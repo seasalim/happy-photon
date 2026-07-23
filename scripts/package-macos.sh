@@ -84,19 +84,30 @@ sign_target() {
     fi
 }
 
-while IFS= read -r -d '' binary; do
-    if file -b "$binary" | grep -q 'Mach-O'; then
-        sign_target "$binary"
-    fi
-done < <(find "$publish_directory" -type f -print0)
-
 cp -a "$publish_directory/." "$contents_directory/MacOS/"
+for resource in LICENSE THIRD_PARTY_NOTICES.md TRADEMARKS.md DEPENDENCIES.json; do
+    if [[ -f "$contents_directory/MacOS/$resource" ]]; then
+        mv "$contents_directory/MacOS/$resource" \
+            "$contents_directory/Resources/$resource"
+    fi
+done
+if [[ -d "$contents_directory/MacOS/licenses" ]]; then
+    mv "$contents_directory/MacOS/licenses" "$contents_directory/Resources/licenses"
+fi
+
 cp "$project_root/Platforms/macOS/Info.plist" "$contents_directory/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $app_version" \
     "$contents_directory/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $app_version" \
     "$contents_directory/Info.plist"
 chmod +x "$contents_directory/MacOS/HappyPhoton"
+
+while IFS= read -r -d '' binary; do
+    if file -b "$binary" | grep -q 'Mach-O'; then
+        sign_target "$binary"
+    fi
+done < <(find "$contents_directory/MacOS" -type f -print0)
+
 sign_target "$app_bundle"
 codesign --verify --deep --strict --verbose=2 "$app_bundle"
 echo "$app_bundle"
