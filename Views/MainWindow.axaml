@@ -1,0 +1,446 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:HappyPhoton.ViewModels"
+        xmlns:models="using:HappyPhoton.Models"
+        xmlns:views="using:HappyPhoton.Views"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700"
+        x:Class="HappyPhoton.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Happy Photon"
+        Icon="/Assets/happy-photon-icon.ico"
+        WindowDecorations="BorderOnly"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="40"
+        Width="1200" Height="700"
+        MinWidth="800" MinHeight="500">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Space" Command="{Binding ToggleSelectionCommand}"/>
+        <KeyBinding Gesture="Enter" Command="{Binding EnterDevelopModeCommand}"/>
+        <KeyBinding Gesture="Delete" Command="{Binding DeleteImageCommand}"/>
+        <KeyBinding Gesture="Ctrl+E" Command="{Binding ShowExportPanelCommand}"/>
+        <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllCommand}"/>
+        <KeyBinding Gesture="Ctrl+Shift+C" Command="{Binding CopyEditSettingsCommand}"/>
+        <KeyBinding Gesture="Ctrl+Shift+V" Command="{Binding PasteEditSettingsCommand}"/>
+        <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}"/>
+        <KeyBinding Gesture="Ctrl+Y" Command="{Binding RedoCommand}"/>
+        <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}"/>
+        <KeyBinding Gesture="B" Command="{Binding ToggleBeforeAfterCommand}"/>
+        <KeyBinding Gesture="P" Command="{Binding PickImageCommand}"/>
+        <KeyBinding Gesture="X" Command="{Binding RejectImageCommand}"/>
+        <KeyBinding Gesture="U" Command="{Binding UnpickImageCommand}"/>
+        <KeyBinding Gesture="D0" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>0</x:Int32></KeyBinding.CommandParameter></KeyBinding>
+        <KeyBinding Gesture="D1" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>1</x:Int32></KeyBinding.CommandParameter></KeyBinding>
+        <KeyBinding Gesture="D2" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>2</x:Int32></KeyBinding.CommandParameter></KeyBinding>
+        <KeyBinding Gesture="D3" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>3</x:Int32></KeyBinding.CommandParameter></KeyBinding>
+        <KeyBinding Gesture="D4" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>4</x:Int32></KeyBinding.CommandParameter></KeyBinding>
+        <KeyBinding Gesture="D5" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>5</x:Int32></KeyBinding.CommandParameter></KeyBinding>
+        <KeyBinding Gesture="E" Command="{Binding ToggleViewModeCommand}"/>
+        <KeyBinding Gesture="Escape" Command="{Binding HandleEscapeCommand}"/>
+        <KeyBinding Gesture="G" Command="{Binding SwitchToLibraryCommand}"/>
+        <KeyBinding Gesture="D" Command="{Binding SwitchToDevelopCommand}"/>
+        <KeyBinding Gesture="F" Command="{Binding ToggleFullScreenCommand}"/>
+    </Window.KeyBindings>
+
+    <Window.Styles>
+        <Style Selector="GridSplitter.panel-splitter">
+            <Setter Property="Width" Value="5"/>
+            <Setter Property="Margin" Value="-2,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Width="1" Background="{StaticResource Divider}"
+                            HorizontalAlignment="Center"/>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+    </Window.Styles>
+
+    <Panel>
+    <Grid RowDefinitions="40,*,24,Auto">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" MinWidth="150"/>
+            <ColumnDefinition Width="1"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="1"/>
+            <ColumnDefinition Width="250" MinWidth="200"/>
+        </Grid.ColumnDefinitions>
+
+        <views:HappyPhotonTitleBar Grid.Row="0" Grid.ColumnSpan="5"/>
+
+        <!-- Left Panel: Navigator + Metadata + Folder Tree -->
+        <Border Grid.Row="1" Grid.Column="0" Background="{StaticResource SurfaceLow}">
+            <Grid RowDefinitions="Auto,8,*">
+                <!-- Navigator + Metadata -->
+                <Border Grid.Row="0" Background="{StaticResource SurfaceHigh}" Padding="8"
+                        BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1"
+                        Height="350">
+                    <ScrollViewer VerticalScrollBarVisibility="Hidden"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+                            <!-- Navigator Thumbnail -->
+                            <TextBlock Classes="section-label" Text="NAVIGATOR" Margin="0,0,0,6"/>
+                            <Border Background="{StaticResource SurfaceLow}" CornerRadius="3"
+                                    Height="140" HorizontalAlignment="Stretch"
+                                    IsVisible="{Binding HasSelectedImage}">
+                                <Image Source="{Binding SelectedImage.Thumbnail}"
+                                       Stretch="Uniform" Margin="4"/>
+                            </Border>
+                            <TextBlock Text="No image selected"
+                                       IsVisible="{Binding !HasSelectedImage}"
+                                       Foreground="{StaticResource TextMuted}" FontSize="11"
+                                       HorizontalAlignment="Center" Margin="0,20"/>
+
+                            <!-- Metadata Section -->
+                            <StackPanel Margin="0,12,0,0" Spacing="10"
+                                        IsVisible="{Binding SelectedImage.MetadataLoaded}">
+                                <!-- File Info -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="FILE" FontSize="{DynamicResource FontSizeSmall}" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSecondary}" LetterSpacing="1"/>
+                                    <TextBlock Text="{Binding SelectedImage.FileName}" Foreground="{StaticResource TextPrimary}" FontSize="{DynamicResource FontSizeBody}"
+                                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectedImage.FileName}"/>
+                                    <TextBlock Foreground="{StaticResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}">
+                                        <Run Text="{Binding SelectedImage.PixelWidth}"/><Run Text="×"/><Run Text="{Binding SelectedImage.PixelHeight}"/>
+                                        <Run Text=" · "/><Run Text="{Binding SelectedImage.FileSizeDisplay}"/>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding SelectedImage.DateTaken, StringFormat='{}{0:MMM d, yyyy  h:mm tt}'}"
+                                               Foreground="{StaticResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
+                                               IsVisible="{Binding SelectedImage.DateTaken, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                </StackPanel>
+
+                                <!-- Camera Info -->
+                                <StackPanel Spacing="4" IsVisible="{Binding SelectedImage.CameraDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                    <TextBlock Text="CAMERA" FontSize="{DynamicResource FontSizeSmall}" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSecondary}" LetterSpacing="1"/>
+                                    <TextBlock Text="{Binding SelectedImage.CameraDisplay}" Foreground="{StaticResource TextPrimary}" FontSize="{DynamicResource FontSizeBody}"
+                                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectedImage.CameraModel}"/>
+                                    <TextBlock Text="{Binding SelectedImage.LensModel}" Foreground="{StaticResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
+                                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectedImage.LensModel}"
+                                               IsVisible="{Binding SelectedImage.LensModel, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                    <TextBlock Text="{Binding SelectedImage.ExposureDisplay}" Foreground="{StaticResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
+                                               IsVisible="{Binding SelectedImage.ExposureDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                </StackPanel>
+
+                                <!-- Location -->
+                                <StackPanel Spacing="4" IsVisible="{Binding SelectedImage.GpsDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                    <TextBlock Text="LOCATION" FontSize="{DynamicResource FontSizeSmall}" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSecondary}" LetterSpacing="1"/>
+                                    <TextBlock Text="{Binding SelectedImage.GpsDisplay}" Foreground="{StaticResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Folder Tree (Library mode) -->
+                <views:FolderTreePanel Grid.Row="2" x:Name="FolderTreePanel"
+                                       IsVisible="{Binding !IsDevelopMode}"
+                                       RootFolders="{Binding RootFolders}"
+                                       SelectedFolder="{Binding SelectedFolder, Mode=TwoWay}"/>
+
+                <!-- Presets Panel (Develop mode) -->
+                <views:PresetsPanel Grid.Row="2" x:Name="PresetsPanel"
+                                    IsVisible="{Binding IsDevelopMode}"
+                                    CanSavePreset="{Binding CanSavePreset}"
+                                    ActivePresetId="{Binding ActivePresetId}"/>
+            </Grid>
+        </Border>
+
+        <GridSplitter Grid.Row="1" Grid.Column="1" Classes="panel-splitter"
+                      ResizeDirection="Columns"/>
+
+        <!-- Center Panel: Library/Develop View -->
+        <Border Grid.Row="1" Grid.Column="2" Background="{StaticResource SurfaceBase}">
+            <Panel>
+                <!-- Library Grid View (when not in Develop mode) -->
+                <views:LibraryGridView x:Name="LibraryGridView"
+                                       IsVisible="{Binding !IsDevelopMode}"
+                                       Images="{Binding Library.VisibleImages}"
+                                       TotalImageCount="{Binding Library.TotalCount}"
+                                       EmptyMessageText="{Binding Library.EmptyMessage}"
+                                       FileTypeFilter="{Binding Library.FileTypeFilter, Mode=TwoWay}"
+                                       FlagFilter="{Binding Library.FlagFilter, Mode=TwoWay}"
+                                       MinimumRating="{Binding Library.MinimumRating, Mode=TwoWay}"
+                                       ShowBursts="{Binding ShowBurstGroups, Mode=TwoWay}"
+                                       SelectedImage="{Binding SelectedImage, Mode=TwoWay}"/>
+
+                <!-- Develop View (when in Develop mode) -->
+                <Grid IsVisible="{Binding IsDevelopMode}" RowDefinitions="*,Auto">
+                        <!-- Zoomable Image -->
+                        <Panel Grid.Row="0">
+                            <!-- Placeholder thumbnail (scaled up, shown while full preview loads) -->
+                            <Image Source="{Binding PlaceholderImage}"
+                                   IsVisible="{Binding PlaceholderImage, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   Stretch="Uniform"
+                                   Margin="10"
+                                   RenderOptions.BitmapInterpolationMode="LowQuality"/>
+
+                            <views:ZoomPanControl x:Name="ZoomPanControl"
+                                                  Source="{Binding PreviewImage}"
+                                                  ZoomLevel="{Binding ZoomLevel}"
+                                                  IsCropMode="{Binding IsCropMode}"
+                                                  IsCropAspectLocked="{Binding IsCropAspectLocked}"
+                                                  Crop="{Binding CurrentCrop, Mode=TwoWay}"
+                                                  Margin="10"/>
+
+                            <ProgressBar IsIndeterminate="True"
+                                         IsVisible="{Binding IsLoadingPreview}"
+                                         Width="100" Height="4"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"/>
+
+                            <TextBlock Text="Select an image to edit"
+                                       IsVisible="{Binding !HasSelectedImage}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource TextMuted}" FontSize="16"/>
+                        </Panel>
+
+                        <!-- Rotation and Zoom Controls -->
+                        <Border Grid.Row="1" Padding="12,6"
+                                IsVisible="{Binding HasSelectedImage}"
+                                HorizontalAlignment="Center" Margin="0,4,0,8">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <Border Background="{StaticResource PrimaryContainer}" CornerRadius="2"
+                                            Padding="6,2"
+                                            IsVisible="{Binding SelectedImage.IsPicked}"
+                                            ToolTip.Tip="Picked">
+                                        <TextBlock Text="Picked" FontSize="10" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource OnPrimary}"/>
+                                    </Border>
+                                    <Border Background="{StaticResource ErrorContainer}" CornerRadius="2"
+                                            Padding="6,2"
+                                            IsVisible="{Binding SelectedImage.IsRejected}"
+                                            ToolTip.Tip="Rejected">
+                                        <TextBlock Text="Rejected" FontSize="10" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource OnErrorContainer}"/>
+                                    </Border>
+                                    <Border Background="{StaticResource SurfaceHigh}" CornerRadius="2"
+                                            Padding="6,2"
+                                            IsVisible="{Binding SelectedImage.IsUnflagged}"
+                                            ToolTip.Tip="Unflagged">
+                                        <TextBlock Text="Unflagged" FontSize="10"
+                                                   Foreground="{StaticResource TextSecondary}"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding SelectedImage.RatingStars}"
+                                               FontSize="12" Foreground="{StaticResource SecondaryContainer}"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding SelectedImage.HasRating, FallbackValue=False}"
+                                               ToolTip.Tip="Rating"/>
+                                </StackPanel>
+                                <Rectangle Width="1" Height="16" Fill="{StaticResource Outline}" Margin="4,0"/>
+                                <Button Command="{Binding RotateLeftCommand}"
+                                        Content="↶"
+                                        ToolTip.Tip="Rotate Left (90° counter-clockwise)"
+                                        FontSize="14" Padding="8,3"
+                                        BorderThickness="0"/>
+                                <Button Command="{Binding RotateRightCommand}"
+                                        Content="↷"
+                                        ToolTip.Tip="Rotate Right (90° clockwise)"
+                                        FontSize="14" Padding="8,3"
+                                        BorderThickness="0"/>
+                                <ToggleButton IsChecked="{Binding IsCropMode, Mode=OneWay}"
+                                              Command="{Binding ToggleCropModeCommand}"
+                                              ToolTip.Tip="Crop Image (C)"
+                                              FontSize="14" Padding="8,3"
+                                              BorderThickness="0">
+                                    <TextBlock Text="⬚" FontSize="14"/>
+                                </ToggleButton>
+                                <Rectangle Width="1" Height="16" Fill="{StaticResource Outline}" Margin="4,0"/>
+                                <views:CompactSlider Label="Zoom"
+                                                     Value="{Binding ZoomLevel}"
+                                                     Minimum="0.1" Maximum="5"
+                                                     SmallChange="0.1"
+                                                     StringFormat="{}{0:P0}"
+                                                     Width="180"/>
+                                <Button Command="{Binding ZoomFitCommand}"
+                                        Content="Fit"
+                                        ToolTip.Tip="Fit to View"
+                                        FontSize="10" Padding="8,3"
+                                        BorderThickness="0"/>
+                                <!-- Crop action buttons (visible in crop mode) -->
+                                <Rectangle Width="1" Height="16" Fill="{StaticResource Outline}" Margin="4,0"
+                                           IsVisible="{Binding IsCropMode}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="4"
+                                            IsVisible="{Binding IsCropMode}">
+                                    <views:CompactSlider Label="Horizon"
+                                                         Value="{Binding HorizonRotation}"
+                                                         Minimum="-5" Maximum="5"
+                                                         SmallChange="0.1"
+                                                         StringFormat="{}{0:+0.0;-0.0;0.0}°"
+                                                         EnableDoubleClickReset="True"
+                                                         Width="150"/>
+                                    <ToggleButton IsChecked="{Binding IsCropAspectLocked}"
+                                                  ToolTip.Tip="Lock Aspect Ratio"
+                                                  FontSize="10" Padding="8,4"
+                                                  BorderThickness="0">
+                                        <TextBlock Text="🔒" FontSize="12"/>
+                                    </ToggleButton>
+                                    <Button Command="{Binding ApplyCropCommand}"
+                                            Content="Apply"
+                                            ToolTip.Tip="Apply Crop (Enter)"
+                                            FontSize="10" Padding="10,4"
+                                            Classes="accent"
+                                            BorderThickness="0"/>
+                                    <Button Command="{Binding ResetCropCommand}"
+                                            Content="Reset"
+                                            ToolTip.Tip="Reset Crop"
+                                            FontSize="10" Padding="8,4"
+                                            BorderThickness="0"/>
+                                    <Button Command="{Binding CancelCropCommand}"
+                                            Content="Cancel"
+                                            ToolTip.Tip="Cancel (Escape)"
+                                            FontSize="10" Padding="8,4"
+                                            BorderThickness="0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+            </Panel>
+        </Border>
+
+        <GridSplitter Grid.Row="1" Grid.Column="3" Classes="panel-splitter"
+                      ResizeDirection="Columns"/>
+
+        <!-- Right Panel: Edit Controls -->
+        <Border Grid.Row="1" Grid.Column="4" Background="{StaticResource SurfaceMid}">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Histogram (fixed, non-scrolling) -->
+                <views:HistogramView Grid.Row="0" Histogram="{Binding Histogram}" Margin="15,15,15,10"
+                                     IsEnabled="{Binding HasSelectedImage}"/>
+
+                <!-- Scrollable adjustments -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Hidden"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="15,5,15,15" Spacing="4" IsEnabled="{Binding HasSelectedImage}">
+                        <TextBlock Classes="section-label" Text="ADJUSTMENTS" Margin="0,0,0,8"/>
+
+                        <views:CompactSlider Label="Exposure" Value="{Binding Exposure}"
+                                             Minimum="-3" Maximum="3" SmallChange="0.05"
+                                             StringFormat="{}{0:F2}"
+                                             EnableDoubleClickReset="True"/>
+
+                        <views:CompactSlider Label="Temperature" Value="{Binding Temperature}"
+                                             Minimum="-100" Maximum="100" SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+
+                        <views:CompactSlider Label="Brightness" Value="{Binding Brightness}"
+                                             Minimum="-100" Maximum="100" SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+
+                        <views:CompactSlider Label="Contrast" Value="{Binding Contrast}"
+                                             Minimum="-100" Maximum="100" SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+
+                        <views:CompactSlider Label="Saturation" Value="{Binding Saturation}"
+                                             Minimum="-100" Maximum="100" SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+
+                        <views:CompactSlider Label="Vibrance" Value="{Binding Vibrance}"
+                                             Minimum="-100" Maximum="100" SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+
+                        <views:CompactSlider Label="Shadows" Value="{Binding Shadows}"
+                                             Minimum="-100" Maximum="100" SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+
+                        <views:CompactSlider Label="Highlights" Value="{Binding Highlights}"
+                                             Minimum="-100" Maximum="100" SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+
+                        <!-- Tone Curve -->
+                    <views:CurveView x:Name="CurveView"
+                                     Curve="{Binding CurrentCurve}"
+                                     Margin="0,20,0,0"
+                                     Height="180"/>
+
+                    <!-- Edit Actions -->
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0" Spacing="8">
+                        <Button Command="{Binding ToggleBeforeAfterCommand}"
+                                ToolTip.Tip="Show Original (B)"
+                                Width="32" Height="28" Padding="0">
+                            <Panel>
+                                <TextBlock Text="👁" FontSize="14" IsVisible="{Binding !IsShowingOriginal}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="👁" FontSize="14" IsVisible="{Binding IsShowingOriginal}"
+                                           Foreground="{StaticResource PrimaryContainer}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Panel>
+                        </Button>
+
+                        <Button Command="{Binding UndoCommand}"
+                                IsEnabled="{Binding CanUndo}"
+                                ToolTip.Tip="Undo"
+                                Width="32" Height="28" Padding="0">
+                            <TextBlock Text="↩" FontSize="14"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Button>
+
+                        <Button Command="{Binding RedoCommand}"
+                                IsEnabled="{Binding CanRedo}"
+                                ToolTip.Tip="Redo"
+                                Width="32" Height="28" Padding="0">
+                            <TextBlock Text="↪" FontSize="14"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Button>
+
+                        <Button Command="{Binding ResetEditsCommand}"
+                                ToolTip.Tip="Reset All"
+                                Width="32" Height="28" Padding="0">
+                            <TextBlock Text="⟲" FontSize="14"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Button>
+
+                        <Button Command="{Binding ShowExportPanelCommand}"
+                                ToolTip.Tip="Export (Ctrl+E)"
+                                Width="32" Height="28" Padding="0">
+                            <TextBlock Text="📤" FontSize="14"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Button>
+                    </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <views:StatusBarView Grid.Row="2" Grid.ColumnSpan="5"/>
+
+        <!-- Batch Export Panel (Row 3) -->
+        <views:BatchExportPanel x:Name="BatchExportPanel"
+                                Grid.Row="3" Grid.ColumnSpan="5"
+                                IsVisible="{ReflectionBinding DataContext.IsExportPanelVisible, RelativeSource={RelativeSource AncestorType=Window}}"/>
+    </Grid>
+
+    <Border Background="#000"
+            IsVisible="{Binding IsFullScreenMode}">
+        <Panel>
+            <Image Source="{Binding PlaceholderImage}"
+                   IsVisible="{Binding PlaceholderImage, Converter={x:Static ObjectConverters.IsNotNull}}"
+                   Stretch="Uniform"
+                   Margin="24"
+                   RenderOptions.BitmapInterpolationMode="LowQuality"/>
+
+            <views:ZoomPanControl x:Name="FullScreenZoomPanControl"
+                                  Source="{Binding PreviewImage}"
+                                  ZoomLevel="{Binding ZoomLevel}"
+                                  ScrollBarVisibility="Disabled"/>
+
+            <ProgressBar IsIndeterminate="True"
+                         IsVisible="{Binding IsLoadingPreview}"
+                         Width="120" Height="4"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"/>
+        </Panel>
+    </Border>
+    </Panel>
+</Window>

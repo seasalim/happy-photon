@@ -1,0 +1,50 @@
+name: Bug report
+description: Report a reproducible Happy Photon defect
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Do not attach private catalogs, agent tokens, or photos you cannot redistribute.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: v0.1.0-rc.1 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - Windows x64
+        - Linux x64
+        - macOS 14+ Apple Silicon
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: List the smallest reliable sequence of steps.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Original-file or privacy impact
+      description: Say whether originals, exports, catalog state, or Agent access were involved.

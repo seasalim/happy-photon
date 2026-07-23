@@ -1,0 +1,73 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-arm64</RuntimeIdentifiers>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\happy-photon-icon.ico</ApplicationIcon>
+    <AssemblyName>HappyPhoton</AssemblyName>
+    <RootNamespace>HappyPhoton</RootNamespace>
+    <AssemblyTitle>Happy Photon</AssemblyTitle>
+    <Product>Happy Photon</Product>
+    <Authors>Happy Photon contributors</Authors>
+    <Copyright>Copyright © 2026 Happy Photon contributors</Copyright>
+    <Description>Open-source photo workflow for RAW and JPEG shoots.</Description>
+    <RepositoryUrl>https://github.com/seasalim/happy-photon</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+    <Compile Remove="Tests\**" />
+    <InternalsVisibleTo Include="HappyPhoton.Tests" />
+    <None Update="LICENSE" CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="Always" />
+    <None Update="THIRD_PARTY_NOTICES.md" CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="Always" />
+    <None Update="TRADEMARKS.md" CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="Always" />
+    <None Update="licenses\**" CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="Always" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.0.4" />
+    <PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="12.0.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.4" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.14.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.9" />
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.8" PrivateAssets="all" />
+    <PackageReference Include="ModelContextProtocol" Version="1.4.1" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.4.1" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
+    <!-- LibRaw for faster RAW processing (Windows/Linux only, macOS falls back to Magick.NET) -->
+    <PackageReference Include="Sdcb.LibRaw" Version="0.21.1.7" />
+    <PackageReference Include="Sdcb.LibRaw.runtime.win64" Version="0.21.1" />
+    <PackageReference Include="Sdcb.LibRaw.runtime.linux64" Version="0.21.1" />
+  </ItemGroup>
+
+  <Target Name="RemoveReleasePublishSymbols"
+          AfterTargets="Publish"
+          Condition="'$(Configuration)' == 'Release'">
+    <ItemGroup>
+      <ReleasePublishSymbols Include="$(PublishDir)**\*.pdb" />
+    </ItemGroup>
+    <Delete Files="@(ReleasePublishSymbols)" />
+  </Target>
+</Project>

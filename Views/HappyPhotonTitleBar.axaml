@@ -1,0 +1,121 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             xmlns:chrome="using:Avalonia.Controls.Chrome"
+             x:Class="HappyPhoton.Views.HappyPhotonTitleBar"
+             x:DataType="vm:MainWindowViewModel"
+             Height="40">
+    <UserControl.Styles>
+        <Style Selector="Button.tab">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontHeading}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="20,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.tab:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="Button.tab.active">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
+        <Style Selector="Button.caption">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+        <Style Selector="Button.caption /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.caption:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="Button.caption.close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnErrorContainer}"/>
+        </Style>
+        <Style Selector="Button.caption Path">
+            <Setter Property="Stroke" Value="{StaticResource TextSecondary}"/>
+        </Style>
+        <Style Selector="Button.caption:pointerover Path">
+            <Setter Property="Stroke" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="Button.caption.close:pointerover Path">
+            <Setter Property="Stroke" Value="{StaticResource OnErrorContainer}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{StaticResource SurfaceLowest}"
+            BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1"
+            PointerPressed="OnTitleBarPointerPressed"
+            chrome:WindowDecorationProperties.ElementRole="TitleBar">
+        <Panel>
+            <StackPanel Orientation="Horizontal" Spacing="8"
+                        HorizontalAlignment="Left" VerticalAlignment="Center"
+                        Margin="14,0,0,0">
+                <Image Source="/Assets/happy-photon-icon.png" Width="20" Height="20"/>
+                <TextBlock FontFamily="{StaticResource FontHeading}"
+                           FontWeight="Bold" FontSize="16"
+                           VerticalAlignment="Center">
+                    <Run Text="Happy " Foreground="{StaticResource TextPrimary}"/>
+                    <Run Text="Photon" Foreground="{StaticResource PrimaryContainer}"/>
+                </TextBlock>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                        VerticalAlignment="Center" Spacing="0"
+                        chrome:WindowDecorationProperties.ElementRole="User">
+                <Button Classes="tab" Classes.active="{Binding !IsDevelopMode}"
+                        Command="{Binding SwitchToLibraryCommand}" Focusable="False"
+                        Content="Library"/>
+                <Button Classes="tab" Classes.active="{Binding IsDevelopMode}"
+                        Command="{Binding SwitchToDevelopCommand}" Focusable="False"
+                        Content="Develop"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                        VerticalAlignment="Stretch"
+                        chrome:WindowDecorationProperties.ElementRole="User">
+                <Button Classes="caption" ToolTip.Tip="Minimize" Click="OnMinimizeClick">
+                    <Path Width="10" Height="10" Data="M 1,7 L 9,7"
+                          StrokeThickness="1.2" StrokeLineCap="Square"
+                          IsHitTestVisible="False"/>
+                </Button>
+                <Button Classes="caption" ToolTip.Tip="Maximize or restore" Click="OnMaximizeClick">
+                    <Path Width="10" Height="10"
+                          Data="M 1.5,1.5 L 8.5,1.5 L 8.5,8.5 L 1.5,8.5 Z"
+                          StrokeThickness="1.2"
+                          IsHitTestVisible="False"/>
+                </Button>
+                <Button Classes="caption close" ToolTip.Tip="Close" Click="OnCloseClick">
+                    <Path Width="10" Height="10"
+                          Data="M 1.5,1.5 L 8.5,8.5 M 8.5,1.5 L 1.5,8.5"
+                          StrokeThickness="1.2" StrokeLineCap="Square"
+                          IsHitTestVisible="False"/>
+                </Button>
+            </StackPanel>
+        </Panel>
+    </Border>
+</UserControl>

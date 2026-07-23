@@ -1,0 +1,32 @@
+name: Feature proposal
+description: Propose a focused improvement to the photo workflow
+title: "[Proposal]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Photographer problem
+      description: Describe the workflow problem before proposing a control or implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workaround or alternatives
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Relevant constraints
+      options:
+        - label: This preserves original-file safety.
+          required: true
+        - label: This can fit the focused Happy Photon workflow.
+          required: true

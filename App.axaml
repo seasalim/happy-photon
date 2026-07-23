@@ -1,0 +1,63 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="HappyPhoton.App"
+             Name="Happy Photon"
+             xmlns:local="using:HappyPhoton"
+             xmlns:converters="using:HappyPhoton.Converters"
+             RequestedThemeVariant="Dark">
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://HappyPhoton/Themes/HappyPhotonTheme.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <converters:SelectionBackgroundConverter x:Key="SelectionBackgroundConverter"/>
+            <converters:ActiveBorderConverter x:Key="ActiveBorderConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <!-- Global typography -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+        </Style>
+        <Style Selector="TextBlock.section-label">
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+        </Style>
+        <Style Selector="ToggleButton">
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+        </Style>
+
+        <!-- Happy Photon accent rule: cyan = actions/active state, magenta = highlights. -->
+        <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource PrimaryHover}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="Button.destructive /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnErrorContainer}"/>
+        </Style>
+        <Style Selector="Button.destructive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnErrorContainer}"/>
+        </Style>
+    </Application.Styles>
+</Application>

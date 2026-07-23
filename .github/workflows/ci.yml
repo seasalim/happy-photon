@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+  NUGET_XMLDOC_MODE: skip
+
+jobs:
+  build-test:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-latest
+            rid: win-x64
+          - name: Linux x64
+            os: ubuntu-latest
+            rid: linux-x64
+          - name: macOS Apple Silicon
+            os: macos-15
+            rid: osx-arm64
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+
+      - name: Check source file lengths
+        if: matrix.rid == 'linux-x64'
+        shell: pwsh
+        run: ./scripts/check-source-lines.ps1
+
+      - name: Restore locked dependencies and run NuGet audit
+        run: >
+          dotnet restore HappyPhoton.sln
+          --locked-mode
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Build
+        run: >
+          dotnet build HappyPhoton.sln
+          --configuration Release
+          --no-restore
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Test
+        run: >
+          dotnet test HappyPhoton.sln
+          --configuration Release
+          --no-build
+          --logger "trx;LogFileName=happy-photon-${{ matrix.rid }}.trx"
+          --results-directory artifacts/test-results/${{ matrix.rid }}
+
+      - name: Publish platform build
+        run: >
+          dotnet publish HappyPhoton.csproj
+          -p:PublishProfile=${{ matrix.rid }}
+          --no-restore
+          --output artifacts/ci/${{ matrix.rid }}
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.rid }}
+          path: artifacts/test-results/${{ matrix.rid }}
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload platform build
+        uses: actions/upload-artifact@v7
+        with:
+          name: happy-photon-ci-${{ matrix.rid }}
+          path: artifacts/ci/${{ matrix.rid }}
+          if-no-files-found: error
+          retention-days: 14

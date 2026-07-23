@@ -1,0 +1,225 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="using:HappyPhoton.Converters"
+             xmlns:models="using:HappyPhoton.Models"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="HappyPhoton.Views.LibraryGridView"
+             Focusable="True"
+             Background="{StaticResource SurfaceBase}">
+
+    <UserControl.Resources>
+        <converters:BurstColorConverter x:Key="BurstColorConverter"/>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="Button.filter">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Outline}"/>
+            <Setter Property="CornerRadius" Value="999"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+        </Style>
+        <Style Selector="Button.filter:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.filter.active">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.filter.active /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="Border.burst-stripe">
+            <Setter Property="Opacity" Value="0.65"/>
+        </Style>
+        <Style Selector="Border.burst-stripe.highlighted">
+            <Setter Property="Opacity" Value="1.0"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Selection Controls -->
+        <Border Grid.Row="0" Background="{StaticResource SurfaceMid}" Padding="10,8"
+                BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1"
+                x:Name="SelectionBar">
+            <ScrollViewer HorizontalScrollBarVisibility="Hidden"
+                          VerticalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="Filter" FontSize="10" Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                           VerticalAlignment="Center" Margin="0,0,2,0"/>
+                <Button x:Name="FilterAllButton" Content="All" Classes="filter"
+                        Click="OnFilterAllClick"/>
+                <Button x:Name="FilterRawButton" Content="RAW" Classes="filter"
+                        Click="OnFilterRawClick"/>
+                <Button x:Name="FilterJpegButton" Content="JPEG" Classes="filter"
+                        Click="OnFilterJpegClick"/>
+                <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
+                <TextBlock Text="Flag" FontSize="10" Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                           VerticalAlignment="Center" Margin="0,0,2,0"/>
+                <Button x:Name="FlagFilterAllButton" Content="All" Classes="filter"
+                        Click="OnFlagFilterAllClick"/>
+                <Button x:Name="FlagFilterPickedButton" Content="Picked" Classes="filter"
+                        Click="OnFlagFilterPickedClick"/>
+                <Button x:Name="FlagFilterRejectedButton" Content="Rejected" Classes="filter"
+                        Click="OnFlagFilterRejectedClick"/>
+                <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
+                <TextBlock Text="Rating" FontSize="10" Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                           VerticalAlignment="Center" Margin="0,0,2,0"/>
+                <Button x:Name="RatingFilterAllButton" Content="All" Classes="filter"
+                        Click="OnRatingFilterAllClick"/>
+                <Button x:Name="RatingFilter1Button" Content="1+" Classes="filter"
+                        Click="OnRatingFilter1Click"/>
+                <Button x:Name="RatingFilter2Button" Content="2+" Classes="filter"
+                        Click="OnRatingFilter2Click"/>
+                <Button x:Name="RatingFilter3Button" Content="3+" Classes="filter"
+                        Click="OnRatingFilter3Click"/>
+                <Button x:Name="RatingFilter4Button" Content="4+" Classes="filter"
+                        Click="OnRatingFilter4Click"/>
+                <Button x:Name="RatingFilter5Button" Content="5" Classes="filter"
+                        Click="OnRatingFilter5Click"/>
+                <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
+                <Button x:Name="BurstsButton" Content="Bursts" Classes="filter"
+                        Click="OnBurstsClick"/>
+                <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
+                <Button Content="Select All" FontSize="10" Padding="8,4"
+                        Click="OnSelectAllClick"/>
+                <Button Content="Select None" FontSize="10" Padding="8,4"
+                        Click="OnDeselectAllClick"/>
+                <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
+                <Button Content="Export..." FontSize="10" Padding="10,4"
+                        Click="OnBatchExportClick"/>
+                <Button Content="Delete Rejected..." FontSize="10" Padding="10,4"
+                        Click="OnDeleteRejectedClick"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Thumbnail Grid with Virtualization -->
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Hidden"
+                      x:Name="ThumbnailScrollViewer">
+            <ItemsRepeater x:Name="ThumbnailGrid" Margin="5">
+                <ItemsRepeater.Layout>
+                    <UniformGridLayout MinItemWidth="190" MinItemHeight="175"
+                                       MinRowSpacing="5" MinColumnSpacing="5"
+                                       ItemsStretch="None"/>
+                </ItemsRepeater.Layout>
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate DataType="models:ImageFile">
+                        <Border Padding="5" CornerRadius="8"
+                                PointerPressed="OnThumbnailPointerPressed"
+                                PointerEntered="OnThumbnailPointerEntered"
+                                PointerExited="OnThumbnailPointerExited"
+                                DoubleTapped="OnThumbnailDoubleTapped"
+                                Background="{Binding IsSelected, Converter={StaticResource SelectionBackgroundConverter}}"
+                                BorderThickness="2"
+                                BorderBrush="{Binding IsActive, Converter={StaticResource ActiveBorderConverter}}">
+                            <Border.Styles>
+                                <Style Selector="Border:pointerover">
+                                    <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+                                </Style>
+                            </Border.Styles>
+                            <StackPanel>
+                                <Panel Width="180" Height="120">
+                                    <!-- Background: darker blue-gray for RAW, standard for others -->
+                                    <Border Background="{StaticResource RawFileBackground}" CornerRadius="8"
+                                            IsVisible="{Binding IsRaw}" ToolTip.Tip="RAW file"/>
+                                    <Border Background="{StaticResource SurfaceHigh}" CornerRadius="8"
+                                            IsVisible="{Binding !IsRaw}"/>
+                                    <!-- Thumbnail content -->
+                                    <Border CornerRadius="8" ClipToBounds="True">
+                                        <Panel>
+                                            <Image Source="{Binding Thumbnail}"
+                                                   Stretch="Uniform"
+                                                   IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                            <ProgressBar IsIndeterminate="True"
+                                                         IsVisible="{Binding IsLoading}"
+                                                         Width="50" Height="4"
+                                                         HorizontalAlignment="Center"
+                                                         VerticalAlignment="Center"/>
+                                        </Panel>
+                                    </Border>
+                                    <Border Width="4" HorizontalAlignment="Left"
+                                            CornerRadius="2,0,0,2"
+                                            Classes="burst-stripe"
+                                            Classes.highlighted="{Binding IsBurstHighlighted}"
+                                            IsVisible="{Binding HasBurstGroup}"
+                                            IsHitTestVisible="False"
+                                            Background="{Binding BurstColorIndex, Converter={StaticResource BurstColorConverter}}"/>
+                                </Panel>
+                                <Grid Width="180" Margin="0,5,0,0"
+                                      RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Row="0" Grid.Column="0"
+                                               Text="{Binding FileName}"
+                                               FontSize="11" Foreground="{StaticResource TextSecondary}"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip.Tip="{Binding FileName}"/>
+                                    <Border Grid.Row="0" Grid.Column="1"
+                                            Background="{StaticResource Tertiary}"
+                                            CornerRadius="{StaticResource RadiusSmall}"
+                                            Padding="4,1"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Margin="6,0,8,0"
+                                            IsVisible="{Binding HasEdits}"
+                                            ToolTip.Tip="Has edits">
+                                        <TextBlock Text="EDIT" FontSize="9" FontWeight="SemiBold"
+                                                   FontFamily="{StaticResource FontLabel}"
+                                                   Foreground="{StaticResource SurfaceBase}"/>
+                                    </Border>
+                                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2"
+                                                Orientation="Horizontal" Spacing="3" Margin="0,2,0,0">
+                                        <Border Background="{StaticResource PrimaryContainer}" CornerRadius="2"
+                                                Padding="3,0"
+                                                IsVisible="{Binding IsPicked}"
+                                                ToolTip.Tip="Picked">
+                                            <TextBlock Text="P" FontSize="9" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource OnPrimary}"/>
+                                        </Border>
+                                        <Border Background="{StaticResource ErrorContainer}" CornerRadius="2"
+                                                Padding="3,0"
+                                                IsVisible="{Binding IsRejected}"
+                                                ToolTip.Tip="Rejected">
+                                            <TextBlock Text="X" FontSize="9" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource OnErrorContainer}"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding RatingStars}"
+                                                   FontSize="10" Foreground="{StaticResource SecondaryContainer}"
+                                                   VerticalAlignment="Center"
+                                                   IsVisible="{Binding HasRating}"
+                                                   ToolTip.Tip="Rating"/>
+                                        <Border CornerRadius="2" Padding="3,0"
+                                                IsVisible="{Binding HasBurstGroup}"
+                                                Background="{Binding BurstColorIndex, Converter={StaticResource BurstColorConverter}}"
+                                                ToolTip.Tip="Burst frame">
+                                            <TextBlock Text="{Binding BurstChipText}" FontSize="9"
+                                                       FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+        </ScrollViewer>
+
+        <!-- Empty state -->
+        <TextBlock Grid.Row="1"
+                   x:Name="EmptyMessage"
+                   Text="Select a folder to view images"
+                   IsVisible="False"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Foreground="{StaticResource TextMuted}" FontSize="16"/>
+    </Grid>
+
+</UserControl>

@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="180"
+             x:Class="HappyPhoton.Views.CurveView">
+
+    <Border Background="{StaticResource SurfaceLow}" CornerRadius="8" Padding="10">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                <TextBlock Text="Tone Curve" FontSize="11" Foreground="{StaticResource TextMuted}"
+                           FontFamily="{StaticResource FontLabel}"/>
+                <Button Grid.Column="1" Content="Reset" FontSize="10"
+                        Padding="8,2" Click="OnResetClick"/>
+            </Grid>
+
+            <Border Grid.Row="1" Background="{StaticResource SurfaceBase}" CornerRadius="4"
+                    BorderBrush="{StaticResource Outline}" BorderThickness="1">
+                <Canvas x:Name="CurveCanvas" ClipToBounds="True" Background="Transparent"/>
+            </Border>
+
+            <TextBlock Grid.Row="2" Text="Click to add • Drag to move • Right-click to remove"
+                       FontSize="9" Foreground="{StaticResource TextMuted}" Margin="0,5,0,0"
+                       HorizontalAlignment="Center"/>
+        </Grid>
+    </Border>
+</UserControl>
