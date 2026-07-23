@@ -17,7 +17,7 @@ public sealed class ThumbnailServiceTests : IDisposable
         _fixture = fixture;
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task LoadUneditedThumbnailAsync_IgnoresDisplayEdits()
     {
         _fixture.RequireWindows();

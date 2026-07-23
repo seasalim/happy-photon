@@ -3,6 +3,17 @@ using Xunit.Sdk;
 
 namespace HappyPhoton.Tests;
 
+public sealed class WindowsFactAttribute : FactAttribute
+{
+    public WindowsFactAttribute()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Skip = "The platform bitmap integration test requires Windows WIC.";
+        }
+    }
+}
+
 public static class AvaloniaTestCollection
 {
     public const string Name = "Avalonia platform";

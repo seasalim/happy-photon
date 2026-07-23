@@ -11,7 +11,7 @@ locked for the `v0.1.0` preparation branch.
 | Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent | 12.0.4 | MIT |
 | Avalonia.Controls.ItemsRepeater | 12.0.0 | MIT |
 | CommunityToolkit.Mvvm | 8.4.2 | MIT |
-| Magick.NET-Q16-AnyCPU | 14.14.0 | Apache-2.0 |
+| Magick.NET-Q16-AnyCPU | 14.15.0 | Apache-2.0 |
 | Microsoft.Data.Sqlite | 10.0.9 | MIT |
 | Microsoft.NET.ILLink.Tasks | 10.0.8 | MIT |
 | ModelContextProtocol and ModelContextProtocol.AspNetCore | 1.4.1 | Apache-2.0 |
@@ -26,7 +26,7 @@ dependency manifest enumerates transitive packages and their locked versions.
 
 ## Magick.NET and ImageMagick
 
-Happy Photon uses Magick.NET 14.14.0, copyright Dirk Lemstra, under
+Happy Photon uses Magick.NET 14.15.0, copyright Dirk Lemstra, under
 Apache-2.0. The package embeds ImageMagick and supporting codec libraries.
 
 The complete notice shipped by the exact NuGet package—including the

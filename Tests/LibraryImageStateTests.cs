@@ -9,7 +9,8 @@ public sealed class LibraryImageStateTests
     private static ImageFile CreateImage(string name, int rating = 0,
         ImageFlag flag = ImageFlag.Unflagged)
     {
-        var image = new ImageFile(@"C:\photos\" + name) { Rating = rating, Flag = flag };
+        var path = Path.Combine(Path.GetTempPath(), "happy-photon-library-state", name);
+        var image = new ImageFile(path) { Rating = rating, Flag = flag };
         return image;
     }
 

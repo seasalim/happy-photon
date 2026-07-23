@@ -56,10 +56,9 @@ jobs:
         run: ./scripts/check-source-lines.ps1
 
       - name: Restore locked dependencies and run NuGet audit
-        run: >
-          dotnet restore HappyPhoton.sln
-          --locked-mode
-          -p:ContinuousIntegrationBuild=true
+        run: |
+          dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
+          dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=${{ matrix.rid }} -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
 
       - name: Build
         run: >
