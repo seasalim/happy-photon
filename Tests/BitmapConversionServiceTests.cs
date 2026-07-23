@@ -14,7 +14,7 @@ public sealed class BitmapConversionServiceTests
         _fixture = fixture;
     }
 
-    [Fact]
+    [WindowsFact]
     public void ConvertToMagickImage_PreservesDimensionsAndChannels()
     {
         _fixture.RequireWindows();

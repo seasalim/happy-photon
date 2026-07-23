@@ -16,7 +16,7 @@ public sealed class ImageFileThumbnailLifetimeTests
         _fixture = fixture;
     }
 
-    [Fact]
+    [WindowsFact]
     public void SetImagesAndRemove_ClearOwnedThumbnailReferences()
     {
         _fixture.RequireWindows();

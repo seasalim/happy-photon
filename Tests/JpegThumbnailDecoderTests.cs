@@ -16,7 +16,7 @@ public sealed class JpegThumbnailDecoderTests : IDisposable
         _fixture = fixture;
     }
 
-    [Fact]
+    [WindowsFact]
     public void Decode_ConstrainsSizeAndAppliesExifOrientation()
     {
         _fixture.RequireWindows();
@@ -48,7 +48,7 @@ public sealed class JpegThumbnailDecoderTests : IDisposable
             Path.Combine(_tempDirectory, "missing.jpg"), 150, cancellation.Token));
     }
 
-    [Fact]
+    [WindowsFact]
     public void Decode_UsesCompatibleEmbeddedExifThumbnail()
     {
         _fixture.RequireWindows();
@@ -63,7 +63,7 @@ public sealed class JpegThumbnailDecoderTests : IDisposable
         Assert.Equal(60, bitmap.PixelSize.Height);
     }
 
-    [Fact]
+    [WindowsFact]
     public void Decode_RejectsEmbeddedExifThumbnailWithDifferentAspectRatio()
     {
         _fixture.RequireWindows();

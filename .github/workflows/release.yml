@@ -88,10 +88,9 @@ jobs:
           cache: true
           cache-dependency-path: "**/packages.lock.json"
       - name: Restore locked dependencies and run NuGet audit
-        run: >
-          dotnet restore HappyPhoton.sln
-          --locked-mode
-          -p:ContinuousIntegrationBuild=true
+        run: |
+          dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
+          dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=win-x64 -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
       - name: Test
         run: >
           dotnet test HappyPhoton.sln
@@ -217,10 +216,9 @@ jobs:
           cache-dependency-path: "**/packages.lock.json"
 
       - name: Restore locked dependencies and run NuGet audit
-        run: >
-          dotnet restore HappyPhoton.sln
-          --locked-mode
-          -p:ContinuousIntegrationBuild=true
+        run: |
+          dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
+          dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=linux-x64 -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
 
       - name: Test
         run: >
@@ -290,10 +288,9 @@ jobs:
           cache-dependency-path: "**/packages.lock.json"
 
       - name: Restore locked dependencies and run NuGet audit
-        run: >
-          dotnet restore HappyPhoton.sln
-          --locked-mode
-          -p:ContinuousIntegrationBuild=true
+        run: |
+          dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
+          dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=osx-arm64 -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
 
       - name: Test
         run: >

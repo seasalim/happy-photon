@@ -14,7 +14,7 @@ public sealed class HistogramServiceBitmapTests
         _fixture = fixture;
     }
 
-    [Fact]
+    [WindowsFact]
     public void CalculateHistogram_ReadsBitmapPixelsWithoutImageDecode()
     {
         _fixture.RequireWindows();

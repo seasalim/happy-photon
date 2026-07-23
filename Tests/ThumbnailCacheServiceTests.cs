@@ -18,7 +18,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         _fixture = fixture;
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task QueueSaveToCache_DropsOldestWritesWhenCapacityIsReached()
     {
         _fixture.RequireWindows();
@@ -56,7 +56,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         }
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task DisposeAsync_ReturnsWhenWriterExceedsShutdownTimeout()
     {
         _fixture.RequireWindows();
@@ -87,7 +87,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         }
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task QueueSaveToCache_PersistsAtomicallyAndCleansTemporaryFile()
     {
         _fixture.RequireWindows();
@@ -129,7 +129,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         }
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task LoadFromCache_LazilyMigratesLegacyPngBytes()
     {
         _fixture.RequireWindows();
