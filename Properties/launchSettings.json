@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "HappyPhoton": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "HAPPY_PHOTON_PERF": "1"
+      }
+    }
+  }
+}

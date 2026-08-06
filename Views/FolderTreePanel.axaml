@@ -1,0 +1,107 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="using:HappyPhoton.Models"
+             mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="500"
+             x:Name="Root"
+             x:Class="HappyPhoton.Views.FolderTreePanel">
+
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="TreeViewItemBackgroundSelected" Color="{StaticResource SurfaceMidColor}"/>
+        <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPointerOver" Color="{StaticResource SurfaceHighColor}"/>
+        <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPressed" Color="{StaticResource SurfaceHighColor}"/>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{StaticResource SurfaceLow}" Padding="10">
+            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto,Auto">
+                <TextBlock Classes="section-label" Text="FOLDERS"
+                           VerticalAlignment="Center"/>
+                <Button Grid.Column="1" x:Name="RefreshFolderButton"
+                        Width="24" Height="24" Padding="5"
+                        Margin="0,0,4,0"
+                        Click="OnRefreshFolderClick"
+                        IsEnabled="{Binding CanRefreshFolder, ElementName=Root}"
+                        ToolTip.Tip="Refresh folder — re-read photographs in the current folder."
+                        AutomationProperties.Name="Refresh current folder">
+                    <PathIcon Width="12" Height="12" Opacity="0.72">
+                        <PathIcon.Data>
+                            <PathGeometry>M13.65 2.35A8 8 0 1 0 16 8h-2a6 6 0 1 1-1.76-4.24L9 7h7V0l-2.35 2.35z</PathGeometry>
+                        </PathIcon.Data>
+                    </PathIcon>
+                </Button>
+                <Button Grid.Column="2" Content="Change…" Click="OnChangeFolderClick"
+                        Padding="8,4" FontSize="10"
+                        ToolTip.Tip="Choose the top-level location shown in the folder tree."
+                        AutomationProperties.Name="Change browsing location"/>
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="3"
+                           Text="{Binding BrowsingFolderName, ElementName=Root, StringFormat='Browsing from: {0}'}"
+                           Foreground="{StaticResource TextMuted}" FontSize="10" Margin="0,4,0,0"/>
+                <TextBlock Grid.Row="2" Grid.ColumnSpan="3"
+                           Text="{Binding ViewingFolderName, ElementName=Root, StringFormat='Viewing: {0}'}"
+                           Foreground="{StaticResource TextSecondary}" FontSize="10" Margin="0,8,0,0"/>
+            </Grid>
+        </Border>
+
+        <!-- Folder Tree -->
+        <TreeView x:Name="FolderTree"
+                  Grid.Row="1"
+                  Background="Transparent"
+                  AutoScrollToSelectedItem="False"
+                  ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                  ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                  SelectionMode="Single">
+            <TreeView.ItemTemplate>
+                <TreeDataTemplate DataType="models:FolderNode" ItemsSource="{Binding Children}">
+                    <Border Classes="folder-row"
+                            Classes.active="{Binding IsSelected}"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="3,0,0,0"
+                            CornerRadius="{StaticResource RadiusSmall}"
+                            Padding="7,4">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <!-- Folder Icon -->
+                            <PathIcon Width="16" Height="16">
+                                <PathIcon.Data>
+                                    <PathGeometry>M2 4a2 2 0 0 1 2-2h3.172a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 10.828 4H14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4z</PathGeometry>
+                                </PathIcon.Data>
+                            </PathIcon>
+                            <!-- Folder Name -->
+                            <TextBlock Text="{Binding Name}"
+                                       FontSize="11"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+            <TreeView.Styles>
+                <Style Selector="TreeViewItem" x:DataType="models:FolderNode">
+                    <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}"/>
+                    <Setter Property="IsSelected" Value="{ReflectionBinding IsSelected, Mode=TwoWay}"/>
+                </Style>
+                <Style Selector="TreeViewItem /template/ ContentPresenter#PART_HeaderPresenter">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+                <Style Selector="Border.folder-row PathIcon">
+                    <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+                </Style>
+                <Style Selector="Border.folder-row TextBlock">
+                    <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                </Style>
+                <Style Selector="Border.folder-row.active">
+                    <Setter Property="Background" Value="{StaticResource SurfaceMid}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
+                </Style>
+                <Style Selector="Border.folder-row.active TextBlock">
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+                </Style>
+                <Style Selector="Border.folder-row.active PathIcon">
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+                </Style>
+            </TreeView.Styles>
+        </TreeView>
+    </Grid>
+</UserControl>

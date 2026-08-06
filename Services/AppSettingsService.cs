@@ -1,0 +1,97 @@
+using HappyPhoton.Models;
+
+namespace HappyPhoton.Services;
+
+/// <summary>
+/// Service for loading and saving application settings via the catalog.
+/// </summary>
+public class AppSettingsService
+{
+    private readonly CatalogService _catalogService;
+
+    private const string RootFolderPathKey = "RootFolderPath";
+    private const string SelectedFolderPathKey = "SelectedFolderPath";
+    private const string FirstRunExperienceVersionKey = "FirstRunExperienceVersion";
+    private const string FileTypeFilterKey = "FileTypeFilter";
+    private const string StripLocationDataKey = "StripLocationData";
+    private const string OutputSharpeningKey = "OutputSharpening";
+    private const string McpServerEnabledKey = "McpServerEnabled";
+    private const string McpTokenKey = "McpToken";
+
+    public AppSettingsService(CatalogService catalogService)
+    {
+        _catalogService = catalogService;
+    }
+
+    public async Task<AppSettings> LoadAsync()
+    {
+        var fileTypeFilter = ImageFileTypeFilter.All;
+        var savedFilter = await _catalogService.GetAppSettingAsync(FileTypeFilterKey);
+        if (!string.IsNullOrEmpty(savedFilter) &&
+            Enum.TryParse<ImageFileTypeFilter>(savedFilter, ignoreCase: true, out var parsedFilter))
+        {
+            fileTypeFilter = parsedFilter;
+        }
+
+        int? firstRunExperienceVersion = null;
+        var savedFirstRunVersion =
+            await _catalogService.GetAppSettingAsync(FirstRunExperienceVersionKey);
+        if (int.TryParse(savedFirstRunVersion, out var parsedFirstRunVersion))
+        {
+            firstRunExperienceVersion = parsedFirstRunVersion;
+        }
+
+        return new AppSettings
+        {
+            RootFolderPath = await _catalogService.GetAppSettingAsync(RootFolderPathKey),
+            SelectedFolderPath = await _catalogService.GetAppSettingAsync(SelectedFolderPathKey),
+            FirstRunExperienceVersion = firstRunExperienceVersion,
+            FileTypeFilter = fileTypeFilter,
+            StripLocationData = bool.TryParse(
+                await _catalogService.GetAppSettingAsync(StripLocationDataKey),
+                out var stripLocationData) && stripLocationData,
+            OutputSharpening = !bool.TryParse(
+                await _catalogService.GetAppSettingAsync(OutputSharpeningKey),
+                out var outputSharpening) || outputSharpening,
+            McpServerEnabled = bool.TryParse(
+                await _catalogService.GetAppSettingAsync(McpServerEnabledKey),
+                out var mcpServerEnabled) && mcpServerEnabled,
+            McpToken = await _catalogService.GetAppSettingAsync(McpTokenKey)
+        };
+    }
+
+    public Task SaveAsync(AppSettings settings)
+    {
+        return _catalogService.SetAppSettingsAsync(new Dictionary<string, string?>
+        {
+            [RootFolderPathKey] = settings.RootFolderPath,
+            [SelectedFolderPathKey] = settings.SelectedFolderPath,
+            [FirstRunExperienceVersionKey] =
+                settings.FirstRunExperienceVersion?.ToString(),
+            [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
+            [StripLocationDataKey] = settings.StripLocationData.ToString(),
+            [OutputSharpeningKey] = settings.OutputSharpening.ToString(),
+            [McpServerEnabledKey] = settings.McpServerEnabled.ToString(),
+            [McpTokenKey] = settings.McpToken
+        });
+    }
+
+    public Task SavePreferencesAsync(AppSettings settings)
+    {
+        return _catalogService.SetAppSettingsAsync(new Dictionary<string, string?>
+        {
+            [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
+            [StripLocationDataKey] = settings.StripLocationData.ToString(),
+            [OutputSharpeningKey] = settings.OutputSharpening.ToString(),
+            [McpServerEnabledKey] = settings.McpServerEnabled.ToString(),
+            [McpTokenKey] = settings.McpToken
+        });
+    }
+
+    public Task SaveFirstRunVersionAsync(int version)
+    {
+        return _catalogService.SetAppSettingAsync(
+            FirstRunExperienceVersionKey,
+            version.ToString());
+    }
+}

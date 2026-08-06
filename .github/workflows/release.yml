@@ -1,0 +1,453 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: SemVer-compatible version for a non-publishing dry run
+        required: true
+        default: 0.1.0-dev
+        type: string
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+  NUGET_XMLDOC_MODE: skip
+jobs:
+  prepare:
+    name: Validate release request
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      source-revision: ${{ steps.metadata.outputs.source-revision }}
+      build-timestamp: ${{ steps.metadata.outputs.build-timestamp }}
+      is-tag: ${{ steps.metadata.outputs.is-tag }}
+      is-final: ${{ steps.metadata.outputs.is-final }}
+      is-prerelease: ${{ steps.metadata.outputs.is-prerelease }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Resolve version and gates
+        id: metadata
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          MACOS_SIGNING_ENABLED: ${{ vars.MACOS_SIGNING_ENABLED }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            is_tag=true
+          else
+            version="$INPUT_VERSION"
+            is_tag=false
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Version must be SemVer-compatible without +build-metadata."
+            exit 1
+          fi
+          is_prerelease=false
+          if [[ "$version" == *-* ]]; then
+            is_prerelease=true
+          fi
+          is_final=false
+          if [[ "$is_tag" == "true" && "$is_prerelease" == "false" ]]; then
+            is_final=true
+          fi
+          if [[ "$is_tag" == "true" && "${MACOS_SIGNING_ENABLED,,}" != "true" ]]; then
+            echo "::error::Set MACOS_SIGNING_ENABLED=true before pushing a release tag."
+            exit 1
+          fi
+          source_revision="$(git rev-parse HEAD)"
+          commit_timestamp="$(git show -s --format=%cI HEAD)"
+          build_timestamp="$(date -u -d "$commit_timestamp" '+%Y-%m-%dT%H:%M:%SZ')"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "source-revision=$source_revision" >> "$GITHUB_OUTPUT"
+          echo "build-timestamp=$build_timestamp" >> "$GITHUB_OUTPUT"
+          echo "is-tag=$is_tag" >> "$GITHUB_OUTPUT"
+          echo "is-final=$is_final" >> "$GITHUB_OUTPUT"
+          echo "is-prerelease=$is_prerelease" >> "$GITHUB_OUTPUT"
+
+  windows:
+    name: Package Windows x64
+    needs: prepare
+    runs-on: windows-2025
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore locked dependencies and run NuGet audit
+        run: |
+          dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
+          dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=win-x64 -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
+      - name: Test
+        run: >
+          dotnet test HappyPhoton.sln
+          --configuration Release
+          --no-restore
+          -p:ContinuousIntegrationBuild=true
+      - name: Build Microsoft Store MSIX
+        if: needs.prepare.outputs.is-prerelease == 'false'
+        shell: pwsh
+        run: |
+          ./scripts/package-windows-msix.ps1 `
+            -Version ${{ needs.prepare.outputs.version }} `
+            -SourceRevision ${{ needs.prepare.outputs.source-revision }} `
+            -BuildTimestampUtc ${{ needs.prepare.outputs.build-timestamp }} `
+            -ContinuousIntegrationBuild `
+            -NoRestore
+      - name: Upload private Microsoft Store package
+        if: needs.prepare.outputs.is-prerelease == 'false'
+        uses: actions/upload-artifact@v7
+        with:
+          name: microsoft-store-msix-win-x64
+          path: artifacts/windows-msix/package/happy-photon-${{ needs.prepare.outputs.version }}-win-x64.msix
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish
+        if: needs.prepare.outputs.is-final != 'true'
+        shell: pwsh
+        run: |
+          dotnet publish HappyPhoton.csproj `
+            -p:PublishProfile=win-x64 `
+            -p:Version=${{ needs.prepare.outputs.version }} `
+            -p:SourceRevisionId=${{ needs.prepare.outputs.source-revision }} `
+            -p:SourceRevision=${{ needs.prepare.outputs.source-revision }} `
+            -p:BuildTimestampUtc=${{ needs.prepare.outputs.build-timestamp }} `
+            --no-restore `
+            --output artifacts/release/win-x64 `
+            -p:ContinuousIntegrationBuild=true
+      - name: Write dependency manifest
+        if: needs.prepare.outputs.is-final != 'true'
+        shell: pwsh
+        run: |
+          ./scripts/write-dependency-manifest.ps1 `
+            -OutputPath artifacts/release/win-x64/DEPENDENCIES.json `
+            -Version ${{ needs.prepare.outputs.version }} `
+            -RuntimeIdentifier win-x64
+      - name: Create Windows ZIP
+        if: needs.prepare.outputs.is-final != 'true'
+        shell: pwsh
+        run: |
+          $artifact = "artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-win-x64.zip"
+          Compress-Archive `
+            -Path artifacts/release/win-x64/* `
+            -DestinationPath $artifact `
+            -CompressionLevel Optimal
+
+      - name: Upload Windows package
+        if: needs.prepare.outputs.is-final != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: package-win-x64
+          path: artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-win-x64.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  linux:
+    name: Package Linux x64
+    needs: prepare
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore locked dependencies and run NuGet audit
+        run: |
+          dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
+          dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=linux-x64 -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
+
+      - name: Test
+        run: >
+          dotnet test HappyPhoton.sln
+          --configuration Release
+          --no-restore
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Publish
+        run: >
+          dotnet publish HappyPhoton.csproj
+          -p:PublishProfile=linux-x64
+          -p:Version=${{ needs.prepare.outputs.version }}
+          -p:SourceRevisionId=${{ needs.prepare.outputs.source-revision }}
+          -p:SourceRevision=${{ needs.prepare.outputs.source-revision }}
+          -p:BuildTimestampUtc=${{ needs.prepare.outputs.build-timestamp }}
+          --no-restore
+          --output artifacts/release/linux-x64
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Write dependency manifest
+        shell: pwsh
+        run: >
+          ./scripts/write-dependency-manifest.ps1
+          -OutputPath artifacts/release/linux-x64/DEPENDENCIES.json
+          -Version ${{ needs.prepare.outputs.version }}
+          -RuntimeIdentifier linux-x64
+
+      - name: Create Linux archive
+        shell: bash
+        run: |
+          chmod +x artifacts/release/linux-x64/HappyPhoton
+          epoch="$(git log -1 --format=%ct)"
+          artifact="artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-linux-x64.tar.gz"
+          tar --sort=name \
+            --mtime="@$epoch" \
+            --owner=0 \
+            --group=0 \
+            --numeric-owner \
+            -C artifacts/release/linux-x64 \
+            -cf - . |
+            gzip -n > "$artifact"
+
+      - name: Upload Linux package
+        uses: actions/upload-artifact@v7
+        with:
+          name: package-linux-x64
+          path: artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-linux-x64.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+
+  macos:
+    name: Package macOS Apple Silicon
+    needs: prepare
+    runs-on: macos-15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore locked dependencies and run NuGet audit
+        run: |
+          dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
+          dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=osx-arm64 -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
+
+      - name: Test
+        run: >
+          dotnet test HappyPhoton.sln
+          --configuration Release
+          --no-restore
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Validate Apple signing configuration
+        if: needs.prepare.outputs.is-tag == 'true'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+          APPLE_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
+        run: |
+          missing=()
+          [[ -n "$APPLE_CERTIFICATE" ]] || missing+=("APPLE_DEVELOPER_ID_CERTIFICATE_P12_BASE64")
+          [[ -n "$APPLE_CERTIFICATE_PASSWORD" ]] || missing+=("APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD")
+          [[ -n "$APPLE_SIGNING_IDENTITY" ]] || missing+=("APPLE_DEVELOPER_ID_APPLICATION")
+          [[ -n "$APPLE_NOTARY_KEY_ID" ]] || missing+=("APPLE_NOTARY_KEY_ID")
+          [[ -n "$APPLE_NOTARY_ISSUER_ID" ]] || missing+=("APPLE_NOTARY_ISSUER_ID")
+          [[ -n "$APPLE_NOTARY_KEY" ]] || missing+=("APPLE_NOTARY_KEY_P8_BASE64")
+          if (( ${#missing[@]} > 0 )); then
+            printf '::error::Missing Apple signing settings: %s\n' "${missing[*]}"
+            exit 1
+          fi
+
+      - name: Import Developer ID certificate
+        if: needs.prepare.outputs.is-tag == 'true'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+        run: |
+          certificate_path="$RUNNER_TEMP/happy-photon-developer-id.p12"
+          keychain_path="$RUNNER_TEMP/happy-photon-signing.keychain-db"
+          keychain_password="$(uuidgen)"
+          printf '%s' "$APPLE_CERTIFICATE" | base64 -D > "$certificate_path"
+          security create-keychain -p "$keychain_password" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$keychain_password" "$keychain_path"
+          security import "$certificate_path" \
+            -k "$keychain_path" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "$keychain_password" \
+            "$keychain_path"
+          security list-keychains -d user -s "$keychain_path"
+
+      - name: Write dependency manifest
+        shell: pwsh
+        run: >
+          ./scripts/write-dependency-manifest.ps1
+          -OutputPath ${{ runner.temp }}/DEPENDENCIES.json
+          -Version ${{ needs.prepare.outputs.version }}
+          -RuntimeIdentifier osx-arm64
+
+      - name: Build and sign app bundle
+        shell: bash
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+          HAPPY_PHOTON_CI_BUILD: "1"
+          HAPPY_PHOTON_DEPENDENCY_MANIFEST: ${{ runner.temp }}/DEPENDENCIES.json
+          HAPPY_PHOTON_SOURCE_REVISION: ${{ needs.prepare.outputs.source-revision }}
+          HAPPY_PHOTON_BUILD_TIMESTAMP: ${{ needs.prepare.outputs.build-timestamp }}
+          HAPPY_PHOTON_NO_RESTORE: "1"
+          HAPPY_PHOTON_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          if [[ "${{ needs.prepare.outputs.is-tag }}" != "true" ]]; then
+            export APPLE_SIGNING_IDENTITY="-"
+          fi
+          ./scripts/package-macos.sh arm64
+
+      - name: Notarize and staple app
+        if: needs.prepare.outputs.is-tag == 'true'
+        shell: bash
+        env:
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+          APPLE_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
+        run: |
+          app="artifacts/osx-arm64/Happy Photon.app"
+          submission="$RUNNER_TEMP/happy-photon-notarization.zip"
+          key_path="$RUNNER_TEMP/AuthKey_${APPLE_NOTARY_KEY_ID}.p8"
+          printf '%s' "$APPLE_NOTARY_KEY" | base64 -D > "$key_path"
+          ditto -c -k --sequesterRsrc --keepParent "$app" "$submission"
+          xcrun notarytool submit "$submission" \
+            --key "$key_path" \
+            --key-id "$APPLE_NOTARY_KEY_ID" \
+            --issuer "$APPLE_NOTARY_ISSUER_ID" \
+            --wait
+          xcrun stapler staple "$app"
+          xcrun stapler validate "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          spctl --assess --type execute --verbose=4 "$app"
+
+      - name: Create macOS ZIP
+        shell: bash
+        run: |
+          app="artifacts/osx-arm64/Happy Photon.app"
+          artifact="artifacts/happy-photon-${{ needs.prepare.outputs.version }}-osx-arm64.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$app" "$artifact"
+
+      - name: Upload macOS package
+        uses: actions/upload-artifact@v7
+        with:
+          name: package-osx-arm64
+          path: artifacts/happy-photon-${{ needs.prepare.outputs.version }}-osx-arm64.zip
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Remove Apple signing material
+        if: always() && needs.prepare.outputs.is-tag == 'true'
+        shell: bash
+        run: |
+          security delete-keychain \
+            "$RUNNER_TEMP/happy-photon-signing.keychain-db" 2>/dev/null || true
+          rm -f \
+            "$RUNNER_TEMP/happy-photon-developer-id.p12" \
+            "$RUNNER_TEMP"/AuthKey_*.p8 \
+            "$RUNNER_TEMP/happy-photon-notarization.zip"
+
+  assemble:
+    name: Assemble release
+    needs:
+      - prepare
+      - windows
+      - linux
+      - macos
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      attestations: write
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Download platform packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: package-*
+          path: release
+          merge-multiple: true
+
+      - name: Generate checksums
+        shell: bash
+        working-directory: release
+        run: sha256sum happy-photon-* > SHA256SUMS.txt
+
+      - name: Attest public release provenance
+        if: needs.prepare.outputs.is-tag == 'true' && github.event.repository.private == false
+        uses: actions/attest@v4
+        with:
+          subject-path: release/happy-photon-*
+
+      - name: Upload combined dry run
+        if: needs.prepare.outputs.is-tag != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: happy-photon-${{ needs.prepare.outputs.version }}-release-dry-run
+          path: release
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Create draft GitHub Release
+        if: needs.prepare.outputs.is-tag == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IS_PRERELEASE: ${{ needs.prepare.outputs.is-prerelease }}
+        run: |
+          notes="$(cat docs/release-notes-preamble.md)"
+          arguments=(
+            "$GITHUB_REF_NAME"
+            release/happy-photon-*
+            release/SHA256SUMS.txt
+            --draft
+            --verify-tag
+            --generate-notes
+            --title "Happy Photon $GITHUB_REF_NAME"
+            --notes "$notes"
+          )
+          if [[ "$IS_PRERELEASE" == "true" ]]; then
+            arguments+=(--prerelease)
+          fi
+          gh release create "${arguments[@]}"

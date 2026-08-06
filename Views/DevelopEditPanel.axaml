@@ -1,0 +1,347 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="using:HappyPhoton.Views"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             mc:Ignorable="d"
+             d:DesignWidth="250"
+             d:DesignHeight="660"
+             x:Class="HappyPhoton.Views.DevelopEditPanel"
+             x:DataType="vm:MainWindowViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="ToggleButton.wb-picker:checked">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="ComboBox.edit-dropdown">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MaxHeight" Value="28"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+        </Style>
+        <Style Selector="Button.develop-action, ToggleButton.develop-action">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.develop-action:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                         ToggleButton.develop-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="Button.develop-action:disabled, ToggleButton.develop-action:disabled">
+            <Setter Property="Opacity" Value="0.32"/>
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+        </Style>
+        <Style Selector="Button.develop-action:disabled /template/ ContentPresenter#PART_ContentPresenter,
+                         ToggleButton.develop-action:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+        </Style>
+        <Style Selector="Button.develop-action Path, ToggleButton.develop-action Path">
+            <Setter Property="Stroke" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
+        <Style Selector="Button.develop-action:pointerover Path,
+                         ToggleButton.develop-action:pointerover Path">
+            <Setter Property="Stroke" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="ToggleButton.develop-action:checked">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="ToggleButton.develop-action:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="ToggleButton.develop-action:checked Path">
+            <Setter Property="Stroke" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="Button.develop-reset">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.develop-reset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="Button.develop-reset /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
+        <Style Selector="Button.develop-reset:disabled">
+            <Setter Property="Opacity" Value="0.32"/>
+        </Style>
+        <Style Selector="Button.develop-reset:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+        </Style>
+        <Style Selector="Button.wb-auto">
+            <Setter Property="MinWidth" Value="50"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MaxHeight" Value="28"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="ToggleButton.wb-picker">
+            <Setter Property="MinWidth" Value="28"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MaxHeight" Value="28"/>
+            <Setter Property="Padding" Value="6"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="TextBlock.edit-control-label">
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{StaticResource SurfaceMid}"
+            IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <Grid Grid.Row="0" RowDefinitions="Auto,2">
+                <views:HistogramView Histogram="{Binding Histogram}"
+                                     Margin="15,15,15,10"
+                                     IsEnabled="{Binding HasSelectedImage}"/>
+                <ProgressBar Grid.Row="1"
+                             IsIndeterminate="True"
+                             IsVisible="{Binding IsBaseArming}"
+                             Height="2"/>
+            </Grid>
+
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Hidden"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="15,5,15,15"
+                            Spacing="4"
+                            IsEnabled="{Binding HasSelectedImage}">
+                        <TextBlock x:Name="WhiteBalanceHeading"
+                                   Classes="section-label"
+                                   Text="WHITE BALANCE"
+                                   Margin="0,2,0,12"/>
+
+                        <Grid ColumnDefinitions="*,Auto,Auto"
+                              Height="28"
+                              Margin="0,0,0,8">
+                            <ComboBox x:Name="WhiteBalanceModeBox"
+                                      Grid.Column="0"
+                                      Classes="edit-dropdown"
+                                      ItemsSource="{Binding WhiteBalanceModeOptions}"
+                                      SelectedItem="{Binding SelectedWhiteBalanceMode, Mode=TwoWay}"/>
+                            <Button x:Name="WhiteBalanceAutoButton"
+                                    Grid.Column="1"
+                                    Classes="wb-auto"
+                                    Command="{Binding AutoWhiteBalanceCommand}"
+                                    Content="Auto"
+                                    Margin="6,0,0,0"
+                                    ToolTip.Tip="Automatic white balance"/>
+                            <ToggleButton x:Name="WhiteBalancePickerButton"
+                                          Grid.Column="2"
+                                          Classes="wb-picker"
+                                          Command="{Binding ToggleWhiteBalancePickerCommand}"
+                                          IsChecked="{Binding IsWhiteBalancePicking, Mode=OneWay}"
+                                          Margin="4,0,0,0"
+                                          ToolTip.Tip="White balance eyedropper (W)">
+                                <Viewbox Width="16" Height="16">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Stroke="{StaticResource Primary}"
+                                              StrokeThickness="1.8"
+                                              StrokeLineCap="Round"
+                                              StrokeJoin="Round"
+                                              Data="M2,22 L3,21 L6,21 L15,12 M3,21 L3,18 L12,9 M15,6 L18.4,2.6 C19.2,1.8 20.5,1.8 21.3,2.6 C22.1,3.4 22.1,4.7 21.3,5.5 L18,9 Z M15,6 L12,9 L15,12 L18,9 Z"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </ToggleButton>
+                        </Grid>
+
+                        <views:CompactSlider Label="Kelvin"
+                                             Value="{Binding WhiteBalanceKelvinPosition}"
+                                             Minimum="0"
+                                             Maximum="1"
+                                             SmallChange="0.005"
+                                             DisplayText="{Binding WhiteBalanceKelvinText}"
+                                             ShowValueFill="False">
+                            <views:CompactSlider.TrackBrush>
+                                <LinearGradientBrush StartPoint="0%,50%"
+                                                     EndPoint="100%,50%">
+                                    <GradientStop Color="{StaticResource WhiteBalanceCoolColor}"
+                                                  Offset="0"/>
+                                    <GradientStop Color="{StaticResource WhiteBalanceNeutralColor}"
+                                                  Offset="0.55"/>
+                                    <GradientStop Color="{StaticResource WhiteBalanceWarmColor}"
+                                                  Offset="1"/>
+                                </LinearGradientBrush>
+                            </views:CompactSlider.TrackBrush>
+                        </views:CompactSlider>
+
+                        <views:CompactSlider Label="Tint"
+                                             Value="{Binding WhiteBalanceTint}"
+                                             Minimum="-100"
+                                             Maximum="100"
+                                             SmallChange="1"
+                                             DisplayText="{Binding WhiteBalanceTintText}"
+                                             ShowValueFill="False">
+                            <views:CompactSlider.TrackBrush>
+                                <LinearGradientBrush StartPoint="0%,50%"
+                                                     EndPoint="100%,50%">
+                                    <GradientStop Color="{StaticResource WhiteBalanceTintGreenColor}"
+                                                  Offset="0"/>
+                                    <GradientStop Color="{StaticResource OutlineColor}"
+                                                  Offset="0.5"/>
+                                    <GradientStop Color="{StaticResource WhiteBalanceTintMagentaColor}"
+                                                  Offset="1"/>
+                                </LinearGradientBrush>
+                            </views:CompactSlider.TrackBrush>
+                        </views:CompactSlider>
+
+                        <TextBlock Classes="section-label"
+                                   Text="ADJUSTMENTS"
+                                   Margin="0,20,0,8"/>
+
+                        <views:CompactSlider Label="Exposure"
+                                             Value="{Binding Exposure}"
+                                             Minimum="-3"
+                                             Maximum="3"
+                                             SmallChange="0.05"
+                                             StringFormat="{}{0:F2}"
+                                             EnableDoubleClickReset="True"/>
+                        <views:CompactSlider Label="Brightness"
+                                             Value="{Binding Brightness}"
+                                             Minimum="-100"
+                                             Maximum="100"
+                                             SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+                        <views:CompactSlider Label="Contrast"
+                                             Value="{Binding Contrast}"
+                                             Minimum="-100"
+                                             Maximum="100"
+                                             SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+                        <views:CompactSlider Label="Saturation"
+                                             Value="{Binding Saturation}"
+                                             Minimum="-100"
+                                             Maximum="100"
+                                             SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+                        <views:CompactSlider Label="Vibrance"
+                                             Value="{Binding Vibrance}"
+                                             Minimum="-100"
+                                             Maximum="100"
+                                             SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+                        <views:CompactSlider Label="Shadows"
+                                             Value="{Binding Shadows}"
+                                             Minimum="-100"
+                                             Maximum="100"
+                                             SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+                        <views:CompactSlider Label="Highlights"
+                                             Value="{Binding Highlights}"
+                                             Minimum="-100"
+                                             Maximum="100"
+                                             SmallChange="1"
+                                             EnableDoubleClickReset="True"/>
+
+                        <views:CurveView x:Name="ToneCurveView"
+                                         Curve="{Binding CurrentCurve}"
+                                         CurveChanged="OnCurveChanged"
+                                         Margin="0,20,0,0"
+                                         Height="180"/>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Row="2"
+                  Margin="15,8,15,15"
+                  ColumnDefinitions="Auto,*,Auto">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="6"
+                            VerticalAlignment="Center">
+                    <ToggleButton x:Name="BeforeAfterButton"
+                                  Classes="develop-action"
+                                  IsChecked="{Binding IsShowingOriginal, Mode=OneWay}"
+                                  Command="{Binding ToggleBeforeAfterCommand}"
+                                  ToolTip.Tip="Toggle original preview (B)"
+                                  AutomationProperties.Name="Toggle original preview">
+                        <Viewbox Width="14" Height="14">
+                            <Canvas Width="16" Height="16">
+                                <Path Fill="Transparent"
+                                      Data="M 1,8 C 2.8,5.2 5.1,3.8 8,3.8 C 10.9,3.8 13.2,5.2 15,8 C 13.2,10.8 10.9,12.2 8,12.2 C 5.1,12.2 2.8,10.8 1,8 Z M 8,5.8 A 2.2,2.2 0 1 1 7.99,5.8"
+                                      StrokeThickness="1.4"
+                                      StrokeLineCap="Round"
+                                      StrokeJoin="Round"/>
+                            </Canvas>
+                        </Viewbox>
+                    </ToggleButton>
+                    <Button x:Name="UndoEditButton"
+                            Classes="develop-action"
+                            Command="{Binding UndoCommand}"
+                            IsEnabled="{Binding CanUndo}"
+                            ToolTip.Tip="Undo (Ctrl+Z)"
+                            AutomationProperties.Name="Undo edit">
+                        <Viewbox Width="14" Height="14">
+                            <Canvas Width="16" Height="16">
+                                <Path Fill="Transparent"
+                                      Data="M 6,3.5 L 2,7.5 L 6,11.5 M 2,7.5 L 9,7.5 C 12,7.5 14,9.5 14,12.5"
+                                      StrokeThickness="1.5"
+                                      StrokeLineCap="Round"
+                                      StrokeJoin="Round"/>
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
+                    <Button x:Name="RedoEditButton"
+                            Classes="develop-action"
+                            Command="{Binding RedoCommand}"
+                            IsEnabled="{Binding CanRedo}"
+                            ToolTip.Tip="Redo (Ctrl+Y / Ctrl+Shift+Z)"
+                            AutomationProperties.Name="Redo edit">
+                        <Viewbox Width="14" Height="14">
+                            <Canvas Width="16" Height="16">
+                                <Path Fill="Transparent"
+                                      Data="M 10,3.5 L 14,7.5 L 10,11.5 M 14,7.5 L 7,7.5 C 4,7.5 2,9.5 2,12.5"
+                                      StrokeThickness="1.5"
+                                      StrokeLineCap="Round"
+                                      StrokeJoin="Round"/>
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
+                </StackPanel>
+                <Button x:Name="ResetAdjustmentsButton"
+                        Grid.Column="2"
+                        Classes="develop-reset"
+                        VerticalAlignment="Center"
+                        Command="{Binding ResetEditsCommand}"
+                        Content="RESET"
+                        ToolTip.Tip="Reset adjustments; crop and rotation are preserved"
+                        AutomationProperties.Name="Reset adjustments"/>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

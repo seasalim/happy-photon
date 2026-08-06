@@ -1,0 +1,309 @@
+using System.ComponentModel;
+using Avalonia.Controls;
+using Avalonia.Input.Platform;
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Input;
+using HappyPhoton.Models;
+using HappyPhoton.Services;
+using HappyPhoton.ViewModels;
+
+namespace HappyPhoton.Views;
+
+public partial class MainWindow
+{
+    private AppSettingsService? _appSettingsService;
+    private MainWindowViewModel? _subscribedViewModel;
+    private CatalogService? _startupCatalogService;
+    private string? _startupPicturesPath;
+    private bool _startupAttemptInProgress;
+    private bool _isClosing;
+    private bool _closeReady;
+
+    private void ZoomFit()
+    {
+        var zoomControl = GetActiveZoomPanControl();
+        if (zoomControl == null || DataContext is not MainWindowViewModel vm) return;
+
+        vm.ZoomLevel = zoomControl.GetFitZoomLevel();
+    }
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+
+        if (_subscribedViewModel != null && !ReferenceEquals(DataContext, _subscribedViewModel))
+        {
+            _subscribedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _subscribedViewModel = null;
+        }
+
+        if (DataContext is not MainWindowViewModel vm)
+        {
+            _presetsPanel?.SetPresetSource(null);
+            return;
+        }
+
+        vm.ZoomFitCommand = new RelayCommand(ZoomFit);
+        vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(zoom => vm.ZoomLevel = zoom);
+        vm.RequestExportDialogAsync = ShowExportDialogAsync;
+        vm.ConfirmMoveToTrashAsync = ConfirmMoveToTrashAsync;
+        vm.ConfirmDeleteRejectedAsync = ConfirmDeleteRejectedAsync;
+        vm.ConfirmBatchApplyAsync = ConfirmBatchApplyAsync;
+        vm.ShowDeleteRejectedFailuresAsync = ShowDeleteRejectedFailuresAsync;
+        vm.PersistAppSettingsAsync = () => SaveAppSettingsAsync(vm);
+        vm.PersistFirstRunCompletionAsync =
+            path => PersistFirstRunCompletionAsync(vm, path);
+        vm.BrowseLocationRequested = () => _ = BrowseForFirstRunLocationAsync(vm);
+        vm.RetryStartupAsync = () => TryInitializeApplicationAsync(vm);
+        vm.CloseApplicationRequested = Close;
+        vm.RequestFolderTreeFocus = FocusFolderTree;
+        vm.CopyToClipboardAsync = async text =>
+        {
+            if (Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(text);
+            }
+        };
+        _presetsPanel?.SetPresetSource(vm.PresetService);
+
+        SetSubscribedViewModel(vm);
+        ApplyWorkspaceKeyboardState(vm.IsWorkspaceInteractionEnabled);
+    }
+
+    internal async Task InitializeApplicationAsync(
+        MainWindowViewModel vm,
+        CatalogService catalogService,
+        string? picturesPath)
+    {
+        _startupCatalogService = catalogService;
+        _startupPicturesPath = picturesPath;
+        _appSettingsService = new AppSettingsService(catalogService);
+        await TryInitializeApplicationAsync(vm);
+    }
+
+    private async Task TryInitializeApplicationAsync(MainWindowViewModel vm)
+    {
+        if (_startupAttemptInProgress ||
+            _appSettingsService == null ||
+            _startupCatalogService == null ||
+            !ReferenceEquals(DataContext, vm))
+        {
+            return;
+        }
+
+        _startupAttemptInProgress = true;
+        vm.ShowInitializing();
+        try
+        {
+            await Task.WhenAll(
+                Task.Run(_startupCatalogService.InitializeAsync),
+                Task.Run(vm.InitializeAsync));
+
+            var settings = await _appSettingsService.LoadAsync();
+            if (!ReferenceEquals(DataContext, vm))
+            {
+                return;
+            }
+
+            vm.Library.FileTypeFilter = settings.FileTypeFilter;
+            vm.ExportSettings.StripLocationData = settings.StripLocationData;
+            vm.ExportSettings.OutputSharpening = settings.OutputSharpening;
+            vm.InitializeAgentSettings(settings.McpServerEnabled, settings.McpToken);
+
+            var firstRunDecision =
+                MainWindowViewModel.DecideFirstRunStartup(settings);
+            if (firstRunDecision == FirstRunStartupDecision.Restore)
+            {
+                await RestoreFolderSessionAsync(vm, settings);
+                vm.ShowWorkspaceReady(
+                    settings.FirstRunExperienceVersion ??
+                    MainWindowViewModel.CurrentFirstRunExperienceVersion);
+                return;
+            }
+
+            if (firstRunDecision ==
+                FirstRunStartupDecision.GrandfatherExistingInstallation)
+            {
+                await _appSettingsService.SaveFirstRunVersionAsync(
+                    MainWindowViewModel.CurrentFirstRunExperienceVersion);
+                await RestoreFolderSessionAsync(vm, settings);
+                vm.ShowWorkspaceReady(
+                    MainWindowViewModel.CurrentFirstRunExperienceVersion);
+                return;
+            }
+
+            if (_startupPicturesPath != null)
+            {
+                await vm.InitializeFolderTreeWithRootAsync(
+                    _startupPicturesPath,
+                    selectFolder: false);
+            }
+            else
+            {
+                vm.ClearFolderTree();
+            }
+
+            vm.ShowFirstRunWelcome(_startupPicturesPath);
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Startup initialization failed: {exception}");
+            vm.ShowStartupFailure(exception.Message);
+        }
+        finally
+        {
+            _startupAttemptInProgress = false;
+        }
+    }
+
+    private async void OnExportSettingsPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs args)
+    {
+        if (sender is not ExportSettings settings ||
+            DataContext is not MainWindowViewModel vm ||
+            !ReferenceEquals(settings, vm.ExportSettings))
+        {
+            return;
+        }
+
+        if (args.PropertyName is not nameof(ExportSettings.StripLocationData) and
+            not nameof(ExportSettings.OutputSharpening))
+        {
+            return;
+        }
+
+        await PersistAppSettingsSafelyAsync(vm);
+    }
+
+    private async Task RestoreFolderSessionAsync(
+        MainWindowViewModel vm,
+        AppSettings settings)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.RootFolderPath) &&
+            vm.ValidateBrowseLocation(settings.RootFolderPath) ==
+            BrowseLocationValidation.Valid)
+        {
+            await vm.InitializeFolderTreeWithRootAsync(
+                settings.RootFolderPath,
+                settings.SelectedFolderPath);
+            return;
+        }
+
+        if (_startupPicturesPath != null)
+        {
+            await vm.InitializeFolderTreeWithRootAsync(_startupPicturesPath);
+            return;
+        }
+
+        vm.ClearFolderTree();
+    }
+
+    private void SetSubscribedViewModel(MainWindowViewModel vm)
+    {
+        if (_subscribedViewModel != null)
+        {
+            _subscribedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
+        _subscribedViewModel = vm;
+        _subscribedViewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (sender is not MainWindowViewModel vm)
+        {
+            return;
+        }
+
+        if (args.PropertyName == nameof(MainWindowViewModel.IsFullScreenMode))
+        {
+            ApplyFullScreenWindowState(vm.IsFullScreenMode);
+        }
+        else if (args.PropertyName ==
+                 nameof(MainWindowViewModel.IsWorkspaceInteractionEnabled))
+        {
+            ApplyWorkspaceKeyboardState(vm.IsWorkspaceInteractionEnabled);
+        }
+    }
+
+    protected override async void OnClosing(WindowClosingEventArgs e)
+    {
+        if (_closeReady || DataContext is not MainWindowViewModel vm)
+        {
+            base.OnClosing(e);
+            return;
+        }
+
+        e.Cancel = true;
+        if (_isClosing) return;
+
+        _isClosing = true;
+        await PersistAppSettingsSafelyAsync(vm);
+
+        try
+        {
+            await vm.ShutdownAgentServerAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Agent server shutdown failed: {ex.Message}");
+        }
+
+        Hide();
+        DataContext = null;
+        await Dispatcher.UIThread.InvokeAsync(
+            static () => { },
+            DispatcherPriority.Loaded);
+
+        try
+        {
+            await vm.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Image service shutdown failed: {ex.Message}");
+        }
+
+        _closeReady = true;
+        Close();
+    }
+
+    private async Task PersistAppSettingsSafelyAsync(MainWindowViewModel vm)
+    {
+        try
+        {
+            await SaveAppSettingsAsync(vm);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"App settings persistence failed: {ex.Message}");
+        }
+    }
+
+    private Task SaveAppSettingsAsync(MainWindowViewModel vm)
+    {
+        if (_appSettingsService == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var settings = new AppSettings
+        {
+            RootFolderPath = vm.RootFolders.FirstOrDefault()?.Path,
+            SelectedFolderPath = vm.CurrentFolderPath,
+            FirstRunExperienceVersion = vm.FirstRunExperienceVersion,
+            FileTypeFilter = vm.Library.FileTypeFilter,
+            StripLocationData = vm.ExportSettings.StripLocationData,
+            OutputSharpening = vm.ExportSettings.OutputSharpening,
+            McpServerEnabled = vm.IsAgentServerEnabled,
+            McpToken = vm.AgentToken
+        };
+
+        return vm.CanPersistFolderSession
+            ? _appSettingsService.SaveAsync(settings)
+            : _appSettingsService.SavePreferencesAsync(settings);
+    }
+}

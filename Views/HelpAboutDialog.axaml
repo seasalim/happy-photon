@@ -1,0 +1,246 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:HappyPhoton.Views"
+        x:Class="HappyPhoton.Views.HelpAboutDialog"
+        x:DataType="views:HelpAboutDialog"
+        Title="Help &amp; About"
+        Width="680"
+        Height="680"
+        MinWidth="520"
+        MinHeight="460"
+        CanResize="True"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource SurfaceLow}">
+    <Window.Styles>
+        <Style Selector="Border.key">
+            <Setter Property="Background" Value="{StaticResource SurfaceHighest}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="Padding" Value="7,3"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+        <Style Selector="Border.key TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="TabItem.dialog-tab">
+            <Setter Property="Background" Value="{StaticResource SurfaceMid}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontHeading}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeHeading}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="TabItem.dialog-tab:pointerover">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        </Style>
+        <Style Selector="TabItem.dialog-tab:focus-visible">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="TabItem.dialog-tab:selected">
+            <Setter Property="Background" Value="{StaticResource SurfaceHighest}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.about-link">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+        </Style>
+        <Style Selector="Button.about-link:pointerover">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryHover}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+        </Style>
+        <Style Selector="Button.about-link:focus-visible">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Border Grid.Row="0"
+                Background="{StaticResource SurfaceMid}"
+                BorderBrush="{StaticResource Divider}"
+                BorderThickness="0,0,0,1"
+                Padding="20,16">
+            <StackPanel Spacing="3">
+                <TextBlock Text="Help &amp; About"
+                           FontFamily="{StaticResource FontHeading}"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="Shortcuts, build details, and project information."
+                           FontSize="12"
+                           Foreground="{StaticResource TextMuted}"/>
+            </StackPanel>
+        </Border>
+
+        <TabControl x:Name="HelpAboutTabs"
+                    Grid.Row="1"
+                    SelectedIndex="0"
+                    Background="{StaticResource SurfaceLow}"
+                    AutomationProperties.Name="Help and About sections">
+            <TabItem Header="Keyboard shortcuts"
+                     Classes="dialog-tab"
+                     AutomationProperties.Name="Keyboard shortcuts">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Groups}" Margin="20,16">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="views:ShortcutGroup">
+                                <StackPanel Margin="0,0,0,20" Spacing="8">
+                                    <TextBlock Text="{Binding Title}" Classes="section-label"/>
+                                    <ItemsControl ItemsSource="{Binding Entries}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="views:ShortcutEntry">
+                                                <Grid ColumnDefinitions="180,*" Margin="0,2">
+                                                    <Border Grid.Column="0" Classes="key">
+                                                        <TextBlock Text="{Binding Keys}"/>
+                                                    </Border>
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding Action}"
+                                                               Margin="12,3,0,0"
+                                                               FontSize="12"
+                                                               Foreground="{StaticResource TextSecondary}"
+                                                               TextWrapping="Wrap"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="About"
+                     Classes="dialog-tab"
+                     AutomationProperties.Name="About Happy Photon">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="28,24" Spacing="18" MaxWidth="560">
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <Image Source="/Assets/happy-photon-icon.png"
+                                   Width="64"
+                                   Height="64"
+                                   AutomationProperties.Name="Happy Photon icon"/>
+                            <StackPanel VerticalAlignment="Center" Spacing="5">
+                                <TextBlock x:Name="AboutIdentityText"
+                                           FontFamily="{StaticResource FontHeading}"
+                                           FontSize="26"
+                                           FontWeight="Bold"
+                                           AutomationProperties.Name="Product name">
+                                    <Run Text="Happy " Foreground="{StaticResource TextPrimary}"/>
+                                    <Run Text="Photon" Foreground="{StaticResource PrimaryContainer}"/>
+                                </TextBlock>
+                                <TextBlock Text="A fast, non-destructive photo workflow for RAW and JPEG shoots."
+                                           FontSize="13"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="430"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Border Background="{StaticResource SurfaceMid}"
+                                BorderBrush="{StaticResource Divider}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusMedium}"
+                                Padding="16,14">
+                            <StackPanel Spacing="7">
+                                <TextBlock x:Name="VersionText"
+                                           Text="{Binding VersionDisplayText}"
+                                           FontFamily="{StaticResource FontLabel}"
+                                           Foreground="{StaticResource TextPrimary}"
+                                           AutomationProperties.Name="Application version"/>
+                                <TextBlock x:Name="SourceRevisionText"
+                                           Text="{Binding SourceRevisionDisplayText}"
+                                           FontFamily="{StaticResource FontLabel}"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           AutomationProperties.Name="Source revision"/>
+                                <TextBlock x:Name="BuildDateText"
+                                           Text="{Binding BuildDateDisplayText}"
+                                           FontFamily="{StaticResource FontLabel}"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           AutomationProperties.Name="Build date provenance"/>
+                                <TextBlock Text="{Binding CopyrightText}"
+                                           FontSize="11"
+                                           Foreground="{StaticResource TextMuted}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Spacing="7">
+                            <TextBlock Text="GPL-3.0-or-later"
+                                       FontFamily="{StaticResource FontLabel}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource Primary}"/>
+                            <TextBlock Text="Original images are never modified. Happy Photon has no account, advertising, or product telemetry."
+                                       Foreground="{StaticResource TextSecondary}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Button x:Name="ProjectLink"
+                                    Content="Project"
+                                    Classes="about-link"
+                                    IsEnabled="{Binding HasProjectUrl}"
+                                    AutomationProperties.Name="Open Happy Photon project"
+                                    Click="OnProjectClick"/>
+                            <Button x:Name="LicenseLink"
+                                    Content="License"
+                                    Classes="about-link"
+                                    IsEnabled="{Binding HasLicenseUrl}"
+                                    AutomationProperties.Name="Open GPL license"
+                                    Click="OnLicenseClick"/>
+                            <Button x:Name="ThirdPartyNoticesLink"
+                                    Content="Third-party notices"
+                                    Classes="about-link"
+                                    IsEnabled="{Binding HasThirdPartyNoticesUrl}"
+                                    AutomationProperties.Name="Open third-party notices"
+                                    Click="OnThirdPartyNoticesClick"/>
+                        </StackPanel>
+
+                        <StackPanel Spacing="6">
+                            <Button x:Name="CopyVersionInfoButton"
+                                    Content="Copy version info"
+                                    HorizontalAlignment="Left"
+                                    Padding="14,7"
+                                    AutomationProperties.Name="Copy version info"
+                                    Click="OnCopyVersionInfoClick"/>
+                            <TextBlock x:Name="CopyFeedbackText"
+                                       MinHeight="16"
+                                       Foreground="{StaticResource TextMuted}"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Version information action status"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <Border Grid.Row="2"
+                Background="{StaticResource SurfaceMid}"
+                BorderBrush="{StaticResource Divider}"
+                BorderThickness="0,1,0,0"
+                Padding="20,12">
+            <Button Content="Close"
+                    HorizontalAlignment="Right"
+                    MinWidth="84"
+                    Padding="16,6"
+                    Classes="accent"
+                    AutomationProperties.Name="Close Help and About"
+                    Click="OnCloseClick"/>
+        </Border>
+    </Grid>
+</Window>

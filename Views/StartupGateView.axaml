@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             xmlns:views="using:HappyPhoton.Views"
+             x:Class="HappyPhoton.Views.StartupGateView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border>
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="{StaticResource SurfaceLowestColor}" Offset="0"/>
+                <GradientStop Color="{StaticResource SurfaceBaseColor}" Offset="0.58"/>
+                <GradientStop Color="{StaticResource SurfaceMidColor}" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Panel>
+            <views:FirstRunView IsVisible="{Binding IsFirstRunVisible}"/>
+
+            <StackPanel IsVisible="{Binding IsStartupInitializing}"
+                        Width="260"
+                        Spacing="16"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Height="3"/>
+                <TextBlock Text="Opening your local catalog…"
+                           Foreground="{StaticResource TextSecondary}"
+                           TextAlignment="Center"/>
+            </StackPanel>
+
+            <Border IsVisible="{Binding IsStartupError}"
+                    MaxWidth="560"
+                    Margin="24"
+                    Padding="32"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SurfaceLow}"
+                    BorderBrush="{StaticResource Divider}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusCard}">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Happy Photon couldn't open its local catalog."
+                               FontFamily="{StaticResource FontHeading}"
+                               FontSize="{StaticResource FontSizeHeading}"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimary}"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding FirstRunErrorMessage}"
+                               Foreground="{StaticResource TextSecondary}"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"/>
+                    <TextBlock Text="Your originals are untouched."
+                               Foreground="{StaticResource TextMuted}"
+                               TextAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="10"
+                                HorizontalAlignment="Center">
+                        <Button Classes="accent"
+                                Content="RETRY"
+                                Command="{Binding RetryStartupCommand}"
+                                AutomationProperties.Name="Retry opening the local catalog"/>
+                        <Button Content="CLOSE"
+                                Command="{Binding CloseApplicationCommand}"
+                                AutomationProperties.Name="Close Happy Photon"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Panel>
+    </Border>
+</UserControl>

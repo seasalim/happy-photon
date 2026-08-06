@@ -1,0 +1,59 @@
+name: Camera or format compatibility
+description: Report a reproduced camera, RAW, JPEG, or codec result
+title: "[Compatibility]: "
+labels:
+  - compatibility
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Happy Photon version
+    validations:
+      required: true
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - Windows x64
+        - Linux x64
+        - macOS 14+ Apple Silicon
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: Exact OS version
+    validations:
+      required: true
+  - type: input
+    id: camera
+    attributes:
+      label: Camera make and model
+    validations:
+      required: true
+  - type: input
+    id: format
+    attributes:
+      label: File extension and capture mode
+      placeholder: CR3, lossless compressed RAW, 14-bit
+    validations:
+      required: true
+  - type: checkboxes
+    id: workflow
+    attributes:
+      label: Completed workflow stages
+      options:
+        - label: Thumbnail
+        - label: Develop preview
+        - label: Metadata
+        - label: Edit
+        - label: Export
+        - label: Reopen and restore catalog state
+  - type: textarea
+    id: result
+    attributes:
+      label: Result and diagnostic details
+      description: Do not attach a copyrighted sample without permission.
+    validations:
+      required: true

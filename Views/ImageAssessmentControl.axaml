@@ -1,0 +1,198 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:HappyPhoton.Converters"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.ImageAssessmentControl"
+             x:DataType="vm:MainWindowViewModel"
+             IsEnabled="{Binding HasSelectedImage}">
+    <UserControl.Resources>
+        <converters:RatingAtLeastConverter x:Key="RatingAtLeastConverter"/>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="Button.assessment">
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Padding" Value="7,2"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.assessment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.flag.active">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="Button.flag.active /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="Button.reject.active">
+            <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnErrorContainer}"/>
+        </Style>
+        <Style Selector="Button.reject.active /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnErrorContainer}"/>
+        </Style>
+        <Style Selector="Button.flag Path">
+            <Setter Property="Stroke" Value="{StaticResource TextSecondary}"/>
+        </Style>
+        <Style Selector="Button.flag:pointerover Path">
+            <Setter Property="Stroke" Value="{StaticResource TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.flag.active Path">
+            <Setter Property="Stroke" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="Button.reject.active Path">
+            <Setter Property="Stroke" Value="{StaticResource OnErrorContainer}"/>
+        </Style>
+        <Style Selector="Button.star">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Padding" Value="2"/>
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
+        <Style Selector="Button.clear Path">
+            <Setter Property="Stroke" Value="{StaticResource TextSecondary}"/>
+        </Style>
+        <Style Selector="Button.clear:pointerover Path">
+            <Setter Property="Stroke" Value="{StaticResource TextPrimary}"/>
+        </Style>
+        <Style Selector="TextBlock.shortcut">
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="Opacity" Value="0.7"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+            <Border Background="{StaticResource SurfaceLowest}"
+                    CornerRadius="{StaticResource RadiusSmall}"
+                    Padding="1">
+                <StackPanel Orientation="Horizontal" Spacing="1">
+                    <Button Classes="assessment flag"
+                            Classes.active="{Binding SelectedImage.IsPicked, FallbackValue=False}"
+                            Command="{Binding TogglePickedImageCommand}"
+                            ToolTip.Tip="Flag image (P); click again to clear"
+                            AutomationProperties.Name="Toggle image flag">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Path Width="14" Height="14"
+                                  Data="M 2,13 L 2,2 M 2,3 L 11,3 L 9,6 L 11,9 L 2,9"
+                                  StrokeThickness="1.4"
+                                  StrokeLineCap="Round"
+                                  StrokeJoin="Round"/>
+                            <TextBlock Text="Flag" VerticalAlignment="Center"/>
+                            <TextBlock Text="P" Classes="shortcut" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="assessment flag reject"
+                            Classes.active="{Binding SelectedImage.IsRejected, FallbackValue=False}"
+                            Command="{Binding ToggleRejectedImageCommand}"
+                            ToolTip.Tip="Reject image (X); click again to clear"
+                            AutomationProperties.Name="Toggle image rejection">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Path Width="14" Height="14"
+                                  Data="M 7,1 A 6,6 0 1 1 6.99,1 M 3,3 L 11,11"
+                                  StrokeThickness="1.4"
+                                  StrokeLineCap="Round"/>
+                            <TextBlock Text="Reject" VerticalAlignment="Center"/>
+                            <TextBlock Text="X" Classes="shortcut" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <Rectangle Width="1" Height="18" Fill="{StaticResource Divider}"/>
+
+            <StackPanel Orientation="Horizontal" Spacing="0">
+                <Button Classes="assessment star"
+                        Command="{Binding SetRatingCommand}"
+                        ToolTip.Tip="Set 1-star rating (1)"
+                        AutomationProperties.Name="Set 1-star rating">
+                    <Button.CommandParameter>
+                        <x:Int32>1</x:Int32>
+                    </Button.CommandParameter>
+                    <Grid>
+                        <TextBlock Text="☆" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock Text="★" Foreground="{StaticResource SecondaryContainer}"
+                                   IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=1, FallbackValue=False}"/>
+                    </Grid>
+                </Button>
+                <Button Classes="assessment star"
+                        Command="{Binding SetRatingCommand}"
+                        ToolTip.Tip="Set 2-star rating (2)"
+                        AutomationProperties.Name="Set 2-star rating">
+                    <Button.CommandParameter>
+                        <x:Int32>2</x:Int32>
+                    </Button.CommandParameter>
+                    <Grid>
+                        <TextBlock Text="☆" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock Text="★" Foreground="{StaticResource SecondaryContainer}"
+                                   IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=2, FallbackValue=False}"/>
+                    </Grid>
+                </Button>
+                <Button Classes="assessment star"
+                        Command="{Binding SetRatingCommand}"
+                        ToolTip.Tip="Set 3-star rating (3)"
+                        AutomationProperties.Name="Set 3-star rating">
+                    <Button.CommandParameter>
+                        <x:Int32>3</x:Int32>
+                    </Button.CommandParameter>
+                    <Grid>
+                        <TextBlock Text="☆" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock Text="★" Foreground="{StaticResource SecondaryContainer}"
+                                   IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=3, FallbackValue=False}"/>
+                    </Grid>
+                </Button>
+                <Button Classes="assessment star"
+                        Command="{Binding SetRatingCommand}"
+                        ToolTip.Tip="Set 4-star rating (4)"
+                        AutomationProperties.Name="Set 4-star rating">
+                    <Button.CommandParameter>
+                        <x:Int32>4</x:Int32>
+                    </Button.CommandParameter>
+                    <Grid>
+                        <TextBlock Text="☆" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock Text="★" Foreground="{StaticResource SecondaryContainer}"
+                                   IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=4, FallbackValue=False}"/>
+                    </Grid>
+                </Button>
+                <Button Classes="assessment star"
+                        Command="{Binding SetRatingCommand}"
+                        ToolTip.Tip="Set 5-star rating (5)"
+                        AutomationProperties.Name="Set 5-star rating">
+                    <Button.CommandParameter>
+                        <x:Int32>5</x:Int32>
+                    </Button.CommandParameter>
+                    <Grid>
+                        <TextBlock Text="☆" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock Text="★" Foreground="{StaticResource SecondaryContainer}"
+                                   IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=5, FallbackValue=False}"/>
+                    </Grid>
+                </Button>
+            </StackPanel>
+
+            <Button Classes="assessment clear"
+                    Command="{Binding SetRatingCommand}"
+                    ToolTip.Tip="Clear rating (0)"
+                    AutomationProperties.Name="Clear rating">
+                <Button.CommandParameter>
+                    <x:Int32>0</x:Int32>
+                </Button.CommandParameter>
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Path Width="14" Height="14"
+                          Data="M 7,1 A 6,6 0 1 1 6.99,1 M 4,7 L 10,7"
+                          StrokeThickness="1.4"
+                          StrokeLineCap="Round"/>
+                    <TextBlock Text="Clear" VerticalAlignment="Center"/>
+                    <TextBlock Text="0" Classes="shortcut" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+    </StackPanel>
+</UserControl>

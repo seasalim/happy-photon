@@ -1,0 +1,203 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.FirstRunView"
+             x:DataType="vm:MainWindowViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.hero-action">
+            <Setter Property="MinHeight" Value="82"/>
+            <Setter Property="MaxWidth" Value="480"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="24,16"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusLarge}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
+        </Style>
+        <Style Selector="Button.quiet-action">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
+            <Setter Property="Padding" Value="12,8"/>
+        </Style>
+        <Style Selector="Button.quiet-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel MaxWidth="760"
+                    Margin="32,24,32,32"
+                    HorizontalAlignment="Center">
+            <TextBlock Text="WELCOME TO HAPPY&#10;PHOTON"
+                       FontFamily="{StaticResource FontHeading}"
+                       FontSize="{StaticResource FontSizeHero}"
+                       FontWeight="Bold"
+                       Foreground="{StaticResource PrimaryContainer}"
+                       LetterSpacing="-1"
+                       LineHeight="50"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"/>
+
+            <StackPanel Margin="0,42,0,0"
+                        IsVisible="{Binding HasDefaultFirstRunLocation}">
+                <TextBlock FontFamily="{StaticResource FontHeading}"
+                           FontSize="{StaticResource FontSizeFeature}"
+                           FontWeight="Bold"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap">
+                    <Run Text="Start with the folders "
+                         Foreground="{StaticResource TextPrimary}"/>
+                    <Run Text="you"
+                         Foreground="{StaticResource PrimaryContainer}"/>
+                </TextBlock>
+                <TextBlock Text="already use."
+                           FontFamily="{StaticResource FontHeading}"
+                           FontSize="{StaticResource FontSizeFeature}"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource PrimaryContainer}"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <StackPanel Margin="0,42,0,0"
+                        IsVisible="{Binding IsPickerLedFirstRun}">
+                <TextBlock Text="Choose where your"
+                           FontFamily="{StaticResource FontHeading}"
+                           FontSize="{StaticResource FontSizeFeature}"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimary}"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"/>
+                <TextBlock Text="photographs live."
+                           FontFamily="{StaticResource FontHeading}"
+                           FontSize="{StaticResource FontSizeFeature}"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource PrimaryContainer}"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <TextBlock Margin="0,30,0,0"
+                       Foreground="{StaticResource TextSecondary}"
+                       FontSize="13"
+                       LineHeight="21"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding HasDefaultFirstRunLocation}">
+                <Run Text="Happy Photon is browsing from "/>
+                <Run Text="{Binding FirstRunDefaultName}"
+                     FontWeight="Bold"
+                     TextDecorations="Underline"/>
+                <Run Text=". Select a folder in the sidebar to see the photographs stored directly inside it. Nothing is imported or moved."/>
+            </TextBlock>
+
+            <TextBlock Margin="0,30,0,0"
+                       Text="Happy Photon could not find a Pictures folder. Choose the top-level location you want shown in the folder tree. Nothing will be imported or moved."
+                       Foreground="{StaticResource TextSecondary}"
+                       FontSize="13"
+                       LineHeight="21"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding IsPickerLedFirstRun}"/>
+
+            <TextBlock Margin="0,18,0,0"
+                       Text="LOCAL CATALOG  •  NO IMPORT  •  ORIGINALS STAY UNTOUCHED"
+                       FontFamily="{StaticResource FontLabel}"
+                       FontSize="{StaticResource FontSizeSmall}"
+                       Foreground="{StaticResource TextMuted}"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"/>
+
+            <TextBlock Margin="0,14,0,0"
+                       Text="{Binding FirstRunErrorMessage}"
+                       IsVisible="{Binding FirstRunErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                       Foreground="{StaticResource OnErrorContainer}"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       AutomationProperties.LiveSetting="Assertive"/>
+
+            <ProgressBar Margin="0,14,0,0"
+                         MaxWidth="480"
+                         HorizontalAlignment="Stretch"
+                         IsIndeterminate="True"
+                         IsVisible="{Binding IsFirstRunBusy}"
+                         Height="3"/>
+
+            <Button x:Name="StartInDefaultButton"
+                    Classes="accent hero-action"
+                    Margin="0,32,0,0"
+                    Command="{Binding StartInDefaultLocationCommand}"
+                    IsVisible="{Binding HasDefaultFirstRunLocation}"
+                    AutomationProperties.Name="{Binding FirstRunPrimaryActionText}">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="18"
+                            HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding FirstRunPrimaryActionText}"
+                               FontFamily="{StaticResource FontLabel}"
+                               FontSize="{StaticResource FontSizeLabel}"
+                               LetterSpacing="2"
+                               Foreground="{StaticResource OnPrimary}"
+                               VerticalAlignment="Center"/>
+                    <Path Width="20"
+                          Height="14"
+                          Data="M 1,7 L 18,7 M 12,1 L 18,7 L 12,13"
+                          Stroke="{StaticResource OnPrimary}"
+                          StrokeThickness="1.6"
+                          StrokeLineCap="Round"
+                          StrokeJoin="Round"/>
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="ChooseLocationButton"
+                    Classes="accent hero-action"
+                    Margin="0,32,0,0"
+                    Command="{Binding BrowseElsewhereCommand}"
+                    IsVisible="{Binding IsPickerLedFirstRun}"
+                    AutomationProperties.Name="Choose a photo location">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="18"
+                            HorizontalAlignment="Center">
+                    <TextBlock Text="CHOOSE A PHOTO LOCATION"
+                               FontFamily="{StaticResource FontLabel}"
+                               FontSize="{StaticResource FontSizeLabel}"
+                               LetterSpacing="2"
+                               Foreground="{StaticResource OnPrimary}"
+                               VerticalAlignment="Center"/>
+                    <Path Width="20"
+                          Height="14"
+                          Data="M 1,7 L 18,7 M 12,1 L 18,7 L 12,13"
+                          Stroke="{StaticResource OnPrimary}"
+                          StrokeThickness="1.6"
+                          StrokeLineCap="Round"
+                          StrokeJoin="Round"/>
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="BrowseElsewhereButton"
+                    Classes="quiet-action"
+                    Margin="0,18,0,0"
+                    HorizontalAlignment="Center"
+                    Command="{Binding BrowseElsewhereCommand}"
+                    IsVisible="{Binding HasDefaultFirstRunLocation}"
+                    AutomationProperties.Name="Browse somewhere else">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="9">
+                    <TextBlock Text="Browse somewhere else"
+                               FontFamily="{StaticResource FontLabel}"
+                               LetterSpacing="1"
+                               VerticalAlignment="Center"/>
+                    <PathIcon Width="17"
+                              Height="17"
+                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              Data="M2 4a2 2 0 0 1 2-2h3.172a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 10.828 4H14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4z"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

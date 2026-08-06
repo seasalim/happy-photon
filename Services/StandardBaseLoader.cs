@@ -1,0 +1,224 @@
+using HappyPhoton.Models;
+using ImageMagick;
+using static HappyPhoton.Services.BitmapConversionService;
+using static HappyPhoton.Services.ImageServiceHelpers;
+
+namespace HappyPhoton.Services;
+
+public sealed class StandardBaseLoader : IBaseImageLoader
+{
+    private readonly Func<string, MagickReadSettings, MagickImage> _decode;
+
+    public StandardBaseLoader()
+        : this((path, settings) => new MagickImage(path, settings))
+    {
+    }
+
+    internal StandardBaseLoader(
+        Func<string, MagickReadSettings, MagickImage> decode)
+    {
+        _decode = decode ?? throw new ArgumentNullException(nameof(decode));
+    }
+
+    public bool CanLoad(ImageFile file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        return ImageFile.SupportedExtensions.Contains(file.Extension);
+    }
+
+    public BaseImage? LoadPreviewBase(
+        ImageFile file,
+        BaseDecodeSettings decode,
+        CancellationToken cancellationToken) =>
+        Load(file, decode, cancellationToken, preview: true);
+
+    public BaseImage? LoadFullBase(
+        ImageFile file,
+        BaseDecodeSettings decode,
+        CancellationToken cancellationToken) =>
+        Load(file, decode, cancellationToken, preview: false);
+
+    private BaseImage? Load(
+        ImageFile file,
+        BaseDecodeSettings decode,
+        CancellationToken cancellationToken,
+        bool preview)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        ArgumentNullException.ThrowIfNull(decode);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!ImageFile.SupportedExtensions.Contains(file.Extension))
+        {
+            return null;
+        }
+
+        MagickImage? image = null;
+        try
+        {
+            var nativeGeometry = GetNativeGeometry(file, preview);
+            var readSettings = CreateReadSettings(file, preview, nativeGeometry);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            image = _decode(file.FilePath, readSettings);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var orientation = NormalizeOrientation(image.Orientation);
+            image.AutoOrient();
+            var fullWidth = checked((int)image.Width);
+            var fullHeight = checked((int)image.Height);
+            if (nativeGeometry is { } native)
+            {
+                (fullWidth, fullHeight) = GetOrientedDimensions(
+                    native.Width,
+                    native.Height,
+                    native.Orientation);
+            }
+
+            var profile = image.GetColorProfile();
+            var hadProfile = profile != null;
+            var profileDescription = profile == null
+                ? null
+                : string.IsNullOrWhiteSpace(profile.Description)
+                    ? profile.Name
+                    : profile.Description;
+            NormalizeColor(image, profile);
+            image.Strip();
+            cancellationToken.ThrowIfCancellationRequested();
+
+            image.Depth = 16;
+            image.ColorSpace = ColorSpace.RGB;
+            if (preview)
+            {
+                ResizePreview(image);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            var info = new BaseImageInfo(
+                IsHeic(file) ? BaseSourceKind.HeicPlatform : BaseSourceKind.Standard,
+                false,
+                decode,
+                null,
+                null,
+                6504,
+                0,
+                hadProfile,
+                profileDescription,
+                orientation,
+                fullWidth,
+                fullHeight);
+            var result = new BaseImage(image, info);
+            image = null;
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            LogDebug(nameof(StandardBaseLoader), $"Failed: {ex.Message}", file.FilePath);
+            HandleImageLoadError(ex, file.FilePath);
+            return null;
+        }
+        finally
+        {
+            image?.Dispose();
+        }
+    }
+
+    private static MagickReadSettings CreateReadSettings(
+        ImageFile file,
+        bool preview,
+        NativeGeometry? nativeGeometry)
+    {
+        var settings = new MagickReadSettings();
+        if (preview &&
+            IsJpeg(file) &&
+            nativeGeometry is { } native &&
+            Math.Max(native.Width, native.Height) >
+                BaseImage.PreviewMaxDimension * 2)
+        {
+            ApplyJpegSizeHint(settings, BaseImage.PreviewMaxDimension * 2);
+        }
+
+        if (file.Extension.Equals(".gif", StringComparison.OrdinalIgnoreCase))
+        {
+            settings.FrameIndex = 0;
+            settings.FrameCount = 1;
+        }
+
+        return settings;
+    }
+
+    private static NativeGeometry? GetNativeGeometry(
+        ImageFile file,
+        bool preview)
+    {
+        if (!preview || !IsJpeg(file))
+        {
+            return null;
+        }
+
+        var info = new MagickImageInfo(file.FilePath);
+        return new NativeGeometry(
+            checked((int)info.Width),
+            checked((int)info.Height),
+            NormalizeOrientation(info.Orientation));
+    }
+
+    private static void NormalizeColor(MagickImage image, IColorProfile? profile)
+    {
+        if (profile != null)
+        {
+            image.TransformColorSpace(profile, ColorProfiles.SRGB);
+        }
+        else if (image.ColorSpace == ColorSpace.CMYK)
+        {
+            image.TransformColorSpace(ColorProfiles.USWebCoatedSWOP, ColorProfiles.SRGB);
+        }
+        else
+        {
+            image.ColorSpace = ColorSpace.sRGB;
+        }
+    }
+
+    private static void ResizePreview(MagickImage image)
+    {
+        if (Math.Max(image.Width, image.Height) <= BaseImage.PreviewMaxDimension)
+        {
+            return;
+        }
+
+        image.Resize(new MagickGeometry(
+            BaseImage.PreviewMaxDimension,
+            BaseImage.PreviewMaxDimension)
+        {
+            IgnoreAspectRatio = false
+        });
+    }
+
+    private static (int Width, int Height) GetOrientedDimensions(
+        int width,
+        int height,
+        int orientation) =>
+        orientation is 5 or 6 or 7 or 8
+            ? (height, width)
+            : (width, height);
+
+    private static int NormalizeOrientation(OrientationType orientation) =>
+        orientation == OrientationType.Undefined ? 1 : (int)orientation;
+
+    private static bool IsJpeg(ImageFile file) =>
+        file.Extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
+        file.Extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsHeic(ImageFile file) =>
+        file.Extension.Equals(".heic", StringComparison.OrdinalIgnoreCase) ||
+        file.Extension.Equals(".heif", StringComparison.OrdinalIgnoreCase);
+
+    private readonly record struct NativeGeometry(
+        int Width,
+        int Height,
+        int Orientation);
+}

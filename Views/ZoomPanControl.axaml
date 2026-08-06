@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="clr-namespace:HappyPhoton.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="HappyPhoton.Views.ZoomPanControl"
+             ClipToBounds="True">
+
+    <ScrollViewer x:Name="ScrollViewer"
+                  HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto"
+                  Background="Transparent">
+        <Panel x:Name="ImagePanel">
+            <Image x:Name="ImageControl"
+                   Stretch="Uniform"/>
+            <views:CropOverlayControl x:Name="CropOverlay"
+                                      IsVisible="False"/>
+        </Panel>
+    </ScrollViewer>
+</UserControl>
