@@ -66,6 +66,12 @@ The certificate and API key are decoded only into the hosted runner's
 temporary directory. The workflow uses a temporary keychain and deletes it
 even when the job fails.
 
+Developer ID signing enables Apple's hardened runtime. Because Happy Photon is
+published as a self-contained .NET single-file app rather than Native AOT, the
+outer app signature must include the `com.apple.security.cs.allow-jit`
+entitlement from `Platforms/macOS/HappyPhoton.entitlements`. Without it,
+Gatekeeper can accept the notarized bundle while CoreCLR still fails at launch.
+
 ## Creating a candidate
 
 1. Run CI on the intended commit and review all three platform jobs.

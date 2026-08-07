@@ -25,6 +25,7 @@ app_version="$("$dotnet_command" msbuild "$project_root/HappyPhoton.csproj" \
     -nologo -getProperty:Version)"
 app_version="${HAPPY_PHOTON_VERSION:-$app_version}"
 signing_identity="${APPLE_SIGNING_IDENTITY:--}"
+entitlements_file="$project_root/Platforms/macOS/HappyPhoton.entitlements"
 
 output_root="$project_root/artifacts/$runtime_identifier"
 publish_directory="$output_root/publish"
@@ -95,6 +96,17 @@ sign_target() {
     fi
 }
 
+sign_app_bundle() {
+    if [[ "$signing_identity" == "-" ]]; then
+        codesign --force --entitlements "$entitlements_file" \
+            --sign - "$app_bundle"
+    else
+        codesign --force --options runtime --timestamp \
+            --entitlements "$entitlements_file" \
+            --sign "$signing_identity" "$app_bundle"
+    fi
+}
+
 cp -a "$publish_directory/." "$contents_directory/MacOS/"
 for resource in LICENSE THIRD_PARTY_NOTICES.md TRADEMARKS.md DEPENDENCIES.json; do
     if [[ -f "$contents_directory/MacOS/$resource" ]]; then
@@ -119,6 +131,6 @@ while IFS= read -r -d '' binary; do
     fi
 done < <(find "$contents_directory/MacOS" -type f -print0)
 
-sign_target "$app_bundle"
+sign_app_bundle
 codesign --verify --deep --strict --verbose=2 "$app_bundle"
 echo "$app_bundle"
