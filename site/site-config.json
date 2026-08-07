@@ -11,7 +11,7 @@
   "microsoftStoreStatus": "public",
   "macosPackageStatus": "verified",
   "releaseChannel": "stable",
-  "downloadProfile": "verify",
+  "downloadProfile": "live",
   "pagesDeployment": "project",
   "platforms": {
     "windows": {
