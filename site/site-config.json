@@ -11,8 +11,8 @@
   "microsoftStoreStatus": "public",
   "macosPackageStatus": "verified",
   "releaseChannel": "stable",
-  "downloadProfile": "predownload",
-  "pagesDeployment": "disabled",
+  "downloadProfile": "verify",
+  "pagesDeployment": "project",
   "platforms": {
     "windows": {
       "label": "Windows",
