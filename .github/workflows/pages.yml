@@ -69,6 +69,7 @@ jobs:
             "disabled+predownload" { @{ Origin = "https://happyphoton.app"; BasePath = "/"; Source = "Unavailable"; Advertise = $false; Deploy = $false } }
             "disabled+verify" { @{ Origin = "https://happyphoton.app"; BasePath = "/"; Source = "GitHub"; Advertise = $false; Deploy = $false } }
             "project+verify" { @{ Origin = "https://seasalim.github.io"; BasePath = "/happy-photon/"; Source = "GitHub"; Advertise = $false; Deploy = $true } }
+            "project+live" { @{ Origin = "https://seasalim.github.io"; BasePath = "/happy-photon/"; Source = "GitHub"; Advertise = $true; Deploy = $true } }
             "custom+live" { @{ Origin = "https://happyphoton.app"; BasePath = "/"; Source = "GitHub"; Advertise = $true; Deploy = $true } }
             default { throw "Unsupported deployment state: $pair" }
           }

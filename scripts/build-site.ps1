@@ -51,7 +51,7 @@ New-Item -ItemType Directory -Path $destinationPath | Out-Null
 $configPath = Join-Path $sourcePath "site-config.json"
 $config = Get-Content -Raw -LiteralPath $configPath | ConvertFrom-Json
 $statePair = "$($config.pagesDeployment)+$($config.downloadProfile)"
-$validStatePairs = @("disabled+predownload", "disabled+verify", "project+verify", "custom+live")
+$validStatePairs = @("disabled+predownload", "disabled+verify", "project+verify", "project+live", "custom+live")
 if ($statePair -notin $validStatePairs) {
     throw "Unsupported Pages deployment and download profile pair: $statePair"
 }

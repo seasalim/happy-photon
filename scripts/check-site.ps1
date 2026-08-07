@@ -110,7 +110,7 @@ foreach ($versionedDependency in @('platform\.js\?v=[0-9a-f]{12}', 'downloads\.j
 
 $config = Get-Content -Raw -LiteralPath (Join-Path $sitePath "site-config.json") | ConvertFrom-Json
 $statePair = "$($config.pagesDeployment)+$($config.downloadProfile)"
-$validStatePairs = @("disabled+predownload", "disabled+verify", "project+verify", "custom+live")
+$validStatePairs = @("disabled+predownload", "disabled+verify", "project+verify", "project+live", "custom+live")
 if ($statePair -notin $validStatePairs) {
     throw "Unsupported staged deployment state: $statePair"
 }
@@ -171,7 +171,7 @@ foreach ($platformId in @("windows", "macos", "linux")) {
 }
 
 $isLive = $config.pagesDeployment -eq "custom" -and $config.downloadProfile -eq "live"
-$requiresLiveDestinations = $isLive -or $isReviewAdvertising
+$requiresLiveDestinations = ($config.downloadProfile -eq "live" -and [bool]$manifest.advertising) -or $isReviewAdvertising
 $indexHtml = Get-Content -Raw -LiteralPath (Join-Path $sitePath "index.html")
 $robots = Get-Content -Raw -LiteralPath (Join-Path $sitePath "robots.txt")
 if ($isLive) {
