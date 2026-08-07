@@ -1,16 +1,13 @@
-$projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-Import-Module (Join-Path $projectRoot "scripts/SiteBuild.psm1") -Force
-
-function Read-Fixture {
-    param([string]$Name)
-    Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot "fixtures/releases/$Name.json") | ConvertFrom-Json
-}
-
-function Read-SiteConfig {
-    Get-Content -Raw -LiteralPath (Join-Path $projectRoot "site/site-config.json") | ConvertFrom-Json
-}
-
 Describe "Happy Photon release selection" {
+    BeforeAll {
+        $projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+        Import-Module (Join-Path $projectRoot "scripts/SiteBuild.psm1") -Force
+        function Read-Fixture {
+            param([string]$Name)
+            Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot "fixtures/releases/$Name.json") | ConvertFrom-Json
+        }
+    }
+
     It "selects the newest stable release by default" {
         $fixture = Read-Fixture "stable-public"
         $selection = Select-SiteRelease -Releases @($fixture.releases) -PreferredChannel stable
@@ -33,6 +30,18 @@ Describe "Happy Photon release selection" {
 }
 
 Describe "Happy Photon download manifests" {
+    BeforeAll {
+        $projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+        Import-Module (Join-Path $projectRoot "scripts/SiteBuild.psm1") -Force
+        function Read-Fixture {
+            param([string]$Name)
+            Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot "fixtures/releases/$Name.json") | ConvertFrom-Json
+        }
+        function Read-SiteConfig {
+            Get-Content -Raw -LiteralPath (Join-Path $projectRoot "site/site-config.json") | ConvertFrom-Json
+        }
+    }
+
     It "keeps verified Store metadata non-actionable without release data" {
         $manifest = New-UnavailableSiteManifest -Config (Read-SiteConfig)
         $manifest.selectedChannel | Should BeNullOrEmpty
