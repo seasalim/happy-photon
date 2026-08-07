@@ -12,7 +12,7 @@
   "macosPackageStatus": "verified",
   "releaseChannel": "stable",
   "downloadProfile": "live",
-  "pagesDeployment": "project",
+  "pagesDeployment": "custom",
   "platforms": {
     "windows": {
       "label": "Windows",
