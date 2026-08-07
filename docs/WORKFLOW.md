@@ -28,8 +28,8 @@ Photon catalog:
 Edits are non-destructive: they are instructions stored in the catalog, not
 changes written into the original image. Export creates new files.
 
-Happy Photon is still preparing for its first public preview. Keep a backup of
-important photographs and consider learning the workflow with a copied shoot.
+Happy Photon is pre-1.0 software. Keep a backup of important photographs and
+consider learning the workflow with a copied shoot.
 
 ## 1. Open and survey the shoot
 

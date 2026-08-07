@@ -1,13 +1,17 @@
 [CmdletBinding()]
 param(
-    [int]$MaximumLines = 499
+    [int]$MaximumLines = 499,
+    [string[]]$IncludePatterns = @("*.cs", "*.axaml")
 )
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $projectRoot
 
 try {
-    $sourceFiles = @(git ls-files -- "*.cs" "*.axaml")
+    if ($IncludePatterns.Count -eq 0) {
+        throw "At least one include pattern is required."
+    }
+    $sourceFiles = @(git ls-files -- $IncludePatterns)
     if ($LASTEXITCODE -ne 0) {
         throw "Could not enumerate tracked source files."
     }

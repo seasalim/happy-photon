@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-base-path="{{BASE_PATH}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#131318">
+  <title>Page not found — Happy Photon</title>
+  <link rel="icon" href="{{BASE_PATH}}assets/images/happy-photon-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="{{STYLESHEET_PATH}}">
+</head>
+<body>
+  {{> shared/header}}
+  <main id="main-content" class="error-page section-shell">
+    <p class="eyebrow">404 · PHOTON MISSED</p>
+    <h1>This frame is out of view.</h1>
+    <p>The page may have moved, but the workflow is still right where you left it.</p>
+    <div class="button-row">
+      <a class="button button-primary" href="{{BASE_PATH}}">Return home</a>
+      <a class="button button-secondary" href="{{BASE_PATH}}download/">View availability</a>
+    </div>
+  </main>
+  {{> shared/footer}}
+  <script type="module" src="{{BASE_PATH}}assets/js/navigation.js?v={{SCRIPT_VERSION}}"></script>
+</body>
+</html>

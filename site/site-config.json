@@ -1,0 +1,36 @@
+{
+  "repositoryUrl": "https://github.com/seasalim/happy-photon",
+  "issuesUrl": "https://github.com/seasalim/happy-photon/issues",
+  "documentationUrl": "https://github.com/seasalim/happy-photon/tree/main/docs",
+  "releasesUrl": "https://github.com/seasalim/happy-photon/releases",
+  "microsoftStoreUrl": "https://apps.microsoft.com/detail/9N45WWF08BP8",
+  "microsoftStoreProductId": "9N45WWF08BP8",
+  "microsoftStoreVersion": "0.1.0",
+  "microsoftStoreDeepLink": "ms-windows-store://pdp/?productid=9N45WWF08BP8",
+  "microsoftStorePublicUrlCandidate": "https://apps.microsoft.com/detail/9N45WWF08BP8",
+  "microsoftStoreStatus": "public",
+  "macosPackageStatus": "verified",
+  "releaseChannel": "stable",
+  "downloadProfile": "predownload",
+  "pagesDeployment": "disabled",
+  "platforms": {
+    "windows": {
+      "label": "Windows",
+      "architecture": "x64",
+      "minimumOs": "Windows 10 version 1809 or later",
+      "status": "Public Microsoft Store listing verified"
+    },
+    "macos": {
+      "label": "macOS",
+      "architecture": "Apple Silicon",
+      "minimumOs": "macOS 14 or later",
+      "status": "Signed and notarized release verified"
+    },
+    "linux": {
+      "label": "Linux",
+      "architecture": "x64",
+      "minimumOs": "Portable archive",
+      "status": "Public release archive verified"
+    }
+  }
+}

@@ -1,0 +1,150 @@
+name: Site
+
+on:
+  pull_request:
+    paths:
+      - "site/**"
+      - "Tests/Site/**"
+      - "scripts/build-site.ps1"
+      - "scripts/check-site.ps1"
+      - "scripts/check-source-lines.ps1"
+      - "scripts/SiteBuild.psm1"
+      - ".github/workflows/pages.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "site/**"
+      - "Tests/Site/**"
+      - "scripts/build-site.ps1"
+      - "scripts/check-site.ps1"
+      - "scripts/check-source-lines.ps1"
+      - "scripts/SiteBuild.psm1"
+      - ".github/workflows/pages.yml"
+  release:
+    types:
+      - published
+      - unpublished
+      - deleted
+      - edited
+  workflow_dispatch:
+  schedule:
+    - cron: "17 8 * * 1"
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and validate site
+    runs-on: windows-2025
+    outputs:
+      should-deploy: ${{ steps.profile.outputs.should-deploy }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+
+      - name: Install pinned Pester
+        shell: pwsh
+        run: Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force
+
+      - name: Resolve committed site profile
+        id: profile
+        shell: pwsh
+        run: |
+          $config = Get-Content -Raw site/site-config.json | ConvertFrom-Json
+          $pair = "$($config.pagesDeployment)+$($config.downloadProfile)"
+          $settings = switch ($pair) {
+            "disabled+predownload" { @{ Origin = "https://happyphoton.app"; BasePath = "/"; Source = "Unavailable"; Advertise = $false; Deploy = $false } }
+            "disabled+verify" { @{ Origin = "https://happyphoton.app"; BasePath = "/"; Source = "GitHub"; Advertise = $false; Deploy = $false } }
+            "project+verify" { @{ Origin = "https://seasalim.github.io"; BasePath = "/happy-photon/"; Source = "GitHub"; Advertise = $false; Deploy = $true } }
+            "custom+live" { @{ Origin = "https://happyphoton.app"; BasePath = "/"; Source = "GitHub"; Advertise = $true; Deploy = $true } }
+            default { throw "Unsupported deployment state: $pair" }
+          }
+          "origin=$($settings.Origin)" >> $env:GITHUB_OUTPUT
+          "base-path=$($settings.BasePath)" >> $env:GITHUB_OUTPUT
+          "release-data-source=$($settings.Source)" >> $env:GITHUB_OUTPUT
+          "advertise=$($settings.Advertise.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          "should-deploy=$($settings.Deploy.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+      - name: Check website source file lengths
+        shell: pwsh
+        run: |
+          ./scripts/check-source-lines.ps1 -IncludePatterns @(
+            "site/**/*.html",
+            "site/**/*.css",
+            "site/**/*.js",
+            "scripts/*site*.ps1",
+            "scripts/SiteBuild.psm1",
+            "Tests/Site/*.ps1",
+            "Tests/Site/*.mjs"
+          )
+
+      - name: Test release and platform logic
+        shell: pwsh
+        run: |
+          Invoke-Pester -CI -Path Tests/Site/BuildSite.Tests.ps1
+          node --test Tests/Site/Platform.Tests.mjs
+
+      - name: Build staged site
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $parameters = @{
+            Production = $true
+            Origin = "${{ steps.profile.outputs.origin }}"
+            BasePath = "${{ steps.profile.outputs.base-path }}"
+            ReleaseDataSource = "${{ steps.profile.outputs.release-data-source }}"
+          }
+          if ("${{ steps.profile.outputs.advertise }}" -eq "true") {
+            $parameters.AdvertiseDownloads = $true
+          }
+          ./scripts/build-site.ps1 @parameters
+          ./scripts/check-site.ps1
+
+      - name: Upload review artifact
+        if: steps.profile.outputs.should-deploy != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: happy-photon-site-${{ github.run_id }}
+          path: artifacts/site
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Configure GitHub Pages
+        if: steps.profile.outputs.should-deploy == 'true'
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+
+      - name: Upload Pages artifact
+        if: steps.profile.outputs.should-deploy == 'true'
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: artifacts/site
+
+  deploy:
+    name: Deploy site
+    if: needs.build.outputs.should-deploy == 'true' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

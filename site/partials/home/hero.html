@@ -1,0 +1,26 @@
+<section class="hero section-shell" aria-labelledby="hero-title">
+  <div class="hero-glow hero-glow-cyan" aria-hidden="true"></div>
+  <div class="hero-glow hero-glow-magenta" aria-hidden="true"></div>
+  <div class="hero-copy">
+    <p class="eyebrow">OPEN-SOURCE DESKTOP PHOTO WORKFLOW</p>
+    <h1 id="hero-title">Photo editing,<br><span>simplified.</span></h1>
+    <p class="hero-summary">Browse a shoot, develop the keepers, and export the copies you need. Happy Photon keeps your originals untouched and your catalog local—without an account or subscription.</p>
+    <div class="button-row hero-actions">
+      <a class="button button-primary" href="{{BASE_PATH}}download/" data-download-action>See release availability</a>
+      <a class="button button-secondary" href="{{REPOSITORY_URL}}" rel="noopener noreferrer">View on GitHub <span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="release-line">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span data-release-status>{{RELEASE_STATUS}}</span>
+      <span aria-hidden="true">·</span>
+      <span>Windows, macOS, Linux</span>
+    </div>
+  </div>
+  <figure class="app-shot app-shot-hero">
+    <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span><b>LIBRARY</b></div>
+    <picture>
+      <source srcset="{{BASE_PATH}}assets/images/library-720.webp 720w, {{BASE_PATH}}assets/images/library-1200.webp 1200w, {{BASE_PATH}}assets/images/library-1800.webp 1800w" sizes="(max-width: 760px) 94vw, (max-width: 1300px) 92vw, 1220px" type="image/webp">
+      <img src="{{BASE_PATH}}assets/images/library-1200.webp" width="1200" height="689" alt="Happy Photon Library showing a wildlife shoot with filters, thumbnails, ratings, and image controls">
+    </picture>
+  </figure>
+</section>

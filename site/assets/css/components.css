@@ -1,0 +1,93 @@
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 12px;
+  left: 12px;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  background: var(--primary-container);
+  color: var(--on-primary);
+  font-weight: 700;
+  transform: translateY(-180%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+.brand { display: inline-flex; align-items: center; gap: 12px; color: var(--primary); font: 700 1rem/1 "Sora", sans-serif; text-decoration: none; }
+.brand img { filter: drop-shadow(0 0 12px color-mix(in srgb, var(--primary-container) 36%, transparent)); }
+.external-mark { margin-left: 4px; font-size: 0.8em; }
+
+.button-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.button:hover { transform: translateY(-1px); }
+.button-primary { background: var(--primary-container); color: var(--on-primary); box-shadow: inset 0 1px var(--primary), var(--shadow-cyan); }
+.button-primary:hover { background: var(--primary-fixed); box-shadow: inset 0 1px var(--primary), 0 0 58px color-mix(in srgb, var(--primary-container) 24%, transparent); }
+.button-secondary { border-color: var(--outline-variant); background: color-mix(in srgb, var(--surface-container) 84%, transparent); color: var(--on-surface); }
+.button-secondary:hover { border-color: var(--outline); background: var(--surface-high); }
+.header-action { min-height: 42px; padding: 8px 18px; }
+
+.eyebrow, .card-detail, .platform-spec, .status-chip, .availability-note {
+  font: 500 0.75rem/1.4 "JetBrains Mono", monospace;
+  letter-spacing: 0.1em;
+}
+.eyebrow { margin-bottom: 18px; color: var(--primary-fixed-dim); }
+.text-link { color: var(--primary-fixed); font-weight: 700; text-decoration-color: color-mix(in srgb, var(--primary-container) 44%, transparent); text-underline-offset: 5px; }
+.text-link:hover { color: var(--primary); text-decoration-color: currentColor; }
+.centered-action { margin: 32px 0 0; text-align: center; }
+
+.menu-button {
+  min-width: 52px;
+  min-height: 44px;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius);
+  background: var(--surface-container);
+  color: var(--on-surface);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.menu-button-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.menu-lines, .menu-lines::before, .menu-lines::after { width: 20px; height: 2px; display: block; border-radius: 2px; background: currentColor; content: ""; transition: transform 160ms ease; }
+.menu-lines { position: relative; }
+.menu-lines::before { position: absolute; top: -6px; }
+.menu-lines::after { position: absolute; top: 6px; }
+.menu-button[aria-expanded="true"] .menu-lines { background: transparent; }
+.menu-button[aria-expanded="true"] .menu-lines::before { top: 0; transform: rotate(45deg); }
+.menu-button[aria-expanded="true"] .menu-lines::after { top: 0; transform: rotate(-45deg); }
+
+.app-shot {
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
+  background: var(--surface-lowest);
+  box-shadow: 0 32px 90px color-mix(in srgb, var(--surface-lowest) 70%, transparent), var(--shadow-cyan);
+}
+.app-shot img { width: 100%; height: auto; }
+.window-bar { height: 38px; display: flex; align-items: center; gap: 7px; padding-inline: 14px; border-bottom: 1px solid var(--outline-variant); background: var(--surface-low); }
+.window-bar span { width: 8px; height: 8px; border-radius: 50%; background: var(--outline); }
+.window-bar span:nth-child(2) { background: var(--secondary); }
+.window-bar span:nth-child(3) { background: var(--primary-container); }
+.window-bar b { margin-left: auto; color: var(--outline); font: 500 0.625rem/1 "JetBrains Mono", monospace; letter-spacing: 0.12em; }
+
+.status-dot { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--secondary-container); box-shadow: 0 0 12px var(--secondary-container); }
+.status-chip { padding: 7px 10px; border: 1px solid var(--outline-variant); border-radius: 999px; }
+.status-progress { border-color: var(--primary-container); color: var(--primary-fixed); }
+.status-pending { border-color: var(--secondary); color: var(--secondary); }
+.status-available { border-color: var(--primary-container); background: color-mix(in srgb, var(--primary-container) 10%, transparent); color: var(--primary-fixed); }
+
+@media (forced-colors: active) {
+  .button, .app-shot, .workflow-card, .platform-card { forced-color-adjust: auto; }
+  .hero-glow { display: none; }
+}

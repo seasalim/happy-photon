@@ -9,7 +9,7 @@ cameras important to your work.
   The Store build is Microsoft-signed and receives updates through the Store;
   Windows ZIPs are not distributed on GitHub.
 - **Linux:** download the `linux-x64` archive, extract it, and run
-  `HappyPhoton`. This is a portable preview rather than a native package.
+  `HappyPhoton`. This is a portable archive rather than a native package.
 - **macOS:** download the `osx-arm64` ZIP on an Apple Silicon Mac running
   macOS 14 or later, extract it, and move **Happy Photon.app** to
   Applications. Tagged Mac artifacts are Developer ID signed and notarized.
@@ -23,7 +23,7 @@ third-party notices.
 - Camera and RAW compatibility varies by platform and capture mode.
 - HEIC/HEIF support depends on operating-system codecs.
 - Linux desktop integration is not yet a native package.
-- Agent mutations are immediate and persistent in v0.1.0; there is no
+- Agent mutations are immediate and persistent; there is no
   activity ledger or session-wide revert.
 
 ## Privacy and original-file safety

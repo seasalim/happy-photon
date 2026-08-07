@@ -1,0 +1,42 @@
+{
+  "repository": {
+    "private": false,
+    "visibility": "public"
+  },
+  "releases": [
+    {
+      "id": 101,
+      "tag_name": "v0.1.0",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-08-01T18:00:00Z",
+      "html_url": "https://github.com/seasalim/happy-photon/releases/tag/v0.1.0",
+      "assets": [
+        {
+          "name": "happy-photon-0.1.0-osx-arm64.zip",
+          "browser_download_url": "https://github.com/seasalim/happy-photon/releases/download/v0.1.0/happy-photon-0.1.0-osx-arm64.zip",
+          "size": 88000000
+        },
+        {
+          "name": "happy-photon-0.1.0-linux-x64.tar.gz",
+          "browser_download_url": "https://github.com/seasalim/happy-photon/releases/download/v0.1.0/happy-photon-0.1.0-linux-x64.tar.gz",
+          "size": 92000000
+        },
+        {
+          "name": "SHA256SUMS.txt",
+          "browser_download_url": "https://github.com/seasalim/happy-photon/releases/download/v0.1.0/SHA256SUMS.txt",
+          "size": 320
+        }
+      ]
+    },
+    {
+      "id": 100,
+      "tag_name": "v0.1.0-rc.1",
+      "draft": false,
+      "prerelease": true,
+      "published_at": "2026-07-28T18:00:00Z",
+      "html_url": "https://github.com/seasalim/happy-photon/releases/tag/v0.1.0-rc.1",
+      "assets": []
+    }
+  ]
+}

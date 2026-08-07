@@ -1,0 +1,33 @@
+<section class="section section-shell" aria-labelledby="platforms-title">
+  <div class="section-heading">
+    <p class="eyebrow">DESKTOP AVAILABILITY</p>
+    <h2 id="platforms-title">Every platform.<br><span>No dead buttons.</span></h2>
+    <p>All supported targets stay visible. Direct actions will appear only after their public destinations are verified.</p>
+  </div>
+  <div class="platform-grid">
+    <article id="windows" class="platform-card" data-platform-card="windows">
+      <div class="platform-card-top"><span class="platform-icon" aria-hidden="true">⊞</span><span class="status-chip {{WINDOWS_STATUS_CLASS}}" data-platform-status>{{WINDOWS_STATUS}}</span></div>
+      <h3>Windows</h3>
+      <p class="platform-spec">x64 · Microsoft Store</p>
+      <p data-platform-detail>{{WINDOWS_DETAIL}}</p>
+      <span class="availability-note" data-platform-note>{{WINDOWS_NOTE}}</span>
+      <a class="button button-primary platform-action" href="{{WINDOWS_ACTION_URL}}" data-platform-action {{WINDOWS_ACTION_STATE}}>{{WINDOWS_ACTION_LABEL}}</a>
+    </article>
+    <article id="macos" class="platform-card" data-platform-card="macos">
+      <div class="platform-card-top"><span class="platform-icon" aria-hidden="true">⌘</span><span class="status-chip {{MACOS_STATUS_CLASS}}" data-platform-status>{{MACOS_STATUS}}</span></div>
+      <h3>macOS</h3>
+      <p class="platform-spec">macOS 14+ · Apple Silicon</p>
+      <p data-platform-detail>{{MACOS_DETAIL}}</p>
+      <span class="availability-note" data-platform-note>{{MACOS_NOTE}}</span>
+      <a class="button button-primary platform-action" href="{{MACOS_ACTION_URL}}" data-platform-action {{MACOS_ACTION_STATE}}>{{MACOS_ACTION_LABEL}}</a>
+    </article>
+    <article id="linux" class="platform-card" data-platform-card="linux">
+      <div class="platform-card-top"><span class="platform-icon" aria-hidden="true">⌁</span><span class="status-chip {{LINUX_STATUS_CLASS}}" data-platform-status>{{LINUX_STATUS}}</span></div>
+      <h3>Linux</h3>
+      <p class="platform-spec">x64 · Portable archive</p>
+      <p data-platform-detail>{{LINUX_DETAIL}}</p>
+      <span class="availability-note" data-platform-note>{{LINUX_NOTE}}</span>
+      <a class="button button-primary platform-action" href="{{LINUX_ACTION_URL}}" data-platform-action {{LINUX_ACTION_STATE}}>{{LINUX_ACTION_LABEL}}</a>
+    </article>
+  </div>
+</section>

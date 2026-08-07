@@ -4,7 +4,21 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "site/**"
+      - "Tests/Site/**"
+      - "scripts/build-site.ps1"
+      - "scripts/check-site.ps1"
+      - "scripts/SiteBuild.psm1"
+      - ".github/workflows/pages.yml"
   pull_request:
+    paths-ignore:
+      - "site/**"
+      - "Tests/Site/**"
+      - "scripts/build-site.ps1"
+      - "scripts/check-site.ps1"
+      - "scripts/SiteBuild.psm1"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 concurrency:
