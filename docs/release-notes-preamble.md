@@ -4,10 +4,11 @@ cameras important to your work.
 
 ## Install
 
-- **Windows:** install Happy Photon from the Microsoft Store. The Store build
-  is Microsoft-signed and receives updates through the Store. The Store link
-  will be added after certification; Windows ZIPs are not distributed on
-  GitHub.
+- **Windows:** install
+  [Happy Photon from the Microsoft Store](https://apps.microsoft.com/detail/9N45WWF08BP8).
+  The listing becomes public after certification. The Store build is
+  Microsoft-signed and receives updates through the Store; Windows ZIPs are
+  not distributed on GitHub.
 - **Linux:** download the `linux-x64` archive, extract it, and run
   `HappyPhoton`. This is a portable preview rather than a native package.
 - **macOS:** download the `osx-arm64` ZIP on an Apple Silicon Mac running
