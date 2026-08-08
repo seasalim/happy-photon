@@ -168,7 +168,31 @@
                                                          Width="50" Height="4"
                                                          HorizontalAlignment="Center"
                                                          VerticalAlignment="Center"/>
+                                            <StackPanel IsVisible="{Binding ShowCloudPlaceholder}"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Spacing="2">
+                                                <TextBlock Text="☁" FontSize="24"
+                                                           Foreground="{StaticResource PrimaryContainer}"
+                                                           HorizontalAlignment="Center"/>
+                                                <TextBlock Text="ONLINE" FontSize="9"
+                                                           FontFamily="{StaticResource FontLabel}"
+                                                           Foreground="{StaticResource TextMuted}"/>
+                                            </StackPanel>
                                         </Panel>
+                                    </Border>
+                                    <Border Background="{StaticResource SurfaceHighest}"
+                                            BorderBrush="{StaticResource PrimaryContainer}"
+                                            BorderThickness="1"
+                                            CornerRadius="999"
+                                            Padding="5,1"
+                                            Margin="0,5,5,0"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            IsVisible="{Binding SourceRequiresHydration}"
+                                            ToolTip.Tip="Online-only original">
+                                        <TextBlock Text="☁" FontSize="10"
+                                                   Foreground="{StaticResource PrimaryContainer}"/>
                                     </Border>
                                     <Border Width="4" HorizontalAlignment="Left"
                                             CornerRadius="2,0,0,2"
@@ -263,9 +287,22 @@
                 Background="{StaticResource SurfaceBase}"
                 BorderBrush="{StaticResource Divider}"
                 BorderThickness="0,1,0,0"
-                Padding="8,4"
-                IsEnabled="{Binding HasSelectedImage}">
-            <views:ImageAssessmentControl HorizontalAlignment="Center"/>
+                Padding="8,4">
+            <Grid ColumnDefinitions="*,Auto,*">
+                <TextBlock Grid.Column="0"
+                           x:Name="OnlineOnlyMessage"
+                           Text="{Binding OnlineOnlyMessage}"
+                           IsVisible="{Binding HasOnlineOnlyPhotos}"
+                           Foreground="{StaticResource TextSecondary}"
+                           FontFamily="{StaticResource FontLabel}"
+                           FontSize="10"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip.Tip="{Binding OnlineOnlyMessage}"/>
+                <views:ImageAssessmentControl Grid.Column="1"
+                                              IsEnabled="{Binding HasSelectedImage}"
+                                              HorizontalAlignment="Center"/>
+            </Grid>
         </Border>
 
         <views:WorkflowCoachmark

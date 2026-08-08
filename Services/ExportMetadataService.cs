@@ -7,26 +7,51 @@ namespace HappyPhoton.Services;
 public sealed class ExportMetadataService
 {
     private readonly string _software;
+    private readonly ISourceAvailabilityService _availabilityService;
+    private readonly Func<string, ExifProfile?> _readSourceProfile;
 
     public ExportMetadataService()
-        : this($"Happy Photon {AppBuildInfo.Version.ToString(3)}")
+        : this(
+            $"Happy Photon {AppBuildInfo.Version.ToString(3)}",
+            new SourceAvailabilityService())
     {
     }
 
     internal ExportMetadataService(string software)
+        : this(software, new SourceAvailabilityService())
+    {
+    }
+
+    internal ExportMetadataService(
+        string software,
+        ISourceAvailabilityService availabilityService,
+        Func<string, ExifProfile?>? readSourceProfile = null)
     {
         _software = software;
+        _availabilityService = availabilityService ??
+            throw new ArgumentNullException(nameof(availabilityService));
+        _readSourceProfile = readSourceProfile ?? ReadSourceProfileCore;
     }
 
     public void Apply(
         ImageFile sourceFile,
         MagickImage destination,
-        bool stripLocationData)
+        bool stripLocationData) => Apply(
+            sourceFile,
+            destination,
+            stripLocationData,
+            SourceReadIntent.Background);
+
+    internal void Apply(
+        ImageFile sourceFile,
+        MagickImage destination,
+        bool stripLocationData,
+        SourceReadIntent intent)
     {
         ArgumentNullException.ThrowIfNull(sourceFile);
         ArgumentNullException.ThrowIfNull(destination);
 
-        var profile = ReadSourceProfile(sourceFile.FilePath) ??
+        var profile = ReadSourceProfile(sourceFile.FilePath, intent) ??
             new ExifProfile();
         ApplyFallbackMetadata(profile, sourceFile);
         destination.Orientation = OrientationType.TopLeft;
@@ -46,7 +71,17 @@ public sealed class ExportMetadataService
         destination.SetProfile(profile);
     }
 
-    private static ExifProfile? ReadSourceProfile(string sourcePath)
+    private ExifProfile? ReadSourceProfile(
+        string sourcePath,
+        SourceReadIntent intent)
+    {
+        var availability = _availabilityService.GetAvailability(sourcePath);
+        return SourceAccessPolicy.CanRead(availability, intent)
+            ? _readSourceProfile(sourcePath)
+            : null;
+    }
+
+    private static ExifProfile? ReadSourceProfileCore(string sourcePath)
     {
         try
         {

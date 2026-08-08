@@ -15,11 +15,21 @@ public partial class ConfirmationDialog : Window
 {
     private readonly ConfirmationDialogButtons _buttons;
     private readonly bool _destructive;
+    private readonly string _cancelLabel;
+    private readonly string _confirmLabel;
 
-    private ConfirmationDialog(string title, string message, ConfirmationDialogButtons buttons, bool destructive)
+    private ConfirmationDialog(
+        string title,
+        string message,
+        ConfirmationDialogButtons buttons,
+        bool destructive,
+        string cancelLabel = "No",
+        string confirmLabel = "Yes")
     {
         _buttons = buttons;
         _destructive = destructive;
+        _cancelLabel = cancelLabel;
+        _confirmLabel = confirmLabel;
 
         Title = title;
         Width = 420;
@@ -51,9 +61,17 @@ public partial class ConfirmationDialog : Window
         Window owner,
         string title,
         string message,
-        bool destructive = false)
+        bool destructive = false,
+        string cancelLabel = "No",
+        string confirmLabel = "Yes")
     {
-        var dialog = new ConfirmationDialog(title, message, ConfirmationDialogButtons.YesNo, destructive);
+        var dialog = new ConfirmationDialog(
+            title,
+            message,
+            ConfirmationDialogButtons.YesNo,
+            destructive,
+            cancelLabel,
+            confirmLabel);
         return await dialog.ShowDialog<bool>(owner);
     }
 
@@ -77,8 +95,8 @@ public partial class ConfirmationDialog : Window
 
         if (_buttons == ConfirmationDialogButtons.YesNo)
         {
-            panel.Children.Add(CreateButton("No", false));
-            panel.Children.Add(CreateButton("Yes", true));
+            panel.Children.Add(CreateButton(_cancelLabel, false));
+            panel.Children.Add(CreateButton(_confirmLabel, true));
         }
         else
         {

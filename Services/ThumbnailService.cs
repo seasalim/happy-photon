@@ -16,12 +16,16 @@ public class ThumbnailService : IAsyncDisposable
     private readonly RenderedThumbnailCacheService _renderedThumbnailCache;
     private readonly EmbeddedPreviewExtractor _embeddedPreviewExtractor;
     private readonly ThumbnailRenderer _renderer;
+    private readonly ISourceAvailabilityService _availabilityService;
+    private readonly Func<ImageFile, CancellationToken, Bitmap?> _loadSource;
 
     internal ThumbnailService(
         CatalogService catalogService,
         IRawProcessingService rawService,
         RenderPipeline renderPipeline,
-        RenderedThumbnailCacheService renderedThumbnailCache)
+        RenderedThumbnailCacheService renderedThumbnailCache,
+        ISourceAvailabilityService? availabilityService = null,
+        Func<ImageFile, CancellationToken, Bitmap?>? loadSource = null)
     {
         _catalogService = catalogService;
         _thumbnailCache = new ThumbnailCacheService(catalogService);
@@ -30,9 +34,12 @@ public class ThumbnailService : IAsyncDisposable
             rawService,
             ThumbnailSize);
         _renderer = new ThumbnailRenderer(renderPipeline, ThumbnailSize);
+        _availabilityService = availabilityService ??
+            new SourceAvailabilityService();
+        _loadSource = loadSource ?? LoadSource;
     }
 
-    public async Task<Bitmap?> LoadThumbnailAsync(
+    public async Task<ThumbnailLoadResult> LoadThumbnailAsync(
         ImageFile imageFile,
         CancellationToken cancellationToken = default)
     {
@@ -45,17 +52,27 @@ public class ThumbnailService : IAsyncDisposable
                     imageFile,
                     RenderSettingsHash.Compute(settings)),
                 cancellationToken);
-            if (rendered != null) return rendered;
+            if (rendered != null) return ThumbnailLoadResult.Loaded(rendered);
         }
 
         var source = await LoadUneditedThumbnailAsync(imageFile, cancellationToken);
-        if (source == null || !settings.HasEdits) return source;
+        if (source.Status != ThumbnailLoadStatus.Loaded || !settings.HasEdits)
+        {
+            return source;
+        }
 
-        return await Task.Run(() => ApplyFallback(
-            imageFile,
-            source,
-            settings,
-            cancellationToken));
+        using (source)
+        {
+            var bitmap = source.DetachBitmap()!;
+            var rendered = await Task.Run(() => ApplyFallback(
+                imageFile,
+                bitmap,
+                settings,
+                cancellationToken));
+            return rendered != null
+                ? ThumbnailLoadResult.Loaded(rendered)
+                : ThumbnailLoadResult.Failed();
+        }
     }
 
     private Bitmap? ApplyFallback(
@@ -76,7 +93,7 @@ public class ThumbnailService : IAsyncDisposable
         catch (OperationCanceledException)
         {
             source.Dispose();
-            return null;
+            throw;
         }
         catch (Exception ex)
         {
@@ -88,18 +105,28 @@ public class ThumbnailService : IAsyncDisposable
         }
     }
 
-    public async Task<Bitmap?> LoadUneditedThumbnailAsync(
+    public Task<ThumbnailLoadResult> LoadUneditedThumbnailAsync(
         ImageFile imageFile,
+        CancellationToken cancellationToken = default) =>
+        LoadUneditedThumbnailAsync(
+            imageFile,
+            SourceReadIntent.Background,
+            cancellationToken);
+
+    internal async Task<ThumbnailLoadResult> LoadUneditedThumbnailAsync(
+        ImageFile imageFile,
+        SourceReadIntent intent,
         CancellationToken cancellationToken = default)
     {
         await imageFile.EnsureCatalogIdAsync(_catalogService);
         return await Task.Run(
-            () => LoadUnedited(imageFile, cancellationToken),
+            () => LoadUnedited(imageFile, intent, cancellationToken),
             cancellationToken);
     }
 
-    private Bitmap? LoadUnedited(
+    private ThumbnailLoadResult LoadUnedited(
         ImageFile imageFile,
+        SourceReadIntent intent,
         CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -116,28 +143,32 @@ public class ThumbnailService : IAsyncDisposable
                         "CacheHit",
                         stopwatch.ElapsedMilliseconds,
                         imageFile.FilePath);
-                    return cached;
+                    return ThumbnailLoadResult.Loaded(cached);
                 }
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            Bitmap? bitmap = imageFile.IsRaw
-                ? _embeddedPreviewExtractor.TryExtract(
-                    imageFile.FilePath,
-                    cancellationToken)
-                : null;
-            bitmap ??= GenerateThumbnailFromFullImage(
-                imageFile.FilePath,
-                cancellationToken);
+            var availability = _availabilityService.GetAvailability(
+                imageFile.FilePath);
+            if (!SourceAccessPolicy.CanRead(availability, intent))
+            {
+                return availability == SourceAvailability.RequiresHydration
+                    ? ThumbnailLoadResult.Deferred()
+                    : ThumbnailLoadResult.Failed();
+            }
+
+            var bitmap = _loadSource(imageFile, cancellationToken);
             if (bitmap != null && !cancellationToken.IsCancellationRequested)
             {
                 _thumbnailCache.QueueSaveToCache(imageFile, bitmap);
             }
-            return bitmap;
+            return bitmap != null
+                ? ThumbnailLoadResult.Loaded(bitmap)
+                : ThumbnailLoadResult.Failed();
         }
         catch (OperationCanceledException)
         {
-            return null;
+            return ThumbnailLoadResult.Failed();
         }
         catch (Exception ex)
         {
@@ -145,8 +176,22 @@ public class ThumbnailService : IAsyncDisposable
                 nameof(LoadThumbnailAsync),
                 $"Failed: {ex.Message}",
                 imageFile.FilePath);
-            return null;
+            return ThumbnailLoadResult.Failed();
         }
+    }
+
+    private Bitmap? LoadSource(
+        ImageFile imageFile,
+        CancellationToken cancellationToken)
+    {
+        Bitmap? bitmap = imageFile.IsRaw
+            ? _embeddedPreviewExtractor.TryExtract(
+                imageFile.FilePath,
+                cancellationToken)
+            : null;
+        return bitmap ?? GenerateThumbnailFromFullImage(
+            imageFile.FilePath,
+            cancellationToken);
     }
 
     private static Bitmap? GenerateThumbnailFromFullImage(

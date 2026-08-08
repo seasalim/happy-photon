@@ -14,6 +14,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private readonly FolderTreeService _folderTreeService;
     private readonly CatalogService _catalogService;
     private readonly Lazy<ImageService> _imageService;
+    private readonly Func<ImageFile, Task> _loadMetadataAsync;
     private readonly FileOperationService _fileOperationService = new();
     private readonly UiBitmapRetirement _bitmapRetirement = new();
 
@@ -26,20 +27,28 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     internal MainWindowViewModel(
         CatalogService catalogService,
-        IBaseImageLoader? baseLoader)
+        IBaseImageLoader? baseLoader,
+        Func<ImageFile, Task>? loadMetadataAsync = null,
+        ISourceAvailabilityService? availabilityService = null)
     {
         _catalogService = catalogService;
         Library = new LibraryImageState(RetireThumbnail);
         _folderTreeService = new FolderTreeService(catalogService.CatalogPath);
         _imageService = new Lazy<ImageService>(() =>
         {
-            var service = baseLoader == null
-                ? new ImageService(catalogService)
-                : new ImageService(catalogService, baseLoader);
+            var loader = baseLoader ?? new BaseLoaderRouter(
+                new RawBaseLoader(),
+                new StandardBaseLoader());
+            var service = new ImageService(
+                catalogService,
+                loader,
+                availabilityService ?? new SourceAvailabilityService());
             service.PreviewRefreshed += OnPreviewRefreshed;
             service.BaseRefreshStateChanged += OnBaseRefreshStateChanged;
             return service;
         });
+        _loadMetadataAsync = loadMetadataAsync ??
+            (image => ImageService.LoadMetadataAsync(image));
         PresetService = new PresetService(Path.Combine(catalogService.CatalogPath, "presets"));
         Library.FilterChanged += OnLibraryFilterChanged;
         Library.StateChanged += OnLibraryStateChanged;
@@ -147,7 +156,11 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty]
     private bool _hasSelectedImage;
 
-    public bool CanSavePreset => HasSelectedImage && IsDevelopMode;
+    public bool CanEditSelectedImage =>
+        HasSelectedImage &&
+        SelectedImage?.SourceRequiresHydration != true;
+
+    public bool CanSavePreset => CanEditSelectedImage && IsDevelopMode;
 
     [ObservableProperty]
     private bool _canReset;
@@ -211,6 +224,12 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     partial void OnCanRedoChanged(bool value) => RedoCommand.NotifyCanExecuteChanged();
     partial void OnHasSelectedImageChanged(bool value)
     {
+        NotifySelectedImageEditStateChanged();
+    }
+
+    private void NotifySelectedImageEditStateChanged()
+    {
+        OnPropertyChanged(nameof(CanEditSelectedImage));
         OnPropertyChanged(nameof(CanSavePreset));
         CopyEditSettingsCommand.NotifyCanExecuteChanged();
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
@@ -233,13 +252,19 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     private void OnEditValueChanged()
     {
+        if (_isLoadingImage || !CanEditSelectedImage)
+        {
+            return;
+        }
+
         UpdateCanReset();
         SchedulePreviewUpdate();
     }
 
     private void OnHorizonRotationValueChanged()
     {
-        if (_isLoadingImage || SelectedImage == null) return;
+        var image = SelectedImage;
+        if (_isLoadingImage || !CanEditSelectedImage || image == null) return;
 
         if (IsCropMode)
         {
@@ -248,7 +273,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             return;
         }
 
-        SelectedImage.EditSettings.HorizonRotation = HorizonRotation;
+        image.EditSettings.HorizonRotation = HorizonRotation;
         SchedulePreviewUpdate(pushUndo: false);
     }
 
@@ -302,7 +327,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     private void SchedulePreviewUpdate(bool pushUndo = true)
     {
-        if (_isLoadingImage || SelectedImage == null) return;
+        if (_isLoadingImage || !CanEditSelectedImage) return;
 
         _thumbnailDebounce?.Cancel();
         if (pushUndo) PushUndoState();
@@ -343,6 +368,12 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         var selectedImage = SelectedImage;
         if (selectedImage == null) return;
+        if ((IsDevelopMode || IsFullScreenMode) &&
+            selectedImage.SourceRequiresHydration)
+        {
+            Histogram = null;
+            return;
+        }
         var debounce = ReplaceDebounce(ref _histogramDebounce);
         var ct = debounce.Token;
         _ = DebouncedAction.RunAsync(
@@ -364,6 +395,11 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
         if (IsDevelopMode || IsFullScreenMode)
         {
+            if (imageFile.SourceRequiresHydration)
+            {
+                return Task.CompletedTask;
+            }
+
             return UpdatePreviewWithCurrentSliders(skipHistogram: false, cancellationToken);
         }
 
@@ -420,7 +456,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private async Task UpdatePreviewWithCurrentSliders(bool skipHistogram = false, CancellationToken cancellationToken = default)
     {
         var selectedImage = SelectedImage;
-        if (selectedImage == null) return;
+        if (selectedImage == null || !CanEditSelectedImage) return;
 
         var tempSettings = selectedImage.EditSettings.Clone();
         SaveSlidersTo(tempSettings);

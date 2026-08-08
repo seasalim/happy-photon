@@ -10,6 +10,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanUndo))]
     private async Task UndoAsync()
     {
+        if (!CanEditSelectedImage) return;
         if (IsFullScreenMode) return;
         if (SelectedImage == null) return;
 
@@ -22,6 +23,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanRedo))]
     private async Task RedoAsync()
     {
+        if (!CanEditSelectedImage) return;
         if (IsFullScreenMode) return;
         if (SelectedImage == null) return;
 
@@ -55,7 +57,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanReset))]
     private async Task ResetEditsAsync()
     {
-        if (SelectedImage == null) return;
+        if (!CanEditSelectedImage || SelectedImage == null) return;
 
         PushLiveUndoState();
 
@@ -118,7 +120,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public async Task ApplyPresetAsync(string presetId)
     {
-        if (SelectedImage == null) return;
+        if (!CanEditSelectedImage || SelectedImage == null) return;
 
         // Clear hover state - we're committing to this preset
         _isHoveringPreset = false;
@@ -241,7 +243,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanReset))]
     private async Task ToggleBeforeAfterAsync()
     {
-        if (SelectedImage == null) return;
+        if (!CanEditSelectedImage || SelectedImage == null) return;
 
         IsShowingOriginal = !IsShowingOriginal;
 

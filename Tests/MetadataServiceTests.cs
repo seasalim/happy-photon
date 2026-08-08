@@ -128,6 +128,46 @@ public sealed class MetadataServiceTests
         Assert.Equal(new DateTime(2026, 7, 19), image.DateTaken);
     }
 
+    [Fact]
+    public async Task HydrationDeferral_RemainsUnloadedAndRetryable()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            $"happy-photon-metadata-hydration-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        var path = Path.Combine(root, "photo.dng");
+        await File.WriteAllBytesAsync(path, [1]);
+        try
+        {
+            var availability = new TestSourceAvailabilityService(
+                SourceAvailability.RequiresHydration);
+            var raw = new CountingRawService();
+            var service = new MetadataService(
+                raw,
+                availability,
+                action =>
+                {
+                    action();
+                    return Task.CompletedTask;
+                });
+            var image = new ImageFile(path);
+
+            var deferred = await service.LoadAsync(image);
+            availability.Availability = SourceAvailability.AvailableLocally;
+            var loaded = await service.LoadAsync(image);
+
+            Assert.Equal(MetadataLoadStatus.DeferredForHydration, deferred);
+            Assert.Equal(MetadataLoadStatus.Loaded, loaded);
+            Assert.Equal(1, raw.ExtractCount);
+            Assert.True(image.MetadataLoaded);
+            Assert.Equal(4000, image.PixelWidth);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     private sealed class SingleThreadActionDispatcher : IDisposable
     {
         private readonly BlockingCollection<(Action Action, TaskCompletionSource Completion)> _queue = new();
@@ -175,6 +215,23 @@ public sealed class MetadataServiceTests
             _thread.Join();
             _queue.Dispose();
             _started.Dispose();
+        }
+    }
+
+    private sealed class CountingRawService : IRawProcessingService
+    {
+        internal int ExtractCount { get; private set; }
+        public bool IsAvailable => true;
+        public byte[]? ExtractThumbnail(string filePath) => null;
+
+        public RawMetadata? ExtractMetadata(string filePath)
+        {
+            ExtractCount++;
+            return new RawMetadata
+            {
+                PixelWidth = 4000,
+                PixelHeight = 3000
+            };
         }
     }
 }

@@ -99,6 +99,16 @@
                             Spacing="24"
                             IsVisible="{Binding ShowConfiguration}"
                             IsEnabled="{Binding IsIdle}">
+                    <Border Padding="12,10"
+                            Background="{StaticResource SurfaceMid}"
+                            BorderBrush="{StaticResource Primary}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusMedium}"
+                            IsVisible="{Binding HasOnlineOnlyImages}">
+                        <TextBlock Text="{Binding OnlineOnlyMessage}"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   TextWrapping="Wrap"/>
+                    </Border>
                     <StackPanel Spacing="8">
                         <TextBlock Text="FOLDER" Classes="section-label"/>
                         <Grid ColumnDefinitions="*,Auto">

@@ -28,22 +28,73 @@ public sealed class ImageExportService
         CancellationToken cancellationToken = default)
     {
         var variants = settings.GetActiveVariants();
-        return ExportBatchAsync(
+        return ExportBatchCoreAsync(
             images,
             settings,
             variants,
             useSubfolders: variants.Count > 1,
             progress,
+            SourceReadIntent.Background,
             cancellationToken);
     }
 
-    public async Task<int> ExportBatchAsync(
+    public Task<int> ExportBatchAsync(
         IEnumerable<ImageFile> images,
         ExportSettings settings,
         IReadOnlyList<ExportVariant> variants,
         bool useSubfolders,
         IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        ExportBatchCoreAsync(
+            images,
+            settings,
+            variants,
+            useSubfolders,
+            progress,
+            SourceReadIntent.Background,
+            cancellationToken);
+
+    internal Task<int> ExportBatchApprovedAsync(
+        IEnumerable<ImageFile> images,
+        ExportSettings settings,
+        IReadOnlyList<ExportVariant> variants,
+        bool useSubfolders,
+        IProgress<(int current, int total, string fileName)>? progress,
+        CancellationToken cancellationToken) =>
+        ExportBatchCoreAsync(
+            images,
+            settings,
+            variants,
+            useSubfolders,
+            progress,
+            SourceReadIntent.UserApprovedHydration,
+            cancellationToken);
+
+    internal Task<int> ExportBatchApprovedAsync(
+        IEnumerable<ImageFile> images,
+        ExportSettings settings,
+        IProgress<(int current, int total, string fileName)>? progress,
+        CancellationToken cancellationToken)
+    {
+        var variants = settings.GetActiveVariants();
+        return ExportBatchCoreAsync(
+            images,
+            settings,
+            variants,
+            useSubfolders: variants.Count > 1,
+            progress,
+            SourceReadIntent.UserApprovedHydration,
+            cancellationToken);
+    }
+
+    private async Task<int> ExportBatchCoreAsync(
+        IEnumerable<ImageFile> images,
+        ExportSettings settings,
+        IReadOnlyList<ExportVariant> variants,
+        bool useSubfolders,
+        IProgress<(int current, int total, string fileName)>? progress,
+        SourceReadIntent intent,
+        CancellationToken cancellationToken)
     {
         var imageList = images.ToList();
         var total = imageList.Count;
@@ -70,6 +121,7 @@ public sealed class ImageExportService
                     settings,
                     variants,
                     useSubfolders,
+                    intent,
                     cancellationToken),
                 cancellationToken);
             if (wroteImage)
@@ -87,6 +139,7 @@ public sealed class ImageExportService
         ExportSettings settings,
         IReadOnlyList<ExportVariant> variants,
         bool useSubfolders,
+        SourceReadIntent intent,
         CancellationToken cancellationToken)
     {
         if (variants.Count == 0)
@@ -97,10 +150,16 @@ public sealed class ImageExportService
         var stopwatch = Stopwatch.StartNew();
         var editSnapshot = imageFile.EditSettings.Clone();
         var decode = BaseDecodeSettings.From(editSnapshot);
-        using var baseImage = _baseLoader.LoadFullBase(
-            imageFile,
-            decode,
-            cancellationToken);
+        using var baseImage = _baseLoader is GatedBaseImageLoader gatedLoader
+            ? gatedLoader.LoadFullBase(
+                imageFile,
+                decode,
+                intent,
+                cancellationToken)
+            : _baseLoader.LoadFullBase(
+                imageFile,
+                decode,
+                cancellationToken);
         if (baseImage == null)
         {
             return false;
@@ -143,7 +202,8 @@ public sealed class ImageExportService
             _metadataService.Apply(
                 imageFile,
                 destination,
-                settings.StripLocationData);
+                settings.StripLocationData,
+                intent);
             ExportEncoder.Write(
                 destination,
                 settings,

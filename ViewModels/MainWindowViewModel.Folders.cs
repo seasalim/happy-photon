@@ -157,6 +157,8 @@ public partial class MainWindowViewModel
             return 0;
         }
 
+        _folderTreeService.LoadChildren(folder);
+
         var comparison = OperatingSystem.IsWindows()
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;

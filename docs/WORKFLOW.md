@@ -28,6 +28,11 @@ Photon catalog:
 Edits are non-destructive: they are instructions stored in the catalog, not
 changes written into the original image. Export creates new files.
 
+Cloud Files providers such as OneDrive are supported without automatically downloading
+online-only originals. Happy Photon may show its own cached thumbnail or preview while
+the original remains online-only. It reads that original only after a clearly scoped
+action such as **Download and open** or a confirmed export.
+
 Happy Photon is pre-1.0 software. Keep a backup of important photographs and
 consider learning the workflow with a copied shoot.
 
@@ -44,12 +49,20 @@ Start in **Library**. Press `G` at any time to return to it.
 
 If photographs are added, removed, or renamed outside Happy Photon, use the
 **Refresh folder** button beside **Change…** in the Folders header. Refresh
-re-reads the currently viewed folder while preserving active filters and
-cataloged edits, ratings, and flags for paths that still exist.
+re-reads the currently viewed folder and its immediate subfolder list while
+preserving active filters and cataloged edits, ratings, and flags for paths that
+still exist.
 
 Burst grouping places photographs captured within two seconds into the same
 sequence. It does not choose a winner; it makes neighboring frames easier to
-recognize and compare.
+recognize and compare. Happy Photon analyzes capture times only after Bursts is
+enabled and keeps an analysis message visible until that work finishes or Bursts is
+turned off.
+
+Online-only photographs stay visible with a cloud badge or placeholder. The folder
+status reports how many will not be downloaded automatically. Bursts analyzes local
+photographs and reports online-only photographs as skipped. To work with one cloud-only
+image, select it and choose **Download and open**; this downloads only that original.
 
 Do not start adjusting every image yet. The first goal is to understand the
 shoot and remove obvious misses from consideration.
@@ -112,6 +125,9 @@ system Trash. Rejecting alone never moves or deletes the original.
 
 Double-click a thumbnail or press `D` to enter **Develop**. Use the left and
 right arrow keys to move between visible images without returning to Library.
+
+If an original is online-only, an existing cached preview can still appear, but Happy
+Photon does not start a fresh decode until you choose **Download and open**.
 
 A useful editing order is composition, light, color, and then refinement. You
 do not have to touch every control.
@@ -239,6 +255,12 @@ changing the selection.
    - **Small** creates a smaller longest-dimension copy.
 5. Choose a naming pattern and check the filename preview.
 6. Start the export.
+
+If the selection includes online-only originals, Happy Photon first reports their exact
+count and approximate logical size. Choose **Cancel** to leave them untouched or
+**Download / Export** to approve downloads for that selected batch. Stopping an export
+after approval is best effort because the cloud provider may already have started a
+download.
 
 The exported files go directly into the chosen output folder.
 

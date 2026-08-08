@@ -28,6 +28,14 @@ metadata apply (§4) → encode (§3) → `ExportSafety` checks → write.
 The render math is identical to the preview path; only `MaxDimension` and base
 resolution differ. WYSIWYG tests measure the remaining resize/decode difference.
 
+Before desktop export starts, the dialog classifies every selected original and totals
+the logical size of files that require hydration. If the count is nonzero, it shows
+that exact scope and waits for **Download / Export** confirmation. Cancellation makes
+no base-loader or source-metadata call. Only the confirmed image list receives
+`UserApprovedHydration`; ordinary and agent exports retain background intent and cannot
+silently download cloud-only originals. Provider cancellation is best effort after a
+download has started.
+
 ## 3. Encoders
 
 | Format | Rules |
@@ -50,7 +58,9 @@ fully independent of the fixed capture-sharpen stage.
 Renders are rebuilt pixels; profiles do not survive the pipeline. This service
 deliberately reconstructs metadata on the encoded output:
 
-1. **EXIF copy:** read the original file's EXIF (Magick `Ping` + `GetExifProfile()`).
+1. **EXIF copy:** after the same live availability/intent check as base decode, read
+   the original file's EXIF (Magick `Ping` + `GetExifProfile()`). Background work does
+   not call `Ping` for a source that requires hydration. A confirmed desktop export may.
    Works for JPEG/TIFF/most raws; when unavailable (some raws/platforms), synthesize a
    minimal EXIF from the catalog's `RawMetadata`/`ImageMetadata` DTO: Make, Model,
    DateTimeOriginal, ISO, FNumber, ExposureTime, FocalLength, LensModel.
@@ -74,7 +84,9 @@ while private or structurally stale metadata is never carried through accidental
 `apply_edit_settings` accepts the current v2 fields, including `wb`, `baseLook`, and
 `hlReconstruction`; omitted fields leave current values unchanged. The privacy
 boundary remains metadata and thumbnail-derived statistics only, and
-`get_image_stats` measures the unedited base thumbnail.
+`get_image_stats` measures the unedited base thumbnail. Agent calls never receive
+hydration approval: image summaries expose `sourceAvailability`, and operations that
+need an online-only original return failure code `hydration_required`.
 
 ## 6. Verification
 
@@ -87,3 +99,6 @@ boundary remains metadata and thumbnail-derived statistics only, and
   a GPS-tagged asset).
 - Subsampling: quality 92 export shows `4:4:4`, quality 80 shows `4:2:0` (read back via
   Magick attributes).
+- Export hydration tests inject source availability and assert the selected cloud count
+  and logical bytes, zero background source calls, and one base/metadata read for each
+  image in the approved set.

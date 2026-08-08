@@ -1,6 +1,7 @@
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
+using ImageMagick;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -47,6 +48,27 @@ public sealed class ManualFolderRefreshTests
             image => image.FilePath == removed);
         Assert.Equal(added, context.ViewModel.SelectedImage?.FilePath);
         Assert.Equal("Refreshed — 2 photos.", context.ViewModel.TransientStatus);
+    }
+
+    [Fact]
+    public void Refresh_AddsNewSubfolderToSelectedTreeNode()
+    {
+        using var context = RefreshTestContext.Create();
+        context.LoadFolder();
+        var selectedFolder = Assert.IsType<FolderNode>(
+            context.ViewModel.SelectedFolder);
+        Assert.Empty(selectedFolder.Children);
+
+        var exportPath = Directory.CreateDirectory(
+            Path.Combine(context.PhotoDirectory, "export")).FullName;
+
+        context.Refresh();
+
+        var exportNode = Assert.Single(selectedFolder.Children);
+        Assert.Equal(exportPath, exportNode.Path);
+        Assert.Equal("export", exportNode.Name);
+        Assert.True(context.ViewModel.CurrentFolderHasSubfolders);
+        Assert.Same(selectedFolder, context.ViewModel.SelectedFolder);
     }
 
     [Fact]
@@ -215,7 +237,15 @@ public sealed class ManualFolderRefreshTests
         public string AddFile(string fileName)
         {
             var path = Path.Combine(PhotoDirectory, fileName);
-            File.WriteAllBytes(path, [1, 2, 3, 4]);
+            if (Path.GetExtension(fileName) is ".jpg" or ".jpeg")
+            {
+                using var image = new MagickImage(MagickColors.Gray, 16, 16);
+                image.Write(path, MagickFormat.Jpeg);
+            }
+            else
+            {
+                File.WriteAllBytes(path, [1, 2, 3, 4]);
+            }
             return path;
         }
 

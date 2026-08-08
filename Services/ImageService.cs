@@ -16,6 +16,8 @@ public class ImageService : IAsyncDisposable
     private readonly PreviewService _previewService;
     private readonly ImageExportService _exportService;
     private readonly MetadataService _metadataService;
+    private readonly ISourceAvailabilityService _availabilityService;
+    private readonly SourceHydrationService _sourceHydrationService;
 
     public event EventHandler<PreviewRefresh>? PreviewRefreshed
     {
@@ -41,10 +43,27 @@ public class ImageService : IAsyncDisposable
 
     internal ImageService(
         CatalogService catalogService,
-        IBaseImageLoader baseLoader)
+        IBaseImageLoader baseLoader) : this(
+            catalogService,
+            baseLoader,
+            new SourceAvailabilityService())
+    {
+    }
+
+    internal ImageService(
+        CatalogService catalogService,
+        IBaseImageLoader baseLoader,
+        ISourceAvailabilityService availabilityService)
     {
         _catalogService = catalogService;
         ArgumentNullException.ThrowIfNull(baseLoader);
+        _availabilityService = availabilityService ??
+            throw new ArgumentNullException(nameof(availabilityService));
+        _sourceHydrationService = new SourceHydrationService(
+            _availabilityService);
+        var gatedBaseLoader = new GatedBaseImageLoader(
+            baseLoader,
+            _availabilityService);
 
         // Initialize RAW processing service
         var libRawService = new LibRawProcessingService();
@@ -59,19 +78,24 @@ public class ImageService : IAsyncDisposable
             catalogService,
             _rawService,
             renderPipeline,
-            renderedThumbnailCache);
+            renderedThumbnailCache,
+            _availabilityService);
         _previewService = new PreviewService(
             catalogService,
-            baseLoader,
+            gatedBaseLoader,
             renderPipeline,
             _histogramService,
             new PreviewCacheService(catalogService),
             renderedThumbnailCache);
         _exportService = new ImageExportService(
             renderPipeline,
-            baseLoader,
-            new ExportMetadataService());
-        _metadataService = new MetadataService(_rawService);
+            gatedBaseLoader,
+            new ExportMetadataService(
+                $"Happy Photon {AppBuildInfo.Version.ToString(3)}",
+                _availabilityService));
+        _metadataService = new MetadataService(
+            _rawService,
+            _availabilityService);
     }
 
     // ===== Preview Methods (delegated to PreviewService) =====
@@ -129,7 +153,7 @@ public class ImageService : IAsyncDisposable
 
     // ===== Thumbnail Methods (delegated to ThumbnailService) =====
 
-    public Task<Bitmap?> LoadThumbnailAsync(
+    public Task<ThumbnailLoadResult> LoadThumbnailAsync(
         ImageFile imageFile,
         CancellationToken cancellationToken)
     {
@@ -137,11 +161,11 @@ public class ImageService : IAsyncDisposable
             imageFile,
             imageFile.EditSettings);
         return promoted != null
-            ? Task.FromResult<Bitmap?>(promoted)
+            ? Task.FromResult(ThumbnailLoadResult.Loaded(promoted))
             : _thumbnailService.LoadThumbnailAsync(imageFile, cancellationToken);
     }
 
-    public Task<Bitmap?> LoadUneditedThumbnailAsync(
+    public Task<ThumbnailLoadResult> LoadUneditedThumbnailAsync(
         ImageFile imageFile,
         CancellationToken cancellationToken) =>
         _thumbnailService.LoadUneditedThumbnailAsync(imageFile, cancellationToken);
@@ -170,6 +194,21 @@ public class ImageService : IAsyncDisposable
         var imageList = images.ToList();
         await EnsureExportMetadataAsync(imageList, cancellationToken);
         return await _exportService.ExportBatchAsync(
+            imageList,
+            settings,
+            progress,
+            cancellationToken);
+    }
+
+    internal async Task<int> ExportBatchApprovedAsync(
+        IEnumerable<ImageFile> images,
+        ExportSettings settings,
+        IProgress<(int current, int total, string fileName)>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var imageList = images.ToList();
+        await EnsureExportMetadataAsync(imageList, cancellationToken);
+        return await _exportService.ExportBatchApprovedAsync(
             imageList,
             settings,
             progress,
@@ -206,6 +245,35 @@ public class ImageService : IAsyncDisposable
         }
     }
 
+    internal ExportHydrationScope GetExportHydrationScope(
+        IEnumerable<ImageFile> images)
+    {
+        var count = 0;
+        long bytes = 0;
+        foreach (var image in images)
+        {
+            if (GetSourceAvailability(image) !=
+                SourceAvailability.RequiresHydration)
+            {
+                continue;
+            }
+
+            count++;
+            try
+            {
+                bytes += new FileInfo(image.FilePath).Length;
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+
+        return new ExportHydrationScope(count, bytes);
+    }
+
     // ===== Histogram Methods (delegated to HistogramService) =====
 
     public HistogramData CalculateHistogram(Bitmap bitmap) =>
@@ -213,7 +281,22 @@ public class ImageService : IAsyncDisposable
 
     // ===== Metadata and Full Image Loading (kept in facade) =====
 
-    public Task LoadMetadataAsync(ImageFile imageFile) =>
+    public Task<MetadataLoadStatus> LoadMetadataAsync(ImageFile imageFile) =>
         _metadataService.LoadAsync(imageFile);
+
+    internal bool CanRetryBackgroundRead(ImageFile imageFile) =>
+        SourceAccessPolicy.CanRead(
+            GetSourceAvailability(imageFile),
+            SourceReadIntent.Background);
+
+    internal SourceAvailability GetSourceAvailability(ImageFile imageFile) =>
+        _availabilityService.GetAvailability(imageFile.FilePath);
+
+    internal Task<bool> HydrateSourceAsync(
+        ImageFile imageFile,
+        CancellationToken cancellationToken) =>
+        _sourceHydrationService.HydrateAsync(
+            imageFile,
+            cancellationToken);
 
 }

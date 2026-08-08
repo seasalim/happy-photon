@@ -98,6 +98,19 @@ public sealed class ImageStatsServiceTests : IDisposable
         Assert.Throws<FileNotFoundException>(() => new ImageStatsService().Compute(path));
     }
 
+    [Fact]
+    public void CloudPathIsBlocked_WhileCallerOwnedBytesRemainReadable()
+    {
+        var path = WriteImage("cloud.jpg", _ => { });
+        var bytes = File.ReadAllBytes(path);
+        var service = new ImageStatsService(
+            new TestSourceAvailabilityService(
+                SourceAvailability.RequiresHydration));
+
+        Assert.Throws<SourceReadDeferredException>(() => service.Compute(path));
+        Assert.True(service.Compute(bytes).MeanLuminance > 0);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_tempDirectory))

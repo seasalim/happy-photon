@@ -18,12 +18,16 @@ public sealed class AgentToolModelsTests
             DateTaken: new DateTime(2026, 7, 1, 10, 30, 0), Camera: "Canon EOS R5",
             Iso: 100, FNumber: 2.8, ExposureTime: "1/250", FocalLength: 35,
             LensModel: "RF 35mm F1.8", BurstId: "burst_1", BurstIndex: 2,
-            BurstSize: 4);
+            BurstSize: 4)
+        {
+            SourceAvailability = "requires_hydration"
+        };
 
         var json = JsonSerializer.Serialize(summary, Options);
         Assert.Contains("\"fileName\"", json);
         Assert.Contains("\"picked\"", json);
         Assert.Contains("\"burstId\":\"burst_1\"", json);
+        Assert.Contains("\"sourceAvailability\":\"requires_hydration\"", json);
 
         var back = JsonSerializer.Deserialize<AgentImageSummary>(json, Options);
         Assert.Equal(summary, back);
@@ -65,6 +69,19 @@ public sealed class AgentToolModelsTests
 
         var json = JsonSerializer.Serialize(result, Options);
         Assert.Contains("unknown image id", json);
+    }
+
+    [Fact]
+    public void BatchFailure_SerializesHydrationCode()
+    {
+        var failure = new AgentBatchFailure(
+            "a.jpg",
+            "source requires hydration",
+            "hydration_required");
+
+        var json = JsonSerializer.Serialize(failure, Options);
+
+        Assert.Contains("\"code\":\"hydration_required\"", json);
     }
 
     [Fact]

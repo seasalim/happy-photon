@@ -21,7 +21,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void RotateLeft()
     {
-        if (SelectedImage == null) return;
+        if (!CanEditSelectedImage || SelectedImage == null) return;
         
         // Rotate counter-clockwise (subtract 90, wrap around)
         // Note: Rotation is separate from undo/reset - it's a geometric transform
@@ -37,7 +37,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void RotateRight()
     {
-        if (SelectedImage == null) return;
+        if (!CanEditSelectedImage || SelectedImage == null) return;
 
         // Rotate clockwise (add 90, wrap around)
         // Note: Rotation is separate from undo/reset - it's a geometric transform
@@ -56,7 +56,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void ToggleCropMode()
     {
-        if (SelectedImage == null) return;
+        if (!CanEditSelectedImage || SelectedImage == null) return;
 
         if (IsCropMode)
         {
@@ -72,7 +72,7 @@ public partial class MainWindowViewModel
 
     private void EnterCropMode()
     {
-        if (SelectedImage == null) return;
+        if (!CanEditSelectedImage || SelectedImage == null) return;
 
         // Save original crop for cancel
         _cropBeforeEdit = SelectedImage.EditSettings.Crop?.Clone();
@@ -95,7 +95,9 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task ApplyCropAsync()
     {
-        if (SelectedImage == null || CurrentCrop == null)
+        if (!CanEditSelectedImage ||
+            SelectedImage == null ||
+            CurrentCrop == null)
         {
             IsCropMode = false;
             return;
@@ -134,6 +136,8 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void ResetCrop()
     {
+        if (!CanEditSelectedImage) return;
+
         // Create new instance to trigger property change (modifying existing object won't update bindings)
         CurrentCrop = new CropRegion();
         HorizonRotation = 0.0;
@@ -169,23 +173,21 @@ public partial class MainWindowViewModel
         ImageFile image,
         CancellationToken cancellationToken)
     {
-        var thumbnail = await ImageService.LoadThumbnailAsync(
+        using var result = await ImageService.LoadThumbnailAsync(
             image,
             cancellationToken);
         if (cancellationToken.IsCancellationRequested)
         {
-            thumbnail?.Dispose();
             return;
         }
 
         if (ReferenceEquals(SelectedImage, image) && Library.Contains(image))
         {
-            image.ThumbnailLoadFailed = thumbnail == null;
-            if (thumbnail != null) Library.ReplaceThumbnail(image, thumbnail);
-        }
-        else
-        {
-            thumbnail?.Dispose();
+            ApplyThumbnailLoadStatus(image, result.Status);
+            if (result.Status == ThumbnailLoadStatus.Loaded)
+            {
+                Library.ReplaceThumbnail(image, result.DetachBitmap());
+            }
         }
     }
 

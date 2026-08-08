@@ -1,4 +1,5 @@
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using Xunit;
 
@@ -117,5 +118,23 @@ public sealed class ExportDialogViewModelTests
 
         Assert.True(viewModel.ShowIdleImageActions);
         Assert.True(viewModel.CanExport);
+    }
+
+    [Fact]
+    public void HydrationScope_ShowsExactCountAndLogicalSize()
+    {
+        using var viewModel = new ExportDialogViewModel(
+            new ExportSettings(),
+            37);
+
+        viewModel.UpdateHydrationScope(new ExportHydrationScope(
+            37,
+            3_006_477_107));
+
+        Assert.True(viewModel.HasOnlineOnlyImages);
+        Assert.Equal(
+            "Exporting will download 37 online-only originals " +
+            "(approximately 2.8 GB).",
+            viewModel.OnlineOnlyMessage);
     }
 }

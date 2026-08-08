@@ -100,7 +100,10 @@ public record AgentImageSummary(
     string? LensModel,
     string? BurstId = null,
     int? BurstIndex = null,
-    int? BurstSize = null);
+    int? BurstSize = null)
+{
+    public string SourceAvailability { get; init; } = "unknown";
+}
 
 public record AgentImageStats(
     string Id,
@@ -113,7 +116,10 @@ public record AgentImageStatsResult(
     List<AgentImageStats> Images,
     List<AgentBatchFailure> Failed);
 
-public record AgentBatchFailure(string Id, string Reason);
+public record AgentBatchFailure(
+    string Id,
+    string Reason,
+    string? Code = null);
 
 public record AgentBatchResult(List<string> Succeeded, List<AgentBatchFailure> Failed);
 

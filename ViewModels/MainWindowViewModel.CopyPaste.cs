@@ -17,9 +17,15 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private string? _transientStatus;
 
+    [ObservableProperty]
+    private string? _pinnedStatus;
+
+    public string? StatusMessage => TransientStatus ?? PinnedStatus;
+
     public Func<int, Task<bool>>? ConfirmBatchApplyAsync { get; set; }
 
-    private bool CanCopyEditSettings => HasSelectedImage && !IsFullScreenMode;
+    private bool CanCopyEditSettings =>
+        CanEditSelectedImage && !IsFullScreenMode;
 
     [RelayCommand(CanExecute = nameof(CanCopyEditSettings))]
     private void CopyEditSettings()
@@ -34,7 +40,7 @@ public partial class MainWindowViewModel
     }
 
     private bool CanPasteEditSettings =>
-        HasCopiedSettings && HasSelectedImage && !IsFullScreenMode;
+        HasCopiedSettings && CanEditSelectedImage && !IsFullScreenMode;
 
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]
     private async Task PasteEditSettingsAsync()
@@ -120,6 +126,12 @@ public partial class MainWindowViewModel
 
         var targets = Library.GetSelectedImages().ToList();
         if (targets.Count == 0 || ConfirmBatchApplyAsync == null) return;
+        if (targets.Any(target => target.SourceRequiresHydration))
+        {
+            ShowTransientStatus(
+                "Download online-only originals before applying edit settings");
+            return;
+        }
         if (!await ConfirmBatchApplyAsync(targets.Count)) return;
 
         List<(ImageFile Target, EditSettings Previous, EditSettings Settings)> proposed;
@@ -246,17 +258,19 @@ public partial class MainWindowViewModel
     {
         try
         {
-            var thumbnail = await ImageService.LoadThumbnailAsync(
+            using var result = await ImageService.LoadThumbnailAsync(
                 image,
                 CancellationToken.None);
             if (!Library.Contains(image))
             {
-                thumbnail?.Dispose();
                 return;
             }
 
-            image.ThumbnailLoadFailed = thumbnail == null;
-            if (thumbnail != null) Library.ReplaceThumbnail(image, thumbnail);
+            ApplyThumbnailLoadStatus(image, result.Status);
+            if (result.Status == ThumbnailLoadStatus.Loaded)
+            {
+                Library.ReplaceThumbnail(image, result.DetachBitmap());
+            }
         }
         catch (Exception ex)
         {
@@ -280,4 +294,20 @@ public partial class MainWindowViewModel
             return Task.CompletedTask;
         });
     }
+
+    private void ShowPinnedStatus(string text) => PinnedStatus = text;
+
+    private void ClearPinnedStatus(string text)
+    {
+        if (PinnedStatus == text)
+        {
+            PinnedStatus = null;
+        }
+    }
+
+    partial void OnTransientStatusChanged(string? value) =>
+        OnPropertyChanged(nameof(StatusMessage));
+
+    partial void OnPinnedStatusChanged(string? value) =>
+        OnPropertyChanged(nameof(StatusMessage));
 }

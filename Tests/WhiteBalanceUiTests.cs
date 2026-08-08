@@ -119,9 +119,12 @@ public sealed class WhiteBalanceUiTests : IDisposable
         await catalog.InitializeAsync();
         await using var imageService = new ImageService(catalog);
         var image = new ImageFile(sourcePath);
-        image.Thumbnail = await imageService.LoadUneditedThumbnailAsync(
+        using (var result = await imageService.LoadUneditedThumbnailAsync(
             image,
-            CancellationToken.None);
+            CancellationToken.None))
+        {
+            image.Thumbnail = result.DetachBitmap();
+        }
         var original = RedBlueDelta(image);
         var vm = new MainWindowViewModel(catalog);
         vm.Library.SetImages([image]);

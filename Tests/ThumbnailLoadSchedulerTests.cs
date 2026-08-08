@@ -114,6 +114,34 @@ public sealed class ThumbnailLoadSchedulerTests
     }
 
     [Fact]
+    public async Task Scheduler_SkipsImagesDeferredForHydration()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var loaded = new TaskCompletionSource<ImageFile>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var deferred = new ImageFile("cloud.jpg")
+        {
+            ThumbnailDeferredForHydration = true
+        };
+        var local = new ImageFile("local.jpg");
+        using var scheduler = new ThumbnailLoadScheduler(
+            1,
+            (image, _) =>
+            {
+                loaded.SetResult(image);
+                return Task.CompletedTask;
+            },
+            cancellation.Token);
+
+        scheduler.Enqueue([(deferred, 0), (local, 0)]);
+        var loadedImage = await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        cancellation.Cancel();
+        await scheduler.Completion;
+
+        Assert.Same(local, loadedImage);
+    }
+
+    [Fact]
     public void ResidencyPolicy_EvictsLeastRecentUnpinnedImages()
     {
         var images = Enumerable.Range(0, 5)

@@ -116,6 +116,28 @@
                                            Margin="4"/>
                                 </Grid>
                             </Border>
+                            <Border Background="{StaticResource SurfaceMid}"
+                                    BorderBrush="{StaticResource OutlineVariant}"
+                                    BorderThickness="1"
+                                    CornerRadius="{StaticResource RadiusSmall}"
+                                    Padding="8"
+                                    Margin="0,8,0,0"
+                                    IsVisible="{Binding SelectedImage.SourceRequiresHydration}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="This original is online-only."
+                                               Foreground="{StaticResource TextSecondary}"
+                                               FontSize="11"
+                                               TextWrapping="Wrap"/>
+                                    <Button x:Name="DownloadAndOpenButton"
+                                             Content="Download and open"
+                                             Classes="accent"
+                                             Command="{Binding DownloadAndOpenCommand}"
+                                             HorizontalAlignment="Left"
+                                             FontSize="10"
+                                             Padding="8,4"
+                                             AutomationProperties.Name="Download and open selected original"/>
+                                </StackPanel>
+                            </Border>
 
                             <!-- Metadata Section -->
                             <StackPanel Margin="0,12,0,0" Spacing="10"
@@ -170,10 +192,10 @@
 
                 <!-- Presets Panel (Develop mode) -->
                 <views:PresetsPanel Grid.Row="2" x:Name="PresetsPanel"
-                                    IsVisible="{Binding IsDevelopMode}"
-                                    IsEnabled="{Binding HasSelectedImage}"
-                                    CanSavePreset="{Binding CanSavePreset}"
-                                    ActivePresetId="{Binding ActivePresetId}"/>
+                                     IsVisible="{Binding IsDevelopMode}"
+                                     IsEnabled="{Binding CanEditSelectedImage}"
+                                     CanSavePreset="{Binding CanSavePreset}"
+                                     ActivePresetId="{Binding ActivePresetId}"/>
             </Grid>
         </Border>
 
@@ -261,17 +283,20 @@
                                 </StackPanel>
                                 <Rectangle Width="1" Height="16" Fill="{StaticResource Outline}" Margin="4,0"/>
                                 <Button Command="{Binding RotateLeftCommand}"
+                                        IsEnabled="{Binding CanEditSelectedImage}"
                                         Content="↶"
                                         ToolTip.Tip="Rotate Left (90° counter-clockwise)"
                                         FontSize="14" Padding="8,3"
                                         BorderThickness="0"/>
                                 <Button Command="{Binding RotateRightCommand}"
+                                        IsEnabled="{Binding CanEditSelectedImage}"
                                         Content="↷"
                                         ToolTip.Tip="Rotate Right (90° clockwise)"
                                         FontSize="14" Padding="8,3"
                                         BorderThickness="0"/>
                                 <ToggleButton IsChecked="{Binding IsCropMode, Mode=OneWay}"
                                               Command="{Binding ToggleCropModeCommand}"
+                                              IsEnabled="{Binding CanEditSelectedImage}"
                                               ToolTip.Tip="Crop Image (C)"
                                               FontSize="14" Padding="8,3"
                                               BorderThickness="0">
@@ -293,7 +318,8 @@
                                 <Rectangle Width="1" Height="16" Fill="{StaticResource Outline}" Margin="4,0"
                                            IsVisible="{Binding IsCropMode}"/>
                                 <StackPanel Orientation="Horizontal" Spacing="4"
-                                            IsVisible="{Binding IsCropMode}">
+                                            IsVisible="{Binding IsCropMode}"
+                                            IsEnabled="{Binding CanEditSelectedImage}">
                                     <views:CompactSlider Label="Horizon"
                                                          Value="{Binding HorizonRotation}"
                                                          Minimum="-5" Maximum="5"
@@ -349,7 +375,8 @@
             SecondaryCommand="{Binding EndWorkflowTourCommand}"/>
 
         <views:DevelopEditPanel x:Name="DevelopEditPanel"
-                                Grid.Row="1" Grid.Column="4"/>
+                                Grid.Row="1" Grid.Column="4"
+                                IsEnabled="{Binding CanEditSelectedImage}"/>
 
         <views:StatusBarView Grid.Row="2" Grid.ColumnSpan="5"
                              IsEnabled="{Binding IsWorkspaceInteractionEnabled}"/>

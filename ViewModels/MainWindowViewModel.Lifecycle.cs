@@ -5,6 +5,9 @@ public partial class MainWindowViewModel
     public async ValueTask DisposeAsync()
     {
         Interlocked.Increment(ref _libraryGeneration);
+        CancelSourceHydration();
+        _burstAnalysisRestartRequested = false;
+        CancelBurstAnalysis();
         var thumbnailLoadingCts = Interlocked.Exchange(
             ref _thumbnailLoadingCts, null);
         if (thumbnailLoadingCts != null)
@@ -21,6 +24,9 @@ public partial class MainWindowViewModel
         }
 
         await WaitForThumbnailSessionsAsync();
+        await Task.WhenAny(
+            WaitForBurstAnalysisAsync(),
+            Task.Delay(TimeSpan.FromSeconds(2)));
 
         CancelAndDispose(ref _previewDebounce);
         CancelAndDispose(ref _histogramDebounce);

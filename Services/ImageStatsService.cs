@@ -5,12 +5,41 @@ namespace HappyPhoton.Services;
 public sealed class ImageStatsService
 {
     private const double QuantumRange = 65535.0;
+    private readonly ISourceAvailabilityService _availabilityService;
+
+    public ImageStatsService() : this(new SourceAvailabilityService())
+    {
+    }
+
+    internal ImageStatsService(
+        ISourceAvailabilityService availabilityService) =>
+        _availabilityService = availabilityService ??
+            throw new ArgumentNullException(nameof(availabilityService));
 
     public (double Sharpness, double ClippedHighlightsPct,
         double ClippedShadowsPct, double MeanLuminance) Compute(string imagePath)
+        => Compute(imagePath, SourceReadIntent.Background);
+
+    internal (double Sharpness, double ClippedHighlightsPct,
+        double ClippedShadowsPct, double MeanLuminance) Compute(
+        string imagePath,
+        SourceReadIntent intent)
     {
         if (!File.Exists(imagePath))
             throw new FileNotFoundException("Thumbnail image was not found.", imagePath);
+
+        var availability = _availabilityService.GetAvailability(imagePath);
+        if (!SourceAccessPolicy.CanRead(availability, intent))
+        {
+            if (availability == SourceAvailability.RequiresHydration)
+            {
+                throw new SourceReadDeferredException(imagePath);
+            }
+
+            throw new FileNotFoundException(
+                "Thumbnail image was not available.",
+                imagePath);
+        }
 
         using var image = new MagickImage(imagePath);
         return Compute(image);

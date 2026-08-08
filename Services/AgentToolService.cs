@@ -4,7 +4,7 @@ using HappyPhoton.ViewModels;
 
 namespace HappyPhoton.Services;
 
-public sealed class AgentToolService
+public sealed partial class AgentToolService
 {
     private const int BatchCap = 500;
     private const int StatsBatchCap = 200;
@@ -81,8 +81,14 @@ public sealed class AgentToolService
                     byte[]? thumbnailData = null;
                     if (!_imageService.IsThumbnailCacheValid(image))
                     {
-                        using var thumbnail = await _imageService.LoadUneditedThumbnailAsync(
+                        using var result = await _imageService.LoadUneditedThumbnailAsync(
                             image, CancellationToken.None);
+                        if (result.Status == ThumbnailLoadStatus.DeferredForHydration)
+                        {
+                            throw new SourceReadDeferredException(image.FilePath);
+                        }
+
+                        using var thumbnail = result.DetachBitmap();
                         if (thumbnail == null)
                         {
                             throw new AgentToolException("Thumbnail could not be generated.");
@@ -95,7 +101,7 @@ public sealed class AgentToolService
                 }
                 catch (Exception ex)
                 {
-                    failed.Add(new AgentBatchFailure(image.FilePath, SafeReason(ex)));
+                    failed.Add(CreateFailure(image.FilePath, ex));
                 }
             }
 
@@ -119,7 +125,7 @@ public sealed class AgentToolService
             }
             catch (Exception ex)
             {
-                snapshot.failed.Add(new AgentBatchFailure(item.Id, SafeReason(ex)));
+                snapshot.failed.Add(CreateFailure(item.Id, ex));
             }
         }
 
@@ -178,177 +184,6 @@ public sealed class AgentToolService
             _vm.ApplyAgentEditSettingsToImagesAsync(images, patch));
     }
 
-    public async Task<AgentExportResult> ExportImagesAsync(
-        IReadOnlyList<string> ids,
-        AgentExportOptions options)
-    {
-        ValidateBatch(ids, BatchCap);
-        ValidateExportOptions(options);
-        var format = AgentToolValidation.ParseExportFormat(options.Format);
-        var useSubfolders = options.Variants is { Count: > 0 };
-        var variants = CreateExportVariants(options);
-        if (ids.Count * variants.Count > 1000)
-        {
-            throw new AgentToolException(
-                "Export is limited to 1000 image-variant outputs per call.");
-        }
-
-        var snapshot = await OnUiThreadAsync(() =>
-        {
-            if (string.IsNullOrWhiteSpace(_vm.CurrentFolderPath))
-            {
-                throw new AgentToolException("No folder is open.");
-            }
-
-            var (images, failed) = ResolveImages(ids);
-            var root = Path.GetFullPath(_vm.CurrentFolderPath);
-            var requestedOutput = options.OutputFolder ?? "export";
-            var output = Path.GetFullPath(Path.IsPathFullyQualified(requestedOutput)
-                ? requestedOutput
-                : Path.Combine(root, requestedOutput));
-            if (!IsSameOrDescendant(root, output))
-            {
-                throw new AgentToolException("Output folder must be inside the currently open folder.");
-            }
-
-            var settings = AgentExportSettingsFactory.Create(
-                output,
-                options,
-                format,
-                _vm.ExportSettings.StripLocationData,
-                _vm.ExportSettings.OutputSharpening);
-            var originalPaths = ExportSafety.BuildOriginalPathSet(
-                _vm.Library.AllImages.Select(image => image.FilePath));
-            return Task.FromResult((images, failed, settings, originalPaths));
-        });
-
-        try
-        {
-            Directory.CreateDirectory(snapshot.settings.OutputFolder);
-        }
-        catch (Exception ex)
-        {
-            throw new AgentToolException($"Could not create the output folder: {SafeReason(ex)}");
-        }
-
-        return await ExportResolvedImagesAsync(
-            snapshot.images, snapshot.failed, snapshot.settings, variants, useSubfolders,
-            snapshot.originalPaths);
-    }
-
-    private async Task<AgentExportResult> ExportResolvedImagesAsync(
-        IReadOnlyList<ImageFile> images,
-        List<AgentBatchFailure> failed,
-        ExportSettings settings,
-        IReadOnlyList<ExportVariant> variants,
-        bool useSubfolders,
-        HashSet<string> originalPaths)
-    {
-        var exported = new List<string>();
-        var skipped = new List<string>();
-        var comparer = OperatingSystem.IsWindows()
-            ? StringComparer.OrdinalIgnoreCase
-            : StringComparer.Ordinal;
-        var targets = new HashSet<string>(comparer);
-
-        foreach (var image in images)
-        {
-            var pending = new List<(ExportVariant Variant, string RelativePath)>();
-            foreach (var variant in variants)
-            {
-                var relativePath = useSubfolders
-                    ? $"{variant.Name}/{settings.GetOutputFileName(image.FileName)}"
-                    : settings.GetOutputFileName(image.FileName);
-                try
-                {
-                    var target = Path.GetFullPath(
-                        settings.GetOutputPath(image.FileName, variant, useSubfolders));
-                    relativePath = ToOutputRelativePath(settings.OutputFolder, target);
-
-                    if (!IsSameOrDescendant(settings.OutputFolder, target))
-                    {
-                        failed.Add(new AgentBatchFailure(
-                            relativePath, "output path escapes export folder"));
-                    }
-                    else if (ExportSafety.IsOriginalPath(target, originalPaths))
-                    {
-                        failed.Add(new AgentBatchFailure(
-                            relativePath, "would overwrite an original image"));
-                    }
-                    else if (File.Exists(target))
-                    {
-                        skipped.Add(relativePath);
-                    }
-                    else if (!targets.Add(target))
-                    {
-                        failed.Add(new AgentBatchFailure(
-                            relativePath, "output name collision"));
-                    }
-                    else
-                    {
-                        pending.Add((variant, relativePath));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    failed.Add(new AgentBatchFailure(
-                        relativePath.Replace('\\', '/'), SafeReason(ex)));
-                }
-            }
-
-            if (pending.Count == 0) continue;
-            try
-            {
-                await _imageService.ExportBatchAsync(
-                    new[] { image }, settings, pending.Select(item => item.Variant).ToList(),
-                    useSubfolders, null, CancellationToken.None);
-                exported.AddRange(pending.Select(item => item.RelativePath));
-            }
-            catch (Exception ex)
-            {
-                failed.AddRange(pending.Select(item =>
-                    new AgentBatchFailure(item.RelativePath, SafeReason(ex))));
-            }
-        }
-
-        return new AgentExportResult(exported, skipped, failed);
-    }
-
-    private static IReadOnlyList<ExportVariant> CreateExportVariants(AgentExportOptions options)
-    {
-        if (options.Variants is not { Count: > 0 })
-        {
-            ValidateMaxDimension(options.MaxDimension);
-            return new[] { new ExportVariant("export", options.MaxDimension) };
-        }
-
-        if (options.Variants.Count > 8)
-            throw new AgentToolException("Variants must contain no more than 8 entries.");
-
-        var names = new HashSet<string>(StringComparer.Ordinal);
-        var variants = options.Variants.Select(item =>
-        {
-            var name = AgentToolValidation.SanitizeVariantName(item.Name);
-            if (!names.Add(name))
-                throw new AgentToolException("Variant names must be unique after sanitization.");
-            ValidateMaxDimension(item.MaxDimension);
-            return new ExportVariant(name, item.MaxDimension);
-        });
-        return variants
-            .OrderBy(item => item.MaxDimension.HasValue ? 1 : 0)
-            .ThenByDescending(item => item.MaxDimension ?? 0)
-            .ToList();
-    }
-
-    private static void ValidateMaxDimension(int? value)
-    {
-        if (value is <= 0 or > 65536)
-            throw new AgentToolException("Maximum dimension must be between 1 and 65536.");
-    }
-
-    private static string ToOutputRelativePath(string outputFolder, string fullPath) =>
-        Path.GetRelativePath(outputFolder, fullPath).Replace('\\', '/');
-
     private Task<AgentBatchResult> MutateAsync(
         IReadOnlyList<string> ids,
         Func<IReadOnlyList<ImageFile>, Task<List<AgentBatchFailure>>> mutation) =>
@@ -401,7 +236,11 @@ public sealed class AgentToolService
             image.MetadataLoaded, image.PixelWidth, image.PixelHeight, image.DateTaken,
             image.CameraDisplay, image.Iso, image.FNumber, image.ExposureTime,
             image.FocalLength, image.LensModel, membership?.BurstId,
-            membership?.Index, membership?.Size);
+            membership?.Index, membership?.Size)
+        {
+            SourceAvailability = ToAgentAvailability(
+                _imageService.GetSourceAvailability(image))
+        };
     }
 
     private static bool MatchesFileType(ImageFile image, string? filter) =>
@@ -455,6 +294,23 @@ public sealed class AgentToolService
 
     private static string SafeReason(Exception ex) =>
         string.IsNullOrWhiteSpace(ex.Message) ? ex.GetType().Name : ex.Message;
+
+    private static AgentBatchFailure CreateFailure(string id, Exception exception) =>
+        exception is SourceReadDeferredException
+            ? new AgentBatchFailure(
+                id,
+                "source requires hydration",
+                "hydration_required")
+            : new AgentBatchFailure(id, SafeReason(exception));
+
+    private static string ToAgentAvailability(SourceAvailability availability) =>
+        availability switch
+        {
+            SourceAvailability.AvailableLocally => "available_locally",
+            SourceAvailability.RequiresHydration => "requires_hydration",
+            SourceAvailability.Unavailable => "unavailable",
+            _ => "unknown"
+        };
 
     private static async Task<T> OnUiThreadAsync<T>(Func<Task<T>> action)
     {

@@ -12,14 +12,16 @@ public class FolderService
         if (!Directory.Exists(folderPath))
             yield break;
 
-        var files = Directory.EnumerateFiles(folderPath)
-            .Where(f => ImageFile.SupportedExtensions.Contains(
-                Path.GetExtension(f)))
-            .OrderBy(f => f, StringComparer.OrdinalIgnoreCase);
+        var files = new DirectoryInfo(folderPath).EnumerateFiles()
+            .Where(file => ImageFile.SupportedExtensions.Contains(
+                file.Extension))
+            .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase);
 
         foreach (var file in files)
         {
-            yield return new ImageFile(file);
+            yield return new ImageFile(
+                file.FullName,
+                SourceAvailabilityService.GetEnumerationHint(file));
         }
     }
 

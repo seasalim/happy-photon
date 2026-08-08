@@ -5,6 +5,8 @@ Happy Photon is a performance-focused .NET 10/Avalonia photo workflow for browsi
 ## Repository rules
 
 - Never modify original images; exports must also refuse collisions with loaded originals.
+- Background work must never hydrate cloud-only originals; source content reads require
+  a live availability check and explicit, clearly scoped user approval.
 - Keep every source file under 500 lines; split focused components when needed.
 - Preserve MVVM ownership: state in `ViewModels/`, UI in `Views/`, and image/catalog logic in `Services/`.
 - For new features, make the smallest simple change that works; optimize only after measurement identifies a real performance need.

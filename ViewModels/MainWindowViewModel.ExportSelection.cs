@@ -92,6 +92,69 @@ public partial class MainWindowViewModel
         CancellationToken cancellationToken = default) =>
         ImageService.ExportBatchAsync(imagesToExport, ExportSettings, progress, cancellationToken);
 
+    internal ExportHydrationScope GetExportHydrationScope(
+        IReadOnlyList<ImageFile> images) =>
+        ImageService.GetExportHydrationScope(images);
+
+    internal async Task<int> ExportBatchApprovedAsync(
+        IReadOnlyList<ImageFile> imagesToExport,
+        IProgress<(int current, int total, string fileName)>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var generation = Volatile.Read(ref _libraryGeneration);
+        var exported = await ImageService.ExportBatchApprovedAsync(
+            imagesToExport,
+            ExportSettings,
+            progress,
+            cancellationToken);
+
+        try
+        {
+            RefreshExportHydratedSources(
+                imagesToExport,
+                generation,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Post-export Library refresh failed: {ex.Message}");
+        }
+
+        return exported;
+    }
+
+    private void RefreshExportHydratedSources(
+        IReadOnlyList<ImageFile> images,
+        int generation,
+        CancellationToken cancellationToken)
+    {
+        foreach (var image in images)
+        {
+            if (cancellationToken.IsCancellationRequested ||
+                generation != Volatile.Read(ref _libraryGeneration))
+            {
+                return;
+            }
+
+            if (!Library.Contains(image) ||
+                (!image.SourceRequiresHydration &&
+                 !image.ThumbnailDeferredForHydration) ||
+                !ImageService.CanRetryBackgroundRead(image))
+            {
+                continue;
+            }
+
+            SetSourceRequiresHydration(image, false);
+            image.ThumbnailDeferredForHydration = false;
+            image.ThumbnailLoadFailed = false;
+            QueueHydratedThumbnail(
+                image,
+                generation,
+                cancellationToken);
+        }
+    }
+
     /// <summary>
     /// Handles Escape key: cancels crop or exits develop mode.
     /// Does nothing in Library view when no transient workspace mode is active.

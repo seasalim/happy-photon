@@ -36,6 +36,7 @@ internal sealed class ThumbnailLoadScheduler : IDisposable
             foreach (var (image, priority) in requests)
             {
                 if (image.Thumbnail != null || image.ThumbnailLoadFailed ||
+                    image.ThumbnailDeferredForHydration ||
                     _inFlight.Contains(image))
                 {
                     continue;

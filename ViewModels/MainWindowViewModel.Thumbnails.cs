@@ -1,5 +1,6 @@
 using Avalonia.Media.Imaging;
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
 
@@ -85,9 +86,7 @@ public partial class MainWindowViewModel
             Interlocked.Exchange(ref _thumbnailScheduler, scheduler);
             QueueRequestedThumbnailRange();
 
-            var metadataTask = SweepMetadataAndComputeBurstsAsync(
-                imageFiles, cancellationToken);
-            await Task.WhenAll(scheduler.Completion, metadataTask);
+            await scheduler.Completion;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -147,16 +146,19 @@ public partial class MainWindowViewModel
         {
             cancellationToken.ThrowIfCancellationRequested();
             imageFile.IsLoading = true;
-            thumbnail = await ImageService.LoadThumbnailAsync(imageFile, cancellationToken);
+            using var result = await ImageService.LoadThumbnailAsync(
+                imageFile,
+                cancellationToken);
             if (generation != Volatile.Read(ref _libraryGeneration) ||
                 !Library.Contains(imageFile))
             {
                 return;
             }
 
-            imageFile.ThumbnailLoadFailed = thumbnail == null;
-            if (thumbnail != null)
+            ApplyThumbnailLoadStatus(imageFile, result.Status);
+            if (result.Status == ThumbnailLoadStatus.Loaded)
             {
+                thumbnail = result.DetachBitmap();
                 Library.ReplaceThumbnail(imageFile, thumbnail);
                 thumbnail = null;
                 if (ReferenceEquals(SelectedImage, imageFile) &&
@@ -213,12 +215,44 @@ public partial class MainWindowViewModel
         scheduler.Enqueue(visible.Select(image => (image, 0)));
     }
 
-    private void ReserveThumbnailResidency(IReadOnlyCollection<ImageFile> requested)
+    private void RetryDeferredThumbnailIfAvailable(ImageFile image)
+    {
+        if (!image.ThumbnailDeferredForHydration ||
+            !ImageService.CanRetryBackgroundRead(image))
+        {
+            return;
+        }
+
+        SetSourceRequiresHydration(image, false);
+        image.ThumbnailDeferredForHydration = false;
+        image.ThumbnailLoadFailed = false;
+        _thumbnailScheduler?.Enqueue([(image, 0)]);
+    }
+
+    private void QueueHydratedThumbnail(
+        ImageFile image,
+        int generation,
+        CancellationToken cancellationToken)
+    {
+        var scheduler = _thumbnailScheduler;
+        if (scheduler != null)
+        {
+            scheduler.Enqueue([(image, 0)]);
+            return;
+        }
+
+        _ = LoadThumbnailAsync(image, generation, cancellationToken);
+    }
+
+    internal void ReserveThumbnailResidency(
+        IReadOnlyCollection<ImageFile> requested)
     {
         var pinned = new HashSet<ImageFile>(requested, ReferenceEqualityComparer.Instance);
         if (SelectedImage != null) pinned.Add(SelectedImage);
         var residents = Library.AllImages.Where(image => image.Thumbnail != null).ToList();
-        var missing = requested.Count(image => image.Thumbnail == null);
+        var missing = requested.Count(image =>
+            image.Thumbnail == null &&
+            !image.ThumbnailDeferredForHydration);
         var pinnedResidentCount = pinned.Count(image => image.Thumbnail != null);
         var targetCount = Math.Max(pinnedResidentCount, MaxResidentThumbnails - missing);
         foreach (var image in ThumbnailResidencyPolicy.SelectEvictions(

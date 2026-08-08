@@ -7,6 +7,7 @@ using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
+using ImageMagick;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -56,7 +57,12 @@ public sealed class ManualFolderRefreshViewTests
             $"happy-photon-refresh-view-{Guid.NewGuid():N}");
         var photos = Path.Combine(root, "photos");
         Directory.CreateDirectory(photos);
-        File.WriteAllBytes(Path.Combine(photos, "image.jpg"), [1]);
+        using (var image = new MagickImage(MagickColors.Gray, 16, 16))
+        {
+            image.Write(
+                Path.Combine(photos, "image.jpg"),
+                MagickFormat.Jpeg);
+        }
         using var catalog = new CatalogService(Path.Combine(root, "catalog"));
         Complete(catalog.InitializeAsync());
         var vm = new MainWindowViewModel(catalog);

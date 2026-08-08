@@ -1,0 +1,283 @@
+using HappyPhoton.Models;
+using HappyPhoton.Services;
+using HappyPhoton.ViewModels;
+using ImageMagick;
+using Xunit;
+
+namespace HappyPhoton.Tests;
+
+[Collection(AvaloniaTestCollection.Name)]
+public sealed class CloudSelectionStateTests : IDisposable
+{
+    private readonly string _root = Path.Combine(
+        Path.GetTempPath(),
+        $"happy-photon-cloud-selection-{Guid.NewGuid():N}");
+
+    [WindowsFact]
+    public void LibrarySelection_CloudAfterLocalClearsDerivedEditUi()
+    {
+        Directory.CreateDirectory(_root);
+        var localPath = WriteJpeg("local.jpg");
+        var cloudPath = WriteJpeg("cloud.jpg");
+        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        Complete(catalog.InitializeAsync());
+        var availability = new TestSourceAvailabilityService(
+            SourceAvailability.AvailableLocally)
+        {
+            Resolver = path => path == cloudPath
+                ? SourceAvailability.RequiresHydration
+                : SourceAvailability.AvailableLocally
+        };
+        var viewModel = new MainWindowViewModel(
+            catalog,
+            new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: availability);
+        try
+        {
+            var local = new ImageFile(
+                localPath,
+                SourceAvailability.AvailableLocally)
+            {
+                EditSettings = new EditSettings { Exposure = 1 }
+            };
+            var cloud = new ImageFile(
+                cloudPath,
+                SourceAvailability.AvailableLocally)
+            {
+                EditSettings = CreateNonDefaultSettings()
+            };
+            viewModel.Library.SetImages([local, cloud]);
+            viewModel.InitializeCloudSourceCount([local, cloud]);
+            viewModel.SelectedImage = local;
+            viewModel.Histogram = new HistogramData();
+            viewModel.IsWhiteBalanceReady = true;
+            viewModel.IsWhiteBalancePicking = true;
+            Assert.True(viewModel.CopyEditSettingsCommand.CanExecute(null));
+            viewModel.CopyEditSettingsCommand.Execute(null);
+
+            viewModel.SelectedImage = cloud;
+
+            Assert.True(cloud.SourceRequiresHydration);
+            Assert.Equal(1, viewModel.OnlineOnlyPhotoCount);
+            Assert.False(viewModel.CanEditSelectedImage);
+            Assert.Null(viewModel.Histogram);
+            Assert.Equal(0, viewModel.Exposure);
+            Assert.Equal(0, viewModel.Brightness);
+            Assert.Equal(0, viewModel.Contrast);
+            Assert.Equal(0, viewModel.Saturation);
+            Assert.Equal(0, viewModel.Vibrance);
+            Assert.Equal(0, viewModel.Shadows);
+            Assert.Equal(0, viewModel.Highlights);
+            Assert.Equal(0, viewModel.Rotation);
+            Assert.Equal(0, viewModel.HorizonRotation);
+            Assert.Equal("As Shot", viewModel.SelectedWhiteBalanceMode);
+            Assert.Equal(0, viewModel.WhiteBalanceTint);
+            Assert.Equal(HlReconstructionMode.Clip, viewModel.HlReconstruction);
+            Assert.Null(viewModel.ActivePresetId);
+            Assert.Null(viewModel.CurrentCrop);
+            Assert.True(viewModel.CurrentCurve!.IsIdentity());
+            Assert.False(viewModel.IsWhiteBalanceReady);
+            Assert.False(viewModel.IsWhiteBalancePicking);
+            Assert.False(viewModel.CopyEditSettingsCommand.CanExecute(null));
+            Assert.False(viewModel.PasteEditSettingsCommand.CanExecute(null));
+        }
+        finally
+        {
+            Complete(viewModel.DisposeAsync().AsTask());
+        }
+    }
+
+    [WindowsFact]
+    public void LibrarySelection_CloudUsesCachedThumbnailHistogram()
+    {
+        Directory.CreateDirectory(_root);
+        var cloudPath = WriteJpeg("cached-cloud.jpg");
+        using var catalog = new CatalogService(Path.Combine(_root, "cached-catalog"));
+        Complete(catalog.InitializeAsync());
+        var viewModel = new MainWindowViewModel(
+            catalog,
+            new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.RequiresHydration));
+        try
+        {
+            var cloud = new ImageFile(
+                cloudPath,
+                SourceAvailability.RequiresHydration);
+            using var source = new MagickImage(MagickColors.Orange, 16, 16);
+            viewModel.Library.SetImages([cloud]);
+            viewModel.Library.ReplaceThumbnail(
+                cloud,
+                BitmapConversionService.ConvertToBitmap(source));
+            viewModel.InitializeCloudSourceCount([cloud]);
+
+            viewModel.SelectedImage = cloud;
+            WaitUntil(() => viewModel.Histogram != null);
+
+            Assert.True(cloud.SourceRequiresHydration);
+            Assert.NotNull(cloud.Thumbnail);
+            Assert.NotNull(viewModel.Histogram);
+        }
+        finally
+        {
+            Complete(viewModel.DisposeAsync().AsTask());
+        }
+    }
+
+    [WindowsFact]
+    public void CloudStateChange_NotifiesEditStateOutsideLibrary()
+    {
+        Directory.CreateDirectory(_root);
+        var imagePath = WriteJpeg("outside-library.jpg");
+        using var catalog = new CatalogService(Path.Combine(_root, "outside-catalog"));
+        Complete(catalog.InitializeAsync());
+        var viewModel = new MainWindowViewModel(
+            catalog,
+            new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally));
+        try
+        {
+            var image = new ImageFile(imagePath);
+            viewModel.SelectedImage = image;
+            var notifications = new List<string?>();
+            viewModel.PropertyChanged += (_, args) =>
+                notifications.Add(args.PropertyName);
+
+            viewModel.ApplyThumbnailLoadStatus(
+                image,
+                ThumbnailLoadStatus.DeferredForHydration);
+
+            Assert.False(viewModel.CanEditSelectedImage);
+            Assert.Contains(nameof(viewModel.CanEditSelectedImage), notifications);
+            Assert.Equal(0, viewModel.OnlineOnlyPhotoCount);
+        }
+        finally
+        {
+            Complete(viewModel.DisposeAsync().AsTask());
+        }
+    }
+
+    [WindowsFact]
+    public void BatchPaste_RejectsCloudOnlyTargets()
+    {
+        Directory.CreateDirectory(_root);
+        var localPath = WriteJpeg("paste-local.jpg");
+        var cloudPath = WriteJpeg("paste-cloud.jpg");
+        using var catalog = new CatalogService(Path.Combine(_root, "paste-catalog"));
+        Complete(catalog.InitializeAsync());
+        var viewModel = new MainWindowViewModel(
+            catalog,
+            new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally)
+            {
+                Resolver = path => path == cloudPath
+                    ? SourceAvailability.RequiresHydration
+                    : SourceAvailability.AvailableLocally
+            });
+        try
+        {
+            var local = new ImageFile(localPath)
+            {
+                EditSettings = new EditSettings { Exposure = 1 }
+            };
+            var cloud = new ImageFile(
+                cloudPath,
+                SourceAvailability.RequiresHydration)
+            {
+                EditSettings = new EditSettings { Exposure = 2 }
+            };
+            viewModel.Library.SetImages([local, cloud]);
+            viewModel.InitializeCloudSourceCount([local, cloud]);
+            viewModel.SelectedImage = local;
+            viewModel.CopyEditSettingsCommand.Execute(null);
+            viewModel.ToggleImageSelection(local);
+            viewModel.ToggleImageSelection(cloud);
+            var confirmations = 0;
+            viewModel.ConfirmBatchApplyAsync = _ =>
+            {
+                confirmations++;
+                return Task.FromResult(true);
+            };
+
+            Complete(viewModel.PasteEditSettingsCommand.ExecuteAsync(null));
+
+            Assert.Equal(0, confirmations);
+            Assert.Equal(2, cloud.EditSettings.Exposure);
+            Assert.Equal(
+                "Download online-only originals before applying edit settings",
+                viewModel.TransientStatus);
+        }
+        finally
+        {
+            Complete(viewModel.DisposeAsync().AsTask());
+        }
+    }
+
+    public void Dispose()
+    {
+        if (Directory.Exists(_root))
+        {
+            Directory.Delete(_root, recursive: true);
+        }
+    }
+
+    private string WriteJpeg(string name)
+    {
+        var path = Path.Combine(_root, name);
+        using var image = new MagickImage(MagickColors.Gray, 16, 16);
+        image.Write(path, MagickFormat.Jpeg);
+        return path;
+    }
+
+    private static EditSettings CreateNonDefaultSettings() => new()
+    {
+        Exposure = 2,
+        Brightness = 20,
+        Contrast = 30,
+        Saturation = 40,
+        Vibrance = 50,
+        Shadows = 60,
+        Highlights = -70,
+        Rotation = 90,
+        HorizonRotation = 2,
+        Curve = new CurveData
+        {
+            Points =
+            [
+                new CurvePoint(0, 0),
+                new CurvePoint(0.5, 0.7),
+                new CurvePoint(1, 1)
+            ]
+        }
+    };
+
+    private static void Complete(Task task) => task.GetAwaiter().GetResult();
+
+    private static void WaitUntil(Func<bool> condition)
+    {
+        Assert.True(
+            SpinWait.SpinUntil(condition, TimeSpan.FromSeconds(3)),
+            "Timed out waiting for the cached thumbnail histogram.");
+    }
+
+    private sealed class NullBaseLoader : IBaseImageLoader
+    {
+        public bool CanLoad(ImageFile file) => true;
+
+        public BaseImage? LoadPreviewBase(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) => null;
+
+        public BaseImage? LoadFullBase(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) => null;
+    }
+}

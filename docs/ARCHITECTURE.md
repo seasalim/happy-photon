@@ -44,8 +44,9 @@ MainWindowViewModel
  │    │    └── PreviewBaseCoordinator ── BaseLoaderRouter
  │    ├── HistogramService
  │    ├── MetadataService                           (single-flight extraction + UI apply)
+ │    ├── SourceAvailabilityService + SourceHydrationService
  │    ├── RenderPipeline                            (shared preview/export edit math)
- │    ├── ImageExportService ── BaseLoaderRouter + RenderPipeline
+ │    ├── ImageExportService ── GatedBaseImageLoader + RenderPipeline
  │    │                         + ExportMetadataService
  │    └── IRawProcessingService                     (thumbnails + metadata only)
  ├── FolderService / FolderTreeService              (disk enumeration)
@@ -210,7 +211,7 @@ sequenceDiagram
     W-->>UI: imageFile.Thumbnail = bitmap (continuations on UI context)
     UI->>UI: grid reports visible indices after layout/scroll
     UI->>W: priority scheduler: visible, then nearby prefetch
-    UI->>TP: metadata sweep + burst grouping (independent of residency)
+    UI->>TP: when Bursts is enabled, metadata sweep + burst grouping
     W->>Q: QueueSaveToCache for uncached thumbnails
     Q->>Q: encode to assets/tmp, atomic File.Move into thumbs/
 ```
@@ -247,11 +248,19 @@ exactly six long-lived workers for the active folder:
   `ImageFile`, so later viewport reports do not retry corrupt or unsupported files and
   any last successful resident bitmap remains visible. A fresh folder load creates new
   instances and permits a new attempt.
+- A cloud deferral is distinct from a decode failure. It is remembered for the current
+  folder generation, is not repeatedly re-enqueued by viewport reports, and does not
+  reserve a slot in the decoded-bitmap residency target.
 - Workers wait on one shared signal, not one semaphore waiter or cancellation
   registration per image. Folder switches remain constant-time on the UI thread.
-- The metadata sweep walks every image independently, computes burst groups, and does
-  not require thumbnails to be resident. `MetadataService` deduplicates this work with
-  selection-triggered loads and awaits UI application before grouping reads `DateTaken`.
+- Capture-time metadata is not swept on folder open. Enabling Bursts starts a
+  cancellable, serial sweep over the current folder and computes burst groups; disabling
+  Bursts or changing folders stops the remaining work. A pinned status remains visible
+  while enabled analysis is active, including while a newer folder waits for a
+  cancelled sweep to yield; disabling Bursts clears it immediately. `MetadataService`
+  deduplicates this work with selection-triggered loads and awaits UI application
+  before grouping reads `DateTaken`. The sweep analyzes locally readable images and
+  reports cloud-only images as skipped; enabling Bursts never approves hydration.
 
 Worker continuations post back to the UI context (the pump is started from the UI
 thread), so `ImageFile.Thumbnail` assignments — and the resulting grid updates — happen
@@ -291,6 +300,26 @@ The source thumbnail remains unchanged in `assets/thumbs/`; agent statistics alw
 read this unedited tier. Accurate RAW thumbnails are q85 JPEGs with settings-hash
 sidecars. Both files must exist, the JPEG must be newer than the original, and the hash
 must match the current render settings.
+
+### Cloud-file source access
+
+Folder enumeration captures a display-only availability hint without opening image
+content. Every actual source access rechecks the current file attributes through
+`ISourceAvailabilityService`; the hint is never authoritative because a provider may
+dehydrate a file after enumeration.
+
+`SourceReadIntent.Background` is used by thumbnails, metadata, previews, statistics,
+Bursts, agents, and unconfirmed export work. It permits local and unknown sources but
+returns a typed deferral for files that require hydration. Warm Happy Photon caches are
+checked before this gate and remain usable. `GatedBaseImageLoader` wraps both default
+and injected base loaders, while metadata and path-based statistics gate their own
+source entry points.
+
+Only two user actions grant `UserApprovedHydration`: **Download and open** for one
+selected image, and the export dialog after it reports the selected cloud-file count
+and logical size. Both paths recheck live availability. Agent operations remain
+background intent and return `sourceAvailability` or a `hydration_required` failure
+code instead of downloading an original.
 
 ### The cache write queue (ThumbnailCacheService)
 
@@ -343,6 +372,8 @@ Briefly, for contrast with thumbnails:
 - Selecting an image starts rendered-cache loading and base decoding concurrently.
   The thumbnail covers a cache miss; a thin line under the histogram appears only
   when base decoding exceeds 150 ms. The fresh preview then schedules the histogram.
+- For a cloud-only original, a valid cached preview may still paint, but fresh base
+  decode is deferred until **Download and open** hydrates that one image.
 - Library mode never loads a 1600px preview just to draw the histogram. It reads the
   already edited 150px thumbnail directly; if that thumbnail is still loading, its UI
   assignment reschedules the debounced histogram.
@@ -359,12 +390,13 @@ Briefly, for contrast with thumbnails:
 | Rendered preview cache writes | Dedicated writer task | On image leave; JPEG + hash sidecar; bounded drop-oldest; atomic move; 2 s drain |
 | Rendered RAW thumbnail writes | Dedicated writer task | Independent capacity-8 queue; q85 JPEG + hash sidecar; promotion or image leave |
 | Metadata extraction | Threadpool | Per-`ImageFile` single-flight task; no observable mutation |
-| Metadata apply + burst grouping | UI thread | Awaited dispatcher application before grouping |
+| Metadata apply + burst grouping | UI thread | Demand-driven by Bursts; cancelled on disable or folder change |
 | Preview base decode | Threadpool | One held base; single-flight by identity; newest-wins generation |
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
 | Library histogram | UI thread after debounce | Direct 150px thumbnail pixel read |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |
 | Agent (MCP) tool calls | ASP.NET worker → marshaled | `AgentToolService` marshals mutations to the UI thread |
+| Explicit source hydration | Threadpool stream read | Single image or confirmed export batch; cancellation is best effort |
 
 ## Design invariants (do not break)
 
@@ -380,3 +412,5 @@ Briefly, for contrast with thumbnails:
 7. Decoded thumbnails are viewport-prioritized and capped; the full folder must not be
    retained in native bitmap memory.
 8. Every source file stays under 500 lines.
+9. Background work never hydrates a cloud-only original. Source reads enforce live
+   availability; only a clearly scoped user action may use approved hydration intent.

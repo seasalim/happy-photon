@@ -36,10 +36,12 @@ public sealed class ThumbnailServiceTests : IDisposable
             EditSettings = new EditSettings { Exposure = 3 }
         };
 
-        using var unedited = await imageService.LoadUneditedThumbnailAsync(
+        using var uneditedResult = await imageService.LoadUneditedThumbnailAsync(
             image, CancellationToken.None);
-        using var edited = await imageService.LoadThumbnailAsync(
+        using var editedResult = await imageService.LoadThumbnailAsync(
             image, CancellationToken.None);
+        var unedited = uneditedResult.Bitmap;
+        var edited = editedResult.Bitmap;
 
         Assert.NotNull(unedited);
         Assert.NotNull(edited);
@@ -83,7 +85,8 @@ public sealed class ThumbnailServiceTests : IDisposable
             new HistogramService());
         var image = new ImageFile(sourcePath);
 
-        using var thumbnail = await thumbnailService.LoadUneditedThumbnailAsync(image);
+        using var thumbnailResult = await thumbnailService.LoadUneditedThumbnailAsync(image);
+        var thumbnail = thumbnailResult.Bitmap;
         var (preview, _) = await previewService.LoadPreviewWithHistogramAsync(
             image, new EditSettings(), skipHistogram: true);
         using (preview)

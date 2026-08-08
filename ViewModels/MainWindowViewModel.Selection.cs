@@ -18,6 +18,7 @@ public partial class MainWindowViewModel
         Volatile.Write(ref _activeBaseRefreshRequestId, 0);
         IsBaseArming = false;
         OnPropertyChanged(nameof(ActiveFileName));
+        NotifySelectedImageEditStateChanged();
 
         // Exit crop mode when switching images
         if (IsCropMode)
@@ -36,7 +37,33 @@ public partial class MainWindowViewModel
 
         if (newValue != null)
         {
+            RefreshSourceAvailability(newValue);
+            RetryDeferredThumbnailIfAvailable(newValue);
             PrepareWhiteBalanceUi(newValue);
+            NotifyWhiteBalanceCommandState();
+            if (newValue.SourceRequiresHydration)
+            {
+                _histogramDebounce?.Cancel();
+                Histogram = null;
+                ResetSliders();
+                CurrentCrop = null;
+                CurrentCurve = new CurveData();
+                ActivePresetId = null;
+                _lastSavedState = null;
+                _isLoadingImage = false;
+                UpdateCanReset();
+
+                if (IsDevelopMode || IsFullScreenMode)
+                {
+                    _ = LoadPreviewAsync(newValue);
+                }
+                else
+                {
+                    ScheduleHistogramUpdate();
+                }
+                return;
+            }
+
             LoadSlidersFrom(newValue.EditSettings);
             _lastSavedState = newValue.EditSettings.Clone();
 
@@ -88,7 +115,7 @@ public partial class MainWindowViewModel
 
     private void UpdateCanReset()
     {
-        if (SelectedImage == null)
+        if (!CanEditSelectedImage)
         {
             CanReset = false;
             return;
@@ -129,7 +156,12 @@ public partial class MainWindowViewModel
 
     public async Task OnCurveChangedAsync()
     {
-        if (SelectedImage == null || CurrentCurve == null) return;
+        if (!CanEditSelectedImage ||
+            SelectedImage == null ||
+            CurrentCurve == null)
+        {
+            return;
+        }
 
         // Push undo state before making changes
         PushUndoState();

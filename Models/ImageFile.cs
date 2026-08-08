@@ -1,6 +1,7 @@
 using System.Collections.Frozen;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.Models;
 
@@ -26,6 +27,7 @@ public partial class ImageFile : ObservableObject
     public string FilePath { get; }
     public string FileName { get; }
     public string Extension { get; }
+    internal SourceAvailability SourceAvailabilityHint { get; }
 
     [ObservableProperty]
     private Bitmap? _thumbnail;
@@ -60,6 +62,15 @@ public partial class ImageFile : ObservableObject
     [ObservableProperty]
     private bool _isLoading;
 
+    [ObservableProperty]
+    private bool _thumbnailDeferredForHydration;
+
+    [ObservableProperty]
+    private bool _sourceRequiresHydration;
+
+    public bool ShowCloudPlaceholder =>
+        SourceRequiresHydration && Thumbnail == null;
+
     public EditSettings EditSettings { get; set; } = new();
 
     /// <summary>
@@ -88,11 +99,21 @@ public partial class ImageFile : ObservableObject
     public int BurstColorIndex => BurstGroupOrdinal <= 0 ? 0 : (BurstGroupOrdinal - 1) % 6;
 
     public ImageFile(string filePath)
+        : this(filePath, SourceAvailability.Unknown)
+    {
+    }
+
+    internal ImageFile(
+        string filePath,
+        SourceAvailability sourceAvailabilityHint)
     {
         FilePath = filePath;
         FileName = Path.GetFileName(filePath);
         Extension = Path.GetExtension(filePath);
         IsRaw = RawExtensions.Contains(Extension);
+        SourceAvailabilityHint = sourceAvailabilityHint;
+        SourceRequiresHydration =
+            sourceAvailabilityHint == SourceAvailability.RequiresHydration;
     }
 
     internal Bitmap? SwapThumbnail(Bitmap? thumbnail)
@@ -173,6 +194,10 @@ public partial class ImageFile : ObservableObject
     }
 
     partial void OnFileSizeChanged(long value) => OnPropertyChanged(nameof(FileSizeDisplay));
+    partial void OnThumbnailChanged(Bitmap? value) =>
+        OnPropertyChanged(nameof(ShowCloudPlaceholder));
+    partial void OnSourceRequiresHydrationChanged(bool value) =>
+        OnPropertyChanged(nameof(ShowCloudPlaceholder));
     partial void OnCameraMakeChanged(string? value) => OnPropertyChanged(nameof(CameraDisplay));
     partial void OnCameraModelChanged(string? value) => OnPropertyChanged(nameof(CameraDisplay));
     partial void OnFNumberChanged(double? value) => OnPropertyChanged(nameof(ExposureDisplay));

@@ -6,11 +6,17 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private const string BurstAnalysisStatus = "Analyzing capture times…";
+
     [ObservableProperty]
     private bool _showBurstGroups;
 
     private IReadOnlyList<BurstGroup>? _burstGroups;
     private Dictionary<string, (string BurstId, int Ordinal, int Index, int Size)>? _burstMembership;
+    private CancellationTokenSource? _burstAnalysisCts;
+    private Task _burstAnalysisTask = Task.CompletedTask;
+    // Burst lifecycle methods and this restart handshake are UI-thread-affine.
+    private bool _burstAnalysisRestartRequested;
 
     internal bool BurstsComputed => _burstGroups != null;
 
@@ -29,27 +35,127 @@ public partial class MainWindowViewModel
             }
             else
             {
-                ShowTransientStatus("Analyzing capture times…");
+                StartBurstAnalysisIfRequested();
             }
         }
         else
         {
+            _burstAnalysisRestartRequested = false;
+            ClearPinnedStatus(BurstAnalysisStatus);
+            CancelBurstAnalysis();
             ClearBurstIndicators();
         }
     }
 
     private void ResetBurstState()
     {
+        _burstAnalysisRestartRequested = false;
+        CancelBurstAnalysis();
         _burstGroups = null;
         _burstMembership = null;
     }
 
+    private bool StartBurstAnalysisIfRequested()
+    {
+        if (!ShowBurstGroups || _burstGroups != null ||
+            Library.AllImages.Count == 0)
+        {
+            return false;
+        }
+
+        var current = _burstAnalysisCts;
+        if (current != null)
+        {
+            _burstAnalysisRestartRequested = true;
+            return true;
+        }
+
+        var folderCancellation = _thumbnailLoadingCts;
+        if (folderCancellation == null || folderCancellation.IsCancellationRequested)
+        {
+            return false;
+        }
+
+        CancellationTokenSource analysisCts;
+        try
+        {
+            analysisCts = CancellationTokenSource.CreateLinkedTokenSource(
+                folderCancellation.Token);
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+        _burstAnalysisRestartRequested = false;
+        Interlocked.Exchange(ref _burstAnalysisCts, analysisCts);
+        ShowPinnedStatus(BurstAnalysisStatus);
+        _burstAnalysisTask = RunBurstAnalysisAsync(
+            Library.AllImages.ToList(),
+            Volatile.Read(ref _libraryGeneration),
+            analysisCts);
+        return true;
+    }
+
+    private async Task RunBurstAnalysisAsync(
+        List<ImageFile> images,
+        int generation,
+        CancellationTokenSource analysisCts)
+    {
+        try
+        {
+            await SweepMetadataAndComputeBurstsAsync(
+                images,
+                generation,
+                analysisCts.Token);
+        }
+        finally
+        {
+            var shouldRestart = _burstAnalysisRestartRequested &&
+                ShowBurstGroups &&
+                _burstGroups == null;
+            // Defensive ownership check if overlapping analyses are ever allowed.
+            var cleared = ReferenceEquals(Interlocked.CompareExchange(
+                ref _burstAnalysisCts,
+                null,
+                analysisCts), analysisCts);
+            analysisCts.Dispose();
+            var restarted = false;
+            if (cleared && shouldRestart)
+            {
+                _burstAnalysisRestartRequested = false;
+                restarted = StartBurstAnalysisIfRequested();
+            }
+            if (cleared && !restarted)
+            {
+                ClearPinnedStatus(BurstAnalysisStatus);
+            }
+        }
+    }
+
+    private void CancelBurstAnalysis() => _burstAnalysisCts?.Cancel();
+
+    internal async Task WaitForBurstAnalysisAsync()
+    {
+        while (true)
+        {
+            var observed = _burstAnalysisTask;
+            await observed;
+            if (ReferenceEquals(observed, _burstAnalysisTask))
+            {
+                return;
+            }
+        }
+    }
+
     private async Task SweepMetadataAndComputeBurstsAsync(
         List<ImageFile> images,
+        int generation,
         CancellationToken cancellationToken)
     {
         try
         {
+            var analyzedCount = 0;
+            var skippedCount = 0;
             foreach (var image in images)
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -57,10 +163,43 @@ public partial class MainWindowViewModel
                     return;
                 }
 
-                await ImageService.LoadMetadataAsync(image);
+                var availability = ImageService.GetSourceAvailability(image);
+                if (availability == SourceAvailability.RequiresHydration)
+                {
+                    if (generation == Volatile.Read(ref _libraryGeneration))
+                    {
+                        SetSourceRequiresHydration(image, true);
+                    }
+                    skippedCount++;
+                    continue;
+                }
+                if (availability == SourceAvailability.Unavailable)
+                {
+                    continue;
+                }
+
+                await _loadMetadataAsync(image);
+                if (image.MetadataLoaded)
+                {
+                    if (generation == Volatile.Read(ref _libraryGeneration))
+                    {
+                        SetSourceRequiresHydration(image, false);
+                    }
+                    analyzedCount++;
+                }
+                else if (ImageService.GetSourceAvailability(image) ==
+                         SourceAvailability.RequiresHydration)
+                {
+                    if (generation == Volatile.Read(ref _libraryGeneration))
+                    {
+                        SetSourceRequiresHydration(image, true);
+                    }
+                    skippedCount++;
+                }
             }
 
-            if (cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested ||
+                generation != Volatile.Read(ref _libraryGeneration))
             {
                 return;
             }
@@ -85,6 +224,12 @@ public partial class MainWindowViewModel
 
             _burstGroups = groups;
             _burstMembership = membership;
+            _burstAnalysisRestartRequested = false;
+            var analyzedNoun = analyzedCount == 1 ? "photo" : "photos";
+            var skippedNoun = skippedCount == 1 ? "photo" : "photos";
+            ShowTransientStatus(
+                $"Burst analysis complete — {analyzedCount:N0} local {analyzedNoun} analyzed; " +
+                $"{skippedCount:N0} online-only {skippedNoun} skipped.");
 
             if (ShowBurstGroups)
             {

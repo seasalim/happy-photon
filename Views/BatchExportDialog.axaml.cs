@@ -33,6 +33,8 @@ public partial class BatchExportDialog : Window
             mainViewModel.ExportSettings,
             images.Count,
             mode);
+        ViewModel.UpdateHydrationScope(
+            mainViewModel.GetExportHydrationScope(images));
         DataContext = ViewModel;
     }
 
@@ -121,6 +123,23 @@ public partial class BatchExportDialog : Window
             }
         }
 
+        var hydrationScope = _mainViewModel.GetExportHydrationScope(_images);
+        ViewModel.UpdateHydrationScope(hydrationScope);
+        var hydrationApproved = false;
+        if (hydrationScope.IsRequired)
+        {
+            hydrationApproved = await ConfirmationDialog.ConfirmAsync(
+                this,
+                "Download originals for export?",
+                ViewModel.OnlineOnlyMessage,
+                cancelLabel: "Cancel",
+                confirmLabel: "Download / Export");
+            if (!hydrationApproved)
+            {
+                return;
+            }
+        }
+
         _exportCts = new CancellationTokenSource();
         ViewModel.BeginExport();
         var progress = new Progress<(int current, int total, string fileName)>(value =>
@@ -128,7 +147,20 @@ public partial class BatchExportDialog : Window
 
         try
         {
-            await _mainViewModel.ExportBatchAsync(_images, progress, _exportCts.Token);
+            if (hydrationApproved)
+            {
+                await _mainViewModel.ExportBatchApprovedAsync(
+                    _images,
+                    progress,
+                    _exportCts.Token);
+            }
+            else
+            {
+                await _mainViewModel.ExportBatchAsync(
+                    _images,
+                    progress,
+                    _exportCts.Token);
+            }
             ViewModel.EndExport();
             Close(true);
         }

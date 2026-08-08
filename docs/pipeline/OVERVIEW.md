@@ -58,6 +58,11 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
    `BaseImage.Pixels` (it clones internally); base lifetime belongs to the caller.
    Decodes coalesce newest-wins per (file, decode settings, size class); tonal/chroma/
    geometry setting changes never trigger a decode (DECODE.md §4).
+9. **Background work does not hydrate cloud sources.** A live source-availability gate
+   wraps base loaders and guards metadata, thumbnails, and path-based statistics.
+   Cached output may be displayed without source content. Only a single-image
+   **Download and open** action or a confirmed export batch may use approved hydration
+   intent; agents always remain background intent.
 
 ## 3. Stage diagram
 
@@ -155,6 +160,8 @@ metadata and consumers treat it as immutable.
 |------|------|
 | `Services/BaseImage.cs` | `BaseImage`, `BaseImageInfo`, `BaseSourceKind`, `BaseDecodeSettings` |
 | `Services/IBaseImageLoader.cs` + `BaseLoaderRouter.cs` | route by format |
+| `Services/GatedBaseImageLoader.cs` | live availability policy before source decode |
+| `Services/SourceAvailabilityService.cs` | cloud-file classification and read intent |
 | `Services/RawBaseLoader.cs` | LibRaw decode → base (DECODE.md §2) |
 | `Services/StandardBaseLoader.cs` | Magick decode + ICC normalize → base (DECODE.md §3) |
 | `Services/RenderPipeline.cs` | stage orchestration and result ownership (RENDER.md) |

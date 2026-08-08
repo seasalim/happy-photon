@@ -1,6 +1,8 @@
 using System.ComponentModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
 
@@ -48,6 +50,12 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
     [ObservableProperty]
     private string _errorMessage = string.Empty;
 
+    [ObservableProperty]
+    private int _onlineOnlyCount;
+
+    [ObservableProperty]
+    private long _onlineOnlyLogicalBytes;
+
     public ExportDialogViewModel(
         ExportSettings settings,
         int imageCount,
@@ -87,6 +95,11 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
     public bool ShowIdleImageActions => HasImages && IsIdle;
     public bool ShowPrimaryAction => ShowIdleImageActions || (IsTourPreview && IsIdle);
     public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+    public bool HasOnlineOnlyImages => OnlineOnlyCount > 0;
+    public string OnlineOnlyMessage =>
+        $"Exporting will download {OnlineOnlyCount} online-only " +
+        $"original{(OnlineOnlyCount == 1 ? string.Empty : "s")} " +
+        $"(approximately {FormatLogicalSize(OnlineOnlyLogicalBytes)}).";
     public bool IsQualityAvailable => Settings.Format != ExportFormat.Png;
     public bool IsLosslessFormat => !IsQualityAvailable;
     public bool IsCustomNaming => SelectedNamingOption == CustomNamingOption;
@@ -97,6 +110,12 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
     public string HeaderText =>
         $"Export {ImageCount} Image{(ImageCount == 1 ? string.Empty : "s")}";
     public string PreviewFileName => Settings.GetOutputFileName("example_photo.jpg");
+
+    public void UpdateHydrationScope(ExportHydrationScope scope)
+    {
+        OnlineOnlyCount = scope.FileCount;
+        OnlineOnlyLogicalBytes = scope.LogicalBytes;
+    }
 
     public ExportFormatOption SelectedFormatOption
     {
@@ -207,6 +226,31 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
 
     partial void OnErrorMessageChanged(string value) =>
         OnPropertyChanged(nameof(HasError));
+
+    partial void OnOnlineOnlyCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(HasOnlineOnlyImages));
+        OnPropertyChanged(nameof(OnlineOnlyMessage));
+    }
+
+    partial void OnOnlineOnlyLogicalBytesChanged(long value) =>
+        OnPropertyChanged(nameof(OnlineOnlyMessage));
+
+    internal static string FormatLogicalSize(long bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        var value = Math.Max(0, bytes);
+        var unit = 0;
+        var display = (double)value;
+        while (display >= 1024 && unit < units.Length - 1)
+        {
+            display /= 1024;
+            unit++;
+        }
+
+        var format = unit == 0 || display >= 10 ? "0" : "0.0";
+        return $"{display.ToString(format, CultureInfo.InvariantCulture)} {units[unit]}";
+    }
 
     private static ExportSizePreset GetInitialSize(ExportSettings settings)
     {

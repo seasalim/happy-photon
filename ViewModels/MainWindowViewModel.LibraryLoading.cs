@@ -15,6 +15,7 @@ public partial class MainWindowViewModel
     public async Task<int> LoadFolderAsync(string folderPath)
     {
         var generation = Interlocked.Increment(ref _libraryGeneration);
+        CancelSourceHydration();
         var requestCts = new CancellationTokenSource();
         var previousThumbnailLoad = Interlocked.Exchange(
             ref _thumbnailLoadingCts, requestCts);
@@ -66,6 +67,7 @@ public partial class MainWindowViewModel
             ResetBurstState();
             ResetThumbnailViewport();
             Library.SetImages(imageFiles);
+            InitializeCloudSourceCount(imageFiles);
 
             // Defer first image selection until after UI settles.
             if (Library.VisibleImages.Count > 0)
@@ -82,6 +84,7 @@ public partial class MainWindowViewModel
 
             pumpStarted = true;
             StartThumbnailSession(imageFiles, requestCts, generation);
+            StartBurstAnalysisIfRequested();
             return generation;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -114,6 +117,7 @@ public partial class MainWindowViewModel
                 CurrentFolderHasSubfolders = false;
                 ResetBurstState();
                 Library.SetImages(Array.Empty<ImageFile>());
+                InitializeCloudSourceCount(Array.Empty<ImageFile>());
                 ShowTransientStatus($"Unable to load folder: {ex.Message}");
             }
             return 0;
@@ -164,6 +168,7 @@ public partial class MainWindowViewModel
                 return;
             }
             IsBaseArming = false;
+            RefreshSourceAvailability(imageFile);
 
             if (preview != null)
             {
@@ -171,12 +176,25 @@ public partial class MainWindowViewModel
             }
 
             RequestZoomFit?.Invoke();
-            ScheduleHistogramUpdate();
-            await RefreshWhiteBalanceContextAsync(imageFile, ct);
+            if (imageFile.SourceRequiresHydration)
+            {
+                Histogram = null;
+            }
+            else
+            {
+                ScheduleHistogramUpdate();
+                await RefreshWhiteBalanceContextAsync(imageFile, ct);
+            }
 
             if (!ReferenceEquals(firstCompleted, cachedTask))
             {
                 using var cached = await cachedTask;
+                if (preview == null &&
+                    cached != null &&
+                    IsCurrentPreviewRequest(imageFile, requestCts))
+                {
+                    ReplacePreviewImage(cached.DetachBitmap());
+                }
             }
         }
         catch (OperationCanceledException)

@@ -68,7 +68,11 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
                 (_, _) => new MagickImage(MagickColors.Gray, 64, 48)),
             () => false,
             warnings.Add);
-        var vm = new MainWindowViewModel(catalog, loader)
+        var vm = new MainWindowViewModel(
+            catalog,
+            loader,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally))
         {
             IsDevelopMode = true
         };
@@ -157,7 +161,11 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         _fixture.RequireWindows();
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(catalog, CreateSyntheticLoader())
+        var vm = new MainWindowViewModel(
+            catalog,
+            CreateSyntheticLoader(),
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally))
         {
             IsDevelopMode = true
         };
@@ -182,7 +190,11 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         _fixture.RequireWindows();
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(catalog, CreateSyntheticLoader())
+        var vm = new MainWindowViewModel(
+            catalog,
+            CreateSyntheticLoader(),
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally))
         {
             IsDevelopMode = true
         };

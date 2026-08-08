@@ -9,43 +9,75 @@ namespace HappyPhoton.Services;
 
 internal sealed class MetadataService
 {
-    private readonly ConditionalWeakTable<ImageFile, Lazy<Task>> _loads = new();
-    private readonly Func<ImageFile, ImageMetadata> _extractMetadata;
+    private readonly ConditionalWeakTable<ImageFile, Lazy<Task<MetadataLoadStatus>>>
+        _loads = new();
+    private readonly Func<ImageFile, MetadataExtractionResult> _extractMetadata;
     private readonly Func<Action, Task> _applyAsync;
 
-    public MetadataService(IRawProcessingService rawService)
+    public MetadataService(IRawProcessingService rawService) : this(
+        rawService,
+        new SourceAvailabilityService())
     {
-        _extractMetadata = imageFile => ExtractMetadata(imageFile, rawService);
-        _applyAsync = ApplyOnUiThreadAsync;
+    }
+
+    internal MetadataService(
+        IRawProcessingService rawService,
+        ISourceAvailabilityService availabilityService,
+        Func<Action, Task>? applyAsync = null)
+    {
+        ArgumentNullException.ThrowIfNull(rawService);
+        ArgumentNullException.ThrowIfNull(availabilityService);
+        _extractMetadata = imageFile => ExtractMetadataCore(
+            imageFile,
+            rawService,
+            availabilityService);
+        _applyAsync = applyAsync ?? ApplyOnUiThreadAsync;
     }
 
     internal MetadataService(
         Func<ImageFile, ImageMetadata> extractMetadata,
         Func<Action, Task> applyAsync)
     {
-        _extractMetadata = extractMetadata;
+        _extractMetadata = image => MetadataExtractionResult.Loaded(
+            extractMetadata(image));
         _applyAsync = applyAsync;
     }
 
-    public Task LoadAsync(ImageFile imageFile)
+    public Task<MetadataLoadStatus> LoadAsync(ImageFile imageFile)
     {
         if (imageFile.MetadataLoaded)
         {
-            return Task.CompletedTask;
+            return Task.FromResult(MetadataLoadStatus.Loaded);
         }
 
         var load = _loads.GetValue(
             imageFile,
-            image => new Lazy<Task>(
+            image => new Lazy<Task<MetadataLoadStatus>>(
                 () => LoadCoreAsync(image),
                 LazyThreadSafetyMode.ExecutionAndPublication));
         return load.Value;
     }
 
-    private async Task LoadCoreAsync(ImageFile imageFile)
+    private async Task<MetadataLoadStatus> LoadCoreAsync(ImageFile imageFile)
     {
-        var metadata = await Task.Run(() => _extractMetadata(imageFile));
-        await _applyAsync(() => imageFile.ApplyMetadata(metadata));
+        MetadataLoadStatus status = MetadataLoadStatus.Failed;
+        try
+        {
+            var result = await Task.Run(() => _extractMetadata(imageFile));
+            status = result.Status;
+            if (status == MetadataLoadStatus.Loaded)
+            {
+                await _applyAsync(() => imageFile.ApplyMetadata(result.Metadata));
+            }
+            return status;
+        }
+        finally
+        {
+            if (status != MetadataLoadStatus.Loaded)
+            {
+                _loads.Remove(imageFile);
+            }
+        }
     }
 
     private static async Task ApplyOnUiThreadAsync(Action action)
@@ -55,7 +87,16 @@ internal sealed class MetadataService
 
     internal static ImageMetadata ExtractMetadata(
         ImageFile imageFile,
-        IRawProcessingService rawService)
+        IRawProcessingService rawService) =>
+        ExtractMetadataCore(
+            imageFile,
+            rawService,
+            new SourceAvailabilityService()).Metadata;
+
+    private static MetadataExtractionResult ExtractMetadataCore(
+        ImageFile imageFile,
+        IRawProcessingService rawService,
+        ISourceAvailabilityService availabilityService)
     {
         var swTotal = Stopwatch.StartNew();
         var builder = new MetadataBuilder();
@@ -65,6 +106,22 @@ internal sealed class MetadataService
         try
         {
             builder.FileSize = new FileInfo(imageFile.FilePath).Length;
+            var availability = availabilityService.GetAvailability(
+                imageFile.FilePath);
+            if (!SourceAccessPolicy.CanRead(
+                availability,
+                SourceReadIntent.Background))
+            {
+                source = availability == SourceAvailability.RequiresHydration
+                    ? "Deferred"
+                    : "Unavailable";
+                return new MetadataExtractionResult(
+                    availability == SourceAvailability.RequiresHydration
+                        ? MetadataLoadStatus.DeferredForHydration
+                        : MetadataLoadStatus.Failed,
+                    builder.ToMetadata());
+            }
+
             if (imageFile.IsRaw && rawService.IsAvailable)
             {
                 var rawMetadata = rawService.ExtractMetadata(imageFile.FilePath);
@@ -72,7 +129,8 @@ internal sealed class MetadataService
                 {
                     source = "LibRaw";
                     builder.Apply(rawMetadata);
-                    return builder.ToMetadata();
+                    return MetadataExtractionResult.Loaded(
+                        builder.ToMetadata());
                 }
             }
 
@@ -119,7 +177,7 @@ internal sealed class MetadataService
                 $"source={source ?? "None"}");
         }
 
-        return builder.ToMetadata();
+        return MetadataExtractionResult.Loaded(builder.ToMetadata());
     }
 
     private static void ApplyExifMetadata(MetadataBuilder metadata, IExifProfile exifProfile)
@@ -236,5 +294,14 @@ internal sealed class MetadataService
             var value = exposureTime.Value;
             return value is > 0 and < 1 ? $"1/{(int)(1 / value)}" : $"{value:F1}";
         }
+    }
+
+    private sealed record MetadataExtractionResult(
+        MetadataLoadStatus Status,
+        ImageMetadata Metadata)
+    {
+        internal static MetadataExtractionResult Loaded(
+            ImageMetadata metadata) =>
+            new(MetadataLoadStatus.Loaded, metadata);
     }
 }

@@ -34,8 +34,10 @@ public sealed class RawThumbnailFallbackTests : IDisposable
                 renderedCache);
             file.EditSettings = new EditSettings { Exposure = 3, Saturation = 50 };
 
-            using var unedited = await service.LoadUneditedThumbnailAsync(file);
-            using var fallback = await service.LoadThumbnailAsync(file);
+            using var uneditedResult = await service.LoadUneditedThumbnailAsync(file);
+            using var fallbackResult = await service.LoadThumbnailAsync(file);
+            var unedited = uneditedResult.Bitmap;
+            var fallback = fallbackResult.Bitmap;
 
             Assert.NotNull(unedited);
             Assert.NotNull(fallback);
@@ -64,7 +66,8 @@ public sealed class RawThumbnailFallbackTests : IDisposable
                 renderedCache);
             file.EditSettings = new EditSettings { Rotation = 90 };
 
-            using var fallback = await service.LoadThumbnailAsync(file);
+            using var fallbackResult = await service.LoadThumbnailAsync(file);
+            var fallback = fallbackResult.Bitmap;
 
             Assert.NotNull(fallback);
             Assert.Equal(90, fallback!.PixelSize.Width);
@@ -98,8 +101,10 @@ public sealed class RawThumbnailFallbackTests : IDisposable
                 }
             };
 
-            using var unedited = await service.LoadUneditedThumbnailAsync(file);
-            using var fallback = await service.LoadThumbnailAsync(file);
+            using var uneditedResult = await service.LoadUneditedThumbnailAsync(file);
+            using var fallbackResult = await service.LoadThumbnailAsync(file);
+            var unedited = uneditedResult.Bitmap;
+            var fallback = fallbackResult.Bitmap;
 
             Assert.NotNull(unedited);
             Assert.NotNull(fallback);

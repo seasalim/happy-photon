@@ -218,7 +218,7 @@ public partial class MainWindowViewModel
 
     private bool CanSampleWhiteBalance() =>
         IsWhiteBalanceReady && IsDevelopMode && !IsCropMode &&
-        !IsFullScreenMode && SelectedImage != null;
+        !IsFullScreenMode && CanEditSelectedImage;
 
     private void NotifyWhiteBalanceCommandState()
     {
