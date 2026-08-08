@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en" data-base-path="{{BASE_PATH}}">
+<head>
+  {{> shared/head-guide}}
+</head>
+<body>
+  {{> shared/header}}
+  <main id="main-content">
+    <section class="guide-hero section-shell" aria-labelledby="guide-title">
+      <nav class="breadcrumb" aria-label="Breadcrumb"><a href="{{BASE_PATH}}">Happy Photon</a><span aria-hidden="true">/</span><span>macOS guide</span></nav>
+      <div class="guide-hero-grid">
+        <div>
+          <p class="eyebrow">MACOS PHOTO WORKFLOW</p>
+          <h1 id="guide-title">A calm RAW and JPEG photo editor <span>for Mac.</span></h1>
+          <p class="guide-summary">Open a local camera folder, review the shoot, make focused non-destructive edits, and export finished copies without an account or subscription.</p>
+          <div class="button-row">
+            <a class="button button-primary" href="{{BASE_PATH}}download/#macos">Get Happy Photon for macOS</a>
+            <a class="button button-secondary" href="#workflow">See the workflow</a>
+          </div>
+        </div>
+        <dl class="guide-facts" aria-label="macOS requirements">
+          <div><dt>System</dt><dd>macOS 14 or later</dd></div>
+          <div><dt>Architecture</dt><dd>Apple Silicon</dd></div>
+          <div><dt>Package</dt><dd>Signed and notarized app</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="guide-visual section-shell" aria-label="Happy Photon Library preview">
+      <figure class="app-shot">
+        <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span><b>LIBRARY · MACOS</b></div>
+        <picture>
+          <source srcset="{{BASE_PATH}}assets/images/library-720.webp 720w, {{BASE_PATH}}assets/images/library-1200.webp 1200w, {{BASE_PATH}}assets/images/library-1800.webp 1800w" sizes="(max-width: 760px) 94vw, (max-width: 1300px) 92vw, 1220px" type="image/webp">
+          <img src="{{BASE_PATH}}assets/images/library-1200.webp" width="1200" height="689" alt="Happy Photon Library on macOS showing a wildlife shoot, folders, filters, ratings, and image controls">
+        </picture>
+      </figure>
+    </section>
+
+    <div class="guide-body section-shell">
+      <article class="guide-article">
+        <section id="fit" aria-labelledby="fit-title">
+          <p class="eyebrow">IS IT A FIT?</p>
+          <h2 id="fit-title">For local shoots and the decisions that finish them</h2>
+          <p>Happy Photon gives Apple Silicon Mac users a focused workflow for personal RAW, JPEG, and mixed-format shoots. It works directly with folders and concentrates on selection, global photographic adjustments, presets, and export.</p>
+          <ul class="check-list">
+            <li>No import or cloud upload is required to begin.</li>
+            <li>No required account, subscription, advertising, or product telemetry.</li>
+            <li>Edits, ratings, and flags are stored in a local catalog.</li>
+            <li>Exports create separate JPEG, PNG, or WebP files.</li>
+          </ul>
+        </section>
+
+        <section id="install" aria-labelledby="install-title">
+          <p class="eyebrow">INSTALL ON MACOS</p>
+          <h2 id="install-title">Use the signed and notarized release</h2>
+          <ol class="numbered-steps">
+            <li><span>01</span><div><h3>Check the Mac</h3><p>The public build requires Apple Silicon and macOS 14 or later. Intel Macs are not supported by the initial release.</p></div></li>
+            <li><span>02</span><div><h3>Download Happy Photon</h3><p>Choose the current <code>osx-arm64</code> download. Safari may unpack it automatically; if you still see a ZIP, double-click it once to reveal <strong>Happy Photon.app</strong>.</p></div></li>
+            <li><span>03</span><div><h3>Open the app</h3><p>Double-click <strong>Happy Photon.app</strong> and choose Open at the macOS safety prompt. You can try it from Downloads or drag it to Applications to keep it with your other apps.</p></div></li>
+          </ol>
+        </section>
+
+        <section id="workflow" aria-labelledby="workflow-guide-title">
+          <p class="eyebrow">FOLDER TO EXPORT</p>
+          <h2 id="workflow-guide-title">A complete workflow in three decisions</h2>
+          <div class="guide-step-grid">
+            <article><span>01</span><h3>Choose the keepers</h3><p>Browse the shoot in place, group bursts, and use flags, ratings, and filters to concentrate on the strongest photographs.</p></article>
+            <article><span>02</span><h3>Develop the photographs</h3><p>Crop and rotate, then adjust light, white balance, color, contrast, and tone with focused global controls.</p></article>
+            <article><span>03</span><h3>Export finished copies</h3><p>Select the photographs you want and create JPEG, PNG, or WebP copies without changing the originals.</p></article>
+          </div>
+          <p><a class="text-link" href="{{REPOSITORY_URL}}/blob/main/docs/WORKFLOW.md">Follow the complete Happy Photon workflow <span aria-hidden="true">↗</span></a></p>
+        </section>
+
+        <section id="formats" aria-labelledby="formats-title">
+          <p class="eyebrow">FILES AND CAMERAS</p>
+          <h2 id="formats-title">Bring a JPEG, RAW, or mixed camera folder</h2>
+          <p>Standard image support includes JPEG (commonly shown as JPG), PNG, BMP, GIF, TIFF, and WebP. RAW extensions include CR2/CR3, NEF/NRW, ARW/SRF/SR2, DNG, RAF, ORF, RW2, and PEF.</p>
+          <aside class="notice-panel"><strong>Verify the camera, not only the extension.</strong><p>RAW decoding uses the bundled LibRaw 0.21.1 generation from early 2023. Support varies by camera model and capture mode, especially for newer bodies. HEIC/HEIF support can also vary with the available codec.</p></aside>
+        </section>
+
+        <section id="safety" aria-labelledby="safety-title">
+          <p class="eyebrow">ORIGINAL-FILE SAFETY</p>
+          <h2 id="safety-title">Your source photographs remain unchanged</h2>
+          <p>Happy Photon saves edit instructions, flags, and ratings in <code>~/Pictures/Happy Photon Catalog/</code>. Original image files remain where they started. Export creates new files and refuses a destination that would overwrite a loaded original.</p>
+          <p>Happy Photon is pre-1.0 software. Keep normal backups of important photographs and verify the camera formats you depend on.</p>
+        </section>
+
+        <section id="limits" aria-labelledby="limits-title">
+          <p class="eyebrow">CURRENT SCOPE</p>
+          <h2 id="limits-title">A smaller workflow by design</h2>
+          <p>The current release does not support Intel Macs, local masks, lens or perspective correction, layered compositing, HDR output, custom output color profiles, cloud/mobile synchronization, or Lightroom-edit migration.</p>
+        </section>
+
+        <section id="questions" aria-labelledby="questions-title">
+          <p class="eyebrow">COMMON QUESTIONS</p>
+          <h2 id="questions-title">Before you download</h2>
+          <div class="faq-list">
+            <details><summary>What happens the first time I open it?</summary><p>macOS shows its standard safety confirmation for an app downloaded from the internet. Choose Open to continue. Public Happy Photon releases are Developer ID signed and notarized.</p></details>
+            <details><summary>Does Happy Photon support Intel Macs?</summary><p>No. The initial public macOS target is Apple Silicon running macOS 14 or later.</p></details>
+            <details><summary>Do my photographs need to be copied into the app?</summary><p>No. Choose an existing folder and browse it in place. Happy Photon keeps its catalog data separately and leaves the original image files untouched.</p></details>
+          </div>
+        </section>
+      </article>
+
+      <aside class="guide-sidebar" aria-label="Guide navigation">
+        <p class="card-detail">ON THIS PAGE</p>
+        <nav><a href="#fit">Is it a fit?</a><a href="#install">Install</a><a href="#workflow">Workflow</a><a href="#formats">Formats</a><a href="#safety">Original safety</a><a href="#limits">Limitations</a><a href="#questions">Questions</a></nav>
+        <div class="sidebar-callout"><strong>Ready to try it?</strong><p>Review the verified macOS archive and current release status.</p><a class="button button-primary" href="{{BASE_PATH}}download/#macos">macOS download</a></div>
+      </aside>
+    </div>
+
+    <section class="section related-guides" aria-labelledby="related-title">
+      <div class="section-shell">
+        <p class="eyebrow">OTHER PLATFORMS</p>
+        <h2 id="related-title">Use Happy Photon elsewhere</h2>
+        <div class="related-guide-links"><a href="{{BASE_PATH}}photo-editor-windows/"><b>Windows guide</b><span>Windows 10 1809+ · x64</span></a><a href="{{BASE_PATH}}photo-editor-linux/"><b>Linux guide</b><span>Portable x64 archive</span></a></div>
+      </div>
+    </section>
+  </main>
+  {{> shared/footer}}
+  <script type="module" src="{{BASE_PATH}}assets/js/navigation.js?v={{SCRIPT_VERSION}}"></script>
+</body>
+</html>

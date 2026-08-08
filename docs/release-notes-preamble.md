@@ -11,12 +11,13 @@ cameras important to your work.
 - **Linux:** download the `linux-x64` archive, extract it, and run
   `HappyPhoton`. This is a portable archive rather than a native package.
 - **macOS:** download the `osx-arm64` ZIP on an Apple Silicon Mac running
-  macOS 14 or later, extract it, and move **Happy Photon.app** to
-  Applications. Tagged Mac artifacts are Developer ID signed and notarized.
+  macOS 14 or later. Safari may unpack it automatically; otherwise, open the
+  ZIP once. Open **Happy Photon.app** and optionally move it to Applications.
+  Tagged Mac artifacts are Developer ID signed and notarized.
 
-Compare each GitHub archive against `SHA256SUMS.txt`. The Linux and macOS
-archives contain the GPL license, trademark policy, dependency inventory, and
-third-party notices.
+Checksums remain available in `SHA256SUMS.txt` for people who want to verify a
+download manually. The Linux and macOS archives contain the GPL license,
+trademark policy, dependency inventory, and third-party notices.
 
 ## Known limitations
 

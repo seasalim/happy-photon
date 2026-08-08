@@ -12,7 +12,17 @@ if (-not $SiteRoot) {
 }
 $sitePath = [System.IO.Path]::GetFullPath($SiteRoot)
 
-foreach ($requiredFile in @("index.html", "download/index.html", "404.html", "site-config.json", "downloads.json", "robots.txt")) {
+foreach ($requiredFile in @(
+    "index.html",
+    "download/index.html",
+    "photo-editor-windows/index.html",
+    "photo-editor-linux/index.html",
+    "photo-editor-macos/index.html",
+    "404.html",
+    "site-config.json",
+    "downloads.json",
+    "robots.txt"
+)) {
     if (-not (Test-Path -LiteralPath (Join-Path $sitePath $requiredFile) -PathType Leaf)) {
         throw "Missing staged site file: $requiredFile"
     }
@@ -185,6 +195,19 @@ if ($isLive) {
     }
     if ($robots -notmatch "Allow: /") {
         throw "Live robots.txt does not allow indexing."
+    }
+    $sitemap = Get-Content -Raw -LiteralPath (Join-Path $sitePath "sitemap.xml")
+    foreach ($guideRoute in @("photo-editor-windows/", "photo-editor-linux/", "photo-editor-macos/")) {
+        $guidePath = $guideRoute + "index.html"
+        $guideHtml = $htmlByPath[$guidePath]
+        foreach ($requiredMetadata in @('rel="canonical"', 'property="og:title"', 'name="twitter:description"')) {
+            if ($guideHtml -notmatch [regex]::Escape($requiredMetadata)) {
+                throw "$guidePath is missing production metadata: $requiredMetadata"
+            }
+        }
+        if ($sitemap -notmatch [regex]::Escape("/$guideRoute</loc>")) {
+            throw "Live sitemap is missing guide route: $guideRoute"
+        }
     }
 }
 else {

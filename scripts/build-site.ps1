@@ -342,6 +342,9 @@ $tokens = [ordered]@{
 $routes = [ordered]@{
     "index.html" = "index.html"
     "download.html" = "download/index.html"
+    "photo-editor-windows.html" = "photo-editor-windows/index.html"
+    "photo-editor-linux.html" = "photo-editor-linux/index.html"
+    "photo-editor-macos.html" = "photo-editor-macos/index.html"
     "404.html" = "404.html"
 }
 
@@ -364,6 +367,27 @@ foreach ($route in $routes.GetEnumerator()) {
                 Title = "Download — Happy Photon"
                 Description = "Download Happy Photon for Windows, macOS, or Linux and review platform requirements."
                 CanonicalUrl = $canonicalBase + "download/"
+            }
+        }
+        "photo-editor-windows.html" {
+            [ordered]@{
+                Title = "Simple RAW and JPEG Photo Editor for Windows — Happy Photon"
+                Description = "Browse, non-destructively edit, and export local RAW and JPEG shoots with Happy Photon for Windows x64. Originals stay untouched."
+                CanonicalUrl = $canonicalBase + "photo-editor-windows/"
+            }
+        }
+        "photo-editor-linux.html" {
+            [ordered]@{
+                Title = "Focused RAW and JPEG Photo Editor for Linux — Happy Photon"
+                Description = "Use a local, open-source workflow to browse, non-destructively edit, and export RAW and JPEG shoots on Linux x64."
+                CanonicalUrl = $canonicalBase + "photo-editor-linux/"
+            }
+        }
+        "photo-editor-macos.html" {
+            [ordered]@{
+                Title = "RAW and JPEG Photo Editor for Mac — Happy Photon"
+                Description = "Browse, non-destructively edit, and export local RAW and JPEG shoots with Happy Photon for Apple Silicon Macs running macOS 14+."
+                CanonicalUrl = $canonicalBase + "photo-editor-macos/"
             }
         }
         default {
@@ -392,11 +416,17 @@ Copy-Item -LiteralPath $configPath -Destination (Join-Path $destinationPath "sit
 [System.IO.File]::WriteAllText((Join-Path $destinationPath "downloads.json"), $manifestJson + "`n", [System.Text.UTF8Encoding]::new($false))
 if ($isIndexable) {
     $robots = "User-agent: *`nAllow: /`nSitemap: $($canonicalBase)sitemap.xml`n"
+    $sitemapEntries = foreach ($outputRoute in $routes.Values) {
+        if ($outputRoute -eq "404.html") {
+            continue
+        }
+        $routeSuffix = if ($outputRoute -eq "index.html") { "" } else { $outputRoute.Replace("index.html", "") }
+        "  <url><loc>$canonicalBase$routeSuffix</loc></url>"
+    }
     $sitemap = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>$canonicalBase</loc></url>
-  <url><loc>$($canonicalBase)download/</loc></url>
+$($sitemapEntries -join "`n")
 </urlset>
 "@
     [System.IO.File]::WriteAllText((Join-Path $destinationPath "sitemap.xml"), $sitemap.Trim() + "`n", [System.Text.UTF8Encoding]::new($false))
