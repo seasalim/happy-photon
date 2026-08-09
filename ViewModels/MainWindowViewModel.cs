@@ -29,7 +29,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         CatalogService catalogService,
         IBaseImageLoader? baseLoader,
         Func<ImageFile, Task>? loadMetadataAsync = null,
-        ISourceAvailabilityService? availabilityService = null)
+        ISourceAvailabilityService? availabilityService = null,
+        Action<Action>? postSelection = null)
     {
         _catalogService = catalogService;
         Library = new LibraryImageState(RetireThumbnail);
@@ -49,6 +50,10 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         });
         _loadMetadataAsync = loadMetadataAsync ??
             (image => ImageService.LoadMetadataAsync(image));
+        _postSelection = postSelection ??
+            (action => Dispatcher.UIThread.Post(
+                action,
+                DispatcherPriority.Background));
         PresetService = new PresetService(Path.Combine(catalogService.CatalogPath, "presets"));
         Library.FilterChanged += OnLibraryFilterChanged;
         Library.StateChanged += OnLibraryStateChanged;

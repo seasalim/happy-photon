@@ -10,6 +10,7 @@ public partial class MainWindowViewModel
 {
     private static readonly TimeSpan BaseArmingDelay =
         TimeSpan.FromMilliseconds(150);
+    private readonly Action<Action> _postSelection;
     private long _activeBaseRefreshRequestId;
 
     public async Task<int> LoadFolderAsync(string folderPath)
@@ -72,14 +73,14 @@ public partial class MainWindowViewModel
             // Defer first image selection until after UI settles.
             if (Library.VisibleImages.Count > 0)
             {
-                Dispatcher.UIThread.Post(() =>
+                _postSelection(() =>
                 {
                     if (!cancellationToken.IsCancellationRequested &&
                         Library.VisibleImages.Count > 0 && SelectedImage == null)
                     {
                         SelectedImage = Library.FirstVisible();
                     }
-                }, DispatcherPriority.Background);
+                });
             }
 
             pumpStarted = true;

@@ -1,7 +1,6 @@
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
-using Avalonia.Threading;
 using ImageMagick;
 using Xunit;
 
@@ -31,7 +30,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 CreateJpeg(Path.Combine(photos, "one.jpg"));
 
                 Complete(viewModel.LoadFolderAsync(photos));
-                WaitForSelectionMetadata(viewModel);
+                WaitForThumbnailAttempt(viewModel);
                 Complete(viewModel.WaitForBurstAnalysisAsync());
 
                 Assert.False(viewModel.ShowBurstGroups);
@@ -62,7 +61,6 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 CreateJpeg(Path.Combine(photos, "one.jpg"));
                 CreateJpeg(Path.Combine(photos, "two.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
-                WaitForSelectionMetadata(viewModel);
 
                 viewModel.ShowBurstGroups = true;
                 Complete(viewModel.WaitForBurstAnalysisAsync());
@@ -101,7 +99,6 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
 
                 CreateJpeg(Path.Combine(photos, "one.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
-                WaitForSelectionMetadata(viewModel);
                 Complete(viewModel.WaitForBurstAnalysisAsync());
 
                 Assert.Equal(1, metadataLoads);
@@ -139,7 +136,6 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 CreateJpeg(Path.Combine(photos, "one.jpg"));
                 CreateJpeg(Path.Combine(photos, "two.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
-                WaitForSelectionMetadata(viewModel);
 
                 viewModel.ShowBurstGroups = true;
                 Complete(firstLoadStarted.Task);
@@ -189,7 +185,6 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
             {
                 CreateJpeg(Path.Combine(firstFolder, "old.jpg"));
                 Complete(viewModel.LoadFolderAsync(firstFolder));
-                WaitForSelectionMetadata(viewModel);
                 viewModel.ShowBurstGroups = true;
                 Complete(firstLoadStarted.Task);
 
@@ -199,7 +194,6 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 Directory.CreateDirectory(secondFolder);
                 CreateJpeg(Path.Combine(secondFolder, "new.jpg"));
                 Complete(viewModel.LoadFolderAsync(secondFolder));
-                WaitForSelectionMetadata(viewModel);
                 releaseFirstLoad.TrySetResult();
                 Complete(viewModel.WaitForBurstAnalysisAsync());
 
@@ -286,7 +280,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
             {
                 CreateJpeg(Path.Combine(photos, "local.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
-                WaitForThumbnail(viewModel);
+                WaitForThumbnailAttempt(viewModel);
                 var image = Assert.Single(viewModel.Library.AllImages);
                 image.SourceRequiresHydration = true;
                 viewModel.InitializeCloudSourceCount([image]);
@@ -319,7 +313,8 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
             catalog,
             baseLoader: null,
             loadMetadataAsync,
-            availabilityService);
+            availabilityService,
+            postSelection: _ => { });
         return (catalog, viewModel, photos);
     }
 
@@ -340,37 +335,23 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         image.Write(path, MagickFormat.Jpeg);
     }
 
-    private static void WaitForSelectionMetadata(
+    private static void WaitForThumbnailAttempt(
         MainWindowViewModel viewModel)
     {
         var timeout = DateTime.UtcNow + TimeSpan.FromSeconds(5);
         while (DateTime.UtcNow < timeout)
         {
-            Dispatcher.UIThread.RunJobs();
-            if (viewModel.SelectedImage?.MetadataLoaded == true)
+            var image = viewModel.Library.AllImages.SingleOrDefault();
+            if (image?.Thumbnail != null ||
+                image?.ThumbnailLoadFailed == true ||
+                image?.ThumbnailDeferredForHydration == true)
             {
                 return;
             }
             Thread.Sleep(10);
         }
 
-        throw new TimeoutException("Selected-image metadata did not finish loading.");
-    }
-
-    private static void WaitForThumbnail(MainWindowViewModel viewModel)
-    {
-        var timeout = DateTime.UtcNow + TimeSpan.FromSeconds(5);
-        while (DateTime.UtcNow < timeout)
-        {
-            Dispatcher.UIThread.RunJobs();
-            if (viewModel.Library.AllImages.SingleOrDefault()?.Thumbnail != null)
-            {
-                return;
-            }
-            Thread.Sleep(10);
-        }
-
-        throw new TimeoutException("Thumbnail did not finish loading.");
+        throw new TimeoutException("Thumbnail attempt did not finish.");
     }
 
     private static void Complete(Task task) => task.GetAwaiter().GetResult();
