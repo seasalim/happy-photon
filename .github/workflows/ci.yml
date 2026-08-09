@@ -107,10 +107,9 @@ jobs:
           $totalCount = $nativeCount + $headlessCount
 
           Write-Host "Discovered $nativeCount native and $headlessCount headless tests ($totalCount total)."
-          # xUnit expands some theories only during execution, so 701 discovered cases produce 720 executed cases.
-          if ($nativeCount -ne 666 -or $headlessCount -ne 35 -or
-              $totalCount -ne 701) {
-            throw "Test discovery counts changed; reconcile the 720-test execution baseline deliberately."
+          # Catch missing test assemblies or discovery regressions without failing when tests are added.
+          if ($nativeCount -lt 666 -or $headlessCount -lt 35) {
+            throw "Test discovery fell below the expected minimum (666 native, 35 headless)."
           }
 
       - name: Test
