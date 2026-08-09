@@ -245,7 +245,7 @@ public sealed class ThumbnailLoadSchedulerTests
             requests.ToArray());
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task UndersizedResidentDoesNotSuppressUpgrade()
     {
         using var cancellation = new CancellationTokenSource();
@@ -271,7 +271,7 @@ public sealed class ThumbnailLoadSchedulerTests
         await scheduler.Completion;
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task FailedUpgradeIsNotRetriedWhileResidentBitmapRemains()
     {
         using var cancellation = new CancellationTokenSource();
@@ -309,6 +309,11 @@ public sealed class ThumbnailLoadSchedulerTests
     [InlineData(true)]
     public async Task EvictedTerminalUpgradeCanReload(bool deferred)
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Skip("The platform bitmap integration test requires Windows WIC.");
+        }
+
         using var cancellation = new CancellationTokenSource();
         using var resident = CreateBitmap(150, 100);
         var image = new ImageFile("evicted.jpg")
@@ -367,7 +372,7 @@ public sealed class ThumbnailLoadSchedulerTests
         await scheduler.Completion;
     }
 
-    [Fact]
+    [WindowsFact]
     public void ResidencyPolicy_EvictsLeastRecentUnpinnedImages()
     {
         var images = Enumerable.Range(0, 5)
