@@ -6,7 +6,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class BurstAnalysisLifecycleTests : IDisposable
 {
     private readonly string _root = Path.Combine(

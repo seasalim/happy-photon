@@ -3,7 +3,6 @@ using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace HappyPhoton.Tests;
 
@@ -14,14 +13,14 @@ public sealed class RenderDetailPerformanceTests
     public RenderDetailPerformanceTests(ITestOutputHelper output) =>
         _output = output;
 
-    [SkippableFact]
+    [Fact]
     public async Task FullResolutionBandedRender_ReportsLatencyAndPeakMemory()
     {
-        Skip.If(
+        Assert.SkipWhen(
             Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
             "Set HAPPY_PHOTON_PERF=1 to run detail performance diagnostics.");
 #if DEBUG
-        Skip.If(true, "Run detail performance diagnostics in Release.");
+        Assert.Skip("Run detail performance diagnostics in Release.");
 #endif
 
         using (var warmup = CreateImage(256, 256))
@@ -72,14 +71,14 @@ public sealed class RenderDetailPerformanceTests
             $"{(peak - baseline) / 1048576.0:F1} MiB.");
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task FullResolutionCaptureSharpen_ReportsLatencyAndPeakMemory()
     {
-        Skip.If(
+        Assert.SkipWhen(
             Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
             "Set HAPPY_PHOTON_PERF=1 to run detail performance diagnostics.");
 #if DEBUG
-        Skip.If(true, "Run detail performance diagnostics in Release.");
+        Assert.Skip("Run detail performance diagnostics in Release.");
 #endif
 
         using (var warmup = CreateImage(256, 256))

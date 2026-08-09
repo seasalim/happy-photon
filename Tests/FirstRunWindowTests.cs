@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
@@ -6,20 +7,11 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class FirstRunWindowTests
 {
-    private readonly AvaloniaTestFixture _fixture;
-
-    public FirstRunWindowTests(AvaloniaTestFixture fixture)
-    {
-        _fixture = fixture;
-    }
-
-    [WindowsFact]
+    [AvaloniaFact]
     public async Task StartupGate_SuspendsAndRestoresWorkspaceKeyBindings()
     {
-        _fixture.RequireWindows();
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),
             $"happy-photon-window-{Guid.NewGuid():N}"));

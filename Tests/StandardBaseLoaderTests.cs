@@ -273,11 +273,11 @@ public sealed class StandardBaseLoaderTests : IDisposable
         Assert.Equal(first.Info, second.Info);
     }
 
-    [SkippableFact]
+    [Fact]
     public void PreviewBase_HeicUsesRuntimeReaderAndHeicKind()
     {
         var format = MagickFormatInfo.Create(MagickFormat.Heic);
-        Skip.If(
+        Assert.SkipWhen(
             format is not { SupportsReading: true },
             "HEIC loader test skipped because this Magick.NET runtime has no HEIC reader.");
         var file = Asset("reference.heic");
@@ -287,7 +287,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
         }
         catch (Exception ex)
         {
-            Skip.If(true, $"HEIC loader test skipped because runtime decode failed: {ex.Message}");
+            Assert.Skip($"HEIC loader test skipped because runtime decode failed: {ex.Message}");
         }
 
         var loader = new StandardBaseLoader();

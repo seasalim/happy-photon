@@ -3,7 +3,6 @@ using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
 using Xunit;
-using Xunit.Abstractions;
 using static HappyPhoton.Tests.RawBaseLoaderTestSupport;
 
 namespace HappyPhoton.Tests;
@@ -18,10 +17,10 @@ public sealed class RawFbddEvaluationTests
         _output = output;
     }
 
-    [SkippableFact]
+    [Fact]
     public void HighIsoRaw_MeasuresOffLightAndFull()
     {
-        Skip.If(
+        Assert.SkipWhen(
             Environment.GetEnvironmentVariable("HAPPY_PHOTON_FBDD_EVAL") != "1",
             "Set HAPPY_PHOTON_FBDD_EVAL=1 to run three full high-ISO RAW decodes.");
         var loader = new RawBaseLoader();

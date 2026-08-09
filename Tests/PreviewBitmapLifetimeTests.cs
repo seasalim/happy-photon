@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using Avalonia.Headless.XUnit;
 using ImageMagick;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -7,18 +8,11 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class PreviewBitmapLifetimeTests
 {
-    private readonly AvaloniaTestFixture _fixture;
-
-    public PreviewBitmapLifetimeTests(AvaloniaTestFixture fixture) =>
-        _fixture = fixture;
-
-    [WindowsFact]
+    [AvaloniaFact]
     public async Task Replacement_DefersRetiredBitmapDisposalUntilAfterRender()
     {
-        _fixture.RequireWindows();
         Dispatcher.UIThread.RunJobs();
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),
@@ -40,10 +34,9 @@ public sealed class PreviewBitmapLifetimeTests
         Assert.Throws<ObjectDisposedException>(() => _ = second.PixelSize);
     }
 
-    [WindowsFact]
+    [AvaloniaFact]
     public async Task Replacement_DoesNotDisposeBitmapThatBecomesCurrentAgain()
     {
-        _fixture.RequireWindows();
         Dispatcher.UIThread.RunJobs();
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),
@@ -66,10 +59,9 @@ public sealed class PreviewBitmapLifetimeTests
         Assert.Throws<ObjectDisposedException>(() => _ = first.PixelSize);
     }
 
-    [WindowsFact]
+    [AvaloniaFact]
     public async Task DisposeAsync_DisposesOwnedBitmapsWithoutDispatcherDrain()
     {
-        _fixture.RequireWindows();
         Dispatcher.UIThread.RunJobs();
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),

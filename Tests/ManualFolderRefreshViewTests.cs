@@ -1,5 +1,6 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -12,18 +13,11 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class ManualFolderRefreshViewTests
 {
-    private readonly AvaloniaTestFixture _fixture;
-
-    public ManualFolderRefreshViewTests(AvaloniaTestFixture fixture) =>
-        _fixture = fixture;
-
-    [WindowsFact]
+    [AvaloniaFact]
     public void FolderPanel_RefreshButtonUsesVectorMetadataAndRaisesEvent()
     {
-        _fixture.RequireWindows();
         var panel = new FolderTreePanel();
         var button = panel.FindControl<Button>("RefreshFolderButton")!;
         var requested = 0;

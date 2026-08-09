@@ -4,7 +4,6 @@ using HappyPhoton.Services;
 using ImageMagick;
 using Sdcb.LibRaw;
 using Xunit;
-using Xunit.Abstractions;
 using static HappyPhoton.Tests.RawBaseLoaderTestSupport;
 
 namespace HappyPhoton.Tests;
@@ -143,7 +142,7 @@ public sealed class RawBaseLoaderTests
                 cancellation.Token));
     }
 
-    [SkippableFact]
+    [Fact]
     public void CancellationDuringDecode_DiscardsPartialResultAndAllowsRetry()
     {
         using var cancellation = new CancellationTokenSource();
@@ -174,7 +173,7 @@ public sealed class RawBaseLoaderTests
         Assert.NotNull(retry);
     }
 
-    [SkippableTheory]
+    [Theory]
     [MemberData(nameof(GetRawAssets))]
     public void PreviewBase_IsLinearSixteenBitAndCarriesRawFacts(string fileName)
     {
@@ -199,7 +198,7 @@ public sealed class RawBaseLoaderTests
             $"camera channels {image.Info.CamMul!.Length}");
     }
 
-    [SkippableFact]
+    [Fact]
     public void PreviewBase_UsesPreviewEstimateAheadOfFujiMetadata()
     {
         var loader = new RawBaseLoader();
@@ -226,7 +225,7 @@ public sealed class RawBaseLoaderTests
             RawExposureBias.MaxAbsEv);
     }
 
-    [SkippableFact]
+    [Fact]
     public void PreviewBase_FallsBackWhenThumbnailIsMissingOrCorrupt()
     {
         var file = new ImageFile(Asset("fujifilm-x30.raf"));
@@ -252,7 +251,7 @@ public sealed class RawBaseLoaderTests
         Assert.Equal(0.58, corruptBase!.Info.SourceExposureBiasEv, 3);
     }
 
-    [SkippableTheory]
+    [Theory]
     [MemberData(nameof(GetRawAssets))]
     public void PreviewAndFull_EstimatesAgreeWithinTolerance(string fileName)
     {
@@ -289,7 +288,7 @@ public sealed class RawBaseLoaderTests
             $"full bias {full.Info.SourceExposureBiasEv:F4} EV");
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task CanonPreviewAndFull_AreDeterministicAndMeasured()
     {
         var loader = new RawBaseLoader();
@@ -330,7 +329,7 @@ public sealed class RawBaseLoaderTests
             $"peak managed delta {fullMeasurement.PeakManagedBytes / 1048576.0:F1} MiB");
     }
 
-    [SkippableFact]
+    [Fact]
     public void ByteIdenticalBurstFiles_ProduceIdenticalPreviewBases()
     {
         var loader = new RawBaseLoader();

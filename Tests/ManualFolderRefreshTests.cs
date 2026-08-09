@@ -6,7 +6,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class ManualFolderRefreshTests
 {
     [Fact]
@@ -231,7 +230,12 @@ public sealed class ManualFolderRefreshTests
                 root,
                 photos,
                 catalog,
-                new MainWindowViewModel(catalog));
+                new MainWindowViewModel(
+                    catalog,
+                    new NullBaseLoader(),
+                    loadMetadataAsync: _ => Task.CompletedTask,
+                    availabilityService: new TestSourceAvailabilityService(
+                        SourceAvailability.RequiresHydration)));
         }
 
         public string AddFile(string fileName)
@@ -266,6 +270,21 @@ public sealed class ManualFolderRefreshTests
             {
                 Directory.Delete(_rootDirectory, recursive: true);
             }
+        }
+
+        private sealed class NullBaseLoader : IBaseImageLoader
+        {
+            public bool CanLoad(ImageFile file) => true;
+
+            public BaseImage? LoadPreviewBase(
+                ImageFile file,
+                BaseDecodeSettings decode,
+                CancellationToken cancellationToken) => null;
+
+            public BaseImage? LoadFullBase(
+                ImageFile file,
+                BaseDecodeSettings decode,
+                CancellationToken cancellationToken) => null;
         }
     }
 }

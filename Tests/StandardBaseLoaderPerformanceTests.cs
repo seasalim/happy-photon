@@ -3,7 +3,6 @@ using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace HappyPhoton.Tests;
 

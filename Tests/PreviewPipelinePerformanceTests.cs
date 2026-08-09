@@ -2,7 +2,6 @@ using System.Diagnostics;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace HappyPhoton.Tests;
 

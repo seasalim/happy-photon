@@ -151,9 +151,17 @@ It is an explicit opt-in diagnostic because all three modes require full RAW dec
 
 ## 6. CI
 
-Existing three-platform workflow runs the whole suite. HEIC and any codec-dependent
-tests use `[SkippableFact]` guards with an explicit skip reason so platform gaps are
-visible in logs, not silent — the Tests project has no such package today; WP0.1 adds
-**`Xunit.SkippableFact`** to `Tests/HappyPhoton.Tests.csproj`. Golden assets and baselines must keep the repo clone
-under control — if the goldens directory exceeds ~20 MB, shrink render size before
-reaching for LFS.
+The three-platform workflow runs both xUnit v3 test hosts. Ordinary and native bitmap
+integration tests live in `Tests/HappyPhoton.Tests.csproj`; UI and dispatcher tests run
+through the supported Avalonia headless integration in
+`HeadlessTests/HappyPhoton.Headless.Tests.csproj`. Keep Windows WIC coverage in the
+ordinary host so the native and headless Avalonia platforms never share a process.
+
+Platform and codec gaps use xUnit v3 native runtime skips (`Assert.Skip` or
+`Assert.SkipWhen`) with an explicit reason so they remain visible in logs. CI gates on
+discovery before execution: 666 ordinary tests plus 35 headless tests. The full run
+currently expands theories to 720 execution cases. Run tests with a 90-second blame
+hang timeout while changing either host.
+
+Golden assets and baselines must keep the repo clone under control — if the goldens
+directory exceeds ~20 MB, shrink render size before reaching for LFS.

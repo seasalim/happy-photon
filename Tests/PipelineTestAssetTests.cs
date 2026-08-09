@@ -51,7 +51,7 @@ public sealed class PipelineTestAssetTests
         Assert.Equal(16u, image.Depth);
     }
 
-    [SkippableFact]
+    [Fact]
     public void FbddReference_IsCanon6dAtIso6400()
     {
         using var context = RawContext.OpenFile(
@@ -79,7 +79,7 @@ public sealed class PipelineTestAssetTests
         }
     }
 
-    [SkippableFact]
+    [Fact]
     public void ReferenceRaw_HasClippedHighlights()
     {
         using var context = RawContext.OpenFile(Asset("canon-eos-350d.cr2"));

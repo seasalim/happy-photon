@@ -30,8 +30,10 @@
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
     <Compile Remove="Tests\**" />
+    <Compile Remove="HeadlessTests\**" />
     <Compile Remove="scripts\**\*.cs" />
     <InternalsVisibleTo Include="HappyPhoton.Tests" />
+    <InternalsVisibleTo Include="HappyPhoton.Headless.Tests" />
     <AssemblyMetadata Include="BuildTimestampUtc"
                       Value="$(BuildTimestampUtc)"
                       Condition="'$(BuildTimestampUtc)' != ''" />

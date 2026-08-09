@@ -1,6 +1,7 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -12,18 +13,11 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class PreviewPlaceholderTests
 {
-    private readonly AvaloniaTestFixture _fixture;
-
-    public PreviewPlaceholderTests(AvaloniaTestFixture fixture) =>
-        _fixture = fixture;
-
-    [WindowsFact]
+    [AvaloniaFact]
     public async Task Placeholder_HidesWhenPreviewArrives()
     {
-        _fixture.RequireWindows();
         Dispatcher.UIThread.RunJobs();
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),

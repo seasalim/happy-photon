@@ -20,18 +20,18 @@ public sealed class WysiwygTests
         }
     }
 
-    [SkippableTheory]
+    [Theory]
     [MemberData(nameof(AssetMatrix))]
     public void PreviewAndExport_StayWithinVisualBound(
         GoldenAssetCase asset)
     {
-        Skip.If(
+        Assert.SkipWhen(
             GoldenTestPaths.ReadActiveVersion() == "pending",
             "awaiting re-baseline");
         if (asset.IsHeic)
         {
             var heic = MagickFormatInfo.Create(MagickFormat.Heic);
-            Skip.If(
+            Assert.SkipWhen(
                 heic is not { SupportsReading: true },
                 "HEIC WYSIWYG skipped because this ImageMagick build " +
                 "has no HEIC reader.");

@@ -60,7 +60,7 @@ public sealed class ThumbnailServiceTests : IDisposable
         var heic = MagickFormatInfo.Create(MagickFormat.Heic);
         if (heic is not { SupportsReading: true })
         {
-            throw Xunit.Sdk.SkipException.ForSkip(
+            Assert.Skip(
                 "HEIC routing test requires an ImageMagick HEIC reader.");
         }
 

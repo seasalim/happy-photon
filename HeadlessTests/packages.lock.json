@@ -2,6 +2,16 @@
   "version": 1,
   "dependencies": {
     "net10.0": {
+      "Avalonia.Headless.XUnit": {
+        "type": "Direct",
+        "requested": "[12.0.4, )",
+        "resolved": "12.0.4",
+        "contentHash": "qfic3uXgnVAydLTOEOtq59axGh0ctMtQd0780paNjkNWitJoLb4iDpS9CEeFtVL6Xb4+3c3xgVaAUHcl9Z2VFA==",
+        "dependencies": {
+          "Avalonia.Headless": "12.0.4",
+          "xunit.v3.extensibility.core": "3.2.2"
+        }
+      },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
         "requested": "[17.12.0, )",
@@ -68,6 +78,14 @@
           "Avalonia.X11": "12.0.4"
         }
       },
+      "Avalonia.Fonts.Inter": {
+        "type": "Transitive",
+        "resolved": "12.0.4",
+        "contentHash": "wXyoxswY4hD6Ly9iB9sojD4rZ104trm2Z1HWLgjHo/eZcBpwT6/T0CDOVp2PeN2wSd72bKlE0n3pFj9t/z7Ipw==",
+        "dependencies": {
+          "Avalonia": "12.0.4"
+        }
+      },
       "Avalonia.FreeDesktop": {
         "type": "Transitive",
         "resolved": "12.0.4",
@@ -94,6 +112,16 @@
           "HarfBuzzSharp": "8.3.1.3",
           "HarfBuzzSharp.NativeAssets.Linux": "8.3.1.3",
           "HarfBuzzSharp.NativeAssets.WebAssembly": "8.3.1.3"
+        }
+      },
+      "Avalonia.Headless": {
+        "type": "Transitive",
+        "resolved": "12.0.4",
+        "contentHash": "KFr6cX3QADbx9KeisLdK1MAWywibnzSOxi0mBOT/oKU+niVJ2lJzmOqNnhpmzrkiczNwULbnT0Jg8RRA4uGSDg==",
+        "dependencies": {
+          "Avalonia": "12.0.4",
+          "Avalonia.Fonts.Inter": "12.0.4",
+          "Avalonia.HarfBuzz": "12.0.4"
         }
       },
       "Avalonia.Native": {

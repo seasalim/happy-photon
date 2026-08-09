@@ -79,12 +79,48 @@ jobs:
           --no-restore
           -p:ContinuousIntegrationBuild=true
 
+      - name: Verify test discovery
+        shell: pwsh
+        run: |
+          function Get-DiscoveredTestCount {
+            param([string] $Project)
+
+            $output = dotnet test $Project `
+              --configuration Release `
+              --no-build `
+              --no-restore `
+              --list-tests 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              $output | ForEach-Object { Write-Host $_ }
+              throw "Test discovery failed for $Project."
+            }
+
+            return @($output | Where-Object {
+                $_ -match '^\s+HappyPhoton\.Tests\.'
+              }).Count
+          }
+
+          $nativeCount = Get-DiscoveredTestCount `
+            "Tests/HappyPhoton.Tests.csproj"
+          $headlessCount = Get-DiscoveredTestCount `
+            "HeadlessTests/HappyPhoton.Headless.Tests.csproj"
+          $totalCount = $nativeCount + $headlessCount
+
+          Write-Host "Discovered $nativeCount native and $headlessCount headless tests ($totalCount total)."
+          # xUnit expands some theories only during execution, so 701 discovered cases produce 720 executed cases.
+          if ($nativeCount -ne 666 -or $headlessCount -ne 35 -or
+              $totalCount -ne 701) {
+            throw "Test discovery counts changed; reconcile the 720-test execution baseline deliberately."
+          }
+
       - name: Test
         run: >
           dotnet test HappyPhoton.sln
           --configuration Release
           --no-build
-          --logger "trx;LogFileName=happy-photon-${{ matrix.rid }}.trx"
+          --blame-hang
+          --blame-hang-timeout 90s
+          --logger "trx;LogFilePrefix=happy-photon-${{ matrix.rid }}"
           --results-directory artifacts/test-results/${{ matrix.rid }}
 
       - name: Resolve source identity

@@ -1,5 +1,6 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
@@ -7,20 +8,11 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class HelpAboutDialogTests
 {
-    private readonly AvaloniaTestFixture _fixture;
-
-    public HelpAboutDialogTests(AvaloniaTestFixture fixture)
-    {
-        _fixture = fixture;
-    }
-
-    [WindowsFact]
+    [AvaloniaFact]
     public void Dialog_ConstructsWithShortcutsSelectedAndIdentityPopulated()
     {
-        _fixture.RequireWindows();
         var dialog = new HelpAboutDialog();
 
         var tabs = dialog.FindControl<TabControl>("HelpAboutTabs")!;
@@ -38,10 +30,9 @@ public sealed class HelpAboutDialogTests
         dialog.Close();
     }
 
-    [WindowsFact]
+    [AvaloniaFact]
     public void Dialog_RequiredActionsHaveAccessibleNames()
     {
-        _fixture.RequireWindows();
         var dialog = new HelpAboutDialog();
 
         Assert.Equal(
@@ -66,10 +57,9 @@ public sealed class HelpAboutDialogTests
         dialog.Close();
     }
 
-    [WindowsFact]
+    [AvaloniaFact]
     public async Task HelpButton_RemainsEnabledBeforeWorkspaceIsReady()
     {
-        _fixture.RequireWindows();
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),
             $"happy-photon-help-about-{Guid.NewGuid():N}"));

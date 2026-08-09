@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -9,19 +10,11 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class RawHighlightReconstructionUiTests : IDisposable
 {
-    private readonly AvaloniaTestFixture _fixture;
     private readonly string _root = Directory.CreateDirectory(Path.Combine(
         Path.GetTempPath(),
         $"happy-photon-highlight-ui-{Guid.NewGuid():N}")).FullName;
-
-    public RawHighlightReconstructionUiTests(
-        AvaloniaTestFixture fixture)
-    {
-        _fixture = fixture;
-    }
 
     [Fact]
     public async Task Selection_PersistsResetsAndUndoesAsOneEdit()
@@ -55,10 +48,9 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    [WindowsFact]
+    [AvaloniaFact]
     public async Task RawFallback_ShowsStatusAndKeepsEditsUsable()
     {
-        _fixture.RequireWindows();
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
         var warnings = new List<string>();
@@ -108,10 +100,9 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    [WindowsFact]
-    public void ExtractedPanel_ForwardsToneCurveChanges()
+    [AvaloniaFact]
+    public async Task ExtractedPanel_ForwardsToneCurveChanges()
     {
-        _fixture.RequireWindows();
         using var catalog = new CatalogService(_root);
         catalog.InitializeAsync().GetAwaiter().GetResult();
         var vm = new MainWindowViewModel(catalog);
@@ -136,9 +127,9 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         Assert.True(vm.CanUndo);
         Assert.True(image.EditSettings.Curve.IsIdentity());
 
-        Thread.Sleep(250);
+        await Task.Delay(250);
         panel.DataContext = null;
-        vm.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        await vm.DisposeAsync();
     }
 
     [Fact]
@@ -155,10 +146,9 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    [WindowsFact]
+    [AvaloniaFact]
     public async Task ScheduledHistogramRefresh_ClearsBeforeAfterState()
     {
-        _fixture.RequireWindows();
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
         var vm = new MainWindowViewModel(
@@ -184,10 +174,9 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    [WindowsFact]
+    [AvaloniaFact]
     public async Task PresetHoverAndRestore_ClearBeforeAfterState()
     {
-        _fixture.RequireWindows();
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
         var vm = new MainWindowViewModel(

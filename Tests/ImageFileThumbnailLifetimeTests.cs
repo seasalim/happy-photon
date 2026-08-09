@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using Avalonia.Headless.XUnit;
 using ImageMagick;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -7,20 +8,11 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class ImageFileThumbnailLifetimeTests
 {
-    private readonly AvaloniaTestFixture _fixture;
-
-    public ImageFileThumbnailLifetimeTests(AvaloniaTestFixture fixture)
-    {
-        _fixture = fixture;
-    }
-
-    [WindowsFact]
+    [AvaloniaFact]
     public void Replacement_DefersRetiredThumbnailDisposalUntilAfterRender()
     {
-        _fixture.RequireWindows();
         Dispatcher.UIThread.RunJobs();
         using var source = new MagickImage(MagickColors.Red, 4, 3);
         var firstBitmap = BitmapConversionService.ConvertToBitmap(source)!;
@@ -49,10 +41,9 @@ public sealed class ImageFileThumbnailLifetimeTests
         Assert.Throws<ObjectDisposedException>(() => _ = secondBitmap.PixelSize);
     }
 
-    [WindowsFact]
+    [AvaloniaFact]
     public void SetImagesAndRemove_ClearOwnedThumbnailReferences()
     {
-        _fixture.RequireWindows();
         Dispatcher.UIThread.RunJobs();
         using var source = new MagickImage(MagickColors.Red, 4, 3);
         var firstBitmap = BitmapConversionService.ConvertToBitmap(source)!;
@@ -78,10 +69,9 @@ public sealed class ImageFileThumbnailLifetimeTests
         Assert.Throws<ObjectDisposedException>(() => _ = secondBitmap.PixelSize);
     }
 
-    [WindowsFact]
+    [AvaloniaFact]
     public void DefaultState_DisposesRetiredThumbnailWithoutDispatcher()
     {
-        _fixture.RequireWindows();
         using var source = new MagickImage(MagickColors.Red, 4, 3);
         var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
         var image = new ImageFile("image.jpg");

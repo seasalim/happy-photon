@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>HappyPhoton.Headless.Tests</AssemblyName>
+    <RootNamespace>HappyPhoton.Tests</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+    <IsPackable>false</IsPackable>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HappyPhoton.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Tests\CloudSourceViewTests.cs" Link="CloudSourceViewTests.cs" />
+    <Compile Include="..\Tests\CloudSelectionStateTests.cs" Link="CloudSelectionStateTests.cs" />
+    <Compile Include="..\Tests\FirstRunWindowTests.cs" Link="FirstRunWindowTests.cs" />
+    <Compile Include="..\Tests\GoldenTestPaths.cs" Link="GoldenTestPaths.cs" />
+    <Compile Include="..\Tests\HelpAboutDialogTests.cs" Link="HelpAboutDialogTests.cs" />
+    <Compile Include="..\Tests\ImageFileThumbnailLifetimeTests.cs" Link="ImageFileThumbnailLifetimeTests.cs" />
+    <Compile Include="..\Tests\ManualFolderRefreshViewTests.cs" Link="ManualFolderRefreshViewTests.cs" />
+    <Compile Include="..\Tests\PreviewBitmapLifetimeTests.cs" Link="PreviewBitmapLifetimeTests.cs" />
+    <Compile Include="..\Tests\PreviewPlaceholderTests.cs" Link="PreviewPlaceholderTests.cs" />
+    <Compile Include="..\Tests\RawHighlightReconstructionUiTests.cs" Link="RawHighlightReconstructionUiTests.cs" />
+    <Compile Include="..\Tests\TestSourceAvailabilityService.cs" Link="TestSourceAvailabilityService.cs" />
+    <Compile Include="..\Tests\WhiteBalanceUiTests.cs" Link="WhiteBalanceUiTests.cs" />
+  </ItemGroup>
+</Project>

@@ -162,7 +162,7 @@ public sealed class ExportMetadataTests : IDisposable
                 result.GetValue(ExifTag.ISOSpeedRatings)!.Value));
     }
 
-    [SkippableFact]
+    [Fact]
     public void Apply_ActualRawCarriesCaptureMetadata()
     {
         var source = new ImageFile(Path.Combine(

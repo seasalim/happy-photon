@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -8,24 +9,17 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class CloudSourceViewTests
 {
-    private readonly AvaloniaTestFixture _fixture;
-
-    public CloudSourceViewTests(AvaloniaTestFixture fixture) =>
-        _fixture = fixture;
-
-    [WindowsFact]
-    public void SelectedCloudSource_ShowsScopedDownloadActionAndFolderMessage()
+    [AvaloniaFact]
+    public async Task SelectedCloudSource_ShowsScopedDownloadActionAndFolderMessage()
     {
-        _fixture.RequireWindows();
         var root = Path.Combine(
             Path.GetTempPath(),
             $"happy-photon-cloud-view-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
         var catalog = new CatalogService(Path.Combine(root, "catalog"));
-        Complete(catalog.InitializeAsync());
+        await catalog.InitializeAsync();
         var viewModel = new MainWindowViewModel(
             catalog,
             new NullBaseLoader(),
@@ -65,13 +59,11 @@ public sealed class CloudSourceViewTests
         {
             window.DataContext = null;
             window.Close();
-            Complete(viewModel.DisposeAsync().AsTask());
+            await viewModel.DisposeAsync();
             catalog.Dispose();
             Directory.Delete(root, recursive: true);
         }
     }
-
-    private static void Complete(Task task) => task.GetAwaiter().GetResult();
 
     private sealed class NullBaseLoader : IBaseImageLoader
     {

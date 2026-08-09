@@ -1,3 +1,4 @@
+using Avalonia.Headless.XUnit;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -6,21 +7,20 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class CloudSelectionStateTests : IDisposable
 {
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
         $"happy-photon-cloud-selection-{Guid.NewGuid():N}");
 
-    [WindowsFact]
-    public void LibrarySelection_CloudAfterLocalClearsDerivedEditUi()
+    [AvaloniaFact]
+    public async Task LibrarySelection_CloudAfterLocalClearsDerivedEditUi()
     {
         Directory.CreateDirectory(_root);
         var localPath = WriteJpeg("local.jpg");
         var cloudPath = WriteJpeg("cloud.jpg");
         using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        Complete(catalog.InitializeAsync());
+        await catalog.InitializeAsync();
         var availability = new TestSourceAvailabilityService(
             SourceAvailability.AvailableLocally)
         {
@@ -84,17 +84,17 @@ public sealed class CloudSelectionStateTests : IDisposable
         }
         finally
         {
-            Complete(viewModel.DisposeAsync().AsTask());
+            await viewModel.DisposeAsync();
         }
     }
 
-    [WindowsFact]
-    public void LibrarySelection_CloudUsesCachedThumbnailHistogram()
+    [AvaloniaFact]
+    public async Task LibrarySelection_CloudUsesCachedThumbnailHistogram()
     {
         Directory.CreateDirectory(_root);
         var cloudPath = WriteJpeg("cached-cloud.jpg");
         using var catalog = new CatalogService(Path.Combine(_root, "cached-catalog"));
-        Complete(catalog.InitializeAsync());
+        await catalog.InitializeAsync();
         var viewModel = new MainWindowViewModel(
             catalog,
             new NullBaseLoader(),
@@ -114,7 +114,7 @@ public sealed class CloudSelectionStateTests : IDisposable
             viewModel.InitializeCloudSourceCount([cloud]);
 
             viewModel.SelectedImage = cloud;
-            WaitUntil(() => viewModel.Histogram != null);
+            await WaitUntilAsync(() => viewModel.Histogram != null);
 
             Assert.True(cloud.SourceRequiresHydration);
             Assert.NotNull(cloud.Thumbnail);
@@ -122,17 +122,17 @@ public sealed class CloudSelectionStateTests : IDisposable
         }
         finally
         {
-            Complete(viewModel.DisposeAsync().AsTask());
+            await viewModel.DisposeAsync();
         }
     }
 
-    [WindowsFact]
-    public void CloudStateChange_NotifiesEditStateOutsideLibrary()
+    [AvaloniaFact]
+    public async Task CloudStateChange_NotifiesEditStateOutsideLibrary()
     {
         Directory.CreateDirectory(_root);
         var imagePath = WriteJpeg("outside-library.jpg");
         using var catalog = new CatalogService(Path.Combine(_root, "outside-catalog"));
-        Complete(catalog.InitializeAsync());
+        await catalog.InitializeAsync();
         var viewModel = new MainWindowViewModel(
             catalog,
             new NullBaseLoader(),
@@ -157,18 +157,18 @@ public sealed class CloudSelectionStateTests : IDisposable
         }
         finally
         {
-            Complete(viewModel.DisposeAsync().AsTask());
+            await viewModel.DisposeAsync();
         }
     }
 
-    [WindowsFact]
-    public void BatchPaste_RejectsCloudOnlyTargets()
+    [AvaloniaFact]
+    public async Task BatchPaste_RejectsCloudOnlyTargets()
     {
         Directory.CreateDirectory(_root);
         var localPath = WriteJpeg("paste-local.jpg");
         var cloudPath = WriteJpeg("paste-cloud.jpg");
         using var catalog = new CatalogService(Path.Combine(_root, "paste-catalog"));
-        Complete(catalog.InitializeAsync());
+        await catalog.InitializeAsync();
         var viewModel = new MainWindowViewModel(
             catalog,
             new NullBaseLoader(),
@@ -205,7 +205,7 @@ public sealed class CloudSelectionStateTests : IDisposable
                 return Task.FromResult(true);
             };
 
-            Complete(viewModel.PasteEditSettingsCommand.ExecuteAsync(null));
+            await viewModel.PasteEditSettingsCommand.ExecuteAsync(null);
 
             Assert.Equal(0, confirmations);
             Assert.Equal(2, cloud.EditSettings.Exposure);
@@ -215,7 +215,7 @@ public sealed class CloudSelectionStateTests : IDisposable
         }
         finally
         {
-            Complete(viewModel.DisposeAsync().AsTask());
+            await viewModel.DisposeAsync();
         }
     }
 
@@ -257,13 +257,19 @@ public sealed class CloudSelectionStateTests : IDisposable
         }
     };
 
-    private static void Complete(Task task) => task.GetAwaiter().GetResult();
-
-    private static void WaitUntil(Func<bool> condition)
+    private static async Task WaitUntilAsync(Func<bool> condition)
     {
-        Assert.True(
-            SpinWait.SpinUntil(condition, TimeSpan.FromSeconds(3)),
-            "Timed out waiting for the cached thumbnail histogram.");
+        for (var attempt = 0; attempt < 60; attempt++)
+        {
+            if (condition())
+            {
+                return;
+            }
+
+            await Task.Delay(50);
+        }
+
+        Assert.Fail("Timed out waiting for the cached thumbnail histogram.");
     }
 
     private sealed class NullBaseLoader : IBaseImageLoader

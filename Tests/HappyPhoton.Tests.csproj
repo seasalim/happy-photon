@@ -5,6 +5,8 @@
     <RootNamespace>HappyPhoton.Tests</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
     <IsPackable>false</IsPackable>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
@@ -12,12 +14,24 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
-    <PackageReference Include="Xunit.SkippableFact" Version="1.5.61" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\HappyPhoton.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="CloudSourceViewTests.cs" />
+    <Compile Remove="CloudSelectionStateTests.cs" />
+    <Compile Remove="FirstRunWindowTests.cs" />
+    <Compile Remove="HelpAboutDialogTests.cs" />
+    <Compile Remove="ImageFileThumbnailLifetimeTests.cs" />
+    <Compile Remove="ManualFolderRefreshViewTests.cs" />
+    <Compile Remove="PreviewBitmapLifetimeTests.cs" />
+    <Compile Remove="PreviewPlaceholderTests.cs" />
+    <Compile Remove="RawHighlightReconstructionUiTests.cs" />
+    <Compile Remove="WhiteBalanceUiTests.cs" />
   </ItemGroup>
 </Project>

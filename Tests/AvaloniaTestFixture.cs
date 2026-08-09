@@ -1,11 +1,17 @@
+using System.Runtime.CompilerServices;
 using Xunit;
-using Xunit.Sdk;
+
+[assembly: AssemblyFixture(
+    typeof(HappyPhoton.Tests.AvaloniaPlatformAssemblyFixture))]
 
 namespace HappyPhoton.Tests;
 
 public sealed class WindowsFactAttribute : FactAttribute
 {
-    public WindowsFactAttribute()
+    public WindowsFactAttribute(
+        [CallerFilePath] string? sourceFilePath = null,
+        [CallerLineNumber] int sourceLineNumber = -1)
+        : base(sourceFilePath, sourceLineNumber)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -26,20 +32,23 @@ public sealed class AvaloniaTestCollectionDefinition : ICollectionFixture<Avalon
 
 public sealed class AvaloniaTestFixture
 {
-    public AvaloniaTestFixture()
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            HappyPhoton.Program.BuildAvaloniaApp().SetupWithoutStarting();
-        }
-    }
-
     public void RequireWindows()
     {
         if (!OperatingSystem.IsWindows())
         {
-            throw Xunit.Sdk.SkipException.ForSkip(
+            Assert.Skip(
                 "The platform bitmap integration test requires Windows WIC.");
+        }
+    }
+}
+
+public sealed class AvaloniaPlatformAssemblyFixture
+{
+    public AvaloniaPlatformAssemblyFixture()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            HappyPhoton.Program.BuildAvaloniaApp().SetupWithoutStarting();
         }
     }
 }

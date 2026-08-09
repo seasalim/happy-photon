@@ -20,17 +20,17 @@ public sealed class GoldenRenderTests
         }
     }
 
-    [SkippableTheory]
+    [Theory]
     [MemberData(nameof(AssetMatrix))]
     public void CurrentPipeline_MatchesActiveBaseline(GoldenAssetCase asset)
     {
         var activeVersion = GoldenTestPaths.ReadActiveVersion();
-        Skip.If(activeVersion == "pending", "awaiting re-baseline");
+        Assert.SkipWhen(activeVersion == "pending", "awaiting re-baseline");
         Assert.Equal($"v{RenderPipeline.Version}", activeVersion);
         if (asset.IsHeic)
         {
             var heic = MagickFormatInfo.Create(MagickFormat.Heic);
-            Skip.If(heic is not { SupportsReading: true },
+            Assert.SkipWhen(heic is not { SupportsReading: true },
                 "HEIC golden skipped because this ImageMagick build has no HEIC reader.");
         }
 

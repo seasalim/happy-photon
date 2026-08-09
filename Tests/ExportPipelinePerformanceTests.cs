@@ -2,7 +2,6 @@ using System.Diagnostics;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace HappyPhoton.Tests;
 
@@ -13,10 +12,10 @@ public sealed class ExportPipelinePerformanceTests
     public ExportPipelinePerformanceTests(ITestOutputHelper output) =>
         _output = output;
 
-    [SkippableFact]
+    [Fact]
     public async Task FullRawExport_ReportsLatencyAndPeakMemory()
     {
-        Skip.If(
+        Assert.SkipWhen(
             Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
             "Set HAPPY_PHOTON_PERF=1 to run export performance diagnostics.");
         var outputFolder = Path.Combine(

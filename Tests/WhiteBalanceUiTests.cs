@@ -1,3 +1,4 @@
+using Avalonia.Headless.XUnit;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -7,16 +8,8 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class WhiteBalanceUiTests : IDisposable
 {
-    private readonly AvaloniaTestFixture _fixture;
-
-    public WhiteBalanceUiTests(AvaloniaTestFixture fixture)
-    {
-        _fixture = fixture;
-    }
-
     private readonly string _root = Directory.CreateDirectory(Path.Combine(
         Path.GetTempPath(),
         $"happy-photon-wb-ui-{Guid.NewGuid():N}")).FullName;
@@ -105,10 +98,9 @@ public sealed class WhiteBalanceUiTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    [WindowsFact]
+    [AvaloniaFact]
     public async Task AsShotAndUndo_RefreshEditedThumbnail()
     {
-        _fixture.RequireWindows();
         var sourcePath = Path.Combine(_root, "thumbnail.jpg");
         using (var source = new MagickImage(MagickColors.Gray, 320, 200))
         {

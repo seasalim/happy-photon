@@ -30,7 +30,7 @@ public sealed class RenderDeterminismTests
             RenderPipelineTestSupport.ReadPixels(second.Image));
     }
 
-    [SkippableFact]
+    [Fact]
     public void ByteIdenticalBurstPair_RendersBitIdentically()
     {
         var firstAsset = new GoldenAssetCase(
