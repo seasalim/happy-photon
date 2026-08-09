@@ -18,7 +18,10 @@ public sealed class WorkspaceKeyRoutingTests : IDisposable
     {
         using var catalog = new CatalogService(
             Path.Combine(_testRoot, Guid.NewGuid().ToString("N")));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            loadMetadataAsync: _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
         var image = new ImageFile(Path.Combine(_testRoot, "photo.jpg"));
         vm.Library.SetImages([image]);

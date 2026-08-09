@@ -24,6 +24,7 @@ public partial class MainWindowViewModel
         }
 
         await WaitForThumbnailSessionsAsync();
+        await WaitForSelectionMetadataLoadsAsync();
         await Task.WhenAny(
             WaitForBurstAnalysisAsync(),
             Task.Delay(TimeSpan.FromSeconds(2)));

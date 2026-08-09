@@ -128,7 +128,10 @@ public sealed class RawThumbnailFallbackTests : IDisposable
             Guid.NewGuid().ToString("N")));
         await catalog.InitializeAsync();
         var loader = new CountingBaseLoader();
-        await using var viewModel = new MainWindowViewModel(catalog, loader);
+        await using var viewModel = new MainWindowViewModel(
+            catalog,
+            loader,
+            loadMetadataAsync: _ => Task.CompletedTask);
         var file = new ImageFile(path);
         viewModel.Library.SetImages([file]);
         viewModel.SelectedImage = file;

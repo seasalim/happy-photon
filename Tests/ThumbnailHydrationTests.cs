@@ -122,11 +122,20 @@ public sealed class ThumbnailHydrationTests : IDisposable
         Complete(catalog.InitializeAsync());
         var availability = new TestSourceAvailabilityService(
             SourceAvailability.RequiresHydration);
+        var metadataStarted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseMetadata = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         var viewModel = new MainWindowViewModel(
             catalog,
             new NullBaseLoader(),
-            loadMetadataAsync: _ => Task.CompletedTask,
+            loadMetadataAsync: async _ =>
+            {
+                metadataStarted.TrySetResult();
+                await releaseMetadata.Task;
+            },
             availabilityService: availability);
+        var disposed = false;
         try
         {
             Complete(viewModel.LoadFolderAsync(_root));
@@ -149,11 +158,22 @@ public sealed class ThumbnailHydrationTests : IDisposable
             viewModel.SelectedImage = null;
             viewModel.SelectedImage = image;
             WaitUntil(() => image.Thumbnail != null);
+            WaitUntil(() => metadataStarted.Task.IsCompleted);
             Assert.False(image.ThumbnailDeferredForHydration);
+
+            var disposeTask = viewModel.DisposeAsync().AsTask();
+            Assert.False(disposeTask.IsCompleted);
+            releaseMetadata.TrySetResult();
+            Complete(disposeTask);
+            disposed = true;
         }
         finally
         {
-            Complete(viewModel.DisposeAsync().AsTask());
+            releaseMetadata.TrySetResult();
+            if (!disposed)
+            {
+                Complete(viewModel.DisposeAsync().AsTask());
+            }
         }
     }
 

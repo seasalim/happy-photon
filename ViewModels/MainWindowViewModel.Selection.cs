@@ -79,7 +79,7 @@ public partial class MainWindowViewModel
             }
 
             // Load Metadata
-            _ = ImageService.LoadMetadataAsync(newValue);
+            StartSelectionMetadataLoad(newValue);
             UpdateCanReset();
         }
         else

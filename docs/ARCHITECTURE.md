@@ -389,7 +389,7 @@ Briefly, for contrast with thumbnails:
 | Thumbnail cache writes | Dedicated writer task | Bounded channel, drop-oldest; 2 s shutdown drain |
 | Rendered preview cache writes | Dedicated writer task | On image leave; JPEG + hash sidecar; bounded drop-oldest; atomic move; 2 s drain |
 | Rendered RAW thumbnail writes | Dedicated writer task | Independent capacity-8 queue; q85 JPEG + hash sidecar; promotion or image leave |
-| Metadata extraction | Threadpool | Per-`ImageFile` single-flight task; no observable mutation |
+| Metadata extraction | Threadpool | Per-`ImageFile` single-flight task; selection loads drain during ViewModel teardown |
 | Metadata apply + burst grouping | UI thread | Demand-driven by Bursts; cancelled on disable or folder change |
 | Preview base decode | Threadpool | One held base; single-flight by identity; newest-wins generation |
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
