@@ -84,9 +84,13 @@ while private or structurally stale metadata is never carried through accidental
 `apply_edit_settings` accepts the current v2 fields, including `wb`, `baseLook`, and
 `hlReconstruction`; omitted fields leave current values unchanged. The privacy
 boundary remains metadata and thumbnail-derived statistics only, and
-`get_image_stats` measures the unedited base thumbnail. Agent calls never receive
-hydration approval: image summaries expose `sourceAvailability`, and operations that
-need an online-only original return failure code `hydration_required`.
+`get_image_stats` independently requests `(150, 150)` and measures the unedited base
+thumbnail. Before statistics are calculated, every cache input is resampled to a
+canonical 150px long edge with Lanczos, whether the stored source thumbnail is a legacy
+150px entry or a promoted 512px entry. This keeps statistics stable without making the
+agent promote the Library cache as a side effect. Agent calls never receive hydration
+approval: image summaries expose `sourceAvailability`, and operations that need an
+online-only original return failure code `hydration_required`.
 
 ## 6. Verification
 
@@ -102,3 +106,5 @@ need an online-only original return failure code `hydration_required`.
 - Export hydration tests inject source availability and assert the selected cloud count
   and logical bytes, zero background source calls, and one base/metadata read for each
   image in the approved set.
+- Agent-statistics tests compare representative 150px and promoted-cache inputs after
+  normalization, with luminance within 2 levels and relative sharpness within 35%.

@@ -106,6 +106,7 @@ public partial class MainWindow
             }
 
             vm.Library.FileTypeFilter = settings.FileTypeFilter;
+            vm.RestoreLibraryThumbnailSize(settings.LibraryThumbnailSize);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;
             vm.ExportSettings.OutputSharpening = settings.OutputSharpening;
             vm.InitializeAgentSettings(settings.McpServerEnabled, settings.McpToken);
@@ -296,6 +297,7 @@ public partial class MainWindow
             SelectedFolderPath = vm.CurrentFolderPath,
             FirstRunExperienceVersion = vm.FirstRunExperienceVersion,
             FileTypeFilter = vm.Library.FileTypeFilter,
+            LibraryThumbnailSize = vm.LibraryThumbnailSize,
             StripLocationData = vm.ExportSettings.StripLocationData,
             OutputSharpening = vm.ExportSettings.OutputSharpening,
             McpServerEnabled = vm.IsAgentServerEnabled,

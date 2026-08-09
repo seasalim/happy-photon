@@ -40,6 +40,54 @@ public partial class MainWindowViewModel
         }
     }
 
+    internal void ApplyThumbnailLoadResult(
+        ImageFile image,
+        ThumbnailLoadResult result)
+    {
+        if (result.Status != ThumbnailLoadStatus.Loaded)
+        {
+            if (image.Thumbnail != null)
+            {
+                if (result.Status == ThumbnailLoadStatus.DeferredForHydration)
+                {
+                    image.ThumbnailUpgradeDeferredDimension = Math.Max(
+                        image.ThumbnailUpgradeDeferredDimension,
+                        result.Request.GenerationDimension);
+                }
+                else
+                {
+                    image.ThumbnailUpgradeFailedDimension = Math.Max(
+                        image.ThumbnailUpgradeFailedDimension,
+                        result.Request.GenerationDimension);
+                }
+                return;
+            }
+
+            ApplyThumbnailLoadStatus(image, result.Status);
+            return;
+        }
+
+        image.ThumbnailDeferredForHydration = false;
+        image.ThumbnailLoadFailed = false;
+        if (result.SatisfiesMinimumDimension)
+        {
+            image.ThumbnailUpgradeDeferredDimension = 0;
+            image.ThumbnailUpgradeFailedDimension = 0;
+        }
+        else if (result.BetterResultDeferredForHydration)
+        {
+            image.ThumbnailUpgradeDeferredDimension = Math.Max(
+                image.ThumbnailUpgradeDeferredDimension,
+                result.Request.GenerationDimension);
+        }
+        else if (result.SourceCannotProvideRequestedQuality)
+        {
+            image.ThumbnailUpgradeFailedDimension = Math.Max(
+                image.ThumbnailUpgradeFailedDimension,
+                result.Request.GenerationDimension);
+        }
+    }
+
     private void SetSourceRequiresHydration(ImageFile image, bool value)
     {
         if (image.SourceRequiresHydration == value)
@@ -120,6 +168,8 @@ public partial class MainWindowViewModel
             UpdateCanReset();
             image.ThumbnailDeferredForHydration = false;
             image.ThumbnailLoadFailed = false;
+            image.ThumbnailUpgradeDeferredDimension = 0;
+            image.ThumbnailUpgradeFailedDimension = 0;
             await LoadThumbnailAsync(
                 image,
                 generation,

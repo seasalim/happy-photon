@@ -8,14 +8,24 @@ internal static class ThumbnailResidencyPolicy
         IReadOnlyCollection<ImageFile> residents,
         IReadOnlySet<ImageFile> pinned,
         IReadOnlyDictionary<ImageFile, long> lastAccess,
-        int targetCount)
+        long targetBytes)
     {
-        var removeCount = Math.Max(0, residents.Count - Math.Max(0, targetCount));
-        if (removeCount == 0) return Array.Empty<ImageFile>();
-        return residents
+        var residentBytes = residents.Sum(image => image.ThumbnailBytes);
+        if (residentBytes <= Math.Max(0, targetBytes))
+        {
+            return Array.Empty<ImageFile>();
+        }
+
+        var evictions = new List<ImageFile>();
+        foreach (var image in residents
             .Where(image => !pinned.Contains(image))
-            .OrderBy(image => lastAccess.GetValueOrDefault(image))
-            .Take(removeCount)
-            .ToList();
+            .OrderBy(image => lastAccess.GetValueOrDefault(image)))
+        {
+            evictions.Add(image);
+            residentBytes -= image.ThumbnailBytes;
+            if (residentBytes <= targetBytes) break;
+        }
+
+        return evictions;
     }
 }

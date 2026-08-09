@@ -9,6 +9,7 @@ public sealed partial class PreviewService
         Task refreshTask,
         ImageFile imageFile,
         EditSettings settings,
+        ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
         long generation)
     {
@@ -24,6 +25,7 @@ public sealed partial class PreviewService
             _pendingRefreshes[refreshTask] = new PendingRefresh(
                 imageFile,
                 settings.Clone(),
+                thumbnailRequest,
                 skipHistogram,
                 generation);
         }
@@ -133,6 +135,7 @@ public sealed partial class PreviewService
             () => Render(
                 snapshot.Base,
                 pending.Settings,
+                pending.ThumbnailRequest,
                 pending.SkipHistogram,
                 generation,
                 CancellationToken.None),

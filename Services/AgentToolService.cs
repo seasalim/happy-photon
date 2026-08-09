@@ -79,10 +79,15 @@ public sealed partial class AgentToolService
 
                     var thumbnailPath = _catalogService.GetThumbnailPath(image.CatalogId);
                     byte[]? thumbnailData = null;
-                    if (!_imageService.IsThumbnailCacheValid(image))
+                    var statsRequest = new ThumbnailSizeRequest(
+                        ImageStatsService.CanonicalLongEdge,
+                        ImageStatsService.CanonicalLongEdge);
+                    if (!_imageService.IsThumbnailCacheValid(image, statsRequest))
                     {
                         using var result = await _imageService.LoadUneditedThumbnailAsync(
-                            image, CancellationToken.None);
+                            image,
+                            statsRequest,
+                            CancellationToken.None);
                         if (result.Status == ThumbnailLoadStatus.DeferredForHydration)
                         {
                             throw new SourceReadDeferredException(image.FilePath);

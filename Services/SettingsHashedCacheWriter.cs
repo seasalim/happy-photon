@@ -14,6 +14,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
     private readonly CatalogService _catalogService;
     private readonly Func<long, string> _getCachePath;
     private readonly int _jpegQuality;
+    private readonly bool _versionedDimensionMetadata;
     private readonly string _temporaryDirectory;
     private readonly Channel<CacheWrite> _queue;
     private readonly Task _processingGate;
@@ -28,11 +29,13 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         int jpegQuality,
         int queueCapacity = 8,
         Task? processingGate = null,
-        TimeSpan? drainTimeout = null)
+        TimeSpan? drainTimeout = null,
+        bool versionedDimensionMetadata = false)
     {
         _catalogService = catalogService;
         _getCachePath = getCachePath;
         _jpegQuality = jpegQuality;
+        _versionedDimensionMetadata = versionedDimensionMetadata;
         _temporaryDirectory = Path.Combine(catalogService.CatalogPath, "assets", "tmp");
         _processingGate = processingGate ?? Task.CompletedTask;
         _drainTimeout = drainTimeout ?? DefaultDrainTimeout;
@@ -138,9 +141,24 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             write.Image.Write(temporaryPath, MagickFormat.Jpeg);
             File.WriteAllText(
                 temporaryMetadataPath,
-                write.SettingsHash,
+                _versionedDimensionMetadata
+                    ? RenderedThumbnailMetadata.Serialize(
+                        write.SettingsHash,
+                        (int)write.Image.Width,
+                        (int)write.Image.Height)
+                    : write.SettingsHash,
                 new UTF8Encoding(false));
             if (File.GetLastWriteTimeUtc(write.SourcePath) != write.SourceWriteTime)
+            {
+                File.Delete(temporaryPath);
+                File.Delete(temporaryMetadataPath);
+                return;
+            }
+            if (_versionedDimensionMetadata &&
+                HasEqualOrLargerMatchingEntry(
+                    write,
+                    metadataPath,
+                    temporaryPath))
             {
                 File.Delete(temporaryPath);
                 File.Delete(temporaryMetadataPath);
@@ -160,6 +178,29 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         {
             write.Image.Dispose();
         }
+    }
+
+    private static bool HasEqualOrLargerMatchingEntry(
+        CacheWrite write,
+        string metadataPath,
+        string candidatePath)
+    {
+        if (!File.Exists(write.CachePath) ||
+            File.GetLastWriteTimeUtc(write.CachePath) <= write.SourceWriteTime ||
+            !RenderedThumbnailMetadata.TryRead(
+                metadataPath,
+                write.CachePath,
+                out var current) ||
+            !string.Equals(
+                current.SettingsHash,
+                write.SettingsHash,
+                StringComparison.Ordinal) ||
+            !JpegDimensions.TryRead(candidatePath, out var candidate))
+        {
+            return false;
+        }
+
+        return current.LongEdge >= Math.Max(candidate.Width, candidate.Height);
     }
 
     private static void TryDelete(string path)

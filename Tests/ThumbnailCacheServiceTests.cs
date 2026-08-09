@@ -160,6 +160,91 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
             File.ReadAllBytes(cachePath).Take(3).ToArray());
     }
 
+    [WindowsFact]
+    public async Task LoadFromCache_ReturnsUndersizedLegacyEntryForLargeRequest()
+    {
+        _fixture.RequireWindows();
+        var sourcePath = CreateSource();
+        using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
+        var image = new ImageFile(sourcePath) { CatalogId = 1 };
+        var cache = new ThumbnailCacheService(catalog);
+        using (var bitmap = JpegThumbnailDecoder.Decode(
+            sourcePath, 150, CancellationToken.None))
+        {
+            cache.QueueSaveToCache(image, bitmap);
+        }
+        await cache.DisposeAsync();
+
+        await using var reader = new ThumbnailCacheService(catalog);
+        using var loaded = reader.LoadFromCache(
+            image,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            out var dimensions,
+            out var satisfiesMinimum);
+
+        Assert.NotNull(loaded);
+        Assert.Equal(150, Math.Max(dimensions.Width, dimensions.Height));
+        Assert.False(satisfiesMinimum);
+    }
+
+    [WindowsFact]
+    public async Task LoadFromCache_DecodesPromotedEntryDownToActiveTarget()
+    {
+        _fixture.RequireWindows();
+        var sourcePath = CreateSource(1200, 800);
+        using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
+        var image = new ImageFile(sourcePath) { CatalogId = 1 };
+        var cache = new ThumbnailCacheService(catalog);
+        using (var bitmap = JpegThumbnailDecoder.Decode(
+            sourcePath, 512, CancellationToken.None))
+        {
+            cache.QueueSaveToCache(image, bitmap);
+        }
+        await cache.DisposeAsync();
+
+        await using var reader = new ThumbnailCacheService(catalog);
+        using var loaded = reader.LoadFromCache(
+            image,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            out var dimensions,
+            out var satisfiesMinimum);
+
+        Assert.NotNull(loaded);
+        Assert.Equal(192, Math.Max(dimensions.Width, dimensions.Height));
+        Assert.True(satisfiesMinimum);
+    }
+
+    [WindowsFact]
+    public async Task QueueSaveToCache_LateSmallWriteCannotReplaceLargeEntry()
+    {
+        _fixture.RequireWindows();
+        var sourcePath = CreateSource(1200, 800);
+        using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
+        var image = new ImageFile(sourcePath) { CatalogId = 1 };
+        var cache = new ThumbnailCacheService(catalog);
+        using var large = JpegThumbnailDecoder.Decode(
+            sourcePath, 512, CancellationToken.None);
+        using var small = JpegThumbnailDecoder.Decode(
+            sourcePath, 150, CancellationToken.None);
+
+        cache.QueueSaveToCache(image, large);
+        cache.QueueSaveToCache(image, small);
+        await cache.DisposeAsync();
+
+        Assert.True(JpegDimensions.TryRead(cache.GetCachePath(image), out var dimensions));
+        Assert.Equal(512, Math.Max(dimensions.Width, dimensions.Height));
+    }
+
+    [Fact]
+    public void JpegDimensions_ReadsSofWithoutPixelDecode()
+    {
+        var sourcePath = CreateSource(640, 360);
+
+        Assert.True(JpegDimensions.TryRead(sourcePath, out var dimensions));
+        Assert.Equal(640, dimensions.Width);
+        Assert.Equal(360, dimensions.Height);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_tempDirectory))
@@ -168,11 +253,14 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         }
     }
 
-    private string CreateSource()
+    private string CreateSource(int width = 400, int height = 200)
     {
         Directory.CreateDirectory(_tempDirectory);
         var sourcePath = Path.Combine(_tempDirectory, "source.jpg");
-        using var source = new MagickImage(MagickColors.Red, 400, 200);
+        using var source = new MagickImage(
+            MagickColors.Red,
+            (uint)width,
+            (uint)height);
         source.Write(sourcePath, MagickFormat.Jpeg);
         return sourcePath;
     }

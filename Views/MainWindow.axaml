@@ -218,6 +218,7 @@
                                        FlagFilter="{Binding Library.FlagFilter, Mode=TwoWay}"
                                        MinimumRating="{Binding Library.MinimumRating, Mode=TwoWay}"
                                        ShowBursts="{Binding ShowBurstGroups, Mode=TwoWay}"
+                                       ThumbnailSize="{Binding LibraryThumbnailSize, Mode=TwoWay}"
                                        SelectedImage="{Binding SelectedImage, Mode=TwoWay}"/>
 
                 <!-- Develop View (when in Develop mode) -->

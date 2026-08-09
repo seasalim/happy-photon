@@ -140,7 +140,11 @@ public partial class MainWindowViewModel
                 imageFile.EditSettings,
                 ct);
             var freshTask = ImageService.LoadPreviewWithHistogramAsync(
-                imageFile, imageFile.EditSettings, skipHistogram: true, ct);
+                imageFile,
+                imageFile.EditSettings,
+                LibraryThumbnailRequest,
+                skipHistogram: true,
+                ct);
             ReplacePreviewImage(null);
             _ = ShowBaseArmingAfterDelay(
                 requestCts,

@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Media.Imaging;
 using ImageMagick;
 using HappyPhoton.Models;
@@ -10,6 +11,7 @@ namespace HappyPhoton.Services;
 public class HistogramService
 {
     private const int HistogramMaxDimension = 1024;
+    internal const int LibraryHistogramDimension = 150;
 
     public void CalculateHistogram(RenderResult result, HistogramData histogram)
     {
@@ -65,6 +67,36 @@ public class HistogramService
         }
         histogram.Normalize();
         return histogram;
+    }
+
+    public HistogramData CalculateLibraryHistogram(Bitmap bitmap)
+    {
+        ArgumentNullException.ThrowIfNull(bitmap);
+        using var snapshot = CreateLibrarySnapshot(bitmap);
+        return CalculateHistogram(snapshot);
+    }
+
+    internal static Bitmap CreateLibrarySnapshot(Bitmap bitmap)
+    {
+        ArgumentNullException.ThrowIfNull(bitmap);
+        var scale = LibraryHistogramDimension /
+            (double)Math.Max(bitmap.PixelSize.Width, bitmap.PixelSize.Height);
+        var size = new PixelSize(
+            Math.Max(1, (int)Math.Round(bitmap.PixelSize.Width * scale)),
+            Math.Max(1, (int)Math.Round(bitmap.PixelSize.Height * scale)));
+        if (bitmap is not WriteableBitmap)
+        {
+            return bitmap.CreateScaledBitmap(
+                size,
+                BitmapInterpolationMode.MediumQuality);
+        }
+
+        using var image = BitmapConversionService.ConvertToMagickImage(bitmap);
+        image.Resize(new MagickGeometry((uint)size.Width, (uint)size.Height)
+        {
+            IgnoreAspectRatio = true
+        });
+        return BitmapConversionService.ConvertToBitmap(image)!;
     }
 
     private static MagickImage CreateHistogramImage(MagickImage source)

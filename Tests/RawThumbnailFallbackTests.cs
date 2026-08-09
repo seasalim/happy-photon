@@ -158,12 +158,11 @@ public sealed class RawThumbnailFallbackTests : IDisposable
             CreatePreview(400, 300, MagickColors.Green),
             6000,
             4000);
-        var extractor = new EmbeddedPreviewExtractor(
-            raw,
-            ThumbnailService.ThumbnailSize);
+        var extractor = new EmbeddedPreviewExtractor(raw);
 
         using var bitmap = extractor.TryExtract(
             Path.Combine(_root, "not-an-image.dng"),
+            ThumbnailService.ThumbnailSize,
             CancellationToken.None);
 
         Assert.NotNull(bitmap);
@@ -181,11 +180,11 @@ public sealed class RawThumbnailFallbackTests : IDisposable
             borderSize: 20,
             verticalBorders: false);
         var extractor = new EmbeddedPreviewExtractor(
-            new PreviewRawService(bytes, 6000, 4000),
-            ThumbnailService.ThumbnailSize);
+            new PreviewRawService(bytes, 6000, 4000));
 
         using var bitmap = extractor.TryExtract(
             Path.Combine(_root, "not-an-image.dng"),
+            ThumbnailService.ThumbnailSize,
             CancellationToken.None);
 
         Assert.NotNull(bitmap);
@@ -206,11 +205,11 @@ public sealed class RawThumbnailFallbackTests : IDisposable
             borderSize: 20,
             verticalBorders: true);
         var extractor = new EmbeddedPreviewExtractor(
-            new PreviewRawService(bytes, 6000, 4000),
-            ThumbnailService.ThumbnailSize);
+            new PreviewRawService(bytes, 6000, 4000));
 
         using var bitmap = extractor.TryExtract(
             Path.Combine(_root, "not-an-image.dng"),
+            ThumbnailService.ThumbnailSize,
             CancellationToken.None);
 
         Assert.NotNull(bitmap);
@@ -226,11 +225,11 @@ public sealed class RawThumbnailFallbackTests : IDisposable
             new PreviewRawService(
                 CreatePreview(300, 400, MagickColors.Green),
                 4000,
-                6000),
-            ThumbnailService.ThumbnailSize);
+                6000));
 
         using var bitmap = extractor.TryExtract(
             Path.Combine(_root, "not-an-image.dng"),
+            ThumbnailService.ThumbnailSize,
             CancellationToken.None);
 
         Assert.NotNull(bitmap);
@@ -246,11 +245,11 @@ public sealed class RawThumbnailFallbackTests : IDisposable
             new PreviewRawService(
                 CreatePreview(400, 100, MagickColors.Green),
                 6000,
-                4000),
-            ThumbnailService.ThumbnailSize);
+                4000));
 
         using var bitmap = extractor.TryExtract(
             Path.Combine(_root, "not-a-decodable-image.dng"),
+            ThumbnailService.ThumbnailSize,
             CancellationToken.None);
 
         Assert.NotNull(bitmap);
@@ -273,16 +272,43 @@ public sealed class RawThumbnailFallbackTests : IDisposable
             new PreviewRawService(
                 CreatePreview(400, 300, MagickColors.Green),
                 visibleWidth,
-                visibleHeight),
-            ThumbnailService.ThumbnailSize);
+                visibleHeight));
 
         using var bitmap = extractor.TryExtract(
             Path.Combine(_root, "not-an-image.dng"),
+            ThumbnailService.ThumbnailSize,
             CancellationToken.None);
 
         Assert.NotNull(bitmap);
         Assert.Equal(ThumbnailService.ThumbnailSize, bitmap.PixelSize.Width);
         Assert.Equal(113, bitmap.PixelSize.Height);
+    }
+
+    [WindowsFact]
+    public void UndersizedLibRawPreview_DoesNotStopLargerSafeCandidate()
+    {
+        _fixture.RequireWindows();
+        Directory.CreateDirectory(_root);
+        var path = Path.Combine(_root, "larger-preview.jpg");
+        using (var image = new MagickImage(MagickColors.Blue, 900, 600))
+        {
+            image.Write(path, MagickFormat.Jpeg);
+        }
+        var extractor = new EmbeddedPreviewExtractor(
+            new PreviewRawService(
+                CreatePreview(120, 80, MagickColors.Green),
+                900,
+                600));
+
+        using var bitmap = extractor.TryExtract(
+            path,
+            512,
+            CancellationToken.None);
+
+        Assert.NotNull(bitmap);
+        Assert.Equal(512, Math.Max(
+            bitmap!.PixelSize.Width,
+            bitmap.PixelSize.Height));
     }
 
     private async Task<(CatalogService Catalog, ImageFile File)> CreateCachedRawAsync(

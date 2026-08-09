@@ -33,9 +33,14 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
             var path = catalog.GetRenderedThumbnailPath(file.CatalogId);
             using var encoded = new MagickImage(path);
             Assert.Equal(85u, encoded.Quality);
-            Assert.Equal(
-                "matching-hash",
-                File.ReadAllText(Path.ChangeExtension(path, ".meta")));
+            Assert.True(RenderedThumbnailMetadata.TryRead(
+                Path.ChangeExtension(path, ".meta"),
+                path,
+                out var metadata));
+            Assert.Equal(RenderedThumbnailMetadata.CurrentVersion, metadata.Version);
+            Assert.Equal("matching-hash", metadata.SettingsHash);
+            Assert.Equal(150, metadata.PixelWidth);
+            Assert.Equal(100, metadata.PixelHeight);
 
             var reader = new RenderedThumbnailCacheService(catalog);
             using var loaded = reader.LoadMatching(file, "matching-hash");
@@ -97,9 +102,85 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
 
             var path = catalog.GetRenderedThumbnailPath(file.CatalogId);
             Assert.True(File.Exists(path));
-            Assert.Equal(
-                "promotion",
-                File.ReadAllText(Path.ChangeExtension(path, ".meta")));
+            Assert.True(RenderedThumbnailMetadata.TryRead(
+                Path.ChangeExtension(path, ".meta"),
+                path,
+                out var metadata));
+            Assert.Equal("promotion", metadata.SettingsHash);
+        }
+    }
+
+    [WindowsFact]
+    public async Task LegacyHashSidecarLoadsWithDimensionsInferredFromJpeg()
+    {
+        _fixture.RequireWindows();
+        var (catalog, file) = await CreateFileAsync();
+        using (catalog)
+        {
+            var path = catalog.GetRenderedThumbnailPath(file.CatalogId);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            using (var image = new MagickImage(MagickColors.Orange, 150, 100))
+            {
+                image.Write(path, MagickFormat.Jpeg);
+            }
+            File.WriteAllText(Path.ChangeExtension(path, ".meta"), "legacy-hash");
+            File.SetLastWriteTimeUtc(path, DateTime.UtcNow);
+
+            await using var cache = new RenderedThumbnailCacheService(catalog);
+            using var loaded = cache.LoadMatching(file, "legacy-hash");
+
+            Assert.NotNull(loaded);
+            Assert.Equal(150, loaded!.PixelSize.Width);
+        }
+    }
+
+    [WindowsFact]
+    public async Task MatchingHashWritesAreMonotonicByLongEdge()
+    {
+        _fixture.RequireWindows();
+        var (catalog, file) = await CreateFileAsync();
+        using (catalog)
+        {
+            var cache = new RenderedThumbnailCacheService(catalog);
+            using var largeImage = new MagickImage(MagickColors.Orange, 512, 341);
+            using var smallImage = new MagickImage(MagickColors.Blue, 150, 100);
+            using var large = BitmapConversionService.ConvertToBitmap(largeImage)!;
+            using var small = BitmapConversionService.ConvertToBitmap(smallImage)!;
+
+            cache.QueueSaveToCache(file, large, "hash");
+            cache.QueueSaveToCache(file, small, "hash");
+            await cache.DisposeAsync();
+
+            Assert.True(JpegDimensions.TryRead(
+                catalog.GetRenderedThumbnailPath(file.CatalogId),
+                out var dimensions));
+            Assert.Equal(512, Math.Max(dimensions.Width, dimensions.Height));
+        }
+    }
+
+    [WindowsFact]
+    public async Task MatchingUndersizedEntryRemainsAccuratePlaceholder()
+    {
+        _fixture.RequireWindows();
+        var (catalog, file) = await CreateFileAsync();
+        using (catalog)
+        {
+            var writer = new RenderedThumbnailCacheService(catalog);
+            using var source = new MagickImage(MagickColors.Orange, 150, 100);
+            using var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
+            writer.QueueSaveToCache(file, bitmap, "hash");
+            await writer.DisposeAsync();
+
+            await using var reader = new RenderedThumbnailCacheService(catalog);
+            using var loaded = reader.LoadMatching(
+                file,
+                "hash",
+                ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+                out var satisfiesMinimum);
+
+            Assert.NotNull(loaded);
+            Assert.False(satisfiesMinimum);
+            Assert.Equal(150, loaded!.PixelSize.Width);
         }
     }
 

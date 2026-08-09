@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using ImageMagick;
@@ -71,21 +72,77 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
         }
     }
 
+    public bool IsCacheValid(
+        ImageFile imageFile,
+        ThumbnailSizeRequest request)
+    {
+        if (!IsCacheValid(imageFile)) return false;
+        var cachePath = GetCachePath(imageFile);
+        if (!IsJpeg(cachePath))
+        {
+            return request.MinimumDimension <= ThumbnailService.ThumbnailSize;
+        }
+
+        return JpegDimensions.TryRead(cachePath, out var dimensions) &&
+               LongEdge(dimensions) >= request.MinimumDimension;
+    }
+
     public Bitmap? LoadFromCache(ImageFile imageFile)
     {
+        return LoadFromCache(
+            imageFile,
+            new ThumbnailSizeRequest(
+                ThumbnailService.ThumbnailSize,
+                ThumbnailService.ThumbnailSize),
+            out _,
+            out _);
+    }
+
+    public Bitmap? LoadFromCache(
+        ImageFile imageFile,
+        ThumbnailSizeRequest request,
+        out PixelSize actualDimensions,
+        out bool satisfiesMinimum)
+    {
+        actualDimensions = default;
+        satisfiesMinimum = false;
         if (imageFile.CatalogId == 0) return null;
         try
         {
             var cachePath = _catalogService.GetThumbnailPath(imageFile.CatalogId);
             if (!File.Exists(cachePath)) return null;
-            var bitmap = new Bitmap(cachePath);
-            if (!IsJpeg(cachePath)) QueueSaveToCache(imageFile, bitmap);
+            var isJpeg = IsJpeg(cachePath);
+            var storedDimensions = isJpeg &&
+                JpegDimensions.TryRead(cachePath, out var jpegDimensions)
+                    ? jpegDimensions
+                    : default;
+            var bitmap = DecodeForRequest(cachePath, storedDimensions, request);
+            actualDimensions = bitmap.PixelSize;
+            satisfiesMinimum = LongEdge(actualDimensions) >= request.MinimumDimension;
+            if (!isJpeg) QueueSaveToCache(imageFile, bitmap);
             return bitmap;
         }
         catch
         {
             return null;
         }
+    }
+
+    private static Bitmap DecodeForRequest(
+        string path,
+        PixelSize storedDimensions,
+        ThumbnailSizeRequest request)
+    {
+        if (storedDimensions.Width <= request.GenerationDimension &&
+            storedDimensions.Height <= request.GenerationDimension)
+        {
+            return new Bitmap(path);
+        }
+
+        using var stream = File.OpenRead(path);
+        return storedDimensions.Width >= storedDimensions.Height
+            ? Bitmap.DecodeToWidth(stream, request.GenerationDimension)
+            : Bitmap.DecodeToHeight(stream, request.GenerationDimension);
     }
 
     public void QueueSaveToCache(ImageFile imageFile, Bitmap bitmap)
@@ -177,6 +234,11 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
                 File.Delete(temporaryPath);
                 return;
             }
+            if (HasEqualOrLargerCurrentEntry(write, temporaryPath))
+            {
+                File.Delete(temporaryPath);
+                return;
+            }
             File.Move(temporaryPath, write.CachePath, overwrite: true);
         }
         catch
@@ -193,6 +255,21 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
         {
             write.Bitmap.Dispose();
         }
+    }
+
+    private static bool HasEqualOrLargerCurrentEntry(
+        CacheWrite write,
+        string candidatePath)
+    {
+        if (!File.Exists(write.CachePath) ||
+            File.GetLastWriteTimeUtc(write.CachePath) <= write.SourceWriteTime ||
+            !JpegDimensions.TryRead(write.CachePath, out var current) ||
+            !JpegDimensions.TryRead(candidatePath, out var candidate))
+        {
+            return false;
+        }
+
+        return LongEdge(current) >= LongEdge(candidate);
     }
 
     public async ValueTask DisposeAsync()
@@ -226,6 +303,9 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
                signature[1] == 0xd8 &&
                signature[2] == 0xff;
     }
+
+    private static int LongEdge(PixelSize dimensions) =>
+        Math.Max(dimensions.Width, dimensions.Height);
 
     private sealed record CacheWrite(
         string CachePath,

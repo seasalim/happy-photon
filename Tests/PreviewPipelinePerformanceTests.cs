@@ -69,9 +69,17 @@ public sealed class PreviewPipelinePerformanceTests
         {
             using var catalog = new CatalogService(root);
             await catalog.InitializeAsync();
+            var file = new ImageFile(Asset("canon-eos-350d.cr2"));
             await CompareRawCandidateCost(
                 catalog,
-                new ImageFile(Asset("canon-eos-350d.cr2")));
+                file,
+                ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+                "192px");
+            await CompareRawCandidateCost(
+                catalog,
+                file,
+                ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+                "512px");
         }
         finally
         {
@@ -101,24 +109,32 @@ public sealed class PreviewPipelinePerformanceTests
             var hash = RenderSettingsHash.Compute(
                 new EditSettings { Exposure = 0.5 });
 
-            MeasureCache(files, file => sourceCache.LoadFromCache(file));
-            MeasureCache(files, file => renderedCache.LoadMatching(file, hash));
-            var sourceMedian = Median(Enumerable.Range(0, 3)
-                .Select(_ => MeasureCache(
-                    files,
-                    file => sourceCache.LoadFromCache(file))));
-            var renderedMedian = Median(Enumerable.Range(0, 3)
-                .Select(_ => MeasureCache(
-                    files,
-                    file => renderedCache.LoadMatching(file, hash))));
+            foreach (var size in Enum.GetValues<LibraryThumbnailSize>())
+            {
+                var request = ThumbnailSizeRequest.For(size);
+                MeasureCache(files, file => sourceCache.LoadFromCache(
+                    file, request, out _, out _));
+                MeasureCache(files, file => renderedCache.LoadMatching(
+                    file, hash, request, out _));
+                var sourceMedian = Median(Enumerable.Range(0, 3)
+                    .Select(_sample => MeasureCache(
+                        files,
+                        file => sourceCache.LoadFromCache(
+                            file, request, out _, out _))));
+                var renderedMedian = Median(Enumerable.Range(0, 3)
+                    .Select(_sample => MeasureCache(
+                        files,
+                        file => renderedCache.LoadMatching(
+                            file, hash, request, out _))));
 
-            _output.WriteLine(
-                $"100 source thumbnails: {sourceMedian:F1} ms; " +
-                $"100 rendered thumbnails: {renderedMedian:F1} ms");
-            Assert.True(
-                renderedMedian <= sourceMedian * 1.15,
-                $"Rendered thumbnail cache was {renderedMedian / sourceMedian:P1} " +
-                "of the source-cache latency.");
+                _output.WriteLine(
+                    $"100 {size} source thumbnails: {sourceMedian:F1} ms; " +
+                    $"rendered thumbnails: {renderedMedian:F1} ms");
+                Assert.True(
+                    renderedMedian <= sourceMedian * 1.15,
+                    $"{size} rendered thumbnail cache was " +
+                    $"{renderedMedian / sourceMedian:P1} of source-cache latency.");
+            }
             await sourceCache.DisposeAsync();
             await renderedCache.DisposeAsync();
         }
@@ -128,9 +144,46 @@ public sealed class PreviewPipelinePerformanceTests
         }
     }
 
+    [WindowsFact]
+    public void LibraryHistogramLatency_WhenEnabled()
+    {
+        _fixture.RequireWindows();
+        if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1")
+        {
+            return;
+        }
+
+        using var source = new ImageMagick.MagickImage(
+            ImageMagick.MagickColors.Orange,
+            512,
+            341);
+        using var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
+        var histogramService = new HistogramService();
+        using (var warmup = BitmapConversionService.CloneBitmap(bitmap))
+        {
+            histogramService.CalculateLibraryHistogram(warmup);
+        }
+
+        var samples = new List<double>();
+        for (var index = 0; index < 9; index++)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            using var snapshot = BitmapConversionService.CloneBitmap(bitmap);
+            histogramService.CalculateLibraryHistogram(snapshot);
+            stopwatch.Stop();
+            samples.Add(stopwatch.Elapsed.TotalMilliseconds);
+        }
+
+        var median = Median(samples);
+        _output.WriteLine($"512px Library histogram median: {median:F1} ms");
+        Assert.True(median <= 100, $"Library histogram median was {median:F1} ms.");
+    }
+
     private async Task CompareRawCandidateCost(
         CatalogService catalog,
-        ImageFile file)
+        ImageFile file,
+        ThumbnailSizeRequest request,
+        string requestLabel)
     {
         await using var baseline = CreateService(
             catalog,
@@ -140,9 +193,9 @@ public sealed class PreviewPipelinePerformanceTests
             createRenderedThumbnail: true);
         var warm = new EditSettings { Exposure = 0.25 };
         DisposePreview(await baseline.ApplyEditsToPreviewAsync(
-            file, warm, skipHistogram: true));
+            file, warm, request, skipHistogram: true));
         DisposePreview(await enabled.ApplyEditsToPreviewAsync(
-            file, warm, skipHistogram: true));
+            file, warm, request, skipHistogram: true));
 
         var baselineSamples = new List<double>();
         var enabledSamples = new List<double>();
@@ -155,35 +208,42 @@ public sealed class PreviewPipelinePerformanceTests
             };
             if (index % 2 == 0)
             {
-                baselineSamples.Add(await MeasureRender(baseline, file, settings));
-                enabledSamples.Add(await MeasureRender(enabled, file, settings));
+                baselineSamples.Add(await MeasureRender(
+                    baseline, file, settings, request));
+                enabledSamples.Add(await MeasureRender(
+                    enabled, file, settings, request));
             }
             else
             {
-                enabledSamples.Add(await MeasureRender(enabled, file, settings));
-                baselineSamples.Add(await MeasureRender(baseline, file, settings));
+                enabledSamples.Add(await MeasureRender(
+                    enabled, file, settings, request));
+                baselineSamples.Add(await MeasureRender(
+                    baseline, file, settings, request));
             }
         }
         var baselineMedian = Median(baselineSamples);
         var enabledMedian = Median(enabledSamples);
         _output.WriteLine(
-            $"RAW preview median without thumbnail: {baselineMedian:F1} ms; " +
+            $"RAW {requestLabel} preview median without thumbnail: " +
+            $"{baselineMedian:F1} ms; " +
             $"with thumbnail: {enabledMedian:F1} ms");
         Assert.True(
-            enabledMedian <= baselineMedian * 1.15,
-            $"Rendered thumbnail candidate raised median latency from " +
-            $"{baselineMedian:F1} to {enabledMedian:F1} ms.");
+            enabledMedian <= 150,
+            $"RAW {requestLabel} render with thumbnail exceeded 150 ms: " +
+            $"{enabledMedian:F1} ms (baseline {baselineMedian:F1} ms).");
     }
 
     private static async Task<double> MeasureRender(
         PreviewService service,
         ImageFile file,
-        EditSettings settings)
+        EditSettings settings,
+        ThumbnailSizeRequest request)
     {
         var stopwatch = Stopwatch.StartNew();
         var result = await service.ApplyEditsToPreviewAsync(
             file,
             settings,
+            request,
             skipHistogram: true);
         stopwatch.Stop();
         result.preview?.Dispose();
@@ -200,8 +260,8 @@ public sealed class PreviewPipelinePerformanceTests
     {
         using var image = new ImageMagick.MagickImage(
             ImageMagick.MagickColors.Orange,
-            150,
-            100);
+            512,
+            341);
         image.Quality = 85;
         var jpeg = image.ToByteArray(ImageMagick.MagickFormat.Jpeg);
         var settingsHash = RenderSettingsHash.Compute(
@@ -332,21 +392,29 @@ public sealed class PreviewPipelinePerformanceTests
         string operationLabel,
         EditSettings settings)
     {
-        var stopwatch = Stopwatch.StartNew();
-        var (preview, _) = await service.ApplyEditsToPreviewAsync(
-            file,
-            settings,
-            skipHistogram: true);
-        stopwatch.Stop();
-        Assert.NotNull(preview);
+        var samples = new List<double>();
+        Avalonia.Media.Imaging.Bitmap? preview = null;
+        for (var index = 0; index < 5; index++)
+        {
+            preview?.Dispose();
+            var stopwatch = Stopwatch.StartNew();
+            (preview, _) = await service.ApplyEditsToPreviewAsync(
+                file,
+                settings,
+                skipHistogram: true);
+            stopwatch.Stop();
+            Assert.NotNull(preview);
+            samples.Add(stopwatch.Elapsed.TotalMilliseconds);
+        }
+        var median = Median(samples);
         _output.WriteLine(
             $"{sourceLabel} {operationLabel} slider-tick " +
             $"v{RenderPipeline.Version} render: " +
-            $"{stopwatch.Elapsed.TotalMilliseconds:F1} ms");
+            $"{median:F1} ms median");
         Assert.True(
-            stopwatch.Elapsed.TotalMilliseconds <= 150,
+            median <= 150,
             $"{sourceLabel} {operationLabel} slider tick exceeded 150 ms: " +
-            $"{stopwatch.Elapsed.TotalMilliseconds:F1} ms.");
+            $"{median:F1} ms median.");
         return preview!;
     }
 

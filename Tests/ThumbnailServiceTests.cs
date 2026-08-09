@@ -98,6 +98,125 @@ public sealed class ThumbnailServiceTests : IDisposable
         Assert.Equal(0, rawService.CallCount);
     }
 
+    [Theory]
+    [InlineData(LibraryThumbnailSize.Small, 150)]
+    [InlineData(LibraryThumbnailSize.Medium, 192)]
+    [InlineData(LibraryThumbnailSize.Large, 512)]
+    public async Task CacheMiss_GeneratesRequestedLongEdge(
+        LibraryThumbnailSize size,
+        int expectedLongEdge)
+    {
+        _fixture.RequireWindows();
+        Directory.CreateDirectory(_tempDirectory);
+        var sourcePath = Path.Combine(_tempDirectory, $"source-{size}.jpg");
+        using (var source = new MagickImage(MagickColors.Gray, 1200, 800))
+        {
+            source.Write(sourcePath, MagickFormat.Jpeg);
+        }
+
+        using var catalog = new CatalogService(
+            Path.Combine(_tempDirectory, $"catalog-{size}"));
+        await catalog.InitializeAsync();
+        await using var imageService = new ImageService(catalog);
+        var image = new ImageFile(sourcePath);
+        var request = ThumbnailSizeRequest.For(size);
+
+        using var result = await imageService.LoadUneditedThumbnailAsync(
+            image,
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(expectedLongEdge, Math.Max(
+            result.PixelDimensions.Width,
+            result.PixelDimensions.Height));
+        Assert.True(result.SatisfiesMinimumDimension);
+        Assert.Equal(request, result.Request);
+    }
+
+    [WindowsFact]
+    public async Task WarmPlaceholderCanBeFollowedBySourceQualityUpgrade()
+    {
+        _fixture.RequireWindows();
+        Directory.CreateDirectory(_tempDirectory);
+        var sourcePath = Path.Combine(_tempDirectory, "upgrade-source.jpg");
+        using (var source = new MagickImage(MagickColors.Gray, 1200, 800))
+        {
+            source.Write(sourcePath, MagickFormat.Jpeg);
+        }
+        File.SetLastWriteTimeUtc(sourcePath, DateTime.UtcNow.AddMinutes(-2));
+        using var catalog = new CatalogService(
+            Path.Combine(_tempDirectory, "upgrade-catalog"));
+        await catalog.InitializeAsync();
+        var image = new ImageFile(sourcePath);
+        await image.EnsureCatalogIdAsync(catalog);
+        var cachePath = catalog.GetThumbnailPath(image.CatalogId);
+        Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
+        using (var cached = new MagickImage(MagickColors.Gray, 150, 100))
+        {
+            cached.Write(cachePath, MagickFormat.Jpeg);
+        }
+        File.SetLastWriteTimeUtc(cachePath, DateTime.UtcNow);
+        await using var imageService = new ImageService(catalog);
+        var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Large);
+
+        using var placeholder = await imageService.LoadThumbnailAsync(
+            image,
+            request,
+            CancellationToken.None);
+        using var upgraded = await imageService.LoadThumbnailAsync(
+            image,
+            request,
+            allowUndersizedCachePlaceholder: false,
+            CancellationToken.None);
+
+        Assert.Equal(150, Math.Max(
+            placeholder.PixelDimensions.Width,
+            placeholder.PixelDimensions.Height));
+        Assert.Equal(512, Math.Max(
+            upgraded.PixelDimensions.Width,
+            upgraded.PixelDimensions.Height));
+        Assert.True(upgraded.SatisfiesMinimumDimension);
+    }
+
+    [WindowsFact]
+    public async Task EditedCropBelowMinimumTerminatesIdenticalUpgrade()
+    {
+        _fixture.RequireWindows();
+        Directory.CreateDirectory(_tempDirectory);
+        var sourcePath = Path.Combine(_tempDirectory, "cropped-source.jpg");
+        using (var source = new MagickImage(MagickColors.Gray, 1200, 800))
+        {
+            source.Write(sourcePath, MagickFormat.Jpeg);
+        }
+
+        using var catalog = new CatalogService(
+            Path.Combine(_tempDirectory, "cropped-catalog"));
+        await catalog.InitializeAsync();
+        await using var imageService = new ImageService(catalog);
+        var image = new ImageFile(sourcePath)
+        {
+            EditSettings = new EditSettings
+            {
+                Crop = new CropRegion
+                {
+                    Left = 0.25,
+                    Top = 0.25,
+                    Right = 0.75,
+                    Bottom = 0.75
+                }
+            }
+        };
+        var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Large);
+
+        using var result = await imageService.LoadThumbnailAsync(
+            image,
+            request,
+            CancellationToken.None);
+
+        Assert.False(result.SatisfiesMinimumDimension);
+        Assert.True(result.SourceCannotProvideRequestedQuality);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_tempDirectory))

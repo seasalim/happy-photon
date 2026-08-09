@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Media.Imaging;
 using HappyPhoton.Models;
+using ImageMagick;
 using static HappyPhoton.Services.BitmapConversionService;
 using static HappyPhoton.Services.ImageServiceHelpers;
 
@@ -19,6 +20,8 @@ public sealed partial class PreviewService : IAsyncDisposable
     private readonly object _refreshSync = new();
     private readonly Dictionary<Task, PendingRefresh> _pendingRefreshes =
         new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<Task> _renderedThumbnailTasks = new(
+        ReferenceEqualityComparer.Instance);
     private RenderedPreview? _lastRendered;
     private long _renderGeneration;
     private long _baseRefreshGeneration;
@@ -109,11 +112,26 @@ public sealed partial class PreviewService : IAsyncDisposable
             EditSettings settings,
             bool skipHistogram = false,
             CancellationToken cancellationToken = default)
+        => LoadPreviewWithHistogramAsync(
+            imageFile,
+            settings,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            skipHistogram,
+            cancellationToken);
+
+    public Task<(Bitmap? preview, HistogramData histogram)>
+        LoadPreviewWithHistogramAsync(
+            ImageFile imageFile,
+            EditSettings settings,
+            ThumbnailSizeRequest thumbnailRequest,
+            bool skipHistogram = false,
+            CancellationToken cancellationToken = default)
     {
         QueueRenderedPreviewIfLeaving(imageFile);
         return RenderAsync(
             imageFile,
             settings,
+            thumbnailRequest,
             skipHistogram,
             cancellationToken);
     }
@@ -124,15 +142,31 @@ public sealed partial class PreviewService : IAsyncDisposable
             EditSettings settings,
             bool skipHistogram = false,
             CancellationToken cancellationToken = default) =>
+        ApplyEditsToPreviewAsync(
+            imageFile,
+            settings,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            skipHistogram,
+            cancellationToken);
+
+    public Task<(Bitmap? preview, HistogramData histogram)>
+        ApplyEditsToPreviewAsync(
+            ImageFile imageFile,
+            EditSettings settings,
+            ThumbnailSizeRequest thumbnailRequest,
+            bool skipHistogram = false,
+            CancellationToken cancellationToken = default) =>
         RenderAsync(
             imageFile,
             settings,
+            thumbnailRequest,
             skipHistogram,
             cancellationToken);
 
     private async Task<(Bitmap? preview, HistogramData histogram)> RenderAsync(
         ImageFile imageFile,
         EditSettings settings,
+        ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
         CancellationToken cancellationToken)
     {
@@ -165,6 +199,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                     snapshot.RefreshTask!,
                     imageFile,
                     settingsSnapshot,
+                    thumbnailRequest,
                     skipHistogram,
                     generation);
             }
@@ -182,6 +217,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                 () => Render(
                     snapshot.Base,
                     settingsSnapshot,
+                    thumbnailRequest,
                     skipHistogram,
                     generation,
                     cancellationToken),
@@ -225,6 +261,7 @@ public sealed partial class PreviewService : IAsyncDisposable
     private RenderOutput Render(
         BaseImage baseImage,
         EditSettings settings,
+        ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
         long generation,
         CancellationToken cancellationToken)
@@ -248,7 +285,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         cancellationToken.ThrowIfCancellationRequested();
 
         Bitmap? preview = null;
-        Bitmap? thumbnail = null;
+        MagickImage? thumbnailSource = null;
         try
         {
             preview = ConvertToBitmap(rendered.Image);
@@ -258,16 +295,18 @@ public sealed partial class PreviewService : IAsyncDisposable
                 settings.HasEdits &&
                 generation == Volatile.Read(ref _renderGeneration))
             {
-                RenderColorEncoding.ResizeInLinearLight(rendered.Image, 150);
-                thumbnail = ConvertToBitmap(rendered.Image);
-                RenderedThumbnailCreated?.Invoke();
+                thumbnailSource = rendered.DetachImage();
             }
-            return new RenderOutput(preview, thumbnail, histogram);
+            return new RenderOutput(
+                preview,
+                thumbnailSource,
+                Math.Min(512, thumbnailRequest.GenerationDimension),
+                histogram);
         }
         catch
         {
             preview?.Dispose();
-            thumbnail?.Dispose();
+            thumbnailSource?.Dispose();
             throw;
         }
     }
@@ -286,14 +325,17 @@ public sealed partial class PreviewService : IAsyncDisposable
             {
                 return false;
             }
+            var thumbnailSource = output.DetachThumbnailSource();
             previous = _lastRendered;
             _lastRendered = new RenderedPreview(
                 imageFile,
                 new WeakReference<Bitmap>(output.Bitmap!),
                 settingsHash,
-                output.DetachThumbnail());
+                CreateRenderedThumbnailAsync(
+                    thumbnailSource,
+                    output.ThumbnailDimension));
         }
-        previous?.Thumbnail?.Dispose();
+        DisposeRenderedThumbnailWhenReady(previous);
         return true;
     }
 
@@ -339,14 +381,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                 bitmap,
                 rendered.SettingsHash);
         }
-        if (rendered.Thumbnail != null)
-        {
-            _renderedThumbnailCache.QueueSaveToCache(
-                rendered.ImageFile,
-                rendered.Thumbnail,
-                rendered.SettingsHash);
-            rendered.Thumbnail.Dispose();
-        }
+        QueueRenderedThumbnailWhenReady(rendered);
     }
 
     private static bool PathsEqual(string left, string right) =>
@@ -365,6 +400,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         }
 
         ClearPreviewCache();
+        await WaitForRenderedThumbnailTasksAsync();
         await _baseCoordinator.DisposeAsync();
         await _previewCache.DisposeAsync();
         await _renderedThumbnailCache.DisposeAsync();
@@ -373,31 +409,34 @@ public sealed partial class PreviewService : IAsyncDisposable
     private sealed class RenderOutput : IDisposable
     {
         public Bitmap? Bitmap { get; }
-        public Bitmap? Thumbnail { get; private set; }
+        public MagickImage? ThumbnailSource { get; private set; }
+        public int ThumbnailDimension { get; }
         public HistogramData Histogram { get; }
 
         public RenderOutput(
             Bitmap? bitmap,
-            Bitmap? thumbnail,
+            MagickImage? thumbnailSource,
+            int thumbnailDimension,
             HistogramData histogram)
         {
             Bitmap = bitmap;
-            Thumbnail = thumbnail;
+            ThumbnailSource = thumbnailSource;
+            ThumbnailDimension = thumbnailDimension;
             Histogram = histogram;
         }
 
-        public Bitmap? DetachThumbnail()
+        public MagickImage? DetachThumbnailSource()
         {
-            var thumbnail = Thumbnail;
-            Thumbnail = null;
-            return thumbnail;
+            var source = ThumbnailSource;
+            ThumbnailSource = null;
+            return source;
         }
 
         public void Dispose()
         {
             Bitmap?.Dispose();
-            Thumbnail?.Dispose();
-            Thumbnail = null;
+            ThumbnailSource?.Dispose();
+            ThumbnailSource = null;
         }
     }
 
@@ -405,11 +444,12 @@ public sealed partial class PreviewService : IAsyncDisposable
         ImageFile ImageFile,
         WeakReference<Bitmap> Bitmap,
         string SettingsHash,
-        Bitmap? Thumbnail);
+        Task<Bitmap?>? ThumbnailTask);
 
     private sealed record PendingRefresh(
         ImageFile ImageFile,
         EditSettings Settings,
+        ThumbnailSizeRequest ThumbnailRequest,
         bool SkipHistogram,
         long Generation);
 }

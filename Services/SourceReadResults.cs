@@ -1,4 +1,6 @@
 using Avalonia.Media.Imaging;
+using Avalonia;
+using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
 
@@ -15,23 +17,52 @@ public sealed class ThumbnailLoadResult : IDisposable
 
     private ThumbnailLoadResult(
         ThumbnailLoadStatus status,
-        Bitmap? bitmap = null)
+        ThumbnailSizeRequest request,
+        Bitmap? bitmap = null,
+        bool betterResultDeferredForHydration = false,
+        bool sourceCannotProvideRequestedQuality = false)
     {
         Status = status;
         _bitmap = bitmap;
+        Request = request;
+        PixelDimensions = bitmap?.PixelSize ?? default;
+        SatisfiesMinimumDimension = bitmap != null &&
+            Math.Max(PixelDimensions.Width, PixelDimensions.Height) >=
+            request.MinimumDimension;
+        BetterResultDeferredForHydration = betterResultDeferredForHydration;
+        SourceCannotProvideRequestedQuality = sourceCannotProvideRequestedQuality;
     }
 
     public ThumbnailLoadStatus Status { get; }
     public Bitmap? Bitmap => _bitmap;
+    public PixelSize PixelDimensions { get; }
+    public ThumbnailSizeRequest Request { get; }
+    public bool SatisfiesMinimumDimension { get; }
+    public bool BetterResultDeferredForHydration { get; }
+    public bool SourceCannotProvideRequestedQuality { get; }
+
+    internal static ThumbnailLoadResult Loaded(
+        Bitmap bitmap,
+        ThumbnailSizeRequest request,
+        bool betterResultDeferredForHydration = false,
+        bool sourceCannotProvideRequestedQuality = false) =>
+        new(
+            ThumbnailLoadStatus.Loaded,
+            request,
+            bitmap,
+            betterResultDeferredForHydration,
+            sourceCannotProvideRequestedQuality);
 
     internal static ThumbnailLoadResult Loaded(Bitmap bitmap) =>
-        new(ThumbnailLoadStatus.Loaded, bitmap);
+        Loaded(bitmap, new ThumbnailSizeRequest(150, 150));
 
-    internal static ThumbnailLoadResult Deferred() =>
-        new(ThumbnailLoadStatus.DeferredForHydration);
+    internal static ThumbnailLoadResult Deferred(
+        ThumbnailSizeRequest request) =>
+        new(ThumbnailLoadStatus.DeferredForHydration, request);
 
-    internal static ThumbnailLoadResult Failed() =>
-        new(ThumbnailLoadStatus.Failed);
+    internal static ThumbnailLoadResult Failed(
+        ThumbnailSizeRequest request) =>
+        new(ThumbnailLoadStatus.Failed, request);
 
     public Bitmap? DetachBitmap() => Interlocked.Exchange(ref _bitmap, null);
 

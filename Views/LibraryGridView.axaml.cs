@@ -48,6 +48,32 @@ public partial class LibraryGridView : UserControl
             nameof(ShowBursts),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
+    public static readonly StyledProperty<LibraryThumbnailSize> ThumbnailSizeProperty =
+        AvaloniaProperty.Register<LibraryGridView, LibraryThumbnailSize>(
+            nameof(ThumbnailSize),
+            LibraryThumbnailSize.Medium,
+            defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+
+    public static readonly DirectProperty<LibraryGridView, double> ImageViewportWidthProperty =
+        AvaloniaProperty.RegisterDirect<LibraryGridView, double>(
+            nameof(ImageViewportWidth),
+            view => view.ImageViewportWidth);
+
+    public static readonly DirectProperty<LibraryGridView, double> ImageViewportHeightProperty =
+        AvaloniaProperty.RegisterDirect<LibraryGridView, double>(
+            nameof(ImageViewportHeight),
+            view => view.ImageViewportHeight);
+
+    public static readonly DirectProperty<LibraryGridView, double> ThumbnailItemWidthProperty =
+        AvaloniaProperty.RegisterDirect<LibraryGridView, double>(
+            nameof(ThumbnailItemWidth),
+            view => view.ThumbnailItemWidth);
+
+    public static readonly DirectProperty<LibraryGridView, double> ThumbnailItemHeightProperty =
+        AvaloniaProperty.RegisterDirect<LibraryGridView, double>(
+            nameof(ThumbnailItemHeight),
+            view => view.ThumbnailItemHeight);
+
     public ObservableCollection<ImageFile>? Images
     {
         get => GetValue(ImagesProperty);
@@ -102,6 +128,12 @@ public partial class LibraryGridView : UserControl
         set => SetValue(ShowBurstsProperty, value);
     }
 
+    public LibraryThumbnailSize ThumbnailSize
+    {
+        get => GetValue(ThumbnailSizeProperty);
+        set => SetValue(ThumbnailSizeProperty, value);
+    }
+
     public event EventHandler? DevelopModeRequested;
     public event EventHandler? SelectAllRequested;
     public event EventHandler? DeselectAllRequested;
@@ -124,6 +156,7 @@ public partial class LibraryGridView : UserControl
         UpdateFlagFilterButtons();
         UpdateRatingFilterButtons();
         UpdateBurstsButton();
+        UpdateThumbnailSizeButtons();
         ThumbnailScrollViewer.ScrollChanged += OnThumbnailScrollChanged;
         LayoutUpdated += OnLayoutUpdated;
     }
@@ -173,6 +206,10 @@ public partial class LibraryGridView : UserControl
         {
             UpdateBurstsButton();
         }
+        else if (change.Property == ThumbnailSizeProperty)
+        {
+            ApplyThumbnailGeometry();
+        }
         // SelectedImage changes don't affect selection state anymore
         // Selection is now independent from the active/focused image
     }
@@ -200,7 +237,7 @@ public partial class LibraryGridView : UserControl
             return;
         }
 
-        const double rowHeight = 180;
+        var rowHeight = Geometry.RowHeight;
         var itemsPerRow = GetItemsPerRow();
         var startRow = Math.Max(0, (int)Math.Floor(
             ThumbnailScrollViewer.Offset.Y / rowHeight));
@@ -249,6 +286,22 @@ public partial class LibraryGridView : UserControl
     }
 
     private void UpdateBurstsButton() => BurstsButton.Classes.Set("active", ShowBursts);
+
+    private void UpdateThumbnailSizeButtons()
+    {
+        SmallThumbnailButton.IsChecked = ThumbnailSize == LibraryThumbnailSize.Small;
+        MediumThumbnailButton.IsChecked = ThumbnailSize == LibraryThumbnailSize.Medium;
+        LargeThumbnailButton.IsChecked = ThumbnailSize == LibraryThumbnailSize.Large;
+    }
+
+    private void OnSmallThumbnailClick(object? sender, RoutedEventArgs e) =>
+        ThumbnailSize = LibraryThumbnailSize.Small;
+
+    private void OnMediumThumbnailClick(object? sender, RoutedEventArgs e) =>
+        ThumbnailSize = LibraryThumbnailSize.Medium;
+
+    private void OnLargeThumbnailClick(object? sender, RoutedEventArgs e) =>
+        ThumbnailSize = LibraryThumbnailSize.Large;
 
     private void OnThumbnailPointerPressed(object? sender, PointerPressedEventArgs e)
     {
@@ -389,66 +442,4 @@ public partial class LibraryGridView : UserControl
 
     private void OnBurstsClick(object? sender, RoutedEventArgs e) => ShowBursts = !ShowBursts;
 
-    /// <summary>
-    /// Calculates the number of items per row based on current layout.
-    /// Uses the UniformGridLayout settings and actual available width.
-    /// </summary>
-    public int GetItemsPerRow()
-    {
-        var availableWidth = ThumbnailScrollViewer.Bounds.Width - 10; // minus Margin="5" on each side
-        if (availableWidth <= 0) return 1;
-
-        // MinItemWidth=190, MinColumnSpacing=5 (from XAML)
-        const double itemWidth = 190;
-        const double spacing = 5;
-
-        var itemsPerRow = (int)Math.Floor((availableWidth + spacing) / (itemWidth + spacing));
-        return Math.Max(1, itemsPerRow);
-    }
-
-    /// <summary>
-    /// Calculates the number of fully visible rows in the viewport.
-    /// </summary>
-    public int GetRowsPerPage()
-    {
-        var viewportHeight = ThumbnailScrollViewer.Viewport.Height;
-        if (viewportHeight <= 0) return 1;
-
-        const double itemHeight = 175;
-        const double rowSpacing = 5;
-
-        var rowsPerPage = (int)Math.Floor(viewportHeight / (itemHeight + rowSpacing));
-        return Math.Max(1, rowsPerPage);
-    }
-
-    /// <summary>
-    /// Scrolls the view to ensure the item at the given index is visible.
-    /// </summary>
-    public void ScrollItemIntoView(int index)
-    {
-        if (index < 0 || Images == null || index >= Images.Count) return;
-
-        var itemsPerRow = GetItemsPerRow();
-        var row = index / itemsPerRow;
-
-        // MinItemHeight=175, MinRowSpacing=5, Margin=5 (from XAML)
-        const double itemHeight = 175;
-        const double rowSpacing = 5;
-        const double margin = 5;
-
-        var itemTop = margin + row * (itemHeight + rowSpacing);
-        var itemBottom = itemTop + itemHeight;
-
-        var viewportTop = ThumbnailScrollViewer.Offset.Y;
-        var viewportBottom = viewportTop + ThumbnailScrollViewer.Viewport.Height;
-
-        if (itemTop < viewportTop)
-        {
-            ThumbnailScrollViewer.Offset = new Vector(0, itemTop);
-        }
-        else if (itemBottom > viewportBottom)
-        {
-            ThumbnailScrollViewer.Offset = new Vector(0, itemBottom - ThumbnailScrollViewer.Viewport.Height);
-        }
-    }
 }

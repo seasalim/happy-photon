@@ -173,20 +173,24 @@ public partial class MainWindowViewModel
         ImageFile image,
         CancellationToken cancellationToken)
     {
+        var sizeGeneration = Volatile.Read(ref _thumbnailSizeGeneration);
         using var result = await ImageService.LoadThumbnailAsync(
             image,
+            LibraryThumbnailRequest,
             cancellationToken);
-        if (cancellationToken.IsCancellationRequested)
+        if (cancellationToken.IsCancellationRequested ||
+            sizeGeneration != Volatile.Read(ref _thumbnailSizeGeneration))
         {
             return;
         }
 
         if (ReferenceEquals(SelectedImage, image) && Library.Contains(image))
         {
-            ApplyThumbnailLoadStatus(image, result.Status);
+            ApplyThumbnailLoadResult(image, result);
             if (result.Status == ThumbnailLoadStatus.Loaded)
             {
                 Library.ReplaceThumbnail(image, result.DetachBitmap());
+                UpdateThumbnailMemoryDiagnostics();
             }
         }
     }

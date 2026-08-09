@@ -18,9 +18,9 @@ Happy Photon Catalog/
 ├── catalog.db              SQLite: image metadata, edit settings, flags, ratings, app settings
 ├── presets/                user preset JSON files (PresetService)
 └── assets/
-    ├── thumbs/<xx>/<id>.jpg     cached 150px thumbnails, sharded by catalogId % 256
+    ├── thumbs/<xx>/<id>.jpg     largest unedited thumbnails, sharded by catalogId % 256
     ├── previews/<xx>/<id>.jpg   cached 1600px previews, same sharding
-    ├── rendered-thumbs/<xx>/<id>.jpg  accurate edited RAW thumbnails + hash sidecars
+    ├── rendered-thumbs/<xx>/<id>.jpg  accurate edited RAW thumbnails + metadata sidecars
     └── tmp/                     staging for atomic cache writes; cleared at startup
 ```
 
@@ -237,12 +237,15 @@ Folder switches are frequent and races here caused real bugs, so ownership is ex
 
 The first `2 × workers` images are loaded by `LoadThumbnailRangeAsync`, whose six
 workers pull indices from a shared `Interlocked` counter. This preserves a fast first
-paint before metadata analysis begins. After that, one `ThumbnailLoadScheduler` owns
-exactly six long-lived workers for the active folder:
+paint before metadata analysis begins. A Large request stages this burst at Small
+quality, then queues the requested Large follow-up. After that, one
+`ThumbnailLoadScheduler` owns exactly six long-lived workers for the active folder:
 
 - `LibraryGridView` derives visible indices from the scroll offset and grid geometry.
-- The ViewModel adds two viewports of prefetch on each side. Visible entries have higher
-  priority than prefetch entries; duplicate requests are coalesced.
+- The ViewModel adds one viewport of nearest-first prefetch on each side, capped at 128
+  images. Visible entries have higher priority than prefetch entries. Queued smaller
+  requests are superseded, while a larger request arriving behind an in-flight smaller
+  request is retained as its follow-up.
 - Active-library ownership is checked through a reference-identity set, keeping each
   completed assignment O(1). A terminal decode failure is remembered on that folder's
   `ImageFile`, so later viewport reports do not retry corrupt or unsupported files and
@@ -251,6 +254,12 @@ exactly six long-lived workers for the active folder:
 - A cloud deferral is distinct from a decode failure. It is remembered for the current
   folder generation, is not repeatedly re-enqueued by viewport reports, and does not
   reserve a slot in the decoded-bitmap residency target.
+- When a usable bitmap is already resident, a failed or hydration-deferred larger
+  request is recorded only against that generation target. It neither changes the base
+  cloud badge/count nor retries on subsequent viewport reports while that bitmap remains
+  resident. Residency eviction removes the placeholder constraint, so viewport re-entry
+  may reload the bitmap. Results without a resident bitmap retain the base
+  failure/deferral behavior above.
 - Workers wait on one shared signal, not one semaphore waiter or cancellation
   registration per image. Folder switches remain constant-time on the UI thread.
 - Capture-time metadata is not swept on folder open. Enabling Bursts starts a
@@ -264,18 +273,26 @@ exactly six long-lived workers for the active folder:
 
 Worker continuations post back to the UI context (the pump is started from the UI
 thread), so `ImageFile.Thumbnail` assignments — and the resulting grid updates — happen
-on the UI thread. Decoded residency is capped at 512 images. Visible, prefetched, and
-selected images are pinned; the least-recently-visible unpinned bitmaps are cleared and
-disposed before new requests are admitted. The disk cache remains the long-lived store,
-so revisiting an evicted range is a cheap decode rather than source-image processing.
+on the UI thread. Decoded residency is capped at 64 MiB by actual BGRA byte count;
+pending UI-thread bitmap retirement also counts against admission, with an 8 MiB
+prefetch safety margin. Visible and selected images are pinned; the
+least-recently-visible unpinned bitmaps are cleared and retired before new requests are
+admitted. The disk cache remains the long-lived store, so revisiting an evicted range is
+a cheap decode rather than source-image processing.
 
 ### Per-image thumbnail resolution (ThumbnailService)
 
-For each image, in order, first hit wins (target size 150 px):
+Each request carries a minimum acceptable long edge and a fresh-generation long edge:
+Small `(150, 150)`, Medium `(150, 192)`, or Large `(512, 512)`. A warm cache is checked
+first. Its JPEG dimensions are read from a bounded SOF-header parser before pixel
+decode; satisfactory larger entries decode down to at most the generation target, and
+undersized entries paint immediately while an allowed source upgrade is queued. Cache
+writes are largest-wins for the current source version, so late Small work cannot
+replace a Large entry.
 
-1. **Disk cache** — valid iff `assets/thumbs/<xx>/<id>.jpg` exists and its mtime is
-   newer than the source file's. No DB involved.
-2. RAW/HEIC only — **LibRaw embedded preview** (`ExtractThumbnail`), with manual EXIF
+On a cache miss, source candidates are tried in this order:
+
+1. RAW/HEIC only — **LibRaw embedded preview** (`ExtractThumbnail`), with manual EXIF
    orientation when LibRaw output lacks it. LibRaw also reports the visible RAW frame
    dimensions used by Develop. A preview whose aspect differs from that frame by more
    than 3% is center-cropped toward the visible RAW aspect; the mismatch is treated as
@@ -283,18 +300,23 @@ For each image, in order, first hit wins (target size 150 px):
    preview is preserved. Once LibRaw returns valid encoded preview bytes, geometry
    never rejects them and therefore cannot fall through to a Magick RAW delegate decode
    during Library loading.
-3. **EXIF thumbnail** via `Ping` (header-only read), accepted only if its aspect ratio
+2. **EXIF thumbnail** via `Ping` (header-only read), accepted only if its aspect ratio
    matches the source within 3% (`ExifThumbnailDecoder`). Unlike LibRaw previews,
    missing geometry or a larger mismatch still rejects an EXIF thumbnail.
-4. RAW only — **embedded JPEG scan** (`EmbeddedJpegExtractor`): scan the raw bytes for
+3. RAW only — **embedded JPEG scan** (`EmbeddedJpegExtractor`): scan the raw bytes for
    `FFD8…FFD9` spans, validate candidates with Magick, pick the largest. Uses the
    *last* `FFD9` marker first (some vendors nest JPEGs). Results are memoized in a
    short-lived static cache to dedupe parallel workers. This fallback is not
    aspect-normalized.
-5. **Reduced-size decode** — for JPEGs, `JpegThumbnailDecoder` uses Avalonia's platform
+4. **Reduced-size decode** — for JPEGs, `JpegThumbnailDecoder` uses Avalonia's platform
    decoder (`Bitmap.DecodeToWidth/Height`) plus a manual orientation pixel-remap; other
    formats go through Magick with size hints. Magick remains the fallback for anything
    corrupt or unsupported. RAW preview-frame fallbacks remain unnormalized.
+
+RAW extraction retains the best safe embedded candidate and continues while it is
+below the generation target. It returns immediately at that target, otherwise returns
+the best candidate after all safe sources are exhausted. Library loading never starts a
+full RAW demosaic to satisfy Large.
 
 Edited standard images keep the low-resolution `RenderPipeline` path, which mirrors
 `StandardBaseLoader`. Edited RAWs use a different speed-first order: an in-memory
@@ -305,11 +327,13 @@ camera-rendered embedded JPEG and never upscales a crop. Opening the RAW in Deve
 self-heals the fallback. Folder loading never decodes a RAW base or a 1600px preview.
 
 The source thumbnail remains unchanged in `assets/thumbs/`; agent statistics always
-read this unedited tier. Accurate RAW thumbnails are q85 JPEGs with settings-hash
-sidecars. Both files must exist, the JPEG must be newer than the original, and the hash
-must match the current render settings. The LibRaw padding fix does not change cache
-validation or migrate existing cached thumbnails; regenerated entries adopt it through
-the normal timestamp-based cache lifecycle.
+read this unedited tier and normalize it to a canonical 150 px raster. Accurate RAW
+thumbnails are q85 JPEGs with versioned metadata sidecars containing the settings hash
+and stored dimensions. Matching writes are largest-wins. Legacy plain-hash sidecars are
+accepted by inferring dimensions from the JPEG header. Both files must exist, the JPEG
+must be newer than the original, and the hash must match the current render settings.
+An accurate undersized edited-RAW entry remains visible instead of falling through to a
+sharper but edit-inaccurate source thumbnail.
 
 ### Cloud-file source access
 
@@ -369,11 +393,14 @@ Briefly, for contrast with thumbnails:
   sidecar stores the deterministic settings hash. Develop entry paints a valid cached
   render even when its hash is stale, then a background base decode and fresh render
   replace it.
-- An accepted edited RAW render also produces a 150px candidate by resizing the owned
-  rendered image in linear light after preview conversion. `PreviewService` retains it
-  strongly, promotes clones to Library, and queues it to the independent q85
-  `assets/rendered-thumbs/` writer on promotion or image/view leave. Stale preview
-  placeholders never enter this record.
+- An accepted edited RAW render also supplies an owned source for the explicit Library
+  request, capped at 512 px. After display conversion and the accepted-generation check,
+  ownership of that render moves to a tracked background resize/conversion task; no
+  full-size clone is made. `PreviewService` retains the resulting thumbnail strongly,
+  promotes clones to Library only when the candidate is already complete, and queues it
+  to the independent q85 `assets/rendered-thumbs/` writer on promotion or image/view
+  leave. Shutdown waits for tracked candidate and queue work before draining that writer.
+  Stale preview placeholders never enter this record.
 - Rendered-cache writes happen on image/view leave, not on slider settles. A bounded
   drop-oldest queue owns JPEG encoding, sidecar creation, and atomic moves; writes
   re-check the source timestamp before installation.
@@ -384,9 +411,11 @@ Briefly, for contrast with thumbnails:
   when base decoding exceeds 150 ms. The fresh preview then schedules the histogram.
 - For a cloud-only original, a valid cached preview may still paint, but fresh base
   decode is deferred until **Download and open** hydrates that one image.
-- Library mode never loads a 1600px preview just to draw the histogram. It reads the
-  already edited 150px thumbnail directly; if that thumbnail is still loading, its UI
-  assignment reschedules the debounced histogram.
+- Library mode never loads a 1600px preview just to draw the histogram. The UI thread
+  copies the current thumbnail pixels into an independently owned bitmap, then a
+  threadpool task scales it to a DPI-independent 150 px bitmap and calculates its bins.
+  Retirement never waits for that work; selection and thumbnail-generation checks reject
+  stale results, and a later thumbnail assignment reschedules the debounce.
 
 ## Threading model summary
 
@@ -398,12 +427,12 @@ Briefly, for contrast with thumbnails:
 | `ImageFile.Thumbnail` assignment | UI context (worker continuations) | — |
 | Thumbnail cache writes | Dedicated writer task | Bounded channel, drop-oldest; 2 s shutdown drain |
 | Rendered preview cache writes | Dedicated writer task | On image leave; JPEG + hash sidecar; bounded drop-oldest; atomic move; 2 s drain |
-| Rendered RAW thumbnail writes | Dedicated writer task | Independent capacity-8 queue; q85 JPEG + hash sidecar; promotion or image leave |
+| Rendered RAW thumbnail writes | Dedicated writer task | Independent capacity-8 queue; q85 JPEG + versioned metadata; promotion or image leave |
 | Metadata extraction | Threadpool | Per-`ImageFile` single-flight task; selection loads drain during ViewModel teardown |
 | Metadata apply + burst grouping | UI thread | Demand-driven by Bursts; cancelled on disable or folder change |
 | Preview base decode | Threadpool | One held base; single-flight by identity; newest-wins generation |
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
-| Library histogram | UI thread after debounce | Direct 150px thumbnail pixel read |
+| Library histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |
 | Agent (MCP) tool calls | ASP.NET worker → marshaled | `AgentToolService` marshals mutations to the UI thread |
 | Explicit source hydration | Threadpool stream read | Single image or confirmed export batch; cancellation is best effort |

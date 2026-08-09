@@ -308,12 +308,16 @@ scale where both paths agree by construction.
 ## 10. Performance contract
 
 Preview rendering calculates the histogram before display conversion. For an edited
-RAW whose generation is still current, `PreviewService` then converts the full preview,
-resizes the still exclusively owned `RenderResult.Image` in place to a 150px box with
-`RenderColorEncoding.ResizeInLinearLight`, and converts that derived thumbnail. This is
-a cache artifact, not a new render stage, so it does not change `RenderPipeline.Version`.
-Superseded generations skip the resize, and non-RAW or unedited renders do not create a
-candidate.
+RAW whose generation is still current, `PreviewService` converts the full preview, then
+transfers exclusive ownership of `RenderResult.Image` to a tracked background task. The
+task resizes that image in place to the explicit Library request's generation dimension,
+capped at 512px, with `RenderColorEncoding.ResizeInLinearLight`, then converts the
+derived thumbnail. No full-size clone is made. This is a cache artifact, not a new render
+stage, so it does not change `RenderPipeline.Version`. Generation checks run before the
+ownership transfer; superseded generations skip the work, and non-RAW or unedited
+renders do not create a candidate. Promotion is a bounded bitmap clone and never waits
+on background work. Shutdown awaits candidate creation and cache queueing before the
+rendered-thumbnail writer is drained.
 
 Per slider tick at 1600px preview: geometry (usually no-op) + at most three
 full-image passes — ColorMatrix (skipped at as-shot), Clut, combined Modulate (skipped

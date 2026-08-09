@@ -1,4 +1,7 @@
 using System.Collections.Concurrent;
+using Avalonia;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using HappyPhoton.Models;
 using HappyPhoton.ViewModels;
 using Xunit;
@@ -142,10 +145,236 @@ public sealed class ThumbnailLoadSchedulerTests
     }
 
     [Fact]
+    public async Task LargerRequestSupersedesSmallerQueuedRequest()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var blockerStarted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var loaded = new TaskCompletionSource<ThumbnailSizeRequest>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var blocker = new ImageFile("blocker.jpg");
+        var target = new ImageFile("target.jpg");
+        using var scheduler = new ThumbnailLoadScheduler(
+            1,
+            async (image, request, _) =>
+            {
+                if (ReferenceEquals(image, blocker))
+                {
+                    blockerStarted.SetResult();
+                    await release.Task;
+                }
+                else
+                {
+                    loaded.SetResult(request);
+                }
+            },
+            cancellation.Token);
+
+        scheduler.Enqueue([new ThumbnailLoadRequest(
+            blocker,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
+            0)]);
+        await blockerStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        scheduler.Enqueue([new ThumbnailLoadRequest(
+            target,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
+            0)]);
+        scheduler.Enqueue([new ThumbnailLoadRequest(
+            target,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            0)]);
+        release.SetResult();
+
+        Assert.Equal(
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+        cancellation.Cancel();
+        await scheduler.Completion;
+    }
+
+    [Fact]
+    public async Task InFlightSmallRetainsLargeFollowUp()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var firstStarted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var completed = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var requests = new ConcurrentQueue<ThumbnailSizeRequest>();
+        var image = new ImageFile("target.jpg");
+        using var scheduler = new ThumbnailLoadScheduler(
+            1,
+            async (_, request, _) =>
+            {
+                requests.Enqueue(request);
+                if (requests.Count == 1)
+                {
+                    firstStarted.SetResult();
+                    await release.Task;
+                }
+                else
+                {
+                    completed.SetResult();
+                }
+            },
+            cancellation.Token);
+
+        scheduler.Enqueue([new ThumbnailLoadRequest(
+            image,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
+            0)]);
+        await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        scheduler.Enqueue([new ThumbnailLoadRequest(
+            image,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            0)]);
+        release.SetResult();
+        await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        cancellation.Cancel();
+        await scheduler.Completion;
+
+        Assert.Equal(
+            [
+                ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
+                ThumbnailSizeRequest.For(LibraryThumbnailSize.Large)
+            ],
+            requests.ToArray());
+    }
+
+    [Fact]
+    public async Task UndersizedResidentDoesNotSuppressUpgrade()
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var resident = CreateBitmap(150, 100);
+        var image = new ImageFile("target.jpg") { Thumbnail = resident };
+        var loaded = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        using var scheduler = new ThumbnailLoadScheduler(
+            1,
+            (_, _, _) =>
+            {
+                loaded.SetResult();
+                return Task.CompletedTask;
+            },
+            cancellation.Token);
+
+        scheduler.Enqueue([new ThumbnailLoadRequest(
+            image,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            0)]);
+        await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        cancellation.Cancel();
+        await scheduler.Completion;
+    }
+
+    [Fact]
+    public async Task FailedUpgradeIsNotRetriedWhileResidentBitmapRemains()
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var resident = CreateBitmap(150, 100);
+        var failed = new ImageFile("failed.jpg")
+        {
+            Thumbnail = resident,
+            ThumbnailUpgradeFailedDimension = 512
+        };
+        var healthy = new ImageFile("healthy.jpg");
+        var loaded = new TaskCompletionSource<ImageFile>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        using var scheduler = new ThumbnailLoadScheduler(
+            1,
+            (image, _, _) =>
+            {
+                loaded.SetResult(image);
+                return Task.CompletedTask;
+            },
+            cancellation.Token);
+
+        var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Large);
+        scheduler.Enqueue([
+            new ThumbnailLoadRequest(failed, request, 0),
+            new ThumbnailLoadRequest(healthy, request, 0)]);
+        var loadedImage = await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        cancellation.Cancel();
+        await scheduler.Completion;
+
+        Assert.Same(healthy, loadedImage);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EvictedTerminalUpgradeCanReload(bool deferred)
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var resident = CreateBitmap(150, 100);
+        var image = new ImageFile("evicted.jpg")
+        {
+            Thumbnail = resident,
+            ThumbnailUpgradeDeferredDimension = deferred ? 512 : 0,
+            ThumbnailUpgradeFailedDimension = deferred ? 0 : 512
+        };
+        image.Thumbnail = null;
+        var loaded = new TaskCompletionSource<ImageFile>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        using var scheduler = new ThumbnailLoadScheduler(
+            1,
+            (candidate, _, _) =>
+            {
+                loaded.SetResult(candidate);
+                return Task.CompletedTask;
+            },
+            cancellation.Token);
+
+        scheduler.Enqueue([new ThumbnailLoadRequest(
+            image,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            0)]);
+        var loadedImage = await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        cancellation.Cancel();
+        await scheduler.Completion;
+
+        Assert.Same(image, loadedImage);
+    }
+
+    [Fact]
+    public async Task CompletedRequestPrunesDesiredTarget()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var loaded = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        using var scheduler = new ThumbnailLoadScheduler(
+            1,
+            (_, _, _) =>
+            {
+                loaded.SetResult();
+                return Task.CompletedTask;
+            },
+            cancellation.Token);
+
+        scheduler.Enqueue([new ThumbnailLoadRequest(
+            new ImageFile("complete.jpg"),
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            0)]);
+        await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(SpinWait.SpinUntil(
+            () => scheduler.DesiredCount == 0,
+            TimeSpan.FromSeconds(5)));
+        cancellation.Cancel();
+        await scheduler.Completion;
+    }
+
+    [Fact]
     public void ResidencyPolicy_EvictsLeastRecentUnpinnedImages()
     {
         var images = Enumerable.Range(0, 5)
-            .Select(index => new ImageFile($"image-{index}.jpg"))
+            .Select(index => new ImageFile($"image-{index}.jpg")
+            {
+                Thumbnail = CreateBitmap()
+            })
             .ToArray();
         var access = images.Select((image, index) => (image, index: (long)index + 1))
             .ToDictionary(item => item.image, item => item.index);
@@ -155,10 +384,22 @@ public sealed class ThumbnailLoadSchedulerTests
         };
 
         var evictions = ThumbnailResidencyPolicy.SelectEvictions(
-            images, pinned, access, targetCount: 3);
+            images,
+            pinned,
+            access,
+            targetBytes: images[0].ThumbnailBytes * 3);
 
         Assert.Equal(new[] { images[1], images[2] }, evictions);
+        foreach (var image in images) image.Thumbnail?.Dispose();
     }
+
+    private static WriteableBitmap CreateBitmap(
+        int width = 10,
+        int height = 10) => new(
+        new PixelSize(width, height),
+        new Vector(96, 96),
+        PixelFormat.Bgra8888,
+        AlphaFormat.Premul);
 
     private static void UpdateMaximum(ref int maximum, int value)
     {
@@ -169,5 +410,32 @@ public sealed class ThumbnailLoadSchedulerTests
             if (observed == current) return;
             current = observed;
         }
+    }
+
+    [Fact]
+    public void PrefetchIsBoundedByViewportCountAbsoluteCountAndBytes()
+    {
+        var images = Enumerable.Range(0, 500)
+            .Select(index => new ImageFile($"image-{index}.jpg"))
+            .ToList();
+        var candidates = MainWindowViewModel.BuildNearestPrefetch(
+            images,
+            visibleStart: 200,
+            visibleCount: 100);
+
+        Assert.Equal(128, candidates.Count);
+        var overBudget = MainWindowViewModel.AdmitPrefetch(
+            candidates,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            MainWindowViewModel.ThumbnailPixelBudget);
+        Assert.Empty(overBudget);
+        var admitted = MainWindowViewModel.AdmitPrefetch(
+            candidates,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            startingBytes: 0);
+        Assert.True(admitted.Count <= 128);
+        Assert.True(admitted.Count * MainWindowViewModel.EstimateRequestBytes(
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large)) <
+            MainWindowViewModel.ThumbnailPixelBudget);
     }
 }

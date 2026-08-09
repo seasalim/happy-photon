@@ -8,6 +8,7 @@
              xmlns:vm="using:HappyPhoton.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="HappyPhoton.Views.LibraryGridView"
+             x:Name="Root"
              x:DataType="vm:MainWindowViewModel"
              Focusable="True"
              Background="{StaticResource SurfaceBase}">
@@ -44,6 +45,53 @@
         </Style>
         <Style Selector="Border.burst-stripe.highlighted">
             <Setter Property="Opacity" Value="1.0"/>
+        </Style>
+        <Style Selector="RadioButton.thumbnail-size">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="Opacity" Value="0.62"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="RadioButton.thumbnail-size:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Opacity" Value="0.86"/>
+        </Style>
+        <Style Selector="RadioButton.thumbnail-size:checked">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Opacity" Value="0.82"/>
+        </Style>
+        <Style Selector="RadioButton.thumbnail-size:checked:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="RadioButton.thumbnail-size:focus-visible">
+            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Opacity" Value="1"/>
         </Style>
     </UserControl.Styles>
 
@@ -131,7 +179,8 @@
                       x:Name="ThumbnailScrollViewer">
             <ItemsRepeater x:Name="ThumbnailGrid" Margin="5">
                 <ItemsRepeater.Layout>
-                    <UniformGridLayout MinItemWidth="190" MinItemHeight="175"
+                    <UniformGridLayout MinItemWidth="{Binding ThumbnailItemWidth, ElementName=Root}"
+                                       MinItemHeight="{Binding ThumbnailItemHeight, ElementName=Root}"
                                        MinRowSpacing="5" MinColumnSpacing="5"
                                        ItemsStretch="None"/>
                 </ItemsRepeater.Layout>
@@ -151,7 +200,8 @@
                                 </Style>
                             </Border.Styles>
                             <StackPanel>
-                                <Panel Width="180" Height="120">
+                                <Panel Width="{Binding $parent[views:LibraryGridView].ImageViewportWidth}"
+                                       Height="{Binding $parent[views:LibraryGridView].ImageViewportHeight}">
                                     <!-- Background: darker blue-gray for RAW, standard for others -->
                                     <Border Background="{StaticResource RawFileBackground}" CornerRadius="8"
                                             IsVisible="{Binding IsRaw}" ToolTip.Tip="RAW file"/>
@@ -202,7 +252,8 @@
                                             IsHitTestVisible="False"
                                             Background="{Binding BurstColorIndex, Converter={StaticResource BurstColorConverter}}"/>
                                 </Panel>
-                                <Grid Width="180" Margin="0,5,0,0"
+                                <Grid Width="{Binding $parent[views:LibraryGridView].ImageViewportWidth}"
+                                      Margin="0,5,0,0"
                                       RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Row="0" Grid.Column="0"
                                                Text="{Binding FileName}"
@@ -302,6 +353,44 @@
                 <views:ImageAssessmentControl Grid.Column="1"
                                               IsEnabled="{Binding HasSelectedImage}"
                                               HorizontalAlignment="Center"/>
+                <StackPanel Grid.Column="2"
+                            HorizontalAlignment="Right"
+                            Orientation="Horizontal"
+                            Spacing="2">
+                        <RadioButton x:Name="SmallThumbnailButton"
+                                     GroupName="LibraryThumbnailSize"
+                                     Classes="thumbnail-size"
+                                     Click="OnSmallThumbnailClick"
+                                     ToolTip.Tip="Small thumbnails"
+                                     AutomationProperties.Name="Small thumbnails">
+                            <PathIcon Width="12"
+                                      Height="12"
+                                      Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                      Data="M1 1h3v3H1z M6.5 1h3v3h-3z M12 1h3v3h-3z M1 6.5h3v3H1z M6.5 6.5h3v3h-3z M12 6.5h3v3h-3z M1 12h3v3H1z M6.5 12h3v3h-3z M12 12h3v3h-3z"/>
+                        </RadioButton>
+                        <RadioButton x:Name="MediumThumbnailButton"
+                                     GroupName="LibraryThumbnailSize"
+                                     Classes="thumbnail-size"
+                                     Click="OnMediumThumbnailClick"
+                                     ToolTip.Tip="Medium thumbnails"
+                                     AutomationProperties.Name="Medium thumbnails">
+                            <PathIcon Width="12"
+                                      Height="12"
+                                      Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                      Data="M1 1h6v6H1z M9 1h6v6H9z M1 9h6v6H1z M9 9h6v6H9z"/>
+                        </RadioButton>
+                        <RadioButton x:Name="LargeThumbnailButton"
+                                     GroupName="LibraryThumbnailSize"
+                                     Classes="thumbnail-size"
+                                     Click="OnLargeThumbnailClick"
+                                     ToolTip.Tip="Large thumbnails"
+                                     AutomationProperties.Name="Large thumbnails">
+                            <PathIcon Width="12"
+                                      Height="12"
+                                      Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                      Data="M1 2h14v5H1z M1 9h14v5H1z"/>
+                        </RadioButton>
+                </StackPanel>
             </Grid>
         </Border>
 

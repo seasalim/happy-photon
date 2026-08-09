@@ -256,20 +256,24 @@ public partial class MainWindowViewModel
 
     private async Task RefreshThumbnailAsync(ImageFile image)
     {
+        var sizeGeneration = Volatile.Read(ref _thumbnailSizeGeneration);
         try
         {
             using var result = await ImageService.LoadThumbnailAsync(
                 image,
+                LibraryThumbnailRequest,
                 CancellationToken.None);
-            if (!Library.Contains(image))
+            if (!Library.Contains(image) ||
+                sizeGeneration != Volatile.Read(ref _thumbnailSizeGeneration))
             {
                 return;
             }
 
-            ApplyThumbnailLoadStatus(image, result.Status);
+            ApplyThumbnailLoadResult(image, result);
             if (result.Status == ThumbnailLoadStatus.Loaded)
             {
                 Library.ReplaceThumbnail(image, result.DetachBitmap());
+                UpdateThumbnailMemoryDiagnostics();
             }
         }
         catch (Exception ex)

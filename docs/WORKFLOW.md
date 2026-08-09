@@ -47,6 +47,13 @@ Start in **Library**. Press `G` at any time to return to it.
 4. Turn on **Bursts** when the folder contains sequences of closely spaced
    frames.
 
+Use the three thumbnail buttons at the right edge of the Library footer to change
+browsing density. **Small** shows the most photographs, **Medium** is the default, and
+**Large** provides a sharper comparison view. The choice is remembered across launches.
+When Large needs a better cached image, Happy Photon keeps the existing thumbnail
+visible while it upgrades locally available sources in the background. It never
+downloads an online-only original for that quality upgrade.
+
 If photographs are added, removed, or renamed outside Happy Photon, use the
 **Refresh folder** button beside **Change…** in the Folders header. Refresh
 re-reads the currently viewed folder and its immediate subfolder list while

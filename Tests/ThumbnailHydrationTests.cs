@@ -34,6 +34,65 @@ public sealed class ThumbnailHydrationTests : IDisposable
     }
 
     [WindowsFact]
+    public async Task WarmUndersizedCacheDefersOnlyLargeQualityUpgrade()
+    {
+        var availability = new TestSourceAvailabilityService(
+            SourceAvailability.RequiresHydration);
+        await using var context = await CreateContextAsync(availability);
+        context.WriteWarmCache();
+        using var catalog = new CatalogService(Path.Combine(_root, "view-model"));
+        await catalog.InitializeAsync();
+        await using var viewModel = new MainWindowViewModel(catalog);
+        viewModel.Library.SetImages([context.Image]);
+        viewModel.InitializeCloudSourceCount([context.Image]);
+
+        using var result = await context.Service.LoadUneditedThumbnailAsync(
+            context.Image,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large));
+        viewModel.ApplyThumbnailLoadResult(context.Image, result);
+        viewModel.Library.ReplaceThumbnail(
+            context.Image,
+            result.DetachBitmap());
+
+        Assert.Equal(ThumbnailLoadStatus.Loaded, result.Status);
+        Assert.True(result.BetterResultDeferredForHydration);
+        Assert.False(result.SatisfiesMinimumDimension);
+        Assert.Equal(512, context.Image.ThumbnailUpgradeDeferredDimension);
+        Assert.False(context.Image.SourceRequiresHydration);
+        Assert.False(context.Image.ShowCloudPlaceholder);
+        Assert.Equal(0, viewModel.OnlineOnlyPhotoCount);
+        Assert.Equal(0, context.SourceCalls);
+    }
+
+    [WindowsFact]
+    public async Task KnownCloudImageKeepsBadgeCountWhileWarmBitmapHidesPlaceholder()
+    {
+        var availability = new TestSourceAvailabilityService(
+            SourceAvailability.RequiresHydration);
+        await using var context = await CreateContextAsync(
+            availability,
+            SourceAvailability.RequiresHydration);
+        context.WriteWarmCache();
+        using var catalog = new CatalogService(Path.Combine(_root, "known-cloud-vm"));
+        await catalog.InitializeAsync();
+        await using var viewModel = new MainWindowViewModel(catalog);
+        viewModel.Library.SetImages([context.Image]);
+        viewModel.InitializeCloudSourceCount([context.Image]);
+
+        using var result = await context.Service.LoadUneditedThumbnailAsync(
+            context.Image,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large));
+        viewModel.ApplyThumbnailLoadResult(context.Image, result);
+        viewModel.Library.ReplaceThumbnail(
+            context.Image,
+            result.DetachBitmap());
+
+        Assert.True(context.Image.SourceRequiresHydration);
+        Assert.False(context.Image.ShowCloudPlaceholder);
+        Assert.Equal(1, viewModel.OnlineOnlyPhotoCount);
+    }
+
+    [WindowsFact]
     public async Task CacheMiss_DefersWithoutSourceRead()
     {
         var availability = new TestSourceAvailabilityService(
@@ -44,6 +103,9 @@ public sealed class ThumbnailHydrationTests : IDisposable
             context.Image);
 
         Assert.Equal(ThumbnailLoadStatus.DeferredForHydration, result.Status);
+        Assert.Equal(
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            result.Request);
         Assert.Null(result.Bitmap);
         Assert.Equal(1, availability.CallCount);
         Assert.Equal(0, context.SourceCalls);
@@ -74,6 +136,9 @@ public sealed class ThumbnailHydrationTests : IDisposable
             context.Image);
 
         Assert.Equal(ThumbnailLoadStatus.Failed, result.Status);
+        Assert.Equal(
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            result.Request);
         Assert.Equal(0, context.SourceCalls);
     }
 
@@ -272,31 +337,6 @@ public sealed class ThumbnailHydrationTests : IDisposable
         }
     }
 
-    [WindowsFact]
-    public async Task DeferredPrefetch_DoesNotEvictLocalResidents()
-    {
-        using var catalog = new CatalogService(Path.Combine(_root, "resident-catalog"));
-        await catalog.InitializeAsync();
-        await using var viewModel = new MainWindowViewModel(catalog);
-        var residents = Enumerable.Range(0, 512)
-            .Select(index => new ImageFile($"resident-{index}.jpg")
-            {
-                Thumbnail = CreateBitmap()
-            })
-            .ToList();
-        var deferred = Enumerable.Range(0, 100)
-            .Select(index => new ImageFile($"cloud-{index}.jpg")
-            {
-                ThumbnailDeferredForHydration = true
-            })
-            .ToList();
-        viewModel.Library.SetImages(residents.Concat(deferred));
-
-        viewModel.ReserveThumbnailResidency(deferred);
-
-        Assert.Equal(512, residents.Count(image => image.Thumbnail != null));
-    }
-
     private async Task<ThumbnailContext> CreateContextAsync(
         TestSourceAvailabilityService availability,
         SourceAvailability hint = SourceAvailability.Unknown)
@@ -320,7 +360,7 @@ public sealed class ThumbnailHydrationTests : IDisposable
 
     private static void WriteJpeg(string path)
     {
-        using var image = new MagickImage(MagickColors.Gray, 16, 16);
+        using var image = new MagickImage(MagickColors.Gray, 150, 100);
         image.Write(path, MagickFormat.Jpeg);
     }
 

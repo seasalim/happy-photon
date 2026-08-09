@@ -104,6 +104,19 @@ public class ImageService : IAsyncDisposable
         ImageFile imageFile, EditSettings settings, bool skipHistogram = false, CancellationToken cancellationToken = default) =>
         _previewService.LoadPreviewWithHistogramAsync(imageFile, settings, skipHistogram, cancellationToken);
 
+    public Task<(Bitmap? preview, HistogramData histogram)> LoadPreviewWithHistogramAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        ThumbnailSizeRequest thumbnailRequest,
+        bool skipHistogram = false,
+        CancellationToken cancellationToken = default) =>
+        _previewService.LoadPreviewWithHistogramAsync(
+            imageFile,
+            settings,
+            thumbnailRequest,
+            skipHistogram,
+            cancellationToken);
+
     public Task<CachedPreviewBitmap?> LoadCachedPreviewAsync(
         ImageFile imageFile,
         EditSettings settings,
@@ -116,6 +129,19 @@ public class ImageService : IAsyncDisposable
     public Task<(Bitmap? preview, HistogramData histogram)> ApplyEditsToPreviewAsync(
         ImageFile imageFile, EditSettings settings, bool skipHistogram = false, CancellationToken cancellationToken = default) =>
         _previewService.ApplyEditsToPreviewAsync(imageFile, settings, skipHistogram, cancellationToken);
+
+    public Task<(Bitmap? preview, HistogramData histogram)> ApplyEditsToPreviewAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        ThumbnailSizeRequest thumbnailRequest,
+        bool skipHistogram = false,
+        CancellationToken cancellationToken = default) =>
+        _previewService.ApplyEditsToPreviewAsync(
+            imageFile,
+            settings,
+            thumbnailRequest,
+            skipHistogram,
+            cancellationToken);
 
     public Task<WhiteBalanceBaseContext?> GetWhiteBalanceContextAsync(
         ImageFile imageFile,
@@ -156,13 +182,38 @@ public class ImageService : IAsyncDisposable
     public Task<ThumbnailLoadResult> LoadThumbnailAsync(
         ImageFile imageFile,
         CancellationToken cancellationToken)
+        => LoadThumbnailAsync(
+            imageFile,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            cancellationToken);
+
+    public Task<ThumbnailLoadResult> LoadThumbnailAsync(
+        ImageFile imageFile,
+        ThumbnailSizeRequest request,
+        CancellationToken cancellationToken)
+        => LoadThumbnailAsync(
+            imageFile,
+            request,
+            allowUndersizedCachePlaceholder: true,
+            cancellationToken);
+
+    internal Task<ThumbnailLoadResult> LoadThumbnailAsync(
+        ImageFile imageFile,
+        ThumbnailSizeRequest request,
+        bool allowUndersizedCachePlaceholder,
+        CancellationToken cancellationToken)
     {
         var promoted = _previewService.TryPromoteRenderedThumbnail(
             imageFile,
-            imageFile.EditSettings);
+            imageFile.EditSettings,
+            request);
         return promoted != null
-            ? Task.FromResult(ThumbnailLoadResult.Loaded(promoted))
-            : _thumbnailService.LoadThumbnailAsync(imageFile, cancellationToken);
+            ? Task.FromResult(ThumbnailLoadResult.Loaded(promoted, request))
+            : _thumbnailService.LoadThumbnailAsync(
+                imageFile,
+                request,
+                allowUndersizedCachePlaceholder,
+                cancellationToken);
     }
 
     public Task<ThumbnailLoadResult> LoadUneditedThumbnailAsync(
@@ -170,8 +221,19 @@ public class ImageService : IAsyncDisposable
         CancellationToken cancellationToken) =>
         _thumbnailService.LoadUneditedThumbnailAsync(imageFile, cancellationToken);
 
+    public Task<ThumbnailLoadResult> LoadUneditedThumbnailAsync(
+        ImageFile imageFile,
+        ThumbnailSizeRequest request,
+        CancellationToken cancellationToken) =>
+        _thumbnailService.LoadUneditedThumbnailAsync(imageFile, request, cancellationToken);
+
     public bool IsThumbnailCacheValid(ImageFile imageFile) =>
         _thumbnailService.IsCacheValid(imageFile);
+
+    public bool IsThumbnailCacheValid(
+        ImageFile imageFile,
+        ThumbnailSizeRequest request) =>
+        _thumbnailService.IsCacheValid(imageFile, request);
 
     public bool HasRenderedThumbnailCacheEntry(ImageFile imageFile) =>
         _thumbnailService.HasRenderedCacheEntry(imageFile);
@@ -278,6 +340,9 @@ public class ImageService : IAsyncDisposable
 
     public HistogramData CalculateHistogram(Bitmap bitmap) =>
         _histogramService.CalculateHistogram(bitmap);
+
+    public HistogramData CalculateLibraryHistogram(Bitmap bitmap) =>
+        _histogramService.CalculateLibraryHistogram(bitmap);
 
     // ===== Metadata and Full Image Loading (kept in facade) =====
 

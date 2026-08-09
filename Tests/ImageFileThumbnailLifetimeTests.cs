@@ -26,8 +26,11 @@ public sealed class ImageFileThumbnailLifetimeTests
         library.ReplaceThumbnail(image, secondBitmap);
 
         Assert.Same(secondBitmap, image.Thumbnail);
+        Assert.Equal(4 * 3 * 4, retirement.PendingBytes);
+        Assert.True(retirement.PeakPendingBytes >= retirement.PendingBytes);
         Assert.Equal(4, firstBitmap.PixelSize.Width);
         Dispatcher.UIThread.RunJobs();
+        Assert.Equal(0, retirement.PendingBytes);
         Assert.Throws<ObjectDisposedException>(() => _ = firstBitmap.PixelSize);
 
         library.ReplaceThumbnail(image, thirdBitmap);

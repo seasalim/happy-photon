@@ -9,6 +9,11 @@ internal sealed class UiBitmapRetirement : IDisposable
     private readonly HashSet<Bitmap> _pending = new(
         ReferenceEqualityComparer.Instance);
     private bool _disposed;
+    private long _pendingBytes;
+    private long _peakPendingBytes;
+
+    public long PendingBytes => Interlocked.Read(ref _pendingBytes);
+    public long PeakPendingBytes => Interlocked.Read(ref _peakPendingBytes);
 
     public void Retire(Bitmap bitmap, Func<bool> isCurrent)
     {
@@ -21,6 +26,10 @@ internal sealed class UiBitmapRetirement : IDisposable
             }
 
             if (!_pending.Add(bitmap)) return;
+            var pending = Interlocked.Add(
+                ref _pendingBytes,
+                EstimateBytes(bitmap));
+            UpdatePeak(pending);
         }
 
         Dispatcher.UIThread.Post(
@@ -37,6 +46,7 @@ internal sealed class UiBitmapRetirement : IDisposable
             _disposed = true;
             pending = _pending.ToArray();
             _pending.Clear();
+            Interlocked.Exchange(ref _pendingBytes, 0);
         }
 
         foreach (var bitmap in pending)
@@ -50,8 +60,26 @@ internal sealed class UiBitmapRetirement : IDisposable
         lock (_sync)
         {
             if (!_pending.Remove(bitmap)) return;
+            Interlocked.Add(ref _pendingBytes, -EstimateBytes(bitmap));
         }
 
         if (!isCurrent()) bitmap.Dispose();
+    }
+
+    private static long EstimateBytes(Bitmap bitmap) =>
+        (long)bitmap.PixelSize.Width * bitmap.PixelSize.Height * 4;
+
+    private void UpdatePeak(long value)
+    {
+        var current = Interlocked.Read(ref _peakPendingBytes);
+        while (value > current)
+        {
+            var observed = Interlocked.CompareExchange(
+                ref _peakPendingBytes,
+                value,
+                current);
+            if (observed == current) return;
+            current = observed;
+        }
     }
 }

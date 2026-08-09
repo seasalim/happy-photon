@@ -85,15 +85,18 @@ Library thumbnail extraction uses LibRaw's already-open context to return both t
 encoded embedded preview and `ctx.Width`/`ctx.Height`, the visible dimensions rendered
 by Develop. Camera-wide aspect differences are treated as preview padding: differences
 at or below 3% pass through, while larger differences center-crop the embedded preview
-toward the visible RAW aspect before the 150px resize. Missing or non-positive visible
-dimensions disable normalization but do not reject successfully decoded preview bytes.
+toward the visible RAW aspect before the requested generation-size resize. Missing or
+non-positive visible dimensions disable normalization but do not reject successfully
+decoded preview bytes.
 A valid LibRaw preview is never rejected on geometry grounds, so a camera-wide mismatch
 cannot fall through to the preview-frame path and invoke Magick's RAW delegate during a
 Library load.
 
 This policy is specific to LibRaw. EXIF thumbnails continue to reject missing geometry
 and mismatches above 3%. Embedded-JPEG and preview-frame fallbacks remain unnormalized,
-and existing cached thumbnails are not migrated or invalidated.
+and existing cached thumbnails are not migrated or invalidated. Extraction retains the
+largest safe candidate seen, continues while it is below the generation target, and
+never starts a full RAW demosaic merely to satisfy a larger Library request.
 
 ### 2.2 Raw exposure
 
@@ -204,9 +207,13 @@ remain a documented limitation.
 
 ## 5. Disk caches
 
-- **Thumbnail cache:** `assets/thumbs/` contains unedited 150px embedded/source JPEGs
-  and uses a capacity-256 bounded writer. It is also the only input to agent image
-  statistics.
+- **Thumbnail cache:** `assets/thumbs/` contains one largest-wins unedited
+  embedded/source JPEG per catalog image and uses a capacity-256 bounded writer. Cache
+  dimensions come from a bounded JPEG SOF-header read before pixel decode. Existing
+  150px entries satisfy Small and Medium; cache misses generate 150px, 192px, or 512px
+  for Small, Medium, or Large. An undersized entry paints as a placeholder while a safe
+  source upgrade is queued. It is also the only input to agent image statistics, which
+  normalize every input to a canonical 150px long edge.
 - **Rendered-preview cache:** `PreviewCacheService` stores the *last rendered output*
   (8-bit JPEG q90, 1600px)
   plus a sidecar `<id>.meta` containing `settingsHash`.
@@ -218,12 +225,15 @@ remain a documented limitation.
   - Existing atomic-write, bounded-channel, drop-oldest, 2 s drain rules all carry over.
   - Write policy: queue a cache write only on leaving the image (or a long debounce),
     never per slider settle — an edit session must not multiply write traffic.
-- **Rendered RAW thumbnail cache:** `assets/rendered-thumbs/` stores q85 150px outputs
-  from accepted edited RAW Develop renders. Each JPEG has the same deterministic
-  settings-hash sidecar and source-timestamp validity rules as rendered previews, but
-  uses an independent capacity-8 writer so folder scans cannot evict active-session
-  promotion. Cache misses use the embedded source thumbnail with geometry only; they
-  never trigger a RAW base decode or load the 1600px preview.
+- **Rendered RAW thumbnail cache:** `assets/rendered-thumbs/` stores one largest-wins
+  q85 output per settings hash from accepted edited RAW Develop renders, capped at
+  512px. Its versioned metadata sidecar stores the deterministic settings hash and
+  raster dimensions; legacy plain-hash sidecars infer dimensions from the JPEG. The
+  cache uses an independent capacity-8 writer so folder scans cannot evict
+  active-session promotion. An accurate undersized match remains visible instead of
+  falling through to a sharper source thumbnail that would omit tone and color edits.
+  Cache misses use the embedded source thumbnail with geometry only; they never trigger
+  a RAW base decode or load the 1600px preview.
 - **Linear base disk cache:** deliberately absent. Bases are retained only in memory;
   the rendered JPEG cache supplies immediate paint while a base is armed.
 

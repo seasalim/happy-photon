@@ -49,6 +49,10 @@ public sealed class RenderResult : IDisposable
         _overlayMask = overlayMask;
     }
 
+    internal MagickImage DetachImage() =>
+        Interlocked.Exchange(ref _image, null) ??
+        throw new ObjectDisposedException(nameof(RenderResult));
+
     public void Dispose()
     {
         Interlocked.Exchange(ref _overlayMask, null)?.Dispose();

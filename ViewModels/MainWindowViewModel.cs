@@ -369,52 +369,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 debounce.Token));
     }
 
-    private void ScheduleHistogramUpdate()
-    {
-        var selectedImage = SelectedImage;
-        if (selectedImage == null) return;
-        if ((IsDevelopMode || IsFullScreenMode) &&
-            selectedImage.SourceRequiresHydration)
-        {
-            Histogram = null;
-            return;
-        }
-        var debounce = ReplaceDebounce(ref _histogramDebounce);
-        var ct = debounce.Token;
-        _ = DebouncedAction.RunAsync(
-            "histogram update",
-            TimeSpan.FromMilliseconds(300),
-            ct,
-            () => UpdateScheduledHistogramAsync(selectedImage, ct));
-    }
-
-    private Task UpdateScheduledHistogramAsync(
-        ImageFile imageFile,
-        CancellationToken cancellationToken)
-    {
-        if (cancellationToken.IsCancellationRequested ||
-            !ReferenceEquals(SelectedImage, imageFile))
-        {
-            return Task.CompletedTask;
-        }
-
-        if (IsDevelopMode || IsFullScreenMode)
-        {
-            if (imageFile.SourceRequiresHydration)
-            {
-                return Task.CompletedTask;
-            }
-
-            return UpdatePreviewWithCurrentSliders(skipHistogram: false, cancellationToken);
-        }
-
-        if (imageFile.Thumbnail != null)
-        {
-            Histogram = ImageService.CalculateHistogram(imageFile.Thumbnail);
-        }
-        return Task.CompletedTask;
-    }
-
     private void ScheduleThumbnailRefresh()
     {
         var image = SelectedImage;
@@ -473,7 +427,11 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         // Use cached preview for fast slider updates (avoids re-decoding from disk)
         // No loading indicator needed - cached preview updates are fast enough
         var (preview, histogram) = await ImageService.ApplyEditsToPreviewAsync(
-            selectedImage, tempSettings, skipHistogram, cancellationToken);
+            selectedImage,
+            tempSettings,
+            LibraryThumbnailRequest,
+            skipHistogram,
+            cancellationToken);
 
         if (cancellationToken.IsCancellationRequested || SelectedImage != selectedImage)
         {

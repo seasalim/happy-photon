@@ -9,34 +9,50 @@ namespace HappyPhoton.Services;
 internal sealed class EmbeddedPreviewExtractor
 {
     private readonly IRawProcessingService _rawService;
-    private readonly int _thumbnailSize;
 
-    public EmbeddedPreviewExtractor(
-        IRawProcessingService rawService,
-        int thumbnailSize)
-    {
+    public EmbeddedPreviewExtractor(IRawProcessingService rawService) =>
         _rawService = rawService;
-        _thumbnailSize = thumbnailSize;
-    }
 
     public Bitmap? TryExtract(
         string filePath,
+        int generationDimension,
         CancellationToken cancellationToken)
     {
+        Bitmap? best = null;
         if (_rawService.IsAvailable)
         {
-            var thumbnail = TryExtractLibRaw(filePath, cancellationToken);
-            if (thumbnail != null) return thumbnail;
+            best = ChooseBest(
+                best,
+                TryExtractLibRaw(
+                    filePath,
+                    generationDimension,
+                    cancellationToken));
+            if (Meets(best, generationDimension)) return best;
             cancellationToken.ThrowIfCancellationRequested();
         }
 
-        return TryExtractExif(filePath, cancellationToken) ??
-            TryExtractEmbeddedJpeg(filePath, cancellationToken) ??
-            TryExtractPreviewFrame(filePath, cancellationToken);
+        best = ChooseBest(
+            best,
+            TryExtractExif(filePath, generationDimension, cancellationToken));
+        if (Meets(best, generationDimension)) return best;
+        best = ChooseBest(
+            best,
+            TryExtractEmbeddedJpeg(
+                filePath,
+                generationDimension,
+                cancellationToken));
+        if (Meets(best, generationDimension)) return best;
+        return ChooseBest(
+            best,
+            TryExtractPreviewFrame(
+                filePath,
+                generationDimension,
+                cancellationToken));
     }
 
     private Bitmap? TryExtractLibRaw(
         string filePath,
+        int generationDimension,
         CancellationToken cancellationToken)
     {
         try
@@ -58,7 +74,7 @@ internal sealed class EmbeddedPreviewExtractor
                 image.AutoOrient();
             }
             NormalizeLibRawPreview(image, thumbnail);
-            ApplyThumbnailSize(image, _thumbnailSize);
+            ApplyThumbnailSize(image, generationDimension);
             cancellationToken.ThrowIfCancellationRequested();
             return ConvertToBitmap(image);
         }
@@ -106,6 +122,7 @@ internal sealed class EmbeddedPreviewExtractor
 
     private Bitmap? TryExtractExif(
         string filePath,
+        int generationDimension,
         CancellationToken cancellationToken)
     {
         try
@@ -115,7 +132,7 @@ internal sealed class EmbeddedPreviewExtractor
             cancellationToken.ThrowIfCancellationRequested();
             return ExifThumbnailDecoder.TryDecode(
                 image,
-                _thumbnailSize,
+                generationDimension,
                 cancellationToken);
         }
         catch (OperationCanceledException)
@@ -130,6 +147,7 @@ internal sealed class EmbeddedPreviewExtractor
 
     private Bitmap? TryExtractEmbeddedJpeg(
         string filePath,
+        int generationDimension,
         CancellationToken cancellationToken)
     {
         try
@@ -140,7 +158,7 @@ internal sealed class EmbeddedPreviewExtractor
 
             using var image = new MagickImage(jpegData);
             image.AutoOrient();
-            ApplyThumbnailSize(image, _thumbnailSize);
+            ApplyThumbnailSize(image, generationDimension);
             cancellationToken.ThrowIfCancellationRequested();
             return ConvertToBitmap(image);
         }
@@ -156,20 +174,21 @@ internal sealed class EmbeddedPreviewExtractor
 
     private Bitmap? TryExtractPreviewFrame(
         string filePath,
+        int generationDimension,
         CancellationToken cancellationToken)
     {
         try
         {
             var settings = new MagickReadSettings
             {
-                Width = 1024,
-                Height = 1024
+                Width = (uint)generationDimension,
+                Height = (uint)generationDimension
             };
             cancellationToken.ThrowIfCancellationRequested();
 
             using var image = new MagickImage(filePath, settings);
             image.AutoOrient();
-            ApplyThumbnailSize(image, _thumbnailSize);
+            ApplyThumbnailSize(image, generationDimension);
             cancellationToken.ThrowIfCancellationRequested();
             return ConvertToBitmap(image);
         }
@@ -183,4 +202,24 @@ internal sealed class EmbeddedPreviewExtractor
             return null;
         }
     }
+
+    private static Bitmap? ChooseBest(Bitmap? current, Bitmap? candidate)
+    {
+        if (candidate == null) return current;
+        if (current == null) return candidate;
+        if (LongEdge(candidate) > LongEdge(current))
+        {
+            current.Dispose();
+            return candidate;
+        }
+
+        candidate.Dispose();
+        return current;
+    }
+
+    private static bool Meets(Bitmap? bitmap, int dimension) =>
+        bitmap != null && LongEdge(bitmap) >= dimension;
+
+    private static int LongEdge(Bitmap bitmap) =>
+        Math.Max(bitmap.PixelSize.Width, bitmap.PixelSize.Height);
 }

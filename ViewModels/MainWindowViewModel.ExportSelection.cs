@@ -139,7 +139,8 @@ public partial class MainWindowViewModel
 
             if (!Library.Contains(image) ||
                 (!image.SourceRequiresHydration &&
-                 !image.ThumbnailDeferredForHydration) ||
+                 !image.ThumbnailDeferredForHydration &&
+                 image.ThumbnailUpgradeDeferredDimension == 0) ||
                 !ImageService.CanRetryBackgroundRead(image))
             {
                 continue;
@@ -148,6 +149,8 @@ public partial class MainWindowViewModel
             SetSourceRequiresHydration(image, false);
             image.ThumbnailDeferredForHydration = false;
             image.ThumbnailLoadFailed = false;
+            image.ThumbnailUpgradeDeferredDimension = 0;
+            image.ThumbnailUpgradeFailedDimension = 0;
             QueueHydratedThumbnail(
                 image,
                 generation,

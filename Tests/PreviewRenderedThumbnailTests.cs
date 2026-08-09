@@ -27,6 +27,9 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
             var loader = new SolidLoader(isRaw: true);
             await using var service = CreateService(catalog, loader);
             var settings = new EditSettings { Exposure = 0.75, Saturation = 20 };
+            var thumbnailCreated = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            service.RenderedThumbnailCreated += () => thumbnailCreated.TrySetResult();
 
             var (preview, _) = await service.ApplyEditsToPreviewAsync(
                 file,
@@ -34,11 +37,12 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 skipHistogram: true);
             Assert.NotNull(preview);
             preview!.Dispose();
+            await thumbnailCreated.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
             using var promoted = service.TryPromoteRenderedThumbnail(file, settings);
             Assert.NotNull(promoted);
-            Assert.Equal(150, promoted!.PixelSize.Width);
-            Assert.Equal(100, promoted.PixelSize.Height);
+            Assert.Equal(192, promoted!.PixelSize.Width);
+            Assert.Equal(128, promoted.PixelSize.Height);
             using var expected = CreateExpected(settings);
             Assert.Equal(
                 BitmapConversionService.CopyBgraPixels(expected),
@@ -73,10 +77,14 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
             await using var service = CreateService(
                 catalog,
                 new SolidLoader(isRaw: true));
+            var thumbnailCreated = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            service.RenderedThumbnailCreated += () => thumbnailCreated.TrySetResult();
             var (first, _) = await service.ApplyEditsToPreviewAsync(
                 file,
                 new EditSettings { Exposure = 0.25 },
                 skipHistogram: true);
+            await thumbnailCreated.Task.WaitAsync(TimeSpan.FromSeconds(5));
             var retained = service.GetRetainedThumbnailReference();
             Assert.NotNull(retained);
             Assert.True(retained!.TryGetTarget(out var oldThumbnail));
@@ -90,6 +98,32 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 () => _ = oldThumbnail!.PixelSize);
             first?.Dispose();
             second?.Dispose();
+        }
+    }
+
+    [WindowsFact]
+    public async Task DisposeWaitsForRenderedThumbnailCacheWrite()
+    {
+        _fixture.RequireWindows();
+        var (catalog, file) = await CreateFileAsync("shutdown.dng");
+        using (catalog)
+        {
+            var service = CreateService(catalog, new SolidLoader(isRaw: true));
+            var settings = new EditSettings { Exposure = 0.5 };
+            var (preview, _) = await service.ApplyEditsToPreviewAsync(
+                file,
+                settings,
+                skipHistogram: true);
+            preview?.Dispose();
+
+            await service.DisposeAsync();
+
+            var reader = new RenderedThumbnailCacheService(catalog);
+            using var restored = reader.LoadMatching(
+                file,
+                RenderSettingsHash.Compute(settings));
+            Assert.NotNull(restored);
+            await reader.DisposeAsync();
         }
     }
 
@@ -187,6 +221,9 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
             var secondResult = await second;
             Assert.Null(firstResult.preview);
             Assert.NotNull(secondResult.preview);
+            Assert.True(SpinWait.SpinUntil(
+                () => Volatile.Read(ref candidateCount) == 1,
+                TimeSpan.FromSeconds(5)));
             Assert.Equal(1, Volatile.Read(ref candidateCount));
             secondResult.preview?.Dispose();
         }
@@ -226,7 +263,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
             RenderIntent.Preview,
             BaseImage.PreviewMaxDimension,
             new RenderOptions(false, false)));
-        RenderColorEncoding.ResizeInLinearLight(rendered.Image, 150);
+        RenderColorEncoding.ResizeInLinearLight(rendered.Image, 192);
         return BitmapConversionService.ConvertToBitmap(rendered.Image)!;
     }
 

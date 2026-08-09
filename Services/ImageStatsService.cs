@@ -4,6 +4,7 @@ namespace HappyPhoton.Services;
 
 public sealed class ImageStatsService
 {
+    internal const int CanonicalLongEdge = 150;
     private const double QuantumRange = 65535.0;
     private readonly ISourceAvailabilityService _availabilityService;
 
@@ -55,11 +56,24 @@ public sealed class ImageStatsService
     private static (double Sharpness, double ClippedHighlightsPct,
         double ClippedShadowsPct, double MeanLuminance) Compute(MagickImage image)
     {
+        NormalizeSize(image);
         image.Grayscale();
 
         var (highlights, shadows, mean) = ComputeLuminanceStats(image);
         var sharpness = ComputeSharpness(image);
         return (sharpness, highlights, shadows, mean);
+    }
+
+    private static void NormalizeSize(MagickImage image)
+    {
+        var longEdge = Math.Max(image.Width, image.Height);
+        if (longEdge == CanonicalLongEdge) return;
+
+        var scale = CanonicalLongEdge / (double)longEdge;
+        image.FilterType = FilterType.Lanczos;
+        image.Resize(
+            (uint)Math.Max(1, Math.Round(image.Width * scale)),
+            (uint)Math.Max(1, Math.Round(image.Height * scale)));
     }
 
     private static (double Highlights, double Shadows, double Mean)

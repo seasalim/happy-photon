@@ -80,6 +80,20 @@ public partial class ImageFile : ObservableObject
 
     public bool ThumbnailLoadFailed { get; set; }
 
+    public int ThumbnailPixelWidth { get; private set; }
+    public int ThumbnailPixelHeight { get; private set; }
+    public long ThumbnailGeneration { get; private set; }
+    public int ThumbnailUpgradeDeferredDimension { get; set; }
+    public int ThumbnailUpgradeFailedDimension { get; set; }
+
+    public long ThumbnailBytes =>
+        (long)ThumbnailPixelWidth * ThumbnailPixelHeight * 4;
+
+    public bool ThumbnailSatisfies(ThumbnailSizeRequest request) =>
+        Thumbnail != null &&
+        Math.Max(ThumbnailPixelWidth, ThumbnailPixelHeight) >=
+        request.MinimumDimension;
+
     public bool IsRaw { get; }
 
     public bool IsPicked => Flag == ImageFlag.Picked;
@@ -194,8 +208,13 @@ public partial class ImageFile : ObservableObject
     }
 
     partial void OnFileSizeChanged(long value) => OnPropertyChanged(nameof(FileSizeDisplay));
-    partial void OnThumbnailChanged(Bitmap? value) =>
+    partial void OnThumbnailChanged(Bitmap? value)
+    {
+        ThumbnailPixelWidth = value?.PixelSize.Width ?? 0;
+        ThumbnailPixelHeight = value?.PixelSize.Height ?? 0;
+        ThumbnailGeneration++;
         OnPropertyChanged(nameof(ShowCloudPlaceholder));
+    }
     partial void OnSourceRequiresHydrationChanged(bool value) =>
         OnPropertyChanged(nameof(ShowCloudPlaceholder));
     partial void OnCameraMakeChanged(string? value) => OnPropertyChanged(nameof(CameraDisplay));

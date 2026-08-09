@@ -13,6 +13,7 @@ public class AppSettingsService
     private const string SelectedFolderPathKey = "SelectedFolderPath";
     private const string FirstRunExperienceVersionKey = "FirstRunExperienceVersion";
     private const string FileTypeFilterKey = "FileTypeFilter";
+    private const string LibraryThumbnailSizeKey = "LibraryThumbnailSize";
     private const string StripLocationDataKey = "StripLocationData";
     private const string OutputSharpeningKey = "OutputSharpening";
     private const string McpServerEnabledKey = "McpServerEnabled";
@@ -33,6 +34,15 @@ public class AppSettingsService
             fileTypeFilter = parsedFilter;
         }
 
+        var thumbnailSize = LibraryThumbnailSize.Medium;
+        var savedThumbnailSize = await _catalogService.GetAppSettingAsync(LibraryThumbnailSizeKey);
+        if (!string.IsNullOrEmpty(savedThumbnailSize) &&
+            Enum.TryParse<LibraryThumbnailSize>(savedThumbnailSize, ignoreCase: true, out var parsedSize) &&
+            Enum.IsDefined(parsedSize))
+        {
+            thumbnailSize = parsedSize;
+        }
+
         int? firstRunExperienceVersion = null;
         var savedFirstRunVersion =
             await _catalogService.GetAppSettingAsync(FirstRunExperienceVersionKey);
@@ -47,6 +57,7 @@ public class AppSettingsService
             SelectedFolderPath = await _catalogService.GetAppSettingAsync(SelectedFolderPathKey),
             FirstRunExperienceVersion = firstRunExperienceVersion,
             FileTypeFilter = fileTypeFilter,
+            LibraryThumbnailSize = thumbnailSize,
             StripLocationData = bool.TryParse(
                 await _catalogService.GetAppSettingAsync(StripLocationDataKey),
                 out var stripLocationData) && stripLocationData,
@@ -69,6 +80,7 @@ public class AppSettingsService
             [FirstRunExperienceVersionKey] =
                 settings.FirstRunExperienceVersion?.ToString(),
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
+            [LibraryThumbnailSizeKey] = settings.LibraryThumbnailSize.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString(),
             [McpServerEnabledKey] = settings.McpServerEnabled.ToString(),
@@ -81,6 +93,7 @@ public class AppSettingsService
         return _catalogService.SetAppSettingsAsync(new Dictionary<string, string?>
         {
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
+            [LibraryThumbnailSizeKey] = settings.LibraryThumbnailSize.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString(),
             [McpServerEnabledKey] = settings.McpServerEnabled.ToString(),

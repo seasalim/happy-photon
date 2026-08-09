@@ -8,22 +8,28 @@ namespace HappyPhoton.Services;
 internal sealed class ThumbnailRenderer
 {
     private readonly RenderPipeline _renderPipeline;
-    private readonly int _thumbnailSize;
 
-    public ThumbnailRenderer(RenderPipeline renderPipeline, int thumbnailSize)
-    {
+    public ThumbnailRenderer(RenderPipeline renderPipeline) =>
         _renderPipeline = renderPipeline;
-        _thumbnailSize = thumbnailSize;
-    }
 
-    public Bitmap RenderRawGeometry(Bitmap source, EditSettings settings)
+    public Bitmap RenderRawGeometry(
+        Bitmap source,
+        EditSettings settings,
+        int generationDimension)
     {
         using var image = ConvertToMagickImage(source);
         RenderGeometry.Apply(image, settings);
+        if (image.Width > generationDimension || image.Height > generationDimension)
+        {
+            ApplyThumbnailSize(image, generationDimension);
+        }
         return ConvertToBitmap(image)!;
     }
 
-    public Bitmap RenderStandardEdits(Bitmap source, EditSettings settings)
+    public Bitmap RenderStandardEdits(
+        Bitmap source,
+        EditSettings settings,
+        int generationDimension)
     {
         MagickImage? image = ConvertToMagickImage(source);
         try
@@ -51,7 +57,7 @@ internal sealed class ThumbnailRenderer
                 baseImage,
                 settings,
                 RenderIntent.Preview,
-                _thumbnailSize,
+                generationDimension,
                 new RenderOptions(false, false)));
             return ConvertToBitmap(rendered.Image)!;
         }

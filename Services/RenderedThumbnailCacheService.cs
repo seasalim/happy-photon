@@ -16,7 +16,8 @@ public sealed class RenderedThumbnailCacheService : IAsyncDisposable
         _writer = new SettingsHashedCacheWriter(
             catalogService,
             catalogService.GetRenderedThumbnailPath,
-            85);
+            85,
+            versionedDimensionMetadata: true);
     }
 
     internal RenderedThumbnailCacheService(
@@ -32,11 +33,24 @@ public sealed class RenderedThumbnailCacheService : IAsyncDisposable
             85,
             queueCapacity,
             processingGate,
-            shutdownDrainTimeout);
+            shutdownDrainTimeout,
+            versionedDimensionMetadata: true);
     }
 
     public Bitmap? LoadMatching(ImageFile imageFile, string settingsHash)
+        => LoadMatching(
+            imageFile,
+            settingsHash,
+            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            out _);
+
+    public Bitmap? LoadMatching(
+        ImageFile imageFile,
+        string settingsHash,
+        ThumbnailSizeRequest request,
+        out bool satisfiesMinimum)
     {
+        satisfiesMinimum = false;
         if (imageFile.CatalogId == 0 || string.IsNullOrWhiteSpace(settingsHash))
             return null;
 
@@ -55,23 +69,50 @@ public sealed class RenderedThumbnailCacheService : IAsyncDisposable
                 cached.WriteTime != writeTime ||
                 cached.MetadataWriteTime != metadataWriteTime)
             {
+                if (!RenderedThumbnailMetadata.TryRead(
+                    metadataPath,
+                    path,
+                    out var metadata))
+                {
+                    return null;
+                }
                 cached = new CachedHash(
                     writeTime,
                     metadataWriteTime,
-                    File.ReadAllText(metadataPath).Trim());
+                    metadata);
                 _hashes[imageFile.CatalogId] = cached;
             }
             if (!string.Equals(
-                cached.SettingsHash,
+                cached.Metadata.SettingsHash,
                 settingsHash,
                 StringComparison.Ordinal)) return null;
 
-            return new Bitmap(path);
+            var bitmap = DecodeForRequest(path, cached.Metadata, request);
+            satisfiesMinimum = Math.Max(
+                bitmap.PixelSize.Width,
+                bitmap.PixelSize.Height) >= request.MinimumDimension;
+            return bitmap;
         }
         catch
         {
             return null;
         }
+    }
+
+    private static Bitmap DecodeForRequest(
+        string path,
+        RenderedThumbnailMetadata metadata,
+        ThumbnailSizeRequest request)
+    {
+        if (metadata.LongEdge <= request.GenerationDimension)
+        {
+            return new Bitmap(path);
+        }
+
+        using var stream = File.OpenRead(path);
+        return metadata.PixelWidth >= metadata.PixelHeight
+            ? Bitmap.DecodeToWidth(stream, request.GenerationDimension)
+            : Bitmap.DecodeToHeight(stream, request.GenerationDimension);
     }
 
     public bool HasCacheEntry(ImageFile imageFile)
@@ -94,5 +135,5 @@ public sealed class RenderedThumbnailCacheService : IAsyncDisposable
     private sealed record CachedHash(
         DateTime WriteTime,
         DateTime MetadataWriteTime,
-        string SettingsHash);
+        RenderedThumbnailMetadata Metadata);
 }

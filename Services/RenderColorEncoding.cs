@@ -26,9 +26,9 @@ internal static class RenderColorEncoding
             return;
         }
 
-        ApplyLut(image, SrgbDecodeLut.Value);
+        ToneLutApplicator.Apply(image, SrgbDecodeLut.Value);
         BitmapConversionService.ResizeToMaxDimension(image, maxDimension);
-        ApplyLut(image, SrgbEncodeLut.Value);
+        ToneLutApplicator.Apply(image, SrgbEncodeLut.Value);
     }
 
     public static void RetagAsSrgb(MagickImage image)

@@ -20,6 +20,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Null(empty.FirstRunExperienceVersion);
         Assert.False(empty.StripLocationData);
         Assert.True(empty.OutputSharpening);
+        Assert.Equal(LibraryThumbnailSize.Medium, empty.LibraryThumbnailSize);
 
         await service.SaveAsync(new AppSettings
         {
@@ -27,6 +28,7 @@ public sealed class AppSettingsServiceTests : IDisposable
             SelectedFolderPath = @"C:\Photos\Shoot",
             FirstRunExperienceVersion = 1,
             FileTypeFilter = ImageFileTypeFilter.Raw,
+            LibraryThumbnailSize = LibraryThumbnailSize.Large,
             StripLocationData = true,
             OutputSharpening = false,
             McpServerEnabled = true,
@@ -38,6 +40,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(@"C:\Photos", loaded.RootFolderPath);
         Assert.Equal(@"C:\Photos\Shoot", loaded.SelectedFolderPath);
         Assert.Equal(ImageFileTypeFilter.Raw, loaded.FileTypeFilter);
+        Assert.Equal(LibraryThumbnailSize.Large, loaded.LibraryThumbnailSize);
         Assert.True(loaded.StripLocationData);
         Assert.False(loaded.OutputSharpening);
         Assert.True(loaded.McpServerEnabled);
@@ -51,6 +54,34 @@ public sealed class AppSettingsServiceTests : IDisposable
         var service = new AppSettingsService(catalog);
 
         await Assert.ThrowsAsync<InvalidOperationException>(service.LoadAsync);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("enormous")]
+    [InlineData("99")]
+    public async Task LoadAsync_InvalidThumbnailSizeDefaultsToMedium(string? value)
+    {
+        using var catalog = new CatalogService(_catalogPath);
+        await catalog.InitializeAsync();
+        await catalog.SetAppSettingAsync("LibraryThumbnailSize", value);
+
+        var loaded = await new AppSettingsService(catalog).LoadAsync();
+
+        Assert.Equal(LibraryThumbnailSize.Medium, loaded.LibraryThumbnailSize);
+    }
+
+    [Fact]
+    public async Task LoadAsync_ParsesThumbnailSizeCaseInsensitively()
+    {
+        using var catalog = new CatalogService(_catalogPath);
+        await catalog.InitializeAsync();
+        await catalog.SetAppSettingAsync("LibraryThumbnailSize", "large");
+
+        var loaded = await new AppSettingsService(catalog).LoadAsync();
+
+        Assert.Equal(LibraryThumbnailSize.Large, loaded.LibraryThumbnailSize);
     }
 
     [Fact]
@@ -69,6 +100,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         await service.SavePreferencesAsync(new AppSettings
         {
             FileTypeFilter = ImageFileTypeFilter.Jpeg,
+            LibraryThumbnailSize = LibraryThumbnailSize.Small,
             StripLocationData = true,
             OutputSharpening = false,
             McpServerEnabled = true,
@@ -80,6 +112,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal("selected", loaded.SelectedFolderPath);
         Assert.Equal(1, loaded.FirstRunExperienceVersion);
         Assert.Equal(ImageFileTypeFilter.Jpeg, loaded.FileTypeFilter);
+        Assert.Equal(LibraryThumbnailSize.Small, loaded.LibraryThumbnailSize);
         Assert.True(loaded.StripLocationData);
         Assert.False(loaded.OutputSharpening);
         Assert.True(loaded.McpServerEnabled);
