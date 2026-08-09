@@ -275,18 +275,26 @@ For each image, in order, first hit wins (target size 150 px):
 
 1. **Disk cache** — valid iff `assets/thumbs/<xx>/<id>.jpg` exists and its mtime is
    newer than the source file's. No DB involved.
-2. RAW/HEIC only — **LibRaw embedded thumbnail** (`ExtractThumbnail`), with manual EXIF
-   orientation when LibRaw output lacks it.
+2. RAW/HEIC only — **LibRaw embedded preview** (`ExtractThumbnail`), with manual EXIF
+   orientation when LibRaw output lacks it. LibRaw also reports the visible RAW frame
+   dimensions used by Develop. A preview whose aspect differs from that frame by more
+   than 3% is center-cropped toward the visible RAW aspect; the mismatch is treated as
+   camera-added padding. At or below 3%, or when visible geometry is unavailable, the
+   preview is preserved. Once LibRaw returns valid encoded preview bytes, geometry
+   never rejects them and therefore cannot fall through to a Magick RAW delegate decode
+   during Library loading.
 3. **EXIF thumbnail** via `Ping` (header-only read), accepted only if its aspect ratio
-   matches the source within 3% (`ExifThumbnailDecoder`).
+   matches the source within 3% (`ExifThumbnailDecoder`). Unlike LibRaw previews,
+   missing geometry or a larger mismatch still rejects an EXIF thumbnail.
 4. RAW only — **embedded JPEG scan** (`EmbeddedJpegExtractor`): scan the raw bytes for
    `FFD8…FFD9` spans, validate candidates with Magick, pick the largest. Uses the
    *last* `FFD9` marker first (some vendors nest JPEGs). Results are memoized in a
-   short-lived static cache to dedupe parallel workers.
+   short-lived static cache to dedupe parallel workers. This fallback is not
+   aspect-normalized.
 5. **Reduced-size decode** — for JPEGs, `JpegThumbnailDecoder` uses Avalonia's platform
    decoder (`Bitmap.DecodeToWidth/Height`) plus a manual orientation pixel-remap; other
    formats go through Magick with size hints. Magick remains the fallback for anything
-   corrupt or unsupported.
+   corrupt or unsupported. RAW preview-frame fallbacks remain unnormalized.
 
 Edited standard images keep the low-resolution `RenderPipeline` path, which mirrors
 `StandardBaseLoader`. Edited RAWs use a different speed-first order: an in-memory
@@ -299,7 +307,9 @@ self-heals the fallback. Folder loading never decodes a RAW base or a 1600px pre
 The source thumbnail remains unchanged in `assets/thumbs/`; agent statistics always
 read this unedited tier. Accurate RAW thumbnails are q85 JPEGs with settings-hash
 sidecars. Both files must exist, the JPEG must be newer than the original, and the hash
-must match the current render settings.
+must match the current render settings. The LibRaw padding fix does not change cache
+validation or migrate existing cached thumbnails; regenerated entries adopt it through
+the normal timestamp-based cache lifecycle.
 
 ### Cloud-file source access
 

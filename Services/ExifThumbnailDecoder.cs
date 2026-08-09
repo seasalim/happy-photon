@@ -1,4 +1,5 @@
 using Avalonia.Media.Imaging;
+using HappyPhoton.Models;
 using ImageMagick;
 
 namespace HappyPhoton.Services;
@@ -57,18 +58,24 @@ internal static class ExifThumbnailDecoder
     private static int NormalizeOrientation(int orientation) =>
         orientation is >= 1 and <= 8 ? orientation : 1;
 
-    private static bool HasCompatibleAspectRatio(MagickImage source, MagickImage thumbnail)
-    {
-        if (source.Width == 0 || source.Height == 0 || thumbnail.Width == 0 || thumbnail.Height == 0)
-        {
-            return false;
-        }
+    private static bool HasCompatibleAspectRatio(MagickImage source, MagickImage thumbnail) =>
+        HasCompatibleAspectRatio(
+            source.Width,
+            source.Height,
+            thumbnail.Width,
+            thumbnail.Height);
 
-        var sourceRatio = Math.Max(source.Width, source.Height) /
-            (double)Math.Min(source.Width, source.Height);
-        var thumbnailRatio = Math.Max(thumbnail.Width, thumbnail.Height) /
-            (double)Math.Min(thumbnail.Width, thumbnail.Height);
-        return Math.Abs(sourceRatio - thumbnailRatio) / sourceRatio <=
-            MaximumAspectRatioDifference;
+    internal static bool HasCompatibleAspectRatio(
+        long sourceWidth,
+        long sourceHeight,
+        long thumbnailWidth,
+        long thumbnailHeight)
+    {
+        var difference = CropGeometry.RelativeAspectRatioDifference(
+            sourceWidth,
+            sourceHeight,
+            thumbnailWidth,
+            thumbnailHeight);
+        return difference is <= MaximumAspectRatioDifference;
     }
 }

@@ -222,7 +222,7 @@ public sealed class MetadataServiceTests
     {
         internal int ExtractCount { get; private set; }
         public bool IsAvailable => true;
-        public byte[]? ExtractThumbnail(string filePath) => null;
+        public RawThumbnailData? ExtractThumbnail(string filePath) => null;
 
         public RawMetadata? ExtractMetadata(string filePath)
         {

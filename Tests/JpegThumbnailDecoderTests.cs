@@ -48,6 +48,22 @@ public sealed class JpegThumbnailDecoderTests : IDisposable
             Path.Combine(_tempDirectory, "missing.jpg"), 150, cancellation.Token));
     }
 
+    [Theory]
+    [InlineData(0, 300, 400, 300)]
+    [InlineData(400, 300, 0, 300)]
+    public void ExifAspectCompatibility_RejectsUnavailableGeometry(
+        long sourceWidth,
+        long sourceHeight,
+        long thumbnailWidth,
+        long thumbnailHeight)
+    {
+        Assert.False(ExifThumbnailDecoder.HasCompatibleAspectRatio(
+            sourceWidth,
+            sourceHeight,
+            thumbnailWidth,
+            thumbnailHeight));
+    }
+
     [WindowsFact]
     public void Decode_UsesCompatibleEmbeddedExifThumbnail()
     {

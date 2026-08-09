@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using HappyPhoton.Models;
 using ImageMagick;
 
 namespace HappyPhoton.Services;
@@ -298,45 +299,35 @@ internal static class PreviewExposureEstimator
         preview.Strip();
     }
 
-    private static SampleArea GetAlignedBaseArea(
+    internal static SampleArea GetAlignedBaseArea(
         MagickImage baseImage,
         MagickImage preview)
     {
-        var baseRatio = AspectRatio(baseImage);
-        var previewRatio = AspectRatio(preview);
-        if (Math.Abs(baseRatio - previewRatio) / previewRatio <= 0.02)
+        var difference = CropGeometry.RelativeAspectRatioDifference(
+            preview.Width,
+            preview.Height,
+            baseImage.Width,
+            baseImage.Height);
+        if (difference is null or <= 0.02)
         {
             return SampleArea.Full(baseImage);
         }
 
-        uint width;
-        uint height;
-        if (baseImage.Width >= baseImage.Height)
+        var crop = CropGeometry.CenterCropToAspect(
+            baseImage.Width,
+            baseImage.Height,
+            preview.Width,
+            preview.Height);
+        if (crop == null)
         {
-            width = baseRatio > previewRatio
-                ? checked((uint)Math.Round(baseImage.Height * previewRatio))
-                : baseImage.Width;
-            height = baseRatio > previewRatio
-                ? baseImage.Height
-                : checked((uint)Math.Round(baseImage.Width / previewRatio));
-        }
-        else
-        {
-            height = baseRatio > previewRatio
-                ? checked((uint)Math.Round(baseImage.Width * previewRatio))
-                : baseImage.Height;
-            width = baseRatio > previewRatio
-                ? baseImage.Width
-                : checked((uint)Math.Round(baseImage.Height / previewRatio));
+            return SampleArea.Full(baseImage);
         }
 
-        width = Math.Clamp(width, 1u, baseImage.Width);
-        height = Math.Clamp(height, 1u, baseImage.Height);
         return new SampleArea(
-            checked((int)((baseImage.Width - width) / 2)),
-            checked((int)((baseImage.Height - height) / 2)),
-            checked((int)width),
-            checked((int)height));
+            crop.Value.X,
+            crop.Value.Y,
+            checked((int)crop.Value.Width),
+            checked((int)crop.Value.Height));
     }
 
     private static ushort[] ReadReducedRgb(
@@ -401,10 +392,6 @@ internal static class PreviewExposureEstimator
         return result;
     }
 
-    private static double AspectRatio(MagickImage image) =>
-        Math.Max(image.Width, image.Height) /
-        (double)Math.Min(image.Width, image.Height);
-
     private static double Luminance(double red, double green, double blue) =>
         0.2126 * red + 0.7152 * green + 0.0722 * blue;
 
@@ -430,7 +417,7 @@ internal static class PreviewExposureEstimator
     private static bool IsJpeg(ReadOnlySpan<byte> bytes) =>
         bytes.Length > 2 && bytes[0] == 0xff && bytes[1] == 0xd8;
 
-    private readonly record struct SampleArea(
+    internal readonly record struct SampleArea(
         int X,
         int Y,
         int Width,

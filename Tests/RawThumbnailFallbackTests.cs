@@ -1,3 +1,4 @@
+using Avalonia.Media.Imaging;
 using ImageMagick;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -149,6 +150,141 @@ public sealed class RawThumbnailFallbackTests : IDisposable
         Assert.Equal(0, loader.LoadCount);
     }
 
+    [WindowsFact]
+    public void LibRawPreview_FourByThreeIsCroppedToVisibleThreeByTwo()
+    {
+        _fixture.RequireWindows();
+        var raw = new PreviewRawService(
+            CreatePreview(400, 300, MagickColors.Green),
+            6000,
+            4000);
+        var extractor = new EmbeddedPreviewExtractor(
+            raw,
+            ThumbnailService.ThumbnailSize);
+
+        using var bitmap = extractor.TryExtract(
+            Path.Combine(_root, "not-an-image.dng"),
+            CancellationToken.None);
+
+        Assert.NotNull(bitmap);
+        Assert.Equal(ThumbnailService.ThumbnailSize, bitmap.PixelSize.Width);
+        Assert.Equal(100, bitmap.PixelSize.Height);
+    }
+
+    [WindowsFact]
+    public void LibRawPreview_CenterCropRemovesBothDistinguishableBorders()
+    {
+        _fixture.RequireWindows();
+        var bytes = CreateBorderedPreview(
+            480,
+            360,
+            borderSize: 20,
+            verticalBorders: false);
+        var extractor = new EmbeddedPreviewExtractor(
+            new PreviewRawService(bytes, 6000, 4000),
+            ThumbnailService.ThumbnailSize);
+
+        using var bitmap = extractor.TryExtract(
+            Path.Combine(_root, "not-an-image.dng"),
+            CancellationToken.None);
+
+        Assert.NotNull(bitmap);
+        AssertPixelIsGreen(bitmap!, 0, 0);
+        AssertPixelIsGreen(
+            bitmap!,
+            bitmap.PixelSize.Width - 1,
+            bitmap.PixelSize.Height - 1);
+    }
+
+    [WindowsFact]
+    public void LibRawPreview_MatchingAspectPassesThroughWithBorders()
+    {
+        _fixture.RequireWindows();
+        var bytes = CreateBorderedPreview(
+            300,
+            200,
+            borderSize: 20,
+            verticalBorders: true);
+        var extractor = new EmbeddedPreviewExtractor(
+            new PreviewRawService(bytes, 6000, 4000),
+            ThumbnailService.ThumbnailSize);
+
+        using var bitmap = extractor.TryExtract(
+            Path.Combine(_root, "not-an-image.dng"),
+            CancellationToken.None);
+
+        Assert.NotNull(bitmap);
+        AssertPixelHasDominantChannel(bitmap!, 0, 50, redIndex: 2);
+        AssertPixelHasDominantChannel(bitmap!, 149, 50, redIndex: 0);
+    }
+
+    [WindowsFact]
+    public void LibRawPreview_PortraitUsesPortraitTargetRatio()
+    {
+        _fixture.RequireWindows();
+        var extractor = new EmbeddedPreviewExtractor(
+            new PreviewRawService(
+                CreatePreview(300, 400, MagickColors.Green),
+                4000,
+                6000),
+            ThumbnailService.ThumbnailSize);
+
+        using var bitmap = extractor.TryExtract(
+            Path.Combine(_root, "not-an-image.dng"),
+            CancellationToken.None);
+
+        Assert.NotNull(bitmap);
+        Assert.Equal(100, bitmap.PixelSize.Width);
+        Assert.Equal(ThumbnailService.ThumbnailSize, bitmap.PixelSize.Height);
+    }
+
+    [WindowsFact]
+    public void LibRawPreview_LargeMismatchStillReturnsCroppedPreview()
+    {
+        _fixture.RequireWindows();
+        var extractor = new EmbeddedPreviewExtractor(
+            new PreviewRawService(
+                CreatePreview(400, 100, MagickColors.Green),
+                6000,
+                4000),
+            ThumbnailService.ThumbnailSize);
+
+        using var bitmap = extractor.TryExtract(
+            Path.Combine(_root, "not-a-decodable-image.dng"),
+            CancellationToken.None);
+
+        Assert.NotNull(bitmap);
+        Assert.Equal(ThumbnailService.ThumbnailSize, bitmap.PixelSize.Width);
+        Assert.Equal(100, bitmap.PixelSize.Height);
+    }
+
+    [Theory]
+    [InlineData(null, 4000)]
+    [InlineData(6000, null)]
+    [InlineData(0, 4000)]
+    [InlineData(6000, 0)]
+    [InlineData(-1, 4000)]
+    public void LibRawPreview_InvalidVisibleGeometrySkipsNormalization(
+        int? visibleWidth,
+        int? visibleHeight)
+    {
+        _fixture.RequireWindows();
+        var extractor = new EmbeddedPreviewExtractor(
+            new PreviewRawService(
+                CreatePreview(400, 300, MagickColors.Green),
+                visibleWidth,
+                visibleHeight),
+            ThumbnailService.ThumbnailSize);
+
+        using var bitmap = extractor.TryExtract(
+            Path.Combine(_root, "not-an-image.dng"),
+            CancellationToken.None);
+
+        Assert.NotNull(bitmap);
+        Assert.Equal(ThumbnailService.ThumbnailSize, bitmap.PixelSize.Width);
+        Assert.Equal(113, bitmap.PixelSize.Height);
+    }
+
     private async Task<(CatalogService Catalog, ImageFile File)> CreateCachedRawAsync(
         int width,
         int height)
@@ -168,6 +304,68 @@ public sealed class RawThumbnailFallbackTests : IDisposable
         return (catalog, file);
     }
 
+    private static byte[] CreatePreview(
+        int width,
+        int height,
+        MagickColor color)
+    {
+        using var image = new MagickImage(color, (uint)width, (uint)height);
+        return image.ToByteArray(MagickFormat.Png);
+    }
+
+    private static byte[] CreateBorderedPreview(
+        int width,
+        int height,
+        int borderSize,
+        bool verticalBorders)
+    {
+        using var image = new MagickImage(
+            MagickColors.Green,
+            (uint)width,
+            (uint)height);
+        using var pixels = image.GetPixels();
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var firstBorder = verticalBorders ? x < borderSize : y < borderSize;
+                var secondBorder = verticalBorders
+                    ? x >= width - borderSize
+                    : y >= height - borderSize;
+                if (firstBorder)
+                {
+                    pixels.SetPixel(x, y, [ushort.MaxValue, 0, 0]);
+                }
+                else if (secondBorder)
+                {
+                    pixels.SetPixel(x, y, [0, 0, ushort.MaxValue]);
+                }
+            }
+        }
+
+        return image.ToByteArray(MagickFormat.Png);
+    }
+
+    private static void AssertPixelIsGreen(Bitmap bitmap, int x, int y)
+    {
+        var pixels = BitmapConversionService.CopyBgraPixels(bitmap);
+        var offset = (y * bitmap.PixelSize.Width + x) * 4;
+        Assert.True(pixels[offset + 1] > pixels[offset]);
+        Assert.True(pixels[offset + 1] > pixels[offset + 2]);
+    }
+
+    private static void AssertPixelHasDominantChannel(
+        Bitmap bitmap,
+        int x,
+        int y,
+        int redIndex)
+    {
+        var pixels = BitmapConversionService.CopyBgraPixels(bitmap);
+        var offset = (y * bitmap.PixelSize.Width + x) * 4;
+        Assert.True(pixels[offset + redIndex] > pixels[offset + 1]);
+        Assert.True(pixels[offset + redIndex] > pixels[offset + (redIndex == 0 ? 2 : 0)]);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
@@ -178,11 +376,29 @@ public sealed class RawThumbnailFallbackTests : IDisposable
         public int ExtractCount { get; private set; }
         public bool IsAvailable => true;
         public RawMetadata? ExtractMetadata(string filePath) => null;
-        public byte[]? ExtractThumbnail(string filePath)
+        public RawThumbnailData? ExtractThumbnail(string filePath)
         {
             ExtractCount++;
             return null;
         }
+    }
+
+    private sealed class PreviewRawService : IRawProcessingService
+    {
+        private readonly RawThumbnailData _thumbnail;
+
+        public PreviewRawService(
+            byte[] encodedBytes,
+            int? visibleWidth,
+            int? visibleHeight) =>
+            _thumbnail = new RawThumbnailData(
+                encodedBytes,
+                visibleWidth,
+                visibleHeight);
+
+        public bool IsAvailable => true;
+        public RawThumbnailData? ExtractThumbnail(string filePath) => _thumbnail;
+        public RawMetadata? ExtractMetadata(string filePath) => null;
     }
 
     private sealed class CountingBaseLoader : IBaseImageLoader

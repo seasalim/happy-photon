@@ -2,6 +2,99 @@ namespace HappyPhoton.Models;
 
 internal static class CropGeometry
 {
+    /// <summary>
+    /// Returns the orientation-independent long-edge/short-edge aspect ratio.
+    /// Invalid dimensions return <see langword="null"/> so callers can choose
+    /// whether unavailable geometry should be accepted or rejected.
+    /// </summary>
+    public static double? AspectRatio(long width, long height)
+    {
+        if (width <= 0 || height <= 0)
+        {
+            return null;
+        }
+
+        return Math.Max(width, height) / (double)Math.Min(width, height);
+    }
+
+    /// <summary>
+    /// Compares two frame aspect ratios relative to the reference frame.
+    /// </summary>
+    public static double? RelativeAspectRatioDifference(
+        long referenceWidth,
+        long referenceHeight,
+        long candidateWidth,
+        long candidateHeight)
+    {
+        var referenceRatio = AspectRatio(referenceWidth, referenceHeight);
+        var candidateRatio = AspectRatio(candidateWidth, candidateHeight);
+        return RelativeAspectRatioDifference(referenceRatio, candidateRatio);
+    }
+
+    /// <summary>
+    /// Center-crops one frame toward another frame's aspect ratio without
+    /// mutating either frame. Library normalization crops the embedded preview
+    /// toward the visible RAW frame; exposure estimation does the opposite and
+    /// crops the RAW base toward the preview frame.
+    /// </summary>
+    public static CenterCropRectangle? CenterCropToAspect(
+        long cropWidth,
+        long cropHeight,
+        long referenceWidth,
+        long referenceHeight)
+    {
+        var cropRatio = AspectRatio(cropWidth, cropHeight);
+        var referenceRatio = AspectRatio(referenceWidth, referenceHeight);
+        if (cropRatio == null || referenceRatio == null)
+        {
+            return null;
+        }
+
+        var sourceWidth = checked((uint)cropWidth);
+        var sourceHeight = checked((uint)cropHeight);
+        uint width;
+        uint height;
+        if (sourceWidth >= sourceHeight)
+        {
+            width = cropRatio > referenceRatio
+                ? checked((uint)Math.Round(sourceHeight * referenceRatio.Value))
+                : sourceWidth;
+            height = cropRatio > referenceRatio
+                ? sourceHeight
+                : checked((uint)Math.Round(sourceWidth / referenceRatio.Value));
+        }
+        else
+        {
+            height = cropRatio > referenceRatio
+                ? checked((uint)Math.Round(sourceWidth * referenceRatio.Value))
+                : sourceHeight;
+            width = cropRatio > referenceRatio
+                ? sourceWidth
+                : checked((uint)Math.Round(sourceHeight / referenceRatio.Value));
+        }
+
+        width = Math.Clamp(width, 1u, sourceWidth);
+        height = Math.Clamp(height, 1u, sourceHeight);
+        return new CenterCropRectangle(
+            checked((int)((sourceWidth - width) / 2)),
+            checked((int)((sourceHeight - height) / 2)),
+            width,
+            height);
+    }
+
+    private static double? RelativeAspectRatioDifference(
+        double? referenceRatio,
+        double? candidateRatio)
+    {
+        if (referenceRatio == null || candidateRatio == null)
+        {
+            return null;
+        }
+
+        return Math.Abs(referenceRatio.Value - candidateRatio.Value) /
+            referenceRatio.Value;
+    }
+
     public static CropRegion? SafeBoundsAfterRotation(
         double width,
         double height,
@@ -103,3 +196,9 @@ internal static class CropGeometry
             (height * cos - width * sin) / cos2A);
     }
 }
+
+internal readonly record struct CenterCropRectangle(
+    int X,
+    int Y,
+    uint Width,
+    uint Height);

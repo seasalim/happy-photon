@@ -9,7 +9,7 @@ namespace HappyPhoton.Services;
 
 public class ThumbnailService : IAsyncDisposable
 {
-    private const int ThumbnailSize = 150;
+    internal const int ThumbnailSize = 150;
 
     private readonly CatalogService _catalogService;
     private readonly ThumbnailCacheService _thumbnailCache;

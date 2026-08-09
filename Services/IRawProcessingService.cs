@@ -14,12 +14,12 @@ public interface IRawProcessingService
     bool IsAvailable { get; }
 
     /// <summary>
-    /// Extracts the embedded thumbnail/preview JPEG from a RAW file.
+    /// Extracts encoded preview bytes from a RAW file.
     /// This is much faster than full decoding.
     /// </summary>
     /// <param name="filePath">Path to the RAW file</param>
-    /// <returns>JPEG bytes or null if extraction fails</returns>
-    byte[]? ExtractThumbnail(string filePath);
+    /// <returns>Encoded preview data or null if extraction fails</returns>
+    RawThumbnailData? ExtractThumbnail(string filePath);
 
     /// <summary>
     /// Extracts metadata from a RAW file.

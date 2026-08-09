@@ -34,7 +34,7 @@ public class LibRawProcessingService : IRawProcessingService
         return available;
     }
 
-    public byte[]? ExtractThumbnail(string filePath)
+    public RawThumbnailData? ExtractThumbnail(string filePath)
     {
         if (!_isAvailable) return null;
 
@@ -50,7 +50,7 @@ public class LibRawProcessingService : IRawProcessingService
             }
 
             LogPerformance(ServiceName, "ExtractThumbnail", sw.ElapsedMilliseconds, filePath);
-            return data;
+            return new RawThumbnailData(data, ctx.Width, ctx.Height);
         }
         catch (Exception ex)
         {

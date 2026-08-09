@@ -114,7 +114,8 @@ public sealed class ThumbnailServiceTests : IDisposable
 
         public int CallCount => Volatile.Read(ref _callCount);
 
-        public byte[]? ExtractThumbnail(string filePath) => Reject<byte[]>();
+        public RawThumbnailData? ExtractThumbnail(string filePath) =>
+            Reject<RawThumbnailData>();
 
         public RawMetadata? ExtractMetadata(string filePath) => Reject<RawMetadata>();
 

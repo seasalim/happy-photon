@@ -1,4 +1,5 @@
 using Avalonia.Media.Imaging;
+using HappyPhoton.Models;
 using ImageMagick;
 using static HappyPhoton.Services.BitmapConversionService;
 using static HappyPhoton.Services.ImageServiceHelpers;
@@ -40,11 +41,14 @@ internal sealed class EmbeddedPreviewExtractor
     {
         try
         {
-            var jpegData = _rawService.ExtractThumbnail(filePath);
-            if (jpegData is not { Length: > 0 }) return null;
+            var thumbnail = _rawService.ExtractThumbnail(filePath);
+            if (thumbnail?.EncodedBytes is not { Length: > 0 } encodedBytes)
+            {
+                return null;
+            }
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var image = new MagickImage(jpegData);
+            using var image = new MagickImage(encodedBytes);
             if (image.Orientation == OrientationType.Undefined)
             {
                 ApplyExifOrientation(image, GetExifOrientation(filePath));
@@ -53,6 +57,7 @@ internal sealed class EmbeddedPreviewExtractor
             {
                 image.AutoOrient();
             }
+            NormalizeLibRawPreview(image, thumbnail);
             ApplyThumbnailSize(image, _thumbnailSize);
             cancellationToken.ThrowIfCancellationRequested();
             return ConvertToBitmap(image);
@@ -65,6 +70,38 @@ internal sealed class EmbeddedPreviewExtractor
         {
             return null;
         }
+    }
+
+    private static void NormalizeLibRawPreview(
+        MagickImage image,
+        RawThumbnailData thumbnail)
+    {
+        var difference = CropGeometry.RelativeAspectRatioDifference(
+            thumbnail.VisibleSourceWidth ?? 0,
+            thumbnail.VisibleSourceHeight ?? 0,
+            image.Width,
+            image.Height);
+        if (difference is null or <= 0.03)
+        {
+            return;
+        }
+
+        var crop = CropGeometry.CenterCropToAspect(
+            image.Width,
+            image.Height,
+            thumbnail.VisibleSourceWidth!.Value,
+            thumbnail.VisibleSourceHeight!.Value);
+        if (crop == null)
+        {
+            return;
+        }
+
+        image.Crop(new MagickGeometry(
+            crop.Value.X,
+            crop.Value.Y,
+            crop.Value.Width,
+            crop.Value.Height));
+        image.ResetPage();
     }
 
     private Bitmap? TryExtractExif(

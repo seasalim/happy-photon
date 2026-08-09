@@ -79,15 +79,33 @@ Post-decode steps, in order:
    as LibRaw's unavailable-transform sentinel rather than projecting camera-space
    multipliers as linear sRGB (WHITE_BALANCE.md §5).
 
-### 2.1 Raw exposure
+### 2.1 RAW Library previews
+
+Library thumbnail extraction uses LibRaw's already-open context to return both the
+encoded embedded preview and `ctx.Width`/`ctx.Height`, the visible dimensions rendered
+by Develop. Camera-wide aspect differences are treated as preview padding: differences
+at or below 3% pass through, while larger differences center-crop the embedded preview
+toward the visible RAW aspect before the 150px resize. Missing or non-positive visible
+dimensions disable normalization but do not reject successfully decoded preview bytes.
+A valid LibRaw preview is never rejected on geometry grounds, so a camera-wide mismatch
+cannot fall through to the preview-frame path and invoke Magick's RAW delegate during a
+Library load.
+
+This policy is specific to LibRaw. EXIF thumbnails continue to reject missing geometry
+and mismatches above 3%. Embedded-JPEG and preview-frame fallbacks remain unnormalized,
+and existing cached thumbnails are not migrated or invalidated.
+
+### 2.2 Raw exposure
 
 RAW decode leaves the linear pixels bias-free while recording a default-brightness
 estimate in `BaseImageInfo.SourceExposureBiasEv`. The loader reads LibRaw's selected
 embedded thumbnail from the already-open context, normalizes it to linear sRGB, and
 compares both images on a 48px-long-edge linear sampling grid. If the
 preview and base aspect ratios differ by more than 2%, the base is center-cropped to
-the preview ratio before comparison. A bounded solver then finds the scalar EV whose
-default raw transfer matches the preview median.
+the preview ratio before comparison. This is deliberately the opposite crop direction
+from Library normalization, which crops the embedded preview toward the visible RAW
+frame. A bounded solver then finds the scalar EV whose default raw transfer matches the
+preview median.
 
 The preview estimate is accepted only for thumbnails at least 64×64 with finite,
 non-degenerate medians. A Fuji estimate that differs from its nonzero MakerNote bias
@@ -101,7 +119,7 @@ Preview and full decodes estimate independently and may differ by up to
 renderer combines the selected source fact with the user's relative Exposure setting
 inside the tone LUT gain.
 
-### 2.2 Why Clip and Blend are the supported modes
+### 2.3 Why Clip and Blend are the supported modes
 
 The LibRaw evaluation compared modes 0 (clip), 2 (blend), and rebuild levels 3, 5, and
 9 on `Tests/assets/canon-eos-350d.cr2`. The fixture's clipped area is the bright
@@ -120,7 +138,7 @@ dotnet run --file scripts/evaluate-highlight-reconstruction.cs -- `
   Tests/assets/canon-eos-350d.cr2
 ```
 
-### 2.3 Platform runtime
+### 2.4 Platform runtime
 
 Windows and Linux use the pinned Sdcb native runtime packages. Apple Silicon macOS
 ships a LibRaw 0.21.1 `libraw.23.dylib` under `runtimes/osx-arm64/native/`; the project

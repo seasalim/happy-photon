@@ -18,7 +18,7 @@ public class MagickNetRawService : IRawProcessingService
     /// </summary>
     public bool IsAvailable => true;
 
-    public byte[]? ExtractThumbnail(string filePath)
+    public RawThumbnailData? ExtractThumbnail(string filePath)
     {
         var sw = Stopwatch.StartNew();
         try
@@ -38,7 +38,7 @@ public class MagickNetRawService : IRawProcessingService
                     {
                         var data = thumbnail.ToByteArray(MagickFormat.Jpeg);
                         LogPerformance(ServiceName, "ExtractThumbnail", sw.ElapsedMilliseconds, filePath, "source=exif");
-                        return data;
+                        return new RawThumbnailData(data, null, null);
                     }
                 }
             }

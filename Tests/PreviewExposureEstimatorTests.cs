@@ -208,6 +208,58 @@ public sealed class PreviewExposureEstimatorTests
             PreviewExposureEstimator.EstimatePrepared(baseImage, preview));
     }
 
+    [Fact]
+    public void GetAlignedBaseArea_ReturnsFullBaseForUnavailableGeometry()
+    {
+        using var emptyBase = new MagickImage();
+        using var preview = new MagickImage(MagickColors.Gray, 120, 80);
+
+        var area = PreviewExposureEstimator.GetAlignedBaseArea(
+            emptyBase,
+            preview);
+
+        Assert.Equal(
+            new PreviewExposureEstimator.SampleArea(0, 0, 0, 0),
+            area);
+    }
+
+    [Theory]
+    [InlineData(120, 80, 120, 68, 0, 6, 120, 68)]
+    [InlineData(80, 120, 68, 120, 6, 0, 68, 120)]
+    [InlineData(101, 80, 3, 2, 0, 6, 101, 67)]
+    [InlineData(2, 100, 1000, 1, 0, 0, 1, 100)]
+    public void GetAlignedBaseArea_PreservesExistingCropResults(
+        int baseWidth,
+        int baseHeight,
+        int previewWidth,
+        int previewHeight,
+        int expectedX,
+        int expectedY,
+        int expectedWidth,
+        int expectedHeight)
+    {
+        using var baseImage = new MagickImage(
+            MagickColors.Gray,
+            (uint)baseWidth,
+            (uint)baseHeight);
+        using var preview = new MagickImage(
+            MagickColors.Gray,
+            (uint)previewWidth,
+            (uint)previewHeight);
+
+        var area = PreviewExposureEstimator.GetAlignedBaseArea(
+            baseImage,
+            preview);
+
+        Assert.Equal(
+            new PreviewExposureEstimator.SampleArea(
+                expectedX,
+                expectedY,
+                expectedWidth,
+                expectedHeight),
+            area);
+    }
+
     private static ushort[] CreateScene(
         int width,
         int height,

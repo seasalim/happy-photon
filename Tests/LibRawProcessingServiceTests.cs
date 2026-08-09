@@ -18,8 +18,10 @@ public sealed class LibRawProcessingServiceTests
 
         Assert.True(service.IsAvailable);
         Assert.NotNull(data);
-        Assert.NotEmpty(data!);
-        using var image = new MagickImage(data);
+        Assert.NotEmpty(data!.EncodedBytes);
+        Assert.True(data.VisibleSourceWidth > 0);
+        Assert.True(data.VisibleSourceHeight > 0);
+        using var image = new MagickImage(data.EncodedBytes);
         Assert.True(image.Width > 0);
         Assert.True(image.Height > 0);
     }
