@@ -59,7 +59,10 @@ public sealed class ManualFolderRefreshViewTests
         }
         using var catalog = new CatalogService(Path.Combine(root, "catalog"));
         Complete(catalog.InitializeAsync());
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            loadMetadataAsync: _ => Task.CompletedTask);
         vm.SetRootFolder(photos);
         var generation = Complete(vm.RefreshCurrentFolderAsync());
         Action? callback = null;

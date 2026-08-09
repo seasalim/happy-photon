@@ -21,7 +21,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     {
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = CreateViewModel(catalog);
         var image = new ImageFile(Path.Combine(_root, "missing.dng"));
         vm.SelectedImage = image;
 
@@ -63,6 +63,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         var vm = new MainWindowViewModel(
             catalog,
             loader,
+            loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally))
         {
@@ -105,7 +106,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     {
         using var catalog = new CatalogService(_root);
         catalog.InitializeAsync().GetAwaiter().GetResult();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = CreateViewModel(catalog);
         var image = new ImageFile(Path.Combine(_root, "missing.jpg"));
         vm.SelectedImage = image;
         var panel = new DevelopEditPanel
@@ -136,7 +137,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     public async Task Selection_ClearsBeforeAfterState()
     {
         using var catalog = new CatalogService(_root);
-        var vm = new MainWindowViewModel(catalog);
+        var vm = CreateViewModel(catalog);
         vm.SelectedImage = new ImageFile(Path.Combine(_root, "first.jpg"));
         vm.IsShowingOriginal = true;
 
@@ -154,6 +155,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         var vm = new MainWindowViewModel(
             catalog,
             CreateSyntheticLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally))
         {
@@ -182,6 +184,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         var vm = new MainWindowViewModel(
             catalog,
             CreateSyntheticLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally))
         {
@@ -215,7 +218,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     public async Task ReplacementDecode_UsesDelayedArmingIndicator()
     {
         using var catalog = new CatalogService(_root);
-        var vm = new MainWindowViewModel(catalog);
+        var vm = CreateViewModel(catalog);
         var image = new ImageFile(Path.Combine(_root, "photo.dng"));
         vm.SelectedImage = image;
         var slow = new PreviewBaseRefreshState(
@@ -278,4 +281,10 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
                 (_, _) => new MagickImage(MagickColors.Gray, 64, 48)),
             () => false,
             _ => { });
+
+    private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
+        new(
+            catalog,
+            baseLoader: null,
+            loadMetadataAsync: _ => Task.CompletedTask);
 }

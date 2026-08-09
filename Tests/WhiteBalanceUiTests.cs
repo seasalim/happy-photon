@@ -31,7 +31,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
     public async Task PickedWhiteBalance_IsPresentedWithEstimatedTemperature()
     {
         using var catalog = new CatalogService(_root);
-        var vm = new MainWindowViewModel(catalog);
+        var vm = CreateViewModel(catalog);
         var image = new ImageFile(Path.Combine(_root, "photo.jpg"))
         {
             EditSettings = new EditSettings
@@ -57,7 +57,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
     public async Task SelectingAsShot_KeepsComboBoxItemsStable(string fileName)
     {
         using var catalog = new CatalogService(_root);
-        var vm = new MainWindowViewModel(catalog);
+        var vm = CreateViewModel(catalog);
         var image = new ImageFile(Path.Combine(_root, fileName))
         {
             EditSettings = new EditSettings
@@ -83,7 +83,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
     public async Task KelvinChange_EnablesResetAndAsShotDisablesIt()
     {
         using var catalog = new CatalogService(_root);
-        var vm = new MainWindowViewModel(catalog);
+        var vm = CreateViewModel(catalog);
         vm.SelectedImage = new ImageFile(Path.Combine(_root, "photo.jpg"));
 
         Assert.False(vm.CanReset);
@@ -118,7 +118,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
             image.Thumbnail = result.DetachBitmap();
         }
         var original = RedBlueDelta(image);
-        var vm = new MainWindowViewModel(catalog);
+        var vm = CreateViewModel(catalog);
         vm.Library.SetImages([image]);
         vm.SelectedImage = image;
 
@@ -149,7 +149,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
     {
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = CreateViewModel(catalog);
         var image = new ImageFile(Path.Combine(_root, "photo.jpg"))
         {
             EditSettings = new EditSettings
@@ -236,4 +236,10 @@ public sealed class WhiteBalanceUiTests : IDisposable
 
         Assert.Fail("The edited thumbnail did not reach the expected state.");
     }
+
+    private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
+        new(
+            catalog,
+            baseLoader: null,
+            loadMetadataAsync: _ => Task.CompletedTask);
 }

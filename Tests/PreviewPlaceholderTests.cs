@@ -22,7 +22,10 @@ public sealed class PreviewPlaceholderTests
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),
             $"happy-photon-placeholder-{Guid.NewGuid():N}"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            loadMetadataAsync: _ => Task.CompletedTask);
         var storedRaw = new ImageFile(
             Path.Combine(catalog.CatalogPath, "missing.dng"));
         vm.SelectedImage = storedRaw;
