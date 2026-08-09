@@ -146,10 +146,20 @@ public sealed class RawBaseLoaderTests
     [SkippableFact]
     public void CancellationDuringDecode_DiscardsPartialResultAndAllowsRetry()
     {
-        var loader = new RawBaseLoader();
-        var file = new ImageFile(Asset("canon-eos-350d.cr2"));
         using var cancellation = new CancellationTokenSource();
-        cancellation.CancelAfter(TimeSpan.FromMilliseconds(1));
+        var cancelOnce = true;
+        var loader = new RawBaseLoader(
+            isAvailable: true,
+            thumbnailReader: _ =>
+            {
+                if (cancelOnce)
+                {
+                    cancelOnce = false;
+                    cancellation.Cancel();
+                }
+                return null;
+            });
+        var file = new ImageFile(Asset("canon-eos-350d.cr2"));
 
         Assert.Throws<OperationCanceledException>(() =>
             loader.LoadFullBase(
