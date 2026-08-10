@@ -33,5 +33,6 @@
     <Compile Remove="PreviewPlaceholderTests.cs" />
     <Compile Remove="RawHighlightReconstructionUiTests.cs" />
     <Compile Remove="WhiteBalanceUiTests.cs" />
+    <Compile Remove="WorkflowTourDimmingTests.cs" />
   </ItemGroup>
 </Project>

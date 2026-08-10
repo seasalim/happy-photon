@@ -117,6 +117,45 @@ public sealed class WorkflowTourTests : IDisposable
     }
 
     [Fact]
+    public async Task PresentedTourState_TracksVisibleCoachmarksOnly()
+    {
+        using var catalog = CreateCatalog();
+        var vm = new MainWindowViewModel(catalog);
+
+        Assert.False(vm.IsWorkflowTourPresented);
+
+        vm.StartWorkflowTour();
+        Assert.True(vm.IsWorkflowTourPresented);
+
+        vm.IsDevelopMode = true;
+        Assert.False(vm.IsWorkflowTourPresented);
+        Assert.Equal(
+            WorkflowTourStep.ChooseWhatMatters,
+            vm.WorkflowTourStep);
+
+        vm.IsDevelopMode = false;
+        Assert.True(vm.IsWorkflowTourPresented);
+
+        vm.ShowDevelopTourStepCommand.Execute(null);
+        Assert.True(vm.IsWorkflowTourPresented);
+
+        vm.IsDevelopMode = false;
+        Assert.False(vm.IsWorkflowTourPresented);
+
+        vm.IsDevelopMode = true;
+        vm.ShowExportTourStepCommand.Execute(null);
+        Assert.True(vm.IsWorkflowTourPresented);
+
+        vm.FinishWorkflowTourCommand.Execute(null);
+        Assert.False(vm.IsWorkflowTourPresented);
+
+        vm.StartWorkflowTour();
+        vm.EndWorkflowTourCommand.Execute(null);
+        Assert.False(vm.IsWorkflowTourPresented);
+        await vm.DisposeAsync();
+    }
+
+    [Fact]
     public async Task DevelopCommand_OpensWorkspaceWithoutSelectedPhotograph()
     {
         using var catalog = CreateCatalog();

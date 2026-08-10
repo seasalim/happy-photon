@@ -36,5 +36,6 @@
     <Compile Include="..\Tests\RawHighlightReconstructionUiTests.cs" Link="RawHighlightReconstructionUiTests.cs" />
     <Compile Include="..\Tests\TestSourceAvailabilityService.cs" Link="TestSourceAvailabilityService.cs" />
     <Compile Include="..\Tests\WhiteBalanceUiTests.cs" Link="WhiteBalanceUiTests.cs" />
+    <Compile Include="..\Tests\WorkflowTourDimmingTests.cs" Link="WorkflowTourDimmingTests.cs" />
   </ItemGroup>
 </Project>

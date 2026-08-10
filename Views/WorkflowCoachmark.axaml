@@ -3,45 +3,136 @@
              xmlns:views="using:HappyPhoton.Views"
              x:Class="HappyPhoton.Views.WorkflowCoachmark"
              x:Name="Root"
-             x:DataType="views:WorkflowCoachmark"
-             MinWidth="280"
-             MaxWidth="370">
-    <Border Background="{StaticResource SurfaceHigh}"
-            BorderBrush="{StaticResource Divider}"
-            BorderThickness="1"
-            CornerRadius="{StaticResource RadiusLarge}"
-            Padding="18"
-            BoxShadow="0 12 30 0 #99000000">
-        <StackPanel Spacing="10">
-            <TextBlock Text="{Binding StepText, ElementName=Root}"
-                       FontFamily="{StaticResource FontLabel}"
-                       FontSize="{StaticResource FontSizeSmall}"
-                       FontWeight="SemiBold"
-                       Foreground="{StaticResource PrimaryContainer}"
-                       LetterSpacing="1"/>
-            <TextBlock Text="{Binding Heading, ElementName=Root}"
-                       FontFamily="{StaticResource FontHeading}"
-                       FontSize="18"
-                       FontWeight="Bold"
-                       Foreground="{StaticResource TextPrimary}"
-                       TextWrapping="Wrap"/>
-            <TextBlock Text="{Binding Body, ElementName=Root}"
-                       FontSize="12"
-                       Foreground="{StaticResource TextSecondary}"
-                       LineHeight="18"
-                       TextWrapping="Wrap"/>
-            <WrapPanel Margin="0,4,0,0"
-                       Orientation="Horizontal">
-                <Button Content="{Binding PrimaryText, ElementName=Root}"
-                        Command="{Binding PrimaryCommand, ElementName=Root}"
-                        Classes="accent"
-                        Margin="0,0,8,8"
-                        Padding="12,6"/>
-                <Button Content="{Binding SecondaryText, ElementName=Root}"
-                        Command="{Binding SecondaryCommand, ElementName=Root}"
-                        Margin="0,0,8,8"
-                        Padding="12,6"/>
-            </WrapPanel>
-        </StackPanel>
-    </Border>
+             x:DataType="views:WorkflowCoachmark">
+
+    <UserControl.Styles>
+        <!-- The trail sits in a square cell so rotating it about its centre can
+             never overflow the layout slot. Hidden until a pointer is set. -->
+        <Style Selector="views|WorkflowCoachmark Path#TourArrow">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Grid.Row" Value="1"/>
+            <Setter Property="Grid.Column" Value="1"/>
+        </Style>
+        <Style Selector="views|WorkflowCoachmark:pointer-right Path#TourArrow">
+            <Setter Property="IsVisible" Value="True"/>
+            <Setter Property="Grid.Row" Value="1"/>
+            <Setter Property="Grid.Column" Value="2"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="views|WorkflowCoachmark:pointer-left Path#TourArrow">
+            <Setter Property="IsVisible" Value="True"/>
+            <Setter Property="Grid.Row" Value="1"/>
+            <Setter Property="Grid.Column" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="RenderTransform" Value="rotate(180deg)"/>
+        </Style>
+        <Style Selector="views|WorkflowCoachmark:pointer-down Path#TourArrow">
+            <Setter Property="IsVisible" Value="True"/>
+            <Setter Property="Grid.Row" Value="2"/>
+            <Setter Property="Grid.Column" Value="1"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="RenderTransform" Value="rotate(90deg)"/>
+        </Style>
+        <Style Selector="views|WorkflowCoachmark:pointer-up Path#TourArrow">
+            <Setter Property="IsVisible" Value="True"/>
+            <Setter Property="Grid.Row" Value="0"/>
+            <Setter Property="Grid.Column" Value="1"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+            <Setter Property="RenderTransform" Value="rotate(-90deg)"/>
+        </Style>
+
+        <!-- Cross-axis placement along the edge. Horizontal edges shift the trail
+             left or right; vertical edges shift it up or down. -->
+        <Style Selector="views|WorkflowCoachmark:pointer-up:pointer-end Path#TourArrow,
+                         views|WorkflowCoachmark:pointer-down:pointer-end Path#TourArrow">
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="Margin" Value="0,0,40,0"/>
+        </Style>
+        <Style Selector="views|WorkflowCoachmark:pointer-up:pointer-start Path#TourArrow,
+                         views|WorkflowCoachmark:pointer-down:pointer-start Path#TourArrow">
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Margin" Value="40,0,0,0"/>
+        </Style>
+        <Style Selector="views|WorkflowCoachmark:pointer-left:pointer-end Path#TourArrow,
+                         views|WorkflowCoachmark:pointer-right:pointer-end Path#TourArrow">
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+            <Setter Property="Margin" Value="0,0,0,32"/>
+        </Style>
+        <Style Selector="views|WorkflowCoachmark:pointer-left:pointer-start Path#TourArrow,
+                         views|WorkflowCoachmark:pointer-right:pointer-start Path#TourArrow">
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Margin" Value="0,32,0,0"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,Auto"
+          ColumnDefinitions="Auto,Auto,Auto">
+
+        <!-- Thin tail fading into a solid head, drawn pointing right in a 56x56
+             box and rotated per edge. Decorative: never hit testable.
+             Rotation is safe because the box is square. -->
+        <Path x:Name="TourArrow"
+              Width="56"
+              Height="56"
+              Stretch="None"
+              IsHitTestVisible="False"
+              Data="M 0,27 L 40,27 L 40,21.5 L 56,28 L 40,34.5 L 40,29 Z"
+              Fill="{StaticResource TourArrowTrail}">
+            <Path.Effect>
+                <DropShadowEffect Color="{StaticResource PrimaryContainerColor}"
+                                  BlurRadius="12"
+                                  OffsetX="0"
+                                  OffsetY="0"
+                                  Opacity="0.55"/>
+            </Path.Effect>
+        </Path>
+
+        <Border Grid.Row="1"
+                Grid.Column="1"
+                MinWidth="280"
+                MaxWidth="370"
+                Background="{StaticResource SurfaceHigh}"
+                BorderBrush="{StaticResource Divider}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLarge}"
+                Padding="18"
+                BoxShadow="0 12 30 0 #99000000">
+            <StackPanel Spacing="10">
+                <TextBlock Text="{Binding StepText, ElementName=Root}"
+                           FontFamily="{StaticResource FontLabel}"
+                           FontSize="{StaticResource FontSizeSmall}"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource PrimaryContainer}"
+                           LetterSpacing="1"/>
+                <TextBlock Text="{Binding Heading, ElementName=Root}"
+                           FontFamily="{StaticResource FontHeading}"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimary}"
+                           TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding Body, ElementName=Root}"
+                           FontSize="12"
+                           Foreground="{StaticResource TextSecondary}"
+                           LineHeight="18"
+                           TextWrapping="Wrap"/>
+                <WrapPanel Margin="0,4,0,0"
+                           Orientation="Horizontal">
+                    <Button Content="{Binding PrimaryText, ElementName=Root}"
+                            Command="{Binding PrimaryCommand, ElementName=Root}"
+                            Classes="accent"
+                            Margin="0,0,8,8"
+                            Padding="12,6"/>
+                    <Button Content="{Binding SecondaryText, ElementName=Root}"
+                            Command="{Binding SecondaryCommand, ElementName=Root}"
+                            Margin="0,0,8,8"
+                            Padding="12,6"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
 </UserControl>
+

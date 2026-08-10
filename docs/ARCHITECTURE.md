@@ -100,9 +100,15 @@ version are committed together when a welcome action succeeds.
 That successful welcome action also starts a session-only workflow tour owned by
 `MainWindowViewModel.WorkflowTour`. Its three non-modal coachmarks are anchored to
 stable Library and Develop layout points, suspend when the user changes view, and
-resume when that view returns. Tour navigation never changes photograph state,
-filters, or export selection; its export action opens a zero-selection preview with
-a prominent return to Library action instead of an enabled export command.
+resume when that view returns. While a coachmark is visible, unrelated stable
+sections are de-emphasized at a themed opacity while the active work surface stays
+fully interactive; this presentation-only dimming lifts whenever no coachmark is on
+screen, including while a step is suspended. Each coachmark also carries a photon
+trail anchored to its own edge, plus an opt-in glow on small target regions, so the
+step names its target without any coordinate tracking between controls. Both marks
+are decorative and never hit testable. Tour navigation never changes photograph
+state, filters, or export selection; its export action opens a zero-selection preview
+with a prominent return to Library action instead of an enabled export command.
 
 ## The catalog
 

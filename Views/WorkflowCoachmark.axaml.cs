@@ -4,8 +4,39 @@ using Avalonia.Controls;
 
 namespace HappyPhoton.Views;
 
+/// <summary>Edge of the coachmark that the photon trail extends from.</summary>
+public enum CoachmarkPointer
+{
+    None,
+    Up,
+    Down,
+    Left,
+    Right
+}
+
+/// <summary>
+/// Where the trail sits along the edge it leaves from. Needed because a target is
+/// not always opposite the middle of the bubble: step 3's Export button is at the
+/// far right of the toolbar above, so a centred trail would point at a thumbnail.
+/// </summary>
+public enum CoachmarkPointerAlignment
+{
+    Center,
+    Start,
+    End
+}
+
 public partial class WorkflowCoachmark : UserControl
 {
+    public static readonly StyledProperty<CoachmarkPointer> PointerProperty =
+        AvaloniaProperty.Register<WorkflowCoachmark, CoachmarkPointer>(
+            nameof(Pointer));
+
+    public static readonly StyledProperty<CoachmarkPointerAlignment>
+        PointerAlignmentProperty =
+            AvaloniaProperty.Register<WorkflowCoachmark, CoachmarkPointerAlignment>(
+                nameof(PointerAlignment));
+
     public static readonly StyledProperty<string> StepTextProperty =
         AvaloniaProperty.Register<WorkflowCoachmark, string>(nameof(StepText));
 
@@ -26,6 +57,25 @@ public partial class WorkflowCoachmark : UserControl
 
     public static readonly StyledProperty<ICommand?> SecondaryCommandProperty =
         AvaloniaProperty.Register<WorkflowCoachmark, ICommand?>(nameof(SecondaryCommand));
+
+    /// <summary>
+    /// Which edge the trail leaves from, and therefore which neighbouring region
+    /// the coachmark is pointing at. Purely presentational: the trail is anchored
+    /// to the bubble rather than to the target's coordinates, so it cannot drift
+    /// when the window resizes or a splitter moves.
+    /// </summary>
+    public CoachmarkPointer Pointer
+    {
+        get => GetValue(PointerProperty);
+        set => SetValue(PointerProperty, value);
+    }
+
+    /// <summary>Position of the trail along its edge. Defaults to centred.</summary>
+    public CoachmarkPointerAlignment PointerAlignment
+    {
+        get => GetValue(PointerAlignmentProperty);
+        set => SetValue(PointerAlignmentProperty, value);
+    }
 
     public string StepText
     {
@@ -72,5 +122,31 @@ public partial class WorkflowCoachmark : UserControl
     public WorkflowCoachmark()
     {
         InitializeComponent();
+        UpdatePointerPseudoClasses();
+    }
+
+    protected override void OnPropertyChanged(
+        AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == PointerProperty ||
+            change.Property == PointerAlignmentProperty)
+        {
+            UpdatePointerPseudoClasses();
+        }
+    }
+
+    private void UpdatePointerPseudoClasses()
+    {
+        PseudoClasses.Set(":pointer-up", Pointer == CoachmarkPointer.Up);
+        PseudoClasses.Set(":pointer-down", Pointer == CoachmarkPointer.Down);
+        PseudoClasses.Set(":pointer-left", Pointer == CoachmarkPointer.Left);
+        PseudoClasses.Set(":pointer-right", Pointer == CoachmarkPointer.Right);
+        PseudoClasses.Set(
+            ":pointer-start",
+            PointerAlignment == CoachmarkPointerAlignment.Start);
+        PseudoClasses.Set(
+            ":pointer-end",
+            PointerAlignment == CoachmarkPointerAlignment.End);
     }
 }

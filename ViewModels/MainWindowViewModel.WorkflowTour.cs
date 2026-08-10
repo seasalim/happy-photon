@@ -28,6 +28,11 @@ public partial class MainWindowViewModel
         WorkflowTourStep == WorkflowTourStep.DeliverCopies &&
         !IsDevelopMode;
 
+    public bool IsWorkflowTourPresented =>
+        IsChooseWhatMattersTourVisible ||
+        IsShapePhotographTourVisible ||
+        IsDeliverCopiesTourVisible;
+
     public void StartWorkflowTour()
     {
         IsFullScreenMode = false;
@@ -75,5 +80,6 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsChooseWhatMattersTourVisible));
         OnPropertyChanged(nameof(IsShapePhotographTourVisible));
         OnPropertyChanged(nameof(IsDeliverCopiesTourVisible));
+        OnPropertyChanged(nameof(IsWorkflowTourPresented));
     }
 }

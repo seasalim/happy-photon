@@ -101,10 +101,16 @@
                 BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1"
                 x:Name="SelectionBar">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <TextBlock Text="Filter" FontSize="10" Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                <TextBlock x:Name="FilterLabel"
+                           Classes="tour-region"
+                           Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                           Text="Filter" FontSize="10" Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}"
                            VerticalAlignment="Center" Margin="0,0,7,0"/>
 
-                <ScrollViewer Grid.Column="1"
+                <ScrollViewer x:Name="FilterScrollViewer"
+                              Grid.Column="1"
+                              Classes="tour-region"
+                              Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                               HorizontalScrollBarVisibility="Hidden"
                               VerticalScrollBarVisibility="Disabled">
                     <StackPanel Orientation="Horizontal" Spacing="5">
@@ -144,8 +150,12 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="5"
-                            Margin="10,0,0,0">
+                <StackPanel x:Name="LibraryActionsPanel"
+                            Grid.Column="2" Orientation="Horizontal" Spacing="5"
+                            Margin="10,0,0,0"
+                            Classes="tour-region tour-glow"
+                            Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                            Classes.tour-focus="{Binding IsDeliverCopiesTourVisible}">
                     <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="0,2,5,2"/>
                     <Button Content="Select All" FontSize="10" Padding="8,4"
                             IsEnabled="{Binding HasSelectedImage}"
@@ -342,6 +352,8 @@
             <Grid ColumnDefinitions="*,Auto,*">
                 <TextBlock Grid.Column="0"
                            x:Name="OnlineOnlyMessage"
+                           Classes="tour-region"
+                           Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                            Text="{Binding OnlineOnlyMessage}"
                            IsVisible="{Binding HasOnlineOnlyPhotos}"
                            Foreground="{StaticResource TextSecondary}"
@@ -350,10 +362,17 @@
                            VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis"
                            ToolTip.Tip="{Binding OnlineOnlyMessage}"/>
-                <views:ImageAssessmentControl Grid.Column="1"
+                <views:ImageAssessmentControl x:Name="ImageAssessment"
+                                              Grid.Column="1"
+                                              Classes="tour-region tour-glow"
+                                              Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                                              Classes.tour-focus="{Binding IsChooseWhatMattersTourVisible}"
                                               IsEnabled="{Binding HasSelectedImage}"
                                               HorizontalAlignment="Center"/>
-                <StackPanel Grid.Column="2"
+                <StackPanel x:Name="ThumbnailSizePanel"
+                            Grid.Column="2"
+                            Classes="tour-region"
+                            Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                             HorizontalAlignment="Right"
                             Orientation="Horizontal"
                             Spacing="2">
@@ -400,6 +419,7 @@
             VerticalAlignment="Bottom"
             Margin="12"
             IsVisible="{Binding IsChooseWhatMattersTourVisible}"
+            Pointer="Down"
             StepText="1 of 3"
             Heading="Curate your images"
             Body="Use the controls below to pick, reject, and curate your photographs"
@@ -414,6 +434,8 @@
             VerticalAlignment="Top"
             Margin="12"
             IsVisible="{Binding IsDeliverCopiesTourVisible}"
+            Pointer="Up"
+            PointerAlignment="End"
             StepText="3 of 3"
             Heading="Export the edited images"
             Body="Select the photographs you curated, then use the Export button to save edited copies to disk. Originals remain untouched."
