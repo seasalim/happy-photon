@@ -334,11 +334,18 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         image.Write(path, MagickFormat.Jpeg);
     }
 
+    // Bounds a genuine hang rather than asserting decode latency. A real JPEG
+    // decode is milliseconds locally but can stall for seconds on a shared CI
+    // runner, which is what made the old 5s budget flake on macOS. Kept well
+    // under the 90s --blame-hang-timeout so a true hang still reports as one.
+    private static readonly TimeSpan ThumbnailAttemptTimeout =
+        TimeSpan.FromSeconds(30);
+
     private static void WaitForThumbnailAttempt(
         MainWindowViewModel viewModel)
     {
-        var timeout = DateTime.UtcNow + TimeSpan.FromSeconds(5);
-        while (DateTime.UtcNow < timeout)
+        var deadline = DateTime.UtcNow + ThumbnailAttemptTimeout;
+        while (DateTime.UtcNow < deadline)
         {
             var image = viewModel.Library.AllImages.SingleOrDefault();
             if (image?.Thumbnail != null ||
@@ -350,7 +357,14 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
             Thread.Sleep(10);
         }
 
-        throw new TimeoutException("Thumbnail attempt did not finish.");
+        var observed = viewModel.Library.AllImages.SingleOrDefault();
+        throw new TimeoutException(
+            $"Thumbnail attempt did not finish within " +
+            $"{ThumbnailAttemptTimeout.TotalSeconds:0}s. " +
+            $"images={viewModel.Library.AllImages.Count}, " +
+            $"thumbnail={observed?.Thumbnail != null}, " +
+            $"failed={observed?.ThumbnailLoadFailed}, " +
+            $"deferred={observed?.ThumbnailDeferredForHydration}");
     }
 
     private static void Complete(Task task) => task.GetAwaiter().GetResult();
@@ -365,3 +379,5 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         }
     }
 }
+
+

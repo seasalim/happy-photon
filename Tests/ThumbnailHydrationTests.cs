@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -364,14 +365,24 @@ public sealed class ThumbnailHydrationTests : IDisposable
         image.Write(path, MagickFormat.Jpeg);
     }
 
-    private static void WaitUntil(Func<bool> predicate)
+    // Same reasoning as BurstAnalysisLifecycleTests: a generous ceiling that
+    // bounds a hang, not a latency assertion. The old 5s budget was tight
+    // enough to fail on a loaded CI runner.
+    private static readonly TimeSpan ConditionTimeout = TimeSpan.FromSeconds(30);
+
+    private static void WaitUntil(
+        Func<bool> predicate,
+        [CallerArgumentExpression(nameof(predicate))] string? expression = null)
     {
-        var timeout = DateTime.UtcNow + TimeSpan.FromSeconds(5);
-        while (!predicate() && DateTime.UtcNow < timeout)
+        var deadline = DateTime.UtcNow + ConditionTimeout;
+        while (!predicate() && DateTime.UtcNow < deadline)
         {
             Thread.Sleep(10);
         }
-        Assert.True(predicate());
+        Assert.True(
+            predicate(),
+            $"Condition '{expression}' was still false after " +
+            $"{ConditionTimeout.TotalSeconds:0}s.");
     }
 
     private static void PumpFor(TimeSpan duration)
