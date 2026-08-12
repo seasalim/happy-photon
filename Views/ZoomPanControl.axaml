@@ -7,15 +7,31 @@
              x:Class="HappyPhoton.Views.ZoomPanControl"
              ClipToBounds="True">
 
-    <ScrollViewer x:Name="ScrollViewer"
-                  HorizontalScrollBarVisibility="Auto"
-                  VerticalScrollBarVisibility="Auto"
-                  Background="Transparent">
-        <Panel x:Name="ImagePanel">
-            <Image x:Name="ImageControl"
-                   Stretch="Uniform"/>
-            <views:CropOverlayControl x:Name="CropOverlay"
-                                      IsVisible="False"/>
-        </Panel>
-    </ScrollViewer>
+    <UserControl.Styles>
+        <Style Selector="Panel#SurroundLayer.assessment-on">
+            <Setter Property="Background" Value="{StaticResource AssessmentGrey}"/>
+        </Style>
+        <Style Selector="Border#AssessmentMat.assessment-on">
+            <Setter Property="Background" Value="{StaticResource AssessmentWhite}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Panel x:Name="SurroundLayer">
+        <ScrollViewer x:Name="ScrollViewer"
+                      Margin="{Binding $parent[views:ZoomPanControl].ContentInset}"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      Background="Transparent">
+            <Border x:Name="AssessmentMat">
+                <Panel x:Name="ImagePanel">
+                    <Image x:Name="ImageControl"
+                           Stretch="Uniform"/>
+                    <views:CropOverlayControl x:Name="CropOverlay"
+                                              IsVisible="False"/>
+                </Panel>
+            </Border>
+        </ScrollViewer>
+    </Panel>
 </UserControl>

@@ -316,6 +316,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(CanSavePreset));
         NotifyWorkflowTourVisibilityChanged();
         NotifyWhiteBalanceCommandState();
+        ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
 
         // Load preview when entering Develop mode (if we have a selected image)
         if (value && SelectedImage != null)
@@ -364,6 +365,7 @@ public partial class MainWindowViewModel
         CopyEditSettingsCommand.NotifyCanExecuteChanged();
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
         NotifyWhiteBalanceCommandState();
+        ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
 
         if (value && SelectedImage != null)
         {

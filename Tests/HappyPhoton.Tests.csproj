@@ -26,6 +26,8 @@
     <Compile Remove="ColorLabelUiTests.cs" />
     <Compile Remove="CloudSourceViewTests.cs" />
     <Compile Remove="CloudSelectionStateTests.cs" />
+    <Compile Remove="ColorAssessmentViewTests.cs" />
+    <Compile Remove="ColorAssessmentScreenshotTests.cs" />
     <Compile Remove="FirstRunWindowTests.cs" />
     <Compile Remove="HelpAboutDialogTests.cs" />
     <Compile Remove="ImageFileThumbnailLifetimeTests.cs" />

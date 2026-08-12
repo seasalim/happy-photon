@@ -150,7 +150,8 @@ reflectance card as the implementation value.
 Mid-grey remains a dark-family theme with light text. Its chrome ramp stays below the
 surround, and text is placed on darker cards rather than directly on `#777777`.
 `AssessmentGrey` uses the same shipped value but is an invariant assessment reference,
-not an alias to the theme surround. Theme resources live in
+not an alias to the theme surround. `AssessmentWhite` is the invariant `#FFFFFF`
+reference band used with it. Theme resources live in
 `Themes/HappyPhotonTheme.axaml`; code-drawn photograph overlays use the matching
 invariant values in `Views/HappyPhotonColors.cs`.
 

@@ -29,6 +29,16 @@ public sealed class ThemeResourceTests
         Assert.Equal(mid, surround);
     }
 
+    [AvaloniaFact]
+    public void AssessmentWhite_IsInvariantAndKeepsOneBrushInstance()
+    {
+        var dark = Brush("AssessmentWhite", ThemeVariant.Dark);
+        var mid = Brush("AssessmentWhite", HappyPhotonThemes.MidGrey);
+
+        Assert.Equal(Color.Parse("#FFFFFF"), dark.Color);
+        Assert.Same(dark, mid);
+    }
+
     [AvaloniaTheory]
     [MemberData(nameof(Variants))]
     public void Theme_TextSelectionAndFocusPairsMeetContrastTargets(

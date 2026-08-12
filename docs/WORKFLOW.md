@@ -163,6 +163,11 @@ Photon does not start a fresh decode until you choose **Download and open**.
 A useful editing order is composition, light, color, and then refinement. You
 do not have to touch every control.
 
+Use **Assess** beside **Fit**, or press `Ctrl+B`, to judge the photograph against
+an invariant white reference band and mid-grey surround. The session-only mode
+works in Develop and fullscreen, re-fits when toggled so the complete reference
+field is visible, and never changes edits or exported pixels.
+
 ![Happy Photon Develop showing presets, the image viewer, histogram, and
 adjustment controls](screenshots/Screenshot_Develop.png)
 
@@ -336,6 +341,7 @@ remains where it started and unchanged.
 | `Space` | Toggle the active photo in the selection |
 | `C` | Toggle crop mode |
 | `B` | Toggle before/after |
+| `Ctrl+B` | Toggle color assessment mode in Develop or fullscreen |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
 | `Ctrl+Z` / `Ctrl+Y` | Undo or redo color and tonal edits |
 | `Ctrl+E` | Open the export dialog |

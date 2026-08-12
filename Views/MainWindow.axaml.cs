@@ -124,11 +124,17 @@ public partial class MainWindow : Window
     private async void OnPresetHoverLeave(object? sender, string presetId) =>
         await WithVmAsync(vm => vm.RestoreFromHoverAsync());
 
-    private void OnZoomChanged(object? sender, double delta) =>
+    private void OnZoomChanged(object? sender, double delta)
+    {
+        if (!ReferenceEquals(sender, GetActiveZoomPanControl())) return;
         WithVm(vm => vm.AdjustZoom(delta));
+    }
 
-    private void OnAutoFitRequested(object? sender, double fitZoom) =>
+    private void OnAutoFitRequested(object? sender, double fitZoom)
+    {
+        if (!ReferenceEquals(sender, GetActiveZoomPanControl())) return;
         WithVm(vm => vm.ZoomLevel = fitZoom);
+    }
 
     private async void OnWhiteBalancePickRequested(
         object? sender,

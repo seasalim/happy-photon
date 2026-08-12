@@ -30,6 +30,7 @@
         <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}"/>
         <KeyBinding Gesture="Ctrl+Y" Command="{Binding RedoCommand}"/>
         <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}"/>
+        <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleColorAssessmentModeCommand}"/>
         <KeyBinding Gesture="B" Command="{Binding ToggleBeforeAfterCommand}"/>
         <KeyBinding Gesture="W" Command="{Binding ToggleWhiteBalancePickerCommand}"/>
         <KeyBinding Gesture="P" Command="{Binding TogglePickedImageCommand}"/>
@@ -265,9 +266,10 @@
                                                   ZoomLevel="{Binding ZoomLevel}"
                                                   IsCropMode="{Binding IsCropMode}"
                                                   IsWhiteBalancePicking="{Binding IsWhiteBalancePicking}"
+                                                  IsColorAssessment="{Binding IsColorAssessmentMode}"
                                                   IsCropAspectLocked="{Binding IsCropAspectLocked}"
                                                   Crop="{Binding CurrentCrop, Mode=TwoWay}"
-                                                  Margin="10"/>
+                                                  ContentInset="10"/>
 
                             <Border IsVisible="{Binding !HasSelectedImage}"
                                     Background="{DynamicResource SurfaceLow}"
@@ -349,6 +351,13 @@
                                         ToolTip.Tip="Fit to View"
                                         FontSize="10" Padding="8,3"
                                         BorderThickness="0"/>
+                                <ToggleButton x:Name="ColorAssessmentButton"
+                                              IsChecked="{Binding IsColorAssessmentMode, Mode=OneWay}"
+                                              Command="{Binding ToggleColorAssessmentModeCommand}"
+                                              Content="Assess"
+                                              ToolTip.Tip="Color assessment mode (Ctrl+B)"
+                                              FontSize="10" Padding="8,3"
+                                              BorderThickness="0"/>
                                 <!-- Crop action buttons (visible in crop mode) -->
                                 <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}" Margin="4,0"
                                            IsVisible="{Binding IsCropMode}"/>
@@ -440,7 +449,8 @@
             <views:ZoomPanControl x:Name="FullScreenZoomPanControl"
                                   Source="{Binding PreviewImage}"
                                   ZoomLevel="{Binding ZoomLevel}"
-                                  ScrollBarVisibility="Disabled"/>
+                                  IsColorAssessment="{Binding IsColorAssessmentMode}"
+                                  ScrollBarVisibility="Hidden"/>
 
             <Border x:Name="FullScreenSelectionBadge"
                     HorizontalAlignment="Center"

@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -6,7 +7,26 @@ using HappyPhoton.Services;
 namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
-{    [RelayCommand]
+{
+    [ObservableProperty]
+    private bool _isColorAssessmentMode;
+
+    private bool CanToggleColorAssessmentMode() =>
+        IsDevelopMode || IsFullScreenMode;
+
+    [RelayCommand(CanExecute = nameof(CanToggleColorAssessmentMode))]
+    private void ToggleColorAssessmentMode()
+    {
+        if (!CanToggleColorAssessmentMode()) return;
+
+        IsColorAssessmentMode = !IsColorAssessmentMode;
+        if (IsColorAssessmentMode)
+        {
+            ShowTransientStatus("Reference field is complete at Fit");
+        }
+    }
+
+    [RelayCommand]
     private void ZoomIn()
     {
         ZoomLevel = Math.Min(MaxZoom, ZoomLevel * 1.25);

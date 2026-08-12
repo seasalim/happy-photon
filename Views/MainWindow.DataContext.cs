@@ -228,6 +228,20 @@ public partial class MainWindow
         if (args.PropertyName == nameof(MainWindowViewModel.IsFullScreenMode))
         {
             ApplyFullScreenWindowState(vm.IsFullScreenMode);
+            Dispatcher.UIThread.Post(
+                () =>
+                {
+                    if (!ReferenceEquals(DataContext, vm)) return;
+                    var control = GetActiveZoomPanControl();
+                    control?.RequestFitToView(zoom =>
+                    {
+                        if (ReferenceEquals(control, GetActiveZoomPanControl()))
+                        {
+                            vm.ZoomLevel = zoom;
+                        }
+                    });
+                },
+                DispatcherPriority.Loaded);
         }
         else if (args.PropertyName ==
                  nameof(MainWindowViewModel.IsWorkspaceInteractionEnabled))

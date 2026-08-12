@@ -3,13 +3,15 @@
                     xmlns:views="using:HappyPhoton.Views">
     <!-- Happy Photon tokens.
          Single visual source of truth: docs/DESIGN.md.
-         Code-behind twin: Views/HappyPhotonColors.cs - keep in sync. -->
+         Keep code-drawn twins in Views/HappyPhotonColors.cs in sync. -->
 
     <!-- The color-assessment reference is invariant across application themes.
          #777777 is the sRGB encoding nearest CIE L* 50. It is intentionally
          independent from the MidGrey viewer token so either can evolve safely. -->
     <Color x:Key="AssessmentGreyColor">#777777</Color>
     <SolidColorBrush x:Key="AssessmentGrey" Color="{StaticResource AssessmentGreyColor}"/>
+    <Color x:Key="AssessmentWhiteColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="AssessmentWhite" Color="{StaticResource AssessmentWhiteColor}"/>
 
     <!-- Photon accents and semantic colors are invariant in the dark family. -->
     <Color x:Key="PrimaryColor">#dbfcff</Color>

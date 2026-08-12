@@ -39,6 +39,7 @@ public static class ShortcutCatalog
         new("Develop and edit",
         [
             new("B", "Toggle before/after"),
+            new("Ctrl+B", "Toggle color assessment mode"),
             new("C", "Toggle crop mode"),
             new("W", "Toggle the white balance eyedropper"),
             new("Ctrl+Shift+C", "Copy the current image's edit settings"),

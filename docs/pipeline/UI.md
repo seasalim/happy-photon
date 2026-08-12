@@ -4,8 +4,10 @@ UI surface for the pipeline rework. Follows AGENTS.md UI conventions and
 `docs/DESIGN.md` tokens throughout: `CompactSlider` for edit controls, uppercase
 `section-label` group headers, 20px between groups, theme tokens only (active states =
 `PrimaryContainer` cyan, passive edit badges = `Tertiary` lavender), no hardcoded hex.
-`ViewerSurround` is the variant-specific image surround; `AssessmentGrey` is the
-invariant color-assessment reference. They are deliberately distinct and must not be aliased.
+`ViewerSurround` is the variant-specific image surround; `AssessmentGrey` and
+`AssessmentWhite` are the invariant color-assessment references. They are deliberately
+distinct from themed resources and must not be aliased. Color assessment mode is a
+session-only viewer composition and never changes render settings or output pixels.
 View markup in `Views/`, state in `MainWindowViewModel` partials (add to the matching
 workflow partial, don't grow the root file).
 
@@ -133,6 +135,7 @@ No UI for quality-dependent chroma subsampling — it is automatic and stays inv
 |-----|--------|-------|----|
 | `W` | Toggle WB eyedropper | Develop only | 3.3 |
 | `J` | Toggle clipping overlays | Develop only | 4.2 |
+| `Ctrl+B` | Toggle color assessment mode | Develop/fullscreen | — |
 
 Shortcut registrations belong in
 [`Views/ShortcutCatalog.cs`](../../Views/ShortcutCatalog.cs). Each work package

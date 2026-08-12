@@ -381,6 +381,13 @@ public sealed class WorkflowTourDimmingTests
             .ToArray();
         Assert.Equal(2, zoomControls.Length);
         AssertOpacity(1, zoomControls);
+        var assessmentElements = zoomControls.SelectMany(control => new Control[]
+        {
+            control.FindControl<Panel>("SurroundLayer")!,
+            control.FindControl<Border>("AssessmentMat")!
+        }).ToArray();
+        Assert.Equal(4, assessmentElements.Length);
+        AssertOpacity(1, assessmentElements);
 
         var expectedNonUnit = new HashSet<Control>(
             baselineOpacity,

@@ -38,6 +38,12 @@ public partial class ZoomPanControl : UserControl
             nameof(ScrollBarVisibility),
             ScrollBarVisibility.Auto);
 
+    public static readonly StyledProperty<bool> IsColorAssessmentProperty =
+        AvaloniaProperty.Register<ZoomPanControl, bool>(nameof(IsColorAssessment));
+
+    public static readonly StyledProperty<Thickness> ContentInsetProperty =
+        AvaloniaProperty.Register<ZoomPanControl, Thickness>(nameof(ContentInset));
+
     public Bitmap? Source
     {
         get => GetValue(SourceProperty);
@@ -86,6 +92,18 @@ public partial class ZoomPanControl : UserControl
         set => SetValue(ScrollBarVisibilityProperty, value);
     }
 
+    public bool IsColorAssessment
+    {
+        get => GetValue(IsColorAssessmentProperty);
+        set => SetValue(IsColorAssessmentProperty, value);
+    }
+
+    public Thickness ContentInset
+    {
+        get => GetValue(ContentInsetProperty);
+        set => SetValue(ContentInsetProperty, value);
+    }
+
     public event EventHandler<double>? ZoomChanged;
     public event EventHandler<double>? AutoFitRequested;
     public event EventHandler<(double X, double Y)>? WhiteBalancePickRequested;
@@ -93,6 +111,8 @@ public partial class ZoomPanControl : UserControl
     private Image? _imageControl;
     private ScrollViewer? _scrollViewer;
     private CropOverlayControl? _cropOverlay;
+    private Panel? _surroundLayer;
+    private Border? _assessmentMat;
     private Point _lastPanPoint;
     private Point _pressPoint;
     private bool _isPanning;
@@ -106,6 +126,8 @@ public partial class ZoomPanControl : UserControl
         _imageControl = this.FindControl<Image>("ImageControl");
         _scrollViewer = this.FindControl<ScrollViewer>("ScrollViewer");
         _cropOverlay = this.FindControl<CropOverlayControl>("CropOverlay");
+        _surroundLayer = this.FindControl<Panel>("SurroundLayer");
+        _assessmentMat = this.FindControl<Border>("AssessmentMat");
 
         AddHandler(
             PointerWheelChangedEvent,
@@ -113,6 +135,7 @@ public partial class ZoomPanControl : UserControl
             RoutingStrategies.Tunnel);
 
         UpdateScrollBarVisibility();
+        ApplyColorAssessment();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -125,6 +148,7 @@ public partial class ZoomPanControl : UserControl
             {
                 _imageControl.Source = Source;
             }
+            ApplyColorAssessment();
             UpdateImageSize();
         }
         else if (change.Property == ZoomLevelProperty)
@@ -153,6 +177,25 @@ public partial class ZoomPanControl : UserControl
         {
             UpdateScrollBarVisibility();
         }
+        else if (change.Property == IsColorAssessmentProperty)
+        {
+            ApplyColorAssessment();
+            RequestAutoFit();
+        }
+    }
+
+    private void ApplyColorAssessment()
+    {
+        if (_surroundLayer == null || _assessmentMat == null)
+        {
+            return;
+        }
+
+        var geometry = GetColorAssessmentGeometry();
+        var showField = Source != null && geometry.IsFieldVisible;
+        _surroundLayer.Classes.Set("assessment-on", showField);
+        _assessmentMat.Classes.Set("assessment-on", showField);
+        _assessmentMat.Padding = new Thickness(showField ? geometry.BandWidth : 0);
     }
 
     private void UpdateScrollBarVisibility()
@@ -208,11 +251,17 @@ public partial class ZoomPanControl : UserControl
     {
         base.OnSizeChanged(e);
 
-        if (AutoFit && Source != null && _scrollViewer != null &&
-            _scrollViewer.Viewport.Width > 0 && _scrollViewer.Viewport.Height > 0)
+        ApplyColorAssessment();
+        RequestAutoFit();
+    }
+
+    private void RequestAutoFit()
+    {
+        var fitBox = GetColorAssessmentGeometry().FitBox;
+        if (AutoFit && Source != null &&
+            fitBox.Width > 0 && fitBox.Height > 0)
         {
-            var fitZoom = GetFitZoomLevel();
-            AutoFitRequested?.Invoke(this, fitZoom);
+            AutoFitRequested?.Invoke(this, GetFitZoomLevel());
         }
     }
 
@@ -220,8 +269,9 @@ public partial class ZoomPanControl : UserControl
     {
         if (Source == null || _scrollViewer == null) return 1.0;
 
-        var viewportWidth = _scrollViewer.Viewport.Width;
-        var viewportHeight = _scrollViewer.Viewport.Height;
+        var fitBox = GetColorAssessmentGeometry().FitBox;
+        var viewportWidth = fitBox.Width;
+        var viewportHeight = fitBox.Height;
 
         if (viewportWidth <= 0 || viewportHeight <= 0) return 1.0;
 
@@ -237,6 +287,13 @@ public partial class ZoomPanControl : UserControl
         // Use the smaller scale to ensure the image fits entirely
         return Math.Min(scaleX, scaleY);
     }
+
+    private ColorAssessmentGeometry GetColorAssessmentGeometry() =>
+        _scrollViewer == null
+            ? default
+            : ColorAssessmentGeometry.Calculate(
+                _scrollViewer.Viewport,
+                IsColorAssessment);
 
     /// <summary>
     /// Requests a fit-to-view zoom. If the viewport isn't ready yet,
@@ -286,14 +343,15 @@ public partial class ZoomPanControl : UserControl
             _pointerMoved = false;
             _pressPoint = e.GetPosition(this);
             _lastPanPoint = _pressPoint;
-            _isPanning = ZoomLevel > 1.0;
+            _isPanning = CanPanContent();
             e.Pointer.Capture(this);
             e.Handled = true;
             return;
         }
 
-        if (point.Properties.IsMiddleButtonPressed ||
-            (point.Properties.IsLeftButtonPressed && ZoomLevel > 1.0))
+        if ((point.Properties.IsMiddleButtonPressed ||
+             point.Properties.IsLeftButtonPressed) &&
+            CanPanContent())
         {
             _isPanning = true;
             _lastPanPoint = e.GetPosition(this);
@@ -302,6 +360,11 @@ public partial class ZoomPanControl : UserControl
             e.Handled = true;
         }
     }
+
+    internal bool CanPanContent() =>
+        _scrollViewer != null &&
+        (_scrollViewer.Extent.Width > _scrollViewer.Viewport.Width ||
+         _scrollViewer.Extent.Height > _scrollViewer.Viewport.Height);
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {
