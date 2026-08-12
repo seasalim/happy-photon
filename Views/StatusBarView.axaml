@@ -10,23 +10,23 @@
         </Style>
     </UserControl.Styles>
 
-    <Border Background="{StaticResource SurfaceLow}"
-            BorderBrush="{StaticResource Divider}" BorderThickness="0,1,0,0"
+    <Border Background="{DynamicResource SurfaceLow}"
+            BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0"
             Height="24">
         <Grid ColumnDefinitions="Auto,*,Auto">
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="{Binding CurrentFolderPath, StringFormat='Folder: {0}'}"
-                           Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}" Margin="8,0"/>
+                           Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}" Margin="8,0"/>
                 <TextBlock Text="{Binding Library.PhotoCountText}"
-                           Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}" Margin="8,0"/>
-                <TextBlock Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}" Margin="8,0">
+                           Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}" Margin="8,0"/>
+                <TextBlock Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}" Margin="8,0">
                     <TextBlock.Text>
                         <MultiBinding StringFormat="{}{0} selected">
                             <Binding Path="SelectedCount"/>
                         </MultiBinding>
                     </TextBlock.Text>
                 </TextBlock>
-                <TextBlock Text="{Binding ActiveFileName}" Foreground="{StaticResource TextSecondary}" FontFamily="{StaticResource FontLabel}" Margin="8,0"/>
+                <TextBlock Text="{Binding ActiveFileName}" Foreground="{DynamicResource TextSecondary}" FontFamily="{StaticResource FontLabel}" Margin="8,0"/>
                 <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource PrimaryContainer}" FontFamily="{StaticResource FontLabel}" Margin="8,0"/>
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -36,7 +36,7 @@
                               ToolTip.Tip="{Binding AgentServerTooltip}"/>
                 <TextBlock Text="HAPPY PHOTON ·" Foreground="{StaticResource Primary}"
                            FontFamily="{StaticResource FontLabel}" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding BuildInfoText}" Foreground="{StaticResource TextMuted}"
+                <TextBlock Text="{Binding BuildInfoText}" Foreground="{DynamicResource TextMuted}"
                            FontFamily="{StaticResource FontLabel}"
                            Margin="0,0,8,0" VerticalAlignment="Center"/>
             </StackPanel>

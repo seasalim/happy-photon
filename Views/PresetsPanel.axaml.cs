@@ -164,7 +164,7 @@ public partial class PresetsPanel : UserControl
                 Text = name,
                 FontSize = 12,
                 FontWeight = FontWeight.SemiBold,
-                Foreground = HappyPhotonColors.TextPrimary
+                Classes = { "preset-header" }
             },
             IsExpanded = true,
             HorizontalAlignment = HorizontalAlignment.Stretch,

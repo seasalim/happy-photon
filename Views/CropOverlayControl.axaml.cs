@@ -49,11 +49,11 @@ public partial class CropOverlayControl : UserControl
     private const double MinCropSize = 0.05; // 5% minimum
 
     // Cached brushes
-    private static readonly SolidColorBrush MaskBrush = new(Color.FromArgb(160, 0, 0, 0));
-    private static readonly SolidColorBrush CropBorderBrush = new(Colors.White);
-    private static readonly SolidColorBrush HandleFillBrush = new(Colors.White);
-    private static readonly SolidColorBrush HandleStrokeBrush = new(Color.FromRgb(80, 80, 80));
-    private static readonly SolidColorBrush GridBrush = new(Color.FromArgb(100, 255, 255, 255));
+    private static readonly IBrush MaskBrush = HappyPhotonColors.CropMask;
+    private static readonly IBrush CropBorderBrush = HappyPhotonColors.CropBorder;
+    private static readonly IBrush HandleFillBrush = HappyPhotonColors.CropHandleFill;
+    private static readonly IBrush HandleStrokeBrush = HappyPhotonColors.CropHandleStroke;
+    private static readonly IBrush GridBrush = HappyPhotonColors.CropGridLine;
 
     private enum DragHandle
     {

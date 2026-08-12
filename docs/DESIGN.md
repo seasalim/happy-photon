@@ -135,6 +135,29 @@ The palette is anchored in deep space blacks to allow the "photons" to pop.
 
 Avoid muddy colors. Use high-saturation tones and implement luminosity masks to ensure the neon hues feel integrated into the dark environment.
 
+### Application themes
+
+Dark is the default. Mid-grey is the second persistent theme and keeps the same
+cyan, magenta, and semantic accents while raising the neutral chrome. Its photograph
+surround is `#777777`, the nearest integer sRGB encoding of CIE L\* 50. That code
+value is about 47% of the encoded channel range but decodes to roughly 18.4% relative
+luminance because sRGB is nonlinear. The familiar 18% photographic grey describes a
+physical reflectance convention whose displayed appearance also depends on lighting
+and color management; Happy Photon therefore targets the display-referred L\* 50
+reference and documents its close relationship to 18% grey rather than treating a
+reflectance card as the implementation value.
+
+Mid-grey remains a dark-family theme with light text. Its chrome ramp stays below the
+surround, and text is placed on darker cards rather than directly on `#777777`.
+`AssessmentGrey` uses the same shipped value but is an invariant assessment reference,
+not an alias to the theme surround. Theme resources live in
+`Themes/HappyPhotonTheme.axaml`; code-drawn photograph overlays use the matching
+invariant values in `Views/HappyPhotonColors.cs`.
+
+The asset audit found no bitmap that depends on a dark backing. The title-bar icon is
+self-contained; all other interface marks are text or vector paths and inherit theme
+resources.
+
 ## Typography
 
 Typography in this design system emphasizes a technical yet premium feel. 

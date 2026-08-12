@@ -11,11 +11,11 @@
         CanResize="True"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource SurfaceLow}">
+        Background="{DynamicResource SurfaceLow}">
     <Window.Styles>
         <Style Selector="Border.key">
-            <Setter Property="Background" Value="{StaticResource SurfaceHighest}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
             <Setter Property="Padding" Value="7,3"/>
@@ -27,8 +27,8 @@
             <Setter Property="Foreground" Value="{StaticResource Primary}"/>
         </Style>
         <Style Selector="TabItem.dialog-tab">
-            <Setter Property="Background" Value="{StaticResource SurfaceMid}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="Padding" Value="18,10"/>
             <Setter Property="FontFamily" Value="{StaticResource FontHeading}"/>
@@ -36,16 +36,16 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
         <Style Selector="TabItem.dialog-tab:pointerover">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="TabItem.dialog-tab:focus-visible">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="Foreground" Value="{StaticResource Primary}"/>
         </Style>
         <Style Selector="TabItem.dialog-tab:selected">
-            <Setter Property="Background" Value="{StaticResource SurfaceHighest}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.about-link">
             <Setter Property="Background" Value="Transparent"/>
@@ -56,20 +56,20 @@
             <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
         </Style>
         <Style Selector="Button.about-link:pointerover">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="Foreground" Value="{StaticResource PrimaryHover}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
         </Style>
         <Style Selector="Button.about-link:focus-visible">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
         </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto">
         <Border Grid.Row="0"
-                Background="{StaticResource SurfaceMid}"
-                BorderBrush="{StaticResource Divider}"
+                Background="{DynamicResource SurfaceMid}"
+                BorderBrush="{DynamicResource Divider}"
                 BorderThickness="0,0,0,1"
                 Padding="20,16">
             <StackPanel Spacing="3">
@@ -77,17 +77,17 @@
                            FontFamily="{StaticResource FontHeading}"
                            FontSize="20"
                            FontWeight="SemiBold"
-                           Foreground="{StaticResource TextPrimary}"/>
+                           Foreground="{DynamicResource TextPrimary}"/>
                 <TextBlock Text="Shortcuts, build details, and project information."
                            FontSize="12"
-                           Foreground="{StaticResource TextMuted}"/>
+                           Foreground="{DynamicResource TextMuted}"/>
             </StackPanel>
         </Border>
 
         <TabControl x:Name="HelpAboutTabs"
                     Grid.Row="1"
                     SelectedIndex="0"
-                    Background="{StaticResource SurfaceLow}"
+                    Background="{DynamicResource SurfaceLow}"
                     AutomationProperties.Name="Help and About sections">
             <TabItem Header="Keyboard shortcuts"
                      Classes="dialog-tab"
@@ -110,7 +110,7 @@
                                                                Text="{Binding Action}"
                                                                Margin="12,3,0,0"
                                                                FontSize="12"
-                                                               Foreground="{StaticResource TextSecondary}"
+                                                               Foreground="{DynamicResource TextSecondary}"
                                                                TextWrapping="Wrap"/>
                                                 </Grid>
                                             </DataTemplate>
@@ -140,19 +140,19 @@
                                            FontSize="26"
                                            FontWeight="Bold"
                                            AutomationProperties.Name="Product name">
-                                    <Run Text="Happy " Foreground="{StaticResource TextPrimary}"/>
+                                    <Run Text="Happy " Foreground="{DynamicResource TextPrimary}"/>
                                     <Run Text="Photon" Foreground="{StaticResource PrimaryContainer}"/>
                                 </TextBlock>
                                 <TextBlock Text="A fast, non-destructive photo workflow for RAW and JPEG shoots."
                                            FontSize="13"
-                                           Foreground="{StaticResource TextSecondary}"
+                                           Foreground="{DynamicResource TextSecondary}"
                                            TextWrapping="Wrap"
                                            MaxWidth="430"/>
                             </StackPanel>
                         </StackPanel>
 
-                        <Border Background="{StaticResource SurfaceMid}"
-                                BorderBrush="{StaticResource Divider}"
+                        <Border Background="{DynamicResource SurfaceMid}"
+                                BorderBrush="{DynamicResource Divider}"
                                 BorderThickness="1"
                                 CornerRadius="{StaticResource RadiusMedium}"
                                 Padding="16,14">
@@ -160,21 +160,21 @@
                                 <TextBlock x:Name="VersionText"
                                            Text="{Binding VersionDisplayText}"
                                            FontFamily="{StaticResource FontLabel}"
-                                           Foreground="{StaticResource TextPrimary}"
+                                           Foreground="{DynamicResource TextPrimary}"
                                            AutomationProperties.Name="Application version"/>
                                 <TextBlock x:Name="SourceRevisionText"
                                            Text="{Binding SourceRevisionDisplayText}"
                                            FontFamily="{StaticResource FontLabel}"
-                                           Foreground="{StaticResource TextSecondary}"
+                                           Foreground="{DynamicResource TextSecondary}"
                                            AutomationProperties.Name="Source revision"/>
                                 <TextBlock x:Name="BuildDateText"
                                            Text="{Binding BuildDateDisplayText}"
                                            FontFamily="{StaticResource FontLabel}"
-                                           Foreground="{StaticResource TextSecondary}"
+                                           Foreground="{DynamicResource TextSecondary}"
                                            AutomationProperties.Name="Build date provenance"/>
                                 <TextBlock Text="{Binding CopyrightText}"
                                            FontSize="11"
-                                           Foreground="{StaticResource TextMuted}"
+                                           Foreground="{DynamicResource TextMuted}"
                                            TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
@@ -185,7 +185,7 @@
                                        FontWeight="SemiBold"
                                        Foreground="{StaticResource Primary}"/>
                             <TextBlock Text="Original images are never modified. Happy Photon has no account, advertising, or product telemetry."
-                                       Foreground="{StaticResource TextSecondary}"
+                                       Foreground="{DynamicResource TextSecondary}"
                                        TextWrapping="Wrap"/>
                         </StackPanel>
 
@@ -219,7 +219,7 @@
                                     Click="OnCopyVersionInfoClick"/>
                             <TextBlock x:Name="CopyFeedbackText"
                                        MinHeight="16"
-                                       Foreground="{StaticResource TextMuted}"
+                                       Foreground="{DynamicResource TextMuted}"
                                        FontSize="11"
                                        TextWrapping="Wrap"
                                        AutomationProperties.Name="Version information action status"/>
@@ -230,8 +230,8 @@
         </TabControl>
 
         <Border Grid.Row="2"
-                Background="{StaticResource SurfaceMid}"
-                BorderBrush="{StaticResource Divider}"
+                Background="{DynamicResource SurfaceMid}"
+                BorderBrush="{DynamicResource Divider}"
                 BorderThickness="0,1,0,0"
                 Padding="20,12">
             <Button Content="Close"

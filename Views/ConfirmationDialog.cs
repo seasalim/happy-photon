@@ -18,7 +18,7 @@ public partial class ConfirmationDialog : Window
     private readonly string _cancelLabel;
     private readonly string _confirmLabel;
 
-    private ConfirmationDialog(
+    internal ConfirmationDialog(
         string title,
         string message,
         ConfirmationDialogButtons buttons,
@@ -37,7 +37,7 @@ public partial class ConfirmationDialog : Window
         SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         CanResize = false;
-        Background = HappyPhotonColors.SurfaceLow;
+        Background = ResolveBrush("SurfaceLow");
 
         Content = new Grid
         {
@@ -49,12 +49,23 @@ public partial class ConfirmationDialog : Window
                     Text = message,
                     Margin = new Thickness(20, 20, 20, 16),
                     TextWrapping = TextWrapping.Wrap,
-                    Foreground = HappyPhotonColors.TextPrimary,
+                    Foreground = ResolveBrush("TextPrimary"),
                     FontSize = 13
                 },
                 CreateButtons()
             }
         };
+    }
+
+    private IBrush ResolveBrush(string key)
+    {
+        if (this.TryFindResource(key, ActualThemeVariant, out var resource) &&
+            resource is IBrush brush)
+        {
+            return brush;
+        }
+
+        throw new InvalidOperationException($"Theme brush '{key}' was not found.");
     }
 
     public static async Task<bool> ConfirmAsync(

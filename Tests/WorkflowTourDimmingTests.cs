@@ -77,7 +77,7 @@ public sealed class WorkflowTourDimmingTests
 
             Assert.True(Application.Current!.TryGetResource(
                 "TourDimmedOpacity",
-                null,
+                window.ActualThemeVariant,
                 out var opacityResource));
             var dimmedOpacity = Assert.IsType<double>(opacityResource);
             Assert.Equal(0.48, dimmedOpacity);

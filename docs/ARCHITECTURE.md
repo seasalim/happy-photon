@@ -91,6 +91,13 @@ First frame is sacred: nothing non-visual happens before the window is shown.
      existing saved browsing root, or prepare an unselected Pictures tree behind the
      versioned first-run welcome.
 
+The first frame always paints Dark. The appearance picker stays disabled until app
+settings load, then the saved `AppTheme` is applied through
+`Application.RequestedThemeVariant`. Variant resources use dynamic lookups, so the
+existing realized tree repaints without replacing merged dictionaries or restarting;
+missing or invalid theme settings fall back to Dark. The brief Dark-to-saved-theme
+transition remains off the first-frame path and preserves invariant 6.
+
 The startup gate is present in the first frame and disables workspace controls and
 global shortcuts until startup reaches `Ready`. Catalog or settings failures replace
 the neutral initializing state with Retry/Close. During an incomplete first run,

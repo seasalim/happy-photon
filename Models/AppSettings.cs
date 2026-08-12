@@ -7,6 +7,7 @@ public class AppSettings
     public int? FirstRunExperienceVersion { get; set; }
     public ImageFileTypeFilter FileTypeFilter { get; set; } = ImageFileTypeFilter.All;
     public LibraryThumbnailSize LibraryThumbnailSize { get; set; } = LibraryThumbnailSize.Medium;
+    public AppTheme AppTheme { get; set; } = AppTheme.Dark;
     public bool StripLocationData { get; set; }
     public bool OutputSharpening { get; set; } = true;
     public bool McpServerEnabled { get; set; }

@@ -34,9 +34,9 @@ public partial class CurveView : UserControl
 
     // Cached brushes and cursors to avoid GC pressure
     private static readonly IBrush ActiveFillBrush = HappyPhotonColors.PrimaryContainer;
-    private static readonly SolidColorBrush NormalFillBrush = new(Colors.White);
-    private static readonly SolidColorBrush ActiveStrokeBrush = new(Colors.White);
-    private static readonly IBrush NormalStrokeBrush = HappyPhotonColors.Outline;
+    private static readonly IBrush NormalFillBrush = HappyPhotonColors.CurveControlPoint;
+    private static readonly IBrush ActiveStrokeBrush = HappyPhotonColors.CurveControlPoint;
+    private static readonly IBrush NormalStrokeBrush = HappyPhotonColors.CurveNormalStroke;
     private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
     private readonly TranslateTransform _dragTransform = new();
 
@@ -87,7 +87,7 @@ public partial class CurveView : UserControl
         {
             StartPoint = new Point(0, height),
             EndPoint = new Point(width, 0),
-            Stroke = new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)),
+            Stroke = HappyPhotonColors.CurveReferenceLine,
             StrokeThickness = 1,
             StrokeDashArray = new Avalonia.Collections.AvaloniaList<double> { 4, 4 }
         };
@@ -146,7 +146,7 @@ public partial class CurveView : UserControl
 
     private void DrawGrid(double width, double height)
     {
-        var gridBrush = new SolidColorBrush(Color.FromArgb(30, 255, 255, 255));
+        var gridBrush = HappyPhotonColors.CurveGridLine;
 
         // Vertical lines at 25%, 50%, 75%
         for (int i = 1; i < 4; i++)

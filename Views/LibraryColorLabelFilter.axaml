@@ -16,9 +16,9 @@
     </UserControl.Styles>
 
     <StackPanel Orientation="Horizontal" Spacing="5">
-        <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
+        <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
         <TextBlock Text="Labels" FontSize="10"
-                   Foreground="{StaticResource TextMuted}"
+                   Foreground="{DynamicResource TextMuted}"
                    FontFamily="{StaticResource FontLabel}"
                    VerticalAlignment="Center" Margin="0,0,2,0"/>
         <ItemsControl ItemsSource="{Binding Choices, ElementName=Root}">
@@ -37,7 +37,7 @@
                             AutomationProperties.Name="{Binding Name}">
                         <Button.BorderBrush>
                             <MultiBinding Converter="{StaticResource ColorLabelOutlineConverter}"
-                                          ConverterParameter="{StaticResource Outline}">
+                                          ConverterParameter="{DynamicResource Outline}">
                                 <Binding Path="Filter" ElementName="Root"/>
                                 <Binding Path="Value"/>
                             </MultiBinding>

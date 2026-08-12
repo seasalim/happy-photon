@@ -16,7 +16,7 @@
         </Style>
         <Style Selector="Button.quiet-action">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
@@ -51,7 +51,7 @@
                            TextAlignment="Center"
                            TextWrapping="Wrap">
                     <Run Text="Start with the folders "
-                         Foreground="{StaticResource TextPrimary}"/>
+                         Foreground="{DynamicResource TextPrimary}"/>
                     <Run Text="you"
                          Foreground="{StaticResource PrimaryContainer}"/>
                 </TextBlock>
@@ -70,7 +70,7 @@
                            FontFamily="{StaticResource FontHeading}"
                            FontSize="{StaticResource FontSizeFeature}"
                            FontWeight="Bold"
-                           Foreground="{StaticResource TextPrimary}"
+                           Foreground="{DynamicResource TextPrimary}"
                            TextAlignment="Center"
                            TextWrapping="Wrap"/>
                 <TextBlock Text="photographs live."
@@ -83,7 +83,7 @@
             </StackPanel>
 
             <TextBlock Margin="0,30,0,0"
-                       Foreground="{StaticResource TextSecondary}"
+                       Foreground="{DynamicResource TextSecondary}"
                        FontSize="13"
                        LineHeight="21"
                        TextAlignment="Center"
@@ -98,7 +98,7 @@
 
             <TextBlock Margin="0,30,0,0"
                        Text="Happy Photon could not find a Pictures folder. Choose the top-level location you want shown in the folder tree. Nothing will be imported or moved."
-                       Foreground="{StaticResource TextSecondary}"
+                       Foreground="{DynamicResource TextSecondary}"
                        FontSize="13"
                        LineHeight="21"
                        TextAlignment="Center"
@@ -109,7 +109,7 @@
                        Text="LOCAL CATALOG  •  NO IMPORT  •  ORIGINALS STAY UNTOUCHED"
                        FontFamily="{StaticResource FontLabel}"
                        FontSize="{StaticResource FontSizeSmall}"
-                       Foreground="{StaticResource TextMuted}"
+                       Foreground="{DynamicResource TextMuted}"
                        HorizontalAlignment="Center"
                        TextAlignment="Center"
                        TextWrapping="Wrap"/>

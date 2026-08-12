@@ -59,13 +59,13 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <ControlTemplate>
-                    <Border Width="1" Background="{StaticResource Divider}"
+                    <Border Width="1" Background="{DynamicResource Divider}"
                             HorizontalAlignment="Center"/>
                 </ControlTemplate>
             </Setter>
         </Style>
         <Style Selector=":is(Control).tour-region.tour-dimmed">
-            <Setter Property="Opacity" Value="{StaticResource TourDimmedOpacity}"/>
+            <Setter Property="Opacity" Value="{DynamicResource TourDimmedOpacity}"/>
         </Style>
         <Style Selector=":is(Control).tour-region.tour-dimmed.tour-focus">
             <Setter Property="Opacity" Value="1"/>
@@ -80,7 +80,7 @@
                                   BlurRadius="18"
                                   OffsetX="0"
                                   OffsetY="0"
-                                  Opacity="0.5"/>
+                                  Opacity="{DynamicResource TourFocusGlowOpacity}"/>
             </Setter>
         </Style>
     </Window.Styles>
@@ -99,21 +99,21 @@
 
         <!-- Left Panel: Navigator + Metadata + Folder Tree -->
         <Border x:Name="TourLeftPanel"
-                Grid.Row="1" Grid.Column="0" Background="{StaticResource SurfaceLow}"
+                Grid.Row="1" Grid.Column="0" Background="{DynamicResource SurfaceLow}"
                 Classes="tour-region"
                 Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                 IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
             <Grid RowDefinitions="Auto,8,*">
                 <!-- Navigator + Metadata -->
-                <Border Grid.Row="0" Background="{StaticResource SurfaceHigh}" Padding="8"
-                        BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1"
+                <Border Grid.Row="0" Background="{DynamicResource SurfaceHigh}" Padding="8"
+                        BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1"
                         Height="350">
                     <Grid>
                         <Grid IsVisible="{Binding !HasSelectedImage}" RowDefinitions="Auto,*">
                             <TextBlock Classes="section-label" Text="NAVIGATOR"/>
                             <TextBlock Grid.Row="1"
                                        Text="Select a photo to preview its details"
-                                       Foreground="{StaticResource TextMuted}"
+                                       Foreground="{DynamicResource TextMuted}"
                                        FontSize="{DynamicResource FontSizeBody}"
                                        TextWrapping="Wrap"
                                        TextAlignment="Center"
@@ -128,7 +128,7 @@
                             <StackPanel>
                             <!-- Navigator Thumbnail -->
                             <TextBlock Classes="section-label" Text="NAVIGATOR" Margin="0,0,0,6"/>
-                            <Border Background="{StaticResource SurfaceLow}" CornerRadius="3"
+                            <Border Background="{DynamicResource SurfaceLow}" CornerRadius="3"
                                     Height="140" HorizontalAlignment="Stretch">
                                 <Grid>
                                     <Image x:Name="NavigatorThumbnailImage"
@@ -142,8 +142,8 @@
                                            Margin="4"/>
                                 </Grid>
                             </Border>
-                            <Border Background="{StaticResource SurfaceMid}"
-                                    BorderBrush="{StaticResource OutlineVariant}"
+                            <Border Background="{DynamicResource SurfaceMid}"
+                                    BorderBrush="{DynamicResource OutlineVariant}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusSmall}"
                                     Padding="8"
@@ -151,7 +151,7 @@
                                     IsVisible="{Binding SelectedImage.SourceRequiresHydration}">
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="This original is online-only."
-                                               Foreground="{StaticResource TextSecondary}"
+                                               Foreground="{DynamicResource TextSecondary}"
                                                FontSize="11"
                                                TextWrapping="Wrap"/>
                                     <Button x:Name="DownloadAndOpenButton"
@@ -171,36 +171,36 @@
                                 <!-- File Info -->
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="FILE" FontSize="{DynamicResource FontSizeSmall}" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextSecondary}" LetterSpacing="1"/>
-                                    <TextBlock Text="{Binding SelectedImage.FileName}" Foreground="{StaticResource TextPrimary}" FontSize="{DynamicResource FontSizeBody}"
+                                               Foreground="{DynamicResource TextSecondary}" LetterSpacing="1"/>
+                                    <TextBlock Text="{Binding SelectedImage.FileName}" Foreground="{DynamicResource TextPrimary}" FontSize="{DynamicResource FontSizeBody}"
                                                TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectedImage.FileName}"/>
-                                    <TextBlock Foreground="{StaticResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}">
+                                    <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}">
                                         <Run Text="{Binding SelectedImage.PixelWidth}"/><Run Text="×"/><Run Text="{Binding SelectedImage.PixelHeight}"/>
                                         <Run Text=" · "/><Run Text="{Binding SelectedImage.FileSizeDisplay}"/>
                                     </TextBlock>
                                     <TextBlock Text="{Binding SelectedImage.DateTaken, StringFormat='{}{0:MMM d, yyyy  h:mm tt}'}"
-                                               Foreground="{StaticResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
+                                               Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
                                                IsVisible="{Binding SelectedImage.DateTaken, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                 </StackPanel>
 
                                 <!-- Camera Info -->
                                 <StackPanel Spacing="4" IsVisible="{Binding SelectedImage.CameraDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
                                     <TextBlock Text="CAMERA" FontSize="{DynamicResource FontSizeSmall}" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextSecondary}" LetterSpacing="1"/>
-                                    <TextBlock Text="{Binding SelectedImage.CameraDisplay}" Foreground="{StaticResource TextPrimary}" FontSize="{DynamicResource FontSizeBody}"
+                                               Foreground="{DynamicResource TextSecondary}" LetterSpacing="1"/>
+                                    <TextBlock Text="{Binding SelectedImage.CameraDisplay}" Foreground="{DynamicResource TextPrimary}" FontSize="{DynamicResource FontSizeBody}"
                                                TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectedImage.CameraModel}"/>
-                                    <TextBlock Text="{Binding SelectedImage.LensModel}" Foreground="{StaticResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
+                                    <TextBlock Text="{Binding SelectedImage.LensModel}" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
                                                TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectedImage.LensModel}"
                                                IsVisible="{Binding SelectedImage.LensModel, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                    <TextBlock Text="{Binding SelectedImage.ExposureDisplay}" Foreground="{StaticResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
+                                    <TextBlock Text="{Binding SelectedImage.ExposureDisplay}" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
                                                IsVisible="{Binding SelectedImage.ExposureDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                 </StackPanel>
 
                                 <!-- Location -->
                                 <StackPanel Spacing="4" IsVisible="{Binding SelectedImage.GpsDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
                                     <TextBlock Text="LOCATION" FontSize="{DynamicResource FontSizeSmall}" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextSecondary}" LetterSpacing="1"/>
-                                    <TextBlock Text="{Binding SelectedImage.GpsDisplay}" Foreground="{StaticResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"/>
+                                               Foreground="{DynamicResource TextSecondary}" LetterSpacing="1"/>
+                                    <TextBlock Text="{Binding SelectedImage.GpsDisplay}" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"/>
                                 </StackPanel>
                             </StackPanel>
                             </StackPanel>
@@ -230,7 +230,7 @@
                       IsEnabled="{Binding IsWorkspaceInteractionEnabled}"/>
 
         <!-- Center Panel: Library/Develop View -->
-        <Border Grid.Row="1" Grid.Column="2" Background="{StaticResource SurfaceBase}"
+        <Border Grid.Row="1" Grid.Column="2" Background="{DynamicResource ViewerSurround}"
                 IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
             <Panel>
                 <!-- Library Grid View (when not in Develop mode) -->
@@ -269,15 +269,22 @@
                                                   Crop="{Binding CurrentCrop, Mode=TwoWay}"
                                                   Margin="10"/>
 
-                            <TextBlock Text="Select an image to edit"
-                                       IsVisible="{Binding !HasSelectedImage}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Foreground="{StaticResource TextMuted}" FontSize="16"/>
+                            <Border IsVisible="{Binding !HasSelectedImage}"
+                                    Background="{DynamicResource SurfaceLow}"
+                                    CornerRadius="{StaticResource RadiusMedium}"
+                                    Padding="20"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="Select an image to edit"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           FontSize="16"/>
+                            </Border>
                         </Panel>
 
                         <!-- Rotation and Zoom Controls -->
                         <Border Grid.Row="1" Padding="12,6"
+                                Background="{DynamicResource ViewerControlBarBackground}"
+                                CornerRadius="{StaticResource RadiusMedium}"
                                 IsEnabled="{Binding HasSelectedImage}"
                                 HorizontalAlignment="Center" Margin="0,4,0,8">
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -296,12 +303,12 @@
                                         <TextBlock Text="Rejected" FontSize="10" FontWeight="SemiBold"
                                                    Foreground="{StaticResource OnErrorContainer}"/>
                                     </Border>
-                                    <Border Background="{StaticResource SurfaceHigh}" CornerRadius="2"
+                                    <Border Background="{DynamicResource SurfaceHigh}" CornerRadius="2"
                                             Padding="6,2"
                                             IsVisible="{Binding SelectedImage.IsUnflagged, FallbackValue=False}"
                                             ToolTip.Tip="Unflagged">
                                         <TextBlock Text="Unflagged" FontSize="10"
-                                                   Foreground="{StaticResource TextSecondary}"/>
+                                                   Foreground="{DynamicResource TextSecondary}"/>
                                     </Border>
                                     <TextBlock Text="{Binding SelectedImage.RatingStars}"
                                                FontSize="12" Foreground="{StaticResource SecondaryContainer}"
@@ -309,7 +316,7 @@
                                                IsVisible="{Binding SelectedImage.HasRating, FallbackValue=False}"
                                                ToolTip.Tip="Rating"/>
                                 </StackPanel>
-                                <Rectangle Width="1" Height="16" Fill="{StaticResource Outline}" Margin="4,0"/>
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}" Margin="4,0"/>
                                 <Button Command="{Binding RotateLeftCommand}"
                                         IsEnabled="{Binding CanEditSelectedImage}"
                                         Content="↶"
@@ -330,7 +337,7 @@
                                               BorderThickness="0">
                                     <TextBlock Text="⬚" FontSize="14"/>
                                 </ToggleButton>
-                                <Rectangle Width="1" Height="16" Fill="{StaticResource Outline}" Margin="4,0"/>
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}" Margin="4,0"/>
                                 <views:CompactSlider Label="Zoom"
                                                      Value="{Binding ZoomLevel}"
                                                      Minimum="0.1" Maximum="5"
@@ -343,7 +350,7 @@
                                         FontSize="10" Padding="8,3"
                                         BorderThickness="0"/>
                                 <!-- Crop action buttons (visible in crop mode) -->
-                                <Rectangle Width="1" Height="16" Fill="{StaticResource Outline}" Margin="4,0"
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}" Margin="4,0"
                                            IsVisible="{Binding IsCropMode}"/>
                                 <StackPanel Orientation="Horizontal" Spacing="4"
                                             IsVisible="{Binding IsCropMode}"
@@ -420,7 +427,7 @@
                                IsVisible="{Binding IsStartupGateVisible}"/>
     </Grid>
 
-    <Border Background="#000"
+    <Border Background="{DynamicResource FullScreenBackdrop}"
             IsVisible="{Binding IsFullScreenMode}">
         <Panel>
             <Image x:Name="FullScreenPlaceholderImage"

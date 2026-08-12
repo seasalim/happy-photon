@@ -7,15 +7,9 @@
              x:Name="Root"
              x:Class="HappyPhoton.Views.FolderTreePanel">
 
-    <UserControl.Resources>
-        <SolidColorBrush x:Key="TreeViewItemBackgroundSelected" Color="{StaticResource SurfaceMidColor}"/>
-        <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPointerOver" Color="{StaticResource SurfaceHighColor}"/>
-        <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPressed" Color="{StaticResource SurfaceHighColor}"/>
-    </UserControl.Resources>
-
     <Grid RowDefinitions="Auto,*">
         <!-- Header -->
-        <Border Grid.Row="0" Background="{StaticResource SurfaceLow}" Padding="10">
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceLow}" Padding="10">
             <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto,Auto">
                 <TextBlock Classes="section-label" Text="FOLDERS"
                            VerticalAlignment="Center"/>
@@ -38,10 +32,10 @@
                         AutomationProperties.Name="Change browsing location"/>
                 <TextBlock Grid.Row="1" Grid.ColumnSpan="3"
                            Text="{Binding BrowsingFolderName, ElementName=Root, StringFormat='Browsing from: {0}'}"
-                           Foreground="{StaticResource TextMuted}" FontSize="10" Margin="0,4,0,0"/>
+                           Foreground="{DynamicResource TextMuted}" FontSize="10" Margin="0,4,0,0"/>
                 <TextBlock Grid.Row="2" Grid.ColumnSpan="3"
                            Text="{Binding ViewingFolderName, ElementName=Root, StringFormat='Viewing: {0}'}"
-                           Foreground="{StaticResource TextSecondary}" FontSize="10" Margin="0,8,0,0"/>
+                           Foreground="{DynamicResource TextSecondary}" FontSize="10" Margin="0,8,0,0"/>
             </Grid>
         </Border>
 
@@ -85,14 +79,21 @@
                 <Style Selector="TreeViewItem /template/ ContentPresenter#PART_HeaderPresenter">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                 </Style>
+                <Style Selector="TreeViewItem:selected /template/ ContentPresenter#PART_HeaderPresenter">
+                    <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
+                </Style>
+                <Style Selector="TreeViewItem:selected:pointerover /template/ ContentPresenter#PART_HeaderPresenter,
+                                 TreeViewItem:selected:pressed /template/ ContentPresenter#PART_HeaderPresenter">
+                    <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+                </Style>
                 <Style Selector="Border.folder-row PathIcon">
-                    <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
                 </Style>
                 <Style Selector="Border.folder-row TextBlock">
-                    <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                 </Style>
                 <Style Selector="Border.folder-row.active">
-                    <Setter Property="Background" Value="{StaticResource SurfaceMid}"/>
+                    <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
                     <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
                 </Style>
                 <Style Selector="Border.folder-row.active TextBlock">

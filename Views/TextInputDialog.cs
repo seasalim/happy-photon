@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 
 namespace HappyPhoton.Views;
 
@@ -10,7 +11,7 @@ public class TextInputDialog : Window
     private readonly TextBox _textBox;
     private readonly Button _okButton;
 
-    private TextInputDialog(string title, string prompt, string initialText)
+    internal TextInputDialog(string title, string prompt, string initialText)
     {
         Title = title;
         Width = 420;
@@ -18,7 +19,7 @@ public class TextInputDialog : Window
         SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         CanResize = false;
-        Background = HappyPhotonColors.SurfaceLow;
+        Background = ResolveBrush("SurfaceLow");
 
         _textBox = new TextBox
         {
@@ -53,7 +54,7 @@ public class TextInputDialog : Window
                 {
                     Text = prompt,
                     Margin = new Thickness(20, 20, 20, 8),
-                    Foreground = HappyPhotonColors.TextPrimary,
+                    Foreground = ResolveBrush("TextPrimary"),
                     FontSize = 13
                 },
                 _textBox,
@@ -69,6 +70,17 @@ public class TextInputDialog : Window
             _textBox.SelectAll();
         };
         UpdateOkState();
+    }
+
+    private IBrush ResolveBrush(string key)
+    {
+        if (this.TryFindResource(key, ActualThemeVariant, out var resource) &&
+            resource is IBrush brush)
+        {
+            return brush;
+        }
+
+        throw new InvalidOperationException($"Theme brush '{key}' was not found.");
     }
 
     public static Task<string?> ShowAsync(

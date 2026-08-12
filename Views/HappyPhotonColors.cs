@@ -9,21 +9,8 @@ namespace HappyPhoton.Views;
 /// </summary>
 public static class HappyPhotonColors
 {
-    public static readonly IBrush SurfaceLow = Brush("#1b1b20");
-    public static readonly IBrush SurfaceHighest = Brush("#35343a");
-    public static readonly IBrush Outline = Brush("#849495");
-    public static readonly IBrush TextPrimary = Brush("#e4e1e9");
     public static readonly IBrush Primary = Brush("#dbfcff");
     public static readonly IBrush PrimaryContainer = Brush("#00f0ff");
-    public static readonly IBrush SecondaryContainer = Brush("#ff24e4");
-    public static readonly IBrush Tertiary = Brush("#e1d2ff");
-    public static readonly IBrush WhiteBalanceCool = Brush("#74f7ff");
-    public static readonly IBrush WhiteBalanceNeutral = Brush("#9df7b0");
-    public static readonly IBrush WhiteBalanceWarm = Brush("#f4ff69");
-    public static readonly IBrush WhiteBalanceTintGreen = Brush("#73b95a");
-    public static readonly IBrush WhiteBalanceTintMagenta = Brush("#ec3c7e");
-    public static readonly IBrush ErrorContainer = Brush("#93000a");
-    public static readonly IBrush OnErrorContainer = Brush("#ffdad6");
 
     public static readonly IBrush BurstCyan = Brush("#00f0ff");
     public static readonly IBrush BurstMagenta = Brush("#ff24e4");
@@ -31,6 +18,13 @@ public static class HappyPhotonColors
     public static readonly IBrush BurstIce = Brush("#7df4ff");
     public static readonly IBrush BurstPink = Brush("#fface8");
     public static readonly IBrush BurstViolet = Brush("#d1bcff");
+
+    public static readonly IBrush MidGreyBurstCyan = Brush("#00dbe9");
+    public static readonly IBrush MidGreyBurstMagenta = Brush("#ff6de7");
+    public static readonly IBrush MidGreyBurstPurple = Brush("#bda0ff");
+    public static readonly IBrush MidGreyBurstIce = Brush("#a8f8ff");
+    public static readonly IBrush MidGreyBurstPink = Brush("#ffd7f0");
+    public static readonly IBrush MidGreyBurstViolet = Brush("#e1d2ff");
 
     public static readonly IBrush ColorLabelRed = Brush("#e34b4b");
     public static readonly IBrush ColorLabelYellow = Brush("#e5c85a");
@@ -42,6 +36,16 @@ public static class HappyPhotonColors
     public static readonly IBrush HistogramGreen = Argb(120, 0x7d, 0xf4, 0xd1);
     public static readonly IBrush HistogramBlue = Argb(120, 0x72, 0x6f, 0xff);
     public static readonly IBrush HistogramLuminance = Argb(190, 0xdb, 0xfc, 0xff);
+
+    public static readonly IBrush CurveControlPoint = Brush("#ffffffff");
+    public static readonly IBrush CurveNormalStroke = Brush("#849495");
+    public static readonly IBrush CurveReferenceLine = Brush("#3cffffff");
+    public static readonly IBrush CurveGridLine = Brush("#1effffff");
+    public static readonly IBrush CropMask = Brush("#a0000000");
+    public static readonly IBrush CropBorder = Brush("#ffffffff");
+    public static readonly IBrush CropHandleFill = Brush("#ffffffff");
+    public static readonly IBrush CropHandleStroke = Brush("#505050");
+    public static readonly IBrush CropGridLine = Brush("#64ffffff");
 
     private static IBrush Brush(string value) => new SolidColorBrush(Color.Parse(value));
 

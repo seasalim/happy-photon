@@ -36,6 +36,11 @@ action such as **Download and open** or a confirmed export.
 Happy Photon is pre-1.0 software. Keep a backup of important photographs and
 consider learning the workflow with a copied shoot.
 
+Use the focusable **Theme** menu in the title bar to choose **Dark** or **Mid-grey**.
+The choice takes effect immediately and is stored with the other application
+preferences. Mid-grey provides a neutral L\* 50 surround for judging photographs;
+it is a persistent appearance choice, not a temporary color-assessment mode.
+
 ## 1. Open and survey the shoot
 
 Start in **Library**. Press `G` at any time to return to it.

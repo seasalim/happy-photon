@@ -11,9 +11,9 @@
         <SolidColorBrush x:Key="ExpanderHeaderBorderPointerOverBrush" Color="Transparent"/>
         <SolidColorBrush x:Key="ExpanderHeaderBorderPressedBrush" Color="Transparent"/>
         <SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="Transparent"/>
-        <SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{StaticResource SurfaceMidColor}"/>
-        <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{StaticResource SurfaceHighestColor}"/>
-        <SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="{StaticResource SurfaceHighestColor}"/>
+        <SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{DynamicResource SurfaceMidColor}"/>
+        <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{DynamicResource SurfaceHighestColor}"/>
+        <SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="{DynamicResource SurfaceHighestColor}"/>
         <Thickness x:Key="ExpanderHeaderBorderThickness">0</Thickness>
         <Thickness x:Key="ExpanderContentDownBorderThickness">0</Thickness>
         <Thickness x:Key="ExpanderContentPadding">0</Thickness>
@@ -23,9 +23,12 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
+        <Style Selector="TextBlock.preset-header">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        </Style>
         <Style Selector="Button.preset">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="Height" Value="24"/>
@@ -37,18 +40,18 @@
             <Setter Property="FontSize" Value="11"/>
         </Style>
         <Style Selector="Button.preset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
         </Style>
         <Style Selector="Button.preset.active">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
         </Style>
         <Style Selector="Button.preset.active /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
         </Style>
         <Style Selector="Button.preset.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource SurfaceHighest}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
         </Style>
 
         <!-- Expander styling -->
@@ -63,7 +66,7 @@
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         </Style>
         <Style Selector="Expander /template/ ToggleButton#PART_toggle">
-            <Setter Property="Background" Value="{StaticResource SurfaceMid}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="Padding" Value="8,4"/>
@@ -75,16 +78,16 @@
             <Setter Property="Margin" Value="0"/>
         </Style>
         <Style Selector="Expander /template/ ToggleButton#PART_toggle:pointerover">
-            <Setter Property="Background" Value="{StaticResource SurfaceHighest}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
         </Style>
         <!-- Style toggle button internal border -->
         <Style Selector="Expander /template/ ToggleButton#PART_toggle /template/ Border#ToggleButtonBackground">
-            <Setter Property="Background" Value="{StaticResource SurfaceMid}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
         </Style>
         <Style Selector="Expander /template/ ToggleButton#PART_toggle:pointerover /template/ Border#ToggleButtonBackground">
-            <Setter Property="Background" Value="{StaticResource SurfaceHighest}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
         </Style>
         <!-- Remove borders and padding from expander content area -->
         <Style Selector="Expander /template/ Border#ExpanderContent">
@@ -99,13 +102,13 @@
         </Style>
         <!-- Style chevron icon -->
         <Style Selector="Expander /template/ Path">
-            <Setter Property="Stroke" Value="{StaticResource TextMuted}"/>
+            <Setter Property="Stroke" Value="{DynamicResource TextMuted}"/>
         </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
         <!-- Header -->
-        <Border Grid.Row="0" Background="{StaticResource SurfaceLow}" Padding="10">
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceLow}" Padding="10">
             <TextBlock Classes="section-label" Text="PRESETS"/>
         </Border>
 

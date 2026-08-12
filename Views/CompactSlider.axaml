@@ -9,7 +9,7 @@
         </Style>
         <Style Selector="TextBlock#LabelText">
             <Setter Property="Grid.Column" Value="0"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -21,7 +21,7 @@
         </Style>
         <Style Selector="TextBlock#ValueText">
             <Setter Property="Grid.Column" Value="2"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
@@ -43,7 +43,7 @@
             <Grid x:Name="TrackGrid" Height="20" VerticalAlignment="Center">
                 <!-- Track background line -->
                 <Border x:Name="TrackLine"
-                        Background="{StaticResource SurfaceHighest}"
+                        Background="{DynamicResource SurfaceHighest}"
                         Height="4"
                         CornerRadius="2"
                         VerticalAlignment="Center"/>
@@ -63,7 +63,7 @@
 
                 <!-- Center mark (for bipolar sliders) -->
                 <Border x:Name="CenterMark"
-                        Background="{StaticResource Outline}"
+                        Background="{DynamicResource Outline}"
                         Width="1"
                         Height="8"
                         HorizontalAlignment="Center"

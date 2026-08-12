@@ -24,14 +24,14 @@
             <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="{StaticResource Primary}"/>
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
         </Style>
         <Style Selector="Button.develop-action, ToggleButton.develop-action">
             <Setter Property="Width" Value="24"/>
             <Setter Property="Height" Value="24"/>
             <Setter Property="Padding" Value="5"/>
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
@@ -40,16 +40,16 @@
         </Style>
         <Style Selector="Button.develop-action:pointerover /template/ ContentPresenter#PART_ContentPresenter,
                          ToggleButton.develop-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="Foreground" Value="{StaticResource Primary}"/>
         </Style>
         <Style Selector="Button.develop-action:disabled, ToggleButton.develop-action:disabled">
-            <Setter Property="Opacity" Value="0.32"/>
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
         </Style>
         <Style Selector="Button.develop-action:disabled /template/ ContentPresenter#PART_ContentPresenter,
                          ToggleButton.develop-action:disabled /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
         </Style>
         <Style Selector="Button.develop-action Path, ToggleButton.develop-action Path">
             <Setter Property="Stroke" Value="{StaticResource PrimaryContainer}"/>
@@ -84,7 +84,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="Button.develop-reset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="Foreground" Value="{StaticResource Primary}"/>
         </Style>
         <Style Selector="Button.develop-reset /template/ ContentPresenter#PART_ContentPresenter">
@@ -92,11 +92,12 @@
             <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
         </Style>
         <Style Selector="Button.develop-reset:disabled">
-            <Setter Property="Opacity" Value="0.32"/>
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDisabled}"/>
         </Style>
         <Style Selector="Button.develop-reset:disabled /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDisabled}"/>
         </Style>
         <Style Selector="Button.wb-auto">
             <Setter Property="MinWidth" Value="50"/>
@@ -118,12 +119,12 @@
         <Style Selector="TextBlock.edit-control-label">
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
     </UserControl.Styles>
 
-    <Border Background="{StaticResource SurfaceMid}"
+    <Border Background="{DynamicResource SurfaceMid}"
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*,Auto">
             <Grid Grid.Row="0" RowDefinitions="Auto,2">
@@ -213,7 +214,7 @@
                                                      EndPoint="100%,50%">
                                     <GradientStop Color="{StaticResource WhiteBalanceTintGreenColor}"
                                                   Offset="0"/>
-                                    <GradientStop Color="{StaticResource OutlineColor}"
+                                    <GradientStop Color="{StaticResource WhiteBalanceTintNeutralColor}"
                                                   Offset="0.5"/>
                                     <GradientStop Color="{StaticResource WhiteBalanceTintMagentaColor}"
                                                   Offset="1"/>

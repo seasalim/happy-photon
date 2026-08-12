@@ -1,13 +1,15 @@
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Styling;
+using HappyPhoton.Views;
 
 namespace HappyPhoton.Converters;
 
 /// <summary>Maps a burst color index to one of six Happy Photon hues.</summary>
-public class BurstColorConverter : IValueConverter
+public class BurstColorConverter : IMultiValueConverter
 {
-    private static readonly IBrush[] Palette =
+    private static readonly IBrush[] DarkPalette =
     {
         Views.HappyPhotonColors.BurstCyan,
         Views.HappyPhotonColors.BurstMagenta,
@@ -17,9 +19,30 @@ public class BurstColorConverter : IValueConverter
         Views.HappyPhotonColors.BurstViolet,
     };
 
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is int index && index >= 0 ? Palette[index % Palette.Length] : Palette[0];
+    private static readonly IBrush[] MidGreyPalette =
+    {
+        HappyPhotonColors.MidGreyBurstCyan,
+        HappyPhotonColors.MidGreyBurstMagenta,
+        HappyPhotonColors.MidGreyBurstPurple,
+        HappyPhotonColors.MidGreyBurstIce,
+        HappyPhotonColors.MidGreyBurstPink,
+        HappyPhotonColors.MidGreyBurstViolet,
+    };
 
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        throw new NotSupportedException();
+    public object Convert(
+        IList<object?> values,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture)
+    {
+        var palette = values.Count > 1 &&
+                      values[1] is ThemeVariant theme &&
+                      theme == HappyPhotonThemes.MidGrey
+            ? MidGreyPalette
+            : DarkPalette;
+        var index = values.Count > 0 && values[0] is int value && value >= 0
+            ? value
+            : 0;
+        return palette[index % palette.Length];
+    }
 }

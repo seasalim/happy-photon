@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Threading;
@@ -67,6 +68,7 @@ public partial class MainWindow
         _presetsPanel?.SetPresetSource(vm.PresetService);
 
         SetSubscribedViewModel(vm);
+        ApplyAppTheme(vm.AppTheme);
         ApplyWorkspaceKeyboardState(vm.IsWorkspaceInteractionEnabled);
     }
 
@@ -110,6 +112,7 @@ public partial class MainWindow
             vm.Library.FileTypeFilter = settings.FileTypeFilter;
             vm.SetColorLabelNames(colorLabelNames);
             vm.RestoreLibraryThumbnailSize(settings.LibraryThumbnailSize);
+            vm.RestoreAppTheme(settings.AppTheme);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;
             vm.ExportSettings.OutputSharpening = settings.OutputSharpening;
             vm.InitializeAgentSettings(settings.McpServerEnabled, settings.McpToken);
@@ -231,6 +234,18 @@ public partial class MainWindow
         {
             ApplyWorkspaceKeyboardState(vm.IsWorkspaceInteractionEnabled);
         }
+        else if (args.PropertyName == nameof(MainWindowViewModel.AppTheme))
+        {
+            ApplyAppTheme(vm.AppTheme);
+        }
+    }
+
+    private static void ApplyAppTheme(AppTheme theme)
+    {
+        if (Application.Current is { } application)
+        {
+            application.RequestedThemeVariant = HappyPhotonThemes.For(theme);
+        }
     }
 
     protected override async void OnClosing(WindowClosingEventArgs e)
@@ -301,6 +316,7 @@ public partial class MainWindow
             FirstRunExperienceVersion = vm.FirstRunExperienceVersion,
             FileTypeFilter = vm.Library.FileTypeFilter,
             LibraryThumbnailSize = vm.LibraryThumbnailSize,
+            AppTheme = vm.AppTheme,
             StripLocationData = vm.ExportSettings.StripLocationData,
             OutputSharpening = vm.ExportSettings.OutputSharpening,
             McpServerEnabled = vm.IsAgentServerEnabled,

@@ -7,9 +7,9 @@
     <Border>
         <Border.Background>
             <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                <GradientStop Color="{StaticResource SurfaceLowestColor}" Offset="0"/>
-                <GradientStop Color="{StaticResource SurfaceBaseColor}" Offset="0.58"/>
-                <GradientStop Color="{StaticResource SurfaceMidColor}" Offset="1"/>
+                <GradientStop Color="{DynamicResource SurfaceLowestColor}" Offset="0"/>
+                <GradientStop Color="{DynamicResource SurfaceBaseColor}" Offset="0.58"/>
+                <GradientStop Color="{DynamicResource SurfaceMidColor}" Offset="1"/>
             </LinearGradientBrush>
         </Border.Background>
         <Panel>
@@ -22,7 +22,7 @@
                         VerticalAlignment="Center">
                 <ProgressBar IsIndeterminate="True" Height="3"/>
                 <TextBlock Text="Opening your local catalog…"
-                           Foreground="{StaticResource TextSecondary}"
+                           Foreground="{DynamicResource TextSecondary}"
                            TextAlignment="Center"/>
             </StackPanel>
 
@@ -32,8 +32,8 @@
                     Padding="32"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{StaticResource SurfaceLow}"
-                    BorderBrush="{StaticResource Divider}"
+                    Background="{DynamicResource SurfaceLow}"
+                    BorderBrush="{DynamicResource Divider}"
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusCard}">
                 <StackPanel Spacing="20">
@@ -41,15 +41,15 @@
                                FontFamily="{StaticResource FontHeading}"
                                FontSize="{StaticResource FontSizeHeading}"
                                FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimary}"
+                               Foreground="{DynamicResource TextPrimary}"
                                TextAlignment="Center"
                                TextWrapping="Wrap"/>
                     <TextBlock Text="{Binding FirstRunErrorMessage}"
-                               Foreground="{StaticResource TextSecondary}"
+                               Foreground="{DynamicResource TextSecondary}"
                                TextAlignment="Center"
                                TextWrapping="Wrap"/>
                     <TextBlock Text="Your originals are untouched."
-                               Foreground="{StaticResource TextMuted}"
+                               Foreground="{DynamicResource TextMuted}"
                                TextAlignment="Center"/>
                     <StackPanel Orientation="Horizontal"
                                 Spacing="10"

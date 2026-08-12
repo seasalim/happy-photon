@@ -11,7 +11,7 @@
              x:Name="Root"
              x:DataType="vm:MainWindowViewModel"
              Focusable="True"
-             Background="{StaticResource SurfaceBase}">
+             Background="{DynamicResource ViewerSurround}">
 
     <UserControl.Resources>
         <converters:BurstColorConverter x:Key="BurstColorConverter"/>
@@ -24,13 +24,13 @@
             <Setter Property="Padding" Value="10,4"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Outline}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Outline}"/>
             <Setter Property="CornerRadius" Value="999"/>
-            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
         </Style>
         <Style Selector="Button.filter:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.filter.active">
             <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
@@ -47,6 +47,19 @@
         <Style Selector="Border.burst-stripe.highlighted">
             <Setter Property="Opacity" Value="1.0"/>
         </Style>
+        <Style Selector="Border.thumbnail">
+            <Setter Property="Background" Value="{DynamicResource SurfaceLow}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Border.thumbnail:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        </Style>
+        <Style Selector="Border.thumbnail.selected">
+            <Setter Property="Background" Value="{DynamicResource SelectionSurface}"/>
+        </Style>
+        <Style Selector="Border.thumbnail.active">
+            <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
         <Style Selector="RadioButton.thumbnail-size">
             <Setter Property="Width" Value="24"/>
             <Setter Property="Height" Value="24"/>
@@ -59,7 +72,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="Opacity" Value="0.62"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -77,7 +90,7 @@
             </Setter>
         </Style>
         <Style Selector="RadioButton.thumbnail-size:pointerover">
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="Opacity" Value="0.86"/>
         </Style>
         <Style Selector="RadioButton.thumbnail-size:checked">
@@ -91,21 +104,21 @@
             <Setter Property="Opacity" Value="1"/>
         </Style>
         <Style Selector="RadioButton.thumbnail-size:focus-visible">
-            <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="Opacity" Value="1"/>
         </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- Selection Controls -->
-        <Border Grid.Row="0" Background="{StaticResource SurfaceMid}" Padding="10,8"
-                BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1"
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceMid}" Padding="10,8"
+                BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1"
                 x:Name="SelectionBar">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <TextBlock x:Name="FilterLabel"
                            Classes="tour-region"
                            Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                           Text="Filter" FontSize="10" Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                           Text="Filter" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
                            VerticalAlignment="Center" Margin="0,0,7,0"/>
 
                 <ScrollViewer x:Name="FilterScrollViewer"
@@ -121,8 +134,8 @@
                                 Click="OnFilterRawClick"/>
                         <Button x:Name="FilterJpegButton" Content="JPEG" Classes="filter"
                                 Click="OnFilterJpegClick"/>
-                        <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
-                        <TextBlock Text="Flag" FontSize="10" Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                        <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
+                        <TextBlock Text="Flag" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
                         <Button x:Name="FlagFilterAllButton" Content="All" Classes="filter"
                                 Click="OnFlagFilterAllClick"/>
@@ -130,8 +143,8 @@
                                 Click="OnFlagFilterPickedClick"/>
                         <Button x:Name="FlagFilterRejectedButton" Content="Rejected" Classes="filter"
                                 Click="OnFlagFilterRejectedClick"/>
-                        <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
-                        <TextBlock Text="Rating" FontSize="10" Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                        <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
+                        <TextBlock Text="Rating" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
                         <Button x:Name="RatingFilterAllButton" Content="All" Classes="filter"
                                 Click="OnRatingFilterAllClick"/>
@@ -149,7 +162,7 @@
                             IsVisible="{Binding Library.ShowColorLabelFilter}"
                             Choices="{Binding ColorLabelFilterChoices}"
                             Filter="{Binding ColorLabelFilter, ElementName=Root, Mode=TwoWay}"/>
-                        <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
+                        <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
                         <Button x:Name="BurstsButton" Content="Bursts" Classes="filter"
                                 Click="OnBurstsClick"/>
                     </StackPanel>
@@ -161,7 +174,7 @@
                             Classes="tour-region tour-glow"
                             Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                             Classes.tour-focus="{Binding IsDeliverCopiesTourVisible}">
-                    <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="0,2,5,2"/>
+                    <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="0,2,5,2"/>
                     <Button Content="Select All" FontSize="10" Padding="8,4"
                             IsEnabled="{Binding HasSelectedImage}"
                             Click="OnSelectAllClick"/>
@@ -202,25 +215,21 @@
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate DataType="models:ImageFile">
                         <Border Padding="5" CornerRadius="8"
+                                Classes="thumbnail"
+                                Classes.selected="{Binding IsSelected}"
+                                Classes.active="{Binding IsActive}"
                                 PointerPressed="OnThumbnailPointerPressed"
                                 PointerEntered="OnThumbnailPointerEntered"
                                 PointerExited="OnThumbnailPointerExited"
                                 DoubleTapped="OnThumbnailDoubleTapped"
-                                Background="{Binding IsSelected, Converter={StaticResource SelectionBackgroundConverter}}"
-                                BorderThickness="2"
-                                BorderBrush="{Binding IsActive, Converter={StaticResource ActiveBorderConverter}}">
-                            <Border.Styles>
-                                <Style Selector="Border:pointerover">
-                                    <Setter Property="Background" Value="{StaticResource SurfaceHigh}"/>
-                                </Style>
-                            </Border.Styles>
+                                BorderThickness="2">
                             <StackPanel>
                                 <Panel Width="{Binding $parent[views:LibraryGridView].ImageViewportWidth}"
                                        Height="{Binding $parent[views:LibraryGridView].ImageViewportHeight}">
                                     <!-- Background: darker blue-gray for RAW, standard for others -->
-                                    <Border Background="{StaticResource RawFileBackground}" CornerRadius="8"
+                                    <Border Background="{DynamicResource RawFileBackground}" CornerRadius="8"
                                             IsVisible="{Binding IsRaw}" ToolTip.Tip="RAW file"/>
-                                    <Border Background="{StaticResource SurfaceHigh}" CornerRadius="8"
+                                    <Border Background="{DynamicResource SurfaceHigh}" CornerRadius="8"
                                             IsVisible="{Binding !IsRaw}"/>
                                     <!-- Thumbnail content -->
                                     <Border CornerRadius="8" ClipToBounds="True">
@@ -242,11 +251,11 @@
                                                            HorizontalAlignment="Center"/>
                                                 <TextBlock Text="ONLINE" FontSize="9"
                                                            FontFamily="{StaticResource FontLabel}"
-                                                           Foreground="{StaticResource TextMuted}"/>
+                                                           Foreground="{DynamicResource TextMuted}"/>
                                             </StackPanel>
                                         </Panel>
                                     </Border>
-                                    <Border Background="{StaticResource SurfaceHighest}"
+                                    <Border Background="{DynamicResource SurfaceHighest}"
                                             BorderBrush="{StaticResource PrimaryContainer}"
                                             BorderThickness="1"
                                             CornerRadius="999"
@@ -265,13 +274,20 @@
                                             Classes.highlighted="{Binding IsBurstHighlighted}"
                                             IsVisible="{Binding HasBurstGroup}"
                                             IsHitTestVisible="False"
-                                            Background="{Binding BurstColorIndex, Converter={StaticResource BurstColorConverter}}"/>
+                                            >
+                                        <Border.Background>
+                                            <MultiBinding Converter="{StaticResource BurstColorConverter}">
+                                                <Binding Path="BurstColorIndex"/>
+                                                <Binding Path="$parent[views:LibraryGridView].ActualThemeVariant"/>
+                                            </MultiBinding>
+                                        </Border.Background>
+                                    </Border>
                                     <Border Width="14" Height="14"
                                             CornerRadius="999"
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Bottom"
                                             Margin="0,0,6,6"
-                                            BorderBrush="{StaticResource SurfaceLowest}"
+                                            BorderBrush="{DynamicResource SurfaceLowest}"
                                             BorderThickness="1.5"
                                             IsVisible="{Binding HasColorLabel}"
                                             IsHitTestVisible="False"
@@ -283,7 +299,7 @@
                                       RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Row="0" Grid.Column="0"
                                                Text="{Binding FileName}"
-                                               FontSize="11" Foreground="{StaticResource TextSecondary}"
+                                               FontSize="11" Foreground="{DynamicResource TextSecondary}"
                                                TextTrimming="CharacterEllipsis"
                                                ToolTip.Tip="{Binding FileName}"/>
                                     <Border Grid.Row="0" Grid.Column="1"
@@ -297,7 +313,7 @@
                                             ToolTip.Tip="Has edits">
                                         <TextBlock Text="EDIT" FontSize="9" FontWeight="SemiBold"
                                                    FontFamily="{StaticResource FontLabel}"
-                                                   Foreground="{StaticResource SurfaceBase}"/>
+                                                   Foreground="{StaticResource OnTertiary}"/>
                                     </Border>
                                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2"
                                                 Orientation="Horizontal" Spacing="3" Margin="0,2,0,0">
@@ -322,10 +338,15 @@
                                                    ToolTip.Tip="Rating"/>
                                         <Border CornerRadius="2" Padding="3,0"
                                                 IsVisible="{Binding HasBurstGroup}"
-                                                Background="{Binding BurstColorIndex, Converter={StaticResource BurstColorConverter}}"
                                                 ToolTip.Tip="Burst frame">
+                                            <Border.Background>
+                                                <MultiBinding Converter="{StaticResource BurstColorConverter}">
+                                                    <Binding Path="BurstColorIndex"/>
+                                                    <Binding Path="$parent[views:LibraryGridView].ActualThemeVariant"/>
+                                                </MultiBinding>
+                                            </Border.Background>
                                             <TextBlock Text="{Binding BurstChipText}" FontSize="9"
-                                                       FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
+                                                       FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
                                         </Border>
                                     </StackPanel>
                                 </Grid>
@@ -337,32 +358,36 @@
         </ScrollViewer>
 
         <!-- Empty state -->
-        <StackPanel Grid.Row="1"
-                    x:Name="EmptyState"
-                    IsVisible="False"
-                    Spacing="8"
-                    MaxWidth="520"
-                    Margin="24"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-            <TextBlock x:Name="EmptyHeading"
-                       Text="Select a folder to view photographs"
-                       FontFamily="{StaticResource FontHeading}"
-                       Foreground="{StaticResource TextPrimary}"
-                       FontSize="16"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"/>
-            <TextBlock x:Name="EmptyMessage"
-                       Text="Choose a folder in the folder tree."
-                       Foreground="{StaticResource TextMuted}"
-                       FontSize="12"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"/>
-        </StackPanel>
+        <Border Grid.Row="1"
+                x:Name="EmptyState"
+                IsVisible="False"
+                Background="{DynamicResource SurfaceLow}"
+                CornerRadius="{StaticResource RadiusMedium}"
+                Padding="20"
+                MaxWidth="520"
+                Margin="24"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <StackPanel Spacing="8">
+                <TextBlock x:Name="EmptyHeading"
+                           Text="Select a folder to view photographs"
+                           FontFamily="{StaticResource FontHeading}"
+                           Foreground="{DynamicResource TextPrimary}"
+                           FontSize="16"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"/>
+                <TextBlock x:Name="EmptyMessage"
+                           Text="Choose a folder in the folder tree."
+                           Foreground="{DynamicResource TextMuted}"
+                           FontSize="12"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
 
         <Border Grid.Row="2"
-                Background="{StaticResource SurfaceBase}"
-                BorderBrush="{StaticResource Divider}"
+                Background="{DynamicResource SurfaceLow}"
+                BorderBrush="{DynamicResource Divider}"
                 BorderThickness="0,1,0,0"
                 Padding="8,4">
             <Grid ColumnDefinitions="*,Auto,*">
@@ -372,7 +397,7 @@
                            Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                            Text="{Binding OnlineOnlyMessage}"
                            IsVisible="{Binding HasOnlineOnlyPhotos}"
-                           Foreground="{StaticResource TextSecondary}"
+                           Foreground="{DynamicResource TextSecondary}"
                            FontFamily="{StaticResource FontLabel}"
                            FontSize="10"
                            VerticalAlignment="Center"

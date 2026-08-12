@@ -14,6 +14,7 @@ public class AppSettingsService
     private const string FirstRunExperienceVersionKey = "FirstRunExperienceVersion";
     private const string FileTypeFilterKey = "FileTypeFilter";
     private const string LibraryThumbnailSizeKey = "LibraryThumbnailSize";
+    private const string AppThemeKey = "AppTheme";
     private const string StripLocationDataKey = "StripLocationData";
     private const string OutputSharpeningKey = "OutputSharpening";
     private const string McpServerEnabledKey = "McpServerEnabled";
@@ -43,6 +44,15 @@ public class AppSettingsService
             thumbnailSize = parsedSize;
         }
 
+        var appTheme = AppTheme.Dark;
+        var savedAppTheme = await _catalogService.GetAppSettingAsync(AppThemeKey);
+        if (!string.IsNullOrEmpty(savedAppTheme) &&
+            Enum.TryParse<AppTheme>(savedAppTheme, ignoreCase: true, out var parsedTheme) &&
+            Enum.IsDefined(parsedTheme))
+        {
+            appTheme = parsedTheme;
+        }
+
         int? firstRunExperienceVersion = null;
         var savedFirstRunVersion =
             await _catalogService.GetAppSettingAsync(FirstRunExperienceVersionKey);
@@ -58,6 +68,7 @@ public class AppSettingsService
             FirstRunExperienceVersion = firstRunExperienceVersion,
             FileTypeFilter = fileTypeFilter,
             LibraryThumbnailSize = thumbnailSize,
+            AppTheme = appTheme,
             StripLocationData = bool.TryParse(
                 await _catalogService.GetAppSettingAsync(StripLocationDataKey),
                 out var stripLocationData) && stripLocationData,
@@ -81,6 +92,7 @@ public class AppSettingsService
                 settings.FirstRunExperienceVersion?.ToString(),
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
             [LibraryThumbnailSizeKey] = settings.LibraryThumbnailSize.ToString(),
+            [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString(),
             [McpServerEnabledKey] = settings.McpServerEnabled.ToString(),
@@ -94,6 +106,7 @@ public class AppSettingsService
         {
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
             [LibraryThumbnailSizeKey] = settings.LibraryThumbnailSize.ToString(),
+            [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString(),
             [McpServerEnabledKey] = settings.McpServerEnabled.ToString(),

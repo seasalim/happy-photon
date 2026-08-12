@@ -20,12 +20,12 @@
         WindowDecorations="BorderOnly"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="72"
-        Background="{StaticResource SurfaceLow}">
+        Background="{DynamicResource SurfaceLow}">
 
     <Window.Styles>
         <Style Selector="Border.field-surface">
-            <Setter Property="Background" Value="{StaticResource SurfaceLowest}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceLowest}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}"/>
             <Setter Property="Padding" Value="12,9"/>
@@ -33,24 +33,24 @@
         <Style Selector="TextBlock.preview">
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
             <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
         </Style>
         <Style Selector="TextBox.size-input">
-            <Setter Property="Background" Value="{StaticResource SurfaceLowest}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Divider}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceLowest}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="TextBox.size-input:disabled">
-            <Setter Property="Background" Value="{StaticResource SurfaceMid}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="Opacity" Value="0.5"/>
         </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,Auto,Auto">
         <Border Grid.Row="0"
-                Background="{StaticResource SurfaceMid}"
-                BorderBrush="{StaticResource Divider}"
+                Background="{DynamicResource SurfaceMid}"
+                BorderBrush="{DynamicResource Divider}"
                 BorderThickness="0,0,0,1"
                 Padding="24,18">
             <Grid ColumnDefinitions="*,Auto">
@@ -66,7 +66,7 @@
                                    FontFamily="{StaticResource FontHeading}"
                                    FontSize="24"
                                    FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimary}"
+                                   Foreground="{DynamicResource TextPrimary}"
                                    VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
@@ -82,7 +82,7 @@
                          Background="Transparent"
                          BorderBrush="Transparent"
                          BorderThickness="0"
-                         Foreground="{StaticResource TextSecondary}"
+                         Foreground="{DynamicResource TextSecondary}"
                         AutomationProperties.Name="Close export dialog"
                         Click="OnCloseClick"/>
             </Grid>
@@ -90,7 +90,7 @@
 
         <ScrollViewer Grid.Row="1"
                       MaxHeight="470"
-                      Background="{StaticResource SurfaceBase}"
+                      Background="{DynamicResource SurfaceBase}"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <Grid Margin="32,28" RowDefinitions="Auto,Auto">
@@ -100,13 +100,13 @@
                             IsVisible="{Binding ShowConfiguration}"
                             IsEnabled="{Binding IsIdle}">
                     <Border Padding="12,10"
-                            Background="{StaticResource SurfaceMid}"
+                            Background="{DynamicResource SurfaceMid}"
                             BorderBrush="{StaticResource Primary}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusMedium}"
                             IsVisible="{Binding HasOnlineOnlyImages}">
                         <TextBlock Text="{Binding OnlineOnlyMessage}"
-                                   Foreground="{StaticResource TextPrimary}"
+                                   Foreground="{DynamicResource TextPrimary}"
                                    TextWrapping="Wrap"/>
                     </Border>
                     <StackPanel Spacing="8">
@@ -168,7 +168,7 @@
                                     MinHeight="40"
                                     IsVisible="{Binding IsLosslessFormat}">
                                 <TextBlock Text="Lossless"
-                                           Foreground="{StaticResource TextSecondary}"
+                                           Foreground="{DynamicResource TextSecondary}"
                                            VerticalAlignment="Center"/>
                             </Border>
                         </StackPanel>
@@ -196,7 +196,7 @@
                                              AutomationProperties.Name="Web maximum dimension"/>
                                     <TextBlock Grid.Column="2"
                                                Text="px"
-                                               Foreground="{StaticResource TextMuted}"
+                                               Foreground="{DynamicResource TextMuted}"
                                                VerticalAlignment="Center"/>
                                 </Grid>
                                 <Grid ColumnDefinitions="64,Auto,Auto" MinHeight="32">
@@ -214,7 +214,7 @@
                                              AutomationProperties.Name="Small maximum dimension"/>
                                     <TextBlock Grid.Column="2"
                                                Text="px"
-                                               Foreground="{StaticResource TextMuted}"
+                                               Foreground="{DynamicResource TextMuted}"
                                                VerticalAlignment="Center"/>
                                 </Grid>
                             </StackPanel>
@@ -238,7 +238,7 @@
                                 <Grid ColumnDefinitions="Auto,*">
                                     <TextBlock Text="→"
                                                Margin="0,0,8,0"
-                                               Foreground="{StaticResource TextMuted}"/>
+                                               Foreground="{DynamicResource TextMuted}"/>
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding PreviewFileName}"
                                                Classes="preview"
@@ -258,13 +258,13 @@
                                FontFamily="{StaticResource FontHeading}"
                                FontSize="20"
                                FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimary}"
+                               Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="Close this dialog and select photographs using Space or the selection controls."
                                MaxWidth="440"
                                TextWrapping="Wrap"
                                TextAlignment="Center"
-                               Foreground="{StaticResource TextSecondary}"/>
+                               Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1"
@@ -295,8 +295,8 @@
         </ScrollViewer>
 
         <Border Grid.Row="2"
-                Background="{StaticResource SurfaceMid}"
-                BorderBrush="{StaticResource Divider}"
+                Background="{DynamicResource SurfaceMid}"
+                BorderBrush="{DynamicResource Divider}"
                 BorderThickness="0,1,0,0"
                 Padding="32,18">
             <Grid ColumnDefinitions="*,Auto">

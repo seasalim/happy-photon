@@ -4,6 +4,8 @@ UI surface for the pipeline rework. Follows AGENTS.md UI conventions and
 `docs/DESIGN.md` tokens throughout: `CompactSlider` for edit controls, uppercase
 `section-label` group headers, 20px between groups, theme tokens only (active states =
 `PrimaryContainer` cyan, passive edit badges = `Tertiary` lavender), no hardcoded hex.
+`ViewerSurround` is the variant-specific image surround; `AssessmentGrey` is the
+invariant color-assessment reference. They are deliberately distinct and must not be aliased.
 View markup in `Views/`, state in `MainWindowViewModel` partials (add to the matching
 workflow partial, don't grow the root file).
 
