@@ -45,6 +45,8 @@ public sealed class PreviewPlaceholderTests
             "DevelopPlaceholderImage")!;
         var fullScreenPlaceholder = window.FindControl<Image>(
             "FullScreenPlaceholderImage")!;
+        var fullScreenSelectionBadge = window.FindControl<Border>(
+            "FullScreenSelectionBadge")!;
         var navigatorThumbnail = window.FindControl<Image>(
             "NavigatorThumbnailImage")!;
         var navigatorPreview = window.FindControl<Image>(
@@ -99,6 +101,7 @@ public sealed class PreviewPlaceholderTests
         Assert.False(vm.ExportSettings.OutputSharpening);
         outputSharpening.IsChecked = true;
         Assert.False(vm.CanUndo);
+        Assert.False(fullScreenSelectionBadge.IsVisible);
         exportDialog.Close();
 
         var tourExportDialog = new BatchExportDialog(
@@ -116,6 +119,9 @@ public sealed class PreviewPlaceholderTests
         vm.SelectedImage = null;
         var image = new ImageFile(
             Path.Combine(GoldenTestPaths.AssetDirectory, "srgb-reference.jpg"));
+        var otherImage = new ImageFile(
+            Path.Combine(GoldenTestPaths.AssetDirectory, "display-p3-reference.jpg"));
+        vm.Library.SetImages([image, otherImage]);
         vm.Library.ReplaceThumbnail(image, placeholder);
         vm.SelectedImage = image;
 
@@ -149,6 +155,20 @@ public sealed class PreviewPlaceholderTests
 
         vm.PreviewImage = editedPreview;
         Assert.Same(editedPreview, navigatorPreview.Source);
+
+        vm.ToggleImageSelection(image);
+        vm.ToggleImageSelection(otherImage);
+        vm.ToggleFullScreenCommand.Execute(null);
+        Assert.True(fullScreenSelectionBadge.IsVisible);
+        Assert.Equal(
+            "SELECTION · 1 / 2",
+            Assert.IsType<TextBlock>(fullScreenSelectionBadge.Child).Text);
+        vm.SelectNextImageCommand.Execute(null);
+        Assert.Equal(
+            "SELECTION · 2 / 2",
+            Assert.IsType<TextBlock>(fullScreenSelectionBadge.Child).Text);
+        vm.ToggleFullScreenCommand.Execute(null);
+        Assert.False(fullScreenSelectionBadge.IsVisible);
 
         vm.PreviewImage = null;
         window.DataContext = null;

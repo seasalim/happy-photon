@@ -271,6 +271,13 @@ Filter the Library to the group you want before selecting it. Then:
 Images that become hidden by a new filter are removed from the selection. Set the
 filters first, then make the final selection.
 
+Press `F` with two or more photos selected to review only that selection in full
+screen, starting from the first selected photo in the Library's current order. Navigation stops at the first and last
+selected photo, and the `SELECTION` badge shows the current position. The set updates
+with visible selection changes; if fewer than two selected photos remain, navigation
+returns to the full folder until full screen is entered again. With zero or one photo
+selected, full-screen navigation continues through the full folder as usual.
+
 ## 6. Export finished copies
 
 From Library, choose **Export**. You can also press `Ctrl+E` from Library or Develop.

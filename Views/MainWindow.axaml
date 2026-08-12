@@ -442,6 +442,19 @@
                                   ZoomLevel="{Binding ZoomLevel}"
                                   ScrollBarVisibility="Disabled"/>
 
+            <Border x:Name="FullScreenSelectionBadge"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom"
+                    Margin="16"
+                    Opacity="1"
+                    IsHitTestVisible="False"
+                    IsVisible="{Binding IsFullScreenSelectionRestricted}">
+                <TextBlock Text="{Binding FullScreenSelectionBadgeText}"
+                           FontFamily="{StaticResource FontLabel}"
+                           FontSize="{StaticResource FontSizeLabel}"
+                           Foreground="{DynamicResource TextMuted}"/>
+            </Border>
+
         </Panel>
     </Border>
     </Panel>

@@ -236,8 +236,11 @@ public partial class MainWindowViewModel
     partial void OnCurrentFolderHasSubfoldersChanged(bool value) =>
         NotifyLibraryEmptyStateChanged();
 
-    private void OnLibraryStateChanged(object? sender, EventArgs e) =>
+    private void OnLibraryStateChanged(object? sender, EventArgs e)
+    {
         NotifyLibraryEmptyStateChanged();
+        ReconcileFullScreenSelection();
+    }
 
     private void NotifyLibraryEmptyStateChanged()
     {
@@ -349,6 +352,15 @@ public partial class MainWindowViewModel
 
     partial void OnIsFullScreenModeChanged(bool value)
     {
+        if (value)
+        {
+            ArmFullScreenSelection();
+        }
+        if (!value)
+        {
+            ReleaseFullScreenSelection();
+        }
+
         CopyEditSettingsCommand.NotifyCanExecuteChanged();
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
         NotifyWhiteBalanceCommandState();

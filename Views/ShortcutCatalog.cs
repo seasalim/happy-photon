@@ -15,7 +15,7 @@ public static class ShortcutCatalog
             new("E", "Toggle Library and Develop"),
             new("Enter", "Toggle Library/Develop, apply crop, or confirm export"),
             new("Escape", "Close the active panel, cancel crop, or return to Library"),
-            new("F", "Toggle image-only fullscreen"),
+            new("F", "Toggle fullscreen; restrict navigation to 2+ selected photos"),
             new("←  /  →", "Previous or next image"),
             new("↑  /  ↓", "Move by one grid row in Library"),
             new("Page Up  /  Page Down", "Move by one visible page in Library"),

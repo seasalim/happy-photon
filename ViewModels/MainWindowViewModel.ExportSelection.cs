@@ -54,6 +54,7 @@ public partial class MainWindowViewModel
     private void UpdateSelectedCount()
     {
         SelectedCount = Library.SelectedCount;
+        ReconcileFullScreenSelection();
     }
 
     public void RefreshSelectedCount()

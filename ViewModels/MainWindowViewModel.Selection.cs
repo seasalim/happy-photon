@@ -19,6 +19,7 @@ public partial class MainWindowViewModel
         IsBaseArming = false;
         OnPropertyChanged(nameof(ActiveFileName));
         NotifySelectedImageEditStateChanged();
+        NotifyFullScreenSelectionBadgeChanged();
 
         // Exit crop mode when switching images
         if (IsCropMode)
@@ -55,7 +56,10 @@ public partial class MainWindowViewModel
 
                 if (IsDevelopMode || IsFullScreenMode)
                 {
-                    _ = LoadPreviewAsync(newValue);
+                    if (!_suppressSelectionPreviewLoad)
+                    {
+                        _ = LoadPreviewAsync(newValue);
+                    }
                 }
                 else
                 {
@@ -71,7 +75,10 @@ public partial class MainWindowViewModel
 
             if (IsDevelopMode || IsFullScreenMode)
             {
-                _ = LoadPreviewAsync(newValue);
+                if (!_suppressSelectionPreviewLoad)
+                {
+                    _ = LoadPreviewAsync(newValue);
+                }
             }
             else
             {

@@ -105,6 +105,8 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void SelectPreviousImage()
     {
+        if (TryMoveWithinFullScreenSelection(-1)) return;
+
         var previous = Library.PreviousVisible(SelectedImage);
         if (previous != null) SelectedImage = previous;
     }
@@ -112,6 +114,8 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void SelectNextImage()
     {
+        if (TryMoveWithinFullScreenSelection(1)) return;
+
         var next = Library.NextVisible(SelectedImage);
         if (next != null) SelectedImage = next;
     }
@@ -121,6 +125,8 @@ public partial class MainWindowViewModel
     /// </summary>
     public void SelectImageUp(int itemsPerRow)
     {
+        if (TryMoveWithinFullScreenSelection(-itemsPerRow)) return;
+
         var image = Library.MoveVisible(SelectedImage, -itemsPerRow);
         if (image != null) SelectedImage = image;
     }
@@ -130,17 +136,23 @@ public partial class MainWindowViewModel
     /// </summary>
     public void SelectImageDown(int itemsPerRow)
     {
+        if (TryMoveWithinFullScreenSelection(itemsPerRow)) return;
+
         var image = Library.MoveVisible(SelectedImage, itemsPerRow);
         if (image != null) SelectedImage = image;
     }
 
     public void SelectFirstImage()
     {
+        if (TrySelectFullScreenSelectionBoundary(last: false)) return;
+
         SelectedImage = Library.FirstVisible();
     }
 
     public void SelectLastImage()
     {
+        if (TrySelectFullScreenSelectionBoundary(last: true)) return;
+
         SelectedImage = Library.LastVisible();
     }
 
