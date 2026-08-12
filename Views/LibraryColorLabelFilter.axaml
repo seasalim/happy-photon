@@ -2,16 +2,45 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="using:HappyPhoton.Converters"
              xmlns:models="using:HappyPhoton.Models"
+             xmlns:views="using:HappyPhoton.Views"
              x:Class="HappyPhoton.Views.LibraryColorLabelFilter"
              x:Name="Root">
     <UserControl.Resources>
         <converters:ColorLabelBrushConverter x:Key="ColorLabelBrushConverter"/>
-        <converters:ColorLabelOutlineConverter x:Key="ColorLabelOutlineConverter"/>
+        <converters:EnumEqualsConverter x:Key="EnumEqualsConverter"/>
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <Style Selector="Button.filter.swatch">
-            <Setter Property="Padding" Value="6,4"/>
+        <Style Selector="Button.swatch">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="3,5"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="3"/>
+        </Style>
+        <Style Selector="Button.swatch:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        </Style>
+        <Style Selector="Button.swatch Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextSecondary}"/>
+        </Style>
+        <Style Selector="Button.swatch:pointerover Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.swatch Border.swatch-dot">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.swatch Border.none-ring">
+            <Setter Property="BorderBrush" Value="{DynamicResource Outline}"/>
+        </Style>
+        <Style Selector="Button.swatch.active Border.swatch-dot">
+            <Setter Property="BorderBrush" Value="{x:Static views:HappyPhotonColors.Primary}"/>
+        </Style>
+        <Style Selector="Button.swatch.active Border.none-ring">
+            <Setter Property="BorderBrush" Value="{x:Static views:HappyPhotonColors.Primary}"/>
         </Style>
     </UserControl.Styles>
 
@@ -24,30 +53,38 @@
         <ItemsControl ItemsSource="{Binding Choices, ElementName=Root}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal" Spacing="5"/>
+                    <StackPanel Orientation="Horizontal" Spacing="1"/>
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="models:ColorLabelFilterChoice">
-                    <Button Classes="filter"
-                            Classes.swatch="{Binding IsColorSlot}"
+                    <Button Classes.filter="{Binding IsAllChoice}"
+                            Classes.swatch="{Binding !IsAllChoice}"
                             Click="OnFilterClick"
                             Tag="{Binding Value}"
-                            ToolTip.Tip="{Binding Name}"
-                            AutomationProperties.Name="{Binding Name}">
-                        <Button.BorderBrush>
-                            <MultiBinding Converter="{StaticResource ColorLabelOutlineConverter}"
-                                          ConverterParameter="{DynamicResource Outline}">
+                            ToolTip.Tip="{Binding ToolTip}"
+                            AutomationProperties.Name="{Binding AutomationName}">
+                        <Classes.active>
+                            <MultiBinding Converter="{StaticResource EnumEqualsConverter}">
                                 <Binding Path="Filter" ElementName="Root"/>
                                 <Binding Path="Value"/>
                             </MultiBinding>
-                        </Button.BorderBrush>
+                        </Classes.active>
                         <Panel>
-                            <Border Width="10" Height="10" CornerRadius="999"
+                            <Border Width="13" Height="13" CornerRadius="999"
+                                    Classes="swatch-dot"
                                     IsVisible="{Binding IsColorSlot}"
-                                    Background="{Binding Value, Converter={StaticResource ColorLabelBrushConverter}}"/>
+                                    Background="{Binding Value, Converter={StaticResource ColorLabelBrushConverter}}"
+                                    BorderThickness="2"/>
+                            <Border Width="13" Height="13" CornerRadius="999"
+                                    Classes="none-ring"
+                                    IsVisible="{Binding IsNoneSlot}"
+                                    BorderThickness="2">
+                                <Path Width="8" Height="8" Data="M 1,1 L 7,7"
+                                      StrokeThickness="1.4" StrokeLineCap="Round"/>
+                            </Border>
                             <TextBlock Text="{Binding Name}"
-                                       IsVisible="{Binding !IsColorSlot}"/>
+                                       IsVisible="{Binding IsAllChoice}"/>
                         </Panel>
                     </Button>
                 </DataTemplate>

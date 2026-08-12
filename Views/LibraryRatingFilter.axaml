@@ -1,0 +1,75 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="HappyPhoton.Views.LibraryRatingFilter"
+             x:Name="Root">
+    <UserControl.Styles>
+        <Style Selector="Button.rating-star">
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="FontSize" Value="15"/>
+        </Style>
+        <Style Selector="Button.rating-star:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        </Style>
+        <Style Selector="TextBlock.rating-glyph">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+        </Style>
+        <Style Selector="TextBlock.rating-filled">
+            <Setter Property="Foreground" Value="{StaticResource SecondaryContainer}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Orientation="Horizontal" Spacing="2">
+            <Button x:Name="RatingFilter1Button" Classes="rating-star" Tag="1"
+                    Click="OnStarClick" ToolTip.Tip="Filter to 1 star or more"
+                    AutomationProperties.Name="Filter to 1 star or more">
+                <Grid>
+                    <TextBlock Text="☆" Classes="rating-glyph"/>
+                    <TextBlock x:Name="RatingFilter1Filled" Text="★"
+                               Classes="rating-filled"/>
+                </Grid>
+            </Button>
+            <Button x:Name="RatingFilter2Button" Classes="rating-star" Tag="2"
+                    Click="OnStarClick" ToolTip.Tip="Filter to 2 stars or more"
+                    AutomationProperties.Name="Filter to 2 stars or more">
+                <Grid>
+                    <TextBlock Text="☆" Classes="rating-glyph"/>
+                    <TextBlock x:Name="RatingFilter2Filled" Text="★"
+                               Classes="rating-filled"/>
+                </Grid>
+            </Button>
+            <Button x:Name="RatingFilter3Button" Classes="rating-star" Tag="3"
+                    Click="OnStarClick" ToolTip.Tip="Filter to 3 stars or more"
+                    AutomationProperties.Name="Filter to 3 stars or more">
+                <Grid>
+                    <TextBlock Text="☆" Classes="rating-glyph"/>
+                    <TextBlock x:Name="RatingFilter3Filled" Text="★"
+                               Classes="rating-filled"/>
+                </Grid>
+            </Button>
+            <Button x:Name="RatingFilter4Button" Classes="rating-star" Tag="4"
+                    Click="OnStarClick" ToolTip.Tip="Filter to 4 stars or more"
+                    AutomationProperties.Name="Filter to 4 stars or more">
+                <Grid>
+                    <TextBlock Text="☆" Classes="rating-glyph"/>
+                    <TextBlock x:Name="RatingFilter4Filled" Text="★"
+                               Classes="rating-filled"/>
+                </Grid>
+            </Button>
+            <Button x:Name="RatingFilter5Button" Classes="rating-star" Tag="5"
+                    Click="OnStarClick" ToolTip.Tip="Filter to 5 stars or more"
+                    AutomationProperties.Name="Filter to 5 stars or more">
+                <Grid>
+                    <TextBlock Text="☆" Classes="rating-glyph"/>
+                    <TextBlock x:Name="RatingFilter5Filled" Text="★"
+                               Classes="rating-filled"/>
+                </Grid>
+            </Button>
+    </StackPanel>
+</UserControl>

@@ -31,7 +31,18 @@ public sealed record ColorLabelChoice(ColorLabel Value, string Name)
 
 public sealed record ColorLabelFilterChoice(ColorLabelFilter Value, string Name)
 {
-    /// <summary>True for the color slots, which show a swatch instead of their name.</summary>
+    /// <summary>True for choices that render as a filled color swatch.</summary>
     public bool IsColorSlot =>
         Value is not (ColorLabelFilter.All or ColorLabelFilter.None);
+    public bool IsNoneSlot => Value == ColorLabelFilter.None;
+    public bool IsAllChoice => Value == ColorLabelFilter.All;
+
+    public string ToolTip => Value switch
+    {
+        ColorLabelFilter.All => "Show all labels",
+        ColorLabelFilter.None => "Show photos with no color label",
+        _ => $"Show {Name.ToLowerInvariant()} label only"
+    };
+
+    public string AutomationName => ToolTip;
 }

@@ -165,7 +165,7 @@ public partial class LibraryGridView : UserControl
         InitializeComponent();
         UpdateFilterButtons();
         UpdateFlagFilterButtons();
-        UpdateRatingFilterButtons();
+        UpdateRatingFilterButton();
         UpdateBurstsButton();
         UpdateThumbnailSizeButtons();
         ThumbnailScrollViewer.ScrollChanged += OnThumbnailScrollChanged;
@@ -211,7 +211,7 @@ public partial class LibraryGridView : UserControl
         }
         else if (change.Property == MinimumRatingProperty)
         {
-            UpdateRatingFilterButtons();
+            UpdateRatingFilterButton();
         }
         else if (change.Property == ShowBurstsProperty)
         {
@@ -286,15 +286,8 @@ public partial class LibraryGridView : UserControl
         FlagFilterRejectedButton.Classes.Set("active", FlagFilter == HappyPhoton.Models.FlagFilter.Rejected);
     }
 
-    private void UpdateRatingFilterButtons()
-    {
+    private void UpdateRatingFilterButton() =>
         RatingFilterAllButton.Classes.Set("active", MinimumRating == 0);
-        RatingFilter1Button.Classes.Set("active", MinimumRating == 1);
-        RatingFilter2Button.Classes.Set("active", MinimumRating == 2);
-        RatingFilter3Button.Classes.Set("active", MinimumRating == 3);
-        RatingFilter4Button.Classes.Set("active", MinimumRating == 4);
-        RatingFilter5Button.Classes.Set("active", MinimumRating == 5);
-    }
 
     private void UpdateBurstsButton() => BurstsButton.Classes.Set("active", ShowBursts);
 
@@ -429,27 +422,25 @@ public partial class LibraryGridView : UserControl
         FileTypeFilter = ImageFileTypeFilter.Jpeg;
     }
 
-    private void OnFlagFilterAllClick(object? sender, RoutedEventArgs e)
-    {
+    private void OnFlagFilterAllClick(object? sender, RoutedEventArgs e) =>
         FlagFilter = HappyPhoton.Models.FlagFilter.All;
-    }
 
     private void OnFlagFilterPickedClick(object? sender, RoutedEventArgs e)
     {
-        FlagFilter = HappyPhoton.Models.FlagFilter.Picked;
+        FlagFilter = FlagFilter == HappyPhoton.Models.FlagFilter.Picked
+            ? HappyPhoton.Models.FlagFilter.All
+            : HappyPhoton.Models.FlagFilter.Picked;
     }
 
     private void OnFlagFilterRejectedClick(object? sender, RoutedEventArgs e)
     {
-        FlagFilter = HappyPhoton.Models.FlagFilter.Rejected;
+        FlagFilter = FlagFilter == HappyPhoton.Models.FlagFilter.Rejected
+            ? HappyPhoton.Models.FlagFilter.All
+            : HappyPhoton.Models.FlagFilter.Rejected;
     }
 
-    private void OnRatingFilterAllClick(object? sender, RoutedEventArgs e) => MinimumRating = 0;
-    private void OnRatingFilter1Click(object? sender, RoutedEventArgs e) => MinimumRating = 1;
-    private void OnRatingFilter2Click(object? sender, RoutedEventArgs e) => MinimumRating = 2;
-    private void OnRatingFilter3Click(object? sender, RoutedEventArgs e) => MinimumRating = 3;
-    private void OnRatingFilter4Click(object? sender, RoutedEventArgs e) => MinimumRating = 4;
-    private void OnRatingFilter5Click(object? sender, RoutedEventArgs e) => MinimumRating = 5;
+    private void OnRatingFilterAllClick(object? sender, RoutedEventArgs e) =>
+        MinimumRating = 0;
 
     private void OnBurstsClick(object? sender, RoutedEventArgs e) => ShowBursts = !ShowBursts;
 

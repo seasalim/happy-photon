@@ -1,5 +1,7 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -10,9 +12,7 @@ using Xunit;
 namespace HappyPhoton.Tests;
 
 /// <summary>
-/// Color-label behavior that needs a live dispatcher or a realized visual tree:
-/// the agent mutation path marshals to the UI thread, and the enum-driven rows only
-/// prove themselves once they actually materialize.
+/// Library controls that need a live dispatcher or a realized visual tree.
 /// </summary>
 public sealed class ColorLabelUiTests
 {
@@ -103,11 +103,212 @@ public sealed class ColorLabelUiTests
             StringComparison.OrdinalIgnoreCase);
     }
 
+    [AvaloniaFact]
+    public void LibraryFilterBar_GroupControlsToggleAndExposeAccessibleMetadata()
+    {
+        using var catalog = new CatalogService(NewRoot());
+        var vm = NewViewModel(catalog);
+        var control = new LibraryGridView { DataContext = vm };
+        var window = new Window { Content = control };
+        window.Show();
+
+        var picked = control.FindControl<Button>("FlagFilterPickedButton")!;
+        var rejected = control.FindControl<Button>("FlagFilterRejectedButton")!;
+        var flagAll = control.FindControl<Button>("FlagFilterAllButton")!;
+        var ratingAll = control.FindControl<Button>("RatingFilterAllButton")!;
+        var bursts = control.FindControl<Button>("BurstsButton")!;
+        var filterLabel = control.FindControl<TextBlock>("FilterLabel")!;
+        var burstsGlyph = Assert.IsType<PathIcon>(bursts.Content);
+        Assert.Contains("filter-icon", bursts.Classes);
+        Assert.Equal(24, bursts.Width);
+        Assert.Equal(0, bursts.BorderThickness.Left);
+        Assert.Equal(18, burstsGlyph.Width);
+        Assert.Equal("Filter", filterLabel.Text);
+        Assert.Equal("Picked", picked.Content);
+        Assert.Equal("Rejected", rejected.Content);
+        Assert.All([picked, rejected], button =>
+            Assert.Contains("filter", button.Classes));
+        Assert.Equal("Group bursts", ToolTip.GetTip(bursts));
+        Assert.Equal("Group bursts", AutomationProperties.GetName(bursts));
+        Assert.Contains("active", flagAll.Classes);
+        Assert.Contains("active", ratingAll.Classes);
+
+        Click(picked);
+        Assert.Equal(FlagFilter.Picked, control.FlagFilter);
+        Assert.Contains("active", picked.Classes);
+        Assert.DoesNotContain("active", flagAll.Classes);
+        Click(flagAll);
+        Assert.Equal(FlagFilter.All, control.FlagFilter);
+        Assert.Contains("active", flagAll.Classes);
+        Click(picked);
+        Click(picked);
+        Assert.Equal(FlagFilter.All, control.FlagFilter);
+        Assert.DoesNotContain("active", picked.Classes);
+
+        Click(rejected);
+        Assert.Equal(FlagFilter.Rejected, control.FlagFilter);
+        Click(rejected);
+        Assert.Equal(FlagFilter.All, control.FlagFilter);
+
+        var rating = control.FindControl<LibraryRatingFilter>("RatingFilter")!;
+        var thirdStar = rating.FindControl<Button>("RatingFilter3Button")!;
+        Assert.Null(rating.FindControl<Border>("RatingFilterGroup"));
+        Assert.Equal(18, thirdStar.Width);
+        Assert.Equal(0, thirdStar.BorderThickness.Left);
+        Click(thirdStar);
+        Assert.Equal(3, control.MinimumRating);
+        Assert.DoesNotContain("active", ratingAll.Classes);
+        Click(ratingAll);
+        Assert.Equal(0, control.MinimumRating);
+        Assert.Contains("active", ratingAll.Classes);
+        Click(thirdStar);
+        Click(thirdStar);
+        Assert.Equal(0, control.MinimumRating);
+
+        Click(bursts);
+        Assert.True(control.ShowBursts);
+        Click(bursts);
+        Assert.False(control.ShowBursts);
+
+        var filterControls = control.FindControl<ScrollViewer>("FilterScrollViewer")!;
+        var captions = filterControls.GetLogicalDescendants()
+            .OfType<TextBlock>()
+            .Select(text => text.Text)
+            .ToArray();
+        Assert.Contains("Flag", captions);
+        Assert.Contains("Rating", captions);
+        Assert.Contains("Labels", captions);
+        Assert.DoesNotContain("≥", captions);
+        Assert.Equal("All", control.FindControl<Button>("SelectAllButton")!.Content);
+        Assert.Equal("None", control.FindControl<Button>("SelectNoneButton")!.Content);
+        Assert.Contains(
+            "Select",
+            control.FindControl<StackPanel>("LibraryActionsPanel")!
+                .GetLogicalDescendants().OfType<TextBlock>().Select(text => text.Text));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void RatingFilter_ThresholdStarsFillAndClearOnReclick()
+    {
+        var control = new LibraryRatingFilter();
+        var window = new Window { Content = control };
+        window.Show();
+
+        var buttons = Enumerable.Range(1, 5)
+            .Select(rating => control.FindControl<Button>(
+                $"RatingFilter{rating}Button")!)
+            .ToArray();
+        Assert.All(buttons, button => Assert.False(string.IsNullOrWhiteSpace(
+            AutomationProperties.GetName(button))));
+
+        Click(buttons[2]);
+        Assert.Equal(3, control.MinimumRating);
+        for (var rating = 1; rating <= 5; rating++)
+        {
+            Assert.Equal(
+                rating <= 3,
+                control.FindControl<TextBlock>(
+                    $"RatingFilter{rating}Filled")!.IsVisible);
+        }
+
+        Click(buttons[2]);
+        Assert.Equal(0, control.MinimumRating);
+        Assert.All(
+            Enumerable.Range(1, 5),
+            rating => Assert.False(control.FindControl<TextBlock>(
+                $"RatingFilter{rating}Filled")!.IsVisible));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void LabelFilter_AllAndSwatchesResetTheGroup()
+    {
+        using var catalog = new CatalogService(NewRoot());
+        var vm = NewViewModel(catalog);
+        vm.SetColorLabelNames(new Dictionary<ColorLabel, string>(ColorLabelNames.Defaults)
+        {
+            [ColorLabel.Red] = "Select"
+        });
+        var control = new LibraryColorLabelFilter
+        {
+            Choices = vm.ColorLabelFilterChoices
+        };
+        var window = new Window { Content = control };
+        window.Show();
+
+        Assert.Contains(
+            control.Choices,
+            choice => choice.Value == ColorLabelFilter.All);
+        var buttons = control.GetLogicalDescendants()
+            .OfType<Button>()
+            .Where(button => button.Tag is ColorLabelFilter)
+            .ToArray();
+        Assert.Equal(control.Choices.Count, buttons.Length);
+        Assert.All(buttons, button => Assert.False(string.IsNullOrWhiteSpace(
+            AutomationProperties.GetName(button))));
+
+        var all = Assert.Single(
+            buttons,
+            button => Equals(button.Tag, ColorLabelFilter.All));
+        Assert.Equal("Show all labels", AutomationProperties.GetName(all));
+        Assert.Equal("Show all labels", ToolTip.GetTip(all));
+        Assert.Contains(
+            all.GetLogicalDescendants().OfType<TextBlock>(),
+            text => text.Text == "All");
+        Assert.Contains("filter", all.Classes);
+        Assert.DoesNotContain("swatch", all.Classes);
+
+        var none = Assert.Single(
+            buttons,
+            button => Equals(button.Tag, ColorLabelFilter.None));
+        Assert.Contains("swatch", none.Classes);
+        Assert.DoesNotContain("filter", none.Classes);
+        Assert.Equal(0, none.BorderThickness.Left);
+        Assert.Equal(13, Assert.Single(
+            none.GetLogicalDescendants().OfType<Border>(),
+            border => border.IsVisible).Width);
+        Assert.NotEmpty(none.GetLogicalDescendants()
+            .OfType<Avalonia.Controls.Shapes.Path>());
+        Assert.Equal(
+            "Show photos with no color label",
+            AutomationProperties.GetName(none));
+        Assert.Equal(
+            "Show photos with no color label",
+            ToolTip.GetTip(none));
+
+        var red = Assert.Single(
+            buttons,
+            button => Equals(button.Tag, ColorLabelFilter.Red));
+        Assert.Contains("swatch", red.Classes);
+        Assert.DoesNotContain("filter", red.Classes);
+        var redDot = Assert.Single(red.GetLogicalDescendants()
+            .OfType<Border>(), border => border.IsVisible);
+        Assert.Equal(13, redDot.Width);
+        Assert.Equal("Show select label only", AutomationProperties.GetName(red));
+        Assert.Equal("Show select label only", ToolTip.GetTip(red));
+        Click(red);
+        Assert.Equal(ColorLabelFilter.Red, control.Filter);
+        Assert.Equal(HappyPhotonColors.Primary, redDot.BorderBrush);
+        Click(all);
+        Assert.Equal(ColorLabelFilter.All, control.Filter);
+        Click(red);
+        Click(red);
+        Assert.Equal(ColorLabelFilter.All, control.Filter);
+
+        window.Close();
+    }
+
     private static List<Button> SwatchButtons(ImageAssessmentControl control) =>
         control.GetLogicalDescendants()
             .OfType<Button>()
             .Where(button => button.CommandParameter is ColorLabel)
             .ToList();
+
+    private static void Click(Button button) =>
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
     private static string NewRoot() =>
         Directory.CreateDirectory(Path.Combine(

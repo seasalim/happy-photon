@@ -49,8 +49,8 @@ Start in **Library**. Press `G` at any time to return to it.
 2. Click the folder or press `Enter` to move focus to the image grid.
 3. Let the first thumbnails appear, then move through the shoot with the arrow
    keys or by clicking thumbnails.
-4. Turn on **Bursts** when the folder contains sequences of closely spaced
-   frames.
+4. Turn on burst grouping with the stacked-frames icon when the folder contains
+   sequences of closely spaced frames.
 
 Use the three thumbnail buttons at the right edge of the Library footer to change
 browsing density. **Small** shows the most photographs, **Medium** is the default, and
@@ -136,17 +136,21 @@ always describes the active photograph, not the selected target set.
 
 ### Filter the result
 
-The Library controls can be combined to show:
+The Library filter bar uses labeled groups of compact controls that can be
+combined to show:
 
 - all files, RAW files, or JPEG files;
 - all flags, picked images, or rejected images;
-- all ratings or a minimum star rating;
+- all ratings or a minimum rating chosen from the five-star strip;
 - all color labels, no label, or one named color.
 
-For example, choose **Picked** and **3+** to review the photographs most likely
-to be delivered. Changing a flag or rating while a filter is active can make
-the current image disappear when it no longer matches; Happy Photon advances
-to another visible image.
+Each **Flag**, **Rating**, and **Labels** group starts with an **All** button.
+For example, choose **Picked** and click the third star to review
+photographs rated three stars or more that are most likely to be delivered.
+Use **All**, or re-click the active flag button, current threshold star, or
+color swatch, to clear that filter group. Changing a flag or rating while a filter is
+active can make the current image disappear when it no longer matches; Happy
+Photon advances to another visible image.
 
 **Delete Rejected** is a separate, destructive cleanup action. After
 confirmation, it moves every rejected image in the open folder to the operating
@@ -271,7 +275,7 @@ Filter the Library to the group you want before selecting it. Then:
 - use `Ctrl+Click` to add or remove individual images;
 - use `Shift+Click` to select a range;
 - press `Ctrl+A` to select every image currently visible through the filters;
-- use **Select None** to clear the visible selection.
+- use **None** in the **Select** group to clear the visible selection.
 
 Images that become hidden by a new filter are removed from the selection. Set the
 filters first, then make the final selection.
@@ -315,10 +319,12 @@ Targets that would overwrite a loaded original are refused.
 
 For a first shoot, keep the process deliberately simple:
 
-1. Open the folder and enable Bursts if it contains rapid sequences.
+1. Open the folder and enable the stacked-frames burst control if it contains
+   rapid sequences.
 2. Make one quick pass with `P`, `X`, and `U`.
-3. Filter to Picked and give only the strongest images three to five stars.
-4. Filter to Picked and `3+`.
+3. Filter with **Picked** and give only the strongest images three to
+   five stars.
+4. Keep the **Picked** filter active and click the third threshold star.
 5. Develop one representative photograph.
 6. Save its look as a preset or copy its settings to similar photographs.
 7. Review every edited image and correct it individually.

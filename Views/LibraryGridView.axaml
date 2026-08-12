@@ -19,28 +19,7 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <Style Selector="Button.filter">
-            <Setter Property="FontSize" Value="10"/>
-            <Setter Property="Padding" Value="10,4"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Outline}"/>
-            <Setter Property="CornerRadius" Value="999"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
-        </Style>
-        <Style Selector="Button.filter:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        </Style>
-        <Style Selector="Button.filter.active">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-        </Style>
-        <Style Selector="Button.filter.active /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
-        </Style>
+        <StyleInclude Source="avares://HappyPhoton/Views/LibraryFilterBarStyles.axaml"/>
         <Style Selector="Border.burst-stripe">
             <Setter Property="Opacity" Value="0.65"/>
         </Style>
@@ -111,7 +90,7 @@
 
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- Selection Controls -->
-        <Border Grid.Row="0" Background="{DynamicResource SurfaceMid}" Padding="10,8"
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceMid}" Padding="8,4"
                 BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1"
                 x:Name="SelectionBar">
             <Grid ColumnDefinitions="Auto,*,Auto">
@@ -148,23 +127,22 @@
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
                         <Button x:Name="RatingFilterAllButton" Content="All" Classes="filter"
                                 Click="OnRatingFilterAllClick"/>
-                        <Button x:Name="RatingFilter1Button" Content="1+" Classes="filter"
-                                Click="OnRatingFilter1Click"/>
-                        <Button x:Name="RatingFilter2Button" Content="2+" Classes="filter"
-                                Click="OnRatingFilter2Click"/>
-                        <Button x:Name="RatingFilter3Button" Content="3+" Classes="filter"
-                                Click="OnRatingFilter3Click"/>
-                        <Button x:Name="RatingFilter4Button" Content="4+" Classes="filter"
-                                Click="OnRatingFilter4Click"/>
-                        <Button x:Name="RatingFilter5Button" Content="5" Classes="filter"
-                                Click="OnRatingFilter5Click"/>
+                        <views:LibraryRatingFilter x:Name="RatingFilter"
+                            MinimumRating="{Binding MinimumRating, ElementName=Root, Mode=TwoWay}"/>
                         <views:LibraryColorLabelFilter
+                            x:Name="ColorLabelFilterControl"
                             IsVisible="{Binding Library.ShowColorLabelFilter}"
                             Choices="{Binding ColorLabelFilterChoices}"
                             Filter="{Binding ColorLabelFilter, ElementName=Root, Mode=TwoWay}"/>
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
-                        <Button x:Name="BurstsButton" Content="Bursts" Classes="filter"
-                                Click="OnBurstsClick"/>
+                        <Button x:Name="BurstsButton" Classes="filter-icon"
+                                Click="OnBurstsClick"
+                                ToolTip.Tip="Group bursts"
+                                AutomationProperties.Name="Group bursts">
+                            <PathIcon Width="18" Height="18"
+                                      Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                      Data="M0 5V0h13v2H2v3z M2 7V2h14v2H4v3z M4 5h14v2H4z M4 16h14v2H4z M4 7h2v9H4z M16 7h2v9h-2z M7 8h2v2H7z M7 14l2.5-3 2 2 1.5-2 2.5 3z"/>
+                        </Button>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -175,10 +153,13 @@
                             Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                             Classes.tour-focus="{Binding IsDeliverCopiesTourVisible}">
                     <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="0,2,5,2"/>
-                    <Button Content="Select All" FontSize="10" Padding="8,4"
+                    <TextBlock Text="Select" FontSize="10" Foreground="{DynamicResource TextMuted}"
+                               FontFamily="{StaticResource FontLabel}"
+                               VerticalAlignment="Center" Margin="0,0,2,0"/>
+                    <Button x:Name="SelectAllButton" Content="All" FontSize="10" Padding="8,4"
                             IsEnabled="{Binding HasSelectedImage}"
                             Click="OnSelectAllClick"/>
-                    <Button Content="Select None" FontSize="10" Padding="8,4"
+                    <Button x:Name="SelectNoneButton" Content="None" FontSize="10" Padding="8,4"
                             IsEnabled="{Binding HasSelectedImage}"
                             Click="OnDeselectAllClick"/>
                     <Button Content="Export…" FontSize="10" Padding="10,4"
