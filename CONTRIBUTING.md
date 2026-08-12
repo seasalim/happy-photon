@@ -31,6 +31,24 @@ project rules:
 - Before/after screenshots are welcome for visible UI changes, but optional;
   describe the visible change in words when you do not attach them.
 
+## Development model
+
+Happy Photon is intentionally AI-developed:
+
+- Avoid hand-writing code. Plan and implement changes through capable AI
+  agents.
+- Use multiple, different state-of-the-art models for adversarial plan and
+  code review; a model should not review its own work.
+- Human review is the guidance and approval gate, and the protection against
+  over-engineering.
+
+## Commits
+
+- Squash commits before merge so each merged change lands as one commit.
+- Commit messages follow the existing standard: a single imperative line
+  matching the history (see [AGENTS.md](AGENTS.md)) — no body, no trailers,
+  no emoji.
+
 ## Pull requests
 
 A pull request should explain the user-visible outcome, tests performed, and
