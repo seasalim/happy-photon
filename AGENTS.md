@@ -14,6 +14,20 @@ Happy Photon is a performance-focused .NET 10/Avalonia photo workflow for browsi
 - Use theme resources from `Themes/HappyPhotonTheme.axaml` and `Views/HappyPhotonColors.cs`; never hardcode UI colors.
 - Keep service implementations flat in `Services/`. Extend the matching `MainWindowViewModel` partial instead of growing its root file.
 
+## Planning
+
+- A plan states the goal, the approach in a few sentences, the main touch points, and any genuinely non-obvious decision or risk. That is the whole plan.
+- Budgets: inline plans under 10 lines; a written plan document for even a large feature fits on roughly one page.
+- Decisions belong in plans; discovery and implementation detail do not. Never include: exhaustive code audits or inventories (file:line tables, reference counts), restated current behavior beyond a short paragraph, derivations or proofs, exact SQL, method signatures, or code snippets. The implementer finds and decides those.
+- Match detail to risk. Expand a step only when it is genuinely ambiguous or risky; routine steps get one line or none.
+- Do not enumerate file-by-file edits, edge-case matrices, phases, or contingency branches unless asked.
+- A plan that will not fit its budget usually means the change should be split — propose the smaller first slice instead.
+
+## Commits
+
+- Commit messages are a single imperative line matching the existing history (e.g. "Highlight the target of each workflow tour step").
+- No body, no bullet lists, no "Co-Authored-By" or "Generated with" trailers, no emoji.
+
 ## Load context on demand
 
 Read only the material relevant to the change:
