@@ -134,6 +134,13 @@
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
+                <Button x:Name="SettingsButton"
+                        Classes="caption help"
+                        Content="⚙"
+                        IsEnabled="{Binding AreXmpSettingsReady}"
+                        ToolTip.Tip="Settings (Ctrl+,)"
+                        AutomationProperties.Name="Settings"
+                        Command="{Binding OpenSettingsCommand}"/>
                 <Button x:Name="HelpAboutButton"
                         Classes="caption help"
                         Content="?"

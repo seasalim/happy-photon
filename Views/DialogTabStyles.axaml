@@ -1,0 +1,24 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style Selector="TabItem.dialog-tab">
+        <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="18,10"/>
+        <Setter Property="FontFamily" Value="{StaticResource FontHeading}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeHeading}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="TabItem.dialog-tab:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+    <Style Selector="TabItem.dialog-tab:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+    </Style>
+    <Style Selector="TabItem.dialog-tab:selected">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+</Styles>

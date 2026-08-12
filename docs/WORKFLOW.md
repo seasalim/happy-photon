@@ -41,6 +41,13 @@ The choice takes effect immediately and is stored with the other application
 preferences. Mid-grey provides a neutral L\* 50 surround for judging photographs;
 it is a persistent appearance choice, not a temporary color-assessment mode.
 
+Open **Settings** with the title-bar gear or `Ctrl+,`. The Metadata tab can
+enable per-catalog XMP reading or read/write interop for ratings, flags, and
+recognized color-label names. Read/write creates or updates a sidecar only
+after you change an assessment; enabling it does not publish older catalog
+assessments. Sidecars may sync through the folder's cloud provider, while the
+original photo remains untouched and is never downloaded for XMP work.
+
 ## 1. Open and survey the shoot
 
 Start in **Library**. Press `G` at any time to return to it.
@@ -351,6 +358,7 @@ remains where it started and unchanged.
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
 | `Ctrl+Z` / `Ctrl+Y` | Undo or redo color and tonal edits |
 | `Ctrl+E` | Open the export dialog |
+| `Ctrl+,` | Open Settings |
 | `F` | Toggle image-only fullscreen |
 
 Use the `?` button in the title bar to open **Help & About**. The complete

@@ -4,7 +4,7 @@ namespace HappyPhoton.Services;
 
 internal static class CatalogMigrations
 {
-    internal const int CurrentVersion = 1;
+    internal const int CurrentVersion = 2;
     private const string SchemaVersionKey = "schema_version";
 
     public static async Task RunAsync(SqliteConnection connection)
@@ -53,6 +53,7 @@ internal static class CatalogMigrations
         int version) => version switch
         {
             1 => AddColorLabelAsync(connection, transaction),
+            2 => AddImageAssessmentsAsync(connection, transaction),
             _ => throw new InvalidDataException(
                 $"Catalog migration {version} is not available.")
         };
@@ -82,6 +83,35 @@ internal static class CatalogMigrations
         command.Transaction = transaction;
         command.CommandText =
             "ALTER TABLE images ADD COLUMN color_label INTEGER NOT NULL DEFAULT 0;";
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private static async Task AddImageAssessmentsAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            CREATE TABLE image_assessments (
+                image_id INTEGER PRIMARY KEY,
+                revision INTEGER NOT NULL,
+                assessed_utc TEXT NOT NULL,
+                pending_axes INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
+            );
+            """;
+        await command.ExecuteNonQueryAsync();
+
+        var capturedUtc = DateTime.UtcNow.ToString("O");
+        command.CommandText = """
+            INSERT INTO image_assessments (
+                image_id, revision, assessed_utc, pending_axes)
+            SELECT id, 1, @assessedUtc, 0
+            FROM images
+            WHERE rating <> 0 OR flag_state <> 0 OR color_label <> 0;
+            """;
+        command.Parameters.AddWithValue("@assessedUtc", capturedUtc);
         await command.ExecuteNonQueryAsync();
     }
 

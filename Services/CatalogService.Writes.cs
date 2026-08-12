@@ -100,24 +100,9 @@ public partial class CatalogService
     /// <summary>Saves the culling flag state for an image.</summary>
     public async Task SaveFlagStateAsync(long catalogId, ImageFlag flag)
     {
-        EnsureInitialized();
-        await _connectionGate.WaitAsync();
-        try
-        {
-            using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = @"
-                UPDATE images SET flag_state = @flagState, updated_utc = @updated
-                WHERE id = @id;
-            ";
-            cmd.Parameters.AddWithValue("@id", catalogId);
-            cmd.Parameters.AddWithValue("@flagState", (int)flag);
-            cmd.Parameters.AddWithValue("@updated", DateTime.UtcNow.ToString("O"));
-            await cmd.ExecuteNonQueryAsync();
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        await MutateAssessmentsAsync(
+            [new AssessmentMutation(catalogId, AssessmentAxes.Flag, Flag: flag)],
+            AssessmentAxes.None);
     }
 
     /// <summary>Saves one flag atomically for a distinct group of images.</summary>
@@ -125,36 +110,19 @@ public partial class CatalogService
         IReadOnlyCollection<long> catalogIds,
         ImageFlag flag)
     {
-        await SaveAssessmentValueAsync(
-            catalogIds,
-            (connection, transaction, ids) => WriteFlagStateAsync(
-                connection,
-                transaction,
-                ids,
-                flag));
+        await MutateAssessmentsAsync(
+            catalogIds.Distinct().Select(id => new AssessmentMutation(
+                id, AssessmentAxes.Flag, Flag: flag)).ToArray(),
+            AssessmentAxes.None);
     }
 
     /// <summary>Saves a star rating clamped to the range 0-5.</summary>
     public async Task SaveRatingAsync(long catalogId, int rating)
     {
-        EnsureInitialized();
-        await _connectionGate.WaitAsync();
-        try
-        {
-            using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = @"
-                UPDATE images SET rating = @rating, updated_utc = @updated
-                WHERE id = @id;
-            ";
-            cmd.Parameters.AddWithValue("@id", catalogId);
-            cmd.Parameters.AddWithValue("@rating", Math.Clamp(rating, 0, 5));
-            cmd.Parameters.AddWithValue("@updated", DateTime.UtcNow.ToString("O"));
-            await cmd.ExecuteNonQueryAsync();
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        await MutateAssessmentsAsync(
+            [new AssessmentMutation(catalogId, AssessmentAxes.Rating,
+                Rating: Math.Clamp(rating, 0, 5))],
+            AssessmentAxes.None);
     }
 
     /// <summary>Saves one rating atomically for a distinct group of images.</summary>
@@ -162,34 +130,11 @@ public partial class CatalogService
         IReadOnlyCollection<long> catalogIds,
         int rating)
     {
-        await SaveAssessmentValueAsync(
-            catalogIds,
-            (connection, transaction, ids) => WriteRatingAsync(
-                connection,
-                transaction,
-                ids,
-                rating));
-    }
-
-    private async Task SaveAssessmentValueAsync(
-        IReadOnlyCollection<long> catalogIds,
-        Func<SqliteConnection, SqliteTransaction, IReadOnlyCollection<long>, Task> write)
-    {
-        EnsureInitialized();
-        var ids = catalogIds.Distinct().ToArray();
-        if (ids.Length == 0) return;
-
-        await _connectionGate.WaitAsync();
-        try
-        {
-            using var transaction = _connection!.BeginTransaction();
-            await write(_connection, transaction, ids);
-            await transaction.CommitAsync();
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        await MutateAssessmentsAsync(
+            catalogIds.Distinct().Select(id => new AssessmentMutation(
+                id, AssessmentAxes.Rating,
+                Rating: Math.Clamp(rating, 0, 5))).ToArray(),
+            AssessmentAxes.None);
     }
 
     internal static Task WriteFlagStateAsync(
@@ -255,25 +200,10 @@ public partial class CatalogService
         IReadOnlyCollection<long> catalogIds,
         ColorLabel colorLabel)
     {
-        EnsureInitialized();
-        var ids = catalogIds.Distinct().ToArray();
-        if (ids.Length == 0) return;
-
-        await _connectionGate.WaitAsync();
-        try
-        {
-            using var transaction = _connection!.BeginTransaction();
-            await WriteColorLabelAsync(
-                _connection,
-                transaction,
-                ids,
-                colorLabel);
-            await transaction.CommitAsync();
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        await MutateAssessmentsAsync(
+            catalogIds.Distinct().Select(id => new AssessmentMutation(
+                id, AssessmentAxes.Label, ColorLabel: colorLabel)).ToArray(),
+            AssessmentAxes.None);
     }
 
     /// <summary>Writes labels using a caller-owned connection gate and transaction.</summary>
@@ -325,10 +255,16 @@ public partial class CatalogService
         await _connectionGate.WaitAsync();
         try
         {
+            using var transaction = _connection!.BeginTransaction();
             using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = "DELETE FROM images WHERE id = @id;";
+            cmd.Transaction = transaction;
+            cmd.CommandText =
+                "DELETE FROM image_assessments WHERE image_id = @id;";
             cmd.Parameters.AddWithValue("@id", catalogId);
             await cmd.ExecuteNonQueryAsync();
+            cmd.CommandText = "DELETE FROM images WHERE id = @id;";
+            await cmd.ExecuteNonQueryAsync();
+            await transaction.CommitAsync();
         }
         finally
         {

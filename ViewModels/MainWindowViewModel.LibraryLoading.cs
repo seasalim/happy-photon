@@ -16,6 +16,8 @@ public partial class MainWindowViewModel
     public async Task<int> LoadFolderAsync(string folderPath)
     {
         var generation = Interlocked.Increment(ref _libraryGeneration);
+        await CancelXmpReconcileAsync();
+        _xmpIndexedSidecars = [];
         CancelSourceHydration();
         var requestCts = new CancellationTokenSource();
         var previousThumbnailLoad = Interlocked.Exchange(
@@ -38,11 +40,12 @@ public partial class MainWindowViewModel
         {
             var folderContents = await Task.Run(
                 () => (
-                    images: _folderService.GetImagesInFolder(folderPath).ToList(),
+                    scan: _folderService.ScanFolder(folderPath),
                     hasSubfolders: _folderTreeService.HasSubfolders(folderPath)),
                 cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            var imageFiles = folderContents.images;
+            var imageFiles = folderContents.scan.Images.ToList();
+            _xmpIndexedSidecars = folderContents.scan.SidecarPaths;
             CurrentFolderHasSubfolders = folderContents.hasSubfolders;
             var imagePaths = imageFiles.Select(image => image.FilePath).ToArray();
             // Microsoft.Data.Sqlite async APIs can perform synchronous disk work.
@@ -61,6 +64,9 @@ public partial class MainWindowViewModel
                 imageFile.Flag = state.Flag;
                 imageFile.Rating = state.Rating;
                 imageFile.ColorLabel = state.ColorLabel;
+                imageFile.AssessmentRevision = state.AssessmentRevision;
+                imageFile.AssessedUtc = state.AssessedUtc;
+                imageFile.PendingAssessmentAxes = state.PendingAxes;
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -86,6 +92,8 @@ public partial class MainWindowViewModel
 
             pumpStarted = true;
             StartThumbnailSession(imageFiles, requestCts, generation);
+            await StartXmpReconcileAsync(generation);
+            ReportPendingXmpAssessments(imageFiles);
             StartBurstAnalysisIfRequested();
             return generation;
         }

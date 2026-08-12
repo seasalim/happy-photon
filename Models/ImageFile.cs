@@ -80,6 +80,9 @@ public partial class ImageFile : ObservableObject
     /// The catalog database ID for this image. Set after loading from catalog.
     /// </summary>
     public long CatalogId { get; set; }
+    public long AssessmentRevision { get; set; }
+    public DateTime? AssessedUtc { get; set; }
+    public AssessmentAxes PendingAssessmentAxes { get; set; }
 
     public bool ThumbnailLoadFailed { get; set; }
 

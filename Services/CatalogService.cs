@@ -157,9 +157,14 @@ public partial class CatalogService : IDisposable
                 }
 
                 cmd.CommandText = $@"
-                SELECT file_path, id, edit_settings, edit_version, flag_state, rating,
-                       color_label
+                SELECT images.file_path, images.id, images.edit_settings,
+                       images.edit_version, images.flag_state, images.rating,
+                       images.color_label, image_assessments.revision,
+                       image_assessments.assessed_utc,
+                       image_assessments.pending_axes
                 FROM images
+                LEFT JOIN image_assessments
+                  ON image_assessments.image_id = images.id
                 WHERE file_path COLLATE NOCASE IN ({string.Join(", ", parameterNames)});
             ";
 
@@ -174,8 +179,19 @@ public partial class CatalogService : IDisposable
                         ? 0
                         : (int)Math.Clamp(reader.GetInt64(5), 0, 5);
                     var colorLabel = ReadEnumColumn(reader, 6, ColorLabel.None);
+                    var revision = reader.IsDBNull(7) ? 0 : reader.GetInt64(7);
+                    DateTime? assessedUtc = reader.IsDBNull(8)
+                        ? null
+                        : DateTime.Parse(
+                            reader.GetString(8),
+                            null,
+                            System.Globalization.DateTimeStyles.RoundtripKind);
+                    var pendingAxes = reader.IsDBNull(9)
+                        ? AssessmentAxes.None
+                        : (AssessmentAxes)reader.GetInt32(9);
                     states[path] = new CatalogImageState(
-                        catalogId, settings, flag, rating, colorLabel);
+                        catalogId, settings, flag, rating, colorLabel,
+                        revision, assessedUtc, pendingAxes);
                 }
             }
             finally

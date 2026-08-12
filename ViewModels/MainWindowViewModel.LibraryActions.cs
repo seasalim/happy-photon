@@ -223,9 +223,9 @@ public partial class MainWindowViewModel
                 await target.EnsureCatalogIdAsync(_catalogService);
             }
 
-            await _catalogService.SaveFlagStateAsync(
-                targets.Select(target => target.CatalogId).ToArray(),
-                next);
+            await CommitAssessmentAsync(targets.Select(target =>
+                new AssessmentMutation(
+                    target.CatalogId, AssessmentAxes.Flag, Flag: next)).ToArray());
         }
         catch (Exception ex)
         {
@@ -282,9 +282,10 @@ public partial class MainWindowViewModel
                 await target.EnsureCatalogIdAsync(_catalogService);
             }
 
-            await _catalogService.SaveRatingAsync(
-                targets.Select(target => target.CatalogId).ToArray(),
-                rating);
+            await CommitAssessmentAsync(targets.Select(target =>
+                new AssessmentMutation(
+                    target.CatalogId, AssessmentAxes.Rating,
+                    Rating: rating)).ToArray());
         }
         catch (Exception ex)
         {

@@ -13,6 +13,7 @@
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SurfaceLow}">
     <Window.Styles>
+        <StyleInclude Source="avares://HappyPhoton/Views/DialogTabStyles.axaml"/>
         <Style Selector="Border.key">
             <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
@@ -25,27 +26,6 @@
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="Foreground" Value="{StaticResource Primary}"/>
-        </Style>
-        <Style Selector="TabItem.dialog-tab">
-            <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="CornerRadius" Value="0"/>
-            <Setter Property="Padding" Value="18,10"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontHeading}"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeHeading}"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-        </Style>
-        <Style Selector="TabItem.dialog-tab:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        </Style>
-        <Style Selector="TabItem.dialog-tab:focus-visible">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
-        </Style>
-        <Style Selector="TabItem.dialog-tab:selected">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.about-link">
             <Setter Property="Background" Value="Transparent"/>

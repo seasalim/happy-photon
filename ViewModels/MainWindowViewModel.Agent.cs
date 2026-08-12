@@ -148,7 +148,10 @@ public partial class MainWindowViewModel
             {
                 image.Rating = rating;
                 await image.EnsureCatalogIdAsync(_catalogService);
-                await _catalogService.SaveRatingAsync(image.CatalogId, image.Rating);
+                await CommitAssessmentAsync(
+                    [new AssessmentMutation(
+                        image.CatalogId, AssessmentAxes.Rating,
+                        Rating: image.Rating)]);
             }
             catch (Exception ex)
             {
@@ -179,7 +182,10 @@ public partial class MainWindowViewModel
             {
                 image.Flag = flag;
                 await image.EnsureCatalogIdAsync(_catalogService);
-                await _catalogService.SaveFlagStateAsync(image.CatalogId, image.Flag);
+                await CommitAssessmentAsync(
+                    [new AssessmentMutation(
+                        image.CatalogId, AssessmentAxes.Flag,
+                        Flag: image.Flag)]);
             }
             catch (Exception ex)
             {
@@ -208,9 +214,10 @@ public partial class MainWindowViewModel
                 await image.EnsureCatalogIdAsync(_catalogService);
             }
 
-            await _catalogService.SaveColorLabelAsync(
-                images.Select(image => image.CatalogId).ToArray(),
-                colorLabel);
+            await CommitAssessmentAsync(images.Select(image =>
+                new AssessmentMutation(
+                    image.CatalogId, AssessmentAxes.Label,
+                    ColorLabel: colorLabel)).ToArray());
         }
         catch (Exception ex)
         {

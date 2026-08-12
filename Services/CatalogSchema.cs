@@ -22,6 +22,24 @@ internal static class CatalogSchema
         await CreateTablesAsync(connection);
         await CatalogMigrations.RunAsync(connection);
         await ValidateImageSchemaAsync(connection);
+        await ValidateAssessmentSchemaAsync(connection);
+    }
+
+    private static async Task ValidateAssessmentSchemaAsync(
+        SqliteConnection connection)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA table_info(image_assessments);";
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync()) columns.Add(reader.GetString(1));
+
+        string[] required = ["image_id", "revision", "assessed_utc", "pending_axes"];
+        if (required.Any(column => !columns.Contains(column)))
+        {
+            throw new InvalidDataException(
+                "This catalog has an unsupported image assessment schema.");
+        }
     }
 
     private static async Task CreateTablesAsync(SqliteConnection connection)

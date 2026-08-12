@@ -21,6 +21,7 @@ public static class ShortcutCatalog
             new("Page Up  /  Page Down", "Move by one visible page in Library"),
             new("Home  /  End", "Select the first or last image in Library"),
             new("Folder Enter", "Open the selected folder and focus the Library grid"),
+            new("Ctrl+,", "Open Settings"),
         ]),
         new("Organize",
         [

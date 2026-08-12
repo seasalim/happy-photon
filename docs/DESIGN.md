@@ -118,6 +118,14 @@ spacing:
   margin-desktop: 64px
 ---
 
+## Settings
+
+The title bar exposes Settings with a gear between the quick Theme menu and
+Help. Settings uses the same tab and footer structure as Help & About. General
+contains the application theme; Metadata contains catalog-scoped XMP mode and
+naming controls, with immediate application and a disclosure about interop,
+cloud synchronization, and original-file safety.
+
 ## Brand & Style
 
 The brand personality for the design system is energetic, luminous, and high-velocity. It targets a tech-forward audience that values performance and visual stimulation. The UI should evoke a sense of "captured light"—vibrant, focused, and humming with energy.

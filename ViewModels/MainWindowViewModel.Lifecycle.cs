@@ -5,6 +5,12 @@ public partial class MainWindowViewModel
     public async ValueTask DisposeAsync()
     {
         Interlocked.Increment(ref _libraryGeneration);
+        await CancelXmpReconcileAsync();
+        if (_xmpWriter != null)
+        {
+            await _xmpWriter.DisposeAsync();
+            _xmpWriter = null;
+        }
         CancelSourceHydration();
         _burstAnalysisRestartRequested = false;
         CancelBurstAnalysis();

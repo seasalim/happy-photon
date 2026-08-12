@@ -24,6 +24,7 @@
         <KeyBinding Gesture="Enter" Command="{Binding EnterDevelopModeCommand}"/>
         <KeyBinding Gesture="Delete" Command="{Binding DeleteImageCommand}"/>
         <KeyBinding Gesture="Ctrl+E" Command="{Binding ShowExportDialogCommand}"/>
+        <KeyBinding Gesture="Ctrl+OemComma" Command="{Binding OpenSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllCommand}"/>
         <KeyBinding Gesture="Ctrl+Shift+C" Command="{Binding CopyEditSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+Shift+V" Command="{Binding PasteEditSettingsCommand}"/>

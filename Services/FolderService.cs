@@ -7,22 +7,37 @@ namespace HappyPhoton.Services;
 /// </summary>
 public class FolderService
 {
-    public IEnumerable<ImageFile> GetImagesInFolder(string folderPath)
+    public FolderScanResult ScanFolder(string folderPath)
     {
         if (!Directory.Exists(folderPath))
-            yield break;
+            return new FolderScanResult([], []);
 
-        var files = new DirectoryInfo(folderPath).EnumerateFiles()
-            .Where(file => ImageFile.SupportedExtensions.Contains(
-                file.Extension))
-            .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase);
-
-        foreach (var file in files)
+        var images = new List<ImageFile>();
+        var sidecars = new List<string>();
+        foreach (var file in new DirectoryInfo(folderPath).EnumerateFiles())
         {
-            yield return new ImageFile(
-                file.FullName,
-                SourceAvailabilityService.GetEnumerationHint(file));
+            if (ImageFile.SupportedExtensions.Contains(file.Extension))
+            {
+                images.Add(new ImageFile(
+                    file.FullName,
+                    SourceAvailabilityService.GetEnumerationHint(file)));
+            }
+            else if (string.Equals(file.Extension, ".xmp",
+                         StringComparison.OrdinalIgnoreCase))
+            {
+                sidecars.Add(file.FullName);
+            }
         }
+
+        images.Sort((left, right) => StringComparer.OrdinalIgnoreCase.Compare(
+            left.FilePath, right.FilePath));
+        sidecars.Sort(StringComparer.OrdinalIgnoreCase);
+        return new FolderScanResult(images, sidecars);
+    }
+
+    public IEnumerable<ImageFile> GetImagesInFolder(string folderPath)
+    {
+        return ScanFolder(folderPath).Images;
     }
 
     public bool IsSupportedImage(string filePath)

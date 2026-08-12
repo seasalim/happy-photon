@@ -1,0 +1,96 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:HappyPhoton.ViewModels"
+        xmlns:models="using:HappyPhoton.Models"
+        xmlns:services="using:HappyPhoton.Services"
+        x:Class="HappyPhoton.Views.SettingsDialog"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Settings"
+        Width="650" Height="610" MinWidth="540" MinHeight="480"
+        CanResize="True" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource SurfaceLow}">
+    <Window.Styles>
+        <StyleInclude Source="avares://HappyPhoton/Views/DialogTabStyles.axaml"/>
+        <Style Selector="TextBlock.setting-heading">
+            <Setter Property="FontFamily" Value="{StaticResource FontHeading}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeHeading}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        </Style>
+        <Style Selector="TextBlock.setting-note">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceMid}"
+                BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1"
+                Padding="20,16">
+            <StackPanel Spacing="3">
+                <TextBlock Text="Settings" FontFamily="{StaticResource FontHeading}"
+                           FontSize="20" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <TextBlock Text="Appearance and catalog metadata preferences."
+                           FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+            </StackPanel>
+        </Border>
+
+        <TabControl x:Name="SettingsTabs" Grid.Row="1" SelectedIndex="0"
+                    Background="{DynamicResource SurfaceLow}">
+            <TabItem Header="General" Classes="dialog-tab">
+                <StackPanel Margin="20,16" Spacing="12" MaxWidth="540"
+                            HorizontalAlignment="Left">
+                    <TextBlock Text="Appearance" Classes="setting-heading"/>
+                    <TextBlock Text="Theme" Foreground="{DynamicResource TextSecondary}"/>
+                    <ComboBox x:Name="ThemeChoice" SelectionChanged="OnThemeChanged">
+                        <ComboBoxItem Content="Dark"/>
+                        <ComboBoxItem Content="Mid-grey"/>
+                    </ComboBox>
+                    <TextBlock Text="Changes apply immediately and are shared by the application."
+                               Classes="setting-note"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Metadata" Classes="dialog-tab">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20,16" Spacing="12" MaxWidth="540"
+                                HorizontalAlignment="Left">
+                        <TextBlock Text="XMP sidecars" Classes="setting-heading"/>
+                        <TextBlock Text="Applies to this catalog" Classes="setting-note"/>
+                        <TextBlock Text="Mode" Foreground="{DynamicResource TextSecondary}"/>
+                        <ComboBox x:Name="XmpModeChoice" SelectionChanged="OnXmpModeChanged">
+                            <ComboBoxItem Content="Off"/>
+                            <ComboBoxItem Content="Read only"/>
+                            <ComboBoxItem Content="Read &amp; write"/>
+                        </ComboBox>
+                        <TextBlock Text="Off keeps today’s catalog-only behavior. Read only adopts newer supported facts. Read &amp; write also writes an axis after you change it locally."
+                                   Classes="setting-note"/>
+                        <TextBlock Text="Naming for new sidecars"
+                                   Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,0"/>
+                        <ComboBox x:Name="XmpNamingChoice" SelectionChanged="OnXmpNamingChanged">
+                            <ComboBoxItem Content="Full filename"/>
+                            <ComboBoxItem Content="Base filename"/>
+                        </ComboBox>
+                        <TextBlock Text="Full name: IMG_1234.CR3.xmp   ·   Base name: IMG_1234.xmp. Existing sidecars keep their form and are never renamed."
+                                   Classes="setting-note"/>
+                        <Border Background="{DynamicResource SurfaceMid}"
+                                BorderBrush="{DynamicResource Divider}" BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusMedium}" Padding="14" Margin="0,8,0,0">
+                            <TextBlock Classes="setting-note"
+                                       Text="Sidecars are created beside photos and may sync through cloud providers. Originals are never modified. Ratings interoperate well; labels and flags may not. Enabling writing does not bulk-create sidecars for previously assessed images."/>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceMid}"
+                BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0"
+                Padding="20,12">
+            <Button Content="Close" HorizontalAlignment="Right" MinWidth="84"
+                    Padding="16,6" Classes="accent" Click="OnCloseClick"/>
+        </Border>
+    </Grid>
+</Window>

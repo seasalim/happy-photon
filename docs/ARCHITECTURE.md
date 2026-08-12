@@ -1,5 +1,20 @@
 # Happy Photon Architecture
 
+## XMP sidecars
+
+XMP support is opt-in per catalog. Folder enumeration records `.xmp` files in
+the same pass as supported images, while XML parsing begins only after the
+thumbnail session has started and runs as cancellable background work.
+Reconciliation compares rating, flag, and label independently against the
+revisioned `image_assessments` row; catalog revisions and the active library
+generation guard UI adoption.
+
+In Read & write mode, only a committed local assessment mutation schedules a
+sidecar write. A single background writer coalesces work by target, merges the
+changed axes into parsed XML, revalidates the candidate path, timestamp, and
+length, then promotes a temporary file beside the sidecar. Sidecar availability
+is checked independently, and this pipeline never opens the original image.
+
 Happy Photon is a desktop photo management and editing app (Avalonia UI, .NET 10) with an intentionally simple workflow. This document describes the overall structure and
 then goes deep on the two most intricate subsystems: **catalog loading** and the
 **thumbnail pump**. For day-to-day agent guidance (style, shortcuts, commands), see

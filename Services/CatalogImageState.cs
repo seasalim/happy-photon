@@ -7,4 +7,7 @@ public sealed record CatalogImageState(
     EditSettings EditSettings,
     ImageFlag Flag,
     int Rating,
-    ColorLabel ColorLabel);
+    ColorLabel ColorLabel,
+    long AssessmentRevision = 0,
+    DateTime? AssessedUtc = null,
+    AssessmentAxes PendingAxes = AssessmentAxes.None);

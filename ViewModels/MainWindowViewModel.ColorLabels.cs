@@ -68,9 +68,10 @@ public partial class MainWindowViewModel
                 await target.EnsureCatalogIdAsync(_catalogService);
             }
 
-            await _catalogService.SaveColorLabelAsync(
-                targets.Select(target => target.CatalogId).ToArray(),
-                next);
+            await CommitAssessmentAsync(targets.Select(target =>
+                new AssessmentMutation(
+                    target.CatalogId, AssessmentAxes.Label,
+                    ColorLabel: next)).ToArray());
         }
         catch (Exception ex)
         {

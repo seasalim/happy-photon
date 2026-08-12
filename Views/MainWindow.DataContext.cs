@@ -47,6 +47,8 @@ public partial class MainWindow
         vm.ZoomFitCommand = new RelayCommand(ZoomFit);
         vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(zoom => vm.ZoomLevel = zoom);
         vm.RequestExportDialogAsync = ShowExportDialogAsync;
+        vm.RequestSettingsDialogAsync = async () =>
+            await new SettingsDialog(vm).ShowDialog(this);
         vm.ConfirmMoveToTrashAsync = ConfirmMoveToTrashAsync;
         vm.ConfirmDeleteRejectedAsync = ConfirmDeleteRejectedAsync;
         vm.ConfirmBatchApplyAsync = ConfirmBatchApplyAsync;
@@ -111,6 +113,7 @@ public partial class MainWindow
 
             vm.Library.FileTypeFilter = settings.FileTypeFilter;
             vm.SetColorLabelNames(colorLabelNames);
+            await vm.RestoreXmpSettingsAsync();
             vm.RestoreLibraryThumbnailSize(settings.LibraryThumbnailSize);
             vm.RestoreAppTheme(settings.AppTheme);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;
