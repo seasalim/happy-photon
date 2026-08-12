@@ -28,7 +28,8 @@ project rules:
 - Keep every C# and XAML source file under 500 lines.
 - Preserve MVVM boundaries.
 - Include tests proportional to the risk.
-- Include before/after screenshots for visible UI changes.
+- Before/after screenshots are welcome for visible UI changes, but optional;
+  describe the visible change in words when you do not attach them.
 
 ## Pull requests
 

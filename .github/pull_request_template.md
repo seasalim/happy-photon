@@ -7,7 +7,7 @@ Describe the user-visible or engineering outcome.
 - [ ] Release build succeeds.
 - [ ] Relevant automated tests pass.
 - [ ] No C# or XAML source file exceeds 500 lines.
-- [ ] UI changes include before/after screenshots.
+- [ ] UI changes are described, with before/after screenshots if available.
 - [ ] Original-file safety remains intact.
 - [ ] Catalog or migration effects are documented.
 - [ ] Agent privacy and mutation effects are documented.
