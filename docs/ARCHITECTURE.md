@@ -107,7 +107,7 @@ screen, including while a step is suspended. Each coachmark also carries a photo
 trail anchored to its own edge, plus an opt-in glow on small target regions, so the
 step names its target without any coordinate tracking between controls. Both marks
 are decorative and never hit testable. Tour navigation never changes photograph
-state, filters, or export selection; its export action opens a zero-selection preview
+state, filters, or selection; its export action opens a zero-selection preview
 with a prominent return to Library action instead of an enabled export command.
 
 ## The catalog
@@ -169,8 +169,9 @@ steady-state cost is zero.
   catalog transaction reuses a parameterized update for every target. Any missing row
   rolls back the entire batch; models update only after commit. Thumbnail refresh uses
   at most six workers and discards results for images no longer in the library.
-- **Flags/ratings**: one `UPDATE` per user action. **Color labels** use one set-based
-  JSON-backed `UPDATE` for the full selection and roll back if any target is missing.
+- **Flags, ratings, and color labels**: one set-based JSON-backed `UPDATE` writes every
+  target for the user action inside a transaction. A missing target rolls back the set,
+  and live models change only after commit.
 - **App settings**: multi-key saves share one catalog transaction. First-run completion
   atomically writes both folder paths, the experience version, and current preferences.
 - **Deletes**: asset files first, then the row.

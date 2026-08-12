@@ -47,12 +47,13 @@ public partial class MainWindowViewModel
     {
         if (IsFullScreenMode || !Enum.IsDefined(colorLabel)) return;
 
-        var targets = ResolveActionTargets();
+        var targets = ResolveActionTargets().Targets;
         if (targets.Count == 0) return;
         var next = colorLabel != ColorLabel.None &&
                    targets.All(image => image.ColorLabel == colorLabel)
             ? ColorLabel.None
             : colorLabel;
+        if (targets.All(image => image.ColorLabel == next)) return;
         var selectedImage = SelectedImage;
         var replacement = selectedImage != null &&
                           targets.Contains(selectedImage) &&
@@ -90,12 +91,9 @@ public partial class MainWindowViewModel
             SelectedImage = replacement;
         }
         UpdateSelectedCount();
-    }
-
-    private IReadOnlyList<ImageFile> ResolveActionTargets()
-    {
-        var selected = Library.GetSelectedImages().ToList();
-        if (selected.Count > 0) return selected;
-        return SelectedImage == null ? [] : [SelectedImage];
+        if (targets.Count > 1)
+        {
+            ShowTransientStatus($"Labeled {targets.Count} photos");
+        }
     }
 }

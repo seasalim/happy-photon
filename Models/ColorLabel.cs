@@ -23,7 +23,9 @@ public enum ColorLabelFilter
 
 public sealed record ColorLabelChoice(ColorLabel Value, string Name)
 {
-    public string ToolTip => $"Set {Name.ToLowerInvariant()} label; click again to clear";
+    public string ToolTip =>
+        $"Set {Name.ToLowerInvariant()} label on the Library selection when non-empty, " +
+        "otherwise the active photo; active photo only in Develop; click again to clear";
     public string AutomationName => $"Set {Name.ToLowerInvariant()} color label";
 }
 

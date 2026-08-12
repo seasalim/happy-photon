@@ -120,6 +120,20 @@ public partial class CatalogService
         }
     }
 
+    /// <summary>Saves one flag atomically for a distinct group of images.</summary>
+    public async Task SaveFlagStateAsync(
+        IReadOnlyCollection<long> catalogIds,
+        ImageFlag flag)
+    {
+        await SaveAssessmentValueAsync(
+            catalogIds,
+            (connection, transaction, ids) => WriteFlagStateAsync(
+                connection,
+                transaction,
+                ids,
+                flag));
+    }
+
     /// <summary>Saves a star rating clamped to the range 0-5.</summary>
     public async Task SaveRatingAsync(long catalogId, int rating)
     {
@@ -140,6 +154,99 @@ public partial class CatalogService
         finally
         {
             _connectionGate.Release();
+        }
+    }
+
+    /// <summary>Saves one rating atomically for a distinct group of images.</summary>
+    public async Task SaveRatingAsync(
+        IReadOnlyCollection<long> catalogIds,
+        int rating)
+    {
+        await SaveAssessmentValueAsync(
+            catalogIds,
+            (connection, transaction, ids) => WriteRatingAsync(
+                connection,
+                transaction,
+                ids,
+                rating));
+    }
+
+    private async Task SaveAssessmentValueAsync(
+        IReadOnlyCollection<long> catalogIds,
+        Func<SqliteConnection, SqliteTransaction, IReadOnlyCollection<long>, Task> write)
+    {
+        EnsureInitialized();
+        var ids = catalogIds.Distinct().ToArray();
+        if (ids.Length == 0) return;
+
+        await _connectionGate.WaitAsync();
+        try
+        {
+            using var transaction = _connection!.BeginTransaction();
+            await write(_connection, transaction, ids);
+            await transaction.CommitAsync();
+        }
+        finally
+        {
+            _connectionGate.Release();
+        }
+    }
+
+    internal static Task WriteFlagStateAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        IReadOnlyCollection<long> catalogIds,
+        ImageFlag flag) =>
+        WriteAssessmentValueAsync(
+            connection,
+            transaction,
+            catalogIds,
+            "flag_state",
+            (int)flag,
+            "flag",
+            Enum.IsDefined(flag));
+
+    internal static Task WriteRatingAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        IReadOnlyCollection<long> catalogIds,
+        int rating) =>
+        WriteAssessmentValueAsync(
+            connection,
+            transaction,
+            catalogIds,
+            "rating",
+            Math.Clamp(rating, 0, 5),
+            "rating",
+            isValid: true);
+
+    private static async Task WriteAssessmentValueAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        IReadOnlyCollection<long> catalogIds,
+        string column,
+        int value,
+        string valueName,
+        bool isValid)
+    {
+        var ids = catalogIds.Distinct().ToArray();
+        if (ids.Length == 0) return;
+        if (!isValid) throw new ArgumentOutOfRangeException(valueName);
+
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = $"""
+            UPDATE images SET {column} = @value, updated_utc = @updated
+            WHERE id IN (SELECT value FROM json_each(@ids));
+            """;
+        command.Parameters.AddWithValue("@value", value);
+        command.Parameters.AddWithValue("@updated", DateTime.UtcNow.ToString("O"));
+        command.Parameters.AddWithValue("@ids", JsonSerializer.Serialize(ids));
+        var affected = await command.ExecuteNonQueryAsync();
+        if (affected != ids.Length)
+        {
+            throw new InvalidOperationException(
+                $"Catalog {valueName} update expected {ids.Length} rows but updated {affected}.");
         }
     }
 

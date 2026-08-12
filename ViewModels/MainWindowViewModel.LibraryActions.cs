@@ -157,10 +157,7 @@ public partial class MainWindowViewModel
     {
         if (IsFullScreenMode) return;
 
-        var flag = SelectedImage?.IsPicked == true
-            ? ImageFlag.Unflagged
-            : ImageFlag.Picked;
-        await SetFlagStateAsync(flag);
+        await SetFlagStateAsync(ImageFlag.Picked, toggleUniform: true);
     }
 
     [RelayCommand]
@@ -184,24 +181,52 @@ public partial class MainWindowViewModel
     {
         if (IsFullScreenMode) return;
 
-        var flag = SelectedImage?.IsRejected == true
-            ? ImageFlag.Unflagged
-            : ImageFlag.Rejected;
-        await SetFlagStateAsync(flag);
+        await SetFlagStateAsync(ImageFlag.Rejected, toggleUniform: true);
     }
 
-    private async Task SetFlagStateAsync(ImageFlag flag)
+    private async Task SetFlagStateAsync(
+        ImageFlag flag,
+        bool toggleUniform = false)
     {
-        if (SelectedImage == null) return;
+        var targets = ResolveActionTargets().Targets;
+        if (targets.Count == 0) return;
 
-        var image = SelectedImage;
-        if (image.Flag == flag) return;
+        var next = toggleUniform && flag != ImageFlag.Unflagged &&
+                   targets.All(image => image.Flag == flag)
+            ? ImageFlag.Unflagged
+            : flag;
+        if (targets.All(image => image.Flag == next)) return;
 
-        var replacement = Library.MatchesCurrentFilters(image, flag) ? null : Library.ReplacementAfterRemoval(image);
+        var selectedImage = SelectedImage;
+        var replacement = selectedImage != null &&
+                          targets.Contains(selectedImage) &&
+                          !Library.MatchesCurrentFilters(selectedImage, next)
+            ? Library.ReplacementAfterRemoval(selectedImage)
+            : null;
 
-        image.Flag = flag;
-        await image.EnsureCatalogIdAsync(_catalogService);
-        await _catalogService.SaveFlagStateAsync(image.CatalogId, image.Flag);
+        try
+        {
+            foreach (var target in targets)
+            {
+                await target.EnsureCatalogIdAsync(_catalogService);
+            }
+
+            await _catalogService.SaveFlagStateAsync(
+                targets.Select(target => target.CatalogId).ToArray(),
+                next);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Flag update failed: {ex.Message}");
+            ShowTransientStatus("Unable to update flags");
+            return;
+        }
+
+        foreach (var target in targets)
+        {
+            target.Flag = next;
+        }
 
         Library.RefreshFilters();
         if (replacement != null && Library.ContainsVisible(replacement))
@@ -209,25 +234,58 @@ public partial class MainWindowViewModel
             SelectedImage = replacement;
         }
         UpdateSelectedCount();
+        if (targets.Count > 1)
+        {
+            var action = next switch
+            {
+                ImageFlag.Picked => "Picked",
+                ImageFlag.Rejected => "Rejected",
+                _ => "Unflagged"
+            };
+            ShowTransientStatus($"{action} {targets.Count} photos");
+        }
     }
 
     [RelayCommand]
     private async Task SetRatingAsync(int rating)
     {
         if (IsFullScreenMode) return;
-        if (SelectedImage == null) return;
 
         rating = Math.Clamp(rating, 0, 5);
-        var image = SelectedImage;
-        if (image.Rating == rating) return;
+        var targets = ResolveActionTargets().Targets;
+        if (targets.Count == 0 ||
+            targets.All(image => image.Rating == rating)) return;
 
-        var replacement = Library.MatchesCurrentFilters(image, rating)
-            ? null
-            : Library.ReplacementAfterRemoval(image);
+        var selectedImage = SelectedImage;
+        var replacement = selectedImage != null &&
+                          targets.Contains(selectedImage) &&
+                          !Library.MatchesCurrentFilters(selectedImage, rating)
+            ? Library.ReplacementAfterRemoval(selectedImage)
+            : null;
 
-        image.Rating = rating;
-        await image.EnsureCatalogIdAsync(_catalogService);
-        await _catalogService.SaveRatingAsync(image.CatalogId, image.Rating);
+        try
+        {
+            foreach (var target in targets)
+            {
+                await target.EnsureCatalogIdAsync(_catalogService);
+            }
+
+            await _catalogService.SaveRatingAsync(
+                targets.Select(target => target.CatalogId).ToArray(),
+                rating);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Rating update failed: {ex.Message}");
+            ShowTransientStatus("Unable to update ratings");
+            return;
+        }
+
+        foreach (var target in targets)
+        {
+            target.Rating = rating;
+        }
 
         Library.RefreshFilters();
         if (replacement != null && Library.ContainsVisible(replacement))
@@ -235,5 +293,9 @@ public partial class MainWindowViewModel
             SelectedImage = replacement;
         }
         UpdateSelectedCount();
+        if (targets.Count > 1)
+        {
+            ShowTransientStatus($"Rated {targets.Count} photos");
+        }
     }
 }

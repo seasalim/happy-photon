@@ -113,6 +113,32 @@ public partial class MainWindowViewModel
         UpdateSelectedCount();
     }
 
+    private ActionTargetResolution ResolveActionTargets()
+    {
+        if (IsFullScreenMode)
+        {
+            return new ActionTargetResolution([], false);
+        }
+
+        if (!IsDevelopMode)
+        {
+            var selected = Library.GetSelectedImages().ToList();
+            if (selected.Count > 0)
+            {
+                return new ActionTargetResolution(selected, true);
+            }
+        }
+
+        IReadOnlyList<ImageFile> targets = SelectedImage == null
+            ? []
+            : [SelectedImage];
+        return new ActionTargetResolution(targets, false);
+    }
+
+    private readonly record struct ActionTargetResolution(
+        IReadOnlyList<ImageFile> Targets,
+        bool IsLibrarySelection);
+
     private void UpdateCanReset()
     {
         if (!CanEditSelectedImage)

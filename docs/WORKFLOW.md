@@ -81,9 +81,15 @@ assessment controls](screenshots/Screenshot_Library.png)
 
 Flags answer **what should happen to this frame?**
 
-- Press `P` to toggle **Picked** on the current image.
+- Press `P` to toggle **Picked**.
 - Press `X` to toggle **Rejected**.
-- Press `U` to return it to **Unflagged**.
+- Press `U` to return photographs to **Unflagged**.
+
+In Library, these commands affect the selection when it is non-empty, even when the
+active photograph is outside it. With an empty selection they affect the active
+photograph. In Develop they affect only the active photograph. Pick and Reject assign
+the whole target set unless every target already has that flag, in which case they
+clear it.
 
 Unflagged is useful for undecided frames. Rejected does not delete a file, and
 Picked does not automatically select it for export.
@@ -102,6 +108,9 @@ Pick and Reject buttons toggle off when clicked again.
 Stars answer a different question: **how strong or important is this frame?**
 Press `1` through `5` to set a rating and `0` to clear it.
 
+Ratings use the same targets as flags: the non-empty selection in Library, otherwise
+the active photograph, and only the active photograph in Develop.
+
 A simple starting method is to flag first, then rate only the picked images:
 
 - `3` — a solid keeper
@@ -115,10 +124,10 @@ rating system.
 
 Color labels provide a third, independent assessment axis. Use the assessment swatches
 or press `6` through `9` for red, yellow, green, or blue; clicking or pressing the active
-color clears it. When one or more photographs are selected for export, a label command
-targets that selection even if the active photograph is outside it. With an empty
-selection it targets the active photograph. The swatch ring always describes the active
-photograph, not the selected target set.
+color clears it. In Library, a label command targets the non-empty selection even when
+the active photograph is outside it, and falls back to the active photograph when the
+selection is empty. In Develop it targets only the active photograph. The swatch ring
+always describes the active photograph, not the selected target set.
 
 ### Filter the result
 
@@ -237,13 +246,14 @@ target remain unchanged.
 After sharing a starting point, inspect the images individually. Exposure and
 temperature can still vary within a series.
 
-## 5. Select what to export
+## 5. Build a selection
 
-Export selection is deliberately separate from flags and ratings:
+Selection is a working set shared by Library assessment actions, batch paste, and
+export:
 
 - **Picked** means the image passed your cull.
 - **Rating** records its relative strength or importance.
-- **Selected** means include this image in the next export.
+- **Selected** means include this image in the next Library action or export.
 
 Filter the Library to the group you want before selecting it. Then:
 
@@ -253,8 +263,8 @@ Filter the Library to the group you want before selecting it. Then:
 - press `Ctrl+A` to select every image currently visible through the filters;
 - use **Select None** to clear the visible selection.
 
-Images that become hidden by a new filter are removed from the export
-selection. Set the filters first, then make the final selection.
+Images that become hidden by a new filter are removed from the selection. Set the
+filters first, then make the final selection.
 
 ## 6. Export finished copies
 
@@ -311,7 +321,7 @@ remains where it started and unchanged.
 | `P` / `X` / `U` | Pick, reject, or unflag |
 | `1`–`5` / `0` | Set or clear a rating |
 | `6`–`9` | Set red, yellow, green, or blue color label |
-| `Space` | Toggle export selection |
+| `Space` | Toggle the active photo in the selection |
 | `C` | Toggle crop mode |
 | `B` | Toggle before/after |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |

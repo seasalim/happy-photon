@@ -39,17 +39,40 @@ public partial class MainWindowViewModel
         ShowTransientStatus("Copied edit settings");
     }
 
-    private bool CanPasteEditSettings =>
-        HasCopiedSettings && CanEditSelectedImage && !IsFullScreenMode;
+    private bool CanPasteEditSettings
+    {
+        get
+        {
+            if (!HasCopiedSettings || IsFullScreenMode) return false;
+            var targets = ResolveActionTargets().Targets;
+            return targets.Count > 0 &&
+                   targets.All(target => !target.SourceRequiresHydration);
+        }
+    }
+
+    partial void OnSelectedCountChanged(int value) =>
+        PasteEditSettingsCommand.NotifyCanExecuteChanged();
+
+    partial void OnIsDevelopModeChanged(bool oldValue, bool newValue) =>
+        PasteEditSettingsCommand.NotifyCanExecuteChanged();
 
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]
     private async Task PasteEditSettingsAsync()
     {
-        if (_copiedSettings == null || SelectedImage == null) return;
+        if (_copiedSettings == null) return;
 
-        if (!IsDevelopMode && SelectedCount > 0)
+        var resolution = ResolveActionTargets();
+        if (resolution.Targets.Count == 0) return;
+        if (resolution.Targets.Any(target => target.SourceRequiresHydration))
         {
-            await PasteToSelectionAsync();
+            ShowTransientStatus(
+                "Download online-only originals before applying edit settings");
+            return;
+        }
+
+        if (resolution.IsLibrarySelection)
+        {
+            await PasteToSelectionAsync(resolution.Targets);
             return;
         }
 
@@ -120,18 +143,11 @@ public partial class MainWindowViewModel
         return liveState;
     }
 
-    private async Task PasteToSelectionAsync()
+    private async Task PasteToSelectionAsync(IReadOnlyList<ImageFile> targets)
     {
         if (_copiedSettings == null) return;
 
-        var targets = Library.GetSelectedImages().ToList();
         if (targets.Count == 0 || ConfirmBatchApplyAsync == null) return;
-        if (targets.Any(target => target.SourceRequiresHydration))
-        {
-            ShowTransientStatus(
-                "Download online-only originals before applying edit settings");
-            return;
-        }
         if (!await ConfirmBatchApplyAsync(targets.Count)) return;
 
         List<(ImageFile Target, EditSettings Previous, EditSettings Settings)> proposed;
