@@ -29,6 +29,7 @@ public static class ShortcutCatalog
             new("X", "Reject the current image"),
             new("1–5", "Set the current image's star rating"),
             new("0", "Clear the current image's rating"),
+            new("6–9", "Set red, yellow, green, or blue color labels"),
             new("Space", "Toggle the current image's export selection"),
             new("Ctrl+A", "Select all visible images for export"),
             new("Ctrl+Click", "Toggle an image in the export selection"),

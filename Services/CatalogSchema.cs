@@ -13,12 +13,14 @@ internal static class CatalogSchema
         "edit_version",
         "flag_state",
         "rating",
+        "color_label",
         "updated_utc"
     ];
 
     public static async Task InitializeAsync(SqliteConnection connection)
     {
         await CreateTablesAsync(connection);
+        await CatalogMigrations.RunAsync(connection);
         await ValidateImageSchemaAsync(connection);
     }
 
@@ -34,6 +36,7 @@ internal static class CatalogSchema
                 edit_version INTEGER NOT NULL,
                 flag_state INTEGER NOT NULL DEFAULT 0,
                 rating INTEGER NOT NULL DEFAULT 0,
+                color_label INTEGER NOT NULL DEFAULT 0,
                 updated_utc TEXT
             );
         ";

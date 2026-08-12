@@ -100,12 +100,15 @@ public partial class MainWindow
                 Task.Run(vm.InitializeAsync));
 
             var settings = await _appSettingsService.LoadAsync();
+            var colorLabelNames = await new ColorLabelNames(
+                _startupCatalogService).LoadAsync();
             if (!ReferenceEquals(DataContext, vm))
             {
                 return;
             }
 
             vm.Library.FileTypeFilter = settings.FileTypeFilter;
+            vm.SetColorLabelNames(colorLabelNames);
             vm.RestoreLibraryThumbnailSize(settings.LibraryThumbnailSize);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;
             vm.ExportSettings.OutputSharpening = settings.OutputSharpening;

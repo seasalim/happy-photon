@@ -1,4 +1,6 @@
 using HappyPhoton.Models;
+using System.Text.Json;
+using Microsoft.Data.Sqlite;
 
 namespace HappyPhoton.Services;
 
@@ -138,6 +140,61 @@ public partial class CatalogService
         finally
         {
             _connectionGate.Release();
+        }
+    }
+
+    /// <summary>Saves one color label atomically for a distinct group of images.</summary>
+    public async Task SaveColorLabelAsync(
+        IReadOnlyCollection<long> catalogIds,
+        ColorLabel colorLabel)
+    {
+        EnsureInitialized();
+        var ids = catalogIds.Distinct().ToArray();
+        if (ids.Length == 0) return;
+
+        await _connectionGate.WaitAsync();
+        try
+        {
+            using var transaction = _connection!.BeginTransaction();
+            await WriteColorLabelAsync(
+                _connection,
+                transaction,
+                ids,
+                colorLabel);
+            await transaction.CommitAsync();
+        }
+        finally
+        {
+            _connectionGate.Release();
+        }
+    }
+
+    /// <summary>Writes labels using a caller-owned connection gate and transaction.</summary>
+    internal static async Task WriteColorLabelAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        IReadOnlyCollection<long> catalogIds,
+        ColorLabel colorLabel)
+    {
+        var ids = catalogIds.Distinct().ToArray();
+        if (ids.Length == 0) return;
+        if (!Enum.IsDefined(colorLabel))
+            throw new ArgumentOutOfRangeException(nameof(colorLabel));
+
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            UPDATE images SET color_label = @colorLabel, updated_utc = @updated
+            WHERE id IN (SELECT value FROM json_each(@ids));
+            """;
+        command.Parameters.AddWithValue("@colorLabel", (int)colorLabel);
+        command.Parameters.AddWithValue("@updated", DateTime.UtcNow.ToString("O"));
+        command.Parameters.AddWithValue("@ids", JsonSerializer.Serialize(ids));
+        var affected = await command.ExecuteNonQueryAsync();
+        if (affected != ids.Length)
+        {
+            throw new InvalidOperationException(
+                $"Catalog label update expected {ids.Length} rows but updated {affected}.");
         }
     }
 

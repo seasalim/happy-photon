@@ -1,12 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="using:HappyPhoton.Converters"
+             xmlns:models="using:HappyPhoton.Models"
              xmlns:vm="using:HappyPhoton.ViewModels"
              x:Class="HappyPhoton.Views.ImageAssessmentControl"
+             x:Name="Root"
              x:DataType="vm:MainWindowViewModel"
              IsEnabled="{Binding HasSelectedImage}">
     <UserControl.Resources>
         <converters:RatingAtLeastConverter x:Key="RatingAtLeastConverter"/>
+        <converters:ColorLabelBrushConverter x:Key="ColorLabelBrushConverter"/>
+        <converters:ColorLabelOutlineConverter x:Key="ColorLabelOutlineConverter"/>
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -194,5 +198,37 @@
                     <TextBlock Text="0" Classes="shortcut" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
+
+            <Rectangle Width="1" Height="18" Fill="{StaticResource Divider}"/>
+
+            <ItemsControl ItemsSource="{Binding ColorLabelChoices}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="3"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:ColorLabelChoice">
+                        <Button Width="20" Height="20" Padding="2"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{Binding DataContext.SetColorLabelCommand, ElementName=Root}"
+                                CommandParameter="{Binding Value}"
+                                ToolTip.Tip="{Binding ToolTip}"
+                                AutomationProperties.Name="{Binding AutomationName}">
+                            <Border Width="13" Height="13" CornerRadius="999"
+                                    Background="{Binding Value, Converter={StaticResource ColorLabelBrushConverter}}"
+                                    BorderThickness="2">
+                                <Border.BorderBrush>
+                                    <MultiBinding Converter="{StaticResource ColorLabelOutlineConverter}">
+                                        <Binding Path="DataContext.SelectedImage.ColorLabel" ElementName="Root"/>
+                                        <Binding Path="Value"/>
+                                    </MultiBinding>
+                                </Border.BorderBrush>
+                            </Border>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
     </StackPanel>
 </UserControl>

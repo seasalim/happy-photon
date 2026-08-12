@@ -102,6 +102,13 @@ public sealed class McpServerHost
             Options("set_flag", "Sets picked, rejected, or unflagged state for images.")),
 
         McpServerTool.Create(
+            async (string[] ids, string colorLabel, CancellationToken ct) =>
+                await InvokeJsonAsync(
+                    () => tools.SetColorLabelAsync(ids, colorLabel), ct),
+            Options("set_color_label",
+                "Sets none, red, yellow, green, blue, or purple color labels for images.")),
+
+        McpServerTool.Create(
             async (CancellationToken ct) =>
                 await InvokeJsonAsync(tools.ListPresetsAsync, ct),
             Options("list_presets", "Lists available built-in and user presets.")),

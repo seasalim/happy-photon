@@ -1,0 +1,101 @@
+using CommunityToolkit.Mvvm.Input;
+using HappyPhoton.Models;
+using HappyPhoton.Services;
+
+namespace HappyPhoton.ViewModels;
+
+public partial class MainWindowViewModel
+{
+    private IReadOnlyDictionary<ColorLabel, string> _colorLabelNames =
+        Services.ColorLabelNames.Defaults;
+
+    public IReadOnlyList<ColorLabelChoice> ColorLabelChoices =>
+        Enum.GetValues<ColorLabel>()
+            .Where(label => label != ColorLabel.None)
+            .Select(label =>
+            {
+                var name = _colorLabelNames.GetValueOrDefault(
+                    label,
+                    label.ToString());
+                return new ColorLabelChoice(label, name);
+            })
+            .ToArray();
+
+    public IReadOnlyList<ColorLabelFilterChoice> ColorLabelFilterChoices =>
+        Enum.GetValues<ColorLabelFilter>()
+            .Select(filter =>
+            {
+                if (filter is ColorLabelFilter.All or ColorLabelFilter.None)
+                    return new ColorLabelFilterChoice(filter, filter.ToString());
+                var label = (ColorLabel)((int)filter - 1);
+                return new ColorLabelFilterChoice(
+                    filter,
+                    _colorLabelNames.GetValueOrDefault(label, label.ToString()));
+            })
+            .ToArray();
+
+    internal void SetColorLabelNames(
+        IReadOnlyDictionary<ColorLabel, string> names)
+    {
+        _colorLabelNames = new Dictionary<ColorLabel, string>(names);
+        OnPropertyChanged(nameof(ColorLabelChoices));
+        OnPropertyChanged(nameof(ColorLabelFilterChoices));
+    }
+
+    [RelayCommand]
+    private async Task SetColorLabelAsync(ColorLabel colorLabel)
+    {
+        if (IsFullScreenMode || !Enum.IsDefined(colorLabel)) return;
+
+        var targets = ResolveActionTargets();
+        if (targets.Count == 0) return;
+        var next = colorLabel != ColorLabel.None &&
+                   targets.All(image => image.ColorLabel == colorLabel)
+            ? ColorLabel.None
+            : colorLabel;
+        var selectedImage = SelectedImage;
+        var replacement = selectedImage != null &&
+                          targets.Contains(selectedImage) &&
+                          !Library.MatchesCurrentFilters(selectedImage, next)
+            ? Library.ReplacementAfterRemoval(selectedImage)
+            : null;
+
+        try
+        {
+            foreach (var target in targets)
+            {
+                await target.EnsureCatalogIdAsync(_catalogService);
+            }
+
+            await _catalogService.SaveColorLabelAsync(
+                targets.Select(target => target.CatalogId).ToArray(),
+                next);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Color label update failed: {ex.Message}");
+            ShowTransientStatus("Unable to update color labels");
+            return;
+        }
+
+        foreach (var target in targets)
+        {
+            target.ColorLabel = next;
+        }
+
+        Library.RefreshFilters();
+        if (replacement != null && Library.ContainsVisible(replacement))
+        {
+            SelectedImage = replacement;
+        }
+        UpdateSelectedCount();
+    }
+
+    private IReadOnlyList<ImageFile> ResolveActionTargets()
+    {
+        var selected = Library.GetSelectedImages().ToList();
+        if (selected.Count > 0) return selected;
+        return SelectedImage == null ? [] : [SelectedImage];
+    }
+}

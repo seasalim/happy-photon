@@ -36,6 +36,11 @@
     <Color x:Key="ErrorContainerColor">#93000a</Color>
     <Color x:Key="OnErrorContainerColor">#ffdad6</Color>
     <Color x:Key="RawFileBackgroundColor">#1f1f25</Color>
+    <Color x:Key="ColorLabelRedColor">#e34b4b</Color>
+    <Color x:Key="ColorLabelYellowColor">#e5c85a</Color>
+    <Color x:Key="ColorLabelGreenColor">#66c27a</Color>
+    <Color x:Key="ColorLabelBlueColor">#4a7ce6</Color>
+    <Color x:Key="ColorLabelPurpleColor">#a77ad9</Color>
 
     <!-- Brushes -->
     <SolidColorBrush x:Key="SurfaceLowest" Color="{StaticResource SurfaceLowestColor}"/>
@@ -67,6 +72,11 @@
     <SolidColorBrush x:Key="ErrorContainer" Color="{StaticResource ErrorContainerColor}"/>
     <SolidColorBrush x:Key="OnErrorContainer" Color="{StaticResource OnErrorContainerColor}"/>
     <SolidColorBrush x:Key="RawFileBackground" Color="{StaticResource RawFileBackgroundColor}"/>
+    <SolidColorBrush x:Key="ColorLabelRed" Color="{StaticResource ColorLabelRedColor}"/>
+    <SolidColorBrush x:Key="ColorLabelYellow" Color="{StaticResource ColorLabelYellowColor}"/>
+    <SolidColorBrush x:Key="ColorLabelGreen" Color="{StaticResource ColorLabelGreenColor}"/>
+    <SolidColorBrush x:Key="ColorLabelBlue" Color="{StaticResource ColorLabelBlueColor}"/>
+    <SolidColorBrush x:Key="ColorLabelPurple" Color="{StaticResource ColorLabelPurpleColor}"/>
 
     <!-- Shape -->
     <CornerRadius x:Key="RadiusSmall">4</CornerRadius>

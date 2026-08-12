@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="ColorLabelUiTests.cs" />
     <Compile Remove="CloudSourceViewTests.cs" />
     <Compile Remove="CloudSelectionStateTests.cs" />
     <Compile Remove="FirstRunWindowTests.cs" />

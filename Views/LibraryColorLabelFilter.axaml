@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:HappyPhoton.Converters"
+             xmlns:models="using:HappyPhoton.Models"
+             x:Class="HappyPhoton.Views.LibraryColorLabelFilter"
+             x:Name="Root">
+    <UserControl.Resources>
+        <converters:ColorLabelBrushConverter x:Key="ColorLabelBrushConverter"/>
+        <converters:ColorLabelOutlineConverter x:Key="ColorLabelOutlineConverter"/>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="Button.filter.swatch">
+            <Setter Property="Padding" Value="6,4"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Orientation="Horizontal" Spacing="5">
+        <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
+        <TextBlock Text="Labels" FontSize="10"
+                   Foreground="{StaticResource TextMuted}"
+                   FontFamily="{StaticResource FontLabel}"
+                   VerticalAlignment="Center" Margin="0,0,2,0"/>
+        <ItemsControl ItemsSource="{Binding Choices, ElementName=Root}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="5"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="models:ColorLabelFilterChoice">
+                    <Button Classes="filter"
+                            Classes.swatch="{Binding IsColorSlot}"
+                            Click="OnFilterClick"
+                            Tag="{Binding Value}"
+                            ToolTip.Tip="{Binding Name}"
+                            AutomationProperties.Name="{Binding Name}">
+                        <Button.BorderBrush>
+                            <MultiBinding Converter="{StaticResource ColorLabelOutlineConverter}"
+                                          ConverterParameter="{StaticResource Outline}">
+                                <Binding Path="Filter" ElementName="Root"/>
+                                <Binding Path="Value"/>
+                            </MultiBinding>
+                        </Button.BorderBrush>
+                        <Panel>
+                            <Border Width="10" Height="10" CornerRadius="999"
+                                    IsVisible="{Binding IsColorSlot}"
+                                    Background="{Binding Value, Converter={StaticResource ColorLabelBrushConverter}}"/>
+                            <TextBlock Text="{Binding Name}"
+                                       IsVisible="{Binding !IsColorSlot}"/>
+                        </Panel>
+                    </Button>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>

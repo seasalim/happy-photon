@@ -37,6 +37,19 @@ public static class AgentToolValidation
             $"Unknown flag '{value}'. Use picked, rejected, or unflagged.")
     };
 
+    public static ColorLabel ParseColorLabel(string value) =>
+        value.ToLowerInvariant() switch
+        {
+            "none" => ColorLabel.None,
+            "red" => ColorLabel.Red,
+            "yellow" => ColorLabel.Yellow,
+            "green" => ColorLabel.Green,
+            "blue" => ColorLabel.Blue,
+            "purple" => ColorLabel.Purple,
+            _ => throw new AgentToolException(
+                $"Unknown color label '{value}'. Use none, red, yellow, green, blue, or purple.")
+        };
+
     public static ExportFormat ParseExportFormat(string value) => value.ToLowerInvariant() switch
     {
         "jpeg" or "jpg" => ExportFormat.Jpeg,
@@ -62,6 +75,9 @@ public static class AgentToolValidation
         ImageFlag.Rejected => "rejected",
         _ => "unflagged"
     };
+
+    public static string ColorLabelToString(ColorLabel colorLabel) =>
+        colorLabel.ToString().ToLowerInvariant();
 }
 
 public record AgentLibraryState(
@@ -72,7 +88,11 @@ public record AgentLibraryState(
     string? SelectedImageId,
     bool BurstsComputed = false);
 
-public record AgentFilterState(string FileType, string Flag, int MinimumRating);
+public record AgentFilterState(
+    string FileType,
+    string Flag,
+    int MinimumRating,
+    string ColorLabel = "all");
 
 public record ListImagesRequest(
     string? Flag = null,
@@ -103,6 +123,7 @@ public record AgentImageSummary(
     int? BurstSize = null)
 {
     public string SourceAvailability { get; init; } = "unknown";
+    public string ColorLabel { get; init; } = "none";
 }
 
 public record AgentImageStats(

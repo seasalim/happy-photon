@@ -1,4 +1,5 @@
 using Avalonia.Media;
+using HappyPhoton.Models;
 
 namespace HappyPhoton.Views;
 
@@ -31,12 +32,28 @@ public static class HappyPhotonColors
     public static readonly IBrush BurstPink = Brush("#fface8");
     public static readonly IBrush BurstViolet = Brush("#d1bcff");
 
+    public static readonly IBrush ColorLabelRed = Brush("#e34b4b");
+    public static readonly IBrush ColorLabelYellow = Brush("#e5c85a");
+    public static readonly IBrush ColorLabelGreen = Brush("#66c27a");
+    public static readonly IBrush ColorLabelBlue = Brush("#4a7ce6");
+    public static readonly IBrush ColorLabelPurple = Brush("#a77ad9");
+
     public static readonly IBrush HistogramRed = Argb(120, 0xff, 0x6b, 0x7a);
     public static readonly IBrush HistogramGreen = Argb(120, 0x7d, 0xf4, 0xd1);
     public static readonly IBrush HistogramBlue = Argb(120, 0x72, 0x6f, 0xff);
     public static readonly IBrush HistogramLuminance = Argb(190, 0xdb, 0xfc, 0xff);
 
     private static IBrush Brush(string value) => new SolidColorBrush(Color.Parse(value));
+
+    public static IBrush GetColorLabelBrush(ColorLabel label) => label switch
+    {
+        ColorLabel.Red => ColorLabelRed,
+        ColorLabel.Yellow => ColorLabelYellow,
+        ColorLabel.Green => ColorLabelGreen,
+        ColorLabel.Blue => ColorLabelBlue,
+        ColorLabel.Purple => ColorLabelPurple,
+        _ => Brushes.Transparent
+    };
 
     private static IBrush Argb(byte alpha, byte red, byte green, byte blue) =>
         new SolidColorBrush(Color.FromArgb(alpha, red, green, blue));

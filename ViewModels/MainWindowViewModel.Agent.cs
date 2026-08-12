@@ -195,6 +195,41 @@ public partial class MainWindowViewModel
         return failed;
     }
 
+    internal async Task<List<AgentBatchFailure>> SetColorLabelForImagesAsync(
+        IReadOnlyList<ImageFile> images,
+        ColorLabel colorLabel)
+    {
+        if (images.Count == 0) return [];
+
+        try
+        {
+            foreach (var image in images)
+            {
+                await image.EnsureCatalogIdAsync(_catalogService);
+            }
+
+            await _catalogService.SaveColorLabelAsync(
+                images.Select(image => image.CatalogId).ToArray(),
+                colorLabel);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Agent color label update failed: {ex.Message}");
+            return images.Select(image =>
+                new AgentBatchFailure(image.FilePath, ex.Message)).ToList();
+        }
+
+        foreach (var image in images)
+        {
+            image.ColorLabel = colorLabel;
+        }
+
+        Library.RefreshFilters();
+        UpdateSelectedCount();
+        return [];
+    }
+
     internal async Task<List<AgentBatchFailure>> ApplyColorSettingsToImagesAsync(
         IReadOnlyList<ImageFile> images,
         EditSettings source,

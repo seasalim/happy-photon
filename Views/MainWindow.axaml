@@ -41,6 +41,10 @@
         <KeyBinding Gesture="D3" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>3</x:Int32></KeyBinding.CommandParameter></KeyBinding>
         <KeyBinding Gesture="D4" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>4</x:Int32></KeyBinding.CommandParameter></KeyBinding>
         <KeyBinding Gesture="D5" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>5</x:Int32></KeyBinding.CommandParameter></KeyBinding>
+        <KeyBinding Gesture="D6" Command="{Binding SetColorLabelCommand}"><KeyBinding.CommandParameter><models:ColorLabel>Red</models:ColorLabel></KeyBinding.CommandParameter></KeyBinding>
+        <KeyBinding Gesture="D7" Command="{Binding SetColorLabelCommand}"><KeyBinding.CommandParameter><models:ColorLabel>Yellow</models:ColorLabel></KeyBinding.CommandParameter></KeyBinding>
+        <KeyBinding Gesture="D8" Command="{Binding SetColorLabelCommand}"><KeyBinding.CommandParameter><models:ColorLabel>Green</models:ColorLabel></KeyBinding.CommandParameter></KeyBinding>
+        <KeyBinding Gesture="D9" Command="{Binding SetColorLabelCommand}"><KeyBinding.CommandParameter><models:ColorLabel>Blue</models:ColorLabel></KeyBinding.CommandParameter></KeyBinding>
         <KeyBinding Gesture="E" Command="{Binding ToggleViewModeCommand}"/>
         <KeyBinding Gesture="Escape" Command="{Binding HandleEscapeCommand}"/>
         <KeyBinding Gesture="G" Command="{Binding SwitchToLibraryCommand}"/>
@@ -239,6 +243,7 @@
                                        FileTypeFilter="{Binding Library.FileTypeFilter, Mode=TwoWay}"
                                        FlagFilter="{Binding Library.FlagFilter, Mode=TwoWay}"
                                        MinimumRating="{Binding Library.MinimumRating, Mode=TwoWay}"
+                                       ColorLabelFilter="{Binding Library.ColorLabelFilter, Mode=TwoWay}"
                                        ShowBursts="{Binding ShowBurstGroups, Mode=TwoWay}"
                                        ThumbnailSize="{Binding LibraryThumbnailSize, Mode=TwoWay}"
                                        SelectedImage="{Binding SelectedImage, Mode=TwoWay}"/>

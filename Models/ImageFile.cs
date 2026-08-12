@@ -48,6 +48,9 @@ public partial class ImageFile : ObservableObject
     private int _rating;   // 0 = unrated, 1-5 stars
 
     [ObservableProperty]
+    private ColorLabel _colorLabel;
+
+    [ObservableProperty]
     private int _burstGroupOrdinal;   // 0 = none; 1-based
 
     [ObservableProperty]
@@ -103,6 +106,8 @@ public partial class ImageFile : ObservableObject
     public bool IsUnflagged => Flag == ImageFlag.Unflagged;
 
     public bool HasRating => Rating > 0;
+
+    public bool HasColorLabel => ColorLabel != ColorLabel.None;
 
     public string RatingStars => new string('★', Math.Clamp(Rating, 0, 5));
 
@@ -237,6 +242,9 @@ public partial class ImageFile : ObservableObject
         OnPropertyChanged(nameof(HasRating));
         OnPropertyChanged(nameof(RatingStars));
     }
+
+    partial void OnColorLabelChanged(ColorLabel value) =>
+        OnPropertyChanged(nameof(HasColorLabel));
 
     partial void OnBurstSizeChanged(int value)
     {

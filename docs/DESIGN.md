@@ -172,6 +172,12 @@ The shape language is "Squircle-adjacent"—sophisticated and intentional.
 
 ## Components
 
+Color labels use fixed red, yellow, green, blue, and purple visual slots. Library
+thumbnails show the assigned color as a round marker in the lower-right corner, kept
+clear of the burst stripe on the left edge and the online-only badge above it. The
+assessment and filter controls generate their swatches from the append-only label enum;
+the filter row shows swatches alone and carries each name in its tooltip.
+
 - **Buttons:** Primary buttons should feature a subtle inner glow and a soft drop-shadow in the primary color. On hover, the luminosity increases.
 - **Input Fields:** Use a "Ghost" style—thin 1px borders in a muted neutral, turning to Electric Cyan on focus with a faint outer glow.
 - **Cards:** Incorporate a subtle top-down gradient stroke (1px) to catch the "light" from above. Backgrounds should use a semi-transparent dark tint with backdrop-blur.

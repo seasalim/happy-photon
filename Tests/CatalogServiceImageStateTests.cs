@@ -28,6 +28,7 @@ public sealed class CatalogServiceImageStateTests : IDisposable
         });
         await service.SaveFlagStateAsync(firstId, ImageFlag.Picked);
         await service.SaveRatingAsync(firstId, 4);
+        await service.SaveColorLabelAsync([firstId], ColorLabel.Blue);
 
         var states = await service.LoadImageStatesAsync(new[]
         {
@@ -42,6 +43,7 @@ public sealed class CatalogServiceImageStateTests : IDisposable
         Assert.Equal(20, states[firstPath].EditSettings.Contrast);
         Assert.Equal(ImageFlag.Picked, states[firstPath].Flag);
         Assert.Equal(4, states[firstPath].Rating);
+        Assert.Equal(ColorLabel.Blue, states[firstPath].ColorLabel);
         Assert.Equal(secondId, states[secondPath].CatalogId);
         Assert.Equal(
             WbMode.AsShot,

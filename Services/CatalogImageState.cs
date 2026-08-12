@@ -6,4 +6,5 @@ public sealed record CatalogImageState(
     long CatalogId,
     EditSettings EditSettings,
     ImageFlag Flag,
-    int Rating);
+    int Rating,
+    ColorLabel ColorLabel);

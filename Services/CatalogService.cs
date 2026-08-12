@@ -157,7 +157,8 @@ public partial class CatalogService : IDisposable
                 }
 
                 cmd.CommandText = $@"
-                SELECT file_path, id, edit_settings, edit_version, flag_state, rating
+                SELECT file_path, id, edit_settings, edit_version, flag_state, rating,
+                       color_label
                 FROM images
                 WHERE file_path COLLATE NOCASE IN ({string.Join(", ", parameterNames)});
             ";
@@ -168,12 +169,13 @@ public partial class CatalogService : IDisposable
                     var path = reader.GetString(0);
                     var catalogId = reader.GetInt64(1);
                     var settings = ReadEditSettings(reader, 2, catalogId, path);
-                    var flagValue = reader.IsDBNull(4) ? 0 : reader.GetInt32(4);
-                    var flag = Enum.IsDefined(typeof(ImageFlag), flagValue)
-                        ? (ImageFlag)flagValue
-                        : ImageFlag.Unflagged;
-                    var rating = reader.IsDBNull(5) ? 0 : Math.Clamp(reader.GetInt32(5), 0, 5);
-                    states[path] = new CatalogImageState(catalogId, settings, flag, rating);
+                    var flag = ReadEnumColumn(reader, 4, ImageFlag.Unflagged);
+                    var rating = reader.IsDBNull(5)
+                        ? 0
+                        : (int)Math.Clamp(reader.GetInt64(5), 0, 5);
+                    var colorLabel = ReadEnumColumn(reader, 6, ColorLabel.None);
+                    states[path] = new CatalogImageState(
+                        catalogId, settings, flag, rating, colorLabel);
                 }
             }
             finally
@@ -183,6 +185,25 @@ public partial class CatalogService : IDisposable
         }
 
         return states;
+    }
+
+    /// <summary>
+    /// Reads an enum-backed column as a 64-bit value so that an out-of-range integer
+    /// degrades to the fallback instead of overflowing, and never rewrites the row.
+    /// </summary>
+    private static TEnum ReadEnumColumn<TEnum>(
+        SqliteDataReader reader,
+        int ordinal,
+        TEnum fallback)
+        where TEnum : struct, Enum
+    {
+        if (reader.IsDBNull(ordinal)) return fallback;
+
+        var value = reader.GetInt64(ordinal);
+        return value is >= 0 and <= int.MaxValue &&
+               Enum.IsDefined(typeof(TEnum), (int)value)
+            ? (TEnum)Enum.ToObject(typeof(TEnum), (int)value)
+            : fallback;
     }
 
     private EditSettings ReadEditSettings(

@@ -31,6 +31,9 @@ public partial class LibraryImageState : ObservableObject
     [ObservableProperty]
     private int _minimumRating;   // 0 = show all; not persisted, same as FlagFilter
 
+    [ObservableProperty]
+    private ColorLabelFilter _colorLabelFilter;
+
     public event EventHandler? FilterChanged;
     public event EventHandler? StateChanged;
 
@@ -38,10 +41,13 @@ public partial class LibraryImageState : ObservableObject
     public int TotalCount => _allImages.Count;
     public int VisibleCount => VisibleImages.Count;
     public int SelectedCount => VisibleImages.Count(i => i.IsSelected);
+    public bool HasColorLabels => _allImages.Any(image => image.HasColorLabel);
+    public bool ShowColorLabelFilter =>
+        HasColorLabels || ColorLabelFilter != ColorLabelFilter.All;
 
     public string PhotoCountText =>
         FileTypeFilter == ImageFileTypeFilter.All && FlagFilter == HappyPhoton.Models.FlagFilter.All &&
-        MinimumRating == 0
+        MinimumRating == 0 && ColorLabelFilter == ColorLabelFilter.All
             ? $"{TotalCount} photos"
             : $"{VisibleCount} of {TotalCount} photos";
 
@@ -77,6 +83,13 @@ public partial class LibraryImageState : ObservableObject
     {
         ApplyFilter();
         FilterChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    partial void OnColorLabelFilterChanged(ColorLabelFilter value)
+    {
+        ApplyFilter();
+        FilterChanged?.Invoke(this, EventArgs.Empty);
+        OnPropertyChanged(nameof(ShowColorLabelFilter));
     }
 
     public void SetImages(IEnumerable<ImageFile> images)
@@ -147,13 +160,20 @@ public partial class LibraryImageState : ObservableObject
     }
 
     public bool MatchesCurrentFilters(ImageFile image) =>
-        FileTypeFilter.Matches(image) && MatchesFlagFilter(image) && image.Rating >= MinimumRating;
+        FileTypeFilter.Matches(image) && MatchesFlagFilter(image) &&
+        image.Rating >= MinimumRating && MatchesColorLabelFilter(image.ColorLabel);
 
     public bool MatchesCurrentFilters(ImageFile image, ImageFlag flag) =>
-        FileTypeFilter.Matches(image) && MatchesFlagFilter(flag) && image.Rating >= MinimumRating;
+        FileTypeFilter.Matches(image) && MatchesFlagFilter(flag) &&
+        image.Rating >= MinimumRating && MatchesColorLabelFilter(image.ColorLabel);
 
     public bool MatchesCurrentFilters(ImageFile image, int rating) =>
-        FileTypeFilter.Matches(image) && MatchesFlagFilter(image) && rating >= MinimumRating;
+        FileTypeFilter.Matches(image) && MatchesFlagFilter(image) &&
+        rating >= MinimumRating && MatchesColorLabelFilter(image.ColorLabel);
+
+    public bool MatchesCurrentFilters(ImageFile image, ColorLabel colorLabel) =>
+        FileTypeFilter.Matches(image) && MatchesFlagFilter(image) &&
+        image.Rating >= MinimumRating && MatchesColorLabelFilter(colorLabel);
 
     public IReadOnlyList<ImageFile> GetRejectedImages() =>
         _allImages.Where(image => image.Flag == ImageFlag.Rejected).ToList();
@@ -246,6 +266,7 @@ public partial class LibraryImageState : ObservableObject
             .Where(image => FileTypeFilter.Matches(image))
             .Where(MatchesFlagFilter)
             .Where(image => image.Rating >= MinimumRating)
+            .Where(image => MatchesColorLabelFilter(image.ColorLabel))
             .ToList();
         var visibleSet = visible.ToHashSet();
 
@@ -268,6 +289,8 @@ public partial class LibraryImageState : ObservableObject
         OnPropertyChanged(nameof(SelectedCount));
         OnPropertyChanged(nameof(PhotoCountText));
         OnPropertyChanged(nameof(EmptyMessage));
+        OnPropertyChanged(nameof(HasColorLabels));
+        OnPropertyChanged(nameof(ShowColorLabelFilter));
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -281,4 +304,8 @@ public partial class LibraryImageState : ObservableObject
             HappyPhoton.Models.FlagFilter.Rejected => flag == ImageFlag.Rejected,
             _ => true
         };
+
+    private bool MatchesColorLabelFilter(ColorLabel colorLabel) =>
+        ColorLabelFilter == ColorLabelFilter.All ||
+        (int)ColorLabelFilter - 1 == (int)colorLabel;
 }

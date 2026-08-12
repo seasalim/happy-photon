@@ -15,6 +15,7 @@
 
     <UserControl.Resources>
         <converters:BurstColorConverter x:Key="BurstColorConverter"/>
+        <converters:ColorLabelBrushConverter x:Key="ColorLabelBrushConverter"/>
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -144,6 +145,10 @@
                                 Click="OnRatingFilter4Click"/>
                         <Button x:Name="RatingFilter5Button" Content="5" Classes="filter"
                                 Click="OnRatingFilter5Click"/>
+                        <views:LibraryColorLabelFilter
+                            IsVisible="{Binding Library.ShowColorLabelFilter}"
+                            Choices="{Binding ColorLabelFilterChoices}"
+                            Filter="{Binding ColorLabelFilter, ElementName=Root, Mode=TwoWay}"/>
                         <Rectangle Width="1" Fill="{StaticResource Outline}" Margin="5,2"/>
                         <Button x:Name="BurstsButton" Content="Bursts" Classes="filter"
                                 Click="OnBurstsClick"/>
@@ -261,6 +266,17 @@
                                             IsVisible="{Binding HasBurstGroup}"
                                             IsHitTestVisible="False"
                                             Background="{Binding BurstColorIndex, Converter={StaticResource BurstColorConverter}}"/>
+                                    <Border Width="14" Height="14"
+                                            CornerRadius="999"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Bottom"
+                                            Margin="0,0,6,6"
+                                            BorderBrush="{StaticResource SurfaceLowest}"
+                                            BorderThickness="1.5"
+                                            IsVisible="{Binding HasColorLabel}"
+                                            IsHitTestVisible="False"
+                                            ToolTip.Tip="Color label"
+                                            Background="{Binding ColorLabel, Converter={StaticResource ColorLabelBrushConverter}}"/>
                                 </Panel>
                                 <Grid Width="{Binding $parent[views:LibraryGridView].ImageViewportWidth}"
                                       Margin="0,5,0,0"

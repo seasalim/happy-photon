@@ -28,6 +28,7 @@ public sealed class AgentToolModelsTests
         Assert.Contains("\"picked\"", json);
         Assert.Contains("\"burstId\":\"burst_1\"", json);
         Assert.Contains("\"sourceAvailability\":\"requires_hydration\"", json);
+        Assert.Contains("\"colorLabel\":\"none\"", json);
 
         var back = JsonSerializer.Deserialize<AgentImageSummary>(json, Options);
         Assert.Equal(summary, back);
@@ -99,6 +100,15 @@ public sealed class AgentToolModelsTests
         Assert.Equal(ImageFlag.Rejected, AgentToolValidation.ParseFlag("rejected"));
         Assert.Equal(ImageFlag.Unflagged, AgentToolValidation.ParseFlag("unflagged"));
         Assert.Throws<AgentToolException>(() => AgentToolValidation.ParseFlag("maybe"));
+    }
+
+    [Fact]
+    public void ColorLabelParsing_RejectsUnknownValues()
+    {
+        Assert.Equal(ColorLabel.Red, AgentToolValidation.ParseColorLabel("Red"));
+        Assert.Equal(ColorLabel.None, AgentToolValidation.ParseColorLabel("none"));
+        Assert.Throws<AgentToolException>(() =>
+            AgentToolValidation.ParseColorLabel("orange"));
     }
 
     [Fact]

@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Tests\ColorLabelUiTests.cs" Link="ColorLabelUiTests.cs" />
     <Compile Include="..\Tests\CloudSourceViewTests.cs" Link="CloudSourceViewTests.cs" />
     <Compile Include="..\Tests\CloudSelectionStateTests.cs" Link="CloudSelectionStateTests.cs" />
     <Compile Include="..\Tests\FirstRunWindowTests.cs" Link="FirstRunWindowTests.cs" />

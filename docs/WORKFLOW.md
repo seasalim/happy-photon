@@ -111,13 +111,23 @@ A simple starting method is to flag first, then rate only the picked images:
 The meaning is yours to define. Consistency is more useful than a complicated
 rating system.
 
+### Add color labels for another classification
+
+Color labels provide a third, independent assessment axis. Use the assessment swatches
+or press `6` through `9` for red, yellow, green, or blue; clicking or pressing the active
+color clears it. When one or more photographs are selected for export, a label command
+targets that selection even if the active photograph is outside it. With an empty
+selection it targets the active photograph. The swatch ring always describes the active
+photograph, not the selected target set.
+
 ### Filter the result
 
 The Library controls can be combined to show:
 
 - all files, RAW files, or JPEG files;
 - all flags, picked images, or rejected images;
-- all ratings or a minimum star rating.
+- all ratings or a minimum star rating;
+- all color labels, no label, or one named color.
 
 For example, choose **Picked** and **3+** to review the photographs most likely
 to be delivered. Changing a flag or rating while a filter is active can make
@@ -300,6 +310,7 @@ remains where it started and unchanged.
 | Arrow keys | Move between images |
 | `P` / `X` / `U` | Pick, reject, or unflag |
 | `1`–`5` / `0` | Set or clear a rating |
+| `6`–`9` | Set red, yellow, green, or blue color label |
 | `Space` | Toggle export selection |
 | `C` | Toggle crop mode |
 | `B` | Toggle before/after |

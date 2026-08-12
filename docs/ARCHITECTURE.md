@@ -116,12 +116,14 @@ with a prominent return to Library action instead of an enabled export command.
 
 One `images` row per known file, keyed by autoincrement `id` (the **catalogId**) with a
 `UNIQUE COLLATE NOCASE` `file_path`. The canonical row contains `file_name`, the v2
-`edit_settings` JSON document and `edit_version` marker, `flag_state`, `rating`, and
-`updated_utc`. `app_settings` is a key/value table. The unique path constraint owns the
+`edit_settings` JSON document and `edit_version` marker, `flag_state`, `rating`,
+`color_label`, and `updated_utc`. `app_settings` is a key/value table. The unique path constraint owns the
 required case-insensitive auto-index; no redundant named path indexes are created.
 
-`CatalogSchema` creates this shape for new catalogs and validates the required image
-columns through `PRAGMA table_info` on every startup. It does not migrate older layouts.
+`CatalogSchema` creates this shape for new catalogs, runs ordered transactional
+migrations recorded by `app_settings.schema_version`, and then validates the required
+image columns through `PRAGMA table_info` on every startup. Migration 1 adds the native
+`color_label` slot before validation so pre-label catalogs remain readable.
 Extra columns are ignored so catalogs created by recent development builds still open;
 missing required columns fail inside startup initialization. The error panel names the
 missing columns and instructs the user to move the entire catalog folder aside before
@@ -167,7 +169,8 @@ steady-state cost is zero.
   catalog transaction reuses a parameterized update for every target. Any missing row
   rolls back the entire batch; models update only after commit. Thumbnail refresh uses
   at most six workers and discards results for images no longer in the library.
-- **Flags/ratings**: one `UPDATE` per user action.
+- **Flags/ratings**: one `UPDATE` per user action. **Color labels** use one set-based
+  JSON-backed `UPDATE` for the full selection and roll back if any target is missing.
 - **App settings**: multi-key saves share one catalog transaction. First-run completion
   atomically writes both folder paths, the experience version, and current preferences.
 - **Deletes**: asset files first, then the row.

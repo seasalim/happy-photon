@@ -60,6 +60,7 @@ public partial class MainWindowViewModel
                 imageFile.HasEdits = state.EditSettings.HasEdits;
                 imageFile.Flag = state.Flag;
                 imageFile.Rating = state.Rating;
+                imageFile.ColorLabel = state.ColorLabel;
             }
 
             cancellationToken.ThrowIfCancellationRequested();

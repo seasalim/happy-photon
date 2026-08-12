@@ -43,6 +43,11 @@ public partial class LibraryGridView : UserControl
             nameof(MinimumRating),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
+    public static readonly StyledProperty<ColorLabelFilter> ColorLabelFilterProperty =
+        AvaloniaProperty.Register<LibraryGridView, ColorLabelFilter>(
+            nameof(ColorLabelFilter),
+            defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+
     public static readonly StyledProperty<bool> ShowBurstsProperty =
         AvaloniaProperty.Register<LibraryGridView, bool>(
             nameof(ShowBursts),
@@ -120,6 +125,12 @@ public partial class LibraryGridView : UserControl
     {
         get => GetValue(MinimumRatingProperty);
         set => SetValue(MinimumRatingProperty, value);
+    }
+
+    public ColorLabelFilter ColorLabelFilter
+    {
+        get => GetValue(ColorLabelFilterProperty);
+        set => SetValue(ColorLabelFilterProperty, value);
     }
 
     public bool ShowBursts

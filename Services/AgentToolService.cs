@@ -32,7 +32,8 @@ public sealed partial class AgentToolService
             new AgentFilterState(
                 _vm.Library.FileTypeFilter.ToString().ToLowerInvariant(),
                 _vm.Library.FlagFilter.ToString().ToLowerInvariant(),
-                _vm.Library.MinimumRating),
+                _vm.Library.MinimumRating,
+                _vm.Library.ColorLabelFilter.ToString().ToLowerInvariant()),
             _vm.SelectedImage?.FilePath,
             _vm.BurstsComputed)));
 
@@ -155,6 +156,22 @@ public sealed partial class AgentToolService
         return MutateAsync(ids, images => _vm.SetFlagForImagesAsync(images, parsedFlag));
     }
 
+    public Task<AgentBatchResult> SetColorLabelAsync(
+        IReadOnlyList<string> ids,
+        string colorLabel)
+    {
+        var normalizedIds = NormalizeColorLabelIds(ids);
+        ValidateBatch(normalizedIds, BatchCap);
+        var parsedLabel = AgentToolValidation.ParseColorLabel(colorLabel);
+        return MutateAsync(
+            normalizedIds,
+            images => _vm.SetColorLabelForImagesAsync(images, parsedLabel));
+    }
+
+    internal static string[] NormalizeColorLabelIds(IReadOnlyList<string>? ids) =>
+        ids?.Distinct(StringComparer.Ordinal).ToArray()
+        ?? throw new AgentToolException("Image ids are required.");
+
     public Task<List<AgentPresetInfo>> ListPresetsAsync() => OnUiThreadAsync(() =>
         Task.FromResult(_vm.PresetService.AllPresets.Select(preset => new AgentPresetInfo(
             preset.Id,
@@ -244,7 +261,8 @@ public sealed partial class AgentToolService
             membership?.Index, membership?.Size)
         {
             SourceAvailability = ToAgentAvailability(
-                _imageService.GetSourceAvailability(image))
+                _imageService.GetSourceAvailability(image)),
+            ColorLabel = AgentToolValidation.ColorLabelToString(image.ColorLabel)
         };
     }
 
