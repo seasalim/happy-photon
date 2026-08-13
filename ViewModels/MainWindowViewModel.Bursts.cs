@@ -6,8 +6,6 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private const string BurstAnalysisStatus = "Analyzing capture times…";
-
     [ObservableProperty]
     private bool _showBurstGroups;
 
@@ -17,6 +15,16 @@ public partial class MainWindowViewModel
     private Task _burstAnalysisTask = Task.CompletedTask;
     // Burst lifecycle methods and this restart handshake are UI-thread-affine.
     private bool _burstAnalysisRestartRequested;
+    private int _burstAnalysisActive;
+    private int _burstAnalysisProcessed;
+    private int _burstAnalysisTotal;
+
+    internal bool IsBurstAnalysisActive =>
+        Volatile.Read(ref _burstAnalysisActive) != 0;
+    internal int BurstAnalysisProcessed =>
+        Volatile.Read(ref _burstAnalysisProcessed);
+    internal int BurstAnalysisTotal =>
+        Volatile.Read(ref _burstAnalysisTotal);
 
     internal bool BurstsComputed => _burstGroups != null;
 
@@ -41,7 +49,6 @@ public partial class MainWindowViewModel
         else
         {
             _burstAnalysisRestartRequested = false;
-            ClearPinnedStatus(BurstAnalysisStatus);
             CancelBurstAnalysis();
             ClearBurstIndicators();
         }
@@ -88,7 +95,10 @@ public partial class MainWindowViewModel
         }
         _burstAnalysisRestartRequested = false;
         Interlocked.Exchange(ref _burstAnalysisCts, analysisCts);
-        ShowPinnedStatus(BurstAnalysisStatus);
+        Volatile.Write(ref _burstAnalysisProcessed, 0);
+        Volatile.Write(ref _burstAnalysisTotal, Library.AllImages.Count);
+        Volatile.Write(ref _burstAnalysisActive, 1);
+        SignalBackgroundActivityStarted();
         _burstAnalysisTask = RunBurstAnalysisAsync(
             Library.AllImages.ToList(),
             Volatile.Read(ref _libraryGeneration),
@@ -126,9 +136,7 @@ public partial class MainWindowViewModel
                 restarted = StartBurstAnalysisIfRequested();
             }
             if (cleared && !restarted)
-            {
-                ClearPinnedStatus(BurstAnalysisStatus);
-            }
+                Volatile.Write(ref _burstAnalysisActive, 0);
         }
     }
 
@@ -162,39 +170,45 @@ public partial class MainWindowViewModel
                 {
                     return;
                 }
+                try
+                {
+                    var availability = ImageService.GetSourceAvailability(image);
+                    if (availability == SourceAvailability.RequiresHydration)
+                    {
+                        if (generation == Volatile.Read(ref _libraryGeneration))
+                        {
+                            SetSourceRequiresHydration(image, true);
+                        }
+                        skippedCount++;
+                        continue;
+                    }
+                    if (availability == SourceAvailability.Unavailable)
+                    {
+                        continue;
+                    }
 
-                var availability = ImageService.GetSourceAvailability(image);
-                if (availability == SourceAvailability.RequiresHydration)
-                {
-                    if (generation == Volatile.Read(ref _libraryGeneration))
+                    await _loadMetadataAsync(image);
+                    if (image.MetadataLoaded)
                     {
-                        SetSourceRequiresHydration(image, true);
+                        if (generation == Volatile.Read(ref _libraryGeneration))
+                        {
+                            SetSourceRequiresHydration(image, false);
+                        }
+                        analyzedCount++;
                     }
-                    skippedCount++;
-                    continue;
-                }
-                if (availability == SourceAvailability.Unavailable)
-                {
-                    continue;
-                }
-
-                await _loadMetadataAsync(image);
-                if (image.MetadataLoaded)
-                {
-                    if (generation == Volatile.Read(ref _libraryGeneration))
+                    else if (ImageService.GetSourceAvailability(image) ==
+                             SourceAvailability.RequiresHydration)
                     {
-                        SetSourceRequiresHydration(image, false);
+                        if (generation == Volatile.Read(ref _libraryGeneration))
+                        {
+                            SetSourceRequiresHydration(image, true);
+                        }
+                        skippedCount++;
                     }
-                    analyzedCount++;
                 }
-                else if (ImageService.GetSourceAvailability(image) ==
-                         SourceAvailability.RequiresHydration)
+                finally
                 {
-                    if (generation == Volatile.Read(ref _libraryGeneration))
-                    {
-                        SetSourceRequiresHydration(image, true);
-                    }
-                    skippedCount++;
+                    Interlocked.Increment(ref _burstAnalysisProcessed);
                 }
             }
 

@@ -16,10 +16,16 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
     private readonly string _temporaryDirectory;
     private readonly Channel<CacheWrite> _saveQueue;
     private readonly Task _processingGate;
+    private readonly Task _writerInHandGate;
     private readonly TimeSpan _shutdownDrainTimeout;
     private readonly CancellationTokenSource _writerCancellation = new();
     private readonly Task _processingTask;
+    private int _activeWrites;
     private int _disposed;
+
+    public int PendingWrites =>
+        _saveQueue.Reader.Count + Volatile.Read(ref _activeWrites);
+    internal int WriterInHandCount => Volatile.Read(ref _activeWrites);
 
     public ThumbnailCacheService(CatalogService catalogService) : this(
         catalogService,
@@ -33,11 +39,13 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
         CatalogService catalogService,
         int queueCapacity,
         Task processingGate,
-        TimeSpan shutdownDrainTimeout)
+        TimeSpan shutdownDrainTimeout,
+        Task? writerInHandGate = null)
     {
         _catalogService = catalogService;
         _temporaryDirectory = Path.Combine(catalogService.CatalogPath, "assets", "tmp");
         _processingGate = processingGate;
+        _writerInHandGate = writerInHandGate ?? Task.CompletedTask;
         _shutdownDrainTimeout = shutdownDrainTimeout;
         _saveQueue = Channel.CreateBounded<CacheWrite>(
             new BoundedChannelOptions(queueCapacity)
@@ -199,7 +207,16 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
             await foreach (var write in _saveQueue.Reader
                 .ReadAllAsync(_writerCancellation.Token).ConfigureAwait(false))
             {
-                Save(write);
+                Interlocked.Increment(ref _activeWrites);
+                try
+                {
+                    await _writerInHandGate.ConfigureAwait(false);
+                    Save(write);
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _activeWrites);
+                }
             }
         }
         catch (OperationCanceledException) when (_writerCancellation.IsCancellationRequested)

@@ -18,10 +18,16 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
     private readonly string _temporaryDirectory;
     private readonly Channel<CacheWrite> _queue;
     private readonly Task _processingGate;
+    private readonly Task _writerInHandGate;
     private readonly TimeSpan _drainTimeout;
     private readonly CancellationTokenSource _cancellation = new();
     private readonly Task _processingTask;
+    private int _activeWrites;
     private int _disposed;
+
+    public int PendingWrites =>
+        _queue.Reader.Count + Volatile.Read(ref _activeWrites);
+    internal int WriterInHandCount => Volatile.Read(ref _activeWrites);
 
     public SettingsHashedCacheWriter(
         CatalogService catalogService,
@@ -30,7 +36,8 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         int queueCapacity = 8,
         Task? processingGate = null,
         TimeSpan? drainTimeout = null,
-        bool versionedDimensionMetadata = false)
+        bool versionedDimensionMetadata = false,
+        Task? writerInHandGate = null)
     {
         _catalogService = catalogService;
         _getCachePath = getCachePath;
@@ -38,6 +45,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         _versionedDimensionMetadata = versionedDimensionMetadata;
         _temporaryDirectory = Path.Combine(catalogService.CatalogPath, "assets", "tmp");
         _processingGate = processingGate ?? Task.CompletedTask;
+        _writerInHandGate = writerInHandGate ?? Task.CompletedTask;
         _drainTimeout = drainTimeout ?? DefaultDrainTimeout;
         _queue = Channel.CreateBounded<CacheWrite>(
             new BoundedChannelOptions(queueCapacity)
@@ -115,7 +123,16 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             await foreach (var write in _queue.Reader
                 .ReadAllAsync(_cancellation.Token).ConfigureAwait(false))
             {
-                Save(write);
+                Interlocked.Increment(ref _activeWrites);
+                try
+                {
+                    await _writerInHandGate.ConfigureAwait(false);
+                    Save(write);
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _activeWrites);
+                }
             }
         }
         catch (OperationCanceledException) when (_cancellation.IsCancellationRequested)

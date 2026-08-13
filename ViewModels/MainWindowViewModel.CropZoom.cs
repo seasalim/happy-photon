@@ -186,7 +186,8 @@ public partial class MainWindowViewModel
         var image = SelectedImage;
         if (image == null) return;
         var refresh = ReplaceDebounce(ref _thumbnailDebounce);
-        _ = RefreshSelectedThumbnailAsync(image, refresh.Token);
+        _ = TrackDirectThumbnailOperation(
+            RefreshSelectedThumbnailAsync(image, refresh.Token));
     }
 
     private async Task RefreshSelectedThumbnailAsync(

@@ -66,6 +66,9 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
 
                 Assert.Equal(2, metadataLoads);
                 Assert.True(viewModel.BurstsComputed);
+                Assert.False(viewModel.IsBurstAnalysisActive);
+                Assert.Equal(2, viewModel.BurstAnalysisProcessed);
+                Assert.Equal(2, viewModel.BurstAnalysisTotal);
                 Assert.All(
                     viewModel.Library.AllImages,
                     image => Assert.Equal(2, image.BurstSize));
@@ -139,8 +142,12 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 viewModel.ShowBurstGroups = true;
                 Complete(firstLoadStarted.Task);
 
-                Assert.Equal("Analyzing capture times…", viewModel.PinnedStatus);
-                Assert.Equal(viewModel.PinnedStatus, viewModel.StatusMessage);
+                Assert.Null(viewModel.PinnedStatus);
+                Assert.True(viewModel.IsBurstAnalysisActive);
+                Assert.Equal(0, viewModel.BurstAnalysisProcessed);
+                Assert.Equal(2, viewModel.BurstAnalysisTotal);
+                Assert.NotNull(
+                    viewModel.CaptureBackgroundActivitySnapshot().CaptureTimes);
 
                 viewModel.ShowBurstGroups = false;
                 Assert.Null(viewModel.PinnedStatus);
@@ -150,6 +157,9 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
 
                 Assert.Equal(1, metadataLoads);
                 Assert.False(viewModel.BurstsComputed);
+                Assert.False(viewModel.IsBurstAnalysisActive);
+                Assert.Equal(1, viewModel.BurstAnalysisProcessed);
+                Assert.Equal(2, viewModel.BurstAnalysisTotal);
                 Assert.Null(viewModel.PinnedStatus);
             }
             finally
@@ -198,6 +208,8 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
 
                 Assert.Equal(["old.jpg", "new.jpg"], loadedNames);
                 Assert.True(viewModel.BurstsComputed);
+                Assert.Equal(1, viewModel.BurstAnalysisProcessed);
+                Assert.Equal(1, viewModel.BurstAnalysisTotal);
                 Assert.Equal(
                     "new.jpg",
                     Assert.Single(viewModel.Library.AllImages).FileName);
@@ -245,6 +257,8 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 var cloud = viewModel.Library.AllImages.Single(
                     image => image.FileName == "cloud.jpg");
                 Assert.Equal(1, metadataLoads);
+                Assert.Equal(2, viewModel.BurstAnalysisProcessed);
+                Assert.Equal(2, viewModel.BurstAnalysisTotal);
                 Assert.False(cloud.MetadataLoaded);
                 Assert.False(cloud.HasBurstGroup);
                 Assert.True(cloud.SourceRequiresHydration);

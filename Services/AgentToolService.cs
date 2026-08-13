@@ -52,6 +52,7 @@ public sealed partial class AgentToolService
 
             if (request.LoadMetadata)
             {
+                _vm.SignalBackgroundActivityStarted();
                 foreach (var image in images)
                 {
                     await _imageService.LoadMetadataAsync(image);

@@ -145,9 +145,15 @@ default. Library mode ignores Develop-only keys.
 
 ## 9. Status bar
 
-Transient hints only (no new permanent segments): eyedropper active hint
+Transient hints remain in the existing message area: eyedropper active hint
 ("Click a neutral area — Esc to cancel"), rejected-pick message (§4), and the
 raw-fallback notice ("Decoded via fallback — RAW controls unavailable", §1.2).
+
+One background-activity segment may appear while sustained work is active and is
+absent at rest. It summarizes the highest-priority activity with overflow and shows a
+determinate bar only for capture-time analysis or export totals. Its dot and progress
+are explicitly static exceptions to the pulse guidance in `docs/DESIGN.md`; the
+segment contains no animation.
 
 ## 10. Explicit UI non-goals
 

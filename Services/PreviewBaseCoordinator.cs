@@ -23,6 +23,14 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
         _loader = loader ?? throw new ArgumentNullException(nameof(loader));
     }
 
+    public int DecodeTaskCount
+    {
+        get
+        {
+            lock (_sync) return _decodeTasks.Count;
+        }
+    }
+
     public async Task<PreviewBaseAcquisition?> GetPreviewAsync(
         ImageFile imageFile,
         BaseDecodeSettings decode,

@@ -101,6 +101,10 @@ public sealed partial class PreviewService
                 rendered.ImageFile,
                 thumbnail,
                 rendered.SettingsHash);
+            if (RenderedThumbnailCacheQueuedAsync is { } cacheQueued)
+            {
+                await cacheQueued();
+            }
         }
         finally
         {
@@ -124,7 +128,13 @@ public sealed partial class PreviewService
 
     private void TrackRenderedThumbnailTask(Task task)
     {
-        lock (_renderedSync) _renderedThumbnailTasks.Add(task);
+        var wake = false;
+        lock (_renderedSync)
+        {
+            wake = _renderedThumbnailTasks.Count == 0;
+            _renderedThumbnailTasks.Add(task);
+        }
+        if (wake) RenderedThumbnailWorkStarted?.Invoke();
         _ = task.ContinueWith(
             completed =>
             {

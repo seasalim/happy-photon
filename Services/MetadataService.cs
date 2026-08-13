@@ -13,6 +13,9 @@ internal sealed class MetadataService
         _loads = new();
     private readonly Func<ImageFile, MetadataExtractionResult> _extractMetadata;
     private readonly Func<Action, Task> _applyAsync;
+    private int _inFlightCount;
+
+    public int InFlightCount => Volatile.Read(ref _inFlightCount);
 
     public MetadataService(IRawProcessingService rawService) : this(
         rawService,
@@ -60,6 +63,7 @@ internal sealed class MetadataService
 
     private async Task<MetadataLoadStatus> LoadCoreAsync(ImageFile imageFile)
     {
+        Interlocked.Increment(ref _inFlightCount);
         MetadataLoadStatus status = MetadataLoadStatus.Failed;
         try
         {
@@ -73,6 +77,7 @@ internal sealed class MetadataService
         }
         finally
         {
+            Interlocked.Decrement(ref _inFlightCount);
             if (status != MetadataLoadStatus.Loaded)
             {
                 _loads.Remove(imageFile);

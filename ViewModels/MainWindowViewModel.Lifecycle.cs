@@ -4,6 +4,7 @@ public partial class MainWindowViewModel
 {
     public async ValueTask DisposeAsync()
     {
+        DisposeBackgroundActivity();
         Interlocked.Increment(ref _libraryGeneration);
         await CancelXmpReconcileAsync();
         if (_xmpWriter != null)
@@ -39,12 +40,15 @@ public partial class MainWindowViewModel
         CancelAndDispose(ref _histogramDebounce);
         CancelAndDispose(ref _thumbnailDebounce);
         CancelAndDispose(ref _transientStatusCts);
+        await DrainBackgroundActivityAsync();
 
         if (_imageService.IsValueCreated)
         {
             _imageService.Value.PreviewRefreshed -= OnPreviewRefreshed;
             _imageService.Value.BaseRefreshStateChanged -=
                 OnBaseRefreshStateChanged;
+            _imageService.Value.RenderedThumbnailWorkStarted -=
+                OnRenderedThumbnailWorkStarted;
             await _imageService.Value.DisposeAsync();
         }
 

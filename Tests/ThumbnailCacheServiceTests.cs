@@ -88,6 +88,45 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
     }
 
     [WindowsFact]
+    public async Task PendingWrites_IncludesWriterInHandAfterDequeue()
+    {
+        _fixture.RequireWindows();
+        var sourcePath = CreateSource();
+        using var bitmap = JpegThumbnailDecoder.Decode(
+            sourcePath, 150, CancellationToken.None);
+        using var catalog = new CatalogService(Path.Combine(
+            _tempDirectory, "writer-in-hand-catalog"));
+        var writerGate = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var cache = new ThumbnailCacheService(
+            catalog,
+            2,
+            Task.CompletedTask,
+            TimeSpan.FromSeconds(5),
+            writerGate.Task);
+        var image = new ImageFile(sourcePath) { CatalogId = 1 };
+
+        try
+        {
+            cache.QueueSaveToCache(image, bitmap);
+            Assert.True(SpinWait.SpinUntil(
+                () => cache.WriterInHandCount == 1,
+                TimeSpan.FromSeconds(5)));
+
+            Assert.Equal(1, cache.PendingWrites);
+            writerGate.SetResult();
+            await cache.DisposeAsync();
+            Assert.Equal(0, cache.PendingWrites);
+        }
+        finally
+        {
+            writerGate.TrySetResult();
+            await cache.ProcessingTask;
+            await cache.DisposeAsync();
+        }
+    }
+
+    [WindowsFact]
     public async Task QueueSaveToCache_PersistsAtomicallyAndCleansTemporaryFile()
     {
         _fixture.RequireWindows();

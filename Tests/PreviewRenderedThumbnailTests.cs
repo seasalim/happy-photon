@@ -128,6 +128,64 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
     }
 
     [WindowsFact]
+    public async Task RenderedThumbnailWorkOverlapsCacheWriteAndWakesOnRestart()
+    {
+        _fixture.RequireWindows();
+        var (catalog, file) = await CreateFileAsync("activity.dng");
+        using (catalog)
+        {
+            var writerGate = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var producerRelease = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var cacheQueued = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var renderedCache = new RenderedThumbnailCacheService(
+                catalog,
+                2,
+                Task.CompletedTask,
+                TimeSpan.FromSeconds(5),
+                writerGate.Task);
+            await using var service = new PreviewService(
+                catalog,
+                new SolidLoader(isRaw: true),
+                new RenderPipeline(),
+                new HistogramService(),
+                new PreviewCacheService(catalog),
+                renderedCache);
+            var wakeCount = 0;
+            service.RenderedThumbnailWorkStarted += () => wakeCount++;
+            service.RenderedThumbnailCacheQueuedAsync = () =>
+            {
+                cacheQueued.TrySetResult();
+                return producerRelease.Task;
+            };
+
+            var (preview, _) = await service.ApplyEditsToPreviewAsync(
+                file,
+                new EditSettings { Exposure = 0.5 },
+                skipHistogram: true);
+            preview?.Dispose();
+            await WaitUntilAsync(() => service.RenderedThumbnailTaskCount == 0);
+            Assert.Equal(1, wakeCount);
+
+            service.ClearPreviewCache();
+            await cacheQueued.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await WaitUntilAsync(() => renderedCache.WriterInHandCount == 1);
+
+            Assert.Equal(2, wakeCount);
+            Assert.True(service.RenderedThumbnailTaskCount > 0);
+            Assert.True(service.PendingCacheWrites > 0);
+
+            producerRelease.SetResult();
+            await WaitUntilAsync(() => service.RenderedThumbnailTaskCount == 0);
+            Assert.True(service.PendingCacheWrites > 0);
+            writerGate.SetResult();
+            await renderedCache.DisposeAsync();
+        }
+    }
+
+    [WindowsFact]
     public async Task StalePreviewPlaceholderIsNeverPromoted()
     {
         _fixture.RequireWindows();
@@ -272,6 +330,16 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
         var first = BitmapConversionService.CopyBgraPixels(left);
         var second = BitmapConversionService.CopyBgraPixels(right);
         return first.Zip(second, (a, b) => Math.Abs(a - b)).Average();
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (!condition())
+        {
+            Assert.True(DateTime.UtcNow < deadline, "Timed out waiting for activity.");
+            await Task.Delay(10);
+        }
     }
 
     public void Dispose()

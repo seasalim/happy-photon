@@ -123,7 +123,8 @@ public partial class MainWindowViewModel
             UpdateCanReset();
         }
 
-        _ = RefreshThumbnailAsync(selectedImage);
+        _ = TrackDirectThumbnailOperation(
+            RefreshThumbnailAsync(selectedImage));
         ShowTransientStatus("Pasted edit settings");
     }
 
@@ -209,8 +210,9 @@ public partial class MainWindowViewModel
             UpdateCanReset();
         }
 
-        _ = RefreshThumbnailsAsync(proposed.Select(update =>
-            (update.Target, update.Previous)));
+        _ = TrackDirectThumbnailOperation(
+            RefreshThumbnailsAsync(proposed.Select(update =>
+                (update.Target, update.Previous))));
 
         var applied = targets.Count;
         var noun = applied == 1 ? "image" : "images";

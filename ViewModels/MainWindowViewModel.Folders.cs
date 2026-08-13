@@ -328,7 +328,8 @@ public partial class MainWindowViewModel
             if (SelectedImage is { IsRaw: true } image &&
                 image.EditSettings.HasEdits)
             {
-                _ = RefreshThumbnailAsync(image);
+                _ = TrackDirectThumbnailOperation(
+                    RefreshThumbnailAsync(image));
             }
             ImageService.ClearPreviewCache();
         }
@@ -376,7 +377,8 @@ public partial class MainWindowViewModel
             if (SelectedImage is { IsRaw: true } image &&
                 image.EditSettings.HasEdits)
             {
-                _ = RefreshThumbnailAsync(image);
+                _ = TrackDirectThumbnailOperation(
+                    RefreshThumbnailAsync(image));
             }
             ImageService.ClearPreviewCache();
         }

@@ -21,7 +21,8 @@ public sealed class PreviewCacheService : IAsyncDisposable
         CatalogService catalogService,
         int queueCapacity,
         Task processingGate,
-        TimeSpan shutdownDrainTimeout)
+        TimeSpan shutdownDrainTimeout,
+        Task? writerInHandGate = null)
     {
         _catalogService = catalogService;
         _writer = new SettingsHashedCacheWriter(
@@ -30,7 +31,8 @@ public sealed class PreviewCacheService : IAsyncDisposable
             90,
             queueCapacity,
             processingGate,
-            shutdownDrainTimeout);
+            shutdownDrainTimeout,
+            writerInHandGate: writerInHandGate);
     }
 
     public string GetCachePath(ImageFile imageFile)
@@ -92,6 +94,9 @@ public sealed class PreviewCacheService : IAsyncDisposable
         _writer.Queue(imageFile, bitmap, settingsHash);
 
     public ValueTask DisposeAsync() => _writer.DisposeAsync();
+
+    public int PendingWrites => _writer.PendingWrites;
+    internal int WriterInHandCount => _writer.WriterInHandCount;
 
     internal Task ProcessingTask => _writer.ProcessingTask;
 }

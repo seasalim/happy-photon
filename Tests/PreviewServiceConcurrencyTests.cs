@@ -205,6 +205,82 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
         }
     }
 
+    [WindowsFact]
+    public async Task SupersededRefreshRendersRemainActiveUntilEachRenderExits()
+    {
+        _fixture.RequireWindows();
+        var (catalog, file) = await CreateCatalogAndFile();
+        using (catalog)
+        {
+            var loader = new OverlappingRefreshLoader();
+            await using var service = new PreviewService(
+                catalog,
+                loader,
+                new RenderPipeline(),
+                new HistogramService());
+            var renderStarted = new[]
+            {
+                new TaskCompletionSource(
+                    TaskCreationOptions.RunContinuationsAsynchronously),
+                new TaskCompletionSource(
+                    TaskCreationOptions.RunContinuationsAsynchronously)
+            };
+            var renderRelease = new[]
+            {
+                new TaskCompletionSource(
+                    TaskCreationOptions.RunContinuationsAsynchronously),
+                new TaskCompletionSource(
+                    TaskCreationOptions.RunContinuationsAsynchronously)
+            };
+            var refreshRender = -1;
+            service.RefreshRenderGateAsync = () =>
+            {
+                var index = Interlocked.Increment(ref refreshRender);
+                renderStarted[index].TrySetResult();
+                return renderRelease[index].Task;
+            };
+
+            var initial = await service.ApplyEditsToPreviewAsync(
+                file,
+                new EditSettings(),
+                skipHistogram: true);
+            initial.preview?.Dispose();
+
+            var firstRefresh = service.ApplyEditsToPreviewAsync(
+                file,
+                new EditSettings
+                {
+                    HlReconstruction = HlReconstructionMode.Blend
+                },
+                skipHistogram: true);
+            Assert.True(loader.RefreshStarted[0].Wait(TimeSpan.FromSeconds(5)));
+            loader.RefreshRelease[0].Set();
+            await renderStarted[0].Task.WaitAsync(TimeSpan.FromSeconds(5));
+            var firstStale = await firstRefresh;
+            firstStale.preview?.Dispose();
+
+            var secondRefresh = service.ApplyEditsToPreviewAsync(
+                file,
+                new EditSettings
+                {
+                    HlReconstruction = HlReconstructionMode.Blend,
+                    Detail = { NoiseReduction = FbddMode.Light }
+                },
+                skipHistogram: true);
+            Assert.True(loader.RefreshStarted[1].Wait(TimeSpan.FromSeconds(5)));
+            loader.RefreshRelease[1].Set();
+            await renderStarted[1].Task.WaitAsync(TimeSpan.FromSeconds(5));
+            var secondStale = await secondRefresh;
+            secondStale.preview?.Dispose();
+
+            Assert.True(service.PreviewActivityCount >= 2);
+            renderRelease[0].SetResult();
+            await WaitUntilAsync(() => service.PreviewActivityCount == 1);
+            renderRelease[1].SetResult();
+            await WaitUntilAsync(() => service.PreviewActivityCount == 0);
+        }
+    }
+
     private async Task<(CatalogService Catalog, ImageFile File)>
         CreateCatalogAndFile()
     {
@@ -234,6 +310,16 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
             new RenderedThumbnailCacheService(catalog));
         service.RenderStarted += renderStarted;
         return service;
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (!condition())
+        {
+            Assert.True(DateTime.UtcNow < deadline, "Timed out waiting for activity.");
+            await Task.Delay(10);
+        }
     }
 
     public void Dispose()
@@ -340,6 +426,52 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
                 ReplacementBase = result;
             }
             return result;
+        }
+
+        public BaseImage? LoadFullBase(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class OverlappingRefreshLoader : IBaseImageLoader
+    {
+        private int _loadCount;
+
+        public ManualResetEventSlim[] RefreshStarted { get; } =
+            [new(), new()];
+        public ManualResetEventSlim[] RefreshRelease { get; } =
+            [new(), new()];
+
+        public bool CanLoad(ImageFile file) => true;
+
+        public BaseImage? LoadPreviewBase(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken)
+        {
+            var call = Interlocked.Increment(ref _loadCount);
+            if (call > 1)
+            {
+                RefreshStarted[call - 2].Set();
+                RefreshRelease[call - 2].Wait(cancellationToken);
+            }
+            return new BaseImage(
+                new MagickImage(MagickColors.Gray, 32, 24),
+                new BaseImageInfo(
+                    BaseSourceKind.Standard,
+                    false,
+                    decode,
+                    null,
+                    null,
+                    6504,
+                    0,
+                    false,
+                    null,
+                    1,
+                    32,
+                    24));
         }
 
         public BaseImage? LoadFullBase(

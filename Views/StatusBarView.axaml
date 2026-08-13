@@ -29,6 +29,36 @@
                 <TextBlock Text="{Binding ActiveFileName}" Foreground="{DynamicResource TextSecondary}" FontFamily="{StaticResource FontLabel}" Margin="8,0"/>
                 <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource PrimaryContainer}" FontFamily="{StaticResource FontLabel}" Margin="8,0"/>
             </StackPanel>
+            <StackPanel x:Name="BackgroundActivitySegment"
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="6"
+                        Margin="8,0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding BackgroundActivity.IsVisible}"
+                        ToolTip.Tip="{Binding BackgroundActivity.Tooltip}"
+                        AutomationProperties.Name="Background activity"
+                        AutomationProperties.LiveSetting="Polite">
+                <Ellipse x:Name="BackgroundActivityDot"
+                         Width="6" Height="6"
+                         Fill="{StaticResource PrimaryContainer}"/>
+                <TextBlock x:Name="BackgroundActivityLabel"
+                           Text="{Binding BackgroundActivity.Label}"
+                           Foreground="{DynamicResource TextSecondary}"
+                           FontFamily="{StaticResource FontLabel}"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="360"
+                           VerticalAlignment="Center"/>
+                <ProgressBar x:Name="BackgroundActivityProgress"
+                             Width="60" Height="3"
+                             Minimum="0"
+                             Maximum="{Binding BackgroundActivity.ProgressMaximum}"
+                             Value="{Binding BackgroundActivity.ProgressValue}"
+                             IsIndeterminate="False"
+                             IsVisible="{Binding BackgroundActivity.ShowProgress}"
+                             VerticalAlignment="Center"/>
+            </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <ToggleButton Classes="agent-toggle" FontSize="10" Padding="6,1"
                               Content="{Binding AgentServerLabel}"

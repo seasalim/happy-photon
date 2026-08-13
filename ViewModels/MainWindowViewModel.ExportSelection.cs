@@ -87,11 +87,19 @@ public partial class MainWindowViewModel
         CancellationToken cancellationToken = default) =>
         ExportBatchAsync(GetSelectedImages().ToList(), progress, cancellationToken);
 
-    public Task<int> ExportBatchAsync(
+    public async Task<int> ExportBatchAsync(
         IReadOnlyList<ImageFile> imagesToExport,
         IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default) =>
-        ImageService.ExportBatchAsync(imagesToExport, ExportSettings, progress, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = BeginExportActivity(imagesToExport.Count);
+        var activityProgress = CreateExportActivityProgress(activity, progress);
+        return await ImageService.ExportBatchAsync(
+            imagesToExport,
+            ExportSettings,
+            activityProgress,
+            cancellationToken);
+    }
 
     internal ExportHydrationScope GetExportHydrationScope(
         IReadOnlyList<ImageFile> images) =>
@@ -102,11 +110,13 @@ public partial class MainWindowViewModel
         IProgress<(int current, int total, string fileName)>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = BeginExportActivity(imagesToExport.Count);
+        var activityProgress = CreateExportActivityProgress(activity, progress);
         var generation = Volatile.Read(ref _libraryGeneration);
         var exported = await ImageService.ExportBatchApprovedAsync(
             imagesToExport,
             ExportSettings,
-            progress,
+            activityProgress,
             cancellationToken);
 
         try
@@ -130,6 +140,7 @@ public partial class MainWindowViewModel
         int generation,
         CancellationToken cancellationToken)
     {
+        var targets = new List<ImageFile>();
         foreach (var image in images)
         {
             if (cancellationToken.IsCancellationRequested ||
@@ -152,10 +163,71 @@ public partial class MainWindowViewModel
             image.ThumbnailLoadFailed = false;
             image.ThumbnailUpgradeDeferredDimension = 0;
             image.ThumbnailUpgradeFailedDimension = 0;
-            QueueHydratedThumbnail(
-                image,
+            targets.Add(image);
+        }
+
+        if (targets.Count == 0) return;
+        var scheduler = _thumbnailScheduler;
+        if (scheduler != null)
+        {
+            scheduler.Enqueue(targets.Select(image =>
+                new ThumbnailLoadRequest(
+                    image,
+                    LibraryThumbnailRequest,
+                    0)));
+            SignalBackgroundActivityStarted();
+            return;
+        }
+
+        _ = TrackDirectThumbnailOperation(
+            RefreshExportHydratedSourcesDirectAsync(
+                targets,
                 generation,
-                cancellationToken);
+                cancellationToken));
+    }
+
+    private async Task RefreshExportHydratedSourcesDirectAsync(
+        IReadOnlyList<ImageFile> images,
+        int generation,
+        CancellationToken cancellationToken)
+    {
+        foreach (var image in images)
+        {
+            if (cancellationToken.IsCancellationRequested ||
+                generation != Volatile.Read(ref _libraryGeneration))
+            {
+                return;
+            }
+            await LoadThumbnailAsync(image, generation, cancellationToken);
+        }
+    }
+
+    private static IProgress<(int current, int total, string fileName)>
+        CreateExportActivityProgress(
+            BackgroundExportActivityRegistry.BackgroundExportScope activity,
+            IProgress<(int current, int total, string fileName)>? progress) =>
+        new ExportActivityProgress(activity, progress);
+
+    private sealed class ExportActivityProgress :
+        IProgress<(int current, int total, string fileName)>
+    {
+        private readonly BackgroundExportActivityRegistry.BackgroundExportScope
+            _activity;
+        private readonly IProgress<(int current, int total, string fileName)>?
+            _progress;
+
+        public ExportActivityProgress(
+            BackgroundExportActivityRegistry.BackgroundExportScope activity,
+            IProgress<(int current, int total, string fileName)>? progress)
+        {
+            _activity = activity;
+            _progress = progress;
+        }
+
+        public void Report((int current, int total, string fileName) value)
+        {
+            _activity.Report(value.current);
+            _progress?.Report(value);
         }
     }
 

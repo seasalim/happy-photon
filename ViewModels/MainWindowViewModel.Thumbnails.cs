@@ -20,6 +20,7 @@ public partial class MainWindowViewModel
     private long _thumbnailAccessClock;
     private long _peakThumbnailBytes;
     private int _lastQueuedSizeGeneration = -1;
+    internal Func<Task>? ThumbnailLoadGateAsync { get; set; }
 
     public long ResidentThumbnailBytes =>
         Library.AllImages.Sum(image => image.ThumbnailBytes);
@@ -104,14 +105,17 @@ public partial class MainWindowViewModel
         {
             var initialCount = Math.Min(imageFiles.Count, ThumbnailConcurrency * 2);
             var initialRequest = GetInitialThumbnailRequest(desiredRequest);
-            await LoadThumbnailRangeAsync(
-                imageFiles,
-                0,
-                initialCount,
-                generation,
-                initialRequest,
-                sizeGeneration,
-                cancellationToken);
+            using (initialCount > 0 ? BeginInitialThumbnailBatch() : null)
+            {
+                await LoadThumbnailRangeAsync(
+                    imageFiles,
+                    0,
+                    initialCount,
+                    generation,
+                    initialRequest,
+                    sizeGeneration,
+                    cancellationToken);
+            }
             cancellationToken.ThrowIfCancellationRequested();
 
             scheduler = new ThumbnailLoadScheduler(
@@ -203,6 +207,10 @@ public partial class MainWindowViewModel
         Bitmap? thumbnail = null;
         try
         {
+            if (ThumbnailLoadGateAsync is { } gate)
+            {
+                await gate();
+            }
             cancellationToken.ThrowIfCancellationRequested();
             imageFile.IsLoading = true;
             using var result = await ImageService.LoadThumbnailAsync(
@@ -307,6 +315,10 @@ public partial class MainWindowViewModel
         {
             scheduler.Enqueue(requests);
         }
+        if (requests.Count > 0)
+        {
+            SignalBackgroundActivityStarted();
+        }
     }
 
     private void RetryDeferredThumbnailIfAvailable(ImageFile image)
@@ -326,8 +338,13 @@ public partial class MainWindowViewModel
         image.ThumbnailLoadFailed = false;
         image.ThumbnailUpgradeDeferredDimension = 0;
         image.ThumbnailUpgradeFailedDimension = 0;
-        _thumbnailScheduler?.Enqueue([
-            new ThumbnailLoadRequest(image, LibraryThumbnailRequest, 0)]);
+        var scheduler = _thumbnailScheduler;
+        if (scheduler != null)
+        {
+            scheduler.Enqueue([
+                new ThumbnailLoadRequest(image, LibraryThumbnailRequest, 0)]);
+            SignalBackgroundActivityStarted();
+        }
     }
 
     private void QueueHydratedThumbnail(
@@ -342,10 +359,12 @@ public partial class MainWindowViewModel
             image.ThumbnailUpgradeFailedDimension = 0;
             scheduler.Enqueue([
                 new ThumbnailLoadRequest(image, LibraryThumbnailRequest, 0)]);
+            SignalBackgroundActivityStarted();
             return;
         }
 
-        _ = LoadThumbnailAsync(image, generation, cancellationToken);
+        _ = TrackDirectThumbnailOperation(
+            LoadThumbnailAsync(image, generation, cancellationToken));
     }
 
     internal void ReserveThumbnailResidency(

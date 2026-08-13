@@ -296,9 +296,10 @@ quality, then queues the requested Large follow-up. After that, one
   registration per image. Folder switches remain constant-time on the UI thread.
 - Capture-time metadata is not swept on folder open. Enabling Bursts starts a
   cancellable, serial sweep over the current folder and computes burst groups; disabling
-  Bursts or changing folders stops the remaining work. A pinned status remains visible
-  while enabled analysis is active, including while a newer folder waits for a
-  cancelled sweep to yield; disabling Bursts clears it immediately. `MetadataService`
+  Bursts or changing folders stops the remaining work. The shared background segment
+  reports processed/total capture-time progress while analysis is active, including
+  while a newer folder waits for a cancelled sweep to yield; disabling Bursts removes
+  that activity. `MetadataService`
   deduplicates this work with selection-triggered loads and awaits UI application
   before grouping reads `DateTaken`. The sweep analyzes locally readable images and
   reports cloud-only images as skipped; enabling Bursts never approves hydration.
@@ -448,6 +449,30 @@ Briefly, for contrast with thumbnails:
   threadpool task scales it to a DPI-independent 150 px bitmap and calculates its bins.
   Retirement never waits for that work; selection and thumbnail-generation checks reject
   stale results, and a later thumbnail assignment reschedules the debounce.
+
+### Background activity ownership
+
+The status bar pulls one constant-size activity snapshot at 4 Hz, and only while an
+activity epoch is open. It reads worker-owned integer state: the initial thumbnail
+batch flag, scheduler desired count, operation-level direct thumbnail tasks, rendered
+thumbnail tasks, preview decode/refresh tasks, cache queues plus writer-in-hand state,
+and unique metadata loads. Burst analysis and UI or agent exports contribute one outer
+scope per batch, with processed/total progress; overlapping export scopes add their
+counts. Metadata remains accounted but is presentation-suppressed while a burst or
+export scope already explains it.
+
+Producer and downstream cache-write phases deliberately overlap: a thumbnail or
+rendered-thumbnail task enqueues its cache write before leaving its own activity set.
+The sampler shows only after 400 ms of continuous work, hides after 600 ms of quiet,
+and stops after the hidden, all-zero snapshot has retained the same activity epoch for
+that trailing quiet interval. A rendered-thumbnail empty-to-nonempty transition can
+re-arm a stopped sampler.
+
+Shared per-image decode methods do not mutate activity state or notify the UI. Folder
+switches register one initial range and a bounded number of operation-level wakes,
+independent of folder size; samples never enumerate the Library, caches, or export
+lists. This preserves invariant 3 while keeping property changes bounded to the 4 Hz
+sampler.
 
 ## Threading model summary
 

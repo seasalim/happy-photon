@@ -68,7 +68,7 @@ public sealed partial class AgentToolService
             snapshot.originalPaths);
     }
 
-    private async Task<AgentExportResult> ExportResolvedImagesAsync(
+    internal async Task<AgentExportResult> ExportResolvedImagesAsync(
         IReadOnlyList<ImageFile> images,
         List<AgentBatchFailure> failed,
         ExportSettings settings,
@@ -76,6 +76,7 @@ public sealed partial class AgentToolService
         bool useSubfolders,
         HashSet<string> originalPaths)
     {
+        using var activity = _vm.BeginExportActivity(images.Count);
         var exported = new List<string>();
         var skipped = new List<string>();
         var comparer = OperatingSystem.IsWindows()
@@ -83,50 +84,58 @@ public sealed partial class AgentToolService
             : StringComparer.Ordinal;
         var targets = new HashSet<string>(comparer);
 
+        var processed = 0;
         foreach (var image in images)
         {
-            var pending = BuildPendingExports(
-                image,
-                settings,
-                variants,
-                useSubfolders,
-                originalPaths,
-                targets,
-                skipped,
-                failed);
-            if (pending.Count == 0)
+            try
             {
-                continue;
-            }
+                var pending = BuildPendingExports(
+                    image,
+                    settings,
+                    variants,
+                    useSubfolders,
+                    originalPaths,
+                    targets,
+                    skipped,
+                    failed);
+                if (pending.Count == 0)
+                {
+                    continue;
+                }
 
-            var availability = _imageService.GetSourceAvailability(image);
-            if (availability == SourceAvailability.RequiresHydration)
-            {
-                AddFailures(
+                var availability = _imageService.GetSourceAvailability(image);
+                if (availability == SourceAvailability.RequiresHydration)
+                {
+                    AddFailures(
+                        pending,
+                        failed,
+                        "source requires hydration",
+                        "hydration_required");
+                    continue;
+                }
+
+                if (availability == SourceAvailability.Unavailable)
+                {
+                    AddFailures(
+                        pending,
+                        failed,
+                        "source is unavailable",
+                        "source_unavailable");
+                    continue;
+                }
+
+                await ExportOneAsync(
+                    image,
+                    settings,
+                    useSubfolders,
                     pending,
-                    failed,
-                    "source requires hydration",
-                    "hydration_required");
-                continue;
+                    exported,
+                    failed);
             }
-
-            if (availability == SourceAvailability.Unavailable)
+            finally
             {
-                AddFailures(
-                    pending,
-                    failed,
-                    "source is unavailable",
-                    "source_unavailable");
-                continue;
+                activity.Report(++processed);
             }
-
-            await ExportOneAsync(
-                image,
-                settings,
-                useSubfolders,
-                pending,
-                exported,
-                failed);
         }
 
         return new AgentExportResult(exported, skipped, failed);

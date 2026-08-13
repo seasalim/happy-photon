@@ -359,6 +359,8 @@ public class ThumbnailService : IAsyncDisposable
     public bool HasRenderedCacheEntry(ImageFile imageFile) =>
         _renderedThumbnailCache.HasCacheEntry(imageFile);
 
+    public int PendingCacheWrites => _thumbnailCache.PendingWrites;
+
     public async ValueTask DisposeAsync()
     {
         await _thumbnailCache.DisposeAsync();

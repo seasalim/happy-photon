@@ -32,6 +32,22 @@ public class ImageService : IAsyncDisposable
         remove => _previewService.BaseRefreshStateChanged -= value;
     }
 
+    public event Action? RenderedThumbnailWorkStarted
+    {
+        add => _previewService.RenderedThumbnailWorkStarted += value;
+        remove => _previewService.RenderedThumbnailWorkStarted -= value;
+    }
+
+    public int ThumbnailActivityCount =>
+        _previewService.RenderedThumbnailTaskCount;
+
+    public int PreviewActivityCount => _previewService.PreviewActivityCount;
+
+    public int CacheWriteActivityCount =>
+        _thumbnailService.PendingCacheWrites + _previewService.PendingCacheWrites;
+
+    public int MetadataActivityCount => _metadataService.InFlightCount;
+
     public ImageService(CatalogService catalogService)
         : this(
             catalogService,

@@ -77,10 +77,19 @@ public sealed partial class PreviewService
                 return;
             }
 
-            var rendered = await RenderRefreshedAsync(
-                    pending,
-                    refreshGeneration)
-                .ConfigureAwait(false);
+            Interlocked.Increment(ref _activeRefreshRenders);
+            RenderOutput? rendered;
+            try
+            {
+                rendered = await RenderRefreshedAsync(
+                        pending,
+                        refreshGeneration)
+                    .ConfigureAwait(false);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _activeRefreshRenders);
+            }
             if (rendered?.Bitmap == null)
             {
                 return;
@@ -121,6 +130,10 @@ public sealed partial class PreviewService
         PendingRefresh pending,
         long generation)
     {
+        if (RefreshRenderGateAsync is { } gate)
+        {
+            await gate().ConfigureAwait(false);
+        }
         var decode = BaseDecodeSettings.From(pending.Settings);
         using var snapshot = _baseCoordinator.TryAcquireCurrent(
             pending.ImageFile,

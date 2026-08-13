@@ -38,6 +38,7 @@ public partial class MainWindowViewModel
 
         if (newValue != null)
         {
+            SignalBackgroundActivityStarted();
             RefreshSourceAvailability(newValue);
             RetryDeferredThumbnailIfAvailable(newValue);
             PrepareWhiteBalanceUi(newValue);
@@ -58,7 +59,7 @@ public partial class MainWindowViewModel
                 {
                     if (!_suppressSelectionPreviewLoad)
                     {
-                        _ = LoadPreviewAsync(newValue);
+                        _ = LoadPreviewAsync(newValue, wakeActivity: false);
                     }
                 }
                 else
@@ -77,7 +78,7 @@ public partial class MainWindowViewModel
             {
                 if (!_suppressSelectionPreviewLoad)
                 {
-                    _ = LoadPreviewAsync(newValue);
+                    _ = LoadPreviewAsync(newValue, wakeActivity: false);
                 }
             }
             else

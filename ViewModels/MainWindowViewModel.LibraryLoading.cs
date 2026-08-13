@@ -134,8 +134,11 @@ public partial class MainWindowViewModel
         }
     }
 
-    private async Task LoadPreviewAsync(ImageFile imageFile)
+    private async Task LoadPreviewAsync(
+        ImageFile imageFile,
+        bool wakeActivity = true)
     {
+        if (wakeActivity) SignalBackgroundActivityStarted();
         _previewLoadingCts?.Cancel();
         var requestCts = new CancellationTokenSource();
         _previewLoadingCts = requestCts;
@@ -310,7 +313,8 @@ public partial class MainWindowViewModel
             {
                 Histogram = histogram;
             }
-            _ = RefreshThumbnailAsync(imageFile);
+            _ = TrackDirectThumbnailOperation(
+                RefreshThumbnailAsync(imageFile));
         });
     }
 

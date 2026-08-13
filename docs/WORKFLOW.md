@@ -75,7 +75,8 @@ still exist.
 Burst grouping places photographs captured within two seconds into the same
 sequence. It does not choose a winner; it makes neighboring frames easier to
 recognize and compare. Happy Photon analyzes capture times only after Bursts is
-enabled and keeps an analysis message visible until that work finishes or Bursts is
+enabled. Sustained analysis appears in the shared background-activity segment with
+processed and total counts; it is absent again after the sweep finishes or Bursts is
 turned off.
 
 Online-only photographs stay visible with a cloud badge or placeholder. The folder

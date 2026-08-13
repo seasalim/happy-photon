@@ -25,14 +25,40 @@ public sealed partial class PreviewService : IAsyncDisposable
     private RenderedPreview? _lastRendered;
     private long _renderGeneration;
     private long _baseRefreshGeneration;
+    private int _activeRefreshRenders;
     private int _disposed;
 
     public event EventHandler<PreviewRefresh>? PreviewRefreshed;
     public event EventHandler<PreviewBaseRefreshState>?
         BaseRefreshStateChanged;
+    public event Action? RenderedThumbnailWorkStarted;
     internal event Action? RenderStarted;
     internal event Action? PreviewConverted;
     internal event Action? RenderedThumbnailCreated;
+    internal Func<Task>? RenderedThumbnailCacheQueuedAsync { get; set; }
+    internal Func<Task>? RefreshRenderGateAsync { get; set; }
+
+    public int PreviewActivityCount
+    {
+        get
+        {
+            int pending;
+            lock (_refreshSync) pending = _pendingRefreshes.Count;
+            return _baseCoordinator.DecodeTaskCount +
+                pending + Volatile.Read(ref _activeRefreshRenders);
+        }
+    }
+
+    public int RenderedThumbnailTaskCount
+    {
+        get
+        {
+            lock (_renderedSync) return _renderedThumbnailTasks.Count;
+        }
+    }
+
+    public int PendingCacheWrites =>
+        _previewCache.PendingWrites + _renderedThumbnailCache.PendingWrites;
 
     public PreviewService(
         CatalogService catalogService,

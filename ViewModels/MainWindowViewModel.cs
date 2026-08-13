@@ -33,6 +33,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         Action<Action>? postSelection = null)
     {
         _catalogService = catalogService;
+        _exportActivities = new BackgroundExportActivityRegistry(
+            SignalBackgroundActivityStarted);
         Library = new LibraryImageState(RetireThumbnail);
         _folderTreeService = new FolderTreeService(catalogService.CatalogPath);
         _imageService = new Lazy<ImageService>(() =>
@@ -46,6 +48,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 availabilityService ?? new SourceAvailabilityService());
             service.PreviewRefreshed += OnPreviewRefreshed;
             service.BaseRefreshStateChanged += OnBaseRefreshStateChanged;
+            service.RenderedThumbnailWorkStarted +=
+                OnRenderedThumbnailWorkStarted;
             return service;
         });
         _loadMetadataAsync = loadMetadataAsync ??
@@ -378,7 +382,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             "thumbnail refresh",
             TimeSpan.FromMilliseconds(500),
             debounce.Token,
-            () => RefreshSelectedThumbnailAsync(image, debounce.Token));
+            () => TrackDirectThumbnailOperation(
+                RefreshSelectedThumbnailAsync(image, debounce.Token)));
     }
 
     private void PushUndoState()
@@ -416,6 +421,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         var selectedImage = SelectedImage;
         if (selectedImage == null || !CanEditSelectedImage) return;
+        SignalBackgroundActivityStarted();
 
         var tempSettings = selectedImage.EditSettings.Clone();
         SaveSlidersTo(tempSettings);

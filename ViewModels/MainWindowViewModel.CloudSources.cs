@@ -170,10 +170,10 @@ public partial class MainWindowViewModel
             image.ThumbnailLoadFailed = false;
             image.ThumbnailUpgradeDeferredDimension = 0;
             image.ThumbnailUpgradeFailedDimension = 0;
-            await LoadThumbnailAsync(
+            await TrackDirectThumbnailOperation(LoadThumbnailAsync(
                 image,
                 generation,
-                request.Token);
+                request.Token));
             await _loadMetadataAsync(image);
             request.Token.ThrowIfCancellationRequested();
 
