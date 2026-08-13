@@ -1,3 +1,4 @@
+using System.Text.Json;
 using HappyPhoton.Services;
 using Microsoft.Data.Sqlite;
 using Xunit;
@@ -101,15 +102,14 @@ public sealed class AppDataLocationServiceTests : IDisposable
     {
         var service = CreateService();
         Directory.CreateDirectory(Path.GetDirectoryName(service.PointerPath)!);
-        var root = Path.Combine(_root, "overlap").Replace("\\", "\\\\");
-        await File.WriteAllTextAsync(service.PointerPath, $$"""
-            {
-              "version": 1,
-              "catalogRoot": "{{root}}",
-              "cacheRoot": "{{root}}\\inside",
-              "legacyCoLocated": false
-            }
-            """);
+        var overlapRoot = Path.Combine(_root, "overlap");
+        await File.WriteAllTextAsync(service.PointerPath, JsonSerializer.Serialize(new
+        {
+            version = 1,
+            catalogRoot = overlapRoot,
+            cacheRoot = Path.Combine(overlapRoot, "inside"),
+            legacyCoLocated = false
+        }));
 
         await Assert.ThrowsAsync<AppDataLocationPointerException>(service.ResolveAsync);
     }

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Runtime.CompilerServices;
 using HappyPhoton.Services;
 using Xunit;
 
@@ -88,7 +87,7 @@ public sealed class UpdateCheckServiceTests
     public void MicrosoftStoreDeepLink_MatchesPublishedSiteConfiguration()
     {
         using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            GetRepositoryRoot(),
+            GoldenTestPaths.RepositoryRoot,
             "site",
             "site-config.json")));
 
@@ -109,9 +108,5 @@ public sealed class UpdateCheckServiceTests
         tag_name = tag,
         html_url = $"{Repository}/releases/tag/{tag}"
     });
-
-    private static string GetRepositoryRoot(
-        [CallerFilePath] string sourceFile = "") =>
-        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFile)!, ".."));
 
 }
