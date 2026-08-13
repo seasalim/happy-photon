@@ -346,7 +346,8 @@
                                                 </MultiBinding>
                                             </Border.Background>
                                             <TextBlock Text="{Binding BurstChipText}" FontSize="9"
-                                                       FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{x:Static views:HappyPhotonColors.BurstChipInk}"/>
                                         </Border>
                                     </StackPanel>
                                 </Grid>

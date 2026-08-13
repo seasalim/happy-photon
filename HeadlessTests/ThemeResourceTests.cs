@@ -84,6 +84,34 @@ public sealed class ThemeResourceTests
     }
 
     [AvaloniaFact]
+    public void BurstPalette_KeepsChipInkReadableOnEveryHue()
+    {
+        var ink = Assert.IsType<SolidColorBrush>(HappyPhotonColors.BurstChipInk).Color;
+        foreach (var hue in new[]
+        {
+            HappyPhotonColors.BurstCyan,
+            HappyPhotonColors.BurstMagenta,
+            HappyPhotonColors.BurstPurple,
+            HappyPhotonColors.BurstIce,
+            HappyPhotonColors.BurstPink,
+            HappyPhotonColors.BurstViolet,
+            HappyPhotonColors.MidGreyBurstCyan,
+            HappyPhotonColors.MidGreyBurstMagenta,
+            HappyPhotonColors.MidGreyBurstPurple,
+            HappyPhotonColors.MidGreyBurstIce,
+            HappyPhotonColors.MidGreyBurstPink,
+            HappyPhotonColors.MidGreyBurstViolet,
+        })
+        {
+            var color = Assert.IsType<SolidColorBrush>(hue).Color;
+            var contrast = Contrast(ink, color);
+            Assert.True(
+                contrast >= 4.5,
+                $"Burst chip ink on {color} resolved to {contrast:F2}:1.");
+        }
+    }
+
+    [AvaloniaFact]
     public void Dark_ControlSpecificOpacitiesPreserveExistingRendering()
     {
         Assert.Equal(0.5, Resource<double>("TourFocusGlowOpacity", ThemeVariant.Dark));
