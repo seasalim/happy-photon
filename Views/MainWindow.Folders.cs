@@ -65,6 +65,45 @@ public partial class MainWindow
         }
     }
 
+    private async void OnImportCatalogRequested(object? sender, EventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm &&
+            vm.IsWorkspaceInteractionEnabled)
+        {
+            await ShowImportCatalogAsync();
+        }
+    }
+
+    private async Task ShowImportCatalogAsync()
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        if (!OperatingSystem.IsWindows())
+        {
+            await ConfirmationDialog.ShowMessageAsync(
+                this,
+                "Lightroom import is not available yet",
+                "Phase 1 enables Lightroom catalog import on Windows. " +
+                "macOS and Linux will follow after snapshot safety verification.");
+            return;
+        }
+
+        var files = await StorageProvider.OpenFilePickerAsync(
+            new FilePickerOpenOptions
+            {
+                Title = "Choose a Lightroom Classic Catalog",
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("Lightroom Classic catalog")
+                    {
+                        Patterns = ["*.lrcat"]
+                    }
+                ]
+            });
+        if (files.Count == 0 || !ReferenceEquals(DataContext, vm)) return;
+        await new ImportCatalogDialog(vm, files[0].Path.LocalPath).ShowDialog(this);
+    }
+
     internal void QueueRefreshScroll(
         MainWindowViewModel vm,
         int generation)
@@ -150,6 +189,28 @@ public partial class MainWindow
         {
             vm.SetRootFolder(path);
         }
+    }
+
+    private async Task PersistImportedFirstRunCompletionAsync(
+        MainWindowViewModel vm,
+        FirstRunImportCompletion completion)
+    {
+        if (_appSettingsService == null)
+            throw new InvalidOperationException("Application settings are unavailable.");
+
+        await _appSettingsService.SaveAsync(new AppSettings
+        {
+            RootFolderPath = completion.BrowsingRootPath,
+            SelectedFolderPath = completion.InitiallySelectedFolderPath,
+            FirstRunExperienceVersion = MainWindowViewModel.CurrentFirstRunExperienceVersion,
+            FileTypeFilter = vm.Library.FileTypeFilter,
+            LibraryThumbnailSize = vm.LibraryThumbnailSize,
+            AppTheme = vm.AppTheme,
+            StripLocationData = vm.ExportSettings.StripLocationData,
+            OutputSharpening = vm.ExportSettings.OutputSharpening,
+            McpServerEnabled = vm.IsAgentServerEnabled,
+            McpToken = vm.AgentToken
+        });
     }
 
     private void FocusFolderTree()

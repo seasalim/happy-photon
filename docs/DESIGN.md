@@ -118,6 +118,25 @@ spacing:
   margin-desktop: 64px
 ---
 
+## Import from Lightroom Classic
+
+The first-run welcome and the Folders header's **More folder actions** menu expose
+**Import from Lightroom**. The dialog reads a `.lrcat`, automatically summarizes source
+roots already available locally,
+asks for optional local mappings for unavailable roots that contain importable photos,
+and offers two non-clearing policies: Lightroom wins, or fill empty Happy Photon values
+only. It previews path and per-axis outcomes before apply. A wholly unmatched import is
+kept separate from expected information such as intentionally unmapped roots, virtual
+copies, unsupported file types, unrecognized color-label tokens, and
+unverified-but-compatible catalog versions.
+
+The completion report distinguishes a catalog with no ratings, flags, or color labels
+from one whose assessed-photo paths did not match. An import into an open folder updates
+the existing Library objects and filters without reloading thumbnails. A first-run import
+chooses an accessible mapped root and a folder that actually contains imported
+photographs; when none is accessible, it completes with an explicit offline/unavailable
+explanation.
+
 ## Settings
 
 The title bar exposes Settings with a gear between the quick Theme menu and

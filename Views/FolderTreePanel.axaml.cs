@@ -58,6 +58,7 @@ public partial class FolderTreePanel : UserControl
     public event EventHandler<FolderNode>? FolderExpanding;
     public event EventHandler? ChangeFolderRequested;
     public event EventHandler? RefreshFolderRequested;
+    public event EventHandler? ImportCatalogRequested;
     public event EventHandler? PhotoNavigationRequested;
 
     private bool _selectionStartedByPointer;
@@ -181,5 +182,12 @@ public partial class FolderTreePanel : UserControl
         Avalonia.Interactivity.RoutedEventArgs e)
     {
         RefreshFolderRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnImportCatalogClick(
+        object? sender,
+        Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        ImportCatalogRequested?.Invoke(this, EventArgs.Empty);
     }
 }

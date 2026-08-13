@@ -1,5 +1,23 @@
 # Happy Photon Architecture
 
+## Lightroom catalog import
+
+Phase 1 imports ratings, pick/reject flags, and color labels from Lightroom Classic
+without opening original photographs. `LightroomCatalogReader` works from a temporary
+snapshot outside the Happy Photon catalog. On Windows, read-only SQLite access was found
+to mutate an existing WAL shared-memory sidecar, so the safe fallback requires Lightroom
+to be fully closed and refuses catalogs with SQLite sidecars; the closed catalog file is
+held open for reading while the snapshot is copied. Orphaned snapshot directories are
+swept during deferred catalog initialization.
+
+`CatalogImportService` normalizes mapped paths and builds a vendor-neutral preview.
+`CatalogService.Import` exclusively owns persistence: it revalidates the preview's
+per-axis baseline under the connection gate, creates unknown paths, updates `images` and
+revisioned `image_assessments`, and persists import settings in one short transaction.
+Imported metadata never sets `pending_axes`, so a large import does not enter the bounded
+XMP writer. After commit, matching live `ImageFile` objects adopt snapshots only when
+their revision still matches the preview baseline, then filters refresh in place.
+
 ## XMP sidecars
 
 XMP support is opt-in per catalog. Folder enumeration records `.xmp` files in

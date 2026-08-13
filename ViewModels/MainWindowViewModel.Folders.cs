@@ -8,6 +8,8 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private bool _suppressSelectedFolderLoad;
+
     [ObservableProperty]
     private bool _currentFolderHasSubfolders;
 
@@ -113,7 +115,8 @@ public partial class MainWindowViewModel
         if (newValue != null && !newValue.IsDummy)
         {
             newValue.IsSelected = true;
-            _ = LoadFolderAsync(newValue.Path);
+            if (!_suppressSelectedFolderLoad)
+                _ = LoadFolderAsync(newValue.Path);
         }
 
         OnPropertyChanged(nameof(ViewingFolderName));

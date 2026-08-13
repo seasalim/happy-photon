@@ -16,6 +16,41 @@ namespace HappyPhoton.Tests;
 public sealed class ManualFolderRefreshViewTests
 {
     [AvaloniaFact]
+    public void FolderPanel_MoreActionsPreserveEventsAndAutomationNames()
+    {
+        var panel = new FolderTreePanel();
+        var button = panel.FindControl<Button>("FolderActionsButton")!;
+        var flyout = Assert.IsType<MenuFlyout>(button.Flyout);
+        var items = flyout.Items.OfType<MenuItem>().ToArray();
+        var importRequested = 0;
+        var changeRequested = 0;
+        panel.ImportCatalogRequested += (_, _) => importRequested++;
+        panel.ChangeFolderRequested += (_, _) => changeRequested++;
+
+        Assert.Equal("⋯", button.Content);
+        Assert.Equal("More folder actions", ToolTip.GetTip(button));
+        Assert.Equal("More folder actions", AutomationProperties.GetName(button));
+        Assert.Equal(
+            ["Import from Lightroom…", "Change browsing location…"],
+            items.Select(item => item.Header));
+        Assert.Equal(
+            ["Import from Lightroom catalog", "Change browsing location"],
+            items.Select(AutomationProperties.GetName));
+        Assert.Equal(
+            [
+                "Import ratings, flags, and color labels from Lightroom Classic.",
+                "Choose the top-level location shown in the folder tree."
+            ],
+            items.Select(ToolTip.GetTip));
+
+        items[0].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        items[1].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+
+        Assert.Equal(1, importRequested);
+        Assert.Equal(1, changeRequested);
+    }
+
+    [AvaloniaFact]
     public void FolderPanel_RefreshButtonUsesVectorMetadataAndRaisesEvent()
     {
         var panel = new FolderTreePanel();

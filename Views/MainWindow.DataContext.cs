@@ -50,6 +50,11 @@ public partial class MainWindow
         vm.ZoomFitCommand = new RelayCommand(ZoomFit);
         vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(zoom => vm.ZoomLevel = zoom);
         vm.RequestExportDialogAsync = ShowExportDialogAsync;
+        vm.RequestCatalogImportAsync = ShowImportCatalogAsync;
+        vm.CaptureLibraryViewportAnchor =
+            () => _libraryGridView?.CaptureViewportAnchorPath();
+        vm.RestoreLibraryViewportAnchor =
+            path => _libraryGridView?.RestoreViewportAnchorPath(path);
         vm.RequestSettingsDialogAsync = async () =>
             await new SettingsDialog(vm).ShowDialog(this);
         vm.ConfirmMoveToTrashAsync = ConfirmMoveToTrashAsync;
@@ -59,6 +64,8 @@ public partial class MainWindow
         vm.PersistAppSettingsAsync = () => SaveAppSettingsAsync(vm);
         vm.PersistFirstRunCompletionAsync =
             path => PersistFirstRunCompletionAsync(vm, path);
+        vm.PersistImportedFirstRunCompletionAsync =
+            completion => PersistImportedFirstRunCompletionAsync(vm, completion);
         vm.BrowseLocationRequested = () => _ = BrowseForFirstRunLocationAsync(vm);
         vm.RetryStartupAsync = () => TryInitializeApplicationAsync(vm);
         vm.CompleteDataLocationSetupAsync = () =>

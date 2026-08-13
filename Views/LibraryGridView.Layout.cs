@@ -103,4 +103,27 @@ public partial class LibraryGridView
                 itemBottom - ThumbnailScrollViewer.Viewport.Height);
         }
     }
+
+    public string? CaptureViewportAnchorPath()
+    {
+        if (Images == null || Images.Count == 0) return null;
+        var row = Math.Max(0, (int)Math.Floor(
+            ThumbnailScrollViewer.Offset.Y / Geometry.RowHeight));
+        var index = Math.Min(Images.Count - 1, row * GetItemsPerRow());
+        return Images[index].FilePath;
+    }
+
+    public void RestoreViewportAnchorPath(string? filePath)
+    {
+        if (Images == null || string.IsNullOrWhiteSpace(filePath)) return;
+        var comparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+        var index = Images.IndexOf(Images.FirstOrDefault(image =>
+            string.Equals(image.FilePath, filePath, comparison))!);
+        if (index < 0) return;
+        Dispatcher.UIThread.Post(
+            () => ScrollItemIntoView(index),
+            DispatcherPriority.Loaded);
+    }
 }

@@ -1,5 +1,22 @@
 # The Happy Photon Workflow
 
+## Bring assessments from Lightroom Classic
+
+Choose **Import from Lightroom…** in the Folders header's **More folder actions** menu,
+or **Import from Lightroom** on first run, then select a `.lrcat`. Close Lightroom first.
+Happy Photon summarizes locations it matches
+automatically. Map any moved location you want to import, or leave it blank to skip those
+photos. Then choose whether Lightroom replaces differing Happy Photon values or only fills
+empty values, review the preview, and apply. Phase 1 never clears a local rating, flag, or
+color label, and never writes to Lightroom or an original photograph.
+
+The report reserves action-needed messages for an import where none of the assessed
+photos matched. Unmapped locations are informational skips, like virtual copies and
+unsupported files. “Nothing to import” means the source
+catalog has no ratings, flags, or labels; “Nothing matched” means its source paths need
+review. Re-running the same import performs no catalog writes when everything is already
+up to date.
+
 Happy Photon is organized around three decisions:
 
 1. **Which photographs are worth keeping?** Use Library to compare, flag, rate,
@@ -78,7 +95,7 @@ visible while it upgrades locally available sources in the background. It never
 downloads an online-only original for that quality upgrade.
 
 If photographs are added, removed, or renamed outside Happy Photon, use the
-**Refresh folder** button beside **Change…** in the Folders header. Refresh
+**Refresh folder** button beside **More folder actions** in the Folders header. Refresh
 re-reads the currently viewed folder and its immediate subfolder list while
 preserving active filters and cataloged edits, ratings, and flags for paths that
 still exist.

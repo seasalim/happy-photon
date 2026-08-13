@@ -50,6 +50,7 @@ public partial class MainWindow : Window
             _folderTreePanel.FolderExpanding += OnFolderExpanding;
             _folderTreePanel.ChangeFolderRequested += OnChangeFolderRequested;
             _folderTreePanel.RefreshFolderRequested += OnRefreshFolderRequested;
+            _folderTreePanel.ImportCatalogRequested += OnImportCatalogRequested;
             _folderTreePanel.PhotoNavigationRequested += OnPhotoNavigationRequested;
         }
 

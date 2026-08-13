@@ -130,9 +130,29 @@
                          IsVisible="{Binding IsFirstRunBusy}"
                          Height="3"/>
 
-            <Button x:Name="StartInDefaultButton"
+            <Button x:Name="ImportLightroomButton"
                     Classes="accent hero-action"
                     Margin="0,32,0,0"
+                    Command="{Binding ImportCatalogCommand}"
+                    AutomationProperties.Name="Import a Lightroom Classic catalog">
+                <StackPanel HorizontalAlignment="Center" Spacing="5">
+                    <TextBlock Text="IMPORT FROM LIGHTROOM"
+                               FontFamily="{StaticResource FontLabel}"
+                               FontSize="{StaticResource FontSizeLabel}"
+                               LetterSpacing="2"
+                               Foreground="{StaticResource OnPrimary}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Bring across ratings, flags, and color labels"
+                               FontSize="11"
+                               Foreground="{StaticResource OnPrimary}"
+                               Opacity="0.78"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="StartInDefaultButton"
+                    Classes="accent hero-action"
+                    Margin="0,14,0,0"
                     Command="{Binding StartInDefaultLocationCommand}"
                     IsVisible="{Binding HasDefaultFirstRunLocation}"
                     AutomationProperties.Name="{Binding FirstRunPrimaryActionText}">

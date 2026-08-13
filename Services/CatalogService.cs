@@ -149,6 +149,8 @@ public partial class CatalogService : IDisposable
                 }
             }
 
+            LightroomCatalogReader.SweepOrphanedSnapshots();
+
             _connection = new SqliteConnection($"Data Source={_databasePath}");
             try
             {

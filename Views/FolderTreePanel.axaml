@@ -26,10 +26,23 @@
                         </PathIcon.Data>
                     </PathIcon>
                 </Button>
-                <Button Grid.Column="2" Content="Change…" Click="OnChangeFolderClick"
-                        Padding="8,4" FontSize="10"
-                        ToolTip.Tip="Choose the top-level location shown in the folder tree."
-                        AutomationProperties.Name="Change browsing location"/>
+                <Button Grid.Column="2" x:Name="FolderActionsButton"
+                        Content="⋯" Width="24" Height="24" Padding="4,0" FontSize="10"
+                        ToolTip.Tip="More folder actions"
+                        AutomationProperties.Name="More folder actions">
+                    <Button.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedRight">
+                            <MenuItem Header="Import from Lightroom…"
+                                      Click="OnImportCatalogClick"
+                                      ToolTip.Tip="Import ratings, flags, and color labels from Lightroom Classic."
+                                      AutomationProperties.Name="Import from Lightroom catalog"/>
+                            <MenuItem Header="Change browsing location…"
+                                      Click="OnChangeFolderClick"
+                                      ToolTip.Tip="Choose the top-level location shown in the folder tree."
+                                      AutomationProperties.Name="Change browsing location"/>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
                 <TextBlock Grid.Row="1" Grid.ColumnSpan="3"
                            Text="{Binding BrowsingFolderName, ElementName=Root, StringFormat='Browsing from: {0}'}"
                            Foreground="{DynamicResource TextMuted}" FontSize="10" Margin="0,4,0,0"/>
