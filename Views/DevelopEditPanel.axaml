@@ -131,8 +131,9 @@
                 <views:HistogramView Histogram="{Binding Histogram}"
                                      Margin="15,15,15,10"
                                      IsEnabled="{Binding HasSelectedImage}"/>
-                <ProgressBar Grid.Row="1"
-                             IsIndeterminate="True"
+                <ProgressBar Name="BaseArmingProgressBar"
+                             Grid.Row="1"
+                             IsIndeterminate="{Binding IsBaseArming}"
                              IsVisible="{Binding IsBaseArming}"
                              Height="2"/>
             </Grid>

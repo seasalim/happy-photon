@@ -215,4 +215,4 @@ the filter row shows swatches alone and carries each name in its tooltip.
 - **Cards:** Incorporate a subtle top-down gradient stroke (1px) to catch the "light" from above. Backgrounds should use a semi-transparent dark tint with backdrop-blur.
 - **Chips:** Monospaced labels inside pill-shaped containers with high-saturation borders.
 - **Data Visualization:** Use "Photon Trails"—thin, glowing lines with gradient tails to represent motion and data flow.
-- **Progress Indicators:** Linear bars with a "pulse" animation, moving from Secondary to Primary color to represent energy charging.
+- **Progress Indicators:** Linear bars with a "pulse" animation, moving from Secondary to Primary color to represent energy charging. The pulse runs only while the represented work is actually active — an indicator never animates at rest or while hidden (hidden indeterminate bars keep the GPU rendering; see `ARCHITECTURE.md` invariant 10). Static loading placeholders, like the library tile strip, are the idle-safe alternative for transient per-item states.

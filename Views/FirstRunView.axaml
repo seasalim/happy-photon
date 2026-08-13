@@ -122,10 +122,11 @@
                        TextWrapping="Wrap"
                        AutomationProperties.LiveSetting="Assertive"/>
 
-            <ProgressBar Margin="0,14,0,0"
+            <ProgressBar Name="FirstRunProgressBar"
+                         Margin="0,14,0,0"
                          MaxWidth="480"
                          HorizontalAlignment="Stretch"
-                         IsIndeterminate="True"
+                         IsIndeterminate="{Binding IsFirstRunBusy}"
                          IsVisible="{Binding IsFirstRunBusy}"
                          Height="3"/>
 

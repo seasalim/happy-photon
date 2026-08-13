@@ -20,7 +20,9 @@
                         Spacing="16"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
-                <ProgressBar IsIndeterminate="True" Height="3"/>
+                <ProgressBar Name="StartupProgressBar"
+                             IsIndeterminate="{Binding IsStartupInitializing}"
+                             Height="3"/>
                 <TextBlock Text="Opening your local catalog…"
                            Foreground="{DynamicResource TextSecondary}"
                            TextAlignment="Center"/>

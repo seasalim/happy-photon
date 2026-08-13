@@ -485,3 +485,11 @@ Briefly, for contrast with thumbnails:
 8. Every source file stays under 500 lines.
 9. Background work never hydrates a cloud-only original. Source reads enforce live
    availability; only a clearly scoped user action may use approved hydration intent.
+10. Progress indicators are indeterminate only while their represented work is active.
+    Indeterminate FluentTheme ProgressBars animate even when hidden and keep the
+    compositor rendering: Phase 0 measurement (2026-08-12, Windows 11, Release) found
+    ~0.3 % CPU / ~2.9 % GPU idling at Ready and ~2.2 % CPU / ~13.4 % GPU idling on a
+    2,000-image folder, and disabling the four always-attached bars returned every
+    case exactly to the empty-FluentTheme-window floor. Bars therefore bind
+    `IsIndeterminate` to their busy flag, and library tiles use a static loading
+    placeholder instead of a ProgressBar.
