@@ -134,14 +134,10 @@
                             Choices="{Binding ColorLabelFilterChoices}"
                             Filter="{Binding ColorLabelFilter, ElementName=Root, Mode=TwoWay}"/>
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
-                        <Button x:Name="BurstsButton" Classes="filter-icon"
+                        <Button x:Name="BurstsButton" Content="Bursts" Classes="filter"
                                 Click="OnBurstsClick"
                                 ToolTip.Tip="Group bursts"
-                                AutomationProperties.Name="Group bursts">
-                            <PathIcon Width="18" Height="18"
-                                      Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      Data="M0 5V0h13v2H2v3z M2 7V2h14v2H4v3z M4 5h14v2H4z M4 16h14v2H4z M4 7h2v9H4z M16 7h2v9h-2z M7 8h2v2H7z M7 14l2.5-3 2 2 1.5-2 2.5 3z"/>
-                        </Button>
+                                AutomationProperties.Name="Group bursts"/>
                     </StackPanel>
                 </ScrollViewer>
 

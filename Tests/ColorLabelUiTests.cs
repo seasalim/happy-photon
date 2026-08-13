@@ -118,11 +118,8 @@ public sealed class ColorLabelUiTests
         var ratingAll = control.FindControl<Button>("RatingFilterAllButton")!;
         var bursts = control.FindControl<Button>("BurstsButton")!;
         var filterLabel = control.FindControl<TextBlock>("FilterLabel")!;
-        var burstsGlyph = Assert.IsType<PathIcon>(bursts.Content);
-        Assert.Contains("filter-icon", bursts.Classes);
-        Assert.Equal(24, bursts.Width);
-        Assert.Equal(0, bursts.BorderThickness.Left);
-        Assert.Equal(18, burstsGlyph.Width);
+        Assert.Equal("Bursts", bursts.Content);
+        Assert.Contains("filter", bursts.Classes);
         Assert.Equal("Filter", filterLabel.Text);
         Assert.Equal("Picked", picked.Content);
         Assert.Equal("Rejected", rejected.Content);
