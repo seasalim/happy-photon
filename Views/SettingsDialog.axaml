@@ -23,6 +23,10 @@
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
+        <Style Selector="ToggleButton.agent-toggle:checked">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto">
@@ -83,6 +87,19 @@
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Experimental" Classes="dialog-tab">
+                <StackPanel Margin="20,16" Spacing="12" MaxWidth="540"
+                            HorizontalAlignment="Left">
+                    <TextBlock Text="Agent server" Classes="setting-heading"/>
+                    <ToggleButton Classes="agent-toggle" Padding="10,4"
+                                  Content="{Binding AgentServerLabel}"
+                                  IsChecked="{Binding IsAgentServerEnabled, Mode=TwoWay}"
+                                  ToolTip.Tip="{Binding AgentServerTooltip}"
+                                  AutomationProperties.Name="Toggle the local agent server"/>
+                    <TextBlock Text="Runs a local MCP server on 127.0.0.1 so an AI agent can browse, assess, and export this catalog. Enabling copies the connection URL to the clipboard. The server stops when Happy Photon exits and never accepts remote connections."
+                               Classes="setting-note"/>
+                </StackPanel>
             </TabItem>
         </TabControl>
 
