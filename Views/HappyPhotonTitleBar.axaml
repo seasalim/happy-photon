@@ -143,10 +143,22 @@
                         Command="{Binding OpenSettingsCommand}"/>
                 <Button x:Name="HelpAboutButton"
                         Classes="caption help"
-                        Content="?"
                         ToolTip.Tip="Help &amp; About"
                         AutomationProperties.Name="Help &amp; About"
-                        Click="OnHelpAboutClick"/>
+                        Click="OnHelpAboutClick">
+                    <Grid Width="18" Height="18">
+                        <TextBlock Text="?"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                        <Ellipse x:Name="UpdateAvailableIndicator"
+                                 Width="4" Height="4"
+                                 Fill="{DynamicResource TextMuted}"
+                                 HorizontalAlignment="Right"
+                                 VerticalAlignment="Top"
+                                 IsVisible="{Binding IsUpdateAvailable}"
+                                 IsHitTestVisible="False"/>
+                    </Grid>
+                </Button>
                 <Border Width="1" Height="16"
                         Background="{DynamicResource Divider}"
                         VerticalAlignment="Center"

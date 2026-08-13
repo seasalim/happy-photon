@@ -30,9 +30,13 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         IBaseImageLoader? baseLoader,
         Func<ImageFile, Task>? loadMetadataAsync = null,
         ISourceAvailabilityService? availabilityService = null,
-        Action<Action>? postSelection = null)
+        Action<Action>? postSelection = null,
+        UpdateCheckService? updateCheckService = null,
+        UpdateInstallChannel? updateInstallChannel = null)
     {
         _catalogService = catalogService;
+        _updateCheckService = updateCheckService ?? new UpdateCheckService();
+        _updateInstallChannel = updateInstallChannel ?? UpdateChannelSelector.Current;
         _exportActivities = new BackgroundExportActivityRegistry(
             SignalBackgroundActivityStarted);
         Library = new LibraryImageState(RetireThumbnail);

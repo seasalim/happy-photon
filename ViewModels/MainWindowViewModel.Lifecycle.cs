@@ -5,6 +5,7 @@ public partial class MainWindowViewModel
     public async ValueTask DisposeAsync()
     {
         DisposeBackgroundActivity();
+        await DisposeUpdatesAsync();
         Interlocked.Increment(ref _libraryGeneration);
         await CancelXmpReconcileAsync();
         if (_xmpWriter != null)

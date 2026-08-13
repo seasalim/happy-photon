@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using HappyPhoton.ViewModels;
 
 namespace HappyPhoton.Views;
 
@@ -38,9 +39,9 @@ public partial class HappyPhotonTitleBar : UserControl
 
     private async void OnHelpAboutClick(object? sender, RoutedEventArgs e)
     {
-        if (OwnerWindow is { } window)
+        if (OwnerWindow is { } window && DataContext is MainWindowViewModel viewModel)
         {
-            await new HelpAboutDialog().ShowDialog(window);
+            await new HelpAboutDialog(viewModel).ShowDialog(window);
         }
     }
 

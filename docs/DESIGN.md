@@ -126,6 +126,13 @@ contains the application theme; Metadata contains catalog-scoped XMP mode and
 naming controls, with immediate application and a disclosure about interop,
 cloud synchronization, and original-file safety.
 
+About carries the manual update action and its muted inline result. An available
+release adds only a small muted dot to the title-bar Help button; it does not add
+status-bar chrome. Opening Help while that dot is present selects About so the
+channel-aware Store or GitHub upgrade action is one more click away.
+Happy Photon makes no automatic update network requests; GitHub is contacted only
+when the user explicitly chooses **Check for updates**.
+
 ## Brand & Style
 
 The brand personality for the design system is energetic, luminous, and high-velocity. It targets a tech-forward audience that values performance and visual stimulation. The UI should evoke a sense of "captured light"—vibrant, focused, and humming with energy.

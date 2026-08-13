@@ -3,18 +3,34 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using HappyPhoton.Services;
+using HappyPhoton.ViewModels;
 
 namespace HappyPhoton.Views;
 
 public partial class HelpAboutDialog : Window
 {
     private AppBuildIdentity BuildIdentity { get; } = AppBuildInfo.Identity;
+    private readonly Func<Uri, Task<bool>>? _launchUriAsync;
 
-    public HelpAboutDialog()
+    public HelpAboutDialog() : this(null)
+    {
+    }
+
+    internal HelpAboutDialog(
+        MainWindowViewModel? viewModel,
+        Func<Uri, Task<bool>>? launchUriAsync = null)
     {
         InitializeComponent();
+        ViewModel = viewModel;
+        _launchUriAsync = launchUriAsync;
         DataContext = this;
+        if (viewModel?.IsUpdateAvailable == true)
+        {
+            HelpAboutTabs.SelectedIndex = 1;
+        }
     }
+
+    public MainWindowViewModel? ViewModel { get; }
 
     public IReadOnlyList<ShortcutGroup> Groups => ShortcutCatalog.Groups;
 
@@ -78,13 +94,30 @@ public partial class HelpAboutDialog : Window
     private async void OnThirdPartyNoticesClick(object? sender, RoutedEventArgs e) =>
         await OpenUrlAsync(BuildIdentity.ThirdPartyNoticesUrl, "third-party notices");
 
+    private async void OnUpgradeClick(object? sender, RoutedEventArgs e)
+    {
+        var uri = ViewModel?.UpgradeUri;
+        try
+        {
+            if (uri == null || !await LaunchUriAsync(uri))
+            {
+                UpdateActionFeedbackText.Text = "Could not open the update destination.";
+                return;
+            }
+
+            UpdateActionFeedbackText.Text = string.Empty;
+        }
+        catch (Exception)
+        {
+            UpdateActionFeedbackText.Text = "Could not open the update destination.";
+        }
+    }
+
     private async Task OpenUrlAsync(string? url, string description)
     {
         try
         {
-            var launcher = TopLevel.GetTopLevel(this)?.Launcher;
-            if (url == null || launcher == null ||
-                !await launcher.LaunchUriAsync(new Uri(url)))
+            if (url == null || !await LaunchUriAsync(new Uri(url)))
             {
                 CopyFeedbackText.Text = $"Could not open {description}.";
                 return;
@@ -96,5 +129,16 @@ public partial class HelpAboutDialog : Window
         {
             CopyFeedbackText.Text = $"Could not open {description}.";
         }
+    }
+
+    private Task<bool> LaunchUriAsync(Uri uri)
+    {
+        if (_launchUriAsync != null)
+        {
+            return _launchUriAsync(uri);
+        }
+
+        var launcher = TopLevel.GetTopLevel(this)?.Launcher;
+        return launcher?.LaunchUriAsync(uri) ?? Task.FromResult(false);
     }
 }

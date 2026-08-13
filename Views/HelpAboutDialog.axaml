@@ -159,6 +159,41 @@
                             </StackPanel>
                         </Border>
 
+                        <StackPanel Spacing="6">
+                            <Button x:Name="CheckForUpdatesButton"
+                                    Content="Check for updates"
+                                    Command="{Binding ViewModel.CheckForUpdatesCommand}"
+                                    HorizontalAlignment="Left"
+                                    Padding="14,7"
+                                    AutomationProperties.Name="Check for updates"/>
+                            <TextBlock x:Name="UpdateStatusText"
+                                       Text="{Binding ViewModel.UpdateStatusText}"
+                                       MinHeight="16"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Update check status"/>
+                            <StackPanel IsVisible="{Binding ViewModel.IsUpdateAvailable}"
+                                        Spacing="5">
+                                <TextBlock x:Name="UpdateChannelText"
+                                           Text="{Binding ViewModel.UpdateChannelText}"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"
+                                           AutomationProperties.Name="Update channel information"/>
+                                <Button x:Name="UpgradeButton"
+                                        Content="{Binding ViewModel.UpgradeActionText}"
+                                        Classes="about-link"
+                                        HorizontalAlignment="Left"
+                                        AutomationProperties.Name="Open update destination"
+                                        Click="OnUpgradeClick"/>
+                                <TextBlock x:Name="UpdateActionFeedbackText"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </StackPanel>
+
                         <StackPanel Spacing="7">
                             <TextBlock Text="GPL-3.0-or-later"
                                        FontFamily="{StaticResource FontLabel}"

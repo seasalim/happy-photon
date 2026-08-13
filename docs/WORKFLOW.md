@@ -47,6 +47,9 @@ recognized color-label names. Read/write creates or updates a sidecar only
 after you change an assessment; enabling it does not publish older catalog
 assessments. Sidecars may sync through the folder's cloud provider, while the
 original photo remains untouched and is never downloaded for XMP work.
+Update discovery is manual-only. Happy Photon makes no automatic update network
+requests; it contacts GitHub only when you explicitly choose **Check for updates**
+on the About tab.
 
 ## 1. Open and survey the shoot
 
@@ -364,4 +367,7 @@ remains where it started and unchanged.
 
 Use the `?` button in the title bar to open **Help & About**. The complete
 shortcut reference is selected by default, with build and project information
-available on the About tab.
+available on the About tab. About can check for updates manually. Store-packaged
+Windows installations open the Microsoft Store, which manages their updates;
+other installations open the matching GitHub release. A muted dot on `?` means
+an in-session manual check found a newer release, and Help then opens on About.

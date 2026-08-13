@@ -110,6 +110,7 @@ public class BuildInfoTests
     {
         var identity = CreateStamped();
 
+        Assert.Equal(Repository, identity.RepositoryRoot);
         Assert.Equal($"{Repository}/tree/{Revision}", identity.ProjectUrl);
         Assert.Equal($"{Repository}/blob/{Revision}/LICENSE", identity.LicenseUrl);
         Assert.Equal(

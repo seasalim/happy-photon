@@ -1,10 +1,13 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
 using Xunit;
+using Ellipse = Avalonia.Controls.Shapes.Ellipse;
 
 namespace HappyPhoton.Tests;
 
@@ -44,6 +47,14 @@ public sealed class HelpAboutDialogTests
             AutomationProperties.GetName(
                 dialog.FindControl<TextBlock>("CopyFeedbackText")!));
         Assert.Equal(
+            "Check for updates",
+            AutomationProperties.GetName(
+                dialog.FindControl<Button>("CheckForUpdatesButton")!));
+        Assert.Equal(
+            "Update check status",
+            AutomationProperties.GetName(
+                dialog.FindControl<TextBlock>("UpdateStatusText")!));
+        Assert.Equal(
             "Open Happy Photon project",
             AutomationProperties.GetName(dialog.FindControl<Button>("ProjectLink")!));
         Assert.Equal(
@@ -78,4 +89,121 @@ public sealed class HelpAboutDialogTests
         titleBar.DataContext = null;
         await vm.DisposeAsync();
     }
+
+    [AvaloniaTheory]
+    [InlineData("v1.0.0", "Happy Photon is up to date.")]
+    [InlineData("v2.0.0", "Update available · v2.0.0")]
+    [InlineData(null, "Couldn’t check for updates. Try again later.")]
+    public async Task ManualCheck_ReportsEveryUserVisibleState(
+        string? tag,
+        string expected)
+    {
+        var root = NewCatalogPath();
+        using var catalog = new CatalogService(root);
+        await catalog.InitializeAsync();
+        var service = CreateUpdateService(tag);
+        var vm = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            updateCheckService: service);
+        var dialog = new HelpAboutDialog(vm);
+
+        await vm.CheckForUpdatesCommand.ExecuteAsync(null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(expected, dialog.FindControl<TextBlock>("UpdateStatusText")!.Text);
+
+        dialog.Close();
+        await vm.DisposeAsync();
+        catalog.Dispose();
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        Directory.Delete(root, recursive: true);
+    }
+
+    [AvaloniaFact]
+    public async Task AvailableUpdate_ShowsIndicatorAndOpensAboutTab()
+    {
+        var root = NewCatalogPath();
+        using var catalog = new CatalogService(root);
+        await catalog.InitializeAsync();
+        var vm = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            updateCheckService: CreateUpdateService("v2.0.0"));
+        await vm.CheckForUpdatesCommand.ExecuteAsync(null);
+        var titleBar = new HappyPhotonTitleBar { DataContext = vm };
+        Dispatcher.UIThread.RunJobs();
+
+        var indicator = titleBar.FindControl<Ellipse>("UpdateAvailableIndicator")!;
+        var dialog = new HelpAboutDialog(vm);
+
+        Assert.True(indicator.IsVisible);
+        Assert.Equal(1, dialog.FindControl<TabControl>("HelpAboutTabs")!.SelectedIndex);
+
+        dialog.Close();
+        titleBar.DataContext = null;
+        await vm.DisposeAsync();
+        catalog.Dispose();
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        Directory.Delete(root, recursive: true);
+    }
+
+    [AvaloniaTheory]
+    [InlineData(
+        UpdateInstallChannel.MicrosoftStore,
+        UpdateChannelSelector.MicrosoftStoreUri,
+        "The Microsoft Store manages updates for this installation.")]
+    [InlineData(
+        UpdateInstallChannel.GitHubRelease,
+        "https://github.com/seasalim/happy-photon/releases/tag/v2.0.0",
+        "Download the update from the Happy Photon release page.")]
+    public async Task UpgradeAction_LaunchesChannelDestinationAndExplainsChannel(
+        UpdateInstallChannel channel,
+        string expectedUri,
+        string expectedCopy)
+    {
+        var root = NewCatalogPath();
+        using var catalog = new CatalogService(root);
+        await catalog.InitializeAsync();
+        var vm = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            updateCheckService: CreateUpdateService("v2.0.0"),
+            updateInstallChannel: channel);
+        await vm.CheckForUpdatesCommand.ExecuteAsync(null);
+        Uri? launched = null;
+        var dialog = new HelpAboutDialog(vm, uri =>
+        {
+            launched = uri;
+            return Task.FromResult(true);
+        });
+        var button = dialog.FindControl<Button>("UpgradeButton")!;
+
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(expectedUri, launched?.AbsoluteUri);
+        Assert.Equal(
+            expectedCopy,
+            dialog.FindControl<TextBlock>("UpdateChannelText")!.Text);
+
+        dialog.Close();
+        await vm.DisposeAsync();
+        catalog.Dispose();
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        Directory.Delete(root, recursive: true);
+    }
+
+    private static UpdateCheckService CreateUpdateService(
+        string? tag) =>
+        new(
+            "1.0.0-beta.1+revision",
+            "https://github.com/seasalim/happy-photon",
+            (_, _) => tag == null
+                ? throw new HttpRequestException("offline")
+                : Task.FromResult(
+                    $$"""{"tag_name":"{{tag}}","html_url":"https://github.com/seasalim/happy-photon/releases/tag/{{tag}}"}"""));
+
+    private static string NewCatalogPath() => Path.Combine(
+        Path.GetTempPath(), $"happy-photon-help-about-{Guid.NewGuid():N}");
 }

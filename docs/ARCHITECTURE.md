@@ -106,6 +106,11 @@ First frame is sacred: nothing non-visual happens before the window is shown.
      existing saved browsing root, or prepare an unselected Pictures tree behind the
      versioned first-run welcome.
 
+Update discovery is manual-only. The app makes no automatic update network requests;
+it contacts GitHub only after the user explicitly chooses **Check for updates** on the
+About tab. The request runs off the UI thread, its result is kept only for the current
+session, and shutdown cancels an in-flight manual check.
+
 The first frame always paints Dark. The appearance picker stays disabled until app
 settings load, then the saved `AppTheme` is applied through
 `Application.RequestedThemeVariant`. Variant resources use dynamic lookups, so the
