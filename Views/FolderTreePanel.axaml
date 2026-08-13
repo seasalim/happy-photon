@@ -51,9 +51,6 @@
                 <TreeDataTemplate DataType="models:FolderNode" ItemsSource="{Binding Children}">
                     <Border Classes="folder-row"
                             Classes.active="{Binding IsSelected}"
-                            Background="Transparent"
-                            BorderBrush="Transparent"
-                            BorderThickness="3,0,0,0"
                             CornerRadius="{StaticResource RadiusSmall}"
                             Padding="7,4">
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -79,12 +76,14 @@
                 <Style Selector="TreeViewItem /template/ ContentPresenter#PART_HeaderPresenter">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                 </Style>
-                <Style Selector="TreeViewItem:selected /template/ ContentPresenter#PART_HeaderPresenter">
-                    <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
+                <!-- FluentTheme paints the selected row's layout root with the accent
+                     color; keep it transparent so Border.folder-row owns the visual. -->
+                <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot,
+                                 TreeViewItem:selected /template/ Border#PART_LayoutRoot:pointerover">
+                    <Setter Property="Background" Value="Transparent"/>
                 </Style>
-                <Style Selector="TreeViewItem:selected:pointerover /template/ ContentPresenter#PART_HeaderPresenter,
-                                 TreeViewItem:selected:pressed /template/ ContentPresenter#PART_HeaderPresenter">
-                    <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+                <Style Selector="Border.folder-row">
+                    <Setter Property="Background" Value="Transparent"/>
                 </Style>
                 <Style Selector="Border.folder-row PathIcon">
                     <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
@@ -94,7 +93,6 @@
                 </Style>
                 <Style Selector="Border.folder-row.active">
                     <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
-                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
                 </Style>
                 <Style Selector="Border.folder-row.active TextBlock">
                     <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
