@@ -152,6 +152,11 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 viewModel.ShowBurstGroups = false;
                 Assert.Null(viewModel.PinnedStatus);
                 Assert.Null(viewModel.StatusMessage);
+                // Disabling removes the published activity immediately, even while
+                // the sweep is still blocked in the gated metadata load.
+                Assert.False(viewModel.IsBurstAnalysisActive);
+                Assert.Null(
+                    viewModel.CaptureBackgroundActivitySnapshot().CaptureTimes);
                 releaseFirstLoad.TrySetResult();
                 Complete(viewModel.WaitForBurstAnalysisAsync());
 

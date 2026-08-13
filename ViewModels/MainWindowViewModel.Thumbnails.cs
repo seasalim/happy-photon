@@ -315,7 +315,10 @@ public partial class MainWindowViewModel
         {
             scheduler.Enqueue(requests);
         }
-        if (requests.Count > 0)
+        // Satisfied thumbnails are discarded by the scheduler; waking the sampler
+        // for them would restart its quiet interval with nothing to show.
+        if (visible.Concat(prefetch).Any(image =>
+                !image.ThumbnailSatisfies(request)))
         {
             SignalBackgroundActivityStarted();
         }

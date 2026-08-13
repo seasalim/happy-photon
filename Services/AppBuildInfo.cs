@@ -26,9 +26,6 @@ public static class AppBuildInfo
             RuntimeInformation.OSDescription,
             RuntimeInformation.ProcessArchitecture.ToString()));
 
-    public static string StatusText { get; } =
-        $"v{Identity.FriendlyVersion} · {Identity.DateDisplayText}";
-
     private static string? GetMetadata(string key) =>
         Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
             .FirstOrDefault(attribute => attribute.Key == key)

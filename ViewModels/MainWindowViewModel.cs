@@ -82,8 +82,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty]
     private string? _currentFolderPath;
 
-    public string BuildInfoText { get; } = AppBuildInfo.StatusText;
-
     // Folder tree
     [ObservableProperty]
     private ObservableCollection<FolderNode> _rootFolders = new();

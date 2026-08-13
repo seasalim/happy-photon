@@ -50,6 +50,9 @@ public partial class MainWindowViewModel
         {
             _burstAnalysisRestartRequested = false;
             CancelBurstAnalysis();
+            // Remove the published capture-time activity immediately; the sweep
+            // task may stay blocked in a non-cancellable metadata load.
+            Volatile.Write(ref _burstAnalysisActive, 0);
             ClearBurstIndicators();
         }
     }
