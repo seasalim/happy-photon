@@ -271,10 +271,10 @@
                             Margin="0,18,0,0"
                             Spacing="8"
                             IsVisible="{Binding IsExporting}">
-                    <ProgressBar Minimum="0"
+                    <ProgressBar Name="ExportProgressBar"
+                                 Minimum="0"
                                  Maximum="{Binding ProgressMaximum}"
                                  Value="{Binding ProgressValue}"
-                                 IsIndeterminate="True"
                                  Height="5"/>
                     <TextBlock Text="{Binding ProgressText}"
                                Classes="preview"
