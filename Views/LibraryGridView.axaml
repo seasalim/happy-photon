@@ -131,7 +131,6 @@
                             MinimumRating="{Binding MinimumRating, ElementName=Root, Mode=TwoWay}"/>
                         <views:LibraryColorLabelFilter
                             x:Name="ColorLabelFilterControl"
-                            IsVisible="{Binding Library.ShowColorLabelFilter}"
                             Choices="{Binding ColorLabelFilterChoices}"
                             Filter="{Binding ColorLabelFilter, ElementName=Root, Mode=TwoWay}"/>
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>

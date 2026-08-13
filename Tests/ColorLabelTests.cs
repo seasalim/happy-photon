@@ -184,7 +184,7 @@ public sealed class ColorLabelTests : IDisposable
     }
 
     [Fact]
-    public void Filter_CombinesAxesDeselectsHiddenAndStaysClearable()
+    public void Filter_CombinesAxesAndDeselectsHidden()
     {
         var red = new ImageFile(Path.Combine(_root, "red.jpg"))
         {
@@ -208,10 +208,6 @@ public sealed class ColorLabelTests : IDisposable
 
         Assert.Empty(state.VisibleImages);
         Assert.False(red.IsSelected);
-        state.SetImages([new ImageFile(Path.Combine(_root, "none.jpg"))]);
-        Assert.True(state.ShowColorLabelFilter);
-        state.ColorLabelFilter = ColorLabelFilter.All;
-        Assert.False(state.ShowColorLabelFilter);
     }
 
     [Fact]

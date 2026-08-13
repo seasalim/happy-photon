@@ -41,9 +41,6 @@ public partial class LibraryImageState : ObservableObject
     public int TotalCount => _allImages.Count;
     public int VisibleCount => VisibleImages.Count;
     public int SelectedCount => VisibleImages.Count(i => i.IsSelected);
-    public bool HasColorLabels => _allImages.Any(image => image.HasColorLabel);
-    public bool ShowColorLabelFilter =>
-        HasColorLabels || ColorLabelFilter != ColorLabelFilter.All;
 
     public string PhotoCountText =>
         FileTypeFilter == ImageFileTypeFilter.All && FlagFilter == HappyPhoton.Models.FlagFilter.All &&
@@ -89,7 +86,6 @@ public partial class LibraryImageState : ObservableObject
     {
         ApplyFilter();
         FilterChanged?.Invoke(this, EventArgs.Empty);
-        OnPropertyChanged(nameof(ShowColorLabelFilter));
     }
 
     public void SetImages(IEnumerable<ImageFile> images)
@@ -289,8 +285,6 @@ public partial class LibraryImageState : ObservableObject
         OnPropertyChanged(nameof(SelectedCount));
         OnPropertyChanged(nameof(PhotoCountText));
         OnPropertyChanged(nameof(EmptyMessage));
-        OnPropertyChanged(nameof(HasColorLabels));
-        OnPropertyChanged(nameof(ShowColorLabelFilter));
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
