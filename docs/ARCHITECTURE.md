@@ -26,18 +26,38 @@ then goes deep on the two most intricate subsystems: **catalog loading** and the
   starts; a second launch exits immediately.
 - The optional agent (MCP) server runs *inside* the GUI process when toggled on, bound
   to `127.0.0.1:7326` behind a persisted token path. It never returns image pixels.
-- All persistent state lives under `~/Pictures/Happy Photon Catalog/`:
+- `AppDataLocationService` owns every application-data root. The default
+  catalog remains under Pictures, while regenerable assets use the platform
+  cache location:
 
 ```
-Happy Photon Catalog/
+<Pictures>/Happy Photon Catalog/
 ├── catalog.db              SQLite: image metadata, edit settings, flags, ratings, app settings
-├── presets/                user preset JSON files (PresetService)
-└── assets/
+├── .catalog-identity       versioned catalog instance GUID
+└── presets/                user preset JSON files (PresetService)
+
+<platform cache>/assets/
+    ├── .catalog-stamp          catalog GUID + image-id high-water mark
     ├── thumbs/<xx>/<id>.jpg     largest unedited thumbnails, sharded by catalogId % 256
     ├── previews/<xx>/<id>.jpg   cached 1600px previews, same sharding
     ├── rendered-thumbs/<xx>/<id>.jpg  accurate edited RAW thumbnails + metadata sidecars
     └── tmp/                     staging for atomic cache writes; cleared at startup
 ```
+
+Windows uses `%LOCALAPPDATA%\Happy Photon\cache`, Linux uses
+`~/.cache/happy-photon`, and macOS uses `~/Library/Caches/Happy Photon`. The
+fixed `locations.json` pointer lives in Local AppData on Windows,
+`~/.config/happy-photon` on Linux, and Application Support on macOS. Users can
+opt into the platform data root for the catalog. Environment overrides affect
+one process and are never written to the pointer.
+
+Every data root carries `.happy-photon-root`. Destructive storage operations
+re-check it immediately before acting and remove only known catalog files or
+cache tiers. Opening is not destructive: a pointer-designated root whose marker
+went missing (a backup restore, a downgraded-build run) is re-marked on open,
+while a marker with foreign contents still refuses. Existing Pictures catalogs with `assets/` are adopted as legacy
+co-located pairs without moving bytes. Without `assets/`, pointer-loss adoption
+always restores the split layout.
 
 ## Layering (MVVM)
 
@@ -92,15 +112,18 @@ output, or custom output profiles.
 First frame is sacred: nothing non-visual happens before the window is shown.
 
 1. `Program.Main`: single-instance guard, then Avalonia lifetime.
-2. `App.OnFrameworkInitializationCompleted`: construct `CatalogService` +
+2. `App.OnFrameworkInitializationCompleted`: construct path-free services +
    `MainWindowViewModel`, show `MainWindow`, then post `CompleteStartupAsync` at
    `Background` dispatcher priority.
 3. `CompleteStartupAsync` (off the first-frame path):
-   - capture whether the platform Pictures folder exists before catalog initialization
-     can create `Pictures/Happy Photon Catalog`;
-   - `CatalogService.InitializeAsync` — create directories, clear `assets/tmp/`
-     orphans, open the SQLite connection, create or validate the current catalog schema.
-   - `PresetService.InitializeAsync` — load user presets.
+   - finish or roll back a pending journaled move, then resolve `locations.json`;
+     a fresh install pauses at the location gate before any SQLite open;
+   - open the shared catalog connection;
+   - create tables;
+   - run ordered catalog migrations;
+   - validate the resulting schema;
+   - check and atomically refresh the cache/catalog pairing stamp;
+   - bind `PresetService` to the resolved catalog and load user presets.
    - `MainWindow.InitializeApplicationAsync` — load app settings without treating read
      failures as an empty installation, then restore the session, grandfather an
      existing saved browsing root, or prepare an unselected Pictures tree behind the
@@ -119,7 +142,9 @@ missing or invalid theme settings fall back to Dark. The brief Dark-to-saved-the
 transition remains off the first-frame path and preserves invariant 6.
 
 The startup gate is present in the first frame and disables workspace controls and
-global shortcuts until startup reaches `Ready`. Catalog or settings failures replace
+global shortcuts until startup reaches `Ready`. A corrupt pointer stops at an explicit
+quarantine/recovery action. A schema mismatch offers journaled **Set aside and retry**
+for both roots when neither is environment-managed. Catalog or settings failures replace
 the neutral initializing state with Retry/Close. During an incomplete first run,
 shutdown saves preferences only; the browsing root, viewed folder, and completion
 version are committed together when a welcome action succeeds.
@@ -153,10 +178,26 @@ image columns through `PRAGMA table_info` on every startup. Migration 1 adds the
 `color_label` slot before validation so pre-label catalogs remain readable.
 Extra columns are ignored so catalogs created by recent development builds still open;
 missing required columns fail inside startup initialization. The error panel names the
-missing columns and instructs the user to move the entire catalog folder aside before
-Retry. Moving the folder rather than only `catalog.db` keeps ID-keyed thumbnails,
-previews, and SQLite sidecars with the incompatible database; no catalog content is
-deleted automatically.
+missing columns and offers to set the catalog and paired cache aside together before
+Retry. The ownership-checked journal resumes or rolls back if a crash interrupts the
+two root renames.
+
+### Location moves and cache identity
+
+Storage changes are staged in Settings and run at the next launch before the shared
+catalog connection opens. A catalog move uses a short-lived SQLite connection for
+hot-journal recovery, fingerprints row count, identity, and every preset, copies and
+verifies the destination, flips `locations.json`, then removes only known source data.
+Failure before the pointer flip rolls back wholesale; after the flip, the journal
+resumes cleanup. Cache moves rename `assets/` on one volume or abandon it for
+regeneration across volumes; cache files are never copied across volumes.
+
+The versioned `.catalog-identity` GUID and `assets/.catalog-stamp` prevent ID-sharded
+assets from pairing with a different or rolled-back catalog. A missing stamp on a
+nonempty established cache, a GUID mismatch, or an ID high-water regression clears
+the known tiers. Legacy adoption receives one trusted bootstrap. The stamp advances
+after each single insert or insert batch. A missing cache root self-heals; a missing
+catalog root fails startup.
 
 For a row marked v2, valid JSON is parsed and out-of-range values clamp in memory. A
 null document, malformed JSON, or non-v2 marker logs once for that image and returns

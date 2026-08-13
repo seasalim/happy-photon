@@ -14,6 +14,105 @@ public class CatalogServiceTests
     }
 
     [Fact]
+    public async Task PointerResolvedRoots_WithMissingMarkers_AreReclaimedOnOpen()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            $"HappyPhotonCatalogReclaim_{Guid.NewGuid():N}");
+        var catalogRoot = Path.Combine(root, "catalog");
+        var cacheRoot = Path.Combine(root, "cache");
+        try
+        {
+            Directory.CreateDirectory(catalogRoot);
+            Directory.CreateDirectory(cacheRoot);
+            await File.WriteAllBytesAsync(
+                Path.Combine(catalogRoot, "catalog.db"), []);
+            using var catalog = new CatalogService();
+            await catalog.InitializeAsync(new AppDataLocations(
+                catalogRoot,
+                cacheRoot,
+                AppDataLocationOrigin.Persisted,
+                AppDataLocationOrigin.Persisted));
+
+            Assert.True(File.Exists(
+                Path.Combine(catalogRoot, AppDataRootOwnership.MarkerFileName)));
+            Assert.True(File.Exists(
+                Path.Combine(cacheRoot, AppDataRootOwnership.MarkerFileName)));
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task PointerResolvedCatalog_WithoutSignatureOrMarker_Refuses()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            $"HappyPhotonCatalogNoSignature_{Guid.NewGuid():N}");
+        var catalogRoot = Path.Combine(root, "catalog");
+        try
+        {
+            Directory.CreateDirectory(catalogRoot);
+            await File.WriteAllTextAsync(
+                Path.Combine(catalogRoot, "unrelated.txt"), "not ours");
+            using var catalog = new CatalogService();
+
+            await Assert.ThrowsAsync<AppDataOwnershipException>(() =>
+                catalog.InitializeAsync(new AppDataLocations(
+                    catalogRoot,
+                    Path.Combine(root, "cache"),
+                    AppDataLocationOrigin.Persisted,
+                    AppDataLocationOrigin.Persisted)));
+            Assert.False(File.Exists(
+                Path.Combine(catalogRoot, AppDataRootOwnership.MarkerFileName)));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task PointerResolvedRoots_WithForeignMarker_StillRefuse()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            $"HappyPhotonCatalogForeign_{Guid.NewGuid():N}");
+        var catalogRoot = Path.Combine(root, "catalog");
+        try
+        {
+            Directory.CreateDirectory(catalogRoot);
+            await File.WriteAllTextAsync(
+                Path.Combine(catalogRoot, AppDataRootOwnership.MarkerFileName),
+                "someone else's marker");
+            using var catalog = new CatalogService();
+
+            await Assert.ThrowsAsync<AppDataOwnershipException>(() =>
+                catalog.InitializeAsync(new AppDataLocations(
+                    catalogRoot,
+                    Path.Combine(root, "cache"),
+                    AppDataLocationOrigin.Persisted,
+                    AppDataLocationOrigin.Persisted)));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task DeleteImage_RemovesRenderedCachesAndSidecars()
     {
         var root = Path.Combine(

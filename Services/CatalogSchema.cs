@@ -2,6 +2,13 @@ using Microsoft.Data.Sqlite;
 
 namespace HappyPhoton.Services;
 
+public sealed class CatalogSchemaMismatchException(
+    string message,
+    IReadOnlyList<string> missingColumns) : Exception(message)
+{
+    public IReadOnlyList<string> MissingColumns { get; } = missingColumns;
+}
+
 internal static class CatalogSchema
 {
     private static readonly string[] RequiredImageColumns =
@@ -80,10 +87,11 @@ internal static class CatalogSchema
             var databasePath = Path.GetFullPath(connection.DataSource);
             var catalogPath = Path.GetDirectoryName(databasePath)
                 ?? throw new InvalidDataException("Catalog database has no parent directory.");
-            throw new InvalidDataException(
+            throw new CatalogSchemaMismatchException(
                 $"This catalog uses an unsupported development format " +
-                $"(missing: {string.Join(", ", missing)}). Move the catalog folder " +
-                $"'{catalogPath}' aside, then choose Retry to create a new catalog.");
+                $"(missing: {string.Join(", ", missing)}). Set the catalog and cache " +
+                $"at '{catalogPath}' aside together, then retry.",
+                missing);
         }
     }
 

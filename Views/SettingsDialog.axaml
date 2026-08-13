@@ -3,6 +3,7 @@
         xmlns:vm="using:HappyPhoton.ViewModels"
         xmlns:models="using:HappyPhoton.Models"
         xmlns:services="using:HappyPhoton.Services"
+        xmlns:views="using:HappyPhoton.Views"
         x:Class="HappyPhoton.Views.SettingsDialog"
         x:DataType="vm:MainWindowViewModel"
         Title="Settings"
@@ -37,7 +38,7 @@
                 <TextBlock Text="Settings" FontFamily="{StaticResource FontHeading}"
                            FontSize="20" FontWeight="SemiBold"
                            Foreground="{DynamicResource TextPrimary}"/>
-                <TextBlock Text="Appearance and catalog metadata preferences."
+                <TextBlock Text="Appearance, storage, and catalog metadata preferences."
                            FontSize="12" Foreground="{DynamicResource TextMuted}"/>
             </StackPanel>
         </Border>
@@ -87,6 +88,9 @@
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Storage" Classes="dialog-tab">
+                <views:StoragePanel DataContext="{Binding StorageSettings}"/>
             </TabItem>
             <TabItem Header="Experimental" Classes="dialog-tab">
                 <StackPanel Margin="20,16" Spacing="12" MaxWidth="540"

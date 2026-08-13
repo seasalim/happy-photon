@@ -7,6 +7,8 @@ namespace HappyPhoton.ViewModels;
 public enum StartupGateState
 {
     Initializing,
+    DataLocations,
+    PointerRecovery,
     Welcome,
     Ready,
     Error
@@ -202,9 +204,13 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsPickerLedFirstRun));
         OnPropertyChanged(nameof(HasDefaultFirstRunLocation));
         OnPropertyChanged(nameof(IsWorkspaceInteractionEnabled));
+        OnPropertyChanged(nameof(IsDataLocationSetupVisible));
+        OnPropertyChanged(nameof(IsPointerRecoveryVisible));
+        OnPropertyChanged(nameof(CanSetAsideCatalog));
         StartInDefaultLocationCommand.NotifyCanExecuteChanged();
         BrowseElsewhereCommand.NotifyCanExecuteChanged();
         RetryStartupCommand.NotifyCanExecuteChanged();
+        SetAsideCatalogCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnFirstRunDefaultPathChanged(string? value)

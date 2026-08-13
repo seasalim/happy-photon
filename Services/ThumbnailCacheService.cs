@@ -43,7 +43,7 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
         Task? writerInHandGate = null)
     {
         _catalogService = catalogService;
-        _temporaryDirectory = Path.Combine(catalogService.CatalogPath, "assets", "tmp");
+        _temporaryDirectory = catalogService.TemporaryAssetsPath;
         _processingGate = processingGate;
         _writerInHandGate = writerInHandGate ?? Task.CompletedTask;
         _shutdownDrainTimeout = shutdownDrainTimeout;

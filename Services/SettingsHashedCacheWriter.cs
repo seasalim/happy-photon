@@ -43,7 +43,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         _getCachePath = getCachePath;
         _jpegQuality = jpegQuality;
         _versionedDimensionMetadata = versionedDimensionMetadata;
-        _temporaryDirectory = Path.Combine(catalogService.CatalogPath, "assets", "tmp");
+        _temporaryDirectory = catalogService.TemporaryAssetsPath;
         _processingGate = processingGate ?? Task.CompletedTask;
         _writerInHandGate = writerInHandGate ?? Task.CompletedTask;
         _drainTimeout = drainTimeout ?? DefaultDrainTimeout;

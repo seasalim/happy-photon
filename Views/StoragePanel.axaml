@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.StoragePanel"
+             x:DataType="vm:StorageSettingsViewModel">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20,16" Spacing="14" MaxWidth="560"
+                    HorizontalAlignment="Left">
+            <TextBlock Text="Storage" Classes="setting-heading"/>
+            <TextBlock Text="Location changes are staged and run before the catalog opens on the next launch."
+                       Classes="setting-note"/>
+            <Border Padding="14" Background="{DynamicResource SurfaceMid}"
+                    BorderBrush="{DynamicResource Divider}" BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusMedium}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Catalog + presets" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding CatalogRoot}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondary}"/>
+                    <TextBlock Text="{Binding CatalogManagementNote}" Classes="setting-note"/>
+                    <TextBlock x:Name="CatalogUninstallWarning"
+                               IsVisible="{Binding ShowCatalogUninstallWarning}"
+                               Text="Packaged Windows warning: uninstalling the Store app removes catalog data stored under AppData."
+                               Foreground="{StaticResource OnErrorContainer}"
+                               TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding PendingCatalogRoot}" Classes="setting-note"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="REVEAL" Command="{Binding RevealCatalogCommand}"/>
+                        <Button Content="CHANGE" Command="{Binding ChangeCatalogCommand}"/>
+                        <Button Content="MOVE" Command="{Binding MoveCatalogCommand}"/>
+                    </StackPanel>
+                    <TextBlock x:Name="CatalogStatus" Text="{Binding CatalogStatus}"
+                               IsVisible="{Binding CatalogStatus,
+                                           Converter={x:Static ObjectConverters.IsNotNull}}"
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextWrapping="Wrap"/>
+                    <TextBlock x:Name="CatalogError" Text="{Binding CatalogError}"
+                               IsVisible="{Binding CatalogError,
+                                           Converter={x:Static ObjectConverters.IsNotNull}}"
+                               Foreground="{StaticResource OnErrorContainer}"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+            <Border Padding="14" Background="{DynamicResource SurfaceMid}"
+                    BorderBrush="{DynamicResource Divider}" BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusMedium}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Regenerable cache" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding CacheRoot}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondary}"/>
+                    <TextBlock Text="{Binding CacheManagementNote}" Classes="setting-note"/>
+                    <TextBlock Text="{Binding PendingCacheRoot}" Classes="setting-note"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="REVEAL" Command="{Binding RevealCacheCommand}"/>
+                        <Button Content="CHANGE" Command="{Binding ChangeCacheCommand}"/>
+                        <Button Content="MOVE" Command="{Binding MoveCacheCommand}"/>
+                    </StackPanel>
+                    <TextBlock x:Name="CacheStatus" Text="{Binding CacheStatus}"
+                               IsVisible="{Binding CacheStatus,
+                                           Converter={x:Static ObjectConverters.IsNotNull}}"
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextWrapping="Wrap"/>
+                    <TextBlock x:Name="CacheError" Text="{Binding CacheError}"
+                               IsVisible="{Binding CacheError,
+                                           Converter={x:Static ObjectConverters.IsNotNull}}"
+                               Foreground="{StaticResource OnErrorContainer}"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

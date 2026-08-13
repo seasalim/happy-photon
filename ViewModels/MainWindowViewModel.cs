@@ -40,7 +40,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         _exportActivities = new BackgroundExportActivityRegistry(
             SignalBackgroundActivityStarted);
         Library = new LibraryImageState(RetireThumbnail);
-        _folderTreeService = new FolderTreeService(catalogService.CatalogPath);
+        _folderTreeService = new FolderTreeService(
+            catalogService.HasExplicitPath ? catalogService.CatalogPath : null);
         _imageService = new Lazy<ImageService>(() =>
         {
             var loader = baseLoader ?? new BaseLoaderRouter(
@@ -62,7 +63,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             (action => Dispatcher.UIThread.Post(
                 action,
                 DispatcherPriority.Background));
-        PresetService = new PresetService(Path.Combine(catalogService.CatalogPath, "presets"));
+        PresetService = new PresetService();
         Library.FilterChanged += OnLibraryFilterChanged;
         Library.StateChanged += OnLibraryStateChanged;
     }
@@ -72,7 +73,24 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
     }
 
-    public Task InitializeAsync() => PresetService.InitializeAsync();
+    public Task InitializeAsync() => InitializeAsync(new AppDataLocations(
+        _catalogService.CatalogPath,
+        _catalogService.CachePath,
+        AppDataLocationOrigin.Persisted,
+        AppDataLocationOrigin.Persisted,
+        string.Equals(_catalogService.CatalogPath, _catalogService.CachePath,
+            OperatingSystem.IsWindows()
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal)
+            ? AppDataLocationTopology.LegacyCoLocated
+            : AppDataLocationTopology.Split));
+
+    public Task InitializeAsync(AppDataLocations locations)
+    {
+        _folderTreeService.UseExcludedRoots(
+            new[] { locations.CatalogRoot, locations.CacheRoot }.Distinct());
+        return PresetService.UseDirectoryAsync(locations.PresetsRoot);
+    }
 
     private ImageService ImageService => _imageService.Value;
 

@@ -15,6 +15,95 @@
         <Panel>
             <views:FirstRunView IsVisible="{Binding IsFirstRunVisible}"/>
 
+            <Border IsVisible="{Binding IsDataLocationSetupVisible}"
+                    MaxWidth="720" Margin="24" Padding="28"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource SurfaceLow}"
+                    BorderBrush="{DynamicResource Divider}" BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusCard}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="CHOOSE STORAGE LOCATIONS"
+                               FontFamily="{StaticResource FontHeading}"
+                               FontSize="{StaticResource FontSizeHeading}"
+                               FontWeight="SemiBold" TextAlignment="Center"/>
+                    <TextBlock Text="Your small catalog stays in Pictures by default. Regenerable previews and thumbnails use your platform cache. Nothing is opened until you confirm."
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextWrapping="Wrap" TextAlignment="Center"/>
+                    <Border Padding="14" Background="{DynamicResource SurfaceMid}"
+                            CornerRadius="{StaticResource RadiusMedium}">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                            <TextBlock Text="Catalog + presets" FontWeight="SemiBold"/>
+                            <Button Grid.Column="1" Content="CHANGE"
+                                    Command="{Binding ChangeSetupCatalogCommand}"/>
+                            <TextBlock Grid.Row="1" Text="{Binding SetupCatalogRoot}"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       TextWrapping="Wrap" Margin="0,4,12,0"/>
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8"
+                                        Margin="0,10,0,0">
+                                <Button Content="PICTURES (DEFAULT)"
+                                        Command="{Binding UsePicturesCatalogCommand}"/>
+                                <Button Content="PLATFORM DATA LOCATION"
+                                        Command="{Binding UseStandardCatalogCommand}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <Border Padding="14" Background="{DynamicResource SurfaceMid}"
+                            CornerRadius="{StaticResource RadiusMedium}">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                            <TextBlock Text="Regenerable cache" FontWeight="SemiBold"/>
+                            <Button Grid.Column="1" Content="CHANGE"
+                                    Command="{Binding ChangeSetupCacheCommand}"/>
+                            <TextBlock Grid.Row="1" Text="{Binding SetupCacheRoot}"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       TextWrapping="Wrap" Margin="0,4,12,0"/>
+                        </Grid>
+                    </Border>
+                    <Border IsVisible="{Binding ShowSetupUninstallWarning}"
+                            Padding="12" Background="{DynamicResource ErrorContainer}"
+                            CornerRadius="{StaticResource RadiusMedium}">
+                        <TextBlock Text="Store uninstall warning: Windows removes app data for packaged builds. Keep precious catalog data in Pictures unless you have another backup."
+                                   Foreground="{DynamicResource OnErrorContainer}"
+                                   TextWrapping="Wrap"/>
+                    </Border>
+                    <TextBlock Text="{Binding FirstRunErrorMessage}"
+                               Foreground="{StaticResource OnErrorContainer}"
+                               TextWrapping="Wrap" TextAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Spacing="10"
+                                HorizontalAlignment="Center">
+                        <Button Classes="accent" Content="USE THESE LOCATIONS"
+                                Command="{Binding CompleteStorageSetupCommand}"/>
+                        <Button Content="LOCATE EXISTING CATALOG"
+                                Command="{Binding LocateExistingCatalogCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border IsVisible="{Binding IsPointerRecoveryVisible}"
+                    MaxWidth="560" Margin="24" Padding="32"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource SurfaceLow}"
+                    BorderBrush="{DynamicResource Divider}" BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusCard}">
+                <StackPanel Spacing="18">
+                    <TextBlock Text="STORAGE POINTER NEEDS RECOVERY"
+                               FontFamily="{StaticResource FontHeading}"
+                               FontSize="{StaticResource FontSizeHeading}"
+                               FontWeight="SemiBold" TextAlignment="Center"/>
+                    <TextBlock Text="{Binding FirstRunErrorMessage}"
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextWrapping="Wrap" TextAlignment="Center"/>
+                    <TextBlock Text="Recovery quarantines the damaged pointer and looks for a conventional catalog. It never creates a replacement catalog automatically."
+                               Foreground="{DynamicResource TextMuted}"
+                               TextWrapping="Wrap" TextAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Spacing="10"
+                                HorizontalAlignment="Center">
+                        <Button Classes="accent" Content="RECOVER POINTER"
+                                Command="{Binding RecoverLocationPointerCommand}"/>
+                        <Button Content="CLOSE" Command="{Binding CloseApplicationCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <StackPanel IsVisible="{Binding IsStartupInitializing}"
                         Width="260"
                         Spacing="16"
@@ -60,6 +149,10 @@
                                 Content="RETRY"
                                 Command="{Binding RetryStartupCommand}"
                                 AutomationProperties.Name="Retry opening the local catalog"/>
+                        <Button Content="SET ASIDE AND RETRY"
+                                IsVisible="{Binding CanSetAsideCatalog}"
+                                Command="{Binding SetAsideCatalogCommand}"
+                                AutomationProperties.Name="Set catalog and cache aside and retry"/>
                         <Button Content="CLOSE"
                                 Command="{Binding CloseApplicationCommand}"
                                 AutomationProperties.Name="Close Happy Photon"/>

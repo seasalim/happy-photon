@@ -14,7 +14,7 @@ public enum BrowseLocationValidation
 /// </summary>
 public class FolderTreeService
 {
-    private readonly string? _catalogPath;
+    private string[] _excludedRoots = [];
     private readonly Func<string?> _picturesPathProvider;
 
     public FolderTreeService(string? catalogPath = null)
@@ -26,8 +26,20 @@ public class FolderTreeService
         string? catalogPath,
         Func<string?> picturesPathProvider)
     {
-        _catalogPath = NormalizePath(catalogPath);
+        UseExcludedRoots(catalogPath == null ? [] : [catalogPath]);
         _picturesPathProvider = picturesPathProvider;
+    }
+
+    public void UseExcludedRoots(IEnumerable<string> roots)
+    {
+        _excludedRoots = roots
+            .Select(NormalizePath)
+            .Where(path => path != null)
+            .Cast<string>()
+            .Distinct(OperatingSystem.IsWindows()
+                ? StringComparer.OrdinalIgnoreCase
+                : StringComparer.Ordinal)
+            .ToArray();
     }
 
     public string? GetAvailablePicturesPath()
@@ -95,7 +107,7 @@ public class FolderTreeService
             return BrowseLocationValidation.MissingOrInaccessible;
         }
 
-        if (_catalogPath != null && IsSameOrDescendant(_catalogPath, normalizedPath))
+        if (_excludedRoots.Any(root => IsSameOrDescendant(root, normalizedPath)))
         {
             return BrowseLocationValidation.Catalog;
         }
@@ -151,8 +163,8 @@ public class FolderTreeService
             return Directory.EnumerateDirectories(parentPath)
                 .Where(path => !IsHiddenOrSystem(path))
                 .Select(Path.GetFullPath)
-                .Where(path => _catalogPath == null ||
-                               !IsSameOrDescendant(_catalogPath, path))
+                .Where(path => !_excludedRoots.Any(root =>
+                    IsSameOrDescendant(root, path)))
                 .ToArray();
         }
         catch (UnauthorizedAccessException)

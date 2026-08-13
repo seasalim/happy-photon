@@ -51,6 +51,7 @@ public partial class CatalogService
                     ON CONFLICT(file_path) DO NOTHING;
                 ";
                 await cmd.ExecuteNonQueryAsync(cancellationToken);
+                await RefreshCacheStampAsync();
             }
             finally
             {

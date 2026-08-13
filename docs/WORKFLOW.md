@@ -19,11 +19,17 @@ Happy Photon works directly with the photographs in an existing folder. There
 is no import step and the original files are not moved.
 
 Edits, flags, ratings, and application settings are stored locally in the Happy
-Photon catalog:
+Photon catalog. The default can be changed before creation or in Settings:
 
 ```text
 ~/Pictures/Happy Photon Catalog/
 ```
+
+Regenerable thumbnails and previews are separate: `%LOCALAPPDATA%\Happy
+Photon\cache` on Windows, `~/.cache/happy-photon` on Linux, or
+`~/Library/Caches/Happy Photon` on macOS. If this cache disappears, Happy
+Photon rebuilds it. Keep the catalog, which contains precious edit state and
+presets, in normal backups.
 
 Edits are non-destructive: they are instructions stored in the catalog, not
 changes written into the original image. Export creates new files.
@@ -41,7 +47,9 @@ The choice takes effect immediately and is stored with the other application
 preferences. Mid-grey provides a neutral L\* 50 surround for judging photographs;
 it is a persistent appearance choice, not a temporary color-assessment mode.
 
-Open **Settings** with the title-bar gear or `Ctrl+,`. The Metadata tab can
+Open **Settings** with the title-bar gear or `Ctrl+,`. The Storage tab reveals
+both roots and stages safe moves for the next launch; environment-managed roots
+explain why Change and Move are unavailable. The Metadata tab can
 enable per-catalog XMP reading or read/write interop for ratings, flags, and
 recognized color-label names. Read/write creates or updates a sidecar only
 after you change an assessment; enabling it does not publish older catalog

@@ -134,14 +134,14 @@ public sealed class CatalogSchemaTests : IDisposable
         }
 
         using var service = new CatalogService(_tempDirectory);
-        var exception = await Assert.ThrowsAsync<InvalidDataException>(
+        var exception = await Assert.ThrowsAsync<CatalogSchemaMismatchException>(
             service.InitializeAsync);
 
         Assert.Contains("edit_settings", exception.Message);
         Assert.Contains("edit_version", exception.Message);
         Assert.Contains(_tempDirectory, exception.Message);
-        Assert.Contains("catalog folder", exception.Message);
-        Assert.Contains("Retry", exception.Message);
+        Assert.Contains("catalog and cache", exception.Message);
+        Assert.Contains("retry", exception.Message);
 
         var staleAsset = Path.Combine(
             _tempDirectory, "assets", "thumbs", "00", "1.jpg");

@@ -11,10 +11,14 @@ public class PresetService
         WriteIndented = true
     };
 
-    private readonly string _presetsDirectory;
+    private string? _presetsDirectory;
     private readonly List<Preset> _userPresets = new();
     private IReadOnlyList<Preset> _userPresetSnapshot = Array.Empty<Preset>();
     private bool _initialized;
+
+    public PresetService()
+    {
+    }
 
     public PresetService(string presetsDirectory)
     {
@@ -35,11 +39,13 @@ public class PresetService
             return;
         }
 
-        Directory.CreateDirectory(_presetsDirectory);
+        var directory = _presetsDirectory ?? throw new InvalidOperationException(
+            "PresetService has no directory. Call UseDirectoryAsync first.");
+        Directory.CreateDirectory(directory);
         var loadedPresets = new List<Preset>();
         var loadedIds = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var path in Directory.EnumerateFiles(_presetsDirectory, "*.json"))
+        foreach (var path in Directory.EnumerateFiles(directory, "*.json"))
         {
             try
             {
@@ -73,6 +79,25 @@ public class PresetService
         RefreshPresetSnapshot();
         _initialized = true;
         PresetsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public async Task UseDirectoryAsync(string presetsDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(presetsDirectory);
+        var normalized = Path.GetFullPath(presetsDirectory);
+        if (_initialized && string.Equals(
+                _presetsDirectory,
+                normalized,
+                OperatingSystem.IsWindows()
+                    ? StringComparison.OrdinalIgnoreCase
+                    : StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _presetsDirectory = normalized;
+        _initialized = false;
+        await InitializeAsync();
     }
 
     public Preset? GetById(string id)
@@ -113,7 +138,7 @@ public class PresetService
             Settings = settings
         };
 
-        Directory.CreateDirectory(_presetsDirectory);
+        Directory.CreateDirectory(RequireDirectory());
         var path = GetPresetPath(id);
         var json = JsonSerializer.Serialize(file, JsonOptions);
         await File.WriteAllTextAsync(path, json);
@@ -183,7 +208,11 @@ public class PresetService
         _userPresetSnapshot = Array.AsReadOnly(_userPresets.ToArray());
     }
 
-    private string GetPresetPath(string id) => Path.Combine(_presetsDirectory, $"{id}.json");
+    private string GetPresetPath(string id) =>
+        Path.Combine(RequireDirectory(), $"{id}.json");
+
+    private string RequireDirectory() => _presetsDirectory ??
+        throw new InvalidOperationException("PresetService is not bound to a directory.");
 
     private static EditSettings CreatePresetSettings(EditSettings source)
     {

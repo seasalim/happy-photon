@@ -122,7 +122,8 @@ spacing:
 
 The title bar exposes Settings with a gear between the quick Theme menu and
 Help. Settings uses the same tab and footer structure as Help & About. General
-contains the application theme; Metadata contains catalog-scoped XMP mode and
+contains the application theme; Storage shows catalog and cache roots with Reveal,
+Change, and restart-time Move actions plus staged status; Metadata contains catalog-scoped XMP mode and
 naming controls, with immediate application and a disclosure about interop,
 cloud synchronization, and original-file safety.
 

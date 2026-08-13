@@ -30,7 +30,10 @@ public partial class App : Application
             window.Show();
 
             Dispatcher.UIThread.Post(
-                () => _ = CompleteStartupAsync(window, viewModel, catalogService),
+                () => _ = CompleteStartupAsync(
+                    window,
+                    viewModel,
+                    catalogService),
                 DispatcherPriority.Background);
         }
 
@@ -42,10 +45,14 @@ public partial class App : Application
         MainWindowViewModel viewModel,
         CatalogService catalogService)
     {
+        var locationService = new AppDataLocationService();
+        var locationMigrator = new CatalogLocationMigrator(locationService);
         var picturesPath = viewModel.GetAvailablePicturesPath();
         await window.InitializeApplicationAsync(
             viewModel,
             catalogService,
+            locationService,
+            locationMigrator,
             picturesPath);
     }
 }

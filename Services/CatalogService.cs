@@ -16,24 +16,42 @@ public partial class CatalogService : IDisposable
     private static readonly string DefaultEditSettingsJson =
         EditSettingsJson.Serialize(new EditSettings());
 
-    private readonly string _catalogPath;
-    private readonly string _databasePath;
+    private string? _catalogPath;
+    private string? _cachePath;
+    private string? _databasePath;
+    private AppDataLocations? _locations;
+    private CatalogIdentity? _identity;
+    private long _lastStampedMaxImageId;
+    private readonly bool _explicitPath;
     private readonly SemaphoreSlim _connectionGate = new(1, 1);
     private readonly HashSet<long> _editSettingsWarnings = new();
     private SqliteConnection? _connection;
     private bool _initialized;
 
     /// <summary>Gets the catalog root directory path.</summary>
-    public string CatalogPath => _catalogPath;
+    public string CatalogPath => _catalogPath ?? GetDefaultCatalogPath();
+    public string CachePath => _cachePath ?? CatalogPath;
+    public string TemporaryAssetsPath =>
+        Path.Combine(CachePath, "assets", "tmp");
+    internal bool HasExplicitPath => _explicitPath;
 
-    public CatalogService() : this(GetDefaultCatalogPath())
+    public CatalogService()
     {
     }
 
     public CatalogService(string catalogPath)
     {
-        _catalogPath = catalogPath;
-        _databasePath = Path.Combine(_catalogPath, DatabaseFileName);
+        var normalized = Path.GetFullPath(catalogPath);
+        _catalogPath = normalized;
+        _cachePath = normalized;
+        _databasePath = Path.Combine(normalized, DatabaseFileName);
+        _locations = new AppDataLocations(
+            normalized,
+            normalized,
+            AppDataLocationOrigin.Persisted,
+            AppDataLocationOrigin.Persisted,
+            AppDataLocationTopology.LegacyCoLocated);
+        _explicitPath = true;
     }
 
     private static string GetDefaultCatalogPath()
@@ -49,21 +67,81 @@ public partial class CatalogService : IDisposable
     /// <summary>Initializes the catalog database and directory structure.</summary>
     public async Task InitializeAsync()
     {
+        var locations = _locations ?? new AppDataLocations(
+            GetDefaultCatalogPath(),
+            GetDefaultCatalogPath(),
+            AppDataLocationOrigin.AdoptedDefault,
+            AppDataLocationOrigin.AdoptedDefault,
+            AppDataLocationTopology.LegacyCoLocated);
+        await InitializeAsync(locations);
+    }
+
+    public async Task InitializeAsync(AppDataLocations locations)
+    {
+        ArgumentNullException.ThrowIfNull(locations);
         await _connectionGate.WaitAsync();
         try
         {
             if (_initialized) return;
 
-            Directory.CreateDirectory(_catalogPath);
-            Directory.CreateDirectory(Path.Combine(_catalogPath, "assets", "thumbs"));
-            Directory.CreateDirectory(Path.Combine(_catalogPath, "assets", "previews"));
-            Directory.CreateDirectory(Path.Combine(_catalogPath, "assets", "rendered-thumbs"));
-            var temporaryAssetsPath = Path.Combine(_catalogPath, "assets", "tmp");
+            if (_explicitPath)
+            {
+                AppDataRootOwnership.Claim(locations.CatalogRoot);
+            }
+            else if (!Directory.Exists(locations.CatalogRoot))
+            {
+                throw new DirectoryNotFoundException(
+                    $"The catalog location '{locations.CatalogRoot}' is missing.");
+            }
+            else if (File.Exists(Path.Combine(
+                         locations.CatalogRoot, AppDataRootOwnership.MarkerFileName)) ||
+                     File.Exists(locations.DatabasePath))
+            {
+                // Opening is non-destructive and the pointer is the record of the
+                // claim: a marker lost to a backup restore or a downgraded-build run
+                // is re-written here. The catalog signature gates the re-mark so a
+                // hand-edited pointer cannot claim an arbitrary folder, and a marker
+                // with foreign contents still refuses. Destructive operations keep
+                // their own AssertAppOwned.
+                AppDataRootOwnership.Claim(locations.CatalogRoot);
+            }
+            else
+            {
+                AppDataRootOwnership.AssertAppOwned(locations.CatalogRoot);
+            }
+            if (!Directory.Exists(locations.CacheRoot))
+            {
+                AppDataRootOwnership.ClaimFresh(locations.CacheRoot);
+            }
+            else if (File.Exists(Path.Combine(
+                         locations.CacheRoot, AppDataRootOwnership.MarkerFileName)) ||
+                     Directory.Exists(locations.AssetsRoot) ||
+                     !Directory.EnumerateFileSystemEntries(locations.CacheRoot).Any())
+            {
+                AppDataRootOwnership.Claim(locations.CacheRoot);
+            }
+            else
+            {
+                AppDataRootOwnership.AssertAppOwned(locations.CacheRoot);
+            }
+
+            _locations = locations;
+            _catalogPath = locations.CatalogRoot;
+            _cachePath = locations.CacheRoot;
+            _databasePath = locations.DatabasePath;
+            _identity = CatalogCacheStamp.EnsureIdentity(
+                locations.CatalogRoot,
+                out var identityCreated);
+            Directory.CreateDirectory(Path.Combine(locations.AssetsRoot, "thumbs"));
+            Directory.CreateDirectory(Path.Combine(locations.AssetsRoot, "previews"));
+            Directory.CreateDirectory(Path.Combine(locations.AssetsRoot, "rendered-thumbs"));
+            var temporaryAssetsPath = locations.TemporaryAssetsRoot;
             Directory.CreateDirectory(temporaryAssetsPath);
             foreach (var orphan in Directory.EnumerateFiles(temporaryAssetsPath))
             {
                 try
                 {
+                    AppDataRootOwnership.AssertAppOwned(locations.CacheRoot);
                     File.Delete(orphan);
                 }
                 catch
@@ -76,6 +154,12 @@ public partial class CatalogService : IDisposable
             {
                 await _connection.OpenAsync();
                 await CatalogSchema.InitializeAsync(_connection);
+                _lastStampedMaxImageId = await CatalogCacheStamp.CheckAndRefreshAsync(
+                    _connection,
+                    locations,
+                    _identity,
+                    identityCreated &&
+                    locations.Topology == AppDataLocationTopology.LegacyCoLocated);
                 _initialized = true;
             }
             catch
@@ -91,6 +175,20 @@ public partial class CatalogService : IDisposable
         {
             _connectionGate.Release();
         }
+    }
+
+    public async Task ReopenAsync(AppDataLocations locations)
+    {
+        await _connectionGate.WaitAsync();
+        try
+        {
+            CloseConnection();
+        }
+        finally
+        {
+            _connectionGate.Release();
+        }
+        await InitializeAsync(locations);
     }
 
     private void EnsureInitialized()
@@ -120,8 +218,9 @@ public partial class CatalogService : IDisposable
             cmd.Parameters.AddWithValue("@editVersion", EditSettings.CurrentVersion);
             cmd.Parameters.AddWithValue("@updated", DateTime.UtcNow.ToString("O"));
 
-            var result = await cmd.ExecuteScalarAsync();
-            return (long)result!;
+            var result = (long)(await cmd.ExecuteScalarAsync())!;
+            await RefreshCacheStampAsync(result);
+            return result;
         }
         finally
         {
@@ -281,14 +380,14 @@ public partial class CatalogService : IDisposable
     public string GetThumbnailPath(long catalogId)
     {
         var prefix = (catalogId % 256).ToString("x2");
-        return Path.Combine(_catalogPath, "assets", "thumbs", prefix, $"{catalogId}.jpg");
+        return Path.Combine(CachePath, "assets", "thumbs", prefix, $"{catalogId}.jpg");
     }
 
     /// <summary>Gets the cached preview path for an image.</summary>
     public string GetPreviewPath(long catalogId)
     {
         var prefix = (catalogId % 256).ToString("x2");
-        return Path.Combine(_catalogPath, "assets", "previews", prefix, $"{catalogId}.jpg");
+        return Path.Combine(CachePath, "assets", "previews", prefix, $"{catalogId}.jpg");
     }
 
     /// <summary>Gets the accurate rendered RAW thumbnail path for an image.</summary>
@@ -296,7 +395,7 @@ public partial class CatalogService : IDisposable
     {
         var prefix = (catalogId % 256).ToString("x2");
         return Path.Combine(
-            _catalogPath,
+            CachePath,
             "assets",
             "rendered-thumbs",
             prefix,
@@ -304,6 +403,25 @@ public partial class CatalogService : IDisposable
     }
 
     public void Dispose()
+    {
+        CloseConnection();
+    }
+
+    private async Task RefreshCacheStampAsync()
+    {
+        var maxImageId = await CatalogCacheStamp.ReadMaxImageIdAsync(_connection!);
+        await RefreshCacheStampAsync(maxImageId);
+    }
+
+    private async Task RefreshCacheStampAsync(long maxImageId)
+    {
+        if (maxImageId <= _lastStampedMaxImageId) return;
+        await CatalogCacheStamp.RefreshAsync(
+            _locations!, _identity!, maxImageId);
+        _lastStampedMaxImageId = maxImageId;
+    }
+
+    private void CloseConnection()
     {
         if (_connection != null)
         {
@@ -313,5 +431,6 @@ public partial class CatalogService : IDisposable
         }
         _connection = null;
         _initialized = false;
+        _lastStampedMaxImageId = 0;
     }
 }
