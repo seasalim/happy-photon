@@ -86,7 +86,7 @@ public sealed class ThemeLiveSwitchTests
                 ColorOf(library.Background));
             Assert.Equal(Color.Parse("#e4e1e9"), ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00f0ff"), ColorOf(burstStripe.Background));
-            Assert.Equal(Color.Parse("#35343a"), ColorOf(thumbnail.Background));
+            Assert.Equal(Color.Parse("#4b4a52"), ColorOf(thumbnail.Background));
             Assert.Equal(Color.Parse("#00f0ff"), ColorOf(thumbnail.BorderBrush));
             Assert.Equal(0.32, undo.Opacity);
             Assert.Equal(0.32, reset.Opacity);
@@ -104,7 +104,7 @@ public sealed class ThemeLiveSwitchTests
             Assert.Equal(Color.Parse("#777777"), ColorOf(library.Background));
             Assert.Equal(Color.Parse("#ffffff"), ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00dbe9"), ColorOf(burstStripe.Background));
-            Assert.Equal(Color.Parse("#4e4e4e"), ColorOf(thumbnail.Background));
+            Assert.Equal(Color.Parse("#616161"), ColorOf(thumbnail.Background));
             Assert.Equal(Color.Parse("#00f0ff"), ColorOf(thumbnail.BorderBrush));
             Assert.Equal(0.62, undo.Opacity);
             Assert.Equal(0.62, reset.Opacity);

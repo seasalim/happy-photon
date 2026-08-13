@@ -129,7 +129,7 @@
             <Color x:Key="RawFileBackgroundColor">#1f1f25</Color>
             <Color x:Key="ViewerSurroundColor">#131318</Color>
             <Color x:Key="FullScreenBackdropColor">#000000</Color>
-            <Color x:Key="SelectionSurfaceColor">#35343a</Color>
+            <Color x:Key="SelectionSurfaceColor">#4b4a52</Color>
 
             <SolidColorBrush x:Key="SurfaceLowest" Color="{StaticResource SurfaceLowestColor}"/>
             <SolidColorBrush x:Key="SurfaceBase" Color="{StaticResource SurfaceBaseColor}"/>
@@ -189,7 +189,7 @@
             <Color x:Key="RawFileBackgroundColor">#444444</Color>
             <Color x:Key="ViewerSurroundColor">#777777</Color>
             <Color x:Key="FullScreenBackdropColor">#777777</Color>
-            <Color x:Key="SelectionSurfaceColor">#4e4e4e</Color>
+            <Color x:Key="SelectionSurfaceColor">#616161</Color>
 
             <SolidColorBrush x:Key="SurfaceLowest" Color="{StaticResource SurfaceLowestColor}"/>
             <SolidColorBrush x:Key="SurfaceBase" Color="{StaticResource SurfaceBaseColor}"/>
