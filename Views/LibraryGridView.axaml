@@ -60,6 +60,21 @@
         <Style Selector="Border.thumbnail.active Border.img-hairline">
             <Setter Property="BorderBrush" Value="{DynamicResource SurfaceLowest}"/>
         </Style>
+        <!-- Hidden via opacity rather than IsVisible so the entrance can animate -->
+        <Style Selector="Border.check-badge">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="RenderTransform" Value="scale(0.7)"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.1" Easing="QuadraticEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" Easing="QuadraticEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.check-badge.selected">
+            <Setter Property="Opacity" Value="0.8"/>
+            <Setter Property="RenderTransform" Value="scale(1)"/>
+        </Style>
         <Style Selector="RadioButton.thumbnail-size">
             <Setter Property="Width" Value="24"/>
             <Setter Property="Height" Value="24"/>
@@ -298,11 +313,10 @@
                                             HorizontalAlignment="Left"
                                             VerticalAlignment="Top"
                                             Margin="8,6,0,0"
-                                            Opacity="0.8"
-                                            Background="{DynamicResource SurfaceLowest}"
-                                            BorderBrush="{StaticResource PrimaryContainer}"
-                                            BorderThickness="1.5"
-                                            IsVisible="{Binding IsSelected}"
+                                            Classes="check-badge"
+                                            Classes.selected="{Binding IsSelected}"
+                                            Background="{DynamicResource SelectionSurface}"
+                                            BoxShadow="{StaticResource BadgeShadow}"
                                             IsHitTestVisible="False">
                                         <Path Data="M 3,7.5 L 6.5,11 L 12,4"
                                               Stretch="Uniform" Width="9" Height="7"

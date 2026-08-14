@@ -75,6 +75,7 @@
     <Color x:Key="CropGridLineColor">#64ffffff</Color>
 
     <!-- Shape -->
+    <BoxShadows x:Key="BadgeShadow">0 1 4 0 #80000000</BoxShadows>
     <CornerRadius x:Key="RadiusSmall">4</CornerRadius>
     <CornerRadius x:Key="RadiusMedium">8</CornerRadius>
     <CornerRadius x:Key="RadiusLarge">16</CornerRadius>
