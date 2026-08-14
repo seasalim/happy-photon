@@ -33,6 +33,7 @@ public static class ShortcutCatalog
             new("6–9", "Set color labels on Library selection, else active photo; active-only in Develop"),
             new("Space", "Toggle the active photo in the selection"),
             new("Ctrl+A", "Select all visible images"),
+            new("Ctrl+D", "Deselect all visible images"),
             new("Ctrl+Click", "Toggle an image in the selection"),
             new("Shift+Click", "Select a range"),
             new("Delete", "Move the current image to Trash after confirmation"),

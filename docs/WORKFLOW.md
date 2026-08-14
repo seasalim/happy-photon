@@ -323,7 +323,8 @@ Filter the Library to the group you want before selecting it. Then:
 - use `Ctrl+Click` to add or remove individual images;
 - use `Shift+Click` to select a range;
 - press `Ctrl+A` to select every image currently visible through the filters;
-- use **None** in the **Select** group to clear the visible selection.
+- press `Ctrl+D`, or choose **Deselect All** from **More library actions**, to clear
+  the visible selection.
 
 Images that become hidden by a new filter are removed from the selection. Set the
 filters first, then make the final selection.
@@ -393,6 +394,7 @@ remains where it started and unchanged.
 | `1`–`5` / `0` | Set or clear a rating |
 | `6`–`9` | Set red, yellow, green, or blue color label |
 | `Space` | Toggle the active photo in the selection |
+| `Ctrl+A` / `Ctrl+D` | Select or deselect all visible images |
 | `C` | Toggle crop mode |
 | `B` | Toggle before/after |
 | `Ctrl+B` | Toggle color assessment mode in Develop or fullscreen |

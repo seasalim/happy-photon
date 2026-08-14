@@ -184,9 +184,9 @@ public sealed class ColorLabelUiTests
         Assert.Contains("Rating", captions);
         Assert.Contains("Labels", captions);
         Assert.DoesNotContain("≥", captions);
-        Assert.Equal("All", control.FindControl<Button>("SelectAllButton")!.Content);
-        Assert.Equal("None", control.FindControl<Button>("SelectNoneButton")!.Content);
-        Assert.Contains(
+        Assert.Null(control.FindControl<Button>("SelectAllButton"));
+        Assert.Null(control.FindControl<Button>("SelectNoneButton"));
+        Assert.DoesNotContain(
             "Select",
             control.FindControl<StackPanel>("LibraryActionsPanel")!
                 .GetLogicalDescendants().OfType<TextBlock>().Select(text => text.Text));

@@ -41,6 +41,8 @@ public partial class LibraryImageState : ObservableObject
     public int TotalCount => _allImages.Count;
     public int VisibleCount => VisibleImages.Count;
     public int SelectedCount => VisibleImages.Count(i => i.IsSelected);
+    public bool HasVisibleImages => VisibleCount > 0;
+    public bool HasSelectedImages => SelectedCount > 0;
 
     public string PhotoCountText =>
         FileTypeFilter == ImageFileTypeFilter.All && FlagFilter == HappyPhoton.Models.FlagFilter.All &&
@@ -234,7 +236,7 @@ public partial class LibraryImageState : ObservableObject
         if (!ContainsVisible(image)) return;
 
         image.IsSelected = !image.IsSelected;
-        OnPropertyChanged(nameof(SelectedCount));
+        NotifySelectedCountChanged();
     }
 
     public void SelectRange(ImageFile fromImage, ImageFile toImage)
@@ -252,7 +254,7 @@ public partial class LibraryImageState : ObservableObject
             VisibleImages[i].IsSelected = true;
         }
 
-        OnPropertyChanged(nameof(SelectedCount));
+        NotifySelectedCountChanged();
     }
 
     public void SelectAllVisible()
@@ -262,7 +264,7 @@ public partial class LibraryImageState : ObservableObject
             image.IsSelected = true;
         }
 
-        OnPropertyChanged(nameof(SelectedCount));
+        NotifySelectedCountChanged();
     }
 
     public void DeselectAllVisible()
@@ -272,7 +274,7 @@ public partial class LibraryImageState : ObservableObject
             image.IsSelected = false;
         }
 
-        OnPropertyChanged(nameof(SelectedCount));
+        NotifySelectedCountChanged();
     }
 
     public IEnumerable<ImageFile> GetSelectedImages() =>
@@ -307,10 +309,17 @@ public partial class LibraryImageState : ObservableObject
     {
         OnPropertyChanged(nameof(TotalCount));
         OnPropertyChanged(nameof(VisibleCount));
-        OnPropertyChanged(nameof(SelectedCount));
+        OnPropertyChanged(nameof(HasVisibleImages));
+        NotifySelectedCountChanged();
         OnPropertyChanged(nameof(PhotoCountText));
         OnPropertyChanged(nameof(EmptyMessage));
         StateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void NotifySelectedCountChanged()
+    {
+        OnPropertyChanged(nameof(SelectedCount));
+        OnPropertyChanged(nameof(HasSelectedImages));
     }
 
     private bool MatchesFlagFilter(ImageFile image) =>

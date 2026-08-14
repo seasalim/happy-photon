@@ -26,6 +26,7 @@
         <KeyBinding Gesture="Ctrl+E" Command="{Binding ShowExportDialogCommand}"/>
         <KeyBinding Gesture="Ctrl+OemComma" Command="{Binding OpenSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllCommand}"/>
+        <KeyBinding Gesture="Ctrl+D" Command="{Binding DeselectAllCommand}"/>
         <KeyBinding Gesture="Ctrl+Shift+C" Command="{Binding CopyEditSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+Shift+V" Command="{Binding PasteEditSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}"/>

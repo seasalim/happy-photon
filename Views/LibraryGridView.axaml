@@ -17,15 +17,8 @@
         <converters:BurstColorConverter x:Key="BurstColorConverter"/>
         <converters:ColorLabelBrushConverter x:Key="ColorLabelBrushConverter"/>
     </UserControl.Resources>
-
     <UserControl.Styles>
         <StyleInclude Source="avares://HappyPhoton/Views/LibraryFilterBarStyles.axaml"/>
-        <Style Selector="Border.burst-stripe">
-            <Setter Property="Opacity" Value="0.65"/>
-        </Style>
-        <Style Selector="Border.burst-stripe.highlighted">
-            <Setter Property="Opacity" Value="1.0"/>
-        </Style>
         <!-- Tile radius stays concentric with the image's radius 8 plus the 7px border+padding inset -->
         <Style Selector="Border.thumbnail">
             <Setter Property="Background" Value="{DynamicResource SurfaceLow}"/>
@@ -147,28 +140,26 @@
                             Classes="tour-region tour-glow"
                             Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                             Classes.tour-focus="{Binding IsDeliverCopiesTourVisible}">
-                    <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="0,2,5,2"/>
-                    <TextBlock Text="Select" FontSize="10" Foreground="{DynamicResource TextMuted}"
-                               FontFamily="{StaticResource FontLabel}"
-                               VerticalAlignment="Center" Margin="0,0,2,0"/>
-                    <Button x:Name="SelectAllButton" Content="All" FontSize="10" Padding="8,4"
-                            IsEnabled="{Binding HasSelectedImage}"
-                            Click="OnSelectAllClick"/>
-                    <Button x:Name="SelectNoneButton" Content="None" FontSize="10" Padding="8,4"
-                            IsEnabled="{Binding HasSelectedImage}"
-                            Click="OnDeselectAllClick"/>
-                    <Button Content="Export…" FontSize="10" Padding="10,4"
+                    <Button x:Name="LibraryExportButton" Content="Export…" FontSize="10" Padding="10,4"
                             Classes="accent"
                             ToolTip.Tip="Export (Ctrl+E)"
                             Click="OnBatchExportClick"/>
-                    <Button Content="⋯" FontSize="10" Width="24" Padding="4,4"
+                    <Button x:Name="LibraryActionsButton" Content="⋯" FontSize="10" Width="24" Padding="4,4"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                            IsEnabled="{Binding HasSelectedImage}"
+                            IsEnabled="{Binding Library.HasVisibleImages}"
                             ToolTip.Tip="More library actions"
                             AutomationProperties.Name="More library actions">
                         <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                <MenuItem Header="Select All" InputGesture="Ctrl+A"
+                                          IsEnabled="{Binding Library.HasVisibleImages}"
+                                          Click="OnSelectAllClick"/>
+                                <MenuItem Header="Deselect All" InputGesture="Ctrl+D"
+                                          IsEnabled="{Binding Library.HasSelectedImages}"
+                                          Click="OnDeselectAllClick"/>
+                                <Separator/>
                                 <MenuItem Header="Delete Rejected…"
+                                          IsEnabled="{Binding Library.HasVisibleImages}"
                                           Click="OnDeleteRejectedClick"/>
                             </MenuFlyout>
                         </Button.Flyout>
