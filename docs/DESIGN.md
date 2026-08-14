@@ -184,6 +184,12 @@ reflectance card as the implementation value.
 
 Mid-grey remains a dark-family theme with light text. Its chrome ramp stays below the
 surround, and text is placed on darker cards rather than directly on `#777777`.
+Every chrome neutral in the Mid-grey dictionary is strictly achromatic (R=G=B); the
+Dark theme's teal-tinted neutral family stays out of this variant so nothing near the
+photograph carries a color cast. Accents that border photo pixels also get muted
+Mid-grey variants — the active-image ring (`#6cc9d1`) and the selection check mark
+(`#9adfe4`) trade the electric cyan for reduced chroma, limiting simultaneous-contrast
+shifts against the L\* 50 surround while staying recognizably in the accent family.
 `AssessmentGrey` uses the same shipped value but is an invariant assessment reference,
 not an alias to the theme surround. `AssessmentWhite` is the invariant `#FFFFFF`
 reference band used with it. Theme resources live in

@@ -40,8 +40,6 @@
 
     <SolidColorBrush x:Key="Primary" Color="{StaticResource PrimaryColor}"/>
     <SolidColorBrush x:Key="PrimaryContainer" Color="{StaticResource PrimaryContainerColor}"/>
-    <!-- Softened accent for the active-image ring so it does not overpower photo content -->
-    <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource PrimaryContainerColor}" Opacity="0.77"/>
     <SolidColorBrush x:Key="PrimaryHover" Color="{StaticResource PrimaryHoverColor}"/>
     <SolidColorBrush x:Key="OnPrimary" Color="{StaticResource OnPrimaryColor}"/>
     <SolidColorBrush x:Key="Secondary" Color="{StaticResource SecondaryColor}"/>
@@ -152,6 +150,9 @@
             <SolidColorBrush x:Key="ViewerSurround" Color="{StaticResource ViewerSurroundColor}"/>
             <SolidColorBrush x:Key="FullScreenBackdrop" Color="{StaticResource FullScreenBackdropColor}"/>
             <SolidColorBrush x:Key="SelectionSurface" Color="{StaticResource SelectionSurfaceColor}"/>
+            <!-- Softened accent for the active-image ring so it does not overpower photo content -->
+            <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource PrimaryContainerColor}" Opacity="0.77"/>
+            <SolidColorBrush x:Key="SelectionCheck" Color="{StaticResource PrimaryContainerColor}"/>
             <SolidColorBrush x:Key="ViewerControlBarBackground" Color="Transparent"/>
             <BoxShadows x:Key="CoachmarkShadow">0 12 30 0 #99000000</BoxShadows>
             <x:Double x:Key="TourDimmedOpacity">0.48</x:Double>
@@ -183,16 +184,23 @@
             <Color x:Key="SurfaceHighColor">#4b4b4b</Color>
             <Color x:Key="SurfaceHighestColor">#535353</Color>
             <Color x:Key="SurfaceBrightColor">#5c5c5c</Color>
-            <Color x:Key="OutlineColor">#c4cccc</Color>
-            <Color x:Key="OutlineVariantColor">#707878</Color>
+            <!-- Chrome neutrals are strictly achromatic (R=G=B) so nothing near
+                 the photograph carries a color cast; the Dark theme's teal-tinted
+                 neutral family must not leak into this dictionary. -->
+            <Color x:Key="OutlineColor">#c8c8c8</Color>
+            <Color x:Key="OutlineVariantColor">#747474</Color>
             <Color x:Key="TextPrimaryColor">#ffffff</Color>
-            <Color x:Key="TextSecondaryColor">#eef2f2</Color>
-            <Color x:Key="TextMutedColor">#d0d8d8</Color>
-            <Color x:Key="TextDisabledColor">#c4cccc</Color>
+            <Color x:Key="TextSecondaryColor">#f0f0f0</Color>
+            <Color x:Key="TextMutedColor">#d4d4d4</Color>
+            <Color x:Key="TextDisabledColor">#c8c8c8</Color>
             <Color x:Key="RawFileBackgroundColor">#444444</Color>
             <Color x:Key="ViewerSurroundColor">#777777</Color>
             <Color x:Key="FullScreenBackdropColor">#777777</Color>
             <Color x:Key="SelectionSurfaceColor">#616161</Color>
+            <!-- Muted accents for chrome that borders photo pixels: reduced chroma
+                 limits simultaneous-contrast shifts against the L* 50 surround. -->
+            <Color x:Key="ActiveImageRingColor">#6cc9d1</Color>
+            <Color x:Key="SelectionCheckColor">#9adfe4</Color>
 
             <SolidColorBrush x:Key="SurfaceLowest" Color="{StaticResource SurfaceLowestColor}"/>
             <SolidColorBrush x:Key="SurfaceBase" Color="{StaticResource SurfaceBaseColor}"/>
@@ -212,6 +220,8 @@
             <SolidColorBrush x:Key="ViewerSurround" Color="{StaticResource ViewerSurroundColor}"/>
             <SolidColorBrush x:Key="FullScreenBackdrop" Color="{StaticResource FullScreenBackdropColor}"/>
             <SolidColorBrush x:Key="SelectionSurface" Color="{StaticResource SelectionSurfaceColor}"/>
+            <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource ActiveImageRingColor}"/>
+            <SolidColorBrush x:Key="SelectionCheck" Color="{StaticResource SelectionCheckColor}"/>
             <SolidColorBrush x:Key="ViewerControlBarBackground" Color="{StaticResource SurfaceLowColor}"/>
             <BoxShadows x:Key="CoachmarkShadow">0 12 30 0 #b3000000</BoxShadows>
             <x:Double x:Key="TourDimmedOpacity">0.44</x:Double>

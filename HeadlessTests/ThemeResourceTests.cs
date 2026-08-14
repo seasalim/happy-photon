@@ -49,6 +49,27 @@ public sealed class ThemeResourceTests
         AssertContrast(4.5, "TextMuted", "SurfaceLowest", variant);
         AssertContrast(4.5, "TextPrimary", "SelectionSurface", variant);
         AssertContrast(3, "PrimaryContainer", "SurfaceBright", variant);
+        AssertContrast(3, "ActiveImageRing", "SelectionSurface", variant);
+        AssertContrast(3, "SelectionCheck", "SelectionSurface", variant);
+    }
+
+    [AvaloniaFact]
+    public void MidGrey_ChromeNeutralsAreStrictlyAchromatic()
+    {
+        foreach (var key in new[]
+        {
+            "SurfaceLowest", "SurfaceBase", "SurfaceLow", "SurfaceMid",
+            "SurfaceHigh", "SurfaceHighest", "SurfaceBright",
+            "Outline", "OutlineVariant", "TextPrimary", "TextSecondary",
+            "TextMuted", "TextDisabled", "RawFileBackground",
+            "ViewerSurround", "FullScreenBackdrop", "SelectionSurface"
+        })
+        {
+            var color = Brush(key, HappyPhotonThemes.MidGrey).Color;
+            Assert.True(
+                color.R == color.G && color.G == color.B,
+                $"{key} resolved to {color}, which carries a color cast.");
+        }
     }
 
     [AvaloniaTheory]

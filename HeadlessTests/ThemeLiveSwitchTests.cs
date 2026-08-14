@@ -110,10 +110,10 @@ public sealed class ThemeLiveSwitchTests
             Assert.Equal(Color.Parse("#ffffff"), ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00dbe9"), ColorOf(burstStripe.Background));
             Assert.Equal(Color.Parse("#616161"), ColorOf(thumbnail.Background));
-            Assert.Equal(Color.Parse("#00f0ff"), ColorOf(thumbnail.BorderBrush));
+            Assert.Equal(Color.Parse("#6cc9d1"), ColorOf(thumbnail.BorderBrush));
             Assert.Equal(0.62, undo.Opacity);
             Assert.Equal(0.62, reset.Opacity);
-            Assert.Equal(Color.Parse("#c4cccc"), ColorOf(reset.Foreground));
+            Assert.Equal(Color.Parse("#c8c8c8"), ColorOf(reset.Foreground));
 
             var flyout = Assert.IsType<MenuFlyout>(appearance.Flyout);
             flyout.ShowAt(appearance);
