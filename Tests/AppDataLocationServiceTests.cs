@@ -159,35 +159,17 @@ public sealed class AppDataLocationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task MissingCatalogRoot_IsStartupFailure()
+    public async Task PersistedMissingCatalogRoot_RequiresPointerRecovery()
     {
         var service = CreateService();
         var locations = await service.CreateFreshAsync();
         Directory.Delete(locations.CatalogRoot, recursive: true);
-        using var catalog = new CatalogService();
 
-        var reopened = await service.ResolveAsync();
-        await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            catalog.InitializeAsync(reopened!));
-    }
+        var exception = await Assert.ThrowsAsync<AppDataLocationPointerException>(
+            service.ResolveAsync);
 
-    [Fact]
-    public async Task CorruptPointerForCustomCatalog_RequiresExplicitLocate()
-    {
-        var service = CreateService();
-        var custom = Path.Combine(_root, "custom", "Happy Photon Catalog");
-        var locations = await service.CreateFreshAsync(catalogRoot: custom);
-        using (var catalog = new CatalogService())
-        {
-            await catalog.InitializeAsync(locations);
-        }
-        await File.WriteAllTextAsync(service.PointerPath, "invalid");
-
-        Assert.Null(await service.QuarantineCorruptPointerAsync());
-        var adopted = await service.AdoptLocatedCatalogAsync(custom);
-
-        Assert.Equal(custom, adopted.CatalogRoot);
-        Assert.Equal(service.StandardCacheRoot, adopted.CacheRoot);
+        Assert.Contains(locations.CatalogRoot, exception.Message);
+        Assert.Contains("Reconnect the drive", exception.Message);
     }
 
     private AppDataLocationService CreateService(

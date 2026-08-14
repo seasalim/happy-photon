@@ -4,221 +4,228 @@
              x:Class="HappyPhoton.Views.FirstRunView"
              x:DataType="vm:MainWindowViewModel">
     <UserControl.Styles>
-        <Style Selector="Button.hero-action">
-            <Setter Property="MinHeight" Value="82"/>
-            <Setter Property="MaxWidth" Value="480"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="Padding" Value="24,16"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="{StaticResource RadiusLarge}"/>
+        <Style Selector="Button.wizard-primary">
+            <Setter Property="MinWidth" Value="150"/>
+            <Setter Property="Padding" Value="18,11"/>
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
-        <Style Selector="Button.quiet-action">
+        <Style Selector="Button.wizard-quiet">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
-            <Setter Property="Padding" Value="12,8"/>
         </Style>
-        <Style Selector="Button.quiet-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        <Style Selector="Border.storage-row">
+            <Setter Property="Padding" Value="14"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}"/>
         </Style>
     </UserControl.Styles>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-        <StackPanel MaxWidth="760"
-                    Margin="32,24,32,32"
-                    HorizontalAlignment="Center">
-            <TextBlock Text="WELCOME TO HAPPY&#10;PHOTON"
-                       FontFamily="{StaticResource FontHeading}"
-                       FontSize="{StaticResource FontSizeHero}"
-                       FontWeight="Bold"
-                       Foreground="{StaticResource PrimaryContainer}"
-                       LetterSpacing="-1"
-                       LineHeight="50"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"/>
+        <Border MaxWidth="760" Margin="24" Padding="32"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Background="{DynamicResource SurfaceLow}"
+                BorderBrush="{DynamicResource Divider}" BorderThickness="1"
+                CornerRadius="{StaticResource RadiusCard}">
+            <StackPanel Spacing="18">
+                <TextBlock Text="FIRST RUN"
+                           Classes="section-label"
+                           HorizontalAlignment="Center"/>
 
-            <StackPanel Margin="0,42,0,0"
-                        IsVisible="{Binding HasDefaultFirstRunLocation}">
-                <TextBlock FontFamily="{StaticResource FontHeading}"
-                           FontSize="{StaticResource FontSizeFeature}"
-                           FontWeight="Bold"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap">
-                    <Run Text="Start with the folders "
-                         Foreground="{DynamicResource TextPrimary}"/>
-                    <Run Text="you"
-                         Foreground="{StaticResource PrimaryContainer}"/>
-                </TextBlock>
-                <TextBlock Text="already use."
-                           FontFamily="{StaticResource FontHeading}"
-                           FontSize="{StaticResource FontSizeFeature}"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource PrimaryContainer}"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap"/>
+                <StackPanel IsVisible="{Binding IsFirstRunWelcomeStep}"
+                            Spacing="18">
+                    <TextBlock Text="WELCOME TO HAPPY PHOTON"
+                               FontFamily="{StaticResource FontHeading}"
+                               FontSize="{StaticResource FontSizeHero}"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource PrimaryContainer}"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <TextBlock Text="A calm, local workspace for browsing and non-destructive photo editing."
+                               Foreground="{DynamicResource TextSecondary}"
+                               LineHeight="22" TextAlignment="Center"
+                               TextWrapping="Wrap"/>
+                    <TextBlock Text="LOCAL CATALOG  •  NO PHOTO IMPORT  •  ORIGINALS UNTOUCHED"
+                               FontFamily="{StaticResource FontLabel}"
+                               FontSize="{StaticResource FontSizeSmall}"
+                               Foreground="{DynamicResource TextMuted}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <Button x:Name="WelcomeContinueButton"
+                            Classes="accent wizard-primary"
+                            Content="CONTINUE"
+                            HorizontalAlignment="Center"
+                            Command="{Binding ContinueFirstRunCommand}"/>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsFirstRunStorageStep}"
+                            Spacing="16">
+                    <TextBlock Text="Confirm Happy Photon storage location"
+                               FontFamily="{StaticResource FontHeading}"
+                               FontSize="{StaticResource FontSizeHeading}"
+                               FontWeight="SemiBold" TextAlignment="Center"
+                               TextWrapping="Wrap"/>
+                    <TextBlock Text="The catalog holds your edits, ratings, and presets. The separate cache contains thumbnails and previews."
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+
+                    <Border Classes="storage-row">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Catalog + presets" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding SetupCatalogRoot}"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Change…"
+                                    Classes="wizard-quiet"
+                                    VerticalAlignment="Center"
+                                    IsVisible="{Binding CanChangeFirstRunStorage}"
+                                    Command="{Binding ChangeSetupCatalogCommand}"/>
+                        </Grid>
+                    </Border>
+                    <Border Classes="storage-row">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Cached thumbnails" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding SetupCacheRoot}"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Change…"
+                                    Classes="wizard-quiet"
+                                    VerticalAlignment="Center"
+                                    IsVisible="{Binding CanChangeFirstRunStorage}"
+                                    Command="{Binding ChangeSetupCacheCommand}"/>
+                        </Grid>
+                    </Border>
+
+                    <Border IsVisible="{Binding ShowSetupUninstallWarning}"
+                            Padding="12"
+                            Background="{DynamicResource ErrorContainer}"
+                            CornerRadius="{StaticResource RadiusMedium}">
+                        <TextBlock Text="Store uninstall warning: Windows removes app data for packaged builds. Keep precious catalog data in Pictures unless you have another backup."
+                                   Foreground="{DynamicResource OnErrorContainer}"
+                                   TextWrapping="Wrap"/>
+                    </Border>
+                    <TextBlock IsVisible="{Binding IsFirstRunStorageReadOnly}"
+                               Text="These storage locations are already configured and cannot be changed here."
+                               Foreground="{DynamicResource TextMuted}"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <Button x:Name="StorageContinueButton"
+                            Classes="accent wizard-primary"
+                            Content="CONTINUE"
+                            HorizontalAlignment="Center"
+                            Command="{Binding ContinueFirstRunCommand}"/>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsFirstRunPicturesStep}"
+                            Spacing="18">
+                    <TextBlock Text="Select your Pictures folder"
+                               FontFamily="{StaticResource FontHeading}"
+                               FontSize="{StaticResource FontSizeHeading}"
+                               FontWeight="SemiBold" TextAlignment="Center"/>
+                    <TextBlock Text="Choose the top-level location to show in the folder tree. Happy Photon browses it in place; nothing is imported or moved."
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <Border IsVisible="{Binding HasDefaultFirstRunLocation}"
+                             Classes="storage-row">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Detected Pictures folder" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding FirstRunDefaultPath}"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Change…"
+                                    Classes="wizard-quiet"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding BrowseElsewhereCommand}"/>
+                        </Grid>
+                    </Border>
+                    <TextBlock IsVisible="{Binding IsPickerLedFirstRun}"
+                               Text="Happy Photon could not find a Pictures folder. Browse to the location you want to use."
+                               Foreground="{DynamicResource TextMuted}"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <Button x:Name="PicturesDefaultButton"
+                            Classes="accent wizard-primary"
+                            Content="CONTINUE"
+                            IsVisible="{Binding HasDefaultFirstRunLocation}"
+                            HorizontalAlignment="Center"
+                            Command="{Binding StartInDefaultLocationCommand}"/>
+                    <Button x:Name="PicturesChooseButton"
+                            Classes="accent wizard-primary"
+                            Content="CHOOSE A FOLDER"
+                            IsVisible="{Binding IsPickerLedFirstRun}"
+                            HorizontalAlignment="Center"
+                            Command="{Binding BrowseElsewhereCommand}"/>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsFirstRunLightroomStep}"
+                            Spacing="18">
+                    <TextBlock Text="Bring your Lightroom assessments?"
+                               FontFamily="{StaticResource FontHeading}"
+                               FontSize="{StaticResource FontSizeHeading}"
+                               FontWeight="SemiBold" TextAlignment="Center"/>
+                    <TextBlock Text="We noticed you may use Lightroom Classic. Import your ratings, flags, and color labels? Happy Photon reads a safe snapshot and never changes Lightroom or your photographs."
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <ComboBox ItemsSource="{Binding DetectedLightroomCatalogPaths}"
+                              SelectedItem="{Binding DetectedLightroomCatalogPath}"
+                              IsVisible="{Binding HasDetectedLightroomCatalogs}"
+                              HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Stretch"/>
+                    <Button Content="Choose another…"
+                            Classes="wizard-quiet"
+                            HorizontalAlignment="Center"
+                            Command="{Binding ChooseAnotherLightroomCatalogCommand}"/>
+                    <TextBlock Text="You can always import later from Folders → More folder actions → Import from Lightroom…"
+                               Foreground="{DynamicResource TextMuted}"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" Spacing="10"
+                                HorizontalAlignment="Center">
+                        <Button x:Name="LightroomImportButton"
+                                Classes="accent wizard-primary"
+                                Content="IMPORT"
+                                Command="{Binding ImportDetectedLightroomCommand}"/>
+                        <Button Content="SKIP"
+                                Command="{Binding SkipDetectedLightroomCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding IsFirstRunAllSetStep}"
+                            Spacing="18">
+                    <TextBlock Text="You're all set"
+                               FontFamily="{StaticResource FontHeading}"
+                               FontSize="{StaticResource FontSizeHeading}"
+                               FontWeight="SemiBold" TextAlignment="Center"/>
+                    <TextBlock Text="Happy Photon is ready for your photographs. Take a short tour of the workspace, or start exploring on your own."
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" Spacing="10"
+                                HorizontalAlignment="Center">
+                        <Button x:Name="StartTourButton"
+                                Classes="accent wizard-primary"
+                                Content="START TOUR"
+                                Command="{Binding StartFirstRunTourCommand}"/>
+                        <Button Content="Skip"
+                                Classes="wizard-quiet"
+                                Command="{Binding SkipFirstRunTourCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <TextBlock Text="{Binding FirstRunErrorMessage}"
+                           IsVisible="{Binding FirstRunErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                           Foreground="{DynamicResource OnErrorContainer}"
+                           TextAlignment="Center" TextWrapping="Wrap"
+                           AutomationProperties.LiveSetting="Assertive"/>
+                <ProgressBar Name="FirstRunProgressBar" Height="3"
+                             IsIndeterminate="{Binding IsFirstRunBusy}"
+                             IsVisible="{Binding IsFirstRunBusy}"/>
             </StackPanel>
-
-            <StackPanel Margin="0,42,0,0"
-                        IsVisible="{Binding IsPickerLedFirstRun}">
-                <TextBlock Text="Choose where your"
-                           FontFamily="{StaticResource FontHeading}"
-                           FontSize="{StaticResource FontSizeFeature}"
-                           FontWeight="Bold"
-                           Foreground="{DynamicResource TextPrimary}"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap"/>
-                <TextBlock Text="photographs live."
-                           FontFamily="{StaticResource FontHeading}"
-                           FontSize="{StaticResource FontSizeFeature}"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource PrimaryContainer}"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap"/>
-            </StackPanel>
-
-            <TextBlock Margin="0,30,0,0"
-                       Foreground="{DynamicResource TextSecondary}"
-                       FontSize="13"
-                       LineHeight="21"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"
-                       IsVisible="{Binding HasDefaultFirstRunLocation}">
-                <Run Text="Happy Photon is browsing from "/>
-                <Run Text="{Binding FirstRunDefaultName}"
-                     FontWeight="Bold"
-                     TextDecorations="Underline"/>
-                <Run Text=". Select a folder in the sidebar to see the photographs stored directly inside it. Nothing is imported or moved."/>
-            </TextBlock>
-
-            <TextBlock Margin="0,30,0,0"
-                       Text="Happy Photon could not find a Pictures folder. Choose the top-level location you want shown in the folder tree. Nothing will be imported or moved."
-                       Foreground="{DynamicResource TextSecondary}"
-                       FontSize="13"
-                       LineHeight="21"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"
-                       IsVisible="{Binding IsPickerLedFirstRun}"/>
-
-            <TextBlock Margin="0,18,0,0"
-                       Text="LOCAL CATALOG  •  NO IMPORT  •  ORIGINALS STAY UNTOUCHED"
-                       FontFamily="{StaticResource FontLabel}"
-                       FontSize="{StaticResource FontSizeSmall}"
-                       Foreground="{DynamicResource TextMuted}"
-                       HorizontalAlignment="Center"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"/>
-
-            <TextBlock Margin="0,14,0,0"
-                       Text="{Binding FirstRunErrorMessage}"
-                       IsVisible="{Binding FirstRunErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                       Foreground="{StaticResource OnErrorContainer}"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"
-                       AutomationProperties.LiveSetting="Assertive"/>
-
-            <ProgressBar Name="FirstRunProgressBar"
-                         Margin="0,14,0,0"
-                         MaxWidth="480"
-                         HorizontalAlignment="Stretch"
-                         IsIndeterminate="{Binding IsFirstRunBusy}"
-                         IsVisible="{Binding IsFirstRunBusy}"
-                         Height="3"/>
-
-            <Button x:Name="ImportLightroomButton"
-                    Classes="accent hero-action"
-                    Margin="0,32,0,0"
-                    Command="{Binding ImportCatalogCommand}"
-                    AutomationProperties.Name="Import a Lightroom Classic catalog">
-                <StackPanel HorizontalAlignment="Center" Spacing="5">
-                    <TextBlock Text="IMPORT FROM LIGHTROOM"
-                               FontFamily="{StaticResource FontLabel}"
-                               FontSize="{StaticResource FontSizeLabel}"
-                               LetterSpacing="2"
-                               Foreground="{StaticResource OnPrimary}"
-                               HorizontalAlignment="Center"/>
-                    <TextBlock Text="Bring across ratings, flags, and color labels"
-                               FontSize="11"
-                               Foreground="{StaticResource OnPrimary}"
-                               Opacity="0.78"
-                               HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Button>
-
-            <Button x:Name="StartInDefaultButton"
-                    Classes="accent hero-action"
-                    Margin="0,14,0,0"
-                    Command="{Binding StartInDefaultLocationCommand}"
-                    IsVisible="{Binding HasDefaultFirstRunLocation}"
-                    AutomationProperties.Name="{Binding FirstRunPrimaryActionText}">
-                <StackPanel Orientation="Horizontal"
-                            Spacing="18"
-                            HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding FirstRunPrimaryActionText}"
-                               FontFamily="{StaticResource FontLabel}"
-                               FontSize="{StaticResource FontSizeLabel}"
-                               LetterSpacing="2"
-                               Foreground="{StaticResource OnPrimary}"
-                               VerticalAlignment="Center"/>
-                    <Path Width="20"
-                          Height="14"
-                          Data="M 1,7 L 18,7 M 12,1 L 18,7 L 12,13"
-                          Stroke="{StaticResource OnPrimary}"
-                          StrokeThickness="1.6"
-                          StrokeLineCap="Round"
-                          StrokeJoin="Round"/>
-                </StackPanel>
-            </Button>
-
-            <Button x:Name="ChooseLocationButton"
-                    Classes="accent hero-action"
-                    Margin="0,32,0,0"
-                    Command="{Binding BrowseElsewhereCommand}"
-                    IsVisible="{Binding IsPickerLedFirstRun}"
-                    AutomationProperties.Name="Choose a photo location">
-                <StackPanel Orientation="Horizontal"
-                            Spacing="18"
-                            HorizontalAlignment="Center">
-                    <TextBlock Text="CHOOSE A PHOTO LOCATION"
-                               FontFamily="{StaticResource FontLabel}"
-                               FontSize="{StaticResource FontSizeLabel}"
-                               LetterSpacing="2"
-                               Foreground="{StaticResource OnPrimary}"
-                               VerticalAlignment="Center"/>
-                    <Path Width="20"
-                          Height="14"
-                          Data="M 1,7 L 18,7 M 12,1 L 18,7 L 12,13"
-                          Stroke="{StaticResource OnPrimary}"
-                          StrokeThickness="1.6"
-                          StrokeLineCap="Round"
-                          StrokeJoin="Round"/>
-                </StackPanel>
-            </Button>
-
-            <Button x:Name="BrowseElsewhereButton"
-                    Classes="quiet-action"
-                    Margin="0,18,0,0"
-                    HorizontalAlignment="Center"
-                    Command="{Binding BrowseElsewhereCommand}"
-                    IsVisible="{Binding HasDefaultFirstRunLocation}"
-                    AutomationProperties.Name="Browse somewhere else">
-                <StackPanel Orientation="Horizontal"
-                            Spacing="9">
-                    <TextBlock Text="Browse somewhere else"
-                               FontFamily="{StaticResource FontLabel}"
-                               LetterSpacing="1"
-                               VerticalAlignment="Center"/>
-                    <PathIcon Width="17"
-                              Height="17"
-                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                              Data="M2 4a2 2 0 0 1 2-2h3.172a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 10.828 4H14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4z"/>
-                </StackPanel>
-            </Button>
-        </StackPanel>
+        </Border>
     </ScrollViewer>
 </UserControl>

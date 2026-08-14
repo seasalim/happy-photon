@@ -33,6 +33,11 @@ public partial class MainWindowViewModel
         IsShapePhotographTourVisible ||
         IsDeliverCopiesTourVisible;
 
+    public bool IsWorkflowTourActive => WorkflowTourStep != WorkflowTourStep.None;
+
+    public bool IsDevelopEmptyStateVisible =>
+        !HasSelectedImage && !IsWorkflowTourActive;
+
     public void StartWorkflowTour()
     {
         IsFullScreenMode = false;
@@ -81,5 +86,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsShapePhotographTourVisible));
         OnPropertyChanged(nameof(IsDeliverCopiesTourVisible));
         OnPropertyChanged(nameof(IsWorkflowTourPresented));
+        OnPropertyChanged(nameof(IsWorkflowTourActive));
+        OnPropertyChanged(nameof(IsDevelopEmptyStateVisible));
     }
 }

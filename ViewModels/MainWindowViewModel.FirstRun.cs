@@ -7,11 +7,19 @@ namespace HappyPhoton.ViewModels;
 public enum StartupGateState
 {
     Initializing,
-    DataLocations,
     PointerRecovery,
     Welcome,
     Ready,
     Error
+}
+
+public enum FirstRunStep
+{
+    Welcome,
+    Storage,
+    Pictures,
+    Lightroom,
+    AllSet
 }
 
 internal enum FirstRunStartupDecision
@@ -29,10 +37,19 @@ public partial class MainWindowViewModel
     private StartupGateState _startupGateState = StartupGateState.Initializing;
 
     [ObservableProperty]
+    private FirstRunStep _firstRunStep;
+
+    [ObservableProperty]
     private string? _firstRunDefaultPath;
 
     [ObservableProperty]
-    private string _firstRunDefaultName = "Pictures";
+    private string? _firstRunPicturesPath;
+
+    [ObservableProperty]
+    private string? _detectedLightroomCatalogPath;
+
+    [ObservableProperty]
+    private IReadOnlyList<string> _detectedLightroomCatalogPaths = [];
 
     [ObservableProperty]
     private string? _firstRunErrorMessage;
@@ -41,12 +58,19 @@ public partial class MainWindowViewModel
     private bool _isFirstRunBusy;
 
     [ObservableProperty]
+    private bool _isFirstRunStorageCommitted;
+
+    [ObservableProperty]
     private int? _firstRunExperienceVersion;
 
     [ObservableProperty]
     private bool _canPersistFolderSession;
 
     public Func<string, Task>? PersistFirstRunCompletionAsync { get; set; }
+    public Func<string, CancellationToken, Task<LightroomDetectionResult>>?
+        DetectLightroomAsync { get; set; }
+    public Func<string?, Task<bool>>? RequestFirstRunCatalogImportAsync { get; set; }
+    public Func<Task<string?>>? RequestFirstRunCatalogPathAsync { get; set; }
     public Action? BrowseLocationRequested { get; set; }
     public Func<Task>? RetryStartupAsync { get; set; }
     public Action? CloseApplicationRequested { get; set; }
@@ -56,10 +80,23 @@ public partial class MainWindowViewModel
     public bool IsStartupInitializing => StartupGateState == StartupGateState.Initializing;
     public bool IsFirstRunVisible => StartupGateState == StartupGateState.Welcome;
     public bool IsStartupError => StartupGateState == StartupGateState.Error;
-    public bool IsPickerLedFirstRun => IsFirstRunVisible && FirstRunDefaultPath == null;
-    public bool HasDefaultFirstRunLocation => IsFirstRunVisible && FirstRunDefaultPath != null;
+    public bool IsFirstRunWelcomeStep =>
+        IsFirstRunVisible && FirstRunStep == FirstRunStep.Welcome;
+    public bool IsFirstRunStorageStep =>
+        IsFirstRunVisible && FirstRunStep == FirstRunStep.Storage;
+    public bool IsFirstRunPicturesStep =>
+        IsFirstRunVisible && FirstRunStep == FirstRunStep.Pictures;
+    public bool IsFirstRunLightroomStep =>
+        IsFirstRunVisible && FirstRunStep == FirstRunStep.Lightroom;
+    public bool IsFirstRunAllSetStep =>
+        IsFirstRunVisible && FirstRunStep == FirstRunStep.AllSet;
+    public bool IsPickerLedFirstRun =>
+        IsFirstRunPicturesStep && FirstRunDefaultPath == null;
+    public bool HasDefaultFirstRunLocation =>
+        IsFirstRunPicturesStep && FirstRunDefaultPath != null;
     public bool IsWorkspaceInteractionEnabled => StartupGateState == StartupGateState.Ready;
-    public string FirstRunPrimaryActionText => $"START IN {FirstRunDefaultName.ToUpperInvariant()}";
+    public bool HasDetectedLightroomCatalogs =>
+        DetectedLightroomCatalogPaths.Count > 0;
 
     internal static FirstRunStartupDecision DecideFirstRunStartup(
         Models.AppSettings settings)
@@ -83,11 +120,30 @@ public partial class MainWindowViewModel
 
     public void ShowFirstRunWelcome(string? defaultPath)
     {
-        FirstRunDefaultPath = defaultPath;
-        FirstRunDefaultName = GetFolderDisplayName(defaultPath) ?? "Pictures";
+        SetFirstRunDefaultLocation(defaultPath);
+        FirstRunPicturesPath = null;
+        DetectedLightroomCatalogPath = null;
+        DetectedLightroomCatalogPaths = [];
         FirstRunErrorMessage = null;
         CanPersistFolderSession = false;
+        FirstRunStep = FirstRunStep.Welcome;
         StartupGateState = StartupGateState.Welcome;
+    }
+
+    public void ResumeFirstRunAfterStorage(string? defaultPath)
+    {
+        SetFirstRunDefaultLocation(defaultPath);
+        FirstRunErrorMessage = null;
+        CanPersistFolderSession = false;
+        IsFirstRunStorageCommitted = true;
+        FirstRunStep = FirstRunStep.Pictures;
+        StartupGateState = StartupGateState.Welcome;
+    }
+
+    public void MarkFirstRunStorageCommitted()
+    {
+        IsFirstRunStorageCommitted = true;
+        IsFirstRunStorageReadOnly = true;
     }
 
     public void ShowStartupFailure(string message)
@@ -105,17 +161,41 @@ public partial class MainWindowViewModel
         StartupGateState = StartupGateState.Ready;
     }
 
-    public void SetFirstRunError(string message)
+    public void SetFirstRunError(string message) => FirstRunErrorMessage = message;
+
+    [RelayCommand(CanExecute = nameof(CanContinueFirstRun))]
+    private async Task ContinueFirstRunAsync()
     {
-        FirstRunErrorMessage = message;
+        if (IsFirstRunBusy || !IsFirstRunVisible) return;
+        FirstRunErrorMessage = null;
+
+        switch (FirstRunStep)
+        {
+            case FirstRunStep.Welcome:
+                FirstRunStep = FirstRunStep.Storage;
+                break;
+            case FirstRunStep.Storage:
+                if (IsFirstRunStorageCommitted)
+                    FirstRunStep = FirstRunStep.Pictures;
+                else
+                    await CompleteStorageSetupAsync();
+                break;
+            case FirstRunStep.Pictures when FirstRunDefaultPath != null:
+                await CompleteFirstRunFromLocationAsync(FirstRunDefaultPath);
+                break;
+            case FirstRunStep.Pictures:
+                BrowseElsewhere();
+                break;
+        }
     }
+
+    private bool CanContinueFirstRun() =>
+        IsFirstRunVisible && !IsFirstRunBusy &&
+        !IsFirstRunLightroomStep && !IsFirstRunAllSetStep;
 
     public async Task CompleteFirstRunFromLocationAsync(string path)
     {
-        if (IsFirstRunBusy || !IsFirstRunVisible)
-        {
-            return;
-        }
+        if (IsFirstRunBusy || !IsFirstRunVisible) return;
 
         var validation = ValidateBrowseLocation(path);
         if (validation == BrowseLocationValidation.Catalog)
@@ -132,25 +212,28 @@ public partial class MainWindowViewModel
             return;
         }
 
-        if (PersistFirstRunCompletionAsync == null)
-        {
-            FirstRunErrorMessage = "Happy Photon couldn't save this location. Please try again.";
-            return;
-        }
-
         IsFirstRunBusy = true;
         FirstRunErrorMessage = null;
         try
         {
-            await PersistFirstRunCompletionAsync(path);
-            ShowWorkspaceReady(CurrentFirstRunExperienceVersion);
-            StartWorkflowTour();
-            RequestFolderTreeFocus?.Invoke();
+            FirstRunPicturesPath = path;
+            SetFirstRunDefaultLocation(path);
+            var detection = DetectLightroomAsync == null
+                ? LightroomDetectionResult.NotDetected
+                : await DetectLightroomAsync(path, CancellationToken.None);
+            if (detection.IsDetected)
+            {
+                DetectedLightroomCatalogPaths = detection.CatalogPaths;
+                DetectedLightroomCatalogPath = detection.CatalogPaths.FirstOrDefault();
+                FirstRunStep = FirstRunStep.Lightroom;
+                return;
+            }
+
+            FirstRunStep = FirstRunStep.AllSet;
         }
         catch (Exception exception)
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"First-run completion failed: {exception}");
+            System.Diagnostics.Debug.WriteLine($"First-run completion failed: {exception}");
             FirstRunErrorMessage =
                 "Happy Photon couldn't save this location. Please try again.";
         }
@@ -160,16 +243,136 @@ public partial class MainWindowViewModel
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanStartInDefaultLocation))]
-    private Task StartInDefaultLocationAsync()
+    [RelayCommand(CanExecute = nameof(CanImportDetectedLightroom))]
+    private async Task ImportDetectedLightroomAsync()
     {
-        return FirstRunDefaultPath == null
-            ? Task.CompletedTask
-            : CompleteFirstRunFromLocationAsync(FirstRunDefaultPath);
+        if (IsFirstRunBusy || !IsFirstRunLightroomStep ||
+            RequestFirstRunCatalogImportAsync == null)
+        {
+            return;
+        }
+
+        IsFirstRunBusy = true;
+        FirstRunErrorMessage = null;
+        try
+        {
+            if (await RequestFirstRunCatalogImportAsync(DetectedLightroomCatalogPath))
+                FirstRunStep = FirstRunStep.AllSet;
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine($"First-run import failed: {exception}");
+            FirstRunErrorMessage =
+                "Happy Photon couldn't finish the Lightroom import. Please try again or skip it.";
+        }
+        finally
+        {
+            IsFirstRunBusy = false;
+        }
     }
 
+    private bool CanImportDetectedLightroom() =>
+        IsFirstRunLightroomStep && !IsFirstRunBusy &&
+        RequestFirstRunCatalogImportAsync != null;
+
+    [RelayCommand(CanExecute = nameof(CanChooseAnotherLightroomCatalog))]
+    private async Task ChooseAnotherLightroomCatalogAsync()
+    {
+        if (RequestFirstRunCatalogPathAsync == null || IsFirstRunBusy) return;
+        IsFirstRunBusy = true;
+        FirstRunErrorMessage = null;
+        try
+        {
+            var path = await RequestFirstRunCatalogPathAsync();
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            if (!DetectedLightroomCatalogPaths.Contains(
+                    path,
+                    StringComparer.OrdinalIgnoreCase))
+            {
+                DetectedLightroomCatalogPaths = [.. DetectedLightroomCatalogPaths, path];
+            }
+            DetectedLightroomCatalogPath = path;
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine($"Lightroom catalog selection failed: {exception}");
+            FirstRunErrorMessage =
+                "Happy Photon couldn't open the catalog picker. Please try again.";
+        }
+        finally
+        {
+            IsFirstRunBusy = false;
+        }
+    }
+
+    private bool CanChooseAnotherLightroomCatalog() =>
+        IsFirstRunLightroomStep && !IsFirstRunBusy &&
+        RequestFirstRunCatalogPathAsync != null;
+
+    [RelayCommand(CanExecute = nameof(CanSkipDetectedLightroom))]
+    private void SkipDetectedLightroom()
+    {
+        if (IsFirstRunBusy || !IsFirstRunLightroomStep) return;
+        FirstRunErrorMessage = null;
+        FirstRunStep = FirstRunStep.AllSet;
+    }
+
+    private bool CanSkipDetectedLightroom() =>
+        IsFirstRunLightroomStep && !IsFirstRunBusy;
+
+    [RelayCommand(CanExecute = nameof(CanFinishFirstRun))]
+    private Task StartFirstRunTourAsync() => CompleteFirstRunAsync(startTour: true);
+
+    [RelayCommand(CanExecute = nameof(CanFinishFirstRun))]
+    private Task SkipFirstRunTourAsync() => CompleteFirstRunAsync(startTour: false);
+
+    private bool CanFinishFirstRun() => IsFirstRunAllSetStep && !IsFirstRunBusy;
+
+    private async Task CompleteFirstRunAsync(bool startTour)
+    {
+        if (IsFirstRunBusy || !IsFirstRunAllSetStep) return;
+        IsFirstRunBusy = true;
+        FirstRunErrorMessage = null;
+        try
+        {
+            await FinishFirstRunAsync(startTour);
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine($"First-run completion failed: {exception}");
+            FirstRunErrorMessage =
+                "Happy Photon couldn't save this location. Please try again.";
+        }
+        finally
+        {
+            IsFirstRunBusy = false;
+        }
+    }
+
+    private async Task FinishFirstRunAsync(bool startTour)
+    {
+        if (string.IsNullOrWhiteSpace(FirstRunPicturesPath) ||
+            PersistFirstRunCompletionAsync == null)
+        {
+            throw new InvalidOperationException(
+                "Happy Photon couldn't save this location. Please try again.");
+        }
+
+        await PersistFirstRunCompletionAsync(FirstRunPicturesPath);
+        ShowWorkspaceReady(CurrentFirstRunExperienceVersion);
+        if (startTour) StartWorkflowTour();
+        RequestFolderTreeFocus?.Invoke();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanStartInDefaultLocation))]
+    private Task StartInDefaultLocationAsync() =>
+        FirstRunDefaultPath == null
+            ? Task.CompletedTask
+            : CompleteFirstRunFromLocationAsync(FirstRunDefaultPath);
+
     private bool CanStartInDefaultLocation() =>
-        IsFirstRunVisible && FirstRunDefaultPath != null && !IsFirstRunBusy;
+        HasDefaultFirstRunLocation && !IsFirstRunBusy;
 
     [RelayCommand(CanExecute = nameof(CanBrowseElsewhere))]
     private void BrowseElsewhere()
@@ -178,67 +381,77 @@ public partial class MainWindowViewModel
         BrowseLocationRequested?.Invoke();
     }
 
-    private bool CanBrowseElsewhere() => IsFirstRunVisible && !IsFirstRunBusy;
+    private bool CanBrowseElsewhere() =>
+        IsFirstRunPicturesStep && !IsFirstRunBusy;
 
     [RelayCommand(CanExecute = nameof(CanRetryStartup))]
-    private Task RetryStartup()
-    {
-        return RetryStartupAsync?.Invoke() ?? Task.CompletedTask;
-    }
+    private Task RetryStartup() => RetryStartupAsync?.Invoke() ?? Task.CompletedTask;
 
-    private bool CanRetryStartup() =>
-        IsStartupError && RetryStartupAsync != null;
+    private bool CanRetryStartup() => IsStartupError && RetryStartupAsync != null;
 
     [RelayCommand]
-    private void CloseApplication()
-    {
-        CloseApplicationRequested?.Invoke();
-    }
+    private void CloseApplication() => CloseApplicationRequested?.Invoke();
 
     partial void OnStartupGateStateChanged(StartupGateState value)
     {
+        NotifyFirstRunPresentationChanged();
         OnPropertyChanged(nameof(IsStartupGateVisible));
         OnPropertyChanged(nameof(IsStartupInitializing));
         OnPropertyChanged(nameof(IsFirstRunVisible));
         OnPropertyChanged(nameof(IsStartupError));
-        OnPropertyChanged(nameof(IsPickerLedFirstRun));
-        OnPropertyChanged(nameof(HasDefaultFirstRunLocation));
         OnPropertyChanged(nameof(IsWorkspaceInteractionEnabled));
-        OnPropertyChanged(nameof(IsDataLocationSetupVisible));
         OnPropertyChanged(nameof(IsPointerRecoveryVisible));
         OnPropertyChanged(nameof(CanSetAsideCatalog));
-        StartInDefaultLocationCommand.NotifyCanExecuteChanged();
-        BrowseElsewhereCommand.NotifyCanExecuteChanged();
         RetryStartupCommand.NotifyCanExecuteChanged();
         SetAsideCatalogCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnFirstRunDefaultPathChanged(string? value)
+    partial void OnFirstRunStepChanged(FirstRunStep value)
     {
-        OnPropertyChanged(nameof(IsPickerLedFirstRun));
-        OnPropertyChanged(nameof(HasDefaultFirstRunLocation));
-        StartInDefaultLocationCommand.NotifyCanExecuteChanged();
+        FirstRunErrorMessage = null;
+        NotifyFirstRunPresentationChanged();
+        OnPropertyChanged(nameof(CanChangeFirstRunStorage));
+        ChangeSetupCatalogCommand.NotifyCanExecuteChanged();
+        ChangeSetupCacheCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnFirstRunDefaultNameChanged(string value)
-    {
-        OnPropertyChanged(nameof(FirstRunPrimaryActionText));
-    }
+    partial void OnFirstRunDefaultPathChanged(string? value) =>
+        NotifyFirstRunPresentationChanged();
+
+    partial void OnDetectedLightroomCatalogPathsChanged(IReadOnlyList<string> value) =>
+        OnPropertyChanged(nameof(HasDetectedLightroomCatalogs));
 
     partial void OnIsFirstRunBusyChanged(bool value)
     {
-        StartInDefaultLocationCommand.NotifyCanExecuteChanged();
-        BrowseElsewhereCommand.NotifyCanExecuteChanged();
+        NotifyFirstRunCommandsChanged();
     }
 
-    private static string? GetFolderDisplayName(string? path)
+    private void NotifyFirstRunPresentationChanged()
     {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return null;
-        }
+        OnPropertyChanged(nameof(IsFirstRunWelcomeStep));
+        OnPropertyChanged(nameof(IsFirstRunStorageStep));
+        OnPropertyChanged(nameof(IsFirstRunPicturesStep));
+        OnPropertyChanged(nameof(IsFirstRunLightroomStep));
+        OnPropertyChanged(nameof(IsFirstRunAllSetStep));
+        OnPropertyChanged(nameof(IsPickerLedFirstRun));
+        OnPropertyChanged(nameof(HasDefaultFirstRunLocation));
+        NotifyFirstRunCommandsChanged();
+    }
 
-        var name = Path.GetFileName(Path.TrimEndingDirectorySeparator(path));
-        return string.IsNullOrWhiteSpace(name) ? path : name;
+    private void NotifyFirstRunCommandsChanged()
+    {
+        ContinueFirstRunCommand.NotifyCanExecuteChanged();
+        StartInDefaultLocationCommand.NotifyCanExecuteChanged();
+        BrowseElsewhereCommand.NotifyCanExecuteChanged();
+        ImportDetectedLightroomCommand.NotifyCanExecuteChanged();
+        SkipDetectedLightroomCommand.NotifyCanExecuteChanged();
+        ChooseAnotherLightroomCatalogCommand.NotifyCanExecuteChanged();
+        StartFirstRunTourCommand.NotifyCanExecuteChanged();
+        SkipFirstRunTourCommand.NotifyCanExecuteChanged();
+    }
+
+    private void SetFirstRunDefaultLocation(string? path)
+    {
+        FirstRunDefaultPath = path;
     }
 }

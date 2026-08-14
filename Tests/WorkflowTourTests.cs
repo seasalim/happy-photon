@@ -13,7 +13,7 @@ public sealed class WorkflowTourTests : IDisposable
             $"happy-photon-tour-{Guid.NewGuid():N}")).FullName;
 
     [Fact]
-    public async Task FirstRunCompletion_StartsTourInLibrary()
+    public async Task FirstRunStartTourChoice_StartsTourInLibrary()
     {
         using var catalog = CreateCatalog();
         var vm = new MainWindowViewModel(catalog)
@@ -23,6 +23,10 @@ public sealed class WorkflowTourTests : IDisposable
         vm.ShowFirstRunWelcome(_testRoot);
 
         await vm.CompleteFirstRunFromLocationAsync(_testRoot);
+        Assert.Equal(FirstRunStep.AllSet, vm.FirstRunStep);
+        Assert.Equal(WorkflowTourStep.None, vm.WorkflowTourStep);
+
+        await vm.StartFirstRunTourCommand.ExecuteAsync(null);
 
         Assert.Equal(
             WorkflowTourStep.ChooseWhatMatters,

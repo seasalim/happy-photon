@@ -50,7 +50,8 @@ public partial class MainWindow
         vm.ZoomFitCommand = new RelayCommand(ZoomFit);
         vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(zoom => vm.ZoomLevel = zoom);
         vm.RequestExportDialogAsync = ShowExportDialogAsync;
-        vm.RequestCatalogImportAsync = ShowImportCatalogAsync;
+        vm.RequestCatalogImportAsync = async () =>
+            await ShowImportCatalogAsync();
         vm.CaptureLibraryViewportAnchor =
             () => _libraryGridView?.CaptureViewportAnchorPath();
         vm.RestoreLibraryViewportAnchor =
@@ -64,15 +65,15 @@ public partial class MainWindow
         vm.PersistAppSettingsAsync = () => SaveAppSettingsAsync(vm);
         vm.PersistFirstRunCompletionAsync =
             path => PersistFirstRunCompletionAsync(vm, path);
-        vm.PersistImportedFirstRunCompletionAsync =
-            completion => PersistImportedFirstRunCompletionAsync(vm, completion);
+        vm.DetectLightroomAsync = DetectLightroomAsync;
+        vm.RequestFirstRunCatalogImportAsync = ShowFirstRunImportCatalogAsync;
+        vm.RequestFirstRunCatalogPathAsync = PickLightroomCatalogPathAsync;
         vm.BrowseLocationRequested = () => _ = BrowseForFirstRunLocationAsync(vm);
         vm.RetryStartupAsync = () => TryInitializeApplicationAsync(vm);
         vm.CompleteDataLocationSetupAsync = () =>
             CompleteDataLocationSetupAsync(vm);
         vm.ChangeSetupLocationAsync = catalog =>
             ChangeSetupLocationAsync(vm, catalog);
-        vm.LocateExistingCatalogAsync = () => LocateExistingCatalogAsync(vm);
         vm.RecoverLocationPointerAsync = () => RecoverLocationPointerAsync(vm);
         vm.SetAsideCatalogAsync = () => SetAsideCatalogAsync(vm);
         vm.CloseApplicationRequested = Close;
@@ -127,12 +128,22 @@ public partial class MainWindow
             _startupLocations = await _dataLocationService.ResolveAsync();
             if (_startupLocations == null)
             {
-                vm.ShowDataLocationSetup(_dataLocationService);
+                vm.PrepareFirstRunStorage(_dataLocationService, null);
+                vm.ShowFirstRunWelcome(_startupPicturesPath);
                 return;
             }
 
             vm.SetResolvedDataLocations(_startupLocations, _locationMigrator);
             ConfigureStorageSettings(vm);
+            vm.PrepareFirstRunStorage(_dataLocationService, _startupLocations);
+            var hasCatalogSignature = AppDataLocationService.HasCatalogSignature(
+                _startupLocations.CatalogRoot);
+            if (!hasCatalogSignature &&
+                !vm.IsFirstRunStorageCommitted)
+            {
+                vm.ShowFirstRunWelcome(_startupPicturesPath);
+                return;
+            }
             await Task.Run(() =>
                 _startupCatalogService.InitializeAsync(_startupLocations));
             await vm.InitializeAsync(_startupLocations);
@@ -187,7 +198,13 @@ public partial class MainWindow
                 vm.ClearFolderTree();
             }
 
-            vm.ShowFirstRunWelcome(_startupPicturesPath);
+            if (vm.IsFirstRunStorageCommitted)
+                vm.ResumeFirstRunAfterStorage(_startupPicturesPath);
+            else
+            {
+                vm.MarkFirstRunStorageCommitted();
+                vm.ShowFirstRunWelcome(_startupPicturesPath);
+            }
         }
         catch (AppDataLocationPointerException exception)
         {
@@ -211,86 +228,6 @@ public partial class MainWindow
         {
             _startupAttemptInProgress = false;
         }
-    }
-
-    private async Task CompleteDataLocationSetupAsync(MainWindowViewModel vm)
-    {
-        if (_dataLocationService == null ||
-            string.IsNullOrWhiteSpace(vm.SetupCatalogRoot) ||
-            string.IsNullOrWhiteSpace(vm.SetupCacheRoot))
-        {
-            throw new InvalidOperationException("Choose both storage locations.");
-        }
-        await _dataLocationService.CreateFreshAsync(
-            catalogRoot: vm.SetupCatalogRoot,
-            cacheRoot: vm.SetupCacheRoot);
-        await TryInitializeApplicationAsync(vm);
-    }
-
-    private async Task ChangeSetupLocationAsync(
-        MainWindowViewModel vm,
-        bool catalog)
-    {
-        var destination = await PickDataLocationAsync(catalog);
-        if (destination == null || !ReferenceEquals(DataContext, vm)) return;
-        if (catalog) vm.SetupCatalogRoot = destination;
-        else vm.SetupCacheRoot = destination;
-    }
-
-    private async Task LocateExistingCatalogAsync(MainWindowViewModel vm)
-    {
-        if (_dataLocationService == null) return;
-        var root = await PickRawFolderAsync("Locate the Happy Photon Catalog");
-        if (root == null) return;
-        await _dataLocationService.AdoptLocatedCatalogAsync(root);
-        await TryInitializeApplicationAsync(vm);
-    }
-
-    private async Task RecoverLocationPointerAsync(MainWindowViewModel vm)
-    {
-        if (_dataLocationService == null) return;
-        await _dataLocationService.QuarantineCorruptPointerAsync();
-        await TryInitializeApplicationAsync(vm);
-    }
-
-    private async Task SetAsideCatalogAsync(MainWindowViewModel vm)
-    {
-        if (_locationMigrator == null || _startupLocations == null) return;
-        await _locationMigrator.StageMoveAsync(
-            _startupLocations,
-            CatalogLocationMoveKind.SetAside);
-        await TryInitializeApplicationAsync(vm);
-    }
-
-    private void ConfigureStorageSettings(MainWindowViewModel vm)
-    {
-        if (vm.StorageSettings == null) return;
-        vm.StorageSettings.RequestDestinationAsync = PickDataLocationAsync;
-    }
-
-    private async Task<string?> PickDataLocationAsync(bool catalog)
-    {
-        var parent = await PickRawFolderAsync(
-            catalog ? "Choose a Catalog Parent Folder" : "Choose a Cache Parent Folder");
-        return parent == null
-            ? null
-            : AppDataRootOwnership.CreateDedicatedChild(
-                parent,
-                catalog ? "Happy Photon Catalog" : "Happy Photon Cache",
-                _startupLocations == null
-                    ? null
-                    : [_startupLocations.CatalogRoot, _startupLocations.CacheRoot]);
-    }
-
-    private async Task<string?> PickRawFolderAsync(string title)
-    {
-        var folders = await StorageProvider.OpenFolderPickerAsync(
-            new Avalonia.Platform.Storage.FolderPickerOpenOptions
-            {
-                Title = title,
-                AllowMultiple = false
-            });
-        return folders.Count == 0 ? null : folders[0].Path.LocalPath;
     }
 
     private async void OnExportSettingsPropertyChanged(

@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 
@@ -20,6 +21,9 @@ public partial class ImportCatalogDialog : Window
     private CancellationTokenSource? _operationCancellation;
     private bool _isReading = true;
     private bool _isReimport;
+    private bool _returnAppliedOnClose;
+    private bool _applySucceeded;
+    private bool _closingWithResult;
 
     public ImportCatalogDialog()
     {
@@ -28,14 +32,16 @@ public partial class ImportCatalogDialog : Window
 
     public ImportCatalogDialog(
         MainWindowViewModel viewModel,
-        string catalogPath) : this()
+        string catalogPath,
+        bool returnAppliedOnClose = false) : this()
     {
         _viewModel = viewModel;
         _catalogPath = catalogPath;
+        _returnAppliedOnClose = returnAppliedOnClose;
         CatalogPathText.Text = catalogPath;
         StatusText.Text = "Creating a consistent, read-only snapshot…";
         Opened += OnOpened;
-        Closing += (_, args) => args.Cancel = _isReading;
+        Closing += OnClosing;
     }
 
     private async void OnOpened(object? sender, EventArgs e)
@@ -287,6 +293,7 @@ public partial class ImportCatalogDialog : Window
             PreviewButton.IsVisible = false;
             ApplyButton.IsVisible = false;
             CancelButton.Content = "Close";
+            _applySucceeded = true;
         }
         catch (OperationCanceledException)
         {
@@ -369,6 +376,23 @@ public partial class ImportCatalogDialog : Window
         if (_operationCancellation != null)
             _operationCancellation.Cancel();
         else
-            Close();
+        {
+            _closingWithResult = true;
+            Close(_returnAppliedOnClose && _applySucceeded);
+        }
+    }
+
+    private void OnClosing(object? sender, WindowClosingEventArgs args)
+    {
+        args.Cancel = _isReading;
+        if (args.Cancel || !_returnAppliedOnClose || !_applySucceeded ||
+            _closingWithResult)
+        {
+            return;
+        }
+
+        args.Cancel = true;
+        _closingWithResult = true;
+        Dispatcher.UIThread.Post(() => Close(true));
     }
 }

@@ -13,9 +13,6 @@ public partial class MainWindowViewModel
     private string? _setupCacheRoot;
 
     [ObservableProperty]
-    private bool _setupUsesStandardCatalog;
-
-    [ObservableProperty]
     private bool _showSetupUninstallWarning;
 
     [ObservableProperty]
@@ -25,31 +22,36 @@ public partial class MainWindowViewModel
     private bool _isDataLocationBusy;
 
     [ObservableProperty]
+    private bool _isFirstRunStorageReadOnly;
+
+    [ObservableProperty]
     private bool _isSchemaMismatch;
 
     public Func<Task>? CompleteDataLocationSetupAsync { get; set; }
     public Func<bool, Task>? ChangeSetupLocationAsync { get; set; }
-    public Func<Task>? LocateExistingCatalogAsync { get; set; }
     public Func<Task>? RecoverLocationPointerAsync { get; set; }
     public Func<Task>? SetAsideCatalogAsync { get; set; }
 
-    public bool IsDataLocationSetupVisible =>
-        StartupGateState == StartupGateState.DataLocations;
     public bool IsPointerRecoveryVisible =>
         StartupGateState == StartupGateState.PointerRecovery;
+    public bool CanChangeFirstRunStorage =>
+        IsFirstRunStorageStep && !IsFirstRunStorageReadOnly;
     public bool CanSetAsideCatalog =>
         IsSchemaMismatch && StartupGateState == StartupGateState.Error &&
         SetAsideCatalogAsync != null &&
         StorageSettings is { CanChangeCatalog: true, CanChangeCache: true };
 
-    public void ShowDataLocationSetup(AppDataLocationService service)
+    public void PrepareFirstRunStorage(
+        AppDataLocationService service,
+        AppDataLocations? resolvedLocations)
     {
-        SetupCatalogRoot = service.DefaultCatalogRoot;
-        SetupCacheRoot = service.StandardCacheRoot;
-        SetupUsesStandardCatalog = false;
+        SetupCatalogRoot = resolvedLocations?.CatalogRoot ?? service.DefaultCatalogRoot;
+        SetupCacheRoot = resolvedLocations?.CacheRoot ?? service.StandardCacheRoot;
+        IsFirstRunStorageReadOnly = resolvedLocations != null ||
+                                    IsFirstRunStorageCommitted;
         ShowSetupUninstallWarning = false;
         FirstRunErrorMessage = null;
-        StartupGateState = StartupGateState.DataLocations;
+        BindDataLocationService(service);
     }
 
     public void ShowPointerRecovery(string message)
@@ -77,31 +79,20 @@ public partial class MainWindowViewModel
         IsSchemaMismatch = false;
     }
 
-    [RelayCommand]
-    private void UsePicturesCatalog()
-    {
-        SetupUsesStandardCatalog = false;
-    }
-
-    [RelayCommand]
-    private void UseStandardCatalog()
-    {
-        SetupUsesStandardCatalog = true;
-    }
-
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChangeFirstRunStorage))]
     private Task ChangeSetupCatalogAsync() => GuardGateActionAsync(() =>
         ChangeSetupLocationAsync?.Invoke(true) ?? Task.CompletedTask);
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChangeFirstRunStorage))]
     private Task ChangeSetupCacheAsync() => GuardGateActionAsync(() =>
         ChangeSetupLocationAsync?.Invoke(false) ?? Task.CompletedTask);
 
-    [RelayCommand]
     private async Task CompleteStorageSetupAsync()
     {
         if (CompleteDataLocationSetupAsync == null || IsDataLocationBusy) return;
         IsDataLocationBusy = true;
+        IsFirstRunBusy = true;
+        FirstRunErrorMessage = null;
         try
         {
             await CompleteDataLocationSetupAsync();
@@ -113,12 +104,9 @@ public partial class MainWindowViewModel
         finally
         {
             IsDataLocationBusy = false;
+            IsFirstRunBusy = false;
         }
     }
-
-    [RelayCommand]
-    private Task LocateExistingCatalog() => GuardGateActionAsync(() =>
-        LocateExistingCatalogAsync?.Invoke() ?? Task.CompletedTask);
 
     [RelayCommand]
     private Task RecoverLocationPointer() => GuardGateActionAsync(() =>
@@ -142,16 +130,14 @@ public partial class MainWindowViewModel
         }
     }
 
-    partial void OnSetupUsesStandardCatalogChanged(bool value)
-    {
-        if (_dataLocationService == null) return;
-        SetupCatalogRoot = value
-            ? _dataLocationService.StandardCatalogRoot
-            : _dataLocationService.DefaultCatalogRoot;
-        UpdateSetupWarning();
-    }
-
     partial void OnSetupCatalogRootChanged(string? value) => UpdateSetupWarning();
+
+    partial void OnIsFirstRunStorageReadOnlyChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanChangeFirstRunStorage));
+        ChangeSetupCatalogCommand.NotifyCanExecuteChanged();
+        ChangeSetupCacheCommand.NotifyCanExecuteChanged();
+    }
 
     private AppDataLocationService? _dataLocationService;
 

@@ -78,46 +78,6 @@ public sealed class CatalogImportViewModelTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    [Fact]
-    public async Task FirstRunCompletion_SelectsFolderContainingImportedPhoto()
-    {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos"));
-        var shoot = Directory.CreateDirectory(Path.Combine(photos.FullName, "shoot"));
-        var importedPath = Path.Combine(shoot.FullName, "keeper.jpg");
-        File.WriteAllBytes(importedPath, [1]);
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        var vm = CreateViewModel(catalog);
-
-        var completion = vm.FindFirstRunImportCompletion(
-            Preview(photos.FullName, importedPath), Report(1));
-
-        Assert.NotNull(completion);
-        Assert.Equal(photos.FullName, completion.BrowsingRootPath);
-        Assert.Equal(shoot.FullName, completion.InitiallySelectedFolderPath);
-        Assert.Null(completion.Message);
-        await vm.DisposeAsync();
-    }
-
-    [Fact]
-    public async Task FirstRunCompletion_UnrelatedFilesUseAccurateUnavailableMessage()
-    {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos"));
-        var shoot = Directory.CreateDirectory(Path.Combine(photos.FullName, "shoot"));
-        File.WriteAllBytes(Path.Combine(shoot.FullName, "unrelated.jpg"), [1]);
-        var missingImportedPath = Path.Combine(shoot.FullName, "keeper.jpg");
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        var vm = CreateViewModel(catalog);
-
-        var completion = vm.FindFirstRunImportCompletion(
-            Preview(photos.FullName, missingImportedPath), Report(1));
-
-        Assert.NotNull(completion);
-        Assert.Equal(photos.FullName, completion.BrowsingRootPath);
-        Assert.Equal(photos.FullName, completion.InitiallySelectedFolderPath);
-        Assert.Contains("couldn't automatically find", completion.Message);
-        await vm.DisposeAsync();
-    }
-
     private LightroomCatalogContents Source(string firstPath, string secondPath) =>
         new(Path.Combine(_root, "source.lrcat"), 1303001, 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot("D:/Photos/", 2)],
@@ -151,19 +111,6 @@ public sealed class CatalogImportViewModelTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.RequiresHydration));
-
-    private CatalogImportPreview Preview(string root, string importedPath) =>
-        new(Path.Combine(_root, "source.lrcat"),
-            CatalogImportPolicy.LightroomWins,
-            new Dictionary<string, string> { ["D:/Photos/"] = root },
-            [], Report(1), "key", null, "{}", [importedPath]);
-
-    private static CatalogImportReport Report(int matched) =>
-        new(matched, matched, matched, 0, matched, 0, 0, 0,
-            new(0, 0, 0, 0, 0),
-            new(0, 0, 0, 0, 0),
-            new(0, 0, 0, 0, 0),
-            new Dictionary<string, int>(), [], [], false);
 
     public void Dispose()
     {

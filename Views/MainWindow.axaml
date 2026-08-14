@@ -242,6 +242,7 @@
                                        TotalImageCount="{Binding Library.TotalCount}"
                                        EmptyHeadingText="{Binding LibraryEmptyHeading}"
                                        EmptyMessageText="{Binding LibraryEmptyMessage}"
+                                       SuppressEmptyState="{Binding IsWorkflowTourActive}"
                                        FileTypeFilter="{Binding Library.FileTypeFilter, Mode=TwoWay}"
                                        FlagFilter="{Binding Library.FlagFilter, Mode=TwoWay}"
                                        MinimumRating="{Binding Library.MinimumRating, Mode=TwoWay}"
@@ -272,7 +273,8 @@
                                                   Crop="{Binding CurrentCrop, Mode=TwoWay}"
                                                   ContentInset="10"/>
 
-                            <Border IsVisible="{Binding !HasSelectedImage}"
+                            <Border x:Name="DevelopEmptyState"
+                                    IsVisible="{Binding IsDevelopEmptyStateVisible}"
                                     Background="{DynamicResource SurfaceLow}"
                                     CornerRadius="{StaticResource RadiusMedium}"
                                     Padding="20"

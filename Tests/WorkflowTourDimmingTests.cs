@@ -41,6 +41,9 @@ public sealed class WorkflowTourDimmingTests
 
             var library = window.FindControl<LibraryGridView>(
                 "LibraryGridView")!;
+            var emptyState = library.FindControl<Border>("EmptyState")!;
+            var developEmptyState = window.FindControl<Border>(
+                "DevelopEmptyState")!;
             var leftPanel = window.FindControl<Border>("TourLeftPanel")!;
             var statusBar = window.FindControl<StatusBarView>(
                 "TourStatusBar")!;
@@ -106,9 +109,13 @@ public sealed class WorkflowTourDimmingTests
                 baselineOpacity,
                 baselineInteraction,
                 dimmedOpacity);
+            Assert.True(emptyState.IsVisible);
+            Assert.True(developEmptyState.IsVisible);
 
             vm.StartWorkflowTour();
             Dispatcher.UIThread.RunJobs();
+            Assert.False(emptyState.IsVisible);
+            Assert.False(developEmptyState.IsVisible);
             AssertState(
                 window,
                 tourRegions,
@@ -127,6 +134,7 @@ public sealed class WorkflowTourDimmingTests
 
             vm.ShowDevelopTourStepCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
+            Assert.False(developEmptyState.IsVisible);
             AssertState(
                 window,
                 tourRegions,
@@ -145,6 +153,7 @@ public sealed class WorkflowTourDimmingTests
 
             vm.ShowExportTourStepCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
+            Assert.False(developEmptyState.IsVisible);
             AssertState(
                 window,
                 tourRegions,
@@ -163,6 +172,8 @@ public sealed class WorkflowTourDimmingTests
 
             vm.FinishWorkflowTourCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
+            Assert.True(emptyState.IsVisible);
+            Assert.True(developEmptyState.IsVisible);
             AssertState(
                 window,
                 tourRegions,

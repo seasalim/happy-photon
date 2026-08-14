@@ -110,6 +110,13 @@ public sealed class AppDataLocationService
         _persisted = locations;
         locations = ApplyEnvironment(locations);
         Validate(locations);
+        if (locations.CatalogOrigin == AppDataLocationOrigin.Persisted &&
+            !Directory.Exists(locations.CatalogRoot))
+        {
+            throw new AppDataLocationPointerException(
+                PointerPath,
+                $"The catalog folder at '{locations.CatalogRoot}' can't be found. Reconnect the drive it lives on, or recover to start fresh.");
+        }
         HealCacheRoot(locations.CacheRoot);
         return locations;
     }
@@ -140,31 +147,6 @@ public sealed class AppDataLocationService
                 "Set-aside replacement refused because the default location already contains a Happy Photon catalog. Choose a different catalog location before starting fresh.");
         }
         return await CreateFreshAsync();
-    }
-
-    public async Task<AppDataLocations> AdoptLocatedCatalogAsync(string catalogRoot)
-    {
-        var normalized = Path.GetFullPath(catalogRoot);
-        if (!HasCatalogSignature(normalized))
-        {
-            throw new InvalidDataException(
-                "The selected folder does not contain a Happy Photon catalog.");
-        }
-        AppDataRootOwnership.AssertAppOwned(normalized);
-        var cache = Directory.Exists(Path.Combine(normalized, "assets"))
-            ? normalized
-            : StandardCacheRoot;
-        if (!Directory.Exists(cache)) AppDataRootOwnership.ClaimFresh(cache);
-        var locations = new AppDataLocations(
-            normalized,
-            cache,
-            AppDataLocationOrigin.Persisted,
-            AppDataLocationOrigin.Persisted,
-            cache == normalized
-                ? AppDataLocationTopology.LegacyCoLocated
-                : AppDataLocationTopology.Split);
-        await PersistAsync(locations);
-        return ApplyEnvironment(locations);
     }
 
     public async Task<AppDataLocations?> QuarantineCorruptPointerAsync()
@@ -282,7 +264,7 @@ public sealed class AppDataLocationService
         if (!Directory.Exists(cacheRoot)) AppDataRootOwnership.ClaimFresh(cacheRoot);
     }
 
-    private static bool HasCatalogSignature(string catalogRoot)
+    internal static bool HasCatalogSignature(string catalogRoot)
     {
         var database = Path.Combine(catalogRoot, "catalog.db");
         if (!File.Exists(database)) return false;

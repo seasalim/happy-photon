@@ -118,10 +118,28 @@ spacing:
   margin-desktop: 64px
 ---
 
+## First run
+
+New installations use one calm, sequential wizard. Welcome contains only the product
+promise: a local catalog, no photo import, and untouched originals. Storage quietly
+shows the resolved catalog and cache defaults; each row has its own **Change…** picker,
+the packaged-app uninstall warning follows the selected catalog location, and the
+standard-location catalog is adopted automatically at startup. Confirming Storage is
+the one catalog-creation boundary. Configured-but-empty roots remain read-only.
+
+Pictures then selects the top-level folder shown in the folder tree, using the detected
+Pictures folder when available and a picker fallback otherwise. On Windows, a shallow
+local probe may add a Lightroom step. Import opens the normal catalog dialog, pre-filled
+from the selected bounded list of detected `.lrcat` files; another catalog can be chosen
+with the normal picker, and import remains available later from Folders. Canceling stays
+in the wizard, while Apply or explicit Skip advances to a final all-set page. **Start
+tour** and **Skip** both finish with the validated Pictures folder, open the workspace,
+and focus the folder tree; only **Start tour** begins the guided tour.
+
 ## Import from Lightroom Classic
 
-The first-run welcome and the Folders header's **More folder actions** menu expose
-**Import from Lightroom**. The dialog reads a `.lrcat`, automatically summarizes source
+The conditional first-run Lightroom step and the Folders header's **More folder
+actions** menu expose **Import from Lightroom**. The dialog reads a `.lrcat`, automatically summarizes source
 roots already available locally,
 asks for optional local mappings for unavailable roots that contain importable photos,
 and offers two non-clearing policies: Lightroom wins, or fill empty Happy Photon values
@@ -132,10 +150,8 @@ unverified-but-compatible catalog versions.
 
 The completion report distinguishes a catalog with no ratings, flags, or color labels
 from one whose assessed-photo paths did not match. An import into an open folder updates
-the existing Library objects and filters without reloading thumbnails. A first-run import
-chooses an accessible mapped root and a folder that actually contains imported
-photographs; when none is accessible, it completes with an explicit offline/unavailable
-explanation.
+the existing Library objects and filters without reloading thumbnails. During first run,
+the Pictures choice remains the browsing root regardless of Lightroom mappings.
 
 ## Settings
 

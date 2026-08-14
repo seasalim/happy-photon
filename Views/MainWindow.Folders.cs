@@ -74,9 +74,11 @@ public partial class MainWindow
         }
     }
 
-    private async Task ShowImportCatalogAsync()
+    private async Task<bool> ShowImportCatalogAsync(
+        string? catalogPath = null,
+        bool returnAppliedOnClose = false)
     {
-        if (DataContext is not MainWindowViewModel vm) return;
+        if (DataContext is not MainWindowViewModel vm) return false;
         if (!OperatingSystem.IsWindows())
         {
             await ConfirmationDialog.ShowMessageAsync(
@@ -84,9 +86,23 @@ public partial class MainWindow
                 "Lightroom import is not available yet",
                 "Phase 1 enables Lightroom catalog import on Windows. " +
                 "macOS and Linux will follow after snapshot safety verification.");
-            return;
+            return false;
         }
 
+        if (string.IsNullOrWhiteSpace(catalogPath))
+        {
+            catalogPath = await PickLightroomCatalogPathAsync();
+            if (catalogPath == null || !ReferenceEquals(DataContext, vm)) return false;
+        }
+
+        return await new ImportCatalogDialog(
+            vm,
+            catalogPath,
+            returnAppliedOnClose).ShowDialog<bool>(this);
+    }
+
+    private async Task<string?> PickLightroomCatalogPathAsync()
+    {
         var files = await StorageProvider.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
@@ -100,8 +116,7 @@ public partial class MainWindow
                     }
                 ]
             });
-        if (files.Count == 0 || !ReferenceEquals(DataContext, vm)) return;
-        await new ImportCatalogDialog(vm, files[0].Path.LocalPath).ShowDialog(this);
+        return files.Count == 0 ? null : files[0].Path.LocalPath;
     }
 
     internal void QueueRefreshScroll(
@@ -133,20 +148,26 @@ public partial class MainWindow
 
     private async Task BrowseForFirstRunLocationAsync(MainWindowViewModel vm)
     {
-        var path = await PickBrowseLocationAsync();
+        var suggestedStartPath = string.IsNullOrWhiteSpace(vm.FirstRunDefaultPath)
+            ? Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)
+            : vm.FirstRunDefaultPath;
+        var path = await PickBrowseLocationAsync(suggestedStartPath);
         if (path != null && ReferenceEquals(DataContext, vm))
         {
             await vm.CompleteFirstRunFromLocationAsync(path);
         }
     }
 
-    private async Task<string?> PickBrowseLocationAsync()
+    private async Task<string?> PickBrowseLocationAsync(
+        string? suggestedStartPath = null)
     {
+        var suggestedStart = await TryGetSuggestedStartFolderAsync(suggestedStartPath);
         var folders = await StorageProvider.OpenFolderPickerAsync(
             new FolderPickerOpenOptions
             {
                 Title = "Choose Where Happy Photon Should Browse",
-                AllowMultiple = false
+                AllowMultiple = false,
+                SuggestedStartLocation = suggestedStart
             });
 
         return folders.Count == 0 ? null : folders[0].Path.LocalPath;
@@ -189,28 +210,6 @@ public partial class MainWindow
         {
             vm.SetRootFolder(path);
         }
-    }
-
-    private async Task PersistImportedFirstRunCompletionAsync(
-        MainWindowViewModel vm,
-        FirstRunImportCompletion completion)
-    {
-        if (_appSettingsService == null)
-            throw new InvalidOperationException("Application settings are unavailable.");
-
-        await _appSettingsService.SaveAsync(new AppSettings
-        {
-            RootFolderPath = completion.BrowsingRootPath,
-            SelectedFolderPath = completion.InitiallySelectedFolderPath,
-            FirstRunExperienceVersion = MainWindowViewModel.CurrentFirstRunExperienceVersion,
-            FileTypeFilter = vm.Library.FileTypeFilter,
-            LibraryThumbnailSize = vm.LibraryThumbnailSize,
-            AppTheme = vm.AppTheme,
-            StripLocationData = vm.ExportSettings.StripLocationData,
-            OutputSharpening = vm.ExportSettings.OutputSharpening,
-            McpServerEnabled = vm.IsAgentServerEnabled,
-            McpToken = vm.AgentToken
-        });
     }
 
     private void FocusFolderTree()

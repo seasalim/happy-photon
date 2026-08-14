@@ -135,7 +135,11 @@ First frame is sacred: nothing non-visual happens before the window is shown.
    `Background` dispatcher priority.
 3. `CompleteStartupAsync` (off the first-frame path):
    - finish or roll back a pending journaled move, then resolve `locations.json`;
-     a fresh install pauses at the location gate before any SQLite open;
+   - branch on an existing catalog signature rather than a configured path. A fresh or
+     configured-but-empty install renders the static Welcome step before any SQLite open;
+   - after the user confirms Storage, create or claim the selected roots and re-enter
+     initialization at the Pictures step. This committed checkpoint prevents root
+     creation from running twice;
    - open the shared catalog connection;
    - create tables;
    - run ordered catalog migrations;
@@ -144,8 +148,8 @@ First frame is sacred: nothing non-visual happens before the window is shown.
    - bind `PresetService` to the resolved catalog and load user presets.
    - `MainWindow.InitializeApplicationAsync` — load app settings without treating read
      failures as an empty installation, then restore the session, grandfather an
-     existing saved browsing root, or prepare an unselected Pictures tree behind the
-     versioned first-run welcome.
+     existing saved browsing root, or prepare an unselected Pictures tree for the
+     versioned first-run wizard.
 
 Update discovery is manual-only. The app makes no automatic update network requests;
 it contacts GitHub only after the user explicitly chooses **Check for updates** on the
@@ -160,20 +164,29 @@ missing or invalid theme settings fall back to Dark. The brief Dark-to-saved-the
 transition remains off the first-frame path and preserves invariant 6.
 
 The startup gate is present in the first frame and disables workspace controls and
-global shortcuts until startup reaches `Ready`. A corrupt pointer stops at an explicit
+global shortcuts until startup reaches `Ready`. An unreadable or invalid pointer,
+including one whose persisted catalog folder is missing, stops at an explicit
 quarantine/recovery action. A schema mismatch offers journaled **Set aside and retry**
 for both roots when neither is environment-managed. Catalog or settings failures replace
 the neutral initializing state with Retry/Close. During an incomplete first run,
 shutdown saves preferences only; the browsing root, viewed folder, and completion
-version are committed together when a welcome action succeeds.
+version are committed together when the wizard finishes. The forward-only wizard
+advances through Welcome, Storage, and Pictures, conditionally offers Lightroom import,
+and ends with an explicit choice to start or skip the tour. Its bounded
+Windows-only detection checks known install locations and shallow local fixed-drive
+folders off the UI thread; reparse-point descendants, remote and removable volumes,
+and broad drive scans are excluded. It reports at most five catalog candidates within
+the shared entry budget.
 
-That successful welcome action also starts a session-only workflow tour owned by
+Choosing **Start tour** after wizard setup starts a session-only workflow tour owned by
 `MainWindowViewModel.WorkflowTour`. Its three non-modal coachmarks are anchored to
 stable Library and Develop layout points, suspend when the user changes view, and
 resume when that view returns. While a coachmark is visible, unrelated stable
 sections are de-emphasized at a themed opacity while the active work surface stays
 fully interactive; this presentation-only dimming lifts whenever no coachmark is on
-screen, including while a step is suspended. Each coachmark also carries a photon
+screen, including while a step is suspended. The Library empty-state card stays hidden
+for the lifetime of an active tour so it does not compete with coachmarks. Each
+coachmark also carries a photon
 trail anchored to its own edge, plus an opt-in glow on small target regions, so the
 step names its target without any coordinate tracking between controls. Both marks
 are decorative and never hit testable. Tour navigation never changes photograph

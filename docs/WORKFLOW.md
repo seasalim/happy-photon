@@ -3,7 +3,9 @@
 ## Bring assessments from Lightroom Classic
 
 Choose **Import from Lightroom…** in the Folders header's **More folder actions** menu,
-or **Import from Lightroom** on first run, then select a `.lrcat`. Close Lightroom first.
+or use the optional Lightroom step during first run. When Happy Photon finds a local
+`.lrcat`, choose from the detected catalogs or browse for another; when only Lightroom
+Classic is detected, choose a catalog. Close Lightroom first.
 Happy Photon summarizes locations it matches
 automatically. Map any moved location you want to import, or leave it blank to skip those
 photos. Then choose whether Lightroom replaces differing Happy Photon values or only fills
@@ -16,6 +18,15 @@ unsupported files. “Nothing to import” means the source
 catalog has no ratings, flags, or labels; “Nothing matched” means its source paths need
 review. Re-running the same import performs no catalog writes when everything is already
 up to date.
+
+On a new installation, first read the Welcome page, confirm where the catalog and cache
+will live, and select the Pictures folder that should appear in the folder tree. Storage
+is created only when you continue from that step. If the optional Lightroom step appears,
+Apply an import or Skip it; canceling the picker or dialog returns to the step. Either
+successful path keeps the Pictures choice as the browsing root and advances to an
+all-set page, where you can start the guided workspace tour or skip it and enter the
+workspace directly. Lightroom import remains available later from the Folders header's
+**More folder actions** menu.
 
 Happy Photon is organized around three decisions:
 
