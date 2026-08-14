@@ -100,115 +100,57 @@
 
         <views:HappyPhotonTitleBar Grid.Row="0" Grid.ColumnSpan="5"/>
 
-        <!-- Left Panel: Navigator + Metadata + Folder Tree -->
+        <!-- Left Panel: Navigator + Folder Tree -->
         <Border x:Name="TourLeftPanel"
                 Grid.Row="1" Grid.Column="0" Background="{DynamicResource SurfaceLow}"
                 Classes="tour-region"
                 Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                 IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
             <Grid RowDefinitions="Auto,8,*">
-                <!-- Navigator + Metadata -->
-                <Border Grid.Row="0" Background="{DynamicResource SurfaceHigh}" Padding="8"
+                <!-- Navigator -->
+                <Border x:Name="NavigatorPanel"
+                        Grid.Row="0" Background="{DynamicResource SurfaceHigh}" Padding="8"
                         BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1"
-                        Height="350">
-                    <Grid>
-                        <Grid IsVisible="{Binding !HasSelectedImage}" RowDefinitions="Auto,*">
-                            <TextBlock Classes="section-label" Text="NAVIGATOR"/>
-                            <TextBlock Grid.Row="1"
-                                       Text="Select a photo to preview its details"
-                                       Foreground="{DynamicResource TextMuted}"
-                                       FontSize="{DynamicResource FontSizeBody}"
-                                       TextWrapping="Wrap"
-                                       TextAlignment="Center"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       MaxWidth="160"/>
-                        </Grid>
-
-                        <ScrollViewer IsVisible="{Binding HasSelectedImage}"
-                                      VerticalScrollBarVisibility="Hidden"
-                                      HorizontalScrollBarVisibility="Disabled">
-                            <StackPanel>
-                            <!-- Navigator Thumbnail -->
-                            <TextBlock Classes="section-label" Text="NAVIGATOR" Margin="0,0,0,6"/>
-                            <Border Background="{DynamicResource SurfaceLow}" CornerRadius="3"
-                                    Height="140" HorizontalAlignment="Stretch">
-                                <Grid>
-                                    <Image x:Name="NavigatorThumbnailImage"
-                                           Source="{Binding SelectedImage.Thumbnail}"
-                                           Stretch="Uniform"
-                                           Margin="4"/>
-                                    <Image x:Name="NavigatorPreviewImage"
-                                           Source="{Binding PreviewImage}"
-                                           IsVisible="{Binding IsDevelopMode}"
-                                           Stretch="Uniform"
-                                           Margin="4"/>
-                                </Grid>
-                            </Border>
-                            <Border Background="{DynamicResource SurfaceMid}"
-                                    BorderBrush="{DynamicResource OutlineVariant}"
-                                    BorderThickness="1"
-                                    CornerRadius="{StaticResource RadiusSmall}"
-                                    Padding="8"
-                                    Margin="0,8,0,0"
-                                    IsVisible="{Binding SelectedImage.SourceRequiresHydration}">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="This original is online-only."
-                                               Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="11"
-                                               TextWrapping="Wrap"/>
-                                    <Button x:Name="DownloadAndOpenButton"
-                                             Content="Download and open"
-                                             Classes="accent"
-                                             Command="{Binding DownloadAndOpenCommand}"
-                                             HorizontalAlignment="Left"
-                                             FontSize="10"
-                                             Padding="8,4"
-                                             AutomationProperties.Name="Download and open selected original"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Metadata Section -->
-                            <StackPanel Margin="0,12,0,0" Spacing="10"
-                                        IsVisible="{Binding SelectedImage.MetadataLoaded}">
-                                <!-- File Info -->
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="FILE" FontSize="{DynamicResource FontSizeSmall}" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextSecondary}" LetterSpacing="1"/>
-                                    <TextBlock Text="{Binding SelectedImage.FileName}" Foreground="{DynamicResource TextPrimary}" FontSize="{DynamicResource FontSizeBody}"
-                                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectedImage.FileName}"/>
-                                    <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}">
-                                        <Run Text="{Binding SelectedImage.PixelWidth}"/><Run Text="×"/><Run Text="{Binding SelectedImage.PixelHeight}"/>
-                                        <Run Text=" · "/><Run Text="{Binding SelectedImage.FileSizeDisplay}"/>
-                                    </TextBlock>
-                                    <TextBlock Text="{Binding SelectedImage.DateTaken, StringFormat='{}{0:MMM d, yyyy  h:mm tt}'}"
-                                               Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
-                                               IsVisible="{Binding SelectedImage.DateTaken, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                </StackPanel>
-
-                                <!-- Camera Info -->
-                                <StackPanel Spacing="4" IsVisible="{Binding SelectedImage.CameraDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                    <TextBlock Text="CAMERA" FontSize="{DynamicResource FontSizeSmall}" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextSecondary}" LetterSpacing="1"/>
-                                    <TextBlock Text="{Binding SelectedImage.CameraDisplay}" Foreground="{DynamicResource TextPrimary}" FontSize="{DynamicResource FontSizeBody}"
-                                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectedImage.CameraModel}"/>
-                                    <TextBlock Text="{Binding SelectedImage.LensModel}" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
-                                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectedImage.LensModel}"
-                                               IsVisible="{Binding SelectedImage.LensModel, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                    <TextBlock Text="{Binding SelectedImage.ExposureDisplay}" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"
-                                               IsVisible="{Binding SelectedImage.ExposureDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                </StackPanel>
-
-                                <!-- Location -->
-                                <StackPanel Spacing="4" IsVisible="{Binding SelectedImage.GpsDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                    <TextBlock Text="LOCATION" FontSize="{DynamicResource FontSizeSmall}" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextSecondary}" LetterSpacing="1"/>
-                                    <TextBlock Text="{Binding SelectedImage.GpsDisplay}" Foreground="{DynamicResource TextSecondary}" FontSize="{DynamicResource FontSizeBody}"/>
-                                </StackPanel>
+                        IsVisible="{Binding HasSelectedImage}">
+                    <StackPanel>
+                        <TextBlock Classes="section-label" Text="NAVIGATOR" Margin="0,0,0,6"/>
+                        <Border Background="{DynamicResource SurfaceLow}" CornerRadius="3"
+                                Height="140" HorizontalAlignment="Stretch">
+                            <Grid>
+                                <Image x:Name="NavigatorThumbnailImage"
+                                       Source="{Binding SelectedImage.Thumbnail}"
+                                       Stretch="Uniform"
+                                       Margin="4"/>
+                                <Image x:Name="NavigatorPreviewImage"
+                                       Source="{Binding PreviewImage}"
+                                       IsVisible="{Binding IsDevelopMode}"
+                                       Stretch="Uniform"
+                                       Margin="4"/>
+                            </Grid>
+                        </Border>
+                        <Border Background="{DynamicResource SurfaceMid}"
+                                BorderBrush="{DynamicResource OutlineVariant}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusSmall}"
+                                Padding="8"
+                                Margin="0,8,0,0"
+                                IsVisible="{Binding SelectedImage.SourceRequiresHydration}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="This original is online-only."
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"/>
+                                <Button x:Name="DownloadAndOpenButton"
+                                         Content="Download and open"
+                                         Classes="accent"
+                                         Command="{Binding DownloadAndOpenCommand}"
+                                         HorizontalAlignment="Left"
+                                         FontSize="10"
+                                         Padding="8,4"
+                                         AutomationProperties.Name="Download and open selected original"/>
                             </StackPanel>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </Grid>
+                        </Border>
+                    </StackPanel>
                 </Border>
 
                 <!-- Folder Tree (Library mode) -->
@@ -428,7 +370,14 @@
                                 Classes="tour-region"
                                 Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                                 Classes.tour-focus="{Binding IsShapePhotographTourVisible}"
+                                IsVisible="{Binding IsDevelopMode}"
                                 IsEnabled="{Binding CanEditSelectedImage}"/>
+
+        <views:LibraryReviewPane x:Name="LibraryReviewPane"
+                                 Grid.Row="1" Grid.Column="4"
+                                 Classes="tour-region"
+                                 Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                                 IsVisible="{Binding !IsDevelopMode}"/>
 
         <views:StatusBarView x:Name="TourStatusBar"
                              Grid.Row="2" Grid.ColumnSpan="5"

@@ -468,7 +468,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             skipHistogram,
             cancellationToken);
 
-        if (cancellationToken.IsCancellationRequested || SelectedImage != selectedImage)
+        if (cancellationToken.IsCancellationRequested ||
+            SelectedImage != selectedImage ||
+            (!IsDevelopMode && !IsFullScreenMode))
         {
             preview?.Dispose();
             return;

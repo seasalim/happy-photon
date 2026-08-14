@@ -239,6 +239,12 @@ The layout philosophy follows a **Fluid Grid** model with high-impact margins.
 
 Spacing rhythm is strictly based on an 8px scale. Use large `xl` (80px+) vertical spacing between sections to allow the dark background to "breathe" and create a sense of vastness.
 
+The desktop workspace keeps its side panes mode-specific. Library uses the right pane
+for review only: the fixed thumbnail histogram, metadata/EXIF, and a multi-selection
+summary. Develop owns the editing controls. The left navigator retains only the active
+thumbnail and online-only download action so the folder tree receives the reclaimed
+height.
+
 ## Elevation & Depth
 
 Elevation is communicated through **Light Emission** rather than physical shadow.

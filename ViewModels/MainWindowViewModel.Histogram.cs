@@ -9,6 +9,13 @@ public partial class MainWindowViewModel
     {
         var selectedImage = SelectedImage;
         if (selectedImage == null) return;
+        if (!IsDevelopMode && !IsFullScreenMode &&
+            selectedImage.Thumbnail == null)
+        {
+            _histogramDebounce?.Cancel();
+            Histogram = null;
+            return;
+        }
         if ((IsDevelopMode || IsFullScreenMode) &&
             selectedImage.SourceRequiresHydration)
         {
@@ -58,6 +65,7 @@ public partial class MainWindowViewModel
                 cancellationToken);
             if (!cancellationToken.IsCancellationRequested &&
                 ReferenceEquals(SelectedImage, imageFile) &&
+                !IsDevelopMode && !IsFullScreenMode &&
                 imageFile.ThumbnailGeneration == generation)
             {
                 Histogram = histogram;

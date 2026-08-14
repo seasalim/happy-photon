@@ -238,6 +238,8 @@ public partial class MainWindowViewModel
 
     private void OnLibraryStateChanged(object? sender, EventArgs e)
     {
+        SelectedCount = Library.SelectedCount;
+        RestartLibrarySelectionSummary();
         NotifyLibraryEmptyStateChanged();
         ReconcileFullScreenSelection();
     }
@@ -317,6 +319,9 @@ public partial class MainWindowViewModel
         NotifyWorkflowTourVisibilityChanged();
         NotifyWhiteBalanceCommandState();
         ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
+        ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
 
         // Load preview when entering Develop mode (if we have a selected image)
         if (value && SelectedImage != null)
@@ -325,6 +330,9 @@ public partial class MainWindowViewModel
         }
         else if (!value && !IsFullScreenMode)
         {
+            IsShowingOriginal = false;
+            _previewLoadingCts?.Cancel();
+            _previewDebounce?.Cancel();
             if (SelectedImage is { IsRaw: true } image &&
                 image.EditSettings.HasEdits)
             {
@@ -332,6 +340,7 @@ public partial class MainWindowViewModel
                     RefreshThumbnailAsync(image));
             }
             ImageService.ClearPreviewCache();
+            ScheduleHistogramUpdate();
         }
     }
 
@@ -367,6 +376,9 @@ public partial class MainWindowViewModel
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
         NotifyWhiteBalanceCommandState();
         ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
+        ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
 
         if (value && SelectedImage != null)
         {
@@ -374,6 +386,9 @@ public partial class MainWindowViewModel
         }
         else if (!value && !IsDevelopMode)
         {
+            IsShowingOriginal = false;
+            _previewLoadingCts?.Cancel();
+            _previewDebounce?.Cancel();
             if (SelectedImage is { IsRaw: true } image &&
                 image.EditSettings.HasEdits)
             {
@@ -381,6 +396,7 @@ public partial class MainWindowViewModel
                     RefreshThumbnailAsync(image));
             }
             ImageService.ClearPreviewCache();
+            ScheduleHistogramUpdate();
         }
     }
 

@@ -94,6 +94,10 @@ public sealed partial class PreviewService
             {
                 return;
             }
+            if (RefreshReadyGateAsync is { } gate)
+            {
+                await gate().ConfigureAwait(false);
+            }
 
             using var refresh = new PreviewRefresh(
                 pending.ImageFile,

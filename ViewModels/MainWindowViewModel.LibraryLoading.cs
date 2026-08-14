@@ -13,9 +13,20 @@ public partial class MainWindowViewModel
     private readonly Action<Action> _postSelection;
     private long _activeBaseRefreshRequestId;
 
+    internal Func<Task>? PreviewRenderGateAsync
+    {
+        set => ImageService.PreviewRenderGateAsync = value;
+    }
+
+    internal Func<Task>? PreviewRefreshReadyGateAsync
+    {
+        set => ImageService.PreviewRefreshReadyGateAsync = value;
+    }
+
     public async Task<int> LoadFolderAsync(string folderPath)
     {
         var generation = Interlocked.Increment(ref _libraryGeneration);
+        await CancelLibrarySelectionSummaryAsync();
         await CancelXmpReconcileAsync();
         _xmpIndexedSidecars = [];
         CancelSourceHydration();
@@ -305,6 +316,14 @@ public partial class MainWindowViewModel
             if (!ReferenceEquals(SelectedImage, imageFile))
             {
                 bitmap.Dispose();
+                return;
+            }
+
+            if (!IsDevelopMode && !IsFullScreenMode)
+            {
+                bitmap.Dispose();
+                _ = TrackDirectThumbnailOperation(
+                    RefreshThumbnailAsync(imageFile));
                 return;
             }
 

@@ -36,7 +36,9 @@ public sealed partial class PreviewService : IAsyncDisposable
     internal event Action? PreviewConverted;
     internal event Action? RenderedThumbnailCreated;
     internal Func<Task>? RenderedThumbnailCacheQueuedAsync { get; set; }
+    internal Func<Task>? RenderGateAsync { get; set; }
     internal Func<Task>? RefreshRenderGateAsync { get; set; }
+    internal Func<Task>? RefreshReadyGateAsync { get; set; }
 
     public int PreviewActivityCount
     {
@@ -238,6 +240,10 @@ public sealed partial class PreviewService : IAsyncDisposable
                 $"size={snapshot.Base.Pixels.Width}x{snapshot.Base.Pixels.Height}");
             stopwatch.Restart();
 
+            if (RenderGateAsync is { } gate)
+            {
+                await gate().ConfigureAwait(false);
+            }
             RenderStarted?.Invoke();
             var rendered = await Task.Run(
                 () => Render(

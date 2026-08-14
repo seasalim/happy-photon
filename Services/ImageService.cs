@@ -48,6 +48,16 @@ public class ImageService : IAsyncDisposable
 
     public int MetadataActivityCount => _metadataService.InFlightCount;
 
+    internal Func<Task>? PreviewRenderGateAsync
+    {
+        set => _previewService.RenderGateAsync = value;
+    }
+
+    internal Func<Task>? PreviewRefreshReadyGateAsync
+    {
+        set => _previewService.RefreshReadyGateAsync = value;
+    }
+
     public ImageService(CatalogService catalogService)
         : this(
             catalogService,

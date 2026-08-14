@@ -119,6 +119,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
         }
         var original = RedBlueDelta(image);
         var vm = CreateViewModel(catalog);
+        vm.IsDevelopMode = true;
         vm.Library.SetImages([image]);
         vm.SelectedImage = image;
 
@@ -150,6 +151,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog);
+        vm.IsDevelopMode = true;
         var image = new ImageFile(Path.Combine(_root, "photo.jpg"))
         {
             EditSettings = new EditSettings

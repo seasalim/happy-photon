@@ -49,6 +49,8 @@ public sealed class WorkflowTourDimmingTests
                 "TourStatusBar")!;
             var developEditPanel = window.FindControl<DevelopEditPanel>(
                 "DevelopEditPanel")!;
+            var libraryReviewPane = window.FindControl<LibraryReviewPane>(
+                "LibraryReviewPane")!;
             var filterLabel = library.FindControl<TextBlock>("FilterLabel")!;
             var filterScrollViewer = library.FindControl<ScrollViewer>(
                 "FilterScrollViewer")!;
@@ -70,6 +72,7 @@ public sealed class WorkflowTourDimmingTests
                 leftPanel,
                 statusBar,
                 developEditPanel,
+                libraryReviewPane,
                 filterLabel,
                 filterScrollViewer,
                 actionsPanel,
@@ -126,6 +129,7 @@ public sealed class WorkflowTourDimmingTests
                 leftPanel,
                 statusBar,
                 developEditPanel,
+                libraryReviewPane,
                 filterLabel,
                 filterScrollViewer,
                 actionsPanel,
@@ -144,6 +148,7 @@ public sealed class WorkflowTourDimmingTests
                 dimmedOpacity,
                 leftPanel,
                 statusBar,
+                libraryReviewPane,
                 filterLabel,
                 filterScrollViewer,
                 actionsPanel,
@@ -164,6 +169,7 @@ public sealed class WorkflowTourDimmingTests
                 leftPanel,
                 statusBar,
                 developEditPanel,
+                libraryReviewPane,
                 filterLabel,
                 filterScrollViewer,
                 onlineOnlyMessage,

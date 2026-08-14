@@ -181,12 +181,14 @@ public partial class ImageFile : ObservableObject
     }
 
     // Computed metadata display properties
-    public string FileSizeDisplay => FileSize switch
+    public string FileSizeDisplay => FormatFileSize(FileSize);
+
+    internal static string FormatFileSize(long bytes) => bytes switch
     {
-        < 1024 => $"{FileSize} B",
-        < 1024 * 1024 => $"{FileSize / 1024.0:F1} KB",
-        < 1024 * 1024 * 1024 => $"{FileSize / (1024.0 * 1024.0):F1} MB",
-        _ => $"{FileSize / (1024.0 * 1024.0 * 1024.0):F2} GB"
+        < 1024 => $"{bytes} B",
+        < 1024 * 1024 => $"{bytes / 1024.0:F1} KB",
+        < 1024L * 1024 * 1024 => $"{bytes / (1024.0 * 1024):F1} MB",
+        _ => $"{bytes / (1024.0 * 1024 * 1024):F2} GB"
     };
 
     public string? CameraDisplay => string.IsNullOrEmpty(CameraModel) ? CameraMake : CameraMake + " " + CameraModel;

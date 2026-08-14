@@ -14,6 +14,7 @@ public partial class MainWindowViewModel
         if (newValue != null) newValue.IsActive = true;
 
         HasSelectedImage = newValue != null;
+        ResetSelectedMetadataState(newValue);
         IsShowingOriginal = false;
         Volatile.Write(ref _activeBaseRefreshRequestId, 0);
         IsBaseArming = false;
@@ -40,6 +41,7 @@ public partial class MainWindowViewModel
         {
             SignalBackgroundActivityStarted();
             RefreshSourceAvailability(newValue);
+            ResetSelectedMetadataState(newValue);
             RetryDeferredThumbnailIfAvailable(newValue);
             PrepareWhiteBalanceUi(newValue);
             NotifyWhiteBalanceCommandState();

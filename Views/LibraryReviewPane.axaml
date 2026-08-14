@@ -1,0 +1,138 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             xmlns:views="using:HappyPhoton.Views"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="660"
+             x:Class="HappyPhoton.Views.LibraryReviewPane"
+             x:DataType="vm:MainWindowViewModel">
+
+    <Border Background="{DynamicResource SurfaceMid}"
+            IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
+        <Grid RowDefinitions="Auto,*">
+            <views:HistogramView x:Name="LibraryHistogram"
+                                 Histogram="{Binding Histogram}"
+                                 Margin="15,15,15,10"
+                                 IsEnabled="{Binding HasSelectedImage}"/>
+
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Hidden"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="15,5,15,15" Spacing="16">
+                    <TextBlock x:Name="ReviewEmptyHint"
+                               Text="Select a photo to review its details"
+                               Foreground="{DynamicResource TextMuted}"
+                               FontSize="{DynamicResource FontSizeBody}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               HorizontalAlignment="Center"
+                               Margin="8,24"
+                               MaxWidth="180"
+                               IsVisible="{Binding !HasSelectedImage}"/>
+
+                    <StackPanel x:Name="ReviewMetadataPanel"
+                                Spacing="12"
+                                IsVisible="{Binding HasSelectedImage}">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="section-label" Text="FILE"/>
+                            <TextBlock x:Name="ReviewFileNameText"
+                                       Text="{Binding SelectedImage.FileName}"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       FontSize="{DynamicResource FontSizeBody}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip.Tip="{Binding SelectedImage.FileName}"/>
+                            <TextBlock x:Name="ReviewMetadataLoadingHint"
+                                       Text="Loading details…"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       FontSize="{DynamicResource FontSizeBody}"
+                                       IsVisible="{Binding IsSelectedMetadataLoading}"/>
+                            <TextBlock x:Name="ReviewOnlineOnlyHint"
+                                       Text="This original is online-only."
+                                       Foreground="{DynamicResource TextMuted}"
+                                       FontSize="{DynamicResource FontSizeBody}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding SelectedImage.SourceRequiresHydration}"/>
+                            <TextBlock x:Name="ReviewMetadataUnavailableHint"
+                                       Text="Details unavailable"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       FontSize="{DynamicResource FontSizeBody}"
+                                       IsVisible="{Binding IsSelectedMetadataUnavailable}"/>
+                            <StackPanel Spacing="4"
+                                        IsVisible="{Binding SelectedImage.MetadataLoaded}">
+                                <TextBlock Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="{DynamicResource FontSizeBody}">
+                                    <Run Text="{Binding SelectedImage.PixelWidth}"/><Run Text="×"/><Run Text="{Binding SelectedImage.PixelHeight}"/>
+                                    <Run Text=" · "/><Run Text="{Binding SelectedImage.FileSizeDisplay}"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding SelectedImage.DateTaken, StringFormat='{}{0:MMM d, yyyy  h:mm tt}'}"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="{DynamicResource FontSizeBody}"
+                                           IsVisible="{Binding SelectedImage.DateTaken, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4"
+                                    IsVisible="{Binding SelectedImage.MetadataLoaded}">
+                            <StackPanel Spacing="4"
+                                        IsVisible="{Binding SelectedImage.CameraDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                <TextBlock Classes="section-label" Text="CAMERA"/>
+                                <TextBlock Text="{Binding SelectedImage.CameraDisplay}"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           FontSize="{DynamicResource FontSizeBody}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip.Tip="{Binding SelectedImage.CameraModel}"/>
+                                <TextBlock Text="{Binding SelectedImage.LensModel}"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="{DynamicResource FontSizeBody}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip.Tip="{Binding SelectedImage.LensModel}"
+                                           IsVisible="{Binding SelectedImage.LensModel, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                <TextBlock Text="{Binding SelectedImage.ExposureDisplay}"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="{DynamicResource FontSizeBody}"
+                                           IsVisible="{Binding SelectedImage.ExposureDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                            </StackPanel>
+
+                            <StackPanel Margin="0,8,0,0" Spacing="4"
+                                        IsVisible="{Binding SelectedImage.GpsDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                <TextBlock Classes="section-label" Text="LOCATION"/>
+                                <TextBlock Text="{Binding SelectedImage.GpsDisplay}"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="{DynamicResource FontSizeBody}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Border x:Name="SelectionSummaryPanel"
+                            Background="{DynamicResource SurfaceLow}"
+                            CornerRadius="{StaticResource RadiusSmall}"
+                            Padding="10"
+                            IsVisible="{Binding HasLibrarySelectionSummary}">
+                        <StackPanel Spacing="5">
+                            <TextBlock Classes="section-label" Text="SELECTION"/>
+                            <TextBlock Text="{Binding LibrarySelectionCountDisplay}"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       FontSize="{DynamicResource FontSizeBody}"/>
+                            <TextBlock Text="{Binding LibrarySelectionDateRangeDisplay}"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       FontSize="{DynamicResource FontSizeBody}"/>
+                            <TextBlock Text="{Binding LibrarySelectionCombinedFileSizeDisplay}"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       FontSize="{DynamicResource FontSizeBody}"/>
+                            <TextBlock Text="Updating selection details…"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       FontSize="{DynamicResource FontSizeSmall}"
+                                       IsVisible="{Binding IsLibrarySelectionSummaryLoading}"/>
+                            <TextBlock Text="{Binding LibrarySelectionOnlineOnlyNote}"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       FontSize="{DynamicResource FontSizeSmall}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding HasLibrarySelectionOnlineOnlyImages}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

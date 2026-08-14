@@ -92,6 +92,12 @@ on the About tab.
 
 Start in **Library**. Press `G` at any time to return to it.
 
+The right review pane keeps the active photograph's thumbnail histogram and file,
+camera, exposure, and location details together. With two or more photographs
+selected, it also shows the selection count, capture-date range, and combined local
+file size. Online-only originals remain excluded from those aggregates until they are
+downloaded.
+
 1. Choose a folder in the folder tree on the left.
 2. Click the folder or press `Enter` to move focus to the image grid.
 3. Let the first thumbnails appear, then move through the shoot with the arrow
@@ -264,8 +270,9 @@ If the image already looks right, leave them alone.
 Use the **Tone Curve** when the basic controls cannot produce the tonal shape
 you want. It is a finishing tool, not a required step.
 
-Press `B` to toggle between the edited image and the original. Use `Ctrl+Z` to
-undo a color or tonal edit and `Ctrl+Y` or `Ctrl+Shift+Z` to redo it. The reset
+In Develop or fullscreen, press `B` to toggle between the edited image and the
+original. In Develop, use `Ctrl+Z` to undo a color or tonal edit and `Ctrl+Y` or
+`Ctrl+Shift+Z` to redo it. These editing shortcuts do nothing in Library. The reset
 button clears the color and tonal adjustments while preserving crop, rotation,
 and horizon settings; reset those separately in the geometry controls.
 
@@ -396,10 +403,10 @@ remains where it started and unchanged.
 | `Space` | Toggle the active photo in the selection |
 | `Ctrl+A` / `Ctrl+D` | Select or deselect all visible images |
 | `C` | Toggle crop mode |
-| `B` | Toggle before/after |
+| `B` | Toggle before/after in Develop or fullscreen |
 | `Ctrl+B` | Toggle color assessment mode in Develop or fullscreen |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
-| `Ctrl+Z` / `Ctrl+Y` | Undo or redo color and tonal edits |
+| `Ctrl+Z` / `Ctrl+Y` | Undo or redo color and tonal edits in Develop |
 | `Ctrl+E` | Open the export dialog |
 | `Ctrl+,` | Open Settings |
 | `F` | Toggle image-only fullscreen |

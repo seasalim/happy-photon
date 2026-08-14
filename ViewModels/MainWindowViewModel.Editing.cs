@@ -7,11 +7,10 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    [RelayCommand(CanExecute = nameof(CanUndo))]
+    [RelayCommand(CanExecute = nameof(CanUndoEdit))]
     private async Task UndoAsync()
     {
-        if (!CanEditSelectedImage) return;
-        if (IsFullScreenMode) return;
+        if (!CanUndoEdit()) return;
         if (SelectedImage == null) return;
 
         var target = _history.Undo(CaptureLiveEditState());
@@ -20,11 +19,10 @@ public partial class MainWindowViewModel
         await ApplyHistoryStateAsync(target);
     }
 
-    [RelayCommand(CanExecute = nameof(CanRedo))]
+    [RelayCommand(CanExecute = nameof(CanRedoEdit))]
     private async Task RedoAsync()
     {
-        if (!CanEditSelectedImage) return;
-        if (IsFullScreenMode) return;
+        if (!CanRedoEdit()) return;
         if (SelectedImage == null) return;
 
         var target = _history.Redo(CaptureLiveEditState());
@@ -240,11 +238,12 @@ public partial class MainWindowViewModel
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanReset))]
+    [RelayCommand(CanExecute = nameof(CanToggleBeforeAfter))]
     private async Task ToggleBeforeAfterAsync()
     {
-        if (!CanEditSelectedImage || SelectedImage == null) return;
+        if (!CanToggleBeforeAfter() || SelectedImage == null) return;
 
+        var image = SelectedImage;
         IsShowingOriginal = !IsShowingOriginal;
 
         if (IsShowingOriginal)
@@ -261,7 +260,18 @@ public partial class MainWindowViewModel
 
             // Show original preview without any edits (same size as edited preview)
             var (preview, histogram) = await ImageService.ApplyEditsToPreviewAsync(
-                SelectedImage, tempSettings, skipHistogram: false);
+                image, tempSettings, skipHistogram: false);
+            if (!CanUseBeforeAfterWorkspace() ||
+                !ReferenceEquals(SelectedImage, image) ||
+                !IsShowingOriginal)
+            {
+                preview?.Dispose();
+                if (!CanUseBeforeAfterWorkspace())
+                {
+                    IsShowingOriginal = false;
+                }
+                return;
+            }
             ReplacePreviewImage(preview);
             Histogram = histogram;
         }
@@ -271,4 +281,16 @@ public partial class MainWindowViewModel
             await UpdatePreviewWithCurrentSliders();
         }
     }
+
+    private bool CanUndoEdit() =>
+        CanUndo && IsDevelopMode && !IsFullScreenMode && CanEditSelectedImage;
+
+    private bool CanRedoEdit() =>
+        CanRedo && IsDevelopMode && !IsFullScreenMode && CanEditSelectedImage;
+
+    private bool CanToggleBeforeAfter() =>
+        CanReset && CanEditSelectedImage && CanUseBeforeAfterWorkspace();
+
+    private bool CanUseBeforeAfterWorkspace() =>
+        IsDevelopMode || IsFullScreenMode;
 }

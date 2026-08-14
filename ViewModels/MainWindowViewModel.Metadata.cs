@@ -25,6 +25,10 @@ public partial class MainWindowViewModel
             System.Diagnostics.Debug.WriteLine(
                 $"Metadata load failed for {image.FilePath}: {ex.Message}");
         }
+        finally
+        {
+            CompleteSelectedMetadataLoad(image);
+        }
     }
 
     private async Task RemoveSelectionMetadataLoadWhenCompleteAsync(Task load)

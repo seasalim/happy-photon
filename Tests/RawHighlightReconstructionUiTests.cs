@@ -22,6 +22,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog);
+        vm.IsDevelopMode = true;
         var image = new ImageFile(Path.Combine(_root, "missing.dng"));
         vm.SelectedImage = image;
 
@@ -147,6 +148,58 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         await vm.DisposeAsync();
     }
 
+    [Fact]
+    public async Task LibraryMode_GatesBeforeAfterUndoAndRedo()
+    {
+        using var catalog = new CatalogService(_root);
+        var vm = CreateViewModel(catalog);
+        var image = new ImageFile(Path.Combine(_root, "library.jpg"))
+        {
+            EditSettings = new EditSettings { Exposure = 1 }
+        };
+        vm.SelectedImage = image;
+        vm.CanUndo = true;
+        vm.CanRedo = true;
+        var undoNotifications = 0;
+        var redoNotifications = 0;
+        var beforeNotifications = 0;
+        vm.UndoCommand.CanExecuteChanged += (_, _) => undoNotifications++;
+        vm.RedoCommand.CanExecuteChanged += (_, _) => redoNotifications++;
+        vm.ToggleBeforeAfterCommand.CanExecuteChanged +=
+            (_, _) => beforeNotifications++;
+
+        Assert.False(vm.UndoCommand.CanExecute(null));
+        Assert.False(vm.RedoCommand.CanExecute(null));
+        Assert.False(vm.ToggleBeforeAfterCommand.CanExecute(null));
+        await vm.UndoCommand.ExecuteAsync(null);
+        await vm.RedoCommand.ExecuteAsync(null);
+        await vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
+        Assert.Equal(1, image.EditSettings.Exposure);
+        Assert.False(vm.IsShowingOriginal);
+        Assert.Null(vm.PreviewImage);
+
+        vm.IsDevelopMode = true;
+        Assert.True(vm.UndoCommand.CanExecute(null));
+        Assert.True(vm.RedoCommand.CanExecute(null));
+        Assert.True(vm.ToggleBeforeAfterCommand.CanExecute(null));
+        Assert.True(undoNotifications > 0);
+        Assert.True(redoNotifications > 0);
+        Assert.True(beforeNotifications > 0);
+
+        vm.IsFullScreenMode = true;
+        Assert.False(vm.UndoCommand.CanExecute(null));
+        Assert.False(vm.RedoCommand.CanExecute(null));
+        Assert.True(vm.ToggleBeforeAfterCommand.CanExecute(null));
+
+        vm.IsShowingOriginal = true;
+        vm.IsDevelopMode = false;
+        vm.IsFullScreenMode = false;
+        Assert.False(vm.IsShowingOriginal);
+        Assert.False(vm.ToggleBeforeAfterCommand.CanExecute(null));
+
+        await vm.DisposeAsync();
+    }
+
     [AvaloniaFact]
     public async Task ScheduledHistogramRefresh_ClearsBeforeAfterState()
     {
@@ -173,6 +226,68 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         Assert.True(vm.IsShowingOriginal);
 
         await WaitUntilAsync(() => !vm.IsShowingOriginal);
+        await vm.DisposeAsync();
+    }
+
+    [AvaloniaFact]
+    public async Task DevelopToLibrary_ReschedulesHistogramFromThumbnailPixels()
+    {
+        using var catalog = new CatalogService(_root);
+        await catalog.InitializeAsync();
+        var vm = new MainWindowViewModel(
+            catalog,
+            CreateSyntheticLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally));
+        var image = new ImageFile(Path.Combine(_root, "histogram.png"));
+        using var orange = new MagickImage(MagickColors.Orange, 16, 16);
+        vm.Library.SetImages([image]);
+        vm.Library.ReplaceThumbnail(
+            image,
+            BitmapConversionService.ConvertToBitmap(orange));
+        vm.SelectedImage = image;
+        var expectedLibrary = new HistogramService().CalculateLibraryHistogram(
+            image.Thumbnail!);
+        await WaitUntilAsync(() => HistogramsMatch(
+            vm.Histogram,
+            expectedLibrary));
+
+        vm.IsDevelopMode = true;
+        await WaitUntilAsync(() =>
+            vm.PreviewImage != null &&
+            vm.Histogram != null &&
+            !HistogramsMatch(vm.Histogram, expectedLibrary));
+
+        vm.IsDevelopMode = false;
+        await WaitUntilAsync(() => HistogramsMatch(
+            vm.Histogram,
+            expectedLibrary));
+
+        vm.Library.ReplaceThumbnail(image, null);
+        await vm.DisposeAsync();
+    }
+
+    [AvaloniaFact]
+    public async Task DevelopToLibrary_WithoutThumbnailClearsRenderHistogram()
+    {
+        using var catalog = new CatalogService(_root);
+        await catalog.InitializeAsync();
+        var vm = new MainWindowViewModel(
+            catalog,
+            CreateSyntheticLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally))
+        {
+            IsDevelopMode = true
+        };
+        vm.SelectedImage = new ImageFile(Path.Combine(_root, "missing.png"));
+        await WaitUntilAsync(() => vm.Histogram != null);
+
+        vm.IsDevelopMode = false;
+
+        Assert.Null(vm.Histogram);
         await vm.DisposeAsync();
     }
 
@@ -281,6 +396,15 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
                 (_, _) => new MagickImage(MagickColors.Gray, 64, 48)),
             () => false,
             _ => { });
+
+    private static bool HistogramsMatch(
+        HistogramData? actual,
+        HistogramData expected) =>
+        actual != null &&
+        actual.Red.SequenceEqual(expected.Red) &&
+        actual.Green.SequenceEqual(expected.Green) &&
+        actual.Blue.SequenceEqual(expected.Blue) &&
+        actual.Luminance.SequenceEqual(expected.Luminance);
 
     private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
         new(
