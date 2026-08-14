@@ -104,11 +104,17 @@ public partial class MainWindowViewModel
             ApplyAssessmentSnapshot(image, adoption.Snapshot);
         }
         if (result.Adoptions.Count > 0) Library.RefreshFilters();
-        if (result.Reports.Count > 0)
-        {
-            foreach (var report in result.Reports)
-                System.Diagnostics.Debug.WriteLine($"[HappyPhoton] {report}");
-        }
+        ReportXmpReconcileIssues(result.Reports);
+    }
+
+    internal void ReportXmpReconcileIssues(IReadOnlyList<string> reports)
+    {
+        if (reports.Count == 0) return;
+        foreach (var report in reports)
+            System.Diagnostics.Debug.WriteLine($"[HappyPhoton] {report}");
+        var noun = reports.Count == 1 ? "issue" : "issues";
+        ShowTransientStatus(
+            $"XMP reconciliation reported {reports.Count} {noun}: {reports[0]}");
     }
 
     private async Task ObserveXmpReconcileAsync(

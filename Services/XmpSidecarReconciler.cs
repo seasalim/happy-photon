@@ -79,6 +79,10 @@ public sealed class XmpSidecarReconciler
                 if (facts != null)
                     pending.Add(new XmpReconcileItem(snapshot, resolution.Winner, facts));
             }
+            catch (XmpSidecarTooLargeException exception)
+            {
+                reports.Add(exception.Message);
+            }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
                 reports.Add($"Could not read XMP sidecar {resolution.Winner.Path}: {exception.Message}");

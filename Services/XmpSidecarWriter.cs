@@ -222,11 +222,17 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
                     ? XmpSidecarDocument.Create()
                     : await LoadAsync(target, cancellationToken);
             }
-            catch (IOException) when (attempt < 2) { continue; }
+            catch (IOException exception) when (
+                exception is not XmpSidecarTooLargeException && attempt < 2)
+            {
+                continue;
+            }
             catch (UnauthorizedAccessException) when (attempt < 2) { continue; }
 
-            XmpSidecarDocument.Merge(
-                document, job.Snapshot, job.Axes, _labelNames);
+            var merge = XmpSidecarDocument.Merge(
+                document, job.Snapshot,
+                before.Winner == null ? AssessmentAxes.All : job.Axes,
+                _labelNames);
             var temporary = Path.Combine(
                 Path.GetDirectoryName(target)!,
                 $".{Path.GetFileName(target)}.{Guid.NewGuid():N}.tmp");
@@ -240,6 +246,9 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
                     job.Snapshot.FilePath, job.FolderImagePaths, job.Naming);
                 if (!SameResolution(before, after)) continue;
                 File.Move(temporary, target, overwrite: true);
+                if (merge.ReplacedUnsupportedLabel)
+                    Report?.Invoke(
+                        $"Unsupported XMP label replaced for {job.Snapshot.FilePath}");
                 return true;
             }
             catch (IOException) when (attempt < 2) { }
@@ -280,11 +289,14 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
         string path,
         CancellationToken cancellationToken)
     {
+        XmpSidecarReadStream.ThrowIfOversized(path);
         await using var stream = new FileStream(
             path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite,
             4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        await using var bounded = new XmpSidecarReadStream(
+            stream, path, XmpSidecarReader.MaximumSidecarBytes);
         return await XDocument.LoadAsync(
-            stream, LoadOptions.PreserveWhitespace, cancellationToken);
+            bounded, LoadOptions.PreserveWhitespace, cancellationToken);
     }
 
     private static async Task SaveAsync(

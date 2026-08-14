@@ -31,7 +31,7 @@ public sealed class XmpSidecarDocumentTests
             2, DateTime.UtcNow, AssessmentAxes.Rating);
 
         XmpSidecarDocument.Merge(
-            document, snapshot, AssessmentAxes.Rating | AssessmentAxes.Label,
+            document, snapshot, AssessmentAxes.Rating,
             ColorLabelNames.Defaults);
 
         Assert.Equal("5", XmpSidecarDocument.ReadValue(
@@ -70,6 +70,127 @@ public sealed class XmpSidecarDocumentTests
             document, XmpSidecarDocument.Xmp, "Rating"));
         Assert.Equal("Pick", XmpSidecarDocument.ReadValue(
             document, XmpSidecarDocument.HappyPhoton, "Flag"));
+    }
+
+    [Fact]
+    public void LabelMerge_ReplacesUnsupportedOnlyWhenSettingAValue()
+    {
+        var document = XmpSidecarDocument.Create();
+        var description = document.Descendants(
+            XmpSidecarDocument.Rdf + "Description").Single();
+        description.SetAttributeValue(XmpSidecarDocument.Xmp + "Label", "Custom");
+        var snapshot = new AssessmentSnapshot(
+            1, "photo.cr3", ImageFlag.Unflagged, 0, ColorLabel.Blue,
+            1, DateTime.UtcNow, AssessmentAxes.Label);
+
+        var replaced = XmpSidecarDocument.Merge(
+            document, snapshot, AssessmentAxes.Label, ColorLabelNames.Defaults);
+
+        Assert.True(replaced.ReplacedUnsupportedLabel);
+        Assert.Equal("Blue", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.Xmp, "Label"));
+
+        description.SetAttributeValue(XmpSidecarDocument.Xmp + "Label", "Custom");
+        var cleared = XmpSidecarDocument.Merge(
+            document, snapshot with { ColorLabel = ColorLabel.None },
+            AssessmentAxes.Label, ColorLabelNames.Defaults);
+        Assert.False(cleared.ReplacedUnsupportedLabel);
+        Assert.Equal("Custom", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.Xmp, "Label"));
+
+        description.SetAttributeValue(XmpSidecarDocument.Xmp + "Label", "Red");
+        XmpSidecarDocument.Merge(
+            document, snapshot with { ColorLabel = ColorLabel.None },
+            AssessmentAxes.Label, ColorLabelNames.Defaults);
+        Assert.Null(XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.Xmp, "Label"));
+    }
+
+    [Theory]
+    [InlineData("flag", XmpFactKind.Missing, XmpFactKind.Matched)]
+    [InlineData("label", XmpFactKind.Empty, XmpFactKind.Missing)]
+    [InlineData("future,flag", XmpFactKind.Missing, XmpFactKind.Matched)]
+    public void DeclaredAbsentAxis_IsAnExplicitClear(
+        string axes,
+        XmpFactKind expectedLabel,
+        XmpFactKind expectedFlag)
+    {
+        var document = XmpSidecarDocument.Create();
+        document.Descendants(XmpSidecarDocument.Rdf + "Description").Single()
+            .SetAttributeValue(XmpSidecarDocument.HappyPhoton + "Axes", axes);
+
+        var facts = XmpSidecarDocument.ReadFacts(
+            document, ColorLabelNames.Defaults);
+
+        Assert.Equal(expectedFlag, facts.Flag.Kind);
+        Assert.Equal(expectedLabel, facts.Label.Kind);
+        if (facts.Flag.Kind == XmpFactKind.Matched)
+            Assert.Equal(ImageFlag.Unflagged, facts.Flag.Value);
+        if (facts.Label.Kind == XmpFactKind.Empty)
+            Assert.Equal(ColorLabel.None, facts.Label.Value);
+    }
+
+    [Fact]
+    public void UndeclaredPlainRating_ProvidesOnlyAWeakFlagClear()
+    {
+        var document = XmpSidecarDocument.Create();
+        document.Descendants(XmpSidecarDocument.Rdf + "Description").Single()
+            .SetAttributeValue(XmpSidecarDocument.Xmp + "Rating", "3");
+
+        var facts = XmpSidecarDocument.ReadFacts(
+            document, ColorLabelNames.Defaults);
+
+        Assert.Equal(XmpFactKind.WeakClear, facts.Flag.Kind);
+        Assert.False(facts.Flag.CanAdopt);
+        Assert.Equal(ImageFlag.Unflagged, facts.Flag.Value);
+    }
+
+    [Fact]
+    public void UnpickRoundTrip_UsesDeclaredFlagClear()
+    {
+        var document = XmpSidecarDocument.Create();
+        var picked = new AssessmentSnapshot(
+            1, "photo.cr3", ImageFlag.Picked, 2, ColorLabel.None,
+            1, DateTime.UtcNow, AssessmentAxes.Flag);
+        XmpSidecarDocument.Merge(
+            document, picked, AssessmentAxes.All, ColorLabelNames.Defaults);
+
+        XmpSidecarDocument.Merge(
+            document, picked with { Flag = ImageFlag.Unflagged, Revision = 2 },
+            AssessmentAxes.Flag, ColorLabelNames.Defaults);
+        var facts = XmpSidecarDocument.ReadFacts(
+            document, ColorLabelNames.Defaults);
+
+        Assert.Equal(XmpFactKind.Matched, facts.Flag.Kind);
+        Assert.Equal(ImageFlag.Unflagged, facts.Flag.Value);
+        Assert.Null(XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.HappyPhoton, "Flag"));
+        Assert.Contains("flag", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.HappyPhoton, "Axes")!.Split(','));
+    }
+
+    [Fact]
+    public void Merge_UnionsAxesAndSetsFreshMetadataDate()
+    {
+        var before = DateTime.UtcNow;
+        var document = XmpSidecarDocument.Create();
+        document.Descendants(XmpSidecarDocument.Rdf + "Description").Single()
+            .SetAttributeValue(
+                XmpSidecarDocument.HappyPhoton + "Axes", "future,flag");
+        var snapshot = new AssessmentSnapshot(
+            1, "photo.cr3", ImageFlag.Unflagged, 4, ColorLabel.None,
+            1, before, AssessmentAxes.Rating);
+
+        XmpSidecarDocument.Merge(
+            document, snapshot, AssessmentAxes.Rating, ColorLabelNames.Defaults);
+
+        Assert.Equal("future,flag,rating", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.HappyPhoton, "Axes"));
+        var metadataDate = DateTime.Parse(XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.Xmp, "MetadataDate")!, null,
+            System.Globalization.DateTimeStyles.RoundtripKind);
+        Assert.True(metadataDate >= before);
+        Assert.Equal(DateTimeKind.Utc, metadataDate.Kind);
     }
 
     private static XDocument LoadFixture(string name) => XDocument.Load(

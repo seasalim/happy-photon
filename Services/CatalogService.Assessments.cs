@@ -153,7 +153,10 @@ public partial class CatalogService
         var axes = AssessmentAxes.None;
         if (item.Facts.Rating.CanAdopt && !pending.HasFlag(AssessmentAxes.Rating))
             axes |= AssessmentAxes.Rating;
-        if (item.Facts.Flag.CanAdopt && !pending.HasFlag(AssessmentAxes.Flag))
+        var canAdoptFlag = item.Facts.Flag.CanAdopt ||
+            item.Facts.Flag.Kind == XmpFactKind.WeakClear &&
+            item.Snapshot.Flag == ImageFlag.Rejected;
+        if (canAdoptFlag && !pending.HasFlag(AssessmentAxes.Flag))
             axes |= AssessmentAxes.Flag;
         if (item.Facts.Label.CanAdopt && !pending.HasFlag(AssessmentAxes.Label))
             axes |= AssessmentAxes.Label;

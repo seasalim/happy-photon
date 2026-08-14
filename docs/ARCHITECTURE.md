@@ -29,9 +29,12 @@ generation guard UI adoption.
 
 In Read & write mode, only a committed local assessment mutation schedules a
 sidecar write. A single background writer coalesces work by target, merges the
-changed axes into parsed XML, revalidates the candidate path, timestamp, and
-length, then promotes a temporary file beside the sidecar. Sidecar availability
-is checked independently, and this pipeline never opens the original image.
+changed axes into parsed XML (or the complete assessment tuple for a new
+sidecar), declares written axes so explicit flag and label clears round-trip,
+revalidates the candidate path, timestamp, and length, then promotes a temporary
+file beside the sidecar. Reader and writer loads reject sidecars larger than
+4 MiB. Sidecar availability is checked independently, and this pipeline never
+opens the original image.
 
 Happy Photon is a desktop photo management and editing app (Avalonia UI, .NET 10) with an intentionally simple workflow. This document describes the overall structure and
 then goes deep on the two most intricate subsystems: **catalog loading** and the

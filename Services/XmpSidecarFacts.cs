@@ -30,7 +30,8 @@ public enum XmpFactKind
     Missing,
     Matched,
     Empty,
-    Unsupported
+    Unsupported,
+    WeakClear
 }
 
 public readonly record struct XmpFact<T>(XmpFactKind Kind, T Value)
@@ -38,6 +39,7 @@ public readonly record struct XmpFact<T>(XmpFactKind Kind, T Value)
     public static XmpFact<T> Missing => new(XmpFactKind.Missing, default!);
     public static XmpFact<T> Empty => new(XmpFactKind.Empty, default!);
     public static XmpFact<T> Unsupported => new(XmpFactKind.Unsupported, default!);
+    public static XmpFact<T> WeakClear(T value) => new(XmpFactKind.WeakClear, value);
     public static XmpFact<T> Matched(T value) => new(XmpFactKind.Matched, value);
     public bool CanAdopt => Kind is XmpFactKind.Matched or XmpFactKind.Empty;
 }

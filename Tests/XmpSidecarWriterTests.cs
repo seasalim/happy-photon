@@ -154,6 +154,124 @@ public sealed class XmpSidecarWriterTests : IDisposable
         Assert.False(File.Exists(original));
     }
 
+    [Fact]
+    public async Task FreshSidecar_WritesCompleteRejectedTupleOnRatingChange()
+    {
+        using var catalog = await CreateCatalogAsync();
+        var path = Path.Combine(_root, "rejected.cr3");
+        var id = await catalog.GetOrCreateImageAsync(path);
+        await catalog.MutateAssessmentsAsync(
+            [new AssessmentMutation(
+                id, AssessmentAxes.Flag, Flag: ImageFlag.Rejected)],
+            AssessmentAxes.None);
+        var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
+            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 4)],
+            AssessmentAxes.Rating));
+        await using var writer = new XmpSidecarWriter(
+            catalog, ColorLabelNames.Defaults);
+        writer.Start();
+
+        Assert.True(writer.TryEnqueue(snapshot, AssessmentAxes.Rating,
+            [path], XmpSidecarNaming.FullName));
+        await writer.DrainAsync();
+
+        var document = System.Xml.Linq.XDocument.Load(path + ".xmp");
+        var facts = XmpSidecarDocument.ReadFacts(
+            document, ColorLabelNames.Defaults);
+        Assert.Equal("-1", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.Xmp, "Rating"));
+        Assert.Equal("4", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.HappyPhoton, "Rating"));
+        Assert.Equal("rating,flag,label", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.HappyPhoton, "Axes"));
+        Assert.Equal(4, facts.Rating.Value);
+        Assert.Equal(ImageFlag.Rejected, facts.Flag.Value);
+        Assert.Equal(XmpFactKind.Empty, facts.Label.Kind);
+        Assert.Equal(AssessmentAxes.None,
+            Assert.Single(await catalog.LoadAssessmentSnapshotsAsync([id])).PendingAxes);
+    }
+
+    [Fact]
+    public async Task ForeignLabelReplacement_ReportsOnceAfterPromotionRetry()
+    {
+        using var catalog = await CreateCatalogAsync();
+        var path = Path.Combine(_root, "label.cr3");
+        var sidecar = path + ".xmp";
+        WriteLabel(sidecar, "Foreign");
+        var id = await catalog.GetOrCreateImageAsync(path);
+        var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
+            [new AssessmentMutation(
+                id, AssessmentAxes.Label, ColorLabel: ColorLabel.Blue)],
+            AssessmentAxes.Label));
+        var promotions = 0;
+        var reports = new List<string>();
+        await using var writer = new XmpSidecarWriter(
+            catalog, ColorLabelNames.Defaults);
+        writer.Report = reports.Add;
+        writer.BeforePromotionAsync = (_, _) =>
+        {
+            if (Interlocked.Increment(ref promotions) == 1)
+                WriteLabel(sidecar, "A longer foreign label");
+            return Task.CompletedTask;
+        };
+        writer.Start();
+
+        Assert.True(writer.TryEnqueue(snapshot, AssessmentAxes.Label,
+            [path], XmpSidecarNaming.FullName));
+        await writer.DrainAsync();
+
+        var replacement = Assert.Single(reports, report =>
+            report.Contains("Unsupported XMP label replaced", StringComparison.Ordinal));
+        Assert.Contains(path, replacement, StringComparison.Ordinal);
+        Assert.Equal("Blue", XmpSidecarDocument.ReadValue(
+            System.Xml.Linq.XDocument.Load(sidecar),
+            XmpSidecarDocument.Xmp, "Label"));
+        Assert.True(promotions >= 2);
+    }
+
+    [Fact]
+    public async Task OversizedSidecar_IsUntouchedAndLeavesWritePending()
+    {
+        using var catalog = await CreateCatalogAsync();
+        var snapshot = await PendingRatingAsync(catalog, "large.cr3", 5);
+        var sidecar = snapshot.FilePath + ".xmp";
+        var original = new byte[XmpSidecarReader.MaximumSidecarBytes + 1];
+        Array.Fill(original, (byte)'x');
+        File.WriteAllBytes(sidecar, original);
+        var reports = new List<string>();
+        await using var writer = new XmpSidecarWriter(
+            catalog, ColorLabelNames.Defaults);
+        writer.Report = reports.Add;
+        writer.Start();
+
+        Assert.True(writer.TryEnqueue(snapshot, AssessmentAxes.Rating,
+            [snapshot.FilePath], XmpSidecarNaming.FullName));
+        await writer.DrainAsync();
+
+        Assert.Equal(original, File.ReadAllBytes(sidecar));
+        Assert.Empty(Directory.GetFiles(
+            _root, $".{Path.GetFileName(sidecar)}.*.tmp"));
+        Assert.Equal(AssessmentAxes.Rating,
+            Assert.Single(await catalog.LoadAssessmentSnapshotsAsync(
+                [snapshot.ImageId])).PendingAxes);
+        var report = Assert.Single(reports);
+        Assert.Contains("4 MiB", report, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task BoundingReadStream_RejectsContentPastTheSizeLimit()
+    {
+        var content = new byte[checked((int)XmpSidecarReader.MaximumSidecarBytes + 1)];
+        await using var bounded = new XmpSidecarReadStream(
+            new MemoryStream(content), "growing.xmp",
+            XmpSidecarReader.MaximumSidecarBytes);
+
+        var exception = await Assert.ThrowsAsync<XmpSidecarTooLargeException>(
+            () => bounded.CopyToAsync(Stream.Null));
+
+        Assert.Contains("4 MiB", exception.Message, StringComparison.Ordinal);
+    }
+
     private async Task<AssessmentSnapshot> PendingRatingAsync(
         CatalogService catalog,
         string name,
@@ -180,6 +298,15 @@ public sealed class XmpSidecarWriterTests : IDisposable
         document.Root!.Descendants(XmpSidecarDocument.Rdf + "Description")
             .Single().SetAttributeValue(
                 XmpSidecarDocument.Xmp + "Rating", rating.ToString());
+        document.Save(path);
+    }
+
+    private static void WriteLabel(string path, string label)
+    {
+        var document = XmpSidecarDocument.Create();
+        document.Root!.Descendants(XmpSidecarDocument.Rdf + "Description")
+            .Single().SetAttributeValue(
+                XmpSidecarDocument.Xmp + "Label", label);
         document.Save(path);
     }
 
