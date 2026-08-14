@@ -131,6 +131,7 @@
             <Color x:Key="ViewerSurroundColor">#131318</Color>
             <Color x:Key="FullScreenBackdropColor">#000000</Color>
             <Color x:Key="SelectionSurfaceColor">#4b4a52</Color>
+            <Color x:Key="RejectMarkColor">#e67c73</Color>
 
             <SolidColorBrush x:Key="SurfaceLowest" Color="{StaticResource SurfaceLowestColor}"/>
             <SolidColorBrush x:Key="SurfaceBase" Color="{StaticResource SurfaceBaseColor}"/>
@@ -153,6 +154,7 @@
             <!-- Softened accent for the active-image ring so it does not overpower photo content -->
             <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource PrimaryContainerColor}" Opacity="0.77"/>
             <SolidColorBrush x:Key="SelectionCheck" Color="{StaticResource PrimaryContainerColor}"/>
+            <SolidColorBrush x:Key="RejectMark" Color="{StaticResource RejectMarkColor}"/>
             <SolidColorBrush x:Key="ViewerControlBarBackground" Color="Transparent"/>
             <BoxShadows x:Key="CoachmarkShadow">0 12 30 0 #99000000</BoxShadows>
             <x:Double x:Key="TourDimmedOpacity">0.48</x:Double>
@@ -201,6 +203,7 @@
                  limits simultaneous-contrast shifts against the L* 50 surround. -->
             <Color x:Key="ActiveImageRingColor">#6cc9d1</Color>
             <Color x:Key="SelectionCheckColor">#9adfe4</Color>
+            <Color x:Key="RejectMarkColor">#f2aaa4</Color>
 
             <SolidColorBrush x:Key="SurfaceLowest" Color="{StaticResource SurfaceLowestColor}"/>
             <SolidColorBrush x:Key="SurfaceBase" Color="{StaticResource SurfaceBaseColor}"/>
@@ -222,6 +225,7 @@
             <SolidColorBrush x:Key="SelectionSurface" Color="{StaticResource SelectionSurfaceColor}"/>
             <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource ActiveImageRingColor}"/>
             <SolidColorBrush x:Key="SelectionCheck" Color="{StaticResource SelectionCheckColor}"/>
+            <SolidColorBrush x:Key="RejectMark" Color="{StaticResource RejectMarkColor}"/>
             <SolidColorBrush x:Key="ViewerControlBarBackground" Color="{StaticResource SurfaceLowColor}"/>
             <BoxShadows x:Key="CoachmarkShadow">0 12 30 0 #b3000000</BoxShadows>
             <x:Double x:Key="TourDimmedOpacity">0.44</x:Double>

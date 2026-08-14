@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:HappyPhoton.ViewModels"
         xmlns:models="using:HappyPhoton.Models"
+        xmlns:converters="using:HappyPhoton.Converters"
         xmlns:views="using:HappyPhoton.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -19,6 +20,11 @@
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
+
+    <Window.Resources>
+        <converters:ColorLabelBrushConverter x:Key="ColorLabelBrushConverter"/>
+        <converters:ColorLabelNameConverter x:Key="ColorLabelNameConverter"/>
+    </Window.Resources>
 
     <Window.KeyBindings>
         <KeyBinding Gesture="Enter" Command="{Binding EnterDevelopModeCommand}"/>
@@ -230,34 +236,54 @@
                         </Panel>
 
                         <!-- Rotation and Zoom Controls -->
-                        <Border Grid.Row="1" Padding="12,6"
+                        <Border x:Name="DevelopControlBar" Grid.Row="1" Padding="12,6"
                                 Background="{DynamicResource ViewerControlBarBackground}"
                                 CornerRadius="{StaticResource RadiusMedium}"
                                 IsEnabled="{Binding HasSelectedImage}"
                                 HorizontalAlignment="Center" Margin="0,4,0,8">
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                    <Border Background="{StaticResource PrimaryContainer}" CornerRadius="2"
-                                            Padding="6,2"
-                                            IsVisible="{Binding SelectedImage.IsPicked, FallbackValue=False}"
-                                            ToolTip.Tip="Picked">
-                                        <TextBlock Text="Picked" FontSize="10" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource OnPrimary}"/>
-                                    </Border>
-                                    <Border Background="{StaticResource ErrorContainer}" CornerRadius="2"
-                                            Padding="6,2"
-                                            IsVisible="{Binding SelectedImage.IsRejected, FallbackValue=False}"
-                                            ToolTip.Tip="Rejected">
-                                        <TextBlock Text="Rejected" FontSize="10" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource OnErrorContainer}"/>
-                                    </Border>
-                                    <Border Background="{DynamicResource SurfaceHigh}" CornerRadius="2"
-                                            Padding="6,2"
-                                            IsVisible="{Binding SelectedImage.IsUnflagged, FallbackValue=False}"
-                                            ToolTip.Tip="Unflagged">
-                                        <TextBlock Text="Unflagged" FontSize="10"
-                                                   Foreground="{DynamicResource TextSecondary}"/>
-                                    </Border>
+                                    <Panel x:Name="FlagStatusSlot" Width="20" Height="20">
+                                        <Path x:Name="PickedStatusMark"
+                                              Data="M 2,13 L 2,2 M 2,3 L 11,3 L 9,6 L 11,9 L 2,9"
+                                              Stretch="Uniform" Width="12" Height="12"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Stroke="{DynamicResource SelectionCheck}"
+                                              Fill="{DynamicResource SelectionCheck}"
+                                              StrokeThickness="1.4"
+                                              StrokeLineCap="Round"
+                                              StrokeJoin="Round"
+                                              IsVisible="{Binding SelectedImage.IsPicked, FallbackValue=False}"
+                                              ToolTip.Tip="Picked"/>
+                                        <Path x:Name="RejectedStatusMark"
+                                              Data="M 3,3 L 13,13 M 13,3 L 3,13"
+                                              Stretch="Uniform" Width="11" Height="11"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Stroke="{DynamicResource RejectMark}"
+                                              StrokeThickness="1.8"
+                                              StrokeLineCap="Round"
+                                              StrokeJoin="Round"
+                                              IsVisible="{Binding SelectedImage.IsRejected, FallbackValue=False}"
+                                              ToolTip.Tip="Rejected"/>
+                                    </Panel>
+                                    <Panel x:Name="ColorLabelStatusSlot" Width="14" Height="20">
+                                        <Border x:Name="ColorLabelStatusDot"
+                                                Width="10" Height="10"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                CornerRadius="999"
+                                                Background="{Binding SelectedImage.ColorLabel, Converter={StaticResource ColorLabelBrushConverter}}"
+                                                IsVisible="{Binding SelectedImage.HasColorLabel, FallbackValue=False}">
+                                            <ToolTip.Tip>
+                                                <MultiBinding Converter="{StaticResource ColorLabelNameConverter}">
+                                                    <Binding Path="SelectedImage.ColorLabel"/>
+                                                    <Binding Path="ColorLabelChoices"/>
+                                                </MultiBinding>
+                                            </ToolTip.Tip>
+                                        </Border>
+                                    </Panel>
                                     <TextBlock Text="{Binding SelectedImage.RatingStars}"
                                                FontSize="12" Foreground="{StaticResource SecondaryContainer}"
                                                VerticalAlignment="Center"
@@ -265,7 +291,8 @@
                                                ToolTip.Tip="Rating"/>
                                 </StackPanel>
                                 <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}" Margin="4,0"/>
-                                <Button Command="{Binding RotateLeftCommand}"
+                                <Button x:Name="RotateLeftButton"
+                                        Command="{Binding RotateLeftCommand}"
                                         IsEnabled="{Binding CanEditSelectedImage}"
                                         Content="↶"
                                         ToolTip.Tip="Rotate Left (90° counter-clockwise)"

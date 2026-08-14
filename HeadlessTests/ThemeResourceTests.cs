@@ -54,6 +54,13 @@ public sealed class ThemeResourceTests
     }
 
     [AvaloniaFact]
+    public void RejectMark_MeetsContrastTargetOnControlBarBackground()
+    {
+        AssertContrast(3, "RejectMark", "ViewerSurround", ThemeVariant.Dark);
+        AssertContrast(3, "RejectMark", "SurfaceLow", HappyPhotonThemes.MidGray);
+    }
+
+    [AvaloniaFact]
     public void MidGray_ChromeNeutralsAreStrictlyAchromatic()
     {
         foreach (var key in new[]

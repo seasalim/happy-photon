@@ -245,6 +245,12 @@ summary. Develop owns the editing controls. The left navigator retains only the 
 thumbnail and online-only download action so the folder tree receives the reclaimed
 height.
 
+The Develop control bar keeps assessment status in a compact, fixed-width cluster so
+flag or color-label changes never move its action buttons. Picked reuses the
+assessment bar's flag glyph, filled with the muted teal of the Library selection
+badge; Rejected uses a bare error-red ×; Unflagged leaves the icon slot empty. A color-label dot uses the configured label
+color and name; rating stars retain their existing behavior.
+
 The review metadata is a curated FILE, CAMERA, and LOCATION summary for every supported
 format. FILE combines dimensions, megapixels, and size; a missing capture date falls
 back to a muted file-modified date without changing capture-time semantics. CAMERA
