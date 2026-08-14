@@ -85,6 +85,7 @@ public partial class MainWindow
                 await clipboard.SetTextAsync(text);
             }
         };
+        vm.LaunchUriAsync = uri => Launcher.LaunchUriAsync(uri);
         _presetsPanel?.SetPresetSource(vm.PresetService);
 
         SetSubscribedViewModel(vm);

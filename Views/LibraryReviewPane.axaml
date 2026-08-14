@@ -8,6 +8,22 @@
              x:Class="HappyPhoton.Views.LibraryReviewPane"
              x:DataType="vm:MainWindowViewModel">
 
+    <UserControl.Styles>
+        <Style Selector="Button.metadata-link">
+            <Setter Property="Background" Value="{x:Null}"/>
+            <Setter Property="BorderBrush" Value="{x:Null}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Foreground" Value="{DynamicResource Primary}"/>
+        </Style>
+        <Style Selector="Button.metadata-link:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryHover}"/>
+        </Style>
+    </UserControl.Styles>
+
     <Border Background="{DynamicResource SurfaceMid}"
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*">
@@ -34,6 +50,13 @@
                     <StackPanel x:Name="ReviewMetadataPanel"
                                 Spacing="12"
                                 IsVisible="{Binding HasSelectedImage}">
+                        <StackPanel.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem x:Name="CopyDetailsMenuItem"
+                                          Header="Copy details"
+                                          Command="{Binding CopyMetadataDetailsCommand}"/>
+                            </ContextMenu>
+                        </StackPanel.ContextMenu>
                         <StackPanel Spacing="4">
                             <TextBlock Classes="section-label" Text="FILE"/>
                             <TextBlock x:Name="ReviewFileNameText"
@@ -41,7 +64,7 @@
                                        Foreground="{DynamicResource TextPrimary}"
                                        FontSize="{DynamicResource FontSizeBody}"
                                        TextTrimming="CharacterEllipsis"
-                                       ToolTip.Tip="{Binding SelectedImage.FileName}"/>
+                                       ToolTip.Tip="{Binding SelectedImage.FilePath}"/>
                             <TextBlock x:Name="ReviewMetadataLoadingHint"
                                        Text="Loading details…"
                                        Foreground="{DynamicResource TextMuted}"
@@ -60,46 +83,71 @@
                                        IsVisible="{Binding IsSelectedMetadataUnavailable}"/>
                             <StackPanel Spacing="4"
                                         IsVisible="{Binding SelectedImage.MetadataLoaded}">
-                                <TextBlock Foreground="{DynamicResource TextSecondary}"
-                                           FontSize="{DynamicResource FontSizeBody}">
-                                    <Run Text="{Binding SelectedImage.PixelWidth}"/><Run Text="×"/><Run Text="{Binding SelectedImage.PixelHeight}"/>
-                                    <Run Text=" · "/><Run Text="{Binding SelectedImage.FileSizeDisplay}"/>
-                                </TextBlock>
-                                <TextBlock Text="{Binding SelectedImage.DateTaken, StringFormat='{}{0:MMM d, yyyy  h:mm tt}'}"
+                                <TextBlock x:Name="ReviewFileDetailsText"
+                                           Text="{Binding SelectedImage.FileDetailsDisplay}"
                                            Foreground="{DynamicResource TextSecondary}"
                                            FontSize="{DynamicResource FontSizeBody}"
-                                           IsVisible="{Binding SelectedImage.DateTaken, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                           IsVisible="{Binding SelectedImage.FileDetailsDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                <TextBlock x:Name="ReviewCaptureDateText"
+                                           Text="{Binding SelectedImage.DisplayDate, StringFormat='{}{0:MMM d, yyyy  h:mm tt}'}"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="{DynamicResource FontSizeBody}"
+                                           IsVisible="{Binding SelectedImage.HasCaptureDate}"/>
+                                <TextBlock x:Name="ReviewModifiedDateText"
+                                           Text="{Binding SelectedImage.DisplayDate, StringFormat='{}{0:MMM d, yyyy  h:mm tt}'}"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           FontSize="{DynamicResource FontSizeBody}"
+                                           ToolTip.Tip="File modified date; capture date is unavailable"
+                                           IsVisible="{Binding SelectedImage.IsFileModifiedDateFallback}"/>
                             </StackPanel>
                         </StackPanel>
 
                         <StackPanel Spacing="4"
                                     IsVisible="{Binding SelectedImage.MetadataLoaded}">
-                            <StackPanel Spacing="4"
-                                        IsVisible="{Binding SelectedImage.CameraDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <StackPanel x:Name="ReviewCameraSection"
+                                        Spacing="4"
+                                        IsVisible="{Binding SelectedImage.HasCameraMetadata}">
                                 <TextBlock Classes="section-label" Text="CAMERA"/>
-                                <TextBlock Text="{Binding SelectedImage.CameraDisplay}"
+                                <TextBlock x:Name="ReviewCameraText"
+                                           Text="{Binding SelectedImage.CameraDisplay}"
                                            Foreground="{DynamicResource TextPrimary}"
                                            FontSize="{DynamicResource FontSizeBody}"
                                            TextTrimming="CharacterEllipsis"
-                                           ToolTip.Tip="{Binding SelectedImage.CameraModel}"/>
-                                <TextBlock Text="{Binding SelectedImage.LensModel}"
+                                           ToolTip.Tip="{Binding SelectedImage.CameraModel}"
+                                           IsVisible="{Binding SelectedImage.CameraDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                <TextBlock x:Name="ReviewLensText"
+                                           Text="{Binding SelectedImage.LensModel}"
                                            Foreground="{DynamicResource TextSecondary}"
                                            FontSize="{DynamicResource FontSizeBody}"
                                            TextTrimming="CharacterEllipsis"
                                            ToolTip.Tip="{Binding SelectedImage.LensModel}"
                                            IsVisible="{Binding SelectedImage.LensModel, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                <TextBlock Text="{Binding SelectedImage.ExposureDisplay}"
+                                <TextBlock x:Name="ReviewExposureText"
+                                           Text="{Binding SelectedImage.ExposureDisplay}"
                                            Foreground="{DynamicResource TextSecondary}"
                                            FontSize="{DynamicResource FontSizeBody}"
+                                           TextWrapping="Wrap"
+                                           ToolTip.Tip="{Binding SelectedImage.ExposureTooltip}"
                                            IsVisible="{Binding SelectedImage.ExposureDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                             </StackPanel>
 
-                            <StackPanel Margin="0,8,0,0" Spacing="4"
-                                        IsVisible="{Binding SelectedImage.GpsDisplay, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <StackPanel x:Name="ReviewLocationSection"
+                                        Margin="0,8,0,0" Spacing="4"
+                                        IsVisible="{Binding SelectedImage.HasLocationMetadata}">
                                 <TextBlock Classes="section-label" Text="LOCATION"/>
-                                <TextBlock Text="{Binding SelectedImage.GpsDisplay}"
+                                <Button x:Name="ReviewMapLink"
+                                        Classes="metadata-link"
+                                        Content="{Binding SelectedImage.GpsDisplay}"
+                                        FontSize="{DynamicResource FontSizeBody}"
+                                        Command="{Binding OpenSelectedImageMapCommand}"
+                                        IsEnabled="{Binding SelectedImage.HasGpsCoordinates}"
+                                        IsVisible="{Binding SelectedImage.GpsDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                        ToolTip.Tip="Open location in OpenStreetMap"/>
+                                <TextBlock x:Name="ReviewAltitudeText"
+                                           Text="{Binding SelectedImage.GpsAltitudeDisplay}"
                                            Foreground="{DynamicResource TextSecondary}"
-                                           FontSize="{DynamicResource FontSizeBody}"/>
+                                           FontSize="{DynamicResource FontSizeBody}"
+                                           IsVisible="{Binding SelectedImage.GpsAltitudeDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>

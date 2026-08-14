@@ -3,7 +3,10 @@ using System.Runtime.CompilerServices;
 using Avalonia.Threading;
 using ImageMagick;
 using HappyPhoton.Models;
+using MetadataExtractor;
+using MetadataExtractor.Formats.Exif;
 using static HappyPhoton.Services.ImageServiceHelpers;
+using Rational = ImageMagick.Rational;
 
 namespace HappyPhoton.Services;
 
@@ -98,10 +101,21 @@ internal sealed class MetadataService
             rawService,
             new SourceAvailabilityService()).Metadata;
 
+    internal static ImageMetadata ExtractMetadata(
+        ImageFile imageFile,
+        IRawProcessingService rawService,
+        Func<string, double?> rawExposureBiasReader) =>
+        ExtractMetadataCore(
+            imageFile,
+            rawService,
+            new SourceAvailabilityService(),
+            rawExposureBiasReader).Metadata;
+
     private static MetadataExtractionResult ExtractMetadataCore(
         ImageFile imageFile,
         IRawProcessingService rawService,
-        ISourceAvailabilityService availabilityService)
+        ISourceAvailabilityService availabilityService,
+        Func<string, double?>? rawExposureBiasReader = null)
     {
         var swTotal = Stopwatch.StartNew();
         var builder = new MetadataBuilder();
@@ -110,7 +124,9 @@ internal sealed class MetadataService
 
         try
         {
-            builder.FileSize = new FileInfo(imageFile.FilePath).Length;
+            var fileInfo = new FileInfo(imageFile.FilePath);
+            builder.FileSize = fileInfo.Length;
+            builder.FileModifiedDate = fileInfo.LastWriteTime;
             var availability = availabilityService.GetAvailability(
                 imageFile.FilePath);
             if (!SourceAccessPolicy.CanRead(
@@ -134,6 +150,10 @@ internal sealed class MetadataService
                 {
                     source = "LibRaw";
                     builder.Apply(rawMetadata);
+                    ApplyRawExposureBias(
+                        imageFile.FilePath,
+                        builder,
+                        rawExposureBiasReader);
                     return MetadataExtractionResult.Loaded(
                         builder.ToMetadata());
                 }
@@ -210,8 +230,7 @@ internal sealed class MetadataService
 
         if (exifProfile.GetValue(ExifTag.ExposureTime)?.Value is Rational exposure)
         {
-            var seconds = exposure.ToDouble();
-            metadata.ExposureTime = seconds < 1 ? exposure.ToString() : $"{seconds:F1}";
+            metadata.ExposureTime = FormatExposureTime(exposure.ToDouble());
         }
 
         if (exifProfile.GetValue(ExifTag.ISOSpeedRatings)?.Value is ushort[] iso && iso.Length > 0)
@@ -224,6 +243,14 @@ internal sealed class MetadataService
             metadata.FocalLength = focalLength.ToDouble();
         }
 
+        if (exifProfile.GetValue(ExifTag.FocalLengthIn35mmFilm)?.Value is ushort equivalent &&
+            equivalent > 0)
+        {
+            metadata.FocalLengthIn35mmFilm = equivalent;
+        }
+
+        ApplyExposureBias(metadata, exifProfile);
+
         var latitude = exifProfile.GetValue(ExifTag.GPSLatitude)?.Value as Rational[];
         var longitude = exifProfile.GetValue(ExifTag.GPSLongitude)?.Value as Rational[];
         if (latitude != null && longitude != null)
@@ -234,6 +261,64 @@ internal sealed class MetadataService
             metadata.GpsLongitude = ConvertGpsToDouble(
                 longitude,
                 exifProfile.GetValue(ExifTag.GPSLongitudeRef)?.Value?.ToString());
+        }
+
+        if (exifProfile.GetValue(ExifTag.GPSAltitude)?.Value is Rational altitude)
+        {
+            var value = altitude.ToDouble();
+            var reference = exifProfile.GetValue(ExifTag.GPSAltitudeRef)?.Value;
+            metadata.GpsAltitude = reference == 1 ? -value : value;
+        }
+    }
+
+    private static void ApplyRawExposureBias(
+        string filePath,
+        MetadataBuilder metadata,
+        Func<string, double?>? rawExposureBiasReader)
+    {
+        try
+        {
+            metadata.ExposureBias = rawExposureBiasReader != null
+                ? rawExposureBiasReader(filePath)
+                : ReadExposureBias(filePath);
+        }
+        catch (Exception ex)
+        {
+            LogDebug(
+                nameof(MetadataService),
+                $"RAW exposure-bias read failed: {ex.Message}",
+                filePath);
+        }
+    }
+
+    // LibRaw does not surface exposure compensation and Magick returns no
+    // EXIF profile for RAW containers, so read just this tag with
+    // MetadataExtractor (header-only, no image decode).
+    private static double? ReadExposureBias(string filePath)
+    {
+        foreach (var directory in ImageMetadataReader
+            .ReadMetadata(filePath)
+            .OfType<ExifSubIfdDirectory>())
+        {
+            if (directory.TryGetRational(
+                ExifDirectoryBase.TagExposureBias,
+                out var bias))
+            {
+                return bias.ToDouble();
+            }
+        }
+
+        return null;
+    }
+
+    private static void ApplyExposureBias(
+        MetadataBuilder metadata,
+        IExifProfile exifProfile)
+    {
+        if (exifProfile.GetValue(ExifTag.ExposureBiasValue)?.Value is
+            SignedRational exposureBias)
+        {
+            metadata.ExposureBias = exposureBias.ToDouble();
         }
     }
 
@@ -252,15 +337,19 @@ internal sealed class MetadataService
         public int PixelWidth { get; set; }
         public int PixelHeight { get; set; }
         public DateTime? DateTaken { get; set; }
+        public DateTime? FileModifiedDate { get; set; }
         public string? CameraMake { get; set; }
         public string? CameraModel { get; set; }
         public double? FNumber { get; set; }
         public string? ExposureTime { get; set; }
         public int? Iso { get; set; }
         public double? FocalLength { get; set; }
+        public double? FocalLengthIn35mmFilm { get; set; }
+        public double? ExposureBias { get; set; }
         public string? LensModel { get; set; }
         public double? GpsLatitude { get; set; }
         public double? GpsLongitude { get; set; }
+        public double? GpsAltitude { get; set; }
 
         public void Apply(RawMetadata metadata)
         {
@@ -273,7 +362,12 @@ internal sealed class MetadataService
             ExposureTime = FormatExposureTime(metadata.ExposureTime);
             Iso = metadata.Iso;
             FocalLength = metadata.FocalLength;
+            FocalLengthIn35mmFilm = metadata.FocalLengthIn35mmFilm;
+            ExposureBias = metadata.ExposureBias;
             LensModel = metadata.LensModel;
+            GpsLatitude = metadata.GpsLatitude;
+            GpsLongitude = metadata.GpsLongitude;
+            GpsAltitude = metadata.GpsAltitude;
         }
 
         public ImageMetadata ToMetadata() => new()
@@ -282,23 +376,36 @@ internal sealed class MetadataService
             PixelWidth = PixelWidth,
             PixelHeight = PixelHeight,
             DateTaken = DateTaken,
+            FileModifiedDate = FileModifiedDate,
             CameraMake = CameraMake,
             CameraModel = CameraModel,
             FNumber = FNumber,
             ExposureTime = ExposureTime,
             Iso = Iso,
             FocalLength = FocalLength,
+            FocalLengthIn35mmFilm = FocalLengthIn35mmFilm,
+            ExposureBias = ExposureBias,
             LensModel = LensModel,
             GpsLatitude = GpsLatitude,
-            GpsLongitude = GpsLongitude
+            GpsLongitude = GpsLongitude,
+            GpsAltitude = GpsAltitude
         };
 
-        private static string? FormatExposureTime(double? exposureTime)
-        {
-            if (!exposureTime.HasValue) return null;
-            var value = exposureTime.Value;
-            return value is > 0 and < 1 ? $"1/{(int)(1 / value)}" : $"{value:F1}";
-        }
+    }
+
+    // Show subsecond exposures as 1/n only when they really are unit
+    // fractions (within float noise); 0.4s must not become 1/2s.
+    internal static string? FormatExposureTime(double? exposureTime)
+    {
+        if (!exposureTime.HasValue) return null;
+        var value = exposureTime.Value;
+        if (value is <= 0 or >= 1) return $"{value:F1}";
+
+        var reciprocal = 1 / value;
+        var rounded = Math.Round(reciprocal);
+        return Math.Abs(reciprocal - rounded) <= 0.01 * rounded
+            ? $"1/{(int)rounded}"
+            : $"{value:0.##}";
     }
 
     private sealed record MetadataExtractionResult(

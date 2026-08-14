@@ -34,6 +34,31 @@ public sealed class LibraryReviewSummaryTests : IDisposable
     }
 
     [Fact]
+    public async Task FileModifiedFallback_IsExcludedFromSelectionDateRange()
+    {
+        using var catalog = CreateCatalog("modified-fallback-catalog");
+        await using var vm = CreateViewModel(catalog, _ => Task.CompletedTask);
+        var captured = CreateImage(
+            "captured.jpg",
+            1_000,
+            new DateTime(2026, 8, 1));
+        var modifiedOnly = new ImageFile(Path.Combine(_root, "modified.jpg"));
+        modifiedOnly.ApplyMetadata(new ImageMetadata
+        {
+            FileSize = 2_000,
+            FileModifiedDate = new DateTime(2026, 8, 14)
+        });
+        vm.Library.SetImages([captured, modifiedOnly]);
+
+        vm.ToggleImageSelection(captured);
+        vm.ToggleImageSelection(modifiedOnly);
+        await vm.WaitForLibrarySelectionSummaryAsync();
+
+        Assert.Equal(new DateTime(2026, 8, 1), vm.LibrarySelectionEarliestDate);
+        Assert.Equal(new DateTime(2026, 8, 1), vm.LibrarySelectionLatestDate);
+    }
+
+    [Fact]
     public async Task MissingMetadata_FillsSeriallyAndPublishesNewestSelection()
     {
         using var catalog = CreateCatalog("delayed-catalog");

@@ -151,15 +151,19 @@ public partial class ImageFile : ObservableObject
     [ObservableProperty] private int _pixelWidth;
     [ObservableProperty] private int _pixelHeight;
     [ObservableProperty] private DateTime? _dateTaken;
+    [ObservableProperty] private DateTime? _fileModifiedDate;
     [ObservableProperty] private string? _cameraMake;
     [ObservableProperty] private string? _cameraModel;
     [ObservableProperty] private double? _fNumber;
     [ObservableProperty] private string? _exposureTime;
     [ObservableProperty] private int? _iso;
     [ObservableProperty] private double? _focalLength;
+    [ObservableProperty] private double? _focalLengthIn35mmFilm;
+    [ObservableProperty] private double? _exposureBias;
     [ObservableProperty] private string? _lensModel;
     [ObservableProperty] private double? _gpsLatitude;
     [ObservableProperty] private double? _gpsLongitude;
+    [ObservableProperty] private double? _gpsAltitude;
     [ObservableProperty] private bool _metadataLoaded;
 
     public void ApplyMetadata(ImageMetadata metadata)
@@ -168,20 +172,45 @@ public partial class ImageFile : ObservableObject
         PixelWidth = metadata.PixelWidth;
         PixelHeight = metadata.PixelHeight;
         DateTaken = metadata.DateTaken;
+        FileModifiedDate = metadata.FileModifiedDate;
         CameraMake = metadata.CameraMake;
         CameraModel = metadata.CameraModel;
         FNumber = metadata.FNumber;
         ExposureTime = metadata.ExposureTime;
         Iso = metadata.Iso;
         FocalLength = metadata.FocalLength;
+        FocalLengthIn35mmFilm = metadata.FocalLengthIn35mmFilm;
+        ExposureBias = metadata.ExposureBias;
         LensModel = metadata.LensModel;
         GpsLatitude = metadata.GpsLatitude;
         GpsLongitude = metadata.GpsLongitude;
+        GpsAltitude = metadata.GpsAltitude;
         MetadataLoaded = true;
     }
 
     // Computed metadata display properties
     public string FileSizeDisplay => FormatFileSize(FileSize);
+
+    public string? FileDetailsDisplay
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (PixelWidth > 0 && PixelHeight > 0)
+            {
+                var megapixels = PixelWidth * (double)PixelHeight / 1_000_000;
+                parts.Add($"{PixelWidth}×{PixelHeight}");
+                parts.Add($"{megapixels:F1} MP");
+            }
+            if (FileSize > 0) parts.Add(FileSizeDisplay);
+            return parts.Count > 0 ? string.Join(" · ", parts) : null;
+        }
+    }
+
+    public DateTime? DisplayDate => DateTaken ?? FileModifiedDate;
+    public bool HasCaptureDate => DateTaken.HasValue;
+    public bool IsFileModifiedDateFallback =>
+        !DateTaken.HasValue && FileModifiedDate.HasValue;
 
     internal static string FormatFileSize(long bytes) => bytes switch
     {
@@ -191,7 +220,71 @@ public partial class ImageFile : ObservableObject
         _ => $"{bytes / (1024.0 * 1024 * 1024):F2} GB"
     };
 
-    public string? CameraDisplay => string.IsNullOrEmpty(CameraModel) ? CameraMake : CameraMake + " " + CameraModel;
+    // EXIF Make values are verbatim vendor strings; LibRaw normalizes them.
+    // Map the common all-caps/suffixed forms so RAW and JPEG display match.
+    private static readonly FrozenDictionary<string, string> CameraMakeAliases =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["FUJIFILM"] = "Fujifilm",
+            ["NIKON"] = "Nikon",
+            ["CANON"] = "Canon",
+            ["SONY"] = "Sony",
+            ["OLYMPUS"] = "Olympus",
+            ["PANASONIC"] = "Panasonic",
+            ["PENTAX"] = "Pentax",
+            ["RICOH"] = "Ricoh",
+            ["SAMSUNG"] = "Samsung",
+            ["SIGMA"] = "Sigma",
+            ["LEICA"] = "Leica",
+            ["KODAK"] = "Kodak",
+            ["MINOLTA"] = "Minolta",
+            ["KONICA MINOLTA"] = "Konica Minolta"
+        }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
+
+    private static readonly string[] CameraMakeSuffixes =
+        ["CORPORATION", "COMPANY", "CO., LTD.", "CO.,LTD.", "LTD."];
+
+    internal static string? NormalizeCameraMake(string? make)
+    {
+        if (string.IsNullOrWhiteSpace(make)) return null;
+        var trimmed = make.Trim();
+        foreach (var suffix in CameraMakeSuffixes)
+        {
+            if (trimmed.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            {
+                trimmed = trimmed[..^suffix.Length].TrimEnd();
+            }
+        }
+
+        return CameraMakeAliases.TryGetValue(trimmed, out var alias)
+            ? alias
+            : trimmed;
+    }
+
+    public string? CameraDisplay
+    {
+        get
+        {
+            var make = NormalizeCameraMake(CameraMake);
+            var model = CameraModel?.Trim();
+            if (!string.IsNullOrEmpty(make) &&
+                !string.IsNullOrEmpty(model) &&
+                model.StartsWith(make, StringComparison.OrdinalIgnoreCase))
+            {
+                model = model[make.Length..].TrimStart();
+            }
+
+            var parts = new[] { make, model }
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .ToArray();
+            return parts.Length > 0 ? string.Join(" ", parts) : null;
+        }
+    }
+
+    public bool HasCameraMetadata =>
+        !string.IsNullOrEmpty(CameraDisplay) ||
+        !string.IsNullOrEmpty(LensModel) ||
+        ExposureDisplay != null;
 
     public string? ExposureDisplay
     {
@@ -202,22 +295,65 @@ public partial class ImageFile : ObservableObject
             if (FNumber.HasValue) parts.Add($"f/{FNumber:F1}");
             if (!string.IsNullOrEmpty(ExposureTime)) parts.Add($"{ExposureTime}s");
             if (Iso.HasValue) parts.Add($"ISO {Iso}");
+            if (ExposureBias is { } bias && double.IsFinite(bias) && Math.Abs(bias) >= 0.05)
+            {
+                parts.Add($"{bias:+0.0;-0.0} EV");
+            }
             return parts.Count > 0 ? string.Join("  ", parts) : null;
         }
     }
+
+    public string? ExposureTooltip =>
+        FocalLength is { } focalLength &&
+        FocalLengthIn35mmFilm is { } equivalent
+            ? $"{focalLength:F0}mm ({equivalent:F0}mm equiv)"
+            : null;
+
+    public bool HasGpsCoordinates =>
+        GpsLatitude is >= -90 and <= 90 &&
+        GpsLongitude is >= -180 and <= 180;
+
+    public bool HasLocationMetadata =>
+        HasGpsCoordinates || GpsAltitude is { } altitude && double.IsFinite(altitude);
 
     public string? GpsDisplay
     {
         get
         {
-            if (!GpsLatitude.HasValue || !GpsLongitude.HasValue) return null;
-            var latDir = GpsLatitude >= 0 ? "N" : "S";
-            var lonDir = GpsLongitude >= 0 ? "E" : "W";
-            return $"{Math.Abs(GpsLatitude.Value):F4}° {latDir}, {Math.Abs(GpsLongitude.Value):F4}° {lonDir}";
+            if (!HasGpsCoordinates) return null;
+            var latitude = GpsLatitude.GetValueOrDefault();
+            var longitude = GpsLongitude.GetValueOrDefault();
+            var latDir = latitude >= 0 ? "N" : "S";
+            var lonDir = longitude >= 0 ? "E" : "W";
+            return $"{Math.Abs(latitude):F4}° {latDir}, {Math.Abs(longitude):F4}° {lonDir}";
         }
     }
 
-    partial void OnFileSizeChanged(long value) => OnPropertyChanged(nameof(FileSizeDisplay));
+    public string? GpsAltitudeDisplay =>
+        GpsAltitude is { } altitude && double.IsFinite(altitude)
+        ? $"{altitude:F0} m altitude"
+        : null;
+
+    partial void OnFileSizeChanged(long value)
+    {
+        OnPropertyChanged(nameof(FileSizeDisplay));
+        OnPropertyChanged(nameof(FileDetailsDisplay));
+    }
+    partial void OnPixelWidthChanged(int value) =>
+        OnPropertyChanged(nameof(FileDetailsDisplay));
+    partial void OnPixelHeightChanged(int value) =>
+        OnPropertyChanged(nameof(FileDetailsDisplay));
+    partial void OnDateTakenChanged(DateTime? value)
+    {
+        OnPropertyChanged(nameof(DisplayDate));
+        OnPropertyChanged(nameof(HasCaptureDate));
+        OnPropertyChanged(nameof(IsFileModifiedDateFallback));
+    }
+    partial void OnFileModifiedDateChanged(DateTime? value)
+    {
+        OnPropertyChanged(nameof(DisplayDate));
+        OnPropertyChanged(nameof(IsFileModifiedDateFallback));
+    }
     partial void OnThumbnailChanged(Bitmap? value)
     {
         ThumbnailPixelWidth = value?.PixelSize.Width ?? 0;
@@ -227,14 +363,47 @@ public partial class ImageFile : ObservableObject
     }
     partial void OnSourceRequiresHydrationChanged(bool value) =>
         OnPropertyChanged(nameof(ShowCloudPlaceholder));
-    partial void OnCameraMakeChanged(string? value) => OnPropertyChanged(nameof(CameraDisplay));
-    partial void OnCameraModelChanged(string? value) => OnPropertyChanged(nameof(CameraDisplay));
-    partial void OnFNumberChanged(double? value) => OnPropertyChanged(nameof(ExposureDisplay));
-    partial void OnExposureTimeChanged(string? value) => OnPropertyChanged(nameof(ExposureDisplay));
-    partial void OnIsoChanged(int? value) => OnPropertyChanged(nameof(ExposureDisplay));
-    partial void OnFocalLengthChanged(double? value) => OnPropertyChanged(nameof(ExposureDisplay));
-    partial void OnGpsLatitudeChanged(double? value) => OnPropertyChanged(nameof(GpsDisplay));
-    partial void OnGpsLongitudeChanged(double? value) => OnPropertyChanged(nameof(GpsDisplay));
+    partial void OnCameraMakeChanged(string? value) => NotifyCameraDisplayChanged();
+    partial void OnCameraModelChanged(string? value) => NotifyCameraDisplayChanged();
+    partial void OnLensModelChanged(string? value) =>
+        OnPropertyChanged(nameof(HasCameraMetadata));
+    partial void OnFNumberChanged(double? value) => NotifyExposureDisplayChanged();
+    partial void OnExposureTimeChanged(string? value) => NotifyExposureDisplayChanged();
+    partial void OnIsoChanged(int? value) => NotifyExposureDisplayChanged();
+    partial void OnFocalLengthChanged(double? value)
+    {
+        NotifyExposureDisplayChanged();
+        OnPropertyChanged(nameof(ExposureTooltip));
+    }
+    partial void OnFocalLengthIn35mmFilmChanged(double? value) =>
+        OnPropertyChanged(nameof(ExposureTooltip));
+    partial void OnExposureBiasChanged(double? value) => NotifyExposureDisplayChanged();
+    partial void OnGpsLatitudeChanged(double? value) => NotifyLocationDisplayChanged();
+    partial void OnGpsLongitudeChanged(double? value) => NotifyLocationDisplayChanged();
+    partial void OnGpsAltitudeChanged(double? value)
+    {
+        OnPropertyChanged(nameof(GpsAltitudeDisplay));
+        OnPropertyChanged(nameof(HasLocationMetadata));
+    }
+
+    private void NotifyCameraDisplayChanged()
+    {
+        OnPropertyChanged(nameof(CameraDisplay));
+        OnPropertyChanged(nameof(HasCameraMetadata));
+    }
+
+    private void NotifyExposureDisplayChanged()
+    {
+        OnPropertyChanged(nameof(ExposureDisplay));
+        OnPropertyChanged(nameof(HasCameraMetadata));
+    }
+
+    private void NotifyLocationDisplayChanged()
+    {
+        OnPropertyChanged(nameof(HasGpsCoordinates));
+        OnPropertyChanged(nameof(GpsDisplay));
+        OnPropertyChanged(nameof(HasLocationMetadata));
+    }
     partial void OnFlagChanged(ImageFlag value)
     {
         OnPropertyChanged(nameof(IsPicked));

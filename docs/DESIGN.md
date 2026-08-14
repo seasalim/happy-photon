@@ -245,6 +245,14 @@ summary. Develop owns the editing controls. The left navigator retains only the 
 thumbnail and online-only download action so the folder tree receives the reclaimed
 height.
 
+The review metadata is a curated FILE, CAMERA, and LOCATION summary for every supported
+format. FILE combines dimensions, megapixels, and size; a missing capture date falls
+back to a muted file-modified date without changing capture-time semantics. CAMERA
+shows available camera, lens, and exposure rows independently, with exposure bias in
+the exposure line and 35mm-equivalent focal length in its tooltip. LOCATION shows
+coordinates and altitude when present. Missing rows remain absent rather than showing
+placeholder values.
+
 ## Elevation & Depth
 
 Elevation is communicated through **Light Emission** rather than physical shadow.

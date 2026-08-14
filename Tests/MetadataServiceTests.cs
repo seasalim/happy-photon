@@ -38,6 +38,152 @@ public sealed class MetadataServiceTests
     }
 
     [Fact]
+    public void ExtractMetadata_ReadsExtendedExifAndFileModifiedDate()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(), $"HappyPhotonExtendedMetadata_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "image.jpg");
+        var modified = new DateTime(2026, 8, 12, 9, 30, 0);
+        try
+        {
+            using (var source = new MagickImage(MagickColors.Blue, 600, 400))
+            {
+                var profile = new ExifProfile();
+                profile.SetValue(
+                    ExifTag.GPSLatitude,
+                    new[] { new Rational(47), new Rational(36), new Rational(30) });
+                profile.SetValue(ExifTag.GPSLatitudeRef, "N");
+                profile.SetValue(
+                    ExifTag.GPSLongitude,
+                    new[] { new Rational(122), new Rational(19), new Rational(15) });
+                profile.SetValue(ExifTag.GPSLongitudeRef, "W");
+                profile.SetValue(ExifTag.GPSAltitude, new Rational(12.5));
+                profile.SetValue(ExifTag.GPSAltitudeRef, (byte)1);
+                profile.SetValue(
+                    ExifTag.ExposureBiasValue,
+                    new SignedRational(2, 3));
+                profile.SetValue(ExifTag.FocalLength, new Rational(70));
+                profile.SetValue(ExifTag.FocalLengthIn35mmFilm, (ushort)105);
+                profile.SetValue(ExifTag.ExposureTime, new Rational(10, 3200));
+                source.SetProfile(profile);
+                source.Write(path, MagickFormat.Jpeg);
+            }
+            File.SetLastWriteTime(path, modified);
+
+            var metadata = MetadataService.ExtractMetadata(
+                new ImageFile(path),
+                new MagickNetRawService());
+
+            Assert.Equal(modified, metadata.FileModifiedDate);
+            Assert.Equal(47.608333, metadata.GpsLatitude!.Value, 6);
+            Assert.Equal(-122.320833, metadata.GpsLongitude!.Value, 6);
+            Assert.Equal(-12.5, metadata.GpsAltitude);
+            Assert.Equal(2.0 / 3.0, metadata.ExposureBias!.Value, 6);
+            Assert.Equal(70, metadata.FocalLength);
+            Assert.Equal(105, metadata.FocalLengthIn35mmFilm);
+            Assert.Equal("1/320", metadata.ExposureTime);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(0.4, "0.4")]
+    [InlineData(0.8, "0.8")]
+    [InlineData(0.5, "1/2")]
+    [InlineData(0.0031250001, "1/320")]
+    [InlineData(1.0 / 60, "1/60")]
+    [InlineData(2.5, "2.5")]
+    public void FormatExposureTime_KeepsNonUnitFractionsExact(
+        double seconds,
+        string expected)
+    {
+        Assert.Equal(expected, MetadataService.FormatExposureTime(seconds));
+    }
+
+    [Fact]
+    public void ExtractMetadata_RealRawAssets_ReadExposureBiasAndGps()
+    {
+        var raw = new LibRawProcessingService();
+
+        var pentax = MetadataService.ExtractMetadata(
+            new ImageFile(Path.Combine(
+                GoldenTestPaths.AssetDirectory, "pentax-k-r.dng")),
+            raw);
+        Assert.NotNull(pentax.ExposureBias);
+        Assert.Equal(-0.7, pentax.ExposureBias.Value, 3);
+
+        var canon = MetadataService.ExtractMetadata(
+            new ImageFile(Path.Combine(
+                GoldenTestPaths.AssetDirectory, "canon-eos-6d-iso-6400.cr2")),
+            raw);
+        Assert.Equal(0, canon.ExposureBias);
+        Assert.NotNull(canon.GpsLatitude);
+        Assert.Equal(47.544, canon.GpsLatitude.Value, 3);
+        Assert.NotNull(canon.GpsAltitude);
+        Assert.Equal(614.2, canon.GpsAltitude.Value, 1);
+    }
+
+    [Fact]
+    public void ExtractMetadata_RawPathSupplementsOnlyExposureBias()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(), $"HappyPhotonRawBias_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "image.dng");
+        try
+        {
+            using (var source = new MagickImage(MagickColors.Green, 20, 10))
+            {
+                var profile = new ExifProfile();
+                profile.SetValue(
+                    ExifTag.ExposureBiasValue,
+                    new SignedRational(-1, 3));
+                profile.SetValue(ExifTag.FocalLengthIn35mmFilm, (ushort)999);
+                source.SetProfile(profile);
+                source.Write(path, MagickFormat.Jpeg);
+            }
+            var raw = new FixedRawService(new RawMetadata
+            {
+                PixelWidth = 6000,
+                PixelHeight = 4000,
+                ExposureTime = 0.0031250001,
+                FocalLengthIn35mmFilm = 85,
+                GpsLatitude = 10,
+                GpsLongitude = 20,
+                GpsAltitude = 30
+            });
+
+            var supplementReads = 0;
+            var metadata = MetadataService.ExtractMetadata(
+                new ImageFile(path),
+                raw,
+                supplementPath =>
+                {
+                    supplementReads++;
+                    Assert.Equal(path, supplementPath);
+                    return -1.0 / 3.0;
+                });
+
+            Assert.Equal(6000, metadata.PixelWidth);
+            Assert.Equal("1/320", metadata.ExposureTime);
+            Assert.Equal(1, supplementReads);
+            Assert.Equal(-1.0 / 3.0, metadata.ExposureBias!.Value, 6);
+            Assert.Equal(85, metadata.FocalLengthIn35mmFilm);
+            Assert.Equal(10, metadata.GpsLatitude);
+            Assert.Equal(20, metadata.GpsLongitude);
+            Assert.Equal(30, metadata.GpsAltitude);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LoadAsync_ConcurrentCallersShareOneExtraction()
     {
         var extractionStarted = new TaskCompletionSource(
@@ -233,5 +379,12 @@ public sealed class MetadataServiceTests
                 PixelHeight = 3000
             };
         }
+    }
+
+    private sealed class FixedRawService(RawMetadata metadata) : IRawProcessingService
+    {
+        public bool IsAvailable => true;
+        public RawThumbnailData? ExtractThumbnail(string filePath) => null;
+        public RawMetadata? ExtractMetadata(string filePath) => metadata;
     }
 }

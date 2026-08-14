@@ -2,6 +2,7 @@ using System.Diagnostics;
 using ImageMagick;
 using HappyPhoton.Models;
 using Sdcb.LibRaw;
+using Sdcb.LibRaw.Natives;
 using static HappyPhoton.Services.ImageServiceHelpers;
 
 namespace HappyPhoton.Services;
@@ -130,26 +131,12 @@ public class LibRawProcessingService : IRawProcessingService
             var iParams = ctx.ImageParams;
             var other = ctx.ImageOtherParams;
 
-            var metadata = new RawMetadata
-            {
-                CameraMake = iParams.Make?.Trim(),
-                CameraModel = iParams.Model?.Trim(),
-                PixelWidth = ctx.RawWidth,
-                PixelHeight = ctx.RawHeight,
-                Iso = (int)other.IsoSpeed,
-                FNumber = other.Aperture,
-                ExposureTime = other.Shutter,
-                FocalLength = other.FocalLength,
-            };
-
-            var lens = ctx.LensInfo.Lens?.Trim();
-            metadata.LensModel = string.IsNullOrEmpty(lens) ? null : lens;
-
-            // Parse timestamp
-            if (other.Timestamp > 0)
-            {
-                metadata.DateTaken = DateTimeOffset.FromUnixTimeSeconds(other.Timestamp).DateTime;
-            }
+            var metadata = CreateMetadata(
+                iParams,
+                other,
+                ctx.LensInfo,
+                ctx.Width,
+                ctx.Height);
 
             LogDebug(ServiceName, $"Metadata: {metadata.CameraMake} {metadata.CameraModel}, ISO {metadata.Iso}", filePath);
             return metadata;
@@ -159,6 +146,105 @@ public class LibRawProcessingService : IRawProcessingService
             LogDebug(ServiceName, $"Metadata extraction failed: {ex.Message}", filePath);
             return null;
         }
+    }
+
+    internal static RawMetadata CreateMetadata(
+        LibRawImageParams imageParams,
+        LibRawImageOtherParams other,
+        LibRawLensInfo lensInfo,
+        int pixelWidth,
+        int pixelHeight)
+    {
+        var lens = lensInfo.Lens?.Trim();
+        var metadata = new RawMetadata
+        {
+            CameraMake = imageParams.Make?.Trim(),
+            CameraModel = imageParams.Model?.Trim(),
+            PixelWidth = pixelWidth,
+            PixelHeight = pixelHeight,
+            Iso = other.IsoSpeed > 0 ? (int)other.IsoSpeed : null,
+            FNumber = other.Aperture > 0 ? other.Aperture : null,
+            ExposureTime = other.Shutter > 0 ? other.Shutter : null,
+            FocalLength = other.FocalLength > 0 ? other.FocalLength : null,
+            FocalLengthIn35mmFilm = lensInfo.FocalLengthIn35mmFormat > 0
+                ? lensInfo.FocalLengthIn35mmFormat
+                : null,
+            LensModel = string.IsNullOrEmpty(lens) ? null : lens
+        };
+
+        if (other.Timestamp > 0)
+        {
+            // LibRaw parses the camera's local capture time via mktime, so
+            // converting back must also use the machine-local zone.
+            metadata.DateTaken = DateTimeOffset
+                .FromUnixTimeSeconds(other.Timestamp)
+                .LocalDateTime;
+        }
+
+        ApplyGps(metadata, other.ParsedGPS);
+        return metadata;
+    }
+
+    private static void ApplyGps(RawMetadata metadata, LibRawGPS gps)
+    {
+        if (gps.GPSParsed == 0) return;
+
+        // A parsed GPS block can still be partial (no fix, altitude-only).
+        // The reference bytes are only set for fields the camera wrote, so
+        // they gate presence; never fabricate a 0,0 or 0 m value.
+        var latitude = ToCoordinate(
+            gps.LatitudeDegrees,
+            gps.LatitudeMinutes,
+            gps.LatitudeSeconds,
+            gps.LatitudeReference,
+            (byte)'N',
+            (byte)'S');
+        var longitude = ToCoordinate(
+            gps.LongitudeDegrees,
+            gps.LongitudeMinutes,
+            gps.LongitudeSeconds,
+            gps.LongitudeReference,
+            (byte)'E',
+            (byte)'W');
+        if (latitude is >= -90 and <= 90 && longitude is >= -180 and <= 180)
+        {
+            metadata.GpsLatitude = latitude;
+            metadata.GpsLongitude = longitude;
+        }
+
+        if (float.IsFinite(gps.Altitude) &&
+            (metadata.GpsLatitude.HasValue || gps.Altitude != 0))
+        {
+            metadata.GpsAltitude = gps.AltitudeReference == 1
+                ? -Math.Abs(gps.Altitude)
+                : gps.Altitude;
+        }
+    }
+
+    private static double? ToCoordinate(
+        float degrees,
+        float minutes,
+        float seconds,
+        byte reference,
+        byte positiveReference,
+        byte negativeReference)
+    {
+        if (reference != positiveReference && reference != negativeReference)
+        {
+            return null;
+        }
+
+        if (!float.IsFinite(degrees) ||
+            !float.IsFinite(minutes) ||
+            !float.IsFinite(seconds))
+        {
+            return null;
+        }
+
+        var value = Math.Abs(degrees) +
+            Math.Abs(minutes) / 60.0 +
+            Math.Abs(seconds) / 3600.0;
+        return reference == negativeReference ? -value : value;
     }
 
     /// <summary>

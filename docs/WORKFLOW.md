@@ -98,6 +98,14 @@ selected, it also shows the selection count, capture-date range, and combined lo
 file size. Online-only originals remain excluded from those aggregates until they are
 downloaded.
 
+Hover the filename to see its containing folder. Right-click the metadata panel and
+choose **Copy details** to copy the visible rows as plain text. When coordinates are
+available, click them to open that position in OpenStreetMap. This explicit click is
+the only map action; the review pane never contacts a map service in the background.
+An altitude can still appear without coordinates, but it is not a map link. A muted
+date is the file-modified fallback used only for display, not for burst grouping or
+selection capture-date ranges.
+
 1. Choose a folder in the folder tree on the left.
 2. Click the folder or press `Enter` to move focus to the image grid.
 3. Let the first thumbnails appear, then move through the shoot with the arrow

@@ -12,6 +12,7 @@ locked for the `v0.1.0` preparation branch.
 | Avalonia.Controls.ItemsRepeater | 12.0.0 | MIT |
 | CommunityToolkit.Mvvm | 8.4.2 | MIT |
 | Magick.NET-Q16-AnyCPU | 14.15.0 | Apache-2.0 |
+| MetadataExtractor | 2.9.3 | Apache-2.0 |
 | Microsoft.Data.Sqlite | 10.0.9 | MIT |
 | Microsoft.NET.ILLink.Tasks | 10.0.8 | MIT |
 | ModelContextProtocol and ModelContextProtocol.AspNetCore | 1.4.1 | Apache-2.0 |
@@ -59,6 +60,15 @@ in
 [`licenses/Sdcb.LibRaw-runtime-audit.md`](licenses/Sdcb.LibRaw-runtime-audit.md).
 The release includes the applicable libjpeg-turbo/IJG, Little CMS, zlib, GPLv3,
 and GCC Runtime Library Exception notices.
+
+## MetadataExtractor and XmpCore
+
+Happy Photon uses MetadataExtractor 2.9.3, copyright Drew Noakes 2002-2026,
+under Apache-2.0 (text in [`licenses/Apache-2.0.txt`](licenses/Apache-2.0.txt))
+to read EXIF tags that the decode libraries do not surface. Its transitive
+dependency XmpCore 6.1.10.1 is a .NET port of Adobe's XMP SDK under the Adobe
+BSD license, preserved in
+[`licenses/XmpCore-BSD.txt`](licenses/XmpCore-BSD.txt).
 
 ## SQLite
 

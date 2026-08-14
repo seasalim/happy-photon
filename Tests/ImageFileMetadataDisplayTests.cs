@@ -1,4 +1,5 @@
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -41,6 +42,105 @@ public sealed class ImageFileMetadataDisplayTests
         image.FocalLength = 23.7;
 
         Assert.Equal("24mm", image.ExposureDisplay);
+    }
+
+    [Theory]
+    [InlineData(0.7, "+0.7 EV")]
+    [InlineData(-0.3, "-0.3 EV")]
+    public void ExposureDisplay_NonzeroBias_AppendsSignedEv(
+        double bias,
+        string expected)
+    {
+        var image = CreateImage();
+        image.Iso = 100;
+        image.ExposureBias = bias;
+
+        Assert.Equal($"ISO 100  {expected}", image.ExposureDisplay);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(0.01)]
+    [InlineData(-0.04)]
+    public void ExposureDisplay_ZeroOrTinyBias_IsHidden(double bias)
+    {
+        var image = CreateImage();
+        image.Iso = 100;
+        image.ExposureBias = bias;
+
+        Assert.Equal("ISO 100", image.ExposureDisplay);
+    }
+
+    [Fact]
+    public void EquivalentFocalLength_AppearsOnlyInExposureTooltip()
+    {
+        var image = CreateImage();
+        image.FocalLength = 70;
+        image.FocalLengthIn35mmFilm = 105;
+
+        Assert.Equal("70mm", image.ExposureDisplay);
+        Assert.Equal("70mm (105mm equiv)", image.ExposureTooltip);
+    }
+
+    [Fact]
+    public void FileDetailsDisplay_IncludesMegapixels()
+    {
+        var image = CreateImage();
+        image.FileSize = 28_4 * 1024 * 1024 / 10;
+        image.PixelWidth = 6000;
+        image.PixelHeight = 4000;
+
+        Assert.Equal(
+            "6000×4000 · 24.0 MP · 28.4 MB",
+            image.FileDetailsDisplay);
+    }
+
+    [Fact]
+    public void FileModifiedFallback_DoesNotChangeCaptureTimeSemantics()
+    {
+        var modified = new DateTime(2026, 8, 14, 12, 30, 0);
+        var image = CreateImage();
+        image.ApplyMetadata(new ImageMetadata { FileModifiedDate = modified });
+
+        Assert.Null(image.DateTaken);
+        Assert.Equal(modified, image.DisplayDate);
+        Assert.True(image.IsFileModifiedDateFallback);
+        var grouping = BurstGroupingService.ComputeGroups(
+            new[] { (image.FilePath, image.DateTaken) });
+        Assert.Empty(grouping.Groups);
+        Assert.Equal(1, grouping.ImagesWithoutTimestamp);
+    }
+
+    [Theory]
+    [InlineData("FUJIFILM", "X-T5", "Fujifilm X-T5")]
+    [InlineData("NIKON CORPORATION", "NIKON D70", "Nikon D70")]
+    [InlineData("Canon", "Canon EOS 350D", "Canon EOS 350D")]
+    [InlineData("DJI", "FC3582", "DJI FC3582")]
+    public void CameraDisplay_NormalizesMakeAndDropsRepeatedMakeInModel(
+        string make,
+        string model,
+        string expected)
+    {
+        var image = CreateImage();
+        image.CameraMake = make;
+        image.CameraModel = model;
+
+        Assert.Equal(expected, image.CameraDisplay);
+    }
+
+    [Fact]
+    public void CameraAndLocationVisibility_IncludeIndependentRows()
+    {
+        var exposureOnly = CreateImage();
+        exposureOnly.Iso = 200;
+        var altitudeOnly = CreateImage();
+        altitudeOnly.GpsAltitude = -12;
+
+        Assert.True(exposureOnly.HasCameraMetadata);
+        Assert.Null(exposureOnly.CameraDisplay);
+        Assert.True(altitudeOnly.HasLocationMetadata);
+        Assert.False(altitudeOnly.HasGpsCoordinates);
+        Assert.Equal("-12 m altitude", altitudeOnly.GpsAltitudeDisplay);
     }
 
     [Fact]

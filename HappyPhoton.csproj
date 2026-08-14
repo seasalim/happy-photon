@@ -34,28 +34,14 @@
     <Compile Remove="scripts\**\*.cs" />
     <InternalsVisibleTo Include="HappyPhoton.Tests" />
     <InternalsVisibleTo Include="HappyPhoton.Headless.Tests" />
-    <AssemblyMetadata Include="BuildTimestampUtc"
-                      Value="$(BuildTimestampUtc)"
-                      Condition="'$(BuildTimestampUtc)' != ''" />
-    <AssemblyMetadata Include="SourceRevision"
-                      Value="$(SourceRevision)"
-                      Condition="'$(SourceRevision)' != ''" />
-    <AssemblyMetadata Include="RepositoryUrl"
-                      Value="$(RepositoryUrl)"
-                      Condition="'$(RepositoryUrl)' != ''" />
-    <None Update="LICENSE" CopyToOutputDirectory="PreserveNewest"
-          CopyToPublishDirectory="Always" />
-    <None Update="THIRD_PARTY_NOTICES.md" CopyToOutputDirectory="PreserveNewest"
-          CopyToPublishDirectory="Always" />
-    <None Update="TRADEMARKS.md" CopyToOutputDirectory="PreserveNewest"
-          CopyToPublishDirectory="Always" />
-    <None Update="licenses\**" CopyToOutputDirectory="PreserveNewest"
-          CopyToPublishDirectory="Always" />
-    <None Include="runtimes/osx-arm64/native/libraw.23.dylib"
-          Condition="$([MSBuild]::IsOSPlatform('OSX')) Or '$(RuntimeIdentifier)' == 'osx-arm64'"
-          Link="libraw.23.dylib"
-          CopyToOutputDirectory="PreserveNewest"
-          CopyToPublishDirectory="Always" />
+    <AssemblyMetadata Include="BuildTimestampUtc" Value="$(BuildTimestampUtc)" Condition="'$(BuildTimestampUtc)' != ''" />
+    <AssemblyMetadata Include="SourceRevision" Value="$(SourceRevision)" Condition="'$(SourceRevision)' != ''" />
+    <AssemblyMetadata Include="RepositoryUrl" Value="$(RepositoryUrl)" Condition="'$(RepositoryUrl)' != ''" />
+    <None Update="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Update="THIRD_PARTY_NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Update="TRADEMARKS.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Update="licenses\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Include="runtimes/osx-arm64/native/libraw.23.dylib" Condition="$([MSBuild]::IsOSPlatform('OSX')) Or '$(RuntimeIdentifier)' == 'osx-arm64'" Link="libraw.23.dylib" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,6 +55,7 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.4" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.15.0" />
+    <PackageReference Include="MetadataExtractor" Version="2.9.3" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.9" />
     <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.8" PrivateAssets="all" />
     <PackageReference Include="ModelContextProtocol" Version="1.4.1" />
@@ -80,9 +67,7 @@
     <PackageReference Include="Sdcb.LibRaw.runtime.linux64" Version="0.21.1" />
   </ItemGroup>
 
-  <Target Name="RemoveReleasePublishSymbols"
-          AfterTargets="Publish"
-          Condition="'$(Configuration)' == 'Release'">
+  <Target Name="RemoveReleasePublishSymbols" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>
       <ReleasePublishSymbols Include="$(PublishDir)**\*.pdb" />
     </ItemGroup>
