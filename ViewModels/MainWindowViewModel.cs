@@ -438,6 +438,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         await _catalogService.SaveEditSettingsAsync(imageFile.CatalogId, imageFile.EditSettings);
     }
 
+    /// <summary>
+    /// The crop to preview with. In crop mode an explicit full-image region
+    /// makes RenderGeometry keep the whole rotated canvas (a null crop would
+    /// auto-apply the horizon safe crop), so the overlay's normalized
+    /// coordinates line up with the displayed bitmap.
+    /// </summary>
+    private CropRegion? PreviewCrop() => IsCropMode ? new CropRegion() : CurrentCrop;
+
     private async Task UpdatePreviewWithCurrentSliders(bool skipHistogram = false, CancellationToken cancellationToken = default)
     {
         var selectedImage = SelectedImage;
@@ -448,7 +456,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         SaveSlidersTo(tempSettings);
         tempSettings.Rotation = Rotation;
         tempSettings.HorizonRotation = HorizonRotation;
-        tempSettings.Crop = IsCropMode ? null : CurrentCrop;
+        tempSettings.Crop = PreviewCrop();
         tempSettings.Curve = CurrentCurve ?? new CurveData();
 
         // Use cached preview for fast slider updates (avoids re-decoding from disk)

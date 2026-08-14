@@ -16,8 +16,12 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 ```
 
 `RenderGeometry` owns the rotation and crop sequence, including
-`CropGeometry.SafeBoundsAfterRotation`, `ResetPage`, and crop intersection. The
-remaining stages operate on that geometry result in a fixed order.
+`CropGeometry.SafeBoundsAfterRotation`, `ResetPage`, and crop intersection.
+Crop contract with horizon rotation: a null crop auto-applies the horizon safe
+bounds, while an explicit full-image crop keeps the whole rotated canvas — the
+crop tool previews with a full-image crop so the overlay's normalized
+coordinates match the displayed bitmap. The remaining stages operate on that
+geometry result in a fixed order.
 
 ### 1.1 Request contract
 

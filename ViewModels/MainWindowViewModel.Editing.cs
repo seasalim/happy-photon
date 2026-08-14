@@ -193,7 +193,7 @@ public partial class MainWindowViewModel
             var previewSettings = EditSettingsTransfer.CopySubset(preset.Settings);
             previewSettings.Rotation = Rotation;
             previewSettings.HorizonRotation = HorizonRotation;
-            previewSettings.Crop = IsCropMode ? null : CurrentCrop;
+            previewSettings.Crop = PreviewCrop();
 
             var (preview, _) = await ImageService.ApplyEditsToPreviewAsync(
                 SelectedImage, previewSettings, skipHistogram: true, token);
@@ -254,8 +254,8 @@ public partial class MainWindowViewModel
             {
                 Rotation = Rotation,
                 HorizonRotation = HorizonRotation,
-                // In crop mode, show uncropped image so user can see full image with overlay
-                Crop = IsCropMode ? null : CurrentCrop,
+                // In crop mode, show the full canvas so the overlay stays aligned
+                Crop = PreviewCrop(),
                 Curve = new CurveData()
             };
 

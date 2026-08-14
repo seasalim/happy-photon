@@ -30,9 +30,11 @@ internal static class GeometryReferenceRenderer
 
         var effectiveCrop = settings.Crop == null
             ? safeCrop
-            : safeCrop == null
-                ? settings.Crop
-                : CropGeometry.Intersect(settings.Crop, safeCrop);
+            : settings.Crop.IsFullImage
+                ? null
+                : safeCrop == null
+                    ? settings.Crop
+                    : CropGeometry.Intersect(settings.Crop, safeCrop);
         if (effectiveCrop == null || effectiveCrop.IsFullImage)
         {
             return;

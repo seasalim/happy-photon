@@ -51,6 +51,15 @@ internal static class RenderGeometry
             return safeCrop;
         }
 
+        // An explicit full-image crop requests the whole rotated canvas; the
+        // crop tool previews this way so its overlay coordinates match the
+        // displayed bitmap. Only a missing crop falls back to the automatic
+        // horizon safe bounds.
+        if (crop.IsFullImage)
+        {
+            return null;
+        }
+
         return safeCrop == null ? crop : CropGeometry.Intersect(crop, safeCrop);
     }
 }
