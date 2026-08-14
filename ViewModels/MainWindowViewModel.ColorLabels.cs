@@ -50,11 +50,23 @@ public partial class MainWindowViewModel
 
         var targets = ResolveActionTargets().Targets;
         if (targets.Count == 0) return;
+        var actedOnImage = targets.Count == 1 ? targets[0] : null;
+        var previousColorLabel =
+            actedOnImage?.ColorLabel ?? ColorLabel.None;
         var next = colorLabel != ColorLabel.None &&
                    targets.All(image => image.ColorLabel == colorLabel)
             ? ColorLabel.None
             : colorLabel;
-        if (targets.All(image => image.ColorLabel == next)) return;
+        if (targets.All(image => image.ColorLabel == next))
+        {
+            if (actedOnImage != null)
+            {
+                ShowAssessmentFeedback(
+                    actedOnImage,
+                    DescribeColorFeedback(next, previousColorLabel));
+            }
+            return;
+        }
         var selectedImage = SelectedImage;
         var replacement = selectedImage != null &&
                           targets.Contains(selectedImage) &&
@@ -97,5 +109,24 @@ public partial class MainWindowViewModel
         {
             ShowTransientStatus($"Labeled {targets.Count} photos");
         }
+        else if (actedOnImage != null &&
+                 ReferenceEquals(SelectedImage, actedOnImage))
+        {
+            ShowAssessmentFeedback(
+                actedOnImage,
+                DescribeColorFeedback(next, previousColorLabel));
+        }
     }
+
+    private string DescribeColorFeedback(
+        ColorLabel next,
+        ColorLabel previous) =>
+        next != ColorLabel.None
+            ? $"Set color: {ColorLabelName(next)}"
+            : previous != ColorLabel.None
+                ? $"Unset color: {ColorLabelName(previous)}"
+                : "Unset color";
+
+    private string ColorLabelName(ColorLabel label) =>
+        _colorLabelNames.GetValueOrDefault(label, label.ToString());
 }

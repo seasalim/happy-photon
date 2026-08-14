@@ -159,6 +159,10 @@ photograph. In Develop they affect only the active photograph. Pick and Reject a
 the whole target set unless every target already has that flag, in which case they
 clear it.
 
+Develop confirms each flag, rating, and color-label change briefly over the
+photograph — "Set flag: Picked", "Unset rating: ★★★" — and shows nothing between
+changes. Library remains where a photograph's current assessment is on display.
+
 Unflagged is useful for undecided frames. Rejected does not delete a file, and
 Picked does not automatically select it for export.
 

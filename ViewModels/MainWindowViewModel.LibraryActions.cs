@@ -202,12 +202,23 @@ public partial class MainWindowViewModel
     {
         var targets = ResolveActionTargets().Targets;
         if (targets.Count == 0) return;
+        var actedOnImage = targets.Count == 1 ? targets[0] : null;
+        var previousFlag = actedOnImage?.Flag ?? ImageFlag.Unflagged;
 
         var next = toggleUniform && flag != ImageFlag.Unflagged &&
                    targets.All(image => image.Flag == flag)
             ? ImageFlag.Unflagged
             : flag;
-        if (targets.All(image => image.Flag == next)) return;
+        if (targets.All(image => image.Flag == next))
+        {
+            if (actedOnImage != null)
+            {
+                ShowAssessmentFeedback(
+                    actedOnImage,
+                    DescribeFlagFeedback(next, previousFlag));
+            }
+            return;
+        }
 
         var selectedImage = SelectedImage;
         var replacement = selectedImage != null &&
@@ -256,7 +267,23 @@ public partial class MainWindowViewModel
             };
             ShowTransientStatus($"{action} {targets.Count} photos");
         }
+        else if (actedOnImage != null &&
+                 ReferenceEquals(SelectedImage, actedOnImage))
+        {
+            ShowAssessmentFeedback(
+                actedOnImage,
+                DescribeFlagFeedback(next, previousFlag));
+        }
     }
+
+    private static string DescribeFlagFeedback(
+        ImageFlag next,
+        ImageFlag previous) =>
+        next != ImageFlag.Unflagged
+            ? $"Set flag: {next}"
+            : previous != ImageFlag.Unflagged
+                ? $"Unset flag: {previous}"
+                : "Unset flag";
 
     [RelayCommand]
     private async Task SetRatingAsync(int rating)
@@ -265,8 +292,19 @@ public partial class MainWindowViewModel
 
         rating = Math.Clamp(rating, 0, 5);
         var targets = ResolveActionTargets().Targets;
-        if (targets.Count == 0 ||
-            targets.All(image => image.Rating == rating)) return;
+        if (targets.Count == 0) return;
+        var actedOnImage = targets.Count == 1 ? targets[0] : null;
+        var previousRating = actedOnImage?.Rating ?? 0;
+        if (targets.All(image => image.Rating == rating))
+        {
+            if (actedOnImage != null)
+            {
+                ShowAssessmentFeedback(
+                    actedOnImage,
+                    DescribeRatingFeedback(rating, previousRating));
+            }
+            return;
+        }
 
         var selectedImage = SelectedImage;
         var replacement = selectedImage != null &&
@@ -310,5 +348,19 @@ public partial class MainWindowViewModel
         {
             ShowTransientStatus($"Rated {targets.Count} photos");
         }
+        else if (actedOnImage != null &&
+                 ReferenceEquals(SelectedImage, actedOnImage))
+        {
+            ShowAssessmentFeedback(
+                actedOnImage,
+                DescribeRatingFeedback(rating, previousRating));
+        }
     }
+
+    private static string DescribeRatingFeedback(int next, int previous) =>
+        next > 0
+            ? $"Set rating: {new string('★', next)}"
+            : previous > 0
+                ? $"Unset rating: {new string('★', previous)}"
+                : "Unset rating";
 }

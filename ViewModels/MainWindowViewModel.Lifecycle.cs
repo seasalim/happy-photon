@@ -42,6 +42,7 @@ public partial class MainWindowViewModel
         CancelAndDispose(ref _histogramDebounce);
         CancelAndDispose(ref _thumbnailDebounce);
         CancelAndDispose(ref _transientStatusCts);
+        CancelAndDispose(ref _assessmentFeedbackCts);
         await DrainBackgroundActivityAsync();
 
         if (_imageService.IsValueCreated)

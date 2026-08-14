@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.AssessmentFeedbackOverlay"
+             x:DataType="vm:MainWindowViewModel"
+             IsHitTestVisible="False">
+    <UserControl.Styles>
+        <Style Selector="Border.feedback">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity"
+                                      Duration="0:0:0.16"
+                                      Easing="QuadraticEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.feedback.visible">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid x:Name="AssessmentFeedbackOverlayContent"
+          IsVisible="{Binding AssessmentFeedback, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <Border x:Name="AssessmentFeedbackPresenter"
+                Classes="feedback"
+                Classes.visible="{Binding IsAssessmentFeedbackVisible}">
+            <!-- Sits over the photograph, so legibility cannot rely on a known
+                 background: full opacity, and a soft dark halo that carries the
+                 text across bright frames without adding a boxed banner. -->
+            <TextBlock Text="{Binding AssessmentFeedback}"
+                       FontFamily="{StaticResource FontLabel}"
+                       FontSize="18"
+                       FontWeight="Medium"
+                       Foreground="{DynamicResource TextPrimary}">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="Black"
+                                      BlurRadius="10"
+                                      OffsetX="0"
+                                      OffsetY="1"
+                                      Opacity="0.85"/>
+                </TextBlock.Effect>
+            </TextBlock>
+        </Border>
+    </Grid>
+</UserControl>

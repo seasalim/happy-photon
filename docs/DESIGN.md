@@ -246,11 +246,14 @@ summary. Develop owns the editing controls. The left navigator retains only the 
 thumbnail and online-only download action so the folder tree receives the reclaimed
 height.
 
-The Develop control bar keeps assessment status in a compact, fixed-width cluster so
-flag or color-label changes never move its action buttons. Picked reuses the
-assessment bar's flag glyph, filled with the muted teal of the Library selection
-badge; Rejected uses a bare error-red ×; Unflagged leaves the icon slot empty. A color-label dot uses the configured label
-color and name; rating stars retain their existing behavior.
+The Develop control bar carries actions only. Flag, color-label, and rating state
+remains visible in Library rather than resting anywhere over the Develop or full-screen
+viewer. Develop culling shortcuts briefly show a confirmation centered over the
+photograph and clear of its bottom edge, then fade it out. Unlike the app's persistent
+overlays, this one is not muted: it appears for barely a second over unknown
+photograph content, so it uses primary text at full opacity with a soft dark halo for
+legibility over bright frames. It stays chrome-less — the halo replaces a boxed banner
+rather than joining one.
 
 The review metadata is a curated FILE, CAMERA, and LOCATION summary for every supported
 format. FILE combines dimensions, megapixels, and size; a missing capture date falls
