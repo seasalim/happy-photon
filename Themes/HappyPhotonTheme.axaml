@@ -40,6 +40,8 @@
 
     <SolidColorBrush x:Key="Primary" Color="{StaticResource PrimaryColor}"/>
     <SolidColorBrush x:Key="PrimaryContainer" Color="{StaticResource PrimaryContainerColor}"/>
+    <!-- Softened accent for the active-image ring so it does not overpower photo content -->
+    <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource PrimaryContainerColor}" Opacity="0.77"/>
     <SolidColorBrush x:Key="PrimaryHover" Color="{StaticResource PrimaryHoverColor}"/>
     <SolidColorBrush x:Key="OnPrimary" Color="{StaticResource OnPrimaryColor}"/>
     <SolidColorBrush x:Key="Secondary" Color="{StaticResource SecondaryColor}"/>

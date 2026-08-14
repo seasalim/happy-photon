@@ -26,9 +26,12 @@
         <Style Selector="Border.burst-stripe.highlighted">
             <Setter Property="Opacity" Value="1.0"/>
         </Style>
+        <!-- Tile radius stays concentric with the image's radius 8 plus the 7px border+padding inset -->
         <Style Selector="Border.thumbnail">
             <Setter Property="Background" Value="{DynamicResource SurfaceLow}"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="BorderThickness" Value="2"/>
         </Style>
         <Style Selector="Border.thumbnail:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
@@ -37,7 +40,14 @@
             <Setter Property="Background" Value="{DynamicResource SelectionSurface}"/>
         </Style>
         <Style Selector="Border.thumbnail.active">
-            <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource ActiveImageRing}"/>
+        </Style>
+        <Style Selector="Border.img-hairline">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="Border.thumbnail.active Border.img-hairline">
+            <Setter Property="BorderBrush" Value="{DynamicResource SurfaceLowest}"/>
         </Style>
         <Style Selector="RadioButton.thumbnail-size">
             <Setter Property="Width" Value="24"/>
@@ -190,15 +200,14 @@
                 </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate DataType="models:ImageFile">
-                        <Border Padding="5" CornerRadius="8"
+                        <Border Padding="5"
                                 Classes="thumbnail"
                                 Classes.selected="{Binding IsSelected}"
                                 Classes.active="{Binding IsActive}"
                                 PointerPressed="OnThumbnailPointerPressed"
                                 PointerEntered="OnThumbnailPointerEntered"
                                 PointerExited="OnThumbnailPointerExited"
-                                DoubleTapped="OnThumbnailDoubleTapped"
-                                BorderThickness="3">
+                                DoubleTapped="OnThumbnailDoubleTapped">
                             <StackPanel>
                                 <Panel Width="{Binding $parent[views:LibraryGridView].ImageViewportWidth}"
                                        Height="{Binding $parent[views:LibraryGridView].ImageViewportHeight}">
@@ -233,6 +242,8 @@
                                             </StackPanel>
                                         </Panel>
                                     </Border>
+                                    <Border Classes="img-hairline" CornerRadius="8"
+                                            IsHitTestVisible="False"/>
                                     <Border Background="{DynamicResource SurfaceHighest}"
                                             BorderBrush="{StaticResource PrimaryContainer}"
                                             BorderThickness="1"
