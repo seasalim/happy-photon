@@ -52,7 +52,7 @@
                     <TextBlock Text="Theme" Foreground="{DynamicResource TextSecondary}"/>
                     <ComboBox x:Name="ThemeChoice" SelectionChanged="OnThemeChanged">
                         <ComboBoxItem Content="Dark"/>
-                        <ComboBoxItem Content="Mid-gray"/>
+                        <ComboBoxItem Content="Middle Gray"/>
                     </ComboBox>
                     <TextBlock Text="Changes apply immediately and are shared by the application."
                                Classes="setting-note"/>

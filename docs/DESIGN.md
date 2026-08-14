@@ -172,7 +172,9 @@ Avoid muddy colors. Use high-saturation tones and implement luminosity masks to 
 
 ### Application themes
 
-Dark is the default. Mid-gray is the second persistent theme and keeps the same
+The themes present as **Dark** (the default) and **Middle Gray** in the UI; the
+Middle Gray internal identifier remains `MidGray` because that spelling matches the
+enum naming style. Middle Gray keeps the same
 cyan, magenta, and semantic accents while raising the neutral chrome. Its photograph
 surround is `#777777`, the nearest integer sRGB encoding of CIE L\* 50. That code
 value is about 47% of the encoded channel range but decodes to roughly 18.4% relative
@@ -182,12 +184,12 @@ and color management; Happy Photon therefore targets the display-referred L\* 50
 reference and documents its close relationship to 18% gray rather than treating a
 reflectance card as the implementation value.
 
-Mid-gray remains a dark-family theme with light text. Its chrome ramp stays below the
-surround, and text is placed on darker cards rather than directly on `#777777`.
-Every chrome neutral in the Mid-gray dictionary is strictly achromatic (R=G=B); the
+Middle Gray remains a dark-family theme with light text. Its chrome ramp stays below
+the surround, and text is placed on darker cards rather than directly on `#777777`.
+Every chrome neutral in the Middle Gray dictionary is strictly achromatic (R=G=B); the
 Dark theme's teal-tinted neutral family stays out of this variant so nothing near the
 photograph carries a color cast. Accents that border photo pixels also get muted
-Mid-gray variants — the active-image ring (`#6cc9d1`) and the selection check mark
+Middle Gray variants — the active-image ring (`#6cc9d1`) and the selection check mark
 (`#9adfe4`) trade the electric cyan for reduced chroma, limiting simultaneous-contrast
 shifts against the L\* 50 surround while staying recognizably in the accent family.
 `AssessmentGray` uses the same shipped value but is an invariant assessment reference,

@@ -126,7 +126,7 @@
                                       IsChecked="{Binding IsDarkTheme, Mode=OneWay}"
                                       Command="{Binding SetAppThemeCommand}"
                                       CommandParameter="{x:Static models:AppTheme.Dark}"/>
-                            <MenuItem Header="Mid-gray"
+                            <MenuItem Header="Middle Gray"
                                       ToggleType="Radio"
                                       IsChecked="{Binding IsMidGrayTheme, Mode=OneWay}"
                                       Command="{Binding SetAppThemeCommand}"
