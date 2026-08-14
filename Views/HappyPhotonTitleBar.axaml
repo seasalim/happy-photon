@@ -12,8 +12,7 @@
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="FontFamily" Value="{StaticResource FontHeading}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="BorderThickness" Value="0,0,0,2"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="Padding" Value="20,8"/>
             <Setter Property="FontSize" Value="13"/>
@@ -24,7 +23,12 @@
         </Style>
         <Style Selector="Button.tab.active">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
+        <Style Selector="Button.tab Rectangle.tabUnderline">
+            <Setter Property="Fill" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.tab.active Rectangle.tabUnderline">
+            <Setter Property="Fill" Value="{StaticResource PrimaryContainer}"/>
         </Style>
         <Style Selector="Button.caption">
             <Setter Property="Width" Value="46"/>
@@ -102,12 +106,20 @@
                         chrome:WindowDecorationProperties.ElementRole="User">
                 <Button Classes="tab" Classes.active="{Binding !IsDevelopMode}"
                         Command="{Binding SwitchToLibraryCommand}" Focusable="False"
-                        IsEnabled="{Binding IsWorkspaceInteractionEnabled}"
-                        Content="Library"/>
+                        IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="Library"/>
+                        <Rectangle Classes="tabUnderline" Height="2" Margin="-4,0"/>
+                    </StackPanel>
+                </Button>
                 <Button Classes="tab" Classes.active="{Binding IsDevelopMode}"
                         Command="{Binding SwitchToDevelopCommand}" Focusable="False"
-                        IsEnabled="{Binding IsWorkspaceInteractionEnabled}"
-                        Content="Develop"/>
+                        IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="Develop"/>
+                        <Rectangle Classes="tabUnderline" Height="2" Margin="-4,0"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
