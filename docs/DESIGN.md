@@ -172,25 +172,25 @@ Avoid muddy colors. Use high-saturation tones and implement luminosity masks to 
 
 ### Application themes
 
-Dark is the default. Mid-grey is the second persistent theme and keeps the same
+Dark is the default. Mid-gray is the second persistent theme and keeps the same
 cyan, magenta, and semantic accents while raising the neutral chrome. Its photograph
 surround is `#777777`, the nearest integer sRGB encoding of CIE L\* 50. That code
 value is about 47% of the encoded channel range but decodes to roughly 18.4% relative
-luminance because sRGB is nonlinear. The familiar 18% photographic grey describes a
+luminance because sRGB is nonlinear. The familiar 18% photographic gray describes a
 physical reflectance convention whose displayed appearance also depends on lighting
 and color management; Happy Photon therefore targets the display-referred L\* 50
-reference and documents its close relationship to 18% grey rather than treating a
+reference and documents its close relationship to 18% gray rather than treating a
 reflectance card as the implementation value.
 
-Mid-grey remains a dark-family theme with light text. Its chrome ramp stays below the
+Mid-gray remains a dark-family theme with light text. Its chrome ramp stays below the
 surround, and text is placed on darker cards rather than directly on `#777777`.
-Every chrome neutral in the Mid-grey dictionary is strictly achromatic (R=G=B); the
+Every chrome neutral in the Mid-gray dictionary is strictly achromatic (R=G=B); the
 Dark theme's teal-tinted neutral family stays out of this variant so nothing near the
 photograph carries a color cast. Accents that border photo pixels also get muted
-Mid-grey variants — the active-image ring (`#6cc9d1`) and the selection check mark
+Mid-gray variants — the active-image ring (`#6cc9d1`) and the selection check mark
 (`#9adfe4`) trade the electric cyan for reduced chroma, limiting simultaneous-contrast
 shifts against the L\* 50 surround while staying recognizably in the accent family.
-`AssessmentGrey` uses the same shipped value but is an invariant assessment reference,
+`AssessmentGray` uses the same shipped value but is an invariant assessment reference,
 not an alias to the theme surround. `AssessmentWhite` is the invariant `#FFFFFF`
 reference band used with it. Theme resources live in
 `Themes/HappyPhotonTheme.axaml`; code-drawn photograph overlays use the matching

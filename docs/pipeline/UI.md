@@ -4,7 +4,7 @@ UI surface for the pipeline rework. Follows AGENTS.md UI conventions and
 `docs/DESIGN.md` tokens throughout: `CompactSlider` for edit controls, uppercase
 `section-label` group headers, 20px between groups, theme tokens only (active states =
 `PrimaryContainer` cyan, passive edit badges = `Tertiary` lavender), no hardcoded hex.
-`ViewerSurround` is the variant-specific image surround; `AssessmentGrey` and
+`ViewerSurround` is the variant-specific image surround; `AssessmentGray` and
 `AssessmentWhite` are the invariant color-assessment references. They are deliberately
 distinct from themed resources and must not be aliased. Color assessment mode is a
 session-only viewer composition and never changes render settings or output pixels.

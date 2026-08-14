@@ -60,13 +60,13 @@ public sealed class ColorAssessmentScreenshotTests
 
             vm.ToggleColorAssessmentModeCommand.Execute(null);
             vm.TransientStatus = null;
-            application.RequestedThemeVariant = HappyPhotonThemes.MidGrey;
+            application.RequestedThemeVariant = HappyPhotonThemes.MidGray;
             Dispatcher.UIThread.RunJobs();
-            Capture(window, "Screenshot_Develop_Assessment_MidGrey_Off.png");
+            Capture(window, "Screenshot_Develop_Assessment_MidGray_Off.png");
 
             vm.ToggleColorAssessmentModeCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
-            Capture(window, "Screenshot_Develop_Assessment_MidGrey_On.png");
+            Capture(window, "Screenshot_Develop_Assessment_MidGray_On.png");
         }
         finally
         {

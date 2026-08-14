@@ -15,7 +15,7 @@ public partial class MainWindowViewModel
     private bool _isAppearanceSettingsReady;
 
     public bool IsDarkTheme => AppTheme == AppTheme.Dark;
-    public bool IsMidGreyTheme => AppTheme == AppTheme.MidGrey;
+    public bool IsMidGrayTheme => AppTheme == AppTheme.MidGray;
 
     public void RestoreAppTheme(AppTheme value)
     {
@@ -35,7 +35,7 @@ public partial class MainWindowViewModel
     partial void OnAppThemeChanged(AppTheme value)
     {
         OnPropertyChanged(nameof(IsDarkTheme));
-        OnPropertyChanged(nameof(IsMidGreyTheme));
+        OnPropertyChanged(nameof(IsMidGrayTheme));
 
         if (!_restoringAppTheme && IsAppearanceSettingsReady)
         {

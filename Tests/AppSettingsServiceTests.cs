@@ -30,7 +30,7 @@ public sealed class AppSettingsServiceTests : IDisposable
             FirstRunExperienceVersion = 1,
             FileTypeFilter = ImageFileTypeFilter.Raw,
             LibraryThumbnailSize = LibraryThumbnailSize.Large,
-            AppTheme = AppTheme.MidGrey,
+            AppTheme = AppTheme.MidGray,
             StripLocationData = true,
             OutputSharpening = false,
             McpServerEnabled = true,
@@ -43,7 +43,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(@"C:\Photos\Shoot", loaded.SelectedFolderPath);
         Assert.Equal(ImageFileTypeFilter.Raw, loaded.FileTypeFilter);
         Assert.Equal(LibraryThumbnailSize.Large, loaded.LibraryThumbnailSize);
-        Assert.Equal(AppTheme.MidGrey, loaded.AppTheme);
+        Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
         Assert.True(loaded.StripLocationData);
         Assert.False(loaded.OutputSharpening);
         Assert.True(loaded.McpServerEnabled);
@@ -108,11 +108,11 @@ public sealed class AppSettingsServiceTests : IDisposable
     {
         using var catalog = new CatalogService(_catalogPath);
         await catalog.InitializeAsync();
-        await catalog.SetAppSettingAsync("AppTheme", "midgrey");
+        await catalog.SetAppSettingAsync("AppTheme", "midgray");
 
         var loaded = await new AppSettingsService(catalog).LoadAsync();
 
-        Assert.Equal(AppTheme.MidGrey, loaded.AppTheme);
+        Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         {
             FileTypeFilter = ImageFileTypeFilter.Jpeg,
             LibraryThumbnailSize = LibraryThumbnailSize.Small,
-            AppTheme = AppTheme.MidGrey,
+            AppTheme = AppTheme.MidGray,
             StripLocationData = true,
             OutputSharpening = false,
             McpServerEnabled = true,
@@ -145,7 +145,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(1, loaded.FirstRunExperienceVersion);
         Assert.Equal(ImageFileTypeFilter.Jpeg, loaded.FileTypeFilter);
         Assert.Equal(LibraryThumbnailSize.Small, loaded.LibraryThumbnailSize);
-        Assert.Equal(AppTheme.MidGrey, loaded.AppTheme);
+        Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
         Assert.True(loaded.StripLocationData);
         Assert.False(loaded.OutputSharpening);
         Assert.True(loaded.McpServerEnabled);

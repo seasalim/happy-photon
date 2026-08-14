@@ -12,17 +12,17 @@ public sealed class ThemeResourceTests
     public static TheoryData<ThemeVariant> Variants => new()
     {
         ThemeVariant.Dark,
-        HappyPhotonThemes.MidGrey
+        HappyPhotonThemes.MidGray
     };
 
     [AvaloniaFact]
-    public void AssessmentGrey_IsInvariantAndMatchesShippedMidGreySurround()
+    public void AssessmentGray_IsInvariantAndMatchesShippedMidGraySurround()
     {
-        var dark = Brush("AssessmentGrey", ThemeVariant.Dark).Color;
-        var mid = Brush("AssessmentGrey", HappyPhotonThemes.MidGrey).Color;
+        var dark = Brush("AssessmentGray", ThemeVariant.Dark).Color;
+        var mid = Brush("AssessmentGray", HappyPhotonThemes.MidGray).Color;
         var surround = Brush(
             "ViewerSurround",
-            HappyPhotonThemes.MidGrey).Color;
+            HappyPhotonThemes.MidGray).Color;
 
         Assert.Equal(Color.Parse("#777777"), dark);
         Assert.Equal(dark, mid);
@@ -33,7 +33,7 @@ public sealed class ThemeResourceTests
     public void AssessmentWhite_IsInvariantAndKeepsOneBrushInstance()
     {
         var dark = Brush("AssessmentWhite", ThemeVariant.Dark);
-        var mid = Brush("AssessmentWhite", HappyPhotonThemes.MidGrey);
+        var mid = Brush("AssessmentWhite", HappyPhotonThemes.MidGray);
 
         Assert.Equal(Color.Parse("#FFFFFF"), dark.Color);
         Assert.Same(dark, mid);
@@ -54,7 +54,7 @@ public sealed class ThemeResourceTests
     }
 
     [AvaloniaFact]
-    public void MidGrey_ChromeNeutralsAreStrictlyAchromatic()
+    public void MidGray_ChromeNeutralsAreStrictlyAchromatic()
     {
         foreach (var key in new[]
         {
@@ -65,7 +65,7 @@ public sealed class ThemeResourceTests
             "ViewerSurround", "FullScreenBackdrop", "SelectionSurface"
         })
         {
-            var color = Brush(key, HappyPhotonThemes.MidGrey).Color;
+            var color = Brush(key, HappyPhotonThemes.MidGray).Color;
             Assert.True(
                 color.R == color.G && color.G == color.B,
                 $"{key} resolved to {color}, which carries a color cast.");
@@ -116,12 +116,12 @@ public sealed class ThemeResourceTests
             HappyPhotonColors.BurstIce,
             HappyPhotonColors.BurstPink,
             HappyPhotonColors.BurstViolet,
-            HappyPhotonColors.MidGreyBurstCyan,
-            HappyPhotonColors.MidGreyBurstMagenta,
-            HappyPhotonColors.MidGreyBurstPurple,
-            HappyPhotonColors.MidGreyBurstIce,
-            HappyPhotonColors.MidGreyBurstPink,
-            HappyPhotonColors.MidGreyBurstViolet,
+            HappyPhotonColors.MidGrayBurstCyan,
+            HappyPhotonColors.MidGrayBurstMagenta,
+            HappyPhotonColors.MidGrayBurstPurple,
+            HappyPhotonColors.MidGrayBurstIce,
+            HappyPhotonColors.MidGrayBurstPink,
+            HappyPhotonColors.MidGrayBurstViolet,
         })
         {
             var color = Assert.IsType<SolidColorBrush>(hue).Color;

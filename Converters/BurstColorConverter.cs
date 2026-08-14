@@ -19,14 +19,14 @@ public class BurstColorConverter : IMultiValueConverter
         Views.HappyPhotonColors.BurstViolet,
     };
 
-    private static readonly IBrush[] MidGreyPalette =
+    private static readonly IBrush[] MidGrayPalette =
     {
-        HappyPhotonColors.MidGreyBurstCyan,
-        HappyPhotonColors.MidGreyBurstMagenta,
-        HappyPhotonColors.MidGreyBurstPurple,
-        HappyPhotonColors.MidGreyBurstIce,
-        HappyPhotonColors.MidGreyBurstPink,
-        HappyPhotonColors.MidGreyBurstViolet,
+        HappyPhotonColors.MidGrayBurstCyan,
+        HappyPhotonColors.MidGrayBurstMagenta,
+        HappyPhotonColors.MidGrayBurstPurple,
+        HappyPhotonColors.MidGrayBurstIce,
+        HappyPhotonColors.MidGrayBurstPink,
+        HappyPhotonColors.MidGrayBurstViolet,
     };
 
     public object Convert(
@@ -37,8 +37,8 @@ public class BurstColorConverter : IMultiValueConverter
     {
         var palette = values.Count > 1 &&
                       values[1] is ThemeVariant theme &&
-                      theme == HappyPhotonThemes.MidGrey
-            ? MidGreyPalette
+                      theme == HappyPhotonThemes.MidGray
+            ? MidGrayPalette
             : DarkPalette;
         var index = values.Count > 0 && values[0] is int value && value >= 0
             ? value

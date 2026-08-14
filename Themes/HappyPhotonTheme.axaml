@@ -7,9 +7,9 @@
 
     <!-- The color-assessment reference is invariant across application themes.
          #777777 is the sRGB encoding nearest CIE L* 50. It is intentionally
-         independent from the MidGrey viewer token so either can evolve safely. -->
-    <Color x:Key="AssessmentGreyColor">#777777</Color>
-    <SolidColorBrush x:Key="AssessmentGrey" Color="{StaticResource AssessmentGreyColor}"/>
+         independent from the MidGray viewer token so either can evolve safely. -->
+    <Color x:Key="AssessmentGrayColor">#777777</Color>
+    <SolidColorBrush x:Key="AssessmentGray" Color="{StaticResource AssessmentGrayColor}"/>
     <Color x:Key="AssessmentWhiteColor">#FFFFFF</Color>
     <SolidColorBrush x:Key="AssessmentWhite" Color="{StaticResource AssessmentWhiteColor}"/>
 
@@ -175,7 +175,7 @@
             <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{StaticResource OnPrimaryColor}"/>
         </ResourceDictionary>
 
-        <ResourceDictionary x:Key="{x:Static views:HappyPhotonThemes.MidGrey}">
+        <ResourceDictionary x:Key="{x:Static views:HappyPhotonThemes.MidGray}">
             <!-- Neutral chrome stays below the L* 50 image surround. -->
             <Color x:Key="SurfaceLowestColor">#303030</Color>
             <Color x:Key="SurfaceBaseColor">#363636</Color>

@@ -137,31 +137,31 @@ public sealed class ColorAssessmentViewTests
         {
             var surround = viewer.FindControl<Panel>("SurroundLayer")!;
             var mat = viewer.FindControl<Border>("AssessmentMat")!;
-            var grey = ThemeResourceTests.Brush(
-                "AssessmentGrey",
+            var gray = ThemeResourceTests.Brush(
+                "AssessmentGray",
                 ThemeVariant.Dark);
             var white = ThemeResourceTests.Brush(
                 "AssessmentWhite",
                 ThemeVariant.Dark);
 
-            Assert.Same(grey, surround.Background);
+            Assert.Same(gray, surround.Background);
             Assert.Same(white, mat.Background);
 
-            application.RequestedThemeVariant = HappyPhotonThemes.MidGrey;
+            application.RequestedThemeVariant = HappyPhotonThemes.MidGray;
             Dispatcher.UIThread.RunJobs();
 
-            Assert.Same(grey, surround.Background);
+            Assert.Same(gray, surround.Background);
             Assert.Same(white, mat.Background);
             Assert.Same(
-                grey,
+                gray,
                 ThemeResourceTests.Brush(
-                    "AssessmentGrey",
-                    HappyPhotonThemes.MidGrey));
+                    "AssessmentGray",
+                    HappyPhotonThemes.MidGray));
             Assert.Same(
                 white,
                 ThemeResourceTests.Brush(
                     "AssessmentWhite",
-                    HappyPhotonThemes.MidGrey));
+                    HappyPhotonThemes.MidGray));
         }
         finally
         {

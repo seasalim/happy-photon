@@ -126,11 +126,11 @@
                                       IsChecked="{Binding IsDarkTheme, Mode=OneWay}"
                                       Command="{Binding SetAppThemeCommand}"
                                       CommandParameter="{x:Static models:AppTheme.Dark}"/>
-                            <MenuItem Header="Mid-grey"
+                            <MenuItem Header="Mid-gray"
                                       ToggleType="Radio"
-                                      IsChecked="{Binding IsMidGreyTheme, Mode=OneWay}"
+                                      IsChecked="{Binding IsMidGrayTheme, Mode=OneWay}"
                                       Command="{Binding SetAppThemeCommand}"
-                                      CommandParameter="{x:Static models:AppTheme.MidGrey}"/>
+                                      CommandParameter="{x:Static models:AppTheme.MidGray}"/>
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>

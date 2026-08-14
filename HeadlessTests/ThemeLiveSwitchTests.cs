@@ -92,7 +92,7 @@ public sealed class ThemeLiveSwitchTests
             Assert.Equal(0.32, reset.Opacity);
             Assert.Equal(Color.Parse("#849495"), ColorOf(reset.Foreground));
 
-            vm.SetAppThemeCommand.Execute(AppTheme.MidGrey);
+            vm.SetAppThemeCommand.Execute(AppTheme.MidGray);
             Dispatcher.UIThread.RunJobs();
             // The thumbnail brushes fade over 130ms; advance past the
             // transition so the assertions sample settled colors.
@@ -101,9 +101,9 @@ public sealed class ThemeLiveSwitchTests
             Dispatcher.UIThread.RunJobs();
 
             Assert.Same(originalWindow, window);
-            Assert.Equal(HappyPhotonThemes.MidGrey, Application.Current.RequestedThemeVariant);
-            Assert.Equal(AppTheme.MidGrey, vm.AppTheme);
-            Assert.True(vm.IsMidGreyTheme);
+            Assert.Equal(HappyPhotonThemes.MidGray, Application.Current.RequestedThemeVariant);
+            Assert.Equal(AppTheme.MidGray, vm.AppTheme);
+            Assert.True(vm.IsMidGrayTheme);
             Assert.False(vm.IsDarkTheme);
             Assert.Equal(1, persistCount);
             Assert.Equal(Color.Parse("#777777"), ColorOf(library.Background));
@@ -178,9 +178,9 @@ public sealed class ThemeLiveSwitchTests
             Dispatcher.UIThread.RunJobs();
             AssertDisabledControls(controls, Avalonia.Styling.ThemeVariant.Dark);
 
-            Application.Current.RequestedThemeVariant = HappyPhotonThemes.MidGrey;
+            Application.Current.RequestedThemeVariant = HappyPhotonThemes.MidGray;
             Dispatcher.UIThread.RunJobs();
-            AssertDisabledControls(controls, HappyPhotonThemes.MidGrey);
+            AssertDisabledControls(controls, HappyPhotonThemes.MidGray);
         }
         finally
         {

@@ -9,7 +9,7 @@
 
     <UserControl.Styles>
         <Style Selector="Panel#SurroundLayer.assessment-on">
-            <Setter Property="Background" Value="{StaticResource AssessmentGrey}"/>
+            <Setter Property="Background" Value="{StaticResource AssessmentGray}"/>
         </Style>
         <Style Selector="Border#AssessmentMat.assessment-on">
             <Setter Property="Background" Value="{StaticResource AssessmentWhite}"/>
