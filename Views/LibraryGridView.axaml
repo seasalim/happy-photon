@@ -32,6 +32,12 @@
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="CornerRadius" Value="14"/>
             <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.13" Easing="QuadraticEaseOut"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.13" Easing="QuadraticEaseOut"/>
+                </Transitions>
+            </Setter>
         </Style>
         <Style Selector="Border.thumbnail:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
@@ -45,6 +51,11 @@
         <Style Selector="Border.img-hairline">
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.13" Easing="QuadraticEaseOut"/>
+                </Transitions>
+            </Setter>
         </Style>
         <Style Selector="Border.thumbnail.active Border.img-hairline">
             <Setter Property="BorderBrush" Value="{DynamicResource SurfaceLowest}"/>

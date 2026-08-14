@@ -94,6 +94,11 @@ public sealed class ThemeLiveSwitchTests
 
             vm.SetAppThemeCommand.Execute(AppTheme.MidGrey);
             Dispatcher.UIThread.RunJobs();
+            // The thumbnail brushes fade over 130ms; advance past the
+            // transition so the assertions sample settled colors.
+            await Task.Delay(250);
+            Avalonia.Headless.AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+            Dispatcher.UIThread.RunJobs();
 
             Assert.Same(originalWindow, window);
             Assert.Equal(HappyPhotonThemes.MidGrey, Application.Current.RequestedThemeVariant);
