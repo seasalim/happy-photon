@@ -58,8 +58,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="models:ColorLabelFilterChoice">
-                    <Button Classes.filter="{Binding IsAllChoice}"
-                            Classes.swatch="{Binding !IsAllChoice}"
+                    <Button Classes="swatch"
                             Click="OnFilterClick"
                             Tag="{Binding Value}"
                             ToolTip.Tip="{Binding ToolTip}"
@@ -83,8 +82,6 @@
                                 <Path Width="8" Height="8" Data="M 1,1 L 7,7"
                                       StrokeThickness="1.4" StrokeLineCap="Round"/>
                             </Border>
-                            <TextBlock Text="{Binding Name}"
-                                       IsVisible="{Binding IsAllChoice}"/>
                         </Panel>
                     </Button>
                 </DataTemplate>

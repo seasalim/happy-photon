@@ -163,11 +163,11 @@ public partial class LibraryGridView : UserControl
     public LibraryGridView()
     {
         InitializeComponent();
-        UpdateFilterButtons();
-        UpdateFlagFilterButtons();
-        UpdateRatingFilterButton();
+        UpdateFilterBar();
         UpdateBurstsButton();
         UpdateThumbnailSizeButtons();
+        FilterScrollViewer.ScrollChanged += OnFilterScrollChanged;
+        FilterScrollViewer.SizeChanged += OnFilterScrollViewerSizeChanged;
         ThumbnailScrollViewer.ScrollChanged += OnThumbnailScrollChanged;
         LayoutUpdated += OnLayoutUpdated;
     }
@@ -208,10 +208,6 @@ public partial class LibraryGridView : UserControl
         else if (change.Property == FlagFilterProperty)
         {
             UpdateFlagFilterButtons();
-        }
-        else if (change.Property == MinimumRatingProperty)
-        {
-            UpdateRatingFilterButton();
         }
         else if (change.Property == ShowBurstsProperty)
         {
@@ -266,30 +262,13 @@ public partial class LibraryGridView : UserControl
     private void UpdateEmptyState()
     {
         var isEmpty = Images == null || Images.Count == 0;
+        var isFilteredEmpty = isEmpty && TotalImageCount > 0;
         EmptyHeading.Text = EmptyHeadingText;
         EmptyMessage.Text = EmptyMessageText;
-        EmptyState.IsVisible = isEmpty;
+        EmptyState.IsVisible = isEmpty && !isFilteredEmpty;
+        FilteredEmptyState.IsVisible = isFilteredEmpty;
         ThumbnailGrid.IsVisible = !isEmpty;
     }
-
-    private void UpdateFilterButtons()
-    {
-        FilterAllButton.Classes.Set("active", FileTypeFilter == ImageFileTypeFilter.All);
-        FilterRawButton.Classes.Set("active", FileTypeFilter == ImageFileTypeFilter.Raw);
-        FilterJpegButton.Classes.Set("active", FileTypeFilter == ImageFileTypeFilter.Jpeg);
-    }
-
-    private void UpdateFlagFilterButtons()
-    {
-        FlagFilterAllButton.Classes.Set("active", FlagFilter == HappyPhoton.Models.FlagFilter.All);
-        FlagFilterPickedButton.Classes.Set("active", FlagFilter == HappyPhoton.Models.FlagFilter.Picked);
-        FlagFilterRejectedButton.Classes.Set("active", FlagFilter == HappyPhoton.Models.FlagFilter.Rejected);
-    }
-
-    private void UpdateRatingFilterButton() =>
-        RatingFilterAllButton.Classes.Set("active", MinimumRating == 0);
-
-    private void UpdateBurstsButton() => BurstsButton.Classes.Set("active", ShowBursts);
 
     private void UpdateThumbnailSizeButtons()
     {
@@ -406,42 +385,5 @@ public partial class LibraryGridView : UserControl
     {
         DeleteRejectedRequested?.Invoke(this, EventArgs.Empty);
     }
-
-    private void OnFilterAllClick(object? sender, RoutedEventArgs e)
-    {
-        FileTypeFilter = ImageFileTypeFilter.All;
-    }
-
-    private void OnFilterRawClick(object? sender, RoutedEventArgs e)
-    {
-        FileTypeFilter = ImageFileTypeFilter.Raw;
-    }
-
-    private void OnFilterJpegClick(object? sender, RoutedEventArgs e)
-    {
-        FileTypeFilter = ImageFileTypeFilter.Jpeg;
-    }
-
-    private void OnFlagFilterAllClick(object? sender, RoutedEventArgs e) =>
-        FlagFilter = HappyPhoton.Models.FlagFilter.All;
-
-    private void OnFlagFilterPickedClick(object? sender, RoutedEventArgs e)
-    {
-        FlagFilter = FlagFilter == HappyPhoton.Models.FlagFilter.Picked
-            ? HappyPhoton.Models.FlagFilter.All
-            : HappyPhoton.Models.FlagFilter.Picked;
-    }
-
-    private void OnFlagFilterRejectedClick(object? sender, RoutedEventArgs e)
-    {
-        FlagFilter = FlagFilter == HappyPhoton.Models.FlagFilter.Rejected
-            ? HappyPhoton.Models.FlagFilter.All
-            : HappyPhoton.Models.FlagFilter.Rejected;
-    }
-
-    private void OnRatingFilterAllClick(object? sender, RoutedEventArgs e) =>
-        MinimumRating = 0;
-
-    private void OnBurstsClick(object? sender, RoutedEventArgs e) => ShowBursts = !ShowBursts;
 
 }

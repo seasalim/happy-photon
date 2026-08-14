@@ -1,8 +1,10 @@
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
+using Avalonia.Threading;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -114,12 +116,17 @@ public sealed class ColorLabelUiTests
 
         var picked = control.FindControl<Button>("FlagFilterPickedButton")!;
         var rejected = control.FindControl<Button>("FlagFilterRejectedButton")!;
-        var flagAll = control.FindControl<Button>("FlagFilterAllButton")!;
-        var ratingAll = control.FindControl<Button>("RatingFilterAllButton")!;
+        var raw = control.FindControl<Button>("FilterRawButton")!;
+        var jpeg = control.FindControl<Button>("FilterJpegButton")!;
         var bursts = control.FindControl<Button>("BurstsButton")!;
         var filterLabel = control.FindControl<TextBlock>("FilterLabel")!;
-        Assert.Equal("Bursts", bursts.Content);
-        Assert.Contains("filter", bursts.Classes);
+        Assert.IsType<PathIcon>(bursts.Content);
+        Assert.Contains("view-toggle", bursts.Classes);
+        Assert.DoesNotContain("filter", bursts.Classes);
+        Assert.Contains(
+            bursts,
+            control.FindControl<StackPanel>("ThumbnailSizePanel")!
+                .GetLogicalDescendants().OfType<Button>());
         Assert.Equal("Filter", filterLabel.Text);
         Assert.Equal("Picked", picked.Content);
         Assert.Equal("Rejected", rejected.Content);
@@ -127,17 +134,23 @@ public sealed class ColorLabelUiTests
             Assert.Contains("filter", button.Classes));
         Assert.Equal("Group bursts", ToolTip.GetTip(bursts));
         Assert.Equal("Group bursts", AutomationProperties.GetName(bursts));
-        Assert.Contains("active", flagAll.Classes);
-        Assert.Contains("active", ratingAll.Classes);
+        Assert.Null(control.FindControl<Button>("FilterAllButton"));
+        Assert.Null(control.FindControl<Button>("FlagFilterAllButton"));
+        Assert.Null(control.FindControl<Button>("RatingFilterAllButton"));
+
+        Click(raw);
+        Assert.Equal(ImageFileTypeFilter.Raw, control.FileTypeFilter);
+        Assert.Contains("active", raw.Classes);
+        Click(raw);
+        Assert.Equal(ImageFileTypeFilter.All, control.FileTypeFilter);
+        Assert.DoesNotContain("active", raw.Classes);
+        Click(jpeg);
+        Click(jpeg);
+        Assert.Equal(ImageFileTypeFilter.All, control.FileTypeFilter);
 
         Click(picked);
         Assert.Equal(FlagFilter.Picked, control.FlagFilter);
         Assert.Contains("active", picked.Classes);
-        Assert.DoesNotContain("active", flagAll.Classes);
-        Click(flagAll);
-        Assert.Equal(FlagFilter.All, control.FlagFilter);
-        Assert.Contains("active", flagAll.Classes);
-        Click(picked);
         Click(picked);
         Assert.Equal(FlagFilter.All, control.FlagFilter);
         Assert.DoesNotContain("active", picked.Classes);
@@ -154,11 +167,6 @@ public sealed class ColorLabelUiTests
         Assert.Equal(0, thirdStar.BorderThickness.Left);
         Click(thirdStar);
         Assert.Equal(3, control.MinimumRating);
-        Assert.DoesNotContain("active", ratingAll.Classes);
-        Click(ratingAll);
-        Assert.Equal(0, control.MinimumRating);
-        Assert.Contains("active", ratingAll.Classes);
-        Click(thirdStar);
         Click(thirdStar);
         Assert.Equal(0, control.MinimumRating);
 
@@ -221,7 +229,7 @@ public sealed class ColorLabelUiTests
     }
 
     [AvaloniaFact]
-    public void LabelFilter_AllAndSwatchesResetTheGroup()
+    public void LabelFilter_SwatchesResetTheGroupOnReclick()
     {
         using var catalog = new CatalogService(NewRoot());
         var vm = NewViewModel(catalog);
@@ -236,7 +244,7 @@ public sealed class ColorLabelUiTests
         var window = new Window { Content = control };
         window.Show();
 
-        Assert.Contains(
+        Assert.DoesNotContain(
             control.Choices,
             choice => choice.Value == ColorLabelFilter.All);
         var buttons = control.GetLogicalDescendants()
@@ -246,17 +254,6 @@ public sealed class ColorLabelUiTests
         Assert.Equal(control.Choices.Count, buttons.Length);
         Assert.All(buttons, button => Assert.False(string.IsNullOrWhiteSpace(
             AutomationProperties.GetName(button))));
-
-        var all = Assert.Single(
-            buttons,
-            button => Equals(button.Tag, ColorLabelFilter.All));
-        Assert.Equal("Show all labels", AutomationProperties.GetName(all));
-        Assert.Equal("Show all labels", ToolTip.GetTip(all));
-        Assert.Contains(
-            all.GetLogicalDescendants().OfType<TextBlock>(),
-            text => text.Text == "All");
-        Assert.Contains("filter", all.Classes);
-        Assert.DoesNotContain("swatch", all.Classes);
 
         var none = Assert.Single(
             buttons,
@@ -289,12 +286,168 @@ public sealed class ColorLabelUiTests
         Click(red);
         Assert.Equal(ColorLabelFilter.Red, control.Filter);
         Assert.Equal(HappyPhotonColors.Primary, redDot.BorderBrush);
-        Click(all);
-        Assert.Equal(ColorLabelFilter.All, control.Filter);
-        Click(red);
         Click(red);
         Assert.Equal(ColorLabelFilter.All, control.Filter);
 
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task ClearAction_ResetsAllFiltersAndUsesFinalResultForSelection()
+    {
+        var root = NewRoot();
+        using var catalog = new CatalogService(Path.Combine(root, "catalog"));
+        var vm = NewViewModel(catalog);
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        var first = new ImageFile(Path.Combine(root, "first.jpg"));
+        var second = new ImageFile(Path.Combine(root, "second.cr2"))
+        {
+            Flag = ImageFlag.Picked,
+            Rating = 5,
+            ColorLabel = ColorLabel.Red
+        };
+        vm.Library.SetImages([first, second]);
+        var window = new MainWindow { DataContext = vm };
+
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var control = window.FindControl<LibraryGridView>("LibraryGridView")!;
+            vm.Library.FileTypeFilter = ImageFileTypeFilter.Raw;
+            vm.Library.FlagFilter = FlagFilter.Picked;
+            vm.Library.MinimumRating = 5;
+            vm.Library.ColorLabelFilter = ColorLabelFilter.Purple;
+            vm.SelectedImage = null;
+            Dispatcher.UIThread.RunJobs();
+
+            var filteredEmpty = control.FindControl<StackPanel>("FilteredEmptyState")!;
+            Assert.True(filteredEmpty.IsVisible);
+            var filterChanges = 0;
+            var stateChanges = 0;
+            vm.Library.FilterChanged += (_, _) => filterChanges++;
+            vm.Library.StateChanged += (_, _) => stateChanges++;
+
+            Click(control.FindControl<Button>("FilteredEmptyClearButton")!);
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(ImageFileTypeFilter.All, vm.Library.FileTypeFilter);
+            Assert.Equal(FlagFilter.All, vm.Library.FlagFilter);
+            Assert.Equal(0, vm.Library.MinimumRating);
+            Assert.Equal(ColorLabelFilter.All, vm.Library.ColorLabelFilter);
+            Assert.Equal(ImageFileTypeFilter.All, control.FileTypeFilter);
+            Assert.Equal(FlagFilter.All, control.FlagFilter);
+            Assert.Equal(0, control.MinimumRating);
+            Assert.Equal(ColorLabelFilter.All, control.ColorLabelFilter);
+            Assert.DoesNotContain(
+                "active",
+                control.FindControl<Button>("FilterRawButton")!.Classes);
+            Assert.DoesNotContain(
+                "active",
+                control.FindControl<Button>("FlagFilterPickedButton")!.Classes);
+            Assert.Equal(1, filterChanges);
+            Assert.Equal(1, stateChanges);
+            Assert.Same(first, vm.SelectedImage);
+            Assert.False(filteredEmpty.IsVisible);
+        }
+        finally
+        {
+            window.DataContext = null;
+            window.Close();
+            await vm.DisposeAsync();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task FilteredEmptyState_ClearsFiltersWithoutReplacingFolderEmptyPanel()
+    {
+        var root = NewRoot();
+        using var catalog = new CatalogService(Path.Combine(root, "catalog"));
+        var vm = NewViewModel(catalog);
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        vm.Library.SetImages(
+            [new ImageFile(Path.Combine(root, "first.jpg"))]);
+        var window = new MainWindow { DataContext = vm };
+
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var control = window.FindControl<LibraryGridView>("LibraryGridView")!;
+            vm.Library.ColorLabelFilter = ColorLabelFilter.Purple;
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.True(control.FindControl<StackPanel>("FilteredEmptyState")!.IsVisible);
+            Assert.Contains(
+                control.FindControl<StackPanel>("FilteredEmptyState")!
+                    .GetLogicalDescendants().OfType<TextBlock>(),
+                text => text.Text == "No images match the current filters");
+            Assert.False(control.FindControl<Border>("EmptyState")!.IsVisible);
+            Assert.False(control.FindControl<ItemsRepeater>("ThumbnailGrid")!.IsVisible);
+
+            Click(control.FindControl<Button>("FilteredEmptyClearButton")!);
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(ColorLabelFilter.All, vm.Library.ColorLabelFilter);
+            Assert.Single(vm.Library.VisibleImages);
+            Assert.False(control.FindControl<StackPanel>("FilteredEmptyState")!.IsVisible);
+
+            vm.Library.SetImages([]);
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.True(control.FindControl<Border>("EmptyState")!.IsVisible);
+            Assert.False(control.FindControl<StackPanel>("FilteredEmptyState")!.IsVisible);
+        }
+        finally
+        {
+            window.DataContext = null;
+            window.Close();
+            await vm.DisposeAsync();
+        }
+    }
+
+    [AvaloniaFact]
+    public void FilterOverflowFades_TrackBothEdgesAndResizeBackToFit()
+    {
+        using var catalog = new CatalogService(NewRoot());
+        var control = new LibraryGridView { DataContext = NewViewModel(catalog) };
+        var window = new Window
+        {
+            Width = 1600,
+            Height = 500,
+            Content = control
+        };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var scroll = control.FindControl<ScrollViewer>("FilterScrollViewer")!;
+        var left = control.FindControl<Border>("FilterLeftFade")!;
+        var right = control.FindControl<Border>("FilterRightFade")!;
+        Assert.False(left.IsHitTestVisible);
+        Assert.False(right.IsHitTestVisible);
+        Assert.False(left.IsVisible);
+        Assert.False(right.IsVisible);
+
+        window.Width = 650;
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(scroll.Extent.Width > scroll.Viewport.Width);
+        Assert.False(left.IsVisible);
+        Assert.True(right.IsVisible);
+
+        var maximumOffset = scroll.Extent.Width - scroll.Viewport.Width;
+        scroll.Offset = new Vector(maximumOffset / 2, 0);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(left.IsVisible);
+        Assert.True(right.IsVisible);
+
+        scroll.Offset = new Vector(maximumOffset, 0);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(left.IsVisible);
+        Assert.False(right.IsVisible);
+
+        window.Width = 1600;
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(left.IsVisible);
+        Assert.False(right.IsVisible);
         window.Close();
     }
 

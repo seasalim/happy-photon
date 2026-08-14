@@ -109,6 +109,31 @@ public partial class LibraryImageState : ObservableObject
         FilterChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    public void ClearFilters()
+    {
+#pragma warning disable MVVMTK0034 // Atomic multi-property update requires backing fields.
+        var fileTypeChanged = _fileTypeFilter != ImageFileTypeFilter.All;
+        var flagChanged = _flagFilter != HappyPhoton.Models.FlagFilter.All;
+        var ratingChanged = _minimumRating != 0;
+        var colorLabelChanged = _colorLabelFilter != ColorLabelFilter.All;
+        if (!fileTypeChanged && !flagChanged && !ratingChanged && !colorLabelChanged)
+            return;
+
+        _fileTypeFilter = ImageFileTypeFilter.All;
+        _flagFilter = HappyPhoton.Models.FlagFilter.All;
+        _minimumRating = 0;
+        _colorLabelFilter = ColorLabelFilter.All;
+
+        if (fileTypeChanged) OnPropertyChanged(nameof(FileTypeFilter));
+        if (flagChanged) OnPropertyChanged(nameof(FlagFilter));
+        if (ratingChanged) OnPropertyChanged(nameof(MinimumRating));
+        if (colorLabelChanged) OnPropertyChanged(nameof(ColorLabelFilter));
+
+        ApplyFilter();
+        FilterChanged?.Invoke(this, EventArgs.Empty);
+#pragma warning restore MVVMTK0034
+    }
+
     public bool ContainsVisible(ImageFile? image) =>
         image != null && VisibleImages.Contains(image);
 

@@ -235,7 +235,8 @@ Color labels use fixed red, yellow, green, blue, and purple visual slots. Librar
 thumbnails show the assigned color as a round marker in the lower-right corner, kept
 clear of the burst stripe on the left edge and the online-only badge above it. The
 assessment and filter controls generate their swatches from the append-only label enum;
-the filter row shows swatches alone and carries each name in its tooltip.
+the filter row shows swatches alone and carries each name in its tooltip; clearing is
+a re-click on the active swatch rather than an All swatch.
 
 - **Buttons:** Primary buttons should feature a subtle inner glow and a soft drop-shadow in the primary color. On hover, the luminosity increases.
 - **Input Fields:** Use a "Ghost" style—thin 1px borders in a muted neutral, turning to Electric Cyan on focus with a faint outer glow.

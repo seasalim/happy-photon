@@ -175,18 +175,18 @@ always describes the active photograph, not the selected target set.
 The Library filter bar uses labeled groups of compact controls that can be
 combined to show:
 
-- all files, RAW files, or JPEG files;
-- all flags, picked images, or rejected images;
-- all ratings or a minimum rating chosen from the five-star strip;
-- all color labels, no label, or one named color.
+- RAW or JPEG files;
+- picked or rejected images;
+- a minimum rating chosen from the five-star strip;
+- no label or one named color.
 
-Each **Flag**, **Rating**, and **Labels** group starts with an **All** button.
 For example, choose **Picked** and click the third star to review
 photographs rated three stars or more that are most likely to be delivered.
-Use **All**, or re-click the active flag button, current threshold star, or
-color swatch, to clear that filter group. Changing a flag or rating while a filter is
-active can make the current image disappear when it no longer matches; Happy
-Photon advances to another visible image.
+Re-click any active file type, flag, threshold star, or color swatch to clear that
+filter group. If nothing matches, the grid says so in place and offers a **Clear**
+action that resets every group at once. Changing a flag or rating while a filter is
+active can make the current image disappear when it no longer matches; Happy Photon
+advances to another visible image.
 
 **Delete Rejected** is a separate, destructive cleanup action. After
 confirmation, it moves every rejected image in the open folder to the operating

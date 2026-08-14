@@ -57,6 +57,11 @@ public sealed class WorkflowTourDimmingTests
                 "ImageAssessment")!;
             var thumbnailSizePanel = library.FindControl<StackPanel>(
                 "ThumbnailSizePanel")!;
+            var burstsButton = library.FindControl<Button>("BurstsButton")!;
+            Assert.Contains(
+                burstsButton,
+                thumbnailSizePanel.GetLogicalDescendants().OfType<Button>());
+            Assert.Contains("tour-region", thumbnailSizePanel.Classes);
             Control[] tourRegions =
             [
                 leftPanel,

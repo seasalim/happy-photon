@@ -23,9 +23,10 @@ public partial class MainWindowViewModel
 
     public IReadOnlyList<ColorLabelFilterChoice> ColorLabelFilterChoices =>
         Enum.GetValues<ColorLabelFilter>()
+            .Where(filter => filter != ColorLabelFilter.All)
             .Select(filter =>
             {
-                if (filter is ColorLabelFilter.All or ColorLabelFilter.None)
+                if (filter == ColorLabelFilter.None)
                     return new ColorLabelFilterChoice(filter, filter.ToString());
                 var label = (ColorLabel)((int)filter - 1);
                 return new ColorLabelFilterChoice(

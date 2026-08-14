@@ -35,7 +35,6 @@ public sealed record ColorLabelFilterChoice(ColorLabelFilter Value, string Name)
     public bool IsColorSlot =>
         Value is not (ColorLabelFilter.All or ColorLabelFilter.None);
     public bool IsNoneSlot => Value == ColorLabelFilter.None;
-    public bool IsAllChoice => Value == ColorLabelFilter.All;
 
     public string ToolTip => Value switch
     {

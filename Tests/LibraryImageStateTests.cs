@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using HappyPhoton.Models;
 using HappyPhoton.ViewModels;
 using Xunit;
@@ -128,6 +129,53 @@ public sealed class LibraryImageStateTests
     }
 
     [Fact]
+    public void ClearFilters_ResetsEveryAxisInOneBatch()
+    {
+        var state = CreateState(
+            CreateImage("first.jpg"),
+            CreateImage("second.cr2", rating: 5, flag: ImageFlag.Picked));
+        state.FileTypeFilter = ImageFileTypeFilter.Raw;
+        state.FlagFilter = FlagFilter.Picked;
+        state.MinimumRating = 5;
+        state.ColorLabelFilter = ColorLabelFilter.Red;
+        var filterChanges = 0;
+        var stateChanges = 0;
+        var propertyChanges = new List<string>();
+        state.FilterChanged += (_, _) => filterChanges++;
+        state.StateChanged += (_, _) => stateChanges++;
+        state.PropertyChanged += (_, e) => TrackFilterProperty(e, propertyChanges);
+
+        state.ClearFilters();
+
+        Assert.Equal(ImageFileTypeFilter.All, state.FileTypeFilter);
+        Assert.Equal(FlagFilter.All, state.FlagFilter);
+        Assert.Equal(0, state.MinimumRating);
+        Assert.Equal(ColorLabelFilter.All, state.ColorLabelFilter);
+        Assert.Equal(2, state.VisibleCount);
+        Assert.Equal(1, filterChanges);
+        Assert.Equal(1, stateChanges);
+        Assert.Equal(
+            [nameof(state.FileTypeFilter), nameof(state.FlagFilter),
+             nameof(state.MinimumRating), nameof(state.ColorLabelFilter)],
+            propertyChanges);
+    }
+
+    [Fact]
+    public void ClearFilters_WhenAlreadyClear_DoesNotNotify()
+    {
+        var state = CreateState(CreateImage("first.jpg"));
+        var filterChanges = 0;
+        var stateChanges = 0;
+        state.FilterChanged += (_, _) => filterChanges++;
+        state.StateChanged += (_, _) => stateChanges++;
+
+        state.ClearFilters();
+
+        Assert.Equal(0, filterChanges);
+        Assert.Equal(0, stateChanges);
+    }
+
+    [Fact]
     public void Contains_TracksSetAndRemovalByReference()
     {
         var first = CreateImage("same.jpg");
@@ -140,5 +188,18 @@ public sealed class LibraryImageStateTests
         state.Remove(first);
 
         Assert.False(state.Contains(first));
+    }
+
+    private static void TrackFilterProperty(
+        PropertyChangedEventArgs args,
+        ICollection<string> changes)
+    {
+        if (args.PropertyName is nameof(LibraryImageState.FileTypeFilter) or
+            nameof(LibraryImageState.FlagFilter) or
+            nameof(LibraryImageState.MinimumRating) or
+            nameof(LibraryImageState.ColorLabelFilter))
+        {
+            changes.Add(args.PropertyName);
+        }
     }
 }

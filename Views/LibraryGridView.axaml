@@ -75,53 +75,6 @@
             <Setter Property="Opacity" Value="0.8"/>
             <Setter Property="RenderTransform" Value="scale(1)"/>
         </Style>
-        <Style Selector="RadioButton.thumbnail-size">
-            <Setter Property="Width" Value="24"/>
-            <Setter Property="Height" Value="24"/>
-            <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
-            <Setter Property="Opacity" Value="0.62"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <ControlTemplate>
-                    <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="3">
-                        <ContentPresenter Content="{TemplateBinding Content}"
-                                          ContentTemplate="{TemplateBinding ContentTemplate}"
-                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                    </Border>
-                </ControlTemplate>
-            </Setter>
-        </Style>
-        <Style Selector="RadioButton.thumbnail-size:pointerover">
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-            <Setter Property="Opacity" Value="0.86"/>
-        </Style>
-        <Style Selector="RadioButton.thumbnail-size:checked">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Opacity" Value="0.82"/>
-        </Style>
-        <Style Selector="RadioButton.thumbnail-size:checked:pointerover">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Opacity" Value="1"/>
-        </Style>
-        <Style Selector="RadioButton.thumbnail-size:focus-visible">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Opacity" Value="1"/>
-        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto">
@@ -133,18 +86,17 @@
                 <TextBlock x:Name="FilterLabel"
                            Classes="tour-region"
                            Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                           Text="Filter" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                           Text="Filter" FontSize="10" Foreground="{DynamicResource TextMuted}"
+                           FontFamily="{StaticResource FontLabel}"
                            VerticalAlignment="Center" Margin="0,0,7,0"/>
 
-                <ScrollViewer x:Name="FilterScrollViewer"
-                              Grid.Column="1"
-                              Classes="tour-region"
-                              Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                              HorizontalScrollBarVisibility="Hidden"
-                              VerticalScrollBarVisibility="Disabled">
-                    <StackPanel Orientation="Horizontal" Spacing="5">
-                        <Button x:Name="FilterAllButton" Content="All" Classes="filter"
-                                Click="OnFilterAllClick"/>
+                <Grid Grid.Column="1" ClipToBounds="True">
+                    <ScrollViewer x:Name="FilterScrollViewer"
+                                  Classes="tour-region"
+                                  Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                                  HorizontalScrollBarVisibility="Hidden"
+                                  VerticalScrollBarVisibility="Disabled">
+                        <StackPanel Orientation="Horizontal" Spacing="5">
                         <Button x:Name="FilterRawButton" Content="RAW" Classes="filter"
                                 Click="OnFilterRawClick"/>
                         <Button x:Name="FilterJpegButton" Content="JPEG" Classes="filter"
@@ -152,8 +104,6 @@
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
                         <TextBlock Text="Flag" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
-                        <Button x:Name="FlagFilterAllButton" Content="All" Classes="filter"
-                                Click="OnFlagFilterAllClick"/>
                         <Button x:Name="FlagFilterPickedButton" Content="Picked" Classes="filter"
                                 Click="OnFlagFilterPickedClick"/>
                         <Button x:Name="FlagFilterRejectedButton" Content="Rejected" Classes="filter"
@@ -161,21 +111,35 @@
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
                         <TextBlock Text="Rating" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
-                        <Button x:Name="RatingFilterAllButton" Content="All" Classes="filter"
-                                Click="OnRatingFilterAllClick"/>
                         <views:LibraryRatingFilter x:Name="RatingFilter"
                             MinimumRating="{Binding MinimumRating, ElementName=Root, Mode=TwoWay}"/>
                         <views:LibraryColorLabelFilter
                             x:Name="ColorLabelFilterControl"
                             Choices="{Binding ColorLabelFilterChoices}"
                             Filter="{Binding ColorLabelFilter, ElementName=Root, Mode=TwoWay}"/>
-                        <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
-                        <Button x:Name="BurstsButton" Content="Bursts" Classes="filter"
-                                Click="OnBurstsClick"
-                                ToolTip.Tip="Group bursts"
-                                AutomationProperties.Name="Group bursts"/>
-                    </StackPanel>
-                </ScrollViewer>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <Border x:Name="FilterLeftFade" Width="18"
+                            HorizontalAlignment="Left" IsVisible="False"
+                            IsHitTestVisible="False">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                <GradientStop Color="{DynamicResource SurfaceMidColor}" Offset="0"/>
+                                <GradientStop Color="Transparent" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                    <Border x:Name="FilterRightFade" Width="18"
+                            HorizontalAlignment="Right" IsVisible="False"
+                            IsHitTestVisible="False">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                <GradientStop Color="Transparent" Offset="0"/>
+                                <GradientStop Color="{DynamicResource SurfaceMidColor}" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                </Grid>
 
                 <StackPanel x:Name="LibraryActionsPanel"
                             Grid.Column="2" Orientation="Horizontal" Spacing="5"
@@ -211,6 +175,18 @@
                 </StackPanel>
             </Grid>
         </Border>
+
+        <StackPanel Grid.Row="1" x:Name="FilteredEmptyState"
+                    IsVisible="False" Orientation="Horizontal" Spacing="4"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="No images match the current filters"
+                       Foreground="{DynamicResource TextMuted}" FontSize="12"
+                       VerticalAlignment="Center"/>
+            <Button x:Name="FilteredEmptyClearButton"
+                    Content="Clear" Classes="filter-clear"
+                    Click="OnClearFiltersClick"
+                    AutomationProperties.Name="Clear all filters"/>
+        </StackPanel>
 
         <!-- Thumbnail Grid with Virtualization -->
         <ScrollViewer Grid.Row="1"
@@ -450,6 +426,15 @@
                             HorizontalAlignment="Right"
                             Orientation="Horizontal"
                             Spacing="2">
+                        <Button x:Name="BurstsButton" Classes="view-toggle"
+                                Click="OnBurstsClick"
+                                ToolTip.Tip="Group bursts"
+                                AutomationProperties.Name="Group bursts">
+                            <PathIcon Width="14" Height="14"
+                                      Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                      Data="M3 1h11v10H3z M1 4h2v9h9v2H1z"/>
+                        </Button>
+                        <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="3,3"/>
                         <RadioButton x:Name="SmallThumbnailButton"
                                      GroupName="LibraryThumbnailSize"
                                      Classes="thumbnail-size"
