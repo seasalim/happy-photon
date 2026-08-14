@@ -26,6 +26,11 @@ workflow partial, don't grow the root file).
 
 ## 2. Develop right panel — target layout (top → bottom)
 
+The right pane is mode-differentiated. In Library it is a **review pane** — the
+fixed thumbnail histogram, the metadata/EXIF block, and a selection summary —
+with no editing controls; everything below is a Develop-only surface (Library
+editing surfaces remain a non-goal, §10).
+
 ```
 WHITE BALANCE          (new group, WP3.3)
   [mode/preset ComboBox]  [Auto button]  [eyedropper button]
@@ -70,8 +75,18 @@ header to click **Export**, or use the global `Ctrl+E` shortcut from either work
   One toggle controls both; state is session-only (not persisted, not in EditSettings).
   Overlays are view-layer only and never appear in exports, before/after, or fullscreen.
 
-## 5. Histogram + base-arming indicator
+## 5. Scope box + base-arming indicator
 
+- **Scope box** (runs 106/107): the Develop panel's top slot is a scope box whose
+  header selector picks exactly one body — display histogram (default), luminance
+  waveform, RGB parade, or RAW sensor histogram. The histogram plot itself is
+  frozen: bins, channel colors, geometry, and 80 px height do not change.
+  Alternate bodies may grow the box vertically only while selected, absorbed by
+  the adjustment scroll area. Scope selection is session-only VM state. Scopes
+  are Develop/fullscreen-only: the Library review pane shows only the fixed
+  thumbnail histogram — never a waveform or RAW data. The RAW entry is disabled
+  (never removed) when sensor data is unavailable, with reason-specific
+  tooltips; the UI never labels display-referred data RAW.
 - **Clipping chips** (WP4.2): small warning chips at the histogram's top corners, lit
   when `ClippingStats` fractions exceed 0.1%; tooltip shows per-channel percentages;
   clicking a chip toggles the overlays (same state as `J`).
@@ -158,10 +173,18 @@ segment contains no animation.
 ## 10. Explicit UI non-goals
 
 Export is the single permitted new workflow modal. No additional pipeline workflow
-modals are introduced. There are also no collapsible panel groups, histogram redesign,
-in-app migration/what's-new dialog (release note only), Library-mode editing surfaces,
-exposure-range change (±3 EV stays), or slider re-ordering beyond removing
-Temperature. If a WP seems to need one of these, it's a spec question first.
+modals are introduced. There are also no collapsible panel groups, in-app
+migration/what's-new dialog (release note only), Library-mode editing surfaces (the
+Library right pane is a review pane, §2), exposure-range change (±3 EV stays), or
+slider re-ordering beyond removing Temperature.
+
+The histogram plot itself is frozen — bins, channel colors, geometry, and height do
+not change. Within that freeze, §5's scope box is permitted: a header selector,
+alternate scope bodies (waveform, RGB parade, RAW sensor histogram), vertical growth
+while a taller body is selected, and RAW-only clipping indication. Scopes never
+appear in Library.
+
+If a WP seems to need one of these, it's a spec question first.
 
 ## 11. Acceptance (VM-level, per existing test patterns)
 
