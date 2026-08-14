@@ -28,6 +28,7 @@
                 </Button>
                 <Button Grid.Column="2" x:Name="FolderActionsButton"
                         Content="⋯" Width="24" Height="24" Padding="4,0" FontSize="10"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         ToolTip.Tip="More folder actions"
                         AutomationProperties.Name="More folder actions">
                     <Button.Flyout>

@@ -161,7 +161,8 @@
                             Classes="accent"
                             ToolTip.Tip="Export (Ctrl+E)"
                             Click="OnBatchExportClick"/>
-                    <Button Content="…" FontSize="14" Width="30" Padding="4,0"
+                    <Button Content="⋯" FontSize="10" Width="24" Padding="4,4"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             IsEnabled="{Binding HasSelectedImage}"
                             ToolTip.Tip="More library actions"
                             AutomationProperties.Name="More library actions">
