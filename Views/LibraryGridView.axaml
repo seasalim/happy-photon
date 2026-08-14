@@ -95,7 +95,7 @@
                         <Button x:Name="FilterJpegButton" Content="JPEG" Classes="filter"
                                 Click="OnFilterJpegClick"/>
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
-                        <TextBlock Text="Flag" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                        <TextBlock Text="Pick" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
                         <Button x:Name="FlagFilterPickedButton" Content="Picked" Classes="filter"
                                 Click="OnFlagFilterPickedClick"/>

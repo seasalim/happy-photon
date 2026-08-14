@@ -46,7 +46,7 @@
 
     <StackPanel Orientation="Horizontal" Spacing="5">
         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
-        <TextBlock Text="Labels" FontSize="10"
+        <TextBlock Text="Label" FontSize="10"
                    Foreground="{DynamicResource TextMuted}"
                    FontFamily="{StaticResource FontLabel}"
                    VerticalAlignment="Center" Margin="0,0,2,0"/>
