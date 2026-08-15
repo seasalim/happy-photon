@@ -105,6 +105,32 @@ public sealed class AssessmentTargetingTests : IDisposable
     }
 
     [Fact]
+    public async Task Navigation_MovesSelectionWithFocusOnlyInLibrary()
+    {
+        using var catalog = await CreateCatalogAsync();
+        await using var vm = CreateViewModel(catalog);
+        var first = await CreateImageAsync(catalog, "first.jpg");
+        var second = await CreateImageAsync(catalog, "second.jpg");
+        var third = await CreateImageAsync(catalog, "third.jpg");
+        vm.Library.SetImages([first, second, third]);
+        vm.SelectedImage = first;
+        vm.Library.ToggleSelection(first);
+
+        vm.SelectNextImageCommand.Execute(null);
+        await vm.SetRatingCommand.ExecuteAsync(4);
+
+        Assert.Equal(0, first.Rating);
+        Assert.Equal(4, second.Rating);
+        Assert.Same(second, Assert.Single(vm.Library.GetSelectedImages()));
+
+        vm.IsDevelopMode = true;
+        vm.SelectNextImageCommand.Execute(null);
+
+        Assert.Same(third, vm.SelectedImage);
+        Assert.Same(second, Assert.Single(vm.Library.GetSelectedImages()));
+    }
+
+    [Fact]
     public async Task Pick_MixedSetAssignsAndUniformSetClears()
     {
         using var catalog = await CreateCatalogAsync();

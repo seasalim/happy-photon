@@ -107,8 +107,7 @@ public partial class MainWindowViewModel
     {
         if (TryMoveWithinFullScreenSelection(-1)) return;
 
-        var previous = Library.PreviousVisible(SelectedImage);
-        if (previous != null) SelectedImage = previous;
+        MoveFocusAndSelection(Library.PreviousVisible(SelectedImage));
     }
 
     [RelayCommand]
@@ -116,8 +115,7 @@ public partial class MainWindowViewModel
     {
         if (TryMoveWithinFullScreenSelection(1)) return;
 
-        var next = Library.NextVisible(SelectedImage);
-        if (next != null) SelectedImage = next;
+        MoveFocusAndSelection(Library.NextVisible(SelectedImage));
     }
 
     /// <summary>
@@ -127,8 +125,7 @@ public partial class MainWindowViewModel
     {
         if (TryMoveWithinFullScreenSelection(-itemsPerRow)) return;
 
-        var image = Library.MoveVisible(SelectedImage, -itemsPerRow);
-        if (image != null) SelectedImage = image;
+        MoveFocusAndSelection(Library.MoveVisible(SelectedImage, -itemsPerRow));
     }
 
     /// <summary>
@@ -138,8 +135,7 @@ public partial class MainWindowViewModel
     {
         if (TryMoveWithinFullScreenSelection(itemsPerRow)) return;
 
-        var image = Library.MoveVisible(SelectedImage, itemsPerRow);
-        if (image != null) SelectedImage = image;
+        MoveFocusAndSelection(Library.MoveVisible(SelectedImage, itemsPerRow));
     }
 
     public void SelectFirstImage()
@@ -147,6 +143,7 @@ public partial class MainWindowViewModel
         if (TrySelectFullScreenSelectionBoundary(last: false)) return;
 
         SelectedImage = Library.FirstVisible();
+        if (SelectedImage != null) MoveSelectionWithFocus(SelectedImage);
     }
 
     public void SelectLastImage()
@@ -154,6 +151,25 @@ public partial class MainWindowViewModel
         if (TrySelectFullScreenSelectionBoundary(last: true)) return;
 
         SelectedImage = Library.LastVisible();
+        if (SelectedImage != null) MoveSelectionWithFocus(SelectedImage);
+    }
+
+    private void MoveFocusAndSelection(ImageFile? image)
+    {
+        if (image == null) return;
+
+        SelectedImage = image;
+        MoveSelectionWithFocus(image);
+    }
+
+    // Keyboard navigation in the Library grid carries the selection with the
+    // focused image so assessment actions land on the photo under the ring.
+    private void MoveSelectionWithFocus(ImageFile image)
+    {
+        if (IsDevelopMode || IsFullScreenMode) return;
+
+        Library.SelectOnly(image);
+        UpdateSelectedCount();
     }
 
     [RelayCommand]

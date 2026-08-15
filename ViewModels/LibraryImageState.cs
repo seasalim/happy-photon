@@ -239,6 +239,16 @@ public partial class LibraryImageState : ObservableObject
         NotifySelectedCountChanged();
     }
 
+    public void SelectOnly(ImageFile image)
+    {
+        foreach (var candidate in VisibleImages)
+        {
+            candidate.IsSelected = ReferenceEquals(candidate, image);
+        }
+
+        NotifySelectedCountChanged();
+    }
+
     public void SelectRange(ImageFile fromImage, ImageFile toImage)
     {
         var fromIndex = VisibleImages.IndexOf(fromImage);

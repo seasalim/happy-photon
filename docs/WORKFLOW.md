@@ -352,6 +352,10 @@ Filter the Library to the group you want before selecting it. Then:
 - press `Ctrl+D`, or choose **Deselect All** from **More library actions**, to clear
   the visible selection.
 
+A plain click or arrow-key move replaces the selection with the newly focused
+photo, so single-photo assessment always lands on the photo under the focus ring;
+use the modifiers above to build a multi-photo selection.
+
 Images that become hidden by a new filter are removed from the selection. Set the
 filters first, then make the final selection.
 
