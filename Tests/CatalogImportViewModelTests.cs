@@ -11,6 +11,25 @@ public sealed class CatalogImportViewModelTests : IDisposable
         Path.GetTempPath(), $"happy-photon-import-vm-{Guid.NewGuid():N}")).FullName;
 
     [Fact]
+    public async Task ReadLightroomCatalog_IsAvailableOnCurrentPlatform()
+    {
+        using var fixture = new LightroomCatalogFixture();
+        var sourceRoot = Path.GetDirectoryName(fixture.CatalogPath)! +
+                         Path.DirectorySeparatorChar;
+        fixture.AddPhoto(1, sourceRoot, "", "photo.jpg", rating: 4);
+        fixture.CloseWriter();
+        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        await catalog.InitializeAsync();
+        var vm = CreateViewModel(catalog);
+
+        var source = await vm.ReadLightroomCatalogAsync(fixture.CatalogPath);
+
+        Assert.Equal(13, source.MajorVersion);
+        Assert.Single(source.Records);
+        await vm.DisposeAsync();
+    }
+
+    [Fact]
     public async Task Apply_UpdatesLiveFiltersSelectionAndViewportWithoutFolderReload()
     {
         using var catalog = new CatalogService(Path.Combine(_root, "catalog"));

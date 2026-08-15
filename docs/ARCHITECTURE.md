@@ -5,7 +5,7 @@
 Phase 1 imports ratings, pick/reject flags, and color labels from Lightroom Classic
 without opening original photographs. `LightroomCatalogReader` works from a temporary
 snapshot outside the Happy Photon catalog. Because read-only SQLite access can mutate an
-existing WAL shared-memory sidecar, the Windows- and macOS-verified safe path requires
+existing WAL shared-memory sidecar, the cross-platform verified safe path requires
 Lightroom to be fully closed and refuses catalogs with SQLite sidecars; the closed catalog
 file is held open for reading while the snapshot is copied. Orphaned snapshot directories
 are swept during deferred catalog initialization.

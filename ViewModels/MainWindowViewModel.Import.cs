@@ -18,13 +18,6 @@ public partial class MainWindowViewModel
         string catalogPath,
         CancellationToken cancellationToken = default)
     {
-        if (!OperatingSystem.IsWindows() && !OperatingSystem.IsMacOS())
-        {
-            throw new PlatformNotSupportedException(
-                "Lightroom catalog import is available on Windows and macOS. " +
-                "Linux will be enabled after the snapshot safety suite is verified there.");
-        }
-
         return await new LightroomCatalogReader().ReadAsync(
             catalogPath, _colorLabelNames, cancellationToken);
     }

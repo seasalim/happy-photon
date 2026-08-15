@@ -128,8 +128,8 @@ standard-location catalog is adopted automatically at startup. Confirming Storag
 the one catalog-creation boundary. Configured-but-empty roots remain read-only.
 
 Pictures then selects the top-level folder shown in the folder tree, using the detected
-Pictures folder when available and a picker fallback otherwise. On Windows and macOS, a
-shallow local probe may add a Lightroom step. Import opens the normal catalog dialog,
+Pictures folder when available and a picker fallback otherwise. On all supported desktop
+platforms, a shallow local probe may add a Lightroom step. Import opens the normal catalog dialog,
 pre-filled
 from the selected bounded list of detected `.lrcat` files; another catalog can be chosen
 with the normal picker, and import remains available later from Folders. Canceling stays

@@ -33,7 +33,7 @@ public sealed class LightroomDetectionService
 
     public LightroomDetectionService()
         : this(
-            OperatingSystem.IsWindows() || OperatingSystem.IsMacOS(),
+            isSupportedPlatform: true,
             Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
             IsLocalFixedPath,
             GetInstallRoots(),

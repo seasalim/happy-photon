@@ -79,15 +79,6 @@ public partial class MainWindow
         bool returnAppliedOnClose = false)
     {
         if (DataContext is not MainWindowViewModel vm) return false;
-        if (!OperatingSystem.IsWindows() && !OperatingSystem.IsMacOS())
-        {
-            await ConfirmationDialog.ShowMessageAsync(
-                this,
-                "Lightroom import is not available yet",
-                "Lightroom catalog import is available on Windows and macOS. " +
-                "Linux will follow after snapshot safety verification.");
-            return false;
-        }
 
         if (string.IsNullOrWhiteSpace(catalogPath))
         {
