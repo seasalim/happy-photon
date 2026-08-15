@@ -83,8 +83,14 @@ explain why Change and Move are unavailable. The Metadata tab can
 enable per-catalog XMP reading or read/write interop for ratings, flags, and
 recognized color-label names. Read/write creates or updates a sidecar only
 after you change an assessment; enabling it does not publish older catalog
-assessments. Sidecars may sync through the folder's cloud provider, while the
-original photo remains untouched and is never downloaded for XMP work.
+assessments. Happy Photon writes standard Adobe XMP vocabulary: true stars stay
+in `xmp:Rating`, flags use Lightroom-compatible `xmpDM:pick`, and color labels
+use `xmp:Label`. Reads likewise use only these standard XMP properties.
+Lightroom Classic can exchange the pick states, but darktable and Bridge versions
+that recognize a reject only as `xmp:Rating="-1"` will not show Happy Photon
+rejects because the rating remains the true star value. Sidecars may sync through
+the folder's cloud provider, while the original photo remains untouched and is
+never downloaded for XMP work.
 Update discovery is manual-only. Happy Photon makes no automatic update network
 requests; it contacts GitHub only when you explicitly choose **Check for updates**
 on the About tab.

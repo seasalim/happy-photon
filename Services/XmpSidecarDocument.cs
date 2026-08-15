@@ -7,12 +7,15 @@ public readonly record struct XmpMergeResult(bool ReplacedUnsupportedLabel);
 
 public static class XmpSidecarDocument
 {
-    public const string HappyPhotonNamespaceUri =
-        "http://happyphoton.app/xmp/1.0/";
+    public const string XmpDynamicMediaNamespaceUri =
+        "http://ns.adobe.com/xmp/1.0/DynamicMedia/";
     internal static readonly XNamespace Xmp = "http://ns.adobe.com/xap/1.0/";
     internal static readonly XNamespace Rdf =
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-    internal static readonly XNamespace HappyPhoton = HappyPhotonNamespaceUri;
+    private static readonly XNamespace HappyPhoton =
+        "http://happyphoton.app/xmp/1.0/";
+    internal static readonly XNamespace XmpDynamicMedia =
+        XmpDynamicMediaNamespaceUri;
 
     public static XDocument Create() => new(
         new XElement(XNamespace.Get("adobe:ns:meta/") + "xmpmeta",
@@ -23,27 +26,22 @@ public static class XmpSidecarDocument
                     new XAttribute(Rdf + "about", string.Empty),
                     new XAttribute(XNamespace.Xmlns + "xmp", Xmp.NamespaceName),
                     new XAttribute(
-                        XNamespace.Xmlns + "happyphoton",
-                        HappyPhoton.NamespaceName)))));
+                        XNamespace.Xmlns + "xmpDM",
+                        XmpDynamicMedia.NamespaceName)))));
 
     public static XmpSidecarFacts ReadFacts(
         XDocument document,
         IReadOnlyDictionary<ColorLabel, string> labelNames)
     {
         var ratingText = ReadValue(document, Xmp, "Rating");
-        var privateRatingText = ReadValue(document, HappyPhoton, "Rating");
-        var privateFlag = ReadValue(document, HappyPhoton, "Flag");
+        var pickText = ReadValue(document, XmpDynamicMedia, "pick");
         var labelText = ReadValue(document, Xmp, "Label");
-        var declaredAxes = ParseAxes(
-            ReadValue(document, HappyPhoton, "Axes"));
 
-        var rating = ParseRating(ratingText == "-1"
-            ? privateRatingText
-            : ratingText);
-        var flag = ParseFlag(ratingText, privateFlag, declaredAxes);
-        var label = labelText == null && declaredAxes.HasFlag(AssessmentAxes.Label)
-            ? XmpFact<ColorLabel>.Empty
-            : ParseLabel(labelText, labelNames);
+        var rating = ratingText == "-1"
+            ? XmpFact<int>.Missing
+            : ParseRating(ratingText);
+        var flag = ParseFlag(ratingText, pickText);
+        var label = ParseLabel(labelText, labelNames);
         return new XmpSidecarFacts(rating, flag, label);
     }
 
@@ -59,7 +57,6 @@ public static class XmpSidecarDocument
             MergeFlag(document, snapshot);
         var replacedUnsupportedLabel = axes.HasFlag(AssessmentAxes.Label) &&
             MergeLabel(document, snapshot.ColorLabel, labelNames);
-        MergeAxes(document, axes);
         SetValue(document, Xmp, "MetadataDate", DateTime.UtcNow.ToString("O"));
         return new XmpMergeResult(replacedUnsupportedLabel);
     }
@@ -90,17 +87,20 @@ public static class XmpSidecarDocument
 
     private static XmpFact<ImageFlag> ParseFlag(
         string? ratingText,
-        string? privateFlag,
-        AssessmentAxes declaredAxes)
+        string? pickText)
     {
         if (ratingText == "-1")
             return XmpFact<ImageFlag>.Matched(ImageFlag.Rejected);
-        if (string.Equals(privateFlag, "Pick", StringComparison.OrdinalIgnoreCase))
-            return XmpFact<ImageFlag>.Matched(ImageFlag.Picked);
-        if (!string.IsNullOrWhiteSpace(privateFlag))
-            return XmpFact<ImageFlag>.Unsupported;
-        if (declaredAxes.HasFlag(AssessmentAxes.Flag))
-            return XmpFact<ImageFlag>.Matched(ImageFlag.Unflagged);
+        if (pickText != null)
+        {
+            return pickText.Trim() switch
+            {
+                "-1" => XmpFact<ImageFlag>.Matched(ImageFlag.Rejected),
+                "1" => XmpFact<ImageFlag>.Matched(ImageFlag.Picked),
+                "0" => XmpFact<ImageFlag>.Matched(ImageFlag.Unflagged),
+                _ => XmpFact<ImageFlag>.Unsupported
+            };
+        }
         return ParseRating(ratingText).Kind == XmpFactKind.Matched
             ? XmpFact<ImageFlag>.WeakClear(ImageFlag.Unflagged)
             : XmpFact<ImageFlag>.Missing;
@@ -125,41 +125,40 @@ public static class XmpSidecarDocument
         XDocument document,
         AssessmentSnapshot snapshot)
     {
-        if (ReadValue(document, Xmp, "Rating") == "-1" ||
-            snapshot.Flag == ImageFlag.Rejected)
-        {
-            SetValue(document, HappyPhoton, "Rating", snapshot.Rating.ToString());
-            return;
-        }
         SetValue(document, Xmp, "Rating", snapshot.Rating.ToString());
         RemoveValue(document, HappyPhoton, "Rating");
+        if (snapshot.Flag == ImageFlag.Rejected)
+            SetPick(document, ImageFlag.Rejected);
     }
 
     private static void MergeFlag(
         XDocument document,
         AssessmentSnapshot snapshot)
     {
-        if (snapshot.Flag == ImageFlag.Rejected)
-        {
-            SetValue(document, HappyPhoton, "Rating", snapshot.Rating.ToString());
-            SetValue(document, Xmp, "Rating", "-1");
-            RemoveValue(document, HappyPhoton, "Flag");
-            return;
-        }
-
         if (ReadValue(document, Xmp, "Rating") == "-1")
         {
-            var restored = ParseRating(ReadValue(document, HappyPhoton, "Rating"));
-            SetValue(document, Xmp, "Rating",
-                (restored.Kind == XmpFactKind.Matched
-                    ? restored.Value
-                    : snapshot.Rating).ToString());
+            SetValue(document, Xmp, "Rating", snapshot.Rating.ToString());
+            RemoveValue(document, HappyPhoton, "Rating");
         }
-        RemoveValue(document, HappyPhoton, "Rating");
-        if (snapshot.Flag == ImageFlag.Picked)
-            SetValue(document, HappyPhoton, "Flag", "Pick");
-        else
-            RemoveValue(document, HappyPhoton, "Flag");
+        SetPick(document, snapshot.Flag);
+        RemoveValue(document, HappyPhoton, "Flag");
+    }
+
+    private static void SetPick(XDocument document, ImageFlag flag)
+    {
+        SetValue(document, XmpDynamicMedia, "pick", flag switch
+        {
+            ImageFlag.Picked => "1",
+            ImageFlag.Rejected => "-1",
+            _ => "0"
+        });
+        if (flag == ImageFlag.Unflagged)
+        {
+            RemoveValue(document, XmpDynamicMedia, "good");
+            return;
+        }
+        SetValue(document, XmpDynamicMedia, "good",
+            flag == ImageFlag.Picked ? "True" : "False");
     }
 
     private static bool MergeLabel(
@@ -172,51 +171,12 @@ public static class XmpSidecarDocument
             ParseLabel(existing, labelNames).Kind == XmpFactKind.Unsupported;
         if (label == ColorLabel.None)
         {
-            if (!unsupported) RemoveValue(document, Xmp, "Label");
+            if (!unsupported) SetValue(document, Xmp, "Label", string.Empty);
             return false;
         }
         var value = labelNames.GetValueOrDefault(label, label.ToString());
         SetValue(document, Xmp, "Label", value);
         return unsupported;
-    }
-
-    private static AssessmentAxes ParseAxes(string? text)
-    {
-        var axes = AssessmentAxes.None;
-        foreach (var token in SplitAxes(text))
-        {
-            if (string.Equals(token, "rating", StringComparison.OrdinalIgnoreCase))
-                axes |= AssessmentAxes.Rating;
-            else if (string.Equals(token, "flag", StringComparison.OrdinalIgnoreCase))
-                axes |= AssessmentAxes.Flag;
-            else if (string.Equals(token, "label", StringComparison.OrdinalIgnoreCase))
-                axes |= AssessmentAxes.Label;
-        }
-        return axes;
-    }
-
-    private static void MergeAxes(XDocument document, AssessmentAxes axes)
-    {
-        var tokens = SplitAxes(ReadValue(document, HappyPhoton, "Axes")).ToList();
-        AddAxisToken(tokens, axes, AssessmentAxes.Rating, "rating");
-        AddAxisToken(tokens, axes, AssessmentAxes.Flag, "flag");
-        AddAxisToken(tokens, axes, AssessmentAxes.Label, "label");
-        SetValue(document, HappyPhoton, "Axes", string.Join(",", tokens));
-    }
-
-    private static IEnumerable<string> SplitAxes(string? text) =>
-        (text ?? string.Empty).Split(',', StringSplitOptions.TrimEntries |
-            StringSplitOptions.RemoveEmptyEntries);
-
-    private static void AddAxisToken(
-        ICollection<string> tokens,
-        AssessmentAxes axes,
-        AssessmentAxes axis,
-        string token)
-    {
-        if (axes.HasFlag(axis) && !tokens.Contains(
-                token, StringComparer.OrdinalIgnoreCase))
-            tokens.Add(token);
     }
 
     private static void SetValue(
@@ -225,6 +185,13 @@ public static class XmpSidecarDocument
         string localName,
         string value)
     {
+        var description = Description(document);
+        if (xmlNamespace == XmpDynamicMedia &&
+            description.GetPrefixOfNamespace(XmpDynamicMedia) != "xmpDM")
+        {
+            description.SetAttributeValue(
+                XNamespace.Xmlns + "xmpDM", XmpDynamicMedia.NamespaceName);
+        }
         var name = xmlNamespace + localName;
         var attribute = document.Descendants().Attributes(name).FirstOrDefault();
         if (attribute != null)
@@ -238,7 +205,7 @@ public static class XmpSidecarDocument
             element.Value = value;
             return;
         }
-        Description(document).SetAttributeValue(name, value);
+        description.SetAttributeValue(name, value);
     }
 
     private static void RemoveValue(

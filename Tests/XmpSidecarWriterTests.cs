@@ -178,17 +178,69 @@ public sealed class XmpSidecarWriterTests : IDisposable
         var document = System.Xml.Linq.XDocument.Load(path + ".xmp");
         var facts = XmpSidecarDocument.ReadFacts(
             document, ColorLabelNames.Defaults);
-        Assert.Equal("-1", XmpSidecarDocument.ReadValue(
-            document, XmpSidecarDocument.Xmp, "Rating"));
         Assert.Equal("4", XmpSidecarDocument.ReadValue(
-            document, XmpSidecarDocument.HappyPhoton, "Rating"));
-        Assert.Equal("rating,flag,label", XmpSidecarDocument.ReadValue(
-            document, XmpSidecarDocument.HappyPhoton, "Axes"));
+            document, XmpSidecarDocument.Xmp, "Rating"));
+        Assert.Equal("-1", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.XmpDynamicMedia, "pick"));
+        Assert.Equal("False", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.XmpDynamicMedia, "good"));
+        Assert.Equal(string.Empty, XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.Xmp, "Label"));
+        var serialized = document.ToString(
+            System.Xml.Linq.SaveOptions.DisableFormatting);
+        Assert.Contains("xmlns:xmpDM=", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("happyphoton", serialized,
+            StringComparison.OrdinalIgnoreCase);
         Assert.Equal(4, facts.Rating.Value);
         Assert.Equal(ImageFlag.Rejected, facts.Flag.Value);
         Assert.Equal(XmpFactKind.Empty, facts.Label.Kind);
         Assert.Equal(AssessmentAxes.None,
             Assert.Single(await catalog.LoadAssessmentSnapshotsAsync([id])).PendingAxes);
+    }
+
+    [Fact]
+    public async Task ExistingLightroomReject_RatingChangeKeepsRejectAndTrueStars()
+    {
+        using var catalog = await CreateCatalogAsync();
+        var path = Path.Combine(_root, "lightroom-rejected.cr3");
+        var sidecar = path + ".xmp";
+        var document = XmpSidecarDocument.Create();
+        var description = document.Descendants(
+            XmpSidecarDocument.Rdf + "Description").Single();
+        description.SetAttributeValue(XmpSidecarDocument.Xmp + "Rating", "3");
+        description.SetAttributeValue(
+            XmpSidecarDocument.XmpDynamicMedia + "pick", "-1");
+        description.SetAttributeValue(
+            XmpSidecarDocument.XmpDynamicMedia + "good", "False");
+        document.Save(sidecar);
+        var id = await catalog.GetOrCreateImageAsync(path);
+        await catalog.MutateAssessmentsAsync(
+            [new AssessmentMutation(
+                id, AssessmentAxes.Flag | AssessmentAxes.Rating,
+                Flag: ImageFlag.Rejected, Rating: 3)],
+            AssessmentAxes.None);
+        var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
+            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 4)],
+            AssessmentAxes.Rating));
+        await using var writer = new XmpSidecarWriter(
+            catalog, ColorLabelNames.Defaults);
+        writer.Start();
+
+        Assert.True(writer.TryEnqueue(snapshot, AssessmentAxes.Rating,
+            [path], XmpSidecarNaming.FullName));
+        await writer.DrainAsync();
+
+        document = System.Xml.Linq.XDocument.Load(sidecar);
+        Assert.Equal("4", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.Xmp, "Rating"));
+        Assert.Equal("-1", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.XmpDynamicMedia, "pick"));
+        Assert.Equal("False", XmpSidecarDocument.ReadValue(
+            document, XmpSidecarDocument.XmpDynamicMedia, "good"));
+        var facts = XmpSidecarDocument.ReadFacts(
+            document, ColorLabelNames.Defaults);
+        Assert.Equal(4, facts.Rating.Value);
+        Assert.Equal(ImageFlag.Rejected, facts.Flag.Value);
     }
 
     [Fact]
