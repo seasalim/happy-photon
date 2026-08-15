@@ -33,10 +33,9 @@ public partial class CatalogService
                 """;
             command.Parameters.AddWithValue(
                 "@paths", JsonSerializer.Serialize(filePaths));
+            // Match the catalog's COLLATE NOCASE file_path identity.
             var result = new Dictionary<string, CatalogImportBaseline>(
-                OperatingSystem.IsWindows()
-                    ? StringComparer.OrdinalIgnoreCase
-                    : StringComparer.Ordinal);
+                StringComparer.OrdinalIgnoreCase);
             using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {

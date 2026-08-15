@@ -101,7 +101,7 @@ public sealed class LightroomDetectionServiceTests : IDisposable
         await File.WriteAllBytesAsync(Path.Combine(pictures.FullName, "photos.lrcat"), [1]);
         var probed = false;
         var service = new LightroomDetectionService(
-            isWindows: true,
+            isSupportedPlatform: true,
             defaultPicturesRoot: null,
             isLocalFixedPath: _ =>
             {
@@ -145,7 +145,7 @@ public sealed class LightroomDetectionServiceTests : IDisposable
         var adobe = Directory.CreateDirectory(Path.Combine(_root, "Adobe"));
         Directory.CreateDirectory(Path.Combine(adobe.FullName, "Adobe Lightroom Classic"));
         var service = new LightroomDetectionService(
-            isWindows: true,
+            isSupportedPlatform: true,
             defaultPicturesRoot: null,
             isLocalFixedPath: _ => true,
             installRoots: [adobe.FullName]);
@@ -157,12 +157,12 @@ public sealed class LightroomDetectionServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task DetectAsync_IsDisabledOutsideWindows()
+    public async Task DetectAsync_IsDisabledOutsideSupportedPlatforms()
     {
         var pictures = Directory.CreateDirectory(Path.Combine(_root, "pictures"));
         await File.WriteAllBytesAsync(Path.Combine(pictures.FullName, "photos.lrcat"), [1]);
         var service = new LightroomDetectionService(
-            isWindows: false,
+            isSupportedPlatform: false,
             defaultPicturesRoot: pictures.FullName,
             isLocalFixedPath: _ => true);
 
@@ -198,7 +198,7 @@ public sealed class LightroomDetectionServiceTests : IDisposable
         int entryLimit = 256,
         int totalEntryLimit = 4096) =>
         new(
-            isWindows: true,
+            isSupportedPlatform: true,
             defaultPicturesRoot,
             isLocalFixedPath: _ => true,
             maxDepth: maxDepth,

@@ -293,9 +293,8 @@ public sealed class CatalogImportService
         return "lightroom_import_" + hash;
     }
 
-    private static StringComparer PathComparer => OperatingSystem.IsWindows()
-        ? StringComparer.OrdinalIgnoreCase
-        : StringComparer.Ordinal;
+    // The catalog's file_path identity is COLLATE NOCASE on every platform.
+    private static StringComparer PathComparer => StringComparer.OrdinalIgnoreCase;
 
     private static StringComparison PathStringComparison =>
         OperatingSystem.IsWindows()

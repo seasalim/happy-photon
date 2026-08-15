@@ -22,7 +22,7 @@ public sealed class LightroomDetectionService
     private const int DefaultEntryLimit = 256;
     private const int DefaultTotalEntryLimit = 4096;
     private const int MaxReportedCatalogs = 5;
-    private readonly bool _isWindows;
+    private readonly bool _isSupportedPlatform;
     private readonly string? _defaultPicturesRoot;
     private readonly Func<string, bool> _isLocalFixedPath;
     private readonly IReadOnlyList<string> _installRoots;
@@ -33,11 +33,11 @@ public sealed class LightroomDetectionService
 
     public LightroomDetectionService()
         : this(
-            OperatingSystem.IsWindows(),
+            OperatingSystem.IsWindows() || OperatingSystem.IsMacOS(),
             Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
             IsLocalFixedPath,
             GetInstallRoots(),
-            probeRegistry: true,
+            probeRegistry: OperatingSystem.IsWindows(),
             DefaultMaxDepth,
             DefaultEntryLimit,
             DefaultTotalEntryLimit)
@@ -45,7 +45,7 @@ public sealed class LightroomDetectionService
     }
 
     internal LightroomDetectionService(
-        bool isWindows,
+        bool isSupportedPlatform,
         string? defaultPicturesRoot,
         Func<string, bool> isLocalFixedPath,
         IReadOnlyList<string>? installRoots = null,
@@ -54,7 +54,7 @@ public sealed class LightroomDetectionService
         int entryLimit = DefaultEntryLimit,
         int totalEntryLimit = DefaultTotalEntryLimit)
     {
-        _isWindows = isWindows;
+        _isSupportedPlatform = isSupportedPlatform;
         _defaultPicturesRoot = defaultPicturesRoot;
         _isLocalFixedPath = isLocalFixedPath;
         _installRoots = installRoots ?? [];
@@ -69,7 +69,7 @@ public sealed class LightroomDetectionService
         string? catalogRoot,
         CancellationToken cancellationToken = default)
     {
-        if (!_isWindows)
+        if (!_isSupportedPlatform)
             return Task.FromResult(LightroomDetectionResult.NotDetected);
 
         return Task.Run(
@@ -289,6 +289,15 @@ public sealed class LightroomDetectionService
 
     private static IReadOnlyList<string> GetInstallRoots()
     {
+        if (OperatingSystem.IsMacOS())
+        {
+            var macRoots = new List<string> { "/Applications" };
+            var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (!string.IsNullOrWhiteSpace(profile))
+                macRoots.Add(Path.Combine(profile, "Applications"));
+            return macRoots;
+        }
+
         var roots = new List<string>();
         AddAdobeRoot(Environment.SpecialFolder.ProgramFiles);
         AddAdobeRoot(Environment.SpecialFolder.ProgramFilesX86);

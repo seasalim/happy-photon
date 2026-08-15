@@ -4,11 +4,11 @@
 
 Phase 1 imports ratings, pick/reject flags, and color labels from Lightroom Classic
 without opening original photographs. `LightroomCatalogReader` works from a temporary
-snapshot outside the Happy Photon catalog. On Windows, read-only SQLite access was found
-to mutate an existing WAL shared-memory sidecar, so the safe fallback requires Lightroom
-to be fully closed and refuses catalogs with SQLite sidecars; the closed catalog file is
-held open for reading while the snapshot is copied. Orphaned snapshot directories are
-swept during deferred catalog initialization.
+snapshot outside the Happy Photon catalog. Because read-only SQLite access can mutate an
+existing WAL shared-memory sidecar, the Windows- and macOS-verified safe path requires
+Lightroom to be fully closed and refuses catalogs with SQLite sidecars; the closed catalog
+file is held open for reading while the snapshot is copied. Orphaned snapshot directories
+are swept during deferred catalog initialization.
 
 `CatalogImportService` normalizes mapped paths and builds a vendor-neutral preview.
 `CatalogService.Import` exclusively owns persistence: it revalidates the preview's
@@ -177,8 +177,8 @@ the neutral initializing state with Retry/Close. During an incomplete first run,
 shutdown saves preferences only; the browsing root, viewed folder, and completion
 version are committed together when the wizard finishes. The forward-only wizard
 advances through Welcome, Storage, and Pictures, conditionally offers Lightroom import,
-and ends with an explicit choice to start or skip the tour. Its bounded
-Windows-only detection checks known install locations and shallow local fixed-drive
+and ends with an explicit choice to start or skip the tour. Its bounded Windows and
+macOS detection checks known install locations and shallow local fixed-drive
 folders off the UI thread; reparse-point descendants, remote and removable volumes,
 and broad drive scans are excluded. It reports at most five catalog candidates within
 the shared entry budget.

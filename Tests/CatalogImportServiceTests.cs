@@ -32,6 +32,78 @@ public sealed class CatalogImportServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Preview_CaseVariantMatchesExistingCatalogIdentity()
+    {
+        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photo = Path.Combine(photos, "keeper.jpg");
+        var catalog = await CreateCatalogAsync();
+        var id = await catalog.GetOrCreateImageAsync(photo);
+        await catalog.MutateAssessmentsAsync([
+            new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 2)
+        ], AssessmentAxes.None);
+        var source = Source(photos, "KEEPER.JPG",
+            rating: CatalogImportFact<int>.Mapped(5));
+        var import = new CatalogImportService(catalog);
+
+        var preview = await import.CreatePreviewAsync(
+            source, Map(source, photos), CatalogImportPolicy.LightroomWins);
+        await import.ApplyAsync(preview);
+
+        Assert.Equal(1, preview.Report.ExistingCatalogRows);
+        Assert.Equal(0, preview.Report.NewlyStoredPaths);
+        Assert.Equal(1, await CountImagesAsync());
+        Assert.Equal(5, (await catalog.LoadImageStatesAsync([photo]))[photo].Rating);
+    }
+
+    [Fact]
+    public async Task Preview_CaseVariantsCollapseToOneCatalogIdentity()
+    {
+        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        const string sourceRoot = "D:/Photos/";
+        var source = new LightroomCatalogContents(
+            Path.Combine(_root, "source.lrcat"), 1303001, 13, true,
+            AssessmentAxes.All, [new CatalogSourceRoot(sourceRoot, 2)],
+            [
+                Record(sourceRoot, "keeper.jpg", CatalogImportFact<int>.Mapped(3)),
+                Record(sourceRoot, "KEEPER.JPG", CatalogImportFact<int>.Mapped(5))
+            ], []);
+        var catalog = await CreateCatalogAsync();
+        var import = new CatalogImportService(catalog);
+
+        var preview = await import.CreatePreviewAsync(
+            source, Map(source, photos), CatalogImportPolicy.LightroomWins);
+        await import.ApplyAsync(preview);
+
+        var importedPath = Assert.Single(preview.ImportedPaths);
+        Assert.Equal(1, preview.Report.MatchedPhotos);
+        Assert.Equal(1, await CountImagesAsync());
+        Assert.Equal(5,
+            (await catalog.LoadImageStatesAsync([importedPath]))[importedPath].Rating);
+    }
+
+    [Fact]
+    public void NormalizeMappedPath_RewritesMixedSeparatorsAndPreservesCase()
+    {
+        var actual = CatalogImportService.NormalizeMappedPath(
+            _root, "/Year\\Shoot/Keeper.JPG");
+
+        Assert.Equal(
+            Path.Combine(_root, "Year", "Shoot", "Keeper.JPG"),
+            actual);
+    }
+
+    [Theory]
+    [InlineData("../outside.jpg")]
+    [InlineData("year/../../outside.jpg")]
+    [InlineData("C:\\outside.jpg")]
+    public void NormalizeMappedPath_RejectsEscapesAndForeignAbsoluteRemainders(
+        string relativePath)
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            CatalogImportService.NormalizeMappedPath(_root, relativePath));
+    }
+
+    [Fact]
     public async Task Apply_NeverClearsLocalValuesAndUnsupportedLabelIsPreserved()
     {
         var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
