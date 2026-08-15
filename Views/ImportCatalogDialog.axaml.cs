@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -10,20 +11,12 @@ namespace HappyPhoton.Views;
 
 public partial class ImportCatalogDialog : Window
 {
-    private MainWindowViewModel _viewModel = null!;
-    private string _catalogPath = string.Empty;
+    private CatalogImportFlowViewModel? _flow;
     private readonly Dictionary<string, TextBox> _rootEditors =
         new(StringComparer.Ordinal);
-    private readonly Dictionary<string, string> _resolvedRootMappings =
-        new(StringComparer.Ordinal);
-    private LightroomCatalogContents? _source;
-    private CatalogImportPreview? _preview;
-    private CancellationTokenSource? _operationCancellation;
-    private bool _isReading = true;
-    private bool _isReimport;
     private bool _returnAppliedOnClose;
-    private bool _applySucceeded;
     private bool _closingWithResult;
+    private bool _policyEventsAttached;
 
     public ImportCatalogDialog()
     {
@@ -33,75 +26,116 @@ public partial class ImportCatalogDialog : Window
     public ImportCatalogDialog(
         MainWindowViewModel viewModel,
         string catalogPath,
+        bool returnAppliedOnClose = false) : this(
+            new CatalogImportFlowViewModel(viewModel, catalogPath),
+            catalogPath,
+            returnAppliedOnClose)
+    {
+    }
+
+    internal ImportCatalogDialog(
+        CatalogImportFlowViewModel flow,
+        string catalogPath,
         bool returnAppliedOnClose = false) : this()
     {
-        _viewModel = viewModel;
-        _catalogPath = catalogPath;
+        _flow = flow;
         _returnAppliedOnClose = returnAppliedOnClose;
         CatalogPathText.Text = catalogPath;
-        StatusText.Text = "Creating a consistent, read-only snapshot…";
+        StatusText.Text = flow.StatusText;
+        flow.InputsReady += OnInputsReady;
+        flow.PropertyChanged += OnFlowPropertyChanged;
         Opened += OnOpened;
         Closing += OnClosing;
+        Closed += OnClosed;
+        UpdateUi();
     }
 
     private async void OnOpened(object? sender, EventArgs e)
     {
         Opened -= OnOpened;
-        SetBusy(true, "Creating a consistent, read-only snapshot…");
-        try
+        if (_flow != null) await _flow.InitializeAsync();
+    }
+
+    private void OnInputsReady(object? sender, EventArgs e)
+    {
+        BuildRootEditors();
+        if (_flow == null) return;
+        PolicyPicker.SelectedIndex = _flow.Policy ==
+                                     CatalogImportPolicy.FillEmptyOnly ? 1 : 0;
+        if (!_policyEventsAttached)
         {
-            _source = await _viewModel.ReadLightroomCatalogAsync(_catalogPath);
-            var stored = await _viewModel.LoadCatalogImportSettingsAsync(_catalogPath);
-            _isReimport = stored != null;
-            BuildRootEditors(stored?.RootMappings);
-            PolicyPicker.SelectedIndex = stored?.Policies.Values.FirstOrDefault() ==
-                                         CatalogImportPolicy.FillEmptyOnly ? 1 : 0;
-            MappingSection.IsVisible = true;
-            PolicySection.IsVisible = true;
-            PreviewButton.IsVisible = true;
-            CancelButton.IsEnabled = true;
-            StatusText.Text = _source.IsVerifiedVersion
-                ? $"Lightroom { _source.MajorVersion } catalog ready."
-                : $"Catalog version {_source.DatabaseVersion} is structurally compatible but unverified.";
-            await RefreshPreviewAsync();
+            PolicyPicker.SelectionChanged += OnPolicyChanged;
+            _policyEventsAttached = true;
         }
-        catch (Exception exception)
+        MappingSection.IsVisible = true;
+        PolicySection.IsVisible = true;
+        UpdateUi();
+    }
+
+    private void OnFlowPropertyChanged(object? sender, PropertyChangedEventArgs e) =>
+        UpdateUi();
+
+    private void UpdateUi()
+    {
+        if (_flow == null) return;
+        BusyProgress.IsVisible = _flow.IsBusy;
+        BusyProgress.IsIndeterminate = _flow.IsBusy;
+        StatusText.Text = _flow.StatusText;
+        MappingSection.IsEnabled = _flow.InputsEnabled;
+        PolicySection.IsEnabled = _flow.InputsEnabled;
+        ApplyButton.IsVisible = _flow.CanApply;
+        ApplyButton.IsEnabled = _flow.CanApply;
+        CancelButton.IsEnabled = true;
+        CancelButton.Content = _flow.IsApplying
+            ? "Cancel import"
+            : _flow.IsPreviewRunning
+                ? "Cancel check"
+                : _flow.IsInitializing
+                    ? "Cancel catalog read"
+                    : "Close";
+
+        if (_flow.Report != null)
         {
-            ShowFailure(exception.Message);
+            RenderReport(_flow.Report, _flow.IsApplied);
         }
-        finally
+        else if (_flow.FailureText != null)
         {
-            _isReading = false;
-            SetBusy(false, StatusText.Text ?? string.Empty);
-            CancelButton.IsEnabled = true;
+            ShowFailure(_flow.FailureText);
+        }
+        else
+        {
+            ReportSection.IsVisible = false;
+        }
+
+        if (_flow.IsApplied)
+        {
+            MappingSection.IsVisible = false;
+            PolicySection.IsVisible = false;
+            ApplyButton.IsVisible = false;
         }
     }
 
-    private void BuildRootEditors(IReadOnlyDictionary<string, string>? storedMappings)
+    private void BuildRootEditors()
     {
-        if (_source == null) return;
+        if (_flow?.Source == null) return;
         RootsPanel.Children.Clear();
         _rootEditors.Clear();
-        _resolvedRootMappings.Clear();
-        var importableRoots = _source.Roots
+        var importableRoots = _flow.Source.Roots
             .Where(root => root.PhotoCount > 0)
             .ToArray();
-        var initial = CatalogImportService.ResolveMappings(
-            importableRoots,
-            storedMappings ?? new Dictionary<string, string>());
         var automatic = CatalogImportService.ResolveMappings(
-            importableRoots,
-            new Dictionary<string, string>());
+            importableRoots, new Dictionary<string, string>());
         foreach (var root in importableRoots)
         {
-            if (initial.TryGetValue(root.SourcePath, out var mappedPath))
-                RootsPanel.Children.Add(BuildResolvedRootRow(root, mappedPath));
-            else
-                RootsPanel.Children.Add(BuildRootEditor(root));
+            var mappedPath = _flow.RootMappings.GetValueOrDefault(
+                root.SourcePath, string.Empty);
+            RootsPanel.Children.Add(string.IsNullOrEmpty(mappedPath)
+                ? BuildRootEditor(root)
+                : BuildResolvedRootRow(root, mappedPath));
         }
 
         var unresolved = importableRoots.Count(root =>
-            !initial.ContainsKey(root.SourcePath));
+            string.IsNullOrEmpty(_flow.RootMappings.GetValueOrDefault(root.SourcePath)));
         if (importableRoots.Length == 0)
         {
             MappingHelpText.Text =
@@ -114,8 +148,8 @@ public partial class ImportCatalogDialog : Window
                 : StringComparer.Ordinal;
             var allMatchedAutomatically = importableRoots.All(root =>
                 automatic.TryGetValue(root.SourcePath, out var automaticPath) &&
-                initial.TryGetValue(root.SourcePath, out var selectedPath) &&
-                pathComparer.Equals(automaticPath, selectedPath));
+                pathComparer.Equals(automaticPath,
+                    _flow.RootMappings[root.SourcePath]));
             MappingHelpText.Text = allMatchedAutomatically
                 ? "All locations matched automatically. Review the paths below or override a match."
                 : "All locations are matched. Saved mappings are shown below and can be overridden.";
@@ -126,24 +160,27 @@ public partial class ImportCatalogDialog : Window
                 "Choose a local folder for any location you want to import. Leave a location blank to skip its photos.";
         }
 
-        var zeroCountRoots = _source.Roots.Count(root => root.PhotoCount == 0);
-        if (zeroCountRoots > 0 && importableRoots.Length > 0)
+        AddZeroCountNotice(importableRoots.Length);
+    }
+
+    private void AddZeroCountNotice(int importableRootCount)
+    {
+        if (_flow?.Source == null) return;
+        var zeroCountRoots = _flow.Source.Roots.Count(root => root.PhotoCount == 0);
+        if (zeroCountRoots == 0 || importableRootCount == 0) return;
+        var notice = new TextBlock
         {
-            var notice = new TextBlock
-            {
-                Text = zeroCountRoots == 1
-                    ? "1 Lightroom location without ratings, flags, or color labels is not shown."
-                    : $"{zeroCountRoots} Lightroom locations without ratings, flags, or color labels are not shown.",
-                TextWrapping = Avalonia.Media.TextWrapping.Wrap
-            };
-            notice.Classes.Add("root-count");
-            RootsPanel.Children.Add(notice);
-        }
+            Text = zeroCountRoots == 1
+                ? "1 Lightroom location without ratings, flags, or color labels is not shown."
+                : $"{zeroCountRoots} Lightroom locations without ratings, flags, or color labels are not shown.",
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap
+        };
+        notice.Classes.Add("root-count");
+        RootsPanel.Children.Add(notice);
     }
 
     private Grid BuildResolvedRootRow(CatalogSourceRoot root, string mappedPath)
     {
-        _resolvedRootMappings[root.SourcePath] = mappedPath;
         var row = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions("*,Auto"),
@@ -152,7 +189,9 @@ public partial class ImportCatalogDialog : Window
         var labels = new StackPanel { Spacing = 3 };
         var location = new TextBlock
         {
-            Text = $"{root.SourcePath}  →  {mappedPath}",
+            Text = IsSameLocation(root.SourcePath, mappedPath)
+                ? mappedPath
+                : $"{root.SourcePath}  →  {mappedPath}",
             TextWrapping = Avalonia.Media.TextWrapping.Wrap
         };
         location.Classes.Add("root-location");
@@ -172,9 +211,8 @@ public partial class ImportCatalogDialog : Window
             VerticalAlignment = VerticalAlignment.Center
         };
         overrideButton.Classes.Add("root-override");
-        overrideButton.Click += (_, _) =>
+        overrideButton.Click += async (_, _) =>
         {
-            _resolvedRootMappings.Remove(root.SourcePath);
             var index = RootsPanel.Children.IndexOf(row);
             if (index >= 0)
             {
@@ -183,6 +221,7 @@ public partial class ImportCatalogDialog : Window
             }
             MappingHelpText.Text =
                 "Choose a different local folder, or leave this location blank to skip its photos.";
+            if (_flow != null) await _flow.OverrideRootAsync(root.SourcePath);
         };
         Grid.SetColumn(overrideButton, 1);
         row.Children.Add(overrideButton);
@@ -197,8 +236,17 @@ public partial class ImportCatalogDialog : Window
             PlaceholderText = "Choose a matching local folder"
         };
         _rootEditors[root.SourcePath] = editor;
+        editor.TextChanged += (_, _) =>
+            _flow?.UpdateRootText(root.SourcePath, editor.Text);
+        editor.GotFocus += (_, _) => _flow?.BeginRootEdit(root.SourcePath);
+        editor.LostFocus += async (_, _) =>
+        {
+            if (_flow != null)
+                await _flow.CommitRootEditAsync(root.SourcePath, editor.Text);
+        };
+
         var choose = new Button { Content = "Choose…" };
-        choose.Click += async (_, _) => await ChooseRootAsync(editor);
+        choose.Click += async (_, _) => await ChooseRootAsync(root.SourcePath, editor);
         var row = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions("*,Auto"),
@@ -218,7 +266,24 @@ public partial class ImportCatalogDialog : Window
         return row;
     }
 
-    private async Task ChooseRootAsync(TextBox editor)
+    private static bool IsSameLocation(string sourcePath, string mappedPath)
+    {
+        try
+        {
+            return string.Equals(
+                Path.TrimEndingDirectorySeparator(Path.GetFullPath(sourcePath)),
+                Path.TrimEndingDirectorySeparator(Path.GetFullPath(mappedPath)),
+                OperatingSystem.IsWindows()
+                    ? StringComparison.OrdinalIgnoreCase
+                    : StringComparison.Ordinal);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task ChooseRootAsync(string sourceRoot, TextBox editor)
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(
             new FolderPickerOpenOptions
@@ -226,101 +291,29 @@ public partial class ImportCatalogDialog : Window
                 Title = "Map Lightroom Source Root",
                 AllowMultiple = false
             });
-        if (folders.Count > 0) editor.Text = folders[0].Path.LocalPath;
+        if (folders.Count == 0 || _flow == null) return;
+        var path = folders[0].Path.LocalPath;
+        editor.Text = path;
+        await _flow.ChooseRootAsync(sourceRoot, path);
     }
 
-    private async void OnPreviewClick(object? sender, RoutedEventArgs e) =>
-        await RefreshPreviewAsync();
-
-    private async Task RefreshPreviewAsync()
+    private async void OnPolicyChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (_source == null) return;
-        _operationCancellation = new CancellationTokenSource();
-        SetBusy(true, "Comparing Lightroom metadata with Happy Photon…");
-        CancelButton.Content = "Cancel preview";
-        try
-        {
-            var mappings = new Dictionary<string, string>(
-                _resolvedRootMappings, StringComparer.Ordinal);
-            foreach (var (sourceRoot, editor) in _rootEditors)
-            {
-                if (!string.IsNullOrWhiteSpace(editor.Text))
-                    mappings[sourceRoot] = editor.Text;
-            }
-            var policy = PolicyPicker.SelectedIndex == 1
-                ? CatalogImportPolicy.FillEmptyOnly
-                : CatalogImportPolicy.LightroomWins;
-            _preview = await _viewModel.PreviewCatalogImportAsync(
-                _source, mappings, policy, _operationCancellation.Token);
-            RenderReport(_preview.Report, applied: false);
-            ApplyButton.IsVisible = true;
-            StatusText.Text = "Review the preview, then apply when ready.";
-        }
-        catch (OperationCanceledException)
-        {
-            StatusText.Text = "Preview canceled. No catalog changes were made.";
-        }
-        catch (Exception exception)
-        {
-            ShowFailure(exception.Message);
-        }
-        finally
-        {
-            _operationCancellation.Dispose();
-            _operationCancellation = null;
-            CancelButton.Content = "Close";
-            SetBusy(false, StatusText.Text ?? string.Empty);
-        }
+        if (_flow == null) return;
+        await _flow.SetPolicyAsync(PolicyPicker.SelectedIndex == 1
+            ? CatalogImportPolicy.FillEmptyOnly
+            : CatalogImportPolicy.LightroomWins);
     }
 
     private async void OnApplyClick(object? sender, RoutedEventArgs e)
     {
-        if (_preview == null) return;
-        _operationCancellation = new CancellationTokenSource();
-        SetBusy(true, "Applying all catalog changes in one transaction…");
-        CancelButton.Content = "Cancel import";
-        CancelButton.IsEnabled = true;
-        try
-        {
-            var result = await _viewModel.ApplyCatalogImportAsync(
-                _preview, _operationCancellation.Token);
-            RenderReport(result.Report, applied: true);
-            StatusText.Text = result.DatabaseWrites == 0
-                ? "Everything is already up to date. No catalog rows were changed."
-                : "Import complete. Lightroom and your original photographs were not changed.";
-            MappingSection.IsVisible = false;
-            PolicySection.IsVisible = false;
-            PreviewButton.IsVisible = false;
-            ApplyButton.IsVisible = false;
-            CancelButton.Content = "Close";
-            _applySucceeded = true;
-        }
-        catch (OperationCanceledException)
-        {
-            StatusText.Text = "Import canceled. No Happy Photon catalog changes were applied.";
-            CancelButton.Content = "Close";
-        }
-        catch (CatalogImportConflictException exception)
-        {
-            ShowFailure(exception.Message, canRefreshPreview: true);
-            CancelButton.Content = "Close";
-        }
-        catch (Exception exception)
-        {
-            ShowFailure(exception.Message);
-            CancelButton.Content = "Close";
-        }
-        finally
-        {
-            _operationCancellation.Dispose();
-            _operationCancellation = null;
-            SetBusy(false, StatusText.Text ?? string.Empty);
-        }
+        if (_flow != null) await _flow.ApplyAsync();
     }
 
     private void RenderReport(CatalogImportReport report, bool applied)
     {
         ReportSection.IsVisible = true;
+        ReportSectionLabel.Text = applied ? "WHAT CHANGED" : "WHAT WILL CHANGE";
         HeadlineText.Text = report.NothingToImport
             ? "Nothing to import"
             : report.NothingMatched
@@ -328,11 +321,11 @@ public partial class ImportCatalogDialog : Window
                 : applied
                     ? report.UpdatedPhotos == 0
                         ? "Everything is already up to date"
-                        : _isReimport
+                        : _flow?.IsReimport == true
                             ? $"Updated {report.UpdatedPhotos} photos, {Math.Max(0, report.MatchedPhotos - report.UpdatedPhotos)} unchanged"
                             : $"Imported metadata for {report.UpdatedPhotos} photos"
                     : $"{report.UpdatedPhotos} photos will be updated";
-        var rerunNote = _isReimport &&
+        var rerunNote = _flow?.IsReimport == true &&
                         report.Rating.PreservedByPolicy +
                         report.Flag.PreservedByPolicy +
                         report.ColorLabel.PreservedByPolicy > 0
@@ -346,46 +339,48 @@ public partial class ImportCatalogDialog : Window
             $"Color labels — {report.ColorLabel.Written} {updated} · {report.ColorLabel.Unchanged} already match · {report.ColorLabel.PreservedByPolicy} kept your value · {report.ColorLabel.Unsupported} unrecognized left as-is" +
             rerunNote;
         ActionableHeading.IsVisible = report.ActionableOutcomes.Count > 0;
-        ActionableText.Text = string.Join("\n", report.ActionableOutcomes.Select(text => "• " + text));
+        ActionableText.Text = string.Join("\n",
+            report.ActionableOutcomes.Select(text => "• " + text));
         InformationHeading.IsVisible = report.InformationalOutcomes.Count > 0;
-        InformationText.Text = string.Join("\n", report.InformationalOutcomes.Select(text => "• " + text));
+        InformationText.Text = string.Join("\n",
+            report.InformationalOutcomes.Select(text => "• " + text));
     }
 
-    private void SetBusy(bool busy, string status)
+    private void ShowFailure(string message)
     {
-        BusyProgress.IsVisible = busy;
-        BusyProgress.IsIndeterminate = busy;
-        PreviewButton.IsEnabled = !busy;
-        ApplyButton.IsEnabled = !busy;
-        StatusText.Text = status;
-    }
-
-    private void ShowFailure(string message, bool canRefreshPreview = false)
-    {
-        StatusText.Text = message;
         ReportSection.IsVisible = true;
+        ReportSectionLabel.Text = "WHAT WILL CHANGE";
         HeadlineText.Text = "Import could not continue";
         OutcomeText.Text = message;
-        PreviewButton.IsVisible = canRefreshPreview;
-        PreviewButton.IsEnabled = canRefreshPreview;
+        ActionableHeading.IsVisible = false;
+        ActionableText.Text = string.Empty;
+        InformationHeading.IsVisible = false;
+        InformationText.Text = string.Empty;
         ApplyButton.IsVisible = false;
     }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e)
     {
-        if (_operationCancellation != null)
-            _operationCancellation.Cancel();
-        else
+        if (_flow?.HasInFlightOperation == true)
         {
-            _closingWithResult = true;
-            Close(_returnAppliedOnClose && _applySucceeded);
+            _flow.CancelCurrentOperation();
+            return;
         }
+
+        _closingWithResult = true;
+        Close(_returnAppliedOnClose && _flow?.ApplySucceeded == true);
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs args)
     {
-        args.Cancel = _isReading;
-        if (args.Cancel || !_returnAppliedOnClose || !_applySucceeded ||
+        if (_flow?.HasInFlightOperation == true)
+        {
+            _flow.CancelCurrentOperation();
+            args.Cancel = true;
+            return;
+        }
+
+        if (!_returnAppliedOnClose || _flow?.ApplySucceeded != true ||
             _closingWithResult)
         {
             return;
@@ -394,5 +389,13 @@ public partial class ImportCatalogDialog : Window
         args.Cancel = true;
         _closingWithResult = true;
         Dispatcher.UIThread.Post(() => Close(true));
+    }
+
+    private void OnClosed(object? sender, EventArgs e)
+    {
+        if (_flow == null) return;
+        _flow.InputsReady -= OnInputsReady;
+        _flow.PropertyChanged -= OnFlowPropertyChanged;
+        _flow.Dispose();
     }
 }

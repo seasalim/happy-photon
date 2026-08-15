@@ -50,13 +50,14 @@
                         <ComboBoxItem Content="Merge — Lightroom wins"/>
                         <ComboBoxItem Content="Merge — fill empty values only"/>
                     </ComboBox>
-                    <TextBlock Text="Fill empty applies Lightroom values only where Happy Photon has none. Values you cleared yourself count as empty. Phase 1 never clears local values."
+                    <TextBlock Text="Fill empty applies Lightroom values only where Happy Photon has none. Values you cleared yourself count as empty. An import never clears local values."
                                Foreground="{DynamicResource TextMuted}"
                                FontSize="11" TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <StackPanel x:Name="ReportSection" Spacing="10" IsVisible="False">
-                    <TextBlock Text="PREVIEW AND REPORT" Classes="section-label"/>
+                    <TextBlock x:Name="ReportSectionLabel" Text="WHAT WILL CHANGE"
+                               Classes="section-label"/>
                     <TextBlock x:Name="HeadlineText" FontSize="18"
                                FontWeight="SemiBold" TextWrapping="Wrap"/>
                     <TextBlock x:Name="OutcomeText" TextWrapping="Wrap"
@@ -73,14 +74,12 @@
             </StackPanel>
         </ScrollViewer>
 
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-            <Button x:Name="PreviewButton" Grid.Column="1" Content="Preview"
-                    IsVisible="False" Click="OnPreviewClick"/>
-            <Button x:Name="ApplyButton" Grid.Column="2" Content="Apply import"
-                    IsVisible="False" Classes="accent" Click="OnApplyClick"/>
-            <Button x:Name="CancelButton" Grid.Column="0" Content="Close"
-                    HorizontalAlignment="Left" IsEnabled="False"
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10"
+                    HorizontalAlignment="Right">
+            <Button x:Name="CancelButton" Content="Close" IsEnabled="False"
                     Click="OnCancelClick"/>
-        </Grid>
+            <Button x:Name="ApplyButton" Content="Import"
+                    IsVisible="False" Classes="accent" Click="OnApplyClick"/>
+        </StackPanel>
     </Grid>
 </Window>

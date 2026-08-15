@@ -127,7 +127,7 @@ public sealed record CatalogImportStoredSettings(
 public sealed class CatalogImportConflictException : InvalidOperationException
 {
     public CatalogImportConflictException()
-        : base("The Happy Photon catalog changed after the import preview. Refresh the preview and try again.")
+        : base("The Happy Photon catalog changed while the import was being checked. Happy Photon re-checks the report automatically; review the current report and try again.")
     {
     }
 }

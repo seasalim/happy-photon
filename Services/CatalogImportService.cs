@@ -123,7 +123,7 @@ public sealed class CatalogImportService
                 ? "1 photo under an unmapped Lightroom location was not imported."
                 : $"{unresolved} photos under unmapped Lightroom locations were not imported.");
         if (virtualCopies > 0)
-            informational.Add($"{virtualCopies} virtual copies were skipped; Phase 1 imports masters only.");
+            informational.Add($"{virtualCopies} virtual copies were skipped; only master photos are imported.");
         if (unsupportedFiles > 0)
             informational.Add($"{unsupportedFiles} unsupported file types were skipped.");
         if (duplicateRecords > 0)

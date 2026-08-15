@@ -144,7 +144,8 @@ actions** menu expose **Import from Lightroom**. The dialog reads a `.lrcat`, au
 roots already available locally,
 asks for optional local mappings for unavailable roots that contain importable photos,
 and offers two non-clearing policies: Lightroom wins, or fill empty Happy Photon values
-only. It previews path and per-axis outcomes before apply. A wholly unmatched import is
+only. Its dry-run report updates automatically after mapping or policy changes and
+summarizes path and per-axis outcomes before apply. A wholly unmatched import is
 kept separate from expected information such as intentionally unmapped roots, virtual
 copies, unsupported file types, unrecognized color-label tokens, and
 unverified-but-compatible catalog versions.
@@ -294,6 +295,7 @@ swatches alone and carries each name in its tooltip; clearing is a re-click on t
 active swatch rather than an All swatch.
 
 - **Buttons:** Primary buttons should feature a subtle inner glow and a soft drop-shadow in the primary color. On hover, the luminosity increases.
+- **Dialog buttons:** Dialog action buttons sit bottom-right, with the dismiss button (Close/Cancel) immediately left of the accent primary. A button keeps its position across dialog states — the dismiss button must not move when the primary appears or disappears.
 - **Input Fields:** Use a "Ghost" style—thin 1px borders in a muted neutral, turning to Electric Cyan on focus with a faint outer glow.
 - **Cards:** Incorporate a subtle top-down gradient stroke (1px) to catch the "light" from above. Backgrounds should use a semi-transparent dark tint with backdrop-blur.
 - **Chips:** Monospaced labels inside pill-shaped containers with high-saturation borders.

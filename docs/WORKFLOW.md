@@ -9,8 +9,9 @@ Classic is detected, choose a catalog. Close Lightroom first.
 Happy Photon summarizes locations it matches
 automatically. Map any moved location you want to import, or leave it blank to skip those
 photos. Then choose whether Lightroom replaces differing Happy Photon values or only fills
-empty values, review the preview, and apply. Phase 1 never clears a local rating, flag, or
-color label, and never writes to Lightroom or an original photograph.
+empty values, review the automatically updated report of what will change, and import.
+An import never clears a local rating, flag, or color label, and never writes to
+Lightroom or an original photograph.
 
 The report reserves action-needed messages for an import where none of the assessed
 photos matched. Unmapped locations are informational skips, like virtual copies and
