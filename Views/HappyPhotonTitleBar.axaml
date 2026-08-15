@@ -28,7 +28,7 @@
             <Setter Property="Fill" Value="Transparent"/>
         </Style>
         <Style Selector="Button.tab.active Rectangle.tabUnderline">
-            <Setter Property="Fill" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Fill" Value="{DynamicResource BrandAccent}"/>
         </Style>
         <Style Selector="Button.caption">
             <Setter Property="Width" Value="46"/>
@@ -92,12 +92,14 @@
             <StackPanel Orientation="Horizontal" Spacing="8"
                         HorizontalAlignment="Left" VerticalAlignment="Center"
                         Margin="14,0,0,0">
-                <Image Source="/Assets/happy-photon-icon.png" Width="20" Height="20"/>
-                <TextBlock FontFamily="{StaticResource FontHeading}"
+                <Border x:Name="BrandMark" Width="20" Height="20"
+                        Background="{DynamicResource BrandMark}"/>
+                <TextBlock x:Name="BrandWordmark"
+                           FontFamily="{StaticResource FontHeading}"
                            FontWeight="Bold" FontSize="16"
                            VerticalAlignment="Center">
                     <Run Text="Happy " Foreground="{DynamicResource TextPrimary}"/>
-                    <Run Text="Photon" Foreground="{StaticResource PrimaryContainer}"/>
+                    <Run Text="Photon" Foreground="{DynamicResource BrandAccent}"/>
                 </TextBlock>
             </StackPanel>
 
@@ -109,7 +111,8 @@
                         IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
                     <StackPanel Spacing="3">
                         <TextBlock Text="Library"/>
-                        <Rectangle Classes="tabUnderline" Height="2" Margin="-4,0"/>
+                        <Rectangle x:Name="LibraryTabUnderline"
+                                   Classes="tabUnderline" Height="2" Margin="-4,0"/>
                     </StackPanel>
                 </Button>
                 <Button Classes="tab" Classes.active="{Binding IsDevelopMode}"
@@ -117,7 +120,8 @@
                         IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
                     <StackPanel Spacing="3">
                         <TextBlock Text="Develop"/>
-                        <Rectangle Classes="tabUnderline" Height="2" Margin="-4,0"/>
+                        <Rectangle x:Name="DevelopTabUnderline"
+                                   Classes="tabUnderline" Height="2" Margin="-4,0"/>
                     </StackPanel>
                 </Button>
             </StackPanel>

@@ -1,8 +1,10 @@
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using HappyPhoton.Views;
+using ImageMagick;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -60,6 +62,29 @@ public sealed class ThemeResourceTests
         AssertContrast(3, "RejectMark", "SurfaceLow", HappyPhotonThemes.MidGray);
     }
 
+    [AvaloniaTheory]
+    [MemberData(nameof(Variants))]
+    public void Theme_BrandAccentPairsMeetContrastTargets(ThemeVariant variant)
+    {
+        AssertContrast(4.5, "OnBrandAccent", "BrandAccent", variant);
+        AssertContrast(4.5, "OnBrandAccent", "BrandAccentHover", variant);
+        AssertContrast(3, "BrandAccent", "SurfaceLowest", variant);
+    }
+
+    [AvaloniaFact]
+    public void Dark_BrandAccentTokensPreserveExistingPalette()
+    {
+        Assert.Equal(
+            Resource<Color>("PrimaryContainerColor", ThemeVariant.Dark),
+            Brush("BrandAccent", ThemeVariant.Dark).Color);
+        Assert.Equal(
+            Resource<Color>("PrimaryHoverColor", ThemeVariant.Dark),
+            Brush("BrandAccentHover", ThemeVariant.Dark).Color);
+        Assert.Equal(
+            Resource<Color>("OnPrimaryColor", ThemeVariant.Dark),
+            Brush("OnBrandAccent", ThemeVariant.Dark).Color);
+    }
+
     [AvaloniaFact]
     public void MidGray_ChromeNeutralsAreStrictlyAchromatic()
     {
@@ -69,7 +94,9 @@ public sealed class ThemeResourceTests
             "SurfaceHigh", "SurfaceHighest", "SurfaceBright",
             "Outline", "OutlineVariant", "TextPrimary", "TextSecondary",
             "TextMuted", "TextDisabled", "RawFileBackground",
-            "ViewerSurround", "FullScreenBackdrop", "SelectionSurface"
+            "ViewerSurround", "FullScreenBackdrop", "SelectionSurface",
+            "BrandAccent", "BrandAccentHover", "OnBrandAccent",
+            "ActiveImageRing"
         })
         {
             var color = Brush(key, HappyPhotonThemes.MidGray).Color;
@@ -77,6 +104,52 @@ public sealed class ThemeResourceTests
                 color.R == color.G && color.G == color.B,
                 $"{key} resolved to {color}, which carries a color cast.");
         }
+    }
+
+    // Asserted through the BrandMark resource rather than by opening the asset
+    // by name, so the theme dictionary is pinned to an asset of the right
+    // character. Checking the rendered pixels rather than a file path also keeps
+    // the test honest if the mark is ever redrawn or renamed.
+    [AvaloniaFact]
+    public void BrandMark_ResolvesToAChromaticMarkOnlyUnderDark()
+    {
+        Assert.False(
+            HasChroma(HappyPhotonThemes.MidGray),
+            "The Middle Gray brand mark carries a color cast.");
+        Assert.True(
+            HasChroma(ThemeVariant.Dark),
+            "The Dark brand mark lost its cyan.");
+    }
+
+    private static bool HasChroma(ThemeVariant variant)
+    {
+        var mark = Resource<ImageBrush>("BrandMark", variant);
+        var bitmap = Assert.IsType<Bitmap>(mark.Source);
+
+        using var encoded = new MemoryStream();
+        bitmap.Save(encoded);
+        encoded.Position = 0;
+
+        using var image = new MagickImage(encoded);
+        var pixels = image.GetPixelsUnsafe().ToByteArray(PixelMapping.RGBA) ??
+            throw new InvalidOperationException(
+                $"Could not read the {variant} brand mark.");
+
+        for (var index = 0; index < pixels.Length; index += 4)
+        {
+            if (pixels[index + 3] == 0)
+            {
+                continue;
+            }
+
+            if (pixels[index] != pixels[index + 1] ||
+                pixels[index + 1] != pixels[index + 2])
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     [AvaloniaTheory]

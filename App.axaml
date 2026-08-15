@@ -37,14 +37,14 @@
         <Style Selector="ToggleButton">
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
         </Style>
-        <!-- Happy Photon accent rule: cyan = actions/active state, magenta = highlights. -->
+        <!-- Happy Photon accent rule: brand accent = actions/active state, magenta = highlights. -->
         <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource BrandAccent}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnBrandAccent}"/>
         </Style>
         <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource PrimaryHover}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource BrandAccentHover}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnBrandAccent}"/>
         </Style>
         <Style Selector="Button.destructive /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>

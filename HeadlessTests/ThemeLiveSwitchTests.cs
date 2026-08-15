@@ -1,9 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using HappyPhoton.Models;
@@ -11,6 +14,7 @@ using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
 using Xunit;
+using Rectangle = Avalonia.Controls.Shapes.Rectangle;
 
 namespace HappyPhoton.Tests;
 
@@ -55,6 +59,13 @@ public sealed class ThemeLiveSwitchTests
             var titleBar = window.GetLogicalDescendants()
                 .OfType<HappyPhotonTitleBar>()
                 .Single();
+            var brandMark = titleBar.FindControl<Border>("BrandMark")!;
+            var brandWordmark = titleBar.FindControl<TextBlock>("BrandWordmark")!;
+            var photonWordmark = brandWordmark.Inlines!
+                .OfType<Run>()
+                .Single(run => run.Text == "Photon");
+            var libraryUnderline = titleBar.FindControl<Rectangle>(
+                "LibraryTabUnderline")!;
             var appearance = titleBar.FindControl<Button>("AppearanceButton")!;
             Assert.False(appearance.IsEffectivelyEnabled);
             Assert.True(appearance.Focusable);
@@ -80,6 +91,12 @@ public sealed class ThemeLiveSwitchTests
             var reset = window.GetLogicalDescendants()
                 .OfType<Button>()
                 .Single(button => button.Name == "ResetAdjustmentsButton");
+            var export = window.GetLogicalDescendants()
+                .OfType<Button>()
+                .Single(button => button.Name == "LibraryExportButton");
+            var exportPresenter = export.GetVisualDescendants()
+                .OfType<ContentPresenter>()
+                .Single(presenter => presenter.Name == "PART_ContentPresenter");
 
             Assert.Equal(
                 ThemeResourceTests.Brush("ViewerSurround", Avalonia.Styling.ThemeVariant.Dark).Color,
@@ -91,6 +108,24 @@ public sealed class ThemeLiveSwitchTests
             Assert.Equal(0.32, undo.Opacity);
             Assert.Equal(0.32, reset.Opacity);
             Assert.Equal(Color.Parse("#849495"), ColorOf(reset.Foreground));
+            AssertBrandSurfaces(
+                brandMark,
+                photonWordmark,
+                libraryUnderline,
+                exportPresenter,
+                ThemeVariant.Dark,
+                pointerOver: false);
+
+            var darkMarkSource = Assert.IsType<ImageBrush>(brandMark.Background).Source;
+            ((IPseudoClasses)export.Classes).Set(":pointerover", true);
+            Dispatcher.UIThread.RunJobs();
+            AssertBrandSurfaces(
+                brandMark,
+                photonWordmark,
+                libraryUnderline,
+                exportPresenter,
+                ThemeVariant.Dark,
+                pointerOver: true);
 
             vm.SetAppThemeCommand.Execute(AppTheme.MidGray);
             Dispatcher.UIThread.RunJobs();
@@ -110,10 +145,30 @@ public sealed class ThemeLiveSwitchTests
             Assert.Equal(Color.Parse("#ffffff"), ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00dbe9"), ColorOf(burstStripe.Background));
             Assert.Equal(Color.Parse("#616161"), ColorOf(thumbnail.Background));
-            Assert.Equal(Color.Parse("#6cc9d1"), ColorOf(thumbnail.BorderBrush));
+            Assert.Equal(Color.Parse("#bbbbbb"), ColorOf(thumbnail.BorderBrush));
             Assert.Equal(0.62, undo.Opacity);
             Assert.Equal(0.62, reset.Opacity);
             Assert.Equal(Color.Parse("#c8c8c8"), ColorOf(reset.Foreground));
+            AssertBrandSurfaces(
+                brandMark,
+                photonWordmark,
+                libraryUnderline,
+                exportPresenter,
+                HappyPhotonThemes.MidGray,
+                pointerOver: true);
+            Assert.NotSame(
+                darkMarkSource,
+                Assert.IsType<ImageBrush>(brandMark.Background).Source);
+
+            ((IPseudoClasses)export.Classes).Set(":pointerover", false);
+            Dispatcher.UIThread.RunJobs();
+            AssertBrandSurfaces(
+                brandMark,
+                photonWordmark,
+                libraryUnderline,
+                exportPresenter,
+                HappyPhotonThemes.MidGray,
+                pointerOver: false);
 
             var flyout = Assert.IsType<MenuFlyout>(appearance.Flyout);
             flyout.ShowAt(appearance);
@@ -191,6 +246,34 @@ public sealed class ThemeLiveSwitchTests
 
     private static Color ColorOf(IBrush? brush) =>
         Assert.IsAssignableFrom<ISolidColorBrush>(brush).Color;
+
+    private static void AssertBrandSurfaces(
+        Border mark,
+        Run photonWordmark,
+        Rectangle underline,
+        ContentPresenter accentPresenter,
+        ThemeVariant variant,
+        bool pointerOver)
+    {
+        var expectedMark = ThemeResourceTests.Resource<ImageBrush>("BrandMark", variant);
+        Assert.Same(
+            expectedMark.Source,
+            Assert.IsType<ImageBrush>(mark.Background).Source);
+        Assert.Equal(
+            ThemeResourceTests.Brush("BrandAccent", variant).Color,
+            ColorOf(photonWordmark.Foreground));
+        Assert.Equal(
+            ThemeResourceTests.Brush("BrandAccent", variant).Color,
+            ColorOf(underline.Fill));
+        Assert.Equal(
+            ThemeResourceTests.Brush(
+                pointerOver ? "BrandAccentHover" : "BrandAccent",
+                variant).Color,
+            ColorOf(accentPresenter.Background));
+        Assert.Equal(
+            ThemeResourceTests.Brush("OnBrandAccent", variant).Color,
+            ColorOf(accentPresenter.Foreground));
+    }
 
     private static void AssertDisabledControls(
         IEnumerable<Control> controls,

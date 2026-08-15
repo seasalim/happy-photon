@@ -114,6 +114,12 @@
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Dark">
             <!-- Existing Dark palette, preserved verbatim. -->
+            <SolidColorBrush x:Key="BrandAccent" Color="{StaticResource PrimaryContainerColor}"/>
+            <SolidColorBrush x:Key="BrandAccentHover" Color="{StaticResource PrimaryHoverColor}"/>
+            <SolidColorBrush x:Key="OnBrandAccent" Color="{StaticResource OnPrimaryColor}"/>
+            <ImageBrush x:Key="BrandMark"
+                        Source="/Assets/happy-photon-icon.png"
+                        Stretch="Uniform"/>
             <Color x:Key="SurfaceLowestColor">#0e0e13</Color>
             <Color x:Key="SurfaceBaseColor">#131318</Color>
             <Color x:Key="SurfaceLowColor">#1b1b20</Color>
@@ -179,6 +185,12 @@
 
         <ResourceDictionary x:Key="{x:Static views:HappyPhotonThemes.MidGray}">
             <!-- Neutral chrome stays below the L* 50 image surround. -->
+            <SolidColorBrush x:Key="BrandAccent" Color="#d4d4d4"/>
+            <SolidColorBrush x:Key="BrandAccentHover" Color="#f0f0f0"/>
+            <SolidColorBrush x:Key="OnBrandAccent" Color="#303030"/>
+            <ImageBrush x:Key="BrandMark"
+                        Source="/Assets/happy-photon-icon-mono.png"
+                        Stretch="Uniform"/>
             <Color x:Key="SurfaceLowestColor">#303030</Color>
             <Color x:Key="SurfaceBaseColor">#363636</Color>
             <Color x:Key="SurfaceLowColor">#3d3d3d</Color>
@@ -201,7 +213,9 @@
             <Color x:Key="SelectionSurfaceColor">#616161</Color>
             <!-- Muted accents for chrome that borders photo pixels: reduced chroma
                  limits simultaneous-contrast shifts against the L* 50 surround. -->
-            <Color x:Key="ActiveImageRingColor">#6cc9d1</Color>
+            <!-- Achromatic at the same relative luminance the muted teal carried,
+                 so the ring keeps its former visual weight against the surround. -->
+            <Color x:Key="ActiveImageRingColor">#bbbbbb</Color>
             <Color x:Key="SelectionCheckColor">#9adfe4</Color>
             <Color x:Key="RejectMarkColor">#f2aaa4</Color>
 

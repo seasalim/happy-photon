@@ -191,9 +191,9 @@ Avoid muddy colors. Use high-saturation tones and implement luminosity masks to 
 
 The themes present as **Dark** (the default) and **Middle Gray** in the UI; the
 Middle Gray internal identifier remains `MidGray` because that spelling matches the
-enum naming style. Middle Gray keeps the same
-cyan, magenta, and semantic accents while raising the neutral chrome. Its photograph
-surround is `#777777`, the nearest integer sRGB encoding of CIE L\* 50. That code
+enum naming style. Middle Gray keeps the same magenta and semantic accents while
+raising the neutral chrome. Its photograph surround is `#777777`, the nearest
+integer sRGB encoding of CIE L\* 50. That code
 value is about 47% of the encoded channel range but decodes to roughly 18.4% relative
 luminance because sRGB is nonlinear. The familiar 18% photographic gray describes a
 physical reflectance convention whose displayed appearance also depends on lighting
@@ -205,19 +205,26 @@ Middle Gray remains a dark-family theme with light text. Its chrome ramp stays b
 the surround, and text is placed on darker cards rather than directly on `#777777`.
 Every chrome neutral in the Middle Gray dictionary is strictly achromatic (R=G=B); the
 Dark theme's teal-tinted neutral family stays out of this variant so nothing near the
-photograph carries a color cast. Accents that border photo pixels also get muted
-Middle Gray variants — the active-image ring (`#6cc9d1`) and the selection check mark
-(`#9adfe4`) trade the electric cyan for reduced chroma, limiting simultaneous-contrast
-shifts against the L\* 50 surround while staying recognizably in the accent family.
+photograph carries a color cast. Accents that border photo pixels drop the electric
+cyan under Middle Gray. The active-image ring goes fully achromatic (`#bbbbbb`),
+chosen at the relative luminance its former muted teal carried so the focus rectangle
+keeps its visual weight while adding no chroma beside the photograph. The selection
+check mark (`#9adfe4`) is not a border and keeps reduced chroma, limiting
+simultaneous-contrast shifts against the L\* 50 surround while staying recognizably
+in the accent family.
+The `BrandAccent`, `BrandAccentHover`, and `OnBrandAccent` tokens isolate brand chrome
+from the invariant cyan palette. Dark maps them to the existing cyan values; Middle
+Gray uses `#D4D4D4`, `#F0F0F0`, and `#303030` so the title-bar wordmark and active-tab
+underline, plus every accent button, are monochrome. The `BrandMark` image-brush token
+selects the matching cyan or neutral title-bar mark and switches live with the theme.
 `AssessmentGray` uses the same shipped value but is an invariant assessment reference,
 not an alias to the theme surround. `AssessmentWhite` is the invariant `#FFFFFF`
 reference band used with it. Theme resources live in
 `Themes/HappyPhotonTheme.axaml`; code-drawn photograph overlays use the matching
 invariant values in `Views/HappyPhotonColors.cs`.
 
-The asset audit found no bitmap that depends on a dark backing. The title-bar icon is
-self-contained; all other interface marks are text or vector paths and inherit theme
-resources.
+The title-bar icon has cyan and neutral theme variants selected by `BrandMark`. Other
+interface marks are text or vector paths and inherit theme resources.
 
 ## Typography
 
