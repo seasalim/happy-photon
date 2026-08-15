@@ -18,6 +18,7 @@ foreach ($requiredFile in @(
     "photo-editor-windows/index.html",
     "photo-editor-linux/index.html",
     "photo-editor-macos/index.html",
+    "import-from-lightroom/index.html",
     "404.html",
     "site-config.json",
     "downloads.json",
@@ -197,13 +198,25 @@ if ($isLive) {
         throw "Live robots.txt does not allow indexing."
     }
     $sitemap = Get-Content -Raw -LiteralPath (Join-Path $sitePath "sitemap.xml")
-    foreach ($guideRoute in @("photo-editor-windows/", "photo-editor-linux/", "photo-editor-macos/")) {
+    foreach ($guideRoute in @("photo-editor-windows/", "photo-editor-linux/", "photo-editor-macos/", "import-from-lightroom/")) {
         $guidePath = $guideRoute + "index.html"
         $guideHtml = $htmlByPath[$guidePath]
         foreach ($requiredMetadata in @('rel="canonical"', 'property="og:title"', 'name="twitter:description"')) {
             if ($guideHtml -notmatch [regex]::Escape($requiredMetadata)) {
                 throw "$guidePath is missing production metadata: $requiredMetadata"
             }
+        }
+        $titleMatch = [regex]::Match($guideHtml, '<title>\s*([^<]+?)\s*</title>', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        $descriptionMatch = [regex]::Match($guideHtml, '<meta\s+name="description"\s+content="([^"]+)"', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        $canonicalMatch = [regex]::Match($guideHtml, '<link\s+rel="canonical"\s+href="([^"]+)"', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if (-not $titleMatch.Success -or [string]::IsNullOrWhiteSpace($titleMatch.Groups[1].Value)) {
+            throw "$guidePath has an empty page title."
+        }
+        if (-not $descriptionMatch.Success -or [string]::IsNullOrWhiteSpace($descriptionMatch.Groups[1].Value)) {
+            throw "$guidePath has an empty meta description."
+        }
+        if (-not $canonicalMatch.Success -or $canonicalMatch.Groups[1].Value -notmatch ([regex]::Escape("/$guideRoute") + '$')) {
+            throw "$guidePath canonical URL does not match its route."
         }
         if ($sitemap -notmatch [regex]::Escape("/$guideRoute</loc>")) {
             throw "Live sitemap is missing guide route: $guideRoute"

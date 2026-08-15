@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en" data-base-path="{{BASE_PATH}}">
+<head>
+  {{> shared/head-guide}}
+</head>
+<body>
+  {{> shared/header}}
+  <main id="main-content">
+    <section class="guide-hero section-shell" aria-labelledby="guide-title">
+      <nav class="breadcrumb" aria-label="Breadcrumb"><a href="{{BASE_PATH}}">Happy Photon</a><span aria-hidden="true">/</span><span>Import from Lightroom Classic</span></nav>
+      <div class="guide-hero-grid">
+        <div>
+          <p class="eyebrow">LIGHTROOM CLASSIC METADATA IMPORT</p>
+          <h1 id="guide-title">Bring your photo assessments <span>into Happy Photon.</span></h1>
+          <p class="guide-summary">Import ratings, pick and reject flags, and color labels from a local Lightroom Classic catalog—without opening, moving, or changing your original photographs.</p>
+          <div class="button-row">
+            <a class="button button-primary" href="{{BASE_PATH}}download/">Get Happy Photon</a>
+            <a class="button button-secondary" href="#steps">See the import steps</a>
+          </div>
+        </div>
+        <dl class="guide-facts" aria-label="Lightroom import scope">
+          <div><dt>Source</dt><dd>Local Lightroom Classic .lrcat</dd></div>
+          <div><dt>Imports</dt><dd>Ratings, flags, color labels</dd></div>
+          <div><dt>Writes</dt><dd>Happy Photon catalog only</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <div class="guide-body section-shell">
+      <article class="guide-article">
+        <section id="scope" aria-labelledby="scope-title">
+          <p class="eyebrow">HONEST SCOPE</p>
+          <h2 id="scope-title">Keep the decisions, start fresh on the edits</h2>
+          <p>Happy Photon brings over the assessments that help you review a shoot: zero-to-five-star ratings, pick or reject flags, and native color labels. It maps those values to the photographs already stored in your folders.</p>
+          <p>This is a metadata import, not a Lightroom catalog conversion. Lightroom develop edits do not migrate, and Happy Photon does not reproduce or import Lightroom’s full catalog organization and features, such as collections, keywords, stacks, virtual copies, publishing, or cloud services.</p>
+        </section>
+
+        <section id="prepare" aria-labelledby="prepare-title">
+          <p class="eyebrow">BEFORE YOU BEGIN</p>
+          <h2 id="prepare-title">Close Lightroom and keep the catalog local</h2>
+          <ul class="check-list">
+            <li>Install Happy Photon for Windows, macOS, or Linux.</li>
+            <li>Close Lightroom Classic completely before selecting its catalog.</li>
+            <li>Use a local <code>.lrcat</code> file; Happy Photon may suggest catalogs it detects, or you can browse to one.</li>
+            <li>Make sure the photo folders you want to match are mounted or available locally.</li>
+          </ul>
+          <aside class="notice-panel"><strong>No original-content read.</strong><p>The preview checks whether each mapped path exists without opening the photograph. Missing files are skipped, and the import never hydrates a cloud-only original.</p></aside>
+        </section>
+
+        <section id="steps" aria-labelledby="steps-title">
+          <p class="eyebrow">IMPORT STEPS</p>
+          <h2 id="steps-title">Preview every change before applying it</h2>
+          <ol class="numbered-steps">
+            <li><span>01</span><div><h3>Open the importer</h3><p>During first run, use the optional Lightroom step. Later, choose <strong>Import from Lightroom…</strong> from the Folders header’s <strong>More folder actions</strong> menu.</p></div></li>
+            <li><span>02</span><div><h3>Choose a catalog</h3><p>Select a detected local catalog or browse to another <code>.lrcat</code>. Lightroom Classic must remain closed.</p></div></li>
+            <li><span>03</span><div><h3>Confirm folder mappings</h3><p>Happy Photon matches known locations automatically. Point any moved Lightroom location to its current folder, or leave it blank to skip those photographs.</p></div></li>
+            <li><span>04</span><div><h3>Choose how values merge</h3><p>Use <strong>Replace differing values</strong> or <strong>Fill empty values</strong>, then review the updated change report.</p></div></li>
+            <li><span>05</span><div><h3>Apply the import</h3><p>Only matched ratings, flags, and labels are written to the Happy Photon catalog. Lightroom and original photographs are never changed.</p></div></li>
+          </ol>
+        </section>
+
+        <section id="merge" aria-labelledby="merge-title">
+          <p class="eyebrow">SAFE MERGING</p>
+          <h2 id="merge-title">Choose how imported values meet local work</h2>
+          <p><strong>Replace differing values</strong> adopts an assessed Lightroom value when it differs from Happy Photon. <strong>Fill empty values</strong> preserves an existing Happy Photon assessment and fills only an empty axis. Neither mode clears a local rating, flag, or color label.</p>
+          <p>Missing files, unmapped locations, virtual copies, and unsupported files are reported as skips. If no mapped photographs exist, correct the mappings or make the originals locally available before applying. Repeating an up-to-date import performs no catalog writes.</p>
+        </section>
+
+        <section id="xmp" aria-labelledby="xmp-title">
+          <p class="eyebrow">OPTIONAL XMP SIDECARS</p>
+          <h2 id="xmp-title">Keep future assessments portable</h2>
+          <p>After import, Settings can opt the current Happy Photon catalog into XMP reading or read/write interoperability. Sidecars exchange ratings, flags, and recognized color-label names with standard Adobe metadata; examples include <code>xmp:Rating</code>, <code>xmpDM:pick</code>, <code>xmpDM:good</code>, and <code>xmp:Label</code>.</p>
+          <p>Read/write mode creates or updates a sidecar only after you make an assessment change. Turning it on does not publish older catalog values. XMP work never opens or changes the original photograph, and it does not silently download an online-only original.</p>
+        </section>
+
+        <section id="questions" aria-labelledby="questions-title">
+          <p class="eyebrow">COMMON QUESTIONS</p>
+          <h2 id="questions-title">Lightroom import FAQ</h2>
+          <div class="faq-list">
+            <details><summary>Does Happy Photon replace Lightroom Classic?</summary><p>It offers a smaller folder-to-export workflow. It can import ratings, flags, and color labels, but Lightroom develop edits and full catalog features do not migrate.</p></details>
+            <details><summary>Will the import change my Lightroom catalog or photos?</summary><p>No. Happy Photon reads from a safe snapshot and writes imported metadata only to its own catalog. It never writes to Lightroom or an original photograph.</p></details>
+            <details><summary>What happens when photos have moved?</summary><p>Map the old Lightroom location to the folder where those files now live. Leave a location unmapped to skip it. Missing files are skipped rather than opened or downloaded.</p></details>
+            <details><summary>Can I import the same catalog again?</summary><p>Yes. Review the new preview and merge choice each time. When every matched value is already current, Happy Photon makes no catalog writes.</p></details>
+            <details><summary>Do I need XMP sidecars?</summary><p>No. XMP is an optional per-catalog setting for exchanging future assessments with compatible software. The one-time Lightroom catalog import works without it.</p></details>
+          </div>
+        </section>
+      </article>
+
+      <aside class="guide-sidebar" aria-label="Guide navigation">
+        <p class="card-detail">ON THIS PAGE</p>
+        <nav><a href="#scope">What imports?</a><a href="#prepare">Prepare</a><a href="#steps">Import steps</a><a href="#merge">Merge behavior</a><a href="#xmp">XMP sidecars</a><a href="#questions">Questions</a></nav>
+        <div class="sidebar-callout"><strong>Ready to continue?</strong><p>Check the current release and choose the installer for your desktop.</p><a class="button button-primary" href="{{BASE_PATH}}download/">Download Happy Photon</a></div>
+      </aside>
+    </div>
+
+    <section class="section related-guides" aria-labelledby="related-title">
+      <div class="section-shell">
+        <p class="eyebrow">INSTALLATION GUIDES</p>
+        <h2 id="related-title">Start on your platform</h2>
+        <div class="related-guide-links"><a href="{{BASE_PATH}}photo-editor-windows/"><b>Windows guide</b><span>Windows 10 1809+ · x64</span></a><a href="{{BASE_PATH}}photo-editor-macos/"><b>macOS guide</b><span>Apple Silicon · macOS 14+</span></a><a href="{{BASE_PATH}}photo-editor-linux/"><b>Linux guide</b><span>Portable x64 archive</span></a></div>
+      </div>
+    </section>
+  </main>
+  {{> shared/footer}}
+  <script type="module" src="{{BASE_PATH}}assets/js/navigation.js?v={{SCRIPT_VERSION}}"></script>
+</body>
+</html>

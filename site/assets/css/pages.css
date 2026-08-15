@@ -105,6 +105,17 @@
 .guide-card .text-link { margin-top: auto; padding-top: 22px; }
 .platform-guide-link { margin-top: 18px; font-size: 0.92rem; }
 
+.updates-section { border-block: 1px solid var(--outline-variant); background: var(--surface-lowest); }
+.updates-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(420px, 0.9fr); align-items: center; gap: clamp(48px, 8vw, 120px); }
+.updates-copy h2 { margin-bottom: 36px; font-size: clamp(2.4rem, 4.5vw, 4.6rem); }
+.updates-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.updates-list article { padding-top: 20px; border-top: 1px solid var(--outline-variant); }
+.updates-list h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.updates-list p { margin-bottom: 10px; }
+.updates-list .text-link { font-size: 0.9rem; }
+.updates-polish { margin: 28px 0 0; color: var(--outline); font-size: 0.92rem; }
+.updates-shot { align-self: center; }
+
 .guide-hero { padding-block: 72px 64px; }
 .breadcrumb { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 56px; color: var(--outline); font: 500 0.75rem/1.4 "JetBrains Mono", monospace; letter-spacing: 0.06em; }
 .breadcrumb a { color: var(--on-surface-variant); text-underline-offset: 4px; }
@@ -156,7 +167,7 @@
 .faq-list details p { margin-bottom: 24px; font-size: 1rem; }
 .related-guides { border-top: 1px solid var(--outline-variant); background: var(--surface-lowest); }
 .related-guides h2 { margin-bottom: 32px; font-size: clamp(2rem, 4vw, 3.5rem); }
-.related-guide-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.related-guide-links { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .related-guide-links a { display: grid; gap: 8px; padding: 26px; border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); background: var(--surface-low); text-decoration: none; }
 .related-guide-links a:hover { border-color: var(--primary-container); }
 .related-guide-links b { color: var(--on-surface); font-family: "Sora", sans-serif; }
@@ -167,10 +178,11 @@
   .trust-strip span:nth-child(2) { border-right: 0; }
   .workflow-grid, .platform-grid { grid-template-columns: 1fr; }
   .workflow-card { min-height: 240px; }
-  .feature-section, .privacy-inner, .pixelblind-section, .open-source-section { grid-template-columns: 1fr; }
+  .feature-section, .privacy-inner, .pixelblind-section, .open-source-section, .updates-grid { grid-template-columns: 1fr; }
   .feature-shot { order: -1; }
   .pixelblind-visual { max-width: 680px; }
   .open-source-section > div:first-child { max-width: 700px; }
+  .updates-shot { order: -1; }
   .guide-card-grid, .guide-hero-grid, .guide-body { grid-template-columns: 1fr; }
   .guide-card { min-height: 250px; }
   .guide-facts { max-width: 680px; }
@@ -186,7 +198,7 @@
   .trust-strip { grid-template-columns: 1fr; padding-block: 50px; }
   .trust-strip span, .trust-strip span:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--outline-variant); }
   .trust-strip span:last-child { border-bottom: 0; }
-  .source-actions, .notes-grid, .release-evidence, .release-facts { grid-template-columns: 1fr; }
+  .source-actions, .notes-grid, .release-evidence, .release-facts, .updates-list { grid-template-columns: 1fr; }
   .boundary-list p { grid-template-columns: 1fr; gap: 5px; }
   .final-section { padding-block: 96px; }
   .download-hero { padding-block: 80px 48px; }

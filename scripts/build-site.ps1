@@ -345,6 +345,7 @@ $routes = [ordered]@{
     "photo-editor-windows.html" = "photo-editor-windows/index.html"
     "photo-editor-linux.html" = "photo-editor-linux/index.html"
     "photo-editor-macos.html" = "photo-editor-macos/index.html"
+    "import-from-lightroom.html" = "import-from-lightroom/index.html"
     "404.html" = "404.html"
 }
 
@@ -388,6 +389,13 @@ foreach ($route in $routes.GetEnumerator()) {
                 Title = "RAW and JPEG Photo Editor for Mac — Happy Photon"
                 Description = "Browse, non-destructively edit, and export local RAW and JPEG shoots with Happy Photon for Apple Silicon Macs running macOS 14+."
                 CanonicalUrl = $canonicalBase + "photo-editor-macos/"
+            }
+        }
+        "import-from-lightroom.html" {
+            [ordered]@{
+                Title = "Import Ratings and Flags from Lightroom Classic — Happy Photon"
+                Description = "Import ratings, pick and reject flags, and color labels from Lightroom Classic into Happy Photon, with optional standard Adobe XMP sidecars."
+                CanonicalUrl = $canonicalBase + "import-from-lightroom/"
             }
         }
         default {

@@ -52,6 +52,10 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Clip decorative bleed (hero glows) at the viewport edge; on body the value
+   would propagate to the viewport and still leave scrollable overflow. */
+main { overflow-x: clip; }
+
 body::before {
   position: fixed;
   inset: 0;
