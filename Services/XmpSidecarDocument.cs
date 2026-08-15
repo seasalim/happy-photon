@@ -113,9 +113,12 @@ public static class XmpSidecarDocument
         if (text == null) return XmpFact<ColorLabel>.Missing;
         if (string.IsNullOrWhiteSpace(text))
             return new XmpFact<ColorLabel>(XmpFactKind.Empty, ColorLabel.None);
-        foreach (var (label, name) in labelNames)
+        var trimmed = text.Trim();
+        // Canonical names win over user display names so a sidecar written by
+        // another tool keeps its standard meaning even after a rename.
+        foreach (var (label, name) in ColorLabelNames.Defaults.Concat(labelNames))
         {
-            if (string.Equals(text.Trim(), name, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(trimmed, name, StringComparison.OrdinalIgnoreCase))
                 return XmpFact<ColorLabel>.Matched(label);
         }
         return XmpFact<ColorLabel>.Unsupported;
@@ -174,7 +177,8 @@ public static class XmpSidecarDocument
             if (!unsupported) SetValue(document, Xmp, "Label", string.Empty);
             return false;
         }
-        var value = labelNames.GetValueOrDefault(label, label.ToString());
+        var value = ColorLabelNames.Defaults.GetValueOrDefault(
+            label, label.ToString());
         SetValue(document, Xmp, "Label", value);
         return unsupported;
     }

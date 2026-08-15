@@ -136,6 +136,57 @@ public sealed class XmpSidecarDocumentTests
     }
 
     [Fact]
+    public void LabelMerge_WithRenamedNames_WritesCanonicalName()
+    {
+        var document = XmpSidecarDocument.Create();
+        var snapshot = Snapshot(ImageFlag.Unflagged,
+            colorLabel: ColorLabel.Red, pendingAxes: AssessmentAxes.Label);
+
+        XmpSidecarDocument.Merge(
+            document, snapshot, AssessmentAxes.Label, RenamedLabelNames());
+
+        Assert.Equal("Red", Read(XmpSidecarDocument.Xmp, "Label", document));
+    }
+
+    [Theory]
+    [InlineData("Red", XmpFactKind.Matched, ColorLabel.Red)]
+    [InlineData("Client", XmpFactKind.Matched, ColorLabel.Red)]
+    [InlineData("Yellow", XmpFactKind.Matched, ColorLabel.Yellow)]
+    [InlineData("Rouge", XmpFactKind.Unsupported, ColorLabel.None)]
+    public void LabelRead_MatchesCanonicalAndDisplayNames(
+        string text,
+        XmpFactKind expectedKind,
+        ColorLabel expectedLabel)
+    {
+        var document = XmpSidecarDocument.Create();
+        Description(document).SetAttributeValue(
+            XmpSidecarDocument.Xmp + "Label", text);
+
+        var fact = XmpSidecarDocument.ReadFacts(
+            document, RenamedLabelNames()).Label;
+
+        Assert.Equal(expectedKind, fact.Kind);
+        if (expectedKind == XmpFactKind.Matched)
+            Assert.Equal(expectedLabel, fact.Value);
+    }
+
+    [Fact]
+    public void LabelMerge_WithRenamedNames_StillPreservesUnsupportedText()
+    {
+        var document = XmpSidecarDocument.Create();
+        Description(document).SetAttributeValue(
+            XmpSidecarDocument.Xmp + "Label", "Foreign");
+        var snapshot = Snapshot(ImageFlag.Unflagged,
+            pendingAxes: AssessmentAxes.Label);
+
+        var preserved = XmpSidecarDocument.Merge(
+            document, snapshot, AssessmentAxes.Label, RenamedLabelNames());
+
+        Assert.False(preserved.ReplacedUnsupportedLabel);
+        Assert.Equal("Foreign", Read(XmpSidecarDocument.Xmp, "Label", document));
+    }
+
+    [Fact]
     public void PrivateProperties_AreIgnoredOnRead()
     {
         var document = XmpSidecarDocument.Create();
@@ -269,6 +320,13 @@ public sealed class XmpSidecarDocumentTests
         Assert.DoesNotContain("happyphoton", serialized,
             StringComparison.OrdinalIgnoreCase);
     }
+
+    private static IReadOnlyDictionary<ColorLabel, string> RenamedLabelNames() =>
+        new Dictionary<ColorLabel, string>(ColorLabelNames.Defaults)
+        {
+            [ColorLabel.Red] = "Client",
+            [ColorLabel.Yellow] = "Red"
+        };
 
     private static XDocument FactDocument(
         string? rating,
