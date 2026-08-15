@@ -52,21 +52,21 @@ public sealed class ColorAssessmentScreenshotTests
             window.Show();
             Dispatcher.UIThread.RunJobs();
             vm.PreviewImage = bitmap;
-            Capture(window, "Screenshot_Develop_Assessment_Dark_Off.png");
+            Capture(window, "Dark with assessment off");
 
             vm.ToggleColorAssessmentModeCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
-            Capture(window, "Screenshot_Develop_Assessment_Dark_On.png");
+            Capture(window, "Dark with assessment on");
 
             vm.ToggleColorAssessmentModeCommand.Execute(null);
             vm.TransientStatus = null;
             application.RequestedThemeVariant = HappyPhotonThemes.MidGray;
             Dispatcher.UIThread.RunJobs();
-            Capture(window, "Screenshot_Develop_Assessment_MidGray_Off.png");
+            Capture(window, "Middle Gray with assessment off");
 
             vm.ToggleColorAssessmentModeCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
-            Capture(window, "Screenshot_Develop_Assessment_MidGray_On.png");
+            Capture(window, "Middle Gray with assessment on");
         }
         finally
         {
@@ -78,22 +78,11 @@ public sealed class ColorAssessmentScreenshotTests
         }
     }
 
-    private static void Capture(Window window, string fileName)
+    private static void Capture(Window window, string label)
     {
         using var frame = window.CaptureRenderedFrame();
         Assert.NotNull(frame);
-        Assert.True(frame.PixelSize.Width > 0);
-        Assert.True(frame.PixelSize.Height > 0);
-        if (Environment.GetEnvironmentVariable(
-                "HAPPY_PHOTON_UPDATE_SCREENSHOTS") != "1")
-        {
-            return;
-        }
-
-        frame.Save(Path.Combine(
-            GoldenTestPaths.RepositoryRoot,
-            "docs",
-            "screenshots",
-            fileName));
+        Assert.True(frame.PixelSize.Width > 0, $"{label} rendered with no width.");
+        Assert.True(frame.PixelSize.Height > 0, $"{label} rendered with no height.");
     }
 }
