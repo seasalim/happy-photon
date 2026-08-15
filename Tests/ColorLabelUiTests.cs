@@ -180,9 +180,9 @@ public sealed class ColorLabelUiTests
             .OfType<TextBlock>()
             .Select(text => text.Text)
             .ToArray();
-        Assert.Contains("Flag", captions);
+        Assert.Contains("Pick", captions);
         Assert.Contains("Rating", captions);
-        Assert.Contains("Labels", captions);
+        Assert.Contains("Label", captions);
         Assert.DoesNotContain("≥", captions);
         Assert.Null(control.FindControl<Button>("SelectAllButton"));
         Assert.Null(control.FindControl<Button>("SelectNoneButton"));
