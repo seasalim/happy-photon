@@ -14,7 +14,8 @@ color label, and never writes to Lightroom or an original photograph.
 
 The report reserves action-needed messages for an import where none of the assessed
 photos matched. Unmapped locations are informational skips, like virtual copies and
-unsupported files. “Nothing to import” means the source
+unsupported files. It also warns when multiple Lightroom records map to the same
+destination path; the later record is used. “Nothing to import” means the source
 catalog has no ratings, flags, or labels; “Nothing matched” means its source paths need
 review. Re-running the same import performs no catalog writes when everything is already
 up to date.

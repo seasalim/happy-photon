@@ -37,6 +37,8 @@ public sealed class CatalogImportService
         var mappings = ResolveMappings(source.Roots, requestedMappings);
         var normalized = new Dictionary<string, CatalogImportRecord>(
             PathComparer);
+        var duplicateDestinations = new HashSet<string>(PathComparer);
+        var duplicateRecords = 0;
         var unresolved = 0;
         var unsupportedFiles = 0;
         var virtualCopies = 0;
@@ -62,6 +64,11 @@ public sealed class CatalogImportService
 
             var path = NormalizeMappedPathFromNormalizedRoot(
                 mappedRoot, record.RelativePath);
+            if (normalized.ContainsKey(path))
+            {
+                duplicateDestinations.Add(path);
+                duplicateRecords++;
+            }
             normalized[path] = record;
         }
 
@@ -119,6 +126,17 @@ public sealed class CatalogImportService
             informational.Add($"{virtualCopies} virtual copies were skipped; Phase 1 imports masters only.");
         if (unsupportedFiles > 0)
             informational.Add($"{unsupportedFiles} unsupported file types were skipped.");
+        if (duplicateRecords > 0)
+        {
+            var destinationText = duplicateDestinations.Count == 1
+                ? "1 destination path"
+                : $"{duplicateDestinations.Count} destination paths";
+            var recordText = duplicateRecords == 1
+                ? "1 additional Lightroom record"
+                : $"{duplicateRecords} additional Lightroom records";
+            informational.Add(
+                $"{recordText} mapped to {destinationText} already used by another record. The later record was used.");
+        }
         foreach (var warning in source.SchemaWarnings) informational.Add(warning);
         if (!source.IsVerifiedVersion)
             informational.Add($"Lightroom catalog major version {source.MajorVersion} is compatible but unverified.");

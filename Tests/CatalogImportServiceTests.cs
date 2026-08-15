@@ -79,6 +79,9 @@ public sealed class CatalogImportServiceTests : IDisposable
         Assert.Equal(1, await CountImagesAsync());
         Assert.Equal(5,
             (await catalog.LoadImageStatesAsync([importedPath]))[importedPath].Rating);
+        Assert.Contains(preview.Report.InformationalOutcomes,
+            message => message ==
+                "1 additional Lightroom record mapped to 1 destination path already used by another record. The later record was used.");
     }
 
     [Fact]
