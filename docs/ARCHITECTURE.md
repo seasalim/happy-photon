@@ -384,9 +384,12 @@ quality, then queues the requested Large follow-up. After that, one
 - Workers wait on one shared signal, not one semaphore waiter or cancellation
   registration per image. Folder switches remain constant-time on the UI thread.
 - Capture-time metadata is not swept on folder open. Enabling Bursts starts a
-  cancellable, serial sweep over the current folder and computes burst groups; disabling
-  Bursts or changing folders stops the remaining work. The shared background segment
-  reports processed/total capture-time progress while analysis is active, including
+  cancellable, serial sweep over the current folder and computes burst groups over logical
+  captures; disabling Bursts or changing folders stops the remaining work. A logical
+  capture is a singleton or a path-derived RAW+JPEG pair with the same case-insensitive
+  basename in the same directory. Pairing is session-scoped, and burst size and index count
+  shutter presses while membership remains available for every file. The shared background
+  segment reports processed/total capture-time progress while analysis is active, including
   while a newer folder waits for a cancelled sweep to yield; disabling Bursts removes
   that activity. `MetadataService`
   deduplicates this work with selection-triggered loads and awaits UI application

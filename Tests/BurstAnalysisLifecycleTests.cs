@@ -81,6 +81,49 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
     }
 
     [Fact]
+    public void Bursts_AssignCaptureLevelMembershipToPairsAndSingles()
+    {
+        var (catalog, viewModel, photos) = CreateContext(image =>
+        {
+            ApplyCaptureTime(image);
+            return Task.CompletedTask;
+        });
+        using (catalog)
+        {
+            try
+            {
+                CreateJpeg(Path.Combine(photos, "one.dng"));
+                CreateJpeg(Path.Combine(photos, "one.jpg"));
+                CreateJpeg(Path.Combine(photos, "two.jpg"));
+                Complete(viewModel.LoadFolderAsync(photos));
+
+                viewModel.ShowBurstGroups = true;
+                Complete(viewModel.WaitForBurstAnalysisAsync());
+
+                var raw = viewModel.Library.AllImages.Single(
+                    image => image.FileName == "one.dng");
+                var jpeg = viewModel.Library.AllImages.Single(
+                    image => image.FileName == "one.jpg");
+                var single = viewModel.Library.AllImages.Single(
+                    image => image.FileName == "two.jpg");
+                Assert.Equal(1, raw.BurstIndex);
+                Assert.Equal(raw.BurstIndex, jpeg.BurstIndex);
+                Assert.Equal(2, single.BurstIndex);
+                Assert.All(
+                    viewModel.Library.AllImages,
+                    image => Assert.Equal(2, image.BurstSize));
+                Assert.Equal(
+                    viewModel.GetBurstMembership(raw.FilePath)?.BurstId,
+                    viewModel.GetBurstMembership(single.FilePath)?.BurstId);
+            }
+            finally
+            {
+                Complete(viewModel.DisposeAsync().AsTask());
+            }
+        }
+    }
+
+    [Fact]
     public void EnablingBurstsBeforeFolder_WaitsWithoutFalseProgress()
     {
         var metadataLoads = 0;

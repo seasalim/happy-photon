@@ -229,13 +229,18 @@ public partial class MainWindowViewModel
             for (var groupIndex = 0; groupIndex < groups.Count; groupIndex++)
             {
                 var group = groups[groupIndex];
-                for (var imageIndex = 0; imageIndex < group.ImageIds.Count; imageIndex++)
+                for (var captureIndex = 0;
+                     captureIndex < group.Captures.Count;
+                     captureIndex++)
                 {
-                    membership[group.ImageIds[imageIndex]] = (
-                        group.Id,
-                        groupIndex + 1,
-                        imageIndex + 1,
-                        group.ImageIds.Count);
+                    foreach (var imageId in group.Captures[captureIndex].ImageIds)
+                    {
+                        membership[imageId] = (
+                            group.Id,
+                            groupIndex + 1,
+                            captureIndex + 1,
+                            group.Captures.Count);
+                    }
                 }
             }
 

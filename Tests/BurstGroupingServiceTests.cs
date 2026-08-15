@@ -116,4 +116,123 @@ public sealed class BurstGroupingServiceTests
             new (string, DateTime?)[] { ("a", T(0)) }, minGroupSize: -3);
         Assert.Single(singles);
     }
+
+    [Fact]
+    public void StandaloneRawJpegPairIsNotABurst()
+    {
+        var directory = Path.Combine("photos", "standalone");
+        var raw = Path.Combine(directory, "capture.cr3");
+        var jpeg = Path.Combine(directory, "capture.jpg");
+
+        var (groups, without) = BurstGroupingService.ComputeGroups(
+            new (string, DateTime?)[] { (raw, T(0)), (jpeg, T(0)) });
+
+        Assert.Empty(groups);
+        Assert.Equal(0, without);
+    }
+
+    [Fact]
+    public void RawJpegBurstCountsAndOrdersLogicalCaptures()
+    {
+        var directory = Path.Combine("photos", "paired-burst");
+        var firstRaw = Path.Combine(directory, "one.nef");
+        var firstJpeg = Path.Combine(directory, "one.jpg");
+        var secondRaw = Path.Combine(directory, "two.nef");
+        var secondJpeg = Path.Combine(directory, "two.jpg");
+
+        var (groups, _) = BurstGroupingService.ComputeGroups(
+            new (string, DateTime?)[]
+            {
+                (secondRaw, T(1)), (firstJpeg, T(0)),
+                (secondJpeg, T(1)), (firstRaw, T(0))
+            });
+
+        var group = Assert.Single(groups);
+        Assert.Equal(2, group.Captures.Count);
+        Assert.Equal([firstJpeg, firstRaw], group.Captures[0].ImageIds);
+        Assert.Equal([secondJpeg, secondRaw], group.Captures[1].ImageIds);
+        Assert.Equal(
+            [firstJpeg, firstRaw, secondJpeg, secondRaw],
+            group.ImageIds);
+    }
+
+    [Fact]
+    public void MixedPairsAndSinglesClusterAtCaptureLevel()
+    {
+        var directory = Path.Combine("photos", "mixed-burst");
+        var firstRaw = Path.Combine(directory, "one.dng");
+        var firstJpeg = Path.Combine(directory, "one.jpg");
+        var single = Path.Combine(directory, "two.jpg");
+        var thirdRaw = Path.Combine(directory, "three.arw");
+        var thirdJpeg = Path.Combine(directory, "three.jpeg");
+
+        var (groups, _) = BurstGroupingService.ComputeGroups(
+            new (string, DateTime?)[]
+            {
+                (firstRaw, T(0)), (firstJpeg, T(0)), (single, T(1)),
+                (thirdRaw, T(2)), (thirdJpeg, T(2))
+            });
+
+        var group = Assert.Single(groups);
+        Assert.Equal(3, group.Captures.Count);
+        Assert.Equal(5, group.ImageIds.Count);
+        Assert.Equal([single], group.Captures[1].ImageIds);
+    }
+
+    [Fact]
+    public void PairUsesItsOnlyTimestampAndStillCountsMissingFileTimestamp()
+    {
+        var directory = Path.Combine("photos", "partial-time");
+        var raw = Path.Combine(directory, "one.raf");
+        var jpeg = Path.Combine(directory, "one.jpg");
+        var next = Path.Combine(directory, "two.jpg");
+
+        var (groups, without) = BurstGroupingService.ComputeGroups(
+            new (string, DateTime?)[]
+            {
+                (raw, null), (jpeg, T(0)), (next, T(1))
+            });
+
+        var group = Assert.Single(groups);
+        Assert.Equal(2, group.Captures.Count);
+        Assert.Equal(1, without);
+        Assert.Equal([jpeg, raw], group.Captures[0].ImageIds);
+    }
+
+    [Fact]
+    public void PairWithNoTimestampsIsExcludedAndCountedPerFile()
+    {
+        var directory = Path.Combine("photos", "no-time");
+        var raw = Path.Combine(directory, "capture.orf");
+        var jpeg = Path.Combine(directory, "capture.jpg");
+
+        var (groups, without) = BurstGroupingService.ComputeGroups(
+            new (string, DateTime?)[] { (raw, null), (jpeg, null) });
+
+        Assert.Empty(groups);
+        Assert.Equal(2, without);
+    }
+
+    [Fact]
+    public void ShuffledRawJpegInputKeepsGroupCaptureAndMemberOrderStable()
+    {
+        var directory = Path.Combine("photos", "deterministic");
+        var files = new (string Id, DateTime? Taken)[]
+        {
+            (Path.Combine(directory, "one.cr3"), T(0)),
+            (Path.Combine(directory, "one.jpg"), T(0)),
+            (Path.Combine(directory, "two.cr3"), T(1)),
+            (Path.Combine(directory, "two.jpg"), T(1))
+        };
+
+        var ordered = Assert.Single(BurstGroupingService.ComputeGroups(files).Groups);
+        var shuffled = Assert.Single(BurstGroupingService.ComputeGroups(
+            new[] { files[3], files[0], files[2], files[1] }).Groups);
+
+        Assert.Equal(ordered.Id, shuffled.Id);
+        Assert.Equal(ordered.ImageIds, shuffled.ImageIds);
+        Assert.Equal(
+            ordered.Captures.Select(capture => string.Join("|", capture.ImageIds)),
+            shuffled.Captures.Select(capture => string.Join("|", capture.ImageIds)));
+    }
 }
