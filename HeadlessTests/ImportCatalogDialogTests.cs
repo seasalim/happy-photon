@@ -121,7 +121,7 @@ public sealed class ImportCatalogDialogTests
     {
         var axis = new CatalogImportAxisSummary(1, 0, 0, 0, 0);
         var report = new CatalogImportReport(
-            1, 1, 1, 1, 0, 0, 0, 0,
+            1, 1, 1, 1, 0, 0, 0, 0, 0,
             axis, axis, axis, new Dictionary<string, int>(), [], [], false);
         return new CatalogImportPreview(
             source.CatalogPath,

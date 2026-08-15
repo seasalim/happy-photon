@@ -10,7 +10,9 @@ Lightroom to be fully closed and refuses catalogs with SQLite sidecars; the clos
 file is held open for reading while the snapshot is copied. Orphaned snapshot directories
 are swept during deferred catalog initialization.
 
-`CatalogImportService` normalizes mapped paths and builds a vendor-neutral preview.
+`CatalogImportService` normalizes mapped paths, verifies each mapped file entry exists
+without opening its content, and builds a vendor-neutral preview. Missing files never
+become catalog rows, and a zero-match preview cannot persist import settings.
 `CatalogService.Import` exclusively owns persistence: it revalidates the preview's
 per-axis baseline under the connection gate, creates unknown paths, updates `images` and
 revisioned `image_assessments`, and persists import settings in one short transaction.

@@ -56,7 +56,7 @@ public sealed class CatalogImportViewModelTests : IDisposable
         vm.CaptureLibraryViewportAnchor = () => secondPath;
         vm.RestoreLibraryViewportAnchor = path => restoredAnchor = path;
         var source = Source(firstPath, secondPath);
-        var import = new CatalogImportService(catalog);
+        var import = new CatalogImportService(catalog, _ => true);
         var preview = await import.CreatePreviewAsync(
             source,
             new Dictionary<string, string> { ["D:/Photos/"] = _root },

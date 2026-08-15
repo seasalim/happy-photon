@@ -150,6 +150,10 @@ kept separate from expected information such as intentionally unmapped roots, vi
 copies, unsupported file types, unrecognized color-label tokens, and
 unverified-but-compatible catalog versions.
 
+Mapped photo files must exist when the preview runs. Missing originals are reported and
+skipped without opening or hydrating image content. When no mapped files exist, Apply is
+unavailable so the import cannot create orphan catalog paths or persist empty settings.
+
 The completion report distinguishes a catalog with no ratings, flags, or color labels
 from one whose assessed-photo paths did not match. An import into an open folder updates
 the existing Library objects and filters without reloading thumbnails. During first run,

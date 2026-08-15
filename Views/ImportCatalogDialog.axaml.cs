@@ -332,8 +332,12 @@ public partial class ImportCatalogDialog : Window
             ? "\nKept values may include ones you changed in Happy Photon since the last import."
             : string.Empty;
         var updated = applied ? "updated" : "to update";
+        var unavailable = report.UnavailableFilePhotos == 0
+            ? string.Empty
+            : $"\nMapped files not found: {report.UnavailableFilePhotos}";
         OutcomeText.Text =
-            $"Matched paths: {report.MatchedPhotos}  ·  Existing: {report.ExistingCatalogRows}  ·  New paths: {report.NewlyStoredPaths}\n" +
+            $"Matched paths: {report.MatchedPhotos}  ·  Existing: {report.ExistingCatalogRows}  ·  New paths: {report.NewlyStoredPaths}" +
+            unavailable + "\n" +
             $"Ratings — {report.Rating.Written} {updated} · {report.Rating.Unchanged} already match · {report.Rating.PreservedByPolicy} kept your value\n" +
             $"Flags — {report.Flag.Written} {updated} · {report.Flag.Unchanged} already match · {report.Flag.PreservedByPolicy} kept your value\n" +
             $"Color labels — {report.ColorLabel.Written} {updated} · {report.ColorLabel.Unchanged} already match · {report.ColorLabel.PreservedByPolicy} kept your value · {report.ColorLabel.Unsupported} unrecognized left as-is" +

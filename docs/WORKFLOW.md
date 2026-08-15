@@ -13,6 +13,10 @@ empty values, review the automatically updated report of what will change, and i
 An import never clears a local rating, flag, or color label, and never writes to
 Lightroom or an original photograph.
 
+The preview checks that each mapped photo file exists without opening it. Missing files
+are skipped. If none of the mapped photos exist, copy or mount the originals or correct
+the mappings before Apply becomes available.
+
 The report reserves action-needed messages for an import where none of the assessed
 photos matched. Unmapped locations are informational skips, like virtual copies and
 unsupported files. It also warns when multiple Lightroom records map to the same

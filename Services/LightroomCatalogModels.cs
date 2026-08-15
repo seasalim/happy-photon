@@ -59,7 +59,8 @@ public sealed record CatalogImportBaseline(
     ColorLabel ColorLabel,
     long Revision,
     DateTime? AssessedUtc,
-    AssessmentAxes PendingAxes);
+    AssessmentAxes PendingAxes,
+    string? FilePath);
 
 public sealed record CatalogImportChange(
     string FilePath,
@@ -84,6 +85,7 @@ public sealed record CatalogImportReport(
     int ExistingCatalogRows,
     int NewlyStoredPaths,
     int UnresolvedRootPhotos,
+    int UnavailableFilePhotos,
     int UnsupportedFilePhotos,
     int VirtualCopyPhotos,
     CatalogImportAxisSummary Rating,

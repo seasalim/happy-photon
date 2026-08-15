@@ -8,9 +8,15 @@ namespace HappyPhoton.Services;
 public sealed class CatalogImportService
 {
     private readonly CatalogService _catalogService;
+    private readonly Func<string, bool> _fileExists;
 
     public CatalogImportService(CatalogService catalogService) =>
-        _catalogService = catalogService;
+        (_catalogService, _fileExists) = (catalogService, File.Exists);
+
+    internal CatalogImportService(
+        CatalogService catalogService,
+        Func<string, bool> fileExists) =>
+        (_catalogService, _fileExists) = (catalogService, fileExists);
 
     public async Task<CatalogImportStoredSettings?> LoadSettingsAsync(
         string catalogPath)
@@ -81,6 +87,7 @@ public sealed class CatalogImportService
         var unsupportedLabels = new Dictionary<string, int>(StringComparer.Ordinal);
         var updatedPhotos = 0;
         var existingRows = 0;
+        var unavailableFiles = 0;
 
         foreach (var (path, record) in normalized)
         {
@@ -88,6 +95,12 @@ public sealed class CatalogImportService
             var baseline = states.TryGetValue(path, out var state)
                 ? state
                 : EmptyBaseline;
+            var availablePath = baseline.FilePath ?? path;
+            if (!_fileExists(availablePath))
+            {
+                unavailableFiles++;
+                continue;
+            }
             if (baseline.Exists) existingRows++;
 
             var axes = AssessmentAxes.None;
@@ -108,20 +121,26 @@ public sealed class CatalogImportService
             }
             if (axes != AssessmentAxes.None) updatedPhotos++;
             changes.Add(new CatalogImportChange(
-                path, baseline, source.CarriedAxes, axes,
+                availablePath, baseline, source.CarriedAxes, axes,
                 nextFlag, nextRating, nextLabel));
         }
 
         var actionable = new List<string>();
         var informational = new List<string>();
-        if (source.Records.Count > 0 && normalized.Count == 0)
-            actionable.Add("None of the Lightroom photos with ratings, flags, or color labels matched a supported photo path. Review the location mappings and try again.");
+        if (source.Records.Count > 0 && changes.Count == 0)
+            actionable.Add(unavailableFiles > 0
+                ? "None of the Lightroom photos with ratings, flags, or color labels exist at their mapped paths. Copy or mount the originals, review the location mappings, and try again."
+                : "None of the Lightroom photos with ratings, flags, or color labels matched a supported photo path. Review the location mappings and try again.");
         if (source.Records.Count == 0)
             informational.Add("This catalog has no ratings, picks, rejects, or color labels to import.");
         if (unresolved > 0)
             informational.Add(unresolved == 1
                 ? "1 photo under an unmapped Lightroom location was not imported."
                 : $"{unresolved} photos under unmapped Lightroom locations were not imported.");
+        if (unavailableFiles > 0)
+            informational.Add(unavailableFiles == 1
+                ? "1 mapped photo file was not found and was not imported."
+                : $"{unavailableFiles} mapped photo files were not found and were not imported.");
         if (virtualCopies > 0)
             informational.Add($"{virtualCopies} virtual copies were skipped; only master photos are imported.");
         if (unsupportedFiles > 0)
@@ -147,9 +166,9 @@ public sealed class CatalogImportService
         }
 
         var report = new CatalogImportReport(
-            source.Records.Count, normalized.Count, updatedPhotos,
-            existingRows, normalized.Count - existingRows,
-            unresolved, unsupportedFiles, virtualCopies,
+            source.Records.Count, changes.Count, updatedPhotos,
+            existingRows, changes.Count - existingRows,
+            unresolved, unavailableFiles, unsupportedFiles, virtualCopies,
             rating.Freeze(), flag.Freeze(), label.Freeze(), unsupportedLabels,
             actionable, informational, !source.IsVerifiedVersion);
         var settingsKey = GetSettingsKey(source.CatalogPath);
@@ -165,13 +184,19 @@ public sealed class CatalogImportService
         var settingsJson = JsonSerializer.Serialize(stored);
         return new CatalogImportPreview(
             source.CatalogPath, policy, mappings, changes, report,
-            settingsKey, baselineSettings, settingsJson, normalized.Keys.ToArray());
+            settingsKey, baselineSettings, settingsJson,
+            changes.Select(change => change.FilePath).ToArray());
     }
 
     public Task<CatalogImportApplyResult> ApplyAsync(
         CatalogImportPreview preview,
-        CancellationToken cancellationToken = default) =>
-        _catalogService.ApplyImportAsync(preview, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        if (preview.Report.NothingToImport || preview.Report.NothingMatched)
+            return Task.FromResult(new CatalogImportApplyResult(
+                preview.Report, [], 0));
+        return _catalogService.ApplyImportAsync(preview, cancellationToken);
+    }
 
     public static IReadOnlyDictionary<string, string> ResolveMappings(
         IReadOnlyList<CatalogSourceRoot> roots,
@@ -321,7 +346,7 @@ public sealed class CatalogImportService
 
     private static readonly CatalogImportBaseline EmptyBaseline =
         new(false, 0, ImageFlag.Unflagged, 0, ColorLabel.None,
-            0, null, AssessmentAxes.None);
+            0, null, AssessmentAxes.None, null);
 
     private sealed class MutableAxisSummary
     {

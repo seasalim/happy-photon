@@ -50,7 +50,8 @@ public partial class CatalogService
                         reader.GetString(6), null,
                         System.Globalization.DateTimeStyles.RoundtripKind),
                     reader.IsDBNull(7) ? AssessmentAxes.None :
-                        (AssessmentAxes)reader.GetInt32(7));
+                        (AssessmentAxes)reader.GetInt32(7),
+                    reader.GetString(0));
             }
             return result;
         }
@@ -160,7 +161,7 @@ public partial class CatalogService
         command.CommandText = """
             SELECT images.id, images.flag_state, images.rating, images.color_label,
                    image_assessments.revision, image_assessments.assessed_utc,
-                   image_assessments.pending_axes
+                   image_assessments.pending_axes, images.file_path
             FROM images
             LEFT JOIN image_assessments ON image_assessments.image_id = images.id
             WHERE images.file_path = @path COLLATE NOCASE;
@@ -171,7 +172,7 @@ public partial class CatalogService
         {
             return new CatalogImportBaseline(
                 false, 0, ImageFlag.Unflagged, 0, ColorLabel.None,
-                0, null, AssessmentAxes.None);
+                0, null, AssessmentAxes.None, null);
         }
 
         return new CatalogImportBaseline(
@@ -184,7 +185,8 @@ public partial class CatalogService
                 reader.GetString(5), null,
                 System.Globalization.DateTimeStyles.RoundtripKind),
             reader.IsDBNull(6) ? AssessmentAxes.None :
-                (AssessmentAxes)reader.GetInt32(6));
+                (AssessmentAxes)reader.GetInt32(6),
+            reader.GetString(7));
     }
 
     private static async Task<long> InsertImportedPathAsync(

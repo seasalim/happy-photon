@@ -36,6 +36,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     {
         var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
         var photo = Path.Combine(photos, "keeper.jpg");
+        File.WriteAllBytes(photo, [1]);
         var catalog = await CreateCatalogAsync();
         var id = await catalog.GetOrCreateImageAsync(photo);
         await catalog.MutateAssessmentsAsync([
@@ -59,6 +60,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     public async Task Preview_CaseVariantsCollapseToOneCatalogIdentity()
     {
         var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        File.WriteAllBytes(Path.Combine(photos, "keeper.jpg"), [1]);
         const string sourceRoot = "D:/Photos/";
         var source = new LightroomCatalogContents(
             Path.Combine(_root, "source.lrcat"), 1303001, 13, true,
@@ -68,7 +70,7 @@ public sealed class CatalogImportServiceTests : IDisposable
                 Record(sourceRoot, "KEEPER.JPG", CatalogImportFact<int>.Mapped(5))
             ], []);
         var catalog = await CreateCatalogAsync();
-        var import = new CatalogImportService(catalog);
+        var import = CreateImport(catalog);
 
         var preview = await import.CreatePreviewAsync(
             source, Map(source, photos), CatalogImportPolicy.LightroomWins);
@@ -119,7 +121,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         ], AssessmentAxes.None);
         var source = Source(photos, "keeper.jpg",
             label: CatalogImportFact<ColorLabel>.Unsupported("Client Pick"));
-        var import = new CatalogImportService(catalog);
+        var import = CreateImport(catalog);
 
         foreach (var policy in Enum.GetValues<CatalogImportPolicy>())
         {
@@ -151,7 +153,7 @@ public sealed class CatalogImportServiceTests : IDisposable
                 Record("D:/Photos/", "first.jpg", CatalogImportFact<int>.Mapped(5)),
                 Record("D:/Photos/", "second.jpg", CatalogImportFact<int>.Mapped(4))
             ], []);
-        var import = new CatalogImportService(catalog);
+        var import = CreateImport(catalog);
 
         var fill = await import.CreatePreviewAsync(
             source, Map(source, photos), CatalogImportPolicy.FillEmptyOnly);
@@ -173,7 +175,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         var source = Source(photos, "keeper.jpg",
             flag: CatalogImportFact<ImageFlag>.Mapped(ImageFlag.Picked));
         var catalog = await CreateCatalogAsync();
-        var import = new CatalogImportService(catalog);
+        var import = CreateImport(catalog);
         var firstPreview = await import.CreatePreviewAsync(
             source, Map(source, photos), CatalogImportPolicy.LightroomWins);
         await import.ApplyAsync(firstPreview);
@@ -207,7 +209,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         var id = await catalog.GetOrCreateImageAsync(photo);
         var source = Source(photos, "keeper.jpg",
             rating: CatalogImportFact<int>.Mapped(5));
-        var import = new CatalogImportService(catalog);
+        var import = CreateImport(catalog);
         var preview = await import.CreatePreviewAsync(
             source, Map(source, photos), CatalogImportPolicy.LightroomWins);
         await catalog.MutateAssessmentsAsync([
@@ -228,7 +230,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         var catalog = await CreateCatalogAsync();
         var source = Source(photos, "keeper.jpg",
             rating: CatalogImportFact<int>.Mapped(5));
-        var import = new CatalogImportService(catalog);
+        var import = CreateImport(catalog);
         var preview = await import.CreatePreviewAsync(
             source, Map(source, photos), CatalogImportPolicy.LightroomWins);
         catalog.ImportWriteObserverAsync = (writes, _) => writes == 2
@@ -249,7 +251,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         var catalog = await CreateCatalogAsync();
         var source = Source(photos, "keeper.jpg",
             rating: CatalogImportFact<int>.Mapped(5));
-        var import = new CatalogImportService(catalog);
+        var import = CreateImport(catalog);
         var preview = await import.CreatePreviewAsync(
             source, Map(source, photos), CatalogImportPolicy.LightroomWins);
         using var cancellation = new CancellationTokenSource();
@@ -270,7 +272,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     public async Task Report_DistinguishesThinUnmatchedAndMixedCatalogs()
     {
         var catalog = await CreateCatalogAsync();
-        var import = new CatalogImportService(catalog);
+        var import = CreateImport(catalog);
         var thin = EmptySource();
         var thinReport = (await import.CreatePreviewAsync(
             thin, new Dictionary<string, string>(), CatalogImportPolicy.LightroomWins)).Report;
@@ -306,6 +308,30 @@ public sealed class CatalogImportServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task MissingMappedPhotosCannotWriteCatalogRowsOrSettings()
+    {
+        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var source = Source("D:/Photos/", "missing.jpg",
+            rating: CatalogImportFact<int>.Mapped(4));
+        var catalog = await CreateCatalogAsync();
+        var import = new CatalogImportService(catalog);
+
+        var preview = await import.CreatePreviewAsync(
+            source, Map(source, photos), CatalogImportPolicy.LightroomWins);
+        var result = await import.ApplyAsync(preview);
+
+        Assert.True(preview.Report.NothingMatched);
+        Assert.Equal(1, preview.Report.UnavailableFilePhotos);
+        Assert.Empty(preview.Changes);
+        Assert.Empty(preview.ImportedPaths);
+        Assert.Contains(preview.Report.ActionableOutcomes,
+            message => message.Contains("Copy or mount the originals"));
+        Assert.Equal(0, result.DatabaseWrites);
+        Assert.Equal(0, await CountImagesAsync());
+        Assert.Null(await catalog.GetAppSettingAsync(preview.SettingsKey));
+    }
+
+    [Fact]
     public async Task Preview_UnmappedRootIsAnInformationalSkipWhenAnotherRootMatches()
     {
         var catalog = await CreateCatalogAsync();
@@ -321,7 +347,7 @@ public sealed class CatalogImportServiceTests : IDisposable
                 Record("D:/Matched/", "one.jpg", CatalogImportFact<int>.Mapped(4)),
                 Record("Z:/Unmapped/", "two.jpg", CatalogImportFact<int>.Mapped(5))
             ], []);
-        var import = new CatalogImportService(catalog);
+        var import = CreateImport(catalog);
 
         var preview = await import.CreatePreviewAsync(
             source,
@@ -354,7 +380,7 @@ public sealed class CatalogImportServiceTests : IDisposable
             records, []);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-        var preview = await new CatalogImportService(catalog).CreatePreviewAsync(
+        var preview = await CreateImport(catalog).CreatePreviewAsync(
             source,
             new Dictionary<string, string> { [sourceRoot] = _root },
             CatalogImportPolicy.LightroomWins);
@@ -371,6 +397,9 @@ public sealed class CatalogImportServiceTests : IDisposable
         await _catalog.InitializeAsync();
         return _catalog;
     }
+
+    private static CatalogImportService CreateImport(CatalogService catalog) =>
+        new(catalog, _ => true);
 
     private async Task<long> CountImagesAsync() =>
         await CountRowsAsync("images");

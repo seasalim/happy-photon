@@ -82,6 +82,8 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
     public bool HasInFlightOperation => IsBusy;
     public bool InputsEnabled => IsInitialized && !IsApplying && !IsApplied;
     public bool CanApply => !IsBusy && !IsApplied && _preview != null &&
+                            !_preview.Report.NothingToImport &&
+                            !_preview.Report.NothingMatched &&
                             _previewedSignature == _liveSignature;
     public CatalogImportReport? Report => _report;
     public string? FailureText => _failureText;
@@ -183,7 +185,7 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
             InvalidateRunningPreview();
             _report = _preview.Report;
             _failureText = null;
-            StatusText = ReviewReadyStatus;
+            StatusText = ReviewStatus(_preview.Report);
             OnPropertyChanged(nameof(Report));
             OnPropertyChanged(nameof(FailureText));
             NotifyCanApply();
@@ -335,7 +337,7 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
             _previewedSignature = signature;
             _report = preview.Report;
             _failureText = null;
-            StatusText = preservedStatus ?? ReviewReadyStatus;
+            StatusText = preservedStatus ?? ReviewStatus(preview.Report);
             OnPropertyChanged(nameof(Report));
             OnPropertyChanged(nameof(FailureText));
         }
@@ -386,7 +388,7 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
         else if (_preview != null)
         {
             _report = _preview.Report;
-            StatusText = ReviewReadyStatus;
+            StatusText = ReviewStatus(_preview.Report);
             OnPropertyChanged(nameof(Report));
         }
         NotifyCanApply();
@@ -408,6 +410,11 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
 
     private string GetRootMapping(string sourceRoot) =>
         _rootMappings.GetValueOrDefault(sourceRoot, string.Empty);
+
+    private static string ReviewStatus(CatalogImportReport report) =>
+        report.NothingToImport || report.NothingMatched
+            ? "No available photo paths can be imported. Update the mappings or close."
+            : ReviewReadyStatus;
 
     private void ShowFailure(string message)
     {

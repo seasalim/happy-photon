@@ -135,6 +135,19 @@ public sealed class CatalogImportFlowViewModelTests
     }
 
     [Fact]
+    public async Task ZeroMatchPreviewLeavesApplyUnavailable()
+    {
+        var harness = new FlowHarness();
+        using var flow = harness.CreateFlow();
+        var initialization = flow.InitializeAsync();
+        Assert.Single(harness.Requests).Complete(0, matchedPhotos: 0);
+        await initialization;
+
+        Assert.False(flow.CanApply);
+        Assert.Contains("No available photo paths", flow.StatusText);
+    }
+
+    [Fact]
     public async Task ConflictAutomaticallyChecksAgainAndKeepsExplanationVisible()
     {
         var harness = new FlowHarness();
@@ -232,14 +245,14 @@ public sealed class CatalogImportFlowViewModelTests
         public Task<CatalogImportPreview> Task => _completion.Task;
         public CatalogImportPreview? Preview { get; private set; }
 
-        public void Complete(int updatedPhotos)
+        public void Complete(int updatedPhotos, int matchedPhotos = 1)
         {
             Preview = new CatalogImportPreview(
                 source.CatalogPath,
                 Policy,
                 Mappings,
                 [],
-                Report(updatedPhotos),
+                Report(updatedPhotos, matchedPhotos),
                 "settings",
                 null,
                 "{}",
@@ -249,12 +262,14 @@ public sealed class CatalogImportFlowViewModelTests
 
         public void Fail(Exception exception) => _completion.SetException(exception);
 
-        private static CatalogImportReport Report(int updatedPhotos)
+        private static CatalogImportReport Report(
+            int updatedPhotos,
+            int matchedPhotos)
         {
             var axis = new CatalogImportAxisSummary(
                 updatedPhotos, 0, 0, 0, 0);
             return new CatalogImportReport(
-                1, 1, updatedPhotos, 1, 0, 0, 0, 0,
+                1, matchedPhotos, updatedPhotos, matchedPhotos, 0, 0, 0, 0, 0,
                 axis, axis, axis,
                 new Dictionary<string, int>(), [], [], false);
         }
