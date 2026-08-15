@@ -265,17 +265,6 @@
                                             </MultiBinding>
                                         </Border.Background>
                                     </Border>
-                                    <Border Width="14" Height="14"
-                                            CornerRadius="999"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Bottom"
-                                            Margin="0,0,6,6"
-                                            BorderBrush="{DynamicResource SurfaceLowest}"
-                                            BorderThickness="1.5"
-                                            IsVisible="{Binding HasColorLabel}"
-                                            IsHitTestVisible="False"
-                                            ToolTip.Tip="Color label"
-                                            Background="{Binding ColorLabel, Converter={StaticResource ColorLabelBrushConverter}}"/>
                                     <Border Width="17" Height="17"
                                             CornerRadius="5"
                                             HorizontalAlignment="Left"
@@ -315,41 +304,43 @@
                                                    FontFamily="{StaticResource FontLabel}"
                                                    Foreground="{StaticResource OnTertiary}"/>
                                     </Border>
-                                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2"
-                                                Orientation="Horizontal" Spacing="3" Margin="0,2,0,0">
-                                        <Border Background="{StaticResource PrimaryContainer}" CornerRadius="2"
-                                                Padding="3,0"
-                                                IsVisible="{Binding IsPicked}"
-                                                ToolTip.Tip="Picked">
-                                            <TextBlock Text="P" FontSize="9" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource OnPrimary}"/>
-                                        </Border>
-                                        <Border Background="{StaticResource ErrorContainer}" CornerRadius="2"
-                                                Padding="3,0"
-                                                IsVisible="{Binding IsRejected}"
-                                                ToolTip.Tip="Rejected">
-                                            <TextBlock Text="X" FontSize="9" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource OnErrorContainer}"/>
-                                        </Border>
-                                        <TextBlock Text="{Binding RatingStars}"
-                                                   FontSize="10" Foreground="{StaticResource SecondaryContainer}"
-                                                   VerticalAlignment="Center"
-                                                   IsVisible="{Binding HasRating}"
-                                                   ToolTip.Tip="Rating"/>
-                                        <Border CornerRadius="2" Padding="3,0"
-                                                IsVisible="{Binding HasBurstGroup}"
-                                                ToolTip.Tip="Burst frame">
-                                            <Border.Background>
-                                                <MultiBinding Converter="{StaticResource BurstColorConverter}">
-                                                    <Binding Path="BurstColorIndex"/>
-                                                    <Binding Path="$parent[views:LibraryGridView].ActualThemeVariant"/>
-                                                </MultiBinding>
-                                            </Border.Background>
-                                            <TextBlock Text="{Binding BurstChipText}" FontSize="9"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{x:Static views:HappyPhotonColors.BurstChipInk}"/>
-                                        </Border>
-                                    </StackPanel>
+                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto"
+                                          Margin="0,2,0,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="3">
+                                            <Border Background="{StaticResource PrimaryContainer}" CornerRadius="2"
+                                                    Padding="3,0" IsVisible="{Binding IsPicked}" ToolTip.Tip="Picked">
+                                                <TextBlock Text="P" FontSize="9" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource OnPrimary}"/>
+                                            </Border>
+                                            <Border Background="{StaticResource ErrorContainer}" CornerRadius="2"
+                                                    Padding="3,0" IsVisible="{Binding IsRejected}" ToolTip.Tip="Rejected">
+                                                <TextBlock Text="X" FontSize="9" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource OnErrorContainer}"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding RatingStars}" FontSize="10"
+                                                       Foreground="{StaticResource SecondaryContainer}"
+                                                       VerticalAlignment="Center" IsVisible="{Binding HasRating}"
+                                                       ToolTip.Tip="Rating"/>
+                                            <Border CornerRadius="2" Padding="3,0"
+                                                    IsVisible="{Binding HasBurstGroup}" ToolTip.Tip="Burst frame">
+                                                <Border.Background>
+                                                    <MultiBinding Converter="{StaticResource BurstColorConverter}">
+                                                        <Binding Path="BurstColorIndex"/>
+                                                        <Binding Path="$parent[views:LibraryGridView].ActualThemeVariant"/>
+                                                    </MultiBinding>
+                                                </Border.Background>
+                                                <TextBlock Text="{Binding BurstChipText}" FontSize="9"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{x:Static views:HappyPhotonColors.BurstChipInk}"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Width="12" Height="12" CornerRadius="999"
+                                                Margin="3,0,8,0" VerticalAlignment="Center"
+                                                Classes="color-label-marker"
+                                                IsVisible="{Binding HasColorLabel}" IsHitTestVisible="False"
+                                                ToolTip.Tip="Color label"
+                                                Background="{Binding ColorLabel, Converter={StaticResource ColorLabelBrushConverter}}"/>
+                                    </Grid>
                                 </Grid>
                             </StackPanel>
                         </Border>
