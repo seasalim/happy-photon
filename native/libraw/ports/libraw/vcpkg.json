@@ -7,10 +7,9 @@
   "supports": "!uwp & !xbox",
   "dependencies": [
     {
-      "name": "jasper",
-      "default-features": false
+      "name": "lcms",
+      "platform": "!osx"
     },
-    "lcms",
     {
       "name": "vcpkg-cmake",
       "host": true
@@ -19,7 +18,10 @@
       "name": "vcpkg-cmake-config",
       "host": true
     },
-    "zlib"
+    {
+      "name": "zlib",
+      "platform": "!osx"
+    }
   ],
   "features": {
     "dng-lossy": {
@@ -34,7 +36,8 @@
       ]
     },
     "openmp": {
-      "description": "Build library with OpenMP support"
+      "description": "Build library with OpenMP support",
+      "supports": "!osx"
     }
   }
 }

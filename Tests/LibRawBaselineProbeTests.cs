@@ -127,14 +127,36 @@ public sealed class LibRawBaselineProbeTests
     private static string FindLoadedLibRaw()
     {
         _ = RawContext.VersionNumber;
-        var candidates = Process.GetCurrentProcess().Modules.Cast<ProcessModule>()
-            .Select(module => module.FileName)
-            .Where(path => path != null && IsLibRawName(Path.GetFileName(path)))
+        var candidates = EnumerateLoadedImagePaths()
+            .Where(path => IsLibRawName(Path.GetFileName(path)))
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
         Assert.Single(candidates);
         return candidates[0];
+    }
+
+    private static IEnumerable<string> EnumerateLoadedImagePaths()
+    {
+        if (!OperatingSystem.IsMacOS())
+        {
+            return Process.GetCurrentProcess().Modules.Cast<ProcessModule>()
+                .Select(module => module.FileName)
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Select(path => path!);
+        }
+
+        var paths = new List<string>();
+        var count = _dyld_image_count();
+        for (uint index = 0; index < count; index++)
+        {
+            var path = Marshal.PtrToStringUTF8(_dyld_get_image_name(index));
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                paths.Add(path);
+            }
+        }
+        return paths;
     }
 
     private static bool IsLibRawName(string name) =>
@@ -167,10 +189,11 @@ public sealed class LibRawBaselineProbeTests
     private static IReadOnlyList<NativeDependencyInfo> ResolveLoadedPrerequisites(
         IReadOnlyList<NativeDependencyInfo> inventory)
     {
-        var loaded = Process.GetCurrentProcess().Modules.Cast<ProcessModule>()
-            .Where(module => module.FileName != null)
-            .GroupBy(module => module.ModuleName, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.First().FileName!,
+        var loaded = EnumerateLoadedImagePaths()
+            .Select(path => (Name: Path.GetFileName(path), Path: path))
+            .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+            .GroupBy(item => item.Name!, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Path,
                 StringComparer.OrdinalIgnoreCase);
         return inventory.Select(item =>
         {
@@ -188,6 +211,12 @@ public sealed class LibRawBaselineProbeTests
                 NativeBinaryInspection.Inspect(path));
         }).ToArray();
     }
+
+    [DllImport("/usr/lib/libSystem.B.dylib")]
+    private static extern uint _dyld_image_count();
+
+    [DllImport("/usr/lib/libSystem.B.dylib")]
+    private static extern nint _dyld_get_image_name(uint imageIndex);
 
     private void WriteInventory(NativeDependencyInfo item)
     {

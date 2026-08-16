@@ -57,7 +57,7 @@ written offer appropriate to the selected LGPL terms.
 The runtime packages also contain supporting native libraries. The exact
 Platform files, versions, package/source hashes, and binary hashes are recorded
 in
-[`licenses/Sdcb.LibRaw-runtime-audit.md`](licenses/Sdcb.LibRaw-runtime-audit.md).
+[`licenses/LibRaw-runtime-audit.md`](licenses/LibRaw-runtime-audit.md).
 The release includes the applicable libjpeg-turbo/IJG, Little CMS, zlib, GPLv3,
 and GCC Runtime Library Exception notices.
 

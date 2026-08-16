@@ -1,18 +1,235 @@
 name: Build LibRaw native artifacts
 
-# Placeholder registered on main so GitHub will dispatch this workflow by
-# name with --ref pointing at a build branch, where the full matrix lives.
-# Replaced by the reviewed full workflow when that branch merges.
+# Manually dispatched only. The build revision is allocated from
+# github.run_number and is consumed by every run, successful or not; reruns
+# of an attempt are rejected so a revision can never be repacked. Jobs call
+# the reviewed scripts under native/libraw/; this workflow never commits.
 
 on:
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
+
+concurrency:
+  group: build-libraw
+  cancel-in-progress: false
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+  HPLR_VCPKG_REVISION: c4d9956c0c10a4742840a5e7d93efa2e0015c865
 
 jobs:
-  placeholder:
+  preflight:
+    name: Allocate revision
     runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.allocate.outputs.version }}
     steps:
-      - name: Explain placeholder
-        run: echo "Dispatch this workflow with --ref <build branch> to run the real native build matrix."
+      - name: Reject reruns
+        if: ${{ github.run_attempt != 1 }}
+        run: |
+          echo "::error::Reruns would repack revision 0.22.2.${{ github.run_number }}; dispatch a fresh run instead."
+          exit 1
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Allocate 0.22.2.${{ github.run_number }}
+        id: allocate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="0.22.2.${{ github.run_number }}"
+          if ls packages/native/HappyPhoton.LibRaw.Native.$version.nupkg 2>/dev/null; then
+            echo "::error::$version already exists as a committed package."
+            exit 1
+          fi
+          count=$(gh api "repos/${{ github.repository }}/actions/artifacts?name=libraw-candidate-$version" --jq '.total_count')
+          if [ "$count" != "0" ]; then
+            echo "::error::$version already has a candidate artifact from a prior run."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  baseline-probe:
+    name: 0.21.1 baseline probe (${{ matrix.rid }})
+    needs: preflight
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: linux-x64
+            os: ubuntu-22.04
+          - rid: osx-arm64
+            os: macos-15
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore and build tests
+        run: |
+          dotnet restore HappyPhoton.sln --locked-mode
+          dotnet build Tests/HappyPhoton.Tests.csproj --configuration Release --no-restore
+      - name: Run isolated baseline probe
+        shell: bash
+        env:
+          HAPPY_PHOTON_BASELINE: "1"
+          HAPPY_PHOTON_BASELINE_ISOLATED: "1"
+        run: |
+          set -o pipefail
+          dotnet test Tests/HappyPhoton.Tests.csproj --configuration Release \
+            --no-build --no-restore \
+            --filter "FullyQualifiedName=HappyPhoton.Tests.LibRawBaselineProbeTests.CurrentRid_EmitsCompleteLibRawBaseline" \
+            --logger "console;verbosity=detailed" | tee baseline-${{ matrix.rid }}.txt
+      - name: Upload baseline output
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-0211-${{ matrix.rid }}
+          path: baseline-${{ matrix.rid }}.txt
+          if-no-files-found: error
+
+  build:
+    name: Build and validate (${{ matrix.rid }})
+    needs: [preflight, baseline-probe]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            os: windows-latest
+          - rid: linux-x64
+            os: ubuntu-22.04
+          - rid: osx-arm64
+            os: macos-15
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore managed harnesses
+        run: dotnet restore HappyPhoton.sln --locked-mode
+      - name: Check out pinned vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git "${{ runner.temp }}/vcpkg"
+          git -C "${{ runner.temp }}/vcpkg" checkout "$HPLR_VCPKG_REVISION"
+        shell: bash
+      - name: Bootstrap vcpkg
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            "${{ runner.temp }}/vcpkg/bootstrap-vcpkg.bat" -disableMetrics
+          else
+            "${{ runner.temp }}/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+          fi
+        shell: bash
+      - name: Enter Visual Studio developer environment
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $vs) { throw "No Visual Studio C++ toolset found on the runner." }
+          cmd /c "`"$vs\Common7\Tools\VsDevCmd.bat`" -arch=amd64 -no_logo && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') {
+              "$($Matches[1])=$($Matches[2])" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            }
+          }
+      - name: Build, validate, and collect provenance
+        shell: pwsh
+        run: |
+          ./native/libraw/build-${{ matrix.rid }}.ps1 `
+            -VcpkgRoot "${{ runner.temp }}/vcpkg" `
+            -PackageVersion "${{ needs.preflight.outputs.version }}"
+      - name: Run native performance gate
+        shell: pwsh
+        run: |
+          ./native/libraw/run-performance.ps1 `
+            -RuntimeDirectory "artifacts/libraw/${{ matrix.rid }}/runtime" `
+            -OutputDirectory "artifacts/libraw/${{ matrix.rid }}/performance"
+      - name: Upload RID artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libraw-${{ matrix.rid }}-${{ needs.preflight.outputs.version }}
+          path: artifacts/libraw/${{ matrix.rid }}
+          if-no-files-found: error
+      - name: Upload diagnostics on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-${{ matrix.rid }}-${{ needs.preflight.outputs.version }}
+          path: |
+            artifacts/libraw/${{ matrix.rid }}/validation
+            artifacts/libraw/${{ matrix.rid }}/performance
+          if-no-files-found: ignore
+
+  sanitize:
+    name: ASAN/UBSAN native tests (linux-x64)
+    needs: preflight
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Check out pinned vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git "${{ runner.temp }}/vcpkg"
+          git -C "${{ runner.temp }}/vcpkg" checkout "$HPLR_VCPKG_REVISION"
+          "${{ runner.temp }}/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+      - name: Build and test under sanitizers
+        shell: pwsh
+        run: |
+          ./native/libraw/build-linux-x64.ps1 `
+            -VcpkgRoot "${{ runner.temp }}/vcpkg" `
+            -PackageVersion "${{ needs.preflight.outputs.version }}" `
+            -OutputRoot "artifacts/libraw-sanitize/linux-x64" `
+            -BuildRoot "artifacts/libraw-sanitize-work/linux-x64" `
+            -Sanitizers
+
+  assemble:
+    name: Assemble candidate package
+    needs: [preflight, build, sanitize]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Download RID artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: libraw-*-${{ needs.preflight.outputs.version }}
+          path: candidate-input
+      - name: Assemble package and provenance inventory
+        run: |
+          version="${{ needs.preflight.outputs.version }}"
+          python3 native/libraw/assemble_candidate.py \
+            --version "$version" \
+            --rid-artifact "win-x64=candidate-input/libraw-win-x64-$version" \
+            --rid-artifact "linux-x64=candidate-input/libraw-linux-x64-$version" \
+            --rid-artifact "osx-arm64=candidate-input/libraw-osx-arm64-$version" \
+            --output-dir candidate-output
+      - name: Upload candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: libraw-candidate-${{ needs.preflight.outputs.version }}
+          path: candidate-output
+          if-no-files-found: error

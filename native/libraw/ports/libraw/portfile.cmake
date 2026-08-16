@@ -1,10 +1,9 @@
-vcpkg_from_github(
-    OUT_SOURCE_PATH SOURCE_PATH
-    REPO LibRaw/LibRaw
-    REF "${VERSION}"
-    SHA512 24313fbdc0f91432cf1de9fd1a7af56cc01c314760194a32fed8e7f5b991ff35e34fe04606e40ed86b3982f88e141c54b528d33631b420b71525abb06c95f5f4
-    HEAD_REF master
+vcpkg_download_distfile(LIBRAW_ARCHIVE
+    URLS "https://www.libraw.org/data/LibRaw-0.22.2.tar.gz"
+    FILENAME "LibRaw-0.22.2.tar.gz"
+    SHA512 9333bc667c8e68a3572c336d3e2ecda82c5987e7feecb6ceb4e1df7dc7291747ffe66f6d3e01b121946ba4e2b1be95295c030d2754a5ae1cd638cffc8213141a
 )
+vcpkg_extract_source_archive(SOURCE_PATH ARCHIVE "${LIBRAW_ARCHIVE}")
 
 vcpkg_from_github(
     OUT_SOURCE_PATH LIBRAW_CMAKE_SOURCE_PATH
@@ -30,12 +29,22 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         dng-lossy   CMAKE_REQUIRE_FIND_PACKAGE_JPEG
 )
 
+if(VCPKG_TARGET_IS_OSX)
+    set(PLATFORM_OPTIONS
+        -DENABLE_LCMS=OFF
+        -DENABLE_JASPER=OFF)
+else()
+    set(PLATFORM_OPTIONS
+        -DENABLE_LCMS=ON
+        -DENABLE_JASPER=OFF)
+endif()
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        ${PLATFORM_OPTIONS}
         -DENABLE_EXAMPLES=OFF
-        -DCMAKE_REQUIRE_FIND_PACKAGE_Jasper=1
         -DCMAKE_REQUIRE_FIND_PACKAGE_ZLIB=1
     MAYBE_UNUSED_VARIABLES
         CMAKE_REQUIRE_FIND_PACKAGE_OpenMP

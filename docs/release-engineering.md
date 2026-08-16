@@ -72,6 +72,43 @@ outer app signature must include the `com.apple.security.cs.allow-jit`
 entitlement from `Platforms/macOS/HappyPhoton.entitlements`. Without it,
 Gatekeeper can accept the notarized bundle while CoreCLR still fails at launch.
 
+## LibRaw native candidates
+
+The manual-only `build-libraw.yml` workflow builds audited LibRaw and bridge
+candidates; it never commits or integrates them. GitHub dispatch requires the
+same-path no-op placeholder on the default branch. Run the build branch's
+full workflow explicitly:
+
+```bash
+gh workflow run build-libraw.yml --ref <build branch>
+```
+
+The checkout and provenance retain the exact feature-branch commit. Candidate
+version `0.22.2.N` takes `N` from the immutable `github.run_number`, so every
+dispatch consumes its revision whether it succeeds or fails. Attempts other
+than 1 are rejected; use a fresh dispatch instead of rerunning. Preflight also
+rejects an existing committed package or candidate artifact with that version.
+Version `0.22.2.0` is reserved for developer-local builds and is never a
+distributable candidate.
+
+The run uploads the isolated `baseline-0211-{rid}` logs and, after successful
+gates, `libraw-{rid}-{version}` directories containing `runtime/`,
+`validation/`, `performance/`, licenses, staging inventory, build options, and
+`provenance.json`. A failed RID uploads the available validation/performance
+files as `diagnostics-{rid}-{version}`. Assembly uploads
+`libraw-candidate-{version}` with the multi-RID nupkg, combined native
+provenance, and their SHA-256 summary.
+
+Validation failures, native-test/sanitizer failures, contract mismatches, and
+a repeatable native peak-memory increase above 10% are fatal. Elapsed changes
+remain measured; a repeatable increase above 10% produces
+`accepted-elapsed-flagged` without failing CI, and a maintainer must rule on
+that flag during candidate review and again during release qualification.
+Workflow artifacts are candidates, never releases: a maintainer downloads a
+run's three RID sets and independently verifies contents, provenance, hashes,
+and validation/performance evidence, and only after that review is the
+package committed or integrated.
+
 ## Creating a candidate
 
 1. Run CI on the intended commit and review all three platform jobs.

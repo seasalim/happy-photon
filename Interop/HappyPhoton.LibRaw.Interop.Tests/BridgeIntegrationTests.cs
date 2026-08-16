@@ -15,10 +15,18 @@ public sealed class BridgeIntegrationTests
         Assert.SkipWhen(string.IsNullOrWhiteSpace(source) || !Directory.Exists(source),
             "Set HAPPY_PHOTON_LIBRAW_BRIDGE_DIR to a complete bridge runtime directory.");
         using var staging = new TemporaryDirectory();
-        foreach (var file in Directory.GetFiles(source!, "*.dll"))
+        foreach (var file in Directory.GetFiles(source!))
             File.Copy(file, Path.Combine(staging.Path, Path.GetFileName(file)));
-        var bridge = Path.Combine(staging.Path, "happyphoton_libraw_bridge.dll");
-        var libraw = Path.Combine(staging.Path, "raw_r.dll");
+        var bridgeName = OperatingSystem.IsWindows()
+            ? "happyphoton_libraw_bridge.dll"
+            : OperatingSystem.IsMacOS()
+                ? "libhappyphoton_libraw_bridge.dylib"
+                : "libhappyphoton_libraw_bridge.so";
+        var librawName = OperatingSystem.IsWindows()
+            ? "raw_r.dll"
+            : OperatingSystem.IsMacOS() ? "libraw.25.dylib" : "libraw_r.so.25";
+        var bridge = Path.Combine(staging.Path, bridgeName);
+        var libraw = Path.Combine(staging.Path, librawName);
         Assert.True(File.Exists(bridge) && File.Exists(libraw));
         var bridgeHash = Hash(bridge);
         var librawHash = Hash(libraw);
@@ -27,8 +35,8 @@ public sealed class BridgeIntegrationTests
         var runtime = LibRawContext.Runtime;
         Assert.Equal(1u, runtime.BridgeAbiVersion);
         Assert.Equal(0x001602u, runtime.LibRawVersionNumber);
-        AssertPathAndHash("happyphoton_libraw_bridge", staging.Path, bridgeHash);
-        AssertPathAndHash("raw_r", staging.Path, librawHash);
+        AssertPathAndHash(bridgeName, staging.Path, bridgeHash);
+        AssertPathAndHash(librawName, staging.Path, librawHash);
 
         var fixture = FindFixture();
         var unicodeFixture = Path.Combine(staging.Path, "写真-カメラ.cr2");
@@ -108,11 +116,11 @@ public sealed class BridgeIntegrationTests
         return new WeakReference(lease);
     }
 
-    private static void AssertPathAndHash(string moduleName, string directory, string hash)
+    private static void AssertPathAndHash(string fileName, string directory, string hash)
     {
         var module = Process.GetCurrentProcess().Modules.Cast<ProcessModule>()
-            .Single(value => string.Equals(Path.GetFileNameWithoutExtension(value.FileName),
-                moduleName, StringComparison.OrdinalIgnoreCase));
+            .Single(value => string.Equals(Path.GetFileName(value.FileName),
+                fileName, StringComparison.OrdinalIgnoreCase));
         Assert.Equal(Path.GetFullPath(directory), Path.GetDirectoryName(Path.GetFullPath(module.FileName)),
             ignoreCase: true);
         Assert.Equal(hash, Hash(module.FileName));

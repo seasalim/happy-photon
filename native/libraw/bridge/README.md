@@ -18,10 +18,13 @@ code and text. ABI failures, programming/ownership failures, and bridge
 resource/internal failures use distinct classes. `HPLR_ABSENT` (missing
 metadata) and `HPLR_UNAVAILABLE` (a non-ushort mosaic layout) are non-errors.
 
-The Windows development build selects `libraw::raw_r`. Other platforms default
-to `libraw::raw`, preserving the macOS decision for Checkpoint B. Non-reentrant
-builds serialize LibRaw calls globally; every build rejects concurrent work on
-the same handle rather than waiting.
+Windows and Linux candidates select `libraw::raw_r`; macOS selects
+`libraw::raw`. Non-reentrant builds serialize LibRaw calls globally; every
+build rejects concurrent work on the same handle rather than waiting. When
+tests are enabled, hook-dependent cases link a separate
+`happyphoton_libraw_bridge_test` target. The production bridge never defines or
+exports `HPLR_TESTING` hooks. Public-ABI smoke and decode cases link the exact
+production candidate.
 
 ## Development build
 
@@ -51,4 +54,41 @@ directory and verifies the loaded bridge and LibRaw paths and hashes before it
 creates a native handle. Without the environment variable, the native-runtime
 integration case is skipped.
 
-ASAN/UBSAN execution is deferred to the Linux baseline refresh in phase 3.
+The Linux phase-3 entry point supports an ASAN/UBSAN CTest-only build.
+
+## Checkpoint B builds
+
+The RID entry points live one directory above this one. Each requires the
+pinned vcpkg checkout and a workflow-allocated package version:
+
+```powershell
+./native/libraw/build-win-x64.ps1 -VcpkgRoot /path/to/vcpkg -PackageVersion 0.22.2.123
+./native/libraw/build-linux-x64.ps1 -VcpkgRoot /path/to/vcpkg -PackageVersion 0.22.2.123
+./native/libraw/build-osx-arm64.ps1 -VcpkgRoot /path/to/vcpkg -PackageVersion 0.22.2.123
+```
+
+The scripts reject any vcpkg revision other than
+`c4d9956c0c10a4742840a5e7d93efa2e0015c865`. Outputs contain a minimal
+`runtime/` dependency closure, CTest and validation logs, build options,
+licenses, hashes, and `provenance.json`. Linux sanitizer validation uses the
+same Linux entry point with `-Sanitizers`; it runs CTest and does not produce a
+distributable runtime. Revision `0.22.2.0` is reserved for explicitly
+non-candidate developer builds; workflow candidates must use a positive,
+never-reused `github.run_number` revision.
+
+Run the paired baseline/candidate performance processes after the candidate
+runtime is staged:
+
+```powershell
+./native/libraw/run-performance.ps1 -RuntimeDirectory artifacts/libraw/win-x64/runtime -OutputDirectory artifacts/libraw/win-x64/performance
+```
+
+The comparison fails when at least two of three paired samples and their median
+show an elapsed-time or native-process peak-memory regression above 10%.
+Managed-host absolute peaks, host baselines, and deltas remain in both reports
+as context but are not a gate because the baseline and candidate test hosts
+have different heaps. The accepted memory gate runs lean native probes against
+the audited 0.21.1 runtime and the staged bridge candidate and records their
+absolute platform peak plus pre-decode host baseline.
+Finally, `assemble_candidate.py` consumes all three per-RID artifact roots and
+creates the uncommitted multi-RID `.nupkg` candidate plus combined provenance.
