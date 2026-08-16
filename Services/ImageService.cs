@@ -26,6 +26,12 @@ public class ImageService : IAsyncDisposable
         remove => _previewService.PreviewRefreshed -= value;
     }
 
+    public event EventHandler<PreviewLoadOutcome>? PreviewLoadCompleted
+    {
+        add => _previewService.PreviewLoadCompleted += value;
+        remove => _previewService.PreviewLoadCompleted -= value;
+    }
+
     public event EventHandler<PreviewBaseRefreshState>?
         BaseRefreshStateChanged
     {
@@ -114,9 +120,8 @@ public class ImageService : IAsyncDisposable
             baseLoader,
             _availabilityService);
 
-        // Initialize RAW processing service
-        var libRawService = new LibRawProcessingService(rawRuntimeHealth);
-        _rawService = libRawService.IsAvailable ? libRawService : new MagickNetRawService();
+        // RAW pixels and embedded previews share the audited native runtime.
+        _rawService = new LibRawProcessingService(rawRuntimeHealth);
 
         // Initialize sub-services
         _histogramService = new HistogramService();

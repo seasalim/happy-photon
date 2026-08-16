@@ -340,6 +340,8 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
 
         public bool CanLoad(ImageFile file) => true;
 
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
+
         public BaseImage? LoadPreviewBase(
             ImageFile file,
             BaseDecodeSettings decode,
@@ -386,6 +388,8 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
         public BaseImage? ReplacementBase { get; private set; }
 
         public bool CanLoad(ImageFile file) => true;
+
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
 
         public BaseImage? LoadPreviewBase(
             ImageFile file,
@@ -445,6 +449,8 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
             [new(), new()];
 
         public bool CanLoad(ImageFile file) => true;
+
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
 
         public BaseImage? LoadPreviewBase(
             ImageFile file,

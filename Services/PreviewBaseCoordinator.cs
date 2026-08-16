@@ -34,6 +34,15 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
     public async Task<PreviewBaseAcquisition?> GetPreviewAsync(
         ImageFile imageFile,
         BaseDecodeSettings decode,
+        CancellationToken cancellationToken) =>
+        (await GetPreviewResultAsync(
+            imageFile,
+            decode,
+            cancellationToken).ConfigureAwait(false)).Acquisition;
+
+    internal async Task<PreviewBaseResult> GetPreviewResultAsync(
+        ImageFile imageFile,
+        BaseDecodeSettings decode,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(imageFile);
@@ -43,16 +52,16 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
         var identity = new BaseIdentity(
             Path.GetFullPath(imageFile.FilePath),
             decode.CacheKey);
-        Task decodeTask;
+        Task<BaseImageLoadFailure> decodeTask;
 
         lock (_sync)
         {
             ThrowIfDisposed();
             if (Matches(_heldIdentity, identity))
             {
-                return new PreviewBaseAcquisition(
+                return PreviewBaseResult.Loaded(new PreviewBaseAcquisition(
                     AcquireHeldBase(),
-                    null);
+                    null));
             }
 
             if (_currentDecode is { } current &&
@@ -68,21 +77,23 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
             if (_heldBase != null &&
                 SamePath(_heldIdentity, identity))
             {
-                return new PreviewBaseAcquisition(
+                return PreviewBaseResult.Loaded(new PreviewBaseAcquisition(
                     AcquireHeldBase(),
-                    decodeTask);
+                    decodeTask));
             }
         }
 
-        await decodeTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var failure = await decodeTask.WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
 
         lock (_sync)
         {
             ThrowIfDisposed();
             return Matches(_heldIdentity, identity)
-                ? new PreviewBaseAcquisition(AcquireHeldBase(), null)
-                : null;
+                ? PreviewBaseResult.Loaded(new PreviewBaseAcquisition(
+                    AcquireHeldBase(), null))
+                : PreviewBaseResult.Failed(failure);
         }
     }
 
@@ -120,7 +131,7 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
         held?.Retire();
     }
 
-    private Task StartDecode(
+    private Task<BaseImageLoadFailure> StartDecode(
         ImageFile imageFile,
         BaseDecodeSettings decode,
         BaseIdentity identity)
@@ -146,19 +157,22 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
         return session.Task;
     }
 
-    private void DecodeAndInstall(
+    private BaseImageLoadFailure DecodeAndInstall(
         ImageFile imageFile,
         BaseDecodeSettings decode,
         DecodeSession session)
     {
         BaseImage? decoded = null;
         HeldBase? superseded = null;
+        var failure = BaseImageLoadFailure.DecodeFailed;
         try
         {
-            decoded = _loader.LoadPreviewBase(
+            var outcome = _loader.LoadPreviewBaseWithOutcome(
                 imageFile,
                 decode,
                 session.Cancellation.Token);
+            decoded = outcome.Image;
+            failure = outcome.Failure;
             session.Cancellation.Token.ThrowIfCancellationRequested();
 
             lock (_sync)
@@ -177,6 +191,7 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
                     _currentDecode = null;
                 }
             }
+            return failure;
         }
         finally
         {
@@ -315,7 +330,9 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
         public BaseIdentity Identity { get; }
         public long Generation { get; }
         public CancellationTokenSource Cancellation { get; } = new();
-        public Task Task { get; set; } = Task.CompletedTask;
+        public Task<BaseImageLoadFailure> Task { get; set; } =
+            System.Threading.Tasks.Task.FromResult(
+                BaseImageLoadFailure.DecodeFailed);
 
         public DecodeSession(BaseIdentity identity, long generation)
         {
@@ -333,13 +350,13 @@ internal sealed class PreviewBaseAcquisition : IDisposable
         _snapshot?.Base ??
         throw new ObjectDisposedException(nameof(PreviewBaseAcquisition));
 
-    public Task? RefreshTask { get; }
+    public Task<BaseImageLoadFailure>? RefreshTask { get; }
 
     public bool IsStale => RefreshTask != null;
 
     public PreviewBaseAcquisition(
         PreviewBaseSnapshot snapshot,
-        Task? refreshTask)
+        Task<BaseImageLoadFailure>? refreshTask)
     {
         _snapshot = snapshot;
         RefreshTask = refreshTask;
@@ -347,6 +364,17 @@ internal sealed class PreviewBaseAcquisition : IDisposable
 
     public void Dispose() =>
         Interlocked.Exchange(ref _snapshot, null)?.Dispose();
+}
+
+internal sealed record PreviewBaseResult(
+    PreviewBaseAcquisition? Acquisition,
+    BaseImageLoadFailure Failure)
+{
+    public static PreviewBaseResult Loaded(PreviewBaseAcquisition acquisition) =>
+        new(acquisition, BaseImageLoadFailure.None);
+
+    public static PreviewBaseResult Failed(BaseImageLoadFailure failure) =>
+        new(null, failure);
 }
 
 internal sealed class PreviewBaseSnapshot : IDisposable

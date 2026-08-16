@@ -41,13 +41,7 @@ internal sealed class EmbeddedPreviewExtractor
                 filePath,
                 generationDimension,
                 cancellationToken));
-        if (Meets(best, generationDimension)) return best;
-        return ChooseBest(
-            best,
-            TryExtractPreviewFrame(
-                filePath,
-                generationDimension,
-                cancellationToken));
+        return best;
     }
 
     private Bitmap? TryExtractLibRaw(
@@ -168,37 +162,6 @@ internal sealed class EmbeddedPreviewExtractor
         }
         catch
         {
-            return null;
-        }
-    }
-
-    private Bitmap? TryExtractPreviewFrame(
-        string filePath,
-        int generationDimension,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var settings = new MagickReadSettings
-            {
-                Width = (uint)generationDimension,
-                Height = (uint)generationDimension
-            };
-            cancellationToken.ThrowIfCancellationRequested();
-
-            using var image = new MagickImage(filePath, settings);
-            image.AutoOrient();
-            ApplyThumbnailSize(image, generationDimension);
-            cancellationToken.ThrowIfCancellationRequested();
-            return ConvertToBitmap(image);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            HandleImageLoadError(ex, filePath);
             return null;
         }
     }

@@ -209,9 +209,10 @@ public sealed partial class PreviewService : IAsyncDisposable
 
         try
         {
-            using var snapshot = await _baseCoordinator.GetPreviewAsync(
+            using var snapshot = await AcquirePreviewBaseAsync(
                 imageFile,
                 decode,
+                generation,
                 cancellationToken);
             if (snapshot == null)
             {
@@ -277,6 +278,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                 $"RenderV{RenderPipeline.Version}",
                 stopwatch.ElapsedMilliseconds,
                 imageFile.FilePath);
+            ReportPreviewSuccess(imageFile, generation);
             return (rendered.Bitmap, rendered.Histogram);
         }
         catch (OperationCanceledException)
@@ -286,6 +288,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         catch (Exception ex)
         {
             HandleImageLoadError(ex, imageFile.FilePath);
+            ReportPreviewFailure(imageFile, generation);
             return (null, new HistogramData());
         }
     }

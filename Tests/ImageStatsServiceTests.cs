@@ -11,6 +11,21 @@ public sealed class ImageStatsServiceTests : IDisposable
 
     public ImageStatsServiceTests() => Directory.CreateDirectory(_tempDirectory);
 
+    [Theory]
+    [InlineData("source.dng")]
+    [InlineData("source.NEF")]
+    [InlineData("source.raf")]
+    public void RawSourcePath_IsRejectedBeforeMagickDecode(string fileName)
+    {
+        var path = Path.Combine(_tempDirectory, fileName);
+        File.WriteAllText(path, "not an image");
+
+        var error = Assert.Throws<NotSupportedException>(() =>
+            new ImageStatsService().Compute(path));
+
+        Assert.Contains("LibRaw", error.Message);
+    }
+
     private string WriteImage(string name, Action<MagickImage> mutate)
     {
         using var image = new MagickImage(MagickColors.Gray, 256, 256);

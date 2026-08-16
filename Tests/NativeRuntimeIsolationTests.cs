@@ -26,7 +26,7 @@ public sealed class NativeRuntimeIsolationTests
     [InlineData("missing-companion")]
     [InlineData("unloadable-bridge")]
     [InlineData("unloadable-companion")]
-    public async Task MissingRuntime_DecoysCannotSatisfyHandshakeAndRouterFallsBack(
+    public async Task MissingRuntime_DecoysCannotSatisfyHandshakeOrDecodeRaw(
         string mode)
     {
         using var staging = new TemporaryDirectory();
@@ -104,10 +104,9 @@ public sealed class NativeRuntimeIsolationTests
         var standard = new StandardBaseLoader((_, _) =>
             new MagickImage(MagickColors.Green, 4, 3));
         var router = new BaseLoaderRouter(raw, standard);
-        using var fallback = router.LoadPreviewBase(new ImageFile("fallback.cr2"),
+        using var result = router.LoadPreviewBase(new ImageFile("fallback.cr2"),
             BaseDecodeSettings.Default, CancellationToken.None);
-        Assert.NotNull(fallback);
-        Assert.Equal(BaseSourceKind.Standard, fallback!.Info.Kind);
+        Assert.Null(result);
 
         using var directory = new TemporaryDirectory();
         using var catalog = new CatalogService(Path.Combine(directory.Path, "catalog"));
@@ -115,7 +114,8 @@ public sealed class NativeRuntimeIsolationTests
         await using var imageService = new ImageService(catalog, router);
         var rawService = typeof(ImageService).GetField("_rawService",
             BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(imageService);
-        Assert.IsType<MagickNetRawService>(rawService);
+        var libRawService = Assert.IsType<LibRawProcessingService>(rawService);
+        Assert.False(libRawService.IsAvailable);
     }
 
     private static async Task RunChildAsync(

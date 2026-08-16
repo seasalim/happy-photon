@@ -98,6 +98,34 @@ public sealed class ThumbnailServiceTests : IDisposable
         Assert.Equal(0, rawService.CallCount);
     }
 
+    [WindowsFact]
+    public async Task RawWithoutSafeEmbeddedPreview_DoesNotUseMagickContainerDecode()
+    {
+        _fixture.RequireWindows();
+        Directory.CreateDirectory(_tempDirectory);
+        var sourcePath = Path.Combine(_tempDirectory, "no-preview.dng");
+        using (var source = new MagickImage(MagickColors.Gray, 80, 60))
+        {
+            source.Write(sourcePath, MagickFormat.Tiff);
+        }
+        using var catalog = new CatalogService(
+            Path.Combine(_tempDirectory, "raw-no-preview-catalog"));
+        await catalog.InitializeAsync();
+        await using var renderedCache =
+            new RenderedThumbnailCacheService(catalog);
+        await using var service = new ThumbnailService(
+            catalog,
+            new UnavailableRawProcessingService(),
+            new RenderPipeline(),
+            renderedCache);
+
+        using var result = await service.LoadUneditedThumbnailAsync(
+            new ImageFile(sourcePath));
+
+        Assert.Equal(ThumbnailLoadStatus.Failed, result.Status);
+        Assert.Null(result.Bitmap);
+    }
+
     [Theory]
     [InlineData(LibraryThumbnailSize.Small, 150)]
     [InlineData(LibraryThumbnailSize.Medium, 192)]
@@ -245,5 +273,12 @@ public sealed class ThumbnailServiceTests : IDisposable
         }
 
         private MagickImage? Reject() => Reject<MagickImage>();
+    }
+
+    private sealed class UnavailableRawProcessingService : IRawProcessingService
+    {
+        public bool IsAvailable => false;
+        public RawThumbnailData? ExtractThumbnail(string filePath) => null;
+        public RawMetadata? ExtractMetadata(string filePath) => null;
     }
 }

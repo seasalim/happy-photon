@@ -20,7 +20,12 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private string? _pinnedStatus;
 
-    public string? StatusMessage => TransientStatus ?? PinnedStatus;
+    public string? StatusMessage =>
+        PinnedStatus ??
+        PreviewSourceFailureStatus ??
+        SelectedRawDecodeFailureStatus ??
+        GlobalRawRuntimeFailureStatus ??
+        TransientStatus;
 
     public Func<int, Task<bool>>? ConfirmBatchApplyAsync { get; set; }
 

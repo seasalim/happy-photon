@@ -431,6 +431,7 @@ public sealed class RawThumbnailFallbackTests : IDisposable
     {
         public int LoadCount { get; private set; }
         public bool CanLoad(ImageFile file) => true;
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.UnsupportedRaw);
         public BaseImage? LoadPreviewBase(
             ImageFile file,
             BaseDecodeSettings decode,

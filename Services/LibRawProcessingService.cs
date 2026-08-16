@@ -8,7 +8,7 @@ namespace HappyPhoton.Services;
 
 /// <summary>
 /// RAW processing service using the pinned Happy Photon LibRaw bridge.
-/// Falls back gracefully when the native runtime is not available.
+/// Reports unavailable when the audited native runtime is rejected.
 /// </summary>
 public class LibRawProcessingService : IRawProcessingService
 {

@@ -40,7 +40,7 @@ public sealed class ThumbnailResidentStateTests : IDisposable
     }
 
     [WindowsFact]
-    public async Task ResidentBitmap_RecordsUpgradeFailureWithoutBaseFailure()
+    public async Task ResidentBitmap_KeepsPixelsAndShowsUpgradeFailure()
     {
         using var catalog = new CatalogService(Path.Combine(_root, "failure-vm"));
         await catalog.InitializeAsync();
@@ -57,7 +57,9 @@ public sealed class ThumbnailResidentStateTests : IDisposable
 
         Assert.Equal(request, result.Request);
         Assert.Equal(512, image.ThumbnailUpgradeFailedDimension);
-        Assert.False(image.ThumbnailLoadFailed);
+        Assert.True(image.ThumbnailLoadFailed);
+        Assert.True(image.HasVisibleLoadFailure);
+        Assert.NotNull(image.Thumbnail);
     }
 
     [WindowsFact]

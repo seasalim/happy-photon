@@ -57,6 +57,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 availabilityService ?? new SourceAvailabilityService(),
                 health);
             service.PreviewRefreshed += OnPreviewRefreshed;
+            service.PreviewLoadCompleted += OnPreviewLoadCompleted;
             service.BaseRefreshStateChanged += OnBaseRefreshStateChanged;
             service.RenderedThumbnailWorkStarted +=
                 OnRenderedThumbnailWorkStarted;

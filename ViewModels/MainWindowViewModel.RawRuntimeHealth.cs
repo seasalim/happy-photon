@@ -15,7 +15,7 @@ public partial class MainWindowViewModel
 
     public string RawRuntimeStatusText => IsRawRuntimeDegraded
         ? $"Native RAW support is unavailable ({RejectedComponentText()}); " +
-          "compatible files will use the fallback decoder."
+          "reinstall Happy Photon to repair the RAW runtime."
         : string.Empty;
 
     public string RawRuntimeSupportText => IsRawRuntimeDegraded
@@ -58,6 +58,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsRawRuntimeDegraded));
         OnPropertyChanged(nameof(RawRuntimeStatusText));
         OnPropertyChanged(nameof(RawRuntimeSupportText));
+        OnPropertyChanged(nameof(StatusMessage));
     }
 
     private string RejectedComponentText() =>

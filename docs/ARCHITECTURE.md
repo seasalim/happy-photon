@@ -128,7 +128,8 @@ thumbnails share `RenderPipeline`; RAW cache-miss thumbnails deliberately apply 
 Source-specific behavior belongs in the loaders and `BaseImageInfo`. Standard images are
 color-normalized and linearized by Magick.NET. RAW images decode through the pinned
 LibRaw 0.22.2 runtime through the versioned Happy Photon bridge into the same linear Q16
-base contract. RAW metadata comes from
+base contract. It is the only producer of RAW raster pixels: runtime rejection and
+per-file decode failure are surfaced instead of routing through Magick. RAW metadata comes from
 LibRaw except exposure bias, which LibRaw does not surface and Magick cannot read from
 RAW containers; MetadataExtractor reads just that tag, header-only, without decoding.
 
@@ -151,7 +152,8 @@ First frame is sacred: nothing non-visual happens before the window is shown.
 3. `CompleteStartupAsync` (off the first-frame path):
    - probe native RAW health on a worker thread, publish pending/degraded About state,
      and inject the completed immutable result into both RAW composition branches
-     before workspace readiness;
+     before workspace readiness; a rejection leaves RAW support unavailable until the
+     installation is repaired;
    - finish or roll back a pending journaled move, then resolve `locations.json`;
    - branch on an existing catalog signature rather than a configured path. A fresh or
      configured-but-empty install renders the static Welcome step before any SQLite open;
@@ -423,14 +425,12 @@ replace a Large entry.
 
 On a cache miss, source candidates are tried in this order:
 
-1. RAW/HEIC only — **LibRaw embedded preview** (`ExtractThumbnail`), with manual EXIF
+1. RAW only — **LibRaw embedded preview** (`ExtractThumbnail`), with manual EXIF
    orientation when LibRaw output lacks it. LibRaw also reports the visible RAW frame
    dimensions used by Develop. A preview whose aspect differs from that frame by more
    than 3% is center-cropped toward the visible RAW aspect; the mismatch is treated as
    camera-added padding. At or below 3%, or when visible geometry is unavailable, the
-   preview is preserved. Once LibRaw returns valid encoded preview bytes, geometry
-   never rejects them and therefore cannot fall through to a Magick RAW delegate decode
-   during Library loading.
+   preview is preserved.
 2. **EXIF thumbnail** via `Ping` (header-only read), accepted only if its aspect ratio
    matches the source within 3% (`ExifThumbnailDecoder`). Unlike LibRaw previews,
    missing geometry or a larger mismatch still rejects an EXIF thumbnail.
@@ -439,10 +439,9 @@ On a cache miss, source candidates are tried in this order:
    *last* `FFD9` marker first (some vendors nest JPEGs). Results are memoized in a
    short-lived static cache to dedupe parallel workers. This fallback is not
    aspect-normalized.
-4. **Reduced-size decode** — for JPEGs, `JpegThumbnailDecoder` uses Avalonia's platform
+4. **Reduced-size decode for non-RAW files** — for JPEGs, `JpegThumbnailDecoder` uses Avalonia's platform
    decoder (`Bitmap.DecodeToWidth/Height`) plus a manual orientation pixel-remap; other
-   formats go through Magick with size hints. Magick remains the fallback for anything
-   corrupt or unsupported. RAW preview-frame fallbacks remain unnormalized.
+   standard formats go through Magick with size hints. RAW files never enter this step.
 
 RAW extraction retains the best safe embedded candidate and continues while it is
 below the generation target. It returns immediately at that target, otherwise returns
@@ -455,7 +454,8 @@ thumbnail from the matching accepted Develop render, a matching
 `assets/rendered-thumbs/` entry, then the unedited source thumbnail with only rotation,
 horizon rotation, and crop applied. The fallback never applies tone or color to the
 camera-rendered embedded JPEG and never upscales a crop. Opening the RAW in Develop
-self-heals the fallback. Folder loading never decodes a RAW base or a 1600px preview.
+replaces it after a successful LibRaw render. Folder loading never decodes a RAW base or
+a 1600px preview.
 
 The source thumbnail remains unchanged in `assets/thumbs/`; agent statistics always
 read this unedited tier and normalize it to a canonical 150 px raster. Accurate RAW

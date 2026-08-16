@@ -24,6 +24,14 @@ public sealed class StandardBaseLoaderTests : IDisposable
     [InlineData("photo.webp")]
     [InlineData("photo.heic")]
     [InlineData("photo.HEIF")]
+    public void CanLoad_AcceptsStandardExtensions(string fileName)
+    {
+        var loader = new StandardBaseLoader();
+
+        Assert.True(loader.CanLoad(new ImageFile(fileName)));
+    }
+
+    [Theory]
     [InlineData("photo.cr2")]
     [InlineData("photo.CR3")]
     [InlineData("photo.nef")]
@@ -36,11 +44,11 @@ public sealed class StandardBaseLoaderTests : IDisposable
     [InlineData("photo.orf")]
     [InlineData("photo.rw2")]
     [InlineData("photo.pef")]
-    public void CanLoad_AcceptsStandardAndRawFallbackExtensions(string fileName)
+    public void CanLoad_RejectsEveryRawExtension(string fileName)
     {
         var loader = new StandardBaseLoader();
 
-        Assert.True(loader.CanLoad(new ImageFile(fileName)));
+        Assert.False(loader.CanLoad(new ImageFile(fileName)));
     }
 
     [Fact]
@@ -238,18 +246,22 @@ public sealed class StandardBaseLoaderTests : IDisposable
     }
 
     [Fact]
-    public void FullBase_RawFallbackIsClassifiedAsStandard()
+    public void FullBase_RawIsRejectedBeforeMagickDecode()
     {
+        var calls = 0;
         var loader = new StandardBaseLoader(
-            (_, _) => new MagickImage(MagickColors.Orange, 32, 16));
+            (_, _) =>
+            {
+                calls++;
+                return new MagickImage(MagickColors.Orange, 32, 16);
+            });
         using var result = loader.LoadFullBase(
             new ImageFile("fallback.dng"),
             BaseDecodeSettings.Default,
             CancellationToken.None);
 
-        Assert.NotNull(result);
-        Assert.Equal(BaseSourceKind.Standard, result!.Info.Kind);
-        Assert.False(result.Info.IsRawSource);
+        Assert.Null(result);
+        Assert.Equal(0, calls);
     }
 
     [Fact]

@@ -46,6 +46,10 @@ public partial class MainWindowViewModel
     {
         if (result.Status != ThumbnailLoadStatus.Loaded)
         {
+            if (result.Status == ThumbnailLoadStatus.Failed)
+            {
+                image.ThumbnailLoadFailed = true;
+            }
             if (image.Thumbnail != null)
             {
                 if (result.Status == ThumbnailLoadStatus.DeferredForHydration)
@@ -96,6 +100,10 @@ public partial class MainWindowViewModel
         }
 
         image.SourceRequiresHydration = value;
+        if (ReferenceEquals(SelectedImage, image))
+        {
+            OnPropertyChanged(nameof(StatusMessage));
+        }
         if (Library.Contains(image))
         {
             OnlineOnlyPhotoCount = Math.Max(

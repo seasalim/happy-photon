@@ -21,6 +21,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(ActiveFileName));
         NotifySelectedImageEditStateChanged();
         NotifyFullScreenSelectionBadgeChanged();
+        OnPreviewFailureSelectionChanged();
 
         // Exit crop mode when switching images
         if (IsCropMode)

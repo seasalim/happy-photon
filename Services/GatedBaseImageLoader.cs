@@ -26,11 +26,31 @@ internal sealed class GatedBaseImageLoader : IBaseImageLoader
         ImageFile file,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken) =>
-        LoadPreviewBase(
+        LoadPreviewBaseWithOutcome(
             file,
             decode,
-            SourceReadIntent.Background,
+            cancellationToken).Image;
+
+    public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
+        ImageFile file,
+        BaseDecodeSettings decode,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!SourceAccessPolicy.CanRead(
+            _availabilityService.GetAvailability(file.FilePath),
+            SourceReadIntent.Background))
+        {
+            return BaseImageLoadOutcome.Failed(
+                BaseImageLoadFailure.SourceUnavailable);
+        }
+
+        return _inner.LoadPreviewBaseWithOutcome(
+            file,
+            decode,
             cancellationToken);
+    }
 
     public BaseImage? LoadFullBase(
         ImageFile file,

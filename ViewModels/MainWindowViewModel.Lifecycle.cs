@@ -48,6 +48,7 @@ public partial class MainWindowViewModel
         if (_imageService.IsValueCreated)
         {
             _imageService.Value.PreviewRefreshed -= OnPreviewRefreshed;
+            _imageService.Value.PreviewLoadCompleted -= OnPreviewLoadCompleted;
             _imageService.Value.BaseRefreshStateChanged -=
                 OnBaseRefreshStateChanged;
             _imageService.Value.RenderedThumbnailWorkStarted -=

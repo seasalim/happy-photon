@@ -454,6 +454,26 @@ prerequisite degrades RAW decoding to the Magick.NET fallback with a
 diagnostic; it does not prevent application startup. System-requirements
 documentation must state the prerequisite (phase 9).
 
+**Superseded 2026-08-16 — single-decoder policy:** the approved fallback above is no
+longer production policy. Magick.NET 14.15.0 advertises the `raw` delegate and reports
+RAF, CR2, CR3, NEF, DNG, ARW, and ORF through its LibRaw-backed `Dng` module; its
+`Magick.Native-Q16-x64.dll` embeds `0.22.1-Release`. That is an older build of the same
+library than the audited 0.22.2 runtime, not an independent rescue decoder. The X30 RAF
+fixture measured 8.1 seconds through Magick versus 1.9 seconds through the Happy Photon
+binding. Its 100% crops had near-identical detail with a small tone shift, making the two
+outputs non-interchangeable in shared caches. The embedded build was unaudited,
+unversioned in this repository, and invisible to the process health gate. The accepted
+residual risk is a hypothetical 0.22.2 regression that 0.22.1 would decode.
+
+Production now fails RAW visibly when the audited runtime is rejected or a file is
+unsupported. The former Windows-only RAF exception is redundant and removed: no
+original rationale was recorded or reproduced, and the fixture decoded cleanly through
+Magick during this investigation without a crash or corrupt output. Caches written
+before the single-decoder change could contain Magick/LibRaw-0.22.1 pixels; no automated
+repair ships, and the remedy is clearing the cache. With no second RAW pixel producer,
+cache keys need no decoder identity. `BaseImage.Version` remains 3 and
+`RenderPipeline.Version` is unchanged.
+
 ## 2026-08-16 — Phase 4 integration record
 
 Production decoding migrated from Sdcb.LibRaw 0.21.1 to the audited

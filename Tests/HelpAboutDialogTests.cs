@@ -94,7 +94,7 @@ public sealed class HelpAboutDialogTests
         var status = degradedDialog.FindControl<TextBlock>("RawRuntimeStatusText")!;
 
         Assert.True(status.IsVisible);
-        Assert.Contains("fallback decoder", status.Text);
+        Assert.Contains("reinstall Happy Photon", status.Text);
         Assert.Contains("RAW runtime: degraded", degraded.RawRuntimeSupportText);
         Assert.Contains("component=LibRaw companion", degraded.RawRuntimeSupportText);
 

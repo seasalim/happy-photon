@@ -25,10 +25,10 @@ and FBDD off.
 `BaseLoaderRouter` picks the loader:
 
 - Mosaic RAW extensions (`.CR2 .CR3 .NEF .NRW .ARW .SRF .SR2 .DNG .RAF .ORF .RW2 .PEF`)
-  route to `RawBaseLoader`. When native LibRaw is unavailable or decoding fails, the
-  router tries `StandardBaseLoader`; a health rejection emits one process-level
-  diagnostic, while a genuine per-file decode failure is logged at the router. RAF
-  deliberately has no Magick fallback on Windows.
+  route only to `RawBaseLoader`. `StandardBaseLoader` rejects these extensions in both
+  its capability and load paths. A rejected native runtime emits one process-level
+  diagnostic; a file LibRaw cannot decode is reported as unsupported in Library and
+  Develop. Neither failure can route RAW pixels through Magick.
 - `.HEIC .HEIF` route to `StandardBaseLoader` with `Kind = HeicPlatform`. They are
   standard image sources rather than RAW files, including in the thumbnail path.
 - Everything else (`.JPG .JPEG .PNG .BMP .GIF .TIFF .WEBP`) → `StandardBaseLoader`.
@@ -95,15 +95,14 @@ at or below 3% pass through, while larger differences center-crop the embedded p
 toward the visible RAW aspect before the requested generation-size resize. Missing or
 non-positive visible dimensions disable normalization but do not reject successfully
 decoded preview bytes.
-A valid LibRaw preview is never rejected on geometry grounds, so a camera-wide mismatch
-cannot fall through to the preview-frame path and invoke Magick's RAW delegate during a
-Library load.
+A valid LibRaw preview is never rejected on geometry grounds. If it remains undersized,
+Library may try metadata-only EXIF extraction and a byte-level embedded-JPEG scan, but
+it never opens the RAW container through Magick.
 
 This policy is specific to LibRaw. EXIF thumbnails continue to reject missing geometry
-and mismatches above 3%. Embedded-JPEG and preview-frame fallbacks remain unnormalized,
-and existing cached thumbnails are not migrated or invalidated. Extraction retains the
-largest safe candidate seen, continues while it is below the generation target, and
-never starts a full RAW demosaic merely to satisfy a larger Library request.
+and mismatches above 3%. Embedded-JPEG candidates remain unnormalized. Extraction
+retains the largest safe candidate seen, continues while it is below the generation
+target, and never starts a full RAW demosaic merely to satisfy a larger Library request.
 
 ### 2.2 Raw exposure
 
@@ -161,12 +160,43 @@ LibRaw's JPEG and zlib capability bits. An ABI mismatch stops before the version
 runtime structure is queried. Resolution and load failures retain
 bridge-versus-companion attribution, and every rejection records the safely observed
 ABI, version, version string, and capability mask. One error-level diagnostic is
-emitted for a rejected runtime; fallback-eligible base decoding plus thumbnail/metadata
-routing then use Magick.NET. The About surface reports this degraded state and includes
-the same facts in copied support text.
+emitted for a rejected runtime. RAW decode and LibRaw preview/metadata extraction stay
+unavailable until the installation is repaired; the About surface reports this degraded
+state and includes the same facts in copied support text. Header-only RAW `Ping`, EXIF
+thumbnail extraction, orientation reads, and decoding already-extracted preview bytes
+remain permitted because they do not decode the RAW raster.
 
 The same loader parameters and golden fixtures cover Windows, Linux, and macOS. The
 cross-platform comparison uses the mean ΔE bound documented in TESTING.md §3.
+
+### 2.5 Single RAW decoder decision (2026-08-16)
+
+This policy deliberately supersedes `LIBRAW_222.md` step 5's approved Magick fallback.
+Inspection showed that Magick.NET's RAW support is itself LibRaw: its delegates include
+`raw`, and RAF, CR2, CR3, NEF, DNG, ARW, and ORF report the LibRaw-backed `Dng` module.
+`Magick.Native-Q16-x64.dll` from Magick.NET 14.15.0 embeds
+`0.22.1-Release`, strictly older than Happy Photon's audited 0.22.2 runtime. It cannot
+normally rescue a file rejected by 0.22.2; the accepted residual risk is a hypothetical
+0.22.2 regression for which 0.22.1 happened to work.
+
+On the X30 RAF fixture, full decode measured 8.1 seconds through Magick versus 1.9
+seconds through the Happy Photon binding (about four times slower). At 100% the results
+had near-identical detail with a small tone shift, consistent with two builds of the
+same decoder and enough to make their pixels non-interchangeable in shared caches. The
+Magick-carried build was also unaudited, unversioned in this repository, and invisible
+to the native health gate. The former Windows-only RAF no-fallback carve-out is removed
+as redundant: its original rationale was never recorded or reproducible, and the same
+fixture currently decodes cleanly through Magick without a crash or corrupt output.
+
+The invariant is enforced by construction: every RAW raster producer is LibRaw 0.22.2.
+The removed production routes are the router's standard-loader descent, the
+`MagickNetRawService` substitution, `ThumbnailService`'s full-container decode,
+`EmbeddedPreviewExtractor`'s preview-frame decode, `MetadataService`'s RAW full-decode
+catch, and path-based RAW input to `ImageStatsService`. `StandardBaseLoader` also rejects
+RAW directly, so a future router change cannot bypass the policy.
+Consequently `ThumbnailCacheService`'s source-mtime validity and
+`RenderSettingsHash` need no decoder-identity field. No `BaseImage.Version` or
+`RenderPipeline.Version` changes.
 
 ## 3. `StandardBaseLoader` (Magick.NET)
 
@@ -252,9 +282,12 @@ remain a documented limitation.
 
 ## 6. Error handling
 
-Loader failures are logged through `ImageServiceHelpers` and return null to the UI's
-existing load-error path. A RAW file decoded by the standard fallback reports
-`Kind = Standard, IsRawSource = false`, so downstream capability checks remain honest.
+Loader failures are logged through `ImageServiceHelpers`. Request-correlated preview
+outcomes preserve source-unavailable, native-runtime rejection, and unsupported-file
+causes through the coordinator to the ViewModel. Library marks thumbnail failures and
+RAW files whose Develop decode failed; Develop keeps an actionable per-image message
+even when a cached preview remains visible. Runtime rejection is one global degraded
+state rather than a per-file mark.
 
 ## 7. Verification
 

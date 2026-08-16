@@ -175,6 +175,13 @@ internal sealed class MetadataService
             catch (Exception ex)
             {
                 LogDebug(nameof(MetadataService), $"Ping failed: {ex.Message}", imageFile.FilePath);
+                if (imageFile.IsRaw)
+                {
+                    source = "RawPingFailed";
+                    return MetadataExtractionResult.Loaded(
+                        builder.ToMetadata());
+                }
+
                 using var image = new MagickImage(imageFile.FilePath);
                 builder.PixelWidth = (int)image.Width;
                 builder.PixelHeight = (int)image.Height;

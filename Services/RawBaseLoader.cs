@@ -45,6 +45,30 @@ public sealed class RawBaseLoader : IBaseImageLoader
         CancellationToken cancellationToken) =>
         Load(file, decode, preview: true, cancellationToken);
 
+    public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
+        ImageFile file,
+        BaseDecodeSettings decode,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        if (!file.IsRaw)
+        {
+            return BaseImageLoadOutcome.Failed(
+                BaseImageLoadFailure.DecodeFailed);
+        }
+        if (IsHealthRejected)
+        {
+            return BaseImageLoadOutcome.Failed(
+                BaseImageLoadFailure.RawRuntimeUnavailable);
+        }
+
+        var image = Load(file, decode, preview: true, cancellationToken);
+        return image != null
+            ? BaseImageLoadOutcome.Loaded(image)
+            : BaseImageLoadOutcome.Failed(
+                BaseImageLoadFailure.UnsupportedRaw);
+    }
+
     public BaseImage? LoadFullBase(
         ImageFile file,
         BaseDecodeSettings decode,

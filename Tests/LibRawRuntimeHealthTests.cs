@@ -24,6 +24,7 @@ public sealed class LibRawRuntimeHealthTests
         Assert.Contains("LibRaw version string=0.22.1-Release", health.DiagnosticText);
         Assert.Contains("capability mask=0x000000C0", health.DiagnosticText);
         Assert.Contains("Reinstall Happy Photon", health.DiagnosticText);
+        Assert.Contains("unavailable until", health.DiagnosticText);
     }
 
     [Fact]
@@ -51,28 +52,21 @@ public sealed class LibRawRuntimeHealthTests
 
     [Theory]
     [MemberData(nameof(Rejections))]
-    public async Task EveryRejectionDisablesNativeBranchesAndSelectsFallback(
+    public async Task EveryRejectionDisablesAllRawDecodeBranches(
         LibRawRuntimeHealth health)
     {
         var raw = new RawBaseLoader(health);
         var standard = new StandardBaseLoader((_, _) =>
             new MagickImage(MagickColors.Green, 4, 3));
-        var warnings = new List<string>();
-        var router = new BaseLoaderRouter(
-            raw,
-            standard,
-            () => false,
-            warnings.Add);
+        var router = new BaseLoaderRouter(raw, standard);
 
         Assert.False(raw.CanLoad(new ImageFile("unavailable.cr2")));
         Assert.False(new LibRawProcessingService(health).IsAvailable);
-        using var fallback = router.LoadPreviewBase(
+        using var result = router.LoadPreviewBase(
             new ImageFile("fallback.cr2"),
             BaseDecodeSettings.Default,
             CancellationToken.None);
-        Assert.NotNull(fallback);
-        Assert.Equal(BaseSourceKind.Standard, fallback!.Info.Kind);
-        Assert.Empty(warnings);
+        Assert.Null(result);
 
         using var directory = new TemporaryDirectory();
         using var catalog = new CatalogService(Path.Combine(directory.Path, "catalog"));
@@ -82,28 +76,9 @@ public sealed class LibRawRuntimeHealthTests
             router,
             new SourceAvailabilityService(),
             health);
-        Assert.IsType<MagickNetRawService>(RawService(imageService));
-    }
-
-    [Theory]
-    [MemberData(nameof(Rejections))]
-    public void WindowsRafStillRefusesFallbackWhenRuntimeIsRejected(
-        LibRawRuntimeHealth health)
-    {
-        var standard = new StandardBaseLoader((_, _) =>
-            new MagickImage(MagickColors.Green, 4, 3));
-        var router = new BaseLoaderRouter(
-            new RawBaseLoader(health),
-            standard,
-            () => true,
-            _ => throw new Xunit.Sdk.XunitException("Unexpected warning"));
-
-        var result = router.LoadPreviewBase(
-            new ImageFile("fallback.raf"),
-            BaseDecodeSettings.Default,
-            CancellationToken.None);
-
-        Assert.Null(result);
+        var rawService = Assert.IsType<LibRawProcessingService>(
+            RawService(imageService));
+        Assert.False(rawService.IsAvailable);
     }
 
     public static IEnumerable<object[]> Rejections()

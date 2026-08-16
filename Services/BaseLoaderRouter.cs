@@ -6,34 +6,15 @@ public sealed class BaseLoaderRouter : IBaseImageLoader
 {
     private readonly IBaseImageLoader _rawLoader;
     private readonly IBaseImageLoader _standardLoader;
-    private readonly Func<bool> _isWindows;
-    private readonly Action<string> _logWarning;
 
     public BaseLoaderRouter(
         IBaseImageLoader rawLoader,
         IBaseImageLoader standardLoader)
-        : this(
-            rawLoader,
-            standardLoader,
-            OperatingSystem.IsWindows,
-            ImageServiceHelpers.LogError)
-    {
-    }
-
-    internal BaseLoaderRouter(
-        IBaseImageLoader rawLoader,
-        IBaseImageLoader standardLoader,
-        Func<bool> isWindows,
-        Action<string> logWarning)
     {
         _rawLoader = rawLoader ??
             throw new ArgumentNullException(nameof(rawLoader));
         _standardLoader = standardLoader ??
             throw new ArgumentNullException(nameof(standardLoader));
-        _isWindows = isWindows ??
-            throw new ArgumentNullException(nameof(isWindows));
-        _logWarning = logWarning ??
-            throw new ArgumentNullException(nameof(logWarning));
     }
 
     public bool CanLoad(ImageFile file)
@@ -44,15 +25,26 @@ public sealed class BaseLoaderRouter : IBaseImageLoader
             return _standardLoader.CanLoad(file);
         }
 
-        return _rawLoader.CanLoad(file) ||
-            (AllowsRawFallback(file) && _standardLoader.CanLoad(file));
+        return _rawLoader.CanLoad(file);
     }
 
     public BaseImage? LoadPreviewBase(
         ImageFile file,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken) =>
-        Load(file, decode, cancellationToken, preview: true);
+        LoadPreviewBaseWithOutcome(file, decode, cancellationToken).Image;
+
+    public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
+        ImageFile file,
+        BaseDecodeSettings decode,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        ArgumentNullException.ThrowIfNull(decode);
+        cancellationToken.ThrowIfCancellationRequested();
+        return (file.IsRaw ? _rawLoader : _standardLoader)
+            .LoadPreviewBaseWithOutcome(file, decode, cancellationToken);
+    }
 
     public BaseImage? LoadFullBase(
         ImageFile file,
@@ -80,30 +72,8 @@ public sealed class BaseLoaderRouter : IBaseImageLoader
                 preview);
         }
 
-        var raw = LoadFrom(
-            _rawLoader,
-            file,
-            decode,
-            cancellationToken,
-            preview);
-        if (raw != null)
-        {
-            return raw;
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-        if (!AllowsRawFallback(file))
-        {
-            return null;
-        }
-
-        if (_rawLoader is not RawBaseLoader { IsHealthRejected: true })
-        {
-            _logWarning(
-                $"LibRaw base decode failed for '{file.FileName}'; trying the standard loader.");
-        }
         return LoadFrom(
-            _standardLoader,
+            _rawLoader,
             file,
             decode,
             cancellationToken,
@@ -126,8 +96,4 @@ public sealed class BaseLoaderRouter : IBaseImageLoader
             ? loader.LoadPreviewBase(file, decode, cancellationToken)
             : loader.LoadFullBase(file, decode, cancellationToken);
     }
-
-    private bool AllowsRawFallback(ImageFile file) =>
-        !(_isWindows() &&
-          file.Extension.Equals(".RAF", StringComparison.OrdinalIgnoreCase));
 }

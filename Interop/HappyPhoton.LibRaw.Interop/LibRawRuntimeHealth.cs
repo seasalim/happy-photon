@@ -120,8 +120,8 @@ public static class LibRawRuntimeHealthEvaluator
             : $" Detail: {facts.FailureDetail}";
         return $"Native RAW runtime rejected: component={component}, reason={reason}{stage}; " +
                $"{FormatFacts(facts)}.{detail}" +
-               " Reinstall Happy Photon to restore native RAW support; " +
-               "fallback-eligible RAW files will use Magick.NET.";
+               " Reinstall Happy Photon to restore RAW support; " +
+               "RAW decoding is unavailable until the runtime is repaired.";
     }
 
     private static LibRawRuntimeHealth Rejected(

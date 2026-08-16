@@ -6,7 +6,7 @@ namespace HappyPhoton.Services;
 public sealed partial class PreviewService
 {
     private void QueueRefresh(
-        Task refreshTask,
+        Task<BaseImageLoadFailure> refreshTask,
         ImageFile imageFile,
         EditSettings settings,
         ThumbnailSizeRequest thumbnailRequest,
@@ -48,13 +48,13 @@ public sealed partial class PreviewService
     }
 
     private async Task RefreshWhenBaseReadyAsync(
-        Task refreshTask,
+        Task<BaseImageLoadFailure> refreshTask,
         ImageFile imageFile,
         long requestId)
     {
         try
         {
-            await refreshTask.ConfigureAwait(false);
+            var failure = await refreshTask.ConfigureAwait(false);
             await Task.Yield();
 
             PendingRefresh? pending;
@@ -65,6 +65,18 @@ public sealed partial class PreviewService
             if (pending == null ||
                 Volatile.Read(ref _disposed) != 0)
             {
+                return;
+            }
+
+            if (failure != BaseImageLoadFailure.None)
+            {
+                if (pending.Generation == Volatile.Read(ref _renderGeneration))
+                {
+                    ReportPreviewOutcome(
+                        pending.ImageFile,
+                        pending.Generation,
+                        failure);
+                }
                 return;
             }
 
@@ -105,6 +117,10 @@ public sealed partial class PreviewService
                 rendered.Histogram,
                 !pending.SkipHistogram);
             PreviewRefreshed?.Invoke(this, refresh);
+            ReportPreviewOutcome(
+                pending.ImageFile,
+                refreshGeneration,
+                BaseImageLoadFailure.None);
         }
         catch (OperationCanceledException)
         {

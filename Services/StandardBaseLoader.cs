@@ -23,7 +23,8 @@ public sealed class StandardBaseLoader : IBaseImageLoader
     public bool CanLoad(ImageFile file)
     {
         ArgumentNullException.ThrowIfNull(file);
-        return ImageFile.SupportedExtensions.Contains(file.Extension);
+        return !file.IsRaw &&
+            ImageFile.SupportedExtensions.Contains(file.Extension);
     }
 
     public BaseImage? LoadPreviewBase(
@@ -31,6 +32,17 @@ public sealed class StandardBaseLoader : IBaseImageLoader
         BaseDecodeSettings decode,
         CancellationToken cancellationToken) =>
         Load(file, decode, cancellationToken, preview: true);
+
+    public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
+        ImageFile file,
+        BaseDecodeSettings decode,
+        CancellationToken cancellationToken)
+    {
+        var image = LoadPreviewBase(file, decode, cancellationToken);
+        return BaseImageLoadOutcome.FromImage(
+            image,
+            BaseImageLoadFailure.DecodeFailed);
+    }
 
     public BaseImage? LoadFullBase(
         ImageFile file,
@@ -48,7 +60,8 @@ public sealed class StandardBaseLoader : IBaseImageLoader
         ArgumentNullException.ThrowIfNull(decode);
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!ImageFile.SupportedExtensions.Contains(file.Extension))
+        if (file.IsRaw ||
+            !ImageFile.SupportedExtensions.Contains(file.Extension))
         {
             return null;
         }

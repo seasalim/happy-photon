@@ -3,8 +3,7 @@ using HappyPhoton.Models;
 namespace HappyPhoton.Services;
 
 /// <summary>
-/// Interface for RAW image processing services.
-/// Enables native LibRaw processing with a Magick.NET fallback.
+/// Extracts RAW metadata and encoded previews through the pinned LibRaw runtime.
 /// </summary>
 public interface IRawProcessingService
 {

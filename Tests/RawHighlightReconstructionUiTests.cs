@@ -50,17 +50,14 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task RawFallback_ShowsStatusAndKeepsEditsUsable()
+    public async Task UnsupportedRaw_ShowsActionablePersistentStatus()
     {
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
-        var warnings = new List<string>();
         var loader = new BaseLoaderRouter(
             new RawBaseLoader(isAvailable: false),
             new StandardBaseLoader(
-                (_, _) => new MagickImage(MagickColors.Gray, 64, 48)),
-            () => false,
-            warnings.Add);
+                (_, _) => new MagickImage(MagickColors.Gray, 64, 48)));
         var vm = new MainWindowViewModel(
             catalog,
             loader,
@@ -80,23 +77,16 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         vm.SelectedImage = image;
 
         Assert.True(vm.CanReset);
-        await WaitUntilAsync(() => vm.IsWhiteBalanceReady);
+        await WaitUntilAsync(() => image.RawDecodeFailed);
 
         Assert.True(vm.CanReset);
-        Assert.Equal(
-            "Decoded via fallback — RAW controls unavailable",
-            vm.TransientStatus);
-        Assert.Single(warnings);
-        Assert.Contains("fallback.dng", warnings[0]);
-
-        await vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
-        Assert.True(vm.IsShowingOriginal);
+        Assert.Contains("could not be decoded", vm.StatusMessage);
+        Assert.Null(vm.PreviewImage);
 
         await vm.ResetEditsCommand.ExecuteAsync(null);
         Assert.Equal(
             HlReconstructionMode.Clip,
             image.EditSettings.HlReconstruction);
-        Assert.False(vm.IsShowingOriginal);
         Assert.False(vm.CanReset);
 
         await vm.DisposeAsync();
@@ -393,9 +383,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         new(
             new RawBaseLoader(isAvailable: false),
             new StandardBaseLoader(
-                (_, _) => new MagickImage(MagickColors.Gray, 64, 48)),
-            () => false,
-            _ => { });
+                (_, _) => new MagickImage(MagickColors.Gray, 64, 48)));
 
     private static bool HistogramsMatch(
         HistogramData? actual,

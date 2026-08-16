@@ -83,6 +83,8 @@ internal static class RawExportPerformanceMeasurement
 
         public bool CanLoad(ImageFile file) => inner.CanLoad(file);
 
+        public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => inner.LoadPreviewBaseWithOutcome(file, decode, cancellationToken);
+
         public BaseImage? LoadPreviewBase(
             ImageFile file,
             BaseDecodeSettings decode,

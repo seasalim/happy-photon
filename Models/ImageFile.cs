@@ -69,6 +69,12 @@ public partial class ImageFile : ObservableObject
     private bool _thumbnailDeferredForHydration;
 
     [ObservableProperty]
+    private bool _thumbnailLoadFailed;
+
+    [ObservableProperty]
+    private bool _rawDecodeFailed;
+
+    [ObservableProperty]
     private bool _sourceRequiresHydration;
 
     public bool ShowCloudPlaceholder =>
@@ -84,7 +90,12 @@ public partial class ImageFile : ObservableObject
     public DateTime? AssessedUtc { get; set; }
     public AssessmentAxes PendingAssessmentAxes { get; set; }
 
-    public bool ThumbnailLoadFailed { get; set; }
+    public bool HasVisibleLoadFailure =>
+        ThumbnailLoadFailed || RawDecodeFailed;
+
+    public string LoadFailureText => RawDecodeFailed
+        ? "This RAW file could not be decoded. It may use an unsupported encoding such as Nikon HE."
+        : "The thumbnail could not be loaded.";
 
     public int ThumbnailPixelWidth { get; private set; }
     public int ThumbnailPixelHeight { get; private set; }
@@ -363,6 +374,10 @@ public partial class ImageFile : ObservableObject
     }
     partial void OnSourceRequiresHydrationChanged(bool value) =>
         OnPropertyChanged(nameof(ShowCloudPlaceholder));
+    partial void OnThumbnailLoadFailedChanged(bool value) =>
+        NotifyLoadFailureChanged();
+    partial void OnRawDecodeFailedChanged(bool value) =>
+        NotifyLoadFailureChanged();
     partial void OnCameraMakeChanged(string? value) => NotifyCameraDisplayChanged();
     partial void OnCameraModelChanged(string? value) => NotifyCameraDisplayChanged();
     partial void OnLensModelChanged(string? value) =>
@@ -403,6 +418,12 @@ public partial class ImageFile : ObservableObject
         OnPropertyChanged(nameof(HasGpsCoordinates));
         OnPropertyChanged(nameof(GpsDisplay));
         OnPropertyChanged(nameof(HasLocationMetadata));
+    }
+
+    private void NotifyLoadFailureChanged()
+    {
+        OnPropertyChanged(nameof(HasVisibleLoadFailure));
+        OnPropertyChanged(nameof(LoadFailureText));
     }
     partial void OnFlagChanged(ImageFlag value)
     {

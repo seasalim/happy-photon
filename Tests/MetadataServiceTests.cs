@@ -23,7 +23,9 @@ public sealed class MetadataServiceTests
             }
             var image = new ImageFile(path);
 
-            var metadata = MetadataService.ExtractMetadata(image, new MagickNetRawService());
+            var metadata = MetadataService.ExtractMetadata(
+                image,
+                new LibRawProcessingService());
 
             Assert.Equal(320, metadata.PixelWidth);
             Assert.Equal(240, metadata.PixelHeight);
@@ -73,7 +75,7 @@ public sealed class MetadataServiceTests
 
             var metadata = MetadataService.ExtractMetadata(
                 new ImageFile(path),
-                new MagickNetRawService());
+                new LibRawProcessingService());
 
             Assert.Equal(modified, metadata.FileModifiedDate);
             Assert.Equal(47.608333, metadata.GpsLatitude!.Value, 6);
@@ -88,6 +90,21 @@ public sealed class MetadataServiceTests
         {
             Directory.Delete(directory, recursive: true);
         }
+    }
+
+    [Fact]
+    public void RawHeaderPing_RemainsAvailableWithoutFullRasterDecode()
+    {
+        var path = Path.Combine(
+            GoldenTestPaths.AssetDirectory,
+            "canon-eos-350d.cr2");
+
+        var metadata = MetadataService.ExtractMetadata(
+            new ImageFile(path),
+            new UnavailableRawService());
+
+        Assert.True(metadata.PixelWidth > 0);
+        Assert.True(metadata.PixelHeight > 0);
     }
 
     [Theory]
@@ -386,5 +403,12 @@ public sealed class MetadataServiceTests
         public bool IsAvailable => true;
         public RawThumbnailData? ExtractThumbnail(string filePath) => null;
         public RawMetadata? ExtractMetadata(string filePath) => metadata;
+    }
+
+    private sealed class UnavailableRawService : IRawProcessingService
+    {
+        public bool IsAvailable => false;
+        public RawThumbnailData? ExtractThumbnail(string filePath) => null;
+        public RawMetadata? ExtractMetadata(string filePath) => null;
     }
 }

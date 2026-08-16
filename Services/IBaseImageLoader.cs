@@ -11,6 +11,11 @@ public interface IBaseImageLoader
         BaseDecodeSettings decode,
         CancellationToken cancellationToken);
 
+    BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
+        ImageFile file,
+        BaseDecodeSettings decode,
+        CancellationToken cancellationToken);
+
     BaseImage? LoadFullBase(
         ImageFile file,
         BaseDecodeSettings decode,

@@ -445,7 +445,7 @@ public sealed class ThumbnailHydrationTests : IDisposable
             ThumbnailContext? context = null;
             var service = new ThumbnailService(
                 catalog,
-                new MagickNetRawService(),
+                new LibRawProcessingService(),
                 new RenderPipeline(),
                 renderedCache,
                 availability,
@@ -482,6 +482,8 @@ public sealed class ThumbnailHydrationTests : IDisposable
     private sealed class NullBaseLoader : IBaseImageLoader
     {
         public bool CanLoad(ImageFile file) => true;
+
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
         public BaseImage? LoadPreviewBase(
             ImageFile file,
             BaseDecodeSettings decode,

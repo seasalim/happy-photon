@@ -251,6 +251,12 @@
                                         <TextBlock Text="☁" FontSize="10"
                                                    Foreground="{StaticResource PrimaryContainer}"/>
                                     </Border>
+                                    <Border Background="{DynamicResource ErrorContainer}" CornerRadius="999"
+                                            Padding="6,2" Margin="0,5,5,0" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                            IsVisible="{Binding HasVisibleLoadFailure}" ToolTip.Tip="{Binding LoadFailureText}">
+                                        <TextBlock Text="!" FontFamily="{StaticResource FontLabel}" FontWeight="Bold"
+                                                   Foreground="{DynamicResource OnErrorContainer}"/>
+                                    </Border>
                                     <Border Width="4" HorizontalAlignment="Left"
                                             CornerRadius="2,0,0,2"
                                             Classes="burst-stripe"

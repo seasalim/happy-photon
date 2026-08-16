@@ -132,6 +132,11 @@ When Large needs a better cached image, Happy Photon keeps the existing thumbnai
 visible while it upgrades locally available sources in the background. It never
 downloads an online-only original for that quality upgrade.
 
+A `!` marker identifies a thumbnail that could not be loaded or a RAW whose Develop
+decode failed, even when an older embedded or cached image remains visible. A broken
+native RAW installation is shown once as a global degraded status rather than marking
+every RAW tile; reinstall Happy Photon to repair it.
+
 If photographs are added, removed, or renamed outside Happy Photon, use the
 **Refresh folder** button beside **More folder actions** in the Folders header. Refresh
 re-reads the currently viewed folder and its immediate subfolder list while
@@ -241,6 +246,10 @@ right arrow keys to move between visible images without returning to Library.
 
 If an original is online-only, an existing cached preview can still appear, but Happy
 Photon does not start a fresh decode until you choose **Download and open**.
+If LibRaw cannot decode a locally available file, an actionable message remains pinned
+for that photograph (including common unsupported variants such as Nikon HE), and the
+Library keeps its failure marker when you return. A successful retry clears both. Source
+availability messages take priority over file decode and global runtime messages.
 
 A useful editing order is composition, light, color, and then refinement. You
 do not have to touch every control.

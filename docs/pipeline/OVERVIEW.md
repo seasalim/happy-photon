@@ -120,7 +120,7 @@ public sealed record BaseImageInfo(
 
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 2;        // bump whenever decoded pixels or facts change
+    public const int Version = 3;        // bump whenever decoded pixels or facts change
     public const int PreviewMaxDimension = 1600;
     public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
     public BaseImageInfo Info { get; }
@@ -175,11 +175,10 @@ metadata and consumers treat it as immutable.
 | `Services/ClippingStats.cs` | clip counters + overlay masks |
 | `Services/ExportMetadataService.cs` | EXIF copy/strip policy (OUTPUT.md §4) |
 
-`IRawProcessingService` is intentionally outside this base/render path. It remains the
-thumbnail-extraction and metadata fallback used by the browsing pipeline.
-Both RAW paths use the same versioned Happy Photon bridge and the RID-selected
-`HappyPhoton.LibRaw.Native` 0.22.2.7 package; deployment failures retain the existing
-Magick.NET fallback behavior.
+`IRawProcessingService` is intentionally outside this base/render path. It extracts
+encoded thumbnails and metadata for browsing through the same versioned Happy Photon
+bridge and RID-selected `HappyPhoton.LibRaw.Native` 0.22.2.7 package. A rejected runtime
+disables RAW decoding until repaired; Magick does not decode RAW raster pixels.
 
 ## 6. Pipeline versioning
 

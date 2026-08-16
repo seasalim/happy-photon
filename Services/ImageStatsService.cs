@@ -1,4 +1,5 @@
 using ImageMagick;
+using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
 
@@ -26,6 +27,12 @@ public sealed class ImageStatsService
         string imagePath,
         SourceReadIntent intent)
     {
+        if (ImageFile.RawExtensions.Contains(Path.GetExtension(imagePath)))
+        {
+            throw new NotSupportedException(
+                "RAW source paths must be decoded through LibRaw before statistics are computed.");
+        }
+
         if (!File.Exists(imagePath))
             throw new FileNotFoundException("Thumbnail image was not found.", imagePath);
 

@@ -161,6 +161,8 @@ public sealed class WorkspaceTransitionTests : IDisposable
 
         public bool CanLoad(ImageFile file) => true;
 
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.Loaded(LoadPreviewBase(file, decode, cancellationToken));
+
         public BaseImage LoadPreviewBase(
             ImageFile file,
             BaseDecodeSettings decode,
@@ -182,6 +184,8 @@ public sealed class WorkspaceTransitionTests : IDisposable
     private sealed class SolidLoader : IBaseImageLoader
     {
         public bool CanLoad(ImageFile file) => true;
+
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.Loaded(LoadPreviewBase(file, decode, cancellationToken));
 
         public BaseImage LoadPreviewBase(
             ImageFile file,

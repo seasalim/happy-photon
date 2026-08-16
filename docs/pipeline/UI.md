@@ -18,9 +18,8 @@ workflow partial, don't grow the root file).
    (OVERVIEW.md invariant 2).
 2. **Capability gating**, not file-extension branching: raw-only controls bind to the
    loaded `BaseImageInfo.IsRawSource`. Before the base arrives, gate provisionally on
-   `ImageFile.IsRaw`; reconcile when the base loads (a raw that fell back to the
-   standard loader demotes to non-raw UI and logs the fallback — never show raw
-   controls that the pipeline will ignore).
+   `ImageFile.IsRaw`; if LibRaw cannot produce a base, keep the RAW identity and show
+   the reason rather than silently demoting the file.
 3. Coachmarks/tours are untouched and must not gain steps for these controls
    (existing rule: tours never mutate edits).
 
@@ -161,8 +160,10 @@ default. Library mode ignores Develop-only keys.
 ## 9. Status bar
 
 Transient hints remain in the existing message area: eyedropper active hint
-("Click a neutral area — Esc to cancel"), rejected-pick message (§4), and the
-raw-fallback notice ("Decoded via fallback — RAW controls unavailable", §1.2).
+("Click a neutral area — Esc to cancel") and the rejected-pick message (§4). Persistent
+reasons outrank transient hints: source availability, selected RAW decode failure, then
+global RAW runtime degradation. Outcomes are correlated to image and preview generation,
+so canceled or superseded work cannot pin a stale failure.
 
 One background-activity segment may appear while sustained work is active and is
 absent at rest. It summarizes the highest-priority activity with overflow and shows a
@@ -193,8 +194,8 @@ If a WP seems to need one of these, it's a spec question first.
   (`MainWindowViewModel` partial tests, like existing edit-history tests).
 - Reset covers every new field; presets/copy-paste round-trip the widened set;
   geometry still excluded.
-- Raw-only controls hidden for a JPEG; demotion on raw-fallback verified with a forced
-  loader failure.
+- Raw-only controls hidden for a JPEG; a forced RAW failure remains identified as RAW
+  and presents its cause.
 - Kelvin log mapping: position 0 → 2000, 1 → 12000, midpoint ≈ 4900 (√6·2000) within
   rounding.
 - Shortcut registration test: `ShortcutCatalog.Groups` lists `W`/`J` when the

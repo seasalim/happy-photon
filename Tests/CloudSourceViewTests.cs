@@ -383,6 +383,8 @@ public sealed class CloudSourceViewTests
     {
         public bool CanLoad(ImageFile file) => true;
 
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
+
         public BaseImage? LoadPreviewBase(
             ImageFile file,
             BaseDecodeSettings decode,
@@ -401,6 +403,8 @@ public sealed class CloudSourceViewTests
         public int LoadCount => Volatile.Read(ref _loadCount);
 
         public bool CanLoad(ImageFile file) => true;
+
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
 
         public BaseImage? LoadPreviewBase(
             ImageFile file,

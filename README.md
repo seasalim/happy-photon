@@ -59,8 +59,8 @@ Agent-visible data may be transmitted wherever the MCP client and model you choo
 
 Standard formats include JPEG, PNG, BMP, GIF, TIFF, and WebP. RAW support
 includes CR2/CR3, NEF/NRW, ARW/SRF/SR2, DNG, RAF, ORF, RW2, and PEF. RAW
-decoding uses the bundled [LibRaw 0.21.1](https://www.libraw.org/news/libraw-0-21-1-release)
-generation from early 2023, so a listed extension does not guarantee support
+decoding uses the bundled, audited [LibRaw 0.22.2](https://www.libraw.org/news/libraw-0-22-2-release)
+generation, so a listed extension does not guarantee support
 for every camera model or compression variant—especially newer bodies. The
 in-app workflow provides global photographic adjustments; it does not currently
 include local masks, lens or perspective correction, layer compositing, HDR

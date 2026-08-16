@@ -287,13 +287,15 @@ public class ThumbnailService : IAsyncDisposable
         int generationDimension,
         CancellationToken cancellationToken)
     {
-        Bitmap? bitmap = imageFile.IsRaw
-            ? _embeddedPreviewExtractor.TryExtract(
+        if (imageFile.IsRaw)
+        {
+            return _embeddedPreviewExtractor.TryExtract(
                 imageFile.FilePath,
                 generationDimension,
-                cancellationToken)
-            : null;
-        return bitmap ?? GenerateThumbnailFromFullImage(
+                cancellationToken);
+        }
+
+        return GenerateThumbnailFromFullImage(
             imageFile.FilePath,
             generationDimension,
             cancellationToken);

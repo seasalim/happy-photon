@@ -110,44 +110,20 @@ public sealed class BaseImageContractsTests
     }
 
     [Fact]
-    public void Router_RawFailureFallsBackWithWarning()
+    public void Router_RawFailureNeverCallsStandardLoader()
     {
-        using var expected = CreateBase(BaseSourceKind.Standard);
-        var warnings = new List<string>();
+        var standard = new StubLoader();
         var router = CreateRouter(
             new StubLoader(),
-            new StubLoader { PreviewResult = expected },
-            warnings: warnings);
+            standard);
 
         var actual = router.LoadPreviewBase(
             new ImageFile("photo.cr2"),
             BaseDecodeSettings.Default,
             CancellationToken.None);
 
-        Assert.Same(expected, actual);
-        Assert.Single(warnings);
-        Assert.Contains("photo.cr2", warnings[0]);
-    }
-
-    [Fact]
-    public void Router_WindowsRafFailureDoesNotFallback()
-    {
-        var standard = new StubLoader();
-        var warnings = new List<string>();
-        var router = CreateRouter(
-            new StubLoader(),
-            standard,
-            isWindows: true,
-            warnings: warnings);
-
-        var actual = router.LoadPreviewBase(
-            new ImageFile("photo.raf"),
-            BaseDecodeSettings.Default,
-            CancellationToken.None);
-
         Assert.Null(actual);
         Assert.Equal(0, standard.PreviewCalls);
-        Assert.Empty(warnings);
     }
 
     [Fact]
@@ -170,14 +146,8 @@ public sealed class BaseImageContractsTests
 
     private static BaseLoaderRouter CreateRouter(
         StubLoader raw,
-        StubLoader standard,
-        bool isWindows = false,
-        List<string>? warnings = null) =>
-        new(
-            raw,
-            standard,
-            () => isWindows,
-            message => warnings?.Add(message));
+        StubLoader standard) =>
+        new(raw, standard);
 
     private static BaseImage CreateBase(
         BaseSourceKind kind,
@@ -211,6 +181,8 @@ public sealed class BaseImageContractsTests
         public int FullCalls { get; private set; }
 
         public bool CanLoad(ImageFile file) => true;
+
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
 
         public BaseImage? LoadPreviewBase(
             ImageFile file,
