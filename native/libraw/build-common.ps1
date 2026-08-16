@@ -223,7 +223,8 @@ function Invoke-LibRawNativeBuild {
     if ($IsMacOS) {
         $prepareMacExecutable = Join-Path $PSScriptRoot "prepare_macos_executable.py"
         Invoke-Checked $python @($prepareMacExecutable, "--canonical-libraw",
-            "libraw.23.dylib", "--executable", $baselinePerformance)
+            (Join-Path $repoRoot "native/libraw/baseline/osx-arm64/libraw.23.dylib"),
+            "--executable", $baselinePerformance)
         Invoke-Checked $python @($prepareMacExecutable, "--canonical-libraw",
             "libraw.25.dylib", "--executable", $candidatePerformance)
     }

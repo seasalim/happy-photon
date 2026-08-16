@@ -8,7 +8,7 @@ public sealed class NativeBinaryInspectionTests
     public void RestoredWindowsRuntime_ReportsImportsAndRecursiveCompanions()
     {
         var path = RuntimePackageFile(
-            "sdcb.libraw.runtime.win64", "win-x64", "raw_r.dll");
+            "happyphoton.libraw.native", "win-x64", "raw_r.dll");
         var directory = Path.GetDirectoryName(path)!;
 
         var binary = NativeBinaryInspection.Inspect(path);
@@ -19,9 +19,9 @@ public sealed class NativeBinaryInspectionTests
         Assert.Contains(binary.Imports, name =>
             name.Equals("jpeg8.dll", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(binary.Imports, name =>
-            name.Equals("lcms2.dll", StringComparison.OrdinalIgnoreCase));
+            name.Equals("lcms2-2.dll", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(binary.Imports, name =>
-            name.Equals("zlib1.dll", StringComparison.OrdinalIgnoreCase));
+            name.Equals("z.dll", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(inventory, item => item.Name.Equals(
             "jpeg8.dll", StringComparison.OrdinalIgnoreCase) &&
             item.ResolvedPath != null);
@@ -32,7 +32,7 @@ public sealed class NativeBinaryInspectionTests
     public void RestoredLinuxRuntime_ReportsSonameImportsAndSymbolRequirements()
     {
         var path = RuntimePackageFile(
-            "sdcb.libraw.runtime.linux64", "linux-x64", "libraw_r.so.23");
+            "happyphoton.libraw.native", "linux-x64", "libraw_r.so.25");
         var directory = Path.GetDirectoryName(path)!;
 
         var binary = NativeBinaryInspection.Inspect(path);
@@ -40,27 +40,27 @@ public sealed class NativeBinaryInspectionTests
 
         Assert.Equal("ELF64", binary.Format);
         Assert.Equal("x86-64", binary.Architecture);
-        Assert.Equal("libraw_r.so.23", binary.Identity);
+        Assert.Equal("libraw_r.so.25", binary.Identity);
         Assert.Contains("libjpeg.so.8", binary.Imports);
-        Assert.Contains("liblcms2.so", binary.Imports);
+        Assert.Contains("liblcms2.so.2", binary.Imports);
         Assert.Contains("libgomp.so.1", binary.Imports);
         Assert.Contains(binary.EncodedRequirements, value => value.Contains("GLIBC_"));
-        Assert.Contains(inventory, item => item.Name == "libgomp.so.1" && item.ResolvedPath != null);
+        Assert.Contains(inventory, item => item.Name == "libgomp.so.1" &&
+            item.Classification == "prerequisite");
     }
 
     [Fact]
     public void CheckedInMacRuntime_ReportsInstallNameImportsAndMinimumOs()
     {
-        var path = Path.Combine(
-            GoldenTestPaths.RepositoryRoot,
-            "runtimes", "osx-arm64", "native", "libraw.23.dylib");
+        var path = RuntimePackageFile(
+            "happyphoton.libraw.native", "osx-arm64", "libraw.25.dylib");
 
         var binary = NativeBinaryInspection.Inspect(path);
         var inventory = NativeBinaryInspection.Inventory(path);
 
         Assert.Equal("Mach-O 64", binary.Format);
         Assert.Equal("arm64", binary.Architecture);
-        Assert.Equal("@rpath/libraw.23.dylib", binary.Identity);
+        Assert.Equal("@loader_path/libraw.25.dylib", binary.Identity);
         Assert.Contains(binary.Imports, value => value.Contains("libSystem"));
         Assert.Contains(binary.EncodedRequirements, value =>
             value.Contains("macOS minimum 13.0.0", StringComparison.Ordinal));
@@ -101,7 +101,7 @@ public sealed class NativeBinaryInspectionTests
                 ".nuget", "packages");
         }
 
-        var path = Path.Combine(root, package, "0.21.1", "runtimes", rid, "native", name);
+        var path = Path.Combine(root, package, "0.22.2.7", "runtimes", rid, "native", name);
         Assert.True(File.Exists(path), $"Restored runtime fixture is missing: {path}");
         return path;
     }

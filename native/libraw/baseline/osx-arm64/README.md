@@ -1,4 +1,8 @@
-# Apple Silicon LibRaw runtime
+# Apple Silicon ABI-23 baseline runtime
+
+This audited binary is retained only for the isolated native performance
+baseline. It is not referenced by an application or test project and is never
+loaded in-process with the ABI-25 production bridge.
 
 `libraw.23.dylib` is LibRaw 0.21.1 for arm64 macOS, built with a minimum
 deployment target of macOS 13. It statically includes libjpeg-turbo 2.1.5.1

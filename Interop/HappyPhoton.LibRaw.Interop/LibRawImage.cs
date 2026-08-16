@@ -52,11 +52,14 @@ public sealed unsafe class LibRawImage : IDisposable
 
     public byte[] CopyData()
     {
+        return AsSpan().ToArray();
+    }
+
+    public ReadOnlySpan<byte> AsSpan()
+    {
         var data = _data;
         if (data == 0) throw new ObjectDisposedException(nameof(LibRawImage));
-        var result = new byte[checked((int)Description.ByteLength)];
-        Marshal.Copy(data, result, 0, result.Length);
-        return result;
+        return new ReadOnlySpan<byte>((void*)data, checked((int)Description.ByteLength));
     }
 
     public void Dispose()

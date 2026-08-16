@@ -184,6 +184,11 @@
         "resolved": "8.4.2",
         "contentHash": "WadCzGEc2U+3e20avRLng4qNtt4zoOGWrdUISqJWrHe3/FSnrYjuM5Sb4yQb09LhkBXrrI4Zt3dLKgRMbItsrg=="
       },
+      "HappyPhoton.LibRaw.Native": {
+        "type": "Transitive",
+        "resolved": "0.22.2.7",
+        "contentHash": "FqWACCCzNwJ9YTYHpT75h0/inQxpqhmhIuZiRVPoH/60sVxtxjBYVEWE4bGch4eIeENqlyH65lGpxXRgn5LNag=="
+      },
       "HarfBuzzSharp": {
         "type": "Transitive",
         "resolved": "8.3.1.3",
@@ -430,21 +435,6 @@
         "resolved": "13.0.1",
         "contentHash": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A=="
       },
-      "Sdcb.LibRaw": {
-        "type": "Transitive",
-        "resolved": "0.21.1.7",
-        "contentHash": "474JG/VAWOJ9rJaBZK8B+tN1S8BsPPZptQoGnwmzOa7fFuSASm+gLotuH+FxNfmCnJ1diRfxRrGTTW1uLY5Dfw=="
-      },
-      "Sdcb.LibRaw.runtime.linux64": {
-        "type": "Transitive",
-        "resolved": "0.21.1",
-        "contentHash": "1Ka8mTfQnb8kyhaFwr7zQlBi/awTEFCoPrItby5+oNZrB4ZO+WX/U6FwXQbzOlCpP9T+7ntk6dagUrM3TAMlhw=="
-      },
-      "Sdcb.LibRaw.runtime.win64": {
-        "type": "Transitive",
-        "resolved": "0.21.1",
-        "contentHash": "KFiLy91bR/4oMiIZ8S4ZYos22SY3QouqImsF2DbCnCIPYYTD2cAVX8RtUNRdax7HLuV4Wgtb68DPYKyF7rDYzA=="
-      },
       "SkiaSharp": {
         "type": "Transitive",
         "resolved": "3.119.4",
@@ -594,15 +584,19 @@
           "Avalonia.Desktop": "[12.0.4, )",
           "Avalonia.Themes.Fluent": "[12.0.4, )",
           "CommunityToolkit.Mvvm": "[8.4.2, )",
+          "HappyPhoton.LibRaw.Interop": "[1.0.0, )",
           "Magick.NET-Q16-AnyCPU": "[14.15.0, )",
           "MetadataExtractor": "[2.9.3, )",
           "Microsoft.Data.Sqlite": "[10.0.9, )",
           "ModelContextProtocol": "[1.4.1, )",
           "ModelContextProtocol.AspNetCore": "[1.4.1, )",
-          "SQLitePCLRaw.bundle_e_sqlite3": "[3.0.3, )",
-          "Sdcb.LibRaw": "[0.21.1.7, )",
-          "Sdcb.LibRaw.runtime.linux64": "[0.21.1, )",
-          "Sdcb.LibRaw.runtime.win64": "[0.21.1, )"
+          "SQLitePCLRaw.bundle_e_sqlite3": "[3.0.3, )"
+        }
+      },
+      "happyphoton.libraw.interop": {
+        "type": "Project",
+        "dependencies": {
+          "HappyPhoton.LibRaw.Native": "[0.22.2.7, )"
         }
       }
     }

@@ -1,14 +1,14 @@
 using System.Diagnostics;
+using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
 using ImageMagick;
-using Sdcb.LibRaw;
 
 namespace HappyPhoton.Services;
 
 public sealed class RawBaseLoader : IBaseImageLoader
 {
     private readonly bool _isAvailable;
-    private readonly Func<RawContext, byte[]?> _thumbnailReader;
+    private readonly Func<LibRawContext, byte[]?> _thumbnailReader;
 
     public RawBaseLoader()
         : this(LibRawNativeSupport.IsAvailable)
@@ -17,7 +17,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
 
     internal RawBaseLoader(
         bool isAvailable,
-        Func<RawContext, byte[]?>? thumbnailReader = null)
+        Func<LibRawContext, byte[]?>? thumbnailReader = null)
     {
         _isAvailable = isAvailable;
         _thumbnailReader = thumbnailReader ?? RawThumbnailReader.Read;
@@ -59,13 +59,11 @@ public sealed class RawBaseLoader : IBaseImageLoader
         MagickImage? pixels = null;
         try
         {
-            using var context = RawContext.OpenFile(file.FilePath);
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var fullWidth = context.Width;
-            var fullHeight = context.Height;
-            var orientation = NormalizeOrientation(
-                ImageServiceHelpers.GetExifOrientation(file.FilePath));
+            using var context = LibRawContext.Open(file.FilePath, cancellationToken);
+            var dimensions = context.GetDimensions(cancellationToken);
+            var fullWidth = checked((int)dimensions.VisibleWidth);
+            var fullHeight = checked((int)dimensions.VisibleHeight);
+            var orientation = NormalizeOrientation(dimensions.Orientation);
             var metadataExposureBiasEv = RawExposureBias.Read(
                 context,
                 file.FilePath);
@@ -74,26 +72,26 @@ public sealed class RawBaseLoader : IBaseImageLoader
             var thumbnailElapsed = thumbnailStopwatch.ElapsedMilliseconds;
             cancellationToken.ThrowIfCancellationRequested();
 
-            context.Unpack();
-            cancellationToken.ThrowIfCancellationRequested();
-            var (camMul, camToSrgb) = CopyCameraFacts(context);
+            context.Unpack(cancellationToken);
+            var (camMul, camToSrgb) = CopyCameraFacts(
+                context.GetCameraFacts(cancellationToken));
 
-            context.DcrawProcess(parameters =>
-                ConfigureOutput(parameters, decode, preview));
-            cancellationToken.ThrowIfCancellationRequested();
+            context.ConfigureOutput(ConfigureOutput(decode, preview), cancellationToken);
+            context.Process(cancellationToken);
 
-            using var processed = context.MakeDcrawMemoryImage();
-            cancellationToken.ThrowIfCancellationRequested();
-            if (processed.Bits != 16 || processed.Channels != 3 ||
-                processed.Width <= 0 || processed.Height <= 0)
+            using var processed = context.MakeProcessedImage(cancellationToken);
+            var description = processed.Description;
+            if (description.BitsPerSample != 16 || description.Channels != 3 ||
+                description.Width == 0 || description.Height == 0)
             {
                 return null;
             }
 
+            context.Recycle(cancellationToken);
             pixels = ImportRgb16(
-                processed.AsSpan<byte>(),
-                processed.Width,
-                processed.Height);
+                processed.AsSpan(),
+                checked((int)description.Width),
+                checked((int)description.Height));
             cancellationToken.ThrowIfCancellationRequested();
 
             ApplyOrientation(
@@ -175,41 +173,46 @@ public sealed class RawBaseLoader : IBaseImageLoader
         }
     }
 
-    internal static void ConfigureOutput(
-        OutputParams parameters,
+    internal static LibRawOutputConfiguration ConfigureOutput(
         BaseDecodeSettings decode,
         bool preview)
     {
-        parameters.OutputBps = 16;
-        parameters.Gamma[0] = 1.0;
-        parameters.Gamma[1] = 1.0;
-        parameters.NoAutoBright = true;
-        parameters.UseAutoWb = false;
-        parameters.UseCameraWb = true;
-        parameters.UseCameraMatrix = true;
-        parameters.OutputColor = LibRawColorSpace.SRGB;
-        parameters.HighlightMode = decode.HlReconstruction switch
+        var highlight = decode.HlReconstruction switch
         {
-            HlReconstructionMode.Blend => 2,
-            HlReconstructionMode.Clip => 0,
+            HlReconstructionMode.Blend => LibRawHighlightMode.Blend,
+            HlReconstructionMode.Clip => LibRawHighlightMode.Clip,
             _ => throw new InvalidOperationException(
                 $"Unsupported highlight reconstruction mode: {decode.HlReconstruction}.")
         };
-        parameters.FbddNoiserd = decode.NoiseReduction switch
+        var noiseReduction = decode.NoiseReduction switch
         {
-            FbddMode.Off => 0,
-            FbddMode.Light => 1,
-            FbddMode.Full => 2,
+            FbddMode.Off => LibRawFbddMode.Off,
+            FbddMode.Light => LibRawFbddMode.Light,
+            FbddMode.Full => LibRawFbddMode.Full,
             _ => throw new InvalidOperationException(
                 $"Unsupported FBDD mode: {decode.NoiseReduction}.")
         };
-        parameters.HalfSize = preview;
+        return LibRawOutputConfiguration.Linear(highlight, noiseReduction, preview);
     }
 
     internal static MagickImage ImportRgb16(
         ReadOnlySpan<byte> data,
         int width,
         int height)
+        => ImportRgb(data, width, height, StorageType.Short, sizeof(ushort));
+
+    internal static MagickImage ImportRgb8(
+        ReadOnlySpan<byte> data,
+        int width,
+        int height)
+        => ImportRgb(data, width, height, StorageType.Char, sizeof(byte));
+
+    private static MagickImage ImportRgb(
+        ReadOnlySpan<byte> data,
+        int width,
+        int height,
+        StorageType storageType,
+        int bytesPerSample)
     {
         if (width <= 0 || height <= 0)
         {
@@ -218,7 +221,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
                 "RGB16 dimensions must be positive.");
         }
 
-        var expectedLength = checked(width * height * 3 * sizeof(ushort));
+        var expectedLength = checked(width * height * 3 * bytesPerSample);
         if (data.Length != expectedLength)
         {
             throw new ArgumentException(
@@ -236,7 +239,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
             var settings = new PixelImportSettings(
                 (uint)width,
                 (uint)height,
-                StorageType.Short,
+                storageType,
                 PixelMapping.RGB);
             image.ImportPixels(data, settings);
             return image;
@@ -294,7 +297,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
     private static int NormalizeOrientation(int orientation) =>
         orientation is >= 1 and <= 8 ? orientation : 1;
 
-    private byte[]? ReadThumbnail(RawContext context, string filePath)
+    private byte[]? ReadThumbnail(LibRawContext context, string filePath)
     {
         try
         {
@@ -311,14 +314,15 @@ public sealed class RawBaseLoader : IBaseImageLoader
     }
 
     private static (double[]? CamMul, double[,]? CamToSrgb) CopyCameraFacts(
-        RawContext context)
+        LibRawCameraFacts? facts)
     {
-        var multipliers = context.CameraMultipler;
-        var matrix = context.RgbCamera;
+        if (facts == null) return (null, null);
+        var multipliers = facts.Multipliers;
+        var matrix = facts.CameraToSrgb;
         var availableColumns = Math.Min(
             4,
-            Math.Min(multipliers.Count, matrix.Width));
-        if (matrix.Height < 3)
+            Math.Min(multipliers.Length, matrix.GetLength(1)));
+        if (matrix.GetLength(0) < 3)
         {
             return (null, null);
         }
@@ -388,18 +392,18 @@ public sealed class RawBaseLoader : IBaseImageLoader
 
     private static bool HasUsableChannel(
         IReadOnlyList<float> multipliers,
-        IReadOnly2DIndexer<float> matrix,
+        float[,] matrix,
         int channel)
     {
         if (multipliers.Count <= channel ||
-            matrix.Width <= channel ||
+            matrix.GetLength(1) <= channel ||
             !float.IsFinite(multipliers[channel]) ||
             multipliers[channel] <= 0)
         {
             return false;
         }
 
-        for (var row = 0; row < Math.Min(3, matrix.Height); row++)
+        for (var row = 0; row < Math.Min(3, matrix.GetLength(0)); row++)
         {
             if (float.IsFinite(matrix[row, channel]) &&
                 Math.Abs(matrix[row, channel]) > float.Epsilon)

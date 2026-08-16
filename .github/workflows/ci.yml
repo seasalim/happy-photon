@@ -147,10 +147,12 @@ jobs:
         if: matrix.rid == 'osx-arm64'
         shell: bash
         run: |
-          runtime="artifacts/ci/osx-arm64/libraw.23.dylib"
-          test -f "$runtime"
-          file "$runtime" | grep -q 'arm64'
-          otool -L "$runtime" | grep -q '@rpath/libraw.23.dylib'
+          for runtime in artifacts/ci/osx-arm64/libraw.25.dylib artifacts/ci/osx-arm64/libhappyphoton_libraw_bridge.dylib; do
+            test -f "$runtime"
+            file "$runtime" | grep -q 'arm64'
+          done
+          otool -D artifacts/ci/osx-arm64/libraw.25.dylib | grep -q '@loader_path/libraw.25.dylib'
+          otool -L artifacts/ci/osx-arm64/libhappyphoton_libraw_bridge.dylib | grep -q '@loader_path/libraw.25.dylib'
 
       - name: Upload test results
         if: failure()

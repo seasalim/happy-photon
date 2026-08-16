@@ -1,4 +1,4 @@
-using Sdcb.LibRaw;
+using HappyPhoton.LibRaw.Interop;
 
 namespace HappyPhoton.Services;
 
@@ -14,14 +14,15 @@ internal static class LibRawNativeSupport
     {
         try
         {
-            _ = RawContext.VersionNumber;
+            _ = LibRawContext.Runtime;
             return true;
         }
         catch (Exception exception) when (
             exception is DllNotFoundException or
                 BadImageFormatException or
                 EntryPointNotFoundException or
-                TypeInitializationException)
+                TypeInitializationException or
+                LibRawDeploymentException)
         {
             ImageServiceHelpers.LogDebug(
                 nameof(LibRawNativeSupport),

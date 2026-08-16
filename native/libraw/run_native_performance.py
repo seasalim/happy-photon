@@ -53,8 +53,25 @@ def run_set(executable: Path, runtime: Path, fixture: Path,
 
 
 def enrich(path: Path, metric: str, runtime: Path, probe: Path,
-           measurements: list[dict]) -> None:
-    report = json.loads(path.read_text(encoding="utf-8-sig"))
+           measurements: list[dict], label: str, rid: str, fixture: Path) -> None:
+    if path.is_file():
+        report = json.loads(path.read_text(encoding="utf-8-sig"))
+    else:
+        report = {
+            "Schema": 2,
+            "Runtime": label,
+            "Rid": rid,
+            "Version": "0.21.1" if label == "baseline" else "0.22.2",
+            "Fixture": fixture.name,
+            "SamplingIntervalMilliseconds": 10,
+            "Measurements": [{
+                **item,
+                "HostBaselinePrivateBytes": item["HostBaselineBytes"],
+                "PeakPrivateBytes": item["PeakProcessBytes"],
+                "PeakPrivateDeltaBytes": item["PeakAboveHostBytes"],
+                "Sha256": item["Checksum"],
+            } for item in measurements],
+        }
     report["NativeMemory"] = {
         "Metric": metric,
         "AcceptedGate": True,
@@ -90,8 +107,10 @@ def main() -> None:
     if not candidate_library.is_file():
         raise RuntimeError(f"candidate LibRaw runtime is absent: {candidate_library}")
     metric = "peak-private-commit" if args.rid == "win-x64" else "peak-resident-set"
-    enrich(args.baseline_report, metric, baseline_library, args.baseline_probe, baseline)
-    enrich(args.candidate_report, metric, candidate_library, args.candidate_probe, candidate)
+    enrich(args.baseline_report, metric, baseline_library, args.baseline_probe,
+           baseline, "baseline", args.rid, args.fixture)
+    enrich(args.candidate_report, metric, candidate_library, args.candidate_probe,
+           candidate, "candidate", args.rid, args.fixture)
 
 
 if __name__ == "__main__":

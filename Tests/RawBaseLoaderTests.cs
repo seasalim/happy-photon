@@ -1,8 +1,8 @@
 using System.Runtime.InteropServices;
+using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
-using Sdcb.LibRaw;
 using Xunit;
 using static HappyPhoton.Tests.RawBaseLoaderTestSupport;
 
@@ -39,23 +39,20 @@ public sealed class RawBaseLoaderTests
         int expectedHighlight,
         int expectedFbdd)
     {
-        var parameters = new OutputParams { Gamma = new double[2] };
-
-        RawBaseLoader.ConfigureOutput(
-            parameters,
+        var parameters = RawBaseLoader.ConfigureOutput(
             new BaseDecodeSettings(highlight, noiseReduction),
             preview);
 
-        Assert.Equal(16, parameters.OutputBps);
-        Assert.Equal(1.0, parameters.Gamma[0]);
-        Assert.Equal(1.0, parameters.Gamma[1]);
+        Assert.Equal(16, parameters.OutputBits);
+        Assert.Equal(1.0, parameters.GammaPower);
+        Assert.Equal(1.0, parameters.GammaSlope);
         Assert.True(parameters.NoAutoBright);
-        Assert.False(parameters.UseAutoWb);
-        Assert.True(parameters.UseCameraWb);
+        Assert.False(parameters.UseAutoWhiteBalance);
+        Assert.True(parameters.UseCameraWhiteBalance);
         Assert.True(parameters.UseCameraMatrix);
-        Assert.Equal(LibRawColorSpace.SRGB, parameters.OutputColor);
+        Assert.Equal(1, parameters.OutputColor);
         Assert.Equal(expectedHighlight, parameters.HighlightMode);
-        Assert.Equal(expectedFbdd, parameters.FbddNoiserd);
+        Assert.Equal(expectedFbdd, parameters.FbddNoiseReduction);
         Assert.Equal(preview, parameters.HalfSize);
     }
 
@@ -100,11 +97,11 @@ public sealed class RawBaseLoaderTests
     [Fact]
     public void NativeRuntime_IsAvailableAndVersionMatched()
     {
-        var version = RawContext.VersionNumber;
+        var runtime = LibRawContext.Runtime;
 
-        Assert.Equal(0, version.Major);
-        Assert.Equal(21, version.Minor);
-        Assert.Equal(1, version.Build);
+        Assert.Equal(1u, runtime.BridgeAbiVersion);
+        Assert.Equal(0x001602u, runtime.LibRawVersionNumber);
+        Assert.StartsWith("0.22.2", runtime.LibRawVersion);
         Assert.True(new RawBaseLoader().CanLoad(new ImageFile("sample.CR2")));
     }
 
@@ -327,6 +324,27 @@ public sealed class RawBaseLoaderTests
         _output.WriteLine(
             $"Canon CR2 full: {fullMeasurement.Elapsed.TotalMilliseconds:F0} ms, " +
             $"peak managed delta {fullMeasurement.PeakManagedBytes / 1048576.0:F1} MiB");
+    }
+
+    [Fact]
+    public void FullDecode_DoesNotAllocateManagedFullImageCopy()
+    {
+        var loader = new RawBaseLoader(isAvailable: true, thumbnailReader: _ => null);
+        var file = new ImageFile(Asset("canon-eos-350d.cr2"));
+        using var warm = loader.LoadFullBase(
+            file, BaseDecodeSettings.Default, CancellationToken.None);
+        Assert.NotNull(warm);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        using var image = loader.LoadFullBase(
+            file, BaseDecodeSettings.Default, CancellationToken.None);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.NotNull(image);
+        var decodedBytes = checked(
+            (long)image!.Pixels.Width * image.Pixels.Height * 3 * sizeof(ushort));
+        Assert.True(allocated < decodedBytes,
+            $"Managed allocations {allocated} unexpectedly include a {decodedBytes}-byte image copy.");
     }
 
     [Fact]

@@ -55,53 +55,15 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-  baseline-probe:
-    name: 0.21.1 baseline probe (${{ matrix.rid }})
-    needs: preflight
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - rid: linux-x64
-            os: ubuntu-22.04
-          - rid: osx-arm64
-            os: macos-15
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - name: Install .NET 10
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "10.0.x"
-      - name: Restore and build tests
-        run: |
-          dotnet restore HappyPhoton.sln --locked-mode
-          dotnet build Tests/HappyPhoton.Tests.csproj --configuration Release --no-restore
-      - name: Run isolated baseline probe
-        shell: bash
-        env:
-          HAPPY_PHOTON_BASELINE: "1"
-          HAPPY_PHOTON_BASELINE_ISOLATED: "1"
-        run: |
-          set -o pipefail
-          dotnet test Tests/HappyPhoton.Tests.csproj --configuration Release \
-            --no-build --no-restore \
-            --filter "FullyQualifiedName=HappyPhoton.Tests.LibRawBaselineProbeTests.CurrentRid_EmitsCompleteLibRawBaseline" \
-            --logger "console;verbosity=detailed" | tee baseline-${{ matrix.rid }}.txt
-      - name: Upload baseline output
-        uses: actions/upload-artifact@v4
-        with:
-          name: baseline-0211-${{ matrix.rid }}
-          path: baseline-${{ matrix.rid }}.txt
-          if-no-files-found: error
+  # The 0.21.1 managed baseline job is retired: its dated baselines are
+  # recorded permanently in licenses/LibRaw-runtime-audit.md, and the
+  # per-RID build jobs carry the paired native performance gate. The
+  # migrated 0.22.2 application probe runs outside this workflow as
+  # checkpoint evidence.
 
   build:
     name: Build and validate (${{ matrix.rid }})
-    needs: [preflight, baseline-probe]
+    needs: preflight
     strategy:
       fail-fast: false
       matrix:

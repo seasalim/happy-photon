@@ -149,6 +149,16 @@ HAPPY_PHOTON_FBDD_EVAL=1 dotnet test Tests/HappyPhoton.Tests.csproj --filter Raw
 
 It is an explicit opt-in diagnostic because all three modes require full RAW decodes.
 
+The LibRaw resolver's single-file extraction path has a committed publish smoke. Run
+the matching command on Windows or Linux; it restores in locked mode, publishes a
+self-contained single-file console, decodes the Canon fixture, and asserts that both
+the bridge and LibRaw companion loaded from the runtime extraction directory:
+
+```powershell
+./scripts/verify-libraw-single-file.ps1 -RuntimeIdentifier win-x64
+./scripts/verify-libraw-single-file.ps1 -RuntimeIdentifier linux-x64
+```
+
 ## 6. CI
 
 The three-platform workflow runs both xUnit v3 test hosts. Ordinary and native bitmap

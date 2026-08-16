@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -7,6 +8,8 @@ namespace HappyPhoton.LibRaw.Interop;
 internal static class NativeLibraryResolver
 {
     internal static string? LoadedBridgePath { get; private set; }
+    internal static string? LoadedLibRawPath { get; private set; }
+    private static nint _libRawHandle;
 
 #pragma warning disable CA2255
     [ModuleInitializer]
@@ -19,19 +22,87 @@ internal static class NativeLibraryResolver
     private static nint Resolve(string libraryName, Assembly assembly, DllImportSearchPath? path)
     {
         if (libraryName != NativeMethods.LibraryName) return 0;
-        var directory = Environment.GetEnvironmentVariable("HAPPY_PHOTON_LIBRAW_BRIDGE_DIR");
-        if (string.IsNullOrWhiteSpace(directory)) return 0;
-        var fileName = OperatingSystem.IsWindows()
+        ConfigureOpenMpThreadLimit();
+        var directory = ResolveDirectory();
+        var bridgeName = OperatingSystem.IsWindows()
             ? "happyphoton_libraw_bridge.dll"
             : OperatingSystem.IsMacOS()
                 ? "libhappyphoton_libraw_bridge.dylib"
                 : "libhappyphoton_libraw_bridge.so";
-        var fullPath = Path.GetFullPath(Path.Combine(directory, fileName));
-        var expectedDirectory = Path.GetFullPath(directory) + Path.DirectorySeparatorChar;
-        if (!fullPath.StartsWith(expectedDirectory, StringComparison.OrdinalIgnoreCase))
-            throw new DllNotFoundException("Bridge path escaped its staging directory.");
-        var handle = NativeLibrary.Load(fullPath);
-        LoadedBridgePath = fullPath;
+        var libRawName = OperatingSystem.IsWindows()
+            ? "raw_r.dll"
+            : OperatingSystem.IsMacOS() ? "libraw.25.dylib" : "libraw_r.so.25";
+        var bridgePath = ContainedPath(directory, bridgeName);
+        var libRawPath = ContainedPath(directory, libRawName);
+        if (!File.Exists(bridgePath))
+            throw new DllNotFoundException($"LibRaw bridge was not found at '{bridgePath}'.");
+        if (!File.Exists(libRawPath))
+            throw new DllNotFoundException($"LibRaw companion was not found at '{libRawPath}'.");
+
+        _libRawHandle = NativeLibrary.Load(libRawPath);
+        LoadedLibRawPath = libRawPath;
+        var handle = NativeLibrary.Load(bridgePath);
+        LoadedBridgePath = bridgePath;
         return handle;
     }
+
+    private static void ConfigureOpenMpThreadLimit()
+    {
+        if (!string.IsNullOrWhiteSpace(
+                Environment.GetEnvironmentVariable("OMP_NUM_THREADS")))
+        {
+            return;
+        }
+
+        Environment.SetEnvironmentVariable(
+            "OMP_NUM_THREADS",
+            GetDefaultOpenMpThreadCount(Environment.ProcessorCount).ToString(
+                CultureInfo.InvariantCulture));
+    }
+
+    internal static int GetDefaultOpenMpThreadCount(int processorCount) =>
+        Math.Clamp(processorCount, 1, 8);
+
+    private static string ResolveDirectory()
+    {
+        var staged = Environment.GetEnvironmentVariable("HAPPY_PHOTON_LIBRAW_BRIDGE_DIR");
+        if (!string.IsNullOrWhiteSpace(staged)) return Path.GetFullPath(staged);
+
+        var nativeSearch = (string?)AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES");
+        if (!string.IsNullOrWhiteSpace(nativeSearch))
+        {
+            foreach (var candidate in nativeSearch.Split(Path.PathSeparator,
+                         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (File.Exists(Path.Combine(candidate, BridgeFileName())))
+                    return Path.GetFullPath(candidate);
+            }
+        }
+
+        var baseDirectory = Path.GetFullPath(AppContext.BaseDirectory);
+        if (File.Exists(Path.Combine(baseDirectory, BridgeFileName()))) return baseDirectory;
+        var ridDirectory = Path.Combine(baseDirectory, "runtimes", RuntimeIdentifier(), "native");
+        if (File.Exists(Path.Combine(ridDirectory, BridgeFileName()))) return ridDirectory;
+        throw new DllNotFoundException("The package-local Happy Photon LibRaw runtime was not found.");
+    }
+
+    private static string ContainedPath(string directory, string fileName)
+    {
+        directory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
+        var fullPath = Path.GetFullPath(Path.Combine(directory, fileName));
+        var expectedDirectory = directory + Path.DirectorySeparatorChar;
+        if (!fullPath.StartsWith(expectedDirectory, StringComparison.OrdinalIgnoreCase))
+            throw new DllNotFoundException("Native path escaped its runtime directory.");
+        return fullPath;
+    }
+
+    private static string BridgeFileName() => OperatingSystem.IsWindows()
+        ? "happyphoton_libraw_bridge.dll"
+        : OperatingSystem.IsMacOS()
+            ? "libhappyphoton_libraw_bridge.dylib"
+            : "libhappyphoton_libraw_bridge.so";
+
+    private static string RuntimeIdentifier() => OperatingSystem.IsWindows()
+        ? "win-x64"
+        : OperatingSystem.IsMacOS() ? "osx-arm64" : "linux-x64";
 }

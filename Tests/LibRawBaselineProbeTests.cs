@@ -1,10 +1,9 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
-using Sdcb.LibRaw;
-using Sdcb.LibRaw.Natives;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -25,9 +24,10 @@ public sealed class LibRawBaselineProbeTests
             Environment.GetEnvironmentVariable("HAPPY_PHOTON_BASELINE_ISOLATED") == "1",
             "Baseline memory would be contaminated. Run only this test with the documented exact filter and set HAPPY_PHOTON_BASELINE_ISOLATED=1.");
 
-        var versionNumber = RawContext.VersionNumber;
-        var version = RawContext.Version;
-        var capabilities = LibRawNative.GetCapabilities();
+        var runtime = LibRawContext.Runtime;
+        var versionNumber = runtime.LibRawVersionNumber;
+        var version = runtime.LibRawVersion;
+        var capabilities = runtime.Capabilities;
         var loadedPath = FindLoadedLibRaw();
         var inventory = ResolveLoadedPrerequisites(NativeBinaryInspection.Inventory(
             loadedPath,
@@ -72,16 +72,12 @@ public sealed class LibRawBaselineProbeTests
         _output.WriteLine($"processor={Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER") ?? "not reported"}");
         _output.WriteLine($"logical_processors={Environment.ProcessorCount}");
         _output.WriteLine($"gc_available_memory_bytes={GC.GetGCMemoryInfo().TotalAvailableMemoryBytes}");
-        _output.WriteLine($"libraw_version_number={versionNumber}");
+        _output.WriteLine($"libraw_version_number=0x{versionNumber:X6}");
         _output.WriteLine($"libraw_version_string={version}");
-        _output.WriteLine($"capability_mask=0x{(uint)capabilities:X8}");
-        foreach (var name in Enum.GetNames<LibRawCapability>())
-        {
-            var flag = Enum.Parse<LibRawCapability>(name);
-            _output.WriteLine($"capability_{name}={capabilities.HasFlag(flag)}");
-        }
-        _output.WriteLine($"jpeg_available={capabilities.HasFlag(LibRawCapability.Jpeg)} (capability bit)");
-        _output.WriteLine($"zlib_available={capabilities.HasFlag(LibRawCapability.Zlib)} (capability bit)");
+        _output.WriteLine($"bridge_abi={runtime.BridgeAbiVersion}");
+        _output.WriteLine($"capability_mask=0x{capabilities:X8}");
+        _output.WriteLine($"jpeg_available={(capabilities & 0x80) != 0} (capability bit)");
+        _output.WriteLine($"zlib_available={(capabilities & 0x40) != 0} (capability bit)");
         _output.WriteLine($"lcms_available={HasDependency(inventory, "lcms")} (dependency graph)");
         _output.WriteLine($"openmp_available={HasOpenMp(inventory)} (dependency graph)");
         _output.WriteLine($"loaded_module={loadedPath}");
@@ -93,6 +89,7 @@ public sealed class LibRawBaselineProbeTests
         _output.WriteLine($"preview_fixture=canon-eos-350d.cr2; warm_up=one preview and one full decode; elapsed_ms={preview.Elapsed.TotalMilliseconds:F1}; size={preview.Image.Pixels.Width}x{preview.Image.Pixels.Height}; loader=RawLibRaw");
         _output.WriteLine($"full_fixture=canon-eos-350d.cr2; elapsed_ms={full.Elapsed.TotalMilliseconds:F1}; size={full.Image.Pixels.Width}x{full.Image.Pixels.Height}; loader=RawLibRaw");
         _output.WriteLine($"export_fixture=fujifilm-x30.raf; settings=JPEG quality 85, chroma NR 100; warm_up=one full export; sampling_ms={RawExportPerformanceMeasurement.SamplingIntervalMilliseconds}; elapsed_ms={export.Elapsed.TotalMilliseconds:F1}; size={export.Width}x{export.Height}; after_decode_private_delta_bytes={export.AfterDecodePrivateBytes}; peak_private_delta_bytes={export.PeakPrivateBytes}; loader={export.SourceKind}");
+        _output.WriteLine($"comparison_baseline=0.21.1 audit-recorded application numbers; context only, not a CI gate");
         _output.WriteLine($"declared_compatibility_floor={DeclaredCompatibilityFloor()}");
         _output.WriteLine("compatibility_note=encoded requirements above are binary facts; declared publisher floors are provenance facts recorded in the runtime audit");
         _output.WriteLine("isolation=verified by dedicated exact-filter command marker");
@@ -126,7 +123,7 @@ public sealed class LibRawBaselineProbeTests
 
     private static string FindLoadedLibRaw()
     {
-        _ = RawContext.VersionNumber;
+        _ = LibRawContext.Runtime;
         var candidates = EnumerateLoadedImagePaths()
             .Where(path => IsLibRawName(Path.GetFileName(path)))
             .Select(Path.GetFullPath)
@@ -177,11 +174,11 @@ public sealed class LibRawBaselineProbeTests
     {
         if (OperatingSystem.IsLinux())
         {
-            return "Ubuntu 22.04 (Sdcb publisher provenance)";
+            return "Ubuntu 22.04 (audited package provenance)";
         }
         if (OperatingSystem.IsMacOS())
         {
-            return "macOS 13 (checked-in dylib build provenance)";
+            return "macOS 13 (audited package provenance)";
         }
         return "none separately declared for Windows";
     }

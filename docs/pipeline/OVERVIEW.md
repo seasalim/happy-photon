@@ -177,6 +177,9 @@ metadata and consumers treat it as immutable.
 
 `IRawProcessingService` is intentionally outside this base/render path. It remains the
 thumbnail-extraction and metadata fallback used by the browsing pipeline.
+Both RAW paths use the same versioned Happy Photon bridge and the RID-selected
+`HappyPhoton.LibRaw.Native` 0.22.2.7 package; deployment failures retain the existing
+Magick.NET fallback behavior.
 
 ## 6. Pipeline versioning
 

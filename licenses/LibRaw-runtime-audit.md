@@ -453,3 +453,31 @@ documented linux-x64 SYSTEM prerequisite (mirroring the Windows
 prerequisite degrades RAW decoding to the Magick.NET fallback with a
 diagnostic; it does not prevent application startup. System-requirements
 documentation must state the prerequisite (phase 9).
+
+## 2026-08-16 — Phase 4 integration record
+
+Production decoding migrated from Sdcb.LibRaw 0.21.1 to the audited
+`HappyPhoton.LibRaw.Native` 0.22.2.7 package via the repository bridge
+binding. Sdcb references were removed repository-wide; the 0.21.1 managed
+probes retired (their dated baselines above are the permanent record) and
+the audited ABI-23 runtimes for the oracle and native performance
+baseline now stage from hash-pinned sources, including the relocated
+macOS dylib under `native/libraw/baseline/osx-arm64/`.
+
+Application-level comparison against the 2026-08-15 win-x64 baseline
+above (same machine and protocol, migrated probe): preview 456.0 ms
+(−7.8%), full 731.7 ms (−8.7%), export 2,090.2 ms (−2.4%), export peak
+private delta 324,243,456 bytes / 309.2 MiB (−23.1%). The initial
+integration showed +70.8% export peak, root-caused to LibRaw 0.22.2's
+OpenMP per-worker scratch in full-resolution X-Trans processing plus
+context-lifetime overlap; the accepted mitigations are a binding-level
+default of `OMP_NUM_THREADS = min(cores, 8)` applied only when the
+variable is unset (explicit overrides win; output pixels are
+thread-count-invariant per the recorded thread-comparison checksums) and
+context recycle before pipeline import. `BaseImage.Version` is 3.
+
+Six RAW goldens changed (three Nikon D70, three Pentax K-r) with CIE76
+ΔE mean/p99 up to 8.514/13.695; each was side-by-side reviewed and
+individually accepted as LibRaw 0.22.2 demosaic/color-table effects.
+Workflow run 31938701422 verified the retired-baseline build workflow and
+audited-runtime staging end to end after integration.

@@ -61,6 +61,7 @@ public sealed class BridgeIntegrationTests
         Assert.Null(context.GetFujiFacts());
         using var thumbnail = context.ExtractThumbnail();
         Assert.NotNull(thumbnail);
+        _ = thumbnail!.AsSpan();
         Assert.NotEmpty(thumbnail!.CopyData());
         context.Unpack();
         using (var mosaic = context.BorrowMosaic())
@@ -77,6 +78,7 @@ public sealed class BridgeIntegrationTests
         Assert.Equal(3u, image.Description.Channels);
         Assert.NotEmpty(image.CopyData());
         image.Dispose();
+        Assert.Throws<ObjectDisposedException>(() => image.AsSpan());
         context.Dispose();
     }
 

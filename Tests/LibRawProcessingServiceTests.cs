@@ -1,6 +1,6 @@
 using HappyPhoton.Services;
+using HappyPhoton.LibRaw.Interop;
 using ImageMagick;
-using Sdcb.LibRaw.Natives;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -30,42 +30,13 @@ public sealed class LibRawProcessingServiceTests
     [Fact]
     public void CreateMetadata_ConvertsGpsReferencesAltitudeAndEquivalentFocalLength()
     {
-        var imageParams = new LibRawImageParams
-        {
-            Make = " Camera Co ",
-            Model = " Model One "
-        };
-        var other = new LibRawImageOtherParams
-        {
-            IsoSpeed = 100,
-            Timestamp = 1_781_400_900,
-            ParsedGPS = new LibRawGPS
-            {
-                GPSParsed = 1,
-                LatitudeDegrees = 33,
-                LatitudeMinutes = 30,
-                LatitudeSeconds = 0,
-                LatitudeReference = (byte)'S',
-                LongitudeDegrees = 151,
-                LongitudeMinutes = 12,
-                LongitudeSeconds = 30,
-                LongitudeReference = (byte)'E',
-                Altitude = 14.25f,
-                AltitudeReference = 1
-            }
-        };
-        var lens = new LibRawLensInfo
-        {
-            Lens = " Test Lens ",
-            FocalLengthIn35mmFormat = 105
-        };
+        var source = Metadata(" Camera Co ", " Model One ", " Test Lens ",
+            new(true, -33.5, 151.208333, -14.25f), timestamp: 1_781_400_900,
+            iso: 100, focalLength35mm: 105);
 
         var metadata = LibRawProcessingService.CreateMetadata(
-            imageParams,
-            other,
-            lens,
-            6000,
-            4000);
+            source,
+            Dimensions(6000, 4000));
 
         Assert.Equal(
             DateTimeOffset.FromUnixTimeSeconds(1_781_400_900).LocalDateTime,
@@ -82,17 +53,9 @@ public sealed class LibRawProcessingServiceTests
     [Fact]
     public void CreateMetadata_AltitudeOnlyGps_KeepsCoordinatesAbsent()
     {
-        var other = new LibRawImageOtherParams
-        {
-            ParsedGPS = new LibRawGPS { GPSParsed = 1, Altitude = 42 }
-        };
-
         var metadata = LibRawProcessingService.CreateMetadata(
-            new LibRawImageParams(),
-            other,
-            new LibRawLensInfo(),
-            6000,
-            4000);
+            Metadata(gps: new(true, null, null, 42)),
+            Dimensions(6000, 4000));
 
         Assert.Null(metadata.GpsLatitude);
         Assert.Null(metadata.GpsLongitude);
@@ -102,20 +65,22 @@ public sealed class LibRawProcessingServiceTests
     [Fact]
     public void CreateMetadata_ZeroedGpsBlock_YieldsNoLocation()
     {
-        var other = new LibRawImageOtherParams
-        {
-            ParsedGPS = new LibRawGPS { GPSParsed = 1 }
-        };
-
         var metadata = LibRawProcessingService.CreateMetadata(
-            new LibRawImageParams(),
-            other,
-            new LibRawLensInfo(),
-            6000,
-            4000);
+            Metadata(gps: new(true, null, null, null)),
+            Dimensions(6000, 4000));
 
         Assert.Null(metadata.GpsLatitude);
         Assert.Null(metadata.GpsLongitude);
         Assert.Null(metadata.GpsAltitude);
     }
+
+    private static LibRawMetadata Metadata(
+        string? make = null, string? model = null, string? lens = null,
+        LibRawGpsFacts? gps = null, long? timestamp = null, float? iso = null,
+        float? focalLength35mm = null) => new(
+            make, model, make, model, lens, iso, null, null, null,
+            focalLength35mm, timestamp, 1, gps ?? new(false, null, null, null));
+
+    private static LibRawDimensions Dimensions(uint width, uint height) =>
+        new(width, height, width, height, width, height, 1);
 }

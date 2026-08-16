@@ -108,6 +108,18 @@ sign_app_bundle() {
 }
 
 cp -a "$publish_directory/." "$contents_directory/MacOS/"
+bridge_dylib="$contents_directory/MacOS/libhappyphoton_libraw_bridge.dylib"
+libraw_dylib="$contents_directory/MacOS/libraw.25.dylib"
+[[ -f "$bridge_dylib" ]] || { echo "LibRaw bridge dylib is absent from publish output" >&2; exit 1; }
+[[ -f "$libraw_dylib" ]] || { echo "LibRaw companion dylib is absent from publish output" >&2; exit 1; }
+otool -D "$bridge_dylib" | grep -Fxq '@loader_path/libhappyphoton_libraw_bridge.dylib' || {
+    echo "LibRaw bridge install identity is not package-local" >&2
+    exit 1
+}
+otool -D "$libraw_dylib" | grep -Fxq '@loader_path/libraw.25.dylib' || {
+    echo "LibRaw companion install identity is not package-local" >&2
+    exit 1
+}
 for resource in LICENSE THIRD_PARTY_NOTICES.md TRADEMARKS.md DEPENDENCIES.json; do
     if [[ -f "$contents_directory/MacOS/$resource" ]]; then
         mv "$contents_directory/MacOS/$resource" \
@@ -130,6 +142,9 @@ while IFS= read -r -d '' binary; do
         sign_target "$binary"
     fi
 done < <(find "$contents_directory/MacOS" -type f -print0)
+
+codesign --verify --strict --verbose=2 "$bridge_dylib"
+codesign --verify --strict --verbose=2 "$libraw_dylib"
 
 sign_app_bundle
 codesign --verify --deep --strict --verbose=2 "$app_bundle"

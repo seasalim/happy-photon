@@ -1,8 +1,10 @@
 #:project ../HappyPhoton.csproj
+#:property PublishAot=false
+#:property SelfContained=false
 
 using System.Runtime.InteropServices;
+using HappyPhoton.LibRaw.Interop;
 using ImageMagick;
-using Sdcb.LibRaw;
 
 if (args.Length is < 1 or > 2)
 {
@@ -30,31 +32,30 @@ var results = new List<DecodeResult>();
 
 foreach (var mode in modes)
 {
-    using var context = RawContext.OpenFile(rawPath);
+    using var context = LibRawContext.Open(rawPath);
     context.Unpack();
-    context.DcrawProcess(parameters =>
+    context.ConfigureOutput(new LibRawOutputConfiguration
     {
-        parameters.OutputBps = 16;
-        parameters.Gamma[0] = 1;
-        parameters.Gamma[1] = 1;
-        parameters.NoAutoBright = true;
-        parameters.UseAutoWb = false;
-        parameters.UseCameraWb = true;
-        parameters.UseCameraMatrix = true;
-        parameters.OutputColor = LibRawColorSpace.SRGB;
-        parameters.HighlightMode = mode.Value;
-        parameters.FbddNoiserd = 0;
-        parameters.HalfSize = false;
+        AbiVersion = 1,
+        OutputBits = 16,
+        OutputColor = 1,
+        GammaPower = 1,
+        GammaSlope = 1,
+        NoAutoBright = true,
+        UseCameraWhiteBalance = true,
+        UseCameraMatrix = true,
+        HighlightMode = mode.Value
     });
 
-    using var processed = context.MakeDcrawMemoryImage();
+    context.Process();
+    using var processed = context.MakeProcessedImage();
     var samples = MemoryMarshal.Cast<byte, ushort>(
-        processed.AsSpan<byte>()).ToArray();
+        processed.AsSpan()).ToArray();
     results.Add(new DecodeResult(
         mode.Value,
         mode.Name,
-        processed.Width,
-        processed.Height,
+        checked((int)processed.Description.Width),
+        checked((int)processed.Description.Height),
         samples));
 }
 

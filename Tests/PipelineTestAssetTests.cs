@@ -1,5 +1,5 @@
 using ImageMagick;
-using Sdcb.LibRaw;
+using HappyPhoton.LibRaw.Interop;
 using System.Runtime.InteropServices;
 using Xunit;
 
@@ -54,12 +54,13 @@ public sealed class PipelineTestAssetTests
     [Fact]
     public void FbddReference_IsCanon6dAtIso6400()
     {
-        using var context = RawContext.OpenFile(
+        using var context = LibRawContext.Open(
             Asset("canon-eos-6d-iso-6400.cr2"));
+        var metadata = context.GetMetadata();
 
-        Assert.Equal("Canon", context.ImageParams.Make?.Trim());
-        Assert.Equal("EOS 6D", context.ImageParams.Model?.Trim());
-        Assert.Equal(6400, context.ImageOtherParams.IsoSpeed);
+        Assert.Equal("Canon", metadata.Make?.Trim());
+        Assert.Equal("EOS 6D", metadata.Model?.Trim());
+        Assert.Equal(6400, metadata.Iso);
     }
 
     [Fact]
@@ -82,21 +83,18 @@ public sealed class PipelineTestAssetTests
     [Fact]
     public void ReferenceRaw_HasClippedHighlights()
     {
-        using var context = RawContext.OpenFile(Asset("canon-eos-350d.cr2"));
+        using var context = LibRawContext.Open(Asset("canon-eos-350d.cr2"));
         context.Unpack();
-        context.DcrawProcess(parameters =>
+        context.ConfigureOutput(new LibRawOutputConfiguration
         {
-            parameters.NoAutoBright = true;
-            parameters.UseCameraWb = true;
-            parameters.OutputBps = 16;
-            parameters.OutputColor = (LibRawColorSpace)1;
-            parameters.Gamma[0] = 1;
-            parameters.Gamma[1] = 1;
-            parameters.HighlightMode = 0;
+            AbiVersion = 1, OutputBits = 16, OutputColor = 1,
+            GammaPower = 1, GammaSlope = 1, NoAutoBright = true,
+            UseCameraWhiteBalance = true, UseCameraMatrix = true
         });
-        using var processed = context.MakeDcrawMemoryImage();
-        Assert.Equal(16, processed.Bits);
-        var samples = MemoryMarshal.Cast<byte, ushort>(processed.AsSpan<byte>());
+        context.Process();
+        using var processed = context.MakeProcessedImage();
+        Assert.Equal(16u, processed.Description.BitsPerSample);
+        var samples = MemoryMarshal.Cast<byte, ushort>(processed.AsSpan());
         var clippedSamples = 0;
         foreach (var sample in samples)
         {

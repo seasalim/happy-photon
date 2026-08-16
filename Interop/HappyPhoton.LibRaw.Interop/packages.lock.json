@@ -1,6 +1,13 @@
 {
   "version": 1,
   "dependencies": {
-    "net10.0": {}
+    "net10.0": {
+      "HappyPhoton.LibRaw.Native": {
+        "type": "Direct",
+        "requested": "[0.22.2.7, )",
+        "resolved": "0.22.2.7",
+        "contentHash": "FqWACCCzNwJ9YTYHpT75h0/inQxpqhmhIuZiRVPoH/60sVxtxjBYVEWE4bGch4eIeENqlyH65lGpxXRgn5LNag=="
+      }
+    }
   }
 }

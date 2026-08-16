@@ -27,6 +27,11 @@
           "xunit.v3.mtp-v1": "[3.2.2]"
         }
       },
+      "HappyPhoton.LibRaw.Native": {
+        "type": "Transitive",
+        "resolved": "0.22.2.7",
+        "contentHash": "FqWACCCzNwJ9YTYHpT75h0/inQxpqhmhIuZiRVPoH/60sVxtxjBYVEWE4bGch4eIeENqlyH65lGpxXRgn5LNag=="
+      },
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
         "resolved": "2.23.0",
@@ -164,7 +169,10 @@
         }
       },
       "happyphoton.libraw.interop": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "HappyPhoton.LibRaw.Native": "[0.22.2.7, )"
+        }
       }
     }
   }

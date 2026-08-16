@@ -17,8 +17,7 @@ locked for the `v0.1.0` preparation branch.
 | Microsoft.NET.ILLink.Tasks | 10.0.8 | MIT |
 | ModelContextProtocol and ModelContextProtocol.AspNetCore | 1.4.1 | Apache-2.0 |
 | SQLitePCLRaw.bundle_e_sqlite3 | 3.0.3 | Apache-2.0 |
-| Sdcb.LibRaw | 0.21.1.7 | MIT |
-| Sdcb.LibRaw native runtimes | 0.21.1 | LGPL-2.1-only OR CDDL-1.0 |
+| HappyPhoton.LibRaw.Native | 0.22.2.7 | GPL-3.0-or-later; bundled components retain their own terms |
 
 The canonical Apache-2.0 text is distributed in
 [`licenses/Apache-2.0.txt`](licenses/Apache-2.0.txt). MIT notices are retained
@@ -36,30 +35,31 @@ verbatim in
 [`licenses/Magick.NET-Notice.txt`](licenses/Magick.NET-Notice.txt). Source and
 binary release archives must include that file.
 
-## Sdcb.LibRaw and LibRaw
+## Happy Photon LibRaw native package
 
-The managed Sdcb.LibRaw 0.21.1.7 wrapper is copyright Zhou Jie and licensed
-under MIT. Its license is in
-[`licenses/Sdcb.LibRaw-MIT.txt`](licenses/Sdcb.LibRaw-MIT.txt).
+`HappyPhoton.LibRaw.Native` 0.22.2.7 supplies the Happy Photon bridge and
+LibRaw 0.22.2 runtimes selected by NuGet for Windows x64, Linux x64, and Apple
+Silicon macOS. The package was built from the audited sources and provenance
+recorded in [`licenses/LibRaw-runtime-audit.md`](licenses/LibRaw-runtime-audit.md).
 
-The Windows and Linux runtime packages and the bundled Apple Silicon dylib contain
-LibRaw 0.21.1 native binaries and declare `LGPL-2.1-only OR CDDL-1.0`. Happy Photon selects
+LibRaw declares `LGPL-2.1-only OR CDDL-1.0`. Happy Photon selects
 **LGPL-2.1-only** as its redistribution basis. The LGPL text is in
 [`licenses/LGPL-2.1.txt`](licenses/LGPL-2.1.txt), and upstream copyright and
 acknowledgement terms are in
 [`licenses/LibRaw-COPYRIGHT.txt`](licenses/LibRaw-COPYRIGHT.txt).
 
 The corresponding unmodified LibRaw source is available from the
-[LibRaw 0.21.1 source tag](https://github.com/LibRaw/LibRaw/tree/0.21.1).
+[LibRaw 0.22.2 source tag](https://github.com/LibRaw/LibRaw/tree/0.22.2).
 Every binary release must retain a durable corresponding-source path or
 written offer appropriate to the selected LGPL terms.
 
-The runtime packages also contain supporting native libraries. The exact
+The native package also contains supporting native libraries. The exact
 Platform files, versions, package/source hashes, and binary hashes are recorded
 in
 [`licenses/LibRaw-runtime-audit.md`](licenses/LibRaw-runtime-audit.md).
-The release includes the applicable libjpeg-turbo/IJG, Little CMS, zlib, GPLv3,
-and GCC Runtime Library Exception notices.
+The release includes the applicable libjpeg-turbo/IJG, Little CMS, zlib,
+GPLv3, and GCC Runtime Library Exception notices. The former Sdcb managed
+wrapper notice was removed with the wrapper because no copied Sdcb code remains.
 
 ## MetadataExtractor and XmpCore
 

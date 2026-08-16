@@ -1,6 +1,4 @@
-using System.Runtime.InteropServices;
-using Sdcb.LibRaw;
-using Sdcb.LibRaw.Natives;
+using HappyPhoton.LibRaw.Interop;
 
 namespace HappyPhoton.Services;
 
@@ -11,25 +9,23 @@ internal static class RawExposureBias
 {
     internal const double MaxAbsEv = 3.0;
 
-    internal static double Read(RawContext context, string filePath)
+    internal static double Read(LibRawContext context, string filePath)
     {
         try
         {
+            var metadata = context.GetMetadata();
             if (!string.Equals(
-                    context.ImageParams.Make?.Trim(),
+                    metadata.Make?.Trim(),
                     "Fujifilm",
                     StringComparison.OrdinalIgnoreCase))
             {
                 return 0;
             }
 
-            var fujiOffset =
-                (int)Marshal.OffsetOf<LibRawData>(nameof(LibRawData.MakerNotes)) +
-                (int)Marshal.OffsetOf<LibRawMakerNotes>(nameof(LibRawMakerNotes.Fuji));
-            var fuji = Marshal.PtrToStructure<LibRawFujiInfo>(
-                context.UnsafeGetHandle() + fujiOffset);
+            var fuji = context.GetFujiFacts();
+            if (fuji == null) return 0;
             return FromFuji(
-                fuji.ExpoMidPointShift,
+                fuji.ExposureMidpointShift,
                 fuji.DevelopmentDynamicRange);
         }
         catch (Exception exception)
@@ -44,7 +40,7 @@ internal static class RawExposureBias
 
     internal static double FromFuji(
         float expoMidPointShift,
-        ushort developmentDynamicRange)
+        uint developmentDynamicRange)
     {
         if (float.IsFinite(expoMidPointShift) &&
             Math.Abs(expoMidPointShift) <= 10)

@@ -38,14 +38,32 @@ foreach ($project in $packageReport.projects) {
 
 $bundledNativeInventory = @()
 if ($RuntimeIdentifier -eq "osx-arm64") {
-    $libRawPath = Join-Path $projectRoot "runtimes/osx-arm64/native/libraw.23.dylib"
-    $bundledNativeInventory = @([ordered]@{
-        name = "LibRaw"
-        version = "0.21.1"
-        file = "libraw.23.dylib"
-        sha256 = (Get-FileHash $libRawPath -Algorithm SHA256).Hash
-        license = "LGPL-2.1-only"
-    })
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $packagePath = Join-Path $projectRoot "packages/native/HappyPhoton.LibRaw.Native.0.22.2.7.nupkg"
+    $archive = [IO.Compression.ZipFile]::OpenRead($packagePath)
+    try {
+        $bundledNativeInventory = @(
+            foreach ($name in @("libhappyphoton_libraw_bridge.dylib", "libraw.25.dylib")) {
+                $entry = $archive.GetEntry("runtimes/osx-arm64/native/$name")
+                if ($null -eq $entry) { throw "Packaged native entry is missing: $name" }
+                $stream = $entry.Open()
+                try {
+                    $hash = [Security.Cryptography.SHA256]::HashData($stream)
+                } finally {
+                    $stream.Dispose()
+                }
+                [ordered]@{
+                    name = if ($name.StartsWith("libhappyphoton")) { "Happy Photon LibRaw bridge" } else { "LibRaw" }
+                    version = "0.22.2.7"
+                    file = $name
+                    sha256 = [Convert]::ToHexString($hash)
+                    license = if ($name.StartsWith("libhappyphoton")) { "GPL-3.0-or-later" } else { "LGPL-2.1-only" }
+                }
+            }
+        )
+    } finally {
+        $archive.Dispose()
+    }
 }
 
 $manifest = [ordered]@{

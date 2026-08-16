@@ -75,6 +75,20 @@ public sealed unsafe class NativeContractTests
         Assert.Equal(1, observer.CallCount);
     }
 
+    [Theory]
+    [InlineData(0, 1)]
+    [InlineData(1, 1)]
+    [InlineData(4, 4)]
+    [InlineData(8, 8)]
+    [InlineData(24, 8)]
+    public void OpenMpDefault_BoundsDecoderScratchWorkers(
+        int processorCount,
+        int expected)
+    {
+        Assert.Equal(expected,
+            NativeLibraryResolver.GetDefaultOpenMpThreadCount(processorCount));
+    }
+
     private sealed class CancelObserver(CancellationTokenSource cancellation) : INativeCallObserver
     {
         public int CallCount { get; private set; }

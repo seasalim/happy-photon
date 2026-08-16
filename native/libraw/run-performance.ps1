@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory)] [string] $RuntimeDirectory,
     [Parameter(Mandatory)] [string] $OutputDirectory,
+    [string] $BaselineRuntimeDirectory,
     [string] $Configuration = "Release")
 
 Set-StrictMode -Version Latest
@@ -20,12 +21,6 @@ $oldOutput, $oldRuntime = $env:HAPPY_PHOTON_NATIVE_PERF_OUTPUT, $env:HAPPY_PHOTO
 try {
     $env:HAPPY_PHOTON_NATIVE_PERF = "1"
     $env:HAPPY_PHOTON_NATIVE_PERF_ISOLATED = "1"
-    $env:HAPPY_PHOTON_NATIVE_PERF_OUTPUT = $baseline
-    dotnet test (Join-Path $repoRoot "Tests/HappyPhoton.Tests.csproj") `
-        --configuration $Configuration `
-        -p:UsedAvaloniaProducts= `
-        --filter "FullyQualifiedName=HappyPhoton.Tests.LibRawNativePerformanceBaselineTests.CurrentRid_WritesPairedHarnessMeasurements"
-    if ($LASTEXITCODE -ne 0) { throw "Baseline performance harness failed." }
     $env:HAPPY_PHOTON_LIBRAW_BRIDGE_DIR = $runtime
     $env:HAPPY_PHOTON_NATIVE_PERF_OUTPUT = $candidate
     dotnet test (Join-Path $repoRoot "Interop/HappyPhoton.LibRaw.Interop.Tests/HappyPhoton.LibRaw.Interop.Tests.csproj") `
@@ -40,12 +35,12 @@ try {
 $python = if ($IsWindows) { "python" } elseif (Get-Command python3 -ErrorAction SilentlyContinue) {
     "python3"
 } else { "python" }
-$baselineData = Get-Content -Raw -LiteralPath $baseline | ConvertFrom-Json
-$rid = $baselineData.Rid
-$baselineRuntime = if ($rid -eq "osx-arm64") {
-    Join-Path $repoRoot "runtimes/osx-arm64/native"
+$candidateData = Get-Content -Raw -LiteralPath $candidate | ConvertFrom-Json
+$rid = $candidateData.Rid
+$baselineRuntime = if ($BaselineRuntimeDirectory) {
+    (Resolve-Path $BaselineRuntimeDirectory).Path
 } else {
-    Join-Path $repoRoot "Tests/bin/$Configuration/net10.0/runtimes/$rid/native"
+    & (Join-Path $PSScriptRoot "fetch-baseline-runtime.ps1") -RuntimeIdentifier $rid
 }
 $extension = if ($rid -eq "win-x64") { ".exe" } else { "" }
 $tools = Join-Path (Split-Path $runtime -Parent) "validation/native-performance"

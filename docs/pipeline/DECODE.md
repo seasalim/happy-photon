@@ -32,7 +32,7 @@ and FBDD off.
   standard image sources rather than RAW files, including in the thumbnail path.
 - Everything else (`.JPG .JPEG .PNG .BMP .GIF .TIFF .WEBP`) → `StandardBaseLoader`.
 
-## 2. `RawBaseLoader` (LibRaw via Sdcb.LibRaw)
+## 2. `RawBaseLoader` (LibRaw via the Happy Photon bridge)
 
 `RawBaseLoader` configures LibRaw explicitly so decoded pixels do not depend on its
 image-statistics defaults:
@@ -60,9 +60,15 @@ Post-decode steps, in order:
    `ImportPixels(data, new PixelImportSettings(w, h, StorageType.Short, PixelMapping.RGB))`.
    Tagging the destination before import is essential: assigning `sRGB → RGB` after
    samples exist runs Magick's transfer transform and double-linearizes the already
-   linear LibRaw values. There is no PPM intermediate or managed full-image copy.
-   Synthetic-buffer tests pin byte order and exact 16-bit preservation. The former
-   PPM wrapping path is not used by the base loader.
+   linear LibRaw values. Once LibRaw has produced its independently owned image, the
+   loader recycles the context before importing that span so raw and processing
+   buffers do not overlap the render pipeline's Q16 allocation. There is no PPM
+   intermediate or managed full-image copy. Synthetic-buffer tests pin byte order
+   and exact 16-bit preservation. The former PPM wrapping path is not used by the
+   base loader.
+   The binding defaults OpenMP to at most eight workers unless the process already
+   defines `OMP_NUM_THREADS`. This bounds the per-worker scratch space used by
+   full-resolution X-Trans processing without changing decode precision or pixels.
 2. LibRaw sometimes pre-rotates. The loader detects that through the dimension swap,
    applies EXIF orientation otherwise, and records `ExifOrientationApplied`.
 3. Preview bases use LibRaw's half-size decode and are bounded to
@@ -143,14 +149,14 @@ dotnet run --file scripts/evaluate-highlight-reconstruction.cs -- `
 
 ### 2.4 Platform runtime
 
-Windows and Linux use the pinned Sdcb native runtime packages. Apple Silicon macOS
-ships a LibRaw 0.21.1 `libraw.23.dylib` under `runtimes/osx-arm64/native/`; the project
-copies it beside the app executable, where Sdcb.LibRaw 0.21.1.7's assembly-level
-`NativeLibrary.SetDllImportResolver` maps the wrapper's `libraw.dll` imports to that
-file. The dylib statically includes libjpeg-turbo 2.1.5.1 for lossy-compressed DNG and
-has only macOS system-library dependencies. `LibRawNativeSupport` probes the native
-version once, and both base decoding and thumbnail/metadata routing fall back to
-Magick.NET only when the probe fails.
+All supported platforms use `HappyPhoton.LibRaw.Native` 0.22.2.7 through the phase-2
+binding. NuGet selects the matching RID assets. The binding resolves the bridge and its
+LibRaw 0.22.2 companion from one package-local directory by absolute path; it never
+allows a system or PATH copy to satisfy either name. Single-file extraction uses the
+runtime's native search-directory contract, while loose development builds use their
+RID-resolved output directory. `LibRawNativeSupport` performs the bridge ABI/runtime
+handshake once, and base decoding plus thumbnail/metadata routing fall back to
+Magick.NET when deployment or decoding fails.
 
 The same loader parameters and golden fixtures cover Windows, Linux, and macOS. The
 cross-platform comparison uses the mean ΔE bound documented in TESTING.md §3.

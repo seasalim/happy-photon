@@ -9,5 +9,9 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="HappyPhoton.LibRaw.Interop.Tests" />
+    <InternalsVisibleTo Include="HappyPhoton.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="HappyPhoton.LibRaw.Native" Version="0.22.2.7" />
   </ItemGroup>
 </Project>

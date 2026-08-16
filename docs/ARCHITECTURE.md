@@ -127,7 +127,8 @@ thumbnails share `RenderPipeline`; RAW cache-miss thumbnails deliberately apply 
 `RenderGeometry` to their embedded preview until Develop produces an accurate render.
 Source-specific behavior belongs in the loaders and `BaseImageInfo`. Standard images are
 color-normalized and linearized by Magick.NET. RAW images decode through the pinned
-LibRaw 0.21.1 runtime into the same linear Q16 base contract. RAW metadata comes from
+LibRaw 0.22.2 runtime through the versioned Happy Photon bridge into the same linear Q16
+base contract. RAW metadata comes from
 LibRaw except exposure bias, which LibRaw does not surface and Magick cannot read from
 RAW containers; MetadataExtractor reads just that tag, header-only, without decoding.
 
