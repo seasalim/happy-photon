@@ -15,6 +15,8 @@ public sealed unsafe class LibRawContext : IDisposable
 
     public static LibRawRuntime Runtime => AbiHandshake.Ensure();
 
+    public static LibRawRuntimeHealth RuntimeHealth => AbiHandshake.Probe();
+
     public static LibRawContext Open(string path, CancellationToken cancellationToken = default)
         => Open(path, cancellationToken, null);
 

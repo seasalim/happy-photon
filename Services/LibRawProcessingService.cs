@@ -16,11 +16,18 @@ public class LibRawProcessingService : IRawProcessingService
     private readonly bool _isAvailable;
 
     public LibRawProcessingService()
+        : this(LibRawNativeSupport.Health)
     {
-        _isAvailable = LibRawNativeSupport.IsAvailable;
-        LogDebug(ServiceName, _isAvailable
-            ? "Native decoder is available"
-            : "Native decoder is unavailable; using fallback");
+    }
+
+    internal LibRawProcessingService(LibRawRuntimeHealth health)
+    {
+        ArgumentNullException.ThrowIfNull(health);
+        _isAvailable = health.IsHealthy;
+        if (_isAvailable)
+        {
+            LogDebug(ServiceName, "Native decoder is available");
+        }
     }
 
     public bool IsAvailable => _isAvailable;

@@ -159,6 +159,22 @@
                             </StackPanel>
                         </Border>
 
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Name="RawRuntimePendingText"
+                                       Text="Checking native RAW support…"
+                                       IsVisible="{Binding ViewModel.IsRawRuntimeHealthPending}"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       FontSize="11"
+                                       AutomationProperties.Name="RAW runtime check status"/>
+                            <TextBlock x:Name="RawRuntimeStatusText"
+                                       Text="{Binding ViewModel.RawRuntimeStatusText}"
+                                       IsVisible="{Binding ViewModel.IsRawRuntimeDegraded}"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="RAW runtime status"/>
+                        </StackPanel>
+
                         <StackPanel Spacing="6">
                             <Button x:Name="CheckForUpdatesButton"
                                     Content="Check for updates"

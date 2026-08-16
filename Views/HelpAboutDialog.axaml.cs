@@ -76,7 +76,8 @@ public partial class HelpAboutDialog : Window
                 return;
             }
 
-            await clipboard.SetTextAsync(BuildIdentity.SupportText);
+            await clipboard.SetTextAsync(
+                ViewModel?.RawRuntimeSupportText ?? BuildIdentity.SupportText);
             CopyFeedbackText.Text = "Version info copied.";
         }
         catch (Exception)

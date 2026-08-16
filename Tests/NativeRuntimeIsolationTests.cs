@@ -24,6 +24,8 @@ public sealed class NativeRuntimeIsolationTests
     [Theory]
     [InlineData("missing-bridge")]
     [InlineData("missing-companion")]
+    [InlineData("unloadable-bridge")]
+    [InlineData("unloadable-companion")]
     public async Task MissingRuntime_DecoysCannotSatisfyHandshakeAndRouterFallsBack(
         string mode)
     {
@@ -32,12 +34,28 @@ public sealed class NativeRuntimeIsolationTests
         var runtime = RuntimeDirectory();
         var bridge = BridgeName();
         var companion = CompanionName();
-        if (mode != "missing-bridge")
-            File.Copy(Path.Combine(runtime, bridge), Path.Combine(staging.Path, bridge));
-        if (mode != "missing-companion")
-            File.Copy(Path.Combine(runtime, companion), Path.Combine(staging.Path, companion));
-        File.WriteAllText(Path.Combine(decoys.Path,
-            mode == "missing-bridge" ? bridge : companion), "decoy");
+        var rejectsBridge = mode.EndsWith("bridge", StringComparison.Ordinal);
+        var unloadable = mode.StartsWith("unloadable", StringComparison.Ordinal);
+        if (unloadable)
+        {
+            foreach (var file in Directory.GetFiles(runtime))
+            {
+                File.Copy(file, Path.Combine(staging.Path, Path.GetFileName(file)));
+            }
+            File.WriteAllText(
+                Path.Combine(staging.Path, rejectsBridge ? bridge : companion),
+                "not a native library");
+        }
+        else
+        {
+            if (!rejectsBridge)
+                File.Copy(Path.Combine(runtime, bridge), Path.Combine(staging.Path, bridge));
+            if (rejectsBridge)
+                File.Copy(Path.Combine(runtime, companion), Path.Combine(staging.Path, companion));
+        }
+        File.WriteAllText(
+            Path.Combine(decoys.Path, rejectsBridge ? bridge : companion),
+            "decoy");
         await RunChildAsync(mode, staging.Path, decoys.Path);
     }
 
@@ -50,6 +68,8 @@ public sealed class NativeRuntimeIsolationTests
         {
             var runtime = LibRawContext.Runtime;
             Assert.Equal(0x001602u, runtime.LibRawVersionNumber);
+            Assert.NotEqual(0u, runtime.Capabilities & LibRawCapabilities.Jpeg);
+            Assert.NotEqual(0u, runtime.Capabilities & LibRawCapabilities.Zlib);
             Assert.Equal(
                 NativeLibraryResolver.GetDefaultOpenMpThreadCount(
                     Environment.ProcessorCount).ToString(),
@@ -63,6 +83,19 @@ public sealed class NativeRuntimeIsolationTests
             return;
         }
 
+        var health = LibRawNativeSupport.Health;
+        Assert.False(health.IsHealthy);
+        Assert.Equal(
+            mode.EndsWith("bridge", StringComparison.Ordinal)
+                ? LibRawRuntimeComponent.Bridge
+                : LibRawRuntimeComponent.LibRawCompanion,
+            health.RejectedComponent);
+        Assert.Equal(
+            mode.StartsWith("unloadable", StringComparison.Ordinal)
+                ? LibRawDeploymentStage.Load
+                : LibRawDeploymentStage.Resolution,
+            health.Observations.FailureStage);
+        Assert.Contains("component=", health.DiagnosticText);
         Assert.False(LibRawNativeSupport.IsAvailable);
         Assert.False(new LibRawProcessingService().IsAvailable);
         var raw = new RawBaseLoader();

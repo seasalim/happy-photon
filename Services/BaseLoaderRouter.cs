@@ -97,8 +97,11 @@ public sealed class BaseLoaderRouter : IBaseImageLoader
             return null;
         }
 
-        _logWarning(
-            $"LibRaw base decode failed for '{file.FileName}'; trying the standard loader.");
+        if (_rawLoader is not RawBaseLoader { IsHealthRejected: true })
+        {
+            _logWarning(
+                $"LibRaw base decode failed for '{file.FileName}'; trying the standard loader.");
+        }
         return LoadFrom(
             _standardLoader,
             file,

@@ -1,4 +1,5 @@
 using Avalonia.Media.Imaging;
+using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
@@ -59,11 +60,20 @@ public class ImageService : IAsyncDisposable
     }
 
     public ImageService(CatalogService catalogService)
+        : this(catalogService, LibRawNativeSupport.Health)
+    {
+    }
+
+    private ImageService(
+        CatalogService catalogService,
+        LibRawRuntimeHealth rawRuntimeHealth)
         : this(
             catalogService,
             new BaseLoaderRouter(
-                new RawBaseLoader(),
-                new StandardBaseLoader()))
+                new RawBaseLoader(rawRuntimeHealth),
+                new StandardBaseLoader()),
+            new SourceAvailabilityService(),
+            rawRuntimeHealth)
     {
     }
 
@@ -72,14 +82,27 @@ public class ImageService : IAsyncDisposable
         IBaseImageLoader baseLoader) : this(
             catalogService,
             baseLoader,
-            new SourceAvailabilityService())
+            new SourceAvailabilityService(),
+            LibRawNativeSupport.Health)
     {
     }
 
     internal ImageService(
         CatalogService catalogService,
         IBaseImageLoader baseLoader,
-        ISourceAvailabilityService availabilityService)
+        ISourceAvailabilityService availabilityService) : this(
+            catalogService,
+            baseLoader,
+            availabilityService,
+            LibRawNativeSupport.Health)
+    {
+    }
+
+    internal ImageService(
+        CatalogService catalogService,
+        IBaseImageLoader baseLoader,
+        ISourceAvailabilityService availabilityService,
+        LibRawRuntimeHealth rawRuntimeHealth)
     {
         _catalogService = catalogService;
         ArgumentNullException.ThrowIfNull(baseLoader);
@@ -92,7 +115,7 @@ public class ImageService : IAsyncDisposable
             _availabilityService);
 
         // Initialize RAW processing service
-        var libRawService = new LibRawProcessingService();
+        var libRawService = new LibRawProcessingService(rawRuntimeHealth);
         _rawService = libRawService.IsAvailable ? libRawService : new MagickNetRawService();
 
         // Initialize sub-services

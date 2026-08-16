@@ -125,6 +125,7 @@ public partial class MainWindow
         vm.ShowInitializing();
         try
         {
+            await vm.EnsureRawRuntimeReadyAsync();
             await _locationMigrator.ExecutePendingAsync();
             _startupLocations = await _dataLocationService.ResolveAsync();
             if (_startupLocations == null)

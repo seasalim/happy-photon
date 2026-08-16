@@ -4,30 +4,31 @@ namespace HappyPhoton.Services;
 
 internal static class LibRawNativeSupport
 {
-    private static readonly Lazy<bool> Availability = new(
-        Probe,
-        LazyThreadSafetyMode.ExecutionAndPublication);
+    private static readonly Lazy<LibRawRuntimeHealth> ProcessHealth = CreateLazy(
+        () => LibRawContext.RuntimeHealth,
+        ImageServiceHelpers.LogError);
 
-    public static bool IsAvailable => Availability.Value;
+    public static LibRawRuntimeHealth Health => ProcessHealth.Value;
 
-    private static bool Probe()
+    public static bool IsAvailable => Health.IsHealthy;
+
+    public static Task<LibRawRuntimeHealth> ProbeAsync() =>
+        Task.Run(() => Health);
+
+    internal static Lazy<LibRawRuntimeHealth> CreateLazy(
+        Func<LibRawRuntimeHealth> probe,
+        Action<string> logError)
     {
-        try
+        ArgumentNullException.ThrowIfNull(probe);
+        ArgumentNullException.ThrowIfNull(logError);
+        return new Lazy<LibRawRuntimeHealth>(() =>
         {
-            _ = LibRawContext.Runtime;
-            return true;
-        }
-        catch (Exception exception) when (
-            exception is DllNotFoundException or
-                BadImageFormatException or
-                EntryPointNotFoundException or
-                TypeInitializationException or
-                LibRawDeploymentException)
-        {
-            ImageServiceHelpers.LogDebug(
-                nameof(LibRawNativeSupport),
-                $"Native LibRaw is unavailable: {exception.Message}");
-            return false;
-        }
+            var health = probe();
+            if (!health.IsHealthy)
+            {
+                logError(health.DiagnosticText);
+            }
+            return health;
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
     }
 }

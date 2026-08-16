@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
@@ -66,6 +67,65 @@ public sealed class HelpAboutDialogTests
                 dialog.FindControl<Button>("ThirdPartyNoticesLink")!));
 
         dialog.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task RawRuntimeStatus_AppearsOnlyForDegradedHealth()
+    {
+        using var catalog = new CatalogService(NewCatalogPath());
+        var healthy = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            rawRuntimeHealth: HealthyRuntime());
+        var healthyDialog = new HelpAboutDialog(healthy);
+
+        Assert.False(healthyDialog.FindControl<TextBlock>(
+            "RawRuntimeStatusText")!.IsVisible);
+        Assert.DoesNotContain("RAW runtime:", healthy.RawRuntimeSupportText);
+
+        healthyDialog.Close();
+        await healthy.DisposeAsync();
+
+        var degraded = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            rawRuntimeHealth: RejectedRuntime());
+        var degradedDialog = new HelpAboutDialog(degraded);
+        var status = degradedDialog.FindControl<TextBlock>("RawRuntimeStatusText")!;
+
+        Assert.True(status.IsVisible);
+        Assert.Contains("fallback decoder", status.Text);
+        Assert.Contains("RAW runtime: degraded", degraded.RawRuntimeSupportText);
+        Assert.Contains("component=LibRaw companion", degraded.RawRuntimeSupportText);
+
+        degradedDialog.Close();
+        await degraded.DisposeAsync();
+    }
+
+    [AvaloniaFact]
+    public async Task OpenAboutSurface_UpdatesWhenRuntimeProbeCompletes()
+    {
+        using var catalog = new CatalogService(NewCatalogPath());
+        var vm = new MainWindowViewModel(catalog, baseLoader: null);
+        var dialog = new HelpAboutDialog(vm);
+        var status = dialog.FindControl<TextBlock>("RawRuntimeStatusText")!;
+        var pending = dialog.FindControl<TextBlock>("RawRuntimePendingText")!;
+
+        Assert.True(vm.IsRawRuntimeHealthPending);
+        Assert.True(pending.IsVisible);
+        Assert.False(status.IsVisible);
+
+        vm.ApplyRawRuntimeHealth(RejectedRuntime());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(vm.IsRawRuntimeHealthPending);
+        Assert.False(pending.IsVisible);
+        Assert.True(status.IsVisible);
+        Assert.Contains("LibRaw companion rejected", status.Text);
+        Assert.Contains("capability mask=0x00000080", vm.RawRuntimeSupportText);
+
+        dialog.Close();
+        await vm.DisposeAsync();
     }
 
     [AvaloniaFact]
@@ -206,4 +266,18 @@ public sealed class HelpAboutDialogTests
 
     private static string NewCatalogPath() => Path.Combine(
         Path.GetTempPath(), $"happy-photon-help-about-{Guid.NewGuid():N}");
+
+    private static LibRawRuntimeHealth HealthyRuntime() =>
+        LibRawRuntimeHealthEvaluator.Evaluate(new(
+            LibRawOutputConfiguration.Version,
+            LibRawRuntimeHealthEvaluator.SupportedLibRawVersion,
+            "0.22.2-Release",
+            LibRawCapabilities.Jpeg | LibRawCapabilities.Zlib));
+
+    private static LibRawRuntimeHealth RejectedRuntime() =>
+        LibRawRuntimeHealthEvaluator.Evaluate(new(
+            LibRawOutputConfiguration.Version,
+            LibRawRuntimeHealthEvaluator.SupportedLibRawVersion,
+            "0.22.2-Release",
+            LibRawCapabilities.Jpeg));
 }

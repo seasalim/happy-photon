@@ -8,18 +8,28 @@ namespace HappyPhoton.Services;
 public sealed class RawBaseLoader : IBaseImageLoader
 {
     private readonly bool _isAvailable;
+    internal bool IsHealthRejected { get; }
     private readonly Func<LibRawContext, byte[]?> _thumbnailReader;
 
     public RawBaseLoader()
-        : this(LibRawNativeSupport.IsAvailable)
+        : this(LibRawNativeSupport.Health)
+    {
+    }
+
+    internal RawBaseLoader(LibRawRuntimeHealth health)
+        : this(
+            health?.IsHealthy ?? throw new ArgumentNullException(nameof(health)),
+            healthRejected: !health.IsHealthy)
     {
     }
 
     internal RawBaseLoader(
         bool isAvailable,
-        Func<LibRawContext, byte[]?>? thumbnailReader = null)
+        Func<LibRawContext, byte[]?>? thumbnailReader = null,
+        bool healthRejected = false)
     {
         _isAvailable = isAvailable;
+        IsHealthRejected = healthRejected;
         _thumbnailReader = thumbnailReader ?? RawThumbnailReader.Read;
     }
 

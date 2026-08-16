@@ -7,34 +7,108 @@ public sealed record LibRawRuntime(
     uint Capabilities,
     bool IsThreadSafeVariant);
 
+internal interface ILibRawNativeObservations
+{
+    uint ReadBridgeAbiVersion();
+    LibRawRuntime ReadRuntime();
+}
+
 internal static class AbiHandshake
 {
-    private static readonly Lazy<LibRawRuntime> Runtime = new(Load,
+    private sealed record HandshakeState(
+        LibRawRuntimeHealth Health,
+        LibRawRuntime? Runtime);
+
+    private sealed class NativeObservations : ILibRawNativeObservations
+    {
+        public uint ReadBridgeAbiVersion() => NativeMethods.AbiVersion();
+        public LibRawRuntime ReadRuntime() => NativeApi.Runtime();
+    }
+
+    private static readonly Lazy<HandshakeState> State = new(
+        () => Observe(new NativeObservations()),
         LazyThreadSafetyMode.ExecutionAndPublication);
 
-    internal static LibRawRuntime Ensure() => Runtime.Value;
-
-    private static LibRawRuntime Load()
+    internal static LibRawRuntime Ensure()
     {
+        var state = State.Value;
+        return state.Runtime ?? throw new LibRawDeploymentException(state.Health);
+    }
+
+    internal static LibRawRuntimeHealth Probe() => State.Value.Health;
+
+    internal static LibRawRuntimeHealth Probe(ILibRawNativeObservations native) =>
+        Observe(native).Health;
+
+    private static HandshakeState Observe(ILibRawNativeObservations native)
+    {
+        ArgumentNullException.ThrowIfNull(native);
+        uint? abi = null;
         try
         {
-            var abi = NativeMethods.AbiVersion();
-            if (abi != LibRawOutputConfiguration.Version)
-                throw new LibRawDeploymentException(
-                    $"Bridge ABI {abi} is incompatible with ABI {LibRawOutputConfiguration.Version}.");
-            var runtime = NativeApi.Runtime();
-            if (runtime.BridgeAbiVersion != abi || runtime.LibRawVersionNumber != 0x001602)
-                throw new LibRawDeploymentException(
-                    $"Expected bridge ABI 1 with LibRaw 0.22.2, observed ABI " +
-                    $"{runtime.BridgeAbiVersion} and LibRaw 0x{runtime.LibRawVersionNumber:x6}.");
-            return runtime;
+            abi = native.ReadBridgeAbiVersion();
+            var abiHealth = LibRawRuntimeHealthEvaluator.Evaluate(new(
+                abi, null, null, null));
+            if (!abiHealth.IsHealthy &&
+                abiHealth.RejectionReason ==
+                LibRawHealthRejectionReason.BridgeAbiMismatch)
+            {
+                return new(abiHealth, null);
+            }
+
+            var runtime = native.ReadRuntime();
+            var health = LibRawRuntimeHealthEvaluator.Evaluate(new(
+                abi,
+                runtime.LibRawVersionNumber,
+                runtime.LibRawVersion,
+                runtime.Capabilities));
+            return new(health, health.IsHealthy ? runtime : null);
         }
-        catch (LibRawDeploymentException) { throw; }
-        catch (Exception exception) when (exception is DllNotFoundException or
-            EntryPointNotFoundException or BadImageFormatException)
+        catch (LibRawDeploymentException exception)
         {
-            throw new LibRawDeploymentException(
-                "The Happy Photon LibRaw bridge could not be loaded.", exception);
+            return DeploymentFailure(abi, exception);
         }
+        catch (TypeInitializationException exception)
+        {
+            if (exception.InnerException is LibRawDeploymentException deployment)
+            {
+                return DeploymentFailure(abi, deployment);
+            }
+
+            var wrapped = new LibRawDeploymentException(
+                LibRawRuntimeComponent.Bridge,
+                LibRawDeploymentStage.Load,
+                exception.InnerException?.Message ?? exception.Message,
+                exception);
+            return DeploymentFailure(abi, wrapped);
+        }
+        catch (Exception exception) when (exception is DllNotFoundException or
+            EntryPointNotFoundException or BadImageFormatException or
+            LibRawBridgeException or LibRawProgrammingException)
+        {
+            var wrapped = new LibRawDeploymentException(
+                LibRawRuntimeComponent.Bridge,
+                abi == null ? LibRawDeploymentStage.Load : LibRawDeploymentStage.RuntimeQuery,
+                exception.Message,
+                exception);
+            return DeploymentFailure(abi, wrapped);
+        }
+    }
+
+    private static HandshakeState DeploymentFailure(
+        uint? abi,
+        LibRawDeploymentException exception)
+    {
+        var observations = new LibRawRuntimeObservations(
+            abi,
+            null,
+            null,
+            null,
+            exception.Component ?? LibRawRuntimeComponent.Bridge,
+            exception.Stage ?? (abi == null
+                ? LibRawDeploymentStage.Load
+                : LibRawDeploymentStage.RuntimeQuery),
+            exception.Message);
+        return new(LibRawRuntimeHealthEvaluator.Evaluate(observations), null);
     }
 }

@@ -149,6 +149,9 @@ First frame is sacred: nothing non-visual happens before the window is shown.
    `MainWindowViewModel`, show `MainWindow`, then post `CompleteStartupAsync` at
    `Background` dispatcher priority.
 3. `CompleteStartupAsync` (off the first-frame path):
+   - probe native RAW health on a worker thread, publish pending/degraded About state,
+     and inject the completed immutable result into both RAW composition branches
+     before workspace readiness;
    - finish or roll back a pending journaled move, then resolve `locations.json`;
    - branch on an existing catalog signature rather than a configured path. A fresh or
      configured-but-empty install renders the static Welcome step before any SQLite open;

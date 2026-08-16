@@ -76,8 +76,8 @@ public sealed class LibRawBaselineProbeTests
         _output.WriteLine($"libraw_version_string={version}");
         _output.WriteLine($"bridge_abi={runtime.BridgeAbiVersion}");
         _output.WriteLine($"capability_mask=0x{capabilities:X8}");
-        _output.WriteLine($"jpeg_available={(capabilities & 0x80) != 0} (capability bit)");
-        _output.WriteLine($"zlib_available={(capabilities & 0x40) != 0} (capability bit)");
+        _output.WriteLine($"jpeg_available={(capabilities & LibRawCapabilities.Jpeg) != 0} (capability bit)");
+        _output.WriteLine($"zlib_available={(capabilities & LibRawCapabilities.Zlib) != 0} (capability bit)");
         _output.WriteLine($"lcms_available={HasDependency(inventory, "lcms")} (dependency graph)");
         _output.WriteLine($"openmp_available={HasOpenMp(inventory)} (dependency graph)");
         _output.WriteLine($"loaded_module={loadedPath}");

@@ -3,6 +3,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 
@@ -32,9 +33,11 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         ISourceAvailabilityService? availabilityService = null,
         Action<Action>? postSelection = null,
         UpdateCheckService? updateCheckService = null,
-        UpdateInstallChannel? updateInstallChannel = null)
+        UpdateInstallChannel? updateInstallChannel = null,
+        LibRawRuntimeHealth? rawRuntimeHealth = null)
     {
         _catalogService = catalogService;
+        _rawRuntimeHealth = rawRuntimeHealth;
         _updateCheckService = updateCheckService ?? new UpdateCheckService();
         _updateInstallChannel = updateInstallChannel ?? UpdateChannelSelector.Current;
         _exportActivities = new BackgroundExportActivityRegistry(
@@ -44,13 +47,15 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             catalogService.HasExplicitPath ? catalogService.CatalogPath : null);
         _imageService = new Lazy<ImageService>(() =>
         {
+            var health = _rawRuntimeHealth ?? LibRawNativeSupport.Health;
             var loader = baseLoader ?? new BaseLoaderRouter(
-                new RawBaseLoader(),
+                new RawBaseLoader(health),
                 new StandardBaseLoader());
             var service = new ImageService(
                 catalogService,
                 loader,
-                availabilityService ?? new SourceAvailabilityService());
+                availabilityService ?? new SourceAvailabilityService(),
+                health);
             service.PreviewRefreshed += OnPreviewRefreshed;
             service.BaseRefreshStateChanged += OnBaseRefreshStateChanged;
             service.RenderedThumbnailWorkStarted +=

@@ -102,6 +102,8 @@ public sealed class RawBaseLoaderTests
         Assert.Equal(1u, runtime.BridgeAbiVersion);
         Assert.Equal(0x001602u, runtime.LibRawVersionNumber);
         Assert.StartsWith("0.22.2", runtime.LibRawVersion);
+        Assert.NotEqual(0u, runtime.Capabilities & LibRawCapabilities.Jpeg);
+        Assert.NotEqual(0u, runtime.Capabilities & LibRawCapabilities.Zlib);
         Assert.True(new RawBaseLoader().CanLoad(new ImageFile("sample.CR2")));
     }
 

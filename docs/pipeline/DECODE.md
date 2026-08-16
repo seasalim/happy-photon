@@ -26,8 +26,9 @@ and FBDD off.
 
 - Mosaic RAW extensions (`.CR2 .CR3 .NEF .NRW .ARW .SRF .SR2 .DNG .RAF .ORF .RW2 .PEF`)
   route to `RawBaseLoader`. When native LibRaw is unavailable or decoding fails, the
-  router logs the fallback and tries `StandardBaseLoader`; RAF deliberately has no
-  Magick fallback on Windows.
+  router tries `StandardBaseLoader`; a health rejection emits one process-level
+  diagnostic, while a genuine per-file decode failure is logged at the router. RAF
+  deliberately has no Magick fallback on Windows.
 - `.HEIC .HEIF` route to `StandardBaseLoader` with `Kind = HeicPlatform`. They are
   standard image sources rather than RAW files, including in the thumbnail path.
 - Everything else (`.JPG .JPEG .PNG .BMP .GIF .TIFF .WEBP`) → `StandardBaseLoader`.
@@ -154,9 +155,15 @@ binding. NuGet selects the matching RID assets. The binding resolves the bridge 
 LibRaw 0.22.2 companion from one package-local directory by absolute path; it never
 allows a system or PATH copy to satisfy either name. Single-file extraction uses the
 runtime's native search-directory contract, while loose development builds use their
-RID-resolved output directory. `LibRawNativeSupport` performs the bridge ABI/runtime
-handshake once, and base decoding plus thumbnail/metadata routing fall back to
-Magick.NET when deployment or decoding fails.
+RID-resolved output directory. `LibRawNativeSupport` performs one process-wide health
+probe. It requires bridge ABI 1, numeric LibRaw version `0x001602` exactly, and
+LibRaw's JPEG and zlib capability bits. An ABI mismatch stops before the versioned
+runtime structure is queried. Resolution and load failures retain
+bridge-versus-companion attribution, and every rejection records the safely observed
+ABI, version, version string, and capability mask. One error-level diagnostic is
+emitted for a rejected runtime; fallback-eligible base decoding plus thumbnail/metadata
+routing then use Magick.NET. The About surface reports this degraded state and includes
+the same facts in copied support text.
 
 The same loader parameters and golden fixtures cover Windows, Linux, and macOS. The
 cross-platform comparison uses the mean ΔE bound documented in TESTING.md §3.
