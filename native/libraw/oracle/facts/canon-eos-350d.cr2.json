@@ -1,0 +1,13 @@
+{
+  "fixture":"canon-eos-350d.cr2",
+  "oracle":{"isolated":true,"module":"raw_r.dll","sha256":"F500C0732FEB21B188D5B52CEA05FD824D5B3C8016EB2CA68D8312ACC9F914B9","version":"0.21.1"},
+  "extent":16370496,
+  "raw_pitch":7032,
+  "dimensions":{"raw_width":3516,"raw_height":2328,"width":3474,"height":2314,"top_margin":14,"left_margin":42},
+  "sensor":{"colors":3,"filters":3031741620,"dng_version":0,"xtrans":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"cdesc":"RGBG"},
+  "black":256,"maximum":4095,
+  "cblack":{"count":4104,"block_rows":0,"block_columns":0,"values":[0,0,0,0,0,0]},
+  "camera":{"multiplier_count":3,"multipliers":[2170,1018,1755],"matrix_rows":3,"matrix_columns":3,"matrix":[[1.72291207,-0.899522841,0.176610723],[0.0193507429,1.33934891,-0.35869965],[0.0241905022,-0.314988643,1.29079819]]},
+  "fuji":{"present":false,"exposure_midpoint_shift":-999,"dynamic_range":65535,"dynamic_range_setting":65535,"development_dynamic_range":65535,"auto_dynamic_range":65535},
+  "service":{"focal_length_35mm":0,"gps_parsed":0}
+}

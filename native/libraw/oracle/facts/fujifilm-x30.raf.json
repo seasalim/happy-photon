@@ -1,0 +1,13 @@
+{
+  "fixture":"fujifilm-x30.raf",
+  "oracle":{"isolated":true,"module":"raw_r.dll","sha256":"F500C0732FEB21B188D5B52CEA05FD824D5B3C8016EB2CA68D8312ACC9F914B9","version":"0.21.1"},
+  "extent":24674304,
+  "raw_pitch":8192,
+  "dimensions":{"raw_width":4096,"raw_height":3012,"width":4032,"height":3012,"top_margin":0,"left_margin":0},
+  "sensor":{"colors":3,"filters":9,"dng_version":0,"xtrans":[1,2,1,1,0,1,0,1,0,2,1,2,1,2,1,1,0,1,1,0,1,1,2,1,2,1,2,0,1,0,1,0,1,1,2,1],"cdesc":"RGBG"},
+  "black":0,"maximum":4095,
+  "cblack":{"count":4104,"block_rows":6,"block_columns":6,"values":[0,0,0,0,6,6,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256]},
+  "camera":{"multiplier_count":3,"multipliers":[526,302,582],"matrix_rows":3,"matrix_columns":3,"matrix":[[1.35193634,-0.0970359072,-0.254900455],[-0.149987638,1.45531178,-0.305324107],[-0.0533698648,-0.479973018,1.53334284]]},
+  "fuji":{"present":true,"exposure_midpoint_shift":-0.579999983,"dynamic_range":1,"dynamic_range_setting":0,"development_dynamic_range":65535,"auto_dynamic_range":100},
+  "service":{"focal_length_35mm":0,"gps_parsed":0}
+}

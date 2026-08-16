@@ -1,0 +1,13 @@
+{
+  "fixture":"nikon-d70-burst-1.nef",
+  "oracle":{"isolated":true,"module":"raw_r.dll","sha256":"F500C0732FEB21B188D5B52CEA05FD824D5B3C8016EB2CA68D8312ACC9F914B9","version":"0.21.1"},
+  "extent":12245120,
+  "raw_pitch":6080,
+  "dimensions":{"raw_width":3040,"raw_height":2014,"width":3039,"height":2014,"top_margin":0,"left_margin":0},
+  "sensor":{"colors":3,"filters":505290270,"dng_version":0,"xtrans":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"cdesc":"RGBG"},
+  "black":0,"maximum":4095,
+  "cblack":{"count":4104,"block_rows":0,"block_columns":0,"values":[0,0,0,0,0,0]},
+  "camera":{"multiplier_count":3,"multipliers":[555,256,388],"matrix_rows":3,"matrix_columns":3,"matrix":[[1.53069603,-0.416853815,-0.113842271],[-0.00771348132,1.28809726,-0.280383736],[0.0115319146,-0.214091733,1.20255983]]},
+  "fuji":{"present":false,"exposure_midpoint_shift":-999,"dynamic_range":65535,"dynamic_range_setting":65535,"development_dynamic_range":65535,"auto_dynamic_range":65535},
+  "service":{"focal_length_35mm":75,"gps_parsed":0}
+}

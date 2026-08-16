@@ -1,0 +1,13 @@
+{
+  "fixture":"pentax-k-r.dng",
+  "oracle":{"isolated":true,"module":"raw_r.dll","sha256":"F500C0732FEB21B188D5B52CEA05FD824D5B3C8016EB2CA68D8312ACC9F914B9","version":"0.21.1"},
+  "extent":24963072,
+  "raw_pitch":8704,
+  "dimensions":{"raw_width":4352,"raw_height":2868,"width":4309,"height":2868,"top_margin":0,"left_margin":0},
+  "sensor":{"colors":3,"filters":505290270,"dng_version":16842752,"xtrans":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"cdesc":"RGBG"},
+  "black":0,"maximum":4030,
+  "cblack":{"count":4104,"block_rows":2,"block_columns":2,"values":[0,0,0,0,2,2,64,63,63,64]},
+  "camera":{"multiplier_count":3,"multipliers":[1.87109375,1,1.546875],"matrix_rows":3,"matrix_columns":3,"matrix":[[1.48433197,-0.484418452,8.65217444e-05],[-0.129068121,1.34780538,-0.21873723],[0.0507557541,-0.390749633,1.33999383]]},
+  "fuji":{"present":false,"exposure_midpoint_shift":-999,"dynamic_range":65535,"dynamic_range_setting":65535,"development_dynamic_range":65535,"auto_dynamic_range":65535},
+  "service":{"focal_length_35mm":82,"gps_parsed":0}
+}

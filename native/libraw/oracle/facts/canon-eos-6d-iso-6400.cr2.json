@@ -1,0 +1,13 @@
+{
+  "fixture":"canon-eos-6d-iso-6400.cr2",
+  "oracle":{"isolated":true,"module":"raw_r.dll","sha256":"F500C0732FEB21B188D5B52CEA05FD824D5B3C8016EB2CA68D8312ACC9F914B9","version":"0.21.1"},
+  "extent":41292288,
+  "raw_pitch":11136,
+  "dimensions":{"raw_width":5568,"raw_height":3708,"width":5496,"height":3670,"top_margin":38,"left_margin":72},
+  "sensor":{"colors":3,"filters":3031741620,"dng_version":0,"xtrans":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"cdesc":"RGBG"},
+  "black":2048,"maximum":15490,
+  "cblack":{"count":4104,"block_rows":0,"block_columns":0,"values":[0,0,0,0,0,0]},
+  "camera":{"multiplier_count":3,"multipliers":[1830,1024,1938],"matrix_rows":3,"matrix_columns":3,"matrix":[[1.91254163,-1.0586561,0.146114409],[-0.224856824,1.64657903,-0.421722174],[0.00986511167,-0.509288609,1.4994235]]},
+  "fuji":{"present":false,"exposure_midpoint_shift":-999,"dynamic_range":65535,"dynamic_range_setting":65535,"development_dynamic_range":65535,"auto_dynamic_range":65535},
+  "service":{"focal_length_35mm":0,"gps_parsed":1}
+}

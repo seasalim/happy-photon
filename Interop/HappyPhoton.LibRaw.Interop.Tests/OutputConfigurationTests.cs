@@ -1,0 +1,57 @@
+using Xunit;
+
+namespace HappyPhoton.LibRaw.Interop.Tests;
+
+public sealed class OutputConfigurationTests
+{
+    [Theory]
+    [InlineData(LibRawHighlightMode.Blend, LibRawFbddMode.Off, true, 2, 0)]
+    [InlineData(LibRawHighlightMode.Blend, LibRawFbddMode.Light, false, 2, 1)]
+    [InlineData(LibRawHighlightMode.Blend, LibRawFbddMode.Full, true, 2, 2)]
+    [InlineData(LibRawHighlightMode.Clip, LibRawFbddMode.Off, false, 0, 0)]
+    [InlineData(LibRawHighlightMode.Clip, LibRawFbddMode.Light, true, 0, 1)]
+    [InlineData(LibRawHighlightMode.Clip, LibRawFbddMode.Full, false, 0, 2)]
+    public void Linear_PinsDeterministicParameters(LibRawHighlightMode highlight,
+        LibRawFbddMode noiseReduction, bool preview, int expectedHighlight, int expectedFbdd)
+    {
+        var value = LibRawOutputConfiguration.Linear(highlight, noiseReduction, preview);
+
+        Assert.Equal(1u, value.AbiVersion);
+        Assert.Equal(16, value.OutputBits);
+        Assert.Equal(1, value.OutputColor);
+        Assert.Equal(1, value.GammaPower);
+        Assert.Equal(1, value.GammaSlope);
+        Assert.True(value.NoAutoBright);
+        Assert.Equal(preview, value.HalfSize);
+        Assert.Equal(expectedHighlight, value.HighlightMode);
+        Assert.Equal(expectedFbdd, value.FbddNoiseReduction);
+        Assert.True(value.UseCameraWhiteBalance);
+        Assert.False(value.UseAutoWhiteBalance);
+        Assert.True(value.UseCameraMatrix);
+        Assert.Equal([0f, 0f, 0f, 0f], Multipliers(value));
+    }
+
+    [Fact]
+    public void FullDecodeSrgb_PinsLegacyEightBitGammaParameters()
+    {
+        var value = LibRawOutputConfiguration.FullDecodeSrgb();
+
+        Assert.Equal(1u, value.AbiVersion);
+        Assert.Equal(8, value.OutputBits);
+        Assert.Equal(1, value.OutputColor);
+        Assert.Equal(1.0 / 2.4, value.GammaPower);
+        Assert.Equal(12.92, value.GammaSlope);
+        Assert.False(value.NoAutoBright);
+        Assert.False(value.HalfSize);
+        Assert.Equal(0, value.HighlightMode);
+        Assert.Equal(0, value.FbddNoiseReduction);
+        Assert.True(value.UseCameraWhiteBalance);
+        Assert.False(value.UseAutoWhiteBalance);
+        Assert.True(value.UseCameraMatrix);
+        Assert.Equal([0f, 0f, 0f, 0f], Multipliers(value));
+    }
+
+    private static float[] Multipliers(LibRawOutputConfiguration value) =>
+        [value.UserMultiplier0, value.UserMultiplier1,
+         value.UserMultiplier2, value.UserMultiplier3];
+}
