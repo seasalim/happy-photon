@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using HappyPhoton.Models;
-using HappyPhoton.Services;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -29,58 +26,16 @@ public sealed class ExportPipelinePerformanceTests
                 Path.Combine(
                     GoldenTestPaths.AssetDirectory,
                     "fujifilm-x30.raf");
-            var file = new ImageFile(rawPath)
-            {
-                EditSettings = new EditSettings
-                {
-                    Detail = new DetailSettings { ChromaNr = 100 }
-                }
-            };
-            var loader = new MeasuringLoader(new BaseLoaderRouter(
-                new RawBaseLoader(),
-                new StandardBaseLoader()));
-            var service = new ImageExportService(
-                new RenderPipeline(),
-                loader,
-                new ExportMetadataService());
-            var settings = new ExportSettings
-            {
-                OutputFolder = outputFolder,
-                Format = ExportFormat.Jpeg,
-                Quality = 85
-            };
-            var process = Process.GetCurrentProcess();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            process.Refresh();
-            var baseline = process.PrivateMemorySize64;
-            var peak = baseline;
-            var stopwatch = Stopwatch.StartNew();
-
-            var export = service.ExportBatchAsync([file], settings);
-            while (!export.IsCompleted)
-            {
-                await Task.Delay(10);
-                process.Refresh();
-                peak = Math.Max(peak, process.PrivateMemorySize64);
-            }
-
-            Assert.Equal(1, await export);
-            stopwatch.Stop();
-            process.Refresh();
-            peak = Math.Max(peak, process.PrivateMemorySize64);
-            var info = new ImageMagick.MagickImageInfo(
-                Path.Combine(
-                    outputFolder,
-                    $"{Path.GetFileNameWithoutExtension(rawPath)}.jpg"));
+            var measurement = await RawExportPerformanceMeasurement.MeasureAsync(
+                rawPath,
+                outputFolder);
             _output.WriteLine(
-                $"Full RAW export with chroma NR 100 {info.Width}x{info.Height}: " +
-                $"{stopwatch.Elapsed.TotalSeconds:F2} s, " +
+                $"Full RAW export with chroma NR 100 {measurement.Width}x{measurement.Height}: " +
+                $"{measurement.Elapsed.TotalSeconds:F2} s, " +
                 $"after decode " +
-                $"{(loader.AfterFullDecodeBytes - baseline) / 1048576.0:F1} MiB, " +
+                $"{measurement.AfterDecodePrivateBytes / 1048576.0:F1} MiB, " +
                 $"peak private-memory delta " +
-                $"{(peak - baseline) / 1048576.0:F1} MiB.");
+                $"{measurement.PeakPrivateBytes / 1048576.0:F1} MiB.");
         }
         finally
         {
@@ -88,32 +43,4 @@ public sealed class ExportPipelinePerformanceTests
         }
     }
 
-    private sealed class MeasuringLoader(IBaseImageLoader inner)
-        : IBaseImageLoader
-    {
-        public long AfterFullDecodeBytes { get; private set; }
-
-        public bool CanLoad(ImageFile file) => inner.CanLoad(file);
-
-        public BaseImage? LoadPreviewBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) =>
-            inner.LoadPreviewBase(file, decode, cancellationToken);
-
-        public BaseImage? LoadFullBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken)
-        {
-            var result = inner.LoadFullBase(
-                file,
-                decode,
-                cancellationToken);
-            var process = Process.GetCurrentProcess();
-            process.Refresh();
-            AfterFullDecodeBytes = process.PrivateMemorySize64;
-            return result;
-        }
-    }
 }
