@@ -46,7 +46,7 @@ public sealed class GoldenRenderTests
             if (GoldenTestPaths.UpdateGoldens)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(baselinePath)!);
-                actual.Write(baselinePath);
+                actual.Write(baselinePath, ExportEncoder.CreatePngWriteDefines());
                 continue;
             }
 

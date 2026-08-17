@@ -15,6 +15,14 @@ block-mean error from 0.1190 to 0.0052 LSB, but increased point error to 0.3322 
 mean and 0.9883 LSB maximum and would add a full-image pass to interactive preview.
 Happy Photon therefore keeps the lower-error, lower-cost conversion; JPEG/WebP also
 receive lossy encoder noise, while PNG remains an explicit 8-bit output.
+
+Nearest-level is the **only** 16-to-8 conversion in the product: display, PNG, JPEG,
+and WebP all reach it through Magick's native quantizer, so preview and export agree
+code for code before any lossy encoding. Never call `Depth = 8` on a render — it
+quantizes toward zero and silently shifts roughly half of all samples one code below
+the preview (measured 30–51% of channel samples, `pngMinusPreview` in {−1, 0}).
+Request 8-bit output through the encoder's own define instead. The opt-in precision
+harness (TESTING.md §5) gates this equality per fixture as `previewPng=pass`.
 `RenderResult` can carry optional clipping masks, but the current display path does
 not request them (RENDER.md §7).
 
@@ -41,7 +49,7 @@ download has started.
 | Format | Rules |
 |--------|-------|
 | JPEG | quality = user setting (default 85). Chroma subsampling: `jpeg:sampling-factor` = `4:4:4` when quality ≥ 90, else `4:2:0` (explicit, no longer encoder default). Baseline (non-progressive). |
-| PNG | 8-bit output (`Depth = 8` before write); the Q16 working pipeline does not imply 16-bit PNG output. |
+| PNG | 8-bit output through `PngWriteDefines.BitDepth = 8`; the Q16 working pipeline does not imply 16-bit PNG output. |
 | WebP | quality = user setting, lossy. |
 
 **Every export embeds the sRGB ICC profile** (`ColorProfile.SRGB`) — for all formats
@@ -96,6 +104,8 @@ online-only original return failure code `hydration_required`.
 
 - Exported JPEG opened in a color-managed browser matches the in-app preview (golden
   ΔE bound; the P3-source test asset is the sentinel case).
+- Preview BGRA and exported PNG read-back carry identical 8-bit codes for the same
+  render (precision harness `previewPng` gate, §1).
 - Export of a RAW carries capture date, camera, exposure EXIF; orientation displays
   upright everywhere; no embedded stale thumbnail (verify with exiftool in CI or a
   Magick profile read-back test).

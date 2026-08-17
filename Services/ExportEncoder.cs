@@ -44,7 +44,9 @@ internal static class ExportEncoder
 
     private static void WritePng(MagickImage image, string path)
     {
-        image.Depth = 8;
+        // Depth is deliberately left alone: setting it to 8 quantizes toward zero,
+        // while the writer's BitDepth define rounds to the nearest level like the
+        // display path (OUTPUT.md §1).
         image.Quality = PngAdaptiveFilterQuality;
         image.RemoveArtifact("png:exclude-chunk");
         image.Settings.RemoveDefine(MagickFormat.Png, "exclude-chunk");

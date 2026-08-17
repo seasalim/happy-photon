@@ -56,7 +56,6 @@ internal sealed class CurrentPipelineGoldenRenderer
         var output = new MagickImage(rendered.Image);
         try
         {
-            output.Depth = 8;
             output.Format = MagickFormat.Png;
             output.Strip();
             return output;
