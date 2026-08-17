@@ -214,6 +214,12 @@ repeat the command and byte-compare the two payload sections. TIFF source-code a
 stage-reconstruction precondition failures abort before report emission; the reported
 gate rows cover the non-aborting base and preview/export comparisons.
 
+The Phase 1 Slice A1 boundary census uses the separate
+`HAPPY_PHOTON_PRECISION_CENSUS=1` gate. Run
+`$env:HAPPY_PHOTON_PRECISION_CENSUS='1'; dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter FullyQualifiedName~PrecisionBoundaryCensusTests --logger "console;verbosity=detailed"`
+twice in fresh processes and byte-compare the metric payloads; environment identity and
+elapsed time are emitted outside that deterministic section.
+
 The LibRaw resolver's single-file extraction path has a committed publish smoke. Run
 the matching command on Windows or Linux; it restores in locked mode, publishes a
 self-contained single-file console, decodes the Canon fixture, and asserts that both
