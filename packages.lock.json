@@ -201,8 +201,8 @@
       },
       "HappyPhoton.LibRaw.Native": {
         "type": "Transitive",
-        "resolved": "0.22.2.7",
-        "contentHash": "FqWACCCzNwJ9YTYHpT75h0/inQxpqhmhIuZiRVPoH/60sVxtxjBYVEWE4bGch4eIeENqlyH65lGpxXRgn5LNag=="
+        "resolved": "0.22.2.10",
+        "contentHash": "S1nBt/BqCIEJZEr7BHeUYrYZOkmAXZbGUajIWiojHEJcoifw6bSOnFXg8qi4WJpiR9eAMnA1bwGzfBIrT+b6nA=="
       },
       "HarfBuzzSharp": {
         "type": "Transitive",
@@ -332,7 +332,7 @@
       "happyphoton.libraw.interop": {
         "type": "Project",
         "dependencies": {
-          "HappyPhoton.LibRaw.Native": "[0.22.2.7, )"
+          "HappyPhoton.LibRaw.Native": "[0.22.2.10, )"
         }
       }
     },
@@ -361,8 +361,8 @@
       },
       "HappyPhoton.LibRaw.Native": {
         "type": "Transitive",
-        "resolved": "0.22.2.7",
-        "contentHash": "FqWACCCzNwJ9YTYHpT75h0/inQxpqhmhIuZiRVPoH/60sVxtxjBYVEWE4bGch4eIeENqlyH65lGpxXRgn5LNag=="
+        "resolved": "0.22.2.10",
+        "contentHash": "S1nBt/BqCIEJZEr7BHeUYrYZOkmAXZbGUajIWiojHEJcoifw6bSOnFXg8qi4WJpiR9eAMnA1bwGzfBIrT+b6nA=="
       },
       "HarfBuzzSharp.NativeAssets.Linux": {
         "type": "Transitive",
@@ -425,8 +425,8 @@
       },
       "HappyPhoton.LibRaw.Native": {
         "type": "Transitive",
-        "resolved": "0.22.2.7",
-        "contentHash": "FqWACCCzNwJ9YTYHpT75h0/inQxpqhmhIuZiRVPoH/60sVxtxjBYVEWE4bGch4eIeENqlyH65lGpxXRgn5LNag=="
+        "resolved": "0.22.2.10",
+        "contentHash": "S1nBt/BqCIEJZEr7BHeUYrYZOkmAXZbGUajIWiojHEJcoifw6bSOnFXg8qi4WJpiR9eAMnA1bwGzfBIrT+b6nA=="
       },
       "HarfBuzzSharp.NativeAssets.Linux": {
         "type": "Transitive",
@@ -489,8 +489,8 @@
       },
       "HappyPhoton.LibRaw.Native": {
         "type": "Transitive",
-        "resolved": "0.22.2.7",
-        "contentHash": "FqWACCCzNwJ9YTYHpT75h0/inQxpqhmhIuZiRVPoH/60sVxtxjBYVEWE4bGch4eIeENqlyH65lGpxXRgn5LNag=="
+        "resolved": "0.22.2.10",
+        "contentHash": "S1nBt/BqCIEJZEr7BHeUYrYZOkmAXZbGUajIWiojHEJcoifw6bSOnFXg8qi4WJpiR9eAMnA1bwGzfBIrT+b6nA=="
       },
       "HarfBuzzSharp.NativeAssets.Linux": {
         "type": "Transitive",

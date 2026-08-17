@@ -13,13 +13,13 @@ public sealed class LibRawRuntimeHealthTests
     public void RejectionDiagnostic_NamesComponentAndEveryObservedFact()
     {
         var health = Reject(new(
-            1,
+            LibRawOutputConfiguration.Version,
             0x001601,
             "0.22.1-Release",
             0x000000C0));
 
         Assert.Contains("component=LibRaw companion", health.DiagnosticText);
-        Assert.Contains("observed bridge ABI=1", health.DiagnosticText);
+        Assert.Contains("observed bridge ABI=2", health.DiagnosticText);
         Assert.Contains("LibRaw version=0x001601", health.DiagnosticText);
         Assert.Contains("LibRaw version string=0.22.1-Release", health.DiagnosticText);
         Assert.Contains("capability mask=0x000000C0", health.DiagnosticText);
@@ -83,7 +83,10 @@ public sealed class LibRawRuntimeHealthTests
 
     public static IEnumerable<object[]> Rejections()
     {
-        yield return [Reject(Healthy() with { BridgeAbiVersion = 2 })];
+        yield return [Reject(Healthy() with
+        {
+            BridgeAbiVersion = LibRawOutputConfiguration.Version + 1
+        })];
         yield return [Reject(Healthy() with { LibRawVersionNumber = 0x001601 })];
         yield return [Reject(Healthy() with { Capabilities = LibRawCapabilities.Zlib })];
         yield return [Reject(Healthy() with { Capabilities = LibRawCapabilities.Jpeg })];

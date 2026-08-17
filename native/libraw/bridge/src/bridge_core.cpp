@@ -271,4 +271,29 @@ extern "C" int32_t HPLR_CALL hplr_test_hold_libraw(hplr_handle handle,
         return static_cast<int32_t>(HPLR_OK);
     });
 }
+
+extern "C" int32_t HPLR_CALL hplr_test_set_camera_facts(hplr_handle handle,
+    uint32_t optional_facts, hplr_error *error) {
+    return hplr::boundary(error, [&]() -> int32_t {
+        std::unique_ptr<hplr::Operation> operation;
+        auto status = hplr::begin(handle, operation, error);
+        if (status != HPLR_OK) return status;
+        auto &color = operation->get().raw.imgdata.color;
+        for (uint32_t channel = 0; channel < 4; ++channel) {
+            color.cam_mul[channel] = static_cast<float>(10 + channel);
+            color.pre_mul[channel] = optional_facts & HPLR_TEST_PRE_MULTIPLIERS
+                ? static_cast<float>(20 + channel) : 0;
+            color.linear_max[channel] = optional_facts & HPLR_TEST_LINEAR_MAX
+                ? 1000 + channel : 0;
+            for (uint32_t column = 0; column < 3; ++column)
+                color.cam_xyz[channel][column] = optional_facts & HPLR_TEST_CAMERA_FROM_XYZ
+                    ? static_cast<float>(200 + channel * 10 + column) : 0;
+        }
+        for (uint32_t row = 0; row < 3; ++row)
+            for (uint32_t column = 0; column < 4; ++column)
+                color.rgb_cam[row][column] = static_cast<float>(
+                    300 + row * 10 + column);
+        return static_cast<int32_t>(HPLR_OK);
+    });
+}
 #endif

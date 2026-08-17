@@ -16,7 +16,7 @@ public enum LibRawFbddMode
 /// <summary>A native-independent, versioned description of LibRaw output.</summary>
 public readonly record struct LibRawOutputConfiguration
 {
-    public const uint Version = 1;
+    public const uint Version = 2;
 
     public uint AbiVersion { get; init; }
     public int OutputBits { get; init; }

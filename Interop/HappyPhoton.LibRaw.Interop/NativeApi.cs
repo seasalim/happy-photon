@@ -5,7 +5,7 @@ namespace HappyPhoton.LibRaw.Interop;
 
 internal static unsafe class NativeApi
 {
-    private const uint Abi = 1;
+    private const uint Abi = 2;
     private const int ErrorCapacity = 512;
 
     internal static LibRawRuntime Runtime()

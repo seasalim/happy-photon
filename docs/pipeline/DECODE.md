@@ -80,11 +80,11 @@ Post-decode steps, in order:
    do not silently truncate the second green or other camera color. Also set
    `FullWidth/FullHeight` = the native full-resolution, orientation-applied dimensions
    (known from LibRaw sizes even for a half-size preview decode — RENDER.md §9 needs
-   them for σ scaling). Set `AsShotKelvin/Tint` to the documented 5500 / 0 fallback.
-   Bridge ABI v1 does not expose `pre_mul` or `cam_xyz`, so its normalized `rgb_cam`
-   cannot measure the capture illuminant from `cam_mul` alone. The stored camera facts
-   remain available for diagnostics and the ABI-v2 follow-up. Treat an identity
-   `rgb_cam` as LibRaw's unavailable-transform sentinel (WHITE_BALANCE.md §5).
+   them for σ scaling). Measure `AsShotKelvin/Tint` by projecting
+   `pre_mul / cam_mul` through `rgb_cam`; use 5500 / 0 only when a required fact is
+   absent. Bridge ABI v2 also exposes `cam_xyz` and per-channel `linear_max`, which
+   remain typed at the interop boundary until a pipeline consumer needs them. Treat an
+   identity `rgb_cam` as LibRaw's unavailable-transform sentinel (WHITE_BALANCE.md §5).
 
 ### 2.1 RAW Library previews
 
@@ -149,13 +149,13 @@ dotnet run --file scripts/evaluate-highlight-reconstruction.cs -- `
 
 ### 2.4 Platform runtime
 
-All supported platforms use `HappyPhoton.LibRaw.Native` 0.22.2.7 through the phase-2
+All supported platforms use `HappyPhoton.LibRaw.Native` 0.22.2.10 through the phase-2
 binding. NuGet selects the matching RID assets. The binding resolves the bridge and its
 LibRaw 0.22.2 companion from one package-local directory by absolute path; it never
 allows a system or PATH copy to satisfy either name. Single-file extraction uses the
 runtime's native search-directory contract, while loose development builds use their
 RID-resolved output directory. `LibRawNativeSupport` performs one process-wide health
-probe. It requires bridge ABI 1, numeric LibRaw version `0x001602` exactly, and
+probe. It requires bridge ABI 2, numeric LibRaw version `0x001602` exactly, and
 LibRaw's JPEG and zlib capability bits. An ABI mismatch stops before the versioned
 runtime structure is queried. Resolution and load failures retain
 bridge-versus-companion attribution, and every rejection records the safely observed

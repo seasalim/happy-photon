@@ -159,9 +159,17 @@ public sealed class WhiteBalanceModelTests
     }
 
     [Fact]
-    public void RawAsShot_UsesDocumentedFallback()
+    public void RawAsShot_UsesDocumentedFallbackWhenFactsAreMissing()
     {
-        Assert.Equal((5500d, 0d), WhiteBalanceModel.EstimateAsShot());
+        Assert.Equal(
+            (5500d, 0d),
+            WhiteBalanceModel.EstimateAsShot(null, null, null));
+        Assert.Equal(
+            (5500d, 0d),
+            WhiteBalanceModel.EstimateAsShot(
+                [2, 1, 1.5],
+                ChromaticAdaptation.Identity(),
+                null));
     }
 
     [Fact]
@@ -187,7 +195,70 @@ public sealed class WhiteBalanceModelTests
                 .Sum(column => camToSrgb[row, column]);
             Assert.InRange(sum, 1 - 1e-9, 1 + 1e-9);
         }
-        Assert.Equal((5500d, 0d), WhiteBalanceModel.EstimateAsShot());
+    }
+
+    [Fact]
+    public void SyntheticPreMultiplierProjection_RecoversAnchor()
+    {
+        var expectedKelvin = 6504d;
+        var xyz = WhiteBalanceModel.GetWhitePointXyz(expectedKelvin, 0);
+        var cameraNeutral = ChromaticAdaptation.XyzToLinearSrgb(xyz);
+        double[] camMul = [2.5, 1.25, 4];
+        var preMul = cameraNeutral
+            .Select((value, channel) => value * camMul[channel])
+            .ToArray();
+
+        var estimated = WhiteBalanceModel.EstimateAsShot(
+            camMul,
+            ChromaticAdaptation.Identity(),
+            preMul);
+
+        Assert.InRange(estimated.kelvin, expectedKelvin - 50, expectedKelvin + 50);
+        Assert.InRange(estimated.tint, -2, 2);
+    }
+
+    [Fact]
+    public void FourChannelPreMultiplierProjection_UsesEveryMatrixColumn()
+    {
+        var expectedKelvin = 6504d;
+        var xyz = WhiteBalanceModel.GetWhitePointXyz(expectedKelvin, 0);
+        var srgbWhite = ChromaticAdaptation.XyzToLinearSrgb(xyz);
+        double[] cameraNeutral =
+        [
+            srgbWhite[0],
+            srgbWhite[1] * 0.2,
+            srgbWhite[2],
+            srgbWhite[1] * 0.8
+        ];
+        double[] camMul = [2, 3, 4, 5];
+        var preMul = cameraNeutral
+            .Select((value, channel) => value * camMul[channel])
+            .ToArray();
+        double[,] camToSrgb =
+        {
+            { 1, 0, 0, 0 },
+            { 0, 1, 0, 1 },
+            { 0, 0, 1, 0 }
+        };
+
+        var estimated = WhiteBalanceModel.EstimateAsShot(
+            camMul,
+            camToSrgb,
+            preMul);
+
+        Assert.InRange(estimated.kelvin, expectedKelvin - 50, expectedKelvin + 50);
+        Assert.InRange(estimated.tint, -2, 2);
+    }
+
+    [Fact]
+    public void MismatchedCameraFactShapes_UseDocumentedFallback()
+    {
+        var estimated = WhiteBalanceModel.EstimateAsShot(
+            [2, 1, 1.5, 1],
+            ChromaticAdaptation.Identity(),
+            [1, 1, 1, 1]);
+
+        Assert.Equal((5500d, 0d), estimated);
     }
 
     [Fact]

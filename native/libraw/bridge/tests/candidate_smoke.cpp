@@ -2,7 +2,9 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <string_view>
 
 #ifdef __APPLE__
@@ -92,6 +94,52 @@ void decode(const std::filesystem::path &fixture, bool linear) {
     CHECK(hplr_close(handle, &error.value) == HPLR_OK);
 }
 
+hplr_camera_facts camera_facts(const std::filesystem::path &fixture) {
+    const auto utf8 = fixture.u8string();
+    Error error;
+    hplr_handle handle{};
+    CHECK(hplr_open_utf8(reinterpret_cast<const uint8_t *>(utf8.data()),
+          static_cast<uint32_t>(utf8.size()), &handle, &error.value) == HPLR_OK);
+    CHECK(hplr_unpack(handle, &error.value) == HPLR_OK);
+    auto facts = output<hplr_camera_facts>();
+    CHECK(hplr_get_camera_facts(handle, &facts, &error.value) == HPLR_OK);
+    CHECK(facts.pre_multiplier_count == 0 ||
+          facts.pre_multiplier_count == facts.multiplier_count);
+    CHECK(facts.camera_from_xyz_rows == 0 ||
+          facts.camera_from_xyz_rows == facts.multiplier_count);
+    CHECK(facts.camera_from_xyz_columns ==
+          (facts.camera_from_xyz_rows ? 3u : 0u));
+    CHECK(facts.linear_max_count == 0 ||
+          facts.linear_max_count == facts.multiplier_count);
+    CHECK(hplr_close(handle, &error.value) == HPLR_OK);
+    return facts;
+}
+
+template<typename T>
+void print_values(const T *values, uint32_t count) {
+    std::cout << '[';
+    for (uint32_t index = 0; index < count; ++index) {
+        if (index) std::cout << ',';
+        std::cout << values[index];
+    }
+    std::cout << ']';
+}
+
+void print_camera_facts(const hplr_camera_facts &facts) {
+    std::cout << ",\"camera_facts\":{\"pre_mul_count\":"
+              << facts.pre_multiplier_count << ",\"pre_mul\":";
+    print_values(facts.pre_multipliers, facts.pre_multiplier_count);
+    std::cout << ",\"camera_from_xyz_rows\":" << facts.camera_from_xyz_rows
+              << ",\"camera_from_xyz_columns\":" << facts.camera_from_xyz_columns
+              << ",\"camera_from_xyz\":";
+    print_values(facts.camera_from_xyz,
+                 facts.camera_from_xyz_rows * facts.camera_from_xyz_columns);
+    std::cout << ",\"linear_max_count\":" << facts.linear_max_count
+              << ",\"linear_max\":";
+    print_values(facts.linear_max, facts.linear_max_count);
+    std::cout << '}';
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
@@ -111,15 +159,18 @@ int main(int argc, char **argv) {
     CHECK((runtime.capabilities & zlib_capability) != 0);
     CHECK(runtime.thread_safe_variant == HPLR_EXPECT_REENTRANT);
     const auto fixture = argv[staged ? 2 : 3];
+    const auto facts = camera_facts(fixture);
     decode(fixture, true);
     decode(fixture, false);
     if (!failures) {
+        std::cout << std::setprecision(std::numeric_limits<float>::max_digits10);
         std::cout << "{\"bridge_abi\":" << hplr_abi_version()
                   << ",\"libraw_version\":" << runtime.libraw_version_number
                   << ",\"capabilities\":" << runtime.capabilities
                   << ",\"thread_safe\":"
-                  << (runtime.thread_safe_variant ? "true" : "false")
-                  << "}\n";
+                  << (runtime.thread_safe_variant ? "true" : "false");
+        print_camera_facts(facts);
+        std::cout << "}\n";
     }
     return failures ? 1 : 0;
 }

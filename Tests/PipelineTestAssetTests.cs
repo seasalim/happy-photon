@@ -87,7 +87,7 @@ public sealed class PipelineTestAssetTests
         context.Unpack();
         context.ConfigureOutput(new LibRawOutputConfiguration
         {
-            AbiVersion = 1, OutputBits = 16, OutputColor = 1,
+            AbiVersion = LibRawOutputConfiguration.Version, OutputBits = 16, OutputColor = 1,
             GammaPower = 1, GammaSlope = 1, NoAutoBright = true,
             UseCameraWhiteBalance = true, UseCameraMatrix = true
         });

@@ -36,7 +36,7 @@ foreach (var mode in modes)
     context.Unpack();
     context.ConfigureOutput(new LibRawOutputConfiguration
     {
-        AbiVersion = 1,
+        AbiVersion = LibRawOutputConfiguration.Version,
         OutputBits = 16,
         OutputColor = 1,
         GammaPower = 1,

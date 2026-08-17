@@ -25,7 +25,12 @@ public sealed record LibRawMetadata(
     int Orientation,
     LibRawGpsFacts Gps);
 
-public sealed record LibRawCameraFacts(float[] Multipliers, float[,] CameraToSrgb);
+public sealed record LibRawCameraFacts(
+    float[] Multipliers,
+    float[,] CameraToSrgb,
+    float[]? PreMultipliers,
+    float[,]? CameraFromXyz,
+    uint[]? LinearMax);
 
 public sealed record LibRawFujiFacts(
     float ExposureMidpointShift,

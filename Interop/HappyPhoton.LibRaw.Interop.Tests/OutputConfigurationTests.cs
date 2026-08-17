@@ -16,7 +16,7 @@ public sealed class OutputConfigurationTests
     {
         var value = LibRawOutputConfiguration.Linear(highlight, noiseReduction, preview);
 
-        Assert.Equal(1u, value.AbiVersion);
+        Assert.Equal(LibRawOutputConfiguration.Version, value.AbiVersion);
         Assert.Equal(16, value.OutputBits);
         Assert.Equal(1, value.OutputColor);
         Assert.Equal(1, value.GammaPower);
@@ -36,7 +36,7 @@ public sealed class OutputConfigurationTests
     {
         var value = LibRawOutputConfiguration.FullDecodeSrgb();
 
-        Assert.Equal(1u, value.AbiVersion);
+        Assert.Equal(LibRawOutputConfiguration.Version, value.AbiVersion);
         Assert.Equal(8, value.OutputBits);
         Assert.Equal(1, value.OutputColor);
         Assert.Equal(1.0 / 2.4, value.GammaPower);

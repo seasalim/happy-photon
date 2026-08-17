@@ -132,6 +132,25 @@ void facts_and_lifetime(const std::filesystem::path &fixture) {
         CHECK(hplr_free_image(thumbnail.allocation, &error.value) == HPLR_E_OWNERSHIP);
     }
     CHECK(hplr_unpack(handle, &error.value) == HPLR_OK);
+    camera = output<hplr_camera_facts>();
+    CHECK(hplr_get_camera_facts(handle, &camera, &error.value) == HPLR_OK);
+    CHECK(camera.pre_multiplier_count == 0 ||
+          camera.pre_multiplier_count == camera.multiplier_count);
+    CHECK(camera.camera_from_xyz_rows == 0 ||
+          camera.camera_from_xyz_rows == camera.multiplier_count);
+    CHECK(camera.camera_from_xyz_columns ==
+          (camera.camera_from_xyz_rows ? 3u : 0u));
+    CHECK(camera.linear_max_count == 0 ||
+          camera.linear_max_count == camera.multiplier_count);
+    for (uint32_t channel = 0; channel < camera.pre_multiplier_count; ++channel) {
+        CHECK(std::isfinite(camera.pre_multipliers[channel]));
+        CHECK(camera.pre_multipliers[channel] > 0);
+    }
+    for (uint32_t channel = 0; channel < camera.linear_max_count; ++channel)
+        CHECK(camera.linear_max[channel] > 0);
+    for (uint32_t row = 0; row < camera.camera_from_xyz_rows; ++row)
+        for (uint32_t column = 0; column < camera.camera_from_xyz_columns; ++column)
+            CHECK(std::isfinite(camera.camera_from_xyz[row * 3 + column]));
     CHECK(hplr_borrow_mosaic(handle, &mosaic, &error.value) == HPLR_OK);
     CHECK(mosaic.data && mosaic.byte_length ==
         static_cast<uint64_t>(mosaic.raw_pitch) * mosaic.raw_height);
@@ -147,6 +166,51 @@ void facts_and_lifetime(const std::filesystem::path &fixture) {
     CHECK(hplr_make_processed_image(handle, &processed, &error.value) == HPLR_OK);
     CHECK(processed.bits_per_sample == 16 && processed.channels == 3);
     CHECK(hplr_free_image(processed.allocation, &error.value) == HPLR_OK);
+    CHECK(hplr_close(handle, &error.value) == HPLR_OK);
+}
+
+void optional_camera_facts(const std::filesystem::path &fixture) {
+    constexpr uint32_t all_facts = HPLR_TEST_PRE_MULTIPLIERS |
+        HPLR_TEST_CAMERA_FROM_XYZ | HPLR_TEST_LINEAR_MAX;
+    Error error;
+    const auto handle = open(fixture);
+    CHECK(hplr_test_set_camera_facts(handle, all_facts, &error.value) == HPLR_OK);
+    auto camera = output<hplr_camera_facts>();
+    CHECK(hplr_get_camera_facts(handle, &camera, &error.value) == HPLR_OK);
+    CHECK(camera.multiplier_count == 4);
+    CHECK(camera.matrix_rows == 3 && camera.matrix_columns == 4);
+    CHECK(camera.pre_multiplier_count == 4);
+    CHECK(camera.camera_from_xyz_rows == 4 && camera.camera_from_xyz_columns == 3);
+    CHECK(camera.linear_max_count == 4);
+    for (uint32_t channel = 0; channel < 4; ++channel) {
+        CHECK(camera.multipliers[channel] == static_cast<float>(10 + channel));
+        CHECK(camera.pre_multipliers[channel] == static_cast<float>(20 + channel));
+        CHECK(camera.linear_max[channel] == 1000 + channel);
+        for (uint32_t row = 0; row < 3; ++row)
+            CHECK(camera.camera_to_srgb[row * 4 + channel] ==
+                static_cast<float>(300 + row * 10 + channel));
+        for (uint32_t column = 0; column < 3; ++column)
+            CHECK(camera.camera_from_xyz[channel * 3 + column] ==
+                static_cast<float>(200 + channel * 10 + column));
+    }
+
+    for (const auto missing : {HPLR_TEST_PRE_MULTIPLIERS,
+                               HPLR_TEST_CAMERA_FROM_XYZ,
+                               HPLR_TEST_LINEAR_MAX}) {
+        CHECK(hplr_test_set_camera_facts(handle, all_facts ^ missing,
+              &error.value) == HPLR_OK);
+        camera = output<hplr_camera_facts>();
+        CHECK(hplr_get_camera_facts(handle, &camera, &error.value) == HPLR_OK);
+        CHECK(camera.multiplier_count == 4);
+        CHECK(camera.pre_multiplier_count ==
+            (missing == HPLR_TEST_PRE_MULTIPLIERS ? 0 : 4));
+        CHECK(camera.camera_from_xyz_rows ==
+            (missing == HPLR_TEST_CAMERA_FROM_XYZ ? 0 : 4));
+        CHECK(camera.camera_from_xyz_columns ==
+            (missing == HPLR_TEST_CAMERA_FROM_XYZ ? 0 : 3));
+        CHECK(camera.linear_max_count ==
+            (missing == HPLR_TEST_LINEAR_MAX ? 0 : 4));
+    }
     CHECK(hplr_close(handle, &error.value) == HPLR_OK);
 }
 
@@ -237,6 +301,7 @@ int main(int argc, char **argv) {
     invalid_inputs();
     runtime_and_unicode(fixture);
     facts_and_lifetime(fixture);
+    optional_camera_facts(fixture);
     configuration_and_failures(fixture);
     concurrent_rejection(fixture);
     unsupported_mosaic(fixture);

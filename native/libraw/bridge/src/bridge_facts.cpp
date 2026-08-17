@@ -66,6 +66,42 @@ bool is_fuji(const char *make) {
     return true;
 }
 
+void copy_pre_multipliers(const libraw_colordata_t &color, uint32_t count,
+                          hplr_camera_facts &out) {
+    for (uint32_t channel = 0; channel < count; ++channel)
+        if (!std::isfinite(color.pre_mul[channel]) || color.pre_mul[channel] <= 0)
+            return;
+    out.pre_multiplier_count = count;
+    for (uint32_t channel = 0; channel < count; ++channel)
+        out.pre_multipliers[channel] = color.pre_mul[channel];
+}
+
+void copy_camera_from_xyz(const libraw_colordata_t &color, uint32_t count,
+                          hplr_camera_facts &out) {
+    bool nonzero = false;
+    for (uint32_t row = 0; row < count; ++row)
+        for (uint32_t column = 0; column < 3; ++column) {
+            const auto value = color.cam_xyz[row][column];
+            if (!std::isfinite(value)) return;
+            nonzero |= value != 0;
+        }
+    if (!nonzero) return;
+    out.camera_from_xyz_rows = count;
+    out.camera_from_xyz_columns = 3;
+    for (uint32_t row = 0; row < count; ++row)
+        for (uint32_t column = 0; column < 3; ++column)
+            out.camera_from_xyz[row * 3 + column] = color.cam_xyz[row][column];
+}
+
+void copy_linear_max(const libraw_colordata_t &color, uint32_t count,
+                     hplr_camera_facts &out) {
+    for (uint32_t channel = 0; channel < count; ++channel)
+        if (!color.linear_max[channel]) return;
+    out.linear_max_count = count;
+    for (uint32_t channel = 0; channel < count; ++channel)
+        out.linear_max[channel] = color.linear_max[channel];
+}
+
 } // namespace
 
 extern "C" int32_t HPLR_CALL hplr_get_dimensions(hplr_handle handle,
@@ -175,6 +211,9 @@ extern "C" int32_t HPLR_CALL hplr_get_camera_facts(hplr_handle handle,
         for (uint32_t row = 0; row < 3; ++row)
             for (uint32_t column = 0; column < count; ++column)
                 out_value->camera_to_srgb[row * 4 + column] = color.rgb_cam[row][column];
+        copy_pre_multipliers(color, count, *out_value);
+        copy_camera_from_xyz(color, count, *out_value);
+        copy_linear_max(color, count, *out_value);
         return static_cast<int32_t>(HPLR_OK);
     });
 }

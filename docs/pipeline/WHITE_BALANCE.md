@@ -114,25 +114,27 @@ than allowing NaN into a render matrix.
 ### 5.2 As-shot anchor estimation
 
 ```csharp
-public static (double kelvin, double tint) EstimateAsShot();
+public static (double kelvin, double tint) EstimateAsShot(
+    double[]? camMul, double[,]? camToSrgb, double[]? preMul);
 ```
 
 - Non-raw bases: **(6504, 0)** — D65 by construction of the normalize step (the loader
   hardcodes this; it never calls the estimator).
-- Raw bases: **(5500, 0)**. This is a documented fallback, not a measurement. The Kelvin
-  display is relative, while `asShot` mode remains exact identity regardless (§1).
+- Raw bases: project the camera neutral `pre_mul / cam_mul` through `rgb_cam`, convert
+  the resulting linear-sRGB white to uv, and invert it through §5.1. If any required
+  fact is absent or malformed, use the **(5500, 0)** fallback. The Kelvin display is
+  relative, while `asShot` mode remains exact identity regardless (§1).
 
 LibRaw's `rgb_cam` consumes daylight-balanced camera values: each row is normalized to
 sum to 1, with the discarded row scale stored in `pre_mul`. A capture neutral must
 therefore be projected as `pre_mul / cam_mul`. Projecting `1 / cam_mul` omits that
 reference and fabricates an illuminant even when the result happens to look plausible.
-Bridge ABI v1 exposes neither `pre_mul` nor `cam_xyz`, and the normalization makes the
-missing scale unrecoverable from `rgb_cam`.
-
-`RawBaseLoader` still preserves the RGB or native four-channel `CamMul`/`CamToSrgb`
-facts in `BaseImageInfo`, but `EstimateAsShot` returns the fallback until bridge ABI v2
-exposes `pre_mul` and/or `cam_xyz`. That ABI-v2 work item must restore a measured anchor
-using `pre_mul / cam_mul`; it must not revive the former `1 / cam_mul` projection.
+Bridge ABI v2 exposes `pre_mul`, so `RawBaseLoader` can restore the discarded reference
+scale and measure the anchor. It still preserves the RGB or native four-channel
+`CamMul`/`CamToSrgb` facts in `BaseImageInfo`; `pre_mul` is consumed during load rather
+than added to the pipeline metadata. The bridge also exposes `cam_xyz` and per-channel
+`linear_max`, but those facts stop at the managed interop layer until they have a
+consumer. The former `1 / cam_mul` projection remains incorrect and is not used.
 
 ### 5.3 Display approximation for picked gains
 
@@ -190,6 +192,6 @@ the §7 gains as `picked`. The result is deterministic for a given base.
    u-solve inverse is near-exact, so these bounds are comfortable, not tight.
 8. Normalization contract (with RENDER §4): for any grid matrix,
    `Mn·(1,1,1)ᵀ ≤ 1 + 1e-9` per component.
-9. RAW fallback: committed camera facts pin the row-sum-1 `rgb_cam` convention and
-   non-uniform real `cam_mul`; every committed RAW fixture reports exactly (5500, 0)
-   until the ABI-v2 reference facts are exposed.
+9. RAW anchor: committed camera facts pin the row-sum-1 `rgb_cam` convention and
+   non-uniform real `cam_mul`; daylight-ish committed RAW fixtures estimate near
+   6500 K, while missing required facts still report exactly (5500, 0).

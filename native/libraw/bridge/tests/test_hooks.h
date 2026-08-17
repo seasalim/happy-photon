@@ -22,6 +22,10 @@ typedef struct hplr_test_params {
     int32_t use_p1_correction;
 } hplr_test_params;
 
+#define HPLR_TEST_PRE_MULTIPLIERS UINT32_C(1)
+#define HPLR_TEST_CAMERA_FROM_XYZ UINT32_C(2)
+#define HPLR_TEST_LINEAR_MAX UINT32_C(4)
+
 HPLR_API void HPLR_CALL hplr_test_fail_next_image_allocation(void);
 HPLR_API int32_t HPLR_CALL hplr_test_get_params(hplr_handle handle,
                                                  hplr_test_params *out_value,
@@ -35,6 +39,9 @@ HPLR_API int32_t HPLR_CALL hplr_test_set_foveon(hplr_handle handle,
 HPLR_API int32_t HPLR_CALL hplr_test_hold_libraw(hplr_handle handle,
                                                  uint32_t milliseconds,
                                                  hplr_error *error);
+HPLR_API int32_t HPLR_CALL hplr_test_set_camera_facts(hplr_handle handle,
+                                                       uint32_t optional_facts,
+                                                       hplr_error *error);
 
 #ifdef __cplusplus
 }

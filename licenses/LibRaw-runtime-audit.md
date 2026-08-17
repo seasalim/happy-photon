@@ -1,10 +1,10 @@
 # LibRaw native runtime audit
 
-> **Current shipped runtime: `HappyPhoton.LibRaw.Native` 0.22.2.7
+> **Current shipped runtime: `HappyPhoton.LibRaw.Native` 0.22.2.10
 > (LibRaw 0.22.2).** The sections immediately below document the
 > SUPERSEDED Sdcb-based 0.21.1 baseline and are retained for provenance
 > history only. Sdcb was removed in `975e118`. For what ships today, see
-> the 0.22.2.7 qualification, per-RID contents, and package hashes later
+> the 0.22.2.10 qualification, per-RID contents, and package hashes later
 > in this document, and the "Redistribution basis and sources" section,
 > which always describes the CURRENT release.
 
@@ -65,7 +65,7 @@ recorded beside the binary in `runtimes/osx-arm64/native/README.md`.
 ## Redistribution basis and sources
 
 This section describes the CURRENT shipped release
-(`HappyPhoton.LibRaw.Native` 0.22.2.7). Component versions come from the
+(`HappyPhoton.LibRaw.Native` 0.22.2.10). Component versions come from the
 package's committed `…provenance.json`, and the notice texts in
 `licenses/` are verbatim copies of the notices produced by that build.
 
@@ -442,7 +442,7 @@ Checkpoint B remains a hard stop: no package commit or decoder integration is
 authorized until the user approves the exact three native sets and bridge
 ABI/layout evidence.
 
-### Qualifying dispatch record (2026-08-16)
+### Historical qualifying dispatch record (2026-08-16)
 
 Workflow run 31932196288 (revision `0.22.2.7`) was the first dispatch with
 every job green: both 0.21.1 baseline probes, ASAN/UBSAN, all three RID
@@ -574,3 +574,58 @@ thread-count-invariant per the recorded thread-comparison checksums, and
 the phase-4 recycle-before-import change is unaffected. The relative
 contribution of the cap versus that recycle change to the phase-4 export
 peak has not been measured separately.
+
+## 2026-08-17 — Bridge ABI v2 qualifying dispatch (0.22.2.10)
+
+Workflow run 32007398972 (revision `0.22.2.10`, source commit
+`c5e872c33d166ac37d5bf5a40cb05ac47b28cd16`, pinned vcpkg revision
+`c4d9956c0c10a4742840a5e7d93efa2e0015c865`) built the first bridge ABI 2
+package: `hplr_camera_facts` grows additively with `pre_mul`,
+`camera_from_xyz` (LibRaw `cam_xyz` orientation: rows are camera
+channels, columns are XYZ), and per-channel `linear_max`, each with its
+own count and zero meaning per-fact absence. Every job was green,
+including both prior gates and the new per-RID probe-versus-bridge
+camera-fact equality validation, which compares the bridge output
+against a directly linked LibRaw on every RID and passed with identical
+values on all three. Downloaded and hash-verified by the orchestrator:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `HappyPhoton.LibRaw.Native.0.22.2.10.nupkg` (2,587,125 bytes) | `9C83C274803BBFD4C32BF083194B036638FCE9EAF26F3833187A232B372CC915` |
+| `native-provenance.json` (combined) | `30273E029199C06B63A9534FB3267B8A377D1C1DD8AF3A37D5BC3EC7A33ABAD0` |
+
+Contract results: bridge ABI 2, LibRaw `0x001602`, capability mask
+`0x000000C0`, reentrant `_r` on win-x64/linux-x64 with functional OpenMP
+(constrained vs parallel checksums identical), non-reentrant osx-arm64,
+zero unresolved bridge imports (12/14/14 against 584/559/543 LibRaw
+exports), 4/4 CTests per RID, ASAN/UBSAN green. Loader and OS floors are
+unchanged from 0.22.2.7: PE minimum 6.0, GLIBC ceiling 2.33 with
+`libgomp.so.1` remaining the approved system prerequisite, macOS 13.0
+with package-local `@loader_path` install names. The linux-x64
+`libraw_r.so.25` and osx-arm64 `libraw.25.dylib` hashes are identical to
+the approved 0.22.2.7 binaries — LibRaw itself is unchanged and the
+delta is confined to the bridge; the win-x64 `raw_r.dll` hash differs as
+expected MSVC rebuild nondeterminism.
+
+Performance against the 0.21.1 native baseline: native peak memory (the
+fatal gate) was flat on every RID (win +0.43%/+0.43%, linux
+−0.02%/+0.11%, macOS +0.85%/+0.92% for preview/full). Win and linux
+elapsed medians stayed within the 10% threshold. osx-arm64 `srgb8-full`
+elapsed was `accepted-elapsed-flagged` at a median +11.17% with samples
+ranging −1% to +32% on a shared 3-core runner; the 0.22.2.6 record
+measured the same baseline/candidate pair at −24% to −36%, so the
+reading is attributed to runner co-tenancy noise, consistent with that
+precedent.
+
+Consumed revisions `0.22.2.8` (an unrelated workflow run number) and
+`0.22.2.9` (dispatch failed at the paired performance gate: the managed
+interop still pinned ABI 1 and its health gate correctly rejected the
+ABI 2 candidate; fixed by moving the managed ABI expectation ahead of
+the dispatch) are never reused.
+
+**Checkpoint approval (2026-08-17):** the user approved the three native
+sets, the ABI 2 layout evidence, and the flagged macOS elapsed reading
+as co-tenancy noise. This entry records the package swap: the 0.22.2.7
+pair is removed from `packages/native/` (its qualification above remains
+the historical record) and 0.22.2.10 is committed with its provenance
+file.

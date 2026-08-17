@@ -1,6 +1,6 @@
 # Happy Photon LibRaw bridge
 
-This directory defines bridge ABI version 1. All ABI values use fixed-width
+This directory defines bridge ABI version 2. All ABI values use fixed-width
 integers and the public header is consumable as C. Inputs described as UTF-8
 are pointer-plus-length values: embedded NUL and malformed UTF-8 are rejected.
 Fixed textual outputs contain a byte length and replace invalid native bytes

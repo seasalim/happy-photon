@@ -38,7 +38,7 @@ public sealed unsafe class LibRawContext : IDisposable
         => Call(value => Convert(NativeApi.Metadata(value)), cancellationToken);
 
     public LibRawCameraFacts? GetCameraFacts(CancellationToken cancellationToken = default)
-        => Call(value => Convert(NativeApi.CameraFacts(value)), cancellationToken);
+        => Call(value => ConvertCameraFacts(NativeApi.CameraFacts(value)), cancellationToken);
 
     public LibRawFujiFacts? GetFujiFacts(CancellationToken cancellationToken = default)
         => Call(value => Convert(NativeApi.FujiFacts(value)), cancellationToken);
@@ -145,7 +145,8 @@ public sealed unsafe class LibRawContext : IDisposable
                 value.Gps.AltitudePresent != 0 ? value.Gps.Altitude : null));
     }
 
-    private static LibRawCameraFacts? Convert((NativeStatus Status, NativeCameraFacts Value) result)
+    internal static LibRawCameraFacts? ConvertCameraFacts(
+        (NativeStatus Status, NativeCameraFacts Value) result)
     {
         if (result.Status == NativeStatus.Absent) return null;
         var value = result.Value;
@@ -160,7 +161,60 @@ public sealed unsafe class LibRawContext : IDisposable
         for (var row = 0; row < matrix.GetLength(0); row++)
             for (var column = 0; column < matrix.GetLength(1); column++)
                 matrix[row, column] = matrixSource[row * 4 + column];
-        return new(multipliers, matrix);
+
+        var preMultipliers = CopyOptionalFloats(
+            value.PreMultipliers,
+            value.PreMultiplierCount,
+            value.MultiplierCount,
+            "Pre-multiplier shape is invalid.");
+        float[,]? cameraFromXyz = null;
+        if (value.CameraFromXyzRows != 0 || value.CameraFromXyzColumns != 0)
+        {
+            if (value.CameraFromXyzRows != value.MultiplierCount ||
+                value.CameraFromXyzColumns != 3)
+            {
+                throw new InvalidDataException("Camera-from-XYZ shape is invalid.");
+            }
+
+            cameraFromXyz = new float[value.CameraFromXyzRows, value.CameraFromXyzColumns];
+            float* cameraFromXyzSource = value.CameraFromXyz;
+            for (var row = 0; row < cameraFromXyz.GetLength(0); row++)
+                for (var column = 0; column < cameraFromXyz.GetLength(1); column++)
+                    cameraFromXyz[row, column] = cameraFromXyzSource[row * 3 + column];
+        }
+
+        var linearMax = CopyOptionalUInts(
+            value.LinearMax,
+            value.LinearMaxCount,
+            value.MultiplierCount,
+            "Linear-maximum shape is invalid.");
+        return new(multipliers, matrix, preMultipliers, cameraFromXyz, linearMax);
+    }
+
+    private static float[]? CopyOptionalFloats(
+        float* source,
+        uint count,
+        uint expectedCount,
+        string error)
+    {
+        if (count == 0) return null;
+        if (count != expectedCount) throw new InvalidDataException(error);
+        var values = new float[count];
+        new ReadOnlySpan<float>(source, values.Length).CopyTo(values);
+        return values;
+    }
+
+    private static uint[]? CopyOptionalUInts(
+        uint* source,
+        uint count,
+        uint expectedCount,
+        string error)
+    {
+        if (count == 0) return null;
+        if (count != expectedCount) throw new InvalidDataException(error);
+        var values = new uint[count];
+        new ReadOnlySpan<uint>(source, values.Length).CopyTo(values);
+        return values;
     }
 
     private static LibRawFujiFacts? Convert((NativeStatus Status, NativeFujiFacts Value) result)

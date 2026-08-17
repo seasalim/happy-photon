@@ -107,7 +107,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
             cancellationToken.ThrowIfCancellationRequested();
 
             context.Unpack(cancellationToken);
-            var (camMul, camToSrgb) = CopyCameraFacts(
+            var (camMul, camToSrgb, preMul) = CopyCameraFacts(
                 context.GetCameraFacts(cancellationToken));
 
             context.ConfigureOutput(ConfigureOutput(decode, preview), cancellationToken);
@@ -161,7 +161,10 @@ public sealed class RawBaseLoader : IBaseImageLoader
                 fullWidth,
                 fullHeight,
                 orientation);
-            var asShot = WhiteBalanceModel.EstimateAsShot();
+            var asShot = WhiteBalanceModel.EstimateAsShot(
+                camMul,
+                camToSrgb,
+                preMul);
             var info = new BaseImageInfo(
                 BaseSourceKind.RawLibRaw,
                 IsRawSource: true,
@@ -345,10 +348,13 @@ public sealed class RawBaseLoader : IBaseImageLoader
         }
     }
 
-    private static (double[]? CamMul, double[,]? CamToSrgb) CopyCameraFacts(
+    private static (
+        double[]? CamMul,
+        double[,]? CamToSrgb,
+        double[]? PreMul) CopyCameraFacts(
         LibRawCameraFacts? facts)
     {
-        if (facts == null) return (null, null);
+        if (facts == null) return (null, null, null);
         var multipliers = facts.Multipliers;
         var matrix = facts.CameraToSrgb;
         var availableColumns = Math.Min(
@@ -356,7 +362,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
             Math.Min(multipliers.Length, matrix.GetLength(1)));
         if (matrix.GetLength(0) < 3)
         {
-            return (null, null);
+            return (null, null, null);
         }
 
         var channelCount = HasUsableChannel(multipliers, matrix, 3)
@@ -364,7 +370,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
             : Math.Min(3, availableColumns);
         if (channelCount < 3)
         {
-            return (null, null);
+            return (null, null, null);
         }
 
         var camMul = new double[channelCount];
@@ -374,7 +380,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
             var multiplier = multipliers[channel];
             if (!float.IsFinite(multiplier) || multiplier <= 0)
             {
-                return (null, null);
+                return (null, null, null);
             }
 
             camMul[channel] = multiplier;
@@ -383,7 +389,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
                 var value = matrix[row, channel];
                 if (!float.IsFinite(value))
                 {
-                    return (null, null);
+                    return (null, null, null);
                 }
 
                 camToSrgb[row, channel] = value;
@@ -392,10 +398,34 @@ public sealed class RawBaseLoader : IBaseImageLoader
 
         if (IsIdentityCameraTransform(camToSrgb))
         {
-            return (camMul, null);
+            return (camMul, null, CopyPreMultipliers(facts.PreMultipliers, channelCount));
         }
 
-        return (camMul, camToSrgb);
+        return (camMul, camToSrgb, CopyPreMultipliers(facts.PreMultipliers, channelCount));
+    }
+
+    private static double[]? CopyPreMultipliers(
+        IReadOnlyList<float>? values,
+        int channelCount)
+    {
+        if (values == null || values.Count != channelCount)
+        {
+            return null;
+        }
+
+        var result = new double[channelCount];
+        for (var channel = 0; channel < channelCount; channel++)
+        {
+            var value = values[channel];
+            if (!float.IsFinite(value) || value <= 0)
+            {
+                return null;
+            }
+
+            result[channel] = value;
+        }
+
+        return result;
     }
 
     internal static bool IsIdentityCameraTransform(double[,] matrix)

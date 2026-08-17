@@ -35,6 +35,33 @@ def require(condition: bool, message: str) -> None:
         raise RuntimeError(message)
 
 
+def validate_camera_facts(probe: dict[str, object],
+                          feature: dict[str, object]) -> dict[str, object]:
+    bridge = probe.get("camera_facts")
+    direct = feature.get("camera_facts")
+    require(isinstance(bridge, dict), "bridge camera facts are missing")
+    require(isinstance(direct, dict), "direct LibRaw camera facts are missing")
+    pre_mul_count = direct.get("pre_mul_count")
+    require(pre_mul_count in (0, 3, 4), "direct pre_mul channel count is invalid")
+    require(len(direct.get("pre_mul", [])) == pre_mul_count,
+            "direct pre_mul value count is invalid")
+    camera_from_xyz_rows = direct.get("camera_from_xyz_rows")
+    camera_from_xyz_columns = direct.get("camera_from_xyz_columns")
+    require(camera_from_xyz_rows in (0, 3, 4) and
+            camera_from_xyz_columns == (3 if camera_from_xyz_rows else 0),
+            "direct camera-from-XYZ dimensions are invalid")
+    require(len(direct.get("camera_from_xyz", [])) ==
+            camera_from_xyz_rows * camera_from_xyz_columns,
+            "direct camera-from-XYZ value count is invalid")
+    linear_max_count = direct.get("linear_max_count")
+    require(linear_max_count in (0, 3, 4) and
+            len(direct.get("linear_max", [])) == linear_max_count,
+            "direct linear_max value count is invalid")
+    require(bridge == direct,
+            "bridge camera fact counts, ordering, or values differ from direct LibRaw")
+    return bridge
+
+
 def find_dumpbin() -> str:
     override = os.environ.get("HPLR_DUMPBIN")
     if override:
@@ -258,7 +285,7 @@ def main() -> None:
     feature = json.loads(args.feature_probe.read_text(encoding="utf-8"))
     threading = json.loads(args.thread_comparison.read_text(encoding="utf-8"))
     options = json.loads(args.build_options.read_text(encoding="utf-8"))
-    require(probe["bridge_abi"] == 1, "bridge ABI is not 1")
+    require(probe["bridge_abi"] == 2, "bridge ABI is not 2")
     require(probe["libraw_version"] == 0x001602, "LibRaw version is not 0.22.2")
     require(probe["capabilities"] & JPEG_CAPABILITY, "JPEG capability bit is absent")
     require(probe["capabilities"] & ZLIB_CAPABILITY, "zlib capability bit is absent")
@@ -271,9 +298,11 @@ def main() -> None:
     if threading["enabled"]:
         require(threading["constrained"]["checksum"] == threading["parallel"]["checksum"],
                 "OpenMP constrained and parallel output checksums differ")
+    camera_facts = validate_camera_facts(probe, feature)
     platform_report = {"win-x64": validate_windows, "linux-x64": validate_linux,
                        "osx-arm64": validate_macos}[args.rid](runtime, bridge, raw)
     report = {"rid": args.rid, "runtime": probe, "feature_probe": feature,
+              "camera_facts": camera_facts,
               "thread_comparison": threading,
               "build_options": options, "files": [
                   {"name": path.name, "sha256": sha256(path), "bytes": path.stat().st_size}

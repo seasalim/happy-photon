@@ -33,7 +33,7 @@ public sealed class BridgeIntegrationTests
         Environment.SetEnvironmentVariable("HAPPY_PHOTON_LIBRAW_BRIDGE_DIR", staging.Path);
 
         var runtime = LibRawContext.Runtime;
-        Assert.Equal(1u, runtime.BridgeAbiVersion);
+        Assert.Equal(2u, runtime.BridgeAbiVersion);
         Assert.Equal(0x001602u, runtime.LibRawVersionNumber);
         AssertPathAndHash(bridgeName, staging.Path, bridgeHash);
         AssertPathAndHash(librawName, staging.Path, librawHash);
@@ -58,6 +58,16 @@ public sealed class BridgeIntegrationTests
         Assert.False(string.IsNullOrWhiteSpace(metadata.Make));
         var camera = context.GetCameraFacts();
         Assert.NotNull(camera);
+        Assert.All(camera!.PreMultipliers!, value =>
+            Assert.True(float.IsFinite(value) && value > 0));
+        Assert.Equal(camera.Multipliers.Length, camera.PreMultipliers!.Length);
+        Assert.Equal(camera.Multipliers.Length, camera.CameraFromXyz!.GetLength(0));
+        Assert.Equal(3, camera.CameraFromXyz.GetLength(1));
+        if (camera.LinearMax is { } linearMax)
+        {
+            Assert.Equal(camera.Multipliers.Length, linearMax.Length);
+            Assert.All(linearMax, value => Assert.True(value > 0));
+        }
         Assert.Null(context.GetFujiFacts());
         using var thumbnail = context.ExtractThumbnail();
         Assert.NotNull(thumbnail);

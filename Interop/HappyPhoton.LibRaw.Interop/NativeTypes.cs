@@ -110,6 +110,12 @@ internal unsafe struct NativeCameraFacts
     internal fixed float Multipliers[4];
     internal uint MatrixRows, MatrixColumns;
     internal fixed float CameraToSrgb[12];
+    internal uint PreMultiplierCount;
+    internal fixed float PreMultipliers[4];
+    internal uint CameraFromXyzRows, CameraFromXyzColumns;
+    internal fixed float CameraFromXyz[12];
+    internal uint LinearMaxCount;
+    internal fixed uint LinearMax[4];
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 8)]

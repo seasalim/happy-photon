@@ -99,7 +99,7 @@ public sealed class RawBaseLoaderTests
     {
         var runtime = LibRawContext.Runtime;
 
-        Assert.Equal(1u, runtime.BridgeAbiVersion);
+        Assert.Equal(2u, runtime.BridgeAbiVersion);
         Assert.Equal(0x001602u, runtime.LibRawVersionNumber);
         Assert.StartsWith("0.22.2", runtime.LibRawVersion);
         Assert.NotEqual(0u, runtime.Capabilities & LibRawCapabilities.Jpeg);
@@ -194,7 +194,8 @@ public sealed class RawBaseLoaderTests
         _output.WriteLine(
             $"{fileName}: preview {image.Pixels.Width}x{image.Pixels.Height}, " +
             $"full {image.Info.FullWidth}x{image.Info.FullHeight}, " +
-            $"camera channels {image.Info.CamMul!.Length}");
+            $"camera channels {image.Info.CamMul!.Length}, " +
+            $"as-shot {image.Info.AsShotKelvin:F0} K/{image.Info.AsShotTint:F1}");
     }
 
     [Fact]
@@ -422,8 +423,15 @@ public sealed class RawBaseLoaderTests
         Assert.Equal(BaseSourceKind.RawLibRaw, image.Info.Kind);
         Assert.True(image.Info.IsRawSource);
         Assert.Equal(expectedDecode, image.Info.Decode);
-        Assert.Equal(5500, image.Info.AsShotKelvin);
-        Assert.Equal(0, image.Info.AsShotTint);
+        Assert.InRange(
+            image.Info.AsShotKelvin,
+            WhiteBalanceModel.MinimumKelvin,
+            WhiteBalanceModel.MaximumKelvin);
+        Assert.InRange(
+            image.Info.AsShotTint,
+            WhiteBalanceModel.MinimumTint,
+            WhiteBalanceModel.MaximumTint);
+        Assert.NotEqual(5500, image.Info.AsShotKelvin);
         Assert.False(image.Info.HadIccProfile);
         Assert.Null(image.Info.IccDescription);
         Assert.InRange(image.Info.ExifOrientationApplied, 1, 8);

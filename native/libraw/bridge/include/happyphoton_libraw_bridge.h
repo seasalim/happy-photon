@@ -22,7 +22,7 @@ extern "C" {
 
 #pragma pack(push, 8)
 
-#define HPLR_ABI_VERSION UINT32_C(1)
+#define HPLR_ABI_VERSION UINT32_C(2)
 #define HPLR_CBLACK_COUNT UINT32_C(4104)
 #define HPLR_TEXT_CAPACITY UINT32_C(128)
 
@@ -147,9 +147,20 @@ typedef struct hplr_camera_facts {
     uint32_t struct_size;
     uint32_t multiplier_count;
     float multipliers[4];
+    /* camera_to_srgb maps camera channels (columns) to sRGB (rows). It has
+       three rows at a fixed stride of four elements. */
     uint32_t matrix_rows;
     uint32_t matrix_columns;
     float camera_to_srgb[12];
+    uint32_t pre_multiplier_count;
+    float pre_multipliers[4];
+    /* camera_from_xyz maps XYZ (columns) to camera channels (rows). It is
+       tightly packed with a stride of three elements. */
+    uint32_t camera_from_xyz_rows;
+    uint32_t camera_from_xyz_columns;
+    float camera_from_xyz[12];
+    uint32_t linear_max_count;
+    uint32_t linear_max[4];
 } hplr_camera_facts;
 
 typedef struct hplr_fuji_facts {

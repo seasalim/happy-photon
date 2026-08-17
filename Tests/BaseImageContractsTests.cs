@@ -15,7 +15,7 @@ public sealed class BaseImageContractsTests
         Assert.Same(BaseDecodeSettings.Default, settings);
         Assert.Equal(HlReconstructionMode.Clip, settings.HlReconstruction);
         Assert.Equal(FbddMode.Off, settings.NoiseReduction);
-        Assert.Equal("base-v4;hl=clip;fbdd=off", settings.CacheKey);
+        Assert.Equal("base-v5;hl=clip;fbdd=off", settings.CacheKey);
         Assert.Equal(1600, BaseImage.PreviewMaxDimension);
     }
 
@@ -43,7 +43,7 @@ public sealed class BaseImageContractsTests
 
         Assert.Equal(HlReconstructionMode.Clip, decode.HlReconstruction);
         Assert.Equal(FbddMode.Full, decode.NoiseReduction);
-        Assert.Equal("base-v4;hl=clip;fbdd=full", decode.CacheKey);
+        Assert.Equal("base-v5;hl=clip;fbdd=full", decode.CacheKey);
     }
 
     [Fact]

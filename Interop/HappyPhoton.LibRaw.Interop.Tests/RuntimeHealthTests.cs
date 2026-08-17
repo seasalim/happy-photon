@@ -76,7 +76,10 @@ public sealed class RuntimeHealthTests
         LibRawRuntimeComponent> Rejections() => new()
     {
         {
-            HealthyObservations() with { BridgeAbiVersion = 2 },
+            HealthyObservations() with
+            {
+                BridgeAbiVersion = LibRawOutputConfiguration.Version + 1
+            },
             LibRawHealthRejectionReason.BridgeAbiMismatch,
             LibRawRuntimeComponent.Bridge
         },
