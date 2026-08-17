@@ -159,75 +159,35 @@ public sealed class WhiteBalanceModelTests
     }
 
     [Fact]
-    public void MissingRawAnchors_UseDocumentedFallback()
+    public void RawAsShot_UsesDocumentedFallback()
     {
-        Assert.Equal(
-            (5500d, 0d),
-            WhiteBalanceModel.EstimateAsShot(null, null));
-        Assert.Equal(
-            (5500d, 0d),
-            WhiteBalanceModel.EstimateAsShot([2, 1, 1.5], null));
+        Assert.Equal((5500d, 0d), WhiteBalanceModel.EstimateAsShot());
     }
 
     [Fact]
-    public void SyntheticCameraNeutral_RecoversAnchor()
+    public void CanonCameraFacts_RecordAbiV2Reference()
     {
-        var expectedKelvin = 5500d;
-        var xyz = WhiteBalanceModel.GetWhitePointXyz(expectedKelvin, 0);
-        var srgbWhite = ChromaticAdaptation.XyzToLinearSrgb(xyz);
-        var camMul = srgbWhite.Select(value => 1 / value).ToArray();
-
-        var estimated = WhiteBalanceModel.EstimateAsShot(
-            camMul,
-            ChromaticAdaptation.Identity());
-
-        Assert.InRange(
-            estimated.kelvin,
-            expectedKelvin - 50,
-            expectedKelvin + 50);
-        Assert.InRange(estimated.tint, -2, 2);
-    }
-
-    [Fact]
-    public void FourChannelCameraNeutral_UsesEveryMatrixColumn()
-    {
-        var expectedKelvin = 5500d;
-        var xyz = WhiteBalanceModel.GetWhitePointXyz(expectedKelvin, 0);
-        var srgbWhite = ChromaticAdaptation.XyzToLinearSrgb(xyz);
-        double[] cameraNeutral =
-        [
-            srgbWhite[0],
-            srgbWhite[1] * 0.2,
-            srgbWhite[2],
-            srgbWhite[1] * 0.8
-        ];
-        var camMul = cameraNeutral.Select(value => 1 / value).ToArray();
+        // Reference data for the ABI-v2 fix, not a check of production code:
+        // real Canon facts showing rgb_cam's rows sum to 1 (so it consumes
+        // daylight-balanced input) and cam_mul is not uniform (so 1 / cam_mul
+        // could never have been the right input). RawBaseLoaderTests asserts
+        // the same convention against actually decoded fixtures.
+        double[] camMul = [2170, 1018, 1755];
         double[,] camToSrgb =
         {
-            { 1, 0, 0, 0 },
-            { 0, 1, 0, 1 },
-            { 0, 0, 1, 0 }
+            { 1.7229120731, -0.8995228410, 0.1766107678 },
+            { 0.0193507429, 1.3393489122, -0.3586996551 },
+            { 0.0241905022, -0.3149886429, 1.2907981407 }
         };
 
-        var estimated = WhiteBalanceModel.EstimateAsShot(
-            camMul,
-            camToSrgb);
-
-        Assert.InRange(
-            estimated.kelvin,
-            expectedKelvin - 50,
-            expectedKelvin + 50);
-        Assert.InRange(estimated.tint, -2, 2);
-    }
-
-    [Fact]
-    public void MismatchedCameraFactShapes_UseDocumentedFallback()
-    {
-        var estimated = WhiteBalanceModel.EstimateAsShot(
-            [2, 1, 1.5, 1],
-            ChromaticAdaptation.Identity());
-
-        Assert.Equal((5500d, 0d), estimated);
+        Assert.NotEqual(camMul[0] / camMul[1], camMul[2] / camMul[1]);
+        for (var row = 0; row < 3; row++)
+        {
+            var sum = Enumerable.Range(0, 3)
+                .Sum(column => camToSrgb[row, column]);
+            Assert.InRange(sum, 1 - 1e-9, 1 + 1e-9);
+        }
+        Assert.Equal((5500d, 0d), WhiteBalanceModel.EstimateAsShot());
     }
 
     [Fact]

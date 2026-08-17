@@ -109,8 +109,8 @@ public sealed record BaseImageInfo(
     BaseDecodeSettings Decode,     // the settings this base was decoded with
     double[]? CamMul,              // length 3, or native LibRaw length 4; null if unavailable
     double[,]? CamToSrgb,          // camera → linear sRGB, 3×CamMul.Length; null if unavailable
-    double AsShotKelvin,           // raw estimate or 5500 fallback; 6504 non-raw
-    double AsShotTint,             // raw estimate or 0 fallback; 0 non-raw
+    double AsShotKelvin,           // 5500 raw fallback; 6504 non-raw
+    double AsShotTint,             // 0 for raw fallback and non-raw
     bool HadIccProfile,
     string? IccDescription,
     int ExifOrientationApplied,    // for diagnostics; pixels are already upright
@@ -120,7 +120,7 @@ public sealed record BaseImageInfo(
 
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 3;        // bump whenever decoded pixels or facts change
+    public const int Version = 4;        // bump whenever decoded pixels or facts change
     public const int PreviewMaxDimension = 1600;
     public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
     public BaseImageInfo Info { get; }

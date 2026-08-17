@@ -80,11 +80,11 @@ Post-decode steps, in order:
    do not silently truncate the second green or other camera color. Also set
    `FullWidth/FullHeight` = the native full-resolution, orientation-applied dimensions
    (known from LibRaw sizes even for a half-size preview decode — RENDER.md §9 needs
-   them for σ scaling). Set `AsShotKelvin/Tint` with
-   `WhiteBalanceModel.EstimateAsShot(CamMul, CamToSrgb)`, falling back to 5500 / 0
-   when either camera fact is unavailable or invalid. Treat an identity `rgb_cam`
-   as LibRaw's unavailable-transform sentinel rather than projecting camera-space
-   multipliers as linear sRGB (WHITE_BALANCE.md §5).
+   them for σ scaling). Set `AsShotKelvin/Tint` to the documented 5500 / 0 fallback.
+   Bridge ABI v1 does not expose `pre_mul` or `cam_xyz`, so its normalized `rgb_cam`
+   cannot measure the capture illuminant from `cam_mul` alone. The stored camera facts
+   remain available for diagnostics and the ABI-v2 follow-up. Treat an identity
+   `rgb_cam` as LibRaw's unavailable-transform sentinel (WHITE_BALANCE.md §5).
 
 ### 2.1 RAW Library previews
 

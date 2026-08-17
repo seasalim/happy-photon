@@ -161,9 +161,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
                 fullWidth,
                 fullHeight,
                 orientation);
-            var asShot = WhiteBalanceModel.EstimateAsShot(
-                camMul,
-                camToSrgb);
+            var asShot = WhiteBalanceModel.EstimateAsShot();
             var info = new BaseImageInfo(
                 BaseSourceKind.RawLibRaw,
                 IsRawSource: true,

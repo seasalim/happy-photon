@@ -422,11 +422,8 @@ public sealed class RawBaseLoaderTests
         Assert.Equal(BaseSourceKind.RawLibRaw, image.Info.Kind);
         Assert.True(image.Info.IsRawSource);
         Assert.Equal(expectedDecode, image.Info.Decode);
-        var expectedAsShot = WhiteBalanceModel.EstimateAsShot(
-            image.Info.CamMul,
-            image.Info.CamToSrgb);
-        Assert.Equal(expectedAsShot.kelvin, image.Info.AsShotKelvin);
-        Assert.Equal(expectedAsShot.tint, image.Info.AsShotTint);
+        Assert.Equal(5500, image.Info.AsShotKelvin);
+        Assert.Equal(0, image.Info.AsShotTint);
         Assert.False(image.Info.HadIccProfile);
         Assert.Null(image.Info.IccDescription);
         Assert.InRange(image.Info.ExifOrientationApplied, 1, 8);
@@ -440,20 +437,19 @@ public sealed class RawBaseLoaderTests
         Assert.All(
             image.Info.CamMul,
             value => Assert.True(double.IsFinite(value) && value > 0));
-        if (image.Info.CamToSrgb == null)
+        Assert.NotNull(image.Info.CamToSrgb);
+        Assert.Equal(3, image.Info.CamToSrgb.GetLength(0));
+        Assert.Equal(
+            image.Info.CamMul.Length,
+            image.Info.CamToSrgb.GetLength(1));
+        Assert.All(
+            Flatten(image.Info.CamToSrgb),
+            value => Assert.True(double.IsFinite(value)));
+        for (var row = 0; row < 3; row++)
         {
-            Assert.Equal(5500, image.Info.AsShotKelvin);
-            Assert.Equal(0, image.Info.AsShotTint);
-        }
-        else
-        {
-            Assert.Equal(3, image.Info.CamToSrgb.GetLength(0));
-            Assert.Equal(
-                image.Info.CamMul.Length,
-                image.Info.CamToSrgb.GetLength(1));
-            Assert.All(
-                Flatten(image.Info.CamToSrgb),
-                value => Assert.True(double.IsFinite(value)));
+            var sum = Enumerable.Range(0, image.Info.CamMul.Length)
+                .Sum(column => image.Info.CamToSrgb[row, column]);
+            Assert.InRange(sum, 1 - 1e-5, 1 + 1e-5);
         }
 
         using var pixels = image.Pixels.GetPixels();

@@ -108,34 +108,31 @@ public static (double kelvin, double tint) EstimateKelvinTintFromUv(double u, do
 2. `tint = (v − v_locus(T)) / 0.00025`, clamped to the slider range (±100).
 
 A nearest-point fit in 2D uv would absorb tint into temperature, so the implementation
-uses the one-dimensional u solve above. Direct uv/model inputs are finite-checked;
-invalid native camera facts use the raw fallback in §5.2 rather than allowing NaN into
-a render matrix.
+uses the one-dimensional u solve above. Direct uv/model inputs are finite-checked rather
+than allowing NaN into a render matrix.
 
 ### 5.2 As-shot anchor estimation
 
 ```csharp
-public static (double kelvin, double tint) EstimateAsShot(
-    double[]? camMul,        // RGB length 3 or native LibRaw length 4; null if unavailable
-    double[,]? camToSrgb);   // camera → linear sRGB, 3×camMul.Length; null if unavailable
+public static (double kelvin, double tint) EstimateAsShot();
 ```
 
 - Non-raw bases: **(6504, 0)** — D65 by construction of the normalize step (the loader
   hardcodes this; it never calls the estimator).
-- Raw with both inputs: preserve either an RGB projection (`cam_mul[3]`, `rgb_cam[3][3]`)
-  or LibRaw's native four-channel facts (`cam_mul[4]`, `rgb_cam[3][4]`). The lengths
-  must match. Compute neutral in camera space `n_cam = normalize(1 / cam_mul)`, then
-  project every channel: `n_srgb = camToSrgb · n_cam`; → XYZ → uv →
-  `EstimateKelvinTintFromUv`. Do not discard the fourth column: it may carry the second
-  green channel or another camera color.
-- Raw with either input missing, or with LibRaw's identity `rgb_cam` sentinel instead
-  of a calibrated camera transform: **(5500, 0)**. The Kelvin display is then relative,
-  which is acceptable — corrective *power* is unaffected, and `asShot` mode is exact
-  identity regardless (§1).
+- Raw bases: **(5500, 0)**. This is a documented fallback, not a measurement. The Kelvin
+  display is relative, while `asShot` mode remains exact identity regardless (§1).
 
-`RawBaseLoader` stores `CamMul`/`CamToSrgb` in `BaseImageInfo` and writes the estimator
-result into `AsShotKelvin/Tint`. Missing, sentinel, and invalid camera facts all take
-the same fallback path.
+LibRaw's `rgb_cam` consumes daylight-balanced camera values: each row is normalized to
+sum to 1, with the discarded row scale stored in `pre_mul`. A capture neutral must
+therefore be projected as `pre_mul / cam_mul`. Projecting `1 / cam_mul` omits that
+reference and fabricates an illuminant even when the result happens to look plausible.
+Bridge ABI v1 exposes neither `pre_mul` nor `cam_xyz`, and the normalization makes the
+missing scale unrecoverable from `rgb_cam`.
+
+`RawBaseLoader` still preserves the RGB or native four-channel `CamMul`/`CamToSrgb`
+facts in `BaseImageInfo`, but `EstimateAsShot` returns the fallback until bridge ABI v2
+exposes `pre_mul` and/or `cam_xyz`. That ABI-v2 work item must restore a measured anchor
+using `pre_mul / cam_mul`; it must not revive the former `1 / cam_mul` projection.
 
 ### 5.3 Display approximation for picked gains
 
@@ -193,3 +190,6 @@ the §7 gains as `picked`. The result is deterministic for a given base.
    u-solve inverse is near-exact, so these bounds are comfortable, not tight.
 8. Normalization contract (with RENDER §4): for any grid matrix,
    `Mn·(1,1,1)ᵀ ≤ 1 + 1e-9` per component.
+9. RAW fallback: committed camera facts pin the row-sum-1 `rgb_cam` convention and
+   non-uniform real `cam_mul`; every committed RAW fixture reports exactly (5500, 0)
+   until the ABI-v2 reference facts are exposed.

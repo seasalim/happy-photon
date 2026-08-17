@@ -112,23 +112,10 @@ public static class WhiteBalanceModel
         return (kelvin, tint);
     }
 
-    public static (double kelvin, double tint) EstimateAsShot(
-        double[]? camMul,
-        double[,]? camToSrgb)
+    public static (double kelvin, double tint) EstimateAsShot()
     {
-        if (!IsPositiveCameraVector(camMul) ||
-            !IsMatchingCameraMatrix(camToSrgb, camMul!.Length))
-        {
-            return (RawFallbackKelvin, 0);
-        }
-
-        var cameraNeutral = Normalize(camMul
-            .Select(value => 1 / value)
-            .ToArray());
-        var srgbNeutral = ProjectCameraNeutral(
-            camToSrgb!,
-            cameraNeutral);
-        return EstimateFromLinearSrgbWhite(srgbNeutral);
+        // Bridge ABI v1 omits pre_mul/cam_xyz, so RAW uses the documented fallback.
+        return (RawFallbackKelvin, 0);
     }
 
     public static (double kelvin, double tint) EstimateFromGains(
@@ -233,49 +220,6 @@ public static class WhiteBalanceModel
     private static bool IsPositiveTriple(double[]? values) =>
         values is { Length: 3 } &&
         values.All(value => double.IsFinite(value) && value > 0);
-
-    private static bool IsPositiveCameraVector(double[]? values) =>
-        values is { Length: 3 or 4 } &&
-        values.All(value => double.IsFinite(value) && value > 0);
-
-    private static bool IsMatchingCameraMatrix(
-        double[,]? matrix,
-        int channelCount)
-    {
-        if (matrix == null ||
-            matrix.GetLength(0) != 3 ||
-            matrix.GetLength(1) != channelCount)
-        {
-            return false;
-        }
-
-        foreach (var value in matrix)
-        {
-            if (!double.IsFinite(value))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static double[] ProjectCameraNeutral(
-        double[,] cameraToSrgb,
-        double[] cameraNeutral)
-    {
-        var result = new double[3];
-        for (var row = 0; row < 3; row++)
-        {
-            for (var column = 0; column < cameraNeutral.Length; column++)
-            {
-                result[row] +=
-                    cameraToSrgb[row, column] * cameraNeutral[column];
-            }
-        }
-
-        return result;
-    }
 
     private static void ValidateFinite(double value, string name)
     {

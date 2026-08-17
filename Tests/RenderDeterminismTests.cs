@@ -64,7 +64,7 @@ public sealed class RenderDeterminismTests
     public void SettingsHash_MatchesPinnedCanonicalValue()
     {
         const string expected =
-            "4e12eccee6f1c684448fd19079685f8bc7f4865090e5c3fee95aa23f7a486f14";
+            "0f2673117774596492b62bc4499a0965c623255f29079496c29e96a5846d51c6";
         var actual = RenderSettingsHash.Compute(CreateSettings());
 
         Assert.True(
