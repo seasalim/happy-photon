@@ -206,6 +206,14 @@ HAPPY_PHOTON_FBDD_EVAL=1 dotnet test Tests/HappyPhoton.Tests.csproj --filter Raw
 
 It is an explicit opt-in diagnostic because all three modes require full RAW decodes.
 
+The Phase 0 precision diagnostic generates its three ramps in-test, captures the eight
+real-pipeline attribution checkpoints, and emits a deterministic metric payload plus
+separate environment/timing details. Run it in a fresh Release process with
+`$env:HAPPY_PHOTON_PRECISION='1'; dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter FullyQualifiedName~PipelinePrecisionInvestigationTests --logger "console;verbosity=detailed"`;
+repeat the command and byte-compare the two payload sections. TIFF source-code and
+stage-reconstruction precondition failures abort before report emission; the reported
+gate rows cover the non-aborting base and preview/export comparisons.
+
 The LibRaw resolver's single-file extraction path has a committed publish smoke. Run
 the matching command on Windows or Linux; it restores in locked mode, publishes a
 self-contained single-file console, decodes the Canon fixture, and asserts that both
