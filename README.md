@@ -58,7 +58,7 @@ Agent-visible data may be transmitted wherever the MCP client and model you choo
 - macOS 14 or newer on Apple Silicon
 
 Standard formats include JPEG, PNG, BMP, GIF, TIFF, and WebP. RAW support
-includes CR2/CR3, NEF/NRW, ARW/SRF/SR2, DNG, RAF, ORF, RW2, and PEF. RAW
+includes CR2/CR3, NEF/NRW, ARW, DNG, RAF, ORF, RW2, and PEF. RAW
 decoding uses the bundled, audited [LibRaw 0.22.2](https://www.libraw.org/news/libraw-0-22-2-release)
 generation, so a listed extension does not guarantee support
 for every camera model or compression variant—especially newer bodies. The

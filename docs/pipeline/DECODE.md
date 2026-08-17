@@ -24,7 +24,7 @@ and FBDD off.
 
 `BaseLoaderRouter` picks the loader:
 
-- Mosaic RAW extensions (`.CR2 .CR3 .NEF .NRW .ARW .SRF .SR2 .DNG .RAF .ORF .RW2 .PEF`)
+- Mosaic RAW extensions (`.CR2 .CR3 .NEF .NRW .ARW .DNG .RAF .ORF .RW2 .PEF`)
   route only to `RawBaseLoader`. `StandardBaseLoader` rejects these extensions in both
   its capability and load paths. A rejected native runtime emits one process-level
   diagnostic; a file LibRaw cannot decode is reported as unsupported in Library and

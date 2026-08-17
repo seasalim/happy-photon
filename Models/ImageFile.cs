@@ -13,7 +13,7 @@ public partial class ImageFile : ObservableObject
     internal static readonly FrozenSet<string> RawExtensions =
         new[]
         {
-            ".cr2", ".cr3", ".nef", ".nrw", ".arw", ".srf", ".sr2",
+            ".cr2", ".cr3", ".nef", ".nrw", ".arw",
             ".dng", ".raf", ".orf", ".rw2", ".pef"
         }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 

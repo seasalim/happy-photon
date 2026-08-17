@@ -11,8 +11,6 @@ public sealed class ImageFileRoutingTests
     [InlineData("image.nef")]
     [InlineData("image.NRW")]
     [InlineData("image.arw")]
-    [InlineData("image.SRF")]
-    [InlineData("image.sr2")]
     [InlineData("image.DNG")]
     [InlineData("image.raf")]
     [InlineData("image.ORF")]

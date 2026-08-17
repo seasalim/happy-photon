@@ -37,8 +37,6 @@ public sealed class StandardBaseLoaderTests : IDisposable
     [InlineData("photo.nef")]
     [InlineData("photo.nrw")]
     [InlineData("photo.arw")]
-    [InlineData("photo.srf")]
-    [InlineData("photo.sr2")]
     [InlineData("photo.dng")]
     [InlineData("photo.raf")]
     [InlineData("photo.orf")]
