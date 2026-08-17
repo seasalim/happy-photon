@@ -1,0 +1,389 @@
+{
+  "schemaVersion": 1,
+  "committedFixtureProvenance": "assets/README.md",
+  "fixtures": [
+    {
+      "slug": "canon-r5m2-craw-apsc",
+      "cameraMake": "Canon",
+      "cameraModel": "EOS R5 Mark II",
+      "captureMode": "C-RAW, APS-C, 3:2",
+      "extension": ".CR3",
+      "provenanceUrl": "https://raw.pixls.us/getfile.php/7884/nice/Canon%20-%20EOS%20R5%20Mark%20II%20-%20CRAW%20%283%3A2%29.CR3",
+      "license": "CC0-1.0",
+      "sizeBytes": 7564960,
+      "sha256": "6a597497776a6abbfab8fcf12d0086ac7a3f8afea2879d61accf6bbf48d357d7",
+      "selectionStatus": "selected",
+      "expectationStatus": "reviewed",
+      "expected": {
+        "overall": "supported",
+        "capabilities": {
+          "browseThumbnail": "pass",
+          "metadata": "pass",
+          "preview": "pass",
+          "fullDecode": "pass",
+          "cameraColor": "pass",
+          "export": "pass"
+        },
+        "metadata": {
+          "visibleWidth": 5118,
+          "visibleHeight": 3412,
+          "nativeOrientation": 0,
+          "appliedOrientation": 1,
+          "requiresIso": true,
+          "requiresExposure": true,
+          "requiresCaptureTimestamp": true
+        },
+        "cameraFacts": {
+          "sensor": {
+            "colors": 3,
+            "filters": 3031741620,
+            "dngVersion": 0,
+            "colorDescription": "RGBG"
+          },
+          "camMul": {
+            "values": [1792, 1024, 1964],
+            "absoluteTolerance": 0.000001,
+            "relativeTolerance": 0.000001
+          },
+          "camToSrgb": {
+            "rows": 3,
+            "columns": 3,
+            "rowMajorValues": [
+              1.5943217277526855,
+              -0.6237859129905701,
+              0.02946418896317482,
+              -0.1738152951002121,
+              1.6337732076644897,
+              -0.45995786786079407,
+              -0.01707267574965954,
+              -0.44437551498413086,
+              1.4614481925964355
+            ],
+            "absoluteTolerance": 0.000001,
+            "relativeTolerance": 0.000001
+          },
+          "toleranceBasis": "Approved Windows x64 observations; 1e-6 covers float-to-JSON round-trip variance.",
+          "reviewBasis": "Complete Windows x64 application-path discovery on LibRaw 0.22.2.7 and inspection of the default 500 px render for color cast, demosaic artifacts, and exposure on 2026-08-16."
+        },
+        "limitations": []
+      },
+      "platformOverrides": [],
+      "testLevel": "smoke"
+    },
+    {
+      "slug": "canon-r5m2-raw-apsc",
+      "cameraMake": "Canon",
+      "cameraModel": "EOS R5 Mark II",
+      "captureMode": "RAW, APS-C, 3:2",
+      "extension": ".CR3",
+      "provenanceUrl": "https://raw.pixls.us/getfile.php/7883/nice/Canon%20-%20EOS%20R5%20Mark%20II%20-%20RAW%20%283%3A2%29.CR3",
+      "license": "CC0-1.0",
+      "sizeBytes": 20533408,
+      "sha256": "9f88c0ff012924193b7f4497559d133dfe626766d600b5d67689156721739ead",
+      "selectionStatus": "selected",
+      "expectationStatus": "reviewed",
+      "expected": {
+        "overall": "supported",
+        "capabilities": {
+          "browseThumbnail": "pass",
+          "metadata": "pass",
+          "preview": "pass",
+          "fullDecode": "pass",
+          "cameraColor": "pass",
+          "export": "pass"
+        },
+        "metadata": {
+          "visibleWidth": 5118,
+          "visibleHeight": 3412,
+          "nativeOrientation": 0,
+          "appliedOrientation": 1,
+          "requiresIso": true,
+          "requiresExposure": true,
+          "requiresCaptureTimestamp": true
+        },
+        "cameraFacts": {
+          "sensor": {
+            "colors": 3,
+            "filters": 3031741620,
+            "dngVersion": 0,
+            "colorDescription": "RGBG"
+          },
+          "camMul": {
+            "values": [1780, 1024, 1971],
+            "absoluteTolerance": 0.000001,
+            "relativeTolerance": 0.000001
+          },
+          "camToSrgb": {
+            "rows": 3,
+            "columns": 3,
+            "rowMajorValues": [
+              1.5943217277526855,
+              -0.6237859129905701,
+              0.02946418896317482,
+              -0.1738152951002121,
+              1.6337732076644897,
+              -0.45995786786079407,
+              -0.01707267574965954,
+              -0.44437551498413086,
+              1.4614481925964355
+            ],
+            "absoluteTolerance": 0.000001,
+            "relativeTolerance": 0.000001
+          },
+          "toleranceBasis": "Approved Windows x64 observations; 1e-6 covers float-to-JSON round-trip variance.",
+          "reviewBasis": "Complete Windows x64 application-path discovery on LibRaw 0.22.2.7 and inspection of the default 500 px render for color cast, demosaic artifacts, and exposure on 2026-08-16."
+        },
+        "limitations": []
+      },
+      "platformOverrides": [],
+      "testLevel": "smoke"
+    },
+    {
+      "slug": "sony-a9m3-lossy",
+      "cameraMake": "Sony",
+      "cameraModel": "ILCE-9M3",
+      "captureMode": "14-bit lossy compressed, 3:2",
+      "extension": ".ARW",
+      "provenanceUrl": "https://raw.pixls.us/getfile.php/7361/nice/Sony%20-%20ILCE-9M3%20-%2014bit%20%283%3A2%29.ARW",
+      "license": "CC0-1.0",
+      "sizeBytes": 29077504,
+      "sha256": "81b0b140f34356964fdb4adf5e202eb01d5e5e5a1b61b861954a183fc30d4bf0",
+      "selectionStatus": "selected",
+      "expectationStatus": "reviewed",
+      "expected": {
+        "overall": "supported",
+        "capabilities": {
+          "browseThumbnail": "pass",
+          "metadata": "pass",
+          "preview": "pass",
+          "fullDecode": "pass",
+          "cameraColor": "pass",
+          "export": "pass"
+        },
+        "metadata": {
+          "visibleWidth": 6012,
+          "visibleHeight": 4020,
+          "nativeOrientation": 0,
+          "appliedOrientation": 1,
+          "requiresIso": true,
+          "requiresExposure": true,
+          "requiresCaptureTimestamp": true
+        },
+        "cameraFacts": {
+          "sensor": {
+            "colors": 3,
+            "filters": 3031741620,
+            "dngVersion": 0,
+            "colorDescription": "RGBG"
+          },
+          "camMul": {
+            "values": [2191, 1024, 1724],
+            "absoluteTolerance": 0.000001,
+            "relativeTolerance": 0.000001
+          },
+          "camToSrgb": {
+            "rows": 3,
+            "columns": 3,
+            "rowMajorValues": [
+              1.4806618690490723,
+              -0.22727864980697632,
+              -0.25338318943977356,
+              -0.19077418744564056,
+              1.6349984407424927,
+              -0.44422420859336853,
+              -0.02878081612288952,
+              -0.37784451246261597,
+              1.4066252708435059
+            ],
+            "absoluteTolerance": 0.000001,
+            "relativeTolerance": 0.000001
+          },
+          "toleranceBasis": "Approved Windows x64 observations; 1e-6 covers float-to-JSON round-trip variance.",
+          "reviewBasis": "Complete Windows x64 application-path discovery on LibRaw 0.22.2.7 and inspection of the default 500 px render for color cast, demosaic artifacts, and exposure on 2026-08-16."
+        },
+        "limitations": []
+      },
+      "platformOverrides": [],
+      "testLevel": "smoke"
+    },
+    {
+      "slug": "fuji-xt50-compressed",
+      "cameraMake": "Fujifilm",
+      "cameraModel": "X-T50",
+      "captureMode": "14-bit compressed, 3:2",
+      "extension": ".RAF",
+      "provenanceUrl": "https://raw.pixls.us/getfile.php/7807/nice/Fujifilm%20-%20X-T50%20-%2014bit%20compressed%20%283%3A2%29.RAF",
+      "license": "CC0-1.0",
+      "sizeBytes": 29651152,
+      "sha256": "3a8a9ac6d92274969aaa1f55ea669191b98bb8f588d00ec8ec17afd8b3963dea",
+      "selectionStatus": "selected",
+      "expectationStatus": "reviewed",
+      "expected": {
+        "overall": "supported",
+        "capabilities": {
+          "browseThumbnail": "pass",
+          "metadata": "pass",
+          "preview": "pass",
+          "fullDecode": "pass",
+          "cameraColor": "pass",
+          "export": "pass"
+        },
+        "metadata": {
+          "visibleWidth": 7752,
+          "visibleHeight": 5178,
+          "nativeOrientation": 0,
+          "appliedOrientation": 1,
+          "requiresIso": true,
+          "requiresExposure": true,
+          "requiresCaptureTimestamp": true
+        },
+        "cameraFacts": {
+          "sensor": {
+            "colors": 3,
+            "filters": 9,
+            "dngVersion": 0,
+            "colorDescription": "RGBG"
+          },
+          "camMul": {
+            "values": [581, 302, 559],
+            "absoluteTolerance": 0.000001,
+            "relativeTolerance": 0.000001
+          },
+          "camToSrgb": {
+            "rows": 3,
+            "columns": 3,
+            "rowMajorValues": [
+              1.2560474872589111,
+              -0.04212497919797897,
+              -0.21392254531383514,
+              -0.1496393233537674,
+              1.549781084060669,
+              -0.40014177560806274,
+              0.004586819093674421,
+              -0.36177071928977966,
+              1.3571839332580566
+            ],
+            "absoluteTolerance": 0.000001,
+            "relativeTolerance": 0.000001
+          },
+          "toleranceBasis": "Approved Windows x64 observations; 1e-6 covers float-to-JSON round-trip variance.",
+          "reviewBasis": "Complete Windows x64 application-path discovery on LibRaw 0.22.2.7 and inspection of the default 500 px render for color cast, demosaic artifacts, and exposure on 2026-08-16."
+        },
+        "limitations": []
+      },
+      "platformOverrides": [],
+      "testLevel": "smoke"
+    },
+    {
+      "slug": "panasonic-s9-standard",
+      "cameraMake": "Panasonic",
+      "cameraModel": "DC-S9",
+      "captureMode": "Standard RAW, 3:2",
+      "extension": ".RW2",
+      "provenanceUrl": "https://raw.pixls.us/getfile.php/7702/nice/Panasonic%20-%20DC-S9%20-%203%3A2.RW2",
+      "license": "CC0-1.0",
+      "sizeBytes": 27680768,
+      "sha256": "290ad5b4e396cb241a59459b2613d2b0659a03ff654e5d5368b3376d35812e50",
+      "selectionStatus": "selected",
+      "expectationStatus": "reviewed",
+      "expected": {
+        "overall": "supported",
+        "capabilities": {
+          "browseThumbnail": "pass",
+          "metadata": "pass",
+          "preview": "pass",
+          "fullDecode": "pass",
+          "cameraColor": "pass",
+          "export": "pass"
+        },
+        "metadata": {
+          "visibleWidth": 6016,
+          "visibleHeight": 4016,
+          "nativeOrientation": 0,
+          "appliedOrientation": 1,
+          "requiresIso": true,
+          "requiresExposure": true,
+          "requiresCaptureTimestamp": true
+        },
+        "cameraFacts": {
+          "sensor": {
+            "colors": 3,
+            "filters": 3031741620,
+            "dngVersion": 0,
+            "colorDescription": "RGBG"
+          },
+          "camMul": {
+            "values": [518, 256, 450],
+            "absoluteTolerance": 0.000001,
+            "relativeTolerance": 0.000001
+          },
+          "camToSrgb": {
+            "rows": 3,
+            "columns": 3,
+            "rowMajorValues": [
+              1.471395492553711,
+              -0.24423977732658386,
+              -0.22715570032596588,
+              -0.17147505283355713,
+              1.5745208263397217,
+              -0.40304574370384216,
+              -0.023035550490021706,
+              -0.3921069800853729,
+              1.41514253616333
+            ],
+            "absoluteTolerance": 0.000001,
+            "relativeTolerance": 0.000001
+          },
+          "toleranceBasis": "Approved Windows x64 observations; 1e-6 covers float-to-JSON round-trip variance.",
+          "reviewBasis": "Complete Windows x64 application-path discovery on LibRaw 0.22.2.7 and inspection of the default 500 px render for color cast, demosaic artifacts, and exposure on 2026-08-16."
+        },
+        "limitations": []
+      },
+      "platformOverrides": [],
+      "testLevel": "smoke"
+    },
+    {
+      "slug": "nikon-z8-he",
+      "cameraMake": "Nikon",
+      "cameraModel": "Z 8",
+      "captureMode": "High efficiency, 8-bit, 3:2",
+      "extension": ".NEF",
+      "provenanceUrl": "https://raw.pixls.us/getfile.php/6616/nice/Nikon%20-%20Z%208%20-%208bit%208bit%20compressed%20%283%3A2%29.NEF",
+      "license": "CC0-1.0",
+      "sizeBytes": 24384512,
+      "sha256": "82df041542b8d328738443bb5ff3373b396e406ecc8cbe7dc3b35252790c53e7",
+      "selectionStatus": "selected",
+      "expectationStatus": "reviewed",
+      "expected": {
+        "overall": "unsupported",
+        "capabilities": {
+          "browseThumbnail": "pass",
+          "metadata": "pass",
+          "preview": "unsupported",
+          "fullDecode": "unsupported",
+          "cameraColor": "unsupported",
+          "export": "unsupported"
+        },
+        "metadata": {
+          "visibleWidth": 8280,
+          "visibleHeight": 5520,
+          "nativeOrientation": 0,
+          "appliedOrientation": 1,
+          "requiresIso": true,
+          "requiresExposure": true,
+          "requiresCaptureTimestamp": true
+        },
+        "cameraFacts": null,
+        "unpackError": {
+          "nativeCode": -2,
+          "nativeText": "Unsupported file format or not RAW file"
+        },
+        "limitations": [
+          "LibRaw 0.22.2 cannot unpack Nikon Z8 HE; metadata and the embedded browse thumbnail remain available."
+        ]
+      },
+      "platformOverrides": [],
+      "testLevel": "smoke"
+    }
+  ]
+}

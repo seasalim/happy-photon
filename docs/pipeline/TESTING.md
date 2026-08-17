@@ -27,6 +27,63 @@ oldest/smallest CC0 body per mosaic type. Provenance is recorded in
 Raw-file burst pair: two consecutive CC0 frames of a similar scene if obtainable; else
 duplicate one raw byte-for-byte under two names (sufficient for determinism testing).
 
+### 1.1 Opt-in modern-camera compatibility fixtures
+
+`Tests/compatibility-fixtures.json` is the authority for downloaded compatibility
+fixture provenance, CC0 license, exact byte length, SHA-256, selection lifecycle, and
+reviewed behavior. The reciprocal committed-asset authority is
+`Tests/assets/README.md`. Compatibility RAWs are never committed: the file-based .NET
+fetcher verifies or downloads them into the disposable, gitignored
+`artifacts/compatibility-fixtures/` cache.
+
+```powershell
+dotnet run --file scripts/fetch-compatibility-fixtures.cs
+dotnet run --file scripts/fetch-compatibility-fixtures.cs -- sony-a9m3-lossy
+```
+
+The provenance URL is also the download endpoint in this P0 slice. An existing cached
+length or hash mismatch fails closed, names the fixture and observed/expected values,
+and is never replaced automatically. A project-controlled mirror is deferred until a
+scheduled release gate makes upstream availability release-critical. Selected fixtures
+are capped at 30 MiB. Tests never access the network.
+
+The manifest uses strict JSON. `selectionStatus` is `pending` or `selected`; selected
+entries use `expectationStatus` `candidate` or `reviewed`. Candidates omit `expected`
+and run only in discovery. Reviewed entries require capability, metadata, sensor,
+camera-WB/matrix, tolerance, and review expectations appropriate to their outcome.
+Camera matrices are 3-by-the-native-multiplier-count in row-major order and each row
+sums to 1. All six P0 entries use `testLevel: smoke`; this slice creates no compatibility
+goldens or P1 placeholders.
+
+`HAPPY_PHOTON_COMPAT` has four states:
+
+| Value | Behavior |
+|-------|----------|
+| unset | One compatibility fact skips before loading the manifest or touching a fixture. |
+| `1` | Runs reviewed fixtures; missing files produce named skip terminals and a fetch instruction. |
+| `discovery` | Requires every selected fixture and valid hash, records candidate and reviewed application-path observations, and never changes expectations. |
+| `strict` | Rejects pending/candidate entries and fails for a missing, invalid, or behaviorally different reviewed fixture. |
+
+Any other non-empty value fails so a misspelled gate cannot silently skip. The P0
+harness is intentionally Windows x64 only and lives wholly in the ordinary test host,
+whose assembly fixture initializes Avalonia/WIC. It owns each fixture's metadata,
+browse-thumbnail, preview base, full base, camera facts, default and edited renders,
+JPEG export, orientation, and disposal checks. It emits exactly one `COMPAT TERMINAL`
+line per selected fixture followed by `COMPAT COMPLETE observed=N selected=N`, and writes
+the ignored structured report to `artifacts/compatibility-results/`. Discovery also
+writes 500 px default-render review images there.
+
+The Windows x64 review on 2026-08-16 ran six selected fixtures on the packaged LibRaw
+0.22.2.7 runtime: the Canon R5 Mark II RAW/C-RAW, Sony A9 III lossy ARW, Fujifilm X-T50
+compressed RAF, and Panasonic S9 RW2 completed every application path; the X-T50
+reported X-Trans filters `0x00000009`. Nikon Z8 HE metadata and its embedded JPEG browse
+thumbnail succeeded, while `Unpack` returned LibRaw `-2`,
+`Unsupported file format or not RAW file`; preview/full/export returned no developed
+base, and the existing Nikon-HE user status was set. Because `RawBaseLoader` catches the
+native exception and maps any null result to `UnsupportedRaw`, the causal link between
+that exact `-2` and the production outcome is inferred by the end-to-end fixture test,
+not proven through a production diagnostic seam.
+
 ## 2. Golden mechanism
 
 - Goldens are rendered PNGs stored under `Tests/goldens/v<RenderPipeline.Version>/`,
@@ -169,8 +226,9 @@ ordinary host so the native and headless Avalonia platforms never share a proces
 
 Platform and codec gaps use xUnit v3 native runtime skips (`Assert.Skip` or
 `Assert.SkipWhen`) with an explicit reason so they remain visible in logs. CI gates on
-discovery before execution: 666 ordinary tests plus 35 headless tests. The full run
-currently expands theories to 720 execution cases. Run tests with a 90-second blame
+discovery before execution: 1,075 ordinary listed cases plus 113 headless listed cases.
+The full run currently expands dynamic theories to 1,099 ordinary and 116 headless
+execution cases. Run tests with a 90-second blame
 hang timeout while changing either host.
 
 Golden assets and baselines must keep the repo clone under control — if the goldens

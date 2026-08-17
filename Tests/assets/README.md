@@ -6,6 +6,10 @@ raw.pixls.us files were uploaded under the
 The Dryad high-ISO dataset is also CC0. The derived standard-format fixtures therefore
 remain CC0. The compact Display P3 profile used during generation is also CC0.
 
+Downloaded modern-camera fixtures are not part of this directory. Their authoritative
+provenance, license, size, hash, and reviewed behavior are recorded in
+[`../compatibility-fixtures.json`](../compatibility-fixtures.json).
+
 | File | Purpose | Source / generation | SHA-256 |
 |------|---------|---------------------|---------|
 | `canon-eos-350d.cr2` | Reference Bayer RAW; tonal matrix and clipped highlights verified by a no-auto-bright linear decode | [raw.pixls.us Canon EOS 350D](https://raw.pixls.us/getfile.php/758/nice/Canon%20-%20EOS%20350D%20-%20RAW%20%283%3A2%29.CR2), CC0 | `8cbb84e04d93b005fe082da9c954122a612b5281af00aa088d767850f343fd38` |
