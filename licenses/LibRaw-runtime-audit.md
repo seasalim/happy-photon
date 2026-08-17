@@ -520,3 +520,32 @@ was needed.
   to leave healthy-runtime pixels untouched.
 - Outstanding for Checkpoint C only: re-confirm immediately before
   release that 3 is still the next-unused cache value.
+
+## 2026-08-16 — OpenMP worker cap raised to sixteen
+
+The phase-4 default of `min(cores, 8)` was measured against the
+modern-camera fixtures this upgrade targets and found to cost real time
+on large X-Trans files without a proportionate memory saving. Full
+sRGB decode of the Fujifilm X-T50 fixture (40.1 MP X-Trans) on a
+24-core Windows machine:
+
+| `OMP_NUM_THREADS` | total | peak working set | peak paged |
+| --- | ---: | ---: | ---: |
+| 8 (previous default) | 5,637 ms | 594 MiB | 582 MiB |
+| 16 (new default) | 3,590 ms | 659 MiB | 771 MiB |
+| 24 (all cores) | 3,666 ms | 659 MiB | 959 MiB |
+
+Sixteen recovers 36% of the decode time for about 65 MiB more working
+set; beyond sixteen there is no further time gain and paged memory keeps
+rising. A Bayer control (Panasonic DC-S9, 24.2 MP) showed the opposite
+sensitivity — 1,072 ms at eight workers versus 1,185 ms at 24 — so this
+is an X-Trans demosaic cost that scales with resolution, which is why
+the 12 MP X30 fixture used in phase 4 did not reveal it.
+
+The cap only binds on machines with more than eight cores, which are
+also the machines with the most memory headroom. Explicit
+`OMP_NUM_THREADS` still wins, output pixels remain
+thread-count-invariant per the recorded thread-comparison checksums, and
+the phase-4 recycle-before-import change is unaffected. The relative
+contribution of the cap versus that recycle change to the phase-4 export
+peak has not been measured separately.

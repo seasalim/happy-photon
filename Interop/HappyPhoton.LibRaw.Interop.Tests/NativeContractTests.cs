@@ -80,7 +80,8 @@ public sealed unsafe class NativeContractTests
     [InlineData(1, 1)]
     [InlineData(4, 4)]
     [InlineData(8, 8)]
-    [InlineData(24, 8)]
+    [InlineData(16, 16)]
+    [InlineData(24, 16)]
     public void OpenMpDefault_BoundsDecoderScratchWorkers(
         int processorCount,
         int expected)

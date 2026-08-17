@@ -67,7 +67,7 @@ Post-decode steps, in order:
    intermediate or managed full-image copy. Synthetic-buffer tests pin byte order
    and exact 16-bit preservation. The former PPM wrapping path is not used by the
    base loader.
-   The binding defaults OpenMP to at most eight workers unless the process already
+   The binding defaults OpenMP to at most sixteen workers unless the process already
    defines `OMP_NUM_THREADS`. This bounds the per-worker scratch space used by
    full-resolution X-Trans processing without changing decode precision or pixels.
 2. LibRaw sometimes pre-rotates. The loader detects that through the dimension swap,

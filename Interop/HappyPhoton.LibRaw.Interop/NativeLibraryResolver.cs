@@ -75,7 +75,7 @@ internal static class NativeLibraryResolver
     }
 
     internal static int GetDefaultOpenMpThreadCount(int processorCount) =>
-        Math.Clamp(processorCount, 1, 8);
+        Math.Clamp(processorCount, 1, 16);
 
     private static string ResolveDirectory()
     {
