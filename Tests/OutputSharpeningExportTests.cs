@@ -103,11 +103,12 @@ public sealed class OutputSharpeningExportTests : IDisposable
             new StandardBaseLoader(),
             new ExportMetadataService());
 
-        var count = await service.ExportBatchAsync(
+        var result = await service.ExportBatchAsync(
             [new ImageFile(sourcePath)],
             settings);
 
-        Assert.Equal(1, count);
+        Assert.Equal(1, result.ExportedCount);
+        Assert.Empty(result.FailedImages);
     }
 
     private string WriteEdgeSource()

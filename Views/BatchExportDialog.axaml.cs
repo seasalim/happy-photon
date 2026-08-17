@@ -147,20 +147,28 @@ public partial class BatchExportDialog : Window
 
         try
         {
+            ExportBatchResult result;
             if (hydrationApproved)
             {
-                await _mainViewModel.ExportBatchApprovedAsync(
+                result = await _mainViewModel.ExportBatchApprovedAsync(
                     _images,
                     progress,
                     _exportCts.Token);
             }
             else
             {
-                await _mainViewModel.ExportBatchAsync(
+                result = await _mainViewModel.ExportBatchAsync(
                     _images,
                     progress,
                     _exportCts.Token);
             }
+
+            if (result.FailedImages.Count > 0)
+            {
+                ViewModel.ShowPartialExport(result);
+                return;
+            }
+
             ViewModel.EndExport();
             Close(true);
         }

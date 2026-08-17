@@ -58,7 +58,7 @@ internal static class RawExportPerformanceMeasurement
             peak = Math.Max(peak, process.PrivateMemorySize64);
         }
 
-        Assert.Equal(1, await export);
+        Assert.Equal(1, (await export).ExportedCount);
         stopwatch.Stop();
         process.Refresh();
         peak = Math.Max(peak, process.PrivateMemorySize64);

@@ -132,11 +132,15 @@ public sealed class BackgroundActivityViewModelTests : IDisposable
         vm.ExportSettings.OutputFolder = Path.Combine(_root, "vm-export");
 
         var before = vm.ExportActivityScopeStartCount;
-        Assert.Equal(0, await vm.ExportBatchAsync(Array.Empty<ImageFile>()));
+        Assert.Equal(
+            0,
+            (await vm.ExportBatchAsync(Array.Empty<ImageFile>())).ExportedCount);
         Assert.Equal(before + 1, vm.ExportActivityScopeStartCount);
 
         before = vm.ExportActivityScopeStartCount;
-        Assert.Equal(0, await vm.ExportBatchApprovedAsync(Array.Empty<ImageFile>()));
+        Assert.Equal(
+            0,
+            (await vm.ExportBatchApprovedAsync(Array.Empty<ImageFile>())).ExportedCount);
         Assert.Equal(before + 1, vm.ExportActivityScopeStartCount);
 
         await using var imageService = new ImageService(

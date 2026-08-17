@@ -83,12 +83,12 @@ public partial class MainWindowViewModel
         return Library.GetSelectedImages();
     }
 
-    public Task<int> ExportBatchAsync(
+    public Task<ExportBatchResult> ExportBatchAsync(
         IProgress<(int current, int total, string fileName)>? progress = null,
         CancellationToken cancellationToken = default) =>
         ExportBatchAsync(GetSelectedImages().ToList(), progress, cancellationToken);
 
-    public async Task<int> ExportBatchAsync(
+    public async Task<ExportBatchResult> ExportBatchAsync(
         IReadOnlyList<ImageFile> imagesToExport,
         IProgress<(int current, int total, string fileName)>? progress = null,
         CancellationToken cancellationToken = default)
@@ -106,7 +106,7 @@ public partial class MainWindowViewModel
         IReadOnlyList<ImageFile> images) =>
         ImageService.GetExportHydrationScope(images);
 
-    internal async Task<int> ExportBatchApprovedAsync(
+    internal async Task<ExportBatchResult> ExportBatchApprovedAsync(
         IReadOnlyList<ImageFile> imagesToExport,
         IProgress<(int current, int total, string fileName)>? progress = null,
         CancellationToken cancellationToken = default)

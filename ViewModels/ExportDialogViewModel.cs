@@ -213,6 +213,22 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
         ErrorMessage = message;
     }
 
+    public void ShowPartialExport(ExportBatchResult result)
+    {
+        EndExport();
+        var failedCount = result.FailedImages.Count;
+        var total = result.ExportedCount + failedCount;
+        var failedLabel = failedCount == 1
+            ? "1 image was"
+            : $"{failedCount} images were";
+        var failedPaths = string.Join(
+            Environment.NewLine,
+            result.FailedImages.Select(image => $"• {image.FilePath}"));
+        ErrorMessage =
+            $"Exported {result.ExportedCount} of {total} images. " +
+            $"{failedLabel} not exported:{Environment.NewLine}{failedPaths}";
+    }
+
     public void Dispose() => Settings.PropertyChanged -= OnSettingsPropertyChanged;
 
     partial void OnIsExportingChanged(bool value)

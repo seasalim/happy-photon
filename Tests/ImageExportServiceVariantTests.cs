@@ -29,9 +29,10 @@ public sealed class ImageExportServiceVariantTests : IDisposable
         };
         var service = CreateService();
 
-        var count = await service.ExportBatchAsync([new ImageFile(sourcePath)], settings);
+        var result = await service.ExportBatchAsync([new ImageFile(sourcePath)], settings);
 
-        Assert.Equal(1, count);
+        Assert.Equal(1, result.ExportedCount);
+        Assert.Empty(result.FailedImages);
         AssertImage(Path.Combine(outputFolder, "hi-res", "source.webp"), 400, 200);
         AssertImage(Path.Combine(outputFolder, "web", "source.webp"), 200, 100);
         AssertImage(Path.Combine(outputFolder, "small", "source.webp"), 100, 50);
@@ -66,7 +67,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
             Format = ExportFormat.Png
         };
 
-        await CreateService().ExportBatchAsync(
+        var count = await CreateService().ExportBatchAsync(
             [new ImageFile(sourcePath)],
             settings,
             [
@@ -75,6 +76,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
             ],
             useSubfolders: true);
 
+        Assert.Equal(1, count);
         AssertImage(Path.Combine(outputFolder, "large", "source.png"), 300, 150);
         AssertImage(Path.Combine(outputFolder, "small", "source.png"), 100, 50);
     }

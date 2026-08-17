@@ -5,6 +5,10 @@ using static HappyPhoton.Services.ImageServiceHelpers;
 
 namespace HappyPhoton.Services;
 
+public sealed record ExportBatchResult(
+    int ExportedCount,
+    IReadOnlyList<ImageFile> FailedImages);
+
 public sealed class ImageExportService
 {
     private readonly RenderPipeline _renderPipeline;
@@ -21,7 +25,7 @@ public sealed class ImageExportService
         _metadataService = metadataService;
     }
 
-    public Task<int> ExportBatchAsync(
+    public Task<ExportBatchResult> ExportBatchAsync(
         IEnumerable<ImageFile> images,
         ExportSettings settings,
         IProgress<(int current, int total, string fileName)>? progress = null,
@@ -38,14 +42,15 @@ public sealed class ImageExportService
             cancellationToken);
     }
 
-    public Task<int> ExportBatchAsync(
+    public async Task<int> ExportBatchAsync(
         IEnumerable<ImageFile> images,
         ExportSettings settings,
         IReadOnlyList<ExportVariant> variants,
         bool useSubfolders,
         IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default) =>
-        ExportBatchCoreAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var result = await ExportBatchCoreAsync(
             images,
             settings,
             variants,
@@ -53,15 +58,18 @@ public sealed class ImageExportService
             progress,
             SourceReadIntent.Background,
             cancellationToken);
+        return result.ExportedCount;
+    }
 
-    internal Task<int> ExportBatchApprovedAsync(
+    internal async Task<int> ExportBatchApprovedAsync(
         IEnumerable<ImageFile> images,
         ExportSettings settings,
         IReadOnlyList<ExportVariant> variants,
         bool useSubfolders,
         IProgress<(int current, int total, string fileName)>? progress,
-        CancellationToken cancellationToken) =>
-        ExportBatchCoreAsync(
+        CancellationToken cancellationToken)
+    {
+        var result = await ExportBatchCoreAsync(
             images,
             settings,
             variants,
@@ -69,8 +77,10 @@ public sealed class ImageExportService
             progress,
             SourceReadIntent.UserApprovedHydration,
             cancellationToken);
+        return result.ExportedCount;
+    }
 
-    internal Task<int> ExportBatchApprovedAsync(
+    internal Task<ExportBatchResult> ExportBatchApprovedAsync(
         IEnumerable<ImageFile> images,
         ExportSettings settings,
         IProgress<(int current, int total, string fileName)>? progress,
@@ -87,7 +97,7 @@ public sealed class ImageExportService
             cancellationToken);
     }
 
-    private async Task<int> ExportBatchCoreAsync(
+    private async Task<ExportBatchResult> ExportBatchCoreAsync(
         IEnumerable<ImageFile> images,
         ExportSettings settings,
         IReadOnlyList<ExportVariant> variants,
@@ -99,6 +109,7 @@ public sealed class ImageExportService
         var imageList = images.ToList();
         var total = imageList.Count;
         var exported = 0;
+        var failedImages = new List<ImageFile>();
 
         Directory.CreateDirectory(settings.OutputFolder);
         if (useSubfolders)
@@ -128,10 +139,13 @@ public sealed class ImageExportService
             {
                 exported++;
             }
+            else
+            {
+                failedImages.Add(imageFile);
+            }
         }
 
-        progress?.Report((exported, total, "Complete"));
-        return exported;
+        return new ExportBatchResult(exported, failedImages);
     }
 
     private bool ExportImage(

@@ -301,7 +301,7 @@ public class ImageService : IAsyncDisposable
 
     // ===== Export Methods (delegated to ImageExportService) =====
 
-    public async Task<int> ExportBatchAsync(
+    public async Task<ExportBatchResult> ExportBatchAsync(
         IEnumerable<ImageFile> images,
         ExportSettings settings,
         IProgress<(int current, int total, string fileName)>? progress = null,
@@ -316,7 +316,7 @@ public class ImageService : IAsyncDisposable
             cancellationToken);
     }
 
-    internal async Task<int> ExportBatchApprovedAsync(
+    internal async Task<ExportBatchResult> ExportBatchApprovedAsync(
         IEnumerable<ImageFile> images,
         ExportSettings settings,
         IProgress<(int current, int total, string fileName)>? progress = null,

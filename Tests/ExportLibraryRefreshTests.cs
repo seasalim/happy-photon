@@ -44,7 +44,8 @@ public sealed class ExportLibraryRefreshTests : IDisposable
                 viewModel.ExportBatchApprovedAsync([image]));
             WaitUntil(() => image.Thumbnail != null);
 
-            Assert.Equal(1, exported);
+            Assert.Equal(1, exported.ExportedCount);
+            Assert.Empty(exported.FailedImages);
             Assert.False(image.SourceRequiresHydration);
             Assert.False(image.ThumbnailDeferredForHydration);
             Assert.NotNull(image.Thumbnail);

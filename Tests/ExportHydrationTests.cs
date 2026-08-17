@@ -52,11 +52,12 @@ public sealed class ExportHydrationTests : IDisposable
             OutputFolder = Path.Combine(_root, "canceled")
         };
 
-        var count = await service.ExportBatchAsync(
+        var result = await service.ExportBatchAsync(
             [new ImageFile(Path.Combine(_root, "cloud.jpg"))],
             settings);
 
-        Assert.Equal(0, count);
+        Assert.Equal(0, result.ExportedCount);
+        Assert.Single(result.FailedImages);
         Assert.Empty(loader.FullLoads);
         Assert.Equal(0, profileReads);
     }
@@ -122,13 +123,14 @@ public sealed class ExportHydrationTests : IDisposable
             OutputFolder = Path.Combine(_root, "approved")
         };
 
-        var count = await service.ExportBatchApprovedAsync(
+        var result = await service.ExportBatchApprovedAsync(
             [first, third],
             settings,
             progress: null,
             CancellationToken.None);
 
-        Assert.Equal(2, count);
+        Assert.Equal(2, result.ExportedCount);
+        Assert.Empty(result.FailedImages);
         Assert.Equal([first.FilePath, third.FilePath], loader.FullLoads);
         Assert.Equal([first.FilePath, third.FilePath], profileReads);
         Assert.DoesNotContain(excluded.FilePath, loader.FullLoads);

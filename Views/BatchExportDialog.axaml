@@ -287,9 +287,9 @@
                         Background="{StaticResource ErrorContainer}"
                         CornerRadius="{StaticResource RadiusMedium}"
                         IsVisible="{Binding HasError}">
-                    <TextBlock Text="{Binding ErrorMessage}"
-                               Foreground="{StaticResource OnErrorContainer}"
-                               TextWrapping="Wrap"/>
+                    <SelectableTextBlock Text="{Binding ErrorMessage}"
+                                         Foreground="{StaticResource OnErrorContainer}"
+                                         TextWrapping="Wrap"/>
                 </Border>
             </Grid>
         </ScrollViewer>

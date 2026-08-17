@@ -127,8 +127,9 @@ it explains how to select photographs, disables Export, and offers Close. While 
 export runs, configuration controls are disabled, progress and the current filename
 are shown, and Cancel Export requests cancellation without destroying the dialog.
 Success closes the dialog; cancellation restores the configured form; failures remain
-visible. Overwrite and original-file collision confirmations are owned by the export
-dialog.
+visible. Partial completion shows the exported count and every failed filename in the
+scrollable dialog. Overwrite and original-file collision confirmations are owned by the
+export dialog.
 
 The final workflow-tour coachmark remains in Library. Its primary action ends the tour
 before opening the dialog through the normal guarded command. The modal contains no
