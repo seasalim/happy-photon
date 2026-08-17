@@ -501,3 +501,22 @@ Six RAW goldens changed (three Nikon D70, three Pentax K-r) with CIE76
 individually accepted as LibRaw 0.22.2 demosaic/color-table effects.
 Workflow run 31938701422 verified the retired-baseline build workflow and
 audited-runtime staging end to end after integration.
+
+## 2026-08-16 — Cache and pixel review closure (LIBRAW_222 step 6)
+
+Step 6 is satisfied by work already recorded above; no separate change
+was needed.
+
+- `BaseImage.Version` is 3, bumped from 2 exactly once (commit
+  975e118) and never reused, so it remains the next-unused value.
+  `RenderPipeline.Version` stays 7: no render-stage math changed.
+- All existing RAW goldens and the WYSIWYG cases were run before any
+  baseline was accepted. Six changed (three Nikon D70, three Pentax
+  K-r); each was reviewed side by side and accepted individually as a
+  LibRaw 0.22.2 demosaic/color-table effect, with CIE76 ΔE mean/p99
+  recorded above. None was accepted merely because the decoder changed.
+- Goldens have not moved since 975e118. The single-decoder change
+  (1f2fc09) and the export-reporting change (f56a555) were both verified
+  to leave healthy-runtime pixels untouched.
+- Outstanding for Checkpoint C only: re-confirm immediately before
+  release that 3 is still the next-unused cache value.
