@@ -122,7 +122,8 @@ package committed or integrated.
    package before submission.
 5. Create and push an annotated `v*` tag for the reviewed commit.
 6. Review the draft GitHub assets on clean machines, including checksums,
-   Gatekeeper behavior, launch, import, edit, and export.
+   Gatekeeper behavior, launch, import (including a RAW file, which proves
+   the packaged native LibRaw runtime loads and decodes), edit, and export.
 7. Download the private MSIX from the tagged workflow run and upload that exact
    file manually to the Happy Photon submission in Partner Center. Complete
    the `runFullTrust` restricted-capability justification there.
