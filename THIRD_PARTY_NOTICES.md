@@ -57,9 +57,20 @@ The native package also contains supporting native libraries. The exact
 Platform files, versions, package/source hashes, and binary hashes are recorded
 in
 [`licenses/LibRaw-runtime-audit.md`](licenses/LibRaw-runtime-audit.md).
-The release includes the applicable libjpeg-turbo/IJG, Little CMS, zlib,
-GPLv3, and GCC Runtime Library Exception notices. The former Sdcb managed
-wrapper notice was removed with the wrapper because no copied Sdcb code remains.
+The bundled components are libjpeg-turbo 3.2.0
+([notice](licenses/libjpeg-turbo-3.2.0.txt)), Little CMS 2.19.1
+([notice](licenses/Little-CMS-MIT.txt)), and zlib 1.3.2
+([notice](licenses/zlib-1.3.2.txt)) on Windows and Linux; the Apple
+Silicon runtime links JPEG statically and uses system zlib, so it bundles
+only the bridge and LibRaw. Each notice is a verbatim copy of the text
+produced by the audited build.
+
+Linux links the system `libgomp.so.1` rather than redistributing it, so
+no libgomp binary ships. The GPLv3 and GCC Runtime Library Exception
+texts are retained because the native package declares
+`GPL-3.0-or-later` as its own license expression. The former Sdcb managed
+wrapper notice was removed with the wrapper because no copied Sdcb code
+remains.
 
 ## MetadataExtractor and XmpCore
 

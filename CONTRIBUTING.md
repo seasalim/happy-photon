@@ -30,6 +30,12 @@ project rules:
 - Include tests proportional to the risk.
 - Before/after screenshots are welcome for visible UI changes, but optional;
   describe the visible change in words when you do not attach them.
+- Do not commit native binaries. RAW decoding restores from the committed
+  `HappyPhoton.LibRaw.Native` package under `packages/native/`, so a fresh
+  clone builds with no extra setup. That package is rebuilt only by
+  maintainers through the manually dispatched `build-libraw` workflow and
+  committed only after its audit review. See
+  [`BUILDING.md`](BUILDING.md).
 
 ## Development model
 

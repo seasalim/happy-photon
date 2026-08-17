@@ -1,5 +1,15 @@
 # LibRaw native runtime audit
 
+> **Current shipped runtime: `HappyPhoton.LibRaw.Native` 0.22.2.7
+> (LibRaw 0.22.2).** The sections immediately below document the
+> SUPERSEDED Sdcb-based 0.21.1 baseline and are retained for provenance
+> history only. Sdcb was removed in `975e118`. For what ships today, see
+> the 0.22.2.7 qualification, per-RID contents, and package hashes later
+> in this document, and the "Redistribution basis and sources" section,
+> which always describes the CURRENT release.
+
+## Superseded 0.21.1 baseline (historical)
+
 The Windows/Linux packages were audited on 2026-07-23 from the exact NuGet
 archives restored by `packages.lock.json`; the Apple Silicon runtime was added
 and audited on 2026-08-02. Both packages are version 0.21.1 and are signed NuGet
@@ -54,20 +64,35 @@ recorded beside the binary in `runtimes/osx-arm64/native/README.md`.
 
 ## Redistribution basis and sources
 
+This section describes the CURRENT shipped release
+(`HappyPhoton.LibRaw.Native` 0.22.2.7). Component versions come from the
+package's committed `…provenance.json`, and the notice texts in
+`licenses/` are verbatim copies of the notices produced by that build.
+
 - LibRaw is redistributed under LGPL-2.1-only. The release carries the LGPL
   text and LibRaw copyright/acknowledgements. Corresponding unmodified source:
-  <https://github.com/LibRaw/LibRaw/tree/0.21.1>.
-- libjpeg-turbo uses its IJG, modified BSD, and zlib license combination.
-  Sources: <https://github.com/libjpeg-turbo/libjpeg-turbo/tree/2.1.3> and
-  <https://github.com/libjpeg-turbo/libjpeg-turbo/tree/2.1.5.1>.
-- Little CMS uses the MIT license. Sources:
-  <https://github.com/mm2/Little-CMS/tree/lcms2.12> and
-  <https://github.com/mm2/Little-CMS/tree/lcms2.14>.
-- zlib uses the zlib license. Source:
-  <https://github.com/madler/zlib/tree/v1.2.11>.
-- libgomp is covered by GPLv3 plus the GCC Runtime Library Exception 3.1. The
-  release carries both texts. Source:
-  <https://github.com/gcc-mirror/gcc/tree/releases/gcc-11.3.0/libgomp>.
+  <https://github.com/LibRaw/LibRaw/tree/0.22.2>.
+- libjpeg-turbo **3.2.0** uses its IJG and modified 3-clause BSD license
+  combination — note that 3.x carries TWO compatible BSD-style licenses,
+  not the three described for the 2.1.x line. Notice:
+  [`licenses/libjpeg-turbo-3.2.0.txt`](libjpeg-turbo-3.2.0.txt). Source:
+  <https://github.com/libjpeg-turbo/libjpeg-turbo/tree/3.2.0>.
+- Little CMS **2.19.1** uses the MIT license. Notice:
+  [`licenses/Little-CMS-MIT.txt`](Little-CMS-MIT.txt). Source:
+  <https://github.com/mm2/Little-CMS>.
+- zlib **1.3.2** uses the zlib license. Notice:
+  [`licenses/zlib-1.3.2.txt`](zlib-1.3.2.txt). Source:
+  <https://github.com/madler/zlib>.
+- libgomp is **NOT redistributed**. Linux builds link the runner's system
+  `libgomp.so.1`, which Checkpoint B approved as a system prerequisite
+  rather than a bundled component. The GPLv3 and GCC Runtime Library
+  Exception texts are retained in `licenses/` because the native package
+  declares `GPL-3.0-or-later` as its own license expression, not because
+  libgomp ships inside it.
+
+Historical note: the superseded 0.21.1 baseline bundled libjpeg-turbo
+2.1.3/2.1.5.1, Little CMS 2.12/2.14, and zlib 1.2.11. Those notices were
+replaced when the runtime moved to 0.22.2.7.
 
 This audit applies to the native contents embedded into Happy Photon's
 self-contained Windows, Linux, and Apple Silicon executables.

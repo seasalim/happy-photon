@@ -74,8 +74,8 @@
         <section id="formats" aria-labelledby="formats-title">
           <p class="eyebrow">FILES AND CAMERAS</p>
           <h2 id="formats-title">JPEG and RAW are both first-class inputs</h2>
-          <p>Standard image support includes JPEG (commonly shown as JPG), PNG, BMP, GIF, TIFF, and WebP. RAW extensions include CR2/CR3, NEF/NRW, ARW/SRF/SR2, DNG, RAF, ORF, RW2, and PEF.</p>
-          <aside class="notice-panel"><strong>Check your camera.</strong><p>RAW decoding uses the bundled LibRaw 0.21.1 generation from early 2023. A listed extension does not guarantee every camera model or compression mode, especially from newer cameras. HEIC/HEIF support can also vary with the available codec.</p></aside>
+          <p>Standard image support includes JPEG (commonly shown as JPG), PNG, BMP, GIF, TIFF, and WebP. RAW support is verified for CR2/CR3, NEF, ARW, DNG, RAF, and RW2. NRW, ORF, and PEF open through the same decoder but are not part of the verified set.</p>
+          <aside class="notice-panel"><strong>Check your camera.</strong><p>RAW decoding uses the bundled, audited LibRaw 0.22.2 generation. A listed extension does not guarantee every camera model or compression mode, especially from newer cameras. HEIC/HEIF support can also vary with the available codec. Nikon high-efficiency (HE and HE*) NEF files are not supported and are reported as unsupported rather than opened.</p></aside>
         </section>
 
         <section id="safety" aria-labelledby="safety-title">
