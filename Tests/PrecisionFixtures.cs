@@ -6,6 +6,7 @@ using ImageMagick;
 namespace HappyPhoton.Tests;
 
 internal sealed record PrecisionFixturePopulation(
+    string Id,
     string Kind,
     string RowSemantics,
     string Intensity);
@@ -35,7 +36,11 @@ internal sealed class PrecisionFixture : IDisposable
         RowNames = rowNames;
         Base = baseImage;
         LoadedFromTiff = loadedFromTiff;
-        Population = population;
+        Population = population ?? new PrecisionFixturePopulation(
+            "synthetic-neutral-ramp",
+            "synthetic-neutral-ramp",
+            "horizontal-grayscale-sweeps",
+            "fixture-declared-range");
         ValidateBaseContract(baseImage, width, height);
     }
 
@@ -49,7 +54,7 @@ internal sealed class PrecisionFixture : IDisposable
     public IReadOnlyList<string> RowNames { get; }
     public BaseImage Base { get; }
     public bool LoadedFromTiff { get; }
-    public PrecisionFixturePopulation? Population { get; }
+    public PrecisionFixturePopulation Population { get; }
 
     public static IReadOnlyList<PrecisionFixture> CreateAll(string temporaryRoot) =>
     [
@@ -59,7 +64,8 @@ internal sealed class PrecisionFixture : IDisposable
     ];
 
     public static PrecisionFixture CreateChromaticAdaptationSweep(
-        double asShotKelvin)
+        double asShotKelvin,
+        PrecisionFixturePopulation? population = null)
     {
         const int width = 257;
         string[] rowNames =
@@ -100,7 +106,8 @@ internal sealed class PrecisionFixture : IDisposable
             rowNames,
             Wrap(image, width, height, asShotKelvin),
             loadedFromTiff: false,
-            population: new PrecisionFixturePopulation(
+            population: population ?? new PrecisionFixturePopulation(
+                "synthetic-saturation-extreme",
                 "synthetic-saturation-extreme",
                 "six-full-intensity-primary-secondary-sweeps-and-six-near-gamut-ring-traversals",
                 "primary-secondary-0-to-1,ring-low-0.04,ring-high-0.90"));

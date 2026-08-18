@@ -169,6 +169,7 @@ metadata and consumers treat it as immutable.
 | `Services/ToneLut.cs` | pure LUT composition (RENDER.md §5) |
 | `Services/ToneLutApplicator.cs` | Q16 LUT interpolation, exhaustively pinned to Magick Clut |
 | `Services/RenderChromaticStage.cs` | white-balance matrix application |
+| `Services/RenderChromaStage.cs` | behavior-neutral saturation and vibrance application |
 | `Services/RenderDetail.cs` + `RenderSharpening.cs` | fixed detail operations |
 | `Services/WhiteBalanceModel.cs` | CCT/tint ↔ gains math (WHITE_BALANCE.md) |
 | `Services/ChromaticAdaptation.cs` | Bradford matrices, normalization |

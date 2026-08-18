@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "retention": {
+    "maximumRecords": 1000000,
+    "startIndex": 0,
+    "rule": "stride-ceiling-eligible-over-cap",
+    "restartScope": "case-population-boundary"
+  },
+  "expectedCases": [
+    "case-5-real-raw",
+    "case-2-wide-primaries",
+    "case-3-exposure-swings",
+    "case-4-stacked-edits",
+    "case-1-synthetic-baseline"
+  ],
+  "populations": [
+    {
+      "id": "real-raw-full-frames",
+      "kind": "real-photographic-full-frame",
+      "rowSemantics": "five-distinct-full-resolution-raw-assets",
+      "intensity": "all-pixels-equal-settings-cross-product"
+    },
+    {
+      "id": "real-raw-focused-crops",
+      "kind": "real-photographic-focused-roi",
+      "rowSemantics": "condition-selected-measurement-windows-not-base-crops",
+      "intensity": "corroboration-only-never-pooled-with-full-frames"
+    },
+    {
+      "id": "wide-space-representative-colors",
+      "kind": "synthetic-wide-encoding",
+      "rowSemantics": "declared-linear-srgb-color-vectors",
+      "intensity": "linear-srgb-zero-to-one"
+    },
+    {
+      "id": "synthetic-exposure-sweep",
+      "kind": "synthetic-ramp",
+      "rowSemantics": "primary-secondary-and-near-gamut-horizontal-sweeps",
+      "intensity": "zero-to-one"
+    },
+    {
+      "id": "synthetic-stacked-pattern",
+      "kind": "synthetic-non-ramp",
+      "rowSemantics": "primary-secondary-and-near-gamut-pattern",
+      "intensity": "zero-to-one"
+    },
+    {
+      "id": "synthetic-saturation-extreme",
+      "kind": "synthetic-saturation-extreme",
+      "rowSemantics": "six-full-intensity-primary-secondary-sweeps-and-six-near-gamut-ring-traversals",
+      "intensity": "primary-secondary-0-to-1,ring-low-0.04,ring-high-0.90"
+    }
+  ],
+  "fullFrameAssets": [
+    { "id": "canon-eos-350d", "fileName": "canon-eos-350d.cr2", "purpose": "clipped-highlights" },
+    { "id": "nikon-d70", "fileName": "nikon-d70-burst-1.nef", "purpose": "second-bayer-path" },
+    { "id": "fujifilm-x30", "fileName": "fujifilm-x30.raf", "purpose": "x-trans-fine-detail" },
+    { "id": "pentax-k-r", "fileName": "pentax-k-r.dng", "purpose": "dng-and-large-white-balance" },
+    { "id": "canon-eos-6d-iso-6400", "fileName": "canon-eos-6d-iso-6400.cr2", "purpose": "high-iso" }
+  ],
+  "excludedAssets": [
+    {
+      "fileName": "nikon-d70-burst-2.nef",
+      "reason": "byte-identical-burst-duplicate-of-nikon-d70-burst-1.nef"
+    }
+  ],
+  "rawSettings": [
+    { "id": "as-shot", "kelvin": null, "tint": null },
+    { "id": "wb-3000", "kelvin": 3000, "tint": 0 },
+    { "id": "wb-9000-tint-p50", "kelvin": 9000, "tint": 50 },
+    { "id": "wb-9000-tint-m50", "kelvin": 9000, "tint": -50 }
+  ],
+  "focusedRois": [
+    { "id": "clipped-highlights", "assetId": "canon-eos-350d", "left": 0.42, "top": 0.30, "right": 0.72, "bottom": 0.62 },
+    { "id": "high-iso", "assetId": "canon-eos-6d-iso-6400", "left": 0.30, "top": 0.30, "right": 0.70, "bottom": 0.70 },
+    { "id": "fine-detail", "assetId": "fujifilm-x30", "left": 0.25, "top": 0.25, "right": 0.65, "bottom": 0.65 },
+    { "id": "large-white-balance", "assetId": "pentax-k-r", "left": 0.20, "top": 0.20, "right": 0.60, "bottom": 0.60 }
+  ],
+  "wideColors": [
+    { "id": "black", "linearSrgb": [0.0, 0.0, 0.0] },
+    { "id": "white", "linearSrgb": [1.0, 1.0, 1.0] },
+    { "id": "red", "linearSrgb": [1.0, 0.0, 0.0] },
+    { "id": "green", "linearSrgb": [0.0, 1.0, 0.0] },
+    { "id": "blue", "linearSrgb": [0.0, 0.0, 1.0] },
+    { "id": "cyan", "linearSrgb": [0.0, 1.0, 1.0] },
+    { "id": "magenta", "linearSrgb": [1.0, 0.0, 1.0] },
+    { "id": "yellow", "linearSrgb": [1.0, 1.0, 0.0] },
+    { "id": "deep-shadow", "linearSrgb": [0.0005, 0.0010, 0.0020] },
+    { "id": "skin-like", "linearSrgb": [0.55, 0.25, 0.12] },
+    { "id": "foliage-like", "linearSrgb": [0.08, 0.35, 0.04] },
+    { "id": "near-neutral", "linearSrgb": [0.48, 0.50, 0.52] }
+  ],
+  "exposureSettings": [
+    { "id": "minus-3-ev", "exposureEv": -3, "highlights": 0 },
+    { "id": "plus-3-ev-shoulder", "exposureEv": 3, "highlights": -100 }
+  ],
+  "stackedSettings": {
+    "kelvin": 9000,
+    "tint": 50,
+    "exposureEv": 1,
+    "brightness": 10,
+    "contrast": 25,
+    "shadows": 35,
+    "highlights": -50,
+    "saturation": 20,
+    "vibrance": 20,
+    "captureSharpen": 60,
+    "chromaNr": 60,
+    "rotation": 90,
+    "cropLeft": 0.05,
+    "cropTop": 0.05,
+    "cropRight": 0.95,
+    "cropBottom": 0.95,
+    "maxDimension": 128
+  }
+}

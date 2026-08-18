@@ -27,24 +27,26 @@ internal static class PrecisionReport
             .Append(" foldPreventsAboveWhite=")
             .Append(Boolean(capture.NormalizedCubeMaximum <= 1 + 1e-12))
             .AppendLine();
-        if (fixture.Population is { } population)
-        {
-            report.Append("CENSUS_POPULATION case=").Append(caseName)
-                .Append(" kind=").Append(population.Kind)
-                .Append(" rowSemantics=").Append(population.RowSemantics)
-                .Append(" intensity=").Append(population.Intensity)
-                .AppendLine();
-        }
+        var population = fixture.Population;
+        report.Append("CENSUS_POPULATION case=").Append(caseName)
+            .Append(" id=").Append(population.Id)
+            .Append(" kind=").Append(population.Kind)
+            .Append(" rowSemantics=").Append(population.RowSemantics)
+            .Append(" intensity=").Append(population.Intensity)
+            .AppendLine();
         foreach (var boundary in capture.Boundaries)
         {
             for (var channel = 0; channel < 3; channel++)
             {
-                AppendBoundary(report, caseName, boundary, channel);
+                AppendBoundary(
+                    report, caseName, population.Id, boundary, channel);
             }
         }
-        AppendQuality(report, caseName, "ingress", capture.IngressQuality);
         AppendQuality(
-            report, caseName, "working-storage", capture.WorkingStorageQuality);
+            report, caseName, population.Id, "ingress", capture.IngressQuality);
+        AppendQuality(
+            report, caseName, population.Id, "working-storage",
+            capture.WorkingStorageQuality);
         report.Append("CENSUS_GATE name=").Append(caseName)
             .Append(" reconstruction=")
             .Append(capture.GateFailures.Count == 0 ? "pass" : "fail")
@@ -126,55 +128,42 @@ internal static class PrecisionReport
     private static void AppendBoundary(
         StringBuilder report,
         string caseName,
+        string population,
         PrecisionBoundaryCapture boundary,
         int channel)
     {
         var samples = boundary.Samples
             .Where(sample => sample.Channel == channel)
             .ToArray();
-        var negative = samples.Count(sample =>
-            sample.Clip == PrecisionClipDirection.Negative);
-        var above = samples.Count(sample =>
-            sample.Clip == PrecisionClipDirection.AboveWhite);
-        var recoverable = samples.Count(sample =>
-            sample.Recovery == PrecisionRecovery.ReturnsUseful);
-        var indeterminate = samples.Count(sample =>
-            sample.Recovery == PrecisionRecovery.Indeterminate);
-        var longestRecoverable = Enumerable.Range(0, boundary.Height)
-            .Select(row => PrecisionCensusLogic.LongestContiguousRun(
-                samples.Where(sample => sample.Y == row)
-                    .OrderBy(sample => sample.X)
-                    .Select(sample =>
-                        sample.Recovery == PrecisionRecovery.ReturnsUseful)
-                    .ToArray()))
-            .DefaultIfEmpty(0)
-            .Max();
-        var maximumNegative = samples
-            .Where(sample => sample.UnclampedReference < 0)
-            .Select(sample => -sample.UnclampedReference!.Value)
-            .DefaultIfEmpty(0)
-            .Max();
-        var maximumAbove = samples
-            .Where(sample => sample.UnclampedReference > 1)
-            .Select(sample => sample.UnclampedReference!.Value - 1)
-            .DefaultIfEmpty(0)
-            .Max();
+        var aggregate = boundary.Aggregates[channel];
         report.Append("CENSUS_BOUNDARY case=").Append(caseName)
+            .Append(" population=").Append(population)
             .Append(" name=").Append(boundary.Name)
             .Append(" channel=").Append("RGB"[channel])
             .Append(" scope=").Append(Token(boundary.Scope))
             .Append(" oracle=").Append(Token(boundary.Oracle))
             .Append(" executed=").Append(Boolean(boundary.Executed))
             .Append(" inputQ16Samples=").Append(boundary.InputStoredQ16.Length)
+            .Append(" clipState=").Append(Token(aggregate.ClipState))
+            .Append(" recoveryState=").Append(Token(aggregate.RecoveryState))
+            .Append(" aggregateBasis=").Append(Token(aggregate.Basis))
+            .Append(" channelSamples=").Append(aggregate.ChannelSamples)
             .Append(" sampleRecords=").Append(samples.Length)
+            .Append(" retentionStride=").Append(boundary.RetentionStride)
             .Append(" storedMaximum=").Append(samples[0].StoredMaximum)
-            .Append(" negativeClips=").Append(negative)
-            .Append(" aboveWhiteClips=").Append(above)
-            .Append(" recoverable=").Append(recoverable)
-            .Append(" indeterminate=").Append(indeterminate)
-            .Append(" longestRecoverableRun=").Append(longestRecoverable)
-            .Append(" maxNegativeExcursion=").Append(Format(maximumNegative))
-            .Append(" maxAboveWhiteExcursion=").Append(Format(maximumAbove))
+            .Append(" negativeClips=").Append(aggregate.ClipState == PrecisionMetricState.Available ? aggregate.NegativeClips : "null")
+            .Append(" aboveWhiteClips=").Append(aggregate.ClipState == PrecisionMetricState.Available ? aggregate.AboveWhiteClips : "null")
+            .Append(" recoverable=").Append(aggregate.RecoveryState == PrecisionMetricState.Available ? aggregate.Recoverable : "null")
+            .Append(" indeterminate=").Append(aggregate.RecoveryState == PrecisionMetricState.Available ? aggregate.Indeterminate : "null")
+            .Append(" longestRecoverableRun=").Append(aggregate.RecoveryState == PrecisionMetricState.Available ? aggregate.LongestRecoverableRun : "null")
+            .Append(" maxNegativeExcursion=").Append(Format(aggregate.MaximumNegativeExcursion))
+            .Append(" maxAboveWhiteExcursion=").Append(Format(aggregate.MaximumAboveWhiteExcursion))
+            .Append(" storedChangeState=").Append(Token(boundary.StoredChange.State))
+            .Append(" storedChangeBasis=").Append(Token(boundary.StoredChange.Basis))
+            .Append(" comparedSamples=").Append(boundary.StoredChange.ComparedSamples)
+            .Append(" changedSamples=").Append(boundary.StoredChange.State == PrecisionMetricState.Available ? boundary.StoredChange.ChangedSamples : "null")
+            .Append(" maxCodeChange=").Append(boundary.StoredChange.State == PrecisionMetricState.Available ? boundary.StoredChange.MaximumCodeChange : "null")
+            .Append(" dimensionsChanged=").Append(Boolean(boundary.StoredChange.DimensionsChanged))
             .Append(" sampleDigest=").Append(Digest(samples))
             .AppendLine();
     }
@@ -182,10 +171,12 @@ internal static class PrecisionReport
     private static void AppendQuality(
         StringBuilder report,
         string caseName,
+        string population,
         string scope,
         PrecisionOutputQuality quality)
     {
         report.Append("CENSUS_QUALITY case=").Append(caseName)
+            .Append(" population=").Append(population)
             .Append(" scope=").Append(scope)
             .Append(" available=").Append(Boolean(quality.Available))
             .Append(" eligiblePixels=").Append(quality.EligiblePixels)
@@ -194,6 +185,13 @@ internal static class PrecisionReport
             .Append(" meanDeltaE00=").Append(Format(quality.MeanDeltaE00))
             .Append(" p99DeltaE00=").Append(Format(quality.P99DeltaE00))
             .Append(" maxDeltaE00=").Append(Format(quality.MaximumDeltaE00))
+            .Append(" countBelow1=").Append(quality.Available ? quality.CountBelowMateriality : "null")
+            .Append(" materialityRank=").Append(quality.Available ? quality.MaterialityRank : "null")
+            .Append(" p99Material=").Append(quality.Available ? Boolean(quality.P99Material) : "null")
+            .Append(" decisionBasis=").Append(Token(quality.DecisionBasis))
+            .Append(" percentileBasis=").Append(Token(quality.PercentileBasis))
+            .Append(" retainedErrors=").Append(quality.RetainedErrors)
+            .Append(" retentionStride=").Append(quality.RetentionStride)
             .AppendLine();
     }
 
@@ -208,8 +206,9 @@ internal static class PrecisionReport
                     "R", CultureInfo.InvariantCulture) ?? "none")
                 .Append(',').Append(sample.StoredCode).Append(',')
                 .Append(sample.StoredMaximum).Append(',')
-                .Append((int)sample.Clip).Append(',')
-                .Append((int)sample.Recovery).Append(';');
+                .Append(sample.Clip is { } clip ? (int)clip : -1).Append(',')
+                .Append(sample.Recovery is { } recovery ? (int)recovery : -1)
+                .Append(';');
         }
         return Convert.ToHexString(SHA256.HashData(
             Encoding.UTF8.GetBytes(canonical.ToString()))).ToLowerInvariant();

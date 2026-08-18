@@ -214,11 +214,58 @@ repeat the command and byte-compare the two payload sections. TIFF source-code a
 stage-reconstruction precondition failures abort before report emission; the reported
 gate rows cover the non-aborting base and preview/export comparisons.
 
-The Phase 1 Slice A1 boundary census uses the separate
-`HAPPY_PHOTON_PRECISION_CENSUS=1` gate. Run
-`$env:HAPPY_PHOTON_PRECISION_CENSUS='1'; dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter FullyQualifiedName~PrecisionBoundaryCensusTests --logger "console;verbosity=detailed"`
-twice in fresh processes and byte-compare the metric payloads; environment identity and
-elapsed time are emitted outside that deterministic section.
+The Phase 1 Slice A boundary census uses the separate
+`HAPPY_PHOTON_PRECISION_CENSUS=1` gate. Slice A2 runs case 5 first, then the wide-space,
+exposure, stacked-edit, and A1 synthetic cases. Its reviewed
+`Tests/assets/precision-census-manifest.json` fixes populations, the distinct full-frame
+RAW roster and duplicate exclusion, the equal settings cross-product, focused
+measurement ROIs, and the bounded record policy. Full RAW bases are never cropped;
+focused ROIs constrain measurement only, preserving detail scale from the production
+render dimensions.
+
+Declare a different artifact path for each fresh Release process and run the census
+twice. Each completed case is flushed before the next starts, and the metric artifact
+contains the expected-case inventory and manifest SHA-256. Environment identity and
+elapsed time remain outside the deterministic payload. The harness pins OpenMP to one
+thread because the control is required for cross-process RAW repeatability on the census
+host; this is recorded in the payload and does not change production decode. Two fresh
+Release processes measured without the pin on 2026-08-17 produced different payloads:
+the Fujifilm X30 decode moved one sample across the negative-clip threshold under the
+WB-3000 vector, and several RAW quality aggregates also differed slightly. Production
+RAW decode is therefore not bit-reproducible across fresh processes when OpenMP is
+uncontrolled on this host. Cross-process cache validity and golden stability must not
+assume otherwise; this discovered issue requires separate production follow-up. Set
+`HAPPY_PHOTON_PRECISION_CENSUS_OPENMP=uncontrolled` only to repeat that diagnostic;
+leave it unset for the controlled census protocol.
+
+```powershell
+$env:HAPPY_PHOTON_PRECISION_CENSUS='1'
+$env:HAPPY_PHOTON_PRECISION_CENSUS_ARTIFACT='artifacts/precision-census/run-1.metrics'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter FullyQualifiedName~PrecisionBoundaryCensusTests --logger "console;verbosity=detailed"
+$env:HAPPY_PHOTON_PRECISION_CENSUS_ARTIFACT='artifacts/precision-census/run-2.metrics'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter FullyQualifiedName~PrecisionBoundaryCensusTests --logger "console;verbosity=detailed"
+```
+
+The quality verdict uses exact streamed `N` and `countBelow1`; nearest-rank p99 is
+material exactly when `countBelow1 < ceil(0.99*N)`. A bounded systematic p99 is emitted
+only as a descriptive estimate and never selects an outcome. Synthetic ramps retain
+their derivative eligibility rule; RAW and wide-space rows use oracle-present, useful,
+non-clamped pixels. Native and detail boundaries report clip/recovery/quality as
+inapplicable and require exact stored-change evidence, while an unavailable analytic
+metric forces P1A-X.
+
+Combine the byte-identical artifacts in a separate process. The combiner verifies the
+inventory and required case/population/boundary evidence and emits exactly one of
+P1A-CLEAN, P1A-LOSS, or P1A-X. The statement is scoped to working-storage boundaries
+and selects none of P1-Q16, P1-FP, or P1-X.
+
+```powershell
+$env:HAPPY_PHOTON_PRECISION_CENSUS_COMBINE='1'
+$env:HAPPY_PHOTON_PRECISION_CENSUS_RUN_1='artifacts/precision-census/run-1.metrics'
+$env:HAPPY_PHOTON_PRECISION_CENSUS_RUN_2='artifacts/precision-census/run-2.metrics'
+$env:HAPPY_PHOTON_PRECISION_CENSUS_TERMINAL='artifacts/precision-census/terminal.txt'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter FullyQualifiedName~PrecisionCensusCombineTests --logger "console;verbosity=detailed"
+```
 
 The LibRaw resolver's single-file extraction path has a committed publish smoke. Run
 the matching command on Windows or Linux; it restores in locked mode, publishes a

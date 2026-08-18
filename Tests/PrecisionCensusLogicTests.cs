@@ -71,14 +71,13 @@ internal static class PrecisionCensusLogic
         evidence.PlannedStageContractLoss;
 
     public static bool IsQualityMaterial(PrecisionOutputQuality quality) =>
-        quality.Available && quality.P99DeltaE00 is >= 1.0;
+        quality.Available && quality.P99Material;
 
     public static PrecisionCensusTerminal SelectTerminal(
         PrecisionTerminalEvidence first,
         PrecisionTerminalEvidence second)
     {
-        if (!first.Valid || !second.Valid || first != second ||
-            first.IndeterminateCouldBeMaterial)
+        if (!first.Valid || !second.Valid || first != second)
         {
             return PrecisionCensusTerminal.Invalid;
         }
@@ -86,7 +85,8 @@ internal static class PrecisionCensusLogic
         {
             return PrecisionCensusTerminal.Loss;
         }
-        return first.WorkingQualityAvailable
+        return first.WorkingQualityAvailable &&
+            !first.IndeterminateCouldBeMaterial
             ? PrecisionCensusTerminal.Clean
             : PrecisionCensusTerminal.Invalid;
     }
@@ -160,17 +160,21 @@ public sealed class PrecisionCensusLogicTests
     }
 
     [Fact]
-    public void ZeroEligibleQuality_IsUnavailableAndCannotPassMateriality()
+    public void FullyClippedQuality_IsInapplicableAndCannotPassMateriality()
     {
         var quality = PrecisionBoundaryCensus.AnalyzeQuality(
-            actual: [0, 0, 0, 1, 1, 1],
-            reference: [0, 0, 0, 1, 1, 1],
+            actual: [0.5, 0.5, 0.5, 0.6, 0.6, 0.6],
+            reference: [0.5, 0.5, 0.5, 0.6, 0.6, 0.6],
             sweep: [0, 1],
             width: 2,
             height: 1,
             clipped: [true, true]);
 
         Assert.False(quality.Available);
+        Assert.Equal(PrecisionMetricState.Inapplicable, quality.State);
+        Assert.Equal(
+            "fully-clipped-no-unclipped-pixels",
+            quality.InapplicableReason);
         Assert.Equal(2, quality.CandidatePixels);
         Assert.Equal(0, quality.EligiblePixels);
         Assert.Null(quality.MeanDeltaE00);
@@ -182,6 +186,54 @@ public sealed class PrecisionCensusLogicTests
         Assert.Equal(
             PrecisionCensusTerminal.Invalid,
             PrecisionCensusLogic.SelectTerminal(unavailable, unavailable));
+    }
+
+    [Fact]
+    public void ZeroEligibleUnclippedQuality_RemainsUnavailable()
+    {
+        var quality = PrecisionBoundaryCensus.AnalyzeQuality(
+            actual: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            reference: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            sweep: [0, 1],
+            width: 2,
+            height: 1,
+            clipped: [false, false]);
+
+        Assert.Equal(PrecisionMetricState.Unavailable, quality.State);
+        Assert.Null(quality.InapplicableReason);
+    }
+
+    [Fact]
+    public void Eligibility_IsPopulationSpecific()
+    {
+        double[] changing = [0.2, 0.2, 0.2, 0.3, 0.3, 0.3];
+        double[] flat = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2];
+        double[] sweep = [0, 1];
+
+        Assert.True(PrecisionBoundaryCensus.IsSyntheticRampEligible(
+            changing, sweep, width: 2, pixel: 0));
+        Assert.False(PrecisionBoundaryCensus.IsSyntheticRampEligible(
+            flat, sweep, width: 2, pixel: 0));
+        Assert.True(PrecisionBoundaryCensus.IsOraclePresentUseful(flat, pixel: 0));
+    }
+
+    [Fact]
+    public void ExactNearestRankDecision_UsesCountBelowThreshold()
+    {
+        var values = Enumerable.Range(0, 100)
+            .Select(index => (double?)(index < 98 ? 0.1 : 1.0))
+            .ToArray();
+
+        var quality = PrecisionStreamingQuality.Measure(
+            values.Length,
+            pixel => values[pixel]);
+
+        Assert.Equal(99, quality.MaterialityRank);
+        Assert.Equal(98, quality.CountBelowMateriality);
+        Assert.True(quality.P99Material);
+        Assert.Equal(
+            PrecisionMetricBasis.ExactFullPopulation,
+            quality.DecisionBasis);
     }
 
     [Fact]
@@ -203,6 +255,16 @@ public sealed class PrecisionCensusLogicTests
         Assert.Equal(
             PrecisionCensusTerminal.Invalid,
             PrecisionCensusLogic.SelectTerminal(indeterminate, indeterminate));
+    }
+
+    [Fact]
+    public void Selector_ConfirmedMaterialLossPrecedesIndeterminacy()
+    {
+        var evidence = Evidence(run: 8, indeterminate: true);
+
+        Assert.Equal(
+            PrecisionCensusTerminal.Loss,
+            PrecisionCensusLogic.SelectTerminal(evidence, evidence));
     }
 
     private static PrecisionTerminalEvidence Evidence(

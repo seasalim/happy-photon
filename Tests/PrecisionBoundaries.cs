@@ -4,8 +4,10 @@ using ImageMagick;
 
 namespace HappyPhoton.Tests;
 
-internal static class PrecisionBoundaryCensus
+internal static partial class PrecisionBoundaryCensus
 {
+    internal const int MaximumRetainedRecords = 1_000_000;
+
     public static PrecisionCensusCapture Capture(
         PrecisionFixture fixture,
         EditSettings settings,
@@ -188,15 +190,22 @@ internal static class PrecisionBoundaryCensus
                 $"Boundary {name} has inconsistent sample dimensions.");
         }
 
-        var samples = new PrecisionBoundarySample[stored.Length];
+        var stride = Math.Max(1, (int)Math.Ceiling(
+            stored.Length / (double)MaximumRetainedRecords));
+        var samples = new List<PrecisionBoundarySample>(
+            Math.Min(stored.Length, MaximumRetainedRecords));
         for (var index = 0; index < stored.Length; index++)
         {
             var pixel = index / 3;
             var value = reference?[index];
-            var clip = value is { } known
+            PrecisionClipDirection? clip = value is { } known
                 ? PrecisionCensusLogic.ClassifyClip(known)
-                : PrecisionClipDirection.None;
-            samples[index] = new PrecisionBoundarySample(
+                : null;
+            if (index % stride != 0)
+            {
+                continue;
+            }
+            samples.Add(new PrecisionBoundarySample(
                 pixel % width,
                 pixel / width,
                 index % 3,
@@ -204,10 +213,19 @@ internal static class PrecisionBoundaryCensus
                 stored[index],
                 storedMaximum,
                 clip,
-                recovery?[index] ?? PrecisionRecovery.NotApplicable);
+                value is null
+                    ? null
+                    : recovery?[index] ?? PrecisionRecovery.NotApplicable));
         }
+        var aggregates = Enumerable.Range(0, 3)
+            .Select(channel => AggregateBoundary(
+                oracle, width, height, stored, reference, recovery, channel))
+            .ToArray();
+        var storedChange = AnalyzeStoredChange(
+            oracle, executed, input, stored, storedMaximum);
         return new PrecisionBoundaryCapture(
-            name, scope, oracle, executed, width, height, input, samples);
+            name, scope, oracle, executed, width, height, input, samples,
+            aggregates, storedChange, stride);
     }
 
     private static PrecisionRecovery[] DetermineMatrixRecovery(
@@ -311,62 +329,6 @@ internal static class PrecisionBoundaryCensus
                 matrixReference[offset + 2] < 0 || matrixReference[offset + 2] > 1;
         }
         return result;
-    }
-
-    internal static PrecisionOutputQuality AnalyzeQuality(
-        double[] actual,
-        double[] reference,
-        double[] sweep,
-        int width,
-        int height,
-        bool[] clipped)
-    {
-        var errors = new List<double>();
-        for (var pixel = 0; pixel < width * height; pixel++)
-        {
-            if (clipped[pixel] || !IsEligible(reference, sweep, width, pixel))
-            {
-                continue;
-            }
-            var offset = pixel * 3;
-            errors.Add(PrecisionDeltaE.FromSrgb(
-                actual[offset], actual[offset + 1], actual[offset + 2],
-                reference[offset], reference[offset + 1], reference[offset + 2]));
-        }
-        if (errors.Count == 0)
-        {
-            return PrecisionOutputQuality.Unavailable(checked(width * height));
-        }
-        errors.Sort();
-        var p99 = Math.Max(0, (int)Math.Ceiling(errors.Count * 0.99) - 1);
-        return new PrecisionOutputQuality(
-            true, checked(width * height), errors.Count,
-            errors.Average(), errors[p99], errors[^1]);
-    }
-
-    private static bool IsEligible(
-        double[] reference,
-        double[] sweep,
-        int width,
-        int pixel)
-    {
-        var offset = pixel * 3;
-        if (!PrecisionCensusLogic.IsUseful(reference[offset]) ||
-            !PrecisionCensusLogic.IsUseful(reference[offset + 1]) ||
-            !PrecisionCensusLogic.IsUseful(reference[offset + 2]))
-        {
-            return false;
-        }
-        var x = pixel % width;
-        var neighbor = x + 1 < width ? pixel + 1 : pixel - 1;
-        if (neighbor < 0 || sweep[neighbor] == sweep[pixel])
-        {
-            return false;
-        }
-        var neighborOffset = neighbor * 3;
-        return Math.Abs(reference[offset] - reference[neighborOffset]) > 1e-12 ||
-            Math.Abs(reference[offset + 1] - reference[neighborOffset + 1]) > 1e-12 ||
-            Math.Abs(reference[offset + 2] - reference[neighborOffset + 2]) > 1e-12;
     }
 
     private static bool GeometryExecutes(EditSettings settings) =>

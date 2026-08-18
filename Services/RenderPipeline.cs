@@ -59,7 +59,7 @@ public sealed class RenderPipeline
             ToneLutApplicator.Apply(working, tone);
             RenderColorEncoding.RetagAsSrgb(working);
             toneElapsed = Lap(stopwatch, ref previousElapsed);
-            ApplyChroma(working, request.Settings);
+            RenderChromaStage.Apply(working, request.Settings);
             chromaElapsed = Lap(stopwatch, ref previousElapsed);
             RenderSharpening.ApplyCapture(
                 working,
@@ -128,24 +128,6 @@ public sealed class RenderPipeline
         var result = elapsed - previousElapsed;
         previousElapsed = elapsed;
         return result;
-    }
-
-    private static void ApplyChroma(
-        MagickImage image,
-        EditSettings settings)
-    {
-        var factor =
-            (100 + settings.Saturation) / 100.0 *
-            (100 + settings.Vibrance * 0.5) / 100.0;
-        if (factor == 1.0)
-        {
-            return;
-        }
-
-        image.Modulate(
-            new Percentage(100),
-            new Percentage(factor * 100),
-            new Percentage(100));
     }
 
     private static void Validate(RenderRequest request)
