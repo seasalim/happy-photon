@@ -198,6 +198,14 @@ Consequently `ThumbnailCacheService`'s source-mtime validity and
 `RenderSettingsHash` need no decoder-identity field. No `BaseImage.Version` or
 `RenderPipeline.Version` changes.
 
+### 2.6 X-Trans decode repeatability (2026-08-17)
+
+LibRaw's X-Trans (Markesteijn) demosaic is not bit-reproducible across fresh processes
+when OpenMP threading is uncontrolled; Bayer sources are. Production decode deliberately
+does not pin OpenMP: serializing Markesteijn would cost real preview latency to remove a
+one-sample difference. TESTING.md §3 records the measurement and its consequence for
+cache-integrity and byte-comparison checks.
+
 ## 3. `StandardBaseLoader` (Magick.NET)
 
 1. JPEG sources are pinged for native geometry before decoding. `LoadPreviewBase` uses the

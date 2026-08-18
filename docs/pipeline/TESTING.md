@@ -155,6 +155,13 @@ RAW and non-RAW case to that canonical baseline with the cross-platform mean ΔE
 bound. HEIC remains the only skippable golden when the platform codec reports no read
 support; codec skips always carry an explicit reason.
 
+**X-Trans decodes are not byte-comparable across processes.** With OpenMP threading
+uncontrolled, two census runs differed on `fujifilm-x30` alone, by one sample in
+36,433,152, while four Bayer assets reproduced byte-exactly (DECODE.md §2.6). The
+bit-identical row above covers repeated renders of one base, not X-Trans decodes in
+separate processes; compare those with a tolerance. The X30 golden's mean ΔE ≤ 1.0 is
+orders above the observed difference.
+
 ## 4. Required suites
 
 1. **`ToneLutTests`**: monotonicity property (`lut[i+1] ≥ lut[i]`, non-strict — clamp
@@ -227,16 +234,10 @@ Declare a different artifact path for each fresh Release process and run the cen
 twice. Each completed case is flushed before the next starts, and the metric artifact
 contains the expected-case inventory and manifest SHA-256. Environment identity and
 elapsed time remain outside the deterministic payload. The harness pins OpenMP to one
-thread because the control is required for cross-process RAW repeatability on the census
-host; this is recorded in the payload and does not change production decode. Two fresh
-Release processes measured without the pin on 2026-08-17 produced different payloads:
-the Fujifilm X30 decode moved one sample across the negative-clip threshold under the
-WB-3000 vector, and several RAW quality aggregates also differed slightly. Production
-RAW decode is therefore not bit-reproducible across fresh processes when OpenMP is
-uncontrolled on this host. Cross-process cache validity and golden stability must not
-assume otherwise; this discovered issue requires separate production follow-up. Set
-`HAPPY_PHOTON_PRECISION_CENSUS_OPENMP=uncontrolled` only to repeat that diagnostic;
-leave it unset for the controlled census protocol.
+thread so RAW decodes repeat across processes (DECODE.md §2.6); the pin is recorded in
+the payload and does not change production decode. Set
+`HAPPY_PHOTON_PRECISION_CENSUS_OPENMP=uncontrolled` only to reproduce the unpinned
+diagnostic; leave it unset for the controlled census protocol.
 
 ```powershell
 $env:HAPPY_PHOTON_PRECISION_CENSUS='1'
