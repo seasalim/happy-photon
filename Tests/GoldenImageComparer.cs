@@ -6,6 +6,13 @@ internal readonly record struct GoldenComparison(double MeanDeltaE, double P99De
 
 internal static class GoldenImageComparer
 {
+    internal static readonly double[,] SrgbToXyzD65 =
+    {
+        { 0.4124564, 0.3575761, 0.1804375 },
+        { 0.2126729, 0.7151522, 0.0721750 },
+        { 0.0193339, 0.1191920, 0.9503041 }
+    };
+
     public static GoldenComparison Compare(MagickImage expected, MagickImage actual)
     {
         if (expected.Width != actual.Width || expected.Height != actual.Height)
@@ -50,9 +57,12 @@ internal static class GoldenImageComparer
         var r = ToLinear(pixels[index] / 255.0);
         var g = ToLinear(pixels[index + 1] / 255.0);
         var b = ToLinear(pixels[index + 2] / 255.0);
-        var x = (0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / 0.95047;
-        var y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b;
-        var z = (0.0193339 * r + 0.1191920 * g + 0.9503041 * b) / 1.08883;
+        var x = (SrgbToXyzD65[0, 0] * r + SrgbToXyzD65[0, 1] * g +
+            SrgbToXyzD65[0, 2] * b) / 0.95047;
+        var y = SrgbToXyzD65[1, 0] * r + SrgbToXyzD65[1, 1] * g +
+            SrgbToXyzD65[1, 2] * b;
+        var z = (SrgbToXyzD65[2, 0] * r + SrgbToXyzD65[2, 1] * g +
+            SrgbToXyzD65[2, 2] * b) / 1.08883;
         var fx = LabTransform(x);
         var fy = LabTransform(y);
         var fz = LabTransform(z);

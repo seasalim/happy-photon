@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "fixture": {
+    "fileName": "nikon-d300-colorchecker.nef",
+    "byteLength": 11443794,
+    "sha256": "96c947a3289c21ef34e609640f441bb5ae4f8f85bd9ff7194eeb0ff1d4063ed0",
+    "camera": "Nikon D300",
+    "captured": "2010-05-16",
+    "lighting": "studio flash",
+    "iso": 100,
+    "aperture": "f/9",
+    "authorCapture": true,
+    "license": "CC0-1.0"
+  },
+  "renderPath": {
+    "base": "full-resolution",
+    "intent": "export",
+    "maxDimension": null,
+    "expectedWidth": 4320,
+    "expectedHeight": 2868,
+    "decodeSettings": "default: highlight clip, FBDD off",
+    "openMpEnvironmentVariable": "OMP_NUM_THREADS",
+    "openMpValue": "1",
+    "settings": "EditSettings defaults except Wb.Mode=picked with gains derived from frozen neutral XYZ; Exposure remains zero"
+  },
+  "geometry": {
+    "rows": 6,
+    "columns": 4,
+    "centralInsetFraction": 0.25,
+    "cornersClockwiseFromTopLeft": [
+      { "x": 2294.0, "y": 993.0 },
+      { "x": 3167.0, "y": 1011.0 },
+      { "x": 3145.0, "y": 2255.0 },
+      { "x": 2277.0, "y": 2246.0 }
+    ],
+    "patchIndexByImageCell": [
+      [5, 11, 17, 23],
+      [4, 10, 16, 22],
+      [3, 9, 15, 21],
+      [2, 8, 14, 20],
+      [1, 7, 13, 19],
+      [0, 6, 12, 18]
+    ]
+  },
+  "calibration": {
+    "neutralPatchIndices": [18, 19, 20, 21, 22],
+    "darkestNeutralExcluded": 23,
+    "clipRule": "reject a neutral ROI if any linear base sample is 0 or 65535 in any RGB channel",
+    "aggregationRule": "equal-weight mean of each accepted projective ROI mean in linear light",
+    "frozenNeutralSamplesXyzD65": [
+      { "patchIndex": 18, "xyz": [0.5834210379879154, 0.6230962600136417, 0.7254826907064409] },
+      { "patchIndex": 19, "xyz": [0.3684173721755955, 0.3943990144031931, 0.4663499219599442] },
+      { "patchIndex": 20, "xyz": [0.2342159654466832, 0.2519124691030386, 0.2999684810891135] },
+      { "patchIndex": 21, "xyz": [0.1252191964121695, 0.13432484832800096, 0.15954267992733534] },
+      { "patchIndex": 22, "xyz": [0.05908533681604017, 0.0640014564851236, 0.0781145742710814] }
+    ],
+    "workingSpaceGainRule": "convert frozen XYZ through the current independently-derived XYZ-to-working-space matrix, then use mean(G)/mean(R), 1, mean(G)/mean(B)",
+    "measuredLinearSrgbGains": [1.1320091911575796, 1.0, 0.9328530179524194],
+    "freshDecodeXyzMaxAbsoluteDrift": 0.002,
+    "exposureScalar": 0.8414241941938978,
+    "exposureScalarRule": "least-squares scale sum(measuredY*referenceY)/sum(measuredY^2) over neutral patches 18-22 after linear ROI averaging and D65-to-reference-white adaptation"
+  },
+  "budget": {
+    "statistics": ["mean DeltaE00 across all 24 patches", "maximum per-patch DeltaE00"],
+    "boundRule": "worst supported-RID fresh-process observation, rounded up to the next 0.5 DeltaE00",
+    "meanDeltaE00": 6.0,
+    "maximumPatchDeltaE00": 11.0,
+    "observations": [
+      {
+        "rid": "win-x64",
+        "freshProcessRuns": 3,
+        "openMpThreads": 1,
+        "meanDeltaE00": [5.646335474596469, 5.646335474596469, 5.646335474596469],
+        "maximumPatchDeltaE00": [10.965591644216602, 10.965591644216602, 10.965591644216602]
+      },
+      {
+        "rid": "linux-x64",
+        "freshProcessRuns": 1,
+        "openMpThreads": 1,
+        "meanDeltaE00": [5.646335474596466],
+        "maximumPatchDeltaE00": [10.965591644216602]
+      },
+      {
+        "rid": "osx-arm64",
+        "freshProcessRuns": 1,
+        "openMpThreads": 1,
+        "meanDeltaE00": [5.646335707335511],
+        "maximumPatchDeltaE00": [10.965591569559617]
+      }
+    ],
+    "pendingRidObservations": []
+  }
+}

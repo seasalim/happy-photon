@@ -219,6 +219,13 @@ internal static class PrecisionColorCases
 public sealed class PrecisionColorCasesTests
 {
     [Fact]
+    public void PublishedSrgbMatrix_AgreesWithDerivationAndOracle() =>
+        ColorScienceMatrixAssertions.AssertPublishedAndOracle(
+            PrecisionColorCases.SrgbToXyzD65,
+            "linear-srgb-d65",
+            2e-12);
+
+    [Fact]
     public void WideRoundTrip_DoesNotCallPublishedMatrixClosureAClip()
     {
         var payload = new StringBuilder();

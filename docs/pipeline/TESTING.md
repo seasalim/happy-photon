@@ -6,8 +6,9 @@ package extends it. Unit tests follow existing conventions (`Tests/*Tests.cs`, x
 
 ## 1. Sample assets (`Tests/assets/`)
 
-Committed directly (no LFS), total budget **≤ 81 MiB, ≤ 30 MiB per file**. The budget
-covers five distinct raws plus the byte-identical burst copy; prefer the
+Committed directly (no LFS), current total **91.37 MiB** within a budget of
+**≤ 100 MiB, ≤ 30 MiB per file**. The budget covers six distinct raws plus the
+byte-identical burst copy; prefer the
 oldest/smallest CC0 body per mosaic type. Provenance is recorded in
 `Tests/assets/README.md` with per-file source URL + license.
 
@@ -17,6 +18,7 @@ oldest/smallest CC0 body per mosaic type. Provenance is recorded in
 | X-Trans RAF | Fuji path | raw.pixls.us CC0 |
 | DNG | Adobe container path | raw.pixls.us CC0 |
 | High-ISO Bayer raw | FBDD quality/runtime evaluation | CC0 research dataset |
+| Nikon D300 ColorChecker NEF | physical colorimetric ground truth | author capture, CC0 exception |
 | sRGB JPEG with EXIF+GPS+orientation 6 | metadata policy, orientation | author with exiftool from a CC0 photo |
 | Display-P3 JPEG of the same picture as an sRGB JPEG | ICC normalize sentinel | generate via Magick from a CC0 source |
 | AdobeRGB JPEG | second ICC case | generate |
@@ -189,6 +191,74 @@ orders above the observed difference.
 9. **`RenderDetailTests`**: chroma NR preserves luma and alpha; a seeded noise image
    rendered as one band and as forced non-divisible bands is bit-identical at box
    radii 1 and 3.
+
+### 4.1 NEWRAW validation anchors
+
+R0 establishes four additive anchors before a NEWRAW stage changes pixels:
+
+1. **Seeded properties.** `RenderPropertyTests` fixes its seed and draw count.
+   Achromatic linear input must remain achromatic through the full renderer under RAW
+   defaults, with picked white balance constrained to unity. Contrast is tested over
+   the named range −100…+100 at today's actual fixed point,
+   `sRGB_EOTF(0.5)`, with base look disabled and a 2-Q16-sample tolerance. This is the
+   **display-pivot analogue**, not ENDSTATE's future scene-linear 0.18 contract; R4
+   activates that separate contract when its tone model makes it true.
+2. **Source-cited constants.** RGB→XYZ matrices are independently derived in C# from
+   each space's published primaries and white point, then compared with both the
+   published matrix and the committed oracle. The authorities are IEC 61966-2-1 for
+   sRGB, ITU-R BT.2020-2 for Rec.2020, and ISO 22028-2 for ROMM; the W3C CSS Color 4
+   conversion appendix provides the cited published values. The exact sRGB matrix in
+   `PrecisionColorCases` stays distinct from the rounded published matrix in
+   `PrecisionDeltaE`, `GoldenImageComparer`, and production
+   `ChromaticAdaptation`; the latter agree at their documented 2.5e-4 rounding
+   tolerance. Production forward and inverse basis vectors are checked directly.
+3. **Independent oracle.** `Tests/assets/color-science-oracle.json` contains linear
+   sRGB/D65, linear Rec.2020/D65, and linear ROMM/D50 RGB↔XYZ matrices and round trips,
+   Bradford D50↔D65 adaptation, sRGB EOTF vectors, and the pre-November-2014
+   ColorChecker values for the CIE 1931 2° observer. It is emitted by the dev-only
+   BSD-licensed `colour-science` generator. Tests and CI read only JSON and never run
+   Python. Regeneration is intentionally version-locked:
+
+   ```powershell
+   python -m venv .venv-color-oracle
+   ./.venv-color-oracle/Scripts/python -m pip install `
+     colour-science==0.4.7 numpy==2.4.4
+   ./.venv-color-oracle/Scripts/python scripts/generate-color-science-oracle.py
+   git diff --exit-code -- Tests/assets/color-science-oracle.json
+   ```
+
+4. **Physical ground truth.** `nikon-d300-colorchecker.nef` is the author-captured
+   CC0 Nikon D300 fixture described in `Tests/assets/README.md`. Its manifest pins the
+   byte length and SHA-256, default full-resolution decode, export intent with no
+   resize (oriented 4320×2868), `OMP_NUM_THREADS=1`, projective corners and central
+   patch ROIs, the 90° chart mapping, frozen neutral-patch XYZ, and the measurement
+   normalization. Rendering starts with defaults and changes only `Wb.Mode` to
+   `Picked`; gains are derived from frozen XYZ through the current working-space
+   basis. Exposure remains zero. Each encoded pixel is EOTF-decoded, converted to
+   XYZ, and averaged in linear light; the frozen least-squares exposure scalar is
+   then applied before Bradford adaptation to the chart's declared ICC D50 white and
+   ΔE00 comparison. Fresh base samples are checked for XYZ drift but never feed back
+   into gains or bounds.
+
+The ground-truth gate reports all 24 patch results and independently checks mean and
+maximum ΔE00. All three supported RIDs are calibrated with the OpenMP pin: three fresh
+win-x64 processes plus one CI process each on linux-x64 and osx-arm64. They agree to
+within **2.4e-7 ΔE00** — mean 5.6463355 (worst, osx-arm64) and per-patch maximum
+10.9655916 (worst, win-x64/linux-x64). The committed bounds are therefore mean ≤ 6.0
+and per-patch maximum ≤ 11.0, following the precommitted rule “worst supported-RID
+observation rounded up to the next 0.5”. The maximum bound's 0.034 margin is roughly
+five orders of magnitude above the observed cross-platform spread, so it is a tight
+gate rather than a fragile one; re-measure and re-apply the same rule if a decoder or
+toolchain change moves the observations. The linux-x64 and osx-arm64 figures came from
+CI `workflow_dispatch` runs 32097958784 and 32098781026 on 2026-08-18; because test
+results upload only on failure, obtaining them required a temporary branch with
+deliberately unreachable bounds. Incidentally, this is the tightest cross-platform
+reproducibility figure the project has measured — decode through render to patch
+colorimetry agrees to sub-microscopic ΔE00 with the OpenMP pin, far inside the general
+2.0 CIE76 allowance in §3. This budget measures the current fixed-matrix,
+no-DCP pipeline and includes the aged 2010 physical chart; it is a stable regression
+gate, not a claim of current colorimetric accuracy. The general 2.0 cross-platform
+CIE76 allowance in §3 uses a different population and does not apply here.
 
 ## 5. Performance (informational, not gating)
 

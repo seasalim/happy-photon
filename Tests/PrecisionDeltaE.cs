@@ -10,6 +10,13 @@ internal static class PrecisionDeltaE
     private const double D65Y = 1.00000;
     private const double D65Z = 1.08883;
 
+    internal static readonly double[,] SrgbToXyzD65 =
+    {
+        { 0.4124564, 0.3575761, 0.1804375 },
+        { 0.2126729, 0.7151522, 0.0721750 },
+        { 0.0193339, 0.1191920, 0.9503041 }
+    };
+
     public static double FromSrgb(
         double red1,
         double green1,
@@ -26,9 +33,12 @@ internal static class PrecisionDeltaE
         var r = Decode(red);
         var g = Decode(green);
         var b = Decode(blue);
-        var x = (0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / D65X;
-        var y = (0.2126729 * r + 0.7151522 * g + 0.0721750 * b) / D65Y;
-        var z = (0.0193339 * r + 0.1191920 * g + 0.9503041 * b) / D65Z;
+        var x = (SrgbToXyzD65[0, 0] * r + SrgbToXyzD65[0, 1] * g +
+            SrgbToXyzD65[0, 2] * b) / D65X;
+        var y = (SrgbToXyzD65[1, 0] * r + SrgbToXyzD65[1, 1] * g +
+            SrgbToXyzD65[1, 2] * b) / D65Y;
+        var z = (SrgbToXyzD65[2, 0] * r + SrgbToXyzD65[2, 1] * g +
+            SrgbToXyzD65[2, 2] * b) / D65Z;
         var fx = PivotXyz(x);
         var fy = PivotXyz(y);
         var fz = PivotXyz(z);
@@ -152,6 +162,13 @@ internal static class PrecisionDeltaE
 
 public sealed class PrecisionDeltaETests
 {
+    [Fact]
+    public void PublishedSrgbMatrix_AgreesWithDerivationAndOracle() =>
+        ColorScienceMatrixAssertions.AssertPublishedAndOracle(
+            PrecisionDeltaE.SrgbToXyzD65,
+            "linear-srgb-d65",
+            2.5e-4);
+
     // Published supplementary test data from Sharma, Wu, and Dalal (2005).
     public static TheoryData<PrecisionLab, PrecisionLab, double> SharmaVectors => new()
     {

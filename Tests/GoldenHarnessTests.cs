@@ -6,6 +6,13 @@ namespace HappyPhoton.Tests;
 public sealed class GoldenHarnessTests
 {
     [Fact]
+    public void PublishedSrgbMatrix_AgreesWithDerivationAndOracle() =>
+        ColorScienceMatrixAssertions.AssertPublishedAndOracle(
+            GoldenImageComparer.SrgbToXyzD65,
+            "linear-srgb-d65",
+            2.5e-4);
+
+    [Fact]
     public void Marker_AcceptsVersionAndPending()
     {
         Assert.Equal("v0", GoldenBaselineMarker.Parse(" v0\r\n"));
@@ -108,9 +115,9 @@ public sealed class GoldenHarnessTests
                 StringComparison.OrdinalIgnoreCase))
             .ToArray();
         var assetBytes = assets.Sum(path => new FileInfo(path).Length);
-        Assert.True(assetBytes <= 81L * 1024 * 1024,
+        Assert.True(assetBytes <= 100L * 1024 * 1024,
             $"Test assets total {assetBytes / 1024d / 1024d:F2} MiB; " +
-            "limit is 81 MiB.");
+            "limit is 100 MiB.");
         Assert.All(assets, path =>
             Assert.True(new FileInfo(path).Length <= 30L * 1024 * 1024,
                 $"{Path.GetFileName(path)} exceeds the 30 MiB per-file limit."));
