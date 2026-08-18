@@ -28,7 +28,7 @@ public sealed class XmpSidecarWriterTests : IDisposable
 
         Assert.True(writer.TryEnqueue(first, AssessmentAxes.Rating,
             [first.FilePath], XmpSidecarNaming.FullName));
-        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await entered.Task.WaitAsync(TestWaits.Condition);
         Assert.False(writer.TryEnqueue(second, AssessmentAxes.Rating,
             [second.FilePath], XmpSidecarNaming.FullName));
         release.TrySetResult();
@@ -122,7 +122,7 @@ public sealed class XmpSidecarWriterTests : IDisposable
         writer.Start();
         Assert.True(writer.TryEnqueue(active, AssessmentAxes.Rating,
             [active.FilePath, queued.FilePath], XmpSidecarNaming.FullName));
-        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await entered.Task.WaitAsync(TestWaits.Condition);
         Assert.True(writer.TryEnqueue(queued, AssessmentAxes.Rating,
             [active.FilePath, queued.FilePath], XmpSidecarNaming.FullName));
 

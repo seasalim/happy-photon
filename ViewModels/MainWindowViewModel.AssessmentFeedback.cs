@@ -25,13 +25,20 @@ public partial class MainWindowViewModel
             TimeSpan.FromSeconds(1.5),
             debounce.Token,
             async () =>
-        {
-            if (!ReferenceEquals(SelectedImage, image)) return;
+            {
+                if (!ReferenceEquals(SelectedImage, image)) return;
 
-            IsAssessmentFeedbackVisible = false;
-            await Task.Delay(TimeSpan.FromMilliseconds(160), debounce.Token);
-            if (ReferenceEquals(SelectedImage, image)) AssessmentFeedback = null;
-        });
+                IsAssessmentFeedbackVisible = false;
+                await Task.Delay(
+                    TimeSpan.FromMilliseconds(160),
+                    _timeProvider,
+                    debounce.Token);
+                if (ReferenceEquals(SelectedImage, image))
+                {
+                    AssessmentFeedback = null;
+                }
+            },
+            timeProvider: _timeProvider);
     }
 
     private void ClearAssessmentFeedback()

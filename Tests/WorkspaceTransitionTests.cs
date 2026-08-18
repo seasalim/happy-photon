@@ -46,13 +46,13 @@ public sealed class WorkspaceTransitionTests : IDisposable
 
         try
         {
-            await WaitUntilAsync(() =>
+            await TestWaits.UntilAsync(() =>
                 vm.PreviewImage != null && vm.Histogram != null);
 
             var toggle = vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
             await toggle;
             Assert.True(vm.IsShowingOriginal);
-            await refreshReady.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await refreshReady.Task.WaitAsync(TestWaits.Condition);
 
             vm.IsDevelopMode = false;
             vm.ReplacePreviewImage(null);
@@ -60,7 +60,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
             Assert.Null(vm.Histogram);
 
             releaseRefresh.TrySetResult();
-            await WaitUntilAsync(() => image.Thumbnail != null);
+            await TestWaits.UntilAsync(() => image.Thumbnail != null);
 
             Assert.True(vm.BackgroundActivityEpoch > activityEpoch);
             Assert.Null(vm.PreviewImage);
@@ -92,7 +92,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
 
         try
         {
-            await WaitUntilAsync(() =>
+            await TestWaits.UntilAsync(() =>
                 vm.PreviewImage != null && vm.Histogram != null);
             vm.PreviewRenderGateAsync = () =>
             {
@@ -101,7 +101,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
             };
 
             var toggle = vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
-            await renderStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await renderStarted.Task.WaitAsync(TestWaits.Condition);
             Assert.True(vm.IsShowingOriginal);
 
             vm.IsDevelopMode = false;
@@ -142,18 +142,6 @@ public sealed class WorkspaceTransitionTests : IDisposable
 
     private static TaskCompletionSource NewSignal() => new(
         TaskCreationOptions.RunContinuationsAsynchronously);
-
-    private static async Task WaitUntilAsync(Func<bool> condition)
-    {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
-        while (!condition())
-        {
-            Assert.True(
-                DateTime.UtcNow < deadline,
-                "The expected workspace state did not arrive.");
-            await Task.Delay(10);
-        }
-    }
 
     private sealed class DecodeTransitionLoader : IBaseImageLoader
     {

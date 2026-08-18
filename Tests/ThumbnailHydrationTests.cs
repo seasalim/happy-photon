@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -206,7 +205,7 @@ public sealed class ThumbnailHydrationTests : IDisposable
         {
             Complete(viewModel.LoadFolderAsync(_root));
             var image = Assert.Single(viewModel.Library.AllImages);
-            WaitUntil(() => image.ThumbnailDeferredForHydration);
+            TestWaits.Until(() => image.ThumbnailDeferredForHydration);
 
             Assert.False(image.ThumbnailLoadFailed);
             Assert.Null(image.Thumbnail);
@@ -217,14 +216,16 @@ public sealed class ThumbnailHydrationTests : IDisposable
             {
                 viewModel.RequestThumbnailRange(0, 1);
             }
+            // Settles before asserting an absence: a slow runner only widens
+            // the window in which an extra availability call would show up.
             PumpFor(TimeSpan.FromMilliseconds(100));
             Assert.Equal(callsAfterDeferral, availability.CallCount);
 
             availability.Availability = SourceAvailability.AvailableLocally;
             viewModel.SelectedImage = null;
             viewModel.SelectedImage = image;
-            WaitUntil(() => image.Thumbnail != null);
-            WaitUntil(() => metadataStarted.Task.IsCompleted);
+            TestWaits.Until(() => image.Thumbnail != null);
+            TestWaits.Until(() => metadataStarted.Task.IsCompleted);
             Assert.False(image.ThumbnailDeferredForHydration);
 
             var disposeTask = viewModel.DisposeAsync().AsTask();
@@ -318,7 +319,7 @@ public sealed class ThumbnailHydrationTests : IDisposable
             viewModel.Histogram = new HistogramData();
 
             viewModel.SelectedImage = image;
-            WaitUntil(() =>
+            TestWaits.Until(() =>
                 viewModel.PreviewImage != null &&
                 image.SourceRequiresHydration);
 
@@ -363,26 +364,6 @@ public sealed class ThumbnailHydrationTests : IDisposable
     {
         using var image = new MagickImage(MagickColors.Gray, 150, 100);
         image.Write(path, MagickFormat.Jpeg);
-    }
-
-    // Same reasoning as BurstAnalysisLifecycleTests: a generous ceiling that
-    // bounds a hang, not a latency assertion. The old 5s budget was tight
-    // enough to fail on a loaded CI runner.
-    private static readonly TimeSpan ConditionTimeout = TimeSpan.FromSeconds(30);
-
-    private static void WaitUntil(
-        Func<bool> predicate,
-        [CallerArgumentExpression(nameof(predicate))] string? expression = null)
-    {
-        var deadline = DateTime.UtcNow + ConditionTimeout;
-        while (!predicate() && DateTime.UtcNow < deadline)
-        {
-            Thread.Sleep(10);
-        }
-        Assert.True(
-            predicate(),
-            $"Condition '{expression}' was still false after " +
-            $"{ConditionTimeout.TotalSeconds:0}s.");
     }
 
     private static void PumpFor(TimeSpan duration)

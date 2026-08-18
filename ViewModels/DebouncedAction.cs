@@ -9,11 +9,15 @@ internal static class DebouncedAction
         TimeSpan delay,
         CancellationToken cancellationToken,
         Func<Task> action,
-        Action<string, Exception>? onError = null)
+        Action<string, Exception>? onError = null,
+        TimeProvider? timeProvider = null)
     {
         try
         {
-            await Task.Delay(delay, cancellationToken);
+            await Task.Delay(
+                delay,
+                timeProvider ?? TimeProvider.System,
+                cancellationToken);
             await action();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

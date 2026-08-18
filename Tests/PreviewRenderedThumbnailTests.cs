@@ -37,7 +37,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 skipHistogram: true);
             Assert.NotNull(preview);
             preview!.Dispose();
-            await thumbnailCreated.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await thumbnailCreated.Task.WaitAsync(TestWaits.Condition);
 
             using var promoted = service.TryPromoteRenderedThumbnail(file, settings);
             Assert.NotNull(promoted);
@@ -84,7 +84,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 file,
                 new EditSettings { Exposure = 0.25 },
                 skipHistogram: true);
-            await thumbnailCreated.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await thumbnailCreated.Task.WaitAsync(TestWaits.Condition);
             var retained = service.GetRetainedThumbnailReference();
             Assert.NotNull(retained);
             Assert.True(retained!.TryGetTarget(out var oldThumbnail));
@@ -166,19 +166,19 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 new EditSettings { Exposure = 0.5 },
                 skipHistogram: true);
             preview?.Dispose();
-            await WaitUntilAsync(() => service.RenderedThumbnailTaskCount == 0);
+            await TestWaits.UntilAsync(() => service.RenderedThumbnailTaskCount == 0);
             Assert.Equal(1, wakeCount);
 
             service.ClearPreviewCache();
-            await cacheQueued.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            await WaitUntilAsync(() => renderedCache.WriterInHandCount == 1);
+            await cacheQueued.Task.WaitAsync(TestWaits.Condition);
+            await TestWaits.UntilAsync(() => renderedCache.WriterInHandCount == 1);
 
             Assert.Equal(2, wakeCount);
             Assert.True(service.RenderedThumbnailTaskCount > 0);
             Assert.True(service.PendingCacheWrites > 0);
 
             producerRelease.SetResult();
-            await WaitUntilAsync(() => service.RenderedThumbnailTaskCount == 0);
+            await TestWaits.UntilAsync(() => service.RenderedThumbnailTaskCount == 0);
             Assert.True(service.PendingCacheWrites > 0);
             writerGate.SetResult();
             await renderedCache.DisposeAsync();
@@ -258,7 +258,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 if (Interlocked.Increment(ref conversionCount) == 1)
                 {
                     firstConverted.Set();
-                    releaseFirst.Wait(TimeSpan.FromSeconds(5));
+                    releaseFirst.Wait(TestWaits.Condition);
                 }
             };
             service.RenderedThumbnailCreated += () =>
@@ -268,7 +268,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 file,
                 new EditSettings { Exposure = 0.25 },
                 skipHistogram: true);
-            Assert.True(firstConverted.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(firstConverted.Wait(TestWaits.Condition));
             var second = service.ApplyEditsToPreviewAsync(
                 file,
                 new EditSettings { Exposure = 0.5 },
@@ -281,7 +281,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
             Assert.NotNull(secondResult.preview);
             Assert.True(SpinWait.SpinUntil(
                 () => Volatile.Read(ref candidateCount) == 1,
-                TimeSpan.FromSeconds(5)));
+                TestWaits.Condition));
             Assert.Equal(1, Volatile.Read(ref candidateCount));
             secondResult.preview?.Dispose();
         }
@@ -330,16 +330,6 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
         var first = BitmapConversionService.CopyBgraPixels(left);
         var second = BitmapConversionService.CopyBgraPixels(right);
         return first.Zip(second, (a, b) => Math.Abs(a - b)).Average();
-    }
-
-    private static async Task WaitUntilAsync(Func<bool> condition)
-    {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
-        while (!condition())
-        {
-            Assert.True(DateTime.UtcNow < deadline, "Timed out waiting for activity.");
-            await Task.Delay(10);
-        }
     }
 
     public void Dispose()

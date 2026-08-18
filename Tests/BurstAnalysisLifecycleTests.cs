@@ -398,10 +398,9 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
 
     // Bounds a genuine hang rather than asserting decode latency. A real JPEG
     // decode is milliseconds locally but can stall for seconds on a shared CI
-    // runner, which is what made the old 5s budget flake on macOS. Kept well
-    // under the 90s --blame-hang-timeout so a true hang still reports as one.
+    // runner, which is what made the old 5s budget flake on macOS.
     private static readonly TimeSpan ThumbnailAttemptTimeout =
-        TimeSpan.FromSeconds(30);
+        TestWaits.Condition;
 
     private static void WaitForThumbnailAttempt(
         MainWindowViewModel viewModel)

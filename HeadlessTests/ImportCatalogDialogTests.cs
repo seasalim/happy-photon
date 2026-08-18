@@ -132,7 +132,8 @@ public sealed class ImportCatalogDialogTests
 
     private static async Task WaitForAsync(Func<bool> predicate)
     {
-        for (var attempt = 0; attempt < 100 && !predicate(); attempt++)
+        var deadline = DateTime.UtcNow + TestWaits.Condition;
+        while (!predicate() && DateTime.UtcNow < deadline)
         {
             Dispatcher.UIThread.RunJobs();
             await Task.Yield();

@@ -114,12 +114,11 @@ public sealed class FullScreenSelectionTests : IDisposable
 
         try
         {
-            // Wait generously for the first load to START (CI runners stall well
-            // past 3 s under full-suite load); exactly-one is enforced by the
-            // Assert.Equal below, not by this wait.
+            // Wait generously for the first load to START; exactly-one is
+            // enforced by the Assert.Equal below, not by this wait.
             Assert.True(SpinWait.SpinUntil(
                 () => loader.PreviewLoadCount >= 1,
-                TimeSpan.FromSeconds(15)));
+                TestWaits.Condition));
             await Task.Delay(100);
             Assert.Equal(1, loader.PreviewLoadCount);
         }

@@ -277,7 +277,7 @@ public sealed class CloudSourceViewTests
             panel.ContextMenu.Open(panel);
             Dispatcher.UIThread.RunJobs();
             copy.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
-            await copiedSignal.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await copiedSignal.Task.WaitAsync(TestWaits.Condition);
             Assert.Contains("photo.jpg", copied);
             Assert.Contains("(file modified)", copied);
 
@@ -294,7 +294,7 @@ public sealed class CloudSourceViewTests
             var mapLink = review.FindControl<Button>("ReviewMapLink")!;
             Assert.Same(viewModel.OpenSelectedImageMapCommand, mapLink.Command);
             mapLink.Command!.Execute(null);
-            await launchedSignal.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await launchedSignal.Task.WaitAsync(TestWaits.Condition);
             Assert.Single(launches);
 
             image.DateTaken = new DateTime(2026, 8, 1, 8, 0, 0);

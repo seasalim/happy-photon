@@ -226,7 +226,7 @@ public sealed class MetadataServiceTests
         var loads = Enumerable.Range(0, 40)
             .Select(_ => service.LoadAsync(image))
             .ToArray();
-        await extractionStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await extractionStarted.Task.WaitAsync(TestWaits.Condition);
         releaseExtraction.SetResult();
         await Task.WhenAll(loads);
 
@@ -280,7 +280,7 @@ public sealed class MetadataServiceTests
         var image = new ImageFile("test.jpg");
 
         var load = service.LoadAsync(image);
-        await applyStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await applyStarted.Task.WaitAsync(TestWaits.Condition);
         Assert.False(load.IsCompleted);
         Assert.False(image.MetadataLoaded);
 

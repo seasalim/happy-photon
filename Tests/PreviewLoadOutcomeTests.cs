@@ -31,11 +31,13 @@ public sealed class PreviewLoadOutcomeTests : IDisposable
             new EditSettings(),
             skipHistogram: true,
             cancellation.Token);
-        Assert.True(loader.Started.Wait(TimeSpan.FromSeconds(5)));
+        Assert.True(loader.Started.Wait(TestWaits.Condition));
         cancellation.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => request);
         loader.Release.Set();
+        // Settles before asserting an absence: a slow runner only widens the
+        // window in which the cancelled outcome would have had to appear.
         await Task.Delay(50);
         Assert.Empty(outcomes);
     }

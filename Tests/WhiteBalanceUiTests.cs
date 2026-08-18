@@ -219,7 +219,8 @@ public sealed class WhiteBalanceUiTests : IDisposable
         ImageFile image,
         Func<double, bool> predicate)
     {
-        for (var attempt = 0; attempt < 80; attempt++)
+        var deadline = DateTime.UtcNow + TestWaits.Condition;
+        while (DateTime.UtcNow < deadline)
         {
             try
             {
@@ -233,7 +234,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
             {
             }
 
-            await Task.Delay(50);
+            await Task.Delay(10);
         }
 
         Assert.Fail("The edited thumbnail did not reach the expected state.");

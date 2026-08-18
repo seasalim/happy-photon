@@ -28,7 +28,7 @@ public sealed class BackgroundActivityViewModelTests : IDisposable
 
         release.SetResult();
         await operation;
-        await WaitUntilAsync(() => vm.DirectThumbnailActivityCount == 0);
+        await TestWaits.UntilAsync(() => vm.DirectThumbnailActivityCount == 0);
         Assert.Equal(0, vm.DirectThumbnailActivityCount);
 
         using (vm.BeginInitialThumbnailBatch())
@@ -79,7 +79,7 @@ public sealed class BackgroundActivityViewModelTests : IDisposable
         using var preview = new MagickImage(MagickColors.Blue, 32, 24);
 
         cache.QueueSaveToCache(image, preview, "settings");
-        await WaitUntilAsync(() => cache.WriterInHandCount == 1);
+        await TestWaits.UntilAsync(() => cache.WriterInHandCount == 1);
 
         Assert.Equal(1, cache.PendingWrites);
         writerGate.SetResult();
@@ -109,7 +109,7 @@ public sealed class BackgroundActivityViewModelTests : IDisposable
 
         var first = service.LoadAsync(image);
         var second = service.LoadAsync(image);
-        await extractionStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await extractionStarted.Task.WaitAsync(TestWaits.Condition);
 
         Assert.Same(first, second);
         Assert.Equal(1, service.InFlightCount);
@@ -160,16 +160,6 @@ public sealed class BackgroundActivityViewModelTests : IDisposable
         Assert.Empty(result.Exported);
         Assert.Equal(before + 1, vm.ExportActivityScopeStartCount);
         await vm.DisposeAsync();
-    }
-
-    private static async Task WaitUntilAsync(Func<bool> condition)
-    {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
-        while (!condition())
-        {
-            Assert.True(DateTime.UtcNow < deadline, "Timed out waiting for activity.");
-            await Task.Delay(10);
-        }
     }
 
     public void Dispose()

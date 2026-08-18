@@ -42,7 +42,7 @@ public sealed class ExportLibraryRefreshTests : IDisposable
 
             var exported = Complete(
                 viewModel.ExportBatchApprovedAsync([image]));
-            WaitUntil(() => image.Thumbnail != null);
+            TestWaits.Until(() => image.Thumbnail != null);
 
             Assert.Equal(1, exported.ExportedCount);
             Assert.Empty(exported.FailedImages);
@@ -172,13 +172,6 @@ public sealed class ExportLibraryRefreshTests : IDisposable
 
     private static T Complete<T>(Task<T> task) =>
         task.GetAwaiter().GetResult();
-
-    private static void WaitUntil(Func<bool> condition)
-    {
-        Assert.True(
-            SpinWait.SpinUntil(condition, TimeSpan.FromSeconds(3)),
-            "Timed out waiting for the thumbnail refresh.");
-    }
 
     private sealed class HydratingBaseLoader(
         TestSourceAvailabilityService availability) : IBaseImageLoader

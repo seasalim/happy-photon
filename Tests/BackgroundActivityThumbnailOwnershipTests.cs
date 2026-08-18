@@ -23,7 +23,7 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
         {
             await small.ViewModel.LoadFolderAsync(small.Folder);
             await large.ViewModel.LoadFolderAsync(large.Folder);
-            await WaitUntilAsync(() =>
+            await TestWaits.UntilAsync(() =>
                 small.Gate.StartedCount == 5 &&
                 large.Gate.StartedCount == 6);
 
@@ -61,6 +61,8 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
 
             small.Gate.Release(1);
             large.Gate.Release(1);
+            // Settles before asserting an absence, so a slow runner only makes
+            // the claim stronger; there is no signal for "nothing was raised".
             await Task.Delay(100);
 
             Assert.Equal(smallEpoch, small.ViewModel.BackgroundActivityEpoch);
@@ -110,7 +112,7 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
         try
         {
             await vm.LoadFolderAsync(folder);
-            await WaitUntilAsync(() =>
+            await TestWaits.UntilAsync(() =>
                 secondLoadGate.StartedCount >= 2 &&
                 vm.SchedulerThumbnailActivityCount == 1);
 
@@ -120,7 +122,7 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
             Assert.Equal(1, vm.CaptureBackgroundActivitySnapshot().ThumbnailCount);
 
             secondLoadGate.Release();
-            await WaitUntilAsync(() => vm.SchedulerThumbnailActivityCount == 0);
+            await TestWaits.UntilAsync(() => vm.SchedulerThumbnailActivityCount == 0);
             Assert.Equal(0, vm.DirectThumbnailActivityCount);
         }
         finally
@@ -162,16 +164,6 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
             image.Write(Path.Combine(folder, $"{index:D4}.jpg"), MagickFormat.Jpeg);
         }
         return folder;
-    }
-
-    private static async Task WaitUntilAsync(Func<bool> condition)
-    {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-        while (!condition())
-        {
-            Assert.True(DateTime.UtcNow < deadline, "Timed out waiting for activity.");
-            await Task.Delay(10);
-        }
     }
 
     public void Dispose()

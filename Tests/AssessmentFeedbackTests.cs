@@ -7,6 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class AssessmentFeedbackTests : IDisposable
 {
+    private readonly TestTimeProvider _clock = new();
     private readonly string _root = Directory.CreateDirectory(Path.Combine(
         Path.GetTempPath(),
         $"happy-photon-assessment-feedback-{Guid.NewGuid():N}")).FullName;
@@ -62,7 +63,9 @@ public sealed class AssessmentFeedbackTests : IDisposable
         Assert.Equal("Set rating: ★", vm.AssessmentFeedback);
         Assert.True(vm.IsAssessmentFeedbackVisible);
 
-        await Task.Delay(TimeSpan.FromMilliseconds(1100));
+        // Short of the 1.5 s hold nothing is due, so the toast cannot start
+        // fading however long the machine takes to reach the assertion.
+        _clock.Advance(TimeSpan.FromMilliseconds(1400));
         Assert.True(vm.IsAssessmentFeedbackVisible);
         Assert.Equal("Set rating: ★", vm.AssessmentFeedback);
 
@@ -71,9 +74,9 @@ public sealed class AssessmentFeedbackTests : IDisposable
         await WaitUntilAsync(() => vm.AssessmentFeedback == null);
 
         await vm.SetRatingCommand.ExecuteAsync(2);
-        await Task.Delay(TimeSpan.FromMilliseconds(1100));
+        _clock.Advance(TimeSpan.FromMilliseconds(1400));
         await vm.SetRatingCommand.ExecuteAsync(2);
-        await Task.Delay(TimeSpan.FromMilliseconds(500));
+        _clock.Advance(TimeSpan.FromMilliseconds(1400));
 
         Assert.True(vm.IsAssessmentFeedbackVisible);
         Assert.Equal("Set rating: ★★", vm.AssessmentFeedback);
@@ -116,7 +119,8 @@ public sealed class AssessmentFeedbackTests : IDisposable
         var vm = new MainWindowViewModel(
             catalog,
             baseLoader: null,
-            loadMetadataAsync: _ => Task.CompletedTask);
+            loadMetadataAsync: _ => Task.CompletedTask,
+            timeProvider: _clock);
         var image = await CreateImageAsync(catalog, "first.jpg");
         vm.Library.SetImages([image]);
         vm.SelectedImage = image;
@@ -132,12 +136,19 @@ public sealed class AssessmentFeedbackTests : IDisposable
         return image;
     }
 
-    private static async Task WaitUntilAsync(Func<bool> condition)
+    // Drives the injected clock rather than wall time: each turn releases at
+    // most one scheduled step, so the wait ends on the state change itself and
+    // the real-time ceiling only bounds a hang.
+    private async Task WaitUntilAsync(Func<bool> condition)
     {
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        var deadline = DateTime.UtcNow + TestWaits.Condition;
         while (!condition())
         {
-            await Task.Delay(10, timeout.Token);
+            Assert.True(
+                DateTime.UtcNow < deadline,
+                "The assessment toast never reached the expected state.");
+            _clock.Advance(TimeSpan.FromMilliseconds(50));
+            await Task.Delay(5);
         }
     }
 

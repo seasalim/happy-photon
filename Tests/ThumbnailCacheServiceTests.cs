@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using ImageMagick;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -72,11 +71,12 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         try
         {
             cache.QueueSaveToCache(image, bitmap);
-            var elapsed = Stopwatch.StartNew();
 
             await cache.DisposeAsync();
 
-            Assert.True(elapsed.Elapsed < TimeSpan.FromSeconds(1));
+            // Returning while the writer is still gated is the whole claim:
+            // dispose abandoned the drain instead of waiting the write out.
+            Assert.False(cache.ProcessingTask.IsCompleted);
             Assert.False(File.Exists(cache.GetCachePath(image)));
         }
         finally
@@ -111,7 +111,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
             cache.QueueSaveToCache(image, bitmap);
             Assert.True(SpinWait.SpinUntil(
                 () => cache.WriterInHandCount == 1,
-                TimeSpan.FromSeconds(5)));
+                TestWaits.Condition));
 
             Assert.Equal(1, cache.PendingWrites);
             writerGate.SetResult();

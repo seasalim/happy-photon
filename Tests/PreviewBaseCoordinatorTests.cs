@@ -21,7 +21,7 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
 
         var first = coordinator.GetPreviewAsync(
             file, BaseDecodeSettings.Default, CancellationToken.None);
-        Assert.True(loader.FirstDecodeStarted.Wait(TimeSpan.FromSeconds(5)));
+        Assert.True(loader.FirstDecodeStarted.Wait(TestWaits.Condition));
         var second = coordinator.GetPreviewAsync(
             file, BaseDecodeSettings.Default, CancellationToken.None);
         loader.ReleaseFirstDecode.Set();
@@ -46,7 +46,7 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
             new ImageFile(firstPath),
             BaseDecodeSettings.Default,
             CancellationToken.None);
-        Assert.True(loader.FirstDecodeStarted.Wait(TimeSpan.FromSeconds(5)));
+        Assert.True(loader.FirstDecodeStarted.Wait(TestWaits.Condition));
         var second = coordinator.GetPreviewAsync(
             new ImageFile(secondPath),
             BaseDecodeSettings.Default,
@@ -73,7 +73,7 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
             new ImageFile(path),
             BaseDecodeSettings.Default,
             cancelled.Token);
-        Assert.True(loader.FirstDecodeStarted.Wait(TimeSpan.FromSeconds(5)));
+        Assert.True(loader.FirstDecodeStarted.Wait(TestWaits.Condition));
         var second = coordinator.GetPreviewAsync(
             new ImageFile(path),
             BaseDecodeSettings.Default,

@@ -129,11 +129,13 @@ public sealed class ThemeLiveSwitchTests
 
             vm.SetAppThemeCommand.Execute(AppTheme.MidGray);
             Dispatcher.UIThread.RunJobs();
-            // The thumbnail brushes fade over 130ms; advance past the
-            // transition so the assertions sample settled colors.
-            await Task.Delay(250);
-            Avalonia.Headless.AvaloniaHeadlessPlatform.ForceRenderTimerTick();
-            Dispatcher.UIThread.RunJobs();
+            // Border.thumbnail is the only asserted control that transitions
+            // (Background and BorderBrush, 130ms each). Pump the render clock
+            // until both reach their end colors so the assertions below sample
+            // settled brushes instead of a guessed instant mid-fade.
+            await SettleAsync(() =>
+                ColorOf(thumbnail.Background) == Color.Parse("#616161") &&
+                ColorOf(thumbnail.BorderBrush) == Color.Parse("#bbbbbb"));
 
             Assert.Same(originalWindow, window);
             Assert.Equal(HappyPhotonThemes.MidGray, Application.Current.RequestedThemeVariant);
@@ -242,6 +244,20 @@ public sealed class ThemeLiveSwitchTests
             Application.Current!.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
             window.Close();
         }
+    }
+
+    private static async Task SettleAsync(Func<bool> settled)
+    {
+        var deadline = DateTime.UtcNow + TestWaits.Condition;
+        while (DateTime.UtcNow < deadline)
+        {
+            Avalonia.Headless.AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+            Dispatcher.UIThread.RunJobs();
+            if (settled()) return;
+            await Task.Delay(10);
+        }
+
+        Assert.True(settled(), "A theme transition never reached its end color.");
     }
 
     private static Color ColorOf(IBrush? brush) =>

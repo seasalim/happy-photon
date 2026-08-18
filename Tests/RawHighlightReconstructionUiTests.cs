@@ -27,7 +27,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         vm.SelectedImage = image;
 
         vm.HlReconstruction = HlReconstructionMode.Blend;
-        await WaitUntilAsync(
+        await TestWaits.UntilAsync(
             () => image.EditSettings.HlReconstruction ==
                   HlReconstructionMode.Blend);
 
@@ -77,7 +77,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         vm.SelectedImage = image;
 
         Assert.True(vm.CanReset);
-        await WaitUntilAsync(() => image.RawDecodeFailed);
+        await TestWaits.UntilAsync(() => image.RawDecodeFailed);
 
         Assert.True(vm.CanReset);
         Assert.Contains("could not be decoded", vm.StatusMessage);
@@ -207,15 +207,15 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         await vm.InitializeAsync();
         var image = new ImageFile(Path.Combine(_root, "missing.png"));
         vm.SelectedImage = image;
-        await WaitUntilAsync(
+        await TestWaits.UntilAsync(
             () => vm.IsWhiteBalanceReady && vm.PreviewImage != null);
 
         vm.Exposure = 1;
-        await WaitUntilAsync(() => image.EditSettings.Exposure == 1);
+        await TestWaits.UntilAsync(() => image.EditSettings.Exposure == 1);
         await vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
         Assert.True(vm.IsShowingOriginal);
 
-        await WaitUntilAsync(() => !vm.IsShowingOriginal);
+        await TestWaits.UntilAsync(() => !vm.IsShowingOriginal);
         await vm.DisposeAsync();
     }
 
@@ -239,18 +239,18 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         vm.SelectedImage = image;
         var expectedLibrary = new HistogramService().CalculateLibraryHistogram(
             image.Thumbnail!);
-        await WaitUntilAsync(() => HistogramsMatch(
+        await TestWaits.UntilAsync(() => HistogramsMatch(
             vm.Histogram,
             expectedLibrary));
 
         vm.IsDevelopMode = true;
-        await WaitUntilAsync(() =>
+        await TestWaits.UntilAsync(() =>
             vm.PreviewImage != null &&
             vm.Histogram != null &&
             !HistogramsMatch(vm.Histogram, expectedLibrary));
 
         vm.IsDevelopMode = false;
-        await WaitUntilAsync(() => HistogramsMatch(
+        await TestWaits.UntilAsync(() => HistogramsMatch(
             vm.Histogram,
             expectedLibrary));
 
@@ -273,7 +273,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
             IsDevelopMode = true
         };
         vm.SelectedImage = new ImageFile(Path.Combine(_root, "missing.png"));
-        await WaitUntilAsync(() => vm.Histogram != null);
+        await TestWaits.UntilAsync(() => vm.Histogram != null);
 
         vm.IsDevelopMode = false;
 
@@ -300,7 +300,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         {
             EditSettings = new EditSettings { Exposure = 1 }
         };
-        await WaitUntilAsync(
+        await TestWaits.UntilAsync(
             () => vm.IsWhiteBalanceReady && vm.PreviewImage != null);
         var preset = await vm.PresetService.SaveUserPresetAsync(
             "Hover",
@@ -334,7 +334,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         vm.ApplyBaseRefreshState(slow);
 
         Assert.False(vm.IsBaseArming);
-        await WaitUntilAsync(() => vm.IsBaseArming);
+        await TestWaits.UntilAsync(() => vm.IsBaseArming);
 
         vm.ApplyBaseRefreshState(new PreviewBaseRefreshState(
             image,
@@ -350,6 +350,8 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
             image,
             requestId: 42,
             isRefreshing: false));
+        // Outlasts the 150ms arming delay to prove the superseded arm was
+        // dropped; waiting longer only strengthens the absence.
         await Task.Delay(200);
         Assert.False(vm.IsBaseArming);
 
@@ -362,21 +364,6 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         {
             Directory.Delete(_root, recursive: true);
         }
-    }
-
-    private static async Task WaitUntilAsync(Func<bool> condition)
-    {
-        for (var attempt = 0; attempt < 100; attempt++)
-        {
-            if (condition())
-            {
-                return;
-            }
-
-            await Task.Delay(50);
-        }
-
-        Assert.Fail("The expected UI state did not arrive.");
     }
 
     private static BaseLoaderRouter CreateSyntheticLoader() =>

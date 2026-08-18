@@ -11,9 +11,10 @@ public sealed class DebouncedActionTests
         using var cancellation = new CancellationTokenSource();
         var ran = false;
 
+        // Never elapses, so only the cancellation below can complete the wait.
         var task = DebouncedAction.RunAsync(
             "test",
-            TimeSpan.FromSeconds(5),
+            Timeout.InfiniteTimeSpan,
             cancellation.Token,
             () =>
             {

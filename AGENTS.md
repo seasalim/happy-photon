@@ -37,6 +37,7 @@ Read only the material relevant to the change:
 - Decode, edits, preview, histogram, RAW, or export: start with `docs/pipeline/OVERVIEW.md`, then follow its relevant sibling document
 - UI or workflow behavior: `docs/DESIGN.md` and, when user flow matters, `docs/WORKFLOW.md`
 - Packaging or releases: `docs/release-engineering.md`
+- Adding or changing a test that waits on time: `docs/test-waits.md`
 
 Treat code and tests as the specification for details not covered there. Update the relevant focused documentation when behavior or architecture changes; do not grow this file with feature inventories.
 

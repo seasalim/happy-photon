@@ -18,6 +18,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private readonly Func<ImageFile, Task> _loadMetadataAsync;
     private readonly FileOperationService _fileOperationService = new();
     private readonly UiBitmapRetirement _bitmapRetirement = new();
+    private readonly TimeProvider _timeProvider;
 
     public PresetService PresetService { get; }
 
@@ -34,9 +35,11 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         Action<Action>? postSelection = null,
         UpdateCheckService? updateCheckService = null,
         UpdateInstallChannel? updateInstallChannel = null,
-        LibRawRuntimeHealth? rawRuntimeHealth = null)
+        LibRawRuntimeHealth? rawRuntimeHealth = null,
+        TimeProvider? timeProvider = null)
     {
         _catalogService = catalogService;
+        _timeProvider = timeProvider ?? TimeProvider.System;
         _rawRuntimeHealth = rawRuntimeHealth;
         _updateCheckService = updateCheckService ?? new UpdateCheckService();
         _updateInstallChannel = updateInstallChannel ?? UpdateChannelSelector.Current;

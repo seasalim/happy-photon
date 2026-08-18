@@ -38,7 +38,7 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
                 file,
                 new EditSettings(),
                 skipHistogram: true);
-            Assert.True(loader.Started.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(loader.Started.Wait(TestWaits.Condition));
             var second = service.ApplyEditsToPreviewAsync(
                 file,
                 new EditSettings { Exposure = 1 },
@@ -80,7 +80,7 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
                 file,
                 mutable,
                 skipHistogram: true);
-            Assert.True(loader.Started.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(loader.Started.Wait(TestWaits.Condition));
             mutable.Exposure = 2;
             loader.Release.Set();
 
@@ -153,7 +153,7 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
                 file,
                 decodeSettings,
                 skipHistogram: true);
-            Assert.True(loader.ReplacementStarted.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(loader.ReplacementStarted.Wait(TestWaits.Condition));
             var latestSettings = decodeSettings.Clone();
             latestSettings.Exposure = 1;
             var latestStale = service.ApplyEditsToPreviewAsync(
@@ -166,16 +166,13 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
             Assert.Null(firstResult.preview);
             Assert.NotNull(latestResult.preview);
             Assert.False(refreshReady.Task.IsCompleted);
-            var started = await refreshStarted.Task.WaitAsync(
-                TimeSpan.FromSeconds(5));
+            var started = await refreshStarted.Task.WaitAsync(TestWaits.Condition);
             await Task.Delay(200);
             Assert.False(refreshCompleted.Task.IsCompleted);
 
             loader.ReleaseReplacement.Set();
-            using var refreshed = await refreshReady.Task.WaitAsync(
-                TimeSpan.FromSeconds(5));
-            var completed = await refreshCompleted.Task.WaitAsync(
-                TimeSpan.FromSeconds(5));
+            using var refreshed = await refreshReady.Task.WaitAsync(TestWaits.Condition);
+            var completed = await refreshCompleted.Task.WaitAsync(TestWaits.Condition);
             await Task.Delay(50);
 
             Assert.Equal(1, Volatile.Read(ref refreshCount));
@@ -253,9 +250,9 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
                     HlReconstruction = HlReconstructionMode.Blend
                 },
                 skipHistogram: true);
-            Assert.True(loader.RefreshStarted[0].Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(loader.RefreshStarted[0].Wait(TestWaits.Condition));
             loader.RefreshRelease[0].Set();
-            await renderStarted[0].Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await renderStarted[0].Task.WaitAsync(TestWaits.Condition);
             var firstStale = await firstRefresh;
             firstStale.preview?.Dispose();
 
@@ -267,17 +264,17 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
                     Detail = { NoiseReduction = FbddMode.Light }
                 },
                 skipHistogram: true);
-            Assert.True(loader.RefreshStarted[1].Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(loader.RefreshStarted[1].Wait(TestWaits.Condition));
             loader.RefreshRelease[1].Set();
-            await renderStarted[1].Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await renderStarted[1].Task.WaitAsync(TestWaits.Condition);
             var secondStale = await secondRefresh;
             secondStale.preview?.Dispose();
 
             Assert.True(service.PreviewActivityCount >= 2);
             renderRelease[0].SetResult();
-            await WaitUntilAsync(() => service.PreviewActivityCount == 1);
+            await TestWaits.UntilAsync(() => service.PreviewActivityCount == 1);
             renderRelease[1].SetResult();
-            await WaitUntilAsync(() => service.PreviewActivityCount == 0);
+            await TestWaits.UntilAsync(() => service.PreviewActivityCount == 0);
         }
     }
 
@@ -310,16 +307,6 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
             new RenderedThumbnailCacheService(catalog));
         service.RenderStarted += renderStarted;
         return service;
-    }
-
-    private static async Task WaitUntilAsync(Func<bool> condition)
-    {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
-        while (!condition())
-        {
-            Assert.True(DateTime.UtcNow < deadline, "Timed out waiting for activity.");
-            await Task.Delay(10);
-        }
     }
 
     public void Dispose()

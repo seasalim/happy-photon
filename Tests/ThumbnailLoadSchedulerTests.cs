@@ -40,9 +40,9 @@ public sealed class ThumbnailLoadSchedulerTests
             .ToArray();
 
         scheduler.Enqueue(images.Select(image => (image, 0)));
-        await workersStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await workersStarted.Task.WaitAsync(TestWaits.Condition);
         release.SetResult();
-        await allLoaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await allLoaded.Task.WaitAsync(TestWaits.Condition);
         cancellation.Cancel();
         await scheduler.Completion;
 
@@ -77,14 +77,14 @@ public sealed class ThumbnailLoadSchedulerTests
             cancellation.Token);
 
         scheduler.Enqueue(new[] { (blocker, 0) });
-        await blockerStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await blockerStarted.Task.WaitAsync(TestWaits.Condition);
         scheduler.Enqueue(new[]
         {
             (new ImageFile("prefetch.jpg"), 1),
             (new ImageFile("visible.jpg"), 0)
         });
         releaseBlocker.SetResult();
-        await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await completed.Task.WaitAsync(TestWaits.Condition);
         cancellation.Cancel();
         await scheduler.Completion;
 
@@ -109,7 +109,7 @@ public sealed class ThumbnailLoadSchedulerTests
             cancellation.Token);
 
         scheduler.Enqueue(new[] { (failed, 0), (healthy, 0) });
-        var loadedImage = await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var loadedImage = await loaded.Task.WaitAsync(TestWaits.Condition);
         cancellation.Cancel();
         await scheduler.Completion;
 
@@ -137,7 +137,7 @@ public sealed class ThumbnailLoadSchedulerTests
             cancellation.Token);
 
         scheduler.Enqueue([(deferred, 0), (local, 0)]);
-        var loadedImage = await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var loadedImage = await loaded.Task.WaitAsync(TestWaits.Condition);
         cancellation.Cancel();
         await scheduler.Completion;
 
@@ -176,7 +176,7 @@ public sealed class ThumbnailLoadSchedulerTests
             blocker,
             ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
             0)]);
-        await blockerStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await blockerStarted.Task.WaitAsync(TestWaits.Condition);
         scheduler.Enqueue([new ThumbnailLoadRequest(
             target,
             ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
@@ -189,7 +189,7 @@ public sealed class ThumbnailLoadSchedulerTests
 
         Assert.Equal(
             ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
-            await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+            await loaded.Task.WaitAsync(TestWaits.Condition));
         cancellation.Cancel();
         await scheduler.Completion;
     }
@@ -227,13 +227,13 @@ public sealed class ThumbnailLoadSchedulerTests
             image,
             ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
             0)]);
-        await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await firstStarted.Task.WaitAsync(TestWaits.Condition);
         scheduler.Enqueue([new ThumbnailLoadRequest(
             image,
             ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
             0)]);
         release.SetResult();
-        await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await completed.Task.WaitAsync(TestWaits.Condition);
         cancellation.Cancel();
         await scheduler.Completion;
 
@@ -266,7 +266,7 @@ public sealed class ThumbnailLoadSchedulerTests
             image,
             ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
             0)]);
-        await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await loaded.Task.WaitAsync(TestWaits.Condition);
         cancellation.Cancel();
         await scheduler.Completion;
     }
@@ -297,7 +297,7 @@ public sealed class ThumbnailLoadSchedulerTests
         scheduler.Enqueue([
             new ThumbnailLoadRequest(failed, request, 0),
             new ThumbnailLoadRequest(healthy, request, 0)]);
-        var loadedImage = await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var loadedImage = await loaded.Task.WaitAsync(TestWaits.Condition);
         cancellation.Cancel();
         await scheduler.Completion;
 
@@ -338,7 +338,7 @@ public sealed class ThumbnailLoadSchedulerTests
             image,
             ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
             0)]);
-        var loadedImage = await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var loadedImage = await loaded.Task.WaitAsync(TestWaits.Condition);
         cancellation.Cancel();
         await scheduler.Completion;
 
@@ -364,10 +364,10 @@ public sealed class ThumbnailLoadSchedulerTests
             new ImageFile("complete.jpg"),
             ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
             0)]);
-        await loaded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await loaded.Task.WaitAsync(TestWaits.Condition);
         Assert.True(SpinWait.SpinUntil(
             () => scheduler.DesiredCount == 0,
-            TimeSpan.FromSeconds(5)));
+            TestWaits.Condition));
         cancellation.Cancel();
         await scheduler.Completion;
     }

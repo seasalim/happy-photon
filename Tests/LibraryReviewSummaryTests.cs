@@ -193,6 +193,8 @@ public sealed class LibraryReviewSummaryTests : IDisposable
         var replacement = Directory.CreateDirectory(
             Path.Combine(_root, "replacement")).FullName;
         var folderLoad = vm.LoadFolderAsync(replacement);
+        // The load cannot finish until releaseLoad is set below, so this only
+        // settles the state it asserts; it never races a deadline.
         await Task.Delay(50);
         Assert.False(folderLoad.IsCompleted);
         Assert.Equal(0, vm.LibrarySelectionCount);
