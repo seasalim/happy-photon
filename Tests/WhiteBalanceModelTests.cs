@@ -1,4 +1,5 @@
 using HappyPhoton.Services;
+using HappyPhoton.Models;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -156,6 +157,49 @@ public sealed class WhiteBalanceModelTests
             new[,] { { 1.4, 0, 0 }, { 0, 1.0, 0 }, { 0, 0, 0.8 } },
             matrix,
             0);
+    }
+
+    [Fact]
+    public void PickedGainDisplay_UsesRec2020WorkingBasis()
+    {
+        double[] gains = [1.8, 1, 0.7];
+        var actual = WhiteBalanceModel.EstimateFromGains(gains);
+        var workingWhite = new[] { 1 / gains[0], 1 / gains[1], 1 / gains[2] };
+        var sum = workingWhite.Sum();
+        workingWhite = workingWhite.Select(value => value / sum).ToArray();
+        var xyz = ChromaticAdaptation.LinearRec2020ToXyz(workingWhite);
+        var denominator = xyz[0] + 15 * xyz[1] + 3 * xyz[2];
+        var expected = WhiteBalanceModel.EstimateKelvinTintFromUv(
+            4 * xyz[0] / denominator,
+            6 * xyz[1] / denominator);
+        var oldXyz = ChromaticAdaptation.LinearSrgbToXyz(workingWhite);
+        var oldDenominator = oldXyz[0] + 15 * oldXyz[1] + 3 * oldXyz[2];
+        var oldBasis = WhiteBalanceModel.EstimateKelvinTintFromUv(
+            4 * oldXyz[0] / oldDenominator,
+            6 * oldXyz[1] / oldDenominator);
+
+        Assert.Equal(expected.kelvin, actual.kelvin, 10);
+        Assert.Equal(expected.tint, actual.tint, 10);
+        Assert.NotEqual(oldBasis, actual);
+    }
+
+    [Fact]
+    public void AsShotWhiteBalanceFactor_RemainsExactIdentity()
+    {
+        var settings = new EditSettings();
+        using var baseImage = RenderPipelineTestSupport.CreateBase(
+            [1000, 1000, 1000],
+            isRaw: true);
+        var info = baseImage.Info;
+        var whiteBalance = WhiteBalanceModel.CreateMatrix(
+            info.AsShotKelvin,
+            info.AsShotTint,
+            info.AsShotKelvin,
+            info.AsShotTint);
+
+        AssertMatrixClose(ChromaticAdaptation.Identity(), whiteBalance, 0);
+        var combined = RenderChromaticStage.CreateNormalizedMatrix(info, settings);
+        Assert.Equal(1.6604910021, combined.Fold, 9);
     }
 
     [Fact]

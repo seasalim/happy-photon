@@ -325,20 +325,8 @@ internal static class PrecisionRawCases
 
     private static (double[,] Matrix, double Fold) CreateNormalizedMatrix(
         BaseImageInfo info,
-        EditSettings settings)
-    {
-        if (settings.Wb.Mode == WbMode.AsShot)
-        {
-            return (new[,] { { 1d, 0, 0 }, { 0, 1d, 0 }, { 0, 0, 1d } }, 1);
-        }
-        var matrix = WhiteBalanceModel.CreateMatrix(
-            settings.Wb.Kelvin!.Value,
-            settings.Wb.Tint!.Value,
-            info.AsShotKelvin,
-            info.AsShotTint);
-        var normalized = ChromaticAdaptation.NormalizeForRender(matrix);
-        return (normalized.Matrix, normalized.Fold);
-    }
+        EditSettings settings) =>
+        RenderChromaticStage.CreateNormalizedMatrix(info, settings);
 
     private static ToneParams CreateTone(
         BaseImageInfo info,

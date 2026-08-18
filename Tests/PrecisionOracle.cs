@@ -80,13 +80,6 @@ internal static class PrecisionOracle
             fixture.Width,
             fixture.Height);
         var baseSamples = ReadRedNormalized(baseRgb);
-        var parameters = CreateToneParameters(settings);
-        var expectedTone = expectedLinear
-            .Select(value => EvaluateTone(value, parameters))
-            .ToArray();
-        var baseTone = baseSamples
-            .Select(value => EvaluateTone(value, parameters))
-            .ToArray();
 
         using var reconstructed = (MagickImage)fixture.Base.Pixels.Clone();
         RenderGeometry.Apply(reconstructed, settings);
@@ -94,11 +87,20 @@ internal static class PrecisionOracle
             reconstructed,
             fixture.Base.Info,
             settings);
-        if (fold != 1)
-        {
-            throw new InvalidOperationException(
-                $"The isolated As Shot reconstruction returned fold {fold}.");
-        }
+        var matrixRgb = ReadRgb16(reconstructed);
+        var matrixSamples = ReadRedNormalized(matrixRgb);
+        var normalized = RenderChromaticStage.CreateNormalizedMatrix(
+            fixture.Base.Info,
+            settings);
+        var neutralScale = normalized.Matrix[0, 0] +
+            normalized.Matrix[0, 1] + normalized.Matrix[0, 2];
+        var parameters = CreateToneParameters(settings, fold);
+        var expectedTone = expectedLinear
+            .Select(value => EvaluateTone(value * neutralScale, parameters))
+            .ToArray();
+        var baseTone = matrixSamples
+            .Select(value => EvaluateTone(value, parameters))
+            .ToArray();
         var lut = ToneLut.Compose(parameters);
         ToneLutApplicator.Apply(reconstructed, lut);
         RenderColorEncoding.RetagAsSrgb(reconstructed);
@@ -175,10 +177,12 @@ internal static class PrecisionOracle
             parity);
     }
 
-    internal static ToneParams CreateToneParameters(EditSettings settings) =>
+    internal static ToneParams CreateToneParameters(
+        EditSettings settings,
+        double fold = 1) =>
         new(
             settings.Exposure,
-            Fold: 1,
+            fold,
             settings.Brightness,
             settings.Contrast,
             settings.Shadows,

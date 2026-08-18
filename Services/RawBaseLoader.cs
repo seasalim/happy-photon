@@ -227,7 +227,10 @@ public sealed class RawBaseLoader : IBaseImageLoader
             _ => throw new InvalidOperationException(
                 $"Unsupported FBDD mode: {decode.NoiseReduction}.")
         };
-        return LibRawOutputConfiguration.Linear(highlight, noiseReduction, preview);
+        return LibRawOutputConfiguration.LinearRec2020(
+            highlight,
+            noiseReduction,
+            preview);
     }
 
     internal static MagickImage ImportRgb16(

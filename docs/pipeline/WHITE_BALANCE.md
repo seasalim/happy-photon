@@ -1,6 +1,6 @@
 # White Balance Model
 
-Happy Photon models white balance as chromatic adaptation in linear sRGB rather than
+Happy Photon models white balance as chromatic adaptation in linear Rec.2020 rather than
 as a display-space red/blue adjustment. `WhiteBalanceModel` and
 `ChromaticAdaptation` produce the 3×3 matrix consumed by RENDER.md §4, while reference
 values and round trips are pinned by the tests summarized in §9.
@@ -11,8 +11,8 @@ The Kelvin slider states *what the scene illuminant was*. The base is already ba
 for the as-shot illuminant (decode applied camera WB; as-shot neutral = (1,1,1)).
 Rendering neutralizes the *claimed* illuminant instead:
 
-- `kelvin == asShotKelvin && tint == asShotTint` → identity (and mode `asShot` skips
-  the matrix entirely, so identity is exact regardless of estimation quality).
+- `kelvin == asShotKelvin && tint == asShotTint` → exact identity in the WB factor.
+  The render's composed working→display matrix still runs.
 - Raising Kelvin above as-shot → image gets **warmer**; lowering → cooler.
 
 UI: Kelvin slider 2000–12000, logarithmic; Tint slider −100 (green) … +100 (magenta).
@@ -80,18 +80,19 @@ cone_dst = M_A · XYZ(asShotKelvin, asShotTint)       // what the base is balanc
 M_CAT    = M_A⁻¹ · diag(cone_dst / cone_src) · M_A
 ```
 
-## 4. Full pixel matrix (linear sRGB in, linear sRGB out)
+## 4. Full pixel matrix (linear Rec.2020 in, linear Rec.2020 out)
 
 ```
-M = M_XYZ→sRGB · M_CAT · M_sRGB→XYZ
+M = M_XYZ→Rec2020 · M_CAT · M_Rec2020→XYZ
 
-M_sRGB→XYZ = [ 0.4124564 0.3575761 0.1804375     M_XYZ→sRGB = [ 3.2404542 −1.5371385 −0.4985314
-               0.2126729 0.7151522 0.0721750                   −0.9692660  1.8760108  0.0415560
-               0.0193339 0.1191920 0.9503041 ]                  0.0556434 −0.2040259  1.0572252 ]
+M_Rec2020→XYZ = [ 0.6369580483 0.1446169036 0.1688809752
+                  0.2627002120 0.6779980715 0.0593017165
+                  0.0000000000 0.0280726930 1.0609850577 ]
 ```
 
-The render stage receives `M` and performs the normalization/fold described in
-RENDER.md §4. For `picked`, `M = diag(g_r, g_g, g_b)` directly (no CAT).
+The render stage composes this factor with Rec.2020→sRGB and performs the single
+normalization/fold described in RENDER.md §4. For `picked`, the WB factor is
+`diag(g_r, g_g, g_b)` directly (no CAT).
 
 ## 5. Inversion & as-shot estimation
 
@@ -139,8 +140,8 @@ consumer. The former `1 / cam_mul` projection remains incorrect and is not used.
 ### 5.3 Display approximation for picked gains
 
 The UI shows grayed Kelvin/tint for gain-based modes. Formula: the white the gains
-neutralize is `w_srgb = normalize(1/g_r, 1/g_g, 1/g_b)` in linear sRGB;
-`XYZ = M_sRGB→XYZ · w_srgb` → uv → `EstimateKelvinTintFromUv`. This is a D65-anchored
+neutralize is `w_work = normalize(1/g_r, 1/g_g, 1/g_b)` in linear Rec.2020;
+`XYZ = M_Rec2020→XYZ · w_work` → uv → `EstimateKelvinTintFromUv`. This is a D65-anchored
 approximation (it ignores the as-shot anchor), adequate for the grayed display —
 it is never used in rendering.
 
@@ -176,7 +177,8 @@ the §7 gains as `picked`. The result is deterministic for a given base.
 
 ## 9. Verification (`WhiteBalanceModelTests`)
 
-1. Identity: matrix for (anchor == target) is I within 1e-6; `asShot` mode bypasses.
+1. Identity: the WB factor for (anchor == target) is exact I; `asShot` composes it with
+   the universal working→display matrix.
 2. Warm direction: target 6500 vs anchor 3000 → R gain > B gain.
 3. Tint sign: (5500, +50) suppresses G relative to (5500, 0).
 4. **D65 pin (daylight branch):** XYZ(6504, 0) ≈ (0.9504, 1, 1.0888), each component

@@ -1,6 +1,6 @@
 # Decode: Sources to `BaseImage`
 
-Every supported file becomes the same canonical `BaseImage`: linear light, sRGB
+Every supported file becomes the same canonical `BaseImage`: linear light, Rec.2020
 primaries, D65, Q16, upright, and free of an aesthetic look. That normalization is
 what lets preview and export share one source-agnostic renderer. See OVERVIEW.md §4
 for the runtime contracts.
@@ -44,7 +44,7 @@ image-statistics defaults:
 | `Gamma` | **(1.0, 1.0)** | linear output; encode happens in the tone LUT |
 | `NoAutoBright` | **true** | determinism — kills the per-image 1% stretch |
 | `UseCameraWb` | true | as-shot neutral becomes (1,1,1); WB edits are relative gains |
-| `OutputColor` | sRGB (1) | LibRaw applies its camera matrix → sRGB primaries |
+| `OutputColor` | Rec.2020 (8) | LibRaw applies its camera matrix → BT.2020 primaries |
 | `HighlightMode` | **0 (clip)** when `decode.HlReconstruction == Clip` (default); 2 when `Blend` | Blend recovers neutral detail in partially clipped areas; output stays ≤ 1.0 |
 | `fbdd_noiserd` | 0/1/2 from `decode.NoiseReduction` (default Off) | internal decode-time NR |
 | `HalfSize` | true for `LoadPreviewBase`, false for `LoadFullBase` | perf; only remaining preview/export decode difference |
@@ -86,6 +86,12 @@ Post-decode steps, in order:
    remain typed at the interop boundary until a pipeline consumer needs them. Treat an
    identity `rgb_cam` as LibRaw's unavailable-transform sentinel (WHITE_BALANCE.md §5).
 
+Camera facts are copied immediately after `Unpack`, before the Rec.2020 output
+configuration is applied. `CamToSrgb` therefore remains camera→linear-sRGB and is not a
+camera→working-space fact. `RawWorkingSpaceTests` pins the semantics against the
+separately exposed camera-from-XYZ fact: row-normalize
+`camera_from_xyz · (sRGB→XYZ)`, then invert it to reproduce `camera_to_srgb`.
+
 ### 2.1 RAW Library previews
 
 Library thumbnail extraction uses LibRaw's already-open context to return both the
@@ -108,13 +114,14 @@ target, and never starts a full RAW demosaic merely to satisfy a larger Library 
 
 RAW decode leaves the linear pixels bias-free while recording a default-brightness
 estimate in `BaseImageInfo.SourceExposureBiasEv`. The loader reads LibRaw's selected
-embedded thumbnail from the already-open context, normalizes it to linear sRGB, and
+embedded thumbnail from the already-open context, normalizes it to display sRGB, and
 compares both images on a 48px-long-edge linear sampling grid. If the
 preview and base aspect ratios differ by more than 2%, the base is center-cropped to
 the preview ratio before comparison. This is deliberately the opposite crop direction
 from Library normalization, which crops the embedded preview toward the visible RAW
 frame. A bounded solver then finds the scalar EV whose default raw transfer matches the
-preview median.
+preview median. Base samples convert Rec.2020 → sRGB in linear light before the
+per-channel default tone response, matching the renderer on colored scenes.
 
 The preview estimate is accepted only for thumbnails at least 64×64 with finite,
 non-degenerate medians. A Fuji estimate that differs from its nonzero MakerNote bias
@@ -214,21 +221,23 @@ cache-integrity and byte-comparison checks.
    decode without upscaling smaller JPEGs).
 2. `AutoOrient()` makes the pixels upright and the applied orientation is recorded.
 3. **Color normalization:**
-   - Embedded ICC present → record its description, then
-     `TransformColorSpace(<embedded>, sRGB)` (Magick applies the source profile and
-     converts).
+   - Embedded ICC present → record its description, then transform from it to the
+     gamma-1.0 Rec.2020 target defined in WORKING_SPACE.md.
    - No profile + CMYK colorspace → assume `ColorProfiles.USWebCoatedSWOP` as the
-     deterministic source profile and transform to sRGB.
-   - No profile otherwise → assume sRGB (document; industry default).
+     deterministic source profile and transform to linear Rec.2020.
+   - No profile otherwise → assume sRGB (industry default), apply the sRGB EOTF, then
+     the exact sRGB→Rec.2020 matrix from WORKING_SPACE.md §2. The bitmap-backed
+     edited-thumbnail proxy, whose upstream profile has already been discarded, uses
+     the same direct path. This avoids lcms profile setup without changing the math.
    - Record `HadIccProfile` and the profile description, then strip **all** profiles
      after color conversion. Bases never retain ICC, EXIF/GPS, XMP, or thumbnails.
-4. Ensure `Depth = 16` **before** linearization (8-bit sources are promoted so the
-   linear representation doesn't posterize).
-5. Linearize: `ColorSpace = ColorSpace.RGB` (Magick's sRGB→linear transfer transform).
-6. Preview base: resize to 1600 as above.
-7. `AsShotKelvin = 6504, AsShotTint = 0` (D65 anchor), `CamMul = null`;
+4. The target ICC has linear TRCs, and the direct sRGB path explicitly applies its EOTF,
+   so normalized samples are already linear. Retag them as `ColorSpace.RGB` without a
+   second transfer conversion, then ensure `Depth = 16`.
+5. Preview base: resize to 1600 as above.
+6. `AsShotKelvin = 6504, AsShotTint = 0` (D65 anchor), `CamMul = null`;
    `FullWidth/FullHeight` = the original decoded dimensions after orientation
-   (captured before the preview resize in step 6).
+   (captured before the preview resize in step 5).
 
 GIF decoding uses the first frame only. HEIC follows the identical standard path
 through Magick.NET's HEIC coder backed by the libheif bundled in the package's native

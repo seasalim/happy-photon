@@ -29,7 +29,7 @@ public static class WhiteBalanceModel
         var destinationWhite = GetWhitePointXyz(
             asShotKelvin,
             asShotTint);
-        return ChromaticAdaptation.CreateLinearSrgbMatrix(
+        return ChromaticAdaptation.CreateLinearRec2020Matrix(
             sourceWhite,
             destinationWhite);
     }
@@ -138,13 +138,19 @@ public static class WhiteBalanceModel
         ValidatePositiveTriple(gains, nameof(gains));
         var white = Normalize(
             [1 / gains[0], 1 / gains[1], 1 / gains[2]]);
-        return EstimateFromLinearSrgbWhite(white);
+        return EstimateFromLinearRec2020White(white);
     }
 
+    private static (double kelvin, double tint) EstimateFromLinearRec2020White(
+        double[] white) =>
+        EstimateFromXyz(ChromaticAdaptation.LinearRec2020ToXyz(white));
+
     private static (double kelvin, double tint) EstimateFromLinearSrgbWhite(
-        double[] white)
+        double[] white) =>
+        EstimateFromXyz(ChromaticAdaptation.LinearSrgbToXyz(white));
+
+    private static (double kelvin, double tint) EstimateFromXyz(double[] xyz)
     {
-        var xyz = ChromaticAdaptation.LinearSrgbToXyz(white);
         var denominator = xyz[0] + 15 * xyz[1] + 3 * xyz[2];
         if (!double.IsFinite(denominator) || Math.Abs(denominator) < 1e-12)
         {

@@ -82,6 +82,36 @@ internal static class ColorScienceMatrixAssertions
 public sealed class ColorScienceMatrixTests
 {
     [Fact]
+    public void SrgbAuthority_ExposesBothDeliberateNumericVariants()
+    {
+        ColorScienceMatrixAssertions.AssertPublishedAndOracle(
+            RgbColorSpaceMatrices.LinearSrgbToXyzD65PublishedRounded,
+            "linear-srgb-d65",
+            2.5e-4);
+        ColorScienceMatrixAssertions.AssertPublishedAndOracle(
+            RgbColorSpaceMatrices.LinearSrgbToXyzD65DerivedExact,
+            "linear-srgb-d65",
+            2e-12);
+        Assert.NotEqual(
+            RgbColorSpaceMatrices.LinearSrgbToXyzD65PublishedRounded[0, 0],
+            RgbColorSpaceMatrices.LinearSrgbToXyzD65DerivedExact[0, 0]);
+    }
+
+    [Fact]
+    public void ExistingCallSites_KeepTheirPriorSrgbVariant()
+    {
+        Assert.Same(
+            RgbColorSpaceMatrices.LinearSrgbToXyzD65PublishedRounded,
+            GoldenImageComparer.SrgbToXyzD65);
+        Assert.Same(
+            RgbColorSpaceMatrices.LinearSrgbToXyzD65PublishedRounded,
+            PrecisionDeltaE.SrgbToXyzD65);
+        Assert.Same(
+            RgbColorSpaceMatrices.LinearSrgbToXyzD65DerivedExact,
+            PrecisionColorCases.SrgbToXyzD65);
+    }
+
+    [Fact]
     public void Rec2020PublishedMatrix_AgreesWithDerivationAndOracle() =>
         ColorScienceMatrixAssertions.AssertPublishedAndOracle(
             PrecisionColorCases.Rec2020ToXyzD65,
@@ -113,6 +143,27 @@ public sealed class ColorScienceMatrixTests
                 ChromaticAdaptation.XyzToLinearSrgb(basis),
                 PrecisionColorCases.Transform(fromXyz, basis),
                 8e-4);
+        }
+    }
+
+    [Fact]
+    public void ProductionRec2020BasisVectors_AgreeWithOracle()
+    {
+        var oracle = ColorScienceOracleData.Load().Space("linear-rec2020-d65");
+        var toXyz = ColorScienceMatrixAssertions.ToMatrix(oracle.MatrixRgbToXyz);
+        var fromXyz = ColorScienceMatrixAssertions.ToMatrix(oracle.MatrixXyzToRgb);
+        for (var channel = 0; channel < 3; channel++)
+        {
+            var basis = new double[3];
+            basis[channel] = 1;
+            AssertVectorClose(
+                ChromaticAdaptation.LinearRec2020ToXyz(basis),
+                PrecisionColorCases.Transform(toXyz, basis),
+                2e-12);
+            AssertVectorClose(
+                ChromaticAdaptation.XyzToLinearRec2020(basis),
+                PrecisionColorCases.Transform(fromXyz, basis),
+                2e-12);
         }
     }
 

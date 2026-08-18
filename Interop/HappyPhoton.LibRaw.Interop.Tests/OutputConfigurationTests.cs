@@ -32,6 +32,23 @@ public sealed class OutputConfigurationTests
     }
 
     [Fact]
+    public void LinearRec2020_ChangesOnlyTheOutputSpace()
+    {
+        var srgb = LibRawOutputConfiguration.Linear(
+            LibRawHighlightMode.Clip,
+            LibRawFbddMode.Light,
+            halfSize: true);
+        var rec2020 = LibRawOutputConfiguration.LinearRec2020(
+            LibRawHighlightMode.Clip,
+            LibRawFbddMode.Light,
+            halfSize: true);
+
+        Assert.Equal(1, srgb.OutputColor);
+        Assert.Equal(8, rec2020.OutputColor);
+        Assert.Equal(srgb with { OutputColor = 8 }, rec2020);
+    }
+
+    [Fact]
     public void FullDecodeSrgb_PinsLegacyEightBitGammaParameters()
     {
         var value = LibRawOutputConfiguration.FullDecodeSrgb();

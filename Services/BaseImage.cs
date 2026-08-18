@@ -65,12 +65,12 @@ public sealed record BaseImageInfo(
     double SourceExposureBiasEv = 0);
 
 /// <summary>
-/// Owns one decoded linear image. Ownership transfers at construction and callers
-/// must dispose the base after all renders using it have completed.
+/// Owns one decoded linear Rec.2020/D65 image. Ownership transfers at construction
+/// and callers must dispose the base after all renders using it have completed.
 /// </summary>
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 5;
+    public const int Version = 6;
     public const int PreviewMaxDimension = 1600;
 
     private MagickImage? _pixels;

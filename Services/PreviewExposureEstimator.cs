@@ -144,7 +144,7 @@ internal static class PreviewExposureEstimator
         double previewMedian)
     {
         ValidateRgb(baseRgb);
-        var rawMedian = MedianLuminance(baseRgb);
+        var rawMedian = MedianWorkingLuminance(baseRgb);
         if (!double.IsFinite(rawMedian) || !double.IsFinite(previewMedian) ||
             rawMedian < MinimumLuminance || previewMedian < MinimumLuminance)
         {
@@ -249,10 +249,14 @@ internal static class PreviewExposureEstimator
         for (var pixel = 0; pixel < luminances.Length; pixel++)
         {
             var offset = pixel * 3;
+            var display = WorkingToDisplay(
+                baseRgb[offset],
+                baseRgb[offset + 1],
+                baseRgb[offset + 2]);
             luminances[pixel] = Luminance(
-                Map(baseRgb[offset], gain, transfer),
-                Map(baseRgb[offset + 1], gain, transfer),
-                Map(baseRgb[offset + 2], gain, transfer));
+                Map(display.R, gain, transfer),
+                Map(display.G, gain, transfer),
+                Map(display.B, gain, transfer));
         }
 
         return Median(luminances);
@@ -272,16 +276,50 @@ internal static class PreviewExposureEstimator
     }
 
     private static double Map(
-        ushort sample,
+        double sample,
         double gain,
         double[] transfer)
     {
-        var exposed = Math.Min(sample / (double)ushort.MaxValue * gain, 1);
+        var exposed = Math.Clamp(sample * gain, 0, 1);
         var position = exposed * (transfer.Length - 1);
         var lower = (int)position;
         var upper = Math.Min(lower + 1, transfer.Length - 1);
         var fraction = position - lower;
         return transfer[lower] * (1 - fraction) + transfer[upper] * fraction;
+    }
+
+    private static double MedianWorkingLuminance(ReadOnlySpan<ushort> workingRgb)
+    {
+        var luminances = new double[workingRgb.Length / 3];
+        for (var pixel = 0; pixel < luminances.Length; pixel++)
+        {
+            var offset = pixel * 3;
+            var display = WorkingToDisplay(
+                workingRgb[offset],
+                workingRgb[offset + 1],
+                workingRgb[offset + 2]);
+            luminances[pixel] = Luminance(
+                Math.Max(display.R, 0),
+                Math.Max(display.G, 0),
+                Math.Max(display.B, 0));
+        }
+
+        return Median(luminances);
+    }
+
+    private static (double R, double G, double B) WorkingToDisplay(
+        ushort red,
+        ushort green,
+        ushort blue)
+    {
+        var r = red / (double)ushort.MaxValue;
+        var g = green / (double)ushort.MaxValue;
+        var b = blue / (double)ushort.MaxValue;
+        var matrix = RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb;
+        return (
+            matrix[0, 0] * r + matrix[0, 1] * g + matrix[0, 2] * b,
+            matrix[1, 0] * r + matrix[1, 1] * g + matrix[1, 2] * b,
+            matrix[2, 0] * r + matrix[2, 1] * g + matrix[2, 2] * b);
     }
 
     private static void NormalizePreview(MagickImage preview)

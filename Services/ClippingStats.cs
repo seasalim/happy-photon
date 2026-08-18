@@ -40,11 +40,22 @@ internal static class ClippingStatsCalculator
         var samples = GetRgbSamples(image.Pixels);
         var pixels = samples.Length / 3;
         long clipped = 0;
+        var matrix = RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb;
+        var threshold = RawNearClipThreshold / (double)ushort.MaxValue;
         for (var i = 0; i < samples.Length; i += 3)
         {
-            if (samples[i] >= RawNearClipThreshold ||
-                samples[i + 1] >= RawNearClipThreshold ||
-                samples[i + 2] >= RawNearClipThreshold)
+            var red = samples[i] / (double)ushort.MaxValue;
+            var green = samples[i + 1] / (double)ushort.MaxValue;
+            var blue = samples[i + 2] / (double)ushort.MaxValue;
+            var displayRed = matrix[0, 0] * red +
+                matrix[0, 1] * green + matrix[0, 2] * blue;
+            var displayGreen = matrix[1, 0] * red +
+                matrix[1, 1] * green + matrix[1, 2] * blue;
+            var displayBlue = matrix[2, 0] * red +
+                matrix[2, 1] * green + matrix[2, 2] * blue;
+            if (displayRed >= threshold ||
+                displayGreen >= threshold ||
+                displayBlue >= threshold)
             {
                 clipped++;
             }

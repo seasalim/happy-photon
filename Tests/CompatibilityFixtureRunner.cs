@@ -368,7 +368,10 @@ internal static partial class CompatibilityFixtureRunner
                     fullPixels,
                     checked((int)Math.Max(previewPixels.Width, previewPixels.Height)));
                 observation.HalfFullMeanDeltaE =
-                    GoldenImageComparer.Compare(fullPixels, previewPixels).MeanDeltaE;
+                    GoldenImageComparer.Compare(
+                        fullPixels,
+                        previewPixels,
+                        GoldenComparisonDomain.LinearRec2020).MeanDeltaE;
                 Require(
                     observation.HalfFullMeanDeltaE <= 2.8,
                     $"Half/full decode mean ΔE was {observation.HalfFullMeanDeltaE:F3}.");
@@ -381,7 +384,9 @@ internal static partial class CompatibilityFixtureRunner
             using var export = pipeline.Render(Request(
                 fullBase, identity, RenderIntent.Export));
             var comparison = GoldenImageComparer.Compare(
-                export.Image, preview.Image);
+                export.Image,
+                preview.Image,
+                GoldenComparisonDomain.DisplaySrgb);
             observation.WysiwygMeanDeltaE = comparison.MeanDeltaE;
             observation.WysiwygP99DeltaE = comparison.P99DeltaE;
             Require(

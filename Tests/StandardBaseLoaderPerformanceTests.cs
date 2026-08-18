@@ -35,6 +35,46 @@ public sealed class StandardBaseLoaderPerformanceTests
         }
     }
 
+    [Fact]
+    public void EditedThumbnailRenderPerformance_WhenEnabled()
+    {
+        if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1")
+        {
+            return;
+        }
+
+        using var sourceImage = new MagickImage(
+            Asset("display-p3-reference.jpg").FilePath);
+        using var source = BitmapConversionService.ConvertToBitmap(sourceImage) ??
+            throw new InvalidOperationException("Could not create thumbnail bitmap.");
+        var renderer = new ThumbnailRenderer(new RenderPipeline());
+        var settings = new EditSettings
+        {
+            Exposure = 0.5,
+            Wb = new WhiteBalanceSettings
+            {
+                Mode = WbMode.Custom,
+                Kelvin = 7200,
+                Tint = -10
+            }
+        };
+        using (renderer.RenderStandardEdits(source, settings, 512))
+        {
+        }
+        var samples = new List<double>();
+        for (var index = 0; index < 5; index++)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            using var result = renderer.RenderStandardEdits(source, settings, 512);
+            stopwatch.Stop();
+            samples.Add(stopwatch.Elapsed.TotalMilliseconds);
+        }
+
+        _output.WriteLine(
+            $"Edited standard 512px thumbnail median: " +
+            $"{samples.Order().ElementAt(2):F1} ms");
+    }
+
     private void MeasureColdAndWarm(string label, ImageFile file)
     {
         var cold = Measure(file);

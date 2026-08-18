@@ -20,7 +20,8 @@ oldest/smallest CC0 body per mosaic type. Provenance is recorded in
 | High-ISO Bayer raw | FBDD quality/runtime evaluation | CC0 research dataset |
 | Nikon D300 ColorChecker NEF | physical colorimetric ground truth | author capture, CC0 exception |
 | sRGB JPEG with EXIF+GPS+orientation 6 | metadata policy, orientation | author with exiftool from a CC0 photo |
-| Display-P3 JPEG of the same picture as an sRGB JPEG | ICC normalize sentinel | generate via Magick from a CC0 source |
+| Display-P3 JPEG of the same picture as an sRGB JPEG | ICC normalize sentinel — sRGB-derived content, so it cannot show gamut preservation | generate via Magick from a CC0 source |
+| Display P3 ICC profile (`DisplayP3-v4.icc`) | independent source profile for the wide-gamut normalization test | Compact ICC Profiles, CC0 |
 | AdobeRGB JPEG | second ICC case | generate |
 | 16-bit TIFF | depth preservation | generate |
 | HEIC | platform codec path (skip test when codec absent) | generate/CC0 |
@@ -95,7 +96,9 @@ not proven through a production diagnostic seam.
   `v1`, …). Golden and WYSIWYG suites read it; the literal value `pending` makes them
   report **skipped-with-reason** ("awaiting re-baseline") instead of failing. This is
   how the integration branch stays green mid-rework (roadmap: integration strategy).
-- Comparison: per-pixel CIE76 ΔE on sRGB→Lab conversion. Report mean and p99.
+- Comparison: per-pixel CIE76 ΔE with an explicit domain. Render comparisons decode
+  display sRGB; base comparisons interpret samples as linear Rec.2020 before XYZ/Lab.
+  Report mean and p99.
 - Re-baselining: `HAPPY_PHOTON_UPDATE_GOLDENS=1 dotnet test` regenerates; CI never sets
   it. A golden diff in review must be justified by a `RenderPipeline.Version` bump or a
   spec change in the PR.
@@ -134,6 +137,10 @@ for the golden PNG. It does not use the half-size preview decode or preview JPEG
 27 golden files at v1, 39 at v2. The clipped-highlight case uses the bright water
 reflection in the reference CR2, as verified during WP4.1
 ([DECODE.md §2.2](DECODE.md#22-highlight-reconstruction-evaluation)).
+
+R1 re-baselined the same 39-case matrix once as v8 for the Rec.2020 base/render version
+pair. Against frozen v7, all 39 changed: mean ΔE ranged 0.074–0.617 and p99 ΔE ranged
+0.718–1.021. The superseded generation is pruned after the report is captured.
 
 ## 3. Tolerances (normative)
 
@@ -191,6 +198,10 @@ orders above the observed difference.
 9. **`RenderDetailTests`**: chroma NR preserves luma and alpha; a seeded noise image
    rendered as one band and as forced non-divisible bands is bit-identical at box
    radii 1 and 3.
+10. **Working-space suites:** `RawWorkingSpaceTests` proves LibRaw output color 8
+    numerically, pins the camera-fact semantics, and preserves near-clip meaning;
+    `StandardWorkingSpaceTests` checks the external sRGB-profile target, native P3
+    gamut vectors, the thumbnail sRGB-proxy limit, and the one-code JPEG identity gate.
 
 ### 4.1 NEWRAW validation anchors
 
@@ -208,10 +219,11 @@ R0 establishes four additive anchors before a NEWRAW stage changes pixels:
    published matrix and the committed oracle. The authorities are IEC 61966-2-1 for
    sRGB, ITU-R BT.2020-2 for Rec.2020, and ISO 22028-2 for ROMM; the W3C CSS Color 4
    conversion appendix provides the cited published values. The exact sRGB matrix in
-   `PrecisionColorCases` stays distinct from the rounded published matrix in
-   `PrecisionDeltaE`, `GoldenImageComparer`, and production
-   `ChromaticAdaptation`; the latter agree at their documented 2.5e-4 rounding
-   tolerance. Production forward and inverse basis vectors are checked directly.
+   `RgbColorSpaceMatrices` is the single authority and explicitly exposes the exact
+   primary-derived and published-rounded sRGB variants. `PrecisionColorCases` uses the
+   exact variant; `PrecisionDeltaE`, `GoldenImageComparer`, and production's legacy
+   sRGB camera-fact conversion use the published-rounded variant, with no value changes.
+   Production sRGB and Rec.2020 forward/inverse basis vectors are checked directly.
 3. **Independent oracle.** `Tests/assets/color-science-oracle.json` contains linear
    sRGB/D65, linear Rec.2020/D65, and linear ROMM/D50 RGB↔XYZ matrices and round trips,
    Bradford D50↔D65 adaptation, sRGB EOTF vectors, and the pre-November-2014
@@ -233,7 +245,7 @@ R0 establishes four additive anchors before a NEWRAW stage changes pixels:
    resize (oriented 4320×2868), `OMP_NUM_THREADS=1`, projective corners and central
    patch ROIs, the 90° chart mapping, frozen neutral-patch XYZ, and the measurement
    normalization. Rendering starts with defaults and changes only `Wb.Mode` to
-   `Picked`; gains are derived from frozen XYZ through the current working-space
+   `Picked`; gains are derived from frozen XYZ through the Rec.2020 working-space
    basis. Exposure remains zero. Each encoded pixel is EOTF-decoded, converted to
    XYZ, and averaged in linear light; the frozen least-squares exposure scalar is
    then applied before Bradford adaptation to the chart's declared ICC D50 white and
@@ -241,29 +253,26 @@ R0 establishes four additive anchors before a NEWRAW stage changes pixels:
    into gains or bounds.
 
 The ground-truth gate reports all 24 patch results and independently checks mean and
-maximum ΔE00. All three supported RIDs are calibrated with the OpenMP pin: three fresh
-win-x64 processes plus one CI process each on linux-x64 and osx-arm64. They agree to
-within **2.4e-7 ΔE00** — mean 5.6463355 (worst, osx-arm64) and per-patch maximum
-10.9655916 (worst, win-x64/linux-x64). The committed bounds are therefore mean ≤ 6.0
-and per-patch maximum ≤ 11.0, following the precommitted rule “worst supported-RID
-observation rounded up to the next 0.5”. The maximum bound's 0.034 margin is roughly
-five orders of magnitude above the observed cross-platform spread, so it is a tight
-gate rather than a fragile one; re-measure and re-apply the same rule if a decoder or
-toolchain change moves the observations. The linux-x64 and osx-arm64 figures came from
-CI `workflow_dispatch` runs 32097958784 and 32098781026 on 2026-08-18; because test
-results upload only on failure, obtaining them required a temporary branch with
-deliberately unreachable bounds. Incidentally, this is the tightest cross-platform
-reproducibility figure the project has measured — decode through render to patch
-colorimetry agrees to sub-microscopic ΔE00 with the OpenMP pin, far inside the general
-2.0 CIE76 allowance in §3. This budget measures the current fixed-matrix,
-no-DCP pipeline and includes the aged 2010 physical chart; it is a stable regression
-gate, not a claim of current colorimetric accuracy. The general 2.0 cross-platform
-CIE76 allowance in §3 uses a different population and does not apply here.
+maximum ΔE00. R1 re-derived base sampling and gains in Rec.2020 while rendered sampling
+remains sRGB, and all three supported RIDs were re-measured with the OpenMP pin: three
+fresh win-x64 processes plus one CI process each on linux-x64 and osx-arm64. They agree to
+within 2.1e-7 ΔE00 — worst mean 5.450965990609351 and worst per-patch maximum
+10.766853169142227, both osx-arm64. The committed bounds are therefore mean ≤ 5.5 and
+per-patch maximum ≤ 11.0 by the precommitted “worst supported-RID observation rounded up
+to the next 0.5” rule, tightened from R0's mean ≤ 6.0. The manifest records every run and
+the current-RID test matches its recorded observation, skipping only RIDs the manifest
+names as pending. Obtain future cross-RID observations with CI `workflow_dispatch` runs:
+the result upload runs on success as well as failure, so a green dispatch carries each
+RID's exact aggregate in its `.trx` — read the `ColorChecker exact aggregate` line, record
+it in the manifest, and recompute both bounds by the rounding rule. This budget includes
+the aged 2010 physical chart and is a stable regression gate, not a claim of current
+colorimetric accuracy.
 
 ## 5. Performance (informational, not gating)
 
 Opt-in local `HAPPY_PHOTON_PERF=1` diagnostics cover preview base decode, slider-tick
-render at 1600px, and full export of one raw; normal CI does not enable them. Track
+render at 1600px, full export of one raw, and edited standard-thumbnail generation at
+512px; normal CI does not enable them. Track
 results in PR descriptions when a work package touches the hot path; hard budget only
 for slider tick (≤ 150 ms dev baseline, RENDER.md §10).
 
@@ -348,6 +357,17 @@ the bridge and LibRaw companion loaded from the runtime extraction directory:
 ./scripts/verify-libraw-single-file.ps1 -RuntimeIdentifier linux-x64
 ```
 
+R1's manual comparison renders a focused fixture/settings set against a frozen baseline,
+reports normalized RMSE, and writes three side-by-side crop rows per case:
+
+```powershell
+dotnet run --file scripts/evaluate-wide-working-space.cs -- `
+  <frozen-baseline-directory> artifacts/wide-working-space
+```
+
+Review `report.tsv` and `crop-sheets/`, then record the user's look sign-off outside the
+automated test gate.
+
 ## 6. CI
 
 The three-platform workflow runs both xUnit v3 test hosts. Ordinary and native bitmap
@@ -358,8 +378,8 @@ ordinary host so the native and headless Avalonia platforms never share a proces
 
 Platform and codec gaps use xUnit v3 native runtime skips (`Assert.Skip` or
 `Assert.SkipWhen`) with an explicit reason so they remain visible in logs. CI gates on
-discovery before execution: 1,075 ordinary listed cases plus 113 headless listed cases.
-The full run currently expands dynamic theories to 1,099 ordinary and 116 headless
+discovery before execution: 1,143 ordinary listed cases plus 113 headless listed cases.
+The full run currently expands dynamic theories to 1,199 ordinary and 116 headless
 execution cases. Run tests with a 90-second blame
 hang timeout while changing either host.
 

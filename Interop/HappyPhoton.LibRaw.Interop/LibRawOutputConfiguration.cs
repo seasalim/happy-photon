@@ -58,6 +58,14 @@ public readonly record struct LibRawOutputConfiguration
             UseCameraMatrix = true
         };
 
+    public static LibRawOutputConfiguration LinearRec2020(
+        LibRawHighlightMode highlight,
+        LibRawFbddMode noiseReduction,
+        bool halfSize) => Linear(highlight, noiseReduction, halfSize) with
+        {
+            OutputColor = 8
+        };
+
     public static LibRawOutputConfiguration FullDecodeSrgb() => new()
     {
         AbiVersion = Version,

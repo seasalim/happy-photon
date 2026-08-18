@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using Xunit;
@@ -65,6 +66,37 @@ public sealed class ColorCheckerGroundTruthTests
             measurement.Manifest.Calibration.ExposureScalar + 0.005);
     }
 
+    [Fact]
+    public void ColorChecker_CurrentRidMatchesRecordedObservationPayload()
+    {
+        var manifest = ColorCheckerManifest.Load();
+        var runtimeRid = RuntimeInformation.RuntimeIdentifier;
+        var recordedRids = manifest.Budget.Observations
+            .Select(value => value.Rid)
+            .Concat(manifest.Budget.PendingRidObservations)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        Assert.True(
+            recordedRids.Contains(runtimeRid, StringComparer.Ordinal),
+            $"Runtime RID '{runtimeRid}' does not match the manifest RID " +
+            $"vocabulary [{string.Join(", ", recordedRids)}].");
+        Assert.SkipWhen(
+            manifest.Budget.PendingRidObservations.Contains(
+                runtimeRid,
+                StringComparer.Ordinal),
+            $"The ColorChecker observation for RID '{runtimeRid}' is pending.");
+
+        var measurement = Measurement.Value;
+        var observation = Assert.Single(
+            measurement.Manifest.Budget.Observations,
+            value => value.Rid == runtimeRid);
+
+        Assert.Contains(observation.MeanDeltaE00,
+            value => Math.Abs(value - measurement.MeanDeltaE00) <= 5e-5);
+        Assert.Contains(observation.MaximumPatchDeltaE00,
+            value => Math.Abs(value - measurement.MaximumDeltaE00) <= 5e-5);
+    }
+
     private void ReportPatches(ColorCheckerMeasurement measurement)
     {
         foreach (var patch in measurement.Patches)
@@ -114,10 +146,14 @@ public sealed class ColorCheckerGroundTruthTests
         ColorCheckerManifest manifest,
         ColorScienceOracleData oracle)
     {
-        var space = oracle.Space("linear-srgb-d65");
-        var rgbToXyz = ColorScienceMatrixAssertions.DeriveRgbToXyz(
-            space.Primaries,
-            space.WhitePoint);
+        var workingSpace = oracle.Space("linear-rec2020-d65");
+        var workingToXyz = ColorScienceMatrixAssertions.DeriveRgbToXyz(
+            workingSpace.Primaries,
+            workingSpace.WhitePoint);
+        var displaySpace = oracle.Space("linear-srgb-d65");
+        var displayToXyz = ColorScienceMatrixAssertions.DeriveRgbToXyz(
+            displaySpace.Primaries,
+            displaySpace.WhitePoint);
         using var baseImage = new RawBaseLoader().LoadFullBase(
             new ImageFile(fixturePath),
             BaseDecodeSettings.Default,
@@ -129,17 +165,17 @@ public sealed class ColorCheckerGroundTruthTests
         var basePatches = ColorCheckerSampling.SampleXyz(
             baseImage.Pixels,
             manifest.Geometry,
-            rgbToXyz,
+            workingToXyz,
             decodeSrgb: false);
         var maximumDrift = MeasureNeutralDrift(
             basePatches,
             manifest.Calibration);
         var gains = DeriveWorkingSpaceGains(
             manifest.Calibration.FrozenNeutralSamplesXyzD65,
-            PrecisionColorCases.Invert(rgbToXyz));
+            PrecisionColorCases.Invert(workingToXyz));
         AssertVectorClose(
             gains,
-            manifest.Calibration.MeasuredLinearSrgbGains,
+            manifest.Calibration.MeasuredLinearRec2020Gains,
             2e-12);
 
         var settings = new EditSettings
@@ -162,7 +198,7 @@ public sealed class ColorCheckerGroundTruthTests
         var renderedD65 = ColorCheckerSampling.SampleXyz(
             rendered.Image,
             manifest.Geometry,
-            rgbToXyz,
+            displayToXyz,
             decodeSrgb: true);
         var d65ToReference = ColorScienceMatrixAssertions.ToMatrix(
             oracle.Adaptation("bradford-d65-to-d50").Matrix);

@@ -16,26 +16,16 @@ public static class ChromaticAdaptation
         { -0.0085287, 0.0400428, 0.9684867 }
     };
 
-    private static readonly double[,] SrgbToXyz =
-    {
-        { 0.4124564, 0.3575761, 0.1804375 },
-        { 0.2126729, 0.7151522, 0.0721750 },
-        { 0.0193339, 0.1191920, 0.9503041 }
-    };
-
-    private static readonly double[,] XyzToSrgb =
-    {
-        { 3.2404542, -1.5371385, -0.4985314 },
-        { -0.9692660, 1.8760108, 0.0415560 },
-        { 0.0556434, -0.2040259, 1.0572252 }
-    };
-
-    public static double[,] CreateLinearSrgbMatrix(
+    public static double[,] CreateLinearRec2020Matrix(
         double[] sourceWhite,
         double[] destinationWhite)
     {
         var adaptation = CreateBradfordMatrix(sourceWhite, destinationWhite);
-        return Multiply(XyzToSrgb, Multiply(adaptation, SrgbToXyz));
+        return Multiply(
+            RgbColorSpaceMatrices.XyzD65ToLinearRec2020DerivedExact,
+            Multiply(
+                adaptation,
+                RgbColorSpaceMatrices.LinearRec2020ToXyzD65DerivedExact));
     }
 
     public static double[,] CreateBradfordMatrix(
@@ -93,10 +83,16 @@ public static class ChromaticAdaptation
     }
 
     public static double[] LinearSrgbToXyz(double[] rgb) =>
-        Multiply(SrgbToXyz, rgb);
+        Multiply(RgbColorSpaceMatrices.LinearSrgbToXyzD65PublishedRounded, rgb);
 
     public static double[] XyzToLinearSrgb(double[] xyz) =>
-        Multiply(XyzToSrgb, xyz);
+        Multiply(RgbColorSpaceMatrices.XyzD65ToLinearSrgbPublishedRounded, xyz);
+
+    public static double[] LinearRec2020ToXyz(double[] rgb) =>
+        Multiply(RgbColorSpaceMatrices.LinearRec2020ToXyzD65DerivedExact, rgb);
+
+    public static double[] XyzToLinearRec2020(double[] xyz) =>
+        Multiply(RgbColorSpaceMatrices.XyzD65ToLinearRec2020DerivedExact, xyz);
 
     public static double[,] CreateDiagonal(IReadOnlyList<double> diagonal)
     {

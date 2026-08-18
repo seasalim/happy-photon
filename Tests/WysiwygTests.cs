@@ -51,7 +51,10 @@ public sealed class WysiwygTests
                 checked((int)Math.Max(
                     halfSize.Width,
                     halfSize.Height)));
-            var decodeGap = GoldenImageComparer.Compare(fullSize, halfSize);
+            var decodeGap = GoldenImageComparer.Compare(
+                fullSize,
+                halfSize,
+                GoldenComparisonDomain.LinearRec2020);
             Assert.True(
                 decodeGap.MeanDeltaE <= 2.8,
                 $"{asset.Slug}: half/full RAW decode mean ΔE " +
@@ -68,7 +71,10 @@ public sealed class WysiwygTests
                 exportBase,
                 settingsCase.CreateSettings(),
                 RenderIntent.Export);
-            var comparison = GoldenImageComparer.Compare(export, preview);
+            var comparison = GoldenImageComparer.Compare(
+                export,
+                preview,
+                GoldenComparisonDomain.DisplaySrgb);
 
             Assert.True(
                 comparison.MeanDeltaE <= 1.5 &&

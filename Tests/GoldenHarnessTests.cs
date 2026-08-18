@@ -37,7 +37,7 @@ public sealed class GoldenHarnessTests
         using var expected = new MagickImage(MagickColors.CornflowerBlue, 4, 3);
         using var actual = (MagickImage)expected.Clone();
 
-        var result = GoldenImageComparer.Compare(expected, actual);
+        var result = GoldenImageComparer.Compare(expected, actual, GoldenComparisonDomain.DisplaySrgb);
 
         Assert.Equal(0, result.MeanDeltaE);
         Assert.Equal(0, result.P99DeltaE);
@@ -49,7 +49,7 @@ public sealed class GoldenHarnessTests
         using var black = new MagickImage(MagickColors.Black, 1, 1);
         using var white = new MagickImage(MagickColors.White, 1, 1);
 
-        var result = GoldenImageComparer.Compare(black, white);
+        var result = GoldenImageComparer.Compare(black, white, GoldenComparisonDomain.DisplaySrgb);
 
         Assert.InRange(result.MeanDeltaE, 99.99, 100.01);
         Assert.InRange(result.P99DeltaE, 99.99, 100.01);
@@ -76,7 +76,7 @@ public sealed class GoldenHarnessTests
             Assert.Equal(294, bytes.Count(value => value == 0));
         }
 
-        var result = GoldenImageComparer.Compare(expected, actual);
+        var result = GoldenImageComparer.Compare(expected, actual, GoldenComparisonDomain.DisplaySrgb);
 
         Assert.InRange(result.MeanDeltaE, 1.99, 2.01);
         Assert.InRange(result.P99DeltaE, 99.99, 100.01);
@@ -89,7 +89,7 @@ public sealed class GoldenHarnessTests
         using var actual = new MagickImage(MagickColors.Black, 1, 2);
 
         Assert.Throws<InvalidOperationException>(
-            () => GoldenImageComparer.Compare(expected, actual));
+            () => GoldenImageComparer.Compare(expected, actual, GoldenComparisonDomain.DisplaySrgb));
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class GoldenHarnessTests
         using var displayP3 = new MagickImage(
             Path.Combine(GoldenTestPaths.AssetDirectory, "display-p3-reference.jpg"));
 
-        var result = GoldenImageComparer.Compare(srgb, displayP3);
+        var result = GoldenImageComparer.Compare(srgb, displayP3, GoldenComparisonDomain.DisplaySrgb);
 
         Assert.True(result.MeanDeltaE <= 1.5,
             $"Tagged reference images differ: mean ΔE {result.MeanDeltaE:F3}, " +

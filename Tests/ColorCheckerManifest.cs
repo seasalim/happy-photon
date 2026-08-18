@@ -88,7 +88,7 @@ internal sealed record ColorCheckerCalibration(
     string AggregationRule,
     FrozenNeutralXyz[] FrozenNeutralSamplesXyzD65,
     string WorkingSpaceGainRule,
-    double[] MeasuredLinearSrgbGains,
+    double[] MeasuredLinearRec2020Gains,
     double FreshDecodeXyzMaxAbsoluteDrift,
     double ExposureScalar,
     string ExposureScalarRule);

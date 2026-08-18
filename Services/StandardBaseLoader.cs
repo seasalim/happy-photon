@@ -100,7 +100,6 @@ public sealed class StandardBaseLoader : IBaseImageLoader
             cancellationToken.ThrowIfCancellationRequested();
 
             image.Depth = 16;
-            image.ColorSpace = ColorSpace.RGB;
             if (preview)
             {
                 ResizePreview(image);
@@ -184,15 +183,25 @@ public sealed class StandardBaseLoader : IBaseImageLoader
     {
         if (profile != null)
         {
-            image.TransformColorSpace(profile, ColorProfiles.SRGB);
+            image.TransformColorSpace(profile, WorkingSpaceIccProfile.LinearRec2020);
         }
         else if (image.ColorSpace == ColorSpace.CMYK)
         {
-            image.TransformColorSpace(ColorProfiles.USWebCoatedSWOP, ColorProfiles.SRGB);
+            image.TransformColorSpace(
+                ColorProfiles.USWebCoatedSWOP,
+                WorkingSpaceIccProfile.LinearRec2020);
         }
         else
         {
-            image.ColorSpace = ColorSpace.sRGB;
+            WorkingSpaceColorConversion.ConvertSrgbToLinearRec2020(image);
+            return;
+        }
+
+        image.SetAttribute("colorspace", "RGB");
+        if (image.ColorSpace != ColorSpace.RGB)
+        {
+            throw new InvalidOperationException(
+                "Unable to tag working-space pixels as linear RGB.");
         }
     }
 

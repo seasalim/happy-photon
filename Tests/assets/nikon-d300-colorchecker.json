@@ -55,7 +55,7 @@
       { "patchIndex": 22, "xyz": [0.05908533681604017, 0.0640014564851236, 0.0781145742710814] }
     ],
     "workingSpaceGainRule": "convert frozen XYZ through the current independently-derived XYZ-to-working-space matrix, then use mean(G)/mean(R), 1, mean(G)/mean(B)",
-    "measuredLinearSrgbGains": [1.1320091911575796, 1.0, 0.9328530179524194],
+    "measuredLinearRec2020Gains": [1.067537898722022, 1.0, 0.9343152361681698],
     "freshDecodeXyzMaxAbsoluteDrift": 0.002,
     "exposureScalar": 0.8414241941938978,
     "exposureScalarRule": "least-squares scale sum(measuredY*referenceY)/sum(measuredY^2) over neutral patches 18-22 after linear ROI averaging and D65-to-reference-white adaptation"
@@ -63,29 +63,28 @@
   "budget": {
     "statistics": ["mean DeltaE00 across all 24 patches", "maximum per-patch DeltaE00"],
     "boundRule": "worst supported-RID fresh-process observation, rounded up to the next 0.5 DeltaE00",
-    "meanDeltaE00": 6.0,
+    "meanDeltaE00": 5.5,
     "maximumPatchDeltaE00": 11.0,
     "observations": [
       {
         "rid": "win-x64",
         "freshProcessRuns": 3,
         "openMpThreads": 1,
-        "meanDeltaE00": [5.646335474596469, 5.646335474596469, 5.646335474596469],
-        "maximumPatchDeltaE00": [10.965591644216602, 10.965591644216602, 10.965591644216602]
-      },
+        "meanDeltaE00": [5.450965785984761, 5.450965785984761, 5.450965785984761],
+        "maximumPatchDeltaE00": [10.766852876442542, 10.766852876442542, 10.766852876442542]      },
       {
         "rid": "linux-x64",
         "freshProcessRuns": 1,
         "openMpThreads": 1,
-        "meanDeltaE00": [5.646335474596466],
-        "maximumPatchDeltaE00": [10.965591644216602]
+        "meanDeltaE00": [5.450965785984759],
+        "maximumPatchDeltaE00": [10.766852876442549]
       },
       {
         "rid": "osx-arm64",
         "freshProcessRuns": 1,
         "openMpThreads": 1,
-        "meanDeltaE00": [5.646335707335511],
-        "maximumPatchDeltaE00": [10.965591569559617]
+        "meanDeltaE00": [5.450965990609351],
+        "maximumPatchDeltaE00": [10.766853169142227]
       }
     ],
     "pendingRidObservations": []

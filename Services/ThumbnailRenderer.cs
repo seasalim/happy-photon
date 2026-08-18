@@ -34,7 +34,7 @@ internal sealed class ThumbnailRenderer
         MagickImage? image = ConvertToMagickImage(source);
         try
         {
-            image.ColorSpace = ColorSpace.RGB;
+            ConvertSrgbProxyToWorking(image);
             image.Depth = 16;
             image.Strip();
             using var baseImage = new BaseImage(
@@ -65,5 +65,11 @@ internal sealed class ThumbnailRenderer
         {
             image?.Dispose();
         }
+    }
+
+    internal static void ConvertSrgbProxyToWorking(MagickImage image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+        WorkingSpaceColorConversion.ConvertSrgbToLinearRec2020(image);
     }
 }

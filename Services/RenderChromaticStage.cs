@@ -14,23 +14,29 @@ internal static class RenderChromaticStage
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(settings);
 
+        var normalized = CreateNormalizedMatrix(info, settings);
+        image.ColorMatrix(ToMagickMatrix(normalized.Matrix));
+
+        return normalized.Fold;
+    }
+
+    internal static (double[,] Matrix, double Fold) CreateNormalizedMatrix(
+        BaseImageInfo info,
+        EditSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(info);
+        ArgumentNullException.ThrowIfNull(settings);
         var whiteBalance = settings.Wb ??
             throw new ArgumentException(
                 "White-balance settings are required.",
                 nameof(settings));
-        if (whiteBalance.Mode == WbMode.AsShot)
-        {
-            return 1.0;
-        }
-
-        var matrix = CreateMatrix(whiteBalance, info);
-        var normalized = ChromaticAdaptation.NormalizeForRender(matrix);
-        if (!IsIdentity(normalized.Matrix))
-        {
-            image.ColorMatrix(ToMagickMatrix(normalized.Matrix));
-        }
-
-        return normalized.Fold;
+        var whiteBalanceMatrix = whiteBalance.Mode == WbMode.AsShot
+            ? ChromaticAdaptation.Identity()
+            : CreateMatrix(whiteBalance, info);
+        var matrix = ChromaticAdaptation.Multiply(
+            RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb,
+            whiteBalanceMatrix);
+        return ChromaticAdaptation.NormalizeForRender(matrix);
     }
 
     private static double[,] CreateMatrix(
@@ -56,23 +62,6 @@ internal static class RenderChromaticStage
         value ?? throw new ArgumentException(
             $"White balance requires {name}.",
             name);
-
-    private static bool IsIdentity(double[,] matrix)
-    {
-        for (var row = 0; row < 3; row++)
-        {
-            for (var column = 0; column < 3; column++)
-            {
-                var expected = row == column ? 1.0 : 0.0;
-                if (matrix[row, column] != expected)
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
 
     private static MagickColorMatrix ToMagickMatrix(double[,] matrix) =>
         new(3,

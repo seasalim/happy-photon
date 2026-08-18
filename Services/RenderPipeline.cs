@@ -6,7 +6,7 @@ namespace HappyPhoton.Services;
 
 public sealed class RenderPipeline
 {
-    public const int Version = 7;
+    public const int Version = 8;
 
     public RenderResult Render(RenderRequest request) =>
         Render(request, RenderDetail.DefaultBandPixelLimit);
@@ -40,8 +40,7 @@ public sealed class RenderPipeline
             RenderGeometry.Apply(working, request.Settings);
             cloneElapsed = Lap(stopwatch, ref previousElapsed);
 
-            var fold = RenderChromaticStage.Apply(
-                working,
+            var chromatic = RenderChromaticStage.CreateNormalizedMatrix(
                 request.Base.Info,
                 request.Settings);
             var baseLookEnabled = request.Settings.BaseLook ??
@@ -49,14 +48,14 @@ public sealed class RenderPipeline
             var tone = ToneLut.Compose(new ToneParams(
                 request.Settings.Exposure +
                     request.Base.Info.SourceExposureBiasEv,
-                fold,
+                chromatic.Fold,
                 request.Settings.Brightness,
                 request.Settings.Contrast,
                 request.Settings.Shadows,
                 request.Settings.Highlights,
                 baseLookEnabled,
                 request.Settings.Curve));
-            ToneLutApplicator.Apply(working, tone);
+            ToneLutApplicator.Apply(working, chromatic.Matrix, tone);
             RenderColorEncoding.RetagAsSrgb(working);
             toneElapsed = Lap(stopwatch, ref previousElapsed);
             RenderChromaStage.Apply(working, request.Settings);

@@ -35,12 +35,9 @@ internal static partial class PrecisionBoundaryCensus
             geometryExecuted, (int)reconstructed.Width, (int)reconstructed.Height,
             geometryInput, geometryStored, null, null));
 
-        var matrix = WhiteBalanceModel.CreateMatrix(
-            settings.Wb.Kelvin!.Value,
-            settings.Wb.Tint!.Value,
-            fixture.Base.Info.AsShotKelvin,
-            fixture.Base.Info.AsShotTint);
-        var normalized = ChromaticAdaptation.NormalizeForRender(matrix);
+        var normalized = RenderChromaticStage.CreateNormalizedMatrix(
+            fixture.Base.Info,
+            settings);
         var matrixReference = ApplyMatrix(geometryStored, normalized.Matrix);
         var matrixInput = geometryStored;
         var fold = RenderChromaticStage.Apply(

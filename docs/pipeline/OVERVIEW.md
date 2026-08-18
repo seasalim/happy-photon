@@ -6,6 +6,7 @@ documents cover the individual stages in greater depth.
 
 | Doc | Covers |
 |-----|--------|
+| [WORKING_SPACE.md](WORKING_SPACE.md) | Canonical Rec.2020 basis, matrices, ICC target, provenance |
 | [DECODE.md](DECODE.md) | Sources → `BaseImage` (loaders, LibRaw params, ICC normalize, caching) |
 | [RENDER.md](RENDER.md) | `BaseImage` + `EditSettings` → rendered image (stage order, LUT math) |
 | [WHITE_BALANCE.md](WHITE_BALANCE.md) | WB model: CCT/tint math, presets, eyedropper, matrices |
@@ -27,10 +28,10 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
   re-decodes the base in the background (DECODE.md §4); changing anything else never
   does. The in-memory base is keyed by (file, decode settings, size class).
 - **`BaseImage`** is the decoded, normalized, canonical representation of a source file
-  under given decode settings: 16-bit unsigned, **linear light, sRGB primaries, D65
+  under given decode settings: 16-bit unsigned, **linear light, Rec.2020 primaries, D65
   white**, orientation applied, no look of any kind baked in. RAW reaches it through
-  LibRaw; JPEG/PNG/TIFF/HEIC reach it through Magick decode + embedded-ICC transform +
-  linearization. See DECODE.md.
+  LibRaw; JPEG/PNG/TIFF/HEIC reach it through Magick decode and either a profiled ICC
+  transform or the equivalent sRGB EOTF plus matrix. See DECODE.md and WORKING_SPACE.md.
 - **`RenderPipeline`** is the only code path that turns a base + settings into visible
   pixels. Preview, histogram, clipping stats, and export all call it. There is no second
   pipeline, no preview-only shortcut that changes pixels, no export-only fixup.
@@ -69,12 +70,13 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 ```
             ┌─ DECODE.md ─────────────────────────────────────────────┐
  RAW ──LibRaw(16-bit, linear, no-auto-bright, camWB, chosen highlights)┤
- JPEG/PNG/TIFF/HEIC ──Magick decode ─ICC→sRGB─ linearize ─────────────┤
-            └──────────────► BaseImage (linear sRGB16 + BaseImageInfo)┘
+ JPEG/PNG/TIFF/HEIC ──Magick decode ─color→linear Rec.2020 ──────────┤
+            └──────────► BaseImage (linear Rec.2020 Q16 + BaseImageInfo)┘
                                    │
             ┌─ RENDER.md ──────────▼──────────────────────────────────┐
             │ 1 Geometry   rotate90 → horizon(+safe crop) → crop      │
-            │ 2 Chromatic  WB 3×3 matrix (normalized)   [WHITE_BALANCE]│
+            │ 2 Chromatic  Rec.2020 WB → linear sRGB, one normalized  │
+            │              3×3 matrix                   [WHITE_BALANCE]│
             │ 3 Tone LUT   exposure→shoulder→sRGB-encode→look→B/C→    │
             │              shadows/highlights→user curve  (ONE Clut)  │
             │ 4 Chroma     saturation, vibrance (Modulate)            │
@@ -120,7 +122,7 @@ public sealed record BaseImageInfo(
 
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 5;        // bump whenever decoded pixels or facts change
+    public const int Version = 6;        // bump whenever decoded pixels or facts change
     public const int PreviewMaxDimension = 1600;
     public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
     public BaseImageInfo Info { get; }
@@ -164,6 +166,8 @@ metadata and consumers treat it as immutable.
 | `Services/SourceAvailabilityService.cs` | cloud-file classification and read intent |
 | `Services/RawBaseLoader.cs` | LibRaw decode → base (DECODE.md §2) |
 | `Services/StandardBaseLoader.cs` | Magick decode + ICC normalize → base (DECODE.md §3) |
+| `Services/WorkingSpaceIccProfile.cs` | deterministic linear-Rec.2020 ICC target |
+| `Services/RgbColorSpaceMatrices.cs` | authoritative published/exact RGB↔XYZ matrices |
 | `Services/RenderPipeline.cs` | stage orchestration and result ownership (RENDER.md) |
 | `Services/RenderGeometry.cs` | rotation, horizon correction, and crop |
 | `Services/ToneLut.cs` | pure LUT composition (RENDER.md §5) |

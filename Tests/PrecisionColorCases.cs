@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using HappyPhoton.Services;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -11,18 +12,10 @@ internal static class PrecisionColorCases
     private const double MatrixReferenceEdgeTolerance = 0.001;
 
     internal static readonly double[,] SrgbToXyzD65 =
-    {
-        { 0.4123907992659595, 0.3575843393838780, 0.1804807884018343 },
-        { 0.2126390058715104, 0.7151686787677560, 0.0721923153607337 },
-        { 0.0193308187155918, 0.1191947797946259, 0.9505321522496607 }
-    };
+        RgbColorSpaceMatrices.LinearSrgbToXyzD65DerivedExact;
 
     internal static readonly double[,] Rec2020ToXyzD65 =
-    {
-        { 0.6369580483012914, 0.1446169035862083, 0.1688809751641721 },
-        { 0.2627002120112671, 0.6779980715188708, 0.0593017164698620 },
-        { 0.0000000000000000, 0.0280726930490874, 1.0609850577107910 }
-    };
+        RgbColorSpaceMatrices.LinearRec2020ToXyzD65DerivedExact;
 
     internal static readonly double[,] BradfordD65ToD50 =
     {

@@ -155,7 +155,7 @@ jobs:
           otool -L artifacts/ci/osx-arm64/libhappyphoton_libraw_bridge.dylib | grep -q '@loader_path/libraw.25.dylib'
 
       - name: Upload test results
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.rid }}

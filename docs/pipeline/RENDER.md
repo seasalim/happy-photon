@@ -8,11 +8,11 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 
 ```
 1 Geometry     rotate90 → horizon rotation (+ safe-crop intersect) → crop
-2 Chromatic    3×3 WB matrix via ColorMatrix (pre-normalized, §4)
-3 Tone LUT     one composed 1D LUT via Clut (§5)
+2 Chromatic    Rec.2020 WB × working→display via one 3×3 matrix (§4)
+3 Tone LUT     one composed 1D LUT, fused with matrix storage (§5)
 4 Chroma       one combined saturation·vibrance Modulate (§6)
 5 Detail       capture sharpen, chroma NR (§9)
-6 Output       display convert / resize + output sharpen + encode (OUTPUT.md)
+6 Output       resize + output sharpen + sRGB encode/profile (OUTPUT.md)
 ```
 
 `RenderGeometry` owns the rotation and crop sequence, including
@@ -55,7 +55,8 @@ public sealed record RenderRequest(
   brightness/contrast, shadows/highlights, user curve) is a **1D function**, identical
   for R, G, B. Composing them into one LUT applied once means: no clipped
   intermediates (invariant 4), no cumulative requantization (one rounding, not seven),
-  and slider ticks cost at most one `ColorMatrix` + one `Clut` + one `Modulate`.
+  The matrix and LUT retain that order and intermediate Q16 quantization but share one
+  storage pass; slider ticks cost at most that fused pass plus one `Modulate`.
 
 ## 3. Notation
 
@@ -65,8 +66,9 @@ public sealed record RenderRequest(
 
 ## 4. Chromatic stage
 
-`WhiteBalanceModel` yields a raw 3×3 matrix `M` in linear sRGB (WHITE_BALANCE.md §4).
-Before use:
+`WhiteBalanceModel` yields a raw 3×3 white-balance matrix `M_WB` in linear Rec.2020
+(WHITE_BALANCE.md §4). The stage composes `M = M_Rec2020→sRGB · M_WB`, so working →
+display conversion happens in linear light inside the existing single matrix. Before use:
 
 ```
 normScale = max over rows i of Σ_j max(M[i,j], 0)     // ≥ 1 ⇒ some input could exceed 1
@@ -74,9 +76,12 @@ Mn        = M / normScale                              // outputs of [0,1]³ sta
 fold      = normScale                                  // refunded inside the tone LUT
 ```
 
-Apply `Mn` with `MagickImage.ColorMatrix`. Negative coefficients may drive rare
-out-of-gamut pixels to 0 (clamped) — accepted, standard behavior. `WbMode.AsShot` with
-no other change must produce `Mn = I, fold = 1` **exactly** (skip the ColorMatrix call).
+Apply `Mn`, clamp and quantize to Q16 exactly as `MagickImage.ColorMatrix`, then evaluate
+the tone LUT in the same storage pass. The bit-identity test pins this fused evaluator
+to the former native matrix-then-LUT sequence. Negative coefficients may drive rare
+out-of-gamut pixels to 0 (clamped) — accepted, standard behavior. `WbMode.AsShot`
+keeps `M_WB = I` exactly, but the universal working→display matrix still runs. Its bare
+fold is 1.6604910021. R4 moves this display conversion after the AgX outset.
 
 ## 5. Tone LUT
 
@@ -192,7 +197,8 @@ public sealed record ClippingStats(
     double HighAny,          // any-channel-high fraction (drives the red overlay/chip)
     double LowAll,           // all-channels-low fraction (drives the blue overlay/chip)
     double RawNearClip);     // raw bases only, else 0: fraction of base pixels with any
-                             // channel ≥ 0.99 BEFORE matrix/LUT. This is "at or near
+                             // display-basis channel ≥ 0.99 after a linear Rec.2020→sRGB
+                             // conversion but BEFORE the render matrix/LUT. This is "at or near
                              // sensor clip *as decoded*" — LibRaw's highlight
                              // reconstruction has already run, so it is an indicator
                              // of unrecoverable areas, not a sensor-domain measurement.
@@ -311,7 +317,8 @@ scale where both paths agree by construction.
 
 ## 10. Performance contract
 
-Preview rendering calculates the histogram before display conversion. For an edited
+Preview rendering calculates the histogram from display-referred sRGB before bitmap
+conversion. For an edited
 RAW whose generation is still current, `PreviewService` converts the full preview, then
 transfers exclusive ownership of `RenderResult.Image` to a tracked background task. The
 task resizes that image in place to the explicit Library request's generation dimension,
@@ -323,8 +330,8 @@ renders do not create a candidate. Promotion is a bounded bitmap clone and never
 on background work. Shutdown awaits candidate creation and cache queueing before the
 rendered-thumbnail writer is drained.
 
-Per slider tick at 1600px preview: geometry (usually no-op) + at most three
-full-image passes — ColorMatrix (skipped at as-shot), Clut, combined Modulate (skipped
+Per slider tick at 1600px preview: geometry (usually no-op) + at most two
+full-image passes — fused matrix + tone LUT (universal), then combined Modulate (skipped
 at neutral). The development baseline budget is ≤ 150 ms and is measured with
 `HAPPY_PHOTON_PERF=1`. LUT composition itself is microseconds. Tonal, chroma, and
 geometry slider moves invalidate only the render; only `BaseDecodeSettings` changes

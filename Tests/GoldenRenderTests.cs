@@ -55,7 +55,10 @@ public sealed class GoldenRenderTests
                 "HAPPY_PHOTON_UPDATE_GOLDENS=1 dotnet test.");
 
             using var expected = new MagickImage(baselinePath);
-            var comparison = GoldenImageComparer.Compare(expected, actual);
+            var comparison = GoldenImageComparer.Compare(
+                expected,
+                actual,
+                GoldenComparisonDomain.DisplaySrgb);
             var crossPlatform = !OperatingSystem.IsLinux();
             var meanLimit = crossPlatform ? 2.0 : 1.0;
             Assert.True(

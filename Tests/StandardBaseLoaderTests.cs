@@ -101,7 +101,8 @@ public sealed class StandardBaseLoaderTests : IDisposable
         Assert.NotNull(actual);
         var comparison = GoldenImageComparer.Compare(
             expected!.Pixels,
-            actual!.Pixels);
+            actual!.Pixels,
+            GoldenComparisonDomain.LinearRec2020);
 
         Assert.True(
             comparison.MeanDeltaE <= meanDeltaEBound,
@@ -126,7 +127,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
     }
 
     [Fact]
-    public void FullBase_UntaggedCmykTransformsToLinearSrgb()
+    public void FullBase_UntaggedCmykTransformsToLinearRec2020()
     {
         var path = Path.Combine(_tempDirectory, "untagged-cmyk.jpg");
         using (var source = new MagickImage(MagickColors.Orange, 40, 20))

@@ -1,19 +1,25 @@
 using ImageMagick;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.Tests;
 
 internal readonly record struct GoldenComparison(double MeanDeltaE, double P99DeltaE);
 
+internal enum GoldenComparisonDomain
+{
+    DisplaySrgb,
+    LinearRec2020
+}
+
 internal static class GoldenImageComparer
 {
     internal static readonly double[,] SrgbToXyzD65 =
-    {
-        { 0.4124564, 0.3575761, 0.1804375 },
-        { 0.2126729, 0.7151522, 0.0721750 },
-        { 0.0193339, 0.1191920, 0.9503041 }
-    };
+        RgbColorSpaceMatrices.LinearSrgbToXyzD65PublishedRounded;
 
-    public static GoldenComparison Compare(MagickImage expected, MagickImage actual)
+    public static GoldenComparison Compare(
+        MagickImage expected,
+        MagickImage actual,
+        GoldenComparisonDomain domain)
     {
         if (expected.Width != actual.Width || expected.Height != actual.Height)
         {
@@ -22,21 +28,40 @@ internal static class GoldenImageComparer
                 $"actual {actual.Width}x{actual.Height}.");
         }
 
-        using var expectedSrgb = Normalize(expected);
-        using var actualSrgb = Normalize(actual);
-        using var expectedPixels = expectedSrgb.GetPixels();
-        using var actualPixels = actualSrgb.GetPixels();
-        var expectedBytes = expectedPixels.ToByteArray(PixelMapping.RGB)
-            ?? throw new InvalidOperationException("Could not read expected RGB pixels.");
-        var actualBytes = actualPixels.ToByteArray(PixelMapping.RGB)
-            ?? throw new InvalidOperationException("Could not read actual RGB pixels.");
         var deltaValues = new double[checked((int)(expected.Width * expected.Height))];
-        for (var pixelIndex = 0; pixelIndex < deltaValues.Length; pixelIndex++)
+        if (domain == GoldenComparisonDomain.DisplaySrgb)
         {
-            var channelIndex = pixelIndex * 3;
-            deltaValues[pixelIndex] = DeltaE(
-                ToLab(expectedBytes, channelIndex),
-                ToLab(actualBytes, channelIndex));
+            using var expectedSrgb = Normalize(expected);
+            using var actualSrgb = Normalize(actual);
+            using var expectedPixels = expectedSrgb.GetPixels();
+            using var actualPixels = actualSrgb.GetPixels();
+            var expectedBytes = expectedPixels.ToByteArray(PixelMapping.RGB)
+                ?? throw new InvalidOperationException("Could not read expected RGB pixels.");
+            var actualBytes = actualPixels.ToByteArray(PixelMapping.RGB)
+                ?? throw new InvalidOperationException("Could not read actual RGB pixels.");
+            for (var pixelIndex = 0; pixelIndex < deltaValues.Length; pixelIndex++)
+            {
+                var channelIndex = pixelIndex * 3;
+                deltaValues[pixelIndex] = DeltaE(
+                    ToDisplayLab(expectedBytes, channelIndex),
+                    ToDisplayLab(actualBytes, channelIndex));
+            }
+        }
+        else
+        {
+            using var expectedPixels = expected.GetPixels();
+            using var actualPixels = actual.GetPixels();
+            var expectedValues = expectedPixels.ToShortArray(PixelMapping.RGB)
+                ?? throw new InvalidOperationException("Could not read expected RGB pixels.");
+            var actualValues = actualPixels.ToShortArray(PixelMapping.RGB)
+                ?? throw new InvalidOperationException("Could not read actual RGB pixels.");
+            for (var pixelIndex = 0; pixelIndex < deltaValues.Length; pixelIndex++)
+            {
+                var channelIndex = pixelIndex * 3;
+                deltaValues[pixelIndex] = DeltaE(
+                    ToLinearLab(expectedValues, channelIndex),
+                    ToLinearLab(actualValues, channelIndex));
+            }
         }
 
         Array.Sort(deltaValues);
@@ -52,17 +77,32 @@ internal static class GoldenImageComparer
         return image;
     }
 
-    private static LabColor ToLab(byte[] pixels, int index)
+    private static LabColor ToDisplayLab(byte[] pixels, int index) =>
+        ToLab(
+            ToLinear(pixels[index] / 255.0),
+            ToLinear(pixels[index + 1] / 255.0),
+            ToLinear(pixels[index + 2] / 255.0),
+            SrgbToXyzD65);
+
+    private static LabColor ToLinearLab(ushort[] pixels, int index) =>
+        ToLab(
+            pixels[index] / (double)ushort.MaxValue,
+            pixels[index + 1] / (double)ushort.MaxValue,
+            pixels[index + 2] / (double)ushort.MaxValue,
+            RgbColorSpaceMatrices.LinearRec2020ToXyzD65DerivedExact);
+
+    private static LabColor ToLab(
+        double r,
+        double g,
+        double b,
+        double[,] rgbToXyz)
     {
-        var r = ToLinear(pixels[index] / 255.0);
-        var g = ToLinear(pixels[index + 1] / 255.0);
-        var b = ToLinear(pixels[index + 2] / 255.0);
-        var x = (SrgbToXyzD65[0, 0] * r + SrgbToXyzD65[0, 1] * g +
-            SrgbToXyzD65[0, 2] * b) / 0.95047;
-        var y = SrgbToXyzD65[1, 0] * r + SrgbToXyzD65[1, 1] * g +
-            SrgbToXyzD65[1, 2] * b;
-        var z = (SrgbToXyzD65[2, 0] * r + SrgbToXyzD65[2, 1] * g +
-            SrgbToXyzD65[2, 2] * b) / 1.08883;
+        var x = (rgbToXyz[0, 0] * r + rgbToXyz[0, 1] * g +
+            rgbToXyz[0, 2] * b) / 0.95047;
+        var y = rgbToXyz[1, 0] * r + rgbToXyz[1, 1] * g +
+            rgbToXyz[1, 2] * b;
+        var z = (rgbToXyz[2, 0] * r + rgbToXyz[2, 1] * g +
+            rgbToXyz[2, 2] * b) / 1.08883;
         var fx = LabTransform(x);
         var fy = LabTransform(y);
         var fz = LabTransform(z);

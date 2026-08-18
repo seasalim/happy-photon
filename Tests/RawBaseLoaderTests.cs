@@ -50,7 +50,7 @@ public sealed class RawBaseLoaderTests
         Assert.False(parameters.UseAutoWhiteBalance);
         Assert.True(parameters.UseCameraWhiteBalance);
         Assert.True(parameters.UseCameraMatrix);
-        Assert.Equal(1, parameters.OutputColor);
+        Assert.Equal(8, parameters.OutputColor);
         Assert.Equal(expectedHighlight, parameters.HighlightMode);
         Assert.Equal(expectedFbdd, parameters.FbddNoiseReduction);
         Assert.Equal(preview, parameters.HalfSize);

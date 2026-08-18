@@ -48,12 +48,14 @@ public sealed class ClippingStatsTests
     public void CalculateRawNearClip_UsesBasePixelsOnlyForRawSources()
     {
         using var raw = RenderPipelineTestSupport.CreateBase(
-        [
-            64879, 0, 0,
-            64880, 0, 0,
-            0, 64880, 0,
-            0, 0, 1
-        ], isRaw: true);
+            DisplayToWorking(
+            [
+                64000, 0, 0,
+                65535, 0, 0,
+                0, 65535, 0,
+                0, 0, 1
+            ]),
+            isRaw: true);
         using var standard = RenderPipelineTestSupport.CreateBase(
         [
             65535, 65535, 65535
@@ -61,6 +63,28 @@ public sealed class ClippingStatsTests
 
         Assert.Equal(0.5, ClippingStatsCalculator.CalculateRawNearClip(raw));
         Assert.Equal(0, ClippingStatsCalculator.CalculateRawNearClip(standard));
+    }
+
+    private static ushort[] DisplayToWorking(ushort[] samples)
+    {
+        var result = new ushort[samples.Length];
+        var matrix = RgbColorSpaceMatrices.LinearSrgbToLinearRec2020;
+        for (var offset = 0; offset < samples.Length; offset += 3)
+        {
+            var red = samples[offset] / (double)ushort.MaxValue;
+            var green = samples[offset + 1] / (double)ushort.MaxValue;
+            var blue = samples[offset + 2] / (double)ushort.MaxValue;
+            for (var row = 0; row < 3; row++)
+            {
+                result[offset + row] = (ushort)Math.Round(Math.Clamp(
+                    matrix[row, 0] * red + matrix[row, 1] * green +
+                    matrix[row, 2] * blue,
+                    0,
+                    1) * ushort.MaxValue);
+            }
+        }
+
+        return result;
     }
 
     [Fact]
