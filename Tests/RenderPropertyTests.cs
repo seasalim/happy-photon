@@ -44,8 +44,11 @@ internal static class RenderPropertyCases
 
 public sealed class RenderPropertyTests
 {
-    [Fact]
-    public void RawDefaults_PreserveAchromaticInputs()
+    [Theory]
+    [InlineData(OutputColorSpace.Srgb)]
+    [InlineData(OutputColorSpace.DisplayP3)]
+    public void RawDefaults_PreserveAchromaticInputs(
+        OutputColorSpace outputColorSpace)
     {
         var pipeline = new RenderPipeline();
         var draw = 0;
@@ -68,7 +71,8 @@ public sealed class RenderPropertyTests
                 settings,
                 RenderIntent.Export,
                 MaxDimension: null,
-                new RenderOptions(false, false)));
+                new RenderOptions(false, false),
+                outputColorSpace));
             var actual = RenderPipelineTestSupport.ReadPixels(result.Image);
             for (var pixel = 0; pixel < actual.Length / 3; pixel++)
             {

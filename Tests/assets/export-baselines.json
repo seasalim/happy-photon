@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "8f64150",
+  "renderPath": "LoadFullBase -> RenderPipeline.Render(EditSettings default, RenderIntent.Export, MaxDimension 600) -> ExportEncoder.Write with default ExportSettings",
+  "purpose": "Pre-R2 sRGB export bytes. R2 must not change them; compare against the entry for the running RID only, since encoded output legitimately differs between RIDs.",
+  "observations": {
+    "win-x64": {
+      "canon-eos-350d.jpeg": {
+        "bytes": 73423,
+        "sha256": "79d9511d1894bced89a46d7885e8d70bd68c8ee7306317862562ea421042eb9e"
+      },
+      "canon-eos-350d.png": {
+        "bytes": 509076,
+        "sha256": "670b2b9017659fc9a98091b8e4ea86ad7c24510ab1ee6318ed500af3633c49ce"
+      },
+      "canon-eos-350d.webp": {
+        "bytes": 72230,
+        "sha256": "9fb93d37cf6de77f72e4b52dc0749df12d71b32d76c4311532b39d8af2546c9a"
+      },
+      "srgb-reference.jpeg": {
+        "bytes": 52665,
+        "sha256": "2e845d28e904b2441ebb72d75ae4e3722fdd7cffd5a712aa10cec46fa11be07f"
+      },
+      "srgb-reference.png": {
+        "bytes": 432935,
+        "sha256": "d17b208169c5c701786364ebcfd212336c657acba6ce0560d381ebd16fba40ce"
+      },
+      "srgb-reference.webp": {
+        "bytes": 44332,
+        "sha256": "daed51f752fe5f7b0231d7de109c6f0b872a7d0136f46e721a9e6dd20ab39873"
+      }
+    },
+    "linux-x64": {
+      "canon-eos-350d.jpeg": {
+        "bytes": 73423,
+        "sha256": "79d9511d1894bced89a46d7885e8d70bd68c8ee7306317862562ea421042eb9e"
+      },
+      "canon-eos-350d.png": {
+        "bytes": 509076,
+        "sha256": "670b2b9017659fc9a98091b8e4ea86ad7c24510ab1ee6318ed500af3633c49ce"
+      },
+      "canon-eos-350d.webp": {
+        "bytes": 72230,
+        "sha256": "9fb93d37cf6de77f72e4b52dc0749df12d71b32d76c4311532b39d8af2546c9a"
+      },
+      "srgb-reference.jpeg": {
+        "bytes": 52665,
+        "sha256": "2e845d28e904b2441ebb72d75ae4e3722fdd7cffd5a712aa10cec46fa11be07f"
+      },
+      "srgb-reference.png": {
+        "bytes": 432935,
+        "sha256": "d17b208169c5c701786364ebcfd212336c657acba6ce0560d381ebd16fba40ce"
+      },
+      "srgb-reference.webp": {
+        "bytes": 44332,
+        "sha256": "daed51f752fe5f7b0231d7de109c6f0b872a7d0136f46e721a9e6dd20ab39873"
+      }
+    },
+    "osx-arm64": {
+      "canon-eos-350d.jpeg": {
+        "bytes": 73441,
+        "sha256": "50b0bef2684d8d14ed707618ad5e4b3b2a40d468308ff39abc5e6e4f0a0239ef"
+      },
+      "canon-eos-350d.png": {
+        "bytes": 509068,
+        "sha256": "6554b78f1ad014e78fc55167fb085558b1ed561c3d97223070c1105aa1afbd63"
+      },
+      "canon-eos-350d.webp": {
+        "bytes": 72230,
+        "sha256": "9fb93d37cf6de77f72e4b52dc0749df12d71b32d76c4311532b39d8af2546c9a"
+      },
+      "srgb-reference.jpeg": {
+        "bytes": 52665,
+        "sha256": "2e845d28e904b2441ebb72d75ae4e3722fdd7cffd5a712aa10cec46fa11be07f"
+      },
+      "srgb-reference.png": {
+        "bytes": 432935,
+        "sha256": "d17b208169c5c701786364ebcfd212336c657acba6ce0560d381ebd16fba40ce"
+      },
+      "srgb-reference.webp": {
+        "bytes": 44332,
+        "sha256": "daed51f752fe5f7b0231d7de109c6f0b872a7d0136f46e721a9e6dd20ab39873"
+      }
+    }
+  }
+}

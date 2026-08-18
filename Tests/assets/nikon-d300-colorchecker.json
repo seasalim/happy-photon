@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "fixture": {
     "fileName": "nikon-d300-colorchecker.nef",
     "byteLength": 11443794,
@@ -28,40 +28,130 @@
     "columns": 4,
     "centralInsetFraction": 0.25,
     "cornersClockwiseFromTopLeft": [
-      { "x": 2294.0, "y": 993.0 },
-      { "x": 3167.0, "y": 1011.0 },
-      { "x": 3145.0, "y": 2255.0 },
-      { "x": 2277.0, "y": 2246.0 }
+      {
+        "x": 2294.0,
+        "y": 993.0
+      },
+      {
+        "x": 3167.0,
+        "y": 1011.0
+      },
+      {
+        "x": 3145.0,
+        "y": 2255.0
+      },
+      {
+        "x": 2277.0,
+        "y": 2246.0
+      }
     ],
     "patchIndexByImageCell": [
-      [5, 11, 17, 23],
-      [4, 10, 16, 22],
-      [3, 9, 15, 21],
-      [2, 8, 14, 20],
-      [1, 7, 13, 19],
-      [0, 6, 12, 18]
+      [
+        5,
+        11,
+        17,
+        23
+      ],
+      [
+        4,
+        10,
+        16,
+        22
+      ],
+      [
+        3,
+        9,
+        15,
+        21
+      ],
+      [
+        2,
+        8,
+        14,
+        20
+      ],
+      [
+        1,
+        7,
+        13,
+        19
+      ],
+      [
+        0,
+        6,
+        12,
+        18
+      ]
     ]
   },
   "calibration": {
-    "neutralPatchIndices": [18, 19, 20, 21, 22],
+    "neutralPatchIndices": [
+      18,
+      19,
+      20,
+      21,
+      22
+    ],
     "darkestNeutralExcluded": 23,
     "clipRule": "reject a neutral ROI if any linear base sample is 0 or 65535 in any RGB channel",
     "aggregationRule": "equal-weight mean of each accepted projective ROI mean in linear light",
     "frozenNeutralSamplesXyzD65": [
-      { "patchIndex": 18, "xyz": [0.5834210379879154, 0.6230962600136417, 0.7254826907064409] },
-      { "patchIndex": 19, "xyz": [0.3684173721755955, 0.3943990144031931, 0.4663499219599442] },
-      { "patchIndex": 20, "xyz": [0.2342159654466832, 0.2519124691030386, 0.2999684810891135] },
-      { "patchIndex": 21, "xyz": [0.1252191964121695, 0.13432484832800096, 0.15954267992733534] },
-      { "patchIndex": 22, "xyz": [0.05908533681604017, 0.0640014564851236, 0.0781145742710814] }
+      {
+        "patchIndex": 18,
+        "xyz": [
+          0.5834210379879154,
+          0.6230962600136417,
+          0.7254826907064409
+        ]
+      },
+      {
+        "patchIndex": 19,
+        "xyz": [
+          0.3684173721755955,
+          0.3943990144031931,
+          0.4663499219599442
+        ]
+      },
+      {
+        "patchIndex": 20,
+        "xyz": [
+          0.2342159654466832,
+          0.2519124691030386,
+          0.2999684810891135
+        ]
+      },
+      {
+        "patchIndex": 21,
+        "xyz": [
+          0.1252191964121695,
+          0.13432484832800096,
+          0.15954267992733534
+        ]
+      },
+      {
+        "patchIndex": 22,
+        "xyz": [
+          0.05908533681604017,
+          0.0640014564851236,
+          0.0781145742710814
+        ]
+      }
     ],
     "workingSpaceGainRule": "convert frozen XYZ through the current independently-derived XYZ-to-working-space matrix, then use mean(G)/mean(R), 1, mean(G)/mean(B)",
-    "measuredLinearRec2020Gains": [1.067537898722022, 1.0, 0.9343152361681698],
+    "measuredLinearRec2020Gains": [
+      1.067537898722022,
+      1.0,
+      0.9343152361681698
+    ],
     "freshDecodeXyzMaxAbsoluteDrift": 0.002,
     "exposureScalar": 0.8414241941938978,
     "exposureScalarRule": "least-squares scale sum(measuredY*referenceY)/sum(measuredY^2) over neutral patches 18-22 after linear ROI averaging and D65-to-reference-white adaptation"
   },
   "budget": {
-    "statistics": ["mean DeltaE00 across all 24 patches", "maximum per-patch DeltaE00"],
+    "statistics": [
+      "mean DeltaE00 across all 24 patches",
+      "maximum per-patch DeltaE00"
+    ],
     "boundRule": "worst supported-RID fresh-process observation, rounded up to the next 0.5 DeltaE00",
     "meanDeltaE00": 5.5,
     "maximumPatchDeltaE00": 11.0,
@@ -70,21 +160,83 @@
         "rid": "win-x64",
         "freshProcessRuns": 3,
         "openMpThreads": 1,
-        "meanDeltaE00": [5.450965785984761, 5.450965785984761, 5.450965785984761],
-        "maximumPatchDeltaE00": [10.766852876442542, 10.766852876442542, 10.766852876442542]      },
+        "meanDeltaE00": [
+          5.450965785984761,
+          5.450965785984761,
+          5.450965785984761
+        ],
+        "maximumPatchDeltaE00": [
+          10.766852876442542,
+          10.766852876442542,
+          10.766852876442542
+        ]
+      },
       {
         "rid": "linux-x64",
         "freshProcessRuns": 1,
         "openMpThreads": 1,
-        "meanDeltaE00": [5.450965785984759],
-        "maximumPatchDeltaE00": [10.766852876442549]
+        "meanDeltaE00": [
+          5.450965785984759
+        ],
+        "maximumPatchDeltaE00": [
+          10.766852876442549
+        ]
       },
       {
         "rid": "osx-arm64",
         "freshProcessRuns": 1,
         "openMpThreads": 1,
-        "meanDeltaE00": [5.450965990609351],
-        "maximumPatchDeltaE00": [10.766853169142227]
+        "meanDeltaE00": [
+          5.450965990609351
+        ],
+        "maximumPatchDeltaE00": [
+          10.766853169142227
+        ]
+      }
+    ],
+    "pendingRidObservations": []
+  },
+  "displayP3Budget": {
+    "statistics": [
+      "mean DeltaE00 across all 24 patches",
+      "maximum per-patch DeltaE00"
+    ],
+    "boundRule": "worst supported-RID fresh-process observation, rounded up to the next 0.5 DeltaE00",
+    "meanDeltaE00": 6.0,
+    "maximumPatchDeltaE00": 11.5,
+    "observations": [
+      {
+        "rid": "win-x64",
+        "freshProcessRuns": 1,
+        "openMpThreads": 1,
+        "meanDeltaE00": [
+          5.737967267765175
+        ],
+        "maximumPatchDeltaE00": [
+          11.405233816061925
+        ]
+      },
+      {
+        "rid": "linux-x64",
+        "freshProcessRuns": 1,
+        "openMpThreads": 1,
+        "meanDeltaE00": [
+          5.737967267765174
+        ],
+        "maximumPatchDeltaE00": [
+          11.405233816061912
+        ]
+      },
+      {
+        "rid": "osx-arm64",
+        "freshProcessRuns": 1,
+        "openMpThreads": 1,
+        "meanDeltaE00": [
+          5.7379670189658745
+        ],
+        "maximumPatchDeltaE00": [
+          11.405234272011066
+        ]
       }
     ],
     "pendingRidObservations": []

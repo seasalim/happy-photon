@@ -17,6 +17,9 @@ public partial class ExportSettings : ObservableObject
     private ExportFormat _format = ExportFormat.Jpeg;
 
     [ObservableProperty]
+    private OutputColorSpace _outputColorSpace = OutputColorSpace.Srgb;
+
+    [ObservableProperty]
     private bool _exportHiRes = true;
 
     [ObservableProperty]

@@ -11,7 +11,8 @@ internal sealed record ColorCheckerManifest(
     ColorCheckerRenderPath RenderPath,
     ColorCheckerGeometry Geometry,
     ColorCheckerCalibration Calibration,
-    ColorCheckerBudget Budget)
+    ColorCheckerBudget Budget,
+    ColorCheckerBudget DisplayP3Budget)
 {
     public static ColorCheckerManifest Load()
     {
@@ -32,7 +33,7 @@ internal sealed record ColorCheckerManifest(
 
     private void Validate()
     {
-        Assert.Equal(1, SchemaVersion);
+        Assert.Equal(2, SchemaVersion);
         Assert.Equal(4, Geometry.Columns);
         Assert.Equal(6, Geometry.Rows);
         Assert.Equal(4, Geometry.CornersClockwiseFromTopLeft.Length);
@@ -46,6 +47,10 @@ internal sealed record ColorCheckerManifest(
             Calibration.FrozenNeutralSamplesXyzD65.Select(value => value.PatchIndex));
         Assert.True(Budget.MeanDeltaE00 > 0);
         Assert.True(Budget.MaximumPatchDeltaE00 > Budget.MeanDeltaE00);
+        Assert.True(DisplayP3Budget.MeanDeltaE00 > 0);
+        Assert.True(
+            DisplayP3Budget.MaximumPatchDeltaE00 >
+            DisplayP3Budget.MeanDeltaE00);
     }
 }
 

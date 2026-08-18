@@ -12,7 +12,7 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 3 Tone LUT     one composed 1D LUT, fused with matrix storage (§5)
 4 Chroma       one combined saturation·vibrance Modulate (§6)
 5 Detail       capture sharpen, chroma NR (§9)
-6 Output       resize + output sharpen + sRGB encode/profile (OUTPUT.md)
+6 Output       resize + output sharpen + selected ICC profile (OUTPUT.md)
 ```
 
 `RenderGeometry` owns the rotation and crop sequence, including
@@ -29,12 +29,16 @@ geometry result in a fixed order.
 public sealed record RenderOptions(bool ComputeStats = true, bool ComputeOverlayMasks = false);
 public sealed record RenderRequest(
     BaseImage Base, EditSettings Settings, RenderIntent Intent,
-    int? MaxDimension, RenderOptions Options);
+    int? MaxDimension, RenderOptions Options,
+    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb);
 ```
 
-- `Intent`, `Options`, and `MaxDimension` change **auxiliary work** such as statistics,
-  optional overlay masks, and the resize target. They do not change per-pixel math in
-  stages 1–5. Preview and export differ only in base resolution and resize target.
+- `OutputColorSpace` selects sRGB (default) or Display P3 for export and therefore changes
+  the chromatic matrix and output codes. Preview always forces sRGB, even if a caller passes
+  Display P3. `Intent`, `Options`, and `MaxDimension` otherwise change **auxiliary work**
+  such as statistics, optional overlay masks, and the resize target. They do not change
+  per-pixel math in stages 1–5. With the same output target, preview and export differ only
+  in base resolution and resize target.
 - **Base immutability:** `RenderPipeline` never mutates `Base.Pixels`; it clones
   internally before stage 1. `BaseImage` lifetime is owned by the caller
   (`PreviewService` generation logic / export loop), never by the pipeline.
@@ -67,8 +71,9 @@ public sealed record RenderRequest(
 ## 4. Chromatic stage
 
 `WhiteBalanceModel` yields a raw 3×3 white-balance matrix `M_WB` in linear Rec.2020
-(WHITE_BALANCE.md §4). The stage composes `M = M_Rec2020→sRGB · M_WB`, so working →
-display conversion happens in linear light inside the existing single matrix. Before use:
+(WHITE_BALANCE.md §4). The stage composes `M = M_Rec2020→target · M_WB`, so working →
+output conversion happens in linear light inside the existing single matrix. The targets
+and derived matrices are specified in WORKING_SPACE.md §9. Before use:
 
 ```
 normScale = max over rows i of Σ_j max(M[i,j], 0)     // ≥ 1 ⇒ some input could exceed 1
@@ -80,8 +85,9 @@ Apply `Mn`, clamp and quantize to Q16 exactly as `MagickImage.ColorMatrix`, then
 the tone LUT in the same storage pass. The bit-identity test pins this fused evaluator
 to the former native matrix-then-LUT sequence. Negative coefficients may drive rare
 out-of-gamut pixels to 0 (clamped) — accepted, standard behavior. `WbMode.AsShot`
-keeps `M_WB = I` exactly, but the universal working→display matrix still runs. Its bare
-fold is 1.6604910021. R4 moves this display conversion after the AgX outset.
+keeps `M_WB = I` exactly, but the universal working→output matrix still runs. Its bare
+fold is 1.6604910021 for sRGB and 1.3435782526 for Display P3. The tone LUT is unchanged:
+both targets use the sRGB transfer. R4 moves this display conversion after the AgX outset.
 
 ## 5. Tone LUT
 
@@ -317,7 +323,7 @@ scale where both paths agree by construction.
 
 ## 10. Performance contract
 
-Preview rendering calculates the histogram from display-referred sRGB before bitmap
+Preview rendering always calculates the histogram from display-referred sRGB before bitmap
 conversion. For an edited
 RAW whose generation is still current, `PreviewService` converts the full preview, then
 transfers exclusive ownership of `RenderResult.Image` to a tracked background task. The

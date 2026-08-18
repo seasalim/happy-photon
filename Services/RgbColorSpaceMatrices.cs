@@ -54,4 +54,20 @@ internal static class RgbColorSpaceMatrices
         { 0.0690972894, 0.9195403951, 0.0113623156 },
         { 0.0163914389, 0.0880133079, 0.8955952532 }
     };
+
+    // Derived directly from SMPTE EG 432-1 primaries and D65.
+    internal static readonly double[,] LinearDisplayP3ToXyzD65DerivedExact =
+    {
+        { 0.4865709486482162, 0.2656676931690931, 0.1982172852343625 },
+        { 0.2289745640697488, 0.6917385218365064, 0.0792869140937450 },
+        { 0.0000000000000000, 0.0451133818589026, 1.0439443689009760 }
+    };
+
+    // WORKING_SPACE.md §9's derived composite, rounded to ten decimal places.
+    internal static readonly double[,] LinearRec2020ToLinearDisplayP3 =
+    {
+        { 1.3435782526, -0.2821796705, -0.0613985821 },
+        { -0.0652974528, 1.0757879158, -0.0104904631 },
+        { 0.0028217873, -0.0195984945, 1.0167767073 }
+    };
 }

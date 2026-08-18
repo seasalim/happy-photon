@@ -42,7 +42,10 @@ public sealed class RenderPipeline
 
             var chromatic = RenderChromaticStage.CreateNormalizedMatrix(
                 request.Base.Info,
-                request.Settings);
+                request.Settings,
+                request.Intent == RenderIntent.Preview
+                    ? OutputColorSpace.Srgb
+                    : request.OutputColorSpace);
             var baseLookEnabled = request.Settings.BaseLook ??
                 request.Base.Info.IsRawSource;
             var tone = ToneLut.Compose(new ToneParams(
@@ -140,6 +143,12 @@ public sealed class RenderPipeline
             throw new ArgumentOutOfRangeException(
                 nameof(request),
                 "MaxDimension must be positive when provided.");
+        }
+        if (!Enum.IsDefined(request.OutputColorSpace))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(request),
+                "OutputColorSpace is not supported.");
         }
     }
 }

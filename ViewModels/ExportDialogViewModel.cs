@@ -20,6 +20,9 @@ public enum ExportDialogMode
 }
 
 public sealed record ExportFormatOption(string Label, ExportFormat Format);
+public sealed record OutputColorSpaceOption(
+    string Label,
+    OutputColorSpace OutputColorSpace);
 
 public sealed partial class ExportDialogViewModel : ObservableObject, IDisposable
 {
@@ -33,6 +36,7 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
 
     private ExportSizePreset _selectedSize;
     private ExportFormatOption _selectedFormatOption;
+    private OutputColorSpaceOption _selectedOutputColorSpaceOption;
     private string _selectedNamingOption;
 
     [ObservableProperty]
@@ -70,8 +74,15 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
             new("PNG", ExportFormat.Png),
             new("WebP", ExportFormat.Webp)
         ];
+        OutputColorSpaceOptions =
+        [
+            new("sRGB", OutputColorSpace.Srgb),
+            new("Display P3", OutputColorSpace.DisplayP3)
+        ];
         NamingOptions = [.. StandardNamingOptions, CustomNamingOption];
         _selectedFormatOption = FormatOptions.First(option => option.Format == settings.Format);
+        _selectedOutputColorSpaceOption = OutputColorSpaceOptions.First(
+            option => option.OutputColorSpace == settings.OutputColorSpace);
         _selectedNamingOption = StandardNamingOptions.Contains(settings.NamingPattern)
             ? settings.NamingPattern
             : CustomNamingOption;
@@ -84,6 +95,7 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
     public int ImageCount { get; }
     public ExportDialogMode Mode { get; }
     public IReadOnlyList<ExportFormatOption> FormatOptions { get; }
+    public IReadOnlyList<OutputColorSpaceOption> OutputColorSpaceOptions { get; }
     public IReadOnlyList<string> NamingOptions { get; }
     public bool HasImages => ImageCount > 0;
     public bool HasNoImages => !HasImages;
@@ -125,6 +137,18 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
             if (SetProperty(ref _selectedFormatOption, value))
             {
                 Settings.Format = value.Format;
+            }
+        }
+    }
+
+    public OutputColorSpaceOption SelectedOutputColorSpaceOption
+    {
+        get => _selectedOutputColorSpaceOption;
+        set
+        {
+            if (SetProperty(ref _selectedOutputColorSpaceOption, value))
+            {
+                Settings.OutputColorSpace = value.OutputColorSpace;
             }
         }
     }

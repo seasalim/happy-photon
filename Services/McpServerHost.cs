@@ -133,7 +133,8 @@ public sealed class McpServerHost
                 "overwriting files; targets that would overwrite original image " +
                 "files are refused. Optional variants have a name and optional " +
                 "maxDimension and export into one sub-folder per variant. Result ids " +
-                "are paths relative to the output folder; existing files are skipped."))
+                "are paths relative to the output folder; existing files are skipped. " +
+                "outputColorSpace accepts srgb (default) or displayP3."))
     ];
 
     private static McpServerToolCreateOptions Options(string name, string description) => new()

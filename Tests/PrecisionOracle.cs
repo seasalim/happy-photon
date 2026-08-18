@@ -246,6 +246,7 @@ internal static class PrecisionOracle
                     Format = ExportFormat.Png,
                     OutputSharpening = false
                 },
+                OutputColorSpace.Srgb,
                 path);
         }
 

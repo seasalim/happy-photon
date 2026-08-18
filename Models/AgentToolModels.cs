@@ -59,6 +59,15 @@ public static class AgentToolValidation
             $"Unknown format '{value}'. Use jpeg, png, or webp.")
     };
 
+    public static OutputColorSpace ParseOutputColorSpace(string? value) =>
+        value?.ToLowerInvariant() switch
+        {
+            "srgb" => OutputColorSpace.Srgb,
+            "displayp3" or "display-p3" or "p3" => OutputColorSpace.DisplayP3,
+            _ => throw new AgentToolException(
+                $"Unknown output color space '{value}'. Use srgb or displayP3.")
+        };
+
     public static string SanitizeVariantName(string name)
     {
         var sanitized = new string(name.Trim().ToLowerInvariant()
@@ -172,6 +181,7 @@ public record AgentExportOptions(
     int? MaxDimension = null,
     string NamingPattern = "{name}",
     string Format = "jpeg",
+    string OutputColorSpace = "srgb",
     List<AgentExportVariant>? Variants = null);
 
 public record AgentExportVariant(string Name, int? MaxDimension);

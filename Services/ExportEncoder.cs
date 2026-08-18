@@ -11,6 +11,7 @@ internal static class ExportEncoder
     public static void Write(
         MagickImage image,
         ExportSettings settings,
+        OutputColorSpace outputColorSpace,
         string path)
     {
         ArgumentNullException.ThrowIfNull(image);
@@ -20,7 +21,7 @@ internal static class ExportEncoder
         var quality = Math.Clamp(settings.Quality, 1, 100);
         image.Format = GetFormat(settings.Format);
         image.Quality = (uint)quality;
-        image.SetProfile(ColorProfiles.SRGB);
+        image.SetProfile(OutputColorProfiles.Get(outputColorSpace));
 
         switch (settings.Format)
         {

@@ -8,6 +8,7 @@ internal static class AgentExportSettingsFactory
         string outputFolder,
         AgentExportOptions options,
         ExportFormat format,
+        OutputColorSpace outputColorSpace,
         bool stripLocationData,
         bool outputSharpening) => new()
         {
@@ -15,6 +16,7 @@ internal static class AgentExportSettingsFactory
             Quality = Math.Clamp(options.Quality, 1, 100),
             NamingPattern = options.NamingPattern,
             Format = format,
+            OutputColorSpace = outputColorSpace,
             StripLocationData = stripLocationData,
             OutputSharpening = outputSharpening
         };

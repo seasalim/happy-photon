@@ -149,6 +149,7 @@ pair. Against frozen v7, all 39 changed: mean ΔE ranged 0.074–0.617 and p99 �
 | Same base, repeated render, same platform | bit-identical |
 | Golden vs current, same platform | mean ΔE ≤ 1.0, p99 ≤ 3.0 |
 | Preview render vs export render downscaled to same size | mean ΔE ≤ 1.5, p99 ≤ 4.0 |
+| sRGB vs Display P3, constructed intersection-gamut settings | mean ΔE00 ≤ 5.0 in XYZ/Lab through each target |
 | Full-decode base vs half-decode base (raw, at common preview size up to 1600px) | mean ΔE ≤ 2.1 (documented gap) |
 | P3-tagged vs sRGB-tagged same-picture bases | mean ΔE ≤ 1.5 |
 | Cross-platform (M6): win/linux/mac renders of same case | mean ΔE ≤ 2.0 |
@@ -202,6 +203,18 @@ orders above the observed difference.
     numerically, pins the camera-fact semantics, and preserves near-clip meaning;
     `StandardWorkingSpaceTests` checks the external sRGB-profile target, native P3
     gamut vectors, the thumbnail sRGB-proxy limit, and the one-code JPEG identity gate.
+11. **Wide-gamut output suites:** `SrgbExportBaselineTests` requires exact same-RID byte
+    length and SHA-256 equality to the frozen `8f64150` JPEG/PNG/WebP exports.
+    `WideGamutExportTests` checks the Display P3 profile and independently derived native-P3
+    codes in every format, gamut survival, and common-space intersection-gamut agreement.
+    `WideGamutColorimetryTests` reports each golden settings case and gates mean ΔE00 ≤ 5.0;
+    RAW defaults are checked separately on neutrals. The ColorChecker P3 anchor samples via
+    P3→XYZ and gates mean ΔE00 ≤ 6.0 / maximum ≤ 11.5; current win-x64 measurement is
+    5.737967267765175 / 11.405233816061925. The unmasked Canon RAW report (not
+    quality-gated because it contains
+    out-of-sRGB colors) measures whole-image mean ΔE00 0.1908 at defaults and 0.5270 for the
+    full-combo tonal edit. These are implementation-error sentinels, not a claim that edited
+    P3 and sRGB looks are identical (WORKING_SPACE.md §9.3).
 
 ### 4.1 NEWRAW validation anchors
 
@@ -266,7 +279,18 @@ the result upload runs on success as well as failure, so a green dispatch carrie
 RID's exact aggregate in its `.trx` — read the `ColorChecker exact aggregate` line, record
 it in the manifest, and recompute both bounds by the rounding rule. This budget includes
 the aged 2010 physical chart and is a stable regression gate, not a claim of current
-colorimetric accuracy.
+colorimetric accuracy. The Display P3 output target is calibrated the same way and
+recorded in the manifest's `displayP3Budget`: all three RIDs measured mean 5.7380 and
+maximum 11.4052 (agreeing to 5e-7), giving bounds of mean ≤ 6.0 and maximum ≤ 11.5 by the
+same rounding rule. P3 measures ~0.29 ΔE00 worse than sRGB because the per-channel tone,
+chroma, and detail stages run after the display convert and therefore act on different
+channel values — the same target-dependence WORKING_SPACE.md §9.3 documents, which R4
+removes when the convert moves after the AgX outset.
+
+The Display P3 ColorChecker target follows the same rule in the manifest's separate
+`displayP3Budget`. Its win-x64 observation produces mean ≤ 6.0 and maximum ≤ 11.5;
+linux-x64 and osx-arm64 are explicitly pending until dispatched CI records their exact
+aggregates. Its current-RID test uses the same recorded-or-explicitly-pending contract.
 
 ## 5. Performance (informational, not gating)
 

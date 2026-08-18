@@ -204,18 +204,20 @@ public sealed class ImageExportServiceVariantTests : IDisposable
         {
             EditSettings = snapshot.Clone()
         };
+        var settings = new ExportSettings
+        {
+            OutputFolder = outputFolder,
+            Format = ExportFormat.Png,
+            OutputColorSpace = OutputColorSpace.DisplayP3
+        };
         var loader = new StubBaseLoader
         {
             OnLoadFullBase = loadedFile =>
             {
                 loadedFile.EditSettings.Exposure = -1;
                 loadedFile.EditSettings.Wb = new WhiteBalanceSettings();
+                settings.OutputColorSpace = OutputColorSpace.Srgb;
             }
-        };
-        var settings = new ExportSettings
-        {
-            OutputFolder = outputFolder,
-            Format = ExportFormat.Png
         };
 
         await new ImageExportService(
@@ -235,11 +237,19 @@ public sealed class ImageExportServiceVariantTests : IDisposable
             snapshot,
             RenderIntent.Export,
             null,
-            new RenderOptions(false, false)));
-        using var actual = new MagickImage(Path.Combine(
-            outputFolder,
-            "snapshot.png"));
+            new RenderOptions(false, false),
+            OutputColorSpace.DisplayP3));
+        var readSettings = new MagickReadSettings();
+        readSettings.SetDefine(MagickFormat.Png, "preserve-iCCP", "true");
+        using var actual = new MagickImage(
+            Path.Combine(outputFolder, "snapshot.png"),
+            readSettings);
         AssertPixelsWithinOne(expected.Image, actual);
+        Assert.Equal(
+            File.ReadAllBytes(Path.Combine(
+                GoldenTestPaths.AssetDirectory,
+                "DisplayP3-v4.icc")),
+            actual.GetColorProfile()!.ToByteArray());
     }
 
     [Theory]

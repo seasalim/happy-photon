@@ -125,6 +125,7 @@ public sealed class AgentToolModelsTests
         var options = new AgentExportOptions(
             OutputFolder: "exports", Quality: 90, MaxDimension: null,
             NamingPattern: "{name}_edited", Format: "webp",
+            OutputColorSpace: "displayP3",
             Variants: new List<AgentExportVariant>
             {
                 new("Hi Res!", null),
@@ -133,6 +134,7 @@ public sealed class AgentToolModelsTests
 
         var json = JsonSerializer.Serialize(options, Options);
         Assert.Contains("\"format\":\"webp\"", json);
+        Assert.Contains("\"outputColorSpace\":\"displayP3\"", json);
         Assert.Contains("\"variants\"", json);
         Assert.Contains("\"maxDimension\":1200", json);
 
@@ -142,6 +144,7 @@ public sealed class AgentToolModelsTests
         Assert.Equal(options.Quality, back.Quality);
         Assert.Equal(options.NamingPattern, back.NamingPattern);
         Assert.Equal(options.Format, back.Format);
+        Assert.Equal(options.OutputColorSpace, back.OutputColorSpace);
         Assert.Equal(options.Variants, back.Variants);
     }
 
@@ -163,6 +166,7 @@ public sealed class AgentToolModelsTests
             "exports",
             options,
             ExportFormat.Jpeg,
+            OutputColorSpace.Srgb,
             stripLocationData,
             outputSharpening);
 
@@ -170,8 +174,28 @@ public sealed class AgentToolModelsTests
         Assert.Equal(92, settings.Quality);
         Assert.Equal("{name}_agent", settings.NamingPattern);
         Assert.Equal(ExportFormat.Jpeg, settings.Format);
+        Assert.Equal(OutputColorSpace.Srgb, settings.OutputColorSpace);
         Assert.Equal(stripLocationData, settings.StripLocationData);
         Assert.Equal(outputSharpening, settings.OutputSharpening);
+    }
+
+    [Fact]
+    public void AgentExportSettings_DefaultsToSrgbAndHonorsDisplayP3()
+    {
+        var defaults = new AgentExportOptions();
+        Assert.Equal(
+            OutputColorSpace.Srgb,
+            AgentToolValidation.ParseOutputColorSpace(defaults.OutputColorSpace));
+
+        var settings = AgentExportSettingsFactory.Create(
+            "exports",
+            defaults,
+            ExportFormat.Jpeg,
+            OutputColorSpace.DisplayP3,
+            stripLocationData: false,
+            outputSharpening: true);
+
+        Assert.Equal(OutputColorSpace.DisplayP3, settings.OutputColorSpace);
     }
 
     [Theory]
@@ -191,6 +215,22 @@ public sealed class AgentToolModelsTests
         Assert.Throws<AgentToolException>(() =>
             AgentToolValidation.ParseExportFormat("tiff"));
     }
+
+    [Theory]
+    [InlineData("srgb", OutputColorSpace.Srgb)]
+    [InlineData("DisplayP3", OutputColorSpace.DisplayP3)]
+    [InlineData("display-p3", OutputColorSpace.DisplayP3)]
+    public void OutputColorSpaceParsing_AcceptsKnownValues(
+        string value,
+        OutputColorSpace expected) =>
+        Assert.Equal(expected, AgentToolValidation.ParseOutputColorSpace(value));
+
+    [Fact]
+    public void OutputColorSpaceParsing_RejectsUnknownValue() =>
+        Assert.All(
+            new string?[] { "adobe-rgb", null },
+            value => Assert.Throws<AgentToolException>(() =>
+                AgentToolValidation.ParseOutputColorSpace(value)));
 
     [Theory]
     [InlineData(" Hi Res! ", "hi-res-")]

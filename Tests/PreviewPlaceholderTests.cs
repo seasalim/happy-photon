@@ -74,6 +74,8 @@ public sealed class PreviewPlaceholderTests
             "ConfigurationPanel")!;
         var outputSharpening = exportDialog.FindControl<CheckBox>(
             "OutputSharpeningCheckBox")!;
+        var outputColorSpace = exportDialog.FindControl<ComboBox>(
+            "OutputColorSpaceBox")!;
         var closeExportDialog = exportDialog.FindControl<Button>(
             "CloseDialogButton")!;
         var exportButton = exportDialog.FindControl<Button>(
@@ -97,6 +99,9 @@ public sealed class PreviewPlaceholderTests
         Assert.Equal(HorizontalAlignment.Center,
             exportButton.HorizontalContentAlignment);
         Assert.True(outputSharpening.IsChecked);
+        Assert.Equal(0, outputColorSpace.SelectedIndex);
+        outputColorSpace.SelectedIndex = 1;
+        Assert.Equal(OutputColorSpace.DisplayP3, vm.ExportSettings.OutputColorSpace);
         outputSharpening.IsChecked = false;
         Assert.False(vm.ExportSettings.OutputSharpening);
         outputSharpening.IsChecked = true;

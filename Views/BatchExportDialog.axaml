@@ -174,6 +174,24 @@
                         </StackPanel>
                     </Grid>
 
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="COLOR SPACE" Classes="section-label"/>
+                        <ComboBox x:Name="OutputColorSpaceBox"
+                                  ItemsSource="{Binding OutputColorSpaceOptions}"
+                                  SelectedItem="{Binding SelectedOutputColorSpaceOption, Mode=TwoWay}"
+                                  Width="180"
+                                  HorizontalAlignment="Left"
+                                  MinHeight="40"
+                                  Padding="12,7"
+                                  AutomationProperties.Name="Export color space">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:OutputColorSpaceOption">
+                                    <TextBlock Text="{Binding Label}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
                     <Grid ColumnDefinitions="*,32,*">
                         <StackPanel Grid.Column="0" Spacing="8">
                             <TextBlock Text="SIZE" Classes="section-label"/>

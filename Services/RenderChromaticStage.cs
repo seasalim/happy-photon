@@ -22,7 +22,8 @@ internal static class RenderChromaticStage
 
     internal static (double[,] Matrix, double Fold) CreateNormalizedMatrix(
         BaseImageInfo info,
-        EditSettings settings)
+        EditSettings settings,
+        OutputColorSpace outputColorSpace = OutputColorSpace.Srgb)
     {
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(settings);
@@ -33,9 +34,16 @@ internal static class RenderChromaticStage
         var whiteBalanceMatrix = whiteBalance.Mode == WbMode.AsShot
             ? ChromaticAdaptation.Identity()
             : CreateMatrix(whiteBalance, info);
-        var matrix = ChromaticAdaptation.Multiply(
-            RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb,
-            whiteBalanceMatrix);
+        var outputMatrix = outputColorSpace switch
+        {
+            OutputColorSpace.Srgb =>
+                RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb,
+            OutputColorSpace.DisplayP3 =>
+                RgbColorSpaceMatrices.LinearRec2020ToLinearDisplayP3,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(outputColorSpace), outputColorSpace, null)
+        };
+        var matrix = ChromaticAdaptation.Multiply(outputMatrix, whiteBalanceMatrix);
         return ChromaticAdaptation.NormalizeForRender(matrix);
     }
 

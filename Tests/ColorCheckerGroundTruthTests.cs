@@ -51,6 +51,33 @@ public sealed class ColorCheckerGroundTruthTests
     }
 
     [Fact]
+    public void ColorChecker_DisplayP3TargetIsWithinMeasuredBudget()
+    {
+        var measurement = Measurement.Value;
+        var budget = measurement.Manifest.DisplayP3Budget;
+        _output.WriteLine(
+            $"ColorChecker Display P3 aggregate: mean ΔE00=" +
+            $"{measurement.DisplayP3MeanDeltaE00:F4}; maximum ΔE00=" +
+            $"{measurement.DisplayP3MaximumDeltaE00:F4}.");
+        _output.WriteLine(
+            $"ColorChecker Display P3 exact aggregate: mean=" +
+            $"{measurement.DisplayP3MeanDeltaE00:R}; maximum=" +
+            $"{measurement.DisplayP3MaximumDeltaE00:R}.");
+
+        Assert.True(
+            measurement.DisplayP3MeanDeltaE00 <= budget.MeanDeltaE00,
+            $"Display P3 ColorChecker mean ΔE00 " +
+            $"{measurement.DisplayP3MeanDeltaE00:F4} exceeds " +
+            $"the measured budget {budget.MeanDeltaE00:F1}.");
+        Assert.True(
+            measurement.DisplayP3MaximumDeltaE00 <=
+                budget.MaximumPatchDeltaE00,
+            $"Display P3 ColorChecker maximum ΔE00 " +
+            $"{measurement.DisplayP3MaximumDeltaE00:F4} exceeds " +
+            $"the measured budget {budget.MaximumPatchDeltaE00:F1}.");
+    }
+
+    [Fact]
     public void ColorChecker_FreshDecodeNeutralCalibrationHasNotDrifted()
     {
         var measurement = Measurement.Value;
@@ -95,6 +122,40 @@ public sealed class ColorCheckerGroundTruthTests
             value => Math.Abs(value - measurement.MeanDeltaE00) <= 5e-5);
         Assert.Contains(observation.MaximumPatchDeltaE00,
             value => Math.Abs(value - measurement.MaximumDeltaE00) <= 5e-5);
+    }
+
+    [Fact]
+    public void ColorChecker_DisplayP3CurrentRidMatchesRecordedObservationPayload()
+    {
+        var manifest = ColorCheckerManifest.Load();
+        var budget = manifest.DisplayP3Budget;
+        var runtimeRid = RuntimeInformation.RuntimeIdentifier;
+        var recordedRids = budget.Observations
+            .Select(value => value.Rid)
+            .Concat(budget.PendingRidObservations)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        Assert.True(
+            recordedRids.Contains(runtimeRid, StringComparer.Ordinal),
+            $"Runtime RID '{runtimeRid}' does not match the Display P3 " +
+            $"manifest RID vocabulary [{string.Join(", ", recordedRids)}].");
+        Assert.SkipWhen(
+            budget.PendingRidObservations.Contains(
+                runtimeRid,
+                StringComparer.Ordinal),
+            $"The Display P3 ColorChecker observation for RID " +
+            $"'{runtimeRid}' is pending.");
+
+        var measurement = Measurement.Value;
+        var observation = Assert.Single(
+            budget.Observations,
+            value => value.Rid == runtimeRid);
+
+        Assert.Contains(observation.MeanDeltaE00,
+            value => Math.Abs(value - measurement.DisplayP3MeanDeltaE00) <= 5e-5);
+        Assert.Contains(observation.MaximumPatchDeltaE00,
+            value => Math.Abs(
+                value - measurement.DisplayP3MaximumDeltaE00) <= 5e-5);
     }
 
     private void ReportPatches(ColorCheckerMeasurement measurement)
@@ -202,6 +263,52 @@ public sealed class ColorCheckerGroundTruthTests
             decodeSrgb: true);
         var d65ToReference = ColorScienceMatrixAssertions.ToMatrix(
             oracle.Adaptation("bradford-d65-to-d50").Matrix);
+        var patches = MeasureRenderedPatches(
+            renderedD65,
+            manifest,
+            oracle,
+            d65ToReference);
+
+        using var displayP3 = new RenderPipeline().Render(new RenderRequest(
+            baseImage,
+            settings,
+            RenderIntent.Export,
+            MaxDimension: null,
+            new RenderOptions(false, false),
+            OutputColorSpace.DisplayP3));
+        var displayP3D65 = ColorCheckerSampling.SampleXyz(
+            displayP3.Image,
+            manifest.Geometry,
+            RgbColorSpaceMatrices.LinearDisplayP3ToXyzD65DerivedExact,
+            decodeSrgb: true);
+        var displayP3Patches = MeasureRenderedPatches(
+            displayP3D65,
+            manifest,
+            oracle,
+            d65ToReference);
+
+        var freshScalar = CalculateExposureScalar(
+            renderedD65,
+            d65ToReference,
+            oracle.ColorChecker,
+            manifest.Calibration.NeutralPatchIndices);
+        return new ColorCheckerMeasurement(
+            manifest,
+            patches,
+            patches.Average(patch => patch.DeltaE00),
+            patches.Max(patch => patch.DeltaE00),
+            displayP3Patches.Average(patch => patch.DeltaE00),
+            displayP3Patches.Max(patch => patch.DeltaE00),
+            maximumDrift,
+            freshScalar);
+    }
+
+    private static ColorCheckerPatchMeasurement[] MeasureRenderedPatches(
+        ColorCheckerPatchSample[] renderedD65,
+        ColorCheckerManifest manifest,
+        ColorScienceOracleData oracle,
+        double[,] d65ToReference)
+    {
         var patches = new ColorCheckerPatchMeasurement[24];
         for (var index = 0; index < patches.Length; index++)
         {
@@ -221,19 +328,7 @@ public sealed class ColorCheckerGroundTruthTests
                 measuredLab,
                 PrecisionDeltaE.Ciede2000(measuredLab, referenceLab));
         }
-
-        var freshScalar = CalculateExposureScalar(
-            renderedD65,
-            d65ToReference,
-            oracle.ColorChecker,
-            manifest.Calibration.NeutralPatchIndices);
-        return new ColorCheckerMeasurement(
-            manifest,
-            patches,
-            patches.Average(patch => patch.DeltaE00),
-            patches.Max(patch => patch.DeltaE00),
-            maximumDrift,
-            freshScalar);
+        return patches;
     }
 
     private static double MeasureNeutralDrift(
@@ -326,6 +421,8 @@ internal sealed record ColorCheckerMeasurement(
     ColorCheckerPatchMeasurement[] Patches,
     double MeanDeltaE00,
     double MaximumDeltaE00,
+    double DisplayP3MeanDeltaE00,
+    double DisplayP3MaximumDeltaE00,
     double MaximumNeutralXyzDrift,
     double FreshExposureScalar);
 

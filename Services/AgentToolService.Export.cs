@@ -11,6 +11,8 @@ public sealed partial class AgentToolService
         ValidateBatch(ids, BatchCap);
         ValidateExportOptions(options);
         var format = AgentToolValidation.ParseExportFormat(options.Format);
+        var outputColorSpace = AgentToolValidation.ParseOutputColorSpace(
+            options.OutputColorSpace);
         var useSubfolders = options.Variants is { Count: > 0 };
         var variants = CreateExportVariants(options);
         if (ids.Count * variants.Count > 1000)
@@ -42,6 +44,7 @@ public sealed partial class AgentToolService
                 output,
                 options,
                 format,
+                outputColorSpace,
                 _vm.ExportSettings.StripLocationData,
                 _vm.ExportSettings.OutputSharpening);
             var originalPaths = ExportSafety.BuildOriginalPathSet(

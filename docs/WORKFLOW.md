@@ -389,13 +389,16 @@ changing the selection.
 1. Choose an output folder. The default is an `export` folder beneath the open
    photo folder.
 2. Choose JPEG, PNG, or WebP.
-3. Set the quality when the selected format uses it.
-4. Choose one size:
+3. Choose **sRGB** for the broadly compatible default, or **Display P3** when the delivery
+   software and display are color-managed and a wider gamut is useful. Preview remains
+   sRGB; the embedded export profile lets color-managed software reproduce the same color.
+4. Set the quality when the selected format uses it.
+5. Choose one size:
    - **Hi-Res** applies no output-size limit.
    - **Web** constrains the longest dimension to the specified size.
    - **Small** creates a smaller longest-dimension copy.
-5. Choose a naming pattern and check the filename preview.
-6. Start the export.
+6. Choose a naming pattern and check the filename preview.
+7. Start the export.
 
 If the selection includes online-only originals, Happy Photon first reports their exact
 count and approximate logical size. Choose **Cancel** to leave them untouched or

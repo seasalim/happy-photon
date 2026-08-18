@@ -6,7 +6,7 @@ can no longer inherit source profiles or orientation tags safely.
 
 ## 1. Display path
 
-`RenderResult.Image` (display-referred sRGB, Q16) passes through
+The preview `RenderResult.Image` (display-referred sRGB, Q16) passes through
 `BitmapConversionService.ConvertToBitmap` to become an 8-bit BGRA Avalonia bitmap.
 The 16-to-8-bit step deliberately uses native nearest-level quantization without
 dithering. On the generated 4096-step gradient, it measured 0.2499 LSB mean absolute
@@ -17,8 +17,9 @@ Happy Photon therefore keeps the lower-error, lower-cost conversion; JPEG/WebP a
 receive lossy encoder noise, while PNG remains an explicit 8-bit output.
 
 Nearest-level is the **only** 16-to-8 conversion in the product: display, PNG, JPEG,
-and WebP all reach it through Magick's native quantizer, so preview and export agree
-code for code before any lossy encoding. Never call `Depth = 8` on a render — it
+and WebP all reach it through Magick's native quantizer, so preview and an sRGB export
+agree code for code before any lossy encoding. A Display P3 export deliberately has
+different channel codes. Never call `Depth = 8` on a render — it
 quantizes toward zero and silently shifts roughly half of all samples one code below
 the preview (measured 30–51% of channel samples, `pngMinusPreview` in {−1, 0}).
 Request 8-bit output through the encoder's own define instead. The opt-in precision
@@ -28,13 +29,16 @@ not request them (RENDER.md §7).
 
 ## 2. Export flow (`ImageExportService`)
 
-Per image: `LoadFullBase` → `RenderPipeline.Render(intent: Export)` **once** → per
+Before pixel work, export snapshots `OutputColorSpace` once and supplies that same value
+to render and encode, so mutable dialog state cannot produce P3 pixels with an sRGB tag or
+the reverse. Per image: `LoadFullBase` → `RenderPipeline.Render(intent: Export)` **once** → per
 variant: resize (descending sizes with progressive downscaling; resizes run in
 linear light per RENDER.md §1.1, same filter as the preview path) → output sharpen →
 metadata apply (§4) → encode (§3) → `ExportSafety` checks → write.
 
-The render math is identical to the preview path; only `MaxDimension` and base
-resolution differ. WYSIWYG tests measure the remaining resize/decode difference.
+The default sRGB render math is identical to the preview path; only `MaxDimension` and base
+resolution differ. Display P3 changes the chromatic target while retaining the same transfer
+and all later stages. WYSIWYG tests compare different-target results through their profiles.
 
 Before desktop export starts, the dialog classifies every selected original and totals
 the logical size of files that require hydration. If the count is nonzero, it shows
@@ -52,8 +56,10 @@ download has started.
 | PNG | 8-bit output through `PngWriteDefines.BitDepth = 8`; the Q16 working pipeline does not imply 16-bit PNG output. |
 | WebP | quality = user setting, lossy. |
 
-**Every export embeds the sRGB ICC profile** (`ColorProfile.SRGB`) — for all formats
-that support it, all source kinds.
+**Every export embeds the profile matching its rendered target** — `ColorProfile.SRGB` for
+the default sRGB path, or the 480-byte Compact ICC Profiles `DisplayP3-v4.icc` (CC0) for
+Display P3. JPEG, PNG, and WebP each preserve the selected profile. Display P3 shares the
+sRGB transfer, so resize and tone encoding continue to use the existing transfer LUTs.
 
 **Output sharpen** is governed by exactly one condition: the export dialog's
 "Output sharpening" checkbox (default on). Checkbox on → applied after each resize to
@@ -80,7 +86,7 @@ deliberately reconstructs metadata on the encoded output:
 3. **GPS:** kept by default; removed when the export dialog's **"Strip location data"**
    checkbox is set (persisted app setting, default off). Stripping removes the entire
    GPS IFD.
-4. ICC: §3's sRGB profile — never the source profile (pixels are sRGB now).
+4. ICC: §3's selected output profile — never the source profile.
 5. XMP/IPTC: not copied.
 
 RAW and non-RAW sources use the same policy. Capture facts survive where available,
@@ -88,7 +94,9 @@ while private or structurally stale metadata is never carried through accidental
 
 ## 5. Agent (MCP) surface
 
-`export_images` uses the same encoder and metadata policy as desktop export.
+`export_images` uses the same encoder and metadata policy as desktop export. Its optional
+`outputColorSpace` is `srgb` by default and accepts `displayP3`; it never inherits mutable
+desktop color-space state.
 `apply_edit_settings` accepts the current v2 fields, including `wb`, `baseLook`, and
 `hlReconstruction`; omitted fields leave current values unchanged. The privacy
 boundary remains metadata and thumbnail-derived statistics only, and
@@ -102,10 +110,12 @@ online-only original return failure code `hydration_required`.
 
 ## 6. Verification
 
-- Exported JPEG opened in a color-managed browser matches the in-app preview (golden
-  ΔE bound; the P3-source test asset is the sentinel case).
-- Preview BGRA and exported PNG read-back carry identical 8-bit codes for the same
-  render (precision harness `previewPng` gate, §1).
+- Exported JPEG opened in a color-managed browser stays within the preview's colorimetric
+  bounds. sRGB retains the golden ΔE/code gates; Display P3 is converted through its
+  embedded profile before comparison, and the synthetic native-P3 fixture is the
+  gamut-survival sentinel. Edited target divergence is governed by WORKING_SPACE.md §9.3.
+- Preview BGRA and sRGB PNG read-back carry identical 8-bit codes for the same render
+  (precision harness `previewPng` gate, §1).
 - Export of a RAW carries capture date, camera, exposure EXIF; orientation displays
   upright everywhere; no embedded stale thumbnail (verify with exiftool in CI or a
   Magick profile read-back test).

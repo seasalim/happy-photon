@@ -84,4 +84,35 @@ public sealed class WysiwygTests
                 $"p99 ΔE {comparison.P99DeltaE:F3} (limit 4.0).");
         }
     }
+
+    [Fact]
+    public void PreviewAndDisplayP3Export_AgreeInCommonSpaceForInGamutCase()
+    {
+        var asset = GoldenTestCases.Assets.Single(
+            value => value.Slug == "display-p3-reference");
+        var renderer = new CurrentPipelineGoldenRenderer();
+        using var baseImage = renderer.LoadBase(asset);
+        using var preview = renderer.Render(
+            baseImage,
+            new HappyPhoton.Models.EditSettings(),
+            RenderIntent.Preview);
+        using var export = renderer.Render(
+            baseImage,
+            new HappyPhoton.Models.EditSettings(),
+            RenderIntent.Export,
+            outputColorSpace: HappyPhoton.Models.OutputColorSpace.DisplayP3);
+        preview.SetProfile(ColorProfiles.SRGB);
+        export.SetProfile(OutputColorProfiles.Get(
+            HappyPhoton.Models.OutputColorSpace.DisplayP3));
+
+        var comparison = GoldenImageComparer.Compare(
+            export,
+            preview,
+            GoldenComparisonDomain.DisplaySrgb);
+
+        Assert.True(
+            comparison.MeanDeltaE <= 1.0 && comparison.P99DeltaE <= 3.0,
+            $"Display P3 common-space WYSIWYG mean ΔE " +
+            $"{comparison.MeanDeltaE:F3}, p99 {comparison.P99DeltaE:F3}.");
+    }
 }

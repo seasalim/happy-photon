@@ -188,3 +188,73 @@ source and the target and leave the test green.
 - `Tests/assets/color-science-oracle.json` — the committed BSD `colour-science` oracle
   (TESTING.md §4.1 anchor 3), which independently carries the linear sRGB and linear
   Rec.2020 matrices used above.
+
+## 9. Output targets
+
+The render's chromatic matrix converts working → **the selected output space**. sRGB is the
+default and Display P3 is the opt-in alternative; preview always renders sRGB. Nothing else
+in the render is parameterized, because P3 shares sRGB's transfer function (IEC 61966-2-1),
+so only the matrix's target primaries change.
+
+**Display P3** — SMPTE EG 432-1 primaries with the D65 white point and the sRGB transfer,
+as published by Apple: R (0.680, 0.320), G (0.265, 0.690), B (0.150, 0.060).
+
+```
+Rec.2020 → Display P3 (both linear, D65)      Display P3 → XYZ (D65)
+ +1.3435782526 -0.2821796705 -0.0613985821     +0.4865709486 +0.2656676932 +0.1982172852
+ -0.0652974528 +1.0757879158 -0.0104904631     +0.2289745641 +0.6917385218 +0.0792869141
+ +0.0028217873 -0.0195984945 +1.0167767073     +0.0000000000 +0.0451133819 +1.0439443689
+```
+
+The render normalization fold (RENDER.md §4) for the bare working→P3 matrix is
+**1.343578252584332**, against 1.6604910021084345 for sRGB — a P3 export therefore spends
+*more* of the tone LUT's knots on its data than an sRGB export does.
+
+### 9.1 Embedded profile
+
+P3 exports embed `DisplayP3-v4.icc` from Compact ICC Profiles (CC0, 480 bytes), already
+committed for R1's gamut fixture and verified there against the D50-adapted P3 colorants to
+7e-6. Exported files are read by other people's software, so a widely-deployed profile beats
+one we generate; the constructed working-space profile (§4) stays internal and is never
+embedded. The embedded profile's primaries **and** its parametric transfer must be checked
+against the pixels the renderer produced — a file tagged with primaries it was not rendered
+for is this feature's characteristic failure and is invisible on inspection.
+
+### 9.2 Oracle vectors
+
+Equivalence — the same color encoded in each target, both under the sRGB transfer. A P3
+export of in-gamut content should land on these codes:
+
+| Color | sRGB code | Display P3 code |
+|-------|-----------|-----------------|
+| red | 255, 0, 0 | 233.959, 51.073, 35.333 |
+| green | 0, 255, 0 | 116.892, 251.242, 76.065 |
+| blue | 0, 0, 255 | 0, 0, 244.695 |
+| mid grey | 128, 128, 128 | 128, 128, 128 |
+
+Round trip — R1's synthetic native-P3 fixture through the Q16 Rec.2020 base and back out to
+a P3 export:
+
+| Patch | P3 source | base Q16 | recovered P3 code |
+|-------|-----------|----------|-------------------|
+| red | 255, 0, 0 | 49402, 2998, 0 | 254.99, 0.00, **4.05** |
+| green | 0, 255, 0 | 13015, 61719, 1154 | 0.00, 255.00, 0.02 |
+| orange | 255, 128, 0 | 52212, 16321, 170 | 255.00, 128.00, 0.02 |
+| neutral | 128, 128, 128 | 14146, 14146, 14146 | 128.00, 128.00, 128.00 |
+
+Red's blue channel recovers as 4, not 0. P3's red corner sits a hair outside Rec.2020
+(−0.0012 in blue, §7), unsigned Q16 clamps that to zero, and the return trip converts the
+clamped value back as a small positive. It is a storage-representation artifact, stated here
+so it is recognized rather than re-derived or absorbed into a tolerance later.
+
+### 9.3 Two honest limits
+
+- **An edited P3 export is not colorimetrically identical to the same edit in sRGB.** The
+  tone LUT, chroma, and detail stages run *after* the display convert, so their per-channel
+  nonlinearities act on different channel values in each target. Agreement holds for
+  in-gamut content with those stages disabled, and for neutrals; edits diverge by a measured
+  amount. R4 removes this when the convert moves after the AgX outset (ENDSTATE node 7).
+- **Luma-weighted stages keep sRGB-referred weights.** Capture sharpen, chroma NR, and
+  output sharpening use rounded BT.709 constants. Deriving them from target primaries would
+  change sRGB output — the rounded constants are not reproducible from any derivation — so
+  P3 exports carry sRGB-referred luma weighting until R4 revisits the basis.

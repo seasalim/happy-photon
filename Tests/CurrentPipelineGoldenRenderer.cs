@@ -45,14 +45,16 @@ internal sealed class CurrentPipelineGoldenRenderer
         BaseImage baseImage,
         EditSettings settings,
         RenderIntent intent = RenderIntent.Export,
-        int maxDimension = LongEdge)
+        int maxDimension = LongEdge,
+        OutputColorSpace outputColorSpace = OutputColorSpace.Srgb)
     {
         using var rendered = _renderPipeline.Render(new RenderRequest(
             baseImage,
             settings,
             intent,
             maxDimension,
-            new RenderOptions(false, false)));
+            new RenderOptions(false, false),
+            outputColorSpace));
         var output = new MagickImage(rendered.Image);
         try
         {

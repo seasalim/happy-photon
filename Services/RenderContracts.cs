@@ -18,7 +18,8 @@ public sealed record RenderRequest(
     EditSettings Settings,
     RenderIntent Intent,
     int? MaxDimension,
-    RenderOptions Options);
+    RenderOptions Options,
+    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb);
 
 public sealed class RenderResult : IDisposable
 {

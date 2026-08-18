@@ -29,6 +29,9 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Remove="Assets\DisplayP3-v4.icc" />
+    <EmbeddedResource Include="Assets\DisplayP3-v4.icc"
+                      LogicalName="HappyPhoton.Assets.DisplayP3-v4.icc" />
     <Compile Remove="Tests\**" />
     <Compile Remove="HeadlessTests\**" />
     <Compile Remove="Interop\**" />

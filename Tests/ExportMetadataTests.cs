@@ -224,6 +224,7 @@ public sealed class ExportMetadataTests : IDisposable
         ExportEncoder.Write(
             destination,
             new ExportSettings { Format = format },
+            OutputColorSpace.Srgb,
             outputPath);
 
         using var result = new MagickImage(outputPath);

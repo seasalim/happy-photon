@@ -16,6 +16,7 @@ public sealed class ExportSettingsVariantTests
         Assert.Equal(".jpg", settings.FileExtension);
         Assert.Equal("photo.jpg", settings.GetOutputFileName("photo.CR2"));
         Assert.True(settings.OutputSharpening);
+        Assert.Equal(OutputColorSpace.Srgb, settings.OutputColorSpace);
     }
 
     [Fact]

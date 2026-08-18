@@ -38,8 +38,11 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 
 ## 2. Invariants
 
-1. **WYSIWYG:** export pixels == preview pixels for the same settings, up to resolution
-   and resize resampling (golden-tested, TESTING.md §4).
+1. **WYSIWYG:** preview and export agreement is judged colorimetrically for the same
+   settings, up to the tested target/decode/resize bounds (TESTING.md §4). Preview and
+   default sRGB export also agree in raw codes; Display P3 uses different codes and is
+   compared through its embedded profile in a common space. Target-dependent stages after
+   the convert create the measured edited-image limit in WORKING_SPACE.md §9.3.
 2. **Determinism:** same base + same settings → identical output, independent of image
    content history, decode size, platform defaults, or time. No auto-anything inside the
    pipeline (auto modes are UI actions that *write settings*, never render-time behavior).
@@ -75,7 +78,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
                                    │
             ┌─ RENDER.md ──────────▼──────────────────────────────────┐
             │ 1 Geometry   rotate90 → horizon(+safe crop) → crop      │
-            │ 2 Chromatic  Rec.2020 WB → linear sRGB, one normalized  │
+            │ 2 Chromatic  Rec.2020 WB → selected linear output, one  │
             │              3×3 matrix                   [WHITE_BALANCE]│
             │ 3 Tone LUT   exposure→shoulder→sRGB-encode→look→B/C→    │
             │              shadows/highlights→user curve  (ONE Clut)  │
@@ -85,7 +88,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
                      histogram + clipping stats            │
             ┌─ OUTPUT.md ──▼───────────────────────────────▼──────────┐
             │ display: ConvertToBitmap (8-bit BGRA)                   │
-            │ export: resize → output sharpen → encode + sRGB ICC     │
+            │ export: resize → output sharpen → encode + matching ICC │
             │         + metadata policy (EXIF copy, GPS toggle)       │
             └─────────────────────────────────────────────────────────┘
 ```
@@ -129,16 +132,18 @@ public sealed class BaseImage : IDisposable
 }
 
 public enum RenderIntent { Preview, Export }
+public enum OutputColorSpace { Srgb, DisplayP3 }
 
 public sealed record RenderOptions(bool ComputeStats = true, bool ComputeOverlayMasks = false);
 
 public sealed record RenderRequest(
     BaseImage Base, EditSettings Settings, RenderIntent Intent,
-    int? MaxDimension, RenderOptions Options);   // semantics: RENDER.md §1.1
+    int? MaxDimension, RenderOptions Options,
+    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb); // RENDER.md §1.1
 
 public sealed class RenderResult : IDisposable
 {
-    public MagickImage Image { get; }        // display-referred sRGB, 16-bit
+    public MagickImage Image { get; }        // display-referred selected output, 16-bit
     public ClippingStats Clipping { get; }   // see RENDER.md §7
     public MagickImage? OverlayMask { get; } // only when Options.ComputeOverlayMasks
 }
@@ -167,6 +172,7 @@ metadata and consumers treat it as immutable.
 | `Services/RawBaseLoader.cs` | LibRaw decode → base (DECODE.md §2) |
 | `Services/StandardBaseLoader.cs` | Magick decode + ICC normalize → base (DECODE.md §3) |
 | `Services/WorkingSpaceIccProfile.cs` | deterministic linear-Rec.2020 ICC target |
+| `Services/OutputColorProfiles.cs` | embedded sRGB / Display P3 export profiles |
 | `Services/RgbColorSpaceMatrices.cs` | authoritative published/exact RGB↔XYZ matrices |
 | `Services/RenderPipeline.cs` | stage orchestration and result ownership (RENDER.md) |
 | `Services/RenderGeometry.cs` | rotation, horizon correction, and crop |

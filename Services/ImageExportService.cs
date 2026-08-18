@@ -107,6 +107,7 @@ public sealed class ImageExportService
         CancellationToken cancellationToken)
     {
         var imageList = images.ToList();
+        var outputColorSpace = settings.OutputColorSpace;
         var total = imageList.Count;
         var exported = 0;
         var failedImages = new List<ImageFile>();
@@ -132,6 +133,7 @@ public sealed class ImageExportService
                     settings,
                     variants,
                     useSubfolders,
+                    outputColorSpace,
                     intent,
                     cancellationToken),
                 cancellationToken);
@@ -153,6 +155,7 @@ public sealed class ImageExportService
         ExportSettings settings,
         IReadOnlyList<ExportVariant> variants,
         bool useSubfolders,
+        OutputColorSpace outputColorSpace,
         SourceReadIntent intent,
         CancellationToken cancellationToken)
     {
@@ -187,7 +190,8 @@ public sealed class ImageExportService
             null,
             new RenderOptions(
                 ComputeStats: false,
-                ComputeOverlayMasks: false)));
+                ComputeOverlayMasks: false),
+            outputColorSpace));
         baseImage.Dispose();
         var orderedVariants = variants
             .OrderBy(variant => variant.MaxDimension.HasValue ? 1 : 0)
@@ -221,6 +225,7 @@ public sealed class ImageExportService
             ExportEncoder.Write(
                 destination,
                 settings,
+                outputColorSpace,
                 settings.GetOutputPath(
                     imageFile.FileName,
                     variant,

@@ -57,6 +57,23 @@ public sealed class ExportDialogViewModelTests
     }
 
     [Fact]
+    public void OutputColorSpace_DefaultsToSrgbAndCanSelectDisplayP3()
+    {
+        var settings = new ExportSettings();
+        using var viewModel = new ExportDialogViewModel(settings, 1);
+
+        Assert.Equal(
+            OutputColorSpace.Srgb,
+            viewModel.SelectedOutputColorSpaceOption.OutputColorSpace);
+
+        viewModel.SelectedOutputColorSpaceOption =
+            viewModel.OutputColorSpaceOptions.Single(
+                option => option.OutputColorSpace == OutputColorSpace.DisplayP3);
+
+        Assert.Equal(OutputColorSpace.DisplayP3, settings.OutputColorSpace);
+    }
+
+    [Fact]
     public void CustomNaming_UpdatesFlatFilenamePreview()
     {
         var settings = new ExportSettings();
