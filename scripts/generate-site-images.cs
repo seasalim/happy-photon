@@ -33,7 +33,8 @@ foreach (var image in images)
     var sourcePath = Path.Combine(screenshotRoot, image.SourceName);
     if (!File.Exists(sourcePath))
     {
-        throw new FileNotFoundException("Site screenshot not found.", sourcePath);
+        Console.Error.WriteLine($"Site screenshot not found: {sourcePath}");
+        return 1;
     }
 
     using var source = new MagickImage(sourcePath);

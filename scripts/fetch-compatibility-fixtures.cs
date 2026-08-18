@@ -2,6 +2,7 @@
 #:property SelfContained=false
 
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -16,12 +17,31 @@ if (args.Length == 1 && args[0] is "--help" or "-h")
     return 0;
 }
 
-var repositoryRoot = FindRepositoryRoot(Directory.GetCurrentDirectory());
+var repositoryRoot = FindRepositoryRoot();
+if (repositoryRoot is null)
+{
+    Console.Error.WriteLine(
+        "Could not locate HappyPhoton.sln from the script location or the " +
+        "current directory. Run this script from a checkout of the repository.");
+    return 1;
+}
+
 var manifestPath = Path.Combine(
     repositoryRoot, "Tests", "compatibility-fixtures.json");
 var cacheDirectory = Path.Combine(
     repositoryRoot, "artifacts", "compatibility-fixtures");
-var fixtures = ReadSelectedFixtures(manifestPath, maximumFixtureBytes);
+List<FixtureDownload> fixtures;
+try
+{
+    fixtures = ReadSelectedFixtures(manifestPath, maximumFixtureBytes);
+    Directory.CreateDirectory(cacheDirectory);
+}
+catch (Exception exception)
+{
+    Console.Error.WriteLine(exception.Message);
+    return 1;
+}
+
 var requested = args.ToHashSet(StringComparer.Ordinal);
 if (requested.Count > 0)
 {
@@ -39,7 +59,6 @@ if (requested.Count > 0)
         .ToList();
 }
 
-Directory.CreateDirectory(cacheDirectory);
 using var client = new HttpClient(new HttpClientHandler
 {
     AutomaticDecompression = DecompressionMethods.All
@@ -230,16 +249,23 @@ static void PrintResult(
         $"provenance_host={fixture.ProvenanceUrl.Host}; bytes={fixture.SizeBytes}; " +
         $"sha256={hash}; verified={source}");
 
-static string FindRepositoryRoot(string start)
+static string? FindRepositoryRoot([CallerFilePath] string scriptPath = "") =>
+    SearchForRepositoryRoot(Path.GetDirectoryName(scriptPath))
+        ?? SearchForRepositoryRoot(Directory.GetCurrentDirectory());
+
+static string? SearchForRepositoryRoot(string? start)
 {
+    if (string.IsNullOrEmpty(start))
+    {
+        return null;
+    }
     var directory = new DirectoryInfo(Path.GetFullPath(start));
     while (directory != null &&
         !File.Exists(Path.Combine(directory.FullName, "HappyPhoton.sln")))
     {
         directory = directory.Parent;
     }
-    return directory?.FullName ?? throw new DirectoryNotFoundException(
-        "Could not locate HappyPhoton.sln from the current directory.");
+    return directory?.FullName;
 }
 
 internal sealed record FixtureDownload(
