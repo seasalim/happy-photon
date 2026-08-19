@@ -186,8 +186,8 @@
       },
       "HappyPhoton.LibRaw.Native": {
         "type": "Transitive",
-        "resolved": "0.22.2.10",
-        "contentHash": "S1nBt/BqCIEJZEr7BHeUYrYZOkmAXZbGUajIWiojHEJcoifw6bSOnFXg8qi4WJpiR9eAMnA1bwGzfBIrT+b6nA=="
+        "resolved": "0.22.2.11",
+        "contentHash": "mHn9hWwvru5+ST5nUYnjQiY3j1PhW6/PLZJLdOLy3k304IXLb3G6KvePjSGdcliKAmG5oaaPegssaUMxqQV+3g=="
       },
       "HarfBuzzSharp": {
         "type": "Transitive",
@@ -596,7 +596,7 @@
       "happyphoton.libraw.interop": {
         "type": "Project",
         "dependencies": {
-          "HappyPhoton.LibRaw.Native": "[0.22.2.10, )"
+          "HappyPhoton.LibRaw.Native": "[0.22.2.11, )"
         }
       }
     }

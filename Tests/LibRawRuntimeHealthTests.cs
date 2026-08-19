@@ -19,7 +19,8 @@ public sealed class LibRawRuntimeHealthTests
             0x000000C0));
 
         Assert.Contains("component=LibRaw companion", health.DiagnosticText);
-        Assert.Contains("observed bridge ABI=2", health.DiagnosticText);
+        Assert.Contains($"observed bridge ABI={LibRawOutputConfiguration.Version}",
+            health.DiagnosticText);
         Assert.Contains("LibRaw version=0x001601", health.DiagnosticText);
         Assert.Contains("LibRaw version string=0.22.1-Release", health.DiagnosticText);
         Assert.Contains("capability mask=0x000000C0", health.DiagnosticText);

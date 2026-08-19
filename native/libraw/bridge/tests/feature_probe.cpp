@@ -4,6 +4,7 @@
 #include <lcms2.h>
 #endif
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -28,6 +29,12 @@ struct CameraFacts {
     float camera_from_xyz[12]{};
     uint32_t linear_max_count{};
     uint32_t linear_max[4]{};
+};
+
+struct OutputDefaults {
+    int32_t user_sat{};
+    int32_t user_qual{};
+    uint32_t cropbox[4]{};
 };
 
 #if HPLR_EXPECT_LCMS
@@ -94,11 +101,15 @@ void read_camera_facts(const LibRaw &raw, CameraFacts &facts) {
     }
 }
 
-uint64_t process_raw(const char *fixture, CameraFacts &facts) {
+uint64_t process_raw(const char *fixture, CameraFacts &facts, OutputDefaults &defaults) {
     LibRaw raw;
     if (raw.open_file(fixture) != LIBRAW_SUCCESS ||
         raw.unpack() != LIBRAW_SUCCESS) return 0;
     read_camera_facts(raw, facts);
+    defaults.user_sat = raw.imgdata.params.user_sat;
+    defaults.user_qual = raw.imgdata.params.user_qual;
+    std::copy(std::begin(raw.imgdata.params.cropbox), std::end(raw.imgdata.params.cropbox),
+              std::begin(defaults.cropbox));
     raw.imgdata.params.output_bps = 8;
     raw.imgdata.params.output_color = 1;
     raw.imgdata.params.use_camera_wb = 1;
@@ -153,7 +164,8 @@ int main(int argc, char **argv) {
         (capabilities & zlib_capability) == 0) return 4;
     const auto started = std::chrono::steady_clock::now();
     CameraFacts facts;
-    const auto checksum = process_raw(argv[1], facts);
+    OutputDefaults defaults;
+    const auto checksum = process_raw(argv[1], facts, defaults);
     const auto elapsed = std::chrono::duration<double, std::milli>(
         std::chrono::steady_clock::now() - started).count();
     if (!checksum) return 5;
@@ -165,6 +177,10 @@ int main(int argc, char **argv) {
               << ",\"elapsed_ms\":" << elapsed
               << ",\"checksum\":" << checksum;
     print_camera_facts(facts);
+    std::cout << ",\"output_defaults\":{\"user_sat\":" << defaults.user_sat
+              << ",\"user_qual\":" << defaults.user_qual << ",\"cropbox\":";
+    print_values(defaults.cropbox, 4);
+    std::cout << '}';
     std::cout << "}\n";
     return 0;
 }

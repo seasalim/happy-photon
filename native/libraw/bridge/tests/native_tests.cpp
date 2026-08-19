@@ -155,6 +155,8 @@ void facts_and_lifetime(const std::filesystem::path &fixture) {
     CHECK(mosaic.data && mosaic.byte_length ==
         static_cast<uint64_t>(mosaic.raw_pitch) * mosaic.raw_height);
     CHECK(mosaic.cblack_count == HPLR_CBLACK_COUNT);
+    auto second_mosaic = output<hplr_mosaic_descriptor>();
+    CHECK(hplr_borrow_mosaic(handle, &second_mosaic, &error.value) == HPLR_E_BUSY);
     auto config = linear();
     CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_OK);
     CHECK(hplr_process(handle, &error.value) == HPLR_E_BUSY);
@@ -162,10 +164,99 @@ void facts_and_lifetime(const std::filesystem::path &fixture) {
     CHECK(hplr_release_mosaic(mosaic.lease, &error.value) == HPLR_OK);
     CHECK(hplr_release_mosaic(mosaic.lease, &error.value) == HPLR_E_OWNERSHIP);
     CHECK(hplr_process(handle, &error.value) == HPLR_OK);
+    mosaic = output<hplr_mosaic_descriptor>();
+    CHECK(hplr_borrow_mosaic(handle, &mosaic, &error.value) == HPLR_E_STATE);
     auto processed = output<hplr_image_descriptor>();
     CHECK(hplr_make_processed_image(handle, &processed, &error.value) == HPLR_OK);
     CHECK(processed.bits_per_sample == 16 && processed.channels == 3);
     CHECK(hplr_free_image(processed.allocation, &error.value) == HPLR_OK);
+    CHECK(hplr_close(handle, &error.value) == HPLR_OK);
+}
+
+void abi_v3_configuration(const std::filesystem::path &fixture) {
+    Error error;
+    const auto handle = open(fixture);
+    CHECK(hplr_unpack(handle, &error.value) == HPLR_OK);
+    auto dimensions = output<hplr_dimensions>();
+    CHECK(hplr_get_dimensions(handle, &dimensions, &error.value) == HPLR_OK);
+    hplr_test_params defaults{};
+    CHECK(hplr_test_get_params(handle, &defaults, &error.value) == HPLR_OK);
+
+    auto config = linear();
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_OK);
+    hplr_test_params absent{};
+    CHECK(hplr_test_get_params(handle, &absent, &error.value) == HPLR_OK);
+    CHECK(absent.user_sat == defaults.user_sat);
+    CHECK(absent.user_qual == defaults.user_qual);
+    for (uint32_t index = 0; index < 4; ++index)
+        CHECK(absent.cropbox[index] == defaults.cropbox[index]);
+
+    config.user_sat = 65535;
+    config.user_qual_present = 1;
+    config.user_qual = 0;
+    config.cropbox_present = 1;
+    config.cropbox[0] = 7;
+    config.cropbox[1] = 9;
+    config.cropbox[2] = 64;
+    config.cropbox[3] = 48;
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_OK);
+    hplr_test_params present{};
+    CHECK(hplr_test_get_params(handle, &present, &error.value) == HPLR_OK);
+    CHECK(present.user_sat == 65535 && present.user_qual == 0);
+    for (uint32_t index = 0; index < 4; ++index)
+        CHECK(present.cropbox[index] == config.cropbox[index]);
+
+    config = linear();
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_OK);
+    hplr_test_params reset{};
+    CHECK(hplr_test_get_params(handle, &reset, &error.value) == HPLR_OK);
+    CHECK(reset.user_sat == defaults.user_sat && reset.user_qual == defaults.user_qual);
+    for (uint32_t index = 0; index < 4; ++index)
+        CHECK(reset.cropbox[index] == defaults.cropbox[index]);
+
+    for (const int32_t quality : {0, 1, 2, 3, 4, 11, 12}) {
+        config = linear();
+        config.user_qual_present = 1;
+        config.user_qual = quality;
+        CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_OK);
+    }
+
+    config.user_sat = -1;
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_E_ARGUMENT);
+    config.user_sat = 65536;
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_E_ARGUMENT);
+    config = linear();
+    config.user_qual_present = 1;
+    config.user_qual = 5;
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_E_ARGUMENT);
+    config = linear();
+    config.cropbox_present = 1;
+    config.cropbox[0] = UINT32_MAX;
+    config.cropbox[2] = 1;
+    config.cropbox[3] = 1;
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_E_ARGUMENT);
+    config.cropbox[0] = 0;
+    config.cropbox[2] = 0;
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_E_ARGUMENT);
+    config.cropbox[0] = dimensions.visible_width;
+    config.cropbox[2] = 1;
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_E_ARGUMENT);
+
+    config = linear();
+    config.cropbox_present = 1;
+    config.cropbox[0] = 1;
+    config.cropbox[2] = config.cropbox[3] = 16;
+    CHECK(hplr_test_set_crop_class(handle, 1, 0, &error.value) == HPLR_OK);
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_E_ARGUMENT);
+    config.cropbox[0] = 16;
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_OK);
+    CHECK(hplr_test_set_crop_class(handle, 9, 0, &error.value) == HPLR_OK);
+    config.cropbox[0] = 1;
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_E_ARGUMENT);
+    config.cropbox[0] = 6;
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_OK);
+    CHECK(hplr_test_set_crop_class(handle, 9, 1, &error.value) == HPLR_OK);
+    CHECK(hplr_configure_output(handle, &config, &error.value) == HPLR_E_ARGUMENT);
     CHECK(hplr_close(handle, &error.value) == HPLR_OK);
 }
 
@@ -303,6 +394,7 @@ int main(int argc, char **argv) {
     facts_and_lifetime(fixture);
     optional_camera_facts(fixture);
     configuration_and_failures(fixture);
+    abi_v3_configuration(fixture);
     concurrent_rejection(fixture);
     unsupported_mosaic(fixture);
     variant_serialization(fixture);

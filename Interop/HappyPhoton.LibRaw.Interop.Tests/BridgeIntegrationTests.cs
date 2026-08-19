@@ -33,7 +33,7 @@ public sealed class BridgeIntegrationTests
         Environment.SetEnvironmentVariable("HAPPY_PHOTON_LIBRAW_BRIDGE_DIR", staging.Path);
 
         var runtime = LibRawContext.Runtime;
-        Assert.Equal(2u, runtime.BridgeAbiVersion);
+        Assert.Equal(3u, runtime.BridgeAbiVersion);
         Assert.Equal(0x001602u, runtime.LibRawVersionNumber);
         AssertPathAndHash(bridgeName, staging.Path, bridgeHash);
         AssertPathAndHash(librawName, staging.Path, librawHash);
@@ -78,11 +78,17 @@ public sealed class BridgeIntegrationTests
         {
             Assert.NotNull(mosaic);
             Assert.False(mosaic!.Samples.IsEmpty);
+            var original = mosaic.Samples[0];
+            mosaic.Samples[0] ^= 1;
+            Assert.NotEqual(original, mosaic.Samples[0]);
+            mosaic.Samples[0] = original;
+            Assert.Throws<LibRawProgrammingException>(() => context.BorrowMosaic());
             Assert.Throws<LibRawProgrammingException>(() => context.Process());
         }
         context.ConfigureOutput(LibRawOutputConfiguration.Linear(
             LibRawHighlightMode.Clip, LibRawFbddMode.Off, true));
         context.Process();
+        Assert.Throws<LibRawProgrammingException>(() => context.BorrowMosaic());
         using var image = context.MakeProcessedImage();
         Assert.Equal(16u, image.Description.BitsPerSample);
         Assert.Equal(3u, image.Description.Channels);

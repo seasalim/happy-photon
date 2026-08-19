@@ -17,6 +17,9 @@ typedef struct hplr_test_params {
     int32_t use_camera_wb;
     int32_t use_auto_wb;
     int32_t use_camera_matrix;
+    int32_t user_sat;
+    int32_t user_qual;
+    uint32_t cropbox[4];
     int32_t user_flip;
     int32_t use_fuji_rotate;
     int32_t use_p1_correction;
@@ -42,6 +45,10 @@ HPLR_API int32_t HPLR_CALL hplr_test_hold_libraw(hplr_handle handle,
 HPLR_API int32_t HPLR_CALL hplr_test_set_camera_facts(hplr_handle handle,
                                                        uint32_t optional_facts,
                                                        hplr_error *error);
+HPLR_API int32_t HPLR_CALL hplr_test_set_crop_class(hplr_handle handle,
+                                                     uint32_t filters,
+                                                     uint32_t fuji_width,
+                                                     hplr_error *error);
 
 #ifdef __cplusplus
 }

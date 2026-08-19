@@ -285,7 +285,7 @@ def main() -> None:
     feature = json.loads(args.feature_probe.read_text(encoding="utf-8"))
     threading = json.loads(args.thread_comparison.read_text(encoding="utf-8"))
     options = json.loads(args.build_options.read_text(encoding="utf-8"))
-    require(probe["bridge_abi"] == 2, "bridge ABI is not 2")
+    require(probe["bridge_abi"] == 3, "bridge ABI is not 3")
     require(probe["libraw_version"] == 0x001602, "LibRaw version is not 0.22.2")
     require(probe["capabilities"] & JPEG_CAPABILITY, "JPEG capability bit is absent")
     require(probe["capabilities"] & ZLIB_CAPABILITY, "zlib capability bit is absent")
@@ -293,6 +293,14 @@ def main() -> None:
     require(options.get("configuration") == "Release", "candidate is not a Release build")
     require(feature["lcms"] is (args.rid != "osx-arm64"), "LCMS functional probe mismatch")
     require(feature["openmp"] is (args.rid != "osx-arm64"), "OpenMP probe mismatch")
+    require(isinstance(probe.get("default_checksum"), str) and
+            bool(probe["default_checksum"]),
+            "bridge default-configuration checksum is missing")
+    require(feature.get("output_defaults") == {
+        "user_sat": -1,
+        "user_qual": -1,
+        "cropbox": [0, 0, 4294967295, 4294967295],
+    }, "LibRaw output defaults do not match the ABI v3 absence contract")
     require(threading["enabled"] is (args.rid != "osx-arm64"),
             "OpenMP comparison enablement mismatch")
     if threading["enabled"]:

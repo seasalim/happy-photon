@@ -16,6 +16,6 @@
     <InternalsVisibleTo Include="HappyPhoton.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="HappyPhoton.LibRaw.Native" Version="0.22.2.10" />
+    <PackageReference Include="HappyPhoton.LibRaw.Native" Version="0.22.2.11" />
   </ItemGroup>
 </Project>

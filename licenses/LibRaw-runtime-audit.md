@@ -1,10 +1,10 @@
 # LibRaw native runtime audit
 
-> **Current shipped runtime: `HappyPhoton.LibRaw.Native` 0.22.2.10
+> **Current shipped runtime: `HappyPhoton.LibRaw.Native` 0.22.2.11
 > (LibRaw 0.22.2).** The sections immediately below document the
 > SUPERSEDED Sdcb-based 0.21.1 baseline and are retained for provenance
 > history only. Sdcb was removed in `975e118`. For what ships today, see
-> the 0.22.2.10 qualification, per-RID contents, and package hashes later
+> the 0.22.2.11 qualification, per-RID contents, and package hashes later
 > in this document, and the "Redistribution basis and sources" section,
 > which always describes the CURRENT release.
 
@@ -629,3 +629,66 @@ as co-tenancy noise. This entry records the package swap: the 0.22.2.7
 pair is removed from `packages/native/` (its qualification above remains
 the historical record) and 0.22.2.10 is committed with its provenance
 file.
+
+## 2026-08-18 — Bridge ABI v3 qualifying dispatch (0.22.2.11)
+
+Workflow run 32201035781 (revision `0.22.2.11`, source commit
+`11f4bbcc5b6a`, pinned vcpkg revision
+`c4d9956c0c10a4742840a5e7d93efa2e0015c865`) built the first bridge ABI 3
+package. The mosaic lease becomes mutable — writes made before release
+are the mosaic the following `hplr_process` demosaics — and
+`hplr_output_config` grows an additive tail carrying an optional
+post-black saturation ceiling, a named demosaic-quality request, and a
+full-resolution crop box. The two fields whose zero value is not inert
+in LibRaw carry `_present` companions, so a zero-initialized
+configuration remains pixel-identical to ABI 2. Every job was green on
+the first attempt, including ASAN/UBSAN and the per-RID probe
+validation, which now also asserts that a directly linked LibRaw reports
+`user_sat = -1`, `user_qual = -1`, and
+`cropbox = {0, 0, UINT_MAX, UINT_MAX}` — the absence contract the new
+fields restore. Downloaded and hash-verified by the orchestrator:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `HappyPhoton.LibRaw.Native.0.22.2.11.nupkg` (2,588,145 bytes) | `80673A01E41051B98888D5681855006A7826FEF532C78E0D84CB67489E780FCB` |
+| `native-provenance.json` (combined) | `91E7B47FDB67661BEA8A6838162A6D8458E6A2DDE74BF3B0D17C25E78804FE2C` |
+
+Contract results: bridge ABI 3, LibRaw `0x001602`, capability mask
+`0x000000C0`, reentrant `_r` on win-x64/linux-x64, non-reentrant
+osx-arm64. The candidate smoke now records a default-configuration
+output checksum per RID: win-x64 and linux-x64 both produce
+`83CAD273F42C521F`, and osx-arm64 produces `7F0B39568B21297D`. Loader
+and OS floors are unchanged from 0.22.2.10, with `libgomp.so.1`
+remaining the approved Linux system prerequisite.
+
+LibRaw itself is unchanged and the delta is confined to the bridge: the
+linux-x64 `libraw_r.so.25` and osx-arm64 `libraw.25.dylib` hashes are
+identical to the approved 0.22.2.10 binaries. Every win-x64 binary
+differs, as expected MSVC rebuild nondeterminism and consistent with the
+0.22.2.10 record. The linux-x64 `libjpeg.so.8` hash also differs despite
+an identical libjpeg-turbo 3.2.0 source SHA-512 and an identical vcpkg
+package ABI hash, so that reading is build nondeterminism rather than a
+dependency change.
+
+Performance against the 0.21.1 native baseline: native peak memory, the
+fatal gate, was flat on every RID (win +0.42%/+0.43%, linux
++0.22%/+0.11%, macOS +2.64%/+0.68% for preview/full) and no reading was
+repeatable. Elapsed was `accepted-elapsed-flagged` on win-x64
+(+25.90% median, repeatable) and osx-arm64 (+28.41% median, repeatable)
+for `linear16-preview`. That gate compares against 0.21.1, not against
+the shipped 0.22.2.10, so it does not isolate this change. The
+orchestrator measured the actual ABI 2 to ABI 3 delta directly, building
+both revisions on one machine from `main` and the feature branch and
+taking five paired samples: `linear16-preview` −1.12% and `srgb8-full`
+−0.24%. The same comparison produced byte-identical output checksums for
+both configurations (`D732B370A61E493E` at 1737x1157 and
+`7D7249EE6AAED581` at 3474x2314), confirming the ABI v3 defaults move no
+pixels. The flagged elapsed readings are therefore runner variance in
+the 0.21.1 comparison, not a regression introduced here.
+
+**Checkpoint approval (2026-08-18):** the user approved the three native
+sets, the ABI 3 layout evidence, the flagged elapsed readings as
+baseline-comparison variance, and the libjpeg nondeterminism reading.
+This entry records the package swap: the 0.22.2.10 pair is removed from
+`packages/native/` (its qualification above remains the historical
+record) and 0.22.2.11 is committed with its provenance file.

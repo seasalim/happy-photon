@@ -1,6 +1,7 @@
 #include "bridge_internal.hpp"
 
 #include <algorithm>
+#include <climits>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -60,6 +61,42 @@ int32_t require_no_allocation(hplr::Context &context, hplr_error *error) {
     if (context.allocations.load(std::memory_order_acquire))
         return hplr::fail(error, HPLR_E_BUSY, HPLR_ERROR_PROGRAMMING, 0,
                           "owned image allocation must be freed first");
+    return HPLR_OK;
+}
+
+bool named_quality(int32_t value) {
+    switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 11:
+    case 12:
+        return true;
+    default:
+        return false;
+    }
+}
+
+int32_t validate_crop(const hplr_output_config &config, const hplr::Context &context,
+                      hplr_error *error) {
+    constexpr uint32_t xtrans_filters = 9;
+    if (!config.cropbox_present) return HPLR_OK;
+    const auto &sizes = context.raw.imgdata.rawdata.sizes;
+    const auto &rawdata = context.raw.imgdata.rawdata;
+    const auto &identity = rawdata.iparams;
+    const auto x = config.cropbox[0];
+    const auto y = config.cropbox[1];
+    const auto width = config.cropbox[2];
+    const auto height = config.cropbox[3];
+    if (!width || !height || x > INT_MAX || y > INT_MAX || width > INT_MAX ||
+        height > INT_MAX || static_cast<uint64_t>(x) + width > sizes.width ||
+        static_cast<uint64_t>(y) + height > sizes.height || rawdata.ioparams.fuji_width ||
+        (identity.filters == xtrans_filters && (x % 6 || y % 6)) ||
+        (identity.filters == 1 && (x % 16 || y % 16)))
+        return hplr::fail(error, HPLR_E_ARGUMENT, HPLR_ERROR_PROGRAMMING, 0,
+                          "crop must be a verbatim in-bounds visible-frame region");
     return HPLR_OK;
 }
 
@@ -142,7 +179,10 @@ extern "C" int32_t HPLR_CALL hplr_configure_output(hplr_handle handle,
             config->output_color < 0 || config->output_color > 8 ||
             config->highlight_mode < 0 || config->fbdd_noise_reduction < 0 ||
             config->fbdd_noise_reduction > 2 || config->gamma_power <= 0 ||
-            config->gamma_slope <= 0)
+            config->gamma_slope <= 0 || config->user_sat < 0 ||
+            config->user_sat > UINT16_MAX || config->user_qual_present > 1 ||
+            config->cropbox_present > 1 ||
+            (config->user_qual_present && !named_quality(config->user_qual)))
             return hplr::fail(error, HPLR_E_ARGUMENT, HPLR_ERROR_PROGRAMMING, 0,
                               "output configuration contains an invalid value");
         std::unique_ptr<hplr::Operation> operation;
@@ -151,6 +191,8 @@ extern "C" int32_t HPLR_CALL hplr_configure_output(hplr_handle handle,
         if (operation->get().state != hplr::State::Unpacked)
             return hplr::fail(error, HPLR_E_STATE, HPLR_ERROR_PROGRAMMING, 0,
                               "configuration requires successful unpack");
+        if ((status = validate_crop(*config, operation->get(), error)) != HPLR_OK)
+            return status;
         auto &params = operation->get().raw.imgdata.params;
         params.output_bps = config->output_bits;
         params.output_color = config->output_color;
@@ -165,6 +207,15 @@ extern "C" int32_t HPLR_CALL hplr_configure_output(hplr_handle handle,
         std::copy(std::begin(config->user_mul), std::end(config->user_mul),
                   std::begin(params.user_mul));
         params.use_camera_matrix = config->use_camera_matrix;
+        params.user_sat = config->user_sat > 0 ? config->user_sat : -1;
+        params.user_qual = config->user_qual_present ? config->user_qual : -1;
+        if (config->cropbox_present) {
+            std::copy(std::begin(config->cropbox), std::end(config->cropbox),
+                      std::begin(params.cropbox));
+        } else {
+            params.cropbox[0] = params.cropbox[1] = 0;
+            params.cropbox[2] = params.cropbox[3] = UINT_MAX;
+        }
         return static_cast<int32_t>(HPLR_OK);
     });
 }

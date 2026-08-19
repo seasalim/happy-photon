@@ -5,7 +5,7 @@ namespace HappyPhoton.LibRaw.Interop;
 
 internal static unsafe class NativeApi
 {
-    private const uint Abi = 2;
+    private const uint Abi = 3;
     private const int ErrorCapacity = 512;
 
     internal static LibRawRuntime Runtime()
@@ -146,7 +146,7 @@ internal static unsafe class NativeApi
         }
     }
 
-    private static NativeOutputConfig ToNative(LibRawOutputConfiguration value)
+    internal static NativeOutputConfig ToNative(LibRawOutputConfiguration value)
     {
         NativeOutputConfig native = Init<NativeOutputConfig>();
         native.OutputBits = value.OutputBits;
@@ -164,6 +164,17 @@ internal static unsafe class NativeApi
         native.UserMultipliers[2] = value.UserMultiplier2;
         native.UserMultipliers[3] = value.UserMultiplier3;
         native.UseCameraMatrix = value.UseCameraMatrix ? 1 : 0;
+        native.UserSaturation = value.UserSaturation ?? 0;
+        native.UserQualityPresent = value.UserQuality.HasValue ? 1u : 0u;
+        native.UserQuality = value.UserQuality.HasValue ? (int)value.UserQuality.Value : 0;
+        native.CropBoxPresent = value.CropBox.HasValue ? 1u : 0u;
+        if (value.CropBox is { } crop)
+        {
+            native.CropBox[0] = crop.X;
+            native.CropBox[1] = crop.Y;
+            native.CropBox[2] = crop.Width;
+            native.CropBox[3] = crop.Height;
+        }
         return native;
     }
 

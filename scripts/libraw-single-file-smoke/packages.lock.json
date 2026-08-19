@@ -10,28 +10,28 @@
       },
       "HappyPhoton.LibRaw.Native": {
         "type": "Transitive",
-        "resolved": "0.22.2.10",
-        "contentHash": "S1nBt/BqCIEJZEr7BHeUYrYZOkmAXZbGUajIWiojHEJcoifw6bSOnFXg8qi4WJpiR9eAMnA1bwGzfBIrT+b6nA=="
+        "resolved": "0.22.2.11",
+        "contentHash": "mHn9hWwvru5+ST5nUYnjQiY3j1PhW6/PLZJLdOLy3k304IXLb3G6KvePjSGdcliKAmG5oaaPegssaUMxqQV+3g=="
       },
       "happyphoton.libraw.interop": {
         "type": "Project",
         "dependencies": {
-          "HappyPhoton.LibRaw.Native": "[0.22.2.10, )"
+          "HappyPhoton.LibRaw.Native": "[0.22.2.11, )"
         }
       }
     },
     "net10.0/linux-x64": {
       "HappyPhoton.LibRaw.Native": {
         "type": "Transitive",
-        "resolved": "0.22.2.10",
-        "contentHash": "S1nBt/BqCIEJZEr7BHeUYrYZOkmAXZbGUajIWiojHEJcoifw6bSOnFXg8qi4WJpiR9eAMnA1bwGzfBIrT+b6nA=="
+        "resolved": "0.22.2.11",
+        "contentHash": "mHn9hWwvru5+ST5nUYnjQiY3j1PhW6/PLZJLdOLy3k304IXLb3G6KvePjSGdcliKAmG5oaaPegssaUMxqQV+3g=="
       }
     },
     "net10.0/win-x64": {
       "HappyPhoton.LibRaw.Native": {
         "type": "Transitive",
-        "resolved": "0.22.2.10",
-        "contentHash": "S1nBt/BqCIEJZEr7BHeUYrYZOkmAXZbGUajIWiojHEJcoifw6bSOnFXg8qi4WJpiR9eAMnA1bwGzfBIrT+b6nA=="
+        "resolved": "0.22.2.11",
+        "contentHash": "mHn9hWwvru5+ST5nUYnjQiY3j1PhW6/PLZJLdOLy3k304IXLb3G6KvePjSGdcliKAmG5oaaPegssaUMxqQV+3g=="
       }
     }
   }

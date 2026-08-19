@@ -17,7 +17,7 @@ locked for the `v0.1.0` preparation branch.
 | Microsoft.NET.ILLink.Tasks | 10.0.8 | MIT |
 | ModelContextProtocol and ModelContextProtocol.AspNetCore | 1.4.1 | Apache-2.0 |
 | SQLitePCLRaw.bundle_e_sqlite3 | 3.0.3 | Apache-2.0 |
-| HappyPhoton.LibRaw.Native | 0.22.2.10 | GPL-3.0-or-later; bundled components retain their own terms |
+| HappyPhoton.LibRaw.Native | 0.22.2.11 | GPL-3.0-or-later; bundled components retain their own terms |
 
 The canonical Apache-2.0 text is distributed in
 [`licenses/Apache-2.0.txt`](licenses/Apache-2.0.txt). MIT notices are retained
@@ -37,7 +37,7 @@ binary release archives must include that file.
 
 ## Happy Photon LibRaw native package
 
-`HappyPhoton.LibRaw.Native` 0.22.2.10 supplies the Happy Photon bridge and
+`HappyPhoton.LibRaw.Native` 0.22.2.11 supplies the Happy Photon bridge and
 LibRaw 0.22.2 runtimes selected by NuGet for Windows x64, Linux x64, and Apple
 Silicon macOS. The package was built from the audited sources and provenance
 recorded in [`licenses/LibRaw-runtime-audit.md`](licenses/LibRaw-runtime-audit.md).

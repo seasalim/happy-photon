@@ -156,13 +156,13 @@ dotnet run --file scripts/evaluate-highlight-reconstruction.cs -- `
 
 ### 2.4 Platform runtime
 
-All supported platforms use `HappyPhoton.LibRaw.Native` 0.22.2.10 through the phase-2
+All supported platforms use `HappyPhoton.LibRaw.Native` 0.22.2.11 through the phase-2
 binding. NuGet selects the matching RID assets. The binding resolves the bridge and its
 LibRaw 0.22.2 companion from one package-local directory by absolute path; it never
 allows a system or PATH copy to satisfy either name. Single-file extraction uses the
 runtime's native search-directory contract, while loose development builds use their
 RID-resolved output directory. `LibRawNativeSupport` performs one process-wide health
-probe. It requires bridge ABI 2, numeric LibRaw version `0x001602` exactly, and
+probe. It requires bridge ABI 3, numeric LibRaw version `0x001602` exactly, and
 LibRaw's JPEG and zlib capability bits. An ABI mismatch stops before the versioned
 runtime structure is queried. Resolution and load failures retain
 bridge-versus-companion attribution, and every rejection records the safely observed
@@ -172,6 +172,13 @@ unavailable until the installation is repaired; the About surface reports this d
 state and includes the same facts in copied support text. Header-only RAW `Ping`, EXIF
 thumbnail extraction, orientation reads, and decoding already-extracted preview bytes
 remain permitted because they do not decode the RAW raster.
+
+Bridge ABI 3 exposes a mutable mosaic lease whose writes are consumed by the following
+LibRaw process call. Its output configuration also carries optional `user_sat`, named
+`user_qual` requests, and an accept-only-verbatim full-resolution crop box. These are
+interop capabilities only: `RawBaseLoader` does not use them until a pipeline consumer
+defines the corresponding decode contract. An absent quality or crop restores LibRaw's
+own sentinel, so the existing zero-initialized configuration remains pixel-identical.
 
 The same loader parameters and golden fixtures cover Windows, Linux, and macOS. The
 cross-platform comparison uses the mean ΔE bound documented in TESTING.md §3.

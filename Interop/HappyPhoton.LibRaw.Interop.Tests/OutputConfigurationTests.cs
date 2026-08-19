@@ -68,6 +68,103 @@ public sealed class OutputConfigurationTests
         Assert.Equal([0f, 0f, 0f, 0f], Multipliers(value));
     }
 
+    [Fact]
+    public unsafe void OptionalAbiV3Fields_MapPresenceAndValuesExplicitly()
+    {
+        var value = LibRawOutputConfiguration.Linear(
+            LibRawHighlightMode.Clip, LibRawFbddMode.Off, halfSize: false) with
+        {
+            UserSaturation = 65535,
+            UserQuality = LibRawDemosaicQuality.Dht,
+            CropBox = new(7, 9, 101, 103)
+        };
+
+        value.Validate();
+        var native = NativeApi.ToNative(value);
+
+        Assert.Equal(65535, native.UserSaturation);
+        Assert.Equal(1u, native.UserQualityPresent);
+        Assert.Equal(11, native.UserQuality);
+        Assert.Equal(1u, native.CropBoxPresent);
+        Assert.Equal(new uint[] { 7, 9, 101, 103 },
+            new ReadOnlySpan<uint>(native.CropBox, 4).ToArray());
+    }
+
+    [Fact]
+    public unsafe void OptionalAbiV3Fields_DefaultToNativeAbsence()
+    {
+        var value = LibRawOutputConfiguration.Linear(
+            LibRawHighlightMode.Clip, LibRawFbddMode.Off, halfSize: false);
+
+        var native = NativeApi.ToNative(value);
+
+        Assert.Null(value.UserSaturation);
+        Assert.Null(value.UserQuality);
+        Assert.Null(value.CropBox);
+        Assert.Equal(0, native.UserSaturation);
+        Assert.Equal(0u, native.UserQualityPresent);
+        Assert.Equal(0, native.UserQuality);
+        Assert.Equal(0u, native.CropBoxPresent);
+        Assert.Equal(new uint[4], new ReadOnlySpan<uint>(native.CropBox, 4).ToArray());
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(65536)]
+    public void UserSaturation_RejectsUnrepresentableValues(int saturation)
+    {
+        var value = LibRawOutputConfiguration.Linear(
+            LibRawHighlightMode.Clip, LibRawFbddMode.Off, halfSize: false) with
+        {
+            UserSaturation = saturation
+        };
+
+        Assert.Throws<ArgumentException>(value.Validate);
+    }
+
+    [Fact]
+    public void UserQuality_RejectsUnnamedRequests()
+    {
+        var value = LibRawOutputConfiguration.Linear(
+            LibRawHighlightMode.Clip, LibRawFbddMode.Off, halfSize: false) with
+        {
+            UserQuality = (LibRawDemosaicQuality)5
+        };
+
+        Assert.Throws<ArgumentException>(value.Validate);
+    }
+
+    [Theory]
+    [InlineData(LibRawDemosaicQuality.Linear)]
+    [InlineData(LibRawDemosaicQuality.Vng)]
+    [InlineData(LibRawDemosaicQuality.Ppg)]
+    [InlineData(LibRawDemosaicQuality.Ahd)]
+    [InlineData(LibRawDemosaicQuality.Dcb)]
+    [InlineData(LibRawDemosaicQuality.Dht)]
+    [InlineData(LibRawDemosaicQuality.Aahd)]
+    public void UserQuality_AcceptsEveryNamedRequest(LibRawDemosaicQuality quality)
+    {
+        var value = LibRawOutputConfiguration.Linear(
+            LibRawHighlightMode.Clip, LibRawFbddMode.Off, halfSize: false) with
+        {
+            UserQuality = quality
+        };
+
+        value.Validate();
+    }
+
+    [Fact]
+    public void CropBox_RejectsEmptyOrNonRepresentableCoordinates()
+    {
+        var baseline = LibRawOutputConfiguration.Linear(
+            LibRawHighlightMode.Clip, LibRawFbddMode.Off, halfSize: false);
+
+        Assert.Throws<ArgumentException>((baseline with
+            { CropBox = new(0, 0, 0, 10) }).Validate);
+        Assert.Throws<ArgumentException>((baseline with
+            { CropBox = new((uint)int.MaxValue + 1, 0, 10, 10) }).Validate);
+    }
+
     private static float[] Multipliers(LibRawOutputConfiguration value) =>
         [value.UserMultiplier0, value.UserMultiplier1,
          value.UserMultiplier2, value.UserMultiplier3];

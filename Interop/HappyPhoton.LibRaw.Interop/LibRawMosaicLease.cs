@@ -47,7 +47,7 @@ public sealed unsafe class LibRawMosaicLease : IDisposable
     public uint[] CBlack { get; }
     private int SampleCount { get; }
 
-    public ReadOnlySpan<ushort> Samples => _data == 0
+    public Span<ushort> Samples => _data == 0
         ? throw new ObjectDisposedException(nameof(LibRawMosaicLease))
         : new((void*)_data, SampleCount);
 

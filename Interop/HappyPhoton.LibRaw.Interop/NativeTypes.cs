@@ -136,6 +136,11 @@ internal unsafe struct NativeOutputConfig
     internal int UseCameraWhiteBalance, UseAutoWhiteBalance;
     internal fixed float UserMultipliers[4];
     internal int UseCameraMatrix, Reserved;
+    internal int UserSaturation;
+    internal uint UserQualityPresent;
+    internal int UserQuality;
+    internal uint CropBoxPresent;
+    internal fixed uint CropBox[4];
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 8)]

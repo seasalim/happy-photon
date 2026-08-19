@@ -99,7 +99,7 @@ public sealed class RawBaseLoaderTests
     {
         var runtime = LibRawContext.Runtime;
 
-        Assert.Equal(2u, runtime.BridgeAbiVersion);
+        Assert.Equal(LibRawOutputConfiguration.Version, runtime.BridgeAbiVersion);
         Assert.Equal(0x001602u, runtime.LibRawVersionNumber);
         Assert.StartsWith("0.22.2", runtime.LibRawVersion);
         Assert.NotEqual(0u, runtime.Capabilities & LibRawCapabilities.Jpeg);

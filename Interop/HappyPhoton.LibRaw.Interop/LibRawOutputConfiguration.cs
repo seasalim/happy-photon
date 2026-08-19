@@ -13,10 +13,25 @@ public enum LibRawFbddMode
     Full = 2
 }
 
+/// <summary>A named LibRaw demosaic request; the sensor may select its documented fallback.</summary>
+public enum LibRawDemosaicQuality
+{
+    Linear = 0,
+    Vng = 1,
+    Ppg = 2,
+    Ahd = 3,
+    Dcb = 4,
+    Dht = 11,
+    Aahd = 12
+}
+
+/// <summary>A full-resolution, pre-rotation region inside the visible RAW frame.</summary>
+public readonly record struct LibRawCropBox(uint X, uint Y, uint Width, uint Height);
+
 /// <summary>A native-independent, versioned description of LibRaw output.</summary>
 public readonly record struct LibRawOutputConfiguration
 {
-    public const uint Version = 2;
+    public const uint Version = 3;
 
     public uint AbiVersion { get; init; }
     public int OutputBits { get; init; }
@@ -34,6 +49,9 @@ public readonly record struct LibRawOutputConfiguration
     public float UserMultiplier2 { get; init; }
     public float UserMultiplier3 { get; init; }
     public bool UseCameraMatrix { get; init; }
+    public int? UserSaturation { get; init; }
+    public LibRawDemosaicQuality? UserQuality { get; init; }
+    public LibRawCropBox? CropBox { get; init; }
 
     public static LibRawOutputConfiguration Linear(
         LibRawHighlightMode highlight,
@@ -92,7 +110,11 @@ public readonly record struct LibRawOutputConfiguration
             throw new ArgumentException("Unsupported output configuration version.");
         if (OutputBits is not (8 or 16) || OutputColor is < 0 or > 8 ||
             GammaPower <= 0 || GammaSlope <= 0 || HighlightMode < 0 ||
-            FbddNoiseReduction is < 0 or > 2)
+            FbddNoiseReduction is < 0 or > 2 || UserSaturation is < 0 or > ushort.MaxValue ||
+            (UserQuality is { } quality && !Enum.IsDefined(quality)) ||
+            (CropBox is { } crop && (crop.Width == 0 || crop.Height == 0 ||
+                crop.X > int.MaxValue || crop.Y > int.MaxValue ||
+                crop.Width > int.MaxValue || crop.Height > int.MaxValue)))
             throw new ArgumentException("Output configuration contains an invalid value.");
     }
 }

@@ -229,6 +229,10 @@ extern "C" int32_t HPLR_CALL hplr_test_get_params(hplr_handle handle,
         out_value->use_camera_wb = params.use_camera_wb;
         out_value->use_auto_wb = params.use_auto_wb;
         out_value->use_camera_matrix = params.use_camera_matrix;
+        out_value->user_sat = params.user_sat;
+        out_value->user_qual = params.user_qual;
+        std::copy(std::begin(params.cropbox), std::end(params.cropbox),
+                  std::begin(out_value->cropbox));
         out_value->user_flip = params.user_flip;
         out_value->use_fuji_rotate = params.use_fuji_rotate;
         out_value->use_p1_correction = params.use_p1_correction;
@@ -293,6 +297,19 @@ extern "C" int32_t HPLR_CALL hplr_test_set_camera_facts(hplr_handle handle,
             for (uint32_t column = 0; column < 4; ++column)
                 color.rgb_cam[row][column] = static_cast<float>(
                     300 + row * 10 + column);
+        return static_cast<int32_t>(HPLR_OK);
+    });
+}
+
+extern "C" int32_t HPLR_CALL hplr_test_set_crop_class(hplr_handle handle,
+    uint32_t filters, uint32_t fuji_width, hplr_error *error) {
+    return hplr::boundary(error, [&]() -> int32_t {
+        std::unique_ptr<hplr::Operation> operation;
+        auto status = hplr::begin(handle, operation, error);
+        if (status != HPLR_OK) return status;
+        auto &rawdata = operation->get().raw.imgdata.rawdata;
+        rawdata.iparams.filters = filters;
+        rawdata.ioparams.fuji_width = static_cast<ushort>(fuji_width);
         return static_cast<int32_t>(HPLR_OK);
     });
 }

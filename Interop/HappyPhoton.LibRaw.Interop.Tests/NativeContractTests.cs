@@ -9,36 +9,88 @@ public sealed unsafe class NativeContractTests
     [Fact]
     public void ManagedLayouts_MirrorBridgeHeader()
     {
-        Assert.Equal(32, Unsafe.SizeOf<NativeError>());
-        Assert.Equal(16, Marshal.OffsetOf<NativeError>(nameof(NativeError.Text)).ToInt32());
-        Assert.Equal(152, Unsafe.SizeOf<NativeRuntimeInfo>());
-        Assert.Equal(40, Unsafe.SizeOf<NativeDimensions>());
-        Assert.Equal(72, Unsafe.SizeOf<NativeSensorIdentity>());
-        Assert.Equal(32, Unsafe.SizeOf<NativeGpsFacts>());
-        Assert.Equal(760, Unsafe.SizeOf<NativeMetadata>());
-        Assert.Equal(180, Unsafe.SizeOf<NativeCameraFacts>());
-        Assert.Equal(0, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.AbiVersion)));
-        Assert.Equal(4, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.StructSize)));
-        Assert.Equal(8, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.MultiplierCount)));
-        Assert.Equal(12, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.Multipliers)));
-        Assert.Equal(28, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.MatrixRows)));
-        Assert.Equal(32, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.MatrixColumns)));
-        Assert.Equal(36, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.CameraToSrgb)));
-        Assert.Equal(84, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.PreMultiplierCount)));
-        Assert.Equal(88, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.PreMultipliers)));
-        Assert.Equal(104, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.CameraFromXyzRows)));
-        Assert.Equal(108, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.CameraFromXyzColumns)));
-        Assert.Equal(112, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.CameraFromXyz)));
-        Assert.Equal(160, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.LinearMaxCount)));
-        Assert.Equal(164, OffsetOf<NativeCameraFacts>(nameof(NativeCameraFacts.LinearMax)));
-        Assert.Equal(32, Unsafe.SizeOf<NativeFujiFacts>());
-        Assert.Equal(80, Unsafe.SizeOf<NativeOutputConfig>());
-        Assert.Equal(16, Marshal.OffsetOf<NativeOutputConfig>(nameof(NativeOutputConfig.GammaPower)).ToInt32());
-        Assert.Equal(56, Marshal.OffsetOf<NativeOutputConfig>(nameof(NativeOutputConfig.UserMultipliers)).ToInt32());
-        Assert.Equal(56, Unsafe.SizeOf<NativeImageDescriptor>());
-        Assert.Equal(48, Marshal.OffsetOf<NativeImageDescriptor>(nameof(NativeImageDescriptor.Allocation)).ToInt32());
-        Assert.Equal(16496, Unsafe.SizeOf<NativeMosaicDescriptor>());
-        Assert.Equal(72, Marshal.OffsetOf<NativeMosaicDescriptor>(nameof(NativeMosaicDescriptor.Cblack)).ToInt32());
+        AssertLayout<NativeError>(32,
+            (nameof(NativeError.AbiVersion), 0), (nameof(NativeError.StructSize), 4),
+            (nameof(NativeError.ErrorClass), 8), (nameof(NativeError.NativeCode), 12),
+            (nameof(NativeError.Text), 16), (nameof(NativeError.TextCapacity), 24),
+            (nameof(NativeError.TextLength), 28));
+        AssertLayout<NativeRuntimeInfo>(152,
+            (nameof(NativeRuntimeInfo.AbiVersion), 0), (nameof(NativeRuntimeInfo.StructSize), 4),
+            (nameof(NativeRuntimeInfo.LibRawVersionNumber), 8), (nameof(NativeRuntimeInfo.Capabilities), 12),
+            (nameof(NativeRuntimeInfo.ThreadSafeVariant), 16), (nameof(NativeRuntimeInfo.VersionStringLength), 20),
+            (nameof(NativeRuntimeInfo.VersionString), 24));
+        AssertLayout<NativeDimensions>(40,
+            (nameof(NativeDimensions.AbiVersion), 0), (nameof(NativeDimensions.StructSize), 4),
+            (nameof(NativeDimensions.RawWidth), 8), (nameof(NativeDimensions.RawHeight), 12),
+            (nameof(NativeDimensions.VisibleWidth), 16), (nameof(NativeDimensions.VisibleHeight), 20),
+            (nameof(NativeDimensions.OutputWidth), 24), (nameof(NativeDimensions.OutputHeight), 28),
+            (nameof(NativeDimensions.Orientation), 32), (nameof(NativeDimensions.Reserved), 36));
+        AssertLayout<NativeSensorIdentity>(72,
+            (nameof(NativeSensorIdentity.AbiVersion), 0), (nameof(NativeSensorIdentity.StructSize), 4),
+            (nameof(NativeSensorIdentity.Colors), 8), (nameof(NativeSensorIdentity.Filters), 12),
+            (nameof(NativeSensorIdentity.DngVersion), 16), (nameof(NativeSensorIdentity.XtransCount), 20),
+            (nameof(NativeSensorIdentity.Xtrans), 24), (nameof(NativeSensorIdentity.CdescLength), 60),
+            (nameof(NativeSensorIdentity.Cdesc), 64), (nameof(NativeSensorIdentity.Reserved), 69));
+        AssertLayout<NativeGpsFacts>(32,
+            (nameof(NativeGpsFacts.Parsed), 0), (nameof(NativeGpsFacts.CoordinatePresent), 4),
+            (nameof(NativeGpsFacts.Latitude), 8), (nameof(NativeGpsFacts.Longitude), 16),
+            (nameof(NativeGpsFacts.AltitudePresent), 24), (nameof(NativeGpsFacts.Altitude), 28));
+        AssertLayout<NativeMetadata>(760,
+            (nameof(NativeMetadata.AbiVersion), 0), (nameof(NativeMetadata.StructSize), 4),
+            (nameof(NativeMetadata.MakeLength), 8), (nameof(NativeMetadata.Make), 12),
+            (nameof(NativeMetadata.ModelLength), 140), (nameof(NativeMetadata.Model), 144),
+            (nameof(NativeMetadata.NormalizedMakeLength), 272), (nameof(NativeMetadata.NormalizedMake), 276),
+            (nameof(NativeMetadata.NormalizedModelLength), 404), (nameof(NativeMetadata.NormalizedModel), 408),
+            (nameof(NativeMetadata.LensLength), 536), (nameof(NativeMetadata.Lens), 540),
+            (nameof(NativeMetadata.IsoPresent), 668), (nameof(NativeMetadata.Iso), 672),
+            (nameof(NativeMetadata.ShutterPresent), 676), (nameof(NativeMetadata.Shutter), 680),
+            (nameof(NativeMetadata.AperturePresent), 684), (nameof(NativeMetadata.Aperture), 688),
+            (nameof(NativeMetadata.FocalLengthPresent), 692), (nameof(NativeMetadata.FocalLength), 696),
+            (nameof(NativeMetadata.FocalLength35mmPresent), 700), (nameof(NativeMetadata.FocalLength35mm), 704),
+            (nameof(NativeMetadata.TimestampPresent), 708), (nameof(NativeMetadata.Timestamp), 712),
+            (nameof(NativeMetadata.Orientation), 720), (nameof(NativeMetadata.Reserved), 724),
+            (nameof(NativeMetadata.Gps), 728));
+        AssertLayout<NativeCameraFacts>(180,
+            (nameof(NativeCameraFacts.AbiVersion), 0), (nameof(NativeCameraFacts.StructSize), 4),
+            (nameof(NativeCameraFacts.MultiplierCount), 8), (nameof(NativeCameraFacts.Multipliers), 12),
+            (nameof(NativeCameraFacts.MatrixRows), 28), (nameof(NativeCameraFacts.MatrixColumns), 32),
+            (nameof(NativeCameraFacts.CameraToSrgb), 36), (nameof(NativeCameraFacts.PreMultiplierCount), 84),
+            (nameof(NativeCameraFacts.PreMultipliers), 88), (nameof(NativeCameraFacts.CameraFromXyzRows), 104),
+            (nameof(NativeCameraFacts.CameraFromXyzColumns), 108), (nameof(NativeCameraFacts.CameraFromXyz), 112),
+            (nameof(NativeCameraFacts.LinearMaxCount), 160), (nameof(NativeCameraFacts.LinearMax), 164));
+        AssertLayout<NativeFujiFacts>(32,
+            (nameof(NativeFujiFacts.AbiVersion), 0), (nameof(NativeFujiFacts.StructSize), 4),
+            (nameof(NativeFujiFacts.Present), 8), (nameof(NativeFujiFacts.ExposureMidpointShift), 12),
+            (nameof(NativeFujiFacts.DynamicRange), 16), (nameof(NativeFujiFacts.DynamicRangeSetting), 20),
+            (nameof(NativeFujiFacts.DevelopmentDynamicRange), 24), (nameof(NativeFujiFacts.AutoDynamicRange), 28));
+        AssertLayout<NativeOutputConfig>(112,
+            (nameof(NativeOutputConfig.AbiVersion), 0), (nameof(NativeOutputConfig.StructSize), 4),
+            (nameof(NativeOutputConfig.OutputBits), 8), (nameof(NativeOutputConfig.OutputColor), 12),
+            (nameof(NativeOutputConfig.GammaPower), 16), (nameof(NativeOutputConfig.GammaSlope), 24),
+            (nameof(NativeOutputConfig.NoAutoBright), 32), (nameof(NativeOutputConfig.HalfSize), 36),
+            (nameof(NativeOutputConfig.HighlightMode), 40), (nameof(NativeOutputConfig.FbddNoiseReduction), 44),
+            (nameof(NativeOutputConfig.UseCameraWhiteBalance), 48), (nameof(NativeOutputConfig.UseAutoWhiteBalance), 52),
+            (nameof(NativeOutputConfig.UserMultipliers), 56), (nameof(NativeOutputConfig.UseCameraMatrix), 72),
+            (nameof(NativeOutputConfig.Reserved), 76), (nameof(NativeOutputConfig.UserSaturation), 80),
+            (nameof(NativeOutputConfig.UserQualityPresent), 84), (nameof(NativeOutputConfig.UserQuality), 88),
+            (nameof(NativeOutputConfig.CropBoxPresent), 92), (nameof(NativeOutputConfig.CropBox), 96));
+        AssertLayout<NativeImageDescriptor>(56,
+            (nameof(NativeImageDescriptor.AbiVersion), 0), (nameof(NativeImageDescriptor.StructSize), 4),
+            (nameof(NativeImageDescriptor.Data), 8), (nameof(NativeImageDescriptor.ByteLength), 16),
+            (nameof(NativeImageDescriptor.Width), 24), (nameof(NativeImageDescriptor.Height), 28),
+            (nameof(NativeImageDescriptor.BitsPerSample), 32), (nameof(NativeImageDescriptor.Channels), 36),
+            (nameof(NativeImageDescriptor.Format), 40), (nameof(NativeImageDescriptor.Reserved), 44),
+            (nameof(NativeImageDescriptor.Allocation), 48));
+        AssertLayout<NativeMosaicDescriptor>(16496,
+            (nameof(NativeMosaicDescriptor.AbiVersion), 0), (nameof(NativeMosaicDescriptor.StructSize), 4),
+            (nameof(NativeMosaicDescriptor.Data), 8), (nameof(NativeMosaicDescriptor.ByteLength), 16),
+            (nameof(NativeMosaicDescriptor.RawPitch), 24), (nameof(NativeMosaicDescriptor.RawWidth), 28),
+            (nameof(NativeMosaicDescriptor.RawHeight), 32), (nameof(NativeMosaicDescriptor.VisibleWidth), 36),
+            (nameof(NativeMosaicDescriptor.VisibleHeight), 40), (nameof(NativeMosaicDescriptor.TopMargin), 44),
+            (nameof(NativeMosaicDescriptor.LeftMargin), 48), (nameof(NativeMosaicDescriptor.Black), 52),
+            (nameof(NativeMosaicDescriptor.Maximum), 56), (nameof(NativeMosaicDescriptor.CblackCount), 60),
+            (nameof(NativeMosaicDescriptor.RepeatingRows), 64), (nameof(NativeMosaicDescriptor.RepeatingColumns), 68),
+            (nameof(NativeMosaicDescriptor.Cblack), 72), (nameof(NativeMosaicDescriptor.Lease), 16488));
     }
 
     [Fact]
@@ -112,7 +164,7 @@ public sealed unsafe class NativeContractTests
     {
         var value = new NativeImageDescriptor
         {
-            AbiVersion = 2,
+            AbiVersion = 3,
             StructSize = (uint)Unsafe.SizeOf<NativeImageDescriptor>(),
             Data = (byte*)1,
             ByteLength = 11,
@@ -167,7 +219,7 @@ public sealed unsafe class NativeContractTests
     {
         var native = new NativeCameraFacts
         {
-            AbiVersion = 2,
+            AbiVersion = 3,
             StructSize = (uint)Unsafe.SizeOf<NativeCameraFacts>(),
             MultiplierCount = channelCount,
             MatrixRows = 3,
@@ -182,4 +234,11 @@ public sealed unsafe class NativeContractTests
 
     private static int OffsetOf<T>(string field) where T : struct =>
         Marshal.OffsetOf<T>(field).ToInt32();
+
+    private static void AssertLayout<T>(int size, params (string Field, int Offset)[] fields)
+        where T : unmanaged
+    {
+        Assert.Equal(size, Unsafe.SizeOf<T>());
+        foreach (var field in fields) Assert.Equal(field.Offset, OffsetOf<T>(field.Field));
+    }
 }

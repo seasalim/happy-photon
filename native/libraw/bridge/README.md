@@ -1,6 +1,6 @@
 # Happy Photon LibRaw bridge
 
-This directory defines bridge ABI version 2. All ABI values use fixed-width
+This directory defines bridge ABI version 3. All ABI values use fixed-width
 integers and the public header is consumable as C. Inputs described as UTF-8
 are pointer-plus-length values: embedded NUL and malformed UTF-8 are rejected.
 Fixed textual outputs contain a byte length and replace invalid native bytes
@@ -8,10 +8,17 @@ with U+FFFD.
 
 Handles, mosaic leases, and image allocations are monotonically issued tokens.
 Unknown, stale, and already-released tokens are rejected. A mosaic borrow is
-allocation-free; release it before process, recycle, or close. Those operations
+allocation-free and mutable; writes made before release are the mosaic consumed
+by the next process call. Release it before process, recycle, or close. Those operations
 return `HPLR_E_BUSY` immediately while a borrow or another handle operation is
 active. Image allocations have exactly one matching `hplr_free_image` call.
 No pointer returned by this bridge is valid after its owning token is released.
+
+Output configuration is replacing rather than cumulative. ABI v3 adds an optional
+post-black saturation ceiling, a named demosaic-quality request, and a full-resolution
+pre-rotation crop. Zero-filled quality and crop presence flags preserve LibRaw's own
+defaults. Accepted crops are limited to regions LibRaw uses verbatim; sensor-dependent
+demosaic fallbacks remain LibRaw's behavior.
 
 Errors are per-call caller-owned values. LibRaw failures preserve its numeric
 code and text. ABI failures, programming/ownership failures, and bridge

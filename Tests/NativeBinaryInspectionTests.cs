@@ -101,7 +101,7 @@ public sealed class NativeBinaryInspectionTests
                 ".nuget", "packages");
         }
 
-        var path = Path.Combine(root, package, "0.22.2.10", "runtimes", rid, "native", name);
+        var path = Path.Combine(root, package, "0.22.2.11", "runtimes", rid, "native", name);
         Assert.True(File.Exists(path), $"Restored runtime fixture is missing: {path}");
         return path;
     }

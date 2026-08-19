@@ -1,22 +1,22 @@
 {
   "schema": 1,
-  "created_utc": "2026-08-17T07:56:37.612925+00:00",
+  "created_utc": "2026-08-19T00:32:01.940879+00:00",
   "package": {
     "id": "HappyPhoton.LibRaw.Native",
-    "version": "0.22.2.10"
+    "version": "0.22.2.11"
   },
   "rids": [
     {
       "schema": 1,
-      "created_utc": "2026-08-17T07:55:50.849519+00:00",
+      "created_utc": "2026-08-19T00:31:15.534889+00:00",
       "rid": "win-x64",
       "package": {
         "id": "HappyPhoton.LibRaw.Native",
-        "version": "0.22.2.10",
+        "version": "0.22.2.11",
         "candidate": true,
         "build_revision_source": "github.run_number"
       },
-      "repository_commit": "c5e872c33d166ac37d5bf5a40cb05ac47b28cd16",
+      "repository_commit": "11f4bbcc5b6a4118de4f078fac4e52a6a1a3c3a4",
       "vcpkg": {
         "revision": "c4d9956c0c10a4742840a5e7d93efa2e0015c865",
         "checkout": "D:\\a\\_temp\\vcpkg"
@@ -34,7 +34,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "5445DDE28CF49D18F1B5A41C29C3F21CA36EE91CAC1B8955A322A1D0D10CB0E7"
+          "sbom_sha256": "A52B28E14D9440AC6BA5FF5CB587A625836668BDFB681601D2544B5AA0A466D8"
         },
         {
           "name": "LibRaw/LibRaw-cmake",
@@ -48,7 +48,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "5445DDE28CF49D18F1B5A41C29C3F21CA36EE91CAC1B8955A322A1D0D10CB0E7"
+          "sbom_sha256": "A52B28E14D9440AC6BA5FF5CB587A625836668BDFB681601D2544B5AA0A466D8"
         },
         {
           "name": "lcms",
@@ -62,7 +62,7 @@
               "locator": "pkg:vcpkg/lcms@2.19.1?port_version=1&triplet=x64-windows-hplr&vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2FMicrosoft%2Fvcpkg%23ports%2Flcms"
             }
           ],
-          "sbom_sha256": "09D6912DD32DBE27D84326EA98242C4756B1A1FCD2F531395143FDDED451CAAE"
+          "sbom_sha256": "9CBB99690E49431FE164C21266447273CADE2693B284DF711A3C0341260B399D"
         },
         {
           "name": "lcms:x64-windows-hplr",
@@ -71,7 +71,7 @@
           "license": "MIT",
           "checksums": [],
           "source_references": [],
-          "sbom_sha256": "09D6912DD32DBE27D84326EA98242C4756B1A1FCD2F531395143FDDED451CAAE"
+          "sbom_sha256": "9CBB99690E49431FE164C21266447273CADE2693B284DF711A3C0341260B399D"
         },
         {
           "name": "libjpeg-turbo",
@@ -85,7 +85,7 @@
               "locator": "pkg:vcpkg/libjpeg-turbo@3.2.0?triplet=x64-windows-hplr&vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2FMicrosoft%2Fvcpkg%23ports%2Flibjpeg-turbo"
             }
           ],
-          "sbom_sha256": "43F6A304DBA0C095CDE47FC5128A37FE6DE70F66C6648E46244AAAE077D6F805"
+          "sbom_sha256": "2B8E87CB0AAC0A2897741BC386212EE8D0073EB761E364DFAA10712875D2F717"
         },
         {
           "name": "libjpeg-turbo/libjpeg-turbo",
@@ -99,7 +99,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "43F6A304DBA0C095CDE47FC5128A37FE6DE70F66C6648E46244AAAE077D6F805"
+          "sbom_sha256": "2B8E87CB0AAC0A2897741BC386212EE8D0073EB761E364DFAA10712875D2F717"
         },
         {
           "name": "libjpeg-turbo:x64-windows-hplr",
@@ -108,7 +108,7 @@
           "license": "BSD-3-Clause",
           "checksums": [],
           "source_references": [],
-          "sbom_sha256": "43F6A304DBA0C095CDE47FC5128A37FE6DE70F66C6648E46244AAAE077D6F805"
+          "sbom_sha256": "2B8E87CB0AAC0A2897741BC386212EE8D0073EB761E364DFAA10712875D2F717"
         },
         {
           "name": "libraw",
@@ -122,7 +122,7 @@
               "locator": "pkg:vcpkg/libraw@0.22.2?triplet=x64-windows-hplr"
             }
           ],
-          "sbom_sha256": "5445DDE28CF49D18F1B5A41C29C3F21CA36EE91CAC1B8955A322A1D0D10CB0E7"
+          "sbom_sha256": "A52B28E14D9440AC6BA5FF5CB587A625836668BDFB681601D2544B5AA0A466D8"
         },
         {
           "name": "libraw:x64-windows-hplr",
@@ -131,7 +131,7 @@
           "license": "(LGPL-2.1-only OR CDDL-1.0)",
           "checksums": [],
           "source_references": [],
-          "sbom_sha256": "5445DDE28CF49D18F1B5A41C29C3F21CA36EE91CAC1B8955A322A1D0D10CB0E7"
+          "sbom_sha256": "A52B28E14D9440AC6BA5FF5CB587A625836668BDFB681601D2544B5AA0A466D8"
         },
         {
           "name": "madler/zlib",
@@ -145,7 +145,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "505AC6D5826CF25ABF9A9B4E75FD452A0C9B3B1E7D1168309AA284C3DCA1CD6D"
+          "sbom_sha256": "035B292FE5DC4E5C4690DF20835394EDF4EFACE4BE0023538BE1B0C9C298A1F9"
         },
         {
           "name": "mm2/Little-CMS",
@@ -159,7 +159,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "09D6912DD32DBE27D84326EA98242C4756B1A1FCD2F531395143FDDED451CAAE"
+          "sbom_sha256": "9CBB99690E49431FE164C21266447273CADE2693B284DF711A3C0341260B399D"
         },
         {
           "name": "zlib",
@@ -173,7 +173,7 @@
               "locator": "pkg:vcpkg/zlib@1.3.2?port_version=2&triplet=x64-windows-hplr&vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2FMicrosoft%2Fvcpkg%23ports%2Fzlib"
             }
           ],
-          "sbom_sha256": "505AC6D5826CF25ABF9A9B4E75FD452A0C9B3B1E7D1168309AA284C3DCA1CD6D"
+          "sbom_sha256": "035B292FE5DC4E5C4690DF20835394EDF4EFACE4BE0023538BE1B0C9C298A1F9"
         },
         {
           "name": "zlib:x64-windows-hplr",
@@ -182,7 +182,7 @@
           "license": "Zlib",
           "checksums": [],
           "source_references": [],
-          "sbom_sha256": "505AC6D5826CF25ABF9A9B4E75FD452A0C9B3B1E7D1168309AA284C3DCA1CD6D"
+          "sbom_sha256": "035B292FE5DC4E5C4690DF20835394EDF4EFACE4BE0023538BE1B0C9C298A1F9"
         }
       ],
       "build_options": {
@@ -214,27 +214,27 @@
       "outputs": [
         {
           "name": "happyphoton_libraw_bridge.dll",
-          "sha256": "9DF9A926C525C626A615A666C438BDAC12C82F04FB2254430BBFEDDE6ABB7A89",
-          "bytes": 54784
+          "sha256": "1554948C012B44AC61F328A1F92EFF4FBED7891F7C14995FF7560068A54ABB13",
+          "bytes": 55296
         },
         {
           "name": "jpeg8.dll",
-          "sha256": "10BF27BA175BB9188A67C6760DB4E2FCFB4372735EF067ADDAD65E9937AE77DC",
+          "sha256": "4162234984AC8DFE55582DA1629E12A950F6F31D3AD37A6942044BBE860863F2",
           "bytes": 723968
         },
         {
           "name": "lcms2-2.dll",
-          "sha256": "31D8078C9FA78BB63D1A02A41C31CB44EBB2F53BF3080F633F1CC681FCCEB745",
+          "sha256": "082D4AA19612229030E17FB4ECEA42D095982BA3D9D72B9C36D50F8D5B74FA9F",
           "bytes": 378880
         },
         {
           "name": "raw_r.dll",
-          "sha256": "6718D62E363AD0F561DF945C0BCAD948EE94356FB8CEA4067B49A470EBFB1BC8",
+          "sha256": "4C15880F30966F29DD60710D17FAB98FA9712C0E9FF3516919D06565E3BD6AD2",
           "bytes": 1168896
         },
         {
           "name": "z.dll",
-          "sha256": "7143F1604DC14CF1D4AA7F2E56D1350AEDB8BCB2AE093E05C441E1C31EFF4A5F",
+          "sha256": "024A28375CE265A5A649ACEC3632C27E6E77C84660D77C590D962CD1D378D9F7",
           "bytes": 91648
         }
       ],
@@ -354,19 +354,19 @@
           "sha256": "230184F60BAE2FEAF244F10A8BAC053C8FF33A183BCC365B4D8B876D2B7F4809"
         }
       ],
-      "validation_report_sha256": "1AB8A8543AA68475AFE0EE4EE050E4B417B5FA3FC2952DAF40EB84997290BF01"
+      "validation_report_sha256": "A0E4184FE58EF8EC4D3737F6A86A79D0515A225ABA9340B9F03847AE5F7A8F27"
     },
     {
       "schema": 1,
-      "created_utc": "2026-08-17T07:51:22.370501+00:00",
+      "created_utc": "2026-08-19T00:26:15.018128+00:00",
       "rid": "linux-x64",
       "package": {
         "id": "HappyPhoton.LibRaw.Native",
-        "version": "0.22.2.10",
+        "version": "0.22.2.11",
         "candidate": true,
         "build_revision_source": "github.run_number"
       },
-      "repository_commit": "c5e872c33d166ac37d5bf5a40cb05ac47b28cd16",
+      "repository_commit": "11f4bbcc5b6a4118de4f078fac4e52a6a1a3c3a4",
       "vcpkg": {
         "revision": "c4d9956c0c10a4742840a5e7d93efa2e0015c865",
         "checkout": "/home/runner/work/_temp/vcpkg"
@@ -384,7 +384,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "50660BE3674D5E7C093169936CC91CD4594C188CD7C01D55854A37D1CC63CD8F"
+          "sbom_sha256": "9184C4526439F2976C9468870AF50504FCD5C7A3285629F34BBAFE2A12A10DF0"
         },
         {
           "name": "LibRaw/LibRaw-cmake",
@@ -398,7 +398,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "50660BE3674D5E7C093169936CC91CD4594C188CD7C01D55854A37D1CC63CD8F"
+          "sbom_sha256": "9184C4526439F2976C9468870AF50504FCD5C7A3285629F34BBAFE2A12A10DF0"
         },
         {
           "name": "lcms",
@@ -412,7 +412,7 @@
               "locator": "pkg:vcpkg/lcms@2.19.1?port_version=1&triplet=x64-linux-hplr&vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2FMicrosoft%2Fvcpkg%23ports%2Flcms"
             }
           ],
-          "sbom_sha256": "2D4C3FC565610369257223E64D8E6DB69A863546626F6C7C57C61A06D62E2A46"
+          "sbom_sha256": "3E4FFD5256B7CBAE5FE49991958F85664DF32392CA9FC93661D0F84F919E4E34"
         },
         {
           "name": "lcms:x64-linux-hplr",
@@ -421,7 +421,7 @@
           "license": "MIT",
           "checksums": [],
           "source_references": [],
-          "sbom_sha256": "2D4C3FC565610369257223E64D8E6DB69A863546626F6C7C57C61A06D62E2A46"
+          "sbom_sha256": "3E4FFD5256B7CBAE5FE49991958F85664DF32392CA9FC93661D0F84F919E4E34"
         },
         {
           "name": "libjpeg-turbo",
@@ -435,7 +435,7 @@
               "locator": "pkg:vcpkg/libjpeg-turbo@3.2.0?triplet=x64-linux-hplr&vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2FMicrosoft%2Fvcpkg%23ports%2Flibjpeg-turbo"
             }
           ],
-          "sbom_sha256": "6C0631FD87562DE2D1A9BD841D837086E71374D7CDE738E90C32882177EB840F"
+          "sbom_sha256": "67475B6B0854BD178354FC03A7FECA19DC5FA49B012CEF5B010B95CB597D8638"
         },
         {
           "name": "libjpeg-turbo/libjpeg-turbo",
@@ -449,7 +449,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "6C0631FD87562DE2D1A9BD841D837086E71374D7CDE738E90C32882177EB840F"
+          "sbom_sha256": "67475B6B0854BD178354FC03A7FECA19DC5FA49B012CEF5B010B95CB597D8638"
         },
         {
           "name": "libjpeg-turbo:x64-linux-hplr",
@@ -458,7 +458,7 @@
           "license": "BSD-3-Clause",
           "checksums": [],
           "source_references": [],
-          "sbom_sha256": "6C0631FD87562DE2D1A9BD841D837086E71374D7CDE738E90C32882177EB840F"
+          "sbom_sha256": "67475B6B0854BD178354FC03A7FECA19DC5FA49B012CEF5B010B95CB597D8638"
         },
         {
           "name": "libraw",
@@ -472,7 +472,7 @@
               "locator": "pkg:vcpkg/libraw@0.22.2?triplet=x64-linux-hplr"
             }
           ],
-          "sbom_sha256": "50660BE3674D5E7C093169936CC91CD4594C188CD7C01D55854A37D1CC63CD8F"
+          "sbom_sha256": "9184C4526439F2976C9468870AF50504FCD5C7A3285629F34BBAFE2A12A10DF0"
         },
         {
           "name": "libraw:x64-linux-hplr",
@@ -481,7 +481,7 @@
           "license": "(LGPL-2.1-only OR CDDL-1.0)",
           "checksums": [],
           "source_references": [],
-          "sbom_sha256": "50660BE3674D5E7C093169936CC91CD4594C188CD7C01D55854A37D1CC63CD8F"
+          "sbom_sha256": "9184C4526439F2976C9468870AF50504FCD5C7A3285629F34BBAFE2A12A10DF0"
         },
         {
           "name": "madler/zlib",
@@ -495,7 +495,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "D053012028BA32BCEBAB22BB8A523833DDD9083297CEAA6145AFF557E3D2F26C"
+          "sbom_sha256": "E51CC7FC59E0C42DE7C45E52A55298E5FC5A82989F05E3CD20645E8E0E5612DB"
         },
         {
           "name": "mm2/Little-CMS",
@@ -509,7 +509,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "2D4C3FC565610369257223E64D8E6DB69A863546626F6C7C57C61A06D62E2A46"
+          "sbom_sha256": "3E4FFD5256B7CBAE5FE49991958F85664DF32392CA9FC93661D0F84F919E4E34"
         },
         {
           "name": "zlib",
@@ -523,7 +523,7 @@
               "locator": "pkg:vcpkg/zlib@1.3.2?port_version=2&triplet=x64-linux-hplr&vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2FMicrosoft%2Fvcpkg%23ports%2Fzlib"
             }
           ],
-          "sbom_sha256": "D053012028BA32BCEBAB22BB8A523833DDD9083297CEAA6145AFF557E3D2F26C"
+          "sbom_sha256": "E51CC7FC59E0C42DE7C45E52A55298E5FC5A82989F05E3CD20645E8E0E5612DB"
         },
         {
           "name": "zlib:x64-linux-hplr",
@@ -532,7 +532,7 @@
           "license": "Zlib",
           "checksums": [],
           "source_references": [],
-          "sbom_sha256": "D053012028BA32BCEBAB22BB8A523833DDD9083297CEAA6145AFF557E3D2F26C"
+          "sbom_sha256": "E51CC7FC59E0C42DE7C45E52A55298E5FC5A82989F05E3CD20645E8E0E5612DB"
         }
       ],
       "build_options": {
@@ -564,12 +564,12 @@
       "outputs": [
         {
           "name": "libhappyphoton_libraw_bridge.so",
-          "sha256": "17D6961B158867384EAC3B9A3925DFE636C63ACFBBF6BE083B953AD3FE426333",
+          "sha256": "67A6D0886FE5FA5F4CE4D340D7A99E6093D3734873A0DB883E98528AA8897417",
           "bytes": 62544
         },
         {
           "name": "libjpeg.so.8",
-          "sha256": "F5AA42CB38FA260853FF82CF9D8626956C8D2AB260074A73C6A456A8C4AAFB55",
+          "sha256": "6433D552C37C9F092E475352E5DF19C07C146B8AEC3780E08AAAF7B6FC5A84AF",
           "bytes": 706944
         },
         {
@@ -649,19 +649,19 @@
           "sha256": "3972DC9744F6499F0F9B2DBF76696F2AE7AD8AF9B23DDE66D6AF86C9DFB36986"
         }
       ],
-      "validation_report_sha256": "3CF9499A53B6612730557378EEB9C80B835EAB534E6EB89375B8B752B2750EC5"
+      "validation_report_sha256": "E245CA25F02D3DD511C36FD54DC0B7D959ED19A08354A812D8AA827984ED825B"
     },
     {
       "schema": 1,
-      "created_utc": "2026-08-17T07:51:39.249478+00:00",
+      "created_utc": "2026-08-19T00:26:40.123824+00:00",
       "rid": "osx-arm64",
       "package": {
         "id": "HappyPhoton.LibRaw.Native",
-        "version": "0.22.2.10",
+        "version": "0.22.2.11",
         "candidate": true,
         "build_revision_source": "github.run_number"
       },
-      "repository_commit": "c5e872c33d166ac37d5bf5a40cb05ac47b28cd16",
+      "repository_commit": "11f4bbcc5b6a4118de4f078fac4e52a6a1a3c3a4",
       "vcpkg": {
         "revision": "c4d9956c0c10a4742840a5e7d93efa2e0015c865",
         "checkout": "/Users/runner/work/_temp/vcpkg"
@@ -679,7 +679,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "27A9BA999B4E987BFA2A4A5726CB9DF33CF954B4E18D1276D439908B58DD3B6C"
+          "sbom_sha256": "5CC57FC8D754E26D2D1F4BA1F39DDACBAEA2E2C3BA235685C3EB9F7E1C5A50BE"
         },
         {
           "name": "LibRaw/LibRaw-cmake",
@@ -693,7 +693,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "27A9BA999B4E987BFA2A4A5726CB9DF33CF954B4E18D1276D439908B58DD3B6C"
+          "sbom_sha256": "5CC57FC8D754E26D2D1F4BA1F39DDACBAEA2E2C3BA235685C3EB9F7E1C5A50BE"
         },
         {
           "name": "libjpeg-turbo",
@@ -707,7 +707,7 @@
               "locator": "pkg:vcpkg/libjpeg-turbo@3.2.0?triplet=arm64-osx-hplr&vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2FMicrosoft%2Fvcpkg%23ports%2Flibjpeg-turbo"
             }
           ],
-          "sbom_sha256": "7BEE75308F4078422448EC4B518E3F8A312365BC46B2775DC57A96A80E5725E5"
+          "sbom_sha256": "C367E79231204FCCD292B4DD19E3B2914C45EECECA9A9D5CBF138A8449BB553C"
         },
         {
           "name": "libjpeg-turbo/libjpeg-turbo",
@@ -721,7 +721,7 @@
             }
           ],
           "source_references": [],
-          "sbom_sha256": "7BEE75308F4078422448EC4B518E3F8A312365BC46B2775DC57A96A80E5725E5"
+          "sbom_sha256": "C367E79231204FCCD292B4DD19E3B2914C45EECECA9A9D5CBF138A8449BB553C"
         },
         {
           "name": "libjpeg-turbo:arm64-osx-hplr",
@@ -730,7 +730,7 @@
           "license": "BSD-3-Clause",
           "checksums": [],
           "source_references": [],
-          "sbom_sha256": "7BEE75308F4078422448EC4B518E3F8A312365BC46B2775DC57A96A80E5725E5"
+          "sbom_sha256": "C367E79231204FCCD292B4DD19E3B2914C45EECECA9A9D5CBF138A8449BB553C"
         },
         {
           "name": "libraw",
@@ -744,7 +744,7 @@
               "locator": "pkg:vcpkg/libraw@0.22.2?triplet=arm64-osx-hplr"
             }
           ],
-          "sbom_sha256": "27A9BA999B4E987BFA2A4A5726CB9DF33CF954B4E18D1276D439908B58DD3B6C"
+          "sbom_sha256": "5CC57FC8D754E26D2D1F4BA1F39DDACBAEA2E2C3BA235685C3EB9F7E1C5A50BE"
         },
         {
           "name": "libraw:arm64-osx-hplr",
@@ -753,7 +753,7 @@
           "license": "(LGPL-2.1-only OR CDDL-1.0)",
           "checksums": [],
           "source_references": [],
-          "sbom_sha256": "27A9BA999B4E987BFA2A4A5726CB9DF33CF954B4E18D1276D439908B58DD3B6C"
+          "sbom_sha256": "5CC57FC8D754E26D2D1F4BA1F39DDACBAEA2E2C3BA235685C3EB9F7E1C5A50BE"
         }
       ],
       "build_options": {
@@ -785,8 +785,8 @@
       "outputs": [
         {
           "name": "libhappyphoton_libraw_bridge.dylib",
-          "sha256": "7F78A9975AC520D0CC6F430DAFAAF62EFB4E4254BFF22C99B8961886C49477B4",
-          "bytes": 95392
+          "sha256": "17F62B0520CFF9CF3D209B7A3B72D661BBEB6323093E974D675A5D2405A2A350",
+          "bytes": 95488
         },
         {
           "name": "libraw.25.dylib",
@@ -832,7 +832,7 @@
           "sha256": "3972DC9744F6499F0F9B2DBF76696F2AE7AD8AF9B23DDE66D6AF86C9DFB36986"
         }
       ],
-      "validation_report_sha256": "E936E83D81054D32309CD5182C1B9FD8B1F5DB0B6D10DFB8A8CF05D3317F4ECC"
+      "validation_report_sha256": "5394D93E8052019AA4EFF52A6BA2B0936574BB70CE1BA777F02194DDBB40E28E"
     }
   ]
 }

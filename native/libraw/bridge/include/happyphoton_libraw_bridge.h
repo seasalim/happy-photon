@@ -22,7 +22,7 @@ extern "C" {
 
 #pragma pack(push, 8)
 
-#define HPLR_ABI_VERSION UINT32_C(2)
+#define HPLR_ABI_VERSION UINT32_C(3)
 #define HPLR_CBLACK_COUNT UINT32_C(4104)
 #define HPLR_TEXT_CAPACITY UINT32_C(128)
 
@@ -174,13 +174,14 @@ typedef struct hplr_fuji_facts {
     uint32_t auto_dynamic_range;
 } hplr_fuji_facts;
 
-/* The data pointer aliases LibRaw's preserved rawdata snapshot. It remains
+/* The data pointer aliases LibRaw's preserved rawdata snapshot. Managed writes
+   made before release are consumed by the following process call. It remains
    valid only until the matching lease is released. Process, recycle, and close
    reject while the lease is live. */
 typedef struct hplr_mosaic_descriptor {
     uint32_t abi_version;
     uint32_t struct_size;
-    const uint16_t *data;
+    uint16_t *data;
     uint64_t byte_length;
     uint32_t raw_pitch;
     uint32_t raw_width;
@@ -214,6 +215,11 @@ typedef struct hplr_output_config {
     float user_mul[4];
     int32_t use_camera_matrix;
     int32_t reserved;
+    int32_t user_sat;
+    uint32_t user_qual_present;
+    int32_t user_qual;
+    uint32_t cropbox_present;
+    uint32_t cropbox[4];
 } hplr_output_config;
 
 /* Thumbnail and processed allocations are owned by the returned allocation
