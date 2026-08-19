@@ -116,6 +116,7 @@ public sealed partial class PreviewService
                 refreshed.Output.Bitmap,
                 refreshed.Output.Histogram,
                 !pending.SkipHistogram,
+                refreshGeneration,
                 refreshed.RawHistogram);
             PreviewRefreshed?.Invoke(this, refresh);
             ReportPreviewOutcome(

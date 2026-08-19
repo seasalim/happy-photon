@@ -314,31 +314,50 @@ public partial class MainWindowViewModel
         var histogram = refresh.Histogram;
         var rawHistogram = refresh.RawHistogram;
         var hasHistogram = refresh.HasHistogram;
-        Dispatcher.UIThread.Post(() =>
+        var generation = refresh.Generation;
+        Dispatcher.UIThread.Post(() => ApplyPreviewRefresh(
+            imageFile,
+            bitmap,
+            histogram,
+            hasHistogram,
+            rawHistogram,
+            generation));
+    }
+
+    internal void ApplyPreviewRefresh(
+        ImageFile imageFile,
+        Bitmap bitmap,
+        HistogramData histogram,
+        bool hasHistogram,
+        HistogramData? rawHistogram,
+        long generation)
+    {
+        // A refresh can settle after its ready gate while a newer render
+        // generation has already been applied. Reject the stale bitmap the same
+        // way the main preview path rejects superseded load outcomes.
+        if (!ReferenceEquals(SelectedImage, imageFile) ||
+            generation < Volatile.Read(ref _latestPreviewOutcomeGeneration))
         {
-            if (!ReferenceEquals(SelectedImage, imageFile))
-            {
-                bitmap.Dispose();
-                return;
-            }
+            bitmap.Dispose();
+            return;
+        }
 
-            if (!IsDevelopMode && !IsFullScreenMode)
-            {
-                bitmap.Dispose();
-                _ = TrackDirectThumbnailOperation(
-                    RefreshThumbnailAsync(imageFile));
-                return;
-            }
-
-            ReplacePreviewImage(bitmap);
-            if (hasHistogram)
-            {
-                Histogram = histogram;
-            }
-            SetRawHistogram(rawHistogram);
+        if (!IsDevelopMode && !IsFullScreenMode)
+        {
+            bitmap.Dispose();
             _ = TrackDirectThumbnailOperation(
                 RefreshThumbnailAsync(imageFile));
-        });
+            return;
+        }
+
+        ReplacePreviewImage(bitmap);
+        if (hasHistogram)
+        {
+            Histogram = histogram;
+        }
+        SetRawHistogram(rawHistogram);
+        _ = TrackDirectThumbnailOperation(
+            RefreshThumbnailAsync(imageFile));
     }
 
     private void OnBaseRefreshStateChanged(

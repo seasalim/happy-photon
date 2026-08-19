@@ -28,6 +28,13 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
     public HistogramData Histogram { get; }
     public HistogramData? RawHistogram { get; }
     public bool HasHistogram { get; }
+
+    /// <summary>
+    /// The render generation this refresh was produced for. A newer render can
+    /// settle while a delayed refresh waits on its ready gate, so the UI rejects
+    /// a refresh whose generation is older than the latest it has applied.
+    /// </summary>
+    public long Generation { get; }
     public Bitmap Bitmap =>
         _bitmap ?? throw new ObjectDisposedException(nameof(PreviewRefresh));
 
@@ -36,12 +43,14 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         Bitmap bitmap,
         HistogramData histogram,
         bool hasHistogram,
+        long generation,
         HistogramData? rawHistogram = null)
     {
         ImageFile = imageFile;
         _bitmap = bitmap;
         Histogram = histogram;
         HasHistogram = hasHistogram;
+        Generation = generation;
         RawHistogram = rawHistogram;
     }
 
