@@ -195,6 +195,14 @@ Runs after the LUT, display-referred, where Q16 clamping is benign.
 Computed from the stage-4/5 output at preview scale when `Options.ComputeStats`
 (existing `HistogramService` bins stay 8-bit).
 
+The same render-stats call makes a second pass over the histogram's exact
+downsampled Q16 RGB buffer to accumulate a 256-column × 128-level luminance
+waveform. Horizontal image position maps to columns, Rec.601 luminance maps with
+`level = value8 >> 1`, and each `ushort` cell stores the sample count. Sources
+narrower than 256 pixels back-fill unrepresented columns. At the 1024 px render-stats
+cap, no cell can exceed 4096 samples. Library thumbnail histograms use the bitmap
+overload and never create waveform data.
+
 The selectable RAW histogram is deliberately outside that render stage. `RawBaseLoader`
 captures it from LibRaw's preserved post-`Unpack` mosaic before output configuration,
 white balance, demosaic, camera conversion, highlight reconstruction, and tone. It walks
@@ -340,8 +348,9 @@ scale where both paths agree by construction.
 
 ## 10. Performance contract
 
-Preview rendering always calculates the histogram from display-referred sRGB before bitmap
-conversion. For an edited
+Preview rendering always calculates the histogram and luminance waveform from the same
+display-referred sRGB buffer before bitmap conversion. The waveform pass is synchronous
+inside `HistogramService` and inherits the render's surrounding cancellation checks. For an edited
 RAW whose generation is still current, `PreviewService` converts the full preview, then
 transfers exclusive ownership of `RenderResult.Image` to a tracked background task. The
 task resizes that image in place to the explicit Library request's generation dimension,

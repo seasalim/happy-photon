@@ -1,35 +1,71 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
-using CommunityToolkit.Mvvm.Input;
 
 namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
     private HistogramData? _rawHistogram;
-    private bool _isRawHistogramPreferred;
+    private ScopeView _selectedScope;
+
+    public IReadOnlyList<ScopeOption> ScopeOptions { get; } =
+    [
+        new(ScopeView.Histogram, "HISTOGRAM"),
+        new(ScopeView.Waveform, "WAVEFORM"),
+        new(
+            ScopeView.RawHistogram,
+            "RAW HISTOGRAM",
+            isEnabled: false,
+            hint: "Select a RAW photograph.")
+    ];
 
     public HistogramData? RawHistogram => _rawHistogram;
 
-    public bool IsRawHistogramPreferred
+    public ScopeView SelectedScope
     {
-        get => _isRawHistogramPreferred;
-        private set
+        get => _selectedScope;
+        set
         {
-            if (SetProperty(ref _isRawHistogramPreferred, value))
+            if (!Enum.IsDefined(value))
             {
-                NotifyRawHistogramState();
+                throw new ArgumentOutOfRangeException(nameof(value));
+            }
+            if (SetProperty(ref _selectedScope, value))
+            {
+                NotifyScopeState();
+            }
+        }
+    }
+
+    public ScopeView EffectiveScope =>
+        SelectedScope == ScopeView.RawHistogram && !IsRawHistogramAvailable
+            ? ScopeView.Histogram
+            : SelectedScope;
+
+    public ScopeOption SelectedScopeOption
+    {
+        get => ScopeOptions[(int)EffectiveScope];
+        set
+        {
+            if (value?.IsEnabled == true)
+            {
+                SelectedScope = value.Scope;
             }
         }
     }
 
     public bool IsRawHistogramAvailable => RawHistogram != null;
-    public bool IsRawHistogramEffective =>
-        IsRawHistogramPreferred && IsRawHistogramAvailable;
+    public bool IsHistogramScopeEffective =>
+        EffectiveScope != ScopeView.Waveform;
+    public bool IsWaveformScopeEffective =>
+        EffectiveScope == ScopeView.Waveform;
     public HistogramData? EffectiveHistogram =>
-        IsRawHistogramEffective ? RawHistogram : Histogram;
-    public string HistogramTitle =>
-        IsRawHistogramEffective ? "RAW HISTOGRAM" : "HISTOGRAM";
+        EffectiveScope == ScopeView.RawHistogram ? RawHistogram : Histogram;
+    public WaveformData? EffectiveWaveform => Histogram?.Waveform;
+    public string EffectiveScopeTitle =>
+        ScopeOptions[(int)EffectiveScope].DisplayName;
+
     public string RawHistogramHint
     {
         get
@@ -49,15 +85,11 @@ public partial class MainWindowViewModel
         }
     }
 
-    [RelayCommand]
-    private void ToggleRawHistogram()
+    partial void OnHistogramChanged(HistogramData? value)
     {
-        if (IsRawHistogramAvailable)
-            IsRawHistogramPreferred = !IsRawHistogramPreferred;
-    }
-
-    partial void OnHistogramChanged(HistogramData? value) =>
         OnPropertyChanged(nameof(EffectiveHistogram));
+        OnPropertyChanged(nameof(EffectiveWaveform));
+    }
 
     private void ScheduleHistogramUpdate()
     {
@@ -146,15 +178,57 @@ public partial class MainWindowViewModel
             _rawHistogram = value;
             OnPropertyChanged(nameof(RawHistogram));
         }
-        NotifyRawHistogramState();
+        NotifyScopeState();
     }
 
-    private void NotifyRawHistogramState()
+    private void NotifyRawHistogramState() => NotifyScopeState();
+
+    private void NotifyScopeState()
     {
+        var rawOption = ScopeOptions[(int)ScopeView.RawHistogram];
+        rawOption.IsEnabled = IsRawHistogramAvailable;
+        rawOption.Hint = RawHistogramHint;
         OnPropertyChanged(nameof(IsRawHistogramAvailable));
-        OnPropertyChanged(nameof(IsRawHistogramEffective));
+        OnPropertyChanged(nameof(EffectiveScope));
+        OnPropertyChanged(nameof(SelectedScopeOption));
+        OnPropertyChanged(nameof(IsHistogramScopeEffective));
+        OnPropertyChanged(nameof(IsWaveformScopeEffective));
         OnPropertyChanged(nameof(EffectiveHistogram));
-        OnPropertyChanged(nameof(HistogramTitle));
+        OnPropertyChanged(nameof(EffectiveWaveform));
+        OnPropertyChanged(nameof(EffectiveScopeTitle));
         OnPropertyChanged(nameof(RawHistogramHint));
+    }
+}
+
+public sealed class ScopeOption : ObservableObject
+{
+    private bool _isEnabled = true;
+    private string? _hint;
+
+    public ScopeOption(
+        ScopeView scope,
+        string displayName,
+        bool isEnabled = true,
+        string? hint = null)
+    {
+        Scope = scope;
+        DisplayName = displayName;
+        _isEnabled = isEnabled;
+        _hint = hint;
+    }
+
+    public ScopeView Scope { get; }
+    public string DisplayName { get; }
+
+    public bool IsEnabled
+    {
+        get => _isEnabled;
+        internal set => SetProperty(ref _isEnabled, value);
+    }
+
+    public string? Hint
+    {
+        get => _hint;
+        internal set => SetProperty(ref _hint, value);
     }
 }

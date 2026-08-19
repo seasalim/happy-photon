@@ -27,10 +27,22 @@
     <Border Background="{DynamicResource SurfaceMid}"
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*">
-            <views:HistogramView x:Name="LibraryHistogram"
-                                 Histogram="{Binding Histogram}"
-                                 Margin="15,15,15,10"
-                                 IsEnabled="{Binding HasSelectedImage}"/>
+            <Border x:Name="LibraryHistogramBox"
+                    Margin="15,15,15,10"
+                    Padding="5"
+                    Background="{DynamicResource SurfaceLow}"
+                    CornerRadius="8"
+                    IsEnabled="{Binding HasSelectedImage}">
+                <Grid RowDefinitions="Auto,Auto">
+                    <TextBlock x:Name="LibraryHistogramHeader"
+                               Classes="section-label"
+                               Text="HISTOGRAM"
+                               Margin="0,0,0,5"/>
+                    <views:HistogramView x:Name="LibraryHistogram"
+                                         Grid.Row="1"
+                                         Histogram="{Binding Histogram}"/>
+                </Grid>
+            </Border>
 
             <ScrollViewer Grid.Row="1"
                           VerticalScrollBarVisibility="Hidden"

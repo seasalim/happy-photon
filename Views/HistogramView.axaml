@@ -3,21 +3,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="100"
-             x:Class="HappyPhoton.Views.HistogramView"
-             x:Name="Root">
+             x:Class="HappyPhoton.Views.HistogramView">
 
-    <Border Background="{DynamicResource SurfaceLow}" CornerRadius="8" Padding="5">
-        <Grid RowDefinitions="Auto,*,Auto">
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,5">
-                <TextBlock Classes="section-label"
-                           Text="{Binding Title, ElementName=Root}"/>
-                <ContentControl Grid.Column="1"
-                                Content="{Binding HeaderContent, ElementName=Root}"/>
-            </Grid>
-            <Canvas Grid.Row="1" x:Name="HistogramCanvas"
-                    Height="80" ClipToBounds="True"/>
-            <StackPanel Grid.Row="2" x:Name="RawClippingPanel"
-                        IsVisible="False" Margin="0,5,0,0" Spacing="2">
+    <Grid RowDefinitions="Auto,Auto">
+        <Canvas x:Name="HistogramCanvas"
+                Height="80" ClipToBounds="True"/>
+        <StackPanel Grid.Row="1" x:Name="RawClippingPanel"
+                    IsVisible="False" Margin="0,5,0,0" Spacing="2">
                 <TextBlock Text="≥ SENSOR WHITE"
                            FontFamily="{StaticResource FontLabel}"
                            FontSize="8" Foreground="{DynamicResource TextMuted}"/>
@@ -41,7 +33,6 @@
                                    Foreground="{DynamicResource TextMuted}"/>
                     </StackPanel>
                 </Grid>
-            </StackPanel>
-        </Grid>
-    </Border>
+        </StackPanel>
+    </Grid>
 </UserControl>

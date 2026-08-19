@@ -42,6 +42,8 @@
     <Compile Include="..\Tests\TestSourceAvailabilityService.cs" Link="TestSourceAvailabilityService.cs" />
     <Compile Include="..\Tests\TestWaits.cs" Link="TestWaits.cs" />
     <Compile Include="..\Tests\WhiteBalanceUiTests.cs" Link="WhiteBalanceUiTests.cs" />
+    <Compile Include="..\Tests\WaveformScopeUiTests.cs" Link="WaveformScopeUiTests.cs" />
+    <Compile Include="..\Tests\WaveformViewTests.cs" Link="WaveformViewTests.cs" />
     <Compile Include="..\Tests\WorkspaceTransitionTests.cs" Link="WorkspaceTransitionTests.cs" />
     <Compile Include="..\Tests\WorkflowTourDimmingTests.cs" Link="WorkflowTourDimmingTests.cs" />
   </ItemGroup>

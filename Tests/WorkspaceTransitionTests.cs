@@ -119,6 +119,112 @@ public sealed class WorkspaceTransitionTests : IDisposable
         }
     }
 
+    [AvaloniaFact]
+    public async Task BeforeAfterRender_SameImageSupersededSentinelIsRejected()
+    {
+        using var catalog = new CatalogService(_root);
+        await catalog.InitializeAsync();
+        var vm = CreateViewModel(catalog, new SolidLoader());
+        var image = new ImageFile(Path.Combine(_root, "before-after.png"))
+        {
+            EditSettings = new EditSettings { Exposure = 1 },
+            HasEdits = true
+        };
+        vm.SelectedImage = image;
+        var started = new[] { NewSignal(), NewSignal() };
+        var release = new[] { NewSignal(), NewSignal() };
+        var gateIndex = -1;
+
+        try
+        {
+            await TestWaits.UntilAsync(() =>
+                vm.PreviewImage != null && vm.Histogram != null);
+            var originalPreview = vm.PreviewImage;
+            var originalHistogram = vm.Histogram;
+            vm.PreviewRenderGateAsync = () =>
+            {
+                var index = Interlocked.Increment(ref gateIndex);
+                started[index].TrySetResult();
+                return release[index].Task;
+            };
+
+            var beforeAfter = vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
+            await started[0].Task.WaitAsync(TestWaits.Condition);
+            var reset = vm.ResetEditsCommand.ExecuteAsync(null);
+            await started[1].Task.WaitAsync(TestWaits.Condition);
+
+            release[0].TrySetResult();
+            await beforeAfter;
+
+            Assert.Same(originalPreview, vm.PreviewImage);
+            Assert.Same(originalHistogram, vm.Histogram);
+
+            release[1].TrySetResult();
+            await reset;
+            Assert.NotNull(vm.PreviewImage);
+            Assert.NotNull(vm.Histogram);
+        }
+        finally
+        {
+            release[0].TrySetResult();
+            release[1].TrySetResult();
+            await vm.DisposeAsync();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task SharedRender_SameImageSupersededSentinelIsRejected()
+    {
+        using var catalog = new CatalogService(_root);
+        await catalog.InitializeAsync();
+        var vm = CreateViewModel(catalog, new SolidLoader());
+        var image = new ImageFile(Path.Combine(_root, "shared.png"))
+        {
+            EditSettings = new EditSettings { Exposure = 1 },
+            HasEdits = true
+        };
+        vm.SelectedImage = image;
+        var started = new[] { NewSignal(), NewSignal() };
+        var release = new[] { NewSignal(), NewSignal() };
+        var gateIndex = -1;
+
+        try
+        {
+            await TestWaits.UntilAsync(() =>
+                vm.PreviewImage != null && vm.Histogram != null);
+            vm.PreviewRenderGateAsync = () =>
+            {
+                var index = Interlocked.Increment(ref gateIndex);
+                started[index].TrySetResult();
+                return release[index].Task;
+            };
+
+            var first = vm.ResetEditsCommand.ExecuteAsync(null);
+            await started[0].Task.WaitAsync(TestWaits.Condition);
+            var second = vm.ResetEditsCommand.ExecuteAsync(null);
+            await started[1].Task.WaitAsync(TestWaits.Condition);
+
+            release[1].TrySetResult();
+            await second;
+            var currentPreview = vm.PreviewImage;
+            var currentHistogram = vm.Histogram;
+            Assert.NotNull(currentPreview);
+            Assert.NotNull(currentHistogram);
+
+            release[0].TrySetResult();
+            await first;
+
+            Assert.Same(currentPreview, vm.PreviewImage);
+            Assert.Same(currentHistogram, vm.Histogram);
+        }
+        finally
+        {
+            release[0].TrySetResult();
+            release[1].TrySetResult();
+            await vm.DisposeAsync();
+        }
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))

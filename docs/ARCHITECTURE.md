@@ -535,8 +535,9 @@ Briefly, for contrast with thumbnails:
 - Rendered-cache writes happen on image/view leave, not on slider settles. A bounded
   drop-oldest queue owns JPEG encoding, sidecar creation, and atomic moves; writes
   re-check the source timestamp before installation.
-- The ViewModel debounces interaction: preview 150 ms, histogram 300 ms (deferred so
-  sliders stay responsive), thumbnail refresh 500 ms, each with its own CTS.
+- The ViewModel debounces interaction: preview 150 ms, render stats 300 ms (display
+  histogram plus luminance waveform, deferred so sliders stay responsive), thumbnail
+  refresh 500 ms, each with its own CTS.
 - A RAW preview/full base also performs one single-threaded visible-mosaic pass between
   LibRaw `Unpack` and `Process`. The pass shares the decode worker and cancellation
   token, releases its native mosaic lease before processing, and stores the optional
@@ -553,6 +554,7 @@ Briefly, for contrast with thumbnails:
   threadpool task scales it to a DPI-independent 150 px bitmap and calculates its bins.
   Retirement never waits for that work; selection and thumbnail-generation checks reject
   stale results, and a later thumbnail assignment reschedules the debounce.
+  This thumbnail-only path calculates no waveform.
 
 ### Background activity ownership
 
@@ -594,6 +596,7 @@ sampler.
 | Preview base decode | Threadpool | One held base; single-flight by identity; newest-wins generation |
 | RAW sensor histogram | Preview/full decode worker | One visible post-Unpack pass; same token; lease released before Process |
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
+| Display histogram + waveform | Preview render worker | One shared ≤1024px Q16 RGB buffer; surrounding render cancellation checks |
 | Library histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |
 | Agent (MCP) tool calls | ASP.NET worker → marshaled | `AgentToolService` marshals mutations to the UI thread |

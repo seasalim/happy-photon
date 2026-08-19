@@ -32,6 +32,7 @@ public sealed class HistogramServiceBitmapTests
         Assert.Equal(1, histogram.Green[0]);
         Assert.Equal(1, histogram.Blue[0]);
         Assert.Equal(1, histogram.Luminance[76]);
+        Assert.Null(histogram.Waveform);
     }
 
     [WindowsFact]

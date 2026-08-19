@@ -207,7 +207,13 @@ orders above the observed difference.
     clipping, lookup-cap, and cancellation cases; six-fixture typed-frame oracle parity;
     loader fault/invariance checks; exact held-base accessor and refresh identity; and
     headless preferred/effective plus 16-photosite presentation boundaries.
-12. **Wide-gamut output suites:** `SrgbExportBaselineTests` requires exact same-RID byte
+12. **Waveform suites:** pure accumulator tests pin the 256×128 grid, column mapping,
+    level boundaries, Rec.601 parity, narrow-source back-fill, histogram-bin invariance,
+    and the production overflow bound. Painter/view tests pin square-root normalization,
+    opaque premultiplied BGRA, theme-token colors, bitmap reuse/disposal and live-theme
+    repaint. Headless tests cover the stable three-entry selector, RAW fallback,
+    Library's fixed chrome, cloud-only no-load behavior, and same-image supersession.
+13. **Wide-gamut output suites:** `SrgbExportBaselineTests` requires exact same-RID byte
     length and SHA-256 equality to the frozen `8f64150` JPEG/PNG/WebP exports.
     `WideGamutExportTests` checks the Display P3 profile and independently derived native-P3
     codes in every format, gamut survival, and common-space intersection-gamut agreement.
@@ -300,7 +306,9 @@ aggregates. Its current-RID test uses the same recorded-or-explicitly-pending co
 
 Opt-in local `HAPPY_PHOTON_PERF=1` diagnostics cover preview base decode, slider-tick
 render at 1600px, full export of one raw, and edited standard-thumbnail generation at
-512px; normal CI does not enable them. Track
+512px; normal CI does not enable them. The waveform diagnostic reports setup separately
+and gates the warmed accumulator-only median over a pre-materialized 1024×1024 Q16 RGB
+span at 5 ms. Track
 results in PR descriptions when a work package touches the hot path; hard budget only
 for slider tick (≤ 150 ms dev baseline, RENDER.md §10).
 RAW base decode performance output includes a `RawHistogram` step for the sensor pass;

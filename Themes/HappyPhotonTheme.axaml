@@ -37,6 +37,7 @@
     <Color x:Key="ColorLabelGreenColor">#66c27a</Color>
     <Color x:Key="ColorLabelBlueColor">#4a7ce6</Color>
     <Color x:Key="ColorLabelPurpleColor">#a77ad9</Color>
+    <Color x:Key="WaveformTraceColor">#cfe6e8</Color>
 
     <SolidColorBrush x:Key="Primary" Color="{StaticResource PrimaryColor}"/>
     <SolidColorBrush x:Key="PrimaryContainer" Color="{StaticResource PrimaryContainerColor}"/>
@@ -60,6 +61,7 @@
     <SolidColorBrush x:Key="ColorLabelGreen" Color="{StaticResource ColorLabelGreenColor}"/>
     <SolidColorBrush x:Key="ColorLabelBlue" Color="{StaticResource ColorLabelBlueColor}"/>
     <SolidColorBrush x:Key="ColorLabelPurple" Color="{StaticResource ColorLabelPurpleColor}"/>
+    <SolidColorBrush x:Key="WaveformTrace" Color="{StaticResource WaveformTraceColor}"/>
 
     <!-- Chart and crop overlays are invariant because they are drawn over pixels. -->
     <Color x:Key="CurveControlPointColor">#ffffffff</Color>
@@ -123,6 +125,7 @@
             <Color x:Key="SurfaceLowestColor">#0e0e13</Color>
             <Color x:Key="SurfaceBaseColor">#131318</Color>
             <Color x:Key="SurfaceLowColor">#1b1b20</Color>
+            <Color x:Key="WaveformBackdropColor">#1b1b20</Color>
             <Color x:Key="SurfaceMidColor">#1f1f25</Color>
             <Color x:Key="SurfaceHighColor">#2a292f</Color>
             <Color x:Key="SurfaceHighestColor">#35343a</Color>
@@ -142,6 +145,7 @@
             <SolidColorBrush x:Key="SurfaceLowest" Color="{StaticResource SurfaceLowestColor}"/>
             <SolidColorBrush x:Key="SurfaceBase" Color="{StaticResource SurfaceBaseColor}"/>
             <SolidColorBrush x:Key="SurfaceLow" Color="{StaticResource SurfaceLowColor}"/>
+            <SolidColorBrush x:Key="WaveformBackdrop" Color="{StaticResource WaveformBackdropColor}"/>
             <SolidColorBrush x:Key="SurfaceMid" Color="{StaticResource SurfaceMidColor}"/>
             <SolidColorBrush x:Key="SurfaceHigh" Color="{StaticResource SurfaceHighColor}"/>
             <SolidColorBrush x:Key="SurfaceHighest" Color="{StaticResource SurfaceHighestColor}"/>
@@ -194,6 +198,7 @@
             <Color x:Key="SurfaceLowestColor">#303030</Color>
             <Color x:Key="SurfaceBaseColor">#363636</Color>
             <Color x:Key="SurfaceLowColor">#3d3d3d</Color>
+            <Color x:Key="WaveformBackdropColor">#3d3d3d</Color>
             <Color x:Key="SurfaceMidColor">#444444</Color>
             <Color x:Key="SurfaceHighColor">#4b4b4b</Color>
             <Color x:Key="SurfaceHighestColor">#535353</Color>
@@ -222,6 +227,7 @@
             <SolidColorBrush x:Key="SurfaceLowest" Color="{StaticResource SurfaceLowestColor}"/>
             <SolidColorBrush x:Key="SurfaceBase" Color="{StaticResource SurfaceBaseColor}"/>
             <SolidColorBrush x:Key="SurfaceLow" Color="{StaticResource SurfaceLowColor}"/>
+            <SolidColorBrush x:Key="WaveformBackdrop" Color="{StaticResource WaveformBackdropColor}"/>
             <SolidColorBrush x:Key="SurfaceMid" Color="{StaticResource SurfaceMidColor}"/>
             <SolidColorBrush x:Key="SurfaceHigh" Color="{StaticResource SurfaceHighColor}"/>
             <SolidColorBrush x:Key="SurfaceHighest" Color="{StaticResource SurfaceHighestColor}"/>

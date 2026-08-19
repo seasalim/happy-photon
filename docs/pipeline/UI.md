@@ -78,7 +78,7 @@ header to click **Export**, or use the global `Ctrl+E` shortcut from either work
 
 - **Scope box** (runs 106/107): the Develop panel's top slot is a scope box whose
   header selector picks exactly one body — display histogram (default), luminance
-  waveform, RGB parade, or RAW sensor histogram. The histogram plot itself is
+  waveform, or RAW sensor histogram. The histogram plot itself is
   frozen: bins, channel colors, geometry, and 80 px height do not change.
   Alternate bodies may grow the box vertically only while selected, absorbed by
   the adjustment scroll area. Scope selection is session-only VM state. Scopes
@@ -86,13 +86,13 @@ header to click **Export**, or use the global `Ctrl+E` shortcut from either work
   thumbnail histogram — never a waveform or RAW data. The RAW entry is disabled
   (never removed) when sensor data is unavailable, with reason-specific
   tooltips; the UI never labels display-referred data RAW.
-  Until the shared waveform selector lands, the histogram header exposes a single RAW
-  toggle. Its checked state is one-way from `Preferred && Available`; preference is
-  session-only and survives JPEG, Library, cloud-only, unsupported-CFA, stale-base,
-  and replacement-in-flight fallback. Those states show `HISTOGRAM`, display data,
-  and an unchecked disabled selector with `ToolTip.ShowOnDisabled` and a specific
-  reason. A replacement refresh carries the matching base's RAW fact so preference
-  reactivates without another click.
+  The selected RAW scope remains the session preference across JPEG, Library,
+  cloud-only, unsupported-CFA, stale-base, and replacement-in-flight fallback.
+  Those states effectively show `HISTOGRAM` and display data while keeping the RAW
+  entry disabled in place with `ToolTip.ShowOnDisabled` and a specific reason. A
+  replacement refresh carries the matching base's RAW fact so the preferred scope
+  reactivates without another click. RGB parade is deferred until luminance waveform
+  usage demonstrates demand.
 - **RAW clipping indication**: effective sensor mode draws the existing red, green,
   and blue channels without a luminance line. Each channel shows a dot and the
   percentage of photosites at or above LibRaw's sensor white level; the exact
@@ -197,9 +197,9 @@ slider re-ordering beyond removing Temperature.
 
 The histogram plot itself is frozen — bins, channel colors, geometry, and height do
 not change. Within that freeze, §5's scope box is permitted: a header selector,
-alternate scope bodies (waveform, RGB parade, RAW sensor histogram), vertical growth
+alternate scope bodies (luminance waveform and RAW sensor histogram), vertical growth
 while a taller body is selected, and RAW-only clipping indication. Scopes never
-appear in Library.
+appear in Library. RGB parade remains deferred.
 
 If a WP seems to need one of these, it's a spec question first.
 

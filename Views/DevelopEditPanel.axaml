@@ -27,6 +27,19 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
         </Style>
+        <Style Selector="ComboBox.scope-selector">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="MinHeight" Value="24"/>
+            <Setter Property="MaxHeight" Value="24"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
+        </Style>
         <Style Selector="Button.develop-action, ToggleButton.develop-action">
             <Setter Property="Width" Value="24"/>
             <Setter Property="Height" Value="24"/>
@@ -128,24 +141,48 @@
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*,Auto">
             <Grid Grid.Row="0" RowDefinitions="Auto,2">
-                <views:HistogramView Histogram="{Binding EffectiveHistogram}"
-                                     Title="{Binding HistogramTitle}"
-                                     Margin="15,15,15,10"
-                                     IsEnabled="{Binding HasSelectedImage}">
-                    <views:HistogramView.HeaderContent>
-                        <ToggleButton Classes="develop-action"
-                                      MinWidth="36" Height="22"
-                                      Padding="6,2"
-                                      FontFamily="{StaticResource FontLabel}"
-                                      FontSize="9" Content="RAW"
-                                      Command="{Binding ToggleRawHistogramCommand}"
-                                      IsChecked="{Binding IsRawHistogramEffective, Mode=OneWay}"
-                                      IsEnabled="{Binding IsRawHistogramAvailable}"
-                                      ToolTip.Tip="{Binding RawHistogramHint}"
-                                      ToolTip.ShowOnDisabled="True"
-                                      AutomationProperties.Name="Show RAW sensor histogram"/>
-                    </views:HistogramView.HeaderContent>
-                </views:HistogramView>
+                <Border x:Name="DevelopScopeBox"
+                        Margin="15,15,15,10"
+                        Padding="5"
+                        Background="{DynamicResource SurfaceLow}"
+                        CornerRadius="8"
+                        IsEnabled="{Binding HasSelectedImage}">
+                    <StackPanel Spacing="5">
+                        <ComboBox x:Name="ScopeSelector"
+                                  Classes="scope-selector"
+                                  ItemsSource="{Binding ScopeOptions}"
+                                  SelectedItem="{Binding SelectedScopeOption, Mode=TwoWay}"
+                                  AutomationProperties.Name="Develop scope">
+                            <ComboBox.Styles>
+                                <Style Selector="ComboBoxItem">
+                                    <Setter Property="IsEnabled"
+                                            Value="{ReflectionBinding IsEnabled}"/>
+                                    <Setter Property="ToolTip.Tip"
+                                            Value="{ReflectionBinding Hint}"/>
+                                    <Setter Property="ToolTip.ShowOnDisabled"
+                                            Value="True"/>
+                                </Style>
+                            </ComboBox.Styles>
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ScopeOption">
+                                    <TextBlock Text="{Binding DisplayName}"
+                                               ToolTip.Tip="{Binding Hint}"
+                                               ToolTip.ShowOnDisabled="True"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Grid>
+                            <views:HistogramView
+                                x:Name="DevelopHistogram"
+                                Histogram="{Binding EffectiveHistogram}"
+                                IsVisible="{Binding IsHistogramScopeEffective}"/>
+                            <views:WaveformView
+                                x:Name="DevelopWaveform"
+                                Waveform="{Binding EffectiveWaveform}"
+                                IsVisible="{Binding IsWaveformScopeEffective}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
                 <ProgressBar Name="BaseArmingProgressBar"
                              Grid.Row="1"
                              IsIndeterminate="{Binding IsBaseArming}"

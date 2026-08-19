@@ -6,6 +6,13 @@ public enum HistogramDomain
     RawSensor
 }
 
+public enum ScopeView
+{
+    Histogram,
+    Waveform,
+    RawHistogram
+}
+
 public sealed record RawClipping(
     long Red,
     long Green,
@@ -20,6 +27,7 @@ public class HistogramData
 {
     public HistogramDomain Domain { get; init; }
     public RawClipping? Clipping { get; set; }
+    public WaveformData? Waveform { get; set; }
     public int[] Red { get; } = new int[256];
     public int[] Green { get; } = new int[256];
     public int[] Blue { get; } = new int[256];

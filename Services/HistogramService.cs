@@ -10,7 +10,7 @@ namespace HappyPhoton.Services;
 /// </summary>
 public class HistogramService
 {
-    private const int HistogramMaxDimension = 1024;
+    internal const int HistogramMaxDimension = 1024;
     internal const int LibraryHistogramDimension = 150;
 
     public void CalculateHistogram(RenderResult result, HistogramData histogram)
@@ -46,6 +46,10 @@ public class HistogramService
             histogram.Luminance[lum]++;
         }
 
+        histogram.Waveform = WaveformAccumulator.Accumulate(
+            data,
+            (int)histogramImage.Width,
+            (int)histogramImage.Height);
         histogram.Normalize();
     }
 

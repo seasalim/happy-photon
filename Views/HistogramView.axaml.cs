@@ -13,29 +13,10 @@ public partial class HistogramView : UserControl
     public static readonly StyledProperty<HistogramData?> HistogramProperty =
         AvaloniaProperty.Register<HistogramView, HistogramData?>(nameof(Histogram));
 
-    public static readonly StyledProperty<string> TitleProperty =
-        AvaloniaProperty.Register<HistogramView, string>(
-            nameof(Title), "HISTOGRAM");
-
-    public static readonly StyledProperty<object?> HeaderContentProperty =
-        AvaloniaProperty.Register<HistogramView, object?>(nameof(HeaderContent));
-
     public HistogramData? Histogram
     {
         get => GetValue(HistogramProperty);
         set => SetValue(HistogramProperty, value);
-    }
-
-    public string Title
-    {
-        get => GetValue(TitleProperty);
-        set => SetValue(TitleProperty, value);
-    }
-
-    public object? HeaderContent
-    {
-        get => GetValue(HeaderContentProperty);
-        set => SetValue(HeaderContentProperty, value);
     }
 
     private Canvas? _canvas;

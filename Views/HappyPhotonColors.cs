@@ -35,6 +35,10 @@ public static class HappyPhotonColors
     public static readonly IBrush ColorLabelBlue = Brush("#4a7ce6");
     public static readonly IBrush ColorLabelPurple = Brush("#a77ad9");
 
+    public static readonly IBrush WaveformTrace = Brush("#cfe6e8");
+    public static readonly IBrush WaveformBackdrop = Brush("#1b1b20");
+    public static readonly IBrush MidGrayWaveformBackdrop = Brush("#3d3d3d");
+
     public static readonly IBrush HistogramRed = Argb(120, 0xff, 0x6b, 0x7a);
     public static readonly IBrush HistogramGreen = Argb(120, 0x7d, 0xf4, 0xd1);
     public static readonly IBrush HistogramBlue = Argb(120, 0x72, 0x6f, 0xff);

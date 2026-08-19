@@ -261,7 +261,8 @@ public partial class MainWindowViewModel
             // Show original preview without any edits (same size as edited preview)
             var (preview, histogram) = await ImageService.ApplyEditsToPreviewAsync(
                 image, tempSettings, skipHistogram: false);
-            if (!CanUseBeforeAfterWorkspace() ||
+            if (preview == null ||
+                !CanUseBeforeAfterWorkspace() ||
                 !ReferenceEquals(SelectedImage, image) ||
                 !IsShowingOriginal)
             {

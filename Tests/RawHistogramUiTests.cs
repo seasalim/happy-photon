@@ -34,17 +34,20 @@ public sealed class RawHistogramUiTests : IDisposable
         };
         vm.SelectedImage = new ImageFile(Path.Combine(_root, "sensor.dng"));
         await TestWaits.UntilAsync(() => vm.IsRawHistogramAvailable);
+        var stableOptions = vm.ScopeOptions;
 
-        vm.ToggleRawHistogramCommand.Execute(null);
-        Assert.True(vm.IsRawHistogramPreferred);
-        Assert.True(vm.IsRawHistogramEffective);
-        Assert.Equal("RAW HISTOGRAM", vm.HistogramTitle);
+        vm.SelectedScope = ScopeView.RawHistogram;
+        Assert.Equal(ScopeView.RawHistogram, vm.SelectedScope);
+        Assert.Equal(ScopeView.RawHistogram, vm.EffectiveScope);
+        Assert.Equal("RAW HISTOGRAM", vm.EffectiveScopeTitle);
 
         vm.SelectedImage = new ImageFile(Path.Combine(_root, "display.jpg"));
         await TestWaits.UntilAsync(() => !vm.IsRawHistogramAvailable);
-        Assert.True(vm.IsRawHistogramPreferred);
-        Assert.False(vm.IsRawHistogramEffective);
-        Assert.Equal("HISTOGRAM", vm.HistogramTitle);
+        Assert.Same(stableOptions, vm.ScopeOptions);
+        Assert.Equal(ScopeView.RawHistogram, vm.SelectedScope);
+        Assert.Equal(ScopeView.Histogram, vm.EffectiveScope);
+        Assert.Equal("HISTOGRAM", vm.EffectiveScopeTitle);
+        Assert.False(vm.ScopeOptions[2].IsEnabled);
         Assert.Contains("Display-referred", vm.RawHistogramHint);
 
         vm.IsDevelopMode = false;
@@ -57,7 +60,14 @@ public sealed class RawHistogramUiTests : IDisposable
         cloud.SourceRequiresHydration = true;
         Assert.False(vm.IsRawHistogramAvailable);
         Assert.Contains("online-only", vm.RawHistogramHint);
-        Assert.True(vm.IsRawHistogramPreferred);
+        Assert.Equal(ScopeView.RawHistogram, vm.SelectedScope);
+
+        cloud.SourceRequiresHydration = false;
+        vm.SelectedImage = new ImageFile(Path.Combine(_root, "restored.dng"));
+        await TestWaits.UntilAsync(() => vm.IsRawHistogramAvailable);
+        Assert.Same(stableOptions, vm.ScopeOptions);
+        Assert.True(vm.ScopeOptions[2].IsEnabled);
+        Assert.Equal(ScopeView.RawHistogram, vm.EffectiveScope);
 
         await vm.DisposeAsync();
     }
