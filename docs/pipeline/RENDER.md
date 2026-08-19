@@ -368,3 +368,13 @@ at neutral). The development baseline budget is ≤ 150 ms and is measured with
 `HAPPY_PHOTON_PERF=1`. LUT composition itself is microseconds. Tonal, chroma, and
 geometry slider moves invalidate only the render; only `BaseDecodeSettings` changes
 invalidate the base.
+
+`HAPPY_PHOTON_DISPLAY_TRACE=1` enables the permanent display-chain diagnostic. The
+active Develop or fullscreen preview emits one post-layout line when its bitmap identity,
+zoom, viewport size, or top-level render scaling changes. The line records bitmap pixels,
+image-control and viewport logical sizes, `TopLevel.RenderScaling`, the device rectangle,
+net device-pixels-per-bitmap-pixel scale, and an explicit 1:1 verdict. Preview bitmap
+swaps separately identify cached JPEG, fresh render, or background refresh provenance.
+The gate is captured at process startup, is independent of `HAPPY_PHOTON_PERF`, and is
+off by default; when off, the view installs no display observer and log interpolation
+does not evaluate bitmap dimensions.

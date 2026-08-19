@@ -22,14 +22,14 @@ public sealed class PreviewBitmapLifetimeTests
         var first = BitmapConversionService.ConvertToBitmap(source)!;
         var second = BitmapConversionService.ConvertToBitmap(source)!;
 
-        viewModel.ReplacePreviewImage(first);
-        viewModel.ReplacePreviewImage(second);
+        viewModel.ReplacePreviewImage(first, PreviewPaintSource.FreshRender);
+        viewModel.ReplacePreviewImage(second, PreviewPaintSource.FreshRender);
 
         Assert.Equal(4, first.PixelSize.Width);
         Dispatcher.UIThread.RunJobs();
         Assert.Throws<ObjectDisposedException>(() => _ = first.PixelSize);
 
-        viewModel.ReplacePreviewImage(null);
+        viewModel.ClearPreviewImage();
         Dispatcher.UIThread.RunJobs();
         Assert.Throws<ObjectDisposedException>(() => _ = second.PixelSize);
     }
@@ -46,15 +46,15 @@ public sealed class PreviewBitmapLifetimeTests
         var first = BitmapConversionService.ConvertToBitmap(source)!;
         var second = BitmapConversionService.ConvertToBitmap(source)!;
 
-        viewModel.ReplacePreviewImage(first);
-        viewModel.ReplacePreviewImage(second);
-        viewModel.ReplacePreviewImage(first);
+        viewModel.ReplacePreviewImage(first, PreviewPaintSource.FreshRender);
+        viewModel.ReplacePreviewImage(second, PreviewPaintSource.FreshRender);
+        viewModel.ReplacePreviewImage(first, PreviewPaintSource.FreshRender);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(4, first.PixelSize.Width);
         Assert.Throws<ObjectDisposedException>(() => _ = second.PixelSize);
 
-        viewModel.ReplacePreviewImage(null);
+        viewModel.ClearPreviewImage();
         Dispatcher.UIThread.RunJobs();
         Assert.Throws<ObjectDisposedException>(() => _ = first.PixelSize);
     }
@@ -75,8 +75,8 @@ public sealed class PreviewBitmapLifetimeTests
         var image = new ImageFile("image.jpg");
         viewModel.Library.SetImages([image]);
 
-        viewModel.ReplacePreviewImage(oldPreview);
-        viewModel.ReplacePreviewImage(currentPreview);
+        viewModel.ReplacePreviewImage(oldPreview, PreviewPaintSource.FreshRender);
+        viewModel.ReplacePreviewImage(currentPreview, PreviewPaintSource.FreshRender);
         viewModel.Library.ReplaceThumbnail(image, oldThumbnail);
         viewModel.Library.ReplaceThumbnail(image, currentThumbnail);
 

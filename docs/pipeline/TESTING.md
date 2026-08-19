@@ -330,6 +330,59 @@ HAPPY_PHOTON_FBDD_EVAL=1 dotnet test Tests/HappyPhoton.Tests.csproj --filter Raw
 
 It is an explicit opt-in diagnostic because all three modes require full RAW decodes.
 
+### 5.1 Display-reference comparison
+
+`ReferenceComparisonTests` is a report-only comparison of the two committed diagnostic
+RAWs (`fujifilm-x30.raf` and `canon-eos-6d-iso-6400.cr2`) with externally rendered
+references. It is excluded from normal execution by `HAPPY_PHOTON_COMPARE=1`. Reference
+files use `Tests/assets/references/<fixture-stem>.<tool>.<ext>`; an explicitly set
+`HAPPY_PHOTON_COMPARE_REFERENCE_DIR` replaces that directory rather than supplementing
+it. Every matching tool is reported. A missing reference is a named skip. References
+must be lossless and have at least the 1600px measurement edge; the harness only
+downscales, never upscales. Untagged references are treated as sRGB and that assumption
+is included in the report.
+
+The protocol is fixed as follows. The reference is EXIF-auto-oriented and its embedded
+or declared color is normalized to display sRGB before any resize or measurement. Both
+arms are reduced to a 1600px long edge in linear light with the pipeline's shared resize
+filter. For every display-sRGB RGB8 pixel:
+
+```text
+Y  = 0.2126 R + 0.7152 G + 0.0722 B
+Cb = B - Y
+Cr = R - Y
+```
+
+The full-frame median is the middle value, or the mean of the two middle values for an
+even population. Exposure is bisected over the closed product range [−3,+3] for at most
+12 iterations until the candidate median is within 0.25 RGB8 code
+(0.25/255 normalized) of the once-resized reference median. Every candidate passes
+through the same 1600px operation, and the
+converged candidate is reused for metrics. An unreachable target or iteration limit is
+reported explicitly.
+
+The reference selects the 256px window with lowest population standard deviation in Y
+whose mean is in [40,200]; an exact tie chooses the topmost, then leftmost window. The
+same coordinates measure both arms. Acutance is the mean central-difference gradient
+magnitude `sqrt(((Y[x+1]-Y[x-1])/2)^2 + ((Y[y+1]-Y[y-1])/2)^2)` over interior pixels
+only. For Y, Cb, and Cr the report gives population standard deviation, the standard
+deviation surviving a radius-4 box blur, and their ratio. The blur clamps samples to the
+window edge. A total deviation below `1e-12` makes the ratio `undefined`. These values
+are descriptive; assertions cover only geometry, ROI discovery, bisection convergence,
+and finite metrics.
+
+The opt-in self-reference cases render a temporary reference from each RAW and drive
+the same decode, canonicalization, bisection, ROI, and metric composition even when no
+external references are committed. LibRaw's OpenMP pin is process-start-sensitive, so
+run the filtered suite in a fresh process:
+
+```powershell
+$env:OMP_NUM_THREADS='1'
+$env:HAPPY_PHOTON_COMPARE='1'
+# Optional: $env:HAPPY_PHOTON_COMPARE_REFERENCE_DIR='D:\references'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter FullyQualifiedName~ReferenceComparisonTests --logger "console;verbosity=detailed"
+```
+
 The Phase 0 precision diagnostic generates its three ramps in-test, captures the eight
 real-pipeline attribution checkpoints, and emits a deterministic metric payload plus
 separate environment/timing details. Run it in a fresh Release process with
@@ -416,8 +469,8 @@ ordinary host so the native and headless Avalonia platforms never share a proces
 
 Platform and codec gaps use xUnit v3 native runtime skips (`Assert.Skip` or
 `Assert.SkipWhen`) with an explicit reason so they remain visible in logs. CI gates on
-discovery before execution: 1,193 ordinary listed cases plus 116 headless listed cases.
-The full run currently expands dynamic theories to 1,258 ordinary and 119 headless
+discovery before execution: 1,237 ordinary listed cases plus 131 headless listed cases.
+The full run currently expands dynamic theories to 1,302 ordinary and 135 headless
 execution cases. Run tests with a 90-second blame
 hang timeout while changing either host.
 

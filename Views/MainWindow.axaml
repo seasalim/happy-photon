@@ -212,6 +212,7 @@
                                                   IsCropMode="{Binding IsCropMode}"
                                                   IsWhiteBalancePicking="{Binding IsWhiteBalancePicking}"
                                                   IsColorAssessment="{Binding IsColorAssessmentMode}"
+                                                  IsDisplayTraceActive="{Binding IsDevelopPreviewSurfaceActive}"
                                                   IsCropAspectLocked="{Binding IsCropAspectLocked}"
                                                   Crop="{Binding CurrentCrop, Mode=TwoWay}"
                                                   ContentInset="10"/>
@@ -380,6 +381,7 @@
                                   Source="{Binding PreviewImage}"
                                   ZoomLevel="{Binding ZoomLevel}"
                                   IsColorAssessment="{Binding IsColorAssessmentMode}"
+                                  IsDisplayTraceActive="{Binding IsFullScreenPreviewSurfaceActive}"
                                   ScrollBarVisibility="Hidden"/>
 
             <Border x:Name="FullScreenSelectionBadge"

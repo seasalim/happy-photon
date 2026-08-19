@@ -13,20 +13,34 @@ public static class ImageServiceHelpers
 {
     private const string PerfEnvironmentVariable = "HAPPY_PHOTON_PERF";
     private const string DebugEnvironmentVariable = "HAPPY_PHOTON_DEBUG";
-    private static readonly (bool Perf, bool Debug) DiagnosticFlags =
+    private const string DisplayTraceEnvironmentVariable =
+        "HAPPY_PHOTON_DISPLAY_TRACE";
+    private static readonly (bool Perf, bool Debug, bool DisplayTrace) DiagnosticFlags =
         ReadDiagnosticFlags(Environment.GetEnvironmentVariable);
+    private static readonly object DisplayTraceSync = new();
+    private static int _displayTraceEnabledOverride = -1;
+    private static Action<string>? _displayTraceSinkOverride;
 
     public static readonly bool PerfLoggingEnabled = DiagnosticFlags.Perf;
 
     public static readonly bool DebugLoggingEnabled = DiagnosticFlags.Debug;
 
-    internal static (bool Perf, bool Debug) ReadDiagnosticFlags(
+    public static bool DisplayTraceLoggingEnabled =>
+        Volatile.Read(ref _displayTraceEnabledOverride) switch
+        {
+            0 => false,
+            1 => true,
+            _ => DiagnosticFlags.DisplayTrace
+        };
+
+    internal static (bool Perf, bool Debug, bool DisplayTrace) ReadDiagnosticFlags(
         Func<string, string?> readVariable)
     {
         ArgumentNullException.ThrowIfNull(readVariable);
         return (
             !string.IsNullOrWhiteSpace(readVariable(PerfEnvironmentVariable)),
-            !string.IsNullOrWhiteSpace(readVariable(DebugEnvironmentVariable)));
+            !string.IsNullOrWhiteSpace(readVariable(DebugEnvironmentVariable)),
+            readVariable(DisplayTraceEnvironmentVariable) == "1");
     }
 
     /// <summary>
@@ -204,10 +218,68 @@ public static class ImageServiceHelpers
         LogPerformance(method, step, elapsedMs, filePath, extra.GetFormattedText());
     }
 
+    public static void LogDisplayTrace(
+        ref DisplayTraceLogInterpolatedStringHandler message)
+    {
+        if (!DisplayTraceLoggingEnabled) return;
+        WriteDisplayTrace(message.GetFormattedText());
+    }
+
+    internal static IDisposable OverrideDisplayTraceForTesting(
+        bool enabled,
+        Action<string>? sink)
+    {
+        lock (DisplayTraceSync)
+        {
+            var previousEnabled = _displayTraceEnabledOverride;
+            var previousSink = _displayTraceSinkOverride;
+            Volatile.Write(ref _displayTraceEnabledOverride, enabled ? 1 : 0);
+            _displayTraceSinkOverride = sink;
+            return new DisplayTraceOverrideScope(
+                previousEnabled,
+                previousSink);
+        }
+    }
+
     public static void LogError(string message)
     {
         Debug.WriteLine($"[HappyPhoton] {message}");
         Console.Error.WriteLine(message);
+    }
+
+    private static void WriteDisplayTrace(string message)
+    {
+        var sink = Volatile.Read(ref _displayTraceSinkOverride);
+
+        var fullMessage = $"[DisplayChain] {message}";
+        if (sink != null)
+        {
+            sink(fullMessage);
+            return;
+        }
+
+        Debug.WriteLine(fullMessage);
+        Console.WriteLine(fullMessage);
+    }
+
+    private sealed class DisplayTraceOverrideScope(
+        int previousEnabled,
+        Action<string>? previousSink) : IDisposable
+    {
+        private bool _disposed;
+
+        public void Dispose()
+        {
+            lock (DisplayTraceSync)
+            {
+                if (_disposed) return;
+                Volatile.Write(
+                    ref _displayTraceEnabledOverride,
+                    previousEnabled);
+                _displayTraceSinkOverride = previousSink;
+                _disposed = true;
+            }
+        }
     }
 
     [InterpolatedStringHandler]
@@ -261,6 +333,29 @@ public static class ImageServiceHelpers
             _builder.AppendFormatted(value, alignment);
         public void AppendFormatted<T>(T value, int alignment, string? format) =>
             _builder.AppendFormatted(value, alignment, format);
+        public string GetFormattedText() => _builder.ToStringAndClear();
+    }
+
+    [InterpolatedStringHandler]
+    public ref struct DisplayTraceLogInterpolatedStringHandler
+    {
+        private DefaultInterpolatedStringHandler _builder;
+
+        public DisplayTraceLogInterpolatedStringHandler(
+            int literalLength,
+            int formattedCount,
+            out bool shouldAppend)
+        {
+            shouldAppend = DisplayTraceLoggingEnabled;
+            _builder = shouldAppend
+                ? new DefaultInterpolatedStringHandler(literalLength, formattedCount)
+                : default;
+        }
+
+        public void AppendLiteral(string value) => _builder.AppendLiteral(value);
+        public void AppendFormatted<T>(T value) => _builder.AppendFormatted(value);
+        public void AppendFormatted<T>(T value, string? format) =>
+            _builder.AppendFormatted(value, format);
         public string GetFormattedText() => _builder.ToStringAndClear();
     }
 }

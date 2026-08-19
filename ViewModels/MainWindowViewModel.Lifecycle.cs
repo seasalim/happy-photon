@@ -56,7 +56,7 @@ public partial class MainWindowViewModel
             await _imageService.Value.DisposeAsync();
         }
 
-        ReplacePreviewImage(null);
+        ClearPreviewImage();
         Library.DisposeThumbnails();
         _bitmapRetirement.Dispose();
     }

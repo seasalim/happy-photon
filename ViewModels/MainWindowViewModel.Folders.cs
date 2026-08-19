@@ -252,6 +252,11 @@ public partial class MainWindowViewModel
 
     // View Mode Methods
 
+    public bool IsDevelopPreviewSurfaceActive =>
+        IsDevelopMode && !IsFullScreenMode;
+
+    public bool IsFullScreenPreviewSurfaceActive => IsFullScreenMode;
+
     [RelayCommand]
     private void ToggleViewMode()
     {
@@ -315,6 +320,7 @@ public partial class MainWindowViewModel
 
     partial void OnIsDevelopModeChanged(bool value)
     {
+        OnPropertyChanged(nameof(IsDevelopPreviewSurfaceActive));
         OnPropertyChanged(nameof(CanSavePreset));
         NotifyWorkflowTourVisibilityChanged();
         NotifyWhiteBalanceCommandState();
@@ -363,6 +369,8 @@ public partial class MainWindowViewModel
 
     partial void OnIsFullScreenModeChanged(bool value)
     {
+        OnPropertyChanged(nameof(IsDevelopPreviewSurfaceActive));
+        OnPropertyChanged(nameof(IsFullScreenPreviewSurfaceActive));
         if (value)
         {
             ArmFullScreenSelection();

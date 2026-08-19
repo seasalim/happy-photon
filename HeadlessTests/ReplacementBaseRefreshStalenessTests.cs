@@ -29,7 +29,7 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
         using var source = new MagickImage(MagickColors.Red, 4, 3);
 
         var newerPreview = BitmapConversionService.ConvertToBitmap(source)!;
-        vm.ReplacePreviewImage(newerPreview);
+        vm.ReplacePreviewImage(newerPreview, PreviewPaintSource.FreshRender);
 
         // A newer render generation settled and was recorded by the outcome
         // path, exactly as a fresh edit render would report it.
@@ -64,7 +64,7 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
         using var source = new MagickImage(MagickColors.Red, 4, 3);
 
         var olderPreview = BitmapConversionService.ConvertToBitmap(source)!;
-        vm.ReplacePreviewImage(olderPreview);
+        vm.ReplacePreviewImage(olderPreview, PreviewPaintSource.FreshRender);
 
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
             image,

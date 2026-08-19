@@ -199,7 +199,7 @@ public partial class MainWindowViewModel
             if (!token.IsCancellationRequested && preview != null)
             {
                 IsShowingOriginal = false;
-                ReplacePreviewImage(preview);
+                ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
             }
             else
             {
@@ -229,7 +229,7 @@ public partial class MainWindowViewModel
                 if (preview != null)
                 {
                     IsShowingOriginal = false;
-                    ReplacePreviewImage(preview);
+                    ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
                 }
             }
             catch (OperationCanceledException) { }
@@ -273,7 +273,7 @@ public partial class MainWindowViewModel
                 }
                 return;
             }
-            ReplacePreviewImage(preview);
+            ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
             Histogram = histogram;
         }
         else

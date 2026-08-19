@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.Views;
 
@@ -43,6 +44,10 @@ public partial class ZoomPanControl : UserControl
 
     public static readonly StyledProperty<Thickness> ContentInsetProperty =
         AvaloniaProperty.Register<ZoomPanControl, Thickness>(nameof(ContentInset));
+
+    public static readonly StyledProperty<bool> IsDisplayTraceActiveProperty =
+        AvaloniaProperty.Register<ZoomPanControl, bool>(
+            nameof(IsDisplayTraceActive));
 
     public Bitmap? Source
     {
@@ -104,6 +109,12 @@ public partial class ZoomPanControl : UserControl
         set => SetValue(ContentInsetProperty, value);
     }
 
+    public bool IsDisplayTraceActive
+    {
+        get => GetValue(IsDisplayTraceActiveProperty);
+        set => SetValue(IsDisplayTraceActiveProperty, value);
+    }
+
     public event EventHandler<double>? ZoomChanged;
     public event EventHandler<double>? AutoFitRequested;
     public event EventHandler<(double X, double Y)>? WhiteBalancePickRequested;
@@ -118,6 +129,7 @@ public partial class ZoomPanControl : UserControl
     private bool _isPanning;
     private bool _isWhiteBalanceGesture;
     private bool _pointerMoved;
+    private readonly DisplayChainTrace? _displayChainTrace;
 
     public ZoomPanControl()
     {
@@ -136,6 +148,13 @@ public partial class ZoomPanControl : UserControl
 
         UpdateScrollBarVisibility();
         ApplyColorAssessment();
+        if (ImageServiceHelpers.DisplayTraceLoggingEnabled)
+        {
+            _displayChainTrace = new DisplayChainTrace(
+                this,
+                _imageControl!,
+                _scrollViewer!);
+        }
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -181,6 +200,13 @@ public partial class ZoomPanControl : UserControl
         {
             ApplyColorAssessment();
             RequestAutoFit();
+        }
+
+        if (change.Property == SourceProperty ||
+            change.Property == ZoomLevelProperty ||
+            change.Property == IsDisplayTraceActiveProperty)
+        {
+            _displayChainTrace?.OnInputChanged();
         }
     }
 
@@ -253,6 +279,7 @@ public partial class ZoomPanControl : UserControl
 
         ApplyColorAssessment();
         RequestAutoFit();
+        _displayChainTrace?.OnInputChanged();
     }
 
     private void RequestAutoFit()

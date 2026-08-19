@@ -486,7 +486,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
 
         IsShowingOriginal = false;
-        ReplacePreviewImage(preview);
+        ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
 
         // Only update histogram if not skipped
         if (!skipHistogram)

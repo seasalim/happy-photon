@@ -38,3 +38,28 @@ dotnet run --file scripts/generate-pipeline-test-assets.cs -- `
 
 The HEIC was encoded at quality 90 with pillow-heif 1.1.1. Its decode test is
 skipped with an explicit reason when the platform codec is unavailable.
+
+## Display-reference comparison assets
+
+External reference renders follow
+`references/<fixture-stem>.<tool>.<lossless-extension>`. The comparison harness also
+accepts a fixture-keyed directory supplied by `HAPPY_PHOTON_COMPARE_REFERENCE_DIR`.
+Committed references are canonical test assets: store them losslessly with exactly the
+1600px measurement long edge (never smaller), and add their compressed size to the
+recursive 100 MiB asset budget before committing. If the two real compressed files do
+not fit the remaining budget, obtain maintainer approval for a budget change; do not
+reduce their measurement resolution.
+
+Copy and complete this provenance block for every added reference:
+
+```text
+### <fixture-stem>.<tool>.<ext>
+- Source fixture: <committed RAW filename and SHA-256>
+- Redistribution license: <license name and source URL>
+- Reference SHA-256: <lowercase digest>
+- Renderer: <tool name and exact version>
+- Settings: <complete preset/profile or exported sidecar plus deviations>
+- Color profile: <embedded/declared profile; never “application default”>
+- Orientation handling: <source EXIF orientation and where it was applied>
+- Output: <lossless format, bit depth, pixel dimensions, resize method>
+```

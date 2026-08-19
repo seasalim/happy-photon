@@ -55,7 +55,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
             await refreshReady.Task.WaitAsync(TestWaits.Condition);
 
             vm.IsDevelopMode = false;
-            vm.ReplacePreviewImage(null);
+            vm.ClearPreviewImage();
             var activityEpoch = vm.BackgroundActivityEpoch;
             Assert.Null(vm.Histogram);
 
@@ -105,7 +105,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
             Assert.True(vm.IsShowingOriginal);
 
             vm.IsDevelopMode = false;
-            vm.ReplacePreviewImage(null);
+            vm.ClearPreviewImage();
             releaseRender.TrySetResult();
             await toggle;
 

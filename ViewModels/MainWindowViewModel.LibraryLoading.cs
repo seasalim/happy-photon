@@ -6,6 +6,13 @@ using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
 
+internal enum PreviewPaintSource
+{
+    CachedJpeg,
+    FreshRender,
+    BackgroundRefresh
+}
+
 public partial class MainWindowViewModel
 {
     private static readonly TimeSpan BaseArmingDelay =
@@ -170,7 +177,7 @@ public partial class MainWindowViewModel
                 LibraryThumbnailRequest,
                 skipHistogram: true,
                 ct);
-            ReplacePreviewImage(null);
+            ClearPreviewImage();
             _ = ShowBaseArmingAfterDelay(
                 requestCts,
                 freshTask,
@@ -182,7 +189,9 @@ public partial class MainWindowViewModel
                 var cached = await cachedTask;
                 if (cached != null && IsCurrentPreviewRequest(imageFile, requestCts))
                 {
-                    ReplacePreviewImage(cached.DetachBitmap());
+                    ReplacePreviewImage(
+                        cached.DetachBitmap(),
+                        PreviewPaintSource.CachedJpeg);
                 }
                 cached?.Dispose();
             }
@@ -202,7 +211,7 @@ public partial class MainWindowViewModel
 
             if (preview != null)
             {
-                ReplacePreviewImage(preview);
+                ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
             }
 
             RequestZoomFit?.Invoke();
@@ -223,7 +232,9 @@ public partial class MainWindowViewModel
                     cached != null &&
                     IsCurrentPreviewRequest(imageFile, requestCts))
                 {
-                    ReplacePreviewImage(cached.DetachBitmap());
+                    ReplacePreviewImage(
+                        cached.DetachBitmap(),
+                        PreviewPaintSource.CachedJpeg);
                 }
             }
         }
@@ -287,11 +298,17 @@ public partial class MainWindowViewModel
         }
     }
 
-    internal void ReplacePreviewImage(Bitmap? preview)
+    internal void ReplacePreviewImage(
+        Bitmap preview,
+        PreviewPaintSource source)
     {
+        ArgumentNullException.ThrowIfNull(preview);
         if (ReferenceEquals(PreviewImage, preview))
             return;
 
+        ImageServiceHelpers.LogDisplayTrace(
+            $"paint source={PaintSourceLabel(source)} " +
+            $"bitmap={preview.PixelSize.Width}x{preview.PixelSize.Height}");
         var previous = PreviewImage;
         PreviewImage = preview;
         if (previous != null)
@@ -301,6 +318,25 @@ public partial class MainWindowViewModel
                 () => ReferenceEquals(PreviewImage, previous));
         }
     }
+
+    internal void ClearPreviewImage()
+    {
+        var previous = PreviewImage;
+        if (previous == null) return;
+        PreviewImage = null;
+        _bitmapRetirement.Retire(
+            previous,
+            () => ReferenceEquals(PreviewImage, previous));
+    }
+
+    private static string PaintSourceLabel(PreviewPaintSource source) =>
+        source switch
+        {
+            PreviewPaintSource.CachedJpeg => "cached-jpeg",
+            PreviewPaintSource.FreshRender => "fresh-render",
+            PreviewPaintSource.BackgroundRefresh => "background-refresh",
+            _ => throw new ArgumentOutOfRangeException(nameof(source))
+        };
 
     private void RetireThumbnail(ImageFile image, Bitmap thumbnail) =>
         _bitmapRetirement.Retire(
@@ -350,7 +386,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        ReplacePreviewImage(bitmap);
+        ReplacePreviewImage(bitmap, PreviewPaintSource.BackgroundRefresh);
         if (hasHistogram)
         {
             Histogram = histogram;

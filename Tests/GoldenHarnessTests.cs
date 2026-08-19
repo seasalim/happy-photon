@@ -110,7 +110,10 @@ public sealed class GoldenHarnessTests
     [Fact]
     public void AssetAndGoldenBudgets_AreWithinSpec()
     {
-        var assets = Directory.EnumerateFiles(GoldenTestPaths.AssetDirectory)
+        var assets = Directory.EnumerateFiles(
+                GoldenTestPaths.AssetDirectory,
+                "*",
+                SearchOption.AllDirectories)
             .Where(path => !Path.GetFileName(path).Equals("README.md",
                 StringComparison.OrdinalIgnoreCase))
             .ToArray();

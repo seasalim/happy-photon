@@ -28,5 +28,16 @@ public sealed class ImageServiceLoggingTests
         Assert.Equal(0, evaluations);
     }
 
+    [Fact]
+    public void DisabledDisplayTrace_DoesNotEvaluateBitmapDimensions()
+    {
+        if (DisplayTraceLoggingEnabled) return;
+        var evaluations = 0;
+
+        LogDisplayTrace($"bitmap={Increment(ref evaluations)}x1");
+
+        Assert.Equal(0, evaluations);
+    }
+
     private static int Increment(ref int value) => ++value;
 }

@@ -98,7 +98,7 @@ public partial class MainWindowViewModel
             // Clear cached preview when no image is selected
             ImageService.ClearPreviewCache();
 
-            ReplacePreviewImage(null);
+            ClearPreviewImage();
             Histogram = null;
             CurrentCrop = null;
             CurrentCurve = null;
