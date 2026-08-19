@@ -128,9 +128,24 @@
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*,Auto">
             <Grid Grid.Row="0" RowDefinitions="Auto,2">
-                <views:HistogramView Histogram="{Binding Histogram}"
+                <views:HistogramView Histogram="{Binding EffectiveHistogram}"
+                                     Title="{Binding HistogramTitle}"
                                      Margin="15,15,15,10"
-                                     IsEnabled="{Binding HasSelectedImage}"/>
+                                     IsEnabled="{Binding HasSelectedImage}">
+                    <views:HistogramView.HeaderContent>
+                        <ToggleButton Classes="develop-action"
+                                      MinWidth="36" Height="22"
+                                      Padding="6,2"
+                                      FontFamily="{StaticResource FontLabel}"
+                                      FontSize="9" Content="RAW"
+                                      Command="{Binding ToggleRawHistogramCommand}"
+                                      IsChecked="{Binding IsRawHistogramEffective, Mode=OneWay}"
+                                      IsEnabled="{Binding IsRawHistogramAvailable}"
+                                      ToolTip.Tip="{Binding RawHistogramHint}"
+                                      ToolTip.ShowOnDisabled="True"
+                                      AutomationProperties.Name="Show RAW sensor histogram"/>
+                    </views:HistogramView.HeaderContent>
+                </views:HistogramView>
                 <ProgressBar Name="BaseArmingProgressBar"
                              Grid.Row="1"
                              IsIndeterminate="{Binding IsBaseArming}"

@@ -86,6 +86,21 @@ header to click **Export**, or use the global `Ctrl+E` shortcut from either work
   thumbnail histogram — never a waveform or RAW data. The RAW entry is disabled
   (never removed) when sensor data is unavailable, with reason-specific
   tooltips; the UI never labels display-referred data RAW.
+  Until the shared waveform selector lands, the histogram header exposes a single RAW
+  toggle. Its checked state is one-way from `Preferred && Available`; preference is
+  session-only and survives JPEG, Library, cloud-only, unsupported-CFA, stale-base,
+  and replacement-in-flight fallback. Those states show `HISTOGRAM`, display data,
+  and an unchecked disabled selector with `ToolTip.ShowOnDisabled` and a specific
+  reason. A replacement refresh carries the matching base's RAW fact so preference
+  reactivates without another click.
+- **RAW clipping indication**: effective sensor mode draws the existing red, green,
+  and blue channels without a luminance line. Each channel shows a dot and the
+  percentage of photosites at or above LibRaw's sensor white level; the exact
+  per-channel count (and white level) live in the tooltip, matching how darktable,
+  RawTherapee, Lightroom, and Capture One surface clipping visually rather than as raw
+  counts. A lit channel never rounds to 0.00% — it floors to `<0.01%`. A channel dot is
+  fully lit at 16 photosites and above; below that it remains dim. Display-domain
+  histograms never show these dots.
 - **Clipping chips** (WP4.2): small warning chips at the histogram's top corners, lit
   when `ClippingStats` fractions exceed 0.1%; tooltip shows per-channel percentages;
   clicking a chip toggles the overlays (same state as `J`).

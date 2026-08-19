@@ -41,6 +41,7 @@ public partial class MainWindowViewModel
 
         // Cancel any in-progress preview loading
         _previewLoadingCts?.Cancel();
+        SetRawHistogram(null);
 
         CurrentFolderPath = folderPath;
         CurrentFolderHasSubfolders = false;
@@ -151,6 +152,7 @@ public partial class MainWindowViewModel
     {
         if (wakeActivity) SignalBackgroundActivityStarted();
         _previewLoadingCts?.Cancel();
+        SetRawHistogram(null);
         var requestCts = new CancellationTokenSource();
         _previewLoadingCts = requestCts;
         var ct = requestCts.Token;
@@ -310,6 +312,7 @@ public partial class MainWindowViewModel
         var bitmap = refresh.DetachBitmap();
         var imageFile = refresh.ImageFile;
         var histogram = refresh.Histogram;
+        var rawHistogram = refresh.RawHistogram;
         var hasHistogram = refresh.HasHistogram;
         Dispatcher.UIThread.Post(() =>
         {
@@ -332,6 +335,7 @@ public partial class MainWindowViewModel
             {
                 Histogram = histogram;
             }
+            SetRawHistogram(rawHistogram);
             _ = TrackDirectThumbnailOperation(
                 RefreshThumbnailAsync(imageFile));
         });
@@ -354,6 +358,8 @@ public partial class MainWindowViewModel
             Volatile.Write(
                 ref _activeBaseRefreshRequestId,
                 state.RequestId);
+            if (IsDevelopMode || IsFullScreenMode)
+                SetRawHistogram(null);
             _ = ShowReplacementBaseArmingAfterDelay(
                 state.ImageFile,
                 state.RequestId);
@@ -365,6 +371,7 @@ public partial class MainWindowViewModel
         {
             Volatile.Write(ref _activeBaseRefreshRequestId, 0);
             IsBaseArming = false;
+            NotifyRawHistogramState();
         }
     }
 

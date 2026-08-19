@@ -62,7 +62,9 @@ public sealed record BaseImageInfo(
     int ExifOrientationApplied,
     int FullWidth,
     int FullHeight,
-    double SourceExposureBiasEv = 0);
+    double SourceExposureBiasEv = 0,
+    // HistogramData is mutable; record equality compares this loader fact by reference.
+    HistogramData? RawHistogram = null);
 
 /// <summary>
 /// Owns one decoded linear Rec.2020/D65 image. Ownership transfers at construction
@@ -70,7 +72,7 @@ public sealed record BaseImageInfo(
 /// </summary>
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 6;
+    public const int Version = 7;
     public const int PreviewMaxDimension = 1600;
 
     private MagickImage? _pixels;

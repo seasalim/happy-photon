@@ -203,7 +203,11 @@ orders above the observed difference.
     numerically, pins the camera-fact semantics, and preserves near-clip meaning;
     `StandardWorkingSpaceTests` checks the external sRGB-profile target, native P3
     gamut vectors, the thumbnail sRGB-proxy limit, and the one-code JPEG identity gate.
-11. **Wide-gamut output suites:** `SrgbExportBaselineTests` requires exact same-RID byte
+11. **RAW histogram suites:** synthetic Bayer/X-Trans geometry, black-level, sRGB-bin,
+    clipping, lookup-cap, and cancellation cases; six-fixture typed-frame oracle parity;
+    loader fault/invariance checks; exact held-base accessor and refresh identity; and
+    headless preferred/effective plus 16-photosite presentation boundaries.
+12. **Wide-gamut output suites:** `SrgbExportBaselineTests` requires exact same-RID byte
     length and SHA-256 equality to the frozen `8f64150` JPEG/PNG/WebP exports.
     `WideGamutExportTests` checks the Display P3 profile and independently derived native-P3
     codes in every format, gamut survival, and common-space intersection-gamut agreement.
@@ -299,6 +303,8 @@ render at 1600px, full export of one raw, and edited standard-thumbnail generati
 512px; normal CI does not enable them. Track
 results in PR descriptions when a work package touches the hot path; hard budget only
 for slider tick (≤ 150 ms dev baseline, RENDER.md §10).
+RAW base decode performance output includes a `RawHistogram` step for the sensor pass;
+measure at least the 20 MP Canon EOS 6D fixture when this gate is enabled.
 
 The direct full-resolution detail diagnostic warms the optimized kernel, then uses a
 5472×3648 synthetic image and reports elapsed time and peak private-memory delta:
@@ -402,8 +408,8 @@ ordinary host so the native and headless Avalonia platforms never share a proces
 
 Platform and codec gaps use xUnit v3 native runtime skips (`Assert.Skip` or
 `Assert.SkipWhen`) with an explicit reason so they remain visible in logs. CI gates on
-discovery before execution: 1,143 ordinary listed cases plus 113 headless listed cases.
-The full run currently expands dynamic theories to 1,199 ordinary and 116 headless
+discovery before execution: 1,193 ordinary listed cases plus 116 headless listed cases.
+The full run currently expands dynamic theories to 1,258 ordinary and 119 headless
 execution cases. Run tests with a 90-second blame
 hang timeout while changing either host.
 

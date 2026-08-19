@@ -92,6 +92,21 @@ camera→working-space fact. `RawWorkingSpaceTests` pins the semantics against t
 separately exposed camera-from-XYZ fact: row-normalize
 `camera_from_xyz · (sRGB→XYZ)`, then invert it to reproduce `camera_to_srgb`.
 
+At the same seam, after camera-fact copying and before `ConfigureOutput`/`Process`,
+`RawSensorFrame` combines the typed bridge sensor identity with a zero-copy
+`BorrowMosaic` lease. The frame owns that lease and always releases it before
+`Process`; a held lease intentionally makes native process/recycle calls reject.
+`RawSensorHistogram` then scans the visible photosites once on the existing decode
+worker and token. Cancellation is checked every 256 visible rows and immediately
+before processing. Cancellation escapes the loader; any other sampling/access fault is
+logged once and leaves a valid decoded base with a null RAW fact.
+
+Only integer CFA mosaics described by Bayer `filters > 1000` or the 36-byte X-Trans
+table (`filters == 9`) qualify. No-CFA (`filters == 0`), Leaf tables (`filters == 1`),
+other filter tables, invalid geometry/levels, and bridge-unavailable mosaics return no
+RAW histogram. There is no Sdcb layout reader, second decode, source reread, or
+processed-RGB substitute.
+
 ### 2.1 RAW Library previews
 
 Library thumbnail extraction uses LibRaw's already-open context to return both the

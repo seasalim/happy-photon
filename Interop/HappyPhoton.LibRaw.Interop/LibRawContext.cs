@@ -85,7 +85,15 @@ public sealed unsafe class LibRawContext : IDisposable
                 added = false;
                 return null;
             }
-            return new LibRawMosaicLease(_handle, native);
+            try
+            {
+                return new LibRawMosaicLease(_handle, native);
+            }
+            catch
+            {
+                ReleaseFailedMosaic(native, NativeApi.ReleaseMosaic);
+                throw;
+            }
         }
         catch
         {
@@ -95,6 +103,15 @@ public sealed unsafe class LibRawContext : IDisposable
     }
 
     public void Dispose() => _handle.Dispose();
+
+    internal static void ReleaseFailedMosaic(
+        NativeMosaicDescriptor native,
+        Action<ulong> release)
+    {
+        if (native.Lease == 0) return;
+        try { release(native.Lease); }
+        catch { }
+    }
 
     private T Call<T>(Func<ulong, T> action, CancellationToken cancellationToken)
     {

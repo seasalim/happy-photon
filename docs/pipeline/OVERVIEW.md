@@ -121,11 +121,12 @@ public sealed record BaseImageInfo(
     int ExifOrientationApplied,    // for diagnostics; pixels are already upright
     int FullWidth,                 // native full-resolution dimensions after orientation —
     int FullHeight,                // set on preview bases too; RENDER.md §9 scales σ by these
-    double SourceExposureBiasEv = 0); // Fuji midpoint restoration; 0 for other sources
+    double SourceExposureBiasEv = 0, // Fuji midpoint restoration; 0 for other sources
+    HistogramData? RawHistogram = null); // pre-process sensor fact; reference equality
 
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 6;        // bump whenever decoded pixels or facts change
+    public const int Version = 7;        // bump whenever decoded pixels or facts change
     public const int PreviewMaxDimension = 1600;
     public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
     public BaseImageInfo Info { get; }
@@ -160,6 +161,10 @@ multiple renders but must dispose it only after those renders finish; disposal i
 idempotent and accessing `Pixels` afterward throws. A loader returning `null` retains
 ownership of any temporary image it created. `BaseImageInfo` is loader-produced factual
 metadata and consumers treat it as immutable.
+`RawHistogram` is a loader fact captured from the unpacked mosaic; it is not persisted.
+Because `HistogramData` is a class, generated `BaseImageInfo` record equality compares
+that member by reference. Consumers must not use whole-record equality for histogram
+content.
 
 ## 5. Service map
 
@@ -170,6 +175,7 @@ metadata and consumers treat it as immutable.
 | `Services/GatedBaseImageLoader.cs` | live availability policy before source decode |
 | `Services/SourceAvailabilityService.cs` | cloud-file classification and read intent |
 | `Services/RawBaseLoader.cs` | LibRaw decode → base (DECODE.md §2) |
+| `Services/RawSensorFrame.cs` + `RawSensorHistogram.cs` | typed unpacked-mosaic lease + sensor histogram |
 | `Services/StandardBaseLoader.cs` | Magick decode + ICC normalize → base (DECODE.md §3) |
 | `Services/WorkingSpaceIccProfile.cs` | deterministic linear-Rec.2020 ICC target |
 | `Services/OutputColorProfiles.cs` | embedded sRGB / Display P3 export profiles |

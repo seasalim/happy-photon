@@ -195,6 +195,23 @@ Runs after the LUT, display-referred, where Q16 clamping is benign.
 Computed from the stage-4/5 output at preview scale when `Options.ComputeStats`
 (existing `HistogramService` bins stay 8-bit).
 
+The selectable RAW histogram is deliberately outside that render stage. `RawBaseLoader`
+captures it from LibRaw's preserved post-`Unpack` mosaic before output configuration,
+white balance, demosaic, camera conversion, highlight reconstruction, and tone. It walks
+only the visible window at `top_margin + row`, `left_margin + column`, using
+`raw_pitch / sizeof(ushort)` as the full-frame stride. CFA phase and repeating black
+blocks use visible coordinates. Bayer tables (`filters > 1000`) and the 6×6 X-Trans
+table (`filters == 9`) are supported; both green phases merge into green.
+
+For photosite value `v` and native channel `ch`, RAW binning uses
+`black_ch = black + cblack[ch] + repeatingBlock`,
+`n = clamp01((v - black_ch) / max(1, maximum - black_ch))`, then
+`round(E(n) * 255)` with §3's sRGB encode. A bounded lookup performs the encode; the
+visible pass contains no `Math.Pow` and never strides over photosites. RAW clipping is
+the separate linear test `v >= maximum`, counted per sensor channel. It is not inferred
+from bin 255 and is distinct from `ClippingStats.RawNearClip`, which describes already
+demosaiced display-basis base pixels.
+
 ```csharp
 public sealed record ChannelClip(double R, double G, double B);   // fractions 0..1
 public sealed record ClippingStats(

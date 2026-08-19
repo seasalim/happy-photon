@@ -537,6 +537,12 @@ Briefly, for contrast with thumbnails:
   re-check the source timestamp before installation.
 - The ViewModel debounces interaction: preview 150 ms, histogram 300 ms (deferred so
   sliders stay responsive), thumbnail refresh 500 ms, each with its own CTS.
+- A RAW preview/full base also performs one single-threaded visible-mosaic pass between
+  LibRaw `Unpack` and `Process`. The pass shares the decode worker and cancellation
+  token, releases its native mosaic lease before processing, and stores the optional
+  sensor histogram on `BaseImageInfo`. Slider renders reuse the held fact; the
+  non-blocking accessor only acquires an exact held path/decode identity and cannot
+  decode, read, or hydrate a source.
 - Selecting an image starts rendered-cache loading and base decoding concurrently.
   The thumbnail covers a cache miss; a thin line under the histogram appears only
   when base decoding exceeds 150 ms. The fresh preview then schedules the histogram.
@@ -586,6 +592,7 @@ sampler.
 | Metadata extraction | Threadpool | Per-`ImageFile` single-flight task; selection loads drain during ViewModel teardown |
 | Metadata apply + burst grouping | UI thread | Demand-driven by Bursts; cancelled on disable or folder change |
 | Preview base decode | Threadpool | One held base; single-flight by identity; newest-wins generation |
+| RAW sensor histogram | Preview/full decode worker | One visible post-Unpack pass; same token; lease released before Process |
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
 | Library histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |

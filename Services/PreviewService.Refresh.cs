@@ -90,10 +90,10 @@ public sealed partial class PreviewService
             }
 
             Interlocked.Increment(ref _activeRefreshRenders);
-            RenderOutput? rendered;
+            RefreshedRender? refreshed;
             try
             {
-                rendered = await RenderRefreshedAsync(
+                refreshed = await RenderRefreshedAsync(
                         pending,
                         refreshGeneration)
                     .ConfigureAwait(false);
@@ -102,7 +102,7 @@ public sealed partial class PreviewService
             {
                 Interlocked.Decrement(ref _activeRefreshRenders);
             }
-            if (rendered?.Bitmap == null)
+            if (refreshed?.Output.Bitmap == null)
             {
                 return;
             }
@@ -113,9 +113,10 @@ public sealed partial class PreviewService
 
             using var refresh = new PreviewRefresh(
                 pending.ImageFile,
-                rendered.Bitmap,
-                rendered.Histogram,
-                !pending.SkipHistogram);
+                refreshed.Output.Bitmap,
+                refreshed.Output.Histogram,
+                !pending.SkipHistogram,
+                refreshed.RawHistogram);
             PreviewRefreshed?.Invoke(this, refresh);
             ReportPreviewOutcome(
                 pending.ImageFile,
@@ -146,7 +147,7 @@ public sealed partial class PreviewService
         }
     }
 
-    private async Task<RenderOutput?> RenderRefreshedAsync(
+    private async Task<RefreshedRender?> RenderRefreshedAsync(
         PendingRefresh pending,
         long generation)
     {
@@ -162,6 +163,7 @@ public sealed partial class PreviewService
         {
             return null;
         }
+        var rawHistogram = snapshot.Base.Info.RawHistogram;
 
         RenderStarted?.Invoke();
         var rendered = await Task.Run(
@@ -185,6 +187,10 @@ public sealed partial class PreviewService
             return null;
         }
 
-        return rendered;
+        return new RefreshedRender(rendered, rawHistogram);
     }
+
+    private sealed record RefreshedRender(
+        RenderOutput Output,
+        HistogramData? RawHistogram);
 }

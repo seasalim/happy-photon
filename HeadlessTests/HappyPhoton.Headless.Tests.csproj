@@ -38,6 +38,7 @@
     <Compile Include="..\Tests\PreviewBitmapLifetimeTests.cs" Link="PreviewBitmapLifetimeTests.cs" />
     <Compile Include="..\Tests\PreviewPlaceholderTests.cs" Link="PreviewPlaceholderTests.cs" />
     <Compile Include="..\Tests\RawHighlightReconstructionUiTests.cs" Link="RawHighlightReconstructionUiTests.cs" />
+    <Compile Include="..\Tests\RawHistogramUiTests.cs" Link="RawHistogramUiTests.cs" />
     <Compile Include="..\Tests\TestSourceAvailabilityService.cs" Link="TestSourceAvailabilityService.cs" />
     <Compile Include="..\Tests\TestWaits.cs" Link="TestWaits.cs" />
     <Compile Include="..\Tests\WhiteBalanceUiTests.cs" Link="WhiteBalanceUiTests.cs" />

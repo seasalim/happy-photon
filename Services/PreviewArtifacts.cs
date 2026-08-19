@@ -26,6 +26,7 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
 
     public ImageFile ImageFile { get; }
     public HistogramData Histogram { get; }
+    public HistogramData? RawHistogram { get; }
     public bool HasHistogram { get; }
     public Bitmap Bitmap =>
         _bitmap ?? throw new ObjectDisposedException(nameof(PreviewRefresh));
@@ -34,12 +35,14 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         ImageFile imageFile,
         Bitmap bitmap,
         HistogramData histogram,
-        bool hasHistogram)
+        bool hasHistogram,
+        HistogramData? rawHistogram = null)
     {
         ImageFile = imageFile;
         _bitmap = bitmap;
         Histogram = histogram;
         HasHistogram = hasHistogram;
+        RawHistogram = rawHistogram;
     }
 
     public Bitmap DetachBitmap() =>

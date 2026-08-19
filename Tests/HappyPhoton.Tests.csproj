@@ -36,6 +36,7 @@
     <Compile Remove="PreviewBitmapLifetimeTests.cs" />
     <Compile Remove="PreviewPlaceholderTests.cs" />
     <Compile Remove="RawHighlightReconstructionUiTests.cs" />
+    <Compile Remove="RawHistogramUiTests.cs" />
     <Compile Remove="WhiteBalanceUiTests.cs" />
     <Compile Remove="WorkspaceTransitionTests.cs" />
     <Compile Remove="WorkflowTourDimmingTests.cs" />

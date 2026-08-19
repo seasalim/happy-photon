@@ -1,10 +1,25 @@
 namespace HappyPhoton.Models;
 
+public enum HistogramDomain
+{
+    Display,
+    RawSensor
+}
+
+public sealed record RawClipping(
+    long Red,
+    long Green,
+    long Blue,
+    long TotalVisibleSamples,
+    uint WhiteLevel);
+
 /// <summary>
 /// Holds histogram data for RGB channels (256 values each, 0-255).
 /// </summary>
 public class HistogramData
 {
+    public HistogramDomain Domain { get; init; }
+    public RawClipping? Clipping { get; set; }
     public int[] Red { get; } = new int[256];
     public int[] Green { get; } = new int[256];
     public int[] Blue { get; } = new int[256];

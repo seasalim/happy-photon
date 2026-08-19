@@ -398,6 +398,11 @@ public class ImageService : IAsyncDisposable
     public HistogramData CalculateLibraryHistogram(Bitmap bitmap) =>
         _histogramService.CalculateLibraryHistogram(bitmap);
 
+    public HistogramData? TryGetRawHistogram(
+        ImageFile image,
+        BaseDecodeSettings decode) =>
+        _previewService.TryGetRawHistogram(image, decode);
+
     // ===== Metadata and Full Image Loading (kept in facade) =====
 
     public Task<MetadataLoadStatus> LoadMetadataAsync(ImageFile imageFile) =>

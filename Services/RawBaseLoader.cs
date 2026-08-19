@@ -10,12 +10,11 @@ public sealed class RawBaseLoader : IBaseImageLoader
     private readonly bool _isAvailable;
     internal bool IsHealthRejected { get; }
     private readonly Func<LibRawContext, byte[]?> _thumbnailReader;
-
+    private readonly Func<LibRawContext, CancellationToken, HistogramData?> _rawHistogramSampler;
     public RawBaseLoader()
         : this(LibRawNativeSupport.Health)
     {
     }
-
     internal RawBaseLoader(LibRawRuntimeHealth health)
         : this(
             health?.IsHealthy ?? throw new ArgumentNullException(nameof(health)),
@@ -26,11 +25,13 @@ public sealed class RawBaseLoader : IBaseImageLoader
     internal RawBaseLoader(
         bool isAvailable,
         Func<LibRawContext, byte[]?>? thumbnailReader = null,
-        bool healthRejected = false)
+        bool healthRejected = false,
+        Func<LibRawContext, CancellationToken, HistogramData?>? rawHistogramSampler = null)
     {
         _isAvailable = isAvailable;
         IsHealthRejected = healthRejected;
         _thumbnailReader = thumbnailReader ?? RawThumbnailReader.Read;
+        _rawHistogramSampler = rawHistogramSampler ?? RawSensorHistogram.Sample;
     }
 
     public bool CanLoad(ImageFile file)
@@ -109,7 +110,22 @@ public sealed class RawBaseLoader : IBaseImageLoader
             context.Unpack(cancellationToken);
             var (camMul, camToSrgb, preMul) = CopyCameraFacts(
                 context.GetCameraFacts(cancellationToken));
-
+            var histogramStopwatch = Stopwatch.StartNew();
+            HistogramData? rawHistogram;
+            try
+            {
+                rawHistogram = _rawHistogramSampler(context, cancellationToken);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception exception)
+            {
+                ImageServiceHelpers.LogDebug(nameof(RawBaseLoader),
+                    $"RAW histogram failed: {exception.Message}", file.FilePath);
+                rawHistogram = null;
+            }
+            ImageServiceHelpers.LogPerformance(nameof(RawBaseLoader), "RawHistogram",
+                histogramStopwatch.ElapsedMilliseconds, file.FilePath);
+            cancellationToken.ThrowIfCancellationRequested();
             context.ConfigureOutput(ConfigureOutput(decode, preview), cancellationToken);
             context.Process(cancellationToken);
 
@@ -178,7 +194,8 @@ public sealed class RawBaseLoader : IBaseImageLoader
                 ExifOrientationApplied: orientation,
                 orientedFullSize.Width,
                 orientedFullSize.Height,
-                SourceExposureBiasEv: sourceExposureBiasEv);
+                SourceExposureBiasEv: sourceExposureBiasEv,
+                RawHistogram: rawHistogram);
             var result = new BaseImage(pixels, info);
             pixels = null;
 
@@ -190,7 +207,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
                 $"size={result.Pixels.Width}x{result.Pixels.Height}");
             return result;
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException)
         {
             throw;
         }
