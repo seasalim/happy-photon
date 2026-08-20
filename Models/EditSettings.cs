@@ -105,6 +105,11 @@ public class EditSettings
     [JsonPropertyOrder(19)]
     public string? AppliedPresetId { get; set; }
 
+    [JsonPropertyName("rawProfile")]
+    [JsonPropertyOrder(20)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RawProfileSelection? RawProfile { get; set; }
+
     [JsonIgnore]
     public bool HasEdits => Exposure != 0.0 || !Wb.IsIdentity ||
                           Brightness != 0 || Contrast != 0 ||
@@ -117,7 +122,8 @@ public class EditSettings
                           (CurveRed is { } red && !red.IsIdentity()) ||
                           (CurveGreen is { } green && !green.IsIdentity()) ||
                           (CurveBlue is { } blue && !blue.IsIdentity()) ||
-                          AppliedPresetId != null;
+                          AppliedPresetId != null ||
+                          RawProfile != null;
 
     public EditSettings Clone() => new()
     {
@@ -140,7 +146,8 @@ public class EditSettings
         CurveRed = CurveRed?.Clone(),
         CurveGreen = CurveGreen?.Clone(),
         CurveBlue = CurveBlue?.Clone(),
-        AppliedPresetId = AppliedPresetId
+        AppliedPresetId = AppliedPresetId,
+        RawProfile = RawProfile?.Clone()
     };
 
     public bool EqualsIgnoringRotation(EditSettings other)
@@ -161,7 +168,8 @@ public class EditSettings
                CurvesMatch(CurveRed, other.CurveRed) &&
                CurvesMatch(CurveGreen, other.CurveGreen) &&
                CurvesMatch(CurveBlue, other.CurveBlue) &&
-               AppliedPresetId == other.AppliedPresetId;
+               AppliedPresetId == other.AppliedPresetId &&
+               ProfilesEqual(RawProfile, other.RawProfile);
     }
 
     private static bool CurvesMatch(CurveData? left, CurveData? right)
@@ -173,6 +181,18 @@ public class EditSettings
 
         return left.Points.SequenceEqual(right.Points);
     }
+
+    private static bool ProfilesEqual(
+        RawProfileSelection? left,
+        RawProfileSelection? right) =>
+        ReferenceEquals(left, right) ||
+        left != null && right != null &&
+        left.Source == right.Source &&
+        string.Equals(left.Location, right.Location, StringComparison.Ordinal) &&
+        string.Equals(
+            left.ContentHash,
+            right.ContentHash,
+            StringComparison.OrdinalIgnoreCase);
 }
 
 public enum ToneCurveChannel

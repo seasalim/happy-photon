@@ -18,10 +18,11 @@ public interface IBaseImageLoader
 ```
 
 `BaseDecodeSettings` (OVERVIEW.md §4) carries the decode-affecting subset of
-`EditSettings` — highlight reconstruction and FBDD. Non-raw loaders accept and record
+`EditSettings` — highlight reconstruction, FBDD, and the selected camera profile.
+Non-raw loaders accept and record
 it but ignore it (their `From(EditSettings)` projection is still stored on
 `BaseImageInfo.Decode` so cache keys stay uniform). The defaults are highlight clip
-and FBDD off.
+and FBDD off with built-in characterization.
 
 `BaseLoaderRouter` picks the loader:
 
@@ -67,7 +68,13 @@ Post-decode steps, in order:
    independently owned image, the loader recycles the context before import so raw and
    processing buffers do not overlap the render allocation. There is no PPM,
    intermediate full-frame pass, managed full-image copy, or second Magick pixel cache.
-   Four-channel processed output is rejected as unsupported rather than truncated.
+   When a DCP resolved successfully and WB facts are valid, its balanced-seam
+   ForwardMatrix or ColorMatrix characterization replaces the built-in matrix in this
+   same fused import. CameraCalibration, AnalogBalance, and the applicable matrix pair
+   are interpolated at the as-shot CCT. Missing-WB and all typed profile rejections use
+   the unchanged built-in transform. The matching HueSat payload and outcome token are
+   attached to `BaseImageInfo` at the same installation boundary. Four-channel
+   processed output is rejected as unsupported rather than truncated.
    The binding defaults OpenMP to at most sixteen workers unless the process already
    defines `OMP_NUM_THREADS`. This bounds the per-worker scratch space used by
    full-resolution X-Trans processing without changing decode precision or pixels.
@@ -287,6 +294,10 @@ remain a documented limitation.
 - **Single-flight, newest-wins decodes:** at most one decode in flight per identity;
   a newer request (image switch, decode-settings change) cancels/supersedes it and
   stale results are disposed, mirroring the existing thumbnail-session pattern.
+- A selected profile is resolved from one immutable, availability-gated snapshot before
+  exact cache matching. Its request token coordinates the generation; its resolved
+  source/hash/status token identifies the result. Profile reads hash and parse the same
+  bytes, and stale bases cannot promote render artifacts under a newer outcome token.
 - **Only `BaseDecodeSettings` changes re-decode.** While a replacement decode is in
   flight, preview renders lease the held old base. The newest settings accumulate, and
   completion emits one refresh using that latest state rather than a render backlog.
@@ -298,7 +309,9 @@ remain a documented limitation.
   internally. Disposal of a superseded base happens only after any in-progress render
   against it completes (generation check, as with today's late thumbnail results).
 - Export always calls `LoadFullBase` fresh per image (no base persistence); the render
-  then runs once and writes all variants (OUTPUT.md §2).
+  then runs once and writes all variants (OUTPUT.md §2). It re-resolves a selected
+  profile. Missing, unavailable, corrupt, and hash-mismatched selections export through
+  built-in characterization with a typed per-image warning.
 
 ## 5. Disk caches
 
@@ -313,10 +326,12 @@ remain a documented limitation.
   (8-bit JPEG q90, 1600px)
   plus a sidecar `<id>.meta` containing `settingsHash`.
   - `settingsHash` = SHA-256 of canonical-JSON `EditSettings` v2 + `RenderPipeline.Version`
-    + `BaseImage.Version`.
+    + `BaseImage.Version` + the installed profile outcome token.
   - Develop entry: if cached hash matches current settings → paint instantly, decode base
     in background for subsequent edits. Hash mismatch → paint it anyway as a stale
-    placeholder while base decode + fresh render replace it (no flash of nothing).
+    placeholder while generation-correlated live profile resolution, base decode, and
+    fresh render replace or confirm it (no flash of nothing). Cache paint itself never
+    opens an embedded profile or hydrates a source.
   - Existing atomic-write, bounded-channel, drop-oldest, 2 s drain rules all carry over.
   - Write policy: queue a cache write only on leaving the image (or a long debounce),
     never per slider settle — an edit session must not multiply write traffic.

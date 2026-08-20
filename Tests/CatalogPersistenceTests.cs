@@ -101,7 +101,13 @@ public sealed class CatalogPersistenceTests : IDisposable
             Highlights = 90,
             Rotation = 180,
             HorizonRotation = 4,
-            AppliedPresetId = "user_new"
+            AppliedPresetId = "user_new",
+            RawProfile = new RawProfileSelection
+            {
+                Source = RawProfileSource.UserFile,
+                Location = Path.Combine(_tempDirectory, "camera.dcp"),
+                ContentHash = new string('a', 64)
+            }
         };
 
         await service.SaveEditSettingsAsync(id, settings);
@@ -116,6 +122,9 @@ public sealed class CatalogPersistenceTests : IDisposable
         Assert.Equal(-10, saved.Wb.Tint);
         Assert.Equal(180, saved.Rotation);
         Assert.Equal("user_new", saved.AppliedPresetId);
+        Assert.Equal(settings.RawProfile.Location, saved.RawProfile?.Location);
+        Assert.Equal(settings.RawProfile.ContentHash,
+            saved.RawProfile?.ContentHash);
     }
 
     private async Task<(string Path, long Id)> CreateImageAsync(string fileName)

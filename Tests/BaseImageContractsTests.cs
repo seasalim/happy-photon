@@ -59,6 +59,41 @@ public sealed class BaseImageContractsTests
     }
 
     [Fact]
+    public void DecodeSettings_ProfileOutcomeTokenInvalidatesBaseCache()
+    {
+        var selection = new RawProfileSelection
+        {
+            Source = RawProfileSource.UserFile,
+            Location = "synthetic.dcp",
+            ContentHash = new string('a', 64)
+        };
+        var requested = BaseDecodeSettings.From(new EditSettings
+        {
+            RawProfile = selection
+        });
+        var rejected = requested.WithProfileResolution(
+            DcpProfileResolution.Rejected(
+                selection,
+                DcpProfileErrorCode.HashMismatch,
+                "changed",
+                new string('b', 64)));
+
+        Assert.Contains($"dcp={selection.CacheToken}", requested.CacheKey);
+        Assert.NotEqual(requested.CacheKey, rejected.CacheKey);
+        Assert.Contains("hash-mismatch", rejected.CacheKey);
+    }
+
+    [Fact]
+    public void DecodeSettings_BuiltInResolutionPreservesDefaultRecordIdentity()
+    {
+        var resolved = BaseDecodeSettings.Default.WithProfileResolution(
+            DcpProfileResolution.BuiltIn);
+
+        Assert.Equal(BaseDecodeSettings.Default, resolved);
+        Assert.Equal(BaseDecodeSettings.Default.CacheKey, resolved.CacheKey);
+    }
+
+    [Fact]
     public void BaseImage_DisposeReleasesOwnedPixelsAndIsIdempotent()
     {
         var pixels = new MagickImage(MagickColors.Black, 2, 2);

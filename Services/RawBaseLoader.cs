@@ -97,8 +97,31 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
         MagickImage? pixels = null;
         try
         {
+            var requestedResolution = decode.ProfileResolution ??
+                (decode.ProfileSelection == null
+                    ? DcpProfileResolution.BuiltIn
+                    : DcpProfileResolution.Rejected(
+                        decode.ProfileSelection,
+                        DcpProfileErrorCode.UnsupportedVariant,
+                        "The selected profile was not resolved for this decode."));
+            var cameraData = DcpCameraData.Defaults;
+            if (requestedResolution.IsActive &&
+                file.Extension.Equals(".dng", StringComparison.OrdinalIgnoreCase))
+            {
+                var cameraResult = TryReadDngCameraData(file.FilePath);
+                cameraData = cameraResult.Data;
+                if (cameraResult.Error != null &&
+                    requestedResolution.Selection != null)
+                {
+                    requestedResolution = DcpProfileResolution.Rejected(
+                        requestedResolution.Selection,
+                        DcpProfileErrorCode.Corrupt,
+                        cameraResult.Error);
+                }
+            }
             using var context = LibRawContext.Open(file.FilePath, cancellationToken);
             var dimensions = context.GetDimensions(cancellationToken);
+            var rawMetadata = context.GetMetadata(cancellationToken);
             var fullWidth = checked((int)dimensions.VisibleWidth);
             var fullHeight = checked((int)dimensions.VisibleHeight);
             var orientation = NormalizeOrientation(dimensions.Orientation);
@@ -141,7 +164,18 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             }
 
             context.Recycle(cancellationToken);
-            var characterization = CameraRgbCharacterization.Create(cameraFacts);
+            var asShot = WhiteBalanceModel.EstimateAsShot(
+                cameraFacts.CamMul,
+                cameraFacts.CamToSrgb,
+                cameraFacts.PreMul);
+            var dcp = DcpMatrixCalculator.Create(
+                requestedResolution,
+                cameraData,
+                cameraFacts,
+                asShot.kelvin);
+            var characterization = dcp.IsActive
+                ? CameraRgbCharacterization.CreateProfile(dcp.CameraToRec2020!)
+                : CameraRgbCharacterization.Create(cameraFacts);
             pixels = characterization.ImportRgb16(
                 processed.AsSpan(),
                 checked((int)description.Width),
@@ -175,14 +209,21 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 fullWidth,
                 fullHeight,
                 orientation);
-            var asShot = WhiteBalanceModel.EstimateAsShot(
-                cameraFacts.CamMul,
-                cameraFacts.CamToSrgb,
-                cameraFacts.PreMul);
+            var effectiveResolution = requestedResolution.Selection == null ||
+                dcp.Status == DcpProfileErrorCode.None
+                ? requestedResolution
+                : DcpProfileResolution.Rejected(
+                    requestedResolution.Selection,
+                    dcp.Status,
+                    dcp.Message ?? "The selected camera profile was rejected.") with
+                {
+                    Token = dcp.Token
+                };
+            var effectiveDecode = decode.WithProfileResolution(effectiveResolution);
             var info = new BaseImageInfo(
                 BaseSourceKind.RawLibRaw,
                 IsRawSource: true,
-                decode,
+                effectiveDecode,
                 cameraFacts.CamMul,
                 cameraFacts.CamToSrgb,
                 AsShotKelvin: asShot.kelvin,
@@ -193,7 +234,16 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 orientedFullSize.Width,
                 orientedFullSize.Height,
                 SourceExposureBiasEv: sourceExposureBiasEv,
-                RawHistogram: rawHistogram);
+                RawHistogram: rawHistogram)
+            {
+                DcpProfile = dcp.Payload,
+                ProfileToken = dcp.Token,
+                ProfileStatus = dcp.Status,
+                ProfileMessage = dcp.Message,
+                CameraIdentity = new CameraIdentity(
+                    rawMetadata.NormalizedMake ?? rawMetadata.Make,
+                    rawMetadata.NormalizedModel ?? rawMetadata.Model)
+            };
             PreviewBasePair? pair = null;
             BaseImage? full = null;
             if (preview)
@@ -310,6 +360,25 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 $"Thumbnail read failed: {exception.Message}",
                 filePath);
             return null;
+        }
+    }
+
+    private static (DcpCameraData Data, string? Error) TryReadDngCameraData(
+        string path)
+    {
+        try
+        {
+            return (new DcpProfileReader().ReadCameraData(path), null);
+        }
+        catch (Exception exception)
+        {
+            ImageServiceHelpers.LogDebug(
+                nameof(RawBaseLoader),
+                $"DNG camera profile facts were rejected: {exception.Message}",
+                path);
+            return (
+                DcpCameraData.Defaults,
+                $"DNG camera calibration tags are invalid: {exception.Message}");
         }
     }
 

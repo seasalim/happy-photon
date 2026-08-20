@@ -2,16 +2,16 @@
 
 The camera-RGB convergence seam and its characterization into linear Rec.2020
 D65. This document is the contract and clean-room provenance record for NEWRAW
-stage 3, covering both R5a (convergence + built-in characterization, this run)
-and R5b (DCP consumption, follow-up run). Sources consulted: the LibRaw 0.22.2
+stage 3, covering both R5a (convergence + built-in characterization) and R5b
+(DCP consumption). Sources consulted: the LibRaw 0.22.2
 source distribution (LGPL-2.1/CDDL — the audited dependency this pipeline
 ships; cited by file:line below), LibRaw's public API documentation, the Adobe
 DNG 1.7.1 specification, and the Bradford adaptation already normative in
 WHITE_BALANCE.md. The GPL trees (darktable, RawTherapee, Blender) were never
 consulted.
 
-**Status: APPROVED 2026-08-19 (NEWRAW R5a checkpoint A, run 158). §6 records
-the ballot outcomes.**
+**Status: IMPLEMENTED 2026-08-20 (NEWRAW R5a + R5b). §6 records the R5a
+ballot outcomes; §7 is the approved and implemented DCP contract.**
 
 ## 1. The convergence seam
 
@@ -169,10 +169,10 @@ The win-x64 ColorChecker observations are recalibrated. Linux-x64 and osx-arm64
 remain explicit pending observations until their fresh-process runs complete;
 neither is inferred from the Windows result.
 
-## 5. Out of scope for R5a
+## 5. Out of scope
 
-Everything in §7 (R5b), RCD (R6), highlight-reconstruction research (R7),
-profile ToneCurve/LookTable (never consumed — ENDSTATE decision 5), ICC input
+RCD (R6), highlight-reconstruction research (R7), profile ToneCurve/LookTable
+(never consumed — ENDSTATE decision 5), ICC input
 profiles, network reads, and the WB re-decode path (standing parked risk).
 
 ## 6. Checkpoint-A ballot outcomes (decided 2026-08-19)
@@ -196,7 +196,7 @@ profiles, network reads, and the WB re-decode path (standing parked risk).
    ancient CYGM Coolpix `.NEF` and hypothetical 4-color `.DNG`); a narrow
    LibRaw-color carve-out and a 3×4 in-app path were both declined.
 
-## 7. DCP consumption (R5b — normative, not implemented in R5a)
+## 7. DCP consumption (R5b — normative and implemented)
 
 ### 7.1 Scope and sources
 
@@ -214,10 +214,14 @@ Parsed from the TIFF-IFD profile container: `ProfileName`,
 `CalibrationIlluminant1/2` (defaults per spec when absent; unknown illuminant
 values reject the profile), `ProfileHueSatMapDims`, `ProfileHueSatMapData1/2`,
 `ProfileHueSatMapEncoding` (linear = 0 default, sRGB = 1),
-`ProfileLookTableData` **ignored**, `ProfileEmbedPolicy` honored for embedded
-extraction. From the camera/DNG side: `AnalogBalance`, `CameraCalibration1/2`
-with the calibration-signature matching rules, `ReductionMatrix1/2` for the
-no-ForwardMatrix fallback, `AsShotNeutral`/as-shot `cam_mul`. Unsupported
+`ProfileLookTableData` **ignored**, `ProfileEmbedPolicy` parsed and range-validated
+but not enforced because it controls embedding/redistribution, not processing,
+and Happy Photon does not write DNG files. From the camera/DNG side:
+`AnalogBalance`, `CameraCalibration1/2`
+with the calibration-signature matching rules, `ReductionMatrix1/2`, and
+`AsShotNeutral`/as-shot `cam_mul`. `ReductionMatrix1/2` are parsed and validated
+but unused: they apply only to more-than-three-plane inputs, which the decode
+rejects (§6). Unsupported
 variants (unexpected dims, missing mandatory tags, non-matching signatures)
 reject the profile explicitly — the picker reports it, decode falls back to
 the built-in path (§2), never a silent wrong matrix.
@@ -250,8 +254,9 @@ with known `CC`/`AB` round-trips a balanced neutral to D50 white exactly).
 Files on the missing/auto-WB path (§1.1) have no recorded balancing gains and
 therefore fall back to the built-in path — a DCP cannot be applied to a seam
 whose neutralization state is unknown. Without a ForwardMatrix, the
-ColorMatrix-inverse path with white-point preservation (and `ReductionMatrix`
-where applicable) composes against the same balanced-seam definition. Then
+ColorMatrix-inverse path with white-point preservation composes against the
+same balanced-seam definition. `ReductionMatrix1/2` remain unused because this
+pipeline accepts only three-plane inputs. Then
 Bradford D50→D65 (WHITE_BALANCE.md matrices) and XYZ→Rec.2020
 (`RgbColorSpaceMatrices`), composed once in `double` and fused into the same
 import seam as §2. The characterized base must satisfy the identical seam
@@ -273,6 +278,13 @@ pair's tables sharing §7.3's as-shot weight, and a single-table profile uses
 that table for all weights. Then HSV → linear ProPhoto → working space. Runs
 only when the selected profile carries tables.
 
+The exact transform above is compiled once for the resolved profile into a
+65³ Q16 RGB lattice and evaluated by trilinear interpolation in the render
+layer. This keeps the full-resolution stage within its budget without changing
+the DCP table interpolation or V-only encoding rules. The bounded profile cache
+holds at most four compiled illuminant outcomes, and seeded comparisons against
+the direct transform enforce a maximum 0.008 normalized-channel error.
+
 ### 7.5 Atomicity, settings, cache identity
 
 Profile selection is decode-affecting: it joins the `BaseDecodeSettings`
@@ -281,22 +293,40 @@ profile change triggers the standard newest-wins replacement decode. The
 resolved profile payload — matrices and interpolated HueSat tables — is bound
 to `BaseImageInfo`, so render consumes the tables from the same base whose
 pixels the matching matrix produced; matrix and tables switch atomically when
-the replacement base installs. Persistence, preset/copy/MCP transfer policy,
-and the v2 settings-schema addition are decided in the R5b plan (camera-
-specific selection is expected to be excluded from transfer surfaces).
+the replacement base installs. The raw-only v2 `rawProfile` field persists
+source, location, and content hash; the built-in state is omitted so legacy
+canonical hashes remain unchanged. Clone and undo/redo retain the field,
+global Reset clears it, and preset hover/apply/untoggle preserve it. Presets,
+copy/paste, and MCP transfers exclude it. A selected profile counts as an edit.
+
+Each decode has one generation-scoped request snapshot. Live resolution yields
+an outcome token containing source, content hash, and rejection status; that
+token joins base and rendered-cache identity. A stale-base render cannot be
+promoted under the requested token, and matrix plus HueSat data switch only
+when the matching replacement base installs. Export re-resolves the selection;
+missing, unavailable, corrupt, or hash-mismatched content uses the typed built-in
+fallback and reports a per-image warning through desktop and agent results.
 
 ### 7.6 Discovery
 
-All profile-content reads route through the live-availability policy
-(no background hydration); embedded-profile extraction happens inside the
-already-gated decode. Adobe-folder matching keys on `UniqueCameraModel`
-against normalized camera identity; mismatch degrades to embedded/built-in,
-never an error state. A user-picked file on cloud-placeholder storage follows
-the standing explicit-hydration rules.
+All profile-content reads route through the live-availability policy and check
+again immediately before open; a placeholder is rejected actionably and is
+never hydrated. When camera identity arrives, discovery starts an asynchronous
+local Adobe scan; picker open remains a generation-correlated refresh fallback.
+The Adobe-only identity scan caches bounded `UniqueCameraModel` probes by
+path/mtime/size and fully parses and hashes only camera-matched candidates.
+Picker discovery also inspects the persisted user file and bounded DNG embedded
+profile IFDs. Adobe
+matching keys on `UniqueCameraModel` against normalized make/model from the
+already-open LibRaw decode. Picker precedence is persisted user file,
+embedded, matching Adobe profiles A–Z, then built-in, with semantic duplicates
+owned by the earliest source. Invalid persisted choices remain visible and fall
+back to built-in rather than selecting a substitute. The no-profile pixel decode
+does no DCP work, and embedded tags remain untouched until picker discovery.
 
 ### 7.7 R5b validation and budgets
 
-Synthetic `.dcp` fixtures with known constants (generated agent-separately —
+Synthetic `.dcp` fixtures with known constants (generated independently —
 Adobe profiles are copyrighted and never committed); parser, interpolation,
 and HSV round-trip oracle vectors via the `colour-science` script; integration
 tests for all three discovery sources, precedence, corrupt/missing profiles,

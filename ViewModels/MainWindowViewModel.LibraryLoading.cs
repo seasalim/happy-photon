@@ -226,6 +226,10 @@ public partial class MainWindowViewModel
                 ReconcileHighlightReconstructionCapability(
                     imageFile,
                     artifacts.IsRawSource);
+                ApplyRawProfileState(
+                    imageFile,
+                    artifacts.IsRawSource,
+                    artifacts.ProfileState);
                 InstallPreviewClipping(artifacts);
                 ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
             }
@@ -380,6 +384,7 @@ public partial class MainWindowViewModel
         var rawHistogram = refresh.RawHistogram;
         var hasHistogram = refresh.HasHistogram;
         var generation = refresh.Generation;
+        var profileState = refresh.ProfileState;
         Dispatcher.UIThread.Post(() => ApplyPreviewRefresh(
             imageFile,
             bitmap,
@@ -389,6 +394,7 @@ public partial class MainWindowViewModel
             generation,
             refresh.Clipping,
             refresh.IsRawSource,
+            profileState,
             clippingMask));
     }
 
@@ -401,6 +407,7 @@ public partial class MainWindowViewModel
         long generation,
         ClippingStats? clipping = null,
         bool? isRawSource = null,
+        DcpProfileState? profileState = null,
         ClippingMask? clippingMask = null)
     {
         // A refresh can settle after its ready gate while a newer render
@@ -429,11 +436,13 @@ public partial class MainWindowViewModel
         {
             ReconcileHighlightReconstructionCapability(imageFile, effectiveIsRawSource);
         }
+        ApplyRawProfileState(imageFile, effectiveIsRawSource, profileState);
         using var artifacts = new PreviewArtifacts(
             null,
             histogram,
             clipping,
             effectiveIsRawSource,
+            profileState,
             generation,
             clippingMask);
         InstallPreviewClipping(artifacts);

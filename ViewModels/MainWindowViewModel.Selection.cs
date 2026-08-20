@@ -29,6 +29,7 @@ public partial class MainWindowViewModel
         NotifySelectedImageEditStateChanged();
         NotifyFullScreenSelectionBadgeChanged();
         OnPreviewFailureSelectionChanged();
+        ResetRawProfilePicker(newValue);
 
         // Exit crop mode when switching images
         if (IsCropMode)
@@ -187,7 +188,8 @@ public partial class MainWindowViewModel
                    NoiseReduction != FbddMode.Off ||
                    ChromaNr != 0 ||
                    hasCurveEdits ||
-                   ActivePresetId != null;
+                   ActivePresetId != null ||
+                   SelectedImage?.EditSettings.RawProfile != null;
     }
 
     private void ResetSliders()

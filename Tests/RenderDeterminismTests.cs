@@ -31,6 +31,35 @@ public sealed class RenderDeterminismTests
     }
 
     [Fact]
+    public void ActiveHueSatProfile_RepeatedRenderIsBitIdentical()
+    {
+        var table = DcpProfileReaderTests.CreateTable(6, 3, 2, 8, 1.1f, 0.92f);
+        using var baseImage = RenderPipelineTestSupport.CreateBase(
+            CreateGradient(128, 72),
+            isRaw: true,
+            height: 72,
+            hueSatMap: new DcpHueSatMap(6, 3, 2, true, table, null, 0));
+        var request = new RenderRequest(
+            baseImage,
+            CreateSettings(),
+            RenderIntent.Export,
+            null,
+            new RenderOptions(false, false));
+        var pipeline = new RenderPipeline();
+        var baseBefore = RenderPipelineTestSupport.ReadPixels(baseImage.Pixels);
+
+        using var first = pipeline.Render(request);
+        Assert.Equal(
+            baseBefore,
+            RenderPipelineTestSupport.ReadPixels(baseImage.Pixels));
+        using var second = pipeline.Render(request);
+
+        Assert.Equal(
+            RenderPipelineTestSupport.ReadPixels(first.Image),
+            RenderPipelineTestSupport.ReadPixels(second.Image));
+    }
+
+    [Fact]
     public void ByteIdenticalBurstPair_RendersBitIdentically()
     {
         var firstAsset = new GoldenAssetCase(

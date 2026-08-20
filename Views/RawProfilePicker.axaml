@@ -1,0 +1,107 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.RawProfilePicker"
+             x:DataType="vm:MainWindowViewModel">
+    <UserControl.Styles>
+        <Style Selector="Grid.raw-profile-row:disabled">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        </Style>
+        <Style Selector="TextBlock.profile-source-line">
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        </Style>
+        <Style Selector="TextBlock.profile-menu-header">
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="Margin" Value="4,5,4,2"/>
+        </Style>
+        <Style Selector="TextBlock.profile-menu-item">
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="Margin" Value="4,2"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+        <TextBlock Classes="section-label"
+                   Text="PROFILE"
+                   Margin="0,2,0,8"/>
+        <Grid Classes="raw-profile-row"
+              ColumnDefinitions="*,Auto"
+              IsEnabled="{Binding IsRawProfilePickerVisible}"
+              Margin="0,0,0,2">
+            <ComboBox x:Name="RawProfileComboBox"
+                      Grid.Column="0"
+                      Classes="edit-dropdown"
+                      ItemsSource="{Binding RawProfileOptions}"
+                      SelectedItem="{Binding SelectedRawProfileOption, Mode=OneWay}"
+                      SelectionChanged="OnSelectionChanged"
+                      DropDownOpened="OnDropDownOpened"
+                      HorizontalAlignment="Stretch"
+                      MaxDropDownHeight="360"
+                      AutomationProperties.Name="Camera profile">
+                <ComboBox.Styles>
+                    <Style Selector="ComboBoxItem">
+                        <Setter Property="IsEnabled"
+                                Value="{ReflectionBinding CanActivate}"/>
+                        <Setter Property="HorizontalContentAlignment"
+                                Value="Stretch"/>
+                        <Setter Property="ToolTip.Tip"
+                                Value="{ReflectionBinding Status}"/>
+                        <Setter Property="ToolTip.ShowOnDisabled" Value="True"/>
+                    </Style>
+                </ComboBox.Styles>
+                <ComboBox.SelectionBoxItemTemplate>
+                    <DataTemplate x:DataType="vm:RawProfileOptionViewModel">
+                        <TextBlock Text="{Binding Label}"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </DataTemplate>
+                </ComboBox.SelectionBoxItemTemplate>
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RawProfileOptionViewModel">
+                        <Grid HorizontalAlignment="Stretch">
+                            <TextBlock Classes="profile-menu-header"
+                                       Text="{Binding Label}"
+                                       IsVisible="{Binding IsGroupHeader}"/>
+                            <TextBlock Classes="profile-menu-item"
+                                       Text="{Binding Label}"
+                                       IsVisible="{Binding IsProfile}"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <Separator Margin="4,3"
+                                       IsVisible="{Binding IsDivider}"/>
+                            <TextBlock Classes="profile-menu-item"
+                                       Text="{Binding Label}"
+                                       IsVisible="{Binding IsChooseFile}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Border Grid.Column="1"
+                    Margin="6,0,0,0"
+                    Padding="5,1"
+                    VerticalAlignment="Center"
+                    BorderBrush="{DynamicResource OutlineVariant}"
+                    BorderThickness="1"
+                    CornerRadius="99">
+                <TextBlock Text="RAW"
+                           FontFamily="{StaticResource FontLabel}"
+                           FontSize="{StaticResource FontSizeSmall}"
+                           FontWeight="SemiBold"
+                           LetterSpacing="1"
+                           Foreground="{DynamicResource TextMuted}"/>
+            </Border>
+        </Grid>
+        <TextBlock Classes="profile-source-line"
+                   Text="{Binding RawProfileStatusMessage}"
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,8"/>
+    </StackPanel>
+</UserControl>

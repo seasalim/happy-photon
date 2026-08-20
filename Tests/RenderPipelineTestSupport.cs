@@ -11,7 +11,8 @@ internal static class RenderPipelineTestSupport
         ushort[] samples,
         bool isRaw = false,
         int height = 1,
-        double sourceBiasEv = 0)
+        double sourceBiasEv = 0,
+        DcpHueSatMap? hueSatMap = null)
     {
         var width = samples.Length / 3 / height;
         var pixels = RawBaseLoader.ImportRgb16(
@@ -33,7 +34,13 @@ internal static class RenderPipelineTestSupport
                 1,
                 width,
                 height,
-                SourceExposureBiasEv: sourceBiasEv));
+                SourceExposureBiasEv: sourceBiasEv)
+            {
+                DcpProfile = hueSatMap == null
+                    ? null
+                    : new DcpProfilePayload("synthetic", "Synthetic", hueSatMap),
+                ProfileToken = hueSatMap == null ? string.Empty : "synthetic"
+            });
     }
 
     public static ushort[] ReadPixels(MagickImage image) =>

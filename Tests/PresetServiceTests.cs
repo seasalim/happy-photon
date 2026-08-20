@@ -74,6 +74,12 @@ public sealed class PresetServiceTests : IDisposable
         source.HorizonRotation = 2.5;
         source.Crop = new CropRegion { Left = 0.1, Top = 0.2, Right = 0.8, Bottom = 0.9 };
         source.AppliedPresetId = "user_existing";
+        source.RawProfile = new RawProfileSelection
+        {
+            Source = RawProfileSource.UserFile,
+            Location = "synthetic.dcp",
+            ContentHash = new string('d', 64)
+        };
 
         var preset = await service.SaveUserPresetAsync("No Geometry", source);
 
@@ -81,6 +87,7 @@ public sealed class PresetServiceTests : IDisposable
         Assert.Equal(0, preset.Settings.HorizonRotation);
         Assert.Null(preset.Settings.Crop);
         Assert.Null(preset.Settings.AppliedPresetId);
+        Assert.Null(preset.Settings.RawProfile);
         Assert.Equal(90, source.Rotation);
         Assert.NotNull(source.Crop);
     }

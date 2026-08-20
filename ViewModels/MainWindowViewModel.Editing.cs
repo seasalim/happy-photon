@@ -42,6 +42,8 @@ public partial class MainWindowViewModel
         _isLoadingImage = false;
 
         EditSettingsTransfer.ApplySubset(state, SelectedImage.EditSettings);
+        SelectedImage.EditSettings.RawProfile = state.RawProfile?.Clone();
+        SyncRawProfilePickerSelection(SelectedImage.EditSettings.RawProfile);
         SelectedImage.EditSettings.AppliedPresetId = ActivePresetId;
         LoadCurrentCurveFrom(SelectedImage.EditSettings);
         SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
@@ -54,7 +56,10 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand(CanExecute = nameof(CanReset))]
-    private async Task ResetEditsAsync()
+    private Task ResetEditsAsync() => ResetEditsCoreAsync(
+        preserveProfile: false);
+
+    private async Task ResetEditsCoreAsync(bool preserveProfile)
     {
         if (!CanEditSelectedImage || SelectedImage == null) return;
 
@@ -82,6 +87,11 @@ public partial class MainWindowViewModel
         SelectedImage.EditSettings.CurveGreen = null;
         SelectedImage.EditSettings.CurveBlue = null;
         SelectedImage.EditSettings.AppliedPresetId = null;
+        if (!preserveProfile)
+        {
+            SelectedImage.EditSettings.RawProfile = null;
+            SyncRawProfilePickerSelection(null);
+        }
         // Note: Rotation, horizon rotation, and crop are preserved (geometric transforms)
         SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
 
@@ -133,7 +143,7 @@ public partial class MainWindowViewModel
         // If same preset is active, untoggle (reset)
         if (ActivePresetId == presetId)
         {
-            await ResetEditsAsync();
+            await UntogglePresetAsync();
             return;
         }
 
@@ -196,6 +206,7 @@ public partial class MainWindowViewModel
         try
         {
             var previewSettings = EditSettingsTransfer.CopySubset(preset.Settings);
+            previewSettings.RawProfile = image.EditSettings.RawProfile?.Clone();
             previewSettings.Rotation = Rotation;
             previewSettings.HorizonRotation = HorizonRotation;
             previewSettings.Crop = PreviewCrop();
@@ -223,6 +234,11 @@ public partial class MainWindowViewModel
             }
         }
         catch (OperationCanceledException) { }
+    }
+
+    private async Task UntogglePresetAsync()
+    {
+        await ResetEditsCoreAsync(preserveProfile: true);
     }
 
     /// <summary>

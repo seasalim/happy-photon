@@ -79,6 +79,7 @@ internal static class EditSettingsJson
         settings.Detail.CaptureSharpen = ClampNullable(
             settings.Detail.CaptureSharpen, 0, 100, ref changed);
         settings.Detail.ChromaNr = Clamp(settings.Detail.ChromaNr, 0, 100, ref changed);
+        ValidateRawProfile(settings.RawProfile);
         settings.Curve ??= new CurveData();
         RebuildCurve(settings.Curve);
         RebuildCurve(settings.CurveRed);
@@ -98,6 +99,30 @@ internal static class EditSettingsJson
             throw new JsonException("Tone curve points cannot be null.");
         }
         curve.BuildLookupTable();
+    }
+
+    private static void ValidateRawProfile(RawProfileSelection? profile)
+    {
+        if (profile == null)
+        {
+            return;
+        }
+        if (!Enum.IsDefined(profile.Source))
+        {
+            throw new JsonException("RAW profile source is not supported.");
+        }
+        if (profile.Source != RawProfileSource.Embedded &&
+            string.IsNullOrWhiteSpace(profile.Location))
+        {
+            throw new JsonException("External RAW profiles require a location.");
+        }
+        if (profile.ContentHash.Length != 64 ||
+            profile.ContentHash.Any(character => !Uri.IsHexDigit(character)))
+        {
+            throw new JsonException(
+                "RAW profile contentHash must be a SHA-256 hexadecimal value.");
+        }
+        profile.ContentHash = profile.ContentHash.ToLowerInvariant();
     }
 
     private static void ValidateWhiteBalance(WhiteBalanceSettings whiteBalance)

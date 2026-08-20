@@ -19,6 +19,8 @@ public class ImageService : IAsyncDisposable
     private readonly MetadataService _metadataService;
     private readonly ISourceAvailabilityService _availabilityService;
     private readonly SourceHydrationService _sourceHydrationService;
+    private readonly DcpProfileService _dcpProfiles;
+    private readonly DcpProfileDiscovery _dcpDiscovery;
 
     public event EventHandler<PreviewRefresh>? PreviewRefreshed
     {
@@ -121,6 +123,8 @@ public class ImageService : IAsyncDisposable
             throw new ArgumentNullException(nameof(availabilityService));
         _sourceHydrationService = new SourceHydrationService(
             _availabilityService);
+        _dcpProfiles = new DcpProfileService(_availabilityService);
+        _dcpDiscovery = new DcpProfileDiscovery(_availabilityService);
         var gatedBaseLoader = new GatedBaseImageLoader(
             baseLoader,
             _availabilityService);
@@ -145,13 +149,15 @@ public class ImageService : IAsyncDisposable
             renderPipeline,
             _histogramService,
             new PreviewCacheService(catalogService),
-            renderedThumbnailCache);
+            renderedThumbnailCache,
+            dcpProfiles: _dcpProfiles);
         _exportService = new ImageExportService(
             renderPipeline,
             gatedBaseLoader,
             new ExportMetadataService(
                 $"Happy Photon {AppBuildInfo.Version.ToString(3)}",
-                _availabilityService));
+                _availabilityService),
+            _dcpProfiles);
         _metadataService = new MetadataService(
             _rawService,
             _availabilityService);
@@ -396,7 +402,8 @@ public class ImageService : IAsyncDisposable
         IReadOnlyList<ExportVariant> variants,
         bool useSubfolders,
         IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<ExportWarning>? warningProgress = null)
     {
         var imageList = images.ToList();
         await EnsureExportMetadataAsync(imageList, cancellationToken);
@@ -406,7 +413,40 @@ public class ImageService : IAsyncDisposable
             variants,
             useSubfolders,
             progress,
+            cancellationToken,
+            warningProgress);
+    }
+
+    internal async Task<ExportBatchResult> ExportBatchVariantsAsync(
+        IEnumerable<ImageFile> images,
+        ExportSettings settings,
+        IReadOnlyList<ExportVariant> variants,
+        bool useSubfolders,
+        CancellationToken cancellationToken)
+    {
+        var imageList = images.ToList();
+        await EnsureExportMetadataAsync(imageList, cancellationToken);
+        return await _exportService.ExportBatchVariantsAsync(
+            imageList,
+            settings,
+            variants,
+            useSubfolders,
             cancellationToken);
+    }
+
+    internal Task<DcpDiscoveryResult> DiscoverRawProfilesAsync(
+        ImageFile image, CameraIdentity? identity,
+        CancellationToken cancellationToken,
+        bool includeImageProfiles = true) =>
+        _dcpDiscovery.DiscoverAsync(image, identity, cancellationToken, includeImageProfiles);
+
+    internal DcpProfileOption InspectRawProfileFile(string path) =>
+        _dcpDiscovery.InspectUserFile(path);
+
+    internal void InvalidateRawProfiles()
+    {
+        _dcpProfiles.Invalidate();
+        _dcpDiscovery.Invalidate();
     }
 
     private async Task EnsureExportMetadataAsync(

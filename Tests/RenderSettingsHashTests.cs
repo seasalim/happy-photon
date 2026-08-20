@@ -110,6 +110,30 @@ public sealed class RenderSettingsHashTests
         return curve;
     }
 
+    [Fact]
+    public void Compute_ProfileOutcomeTokenSeparatesSuccessFromFallback()
+    {
+        var settings = new EditSettings
+        {
+            RawProfile = new RawProfileSelection
+            {
+                Source = RawProfileSource.UserFile,
+                Location = "synthetic.dcp",
+                ContentHash = new string('c', 64)
+            }
+        };
+
+        var success = RenderSettingsHash.Compute(settings, "user:success");
+        var rejected = RenderSettingsHash.Compute(
+            settings,
+            "user:success:hash-mismatch:replacement");
+
+        Assert.NotEqual(success, rejected);
+        Assert.Equal(
+            RenderSettingsHash.Compute(new EditSettings()),
+            RenderSettingsHash.Compute(new EditSettings(), string.Empty));
+    }
+
     private static EditSettings CreateSettings() => new()
     {
         Exposure = 1.25,

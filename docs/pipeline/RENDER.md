@@ -8,12 +8,13 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 
 ```
 1 Geometry     rotate90 → horizon rotation (+ safe-crop intersect) → crop
-2 Matrix       crossing on: AgX inset × WB; crossing off: WB (§4)
-3 Tone LUT     source-kind tone regime, fused with matrix storage (§5)
-4 Matrix       crossing on: AgX outset; crossing off: identity
-5 Chroma       one combined saturation·vibrance Modulate (§6)
-6 Detail       capture sharpen, chroma NR (§9)
-7 Output       linear resize → output sharpen → target convert → encode (OUTPUT.md)
+2 DCP HueSat   optional scene-linear ProPhoto HSV profile map (§2.1)
+3 Matrix       crossing on: AgX inset × WB; crossing off: WB (§4)
+4 Tone LUT     source-kind tone regime, fused with matrix storage (§5)
+5 Matrix       crossing on: AgX outset; crossing off: identity
+6 Chroma       one combined saturation·vibrance Modulate (§6)
+7 Detail       capture sharpen, chroma NR (§9)
+8 Output       linear resize → output sharpen → target convert → encode (OUTPUT.md)
 ```
 
 `RenderGeometry` owns the rotation and crop sequence, including
@@ -63,6 +64,22 @@ public sealed record RenderRequest(
   one Q16 write. Crossing-off degenerates to WB → retained display chain → identity.
   This avoids clipped intermediates and cumulative requantization while keeping slider
   ticks bounded to one fused pass plus optional chroma/detail work.
+
+### 2.1 DCP HueSat stage
+
+An active DCP HueSat map runs after geometry and before the AgX inset. The
+payload comes only from the installed base, so it always matches the profile
+matrix used during decode. The transform is working Rec.2020 D65 → linear
+ProPhoto D50 → HSV → profile map → linear ProPhoto → working space. For sRGB
+table encoding, only HSV V is encoded before lookup and inverse-decoded after;
+H and S remain linear. ValueDivisions=1 is a 2.5D hue/saturation lookup and
+ignores the encoding tag. Dual tables share decode's as-shot interpolation
+weight; single tables do not vary with it. A 65³ Q16 RGB lattice compiled from
+that sequence (cached process-wide by profile content and weight) is
+trilinearly evaluated as a pass fused onto the AgX crossing's whole-frame
+working array — one read and one write total, in both the interactive and
+resting render paths. With no active table the crossing runs exactly its
+pre-R5b math, preserving exact no-profile output.
 
 ## 3. Notation
 
@@ -286,7 +303,10 @@ JSON document shape (canonical field order for hashing):
   "curveRed": { },                       // optional; omitted = identity
   "curveGreen": { },                     // optional; omitted = identity
   "curveBlue": { },                      // optional; omitted = identity
-  "applied_preset_id": null
+  "applied_preset_id": null,
+  "rawProfile": { "source": "userFile", // omitted for built-in
+                  "location": "C:\\Profiles\\Camera.dcp",
+                  "contentHash": "<lowercase SHA-256>" }
 }
 ```
 
@@ -294,10 +314,17 @@ The three channel fields follow `curve` in the shown order and use null-omission
 semantics: `null` is never serialized. Legacy v2 documents therefore remain
 byte-identical after normalization, and `Clamp` validates/rebuilds an optional curve
 only when the field was present. Selecting a channel in the UI does not materialize it.
+`rawProfile` follows `applied_preset_id` with the same null-omission semantics.
 
-`hlReconstruction` and `detail.noiseReduction` are the **decode-affecting subset**;
+`hlReconstruction`, `detail.noiseReduction`, and `rawProfile` are the
+**decode-affecting subset**;
 they project into `BaseDecodeSettings` (OVERVIEW.md §4, DECODE.md §4) and changing
 them re-decodes the base rather than re-rendering it.
+
+The profile field is additive v2. Clone/history retain it, global Reset clears
+it, and it contributes to `HasEdits`. Preset hover/apply/untoggle preserve it;
+preset files, copy/paste, and MCP transfer exclude it because it is camera- and
+file-specific. Omitting built-in preserves legacy canonical JSON and hash identity.
 
 The Develop Detail group exposes all three fields. Capture sharpening resolves a
 `null` value to RAW 25 or standard 0 and canonicalizes the matching default back to
@@ -399,8 +426,9 @@ renders do not create a candidate. Promotion is a bounded bitmap clone and never
 on background work. Shutdown awaits candidate creation and cache queueing before the
 rendered-thumbnail writer is drained.
 
-Per slider tick at 1600px preview: geometry (usually no-op) + the fused matrix → tone
-LUT → matrix pass, then optional combined Modulate/detail work. The development budget
+Per slider tick at 1600px preview: geometry (usually no-op), optional profile HueSat,
+the fused matrix → tone LUT → matrix pass, then optional combined Modulate/detail work.
+The development budget
 is ≤ 150 ms and is measured with `HAPPY_PHOTON_PERF=1`; the exact tone tables are cached
 for the bounded active settings set. Tonal, chroma, and
 geometry slider moves invalidate only the render; only `BaseDecodeSettings` changes
@@ -425,6 +453,15 @@ only the resting entry point supplies them, with at most two managed workers. Th
 ordinary `Render` call and every interactive caller remain unchanged. Completed output
 is bit-identical for an already target-sized base regardless of the resting worker cap;
 band partitioning does not alter pixel values.
+
+R5b additionally gates the optional HueSat stage at ≤ 80 ms per preview tick and
+≤ 250 ms for full export, with exactly zero inactive work. Selected-profile
+resolution/decode on the Canon 6D is bounded at ≤ 50 ms cold external, ≤ 30 ms
+cold embedded, and ≤ 15 ms warm beyond built-in; the incremental matrix kernel is
+≤ 10 ms. Retained and managed allocation deltas are each ≤ 8 MiB. The opt-in
+`DcpPerformanceGateTests` also covers the unchanged 150 ms slider ceiling,
+active export's +5%/+16 MiB ceiling, and a realistic 4,000-profile Adobe corpus
+at ≤ 1.5 s cold and ≤ 0.3 s warm.
 
 `HAPPY_PHOTON_DISPLAY_TRACE=1` enables the permanent display-chain diagnostic. The
 active Develop or fullscreen preview emits one post-layout line when its bitmap identity,

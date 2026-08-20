@@ -13,6 +13,7 @@ public sealed class PreviewArtifacts : IDisposable
     public HistogramData Histogram { get; }
     public ClippingStats? Clipping { get; }
     public bool IsRawSource { get; }
+    internal DcpProfileState? ProfileState { get; }
     public long Generation { get; }
     public ClippingMask? ClippingMask => _clippingMask;
 
@@ -21,6 +22,7 @@ public sealed class PreviewArtifacts : IDisposable
         HistogramData histogram,
         ClippingStats? clipping,
         bool isRawSource,
+        DcpProfileState? profileState,
         long generation,
         ClippingMask? clippingMask)
     {
@@ -28,6 +30,7 @@ public sealed class PreviewArtifacts : IDisposable
         Histogram = histogram ?? throw new ArgumentNullException(nameof(histogram));
         Clipping = clipping;
         IsRawSource = isRawSource;
+        ProfileState = profileState;
         Generation = generation;
         _clippingMask = clippingMask;
     }
@@ -38,6 +41,7 @@ public sealed class PreviewArtifacts : IDisposable
             new HistogramData(),
             null,
             isRawSource,
+            null,
             generation,
             null);
 
@@ -88,6 +92,7 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
     public bool HasHistogram { get; }
     public ClippingStats? Clipping { get; }
     public bool IsRawSource { get; }
+    internal DcpProfileState? ProfileState { get; }
     public ClippingMask? ClippingMask => _clippingMask;
 
     /// <summary>
@@ -108,6 +113,7 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         HistogramData? rawHistogram = null,
         ClippingStats? clipping = null,
         bool isRawSource = false,
+        DcpProfileState? profileState = null,
         ClippingMask? clippingMask = null)
     {
         ImageFile = imageFile;
@@ -118,6 +124,7 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         RawHistogram = rawHistogram;
         Clipping = clipping;
         IsRawSource = isRawSource;
+        ProfileState = profileState;
         _clippingMask = clippingMask;
     }
 
@@ -133,6 +140,21 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         Interlocked.Exchange(ref _clippingMask, null)?.Dispose();
         Interlocked.Exchange(ref _bitmap, null)?.Dispose();
     }
+}
+
+internal sealed record DcpProfileState(
+    string Token,
+    DcpProfileErrorCode Status,
+    string? Message,
+    string? ProfileName,
+    CameraIdentity? CameraIdentity)
+{
+    internal static DcpProfileState From(BaseImageInfo info) => new(
+        info.ProfileToken,
+        info.ProfileStatus,
+        info.ProfileMessage,
+        info.DcpProfile?.Name,
+        info.CameraIdentity);
 }
 
 public sealed class CachedPreviewBitmap : IDisposable

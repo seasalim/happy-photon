@@ -45,6 +45,10 @@ public partial class MainWindowViewModel
         ReconcileHighlightReconstructionCapability(
             selectedImage,
             artifacts.IsRawSource);
+        ApplyRawProfileState(
+            selectedImage,
+            artifacts.IsRawSource,
+            artifacts.ProfileState);
         InstallPreviewClipping(artifacts);
         ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
 

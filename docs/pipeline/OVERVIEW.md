@@ -24,7 +24,8 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 ```
 
 - **`BaseDecodeSettings`** is the small, decode-affecting projection of `EditSettings`
-  (today: highlight reconstruction, FBDD noise reduction — both raw-only). Everything
+  (highlight reconstruction, FBDD noise reduction, and camera-profile selection — all
+  raw-only). Everything
   else in `EditSettings` affects only the render. Changing a decode-affecting field
   re-decodes the base in the background (DECODE.md §4); changing anything else never
   does. The in-memory base is keyed by (file, decode settings, size class).
@@ -110,9 +111,9 @@ public enum FbddMode { Off, Light, Full }
 
 public sealed record BaseDecodeSettings(HlReconstructionMode HlReconstruction, FbddMode NoiseReduction)
 {
-    public static BaseDecodeSettings Default { get; }        // Clip + Off
-    public static BaseDecodeSettings From(EditSettings s);   // projects both decode-affecting fields
-    public string CacheKey { get; }                          // base-v{BaseImage.Version};hl=…;fbdd=…
+    public static BaseDecodeSettings Default { get; }        // Clip + Off + built-in profile
+    public static BaseDecodeSettings From(EditSettings s);   // also carries rawProfile selection
+    public string CacheKey { get; }                          // adds dcp=resolved token when selected
 }
 
 public sealed record BaseImageInfo(
@@ -167,6 +168,10 @@ public sealed class RenderResult : IDisposable
 }
 ```
 
+`BaseImageInfo` also carries the internal resolved DCP payload, outcome token,
+typed status/message, and normalized camera identity. These facts install with
+the characterized pixels; render never resolves or mixes profile state.
+
 `EditSettings` v2 schema and current storage contract: RENDER.md §8.
 
 Develop exposes capture sharpening, RAW-only FBDD noise reduction, and chroma noise
@@ -196,6 +201,10 @@ content.
 | `Services/RawBaseLoader.cs` | LibRaw decode → base (DECODE.md §2) |
 | `Services/RawCameraFactSnapshot.cs` | validated pre-process camera facts |
 | `Services/CameraRgbCharacterization.cs` | camera RGB → Rec.2020 fused Q16 import |
+| `Services/DcpProfileReader.cs` + `DcpTiffReader.cs` | hardened TIFF-IFD DCP parser |
+| `Services/DcpProfileService.cs` + `DcpProfileDiscovery.cs` | availability-gated resolution and lazy local discovery |
+| `Services/DcpMatrixCalculator.cs` | as-shot DCP matrix composition for the balanced seam |
+| `Services/DcpHueSatRenderer.cs` | scene-linear ProPhoto HueSatDeltas render stage |
 | `Services/RawSensorFrame.cs` + `RawSensorHistogram.cs` | typed unpacked-mosaic lease + sensor histogram |
 | `Services/StandardBaseLoader.cs` | Magick decode + ICC normalize → base (DECODE.md §3) |
 | `Services/WorkingSpaceIccProfile.cs` | deterministic linear-Rec.2020 ICC target |
@@ -231,13 +240,16 @@ omitting the new field reproduces old pixels bit-for-bit and canonical JSON omit
 so old settings hashes and caches remain valid. Per-channel curves use this exception;
 present fields change the canonical settings hash.
 `BaseDecodeSettings.CacheKey` is the invariant, culture-independent string
-`base-v{BaseImage.Version};hl={blend|clip};fbdd={off|light|full}`. In-memory identity
-adds normalized file path and preview/full size class; rendered-cache settings hashes
-still include `BaseImage.Version` separately as specified in DECODE.md §5.
+`base-v{BaseImage.Version};hl={blend|clip};fbdd={off|light|full}`, with
+`;dcp={source:content-hash:resolution-status}` appended only for a selected profile.
+In-memory identity adds normalized file path and preview/full size class;
+rendered-cache settings hashes also carry the installed outcome token.
 The active markers are render v9 and base v9. Render v9 attributes the AgX crossing,
 target-convert relocation, Rec.2020 luma basis, and final numeric path. Base v8
 invalidated stale `SourceExposureBiasEv` facts; base v9 moves RAW output-space
-characterization from LibRaw into Happy Photon's fused decode import.
+characterization from LibRaw into Happy Photon's fused decode import. R5b does
+not bump either version: the no-profile path is unchanged, while active and
+rejected profile outcomes are isolated by the DCP token.
 
 ## 7. Current boundaries
 

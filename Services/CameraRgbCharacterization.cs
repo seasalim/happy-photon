@@ -9,6 +9,7 @@ internal enum CameraRgbCharacterizationOutcome
 {
     Usable,
     Derived,
+    Profile,
     UncharacterizedPassthrough
 }
 
@@ -80,6 +81,21 @@ internal sealed class CameraRgbCharacterization
         }
 
         return Passthrough;
+    }
+
+    internal static CameraRgbCharacterization CreateProfile(
+        double[,] cameraToRec2020)
+    {
+        if (!IsFiniteThreeChannelMatrix(cameraToRec2020))
+        {
+            throw new ArgumentException(
+                "A DCP characterization matrix must be finite and 3x3.",
+                nameof(cameraToRec2020));
+        }
+        return new CameraRgbCharacterization(
+            CameraRgbCharacterizationOutcome.Profile,
+            (double[,])cameraToRec2020.Clone(),
+            applyMatrix: true);
     }
 
     internal MagickImage ImportRgb16(

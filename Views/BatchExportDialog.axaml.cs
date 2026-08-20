@@ -169,6 +169,12 @@ public partial class BatchExportDialog : Window
                 return;
             }
 
+            if (result.Warnings.Count > 0)
+            {
+                ViewModel.ShowExportWarnings(result);
+                return;
+            }
+
             ViewModel.EndExport();
             Close(true);
         }

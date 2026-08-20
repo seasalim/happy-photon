@@ -40,5 +40,6 @@ public sealed partial class PreviewService
         ThumbnailSizeRequest ThumbnailRequest,
         bool SkipHistogram,
         ClippingOverlaySide OverlaySides,
+        BaseDecodeSettings Decode,
         long Generation);
 }

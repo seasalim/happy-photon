@@ -189,4 +189,5 @@ public record AgentExportVariant(string Name, int? MaxDimension);
 public record AgentExportResult(
     List<string> Exported,
     List<string> Skipped,
-    List<AgentBatchFailure> Failed);
+    List<AgentBatchFailure> Failed,
+    List<string> Warnings);

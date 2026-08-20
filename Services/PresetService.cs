@@ -227,6 +227,7 @@ public class PresetService
         settings.HorizonRotation = 0;
         settings.Crop = null;
         settings.AppliedPresetId = null;
+        settings.RawProfile = null;
         return settings;
     }
 
@@ -272,6 +273,9 @@ public class PresetService
         var settings = EditSettingsJson.Deserialize(
             settingsElement.GetRawText(),
             out var wasClamped);
+        // Camera profiles are image-specific and never transfer through a
+        // preset file, including a hand-edited one.
+        settings.RawProfile = null;
         if (wasClamped)
         {
             Debug.WriteLine($"Clamped out-of-range preset settings: {path}");

@@ -19,6 +19,7 @@ public sealed partial class PreviewService
             thumbnailRequest,
             skipHistogram,
             overlaySides,
+            forceProfileRefresh: true,
             cancellationToken);
     }
 
@@ -35,6 +36,7 @@ public sealed partial class PreviewService
             thumbnailRequest,
             skipHistogram,
             overlaySides,
+            forceProfileRefresh: false,
             cancellationToken);
 
     public Task<(Avalonia.Media.Imaging.Bitmap? preview,

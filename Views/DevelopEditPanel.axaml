@@ -242,6 +242,8 @@
                 <StackPanel Margin="15,5,15,15"
                             Spacing="4"
                             IsEnabled="{Binding HasSelectedImage}">
+                        <views:RawProfilePicker/>
+
                         <TextBlock x:Name="WhiteBalanceHeading"
                                    Classes="section-label"
                                    Text="WHITE BALANCE"

@@ -132,6 +132,11 @@ base contract. It is the only producer of RAW raster pixels: runtime rejection a
 per-file decode failure are surfaced instead of routing through Magick. RAW metadata comes from
 LibRaw except exposure bias, which LibRaw does not surface and Magick cannot read from
 RAW containers; MetadataExtractor reads just that tag, header-only, without decoding.
+An optional local DCP replaces only the RAW characterization matrix at the fused import
+seam and contributes its HueSat payload before AgX in the shared renderer. Resolution is
+availability-gated and binds matrix, tables, typed status, and source/content outcome
+token atomically to `BaseImageInfo`. Missing-WB or rejected profile content preserves the
+built-in path. No profile ships and no profile operation performs a network read.
 
 Develop mode holds one bounded preview pair from a single half-size RAW decode: an
 at-most-1600px interactive base and an at-most-3200px large base for the resting
@@ -529,10 +534,23 @@ Briefly, for contrast with thumbnails:
   edits render only from the 1600 base and never resize or re-decode. The two bases
   have separate lease/retirement lifetimes so a decode-settings replacement can keep
   only the old interactive base for stale-paint continuity.
+- Camera-profile selection is part of that decode identity. One generation-scoped
+  request resolves a live immutable snapshot before exact cache matching, then the
+  resolved source/hash/status token follows the installed base into every render and
+  persisted hash. Matrix and HueSat tables therefore switch together; stale-base
+  renders are non-promotable.
 - `assets/previews/` stores the last rendered q90 JPEG, not a linear base. A `.meta`
   sidecar stores the deterministic settings hash. Develop entry paints a valid cached
   render even when its hash is stale, then a background base decode and fresh render
   replace it.
+- Warm preview and rendered-thumbnail artifacts may paint immediately as last-known
+  stale state. Generation-correlated live profile resolution then confirms or replaces
+  them; merely painting a warm cache never opens an embedded profile. When make/model
+  arrives from the open LibRaw base, a background Adobe scan probes only bounded
+  `UniqueCameraModel` metadata cached by path/mtime/size, then parses and hashes the few
+  matching profiles. Picker open remains a generation-correlated refresh fallback, and
+  is the point where embedded profiles are inspected. Availability is rechecked
+  immediately before every profile content open.
 - An accepted edited RAW render also supplies an owned source for the explicit Library
   request, capped at 512 px. After display conversion and the accepted-generation check,
   ownership of that render moves to a tracked background resize/conversion task; no
@@ -568,6 +586,9 @@ Briefly, for contrast with thumbnails:
   when base decoding exceeds 150 ms. The fresh preview then schedules the histogram.
 - For a cloud-only original, a valid cached preview may still paint, but fresh base
   decode is deferred until **Download and open** hydrates that one image.
+- Export independently re-resolves each selected profile. Degraded selections use the
+  built-in matrix and propagate a per-image warning through batch, desktop, and agent
+  result carriers rather than hiding preview/export divergence.
 - Library mode never loads a 1600px preview just to draw the histogram. The UI thread
   copies the current thumbnail pixels into an independently owned bitmap, then a
   threadpool task scales it to a DPI-independent 150 px bitmap and calculates its bins.

@@ -40,6 +40,7 @@ public sealed class EditSettingsTransferTests
         HorizonRotation = 1.5,
         Crop = new CropRegion { Left = 0.1, Top = 0.2, Right = 0.8, Bottom = 0.9 },
         AppliedPresetId = "user_abc",
+        RawProfile = CreateProfileSelection(),
         Curve = CreateCurve(),
         CurveRed = CreateCurve(),
         CurveGreen = CreateCurve(),
@@ -77,6 +78,7 @@ public sealed class EditSettingsTransferTests
         Assert.Equal(0, copy.Rotation);
         Assert.Equal(0.0, copy.HorizonRotation);
         Assert.Null(copy.Crop);
+        Assert.Null(copy.RawProfile);
         Assert.Equal(EditSettings.CurrentVersion, copy.Version);
     }
 
@@ -95,7 +97,8 @@ public sealed class EditSettingsTransferTests
             },
             Rotation = 270,
             HorizonRotation = -3.0,
-            Crop = new CropRegion { Left = 0.25, Top = 0.25, Right = 0.75, Bottom = 0.75 }
+            Crop = new CropRegion { Left = 0.25, Top = 0.25, Right = 0.75, Bottom = 0.75 },
+            RawProfile = CreateProfileSelection()
         };
 
         EditSettingsTransfer.ApplySubset(copied, target);
@@ -121,6 +124,7 @@ public sealed class EditSettingsTransferTests
         Assert.Equal(-3.0, target.HorizonRotation);
         Assert.NotNull(target.Crop);
         Assert.Equal(0.25, target.Crop!.Left);
+        Assert.NotNull(target.RawProfile);
     }
 
     [Fact]
@@ -215,4 +219,11 @@ public sealed class EditSettingsTransferTests
                 new EditSettings(),
                 new EditSettings { Version = 1 }));
     }
+
+    private static RawProfileSelection CreateProfileSelection() => new()
+    {
+        Source = RawProfileSource.UserFile,
+        Location = "synthetic.dcp",
+        ContentHash = new string('a', 64)
+    };
 }

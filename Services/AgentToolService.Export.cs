@@ -82,6 +82,7 @@ public sealed partial class AgentToolService
         using var activity = _vm.BeginExportActivity(images.Count);
         var exported = new List<string>();
         var skipped = new List<string>();
+        var warnings = new List<string>();
         var comparer = OperatingSystem.IsWindows()
             ? StringComparer.OrdinalIgnoreCase
             : StringComparer.Ordinal;
@@ -133,7 +134,8 @@ public sealed partial class AgentToolService
                     useSubfolders,
                     pending,
                     exported,
-                    failed);
+                    failed,
+                    warnings);
             }
             finally
             {
@@ -141,7 +143,7 @@ public sealed partial class AgentToolService
             }
         }
 
-        return new AgentExportResult(exported, skipped, failed);
+        return new AgentExportResult(exported, skipped, failed, warnings);
     }
 
     private List<(ExportVariant Variant, string RelativePath)> BuildPendingExports(
@@ -212,20 +214,22 @@ public sealed partial class AgentToolService
         bool useSubfolders,
         List<(ExportVariant Variant, string RelativePath)> pending,
         List<string> exported,
-        List<AgentBatchFailure> failed)
+        List<AgentBatchFailure> failed,
+        List<string> warnings)
     {
         try
         {
-            var count = await _imageService.ExportBatchAsync(
+            var result = await _imageService.ExportBatchVariantsAsync(
                 [image],
                 settings,
                 pending.Select(item => item.Variant).ToList(),
                 useSubfolders,
-                null,
                 CancellationToken.None);
-            if (count == 1)
+            if (result.ExportedCount == 1)
             {
                 exported.AddRange(pending.Select(item => item.RelativePath));
+                warnings.AddRange(result.Warnings.Select(item =>
+                    $"{image.FileName}: {item.Message}"));
                 return;
             }
 

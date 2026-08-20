@@ -21,15 +21,43 @@ public sealed record BaseDecodeSettings(
     {
         ArgumentNullException.ThrowIfNull(settings);
         return settings.HlReconstruction == HlReconstructionMode.Clip &&
-               settings.Detail.NoiseReduction == FbddMode.Off
+               settings.Detail.NoiseReduction == FbddMode.Off &&
+               settings.RawProfile == null
             ? Default
             : new BaseDecodeSettings(
                 settings.HlReconstruction,
-                settings.Detail.NoiseReduction);
+                settings.Detail.NoiseReduction)
+            {
+                ProfileSelection = settings.RawProfile?.Clone()
+            };
     }
 
+    internal RawProfileSelection? ProfileSelection { get; init; }
+
+    internal DcpProfileResolution? ProfileResolution { get; init; }
+
+    internal BaseDecodeSettings WithProfileResolution(
+        DcpProfileResolution resolution) => resolution.Selection == null
+            ? this with
+            {
+                ProfileResolution = null,
+                ProfileSelection = null
+            }
+            : this with
+            {
+                ProfileResolution = resolution,
+                ProfileSelection = resolution.Selection.Clone()
+            };
+
     public string CacheKey =>
-        $"base-v{BaseImage.Version};hl={GetHighlightKey()};fbdd={GetNoiseReductionKey()}";
+        $"base-v{BaseImage.Version};hl={GetHighlightKey()};fbdd={GetNoiseReductionKey()}" +
+        GetProfileKey();
+
+    private string GetProfileKey()
+    {
+        var token = ProfileResolution?.Token ?? ProfileSelection?.CacheToken;
+        return string.IsNullOrEmpty(token) ? string.Empty : $";dcp={token}";
+    }
 
     private string GetHighlightKey() => HlReconstruction switch
     {
@@ -64,7 +92,14 @@ public sealed record BaseImageInfo(
     int FullHeight,
     double SourceExposureBiasEv = 0,
     // HistogramData is mutable; record equality compares this loader fact by reference.
-    HistogramData? RawHistogram = null);
+    HistogramData? RawHistogram = null)
+{
+    internal DcpProfilePayload? DcpProfile { get; init; }
+    internal string ProfileToken { get; init; } = string.Empty;
+    internal DcpProfileErrorCode ProfileStatus { get; init; }
+    internal string? ProfileMessage { get; init; }
+    internal CameraIdentity? CameraIdentity { get; init; }
+}
 
 /// <summary>
 /// Owns one decoded linear Rec.2020/D65 image. Ownership transfers at construction

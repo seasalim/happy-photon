@@ -18,9 +18,12 @@ internal sealed class AgxCrossing
     private readonly double _toePower;
     private readonly double _shoulderPower;
 
+    private readonly DcpHueSatMap? _hueSatMap;
+
     internal AgxCrossing(
         AgxToneParameters parameters,
-        double[,]? whiteBalanceMatrix = null)
+        double[,]? whiteBalanceMatrix = null,
+        DcpHueSatMap? hueSatMap = null)
     {
         ArgumentNullException.ThrowIfNull(parameters.Curve);
         _parameters = parameters with
@@ -56,10 +59,12 @@ internal sealed class AgxCrossing
     internal AgxCrossing(
         AgxToneParameters parameters,
         double[,]? whiteBalanceMatrix,
-        RenderExecutionOptions execution)
+        RenderExecutionOptions execution,
+        DcpHueSatMap? hueSatMap = null)
     {
         ArgumentNullException.ThrowIfNull(parameters.Curve);
         _parameters = parameters with { Curve = parameters.Curve.Clone() };
+        _hueSatMap = hueSatMap;
 
         if (whiteBalanceMatrix == null)
         {
@@ -94,9 +99,23 @@ internal sealed class AgxCrossing
         var values = pixels.GetArea(0, 0, image.Width, image.Height) ??
             throw new InvalidOperationException("Unable to access Q16 pixels.");
         var layout = RenderKernelSupport.GetLayout(pixels);
+        var pixelCount = checked((int)(image.Width * image.Height));
+        if (_hueSatMap != null)
+        {
+            // The DCP HueSat pass is fused onto the crossing's working array:
+            // scene-linear per §7.4, one whole-frame read and write total.
+            DcpHueSatRenderer.ApplyValues(
+                values,
+                pixelCount,
+                layout.Channels,
+                layout.Red,
+                layout.Green,
+                layout.Blue,
+                _hueSatMap);
+        }
         Apply(
             values,
-            checked((int)(image.Width * image.Height)),
+            pixelCount,
             layout.Channels,
             layout.Red,
             layout.Green,
@@ -115,9 +134,24 @@ internal sealed class AgxCrossing
             throw new InvalidOperationException("Unable to access Q16 pixels.");
         execution.ThrowIfCancellationRequested();
         var layout = RenderKernelSupport.GetLayout(pixels);
+        var restingPixelCount = checked((int)(image.Width * image.Height));
+        if (_hueSatMap != null)
+        {
+            // Keep resting renders pixel-identical to interactive ones: the
+            // fused DCP HueSat pass runs on the same working array here too.
+            DcpHueSatRenderer.ApplyValues(
+                values,
+                restingPixelCount,
+                layout.Channels,
+                layout.Red,
+                layout.Green,
+                layout.Blue,
+                _hueSatMap);
+            execution.ThrowIfCancellationRequested();
+        }
         ApplyResting(
             values,
-            checked((int)(image.Width * image.Height)),
+            restingPixelCount,
             layout.Channels,
             layout.Red,
             layout.Green,

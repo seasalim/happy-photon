@@ -12,6 +12,7 @@ public sealed partial class PreviewService
         ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
         ClippingOverlaySide overlaySides,
+        BaseDecodeSettings decode,
         long generation)
     {
         var startWorker = false;
@@ -29,6 +30,7 @@ public sealed partial class PreviewService
                 thumbnailRequest,
                 skipHistogram,
                 overlaySides,
+                decode,
                 generation);
         }
 
@@ -122,6 +124,7 @@ public sealed partial class PreviewService
                 refreshed.RawHistogram,
                 refreshed.Output.Clipping,
                 refreshed.Output.IsRawSource,
+                refreshed.Output.ProfileState,
                 refreshed.Output.DetachClippingMask());
             refreshed.Output.Dispose();
             PreviewRefreshed?.Invoke(this, refresh);
@@ -162,10 +165,9 @@ public sealed partial class PreviewService
         {
             await gate().ConfigureAwait(false);
         }
-        var decode = BaseDecodeSettings.From(pending.Settings);
         using var snapshot = _baseCoordinator.TryAcquireCurrent(
             pending.ImageFile,
-            decode);
+            pending.Decode);
         if (snapshot == null)
         {
             return null;
@@ -183,7 +185,9 @@ public sealed partial class PreviewService
                 generation,
                 CancellationToken.None),
             CancellationToken.None).ConfigureAwait(false);
-        var settingsHash = RenderSettingsHash.Compute(pending.Settings);
+        var settingsHash = RenderSettingsHash.Compute(
+            pending.Settings,
+            snapshot.Base.Info.ProfileToken);
         if (generation != Volatile.Read(ref _renderGeneration) ||
             rendered.Bitmap == null ||
             !TryRememberRendered(
@@ -200,7 +204,7 @@ public sealed partial class PreviewService
             rendered.Bitmap,
             pending.ImageFile,
             generation,
-            decode.CacheKey,
+            pending.Decode.CacheKey,
             settingsHash,
             snapshot.Base);
 

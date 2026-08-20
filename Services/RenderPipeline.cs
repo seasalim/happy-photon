@@ -154,7 +154,8 @@ public sealed class RenderPipeline
                         request.Settings.CurveGreen,
                         request.Settings.CurveBlue),
                     whiteBalance,
-                    execution);
+                    execution,
+                    request.Base.Info.DcpProfile?.HueSatMap);
                 crossing.Apply(working, execution);
             }
             else
@@ -277,7 +278,8 @@ public sealed class RenderPipeline
                         request.Settings.CurveRed,
                         request.Settings.CurveGreen,
                         request.Settings.CurveBlue),
-                    whiteBalance);
+                    whiteBalance,
+                    request.Base.Info.DcpProfile?.HueSatMap);
                 crossing.Apply(working);
             }
             else

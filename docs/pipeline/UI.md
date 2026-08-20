@@ -31,6 +31,9 @@ with no editing controls; everything below is a Develop-only surface (Library
 editing surfaces remain a non-goal, §10).
 
 ```
+CAMERA PROFILE         (RAW only, collapsed child control)
+  [profile ComboBox]
+  [Browse…] [Refresh]                         status / loading
 WHITE BALANCE          (new group, WP3.3)
   [mode/preset ComboBox]  [Auto button]  [eyedropper button]
   Kelvin   ────────●────────   5500K
@@ -77,6 +80,18 @@ tints its selector letter. While a channel is active, its curve uses the matchin
 label token and the composite is painted dimly behind it. The embedded Reset clears
 only the active curve; RGB remains a required identity curve, while resetting R/G/B
 returns that optional field to null.
+
+The camera-profile child control is visible provisionally for a RAW `ImageFile` and
+confirms or retracts against the loaded `BaseImageInfo.IsRawSource`. Camera identity
+starts cached local Adobe discovery in the background; opening the picker performs a
+generation-correlated fallback refresh, adds embedded candidates, and shows its pending
+state.
+Order is persisted user file, DNG embedded, matching Adobe profiles A–Z, then built-in.
+Browse adds one local `.dcp`; Refresh invalidates discovery metadata and re-resolves the
+selection. Loading, honest empty, unavailable, corrupt, hash-mismatch, unsupported, and
+missing-WB fallback are terminal visible states. Invalid persisted choices remain
+selected with their reason while decode uses built-in characterization. The control
+never offers hydration or causes a cloud placeholder to be read.
 
 ## 3. White balance group (WP3.3)
 
@@ -158,15 +173,15 @@ returns that optional field to null.
 - **Reset** returns: `wb → asShot`, `baseLook → null` (source default), all four
   curves to identity (the three optional channel fields to null),
   `hlReconstruction → clip`, `detail → source defaults`, plus all existing fields.
-  One undo step, as today.
+  A selected camera profile returns to built-in. One undo step, as today.
 - **Undo/redo**: each committed control change is one step (existing granularity),
   including a full curve drag, point removal, or embedded curve reset;
-  this includes each Clip/Blend selection; mode switches (preset select, eyedropper
-  pick, Auto) are each one step.
-- **User presets** capture color, tonal, all curve, and detail fields and still never geometry.
-  Applying/untoggling behavior is unchanged.
+  this includes each Clip/Blend or camera-profile selection; mode switches (preset
+  select, eyedropper pick, Auto) are each one step.
+- **User presets** capture color, tonal, all curve, and detail fields and still never
+  geometry or camera profiles. Hover, apply, and untoggle preserve the current profile.
 - **Copy/paste** (`Ctrl+Shift+C/V`) carries the same widened set, including nullable
-  channel curves; geometry still never
+  channel curves but never camera profiles; geometry still never
   transfers; Library multi-paste confirmation flow unchanged.
 
 Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields use
@@ -191,8 +206,10 @@ export runs, configuration controls are disabled, progress and the current filen
 are shown, and Cancel Export requests cancellation without destroying the dialog.
 Success closes the dialog; cancellation restores the configured form; failures remain
 visible. Partial completion shows the exported count and every failed filename in the
-scrollable dialog. Overwrite and original-file collision confirmations are owned by the
-export dialog.
+scrollable dialog. A selected profile that became missing, unavailable, corrupt, or
+hash-mismatched exports with built-in characterization and keeps the success path open
+long enough to report its per-image warning. Overwrite and original-file collision
+confirmations are owned by the export dialog.
 
 The final workflow-tour coachmark remains in Library. Its primary action ends the tour
 before opening the dialog through the normal guarded command. The modal contains no

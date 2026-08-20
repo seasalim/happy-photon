@@ -222,4 +222,55 @@ public sealed class EditSettingsJsonTests
         Assert.Throws<JsonException>(() =>
             EditSettingsJson.Deserialize(json, out _));
     }
+
+    [Fact]
+    public void RawProfile_RoundTripsAsAdditiveV2Field()
+    {
+        var settings = new EditSettings
+        {
+            RawProfile = new RawProfileSelection
+            {
+                Source = RawProfileSource.UserFile,
+                Location = "C:/profiles/synthetic.dcp",
+                ContentHash = new string('b', 64)
+            }
+        };
+
+        var json = EditSettingsJson.Serialize(settings);
+        var result = EditSettingsJson.Deserialize(json, out var wasClamped);
+
+        Assert.False(wasClamped);
+        Assert.Contains("\"rawProfile\"", json);
+        Assert.Equal(RawProfileSource.UserFile, result.RawProfile?.Source);
+        Assert.Equal(settings.RawProfile.Location, result.RawProfile?.Location);
+        Assert.Equal(settings.RawProfile.ContentHash, result.RawProfile?.ContentHash);
+        Assert.True(result.HasEdits);
+    }
+
+    [Fact]
+    public void BuiltInProfile_OmitsFieldAndPreservesLegacyCanonicalJson()
+    {
+        var settings = new EditSettings();
+        var json = EditSettingsJson.Serialize(settings);
+
+        Assert.DoesNotContain("rawProfile", json);
+        Assert.Null(EditSettingsJson.Deserialize(json, out _).RawProfile);
+    }
+
+    [Theory]
+    [InlineData("short")]
+    [InlineData("gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg")]
+    public void RawProfile_RejectsInvalidContentHash(string hash)
+    {
+        var settings = new EditSettings
+        {
+            RawProfile = new RawProfileSelection
+            {
+                Source = RawProfileSource.Embedded,
+                ContentHash = hash
+            }
+        };
+
+        Assert.Throws<JsonException>(() => EditSettingsJson.Serialize(settings));
+    }
 }

@@ -156,7 +156,10 @@ public sealed class ColorCheckerGroundTruthTests
             $"maximum={measurement.LookMaximumDeltaE00:R}.");
     }
 
-    private static ColorCheckerMeasurement Measure()
+    private static ColorCheckerMeasurement Measure() =>
+        Measure(BaseDecodeSettings.Default);
+
+    internal static ColorCheckerMeasurement Measure(BaseDecodeSettings decode)
     {
         var manifest = ColorCheckerManifest.Load();
         var oracle = ColorScienceOracleData.Load();
@@ -172,7 +175,7 @@ public sealed class ColorCheckerGroundTruthTests
             manifest.RenderPath.OpenMpValue);
         try
         {
-            return MeasureCore(fixturePath, manifest, oracle);
+            return MeasureCore(fixturePath, manifest, oracle, decode);
         }
         finally
         {
@@ -185,7 +188,8 @@ public sealed class ColorCheckerGroundTruthTests
     private static ColorCheckerMeasurement MeasureCore(
         string fixturePath,
         ColorCheckerManifest manifest,
-        ColorScienceOracleData oracle)
+        ColorScienceOracleData oracle,
+        BaseDecodeSettings decode)
     {
         var workingSpace = oracle.Space("linear-rec2020-d65");
         var workingToXyz = ColorScienceMatrixAssertions.DeriveRgbToXyz(
@@ -193,7 +197,7 @@ public sealed class ColorCheckerGroundTruthTests
             workingSpace.WhitePoint);
         using var baseImage = new RawBaseLoader().LoadFullBase(
             new ImageFile(fixturePath),
-            BaseDecodeSettings.Default,
+            decode,
             CancellationToken.None) ?? throw new InvalidOperationException(
                 "The ColorChecker fixture did not decode.");
         Assert.Equal((uint)manifest.RenderPath.ExpectedWidth, baseImage.Pixels.Width);

@@ -253,6 +253,19 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
             $"{failedLabel} not exported:{Environment.NewLine}{failedPaths}";
     }
 
+    public void ShowExportWarnings(ExportBatchResult result)
+    {
+        EndExport();
+        var details = string.Join(
+            Environment.NewLine,
+            result.Warnings.Select(warning =>
+                $"• {warning.Image.FileName}: {warning.Message}"));
+        ErrorMessage =
+            $"Exported {result.ExportedCount} images using built-in camera " +
+            $"characterization where selected profiles were unavailable:" +
+            $"{Environment.NewLine}{details}";
+    }
+
     public void Dispose() => Settings.PropertyChanged -= OnSettingsPropertyChanged;
 
     partial void OnIsExportingChanged(bool value)
