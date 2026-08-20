@@ -14,7 +14,7 @@ internal enum CameraRgbCharacterizationOutcome
 
 internal sealed class CameraRgbCharacterization
 {
-    private const int DestinationBufferBudgetBytes = 2 * 1024 * 1024;
+    private const int DestinationBufferBudgetBytes = 3 * 1024 * 1024 / 2;
 
     private readonly bool _applyMatrix;
 
@@ -188,7 +188,13 @@ internal sealed class CameraRgbCharacterization
         CancellationToken cancellationToken)
     {
         var image = CreateDestination(width, height);
-        ushort[]? destinationBuffer = null;
+        ushort[]? frontBuffer = null;
+        ushort[]? backBuffer = null;
+        // Double-buffered pipeline: band k's SetArea overlaps band k+1's
+        // transform; SetArea calls themselves never overlap each other. The
+        // pending write must be drained before buffers or the pixel
+        // collection are released, on every exit path.
+        var pendingWrite = Task.CompletedTask;
         try
         {
             using var destinationPixels = image.GetPixels();
@@ -201,32 +207,60 @@ internal sealed class CameraRgbCharacterization
                     height,
                     DestinationBufferBudgetBytes /
                         sizeof(ushort) / destinationSamplesPerRow));
-            destinationBuffer = ArrayPool<ushort>.Shared.Rent(
-                checked(destinationSamplesPerRow * bandHeight));
+            var bandSamples = checked(destinationSamplesPerRow * bandHeight);
+            frontBuffer = ArrayPool<ushort>.Shared.Rent(bandSamples);
+            backBuffer = ArrayPool<ushort>.Shared.Rent(bandSamples);
 
-            fixed (byte* source = data)
-            fixed (ushort* destination = destinationBuffer)
+            try
             {
-                for (var y = 0; y < height; y += bandHeight)
+                fixed (byte* source = data)
                 {
-                    var currentBandHeight = Math.Min(
-                        bandHeight,
-                        height - y);
-                    var sampleCount = checked(
-                        destinationSamplesPerRow * currentBandHeight);
-                    TransformPixels(
-                        (nint)(source + checked(
-                            y * sourceSamplesPerRow * sizeof(ushort))),
-                        (nint)destination,
-                        checked(width * currentBandHeight),
-                        layout,
-                        cancellationToken);
-                    destinationPixels.SetArea(
-                        0,
-                        y,
-                        (uint)width,
-                        (uint)currentBandHeight,
-                        destinationBuffer.AsSpan(0, sampleCount));
+                    for (var y = 0; y < height; y += bandHeight)
+                    {
+                        var bandY = y;
+                        var currentBandHeight = Math.Min(
+                            bandHeight,
+                            height - y);
+                        var sampleCount = checked(
+                            destinationSamplesPerRow * currentBandHeight);
+                        var buffer = frontBuffer;
+                        fixed (ushort* destination = buffer)
+                        {
+                            TransformPixels(
+                                (nint)(source + checked(
+                                    y * sourceSamplesPerRow * sizeof(ushort))),
+                                (nint)destination,
+                                checked(width * currentBandHeight),
+                                layout,
+                                cancellationToken);
+                        }
+
+                        pendingWrite.GetAwaiter().GetResult();
+                        pendingWrite = Task.Run(
+                            () => destinationPixels.SetArea(
+                                0,
+                                bandY,
+                                (uint)width,
+                                (uint)currentBandHeight,
+                                buffer.AsSpan(0, sampleCount)),
+                            CancellationToken.None);
+                        (frontBuffer, backBuffer) = (backBuffer, frontBuffer);
+                    }
+                }
+
+                pendingWrite.GetAwaiter().GetResult();
+            }
+            finally
+            {
+                // Drain before the pixel collection or buffers can be
+                // released on the failure path; a completed task makes this
+                // a no-op on the normal path.
+                try
+                {
+                    pendingWrite.GetAwaiter().GetResult();
+                }
+                catch
+                {
                 }
             }
 
@@ -239,9 +273,14 @@ internal sealed class CameraRgbCharacterization
         }
         finally
         {
-            if (destinationBuffer != null)
+            if (frontBuffer != null)
             {
-                ArrayPool<ushort>.Shared.Return(destinationBuffer);
+                ArrayPool<ushort>.Shared.Return(frontBuffer);
+            }
+
+            if (backBuffer != null)
+            {
+                ArrayPool<ushort>.Shared.Return(backBuffer);
             }
         }
     }
