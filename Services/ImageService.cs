@@ -65,6 +65,11 @@ public class ImageService : IAsyncDisposable
         set => _previewService.RefreshReadyGateAsync = value;
     }
 
+    internal Action<string>? RestingStageStarted
+    {
+        set => _previewService.RestingStageStarted = value;
+    }
+
     public ImageService(CatalogService catalogService)
         : this(catalogService, LibRawNativeSupport.Health)
     {
@@ -263,6 +268,27 @@ public class ImageService : IAsyncDisposable
 
     internal void InvalidatePendingPreviewRenders() =>
         _previewService.InvalidatePendingRenders();
+
+    internal PreviewRenderIdentity? TryGetPreviewRenderIdentity(Bitmap bitmap) =>
+        _previewService.TryGetPreviewRenderIdentity(bitmap);
+
+    internal bool TransferCurrentRenderedBitmap(
+        Bitmap bitmap,
+        PreviewRenderIdentity identity) =>
+        _previewService.TransferCurrentRenderedBitmap(bitmap, identity);
+
+    internal Task<RestingPreview?> RenderRestingPreviewAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        int fittedLongEdge,
+        PreviewRenderIdentity parent,
+        CancellationToken cancellationToken) =>
+        _previewService.RenderRestingPreviewAsync(
+            imageFile,
+            settings,
+            fittedLongEdge,
+            parent,
+            cancellationToken);
 
     // ===== Thumbnail Methods (delegated to ThumbnailService) =====
 

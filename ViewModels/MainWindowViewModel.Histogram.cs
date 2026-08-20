@@ -122,7 +122,8 @@ public partial class MainWindowViewModel
             "histogram update",
             TimeSpan.FromMilliseconds(300),
             ct,
-            () => UpdateScheduledHistogramAsync(selectedImage, ct));
+            () => UpdateScheduledHistogramAsync(selectedImage, ct),
+            timeProvider: _timeProvider);
     }
 
     private async Task UpdateScheduledHistogramAsync(

@@ -28,7 +28,7 @@ public partial class MainWindow
         var zoomControl = GetActiveZoomPanControl();
         if (zoomControl == null || DataContext is not MainWindowViewModel vm) return;
 
-        vm.ZoomLevel = zoomControl.GetFitZoomLevel();
+        vm.ApplyFitZoom(zoomControl.GetFitZoomLevel());
     }
 
     protected override void OnDataContextChanged(EventArgs e)
@@ -49,7 +49,7 @@ public partial class MainWindow
         }
 
         vm.ZoomFitCommand = new RelayCommand(ZoomFit);
-        vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(zoom => vm.ZoomLevel = zoom);
+        vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(vm.ApplyFitZoom);
         vm.RequestExportDialogAsync = ShowExportDialogAsync;
         vm.RequestCatalogImportAsync = async () =>
             await ShowImportCatalogAsync();
@@ -312,7 +312,7 @@ public partial class MainWindow
                     {
                         if (ReferenceEquals(control, GetActiveZoomPanControl()))
                         {
-                            vm.ZoomLevel = zoom;
+                            vm.ApplyFitZoom(zoom);
                             ReleaseDevelopViewportPublication(vm, control);
                         }
                     });

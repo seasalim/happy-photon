@@ -177,6 +177,34 @@ public sealed class StandardBaseLoaderTests : IDisposable
     }
 
     [Fact]
+    public void PreviewPair_UsesOneDecodeAndIndependentSizeClasses()
+    {
+        var decodeCount = 0;
+        var loader = new StandardBaseLoader((_, _) =>
+        {
+            decodeCount++;
+            return new MagickImage(MagickColors.Orange, 4000, 2000)
+            {
+                Depth = 16
+            };
+        });
+
+        using var outcome = ((IBaseImageLoader)loader)
+            .LoadPreviewBaseWithOutcome(
+                new ImageFile(Path.Combine(_tempDirectory, "pair.png")),
+                BaseDecodeSettings.Default,
+                CancellationToken.None).Pair;
+
+        Assert.NotNull(outcome);
+        Assert.Equal(1, decodeCount);
+        Assert.Equal(1600u, outcome!.Interactive.Pixels.Width);
+        Assert.Equal(800u, outcome.Interactive.Pixels.Height);
+        Assert.NotNull(outcome.Large);
+        Assert.Equal(3200u, outcome.Large!.Pixels.Width);
+        Assert.Equal(1600u, outcome.Large.Pixels.Height);
+    }
+
+    [Fact]
     public void PreviewBase_DoesNotUpscaleJpegBelowPreviewBound()
     {
         var loader = new StandardBaseLoader();
@@ -189,7 +217,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
         Assert.NotNull(result);
         Assert.True(
             Math.Max(result!.Info.FullWidth, result.Info.FullHeight) <=
-            BaseImage.PreviewMaxDimension);
+            BaseImage.InteractivePreviewMaxDimension);
         Assert.Equal((uint)result.Info.FullWidth, result.Pixels.Width);
         Assert.Equal((uint)result.Info.FullHeight, result.Pixels.Height);
     }

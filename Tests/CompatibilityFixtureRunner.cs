@@ -94,7 +94,7 @@ internal static partial class CompatibilityFixtureRunner
                     imageFile,
                     BaseDecodeSettings.Default,
                     cancellationToken);
-                previewBase = previewOutcome.Image;
+                previewBase = previewOutcome.DetachInteractiveImage();
                 observation.Capabilities["preview"] = previewBase != null
                     ? "pass"
                     : OutcomeForFailure(previewOutcome.Failure);
@@ -438,7 +438,7 @@ internal static partial class CompatibilityFixtureRunner
         {
             Require(
                 Math.Max(image.Pixels.Width, image.Pixels.Height) <=
-                BaseImage.PreviewMaxDimension,
+                BaseImage.InteractivePreviewMaxDimension,
                 "Preview base exceeded its maximum dimension.");
         }
         using var sample = new MagickImage(image.Pixels);

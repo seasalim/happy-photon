@@ -7,7 +7,7 @@ using static HappyPhoton.Services.RenderKernelSupport;
 
 namespace HappyPhoton.Services;
 
-internal static class RenderDetail
+internal static partial class RenderDetail
 {
     private const double MinimumEffectiveSigma = 0.3;
     private const double MaximumChromaSigma = 2.0;
@@ -42,25 +42,37 @@ internal static class RenderDetail
         ApplyBanded(image, blur, bandPixelLimit);
     }
 
-    internal static double CalculateEffectiveSigma(
+    internal static void ApplyResting(
         MagickImage image,
         BaseImageInfo info,
-        double nativeSigma)
+        DetailSettings settings,
+        RenderExecutionOptions execution)
     {
-        var nativeLongEdge = Math.Max(info.FullWidth, info.FullHeight);
-        if (nativeSigma <= 0 || nativeLongEdge <= 0)
+        ArgumentNullException.ThrowIfNull(image);
+        ArgumentNullException.ThrowIfNull(info);
+        ArgumentNullException.ThrowIfNull(settings);
+        execution.ThrowIfCancellationRequested();
+
+        var nativeSigma = Math.Clamp(settings.ChromaNr, 0, 100) /
+            100.0 * MaximumChromaSigma;
+        var sigma = CalculateEffectiveSigma(image, info, nativeSigma);
+        if (sigma < MinimumEffectiveSigma)
         {
-            return 0;
+            return;
         }
 
-        var renderLongEdge = Math.Max(image.Width, image.Height);
-        return nativeSigma * renderLongEdge / nativeLongEdge;
+        ApplyBanded(
+            image,
+            CreateBoxBlur(sigma),
+            DefaultBandPixelLimit,
+            execution);
     }
 
     private static void ApplyBanded(
         MagickImage image,
         BoxBlurParameters blur,
-        int bandPixelLimit)
+        int bandPixelLimit,
+        RenderExecutionOptions? execution = null)
     {
         var stopwatch = Stopwatch.StartNew();
         using var sourcePixels = image.GetPixels();
@@ -82,6 +94,7 @@ internal static class RenderDetail
         {
             for (var bandStart = 0; bandStart < height;)
             {
+                execution?.ThrowIfCancellationRequested();
                 var outputRows = Math.Min(bandRows, height - bandStart);
                 var bandEnd = bandStart + outputRows;
                 var values = sourcePixels.GetArea(
@@ -101,7 +114,9 @@ internal static class RenderDetail
                     outputRows,
                     horizontalRowOffset,
                     layout,
-                    blur.Radius);
+                    blur.Radius,
+                    execution);
+                execution?.ThrowIfCancellationRequested();
                 var upperRows = Math.Min(
                     blur.Radius + 1,
                     height - bandEnd);
@@ -121,7 +136,8 @@ internal static class RenderDetail
                         upperRows,
                         horizontalRowOffset + outputRows,
                         layout,
-                        blur.Radius);
+                        blur.Radius,
+                        execution);
                 }
                 var horizontalBaseRow = bandStart == 0
                     ? 0
@@ -137,7 +153,8 @@ internal static class RenderDetail
                         outputRows,
                         horizontalBaseRow,
                         layout,
-                        blur.Strength);
+                        blur.Strength,
+                        execution);
                 }
                 else
                 {
@@ -152,9 +169,11 @@ internal static class RenderDetail
                         outputRows,
                         horizontalBaseRow,
                         layout,
-                        blur);
+                        blur,
+                        execution);
                 }
 
+                execution?.ThrowIfCancellationRequested();
                 sourcePixels.SetArea(
                     0,
                     bandStart,
@@ -194,11 +213,21 @@ internal static class RenderDetail
         int rows,
         int destinationRowOffset,
         PixelLayout layout,
-        int radius)
+        int radius,
+        RenderExecutionOptions? execution = null)
     {
         var workers = Math.Min(Environment.ProcessorCount, rows);
         var rowsPerWorker = (rows + workers - 1) / workers;
-        Parallel.For(0, workers, ProcessWorker);
+        if (execution is { } bounded)
+        {
+            workers = bounded.CapWorkers(workers);
+            rowsPerWorker = (rows + workers - 1) / workers;
+            Parallel.For(0, workers, bounded.ParallelOptions, ProcessWorker);
+        }
+        else
+        {
+            Parallel.For(0, workers, ProcessWorker);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         void ProcessWorker(int worker)
@@ -230,12 +259,22 @@ internal static class RenderDetail
         int outputRows,
         int sourceBaseRow,
         PixelLayout layout,
-        BoxBlurParameters blur)
+        BoxBlurParameters blur,
+        RenderExecutionOptions? execution = null)
     {
         var window = blur.Radius * 2 + 1;
         var workers = Math.Min(Environment.ProcessorCount, width);
         var columnsPerWorker = (width + workers - 1) / workers;
-        Parallel.For(0, workers, ProcessWorker);
+        if (execution is { } bounded)
+        {
+            workers = bounded.CapWorkers(workers);
+            columnsPerWorker = (width + workers - 1) / workers;
+            Parallel.For(0, workers, bounded.ParallelOptions, ProcessWorker);
+        }
+        else
+        {
+            Parallel.For(0, workers, ProcessWorker);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         void ProcessWorker(int worker)
@@ -313,11 +352,12 @@ internal static class RenderDetail
         int outputRows,
         int sourceBaseRow,
         PixelLayout layout,
-        float strength)
+        float strength,
+        RenderExecutionOptions? execution = null)
     {
         var workers = Math.Min(Environment.ProcessorCount, outputRows);
         var rowsPerWorker = (outputRows + workers - 1) / workers;
-        Parallel.For(0, workers, worker =>
+        Action<int> processWorker = worker =>
         {
             var start = worker * rowsPerWorker;
             var end = Math.Min(outputRows, start + rowsPerWorker);
@@ -352,7 +392,17 @@ internal static class RenderDetail
                     outputPixel += layout.Channels;
                 }
             }
-        });
+        };
+        if (execution is { } bounded)
+        {
+            workers = bounded.CapWorkers(workers);
+            rowsPerWorker = (outputRows + workers - 1) / workers;
+            Parallel.For(0, workers, bounded.ParallelOptions, processWorker);
+        }
+        else
+        {
+            Parallel.For(0, workers, processWorker);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -444,18 +494,4 @@ internal static class RenderDetail
         output[pixel + layout.Blue] = ToQuantum(b);
     }
 
-    private static BoxBlurParameters CreateBoxBlur(double sigma)
-    {
-        var radius = Math.Max(
-            1,
-            (int)Math.Round((Math.Sqrt(1 + 12 * sigma * sigma) - 1) / 2));
-        var variance = radius * (radius + 1) / 3.0;
-        return new BoxBlurParameters(
-            radius,
-            (float)Math.Min(1, sigma * sigma / variance));
-    }
-
-    private readonly record struct BoxBlurParameters(
-        int Radius,
-        float Strength);
 }

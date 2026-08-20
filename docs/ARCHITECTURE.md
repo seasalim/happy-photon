@@ -133,9 +133,11 @@ per-file decode failure are surfaced instead of routing through Magick. RAW meta
 LibRaw except exposure bias, which LibRaw does not surface and Magick cannot read from
 RAW containers; MetadataExtractor reads just that tag, header-only, without decoding.
 
-Develop mode holds a half-size, at-most-1600px RAW preview base for responsive global
-editing, while export decodes a fresh native-resolution base. Consequently 1:1 viewer
-zoom is limited by the preview base and is not a native-detail RAW inspection mode.
+Develop mode holds one bounded preview pair from a single half-size RAW decode: an
+at-most-1600px interactive base and an at-most-3200px large base for the resting
+viewport render. Export decodes a fresh native-resolution base. The viewer's 100%
+geometry is anchored to original pixels, but preview detail remains limited by the
+large base; zoom beyond that ceiling is not a native-detail RAW inspection mode.
 Preview bitmap, clipping statistics, source capability, semantic clipping mask, and
 render generation travel together in `PreviewArtifacts`; the view model accepts or
 rejects that carrier atomically. Clipping masks are requested only while the Develop
@@ -520,10 +522,13 @@ touches originals or deletes the assets folder.
 
 Briefly, for contrast with thumbnails:
 
-- `PreviewService` keeps one immutable, linear 1600px `BaseImage` in memory. Its
-  identity is source path plus `BaseDecodeSettings.CacheKey`; slider edits render from
-  a clone and never re-decode. Identical decode requests coalesce, newer identities
-  cancel and supersede older ones, and late results are disposed.
+- `PreviewService` keeps one current preview-base pair: an immutable linear 1600px
+  interactive base and an at-most-3200px large base derived independently from the
+  same bounded decode. Their identity is source path plus
+  `BaseDecodeSettings.CacheKey`; viewport changes never change that identity. Slider
+  edits render only from the 1600 base and never resize or re-decode. The two bases
+  have separate lease/retirement lifetimes so a decode-settings replacement can keep
+  only the old interactive base for stale-paint continuity.
 - `assets/previews/` stores the last rendered q90 JPEG, not a linear base. A `.meta`
   sidecar stores the deterministic settings hash. Develop entry paints a valid cached
   render even when its hash is stale, then a background base decode and fresh render
@@ -542,6 +547,16 @@ Briefly, for contrast with thumbnails:
 - The ViewModel debounces interaction: preview 150 ms, render stats 300 ms (display
   histogram plus luminance waveform, deferred so sliders stay responsive), thumbnail
   refresh 500 ms, each with its own CTS.
+- An accepted current 1600 render arms a display-only resting render after the stats
+  refresh. Fit and zoom settles use the active Develop/fullscreen surface's required
+  device-pixel long edge, bounded by the large base and 3200 cap. Pan and zoom-out do
+  not render. A crop-aware target-sized linear snapshot enters the unchanged render
+  math with stats disabled. Edits cancel it at input time through the preview-debounce
+  token; selection and mode changes retire it.
+  Resting generations never advance the interactive render generation and never feed
+  histograms, rendered thumbnails, or the q90 rendered-preview cache. When a resting
+  bitmap replaces the current 1600 bitmap, ownership of that displaced bitmap moves to
+  `PreviewService` until cache promotion or invalidation.
 - A RAW preview/full base also performs one single-threaded visible-mosaic pass between
   LibRaw `Unpack` and `Process`. The pass shares the decode worker and cancellation
   token, releases its native mosaic lease before processing, and stores the optional
@@ -600,6 +615,7 @@ sampler.
 | Preview base decode | Threadpool | One held base; single-flight by identity; newest-wins generation |
 | RAW sensor histogram | Preview/full decode worker | One visible post-Unpack pass; same token; lease released before Process |
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
+| Resting preview render | Threadpool, at most 2 managed workers | Parent interactive generation + decode key + resting serial; edit token cancels |
 | Display histogram + waveform | Preview render worker | One shared ≤1024px Q16 RGB buffer; surrounding render cancellation checks |
 | Library histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |
@@ -629,4 +645,9 @@ sampler.
     2,000-image folder, and disabling the four always-attached bars returned every
     case exactly to the empty-FluentTheme-window floor. Bars therefore bind
     `IsIndeterminate` to their busy flag, and library tiles use a static loading
-    placeholder instead of a ProgressBar.
+     placeholder instead of a ProgressBar.
+11. Interactive preview ticks stay on the pre-derived 1600 base. Viewport-resolution
+    work begins only after a current 1600 paint and never enters histogram/cache paths.
+    A Windows Debug measurement of the cap-3200/target-2826 replacement-contention
+    shape peaked at 330.2 MiB private memory (138.7 MiB baseline, +191.5 MiB); the cap
+    and current-image-only pair ownership bound that peak.

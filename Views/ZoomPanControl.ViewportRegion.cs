@@ -28,6 +28,7 @@ public partial class ZoomPanControl
     {
         if (property == SourceProperty ||
             property == ZoomLevelProperty ||
+            property == OriginalViewPixelSizeProperty ||
             property == IsColorAssessmentProperty)
         {
             RequestVisibleRegionPublication();

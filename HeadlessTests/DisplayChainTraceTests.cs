@@ -31,6 +31,18 @@ public sealed class DisplayChainTraceTests
         Assert.False(mapping.IsOneToOne);
     }
 
+    [Fact]
+    public void Calculator_TreatsSubHalfPercentRoundingAsOneToOne()
+    {
+        var mapping = DisplayChainMappingCalculator.Calculate(
+            new PixelSize(1000, 1000),
+            new Size(995, 1005),
+            new Size(1000, 1000),
+            1);
+
+        Assert.True(mapping.IsOneToOne);
+    }
+
     [AvaloniaFact]
     public void RealizedControl_ReportsEveryMappingFieldAndCoalescesChanges()
     {
@@ -64,7 +76,9 @@ public sealed class DisplayChainTraceTests
             window.SetRenderScaling(1.5);
             Dispatcher.UIThread.RunJobs();
             Assert.Equal(
-                MappingLine(800, 400, 400, 200, 600, 500, 1.5, 600, 300, 0.75),
+                MappingLine(
+                    800, 400, 266.666667, 133.333333, 600, 500,
+                    1.5, 400, 200, 0.5),
                 MappingLines(lines)[1]);
 
             control.Source = sameSize;
@@ -75,21 +89,25 @@ public sealed class DisplayChainTraceTests
             control.ZoomLevel = 1;
             Dispatcher.UIThread.RunJobs();
             Assert.Equal(
-                MappingLine(800, 400, 800, 400, 600, 500, 1.5, 1200, 600, 1.5),
+                MappingLine(
+                    800, 400, 533.333333, 266.666667, 600, 500,
+                    1.5, 800, 400, 1, oneToOne: true),
                 MappingLines(lines)[3]);
 
             window.Height = 550;
             Dispatcher.UIThread.RunJobs();
             Assert.Equal(
-                MappingLine(800, 400, 800, 400, 600, 550, 1.5, 1200, 600, 1.5),
+                MappingLine(
+                    800, 400, 533.333333, 266.666667, 600, 550,
+                    1.5, 800, 400, 1, oneToOne: true),
                 MappingLines(lines)[4]);
 
             control.ZoomLevel = 2.0 / 3;
             Dispatcher.UIThread.RunJobs();
             Assert.Equal(
                 MappingLine(
-                    800, 400, 533.333333, 266.666667, 600, 550,
-                    1.5, 800, 400, 1, oneToOne: true),
+                    800, 400, 356, 178, 600, 550,
+                    1.5, 534, 267, 0.6675),
                 MappingLines(lines)[5]);
             Assert.Equal(6, MappingLines(lines).Count);
         }
@@ -97,6 +115,46 @@ public sealed class DisplayChainTraceTests
         {
             window.Close();
         }
+    }
+
+    [Fact]
+    public void ZoomGeometry_IsDeviceTrueAndFitPreservesLogicalGeometry()
+    {
+        var pixels = new PixelSize(1500, 1000);
+        var original = new PixelSize(6000, 4000);
+        var fitBox = new Size(2068, 1256);
+
+        Assert.Equal(4, ZoomGeometryCalculator.BitmapRelativeZoom(
+            pixels, original, 1));
+        Assert.Equal(6000, ZoomGeometryCalculator.RequiredDeviceLongEdge(
+            original, 1));
+        Assert.Equal(
+            new Size(1000, 666.6666666666666),
+            ZoomGeometryCalculator.ImageLogicalSize(pixels, 1, 1.5));
+
+        var fitAtOne = ZoomGeometryCalculator.FitZoomLevel(
+            pixels,
+            fitBox,
+            1);
+        var fitAtOnePointFive = ZoomGeometryCalculator.FitZoomLevel(
+            pixels,
+            fitBox,
+            1.5);
+        var logicalAtOne = ZoomGeometryCalculator.ImageLogicalSize(
+            pixels,
+            fitAtOne,
+            1);
+        var logicalAtOnePointFive = ZoomGeometryCalculator.ImageLogicalSize(
+            pixels,
+            fitAtOnePointFive,
+            1.5);
+
+        Assert.Equal(logicalAtOne.Width, logicalAtOnePointFive.Width, 10);
+        Assert.Equal(logicalAtOne.Height, logicalAtOnePointFive.Height, 10);
+        Assert.Equal(2826, ZoomGeometryCalculator.FittedDeviceLongEdge(
+            pixels,
+            fitBox,
+            1.5));
     }
 
     [AvaloniaFact]
@@ -139,6 +197,137 @@ public sealed class DisplayChainTraceTests
         finally
         {
             window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SourceSwap_PreservesFitAndManualSceneGeometryAtScalingOnePointFive()
+    {
+        using var first = CreateBitmap(1600, 800);
+        using var large = CreateBitmap(2826, 1413);
+        var originalViewSize = new PixelSize(6000, 3000);
+
+        var manual = new ZoomPanControl
+        {
+            Source = first,
+            OriginalViewPixelSize = originalViewSize,
+            ZoomLevel = 0.5,
+            AutoFit = false
+        };
+        var requiredLongEdge = 0;
+        manual.RequiredDeviceLongEdgeChanged +=
+            (_, value) => requiredLongEdge = value;
+        var manualWindow = new Window
+        {
+            Width = 400,
+            Height = 300,
+            Content = manual
+        };
+
+        try
+        {
+            manualWindow.Show();
+            manualWindow.SetRenderScaling(1.5);
+            Dispatcher.UIThread.RunJobs();
+            var image = manual.FindControl<Image>("ImageControl")!;
+            var before = image.Bounds.Size;
+
+            manual.Source = large;
+            Dispatcher.UIThread.RunJobs();
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(0.5, manual.ZoomLevel, 10);
+            Assert.Equal(before.Width, image.Bounds.Width, 6);
+            Assert.Equal(before.Height, image.Bounds.Height, 6);
+            manual.ZoomLevel = 0.75;
+            Assert.Equal(4500, requiredLongEdge);
+        }
+        finally
+        {
+            manualWindow.Close();
+        }
+
+        var fitted = new ZoomPanControl
+        {
+            Source = first,
+            OriginalViewPixelSize = originalViewSize,
+            AutoFit = true
+        };
+        fitted.AutoFitRequested += (_, zoom) => fitted.ZoomLevel = zoom;
+        var fitWindow = new Window
+        {
+            Width = 600,
+            Height = 500,
+            Content = fitted
+        };
+
+        try
+        {
+            fitWindow.Show();
+            fitWindow.SetRenderScaling(1.5);
+            Dispatcher.UIThread.RunJobs();
+            var image = fitted.FindControl<Image>("ImageControl")!;
+            var before = image.Bounds.Size;
+
+            fitted.Source = large;
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(before.Width, image.Bounds.Width, 6);
+            Assert.Equal(before.Height, image.Bounds.Height, 6);
+        }
+        finally
+        {
+            fitWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ScalingTransition_RecomputesFitAndManualGeometry()
+    {
+        using var bitmap = CreateBitmap(800, 400);
+        foreach (var autoFit in new[] { false, true })
+        {
+            var control = new ZoomPanControl
+            {
+                Source = bitmap,
+                ZoomLevel = 1,
+                AutoFit = autoFit
+            };
+            control.AutoFitRequested += (_, zoom) => control.ZoomLevel = zoom;
+            var window = new Window
+            {
+                Width = 600,
+                Height = 500,
+                Content = control
+            };
+
+            try
+            {
+                window.Show();
+                Dispatcher.UIThread.RunJobs();
+                var image = control.FindControl<Image>("ImageControl")!;
+                var before = image.Bounds.Size;
+
+                window.SetRenderScaling(1.5);
+                Dispatcher.UIThread.RunJobs();
+                var after = image.Bounds.Size;
+
+                if (autoFit)
+                {
+                    Assert.Equal(before.Width, after.Width, 6);
+                    Assert.Equal(before.Height, after.Height, 6);
+                }
+                else
+                {
+                    Assert.Equal(1, control.ZoomLevel);
+                    Assert.Equal(800, after.Width * 1.5, 6);
+                    Assert.Equal(400, after.Height * 1.5, 6);
+                }
+            }
+            finally
+            {
+                window.Close();
+            }
         }
     }
 
@@ -216,6 +405,7 @@ public sealed class DisplayChainTraceTests
         var cached = CreateBitmap(4, 3);
         var fresh = CreateBitmap(5, 2);
         var refresh = CreateBitmap(6, 4);
+        var resting = CreateBitmap(8, 5);
         var image = new ImageFile(Path.Combine(root.Path, "image.jpg"));
         viewModel.SelectedImage = image;
         viewModel.IsDevelopMode = true;
@@ -229,12 +419,16 @@ public sealed class DisplayChainTraceTests
             hasHistogram: false,
             rawHistogram: null,
             generation: 1);
+        viewModel.ReplacePreviewImage(
+            resting,
+            PreviewPaintSource.RestingRender);
 
         Assert.Equal(
             [
                 "[DisplayChain] paint source=cached-jpeg bitmap=4x3",
                 "[DisplayChain] paint source=fresh-render bitmap=5x2",
-                "[DisplayChain] paint source=background-refresh bitmap=6x4"
+                "[DisplayChain] paint source=background-refresh bitmap=6x4",
+                "[DisplayChain] paint source=resting-render bitmap=8x5"
             ],
             lines);
     }

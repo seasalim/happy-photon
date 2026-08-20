@@ -38,6 +38,8 @@ public partial class MainWindow : Window
             _zoomPanControl.AutoFitRequested += OnAutoFitRequested;
             _zoomPanControl.WhiteBalancePickRequested += OnWhiteBalancePickRequested;
             _zoomPanControl.VisibleRegionChanged += OnVisibleRegionChanged;
+            _zoomPanControl.RequiredDeviceLongEdgeChanged +=
+                OnRequiredDeviceLongEdgeChanged;
         }
 
         _fullScreenZoomPanControl = this.FindControl<ZoomPanControl>("FullScreenZoomPanControl");
@@ -45,6 +47,8 @@ public partial class MainWindow : Window
         {
             _fullScreenZoomPanControl.ZoomChanged += OnZoomChanged;
             _fullScreenZoomPanControl.AutoFitRequested += OnAutoFitRequested;
+            _fullScreenZoomPanControl.RequiredDeviceLongEdgeChanged +=
+                OnRequiredDeviceLongEdgeChanged;
         }
 
         _folderTreePanel = this.FindControl<FolderTreePanel>("FolderTreePanel");
@@ -137,7 +141,13 @@ public partial class MainWindow : Window
     private void OnAutoFitRequested(object? sender, double fitZoom)
     {
         if (!ReferenceEquals(sender, GetActiveZoomPanControl())) return;
-        WithVm(vm => vm.ZoomLevel = fitZoom);
+        WithVm(vm => vm.ApplyFitZoom(fitZoom));
+    }
+
+    private void OnRequiredDeviceLongEdgeChanged(object? sender, int longEdge)
+    {
+        if (!ReferenceEquals(sender, GetActiveZoomPanControl())) return;
+        WithVm(vm => vm.PublishRequiredDeviceLongEdge(longEdge));
     }
 
     private void OnVisibleRegionChanged(object? sender, Rect? region)

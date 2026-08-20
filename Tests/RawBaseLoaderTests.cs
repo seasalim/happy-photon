@@ -186,8 +186,8 @@ public sealed class RawBaseLoaderTests
         Assert.NotNull(image);
         AssertCanonicalBase(image!, BaseDecodeSettings.Default);
         Assert.True(
-            image.Pixels.Width <= BaseImage.PreviewMaxDimension &&
-            image.Pixels.Height <= BaseImage.PreviewMaxDimension);
+            image.Pixels.Width <= BaseImage.InteractivePreviewMaxDimension &&
+            image.Pixels.Height <= BaseImage.InteractivePreviewMaxDimension);
         Assert.True(
             image.Info.FullWidth >= image.Pixels.Width &&
             image.Info.FullHeight >= image.Pixels.Height);

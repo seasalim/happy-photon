@@ -142,6 +142,7 @@ public partial class ZoomPanControl : UserControl
         _assessmentMat = this.FindControl<Border>("AssessmentMat");
         InitializeVisibleRegionTracking();
         InitializeClippingOverlay();
+        InitializeDeviceScaling();
 
         AddHandler(
             PointerWheelChangedEvent,
@@ -165,16 +166,40 @@ public partial class ZoomPanControl : UserControl
 
         if (change.Property == SourceProperty)
         {
+            OnPreviewSourceChanging(
+                change.OldValue as Bitmap,
+                change.NewValue as Bitmap);
             if (_imageControl != null)
             {
                 _imageControl.Source = Source;
             }
             ApplyColorAssessment();
             UpdateImageSize();
+            if (AutoFit)
+            {
+                RequestAutoFit();
+            }
+            RestorePendingAnchorAfterLayout();
+            RequestRequiredBoundPublication();
         }
         else if (change.Property == ZoomLevelProperty)
         {
             UpdateImageSize();
+            RequestRequiredBoundPublication();
+        }
+        else if (change.Property == OriginalViewPixelSizeProperty)
+        {
+            if (!AutoFit)
+            {
+                _pendingNormalizedAnchor = CaptureNormalizedAnchor();
+            }
+            UpdateImageSize();
+            if (AutoFit)
+            {
+                RequestAutoFit();
+            }
+            RestorePendingAnchorAfterLayout();
+            RequestRequiredBoundPublication();
         }
         else if (change.Property == IsCropModeProperty)
         {
@@ -202,6 +227,15 @@ public partial class ZoomPanControl : UserControl
         {
             ApplyColorAssessment();
             RequestAutoFit();
+            RequestRequiredBoundPublication();
+        }
+        else if (change.Property == AutoFitProperty)
+        {
+            if (AutoFit)
+            {
+                RequestAutoFit();
+            }
+            RequestRequiredBoundPublication();
         }
         else if (IsClippingProperty(change.Property))
         {
@@ -210,6 +244,7 @@ public partial class ZoomPanControl : UserControl
 
         if (change.Property == SourceProperty ||
             change.Property == ZoomLevelProperty ||
+            change.Property == OriginalViewPixelSizeProperty ||
             change.Property == IsDisplayTraceActiveProperty)
         {
             _displayChainTrace?.OnInputChanged();
@@ -237,19 +272,6 @@ public partial class ZoomPanControl : UserControl
 
         _scrollViewer.HorizontalScrollBarVisibility = ScrollBarVisibility;
         _scrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility;
-    }
-
-    private void UpdateImageSize()
-    {
-        if (_imageControl == null || Source == null) return;
-
-        // Set explicit size based on source image and zoom level
-        _imageControl.Width = Source.PixelSize.Width * ZoomLevel;
-        _imageControl.Height = Source.PixelSize.Height * ZoomLevel;
-
-        // Update crop overlay size to match
-        UpdateCropOverlaySize();
-        UpdateClippingOverlaySize();
     }
 
     private void UpdateCropOverlayVisibility()
@@ -288,6 +310,7 @@ public partial class ZoomPanControl : UserControl
         ApplyColorAssessment();
         RequestAutoFit();
         RequestVisibleRegionPublication();
+        RequestRequiredBoundPublication();
         _displayChainTrace?.OnInputChanged();
     }
 
@@ -311,17 +334,10 @@ public partial class ZoomPanControl : UserControl
 
         if (viewportWidth <= 0 || viewportHeight <= 0) return 1.0;
 
-        var imageWidth = Source.PixelSize.Width;
-        var imageHeight = Source.PixelSize.Height;
-
-        if (imageWidth <= 0 || imageHeight <= 0) return 1.0;
-
-        // Calculate scale to fit both dimensions
-        var scaleX = viewportWidth / imageWidth;
-        var scaleY = viewportHeight / imageHeight;
-
-        // Use the smaller scale to ensure the image fits entirely
-        return Math.Min(scaleX, scaleY);
+        return ZoomGeometryCalculator.FitZoomLevel(
+            GetOriginalViewPixelSize(),
+            new Size(viewportWidth, viewportHeight),
+            RenderScaling);
     }
 
     private ColorAssessmentGeometry GetColorAssessmentGeometry() =>

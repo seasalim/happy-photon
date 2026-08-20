@@ -189,7 +189,7 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
                 loader.ReplacementBase!,
                 latestSettings,
                 RenderIntent.Preview,
-                BaseImage.PreviewMaxDimension,
+                BaseImage.InteractivePreviewMaxDimension,
                 new RenderOptions(false, false)));
             using var expectedBitmap =
                 BitmapConversionService.ConvertToBitmap(expected.Image);

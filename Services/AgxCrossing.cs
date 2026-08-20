@@ -53,6 +53,36 @@ internal sealed class AgxCrossing
         _shoulderPower = AgxToneEngine.ShoulderPower(_parameters.Highlights);
     }
 
+    internal AgxCrossing(
+        AgxToneParameters parameters,
+        double[,]? whiteBalanceMatrix,
+        RenderExecutionOptions execution)
+    {
+        ArgumentNullException.ThrowIfNull(parameters.Curve);
+        _parameters = parameters with { Curve = parameters.Curve.Clone() };
+
+        if (whiteBalanceMatrix == null)
+        {
+            _input = new Matrix3x3(AgxToneEngine.InsetMatrix);
+            Fold = 1;
+        }
+        else
+        {
+            var composed = ChromaticAdaptation.Multiply(
+                AgxToneEngine.InsetMatrix,
+                whiteBalanceMatrix);
+            var normalized = ChromaticAdaptation.NormalizeForRender(composed);
+            _input = new Matrix3x3(normalized.Matrix);
+            Fold = normalized.Fold;
+        }
+
+        _luts = AgxToneLut.ComposeCached(_parameters, Fold, execution);
+        _log2Fold = Math.Log2(Fold);
+        _slope = AgxToneEngine.Slope(_parameters.Contrast);
+        _toePower = AgxToneEngine.ToePower(_parameters.Shadows);
+        _shoulderPower = AgxToneEngine.ShoulderPower(_parameters.Highlights);
+    }
+
     internal double Fold { get; }
 
     internal void Apply(ushort[] rgb) => Apply(rgb, rgb);
@@ -72,6 +102,30 @@ internal sealed class AgxCrossing
             layout.Green,
             layout.Blue);
         pixels.SetArea(0, 0, image.Width, image.Height, values);
+    }
+
+    internal void Apply(
+        MagickImage image,
+        RenderExecutionOptions execution)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+        execution.ThrowIfCancellationRequested();
+        using var pixels = image.GetPixels();
+        var values = pixels.GetArea(0, 0, image.Width, image.Height) ??
+            throw new InvalidOperationException("Unable to access Q16 pixels.");
+        execution.ThrowIfCancellationRequested();
+        var layout = RenderKernelSupport.GetLayout(pixels);
+        ApplyResting(
+            values,
+            checked((int)(image.Width * image.Height)),
+            layout.Channels,
+            layout.Red,
+            layout.Green,
+            layout.Blue,
+            execution);
+        execution.ThrowIfCancellationRequested();
+        pixels.SetArea(0, 0, image.Width, image.Height, values);
+        execution.ThrowIfCancellationRequested();
     }
 
     internal void Apply(ushort[] source, ushort[] destination)
@@ -134,6 +188,56 @@ internal sealed class AgxCrossing
                 var toneRed = AgxToneLut.InterpolateUnchecked(luts.Red, insetRed);
                 var toneGreen = AgxToneLut.InterpolateUnchecked(luts.Green, insetGreen);
                 var toneBlue = AgxToneLut.InterpolateUnchecked(luts.Blue, insetBlue);
+
+                values[offset + redChannel] = EncodeQ16(
+                    outset.Row0(toneRed, toneGreen, toneBlue));
+                values[offset + greenChannel] = EncodeQ16(
+                    outset.Row1(toneRed, toneGreen, toneBlue));
+                values[offset + blueChannel] = EncodeQ16(
+                    outset.Row2(toneRed, toneGreen, toneBlue));
+            }
+        });
+    }
+
+    private void ApplyResting(
+        ushort[] values,
+        int pixelCount,
+        int channels,
+        int redChannel,
+        int greenChannel,
+        int blueChannel,
+        RenderExecutionOptions execution)
+    {
+        var workers = execution.CapWorkers(Math.Min(
+            Environment.ProcessorCount,
+            Math.Max(1, (pixelCount + 32_767) / 32_768)));
+        var input = _input;
+        var outset = _outset;
+        var luts = _luts;
+
+        Parallel.For(0, workers, execution.ParallelOptions, worker =>
+        {
+            var start = pixelCount * worker / workers;
+            var end = pixelCount * (worker + 1) / workers;
+            for (var pixel = start; pixel < end; pixel++)
+            {
+                var offset = pixel * channels;
+                var red = values[offset + redChannel] * Q16ToUnit;
+                var green = values[offset + greenChannel] * Q16ToUnit;
+                var blue = values[offset + blueChannel] * Q16ToUnit;
+
+                var insetRed = Clamp01(input.Row0(red, green, blue));
+                var insetGreen = Clamp01(input.Row1(red, green, blue));
+                var insetBlue = Clamp01(input.Row2(red, green, blue));
+                var toneRed = AgxToneLut.InterpolateUnchecked(
+                    luts.Red,
+                    insetRed);
+                var toneGreen = AgxToneLut.InterpolateUnchecked(
+                    luts.Green,
+                    insetGreen);
+                var toneBlue = AgxToneLut.InterpolateUnchecked(
+                    luts.Blue,
+                    insetBlue);
 
                 values[offset + redChannel] = EncodeQ16(
                     outset.Row0(toneRed, toneGreen, toneBlue));

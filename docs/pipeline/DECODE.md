@@ -11,7 +11,8 @@ for the runtime contracts.
 public interface IBaseImageLoader
 {
     bool CanLoad(ImageFile file);
-    BaseImage? LoadPreviewBase(ImageFile file, BaseDecodeSettings decode, CancellationToken ct); // ~1600px class
+    BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
+        ImageFile file, BaseDecodeSettings decode, CancellationToken ct); // preview pair
     BaseImage? LoadFullBase(ImageFile file, BaseDecodeSettings decode, CancellationToken ct);    // native resolution
 }
 ```
@@ -72,8 +73,10 @@ Post-decode steps, in order:
    full-resolution X-Trans processing without changing decode precision or pixels.
 2. LibRaw sometimes pre-rotates. The loader detects that through the dimension swap,
    applies EXIF orientation otherwise, and records `ExifOrientationApplied`.
-3. Preview bases use LibRaw's half-size decode and are bounded to
-   `PreviewMaxDimension` (1600) with Lanczos. Full bases remain native resolution.
+3. Preview uses one LibRaw half-size decode. Two bases derive independently from that
+   decoded buffer: interactive is the same one-step linear resize to 1600 as before;
+   large is one resize to min(half-size result, 3200). Small sensors are never upscaled
+   and preview never forces a full decode. Full bases remain native resolution.
 4. `BaseImageInfo` stores the raw facts — either RGB `CamMul[3]` with
    `CamToSrgb[3][3]`, or native LibRaw `cam_mul[4]` with `rgb_cam[3][4]` — from the
    wrapper's color data where exposed, else null. Preserve all four native channels;
@@ -241,9 +244,9 @@ cache-integrity and byte-comparison checks.
 
 ## 3. `StandardBaseLoader` (Magick.NET)
 
-1. JPEG sources are pinged for native geometry before decoding. `LoadPreviewBase` uses the
-   `jpeg:size` hint at `2 × PreviewMaxDimension` only when the native long edge exceeds
-   that hint, then resize to the preview bound (preserves quality through DCT-scaled
+1. JPEG sources are pinged for native geometry before decoding. Preview loading uses the
+   `jpeg:size` hint at `LargePreviewMaxDimension` only when the native long edge exceeds
+   that hint, then derives both preview classes (preserves quality through DCT-scaled
    decode without upscaling smaller JPEGs).
 2. `AutoOrient()` makes the pixels upright and the applied orientation is recorded.
 3. **Color normalization:**
@@ -260,7 +263,9 @@ cache-integrity and byte-comparison checks.
 4. The target ICC has linear TRCs, and the direct sRGB path explicitly applies its EOTF,
    so normalized samples are already linear. Retag them as `ColorSpace.RGB` without a
    second transfer conversion, then ensure `Depth = 16`.
-5. Preview base: resize to 1600 as above.
+5. Preview pair: from the single color-normalized decoded buffer, independently resize
+   interactive to 1600 and large to at most 3200. JPEG's existing 3200 DCT size hint is
+   stable across viewport changes, so repeated resizes do not change decode identity.
 6. `AsShotKelvin = 6504, AsShotTint = 0` (D65 anchor), `CamMul = null`;
    `FullWidth/FullHeight` = the original decoded dimensions after orientation
    (captured before the preview resize in step 5).
@@ -276,15 +281,19 @@ remain a documented limitation.
 
 ## 4. Ownership and concurrency
 
-- `PreviewBaseCoordinator` owns **one in-memory `BaseImage` snapshot** for the current
-  image. Base identity is **(normalized file path, `BaseDecodeSettings.CacheKey`, size
-  class)**, so tonal, chroma, and geometry changes reuse the held base.
+- `PreviewBaseCoordinator` owns the current preview pair with separable leases. Base
+  identity is **(normalized file path, `BaseDecodeSettings.CacheKey`, preview-pair
+  class)**; viewport dimensions are not a decode key.
 - **Single-flight, newest-wins decodes:** at most one decode in flight per identity;
   a newer request (image switch, decode-settings change) cancels/supersedes it and
   stale results are disposed, mirroring the existing thumbnail-session pattern.
 - **Only `BaseDecodeSettings` changes re-decode.** While a replacement decode is in
   flight, preview renders lease the held old base. The newest settings accumulate, and
   completion emits one refresh using that latest state rather than a render backlog.
+- A path change retires both old bases immediately, subject only to outstanding leases.
+  A same-file decode-settings change retains the old interactive base for stale paint
+  but retires the old large base immediately; its only normal lease is cancellable
+  resting work.
 - `RenderPipeline` never mutates the held base (OVERVIEW invariant 8); it clones
   internally. Disposal of a superseded base happens only after any in-progress render
   against it completes (generation check, as with today's late thumbnail results).

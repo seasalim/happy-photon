@@ -93,6 +93,46 @@ internal static class AgxToneLut
         return composed;
     }
 
+    // Resting-path variant: identical composition to ComposeCached (the LUT
+    // build is milliseconds, so no worker cap is needed), with a cancellation
+    // check before the cache insert.
+    internal static ToneLuts ComposeCached(
+        AgxToneParameters parameters,
+        double fold,
+        RenderExecutionOptions execution)
+    {
+        AgxToneEngine.Validate(parameters, fold);
+        lock (CacheLock)
+        {
+            var index = Cache.FindIndex(entry => entry.Matches(parameters, fold));
+            if (index >= 0)
+            {
+                var hit = Cache[index];
+                Cache.RemoveAt(index);
+                Cache.Insert(0, hit);
+                return hit.Lut;
+            }
+        }
+
+        var composed = Compose(parameters, fold);
+        execution.ThrowIfCancellationRequested();
+        lock (CacheLock)
+        {
+            var existing = Cache.FindIndex(
+                entry => entry.Matches(parameters, fold));
+            if (existing >= 0)
+            {
+                return Cache[existing].Lut;
+            }
+            Cache.Insert(0, new CacheEntry(parameters, fold, composed));
+            if (Cache.Count > CacheCapacity)
+            {
+                Cache.RemoveAt(Cache.Count - 1);
+            }
+        }
+        return composed;
+    }
+
     internal static double Interpolate(double[] lut, double value)
     {
         ArgumentNullException.ThrowIfNull(lut);

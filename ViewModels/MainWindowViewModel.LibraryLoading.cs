@@ -10,7 +10,8 @@ internal enum PreviewPaintSource
 {
     CachedJpeg,
     FreshRender,
-    BackgroundRefresh
+    BackgroundRefresh,
+    RestingRender
 }
 
 public partial class MainWindowViewModel
@@ -28,6 +29,11 @@ public partial class MainWindowViewModel
     internal Func<Task>? PreviewRefreshReadyGateAsync
     {
         set => ImageService.PreviewRefreshReadyGateAsync = value;
+    }
+
+    internal Action<string>? RestingStageStarted
+    {
+        set => ImageService.RestingStageStarted = value;
     }
 
     public async Task<int> LoadFolderAsync(string folderPath)
@@ -161,6 +167,9 @@ public partial class MainWindowViewModel
         _previewLoadingCts?.Cancel();
         SetRawHistogram(null);
         ClearPreviewClippingArtifacts();
+        // Every entry load declares fit intent; a manual zoom during the load
+        // window flips it and then wins over the entry refit below.
+        IsZoomFitMode = true;
         var requestCts = new CancellationTokenSource();
         _previewLoadingCts = requestCts;
         var ct = requestCts.Token;
@@ -221,7 +230,13 @@ public partial class MainWindowViewModel
                 ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
             }
 
-            RequestZoomFit?.Invoke();
+            // The entry refit only applies while the user hasn't taken manual
+            // zoom control during the load window — their zoom wins over the
+            // default fit ("snaps back after render" defect).
+            if (IsZoomFitMode)
+            {
+                RequestZoomFit?.Invoke();
+            }
             if (imageFile.SourceRequiresHydration)
             {
                 Histogram = null;
@@ -270,7 +285,7 @@ public partial class MainWindowViewModel
     {
         try
         {
-            await Task.Delay(BaseArmingDelay, ct);
+            await Task.Delay(BaseArmingDelay, _timeProvider, ct);
             if (!freshPreview.IsCompleted &&
                 !ct.IsCancellationRequested &&
                 ReferenceEquals(_previewLoadingCts, requestCts))
@@ -316,6 +331,11 @@ public partial class MainWindowViewModel
         ImageServiceHelpers.LogDisplayTrace(
             $"paint source={PaintSourceLabel(source)} " +
             $"bitmap={preview.PixelSize.Width}x{preview.PixelSize.Height}");
+        if (source is PreviewPaintSource.FreshRender or
+            PreviewPaintSource.BackgroundRefresh)
+        {
+            UpdateOriginalViewPixelSize(preview);
+        }
         var previous = PreviewImage;
         PreviewImage = preview;
         if (previous != null)
@@ -342,6 +362,7 @@ public partial class MainWindowViewModel
             PreviewPaintSource.CachedJpeg => "cached-jpeg",
             PreviewPaintSource.FreshRender => "fresh-render",
             PreviewPaintSource.BackgroundRefresh => "background-refresh",
+            PreviewPaintSource.RestingRender => "resting-render",
             _ => throw new ArgumentOutOfRangeException(nameof(source))
         };
 
@@ -420,6 +441,10 @@ public partial class MainWindowViewModel
         if (hasHistogram)
         {
             Histogram = histogram;
+            if (!IsCropMode && !IsShowingOriginal && !_isHoveringPreset)
+            {
+                OnAcceptedInteractivePreview(bitmap);
+            }
         }
         SetRawHistogram(rawHistogram);
         _ = TrackDirectThumbnailOperation(
@@ -464,7 +489,10 @@ public partial class MainWindowViewModel
         ImageFile imageFile,
         long requestId)
     {
-        await Task.Delay(BaseArmingDelay);
+        await Task.Delay(
+            BaseArmingDelay,
+            _timeProvider,
+            CancellationToken.None);
         if (Volatile.Read(ref _activeBaseRefreshRequestId) == requestId &&
             ReferenceEquals(SelectedImage, imageFile))
         {

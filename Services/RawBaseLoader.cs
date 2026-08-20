@@ -5,7 +5,7 @@ using ImageMagick;
 
 namespace HappyPhoton.Services;
 
-public sealed class RawBaseLoader : IBaseImageLoader
+public sealed partial class RawBaseLoader : IBaseImageLoader
 {
     private readonly bool _isAvailable;
     internal bool IsHealthRejected { get; }
@@ -44,7 +44,10 @@ public sealed class RawBaseLoader : IBaseImageLoader
         ImageFile file,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken) =>
-        Load(file, decode, preview: true, cancellationToken);
+        LoadPreviewBaseWithOutcome(
+            file,
+            decode,
+            cancellationToken).DetachInteractiveImage();
 
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
         ImageFile file,
@@ -63,9 +66,9 @@ public sealed class RawBaseLoader : IBaseImageLoader
                 BaseImageLoadFailure.RawRuntimeUnavailable);
         }
 
-        var image = Load(file, decode, preview: true, cancellationToken);
-        return image != null
-            ? BaseImageLoadOutcome.Loaded(image)
+        var loaded = Load(file, decode, preview: true, cancellationToken);
+        return loaded?.Pair is { } pair
+            ? BaseImageLoadOutcome.Loaded(pair)
             : BaseImageLoadOutcome.Failed(
                 BaseImageLoadFailure.UnsupportedRaw);
     }
@@ -74,9 +77,9 @@ public sealed class RawBaseLoader : IBaseImageLoader
         ImageFile file,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken) =>
-        Load(file, decode, preview: false, cancellationToken);
+        Load(file, decode, preview: false, cancellationToken)?.Full;
 
-    private BaseImage? Load(
+    private LoadedBases? Load(
         ImageFile file,
         BaseDecodeSettings decode,
         bool preview,
@@ -164,13 +167,6 @@ public sealed class RawBaseLoader : IBaseImageLoader
                 thumbnailElapsed + estimateElapsed,
                 file.FilePath,
                 $"thumbnail={thumbnailElapsed};estimate={estimateElapsed}");
-            if (preview)
-            {
-                BitmapConversionService.ResizeToMaxDimension(
-                    pixels,
-                    BaseImage.PreviewMaxDimension);
-            }
-
             pixels.Depth = 16;
             pixels.Strip();
             cancellationToken.ThrowIfCancellationRequested();
@@ -198,16 +194,31 @@ public sealed class RawBaseLoader : IBaseImageLoader
                 orientedFullSize.Height,
                 SourceExposureBiasEv: sourceExposureBiasEv,
                 RawHistogram: rawHistogram);
-            var result = new BaseImage(pixels, info);
-            pixels = null;
+            PreviewBasePair? pair = null;
+            BaseImage? full = null;
+            if (preview)
+            {
+                pair = PreviewBasePairFactory.Create(
+                    pixels,
+                    info,
+                    cancellationToken);
+            }
+            else
+            {
+                full = new BaseImage(pixels, info);
+                pixels = null;
+            }
 
             ImageServiceHelpers.LogPerformance(
                 nameof(RawBaseLoader),
                 preview ? nameof(LoadPreviewBase) : nameof(LoadFullBase),
                 stopwatch.ElapsedMilliseconds,
                 file.FilePath,
-                $"size={result.Pixels.Width}x{result.Pixels.Height}");
-            return result;
+                preview
+                    ? $"size={pair!.Interactive.Pixels.Width}x{pair.Interactive.Pixels.Height};" +
+                      $"large={pair.Large!.Pixels.Width}x{pair.Large.Pixels.Height}"
+                    : $"size={full!.Pixels.Width}x{full.Pixels.Height}");
+            return new LoadedBases(pair, full);
         }
         catch (OperationCanceledException)
         {
@@ -225,31 +236,6 @@ public sealed class RawBaseLoader : IBaseImageLoader
         {
             pixels?.Dispose();
         }
-    }
-
-    internal static LibRawOutputConfiguration ConfigureOutput(
-        BaseDecodeSettings decode,
-        bool preview)
-    {
-        var highlight = decode.HlReconstruction switch
-        {
-            HlReconstructionMode.Blend => LibRawHighlightMode.Blend,
-            HlReconstructionMode.Clip => LibRawHighlightMode.Clip,
-            _ => throw new InvalidOperationException(
-                $"Unsupported highlight reconstruction mode: {decode.HlReconstruction}.")
-        };
-        var noiseReduction = decode.NoiseReduction switch
-        {
-            FbddMode.Off => LibRawFbddMode.Off,
-            FbddMode.Light => LibRawFbddMode.Light,
-            FbddMode.Full => LibRawFbddMode.Full,
-            _ => throw new InvalidOperationException(
-                $"Unsupported FBDD mode: {decode.NoiseReduction}.")
-        };
-        return LibRawOutputConfiguration.LinearCameraNative(
-            highlight,
-            noiseReduction,
-            preview);
     }
 
     internal static MagickImage ImportRgb16(

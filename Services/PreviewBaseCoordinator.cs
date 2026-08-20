@@ -12,7 +12,8 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
     private readonly IBaseImageLoader _loader;
     private readonly object _sync = new();
     private readonly HashSet<Task> _decodeTasks = [];
-    private HeldBase? _heldBase;
+    private HeldBase? _heldInteractiveBase;
+    private HeldBase? _heldLargeBase;
     private BaseIdentity? _heldIdentity;
     private DecodeSession? _currentDecode;
     private long _generation;
@@ -60,7 +61,7 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
             if (Matches(_heldIdentity, identity))
             {
                 return PreviewBaseResult.Loaded(new PreviewBaseAcquisition(
-                    AcquireHeldBase(),
+                    AcquireHeldInteractiveBase(),
                     null));
             }
 
@@ -71,14 +72,15 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
             }
             else
             {
+                RetireForReplacement(identity);
                 decodeTask = StartDecode(imageFile, decode, identity);
             }
 
-            if (_heldBase != null &&
+            if (_heldInteractiveBase != null &&
                 SamePath(_heldIdentity, identity))
             {
                 return PreviewBaseResult.Loaded(new PreviewBaseAcquisition(
-                    AcquireHeldBase(),
+                    AcquireHeldInteractiveBase(),
                     decodeTask));
             }
         }
@@ -92,7 +94,7 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
             ThrowIfDisposed();
             return Matches(_heldIdentity, identity)
                 ? PreviewBaseResult.Loaded(new PreviewBaseAcquisition(
-                    AcquireHeldBase(), null))
+                    AcquireHeldInteractiveBase(), null))
                 : PreviewBaseResult.Failed(failure);
         }
     }
@@ -111,24 +113,48 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
         {
             ThrowIfDisposed();
             return Matches(_heldIdentity, identity)
-                ? new PreviewBaseAcquisition(AcquireHeldBase(), null)
+                ? new PreviewBaseAcquisition(
+                    AcquireHeldInteractiveBase(), null)
+                : null;
+        }
+    }
+
+    public PreviewBaseSnapshot? TryAcquireLargeCurrent(
+        ImageFile imageFile,
+        BaseDecodeSettings decode)
+    {
+        ArgumentNullException.ThrowIfNull(imageFile);
+        ArgumentNullException.ThrowIfNull(decode);
+        var identity = new BaseIdentity(
+            Path.GetFullPath(imageFile.FilePath),
+            decode.CacheKey);
+
+        lock (_sync)
+        {
+            ThrowIfDisposed();
+            return Matches(_heldIdentity, identity) && _heldLargeBase != null
+                ? _heldLargeBase.Acquire()
                 : null;
         }
     }
 
     public void Clear()
     {
-        HeldBase? held;
+        HeldBase? interactive;
+        HeldBase? large;
         lock (_sync)
         {
             _generation++;
             _currentDecode?.Cancellation.Cancel();
             _currentDecode = null;
-            held = _heldBase;
-            _heldBase = null;
+            interactive = _heldInteractiveBase;
+            large = _heldLargeBase;
+            _heldInteractiveBase = null;
+            _heldLargeBase = null;
             _heldIdentity = null;
         }
-        held?.Retire();
+        large?.Retire();
+        interactive?.Retire();
     }
 
     private Task<BaseImageLoadFailure> StartDecode(
@@ -162,8 +188,9 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
         BaseDecodeSettings decode,
         DecodeSession session)
     {
-        BaseImage? decoded = null;
-        HeldBase? superseded = null;
+        PreviewBasePair? decoded = null;
+        HeldBase? supersededInteractive = null;
+        HeldBase? supersededLarge = null;
         var failure = BaseImageLoadFailure.DecodeFailed;
         try
         {
@@ -171,7 +198,7 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
                 imageFile,
                 decode,
                 session.Cancellation.Token);
-            decoded = outcome.Image;
+            decoded = outcome.Pair;
             failure = outcome.Failure;
             session.Cancellation.Token.ThrowIfCancellationRequested();
 
@@ -183,10 +210,15 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
                 {
                     if (decoded != null)
                     {
-                        superseded = _heldBase;
-                        _heldBase = new HeldBase(decoded);
+                        var interactive = decoded.DetachInteractive();
+                        var large = decoded.DetachLarge();
+                        supersededInteractive = _heldInteractiveBase;
+                        supersededLarge = _heldLargeBase;
+                        _heldInteractiveBase = new HeldBase(interactive);
+                        _heldLargeBase = large == null
+                            ? null
+                            : new HeldBase(large);
                         _heldIdentity = session.Identity;
-                        decoded = null;
                     }
                     _currentDecode = null;
                 }
@@ -203,16 +235,36 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
                 }
             }
             decoded?.Dispose();
-            superseded?.Retire();
+            supersededLarge?.Retire();
+            supersededInteractive?.Retire();
             session.Cancellation.Dispose();
         }
     }
 
-    private PreviewBaseSnapshot AcquireHeldBase()
+    private PreviewBaseSnapshot AcquireHeldInteractiveBase()
     {
-        var held = _heldBase ??
+        var held = _heldInteractiveBase ??
             throw new InvalidOperationException("The held preview base is missing.");
         return held.Acquire();
+    }
+
+    private void RetireForReplacement(BaseIdentity identity)
+    {
+        if (_heldIdentity == null)
+        {
+            return;
+        }
+
+        _heldLargeBase?.Retire();
+        _heldLargeBase = null;
+        if (SamePath(_heldIdentity, identity))
+        {
+            return;
+        }
+
+        _heldInteractiveBase?.Retire();
+        _heldInteractiveBase = null;
+        _heldIdentity = null;
     }
 
     private static bool Matches(BaseIdentity? left, BaseIdentity right) =>
@@ -241,8 +293,10 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
             _generation++;
             _currentDecode?.Cancellation.Cancel();
             _currentDecode = null;
-            _heldBase?.Retire();
-            _heldBase = null;
+            _heldLargeBase?.Retire();
+            _heldInteractiveBase?.Retire();
+            _heldLargeBase = null;
+            _heldInteractiveBase = null;
             _heldIdentity = null;
             pending = [.. _decodeTasks];
         }

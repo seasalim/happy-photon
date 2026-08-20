@@ -10,7 +10,9 @@ public partial class MainWindowViewModel
     partial void OnSelectedImageChanged(ImageFile? oldValue, ImageFile? newValue)
     {
         ClearCurveGesture();
+        CancelRestingPreview(clearParent: true);
         ClearNavigatorVisibleRegion();
+        OriginalViewPixelSize = default;
 
         // Update IsActive flags for visual highlighting in Library grid
         if (oldValue != null) oldValue.IsActive = false;

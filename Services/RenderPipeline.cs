@@ -86,6 +86,140 @@ public sealed class RenderPipeline
         }
     }
 
+    internal RenderResult RenderResting(
+        RenderRequest request,
+        RenderExecutionOptions execution)
+    {
+        Validate(request);
+        execution.ThrowIfCancellationRequested();
+
+        MagickImage? displayRec2020 = null;
+        MagickImage? display = null;
+        try
+        {
+            displayRec2020 = RenderDisplayRec2020Resting(request, execution);
+            execution.ThrowIfCancellationRequested();
+            execution.ReportStage("finalization");
+            display = RenderFinalizer.FinalizeOwnedResting(
+                Take(ref displayRec2020),
+                request.MaxDimension,
+                request.Intent == RenderIntent.Preview
+                    ? OutputColorSpace.Srgb
+                    : request.OutputColorSpace,
+                execution);
+            execution.ThrowIfCancellationRequested();
+            var result = new RenderResult(
+                display,
+                ClippingStats.Empty,
+                overlayMask: null);
+            display = null;
+            return result;
+        }
+        finally
+        {
+            display?.Dispose();
+            displayRec2020?.Dispose();
+        }
+    }
+
+    private static MagickImage RenderDisplayRec2020Resting(
+        RenderRequest request,
+        RenderExecutionOptions execution)
+    {
+        MagickImage? working = null;
+        try
+        {
+            execution.ThrowIfCancellationRequested();
+            execution.ReportStage("clone");
+            working = new MagickImage(request.Base.Pixels);
+            execution.ThrowIfCancellationRequested();
+            execution.ReportStage("geometry");
+            RenderGeometry.Apply(working, request.Settings);
+            execution.ThrowIfCancellationRequested();
+            if (request.Base.Info.IsRawSource)
+            {
+                execution.ReportStage("raw-crossing");
+                var whiteBalance = RenderChromaticStage.CreateWhiteBalanceMatrix(
+                    request.Base.Info,
+                    request.Settings);
+                var crossing = new AgxCrossing(
+                    new AgxToneParameters(
+                        request.Settings.Exposure,
+                        request.Base.Info.SourceExposureBiasEv,
+                        request.Settings.Contrast,
+                        request.Settings.Highlights,
+                        request.Settings.Shadows,
+                        request.Settings.Curve,
+                        request.Settings.CurveRed,
+                        request.Settings.CurveGreen,
+                        request.Settings.CurveBlue),
+                    whiteBalance,
+                    execution);
+                crossing.Apply(working, execution);
+            }
+            else
+            {
+                execution.ReportStage("standard-tone");
+                ApplyCrossingOffToneResting(working, request, execution);
+            }
+            execution.ThrowIfCancellationRequested();
+            execution.ReportStage("color-encoding");
+            RenderColorEncoding.RetagAsSrgb(working);
+            execution.ReportStage("chroma");
+            RenderChromaStage.Apply(working, request.Settings);
+            execution.ThrowIfCancellationRequested();
+            execution.ReportStage("capture-sharpen");
+            RenderSharpening.ApplyCaptureResting(
+                working,
+                request.Base.Info,
+                request.Settings.Detail,
+                execution);
+            execution.ReportStage("detail");
+            RenderDetail.ApplyResting(
+                working,
+                request.Base.Info,
+                request.Settings.Detail,
+                execution);
+            execution.ThrowIfCancellationRequested();
+            var result = working;
+            working = null;
+            return result;
+        }
+        finally
+        {
+            working?.Dispose();
+        }
+    }
+
+    private static void ApplyCrossingOffToneResting(
+        MagickImage working,
+        RenderRequest request,
+        RenderExecutionOptions execution)
+    {
+        var chromatic = RenderChromaticStage.CreateNormalizedMatrix(
+            request.Base.Info,
+            request.Settings);
+        var tone = ToneLut.Compose(new ToneParams(
+            request.Settings.Exposure +
+                request.Base.Info.SourceExposureBiasEv,
+            chromatic.Fold,
+            request.Settings.Brightness,
+            request.Settings.Contrast,
+            request.Settings.Shadows,
+            request.Settings.Highlights,
+            request.Settings.BaseLook ?? false,
+            request.Settings.Curve,
+            request.Settings.CurveRed,
+            request.Settings.CurveGreen,
+            request.Settings.CurveBlue));
+        execution.ThrowIfCancellationRequested();
+        ToneLutApplicator.ApplyResting(
+            working,
+            chromatic.Matrix,
+            tone,
+            execution);
+    }
+
     internal MagickImage RenderDisplayRec2020(RenderRequest request)
     {
         Validate(request);

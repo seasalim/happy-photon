@@ -18,9 +18,13 @@ internal readonly record struct DisplayChainMapping(
     double NetScaleX,
     double NetScaleY)
 {
+    private const double OneToOneTolerance = 0.005;
+
     public bool IsOneToOne =>
-        Math.Abs(NetScaleX - 1) < 0.000001 &&
-        Math.Abs(NetScaleY - 1) < 0.000001;
+        NetScaleX >= 1 - OneToOneTolerance &&
+        NetScaleX <= 1 + OneToOneTolerance &&
+        NetScaleY >= 1 - OneToOneTolerance &&
+        NetScaleY <= 1 + OneToOneTolerance;
 }
 
 internal static class DisplayChainMappingCalculator

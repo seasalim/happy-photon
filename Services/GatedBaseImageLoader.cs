@@ -29,7 +29,7 @@ internal sealed class GatedBaseImageLoader : IBaseImageLoader
         LoadPreviewBaseWithOutcome(
             file,
             decode,
-            cancellationToken).Image;
+            cancellationToken).DetachInteractiveImage();
 
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
         ImageFile file,

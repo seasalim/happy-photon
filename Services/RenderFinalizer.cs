@@ -74,4 +74,38 @@ internal static class RenderFinalizer
             throw;
         }
     }
+
+    internal static MagickImage FinalizeOwnedResting(
+        MagickImage displayRec2020,
+        int? maxDimension,
+        OutputColorSpace outputColorSpace,
+        RenderExecutionOptions execution)
+    {
+        ArgumentNullException.ThrowIfNull(displayRec2020);
+        try
+        {
+            if (maxDimension is <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxDimension));
+            }
+            if (maxDimension is { } limit)
+            {
+                RenderColorEncoding.ResizeInLinearLightResting(
+                    displayRec2020,
+                    limit,
+                    execution);
+            }
+            execution.ThrowIfCancellationRequested();
+            RenderColorEncoding.ConvertEncodedRec2020ToTargetResting(
+                displayRec2020,
+                outputColorSpace,
+                execution);
+            return displayRec2020;
+        }
+        catch
+        {
+            displayRec2020.Dispose();
+            throw;
+        }
+    }
 }

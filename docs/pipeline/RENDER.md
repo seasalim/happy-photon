@@ -406,12 +406,33 @@ for the bounded active settings set. Tonal, chroma, and
 geometry slider moves invalidate only the render; only `BaseDecodeSettings` changes
 invalidate the base.
 
+After a current 1600 paint settles, the display-only resting entry point may render a
+crop-aware snapshot of the large preview base at the active view's required
+device-pixel long edge. Fit uses the fitted image bound; manual zoom uses the
+original-relative zoom times the original-scale displayed geometry. Growth settles
+again after zoom-in, while pan and zoom-out do not render. The request is capped by
+the large base and 3200, so zoom beyond that base intentionally stretches the best
+available preview until native region decode exists. Geometry and the linear resize
+happen before the pipeline so all size-dependent detail stages see the achievable
+resting scale. The result uses the same render math and version, but skips statistics
+and is excluded from rendered thumbnails and disk caches. A separate resting serial
+plus the captured interactive generation and decode key reject stale results without
+advancing the interactive generation.
+
+Resting execution checks its cancellation token between native full-frame operations.
+Its managed full-frame kernels accept an optional worker cap and cancellation token;
+only the resting entry point supplies them, with at most two managed workers. The
+ordinary `Render` call and every interactive caller remain unchanged. Completed output
+is bit-identical for an already target-sized base regardless of the resting worker cap;
+band partitioning does not alter pixel values.
+
 `HAPPY_PHOTON_DISPLAY_TRACE=1` enables the permanent display-chain diagnostic. The
 active Develop or fullscreen preview emits one post-layout line when its bitmap identity,
 zoom, viewport size, or top-level render scaling changes. The line records bitmap pixels,
 image-control and viewport logical sizes, `TopLevel.RenderScaling`, the device rectangle,
 net device-pixels-per-bitmap-pixel scale, and an explicit 1:1 verdict. Preview bitmap
-swaps separately identify cached JPEG, fresh render, or background refresh provenance.
+swaps separately identify cached JPEG, fresh render, background refresh, or resting
+render provenance.
 The gate is captured at process startup, is independent of `HAPPY_PHOTON_PERF`, and is
 off by default; when off, the view installs no display observer and log interpolation
 does not evaluate bitmap dimensions. Besides console/debug output, every trace line is

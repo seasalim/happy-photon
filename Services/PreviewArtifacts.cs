@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Media.Imaging;
 using HappyPhoton.Models;
 
@@ -152,6 +153,48 @@ public sealed class CachedPreviewBitmap : IDisposable
     public Bitmap DetachBitmap() =>
         Interlocked.Exchange(ref _bitmap, null) ??
         throw new ObjectDisposedException(nameof(CachedPreviewBitmap));
+
+    public void Dispose() =>
+        Interlocked.Exchange(ref _bitmap, null)?.Dispose();
+}
+
+internal sealed record PreviewRenderIdentity(
+    ImageFile ImageFile,
+    long Generation,
+    string DecodeKey,
+    string SettingsHash,
+    PixelSize OriginalImageSize,
+    PixelSize OriginalViewSize);
+
+internal sealed class RestingPreview : IDisposable
+{
+    private Bitmap? _bitmap;
+
+    public Bitmap Bitmap =>
+        _bitmap ?? throw new ObjectDisposedException(nameof(RestingPreview));
+
+    public long ParentGeneration { get; }
+    public int RequestedLongEdge { get; }
+    public int RenderedLongEdge { get; }
+    public int AchievableLongEdge { get; }
+
+    internal RestingPreview(
+        Bitmap bitmap,
+        long parentGeneration,
+        int requestedLongEdge,
+        int renderedLongEdge,
+        int achievableLongEdge)
+    {
+        _bitmap = bitmap;
+        ParentGeneration = parentGeneration;
+        RequestedLongEdge = requestedLongEdge;
+        RenderedLongEdge = renderedLongEdge;
+        AchievableLongEdge = achievableLongEdge;
+    }
+
+    public Bitmap DetachBitmap() =>
+        Interlocked.Exchange(ref _bitmap, null) ??
+        throw new ObjectDisposedException(nameof(RestingPreview));
 
     public void Dispose() =>
         Interlocked.Exchange(ref _bitmap, null)?.Dispose();

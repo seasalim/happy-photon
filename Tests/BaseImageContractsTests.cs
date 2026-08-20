@@ -16,7 +16,8 @@ public sealed class BaseImageContractsTests
         Assert.Equal(HlReconstructionMode.Clip, settings.HlReconstruction);
         Assert.Equal(FbddMode.Off, settings.NoiseReduction);
         Assert.Equal("base-v9;hl=clip;fbdd=off", settings.CacheKey);
-        Assert.Equal(1600, BaseImage.PreviewMaxDimension);
+        Assert.Equal(1600, BaseImage.InteractivePreviewMaxDimension);
+        Assert.Equal(3200, BaseImage.LargePreviewMaxDimension);
     }
 
     [Fact]

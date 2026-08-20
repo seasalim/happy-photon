@@ -51,6 +51,10 @@ public partial class MainWindowViewModel
         if (!skipHistogram)
         {
             Histogram = artifacts.Histogram;
+            if (!IsCropMode && !_isHoveringPreset)
+            {
+                OnAcceptedInteractivePreview(preview);
+            }
         }
     }
 }

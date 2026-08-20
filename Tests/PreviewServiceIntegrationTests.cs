@@ -96,7 +96,7 @@ public sealed class PreviewServiceIntegrationTests : IDisposable
             baseImage!,
             settings,
             RenderIntent.Preview,
-            BaseImage.PreviewMaxDimension,
+            BaseImage.InteractivePreviewMaxDimension,
             new RenderOptions(false, false)));
         using var expected = BitmapConversionService.ConvertToBitmap(rendered.Image);
 

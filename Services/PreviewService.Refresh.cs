@@ -183,17 +183,26 @@ public sealed partial class PreviewService
                 generation,
                 CancellationToken.None),
             CancellationToken.None).ConfigureAwait(false);
+        var settingsHash = RenderSettingsHash.Compute(pending.Settings);
         if (generation != Volatile.Read(ref _renderGeneration) ||
             rendered.Bitmap == null ||
             !TryRememberRendered(
                 pending.ImageFile,
                 rendered,
-                RenderSettingsHash.Compute(pending.Settings),
+                settingsHash,
                 generation))
         {
             rendered.Dispose();
             return null;
         }
+
+        TagPreview(
+            rendered.Bitmap,
+            pending.ImageFile,
+            generation,
+            decode.CacheKey,
+            settingsHash,
+            snapshot.Base);
 
         return new RefreshedRender(rendered, rawHistogram);
     }

@@ -89,7 +89,7 @@ internal static partial class CompatibilityFixtureRunner
         IBaseImageLoader loader,
         string temporaryDirectory)
     {
-        if (previewOutcome is not { Image: null })
+        if (previewOutcome is not { Pair: null })
         {
             observation.Capabilities["attribution"] = "not-applicable";
             return;

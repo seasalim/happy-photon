@@ -41,6 +41,7 @@ public partial class MainWindowViewModel
         CancelAndDispose(ref _previewDebounce);
         CancelAndDispose(ref _histogramDebounce);
         CancelAndDispose(ref _thumbnailDebounce);
+        CancelRestingPreview(clearParent: true);
         CancelAndDispose(ref _transientStatusCts);
         CancelAndDispose(ref _assessmentFeedbackCts);
         CancelAndDispose(ref _clippingOverlayCts);

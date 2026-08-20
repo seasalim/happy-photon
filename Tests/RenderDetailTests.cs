@@ -22,6 +22,26 @@ public sealed class RenderDetailTests
     }
 
     [Fact]
+    public void RestingTargetScale_KeepsCaptureSharpenBelowThreshold()
+    {
+        var info = CreateInfo(fullWidth: 7500, fullHeight: 5000);
+        using var capped = new MagickImage(MagickColors.Black, 3200, 2000);
+        using var fitted = new MagickImage(MagickColors.Black, 2826, 1766);
+
+        var capSigma = RenderDetail.CalculateEffectiveSigma(
+            capped,
+            info,
+            nativeSigma: 0.75);
+        var targetSigma = RenderDetail.CalculateEffectiveSigma(
+            fitted,
+            info,
+            nativeSigma: 0.75);
+
+        Assert.True(capSigma >= 0.3);
+        Assert.True(targetSigma < 0.3);
+    }
+
+    [Fact]
     public void Apply_SkipsPerceptuallyNilSigmaBitIdentically()
     {
         using var image = CreateChromaPattern();

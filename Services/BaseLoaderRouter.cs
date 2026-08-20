@@ -32,7 +32,10 @@ public sealed class BaseLoaderRouter : IBaseImageLoader
         ImageFile file,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken) =>
-        LoadPreviewBaseWithOutcome(file, decode, cancellationToken).Image;
+        LoadPreviewBaseWithOutcome(
+            file,
+            decode,
+            cancellationToken).DetachInteractiveImage();
 
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
         ImageFile file,

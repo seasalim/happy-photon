@@ -320,6 +320,11 @@ public partial class MainWindowViewModel
 
     partial void OnIsDevelopModeChanged(bool value)
     {
+        // Cancel in-flight resting work but keep the parent: mode round-trips
+        // on the same image must stay armed (publication is surface-gated and
+        // render-time guards catch real staleness). Only selection changes
+        // clear the parent.
+        CancelRestingPreview(clearParent: false);
         OnPropertyChanged(nameof(IsDevelopPreviewSurfaceActive));
         UpdateNavigatorPreviewSurfaceActivity();
         OnPropertyChanged(nameof(CanSavePreset));
@@ -372,6 +377,7 @@ public partial class MainWindowViewModel
 
     partial void OnIsFullScreenModeChanged(bool value)
     {
+        CancelRestingPreview(clearParent: false);
         OnPropertyChanged(nameof(IsDevelopPreviewSurfaceActive));
         OnPropertyChanged(nameof(IsFullScreenPreviewSurfaceActive));
         UpdateNavigatorPreviewSurfaceActivity();

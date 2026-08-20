@@ -8,6 +8,15 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    /// <summary>
+    /// The crop to preview with. In crop mode an explicit full-image region
+    /// makes RenderGeometry keep the whole rotated canvas (a null crop would
+    /// auto-apply the horizon safe crop), so the overlay's normalized
+    /// coordinates line up with the displayed bitmap.
+    /// </summary>
+    private CropRegion? PreviewCrop() =>
+        IsCropMode ? new CropRegion() : CurrentCrop;
+
     [ObservableProperty]
     private bool _isColorAssessmentMode;
 
@@ -29,13 +38,13 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void ZoomIn()
     {
-        ZoomLevel = Math.Min(MaxZoom, ZoomLevel * 1.25);
+        ApplyManualZoom(ZoomLevel * 1.25);
     }
 
     [RelayCommand]
     private void ZoomOut()
     {
-        ZoomLevel = Math.Max(MinZoom, ZoomLevel / 1.25);
+        ApplyManualZoom(ZoomLevel / 1.25);
     }
 
     [RelayCommand]
@@ -93,6 +102,7 @@ public partial class MainWindowViewModel
     private void EnterCropMode()
     {
         if (!CanEditSelectedImage || SelectedImage == null) return;
+        CancelRestingPreview(clearParent: true);
 
         // Save original crop for cancel
         _cropBeforeEdit = SelectedImage.EditSettings.Crop?.Clone();
@@ -251,15 +261,15 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void ZoomActual()
     {
-        ZoomLevel = 1.0; // 100% actual pixels
+        ApplyManualZoom(1.0);
     }
 
     public void AdjustZoom(double delta)
     {
         if (delta > 0)
-            ZoomLevel = Math.Min(MaxZoom, ZoomLevel * 1.1);
+            ApplyManualZoom(ZoomLevel * 1.1);
         else
-            ZoomLevel = Math.Max(MinZoom, ZoomLevel / 1.1);
+            ApplyManualZoom(ZoomLevel / 1.1);
     }
 
     // Folder Tree Methods

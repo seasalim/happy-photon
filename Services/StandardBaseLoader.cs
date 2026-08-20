@@ -31,26 +31,29 @@ public sealed class StandardBaseLoader : IBaseImageLoader
         ImageFile file,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken) =>
-        Load(file, decode, cancellationToken, preview: true);
+        LoadPreviewBaseWithOutcome(
+            file,
+            decode,
+            cancellationToken).DetachInteractiveImage();
 
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
         ImageFile file,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken)
     {
-        var image = LoadPreviewBase(file, decode, cancellationToken);
-        return BaseImageLoadOutcome.FromImage(
-            image,
-            BaseImageLoadFailure.DecodeFailed);
+        var loaded = Load(file, decode, cancellationToken, preview: true);
+        return loaded?.Pair is { } pair
+            ? BaseImageLoadOutcome.Loaded(pair)
+            : BaseImageLoadOutcome.Failed(BaseImageLoadFailure.DecodeFailed);
     }
 
     public BaseImage? LoadFullBase(
         ImageFile file,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken) =>
-        Load(file, decode, cancellationToken, preview: false);
+        Load(file, decode, cancellationToken, preview: false)?.Full;
 
-    private BaseImage? Load(
+    private LoadedBases? Load(
         ImageFile file,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken,
@@ -100,11 +103,6 @@ public sealed class StandardBaseLoader : IBaseImageLoader
             cancellationToken.ThrowIfCancellationRequested();
 
             image.Depth = 16;
-            if (preview)
-            {
-                ResizePreview(image);
-            }
-
             cancellationToken.ThrowIfCancellationRequested();
             var info = new BaseImageInfo(
                 IsHeic(file) ? BaseSourceKind.HeicPlatform : BaseSourceKind.Standard,
@@ -119,9 +117,18 @@ public sealed class StandardBaseLoader : IBaseImageLoader
                 orientation,
                 fullWidth,
                 fullHeight);
-            var result = new BaseImage(image, info);
+            if (preview)
+            {
+                var pair = PreviewBasePairFactory.Create(
+                    image,
+                    info,
+                    cancellationToken);
+                return new LoadedBases(pair, null);
+            }
+
+            var full = new BaseImage(image, info);
             image = null;
-            return result;
+            return new LoadedBases(null, full);
         }
         catch (OperationCanceledException)
         {
@@ -149,9 +156,9 @@ public sealed class StandardBaseLoader : IBaseImageLoader
             IsJpeg(file) &&
             nativeGeometry is { } native &&
             Math.Max(native.Width, native.Height) >
-                BaseImage.PreviewMaxDimension * 2)
+                BaseImage.LargePreviewMaxDimension)
         {
-            ApplyJpegSizeHint(settings, BaseImage.PreviewMaxDimension * 2);
+            ApplyJpegSizeHint(settings, BaseImage.LargePreviewMaxDimension);
         }
 
         if (file.Extension.Equals(".gif", StringComparison.OrdinalIgnoreCase))
@@ -205,21 +212,6 @@ public sealed class StandardBaseLoader : IBaseImageLoader
         }
     }
 
-    private static void ResizePreview(MagickImage image)
-    {
-        if (Math.Max(image.Width, image.Height) <= BaseImage.PreviewMaxDimension)
-        {
-            return;
-        }
-
-        image.Resize(new MagickGeometry(
-            BaseImage.PreviewMaxDimension,
-            BaseImage.PreviewMaxDimension)
-        {
-            IgnoreAspectRatio = false
-        });
-    }
-
     private static (int Width, int Height) GetOrientedDimensions(
         int width,
         int height,
@@ -243,4 +235,6 @@ public sealed class StandardBaseLoader : IBaseImageLoader
         int Width,
         int Height,
         int Orientation);
+
+    private sealed record LoadedBases(PreviewBasePair? Pair, BaseImage? Full);
 }

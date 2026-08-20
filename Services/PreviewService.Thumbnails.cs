@@ -112,11 +112,15 @@ public sealed partial class PreviewService
         }
     }
 
-    private void DisposeRenderedThumbnailWhenReady(RenderedPreview? rendered)
+    private void DisposeRenderedPreviewWhenReady(RenderedPreview? rendered)
     {
-        if (rendered?.ThumbnailTask == null) return;
-        TrackRenderedThumbnailTask(
-            DisposeRenderedThumbnailWhenReadyAsync(rendered.ThumbnailTask));
+        if (rendered == null) return;
+        rendered.DetachStrongBitmap()?.Dispose();
+        if (rendered.ThumbnailTask != null)
+        {
+            TrackRenderedThumbnailTask(
+                DisposeRenderedThumbnailWhenReadyAsync(rendered.ThumbnailTask));
+        }
     }
 
     private static async Task DisposeRenderedThumbnailWhenReadyAsync(

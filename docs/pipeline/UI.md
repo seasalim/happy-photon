@@ -106,6 +106,16 @@ returns that optional field to null.
   both on leave. Standard sources cannot peek or render the scene-highlight side.
   The latched image carries one muted, chrome-less `CLIPPING · SCENE / FLOOR` line;
   toggling also uses the standard 1.5-second feedback toast.
+- **Zoom is device-true and original-relative.** `ZoomLevel = 1.0` maps one original
+  image pixel to one device pixel, independent of the monitor's render scaling. The
+  ViewModel owns this stable user-facing value; the view derives the current
+  bitmap-relative scale from decoded original dimensions. A 1600-to-resting source
+  swap therefore leaves both the zoom slider and on-screen scene geometry unchanged,
+  restoring the normalized viewport anchor without writing zoom back. Fit/manual state
+  is shared by Develop and fullscreen. Fit calculates in device pixels and remains
+  geometry-identical across source swaps. Fit and zoom-in publish the current view's
+  required device-pixel long edge for resting rendering; pan and zoom-out do not
+  rerender. A monitor-scaling change recomputes the same geometry and bound.
 
 ## 5. Scope box + base-arming indicator
 

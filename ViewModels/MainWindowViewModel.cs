@@ -385,7 +385,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             debounce.Token.ThrowIfCancellationRequested();
             ScheduleHistogramUpdate();
             ScheduleThumbnailRefresh();
-        });
+        },
+            timeProvider: _timeProvider);
     }
 
     private void ScheduleCropPreviewUpdate()
@@ -399,7 +400,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             debounce.Token,
             () => UpdatePreviewWithCurrentSliders(
                 skipHistogram: true,
-                debounce.Token));
+                debounce.Token),
+            timeProvider: _timeProvider);
     }
 
     private void ScheduleThumbnailRefresh()
@@ -412,7 +414,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             TimeSpan.FromMilliseconds(500),
             debounce.Token,
             () => TrackDirectThumbnailOperation(
-                RefreshSelectedThumbnailAsync(image, debounce.Token)));
+                RefreshSelectedThumbnailAsync(image, debounce.Token)),
+            timeProvider: _timeProvider);
     }
 
     private void PushUndoState()
@@ -445,13 +448,5 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         await imageFile.EnsureCatalogIdAsync(_catalogService);
         await _catalogService.SaveEditSettingsAsync(imageFile.CatalogId, imageFile.EditSettings);
     }
-
-    /// <summary>
-    /// The crop to preview with. In crop mode an explicit full-image region
-    /// makes RenderGeometry keep the whole rotated canvas (a null crop would
-    /// auto-apply the horizon safe crop), so the overlay's normalized
-    /// coordinates line up with the displayed bitmap.
-    /// </summary>
-    private CropRegion? PreviewCrop() => IsCropMode ? new CropRegion() : CurrentCrop;
 
 }

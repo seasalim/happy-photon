@@ -58,6 +58,37 @@ internal static class RenderSharpening
             bandPixelLimit);
     }
 
+    internal static void ApplyCaptureResting(
+        MagickImage image,
+        BaseImageInfo info,
+        DetailSettings detail,
+        RenderExecutionOptions execution)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+        ArgumentNullException.ThrowIfNull(info);
+        ArgumentNullException.ThrowIfNull(detail);
+        execution.ThrowIfCancellationRequested();
+
+        var value = detail.ResolveCaptureSharpen(info.IsRawSource);
+        var amount = Math.Clamp(value, 0, 100) / 100.0;
+        var sigma = RenderDetail.CalculateEffectiveSigma(
+            image,
+            info,
+            CaptureNativeSigma);
+        if (amount <= 0 || sigma < MinimumEffectiveSigma)
+        {
+            return;
+        }
+
+        ApplyLuminance(
+            image,
+            sigma,
+            amount,
+            CaptureThreshold,
+            RenderDetail.DefaultBandPixelLimit,
+            execution);
+    }
+
     public static void ApplyOutput(
         MagickImage image,
         bool enabled,
@@ -97,7 +128,8 @@ internal static class RenderSharpening
         double sigma,
         double amount,
         double threshold,
-        int bandPixelLimit)
+        int bandPixelLimit,
+        RenderExecutionOptions? execution = null)
     {
         var stopwatch = Stopwatch.StartNew();
         using var pixels = image.GetPixels();
@@ -116,6 +148,7 @@ internal static class RenderSharpening
         {
             for (var bandStart = 0; bandStart < height;)
             {
+                execution?.ThrowIfCancellationRequested();
                 var outputRows = Math.Min(
                     bandRows,
                     height - bandStart);
@@ -135,7 +168,8 @@ internal static class RenderSharpening
                     radius,
                     layout,
                     kernel,
-                    radius);
+                    radius,
+                    execution);
                 if (bandStart == 0)
                 {
                     FillRows(
@@ -166,7 +200,8 @@ internal static class RenderSharpening
                         radius + outputRows,
                         layout,
                         kernel,
-                        radius);
+                        radius,
+                        execution);
                 }
 
                 FillRows(
@@ -186,7 +221,8 @@ internal static class RenderSharpening
                     kernel,
                     radius,
                     (float)amount,
-                    (float)(threshold * ushort.MaxValue));
+                    (float)(threshold * ushort.MaxValue),
+                    execution);
                 if (bandEnd < height)
                 {
                     horizontal.AsSpan(
@@ -194,6 +230,7 @@ internal static class RenderSharpening
                         radius * width).CopyTo(horizontal);
                 }
 
+                execution?.ThrowIfCancellationRequested();
                 pixels.SetArea(
                     0,
                     bandStart,
@@ -226,11 +263,12 @@ internal static class RenderSharpening
         int destinationRowOffset,
         PixelLayout layout,
         float[] kernel,
-        int radius)
+        int radius,
+        RenderExecutionOptions? execution = null)
     {
         var workers = Math.Min(Environment.ProcessorCount, rows);
         var rowsPerWorker = (rows + workers - 1) / workers;
-        Parallel.For(0, workers, worker =>
+        Action<int> processWorker = worker =>
         {
             var start = worker * rowsPerWorker;
             var end = Math.Min(rows, start + rowsPerWorker);
@@ -257,7 +295,17 @@ internal static class RenderSharpening
                     destination[targetRow + x] = luma;
                 }
             }
-        });
+        };
+        if (execution is { } bounded)
+        {
+            workers = bounded.CapWorkers(workers);
+            rowsPerWorker = (rows + workers - 1) / workers;
+            Parallel.For(0, workers, bounded.ParallelOptions, processWorker);
+        }
+        else
+        {
+            Parallel.For(0, workers, processWorker);
+        }
     }
 
     private static void FillRows(
@@ -285,11 +333,12 @@ internal static class RenderSharpening
         float[] kernel,
         int radius,
         float amount,
-        float threshold)
+        float threshold,
+        RenderExecutionOptions? execution = null)
     {
         var workers = Math.Min(Environment.ProcessorCount, rows);
         var rowsPerWorker = (rows + workers - 1) / workers;
-        Parallel.For(0, workers, worker =>
+        Action<int> processWorker = worker =>
         {
             var start = worker * rowsPerWorker;
             var end = Math.Min(rows, start + rowsPerWorker);
@@ -326,7 +375,17 @@ internal static class RenderSharpening
                     pixel += layout.Channels;
                 }
             }
-        });
+        };
+        if (execution is { } bounded)
+        {
+            workers = bounded.CapWorkers(workers);
+            rowsPerWorker = (rows + workers - 1) / workers;
+            Parallel.For(0, workers, bounded.ParallelOptions, processWorker);
+        }
+        else
+        {
+            Parallel.For(0, workers, processWorker);
+        }
     }
 
     private static float[] CreateGaussianKernel(double sigma)

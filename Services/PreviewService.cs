@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Avalonia.Media.Imaging;
 using HappyPhoton.Models;
 using ImageMagick;
@@ -22,10 +23,14 @@ public sealed partial class PreviewService : IAsyncDisposable
         new(ReferenceEqualityComparer.Instance);
     private readonly HashSet<Task> _renderedThumbnailTasks = new(
         ReferenceEqualityComparer.Instance);
+    private readonly ConditionalWeakTable<Bitmap, PreviewRenderIdentity>
+        _previewIdentities = new();
     private RenderedPreview? _lastRendered;
     private long _renderGeneration;
     private long _baseRefreshGeneration;
+    private long _restingSerial;
     private int _activeRefreshRenders;
+    private int _activeRestingRenders;
     private int _disposed;
 
     public event EventHandler<PreviewRefresh>? PreviewRefreshed;
@@ -39,6 +44,7 @@ public sealed partial class PreviewService : IAsyncDisposable
     internal Func<Task>? RenderGateAsync { get; set; }
     internal Func<Task>? RefreshRenderGateAsync { get; set; }
     internal Func<Task>? RefreshReadyGateAsync { get; set; }
+    internal Action<string>? RestingStageStarted { get; set; }
 
     public int PreviewActivityCount
     {
@@ -47,7 +53,8 @@ public sealed partial class PreviewService : IAsyncDisposable
             int pending;
             lock (_refreshSync) pending = _pendingRefreshes.Count;
             return _baseCoordinator.DecodeTaskCount +
-                pending + Volatile.Read(ref _activeRefreshRenders);
+                pending + Volatile.Read(ref _activeRefreshRenders) +
+                Volatile.Read(ref _activeRestingRenders);
         }
     }
 
@@ -213,11 +220,12 @@ public sealed partial class PreviewService : IAsyncDisposable
                     snapshot.Base.Info.IsRawSource);
             }
 
+            var settingsHash = RenderSettingsHash.Compute(settingsSnapshot);
             if (rendered.Bitmap == null ||
                 !TryRememberRendered(
                     imageFile,
                     rendered,
-                    RenderSettingsHash.Compute(settingsSnapshot),
+                    settingsHash,
                     generation))
             {
                 rendered.Dispose();
@@ -230,6 +238,12 @@ public sealed partial class PreviewService : IAsyncDisposable
                 $"RenderV{RenderPipeline.Version}",
                 stopwatch.ElapsedMilliseconds,
                 imageFile.FilePath);
+            TagPreview(
+                rendered.Bitmap,
+                imageFile,
+                generation,
+                decode.CacheKey,
+                settingsHash, snapshot.Base);
             ReportPreviewSuccess(imageFile, generation);
             return rendered.DetachArtifacts(generation);
         }
@@ -262,7 +276,7 @@ public sealed partial class PreviewService : IAsyncDisposable
             baseImage,
             settings,
             RenderIntent.Preview,
-            BaseImage.PreviewMaxDimension,
+            BaseImage.InteractivePreviewMaxDimension,
             new RenderOptions(
                 ComputeStats: !skipHistogram ||
                     effectiveOverlaySides != ClippingOverlaySide.None,
@@ -336,11 +350,12 @@ public sealed partial class PreviewService : IAsyncDisposable
                 imageFile,
                 new WeakReference<Bitmap>(output.Bitmap!),
                 settingsHash,
+                generation,
                 CreateRenderedThumbnailAsync(
                     thumbnailSource,
                     output.ThumbnailDimension));
         }
-        DisposeRenderedThumbnailWhenReady(previous);
+        DisposeRenderedPreviewWhenReady(previous);
         return true;
     }
 
@@ -362,6 +377,7 @@ public sealed partial class PreviewService : IAsyncDisposable
     public void ClearPreviewCache()
     {
         Interlocked.Increment(ref _renderGeneration);
+        Interlocked.Increment(ref _restingSerial);
         RenderedPreview? rendered;
         lock (_renderedSync)
         {
@@ -379,32 +395,37 @@ public sealed partial class PreviewService : IAsyncDisposable
             return;
         }
 
-        if (rendered.Bitmap.TryGetTarget(out var bitmap))
+        var bitmap = rendered.DetachStrongBitmap();
+        var ownsBitmap = bitmap != null;
+        if (bitmap != null || rendered.Bitmap.TryGetTarget(out bitmap))
         {
-            _previewCache.QueueSaveToCache(
-                rendered.ImageFile,
-                bitmap,
-                rendered.SettingsHash);
+            try
+            {
+                _previewCache.QueueSaveToCache(
+                    rendered.ImageFile,
+                    bitmap,
+                    rendered.SettingsHash);
+            }
+            finally
+            {
+                if (ownsBitmap)
+                {
+                    bitmap.Dispose();
+                }
+            }
         }
         QueueRenderedThumbnailWhenReady(rendered);
     }
 
-    private static bool PathsEqual(string left, string right) =>
-        string.Equals(
-            Path.GetFullPath(left),
-            Path.GetFullPath(right),
-            OperatingSystem.IsWindows()
-                ? StringComparison.OrdinalIgnoreCase
-                : StringComparison.Ordinal);
-
     public async ValueTask DisposeAsync()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+        if (!TryBeginDispose())
         {
             return;
         }
 
         ClearPreviewCache();
+        await WaitForRestingRenderTasksAsync();
         await WaitForRenderedThumbnailTasksAsync();
         await _baseCoordinator.DisposeAsync();
         await _previewCache.DisposeAsync();
@@ -484,17 +505,4 @@ public sealed partial class PreviewService : IAsyncDisposable
         }
     }
 
-    private sealed record RenderedPreview(
-        ImageFile ImageFile,
-        WeakReference<Bitmap> Bitmap,
-        string SettingsHash,
-        Task<Bitmap?>? ThumbnailTask);
-
-    private sealed record PendingRefresh(
-        ImageFile ImageFile,
-        EditSettings Settings,
-        ThumbnailSizeRequest ThumbnailRequest,
-        bool SkipHistogram,
-        ClippingOverlaySide OverlaySides,
-        long Generation);
 }

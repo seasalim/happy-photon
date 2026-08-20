@@ -12,11 +12,14 @@ public enum BaseImageLoadFailure
 }
 
 public sealed record BaseImageLoadOutcome(
-    BaseImage? Image,
+    PreviewBasePair? Pair,
     BaseImageLoadFailure Failure)
 {
+    public static BaseImageLoadOutcome Loaded(PreviewBasePair pair) =>
+        new(pair, BaseImageLoadFailure.None);
+
     public static BaseImageLoadOutcome Loaded(BaseImage image) =>
-        new(image, BaseImageLoadFailure.None);
+        Loaded(new PreviewBasePair(image, large: null));
 
     public static BaseImageLoadOutcome Failed(BaseImageLoadFailure failure) =>
         new(null, failure);
@@ -25,4 +28,15 @@ public sealed record BaseImageLoadOutcome(
         BaseImage? image,
         BaseImageLoadFailure failure) =>
         image != null ? Loaded(image) : Failed(failure);
+
+    internal BaseImage? DetachInteractiveImage()
+    {
+        if (Pair == null)
+        {
+            return null;
+        }
+
+        using var pair = Pair;
+        return pair.DetachInteractive();
+    }
 }

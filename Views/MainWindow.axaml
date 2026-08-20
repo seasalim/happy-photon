@@ -218,6 +218,8 @@
                             <views:ZoomPanControl x:Name="ZoomPanControl"
                                                   Source="{Binding PreviewImage}"
                                                   ZoomLevel="{Binding ZoomLevel}"
+                                                  OriginalViewPixelSize="{Binding OriginalViewPixelSize}"
+                                                  AutoFit="{Binding IsZoomFitMode}"
                                                   IsCropMode="{Binding IsCropMode}"
                                                   IsWhiteBalancePicking="{Binding IsWhiteBalancePicking}"
                                                   IsColorAssessment="{Binding IsColorAssessmentMode}"
@@ -278,7 +280,7 @@
                                 </ToggleButton>
                                 <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}" Margin="4,0"/>
                                 <views:CompactSlider Label="Zoom"
-                                                     Value="{Binding ZoomLevel}"
+                                                     Value="{Binding ManualZoomLevel, Mode=TwoWay}"
                                                      Minimum="0.1" Maximum="5"
                                                      SmallChange="0.1"
                                                      StringFormat="{}{0:P0}"
@@ -393,6 +395,8 @@
             <views:ZoomPanControl x:Name="FullScreenZoomPanControl"
                                   Source="{Binding PreviewImage}"
                                   ZoomLevel="{Binding ZoomLevel}"
+                                  OriginalViewPixelSize="{Binding OriginalViewPixelSize}"
+                                  AutoFit="{Binding IsZoomFitMode}"
                                   IsColorAssessment="{Binding IsColorAssessmentMode}"
                                   IsDisplayTraceActive="{Binding IsFullScreenPreviewSurfaceActive}"
                                   ScrollBarVisibility="Hidden"/>

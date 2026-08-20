@@ -113,6 +113,75 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
             () => Task.Run(() => _ = loader.FirstBase!.Pixels));
     }
 
+    [Fact]
+    public async Task PathChange_RetiresBothBasesSubjectToOutstandingLeases()
+    {
+        var firstPath = CreateSource("pair-first.jpg");
+        var secondPath = CreateSource("pair-second.jpg");
+        var loader = new ControlledLoader(blockFirst: false, blockSecond: true);
+        await using var coordinator = new PreviewBaseCoordinator(loader);
+        var firstFile = new ImageFile(firstPath);
+
+        var first = await coordinator.GetPreviewAsync(
+            firstFile,
+            BaseDecodeSettings.Default,
+            CancellationToken.None);
+        Assert.NotNull(first);
+        var large = coordinator.TryAcquireLargeCurrent(
+            firstFile,
+            BaseDecodeSettings.Default);
+        Assert.NotNull(large);
+
+        var secondTask = coordinator.GetPreviewAsync(
+            new ImageFile(secondPath),
+            BaseDecodeSettings.Default,
+            CancellationToken.None);
+        Assert.True(loader.SecondDecodeStarted.Wait(TestWaits.Condition));
+        Assert.NotNull(first!.Base.Pixels);
+        Assert.NotNull(large!.Base.Pixels);
+
+        first.Dispose();
+        await Assert.ThrowsAsync<ObjectDisposedException>(
+            () => Task.Run(() => _ = loader.FirstBase!.Pixels));
+        large.Dispose();
+        await Assert.ThrowsAsync<ObjectDisposedException>(
+            () => Task.Run(() => _ = loader.FirstLargeBase!.Pixels));
+
+        loader.ReleaseSecondDecode.Set();
+        using var second = await secondTask;
+        Assert.NotNull(second);
+    }
+
+    [Fact]
+    public async Task SamePathReplacement_KeepsOnlyInteractiveStaleBase()
+    {
+        var path = CreateSource("pair-replacement.jpg");
+        var loader = new ControlledLoader(blockFirst: false, blockSecond: true);
+        await using var coordinator = new PreviewBaseCoordinator(loader);
+        var file = new ImageFile(path);
+        var replacementDecode = new BaseDecodeSettings(
+            HlReconstructionMode.Blend,
+            FbddMode.Light);
+
+        using var first = await coordinator.GetPreviewAsync(
+            file,
+            BaseDecodeSettings.Default,
+            CancellationToken.None);
+        using var stale = await coordinator.GetPreviewAsync(
+            file,
+            replacementDecode,
+            CancellationToken.None);
+        Assert.True(loader.SecondDecodeStarted.Wait(TestWaits.Condition));
+        Assert.True(stale!.IsStale);
+        Assert.Same(first!.Base, stale.Base);
+        await Assert.ThrowsAsync<ObjectDisposedException>(
+            () => Task.Run(() => _ = loader.FirstLargeBase!.Pixels));
+        Assert.NotNull(first.Base.Pixels);
+
+        loader.ReleaseSecondDecode.Set();
+        await stale.RefreshTask!;
+    }
+
     [Theory]
     [InlineData(FbddMode.Light)]
     [InlineData(FbddMode.Full)]
@@ -208,26 +277,46 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
     private sealed class ControlledLoader : IBaseImageLoader
     {
         private readonly bool _blockFirst;
+        private readonly bool _blockSecond;
         private readonly bool _failSecond;
         private int _decodeCount;
 
         public ManualResetEventSlim FirstDecodeStarted { get; } = new();
         public ManualResetEventSlim ReleaseFirstDecode { get; } = new();
+        public ManualResetEventSlim SecondDecodeStarted { get; } = new();
+        public ManualResetEventSlim ReleaseSecondDecode { get; } = new();
         public int DecodeCount => Volatile.Read(ref _decodeCount);
         public BaseImage? FirstBase { get; private set; }
+        public BaseImage? FirstLargeBase { get; private set; }
 
-        public ControlledLoader(bool blockFirst, bool failSecond = false)
+        public ControlledLoader(
+            bool blockFirst,
+            bool failSecond = false,
+            bool blockSecond = false)
         {
             _blockFirst = blockFirst;
             _failSecond = failSecond;
+            _blockSecond = blockSecond;
         }
 
         public bool CanLoad(ImageFile file) => true;
 
-        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) =>
+            LoadPreviewPair(decode, cancellationToken);
 
         public BaseImage? LoadPreviewBase(
             ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken)
+        {
+            var outcome = LoadPreviewPair(decode, cancellationToken);
+            return outcome.DetachInteractiveImage();
+        }
+
+        private BaseImageLoadOutcome LoadPreviewPair(
             BaseDecodeSettings decode,
             CancellationToken cancellationToken)
         {
@@ -237,26 +326,40 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
                 FirstDecodeStarted.Set();
                 ReleaseFirstDecode.Wait();
             }
+            if (_blockSecond && call == 2)
+            {
+                SecondDecodeStarted.Set();
+                ReleaseSecondDecode.Wait();
+            }
             if (call != 1)
             {
                 cancellationToken.ThrowIfCancellationRequested();
             }
             if (_failSecond && call == 2)
             {
-                return null;
+                return BaseImageLoadOutcome.Failed(
+                    BaseImageLoadFailure.DecodeFailed);
             }
 
-            var result = new BaseImage(
+            var interactive = new BaseImage(
                 new MagickImage(
                     call == 1 ? MagickColors.Red : MagickColors.Blue,
                     16,
                     12),
                 CreateInfo(decode));
+            var large = new BaseImage(
+                new MagickImage(
+                    call == 1 ? MagickColors.Red : MagickColors.Blue,
+                    32,
+                    24),
+                CreateInfo(decode));
             if (call == 1)
             {
-                FirstBase = result;
+                FirstBase = interactive;
+                FirstLargeBase = large;
             }
-            return result;
+            return BaseImageLoadOutcome.Loaded(
+                new PreviewBasePair(interactive, large));
         }
 
         public BaseImage? LoadFullBase(

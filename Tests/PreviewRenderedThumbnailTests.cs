@@ -319,7 +319,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
             baseImage,
             settings,
             RenderIntent.Preview,
-            BaseImage.PreviewMaxDimension,
+            BaseImage.InteractivePreviewMaxDimension,
             new RenderOptions(false, false)));
         RenderColorEncoding.ResizeInLinearLight(rendered.Image, 192);
         return BitmapConversionService.ConvertToBitmap(rendered.Image)!;

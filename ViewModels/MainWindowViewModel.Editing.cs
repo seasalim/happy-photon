@@ -176,6 +176,7 @@ public partial class MainWindowViewModel
     {
         if (SelectedImage == null) return;
         var image = SelectedImage;
+        CancelRestingPreview(clearParent: true);
 
         _hoverPreviewCts?.Cancel();
         _hoverPreviewCts = new CancellationTokenSource();
@@ -254,6 +255,7 @@ public partial class MainWindowViewModel
                     IsShowingOriginal = false;
                     InstallPreviewClipping(artifacts);
                     ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
+                    OnAcceptedInteractivePreview(preview);
                 }
                 else
                 {
@@ -270,6 +272,7 @@ public partial class MainWindowViewModel
         if (!CanToggleBeforeAfter() || SelectedImage == null) return;
 
         var image = SelectedImage;
+        CancelRestingPreview(clearParent: true);
         IsShowingOriginal = !IsShowingOriginal;
 
         if (IsShowingOriginal)

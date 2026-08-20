@@ -63,7 +63,10 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 8. **Bases are immutable, decodes are single-flight.** `RenderPipeline` never mutates
    `BaseImage.Pixels` (it clones internally); base lifetime belongs to the caller.
    Decodes coalesce newest-wins per (file, decode settings, size class); tonal/chroma/
-   geometry setting changes never trigger a decode (DECODE.md §4).
+   geometry setting changes never trigger a decode (DECODE.md §4). Preview loading
+   returns an interactive/large pair from one bounded decode; the active fitted or
+   manually zoomed view selects a resting render target and is never part of base
+   identity.
 9. **Background work does not hydrate cloud sources.** A live source-availability gate
    wraps base loaders and guards metadata, thumbnails, and path-based statistics.
    Cached output may be displayed without source content. Only a single-image
@@ -131,9 +134,16 @@ public sealed record BaseImageInfo(
 public sealed class BaseImage : IDisposable
 {
     public const int Version = 9;        // bump whenever decoded pixels or facts change
-    public const int PreviewMaxDimension = 1600;
+    public const int InteractivePreviewMaxDimension = 1600;
+    public const int LargePreviewMaxDimension = 3200;
     public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
     public BaseImageInfo Info { get; }
+}
+
+public sealed class PreviewBasePair : IDisposable
+{
+    public BaseImage Interactive { get; } // pre-derived slider base
+    public BaseImage? Large { get; }       // bounded resting-render base
 }
 
 public enum RenderIntent { Preview, Export }
