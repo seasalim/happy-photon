@@ -230,10 +230,28 @@ temperature (inverse-CCT linear weighting, clamped to the pair's range).
 Anchoring at as-shot is a deliberate, documented deviation from strict DNG
 math (which re-interpolates under the user-selected WB): user WB remains a
 render-layer chromatic adaptation, extending the standing WB-accuracy-ceiling
-risk rather than making WB decode-affecting. With a ForwardMatrix:
-`XYZ_D50 = FM · D · CC⁻¹ · AB⁻¹ · camera`, `D` the reference-neutral
-normalization per spec; without one, the ColorMatrix-inverse path with
-white-point preservation (and `ReductionMatrix` where applicable). Then
+risk rather than making WB decode-affecting.
+
+**The composition must be defined for the balanced seam, not raw camera
+coordinates.** The DNG spec's equations (`XYZ_D50 = FM · D · CC⁻¹ · AB⁻¹ ·
+camera_raw`, `D` the reference-neutral normalization) act on *unbalanced*
+camera values; §1's seam is already as-shot-neutralized by LibRaw (`cam_mul`
+applied, per-channel; the remaining `65535/maximum` scale is uniform).
+Applying the literal equations at this seam would neutralize twice. The R5b
+implementation therefore composes against the balanced seam: with
+`seam = diag(cam_mul_normalized) · camera_raw` (up to a uniform exposure
+scale, which every downstream stage is invariant to), the decode transform is
+`XYZ_D50 = FM · D · CC⁻¹ · AB⁻¹ · diag(cam_mul_normalized)⁻¹ · seam`, where
+`D` uses the profile's reference neutral (`AsShotNeutral` for DNGs; the
+CameraNeutral implied by `cam_mul` otherwise — the spec derivation must state
+the `cam_mul ↔ AsShotNeutral⁻¹` correspondence and its normalization
+explicitly, and the R5b plan carries an oracle test that a synthetic profile
+with known `CC`/`AB` round-trips a balanced neutral to D50 white exactly).
+Files on the missing/auto-WB path (§1.1) have no recorded balancing gains and
+therefore fall back to the built-in path — a DCP cannot be applied to a seam
+whose neutralization state is unknown. Without a ForwardMatrix, the
+ColorMatrix-inverse path with white-point preservation (and `ReductionMatrix`
+where applicable) composes against the same balanced-seam definition. Then
 Bradford D50→D65 (WHITE_BALANCE.md matrices) and XYZ→Rec.2020
 (`RgbColorSpaceMatrices`), composed once in `double` and fused into the same
 import seam as §2. The characterized base must satisfy the identical seam
@@ -241,13 +259,19 @@ contract (§1) — the profile only replaces the matrix source.
 
 ### 7.4 HueSatDeltas (render layer)
 
-Applied scene-linear, before the AgX crossing: working Rec.2020 → linear
-ProPhoto D50 RGB (Bradford) → HSV per spec (with the sRGB encoding applied
-first when `ProfileHueSatMapEncoding=1`) → trilinear table interpolation of
-(hue-shift°, saturation-scale, value-scale) with hue wraparound and the
-spec's dual-table interpolation sharing §7.3's as-shot weight → back to
-working space. Tables interpolate between illuminant pairs exactly like the
-matrices. Runs only when the selected profile carries tables.
+Applied scene-linear, before the AgX crossing. The exact sequence per the DNG
+spec: working Rec.2020 → linear ProPhoto D50 RGB (Bradford) → HSV. When
+`ProfileHueSatMapEncoding=1` (sRGB), **only the V coordinate is sRGB-encoded**
+before table lookup, and the modified V is inverse-decoded back to linear
+after the deltas apply — H and S are never encoded; the encoding tag is
+inapplicable (ignored) when `ValueDivisions` is 1, where the map is 2.5D and
+lookup interpolates over hue and saturation only. Table interpolation is
+trilinear (bilinear in the 2.5D case) over (hue-shift°, saturation-scale,
+value-scale) with hue wraparound; saturation and value scales clamp results
+to valid HSV; the spec's dual-table case interpolates between the illuminant
+pair's tables sharing §7.3's as-shot weight, and a single-table profile uses
+that table for all weights. Then HSV → linear ProPhoto → working space. Runs
+only when the selected profile carries tables.
 
 ### 7.5 Atomicity, settings, cache identity
 

@@ -333,11 +333,15 @@ RAW base decode performance output includes a `RawHistogram` step for the sensor
 measure at least the 20 MP Canon EOS 6D fixture when this gate is enabled.
 
 R5a's isolated import gate uses that 20 MP Canon in camera-native output mode, one
-warm-up plus five samples, and 10 ms private-memory sampling. It compares direct Q16
-import with fused characterization of the same native span. The budgets are ≤ 30 ms
-preview, ≤ 100 ms full, and no incremental peak beyond import transients. The
-direct-cache implementation recorded −3.1 ms preview, −17.5 ms full, and no positive
-private-peak delta on win-x64:
+warm-up plus five samples. It compares direct Q16 import with fused
+characterization of the same native span. The budgets are ≤ 45 ms preview,
+≤ 150 ms full (recalibrated from the checkpoint-A 30/100 ms freeze with user
+approval 2026-08-19 — the measured floor under the 4 MiB transient constraint
+left no variance margin; CHARACTERIZATION.md §4 records the evidence), and a
+≤ 4 MiB deterministic retained private-memory delta; async-sampled peaks are
+informational because native-allocator private bytes are not reproducible.
+Measured deltas on the review machine: preview 22–31 ms, full 86–136 ms,
+retained 0.0/2.0 MiB:
 
 ```powershell
 $env:HAPPY_PHOTON_R5A_PERF='1'

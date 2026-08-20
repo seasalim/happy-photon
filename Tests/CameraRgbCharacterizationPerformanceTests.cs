@@ -54,6 +54,20 @@ public sealed class CameraRgbCharacterizationPerformanceTests
             full.AddedRetainedBytes <= TransientMemoryBudget,
             $"Full characterization retained " +
             $"{full.AddedRetainedBytes / 1048576.0:F1} MiB over direct import.");
+        // Managed-allocation delta is exact and catches a future full-frame
+        // managed staging buffer even when it is transient (released before
+        // the retained measurement); the pooled band design keeps it near
+        // zero after warm-up.
+        Assert.True(
+            preview.AddedAllocatedBytes <= TransientMemoryBudget,
+            $"Preview characterization allocated " +
+            $"{preview.AddedAllocatedBytes / 1048576.0:F1} MiB managed over " +
+            "direct import.");
+        Assert.True(
+            full.AddedAllocatedBytes <= TransientMemoryBudget,
+            $"Full characterization allocated " +
+            $"{full.AddedAllocatedBytes / 1048576.0:F1} MiB managed over " +
+            "direct import.");
     }
 
     private static async Task<ImportDelta> MeasureCase(bool halfSize)
@@ -94,6 +108,11 @@ public sealed class CameraRgbCharacterizationPerformanceTests
                 processed.AsSpan(), width, height));
         var characterizedRetained = MeasureRetained(() =>
             characterization.ImportRgb16(processed.AsSpan(), width, height));
+        var baselineAllocated = MeasureAllocated(() =>
+            CameraRgbCharacterization.Passthrough.ImportRgb16(
+                processed.AsSpan(), width, height));
+        var characterizedAllocated = MeasureAllocated(() =>
+            characterization.ImportRgb16(processed.AsSpan(), width, height));
         return new ImportDelta(
             width,
             height,
@@ -105,7 +124,18 @@ public sealed class CameraRgbCharacterizationPerformanceTests
             Math.Max(0, characterizedPeak - baselinePeak),
             baselineRetained,
             characterizedRetained,
-            Math.Max(0, characterizedRetained - baselineRetained));
+            Math.Max(0, characterizedRetained - baselineRetained),
+            Math.Max(0, characterizedAllocated - baselineAllocated));
+    }
+
+    private static long MeasureAllocated(Func<MagickImage> operation)
+    {
+        CollectAll();
+        var baseline = GC.GetTotalAllocatedBytes(precise: true);
+        using (operation()) { }
+        return Math.Max(
+            0,
+            GC.GetTotalAllocatedBytes(precise: true) - baseline);
     }
 
     private static double MeasureElapsed(Func<MagickImage> operation)
@@ -197,5 +227,6 @@ public sealed class CameraRgbCharacterizationPerformanceTests
         long AddedPeakPrivateBytes,
         long BaselineRetainedBytes,
         long CharacterizedRetainedBytes,
-        long AddedRetainedBytes);
+        long AddedRetainedBytes,
+        long AddedAllocatedBytes);
 }
