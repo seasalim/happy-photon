@@ -147,14 +147,21 @@ freezes the gate at mean ΔE76 ≤ 1.1 and p99 ΔE76 ≤ 9.5; Bayer measured
 
 Budgets: canonical TESTING.md gates stay binding (complete slider render
 ≤ 150 ms preview; full export within +5% / +16 MiB). R5a adds: decode-latency
-delta ≤ 100 ms full-res / ≤ 30 ms preview, and a ≤ 4 MiB
-peak-private-memory delta vs the pre-R5a baseline sampled through import
-completion. These are the checkpoint-A-frozen R5a import budgets and exclude
-any additional full-frame allocation. On win-x64 the 20 MP Canon 6D import gate
-measured preview deltas of 4.3/21.5 ms and 0.1/2.0 MiB, and full-resolution
-deltas of 9.8/1.2 ms and 0.0/0.0 MiB, in two quiet repeat runs. The bounded
-pooled-band implementation uses no full-frame import transient. The opt-in
-modern-camera compatibility suite reruns at checkpoint C.
+delta ≤ 100 ms full-res / ≤ 45 ms preview, and a ≤ 4 MiB **retained**
+private-memory delta vs the direct import, measured deterministically (forced
+GC at step boundaries with the result image alive) — async-sampled peaks are
+reported for information only, because native-allocator private bytes are not
+reproducible run-to-run. The budgets exclude any additional full-frame
+allocation; the double-buffered pooled-band pipeline (two ≤ 1.5 MiB buffers,
+each band's cache write overlapping the next band's transform) uses no
+full-frame import transient. The preview latency budget was recalibrated from
+the checkpoint-A 30 ms freeze to 45 ms at review (user-approved 2026-08-19):
+the measured floor under the 4 MiB constraint is 22–31 ms on the slower review
+machine (4–22 ms on a faster one), dominated by the serialized region cache
+writes, and the faster alternative — full-frame staging — was declined to
+protect the export peak gate. Measured on the 20 MP Canon 6D: preview delta
+22–31 ms / retained 0.0 MiB; full-resolution delta 86–89 ms / retained
+2.0 MiB. The opt-in modern-camera compatibility suite reruns at checkpoint C.
 
 The win-x64 ColorChecker observations are recalibrated. Linux-x64 and osx-arm64
 remain explicit pending observations until their fresh-process runs complete;

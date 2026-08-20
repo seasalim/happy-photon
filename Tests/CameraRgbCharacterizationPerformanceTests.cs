@@ -29,10 +29,13 @@ public sealed class CameraRgbCharacterizationPerformanceTests
         Report("preview", preview);
         Report("full", full);
 
+        // 45 ms preview budget recalibrated from the measured floor under the
+        // 4 MiB transient constraint (user-approved 2026-08-19; original A
+        // freeze was 30 ms).
         Assert.True(
-            preview.AddedMilliseconds <= 30,
+            preview.AddedMilliseconds <= 45,
             $"Preview characterization added {preview.AddedMilliseconds:F1} ms; " +
-            "budget is 30 ms.");
+            "budget is 45 ms.");
         Assert.True(
             full.AddedMilliseconds <= 100,
             $"Full characterization added {full.AddedMilliseconds:F1} ms; " +
