@@ -166,12 +166,31 @@
         "maximumPatchDeltaE00": [
           6.245169268388049
         ]
+      },
+      {
+        "rid": "linux-x64",
+        "freshProcessRuns": 1,
+        "openMpThreads": 1,
+        "meanDeltaE00": [
+          2.638447292477815
+        ],
+        "maximumPatchDeltaE00": [
+          6.2451692683880236
+        ]
+      },
+      {
+        "rid": "osx-arm64",
+        "freshProcessRuns": 1,
+        "openMpThreads": 1,
+        "meanDeltaE00": [
+          2.638449030560668
+        ],
+        "maximumPatchDeltaE00": [
+          6.245169268388058
+        ]
       }
     ],
-    "pendingRidObservations": [
-      "linux-x64",
-      "osx-arm64"
-    ]
+    "pendingRidObservations": []
   },
   "lookBudget": {
     "statistics": [
@@ -192,11 +211,30 @@
         "maximumPatchDeltaE00": [
           13.762419710624835
         ]
+      },
+      {
+        "rid": "linux-x64",
+        "freshProcessRuns": 1,
+        "openMpThreads": 1,
+        "meanDeltaE00": [
+          5.993899394879203
+        ],
+        "maximumPatchDeltaE00": [
+          13.762419710624826
+        ]
+      },
+      {
+        "rid": "osx-arm64",
+        "freshProcessRuns": 1,
+        "openMpThreads": 1,
+        "meanDeltaE00": [
+          5.993900252729108
+        ],
+        "maximumPatchDeltaE00": [
+          13.76241971062483
+        ]
       }
     ],
-    "pendingRidObservations": [
-      "linux-x64",
-      "osx-arm64"
-    ]
+    "pendingRidObservations": []
   }
 }

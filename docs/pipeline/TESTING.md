@@ -291,8 +291,10 @@ The manifest uses the precommitted “worst supported-RID observation rounded up
 next 0.5” rule for both anchors. Post-R5a win-x64 measures pre-crossing mean/max ΔE00
 2.6384472924778217/6.245169268388049, retaining bounds 3.0/6.5. The integrated AgX
 look measures 5.9938993948792065/13.762419710624835, retaining bounds 6.0/14.0.
-Linux-x64 and osx-arm64 are explicit pending observations until their fresh-process
-R5a calibration runs complete; the current-RID test skips only those pending RIDs.
+Linux-x64 measures 2.638447292477815/6.2451692683880236 and osx-arm64
+2.638449030560668/6.245169268388058 (look 5.993899394879203/13.762419710624826
+and 5.993900252729108/13.76241971062483), harvested from the PR CI test
+results; all three RIDs agree at the 1e-5 level and the retained bounds hold.
 These budgets pin characterization and look drift; they are not claims that an aged
 physical chart should be rendered colorimetrically exact.
 
