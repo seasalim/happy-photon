@@ -11,7 +11,7 @@ public class ToneLutTests
     [Fact]
     public void Compose_UsesTheRequired65536EntryAnalyticShape()
     {
-        var lut = ToneLut.Compose(Identity());
+        var lut = ToneLut.Compose(Identity()).Red;
 
         Assert.Equal(65536, lut.Length);
         Assert.Equal(ToneLut.Evaluate(Identity(), 0), lut[0]);
@@ -23,7 +23,7 @@ public class ToneLutTests
     [Fact]
     public void Compose_IdentityReproducesSrgbEncodeWithinOneEightBitLsb()
     {
-        var lut = ToneLut.Compose(Identity());
+        var lut = ToneLut.Compose(Identity()).Red;
 
         for (var i = 0; i < lut.Length; i++)
         {
@@ -34,6 +34,76 @@ public class ToneLutTests
                 0,
                 1e-12);
         }
+    }
+
+    [Fact]
+    public void Compose_IdentityChannelsShareOneArray()
+    {
+        var luts = ToneLut.Compose(Identity() with
+        {
+            CurveRed = new CurveData(),
+            CurveGreen = new CurveData(),
+            CurveBlue = new CurveData()
+        });
+
+        Assert.Same(luts.Red, luts.Green);
+        Assert.Same(luts.Red, luts.Blue);
+    }
+
+    [Fact]
+    public void Compose_AppliesChannelBeforeComposite()
+    {
+        var channel = CreateCurve(0.35, 0.72);
+        var composite = CreateCurve(0.65, 0.42);
+        var parameters = Identity() with
+        {
+            Curve = composite,
+            CurveRed = channel
+        };
+        const double input = 0.2;
+        var upstream = ToneLut.SrgbEncode(input);
+        var expected = ToneLut.EvaluateCurve(
+            composite,
+            ToneLut.EvaluateCurve(channel, upstream));
+        var reverse = ToneLut.EvaluateCurve(
+            channel,
+            ToneLut.EvaluateCurve(composite, upstream));
+
+        var actual = ToneLut.Evaluate(parameters, input, channel);
+
+        Assert.Equal(expected, actual, 12);
+        Assert.True(Math.Abs(actual - reverse) > 1e-3);
+    }
+
+    [Fact]
+    public void Compose_NonIdentityChannelOnlyAllocatesItsOwnArray()
+    {
+        var luts = ToneLut.Compose(Identity() with
+        {
+            CurveRed = CreateCurve(0.5, 0.7)
+        });
+
+        Assert.NotSame(luts.Red, luts.Green);
+        Assert.Same(luts.Green, luts.Blue);
+    }
+
+    [Fact]
+    public void Compose_PreservesDecreasingChannelSegments()
+    {
+        var decreasing = new CurveData
+        {
+            Points =
+            [
+                new CurvePoint(0, 1),
+                new CurvePoint(1, 0)
+            ]
+        };
+        decreasing.BuildLookupTable();
+
+        var luts = ToneLut.Compose(Identity() with { CurveRed = decreasing });
+
+        Assert.True(luts.Red[0] > luts.Red[^1]);
+        Assert.Same(luts.Green, luts.Blue);
     }
 
     [Fact]
@@ -62,7 +132,7 @@ public class ToneLutTests
                 BaseLookEnabled: random.Next(2) == 1,
                 Curve: curve);
 
-            var lut = ToneLut.Compose(parameters);
+            var lut = ToneLut.Compose(parameters).Red;
 
             for (var i = 1; i < lut.Length; i++)
             {
@@ -203,7 +273,7 @@ public class ToneLutTests
         {
             Brightness = 100,
             Contrast = 100
-        });
+        }).Red;
         var plateauStart = Array.IndexOf(lut, 1.0);
 
         Assert.InRange(plateauStart, 1, lut.Length - 2);
@@ -245,6 +315,13 @@ public class ToneLutTests
                 return curve;
             }
         }
+    }
+
+    private static CurveData CreateCurve(double x, double y)
+    {
+        var curve = new CurveData();
+        curve.AddPointAndReturnIndex(x, y);
+        return curve;
     }
 
     private static double NextDouble(Random random, double minimum, double maximum) =>

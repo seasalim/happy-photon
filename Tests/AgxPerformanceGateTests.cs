@@ -77,7 +77,7 @@ public sealed class AgxPerformanceGateTests : IDisposable
             new RawBaseLoader(),
             new StandardBaseLoader());
         var pipeline = new RenderPipeline();
-        return fixtures.Select(fixture =>
+        var existing = fixtures.Select(fixture =>
         {
             if (Path.GetExtension(fixture).Equals(
                     ".heic",
@@ -105,7 +105,62 @@ public sealed class AgxPerformanceGateTests : IDisposable
                 1600,
                 new RenderOptions(false, false))));
             return new SliderMeasurement(fixture, elapsed, null);
-        }).ToArray();
+        });
+        var channels = new[]
+        {
+            MeasureAllChannelTicks(
+                loader,
+                pipeline,
+                "canon-eos-6d-iso-6400.cr2"),
+            MeasureAllChannelTicks(loader, pipeline, "srgb-reference.jpg")
+        };
+        return existing.Concat(channels).ToArray();
+    }
+
+    private static SliderMeasurement MeasureAllChannelTicks(
+        IBaseImageLoader loader,
+        RenderPipeline pipeline,
+        string fixture)
+    {
+        using var baseImage = loader.LoadPreviewBase(
+            new ImageFile(Asset(fixture)),
+            BaseDecodeSettings.Default,
+            CancellationToken.None) ??
+            throw new InvalidOperationException(
+                $"Channel-curve fixture did not decode: {fixture}.");
+        var elapsed = MeasureCold(sample =>
+        {
+            var settings = CreateAllChannelSettings(sample);
+            return pipeline.Render(new RenderRequest(
+                baseImage,
+                settings,
+                RenderIntent.Preview,
+                1600,
+                new RenderOptions(false, false)));
+        });
+        return new SliderMeasurement(
+            $"{fixture} (all channel curves, cold)",
+            elapsed,
+            null);
+    }
+
+    private static EditSettings CreateAllChannelSettings(int sample)
+    {
+        var offset = (sample + 2) * 0.01;
+        return new EditSettings
+        {
+            Contrast = 25,
+            CurveRed = CreateCurve(0.4, 0.58 + offset),
+            CurveGreen = CreateCurve(0.5, 0.42 - offset),
+            CurveBlue = CreateCurve(0.6, 0.68 + offset)
+        };
+    }
+
+    private static CurveData CreateCurve(double x, double y)
+    {
+        var curve = new CurveData();
+        curve.AddPointAndReturnIndex(x, y);
+        return curve;
     }
 
     private async Task<ExportMeasurement> MeasureThreeVariants(
@@ -157,6 +212,20 @@ public sealed class AgxPerformanceGateTests : IDisposable
         {
             var stopwatch = Stopwatch.StartNew();
             using (operation()) { }
+            stopwatch.Stop();
+            samples[index] = stopwatch.Elapsed.TotalMilliseconds;
+        }
+        return Median(samples);
+    }
+
+    private static double MeasureCold(Func<int, IDisposable> operation)
+    {
+        using (operation(-1)) { }
+        var samples = new double[SampleCount];
+        for (var index = 0; index < samples.Length; index++)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            using (operation(index)) { }
             stopwatch.Stop();
             samples[index] = stopwatch.Elapsed.TotalMilliseconds;
         }

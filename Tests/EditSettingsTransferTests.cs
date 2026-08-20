@@ -40,7 +40,10 @@ public sealed class EditSettingsTransferTests
         HorizonRotation = 1.5,
         Crop = new CropRegion { Left = 0.1, Top = 0.2, Right = 0.8, Bottom = 0.9 },
         AppliedPresetId = "user_abc",
-        Curve = CreateCurve()
+        Curve = CreateCurve(),
+        CurveRed = CreateCurve(),
+        CurveGreen = CreateCurve(),
+        CurveBlue = CreateCurve()
     };
 
     [Fact]
@@ -68,6 +71,9 @@ public sealed class EditSettingsTransferTests
         Assert.Equal("user_abc", copy.AppliedPresetId);
         Assert.Equal(source.Curve.Points.Count, copy.Curve.Points.Count);
         Assert.Equal(0.7, copy.Curve.Points[1].Y);
+        Assert.Equal(0.7, copy.CurveRed!.Points[1].Y);
+        Assert.Equal(0.7, copy.CurveGreen!.Points[1].Y);
+        Assert.Equal(0.7, copy.CurveBlue!.Points[1].Y);
         Assert.Equal(0, copy.Rotation);
         Assert.Equal(0.0, copy.HorizonRotation);
         Assert.Null(copy.Crop);
@@ -124,7 +130,9 @@ public sealed class EditSettingsTransferTests
         var copy = EditSettingsTransfer.CopySubset(source);
 
         source.Curve.MovePoint(1, 0.5, 0.1);
+        source.CurveRed!.MovePoint(1, 0.5, 0.1);
         Assert.Equal(0.7, copy.Curve.Points[1].Y);
+        Assert.Equal(0.7, copy.CurveRed!.Points[1].Y);
 
         var targetA = new EditSettings();
         var targetB = new EditSettings();
@@ -132,8 +140,11 @@ public sealed class EditSettingsTransferTests
         EditSettingsTransfer.ApplySubset(copy, targetB);
 
         targetA.Curve.MovePoint(1, 0.5, 0.9);
+        targetA.CurveBlue!.MovePoint(1, 0.5, 0.9);
         Assert.Equal(0.7, targetB.Curve.Points[1].Y);
+        Assert.Equal(0.7, targetB.CurveBlue!.Points[1].Y);
         Assert.Equal(0.7, copy.Curve.Points[1].Y);
+        Assert.Equal(0.7, copy.CurveBlue!.Points[1].Y);
     }
 
     [Fact]
@@ -152,6 +163,21 @@ public sealed class EditSettingsTransferTests
     }
 
     [Fact]
+    public void ChannelCurvesJoinCloneAndHasEdits()
+    {
+        var source = new EditSettings { CurveRed = CreateCurve() };
+
+        var clone = source.Clone();
+
+        Assert.True(source.HasEdits);
+        Assert.True(clone.HasEdits);
+        Assert.NotSame(source.CurveRed, clone.CurveRed);
+        source.CurveRed!.MovePoint(1, 0.5, 0.2);
+        Assert.Equal(0.7, clone.CurveRed!.Points[1].Y);
+        Assert.False(new EditSettings { CurveRed = new CurveData() }.HasEdits);
+    }
+
+    [Fact]
     public void ApplySubset_AppliedCurveHasRebuiltLookupTable()
     {
         var target = new EditSettings();
@@ -159,6 +185,7 @@ public sealed class EditSettingsTransferTests
         EditSettingsTransfer.ApplySubset(EditSettingsTransfer.CopySubset(CreateFullSettings()), target);
 
         Assert.True(target.Curve.LookupTable[128] > 140);
+        Assert.True(target.CurveRed!.LookupTable[128] > 140);
     }
 
     [Fact]

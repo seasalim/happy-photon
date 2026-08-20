@@ -6,8 +6,6 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using HappyPhoton.Models;
 
-using APath = Avalonia.Controls.Shapes.Path;
-
 namespace HappyPhoton.Views;
 
 public partial class CurveView : UserControl
@@ -22,6 +20,7 @@ public partial class CurveView : UserControl
     }
 
     public event EventHandler? CurveChanged;
+    public event EventHandler? CurveEditStarted;
 
     private Canvas? _canvas;
     private int _dragPointIndex = -1;
@@ -44,6 +43,7 @@ public partial class CurveView : UserControl
     {
         InitializeComponent();
         _canvas = this.FindControl<Canvas>("CurveCanvas");
+        UpdateChannelSelectors();
 
         if (_canvas != null)
         {
@@ -59,6 +59,15 @@ public partial class CurveView : UserControl
 
         if (change.Property == CurveProperty)
         {
+            DrawCurve();
+        }
+        else if (change.Property == ActiveChannelProperty ||
+                 change.Property == CompositeCurveProperty ||
+                 change.Property == HasRedCurveProperty ||
+                 change.Property == HasGreenCurveProperty ||
+                 change.Property == HasBlueCurveProperty)
+        {
+            UpdateChannelSelectors();
             DrawCurve();
         }
     }
@@ -95,27 +104,17 @@ public partial class CurveView : UserControl
 
         if (Curve == null) return;
 
-        // Draw the curve from lookup table
-        var curveGeometry = new StreamGeometry();
-        using (var context = curveGeometry.Open())
+        if (ActiveChannel != ToneCurveChannel.Composite && CompositeCurve != null)
         {
-            context.BeginFigure(new Point(0, height - (Curve.LookupTable[0] / 255.0 * height)), false);
-            for (int i = 1; i < 256; i++)
-            {
-                double x = i / 255.0 * width;
-                double y = height - (Curve.LookupTable[i] / 255.0 * height);
-                context.LineTo(new Point(x, y));
-            }
-            context.EndFigure(false);
+            DrawCurvePath(
+                CompositeCurve,
+                width,
+                height,
+                HappyPhotonColors.CurveNormalStroke,
+                1.2,
+                0.35);
         }
-
-        var curvePath = new APath
-        {
-            Data = curveGeometry,
-            Stroke = HappyPhotonColors.PrimaryContainer,
-            StrokeThickness = 2
-        };
-        _canvas.Children.Add(curvePath);
+        DrawCurvePath(Curve, width, height, ActiveCurveBrush, 2, 1);
 
         // Draw control points with hover highlighting
         _pointEllipses.Clear();
@@ -197,6 +196,7 @@ public partial class CurveView : UserControl
             // Right-click: remove point (if within radius and not an endpoint)
             if (nearestIndex > 0 && nearestIndex < Curve.Points.Count - 1)
             {
+                CurveEditStarted?.Invoke(this, EventArgs.Empty);
                 Curve.RemovePoint(nearestIndex);
                 DrawCurve();
                 CurveChanged?.Invoke(this, EventArgs.Empty);
@@ -204,6 +204,7 @@ public partial class CurveView : UserControl
         }
         else if (point.Properties.IsLeftButtonPressed)
         {
+            CurveEditStarted?.Invoke(this, EventArgs.Empty);
             if (nearestIndex >= 0)
             {
                 // Click is near an existing point - start dragging it
@@ -345,6 +346,7 @@ public partial class CurveView : UserControl
 
     internal void ResetCurve()
     {
+        CurveEditStarted?.Invoke(this, EventArgs.Empty);
         Curve?.Reset();
         _dragPointIndex = -1;
         _hoverPointIndex = -1;

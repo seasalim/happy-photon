@@ -10,7 +10,7 @@ internal sealed class AgxCrossing
     private const double Q16ToUnit = 1.0 / ushort.MaxValue;
 
     private readonly AgxToneParameters _parameters;
-    private readonly double[] _lut;
+    private readonly ToneLuts _luts;
     private readonly Matrix3x3 _input;
     private readonly Matrix3x3 _outset = new(AgxToneEngine.OutsetMatrix);
     private readonly double _log2Fold;
@@ -23,7 +23,13 @@ internal sealed class AgxCrossing
         double[,]? whiteBalanceMatrix = null)
     {
         ArgumentNullException.ThrowIfNull(parameters.Curve);
-        _parameters = parameters with { Curve = parameters.Curve.Clone() };
+        _parameters = parameters with
+        {
+            Curve = parameters.Curve.Clone(),
+            CurveRed = parameters.CurveRed?.Clone(),
+            CurveGreen = parameters.CurveGreen?.Clone(),
+            CurveBlue = parameters.CurveBlue?.Clone()
+        };
 
         if (whiteBalanceMatrix == null)
         {
@@ -40,7 +46,7 @@ internal sealed class AgxCrossing
             Fold = normalized.Fold;
         }
 
-        _lut = AgxToneLut.ComposeCached(_parameters, Fold);
+        _luts = AgxToneLut.ComposeCached(_parameters, Fold);
         _log2Fold = Math.Log2(Fold);
         _slope = AgxToneEngine.Slope(_parameters.Contrast);
         _toePower = AgxToneEngine.ToePower(_parameters.Shadows);
@@ -109,7 +115,7 @@ internal sealed class AgxCrossing
             Math.Max(1, (pixelCount + 32_767) / 32_768));
         var input = _input;
         var outset = _outset;
-        var lut = _lut;
+        var luts = _luts;
 
         Parallel.For(0, workers, worker =>
         {
@@ -125,9 +131,9 @@ internal sealed class AgxCrossing
                 var insetRed = Clamp01(input.Row0(red, green, blue));
                 var insetGreen = Clamp01(input.Row1(red, green, blue));
                 var insetBlue = Clamp01(input.Row2(red, green, blue));
-                var toneRed = AgxToneLut.InterpolateUnchecked(lut, insetRed);
-                var toneGreen = AgxToneLut.InterpolateUnchecked(lut, insetGreen);
-                var toneBlue = AgxToneLut.InterpolateUnchecked(lut, insetBlue);
+                var toneRed = AgxToneLut.InterpolateUnchecked(luts.Red, insetRed);
+                var toneGreen = AgxToneLut.InterpolateUnchecked(luts.Green, insetGreen);
+                var toneBlue = AgxToneLut.InterpolateUnchecked(luts.Blue, insetBlue);
 
                 values[offset + redChannel] = EncodeQ16(
                     outset.Row0(toneRed, toneGreen, toneBlue));
@@ -165,14 +171,17 @@ internal sealed class AgxCrossing
     private AgxRgb TransformAnalytic(AgxRgb inset, double exposureGain)
     {
         var tone = new AgxRgb(
-            EvaluateTone(inset.Red, exposureGain),
-            EvaluateTone(inset.Green, exposureGain),
-            EvaluateTone(inset.Blue, exposureGain));
+            EvaluateTone(inset.Red, exposureGain, _parameters.CurveRed),
+            EvaluateTone(inset.Green, exposureGain, _parameters.CurveGreen),
+            EvaluateTone(inset.Blue, exposureGain, _parameters.CurveBlue));
         return TransformOutput(tone, _outset);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private double EvaluateTone(double value, double exposureGain) =>
+    private double EvaluateTone(
+        double value,
+        double exposureGain,
+        HappyPhoton.Models.CurveData? channelCurve) =>
         AgxToneEngine.EvaluateToneUnchecked(
             value,
             _parameters,
@@ -180,15 +189,16 @@ internal sealed class AgxCrossing
             _log2Fold,
             _slope,
             _toePower,
-            _shoulderPower);
+            _shoulderPower,
+            channelCurve);
 
     internal AgxRgb TransformInterpolated(AgxRgb input)
     {
         var inset = TransformInput(input, _input);
         var tone = new AgxRgb(
-            AgxToneLut.InterpolateUnchecked(_lut, inset.Red),
-            AgxToneLut.InterpolateUnchecked(_lut, inset.Green),
-            AgxToneLut.InterpolateUnchecked(_lut, inset.Blue));
+            AgxToneLut.InterpolateUnchecked(_luts.Red, inset.Red),
+            AgxToneLut.InterpolateUnchecked(_luts.Green, inset.Green),
+            AgxToneLut.InterpolateUnchecked(_luts.Blue, inset.Blue));
         return TransformOutput(tone, _outset);
     }
 
@@ -201,9 +211,12 @@ internal sealed class AgxCrossing
             input,
             new Matrix3x3(AgxToneEngine.InsetMatrix));
         var tone = new AgxRgb(
-            AgxToneEngine.EvaluateTone(inset.Red, parameters, fold: 1),
-            AgxToneEngine.EvaluateTone(inset.Green, parameters, fold: 1),
-            AgxToneEngine.EvaluateTone(inset.Blue, parameters, fold: 1));
+            AgxToneEngine.EvaluateTone(
+                inset.Red, parameters, fold: 1, parameters.CurveRed),
+            AgxToneEngine.EvaluateTone(
+                inset.Green, parameters, fold: 1, parameters.CurveGreen),
+            AgxToneEngine.EvaluateTone(
+                inset.Blue, parameters, fold: 1, parameters.CurveBlue));
         return TransformOutput(
             tone,
             new Matrix3x3(AgxToneEngine.OutsetMatrix));

@@ -104,6 +104,9 @@ internal sealed record AgentEditSettingsPatch(
             target.HlReconstruction = Settings.HlReconstruction;
         }
         target.Curve = Settings.Curve.Clone();
+        target.CurveRed = null;
+        target.CurveGreen = null;
+        target.CurveBlue = null;
         target.AppliedPresetId = null;
     }
 }

@@ -139,7 +139,10 @@ public sealed class RenderPipeline
                         request.Settings.Contrast,
                         request.Settings.Highlights,
                         request.Settings.Shadows,
-                        request.Settings.Curve),
+                        request.Settings.Curve,
+                        request.Settings.CurveRed,
+                        request.Settings.CurveGreen,
+                        request.Settings.CurveBlue),
                     whiteBalance);
                 crossing.Apply(working);
             }
@@ -184,7 +187,10 @@ public sealed class RenderPipeline
             request.Settings.Shadows,
             request.Settings.Highlights,
             request.Settings.BaseLook ?? false,
-            request.Settings.Curve));
+            request.Settings.Curve,
+            request.Settings.CurveRed,
+            request.Settings.CurveGreen,
+            request.Settings.CurveBlue));
         ToneLutApplicator.Apply(working, chromatic.Matrix, tone);
     }
 

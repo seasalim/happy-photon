@@ -13,7 +13,6 @@ public partial class MainWindowViewModel
 
         var source = SelectedImage.EditSettings.Clone();
         SaveSlidersTo(source);
-        source.Curve = CurrentCurve?.Clone() ?? new CurveData();
 
         var preset = await PresetService.SaveUserPresetAsync(name, source, overwriteId);
         ActivePresetId = preset.Id;

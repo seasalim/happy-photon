@@ -352,6 +352,25 @@ public sealed class AgentToolModelsTests
     }
 
     [Fact]
+    public void EditSettingsInput_ReplaceClearsUnexposedChannelCurves()
+    {
+        var target = new EditSettings
+        {
+            CurveRed = new CurveData(),
+            CurveGreen = new CurveData(),
+            CurveBlue = new CurveData()
+        };
+        target.CurveRed!.AddPointAndReturnIndex(0.5, 0.7);
+
+        AgentEditSettingsMapper.CreatePatch(new AgentEditSettingsInput(
+            0, 0, 0, 0, 0, 0, 0)).ApplyTo(target);
+
+        Assert.Null(target.CurveRed);
+        Assert.Null(target.CurveGreen);
+        Assert.Null(target.CurveBlue);
+    }
+
+    [Fact]
     public void EditSettingsInput_RejectsRemovedManualWhiteBalanceMode()
     {
         var input = new AgentEditSettingsInput(

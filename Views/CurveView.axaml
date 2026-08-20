@@ -5,13 +5,123 @@
              mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="180"
              x:Class="HappyPhoton.Views.CurveView">
 
+    <UserControl.Styles>
+        <Style Selector="Button.curveChannel">
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.curveChannel /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.curveChannel:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        </Style>
+        <Style Selector="Button.curveChannel.red.touched /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{DynamicResource ColorLabelRed}"/>
+        </Style>
+        <Style Selector="Button.curveChannel.green.touched /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{DynamicResource ColorLabelGreen}"/>
+        </Style>
+        <Style Selector="Button.curveChannel.blue.touched /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{DynamicResource ColorLabelBlue}"/>
+        </Style>
+        <Style Selector="Button.curveChannel.composite.active /template/ ContentPresenter#PART_ContentPresenter,
+                         Button.curveChannel.composite.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnPrimary}"/>
+        </Style>
+        <Style Selector="Button.curveChannel.red.active /template/ ContentPresenter#PART_ContentPresenter,
+                         Button.curveChannel.red.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ColorLabelRed}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.curveChannel.green.active /template/ ContentPresenter#PART_ContentPresenter,
+                         Button.curveChannel.green.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ColorLabelGreen}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.curveChannel.blue.active /template/ ContentPresenter#PART_ContentPresenter,
+                         Button.curveChannel.blue.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ColorLabelBlue}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.curveReset">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="3"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.curveReset /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.curveReset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        </Style>
+        <Style Selector="Button.curveReset Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextMuted}"/>
+        </Style>
+        <Style Selector="Button.curveReset:pointerover Path">
+            <Setter Property="Stroke" Value="{StaticResource Primary}"/>
+        </Style>
+    </UserControl.Styles>
+
     <Border Background="{DynamicResource SurfaceLow}" CornerRadius="8" Padding="10">
         <Grid RowDefinitions="Auto,*,Auto">
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,8">
                 <TextBlock Text="Tone Curve" FontSize="11" Foreground="{DynamicResource TextMuted}"
-                           FontFamily="{StaticResource FontLabel}"/>
-                <Button Grid.Column="1" Content="Reset" FontSize="10"
-                        Padding="8,2" Click="OnResetClick"/>
+                           FontFamily="{StaticResource FontLabel}"
+                           VerticalAlignment="Center"/>
+                <Border Grid.Column="2" Width="112" Height="22" Margin="4,0"
+                        Background="{DynamicResource SurfaceHigh}"
+                        CornerRadius="4" Padding="2">
+                    <UniformGrid Rows="1" ColumnSpacing="2">
+                        <Button x:Name="CompositeChannelButton" Classes="curveChannel composite"
+                                Content="RGB" Click="OnCompositeChannelClick"/>
+                        <Button x:Name="RedChannelButton" Classes="curveChannel red"
+                                Content="R" Click="OnRedChannelClick"/>
+                        <Button x:Name="GreenChannelButton" Classes="curveChannel green"
+                                Content="G" Click="OnGreenChannelClick"/>
+                        <Button x:Name="BlueChannelButton" Classes="curveChannel blue"
+                                Content="B" Click="OnBlueChannelClick"/>
+                    </UniformGrid>
+                </Border>
+                <Button Grid.Column="3" Classes="curveReset" Click="OnResetClick"
+                        ToolTip.Tip="Reset the active channel's curve"
+                        AutomationProperties.Name="Reset curve">
+                    <Viewbox Width="14" Height="14">
+                        <Canvas Width="16" Height="16">
+                            <Path Fill="Transparent"
+                                  StrokeThickness="1.5"
+                                  StrokeLineCap="Round"
+                                  StrokeJoin="Round"
+                                  Data="M 2.5,8 A 5.5,5.5 0 1 0 8,2.5 M 8,2.5 L 5.2,1.2 M 8,2.5 L 6.7,5.3"/>
+                        </Canvas>
+                    </Viewbox>
+                </Button>
             </Grid>
 
             <Border Grid.Row="1" Background="{DynamicResource SurfaceBase}" CornerRadius="4"

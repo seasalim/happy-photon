@@ -43,6 +43,7 @@ public partial class MainWindowViewModel
 
         EditSettingsTransfer.ApplySubset(state, SelectedImage.EditSettings);
         SelectedImage.EditSettings.AppliedPresetId = ActivePresetId;
+        LoadCurrentCurveFrom(SelectedImage.EditSettings);
         SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
         await SaveEditSettingsAsync(SelectedImage);
         _lastSavedState = SelectedImage.EditSettings.Clone();
@@ -77,6 +78,9 @@ public partial class MainWindowViewModel
         SelectedImage.EditSettings.HlReconstruction = HlReconstructionMode.Clip;
         SelectedImage.EditSettings.Detail = new DetailSettings();
         SelectedImage.EditSettings.Curve.Reset();
+        SelectedImage.EditSettings.CurveRed = null;
+        SelectedImage.EditSettings.CurveGreen = null;
+        SelectedImage.EditSettings.CurveBlue = null;
         SelectedImage.EditSettings.AppliedPresetId = null;
         // Note: Rotation, horizon rotation, and crop are preserved (geometric transforms)
         SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
@@ -96,7 +100,7 @@ public partial class MainWindowViewModel
         Rotation = currentRotation;
         HorizonRotation = currentHorizonRotation;
         CurrentCrop = currentCrop;
-        CurrentCurve = new CurveData();
+        LoadCurrentCurveFrom(SelectedImage.EditSettings);
         ActivePresetId = null;
         _isLoadingImage = false;
 
@@ -142,7 +146,6 @@ public partial class MainWindowViewModel
 
         _isLoadingImage = true;
         LoadSlidersFrom(preset.Settings);
-        CurrentCurve = preset.Settings.Curve.Clone();
         ActivePresetId = presetId;
         Rotation = SelectedImage.EditSettings.Rotation;
         HorizonRotation = SelectedImage.EditSettings.HorizonRotation;
@@ -151,6 +154,7 @@ public partial class MainWindowViewModel
 
         EditSettingsTransfer.ApplySubset(preset.Settings, SelectedImage.EditSettings);
         SelectedImage.EditSettings.AppliedPresetId = presetId;
+        LoadCurrentCurveFrom(SelectedImage.EditSettings);
         SelectedImage.HasEdits = true;
 
         // Save to catalog

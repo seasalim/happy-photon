@@ -17,7 +17,6 @@ public partial class MainWindowViewModel
         tempSettings.Rotation = Rotation;
         tempSettings.HorizonRotation = HorizonRotation;
         tempSettings.Crop = PreviewCrop();
-        tempSettings.Curve = CurrentCurve ?? new CurveData();
 
         using var artifacts = await ImageService.ApplyEditsToPreviewArtifactsAsync(
             selectedImage,

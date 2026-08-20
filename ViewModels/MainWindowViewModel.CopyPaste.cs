@@ -101,7 +101,6 @@ public partial class MainWindowViewModel
         try
         {
             LoadSlidersFrom(_copiedSettings);
-            CurrentCurve = _copiedSettings.Curve.Clone();
             Rotation = currentRotation;
             HorizonRotation = currentHorizonRotation;
             CurrentCrop = currentCrop;
@@ -115,6 +114,7 @@ public partial class MainWindowViewModel
         selectedImage.EditSettings.Rotation = storedRotation;
         selectedImage.EditSettings.HorizonRotation = storedHorizonRotation;
         selectedImage.EditSettings.Crop = storedCrop;
+        LoadCurrentCurveFrom(selectedImage.EditSettings);
         selectedImage.HasEdits = selectedImage.EditSettings.HasEdits;
         await SaveEditSettingsAsync(selectedImage);
 
@@ -135,8 +135,7 @@ public partial class MainWindowViewModel
 
     private void PushLiveUndoState()
     {
-        // No dedup: the pre-paste state may differ from the stack top only by
-        // curve, which the dedup comparison ignores.
+        // Paste owns one explicit pre-apply history snapshot.
         _history.PushEdit(CaptureLiveEditState(), dedup: false);
         SyncHistoryFlags();
     }
@@ -145,7 +144,6 @@ public partial class MainWindowViewModel
     {
         var liveState = SelectedImage!.EditSettings.Clone();
         SaveSlidersTo(liveState);
-        liveState.Curve = (CurrentCurve ?? new CurveData()).Clone();
         return liveState;
     }
 
@@ -200,7 +198,6 @@ public partial class MainWindowViewModel
             try
             {
                 LoadSlidersFrom(SelectedImage.EditSettings);
-                CurrentCurve = SelectedImage.EditSettings.Curve;
             }
             finally
             {

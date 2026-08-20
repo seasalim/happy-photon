@@ -32,7 +32,7 @@ families discontinuously at the threshold.
 3 Tone LUT     gain 2^(EVuser+EVsource)
                → log2 window (+ log2(fold) refund, once)
                → sigmoid                                    the crossing
-               → u^2.2 → E → user curve → D                 display, 1D
+               → u^2.2 → E → channel curve → master curve → D  display, 1D
 4 Matrix       AgX outset → E                               one Q16 write
 ```
 
@@ -41,7 +41,11 @@ analytically computed LUT evaluated by linear interpolation on the unrounded
 matrix output, and exactly one rounding — the final Q16 write. Interpolation
 error against the analytic chain is gated at ≤ 1 Q16 LSB. `fold` is the
 render normalization of the composed matrix; asShot keeps `M_WB = I` and
-`fold = 1` exactly. The user curve keeps its familiar sRGB-encoded axis.
+`fold = 1` exactly. The four user curves keep their familiar sRGB-encoded axis.
+For channel `c`, the curve seam is `u_c = master(channel_c(t_c))`; a missing
+channel curve is identity. The curves remain before the AgX outset, so the
+outset can mix their results. Crossing-off uses the same ordered seam without
+an outset.
 Crossing-off sources run the same fused pass degenerately (WB matrix only,
 no outset, fold refund in the gain). The working→target convert (sRGB or
 Display P3) runs in finalization, after every shared stage — see OUTPUT.md.
@@ -56,8 +60,10 @@ Display P3) runs in finalization, after every shared stage — see OUTPUT.md.
   defensible default, never to per-image slider drift.
 - **Achromatic in → achromatic out** through inset + sigmoid + outset (all
   matrix rows sum to 1).
-- **Monotone and bounded:** strictly monotone per channel for every slider
-  combination; output in [0,1].
+- **Monotone and bounded upstream:** strictly monotone per channel for every
+  slider combination before user curves; output remains in [0,1]. Identity or
+  monotone user curves preserve monotonicity. Decreasing user-curve segments
+  are accepted as deliberate intent.
 
 ## 4. The crossing, exactly
 

@@ -17,9 +17,8 @@ public class EditHistory
     /// <summary>
     /// Records the state that precedes a new user edit. By default dedups
     /// against the top entry; pass dedup: false to always push — required for
-    /// paste, whose pre-paste state may differ from the stack top only by
-    /// curve, which the dedup comparison ignores. A new edit always
-    /// invalidates the redo branch, even when the push dedups.
+    /// gesture transactions that must preserve their explicit start snapshot.
+    /// A new edit always invalidates the redo branch, even when the push dedups.
     /// </summary>
     public void PushEdit(EditSettings currentState, bool dedup = true)
     {

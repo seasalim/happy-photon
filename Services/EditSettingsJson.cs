@@ -80,12 +80,24 @@ internal static class EditSettingsJson
             settings.Detail.CaptureSharpen, 0, 100, ref changed);
         settings.Detail.ChromaNr = Clamp(settings.Detail.ChromaNr, 0, 100, ref changed);
         settings.Curve ??= new CurveData();
-        if (settings.Curve.Points == null)
+        RebuildCurve(settings.Curve);
+        RebuildCurve(settings.CurveRed);
+        RebuildCurve(settings.CurveGreen);
+        RebuildCurve(settings.CurveBlue);
+        return changed;
+    }
+
+    private static void RebuildCurve(CurveData? curve)
+    {
+        if (curve == null)
+        {
+            return;
+        }
+        if (curve.Points == null)
         {
             throw new JsonException("Tone curve points cannot be null.");
         }
-        settings.Curve.BuildLookupTable();
-        return changed;
+        curve.BuildLookupTable();
     }
 
     private static void ValidateWhiteBalance(WhiteBalanceSettings whiteBalance)

@@ -104,7 +104,7 @@ public sealed class ToneLutApplicatorTests
 
             ushort Transform(int row) => ToQuantum(
                 ToneLutApplicator.Interpolate(
-                    lut,
+                    row == 0 ? lut.Red : row == 1 ? lut.Green : lut.Blue,
                     matrix[row, 0] * red +
                     matrix[row, 1] * green +
                     matrix[row, 2] * blue));

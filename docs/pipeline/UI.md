@@ -38,7 +38,7 @@ WHITE BALANCE          (new group, WP3.3)
 ADJUSTMENTS            (existing group, Temperature slider REMOVED)
   Exposure / Brightness / Contrast / Saturation / Vibrance / Shadows / Highlights
   Recovery                                                [Clip | Blend]  (RAW only)
-CURVE                  (unchanged)
+TONE CURVE             [RGB | R | G | B] [embedded Reset]
 DETAIL
   Sharpen  ────────●────────   25
   Noise Red.                                [OFF | LIGHT | FULL]  (RAW only)
@@ -69,6 +69,14 @@ all sources; Sharpen displays the resolved source default (RAW 25, standard 0). 
 Red. is an Off/Light/Full segmented control that stays in place with a RAW chip and
 dims to `DisabledOpacity` for standard sources. Loaded-base capability reconciliation
 never reflows the panel or discards stored values.
+
+The tone-curve selector shares the curve control's existing header, so the panel and
+control do not grow. RGB is the default. Selecting an untouched R/G/B channel shows a
+detached identity draft; only a committed edit creates channel state. A present channel
+tints its selector letter. While a channel is active, its curve uses the matching color
+label token and the composite is painted dimly behind it. The embedded Reset clears
+only the active curve; RGB remains a required identity curve, while resetting R/G/B
+returns that optional field to null.
 
 ## 3. White balance group (WP3.3)
 
@@ -137,15 +145,18 @@ never reflows the panel or discards stored values.
 
 ## 6. Reset / undo / presets / copy-paste scope
 
-- **Reset** returns: `wb → asShot`, `baseLook → null` (source default),
+- **Reset** returns: `wb → asShot`, `baseLook → null` (source default), all four
+  curves to identity (the three optional channel fields to null),
   `hlReconstruction → clip`, `detail → source defaults`, plus all existing fields.
   One undo step, as today.
-- **Undo/redo**: each committed control change is one step (existing granularity);
+- **Undo/redo**: each committed control change is one step (existing granularity),
+  including a full curve drag, point removal, or embedded curve reset;
   this includes each Clip/Blend selection; mode switches (preset select, eyedropper
   pick, Auto) are each one step.
-- **User presets** capture color, tonal, and detail fields and still never geometry.
+- **User presets** capture color, tonal, all curve, and detail fields and still never geometry.
   Applying/untoggling behavior is unchanged.
-- **Copy/paste** (`Ctrl+Shift+C/V`) carries the same widened set; geometry still never
+- **Copy/paste** (`Ctrl+Shift+C/V`) carries the same widened set, including nullable
+  channel curves; geometry still never
   transfers; Library multi-paste confirmation flow unchanged.
 
 Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields use

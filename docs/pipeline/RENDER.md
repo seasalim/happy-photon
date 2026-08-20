@@ -94,7 +94,8 @@ shared edits in finalization (WORKING_SPACE.md §9).
 
 RAW sources use the scene-referred crossing defined normatively in
 [TONE_ENGINE.md](TONE_ENGINE.md): exposure gain → normalized log2 → parameterized
-sigmoid → `u^2.2` → sRGB encode → user curve → decode → AgX outset → encode.
+sigmoid → `u^2.2` → sRGB encode → channel curve → master curve → decode →
+AgX outset → encode.
 Contrast controls sigmoid slope at grey, Highlights controls the shoulder power, and
 Shadows controls the toe power. The post-gain scene value `a = 0.18` maps to the pinned
 display grey for every Contrast value and every `EVsource`. Brightness and base look
@@ -120,7 +121,7 @@ f  = clamp01(e + Brightness/100 · 0.35)
 h  = clamp01(0.5 + (f − 0.5) · slope)    // slope = tan(π/4 · (1 + Contrast/100 · 0.6))
 s  = h + Shadows/100 · 0.35 · h·(1−h)³   // §5.2  closed on [0,1], no clamp needed
 t  = clamp01(s + max(Highlights,0)/100 · 0.30 · s³)   // §5.3
-u  = curve(t)                            // §5.5  input already ∈ [0,1]
+u  = master(channel(t))                  // §5.5  input already ∈ [0,1]
 lut[i] = clamp01(u)
 ```
 
@@ -176,15 +177,20 @@ Monotone on [0,1] (derivative ≥ 1 − 0.63 > 0) and range ⊂ [0,1].
 `EditSettings.BaseLook == null` means off. Persisted true/false values remain functional
 for crossing-off sources; crossing-on sources retain the value but ignore it.
 
-### 5.5 User curve
+### 5.5 User curves
 
-Existing `CurveData` 256-entry table, evaluated with linear interpolation between
-entries at LUT-composition time (input `t·255`). `CurveData` orders points by X but
-does **not** constrain Y ([CurveData.cs](../../Models/CurveData.cs)) — a user can
-draw a decreasing curve, and that is allowed (deliberate solarization is user intent,
-not a pipeline bug). Consequently the global monotonicity *property test* runs with
-identity/monotone curves only (TESTING.md §4.1); everything upstream of the curve must
-stay monotone unconditionally.
+Each channel optionally has a `CurveData` 256-entry table, followed by the required
+composite/master table: `u_c = master(channel_c(t_c))`. A missing channel table is
+identity. Both tone regimes compose this at one shared seam; RAW keeps it before the
+AgX outset, whose matrix may then mix channels. Identity channel curves share the
+master LUT array and add no application cost.
+
+Tables are evaluated with linear interpolation between entries at LUT-composition
+time (input `t·255`). `CurveData` orders points by X but does **not** constrain Y
+([CurveData.cs](../../Models/CurveData.cs)) — a user can draw a decreasing curve, and
+that is allowed (deliberate solarization is user intent, not a pipeline bug).
+Consequently the global monotonicity *property test* runs with identity/monotone
+curves only (TESTING.md §4.1); everything upstream must stay monotone unconditionally.
 
 ## 6. Chroma stage
 
@@ -276,9 +282,18 @@ JSON document shape (canonical field order for hashing):
               "noiseReduction": "off",   // off | light | full  (FBDD, decode-affecting)
               "chromaNr": 0 },           // 0-100
   "rotation": 0, "horizon_rotation": 0.0, "crop": null,
-  "curve": { }, "applied_preset_id": null
+  "curve": { },
+  "curveRed": { },                       // optional; omitted = identity
+  "curveGreen": { },                     // optional; omitted = identity
+  "curveBlue": { },                      // optional; omitted = identity
+  "applied_preset_id": null
 }
 ```
+
+The three channel fields follow `curve` in the shown order and use null-omission
+semantics: `null` is never serialized. Legacy v2 documents therefore remain
+byte-identical after normalization, and `Clamp` validates/rebuilds an optional curve
+only when the field was present. Selecting a channel in the UI does not materialize it.
 
 `hlReconstruction` and `detail.noiseReduction` are the **decode-affecting subset**;
 they project into `BaseDecodeSettings` (OVERVIEW.md §4, DECODE.md §4) and changing
@@ -328,6 +343,8 @@ The MCP `apply_edit_settings` input defaults an omitted `version` to 2 and accep
 version 2. Its white balance shape is the same `asShot`/`custom`/`preset`/`picked` model
 shown above; there is no scalar temperature field or generic raw-gain mode. Unsupported
 versions and modes are rejected before any image is mutated.
+Because `apply_edit_settings` replaces tonal state without exposing channel curves,
+it clears all three optional channel curves rather than retaining stale values.
 
 ## 9. Detail stage
 

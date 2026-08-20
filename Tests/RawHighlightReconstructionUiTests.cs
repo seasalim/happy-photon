@@ -107,7 +107,9 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         panel.Measure(new Size(250, 660));
         panel.Arrange(new Rect(0, 0, 250, 660));
 
+        vm.OnCurveEditStarted();
         vm.CurrentCurve!.AddPointAndReturnIndex(0.5, 0.75);
+        await vm.OnCurveChangedAsync();
         var curve = panel.FindControl<CurveView>("ToneCurveView")!;
         curve.Curve = vm.CurrentCurve;
         var curveChanged = false;

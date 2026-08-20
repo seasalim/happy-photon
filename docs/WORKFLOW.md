@@ -314,7 +314,10 @@ If the image already looks right, leave them alone.
 ### Refine the tone
 
 Use the **Tone Curve** when the basic controls cannot produce the tonal shape
-you want. It is a finishing tool, not a required step.
+you want. It is a finishing tool, not a required step. RGB shapes the composite
+curve. Choose R, G, or B for channel-specific balance and split-tone effects; edited
+channel letters stay tinted. The curve's Reset clears only the active channel, while
+the Develop footer RESET clears every curve and other tonal adjustments.
 
 ### Refine detail
 
@@ -352,7 +355,8 @@ include crop, rotation, or horizon changes.
 
 ### Copy edits between images
 
-Press `Ctrl+Shift+C` to copy the current image's color, tonal, curve, and preset
+Press `Ctrl+Shift+C` to copy the current image's color, tonal, composite and channel
+curve, and preset
 settings. Press `Ctrl+Shift+V` to paste them onto another image.
 
 To apply the settings to several photographs:

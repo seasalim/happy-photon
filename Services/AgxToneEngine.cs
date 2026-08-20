@@ -8,7 +8,10 @@ internal readonly record struct AgxToneParameters(
     int Contrast,
     int Highlights,
     int Shadows,
-    CurveData Curve);
+    CurveData Curve,
+    CurveData? CurveRed = null,
+    CurveData? CurveGreen = null,
+    CurveData? CurveBlue = null);
 
 internal static class AgxToneEngine
 {
@@ -103,7 +106,8 @@ internal static class AgxToneEngine
     internal static double EvaluateTone(
         double value,
         AgxToneParameters parameters,
-        double fold)
+        double fold,
+        CurveData? channelCurve = null)
     {
         Validate(parameters, fold);
         return EvaluateToneUnchecked(
@@ -113,7 +117,8 @@ internal static class AgxToneEngine
             Math.Log2(fold),
             Slope(parameters.Contrast),
             ToePower(parameters.Shadows),
-            ShoulderPower(parameters.Highlights));
+            ShoulderPower(parameters.Highlights),
+            channelCurve);
     }
 
     internal static double EvaluateToneUnchecked(
@@ -123,7 +128,8 @@ internal static class AgxToneEngine
         double log2Fold,
         double slope,
         double toePower,
-        double shoulderPower)
+        double shoulderPower,
+        CurveData? channelCurve = null)
     {
         var x = NormalizeLog(
             Math.Clamp(value, 0, 1),
@@ -136,7 +142,10 @@ internal static class AgxToneEngine
             shoulderPower);
         var displayLinear = Math.Pow(encoded22, DisplayGamma);
         var curveInput = ToneLut.SrgbEncode(displayLinear);
-        var curveOutput = ToneLut.EvaluateCurve(parameters.Curve, curveInput);
+        var curveOutput = ToneLut.EvaluateComposedCurve(
+            parameters.Curve,
+            channelCurve,
+            curveInput);
         return ToneLut.SrgbDecode(Math.Clamp(curveOutput, 0, 1));
     }
 

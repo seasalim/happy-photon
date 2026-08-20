@@ -6,7 +6,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class EditHistoryTests
 {
-    // Distinct states differ by Exposure (compared by EqualsIgnoringRotation).
+    // Most test states differ by Exposure (compared by EqualsIgnoringRotation).
     private static EditSettings S(double exposure) => new() { Exposure = exposure };
 
     [Fact]
@@ -114,6 +114,26 @@ public sealed class EditHistoryTests
         Assert.Same(a2, history.Undo(S(1)));    // both entries present
         Assert.Same(a, history.Undo(a2));
         Assert.False(history.CanUndo);
+    }
+
+    [Fact]
+    public void EqualityDistinguishesEveryCurveAndNullFromPresent()
+    {
+        var baseline = new EditSettings();
+        var composite = baseline.Clone();
+        composite.Curve.AddPointAndReturnIndex(0.5, 0.7);
+        var red = baseline.Clone();
+        red.CurveRed = new CurveData();
+        var green = baseline.Clone();
+        green.CurveGreen = new CurveData();
+        var blue = baseline.Clone();
+        blue.CurveBlue = new CurveData();
+
+        Assert.False(baseline.EqualsIgnoringRotation(composite));
+        Assert.False(baseline.EqualsIgnoringRotation(red));
+        Assert.False(baseline.EqualsIgnoringRotation(green));
+        Assert.False(baseline.EqualsIgnoringRotation(blue));
+        Assert.False(red.EqualsIgnoringRotation(green));
     }
 
     [Fact]

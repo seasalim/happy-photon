@@ -294,7 +294,6 @@ public partial class MainWindowViewModel
             try
             {
                 LoadSlidersFrom(SelectedImage.EditSettings);
-                CurrentCurve = SelectedImage.EditSettings.Curve;
             }
             finally
             {

@@ -92,6 +92,37 @@ public sealed class RenderPipelineToneRegimeTests
         Assert.Equal(expected, RenderPipelineTestSupport.ReadPixels(actual));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RedChannelCurveChangesRedOutputInBothToneRegimes(bool isRaw)
+    {
+        ushort[] samples =
+        [
+            12000, 12000, 12000,
+            28000, 28000, 28000,
+            48000, 48000, 48000
+        ];
+        using var baseImage = RenderPipelineTestSupport.CreateBase(
+            samples,
+            isRaw: isRaw);
+        using var baseline = RenderShared(new EditSettings(), baseImage);
+        var redCurve = new CurveData();
+        redCurve.AddPointAndReturnIndex(0.5, 0.75);
+        using var curved = RenderShared(
+            new EditSettings { CurveRed = redCurve },
+            baseImage);
+        var baselinePixels = RenderPipelineTestSupport.ReadPixels(baseline);
+        var curvedPixels = RenderPipelineTestSupport.ReadPixels(curved);
+
+        Assert.NotEqual(baselinePixels[3], curvedPixels[3]);
+        if (!isRaw)
+        {
+            Assert.Equal(baselinePixels[4], curvedPixels[4]);
+            Assert.Equal(baselinePixels[5], curvedPixels[5]);
+        }
+    }
+
     private RenderResult Render(EditSettings settings, BaseImage baseImage) =>
         _pipeline.Render(new RenderRequest(
             baseImage,

@@ -186,9 +186,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private double _horizonRotation;
 
     [ObservableProperty]
-    private CurveData? _currentCurve;
-
-    [ObservableProperty]
     private string? _activePresetId;
 
     [ObservableProperty]
@@ -331,7 +328,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         target.Highlights = Highlights;
         target.Rotation = Rotation;
         target.HorizonRotation = HorizonRotation;
-        if (CurrentCurve != null) target.Curve = CurrentCurve;
         target.AppliedPresetId = ActivePresetId;
     }
 
@@ -350,7 +346,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         Rotation = source.Rotation;
         HorizonRotation = source.HorizonRotation;
         CurrentCrop = source.Crop?.Clone();
-        CurrentCurve = source.Curve;
+        LoadCurrentCurveFrom(source);
         ActivePresetId = source.AppliedPresetId != null &&
                          PresetService.GetById(source.AppliedPresetId) != null
             ? source.AppliedPresetId

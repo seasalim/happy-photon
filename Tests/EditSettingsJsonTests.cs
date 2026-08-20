@@ -59,6 +59,56 @@ public sealed class EditSettingsJsonTests
     }
 
     [Fact]
+    public void Serialize_WithoutChannelCurves_RemainsByteIdenticalToLegacyV2()
+    {
+        const string expected =
+            "{\"version\":2,\"exposure\":0,\"wb\":{\"mode\":\"asShot\"," +
+            "\"kelvin\":null,\"tint\":null,\"gains\":null,\"preset\":null}," +
+            "\"highlights\":0,\"shadows\":0,\"brightness\":0,\"contrast\":0," +
+            "\"saturation\":0,\"vibrance\":0,\"baseLook\":null," +
+            "\"hlReconstruction\":\"clip\",\"detail\":{\"captureSharpen\":null," +
+            "\"noiseReduction\":\"off\",\"chromaNr\":0},\"rotation\":0," +
+            "\"horizon_rotation\":0,\"crop\":null,\"curve\":{\"points\":" +
+            "[{\"x\":0,\"y\":0},{\"x\":1,\"y\":1}]}," +
+            "\"applied_preset_id\":null}";
+
+        Assert.Equal(expected, EditSettingsJson.Serialize(new EditSettings()));
+    }
+
+    [Fact]
+    public void ChannelCurves_RoundTripOnlyWhenPresent()
+    {
+        var red = new CurveData();
+        red.AddPointAndReturnIndex(0.5, 0.7);
+        var source = new EditSettings { CurveRed = red };
+
+        var json = EditSettingsJson.Serialize(source);
+        var result = EditSettingsJson.Deserialize(json, out var wasClamped);
+
+        Assert.False(wasClamped);
+        Assert.Contains("\"curveRed\"", json);
+        Assert.DoesNotContain("\"curveGreen\"", json);
+        Assert.DoesNotContain("\"curveBlue\"", json);
+        Assert.NotNull(result.CurveRed);
+        Assert.Null(result.CurveGreen);
+        Assert.Null(result.CurveBlue);
+        Assert.True(result.CurveRed!.LookupTable[128] > 140);
+    }
+
+    [Fact]
+    public void Deserialize_LegacyV2_DoesNotMaterializeOptionalChannels()
+    {
+        var json = EditSettingsJson.Serialize(new EditSettings());
+
+        var result = EditSettingsJson.Deserialize(json, out _);
+
+        Assert.Null(result.CurveRed);
+        Assert.Null(result.CurveGreen);
+        Assert.Null(result.CurveBlue);
+        Assert.Equal(json, EditSettingsJson.Serialize(result));
+    }
+
+    [Fact]
     public void Deserialize_ClampsAllPersistedSliderRanges()
     {
         var json = """

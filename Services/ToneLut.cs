@@ -10,13 +10,27 @@ internal readonly record struct ToneParams(
     int Shadows,
     int Highlights,
     bool BaseLookEnabled,
-    CurveData Curve);
+    CurveData Curve,
+    CurveData? CurveRed = null,
+    CurveData? CurveGreen = null,
+    CurveData? CurveBlue = null);
+
+internal sealed record ToneLuts(double[] Red, double[] Green, double[] Blue);
 
 internal static class ToneLut
 {
     internal const int Length = ushort.MaxValue + 1;
 
-    public static double[] Compose(ToneParams parameters)
+    public static ToneLuts Compose(ToneParams parameters) =>
+        ChannelCurveLutComposer.Compose(
+            parameters.CurveRed,
+            parameters.CurveGreen,
+            parameters.CurveBlue,
+            channelCurve => Compose(parameters, channelCurve));
+
+    private static double[] Compose(
+        ToneParams parameters,
+        CurveData? channelCurve)
     {
         var lut = new double[Length];
         var workers = Math.Min(
@@ -30,14 +44,21 @@ internal static class ToneLut
             {
                 lut[index] = Evaluate(
                     parameters,
-                    index / (double)(Length - 1));
+                    index / (double)(Length - 1),
+                    channelCurve);
             }
         });
 
         return lut;
     }
 
-    internal static double Evaluate(ToneParams parameters, double input)
+    internal static double Evaluate(ToneParams parameters, double input) =>
+        Evaluate(parameters, input, channelCurve: null);
+
+    internal static double Evaluate(
+        ToneParams parameters,
+        double input,
+        CurveData? channelCurve)
     {
         var gain = ExposureGain(
             parameters.ExposureEv,
@@ -53,7 +74,10 @@ internal static class ToneLut
         var shadowed = ApplyShadows(contrasted, parameters.Shadows);
         var highlighted = ApplyPositiveHighlights(shadowed, parameters.Highlights);
         return Math.Clamp(
-            EvaluateCurve(parameters.Curve, highlighted),
+            EvaluateComposedCurve(
+                parameters.Curve,
+                channelCurve,
+                highlighted),
             0,
             1);
     }
@@ -127,4 +151,40 @@ internal static class ToneLut
         return (curve.LookupTable[lowerIndex] * (1 - fraction) +
                 curve.LookupTable[upperIndex] * fraction) / byte.MaxValue;
     }
+
+    internal static double EvaluateComposedCurve(
+        CurveData composite,
+        CurveData? channel,
+        double value)
+    {
+        var channelOutput = channel == null
+            ? value
+            : EvaluateCurve(channel, value);
+        return EvaluateCurve(composite, channelOutput);
+    }
+}
+
+internal static class ChannelCurveLutComposer
+{
+    internal static ToneLuts Compose(
+        CurveData? red,
+        CurveData? green,
+        CurveData? blue,
+        Func<CurveData?, double[]> compose)
+    {
+        var redActive = IsActive(red);
+        var greenActive = IsActive(green);
+        var blueActive = IsActive(blue);
+        double[]? shared = redActive && greenActive && blueActive
+            ? null
+            : compose(null);
+
+        return new ToneLuts(
+            redActive ? compose(red) : shared!,
+            greenActive ? compose(green) : shared!,
+            blueActive ? compose(blue) : shared!);
+    }
+
+    private static bool IsActive(CurveData? curve) =>
+        curve != null && !curve.IsIdentity();
 }

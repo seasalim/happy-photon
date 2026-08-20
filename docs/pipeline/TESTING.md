@@ -195,7 +195,8 @@ orders above the observed difference.
 1. **Tone suites:** `AgxToneEngineTests`, `AgxCrossingTests`, and
    `AgxCrossingDerivationTests` pin the crossing properties, source-derived constants,
    exact-table interpolation, and Blender oracle. `ToneLutTests` pins the retained
-   crossing-off formulas and monotonicity for identity/monotone user curves.
+   crossing-off formulas, channel-before-master composition in both regimes,
+   identity-array sharing, and monotonicity for identity/monotone user curves.
 2. **`WhiteBalanceModelTests`**: WHITE_BALANCE.md §9 list.
 3. **`RenderDeterminismTests`**: repeated render bit-identical; burst pair identical;
    settings hash stable across process runs (canonical JSON ordering).
@@ -304,7 +305,8 @@ Opt-in `HAPPY_PHOTON_PERF=1` diagnostics remain outside normal CI. The tone
 gate is `AgxPerformanceGateTests`: one warm-up, median of five, a separate
 process per output target, and a required JSON report. It covers 1600px
 Contrast +25 slider ticks on the Canon 6D, Fuji X30, sRGB JPEG, and HEIC; the
-three-size RAW export per target; and the full-resolution standard export,
+three-size RAW export per target; the full-resolution standard export; and unique-key
+cold all-channel-curve ticks for one RAW and one standard fixture,
 sampling process private memory every 10 ms. Reports compare against the same
 harness run on the pre-AgX baseline (`878903f`); budgets are slider ≤ 150 ms,
 export wall ≤ +5%, and private peak ≤ +16 MiB.

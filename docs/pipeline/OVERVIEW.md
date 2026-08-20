@@ -81,7 +81,8 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
             ┌─ RENDER.md ──────────▼──────────────────────────────────┐
             │ 1 Geometry   rotate90 → horizon(+safe crop) → crop      │
             │ 2 Matrix     RAW: AgX inset × WB; standard: WB           │
-            │ 3 Tone LUT   RAW: gain→log2→sigmoid→curve; standard:    │
+            │ 3 Tone LUT   RAW: gain→log2→sigmoid→channel→master;    │
+            │              standard: retained chain→channel→master   │
             │              retained display-domain chain (exact Q16)  │
             │ 4 Matrix     RAW: AgX outset; standard: identity         │
             │ 5 Chroma     saturation, vibrance (Modulate)            │
@@ -215,6 +216,10 @@ disables RAW decoding until repaired; Magick does not decode RAW raster pixels.
 cache (DECODE.md §5) and selects the matching golden baseline. A visible render-math
 change increments it, which invalidates rendered caches and makes the corresponding
 golden update explicit. Decode changes increment `BaseImage.Version` similarly.
+An additive optional setting is the narrow exception: the version stays put when
+omitting the new field reproduces old pixels bit-for-bit and canonical JSON omits it,
+so old settings hashes and caches remain valid. Per-channel curves use this exception;
+present fields change the canonical settings hash.
 `BaseDecodeSettings.CacheKey` is the invariant, culture-independent string
 `base-v{BaseImage.Version};hl={blend|clip};fbdd={off|light|full}`. In-memory identity
 adds normalized file path and preview/full size class; rendered-cache settings hashes

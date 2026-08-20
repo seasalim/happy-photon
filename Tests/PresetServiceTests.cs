@@ -32,6 +32,7 @@ public sealed class PresetServiceTests : IDisposable
         Assert.Equal(source.Wb.Tint, file.Settings.Wb.Tint);
         Assert.Equal(source.Curve.Points.Count, file.Settings.Curve.Points.Count);
         Assert.Equal(source.Curve.Points[1].Y, file.Settings.Curve.Points[1].Y);
+        Assert.Equal(source.CurveRed!.Points[1].Y, file.Settings.CurveRed!.Points[1].Y);
     }
 
     [Fact]
@@ -336,7 +337,8 @@ public sealed class PresetServiceTests : IDisposable
             Vibrance = 17,
             Shadows = 11,
             Highlights = -21,
-            Curve = curve
+            Curve = curve,
+            CurveRed = curve.Clone()
         };
     }
 }

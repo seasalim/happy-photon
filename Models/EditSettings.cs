@@ -85,9 +85,24 @@ public class EditSettings
     [JsonPropertyOrder(15)]
     public CurveData Curve { get; set; } = new();
 
+    [JsonPropertyName("curveRed")]
+    [JsonPropertyOrder(16)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CurveData? CurveRed { get; set; }
+
+    [JsonPropertyName("curveGreen")]
+    [JsonPropertyOrder(17)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CurveData? CurveGreen { get; set; }
+
+    [JsonPropertyName("curveBlue")]
+    [JsonPropertyOrder(18)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CurveData? CurveBlue { get; set; }
+
     /// <summary>ID of the preset that was applied, or null if no preset is active</summary>
     [JsonPropertyName("applied_preset_id")]
-    [JsonPropertyOrder(16)]
+    [JsonPropertyOrder(19)]
     public string? AppliedPresetId { get; set; }
 
     [JsonIgnore]
@@ -98,7 +113,11 @@ public class EditSettings
                           Detail.CaptureSharpen != null || Detail.NoiseReduction != FbddMode.Off ||
                           Detail.ChromaNr != 0 ||
                           Rotation != 0 || HorizonRotation != 0.0 || (Crop != null && !Crop.IsFullImage) ||
-                          !Curve.IsIdentity() || AppliedPresetId != null;
+                          !Curve.IsIdentity() ||
+                          (CurveRed is { } red && !red.IsIdentity()) ||
+                          (CurveGreen is { } green && !green.IsIdentity()) ||
+                          (CurveBlue is { } blue && !blue.IsIdentity()) ||
+                          AppliedPresetId != null;
 
     public EditSettings Clone() => new()
     {
@@ -118,6 +137,9 @@ public class EditSettings
         HorizonRotation = HorizonRotation,
         Crop = Crop?.Clone(),
         Curve = Curve?.Clone() ?? new CurveData(),
+        CurveRed = CurveRed?.Clone(),
+        CurveGreen = CurveGreen?.Clone(),
+        CurveBlue = CurveBlue?.Clone(),
         AppliedPresetId = AppliedPresetId
     };
 
@@ -135,6 +157,28 @@ public class EditSettings
                Detail.CaptureSharpen == other.Detail.CaptureSharpen &&
                Detail.NoiseReduction == other.Detail.NoiseReduction &&
                Detail.ChromaNr == other.Detail.ChromaNr &&
+               CurvesMatch(Curve, other.Curve) &&
+               CurvesMatch(CurveRed, other.CurveRed) &&
+               CurvesMatch(CurveGreen, other.CurveGreen) &&
+               CurvesMatch(CurveBlue, other.CurveBlue) &&
                AppliedPresetId == other.AppliedPresetId;
     }
+
+    private static bool CurvesMatch(CurveData? left, CurveData? right)
+    {
+        if (left == null || right == null)
+        {
+            return left == right;
+        }
+
+        return left.Points.SequenceEqual(right.Points);
+    }
+}
+
+public enum ToneCurveChannel
+{
+    Composite,
+    Red,
+    Green,
+    Blue
 }

@@ -9,11 +9,23 @@ internal static class AgxToneLut
     private static readonly object CacheLock = new();
     private static readonly List<CacheEntry> Cache = [];
 
-    internal static double[] Compose(
+    internal static ToneLuts Compose(
         AgxToneParameters parameters,
         double fold)
     {
         AgxToneEngine.Validate(parameters, fold);
+        return ChannelCurveLutComposer.Compose(
+            parameters.CurveRed,
+            parameters.CurveGreen,
+            parameters.CurveBlue,
+            channelCurve => Compose(parameters, fold, channelCurve));
+    }
+
+    private static double[] Compose(
+        AgxToneParameters parameters,
+        double fold,
+        HappyPhoton.Models.CurveData? channelCurve)
+    {
         var lut = new double[Length];
         var exposureGain = Math.Pow(
             2,
@@ -38,13 +50,14 @@ internal static class AgxToneLut
                     log2Fold,
                     slope,
                     toePower,
-                    shoulderPower);
+                    shoulderPower,
+                    channelCurve);
             }
         });
         return lut;
     }
 
-    internal static double[] ComposeCached(
+    internal static ToneLuts ComposeCached(
         AgxToneParameters parameters,
         double fold)
     {
@@ -123,12 +136,16 @@ internal static class AgxToneLut
         private readonly bool _identityCurve;
         private readonly byte[] _curve;
 
-        internal double[] Lut { get; }
+        private readonly CurveKey _red;
+        private readonly CurveKey _green;
+        private readonly CurveKey _blue;
+
+        internal ToneLuts Lut { get; }
 
         internal CacheEntry(
             AgxToneParameters parameters,
             double fold,
-            double[] lut)
+            ToneLuts lut)
         {
             _exposureEv = parameters.ExposureEv;
             _sourceExposureEv = parameters.SourceExposureEv;
@@ -138,6 +155,9 @@ internal static class AgxToneLut
             _fold = fold;
             _identityCurve = parameters.Curve.IsIdentity();
             _curve = parameters.Curve.LookupTable.ToArray();
+            _red = new CurveKey(parameters.CurveRed);
+            _green = new CurveKey(parameters.CurveGreen);
+            _blue = new CurveKey(parameters.CurveBlue);
             Lut = lut;
         }
 
@@ -149,6 +169,29 @@ internal static class AgxToneLut
             _shadows == parameters.Shadows &&
             _fold == fold &&
             _identityCurve == parameters.Curve.IsIdentity() &&
-            _curve.AsSpan().SequenceEqual(parameters.Curve.LookupTable);
+            _curve.AsSpan().SequenceEqual(parameters.Curve.LookupTable) &&
+            _red.Matches(parameters.CurveRed) &&
+            _green.Matches(parameters.CurveGreen) &&
+            _blue.Matches(parameters.CurveBlue);
+    }
+
+    private sealed class CurveKey
+    {
+        private readonly bool _present;
+        private readonly bool _identity;
+        private readonly byte[] _lookupTable;
+
+        internal CurveKey(HappyPhoton.Models.CurveData? curve)
+        {
+            _present = curve != null;
+            _identity = curve?.IsIdentity() ?? true;
+            _lookupTable = curve?.LookupTable.ToArray() ?? [];
+        }
+
+        internal bool Matches(HappyPhoton.Models.CurveData? curve) =>
+            _present == (curve != null) &&
+            _identity == (curve?.IsIdentity() ?? true) &&
+            (curve == null ||
+                _lookupTable.AsSpan().SequenceEqual(curve.LookupTable));
     }
 }

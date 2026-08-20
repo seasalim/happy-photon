@@ -34,6 +34,9 @@ public partial class DevelopEditPanel : UserControl
     private async void OnCurveChanged(object? sender, EventArgs e) =>
         await ForwardCurveChangedAsync();
 
+    private void OnCurveEditStarted(object? sender, EventArgs e) =>
+        (DataContext as MainWindowViewModel)?.OnCurveEditStarted();
+
     internal Task ForwardCurveChangedAsync() =>
         DataContext is MainWindowViewModel viewModel
             ? viewModel.OnCurveChangedAsync()

@@ -1,3 +1,4 @@
+using HappyPhoton.Models;
 using HappyPhoton.Services;
 using Xunit;
 
@@ -120,7 +121,7 @@ public sealed class AgxToneEngineDerivationTests
             shadows: 100,
             exposureEv: 1.25,
             sourceExposureEv: -0.375);
-        var lut = AgxToneLut.Compose(parameters, fold: 1.37);
+        var lut = AgxToneLut.Compose(parameters, fold: 1.37).Red;
 
         Assert.Equal(AgxToneLut.Length, lut.Length);
         for (var index = 0; index < lut.Length; index++)
@@ -146,7 +147,7 @@ public sealed class AgxToneEngineDerivationTests
                 contrast,
                 highlights,
                 shadows);
-            var lut = AgxToneLut.Compose(parameters, fold: 1);
+            var lut = AgxToneLut.Compose(parameters, fold: 1).Red;
             for (var index = 0; index < AgxToneLut.Length - 1; index++)
             foreach (var fraction in new[] { 0.25, 0.5, 0.75 })
             {
@@ -162,6 +163,137 @@ public sealed class AgxToneEngineDerivationTests
                     $"interpolated {interpolatedCode:R}.");
             }
         }
+    }
+
+    [Fact]
+    public void LutComposition_IdentityChannelsShareOneArray()
+    {
+        var parameters = AgxToneEnginePropertyTests.Parameters() with
+        {
+            CurveRed = new CurveData(),
+            CurveGreen = new CurveData(),
+            CurveBlue = new CurveData()
+        };
+
+        var luts = AgxToneLut.Compose(parameters, fold: 1);
+
+        Assert.Same(luts.Red, luts.Green);
+        Assert.Same(luts.Red, luts.Blue);
+    }
+
+    [Fact]
+    public void LutComposition_PreservesDecreasingChannelSegments()
+    {
+        var decreasing = new CurveData
+        {
+            Points =
+            [
+                new CurvePoint(0, 1),
+                new CurvePoint(1, 0)
+            ]
+        };
+        decreasing.BuildLookupTable();
+        var parameters = AgxToneEnginePropertyTests.Parameters() with
+        {
+            CurveRed = decreasing
+        };
+
+        var luts = AgxToneLut.Compose(parameters, fold: 1);
+
+        Assert.True(luts.Red[0] > luts.Red[^1]);
+        Assert.Same(luts.Green, luts.Blue);
+    }
+
+    [Fact]
+    public void ToneEvaluation_AppliesChannelBeforeComposite()
+    {
+        var channel = CreateCurve(0.35, 0.72);
+        var composite = CreateCurve(0.65, 0.42);
+        var parameters = AgxToneEnginePropertyTests.Parameters() with
+        {
+            Curve = composite,
+            CurveRed = channel
+        };
+        const double input = 0.18;
+        var x = AgxToneEngine.NormalizeLog(input, 0, 0, 1);
+        var encoded22 = AgxToneEngine.EvaluateSigmoid(
+            x,
+            AgxToneEngine.Slope(0),
+            AgxToneEngine.ToePower(0),
+            AgxToneEngine.ShoulderPower(0));
+        var curveInput = ToneLut.SrgbEncode(
+            Math.Pow(encoded22, AgxToneEngine.DisplayGamma));
+        var expected = ToneLut.SrgbDecode(ToneLut.EvaluateCurve(
+            composite,
+            ToneLut.EvaluateCurve(channel, curveInput)));
+        var reverse = ToneLut.SrgbDecode(ToneLut.EvaluateCurve(
+            channel,
+            ToneLut.EvaluateCurve(composite, curveInput)));
+
+        var actual = AgxToneEngine.EvaluateTone(
+            input, parameters, fold: 1, channel);
+
+        Assert.Equal(expected, actual, 12);
+        Assert.True(Math.Abs(actual - reverse) > 1e-3);
+    }
+
+    [Fact]
+    public void ComposeCached_KeysAndEvictsChannelCurves()
+    {
+        var firstParameters = AgxToneEnginePropertyTests.Parameters(
+            exposureEv: -2.873) with
+        {
+            CurveRed = CreateCurve(0.5, 0.61)
+        };
+        var first = AgxToneLut.ComposeCached(firstParameters, fold: 1);
+        var hit = AgxToneLut.ComposeCached(firstParameters with
+        {
+            CurveRed = firstParameters.CurveRed!.Clone()
+        }, fold: 1);
+        Assert.Same(first, hit);
+
+        for (var index = 0; index < 4; index++)
+        {
+            var parameters = firstParameters with
+            {
+                CurveRed = CreateCurve(0.5, 0.7 + index * 0.03)
+            };
+            AgxToneLut.ComposeCached(parameters, fold: 1);
+        }
+
+        var recomposed = AgxToneLut.ComposeCached(firstParameters, fold: 1);
+        Assert.NotSame(first, recomposed);
+    }
+
+    [Fact]
+    public void AnalyticAndInterpolatedPathsAgreeWithChannelCurves()
+    {
+        var parameters = AgxToneEnginePropertyTests.Parameters(
+            contrast: 35,
+            highlights: -20,
+            shadows: 40) with
+        {
+            CurveRed = CreateCurve(0.4, 0.68),
+            CurveGreen = CreateCurve(0.6, 0.35),
+            CurveBlue = new CurveData
+            {
+                Points =
+                [
+                    new CurvePoint(0, 1),
+                    new CurvePoint(1, 0)
+                ]
+            }
+        };
+        parameters.CurveBlue.BuildLookupTable();
+        var crossing = new AgxCrossing(parameters);
+        var input = new AgxRgb(0.12, 0.37, 0.81);
+
+        var analytic = crossing.TransformAnalytic(input);
+        var interpolated = crossing.TransformInterpolated(input);
+
+        Assert.InRange(Math.Abs(analytic.Red - interpolated.Red), 0, 2e-5);
+        Assert.InRange(Math.Abs(analytic.Green - interpolated.Green), 0, 2e-5);
+        Assert.InRange(Math.Abs(analytic.Blue - interpolated.Blue), 0, 2e-5);
     }
 
     [Fact]
@@ -249,4 +381,11 @@ public sealed class AgxToneEngineDerivationTests
         (ushort)Math.Round(
             Math.Clamp(value, 0, 1) * ushort.MaxValue,
             MidpointRounding.AwayFromZero);
+
+    private static CurveData CreateCurve(double x, double y)
+    {
+        var curve = new CurveData();
+        curve.AddPointAndReturnIndex(x, y);
+        return curve;
+    }
 }

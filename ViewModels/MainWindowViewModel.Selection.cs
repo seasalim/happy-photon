@@ -9,6 +9,7 @@ public partial class MainWindowViewModel
 {
     partial void OnSelectedImageChanged(ImageFile? oldValue, ImageFile? newValue)
     {
+        ClearCurveGesture();
         ClearNavigatorVisibleRegion();
 
         // Update IsActive flags for visual highlighting in Library grid
@@ -50,13 +51,14 @@ public partial class MainWindowViewModel
             RetryDeferredThumbnailIfAvailable(newValue);
             PrepareWhiteBalanceUi(newValue);
             NotifyWhiteBalanceCommandState();
+            ActiveCurveChannel = ToneCurveChannel.Composite;
             if (newValue.SourceRequiresHydration)
             {
                 _histogramDebounce?.Cancel();
                 Histogram = null;
                 ResetSliders();
                 CurrentCrop = null;
-                CurrentCurve = new CurveData();
+                LoadCurrentCurveFrom(null);
                 ActivePresetId = null;
                 _lastSavedState = null;
                 _isLoadingImage = false;
@@ -105,7 +107,7 @@ public partial class MainWindowViewModel
             ClearPreviewImage();
             Histogram = null;
             CurrentCrop = null;
-            CurrentCurve = null;
+            LoadCurrentCurveFrom(null);
             ActivePresetId = null;
             IsFullScreenMode = false;
             _lastSavedState = null;
@@ -164,7 +166,11 @@ public partial class MainWindowViewModel
         }
 
         // Note: Rotation is excluded - Reset only affects color/tonal adjustments
-        var hasCurveEdits = CurrentCurve != null && !CurrentCurve.IsIdentity();
+        var hasCurveEdits = SelectedImage?.EditSettings.Curve is { } composite &&
+                !composite.IsIdentity() ||
+            SelectedImage?.EditSettings.CurveRed is { } red && !red.IsIdentity() ||
+            SelectedImage?.EditSettings.CurveGreen is { } green && !green.IsIdentity() ||
+            SelectedImage?.EditSettings.CurveBlue is { } blue && !blue.IsIdentity();
         CanReset = Exposure != 0.0 ||
                    !_liveWhiteBalance.IsIdentity ||
                    Brightness != 0 ||
@@ -196,28 +202,7 @@ public partial class MainWindowViewModel
         Highlights = 0;
         Rotation = 0;
         HorizonRotation = 0.0;
-        CurrentCurve = SelectedImage?.EditSettings.Curve;
-        UpdateCanReset();
-    }
-
-    public async Task OnCurveChangedAsync()
-    {
-        if (!CanEditSelectedImage ||
-            SelectedImage == null ||
-            CurrentCurve == null)
-        {
-            return;
-        }
-
-        // Push undo state before making changes
-        PushUndoState();
-
-        // Rebuild the lookup table after curve changes
-        CurrentCurve.BuildLookupTable();
-
-        // Trigger live preview update and auto-save
-        await UpdatePreviewWithCurrentSliders();
-        await AutoSaveAsync();
+        LoadCurrentCurveFrom(SelectedImage?.EditSettings);
         UpdateCanReset();
     }
 }

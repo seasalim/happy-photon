@@ -416,8 +416,8 @@
                         </Grid>
 
                         <views:CurveView x:Name="ToneCurveView"
-                                         Curve="{Binding CurrentCurve}"
-                                         CurveChanged="OnCurveChanged"
+                                         Curve="{Binding CurrentCurve}" CompositeCurve="{Binding CompositeCurve}" ActiveChannel="{Binding ActiveCurveChannel, Mode=TwoWay}"
+                                         HasRedCurve="{Binding HasRedCurve}" HasGreenCurve="{Binding HasGreenCurve}" HasBlueCurve="{Binding HasBlueCurve}" CurveEditStarted="OnCurveEditStarted" CurveChanged="OnCurveChanged"
                                          Margin="0,20,0,0"
                                          Height="180"/>
 

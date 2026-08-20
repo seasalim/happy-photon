@@ -23,6 +23,9 @@ public static class EditSettingsTransfer
             HlReconstruction = source.HlReconstruction,
             Detail = source.Detail.Clone(),
             Curve = source.Curve.Clone(),
+            CurveRed = source.CurveRed?.Clone(),
+            CurveGreen = source.CurveGreen?.Clone(),
+            CurveBlue = source.CurveBlue?.Clone(),
             AppliedPresetId = source.AppliedPresetId
         };
     }
@@ -43,6 +46,9 @@ public static class EditSettingsTransfer
         target.HlReconstruction = copied.HlReconstruction;
         target.Detail = copied.Detail.Clone();
         target.Curve = copied.Curve.Clone();
+        target.CurveRed = copied.CurveRed?.Clone();
+        target.CurveGreen = copied.CurveGreen?.Clone();
+        target.CurveBlue = copied.CurveBlue?.Clone();
         target.AppliedPresetId = copied.AppliedPresetId;
     }
 
