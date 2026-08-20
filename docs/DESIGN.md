@@ -275,9 +275,11 @@ The review metadata is a curated FILE, CAMERA, and LOCATION summary for every su
 format. FILE combines dimensions, megapixels, and size; a missing capture date falls
 back to a muted file-modified date without changing capture-time semantics. CAMERA
 shows available camera, lens, and exposure rows independently, with exposure bias in
-the exposure line and 35mm-equivalent focal length in its tooltip. LOCATION shows
-coordinates and altitude when present. Missing rows remain absent rather than showing
-placeholder values.
+the exposure line and 35mm-equivalent focal length plus crop factor in its tooltip.
+A muted conditions line appears only when a frame deviates from defaults — flash
+fired, non-pattern metering, manual white balance — and stays absent otherwise.
+LOCATION shows coordinates and altitude when present. Missing rows remain absent
+rather than showing placeholder values.
 
 ## Elevation & Depth
 

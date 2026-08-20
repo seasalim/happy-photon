@@ -104,18 +104,18 @@ internal sealed class MetadataService
     internal static ImageMetadata ExtractMetadata(
         ImageFile imageFile,
         IRawProcessingService rawService,
-        Func<string, double?> rawExposureBiasReader) =>
+        Func<string, RawExifSupplement> rawSupplementReader) =>
         ExtractMetadataCore(
             imageFile,
             rawService,
             new SourceAvailabilityService(),
-            rawExposureBiasReader).Metadata;
+            rawSupplementReader).Metadata;
 
     private static MetadataExtractionResult ExtractMetadataCore(
         ImageFile imageFile,
         IRawProcessingService rawService,
         ISourceAvailabilityService availabilityService,
-        Func<string, double?>? rawExposureBiasReader = null)
+        Func<string, RawExifSupplement>? rawSupplementReader = null)
     {
         var swTotal = Stopwatch.StartNew();
         var builder = new MetadataBuilder();
@@ -150,10 +150,10 @@ internal sealed class MetadataService
                 {
                     source = "LibRaw";
                     builder.Apply(rawMetadata);
-                    ApplyRawExposureBias(
+                    ApplyRawExifSupplement(
                         imageFile.FilePath,
                         builder,
-                        rawExposureBiasReader);
+                        rawSupplementReader);
                     return MetadataExtractionResult.Loaded(
                         builder.ToMetadata());
                 }
@@ -258,6 +258,21 @@ internal sealed class MetadataService
 
         ApplyExposureBias(metadata, exifProfile);
 
+        if (exifProfile.GetValue(ExifTag.MeteringMode)?.Value is ushort metering)
+        {
+            metadata.MeteringMode = metering;
+        }
+
+        if (exifProfile.GetValue(ExifTag.WhiteBalance)?.Value is ushort whiteBalance)
+        {
+            metadata.WhiteBalanceMode = whiteBalance;
+        }
+
+        if (exifProfile.GetValue(ExifTag.Flash)?.Value is ushort flash)
+        {
+            metadata.FlashValue = flash;
+        }
+
         var latitude = exifProfile.GetValue(ExifTag.GPSLatitude)?.Value as Rational[];
         var longitude = exifProfile.GetValue(ExifTag.GPSLongitude)?.Value as Rational[];
         if (latitude != null && longitude != null)
@@ -278,45 +293,81 @@ internal sealed class MetadataService
         }
     }
 
-    private static void ApplyRawExposureBias(
+    private static void ApplyRawExifSupplement(
         string filePath,
         MetadataBuilder metadata,
-        Func<string, double?>? rawExposureBiasReader)
+        Func<string, RawExifSupplement>? rawSupplementReader)
     {
         try
         {
-            metadata.ExposureBias = rawExposureBiasReader != null
-                ? rawExposureBiasReader(filePath)
-                : ReadExposureBias(filePath);
+            var supplement = rawSupplementReader != null
+                ? rawSupplementReader(filePath)
+                : ReadRawExifSupplement(filePath);
+            metadata.ExposureBias = supplement.ExposureBias;
+            metadata.MeteringMode = supplement.MeteringMode;
+            metadata.WhiteBalanceMode = supplement.WhiteBalanceMode;
+            metadata.FlashValue = supplement.FlashValue;
         }
         catch (Exception ex)
         {
             LogDebug(
                 nameof(MetadataService),
-                $"RAW exposure-bias read failed: {ex.Message}",
+                $"RAW EXIF supplement read failed: {ex.Message}",
                 filePath);
         }
     }
 
-    // LibRaw does not surface exposure compensation and Magick returns no
-    // EXIF profile for RAW containers, so read just this tag with
-    // MetadataExtractor (header-only, no image decode).
-    private static double? ReadExposureBias(string filePath)
+    // LibRaw does not surface these capture tags and Magick returns no EXIF
+    // profile for RAW containers, so read them with MetadataExtractor
+    // (header-only, no image decode). Tags can live in a later SubIFD, so
+    // every EXIF directory is scanned, first present value wins.
+    internal static RawExifSupplement ReadRawExifSupplement(string filePath)
     {
+        double? bias = null;
+        int? metering = null;
+        int? whiteBalance = null;
+        int? flash = null;
         foreach (var directory in ImageMetadataReader
             .ReadMetadata(filePath)
             .OfType<ExifSubIfdDirectory>())
         {
-            if (directory.TryGetRational(
+            if (bias == null && directory.TryGetRational(
                 ExifDirectoryBase.TagExposureBias,
-                out var bias))
+                out var biasValue))
             {
-                return bias.ToDouble();
+                bias = biasValue.ToDouble();
+            }
+
+            if (metering == null && directory.TryGetInt32(
+                ExifDirectoryBase.TagMeteringMode,
+                out var meteringValue))
+            {
+                metering = meteringValue;
+            }
+
+            if (whiteBalance == null && directory.TryGetInt32(
+                ExifDirectoryBase.TagWhiteBalanceMode,
+                out var whiteBalanceValue))
+            {
+                whiteBalance = whiteBalanceValue;
+            }
+
+            if (flash == null && directory.TryGetInt32(
+                ExifDirectoryBase.TagFlash,
+                out var flashValue))
+            {
+                flash = flashValue;
             }
         }
 
-        return null;
+        return new RawExifSupplement(bias, metering, whiteBalance, flash);
     }
+
+    internal sealed record RawExifSupplement(
+        double? ExposureBias,
+        int? MeteringMode,
+        int? WhiteBalanceMode,
+        int? FlashValue);
 
     private static void ApplyExposureBias(
         MetadataBuilder metadata,
@@ -353,6 +404,9 @@ internal sealed class MetadataService
         public double? FocalLength { get; set; }
         public double? FocalLengthIn35mmFilm { get; set; }
         public double? ExposureBias { get; set; }
+        public int? MeteringMode { get; set; }
+        public int? WhiteBalanceMode { get; set; }
+        public int? FlashValue { get; set; }
         public string? LensModel { get; set; }
         public double? GpsLatitude { get; set; }
         public double? GpsLongitude { get; set; }
@@ -392,6 +446,9 @@ internal sealed class MetadataService
             FocalLength = FocalLength,
             FocalLengthIn35mmFilm = FocalLengthIn35mmFilm,
             ExposureBias = ExposureBias,
+            MeteringMode = MeteringMode,
+            WhiteBalanceMode = WhiteBalanceMode,
+            FlashValue = FlashValue,
             LensModel = LensModel,
             GpsLatitude = GpsLatitude,
             GpsLongitude = GpsLongitude,

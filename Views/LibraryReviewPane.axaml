@@ -141,6 +141,12 @@
                                            TextWrapping="Wrap"
                                            ToolTip.Tip="{Binding SelectedImage.ExposureTooltip}"
                                            IsVisible="{Binding SelectedImage.ExposureDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                <TextBlock x:Name="ReviewConditionsText"
+                                           Text="{Binding SelectedImage.CaptureConditionsDisplay}"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           FontSize="{DynamicResource FontSizeBody}"
+                                           TextWrapping="Wrap"
+                                           IsVisible="{Binding SelectedImage.CaptureConditionsDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                             </StackPanel>
 
                             <StackPanel x:Name="ReviewLocationSection"

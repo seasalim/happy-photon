@@ -15,6 +15,9 @@ public sealed record ImageMetadata
     public double? FocalLength { get; init; }
     public double? FocalLengthIn35mmFilm { get; init; }
     public double? ExposureBias { get; init; }
+    public int? MeteringMode { get; init; }
+    public int? WhiteBalanceMode { get; init; }
+    public int? FlashValue { get; init; }
     public string? LensModel { get; init; }
     public double? GpsLatitude { get; init; }
     public double? GpsLongitude { get; init; }

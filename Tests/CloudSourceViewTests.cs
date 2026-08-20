@@ -244,7 +244,9 @@ public sealed class CloudSourceViewTests
                 "6000×4000 · 24.0 MP · 28.4 MB",
                 review.FindControl<TextBlock>("ReviewFileDetailsText")!.Text);
             Assert.Equal(image.FilePath, ToolTip.GetTip(fileName));
-            Assert.Equal("70mm (105mm equiv)", ToolTip.GetTip(exposure));
+            Assert.Equal(
+                "70mm · 105mm equiv · 1.5× crop",
+                ToolTip.GetTip(exposure));
             Assert.True(review.FindControl<StackPanel>(
                 "ReviewCameraSection")!.IsVisible);
             Assert.False(review.FindControl<TextBlock>(

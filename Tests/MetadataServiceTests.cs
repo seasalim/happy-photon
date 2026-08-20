@@ -68,6 +68,9 @@ public sealed class MetadataServiceTests
                 profile.SetValue(ExifTag.FocalLength, new Rational(70));
                 profile.SetValue(ExifTag.FocalLengthIn35mmFilm, (ushort)105);
                 profile.SetValue(ExifTag.ExposureTime, new Rational(10, 3200));
+                profile.SetValue(ExifTag.MeteringMode, (ushort)3);
+                profile.SetValue(ExifTag.WhiteBalance, (ushort)1);
+                profile.SetValue(ExifTag.Flash, (ushort)0x9);
                 source.SetProfile(profile);
                 source.Write(path, MagickFormat.Jpeg);
             }
@@ -85,6 +88,9 @@ public sealed class MetadataServiceTests
             Assert.Equal(70, metadata.FocalLength);
             Assert.Equal(105, metadata.FocalLengthIn35mmFilm);
             Assert.Equal("1/320", metadata.ExposureTime);
+            Assert.Equal(3, metadata.MeteringMode);
+            Assert.Equal(1, metadata.WhiteBalanceMode);
+            Assert.Equal(0x9, metadata.FlashValue);
         }
         finally
         {
@@ -121,6 +127,23 @@ public sealed class MetadataServiceTests
         Assert.Equal(expected, MetadataService.FormatExposureTime(seconds));
     }
 
+    // Reader-level (no LibRaw fallback in play): the supplement must find
+    // capture tags in multi-IFD RAW containers on its own.
+    [Fact]
+    public void ReadRawExifSupplement_FindsCaptureTagsInRealRawAssets()
+    {
+        var colorChecker = MetadataService.ReadRawExifSupplement(Path.Combine(
+            GoldenTestPaths.AssetDirectory, "nikon-d300-colorchecker.nef"));
+        Assert.Equal(1, colorChecker.WhiteBalanceMode);
+        Assert.Equal(5, colorChecker.MeteringMode);
+
+        var fuji = MetadataService.ReadRawExifSupplement(Path.Combine(
+            GoldenTestPaths.AssetDirectory, "fujifilm-x30.raf"));
+        Assert.Equal(3, fuji.MeteringMode);
+        Assert.Equal(0, fuji.WhiteBalanceMode);
+        Assert.Equal(16, fuji.FlashValue);
+    }
+
     [Fact]
     public void ExtractMetadata_RealRawAssets_ReadExposureBiasAndGps()
     {
@@ -132,6 +155,7 @@ public sealed class MetadataServiceTests
             raw);
         Assert.NotNull(pentax.ExposureBias);
         Assert.Equal(-0.7, pentax.ExposureBias.Value, 3);
+        Assert.Equal(3, pentax.MeteringMode);
 
         var canon = MetadataService.ExtractMetadata(
             new ImageFile(Path.Combine(
@@ -145,7 +169,7 @@ public sealed class MetadataServiceTests
     }
 
     [Fact]
-    public void ExtractMetadata_RawPathSupplementsOnlyExposureBias()
+    public void ExtractMetadata_RawPathAppliesExifSupplement()
     {
         var directory = Path.Combine(
             Path.GetTempPath(), $"HappyPhotonRawBias_{Guid.NewGuid():N}");
@@ -182,13 +206,20 @@ public sealed class MetadataServiceTests
                 {
                     supplementReads++;
                     Assert.Equal(path, supplementPath);
-                    return -1.0 / 3.0;
+                    return new MetadataService.RawExifSupplement(
+                        -1.0 / 3.0,
+                        MeteringMode: 3,
+                        WhiteBalanceMode: 1,
+                        FlashValue: 1);
                 });
 
             Assert.Equal(6000, metadata.PixelWidth);
             Assert.Equal("1/320", metadata.ExposureTime);
             Assert.Equal(1, supplementReads);
             Assert.Equal(-1.0 / 3.0, metadata.ExposureBias!.Value, 6);
+            Assert.Equal(3, metadata.MeteringMode);
+            Assert.Equal(1, metadata.WhiteBalanceMode);
+            Assert.Equal(1, metadata.FlashValue);
             Assert.Equal(85, metadata.FocalLengthIn35mmFilm);
             Assert.Equal(10, metadata.GpsLatitude);
             Assert.Equal(20, metadata.GpsLongitude);

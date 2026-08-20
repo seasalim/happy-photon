@@ -171,6 +171,9 @@ public partial class ImageFile : ObservableObject
     [ObservableProperty] private double? _focalLength;
     [ObservableProperty] private double? _focalLengthIn35mmFilm;
     [ObservableProperty] private double? _exposureBias;
+    [ObservableProperty] private int? _meteringMode;
+    [ObservableProperty] private int? _whiteBalanceMode;
+    [ObservableProperty] private int? _flashValue;
     [ObservableProperty] private string? _lensModel;
     [ObservableProperty] private double? _gpsLatitude;
     [ObservableProperty] private double? _gpsLongitude;
@@ -192,6 +195,9 @@ public partial class ImageFile : ObservableObject
         FocalLength = metadata.FocalLength;
         FocalLengthIn35mmFilm = metadata.FocalLengthIn35mmFilm;
         ExposureBias = metadata.ExposureBias;
+        MeteringMode = metadata.MeteringMode;
+        WhiteBalanceMode = metadata.WhiteBalanceMode;
+        FlashValue = metadata.FlashValue;
         LensModel = metadata.LensModel;
         GpsLatitude = metadata.GpsLatitude;
         GpsLongitude = metadata.GpsLongitude;
@@ -295,7 +301,41 @@ public partial class ImageFile : ObservableObject
     public bool HasCameraMetadata =>
         !string.IsNullOrEmpty(CameraDisplay) ||
         !string.IsNullOrEmpty(LensModel) ||
-        ExposureDisplay != null;
+        ExposureDisplay != null ||
+        CaptureConditionsDisplay != null;
+
+    // Exceptions only: the line stays absent on default frames (no flash,
+    // pattern metering, auto white balance) so it reads as a flag, not a form.
+    public string? CaptureConditionsDisplay
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (FlashValue is { } flash && (flash & 0x1) != 0)
+            {
+                parts.Add("Flash fired");
+            }
+            if (MeteringModeName is { } metering)
+            {
+                parts.Add($"{metering} metering");
+            }
+            if (WhiteBalanceMode == 1)
+            {
+                parts.Add("Manual WB");
+            }
+            return parts.Count > 0 ? string.Join(" · ", parts) : null;
+        }
+    }
+
+    private string? MeteringModeName => MeteringMode switch
+    {
+        1 => "Average",
+        2 => "Center-weighted",
+        3 => "Spot",
+        4 => "Multi-spot",
+        6 => "Partial",
+        _ => null   // 0 unknown, 5 pattern (the default), 255 other
+    };
 
     public string? ExposureDisplay
     {
@@ -314,11 +354,25 @@ public partial class ImageFile : ObservableObject
         }
     }
 
-    public string? ExposureTooltip =>
-        FocalLength is { } focalLength &&
-        FocalLengthIn35mmFilm is { } equivalent
-            ? $"{focalLength:F0}mm ({equivalent:F0}mm equiv)"
-            : null;
+    public string? ExposureTooltip
+    {
+        get
+        {
+            if (FocalLength is not { } focalLength ||
+                FocalLengthIn35mmFilm is not { } equivalent)
+            {
+                return null;
+            }
+
+            var tooltip = $"{focalLength:F0}mm · {equivalent:F0}mm equiv";
+            if (focalLength > 0 && equivalent > 0)
+            {
+                tooltip += $" · {equivalent / focalLength:0.#}× crop";
+            }
+
+            return tooltip;
+        }
+    }
 
     public bool HasGpsCoordinates =>
         GpsLatitude is >= -90 and <= 90 &&
@@ -393,6 +447,9 @@ public partial class ImageFile : ObservableObject
     partial void OnFocalLengthIn35mmFilmChanged(double? value) =>
         OnPropertyChanged(nameof(ExposureTooltip));
     partial void OnExposureBiasChanged(double? value) => NotifyExposureDisplayChanged();
+    partial void OnMeteringModeChanged(int? value) => NotifyConditionsDisplayChanged();
+    partial void OnWhiteBalanceModeChanged(int? value) => NotifyConditionsDisplayChanged();
+    partial void OnFlashValueChanged(int? value) => NotifyConditionsDisplayChanged();
     partial void OnGpsLatitudeChanged(double? value) => NotifyLocationDisplayChanged();
     partial void OnGpsLongitudeChanged(double? value) => NotifyLocationDisplayChanged();
     partial void OnGpsAltitudeChanged(double? value)
@@ -410,6 +467,12 @@ public partial class ImageFile : ObservableObject
     private void NotifyExposureDisplayChanged()
     {
         OnPropertyChanged(nameof(ExposureDisplay));
+        OnPropertyChanged(nameof(HasCameraMetadata));
+    }
+
+    private void NotifyConditionsDisplayChanged()
+    {
+        OnPropertyChanged(nameof(CaptureConditionsDisplay));
         OnPropertyChanged(nameof(HasCameraMetadata));
     }
 

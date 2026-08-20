@@ -79,7 +79,7 @@ public sealed class ImageFileMetadataDisplayTests
         image.FocalLengthIn35mmFilm = 105;
 
         Assert.Equal("70mm", image.ExposureDisplay);
-        Assert.Equal("70mm (105mm equiv)", image.ExposureTooltip);
+        Assert.Equal("70mm · 105mm equiv · 1.5× crop", image.ExposureTooltip);
     }
 
     [Fact]
@@ -109,6 +109,45 @@ public sealed class ImageFileMetadataDisplayTests
             new[] { (image.FilePath, image.DateTaken) });
         Assert.Empty(grouping.Groups);
         Assert.Equal(1, grouping.ImagesWithoutTimestamp);
+    }
+
+    [Fact]
+    public void CaptureConditions_DefaultFrame_ShowsNothing()
+    {
+        var image = CreateImage();
+        image.FlashValue = 0x10;     // no flash, compulsory suppression
+        image.MeteringMode = 5;      // pattern (default)
+        image.WhiteBalanceMode = 0;  // auto
+
+        Assert.Null(image.CaptureConditionsDisplay);
+    }
+
+    [Fact]
+    public void CaptureConditions_NoteworthyFrame_ListsExceptions()
+    {
+        var image = CreateImage();
+        image.FlashValue = 0x9;      // fired, compulsory mode
+        image.MeteringMode = 3;      // spot
+        image.WhiteBalanceMode = 1;  // manual
+
+        Assert.Equal(
+            "Flash fired · Spot metering · Manual WB",
+            image.CaptureConditionsDisplay);
+        Assert.True(image.HasCameraMetadata);
+    }
+
+    [Theory]
+    [InlineData(1, "Average metering")]
+    [InlineData(2, "Center-weighted metering")]
+    [InlineData(6, "Partial metering")]
+    public void CaptureConditions_NonDefaultMetering_IsNamed(
+        int mode,
+        string expected)
+    {
+        var image = CreateImage();
+        image.MeteringMode = mode;
+
+        Assert.Equal(expected, image.CaptureConditionsDisplay);
     }
 
     [Theory]

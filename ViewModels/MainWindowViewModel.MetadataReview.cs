@@ -86,7 +86,8 @@ public partial class MainWindowViewModel
                 "CAMERA",
                 image.CameraDisplay,
                 image.LensModel,
-                image.ExposureDisplay);
+                image.ExposureDisplay,
+                image.CaptureConditionsDisplay);
             AppendSection(
                 details,
                 "LOCATION",
