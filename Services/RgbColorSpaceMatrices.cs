@@ -43,6 +43,11 @@ internal static class RgbColorSpaceMatrices
         { 0.0176398574453109, -0.0427706132578085, 0.9421031212354738 }
     };
 
+    internal static readonly double[,] LinearSrgbToLinearRec2020DerivedExact =
+        Multiply(
+            XyzD65ToLinearRec2020DerivedExact,
+            LinearSrgbToXyzD65DerivedExact);
+
     // WORKING_SPACE.md §2's published composite, rounded to ten decimals.
     // Its < 1.5e-10 maximum channel error is far below half a Q16 quantum.
     internal static readonly double[,] LinearRec2020ToLinearSrgb =
@@ -74,6 +79,19 @@ internal static class RgbColorSpaceMatrices
         { -0.0652974528, 1.0757879158, -0.0104904631 },
         { 0.0028217873, -0.0195984945, 1.0167767073 }
     };
+
+    private static double[,] Multiply(double[,] left, double[,] right)
+    {
+        var result = new double[3, 3];
+        for (var row = 0; row < 3; row++)
+        for (var column = 0; column < 3; column++)
+        for (var index = 0; index < 3; index++)
+        {
+            result[row, column] += left[row, index] * right[index, column];
+        }
+
+        return result;
+    }
 }
 
 internal static class Rec2020Luminance

@@ -84,6 +84,14 @@ public readonly record struct LibRawOutputConfiguration
             OutputColor = 8
         };
 
+    public static LibRawOutputConfiguration LinearCameraNative(
+        LibRawHighlightMode highlight,
+        LibRawFbddMode noiseReduction,
+        bool halfSize) => Linear(highlight, noiseReduction, halfSize) with
+        {
+            OutputColor = 0
+        };
+
     public static LibRawOutputConfiguration FullDecodeSrgb() => new()
     {
         AbiVersion = Version,

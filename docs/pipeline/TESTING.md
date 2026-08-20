@@ -151,6 +151,11 @@ average (range 6.047–20.502). Crossing-off output stayed byte-identical.
 The cache markers are `RenderPipeline.Version = 9` and `BaseImage.Version =
 8`; the latter attributes the re-derived `SourceExposureBiasEv` fact.
 
+R5a keeps render v9, bumps `BaseImage.Version` to 9, and re-baselines the v9
+directory once. Standard and HEIC outputs stayed byte-identical; all 19 RAW cases
+changed by mean ΔE76 0.003–0.015 and p99 0.000–0.677. The per-image report is
+[`Tests/goldens/v9/R5A_ATTRIBUTION.md`](../../Tests/goldens/v9/R5A_ATTRIBUTION.md).
+
 ## 3. Tolerances (normative)
 
 | Comparison | Bound |
@@ -162,12 +167,14 @@ The cache markers are `RenderPipeline.Version = 9` and `BaseImage.Version =
 | Full-decode base vs half-decode base (raw, at common preview size up to 1600px) | mean ΔE ≤ 2.8 (documented gap) |
 | P3-tagged vs sRGB-tagged same-picture bases | mean ΔE ≤ 1.5 |
 | Cross-platform (M6): win/linux/mac renders of same case | mean ΔE ≤ 2.0 |
+| R5a built-in matrix vs LibRaw Rec.2020 comparator, Bayer/X-Trans Clip/Blend/FBDD | mean ΔE76 ≤ 1.1, p99 ≤ 9.5 |
 
 WYSIWYG is calibrated over every v9 settings case using the actual preview
 base and a full-base export, aligning the occasional one-pixel aspect
-difference to the preview dimensions. Crossing-on measured worst mean 1.8722
-and p99 7.9673; crossing-off was bit-identical. Each worst observation rounds
-up to the next 0.5, producing 2.0/8.0. The separate half/full base bound
+difference to the preview dimensions. Post-R5a crossing-on measured worst mean
+1.87233444906093 and p99 7.97110639082136; crossing-off was bit-identical.
+Each worst observation rounds up to the next 0.5, producing 2.0/8.0. The separate
+half/full base bound
 covers the decoded sampling gap before tone.
 
 **OS gating policy at M6:** goldens are generated on Linux CI (canonical). Linux uses
@@ -249,10 +256,13 @@ Every stage that changes pixels answers to four anchors:
    primary-derived and published-rounded sRGB variants. `PrecisionColorCases` uses the
    exact variant; `PrecisionDeltaE`, `GoldenImageComparer`, and production's legacy
    sRGB camera-fact conversion use the published-rounded variant, with no value changes.
+   Camera characterization composes the exact primary-derived sRGB→Rec.2020 factor
+   from the same authority with each copied camera→sRGB fact.
    Production sRGB and Rec.2020 forward/inverse basis vectors are checked directly.
 3. **Independent oracle.** `Tests/assets/color-science-oracle.json` contains linear
    sRGB/D65, linear Rec.2020/D65, and linear ROMM/D50 RGB↔XYZ matrices and round trips,
-   Bradford D50↔D65 adaptation, sRGB EOTF vectors, and the pre-November-2014
+   Bradford D50↔D65 adaptation, a synthetic camera→sRGB characterization matrix and
+   transformed RGB vectors, sRGB EOTF vectors, and the pre-November-2014
    ColorChecker values for the CIE 1931 2° observer. It is emitted by the dev-only
    BSD-licensed `colour-science` generator. Tests and CI read only JSON and never run
    Python. Regeneration is intentionally version-locked:
@@ -278,13 +288,15 @@ Every stage that changes pixels answers to four anchors:
    checked for XYZ drift but never feed back into gains or bounds.
 
 The manifest uses the precommitted “worst supported-RID observation rounded up to the
-next 0.5” rule for both anchors. Win-x64 measures pre-crossing mean/max ΔE00
-2.6383236546063933/6.2450756876906794, producing bounds 3.0/6.5. The integrated AgX
-look measures 5.993530184884918/13.761233948669688, producing bounds 6.0/14.0.
-All three supported RIDs record exact aggregate observations in the manifest
-(cross-platform agreement is within 2e-6). The current-RID test matches the
-recorded payloads. These budgets pin characterization and look drift; they are not claims
-that an aged physical chart should be rendered colorimetrically exact.
+next 0.5” rule for both anchors. Post-R5a win-x64 measures pre-crossing mean/max ΔE00
+2.6384472924778217/6.245169268388049, retaining bounds 3.0/6.5. The integrated AgX
+look measures 5.9938993948792065/13.762419710624835, retaining bounds 6.0/14.0.
+Linux-x64 measures 2.638447292477815/6.2451692683880236 and osx-arm64
+2.638449030560668/6.245169268388058 (look 5.993899394879203/13.762419710624826
+and 5.993900252729108/13.76241971062483), harvested from the PR CI test
+results; all three RIDs agree at the 1e-5 level and the retained bounds hold.
+These budgets pin characterization and look drift; they are not claims that an aged
+physical chart should be rendered colorimetrically exact.
 
 ## 5. Performance
 
@@ -321,6 +333,23 @@ above; sRGB variants +2.0% with +1.0 MiB private peak; P3 variants −1.5% with
 +0.3 MiB; standard export −7.6%. All budgets pass.
 RAW base decode performance output includes a `RawHistogram` step for the sensor pass;
 measure at least the 20 MP Canon EOS 6D fixture when this gate is enabled.
+
+R5a's isolated import gate uses that 20 MP Canon in camera-native output mode, one
+warm-up plus five samples. It compares direct Q16 import with fused
+characterization of the same native span. The budgets are ≤ 45 ms preview,
+≤ 150 ms full (recalibrated from the checkpoint-A 30/100 ms freeze with user
+approval 2026-08-19 — the measured floor under the 4 MiB transient constraint
+left no variance margin; CHARACTERIZATION.md §4 records the evidence), and a
+≤ 4 MiB deterministic retained private-memory delta; async-sampled peaks are
+informational because native-allocator private bytes are not reproducible.
+Measured deltas on the review machine: preview 22–31 ms, full 86–136 ms,
+retained 0.0/2.0 MiB:
+
+```powershell
+$env:HAPPY_PHOTON_R5A_PERF='1'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter `
+  FullyQualifiedName~CameraRgbCharacterizationPerformanceTests
+```
 
 The direct full-resolution detail diagnostic warms the optimized kernel, then uses a
 5472×3648 synthetic image and reports elapsed time and peak private-memory delta:
@@ -477,8 +506,8 @@ ordinary host so the native and headless Avalonia platforms never share a proces
 
 Platform and codec gaps use xUnit v3 native runtime skips (`Assert.Skip` or
 `Assert.SkipWhen`) with an explicit reason so they remain visible in logs. CI gates on
-discovery before execution: 1,237 ordinary listed cases plus 131 headless listed cases.
-The full run currently expands dynamic theories to 1,302 ordinary and 135 headless
+discovery before execution: 1,294 ordinary listed cases plus 132 headless listed cases.
+The full run currently expands dynamic theories to 1,359 ordinary and 137 headless
 execution cases. Run tests with a 90-second blame
 hang timeout while changing either host.
 

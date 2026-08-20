@@ -161,10 +161,10 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          2.6383236546063933
+          2.6384472924778217
         ],
         "maximumPatchDeltaE00": [
-          6.2450756876906794
+          6.245169268388049
         ]
       },
       {
@@ -172,10 +172,10 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          2.638323654606382
+          2.638447292477815
         ],
         "maximumPatchDeltaE00": [
-          6.245075687690655
+          6.2451692683880236
         ]
       },
       {
@@ -183,10 +183,10 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          2.6383253668088718
+          2.638449030560668
         ],
         "maximumPatchDeltaE00": [
-          6.2450761886600015
+          6.245169268388058
         ]
       }
     ],
@@ -206,10 +206,10 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          5.993530184884918
+          5.9938993948792065
         ],
         "maximumPatchDeltaE00": [
-          13.761233948669688
+          13.762419710624835
         ]
       },
       {
@@ -217,10 +217,10 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          5.993530184884922
+          5.993899394879203
         ],
         "maximumPatchDeltaE00": [
-          13.761233948669704
+          13.762419710624826
         ]
       },
       {
@@ -228,10 +228,10 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          5.9935309875556415
+          5.993900252729108
         ],
         "maximumPatchDeltaE00": [
-          13.76123375287244
+          13.76241971062483
         ]
       }
     ],

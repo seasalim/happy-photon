@@ -49,6 +49,22 @@ public sealed class OutputConfigurationTests
     }
 
     [Fact]
+    public void LinearCameraNative_ChangesOnlyTheOutputSpace()
+    {
+        var srgb = LibRawOutputConfiguration.Linear(
+            LibRawHighlightMode.Blend,
+            LibRawFbddMode.Full,
+            halfSize: true);
+        var cameraNative = LibRawOutputConfiguration.LinearCameraNative(
+            LibRawHighlightMode.Blend,
+            LibRawFbddMode.Full,
+            halfSize: true);
+
+        Assert.Equal(0, cameraNative.OutputColor);
+        Assert.Equal(srgb with { OutputColor = 0 }, cameraNative);
+    }
+
+    [Fact]
     public void FullDecodeSrgb_PinsLegacyEightBitGammaParameters()
     {
         var value = LibRawOutputConfiguration.FullDecodeSrgb();

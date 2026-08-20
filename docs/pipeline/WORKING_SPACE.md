@@ -56,10 +56,14 @@ the requested target immediately before the common sRGB transfer is encoded.
 
 ## 3. Decode: raw
 
-`RawBaseLoader` selects the wide output space through the bridge's existing output
-configuration (`output_color`); LibRaw applies its camera matrix into BT.2020 instead of
-sRGB. This is configuration data — no bridge, native, or ABI change. The shared
-linear/sRGB output configuration keeps its current value and its existing callers.
+`RawBaseLoader` selects camera-native output through the bridge's existing
+configuration (`output_color = 0`). LibRaw performs black subtraction, camera-WB
+scaling, normalization, demosaic, and configured highlight handling, but applies no
+output-space matrix. `CameraRgbCharacterization` composes the copied camera→sRGB fact
+with the exact §2 sRGB→Rec.2020 matrix and fuses it into the one Q16 decode write. This
+is a managed configuration/loader change — no bridge, native package, or ABI change.
+See CHARACTERIZATION.md for the neutralization state, typed fact outcomes, and R5b DCP
+replacement contract.
 
 **The camera-matrix fact stays camera→sRGB.** Facts are copied after unpack and before the
 output configuration is applied, so `camera_to_srgb` is what LibRaw computed under its own
@@ -71,8 +75,8 @@ across output selections would only prove configuration-independence. The oracle
 > Rec.2020→XYZ for sRGB→XYZ does not.
 
 The row-sum-1 convention and the `pre_mul / cam_mul` projection it implies are already
-documented in WHITE_BALANCE.md §5.2 and are unchanged. A camera→wide matrix would be a new
-fact behind a bridge ABI bump; this run does not need one.
+documented in WHITE_BALANCE.md §5.2 and are unchanged. The camera→working matrix is a
+decode-local composition, not a persisted or bridge-owned fact.
 
 ## 4. Decode: non-raw
 
