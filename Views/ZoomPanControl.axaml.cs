@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -143,11 +142,7 @@ public partial class ZoomPanControl : UserControl
         InitializeVisibleRegionTracking();
         InitializeClippingOverlay();
         InitializeDeviceScaling();
-
-        AddHandler(
-            PointerWheelChangedEvent,
-            OnPreviewPointerWheelChanged,
-            RoutingStrategies.Tunnel);
+        InitializeWheelAnchoring();
 
         UpdateScrollBarVisibility();
         ApplyColorAssessment();
@@ -166,9 +161,10 @@ public partial class ZoomPanControl : UserControl
 
         if (change.Property == SourceProperty)
         {
-            OnPreviewSourceChanging(
+            var anchor = CaptureSourceChangeAnchor(
                 change.OldValue as Bitmap,
                 change.NewValue as Bitmap);
+            ScheduleAnchorRestoreAfterLayout(anchor);
             if (_imageControl != null)
             {
                 _imageControl.Source = Source;
@@ -179,26 +175,27 @@ public partial class ZoomPanControl : UserControl
             {
                 RequestAutoFit();
             }
-            RestorePendingAnchorAfterLayout();
             RequestRequiredBoundPublication();
         }
         else if (change.Property == ZoomLevelProperty)
         {
+            var anchor = CaptureZoomChangeAnchor(
+                change.OldValue is double oldZoom ? oldZoom : ZoomLevel);
+            ScheduleAnchorRestoreAfterLayout(anchor);
             UpdateImageSize();
             RequestRequiredBoundPublication();
         }
         else if (change.Property == OriginalViewPixelSizeProperty)
         {
-            if (!AutoFit)
-            {
-                _pendingNormalizedAnchor = CaptureNormalizedAnchor();
-            }
+            var anchor = AutoFit
+                ? null
+                : CapturePendingOrViewportCenterAnchor();
+            ScheduleAnchorRestoreAfterLayout(anchor);
             UpdateImageSize();
             if (AutoFit)
             {
                 RequestAutoFit();
             }
-            RestorePendingAnchorAfterLayout();
             RequestRequiredBoundPublication();
         }
         else if (change.Property == IsCropModeProperty)
@@ -233,6 +230,7 @@ public partial class ZoomPanControl : UserControl
         {
             if (AutoFit)
             {
+                ScheduleAnchorRestoreAfterLayout(null);
                 RequestAutoFit();
             }
             RequestRequiredBoundPublication();
@@ -373,13 +371,6 @@ public partial class ZoomPanControl : UserControl
         }
 
         LayoutUpdated += OnLayoutUpdated;
-    }
-
-    private void OnPreviewPointerWheelChanged(object? sender, PointerWheelEventArgs e)
-    {
-        var delta = e.Delta.Y;
-        ZoomChanged?.Invoke(this, delta);
-        e.Handled = true;
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)

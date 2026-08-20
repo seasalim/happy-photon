@@ -100,7 +100,17 @@ public partial class ZoomPanControl
             nameof(OriginalViewPixelSize));
 
     private TopLevel? _scalingTopLevel;
-    private Point? _pendingNormalizedAnchor;
+    private ScheduledAnchorRestore? _scheduledAnchorRestore;
+    private long _anchorRestoreGeneration;
+    private long _appliedAnchorRestoreGeneration;
+
+    private readonly record struct ViewportAnchor(
+        Point NormalizedImagePoint,
+        Point FocalPoint);
+
+    private readonly record struct ScheduledAnchorRestore(
+        ViewportAnchor Anchor,
+        long Generation);
 
     public event EventHandler<int>? RequiredDeviceLongEdgeChanged;
 
@@ -117,6 +127,7 @@ public partial class ZoomPanControl
 
     private void InitializeDeviceScaling()
     {
+        LayoutUpdated += OnAnchorLayoutUpdated;
         AttachedToVisualTree += OnDeviceScalingAttached;
         DetachedFromVisualTree += OnDeviceScalingDetached;
         if (this.IsAttachedToVisualTree())
@@ -162,26 +173,30 @@ public partial class ZoomPanControl
 
     private void OnProductionScalingChanged(object? sender, EventArgs e)
     {
-        _pendingNormalizedAnchor = CaptureNormalizedAnchor();
+        var anchor = AutoFit
+            ? null
+            : CapturePendingOrViewportCenterAnchor();
+        ScheduleAnchorRestoreAfterLayout(anchor);
         UpdateImageSize();
         if (AutoFit)
         {
             RequestAutoFit();
         }
-        RestorePendingAnchorAfterLayout();
         RequestRequiredBoundPublication();
         RequestVisibleRegionPublication(force: true);
         _displayChainTrace?.OnInputChanged();
     }
 
-    private void OnPreviewSourceChanging(Bitmap? oldSource, Bitmap? newSource)
+    private ViewportAnchor? CaptureSourceChangeAnchor(
+        Bitmap? oldSource,
+        Bitmap? newSource)
     {
         if (oldSource == null || newSource == null || AutoFit)
         {
-            return;
+            return null;
         }
 
-        _pendingNormalizedAnchor = CaptureNormalizedAnchor();
+        return CapturePendingOrViewportCenterAnchor();
     }
 
     private PixelSize GetOriginalViewPixelSize() =>
@@ -207,54 +222,107 @@ public partial class ZoomPanControl
         UpdateClippingOverlaySize();
     }
 
-    private Point? CaptureNormalizedAnchor()
+    private ViewportAnchor? CaptureViewportCenterAnchor()
     {
         if (_scrollViewer == null || _imageControl == null ||
             _imageControl.Bounds.Width <= 0 ||
-            _imageControl.Bounds.Height <= 0)
+            _imageControl.Bounds.Height <= 0 ||
+            _scrollViewer.Viewport.Width <= 0 ||
+            _scrollViewer.Viewport.Height <= 0)
         {
             return null;
         }
 
-        return new Point(
-            Math.Clamp(
-                (_scrollViewer.Offset.X + _scrollViewer.Viewport.Width / 2) /
-                    _imageControl.Bounds.Width,
-                0,
-                1),
-            Math.Clamp(
-                (_scrollViewer.Offset.Y + _scrollViewer.Viewport.Height / 2) /
-                    _imageControl.Bounds.Height,
-                0,
-                1));
+        var focalPoint = new Point(
+            _scrollViewer.Viewport.Width / 2,
+            _scrollViewer.Viewport.Height / 2);
+        var imageOrigin = _imageControl.TranslatePoint(default, _scrollViewer);
+        return imageOrigin == null
+            ? null
+            : CreateViewportAnchor(focalPoint - imageOrigin.Value, focalPoint);
     }
 
-    private void RestorePendingAnchorAfterLayout()
+    private ViewportAnchor? CapturePendingOrViewportCenterAnchor() =>
+        _scheduledAnchorRestore?.Anchor ?? CaptureViewportCenterAnchor();
+
+    private ViewportAnchor CreateViewportAnchor(
+        Vector imagePosition,
+        Point focalPoint) =>
+        new(
+            new Point(
+                Math.Clamp(
+                    imagePosition.X / _imageControl!.Bounds.Width,
+                    0,
+                    1),
+                Math.Clamp(
+                    imagePosition.Y / _imageControl.Bounds.Height,
+                    0,
+                    1)),
+            focalPoint);
+
+    private void ScheduleAnchorRestoreAfterLayout(ViewportAnchor? anchor)
     {
-        if (_pendingNormalizedAnchor == null) return;
+        var generation = ++_anchorRestoreGeneration;
+        if (anchor == null)
+        {
+            _scheduledAnchorRestore = null;
+            return;
+        }
+
+        _scheduledAnchorRestore = new ScheduledAnchorRestore(
+            anchor.Value,
+            generation);
+        // Layout runs above Background priority. Keep the first anchor alive
+        // through the batch so the layout hook applies it before rendering.
         Dispatcher.UIThread.Post(
-            RestorePendingAnchor,
-            DispatcherPriority.Render);
+            () => CompleteAnchorRestore(generation),
+            DispatcherPriority.Background);
     }
 
-    private void RestorePendingAnchor()
+    private void OnAnchorLayoutUpdated(object? sender, EventArgs e)
     {
-        var anchor = _pendingNormalizedAnchor;
-        _pendingNormalizedAnchor = null;
-        if (anchor == null || _scrollViewer == null || _imageControl == null)
+        var request = _scheduledAnchorRestore;
+        if (request == null ||
+            request.Value.Generation == _appliedAnchorRestoreGeneration)
         {
             return;
         }
 
-        _scrollViewer.Offset = new Vector(
-            Math.Max(
-                0,
-                _imageControl.Bounds.Width * anchor.Value.X -
-                    _scrollViewer.Viewport.Width / 2),
-            Math.Max(
-                0,
-                _imageControl.Bounds.Height * anchor.Value.Y -
-                    _scrollViewer.Viewport.Height / 2));
+        _appliedAnchorRestoreGeneration = request.Value.Generation;
+        if (!RestorePendingAnchor(request.Value.Anchor))
+        {
+            _appliedAnchorRestoreGeneration = 0;
+        }
+    }
+
+    private bool RestorePendingAnchor(ViewportAnchor anchor)
+    {
+        if (_scrollViewer == null || _imageControl == null)
+        {
+            return false;
+        }
+
+        var imageOrigin = _imageControl.TranslatePoint(default, _scrollViewer);
+        if (imageOrigin == null)
+        {
+            return false;
+        }
+
+        var anchoredPoint = imageOrigin.Value + new Vector(
+            _imageControl.Bounds.Width * anchor.NormalizedImagePoint.X,
+            _imageControl.Bounds.Height * anchor.NormalizedImagePoint.Y);
+        var adjustment = anchoredPoint - anchor.FocalPoint;
+
+        _scrollViewer.Offset += adjustment;
+        return true;
+    }
+
+    private void CompleteAnchorRestore(long generation)
+    {
+        if (_scheduledAnchorRestore?.Generation == generation)
+        {
+            _scheduledAnchorRestore = null;
+        }
     }
 
     private void RequestRequiredBoundPublication()

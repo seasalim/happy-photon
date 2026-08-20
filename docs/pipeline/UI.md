@@ -123,6 +123,7 @@ never offers hydration or causes a cloud placeholder to be read.
   toggling also uses the standard 1.5-second feedback toast.
 - **Zoom is device-true and original-relative.** `ZoomLevel = 1.0` maps one original
   image pixel to one device pixel, independent of the monitor's render scaling. The
+  mouse wheel keeps the image point under the pointer fixed while zooming.
   ViewModel owns this stable user-facing value; the view derives the current
   bitmap-relative scale from decoded original dimensions. A 1600-to-resting source
   swap therefore leaves both the zoom slider and on-screen scene geometry unchanged,
