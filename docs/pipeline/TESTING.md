@@ -315,6 +315,27 @@ accumulator-only median over a pre-materialized 1024×1024 Q16 RGB span at
 standard-thumbnail generation at 512px; track results in PR descriptions when
 a work package touches the hot path.
 
+`PreviewPipelinePerformanceTests` carries those preview diagnostics and their
+≤ 150 ms slider budgets. In-class execution order is a runner implementation
+detail that reshuffles as the assembly changes, and heap and thread-pool
+residue from the class's own cache and render tests can inflate a later test's
+medians past budget. The canonical run therefore executes each test in its own
+Release process; apply the same one-test-per-process rule to any new
+`HAPPY_PHOTON_PERF` class with latency budgets, and never loosen a budget to
+make a single-process class run pass:
+
+```powershell
+$env:HAPPY_PHOTON_PERF='1'
+foreach ($test in 'DevelopEntryLatencyAndMemory',
+                  'RawCandidateLatency',
+                  'RenderedThumbnailCacheLatency',
+                  'LibraryHistogramLatency') {
+  dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
+    --filter "FullyQualifiedName~PreviewPipelinePerformanceTests.$test" `
+    --logger "console;verbosity=detailed"
+}
+```
+
 ```powershell
 $env:HAPPY_PHOTON_PERF='1'
 $env:HAPPY_PHOTON_AGX_PERF_TARGET='srgb' # then display-p3

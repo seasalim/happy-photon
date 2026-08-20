@@ -197,6 +197,7 @@ public sealed class PreviewPipelinePerformanceTests
         DisposePreview(await enabled.ApplyEditsToPreviewAsync(
             file, warm, request, skipHistogram: true));
 
+        ForceCollection();
         var baselineSamples = new List<double>();
         var enabledSamples = new List<double>();
         for (var index = 0; index < 7; index++)
@@ -392,6 +393,7 @@ public sealed class PreviewPipelinePerformanceTests
         string operationLabel,
         EditSettings settings)
     {
+        ForceCollection();
         var samples = new List<double>();
         Avalonia.Media.Imaging.Bitmap? preview = null;
         for (var index = 0; index < 5; index++)
