@@ -20,6 +20,8 @@ public static class ImageServiceHelpers
     private static readonly object DisplayTraceSync = new();
     private static int _displayTraceEnabledOverride = -1;
     private static Action<string>? _displayTraceSinkOverride;
+    private static string? _displayTraceFilePathOverride;
+    private static bool _displayTraceFileStarted;
 
     public static readonly bool PerfLoggingEnabled = DiagnosticFlags.Perf;
 
@@ -260,6 +262,76 @@ public static class ImageServiceHelpers
 
         Debug.WriteLine(fullMessage);
         Console.WriteLine(fullMessage);
+        AppendDisplayTraceToFile(fullMessage);
+    }
+
+    private static void AppendDisplayTraceToFile(string fullMessage)
+    {
+        try
+        {
+            lock (DisplayTraceSync)
+            {
+                var path = _displayTraceFilePathOverride
+                    ?? GetDefaultDisplayTraceFilePath();
+                if (path == null) return;
+
+                if (!_displayTraceFileStarted)
+                {
+                    var directory = Path.GetDirectoryName(path);
+                    if (!string.IsNullOrEmpty(directory))
+                        Directory.CreateDirectory(directory);
+                    File.WriteAllText(path, fullMessage + Environment.NewLine);
+                    _displayTraceFileStarted = true;
+                }
+                else
+                {
+                    File.AppendAllText(path, fullMessage + Environment.NewLine);
+                }
+            }
+        }
+        catch
+        {
+            // The trace is a diagnostic; file failures must never surface.
+        }
+    }
+
+    private static string? GetDefaultDisplayTraceFilePath()
+    {
+        var local = Environment.GetFolderPath(
+            Environment.SpecialFolder.LocalApplicationData);
+        return string.IsNullOrEmpty(local)
+            ? null
+            : Path.Combine(local, "Happy Photon", "logs", "display-trace.log");
+    }
+
+    internal static IDisposable OverrideDisplayTraceFileForTesting(string path)
+    {
+        lock (DisplayTraceSync)
+        {
+            var previousPath = _displayTraceFilePathOverride;
+            var previousStarted = _displayTraceFileStarted;
+            _displayTraceFilePathOverride = path;
+            _displayTraceFileStarted = false;
+            return new DisplayTraceFileOverrideScope(previousPath, previousStarted);
+        }
+    }
+
+    private sealed class DisplayTraceFileOverrideScope(
+        string? previousPath,
+        bool previousStarted) : IDisposable
+    {
+        private bool _disposed;
+
+        public void Dispose()
+        {
+            lock (DisplayTraceSync)
+            {
+                if (_disposed) return;
+                _displayTraceFilePathOverride = previousPath;
+                _displayTraceFileStarted = previousStarted;
+                _disposed = true;
+            }
+        }
     }
 
     private sealed class DisplayTraceOverrideScope(

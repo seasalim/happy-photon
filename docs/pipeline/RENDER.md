@@ -377,4 +377,7 @@ net device-pixels-per-bitmap-pixel scale, and an explicit 1:1 verdict. Preview b
 swaps separately identify cached JPEG, fresh render, or background refresh provenance.
 The gate is captured at process startup, is independent of `HAPPY_PHOTON_PERF`, and is
 off by default; when off, the view installs no display observer and log interpolation
-does not evaluate bitmap dimensions.
+does not evaluate bitmap dimensions. Besides console/debug output, every trace line is
+appended to `%LOCALAPPDATA%\Happy Photon\logs\display-trace.log`, truncated at each
+process start so it holds the last session. The app is a WinExe, so `dotnet run` shows
+no console output — the log file is the reliable capture.
