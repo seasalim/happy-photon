@@ -6,7 +6,7 @@ namespace HappyPhoton.Services;
 
 public sealed class RenderPipeline
 {
-    public const int Version = 8;
+    public const int Version = 9;
 
     public RenderResult Render(RenderRequest request) =>
         Render(request, RenderDetail.DefaultBandPixelLimit);
@@ -24,79 +24,39 @@ public sealed class RenderPipeline
             ? ClippingStatsCalculator.CalculateRawNearClip(request.Base)
             : 0;
 
-        MagickImage? working = null;
+        MagickImage? displayRec2020 = null;
         MagickImage? display = null;
         MagickImage? overlay = null;
-        long previousElapsed = 0;
-        long cloneElapsed = 0;
-        long toneElapsed = 0;
-        long chromaElapsed = 0;
-        long detailElapsed = 0;
-        long resizeElapsed = 0;
-        long statsElapsed = 0;
         try
         {
-            working = (MagickImage)request.Base.Pixels.Clone();
-            RenderGeometry.Apply(working, request.Settings);
-            cloneElapsed = Lap(stopwatch, ref previousElapsed);
-
-            var chromatic = RenderChromaticStage.CreateNormalizedMatrix(
-                request.Base.Info,
-                request.Settings,
-                request.Intent == RenderIntent.Preview
-                    ? OutputColorSpace.Srgb
-                    : request.OutputColorSpace);
-            var baseLookEnabled = request.Settings.BaseLook ??
-                request.Base.Info.IsRawSource;
-            var tone = ToneLut.Compose(new ToneParams(
-                request.Settings.Exposure +
-                    request.Base.Info.SourceExposureBiasEv,
-                chromatic.Fold,
-                request.Settings.Brightness,
-                request.Settings.Contrast,
-                request.Settings.Shadows,
-                request.Settings.Highlights,
-                baseLookEnabled,
-                request.Settings.Curve));
-            ToneLutApplicator.Apply(working, chromatic.Matrix, tone);
-            RenderColorEncoding.RetagAsSrgb(working);
-            toneElapsed = Lap(stopwatch, ref previousElapsed);
-            RenderChromaStage.Apply(working, request.Settings);
-            chromaElapsed = Lap(stopwatch, ref previousElapsed);
-            RenderSharpening.ApplyCapture(
-                working,
-                request.Base.Info,
-                request.Settings.Detail);
-            RenderDetail.Apply(
-                working,
-                request.Base.Info,
-                request.Settings.Detail,
-                detailBandPixelLimit);
-            detailElapsed = Lap(stopwatch, ref previousElapsed);
-
-            if (request.MaxDimension is { } maxDimension)
-            {
-                RenderColorEncoding.ResizeInLinearLight(
-                    working,
-                    maxDimension);
-            }
-            resizeElapsed = Lap(stopwatch, ref previousElapsed);
-
-            display = working;
-            working = null;
-
             var createOverlay =
                 request.Intent == RenderIntent.Preview &&
                 request.Options.ComputeOverlayMasks;
             var analyze = request.Options.ComputeStats || createOverlay;
+            displayRec2020 = RenderDisplayRec2020Core(
+                request,
+                detailBandPixelLimit,
+                analyze,
+                createOverlay,
+                out var sceneHighlights);
+            display = RenderFinalizer.FinalizeOwned(
+                Take(ref displayRec2020),
+                request.MaxDimension,
+                request.Intent == RenderIntent.Preview
+                    ? OutputColorSpace.Srgb
+                    : request.OutputColorSpace,
+                outputSharpening: false,
+                wasResized: false,
+                detailBandPixelLimit);
+
             var analysis = analyze
                 ? ClippingStatsCalculator.Analyze(
                     display,
                     rawNearClip,
-                    createOverlay)
+                    createOverlay,
+                    sceneHighlights)
                 : new ClippingAnalysis(ClippingStats.Empty, null);
             overlay = analysis.OverlayMask;
-            statsElapsed = Lap(stopwatch, ref previousElapsed);
 
             var result = new RenderResult(
                 display,
@@ -109,26 +69,124 @@ public sealed class RenderPipeline
                 nameof(Render),
                 stopwatch.ElapsedMilliseconds,
                 $"intent={request.Intent}",
-                $"size={result.Image.Width}x{result.Image.Height};" +
-                $"clone={cloneElapsed};tone={toneElapsed};" +
-                $"chroma={chromaElapsed};detail={detailElapsed};" +
-                $"resize={resizeElapsed};" +
-                $"stats={statsElapsed}");
+                $"size={result.Image.Width}x{result.Image.Height}");
             return result;
         }
         finally
         {
             overlay?.Dispose();
             display?.Dispose();
+            displayRec2020?.Dispose();
+        }
+    }
+
+    internal MagickImage RenderDisplayRec2020(RenderRequest request)
+    {
+        Validate(request);
+        if (request.MaxDimension != null)
+        {
+            throw new ArgumentException(
+                "The shared display-Rec.2020 render must remain unresized.",
+                nameof(request));
+        }
+        return RenderDisplayRec2020Core(
+            request,
+            RenderDetail.DefaultBandPixelLimit,
+            analyzeSceneHighlights: false,
+            createSceneMask: false,
+            out _);
+    }
+
+    private static MagickImage RenderDisplayRec2020Core(
+        RenderRequest request,
+        int detailBandPixelLimit,
+        bool analyzeSceneHighlights,
+        bool createSceneMask,
+        out SceneHighlightAnalysis? sceneHighlights)
+    {
+        sceneHighlights = null;
+        MagickImage? working = null;
+        try
+        {
+            working = (MagickImage)request.Base.Pixels.Clone();
+            RenderGeometry.Apply(working, request.Settings);
+            if (request.Base.Info.IsRawSource)
+            {
+                var whiteBalance = RenderChromaticStage.CreateWhiteBalanceMatrix(
+                    request.Base.Info,
+                    request.Settings);
+                if (analyzeSceneHighlights)
+                {
+                    sceneHighlights =
+                        ClippingStatsCalculator.AnalyzeSceneHighlights(
+                            working,
+                            whiteBalance,
+                            request.Settings.Exposure +
+                                request.Base.Info.SourceExposureBiasEv,
+                            createSceneMask);
+                }
+
+                var crossing = new AgxCrossing(
+                    new AgxToneParameters(
+                        request.Settings.Exposure,
+                        request.Base.Info.SourceExposureBiasEv,
+                        request.Settings.Contrast,
+                        request.Settings.Highlights,
+                        request.Settings.Shadows,
+                        request.Settings.Curve),
+                    whiteBalance);
+                crossing.Apply(working);
+            }
+            else
+            {
+                ApplyCrossingOffTone(working, request);
+            }
+            RenderColorEncoding.RetagAsSrgb(working);
+            RenderChromaStage.Apply(working, request.Settings);
+            RenderSharpening.ApplyCapture(
+                working,
+                request.Base.Info,
+                request.Settings.Detail);
+            RenderDetail.Apply(
+                working,
+                request.Base.Info,
+                request.Settings.Detail,
+                detailBandPixelLimit);
+            var result = working;
+            working = null;
+            return result;
+        }
+        finally
+        {
             working?.Dispose();
         }
     }
 
-    private static long Lap(Stopwatch stopwatch, ref long previousElapsed)
+    private static void ApplyCrossingOffTone(
+        MagickImage working,
+        RenderRequest request)
     {
-        var elapsed = stopwatch.ElapsedMilliseconds;
-        var result = elapsed - previousElapsed;
-        previousElapsed = elapsed;
+        var chromatic = RenderChromaticStage.CreateNormalizedMatrix(
+            request.Base.Info,
+            request.Settings);
+        var tone = ToneLut.Compose(new ToneParams(
+            request.Settings.Exposure +
+                request.Base.Info.SourceExposureBiasEv,
+            chromatic.Fold,
+            request.Settings.Brightness,
+            request.Settings.Contrast,
+            request.Settings.Shadows,
+            request.Settings.Highlights,
+            request.Settings.BaseLook ?? false,
+            request.Settings.Curve));
+        ToneLutApplicator.Apply(working, chromatic.Matrix, tone);
+    }
+
+    private static MagickImage Take(ref MagickImage? image)
+    {
+        var result = image ?? throw new InvalidOperationException(
+            "The display render was already consumed.");
+        image = null;
         return result;
     }
 

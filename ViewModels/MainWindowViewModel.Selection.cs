@@ -14,6 +14,7 @@ public partial class MainWindowViewModel
         if (newValue != null) newValue.IsActive = true;
 
         HasSelectedImage = newValue != null;
+        IsBrightnessEnabled = newValue?.IsRaw != true;
         ResetSelectedMetadataState(newValue);
         IsShowingOriginal = false;
         Volatile.Write(ref _activeBaseRefreshRequestId, 0);

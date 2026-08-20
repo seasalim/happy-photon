@@ -11,6 +11,9 @@
              x:DataType="vm:MainWindowViewModel">
 
     <UserControl.Styles>
+        <Style Selector="views|CompactSlider.crossing-dependent:disabled">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        </Style>
         <Style Selector="ToggleButton.wb-picker:checked">
             <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
             <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
@@ -286,8 +289,11 @@
                                              SmallChange="0.05"
                                              StringFormat="{}{0:F2}"
                                              EnableDoubleClickReset="True"/>
-                        <views:CompactSlider Label="Brightness"
+                        <views:CompactSlider x:Name="BrightnessSlider"
+                                             Classes="crossing-dependent"
+                                             Label="Brightness"
                                              Value="{Binding Brightness}"
+                                             IsEnabled="{Binding IsBrightnessEnabled}"
                                              Minimum="-100"
                                              Maximum="100"
                                              SmallChange="1"

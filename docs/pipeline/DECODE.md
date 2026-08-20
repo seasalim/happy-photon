@@ -49,9 +49,9 @@ image-statistics defaults:
 | `fbdd_noiserd` | 0/1/2 from `decode.NoiseReduction` (default Off) | internal decode-time NR |
 | `HalfSize` | true for `LoadPreviewBase`, false for `LoadFullBase` | perf; only remaining preview/export decode difference |
 
-The loader applies no S-curve, saturation boost, or 8-bit conversion. The optional
-base look belongs to the render LUT (RENDER.md §5.4), where it remains explicit and
-identical between preview and export.
+The loader applies no S-curve, saturation boost, or 8-bit conversion. RAW picture
+formation belongs to the AgX crossing (TONE_ENGINE.md); no base look is applied to
+crossing-on sources.
 
 Post-decode steps, in order:
 
@@ -134,9 +134,9 @@ compares both images on a 48px-long-edge linear sampling grid. If the
 preview and base aspect ratios differ by more than 2%, the base is center-cropped to
 the preview ratio before comparison. This is deliberately the opposite crop direction
 from Library normalization, which crops the embedded preview toward the visible RAW
-frame. A bounded solver then finds the scalar EV whose default raw transfer matches the
-preview median. Base samples convert Rec.2020 → sRGB in linear light before the
-per-channel default tone response, matching the renderer on colored scenes.
+frame. A bounded solver then finds the scalar EV whose neutral AgX render matches the
+preview median. Base samples pass through the same default inset → log2/sigmoid → outset
+crossing as the renderer, including the Rec.2020-to-sRGB comparison basis.
 
 The preview estimate is accepted only for thumbnails at least 64×64 with finite,
 non-degenerate medians. A Fuji estimate that differs from its nonzero MakerNote bias
@@ -148,7 +148,10 @@ tag is absent; all remaining sources fall back to 0. Every path is clamped to ±
 Preview and full decodes estimate independently and may differ by up to
 0.05 EV because their LibRaw demosaics are approximate rather than identical. The
 renderer combines the selected source fact with the user's relative Exposure setting
-inside the tone LUT gain.
+inside the tone-engine gain. The estimator and engine therefore share the anchored
+post-gain quantity `a = v·2^(EVuser+EVsource)`; an unusable preview falls back to a
+defensible decoded fact and never changes slider semantics. This re-derivation is the
+reason `BaseImage.Version` is 8.
 
 ### 2.3 Why Clip and Blend are the supported modes
 

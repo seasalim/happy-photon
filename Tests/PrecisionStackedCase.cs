@@ -130,6 +130,16 @@ internal static partial class PrecisionBoundaryCensus
         boundaries.Add(resizeBoundary);
         executed["resize"] = resizeBoundary.StoredChange.DimensionsChanged;
 
+        RenderColorEncoding.ConvertEncodedRec2020ToTarget(
+            reconstructed,
+            OutputColorSpace.Srgb);
+        var targetStored = ReadRgb16(reconstructed);
+        boundaries.Add(CreateBoundary(
+            "post-target-convert", PrecisionBoundaryScope.Output,
+            PrecisionBoundaryOracle.Analytic, true,
+            (int)reconstructed.Width, (int)reconstructed.Height,
+            resizeStored, targetStored, null, null));
+
         using var pipeline = new RenderPipeline().Render(new RenderRequest(
             fixture.Base,
             settings,
@@ -138,7 +148,7 @@ internal static partial class PrecisionBoundaryCensus
             new RenderOptions(false, false)));
         var pipelineRgb = ReadRgb16(pipeline.Image);
         AddEqualityFailure(
-            failures, resizeStored, pipelineRgb,
+            failures, targetStored, pipelineRgb,
             "stacked stage reconstruction differs from RenderPipeline");
         foreach (var stage in executed.Where(pair => !pair.Value))
         {

@@ -87,27 +87,30 @@ public sealed class RenderPropertyTests
     }
 
     [Fact]
-    public void Contrast_PreservesCurrentDisplayPivotAnalogue()
+    public void RawContrast_PreservesPostGainSceneMiddleGrey()
     {
-        var linearDisplayPivot = DecodeSrgb(0.5);
-        var source = (ushort)Math.Round(
-            linearDisplayPivot * ushort.MaxValue,
-            MidpointRounding.AwayFromZero);
-        var samples = Enumerable.Repeat(source, 9 * 9 * 3).ToArray();
         var expected = (ushort)Math.Round(
-            0.5 * ushort.MaxValue,
+            ToneLut.SrgbEncode(AgxToneEngine.MiddleGrey) * ushort.MaxValue,
             MidpointRounding.AwayFromZero);
         var pipeline = new RenderPipeline();
 
+        foreach (var sourceExposure in new[] { -2.0, -0.75, 0.625, 2.0 })
         foreach (var contrast in RenderPropertyCases.Contrasts())
         {
+            var source = (ushort)Math.Round(
+                AgxToneEngine.MiddleGrey * Math.Pow(2, -sourceExposure) *
+                ushort.MaxValue,
+                MidpointRounding.AwayFromZero);
+            var samples = Enumerable.Repeat(source, 9 * 9 * 3).ToArray();
             using var baseImage = RenderPipelineTestSupport.CreateBase(
                 samples,
-                height: 9);
+                isRaw: true,
+                height: 9,
+                sourceBiasEv: sourceExposure);
             var settings = new EditSettings
             {
-                BaseLook = false,
                 Contrast = contrast,
+                Detail = new DetailSettings { CaptureSharpen = 0 },
                 Wb = new WhiteBalanceSettings
                 {
                     Mode = WbMode.Picked,
@@ -123,12 +126,8 @@ public sealed class RenderPropertyTests
             var actual = RenderPipelineTestSupport.ReadPixels(result.Image);
             Assert.All(actual, value => Assert.InRange(
                 value,
-                expected - RenderPropertyCases.Q16Tolerance,
-                expected + RenderPropertyCases.Q16Tolerance));
+                expected - 3,
+                expected + 3));
         }
     }
-
-    private static double DecodeSrgb(double value) => value <= 0.04045
-        ? value / 12.92
-        : Math.Pow((value + 0.055) / 1.055, 2.4);
 }

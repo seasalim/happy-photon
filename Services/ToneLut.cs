@@ -14,34 +14,48 @@ internal readonly record struct ToneParams(
 
 internal static class ToneLut
 {
-    internal const int Length = 4096;
+    internal const int Length = ushort.MaxValue + 1;
 
-    public static ushort[] Compose(ToneParams parameters)
+    public static double[] Compose(ToneParams parameters)
     {
-        var lut = new ushort[Length];
+        var lut = new double[Length];
+        var workers = Math.Min(
+            Environment.ProcessorCount,
+            Math.Max(1, Length / 8192));
+        Parallel.For(0, workers, worker =>
+        {
+            var start = Length * worker / workers;
+            var end = Length * (worker + 1) / workers;
+            for (var index = start; index < end; index++)
+            {
+                lut[index] = Evaluate(
+                    parameters,
+                    index / (double)(Length - 1));
+            }
+        });
+
+        return lut;
+    }
+
+    internal static double Evaluate(ToneParams parameters, double input)
+    {
         var gain = ExposureGain(
             parameters.ExposureEv,
             parameters.Fold);
         var knee = HighlightKnee(parameters.Highlights);
         var contrastSlope = ContrastSlope(parameters.Contrast);
-
-        for (var i = 0; i < lut.Length; i++)
-        {
-            var exposed = i / (double)(Length - 1) * gain;
-            var shouldered = HighlightShoulder(exposed, knee);
-            var display = SrgbEncode(Math.Min(shouldered, 1));
-            var looked = parameters.BaseLookEnabled ? BaseLook(display) : display;
-            var brightened = ApplyBrightness(looked, parameters.Brightness);
-            var contrasted = ApplyContrast(brightened, contrastSlope);
-            var shadowed = ApplyShadows(contrasted, parameters.Shadows);
-            var highlighted = ApplyPositiveHighlights(shadowed, parameters.Highlights);
-            var curved = EvaluateCurve(parameters.Curve, highlighted);
-            lut[i] = (ushort)Math.Round(
-                Math.Clamp(curved, 0, 1) * ushort.MaxValue,
-                MidpointRounding.AwayFromZero);
-        }
-
-        return lut;
+        var exposed = input * gain;
+        var shouldered = HighlightShoulder(exposed, knee);
+        var display = SrgbEncode(Math.Min(shouldered, 1));
+        var looked = parameters.BaseLookEnabled ? BaseLook(display) : display;
+        var brightened = ApplyBrightness(looked, parameters.Brightness);
+        var contrasted = ApplyContrast(brightened, contrastSlope);
+        var shadowed = ApplyShadows(contrasted, parameters.Shadows);
+        var highlighted = ApplyPositiveHighlights(shadowed, parameters.Highlights);
+        return Math.Clamp(
+            EvaluateCurve(parameters.Curve, highlighted),
+            0,
+            1);
     }
 
     internal static double ExposureGain(double exposureEv, double fold) =>

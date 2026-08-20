@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "878903f",
+  "renderPath": "full base -\u003E unedited export render -\u003E sRGB RGB8, full resolution, output sharpening off",
+  "observations": {
+    "win-x64": {
+      "display-p3": {
+        "width": 1200,
+        "height": 799,
+        "bytes": 2876400,
+        "sha256": "e84272f6e7d6ffc85c5a9c260bf8ce521e1376168c656ce5581d7218cfc6a933"
+      },
+      "adobe-rgb": {
+        "width": 1200,
+        "height": 799,
+        "bytes": 2876400,
+        "sha256": "280a54f38e0422ed6896db4c4fa03ccf69ba3cfcf581eba3bbbaf08bbd40f0ab"
+      },
+      "heic": {
+        "width": 1200,
+        "height": 799,
+        "bytes": 2876400,
+        "sha256": "1182cb04718207aa7a98dfc5922561647dd4c11a626be149a1d772cece3d9276"
+      },
+      "tiff-16bit": {
+        "width": 1200,
+        "height": 799,
+        "bytes": 2876400,
+        "sha256": "abeffc1f6d108bbbcdaad27702e7b1e47ddedf0e3de24dca98720fc2d2ec97f7"
+      }
+    }
+  }
+}

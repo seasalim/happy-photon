@@ -36,7 +36,6 @@ WHITE BALANCE          (new group, WP3.3)
   Kelvin   ────────●────────   5500K
   Tint     ──────●──────────   −12
 ADJUSTMENTS            (existing group, Temperature slider REMOVED)
-  Base look            [toggle]         (new, WP2.2)
   Exposure / Brightness / Contrast / Saturation / Vibrance / Shadows / Highlights
 CURVE                  (unchanged)
 DEVELOP FOOTER
@@ -46,6 +45,13 @@ DEVELOP FOOTER
 The adjustment stack scrolls beneath the histogram while the Develop footer remains
 fixed. Export intentionally has no pointer action in Develop: return to the Library
 header to click **Export**, or use the global `Ctrl+E` shortcut from either workspace.
+
+Brightness is disabled (not hidden) at `DisabledOpacity` while a RAW base is active,
+because the crossing-on engine has no Brightness parameter. It remains enabled and
+functional for JPEG/HEIC/TIFF/proxy sources. The gate follows the loaded base, falls
+back provisionally to `ImageFile.IsRaw` before load, survives filmstrip switching, and
+never clears the persisted value. Base look remains persisted/MCP-settable but has no
+panel control; RAW ignores it and standard sources retain it.
 
 ## 3. White balance group (WP3.3)
 
@@ -69,10 +75,9 @@ header to click **Export**, or use the global `Ctrl+E` shortcut from either work
   sampling; pan/zoom gestures remain live (click-without-drag samples, drag pans).
   Rejected picks (clipped/noise-floor) show a status-bar hint ("Pick a neutral mid-tone
   area") and stay in the mode. Unavailable while the crop overlay is active.
-- **Clipping overlays** (`J` or histogram chips, Develop only): composited tints at
-  preview resolution — highlight clip red, shadow crush blue (RENDER.md §7 thresholds).
-  One toggle controls both; state is session-only (not persisted, not in EditSettings).
-  Overlays are view-layer only and never appear in exports, before/after, or fullscreen.
+- **Clipping overlays are not exposed yet.** The renderer carries regime-specific
+  stats/mask semantics (RENDER.md §7), but the `J` latch and viewer compositing remain
+  parked for a follow-up run.
 
 ## 5. Scope box + base-arming indicator
 
@@ -101,9 +106,8 @@ header to click **Export**, or use the global `Ctrl+E` shortcut from either work
   counts. A lit channel never rounds to 0.00% — it floors to `<0.01%`. A channel dot is
   fully lit at 16 photosites and above; below that it remains dim. Display-domain
   histograms never show these dots.
-- **Clipping chips** (WP4.2): small warning chips at the histogram's top corners, lit
-  when `ClippingStats` fractions exceed 0.1%; tooltip shows per-channel percentages;
-  clicking a chip toggles the overlays (same state as `J`).
+- **Clipping chips** remain parked with the viewer overlay follow-up. The AgX rework changed the
+  statistics contract only.
 - **Arming indicator** (WP1.3): while the linear base is decoding after Develop entry,
   show a thin indeterminate progress line under the histogram. Sliders stay **enabled**
   — edits accumulate in `EditSettings` and the first render catches up. Show only when
@@ -164,8 +168,9 @@ No UI for quality-dependent chroma subsampling — it is automatic and stays inv
 | Key | Action | Scope | WP |
 |-----|--------|-------|----|
 | `W` | Toggle WB eyedropper | Develop only | 3.3 |
-| `J` | Toggle clipping overlays | Develop only | 4.2 |
 | `Ctrl+B` | Toggle color assessment mode | Develop/fullscreen | — |
+
+`J` is reserved for the parked clipping-overlay run and is not registered yet.
 
 Shortcut registrations belong in
 [`Views/ShortcutCatalog.cs`](../../Views/ShortcutCatalog.cs). Each work package
@@ -210,9 +215,8 @@ If a WP seems to need one of these, it's a spec question first.
   (`MainWindowViewModel` partial tests, like existing edit-history tests).
 - Reset covers every new field; presets/copy-paste round-trip the widened set;
   geometry still excluded.
-- Raw-only controls hidden for a JPEG; a forced RAW failure remains identified as RAW
-  and presents its cause.
+- Capability-gated controls follow loaded-base facts; Brightness specifically uses
+  disable-not-hide for RAW and preserves its stored value across source changes.
 - Kelvin log mapping: position 0 → 2000, 1 → 12000, midpoint ≈ 4900 (√6·2000) within
   rounding.
-- Shortcut registration test: `ShortcutCatalog.Groups` lists `W`/`J` when the
-  features land.
+- Shortcut registration tests list `W`; `J` is added only when viewer clipping lands.

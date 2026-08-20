@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
 using Xunit;
@@ -105,6 +106,80 @@ public sealed class ClippingStatsTests
         Assert.Equal(new ChannelClip(0.5, 0, 0.5), result.Stats.Low);
         Assert.Equal(0.5, result.Stats.HighAny);
         Assert.Equal(0, result.Stats.LowAll);
+    }
+
+    [Fact]
+    public void Render_RawHighlightsUsePreInsetSceneWhite()
+    {
+        using var raw = RenderPipelineTestSupport.CreateBase(
+            [ushort.MaxValue, 0, 0],
+            isRaw: true);
+        using var result = new RenderPipeline().Render(new RenderRequest(
+            raw,
+            new EditSettings
+            {
+                Detail = new DetailSettings { CaptureSharpen = 0 }
+            },
+            RenderIntent.Preview,
+            null,
+            new RenderOptions(true, true)));
+
+        Assert.Equal(new ChannelClip(1, 0, 0), result.Clipping.High);
+        Assert.Equal(1, result.Clipping.HighAny);
+        Assert.All(
+            RenderPipelineTestSupport.ReadPixels(result.Image),
+            value => Assert.True(value < 65407));
+        var mask = result.OverlayMask!.GetPixelsUnsafe()
+            .ToShortArray(PixelMapping.RGBA)!;
+        Assert.Equal(ushort.MaxValue, mask[0]);
+        Assert.Equal((ushort)0, mask[1]);
+        Assert.Equal((ushort)0, mask[2]);
+    }
+
+    [Fact]
+    public void Render_RawHighlightsRespondToExposureAndWhiteBalance()
+    {
+        using var halfGrey = RenderPipelineTestSupport.CreateBase(
+            [32768, 32768, 32768],
+            isRaw: true);
+        using var neutral = RenderRaw(halfGrey, new EditSettings());
+        using var exposed = RenderRaw(
+            halfGrey,
+            new EditSettings { Exposure = 1 });
+
+        Assert.Equal(ChannelClip.Empty, neutral.Clipping.High);
+        Assert.Equal(0, neutral.Clipping.HighAny);
+        Assert.Equal(new ChannelClip(1, 1, 1), exposed.Clipping.High);
+        Assert.Equal(1, exposed.Clipping.HighAny);
+
+        using var wbBase = RenderPipelineTestSupport.CreateBase(
+            [40000, 40000, 40000],
+            isRaw: true);
+        using var whiteBalanced = RenderRaw(
+            wbBase,
+            new EditSettings
+            {
+                Wb = new WhiteBalanceSettings
+                {
+                    Mode = WbMode.Picked,
+                    Gains = [2, 1, 1]
+                }
+            });
+        Assert.Equal(new ChannelClip(1, 0, 0), whiteBalanced.Clipping.High);
+        Assert.Equal(1, whiteBalanced.Clipping.HighAny);
+    }
+
+    private static RenderResult RenderRaw(
+        BaseImage image,
+        EditSettings settings)
+    {
+        settings.Detail = new DetailSettings { CaptureSharpen = 0 };
+        return new RenderPipeline().Render(new RenderRequest(
+            image,
+            settings,
+            RenderIntent.Preview,
+            null,
+            new RenderOptions(true, false)));
     }
 
     private static MagickImage CreateImage(ushort[] samples)

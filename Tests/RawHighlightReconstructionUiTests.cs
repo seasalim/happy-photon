@@ -124,6 +124,54 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         await vm.DisposeAsync();
     }
 
+    [AvaloniaFact]
+    public async Task Brightness_GatesByProvisionalAndDecodedSourceRegime()
+    {
+        using var catalog = new CatalogService(_root);
+        var vm = CreateViewModel(catalog);
+        var raw = new ImageFile(Path.Combine(_root, "raw.dng"))
+        {
+            EditSettings = new EditSettings { Brightness = 37 }
+        };
+        var standard = new ImageFile(Path.Combine(_root, "standard.jpg"))
+        {
+            EditSettings = new EditSettings { Brightness = -23 }
+        };
+        var panel = new DevelopEditPanel { DataContext = vm };
+        var window = new Window
+        {
+            Width = 250,
+            Height = 660,
+            Content = panel
+        };
+        window.Show();
+        var slider = panel.FindControl<CompactSlider>("BrightnessSlider")!;
+
+        vm.SelectedImage = raw;
+        Assert.False(vm.IsBrightnessEnabled);
+        Assert.False(slider.IsEnabled);
+        Assert.Equal(37, vm.Brightness);
+        Assert.InRange(slider.Opacity, 0, 0.99);
+
+        vm.SelectedImage = standard;
+        Assert.True(vm.IsBrightnessEnabled);
+        Assert.True(slider.IsEnabled);
+        Assert.Equal(-23, vm.Brightness);
+
+        vm.SelectedImage = raw;
+        Assert.False(vm.IsBrightnessEnabled);
+        Assert.Equal(37, vm.Brightness);
+        vm.ReconcileHighlightReconstructionCapability(raw, isRawSource: false);
+        Assert.True(vm.IsBrightnessEnabled);
+        Assert.Equal(37, raw.EditSettings.Brightness);
+        vm.ReconcileHighlightReconstructionCapability(raw, isRawSource: true);
+        Assert.False(vm.IsBrightnessEnabled);
+
+        window.Close();
+        panel.DataContext = null;
+        await vm.DisposeAsync();
+    }
+
     [Fact]
     public async Task Selection_ClearsBeforeAfterState()
     {

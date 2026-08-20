@@ -6,6 +6,9 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     [ObservableProperty]
+    private bool _isBrightnessEnabled = true;
+
+    [ObservableProperty]
     private HlReconstructionMode _hlReconstruction =
         HlReconstructionMode.Clip;
 
@@ -26,6 +29,7 @@ public partial class MainWindowViewModel
         ImageFile imageFile,
         bool isRawSource)
     {
+        IsBrightnessEnabled = !isRawSource;
         if (imageFile.IsRaw && !isRawSource)
         {
             ShowTransientStatus(

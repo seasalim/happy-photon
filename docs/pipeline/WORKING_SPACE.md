@@ -1,7 +1,6 @@
 # Working Space: linear Rec.2020, D65
 
-The canonical `BaseImage` color space and the transforms into and out of it. This is the
-NEWRAW stage 1 / NEWJPEG stage 1 specification and its provenance record: every constant
+The canonical `BaseImage` color space and the transforms into and out of it. This is the working-space specification and its provenance record: every constant
 below is derived here from published primaries or cited to a public standard. No GPL
 implementation (darktable, RawTherapee, Blender) was consulted.
 
@@ -16,10 +15,9 @@ orientation applied, no look baked in. Nothing else about the contract changes:
 scene-referred values, 1.0 = sensor/display white, and `BaseImageInfo` facts keep their
 current meanings.
 
-Rationale is ENDSTATE.md decision 1 — real primaries give the densest Q16 code usage, the
+Rationale: real primaries give the densest Q16 code usage, the
 AgX formulations are defined against them, and BT.2100 shares them, so future HDR output
-inherits the basis. Numeric representation stays Q16 storage with `double` computation
-(ENDSTATE.md decision 9).
+inherits the basis. Numeric representation stays Q16 storage with `double` computation.
 
 | Quantity | Value |
 |----------|-------|
@@ -52,9 +50,9 @@ sRGB → Rec.2020 (both linear, D65)
  +0.0163914389 +0.0880133079 +0.8955952532
 ```
 
-The render normalization fold (RENDER.md §4) for the bare working→display matrix is its
-largest row positive sum, **1.6604910021084345**. Neutral (1,1,1) therefore lands at
-0.6022 before the tone LUT refunds the fold — the existing mechanism, now universal.
+The Rec.2020→sRGB matrix now runs only in finalization, after every shared edit. It is
+not normalized or folded into the tone stage; it converts display-linear Rec.2020 to
+the requested target immediately before the common sRGB transfer is encoded.
 
 ## 3. Decode: raw
 
@@ -105,26 +103,18 @@ wide base — which is the gamut this run exists to preserve. §7 pins that with
 
 ## 5. Render placement
 
-The working→display conversion composes with the white-balance matrix into the render's
-single chromatic matrix. It is evaluated with the one tone LUT in a fused storage pass,
-with the same intermediate Q16 quantization, keeping RENDER.md's matrix + one-LUT
-contract and its normalize/fold refund. `asShot` no longer skips the stage; its factor
-remains exact identity, so the composed matrix is exactly the §2 working→display matrix.
+The AgX rework completed this placement: RAW composes the AgX inset with white balance,
+evaluates the tone engine, and applies the AgX outset; standard sources use white
+balance and the retained display-referred chain. Chroma and all detail stages then run
+on encoded display Rec.2020. Only after resize and optional output sharpening does
+finalization decode, convert display-linear Rec.2020 to sRGB or Display P3, clamp, and
+encode. Preview always selects sRGB.
 
-This placement is temporary by design. In the ENDSTATE graph the display convert is node
-7, after the AgX outset; R4 moves it there when the crossing lands. Until then it sits
-where today's pipeline already crosses into display primaries, which is before the tone
-LUT's sRGB encode.
-
-Two consequences are deliberate:
-
-- Colors outside the display gamut clamp at the matrix (negative coefficients drive them
-  to 0), exactly as they clamped at decode before this change. Wide-gamut *output* is
-  R2's job; R1 preserves the gamut through editing, not through export.
-- The raw near-clip statistic thresholds base channels before the matrix, so on saturated
-  color, wide primaries would under-report sensor clip. It converts to the display basis
-  inside its scan and keeps its current published behavior. ENDSTATE decision 7's
-  scene-referred redefinition remains R4's.
+The crossing's normalize/fold machinery applies only to `M_inset · M_WB` (or `M_WB`
+for crossing off), with the fold refunded by the active tone regime. Target matrices
+never affect shared edits. Scene-referred RAW highlight statistics sample after WB and
+exposure but before the inset; `RawNearClip` keeps its legacy decoded display-basis
+meaning (RENDER.md §7).
 
 ## 6. White balance
 
@@ -191,10 +181,10 @@ source and the target and leave the test green.
 
 ## 9. Output targets
 
-The render's chromatic matrix converts working → **the selected output space**. sRGB is the
-default and Display P3 is the opt-in alternative; preview always renders sRGB. Nothing else
-in the render is parameterized, because P3 shares sRGB's transfer function (IEC 61966-2-1),
-so only the matrix's target primaries change.
+Finalization converts display-linear Rec.2020 → **the selected output space** after
+all shared editing. sRGB is the default and Display P3 is opt-in; preview always uses
+sRGB. P3 shares the IEC 61966-2-1 transfer, so only the final matrix and embedded
+profile differ.
 
 **Display P3** — SMPTE EG 432-1 primaries with the D65 white point and the sRGB transfer,
 as published by Apple: R (0.680, 0.320), G (0.265, 0.690), B (0.150, 0.060).
@@ -206,14 +196,13 @@ Rec.2020 → Display P3 (both linear, D65)      Display P3 → XYZ (D65)
  +0.0028217873 -0.0195984945 +1.0167767073     +0.0000000000 +0.0451133819 +1.0439443689
 ```
 
-The render normalization fold (RENDER.md §4) for the bare working→P3 matrix is
-**1.343578252584332**, against 1.6604910021084345 for sRGB — a P3 export therefore spends
-*more* of the tone LUT's knots on its data than an sRGB export does.
+These target matrices are evaluated directly in the trailing decode → convert → encode
+pass. They do not participate in render normalization or consume tone-table range.
 
 ### 9.1 Embedded profile
 
 P3 exports embed `DisplayP3-v4.icc` from Compact ICC Profiles (CC0, 480 bytes), already
-committed for R1's gamut fixture and verified there against the D50-adapted P3 colorants to
+committed for the gamut fixture and verified there against the D50-adapted P3 colorants to
 7e-6. Exported files are read by other people's software, so a widely-deployed profile beats
 one we generate; the constructed working-space profile (§4) stays internal and is never
 embedded. The embedded profile's primaries **and** its parametric transfer must be checked
@@ -232,7 +221,7 @@ export of in-gamut content should land on these codes:
 | blue | 0, 0, 255 | 0, 0, 244.695 |
 | mid grey | 128, 128, 128 | 128, 128, 128 |
 
-Round trip — R1's synthetic native-P3 fixture through the Q16 Rec.2020 base and back out to
+Round trip — the synthetic native-P3 fixture through the Q16 Rec.2020 base and back out to
 a P3 export:
 
 | Patch | P3 source | base Q16 | recovered P3 code |
@@ -247,14 +236,14 @@ Red's blue channel recovers as 4, not 0. P3's red corner sits a hair outside Rec
 clamped value back as a small positive. It is a storage-representation artifact, stated here
 so it is recognized rather than re-derived or absorbed into a tolerance later.
 
-### 9.3 Two honest limits
+### 9.3 Resolved limits
 
-- **An edited P3 export is not colorimetrically identical to the same edit in sRGB.** The
-  tone LUT, chroma, and detail stages run *after* the display convert, so their per-channel
-  nonlinearities act on different channel values in each target. Agreement holds for
-  in-gamut content with those stages disabled, and for neutrals; edits diverge by a measured
-  amount. R4 removes this when the convert moves after the AgX outset (ENDSTATE node 7).
-- **Luma-weighted stages keep sRGB-referred weights.** Capture sharpen, chroma NR, and
-  output sharpening use rounded BT.709 constants. Deriving them from target primaries would
-  change sRGB output — the rounded constants are not reproducible from any derivation — so
-  P3 exports carry sRGB-referred luma weighting until R4 revisits the basis.
+- Every nonlinear edit is target-independent. At the renderer's Q16 pre-encode
+  boundary, edited in-gamut sRGB/P3 agreement is gated at mean ΔE00 ≤ 0.034 for the
+  synthetic worst case and ≤ 0.053 for the real-RAW full-combo case, both with output
+  sharpening off and on. The encoded 8-bit observation remains informational because
+  target-code quantization alone contributes about 0.2 mean ΔE00.
+- Capture sharpen, chroma NR, and output sharpen all reference `Rec2020Luminance`, the
+  exact Rec.2020→XYZ Y row from §2:
+  `(0.2627002120112671, 0.6779980715188708, 0.0593017164698620)`. They run before the
+  target convert; the former rounded BT.709 basis is retired.

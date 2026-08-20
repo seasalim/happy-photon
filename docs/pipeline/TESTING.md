@@ -138,9 +138,18 @@ for the golden PNG. It does not use the half-size preview decode or preview JPEG
 reflection in the reference CR2, as verified during WP4.1
 ([DECODE.md §2.2](DECODE.md#22-highlight-reconstruction-evaluation)).
 
-R1 re-baselined the same 39-case matrix once as v8 for the Rec.2020 base/render version
-pair. Against frozen v7, all 39 changed: mean ΔE ranged 0.074–0.617 and p99 ΔE ranged
-0.718–1.021. The superseded generation is pruned after the report is captured.
+The Rec.2020 working-space change re-baselined the same 39-case matrix once
+as v8 (against frozen v7, all 39 changed: mean ΔE 0.074–0.617, p99
+0.718–1.021). The superseded generation is pruned after the report is
+captured.
+
+The AgX rework re-baselines once as v9 and prunes v8. Its attribution has two
+measured parts: the numeric-path change (exact tables, fused finalization,
+luma basis, convert relocation) moved goldens by at most mean ΔE00 7.56
+(Fuji WB), and the AgX default changed RAW goldens by mean ΔE00 12.150 on
+average (range 6.047–20.502). Crossing-off output stayed byte-identical.
+The cache markers are `RenderPipeline.Version = 9` and `BaseImage.Version =
+8`; the latter attributes the re-derived `SourceExposureBiasEv` fact.
 
 ## 3. Tolerances (normative)
 
@@ -148,16 +157,18 @@ pair. Against frozen v7, all 39 changed: mean ΔE ranged 0.074–0.617 and p99 �
 |------------|-------|
 | Same base, repeated render, same platform | bit-identical |
 | Golden vs current, same platform | mean ΔE ≤ 1.0, p99 ≤ 3.0 |
-| Preview render vs export render downscaled to same size | mean ΔE ≤ 1.5, p99 ≤ 4.0 |
-| sRGB vs Display P3, constructed intersection-gamut settings | mean ΔE00 ≤ 5.0 in XYZ/Lab through each target |
-| Full-decode base vs half-decode base (raw, at common preview size up to 1600px) | mean ΔE ≤ 2.1 (documented gap) |
+| Actual preview-base render vs full-base export aligned to the preview size | mean ΔE ≤ 2.0, p99 ≤ 8.0 |
+| Edited sRGB vs Display P3 at the Q16 pre-encode boundary | synthetic mean ΔE00 ≤ 0.034; real RAW ≤ 0.053; sharpening off and on |
+| Full-decode base vs half-decode base (raw, at common preview size up to 1600px) | mean ΔE ≤ 2.8 (documented gap) |
 | P3-tagged vs sRGB-tagged same-picture bases | mean ΔE ≤ 1.5 |
 | Cross-platform (M6): win/linux/mac renders of same case | mean ΔE ≤ 2.0 |
 
-The RAW half/full bound pins the Canon EOS 350D fixture's measured LibRaw
-half-size demosaic gap of mean ΔE 2.087 at the common preview size. A resize-filter
-audit ranged from 2.086 to 2.205, confirming the residual is decode sampling rather
-than a render or resize regression.
+WYSIWYG is calibrated over every v9 settings case using the actual preview
+base and a full-base export, aligning the occasional one-pixel aspect
+difference to the preview dimensions. Crossing-on measured worst mean 1.8722
+and p99 7.9673; crossing-off was bit-identical. Each worst observation rounds
+up to the next 0.5, producing 2.0/8.0. The separate half/full base bound
+covers the decoded sampling gap before tone.
 
 **OS gating policy at M6:** goldens are generated on Linux CI (canonical). Linux uses
 the same-platform mean/p99 bounds above. Windows and Apple Silicon macOS compare every
@@ -174,18 +185,17 @@ orders above the observed difference.
 
 ## 4. Required suites
 
-1. **`ToneLutTests`**: monotonicity property (`lut[i+1] ≥ lut[i]`, non-strict — clamp
-   plateaus are legal) over randomized valid settings with **identity or monotone user
-   curves** (seeded, ≥ 1000 draws; non-monotone user curves are allowed by the product
-   and exempt from this property — RENDER.md §5.5); identity case reproduces `E(x)`
-   within 1 LSB@8bit; shoulder C1 continuity numeric check; every §5 formula pinned at
-   3 sample points, including the clamp boundaries (e.g. Brightness+Contrast at +100
-   must plateau, not fold back).
+1. **Tone suites:** `AgxToneEngineTests`, `AgxCrossingTests`, and
+   `AgxCrossingDerivationTests` pin the crossing properties, source-derived constants,
+   exact-table interpolation, and Blender oracle. `ToneLutTests` pins the retained
+   crossing-off formulas and monotonicity for identity/monotone user curves.
 2. **`WhiteBalanceModelTests`**: WHITE_BALANCE.md §9 list.
 3. **`RenderDeterminismTests`**: repeated render bit-identical; burst pair identical;
    settings hash stable across process runs (canonical JSON ordering).
 4. **`GoldenRenderTests`**: §2 matrix.
-5. **`WysiwygTests`**: preview vs export bound (§3 row 3) for the settings cases.
+5. **`WysiwygTests`**: actual preview-base vs full-export bound (§3 row 3) for both
+   regimes and every golden settings case; `WysiwygCalibrationTests` emits the
+   opt-in calibration payload.
 6. **Current-format boundary tests**: `EditSettingsJsonTests` pins canonical ordering,
    clone-before-clamp behavior, range validation, removed WB modes, and rejection of
    every non-v2 write. `CatalogSchemaTests` pins the clean new schema, acceptance of
@@ -213,30 +223,23 @@ orders above the observed difference.
     opaque premultiplied BGRA, theme-token colors, bitmap reuse/disposal and live-theme
     repaint. Headless tests cover the stable three-entry selector, RAW fallback,
     Library's fixed chrome, cloud-only no-load behavior, and same-image supersession.
-13. **Wide-gamut output suites:** `SrgbExportBaselineTests` requires exact same-RID byte
-    length and SHA-256 equality to the frozen `8f64150` JPEG/PNG/WebP exports.
-    `WideGamutExportTests` checks the Display P3 profile and independently derived native-P3
-    codes in every format, gamut survival, and common-space intersection-gamut agreement.
-    `WideGamutColorimetryTests` reports each golden settings case and gates mean ΔE00 ≤ 5.0;
-    RAW defaults are checked separately on neutrals. The ColorChecker P3 anchor samples via
-    P3→XYZ and gates mean ΔE00 ≤ 6.0 / maximum ≤ 11.5; current win-x64 measurement is
-    5.737967267765175 / 11.405233816061925. The unmasked Canon RAW report (not
-    quality-gated because it contains
-    out-of-sRGB colors) measures whole-image mean ΔE00 0.1908 at defaults and 0.5270 for the
-    full-combo tonal edit. These are implementation-error sentinels, not a claim that edited
-    P3 and sRGB looks are identical (WORKING_SPACE.md §9.3).
+13. **Wide-gamut output suites:** `WideGamutExportTests` checks the Display P3 profile,
+    independently derived native-P3 codes in every format, gamut survival, and common-space
+    agreement. `WideGamutColorimetryTests` gates the Q16 finalization boundary at the
+    §3 limits with output sharpening off and on, and records the expected 8-bit
+    quantization floor as informational. The former frozen per-RID export
+    byte hashes are retired; v9 goldens own regression.
 
-### 4.1 NEWRAW validation anchors
+### 4.1 Pipeline validation anchors
 
-R0 establishes four additive anchors before a NEWRAW stage changes pixels:
+Every stage that changes pixels answers to four anchors:
 
 1. **Seeded properties.** `RenderPropertyTests` fixes its seed and draw count.
-   Achromatic linear input must remain achromatic through the full renderer under RAW
-   defaults, with picked white balance constrained to unity. Contrast is tested over
-   the named range −100…+100 at today's actual fixed point,
-   `sRGB_EOTF(0.5)`, with base look disabled and a 2-Q16-sample tolerance. This is the
-   **display-pivot analogue**, not ENDSTATE's future scene-linear 0.18 contract; R4
-   activates that separate contract when its tone model makes it true.
+   Achromatic linear input remains achromatic through the full RAW crossing. The
+   post-gain value `a = v·2^(EVuser+EVsource) = 0.18` maps to the pinned display grey
+   across the full Contrast range and multiple nonzero `EVsource` values. The old
+   display-pivot analogue is retired. Brightness/BaseLook dormancy and crossing-off
+   sensitivity are bit-gated separately.
 2. **Source-cited constants.** RGB→XYZ matrices are independently derived in C# from
    each space's published primaries and white point, then compared with both the
    published matrix and the committed oracle. The authorities are IEC 61966-2-1 for
@@ -267,50 +270,55 @@ R0 establishes four additive anchors before a NEWRAW stage changes pixels:
    byte length and SHA-256, default full-resolution decode, export intent with no
    resize (oriented 4320×2868), `OMP_NUM_THREADS=1`, projective corners and central
    patch ROIs, the 90° chart mapping, frozen neutral-patch XYZ, and the measurement
-   normalization. Rendering starts with defaults and changes only `Wb.Mode` to
-   `Picked`; gains are derived from frozen XYZ through the Rec.2020 working-space
-   basis. Exposure remains zero. Each encoded pixel is EOTF-decoded, converted to
-   XYZ, and averaged in linear light; the frozen least-squares exposure scalar is
-   then applied before Bradford adaptation to the chart's declared ICC D50 white and
-   ΔE00 comparison. Fresh base samples are checked for XYZ drift but never feed back
-   into gains or bounds.
+   normalization. The characterization anchor samples after analytic picked WB at the
+   pre-crossing scene-linear Rec.2020 seam, applies the frozen least-squares exposure
+   scalar, then adapts to the chart's declared ICC D50 white. A separate observation
+   renders those same fixed gains through the default RAW AgX crossing and samples the
+   finalized sRGB output with no post-look exposure scalar. Fresh base samples are
+   checked for XYZ drift but never feed back into gains or bounds.
 
-The ground-truth gate reports all 24 patch results and independently checks mean and
-maximum ΔE00. R1 re-derived base sampling and gains in Rec.2020 while rendered sampling
-remains sRGB, and all three supported RIDs were re-measured with the OpenMP pin: three
-fresh win-x64 processes plus one CI process each on linux-x64 and osx-arm64. They agree to
-within 2.1e-7 ΔE00 — worst mean 5.450965990609351 and worst per-patch maximum
-10.766853169142227, both osx-arm64. The committed bounds are therefore mean ≤ 5.5 and
-per-patch maximum ≤ 11.0 by the precommitted “worst supported-RID observation rounded up
-to the next 0.5” rule, tightened from R0's mean ≤ 6.0. The manifest records every run and
-the current-RID test matches its recorded observation, skipping only RIDs the manifest
-names as pending. Obtain future cross-RID observations with CI `workflow_dispatch` runs:
-the result upload runs on success as well as failure, so a green dispatch carries each
-RID's exact aggregate in its `.trx` — read the `ColorChecker exact aggregate` line, record
-it in the manifest, and recompute both bounds by the rounding rule. This budget includes
-the aged 2010 physical chart and is a stable regression gate, not a claim of current
-colorimetric accuracy. The Display P3 output target is calibrated the same way and
-recorded in the manifest's `displayP3Budget`: all three RIDs measured mean 5.7380 and
-maximum 11.4052 (agreeing to 5e-7), giving bounds of mean ≤ 6.0 and maximum ≤ 11.5 by the
-same rounding rule. P3 measures ~0.29 ΔE00 worse than sRGB because the per-channel tone,
-chroma, and detail stages run after the display convert and therefore act on different
-channel values — the same target-dependence WORKING_SPACE.md §9.3 documents, which R4
-removes when the convert moves after the AgX outset.
+The manifest uses the precommitted “worst supported-RID observation rounded up to the
+next 0.5” rule for both anchors. Win-x64 measures pre-crossing mean/max ΔE00
+2.6383236546063933/6.2450756876906794, producing bounds 3.0/6.5. The integrated AgX
+look measures 5.993530184884918/13.761233948669688, producing bounds 6.0/14.0.
+All three supported RIDs record exact aggregate observations in the manifest
+(cross-platform agreement is within 2e-6). The current-RID test matches the
+recorded payloads. These budgets pin characterization and look drift; they are not claims
+that an aged physical chart should be rendered colorimetrically exact.
 
-The Display P3 ColorChecker target follows the same rule in the manifest's separate
-`displayP3Budget`. Its win-x64 observation produces mean ≤ 6.0 and maximum ≤ 11.5;
-linux-x64 and osx-arm64 are explicitly pending until dispatched CI records their exact
-aggregates. Its current-RID test uses the same recorded-or-explicitly-pending contract.
+## 5. Performance
 
-## 5. Performance (informational, not gating)
+Opt-in `HAPPY_PHOTON_PERF=1` diagnostics remain outside normal CI. The tone
+gate is `AgxPerformanceGateTests`: one warm-up, median of five, a separate
+process per output target, and a required JSON report. It covers 1600px
+Contrast +25 slider ticks on the Canon 6D, Fuji X30, sRGB JPEG, and HEIC; the
+three-size RAW export per target; and the full-resolution standard export,
+sampling process private memory every 10 ms. Reports compare against the same
+harness run on the pre-AgX baseline (`878903f`); budgets are slider ≤ 150 ms,
+export wall ≤ +5%, and private peak ≤ +16 MiB.
 
-Opt-in local `HAPPY_PHOTON_PERF=1` diagnostics cover preview base decode, slider-tick
-render at 1600px, full export of one raw, and edited standard-thumbnail generation at
-512px; normal CI does not enable them. The waveform diagnostic reports setup separately
-and gates the warmed accumulator-only median over a pre-materialized 1024×1024 Q16 RGB
-span at 5 ms. Track
-results in PR descriptions when a work package touches the hot path; hard budget only
-for slider tick (≤ 150 ms dev baseline, RENDER.md §10).
+The waveform diagnostic reports setup separately and gates the warmed
+accumulator-only median over a pre-materialized 1024×1024 Q16 RGB span at
+5 ms. Additional opt-in diagnostics cover preview base decode and edited
+standard-thumbnail generation at 512px; track results in PR descriptions when
+a work package touches the hot path.
+
+```powershell
+$env:HAPPY_PHOTON_PERF='1'
+$env:HAPPY_PHOTON_AGX_PERF_TARGET='srgb' # then display-p3
+$env:HAPPY_PHOTON_AGX_PERF_REPORT='artifacts/agx-perf-srgb.json'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
+  --filter FullyQualifiedName~AgxPerformanceGateTests
+
+$env:HAPPY_PHOTON_WYSIWYG='1'
+$env:HAPPY_PHOTON_WYSIWYG_REPORT='artifacts/agx-wysiwyg.json'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
+  --filter FullyQualifiedName~WysiwygCalibrationTests
+```
+
+Recorded win-x64 numbers: slider 29.4/35.2/17.2/16.7 ms in the fixture order
+above; sRGB variants +2.0% with +1.0 MiB private peak; P3 variants −1.5% with
++0.3 MiB; standard export −7.6%. All budgets pass.
 RAW base decode performance output includes a `RawHistogram` step for the sensor pass;
 measure at least the 20 MP Canon EOS 6D fixture when this gate is enabled.
 
@@ -448,7 +456,7 @@ the bridge and LibRaw companion loaded from the runtime extraction directory:
 ./scripts/verify-libraw-single-file.ps1 -RuntimeIdentifier linux-x64
 ```
 
-R1's manual comparison renders a focused fixture/settings set against a frozen baseline,
+The manual working-space comparison renders a focused fixture/settings set against a frozen baseline,
 reports normalized RMSE, and writes three side-by-side crop rows per case:
 
 ```powershell

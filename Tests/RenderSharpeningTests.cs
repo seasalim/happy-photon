@@ -246,9 +246,9 @@ public sealed class RenderSharpeningTests
         throw new InvalidOperationException("Unable to read RGB pixels.");
 
     private static double GetLuma(ushort[] rgb, int index) =>
-        0.2126 * rgb[index] +
-        0.7152 * rgb[index + 1] +
-        0.0722 * rgb[index + 2];
+        Rec2020Luminance.Red * rgb[index] +
+        Rec2020Luminance.Green * rgb[index + 1] +
+        Rec2020Luminance.Blue * rgb[index + 2];
 
     private static double MaxLumaDelta(
         ushort[] before,

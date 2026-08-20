@@ -112,6 +112,10 @@ internal static class PrecisionOracle
             reconstructed,
             fixture.Base.Info,
             settings.Detail);
+        var toneStageRgb = ReadRgb16(reconstructed);
+        RenderColorEncoding.ConvertEncodedRec2020ToTarget(
+            reconstructed,
+            OutputColorSpace.Srgb);
 
         using var result = new RenderPipeline().Render(new RenderRequest(
             fixture.Base,
@@ -142,7 +146,7 @@ internal static class PrecisionOracle
             new PrecisionCheckpoint(
                 4, "base-continuous-tone", baseTone, expectedTone, expectedTone, false),
             new PrecisionCheckpoint(
-                5, "tone-stage-q16", ReadRedNormalized(reconstructedRgb), baseTone, baseTone, false),
+                5, "tone-stage-q16", ReadRedNormalized(toneStageRgb), baseTone, baseTone, false),
             new PrecisionCheckpoint(
                 6, "render-pipeline-q16", ReadRedNormalized(pipelineRgb), baseTone, baseTone, false),
             new PrecisionCheckpoint(

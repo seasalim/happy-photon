@@ -437,7 +437,8 @@ internal static class RenderDetail
              cr * strength;
         var r = luma + cr;
         var b = luma + cb;
-        var g = (luma - RedLuma * r - BlueLuma * b) / GreenLuma;
+        var g = (float)((luma - Rec2020Luminance.Red * r -
+            Rec2020Luminance.Blue * b) / Rec2020Luminance.Green);
         output[pixel + layout.Red] = ToQuantum(r);
         output[pixel + layout.Green] = ToQuantum(g);
         output[pixel + layout.Blue] = ToQuantum(b);

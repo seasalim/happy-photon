@@ -38,8 +38,10 @@ public sealed class RenderPipelineTests
         Assert.Equal(4u, baseImage.Pixels.Height);
     }
 
-    [Fact]
-    public void Render_SourceExposureBiasMatchesUserExposure()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Render_SourceExposureBiasMatchesUserExposure(bool isRaw)
     {
         ushort[] samples =
         [
@@ -49,8 +51,11 @@ public sealed class RenderPipelineTests
         ];
         using var biasedBase = RenderPipelineTestSupport.CreateBase(
             samples,
+            isRaw,
             sourceBiasEv: 1);
-        using var exposedBase = RenderPipelineTestSupport.CreateBase(samples);
+        using var exposedBase = RenderPipelineTestSupport.CreateBase(
+            samples,
+            isRaw);
 
         using var biased = Render(new EditSettings(), biasedBase);
         using var exposed = Render(
@@ -230,28 +235,28 @@ public sealed class RenderPipelineTests
     }
 
     [Fact]
-    public void Render_AppliesChromaToDisplayReferredSrgbPixels()
+    public void Render_AppliesChromaToEncodedDisplayRec2020Pixels()
     {
         using var baseImage = RenderPipelineTestSupport.CreateBase(
         [
             6000, 18000, 42000,
             50000, 21000, 9000
         ]);
-        using var neutral = Render(new EditSettings(), baseImage);
-        using var expected = (MagickImage)neutral.Image.Clone();
+        using var neutral = RenderShared(new EditSettings(), baseImage);
+        using var expected = new MagickImage(neutral);
         expected.Modulate(
             new Percentage(100),
             new Percentage(150),
             new Percentage(100));
 
-        using var saturated = Render(
+        using var saturated = RenderShared(
             new EditSettings { Saturation = 50 },
             baseImage);
 
-        Assert.Equal(ColorSpace.sRGB, saturated.Image.ColorSpace);
+        Assert.Equal(ColorSpace.sRGB, saturated.ColorSpace);
         Assert.Equal(
             RenderPipelineTestSupport.ReadPixels(expected),
-            RenderPipelineTestSupport.ReadPixels(saturated.Image));
+            RenderPipelineTestSupport.ReadPixels(saturated));
     }
 
     [Fact]
@@ -263,17 +268,17 @@ public sealed class RenderPipelineTests
             Saturation = 30,
             Detail = new DetailSettings { ChromaNr = 100 }
         };
-        using var chromaOnly = Render(
+        using var chromaOnly = RenderShared(
             new EditSettings { Saturation = 30 },
             baseImage);
-        using var expected = (MagickImage)chromaOnly.Image.Clone();
+        using var expected = new MagickImage(chromaOnly);
         RenderDetail.Apply(expected, baseImage.Info, settings.Detail);
 
-        using var actual = Render(settings, baseImage);
+        using var actual = RenderShared(settings, baseImage);
 
         Assert.Equal(
             RenderPipelineTestSupport.ReadPixels(expected),
-            RenderPipelineTestSupport.ReadPixels(actual.Image));
+            RenderPipelineTestSupport.ReadPixels(actual));
     }
 
     [Fact]
@@ -308,48 +313,6 @@ public sealed class RenderPipelineTests
             RenderPipelineTestSupport.ReadPixels(singleBand.Image),
             RenderPipelineTestSupport.ReadPixels(multipleBands.Image));
         Assert.Equal(before, RenderPipelineTestSupport.ReadPixels(baseImage.Pixels));
-    }
-
-    [Theory]
-    [InlineData(false, false)]
-    [InlineData(true, true)]
-    public void Render_ResolvesBaseLookDefaultFromSourceKind(
-        bool isRaw,
-        bool expectedBaseLook)
-    {
-        using var baseImage = RenderPipelineTestSupport.CreateBase(
-        [
-            8000, 16000, 24000,
-            32000, 40000, 48000
-        ], isRaw);
-        using var implicitResult = Render(new EditSettings(), baseImage);
-        using var explicitResult = Render(
-            new EditSettings { BaseLook = expectedBaseLook },
-            baseImage);
-
-        Assert.Equal(
-            RenderPipelineTestSupport.ReadPixels(explicitResult.Image),
-            RenderPipelineTestSupport.ReadPixels(implicitResult.Image));
-    }
-
-    [Fact]
-    public void Render_DoesNotApplySourceSpecificExposureBias()
-    {
-        ushort[] samples = [4000, 8000, 12000];
-        using var raw = RenderPipelineTestSupport.CreateBase(samples, isRaw: true);
-        using var standard = RenderPipelineTestSupport.CreateBase(samples, isRaw: false);
-        var settings = new EditSettings
-        {
-            BaseLook = false,
-            Detail = new DetailSettings { CaptureSharpen = 0 }
-        };
-
-        using var rawResult = Render(settings, raw);
-        using var standardResult = Render(settings, standard);
-        var rawPixels = RenderPipelineTestSupport.ReadPixels(rawResult.Image);
-        var standardPixels = RenderPipelineTestSupport.ReadPixels(standardResult.Image);
-
-        Assert.Equal(standardPixels, rawPixels);
     }
 
     [Fact]
@@ -457,6 +420,16 @@ public sealed class RenderPipelineTests
 
     private RenderResult Render(EditSettings settings, BaseImage baseImage) =>
         _pipeline.Render(new RenderRequest(
+            baseImage,
+            settings,
+            RenderIntent.Preview,
+            null,
+            new RenderOptions()));
+
+    private MagickImage RenderShared(
+        EditSettings settings,
+        BaseImage baseImage) =>
+        _pipeline.RenderDisplayRec2020(new RenderRequest(
             baseImage,
             settings,
             RenderIntent.Preview,

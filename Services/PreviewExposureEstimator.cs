@@ -9,10 +9,16 @@ internal static class PreviewExposureEstimator
     internal const int ComparisonMaxDimension = 48;
     internal const int MinimumPreviewDimension = 64;
     internal const double MaxMetadataDisagreementEv = 0.5;
-    private const int TransferLutLength = 4096;
+    private const int TransferLutLength = ToneLut.Length;
     private const double MinimumLuminance = 1e-5;
-    private static readonly Lazy<double[]> DefaultTransferLut =
-        new(CreateDefaultTransferLut);
+    private static readonly Lazy<AgxCrossing> DefaultCrossing =
+        new(() => new AgxCrossing(new AgxToneParameters(
+            ExposureEv: 0,
+            SourceExposureEv: 0,
+            Contrast: 0,
+            Highlights: 0,
+            Shadows: 0,
+            new CurveData())));
     private static readonly Lazy<ushort[]> SrgbDecodeLut =
         new(CreateSrgbDecodeLut);
 
@@ -244,48 +250,28 @@ internal static class PreviewExposureEstimator
         double exposureEv,
         double[] luminances)
     {
-        var gain = Math.Pow(2, exposureEv);
-        var transfer = DefaultTransferLut.Value;
+        var crossing = DefaultCrossing.Value;
         for (var pixel = 0; pixel < luminances.Length; pixel++)
         {
             var offset = pixel * 3;
-            var display = WorkingToDisplay(
-                baseRgb[offset],
-                baseRgb[offset + 1],
-                baseRgb[offset + 2]);
+            var encoded = crossing.TransformAnalyticAtExposure(
+                new AgxRgb(
+                    baseRgb[offset] / (double)ushort.MaxValue,
+                    baseRgb[offset + 1] / (double)ushort.MaxValue,
+                    baseRgb[offset + 2] / (double)ushort.MaxValue),
+                exposureEv);
+            var displayRec2020 = (
+                R: ToneLut.SrgbDecode(encoded.Red),
+                G: ToneLut.SrgbDecode(encoded.Green),
+                B: ToneLut.SrgbDecode(encoded.Blue));
+            var display = Rec2020ToSrgb(displayRec2020);
             luminances[pixel] = Luminance(
-                Map(display.R, gain, transfer),
-                Map(display.G, gain, transfer),
-                Map(display.B, gain, transfer));
+                Math.Clamp(display.R, 0, 1),
+                Math.Clamp(display.G, 0, 1),
+                Math.Clamp(display.B, 0, 1));
         }
 
         return Median(luminances);
-    }
-
-    private static double[] CreateDefaultTransferLut()
-    {
-        var result = new double[TransferLutLength];
-        for (var index = 0; index < result.Length; index++)
-        {
-            var linear = index / (double)(result.Length - 1);
-            var display = ToneLut.SrgbEncode(linear);
-            result[index] = ToneLut.SrgbDecode(ToneLut.BaseLook(display));
-        }
-
-        return result;
-    }
-
-    private static double Map(
-        double sample,
-        double gain,
-        double[] transfer)
-    {
-        var exposed = Math.Clamp(sample * gain, 0, 1);
-        var position = exposed * (transfer.Length - 1);
-        var lower = (int)position;
-        var upper = Math.Min(lower + 1, transfer.Length - 1);
-        var fraction = position - lower;
-        return transfer[lower] * (1 - fraction) + transfer[upper] * fraction;
     }
 
     private static double MedianWorkingLuminance(ReadOnlySpan<ushort> workingRgb)
@@ -320,6 +306,19 @@ internal static class PreviewExposureEstimator
             matrix[0, 0] * r + matrix[0, 1] * g + matrix[0, 2] * b,
             matrix[1, 0] * r + matrix[1, 1] * g + matrix[1, 2] * b,
             matrix[2, 0] * r + matrix[2, 1] * g + matrix[2, 2] * b);
+    }
+
+    private static (double R, double G, double B) Rec2020ToSrgb(
+        (double R, double G, double B) value)
+    {
+        var matrix = RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb;
+        return (
+            matrix[0, 0] * value.R + matrix[0, 1] * value.G +
+                matrix[0, 2] * value.B,
+            matrix[1, 0] * value.R + matrix[1, 1] * value.G +
+                matrix[1, 2] * value.B,
+            matrix[2, 0] * value.R + matrix[2, 1] * value.G +
+                matrix[2, 2] * value.B);
     }
 
     private static void NormalizePreview(MagickImage preview)

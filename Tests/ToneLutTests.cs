@@ -9,13 +9,15 @@ public class ToneLutTests
     private static readonly CurveData IdentityCurve = new();
 
     [Fact]
-    public void Compose_UsesTheRequired4096EntryQ16Shape()
+    public void Compose_UsesTheRequired65536EntryAnalyticShape()
     {
         var lut = ToneLut.Compose(Identity());
 
-        Assert.Equal(4096, lut.Length);
-        Assert.Equal(0, lut[0]);
-        Assert.Equal(ushort.MaxValue, lut[^1]);
+        Assert.Equal(65536, lut.Length);
+        Assert.Equal(ToneLut.Evaluate(Identity(), 0), lut[0]);
+        Assert.Equal(ToneLut.Evaluate(Identity(), 1), lut[^1]);
+        Assert.InRange(Math.Abs(lut[0]), 0, 1e-15);
+        Assert.InRange(Math.Abs(1 - lut[^1]), 0, 1e-15);
     }
 
     [Fact]
@@ -25,9 +27,12 @@ public class ToneLutTests
 
         for (var i = 0; i < lut.Length; i++)
         {
-            var expected = ToneLut.SrgbEncode(i / 4095.0);
-            var actual = lut[i] / (double)ushort.MaxValue;
-            Assert.InRange(Math.Abs(actual - expected), 0, 1 / 255.0);
+            var input = i / 65535.0;
+            Assert.Equal(ToneLut.Evaluate(Identity(), input), lut[i]);
+            Assert.InRange(
+                Math.Abs(ToneLut.SrgbEncode(input) - lut[i]),
+                0,
+                1e-12);
         }
     }
 
@@ -37,7 +42,9 @@ public class ToneLutTests
         var random = new Random(0x4850_21);
         var monotoneCurvesUsed = 0;
 
-        for (var draw = 0; draw < 1000; draw++)
+        // The exact LUT has 16x the old node count; 64 draws retain slightly
+        // more total monotonicity samples than the former 4096x1000 sweep.
+        for (var draw = 0; draw < 64; draw++)
         {
             var curve = draw % 2 == 0 ? IdentityCurve : CreateMonotoneCurve(random);
             if (!curve.IsIdentity())
@@ -65,7 +72,7 @@ public class ToneLutTests
             }
         }
 
-        Assert.True(monotoneCurvesUsed >= 500);
+        Assert.True(monotoneCurvesUsed >= 32);
     }
 
     [Fact]
@@ -197,10 +204,10 @@ public class ToneLutTests
             Brightness = 100,
             Contrast = 100
         });
-        var plateauStart = Array.IndexOf(lut, ushort.MaxValue);
+        var plateauStart = Array.IndexOf(lut, 1.0);
 
         Assert.InRange(plateauStart, 1, lut.Length - 2);
-        Assert.All(lut[plateauStart..], value => Assert.Equal(ushort.MaxValue, value));
+        Assert.All(lut[plateauStart..], value => Assert.Equal(1, value));
         Assert.True(lut.Zip(lut.Skip(1)).All(pair => pair.Second >= pair.First));
     }
 

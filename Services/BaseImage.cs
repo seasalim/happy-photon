@@ -72,7 +72,7 @@ public sealed record BaseImageInfo(
 /// </summary>
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 7;
+    public const int Version = 8;
     public const int PreviewMaxDimension = 1600;
 
     private MagickImage? _pixels;

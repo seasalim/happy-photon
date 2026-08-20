@@ -29,16 +29,17 @@ not request them (RENDER.md §7).
 
 ## 2. Export flow (`ImageExportService`)
 
-Before pixel work, export snapshots `OutputColorSpace` once and supplies that same value
-to render and encode, so mutable dialog state cannot produce P3 pixels with an sRGB tag or
-the reverse. Per image: `LoadFullBase` → `RenderPipeline.Render(intent: Export)` **once** → per
-variant: resize (descending sizes with progressive downscaling; resizes run in
-linear light per RENDER.md §1.1, same filter as the preview path) → output sharpen →
-metadata apply (§4) → encode (§3) → `ExportSafety` checks → write.
+Before pixel work, export snapshots `OutputColorSpace` once, so mutable dialog state
+cannot produce P3 pixels with an sRGB tag or the reverse. Per image:
+`LoadFullBase` → one unresized `RenderDisplayRec2020` → per variant, in descending size
+order: sRGB-decode → progressive linear-light resize → sRGB-encode → optional output
+sharpen → sRGB-decode → target convert → clamp → sRGB-encode → metadata apply (§4) →
+encode (§3) → `ExportSafety` checks → write. The export loop transfers ownership of the
+last progressive variant instead of cloning it.
 
-The default sRGB render math is identical to the preview path; only `MaxDimension` and base
-resolution differ. Display P3 changes the chromatic target while retaining the same transfer
-and all later stages. WYSIWYG tests compare different-target results through their profiles.
+Preview uses the same finalizer with output sharpening disabled and sRGB selected.
+All geometry, tone, chroma, detail, resize, and sharpening work is target-independent;
+only the trailing convert, clamp, encode, and profile differ between sRGB and P3.
 
 Before desktop export starts, the dialog classifies every selected original and totals
 the logical size of files that require hydration. If the count is nonzero, it shows
@@ -61,7 +62,8 @@ the default sRGB path, or the 480-byte Compact ICC Profiles `DisplayP3-v4.icc` (
 Display P3. JPEG, PNG, and WebP each preserve the selected profile. Display P3 shares the
 sRGB transfer, so resize and tone encoding continue to use the existing transfer LUTs.
 
-**Output sharpen** is governed by exactly one condition: the export dialog's
+**Output sharpen** uses the exact Rec.2020 luma authority in RENDER.md §9 and is
+governed by exactly one condition: the export dialog's
 "Output sharpening" checkbox (default on). Checkbox on → applied after each resize to
 a sized variant ≤ 2560px (luminance unsharp `sigma 0.5, amount 0.3, threshold 0.005`).
 Checkbox off → never applied. Hi-res (unresized) variants never receive it. It is
@@ -113,7 +115,7 @@ online-only original return failure code `hydration_required`.
 - Exported JPEG opened in a color-managed browser stays within the preview's colorimetric
   bounds. sRGB retains the golden ΔE/code gates; Display P3 is converted through its
   embedded profile before comparison, and the synthetic native-P3 fixture is the
-  gamut-survival sentinel. Edited target divergence is governed by WORKING_SPACE.md §9.3.
+  gamut-survival sentinel. Edited target agreement is governed by WORKING_SPACE.md §9.3.
 - Preview BGRA and sRGB PNG read-back carry identical 8-bit codes for the same render
   (precision harness `previewPng` gate, §1).
 - Export of a RAW carries capture date, camera, exposure EXIF; orientation displays

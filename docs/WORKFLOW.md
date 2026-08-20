@@ -280,10 +280,13 @@ rotation, and horizon settings are never transferred by presets or copy/paste.
 Start with the largest problem and make the smallest adjustment that solves it:
 
 - **Exposure** changes the overall light level in photographic stops.
-- **Highlights** adjusts the brighter tonal regions.
-- **Shadows** adjusts the darker tonal regions.
-- **Brightness** provides another overall brightness adjustment.
-- **Contrast** changes the separation between dark and light areas.
+- On RAW files, **Contrast**, **Highlights**, and **Shadows** shape the AgX tone
+  engine around fixed scene middle grey: slope, shoulder, and toe respectively.
+- On JPEG/HEIC/TIFF/proxy sources, those same controls retain their familiar
+  display-referred behavior.
+- **Brightness** is available for standard sources. It is disabled for RAW because
+  the crossing-on engine anchors global light with Exposure; switching sources does
+  not erase a stored Brightness value.
 
 Watch the photograph first and use the histogram as supporting information.
 Avoid correcting the histogram merely to make it fill the graph.

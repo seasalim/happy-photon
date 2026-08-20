@@ -5,6 +5,14 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
+[CollectionDefinition(CheckpointCRenderGateCollection.Name,
+    DisableParallelization = true)]
+public sealed class CheckpointCRenderGateCollection
+{
+    public const string Name = "Checkpoint C render gates";
+}
+
+[Collection(CheckpointCRenderGateCollection.Name)]
 public sealed class WideGamutColorimetryTests
 {
     private readonly ITestOutputHelper _output;
@@ -22,6 +30,60 @@ public sealed class WideGamutColorimetryTests
             }
             return data;
         }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EditedSyntheticFinalization_AgreesAcrossTargets(bool outputSharpening)
+    {
+        using var baseImage = CreateAgreementBase();
+        var settings = CreateAgreementSettings();
+        using var shared = RenderShared(baseImage, settings);
+        using var prepared = PrepareForEligibility(shared, outputSharpening);
+        using var srgb = Finalize(shared, OutputColorSpace.Srgb, outputSharpening);
+        using var p3 = Finalize(shared, OutputColorSpace.DisplayP3, outputSharpening);
+        var comparison = MeanDeltaE00(srgb, p3, prepared);
+        var encoded = MeanDeltaE00EightBit(srgb, p3, prepared);
+        _output.WriteLine(
+            $"synthetic sharpen={outputSharpening}: Q16 mean ΔE00=" +
+            $"{comparison.Mean:F4} over {comparison.Count} in-gamut pixels; " +
+            $"RGB8 informational={encoded:F4}");
+
+        Assert.Equal(checked((int)(srgb.Width * srgb.Height)), comparison.Count);
+        Assert.True(
+            comparison.Mean <= 0.034,
+            $"Synthetic mean ΔE00 {comparison.Mean:F4} exceeds 0.034.");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EditedRealRawFinalization_AgreesAcrossTargets(bool outputSharpening)
+    {
+        var path = Path.Combine(
+            GoldenTestPaths.AssetDirectory,
+            "canon-eos-6d-iso-6400.cr2");
+        using var baseImage = new RawBaseLoader().LoadFullBase(
+            new ImageFile(path),
+            BaseDecodeSettings.Default,
+            CancellationToken.None) ?? throw new InvalidOperationException(
+                "Real-RAW agreement fixture did not decode.");
+        using var shared = RenderShared(baseImage, CreateAgreementSettings());
+        using var prepared = PrepareForEligibility(shared, outputSharpening);
+        using var srgb = Finalize(shared, OutputColorSpace.Srgb, outputSharpening);
+        using var p3 = Finalize(shared, OutputColorSpace.DisplayP3, outputSharpening);
+        var comparison = MeanDeltaE00(srgb, p3, prepared);
+        var encoded = MeanDeltaE00EightBit(srgb, p3, prepared);
+        _output.WriteLine(
+            $"real-RAW sharpen={outputSharpening}: Q16 mean ΔE00=" +
+            $"{comparison.Mean:F4} over {comparison.Count} in-gamut pixels; " +
+            $"RGB8 informational={encoded:F4}");
+
+        Assert.True(comparison.Count > 0);
+        Assert.True(
+            comparison.Mean <= 0.053,
+            $"Real-RAW mean ΔE00 {comparison.Mean:F4} exceeds 0.053.");
     }
 
     [Theory]
@@ -129,6 +191,95 @@ public sealed class WideGamutColorimetryTests
         return RenderPipelineTestSupport.CreateBase(samples);
     }
 
+    private static BaseImage CreateAgreementBase()
+    {
+        const int width = 4096;
+        double[][] codes =
+        [
+            [0.18, 0.24, 0.31],
+            [0.29, 0.20, 0.16],
+            [0.22, 0.34, 0.25],
+            [0.42, 0.38, 0.31],
+            [0.35, 0.27, 0.43],
+            [0.52, 0.48, 0.40],
+            [0.12, 0.15, 0.20],
+            [0.62, 0.56, 0.48]
+        ];
+        var samples = new ushort[width * 3];
+        for (var x = 0; x < width; x++)
+        {
+            var code = codes[x % codes.Length];
+            var linearSrgb = code.Select(DecodeSrgb).ToArray();
+            var working = PrecisionColorCases.Transform(
+                RgbColorSpaceMatrices.LinearSrgbToLinearRec2020,
+                linearSrgb);
+            for (var channel = 0; channel < 3; channel++)
+            {
+                samples[x * 3 + channel] = (ushort)Math.Round(
+                    Math.Clamp(working[channel], 0, 1) * ushort.MaxValue);
+            }
+        }
+        return RenderPipelineTestSupport.CreateBase(samples);
+    }
+
+    private static EditSettings CreateAgreementSettings()
+    {
+        var curve = new CurveData();
+        curve.AddPointAndReturnIndex(0.25, 0.22);
+        curve.AddPointAndReturnIndex(0.75, 0.79);
+        return new EditSettings
+        {
+            Exposure = 0.35,
+            Brightness = 4,
+            Contrast = 15,
+            Shadows = 20,
+            Highlights = -30,
+            Saturation = 12,
+            Vibrance = 8,
+            BaseLook = false,
+            Curve = curve,
+            Detail = new DetailSettings
+            {
+                CaptureSharpen = 40,
+                ChromaNr = 40
+            }
+        };
+    }
+
+    private static MagickImage RenderShared(
+        BaseImage baseImage,
+        EditSettings settings) =>
+        new RenderPipeline().RenderDisplayRec2020(new RenderRequest(
+            baseImage,
+            settings,
+            RenderIntent.Export,
+            null,
+            new RenderOptions(false, false)));
+
+    private static MagickImage Finalize(
+        MagickImage shared,
+        OutputColorSpace outputColorSpace,
+        bool outputSharpening) =>
+        RenderFinalizer.Finalize(
+            shared,
+            2048,
+            outputColorSpace,
+            outputSharpening,
+            wasResized: false);
+
+    private static MagickImage PrepareForEligibility(
+        MagickImage shared,
+        bool outputSharpening)
+    {
+        var prepared = new MagickImage(shared);
+        RenderColorEncoding.ResizeInLinearLight(prepared, 2048);
+        RenderSharpening.ApplyOutput(
+            prepared,
+            outputSharpening,
+            wasResized: true);
+        return prepared;
+    }
+
     private static RenderResult Render(
         BaseImage baseImage,
         EditSettings settings,
@@ -170,6 +321,72 @@ public sealed class WideGamutColorimetryTests
         return sum / (srgbPixels.Length / 3);
     }
 
+    private static (double Mean, int Count) MeanDeltaE00(
+        MagickImage srgb,
+        MagickImage p3,
+        MagickImage prepared)
+    {
+        var srgbPixels = RenderPipelineTestSupport.ReadPixels(srgb);
+        var p3Pixels = RenderPipelineTestSupport.ReadPixels(p3);
+        var sharedPixels = RenderPipelineTestSupport.ReadPixels(prepared);
+        double sum = 0;
+        var count = 0;
+        for (var index = 0; index < sharedPixels.Length; index += 3)
+        {
+            if (!IsSrgbInGamut(sharedPixels, index))
+            {
+                continue;
+            }
+            sum += PrecisionDeltaE.Ciede2000(
+                ToLab(srgbPixels, index,
+                    RgbColorSpaceMatrices.LinearSrgbToXyzD65DerivedExact),
+                ToLab(p3Pixels, index,
+                    RgbColorSpaceMatrices.LinearDisplayP3ToXyzD65DerivedExact));
+            count++;
+        }
+        return (sum / count, count);
+    }
+
+    private static double MeanDeltaE00EightBit(
+        MagickImage srgb,
+        MagickImage p3,
+        MagickImage prepared)
+    {
+        var srgbPixels = srgb.GetPixelsUnsafe().ToByteArray(PixelMapping.RGB) ?? [];
+        var p3Pixels = p3.GetPixelsUnsafe().ToByteArray(PixelMapping.RGB) ?? [];
+        var sharedPixels = RenderPipelineTestSupport.ReadPixels(prepared);
+        double sum = 0;
+        var count = 0;
+        for (var index = 0; index < sharedPixels.Length; index += 3)
+        {
+            if (!IsSrgbInGamut(sharedPixels, index))
+            {
+                continue;
+            }
+            sum += PrecisionDeltaE.Ciede2000(
+                ToLab(srgbPixels, index,
+                    RgbColorSpaceMatrices.LinearSrgbToXyzD65DerivedExact),
+                ToLab(p3Pixels, index,
+                    RgbColorSpaceMatrices.LinearDisplayP3ToXyzD65DerivedExact));
+            count++;
+        }
+        return sum / count;
+    }
+
+    private static bool IsSrgbInGamut(ushort[] pixels, int offset)
+    {
+        var rec2020 = new[]
+        {
+            DecodeSrgb(pixels[offset] / (double)ushort.MaxValue),
+            DecodeSrgb(pixels[offset + 1] / (double)ushort.MaxValue),
+            DecodeSrgb(pixels[offset + 2] / (double)ushort.MaxValue)
+        };
+        var srgb = PrecisionColorCases.Transform(
+            RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb,
+            rec2020);
+        return srgb.All(value => value is >= 0 and <= 1);
+    }
+
     private static PrecisionLab ToLab(
         ushort[] pixels,
         int offset,
@@ -180,6 +397,27 @@ public sealed class WideGamutColorimetryTests
             DecodeSrgb(pixels[offset] / (double)ushort.MaxValue),
             DecodeSrgb(pixels[offset + 1] / (double)ushort.MaxValue),
             DecodeSrgb(pixels[offset + 2] / (double)ushort.MaxValue)
+        };
+        var xyz = PrecisionColorCases.Transform(rgbToXyz, rgb);
+        var fx = Pivot(xyz[0] / 0.9504559270516716);
+        var fy = Pivot(xyz[1]);
+        var fz = Pivot(xyz[2] / 1.0890577507598784);
+        return new PrecisionLab(
+            116 * fy - 16,
+            500 * (fx - fy),
+            200 * (fy - fz));
+    }
+
+    private static PrecisionLab ToLab(
+        byte[] pixels,
+        int offset,
+        double[,] rgbToXyz)
+    {
+        var rgb = new[]
+        {
+            DecodeSrgb(pixels[offset] / (double)byte.MaxValue),
+            DecodeSrgb(pixels[offset + 1] / (double)byte.MaxValue),
+            DecodeSrgb(pixels[offset + 2] / (double)byte.MaxValue)
         };
         var xyz = PrecisionColorCases.Transform(rgbToXyz, rgb);
         var fx = Pivot(xyz[0] / 0.9504559270516716);

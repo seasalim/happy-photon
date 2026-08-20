@@ -5,13 +5,11 @@ namespace HappyPhoton.Services;
 
 internal static class RenderKernelSupport
 {
-    internal const float RedLuma = 0.2126f;
-    internal const float GreenLuma = 0.7152f;
-    internal const float BlueLuma = 0.0722f;
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static float GetLuma(float red, float green, float blue) =>
-        RedLuma * red + GreenLuma * green + BlueLuma * blue;
+        (float)(Rec2020Luminance.Red * red +
+            Rec2020Luminance.Green * green +
+            Rec2020Luminance.Blue * blue);
 
     internal static ushort ToQuantum(float value)
     {

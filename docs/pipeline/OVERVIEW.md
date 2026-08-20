@@ -39,22 +39,23 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 ## 2. Invariants
 
 1. **WYSIWYG:** preview and export agreement is judged colorimetrically for the same
-   settings, up to the tested target/decode/resize bounds (TESTING.md §4). Preview and
+   settings, up to the tested target/decode/resize bounds (TESTING.md §3). Preview and
    default sRGB export also agree in raw codes; Display P3 uses different codes and is
-   compared through its embedded profile in a common space. Target-dependent stages after
-   the convert create the measured edited-image limit in WORKING_SPACE.md §9.3.
+   compared through its embedded profile in a common space. All shared edit stages precede
+   the target fork; only convert, clamp, and encode are target-dependent.
 2. **Determinism:** same base + same settings → identical output, independent of image
    content history, decode size, platform defaults, or time. No auto-anything inside the
    pipeline (auto modes are UI actions that *write settings*, never render-time behavior).
 3. **No baked look:** `BaseImage` is linear and neutral. Aesthetic decisions live in
    explicit render settings or source-kind defaults rather than the decoded pixels.
 4. **No clipped intermediates:** linear-domain gains never materialize values that a Q16
-   buffer would clamp. Chromatic 3×3 matrices are pre-normalized (gain refunded inside the
-   tone LUT); all per-channel gain/roll-off happens analytically inside one composed LUT.
+   buffer would clamp. Chromatic 3×3 matrices are pre-normalized (the fold is refunded
+   inside the active tone regime); all per-channel gain/roll-off happens analytically
+   inside one exact 65,536-entry LUT.
    (This is why the plain `Magick.NET-Q16` package suffices — do not switch to HDRI.)
-5. **Source-agnostic render:** `RenderPipeline` never branches on file type. Capability
-   differences (highlight reconstruction, FBDD, capture-sharpen default) are expressed in
-   `BaseImageInfo` and settings defaults, decided at load/UI time.
+5. **Source-kind tone regime:** `BaseImageInfo.IsRawSource` selects the scene-referred
+   AgX crossing for RAW and the identity-preserving display-referred chain for standard
+   sources. There is no exposure trigger or persisted crossing toggle.
 6. **Originals are never modified.**
 7. Pipeline services remain independent of UI state. ViewModels translate controls into
    settings and marshal completed pixels; views only display them.
@@ -78,17 +79,18 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
                                    │
             ┌─ RENDER.md ──────────▼──────────────────────────────────┐
             │ 1 Geometry   rotate90 → horizon(+safe crop) → crop      │
-            │ 2 Chromatic  Rec.2020 WB → selected linear output, one  │
-            │              3×3 matrix                   [WHITE_BALANCE]│
-            │ 3 Tone LUT   exposure→shoulder→sRGB-encode→look→B/C→    │
-            │              shadows/highlights→user curve  (ONE Clut)  │
-            │ 4 Chroma     saturation, vibrance (Modulate)            │
-            │ 5 Detail     capture sharpen, chroma NR                 │
+            │ 2 Matrix     RAW: AgX inset × WB; standard: WB           │
+            │ 3 Tone LUT   RAW: gain→log2→sigmoid→curve; standard:    │
+            │              retained display-domain chain (exact Q16)  │
+            │ 4 Matrix     RAW: AgX outset; standard: identity         │
+            │ 5 Chroma     saturation, vibrance (Modulate)            │
+            │ 6 Detail     capture sharpen, chroma NR (Rec.2020 luma) │
             └──────────────┬───────────────────────────────┬──────────┘
                      histogram + clipping stats            │
             ┌─ OUTPUT.md ──▼───────────────────────────────▼──────────┐
             │ display: ConvertToBitmap (8-bit BGRA)                   │
-            │ export: resize → output sharpen → encode + matching ICC │
+            │ shared: decode→linear resize→encode→output sharpen      │
+            │ target: decode→sRGB/P3 convert→encode + matching ICC    │
             │         + metadata policy (EXIF copy, GPS toggle)       │
             └─────────────────────────────────────────────────────────┘
 ```
@@ -126,7 +128,7 @@ public sealed record BaseImageInfo(
 
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 7;        // bump whenever decoded pixels or facts change
+    public const int Version = 8;        // bump whenever decoded pixels or facts change
     public const int PreviewMaxDimension = 1600;
     public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
     public BaseImageInfo Info { get; }
@@ -182,8 +184,10 @@ content.
 | `Services/RgbColorSpaceMatrices.cs` | authoritative published/exact RGB↔XYZ matrices |
 | `Services/RenderPipeline.cs` | stage orchestration and result ownership (RENDER.md) |
 | `Services/RenderGeometry.cs` | rotation, horizon correction, and crop |
-| `Services/ToneLut.cs` | pure LUT composition (RENDER.md §5) |
-| `Services/ToneLutApplicator.cs` | Q16 LUT interpolation, exhaustively pinned to Magick Clut |
+| `Services/AgxCrossing.cs` + `AgxToneEngine.cs` | RAW inset → tone engine → outset crossing |
+| `Services/AgxToneLut.cs` | exact crossing-on tone table and bounded settings cache |
+| `Services/ToneLut.cs` | exact crossing-off LUT composition (RENDER.md §5) |
+| `Services/ToneLutApplicator.cs` | unrounded-input linear interpolation with one Q16 write |
 | `Services/RenderChromaticStage.cs` | white-balance matrix application |
 | `Services/RenderChromaStage.cs` | behavior-neutral saturation and vibrance application |
 | `Services/RenderDetail.cs` + `RenderSharpening.cs` | fixed detail operations |
@@ -207,6 +211,9 @@ golden update explicit. Decode changes increment `BaseImage.Version` similarly.
 `base-v{BaseImage.Version};hl={blend|clip};fbdd={off|light|full}`. In-memory identity
 adds normalized file path and preview/full size class; rendered-cache settings hashes
 still include `BaseImage.Version` separately as specified in DECODE.md §5.
+The AgX rework shipped as render v9 and base v8: v9 attributes the AgX crossing, target-convert
+relocation, Rec.2020 luma basis, and final numeric path; base v8 invalidates stale
+`SourceExposureBiasEv` facts after the estimator was re-derived for the default crossing.
 
 ## 7. Current boundaries
 

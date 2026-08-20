@@ -199,7 +199,11 @@ public sealed class WhiteBalanceModelTests
 
         AssertMatrixClose(ChromaticAdaptation.Identity(), whiteBalance, 0);
         var combined = RenderChromaticStage.CreateNormalizedMatrix(info, settings);
-        Assert.Equal(1.6604910021, combined.Fold, 9);
+        Assert.Equal(1, combined.Fold);
+        AssertMatrixClose(
+            ChromaticAdaptation.Identity(),
+            combined.Matrix,
+            0);
     }
 
     [Fact]

@@ -28,7 +28,11 @@ internal static class RgbColorSpaceMatrices
     internal static readonly double[,] LinearRec2020ToXyzD65DerivedExact =
     {
         { 0.6369580483012914, 0.1446169035862083, 0.1688809751641721 },
-        { 0.2627002120112671, 0.6779980715188708, 0.0593017164698620 },
+        {
+            Rec2020Luminance.Red,
+            Rec2020Luminance.Green,
+            Rec2020Luminance.Blue
+        },
         { 0.0000000000000000, 0.0280726930490874, 1.0609850577107910 }
     };
 
@@ -70,4 +74,11 @@ internal static class RgbColorSpaceMatrices
         { -0.0652974528, 1.0757879158, -0.0104904631 },
         { 0.0028217873, -0.0195984945, 1.0167767073 }
     };
+}
+
+internal static class Rec2020Luminance
+{
+    internal const double Red = 0.2627002120112671;
+    internal const double Green = 0.6779980715188708;
+    internal const double Blue = 0.0593017164698620;
 }

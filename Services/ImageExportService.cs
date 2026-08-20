@@ -183,7 +183,8 @@ public sealed class ImageExportService
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        using var rendered = _renderPipeline.Render(new RenderRequest(
+        MagickImage? displayRec2020 = _renderPipeline.RenderDisplayRec2020(
+            new RenderRequest(
             baseImage,
             editSnapshot,
             RenderIntent.Export,
@@ -193,52 +194,80 @@ public sealed class ImageExportService
                 ComputeOverlayMasks: false),
             outputColorSpace));
         baseImage.Dispose();
-        var orderedVariants = variants
-            .OrderBy(variant => variant.MaxDimension.HasValue ? 1 : 0)
-            .ThenByDescending(variant => variant.MaxDimension ?? 0)
-            .ToList();
-        var fullLongEdge = Math.Max(
-            rendered.Image.Width,
-            rendered.Image.Height);
-
-        foreach (var variant in orderedVariants)
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (variant.MaxDimension is int maxDimension)
+            var orderedVariants = variants
+                .OrderBy(variant => variant.MaxDimension.HasValue ? 1 : 0)
+                .ThenByDescending(variant => variant.MaxDimension ?? 0)
+                .ToList();
+            var fullLongEdge = Math.Max(
+                displayRec2020.Width,
+                displayRec2020.Height);
+            var fullSize = $"{displayRec2020.Width}x{displayRec2020.Height}";
+
+            for (var index = 0; index < orderedVariants.Count; index++)
             {
-                RenderColorEncoding.ResizeInLinearLight(
-                    rendered.Image,
-                    maxDimension);
+                var variant = orderedVariants[index];
+                cancellationToken.ThrowIfCancellationRequested();
+                var shared = displayRec2020 ??
+                    throw new InvalidOperationException(
+                        "The shared render was already consumed.");
+                if (variant.MaxDimension is int maxDimension)
+                {
+                    RenderColorEncoding.ResizeInLinearLight(
+                        shared,
+                        maxDimension);
+                }
+
+                using var destination = index == orderedVariants.Count - 1
+                    ? RenderFinalizer.FinalizeOwned(
+                        Take(ref displayRec2020),
+                        maxDimension: null,
+                        outputColorSpace,
+                        settings.OutputSharpening,
+                        variant.MaxDimension is int ownedLongEdge &&
+                        ownedLongEdge < fullLongEdge)
+                    : RenderFinalizer.Finalize(
+                        shared,
+                        maxDimension: null,
+                        outputColorSpace,
+                        settings.OutputSharpening,
+                        variant.MaxDimension is int sizedLongEdge &&
+                        sizedLongEdge < fullLongEdge);
+                _metadataService.Apply(
+                    imageFile,
+                    destination,
+                    settings.StripLocationData,
+                    intent);
+                ExportEncoder.Write(
+                    destination,
+                    settings,
+                    outputColorSpace,
+                    settings.GetOutputPath(
+                        imageFile.FileName,
+                        variant,
+                        useSubfolders));
             }
 
-            using var destination = new MagickImage(rendered.Image);
-            RenderSharpening.ApplyOutput(
-                destination,
-                settings.OutputSharpening,
-                variant.MaxDimension is int sizedLongEdge &&
-                sizedLongEdge < fullLongEdge);
-            _metadataService.Apply(
-                imageFile,
-                destination,
-                settings.StripLocationData,
-                intent);
-            ExportEncoder.Write(
-                destination,
-                settings,
-                outputColorSpace,
-                settings.GetOutputPath(
-                    imageFile.FileName,
-                    variant,
-                    useSubfolders));
+            LogPerformance(
+                nameof(ImageExportService),
+                nameof(ExportImage),
+                stopwatch.ElapsedMilliseconds,
+                imageFile.FilePath,
+                $"variants={orderedVariants.Count};size={fullSize}");
+            return true;
         }
+        finally
+        {
+            displayRec2020?.Dispose();
+        }
+    }
 
-        LogPerformance(
-            nameof(ImageExportService),
-            nameof(ExportImage),
-            stopwatch.ElapsedMilliseconds,
-            imageFile.FilePath,
-            $"variants={orderedVariants.Count};" +
-            $"size={rendered.Image.Width}x{rendered.Image.Height}");
-        return true;
+    private static MagickImage Take(ref MagickImage? image)
+    {
+        var result = image ?? throw new InvalidOperationException(
+            "The shared render was already consumed.");
+        image = null;
+        return result;
     }
 }

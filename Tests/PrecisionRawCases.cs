@@ -290,6 +290,9 @@ internal static class PrecisionRawCases
             reconstructed,
             ToneLut.Compose(CreateTone(baseImage.Info, settings, fold)));
         RenderColorEncoding.RetagAsSrgb(reconstructed);
+        RenderColorEncoding.ConvertEncodedRec2020ToTarget(
+            reconstructed,
+            OutputColorSpace.Srgb);
         var reconstructedRgb = ReadRgb16(reconstructed);
         using var pipeline = new RenderPipeline().Render(new RenderRequest(
             baseImage,

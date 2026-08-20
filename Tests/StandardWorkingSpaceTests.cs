@@ -116,6 +116,25 @@ public sealed class StandardWorkingSpaceTests : IDisposable
         Assert.InRange(maximum, 0, 1);
     }
 
+    // The sRGB proxy identity gate lives in HeadlessTests
+    // (SrgbProxyIdentityTests): ThumbnailRenderer needs the Avalonia platform
+    // render interface, which the plain test host lacks on linux-x64 and
+    // osx-arm64 CI runners.
+
+    [Fact]
+    public void Rec2020LuminanceAuthority_IsTheExactXyzYRow()
+    {
+        Assert.Equal(
+            Rec2020Luminance.Red,
+            RgbColorSpaceMatrices.LinearRec2020ToXyzD65DerivedExact[1, 0]);
+        Assert.Equal(
+            Rec2020Luminance.Green,
+            RgbColorSpaceMatrices.LinearRec2020ToXyzD65DerivedExact[1, 1]);
+        Assert.Equal(
+            Rec2020Luminance.Blue,
+            RgbColorSpaceMatrices.LinearRec2020ToXyzD65DerivedExact[1, 2]);
+    }
+
     private BaseImage Load(string path) =>
         new StandardBaseLoader().LoadFullBase(
             new ImageFile(path),

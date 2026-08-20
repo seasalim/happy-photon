@@ -54,6 +54,27 @@ public sealed class PreviewExposureEstimatorTests
         Assert.InRange(actual.Value, expectedEv - 1e-4, expectedEv + 1e-4);
     }
 
+    [Theory]
+    [InlineData(-2.0)]
+    [InlineData(-0.75)]
+    [InlineData(0.625)]
+    [InlineData(2.0)]
+    public void DefaultResponse_UsesPostGainMiddleGreyAnchor(double sourceEv)
+    {
+        var value = (ushort)Math.Round(
+            AgxToneEngine.MiddleGrey * Math.Pow(2, -sourceEv) *
+            ushort.MaxValue);
+
+        var actual = PreviewExposureEstimator.DefaultRenderMedian(
+            [value, value, value],
+            sourceEv);
+
+        Assert.InRange(
+            Math.Abs(actual - AgxToneEngine.MiddleGrey),
+            0,
+            5e-5);
+    }
+
     [Fact]
     public void Solve_ClampsTargetsOutsideReachableRange()
     {
@@ -304,15 +325,29 @@ public sealed class PreviewExposureEstimatorTests
     private static ushort[] Transfer(ushort[] source, double exposureEv)
     {
         var result = new ushort[source.Length];
-        var gain = Math.Pow(2, exposureEv);
-        for (var index = 0; index < source.Length; index++)
+        var crossing = new AgxCrossing(
+            AgxToneEnginePropertyTests.Parameters());
+        var matrix = RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb;
+        for (var index = 0; index < source.Length; index += 3)
         {
-            var linear = Math.Min(
-                source[index] / (double)ushort.MaxValue * gain,
-                1);
-            var display = ToneLut.BaseLook(ToneLut.SrgbEncode(linear));
-            var decoded = ToneLut.SrgbDecode(display);
-            result[index] = (ushort)Math.Round(decoded * ushort.MaxValue);
+            var encoded = crossing.TransformAnalyticAtExposure(
+                new AgxRgb(
+                    source[index] / (double)ushort.MaxValue,
+                    source[index + 1] / (double)ushort.MaxValue,
+                    source[index + 2] / (double)ushort.MaxValue),
+                exposureEv);
+            var red = ToneLut.SrgbDecode(encoded.Red);
+            var green = ToneLut.SrgbDecode(encoded.Green);
+            var blue = ToneLut.SrgbDecode(encoded.Blue);
+            for (var row = 0; row < 3; row++)
+            {
+                result[index + row] = (ushort)Math.Round(Math.Clamp(
+                    matrix[row, 0] * red +
+                    matrix[row, 1] * green +
+                    matrix[row, 2] * blue,
+                    0,
+                    1) * ushort.MaxValue);
+            }
         }
 
         return result;

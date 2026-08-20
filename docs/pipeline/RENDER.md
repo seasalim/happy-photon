@@ -8,11 +8,12 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 
 ```
 1 Geometry     rotate90 → horizon rotation (+ safe-crop intersect) → crop
-2 Chromatic    Rec.2020 WB × working→display via one 3×3 matrix (§4)
-3 Tone LUT     one composed 1D LUT, fused with matrix storage (§5)
-4 Chroma       one combined saturation·vibrance Modulate (§6)
-5 Detail       capture sharpen, chroma NR (§9)
-6 Output       resize + output sharpen + selected ICC profile (OUTPUT.md)
+2 Matrix       crossing on: AgX inset × WB; crossing off: WB (§4)
+3 Tone LUT     source-kind tone regime, fused with matrix storage (§5)
+4 Matrix       crossing on: AgX outset; crossing off: identity
+5 Chroma       one combined saturation·vibrance Modulate (§6)
+6 Detail       capture sharpen, chroma NR (§9)
+7 Output       linear resize → output sharpen → target convert → encode (OUTPUT.md)
 ```
 
 `RenderGeometry` owns the rotation and crop sequence, including
@@ -33,12 +34,10 @@ public sealed record RenderRequest(
     OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb);
 ```
 
-- `OutputColorSpace` selects sRGB (default) or Display P3 for export and therefore changes
-  the chromatic matrix and output codes. Preview always forces sRGB, even if a caller passes
-  Display P3. `Intent`, `Options`, and `MaxDimension` otherwise change **auxiliary work**
-  such as statistics, optional overlay masks, and the resize target. They do not change
-  per-pixel math in stages 1–5. With the same output target, preview and export differ only
-  in base resolution and resize target.
+- `OutputColorSpace` selects sRGB (default) or Display P3 only in finalization. Preview
+  always forces sRGB. Geometry, tone, chroma, and detail are target-independent;
+  `Intent`, `Options`, and `MaxDimension` otherwise change auxiliary work such as
+  statistics, optional overlay masks, and the resize target.
 - **Base immutability:** `RenderPipeline` never mutates `Base.Pixels`; it clones
   internally before stage 1. `BaseImage` lifetime is owned by the caller
   (`PreviewService` generation logic / export loop), never by the pipeline.
@@ -52,15 +51,15 @@ public sealed record RenderRequest(
   The shared filter + linear domain minimize the divergence; the WYSIWYG ΔE bounds
   (TESTING.md §3, row 3) are what actually govern it.
 
-## 2. Why matrix + single LUT
+## 2. Why matrix → single LUT → matrix
 
-- The chromatic part of WB is a 3×3 matrix — not expressible as per-channel curves.
-- Everything tonal (exposure gain, highlight shoulder, sRGB encode, base look,
-  brightness/contrast, shadows/highlights, user curve) is a **1D function**, identical
-  for R, G, B. Composing them into one LUT applied once means: no clipped
-  intermediates (invariant 4), no cumulative requantization (one rounding, not seven),
-  The matrix and LUT retain that order and intermediate Q16 quantization but share one
-  storage pass; slider ticks cost at most that fused pass plus one `Modulate`.
+- The chromatic part of WB and the AgX inset/outset are 3×3 matrices; none is
+  expressible as per-channel curves.
+- Everything between the matrices is a per-channel 1D function. `AgxCrossing` evaluates
+  inset → exact 65,536-entry interpolated tone table → outset in `double`, then makes
+  one Q16 write. Crossing-off degenerates to WB → retained display chain → identity.
+  This avoids clipped intermediates and cumulative requantization while keeping slider
+  ticks bounded to one fused pass plus optional chroma/detail work.
 
 ## 3. Notation
 
@@ -68,12 +67,11 @@ public sealed record RenderRequest(
 - `D(y)`: inverse (decode). `y/12.92` for `y ≤ 0.04045`, else `((y+0.055)/1.055)^2.4`.
 - `clamp01(x) = min(max(x, 0), 1)`. Slider ranges are the existing UI ranges.
 
-## 4. Chromatic stage
+## 4. Matrix stages
 
-`WhiteBalanceModel` yields a raw 3×3 white-balance matrix `M_WB` in linear Rec.2020
-(WHITE_BALANCE.md §4). The stage composes `M = M_Rec2020→target · M_WB`, so working →
-output conversion happens in linear light inside the existing single matrix. The targets
-and derived matrices are specified in WORKING_SPACE.md §9. Before use:
+`WhiteBalanceModel` yields a 3×3 matrix `M_WB` in linear Rec.2020
+(WHITE_BALANCE.md §4). Crossing-on composes `M = M_inset · M_WB`; crossing-off uses
+`M = M_WB`. Before use:
 
 ```
 normScale = max over rows i of Σ_j max(M[i,j], 0)     // ≥ 1 ⇒ some input could exceed 1
@@ -81,18 +79,29 @@ Mn        = M / normScale                              // outputs of [0,1]³ sta
 fold      = normScale                                  // refunded inside the tone LUT
 ```
 
-Apply `Mn`, clamp and quantize to Q16 exactly as `MagickImage.ColorMatrix`, then evaluate
-the tone LUT in the same storage pass. The bit-identity test pins this fused evaluator
-to the former native matrix-then-LUT sequence. Negative coefficients may drive rare
-out-of-gamut pixels to 0 (clamped) — accepted, standard behavior. `WbMode.AsShot`
-keeps `M_WB = I` exactly, but the universal working→output matrix still runs. Its bare
-fold is 1.6604910021 for sRGB and 1.3435782526 for Display P3. The tone LUT is unchanged:
-both targets use the sRGB transfer. R4 moves this display conversion after the AgX outset.
+The fused evaluator interpolates the LUT on the unrounded `double` matrix result;
+intermediate index or Q16 rounding is forbidden. Crossing-on refunds the fold exactly
+once as `+log2(fold)` inside its log encoding, then applies the AgX outset after the
+tone table. Crossing-off refunds it in the exposure multiplier. `WbMode.AsShot` keeps
+`M_WB = I`; the normalized RAW input is therefore exactly the inset, whose fold is 1.
+The working→sRGB or Display P3 matrix is not part of either stage—it runs after all
+shared edits in finalization (WORKING_SPACE.md §9).
 
-## 5. Tone LUT
+## 5. Tone regimes
 
-`ToneLut.Compose(ToneParams p) → ushort[4096]` is pure and unit-testable. Entry `i`
-uses `v = i/4095`, a linear post-matrix value. Display-domain operators are defined
+RAW sources use the scene-referred crossing defined normatively in
+[TONE_ENGINE.md](TONE_ENGINE.md): exposure gain → normalized log2 → parameterized
+sigmoid → `u^2.2` → sRGB encode → user curve → decode → AgX outset → encode.
+Contrast controls sigmoid slope at grey, Highlights controls the shoulder power, and
+Shadows controls the toe power. The post-gain scene value `a = 0.18` maps to the pinned
+display grey for every Contrast value and every `EVsource`. Brightness and base look
+are ignored in this regime.
+
+Standard sources retain the display-referred chain below. There is no automatic
+exposure trigger and no persisted crossing toggle.
+
+`ToneLut.Compose(ToneParams p) → double[65536]` is pure and unit-testable. Entry `i`
+uses `v = i/65535`, a linear post-matrix value. Display-domain operators are defined
 on [0,1] only. The marked `clamp01` calls keep the §5.2/§5.3 polynomials inside their
 monotone domains; without those clamps the chain can break (for example, Contrast
 +100 can push values to ≈ 3.1 before clamping):
@@ -109,7 +118,7 @@ h  = clamp01(0.5 + (f − 0.5) · slope)    // slope = tan(π/4 · (1 + Contrast
 s  = h + Shadows/100 · 0.35 · h·(1−h)³   // §5.2  closed on [0,1], no clamp needed
 t  = clamp01(s + max(Highlights,0)/100 · 0.30 · s³)   // §5.3
 u  = curve(t)                            // §5.5  input already ∈ [0,1]
-lut[i] = round(clamp01(u) · 65535)
+lut[i] = clamp01(u)
 ```
 
 `EVsource` is `BaseImageInfo.SourceExposureBiasEv`. RAW loaders first solve a bounded
@@ -121,15 +130,14 @@ mode). Every other source falls back to 0. Standard images always use 0.
 Each step is monotone non-decreasing on its domain and `clamp01` preserves (non-strict)
 monotonicity, so the composed LUT is non-decreasing whenever the user curve is —
 flat plateaus from clamping are expected and legal. Apply with
-`ToneLutApplicator`, which linearly interpolates the 4096 entries directly into the
-Q16 RGB pixel cache. Its exhaustive 65,536-input tests pin it bit-for-bit to
-`image.Clut(lutImage, PixelInterpolateMethod.Bilinear, Channels.RGB)`; the direct
-implementation avoids the latter's slider-budget regression without changing pixels.
+`ToneLutApplicator`, which linearly interpolates the exact 65,536 entries on the
+unrounded matrix result and writes Q16 once. The former 4,096-entry table, rounded-index
+lookup, and Magick `Clut` parity contract are retired.
 The identity settings vector must produce, for non-raw bases,
-`lut[i] ≈ E(i/4095)` — a JPEG with zero edits renders back to its original appearance
+`lut[i] ≈ E(i/65535)` — a JPEG with zero edits renders back to its original appearance
 within 1 LSB at 8 bits (regression test).
 
-### 5.1 Highlight shoulder (Highlights slider H ∈ [−100, 0])
+### 5.1 Crossing-off highlight shoulder (Highlights H ∈ [−100, 0])
 
 ```
 k = 1 + H/100 · 0.55                     // knee ∈ [0.45, 1]
@@ -141,19 +149,19 @@ shoulder(x, k) = x                        for x ≤ k
 C1-continuous at the knee, strictly monotone, asymptote 1.0. At `H = 0` this is
 identity-then-clip, so unedited images are unaffected.
 
-### 5.2 Shadows (S ∈ [−100, 100], display domain, input ∈ [0,1])
+### 5.2 Crossing-off shadows (S ∈ [−100, 100], display domain)
 
 `x + S/100 · 0.35 · x(1−x)³` — zero at both ends, peak effect near x ≈ 0.25.
 On [0,1] it is monotone for the full slider range (|d/dx x(1−x)³| ≤ 1) and its output
 stays inside [0,1] (monotone with fixed endpoints 0 and 1). These properties do **not**
 hold outside [0,1] — hence the clamp before this step.
 
-### 5.3 Highlights, positive side (H ∈ (0, 100], input ∈ [0,1])
+### 5.3 Crossing-off highlights, positive side (H ∈ (0, 100])
 
 `x + H/100 · 0.30 · x³` — monotone on [0,1]; output can reach 1.3, hence the clamp
 after. The negative side is §5.1's knee.
 
-### 5.4 Base look (default on for raw bases, off for others)
+### 5.4 Crossing-off base look
 
 Exact port of the current decode-time curve, now optional and float:
 
@@ -162,9 +170,8 @@ baseLook(x) = x + 0.012(1−x)³ − 0.10·sin(2πx)·4x(1−x) − 0.03x³
 ```
 
 Monotone on [0,1] (derivative ≥ 1 − 0.63 > 0) and range ⊂ [0,1].
-`EditSettings.BaseLook == null` means "default by source kind." RAW bases default on
-and standard bases default off. The first-release Develop panel does not expose this
-internal setting.
+`EditSettings.BaseLook == null` means off. Persisted true/false values remain functional
+for crossing-off sources; crossing-on sources retain the value but ignore it.
 
 ### 5.5 User curve
 
@@ -188,12 +195,13 @@ satFactor = (100 + Saturation)/100 · (100 + Vibrance·0.5)/100
 Modulate(100, satFactor·100, 100)        // skip when satFactor == 1
 ```
 
-Runs after the LUT, display-referred, where Q16 clamping is benign.
+Runs after the crossing, on sRGB-encoded display Rec.2020, where Q16 clamping is benign.
 
 ## 7. Histogram & clipping
 
-Computed from the stage-4/5 output at preview scale when `Options.ComputeStats`
-(existing `HistogramService` bins stay 8-bit).
+Computed at preview scale when `Options.ComputeStats` (existing `HistogramService`
+bins stay 8-bit). Shadow statistics always sample the finalized display. Highlight
+statistics depend on the tone regime:
 
 The same render-stats call makes a second pass over the histogram's exact
 downsampled Q16 RGB buffer to accumulate a 256-column × 128-level luminance
@@ -223,9 +231,10 @@ demosaiced display-basis base pixels.
 ```csharp
 public sealed record ChannelClip(double R, double G, double B);   // fractions 0..1
 public sealed record ClippingStats(
-    ChannelClip High,        // per channel: fraction ≥ 254.5/255 (display domain)
+    ChannelClip High,        // RAW: scene channel ≥ 1 after WB+gain, before inset;
+                             // standard: display channel ≥ 254.5/255
     ChannelClip Low,         // per channel: fraction ≤ 0.5/255
-    double HighAny,          // any-channel-high fraction (drives the red overlay/chip)
+    double HighAny,          // same regime-specific high threshold, any channel
     double LowAll,           // all-channels-low fraction (drives the blue overlay/chip)
     double RawNearClip);     // raw bases only, else 0: fraction of base pixels with any
                              // display-basis channel ≥ 0.99 after a linear Rec.2020→sRGB
@@ -235,11 +244,12 @@ public sealed record ClippingStats(
                              // of unrecoverable areas, not a sensor-domain measurement.
 ```
 
-When `Options.ComputeOverlayMasks` is true, a mask bitmap at render resolution is produced from
-the same thresholds (highlight = any channel high → red tint; shadow = all channels
-low → blue tint) and returned on `RenderResult`. The current preview and export callers
-leave this option off; masks remain an internal render capability and never touch
-exported pixels.
+For RAW, `High`/`HighAny` are exposure- and WB-sensitive scene facts measured after
+geometry and before the inset. `RawNearClip` remains the edit-independent legacy
+decoded-near-clip fact above; sensor mosaic clip counts remain authoritative for true
+sensor clip. When `Options.ComputeOverlayMasks` is true, masks follow the same
+regime-specific thresholds. Product callers leave masks off; there is no viewer overlay UI yet
+ships in this run.
 
 ## 8. EditSettings v2 — schema and storage
 
@@ -253,8 +263,8 @@ JSON document shape (canonical field order for hashing):
           "kelvin": null, "tint": null,  // custom/preset
           "gains": null,                 // [r,g,b] for picked
           "preset": null },              // preset name when mode == preset
-  "highlights": 0, "shadows": 0,         // §5.1–5.3
-  "brightness": 0, "contrast": 0,        // §5
+  "highlights": 0, "shadows": 0,         // engine params RAW; §5.1–5.3 standard
+  "brightness": 0, "contrast": 0,        // brightness ignored RAW; contrast re-anchored
   "saturation": 0, "vibrance": 0,
   "baseLook": null,                      // null = source-kind default
   "hlReconstruction": "clip",            // raw only: blend | clip  (decode-affecting)
@@ -328,8 +338,9 @@ scale where both paths agree by construction.
 - **Capture sharpen** (0–100, default 25 raw / 0 non-raw): luminance-targeted unsharp,
   `σ_native 0.75, amount = v/100 · 1.0, threshold 0.01`, applied before any resize.
   Luminance-only (Lab L or equivalent); acceptance = no chroma fringing on golden crops.
-- **Chroma NR** (0–100): preserve BT.709-weighted luma
-  `Y = 0.2126R + 0.7152G + 0.0722B`; blur `Cb = B−Y` and `Cr = R−Y` with an
+- **Chroma NR** (0–100): preserve the authoritative Rec.2020 luma
+  `Y = 0.2627002120112671R + 0.6779980715188708G + 0.0593017164698620B`;
+  blur `Cb = B−Y` and `Cr = R−Y` with an
   edge-clamped separable box, then reconstruct RGB at the original Y.
   `σ_native = v/100 · 2.0`; choose the integer radius
   `r = max(1, round((√(1 + 12σ²) − 1) / 2))`. When its variance `r(r+1)/3`
@@ -362,10 +373,10 @@ renders do not create a candidate. Promotion is a bounded bitmap clone and never
 on background work. Shutdown awaits candidate creation and cache queueing before the
 rendered-thumbnail writer is drained.
 
-Per slider tick at 1600px preview: geometry (usually no-op) + at most two
-full-image passes — fused matrix + tone LUT (universal), then combined Modulate (skipped
-at neutral). The development baseline budget is ≤ 150 ms and is measured with
-`HAPPY_PHOTON_PERF=1`. LUT composition itself is microseconds. Tonal, chroma, and
+Per slider tick at 1600px preview: geometry (usually no-op) + the fused matrix → tone
+LUT → matrix pass, then optional combined Modulate/detail work. The development budget
+is ≤ 150 ms and is measured with `HAPPY_PHOTON_PERF=1`; the exact tone tables are cached
+for the bounded active settings set. Tonal, chroma, and
 geometry slider moves invalidate only the render; only `BaseDecodeSettings` changes
 invalidate the base.
 

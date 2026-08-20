@@ -12,7 +12,8 @@ for the as-shot illuminant (decode applied camera WB; as-shot neutral = (1,1,1))
 Rendering neutralizes the *claimed* illuminant instead:
 
 - `kelvin == asShotKelvin && tint == asShotTint` → exact identity in the WB factor.
-  The render's composed working→display matrix still runs.
+  RAW still applies the AgX inset/outset crossing; finalization still converts the
+  shared display-Rec.2020 result to the selected target.
 - Raising Kelvin above as-shot → image gets **warmer**; lowering → cooler.
 
 UI: Kelvin slider 2000–12000, logarithmic; Tint slider −100 (green) … +100 (magenta).
@@ -90,9 +91,12 @@ M_Rec2020→XYZ = [ 0.6369580483 0.1446169036 0.1688809752
                   0.0000000000 0.0280726930 1.0609850577 ]
 ```
 
-The render stage composes this factor with Rec.2020→sRGB and performs the single
-normalization/fold described in RENDER.md §4. For `picked`, the WB factor is
-`diag(g_r, g_g, g_b)` directly (no CAT).
+For crossing-on RAW, the render composes this factor as
+`M = M_AgX-inset · M_WB`, normalizes that composed matrix, and refunds its fold once
+inside the log2 tone encoding. Crossing-off sources normalize `M_WB` alone and refund
+the fold in their exposure multiplier. The Rec.2020→sRGB or Display P3 conversion is
+not part of either composition; it runs after all shared edits in finalization. For
+`picked`, the WB factor is `diag(g_r, g_g, g_b)` directly (no CAT).
 
 ## 5. Inversion & as-shot estimation
 
@@ -177,8 +181,8 @@ the §7 gains as `picked`. The result is deterministic for a given base.
 
 ## 9. Verification (`WhiteBalanceModelTests`)
 
-1. Identity: the WB factor for (anchor == target) is exact I; `asShot` composes it with
-   the universal working→display matrix.
+1. Identity: the WB factor for (anchor == target) is exact I; crossing-on composes it
+   with the AgX inset, while crossing-off normalizes identity alone.
 2. Warm direction: target 6500 vs anchor 3000 → R gain > B gain.
 3. Tint sign: (5500, +50) suppresses G relative to (5500, 0).
 4. **D65 pin (daylight branch):** XYZ(6504, 0) ≈ (0.9504, 1, 1.0888), each component

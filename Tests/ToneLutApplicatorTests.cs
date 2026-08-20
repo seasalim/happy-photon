@@ -13,13 +13,13 @@ public sealed class ToneLutApplicatorTests
     [InlineData(0.0, 0, 0, 0)]
     [InlineData(1.25, 15, 30, -50)]
     [InlineData(-1.5, -20, -40, 80)]
-    public void Apply_IsBitIdenticalToPinnedMagickClut(
+    public void Apply_MatchesAnalyticDoubleNodes(
         double exposure,
         int brightness,
         int contrast,
         int highlights)
     {
-        var lut = ToneLut.Compose(new ToneParams(
+        var parameters = new ToneParams(
             exposure,
             1,
             brightness,
@@ -27,15 +27,20 @@ public sealed class ToneLutApplicatorTests
             20,
             highlights,
             false,
-            new CurveData()));
-        using var expected = CreateAllQuantumValues();
-        using var actual = (MagickImage)expected.Clone();
-
-        RenderColorEncoding.ApplyLut(expected, lut);
+            new CurveData());
+        var lut = ToneLut.Compose(parameters);
+        using var source = CreateAllQuantumValues();
+        var sourceSamples = RenderPipelineTestSupport.ReadPixels(source);
+        using var actual = (MagickImage)source.Clone();
         ToneLutApplicator.Apply(actual, lut);
+        var expected = sourceSamples
+            .Select(sample => ToQuantum(ToneLut.Evaluate(
+                parameters,
+                sample / (double)ushort.MaxValue)))
+            .ToArray();
 
         Assert.Equal(
-            RenderPipelineTestSupport.ReadPixels(expected),
+            expected,
             RenderPipelineTestSupport.ReadPixels(actual));
     }
 
@@ -71,10 +76,11 @@ public sealed class ToneLutApplicatorTests
 
     [Theory]
     [MemberData(nameof(MatrixCases))]
-    public void MatrixApply_MatchesLegacyMagickMatrixThenClutWithinPlatformTolerance(
+    public void MatrixApply_InterpolatesOnUnroundedDoubleMatrixOutput(
         string caseName,
         double[,] matrix)
     {
+        Assert.False(string.IsNullOrWhiteSpace(caseName));
         var lut = ToneLut.Compose(new ToneParams(
             0.75, 1.3, 10, -20, 30, -40, true, new CurveData()));
         var random = new Random(1729);
@@ -83,65 +89,30 @@ public sealed class ToneLutApplicatorTests
         {
             samples[index] = checked((ushort)random.Next(ushort.MaxValue + 1));
         }
-        using var expected = CreateRgba(samples);
-        using var actual = (MagickImage)expected.Clone();
-
-        expected.ColorMatrix(new MagickColorMatrix(3,
-        [
-            matrix[0, 0], matrix[0, 1], matrix[0, 2],
-            matrix[1, 0], matrix[1, 1], matrix[1, 2],
-            matrix[2, 0], matrix[2, 1], matrix[2, 2]
-        ]));
-        ToneLutApplicator.Apply(expected, lut);
+        using var actual = CreateRgba(samples);
         ToneLutApplicator.Apply(actual, matrix, lut);
 
-        var expectedSamples = expected.GetPixelsUnsafe()
-            .ToShortArray(PixelMapping.RGBA);
+        var expectedSamples = (ushort[])samples.Clone();
+        for (var offset = 0; offset < expectedSamples.Length; offset += 4)
+        {
+            var red = samples[offset] / (double)ushort.MaxValue;
+            var green = samples[offset + 1] / (double)ushort.MaxValue;
+            var blue = samples[offset + 2] / (double)ushort.MaxValue;
+            expectedSamples[offset] = Transform(0);
+            expectedSamples[offset + 1] = Transform(1);
+            expectedSamples[offset + 2] = Transform(2);
+
+            ushort Transform(int row) => ToQuantum(
+                ToneLutApplicator.Interpolate(
+                    lut,
+                    matrix[row, 0] * red +
+                    matrix[row, 1] * green +
+                    matrix[row, 2] * blue));
+        }
         var actualSamples = actual.GetPixelsUnsafe()
             .ToShortArray(PixelMapping.RGBA);
-        Assert.NotNull(expectedSamples);
         Assert.NotNull(actualSamples);
-
-        Assert.Equal(expectedSamples!.Length, actualSamples!.Length);
-        var worstDifference = 0;
-        var worstIndex = 0;
-        for (var index = 0; index < expectedSamples.Length; index++)
-        {
-            var difference = Math.Abs(expectedSamples[index] - actualSamples[index]);
-            if (difference > worstDifference)
-            {
-                worstDifference = difference;
-                worstIndex = index;
-            }
-        }
-
-        // The passes differ only at the matrix stage, where both round half-up and clamp,
-        // so they can disagree by at most one Q16 code; the LUT then amplifies that by its
-        // steepest per-code step. Deriving the bound from the LUT keeps it correct if the
-        // tone parameters above ever change. x64 carries the regression proof: the fused
-        // pass is architecture-invariant managed code, so a real defect in it shows up
-        // there as inequality rather than hiding inside this tolerance.
-        var tolerance = RuntimeInformation.ProcessArchitecture is Architecture.X64
-            ? 0
-            : MaxAdjacentInterpolationStep(lut);
-
-        Assert.True(
-            worstDifference <= tolerance,
-            $"{caseName} differed from the legacy pass by {worstDifference} Q16 codes " +
-            $"({worstDifference / 257.0:F3} of an 8-bit code) at sample {worstIndex}, " +
-            $"above the {tolerance}-code tolerance.");
-    }
-
-    private static int MaxAdjacentInterpolationStep(ushort[] lut)
-    {
-        var worst = 0;
-        for (var value = 0; value < ushort.MaxValue; value++)
-        {
-            worst = Math.Max(worst, Math.Abs(
-                ToneLutApplicator.Interpolate(lut, (ushort)(value + 1)) -
-                ToneLutApplicator.Interpolate(lut, (ushort)value)));
-        }
-        return worst;
+        Assert.Equal(expectedSamples, actualSamples);
     }
 
     public static TheoryData<string, double[,]> MatrixCases => new()
@@ -191,4 +162,9 @@ public sealed class ToneLutApplicatorTests
                 PixelMapping.RGBA));
         return image;
     }
+
+    private static ushort ToQuantum(double value) =>
+        (ushort)Math.Round(
+            Math.Clamp(value, 0, 1) * ushort.MaxValue,
+            MidpointRounding.AwayFromZero);
 }

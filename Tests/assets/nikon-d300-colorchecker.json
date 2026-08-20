@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 4,
   "fixture": {
     "fileName": "nikon-d300-colorchecker.nef",
     "byteLength": 11443794,
@@ -13,15 +13,15 @@
     "license": "CC0-1.0"
   },
   "renderPath": {
-    "base": "full-resolution",
-    "intent": "export",
+    "base": "full-resolution scene-linear Rec.2020 after analytic picked-WB matrix, before the crossing",
+    "intent": "characterization-seam",
     "maxDimension": null,
     "expectedWidth": 4320,
     "expectedHeight": 2868,
     "decodeSettings": "default: highlight clip, FBDD off",
     "openMpEnvironmentVariable": "OMP_NUM_THREADS",
     "openMpValue": "1",
-    "settings": "EditSettings defaults except Wb.Mode=picked with gains derived from frozen neutral XYZ; Exposure remains zero"
+    "settings": "picked WB gains derived from frozen neutral XYZ; no tone, look, detail, target convert, or output stage"
   },
   "geometry": {
     "rows": 6,
@@ -144,8 +144,8 @@
       0.9343152361681698
     ],
     "freshDecodeXyzMaxAbsoluteDrift": 0.002,
-    "exposureScalar": 0.8414241941938978,
-    "exposureScalarRule": "least-squares scale sum(measuredY*referenceY)/sum(measuredY^2) over neutral patches 18-22 after linear ROI averaging and D65-to-reference-white adaptation"
+    "exposureScalar": 1.4499499853819999,
+    "exposureScalarRule": "least-squares scale sum(measuredY*referenceY)/sum(measuredY^2) over neutral patches 18-22 after analytic picked-WB at the pre-crossing scene-linear seam and D65-to-reference-white adaptation"
   },
   "budget": {
     "statistics": [
@@ -153,22 +153,18 @@
       "maximum per-patch DeltaE00"
     ],
     "boundRule": "worst supported-RID fresh-process observation, rounded up to the next 0.5 DeltaE00",
-    "meanDeltaE00": 5.5,
-    "maximumPatchDeltaE00": 11.0,
+    "meanDeltaE00": 3.0,
+    "maximumPatchDeltaE00": 6.5,
     "observations": [
       {
         "rid": "win-x64",
-        "freshProcessRuns": 3,
+        "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          5.450965785984761,
-          5.450965785984761,
-          5.450965785984761
+          2.6383236546063933
         ],
         "maximumPatchDeltaE00": [
-          10.766852876442542,
-          10.766852876442542,
-          10.766852876442542
+          6.2450756876906794
         ]
       },
       {
@@ -176,10 +172,10 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          5.450965785984759
+          2.638323654606382
         ],
         "maximumPatchDeltaE00": [
-          10.766852876442549
+          6.245075687690655
         ]
       },
       {
@@ -187,33 +183,33 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          5.450965990609351
+          2.6383253668088718
         ],
         "maximumPatchDeltaE00": [
-          10.766853169142227
+          6.2450761886600015
         ]
       }
     ],
     "pendingRidObservations": []
   },
-  "displayP3Budget": {
+  "lookBudget": {
     "statistics": [
-      "mean DeltaE00 across all 24 patches",
-      "maximum per-patch DeltaE00"
+      "mean DeltaE00 across all 24 patches through the default RAW AgX crossing",
+      "maximum per-patch DeltaE00 through the default RAW AgX crossing"
     ],
     "boundRule": "worst supported-RID fresh-process observation, rounded up to the next 0.5 DeltaE00",
     "meanDeltaE00": 6.0,
-    "maximumPatchDeltaE00": 11.5,
+    "maximumPatchDeltaE00": 14.0,
     "observations": [
       {
         "rid": "win-x64",
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          5.737967267765175
+          5.993530184884918
         ],
         "maximumPatchDeltaE00": [
-          11.405233816061925
+          13.761233948669688
         ]
       },
       {
@@ -221,10 +217,10 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          5.737967267765174
+          5.993530184884922
         ],
         "maximumPatchDeltaE00": [
-          11.405233816061912
+          13.761233948669704
         ]
       },
       {
@@ -232,10 +228,10 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          5.7379670189658745
+          5.9935309875556415
         ],
         "maximumPatchDeltaE00": [
-          11.405234272011066
+          13.76123375287244
         ]
       }
     ],
