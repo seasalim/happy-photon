@@ -73,6 +73,9 @@
     <Color x:Key="CropHandleFillColor">#ffffffff</Color>
     <Color x:Key="CropHandleStrokeColor">#505050</Color>
     <Color x:Key="CropGridLineColor">#64ffffff</Color>
+    <Color x:Key="NavigatorViewportHaloColor">#73000000</Color>
+    <SolidColorBrush x:Key="NavigatorViewportHalo"
+                     Color="{StaticResource NavigatorViewportHaloColor}"/>
 
     <!-- Shape -->
     <BoxShadows x:Key="BadgeShadow">0 1 4 0 #80000000</BoxShadows>
@@ -154,6 +157,9 @@
             <SolidColorBrush x:Key="OutlineVariant" Color="{StaticResource OutlineVariantColor}"/>
             <SolidColorBrush x:Key="Divider" Color="{StaticResource OutlineVariantColor}" Opacity="0.55"/>
             <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}"/>
+            <SolidColorBrush x:Key="NavigatorViewportStroke"
+                             Color="{StaticResource TextPrimaryColor}"
+                             Opacity="0.92"/>
             <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}"/>
             <SolidColorBrush x:Key="TextMuted" Color="{StaticResource TextMutedColor}"/>
             <SolidColorBrush x:Key="TextDisabled" Color="{StaticResource TextDisabledColor}"/>
@@ -236,6 +242,9 @@
             <SolidColorBrush x:Key="OutlineVariant" Color="{StaticResource OutlineVariantColor}"/>
             <SolidColorBrush x:Key="Divider" Color="{StaticResource OutlineVariantColor}" Opacity="0.72"/>
             <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}"/>
+            <SolidColorBrush x:Key="NavigatorViewportStroke"
+                             Color="{StaticResource TextPrimaryColor}"
+                             Opacity="0.92"/>
             <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}"/>
             <SolidColorBrush x:Key="TextMuted" Color="{StaticResource TextMutedColor}"/>
             <SolidColorBrush x:Key="TextDisabled" Color="{StaticResource TextDisabledColor}"/>

@@ -9,6 +9,8 @@ public partial class MainWindowViewModel
 {
     partial void OnSelectedImageChanged(ImageFile? oldValue, ImageFile? newValue)
     {
+        ClearNavigatorVisibleRegion();
+
         // Update IsActive flags for visual highlighting in Library grid
         if (oldValue != null) oldValue.IsActive = false;
         if (newValue != null) newValue.IsActive = true;

@@ -140,6 +140,7 @@ public partial class ZoomPanControl : UserControl
         _cropOverlay = this.FindControl<CropOverlayControl>("CropOverlay");
         _surroundLayer = this.FindControl<Panel>("SurroundLayer");
         _assessmentMat = this.FindControl<Border>("AssessmentMat");
+        InitializeVisibleRegionTracking();
 
         AddHandler(
             PointerWheelChangedEvent,
@@ -208,6 +209,7 @@ public partial class ZoomPanControl : UserControl
         {
             _displayChainTrace?.OnInputChanged();
         }
+        OnViewportGeometryInputChanged(change.Property);
     }
 
     private void ApplyColorAssessment()
@@ -279,6 +281,7 @@ public partial class ZoomPanControl : UserControl
 
         ApplyColorAssessment();
         RequestAutoFit();
+        RequestVisibleRegionPublication();
         _displayChainTrace?.OnInputChanged();
     }
 

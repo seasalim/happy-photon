@@ -126,6 +126,14 @@
                                        IsVisible="{Binding IsDevelopMode}"
                                        Stretch="Uniform"
                                        Margin="4"/>
+                                <views:NavigatorViewportOverlay x:Name="NavigatorViewportOverlay"
+                                                                Source="{Binding PreviewImage}"
+                                                                VisibleRegion="{Binding NavigatorVisibleRegion}"
+                                                                Stroke="{DynamicResource NavigatorViewportStroke}"
+                                                                Halo="{DynamicResource NavigatorViewportHalo}"
+                                                                IsVisible="{Binding NavigatorVisibleRegion, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                                IsHitTestVisible="False"
+                                                                Margin="4"/>
                             </Grid>
                         </Border>
                         <Border Background="{DynamicResource SurfaceMid}"
@@ -215,6 +223,7 @@
                                                   IsDisplayTraceActive="{Binding IsDevelopPreviewSurfaceActive}"
                                                   IsCropAspectLocked="{Binding IsCropAspectLocked}"
                                                   Crop="{Binding CurrentCrop, Mode=TwoWay}"
+                                                  ScrollBarVisibility="Hidden"
                                                   ContentInset="10"/>
 
                             <views:AssessmentFeedbackOverlay x:Name="DevelopAssessmentFeedbackOverlay"

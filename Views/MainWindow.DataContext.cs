@@ -34,6 +34,7 @@ public partial class MainWindow
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
+        _isDevelopViewportPublicationSuppressed = false;
 
         if (_subscribedViewModel != null && !ReferenceEquals(DataContext, _subscribedViewModel))
         {
@@ -91,6 +92,7 @@ public partial class MainWindow
         SetSubscribedViewModel(vm);
         ApplyAppTheme(vm.AppTheme);
         ApplyWorkspaceKeyboardState(vm.IsWorkspaceInteractionEnabled);
+        UpdateDevelopViewportPublication(vm);
     }
 
     internal async Task InitializeApplicationAsync(
@@ -301,15 +303,26 @@ public partial class MainWindow
                 {
                     if (!ReferenceEquals(DataContext, vm)) return;
                     var control = GetActiveZoomPanControl();
-                    control?.RequestFitToView(zoom =>
+                    if (control == null)
+                    {
+                        ReleaseDevelopViewportPublication(vm, null);
+                        return;
+                    }
+                    control.RequestFitToView(zoom =>
                     {
                         if (ReferenceEquals(control, GetActiveZoomPanControl()))
                         {
                             vm.ZoomLevel = zoom;
+                            ReleaseDevelopViewportPublication(vm, control);
                         }
                     });
                 },
                 DispatcherPriority.Loaded);
+        }
+        else if (args.PropertyName ==
+                 nameof(MainWindowViewModel.IsDevelopPreviewSurfaceActive))
+        {
+            UpdateDevelopViewportPublication(vm);
         }
         else if (args.PropertyName ==
                  nameof(MainWindowViewModel.IsWorkspaceInteractionEnabled))
@@ -320,6 +333,53 @@ public partial class MainWindow
         {
             ApplyAppTheme(vm.AppTheme);
         }
+    }
+
+    private void UpdateDevelopViewportPublication(MainWindowViewModel vm)
+    {
+        if (!vm.IsDevelopPreviewSurfaceActive)
+        {
+            if (vm.IsFullScreenMode)
+            {
+                _isDevelopViewportPublicationSuppressed = true;
+            }
+            vm.PublishNavigatorVisibleRegion(null);
+            return;
+        }
+
+        if (!_isDevelopViewportPublicationSuppressed)
+        {
+            _zoomPanControl?.RequestVisibleRegionPublication(force: true);
+        }
+    }
+
+    private void ReleaseDevelopViewportPublication(
+        MainWindowViewModel vm,
+        ZoomPanControl? refittedControl)
+    {
+        if (vm.IsFullScreenMode)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (!ReferenceEquals(DataContext, vm) ||
+                    vm.IsFullScreenMode ||
+                    (refittedControl != null &&
+                     !ReferenceEquals(refittedControl, _zoomPanControl)))
+                {
+                    return;
+                }
+
+                _isDevelopViewportPublicationSuppressed = false;
+                if (vm.IsDevelopPreviewSurfaceActive)
+                {
+                    _zoomPanControl?.RequestVisibleRegionPublication(force: true);
+                }
+            },
+            DispatcherPriority.Render);
     }
 
     private static void ApplyAppTheme(AppTheme theme)

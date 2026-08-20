@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -15,6 +16,7 @@ public partial class MainWindow : Window
     private FolderTreePanel? _folderTreePanel;
     private PresetsPanel? _presetsPanel;
     private LibraryGridView? _libraryGridView;
+    private bool _isDevelopViewportPublicationSuppressed;
 
     public MainWindow()
     {
@@ -35,6 +37,7 @@ public partial class MainWindow : Window
             _zoomPanControl.ZoomChanged += OnZoomChanged;
             _zoomPanControl.AutoFitRequested += OnAutoFitRequested;
             _zoomPanControl.WhiteBalancePickRequested += OnWhiteBalancePickRequested;
+            _zoomPanControl.VisibleRegionChanged += OnVisibleRegionChanged;
         }
 
         _fullScreenZoomPanControl = this.FindControl<ZoomPanControl>("FullScreenZoomPanControl");
@@ -135,6 +138,19 @@ public partial class MainWindow : Window
     {
         if (!ReferenceEquals(sender, GetActiveZoomPanControl())) return;
         WithVm(vm => vm.ZoomLevel = fitZoom);
+    }
+
+    private void OnVisibleRegionChanged(object? sender, Rect? region)
+    {
+        if (!ReferenceEquals(sender, _zoomPanControl) ||
+            _isDevelopViewportPublicationSuppressed ||
+            DataContext is not MainWindowViewModel vm ||
+            !vm.IsDevelopPreviewSurfaceActive)
+        {
+            return;
+        }
+
+        vm.PublishNavigatorVisibleRegion(region);
     }
 
     private async void OnWhiteBalancePickRequested(

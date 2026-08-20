@@ -321,6 +321,7 @@ public partial class MainWindowViewModel
     partial void OnIsDevelopModeChanged(bool value)
     {
         OnPropertyChanged(nameof(IsDevelopPreviewSurfaceActive));
+        UpdateNavigatorPreviewSurfaceActivity();
         OnPropertyChanged(nameof(CanSavePreset));
         NotifyWorkflowTourVisibilityChanged();
         NotifyWhiteBalanceCommandState();
@@ -371,6 +372,7 @@ public partial class MainWindowViewModel
     {
         OnPropertyChanged(nameof(IsDevelopPreviewSurfaceActive));
         OnPropertyChanged(nameof(IsFullScreenPreviewSurfaceActive));
+        UpdateNavigatorPreviewSurfaceActivity();
         if (value)
         {
             ArmFullScreenSelection();

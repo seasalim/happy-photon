@@ -256,7 +256,11 @@ The desktop workspace keeps its side panes mode-specific. Library uses the right
 for review only: the fixed thumbnail histogram, metadata/EXIF, and a multi-selection
 summary. Develop owns the editing controls. The left navigator retains only the active
 thumbnail and online-only download action so the folder tree receives the reclaimed
-height.
+height. When Develop is zoomed past fit, its navigator preview outlines the visible
+image region with a one-pixel primary-text hairline and dark halo. The outline maps to
+the Uniform-stretched image rather than its gutters, tracks pan and zoom, and disappears
+when at least 99.5% of the image is visible. It is informational only; navigator panning
+remains out of scope.
 
 The Develop control bar carries actions only. Flag, color-label, and rating state
 remains visible in Library rather than resting anywhere over the Develop or full-screen
