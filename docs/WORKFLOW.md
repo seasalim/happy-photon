@@ -284,6 +284,10 @@ Start with the largest problem and make the smallest adjustment that solves it:
   engine around fixed scene middle grey: slope, shoulder, and toe respectively.
 - On JPEG/HEIC/TIFF/proxy sources, those same controls retain their familiar
   display-referred behavior.
+- On RAW files, **Recovery** defaults to **Clip**. Choose **Blend** to blend
+  channel-clipped highlight information during RAW decoding. The row remains in place
+  but is disabled for standard sources. The current preview remains visible while the
+  updated decode completes in the background.
 - **Brightness** is available for standard sources. It is disabled for RAW because
   the crossing-on engine anchors global light with Exposure; switching sources does
   not erase a stored Brightness value.

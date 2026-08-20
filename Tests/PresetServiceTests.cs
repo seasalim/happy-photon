@@ -47,7 +47,7 @@ public sealed class PresetServiceTests : IDisposable
                 Tint = -15
             },
             BaseLook = true,
-            HlReconstruction = HlReconstructionMode.Clip
+            HlReconstruction = HlReconstructionMode.Blend
         };
 
         var preset = await service.SaveUserPresetAsync("V2", source);
@@ -61,7 +61,7 @@ public sealed class PresetServiceTests : IDisposable
         Assert.Equal(7200, settings.Wb.Kelvin);
         Assert.Equal(-15, settings.Wb.Tint);
         Assert.True(settings.BaseLook);
-        Assert.Equal(HlReconstructionMode.Clip, settings.HlReconstruction);
+        Assert.Equal(HlReconstructionMode.Blend, settings.HlReconstruction);
     }
 
     [Fact]

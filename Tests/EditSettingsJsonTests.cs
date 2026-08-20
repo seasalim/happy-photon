@@ -123,7 +123,7 @@ public sealed class EditSettingsJsonTests
     {
         var source = new EditSettings
         {
-            HlReconstruction = HlReconstructionMode.Clip,
+            HlReconstruction = HlReconstructionMode.Blend,
             Detail = new DetailSettings { NoiseReduction = FbddMode.Light }
         };
 
@@ -131,7 +131,7 @@ public sealed class EditSettingsJsonTests
         var result = JsonSerializer.Deserialize<EditSettings>(json);
 
         Assert.NotNull(result);
-        Assert.Equal(HlReconstructionMode.Clip, result.HlReconstruction);
+        Assert.Equal(HlReconstructionMode.Blend, result.HlReconstruction);
         Assert.Equal(FbddMode.Light, result.Detail.NoiseReduction);
     }
 

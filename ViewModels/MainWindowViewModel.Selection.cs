@@ -169,7 +169,7 @@ public partial class MainWindowViewModel
                    Vibrance != 0 ||
                    Shadows != 0 ||
                    Highlights != 0 ||
-                   // Keep hidden RAW-only state resettable after fallback.
+                   // Keep disabled RAW-only state resettable after fallback.
                    HlReconstruction != HlReconstructionMode.Clip ||
                    hasCurveEdits ||
                    ActivePresetId != null;

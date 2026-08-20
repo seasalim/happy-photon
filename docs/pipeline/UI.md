@@ -37,6 +37,7 @@ WHITE BALANCE          (new group, WP3.3)
   Tint     ──────●──────────   −12
 ADJUSTMENTS            (existing group, Temperature slider REMOVED)
   Exposure / Brightness / Contrast / Saturation / Vibrance / Shadows / Highlights
+  Recovery                                                [Clip | Blend]  (RAW only)
 CURVE                  (unchanged)
 DEVELOP FOOTER
   [Before/after] [Undo] [Redo]                         RESET
@@ -52,6 +53,12 @@ functional for JPEG/HEIC/TIFF/proxy sources. The gate follows the loaded base, f
 back provisionally to `ImageFile.IsRaw` before load, survives filmstrip switching, and
 never clears the persisted value. Base look remains persisted/MCP-settable but has no
 panel control; RAW ignores it and standard sources retain it.
+
+Recovery is a compact, exclusive Clip/Blend control directly below Highlights. It is
+enabled only for RAW sources, provisionally from `ImageFile.IsRaw` and then from the
+loaded base fact. The row remains present but dims to `DisabledOpacity` when unavailable,
+so the panel does not reflow across mixed-source filmstrips. A contradictory non-RAW
+loaded fact disables the row without changing the stored value. Clip is the default.
 
 ## 3. White balance group (WP3.3)
 
@@ -118,15 +125,16 @@ panel control; RAW ignores it and standard sources retain it.
 - **Reset** returns: `wb → asShot`, `baseLook → null` (source default),
   `hlReconstruction → clip`, plus all existing fields. One undo step, as today.
 - **Undo/redo**: each committed control change is one step (existing granularity);
-  mode switches (preset select, eyedropper pick, Auto) are each one step.
+  this includes each Clip/Blend selection; mode switches (preset select, eyedropper
+  pick, Auto) are each one step.
 - **User presets** capture the new color/tonal fields (wb, baseLook,
   hlReconstruction) and still never geometry. Applying/untoggling behavior unchanged.
 - **Copy/paste** (`Ctrl+Shift+C/V`) carries the same widened set; geometry still never
   transfers; Library multi-paste confirmation flow unchanged.
 
-Highlight reconstruction, capture sharpening, FBDD, and chroma NR have no
-first-release controls. Highlight reconstruction defaults to Clip, capture sharpening
-uses its source-kind default, and FBDD and chroma NR remain Off/0.
+Recovery has the first-release RAW-only Clip/Blend control and defaults to
+Clip. Capture sharpening, FBDD, and chroma NR have no first-release controls: capture
+sharpening uses its source-kind default, and FBDD and chroma NR remain Off/0.
 
 ## 7. Export dialog
 

@@ -6,7 +6,18 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsHighlightHandlingEnabled))]
     private bool _isBrightnessEnabled = true;
+
+    // Rides the brightness capability because crossing-on ⟺ RAW today; a
+    // future display-referred crossing toggle must split these two gates.
+    public bool IsHighlightHandlingEnabled => !IsBrightnessEnabled;
+
+    public IReadOnlyList<HlReconstructionMode> HighlightHandlingOptions { get; } =
+    [
+        HlReconstructionMode.Clip,
+        HlReconstructionMode.Blend
+    ];
 
     [ObservableProperty]
     private HlReconstructionMode _hlReconstruction =

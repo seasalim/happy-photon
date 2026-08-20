@@ -29,7 +29,7 @@ public sealed class EditSettingsTransferTests
         Shadows = 30,
         Highlights = -40,
         BaseLook = true,
-        HlReconstruction = HlReconstructionMode.Clip,
+        HlReconstruction = HlReconstructionMode.Blend,
         Detail = new DetailSettings
         {
             CaptureSharpen = 35,
@@ -61,7 +61,7 @@ public sealed class EditSettingsTransferTests
         Assert.Equal(30, copy.Shadows);
         Assert.Equal(-40, copy.Highlights);
         Assert.True(copy.BaseLook);
-        Assert.Equal(HlReconstructionMode.Clip, copy.HlReconstruction);
+        Assert.Equal(HlReconstructionMode.Blend, copy.HlReconstruction);
         Assert.Null(copy.Detail.CaptureSharpen);
         Assert.Equal(FbddMode.Off, copy.Detail.NoiseReduction);
         Assert.Equal(0, copy.Detail.ChromaNr);
@@ -105,7 +105,7 @@ public sealed class EditSettingsTransferTests
         Assert.Equal(30, target.Shadows);
         Assert.Equal(-40, target.Highlights);
         Assert.True(target.BaseLook);
-        Assert.Equal(HlReconstructionMode.Clip, target.HlReconstruction);
+        Assert.Equal(HlReconstructionMode.Blend, target.HlReconstruction);
         Assert.Equal(80, target.Detail.CaptureSharpen);
         Assert.Equal(FbddMode.Full, target.Detail.NoiseReduction);
         Assert.Equal(60, target.Detail.ChromaNr);
