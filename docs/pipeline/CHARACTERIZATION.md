@@ -91,9 +91,10 @@ ancient Coolpix `.NEF` files and hypothetical 4-color `.DNG` conversions.
 ## 2. Characterization (R5a)
 
 Characterization runs in decode, fused into the existing pixel-import seam:
-camera `ushort` → 3×3 matrix in `double` → one Q16 write, clamped only at that
-write. The implementation writes through Magick's writable Q16 cache pointer, so
-there is no extra full-image pass, managed full-frame copy, or second pixel cache.
+camera `ushort` → 3×3 matrix in `double` → one Q16 encoding, clamped only
+at that point. The implementation transforms into a pooled Q16 band capped at
+2 MiB for supported camera dimensions and writes each band into Magick's pixel
+cache, so there is no managed full-frame copy or second full-frame pixel cache.
 
 **Typed outcomes**, decided per file from the copied facts (matrix validity
 decoupled from WB-fact validity):
@@ -146,11 +147,13 @@ freezes the gate at mean ΔE76 ≤ 1.1 and p99 ΔE76 ≤ 9.5; Bayer measured
 
 Budgets: canonical TESTING.md gates stay binding (complete slider render
 ≤ 150 ms preview; full export within +5% / +16 MiB). R5a adds: decode-latency
-delta ≤ 100 ms full-res / ≤ 30 ms preview, and a peak-private-memory delta vs
-the pre-R5a baseline sampled through import completion that excludes any
-additional full-frame allocation. On win-x64 the 20 MP Canon 6D import gate
-measured no positive median latency delta and no positive private-peak delta;
-the direct-pointer implementation allocates no import transient. The opt-in
+delta ≤ 100 ms full-res / ≤ 30 ms preview, and a ≤ 4 MiB
+peak-private-memory delta vs the pre-R5a baseline sampled through import
+completion. These are the checkpoint-A-frozen R5a import budgets and exclude
+any additional full-frame allocation. On win-x64 the 20 MP Canon 6D import gate
+measured preview deltas of 4.3/21.5 ms and 0.1/2.0 MiB, and full-resolution
+deltas of 9.8/1.2 ms and 0.0/0.0 MiB, in two quiet repeat runs. The bounded
+pooled-band implementation uses no full-frame import transient. The opt-in
 modern-camera compatibility suite reruns at checkpoint C.
 
 The win-x64 ColorChecker observations are recalibrated. Linux-x64 and osx-arm64

@@ -101,7 +101,7 @@ public sealed class CameraRgbCharacterizationTests
     }
 
     [Fact]
-    public void FourChannelTransform_IsRejectedWithoutTruncation()
+    public void FourChannelTransform_IsTypedPassthroughWithoutTruncation()
     {
         var snapshot = Snapshot(new double[,]
         {
@@ -110,10 +110,11 @@ public sealed class CameraRgbCharacterizationTests
             { 0, 0, 1, 0.1 }
         });
 
-        var exception = Assert.Throws<NotSupportedException>(
-            () => CameraRgbCharacterization.Create(snapshot));
+        var characterization = CameraRgbCharacterization.Create(snapshot);
 
-        Assert.Contains("three", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(
+            CameraRgbCharacterizationOutcome.UncharacterizedPassthrough,
+            characterization.Outcome);
     }
 
     [Fact]

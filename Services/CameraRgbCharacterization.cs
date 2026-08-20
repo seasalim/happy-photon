@@ -1,3 +1,5 @@
+using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using ImageMagick;
 
@@ -12,6 +14,8 @@ internal enum CameraRgbCharacterizationOutcome
 
 internal sealed class CameraRgbCharacterization
 {
+    private const int DestinationBufferBudgetBytes = 2 * 1024 * 1024;
+
     private readonly bool _applyMatrix;
 
     private CameraRgbCharacterization(
@@ -39,20 +43,40 @@ internal sealed class CameraRgbCharacterization
         ArgumentNullException.ThrowIfNull(facts);
         if (facts.CamToSrgb is { } cameraToSrgb)
         {
-            RequireThreeChannels(cameraToSrgb);
+            if (!IsFiniteThreeChannelMatrix(cameraToSrgb))
+            {
+                Debug.WriteLine(
+                    "Camera characterization is unavailable because the " +
+                    "camera transform is not a finite 3x3 matrix.");
+                return Passthrough;
+            }
+
             return new CameraRgbCharacterization(
                 CameraRgbCharacterizationOutcome.Usable,
                 ComposeWorkingMatrix(cameraToSrgb),
                 applyMatrix: true);
         }
 
-        if (facts.IsIdentityCameraTransform &&
-            TryDeriveCameraToSrgb(facts.CameraFromXyz, out cameraToSrgb))
+        if (facts.IsIdentityCameraTransform)
         {
-            return new CameraRgbCharacterization(
-                CameraRgbCharacterizationOutcome.Derived,
-                ComposeWorkingMatrix(cameraToSrgb),
-                applyMatrix: true);
+            if (facts.CameraFromXyz is { } cameraFromXyz &&
+                !IsFiniteThreeChannelMatrix(cameraFromXyz))
+            {
+                Debug.WriteLine(
+                    "Camera characterization is unavailable because the " +
+                    "camera-from-XYZ transform is not a finite 3x3 matrix.");
+                return Passthrough;
+            }
+
+            if (TryDeriveCameraToSrgb(
+                facts.CameraFromXyz,
+                out cameraToSrgb))
+            {
+                return new CameraRgbCharacterization(
+                    CameraRgbCharacterizationOutcome.Derived,
+                    ComposeWorkingMatrix(cameraToSrgb),
+                    applyMatrix: true);
+            }
         }
 
         return Passthrough;
@@ -107,7 +131,6 @@ internal sealed class CameraRgbCharacterization
             return false;
         }
 
-        RequireThreeChannels(cameraFromXyz);
         var cameraFromSrgb = ChromaticAdaptation.Multiply(
             cameraFromXyz,
             RgbColorSpaceMatrices.LinearSrgbToXyzD65PublishedRounded);
@@ -165,34 +188,46 @@ internal sealed class CameraRgbCharacterization
         CancellationToken cancellationToken)
     {
         var image = CreateDestination(width, height);
+        ushort[]? destinationBuffer = null;
         try
         {
-            RenderKernelSupport.PixelLayout layout;
-            using (var pixels = image.GetPixels())
-            {
-                layout = RenderKernelSupport.GetLayout(pixels);
-            }
-
-            using var destinationPixels = image.GetPixelsUnsafe();
-            var destinationAddress = destinationPixels.GetAreaPointer(
-                0,
-                0,
-                (uint)width,
-                (uint)height);
-            if (destinationAddress == 0)
-            {
-                throw new InvalidOperationException(
-                    "Unable to access the Q16 destination pixels.");
-            }
+            using var destinationPixels = image.GetPixels();
+            var layout = RenderKernelSupport.GetLayout(destinationPixels);
+            var sourceSamplesPerRow = checked(width * 3);
+            var destinationSamplesPerRow = checked(width * layout.Channels);
+            var bandHeight = Math.Max(
+                1,
+                Math.Min(
+                    height,
+                    DestinationBufferBudgetBytes /
+                        sizeof(ushort) / destinationSamplesPerRow));
+            destinationBuffer = ArrayPool<ushort>.Shared.Rent(
+                checked(destinationSamplesPerRow * bandHeight));
 
             fixed (byte* source = data)
+            fixed (ushort* destination = destinationBuffer)
             {
-                TransformPixels(
-                    (nint)source,
-                    destinationAddress,
-                    checked(width * height),
-                    layout,
-                    cancellationToken);
+                for (var y = 0; y < height; y += bandHeight)
+                {
+                    var currentBandHeight = Math.Min(
+                        bandHeight,
+                        height - y);
+                    var sampleCount = checked(
+                        destinationSamplesPerRow * currentBandHeight);
+                    TransformPixels(
+                        (nint)(source + checked(
+                            y * sourceSamplesPerRow * sizeof(ushort))),
+                        (nint)destination,
+                        checked(width * currentBandHeight),
+                        layout,
+                        cancellationToken);
+                    destinationPixels.SetArea(
+                        0,
+                        y,
+                        (uint)width,
+                        (uint)currentBandHeight,
+                        destinationBuffer.AsSpan(0, sampleCount));
+                }
             }
 
             return image;
@@ -201,6 +236,13 @@ internal sealed class CameraRgbCharacterization
         {
             image.Dispose();
             throw;
+        }
+        finally
+        {
+            if (destinationBuffer != null)
+            {
+                ArrayPool<ushort>.Shared.Return(destinationBuffer);
+            }
         }
     }
 
@@ -212,6 +254,15 @@ internal sealed class CameraRgbCharacterization
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var m00 = CameraToRec2020[0, 0];
+        var m01 = CameraToRec2020[0, 1];
+        var m02 = CameraToRec2020[0, 2];
+        var m10 = CameraToRec2020[1, 0];
+        var m11 = CameraToRec2020[1, 1];
+        var m12 = CameraToRec2020[1, 2];
+        var m20 = CameraToRec2020[2, 0];
+        var m21 = CameraToRec2020[2, 1];
+        var m22 = CameraToRec2020[2, 2];
         var workers = Math.Min(
             Environment.ProcessorCount,
             Math.Max(1, (pixelCount + 32_767) / 32_768));
@@ -229,40 +280,29 @@ internal sealed class CameraRgbCharacterization
                 (void*)(destinationAddress + checked(
                     start * layout.Channels * sizeof(ushort))),
                 checked((end - start) * layout.Channels));
-            var output = 0;
             for (var pixel = 0; pixel < end - start; pixel++)
             {
                 var input = pixel * 3;
+                var output = pixel * layout.Channels;
                 var red = source[input];
                 var green = source[input + 1];
                 var blue = source[input + 2];
                 destination[output + layout.Red] = EncodeQ16(
-                    Transform(0, red, green, blue));
+                    m00 * red + m01 * green + m02 * blue);
                 destination[output + layout.Green] = EncodeQ16(
-                    Transform(1, red, green, blue));
+                    m10 * red + m11 * green + m12 * blue);
                 destination[output + layout.Blue] = EncodeQ16(
-                    Transform(2, red, green, blue));
-                output += layout.Channels;
+                    m20 * red + m21 * green + m22 * blue);
             }
         });
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private double Transform(
-        int row,
-        ushort red,
-        ushort green,
-        ushort blue) =>
-        CameraToRec2020[row, 0] * red +
-        CameraToRec2020[row, 1] * green +
-        CameraToRec2020[row, 2] * blue;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ushort EncodeQ16(double value)
     {
         if (value <= ushort.MinValue) return ushort.MinValue;
         if (value >= ushort.MaxValue) return ushort.MaxValue;
-        return (ushort)Math.Round(value, MidpointRounding.AwayFromZero);
+        return (ushort)(value + 0.5);
     }
 
     private static MagickImage ImportDirect(
@@ -323,13 +363,7 @@ internal sealed class CameraRgbCharacterization
         }
     }
 
-    private static void RequireThreeChannels(double[,] matrix)
-    {
-        if (matrix.GetLength(0) != 3 || matrix.GetLength(1) != 3 ||
-            matrix.Cast<double>().Any(value => !double.IsFinite(value)))
-        {
-            throw new NotSupportedException(
-                "Camera characterization requires three finite RGB channels.");
-        }
-    }
+    private static bool IsFiniteThreeChannelMatrix(double[,] matrix) =>
+        matrix.GetLength(0) == 3 && matrix.GetLength(1) == 3 &&
+        matrix.Cast<double>().All(double.IsFinite);
 }
