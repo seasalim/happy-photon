@@ -36,10 +36,12 @@ public sealed class CameraRgbCharacterizationPerformanceTests
             preview.AddedMilliseconds <= 45,
             $"Preview characterization added {preview.AddedMilliseconds:F1} ms; " +
             "budget is 45 ms.");
+        // 150 ms full budget recalibrated with the same variance-margin
+        // rationale (user-approved 2026-08-19; original A freeze was 100 ms).
         Assert.True(
-            full.AddedMilliseconds <= 100,
+            full.AddedMilliseconds <= 150,
             $"Full characterization added {full.AddedMilliseconds:F1} ms; " +
-            "budget is 100 ms.");
+            "budget is 150 ms.");
         // The retained-delta metric is deterministic (forced GC at step
         // boundaries with the result image alive); the async-sampled peak is
         // reported for information only, because process private bytes under
