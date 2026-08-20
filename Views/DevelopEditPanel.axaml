@@ -218,6 +218,9 @@
                             <views:HistogramView
                                 x:Name="DevelopHistogram"
                                 Histogram="{Binding EffectiveHistogram}"
+                                Clipping="{Binding DisplayClippingStats}"
+                                ClippingIsRawSource="{Binding DisplayClippingIsRawSource}"
+                                ShowDisplayClippingIndicators="True"
                                 IsVisible="{Binding IsHistogramScopeEffective}"/>
                             <views:WaveformView
                                 x:Name="DevelopWaveform"
@@ -417,6 +420,8 @@
                                          CurveChanged="OnCurveChanged"
                                          Margin="0,20,0,0"
                                          Height="180"/>
+
+                        <views:DetailEditGroup x:Name="DetailEditGroup"/>
 
                 </StackPanel>
             </ScrollViewer>

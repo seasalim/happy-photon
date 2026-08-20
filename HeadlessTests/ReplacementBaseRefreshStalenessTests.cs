@@ -41,16 +41,31 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
         // A replacement-base refresh for an older generation is released late,
         // after the newer render already won.
         var staleRefresh = BitmapConversionService.ConvertToBitmap(source)!;
+        var staleMask = new ClippingMask(
+            4,
+            3,
+            ClippingOverlaySide.DisplayFloor,
+            new byte[12]);
         vm.ApplyPreviewRefresh(
             image,
             staleRefresh,
             new HistogramData(),
             hasHistogram: false,
             rawHistogram: null,
-            generation: 50);
+            generation: 50,
+            clipping: new ClippingStats(
+                ChannelClip.Empty,
+                ChannelClip.Empty,
+                0,
+                1,
+                0),
+            isRawSource: false,
+            clippingMask: staleMask);
 
         Assert.Same(newerPreview, vm.PreviewImage);
+        Assert.False(vm.IsClippingStatsAvailable);
         Assert.Throws<ObjectDisposedException>(() => _ = staleRefresh.PixelSize);
+        Assert.Throws<ObjectDisposedException>(() => _ = staleMask.Flags.Length);
 
         await vm.DisposeAsync();
     }

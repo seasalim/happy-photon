@@ -35,6 +35,7 @@
         <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleColorAssessmentModeCommand}"/>
         <KeyBinding Gesture="B" Command="{Binding ToggleBeforeAfterCommand}"/>
         <KeyBinding Gesture="W" Command="{Binding ToggleWhiteBalancePickerCommand}"/>
+        <KeyBinding Gesture="J" Command="{Binding ToggleClippingOverlayCommand}"/>
         <KeyBinding Gesture="P" Command="{Binding TogglePickedImageCommand}"/>
         <KeyBinding Gesture="X" Command="{Binding ToggleRejectedImageCommand}"/>
         <KeyBinding Gesture="U" Command="{Binding UnpickImageCommand}"/>
@@ -221,6 +222,9 @@
                                                   IsWhiteBalancePicking="{Binding IsWhiteBalancePicking}"
                                                   IsColorAssessment="{Binding IsColorAssessmentMode}"
                                                   IsDisplayTraceActive="{Binding IsDevelopPreviewSurfaceActive}"
+                                                  ClippingMask="{Binding PreviewClippingMask}"
+                                                  VisibleClippingSides="{Binding VisibleClippingOverlaySides}"
+                                                  IsClippingOverlayLatched="{Binding IsClippingOverlayLatched}"
                                                   IsCropAspectLocked="{Binding IsCropAspectLocked}"
                                                   Crop="{Binding CurrentCrop, Mode=TwoWay}"
                                                   ScrollBarVisibility="Hidden"

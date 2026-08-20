@@ -2,7 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.Views;
 
@@ -13,11 +15,42 @@ public partial class HistogramView : UserControl
     public static readonly StyledProperty<HistogramData?> HistogramProperty =
         AvaloniaProperty.Register<HistogramView, HistogramData?>(nameof(Histogram));
 
+    public static readonly StyledProperty<ClippingStats?> ClippingProperty =
+        AvaloniaProperty.Register<HistogramView, ClippingStats?>(nameof(Clipping));
+
+    public static readonly StyledProperty<bool> ClippingIsRawSourceProperty =
+        AvaloniaProperty.Register<HistogramView, bool>(nameof(ClippingIsRawSource));
+
+    public static readonly StyledProperty<bool> ShowDisplayClippingIndicatorsProperty =
+        AvaloniaProperty.Register<HistogramView, bool>(
+            nameof(ShowDisplayClippingIndicators));
+
     public HistogramData? Histogram
     {
         get => GetValue(HistogramProperty);
         set => SetValue(HistogramProperty, value);
     }
+
+    public ClippingStats? Clipping
+    {
+        get => GetValue(ClippingProperty);
+        set => SetValue(ClippingProperty, value);
+    }
+
+    public bool ClippingIsRawSource
+    {
+        get => GetValue(ClippingIsRawSourceProperty);
+        set => SetValue(ClippingIsRawSourceProperty, value);
+    }
+
+    public bool ShowDisplayClippingIndicators
+    {
+        get => GetValue(ShowDisplayClippingIndicatorsProperty);
+        set => SetValue(ShowDisplayClippingIndicatorsProperty, value);
+    }
+
+    public event EventHandler<ClippingOverlaySide>? ClippingPeekStarted;
+    public event EventHandler? ClippingPeekEnded;
 
     private Canvas? _canvas;
     private StackPanel? _clippingPanel;
@@ -27,6 +60,11 @@ public partial class HistogramView : UserControl
     private TextBlock? _redText;
     private TextBlock? _greenText;
     private TextBlock? _blueText;
+    private Grid? _displayClippingIndicators;
+    private Border? _displayFloorTriangleTarget;
+    private Border? _sceneHighlightTriangleTarget;
+    private Avalonia.Controls.Shapes.Path? _displayFloorTriangle;
+    private Avalonia.Controls.Shapes.Path? _sceneHighlightTriangle;
 
     public HistogramView()
     {
@@ -39,6 +77,21 @@ public partial class HistogramView : UserControl
         _redText = this.FindControl<TextBlock>("RawRedClippingText");
         _greenText = this.FindControl<TextBlock>("RawGreenClippingText");
         _blueText = this.FindControl<TextBlock>("RawBlueClippingText");
+        _displayClippingIndicators =
+            this.FindControl<Grid>("DisplayClippingIndicators");
+        _displayFloorTriangleTarget =
+            this.FindControl<Border>("DisplayFloorTriangleTarget");
+        _sceneHighlightTriangleTarget =
+            this.FindControl<Border>("SceneHighlightTriangleTarget");
+        _displayFloorTriangle =
+            this.FindControl<Avalonia.Controls.Shapes.Path>("DisplayFloorTriangle");
+        _sceneHighlightTriangle =
+            this.FindControl<Avalonia.Controls.Shapes.Path>("SceneHighlightTriangle");
+        _displayFloorTriangleTarget!.PointerEntered += OnDisplayFloorEntered;
+        _displayFloorTriangleTarget.PointerExited += OnTriangleExited;
+        _sceneHighlightTriangleTarget!.PointerEntered += OnSceneHighlightEntered;
+        _sceneHighlightTriangleTarget.PointerExited += OnTriangleExited;
+        UpdateDisplayClippingIndicators();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -48,6 +101,13 @@ public partial class HistogramView : UserControl
         if (change.Property == HistogramProperty)
         {
             DrawHistogram();
+            UpdateDisplayClippingIndicators();
+        }
+        else if (change.Property == ClippingProperty ||
+                 change.Property == ClippingIsRawSourceProperty ||
+                 change.Property == ShowDisplayClippingIndicatorsProperty)
+        {
+            UpdateDisplayClippingIndicators();
         }
     }
 
@@ -100,6 +160,61 @@ public partial class HistogramView : UserControl
             clipping.TotalVisibleSamples, HappyPhotonColors.HistogramBlue,
             clipping.WhiteLevel);
     }
+
+    private void UpdateDisplayClippingIndicators()
+    {
+        if (_displayClippingIndicators == null ||
+            _displayFloorTriangle == null ||
+            _sceneHighlightTriangle == null ||
+            _displayFloorTriangleTarget == null ||
+            _sceneHighlightTriangleTarget == null)
+        {
+            return;
+        }
+
+        var isDisplayHistogram = Histogram?.Domain != HistogramDomain.RawSensor;
+        _displayClippingIndicators.IsVisible =
+            ShowDisplayClippingIndicators && isDisplayHistogram;
+        _displayFloorTriangle.Fill = HappyPhotonColors.DisplayFloorClip;
+        _sceneHighlightTriangle.Fill = HappyPhotonColors.SceneHighlightClip;
+
+        var clipping = Clipping;
+        var hasStats = clipping != null;
+        _displayFloorTriangle.Opacity = clipping?.LowAll > 0 ? 0.9 : 0.25;
+        _sceneHighlightTriangle.Opacity = !ClippingIsRawSource
+            ? 0.16
+            : clipping?.HighAny > 0
+                ? 1
+                : 0.25;
+        _displayFloorTriangleTarget.IsHitTestVisible = true;
+        _sceneHighlightTriangleTarget.IsHitTestVisible = true;
+
+        ToolTip.SetTip(
+            _displayFloorTriangleTarget,
+            hasStats
+                ? $"Display-floor shadows: {clipping!.LowAll:P4}."
+                : "Display-floor clipping data is unavailable.");
+        ToolTip.SetTip(
+            _sceneHighlightTriangleTarget,
+            !ClippingIsRawSource
+                ? "Scene highlight clipping is available for RAW sources."
+                : hasStats
+                    ? $"Scene highlights above scene white: {clipping!.HighAny:P4}."
+                    : "Scene highlight clipping data is unavailable.");
+    }
+
+    private void OnDisplayFloorEntered(object? sender, PointerEventArgs e) =>
+        ClippingPeekStarted?.Invoke(
+            this,
+            ClippingOverlaySide.DisplayFloor);
+
+    private void OnSceneHighlightEntered(object? sender, PointerEventArgs e) =>
+        ClippingPeekStarted?.Invoke(
+            this,
+            ClippingOverlaySide.SceneHighlights);
+
+    private void OnTriangleExited(object? sender, PointerEventArgs e) =>
+        ClippingPeekEnded?.Invoke(this, EventArgs.Empty);
 
     private static void SetClippingChannel(
         Ellipse dot,

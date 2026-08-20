@@ -39,6 +39,10 @@ ADJUSTMENTS            (existing group, Temperature slider REMOVED)
   Exposure / Brightness / Contrast / Saturation / Vibrance / Shadows / Highlights
   Recovery                                                [Clip | Blend]  (RAW only)
 CURVE                  (unchanged)
+DETAIL
+  Sharpen  ────────●────────   25
+  Noise Red.                                [OFF | LIGHT | FULL]  (RAW only)
+  Chroma NR ──────●──────────   0
 DEVELOP FOOTER
   [Before/after] [Undo] [Redo]                         RESET
 ```
@@ -59,6 +63,12 @@ enabled only for RAW sources, provisionally from `ImageFile.IsRaw` and then from
 loaded base fact. The row remains present but dims to `DisabledOpacity` when unavailable,
 so the panel does not reflow across mixed-source filmstrips. A contradictory non-RAW
 loaded fact disables the row without changing the stored value. Clip is the default.
+
+Detail follows the tone curve. Sharpen and Chroma NR are 0–100 `CompactSlider`s for
+all sources; Sharpen displays the resolved source default (RAW 25, standard 0). Noise
+Red. is an Off/Light/Full segmented control that stays in place with a RAW chip and
+dims to `DisabledOpacity` for standard sources. Loaded-base capability reconciliation
+never reflows the panel or discards stored values.
 
 ## 3. White balance group (WP3.3)
 
@@ -82,9 +92,12 @@ loaded fact disables the row without changing the stored value. Clip is the defa
   sampling; pan/zoom gestures remain live (click-without-drag samples, drag pans).
   Rejected picks (clipped/noise-floor) show a status-bar hint ("Pick a neutral mid-tone
   area") and stay in the mode. Unavailable while the crop overlay is active.
-- **Clipping overlays are not exposed yet.** The renderer carries regime-specific
-  stats/mask semantics (RENDER.md §7), but the `J` latch and viewer compositing remain
-  parked for a follow-up run.
+- **Clipping overlay** (`J`, Develop only): latches semantic scene-highlight red and
+  display-floor blue over the photograph. Hovering a display-histogram triangle peeks
+  that side only; while latched it temporarily isolates the hovered side, then restores
+  both on leave. Standard sources cannot peek or render the scene-highlight side.
+  The latched image carries one muted, chrome-less `CLIPPING · SCENE / FLOOR` line;
+  toggling also uses the standard 1.5-second feedback toast.
 
 ## 5. Scope box + base-arming indicator
 
@@ -113,8 +126,10 @@ loaded fact disables the row without changing the stored value. Clip is the defa
   counts. A lit channel never rounds to 0.00% — it floors to `<0.01%`. A channel dot is
   fully lit at 16 photosites and above; below that it remains dim. Display-domain
   histograms never show these dots.
-- **Clipping chips** remain parked with the viewer overlay follow-up. The AgX rework changed the
-  statistics contract only.
+- **Display clipping triangles** flank only the Develop display histogram. The right
+  triangle lights for a RAW `HighAny` scene fraction; standard sources show a dimmed,
+  non-interactive no-data state. The left triangle lights for `LowAll` display-floor
+  clipping on every source. Missing or stale render statistics darken both immediately.
 - **Arming indicator** (WP1.3): while the linear base is decoding after Develop entry,
   show a thin indeterminate progress line under the histogram. Sliders stay **enabled**
   — edits accumulate in `EditSettings` and the first render catches up. Show only when
@@ -123,18 +138,18 @@ loaded fact disables the row without changing the stored value. Clip is the defa
 ## 6. Reset / undo / presets / copy-paste scope
 
 - **Reset** returns: `wb → asShot`, `baseLook → null` (source default),
-  `hlReconstruction → clip`, plus all existing fields. One undo step, as today.
+  `hlReconstruction → clip`, `detail → source defaults`, plus all existing fields.
+  One undo step, as today.
 - **Undo/redo**: each committed control change is one step (existing granularity);
   this includes each Clip/Blend selection; mode switches (preset select, eyedropper
   pick, Auto) are each one step.
-- **User presets** capture the new color/tonal fields (wb, baseLook,
-  hlReconstruction) and still never geometry. Applying/untoggling behavior unchanged.
+- **User presets** capture color, tonal, and detail fields and still never geometry.
+  Applying/untoggling behavior is unchanged.
 - **Copy/paste** (`Ctrl+Shift+C/V`) carries the same widened set; geometry still never
   transfers; Library multi-paste confirmation flow unchanged.
 
-Recovery has the first-release RAW-only Clip/Blend control and defaults to
-Clip. Capture sharpening, FBDD, and chroma NR have no first-release controls: capture
-sharpening uses its source-kind default, and FBDD and chroma NR remain Off/0.
+Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields use
+the controls in §2; copy/paste preserves nullable capture-sharpen semantics.
 
 ## 7. Export dialog
 
@@ -176,9 +191,8 @@ No UI for quality-dependent chroma subsampling — it is automatic and stays inv
 | Key | Action | Scope | WP |
 |-----|--------|-------|----|
 | `W` | Toggle WB eyedropper | Develop only | 3.3 |
+| `J` | Toggle clipping overlay | Develop only | — |
 | `Ctrl+B` | Toggle color assessment mode | Develop/fullscreen | — |
-
-`J` is reserved for the parked clipping-overlay run and is not registered yet.
 
 Shortcut registrations belong in
 [`Views/ShortcutCatalog.cs`](../../Views/ShortcutCatalog.cs). Each work package
@@ -227,4 +241,4 @@ If a WP seems to need one of these, it's a spec question first.
   disable-not-hide for RAW and preserves its stored value across source changes.
 - Kelvin log mapping: position 0 → 2000, 1 → 12000, midpoint ≈ 4900 (√6·2000) within
   rounding.
-- Shortcut registration tests list `W`; `J` is added only when viewer clipping lands.
+- Shortcut registration tests list `W` and `J`.

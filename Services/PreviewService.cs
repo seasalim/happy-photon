@@ -134,68 +134,12 @@ public sealed partial class PreviewService : IAsyncDisposable
             cancellationToken);
     }
 
-    public Task<(Bitmap? preview, HistogramData histogram)>
-        LoadPreviewWithHistogramAsync(
-            ImageFile imageFile,
-            EditSettings settings,
-            bool skipHistogram = false,
-            CancellationToken cancellationToken = default)
-        => LoadPreviewWithHistogramAsync(
-            imageFile,
-            settings,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
-            skipHistogram,
-            cancellationToken);
-
-    public Task<(Bitmap? preview, HistogramData histogram)>
-        LoadPreviewWithHistogramAsync(
-            ImageFile imageFile,
-            EditSettings settings,
-            ThumbnailSizeRequest thumbnailRequest,
-            bool skipHistogram = false,
-            CancellationToken cancellationToken = default)
-    {
-        QueueRenderedPreviewIfLeaving(imageFile);
-        return RenderAsync(
-            imageFile,
-            settings,
-            thumbnailRequest,
-            skipHistogram,
-            cancellationToken);
-    }
-
-    public Task<(Bitmap? preview, HistogramData histogram)>
-        ApplyEditsToPreviewAsync(
-            ImageFile imageFile,
-            EditSettings settings,
-            bool skipHistogram = false,
-            CancellationToken cancellationToken = default) =>
-        ApplyEditsToPreviewAsync(
-            imageFile,
-            settings,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
-            skipHistogram,
-            cancellationToken);
-
-    public Task<(Bitmap? preview, HistogramData histogram)>
-        ApplyEditsToPreviewAsync(
-            ImageFile imageFile,
-            EditSettings settings,
-            ThumbnailSizeRequest thumbnailRequest,
-            bool skipHistogram = false,
-            CancellationToken cancellationToken = default) =>
-        RenderAsync(
-            imageFile,
-            settings,
-            thumbnailRequest,
-            skipHistogram,
-            cancellationToken);
-
-    private async Task<(Bitmap? preview, HistogramData histogram)> RenderAsync(
+    private async Task<PreviewArtifacts> RenderAsync(
         ImageFile imageFile,
         EditSettings settings,
         ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
+        ClippingOverlaySide overlaySides,
         CancellationToken cancellationToken)
     {
         var settingsSnapshot = settings.Clone();
@@ -216,11 +160,13 @@ public sealed partial class PreviewService : IAsyncDisposable
                 cancellationToken);
             if (snapshot == null)
             {
-                return (null, new HistogramData());
+                return PreviewArtifacts.Empty(generation, imageFile.IsRaw);
             }
             if (generation != Volatile.Read(ref _renderGeneration))
             {
-                return (null, new HistogramData());
+                return PreviewArtifacts.Empty(
+                    generation,
+                    snapshot.Base.Info.IsRawSource);
             }
             if (snapshot.IsStale)
             {
@@ -230,6 +176,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                     settingsSnapshot,
                     thumbnailRequest,
                     skipHistogram,
+                    overlaySides,
                     generation);
             }
 
@@ -252,6 +199,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                     settingsSnapshot,
                     thumbnailRequest,
                     skipHistogram,
+                    overlaySides,
                     generation,
                     cancellationToken),
                 cancellationToken);
@@ -260,7 +208,9 @@ public sealed partial class PreviewService : IAsyncDisposable
             {
                 rendered.Dispose();
                 cancellationToken.ThrowIfCancellationRequested();
-                return (null, new HistogramData());
+                return PreviewArtifacts.Empty(
+                    generation,
+                    snapshot.Base.Info.IsRawSource);
             }
 
             if (rendered.Bitmap == null ||
@@ -271,7 +221,9 @@ public sealed partial class PreviewService : IAsyncDisposable
                     generation))
             {
                 rendered.Dispose();
-                return (null, new HistogramData());
+                return PreviewArtifacts.Empty(
+                    generation,
+                    snapshot.Base.Info.IsRawSource);
             }
             LogPerformance(
                 nameof(RenderAsync),
@@ -279,7 +231,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                 stopwatch.ElapsedMilliseconds,
                 imageFile.FilePath);
             ReportPreviewSuccess(imageFile, generation);
-            return (rendered.Bitmap, rendered.Histogram);
+            return rendered.DetachArtifacts(generation);
         }
         catch (OperationCanceledException)
         {
@@ -289,7 +241,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         {
             HandleImageLoadError(ex, imageFile.FilePath);
             ReportPreviewFailure(imageFile, generation);
-            return (null, new HistogramData());
+            return PreviewArtifacts.Empty(generation, imageFile.IsRaw);
         }
     }
 
@@ -298,18 +250,25 @@ public sealed partial class PreviewService : IAsyncDisposable
         EditSettings settings,
         ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
+        ClippingOverlaySide overlaySides,
         long generation,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var effectiveOverlaySides = baseImage.Info.IsRawSource
+            ? overlaySides
+            : overlaySides & ClippingOverlaySide.DisplayFloor;
         using var rendered = _renderPipeline.Render(new RenderRequest(
             baseImage,
             settings,
             RenderIntent.Preview,
             BaseImage.PreviewMaxDimension,
             new RenderOptions(
-                ComputeStats: !skipHistogram,
-                ComputeOverlayMasks: false)));
+                ComputeStats: !skipHistogram ||
+                    effectiveOverlaySides != ClippingOverlaySide.None,
+                ComputeOverlayMasks:
+                    effectiveOverlaySides != ClippingOverlaySide.None,
+                OverlaySides: effectiveOverlaySides)));
         cancellationToken.ThrowIfCancellationRequested();
 
         var histogram = new HistogramData();
@@ -321,9 +280,13 @@ public sealed partial class PreviewService : IAsyncDisposable
 
         Bitmap? preview = null;
         MagickImage? thumbnailSource = null;
+        ClippingMask? clippingMask = null;
         try
         {
             preview = ConvertToBitmap(rendered.Image);
+            clippingMask = ClippingMask.FromSemanticChannels(
+                rendered.OverlayMask,
+                effectiveOverlaySides);
             PreviewConverted?.Invoke();
             if (_createRenderedThumbnail &&
                 baseImage.Info.IsRawSource &&
@@ -336,12 +299,19 @@ public sealed partial class PreviewService : IAsyncDisposable
                 preview,
                 thumbnailSource,
                 Math.Min(512, thumbnailRequest.GenerationDimension),
-                histogram);
+                histogram,
+                !skipHistogram ||
+                    effectiveOverlaySides != ClippingOverlaySide.None
+                    ? rendered.Clipping
+                    : null,
+                baseImage.Info.IsRawSource,
+                clippingMask);
         }
         catch
         {
             preview?.Dispose();
             thumbnailSource?.Dispose();
+            clippingMask?.Dispose();
             throw;
         }
     }
@@ -443,21 +413,30 @@ public sealed partial class PreviewService : IAsyncDisposable
 
     private sealed class RenderOutput : IDisposable
     {
-        public Bitmap? Bitmap { get; }
+        public Bitmap? Bitmap { get; private set; }
         public MagickImage? ThumbnailSource { get; private set; }
         public int ThumbnailDimension { get; }
         public HistogramData Histogram { get; }
+        public ClippingStats? Clipping { get; }
+        public bool IsRawSource { get; }
+        public ClippingMask? ClippingMask { get; private set; }
 
         public RenderOutput(
             Bitmap? bitmap,
             MagickImage? thumbnailSource,
             int thumbnailDimension,
-            HistogramData histogram)
+            HistogramData histogram,
+            ClippingStats? clipping,
+            bool isRawSource,
+            ClippingMask? clippingMask)
         {
             Bitmap = bitmap;
             ThumbnailSource = thumbnailSource;
             ThumbnailDimension = thumbnailDimension;
             Histogram = histogram;
+            Clipping = clipping;
+            IsRawSource = isRawSource;
+            ClippingMask = clippingMask;
         }
 
         public MagickImage? DetachThumbnailSource()
@@ -467,11 +446,41 @@ public sealed partial class PreviewService : IAsyncDisposable
             return source;
         }
 
+        public ClippingMask? DetachClippingMask()
+        {
+            var mask = ClippingMask;
+            ClippingMask = null;
+            return mask;
+        }
+
+        public Bitmap? DetachBitmap()
+        {
+            var bitmap = Bitmap;
+            Bitmap = null;
+            return bitmap;
+        }
+
+        public PreviewArtifacts DetachArtifacts(long generation)
+        {
+            var mask = ClippingMask;
+            ClippingMask = null;
+            return new PreviewArtifacts(
+                DetachBitmap(),
+                Histogram,
+                Clipping,
+                IsRawSource,
+                generation,
+                mask);
+        }
+
         public void Dispose()
         {
             Bitmap?.Dispose();
             ThumbnailSource?.Dispose();
+            ClippingMask?.Dispose();
             ThumbnailSource = null;
+            ClippingMask = null;
+            Bitmap = null;
         }
     }
 
@@ -486,5 +495,6 @@ public sealed partial class PreviewService : IAsyncDisposable
         EditSettings Settings,
         ThumbnailSizeRequest ThumbnailRequest,
         bool SkipHistogram,
+        ClippingOverlaySide OverlaySides,
         long Generation);
 }

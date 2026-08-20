@@ -171,6 +171,21 @@ public class ImageService : IAsyncDisposable
             skipHistogram,
             cancellationToken);
 
+    public Task<PreviewArtifacts> LoadPreviewArtifactsAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        ThumbnailSizeRequest thumbnailRequest,
+        bool skipHistogram,
+        ClippingOverlaySide overlaySides,
+        CancellationToken cancellationToken = default) =>
+        _previewService.LoadPreviewArtifactsAsync(
+            imageFile,
+            settings,
+            thumbnailRequest,
+            skipHistogram,
+            overlaySides,
+            cancellationToken);
+
     public Task<CachedPreviewBitmap?> LoadCachedPreviewAsync(
         ImageFile imageFile,
         EditSettings settings,
@@ -195,6 +210,21 @@ public class ImageService : IAsyncDisposable
             settings,
             thumbnailRequest,
             skipHistogram,
+            cancellationToken);
+
+    public Task<PreviewArtifacts> ApplyEditsToPreviewArtifactsAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        ThumbnailSizeRequest thumbnailRequest,
+        bool skipHistogram,
+        ClippingOverlaySide overlaySides,
+        CancellationToken cancellationToken = default) =>
+        _previewService.ApplyEditsToPreviewArtifactsAsync(
+            imageFile,
+            settings,
+            thumbnailRequest,
+            skipHistogram,
+            overlaySides,
             cancellationToken);
 
     public Task<WhiteBalanceBaseContext?> GetWhiteBalanceContextAsync(
@@ -230,6 +260,9 @@ public class ImageService : IAsyncDisposable
 
     public void ClearPreviewCache() =>
         _previewService.ClearPreviewCache();
+
+    internal void InvalidatePendingPreviewRenders() =>
+        _previewService.InvalidatePendingRenders();
 
     // ===== Thumbnail Methods (delegated to ThumbnailService) =====
 

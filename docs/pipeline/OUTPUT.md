@@ -24,8 +24,9 @@ quantizes toward zero and silently shifts roughly half of all samples one code b
 the preview (measured 30–51% of channel samples, `pngMinusPreview` in {−1, 0}).
 Request 8-bit output through the encoder's own define instead. The opt-in precision
 harness (TESTING.md §5) gates this equality per fixture as `previewPng=pass`.
-`RenderResult` can carry optional clipping masks, but the current display path does
-not request them (RENDER.md §7).
+`RenderResult` can carry optional semantic clipping masks. Develop requests them only
+while the clipping latch or a histogram-triangle peek is active; normal display and
+all export renders remain mask-free (RENDER.md §7).
 
 ## 2. Export flow (`ImageExportService`)
 

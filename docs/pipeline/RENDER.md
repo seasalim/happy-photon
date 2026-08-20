@@ -27,7 +27,10 @@ geometry result in a fixed order.
 ### 1.1 Request contract
 
 ```csharp
-public sealed record RenderOptions(bool ComputeStats = true, bool ComputeOverlayMasks = false);
+public sealed record RenderOptions(
+    bool ComputeStats = true,
+    bool ComputeOverlayMasks = false,
+    ClippingOverlaySide OverlaySides = ClippingOverlaySide.Both);
 public sealed record RenderRequest(
     BaseImage Base, EditSettings Settings, RenderIntent Intent,
     int? MaxDimension, RenderOptions Options,
@@ -247,9 +250,10 @@ public sealed record ClippingStats(
 For RAW, `High`/`HighAny` are exposure- and WB-sensitive scene facts measured after
 geometry and before the inset. `RawNearClip` remains the edit-independent legacy
 decoded-near-clip fact above; sensor mosaic clip counts remain authoritative for true
-sensor clip. When `Options.ComputeOverlayMasks` is true, masks follow the same
-regime-specific thresholds. Product callers leave masks off; there is no viewer overlay UI yet
-ships in this run.
+sensor clip. When `Options.ComputeOverlayMasks` is true, masks follow the requested
+semantic sides: scene highlights and/or display floor. Standard-source requests always
+suppress the scene-highlight side. Develop requests masks only while the `J` latch or a
+triangle peek is active; ordinary preview renders remain mask-free.
 
 ## 8. EditSettings v2 — schema and storage
 
@@ -279,6 +283,11 @@ JSON document shape (canonical field order for hashing):
 `hlReconstruction` and `detail.noiseReduction` are the **decode-affecting subset**;
 they project into `BaseDecodeSettings` (OVERVIEW.md §4, DECODE.md §4) and changing
 them re-decodes the base rather than re-rendering it.
+
+The Develop Detail group exposes all three fields. Capture sharpening resolves a
+`null` value to RAW 25 or standard 0 and canonicalizes the matching default back to
+`null`; FBDD remains visible but disabled for standard sources. Preview detail uses
+the bounded preview base, while export-scale renders are the fidelity reference.
 
 ### 8.1 Catalog storage (the actual schema, [CatalogSchema.cs](../../Services/CatalogSchema.cs))
 

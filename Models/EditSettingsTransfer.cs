@@ -1,7 +1,7 @@
 namespace HappyPhoton.Models;
 
 /// <summary>
-/// Policy for which color and tonal settings transfer between images.
+/// Policy for which Develop settings transfer between images.
 /// Geometry (rotation, horizon rotation, crop) never transfers in either direction.
 /// </summary>
 public static class EditSettingsTransfer
@@ -21,6 +21,7 @@ public static class EditSettingsTransfer
             Highlights = source.Highlights,
             BaseLook = source.BaseLook,
             HlReconstruction = source.HlReconstruction,
+            Detail = source.Detail.Clone(),
             Curve = source.Curve.Clone(),
             AppliedPresetId = source.AppliedPresetId
         };
@@ -40,6 +41,7 @@ public static class EditSettingsTransfer
         target.Highlights = copied.Highlights;
         target.BaseLook = copied.BaseLook;
         target.HlReconstruction = copied.HlReconstruction;
+        target.Detail = copied.Detail.Clone();
         target.Curve = copied.Curve.Clone();
         target.AppliedPresetId = copied.AppliedPresetId;
     }

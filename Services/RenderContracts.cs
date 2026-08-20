@@ -9,9 +9,19 @@ public enum RenderIntent
     Export
 }
 
+[Flags]
+public enum ClippingOverlaySide
+{
+    None = 0,
+    SceneHighlights = 1,
+    DisplayFloor = 2,
+    Both = SceneHighlights | DisplayFloor
+}
+
 public sealed record RenderOptions(
     bool ComputeStats = true,
-    bool ComputeOverlayMasks = false);
+    bool ComputeOverlayMasks = false,
+    ClippingOverlaySide OverlaySides = ClippingOverlaySide.Both);
 
 public sealed record RenderRequest(
     BaseImage Base,

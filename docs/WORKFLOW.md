@@ -295,6 +295,12 @@ Start with the largest problem and make the smallest adjustment that solves it:
 Watch the photograph first and use the histogram as supporting information.
 Avoid correcting the histogram merely to make it fill the graph.
 
+The display histogram's right triangle reports RAW scene highlights above scene white;
+on standard sources it remains dim because that scene fact is unavailable. The left
+triangle reports pixels at the display floor for every source. Hover either available
+triangle to peek that side over the photograph, or press `J` in Develop to latch the
+clipping overlay. Red marks the scene side and blue marks the display floor.
+
 ### Shape the color
 
 - **Kelvin** moves the white balance toward cooler or warmer color.
@@ -309,6 +315,13 @@ If the image already looks right, leave them alone.
 
 Use the **Tone Curve** when the basic controls cannot produce the tonal shape
 you want. It is a finishing tool, not a required step.
+
+### Refine detail
+
+Use **Sharpen** and **Chroma NR** for final detail balance. RAW files also enable the
+Off/Light/Full **Noise Red.** control; the row stays visible but disabled for standard
+sources. The Develop viewer uses a bounded 1600px preview base even at 1:1, so judge
+capture sharpening and subtle chroma reduction on an export-scale render.
 
 In Develop or fullscreen, press `B` to toggle between the edited image and the
 original. In Develop, use `Ctrl+Z` to undo a color or tonal edit and `Ctrl+Y` or
@@ -452,6 +465,7 @@ remains where it started and unchanged.
 | `C` | Toggle crop mode |
 | `B` | Toggle before/after in Develop or fullscreen |
 | `Ctrl+B` | Toggle color assessment mode in Develop or fullscreen |
+| `J` | Toggle clipping overlay in Develop |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
 | `Ctrl+Z` / `Ctrl+Y` | Undo or redo color and tonal edits in Develop |
 | `Ctrl+E` | Open the export dialog |

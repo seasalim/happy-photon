@@ -62,9 +62,9 @@ public sealed class EditSettingsTransferTests
         Assert.Equal(-40, copy.Highlights);
         Assert.True(copy.BaseLook);
         Assert.Equal(HlReconstructionMode.Blend, copy.HlReconstruction);
-        Assert.Null(copy.Detail.CaptureSharpen);
-        Assert.Equal(FbddMode.Off, copy.Detail.NoiseReduction);
-        Assert.Equal(0, copy.Detail.ChromaNr);
+        Assert.Equal(35, copy.Detail.CaptureSharpen);
+        Assert.Equal(FbddMode.Light, copy.Detail.NoiseReduction);
+        Assert.Equal(12, copy.Detail.ChromaNr);
         Assert.Equal("user_abc", copy.AppliedPresetId);
         Assert.Equal(source.Curve.Points.Count, copy.Curve.Points.Count);
         Assert.Equal(0.7, copy.Curve.Points[1].Y);
@@ -106,9 +106,9 @@ public sealed class EditSettingsTransferTests
         Assert.Equal(-40, target.Highlights);
         Assert.True(target.BaseLook);
         Assert.Equal(HlReconstructionMode.Blend, target.HlReconstruction);
-        Assert.Equal(80, target.Detail.CaptureSharpen);
-        Assert.Equal(FbddMode.Full, target.Detail.NoiseReduction);
-        Assert.Equal(60, target.Detail.ChromaNr);
+        Assert.Equal(35, target.Detail.CaptureSharpen);
+        Assert.Equal(FbddMode.Light, target.Detail.NoiseReduction);
+        Assert.Equal(12, target.Detail.ChromaNr);
         Assert.Equal("user_abc", target.AppliedPresetId);
         Assert.Equal(EditSettings.CurrentVersion, target.Version);
         Assert.Equal(270, target.Rotation);

@@ -109,6 +109,38 @@ public sealed class ClippingStatsTests
     }
 
     [Fact]
+    public void Analyze_FiltersSemanticMaskByRequestedSide()
+    {
+        using var image = CreateImage(
+        [
+            ushort.MaxValue, ushort.MaxValue, ushort.MaxValue,
+            0, 0, 0
+        ]);
+
+        var highlights = ClippingStatsCalculator.Analyze(
+            image,
+            rawNearClip: 0,
+            createOverlay: true,
+            overlaySides: ClippingOverlaySide.SceneHighlights);
+        var floor = ClippingStatsCalculator.Analyze(
+            image,
+            rawNearClip: 0,
+            createOverlay: true,
+            overlaySides: ClippingOverlaySide.DisplayFloor);
+        using var highlightMask = highlights.OverlayMask;
+        using var floorMask = floor.OverlayMask;
+        var highlightPixels = highlightMask!.GetPixelsUnsafe()
+            .ToShortArray(PixelMapping.RGB)!;
+        var floorPixels = floorMask!.GetPixelsUnsafe()
+            .ToShortArray(PixelMapping.RGB)!;
+
+        Assert.Equal(ushort.MaxValue, highlightPixels[0]);
+        Assert.Equal((ushort)0, highlightPixels[5]);
+        Assert.Equal((ushort)0, floorPixels[0]);
+        Assert.Equal(ushort.MaxValue, floorPixels[5]);
+    }
+
+    [Fact]
     public void Render_RawHighlightsUsePreInsetSceneWhite()
     {
         using var raw = RenderPipelineTestSupport.CreateBase(

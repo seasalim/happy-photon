@@ -160,6 +160,7 @@ public partial class MainWindowViewModel
         if (wakeActivity) SignalBackgroundActivityStarted();
         _previewLoadingCts?.Cancel();
         SetRawHistogram(null);
+        ClearPreviewClippingArtifacts();
         var requestCts = new CancellationTokenSource();
         _previewLoadingCts = requestCts;
         var ct = requestCts.Token;
@@ -171,11 +172,12 @@ public partial class MainWindowViewModel
                 imageFile,
                 imageFile.EditSettings,
                 ct);
-            var freshTask = ImageService.LoadPreviewWithHistogramAsync(
+            var freshTask = ImageService.LoadPreviewArtifactsAsync(
                 imageFile,
                 imageFile.EditSettings,
                 LibraryThumbnailRequest,
                 skipHistogram: true,
+                RequestedClippingOverlaySides,
                 ct);
             ClearPreviewImage();
             _ = ShowBaseArmingAfterDelay(
@@ -196,7 +198,8 @@ public partial class MainWindowViewModel
                 cached?.Dispose();
             }
 
-            var (preview, _) = await freshTask;
+            using var artifacts = await freshTask;
+            var preview = artifacts.DetachBitmap();
             if (!IsCurrentPreviewRequest(imageFile, requestCts))
             {
                 preview?.Dispose();
@@ -211,6 +214,10 @@ public partial class MainWindowViewModel
 
             if (preview != null)
             {
+                ReconcileHighlightReconstructionCapability(
+                    imageFile,
+                    artifacts.IsRawSource);
+                InstallPreviewClipping(artifacts);
                 ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
             }
 
@@ -346,6 +353,7 @@ public partial class MainWindowViewModel
     private void OnPreviewRefreshed(object? sender, PreviewRefresh refresh)
     {
         var bitmap = refresh.DetachBitmap();
+        var clippingMask = refresh.DetachClippingMask();
         var imageFile = refresh.ImageFile;
         var histogram = refresh.Histogram;
         var rawHistogram = refresh.RawHistogram;
@@ -357,7 +365,10 @@ public partial class MainWindowViewModel
             histogram,
             hasHistogram,
             rawHistogram,
-            generation));
+            generation,
+            refresh.Clipping,
+            refresh.IsRawSource,
+            clippingMask));
     }
 
     internal void ApplyPreviewRefresh(
@@ -366,7 +377,10 @@ public partial class MainWindowViewModel
         HistogramData histogram,
         bool hasHistogram,
         HistogramData? rawHistogram,
-        long generation)
+        long generation,
+        ClippingStats? clipping = null,
+        bool? isRawSource = null,
+        ClippingMask? clippingMask = null)
     {
         // A refresh can settle after its ready gate while a newer render
         // generation has already been applied. Reject the stale bitmap the same
@@ -375,17 +389,33 @@ public partial class MainWindowViewModel
             generation < Volatile.Read(ref _latestPreviewOutcomeGeneration))
         {
             bitmap.Dispose();
+            clippingMask?.Dispose();
             return;
         }
 
         if (!IsDevelopMode && !IsFullScreenMode)
         {
             bitmap.Dispose();
+            clippingMask?.Dispose();
+            ClearPreviewClippingArtifacts();
             _ = TrackDirectThumbnailOperation(
                 RefreshThumbnailAsync(imageFile));
             return;
         }
 
+        var effectiveIsRawSource = isRawSource ?? imageFile.IsRaw;
+        if (isRawSource.HasValue)
+        {
+            ReconcileHighlightReconstructionCapability(imageFile, effectiveIsRawSource);
+        }
+        using var artifacts = new PreviewArtifacts(
+            null,
+            histogram,
+            clipping,
+            effectiveIsRawSource,
+            generation,
+            clippingMask);
+        InstallPreviewClipping(artifacts);
         ReplacePreviewImage(bitmap, PreviewPaintSource.BackgroundRefresh);
         if (hasHistogram)
         {

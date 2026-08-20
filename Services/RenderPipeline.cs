@@ -19,6 +19,9 @@ public sealed class RenderPipeline
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(detailBandPixelLimit);
 
         var stopwatch = Stopwatch.StartNew();
+        var requestedOverlaySides = request.Base.Info.IsRawSource
+            ? request.Options.OverlaySides
+            : request.Options.OverlaySides & ClippingOverlaySide.DisplayFloor;
         var rawNearClip = request.Options.ComputeStats ||
             request.Options.ComputeOverlayMasks
             ? ClippingStatsCalculator.CalculateRawNearClip(request.Base)
@@ -31,13 +34,15 @@ public sealed class RenderPipeline
         {
             var createOverlay =
                 request.Intent == RenderIntent.Preview &&
-                request.Options.ComputeOverlayMasks;
+                request.Options.ComputeOverlayMasks &&
+                requestedOverlaySides != ClippingOverlaySide.None;
             var analyze = request.Options.ComputeStats || createOverlay;
             displayRec2020 = RenderDisplayRec2020Core(
                 request,
                 detailBandPixelLimit,
                 analyze,
-                createOverlay,
+                createOverlay && requestedOverlaySides.HasFlag(
+                    ClippingOverlaySide.SceneHighlights),
                 out var sceneHighlights);
             display = RenderFinalizer.FinalizeOwned(
                 Take(ref displayRec2020),
@@ -54,7 +59,8 @@ public sealed class RenderPipeline
                     display,
                     rawNearClip,
                     createOverlay,
-                    sceneHighlights)
+                    sceneHighlights,
+                    requestedOverlaySides)
                 : new ClippingAnalysis(ClippingStats.Empty, null);
             overlay = analysis.OverlayMask;
 

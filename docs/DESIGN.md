@@ -271,6 +271,12 @@ photograph content, so it uses primary text at full opacity with a soft dark hal
 legibility over bright frames. It stays chrome-less — the halo replaces a boxed banner
 rather than joining one.
 
+The Develop clipping latch uses the same restrained overlay language: one muted,
+chrome-less `CLIPPING · SCENE / FLOOR` status line stays over the photograph while
+latched, and the toggle produces the standard 1.5-second feedback toast. Overlay
+colors are invariant viewing aids rather than theme accents: red means scene-highlight
+clip and blue means display floor.
+
 The review metadata is a curated FILE, CAMERA, and LOCATION summary for every supported
 format. FILE combines dimensions, megapixels, and size; a missing capture date falls
 back to a muted file-modified date without changing capture-time semantics. CAMERA

@@ -19,6 +19,7 @@ public partial class MainWindowViewModel
         IsBrightnessEnabled = newValue?.IsRaw != true;
         ResetSelectedMetadataState(newValue);
         IsShowingOriginal = false;
+        ClearPreviewClippingArtifacts();
         Volatile.Write(ref _activeBaseRefreshRequestId, 0);
         IsBaseArming = false;
         OnPropertyChanged(nameof(ActiveFileName));
@@ -111,6 +112,7 @@ public partial class MainWindowViewModel
             ResetSliders();
             _isLoadingImage = false;
         }
+        NotifyClippingCommandState();
     }
 
     private void OnLibraryFilterChanged(object? sender, EventArgs e)
@@ -173,6 +175,9 @@ public partial class MainWindowViewModel
                    Highlights != 0 ||
                    // Keep disabled RAW-only state resettable after fallback.
                    HlReconstruction != HlReconstructionMode.Clip ||
+                   CaptureSharpen != CaptureSharpenDefault ||
+                   NoiseReduction != FbddMode.Off ||
+                   ChromaNr != 0 ||
                    hasCurveEdits ||
                    ActivePresetId != null;
     }
@@ -182,6 +187,7 @@ public partial class MainWindowViewModel
         Exposure = 0;
         ResetWhiteBalanceUi();
         ResetHighlightReconstructionUi();
+        ResetDetailUi();
         Brightness = 0;
         Contrast = 0;
         Saturation = 0;

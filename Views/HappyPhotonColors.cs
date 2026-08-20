@@ -9,6 +9,15 @@ namespace HappyPhoton.Views;
 /// </summary>
 public static class HappyPhotonColors
 {
+    public static readonly Color SceneHighlightClipColor =
+        Color.FromArgb(235, 0xff, 0x3b, 0x30);
+    public static readonly Color DisplayFloorClipColor =
+        Color.FromArgb(235, 0x2f, 0x6f, 0xed);
+    public static readonly IBrush SceneHighlightClip =
+        new SolidColorBrush(SceneHighlightClipColor);
+    public static readonly IBrush DisplayFloorClip =
+        new SolidColorBrush(DisplayFloorClipColor);
+
     public static readonly IBrush Primary = Brush("#dbfcff");
     public static readonly IBrush PrimaryContainer = Brush("#00f0ff");
 

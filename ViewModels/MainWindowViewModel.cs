@@ -272,6 +272,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         OnPropertyChanged(nameof(CanSavePreset));
         CopyEditSettingsCommand.NotifyCanExecuteChanged();
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
+        NotifyClippingCommandState();
     }
     partial void OnCanResetChanged(bool value)
     {
@@ -321,6 +322,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         target.Exposure = Exposure;
         SaveWhiteBalanceTo(target);
         SaveHighlightReconstructionTo(target);
+        SaveDetailTo(target);
         target.Brightness = Brightness;
         target.Contrast = Contrast;
         target.Saturation = Saturation;
@@ -338,6 +340,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         Exposure = source.Exposure;
         LoadWhiteBalanceFrom(source);
         LoadHighlightReconstructionFrom(source);
+        LoadDetailFrom(source);
         Brightness = source.Brightness;
         Contrast = source.Contrast;
         Saturation = source.Saturation;
@@ -455,43 +458,4 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     /// </summary>
     private CropRegion? PreviewCrop() => IsCropMode ? new CropRegion() : CurrentCrop;
 
-    private async Task UpdatePreviewWithCurrentSliders(bool skipHistogram = false, CancellationToken cancellationToken = default)
-    {
-        var selectedImage = SelectedImage;
-        if (selectedImage == null || !CanEditSelectedImage) return;
-        SignalBackgroundActivityStarted();
-
-        var tempSettings = selectedImage.EditSettings.Clone();
-        SaveSlidersTo(tempSettings);
-        tempSettings.Rotation = Rotation;
-        tempSettings.HorizonRotation = HorizonRotation;
-        tempSettings.Crop = PreviewCrop();
-        tempSettings.Curve = CurrentCurve ?? new CurveData();
-
-        // Use cached preview for fast slider updates (avoids re-decoding from disk)
-        // No loading indicator needed - cached preview updates are fast enough
-        var (preview, histogram) = await ImageService.ApplyEditsToPreviewAsync(
-            selectedImage,
-            tempSettings,
-            LibraryThumbnailRequest,
-            skipHistogram,
-            cancellationToken);
-
-        if (preview == null || cancellationToken.IsCancellationRequested ||
-            SelectedImage != selectedImage ||
-            (!IsDevelopMode && !IsFullScreenMode))
-        {
-            preview?.Dispose();
-            return;
-        }
-
-        IsShowingOriginal = false;
-        ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
-
-        // Only update histogram if not skipped
-        if (!skipHistogram)
-        {
-            Histogram = histogram;
-        }
-    }
 }

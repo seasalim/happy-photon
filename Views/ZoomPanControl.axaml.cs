@@ -141,6 +141,7 @@ public partial class ZoomPanControl : UserControl
         _surroundLayer = this.FindControl<Panel>("SurroundLayer");
         _assessmentMat = this.FindControl<Border>("AssessmentMat");
         InitializeVisibleRegionTracking();
+        InitializeClippingOverlay();
 
         AddHandler(
             PointerWheelChangedEvent,
@@ -202,6 +203,10 @@ public partial class ZoomPanControl : UserControl
             ApplyColorAssessment();
             RequestAutoFit();
         }
+        else if (IsClippingProperty(change.Property))
+        {
+            UpdateClippingOverlaySize();
+        }
 
         if (change.Property == SourceProperty ||
             change.Property == ZoomLevelProperty ||
@@ -244,6 +249,7 @@ public partial class ZoomPanControl : UserControl
 
         // Update crop overlay size to match
         UpdateCropOverlaySize();
+        UpdateClippingOverlaySize();
     }
 
     private void UpdateCropOverlayVisibility()

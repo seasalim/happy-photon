@@ -400,6 +400,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsFirstRunVisible));
         OnPropertyChanged(nameof(IsStartupError));
         OnPropertyChanged(nameof(IsWorkspaceInteractionEnabled));
+        NotifyClippingCommandState();
         OnPropertyChanged(nameof(IsPointerRecoveryVisible));
         OnPropertyChanged(nameof(CanSetAsideCatalog));
         RetryStartupCommand.NotifyCanExecuteChanged();

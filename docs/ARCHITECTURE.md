@@ -136,6 +136,10 @@ RAW containers; MetadataExtractor reads just that tag, header-only, without deco
 Develop mode holds a half-size, at-most-1600px RAW preview base for responsive global
 editing, while export decodes a fresh native-resolution base. Consequently 1:1 viewer
 zoom is limited by the preview base and is not a native-detail RAW inspection mode.
+Preview bitmap, clipping statistics, source capability, semantic clipping mask, and
+render generation travel together in `PreviewArtifacts`; the view model accepts or
+rejects that carrier atomically. Clipping masks are requested only while the Develop
+overlay is latched or peeked, preserving a mask-free normal preview path.
 Camera compatibility follows the bundled LibRaw generation and the exact compression
 variant, not merely the file extension. The current product boundary is global edits:
 there are no local masks, lens or perspective correction, layered compositing, HDR

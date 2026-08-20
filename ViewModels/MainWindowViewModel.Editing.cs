@@ -86,6 +86,7 @@ public partial class MainWindowViewModel
         Exposure = 0;
         LoadWhiteBalanceFrom(SelectedImage.EditSettings);
         LoadHighlightReconstructionFrom(SelectedImage.EditSettings);
+        LoadDetailFrom(SelectedImage.EditSettings);
         Brightness = 0;
         Contrast = 0;
         Saturation = 0;
@@ -170,6 +171,7 @@ public partial class MainWindowViewModel
     public async Task PreviewPresetHoverAsync(string presetId)
     {
         if (SelectedImage == null) return;
+        var image = SelectedImage;
 
         _hoverPreviewCts?.Cancel();
         _hoverPreviewCts = new CancellationTokenSource();
@@ -193,12 +195,21 @@ public partial class MainWindowViewModel
             previewSettings.HorizonRotation = HorizonRotation;
             previewSettings.Crop = PreviewCrop();
 
-            var (preview, _) = await ImageService.ApplyEditsToPreviewAsync(
-                SelectedImage, previewSettings, skipHistogram: true, token);
+            using var artifacts = await ImageService.ApplyEditsToPreviewArtifactsAsync(
+                image,
+                previewSettings,
+                LibraryThumbnailRequest,
+                skipHistogram: true,
+                RequestedClippingOverlaySides,
+                token);
+            var preview = artifacts.DetachBitmap();
 
-            if (!token.IsCancellationRequested && preview != null)
+            if (!token.IsCancellationRequested && preview != null &&
+                ReferenceEquals(SelectedImage, image) &&
+                (IsDevelopMode || IsFullScreenMode))
             {
                 IsShowingOriginal = false;
+                InstallPreviewClipping(artifacts);
                 ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
             }
             else
@@ -215,26 +226,37 @@ public partial class MainWindowViewModel
     public async Task RestoreFromHoverAsync()
     {
         if (!_isHoveringPreset || SelectedImage == null) return;
+        var image = SelectedImage;
 
         _hoverPreviewCts?.Cancel();
         _isHoveringPreset = false;
 
-        if (_preHoverSettings != null)
+        if (_preHoverSettings is { } preHoverSettings)
         {
+            _preHoverSettings = null;
             try
             {
-                var (preview, _) = await ImageService.ApplyEditsToPreviewAsync(
-                    SelectedImage, _preHoverSettings, skipHistogram: true);
+                using var artifacts = await ImageService.ApplyEditsToPreviewArtifactsAsync(
+                    image,
+                    preHoverSettings,
+                    LibraryThumbnailRequest,
+                    skipHistogram: true,
+                    RequestedClippingOverlaySides);
+                var preview = artifacts.DetachBitmap();
 
-                if (preview != null)
+                if (preview != null && ReferenceEquals(SelectedImage, image) &&
+                    (IsDevelopMode || IsFullScreenMode))
                 {
                     IsShowingOriginal = false;
+                    InstallPreviewClipping(artifacts);
                     ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
+                }
+                else
+                {
+                    preview?.Dispose();
                 }
             }
             catch (OperationCanceledException) { }
-
-            _preHoverSettings = null;
         }
     }
 
@@ -259,8 +281,13 @@ public partial class MainWindowViewModel
             };
 
             // Show original preview without any edits (same size as edited preview)
-            var (preview, histogram) = await ImageService.ApplyEditsToPreviewAsync(
-                image, tempSettings, skipHistogram: false);
+            using var artifacts = await ImageService.ApplyEditsToPreviewArtifactsAsync(
+                image,
+                tempSettings,
+                LibraryThumbnailRequest,
+                skipHistogram: false,
+                RequestedClippingOverlaySides);
+            var preview = artifacts.DetachBitmap();
             if (preview == null ||
                 !CanUseBeforeAfterWorkspace() ||
                 !ReferenceEquals(SelectedImage, image) ||
@@ -273,8 +300,9 @@ public partial class MainWindowViewModel
                 }
                 return;
             }
+            InstallPreviewClipping(artifacts);
             ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
-            Histogram = histogram;
+            Histogram = artifacts.Histogram;
         }
         else
         {

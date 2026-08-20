@@ -28,10 +28,35 @@
                 <Panel x:Name="ImagePanel">
                     <Image x:Name="ImageControl"
                            Stretch="Uniform"/>
+                    <views:ClippingOverlayControl x:Name="ClippingOverlay"
+                                                   Mask="{Binding $parent[views:ZoomPanControl].ClippingMask}"
+                                                   VisibleSides="{Binding $parent[views:ZoomPanControl].VisibleClippingSides}"/>
                     <views:CropOverlayControl x:Name="CropOverlay"
                                               IsVisible="False"/>
                 </Panel>
             </Border>
         </ScrollViewer>
+        <Panel x:Name="ViewportOverlayLayer"
+               Margin="{Binding $parent[views:ZoomPanControl].ContentInset}"
+               IsHitTestVisible="False">
+            <TextBlock x:Name="ClippingStatus"
+                       Text="CLIPPING · SCENE / FLOOR"
+                       IsVisible="{Binding $parent[views:ZoomPanControl].IsClippingOverlayLatched}"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Bottom"
+                       Margin="10,8"
+                       FontFamily="{StaticResource FontLabel}"
+                       FontSize="9"
+                       FontWeight="SemiBold"
+                       LetterSpacing="1"
+                       Foreground="{DynamicResource TextMuted}">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="Black"
+                                      BlurRadius="6"
+                                      OffsetY="1"
+                                      Opacity="0.8"/>
+                </TextBlock.Effect>
+            </TextBlock>
+        </Panel>
     </Panel>
 </UserControl>

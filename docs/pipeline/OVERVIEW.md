@@ -138,7 +138,10 @@ public sealed class BaseImage : IDisposable
 public enum RenderIntent { Preview, Export }
 public enum OutputColorSpace { Srgb, DisplayP3 }
 
-public sealed record RenderOptions(bool ComputeStats = true, bool ComputeOverlayMasks = false);
+public sealed record RenderOptions(
+    bool ComputeStats = true,
+    bool ComputeOverlayMasks = false,
+    ClippingOverlaySide OverlaySides = ClippingOverlaySide.Both);
 
 public sealed record RenderRequest(
     BaseImage Base, EditSettings Settings, RenderIntent Intent,
@@ -155,9 +158,11 @@ public sealed class RenderResult : IDisposable
 
 `EditSettings` v2 schema and current storage contract: RENDER.md §8.
 
-The first-release UI keeps spatial detail at fixed defaults: RAW capture sharpening 25,
-other capture sharpening 0, FBDD Off, and chroma NR 0. Presets, copy/paste, and MCP do
-not expose those fields; only export output sharpening is user-adjustable.
+Develop exposes capture sharpening, RAW-only FBDD noise reduction, and chroma noise
+reduction in its Detail group. Capture sharpening displays its source-kind default
+(RAW 25, standard 0) while persisting that default as `null`. Fit and 1:1 views both
+use the bounded preview base, so detail fidelity is judged on export-scale renders;
+native-detail inspection is not part of this viewer.
 
 `BaseImage` exclusively owns `Pixels` after construction. Callers may hold a base across
 multiple renders but must dispose it only after those renders finish; disposal is

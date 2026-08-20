@@ -51,6 +51,7 @@ public partial class MainWindowViewModel
         }
         else
         {
+            ClearPreviewClippingArtifacts();
             _previewSourceFailure =
                 outcome.Failure == BaseImageLoadFailure.SourceUnavailable;
             if (outcome.ImageFile.IsRaw &&

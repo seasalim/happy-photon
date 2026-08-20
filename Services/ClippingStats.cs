@@ -18,6 +18,77 @@ public sealed record ClippingStats(
         new(ChannelClip.Empty, ChannelClip.Empty, 0, 0, 0);
 }
 
+public sealed class ClippingMask : IDisposable
+{
+    private byte[]? _flags;
+
+    public int Width { get; }
+    public int Height { get; }
+    public ClippingOverlaySide Sides { get; }
+
+    internal ReadOnlySpan<byte> Flags =>
+        _flags ?? throw new ObjectDisposedException(nameof(ClippingMask));
+
+    internal ClippingMask(
+        int width,
+        int height,
+        ClippingOverlaySide sides,
+        byte[] flags)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
+        ArgumentNullException.ThrowIfNull(flags);
+        if (flags.Length != checked(width * height))
+        {
+            throw new ArgumentException(
+                "The clipping mask length must match its dimensions.",
+                nameof(flags));
+        }
+
+        Width = width;
+        Height = height;
+        Sides = sides;
+        _flags = flags;
+    }
+
+    internal static ClippingMask? FromSemanticChannels(
+        MagickImage? image,
+        ClippingOverlaySide sides)
+    {
+        if (image == null || sides == ClippingOverlaySide.None)
+        {
+            return null;
+        }
+
+        var samples = image.GetPixelsUnsafe().ToByteArray(PixelMapping.RGB) ??
+            throw new InvalidOperationException(
+                "Unable to read the semantic clipping mask.");
+        var flags = new byte[checked((int)(image.Width * image.Height))];
+        for (var pixel = 0; pixel < flags.Length; pixel++)
+        {
+            var offset = pixel * 3;
+            var value = ClippingOverlaySide.None;
+            if (samples[offset] != 0)
+            {
+                value |= ClippingOverlaySide.SceneHighlights;
+            }
+            if (samples[offset + 2] != 0)
+            {
+                value |= ClippingOverlaySide.DisplayFloor;
+            }
+            flags[pixel] = (byte)value;
+        }
+
+        return new ClippingMask(
+            checked((int)image.Width),
+            checked((int)image.Height),
+            sides,
+            flags);
+    }
+
+    public void Dispose() => Interlocked.Exchange(ref _flags, null);
+}
+
 internal readonly record struct ClippingAnalysis(
     ClippingStats Stats,
     MagickImage? OverlayMask);
@@ -75,7 +146,8 @@ internal static class ClippingStatsCalculator
         MagickImage image,
         double rawNearClip,
         bool createOverlay,
-        SceneHighlightAnalysis? sceneHighlights = null)
+        SceneHighlightAnalysis? sceneHighlights = null,
+        ClippingOverlaySide overlaySides = ClippingOverlaySide.Both)
     {
         ArgumentNullException.ThrowIfNull(image);
         var samples = GetRgbSamples(image);
@@ -87,7 +159,9 @@ internal static class ClippingStatsCalculator
                 null);
         }
 
-        var overlay = createOverlay ? new ushort[pixels * 4] : null;
+        var overlay = createOverlay && overlaySides != ClippingOverlaySide.None
+            ? new ushort[pixels * 4]
+            : null;
         long highR = 0, highG = 0, highB = 0;
         long lowR = 0, lowG = 0, lowB = 0;
         long highAny = 0, lowAll = 0;
@@ -118,12 +192,18 @@ internal static class ClippingStatsCalculator
             if (anyHigh)
             {
                 highAny++;
-                SetOverlayPixel(overlay, pixel, Quantum.Max, 0, 0);
+                if (overlaySides.HasFlag(ClippingOverlaySide.SceneHighlights))
+                {
+                    SetOverlayPixel(overlay, pixel, Quantum.Max, 0, 0);
+                }
             }
             else if (rLow && gLow && bLow)
             {
                 lowAll++;
-                SetOverlayPixel(overlay, pixel, 0, 0, Quantum.Max);
+                if (overlaySides.HasFlag(ClippingOverlaySide.DisplayFloor))
+                {
+                    SetOverlayPixel(overlay, pixel, 0, 0, Quantum.Max);
+                }
             }
         }
 

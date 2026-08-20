@@ -11,6 +11,7 @@ public sealed partial class PreviewService
         EditSettings settings,
         ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
+        ClippingOverlaySide overlaySides,
         long generation)
     {
         var startWorker = false;
@@ -27,6 +28,7 @@ public sealed partial class PreviewService
                 settings.Clone(),
                 thumbnailRequest,
                 skipHistogram,
+                overlaySides,
                 generation);
         }
 
@@ -113,11 +115,15 @@ public sealed partial class PreviewService
 
             using var refresh = new PreviewRefresh(
                 pending.ImageFile,
-                refreshed.Output.Bitmap,
+                refreshed.Output.DetachBitmap()!,
                 refreshed.Output.Histogram,
                 !pending.SkipHistogram,
                 refreshGeneration,
-                refreshed.RawHistogram);
+                refreshed.RawHistogram,
+                refreshed.Output.Clipping,
+                refreshed.Output.IsRawSource,
+                refreshed.Output.DetachClippingMask());
+            refreshed.Output.Dispose();
             PreviewRefreshed?.Invoke(this, refresh);
             ReportPreviewOutcome(
                 pending.ImageFile,
@@ -173,6 +179,7 @@ public sealed partial class PreviewService
                 pending.Settings,
                 pending.ThumbnailRequest,
                 pending.SkipHistogram,
+                pending.OverlaySides,
                 generation,
                 CancellationToken.None),
             CancellationToken.None).ConfigureAwait(false);

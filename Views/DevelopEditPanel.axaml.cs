@@ -14,6 +14,21 @@ public partial class DevelopEditPanel : UserControl
     public DevelopEditPanel()
     {
         InitializeComponent();
+        var histogram = this.FindControl<HistogramView>("DevelopHistogram");
+        histogram!.ClippingPeekStarted += (_, side) =>
+        {
+            if (DataContext is MainWindowViewModel viewModel)
+            {
+                viewModel.BeginClippingPeek(side);
+            }
+        };
+        histogram.ClippingPeekEnded += (_, _) =>
+        {
+            if (DataContext is MainWindowViewModel viewModel)
+            {
+                viewModel.EndClippingPeek();
+            }
+        };
     }
 
     private async void OnCurveChanged(object? sender, EventArgs e) =>

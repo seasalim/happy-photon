@@ -6,8 +6,32 @@
              x:Class="HappyPhoton.Views.HistogramView">
 
     <Grid RowDefinitions="Auto,Auto">
-        <Canvas x:Name="HistogramCanvas"
-                Height="80" ClipToBounds="True"/>
+        <Grid Height="80">
+            <Canvas x:Name="HistogramCanvas" Height="80" ClipToBounds="True"/>
+            <Grid x:Name="DisplayClippingIndicators"
+                  IsVisible="False">
+                <Border x:Name="DisplayFloorTriangleTarget"
+                        Width="20" Height="20"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Background="Transparent">
+                    <Path x:Name="DisplayFloorTriangle"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Top"
+                          Data="M 0,0 L 11,0 L 0,11 Z"/>
+                </Border>
+                <Border x:Name="SceneHighlightTriangleTarget"
+                        Width="20" Height="20"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Background="Transparent">
+                    <Path x:Name="SceneHighlightTriangle"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Top"
+                          Data="M 0,0 L 11,0 L 11,11 Z"/>
+                </Border>
+            </Grid>
+        </Grid>
         <StackPanel Grid.Row="1" x:Name="RawClippingPanel"
                     IsVisible="False" Margin="0,5,0,0" Spacing="2">
                 <TextBlock Text="≥ SENSOR WHITE"

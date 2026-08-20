@@ -43,6 +43,7 @@ public partial class MainWindowViewModel
         CancelAndDispose(ref _thumbnailDebounce);
         CancelAndDispose(ref _transientStatusCts);
         CancelAndDispose(ref _assessmentFeedbackCts);
+        CancelAndDispose(ref _clippingOverlayCts);
         await DrainBackgroundActivityAsync();
 
         if (_imageService.IsValueCreated)
@@ -57,6 +58,7 @@ public partial class MainWindowViewModel
         }
 
         ClearPreviewImage();
+        ClearPreviewClippingArtifacts();
         Library.DisposeThumbnails();
         _bitmapRetirement.Dispose();
     }

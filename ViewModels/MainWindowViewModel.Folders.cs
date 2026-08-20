@@ -329,6 +329,7 @@ public partial class MainWindowViewModel
         ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
+        NotifyClippingCommandState();
 
         // Load preview when entering Develop mode (if we have a selected image)
         if (value && SelectedImage != null)
@@ -337,6 +338,7 @@ public partial class MainWindowViewModel
         }
         else if (!value && !IsFullScreenMode)
         {
+            LeaveDevelopClippingSurface();
             IsShowingOriginal = false;
             _previewLoadingCts?.Cancel();
             _previewDebounce?.Cancel();
@@ -389,10 +391,17 @@ public partial class MainWindowViewModel
         ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
+        NotifyClippingCommandState();
 
         if (value && SelectedImage != null)
         {
+            LeaveDevelopClippingSurface();
             _ = LoadPreviewAsync(SelectedImage);
+        }
+        else if (!value && IsDevelopMode &&
+                 IsClippingOverlayLatched && SelectedImage != null)
+        {
+            RequestClippingOverlayRender();
         }
         else if (!value && !IsDevelopMode)
         {

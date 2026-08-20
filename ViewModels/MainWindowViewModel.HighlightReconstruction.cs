@@ -7,6 +7,8 @@ public partial class MainWindowViewModel
 {
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsHighlightHandlingEnabled))]
+    [NotifyPropertyChangedFor(nameof(IsNoiseReductionEnabled))]
+    [NotifyPropertyChangedFor(nameof(CaptureSharpenDefault))]
     private bool _isBrightnessEnabled = true;
 
     // Rides the brightness capability because crossing-on ⟺ RAW today; a
@@ -40,8 +42,10 @@ public partial class MainWindowViewModel
         ImageFile imageFile,
         bool isRawSource)
     {
+        var capabilityChanged = IsBrightnessEnabled != !isRawSource;
         IsBrightnessEnabled = !isRawSource;
-        if (imageFile.IsRaw && !isRawSource)
+        ReconcileDetailCapability(isRawSource, capabilityChanged);
+        if (capabilityChanged && imageFile.IsRaw && !isRawSource)
         {
             ShowTransientStatus(
                 "Decoded via fallback — RAW controls unavailable");

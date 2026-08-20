@@ -3,6 +3,62 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
 
+public sealed class PreviewArtifacts : IDisposable
+{
+    private Bitmap? _bitmap;
+    private ClippingMask? _clippingMask;
+
+    public Bitmap? Bitmap => _bitmap;
+    public HistogramData Histogram { get; }
+    public ClippingStats? Clipping { get; }
+    public bool IsRawSource { get; }
+    public long Generation { get; }
+    public ClippingMask? ClippingMask => _clippingMask;
+
+    internal PreviewArtifacts(
+        Bitmap? bitmap,
+        HistogramData histogram,
+        ClippingStats? clipping,
+        bool isRawSource,
+        long generation,
+        ClippingMask? clippingMask)
+    {
+        _bitmap = bitmap;
+        Histogram = histogram ?? throw new ArgumentNullException(nameof(histogram));
+        Clipping = clipping;
+        IsRawSource = isRawSource;
+        Generation = generation;
+        _clippingMask = clippingMask;
+    }
+
+    internal static PreviewArtifacts Empty(long generation, bool isRawSource) =>
+        new(
+            null,
+            new HistogramData(),
+            null,
+            isRawSource,
+            generation,
+            null);
+
+    public Bitmap? DetachBitmap() => Interlocked.Exchange(ref _bitmap, null);
+
+    public ClippingMask? DetachClippingMask() =>
+        Interlocked.Exchange(ref _clippingMask, null);
+
+    internal (Bitmap? preview, HistogramData histogram) DetachLegacyResult()
+    {
+        var bitmap = DetachBitmap();
+        Interlocked.Exchange(ref _clippingMask, null)?.Dispose();
+        return (bitmap, Histogram);
+    }
+
+    public void Dispose()
+    {
+        Interlocked.Exchange(ref _clippingMask, null)?.Dispose();
+        Interlocked.Exchange(ref _bitmap, null)?.Dispose();
+    }
+}
+
 public sealed class PreviewBaseRefreshState : EventArgs
 {
     public ImageFile ImageFile { get; }
@@ -23,11 +79,15 @@ public sealed class PreviewBaseRefreshState : EventArgs
 public sealed class PreviewRefresh : EventArgs, IDisposable
 {
     private Bitmap? _bitmap;
+    private ClippingMask? _clippingMask;
 
     public ImageFile ImageFile { get; }
     public HistogramData Histogram { get; }
     public HistogramData? RawHistogram { get; }
     public bool HasHistogram { get; }
+    public ClippingStats? Clipping { get; }
+    public bool IsRawSource { get; }
+    public ClippingMask? ClippingMask => _clippingMask;
 
     /// <summary>
     /// The render generation this refresh was produced for. A newer render can
@@ -44,7 +104,10 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         HistogramData histogram,
         bool hasHistogram,
         long generation,
-        HistogramData? rawHistogram = null)
+        HistogramData? rawHistogram = null,
+        ClippingStats? clipping = null,
+        bool isRawSource = false,
+        ClippingMask? clippingMask = null)
     {
         ImageFile = imageFile;
         _bitmap = bitmap;
@@ -52,14 +115,23 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         HasHistogram = hasHistogram;
         Generation = generation;
         RawHistogram = rawHistogram;
+        Clipping = clipping;
+        IsRawSource = isRawSource;
+        _clippingMask = clippingMask;
     }
 
     public Bitmap DetachBitmap() =>
         Interlocked.Exchange(ref _bitmap, null) ??
         throw new ObjectDisposedException(nameof(PreviewRefresh));
 
-    public void Dispose() =>
+    public ClippingMask? DetachClippingMask() =>
+        Interlocked.Exchange(ref _clippingMask, null);
+
+    public void Dispose()
+    {
+        Interlocked.Exchange(ref _clippingMask, null)?.Dispose();
         Interlocked.Exchange(ref _bitmap, null)?.Dispose();
+    }
 }
 
 public sealed class CachedPreviewBitmap : IDisposable
