@@ -48,7 +48,8 @@ outset can mix their results. Crossing-off uses the same ordered seam without
 an outset.
 Crossing-off sources run the same fused pass degenerately (WB matrix only,
 no outset, fold refund in the gain). The working→target convert (sRGB or
-Display P3) runs in finalization, after every shared stage — see OUTPUT.md.
+Display P3) runs after the display-referred effects substep in finalization;
+neither feeds back into the tone engine — see OUTPUT.md.
 
 ## 3. Fixed points
 

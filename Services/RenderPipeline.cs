@@ -52,7 +52,8 @@ public sealed class RenderPipeline
                     : request.OutputColorSpace,
                 outputSharpening: false,
                 wasResized: false,
-                detailBandPixelLimit);
+                detailBandPixelLimit,
+                request.Settings.Effects);
 
             var analysis = analyze
                 ? ClippingStatsCalculator.Analyze(
@@ -106,6 +107,7 @@ public sealed class RenderPipeline
                 request.Intent == RenderIntent.Preview
                     ? OutputColorSpace.Srgb
                     : request.OutputColorSpace,
+                request.Settings.Effects,
                 execution);
             execution.ThrowIfCancellationRequested();
             var result = new RenderResult(

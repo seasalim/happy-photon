@@ -226,6 +226,10 @@ public class PresetService
         settings.Rotation = 0;
         settings.HorizonRotation = 0;
         settings.Crop = null;
+        if (settings.Effects?.HasActivePixels != true)
+        {
+            settings.Effects = null;
+        }
         settings.AppliedPresetId = null;
         settings.RawProfile = null;
         return settings;

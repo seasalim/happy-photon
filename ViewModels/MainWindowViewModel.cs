@@ -320,6 +320,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         SaveWhiteBalanceTo(target);
         SaveHighlightReconstructionTo(target);
         SaveDetailTo(target);
+        SaveEffectsTo(target);
         target.Brightness = Brightness;
         target.Contrast = Contrast;
         target.Saturation = Saturation;
@@ -337,6 +338,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         LoadWhiteBalanceFrom(source);
         LoadHighlightReconstructionFrom(source);
         LoadDetailFrom(source);
+        LoadEffectsFrom(source);
         Brightness = source.Brightness;
         Contrast = source.Contrast;
         Saturation = source.Saturation;

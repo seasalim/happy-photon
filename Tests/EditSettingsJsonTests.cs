@@ -109,6 +109,59 @@ public sealed class EditSettingsJsonTests
     }
 
     [Fact]
+    public void Effects_IdentityCanonicalizesToNullJsonAndHash()
+    {
+        var baseline = EditSettingsJson.Serialize(new EditSettings());
+        var explicitIdentity = baseline.Replace(
+            "\"rotation\":0",
+            "\"effects\":{\"vignette\":0,\"midpoint\":87," +
+            "\"grain\":0,\"grainSize\":\"coarse\"},\"rotation\":0",
+            StringComparison.Ordinal);
+
+        var settings = EditSettingsJson.Deserialize(
+            explicitIdentity,
+            out var wasClamped);
+
+        Assert.False(wasClamped);
+        Assert.Null(settings.Effects);
+        Assert.Equal(baseline, EditSettingsJson.Serialize(settings));
+        Assert.Equal(
+            RenderSettingsHash.Compute(new EditSettings()),
+            RenderSettingsHash.Compute(new EditSettings
+            {
+                Effects = new EffectsSettings
+                {
+                    Midpoint = 87,
+                    GrainSize = GrainSize.Coarse
+                }
+            }));
+    }
+
+    [Fact]
+    public void Effects_ActiveSettingsClampAndRoundTrip()
+    {
+        var json = EditSettingsJson.Serialize(new EditSettings
+        {
+            Effects = new EffectsSettings
+            {
+                Vignette = -150,
+                Midpoint = 140,
+                Grain = 120,
+                GrainSize = GrainSize.Fine
+            }
+        });
+        var settings = EditSettingsJson.Deserialize(json, out var wasClamped);
+
+        Assert.False(wasClamped);
+        Assert.NotNull(settings.Effects);
+        Assert.Equal(-100, settings.Effects!.Vignette);
+        Assert.Equal(100, settings.Effects.Midpoint);
+        Assert.Equal(100, settings.Effects.Grain);
+        Assert.Equal(GrainSize.Fine, settings.Effects.GrainSize);
+        Assert.Contains("\"grainSize\":\"fine\"", json);
+    }
+
+    [Fact]
     public void Deserialize_ClampsAllPersistedSliderRanges()
     {
         var json = """
@@ -123,6 +176,8 @@ public sealed class EditSettingsJsonTests
               "baseLook": null, "hlReconstruction": "blend",
               "detail": { "captureSharpen": 150, "noiseReduction": "off",
                           "chromaNr": -1 },
+              "effects": { "vignette": -150, "midpoint": 150,
+                           "grain": 150, "grainSize": "coarse" },
               "rotation": 0, "horizon_rotation": 8,
               "crop": null, "curve": { "points": [{"x":0,"y":0},{"x":1,"y":1}] },
               "applied_preset_id": null
@@ -142,6 +197,9 @@ public sealed class EditSettingsJsonTests
         Assert.Equal(-100, settings.Contrast);
         Assert.Equal(100, settings.Detail.CaptureSharpen);
         Assert.Equal(0, settings.Detail.ChromaNr);
+        Assert.Equal(-100, settings.Effects!.Vignette);
+        Assert.Equal(100, settings.Effects.Midpoint);
+        Assert.Equal(100, settings.Effects.Grain);
         Assert.Equal(5, settings.HorizonRotation);
     }
 
@@ -196,6 +254,27 @@ public sealed class EditSettingsJsonTests
 
         Assert.Throws<JsonException>(() =>
             EditSettingsJson.Deserialize(json, out _));
+    }
+
+    [Fact]
+    public void Effects_RejectUnknownGrainSize()
+    {
+        var json = EditSettingsJson.Serialize(new EditSettings
+        {
+            Effects = new EffectsSettings { Grain = 10 }
+        }).Replace("\"medium\"", "\"huge\"", StringComparison.Ordinal);
+
+        Assert.Throws<JsonException>(() =>
+            EditSettingsJson.Deserialize(json, out _));
+        Assert.Throws<JsonException>(() =>
+            EditSettingsJson.Serialize(new EditSettings
+            {
+                Effects = new EffectsSettings
+                {
+                    Grain = 10,
+                    GrainSize = (GrainSize)99
+                }
+            }));
     }
 
     [Theory]

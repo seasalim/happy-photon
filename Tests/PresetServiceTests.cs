@@ -66,6 +66,57 @@ public sealed class PresetServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Save_RoundTripsActiveEffectsAsDeepClone()
+    {
+        var service = await CreateServiceAsync();
+        var source = new EditSettings
+        {
+            Effects = new EffectsSettings
+            {
+                Vignette = -44,
+                Midpoint = 72,
+                Grain = 31,
+                GrainSize = GrainSize.Coarse
+            }
+        };
+
+        var saved = await service.SaveUserPresetAsync("Effects", source);
+        source.Effects!.Grain = 1;
+        var reloaded = new PresetService(_tempDirectory);
+        await reloaded.InitializeAsync();
+        var effects = Assert.Single(reloaded.UserPresets).Settings.Effects;
+
+        Assert.NotSame(source.Effects, saved.Settings.Effects);
+        Assert.Equal(-44, effects!.Vignette);
+        Assert.Equal(72, effects.Midpoint);
+        Assert.Equal(31, effects.Grain);
+        Assert.Equal(GrainSize.Coarse, effects.GrainSize);
+    }
+
+    [Fact]
+    public async Task Save_CanonicalizesInactiveEffects()
+    {
+        var service = await CreateServiceAsync();
+        var preset = await service.SaveUserPresetAsync(
+            "Inactive Effects",
+            new EditSettings
+            {
+                Effects = new EffectsSettings
+                {
+                    Midpoint = 91,
+                    GrainSize = GrainSize.Coarse
+                }
+            });
+
+        Assert.Null(preset.Settings.Effects);
+        Assert.DoesNotContain(
+            "\"effects\"",
+            await File.ReadAllTextAsync(Path.Combine(
+                _tempDirectory,
+                $"{preset.Id}.json")));
+    }
+
+    [Fact]
     public async Task Save_ZeroesGeometryAndAppliedPresetId()
     {
         var service = await CreateServiceAsync();

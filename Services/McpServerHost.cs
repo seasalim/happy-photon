@@ -123,7 +123,8 @@ public sealed class McpServerHost
             async (string[] ids, AgentEditSettingsInput settings, CancellationToken ct) =>
                 await InvokeJsonAsync(() => tools.ApplyEditSettingsAsync(ids, settings), ct),
             Options("apply_edit_settings",
-                "Replaces color and tonal settings without changing geometry.")),
+                "Replaces color and tonal settings without changing geometry; " +
+                "channel curves and effects reset because this tool does not expose them.")),
 
         McpServerTool.Create(
             async (string[] ids, AgentExportOptions options, CancellationToken ct) =>

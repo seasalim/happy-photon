@@ -343,12 +343,14 @@ public sealed class PreviewPipelinePerformanceTests
                 Exposure = 0.5,
                 Saturation = 10
             };
+            double coreMedian = 0;
             using var corePreview = await MeasureSliderTick(
                 service,
                 file,
                 label,
                 "core",
-                coreSettings);
+                coreSettings,
+                value => coreMedian = value);
             var detailSettings = new EditSettings
             {
                 Exposure = 0.5,
@@ -360,6 +362,28 @@ public sealed class PreviewPipelinePerformanceTests
                 label,
                 "chroma NR",
                 detailSettings);
+            double effectsMedian = 0;
+            using var effectsPreview = await MeasureSliderTick(
+                service,
+                file,
+                label,
+                "active effects",
+                new EditSettings
+                {
+                    Exposure = 0.5,
+                    Saturation = 10,
+                    Effects = new EffectsSettings
+                    {
+                        Vignette = -50,
+                        Grain = 50,
+                        GrainSize = GrainSize.Medium
+                    }
+                },
+                value => effectsMedian = value);
+            Assert.True(
+                effectsMedian - coreMedian <= 25,
+                $"{label} active effects added " +
+                $"{effectsMedian - coreMedian:F1} ms (budget 25 ms).");
             var leaveStopwatch = Stopwatch.StartNew();
             service.ClearPreviewCache();
             leaveStopwatch.Stop();
@@ -376,7 +400,13 @@ public sealed class PreviewPipelinePerformanceTests
             new EditSettings
             {
                 Exposure = 0.5,
-                Detail = new DetailSettings { ChromaNr = 100 }
+                Saturation = 10,
+                Effects = new EffectsSettings
+                {
+                    Vignette = -50,
+                    Grain = 50,
+                    GrainSize = GrainSize.Medium
+                }
             });
         stopwatch.Stop();
         Assert.NotNull(cached);
@@ -391,7 +421,8 @@ public sealed class PreviewPipelinePerformanceTests
         ImageFile file,
         string sourceLabel,
         string operationLabel,
-        EditSettings settings)
+        EditSettings settings,
+        Action<double>? measured = null)
     {
         ForceCollection();
         var samples = new List<double>();
@@ -409,6 +440,7 @@ public sealed class PreviewPipelinePerformanceTests
             samples.Add(stopwatch.Elapsed.TotalMilliseconds);
         }
         var median = Median(samples);
+        measured?.Invoke(median);
         _output.WriteLine(
             $"{sourceLabel} {operationLabel} slider-tick " +
             $"v{RenderPipeline.Version} render: " +

@@ -371,6 +371,24 @@ public sealed class AgentToolModelsTests
     }
 
     [Fact]
+    public void EditSettingsInput_ReplaceClearsEffects()
+    {
+        var target = new EditSettings
+        {
+            Effects = new EffectsSettings
+            {
+                Vignette = -40,
+                Grain = 30
+            }
+        };
+
+        AgentEditSettingsMapper.CreatePatch(new AgentEditSettingsInput(
+            0, 0, 0, 0, 0, 0, 0)).ApplyTo(target);
+
+        Assert.Null(target.Effects);
+    }
+
+    [Fact]
     public void EditSettingsInput_RejectsRemovedManualWhiteBalanceMode()
     {
         var input = new AgentEditSettingsInput(

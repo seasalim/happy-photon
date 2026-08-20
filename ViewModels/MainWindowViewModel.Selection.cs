@@ -187,6 +187,8 @@ public partial class MainWindowViewModel
                    CaptureSharpen != CaptureSharpenDefault ||
                    NoiseReduction != FbddMode.Off ||
                    ChromaNr != 0 ||
+                   Vignette != 0 ||
+                   Grain != 0 ||
                    hasCurveEdits ||
                    ActivePresetId != null ||
                    SelectedImage?.EditSettings.RawProfile != null;
@@ -198,6 +200,7 @@ public partial class MainWindowViewModel
         ResetWhiteBalanceUi();
         ResetHighlightReconstructionUi();
         ResetDetailUi();
+        ResetEffectsUi();
         Brightness = 0;
         Contrast = 0;
         Saturation = 0;

@@ -30,6 +30,13 @@ public sealed class RestingRenderExecutionTests
                 CaptureSharpen = 80,
                 ChromaNr = 65
             },
+            Effects = new EffectsSettings
+            {
+                Vignette = -37,
+                Midpoint = 61,
+                Grain = 42,
+                GrainSize = GrainSize.Coarse
+            },
             Curve = CreateCurve(0.5, 0.55),
             CurveRed = CreateCurve(0.4, 0.47),
             CurveGreen = CreateCurve(0.5, 0.52),
@@ -55,6 +62,36 @@ public sealed class RestingRenderExecutionTests
         Assert.Equal(
             RenderPipelineTestSupport.ReadPixels(unrestricted.Image),
             RenderPipelineTestSupport.ReadPixels(resting.Image));
+    }
+
+    [Fact]
+    public void RestingExecution_ActiveEffectsObserveCancellationAtStageEntry()
+    {
+        using var baseImage = CreatePatternBase(isRaw: false);
+        using var cancellation = new CancellationTokenSource();
+        var request = new RenderRequest(
+            baseImage,
+            new EditSettings
+            {
+                Effects = new EffectsSettings
+                {
+                    Vignette = -40,
+                    Grain = 35
+                }
+            },
+            RenderIntent.Preview,
+            MaxDimension: null,
+            new RenderOptions(false, false));
+        var execution = RenderExecutionOptions.Resting(
+            cancellation.Token,
+            maxDegreeOfParallelism: 2,
+            stageStarted: stage =>
+            {
+                if (stage == "effects") cancellation.Cancel();
+            });
+
+        Assert.Throws<OperationCanceledException>(() =>
+            new RenderPipeline().RenderResting(request, execution));
     }
 
     private static CurveData CreateCurve(double x, double y)

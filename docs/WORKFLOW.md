@@ -326,6 +326,15 @@ Off/Light/Full **Noise Red.** control; the row stays visible but disabled for st
 sources. The Develop viewer uses a bounded 1600px preview base even at 1:1, so judge
 capture sharpening and subtle chroma reduction on an export-scale render.
 
+### Add finishing effects
+
+Use **Vignette** after composition to darken negative-value corners or lift
+positive-value corners around the finished frame. **Midpoint** moves the falloff onset
+and is dimmed until Vignette is active. **Grain** adds deterministic monochrome film
+grain; choose Fine, Med, or Coarse for its output-pixel size. Both effects apply to RAW
+and standard sources. During crop mode the vignette is temporarily centered on the full
+canvas used by the crop overlay, then recenters when the crop is applied.
+
 In Develop or fullscreen, press `B` to toggle between the edited image and the
 original. In Develop, use `Ctrl+Z` to undo a color or tonal edit and `Ctrl+Y` or
 `Ctrl+Shift+Z` to redo it. These editing shortcuts do nothing in Library. The reset
@@ -349,15 +358,16 @@ When the current image has a useful look:
 3. Hover over the preset to preview it on another image.
 4. Click it to apply it.
 
-Applying a preset replaces the image's current color and tonal settings. Click
+Applying a preset replaces the image's current color, tonal, detail, and effects
+settings. Click
 the active preset again to remove it and reset those settings. Presets never
 include crop, rotation, or horizon changes.
 
 ### Copy edits between images
 
 Press `Ctrl+Shift+C` to copy the current image's color, tonal, composite and channel
-curve, and preset
-settings. Press `Ctrl+Shift+V` to paste them onto another image.
+curve, detail, effects, and preset settings. Press `Ctrl+Shift+V` to paste them onto
+another image.
 
 To apply the settings to several photographs:
 

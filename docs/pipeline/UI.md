@@ -46,6 +46,11 @@ DETAIL
   Sharpen  ────────●────────   25
   Noise Red.                                [OFF | LIGHT | FULL]  (RAW only)
   Chroma NR ──────●──────────   0
+EFFECTS
+  Vignette ─────●────────────  −35
+  Midpoint ────────●─────────   50
+  Grain    ───●──────────────   20
+  Size                                      [FINE | MED | COARSE]
 DEVELOP FOOTER
   [Before/after] [Undo] [Redo]                         RESET
 ```
@@ -72,6 +77,13 @@ all sources; Sharpen displays the resolved source default (RAW 25, standard 0). 
 Red. is an Off/Light/Full segmented control that stays in place with a RAW chip and
 dims to `DisabledOpacity` for standard sources. Loaded-base capability reconciliation
 never reflows the panel or discards stored values.
+
+Effects follows Detail and applies to every source, with no RAW chip. Vignette is a
+−100..100 bipolar `CompactSlider`; Midpoint is 0..100 (default 50) and remains in place
+at `DisabledOpacity` while Vignette is zero. Grain is 0..100. Size is the standard
+compact segmented idiom: `SurfaceHigh` container, radius 4, padding 2, height 22,
+flat borderless pills, `PrimaryContainer` selected fill, and Fine/Med/Coarse labels in
+FontLabel 9 SemiBold with letter spacing 1. Medium is the default.
 
 The tone-curve selector shares the curve control's existing header, so the panel and
 control do not grow. RGB is the default. Selecting an untouched R/G/B channel shows a
@@ -110,6 +122,10 @@ never offers hydration or causes a cloud placeholder to be read.
   Any path that installs edited pixels — including scheduled histogram refresh and
   preset hover/restore — clears the active state so the control always matches the
   displayed preview.
+- **Crop-mode vignette exception:** crop mode deliberately renders the full canvas so
+  the overlay remains aligned. Vignette is centered on that transient full-canvas
+  preview and recenters on the committed crop after Apply; pending crop coordinates do
+  not enter a render request.
 - **Eyedropper mode** (`W` or button, Develop only): crosshair cursor; left-click
   samples per WHITE_BALANCE.md §7 and exits the mode; Escape or re-press exits without
   sampling; pan/zoom gestures remain live (click-without-drag samples, drag pans).
@@ -173,20 +189,27 @@ never offers hydration or causes a cloud placeholder to be read.
 
 - **Reset** returns: `wb → asShot`, `baseLook → null` (source default), all four
   curves to identity (the three optional channel fields to null),
-  `hlReconstruction → clip`, `detail → source defaults`, plus all existing fields.
+  `hlReconstruction → clip`, `detail → source defaults`, `effects → null`, plus all
+  existing fields.
   A selected camera profile returns to built-in. One undo step, as today.
 - **Undo/redo**: each committed control change is one step (existing granularity),
   including a full curve drag, point removal, or embedded curve reset;
   this includes each Clip/Blend or camera-profile selection; mode switches (preset
   select, eyedropper pick, Auto) are each one step.
-- **User presets** capture color, tonal, all curve, and detail fields and still never
-  geometry or camera profiles. Hover, apply, and untoggle preserve the current profile.
+- **User presets** capture color, tonal, all curve, detail, and effects fields and
+  still never geometry or camera profiles. Hover, apply, and untoggle preserve the
+  current profile.
 - **Copy/paste** (`Ctrl+Shift+C/V`) carries the same widened set, including nullable
   channel curves but never camera profiles; geometry still never
   transfers; Library multi-paste confirmation flow unchanged.
 
 Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields use
 the controls in §2; copy/paste preserves nullable capture-sharpen semantics.
+
+Rendered thumbnails remain navigational chrome: the existing path detaches the
+accepted finalized preview, resizes it to at most 512px, and reuses the current caches.
+Vignette remains scale-invariant, while grain may be resampled in this non-authoritative
+surface. Develop preview and export are the authoritative effects surfaces.
 
 ## 7. Export dialog
 

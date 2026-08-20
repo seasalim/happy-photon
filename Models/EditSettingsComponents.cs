@@ -42,6 +42,16 @@ public enum FbddMode
     Full
 }
 
+public enum GrainSize
+{
+    [JsonStringEnumMemberName("fine")]
+    Fine,
+    [JsonStringEnumMemberName("medium")]
+    Medium,
+    [JsonStringEnumMemberName("coarse")]
+    Coarse
+}
+
 public sealed class WhiteBalanceSettings
 {
     [JsonPropertyName("mode")]
@@ -100,5 +110,32 @@ public sealed class DetailSettings
         CaptureSharpen = CaptureSharpen,
         NoiseReduction = NoiseReduction,
         ChromaNr = ChromaNr
+    };
+}
+
+public sealed class EffectsSettings
+{
+    [JsonPropertyName("vignette")]
+    public int Vignette { get; set; }
+
+    [JsonPropertyName("midpoint")]
+    public int Midpoint { get; set; } = 50;
+
+    [JsonPropertyName("grain")]
+    public int Grain { get; set; }
+
+    [JsonPropertyName("grainSize")]
+    [JsonConverter(typeof(StrictCamelCaseEnumConverter<GrainSize>))]
+    public GrainSize GrainSize { get; set; } = GrainSize.Medium;
+
+    [JsonIgnore]
+    public bool HasActivePixels => Vignette != 0 || Grain != 0;
+
+    public EffectsSettings Clone() => new()
+    {
+        Vignette = Vignette,
+        Midpoint = Midpoint,
+        Grain = Grain,
+        GrainSize = GrainSize
     };
 }

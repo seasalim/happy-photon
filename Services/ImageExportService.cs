@@ -296,14 +296,16 @@ public sealed class ImageExportService
                         outputColorSpace,
                         settings.OutputSharpening,
                         variant.MaxDimension is int ownedLongEdge &&
-                        ownedLongEdge < fullLongEdge)
+                        ownedLongEdge < fullLongEdge,
+                        effects: editSnapshot.Effects)
                     : RenderFinalizer.Finalize(
                         shared,
                         maxDimension: null,
                         outputColorSpace,
                         settings.OutputSharpening,
                         variant.MaxDimension is int sizedLongEdge &&
-                        sizedLongEdge < fullLongEdge);
+                        sizedLongEdge < fullLongEdge,
+                        effects: editSnapshot.Effects);
                 _metadataService.Apply(
                     imageFile,
                     destination,

@@ -1,0 +1,111 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="using:HappyPhoton.Views"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             mc:Ignorable="d"
+             x:Class="HappyPhoton.Views.EffectsEditGroup"
+             x:DataType="vm:MainWindowViewModel">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.effects-control-label">
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Grid.midpoint-row">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="Grid.midpoint-row:disabled">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        </Style>
+        <Style Selector="Grid.midpoint-row.active">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="ListBox.grain-size">
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Padding" Value="2"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="ListBox.grain-size ListBoxItem">
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ListBox.grain-size ListBoxItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+        </Style>
+        <Style Selector="ListBox.grain-size ListBoxItem:selected,
+                         ListBox.grain-size ListBoxItem:selected:pointerover">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="4">
+        <TextBlock Classes="section-label" Text="EFFECTS" Margin="0,20,0,8"/>
+        <views:CompactSlider x:Name="VignetteSlider"
+                             Label="Vignette"
+                             Value="{Binding Vignette}"
+                             Minimum="-100" Maximum="100" SmallChange="1"
+                             EnableDoubleClickReset="True"/>
+        <Grid x:Name="MidpointRow"
+              Classes="midpoint-row"
+              Classes.active="{Binding IsVignetteActive}"
+              IsEnabled="{Binding IsVignetteActive}">
+            <views:CompactSlider x:Name="MidpointSlider"
+                                 Label="Midpoint"
+                                 Value="{Binding Midpoint}"
+                                 Minimum="0" Maximum="100" SmallChange="1"
+                                 DefaultValue="50"
+                                 EnableDoubleClickReset="True"/>
+        </Grid>
+        <views:CompactSlider x:Name="GrainSlider"
+                             Label="Grain"
+                             Value="{Binding Grain}"
+                             Minimum="0" Maximum="100" SmallChange="1"
+                             Margin="0,8,0,0"
+                             EnableDoubleClickReset="True"/>
+        <Grid x:Name="GrainSizeRow"
+              ColumnDefinitions="70,*,40"
+              Height="26">
+            <TextBlock Classes="effects-control-label" Text="Size"/>
+            <ListBox x:Name="GrainSizeControl"
+                     Grid.Column="1"
+                     Grid.ColumnSpan="2"
+                     Margin="8,0,0,0"
+                     Classes="grain-size"
+                     ItemsSource="{Binding GrainSizeOptions}"
+                     SelectedItem="{Binding GrainSize, Mode=TwoWay}"
+                     SelectionMode="Single,AlwaysSelected"
+                     AutomationProperties.Name="Grain size">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" ColumnSpacing="2"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Converter={x:Static views:EffectsEditGroup.GrainSizeLabelConverter}}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </StackPanel>
+</UserControl>

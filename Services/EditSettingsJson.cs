@@ -80,6 +80,23 @@ internal static class EditSettingsJson
             settings.Detail.CaptureSharpen, 0, 100, ref changed);
         settings.Detail.ChromaNr = Clamp(settings.Detail.ChromaNr, 0, 100, ref changed);
         ValidateRawProfile(settings.RawProfile);
+        if (settings.Effects != null)
+        {
+            if (!Enum.IsDefined(settings.Effects.GrainSize))
+            {
+                throw new JsonException("Effects grain size is not supported.");
+            }
+            settings.Effects.Vignette = Clamp(
+                settings.Effects.Vignette, -100, 100, ref changed);
+            settings.Effects.Midpoint = Clamp(
+                settings.Effects.Midpoint, 0, 100, ref changed);
+            settings.Effects.Grain = Clamp(
+                settings.Effects.Grain, 0, 100, ref changed);
+            if (!settings.Effects.HasActivePixels)
+            {
+                settings.Effects = null;
+            }
+        }
         settings.Curve ??= new CurveData();
         RebuildCurve(settings.Curve);
         RebuildCurve(settings.CurveRed);

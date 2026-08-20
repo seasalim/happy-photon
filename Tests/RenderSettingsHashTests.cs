@@ -101,6 +101,11 @@ public sealed class RenderSettingsHashTests
             new EditSettings { HlReconstruction = HlReconstructionMode.Blend }));
         Assert.NotEqual(baseline, RenderSettingsHash.Compute(
             new EditSettings { CurveRed = CreateCurve() }));
+        Assert.NotEqual(baseline, RenderSettingsHash.Compute(
+            new EditSettings
+            {
+                Effects = new EffectsSettings { Grain = 20 }
+            }));
     }
 
     private static CurveData CreateCurve()

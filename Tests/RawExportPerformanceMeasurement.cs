@@ -20,14 +20,17 @@ internal static class RawExportPerformanceMeasurement
 
     public static async Task<RawExportMeasurement> MeasureAsync(
         string rawPath,
-        string outputFolder)
+        string outputFolder,
+        EffectsSettings? effects = null,
+        OutputColorSpace outputColorSpace = OutputColorSpace.Srgb)
     {
         Directory.CreateDirectory(outputFolder);
         var file = new ImageFile(rawPath)
         {
             EditSettings = new EditSettings
             {
-                Detail = new DetailSettings { ChromaNr = 100 }
+                Detail = new DetailSettings { ChromaNr = 100 },
+                Effects = effects?.Clone()
             }
         };
         var loader = new MeasuringLoader(new BaseLoaderRouter(
@@ -39,7 +42,8 @@ internal static class RawExportPerformanceMeasurement
         {
             OutputFolder = outputFolder,
             Format = ExportFormat.Jpeg,
-            Quality = 85
+            Quality = 85,
+            OutputColorSpace = outputColorSpace
         };
         var process = Process.GetCurrentProcess();
         GC.Collect();

@@ -424,6 +424,7 @@
                                          Height="180"/>
 
                         <views:DetailEditGroup x:Name="DetailEditGroup"/>
+                        <views:EffectsEditGroup x:Name="EffectsEditGroup"/>
 
                 </StackPanel>
             </ScrollViewer>

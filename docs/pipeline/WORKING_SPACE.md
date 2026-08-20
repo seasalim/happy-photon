@@ -110,9 +110,10 @@ wide base — which is the gamut this run exists to preserve. §7 pins that with
 The AgX rework completed this placement: RAW composes the AgX inset with white balance,
 evaluates the tone engine, and applies the AgX outset; standard sources use white
 balance and the retained display-referred chain. Chroma and all detail stages then run
-on encoded display Rec.2020. Only after resize and optional output sharpening does
-finalization decode, convert display-linear Rec.2020 to sRGB or Display P3, clamp, and
-encode. Preview always selects sRGB.
+on encoded display Rec.2020. After resize and optional output sharpening, vignette and
+grain run in that same encoded Rec.2020 domain. Only then does finalization decode,
+convert display-linear Rec.2020 to sRGB or Display P3, clamp, and encode. Preview always
+selects sRGB.
 
 The crossing's normalize/fold machinery applies only to `M_inset · M_WB` (or `M_WB`
 for crossing off), with the fold refunded by the active tone regime. Target matrices

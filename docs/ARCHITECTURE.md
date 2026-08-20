@@ -559,6 +559,11 @@ Briefly, for contrast with thumbnails:
   to the independent q85 `assets/rendered-thumbs/` writer on promotion or image/view
   leave. Shutdown waits for tracked candidate and queue work before draining that writer.
   Stale preview placeholders never enter this record.
+- Effects do not fork thumbnail ownership. The accepted preview is already finalized
+  with vignette and grain before the existing ≤512px detach-and-resize path. Vignette
+  is scale-invariant; grain may be resampled because rendered thumbnails are
+  navigational chrome rather than an authoritative render surface. Effects-off adds no
+  thumbnail work because inactive settings do not count as edits.
 - Rendered-cache writes happen on image/view leave, not on slider settles. A bounded
   drop-oldest queue owns JPEG encoding, sidecar creation, and atomic moves; writes
   re-check the source timestamp before installation.

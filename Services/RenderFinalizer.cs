@@ -11,7 +11,8 @@ internal static class RenderFinalizer
         OutputColorSpace outputColorSpace,
         bool outputSharpening,
         bool wasResized,
-        int detailBandPixelLimit = RenderDetail.DefaultBandPixelLimit)
+        int detailBandPixelLimit = RenderDetail.DefaultBandPixelLimit,
+        EffectsSettings? effects = null)
     {
         ArgumentNullException.ThrowIfNull(displayRec2020);
         if (maxDimension is <= 0)
@@ -26,7 +27,8 @@ internal static class RenderFinalizer
             outputColorSpace,
             outputSharpening,
             wasResized,
-            detailBandPixelLimit);
+            detailBandPixelLimit,
+            effects);
     }
 
     internal static MagickImage FinalizeOwned(
@@ -35,7 +37,8 @@ internal static class RenderFinalizer
         OutputColorSpace outputColorSpace,
         bool outputSharpening,
         bool wasResized,
-        int detailBandPixelLimit = RenderDetail.DefaultBandPixelLimit)
+        int detailBandPixelLimit = RenderDetail.DefaultBandPixelLimit,
+        EffectsSettings? effects = null)
     {
         ArgumentNullException.ThrowIfNull(displayRec2020);
         try
@@ -63,6 +66,7 @@ internal static class RenderFinalizer
                 outputSharpening,
                 wasResized,
                 detailBandPixelLimit);
+            RenderEffects.Apply(displayRec2020, effects);
             RenderColorEncoding.ConvertEncodedRec2020ToTarget(
                 displayRec2020,
                 outputColorSpace);
@@ -79,6 +83,7 @@ internal static class RenderFinalizer
         MagickImage displayRec2020,
         int? maxDimension,
         OutputColorSpace outputColorSpace,
+        EffectsSettings? effects,
         RenderExecutionOptions execution)
     {
         ArgumentNullException.ThrowIfNull(displayRec2020);
@@ -96,6 +101,10 @@ internal static class RenderFinalizer
                     execution);
             }
             execution.ThrowIfCancellationRequested();
+            RenderEffects.ApplyResting(
+                displayRec2020,
+                effects,
+                execution);
             RenderColorEncoding.ConvertEncodedRec2020ToTargetResting(
                 displayRec2020,
                 outputColorSpace,

@@ -96,6 +96,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
             ┌─ OUTPUT.md ──▼───────────────────────────────▼──────────┐
             │ display: ConvertToBitmap (8-bit BGRA)                   │
             │ shared: decode→linear resize→encode→output sharpen      │
+            │         → vignette→grain                                │
             │ target: decode→sRGB/P3 convert→encode + matching ICC    │
             │         + metadata policy (EXIF copy, GPS toggle)       │
             └─────────────────────────────────────────────────────────┘
@@ -219,6 +220,7 @@ content.
 | `Services/RenderChromaticStage.cs` | white-balance matrix application |
 | `Services/RenderChromaStage.cs` | behavior-neutral saturation and vibrance application |
 | `Services/RenderDetail.cs` + `RenderSharpening.cs` | fixed detail operations |
+| `Services/RenderEffects.cs` | post-resize vignette and deterministic film grain |
 | `Services/WhiteBalanceModel.cs` | CCT/tint ↔ gains math (WHITE_BALANCE.md) |
 | `Services/ChromaticAdaptation.cs` | Bradford matrices, normalization |
 | `Services/ClippingStats.cs` | clip counters + overlay masks |
@@ -237,8 +239,9 @@ change increments it, which invalidates rendered caches and makes the correspond
 golden update explicit. Decode changes increment `BaseImage.Version` similarly.
 An additive optional setting is the narrow exception: the version stays put when
 omitting the new field reproduces old pixels bit-for-bit and canonical JSON omits it,
-so old settings hashes and caches remain valid. Per-channel curves use this exception;
-present fields change the canonical settings hash.
+so old settings hashes and caches remain valid. Per-channel curves and the nullable
+effects object use this exception; present pixel-active fields change the canonical
+settings hash.
 `BaseDecodeSettings.CacheKey` is the invariant, culture-independent string
 `base-v{BaseImage.Version};hl={blend|clip};fbdd={off|light|full}`, with
 `;dcp={source:content-hash:resolution-status}` appended only for a selected profile.

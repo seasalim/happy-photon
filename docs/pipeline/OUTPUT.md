@@ -34,13 +34,15 @@ Before pixel work, export snapshots `OutputColorSpace` once, so mutable dialog s
 cannot produce P3 pixels with an sRGB tag or the reverse. Per image:
 `LoadFullBase` → one unresized `RenderDisplayRec2020` → per variant, in descending size
 order: sRGB-decode → progressive linear-light resize → sRGB-encode → optional output
-sharpen → sRGB-decode → target convert → clamp → sRGB-encode → metadata apply (§4) →
+sharpen → vignette → grain → sRGB-decode → target convert → clamp → sRGB-encode → metadata apply (§4) →
 encode (§3) → `ExportSafety` checks → write. The export loop transfers ownership of the
 last progressive variant instead of cloning it.
 
 Preview uses the same finalizer with output sharpening disabled and sRGB selected.
-All geometry, tone, chroma, detail, resize, and sharpening work is target-independent;
-only the trailing convert, clamp, encode, and profile differ between sRGB and P3.
+All geometry, tone, chroma, detail, resize, sharpening, and effects work is
+target-independent; only the trailing convert, clamp, encode, and profile differ
+between sRGB and P3. Effects are snapshotted with the edit settings and run separately
+at each variant's output dimensions, after that variant's resize and sharpen.
 
 Before desktop export starts, the dialog classifies every selected original and totals
 the logical size of files that require hydration. If the count is nonzero, it shows
@@ -101,7 +103,9 @@ while private or structurally stale metadata is never carried through accidental
 `outputColorSpace` is `srgb` by default and accepts `displayP3`; it never inherits mutable
 desktop color-space state.
 `apply_edit_settings` accepts the current v2 fields, including `wb`, `baseLook`, and
-`hlReconstruction`; omitted fields leave current values unchanged. The privacy
+`hlReconstruction`; omitted exposed fields leave current values unchanged. Channel
+curves and effects are the explicit replace/reset exception: the tool does not expose
+them and clears them rather than retaining stale state. The privacy
 boundary remains metadata and thumbnail-derived statistics only, and
 `get_image_stats` independently requests `(150, 150)` and measures the unedited base
 thumbnail. Before statistics are calculated, every cache input is resampled to a

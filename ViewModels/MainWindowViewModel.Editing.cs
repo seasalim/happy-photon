@@ -82,6 +82,7 @@ public partial class MainWindowViewModel
         SelectedImage.EditSettings.BaseLook = null;
         SelectedImage.EditSettings.HlReconstruction = HlReconstructionMode.Clip;
         SelectedImage.EditSettings.Detail = new DetailSettings();
+        SelectedImage.EditSettings.Effects = null;
         SelectedImage.EditSettings.Curve.Reset();
         SelectedImage.EditSettings.CurveRed = null;
         SelectedImage.EditSettings.CurveGreen = null;
@@ -101,6 +102,7 @@ public partial class MainWindowViewModel
         LoadWhiteBalanceFrom(SelectedImage.EditSettings);
         LoadHighlightReconstructionFrom(SelectedImage.EditSettings);
         LoadDetailFrom(SelectedImage.EditSettings);
+        LoadEffectsFrom(SelectedImage.EditSettings);
         Brightness = 0;
         Contrast = 0;
         Saturation = 0;

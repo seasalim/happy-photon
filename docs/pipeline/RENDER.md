@@ -14,7 +14,8 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 5 Matrix       crossing on: AgX outset; crossing off: identity
 6 Chroma       one combined saturation·vibrance Modulate (§6)
 7 Detail       capture sharpen, chroma NR (§9)
-8 Output       linear resize → output sharpen → target convert → encode (OUTPUT.md)
+8 Output       linear resize → output sharpen → effects → target convert → encode
+               (OUTPUT.md)
 ```
 
 `RenderGeometry` owns the rotation and crop sequence, including
@@ -298,6 +299,10 @@ JSON document shape (canonical field order for hashing):
   "detail": { "captureSharpen": null,    // null = default (raw 25, else 0); 0-100
               "noiseReduction": "off",   // off | light | full  (FBDD, decode-affecting)
               "chromaNr": 0 },           // 0-100
+  "effects": { "vignette": 0,            // optional; -100..100
+               "midpoint": 50,            // 0..100
+               "grain": 0,                // 0..100
+               "grainSize": "medium" },   // fine | medium | coarse
   "rotation": 0, "horizon_rotation": 0.0, "crop": null,
   "curve": { },
   "curveRed": { },                       // optional; omitted = identity
@@ -315,6 +320,14 @@ semantics: `null` is never serialized. Legacy v2 documents therefore remain
 byte-identical after normalization, and `Clamp` validates/rebuilds an optional curve
 only when the field was present. Selecting a channel in the UI does not materialize it.
 `rawProfile` follows `applied_preset_id` with the same null-omission semantics.
+
+`effects` is omitted when neither Vignette nor Grain changes pixels. That
+`HasActivePixels` predicate governs persistence, `HasEdits`, hashing, and the render
+skip. `EditSettingsJson` canonicalizes an explicit pixel-inactive object to null on
+both serialization and deserialization, and preset saving does the same. Midpoint and
+Size choices made while both operators are off remain session-only UI state. Legacy v2
+JSON, hashes, caches, and effects-off pixels therefore stay byte-identical, so this
+additive optional field does not change `RenderPipeline.Version`.
 
 `hlReconstruction`, `detail.noiseReduction`, and `rawProfile` are the
 **decode-affecting subset**;
@@ -410,7 +423,33 @@ scale where both paths agree by construction.
   (DECODE.md §4), not merely the render.
 - **Output sharpen**: OUTPUT.md §3.
 
-## 10. Performance contract
+## 10. Effects substep of output finalization
+
+`RenderEffects` runs on encoded display Rec.2020 after the final linear-light resize
+and optional export output sharpening, immediately before the target conversion. It
+is one skipped-when-inactive in-place pass (`GetArea` → parallel coordinate kernel →
+`SetArea`) shared by ordinary preview/export finalization and capped-worker resting
+finalization. Production multi-variant export applies the snapshotted settings after
+each variant's progressive resize and sharpen. The internal order is vignette, then
+grain.
+
+Vignette uses an elliptical smooth falloff over normalized coordinates of the
+post-crop output frame. Negative values multiply toward black; positive values lift
+toward white, with Midpoint moving the falloff onset. The normalized field is unchanged
+by output dimensions. While crop mode is active, Develop intentionally renders the
+full pending canvas so the overlay remains aligned; the vignette therefore previews
+on that full canvas and recenters on the committed crop when crop mode exits.
+
+Grain is an equal-channel additive delta in the encoded display domain. A stateless
+coordinate hash covers only `(x, y, grainSize)`; amount scales the stable signed sample.
+Fine hashes every pixel. Medium and Coarse bilinearly interpolate fixed 2px and 3px
+cells. Before the shared delta is added, it is clamped to the shared gamut-safe
+interval `[−min(R,G,B), 1−max(R,G,B)]`, preserving channel differences at gamut
+boundaries; alpha is untouched.
+Frequency is consequently defined in output pixels, so preview and export are
+appearance-consistent rather than sample-identical across resolutions.
+
+## 11. Performance contract
 
 Preview rendering always calculates the histogram and luminance waveform from the same
 display-referred sRGB buffer before bitmap conversion. The waveform pass is synchronous
@@ -433,6 +472,12 @@ is ≤ 150 ms and is measured with `HAPPY_PHOTON_PERF=1`; the exact tone tables 
 for the bounded active settings set. Tonal, chroma, and
 geometry slider moves invalidate only the render; only `BaseDecodeSettings` changes
 invalidate the base.
+
+Effects-off finalization returns before pixel access and adds no work. On the opt-in
+Release fixtures, active effects retain the ≤150 ms preview-tick budget with an
+active-minus-off delta ≤25 ms. Full export delta is ≤max(5%, 500 ms), incremental
+private-memory peak is at most one processed Q16 RGB frame, and resting cancellation
+is observed at the next effects execution check.
 
 After a current 1600 paint settles, the display-only resting entry point may render a
 crop-aware snapshot of the large preview base at the active view's required

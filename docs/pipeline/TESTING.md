@@ -360,6 +360,14 @@ Release process; apply the same one-test-per-process rule to any new
 `HAPPY_PHOTON_PERF` class with latency budgets, and never loosen a budget to
 make a single-process class run pass:
 
+Effects extend the opt-in Release gate with frozen active-minus-off budgets: preview
+delta ≤25 ms while total tick remains ≤150 ms; full export delta ≤max(5%, 500 ms) for
+sRGB and Display P3; incremental private-memory peak ≤ one Q16 RGB frame at the
+processed dimensions. Resting tests also pin bit identity at worker caps 1 and 2 and
+cancellation at effects stage entry. Inactive effects are covered separately by exact
+pixel and canonical-hash equality, so the skip is deterministic rather than inferred
+from timing.
+
 ```powershell
 $env:HAPPY_PHOTON_PERF='1'
 foreach ($test in 'DevelopEntryLatencyAndMemory',

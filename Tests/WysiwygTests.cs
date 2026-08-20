@@ -131,4 +131,83 @@ public sealed class WysiwygTests
             $"Display P3 common-space WYSIWYG mean ΔE " +
             $"{comparison.MeanDeltaE:F3}, p99 {comparison.P99DeltaE:F3}.");
     }
+
+    [Theory]
+    [InlineData("canon-eos-350d")]
+    [InlineData("srgb-reference")]
+    public void ActiveEffects_PreviewAndExportAgreeAtCommonDimension(string slug)
+    {
+        var asset = GoldenTestCases.Assets.Single(value => value.Slug == slug);
+        var renderer = new CurrentPipelineGoldenRenderer();
+        using var previewBase = renderer.LoadPreviewBase(asset);
+        using var exportBase = renderer.LoadBase(asset);
+        var settings = new HappyPhoton.Models.EditSettings
+        {
+            Contrast = 12,
+            Effects = new HappyPhoton.Models.EffectsSettings
+            {
+                Vignette = -38,
+                Midpoint = 64,
+                Grain = 27,
+                GrainSize = HappyPhoton.Models.GrainSize.Medium
+            }
+        };
+        using var preview = renderer.Render(
+            previewBase,
+            settings,
+            RenderIntent.Preview);
+        using var export = renderer.Render(
+            exportBase,
+            settings,
+            RenderIntent.Export);
+        var comparison = GoldenImageComparer.Compare(
+            export,
+            preview,
+            GoldenComparisonDomain.DisplaySrgb);
+
+        Assert.True(
+            comparison.MeanDeltaE <= 2.0 && comparison.P99DeltaE <= 8.0,
+            $"{slug}: active-effects preview/export mean ΔE " +
+            $"{comparison.MeanDeltaE:F3}, p99 {comparison.P99DeltaE:F3}.");
+    }
+
+    [Fact]
+    public void ActiveEffects_SrgbAndDisplayP3AgreeInCommonSpace()
+    {
+        var asset = GoldenTestCases.Assets.Single(
+            value => value.Slug == "display-p3-reference");
+        var renderer = new CurrentPipelineGoldenRenderer();
+        using var baseImage = renderer.LoadBase(asset);
+        var settings = new HappyPhoton.Models.EditSettings
+        {
+            Effects = new HappyPhoton.Models.EffectsSettings
+            {
+                Vignette = 24,
+                Grain = 19,
+                GrainSize = HappyPhoton.Models.GrainSize.Fine
+            }
+        };
+        using var srgb = renderer.Render(
+            baseImage,
+            settings,
+            RenderIntent.Export);
+        using var displayP3 = renderer.Render(
+            baseImage,
+            settings,
+            RenderIntent.Export,
+            outputColorSpace: HappyPhoton.Models.OutputColorSpace.DisplayP3);
+        srgb.SetProfile(ColorProfiles.SRGB);
+        displayP3.SetProfile(OutputColorProfiles.Get(
+            HappyPhoton.Models.OutputColorSpace.DisplayP3));
+
+        var comparison = GoldenImageComparer.Compare(
+            displayP3,
+            srgb,
+            GoldenComparisonDomain.DisplaySrgb);
+
+        Assert.True(
+            comparison.MeanDeltaE <= 1.0 && comparison.P99DeltaE <= 3.0,
+            $"Active-effects target agreement mean ΔE " +
+            $"{comparison.MeanDeltaE:F3}, p99 {comparison.P99DeltaE:F3}.");
+    }
 }
