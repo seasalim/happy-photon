@@ -92,7 +92,8 @@ ancient Coolpix `.NEF` files and hypothetical 4-color `.DNG` conversions.
 
 Characterization runs in decode, fused into the existing pixel-import seam:
 camera `ushort` → 3×3 matrix in `double` → one Q16 write, clamped only at that
-write. No extra full-image pass or allocation.
+write. The implementation writes through Magick's writable Q16 cache pointer, so
+there is no extra full-image pass, managed full-frame copy, or second pixel cache.
 
 **Typed outcomes**, decided per file from the copied facts (matrix validity
 decoupled from WB-fact validity):
@@ -139,15 +140,22 @@ Parity gate (checkpoint B, before integration): pre/post-R5a rendered
 comparison over the four RAW golden anchors + ColorChecker NEF + Canon 6D,
 including Blend and FBDD decode modes on Bayer and X-Trans. Expected sub-1
 mean ΔE00 (differences only from double-precision math and single rounding
-replacing LibRaw's internal 16-bit matrix path); the binding tolerance is
-frozen from the measured pilot at A.
+replacing LibRaw's internal 16-bit matrix path). The measured comparator pilot
+freezes the gate at mean ΔE76 ≤ 1.1 and p99 ΔE76 ≤ 9.5; Bayer measured
+0.009–0.015 mean and X-Trans 0.79–1.00 mean across Clip, Blend, and FBDD.
 
 Budgets: canonical TESTING.md gates stay binding (complete slider render
 ≤ 150 ms preview; full export within +5% / +16 MiB). R5a adds: decode-latency
 delta ≤ 100 ms full-res / ≤ 30 ms preview, and a peak-private-memory delta vs
 the pre-R5a baseline sampled through import completion that excludes any
-additional full-frame allocation (exact MiB frozen at A). The opt-in
+additional full-frame allocation. On win-x64 the 20 MP Canon 6D import gate
+measured no positive median latency delta and no positive private-peak delta;
+the direct-pointer implementation allocates no import transient. The opt-in
 modern-camera compatibility suite reruns at checkpoint C.
+
+The win-x64 ColorChecker observations are recalibrated. Linux-x64 and osx-arm64
+remain explicit pending observations until their fresh-process runs complete;
+neither is inferred from the Windows result.
 
 ## 5. Out of scope for R5a
 

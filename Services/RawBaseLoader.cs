@@ -108,7 +108,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
             cancellationToken.ThrowIfCancellationRequested();
 
             context.Unpack(cancellationToken);
-            var (camMul, camToSrgb, preMul) = CopyCameraFacts(
+            var cameraFacts = RawCameraFactSnapshot.Copy(
                 context.GetCameraFacts(cancellationToken));
             var histogramStopwatch = Stopwatch.StartNew();
             HistogramData? rawHistogram;
@@ -138,10 +138,12 @@ public sealed class RawBaseLoader : IBaseImageLoader
             }
 
             context.Recycle(cancellationToken);
-            pixels = ImportRgb16(
+            var characterization = CameraRgbCharacterization.Create(cameraFacts);
+            pixels = characterization.ImportRgb16(
                 processed.AsSpan(),
                 checked((int)description.Width),
-                checked((int)description.Height));
+                checked((int)description.Height),
+                cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
             ApplyOrientation(
@@ -178,15 +180,15 @@ public sealed class RawBaseLoader : IBaseImageLoader
                 fullHeight,
                 orientation);
             var asShot = WhiteBalanceModel.EstimateAsShot(
-                camMul,
-                camToSrgb,
-                preMul);
+                cameraFacts.CamMul,
+                cameraFacts.CamToSrgb,
+                cameraFacts.PreMul);
             var info = new BaseImageInfo(
                 BaseSourceKind.RawLibRaw,
                 IsRawSource: true,
                 decode,
-                camMul,
-                camToSrgb,
+                cameraFacts.CamMul,
+                cameraFacts.CamToSrgb,
                 AsShotKelvin: asShot.kelvin,
                 AsShotTint: asShot.tint,
                 HadIccProfile: false,
@@ -244,7 +246,7 @@ public sealed class RawBaseLoader : IBaseImageLoader
             _ => throw new InvalidOperationException(
                 $"Unsupported FBDD mode: {decode.NoiseReduction}.")
         };
-        return LibRawOutputConfiguration.LinearRec2020(
+        return LibRawOutputConfiguration.LinearCameraNative(
             highlight,
             noiseReduction,
             preview);
@@ -253,58 +255,15 @@ public sealed class RawBaseLoader : IBaseImageLoader
     internal static MagickImage ImportRgb16(
         ReadOnlySpan<byte> data,
         int width,
-        int height)
-        => ImportRgb(data, width, height, StorageType.Short, sizeof(ushort));
+        int height) => CameraRgbCharacterization.Passthrough.ImportRgb16(
+            data,
+            width,
+            height);
 
     internal static MagickImage ImportRgb8(
         ReadOnlySpan<byte> data,
         int width,
-        int height)
-        => ImportRgb(data, width, height, StorageType.Char, sizeof(byte));
-
-    private static MagickImage ImportRgb(
-        ReadOnlySpan<byte> data,
-        int width,
-        int height,
-        StorageType storageType,
-        int bytesPerSample)
-    {
-        if (width <= 0 || height <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(width),
-                "RGB16 dimensions must be positive.");
-        }
-
-        var expectedLength = checked(width * height * 3 * bytesPerSample);
-        if (data.Length != expectedLength)
-        {
-            throw new ArgumentException(
-                $"Expected {expectedLength} bytes for a {width}x{height} RGB16 image.",
-                nameof(data));
-        }
-
-        var image = new MagickImage(
-            MagickColors.Black,
-            (uint)width,
-            (uint)height);
-        try
-        {
-            image.ColorSpace = ColorSpace.RGB;
-            var settings = new PixelImportSettings(
-                (uint)width,
-                (uint)height,
-                storageType,
-                PixelMapping.RGB);
-            image.ImportPixels(data, settings);
-            return image;
-        }
-        catch
-        {
-            image.Dispose();
-            throw;
-        }
-    }
+        int height) => CameraRgbCharacterization.ImportRgb8(data, width, height);
 
     internal static bool ApplyOrientation(
         MagickImage image,
@@ -368,132 +327,4 @@ public sealed class RawBaseLoader : IBaseImageLoader
         }
     }
 
-    private static (
-        double[]? CamMul,
-        double[,]? CamToSrgb,
-        double[]? PreMul) CopyCameraFacts(
-        LibRawCameraFacts? facts)
-    {
-        if (facts == null) return (null, null, null);
-        var multipliers = facts.Multipliers;
-        var matrix = facts.CameraToSrgb;
-        var availableColumns = Math.Min(
-            4,
-            Math.Min(multipliers.Length, matrix.GetLength(1)));
-        if (matrix.GetLength(0) < 3)
-        {
-            return (null, null, null);
-        }
-
-        var channelCount = HasUsableChannel(multipliers, matrix, 3)
-            ? 4
-            : Math.Min(3, availableColumns);
-        if (channelCount < 3)
-        {
-            return (null, null, null);
-        }
-
-        var camMul = new double[channelCount];
-        var camToSrgb = new double[3, channelCount];
-        for (var channel = 0; channel < channelCount; channel++)
-        {
-            var multiplier = multipliers[channel];
-            if (!float.IsFinite(multiplier) || multiplier <= 0)
-            {
-                return (null, null, null);
-            }
-
-            camMul[channel] = multiplier;
-            for (var row = 0; row < 3; row++)
-            {
-                var value = matrix[row, channel];
-                if (!float.IsFinite(value))
-                {
-                    return (null, null, null);
-                }
-
-                camToSrgb[row, channel] = value;
-            }
-        }
-
-        if (IsIdentityCameraTransform(camToSrgb))
-        {
-            return (camMul, null, CopyPreMultipliers(facts.PreMultipliers, channelCount));
-        }
-
-        return (camMul, camToSrgb, CopyPreMultipliers(facts.PreMultipliers, channelCount));
-    }
-
-    private static double[]? CopyPreMultipliers(
-        IReadOnlyList<float>? values,
-        int channelCount)
-    {
-        if (values == null || values.Count != channelCount)
-        {
-            return null;
-        }
-
-        var result = new double[channelCount];
-        for (var channel = 0; channel < channelCount; channel++)
-        {
-            var value = values[channel];
-            if (!float.IsFinite(value) || value <= 0)
-            {
-                return null;
-            }
-
-            result[channel] = value;
-        }
-
-        return result;
-    }
-
-    internal static bool IsIdentityCameraTransform(double[,] matrix)
-    {
-        ArgumentNullException.ThrowIfNull(matrix);
-        if (matrix.GetLength(0) != 3 ||
-            matrix.GetLength(1) is not (3 or 4))
-        {
-            return false;
-        }
-
-        for (var row = 0; row < 3; row++)
-        {
-            for (var column = 0; column < matrix.GetLength(1); column++)
-            {
-                var expected = column < 3 && row == column ? 1.0 : 0.0;
-                if (Math.Abs(matrix[row, column] - expected) > 1e-6)
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private static bool HasUsableChannel(
-        IReadOnlyList<float> multipliers,
-        float[,] matrix,
-        int channel)
-    {
-        if (multipliers.Count <= channel ||
-            matrix.GetLength(1) <= channel ||
-            !float.IsFinite(multipliers[channel]) ||
-            multipliers[channel] <= 0)
-        {
-            return false;
-        }
-
-        for (var row = 0; row < Math.Min(3, matrix.GetLength(0)); row++)
-        {
-            if (float.IsFinite(matrix[row, channel]) &&
-                Math.Abs(matrix[row, channel]) > float.Epsilon)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

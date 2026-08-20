@@ -161,36 +161,17 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          2.6383236546063933
+          2.6384472924778217
         ],
         "maximumPatchDeltaE00": [
-          6.2450756876906794
-        ]
-      },
-      {
-        "rid": "linux-x64",
-        "freshProcessRuns": 1,
-        "openMpThreads": 1,
-        "meanDeltaE00": [
-          2.638323654606382
-        ],
-        "maximumPatchDeltaE00": [
-          6.245075687690655
-        ]
-      },
-      {
-        "rid": "osx-arm64",
-        "freshProcessRuns": 1,
-        "openMpThreads": 1,
-        "meanDeltaE00": [
-          2.6383253668088718
-        ],
-        "maximumPatchDeltaE00": [
-          6.2450761886600015
+          6.245169268388049
         ]
       }
     ],
-    "pendingRidObservations": []
+    "pendingRidObservations": [
+      "linux-x64",
+      "osx-arm64"
+    ]
   },
   "lookBudget": {
     "statistics": [
@@ -206,35 +187,16 @@
         "freshProcessRuns": 1,
         "openMpThreads": 1,
         "meanDeltaE00": [
-          5.993530184884918
+          5.9938993948792065
         ],
         "maximumPatchDeltaE00": [
-          13.761233948669688
-        ]
-      },
-      {
-        "rid": "linux-x64",
-        "freshProcessRuns": 1,
-        "openMpThreads": 1,
-        "meanDeltaE00": [
-          5.993530184884922
-        ],
-        "maximumPatchDeltaE00": [
-          13.761233948669704
-        ]
-      },
-      {
-        "rid": "osx-arm64",
-        "freshProcessRuns": 1,
-        "openMpThreads": 1,
-        "meanDeltaE00": [
-          5.9935309875556415
-        ],
-        "maximumPatchDeltaE00": [
-          13.76123375287244
+          13.762419710624835
         ]
       }
     ],
-    "pendingRidObservations": []
+    "pendingRidObservations": [
+      "linux-x64",
+      "osx-arm64"
+    ]
   }
 }

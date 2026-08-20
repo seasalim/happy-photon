@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Services;
+using ImageMagick;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -17,50 +18,36 @@ public sealed class RawWorkingSpaceTests
         GoldenTestPaths.AssetDirectory,
         "canon-eos-350d.cr2");
 
-    [Fact]
-    public void Rec2020Output_MatchesIndependentWorkingSpaceMatrix()
+    [Theory]
+    [InlineData("canon-eos-350d.cr2", LibRawHighlightMode.Clip, LibRawFbddMode.Off)]
+    [InlineData("canon-eos-350d.cr2", LibRawHighlightMode.Blend, LibRawFbddMode.Off)]
+    [InlineData("canon-eos-350d.cr2", LibRawHighlightMode.Clip, LibRawFbddMode.Full)]
+    [InlineData("fujifilm-x30.raf", LibRawHighlightMode.Clip, LibRawFbddMode.Off)]
+    [InlineData("fujifilm-x30.raf", LibRawHighlightMode.Blend, LibRawFbddMode.Off)]
+    [InlineData("fujifilm-x30.raf", LibRawHighlightMode.Clip, LibRawFbddMode.Full)]
+    public void BuiltInCharacterization_MatchesLibRawRec2020Comparator(
+        string fileName,
+        LibRawHighlightMode highlight,
+        LibRawFbddMode fbdd)
     {
-        var srgb = Decode(LibRawOutputConfiguration.Linear(
-            LibRawHighlightMode.Clip,
-            LibRawFbddMode.Off,
-            halfSize: true));
-        var rec2020 = Decode(LibRawOutputConfiguration.LinearRec2020(
-            LibRawHighlightMode.Clip,
-            LibRawFbddMode.Off,
-            halfSize: true));
+        var path = Path.Combine(GoldenTestPaths.AssetDirectory, fileName);
+        using var expected = DecodeImage(
+            path,
+            LibRawOutputConfiguration.LinearRec2020(highlight, fbdd, halfSize: true));
+        var actual = DecodeCharacterized(path, highlight, fbdd);
+        using var actualImage = actual.Image;
 
-        Assert.Equal(srgb.Width, rec2020.Width);
-        Assert.Equal(srgb.Height, rec2020.Height);
-        double totalError = 0;
-        double maximumError = 0;
-        var comparedChannels = 0;
-        for (var offset = 0; offset < srgb.Samples.Length; offset += 3 * 97)
-        {
-            var source = new[]
-            {
-                srgb.Samples[offset] / (double)ushort.MaxValue,
-                srgb.Samples[offset + 1] / (double)ushort.MaxValue,
-                srgb.Samples[offset + 2] / (double)ushort.MaxValue
-            };
-            if (source.Any(value => value is < 0.01 or > 0.99)) continue;
-            var expected = ChromaticAdaptation.Multiply(
-                RgbColorSpaceMatrices.LinearSrgbToLinearRec2020,
-                source);
-            if (expected.Any(value => value is < 0.01 or > 0.99)) continue;
-            for (var channel = 0; channel < 3; channel++)
-            {
-                var actual = rec2020.Samples[offset + channel] /
-                    (double)ushort.MaxValue;
-                var error = Math.Abs(actual - expected[channel]);
-                totalError += error;
-                maximumError = Math.Max(maximumError, error);
-                comparedChannels++;
-            }
-        }
+        var comparison = GoldenImageComparer.Compare(
+            expected,
+            actualImage,
+            GoldenComparisonDomain.LinearRec2020);
+        _output.WriteLine(
+            $"{fileName} {highlight}/{fbdd}: outcome={actual.Outcome}; " +
+            $"mean ΔE76={comparison.MeanDeltaE:R}; p99={comparison.P99DeltaE:R}");
 
-        Assert.True(comparedChannels > 1000);
-        Assert.InRange(totalError / comparedChannels, 0, 2e-4);
-        Assert.InRange(maximumError, 0, 0.003);
+        Assert.Equal(CameraRgbCharacterizationOutcome.Usable, actual.Outcome);
+        Assert.InRange(comparison.MeanDeltaE, 0, 1.1);
+        Assert.InRange(comparison.P99DeltaE, 0, 9.5);
     }
 
     [Fact]
@@ -143,6 +130,39 @@ public sealed class RawWorkingSpaceTests
             MemoryMarshal.Cast<byte, ushort>(image.AsSpan()).ToArray());
     }
 
+    private static MagickImage DecodeImage(
+        string path,
+        LibRawOutputConfiguration configuration)
+    {
+        var decoded = Decode(path, configuration);
+        return RawBaseLoader.ImportRgb16(
+            MemoryMarshal.AsBytes(decoded.Samples.AsSpan()),
+            decoded.Width,
+            decoded.Height);
+    }
+
+    private static CharacterizedImage DecodeCharacterized(
+        string path,
+        LibRawHighlightMode highlight,
+        LibRawFbddMode fbdd)
+    {
+        using var context = LibRawContext.Open(path);
+        context.Unpack();
+        var facts = RawCameraFactSnapshot.Copy(context.GetCameraFacts());
+        context.ConfigureOutput(LibRawOutputConfiguration.LinearCameraNative(
+            highlight,
+            fbdd,
+            halfSize: true));
+        context.Process();
+        using var processed = context.MakeProcessedImage();
+        var characterization = CameraRgbCharacterization.Create(facts);
+        var image = characterization.ImportRgb16(
+            processed.AsSpan(),
+            checked((int)processed.Description.Width),
+            checked((int)processed.Description.Height));
+        return new CharacterizedImage(characterization.Outcome, image);
+    }
+
     private static double CalculateNearClip(ushort[] samples)
     {
         var clipped = 0;
@@ -206,4 +226,7 @@ public sealed class RawWorkingSpaceTests
     }
 
     private sealed record DecodedImage(int Width, int Height, ushort[] Samples);
+    private sealed record CharacterizedImage(
+        CameraRgbCharacterizationOutcome Outcome,
+        MagickImage Image);
 }

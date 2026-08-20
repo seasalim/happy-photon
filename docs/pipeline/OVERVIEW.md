@@ -7,6 +7,7 @@ documents cover the individual stages in greater depth.
 | Doc | Covers |
 |-----|--------|
 | [WORKING_SPACE.md](WORKING_SPACE.md) | Canonical Rec.2020 basis, matrices, ICC target, provenance |
+| [CHARACTERIZATION.md](CHARACTERIZATION.md) | Camera-RGB contract, built-in characterization, R5b DCP math |
 | [DECODE.md](DECODE.md) | Sources → `BaseImage` (loaders, LibRaw params, ICC normalize, caching) |
 | [RENDER.md](RENDER.md) | `BaseImage` + `EditSettings` → rendered image (stage order, LUT math) |
 | [WHITE_BALANCE.md](WHITE_BALANCE.md) | WB model: CCT/tint math, presets, eyedropper, matrices |
@@ -73,7 +74,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 
 ```
             ┌─ DECODE.md ─────────────────────────────────────────────┐
- RAW ──LibRaw(16-bit, linear, no-auto-bright, camWB, chosen highlights)┤
+ RAW ──LibRaw(camera RGB, linear, camWB)──characterize→Rec.2020 ──────┤
  JPEG/PNG/TIFF/HEIC ──Magick decode ─color→linear Rec.2020 ──────────┤
             └──────────► BaseImage (linear Rec.2020 Q16 + BaseImageInfo)┘
                                    │
@@ -128,7 +129,7 @@ public sealed record BaseImageInfo(
 
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 8;        // bump whenever decoded pixels or facts change
+    public const int Version = 9;        // bump whenever decoded pixels or facts change
     public const int PreviewMaxDimension = 1600;
     public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
     public BaseImageInfo Info { get; }
@@ -177,6 +178,8 @@ content.
 | `Services/GatedBaseImageLoader.cs` | live availability policy before source decode |
 | `Services/SourceAvailabilityService.cs` | cloud-file classification and read intent |
 | `Services/RawBaseLoader.cs` | LibRaw decode → base (DECODE.md §2) |
+| `Services/RawCameraFactSnapshot.cs` | validated pre-process camera facts |
+| `Services/CameraRgbCharacterization.cs` | camera RGB → Rec.2020 fused Q16 import |
 | `Services/RawSensorFrame.cs` + `RawSensorHistogram.cs` | typed unpacked-mosaic lease + sensor histogram |
 | `Services/StandardBaseLoader.cs` | Magick decode + ICC normalize → base (DECODE.md §3) |
 | `Services/WorkingSpaceIccProfile.cs` | deterministic linear-Rec.2020 ICC target |
@@ -211,9 +214,10 @@ golden update explicit. Decode changes increment `BaseImage.Version` similarly.
 `base-v{BaseImage.Version};hl={blend|clip};fbdd={off|light|full}`. In-memory identity
 adds normalized file path and preview/full size class; rendered-cache settings hashes
 still include `BaseImage.Version` separately as specified in DECODE.md §5.
-The AgX rework shipped as render v9 and base v8: v9 attributes the AgX crossing, target-convert
-relocation, Rec.2020 luma basis, and final numeric path; base v8 invalidates stale
-`SourceExposureBiasEv` facts after the estimator was re-derived for the default crossing.
+The active markers are render v9 and base v9. Render v9 attributes the AgX crossing,
+target-convert relocation, Rec.2020 luma basis, and final numeric path. Base v8
+invalidated stale `SourceExposureBiasEv` facts; base v9 moves RAW output-space
+characterization from LibRaw into Happy Photon's fused decode import.
 
 ## 7. Current boundaries
 

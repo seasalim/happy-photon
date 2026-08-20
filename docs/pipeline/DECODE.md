@@ -44,7 +44,8 @@ image-statistics defaults:
 | `Gamma` | **(1.0, 1.0)** | linear output; encode happens in the tone LUT |
 | `NoAutoBright` | **true** | determinism — kills the per-image 1% stretch |
 | `UseCameraWb` | true | as-shot neutral becomes (1,1,1); WB edits are relative gains |
-| `OutputColor` | Rec.2020 (8) | LibRaw applies its camera matrix → BT.2020 primaries |
+| `UseCameraMatrix` | true | preserve open-time camera/DNG fact population; no matrix is applied when output color is 0 |
+| `OutputColor` | camera-native (0) | skip LibRaw output-space conversion; characterize in-app |
 | `HighlightMode` | **0 (clip)** when `decode.HlReconstruction == Clip` (default); 2 when `Blend` | Blend recovers neutral detail in partially clipped areas; output stays ≤ 1.0 |
 | `fbdd_noiserd` | 0/1/2 from `decode.NoiseReduction` (default Off) | internal decode-time NR |
 | `HalfSize` | true for `LoadPreviewBase`, false for `LoadFullBase` | perf; only remaining preview/export decode difference |
@@ -55,18 +56,17 @@ crossing-on sources.
 
 Post-decode steps, in order:
 
-1. The `MagickImage` is constructed by **direct pixel import** from the LibRaw
-   native-endian output span. The loader creates a blank Q16 destination, tags it as
-   `ColorSpace.RGB`, then calls
-   `ImportPixels(data, new PixelImportSettings(w, h, StorageType.Short, PixelMapping.RGB))`.
-   Tagging the destination before import is essential: assigning `sRGB → RGB` after
-   samples exist runs Magick's transfer transform and double-linearizes the already
-   linear LibRaw values. Once LibRaw has produced its independently owned image, the
-   loader recycles the context before importing that span so raw and processing
-   buffers do not overlap the render pipeline's Q16 allocation. There is no PPM
-   intermediate or managed full-image copy. Synthetic-buffer tests pin byte order
-   and exact 16-bit preservation. The former PPM wrapping path is not used by the
-   base loader.
+1. LibRaw's AHD Bayer and Markesteijn X-Trans paths both end at the same linear,
+   neutralized, normalized three-channel camera-RGB span. `CameraRgbCharacterization`
+   composes camera→sRGB with the exact sRGB→Rec.2020 matrix in `double`, then writes
+   through Magick's writable Q16 cache pointer: camera `ushort` → matrix → one rounded
+   Q16 write, with the only clamp at that write. The uncharacterized outcome imports
+   the native codes unchanged. The destination is tagged `ColorSpace.RGB` before any
+   sample is stored, avoiding Magick transfer conversion. Once LibRaw has produced its
+   independently owned image, the loader recycles the context before import so raw and
+   processing buffers do not overlap the render allocation. There is no PPM,
+   intermediate full-frame pass, managed full-image copy, or second Magick pixel cache.
+   Four-channel processed output is rejected as unsupported rather than truncated.
    The binding defaults OpenMP to at most sixteen workers unless the process already
    defines `OMP_NUM_THREADS`. This bounds the per-worker scratch space used by
    full-resolution X-Trans processing without changing decode precision or pixels.
@@ -82,11 +82,12 @@ Post-decode steps, in order:
    (known from LibRaw sizes even for a half-size preview decode — RENDER.md §9 needs
    them for σ scaling). Measure `AsShotKelvin/Tint` by projecting
    `pre_mul / cam_mul` through `rgb_cam`; use 5500 / 0 only when a required fact is
-   absent. Bridge ABI v2 also exposes `cam_xyz` and per-channel `linear_max`, which
-   remain typed at the interop boundary until a pipeline consumer needs them. Treat an
-   identity `rgb_cam` as LibRaw's unavailable-transform sentinel (WHITE_BALANCE.md §5).
+   absent. Bridge ABI v2 also exposes `cam_xyz` and per-channel `linear_max`.
+   Characterization uses `cam_xyz` only to derive the built-in transform when
+   `rgb_cam` is LibRaw's identity unavailable-transform sentinel; `linear_max` remains
+   typed at the interop boundary until a consumer needs it (WHITE_BALANCE.md §5).
 
-Camera facts are copied immediately after `Unpack`, before the Rec.2020 output
+Camera facts are copied immediately after `Unpack`, before the camera-native output
 configuration is applied. `CamToSrgb` therefore remains camera→linear-sRGB and is not a
 camera→working-space fact. `RawWorkingSpaceTests` pins the semantics against the
 separately exposed camera-from-XYZ fact: row-normalize
@@ -151,7 +152,7 @@ renderer combines the selected source fact with the user's relative Exposure set
 inside the tone-engine gain. The estimator and engine therefore share the anchored
 post-gain quantity `a = v·2^(EVuser+EVsource)`; an unusable preview falls back to a
 defensible decoded fact and never changes slider semantics. This re-derivation is the
-reason `BaseImage.Version` is 8.
+reason base-image version 8 was introduced.
 
 ### 2.3 Why Clip and Blend are the supported modes
 

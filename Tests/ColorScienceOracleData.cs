@@ -8,6 +8,7 @@ internal sealed class ColorScienceOracleData
     public OracleGenerator Generator { get; set; } = new();
     public List<OracleColorSpace> Spaces { get; set; } = [];
     public List<OracleAdaptation> Adaptations { get; set; } = [];
+    public List<OracleCameraCharacterization> CameraCharacterizations { get; set; } = [];
     public OracleTransferFunctions TransferFunctions { get; set; } = new();
     public OracleColorChecker ColorChecker { get; set; } = new();
 
@@ -77,6 +78,20 @@ internal sealed class OracleEotfSample
 {
     public double Encoded { get; set; }
     public double Linear { get; set; }
+}
+
+internal sealed class OracleCameraCharacterization
+{
+    public string Id { get; set; } = "";
+    public double[][] CameraToSrgb { get; set; } = [];
+    public double[][] CameraToRec2020 { get; set; } = [];
+    public List<OracleCameraSample> Samples { get; set; } = [];
+}
+
+internal sealed class OracleCameraSample
+{
+    public double[] CameraRgb { get; set; } = [];
+    public double[] Rec2020 { get; set; } = [];
 }
 
 internal sealed class OracleColorChecker

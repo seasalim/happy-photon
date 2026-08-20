@@ -50,7 +50,7 @@ public sealed class RawBaseLoaderTests
         Assert.False(parameters.UseAutoWhiteBalance);
         Assert.True(parameters.UseCameraWhiteBalance);
         Assert.True(parameters.UseCameraMatrix);
-        Assert.Equal(8, parameters.OutputColor);
+        Assert.Equal(0, parameters.OutputColor);
         Assert.Equal(expectedHighlight, parameters.HighlightMode);
         Assert.Equal(expectedFbdd, parameters.FbddNoiseReduction);
         Assert.Equal(preview, parameters.HalfSize);
@@ -195,7 +195,7 @@ public sealed class RawBaseLoaderTests
             $"{fileName}: preview {image.Pixels.Width}x{image.Pixels.Height}, " +
             $"full {image.Info.FullWidth}x{image.Info.FullHeight}, " +
             $"camera channels {image.Info.CamMul!.Length}, " +
-            $"as-shot {image.Info.AsShotKelvin:F0} K/{image.Info.AsShotTint:F1}");
+            $"as-shot {image.Info.AsShotKelvin:R} K/{image.Info.AsShotTint:R}");
     }
 
     [Fact]
@@ -469,9 +469,9 @@ public sealed class RawBaseLoaderTests
     [Fact]
     public void IdentityCameraTransform_IsUnavailableSentinel()
     {
-        Assert.True(RawBaseLoader.IsIdentityCameraTransform(
+        Assert.True(RawCameraFactSnapshot.IsIdentityTransform(
             ChromaticAdaptation.Identity()));
-        Assert.True(RawBaseLoader.IsIdentityCameraTransform(new double[,]
+        Assert.True(RawCameraFactSnapshot.IsIdentityTransform(new double[,]
         {
             { 1, 0, 0, 0 },
             { 0, 1, 0, 0 },
@@ -480,7 +480,7 @@ public sealed class RawBaseLoaderTests
 
         var calibrated = ChromaticAdaptation.Identity();
         calibrated[0, 1] = 0.01;
-        Assert.False(RawBaseLoader.IsIdentityCameraTransform(calibrated));
+        Assert.False(RawCameraFactSnapshot.IsIdentityTransform(calibrated));
     }
 
     private static MagickImage CreateTwoPixelImage(int width, int height)

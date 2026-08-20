@@ -26,6 +26,14 @@ SAMPLES = np.array(
     dtype=float,
 )
 EOTF_SAMPLES = np.array([0.0, 0.003, 0.04045, 0.18, 0.5, 1.0])
+CAMERA_TO_SRGB = np.array(
+    [
+        [1.60, -0.70, 0.10],
+        [-0.10, 1.30, -0.20],
+        [0.05, -0.40, 1.35],
+    ],
+    dtype=float,
+)
 
 
 def array(value: np.ndarray) -> list:
@@ -97,6 +105,28 @@ def color_checker() -> dict:
     }
 
 
+def camera_characterization() -> dict:
+    srgb = colour.RGB_COLOURSPACES["sRGB"]
+    rec2020 = colour.RGB_COLOURSPACES["ITU-R BT.2020"]
+    srgb_to_rec2020 = (
+        np.asarray(rec2020.matrix_XYZ_to_RGB, dtype=float)
+        @ np.asarray(srgb.matrix_RGB_to_XYZ, dtype=float)
+    )
+    camera_to_rec2020 = srgb_to_rec2020 @ CAMERA_TO_SRGB
+    return {
+        "id": "synthetic-camera-rgb",
+        "cameraToSrgb": array(CAMERA_TO_SRGB),
+        "cameraToRec2020": array(camera_to_rec2020),
+        "samples": [
+            {
+                "cameraRgb": array(rgb),
+                "rec2020": array(camera_to_rec2020 @ rgb),
+            }
+            for rgb in SAMPLES
+        ],
+    }
+
+
 def build_oracle() -> dict:
     if colour.__version__ != COLOUR_SCIENCE_VERSION:
         raise RuntimeError(
@@ -121,6 +151,7 @@ def build_oracle() -> dict:
             "romm": "ISO 22028-2:2013",
             "chromaticAdaptation": "Bradford (Lam, 1985)",
             "colorChecker": "X-Rite ColorChecker Classic data published in 2016, pre-November-2014 edition",
+            "cameraCharacterization": "Synthetic row-normalized camera matrix composed through IEC 61966-2-1 and ITU-R BT.2020",
         },
         "spaces": [
             colour_space("linear-srgb-d65", "sRGB"),
@@ -131,6 +162,7 @@ def build_oracle() -> dict:
             adaptation("bradford-d50-to-d65", d50, d65),
             adaptation("bradford-d65-to-d50", d65, d50),
         ],
+        "cameraCharacterizations": [camera_characterization()],
         "transferFunctions": {
             "srgbEotf": [
                 {"encoded": float(encoded), "linear": float(linear)}
