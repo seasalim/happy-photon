@@ -360,11 +360,8 @@ public sealed class ThumbnailHydrationTests : IDisposable
         PixelFormat.Bgra8888,
         AlphaFormat.Premul);
 
-    private static void WriteJpeg(string path)
-    {
-        using var image = new MagickImage(MagickColors.Gray, 150, 100);
-        image.Write(path, MagickFormat.Jpeg);
-    }
+    private static void WriteJpeg(string path) =>
+        TestImages.WriteJpeg(path, width: 150, height: 100);
 
     private static void PumpFor(TimeSpan duration)
     {
@@ -458,20 +455,5 @@ public sealed class ThumbnailHydrationTests : IDisposable
             await RenderedCache.DisposeAsync();
             Catalog.Dispose();
         }
-    }
-
-    private sealed class NullBaseLoader : IBaseImageLoader
-    {
-        public bool CanLoad(ImageFile file) => true;
-
-        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
-        public BaseImage? LoadPreviewBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-        public BaseImage? LoadFullBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
     }
 }

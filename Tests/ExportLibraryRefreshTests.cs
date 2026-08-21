@@ -163,8 +163,7 @@ public sealed class ExportLibraryRefreshTests : IDisposable
     private string WriteJpeg(string name)
     {
         var path = Path.Combine(_root, name);
-        using var image = new MagickImage(MagickColors.Gray, 16, 16);
-        image.Write(path, MagickFormat.Jpeg);
+        TestImages.WriteJpeg(path);
         return path;
     }
 

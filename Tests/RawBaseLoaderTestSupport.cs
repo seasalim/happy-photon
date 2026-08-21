@@ -9,7 +9,7 @@ namespace HappyPhoton.Tests;
 internal static class RawBaseLoaderTestSupport
 {
     public static string Asset(string fileName) =>
-        Path.Combine(GoldenTestPaths.AssetDirectory, fileName);
+        GoldenTestPaths.Asset(fileName);
 
     public static byte[] PixelHash(MagickImage image)
     {
@@ -67,20 +67,3 @@ internal sealed record DecodeMeasurement(
     BaseImage? Image,
     TimeSpan Elapsed,
     long PeakManagedBytes);
-
-internal sealed class TemporaryDirectory : IDisposable
-{
-    public string Path { get; } = System.IO.Path.Combine(
-        System.IO.Path.GetTempPath(),
-        $"happy-photon-raw-loader-{Guid.NewGuid():N}");
-
-    public TemporaryDirectory()
-    {
-        Directory.CreateDirectory(Path);
-    }
-
-    public void Dispose()
-    {
-        Directory.Delete(Path, recursive: true);
-    }
-}

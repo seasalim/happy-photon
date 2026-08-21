@@ -23,10 +23,7 @@ public sealed class ThumbnailServiceTests : IDisposable
         _fixture.RequireWindows();
         Directory.CreateDirectory(_tempDirectory);
         var sourcePath = Path.Combine(_tempDirectory, "source.jpg");
-        using (var source = new MagickImage(MagickColors.Gray, 400, 200))
-        {
-            source.Write(sourcePath, MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(sourcePath, width: 400, height: 200);
 
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
         await catalog.InitializeAsync();
@@ -138,10 +135,7 @@ public sealed class ThumbnailServiceTests : IDisposable
         _fixture.RequireWindows();
         Directory.CreateDirectory(_tempDirectory);
         var sourcePath = Path.Combine(_tempDirectory, $"source-{size}.jpg");
-        using (var source = new MagickImage(MagickColors.Gray, 1200, 800))
-        {
-            source.Write(sourcePath, MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(sourcePath, width: 1200, height: 800);
 
         using var catalog = new CatalogService(
             Path.Combine(_tempDirectory, $"catalog-{size}"));
@@ -168,10 +162,7 @@ public sealed class ThumbnailServiceTests : IDisposable
         _fixture.RequireWindows();
         Directory.CreateDirectory(_tempDirectory);
         var sourcePath = Path.Combine(_tempDirectory, "upgrade-source.jpg");
-        using (var source = new MagickImage(MagickColors.Gray, 1200, 800))
-        {
-            source.Write(sourcePath, MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(sourcePath, width: 1200, height: 800);
         File.SetLastWriteTimeUtc(sourcePath, DateTime.UtcNow.AddMinutes(-2));
         using var catalog = new CatalogService(
             Path.Combine(_tempDirectory, "upgrade-catalog"));
@@ -180,10 +171,7 @@ public sealed class ThumbnailServiceTests : IDisposable
         await image.EnsureCatalogIdAsync(catalog);
         var cachePath = catalog.GetThumbnailPath(image.CatalogId);
         Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
-        using (var cached = new MagickImage(MagickColors.Gray, 150, 100))
-        {
-            cached.Write(cachePath, MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(cachePath, width: 150, height: 100);
         File.SetLastWriteTimeUtc(cachePath, DateTime.UtcNow);
         await using var imageService = new ImageService(catalog);
         var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Large);
@@ -213,10 +201,7 @@ public sealed class ThumbnailServiceTests : IDisposable
         _fixture.RequireWindows();
         Directory.CreateDirectory(_tempDirectory);
         var sourcePath = Path.Combine(_tempDirectory, "cropped-source.jpg");
-        using (var source = new MagickImage(MagickColors.Gray, 1200, 800))
-        {
-            source.Write(sourcePath, MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(sourcePath, width: 1200, height: 800);
 
         using var catalog = new CatalogService(
             Path.Combine(_tempDirectory, "cropped-catalog"));

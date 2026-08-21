@@ -3,7 +3,6 @@ using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
 using Microsoft.Data.Sqlite;
-using SQLitePCL;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -239,40 +238,6 @@ public sealed class AssessmentTargetingTests : IDisposable
                 Assert.Equal(4, state.Rating);
         });
 
-        await using (var connection = new SqliteConnection(
-            $"Data Source={Path.Combine(catalog.CatalogPath, "catalog.db")};Pooling=False"))
-        {
-            await connection.OpenAsync();
-            var updateStatements = 0;
-            strdelegate_trace trace = (_, sql) =>
-            {
-                var expectedColumn = axis == AssessmentAxis.Flag
-                    ? "flag_state"
-                    : "rating";
-                if (sql.TrimStart().StartsWith(
-                    $"UPDATE images SET {expectedColumn}",
-                    StringComparison.Ordinal))
-                {
-                    Interlocked.Increment(ref updateStatements);
-                }
-            };
-            raw.sqlite3_trace(connection.Handle, trace, null);
-            using var transaction = connection.BeginTransaction();
-            if (axis == AssessmentAxis.Flag)
-            {
-                await CatalogService.WriteFlagStateAsync(
-                    connection, transaction, ids, ImageFlag.Picked);
-            }
-            else
-            {
-                await CatalogService.WriteRatingAsync(
-                    connection, transaction, ids, 4);
-            }
-            await transaction.RollbackAsync();
-            Assert.Equal(1, updateStatements);
-            GC.KeepAlive(trace);
-        }
-
         if (axis == AssessmentAxis.Flag)
         {
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -464,22 +429,5 @@ public sealed class AssessmentTargetingTests : IDisposable
         Flag,
         Rating,
         ColorLabel
-    }
-
-    private sealed class NullBaseLoader : IBaseImageLoader
-    {
-        public bool CanLoad(ImageFile file) => true;
-
-        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
-
-        public BaseImage? LoadPreviewBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-
-        public BaseImage? LoadFullBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
     }
 }

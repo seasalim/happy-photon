@@ -339,7 +339,7 @@ public sealed class DisplayChainTraceTests
             enabled: true,
             lines.Add);
         using var bitmap = CreateBitmap(80, 40);
-        using var root = new DisplayTraceTemporaryDirectory();
+        using var root = new TemporaryDirectory();
         using var catalog = new CatalogService(root.Path);
         await using var viewModel = new MainWindowViewModel(catalog);
         var develop = CreateBoundSurface(
@@ -399,7 +399,7 @@ public sealed class DisplayChainTraceTests
         using var trace = ImageServiceHelpers.OverrideDisplayTraceForTesting(
             enabled: true,
             lines.Add);
-        using var root = new DisplayTraceTemporaryDirectory();
+        using var root = new TemporaryDirectory();
         using var catalog = new CatalogService(root.Path);
         await using var viewModel = new MainWindowViewModel(catalog);
         var cached = CreateBitmap(4, 3);
@@ -481,15 +481,4 @@ public sealed class DisplayChainTraceTests
 
     private static string F(double value) =>
         value.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
-
-    private sealed class DisplayTraceTemporaryDirectory : IDisposable
-    {
-        public string Path { get; } = System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(),
-            $"happy-photon-display-trace-{Guid.NewGuid():N}");
-
-        public DisplayTraceTemporaryDirectory() => Directory.CreateDirectory(Path);
-
-        public void Dispose() => Directory.Delete(Path, recursive: true);
-    }
 }

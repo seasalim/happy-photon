@@ -98,27 +98,4 @@ public sealed class DetailViewModelTests : IDisposable
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         Directory.Delete(_root, recursive: true);
     }
-
-    private sealed class NullBaseLoader : IBaseImageLoader
-    {
-        public bool CanLoad(ImageFile file) => true;
-
-        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) =>
-            BaseImageLoadOutcome.FromImage(
-                null,
-                BaseImageLoadFailure.DecodeFailed);
-
-        public BaseImage? LoadPreviewBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-
-        public BaseImage? LoadFullBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-    }
 }

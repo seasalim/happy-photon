@@ -119,10 +119,7 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
         {
             var path = catalog.GetRenderedThumbnailPath(file.CatalogId);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            using (var image = new MagickImage(MagickColors.Orange, 150, 100))
-            {
-                image.Write(path, MagickFormat.Jpeg);
-            }
+            TestImages.WriteJpeg(path, MagickColors.Orange, 150, 100);
             File.WriteAllText(Path.ChangeExtension(path, ".meta"), "legacy-hash");
             File.SetLastWriteTimeUtc(path, DateTime.UtcNow);
 

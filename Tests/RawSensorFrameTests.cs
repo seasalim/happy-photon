@@ -21,7 +21,7 @@ public sealed class RawSensorFrameTests
     [MemberData(nameof(FixtureNames))]
     public void ShippedRuntime_FrameMatchesRecordedOracle(string fixtureName)
     {
-        using var context = LibRawContext.Open(Asset(fixtureName));
+        using var context = LibRawContext.Open(GoldenTestPaths.Asset(fixtureName));
         context.Unpack();
         using var frame = RawSensorFrame.TryCreate(context);
         Assert.NotNull(frame);
@@ -56,7 +56,7 @@ public sealed class RawSensorFrameTests
     [Fact]
     public void Lease_BlocksProcessUntilFrameIsDisposed()
     {
-        using var context = LibRawContext.Open(Asset("canon-eos-350d.cr2"));
+        using var context = LibRawContext.Open(GoldenTestPaths.Asset("canon-eos-350d.cr2"));
         context.Unpack();
         var frame = RawSensorFrame.TryCreate(context);
         Assert.NotNull(frame);
@@ -73,7 +73,7 @@ public sealed class RawSensorFrameTests
     [Fact]
     public void ContextDispose_DefersNativeCloseWhileFrameOwnsLease()
     {
-        var context = LibRawContext.Open(Asset("canon-eos-350d.cr2"));
+        var context = LibRawContext.Open(GoldenTestPaths.Asset("canon-eos-350d.cr2"));
         context.Unpack();
         using var frame = RawSensorFrame.TryCreate(context);
 
@@ -81,7 +81,4 @@ public sealed class RawSensorFrameTests
 
         Assert.False(frame!.Samples.IsEmpty);
     }
-
-    private static string Asset(string name) =>
-        Path.Combine(GoldenTestPaths.AssetDirectory, name);
 }

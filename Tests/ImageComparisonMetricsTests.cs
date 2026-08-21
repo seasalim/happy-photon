@@ -183,7 +183,7 @@ public sealed class ImageComparisonMetricsTests
     [Fact]
     public void ReferenceResolution_EnvironmentDirectoryWinsAndEnumeratesTools()
     {
-        using var directory = new ComparisonTemporaryDirectory();
+        using var directory = new TemporaryDirectory();
         var committed = Directory.CreateDirectory(
             Path.Combine(directory.Path, "committed")).FullName;
         var overridden = Directory.CreateDirectory(
@@ -209,7 +209,7 @@ public sealed class ImageComparisonMetricsTests
     [Fact]
     public void ReferenceResolution_MissingReferenceExplainsSkipConvention()
     {
-        using var directory = new ComparisonTemporaryDirectory();
+        using var directory = new TemporaryDirectory();
         var result = ReferenceComparisonResolver.Resolve(
             "fixture.raf",
             directory.Path,
@@ -262,16 +262,5 @@ public sealed class ImageComparisonMetricsTests
     {
         using var pixels = image.GetPixels();
         return pixels.ToByteArray(PixelMapping.RGB)!;
-    }
-
-    private sealed class ComparisonTemporaryDirectory : IDisposable
-    {
-        public string Path { get; } = System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(),
-            $"happy-photon-comparison-{Guid.NewGuid():N}");
-
-        public ComparisonTemporaryDirectory() => Directory.CreateDirectory(Path);
-
-        public void Dispose() => Directory.Delete(Path, recursive: true);
     }
 }

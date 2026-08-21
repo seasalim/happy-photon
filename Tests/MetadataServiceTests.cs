@@ -17,10 +17,7 @@ public sealed class MetadataServiceTests
         var path = Path.Combine(directory, "image.jpg");
         try
         {
-            using (var source = new MagickImage(MagickColors.Red, 320, 240))
-            {
-                source.Write(path, MagickFormat.Jpeg);
-            }
+            TestImages.WriteJpeg(path, MagickColors.Red, 320, 240);
             var image = new ImageFile(path);
 
             var metadata = MetadataService.ExtractMetadata(

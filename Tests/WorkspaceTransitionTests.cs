@@ -18,7 +18,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
     {
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
-        var loader = new DecodeTransitionLoader();
+        var loader = new RedThenBlueDecodeLoader();
         var vm = CreateViewModel(catalog, loader);
         var refreshReady = NewSignal();
         var releaseRefresh = NewSignal();
@@ -80,7 +80,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
     {
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
-        var vm = CreateViewModel(catalog, new SolidLoader());
+        var vm = CreateViewModel(catalog, new GraySolidLoader());
         var image = new ImageFile(Path.Combine(_root, "original.png"))
         {
             EditSettings = new EditSettings { Exposure = 1 },
@@ -124,7 +124,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
     {
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
-        var vm = CreateViewModel(catalog, new SolidLoader());
+        var vm = CreateViewModel(catalog, new GraySolidLoader());
         var image = new ImageFile(Path.Combine(_root, "before-after.png"))
         {
             EditSettings = new EditSettings { Exposure = 1 },
@@ -177,7 +177,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
     {
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
-        var vm = CreateViewModel(catalog, new SolidLoader());
+        var vm = CreateViewModel(catalog, new GraySolidLoader());
         var image = new ImageFile(Path.Combine(_root, "shared.png"))
         {
             EditSettings = new EditSettings { Exposure = 1 },
@@ -249,7 +249,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
     private static TaskCompletionSource NewSignal() => new(
         TaskCreationOptions.RunContinuationsAsynchronously);
 
-    private sealed class DecodeTransitionLoader : IBaseImageLoader
+    private sealed class RedThenBlueDecodeLoader : IBaseImageLoader
     {
         private int _loadCount;
 
@@ -275,7 +275,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
             throw new NotSupportedException();
     }
 
-    private sealed class SolidLoader : IBaseImageLoader
+    private sealed class GraySolidLoader : IBaseImageLoader
     {
         public bool CanLoad(ImageFile file) => true;
 

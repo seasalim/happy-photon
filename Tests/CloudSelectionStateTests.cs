@@ -230,8 +230,7 @@ public sealed class CloudSelectionStateTests : IDisposable
     private string WriteJpeg(string name)
     {
         var path = Path.Combine(_root, name);
-        using var image = new MagickImage(MagickColors.Gray, 16, 16);
-        image.Write(path, MagickFormat.Jpeg);
+        TestImages.WriteJpeg(path);
         return path;
     }
 
@@ -256,21 +255,4 @@ public sealed class CloudSelectionStateTests : IDisposable
             ]
         }
     };
-
-    private sealed class NullBaseLoader : IBaseImageLoader
-    {
-        public bool CanLoad(ImageFile file) => true;
-
-        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
-
-        public BaseImage? LoadPreviewBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-
-        public BaseImage? LoadFullBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-    }
 }

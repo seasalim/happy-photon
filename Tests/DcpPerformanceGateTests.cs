@@ -37,7 +37,7 @@ public sealed class DcpPerformanceGateTests
             "Set HAPPY_PHOTON_R5B_PERF=1 to run the R5b profile gate.");
 
         using var directory = new TemporaryDirectory();
-        var rawPath = Asset("canon-eos-6d-iso-6400.cr2");
+        var rawPath = GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2");
         var table = DcpProfileReaderTests.CreateTable(2, 2, 2, 2, 1.01f, 1);
         var profilePath = SyntheticDcpFactory.WriteTemporary(
             directory.Path,
@@ -369,7 +369,7 @@ public sealed class DcpPerformanceGateTests
             availability, adobeRoots: [root]);
         var stopwatch = Stopwatch.StartNew();
         var result = await discovery.DiscoverAsync(
-            new ImageFile(Asset("canon-eos-6d-iso-6400.cr2")),
+            new ImageFile(GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2")),
             new CameraIdentity("Canon", "EOS 6D"),
             CancellationToken.None);
         stopwatch.Stop();
@@ -377,7 +377,7 @@ public sealed class DcpPerformanceGateTests
         var cold = stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
         result = await discovery.DiscoverAsync(
-            new ImageFile(Asset("canon-eos-6d-iso-6400.cr2")),
+            new ImageFile(GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2")),
             new CameraIdentity("Canon", "EOS 6D"),
             CancellationToken.None);
         stopwatch.Stop();
@@ -482,9 +482,6 @@ public sealed class DcpPerformanceGateTests
         GC.WaitForPendingFinalizers();
         GC.Collect();
     }
-
-    private static string Asset(string name) =>
-        Path.Combine(GoldenTestPaths.AssetDirectory, name);
 
     private sealed record ExportDelta(double BuiltInMs, double ActiveMs);
     private sealed record AdobeScanDelta(double ColdMs, double WarmMs);

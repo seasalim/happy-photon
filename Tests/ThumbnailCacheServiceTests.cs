@@ -132,10 +132,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         _fixture.RequireWindows();
         Directory.CreateDirectory(_tempDirectory);
         var sourcePath = Path.Combine(_tempDirectory, "source.jpg");
-        using (var source = new MagickImage(MagickColors.Red, 400, 200))
-        {
-            source.Write(sourcePath, MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(sourcePath, MagickColors.Red, 400, 200);
 
         using var bitmap = JpegThumbnailDecoder.Decode(
             sourcePath, 150, CancellationToken.None);
@@ -174,10 +171,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         _fixture.RequireWindows();
         Directory.CreateDirectory(_tempDirectory);
         var sourcePath = Path.Combine(_tempDirectory, "source.jpg");
-        using (var source = new MagickImage(MagickColors.Red, 400, 200))
-        {
-            source.Write(sourcePath, MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(sourcePath, MagickColors.Red, 400, 200);
 
         using var bitmap = JpegThumbnailDecoder.Decode(
             sourcePath, 150, CancellationToken.None);
@@ -296,11 +290,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
     {
         Directory.CreateDirectory(_tempDirectory);
         var sourcePath = Path.Combine(_tempDirectory, "source.jpg");
-        using var source = new MagickImage(
-            MagickColors.Red,
-            (uint)width,
-            (uint)height);
-        source.Write(sourcePath, MagickFormat.Jpeg);
+        TestImages.WriteJpeg(sourcePath, MagickColors.Red, (uint)width, (uint)height);
         return sourcePath;
     }
 }

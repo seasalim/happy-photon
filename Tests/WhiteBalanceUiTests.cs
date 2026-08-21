@@ -102,10 +102,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
     public async Task AsShotAndUndo_RefreshEditedThumbnail()
     {
         var sourcePath = Path.Combine(_root, "thumbnail.jpg");
-        using (var source = new MagickImage(MagickColors.Gray, 320, 200))
-        {
-            source.Write(sourcePath, MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(sourcePath, width: 320, height: 200);
 
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();

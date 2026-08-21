@@ -36,7 +36,7 @@ public sealed class ViewportRestingPerformanceTests
             using var catalog = new CatalogService(root);
             await catalog.InitializeAsync();
             await using var service = CreateService(catalog);
-            var file = new ImageFile(Asset("canon-eos-6d-iso-6400.cr2"));
+            var file = new ImageFile(GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2"));
             var (interactive, _) = await service.ApplyEditsToPreviewAsync(
                 file,
                 new EditSettings(),
@@ -105,7 +105,4 @@ public sealed class ViewportRestingPerformanceTests
             new PreviewCacheService(catalog),
             new RenderedThumbnailCacheService(catalog),
             createRenderedThumbnail: false);
-
-    private static string Asset(string fileName) =>
-        Path.Combine(GoldenTestPaths.AssetDirectory, fileName);
 }

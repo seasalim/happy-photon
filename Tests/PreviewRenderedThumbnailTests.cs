@@ -24,7 +24,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
         var (catalog, file) = await CreateFileAsync("source.dng");
         using (catalog)
         {
-            var loader = new SolidLoader(isRaw: true);
+            var loader = new CountingSolidLoader(isRaw: true);
             await using var service = CreateService(catalog, loader);
             var settings = new EditSettings { Exposure = 0.75, Saturation = 20 };
             var thumbnailCreated = new TaskCompletionSource(
@@ -76,7 +76,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
         {
             await using var service = CreateService(
                 catalog,
-                new SolidLoader(isRaw: true));
+                new CountingSolidLoader(isRaw: true));
             var thumbnailCreated = new TaskCompletionSource(
                 TaskCreationOptions.RunContinuationsAsynchronously);
             service.RenderedThumbnailCreated += () => thumbnailCreated.TrySetResult();
@@ -108,7 +108,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
         var (catalog, file) = await CreateFileAsync("shutdown.dng");
         using (catalog)
         {
-            var service = CreateService(catalog, new SolidLoader(isRaw: true));
+            var service = CreateService(catalog, new CountingSolidLoader(isRaw: true));
             var settings = new EditSettings { Exposure = 0.5 };
             var (preview, _) = await service.ApplyEditsToPreviewAsync(
                 file,
@@ -148,7 +148,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 writerGate.Task);
             await using var service = new PreviewService(
                 catalog,
-                new SolidLoader(isRaw: true),
+                new CountingSolidLoader(isRaw: true),
                 new RenderPipeline(),
                 new HistogramService(),
                 new PreviewCacheService(catalog),
@@ -201,7 +201,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 RenderSettingsHash.Compute(new EditSettings { Exposure = 0.25 }));
             await writer.DisposeAsync();
 
-            var loader = new SolidLoader(isRaw: true);
+            var loader = new CountingSolidLoader(isRaw: true);
             await using var service = CreateService(catalog, loader);
             using var cached = await service.LoadCachedPreviewAsync(file, settings);
 
@@ -221,7 +221,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
         {
             await using var service = CreateService(
                 catalog,
-                new SolidLoader(isRaw: false));
+                new CountingSolidLoader(isRaw: false));
             var settings = new EditSettings { Exposure = 0.5 };
             var (preview, _) = await service.ApplyEditsToPreviewAsync(
                 file,
@@ -248,7 +248,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
             var candidateCount = 0;
             await using var service = new PreviewService(
                 catalog,
-                new SolidLoader(isRaw: true),
+                new CountingSolidLoader(isRaw: true),
                 new RenderPipeline(),
                 new HistogramService(),
                 new PreviewCacheService(catalog),
@@ -312,7 +312,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
 
     private static Bitmap CreateExpected(EditSettings settings)
     {
-        using var baseImage = SolidLoader.CreateBase(
+        using var baseImage = CountingSolidLoader.CreateBase(
             isRaw: true,
             BaseDecodeSettings.From(settings));
         using var rendered = new RenderPipeline().Render(new RenderRequest(
@@ -337,12 +337,12 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
         if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
     }
 
-    private sealed class SolidLoader : IBaseImageLoader
+    private sealed class CountingSolidLoader : IBaseImageLoader
     {
         private readonly bool _isRaw;
         private int _loadCount;
 
-        public SolidLoader(bool isRaw) => _isRaw = isRaw;
+        public CountingSolidLoader(bool isRaw) => _isRaw = isRaw;
         public int LoadCount => Volatile.Read(ref _loadCount);
         public bool CanLoad(ImageFile file) => true;
 

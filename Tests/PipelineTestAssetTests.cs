@@ -10,8 +10,8 @@ public sealed class PipelineTestAssetTests
     [Fact]
     public void BurstPair_IsByteIdentical()
     {
-        var first = File.ReadAllBytes(Asset("nikon-d70-burst-1.nef"));
-        var second = File.ReadAllBytes(Asset("nikon-d70-burst-2.nef"));
+        var first = File.ReadAllBytes(GoldenTestPaths.Asset("nikon-d70-burst-1.nef"));
+        var second = File.ReadAllBytes(GoldenTestPaths.Asset("nikon-d70-burst-2.nef"));
 
         Assert.Equal(first, second);
     }
@@ -19,7 +19,7 @@ public sealed class PipelineTestAssetTests
     [Fact]
     public void MetadataReference_HasGpsAndOrientationSix()
     {
-        using var image = new MagickImage(Asset("srgb-exif-gps-orientation-6.jpg"));
+        using var image = new MagickImage(GoldenTestPaths.Asset("srgb-exif-gps-orientation-6.jpg"));
         var exif = image.GetExifProfile();
 
         Assert.NotNull(exif);
@@ -36,7 +36,7 @@ public sealed class PipelineTestAssetTests
     [InlineData("adobe-rgb-reference.jpg")]
     public void ColorReference_HasEmbeddedProfile(string fileName)
     {
-        using var image = new MagickImage(Asset(fileName));
+        using var image = new MagickImage(GoldenTestPaths.Asset(fileName));
         var profile = image.GetColorProfile();
 
         Assert.NotNull(profile);
@@ -46,7 +46,7 @@ public sealed class PipelineTestAssetTests
     [Fact]
     public void TiffReference_IsSixteenBit()
     {
-        using var image = new MagickImage(Asset("reference-16bit.tiff"));
+        using var image = new MagickImage(GoldenTestPaths.Asset("reference-16bit.tiff"));
 
         Assert.Equal(16u, image.Depth);
     }
@@ -55,7 +55,7 @@ public sealed class PipelineTestAssetTests
     public void FbddReference_IsCanon6dAtIso6400()
     {
         using var context = LibRawContext.Open(
-            Asset("canon-eos-6d-iso-6400.cr2"));
+            GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2"));
         var metadata = context.GetMetadata();
 
         Assert.Equal("Canon", metadata.Make?.Trim());
@@ -83,7 +83,7 @@ public sealed class PipelineTestAssetTests
     [Fact]
     public void ReferenceRaw_HasClippedHighlights()
     {
-        using var context = LibRawContext.Open(Asset("canon-eos-350d.cr2"));
+        using var context = LibRawContext.Open(GoldenTestPaths.Asset("canon-eos-350d.cr2"));
         context.Unpack();
         context.ConfigureOutput(new LibRawOutputConfiguration
         {
@@ -107,7 +107,4 @@ public sealed class PipelineTestAssetTests
         Assert.True(clippedSamples > 0,
             "Reference CR2 must clip in a no-auto-bright, linear 16-bit decode.");
     }
-
-    private static string Asset(string fileName) =>
-        Path.Combine(GoldenTestPaths.AssetDirectory, fileName);
 }

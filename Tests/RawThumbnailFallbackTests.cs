@@ -290,10 +290,7 @@ public sealed class RawThumbnailFallbackTests : IDisposable
         _fixture.RequireWindows();
         Directory.CreateDirectory(_root);
         var path = Path.Combine(_root, "larger-preview.jpg");
-        using (var image = new MagickImage(MagickColors.Blue, 900, 600))
-        {
-            image.Write(path, MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(path, MagickColors.Blue, 900, 600);
         var extractor = new EmbeddedPreviewExtractor(
             new PreviewRawService(
                 CreatePreview(120, 80, MagickColors.Green),
@@ -325,8 +322,7 @@ public sealed class RawThumbnailFallbackTests : IDisposable
         await file.EnsureCatalogIdAsync(catalog);
         var cachePath = catalog.GetThumbnailPath(file.CatalogId);
         Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
-        using var image = new MagickImage(MagickColors.Gray, (uint)width, (uint)height);
-        image.Write(cachePath, MagickFormat.Jpeg);
+        TestImages.WriteJpeg(cachePath, width: (uint)width, height: (uint)height);
         return (catalog, file);
     }
 

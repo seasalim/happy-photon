@@ -38,11 +38,11 @@ public sealed class PreviewPipelinePerformanceTests
             await Measure(
                 catalog,
                 "JPEG",
-                new ImageFile(Asset("display-p3-reference.jpg")));
+                new ImageFile(GoldenTestPaths.Asset("display-p3-reference.jpg")));
             await Measure(
                 catalog,
                 "RAW",
-                new ImageFile(Asset("canon-eos-350d.cr2")));
+                new ImageFile(GoldenTestPaths.Asset("canon-eos-350d.cr2")));
         }
         finally
         {
@@ -69,7 +69,7 @@ public sealed class PreviewPipelinePerformanceTests
         {
             using var catalog = new CatalogService(root);
             await catalog.InitializeAsync();
-            var file = new ImageFile(Asset("canon-eos-350d.cr2"));
+            var file = new ImageFile(GoldenTestPaths.Asset("canon-eos-350d.cr2"));
             await CompareRawCandidateCost(
                 catalog,
                 file,
@@ -468,9 +468,6 @@ public sealed class PreviewPipelinePerformanceTests
             new PreviewCacheService(catalog),
             new RenderedThumbnailCacheService(catalog),
             createRenderedThumbnail: createRenderedThumbnail);
-
-    private static string Asset(string fileName) =>
-        Path.Combine(GoldenTestPaths.AssetDirectory, fileName);
 
     private static void ForceCollection()
     {

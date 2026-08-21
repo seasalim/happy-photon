@@ -274,25 +274,4 @@ public sealed class RawProfileViewModelTests : IDisposable
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         Directory.Delete(_root, recursive: true);
     }
-
-    private sealed class NullBaseLoader : IBaseImageLoader
-    {
-        public bool CanLoad(ImageFile file) => true;
-
-        public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) =>
-            BaseImageLoadOutcome.Failed(BaseImageLoadFailure.DecodeFailed);
-
-        public BaseImage? LoadPreviewBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-
-        public BaseImage? LoadFullBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-    }
 }

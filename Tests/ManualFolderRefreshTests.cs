@@ -243,8 +243,7 @@ public sealed class ManualFolderRefreshTests
             var path = Path.Combine(PhotoDirectory, fileName);
             if (Path.GetExtension(fileName) is ".jpg" or ".jpeg")
             {
-                using var image = new MagickImage(MagickColors.Gray, 16, 16);
-                image.Write(path, MagickFormat.Jpeg);
+                TestImages.WriteJpeg(path);
             }
             else
             {
@@ -270,23 +269,6 @@ public sealed class ManualFolderRefreshTests
             {
                 Directory.Delete(_rootDirectory, recursive: true);
             }
-        }
-
-        private sealed class NullBaseLoader : IBaseImageLoader
-        {
-            public bool CanLoad(ImageFile file) => true;
-
-            BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
-
-            public BaseImage? LoadPreviewBase(
-                ImageFile file,
-                BaseDecodeSettings decode,
-                CancellationToken cancellationToken) => null;
-
-            public BaseImage? LoadFullBase(
-                ImageFile file,
-                BaseDecodeSettings decode,
-                CancellationToken cancellationToken) => null;
         }
     }
 }

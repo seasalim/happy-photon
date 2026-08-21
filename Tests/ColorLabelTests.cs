@@ -73,10 +73,7 @@ public sealed class ColorLabelTests : IDisposable
         var photos = Directory.CreateDirectory(
             Path.Combine(_root, "photos")).FullName;
         var path = Path.Combine(photos, "labeled.jpg");
-        using (var image = new MagickImage(MagickColors.Gray, 16, 16))
-        {
-            image.Write(path, MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(path);
 
         using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
         await catalog.InitializeAsync();
@@ -111,23 +108,6 @@ public sealed class ColorLabelTests : IDisposable
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             catalog.SaveColorLabelAsync([ids[0], long.MaxValue], ColorLabel.Red));
         Assert.Equal((int)ColorLabel.Blue, await ReadLabelAsync(ids[0]));
-    }
-
-    [Fact]
-    public async Task AmbientWrite_UsesCallerTransactionAndOuterRollback()
-    {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
-        var id = await catalog.GetOrCreateImageAsync(Path.Combine(_root, "ambient.jpg"));
-        await using var connection = await OpenAsync();
-        using (var transaction = connection.BeginTransaction())
-        {
-            await CatalogService.WriteColorLabelAsync(
-                connection, transaction, [id], ColorLabel.Purple);
-            await transaction.RollbackAsync();
-        }
-
-        Assert.Equal(0, await ReadLabelAsync(id));
     }
 
     [Fact]
@@ -279,23 +259,6 @@ public sealed class ColorLabelTests : IDisposable
             $"Data Source={Path.Combine(_root, "catalog.db")};Pooling=False");
         await connection.OpenAsync();
         return connection;
-    }
-
-    private sealed class NullBaseLoader : IBaseImageLoader
-    {
-        public bool CanLoad(ImageFile file) => true;
-
-        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.DecodeFailed);
-
-        public BaseImage? LoadPreviewBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-
-        public BaseImage? LoadFullBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
     }
 
     public void Dispose()

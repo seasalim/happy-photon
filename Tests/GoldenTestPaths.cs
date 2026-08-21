@@ -7,6 +7,9 @@ internal static class GoldenTestPaths
     public static string AssetDirectory =>
         Path.Combine(RepositoryRoot, "Tests", "assets");
 
+    public static string Asset(string name) =>
+        Path.Combine(AssetDirectory, name);
+
     public static string GoldenDirectory =>
         Path.Combine(RepositoryRoot, "Tests", "goldens");
 

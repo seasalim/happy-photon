@@ -103,7 +103,7 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
         var (catalog, file) = await CreateCatalogAndFile();
         using (catalog)
         {
-            var loader = new DecodeTransitionLoader();
+            var loader = new GatedSecondDecodeLoader();
             await using var service = new PreviewService(
                 catalog,
                 loader,
@@ -365,7 +365,7 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
             throw new NotSupportedException();
     }
 
-    private sealed class DecodeTransitionLoader : IBaseImageLoader
+    private sealed class GatedSecondDecodeLoader : IBaseImageLoader
     {
         private int _decodeCount;
 

@@ -92,7 +92,7 @@ public sealed class AgxPerformanceGateTests : IDisposable
             }
 
             using var baseImage = loader.LoadPreviewBase(
-                new ImageFile(Asset(fixture)),
+                new ImageFile(GoldenTestPaths.Asset(fixture)),
                 BaseDecodeSettings.Default,
                 CancellationToken.None) ??
                 throw new InvalidOperationException(
@@ -123,7 +123,7 @@ public sealed class AgxPerformanceGateTests : IDisposable
         string fixture)
     {
         using var baseImage = loader.LoadPreviewBase(
-            new ImageFile(Asset(fixture)),
+            new ImageFile(GoldenTestPaths.Asset(fixture)),
             BaseDecodeSettings.Default,
             CancellationToken.None) ??
             throw new InvalidOperationException(
@@ -166,7 +166,7 @@ public sealed class AgxPerformanceGateTests : IDisposable
     private async Task<ExportMeasurement> MeasureThreeVariants(
         OutputColorSpace target)
     {
-        var file = new ImageFile(Asset("canon-eos-6d-iso-6400.cr2"));
+        var file = new ImageFile(GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2"));
         var settings = new ExportSettings
         {
             OutputFolder = Path.Combine(_output, $"variants-{target}"),
@@ -188,7 +188,7 @@ public sealed class AgxPerformanceGateTests : IDisposable
 
     private async Task<double> MeasureStandardExport()
     {
-        var file = new ImageFile(Asset("srgb-reference.jpg"));
+        var file = new ImageFile(GoldenTestPaths.Asset("srgb-reference.jpg"));
         var settings = new ExportSettings
         {
             OutputFolder = Path.Combine(_output, "standard"),
@@ -303,9 +303,6 @@ public sealed class AgxPerformanceGateTests : IDisposable
             new RenderPipeline(),
             new BaseLoaderRouter(new RawBaseLoader(), new StandardBaseLoader()),
             new ExportMetadataService());
-
-    private static string Asset(string fileName) =>
-        Path.Combine(GoldenTestPaths.AssetDirectory, fileName);
 
     public void Dispose()
     {

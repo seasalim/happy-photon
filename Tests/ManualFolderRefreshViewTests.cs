@@ -86,12 +86,7 @@ public sealed class ManualFolderRefreshViewTests
             $"happy-photon-refresh-view-{Guid.NewGuid():N}");
         var photos = Path.Combine(root, "photos");
         Directory.CreateDirectory(photos);
-        using (var image = new MagickImage(MagickColors.Gray, 16, 16))
-        {
-            image.Write(
-                Path.Combine(photos, "image.jpg"),
-                MagickFormat.Jpeg);
-        }
+        TestImages.WriteJpeg(Path.Combine(photos, "image.jpg"));
         using var catalog = new CatalogService(Path.Combine(root, "catalog"));
         Complete(catalog.InitializeAsync());
         var vm = new MainWindowViewModel(

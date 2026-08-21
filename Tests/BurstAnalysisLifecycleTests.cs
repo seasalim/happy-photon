@@ -26,7 +26,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         {
             try
             {
-                CreateJpeg(Path.Combine(photos, "one.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "one.jpg"));
 
                 Complete(viewModel.LoadFolderAsync(photos));
                 WaitForThumbnailAttempt(viewModel);
@@ -57,8 +57,8 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         {
             try
             {
-                CreateJpeg(Path.Combine(photos, "one.jpg"));
-                CreateJpeg(Path.Combine(photos, "two.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "one.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "two.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
 
                 viewModel.ShowBurstGroups = true;
@@ -92,9 +92,9 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         {
             try
             {
-                CreateJpeg(Path.Combine(photos, "one.dng"));
-                CreateJpeg(Path.Combine(photos, "one.jpg"));
-                CreateJpeg(Path.Combine(photos, "two.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "one.dng"));
+                TestImages.WriteJpeg(Path.Combine(photos, "one.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "two.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
 
                 viewModel.ShowBurstGroups = true;
@@ -142,7 +142,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 Assert.Null(viewModel.PinnedStatus);
                 Assert.Null(viewModel.StatusMessage);
 
-                CreateJpeg(Path.Combine(photos, "one.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "one.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
                 Complete(viewModel.WaitForBurstAnalysisAsync());
 
@@ -178,8 +178,8 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         {
             try
             {
-                CreateJpeg(Path.Combine(photos, "one.jpg"));
-                CreateJpeg(Path.Combine(photos, "two.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "one.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "two.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
 
                 viewModel.ShowBurstGroups = true;
@@ -240,7 +240,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         {
             try
             {
-                CreateJpeg(Path.Combine(firstFolder, "old.jpg"));
+                TestImages.WriteJpeg(Path.Combine(firstFolder, "old.jpg"));
                 Complete(viewModel.LoadFolderAsync(firstFolder));
                 viewModel.ShowBurstGroups = true;
                 Complete(firstLoadStarted.Task);
@@ -249,7 +249,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                     Path.GetDirectoryName(firstFolder)!,
                     "second-photos");
                 Directory.CreateDirectory(secondFolder);
-                CreateJpeg(Path.Combine(secondFolder, "new.jpg"));
+                TestImages.WriteJpeg(Path.Combine(secondFolder, "new.jpg"));
                 Complete(viewModel.LoadFolderAsync(secondFolder));
                 releaseFirstLoad.TrySetResult();
                 Complete(viewModel.WaitForBurstAnalysisAsync());
@@ -295,8 +295,8 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         {
             try
             {
-                CreateJpeg(Path.Combine(photos, "local.jpg"));
-                CreateJpeg(Path.Combine(photos, "cloud.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "local.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "cloud.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
 
                 viewModel.ShowBurstGroups = true;
@@ -339,7 +339,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         {
             try
             {
-                CreateJpeg(Path.Combine(photos, "local.jpg"));
+                TestImages.WriteJpeg(Path.Combine(photos, "local.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
                 WaitForThumbnailAttempt(viewModel);
                 var image = Assert.Single(viewModel.Library.AllImages);
@@ -390,11 +390,6 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         });
     }
 
-    private static void CreateJpeg(string path)
-    {
-        using var image = new MagickImage(MagickColors.Gray, 16, 16);
-        image.Write(path, MagickFormat.Jpeg);
-    }
 
     // Bounds a genuine hang rather than asserting decode latency. A real JPEG
     // decode is milliseconds locally but can stall for seconds on a shared CI

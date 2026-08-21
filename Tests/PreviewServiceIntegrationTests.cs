@@ -110,8 +110,7 @@ public sealed class PreviewServiceIntegrationTests : IDisposable
     private string WriteSource(string name, MagickColor color)
     {
         var path = Path.Combine(_tempDirectory, name);
-        using var image = new MagickImage(color, 64, 48);
-        image.Write(path, MagickFormat.Jpeg);
+        TestImages.WriteJpeg(path, color, 64, 48);
         return path;
     }
 
