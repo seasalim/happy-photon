@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 
@@ -43,19 +44,22 @@ public partial class MainWindowViewModel
             ? ScopeView.Histogram
             : SelectedScope;
 
-    public ScopeOption SelectedScopeOption
+    [RelayCommand]
+    private void SelectScope(ScopeView scope)
     {
-        get => ScopeOptions[(int)EffectiveScope];
-        set
-        {
-            if (value?.IsEnabled == true)
-            {
-                SelectedScope = value.Scope;
-            }
-        }
+        SelectedScope = scope;
+        // Clicking the already-active icon still toggles the button's local
+        // IsChecked; notify unconditionally so the binding re-asserts it.
+        NotifyScopeState();
     }
 
     public bool IsRawHistogramAvailable => RawHistogram != null;
+    public bool IsHistogramScopeActive =>
+        EffectiveScope == ScopeView.Histogram;
+    public bool IsWaveformScopeActive =>
+        EffectiveScope == ScopeView.Waveform;
+    public bool IsRawHistogramScopeActive =>
+        EffectiveScope == ScopeView.RawHistogram;
     public bool IsHistogramScopeEffective =>
         EffectiveScope != ScopeView.Waveform;
     public bool IsWaveformScopeEffective =>
@@ -192,7 +196,9 @@ public partial class MainWindowViewModel
         rawOption.Hint = RawHistogramHint;
         OnPropertyChanged(nameof(IsRawHistogramAvailable));
         OnPropertyChanged(nameof(EffectiveScope));
-        OnPropertyChanged(nameof(SelectedScopeOption));
+        OnPropertyChanged(nameof(IsHistogramScopeActive));
+        OnPropertyChanged(nameof(IsWaveformScopeActive));
+        OnPropertyChanged(nameof(IsRawHistogramScopeActive));
         OnPropertyChanged(nameof(IsHistogramScopeEffective));
         OnPropertyChanged(nameof(IsWaveformScopeEffective));
         OnPropertyChanged(nameof(EffectiveHistogram));

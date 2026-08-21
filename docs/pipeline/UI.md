@@ -152,8 +152,10 @@ never offers hydration or causes a cloud placeholder to be read.
 ## 5. Scope box + base-arming indicator
 
 - **Scope box** (runs 106/107): the Develop panel's top slot is a scope box whose
-  header selector picks exactly one body — display histogram (default), luminance
-  waveform, or RAW sensor histogram. The histogram plot itself is
+  header — the effective-scope title beside a row of three always-present icon
+  toggles (mound = histogram, CFA mosaic = RAW, scanlines = waveform) — picks
+  exactly one body: display histogram (default), luminance waveform, or RAW
+  sensor histogram. The histogram plot itself is
   frozen: bins, channel colors, geometry, and 80 px height do not change.
   Alternate bodies may grow the box vertically only while selected, absorbed by
   the adjustment scroll area. Scope selection is session-only VM state. Scopes

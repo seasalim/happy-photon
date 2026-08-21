@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
@@ -27,37 +28,44 @@ public sealed class WaveformScopeUiTests : IDisposable
             loader,
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally));
+                SourceAvailability.AvailableLocally))
+        {
+            IsDevelopMode = true
+        };
         var panel = new DevelopEditPanel { DataContext = vm };
         var window = new Window { Width = 250, Height = 660, Content = panel };
         window.Show();
         Dispatcher.UIThread.RunJobs();
-        var selector = panel.FindControl<ComboBox>("ScopeSelector")!;
+        var title = panel.FindControl<TextBlock>("ScopeTitle")!;
+        var histogramButton = panel.FindControl<ToggleButton>("HistogramScopeButton")!;
+        var waveformButton = panel.FindControl<ToggleButton>("WaveformScopeButton")!;
+        var rawButton = panel.FindControl<ToggleButton>("RawHistogramScopeButton")!;
         var histogram = panel.FindControl<HistogramView>("DevelopHistogram")!;
         var waveform = panel.FindControl<WaveformView>("DevelopWaveform")!;
         var options = vm.ScopeOptions;
 
-        Assert.Equal(3, selector.ItemCount);
         Assert.Equal(
             ["HISTOGRAM", "WAVEFORM", "RAW HISTOGRAM"],
             options.Select(option => option.DisplayName));
+        Assert.Equal("HISTOGRAM", title.Text);
+        Assert.True(histogramButton.IsChecked);
+        Assert.False(waveformButton.IsChecked);
+        Assert.False(rawButton.IsChecked);
         Assert.True(histogram.IsVisible);
         Assert.False(waveform.IsVisible);
         Assert.Equal(80, histogram.FindControl<Canvas>("HistogramCanvas")!.Height);
         Assert.Equal(80, waveform.FindControl<Image>("WaveformImage")!.Height);
-        Assert.False(options[2].IsEnabled);
-        Assert.Equal("Select a RAW photograph.", options[2].Hint);
-        selector.IsDropDownOpen = true;
-        Dispatcher.UIThread.RunJobs();
-        Assert.False(Assert.IsType<ComboBoxItem>(
-            selector.ContainerFromIndex(2)).IsEnabled);
-        selector.IsDropDownOpen = false;
+        Assert.False(rawButton.IsEnabled);
+        Assert.Equal("Select a RAW photograph.", ToolTip.GetTip(rawButton));
 
         var loadCount = loader.LoadCount;
         var activityEpoch = vm.BackgroundActivityEpoch;
-        vm.SelectedScope = ScopeView.Waveform;
+        waveformButton.Command!.Execute(waveformButton.CommandParameter);
         Dispatcher.UIThread.RunJobs();
         Assert.Same(options, vm.ScopeOptions);
+        Assert.Equal("WAVEFORM", title.Text);
+        Assert.False(histogramButton.IsChecked);
+        Assert.True(waveformButton.IsChecked);
         Assert.False(histogram.IsVisible);
         Assert.True(waveform.IsVisible);
         Assert.Equal(loadCount, loader.LoadCount);
@@ -67,8 +75,9 @@ public sealed class WaveformScopeUiTests : IDisposable
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(ScopeView.RawHistogram, vm.SelectedScope);
         Assert.Equal(ScopeView.Histogram, vm.EffectiveScope);
-        Assert.Equal("HISTOGRAM", vm.EffectiveScopeTitle);
-        Assert.Same(options[0], selector.SelectedItem);
+        Assert.Equal("HISTOGRAM", title.Text);
+        Assert.True(histogramButton.IsChecked);
+        Assert.False(rawButton.IsChecked);
         Assert.True(histogram.IsVisible);
         Assert.False(waveform.IsVisible);
 
