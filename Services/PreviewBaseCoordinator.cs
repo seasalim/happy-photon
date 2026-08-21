@@ -229,6 +229,12 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
                             ? null
                             : new HeldBase(large);
                         _heldIdentity = session.Identity;
+                        ImageServiceHelpers.LogDisplayTrace(
+                            $"base installed key={session.Identity.DecodeKey} " +
+                            $"profile={interactive.Info.DcpProfile?.Name ?? "NONE"} " +
+                            $"status={interactive.Info.ProfileStatus} " +
+                            $"bias={interactive.Info.SourceExposureBiasEv:F4} " +
+                            $"hasLarge={large != null}");
                     }
                     _currentDecode = null;
                 }

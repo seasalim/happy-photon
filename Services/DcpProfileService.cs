@@ -18,7 +18,27 @@ internal sealed class DcpProfileService
         _reader = reader ?? new DcpProfileReader();
     }
 
-    internal Task<DcpProfileResolution> ResolveAsync(
+    internal async Task<DcpProfileResolution> ResolveAsync(
+        ImageFile image,
+        RawProfileSelection? selection,
+        bool forceRefresh,
+        CancellationToken cancellationToken)
+    {
+        var resolution = await ResolveCoreAsync(
+            image,
+            selection,
+            forceRefresh,
+            cancellationToken).ConfigureAwait(false);
+        ImageServiceHelpers.LogDisplayTrace(
+            $"profile resolve token={resolution.Token} " +
+            $"status={resolution.Status} " +
+            $"payload={resolution.Profile != null} " +
+            $"selection={selection?.CacheToken ?? "none"} " +
+            $"isRaw={image.IsRaw} force={forceRefresh}");
+        return resolution;
+    }
+
+    private Task<DcpProfileResolution> ResolveCoreAsync(
         ImageFile image,
         RawProfileSelection? selection,
         bool forceRefresh,
