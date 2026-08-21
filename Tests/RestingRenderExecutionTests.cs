@@ -94,6 +94,29 @@ public sealed class RestingRenderExecutionTests
             new RenderPipeline().RenderResting(request, execution));
     }
 
+    [Fact]
+    public void RestingExecution_ActiveChromaObservesCancellationAtStageEntry()
+    {
+        using var baseImage = CreatePatternBase(isRaw: true);
+        using var cancellation = new CancellationTokenSource();
+        var request = new RenderRequest(
+            baseImage,
+            new EditSettings { Saturation = 100, Vibrance = 100 },
+            RenderIntent.Preview,
+            MaxDimension: null,
+            new RenderOptions(false, false));
+        var execution = RenderExecutionOptions.Resting(
+            cancellation.Token,
+            maxDegreeOfParallelism: 2,
+            stageStarted: stage =>
+            {
+                if (stage == "chroma") cancellation.Cancel();
+            });
+
+        Assert.Throws<OperationCanceledException>(() =>
+            new RenderPipeline().RenderResting(request, execution));
+    }
+
     private static CurveData CreateCurve(double x, double y)
     {
         var curve = new CurveData();

@@ -48,6 +48,19 @@ internal static class GoldenTestCases
     private static readonly GoldenSettingsCase WhiteBalance9000TintMinus50 =
         new("wb-9000-tint-minus-50", () => CreateWhiteBalance(9000, -50));
 
+    public static readonly GoldenSettingsCase SaturationMinus50 =
+        new("saturation-minus-50", () => new EditSettings { Saturation = -50 });
+
+    public static readonly GoldenSettingsCase VibranceMinus100 =
+        new("vibrance-minus-100", () => new EditSettings { Vibrance = -100 });
+
+    public static readonly GoldenSettingsCase CombinedChroma =
+        new("chroma-combined", () => new EditSettings
+        {
+            Saturation = -35,
+            Vibrance = 70
+        });
+
     private static readonly IReadOnlyList<GoldenSettingsCase> AllTonal =
     [
         Identity,
@@ -67,6 +80,14 @@ internal static class GoldenTestCases
         WhiteBalance9000TintMinus50
     ];
 
+    private static readonly IReadOnlyList<GoldenSettingsCase> AllCasesWithChroma =
+    [
+        .. AllCases,
+        SaturationMinus50,
+        VibranceMinus100,
+        CombinedChroma
+    ];
+
     private static readonly IReadOnlyList<GoldenSettingsCase> IdentityAndExposure =
     [
         Identity,
@@ -81,8 +102,8 @@ internal static class GoldenTestCases
 
     public static IReadOnlyList<GoldenAssetCase> Assets { get; } =
     [
-        new("canon-eos-350d", "canon-eos-350d.cr2", true, false, AllCases),
-        new("display-p3-reference", "display-p3-reference.jpg", false, false, AllCases),
+        new("canon-eos-350d", "canon-eos-350d.cr2", true, false, AllCasesWithChroma),
+        new("display-p3-reference", "display-p3-reference.jpg", false, false, AllCasesWithChroma),
         new("nikon-d70", "nikon-d70-burst-1.nef", true, false, IdentityExposureAndWb),
         new("fujifilm-x30", "fujifilm-x30.raf", true, false, IdentityExposureAndWb),
         new("pentax-k-r", "pentax-k-r.dng", true, false, IdentityExposureAndWb),

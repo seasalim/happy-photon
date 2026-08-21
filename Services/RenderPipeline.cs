@@ -6,7 +6,7 @@ namespace HappyPhoton.Services;
 
 public sealed class RenderPipeline
 {
-    public const int Version = 9;
+    public const int Version = 10;
 
     public RenderResult Render(RenderRequest request) =>
         Render(request, RenderDetail.DefaultBandPixelLimit);
@@ -169,7 +169,7 @@ public sealed class RenderPipeline
             execution.ReportStage("color-encoding");
             RenderColorEncoding.RetagAsSrgb(working);
             execution.ReportStage("chroma");
-            RenderChromaStage.Apply(working, request.Settings);
+            RenderChromaStage.Apply(working, request.Settings, execution);
             execution.ThrowIfCancellationRequested();
             execution.ReportStage("capture-sharpen");
             RenderSharpening.ApplyCaptureResting(

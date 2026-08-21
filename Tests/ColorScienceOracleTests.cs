@@ -17,6 +17,8 @@ public sealed class ColorScienceOracleTests
             oracle.Spaces.Select(space => space.Id));
         Assert.Equal(2, oracle.Adaptations.Count);
         Assert.Equal(6, oracle.TransferFunctions.SrgbEotf.Count);
+        Assert.Equal(5, oracle.Oklab.RgbVectors.Count);
+        Assert.Equal(3, oracle.Oklab.GamutProjectionVectors.Count);
         Assert.Equal("ColorChecker24 - Before November 2014",
             oracle.ColorChecker.Dataset);
         Assert.Equal("CIE 1931 2 Degree Standard Observer",

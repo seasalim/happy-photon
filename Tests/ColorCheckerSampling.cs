@@ -67,12 +67,48 @@ internal static class ColorCheckerSampling
         return result;
     }
 
+    internal static MagickGeometry GetPatchBounds(
+        ColorCheckerGeometry geometry,
+        int patchIndex,
+        double scale)
+    {
+        if (scale <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(scale));
+        }
+        for (var row = 0; row < geometry.Rows; row++)
+        for (var column = 0; column < geometry.Columns; column++)
+        {
+            if (geometry.PatchIndexByImageCell[row][column] != patchIndex)
+            {
+                continue;
+            }
+            var polygon = CreatePatchPolygon(geometry, row, column, 0.08);
+            var x = (int)Math.Floor(polygon.Min(point => point.X) * scale);
+            var y = (int)Math.Floor(polygon.Min(point => point.Y) * scale);
+            var right = (int)Math.Ceiling(polygon.Max(point => point.X) * scale);
+            var bottom = (int)Math.Ceiling(polygon.Max(point => point.Y) * scale);
+            return new MagickGeometry(x, y, (uint)(right - x), (uint)(bottom - y));
+        }
+        throw new ArgumentOutOfRangeException(nameof(patchIndex));
+    }
+
     private static ColorCheckerPoint[] CreatePatchPolygon(
         ColorCheckerGeometry geometry,
         int row,
-        int column)
+        int column) =>
+        CreatePatchPolygon(
+            geometry,
+            row,
+            column,
+            geometry.CentralInsetFraction);
+
+    private static ColorCheckerPoint[] CreatePatchPolygon(
+        ColorCheckerGeometry geometry,
+        int row,
+        int column,
+        double inset)
     {
-        var inset = geometry.CentralInsetFraction;
         return
         [
             Project(geometry, (column + inset) / geometry.Columns,

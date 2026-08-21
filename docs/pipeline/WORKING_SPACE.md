@@ -110,7 +110,9 @@ with vectors.
 RAW composes the AgX inset with white balance,
 evaluates the tone engine, and applies the AgX outset; standard sources use white
 balance and the retained display-referred chain. Chroma and all detail stages then run
-on encoded display Rec.2020. After resize and optional output sharpening, vignette and
+on encoded display Rec.2020. The chroma stage alone temporarily decodes each value to
+linear Rec.2020 for its OKLab/OKLCh transform, then returns to that encoded contract in
+the same pass. After resize and optional output sharpening, vignette and
 grain run in that same encoded Rec.2020 domain. Only then does finalization decode,
 convert display-linear Rec.2020 to sRGB or Display P3, clamp, and encode. Preview always
 selects sRGB.
@@ -120,6 +122,30 @@ for crossing off), with the fold refunded by the active tone regime. Target matr
 never affect shared edits. Scene-referred RAW highlight statistics sample after WB and
 exposure but before the inset; `RawNearClip` keeps its legacy decoded display-basis
 meaning (RENDER.md §7).
+
+### 5.1 Perceptual chroma derivation and gamut projection
+
+The chroma stage composes the §2 Rec.2020→XYZ matrix with Björn Ottosson's published
+XYZ(D65)→LMS matrix before taking signed cube roots and applying his LMS'→OKLab
+matrix. The resulting Rec.2020→LMS matrix is:
+
+```
+ 0.6166884417511044  0.3601590704701176  0.0230432935209057
+ 0.2651401961832023  0.6358564846985174  0.0990302335663959
+ 0.1001506451032589  0.2040043234319267  0.6963246774370333
+```
+
+`L`, `C = sqrt(a²+b²)`, and `h = atan2(b,a)` are all computed in `double`.
+Saturation and the chroma- and hue-weighted vibrance factor scale only C. For a
+transformed color outside the Rec.2020 cube, each inverse RGB channel is a cubic in
+the scalar position along the constant-L/h ray. The implementation selects the first
+valid zero or one channel boundary and retreats only for floating-point containment;
+a bounded bisection supplies the defensive fallback. Thus gamut mapping preserves L
+and h instead of independently clipping RGB channels.
+
+Production uses the composed matrices. Tests independently derive them from the
+BT.2020 primaries and Ottosson's matrices, and compare production-path RGB/OKLCh and
+projection results with the committed `colour-science` oracle (§7).
 
 ## 6. White balance
 
@@ -178,11 +204,13 @@ source and the target and leave the test green.
   `chad`, and the D50 PCS illuminant.
 - **W3C CSS Color 4 conversion appendix** — the published matrix values §2 is checked
   against, sourced there from the standards above.
+- **Björn Ottosson, “A perceptual color space for image processing” (2020)** — the
+  XYZ(D65)↔LMS and LMS'↔OKLab transforms used in §5.1.
 - **LibRaw 0.22 documentation** for `output_color`; the row-sum-1 camera-matrix convention
   as already recorded in WHITE_BALANCE.md §5.2.
 - `Tests/assets/color-science-oracle.json` — the committed BSD `colour-science` oracle
-  (TESTING.md §4.1 anchor 3), which independently carries the linear sRGB and linear
-  Rec.2020 matrices used above.
+  (TESTING.md §4.1 anchor 3), which independently carries the linear sRGB, linear
+  Rec.2020, OKLab/OKLCh, and gamut-projection vectors used above.
 
 ## 9. Output targets
 

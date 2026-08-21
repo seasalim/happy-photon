@@ -124,9 +124,11 @@ Property tests hold all §3 fixed points across the full slider grid.
 Every shared stage runs before the target fork, so in-gamut edited content
 agrees between sRGB and Display P3 within mean ΔE00 ≤ 0.034 (synthetic worst
 case) and ≤ 0.053 (real-RAW full-combo edit), measured at the renderer's Q16
-boundary with sharpening off and on. Measured values are ≈ 0.002 and
-≈ 0.0001. Encoded 8-bit files cannot carry this bound — quantizing identical
-colors to different target codes alone measures ≈ 0.2 mean ΔE00.
+boundary with sharpening off and on. After the render-v10 perceptual-chroma
+change, the observed synthetic value is 0.0022 with sharpening off or on; the
+real-RAW value is 0.0014 off or on. Encoded 8-bit files cannot carry this
+bound — quantizing identical colors to different target codes alone measures
+≈ 0.2 mean ΔE00.
 
 ## 6. Luma authority
 

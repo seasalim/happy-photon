@@ -153,7 +153,8 @@ public sealed class ImageExportServiceVariantTests : IDisposable
             {
                 Exposure = 0.5,
                 Contrast = 20,
-                Saturation = 10
+                Saturation = 10,
+                Vibrance = -7
             }
         };
         var settings = new ExportSettings

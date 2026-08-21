@@ -93,7 +93,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
             │              standard: retained chain→channel→master   │
             │              retained display-domain chain (exact Q16)  │
             │ 5 Matrix     RAW: AgX outset; standard: identity         │
-            │ 6 Chroma     saturation, vibrance (Modulate)            │
+            │ 6 Chroma     OKLCh saturation + protected vibrance      │
             │ 7 Detail     capture sharpen, chroma NR (Rec.2020 luma) │
             └──────────────┬───────────────────────────────┬──────────┘
                      histogram + clipping stats            │
@@ -222,7 +222,7 @@ content.
 | `Services/ToneLut.cs` | exact crossing-off LUT composition (RENDER.md §5) |
 | `Services/ToneLutApplicator.cs` | unrounded-input linear interpolation with one Q16 write |
 | `Services/RenderChromaticStage.cs` | white-balance matrix application |
-| `Services/RenderChromaStage.cs` | behavior-neutral saturation and vibrance application |
+| `Services/RenderChromaStage.cs` + `OklabColor.cs` | fused OKLCh saturation/vibrance and gamut projection |
 | `Services/RenderDetail.cs` + `RenderSharpening.cs` | fixed detail operations |
 | `Services/RenderEffects.cs` | post-resize vignette and deterministic film grain |
 | `Services/WhiteBalanceModel.cs` | CCT/tint ↔ gains math (WHITE_BALANCE.md) |
@@ -252,10 +252,11 @@ settings hash.
 In-memory identity adds normalized file path and preview/full size class;
 rendered-cache settings hashes also carry the installed outcome token.
 The current marker values live in code (`RenderPipeline.Version` and
-`BaseImage.Version`); the doc deliberately does not restate them. A selected
-DCP profile bumps neither version: the
-no-profile path is unchanged, while active and rejected profile outcomes are
-isolated by the DCP token.
+`BaseImage.Version`); the doc deliberately does not restate them. The
+perceptual OKLCh chroma stage incremented the render version (its golden
+attribution lives beside the goldens); a selected DCP profile bumps neither
+version: the no-profile path is unchanged, while active and rejected profile
+outcomes are isolated by the DCP token.
 
 ## 7. Current boundaries
 

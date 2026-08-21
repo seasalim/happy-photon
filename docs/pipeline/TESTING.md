@@ -101,10 +101,12 @@ not proven through a production diagnostic seam.
   spec change in the PR. Each re-baseline records a pre/post attribution report
   (per-image ΔE summary); only the active generation is kept, and superseded versions
   are pruned once the report is captured.
-- Settings cases (10 total): **tonal set** — identity; +2 EV; −2 EV; highlights −100;
+- Settings cases (16 total): **tonal set** — identity; +2 EV; −2 EV; highlights −100;
   shadows +80; contrast +50; full-combo tonal preset. **WB set** — WB 3000 K;
   WB 9000 K tint +50; WB 9000 K tint −50. Never baseline WB cases while the chromatic
   stage is a stub — that would golden "WB ignored" and immediately invalidate itself.
+  **Chroma set** — saturation-only, vibrance-only, and combined settings on the
+  reference RAW and Display-P3 fixture (6 cases).
 
 The full-combo tonal case is pinned to exposure +1 EV, brightness +10, contrast +25,
 shadows +35, highlights −50, and a monotone curve through `(0,0)`, `(0.25,0.20)`,
@@ -121,11 +123,14 @@ at defaults.
 | HEIC | identity (skippable per §6) | — |
 
 The matrix determines the golden count; the tracked files live under the
-generation directory named by `ACTIVE_VERSION`. The clipped-highlight case uses
-the bright water reflection in the reference CR2
+generation directory named by `ACTIVE_VERSION`, with the chroma set adding its
+six cases on the reference CR2 and the Display-P3 JPEG. The clipped-highlight
+case uses the bright water reflection in the reference CR2
 ([DECODE.md §2.3](DECODE.md#23-why-clip-and-blend-are-the-supported-modes)).
-Each re-baseline keeps its attribution report beside its goldens (currently
-`Tests/goldens/v9/R5A_ATTRIBUTION.md`).
+The perceptual-chroma re-baseline left every neutral-chroma case
+byte-identical. Each re-baseline keeps its attribution report beside its
+goldens (currently `Tests/goldens/v10/CHROMA_ATTRIBUTION.md`, alongside the
+carried `R5A_ATTRIBUTION.md`).
 
 ## 3. Tolerances (normative)
 
@@ -143,9 +148,11 @@ Each re-baseline keeps its attribution report beside its goldens (currently
 WYSIWYG is calibrated over every active-generation settings case using the actual
 preview base and a full-base export, aligning the occasional one-pixel aspect
 difference to the preview dimensions. Crossing-on measured a worst mean of 1.87 and
-worst p99 of 7.97; crossing-off was bit-identical. Each worst observation rounds up
-to the next 0.5, producing 2.0/8.0. The separate half/full base bound covers the
-decoded sampling gap before tone.
+worst p99 of 7.97; crossing-off was bit-identical. The active-chroma RAW cases
+measure 0.82/3.54 (S −50), 0.90/4.15 (V −100), and 1.25/5.61 (combined) mean/p99
+ΔE76; standard cases stay bit-identical at the common dimension. Each worst
+observation rounds up to the next 0.5, producing 2.0/8.0. The separate half/full
+base bound covers the decoded sampling gap before tone.
 
 **OS gating policy:** goldens are generated on Linux CI (canonical). Linux uses
 the same-platform mean/p99 bounds above. Windows and Apple Silicon macOS compare every
@@ -222,6 +229,13 @@ orders above the observed difference.
     determinism suites cover the integrated boundaries. `DcpColorCheckerAnchorTests`
     applies a generated synthetic profile to the D300 ground-truth fixture without a
     skip path. No Adobe profile is committed.
+15. **Perceptual-chroma suites:** `OklabColorDerivationTests` independently derives
+    the composed matrices and consumes oracle vectors; `OklabColorPropertyTests`
+    pins factor, invariance, taper, skin window, and maximal-ray projection semantics;
+    `RenderChromaStageTests` covers single-final-Q16 precision, bounded-band parity,
+    identity skip, both tone regimes, resting execution, and alpha preservation.
+    `PerceptualChromaExportTests` reads active RAW/standard variants back through the
+    real export service for both output targets.
 
 ### 4.1 Pipeline validation anchors
 
@@ -249,11 +263,14 @@ Every stage that changes pixels answers to four anchors:
    illuminants, defaults, table ordering, and V encoding cite Adobe DNG 1.7.1 in the
    parser and are exercised through independently built TIFF-IFD fixtures.
    Production sRGB and Rec.2020 forward/inverse basis vectors are checked directly.
+   OKLab adds Ottosson's XYZ↔LMS and LMS'↔Lab authorities; tests independently
+   compose them with a BT.2020 matrix derived from the published primaries.
 3. **Independent oracle.** `Tests/assets/color-science-oracle.json` contains linear
    sRGB/D65, linear Rec.2020/D65, and linear ROMM/D50 RGB↔XYZ matrices and round trips,
    Bradford D50↔D65 adaptation, a synthetic camera→sRGB characterization matrix and
    transformed RGB vectors, DCP ProPhoto crossing vectors, sRGB EOTF vectors, and the pre-November-2014
-   ColorChecker values for the CIE 1931 2° observer. It is emitted by the dev-only
+   ColorChecker values for the CIE 1931 2° observer, plus Rec.2020↔OKLab/OKLCh and
+   constant-L/h gamut-projection vectors. It is emitted by the dev-only
    BSD-licensed `colour-science` generator. Tests and CI read only JSON and never run
    Python. Regeneration is intentionally version-locked:
 
@@ -292,6 +309,26 @@ runs the same non-skipping physical measurement with frozen mean/max ΔE00 bound
 anchor. Dev-only `scripts/SyntheticDcpGenerator.csproj` generates valid, malformed,
 and dual-table fixtures without checking binaries into the repository.
 
+### 4.2 Perceptual-chroma look gate
+
+`PerceptualChromaLookGateTests` renders a test-only frozen legacy Modulate reference
+beside the production OKLCh result from the same upstream pixels. It covers every
+canonical golden fixture (including TIFF and HEIC under the normal codec skip policy)
+at S/V −100, −50, +50, and +100 plus two combined cases. A sentinel prevents an
+accidental shared implementation from erasing the A/B difference. The sheet also joins
+the D300 manifest geometry and patch mapping with oracle labels/reference Lab values to
+show skin and neighboring non-skin crops under positive and negative vibrance.
+
+```powershell
+$env:HAPPY_PHOTON_CHROMA_LOOKGATE='1'
+$env:HAPPY_PHOTON_CHROMA_LOOKGATE_DIR='artifacts/perceptual-chroma-lookgate'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build `
+  --filter FullyQualifiedName~PerceptualChromaLookGateTests
+```
+
+The generated `index.html` is the maintainer product checkpoint; approval is required
+before merge and the artifacts are not a numeric-oracle substitute.
+
 ## 5. Performance
 
 Opt-in `HAPPY_PHOTON_PERF=1` diagnostics remain outside normal CI. The tone
@@ -303,6 +340,14 @@ cold all-channel-curve ticks for one RAW and one standard fixture,
 sampling process private memory every 10 ms. Reports compare against the same
 harness run on the pre-AgX baseline (`878903f`); budgets are slider ≤ 150 ms,
 export wall ≤ +5%, and private peak ≤ +16 MiB.
+
+The same integrated gate includes active chroma for every slider fixture, a
+projection-heavy Canon S=+100 endpoint, and active full-resolution three-variant RAW
+exports for both targets. Active-minus-neutral private peak must stay within the same
++16 MiB ceiling. `PerceptualChromaPerformanceTests` separately measures the complete
+pooled-band pass, including pixel-cache traffic, against a same-fixture AgX crossing
+comparator and enforces the 60 ms class; the neutral identity test proves no pixel
+access instead of timing an empty call.
 
 `DcpPerformanceGateTests` runs separately with `HAPPY_PHOTON_R5B_PERF=1` against the
 20 MP Canon 6D fixture. It records cold external, cold embedded, and warm selected-

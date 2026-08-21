@@ -34,6 +34,21 @@ CAMERA_TO_SRGB = np.array(
     ],
     dtype=float,
 )
+OKLAB_ENCODED_SAMPLES = np.array(
+    [
+        [0.10, 0.20, 0.70],
+        [0.82, 0.31, 0.18],
+        [0.50, 0.50, 0.50],
+        [0.02, 0.025, 0.03],
+        [0.95, 0.15, 0.80],
+    ],
+    dtype=float,
+)
+OKLAB_PROJECTION_CASES = (
+    ([0.92, 0.15, 0.05], 2.0),
+    ([0.10, 0.85, 0.20], 2.0),
+    ([0.10, 0.20, 0.95], 2.0),
+)
 
 
 def array(value: np.ndarray) -> list:
@@ -127,6 +142,85 @@ def camera_characterization() -> dict:
     }
 
 
+def to_oklch(lab: np.ndarray) -> np.ndarray:
+    hue = np.arctan2(lab[2], lab[1]) % (2 * np.pi)
+    return np.array([lab[0], np.hypot(lab[1], lab[2]), hue])
+
+
+def from_oklch(lch: np.ndarray) -> np.ndarray:
+    return np.array(
+        [lch[0], lch[1] * np.cos(lch[2]), lch[1] * np.sin(lch[2])]
+    )
+
+
+def oklab_vectors() -> dict:
+    from colour.models.oklab import (  # pylint: disable=import-outside-toplevel
+        MATRIX_1_XYZ_TO_LMS,
+        MATRIX_2_LMS_TO_LAB,
+    )
+
+    rec2020 = colour.RGB_COLOURSPACES["ITU-R BT.2020"]
+    to_xyz = np.asarray(rec2020.matrix_RGB_to_XYZ, dtype=float)
+    from_xyz = np.asarray(rec2020.matrix_XYZ_to_RGB, dtype=float)
+    rec2020_to_lms = MATRIX_1_XYZ_TO_LMS @ to_xyz
+    lms_to_rec2020 = from_xyz @ np.linalg.inv(MATRIX_1_XYZ_TO_LMS)
+
+    rgb_vectors = []
+    for encoded in OKLAB_ENCODED_SAMPLES:
+        linear = colour.models.eotf_sRGB(encoded)
+        xyz = to_xyz @ linear
+        lab = colour.XYZ_to_Oklab(xyz)
+        recovered = from_xyz @ colour.Oklab_to_XYZ(lab)
+        rgb_vectors.append(
+            {
+                "encodedRec2020": array(encoded),
+                "linearRec2020": array(linear),
+                "oklab": array(lab),
+                "oklch": array(to_oklch(lab)),
+                "recoveredLinearRec2020": array(recovered),
+            }
+        )
+
+    projection_vectors = []
+    for encoded, scale in OKLAB_PROJECTION_CASES:
+        linear = colour.models.eotf_sRGB(np.asarray(encoded, dtype=float))
+        source = to_oklch(colour.XYZ_to_Oklab(to_xyz @ linear))
+        target = source.copy()
+        target[1] *= scale
+        unprojected = from_xyz @ colour.Oklab_to_XYZ(from_oklch(target))
+        low = 0.0
+        high = float(target[1])
+        for _ in range(80):
+            middle = (low + high) * 0.5
+            candidate = target.copy()
+            candidate[1] = middle
+            rgb = from_xyz @ colour.Oklab_to_XYZ(from_oklch(candidate))
+            if np.all((rgb >= 0) & (rgb <= 1)):
+                low = middle
+            else:
+                high = middle
+        projected = target.copy()
+        projected[1] = low
+        projected_rgb = from_xyz @ colour.Oklab_to_XYZ(from_oklch(projected))
+        projection_vectors.append(
+            {
+                "sourceEncodedRec2020": encoded,
+                "targetOklch": array(target),
+                "unprojectedLinearRec2020": array(unprojected),
+                "projectedOklch": array(projected),
+                "projectedLinearRec2020": array(projected_rgb),
+            }
+        )
+
+    return {
+        "matrixRec2020ToLms": array(rec2020_to_lms),
+        "matrixLmsToRec2020": array(lms_to_rec2020),
+        "matrixLmsToOklab": array(MATRIX_2_LMS_TO_LAB),
+        "rgbVectors": rgb_vectors,
+        "gamutProjectionVectors": projection_vectors,
+    }
+
+
 def build_oracle() -> dict:
     if colour.__version__ != COLOUR_SCIENCE_VERSION:
         raise RuntimeError(
@@ -152,6 +246,7 @@ def build_oracle() -> dict:
             "chromaticAdaptation": "Bradford (Lam, 1985)",
             "colorChecker": "X-Rite ColorChecker Classic data published in 2016, pre-November-2014 edition",
             "cameraCharacterization": "Synthetic row-normalized camera matrix composed through IEC 61966-2-1 and ITU-R BT.2020",
+            "oklab": "Björn Ottosson (2020), generated independently through colour-science XYZ_to_Oklab",
         },
         "spaces": [
             colour_space("linear-srgb-d65", "sRGB"),
@@ -163,6 +258,7 @@ def build_oracle() -> dict:
             adaptation("bradford-d65-to-d50", d65, d50),
         ],
         "cameraCharacterizations": [camera_characterization()],
+        "oklab": oklab_vectors(),
         "transferFunctions": {
             "srgbEotf": [
                 {"encoded": float(encoded), "linear": float(linear)}

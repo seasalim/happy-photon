@@ -217,21 +217,21 @@ public sealed class RenderPipelineTests
     }
 
     [Fact]
-    public void Render_CombinesSaturationAndVibranceMultiplicatively()
+    public void Render_CombinedChromaUsesPerPixelWeighting()
     {
         using var baseImage = CreateGradientBase();
-        var combinedIdentity = new EditSettings
+        var combined = new EditSettings
         {
             Saturation = 100,
             Vibrance = -100
         };
 
         using var identity = Render(new EditSettings(), baseImage);
-        using var combined = Render(combinedIdentity, baseImage);
+        using var adjusted = Render(combined, baseImage);
 
-        Assert.Equal(
+        Assert.NotEqual(
             RenderPipelineTestSupport.ReadPixels(identity.Image),
-            RenderPipelineTestSupport.ReadPixels(combined.Image));
+            RenderPipelineTestSupport.ReadPixels(adjusted.Image));
     }
 
     [Fact]
@@ -243,11 +243,20 @@ public sealed class RenderPipelineTests
             50000, 21000, 9000
         ]);
         using var neutral = RenderShared(new EditSettings(), baseImage);
-        using var expected = new MagickImage(neutral);
-        expected.Modulate(
-            new Percentage(100),
-            new Percentage(150),
-            new Percentage(100));
+        var expected = RenderPipelineTestSupport.ReadPixels(neutral);
+        for (var offset = 0; offset < expected.Length; offset += 3)
+        {
+            var transformed = OklabColor.TransformEncodedRec2020(
+                new OklabRgb(
+                    expected[offset] / (double)ushort.MaxValue,
+                    expected[offset + 1] / (double)ushort.MaxValue,
+                    expected[offset + 2] / (double)ushort.MaxValue),
+                saturation: 50,
+                vibrance: 0);
+            expected[offset] = Encode(transformed.Red);
+            expected[offset + 1] = Encode(transformed.Green);
+            expected[offset + 2] = Encode(transformed.Blue);
+        }
 
         using var saturated = RenderShared(
             new EditSettings { Saturation = 50 },
@@ -255,7 +264,7 @@ public sealed class RenderPipelineTests
 
         Assert.Equal(ColorSpace.sRGB, saturated.ColorSpace);
         Assert.Equal(
-            RenderPipelineTestSupport.ReadPixels(expected),
+            expected,
             RenderPipelineTestSupport.ReadPixels(saturated));
     }
 
@@ -459,4 +468,9 @@ public sealed class RenderPipelineTests
 
         return RenderPipelineTestSupport.CreateBase(samples, height: 4);
     }
+
+    private static ushort Encode(double value) =>
+        (ushort)Math.Round(
+            value * ushort.MaxValue,
+            MidpointRounding.AwayFromZero);
 }

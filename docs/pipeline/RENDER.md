@@ -12,7 +12,7 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 3 Matrix       crossing on: AgX inset × WB; crossing off: WB (§4)
 4 Tone LUT     source-kind tone regime, fused with matrix storage (§5)
 5 Matrix       crossing on: AgX outset; crossing off: identity
-6 Chroma       one combined saturation·vibrance Modulate (§6)
+6 Chroma       one fused OKLCh saturation/vibrance pass (§6)
 7 Detail       capture sharpen, chroma NR (§9)
 8 Output       linear resize → output sharpen → effects → target convert → encode
                (OUTPUT.md)
@@ -204,17 +204,31 @@ curves only (TESTING.md §4.1); everything upstream must stay monotone unconditi
 
 ## 6. Chroma stage
 
-Saturation and vibrance are both HSL saturation scalings and therefore compose
-multiplicatively into **one** Modulate call. Combining them avoids an intermediate
-clamp and rounding step; for example, saturation +100 followed by vibrance −100
-resolves cleanly to identity rather than clipping saturated colors first:
+The encoded display-Rec.2020 value is decoded, converted through linear Rec.2020 to
+OKLab/OKLCh, transformed at constant lightness and hue, returned through the inverse
+chain, encoded, and written once to Q16. Saturation and vibrance compose before the
+inverse transform:
 
 ```
-satFactor = (100 + Saturation)/100 · (100 + Vibrance·0.5)/100
-Modulate(100, satFactor·100, 100)        // skip when satFactor == 1
+sat = (100 + Saturation) / 100
+vib = 1 + Vibrance / 100 · 0.5 · weight(C, h)
+C' = C · sat · vib
 ```
 
-Runs after the crossing, on sRGB-encoded display Rec.2020, where Q16 clamping is benign.
+`weight(C,h)` is one at zero chroma, tapers smoothly toward zero as chroma grows,
+and is further damped by a smooth periodic window centered on the OKLab skin-hue
+region. The same weight applies to both vibrance signs. Hue damping fades in only as
+hue becomes reliable near the achromatic axis. Saturation −100 sets C exactly to zero.
+
+An inverse result outside linear Rec.2020 [0,1] is projected to the maximal feasible
+chroma on its constant-L/h ray. The normal path solves the channel-boundary cubics and
+retains bounded bisection as a fallback; it never clips channels independently.
+
+The pass runs in bounded pooled bands, preserves alpha and extra channels, and checks
+the resting execution contract for worker limits and cancellation. S=V=0 returns
+before pixel access. All transform math is `double`; transfer lookup interpolation and
+the final Q16 write are the only production precision boundary. The internal
+`(L,C,h) -> (L,C,h)` seam is intentionally the later mixer composition point.
 
 ## 7. Histogram & clipping
 
@@ -450,11 +464,13 @@ or unedited renders create no candidate; promotion never waits on background wor
 Shutdown awaits candidate creation and cache queueing before the writer is drained.
 
 Per slider tick at 1600px preview: geometry (usually no-op), optional profile HueSat,
-the fused matrix → tone LUT → matrix pass, then optional combined Modulate/detail work.
+the fused matrix → tone LUT → matrix pass, then optional OKLCh/detail work.
 The development budget is ≤ 150 ms, measured with `HAPPY_PHOTON_PERF=1`; the exact tone
-tables are cached for the bounded active settings set. Tonal, chroma, and geometry
-slider moves invalidate only the render; only `BaseDecodeSettings` changes invalidate
-the base.
+tables are cached for the bounded active settings set. The active-chroma pass —
+pixel-cache traffic included, gated on a projection-heavy S=+100 fixture — is
+additionally capped at the 60 ms AgX-crossing cost class, and identity chroma is
+pinned to zero pixel access. Tonal, chroma, and geometry slider moves invalidate
+only the render; only `BaseDecodeSettings` changes invalidate the base.
 
 Effects-off finalization returns before pixel access and adds no work. On the opt-in
 Release fixtures, active effects retain the ≤150 ms preview-tick budget

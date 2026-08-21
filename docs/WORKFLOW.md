@@ -292,8 +292,9 @@ clipping overlay. Red marks the scene side and blue marks the display floor.
 ### Shape the color
 
 - **Kelvin** moves the white balance toward cooler or warmer color.
-- **Vibrance** provides a gentler color-intensity adjustment.
-- **Saturation** makes the overall color intensity change more strongly.
+- **Vibrance** changes lower-intensity colors most while protecting already-saturated
+  colors and common skin hues.
+- **Saturation** scales every color's perceptual intensity uniformly; −100 is grayscale.
 
 Kelvin usually answers whether the photograph feels too cool or too warm.
 Vibrance and saturation answer whether the color feels too weak or too intense.

@@ -9,6 +9,7 @@ internal sealed class ColorScienceOracleData
     public List<OracleColorSpace> Spaces { get; set; } = [];
     public List<OracleAdaptation> Adaptations { get; set; } = [];
     public List<OracleCameraCharacterization> CameraCharacterizations { get; set; } = [];
+    public OracleOklab Oklab { get; set; } = new();
     public OracleTransferFunctions TransferFunctions { get; set; } = new();
     public OracleColorChecker ColorChecker { get; set; } = new();
 
@@ -92,6 +93,33 @@ internal sealed class OracleCameraSample
 {
     public double[] CameraRgb { get; set; } = [];
     public double[] Rec2020 { get; set; } = [];
+}
+
+internal sealed class OracleOklab
+{
+    public double[][] MatrixRec2020ToLms { get; set; } = [];
+    public double[][] MatrixLmsToRec2020 { get; set; } = [];
+    public double[][] MatrixLmsToOklab { get; set; } = [];
+    public List<OracleOklabRgbVector> RgbVectors { get; set; } = [];
+    public List<OracleOklabProjectionVector> GamutProjectionVectors { get; set; } = [];
+}
+
+internal sealed class OracleOklabRgbVector
+{
+    public double[] EncodedRec2020 { get; set; } = [];
+    public double[] LinearRec2020 { get; set; } = [];
+    public double[] Oklab { get; set; } = [];
+    public double[] Oklch { get; set; } = [];
+    public double[] RecoveredLinearRec2020 { get; set; } = [];
+}
+
+internal sealed class OracleOklabProjectionVector
+{
+    public double[] SourceEncodedRec2020 { get; set; } = [];
+    public double[] TargetOklch { get; set; } = [];
+    public double[] UnprojectedLinearRec2020 { get; set; } = [];
+    public double[] ProjectedOklch { get; set; } = [];
+    public double[] ProjectedLinearRec2020 { get; set; } = [];
 }
 
 internal sealed class OracleColorChecker

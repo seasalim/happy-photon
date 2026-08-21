@@ -31,7 +31,13 @@ public sealed class AgxPerformanceGateTests : IDisposable
 
         var sliders = MeasureSliderTicks();
         var variants = await MeasureThreeVariants(target);
+        var activeChromaVariants = await MeasureThreeVariants(
+            target,
+            new EditSettings { Saturation = 100 });
         var standard = await MeasureStandardExport();
+        var activeChromaPrivateDeltaBytes = Math.Max(
+            0,
+            activeChromaVariants.PeakPrivateBytes - variants.PeakPrivateBytes);
         File.WriteAllText(
             reportPath,
             JsonSerializer.Serialize(
@@ -48,6 +54,8 @@ public sealed class AgxPerformanceGateTests : IDisposable
                     target,
                     sliders,
                     variants,
+                    activeChromaVariants,
+                    activeChromaPrivateDeltaBytes,
                     standard
                 },
                 new JsonSerializerOptions
@@ -62,6 +70,11 @@ public sealed class AgxPerformanceGateTests : IDisposable
                 value.ElapsedMs <= 150,
                 $"{value.Fixture} slider tick took " +
                 $"{value.ElapsedMs:F1} ms; budget is 150 ms."));
+        Assert.True(
+            activeChromaPrivateDeltaBytes <= 16L * 1024 * 1024,
+            $"Active chroma added " +
+            $"{activeChromaPrivateDeltaBytes / 1024d / 1024d:F1} MiB private " +
+            "memory; budget is 16 MiB.");
     }
 
     private static SliderMeasurement[] MeasureSliderTicks()
@@ -77,7 +90,7 @@ public sealed class AgxPerformanceGateTests : IDisposable
             new RawBaseLoader(),
             new StandardBaseLoader());
         var pipeline = new RenderPipeline();
-        var existing = fixtures.Select(fixture =>
+        var existing = fixtures.SelectMany<string, SliderMeasurement>(fixture =>
         {
             if (Path.GetExtension(fixture).Equals(
                     ".heic",
@@ -85,10 +98,17 @@ public sealed class AgxPerformanceGateTests : IDisposable
                 MagickFormatInfo.Create(MagickFormat.Heic) is not
                     { SupportsReading: true })
             {
-                return new SliderMeasurement(
-                    fixture,
-                    null,
-                    "ImageMagick has no HEIC reader");
+                return new[]
+                {
+                    new SliderMeasurement(
+                        fixture,
+                        null,
+                        "ImageMagick has no HEIC reader"),
+                    new SliderMeasurement(
+                        $"{fixture} (active chroma)",
+                        null,
+                        "ImageMagick has no HEIC reader")
+                };
             }
 
             using var baseImage = loader.LoadPreviewBase(
@@ -97,14 +117,30 @@ public sealed class AgxPerformanceGateTests : IDisposable
                 CancellationToken.None) ??
                 throw new InvalidOperationException(
                     $"Slider fixture did not decode: {fixture}.");
-            var settings = new EditSettings { Contrast = 25 };
-            var elapsed = Measure(() => pipeline.Render(new RenderRequest(
+            var contrast = MeasureRender(
+                pipeline,
                 baseImage,
-                settings,
-                RenderIntent.Preview,
-                1600,
-                new RenderOptions(false, false))));
-            return new SliderMeasurement(fixture, elapsed, null);
+                new EditSettings { Contrast = 25 });
+            var chroma = MeasureRender(
+                pipeline,
+                baseImage,
+                new EditSettings { Saturation = 50, Vibrance = 50 });
+            var measurements = new List<SliderMeasurement>
+            {
+                new SliderMeasurement(fixture, contrast, null),
+                new SliderMeasurement($"{fixture} (active chroma)", chroma, null)
+            };
+            if (fixture == "canon-eos-6d-iso-6400.cr2")
+            {
+                measurements.Add(new SliderMeasurement(
+                    $"{fixture} (projection-heavy S=+100)",
+                    MeasureRender(
+                        pipeline,
+                        baseImage,
+                        new EditSettings { Saturation = 100 }),
+                    null));
+            }
+            return measurements;
         });
         var channels = new[]
         {
@@ -116,6 +152,17 @@ public sealed class AgxPerformanceGateTests : IDisposable
         };
         return existing.Concat(channels).ToArray();
     }
+
+    private static double MeasureRender(
+        RenderPipeline pipeline,
+        BaseImage baseImage,
+        EditSettings settings) =>
+        Measure(() => pipeline.Render(new RenderRequest(
+            baseImage,
+            settings,
+            RenderIntent.Preview,
+            1600,
+            new RenderOptions(false, false))));
 
     private static SliderMeasurement MeasureAllChannelTicks(
         IBaseImageLoader loader,
@@ -164,12 +211,18 @@ public sealed class AgxPerformanceGateTests : IDisposable
     }
 
     private async Task<ExportMeasurement> MeasureThreeVariants(
-        OutputColorSpace target)
+        OutputColorSpace target,
+        EditSettings? editSettings = null)
     {
-        var file = new ImageFile(GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2"));
+        var file = new ImageFile(GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2"))
+        {
+            EditSettings = editSettings ?? new EditSettings()
+        };
         var settings = new ExportSettings
         {
-            OutputFolder = Path.Combine(_output, $"variants-{target}"),
+            OutputFolder = Path.Combine(
+                _output,
+                $"variants-{target}-{(editSettings == null ? "off" : "chroma")}"),
             Format = ExportFormat.Jpeg,
             Quality = 85,
             OutputColorSpace = target,

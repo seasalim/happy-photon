@@ -4,6 +4,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
+[Collection(CheckpointCRenderGateCollection.Name)]
 public sealed class WysiwygTests
 {
     public static TheoryData<GoldenAssetCase> AssetMatrix
