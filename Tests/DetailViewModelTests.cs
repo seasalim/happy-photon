@@ -7,17 +7,14 @@ namespace HappyPhoton.Tests;
 
 public sealed class DetailViewModelTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-detail-vm-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("detail-vm");
 
     [Fact]
     public async Task DetailEdits_CanonicalizePersistResetAndUndo()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("catalog");
         await using var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "photo.dng"));
+        var image = new ImageFile(_fx.Path("photo.dng"));
         vm.SelectedImage = image;
 
         Assert.Equal(25, vm.CaptureSharpen);
@@ -52,9 +49,9 @@ public sealed class DetailViewModelTests : IDisposable
     [Fact]
     public async Task RenderReconcile_KeepsUnsavedSharpenWhenCapabilityIsUnchanged()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "sticky"));
+        using var catalog = _fx.CreateCatalog("sticky");
         await using var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "photo.dng"));
+        var image = new ImageFile(_fx.Path("photo.dng"));
         vm.SelectedImage = image;
         Assert.Equal(25, vm.CaptureSharpen);
 
@@ -69,9 +66,9 @@ public sealed class DetailViewModelTests : IDisposable
     [Fact]
     public async Task SourceDefault_ReconcilesWithoutCreatingAnEdit()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "reconcile"));
+        using var catalog = _fx.CreateCatalog("reconcile");
         await using var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "guard.dng"));
+        var image = new ImageFile(_fx.Path("guard.dng"));
         vm.SelectedImage = image;
 
         Assert.Equal(25, vm.CaptureSharpen);
@@ -82,20 +79,17 @@ public sealed class DetailViewModelTests : IDisposable
         Assert.False(vm.IsNoiseReductionEnabled);
     }
 
-    private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
-        new(
+    private MainWindowViewModel CreateViewModel(CatalogService catalog)
+    {
+        var vm = _fx.CreateViewModel(
             catalog,
             new NullBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally))
-        {
-            IsDevelopMode = true
-        };
-
-    public void Dispose()
-    {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
+        return vm;
     }
+
+    public void Dispose() => _fx.Dispose();
 }

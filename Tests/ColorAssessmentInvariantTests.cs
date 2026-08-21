@@ -9,14 +9,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class ColorAssessmentInvariantTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-assessment-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("assessment");
 
     [Fact]
     public async Task ToggleCommand_IsGatedToDevelopAndFullScreen()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = _fx.CreateCatalog("catalog");
         await using var vm = CreateViewModel(catalog);
         var notifications = 0;
         vm.ToggleColorAssessmentModeCommand.CanExecuteChanged +=
@@ -43,9 +41,9 @@ public sealed class ColorAssessmentInvariantTests : IDisposable
     [Fact]
     public async Task Toggle_DoesNotChangePipelineStateOrPersistence()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = _fx.CreateCatalog("catalog");
         await using var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "photo.jpg"))
+        var image = new ImageFile(_fx.Path("photo.jpg"))
         {
             EditSettings = new EditSettings
             {
@@ -94,13 +92,13 @@ public sealed class ColorAssessmentInvariantTests : IDisposable
     [Fact]
     public async Task Toggle_DoesNotChangeExportBytes()
     {
-        var sourcePath = Path.Combine(_root, "source.png");
+        var sourcePath = _fx.Path("source.png");
         using (var source = new MagickImage(MagickColors.Orange, 160, 100))
         {
             source.Write(sourcePath);
         }
 
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog-export"));
+        using var catalog = _fx.CreateCatalog("catalog-export");
         await using var vm = CreateViewModel(catalog);
         var image = new ImageFile(sourcePath)
         {
@@ -112,8 +110,8 @@ public sealed class ColorAssessmentInvariantTests : IDisposable
             new RenderPipeline(),
             new StandardBaseLoader(),
             new ExportMetadataService());
-        var beforeFolder = Path.Combine(_root, "before");
-        var afterFolder = Path.Combine(_root, "after");
+        var beforeFolder = _fx.Path("before");
+        var afterFolder = _fx.Path("after");
 
         await service.ExportBatchAsync(
             [image],
@@ -139,7 +137,7 @@ public sealed class ColorAssessmentInvariantTests : IDisposable
     [Fact]
     public async Task EscapeLadder_DoesNotConsumeAssessmentMode()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog-escape"));
+        using var catalog = _fx.CreateCatalog("catalog-escape");
         await using var vm = CreateViewModel(catalog);
         vm.IsDevelopMode = true;
         vm.ToggleColorAssessmentModeCommand.Execute(null);
@@ -166,17 +164,10 @@ public sealed class ColorAssessmentInvariantTests : IDisposable
                          StringComparison.OrdinalIgnoreCase));
     }
 
-    private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
-        new(
+    private MainWindowViewModel CreateViewModel(CatalogService catalog) =>
+        _fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask);
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _fx.Dispose();
 }

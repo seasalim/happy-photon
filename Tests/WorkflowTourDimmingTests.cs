@@ -17,14 +17,10 @@ public sealed class WorkflowTourDimmingTests
     [AvaloniaFact]
     public async Task TourSteps_DimUnrelatedRegionsOnly()
     {
-        var root = Path.Combine(
-            Path.GetTempPath(),
-            $"happy-photon-tour-dimming-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(root);
-        var catalog = new CatalogService(Path.Combine(root, "catalog"));
-        var vm = new MainWindowViewModel(
+        var fx = new CatalogVmFixture("tour-dimming");
+        var catalog = fx.CreateCatalog("catalog");
+        var vm = fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
@@ -222,21 +218,17 @@ public sealed class WorkflowTourDimmingTests
             window.Close();
             await vm.DisposeAsync();
             catalog.Dispose();
-            Directory.Delete(root, recursive: true);
+            fx.Dispose();
         }
     }
 
     [AvaloniaFact]
     public async Task SelectedPhotograph_KeepsFocusedAssessmentBrightAndUsable()
     {
-        var root = Path.Combine(
-            Path.GetTempPath(),
-            $"happy-photon-tour-focus-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(root);
-        var catalog = new CatalogService(Path.Combine(root, "catalog"));
-        var vm = new MainWindowViewModel(
+        var fx = new CatalogVmFixture("tour-focus");
+        var catalog = fx.CreateCatalog("catalog");
+        var vm = fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
@@ -255,7 +247,7 @@ public sealed class WorkflowTourDimmingTests
             // thumbnail is selected. The assessment control must therefore be
             // both bright and usable at that point, never dimmed with it.
             vm.Library.SetImages(
-                [new Models.ImageFile(Path.Combine(root, "photo.jpg"))]);
+                [new Models.ImageFile(fx.Path("photo.jpg"))]);
             vm.SelectedImage = vm.Library.VisibleImages[0];
             vm.StartWorkflowTour();
             Dispatcher.UIThread.RunJobs();
@@ -283,21 +275,17 @@ public sealed class WorkflowTourDimmingTests
             window.Close();
             await vm.DisposeAsync();
             catalog.Dispose();
-            Directory.Delete(root, recursive: true);
+            fx.Dispose();
         }
     }
 
     [AvaloniaFact]
     public async Task EachCoachmark_PointsAtItsOwnTarget()
     {
-        var root = Path.Combine(
-            Path.GetTempPath(),
-            $"happy-photon-tour-pointer-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(root);
-        var catalog = new CatalogService(Path.Combine(root, "catalog"));
-        var vm = new MainWindowViewModel(
+        var fx = new CatalogVmFixture("tour-pointer");
+        var catalog = fx.CreateCatalog("catalog");
+        var vm = fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
@@ -353,7 +341,7 @@ public sealed class WorkflowTourDimmingTests
             window.Close();
             await vm.DisposeAsync();
             catalog.Dispose();
-            Directory.Delete(root, recursive: true);
+            fx.Dispose();
         }
     }
 

@@ -7,9 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class LibraryReviewSummaryTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-library-review-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("library-review");
 
     [Fact]
     public async Task PreloadedMetadata_AggregatesCountDatesAndSize()
@@ -42,7 +40,7 @@ public sealed class LibraryReviewSummaryTests : IDisposable
             "captured.jpg",
             1_000,
             new DateTime(2026, 8, 1));
-        var modifiedOnly = new ImageFile(Path.Combine(_root, "modified.jpg"));
+        var modifiedOnly = new ImageFile(_fx.Path("modified.jpg"));
         modifiedOnly.ApplyMetadata(new ImageMetadata
         {
             FileSize = 2_000,
@@ -85,10 +83,10 @@ public sealed class LibraryReviewSummaryTests : IDisposable
                 DateTaken = new DateTime(2026, 8, offset)
             });
         });
-        var oldA = new ImageFile(Path.Combine(_root, "old-a.jpg"));
-        var oldB = new ImageFile(Path.Combine(_root, "old-b.jpg"));
-        var newA = new ImageFile(Path.Combine(_root, "new-a.jpg"));
-        var newB = new ImageFile(Path.Combine(_root, "new-b.jpg"));
+        var oldA = new ImageFile(_fx.Path("old-a.jpg"));
+        var oldB = new ImageFile(_fx.Path("old-b.jpg"));
+        var newA = new ImageFile(_fx.Path("new-a.jpg"));
+        var newB = new ImageFile(_fx.Path("new-b.jpg"));
         vm.Library.SetImages([oldA, oldB, newA, newB]);
 
         vm.ToggleImageSelection(oldA);
@@ -183,15 +181,15 @@ public sealed class LibraryReviewSummaryTests : IDisposable
             await releaseLoad.Task;
             image.ApplyMetadata(new ImageMetadata { FileSize = 100 });
         });
-        var first = new ImageFile(Path.Combine(_root, "first.jpg"));
-        var second = new ImageFile(Path.Combine(_root, "second.jpg"));
+        var first = new ImageFile(_fx.Path("first.jpg"));
+        var second = new ImageFile(_fx.Path("second.jpg"));
         vm.Library.SetImages([first, second]);
         vm.ToggleImageSelection(first);
         vm.ToggleImageSelection(second);
         await loadStarted.Task;
 
         var replacement = Directory.CreateDirectory(
-            Path.Combine(_root, "replacement")).FullName;
+            _fx.Path("replacement")).FullName;
         var folderLoad = vm.LoadFolderAsync(replacement);
         // The load cannot finish until releaseLoad is set below, so this only
         // settles the state it asserts; it never races a deadline.
@@ -206,17 +204,11 @@ public sealed class LibraryReviewSummaryTests : IDisposable
         Assert.False(vm.HasLibrarySelectionSummary);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _fx.Dispose();
 
     private CatalogService CreateCatalog(string name)
     {
-        var catalog = new CatalogService(Path.Combine(_root, name));
+        var catalog = _fx.CreateCatalog(name);
         catalog.InitializeAsync().GetAwaiter().GetResult();
         return catalog;
     }
@@ -225,7 +217,7 @@ public sealed class LibraryReviewSummaryTests : IDisposable
         CatalogService catalog,
         Func<ImageFile, Task> loadMetadataAsync,
         ISourceAvailabilityService? availability = null) =>
-        new(
+        _fx.CreateViewModel(
             catalog,
             baseLoader: null,
             loadMetadataAsync,
@@ -238,7 +230,7 @@ public sealed class LibraryReviewSummaryTests : IDisposable
         long fileSize,
         DateTime? dateTaken)
     {
-        var image = new ImageFile(Path.Combine(_root, name));
+        var image = new ImageFile(_fx.Path(name));
         image.ApplyMetadata(new ImageMetadata
         {
             FileSize = fileSize,

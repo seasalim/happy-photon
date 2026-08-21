@@ -14,25 +14,20 @@ namespace HappyPhoton.Tests;
 
 public sealed class RawHistogramUiTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(), $"happy-photon-rawhist-ui-{Guid.NewGuid():N}"))
-        .FullName;
+    private readonly CatalogVmFixture _fx = new("rawhist-ui");
 
     [AvaloniaFact]
     public async Task PreferenceFallsBackForStandardLibraryAndCloudSources()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(
+        using var catalog = await _fx.CreateCatalogAsync("catalog");
+        var vm = _fx.CreateViewModel(
             catalog,
             new DomainLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally))
-        {
-            IsDevelopMode = true
-        };
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "sensor.dng"));
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
+        vm.SelectedImage = new ImageFile(_fx.Path("sensor.dng"));
         await TestWaits.UntilAsync(() => vm.IsRawHistogramAvailable);
         var stableOptions = vm.ScopeOptions;
 
@@ -41,7 +36,7 @@ public sealed class RawHistogramUiTests : IDisposable
         Assert.Equal(ScopeView.RawHistogram, vm.EffectiveScope);
         Assert.Equal("RAW HISTOGRAM", vm.EffectiveScopeTitle);
 
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "display.jpg"));
+        vm.SelectedImage = new ImageFile(_fx.Path("display.jpg"));
         await TestWaits.UntilAsync(() => !vm.IsRawHistogramAvailable);
         Assert.Same(stableOptions, vm.ScopeOptions);
         Assert.Equal(ScopeView.RawHistogram, vm.SelectedScope);
@@ -55,7 +50,7 @@ public sealed class RawHistogramUiTests : IDisposable
         Assert.Contains("Develop", vm.RawHistogramHint);
 
         vm.IsDevelopMode = true;
-        var cloud = new ImageFile(Path.Combine(_root, "cloud.dng"));
+        var cloud = new ImageFile(_fx.Path("cloud.dng"));
         vm.SelectedImage = cloud;
         cloud.SourceRequiresHydration = true;
         Assert.False(vm.IsRawHistogramAvailable);
@@ -63,7 +58,7 @@ public sealed class RawHistogramUiTests : IDisposable
         Assert.Equal(ScopeView.RawHistogram, vm.SelectedScope);
 
         cloud.SourceRequiresHydration = false;
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "restored.dng"));
+        vm.SelectedImage = new ImageFile(_fx.Path("restored.dng"));
         await TestWaits.UntilAsync(() => vm.IsRawHistogramAvailable);
         Assert.Same(stableOptions, vm.ScopeOptions);
         Assert.True(vm.ScopeOptions[2].IsEnabled);
@@ -136,10 +131,7 @@ public sealed class RawHistogramUiTests : IDisposable
         window.Close();
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _fx.Dispose();
 
     private static Window Show(HistogramView view)
     {

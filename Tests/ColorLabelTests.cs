@@ -10,17 +10,15 @@ namespace HappyPhoton.Tests;
 
 public sealed class ColorLabelTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-label-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("label");
 
     [Fact]
     public void Slots_ArePinnedAndEnumDrivenChoicesIncludeEverySlot()
     {
         Assert.Equal([0, 1, 2, 3, 4, 5],
             Enum.GetValues<ColorLabel>().Select(value => (int)value));
-        using var catalog = new CatalogService(_root);
-        var vm = new MainWindowViewModel(catalog);
+        using var catalog = _fx.CreateCatalog();
+        var vm = _fx.CreateViewModel(catalog);
 
         Assert.Equal(5, vm.ColorLabelChoices.Count);
         Assert.Equal(Enum.GetValues<ColorLabel>().Skip(1),
@@ -30,9 +28,8 @@ public sealed class ColorLabelTests : IDisposable
     [Fact]
     public async Task Names_DefaultMalformedAndRenameRoundTripWithoutImageRewrite()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
-        var id = await catalog.GetOrCreateImageAsync(Path.Combine(_root, "a.jpg"));
+        using var catalog = await _fx.CreateCatalogAsync();
+        var id = await catalog.GetOrCreateImageAsync(_fx.Path("a.jpg"));
         var names = new ColorLabelNames(catalog);
         Assert.Equal("Red", (await names.LoadAsync())[ColorLabel.Red]);
         await catalog.SetAppSettingAsync(ColorLabelNames.SettingKey, "bad-json");
@@ -53,9 +50,8 @@ public sealed class ColorLabelTests : IDisposable
     [Fact]
     public async Task SaveLoadAndUnknownStoredValue_RoundTripWithoutRewrite()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
-        var path = Path.Combine(_root, "a.jpg");
+        using var catalog = await _fx.CreateCatalogAsync();
+        var path = _fx.Path("a.jpg");
         var id = await catalog.GetOrCreateImageAsync(path);
         await catalog.SaveColorLabelAsync([id], ColorLabel.Green);
         Assert.Equal(ColorLabel.Green,
@@ -70,16 +66,14 @@ public sealed class ColorLabelTests : IDisposable
     [Fact]
     public async Task FolderLoad_CarriesCatalogLabelIntoImageFile()
     {
-        var photos = Directory.CreateDirectory(
-            Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(_fx.Path("photos")).FullName;
         var path = Path.Combine(photos, "labeled.jpg");
         TestImages.WriteJpeg(path);
 
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("catalog");
         var id = await catalog.GetOrCreateImageAsync(path);
         await catalog.SaveColorLabelAsync([id], ColorLabel.Yellow);
-        await using var vm = new MainWindowViewModel(
+        await using var vm = _fx.CreateViewModel(
             catalog,
             new NullBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
@@ -95,10 +89,9 @@ public sealed class ColorLabelTests : IDisposable
     [Fact]
     public async Task SetBasedWrite_NormalizesDuplicatesAndRollsBackOnMissingRow()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync();
         var paths = Enumerable.Range(0, 2000)
-            .Select(index => Path.Combine(_root, $"{index}.jpg"))
+            .Select(index => _fx.Path($"{index}.jpg"))
             .ToArray();
         var states = await catalog.LoadOrCreateImageStatesAsync(paths);
         var ids = paths.Select(path => states[path].CatalogId).ToList();
@@ -113,9 +106,8 @@ public sealed class ColorLabelTests : IDisposable
     [Fact]
     public async Task Authoring_SelectionWinsAndTogglesOverWholeMaterializedSet()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(catalog);
+        using var catalog = await _fx.CreateCatalogAsync();
+        var vm = _fx.CreateViewModel(catalog);
         var active = await CreateCatalogImageAsync(catalog, "active.jpg", ColorLabel.Blue);
         var first = await CreateCatalogImageAsync(catalog, "first.jpg", ColorLabel.Red);
         var second = await CreateCatalogImageAsync(catalog, "second.jpg", ColorLabel.Red);
@@ -140,9 +132,8 @@ public sealed class ColorLabelTests : IDisposable
     [Fact]
     public async Task Authoring_ReselectsVisibleImageWhenActiveTargetIsFilteredOut()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(catalog);
+        using var catalog = await _fx.CreateCatalogAsync();
+        var vm = _fx.CreateViewModel(catalog);
         var active = await CreateCatalogImageAsync(catalog, "active.jpg", ColorLabel.Red);
         var target = await CreateCatalogImageAsync(catalog, "target.jpg", ColorLabel.Red);
         var replacement = await CreateCatalogImageAsync(
@@ -166,14 +157,14 @@ public sealed class ColorLabelTests : IDisposable
     [Fact]
     public void Filter_CombinesAxesAndDeselectsHidden()
     {
-        var red = new ImageFile(Path.Combine(_root, "red.jpg"))
+        var red = new ImageFile(_fx.Path("red.jpg"))
         {
             ColorLabel = ColorLabel.Red,
             Flag = ImageFlag.Picked,
             Rating = 4,
             IsSelected = true
         };
-        var blue = new ImageFile(Path.Combine(_root, "blue.cr2"))
+        var blue = new ImageFile(_fx.Path("blue.cr2"))
         {
             ColorLabel = ColorLabel.Blue,
             Flag = ImageFlag.Picked,
@@ -226,7 +217,7 @@ public sealed class ColorLabelTests : IDisposable
         string name,
         ColorLabel colorLabel)
     {
-        var image = new ImageFile(Path.Combine(_root, name))
+        var image = new ImageFile(_fx.Path(name))
         {
             ColorLabel = colorLabel
         };
@@ -256,14 +247,10 @@ public sealed class ColorLabelTests : IDisposable
     private async Task<SqliteConnection> OpenAsync()
     {
         var connection = new SqliteConnection(
-            $"Data Source={Path.Combine(_root, "catalog.db")};Pooling=False");
+            $"Data Source={_fx.Path("catalog.db")};Pooling=False");
         await connection.OpenAsync();
         return connection;
     }
 
-    public void Dispose()
-    {
-        SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _fx.Dispose();
 }

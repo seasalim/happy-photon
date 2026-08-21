@@ -8,15 +8,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class AgentColorLabelTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-agent-label-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("agent-label");
 
     [Fact]
     public async Task ColorLabelMutation_UsesNormalizedIdsAndRefreshesOnce()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync();
         var vm = CreateViewModel(catalog);
         var first = await CreateImageAsync(catalog, "first.jpg");
         vm.Library.SetImages([first]);
@@ -60,7 +57,7 @@ public sealed class AgentColorLabelTests : IDisposable
     [Fact]
     public async Task McpHost_RegistersSetColorLabelTool()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = _fx.CreateCatalog();
         var vm = CreateViewModel(catalog);
         await using var imageService = new ImageService(catalog);
         var service = new AgentToolService(vm, imageService, catalog);
@@ -76,23 +73,18 @@ public sealed class AgentColorLabelTests : IDisposable
     }
 
     private MainWindowViewModel CreateViewModel(CatalogService catalog) =>
-        new(
+        _fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask);
 
     private async Task<ImageFile> CreateImageAsync(
         CatalogService catalog,
         string name)
     {
-        var image = new ImageFile(Path.Combine(_root, name));
+        var image = new ImageFile(_fx.Path(name));
         image.CatalogId = await catalog.GetOrCreateImageAsync(image.FilePath);
         return image;
     }
 
-    public void Dispose()
-    {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _fx.Dispose();
 }

@@ -9,20 +9,17 @@ namespace HappyPhoton.Tests;
 [Collection(AvaloniaTestCollection.Name)]
 public sealed class ExportLibraryRefreshTests : IDisposable
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-export-library-{Guid.NewGuid():N}");
+    private readonly CatalogVmFixture _fx = new("export-library");
 
     [WindowsFact]
     public void ApprovedExport_RefreshesThumbnailAfterHydration()
     {
-        Directory.CreateDirectory(_root);
         var sourcePath = WriteJpeg("cloud.jpg");
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = _fx.CreateCatalog("catalog");
         Complete(catalog.InitializeAsync());
         var availability = new TestSourceAvailabilityService(
             SourceAvailability.RequiresHydration);
-        var viewModel = new MainWindowViewModel(
+        var viewModel = _fx.CreateViewModel(
             catalog,
             new HydratingBaseLoader(availability),
             _ => throw new InvalidOperationException(
@@ -37,7 +34,7 @@ public sealed class ExportLibraryRefreshTests : IDisposable
                 ThumbnailDeferredForHydration = true
             };
             viewModel.Library.SetImages([image]);
-            viewModel.ExportSettings.OutputFolder = Path.Combine(_root, "export");
+            viewModel.ExportSettings.OutputFolder = _fx.Path("export");
 
             var exported = Complete(
                 viewModel.ExportBatchApprovedAsync([image]));
@@ -60,14 +57,13 @@ public sealed class ExportLibraryRefreshTests : IDisposable
     [WindowsFact]
     public void ExportFailure_IsNotReplacedByLibraryRefreshFailure()
     {
-        Directory.CreateDirectory(_root);
         var sourcePath = WriteJpeg("failure.jpg");
-        using var catalog = new CatalogService(Path.Combine(_root, "failure-catalog"));
+        using var catalog = _fx.CreateCatalog("failure-catalog");
         Complete(catalog.InitializeAsync());
         var availability = new TestSourceAvailabilityService(
             SourceAvailability.RequiresHydration);
         var metadataLoads = 0;
-        var viewModel = new MainWindowViewModel(
+        var viewModel = _fx.CreateViewModel(
             catalog,
             new FailingHydratingBaseLoader(availability),
             _ =>
@@ -85,7 +81,7 @@ public sealed class ExportLibraryRefreshTests : IDisposable
                 ThumbnailDeferredForHydration = true
             };
             viewModel.Library.SetImages([image]);
-            viewModel.ExportSettings.OutputFolder = Path.Combine(_root, "failure-export");
+            viewModel.ExportSettings.OutputFolder = _fx.Path("failure-export");
 
             var exception = Assert.Throws<InvalidOperationException>(() =>
                 Complete(viewModel.ExportBatchApprovedAsync([image])));
@@ -104,14 +100,13 @@ public sealed class ExportLibraryRefreshTests : IDisposable
     [WindowsFact]
     public void CanceledExport_DoesNotRunLibraryRefreshTail()
     {
-        Directory.CreateDirectory(_root);
         var sourcePath = WriteJpeg("canceled.jpg");
-        using var catalog = new CatalogService(Path.Combine(_root, "canceled-catalog"));
+        using var catalog = _fx.CreateCatalog("canceled-catalog");
         Complete(catalog.InitializeAsync());
         var availability = new TestSourceAvailabilityService(
             SourceAvailability.AvailableLocally);
         var metadataLoads = 0;
-        var viewModel = new MainWindowViewModel(
+        var viewModel = _fx.CreateViewModel(
             catalog,
             new HydratingBaseLoader(availability),
             _ =>
@@ -129,7 +124,7 @@ public sealed class ExportLibraryRefreshTests : IDisposable
                 ThumbnailDeferredForHydration = true
             };
             viewModel.Library.SetImages([image]);
-            viewModel.ExportSettings.OutputFolder = Path.Combine(_root, "canceled-export");
+            viewModel.ExportSettings.OutputFolder = _fx.Path("canceled-export");
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();
 
@@ -149,17 +144,11 @@ public sealed class ExportLibraryRefreshTests : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _fx.Dispose();
 
     private string WriteJpeg(string name)
     {
-        var path = Path.Combine(_root, name);
+        var path = _fx.Path(name);
         TestImages.WriteJpeg(path);
         return path;
     }

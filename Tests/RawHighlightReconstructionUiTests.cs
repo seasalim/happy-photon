@@ -12,18 +12,15 @@ namespace HappyPhoton.Tests;
 
 public sealed class RawHighlightReconstructionUiTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-highlight-ui-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("highlight-ui");
 
     [Fact]
     public async Task Selection_PersistsResetsAndUndoesAsOneEdit()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync();
         var vm = CreateViewModel(catalog);
         vm.IsDevelopMode = true;
-        var image = new ImageFile(Path.Combine(_root, "missing.dng"));
+        var image = new ImageFile(_fx.Path("missing.dng"));
         vm.SelectedImage = image;
 
         vm.HlReconstruction = HlReconstructionMode.Blend;
@@ -52,22 +49,19 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     [AvaloniaFact]
     public async Task UnsupportedRaw_ShowsActionablePersistentStatus()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync();
         var loader = new BaseLoaderRouter(
             new RawBaseLoader(isAvailable: false),
             new StandardBaseLoader(
                 (_, _) => new MagickImage(MagickColors.Gray, 64, 48)));
-        var vm = new MainWindowViewModel(
+        var vm = _fx.CreateViewModel(
             catalog,
             loader,
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally))
-        {
-            IsDevelopMode = true
-        };
-        var image = new ImageFile(Path.Combine(_root, "fallback.dng"))
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
+        var image = new ImageFile(_fx.Path("fallback.dng"))
         {
             EditSettings = new EditSettings
             {
@@ -95,10 +89,10 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     [AvaloniaFact]
     public async Task ExtractedPanel_ForwardsToneCurveChanges()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = _fx.CreateCatalog();
         catalog.InitializeAsync().GetAwaiter().GetResult();
         var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "missing.jpg"));
+        var image = new ImageFile(_fx.Path("missing.jpg"));
         vm.SelectedImage = image;
         var panel = new DevelopEditPanel
         {
@@ -129,13 +123,13 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     [AvaloniaFact]
     public async Task Brightness_GatesByProvisionalAndDecodedSourceRegime()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = _fx.CreateCatalog();
         var vm = CreateViewModel(catalog);
-        var raw = new ImageFile(Path.Combine(_root, "raw.dng"))
+        var raw = new ImageFile(_fx.Path("raw.dng"))
         {
             EditSettings = new EditSettings { Brightness = 37 }
         };
-        var standard = new ImageFile(Path.Combine(_root, "standard.jpg"))
+        var standard = new ImageFile(_fx.Path("standard.jpg"))
         {
             EditSettings = new EditSettings { Brightness = -23 }
         };
@@ -177,12 +171,12 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     [Fact]
     public async Task Selection_ClearsBeforeAfterState()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = _fx.CreateCatalog();
         var vm = CreateViewModel(catalog);
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "first.jpg"));
+        vm.SelectedImage = new ImageFile(_fx.Path("first.jpg"));
         vm.IsShowingOriginal = true;
 
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "second.jpg"));
+        vm.SelectedImage = new ImageFile(_fx.Path("second.jpg"));
 
         Assert.False(vm.IsShowingOriginal);
         await vm.DisposeAsync();
@@ -191,9 +185,9 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     [Fact]
     public async Task LibraryMode_GatesBeforeAfterUndoAndRedo()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = _fx.CreateCatalog();
         var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "library.jpg"))
+        var image = new ImageFile(_fx.Path("library.jpg"))
         {
             EditSettings = new EditSettings { Exposure = 1 }
         };
@@ -243,19 +237,16 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     [AvaloniaFact]
     public async Task ScheduledHistogramRefresh_ClearsBeforeAfterState()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(
+        using var catalog = await _fx.CreateCatalogAsync();
+        var vm = _fx.CreateViewModel(
             catalog,
             CreateSyntheticLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally))
-        {
-            IsDevelopMode = true
-        };
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
         await vm.InitializeAsync();
-        var image = new ImageFile(Path.Combine(_root, "missing.png"));
+        var image = new ImageFile(_fx.Path("missing.png"));
         vm.SelectedImage = image;
         await TestWaits.UntilAsync(
             () => vm.IsWhiteBalanceReady && vm.PreviewImage != null);
@@ -272,15 +263,14 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     [AvaloniaFact]
     public async Task DevelopToLibrary_ReschedulesHistogramFromThumbnailPixels()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(
+        using var catalog = await _fx.CreateCatalogAsync();
+        var vm = _fx.CreateViewModel(
             catalog,
             CreateSyntheticLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally));
-        var image = new ImageFile(Path.Combine(_root, "histogram.png"));
+        var image = new ImageFile(_fx.Path("histogram.png"));
         using var orange = new MagickImage(MagickColors.Orange, 16, 16);
         vm.Library.SetImages([image]);
         vm.Library.ReplaceThumbnail(
@@ -311,18 +301,15 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     [AvaloniaFact]
     public async Task DevelopToLibrary_WithoutThumbnailClearsRenderHistogram()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(
+        using var catalog = await _fx.CreateCatalogAsync();
+        var vm = _fx.CreateViewModel(
             catalog,
             CreateSyntheticLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally))
-        {
-            IsDevelopMode = true
-        };
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "missing.png"));
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
+        vm.SelectedImage = new ImageFile(_fx.Path("missing.png"));
         await TestWaits.UntilAsync(() => vm.Histogram != null);
 
         vm.IsDevelopMode = false;
@@ -334,19 +321,16 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     [AvaloniaFact]
     public async Task PresetHoverAndRestore_ClearBeforeAfterState()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
-        var vm = new MainWindowViewModel(
+        using var catalog = await _fx.CreateCatalogAsync();
+        var vm = _fx.CreateViewModel(
             catalog,
             CreateSyntheticLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally))
-        {
-            IsDevelopMode = true
-        };
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
         await vm.InitializeAsync();
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "missing.png"))
+        vm.SelectedImage = new ImageFile(_fx.Path("missing.png"))
         {
             EditSettings = new EditSettings { Exposure = 1 }
         };
@@ -372,9 +356,9 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     [Fact]
     public async Task ReplacementDecode_UsesDelayedArmingIndicator()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = _fx.CreateCatalog();
         var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "photo.dng"));
+        var image = new ImageFile(_fx.Path("photo.dng"));
         vm.SelectedImage = image;
         var slow = new PreviewBaseRefreshState(
             image,
@@ -408,13 +392,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _fx.Dispose();
 
     private static BaseLoaderRouter CreateSyntheticLoader() =>
         new(
@@ -431,9 +409,8 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         actual.Blue.SequenceEqual(expected.Blue) &&
         actual.Luminance.SequenceEqual(expected.Luminance);
 
-    private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
-        new(
+    private MainWindowViewModel CreateViewModel(CatalogService catalog) =>
+        _fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask);
 }

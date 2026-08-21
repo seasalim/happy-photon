@@ -10,9 +10,7 @@ namespace HappyPhoton.Tests;
 [Collection(AvaloniaTestCollection.Name)]
 public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-activity-folders-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("activity-folders");
 
     [WindowsFact]
     public async Task FolderSizeDoesNotChangeUiWakeOrPumpWork()
@@ -96,18 +94,14 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
     public async Task SchedulerAloneOwnsSharedThumbnailLoadCallback()
     {
         var folder = CreatePhotoFolder("scheduler", 1, 1200, 800);
-        using var catalog = new CatalogService(Path.Combine(_root, "scheduler-catalog"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("scheduler-catalog");
         var secondLoadGate = new SelectiveLoadGate(2);
-        var vm = new MainWindowViewModel(
+        var vm = _fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask,
-            postSelection: _ => { })
-        {
-            LibraryThumbnailSize = LibraryThumbnailSize.Large,
-            ThumbnailLoadGateAsync = secondLoadGate.EnterAsync
-        };
+            postSelection: _ => { });
+        vm.LibraryThumbnailSize = LibraryThumbnailSize.Large;
+        vm.ThumbnailLoadGateAsync = secondLoadGate.EnterAsync;
 
         try
         {
@@ -137,17 +131,13 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
         int imageCount)
     {
         var folder = CreatePhotoFolder(name, imageCount, 16, 16);
-        var catalog = new CatalogService(Path.Combine(_root, $"{name}-catalog"));
-        await catalog.InitializeAsync();
+        var catalog = await _fx.CreateCatalogAsync($"{name}-catalog");
         var gate = new LoadGate();
-        var vm = new MainWindowViewModel(
+        var vm = _fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask,
-            postSelection: _ => { })
-        {
-            ThumbnailLoadGateAsync = gate.EnterAsync
-        };
+            postSelection: _ => { });
+        vm.ThumbnailLoadGateAsync = gate.EnterAsync;
         return new FolderSession(folder, catalog, vm, gate);
     }
 
@@ -157,7 +147,7 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
         uint width,
         uint height)
     {
-        var folder = Directory.CreateDirectory(Path.Combine(_root, name)).FullName;
+        var folder = Directory.CreateDirectory(_fx.Path(name)).FullName;
         using var image = new MagickImage(MagickColors.Gray, width, height);
         for (var index = 0; index < count; index++)
         {
@@ -166,10 +156,7 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
         return folder;
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _fx.Dispose();
 
     private sealed class LoadGate
     {

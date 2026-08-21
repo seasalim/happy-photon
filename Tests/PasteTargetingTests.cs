@@ -7,9 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class PasteTargetingTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-paste-targets-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("paste-targets");
 
     [Fact]
     public async Task OnePhotoLibrarySelection_UsesBatchConfirmation()
@@ -130,17 +128,13 @@ public sealed class PasteTargetingTests : IDisposable
         Assert.Equal(0, cloud.EditSettings.Exposure);
     }
 
-    private async Task<CatalogService> CreateCatalogAsync()
-    {
-        var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
-        return catalog;
-    }
+    private Task<CatalogService> CreateCatalogAsync() =>
+        _fx.CreateCatalogAsync("catalog");
 
-    private static MainWindowViewModel CreateViewModel(
+    private MainWindowViewModel CreateViewModel(
         CatalogService catalog,
         ISourceAvailabilityService? availability = null) =>
-        new(
+        _fx.CreateViewModel(
             catalog,
             new NullBaseLoader(),
             _ => Task.CompletedTask,
@@ -152,7 +146,7 @@ public sealed class PasteTargetingTests : IDisposable
         string name,
         double exposure = 0)
     {
-        var image = new ImageFile(Path.Combine(_root, name))
+        var image = new ImageFile(_fx.Path(name))
         {
             EditSettings = new EditSettings { Exposure = exposure }
         };
@@ -161,9 +155,5 @@ public sealed class PasteTargetingTests : IDisposable
         return image;
     }
 
-    public void Dispose()
-    {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _fx.Dispose();
 }

@@ -7,8 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class CatalogImportViewModelTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(), $"happy-photon-import-vm-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("import-vm");
 
     [Fact]
     public async Task ReadLightroomCatalog_IsAvailableOnCurrentPlatform()
@@ -18,8 +17,7 @@ public sealed class CatalogImportViewModelTests : IDisposable
                          Path.DirectorySeparatorChar;
         fixture.AddPhoto(1, sourceRoot, "", "photo.jpg", rating: 4);
         fixture.CloseWriter();
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("catalog");
         var vm = CreateViewModel(catalog);
 
         var source = await vm.ReadLightroomCatalogAsync(fixture.CatalogPath);
@@ -32,10 +30,9 @@ public sealed class CatalogImportViewModelTests : IDisposable
     [Fact]
     public async Task Apply_UpdatesLiveFiltersSelectionAndViewportWithoutFolderReload()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
-        var firstPath = Path.Combine(_root, "first.jpg");
-        var secondPath = Path.Combine(_root, "second.jpg");
+        using var catalog = await _fx.CreateCatalogAsync("catalog");
+        var firstPath = _fx.Path("first.jpg");
+        var secondPath = _fx.Path("second.jpg");
         var states = await catalog.LoadOrCreateImageStatesAsync([firstPath, secondPath]);
         await catalog.MutateAssessmentsAsync([
             new AssessmentMutation(states[firstPath].CatalogId,
@@ -59,7 +56,7 @@ public sealed class CatalogImportViewModelTests : IDisposable
         var import = new CatalogImportService(catalog, _ => true);
         var preview = await import.CreatePreviewAsync(
             source,
-            new Dictionary<string, string> { ["D:/Photos/"] = _root },
+            new Dictionary<string, string> { ["D:/Photos/"] = _fx.Root },
             CatalogImportPolicy.LightroomWins);
 
         await vm.ApplyCatalogImportAsync(preview);
@@ -77,9 +74,8 @@ public sealed class CatalogImportViewModelTests : IDisposable
     [Fact]
     public async Task Adoption_SkipsLiveImageWhoseRevisionMovedAfterCommit()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
-        var path = Path.Combine(_root, "photo.jpg");
+        using var catalog = await _fx.CreateCatalogAsync("catalog");
+        var path = _fx.Path("photo.jpg");
         var state = (await catalog.LoadOrCreateImageStatesAsync([path]))[path];
         var image = ToImage(path, state);
         var vm = CreateViewModel(catalog);
@@ -98,7 +94,7 @@ public sealed class CatalogImportViewModelTests : IDisposable
     }
 
     private LightroomCatalogContents Source(string firstPath, string secondPath) =>
-        new(Path.Combine(_root, "source.lrcat"), 1303001, 13, true,
+        new(_fx.Path("source.lrcat"), 1303001, 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot("D:/Photos/", 2)],
             [
                 new CatalogImportRecord(
@@ -125,14 +121,11 @@ public sealed class CatalogImportViewModelTests : IDisposable
             PendingAssessmentAxes = state.PendingAxes
         };
 
-    private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
-        new(catalog, baseLoader: null,
+    private MainWindowViewModel CreateViewModel(CatalogService catalog) =>
+        _fx.CreateViewModel(catalog,
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.RequiresHydration));
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _fx.Dispose();
 }

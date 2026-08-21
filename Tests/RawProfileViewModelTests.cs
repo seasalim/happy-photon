@@ -7,17 +7,14 @@ namespace HappyPhoton.Tests;
 
 public sealed class RawProfileViewModelTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-profile-vm-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("profile-vm");
 
     [Fact]
     public async Task SelectionResetAndUndoPreserveProfileHistoryPolicy()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("catalog");
         await using var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "image.dng"));
+        var image = new ImageFile(_fx.Path("image.dng"));
         vm.SelectedImage = image;
         var option = Option('a');
 
@@ -39,10 +36,9 @@ public sealed class RawProfileViewModelTests : IDisposable
     [Fact]
     public async Task RapidSelectionLeavesNewestProfileInstalled()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "rapid"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("rapid");
         await using var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "rapid.dng"));
+        var image = new ImageFile(_fx.Path("rapid.dng"));
         vm.SelectedImage = image;
         var first = Option('b');
         var second = Option('c');
@@ -60,11 +56,10 @@ public sealed class RawProfileViewModelTests : IDisposable
     [Fact]
     public async Task ImageSwitchKeepsBuiltInAnchorAndOpenRebuildsMenu()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "switch"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("switch");
         await using var vm = CreateViewModel(catalog);
-        var first = new ImageFile(Path.Combine(_root, "first.cr2"));
-        var second = new ImageFile(Path.Combine(_root, "second.nef"));
+        var first = new ImageFile(_fx.Path("first.cr2"));
+        var second = new ImageFile(_fx.Path("second.nef"));
 
         vm.SelectedImage = first;
         AssertBuiltInAnchor(vm);
@@ -84,13 +79,12 @@ public sealed class RawProfileViewModelTests : IDisposable
     [Fact]
     public async Task DropdownOpenRescansSelectedFileAndShowsRejection()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "rescan"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("rescan");
         await using var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "rescan.cr2"));
+        var image = new ImageFile(_fx.Path("rescan.cr2"));
         vm.SelectedImage = image;
         var profilePath = SyntheticDcpFactory.WriteTemporary(
-            _root,
+            _fx.Root,
             new SyntheticDcpOptions { Name = "Chosen profile" },
             "chosen.dcp");
 
@@ -110,11 +104,10 @@ public sealed class RawProfileViewModelTests : IDisposable
     [Fact]
     public async Task IdentityPreloadPreservesInvalidPersistedSelectionStatus()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "preload"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("preload");
         await using var vm = CreateViewModel(catalog);
         var profilePath = SyntheticDcpFactory.WriteTemporary(
-            _root,
+            _fx.Root,
             new SyntheticDcpOptions { Name = "Changed profile" },
             "changed.dcp");
         var selection = new RawProfileSelection
@@ -123,7 +116,7 @@ public sealed class RawProfileViewModelTests : IDisposable
             Location = profilePath,
             ContentHash = new string('f', 64)
         };
-        var image = new ImageFile(Path.Combine(_root, "preload.cr2"))
+        var image = new ImageFile(_fx.Path("preload.cr2"))
         {
             EditSettings = new EditSettings { RawProfile = selection }
         };
@@ -155,11 +148,10 @@ public sealed class RawProfileViewModelTests : IDisposable
     [Fact]
     public async Task IdentityPreloadPreservesEmbeddedProfileEntries()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "embedded"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("embedded");
         await using var vm = CreateViewModel(catalog);
         var dngPath = SyntheticDcpFactory.WriteTemporary(
-            _root,
+            _fx.Root,
             new SyntheticDcpOptions { Name = "Embedded profile" },
             "embedded.dng");
         var image = new ImageFile(dngPath);
@@ -214,23 +206,24 @@ public sealed class RawProfileViewModelTests : IDisposable
             menu.Select(option => option.IsDivider ? "<divider>" : option.Label));
     }
 
-    private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
-        new(
+    private MainWindowViewModel CreateViewModel(CatalogService catalog)
+    {
+        var vm = _fx.CreateViewModel(
             catalog,
             new NullBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally))
-        {
-            IsDevelopMode = true
-        };
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
+        return vm;
+    }
 
     private RawProfileOptionViewModel Option(char hashCharacter)
     {
         var selection = new RawProfileSelection
         {
             Source = RawProfileSource.UserFile,
-            Location = Path.Combine(_root, $"{hashCharacter}.dcp"),
+            Location = _fx.Path($"{hashCharacter}.dcp"),
             ContentHash = new string(hashCharacter, 64)
         };
         return new RawProfileOptionViewModel(new DcpProfileOption(
@@ -250,7 +243,7 @@ public sealed class RawProfileViewModelTests : IDisposable
                 Source = source,
                 Location = source == RawProfileSource.Embedded
                     ? null
-                    : Path.Combine(_root, $"{name}.dcp"),
+                    : _fx.Path($"{name}.dcp"),
                 ContentHash = new string(hashCharacter, 64)
             },
             DcpProfileErrorCode.None,
@@ -269,9 +262,5 @@ public sealed class RawProfileViewModelTests : IDisposable
             option.IsProfile &&
             option.Label == RawProfileOptionViewModel.BuiltInLabel);
 
-    public void Dispose()
-    {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _fx.Dispose();
 }

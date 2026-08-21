@@ -10,9 +10,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class WhiteBalanceUiTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-wb-ui-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("wb-ui");
 
     [Theory]
     [InlineData(0, 2000)]
@@ -30,9 +28,9 @@ public sealed class WhiteBalanceUiTests : IDisposable
     [Fact]
     public async Task PickedWhiteBalance_IsPresentedWithEstimatedTemperature()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = _fx.CreateCatalog();
         var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "photo.jpg"))
+        var image = new ImageFile(_fx.Path("photo.jpg"))
         {
             EditSettings = new EditSettings
             {
@@ -56,9 +54,9 @@ public sealed class WhiteBalanceUiTests : IDisposable
     [InlineData("photo.dng")]
     public async Task SelectingAsShot_KeepsComboBoxItemsStable(string fileName)
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = _fx.CreateCatalog();
         var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, fileName))
+        var image = new ImageFile(_fx.Path(fileName))
         {
             EditSettings = new EditSettings
             {
@@ -82,9 +80,9 @@ public sealed class WhiteBalanceUiTests : IDisposable
     [Fact]
     public async Task KelvinChange_EnablesResetAndAsShotDisablesIt()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = _fx.CreateCatalog();
         var vm = CreateViewModel(catalog);
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "photo.jpg"));
+        vm.SelectedImage = new ImageFile(_fx.Path("photo.jpg"));
 
         Assert.False(vm.CanReset);
 
@@ -101,11 +99,10 @@ public sealed class WhiteBalanceUiTests : IDisposable
     [AvaloniaFact]
     public async Task AsShotAndUndo_RefreshEditedThumbnail()
     {
-        var sourcePath = Path.Combine(_root, "thumbnail.jpg");
+        var sourcePath = _fx.Path("thumbnail.jpg");
         TestImages.WriteJpeg(sourcePath, width: 320, height: 200);
 
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync();
         await using var imageService = new ImageService(catalog);
         var image = new ImageFile(sourcePath);
         using (var result = await imageService.Thumbnails.LoadUneditedThumbnailAsync(
@@ -145,11 +142,10 @@ public sealed class WhiteBalanceUiTests : IDisposable
     [Fact]
     public async Task ResetWhiteBalance_IsOneUndoStep()
     {
-        using var catalog = new CatalogService(_root);
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync();
         var vm = CreateViewModel(catalog);
         vm.IsDevelopMode = true;
-        var image = new ImageFile(Path.Combine(_root, "photo.jpg"))
+        var image = new ImageFile(_fx.Path("photo.jpg"))
         {
             EditSettings = new EditSettings
             {
@@ -191,13 +187,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
                          StringComparison.OrdinalIgnoreCase));
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _fx.Dispose();
 
     private static double RedBlueDelta(ImageFile image)
     {
@@ -237,9 +227,8 @@ public sealed class WhiteBalanceUiTests : IDisposable
         Assert.Fail("The edited thumbnail did not reach the expected state.");
     }
 
-    private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
-        new(
+    private MainWindowViewModel CreateViewModel(CatalogService catalog) =>
+        _fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask);
 }

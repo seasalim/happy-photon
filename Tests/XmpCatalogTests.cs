@@ -8,14 +8,13 @@ namespace HappyPhoton.Tests;
 
 public sealed class XmpCatalogTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(), $"happy-photon-xmp-catalog-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("xmp-catalog");
 
     [Fact]
     public async Task Mutation_BumpsRevisionAndSetsThenRevisionGuardsPendingMask()
     {
         using var catalog = await CreateCatalogAsync();
-        var id = await catalog.GetOrCreateImageAsync(Path.Combine(_root, "a.jpg"));
+        var id = await catalog.GetOrCreateImageAsync(_fx.Path("a.jpg"));
 
         var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 4)],
@@ -35,7 +34,7 @@ public sealed class XmpCatalogTests : IDisposable
     public async Task Reconcile_AdoptsOnlyNewerNonPendingAxes()
     {
         using var catalog = await CreateCatalogAsync();
-        var photo = Path.Combine(_root, "photo.cr3");
+        var photo = _fx.Path("photo.cr3");
         var id = await catalog.GetOrCreateImageAsync(photo);
         var local = Assert.Single(await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 1)],
@@ -63,7 +62,7 @@ public sealed class XmpCatalogTests : IDisposable
     public async Task Reconcile_RegistersAndAdoptsImageMissingFromFreshCatalog()
     {
         using var catalog = await CreateCatalogAsync();
-        var photo = Path.Combine(_root, "fresh.cr3");
+        var photo = _fx.Path("fresh.cr3");
         var sidecar = photo + ".xmp";
         var document = XmpSidecarDocument.Create();
         document.Root!.Descendants(XmpSidecarDocument.Rdf + "Description")
@@ -87,7 +86,7 @@ public sealed class XmpCatalogTests : IDisposable
     public async Task Writer_CreatesBesidePhotoAndClearsExactPendingAxis()
     {
         using var catalog = await CreateCatalogAsync();
-        var photo = Path.Combine(_root, "cloud-only.cr3");
+        var photo = _fx.Path("cloud-only.cr3");
         var id = await catalog.GetOrCreateImageAsync(photo);
         var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(id, AssessmentAxes.Flag,
@@ -148,7 +147,7 @@ public sealed class XmpCatalogTests : IDisposable
     public async Task OversizedRead_IsReportedWithoutAdoption()
     {
         using var catalog = await CreateCatalogAsync();
-        var photo = Path.Combine(_root, "oversized.cr3");
+        var photo = _fx.Path("oversized.cr3");
         var id = await catalog.GetOrCreateImageAsync(photo);
         await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 1)],
@@ -170,7 +169,7 @@ public sealed class XmpCatalogTests : IDisposable
     public async Task ReconcileReports_SurfaceAsOneTransientStatus()
     {
         using var catalog = await CreateCatalogAsync();
-        await using var viewModel = new MainWindowViewModel(catalog);
+        await using var viewModel = _fx.CreateViewModel(catalog);
 
         viewModel.ReportXmpReconcileIssues(["first example", "second example"]);
 
@@ -184,7 +183,7 @@ public sealed class XmpCatalogTests : IDisposable
     {
         using var catalog = await CreateCatalogAsync();
         await using var connection = new SqliteConnection(
-            $"Data Source={Path.Combine(_root, "catalog", "catalog.db")};Pooling=False");
+            $"Data Source={Path.Combine(_fx.Root, "catalog", "catalog.db")};Pooling=False");
         await connection.OpenAsync();
         using var command = connection.CreateCommand();
         command.CommandText = "PRAGMA table_info(image_assessments);";
@@ -198,7 +197,7 @@ public sealed class XmpCatalogTests : IDisposable
     public async Task CatalogSettings_RestoreModeAndNamingWithSafeDefaults()
     {
         using var catalog = await CreateCatalogAsync();
-        await using (var defaults = new MainWindowViewModel(catalog))
+        await using (var defaults = _fx.CreateViewModel(catalog))
         {
             await defaults.RestoreXmpSettingsAsync();
             Assert.Equal(XmpSidecarMode.Off, defaults.XmpSidecarMode);
@@ -209,7 +208,7 @@ public sealed class XmpCatalogTests : IDisposable
             [MainWindowViewModel.XmpSidecarModeKey] = "read",
             [MainWindowViewModel.XmpSidecarNamingKey] = "basename"
         });
-        await using var restored = new MainWindowViewModel(catalog);
+        await using var restored = _fx.CreateViewModel(catalog);
 
         await restored.RestoreXmpSettingsAsync();
 
@@ -217,12 +216,8 @@ public sealed class XmpCatalogTests : IDisposable
         Assert.Equal(XmpSidecarNaming.BaseName, restored.XmpSidecarNaming);
     }
 
-    private async Task<CatalogService> CreateCatalogAsync()
-    {
-        var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
-        return catalog;
-    }
+    private Task<CatalogService> CreateCatalogAsync() =>
+        _fx.CreateCatalogAsync("catalog");
 
     private async Task<AssessmentSnapshot> CreateFlaggedSidecarCaseAsync(
         CatalogService catalog,
@@ -230,7 +225,7 @@ public sealed class XmpCatalogTests : IDisposable
         ImageFlag flag,
         AssessmentAxes pendingAxes)
     {
-        var path = Path.Combine(_root, name);
+        var path = _fx.Path(name);
         var id = await catalog.GetOrCreateImageAsync(path);
         var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(id, AssessmentAxes.Flag, Flag: flag)],
@@ -243,9 +238,5 @@ public sealed class XmpCatalogTests : IDisposable
         return snapshot;
     }
 
-    public void Dispose()
-    {
-        SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _fx.Dispose();
 }

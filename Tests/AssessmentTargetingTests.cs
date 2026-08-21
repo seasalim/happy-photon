@@ -9,9 +9,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class AssessmentTargetingTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-assessment-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("assessment");
 
     [Theory]
     [InlineData(AssessmentAxis.Flag)]
@@ -186,7 +184,7 @@ public sealed class AssessmentTargetingTests : IDisposable
         using var catalog = await CreateCatalogAsync();
         await using var vm = CreateViewModel(catalog);
         var valid = await CreateImageAsync(catalog, "valid.jpg");
-        var missing = new ImageFile(Path.Combine(_root, "missing.jpg"))
+        var missing = new ImageFile(_fx.Path("missing.jpg"))
         {
             CatalogId = long.MaxValue
         };
@@ -219,7 +217,7 @@ public sealed class AssessmentTargetingTests : IDisposable
     {
         using var catalog = await CreateCatalogAsync();
         var paths = Enumerable.Range(0, 1500)
-            .Select(index => Path.Combine(_root, $"batch-{index}.jpg"))
+            .Select(index => _fx.Path($"batch-{index}.jpg"))
             .ToArray();
         var states = await catalog.LoadOrCreateImageStatesAsync(paths);
         var ids = paths.Select(path => states[path].CatalogId).ToArray();
@@ -284,22 +282,18 @@ public sealed class AssessmentTargetingTests : IDisposable
         Assert.Contains("Develop", labelTip, StringComparison.OrdinalIgnoreCase);
     }
 
-    private async Task<CatalogService> CreateCatalogAsync()
-    {
-        var catalog = new CatalogService(Path.Combine(_root, Guid.NewGuid().ToString("N")));
-        await catalog.InitializeAsync();
-        return catalog;
-    }
+    private Task<CatalogService> CreateCatalogAsync() =>
+        _fx.CreateUniqueCatalogAsync();
 
-    private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
-        new(catalog, new NullBaseLoader(), _ => Task.CompletedTask);
+    private MainWindowViewModel CreateViewModel(CatalogService catalog) =>
+        _fx.CreateViewModel(catalog, new NullBaseLoader(), _ => Task.CompletedTask);
 
     private async Task<ImageFile> CreateImageAsync(
         CatalogService catalog,
         string name,
         AssessmentAxis? initialAxis = null)
     {
-        var image = new ImageFile(Path.Combine(_root, name));
+        var image = new ImageFile(_fx.Path(name));
         image.CatalogId = await catalog.GetOrCreateImageAsync(image.FilePath);
         if (initialAxis == null) return image;
 
@@ -418,11 +412,7 @@ public sealed class AssessmentTargetingTests : IDisposable
             _ => $"Labeled {count} photos"
         };
 
-    public void Dispose()
-    {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _fx.Dispose();
 
     public enum AssessmentAxis
     {

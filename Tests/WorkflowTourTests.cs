@@ -7,22 +7,17 @@ namespace HappyPhoton.Tests;
 
 public sealed class WorkflowTourTests : IDisposable
 {
-    private readonly string _testRoot =
-        Directory.CreateDirectory(Path.Combine(
-            Path.GetTempPath(),
-            $"happy-photon-tour-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("tour");
 
     [Fact]
     public async Task FirstRunStartTourChoice_StartsTourInLibrary()
     {
         using var catalog = CreateCatalog();
-        var vm = new MainWindowViewModel(catalog)
-        {
-            PersistFirstRunCompletionAsync = _ => Task.CompletedTask
-        };
-        vm.ShowFirstRunWelcome(_testRoot);
+        var vm = _fx.CreateViewModel(catalog);
+        vm.PersistFirstRunCompletionAsync = _ => Task.CompletedTask;
+        vm.ShowFirstRunWelcome(_fx.Root);
 
-        await vm.CompleteFirstRunFromLocationAsync(_testRoot);
+        await vm.CompleteFirstRunFromLocationAsync(_fx.Root);
         Assert.Equal(FirstRunStep.AllSet, vm.FirstRunStep);
         Assert.Equal(WorkflowTourStep.None, vm.WorkflowTourStep);
 
@@ -40,8 +35,8 @@ public sealed class WorkflowTourTests : IDisposable
     public async Task TourTransitions_DoNotChangePhotographStateOrSelection()
     {
         using var catalog = CreateCatalog();
-        var vm = new MainWindowViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_testRoot, "photo.jpg"))
+        var vm = _fx.CreateViewModel(catalog);
+        var image = new ImageFile(_fx.Path("photo.jpg"))
         {
             Flag = ImageFlag.Picked,
             Rating = 4,
@@ -104,7 +99,7 @@ public sealed class WorkflowTourTests : IDisposable
     public async Task TipSuspendsOutsideItsViewAndReturnsWithWorkspace()
     {
         using var catalog = CreateCatalog();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = _fx.CreateViewModel(catalog);
         vm.StartWorkflowTour();
 
         vm.IsDevelopMode = true;
@@ -124,7 +119,7 @@ public sealed class WorkflowTourTests : IDisposable
     public async Task PresentedTourState_TracksVisibleCoachmarksOnly()
     {
         using var catalog = CreateCatalog();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = _fx.CreateViewModel(catalog);
 
         Assert.False(vm.IsWorkflowTourPresented);
 
@@ -163,7 +158,7 @@ public sealed class WorkflowTourTests : IDisposable
     public async Task DevelopCommand_OpensWorkspaceWithoutSelectedPhotograph()
     {
         using var catalog = CreateCatalog();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = _fx.CreateViewModel(catalog);
 
         vm.SwitchToDevelopCommand.Execute(null);
 
@@ -176,10 +171,8 @@ public sealed class WorkflowTourTests : IDisposable
     public async Task ExportCommand_RequestsDialogWithNoSelectedPhotographs()
     {
         using var catalog = CreateCatalog();
-        var vm = new MainWindowViewModel(catalog)
-        {
-            CurrentFolderPath = _testRoot
-        };
+        var vm = _fx.CreateViewModel(catalog);
+        vm.CurrentFolderPath = _fx.Root;
         var dialogRequests = 0;
         ExportDialogMode? requestedMode = null;
         vm.RequestExportDialogAsync = mode =>
@@ -195,7 +188,7 @@ public sealed class WorkflowTourTests : IDisposable
         Assert.Equal(ExportDialogMode.Standard, requestedMode);
         Assert.Equal(0, vm.SelectedCount);
         Assert.Equal(
-            Path.Combine(_testRoot, "export"),
+            _fx.Path("export"),
             vm.ExportSettings.OutputFolder);
         await vm.DisposeAsync();
     }
@@ -204,7 +197,7 @@ public sealed class WorkflowTourTests : IDisposable
     public async Task ExportCommand_CanReopenAfterPreviousDialogCloses()
     {
         using var catalog = CreateCatalog();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = _fx.CreateViewModel(catalog);
         var dialogRequests = 0;
         vm.RequestExportDialogAsync = _ =>
         {
@@ -223,12 +216,10 @@ public sealed class WorkflowTourTests : IDisposable
     public async Task ExportCommand_IsIgnoredInFullScreen()
     {
         using var catalog = CreateCatalog();
-        var vm = new MainWindowViewModel(catalog)
-        {
-            IsFullScreenMode = true,
-            RequestExportDialogAsync = _ =>
-                throw new InvalidOperationException("Dialog must not open in fullscreen")
-        };
+        var vm = _fx.CreateViewModel(catalog);
+        vm.IsFullScreenMode = true;
+        vm.RequestExportDialogAsync = _ =>
+            throw new InvalidOperationException("Dialog must not open in fullscreen");
 
         await vm.ShowExportDialogCommand.ExecuteAsync(null);
 
@@ -240,13 +231,11 @@ public sealed class WorkflowTourTests : IDisposable
     public async Task ExportCommand_FollowsFolderUntilDestinationIsCustomized()
     {
         using var catalog = CreateCatalog();
-        var vm = new MainWindowViewModel(catalog)
-        {
-            RequestExportDialogAsync = _ => Task.CompletedTask
-        };
-        var folderA = Path.Combine(_testRoot, "a");
-        var folderB = Path.Combine(_testRoot, "b");
-        var folderC = Path.Combine(_testRoot, "c");
+        var vm = _fx.CreateViewModel(catalog);
+        vm.RequestExportDialogAsync = _ => Task.CompletedTask;
+        var folderA = _fx.Path("a");
+        var folderB = _fx.Path("b");
+        var folderC = _fx.Path("c");
 
         vm.CurrentFolderPath = folderA;
         await vm.ShowExportDialogCommand.ExecuteAsync(null);
@@ -256,7 +245,7 @@ public sealed class WorkflowTourTests : IDisposable
         await vm.ShowExportDialogCommand.ExecuteAsync(null);
         Assert.Equal(Path.Combine(folderB, "export"), vm.ExportSettings.OutputFolder);
 
-        var customFolder = Path.Combine(_testRoot, "deliveries");
+        var customFolder = _fx.Path("deliveries");
         vm.ExportSettings.OutputFolder = customFolder;
         vm.CurrentFolderPath = folderC;
         await vm.ShowExportDialogCommand.ExecuteAsync(null);
@@ -269,7 +258,7 @@ public sealed class WorkflowTourTests : IDisposable
     public async Task EndTour_DismissesEveryStepWithoutChangingView()
     {
         using var catalog = CreateCatalog();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = _fx.CreateViewModel(catalog);
 
         vm.StartWorkflowTour();
         vm.EndWorkflowTourCommand.Execute(null);
@@ -292,13 +281,7 @@ public sealed class WorkflowTourTests : IDisposable
     }
 
     private CatalogService CreateCatalog() =>
-        new(Path.Combine(_testRoot, Guid.NewGuid().ToString("N")));
+        _fx.CreateCatalog(Guid.NewGuid().ToString("N"));
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_testRoot))
-        {
-            Directory.Delete(_testRoot, recursive: true);
-        }
-    }
+    public void Dispose() => _fx.Dispose();
 }

@@ -8,9 +8,7 @@ namespace HappyPhoton.Tests;
 public sealed class AssessmentFeedbackTests : IDisposable
 {
     private readonly TestTimeProvider _clock = new();
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-assessment-feedback-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("assessment-feedback");
 
     [Fact]
     public async Task SingleImageActionsDescribeSetAndUnsetValues()
@@ -106,17 +104,13 @@ public sealed class AssessmentFeedbackTests : IDisposable
         Assert.False(vm.IsAssessmentFeedbackVisible);
     }
 
-    private async Task<CatalogService> CreateCatalogAsync()
-    {
-        var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
-        return catalog;
-    }
+    private Task<CatalogService> CreateCatalogAsync() =>
+        _fx.CreateCatalogAsync("catalog");
 
     private async Task<MainWindowViewModel> CreateViewModelAsync(
         CatalogService catalog)
     {
-        var vm = new MainWindowViewModel(
+        var vm = _fx.CreateViewModel(
             catalog,
             baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask,
@@ -131,7 +125,7 @@ public sealed class AssessmentFeedbackTests : IDisposable
         CatalogService catalog,
         string name)
     {
-        var image = new ImageFile(Path.Combine(_root, name));
+        var image = new ImageFile(_fx.Path(name));
         image.CatalogId = await catalog.GetOrCreateImageAsync(image.FilePath);
         return image;
     }
@@ -152,9 +146,5 @@ public sealed class AssessmentFeedbackTests : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _fx.Dispose();
 }

@@ -7,14 +7,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class FullScreenSelectionTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-fullscreen-selection-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("fullscreen-selection");
     private readonly CatalogService _catalog;
 
     public FullScreenSelectionTests()
     {
-        _catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        _catalog = _fx.CreateCatalog("catalog");
         _catalog.InitializeAsync().GetAwaiter().GetResult();
     }
 
@@ -275,7 +273,7 @@ public sealed class FullScreenSelectionTests : IDisposable
         vm.SelectedImage = images[0];
         vm.ToggleFullScreenCommand.Execute(null);
         var replacementFolder = Directory.CreateDirectory(
-            Path.Combine(_root, "replacement-folder")).FullName;
+            _fx.Path("replacement-folder")).FullName;
 
         await vm.LoadFolderAsync(replacementFolder);
 
@@ -290,7 +288,7 @@ public sealed class FullScreenSelectionTests : IDisposable
     private MainWindowViewModel CreateViewModel(
         IBaseImageLoader loader,
         ISourceAvailabilityService? availabilityService = null) =>
-        new(
+        _fx.CreateViewModel(
             _catalog,
             loader,
             loadMetadataAsync: _ => Task.CompletedTask,
@@ -302,13 +300,12 @@ public sealed class FullScreenSelectionTests : IDisposable
             .ToList();
 
     private ImageFile CreateImage(string name) =>
-        new(Path.Combine(_root, name));
+        new(_fx.Path(name));
 
     public void Dispose()
     {
         _catalog.Dispose();
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _fx.Dispose();
     }
 
     private sealed class CountingBaseLoader : IBaseImageLoader

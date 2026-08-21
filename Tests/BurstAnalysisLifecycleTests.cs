@@ -8,9 +8,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class BurstAnalysisLifecycleTests : IDisposable
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-bursts-{Guid.NewGuid():N}");
+    private readonly CatalogVmFixture _fx = new("bursts");
 
     [Fact]
     public void FolderOpen_DoesNotAnalyzeCaptureTimes_WhenBurstsAreOff()
@@ -365,12 +363,12 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
             Func<ImageFile, Task> loadMetadataAsync,
             ISourceAvailabilityService? availabilityService = null)
     {
-        var photos = Path.Combine(_root, Guid.NewGuid().ToString("N"), "photos");
+        var runFolder = Guid.NewGuid().ToString("N");
+        var photos = Path.Combine(_fx.Path(runFolder), "photos");
         Directory.CreateDirectory(photos);
-        var catalog = new CatalogService(Path.Combine(
-            Path.GetDirectoryName(photos)!, "catalog"));
+        var catalog = _fx.CreateCatalog(Path.Combine(runFolder, "catalog"));
         catalog.InitializeAsync().GetAwaiter().GetResult();
-        var viewModel = new MainWindowViewModel(
+        var viewModel = _fx.CreateViewModel(
             catalog,
             baseLoader: null,
             loadMetadataAsync,
@@ -427,13 +425,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
 
     private static T Complete<T>(Task<T> task) => task.GetAwaiter().GetResult();
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _fx.Dispose();
 }
 
 

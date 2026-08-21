@@ -7,17 +7,14 @@ namespace HappyPhoton.Tests;
 
 public sealed class EffectsViewModelTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-effects-vm-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("effects-vm");
 
     [Fact]
     public async Task EffectsEdits_CanonicalizeResetUndoAndRedo()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("catalog");
         await using var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "photo.jpg"));
+        var image = new ImageFile(_fx.Path("photo.jpg"));
         vm.SelectedImage = image;
 
         vm.Midpoint = 73;
@@ -57,10 +54,10 @@ public sealed class EffectsViewModelTests : IDisposable
     [Fact]
     public async Task InactiveLatentState_IsSessionOnlyAndResetsOnSelectionChange()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "latent"));
+        using var catalog = _fx.CreateCatalog("latent");
         await using var vm = CreateViewModel(catalog);
-        var first = new ImageFile(Path.Combine(_root, "first.jpg"));
-        var second = new ImageFile(Path.Combine(_root, "second.jpg"));
+        var first = new ImageFile(_fx.Path("first.jpg"));
+        var second = new ImageFile(_fx.Path("second.jpg"));
         vm.SelectedImage = first;
 
         vm.Midpoint = 81;
@@ -76,12 +73,11 @@ public sealed class EffectsViewModelTests : IDisposable
     [Fact]
     public async Task CopyPasteAndPreset_TransferDeepClonedEffects()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "transfer"));
-        await catalog.InitializeAsync();
+        using var catalog = await _fx.CreateCatalogAsync("transfer");
         await using var vm = CreateViewModel(catalog);
-        await vm.PresetService.UseDirectoryAsync(Path.Combine(_root, "presets"));
-        var source = new ImageFile(Path.Combine(_root, "source.jpg"));
-        var target = new ImageFile(Path.Combine(_root, "target.jpg"));
+        await vm.PresetService.UseDirectoryAsync(_fx.Path("presets"));
+        var source = new ImageFile(_fx.Path("source.jpg"));
+        var target = new ImageFile(_fx.Path("target.jpg"));
         vm.SelectedImage = source;
         vm.Vignette = 32;
         vm.Midpoint = 66;
@@ -110,20 +106,17 @@ public sealed class EffectsViewModelTests : IDisposable
         Assert.NotSame(preset.Settings.Effects, source.EditSettings.Effects);
     }
 
-    private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>
-        new(
+    private MainWindowViewModel CreateViewModel(CatalogService catalog)
+    {
+        var vm = _fx.CreateViewModel(
             catalog,
             new NullBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally))
-        {
-            IsDevelopMode = true
-        };
-
-    public void Dispose()
-    {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
+        return vm;
     }
+
+    public void Dispose() => _fx.Dispose();
 }

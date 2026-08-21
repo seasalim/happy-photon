@@ -7,19 +7,16 @@ namespace HappyPhoton.Tests;
 
 public sealed class MetadataReviewActionsTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-metadata-actions-{Guid.NewGuid():N}")).FullName;
+    private readonly CatalogVmFixture _fx = new("metadata-actions");
 
     [Fact]
     public async Task CopyDetails_IncludesVisibleRowsAndOmitsAbsentRows()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await using var vm = new MainWindowViewModel(
+        using var catalog = _fx.CreateCatalog("catalog");
+        await using var vm = _fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask);
-        var image = new ImageFile(Path.Combine(_root, "photo.jpg"));
+        var image = new ImageFile(_fx.Path("photo.jpg"));
         image.ApplyMetadata(new ImageMetadata
         {
             FileSize = 2_048,
@@ -55,12 +52,11 @@ public sealed class MetadataReviewActionsTests : IDisposable
     [Fact]
     public async Task OpenMap_LaunchesOnlyAfterExplicitCommandActivation()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "map-catalog"));
-        await using var vm = new MainWindowViewModel(
+        using var catalog = _fx.CreateCatalog("map-catalog");
+        await using var vm = _fx.CreateViewModel(
             catalog,
-            baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask);
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "mapped.jpg"))
+        vm.SelectedImage = new ImageFile(_fx.Path("mapped.jpg"))
         {
             GpsLatitude = 47.608333,
             GpsLongitude = -122.320833
@@ -82,11 +78,5 @@ public sealed class MetadataReviewActionsTests : IDisposable
             launched.AbsoluteUri);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _fx.Dispose();
 }
