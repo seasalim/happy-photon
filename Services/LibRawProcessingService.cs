@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
-using ImageMagick;
 using static HappyPhoton.Services.ImageServiceHelpers;
 
 namespace HappyPhoton.Services;
@@ -56,35 +55,6 @@ public class LibRawProcessingService : IRawProcessingService
         catch (Exception exception)
         {
             LogDebug(ServiceName, $"Thumbnail extraction failed: {exception.Message}", filePath);
-            return null;
-        }
-    }
-
-    public MagickImage? DecodeFull(string filePath)
-    {
-        if (!_isAvailable) return null;
-        var stopwatch = Stopwatch.StartNew();
-        try
-        {
-            using var context = LibRawContext.Open(filePath);
-            context.Unpack();
-            context.ConfigureOutput(LibRawOutputConfiguration.FullDecodeSrgb());
-            context.Process();
-            using var processed = context.MakeProcessedImage();
-            var shape = processed.Description;
-            if (shape.BitsPerSample != 8 || shape.Channels != 3 ||
-                shape.Width == 0 || shape.Height == 0) return null;
-
-            using var pixels = RawBaseLoader.ImportRgb8(
-                processed.AsSpan(), checked((int)shape.Width), checked((int)shape.Height));
-            var image = (MagickImage)pixels.Clone();
-            LogPerformance(ServiceName, nameof(DecodeFull),
-                stopwatch.ElapsedMilliseconds, filePath);
-            return image;
-        }
-        catch (Exception exception)
-        {
-            LogDebug(ServiceName, $"DecodeFull failed: {exception.Message}", filePath);
             return null;
         }
     }

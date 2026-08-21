@@ -313,11 +313,6 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             width,
             height);
 
-    internal static MagickImage ImportRgb8(
-        ReadOnlySpan<byte> data,
-        int width,
-        int height) => CameraRgbCharacterization.ImportRgb8(data, width, height);
-
     internal static bool ApplyOrientation(
         MagickImage image,
         int orientation,

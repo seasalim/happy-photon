@@ -1,6 +1,6 @@
 #:project ../HappyPhoton.csproj
 
-using HappyPhoton.Services;
+using HappyPhoton.LibRaw.Interop;
 using ImageMagick;
 
 if (args.Length != 2)
@@ -13,9 +13,7 @@ if (args.Length != 2)
 var assetDirectory = Path.GetFullPath(args[0]);
 var displayP3ProfilePath = Path.GetFullPath(args[1]);
 var rawPath = Path.Combine(assetDirectory, "canon-eos-350d.cr2");
-var rawService = new LibRawProcessingService();
-using var source = rawService.DecodeFull(rawPath)
-    ?? throw new InvalidOperationException($"Could not decode {rawPath}.");
+using var source = DecodeFull(rawPath);
 
 Resize(source, 1200);
 source.Strip();
@@ -35,6 +33,46 @@ using (var tiff = (MagickImage)source.Clone())
 }
 
 return 0;
+
+MagickImage DecodeFull(string filePath)
+{
+    using var context = LibRawContext.Open(filePath);
+    context.Unpack();
+    context.ConfigureOutput(LibRawOutputConfiguration.FullDecodeSrgb());
+    context.Process();
+    using var processed = context.MakeProcessedImage();
+    var shape = processed.Description;
+    if (shape.BitsPerSample != 8 || shape.Channels != 3 ||
+        shape.Width == 0 || shape.Height == 0)
+    {
+        throw new InvalidOperationException(
+            $"LibRaw returned an unsupported image shape for {filePath}.");
+    }
+
+    var width = checked((int)shape.Width);
+    var height = checked((int)shape.Height);
+    var image = new MagickImage(
+        MagickColors.Black,
+        (uint)width,
+        (uint)height);
+    try
+    {
+        image.ColorSpace = ColorSpace.RGB;
+        image.ImportPixels(
+            processed.AsSpan(),
+            new PixelImportSettings(
+                (uint)width,
+                (uint)height,
+                StorageType.Char,
+                PixelMapping.RGB));
+        return image;
+    }
+    catch
+    {
+        image.Dispose();
+        throw;
+    }
+}
 
 void WriteJpeg(MagickImage image, string fileName)
 {

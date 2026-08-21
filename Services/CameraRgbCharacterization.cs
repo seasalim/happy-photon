@@ -118,20 +118,6 @@ internal sealed class CameraRgbCharacterization
         return ImportCharacterized(data, width, height, cancellationToken);
     }
 
-    internal static MagickImage ImportRgb8(
-        ReadOnlySpan<byte> data,
-        int width,
-        int height)
-    {
-        ValidateInput(data, width, height, sizeof(byte));
-        return ImportDirect(
-            data,
-            width,
-            height,
-            StorageType.Char,
-            PixelMapping.RGB);
-    }
-
     private static double[,] ComposeWorkingMatrix(double[,] cameraToSrgb) =>
         ChromaticAdaptation.Multiply(
             RgbColorSpaceMatrices.LinearSrgbToLinearRec2020DerivedExact,
