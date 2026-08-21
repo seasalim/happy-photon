@@ -23,6 +23,13 @@ Happy Photon is a performance-focused .NET 10/Avalonia photo workflow for browsi
 - Do not enumerate file-by-file edits, edge-case matrices, phases, or contingency branches unless asked.
 - A plan that will not fit its budget usually means the change should be split — propose the smaller first slice instead.
 
+## Measured change process
+
+- For refactors and fixes, first establish an instrumented baseline and propose concrete gates that include the workload, metric, observed before value, and acceptance threshold. Get the user's explicit approval of those gates before changing production code.
+- Instrumentation and test-only changes may be made while establishing the gates. If a meaningful instrumented gate is impractical, explain why and agree on an observable substitute before starting the production fix.
+- Split production work into the smallest coherent, human-reviewable iteration. Keep each production diff narrowly focused; test-code changes do not count toward this limit.
+- After each production iteration, rerun the approved gates, report the before/after values, and walk the user through every production change and how the design preserves ownership and relevant invariants before continuing.
+
 ## Commits
 
 - Commit messages are a single imperative line matching the existing history (e.g. "Highlight the target of each workflow tour step").
