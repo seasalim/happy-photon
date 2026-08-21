@@ -59,8 +59,8 @@ public sealed class ColorAssessmentInvariantTests : IDisposable
         };
         var histogram = new HistogramData();
         vm.SelectedImage = image;
-        vm.Histogram = histogram;
         vm.IsDevelopMode = true;
+        vm.Histogram = histogram;
         vm.IsCropMode = true;
         vm.IsWhiteBalancePicking = true;
         vm.IsShowingOriginal = true;

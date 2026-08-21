@@ -21,7 +21,10 @@ public enum ClippingOverlaySide
 public sealed record RenderOptions(
     bool ComputeStats = true,
     bool ComputeOverlayMasks = false,
-    ClippingOverlaySide OverlaySides = ClippingOverlaySide.Both);
+    ClippingOverlaySide OverlaySides = ClippingOverlaySide.Both,
+    bool ComputeHistogram = false,
+    bool ComputeWaveform = false,
+    bool PreparePreviewPixels = false);
 
 public sealed record RenderRequest(
     BaseImage Base,
@@ -40,6 +43,8 @@ public sealed class RenderResult : IDisposable
         _image ?? throw new ObjectDisposedException(nameof(RenderResult));
 
     public ClippingStats Clipping { get; }
+    public HistogramData? Histogram { get; }
+    internal byte[]? PreviewPixels { get; }
 
     public ClippingMask? OverlayMask
     {
@@ -53,11 +58,15 @@ public sealed class RenderResult : IDisposable
     internal RenderResult(
         MagickImage image,
         ClippingStats clipping,
-        ClippingMask? overlayMask)
+        ClippingMask? overlayMask,
+        HistogramData? histogram = null,
+        byte[]? previewPixels = null)
     {
         _image = image ?? throw new ArgumentNullException(nameof(image));
         Clipping = clipping ?? throw new ArgumentNullException(nameof(clipping));
         _overlayMask = overlayMask;
+        Histogram = histogram;
+        PreviewPixels = previewPixels;
     }
 
     internal MagickImage DetachImage() =>

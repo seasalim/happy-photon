@@ -26,6 +26,15 @@ public sealed partial class PreviewService
         ImageFile imageFile,
         EditSettings settings,
         CancellationToken cancellationToken = default) =>
+        GetSampleGainsAsync(GetAutoWhiteBalanceSampleAsync(
+            imageFile,
+            settings,
+            cancellationToken));
+
+    internal Task<WhiteBalanceSample?> GetAutoWhiteBalanceSampleAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        CancellationToken cancellationToken = default) =>
         SampleWhiteBalanceAsync(
             imageFile,
             settings,
@@ -33,6 +42,19 @@ public sealed partial class PreviewService
             cancellationToken);
 
     public Task<double[]?> PickWhiteBalanceAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        double normalizedX,
+        double normalizedY,
+        CancellationToken cancellationToken = default) =>
+        GetSampleGainsAsync(PickWhiteBalanceSampleAsync(
+            imageFile,
+            settings,
+            normalizedX,
+            normalizedY,
+            cancellationToken));
+
+    internal Task<WhiteBalanceSample?> PickWhiteBalanceSampleAsync(
         ImageFile imageFile,
         EditSettings settings,
         double normalizedX,
@@ -48,7 +70,7 @@ public sealed partial class PreviewService
                 normalizedY),
             cancellationToken);
 
-    private async Task<double[]?> SampleWhiteBalanceAsync(
+    private async Task<WhiteBalanceSample?> SampleWhiteBalanceAsync(
         ImageFile imageFile,
         EditSettings settings,
         Func<MagickImage, double[]?> sample,
@@ -62,11 +84,38 @@ public sealed partial class PreviewService
         {
             return null;
         }
+        if (WhiteBalanceSampleGateAsync is { } gate)
+        {
+            await gate().ConfigureAwait(false);
+        }
 
-        return await Task.Run(
+        var gains = await Task.Run(
             () => sample(snapshot.Base.Pixels),
             cancellationToken);
+        return gains == null
+            ? null
+            : new WhiteBalanceSample(gains, snapshot.Base);
     }
+
+    internal async Task<bool> IsWhiteBalanceBaseCurrentAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        object baseToken,
+        CancellationToken cancellationToken = default)
+    {
+        var decode = await ResolveDecodeAsync(
+            imageFile,
+            settings,
+            cancellationToken).ConfigureAwait(false);
+        using var snapshot = _baseCoordinator.TryAcquireCurrent(
+            imageFile,
+            decode);
+        return snapshot != null && ReferenceEquals(snapshot.Base, baseToken);
+    }
+
+    private static async Task<double[]?> GetSampleGainsAsync(
+        Task<WhiteBalanceSample?> sample) =>
+        (await sample.ConfigureAwait(false))?.Gains;
 
     // Bases are keyed by the profile selection token, so any decode this
     // service initiates must carry the resolved profile — a selection-only

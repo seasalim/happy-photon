@@ -235,7 +235,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task ScheduledHistogramRefresh_ClearsBeforeAfterState()
+    public async Task DevelopHistogramDoesNotScheduleDuplicateRender()
     {
         using var catalog = await _fx.CreateCatalogAsync();
         var vm = _fx.CreateViewModel(
@@ -256,7 +256,8 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         await vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
         Assert.True(vm.IsShowingOriginal);
 
-        await TestWaits.UntilAsync(() => !vm.IsShowingOriginal);
+        await Task.Delay(TimeSpan.FromMilliseconds(400));
+        Assert.True(vm.IsShowingOriginal);
         await vm.DisposeAsync();
     }
 

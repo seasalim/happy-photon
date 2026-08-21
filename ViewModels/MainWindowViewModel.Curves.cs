@@ -56,11 +56,14 @@ public partial class MainWindowViewModel
             return;
         }
 
+        var surfaceGeneration = RequestEditedRender();
         _history.PushEdit(before, dedup: false);
         SyncHistoryFlags();
         SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
-        await UpdatePreviewWithCurrentSliders();
-        await AutoSaveAsync();
+        if (await UpdatePreviewWithCurrentSliders(generation: surfaceGeneration))
+        {
+            await AutoSaveAsync();
+        }
     }
 
     private void MaterializeActiveCurve(EditSettings target)

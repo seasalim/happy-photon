@@ -28,6 +28,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         _previewIdentities = new();
     private RenderedPreview? _lastRendered;
     private long _renderGeneration;
+    private long _latestSurfaceGeneration;
     private long _baseRefreshGeneration;
     private long _restingSerial;
     private int _activeRefreshRenders;
@@ -41,10 +42,13 @@ public sealed partial class PreviewService : IAsyncDisposable
     internal event Action? RenderStarted;
     internal event Action? PreviewConverted;
     internal event Action? RenderedThumbnailCreated;
+    internal event Action<long>? RenderRequestCompleted;
     internal Func<Task>? RenderedThumbnailCacheQueuedAsync { get; set; }
     internal Func<Task>? RenderGateAsync { get; set; }
     internal Func<Task>? RefreshRenderGateAsync { get; set; }
     internal Func<Task>? RefreshReadyGateAsync { get; set; }
+    internal Func<Task>? WhiteBalanceSampleGateAsync { get; set; }
+    internal Func<Task>? CachedPreviewGateAsync { get; set; }
     internal Action<string>? RestingStageStarted { get; set; }
 
     public int PreviewActivityCount
@@ -99,6 +103,10 @@ public sealed partial class PreviewService : IAsyncDisposable
     {
         var settingsSnapshot = settings.Clone();
         await imageFile.EnsureCatalogIdAsync(_catalogService);
+        if (CachedPreviewGateAsync is { } gate)
+        {
+            await gate().ConfigureAwait(false);
+        }
         return await Task.Run(() =>
         {
             try
@@ -137,9 +145,11 @@ public sealed partial class PreviewService : IAsyncDisposable
         EditSettings settings,
         ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
+        bool computeWaveform,
         ClippingOverlaySide overlaySides,
         long generation,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool surfaceAuthorized)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var effectiveOverlaySides = baseImage.Info.IsRawSource
@@ -155,28 +165,32 @@ public sealed partial class PreviewService : IAsyncDisposable
                     effectiveOverlaySides != ClippingOverlaySide.None,
                 ComputeOverlayMasks:
                     effectiveOverlaySides != ClippingOverlaySide.None,
-                OverlaySides: effectiveOverlaySides)));
+                OverlaySides: effectiveOverlaySides,
+                ComputeHistogram: !skipHistogram,
+                ComputeWaveform: !skipHistogram && computeWaveform,
+                PreparePreviewPixels: true)));
         cancellationToken.ThrowIfCancellationRequested();
 
-        var histogram = new HistogramData();
-        if (!skipHistogram)
-        {
-            _histogramService.CalculateHistogram(rendered, histogram);
-        }
-        cancellationToken.ThrowIfCancellationRequested();
-
+        var histogram = rendered.Histogram ?? new HistogramData();
         Bitmap? preview = null;
         MagickImage? thumbnailSource = null;
         ClippingMask? clippingMask = null;
         try
         {
-            preview = ConvertToBitmap(rendered.Image);
+            preview = rendered.PreviewPixels == null
+                ? ConvertToBitmap(rendered.Image)
+                : BitmapConversionService.ConvertToBitmap(
+                    rendered.PreviewPixels,
+                    checked((int)rendered.Image.Width),
+                    checked((int)rendered.Image.Height));
+            cancellationToken.ThrowIfCancellationRequested();
             clippingMask = rendered.DetachOverlayMask();
             PreviewConverted?.Invoke();
             if (_createRenderedThumbnail &&
                 baseImage.Info.IsRawSource &&
                 settings.HasEdits &&
-                generation == Volatile.Read(ref _renderGeneration))
+                (surfaceAuthorized ||
+                 generation == Volatile.Read(ref _renderGeneration)))
             {
                 thumbnailSource = rendered.DetachImage();
             }
@@ -202,33 +216,56 @@ public sealed partial class PreviewService : IAsyncDisposable
         }
     }
 
-    private bool TryRememberRendered(
+    private void CommitRenderedPreview(
         ImageFile imageFile,
-        RenderOutput output,
+        Bitmap bitmap,
+        ImageMagick.MagickImage? thumbnailSource,
+        int thumbnailDimension,
         string settingsHash,
-        long generation)
+        long generation,
+        bool surfaceAuthorized)
     {
         RenderedPreview? previous;
         lock (_renderedSync)
         {
             if (Volatile.Read(ref _disposed) != 0 ||
+                !surfaceAuthorized &&
                 generation != Volatile.Read(ref _renderGeneration))
             {
-                return false;
+                thumbnailSource?.Dispose();
+                return;
             }
-            var thumbnailSource = output.DetachThumbnailSource();
             previous = _lastRendered;
             _lastRendered = new RenderedPreview(
                 imageFile,
-                new WeakReference<Bitmap>(output.Bitmap!),
+                new WeakReference<Bitmap>(bitmap),
                 settingsHash,
                 generation,
                 CreateRenderedThumbnailAsync(
                     thumbnailSource,
-                    output.ThumbnailDimension));
+                    thumbnailDimension));
         }
         DisposeRenderedPreviewWhenReady(previous);
-        return true;
+    }
+
+    private PreviewPromotionLease CreatePromotionLease(
+        ImageFile imageFile,
+        RenderOutput output,
+        string settingsHash,
+        long generation,
+        bool surfaceAuthorized)
+    {
+        var thumbnailSource = output.DetachThumbnailSource();
+        return new PreviewPromotionLease(
+            thumbnailSource,
+            (bitmap, source) => CommitRenderedPreview(
+                imageFile,
+                bitmap,
+                source,
+                output.ThumbnailDimension,
+                settingsHash,
+                generation,
+                surfaceAuthorized));
     }
 
     private void QueueRenderedPreviewIfLeaving(ImageFile nextImage)
@@ -356,7 +393,11 @@ public sealed partial class PreviewService : IAsyncDisposable
             return bitmap;
         }
 
-        public PreviewArtifacts DetachArtifacts(long generation)
+        public PreviewArtifacts DetachArtifacts(
+            long generation,
+            BaseImageInfo info,
+            bool isBaseStale,
+            PreviewPromotionLease? promotionLease)
         {
             var mask = ClippingMask;
             ClippingMask = null;
@@ -367,7 +408,12 @@ public sealed partial class PreviewService : IAsyncDisposable
                 IsRawSource,
                 ProfileState,
                 generation,
-                mask);
+                mask,
+                info.RawHistogram,
+                info.AsShotKelvin,
+                info.AsShotTint,
+                isBaseStale,
+                promotionLease);
         }
 
         public void Dispose()

@@ -150,16 +150,31 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var gains = await ImageService.Previews.GetAutoWhiteBalanceAsync(
-            SelectedImage,
-            CaptureLiveEditState());
-        if (gains == null)
+        var image = SelectedImage;
+        var generation = Volatile.Read(ref _latestPreviewOutcomeGeneration);
+        var settings = CaptureLiveEditState();
+        var sample = await ImageService.Previews.GetAutoWhiteBalanceSampleAsync(
+            image,
+            settings);
+        if (sample == null)
         {
-            ShowTransientStatus("Auto white balance needs usable mid-tones");
+            if (IsCurrentWhiteBalanceRequest(image, generation, settings))
+            {
+                ShowTransientStatus("Auto white balance needs usable mid-tones");
+            }
             return;
         }
 
-        await ApplyPickedWhiteBalanceAsync(gains);
+        if (!await IsCurrentWhiteBalanceSampleAsync(
+                image,
+                generation,
+                settings,
+                sample.BaseToken))
+        {
+            return;
+        }
+        var surfaceGeneration = RequestEditedRender();
+        await ApplyPickedWhiteBalanceAsync(sample.Gains, surfaceGeneration);
     }
 
     [RelayCommand(CanExecute = nameof(CanSampleWhiteBalance))]
@@ -180,22 +195,68 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var gains = await ImageService.Previews.PickWhiteBalanceAsync(
-            SelectedImage,
-            CaptureLiveEditState(),
+        var image = SelectedImage;
+        var generation = Volatile.Read(ref _latestPreviewOutcomeGeneration);
+        var settings = CaptureLiveEditState();
+        var sample = await ImageService.Previews.PickWhiteBalanceSampleAsync(
+            image,
+            settings,
             normalizedX,
             normalizedY);
-        if (gains == null)
+        if (sample == null)
         {
-            ShowTransientStatus("Pick a neutral mid-tone area");
+            if (IsCurrentWhiteBalanceRequest(image, generation, settings))
+            {
+                ShowTransientStatus("Pick a neutral mid-tone area");
+            }
             return;
         }
 
+        if (!await IsCurrentWhiteBalanceSampleAsync(
+                image,
+                generation,
+                settings,
+                sample.BaseToken))
+        {
+            return;
+        }
+        var surfaceGeneration = RequestEditedRender();
         IsWhiteBalancePicking = false;
-        await ApplyPickedWhiteBalanceAsync(gains);
+        await ApplyPickedWhiteBalanceAsync(sample.Gains, surfaceGeneration);
     }
 
-    private async Task ApplyPickedWhiteBalanceAsync(double[] gains)
+    private async Task<bool> IsCurrentWhiteBalanceSampleAsync(
+        ImageFile image,
+        long generation,
+        EditSettings settings,
+        object baseToken)
+    {
+        if (!IsCurrentWhiteBalanceRequest(image, generation, settings))
+        {
+            return false;
+        }
+        var baseCurrent = await ImageService.Previews.IsWhiteBalanceBaseCurrentAsync(
+            image,
+            settings,
+            baseToken);
+        return baseCurrent &&
+            IsCurrentWhiteBalanceRequest(image, generation, settings);
+    }
+
+    private bool IsCurrentWhiteBalanceRequest(
+        ImageFile image,
+        long generation,
+        EditSettings settings) =>
+        ReferenceEquals(SelectedImage, image) &&
+        generation == Volatile.Read(ref _latestPreviewOutcomeGeneration) &&
+        string.Equals(
+            RenderSettingsHash.Compute(CaptureLiveEditState()),
+            RenderSettingsHash.Compute(settings),
+            StringComparison.Ordinal);
+
+    private async Task ApplyPickedWhiteBalanceAsync(
+        double[] gains,
+        long generation)
     {
         if (SelectedImage == null)
         {
@@ -211,8 +272,10 @@ public partial class MainWindowViewModel
         var display = WhiteBalanceModel.EstimateFromGains(gains);
         SetDisplayedWhiteBalance(display.kelvin, display.tint);
         SetModeLabel("Picked");
-        await UpdatePreviewWithCurrentSliders();
-        await AutoSaveAsync();
+        if (await UpdatePreviewWithCurrentSliders(generation: generation))
+        {
+            await AutoSaveAsync();
+        }
         UpdateCanReset();
     }
 
@@ -292,25 +355,14 @@ public partial class MainWindowViewModel
         _isLoadingImage = wasLoading;
     }
 
-    private async Task RefreshWhiteBalanceContextAsync(
-        ImageFile imageFile,
-        CancellationToken cancellationToken)
+    private void ApplyWhiteBalanceContext(
+        double asShotKelvin,
+        double asShotTint,
+        bool ready)
     {
-        var context = await ImageService.Previews.GetWhiteBalanceContextAsync(
-            imageFile,
-            imageFile.EditSettings,
-            cancellationToken);
-        if (context == null || !ReferenceEquals(SelectedImage, imageFile))
-        {
-            return;
-        }
-
-        _asShotKelvin = context.AsShotKelvin;
-        _asShotTint = context.AsShotTint;
-        ReconcileHighlightReconstructionCapability(
-            imageFile,
-            context.IsRawSource);
-        IsWhiteBalanceReady = true;
+        _asShotKelvin = asShotKelvin;
+        _asShotTint = asShotTint;
+        IsWhiteBalanceReady = ready;
         if (_liveWhiteBalance.Mode == WbMode.AsShot)
         {
             SetDisplayedWhiteBalance(_asShotKelvin, _asShotTint);
@@ -320,19 +372,8 @@ public partial class MainWindowViewModel
     private void ResetWhiteBalanceUi()
     {
         _liveWhiteBalance = new WhiteBalanceSettings();
-        _asShotKelvin = 6504;
-        _asShotTint = 0;
-        IsWhiteBalanceReady = false;
         IsWhiteBalancePicking = false;
         SetDisplayedWhiteBalance(_asShotKelvin, _asShotTint);
         SetModeLabel("As Shot");
-    }
-
-    private void PrepareWhiteBalanceUi(ImageFile imageFile)
-    {
-        _asShotKelvin = imageFile.IsRaw ? 5500 : 6504;
-        _asShotTint = 0;
-        IsWhiteBalanceReady = false;
-        IsWhiteBalancePicking = false;
     }
 }

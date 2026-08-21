@@ -8,6 +8,7 @@ public sealed class PreviewArtifacts : IDisposable
 {
     private Bitmap? _bitmap;
     private ClippingMask? _clippingMask;
+    private PreviewPromotionLease? _promotionLease;
 
     public Bitmap? Bitmap => _bitmap;
     public HistogramData Histogram { get; }
@@ -15,6 +16,10 @@ public sealed class PreviewArtifacts : IDisposable
     public bool IsRawSource { get; }
     internal DcpProfileState? ProfileState { get; }
     public long Generation { get; }
+    public HistogramData? RawHistogram { get; }
+    public double AsShotKelvin { get; }
+    public double AsShotTint { get; }
+    public bool IsBaseStale { get; }
     public ClippingMask? ClippingMask => _clippingMask;
 
     internal PreviewArtifacts(
@@ -24,7 +29,12 @@ public sealed class PreviewArtifacts : IDisposable
         bool isRawSource,
         DcpProfileState? profileState,
         long generation,
-        ClippingMask? clippingMask)
+        ClippingMask? clippingMask,
+        HistogramData? rawHistogram = null,
+        double asShotKelvin = 6504,
+        double asShotTint = 0,
+        bool isBaseStale = false,
+        PreviewPromotionLease? promotionLease = null)
     {
         _bitmap = bitmap;
         Histogram = histogram ?? throw new ArgumentNullException(nameof(histogram));
@@ -33,6 +43,11 @@ public sealed class PreviewArtifacts : IDisposable
         ProfileState = profileState;
         Generation = generation;
         _clippingMask = clippingMask;
+        RawHistogram = rawHistogram;
+        AsShotKelvin = asShotKelvin;
+        AsShotTint = asShotTint;
+        IsBaseStale = isBaseStale;
+        _promotionLease = promotionLease;
     }
 
     internal static PreviewArtifacts Empty(long generation, bool isRawSource) =>
@@ -50,9 +65,25 @@ public sealed class PreviewArtifacts : IDisposable
     public ClippingMask? DetachClippingMask() =>
         Interlocked.Exchange(ref _clippingMask, null);
 
+    internal PreviewPromotionLease? DetachPromotionLease() =>
+        Interlocked.Exchange(ref _promotionLease, null);
+
+    internal void CommitPromotion()
+    {
+        var bitmap = _bitmap;
+        if (bitmap != null)
+        {
+            Interlocked.Exchange(ref _promotionLease, null)?.Commit(bitmap);
+        }
+    }
+
     internal (Bitmap? preview, HistogramData histogram) DetachLegacyResult()
     {
         var bitmap = DetachBitmap();
+        if (bitmap != null)
+        {
+            Interlocked.Exchange(ref _promotionLease, null)?.Commit(bitmap);
+        }
         Interlocked.Exchange(ref _clippingMask, null)?.Dispose();
         return (bitmap, Histogram);
     }
@@ -60,6 +91,7 @@ public sealed class PreviewArtifacts : IDisposable
     public void Dispose()
     {
         Interlocked.Exchange(ref _clippingMask, null)?.Dispose();
+        Interlocked.Exchange(ref _promotionLease, null)?.Dispose();
         Interlocked.Exchange(ref _bitmap, null)?.Dispose();
     }
 }
@@ -85,6 +117,7 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
 {
     private Bitmap? _bitmap;
     private ClippingMask? _clippingMask;
+    private PreviewPromotionLease? _promotionLease;
 
     public ImageFile ImageFile { get; }
     public HistogramData Histogram { get; }
@@ -93,6 +126,8 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
     public ClippingStats? Clipping { get; }
     public bool IsRawSource { get; }
     internal DcpProfileState? ProfileState { get; }
+    public double AsShotKelvin { get; }
+    public double AsShotTint { get; }
     public ClippingMask? ClippingMask => _clippingMask;
 
     /// <summary>
@@ -114,7 +149,9 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         ClippingStats? clipping = null,
         bool isRawSource = false,
         DcpProfileState? profileState = null,
-        ClippingMask? clippingMask = null)
+        ClippingMask? clippingMask = null,
+        double asShotKelvin = 6504,
+        double asShotTint = 0)
     {
         ImageFile = imageFile;
         _bitmap = bitmap;
@@ -126,6 +163,8 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         IsRawSource = isRawSource;
         ProfileState = profileState;
         _clippingMask = clippingMask;
+        AsShotKelvin = asShotKelvin;
+        AsShotTint = asShotTint;
     }
 
     public Bitmap DetachBitmap() =>
@@ -135,9 +174,16 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
     public ClippingMask? DetachClippingMask() =>
         Interlocked.Exchange(ref _clippingMask, null);
 
+    internal PreviewPromotionLease? DetachPromotionLease() =>
+        Interlocked.Exchange(ref _promotionLease, null);
+
+    internal void SetPromotionLease(PreviewPromotionLease lease) =>
+        _promotionLease = lease;
+
     public void Dispose()
     {
         Interlocked.Exchange(ref _clippingMask, null)?.Dispose();
+        Interlocked.Exchange(ref _promotionLease, null)?.Dispose();
         Interlocked.Exchange(ref _bitmap, null)?.Dispose();
     }
 }

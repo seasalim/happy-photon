@@ -98,8 +98,16 @@ public partial class MainWindowViewModel
             return;
         }
 
+        var isSelected = ReferenceEquals(SelectedImage, image);
+        var surfaceGeneration = isSelected
+            ? ReserveRenderOutcome()
+            : 0;
         image.SourceRequiresHydration = value;
-        if (ReferenceEquals(SelectedImage, image))
+        if (isSelected)
+        {
+            ApplySurfaceClearOutcome(image, surfaceGeneration);
+        }
+        if (isSelected)
         {
             OnPropertyChanged(nameof(StatusMessage));
         }
@@ -108,7 +116,7 @@ public partial class MainWindowViewModel
             RefreshOnlineOnlyPhotoCount();
         }
 
-        if (ReferenceEquals(SelectedImage, image))
+        if (isSelected)
         {
             NotifySelectedImageEditStateChanged();
             UpdateCanReset();
@@ -120,7 +128,6 @@ public partial class MainWindowViewModel
                 _histogramDebounce?.Cancel();
                 IsCropMode = false;
                 IsWhiteBalancePicking = false;
-                Histogram = null;
             }
         }
     }
@@ -165,7 +172,6 @@ public partial class MainWindowViewModel
 
             _isLoadingImage = true;
             SetSourceRequiresHydration(image, false);
-            PrepareWhiteBalanceUi(image);
             LoadSlidersFrom(image.EditSettings);
             _lastSavedState = image.EditSettings.Clone();
             _isLoadingImage = false;
@@ -188,7 +194,9 @@ public partial class MainWindowViewModel
             }
             else
             {
-                await LoadPreviewAsync(image);
+                var surfaceGeneration = ReserveRenderOutcome();
+                ApplySurfaceClearOutcome(image, surfaceGeneration);
+                await LoadPreviewAsync(image, surfaceGeneration);
             }
         }
         catch (OperationCanceledException) when (request.IsCancellationRequested)

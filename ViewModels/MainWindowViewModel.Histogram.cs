@@ -35,6 +35,12 @@ public partial class MainWindowViewModel
             if (SetProperty(ref _selectedScope, value))
             {
                 NotifyScopeState();
+                if ((IsDevelopMode || IsFullScreenMode) &&
+                    SelectedImage != null &&
+                    value == ScopeView.Waveform)
+                {
+                    _ = RefreshWaveformScopeAsync();
+                }
             }
         }
     }
@@ -51,6 +57,18 @@ public partial class MainWindowViewModel
         // Clicking the already-active icon still toggles the button's local
         // IsChecked; notify unconditionally so the binding re-asserts it.
         NotifyScopeState();
+    }
+
+    private async Task RefreshWaveformScopeAsync()
+    {
+        var generation = ReserveRenderOutcome(
+            _requestedPreviewIntent,
+            promotionEligible: false);
+        await UpdatePreviewWithCurrentSliders(
+            generation: generation,
+            intent: _requestedPreviewIntent,
+            promotable: false,
+            rollbackRequestedIntent: _requestedPreviewIntent);
     }
 
     public bool IsRawHistogramAvailable => RawHistogram != null;
@@ -111,15 +129,12 @@ public partial class MainWindowViewModel
             Histogram = null;
             return;
         }
-        if ((IsDevelopMode || IsFullScreenMode) &&
-            selectedImage.SourceRequiresHydration)
+        if (IsDevelopMode || IsFullScreenMode)
         {
-            SetRawHistogram(null);
-            Histogram = null;
+            _histogramDebounce?.Cancel();
             return;
         }
-        if (!IsDevelopMode && !IsFullScreenMode)
-            SetRawHistogram(null);
+        SetRawHistogram(null);
         var debounce = ReplaceDebounce(ref _histogramDebounce);
         var ct = debounce.Token;
         _ = DebouncedAction.RunAsync(
@@ -137,23 +152,6 @@ public partial class MainWindowViewModel
         if (cancellationToken.IsCancellationRequested ||
             !ReferenceEquals(SelectedImage, imageFile))
         {
-            return;
-        }
-
-        if (IsDevelopMode || IsFullScreenMode)
-        {
-            if (imageFile.SourceRequiresHydration)
-            {
-                return;
-            }
-
-            SetRawHistogram(ImageService.Previews.TryGetRawHistogram(
-                imageFile,
-                BaseDecodeSettings.From(imageFile.EditSettings)));
-
-            await UpdatePreviewWithCurrentSliders(
-                skipHistogram: false,
-                cancellationToken);
             return;
         }
 

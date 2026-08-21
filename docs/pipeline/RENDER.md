@@ -236,13 +236,13 @@ Computed at preview scale when `Options.ComputeStats` (existing `HistogramServic
 bins stay 8-bit). Shadow statistics always sample the finalized display. Highlight
 statistics depend on the tone regime:
 
-The same render-stats call makes a second pass over the histogram's exact
-downsampled Q16 RGB buffer to accumulate a 256-column × 128-level luminance
-waveform. Horizontal image position maps to columns, Rec.601 luminance maps with
-`level = value8 >> 1`, and each `ushort` cell stores the sample count. Sources
-narrower than 256 pixels back-fill unrepresented columns. At the 1024 px render-stats
-cap, no cell can exceed 4096 samples. Library thumbnail histograms use the bitmap
-overload and never create waveform data.
+The render exports one BGRA8 buffer that is both the preview-bitmap source and the
+display-scope source. Histogram-active interaction accumulates only the four 8-bit
+histogram channels; waveform-active interaction also accumulates the 256-column ×
+128-level luminance waveform. Horizontal image position maps to columns, Rec.601
+luminance maps with `level = value8 >> 1`, and each `ushort` cell stores the sample
+count. Sources narrower than 256 pixels back-fill unrepresented columns. Library
+thumbnail histograms use the bitmap overload and never create waveform data.
 
 The selectable RAW histogram is deliberately outside that render stage: `RawBaseLoader`
 captures it from LibRaw's preserved post-`Unpack` mosaic before output configuration,
@@ -452,15 +452,19 @@ appearance-consistent rather than sample-identical across resolutions.
 
 ## 11. Performance contract
 
-Preview rendering always calculates the histogram and luminance waveform from the same
-display-referred sRGB buffer before bitmap conversion; the waveform pass is synchronous
-inside `HistogramService` and inherits the render's cancellation checks. For an edited
-RAW whose generation is still current, `PreviewService` converts the full preview, then
-transfers exclusive ownership of `RenderResult.Image` to a tracked background task that
-resizes it in place (linear light, capped at 512px) into the rendered-thumbnail
-candidate — a cache artifact, not a render stage, so `RenderPipeline.Version` is
-unchanged and no full-size clone is made. Superseded generations skip the work; non-RAW
-or unedited renders create no candidate; promotion never waits on background work.
+Preview rendering calculates the active display scope from the exact display-referred
+sRGB bytes used for bitmap conversion. Entry paints seed both scopes. Histogram-active
+ticks skip waveform accumulation and retain the last trace for an immediate scope
+switch; selecting Waveform schedules one current-generation render that replaces it
+with a coherent trace. For an edited
+RAW whose service render is still current, `PreviewService` places the detachable
+`RenderResult.Image` in the outcome's promotion lease. Only VM acceptance of a
+committed edited-state render from the current base commits that lease and starts the
+tracked resize (linear light, capped at 512px); rejection, stale-base paint, before
+view, preset hover, crop draft, cache, resting, and shutdown dispose it without
+promotion. The candidate is a cache artifact, not a render stage, so
+`RenderPipeline.Version` is unchanged and no full-size clone is made. Promotion never
+waits on background work.
 Shutdown awaits candidate creation and cache queueing before the writer is drained.
 
 Per slider tick at 1600px preview: geometry (usually no-op), optional profile HueSat,

@@ -162,6 +162,19 @@ internal static class ClippingStatsCalculator
         long highR = 0, highG = 0, highB = 0;
         long lowR = 0, lowG = 0, lowB = 0;
         long highAny = 0, lowAll = 0;
+        var imageWidth = checked((int)image.Width);
+        var imageHeight = checked((int)image.Height);
+        var scene = sceneHighlights;
+        var sceneHasMask = scene?.HighMask != null;
+        var sceneDimensionsMatch = sceneHasMask &&
+            scene!.Width == image.Width &&
+            scene.Height == image.Height;
+        var sceneX = sceneHasMask && !sceneDimensionsMatch
+            ? BuildCoordinateMap(imageWidth, checked((int)scene!.Width))
+            : null;
+        var sceneY = sceneHasMask && !sceneDimensionsMatch
+            ? BuildCoordinateMap(imageHeight, checked((int)scene!.Height))
+            : null;
 
         var workers = WorkerCount(pixels);
         Parallel.For(0, workers, worker =>
@@ -170,19 +183,26 @@ internal static class ClippingStatsCalculator
             long localHighR = 0, localHighG = 0, localHighB = 0;
             long localLowR = 0, localLowG = 0, localLowB = 0;
             long localHighAny = 0, localLowAll = 0;
+            var imageX = start % imageWidth;
+            var imageY = start / imageWidth;
             for (var pixel = start; pixel < end; pixel++)
             {
                 var sample = pixel * 3;
                 var r = samples[sample];
                 var g = samples[sample + 1];
                 var b = samples[sample + 2];
-                var rHigh = sceneHighlights == null && r >= HighThreshold;
-                var gHigh = sceneHighlights == null && g >= HighThreshold;
-                var bHigh = sceneHighlights == null && b >= HighThreshold;
-                var anyHigh = sceneHighlights == null
+                var rHigh = scene == null && r >= HighThreshold;
+                var gHigh = scene == null && g >= HighThreshold;
+                var bHigh = scene == null && b >= HighThreshold;
+                var anyHigh = scene == null
                     ? rHigh || gHigh || bHigh
-                    : IsSceneHigh(
-                        sceneHighlights, pixel, image.Width, image.Height);
+                    : !sceneHasMask
+                        ? false
+                    : sceneDimensionsMatch
+                        ? scene.HighMask![pixel]
+                        : scene.HighMask![
+                            sceneY![imageY] * checked((int)scene.Width) +
+                            sceneX![imageX]];
                 var rLow = r <= LowThreshold;
                 var gLow = g <= LowThreshold;
                 var bLow = b <= LowThreshold;
@@ -212,6 +232,11 @@ internal static class ClippingStatsCalculator
                         flags[pixel] = (byte)ClippingOverlaySide.DisplayFloor;
                     }
                 }
+                if (sceneHasMask && ++imageX == imageWidth)
+                {
+                    imageX = 0;
+                    imageY++;
+                }
             }
             Interlocked.Add(ref highR, localHighR);
             Interlocked.Add(ref highG, localHighG);
@@ -225,10 +250,10 @@ internal static class ClippingStatsCalculator
 
         var divisor = (double)pixels;
         var stats = new ClippingStats(
-            sceneHighlights?.High ??
+            scene?.High ??
                 new ChannelClip(highR / divisor, highG / divisor, highB / divisor),
             new ChannelClip(lowR / divisor, lowG / divisor, lowB / divisor),
-            sceneHighlights?.HighAny ?? highAny / divisor,
+            scene?.HighAny ?? highAny / divisor,
             lowAll / divisor,
             rawNearClip);
         return new ClippingAnalysis(
@@ -249,6 +274,24 @@ internal static class ClippingStatsCalculator
         bool createMask)
     {
         ArgumentNullException.ThrowIfNull(image);
+        return AnalyzeSceneHighlights(
+            GetRgbSamples(image),
+            image.Width,
+            image.Height,
+            whiteBalanceMatrix,
+            exposureEv,
+            createMask);
+    }
+
+    internal static SceneHighlightAnalysis AnalyzeSceneHighlights(
+        ushort[] samples,
+        uint width,
+        uint height,
+        double[,] whiteBalanceMatrix,
+        double exposureEv,
+        bool createMask)
+    {
+        ArgumentNullException.ThrowIfNull(samples);
         ArgumentNullException.ThrowIfNull(whiteBalanceMatrix);
         if (whiteBalanceMatrix.GetLength(0) != 3 ||
             whiteBalanceMatrix.GetLength(1) != 3)
@@ -262,11 +305,25 @@ internal static class ClippingStatsCalculator
             throw new ArgumentOutOfRangeException(nameof(exposureEv));
         }
 
-        var samples = GetRgbSamples(image);
+        if (samples.Length != checked((int)(width * height * 3)))
+        {
+            throw new ArgumentException(
+                "The RGB samples must match the supplied dimensions.",
+                nameof(samples));
+        }
         var pixels = samples.Length / 3;
         var mask = createMask ? new bool[pixels] : null;
         long highR = 0, highG = 0, highB = 0, highAny = 0;
         var gain = Math.Pow(2, exposureEv);
+        var m00 = whiteBalanceMatrix[0, 0];
+        var m01 = whiteBalanceMatrix[0, 1];
+        var m02 = whiteBalanceMatrix[0, 2];
+        var m10 = whiteBalanceMatrix[1, 0];
+        var m11 = whiteBalanceMatrix[1, 1];
+        var m12 = whiteBalanceMatrix[1, 2];
+        var m20 = whiteBalanceMatrix[2, 0];
+        var m21 = whiteBalanceMatrix[2, 1];
+        var m22 = whiteBalanceMatrix[2, 2];
         var workers = WorkerCount(pixels);
         Parallel.For(0, workers, worker =>
         {
@@ -279,12 +336,12 @@ internal static class ClippingStatsCalculator
                 var red = samples[offset] / (double)ushort.MaxValue;
                 var green = samples[offset + 1] / (double)ushort.MaxValue;
                 var blue = samples[offset + 2] / (double)ushort.MaxValue;
-                var rHigh = gain * Transform(
-                    whiteBalanceMatrix, 0, red, green, blue) >= 1;
-                var gHigh = gain * Transform(
-                    whiteBalanceMatrix, 1, red, green, blue) >= 1;
-                var bHigh = gain * Transform(
-                    whiteBalanceMatrix, 2, red, green, blue) >= 1;
+                var rHigh = gain *
+                    (m00 * red + m01 * green + m02 * blue) >= 1;
+                var gHigh = gain *
+                    (m10 * red + m11 * green + m12 * blue) >= 1;
+                var bHigh = gain *
+                    (m20 * red + m21 * green + m22 * blue) >= 1;
                 if (rHigh) localHighR++;
                 if (gHigh) localHighG++;
                 if (bHigh) localHighB++;
@@ -307,46 +364,31 @@ internal static class ClippingStatsCalculator
                 highG / (double)divisor,
                 highB / (double)divisor),
             highAny / (double)divisor,
-            image.Width,
-            image.Height,
+            width,
+            height,
             mask);
+    }
+
+    internal static ushort[] CopyRgbSamples(MagickImage image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+        return GetRgbSamples(image);
     }
 
     private static ushort[] GetRgbSamples(MagickImage image) =>
         image.GetPixelsUnsafe().ToShortArray(PixelMapping.RGB) ??
         throw new InvalidOperationException("Unable to read Q16 RGB pixels.");
 
-    private static double Transform(
-        double[,] matrix,
-        int row,
-        double red,
-        double green,
-        double blue) =>
-        matrix[row, 0] * red +
-        matrix[row, 1] * green +
-        matrix[row, 2] * blue;
-
-    private static bool IsSceneHigh(
-        SceneHighlightAnalysis scene,
-        int pixel,
-        uint width,
-        uint height)
+    private static int[] BuildCoordinateMap(int destinationSize, int sourceSize)
     {
-        if (scene.HighMask == null || width == 0 || height == 0 ||
-            scene.Width == 0 || scene.Height == 0)
+        var map = new int[destinationSize];
+        for (var coordinate = 0; coordinate < destinationSize; coordinate++)
         {
-            return false;
+            map[coordinate] = Math.Min(
+                sourceSize - 1,
+                (int)((coordinate + 0.5) * sourceSize / destinationSize));
         }
-
-        var x = pixel % checked((int)width);
-        var y = pixel / checked((int)width);
-        var sourceX = Math.Min(
-            checked((int)scene.Width) - 1,
-            (int)((x + 0.5) * scene.Width / width));
-        var sourceY = Math.Min(
-            checked((int)scene.Height) - 1,
-            (int)((y + 0.5) * scene.Height / height));
-        return scene.HighMask[sourceY * checked((int)scene.Width) + sourceX];
+        return map;
     }
 
 }

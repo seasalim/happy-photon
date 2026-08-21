@@ -11,16 +11,38 @@ public sealed partial class PreviewService
         EditSettings settings,
         ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
+        bool computeWaveform,
         ClippingOverlaySide overlaySides,
         bool forceProfileRefresh,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        long? surfaceGeneration)
     {
         var settingsSnapshot = settings.Clone();
+        var outcomeGeneration = surfaceGeneration ?? 0;
+        if (surfaceGeneration.HasValue &&
+            !TryAdoptSurfaceGeneration(surfaceGeneration.Value))
+        {
+            return PreviewArtifacts.Empty(
+                surfaceGeneration.Value,
+                imageFile.IsRaw);
+        }
         await imageFile.EnsureCatalogIdAsync(_catalogService);
+        if (surfaceGeneration.HasValue &&
+            surfaceGeneration.Value != Volatile.Read(
+                ref _latestSurfaceGeneration))
+        {
+            return PreviewArtifacts.Empty(
+                surfaceGeneration.Value,
+                imageFile.IsRaw);
+        }
         ObjectDisposedException.ThrowIf(
             Volatile.Read(ref _disposed) != 0,
             this);
         var generation = Interlocked.Increment(ref _renderGeneration);
+        if (!surfaceGeneration.HasValue)
+        {
+            outcomeGeneration = generation;
+        }
         var stopwatch = Stopwatch.StartNew();
 
         try
@@ -35,19 +57,27 @@ public sealed partial class PreviewService
                     cancellationToken).ConfigureAwait(false);
                 decode = decode.WithProfileResolution(resolution);
             }
+            if (!IsCurrentSurfaceGeneration(surfaceGeneration))
+            {
+                return PreviewArtifacts.Empty(
+                    outcomeGeneration,
+                    imageFile.IsRaw);
+            }
             using var snapshot = await AcquirePreviewBaseAsync(
                 imageFile,
                 decode,
                 generation,
+                outcomeGeneration,
+                surfaceGeneration,
                 cancellationToken);
             if (snapshot == null)
             {
-                return PreviewArtifacts.Empty(generation, imageFile.IsRaw);
+                return PreviewArtifacts.Empty(outcomeGeneration, imageFile.IsRaw);
             }
-            if (generation != Volatile.Read(ref _renderGeneration))
+            if (!IsCurrentRenderRequest(surfaceGeneration, generation))
             {
                 return PreviewArtifacts.Empty(
-                    generation,
+                    outcomeGeneration,
                     snapshot.Base.Info.IsRawSource);
             }
             if (snapshot.IsStale)
@@ -57,10 +87,11 @@ public sealed partial class PreviewService
                     imageFile,
                     settingsSnapshot,
                     thumbnailRequest,
-                    skipHistogram,
+                    computeWaveform,
                     overlaySides,
                     decode,
-                    generation);
+                    generation,
+                    outcomeGeneration);
             }
 
             LogPerformance(
@@ -75,6 +106,13 @@ public sealed partial class PreviewService
             {
                 await gate().ConfigureAwait(false);
             }
+            if (!IsCurrentSurfaceGeneration(surfaceGeneration) ||
+                !IsCurrentRenderRequest(surfaceGeneration, generation))
+            {
+                return PreviewArtifacts.Empty(
+                    outcomeGeneration,
+                    snapshot.Base.Info.IsRawSource);
+            }
             RenderStarted?.Invoke();
             var rendered = await Task.Run(
                 () => Render(
@@ -82,33 +120,30 @@ public sealed partial class PreviewService
                     settingsSnapshot,
                     thumbnailRequest,
                     skipHistogram,
+                    computeWaveform,
                     overlaySides,
                     generation,
-                    cancellationToken),
+                    cancellationToken,
+                    surfaceAuthorized: surfaceGeneration.HasValue),
                 cancellationToken);
-            if (generation != Volatile.Read(ref _renderGeneration) ||
+            if (!IsCurrentRenderRequest(surfaceGeneration, generation) ||
                 cancellationToken.IsCancellationRequested)
             {
                 rendered.Dispose();
                 cancellationToken.ThrowIfCancellationRequested();
                 return PreviewArtifacts.Empty(
-                    generation,
+                    outcomeGeneration,
                     snapshot.Base.Info.IsRawSource);
             }
 
             var settingsHash = RenderSettingsHash.Compute(
                 settingsSnapshot,
                 snapshot.Base.Info.ProfileToken);
-            if (rendered.Bitmap == null ||
-                !TryRememberRendered(
-                    imageFile,
-                    rendered,
-                    settingsHash,
-                    generation))
+            if (rendered.Bitmap == null)
             {
                 rendered.Dispose();
                 return PreviewArtifacts.Empty(
-                    generation,
+                    outcomeGeneration,
                     snapshot.Base.Info.IsRawSource);
             }
             LogPerformance(
@@ -122,8 +157,18 @@ public sealed partial class PreviewService
                 generation,
                 decode.CacheKey,
                 settingsHash, snapshot.Base);
-            ReportPreviewSuccess(imageFile, generation);
-            return rendered.DetachArtifacts(generation);
+            var promotionLease = CreatePromotionLease(
+                imageFile,
+                rendered,
+                settingsHash,
+                generation,
+                surfaceAuthorized: surfaceGeneration.HasValue);
+            ReportPreviewSuccess(imageFile, outcomeGeneration);
+            return rendered.DetachArtifacts(
+                outcomeGeneration,
+                snapshot.Base.Info,
+                snapshot.IsStale,
+                promotionLease);
         }
         catch (OperationCanceledException)
         {
@@ -132,8 +177,43 @@ public sealed partial class PreviewService
         catch (Exception ex)
         {
             HandleImageLoadError(ex, imageFile.FilePath);
-            ReportPreviewFailure(imageFile, generation);
-            return PreviewArtifacts.Empty(generation, imageFile.IsRaw);
+            ReportPreviewFailure(imageFile, outcomeGeneration);
+            return PreviewArtifacts.Empty(outcomeGeneration, imageFile.IsRaw);
+        }
+        finally
+        {
+            RenderRequestCompleted?.Invoke(outcomeGeneration);
         }
     }
+
+    private bool TryAdoptSurfaceGeneration(long generation)
+    {
+        while (true)
+        {
+            var current = Volatile.Read(ref _latestSurfaceGeneration);
+            if (generation < current)
+            {
+                return false;
+            }
+            if (generation == current ||
+                Interlocked.CompareExchange(
+                    ref _latestSurfaceGeneration,
+                    generation,
+                    current) == current)
+            {
+                return true;
+            }
+        }
+    }
+
+    private bool IsCurrentSurfaceGeneration(long? generation) =>
+        !generation.HasValue ||
+        generation.Value == Volatile.Read(ref _latestSurfaceGeneration);
+
+    private bool IsCurrentRenderRequest(
+        long? surfaceGeneration,
+        long renderGeneration) =>
+        surfaceGeneration.HasValue
+            ? IsCurrentSurfaceGeneration(surfaceGeneration)
+            : renderGeneration == Volatile.Read(ref _renderGeneration);
 }

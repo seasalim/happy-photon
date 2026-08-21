@@ -418,7 +418,7 @@ public sealed class DisplayChainTraceTests
             new HistogramData(),
             hasHistogram: false,
             rawHistogram: null,
-            generation: 1);
+            generation: viewModel.LatestPreviewOutcomeGeneration);
         viewModel.ReplacePreviewImage(
             resting,
             PreviewPaintSource.RestingRender);

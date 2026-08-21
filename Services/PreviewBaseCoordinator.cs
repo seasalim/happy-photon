@@ -2,7 +2,7 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
 
-internal sealed class PreviewBaseCoordinator : IAsyncDisposable
+internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
 {
     private static readonly StringComparer PathComparer =
         OperatingSystem.IsWindows()
@@ -17,6 +17,7 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
     private BaseIdentity? _heldIdentity;
     private DecodeSession? _currentDecode;
     private long _generation;
+    private long _latestSurfaceGeneration;
     private bool _disposed;
 
     public PreviewBaseCoordinator(IBaseImageLoader loader)
@@ -35,16 +36,19 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
     public async Task<PreviewBaseAcquisition?> GetPreviewAsync(
         ImageFile imageFile,
         BaseDecodeSettings decode,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken,
+        long? surfaceGeneration = null) =>
         (await GetPreviewResultAsync(
             imageFile,
             decode,
-            cancellationToken).ConfigureAwait(false)).Acquisition;
+            cancellationToken,
+            surfaceGeneration).ConfigureAwait(false)).Acquisition;
 
     internal async Task<PreviewBaseResult> GetPreviewResultAsync(
         ImageFile imageFile,
         BaseDecodeSettings decode,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        long? surfaceGeneration = null)
     {
         ArgumentNullException.ThrowIfNull(imageFile);
         ArgumentNullException.ThrowIfNull(decode);
@@ -68,22 +72,64 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
         lock (_sync)
         {
             ThrowIfDisposed();
+            if (surfaceGeneration.HasValue)
+            {
+                if (surfaceGeneration.Value < _latestSurfaceGeneration)
+                {
+                    return PreviewBaseResult.SupersededRequest();
+                }
+                _latestSurfaceGeneration = surfaceGeneration.Value;
+            }
+
             if (Matches(_heldIdentity, identity))
             {
+                Task<BaseImageLoadFailure>? refreshTask = null;
+                if (_currentDecode is { } heldReplacement)
+                {
+                    if (Matches(heldReplacement.Identity, identity))
+                    {
+                        heldReplacement.AdoptSurfaceGeneration(
+                            surfaceGeneration);
+                        refreshTask = heldReplacement.Task;
+                    }
+                    else if (CanSupersede(
+                                 heldReplacement,
+                                 surfaceGeneration))
+                    {
+                        // The held base was made provisional by the older
+                        // replacement. Revalidate it under the newer surface
+                        // token so the older decode cannot install last.
+                        refreshTask = StartDecode(
+                            imageFile,
+                            decode,
+                            identity,
+                            surfaceGeneration);
+                    }
+                }
                 return PreviewBaseResult.Loaded(new PreviewBaseAcquisition(
                     AcquireHeldInteractiveBase(),
-                    null));
+                    refreshTask));
             }
 
             if (_currentDecode is { } current &&
                 Matches(current.Identity, identity))
             {
+                current.AdoptSurfaceGeneration(surfaceGeneration);
                 decodeTask = current.Task;
             }
             else
             {
+                if (_currentDecode is { } active &&
+                    !CanSupersede(active, surfaceGeneration))
+                {
+                    return PreviewBaseResult.SupersededRequest();
+                }
                 RetireForReplacement(identity);
-                decodeTask = StartDecode(imageFile, decode, identity);
+                decodeTask = StartDecode(
+                    imageFile,
+                    decode,
+                    identity,
+                    surfaceGeneration);
             }
 
             if (_heldInteractiveBase != null &&
@@ -122,7 +168,7 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
         lock (_sync)
         {
             ThrowIfDisposed();
-            return Matches(_heldIdentity, identity)
+            return _currentDecode == null && Matches(_heldIdentity, identity)
                 ? new PreviewBaseAcquisition(
                     AcquireHeldInteractiveBase(), null)
                 : null;
@@ -170,10 +216,14 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
     private Task<BaseImageLoadFailure> StartDecode(
         ImageFile imageFile,
         BaseDecodeSettings decode,
-        BaseIdentity identity)
+        BaseIdentity identity,
+        long? surfaceGeneration)
     {
         _currentDecode?.Cancellation.Cancel();
-        var session = new DecodeSession(identity, ++_generation);
+        var session = new DecodeSession(
+            identity,
+            ++_generation,
+            surfaceGeneration);
         _currentDecode = session;
         session.Task = Task.Run(
             () => DecodeAndInstall(imageFile, decode, session),
@@ -192,6 +242,11 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
             TaskScheduler.Default);
         return session.Task;
     }
+
+    private static bool CanSupersede(
+        DecodeSession current,
+        long? surfaceGeneration) =>
+        surfaceGeneration.HasValue || !current.SurfaceGeneration.HasValue;
 
     private BaseImageLoadFailure DecodeAndInstall(
         ImageFile imageFile,
@@ -395,21 +450,6 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
         }
     }
 
-    private sealed class DecodeSession
-    {
-        public BaseIdentity Identity { get; }
-        public long Generation { get; }
-        public CancellationTokenSource Cancellation { get; } = new();
-        public Task<BaseImageLoadFailure> Task { get; set; } =
-            System.Threading.Tasks.Task.FromResult(
-                BaseImageLoadFailure.DecodeFailed);
-
-        public DecodeSession(BaseIdentity identity, long generation)
-        {
-            Identity = identity;
-            Generation = generation;
-        }
-    }
 }
 
 internal sealed class PreviewBaseAcquisition : IDisposable
@@ -434,17 +474,6 @@ internal sealed class PreviewBaseAcquisition : IDisposable
 
     public void Dispose() =>
         Interlocked.Exchange(ref _snapshot, null)?.Dispose();
-}
-
-internal sealed record PreviewBaseResult(
-    PreviewBaseAcquisition? Acquisition,
-    BaseImageLoadFailure Failure)
-{
-    public static PreviewBaseResult Loaded(PreviewBaseAcquisition acquisition) =>
-        new(acquisition, BaseImageLoadFailure.None);
-
-    public static PreviewBaseResult Failed(BaseImageLoadFailure failure) =>
-        new(null, failure);
 }
 
 internal sealed class PreviewBaseSnapshot : IDisposable

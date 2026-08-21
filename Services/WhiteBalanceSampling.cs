@@ -8,6 +8,10 @@ public sealed record WhiteBalanceBaseContext(
     double AsShotTint,
     bool IsRawSource);
 
+internal sealed record WhiteBalanceSample(
+    double[] Gains,
+    object BaseToken);
+
 internal static class WhiteBalanceSampling
 {
     private const double LowThreshold = 0.005;

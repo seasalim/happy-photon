@@ -5,6 +5,8 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private const string RawFallbackStatus =
+        "Decoded via fallback — RAW controls unavailable";
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsHighlightHandlingEnabled))]
     [NotifyPropertyChangedFor(nameof(IsNoiseReductionEnabled))]
@@ -47,8 +49,7 @@ public partial class MainWindowViewModel
         ReconcileDetailCapability(isRawSource, capabilityChanged);
         if (capabilityChanged && imageFile.IsRaw && !isRawSource)
         {
-            ShowTransientStatus(
-                "Decoded via fallback — RAW controls unavailable");
+            ShowTransientStatus(RawFallbackStatus);
         }
     }
 

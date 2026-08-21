@@ -258,6 +258,60 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
         Assert.Equal(2, loader.DecodeCount);
     }
 
+    [Fact]
+    public async Task NewerSurfaceReturningToHeldIdentitySupersedesReplacement()
+    {
+        var path = CreateSource("surface-return.jpg");
+        var loader = new ControlledLoader(blockFirst: false, blockSecond: true);
+        await using var coordinator = new PreviewBaseCoordinator(loader);
+        var file = new ImageFile(path);
+        var replacementDecode = new BaseDecodeSettings(
+            HlReconstructionMode.Blend,
+            FbddMode.Off);
+
+        using var first = await coordinator.GetPreviewAsync(
+            file,
+            BaseDecodeSettings.Default,
+            CancellationToken.None,
+            surfaceGeneration: 1);
+        using var replacing = await coordinator.GetPreviewAsync(
+            file,
+            replacementDecode,
+            CancellationToken.None,
+            surfaceGeneration: 2);
+        Assert.True(loader.SecondDecodeStarted.Wait(TestWaits.Condition));
+        Assert.True(replacing!.IsStale);
+        Assert.Null(coordinator.TryAcquireCurrent(
+            file,
+            BaseDecodeSettings.Default));
+
+        using var restored = await coordinator.GetPreviewAsync(
+            file,
+            BaseDecodeSettings.Default,
+            CancellationToken.None,
+            surfaceGeneration: 3);
+        Assert.True(restored!.IsStale);
+        await restored.RefreshTask!;
+        Assert.Equal(3, loader.DecodeCount);
+
+        using var superseded = await coordinator.GetPreviewAsync(
+            file,
+            replacementDecode,
+            CancellationToken.None,
+            surfaceGeneration: 2);
+        Assert.Null(superseded);
+        Assert.Equal(3, loader.DecodeCount);
+
+        loader.ReleaseSecondDecode.Set();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => replacing.RefreshTask!);
+        using var current = coordinator.TryAcquireCurrent(
+            file,
+            BaseDecodeSettings.Default);
+        Assert.NotNull(current);
+        Assert.Equal(BaseDecodeSettings.Default, current!.Base.Info.Decode);
+    }
+
     private string CreateSource(string name)
     {
         Directory.CreateDirectory(_tempDirectory);

@@ -76,6 +76,67 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable
     }
 
     [WindowsFact]
+    public async Task ClippingRequestCannotDowngradePendingReplacementHistogram()
+    {
+        _fixture.RequireWindows();
+        Directory.CreateDirectory(_root);
+        using var catalog = new CatalogService(Path.Combine(_root, "coalesce-catalog"));
+        await catalog.InitializeAsync();
+        var loader = new HistogramLoader { GateReplacement = true };
+        var file = new ImageFile(Path.Combine(_root, "coalesce.dng"));
+        await using var service = CreateService(catalog, loader);
+        using (var initial = await service.ApplyEditsToPreviewArtifactsAsync(
+                   file,
+                   new EditSettings(),
+                   ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+                   skipHistogram: false,
+                   ClippingOverlaySide.None,
+                   surfaceGeneration: 1))
+        {
+            Assert.NotNull(initial.Bitmap);
+        }
+
+        var refreshed = new TaskCompletionSource<(bool HasHistogram,
+            HistogramData Histogram)>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        service.PreviewRefreshed += (_, refresh) => refreshed.TrySetResult(
+            (refresh.HasHistogram, refresh.Histogram));
+        var settings = new EditSettings
+        {
+            HlReconstruction = HlReconstructionMode.Blend
+        };
+
+        try
+        {
+            using var stateDefining = await service.ApplyEditsToPreviewArtifactsAsync(
+                file,
+                settings,
+                ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+                skipHistogram: false,
+                ClippingOverlaySide.None,
+                surfaceGeneration: 2);
+            Assert.True(loader.ReplacementStarted.Wait(TestWaits.Condition));
+
+            using var clipping = await service.ApplyEditsToPreviewArtifactsAsync(
+                file,
+                settings,
+                ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+                skipHistogram: true,
+                ClippingOverlaySide.Both,
+                surfaceGeneration: 2);
+            loader.ReleaseReplacement.Set();
+            var result = await refreshed.Task.WaitAsync(TestWaits.Condition);
+
+            Assert.True(result.HasHistogram);
+            Assert.Contains(result.Histogram.Luminance, value => value > 0);
+        }
+        finally
+        {
+            loader.ReleaseReplacement.Set();
+        }
+    }
+
+    [WindowsFact]
     public async Task DisposedAccessor_ReturnsNullWithoutIo()
     {
         _fixture.RequireWindows();
@@ -105,12 +166,20 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable
     {
         public int DecodeCount { get; private set; }
         public HistogramData? LastHistogram { get; private set; }
+        public bool GateReplacement { get; init; }
+        public ManualResetEventSlim ReplacementStarted { get; } = new();
+        public ManualResetEventSlim ReleaseReplacement { get; } = new();
         public bool CanLoad(ImageFile file) => true;
 
         public BaseImage? LoadPreviewBase(ImageFile file, BaseDecodeSettings decode,
             CancellationToken cancellationToken)
         {
             DecodeCount++;
+            if (GateReplacement && DecodeCount == 2)
+            {
+                ReplacementStarted.Set();
+                ReleaseReplacement.Wait(cancellationToken);
+            }
             LastHistogram = new HistogramData { Domain = HistogramDomain.RawSensor };
             LastHistogram.Red[DecodeCount] = 1;
             LastHistogram.Normalize();

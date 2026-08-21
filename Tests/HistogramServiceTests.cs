@@ -1,6 +1,7 @@
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -89,6 +90,74 @@ public sealed class HistogramServiceTests
         Assert.Equal(GoldenBytes(golden), GoldenBytes(histogram));
     }
 
+    [Theory]
+    [InlineData(181, 91)]
+    [InlineData(512, 512)]
+    [InlineData(17, 13)]
+    public void CalculateHistogram_ParallelPathMatchesSequentialReference(
+        int width,
+        int height)
+    {
+        var samples = CreateDeterministicSamples(width, height);
+        using var result = CreateResult(width, height, samples);
+        var actual = new HistogramData();
+
+        new HistogramService().CalculateHistogram(result, actual);
+        var expected = CalculateSequentialReference(samples, width, height);
+
+        Assert.Equal(expected.Red, actual.Red);
+        Assert.Equal(expected.Green, actual.Green);
+        Assert.Equal(expected.Blue, actual.Blue);
+        Assert.Equal(expected.Luminance, actual.Luminance);
+        Assert.Equal(expected.MaxValue, actual.MaxValue);
+        Assert.NotNull(actual.Waveform);
+        Assert.Equal(
+            expected.Waveform!.Luminance,
+            actual.Waveform!.Luminance);
+        Assert.Equal(
+            expected.Waveform.ColumnSampleCounts,
+            actual.Waveform.ColumnSampleCounts);
+    }
+
+    [Theory]
+    [InlineData(181, 91)]
+    [InlineData(512, 512)]
+    [InlineData(17, 13)]
+    public void CalculatePreviewHistogram_MatchesSequentialReference(
+        int width,
+        int height)
+    {
+        var samples = CreateDeterministicSamples(width, height);
+        var bgra = new byte[checked(width * height * 4)];
+        for (var pixel = 0; pixel < width * height; pixel++)
+        {
+            bgra[pixel * 4] = (byte)(samples[pixel * 3 + 2] >> 8);
+            bgra[pixel * 4 + 1] = (byte)(samples[pixel * 3 + 1] >> 8);
+            bgra[pixel * 4 + 2] = (byte)(samples[pixel * 3] >> 8);
+            bgra[pixel * 4 + 3] = byte.MaxValue;
+        }
+        var actual = new HistogramData();
+
+        HistogramService.CalculatePreviewHistogram(
+            bgra,
+            width,
+            height,
+            actual,
+            includeHistogram: true,
+            includeWaveform: true);
+        var expected = CalculateSequentialReference(samples, width, height);
+
+        Assert.Equal(expected.Red, actual.Red);
+        Assert.Equal(expected.Green, actual.Green);
+        Assert.Equal(expected.Blue, actual.Blue);
+        Assert.Equal(expected.Luminance, actual.Luminance);
+        Assert.Equal(expected.MaxValue, actual.MaxValue);
+        Assert.Equal(expected.Waveform!.Luminance, actual.Waveform!.Luminance);
+        Assert.Equal(
+            expected.Waveform.ColumnSampleCounts,
+            actual.Waveform.ColumnSampleCounts);
+    }
+
     private static byte[] GoldenBytes(HistogramData histogram)
     {
         var bytes = new byte[4 * 256 * sizeof(int)];
@@ -111,24 +180,54 @@ public sealed class HistogramServiceTests
         histogram.Luminance[luminance]++;
     }
 
+    private static HistogramData CalculateSequentialReference(
+        ushort[] samples,
+        int width,
+        int height)
+    {
+        var histogram = new HistogramData();
+        for (var offset = 0; offset < samples.Length; offset += 3)
+        {
+            AddGolden(
+                histogram,
+                samples[offset] >> 8,
+                samples[offset + 1] >> 8,
+                samples[offset + 2] >> 8);
+        }
+        histogram.Waveform = WaveformAccumulator.Accumulate(
+            samples,
+            width,
+            height);
+        histogram.Normalize();
+        return histogram;
+    }
+
+    private static ushort[] CreateDeterministicSamples(int width, int height)
+    {
+        var samples = new ushort[checked(width * height * 3)];
+        uint state = 0xC0FFEEu;
+        for (var index = 0; index < samples.Length; index++)
+        {
+            state = state * 1664525u + 1013904223u;
+            samples[index] = (ushort)(state >> 16);
+        }
+        return samples;
+    }
+
     private static RenderResult CreateResult(
         int width,
         int height,
         ushort[] samples)
     {
-        var image = new MagickImage(
-            MagickColors.Black,
+        var settings = new PixelReadSettings(
             (uint)width,
-            (uint)height);
-        using var pixels = image.GetPixels();
-        for (var pixel = 0; pixel < samples.Length / 3; pixel++)
-        {
-            var offset = pixel * 3;
-            pixels.SetPixel(
-                pixel % width,
-                pixel / width,
-                samples.AsSpan(offset, 3).ToArray());
-        }
+            (uint)height,
+            StorageType.Short,
+            PixelMapping.RGB);
+        settings.ReadSettings.ColorSpace = ColorSpace.sRGB;
+        var image = new MagickImage(
+            MemoryMarshal.AsBytes(samples.AsSpan()),
+            settings);
 
         return new RenderResult(image, ClippingStats.Empty, null);
     }

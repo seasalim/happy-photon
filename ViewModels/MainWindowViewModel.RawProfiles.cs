@@ -5,96 +5,6 @@ using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
 
-public sealed class RawProfileOptionViewModel
-{
-    internal const string BuiltInLabel = "Happy Photon Matrix";
-
-    public string Label { get; }
-    public bool CanSelect { get; }
-    public string? Status { get; }
-    public bool IsProfile { get; }
-    public bool IsGroupHeader { get; }
-    public bool IsDivider { get; }
-    public bool IsChooseFile { get; }
-    public bool CanActivate => IsChooseFile || IsProfile && CanSelect;
-    internal RawProfileSelection? Selection { get; }
-    internal bool IsBuiltIn { get; }
-    internal string? Fingerprint { get; }
-
-    internal RawProfileOptionViewModel(DcpProfileOption option)
-    {
-        Label = option.IsBuiltIn ? BuiltInLabel : option.DisplayName;
-        CanSelect = option.CanSelect;
-        Status = option.Message;
-        Selection = option.Selection?.Clone();
-        IsBuiltIn = option.IsBuiltIn;
-        Fingerprint = option.Fingerprint;
-        IsProfile = true;
-    }
-
-    private RawProfileOptionViewModel(
-        string label,
-        bool canSelect = false,
-        string? status = null,
-        RawProfileSelection? selection = null,
-        bool isBuiltIn = false,
-        bool isProfile = false,
-        bool isGroupHeader = false,
-        bool isDivider = false,
-        bool isChooseFile = false,
-        string? fingerprint = null)
-    {
-        Label = label;
-        CanSelect = canSelect;
-        Status = status;
-        Selection = selection?.Clone();
-        IsBuiltIn = isBuiltIn;
-        IsProfile = isProfile;
-        IsGroupHeader = isGroupHeader;
-        IsDivider = isDivider;
-        IsChooseFile = isChooseFile;
-        Fingerprint = fingerprint;
-    }
-
-    internal static RawProfileOptionViewModel BuiltIn() => new(
-        BuiltInLabel,
-        canSelect: true,
-        isBuiltIn: true,
-        isProfile: true);
-
-    internal static RawProfileOptionViewModel Anchor(
-        RawProfileSelection selection) => new(
-            ProfileLabel(selection),
-            canSelect: true,
-            selection: selection,
-            isProfile: true);
-
-    internal static RawProfileOptionViewModel GroupHeader(string label) =>
-        new(label, isGroupHeader: true);
-
-    internal static RawProfileOptionViewModel Divider() =>
-        new(string.Empty, isDivider: true);
-
-    internal static RawProfileOptionViewModel ChooseFile() =>
-        new("Choose .dcp file…", isChooseFile: true);
-
-    internal RawProfileOptionViewModel WithLabel(string label) => new(
-        label,
-        CanSelect,
-        Status,
-        Selection,
-        IsBuiltIn,
-        isProfile: true,
-        fingerprint: Fingerprint);
-
-    private static string ProfileLabel(RawProfileSelection selection) =>
-        selection.Source == RawProfileSource.Embedded
-            ? "Embedded camera profile"
-            : Path.GetFileNameWithoutExtension(selection.Location) is { Length: > 0 } name
-                ? name
-                : "Selected camera profile";
-}
-
 public partial class MainWindowViewModel
 {
     [ObservableProperty]
@@ -116,6 +26,7 @@ public partial class MainWindowViewModel
     private CancellationTokenSource? _rawProfilePickerCts;
     private CancellationTokenSource? _rawProfileSelectionCts;
     private long _rawProfileDiscoveryGeneration;
+    private DcpProfileState? _renderDerivedRawProfileState;
 
     private const string NoRawProfilesMessage =
         "NO CAMERA PROFILES FOUND ON THIS PC";
@@ -127,6 +38,7 @@ public partial class MainWindowViewModel
         _rawProfilePickerCts?.Cancel();
         _rawProfileSelectionCts?.Cancel();
         _rawProfileCameraIdentity = null;
+        _renderDerivedRawProfileState = null;
         var selection = image?.EditSettings.RawProfile;
         var profiles = new List<RawProfileOptionViewModel>
         {
@@ -152,6 +64,7 @@ public partial class MainWindowViewModel
         DcpProfileState? state)
     {
         if (!ReferenceEquals(SelectedImage, image)) return;
+        _renderDerivedRawProfileState = state;
         IsRawProfilePickerVisible = isRawSource;
         if (!isRawSource)
         {
@@ -199,6 +112,12 @@ public partial class MainWindowViewModel
     {
         var image = SelectedImage;
         if (image == null || !IsRawProfilePickerVisible) return;
+        var previousSettings = image.EditSettings.Clone();
+        var previousIntent = _requestedPreviewIntent;
+        long? surfaceGeneration = confirmSelection &&
+            image.EditSettings.RawProfile != null
+                ? ReserveRenderOutcome()
+                : null;
         if (confirmSelection)
         {
             ImageService.InvalidateRawProfiles();
@@ -220,6 +139,14 @@ public partial class MainWindowViewModel
             if (generation != Volatile.Read(ref _rawProfileDiscoveryGeneration) ||
                 !ReferenceEquals(SelectedImage, image))
             {
+                if (surfaceGeneration.HasValue)
+                {
+                    RollbackEditReservation(
+                        image,
+                        previousSettings,
+                        surfaceGeneration.Value,
+                        previousIntent);
+                }
                 return;
             }
             var options = result.Options
@@ -240,15 +167,37 @@ public partial class MainWindowViewModel
             RawProfileStatusMessage = SelectedRawProfileOption?.Status is { } status
                 ? UppercaseStatus(status)
                 : ProfileSummaryLine();
+            RestoreRenderDerivedRawProfilePresentation(image);
             if (confirmSelection && image.EditSettings.RawProfile != null)
             {
                 await UpdatePreviewWithCurrentSliders(
-                    skipHistogram: true,
-                    cts.Token);
+                    cts.Token,
+                    generation: surfaceGeneration,
+                    intent: _requestedPreviewIntent);
             }
         }
         catch (OperationCanceledException)
         {
+            if (surfaceGeneration.HasValue)
+            {
+                RollbackEditReservation(
+                    image,
+                    previousSettings,
+                    surfaceGeneration.Value,
+                    previousIntent);
+            }
+        }
+        catch
+        {
+            if (surfaceGeneration.HasValue)
+            {
+                RollbackEditReservation(
+                    image,
+                    previousSettings,
+                    surfaceGeneration.Value,
+                    previousIntent);
+            }
+            throw;
         }
         finally
         {
@@ -267,6 +216,9 @@ public partial class MainWindowViewModel
         if (image == null || option == null ||
             !option.IsProfile || !option.CanSelect) return;
         if (ProfilesEqual(image.EditSettings.RawProfile, option.Selection)) return;
+        var previousSettings = image.EditSettings.Clone();
+        var previousIntent = _requestedPreviewIntent;
+        var surfaceGeneration = RequestEditedRender();
 
         _history.PushEdit(image.EditSettings.Clone());
         SyncHistoryFlags();
@@ -275,7 +227,19 @@ public partial class MainWindowViewModel
         SelectedRawProfileOption = option;
         RawProfileStatusMessage = ProfileSummaryLine();
         UpdateCanReset();
-        await SaveEditSettingsAsync(image);
+        try
+        {
+            await SaveEditSettingsAsync(image);
+        }
+        catch
+        {
+            RollbackEditReservation(
+                image,
+                previousSettings,
+                surfaceGeneration,
+                previousIntent);
+            throw;
+        }
         _lastSavedState = image.EditSettings.Clone();
 
         var cts = new CancellationTokenSource();
@@ -285,8 +249,8 @@ public partial class MainWindowViewModel
         try
         {
             await UpdatePreviewWithCurrentSliders(
-                skipHistogram: true,
-                cts.Token);
+                cts.Token,
+                surfaceGeneration);
         }
         catch (OperationCanceledException)
         {
@@ -444,6 +408,25 @@ public partial class MainWindowViewModel
                 : option)
             .ToList();
         InstallRawProfileOptions(profiles, selection);
+    }
+
+    private void RestoreRenderDerivedRawProfilePresentation(ImageFile image)
+    {
+        var state = _renderDerivedRawProfileState;
+        if (state == null || !ReferenceEquals(SelectedImage, image))
+        {
+            return;
+        }
+        if (state.ProfileName != null && image.EditSettings.RawProfile != null)
+        {
+            UpdateSelectedRawProfileLabel(
+                image.EditSettings.RawProfile,
+                state.ProfileName);
+        }
+        RawProfileStatusMessage = state.Status == DcpProfileErrorCode.None
+            ? ProfileSummaryLine()
+            : UppercaseStatus(state.Message ??
+                "The selected profile was rejected; using built-in characterization.");
     }
 
     private static RawProfileOptionViewModel? FindSelectedOption(

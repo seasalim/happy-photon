@@ -289,7 +289,7 @@ public sealed class ThumbnailHydrationTests : IDisposable
     }
 
     [WindowsFact]
-    public void CachedPreview_RemainsVisibleWhenFreshBaseIsDeferred()
+    public void AvailabilityTransitionClearsCachedPreview()
     {
         Directory.CreateDirectory(_root);
         var sourcePath = Path.Combine(_root, "preview-source.jpg");
@@ -317,10 +317,9 @@ public sealed class ThumbnailHydrationTests : IDisposable
 
             viewModel.SelectedImage = image;
             TestWaits.Until(() =>
-                viewModel.PreviewImage != null &&
                 image.SourceRequiresHydration);
 
-            Assert.NotNull(viewModel.PreviewImage);
+            Assert.Null(viewModel.PreviewImage);
             Assert.True(image.SourceRequiresHydration);
             Assert.Equal(1, viewModel.OnlineOnlyPhotoCount);
             Assert.False(viewModel.CanEditSelectedImage);

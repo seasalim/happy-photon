@@ -23,7 +23,7 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
 
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
             raw,
-            2,
+            vm.LatestPreviewOutcomeGeneration,
             BaseImageLoadFailure.UnsupportedRaw));
 
         Assert.True(raw.RawDecodeFailed);
@@ -35,7 +35,7 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
 
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
             raw,
-            3,
+            vm.LatestPreviewOutcomeGeneration,
             BaseImageLoadFailure.None));
         Assert.False(raw.RawDecodeFailed);
         Assert.False(raw.HasVisibleLoadFailure);
@@ -55,17 +55,17 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
 
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
             first,
-            4,
+            vm.LatestPreviewOutcomeGeneration - 1,
             BaseImageLoadFailure.UnsupportedRaw));
         Assert.False(first.RawDecodeFailed);
 
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
             second,
-            6,
+            vm.LatestPreviewOutcomeGeneration,
             BaseImageLoadFailure.UnsupportedRaw));
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
             second,
-            5,
+            vm.LatestPreviewOutcomeGeneration - 1,
             BaseImageLoadFailure.None));
         Assert.True(second.RawDecodeFailed);
         Assert.Contains("could not be decoded", vm.StatusMessage);
@@ -82,7 +82,7 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
         vm.TransientStatus = "transient";
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
             raw,
-            1,
+            vm.LatestPreviewOutcomeGeneration,
             BaseImageLoadFailure.UnsupportedRaw));
         Assert.Contains("could not be decoded", vm.StatusMessage);
 
@@ -103,7 +103,7 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
 
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
             raw,
-            1,
+            vm.LatestPreviewOutcomeGeneration,
             BaseImageLoadFailure.RawRuntimeUnavailable));
 
         Assert.False(raw.RawDecodeFailed);

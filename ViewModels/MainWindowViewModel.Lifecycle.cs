@@ -4,6 +4,7 @@ public partial class MainWindowViewModel
 {
     public async ValueTask DisposeAsync()
     {
+        CloseRenderOutcomeChannel();
         DisposeBackgroundActivity();
         await DisposeUpdatesAsync();
         Interlocked.Increment(ref _libraryGeneration);

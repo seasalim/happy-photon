@@ -6,7 +6,6 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private long _latestPreviewOutcomeGeneration;
     private bool _previewSourceFailure;
 
     internal string? PreviewSourceFailureStatus =>
@@ -34,41 +33,51 @@ public partial class MainWindowViewModel
     internal void ApplyPreviewLoadOutcome(PreviewLoadOutcome outcome)
     {
         ArgumentNullException.ThrowIfNull(outcome);
-        if (!ReferenceEquals(SelectedImage, outcome.ImageFile) ||
-            outcome.Generation < Volatile.Read(
-                ref _latestPreviewOutcomeGeneration))
+        ApplyRenderOutcome(new RenderOutcome
+        {
+            Image = outcome.ImageFile,
+            Generation = outcome.Generation,
+            Class = RenderOutcomeClass.Failure,
+            Intent = _requestedPreviewIntent,
+            Succeeded = outcome.Succeeded,
+            Failure = outcome.Failure
+        });
+    }
+
+    private void ApplyPreviewFailure(RenderOutcome outcome)
+    {
+        if (outcome.Class != RenderOutcomeClass.Failure)
         {
             return;
         }
-
-        Volatile.Write(
-            ref _latestPreviewOutcomeGeneration,
-            outcome.Generation);
         if (outcome.Succeeded)
         {
-            outcome.ImageFile.RawDecodeFailed = false;
+            outcome.Image!.RawDecodeFailed = false;
             _previewSourceFailure = false;
         }
         else
         {
-            ClearPreviewClippingArtifacts();
+            ApplyPreviewClipping(null, false, null);
             _previewSourceFailure =
                 outcome.Failure == BaseImageLoadFailure.SourceUnavailable;
-            if (outcome.ImageFile.IsRaw &&
+            if (outcome.Image!.IsRaw &&
                 outcome.Failure is BaseImageLoadFailure.UnsupportedRaw or
                     BaseImageLoadFailure.DecodeFailed)
             {
-                outcome.ImageFile.RawDecodeFailed = true;
+                outcome.Image.RawDecodeFailed = true;
             }
         }
-
         OnPropertyChanged(nameof(StatusMessage));
     }
 
     private void OnPreviewFailureSelectionChanged()
     {
-        Volatile.Write(ref _latestPreviewOutcomeGeneration, 0);
         _previewSourceFailure = false;
+        if (TransientStatus == RawFallbackStatus)
+        {
+            _transientStatusCts?.Cancel();
+            TransientStatus = null;
+        }
         OnPropertyChanged(nameof(StatusMessage));
     }
 }

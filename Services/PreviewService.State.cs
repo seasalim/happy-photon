@@ -38,8 +38,9 @@ public sealed partial class PreviewService
         ImageFile ImageFile,
         EditSettings Settings,
         ThumbnailSizeRequest ThumbnailRequest,
-        bool SkipHistogram,
+        bool ComputeWaveform,
         ClippingOverlaySide OverlaySides,
         BaseDecodeSettings Decode,
-        long Generation);
+        long Generation,
+        long SurfaceGeneration);
 }

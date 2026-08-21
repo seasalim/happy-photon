@@ -372,6 +372,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
         _thumbnailDebounce?.Cancel();
         if (pushUndo) PushUndoState();
+        var generation = RequestEditedRender();
 
         var debounce = ReplaceDebounce(ref _previewDebounce);
         _ = DebouncedAction.RunAsync(
@@ -380,13 +381,15 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             debounce.Token,
             async () =>
         {
-            await UpdatePreviewWithCurrentSliders(
-                skipHistogram: true,
-                debounce.Token);
+            if (!await UpdatePreviewWithCurrentSliders(
+                debounce.Token,
+                generation))
+            {
+                return;
+            }
             debounce.Token.ThrowIfCancellationRequested();
             await AutoSaveAsync();
             debounce.Token.ThrowIfCancellationRequested();
-            ScheduleHistogramUpdate();
             ScheduleThumbnailRefresh();
         },
             timeProvider: _timeProvider);
@@ -396,14 +399,18 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         if (_isLoadingImage || SelectedImage == null) return;
 
+        var generation = ReserveRenderOutcome(
+            PreviewSurfaceIntent.Edited,
+            promotionEligible: false);
         var debounce = ReplaceDebounce(ref _previewDebounce);
         _ = DebouncedAction.RunAsync(
             "crop preview update",
             TimeSpan.FromMilliseconds(60),
             debounce.Token,
             () => UpdatePreviewWithCurrentSliders(
-                skipHistogram: true,
-                debounce.Token),
+                debounce.Token,
+                generation,
+                promotable: false),
             timeProvider: _timeProvider);
     }
 
@@ -448,8 +455,15 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     private async Task SaveEditSettingsAsync(ImageFile imageFile)
     {
+        await SaveEditSettingsAsync(imageFile, imageFile.EditSettings);
+    }
+
+    private async Task SaveEditSettingsAsync(
+        ImageFile imageFile,
+        EditSettings settings)
+    {
         await imageFile.EnsureCatalogIdAsync(_catalogService);
-        await _catalogService.SaveEditSettingsAsync(imageFile.CatalogId, imageFile.EditSettings);
+        await _catalogService.SaveEditSettingsAsync(imageFile.CatalogId, settings);
     }
 
 }

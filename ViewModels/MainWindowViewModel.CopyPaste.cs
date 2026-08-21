@@ -88,6 +88,9 @@ public partial class MainWindowViewModel
     {
         var selectedImage = SelectedImage;
         if (selectedImage == null || _copiedSettings == null) return;
+        var previousSettings = CaptureLiveEditState();
+        var previousIntent = _requestedPreviewIntent;
+        var surfaceGeneration = RequestEditedRender();
 
         PushLiveUndoState();
         var currentRotation = Rotation;
@@ -116,14 +119,27 @@ public partial class MainWindowViewModel
         selectedImage.EditSettings.Crop = storedCrop;
         LoadCurrentCurveFrom(selectedImage.EditSettings);
         selectedImage.HasEdits = selectedImage.EditSettings.HasEdits;
-        await SaveEditSettingsAsync(selectedImage);
+        try
+        {
+            await SaveEditSettingsAsync(selectedImage);
+        }
+        catch
+        {
+            RollbackEditReservation(
+                selectedImage,
+                previousSettings,
+                surfaceGeneration,
+                previousIntent);
+            throw;
+        }
 
         if (ReferenceEquals(SelectedImage, selectedImage))
         {
             _lastSavedState = selectedImage.EditSettings.Clone();
             if (IsDevelopMode || IsFullScreenMode)
             {
-                await UpdatePreviewWithCurrentSliders();
+                await UpdatePreviewWithCurrentSliders(
+                    generation: surfaceGeneration);
             }
             UpdateCanReset();
         }
@@ -189,8 +205,10 @@ public partial class MainWindowViewModel
             return;
         }
 
+        long? surfaceGeneration = null;
         if (SelectedImage != null && targets.Contains(SelectedImage))
         {
+            surfaceGeneration = RequestEditedRender();
             _history.Clear();
             SyncHistoryFlags();
 
@@ -207,7 +225,8 @@ public partial class MainWindowViewModel
             _lastSavedState = SelectedImage.EditSettings.Clone();
             if (IsDevelopMode || IsFullScreenMode)
             {
-                await UpdatePreviewWithCurrentSliders();
+                await UpdatePreviewWithCurrentSliders(
+                    generation: surfaceGeneration);
             }
             UpdateCanReset();
         }

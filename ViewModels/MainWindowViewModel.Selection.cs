@@ -9,6 +9,9 @@ public partial class MainWindowViewModel
 {
     partial void OnSelectedImageChanged(ImageFile? oldValue, ImageFile? newValue)
     {
+        var surfaceGeneration = ReserveRenderOutcome(
+            PreviewSurfaceIntent.Edited,
+            promotionEligible: true);
         ClearCurveGesture();
         CancelRestingPreview(clearParent: true);
         ClearNavigatorVisibleRegion();
@@ -19,17 +22,14 @@ public partial class MainWindowViewModel
         if (newValue != null) newValue.IsActive = true;
 
         HasSelectedImage = newValue != null;
-        IsBrightnessEnabled = newValue?.IsRaw != true;
         ResetSelectedMetadataState(newValue);
-        IsShowingOriginal = false;
-        ClearPreviewClippingArtifacts();
         Volatile.Write(ref _activeBaseRefreshRequestId, 0);
         IsBaseArming = false;
         OnPropertyChanged(nameof(ActiveFileName));
         NotifySelectedImageEditStateChanged();
         NotifyFullScreenSelectionBadgeChanged();
         OnPreviewFailureSelectionChanged();
-        ResetRawProfilePicker(newValue);
+        ApplySelectionOutcome(newValue, surfaceGeneration);
 
         // Exit crop mode when switching images
         if (IsCropMode)
@@ -48,17 +48,16 @@ public partial class MainWindowViewModel
 
         if (newValue != null)
         {
+            _lastAppliedEditSettings = null;
             SignalBackgroundActivityStarted();
             RefreshSourceAvailability(newValue);
             ResetSelectedMetadataState(newValue);
             RetryDeferredThumbnailIfAvailable(newValue);
-            PrepareWhiteBalanceUi(newValue);
             NotifyWhiteBalanceCommandState();
             ActiveCurveChannel = ToneCurveChannel.Composite;
             if (newValue.SourceRequiresHydration)
             {
                 _histogramDebounce?.Cancel();
-                Histogram = null;
                 ResetSliders();
                 CurrentCrop = null;
                 LoadCurrentCurveFrom(null);
@@ -71,7 +70,10 @@ public partial class MainWindowViewModel
                 {
                     if (!_suppressSelectionPreviewLoad)
                     {
-                        _ = LoadPreviewAsync(newValue, wakeActivity: false);
+                        _ = LoadPreviewAsync(
+                            newValue,
+                            surfaceGeneration,
+                            wakeActivity: false);
                     }
                 }
                 else
@@ -90,7 +92,10 @@ public partial class MainWindowViewModel
             {
                 if (!_suppressSelectionPreviewLoad)
                 {
-                    _ = LoadPreviewAsync(newValue, wakeActivity: false);
+                    _ = LoadPreviewAsync(
+                        newValue,
+                        surfaceGeneration,
+                        wakeActivity: false);
                 }
             }
             else
@@ -104,11 +109,10 @@ public partial class MainWindowViewModel
         }
         else
         {
+            _lastAppliedEditSettings = null;
             // Clear cached preview when no image is selected
             ImageService.Previews.ClearPreviewCache();
 
-            ClearPreviewImage();
-            Histogram = null;
             CurrentCrop = null;
             LoadCurrentCurveFrom(null);
             ActivePresetId = null;

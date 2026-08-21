@@ -295,7 +295,7 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
     }
 
     [WindowsFact]
-    public async Task StaleHistogramAfterInput_DoesNotRearmRestingRender()
+    public async Task DevelopIdle_DoesNotScheduleDuplicateHistogramRender()
     {
         var clock = new TestTimeProvider();
         var viewModel = new MainWindowViewModel(
@@ -319,15 +319,10 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
             await releaseHistogram.Task;
         };
         clock.Advance(TimeSpan.FromMilliseconds(300));
-        Assert.True(histogramStarted.Wait(TestWaits.Condition));
-
-        viewModel.Exposure = 0.5;
+        Assert.False(histogramStarted.Wait(TimeSpan.FromMilliseconds(100)));
+        Assert.Equal(1, viewModel.RestingPaintCount);
+        Assert.Equal(240, viewModel.PreviewImage!.PixelSize.Width);
         releaseHistogram.SetResult();
-        await TestWaits.UntilAsync(() => viewModel.Histogram != null);
-        clock.Advance(TimeSpan.FromMilliseconds(75));
-
-        Assert.Equal(0, viewModel.RestingPaintCount);
-        Assert.Equal(160, viewModel.PreviewImage!.PixelSize.Width);
         await viewModel.DisposeAsync();
     }
 

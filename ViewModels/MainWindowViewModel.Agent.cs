@@ -258,6 +258,12 @@ public partial class MainWindowViewModel
         IReadOnlyList<ImageFile> images,
         Action<EditSettings> apply)
     {
+        var selected = SelectedImage;
+        var previousSelectedSettings = selected?.EditSettings.Clone();
+        var previousIntent = _requestedPreviewIntent;
+        var surfaceGeneration = selected != null && images.Contains(selected)
+            ? RequestEditedRender()
+            : (long?)null;
         var failed = new List<AgentBatchFailure>();
         var succeeded = new List<(ImageFile Image, EditSettings Previous)>(
             images.Count);
@@ -303,9 +309,20 @@ public partial class MainWindowViewModel
             _lastSavedState = SelectedImage.EditSettings.Clone();
             if (IsDevelopMode || IsFullScreenMode)
             {
-                await UpdatePreviewWithCurrentSliders();
+                await UpdatePreviewWithCurrentSliders(
+                    generation: surfaceGeneration);
             }
             UpdateCanReset();
+        }
+        else if (surfaceGeneration.HasValue &&
+                 selected != null &&
+                 previousSelectedSettings != null)
+        {
+            RollbackEditReservation(
+                selected,
+                previousSelectedSettings,
+                surfaceGeneration.Value,
+                previousIntent);
         }
 
         Library.RefreshFilters();

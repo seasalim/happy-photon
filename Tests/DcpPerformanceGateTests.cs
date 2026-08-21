@@ -118,7 +118,11 @@ public sealed class DcpPerformanceGateTests
                     new EditSettings { Contrast = 25 },
                     RenderIntent.Preview,
                     1600,
-                    new RenderOptions(false, false)));
+                    new RenderOptions(
+                        ComputeStats: true,
+                        ComputeOverlayMasks: false,
+                        ComputeHistogram: true,
+                        PreparePreviewPixels: true)));
             });
             var hueAllocated = MeasureHueAllocated(activeBase.Pixels, map);
             var hueRetained = MeasureHueRetained(activeBase.Pixels, map);

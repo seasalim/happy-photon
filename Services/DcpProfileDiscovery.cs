@@ -26,6 +26,7 @@ internal sealed class DcpProfileDiscovery
     private readonly DcpAdobeProfileIndex _adobeIndex;
     private readonly ConcurrentDictionary<string, CachedProfile> _externalCache =
         new(StringComparer.Ordinal);
+    internal Func<Task>? DiscoveryGateAsync { get; set; }
 
     internal DcpProfileDiscovery(
         ISourceAvailabilityService availability,
@@ -40,17 +41,24 @@ internal sealed class DcpProfileDiscovery
             adobeRoots ?? DcpAdobeProfileIndex.GetDefaultRoots());
     }
 
-    internal Task<DcpDiscoveryResult> DiscoverAsync(
+    internal async Task<DcpDiscoveryResult> DiscoverAsync(
         ImageFile image,
         CameraIdentity? cameraIdentity,
         CancellationToken cancellationToken,
-        bool includeImageProfiles = true) => Task.Run(
+        bool includeImageProfiles = true)
+    {
+        if (DiscoveryGateAsync is { } gate)
+        {
+            await gate().ConfigureAwait(false);
+        }
+        return await Task.Run(
             () => Discover(
                 image,
                 cameraIdentity,
                 includeImageProfiles,
                 cancellationToken),
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
+    }
 
     internal DcpProfileOption InspectUserFile(string path)
     {

@@ -33,6 +33,11 @@ public partial class MainWindowViewModel
 
     private async Task ApplyHistoryStateAsync(EditSettings state)
     {
+        _previewDebounce?.Cancel();
+        var image = SelectedImage!;
+        var previousSettings = CaptureLiveEditState();
+        var previousIntent = _requestedPreviewIntent;
+        var generation = RequestEditedRender();
         _isLoadingImage = true;
         LoadSlidersFrom(state);
         // Preserve current geometric transforms.
@@ -47,10 +52,22 @@ public partial class MainWindowViewModel
         SelectedImage.EditSettings.AppliedPresetId = ActivePresetId;
         LoadCurrentCurveFrom(SelectedImage.EditSettings);
         SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
-        await SaveEditSettingsAsync(SelectedImage);
+        try
+        {
+            await SaveEditSettingsAsync(SelectedImage);
+        }
+        catch
+        {
+            RollbackEditReservation(
+                image,
+                previousSettings,
+                generation,
+                previousIntent);
+            throw;
+        }
         _lastSavedState = SelectedImage.EditSettings.Clone();
 
-        await UpdatePreviewWithCurrentSliders();
+        await UpdatePreviewWithCurrentSliders(generation: generation);
         UpdateCanReset();
         RefreshSelectedThumbnail();
     }
@@ -62,6 +79,10 @@ public partial class MainWindowViewModel
     private async Task ResetEditsCoreAsync(bool preserveProfile)
     {
         if (!CanEditSelectedImage || SelectedImage == null) return;
+        var image = SelectedImage;
+        var previousSettings = CaptureLiveEditState();
+        var previousIntent = _requestedPreviewIntent;
+        var generation = RequestEditedRender();
 
         PushLiveUndoState();
 
@@ -117,13 +138,25 @@ public partial class MainWindowViewModel
         _isLoadingImage = false;
 
         // Save to catalog (geometric transforms are preserved)
-        await SaveEditSettingsAsync(SelectedImage);
+        try
+        {
+            await SaveEditSettingsAsync(SelectedImage);
+        }
+        catch
+        {
+            RollbackEditReservation(
+                image,
+                previousSettings,
+                generation,
+                previousIntent);
+            throw;
+        }
 
         // Update last saved state
         _lastSavedState = SelectedImage.EditSettings.Clone();
 
         // Trigger live preview update
-        await UpdatePreviewWithCurrentSliders();
+        await UpdatePreviewWithCurrentSliders(generation: generation);
         UpdateCanReset();
 
         // Refresh thumbnail to reflect reset
@@ -136,6 +169,7 @@ public partial class MainWindowViewModel
     public async Task ApplyPresetAsync(string presetId)
     {
         if (!CanEditSelectedImage || SelectedImage == null) return;
+        var image = SelectedImage;
 
         // Clear hover state - we're committing to this preset
         _isHoveringPreset = false;
@@ -151,6 +185,9 @@ public partial class MainWindowViewModel
 
         var preset = PresetService.GetById(presetId);
         if (preset == null) return;
+        var previousSettings = CaptureLiveEditState();
+        var previousIntent = _requestedPreviewIntent;
+        var generation = RequestEditedRender();
 
         // Push current state to undo stack before applying preset
         PushUndoState();
@@ -170,11 +207,23 @@ public partial class MainWindowViewModel
         SelectedImage.HasEdits = true;
 
         // Save to catalog
-        await SaveEditSettingsAsync(SelectedImage);
+        try
+        {
+            await SaveEditSettingsAsync(SelectedImage);
+        }
+        catch
+        {
+            RollbackEditReservation(
+                image,
+                previousSettings,
+                generation,
+                previousIntent);
+            throw;
+        }
         _lastSavedState = SelectedImage.EditSettings.Clone();
 
         // Update preview and UI
-        await UpdatePreviewWithCurrentSliders();
+        await UpdatePreviewWithCurrentSliders(generation: generation);
         UpdateCanReset();
 
         // Refresh thumbnail to reflect preset
@@ -196,6 +245,9 @@ public partial class MainWindowViewModel
 
         var preset = PresetService.GetById(presetId);
         if (preset == null) return;
+        var generation = ReserveRenderOutcome(
+            PreviewSurfaceIntent.Edited,
+            promotionEligible: false);
 
         if (!_isHoveringPreset)
         {
@@ -217,23 +269,20 @@ public partial class MainWindowViewModel
                 image,
                 previewSettings,
                 LibraryThumbnailRequest,
-                skipHistogram: true,
+                skipHistogram: false,
                 RequestedClippingOverlaySides,
-                token);
-            var preview = artifacts.DetachBitmap();
-
-            if (!token.IsCancellationRequested && preview != null &&
-                ReferenceEquals(SelectedImage, image) &&
-                (IsDevelopMode || IsFullScreenMode))
-            {
-                IsShowingOriginal = false;
-                InstallPreviewClipping(artifacts);
-                ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
-            }
-            else
-            {
-                preview?.Dispose();
-            }
+                token,
+                generation,
+                computeWaveform: IsWaveformScopeEffective);
+            token.ThrowIfCancellationRequested();
+            ApplyRenderOutcome(RenderOutcome.FromArtifacts(
+                image,
+                generation,
+                PreviewSurfaceIntent.Edited,
+                RenderOutcomeClass.StateDefining,
+                PreviewPaintSource.FreshRender,
+                artifacts,
+                promotable: false));
         }
         catch (OperationCanceledException) { }
     }
@@ -250,6 +299,7 @@ public partial class MainWindowViewModel
     {
         if (!_isHoveringPreset || SelectedImage == null) return;
         var image = SelectedImage;
+        var generation = RequestEditedRender();
 
         _hoverPreviewCts?.Cancel();
         _isHoveringPreset = false;
@@ -263,22 +313,18 @@ public partial class MainWindowViewModel
                     image,
                     preHoverSettings,
                     LibraryThumbnailRequest,
-                    skipHistogram: true,
-                    RequestedClippingOverlaySides);
-                var preview = artifacts.DetachBitmap();
-
-                if (preview != null && ReferenceEquals(SelectedImage, image) &&
-                    (IsDevelopMode || IsFullScreenMode))
-                {
-                    IsShowingOriginal = false;
-                    InstallPreviewClipping(artifacts);
-                    ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
-                    OnAcceptedInteractivePreview(preview);
-                }
-                else
-                {
-                    preview?.Dispose();
-                }
+                    skipHistogram: false,
+                    RequestedClippingOverlaySides,
+                    surfaceGeneration: generation,
+                    computeWaveform: IsWaveformScopeEffective);
+                ApplyRenderOutcome(RenderOutcome.FromArtifacts(
+                    image,
+                    generation,
+                    PreviewSurfaceIntent.Edited,
+                    RenderOutcomeClass.StateDefining,
+                    PreviewPaintSource.FreshRender,
+                    artifacts,
+                    promotable: true));
             }
             catch (OperationCanceledException) { }
         }
@@ -291,9 +337,15 @@ public partial class MainWindowViewModel
 
         var image = SelectedImage;
         CancelRestingPreview(clearParent: true);
-        IsShowingOriginal = !IsShowingOriginal;
+        var previousIntent = _requestedPreviewIntent;
+        var intent = _requestedPreviewIntent == PreviewSurfaceIntent.Original
+            ? PreviewSurfaceIntent.Edited
+            : PreviewSurfaceIntent.Original;
+        var generation = ReserveRenderOutcome(
+            intent,
+            promotionEligible: false);
 
-        if (IsShowingOriginal)
+        if (intent == PreviewSurfaceIntent.Original)
         {
             // Create temporary settings with only rotation and crop (no color edits)
             var tempSettings = new EditSettings
@@ -311,28 +363,25 @@ public partial class MainWindowViewModel
                 tempSettings,
                 LibraryThumbnailRequest,
                 skipHistogram: false,
-                RequestedClippingOverlaySides);
-            var preview = artifacts.DetachBitmap();
-            if (preview == null ||
-                !CanUseBeforeAfterWorkspace() ||
-                !ReferenceEquals(SelectedImage, image) ||
-                !IsShowingOriginal)
-            {
-                preview?.Dispose();
-                if (!CanUseBeforeAfterWorkspace())
-                {
-                    IsShowingOriginal = false;
-                }
-                return;
-            }
-            InstallPreviewClipping(artifacts);
-            ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
-            Histogram = artifacts.Histogram;
+                RequestedClippingOverlaySides,
+                surfaceGeneration: generation,
+                computeWaveform: IsWaveformScopeEffective);
+            ApplyRenderOutcome(RenderOutcome.FromArtifacts(
+                image,
+                generation,
+                PreviewSurfaceIntent.Original,
+                RenderOutcomeClass.StateDefining,
+                PreviewPaintSource.FreshRender,
+                artifacts,
+                promotable: false,
+                rollbackRequestedIntent: previousIntent));
         }
         else
         {
             // Show edited image
-            await UpdatePreviewWithCurrentSliders();
+            await UpdatePreviewWithCurrentSliders(
+                generation: generation,
+                rollbackRequestedIntent: previousIntent);
         }
     }
 

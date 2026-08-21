@@ -28,6 +28,7 @@
     <Compile Include="..\Tests\ColorLabelUiTests.cs" Link="ColorLabelUiTests.cs" />
     <Compile Include="..\Tests\CloudSourceViewTests.cs" Link="CloudSourceViewTests.cs" />
     <Compile Include="..\Tests\CloudSelectionStateTests.cs" Link="CloudSelectionStateTests.cs" />
+    <Compile Include="..\Tests\ClippingOverlayViewModelTests.cs" Link="ClippingOverlayViewModelTests.cs" />
     <Compile Include="..\Tests\ColorAssessmentViewTests.cs" Link="ColorAssessmentViewTests.cs" />
     <Compile Include="..\Tests\ColorAssessmentScreenshotTests.cs" Link="ColorAssessmentScreenshotTests.cs" />
     <Compile Include="..\Tests\FirstRunWindowTests.cs" Link="FirstRunWindowTests.cs" />
@@ -38,14 +39,18 @@
     <Compile Include="..\Tests\ManualFolderRefreshViewTests.cs" Link="ManualFolderRefreshViewTests.cs" />
     <Compile Include="..\Tests\PreviewBitmapLifetimeTests.cs" Link="PreviewBitmapLifetimeTests.cs" />
     <Compile Include="..\Tests\PreviewPlaceholderTests.cs" Link="PreviewPlaceholderTests.cs" />
+    <Compile Include="..\Tests\PreviewCacheOutcomeOrderingTests.cs" Link="PreviewCacheOutcomeOrderingTests.cs" />
+    <Compile Include="..\Tests\PromotionOutcomeTests.cs" Link="PromotionOutcomeTests.cs" />
     <Compile Include="..\Tests\RawHighlightReconstructionUiTests.cs" Link="RawHighlightReconstructionUiTests.cs" />
     <Compile Include="..\Tests\RawHistogramUiTests.cs" Link="RawHistogramUiTests.cs" />
+    <Compile Include="..\Tests\RenderFailureRollbackTests.cs" Link="RenderFailureRollbackTests.cs" />
     <Compile Include="..\Tests\TemporaryDirectory.cs" Link="TemporaryDirectory.cs" />
     <Compile Include="..\Tests\TestBaseLoaders.cs" Link="TestBaseLoaders.cs" />
     <Compile Include="..\Tests\TestImages.cs" Link="TestImages.cs" />
     <Compile Include="..\Tests\TestSourceAvailabilityService.cs" Link="TestSourceAvailabilityService.cs" />
     <Compile Include="..\Tests\TestWaits.cs" Link="TestWaits.cs" />
     <Compile Include="..\Tests\WhiteBalanceUiTests.cs" Link="WhiteBalanceUiTests.cs" />
+    <Compile Include="..\Tests\WhiteBalanceOutcomeRaceTests.cs" Link="WhiteBalanceOutcomeRaceTests.cs" />
     <Compile Include="..\Tests\WaveformScopeUiTests.cs" Link="WaveformScopeUiTests.cs" />
     <Compile Include="..\Tests\WaveformViewTests.cs" Link="WaveformViewTests.cs" />
     <Compile Include="..\Tests\WorkspaceTransitionTests.cs" Link="WorkspaceTransitionTests.cs" />

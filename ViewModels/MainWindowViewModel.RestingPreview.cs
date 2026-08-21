@@ -19,6 +19,7 @@ public partial class MainWindowViewModel
     private int _restingAchievableLongEdge;
     private int _restingSatisfiedLongEdge;
     private long _restingScheduleSerial;
+    private long _restingSurfaceGeneration;
     private int _restingPaintCount;
 
     internal int RequiredDeviceLongEdge => _requiredDeviceLongEdge;
@@ -84,6 +85,8 @@ public partial class MainWindowViewModel
                 identity.DecodeKey,
                 StringComparison.Ordinal);
         _restingParent = identity;
+        _restingSurfaceGeneration = Volatile.Read(
+            ref _latestPreviewOutcomeGeneration);
         _restingSettings = settings;
         if (parentChanged)
         {
@@ -179,6 +182,7 @@ public partial class MainWindowViewModel
         var parent = _restingParent;
         var settings = _restingSettings?.Clone();
         var requested = _requiredDeviceLongEdge;
+        var surfaceGeneration = _restingSurfaceGeneration;
         if (image == null || parent == null || settings == null)
         {
             return;
@@ -205,6 +209,8 @@ public partial class MainWindowViewModel
             : !ReferenceEquals(_restingRenderCts, cancellation) ? "cts"
             : !ReferenceEquals(SelectedImage, image) ? "image"
             : _restingParent?.Generation != parent.Generation ? "generation"
+            : surfaceGeneration != Volatile.Read(
+                ref _latestPreviewOutcomeGeneration) ? "surface-generation"
             : !IsDevelopMode && !IsFullScreenMode ? "surface"
             : IsCropMode || IsShowingOriginal || _isHoveringPreset
                 ? "transient"
@@ -228,7 +234,10 @@ public partial class MainWindowViewModel
             return;
         }
 
-        ReplaceWithRestingPreview(result.DetachBitmap());
+        ApplyRenderOutcome(RenderOutcome.Resting(
+            image,
+            surfaceGeneration,
+            result.DetachBitmap()));
     }
 
     private void ReplaceWithRestingPreview(Bitmap preview)
@@ -302,6 +311,7 @@ public partial class MainWindowViewModel
     private void ClearRestingParentState()
     {
         _restingParent = null;
+        _restingSurfaceGeneration = 0;
         _restingSettings = null;
         _restingHighestAttemptedBound = 0;
         _restingAchievableLongEdge = 0;

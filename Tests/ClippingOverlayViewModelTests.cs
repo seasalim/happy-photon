@@ -1,6 +1,8 @@
+using Avalonia.Headless.XUnit;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
+using ImageMagick;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -54,5 +56,83 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
         Assert.False(vm.IsClippingOverlayLatched);
     }
 
+    [AvaloniaFact]
+    public async Task LatchAndPeekTransitionsPreserveOrClearOnlyAsRequired()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("masks");
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            new GrayLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
+        vm.ShowWorkspaceReady(
+            MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        vm.SelectedImage = new ImageFile(_fx.Path("photo.jpg"));
+        await TestWaits.UntilAsync(() => vm.PreviewImage != null);
+
+        vm.ToggleClippingOverlayCommand.Execute(null);
+        await TestWaits.UntilAsync(() => vm.PreviewClippingMask != null);
+        var latchedMask = vm.PreviewClippingMask;
+
+        vm.BeginClippingPeek(ClippingOverlaySide.DisplayFloor);
+        vm.EndClippingPeek();
+        Assert.Same(latchedMask, vm.PreviewClippingMask);
+
+        vm.ToggleClippingOverlayCommand.Execute(null);
+        Assert.Null(vm.PreviewClippingMask);
+
+        vm.BeginClippingPeek(ClippingOverlaySide.DisplayFloor);
+        await TestWaits.UntilAsync(() => vm.PreviewClippingMask != null);
+        vm.ToggleClippingOverlayCommand.Execute(null);
+        Assert.NotNull(vm.PreviewClippingMask);
+        vm.ToggleClippingOverlayCommand.Execute(null);
+        Assert.NotNull(vm.PreviewClippingMask);
+
+        vm.EndClippingPeek();
+        Assert.Null(vm.PreviewClippingMask);
+    }
+
     public void Dispose() => _fx.Dispose();
+
+    private sealed class GrayLoader : IBaseImageLoader
+    {
+        public bool CanLoad(ImageFile file) => true;
+
+        public BaseImage LoadPreviewBase(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) =>
+            new(
+                new MagickImage(MagickColors.Gray, 64, 48),
+                new BaseImageInfo(
+                    BaseSourceKind.Standard,
+                    false,
+                    decode,
+                    null,
+                    null,
+                    6504,
+                    0,
+                    false,
+                    null,
+                    1,
+                    64,
+                    48));
+
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) =>
+            BaseImageLoadOutcome.Loaded(LoadPreviewBase(
+                file,
+                decode,
+                cancellationToken));
+
+        public BaseImage? LoadFullBase(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+    }
 }

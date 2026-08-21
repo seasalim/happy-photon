@@ -327,12 +327,15 @@ public partial class MainWindowViewModel
         // Load preview when entering Develop mode (if we have a selected image)
         if (value && SelectedImage != null)
         {
-            _ = LoadPreviewAsync(SelectedImage);
+            var generation = ReserveRenderOutcome();
+            ApplySurfaceClearOutcome(SelectedImage, generation);
+            _ = LoadPreviewAsync(SelectedImage, generation);
         }
         else if (!value && !IsFullScreenMode)
         {
+            var generation = ReserveRenderOutcome();
+            ApplySurfaceClearOutcome(SelectedImage, generation);
             LeaveDevelopClippingSurface();
-            IsShowingOriginal = false;
             _previewLoadingCts?.Cancel();
             _previewDebounce?.Cancel();
             if (SelectedImage is { IsRaw: true } image &&
@@ -389,8 +392,10 @@ public partial class MainWindowViewModel
 
         if (value && SelectedImage != null)
         {
+            var generation = ReserveRenderOutcome();
+            ApplySurfaceClearOutcome(SelectedImage, generation);
             LeaveDevelopClippingSurface();
-            _ = LoadPreviewAsync(SelectedImage);
+            _ = LoadPreviewAsync(SelectedImage, generation);
         }
         else if (!value && IsDevelopMode &&
                  IsClippingOverlayLatched && SelectedImage != null)
@@ -399,7 +404,8 @@ public partial class MainWindowViewModel
         }
         else if (!value && !IsDevelopMode)
         {
-            IsShowingOriginal = false;
+            var generation = ReserveRenderOutcome();
+            ApplySurfaceClearOutcome(SelectedImage, generation);
             _previewLoadingCts?.Cancel();
             _previewDebounce?.Cancel();
             if (SelectedImage is { IsRaw: true } image &&

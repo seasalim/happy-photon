@@ -10,7 +10,9 @@ public sealed partial class PreviewService
         ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
         ClippingOverlaySide overlaySides,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        long? surfaceGeneration = null,
+        bool computeWaveform = false)
     {
         QueueRenderedPreviewIfLeaving(imageFile);
         return RenderAsync(
@@ -18,9 +20,11 @@ public sealed partial class PreviewService
             settings,
             thumbnailRequest,
             skipHistogram,
+            computeWaveform,
             overlaySides,
             forceProfileRefresh: true,
-            cancellationToken);
+            cancellationToken,
+            surfaceGeneration);
     }
 
     public Task<PreviewArtifacts> ApplyEditsToPreviewArtifactsAsync(
@@ -29,15 +33,19 @@ public sealed partial class PreviewService
         ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
         ClippingOverlaySide overlaySides,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken = default,
+        long? surfaceGeneration = null,
+        bool computeWaveform = false) =>
         RenderAsync(
             imageFile,
             settings,
             thumbnailRequest,
             skipHistogram,
+            computeWaveform,
             overlaySides,
             forceProfileRefresh: false,
-            cancellationToken);
+            cancellationToken,
+            surfaceGeneration);
 
     public Task<(Avalonia.Media.Imaging.Bitmap? preview,
         HistogramData histogram)> LoadPreviewWithHistogramAsync(

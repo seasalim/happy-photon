@@ -162,6 +162,7 @@ public sealed class DcpAtomicityTests : IDisposable
             ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
             skipHistogram: true,
             ClippingOverlaySide.None);
+        newest.CommitPromotion();
 
         loader.ReleaseA.Set();
         loader.ReleaseB.Set();

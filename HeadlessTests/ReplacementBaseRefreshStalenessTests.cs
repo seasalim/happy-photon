@@ -31,12 +31,7 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
         var newerPreview = BitmapConversionService.ConvertToBitmap(source)!;
         vm.ReplacePreviewImage(newerPreview, PreviewPaintSource.FreshRender);
 
-        // A newer render generation settled and was recorded by the outcome
-        // path, exactly as a fresh edit render would report it.
-        vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
-            image,
-            generation: 100,
-            BaseImageLoadFailure.None));
+        var currentGeneration = vm.LatestPreviewOutcomeGeneration;
 
         // A replacement-base refresh for an older generation is released late,
         // after the newer render already won.
@@ -52,7 +47,7 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
             new HistogramData(),
             hasHistogram: false,
             rawHistogram: null,
-            generation: 50,
+            generation: currentGeneration - 1,
             clipping: new ClippingStats(
                 ChannelClip.Empty,
                 ChannelClip.Empty,
@@ -70,10 +65,10 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    // A refresh whose generation is newer than the last one applied must still
-    // be installed, so the guard does not reject legitimate replacement bases.
+    // A service-manufactured generation has no authority to advance the VM
+    // surface. Only exact equality with the reserved generation is accepted.
     [AvaloniaFact]
-    public async Task FreshRefreshForNewerGenerationIsApplied()
+    public async Task GreaterThanReservedRefreshIsRejected()
     {
         var vm = CreateDevelopViewModel(out var image);
         using var source = new MagickImage(MagickColors.Red, 4, 3);
@@ -81,10 +76,7 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
         var olderPreview = BitmapConversionService.ConvertToBitmap(source)!;
         vm.ReplacePreviewImage(olderPreview, PreviewPaintSource.FreshRender);
 
-        vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
-            image,
-            generation: 100,
-            BaseImageLoadFailure.None));
+        var currentGeneration = vm.LatestPreviewOutcomeGeneration;
 
         var freshRefresh = BitmapConversionService.ConvertToBitmap(source)!;
         vm.ApplyPreviewRefresh(
@@ -93,9 +85,33 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
             new HistogramData(),
             hasHistogram: false,
             rawHistogram: null,
-            generation: 101);
+            generation: currentGeneration + 1);
 
-        Assert.Same(freshRefresh, vm.PreviewImage);
+        Assert.Same(olderPreview, vm.PreviewImage);
+        Assert.Throws<ObjectDisposedException>(() => _ = freshRefresh.PixelSize);
+
+        await vm.DisposeAsync();
+    }
+
+    [AvaloniaFact]
+    public async Task ExactReservedRefreshIsApplied()
+    {
+        var vm = CreateDevelopViewModel(out var image);
+        using var source = new MagickImage(MagickColors.Red, 4, 3);
+
+        var previous = BitmapConversionService.ConvertToBitmap(source)!;
+        vm.ReplacePreviewImage(previous, PreviewPaintSource.FreshRender);
+        var fresh = BitmapConversionService.ConvertToBitmap(source)!;
+        vm.ApplyPreviewRefresh(
+            image,
+            fresh,
+            new HistogramData(),
+            hasHistogram: true,
+            rawHistogram: null,
+            generation: vm.LatestPreviewOutcomeGeneration);
+
+        Assert.Same(fresh, vm.PreviewImage);
+        Assert.NotNull(vm.Histogram);
 
         await vm.DisposeAsync();
     }

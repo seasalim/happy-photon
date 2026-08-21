@@ -1,6 +1,7 @@
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
+using System.Security.Cryptography;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -175,6 +176,60 @@ public sealed class RawProfileViewModelTests : IDisposable
             option.Selection?.Source == RawProfileSource.Embedded);
         Assert.Equal(embedded.Label, retained.Label);
         Assert.Equal(embedded.Status, retained.Status);
+    }
+
+    [Fact]
+    public async Task DiscoveryCannotOverwriteNewerRenderLabelOrEditGeneration()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("race");
+        await using var vm = CreateViewModel(catalog);
+        var profilePath = SyntheticDcpFactory.WriteTemporary(
+            _fx.Root,
+            new SyntheticDcpOptions { Name = "Discovery label" },
+            "race.dcp");
+        var selection = new RawProfileSelection
+        {
+            Source = RawProfileSource.UserFile,
+            Location = profilePath,
+            ContentHash = Convert.ToHexString(
+                    SHA256.HashData(File.ReadAllBytes(profilePath)))
+                .ToLowerInvariant()
+        };
+        var image = new ImageFile(_fx.Path("race.cr2"))
+        {
+            EditSettings = new EditSettings { RawProfile = selection },
+            HasEdits = true
+        };
+        vm.SelectedImage = image;
+        var started = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        vm.ImageService.DcpDiscovery.DiscoveryGateAsync = () =>
+        {
+            started.TrySetResult();
+            return release.Task;
+        };
+
+        var discovery = vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
+        await started.Task.WaitAsync(TestWaits.Condition);
+        vm.Exposure = 1;
+        vm.ApplyRawProfileState(
+            image,
+            isRawSource: true,
+            new DcpProfileState(
+                "resolved",
+                DcpProfileErrorCode.None,
+                null,
+                "Render label",
+                new CameraIdentity("Canon", "EOS 6D")));
+        release.TrySetResult();
+        await discovery;
+
+        Assert.Equal(1, vm.Exposure);
+        Assert.Equal("Render label", vm.SelectedRawProfileOption?.Label);
+        Assert.Equal(selection.ContentHash,
+            vm.SelectedRawProfileOption?.Selection?.ContentHash);
     }
 
     [Fact]

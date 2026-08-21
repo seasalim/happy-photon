@@ -54,21 +54,64 @@ public sealed class RenderPipeline
                 wasResized: false,
                 detailBandPixelLimit,
                 request.Settings.Effects);
-
-            var analysis = analyze
-                ? ClippingStatsCalculator.Analyze(
-                    display,
-                    rawNearClip,
-                    createOverlay,
-                    sceneHighlights,
-                    requestedOverlaySides)
-                : new ClippingAnalysis(ClippingStats.Empty, null);
+            var histogram = request.Options.ComputeHistogram ||
+                request.Options.ComputeWaveform
+                ? new HistogramData()
+                : null;
+            byte[]? previewPixels = null;
+            var analysis = new ClippingAnalysis(ClippingStats.Empty, null);
+            if (analyze || histogram != null ||
+                request.Options.PreparePreviewPixels)
+            {
+                Parallel.Invoke(
+                    () =>
+                    {
+                        if (analyze)
+                        {
+                            analysis = ClippingStatsCalculator.Analyze(
+                                display,
+                                rawNearClip,
+                                createOverlay,
+                                sceneHighlights,
+                                requestedOverlaySides);
+                        }
+                    },
+                    () =>
+                    {
+                        if (request.Options.PreparePreviewPixels ||
+                            histogram != null)
+                        {
+                            var pixels = BitmapConversionService
+                                .CopyBgraPixels(display);
+                            if (histogram != null)
+                            {
+                                HistogramService.CalculatePreviewHistogram(
+                                    pixels,
+                                    checked((int)display.Width),
+                                    checked((int)display.Height),
+                                    histogram,
+                                    request.Options.ComputeHistogram,
+                                    request.Options.ComputeWaveform);
+                            }
+                            if (request.Options.PreparePreviewPixels)
+                            {
+                                previewPixels = pixels;
+                            }
+                        }
+                        else
+                        {
+                            previewPixels = null;
+                        }
+                    });
+            }
             overlay = analysis.OverlayMask;
 
             var result = new RenderResult(
                 display,
                 analysis.Stats,
-                overlay);
+                overlay,
+                histogram,
+                previewPixels);
             display = null;
             overlay = null;
             ImageServiceHelpers.LogPerformance(
@@ -258,17 +301,6 @@ public sealed class RenderPipeline
                 var whiteBalance = RenderChromaticStage.CreateWhiteBalanceMatrix(
                     request.Base.Info,
                     request.Settings);
-                if (analyzeSceneHighlights)
-                {
-                    sceneHighlights =
-                        ClippingStatsCalculator.AnalyzeSceneHighlights(
-                            working,
-                            whiteBalance,
-                            request.Settings.Exposure +
-                                request.Base.Info.SourceExposureBiasEv,
-                            createSceneMask);
-                }
-
                 var crossing = new AgxCrossing(
                     new AgxToneParameters(
                         request.Settings.Exposure,
@@ -282,7 +314,33 @@ public sealed class RenderPipeline
                         request.Settings.CurveBlue),
                     whiteBalance,
                     request.Base.Info.DcpProfile?.HueSatMap);
-                crossing.Apply(working);
+                if (analyzeSceneHighlights)
+                {
+                    // Materialize independent samples before crossing writes.
+                    // Magick clones may share a pixel cache until either image
+                    // writes, so clone siblings cannot safely overlap here.
+                    var sceneSamples =
+                        ClippingStatsCalculator.CopyRgbSamples(working);
+                    var sceneWidth = working.Width;
+                    var sceneHeight = working.Height;
+                    SceneHighlightAnalysis? sceneResult = null;
+                    Parallel.Invoke(
+                        () => sceneResult = ClippingStatsCalculator
+                            .AnalyzeSceneHighlights(
+                            sceneSamples,
+                            sceneWidth,
+                            sceneHeight,
+                            whiteBalance,
+                            request.Settings.Exposure +
+                                request.Base.Info.SourceExposureBiasEv,
+                            createSceneMask),
+                        () => crossing.Apply(working));
+                    sceneHighlights = sceneResult;
+                }
+                else
+                {
+                    crossing.Apply(working);
+                }
             }
             else
             {

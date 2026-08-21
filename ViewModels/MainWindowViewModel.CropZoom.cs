@@ -122,30 +122,50 @@ public partial class MainWindowViewModel
         }
 
         ConstrainCropToSafeHorizonBounds();
+        var image = SelectedImage;
+        var previousSettings = image.EditSettings.Clone();
+        var previousIntent = _requestedPreviewIntent;
+        _previewDebounce?.Cancel();
+        var generation = RequestEditedRender();
 
         // Apply crop to settings
         if (CurrentCrop.IsFullImage)
         {
-            SelectedImage.EditSettings.Crop = null;
+            image.EditSettings.Crop = null;
         }
         else
         {
-            SelectedImage.EditSettings.Crop = CurrentCrop.Clone();
+            image.EditSettings.Crop = CurrentCrop.Clone();
         }
-        SelectedImage.EditSettings.HorizonRotation = HorizonRotation;
+        image.EditSettings.HorizonRotation = HorizonRotation;
 
-        SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
+        image.HasEdits = image.EditSettings.HasEdits;
 
         // Save to catalog
-        await SaveEditSettingsAsync(SelectedImage);
+        try
+        {
+            await SaveEditSettingsAsync(image);
+        }
+        catch
+        {
+            RollbackCropReservation(
+                image,
+                previousSettings,
+                generation,
+                previousIntent);
+            throw;
+        }
+        _lastSavedState = image.EditSettings.Clone();
 
         // Exit crop mode first, so preview update shows cropped result
         IsCropMode = false;
         _cropBeforeEdit = null;
 
         // Update preview and thumbnail (no undo for crop - it's a geometric transform)
-        SchedulePreviewUpdate(pushUndo: false);
-        RefreshSelectedThumbnail();
+        if (await UpdatePreviewWithCurrentSliders(generation: generation))
+        {
+            RefreshSelectedThumbnail();
+        }
     }
 
     /// <summary>

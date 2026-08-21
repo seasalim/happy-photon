@@ -27,17 +27,21 @@ public sealed partial class PreviewService
     private async Task<PreviewBaseAcquisition?> AcquirePreviewBaseAsync(
         ImageFile imageFile,
         BaseDecodeSettings decode,
-        long generation,
+        long renderGeneration,
+        long outcomeGeneration,
+        long? surfaceGeneration,
         CancellationToken cancellationToken)
     {
         var result = await _baseCoordinator.GetPreviewResultAsync(
             imageFile,
             decode,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken,
+            surfaceGeneration).ConfigureAwait(false);
         if (result.Acquisition == null &&
-            generation == Volatile.Read(ref _renderGeneration))
+            !result.Superseded &&
+            renderGeneration == Volatile.Read(ref _renderGeneration))
         {
-            ReportPreviewOutcome(imageFile, generation, result.Failure);
+            ReportPreviewOutcome(imageFile, outcomeGeneration, result.Failure);
         }
         return result.Acquisition;
     }
@@ -50,11 +54,6 @@ public sealed partial class PreviewService
 
     private void ReportPreviewFailure(ImageFile imageFile, long generation)
     {
-        if (generation != Volatile.Read(ref _renderGeneration))
-        {
-            return;
-        }
-
         ReportPreviewOutcome(
             imageFile,
             generation,

@@ -26,6 +26,7 @@
     <Compile Remove="ColorLabelUiTests.cs" />
     <Compile Remove="CloudSourceViewTests.cs" />
     <Compile Remove="CloudSelectionStateTests.cs" />
+    <Compile Remove="ClippingOverlayViewModelTests.cs" />
     <Compile Remove="ColorAssessmentViewTests.cs" />
     <Compile Remove="ColorAssessmentScreenshotTests.cs" />
     <Compile Remove="FirstRunWindowTests.cs" />
@@ -35,9 +36,13 @@
     <Compile Remove="ManualFolderRefreshViewTests.cs" />
     <Compile Remove="PreviewBitmapLifetimeTests.cs" />
     <Compile Remove="PreviewPlaceholderTests.cs" />
+    <Compile Remove="PreviewCacheOutcomeOrderingTests.cs" />
+    <Compile Remove="PromotionOutcomeTests.cs" />
     <Compile Remove="RawHighlightReconstructionUiTests.cs" />
     <Compile Remove="RawHistogramUiTests.cs" />
+    <Compile Remove="RenderFailureRollbackTests.cs" />
     <Compile Remove="WhiteBalanceUiTests.cs" />
+    <Compile Remove="WhiteBalanceOutcomeRaceTests.cs" />
     <Compile Remove="WaveformScopeUiTests.cs" />
     <Compile Remove="WaveformViewTests.cs" />
     <Compile Remove="WorkspaceTransitionTests.cs" />

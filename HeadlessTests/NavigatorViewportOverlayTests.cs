@@ -307,6 +307,8 @@ public sealed class NavigatorViewportOverlayTests
             Assert.Null(vm.NavigatorVisibleRegion);
 
             vm.IsDevelopMode = true;
+            vm.PreviewImage = CreateBitmap(800, 400);
+            vm.ZoomLevel = develop.GetFitZoomLevel() * 2;
             Dispatcher.UIThread.RunJobs();
             Assert.NotNull(vm.NavigatorVisibleRegion);
 
@@ -315,6 +317,8 @@ public sealed class NavigatorViewportOverlayTests
             Dispatcher.UIThread.RunJobs();
             Assert.Null(vm.NavigatorVisibleRegion);
             vm.IsDevelopMode = true;
+            vm.PreviewImage = CreateBitmap(800, 400);
+            vm.ZoomLevel = develop.GetFitZoomLevel() * 2;
             Dispatcher.UIThread.RunJobs();
             Assert.NotNull(vm.NavigatorVisibleRegion);
 
@@ -356,6 +360,8 @@ public sealed class NavigatorViewportOverlayTests
             Dispatcher.UIThread.RunJobs();
             vm.ZoomLevel = develop.GetFitZoomLevel() * 2;
             vm.IsDevelopMode = true;
+            vm.PreviewImage = CreateBitmap(800, 400);
+            vm.ZoomLevel = develop.GetFitZoomLevel() * 2;
             Dispatcher.UIThread.RunJobs();
             Assert.NotNull(vm.NavigatorVisibleRegion);
         }

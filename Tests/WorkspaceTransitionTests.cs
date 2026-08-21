@@ -102,7 +102,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
 
             var toggle = vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
             await renderStarted.Task.WaitAsync(TestWaits.Condition);
-            Assert.True(vm.IsShowingOriginal);
+            Assert.False(vm.IsShowingOriginal);
 
             vm.IsDevelopMode = false;
             vm.ClearPreviewImage();
@@ -225,6 +225,151 @@ public sealed class WorkspaceTransitionTests : IDisposable
         }
     }
 
+    [AvaloniaFact]
+    public async Task ImageSwitchClearsOldSurfaceUntilFirstCoherentPaint()
+    {
+        using var catalog = new CatalogService(_root);
+        await catalog.InitializeAsync();
+        var vm = CreateViewModel(catalog, new PathColorLoader());
+        var first = new ImageFile(Path.Combine(_root, "first.png"));
+        var second = new ImageFile(Path.Combine(_root, "second.png"));
+        var secondStarted = NewSignal();
+        var releaseSecond = NewSignal();
+        vm.SelectedImage = first;
+
+        try
+        {
+            await TestWaits.UntilAsync(() =>
+                vm.PreviewImage != null && vm.Histogram != null);
+            vm.ImageService.Previews.RenderGateAsync = () =>
+            {
+                secondStarted.TrySetResult();
+                return releaseSecond.Task;
+            };
+
+            vm.SelectedImage = second;
+            Assert.Null(vm.PreviewImage);
+            Assert.Null(vm.Histogram);
+            Assert.False(vm.IsClippingStatsAvailable);
+            await secondStarted.Task.WaitAsync(TestWaits.Condition);
+            Assert.Null(vm.PreviewImage);
+            Assert.Null(vm.Histogram);
+
+            releaseSecond.TrySetResult();
+            await TestWaits.UntilAsync(() =>
+                vm.PreviewImage != null && vm.Histogram != null);
+            Assert.Same(second, vm.SelectedImage);
+            Assert.True(vm.IsClippingStatsAvailable);
+        }
+        finally
+        {
+            releaseSecond.TrySetResult();
+            await vm.DisposeAsync();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task BeforeViewSurvivesLateEditedRender()
+    {
+        using var catalog = new CatalogService(_root);
+        await catalog.InitializeAsync();
+        var vm = CreateViewModel(catalog, new GraySolidLoader());
+        var image = new ImageFile(Path.Combine(_root, "before-wins.png"))
+        {
+            EditSettings = new EditSettings { Exposure = 1 },
+            HasEdits = true
+        };
+        vm.SelectedImage = image;
+        var started = new[] { NewSignal(), NewSignal() };
+        var release = new[] { NewSignal(), NewSignal() };
+        var gateIndex = -1;
+
+        try
+        {
+            await TestWaits.UntilAsync(() =>
+                vm.PreviewImage != null && vm.Histogram != null);
+            vm.ImageService.Previews.RenderGateAsync = () =>
+            {
+                var index = Interlocked.Increment(ref gateIndex);
+                started[index].TrySetResult();
+                return release[index].Task;
+            };
+
+            vm.Exposure = 2;
+            await started[0].Task.WaitAsync(TestWaits.Condition);
+            var toggle = vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
+            await started[1].Task.WaitAsync(TestWaits.Condition);
+
+            release[1].TrySetResult();
+            await toggle;
+            Assert.True(vm.IsShowingOriginal);
+            var beforeBitmap = vm.PreviewImage;
+            var beforeHistogram = vm.Histogram;
+            var beforeClipping = vm.DisplayClippingStats;
+
+            var lateCompleted = NewSignal();
+            vm.ImageService.Previews.RenderRequestCompleted +=
+                _ => lateCompleted.TrySetResult();
+            release[0].TrySetResult();
+            await lateCompleted.Task.WaitAsync(TestWaits.Condition);
+            Assert.True(vm.IsShowingOriginal);
+            Assert.Same(beforeBitmap, vm.PreviewImage);
+            Assert.Same(beforeHistogram, vm.Histogram);
+            Assert.Same(beforeClipping, vm.DisplayClippingStats);
+        }
+        finally
+        {
+            release[0].TrySetResult();
+            release[1].TrySetResult();
+            await vm.DisposeAsync();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task DoubleBeforeToggleInvertsRequestedIntent()
+    {
+        using var catalog = new CatalogService(_root);
+        await catalog.InitializeAsync();
+        var vm = CreateViewModel(catalog, new GraySolidLoader());
+        vm.SelectedImage = new ImageFile(Path.Combine(_root, "double-toggle.png"))
+        {
+            EditSettings = new EditSettings { Exposure = 1 },
+            HasEdits = true
+        };
+        var started = new[] { NewSignal(), NewSignal() };
+        var release = new[] { NewSignal(), NewSignal() };
+        var gateIndex = -1;
+
+        try
+        {
+            await TestWaits.UntilAsync(() => vm.PreviewImage != null);
+            vm.ImageService.Previews.RenderGateAsync = () =>
+            {
+                var index = Interlocked.Increment(ref gateIndex);
+                started[index].TrySetResult();
+                return release[index].Task;
+            };
+
+            var before = vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
+            await started[0].Task.WaitAsync(TestWaits.Condition);
+            var after = vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
+            await started[1].Task.WaitAsync(TestWaits.Condition);
+            release[1].TrySetResult();
+            await after;
+            Assert.False(vm.IsShowingOriginal);
+
+            release[0].TrySetResult();
+            await before;
+            Assert.False(vm.IsShowingOriginal);
+        }
+        finally
+        {
+            release[0].TrySetResult();
+            release[1].TrySetResult();
+            await vm.DisposeAsync();
+        }
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))
@@ -286,6 +431,36 @@ public sealed class WorkspaceTransitionTests : IDisposable
             BaseDecodeSettings decode,
             CancellationToken cancellationToken) =>
             CreateBase(MagickColors.Gray, decode);
+
+        public BaseImage? LoadFullBase(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class PathColorLoader : IBaseImageLoader
+    {
+        public bool CanLoad(ImageFile file) => true;
+
+        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) =>
+            BaseImageLoadOutcome.Loaded(LoadPreviewBase(
+                file,
+                decode,
+                cancellationToken));
+
+        public BaseImage LoadPreviewBase(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) =>
+            CreateBase(
+                file.FileName.StartsWith("first", StringComparison.Ordinal)
+                    ? MagickColors.Red
+                    : MagickColors.Blue,
+                decode);
 
         public BaseImage? LoadFullBase(
             ImageFile file,

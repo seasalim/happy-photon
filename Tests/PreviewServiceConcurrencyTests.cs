@@ -149,6 +149,22 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
             {
                 HlReconstruction = HlReconstructionMode.Blend
             };
+            // Hold both renders at the pre-render gate until the latest
+            // request has claimed the newer render generation; otherwise the
+            // first render can finish before it is superseded.
+            var gateArrivals = 0;
+            var bothRendersAtGate = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var releaseRenders = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            service.RenderGateAsync = () =>
+            {
+                if (Interlocked.Increment(ref gateArrivals) == 2)
+                {
+                    bothRendersAtGate.TrySetResult();
+                }
+                return releaseRenders.Task;
+            };
             var firstStale = service.ApplyEditsToPreviewAsync(
                 file,
                 decodeSettings,
@@ -160,6 +176,9 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
                 file,
                 latestSettings,
                 skipHistogram: true);
+            await bothRendersAtGate.Task.WaitAsync(TestWaits.Condition);
+            service.RenderGateAsync = null;
+            releaseRenders.TrySetResult();
 
             var firstResult = await firstStale;
             var latestResult = await latestStale;

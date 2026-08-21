@@ -66,6 +66,14 @@ provisionally to `ImageFile.IsRaw` before load, survives filmstrip switching, an
 never clears the persisted value. Base look remains persisted/MCP-settable but has no
 panel control; RAW ignores it and standard sources retain it.
 
+Selection clears the previous Develop bitmap, scopes, clipping, and RAW histogram in
+one provisional outcome while seeding filename-derived RAW capability, profile
+visibility, and the 5500 K/6504 K as-shot placeholder. The first accepted decode
+outcome confirms or corrects those facts and publishes the fresh bitmap, display
+scopes, clipping, measured as-shot anchor, and sensor histogram together. A stale-base
+interim paint may update bitmap and display scopes only; it clears clipping and cannot
+replace decode-derived facts.
+
 Recovery is a compact, exclusive Clip/Blend control directly below Highlights, enabled
 only for RAW sources — provisionally from `ImageFile.IsRaw`, then from the loaded base
 fact. The row stays present and dims to `DisabledOpacity` when unavailable, so the
@@ -119,9 +127,11 @@ be read.
 ## 4. Viewer interactions
 
 - **Before/after** (`B` or the Develop footer eye): shows the original while active.
-  Any path that installs edited pixels — including scheduled histogram refresh and
-  preset hover/restore — clears the active state so the control always matches the
-  displayed preview.
+  The toggle changes requested intent immediately, but its visible active state follows
+  only an accepted render outcome. A second toggle inverts the requested intent even
+  while the first render is pending. Edit mutations request edited intent; maintenance,
+  cache, refresh, and resting work preserve it, so a late edited render cannot exit an
+  accepted before view.
 - **Crop-mode vignette exception:** crop mode deliberately renders the full canvas so
   the overlay remains aligned. Vignette is centered on that transient full-canvas
   preview and recenters on the committed crop after Apply; pending crop coordinates do

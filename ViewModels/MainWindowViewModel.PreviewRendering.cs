@@ -4,12 +4,18 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private async Task UpdatePreviewWithCurrentSliders(
-        bool skipHistogram = false,
-        CancellationToken cancellationToken = default)
+    private async Task<bool> UpdatePreviewWithCurrentSliders(
+        CancellationToken cancellationToken = default,
+        long? generation = null,
+        PreviewSurfaceIntent intent = PreviewSurfaceIntent.Edited,
+        bool promotable = true,
+        PreviewSurfaceIntent? rollbackRequestedIntent = null)
     {
         var selectedImage = SelectedImage;
-        if (selectedImage == null || !CanEditSelectedImage) return;
+        if (selectedImage == null || !CanEditSelectedImage) return false;
+        var previousIntent = _requestedPreviewIntent;
+        var outcomeGeneration = generation ??
+            ReserveRenderOutcome(intent);
         SignalBackgroundActivityStarted();
 
         var tempSettings = selectedImage.EditSettings.Clone();
@@ -18,47 +24,78 @@ public partial class MainWindowViewModel
         tempSettings.HorizonRotation = HorizonRotation;
         tempSettings.Crop = PreviewCrop();
 
-        using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
-            selectedImage,
-            tempSettings,
-            LibraryThumbnailRequest,
-            skipHistogram,
-            RequestedClippingOverlaySides,
-            cancellationToken);
-        var preview = artifacts.DetachBitmap();
-
-        if (preview == null || cancellationToken.IsCancellationRequested ||
-            SelectedImage != selectedImage ||
-            (!IsDevelopMode && !IsFullScreenMode))
+        try
         {
-            preview?.Dispose();
-            if (preview == null &&
-                !cancellationToken.IsCancellationRequested &&
-                ReferenceEquals(SelectedImage, selectedImage))
+            using var artifacts = await ImageService.Previews
+                .ApplyEditsToPreviewArtifactsAsync(
+                    selectedImage,
+                    tempSettings,
+                    LibraryThumbnailRequest,
+                    skipHistogram: false,
+                    RequestedClippingOverlaySides,
+                    cancellationToken,
+                    outcomeGeneration,
+                    computeWaveform: IsWaveformScopeEffective);
+            cancellationToken.ThrowIfCancellationRequested();
+            var succeeded = artifacts.Bitmap != null;
+            var painted = ApplyRenderOutcome(RenderOutcome.FromArtifacts(
+                selectedImage,
+                outcomeGeneration,
+                intent,
+                RenderOutcomeClass.StateDefining,
+                PreviewPaintSource.FreshRender,
+                artifacts,
+                promotable,
+                rollbackRequestedIntent ?? previousIntent));
+            if (!succeeded)
             {
-                ClearPreviewClippingArtifacts();
+                var rolledBack = await RollbackFailedRenderAsync(
+                    selectedImage,
+                    outcomeGeneration,
+                    previousIntent);
+                return !rolledBack;
             }
-            return;
+            if (painted && promotable &&
+                intent == PreviewSurfaceIntent.Edited)
+            {
+                _lastAppliedEditSettings = tempSettings.Clone();
+            }
+            return painted;
+        }
+        catch (OperationCanceledException)
+        {
+            if (outcomeGeneration == Volatile.Read(
+                    ref _latestPreviewOutcomeGeneration))
+            {
+                await RollbackFailedRenderAsync(
+                    selectedImage,
+                    outcomeGeneration,
+                    previousIntent);
+            }
+            return false;
+        }
+    }
+
+    private async Task<bool> RollbackFailedRenderAsync(
+        ImageFile image,
+        long generation,
+        PreviewSurfaceIntent previousIntent)
+    {
+        if (_lastAppliedEditSettings == null)
+        {
+            return false;
+        }
+        var previousSettings = _lastAppliedEditSettings.Clone();
+        if (!RollbackEditReservation(
+                image,
+                previousSettings,
+                generation,
+                previousIntent))
+        {
+            return false;
         }
 
-        IsShowingOriginal = false;
-        ReconcileHighlightReconstructionCapability(
-            selectedImage,
-            artifacts.IsRawSource);
-        ApplyRawProfileState(
-            selectedImage,
-            artifacts.IsRawSource,
-            artifacts.ProfileState);
-        InstallPreviewClipping(artifacts);
-        ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
-
-        if (!skipHistogram)
-        {
-            Histogram = artifacts.Histogram;
-            if (!IsCropMode && !_isHoveringPreset)
-            {
-                OnAcceptedInteractivePreview(preview);
-            }
-        }
+        await SaveEditSettingsAsync(image, previousSettings);
+        return true;
     }
 }

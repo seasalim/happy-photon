@@ -112,6 +112,31 @@ public static class BitmapConversionService
     {
         var width = (int)image.Width;
         var height = (int)image.Height;
+        return ConvertToBitmap(
+            CopyBgraPixels(image),
+            width,
+            height);
+    }
+
+    internal static byte[] CopyBgraPixels(MagickImage image)
+    {
+        using var pixels = image.GetPixelsUnsafe();
+        return pixels.ToByteArray(PixelMapping.BGRA) ??
+            throw new InvalidOperationException("Unable to read BGRA pixels.");
+    }
+
+    internal static Bitmap ConvertToBitmap(
+        byte[] pixels,
+        int width,
+        int height)
+    {
+        ArgumentNullException.ThrowIfNull(pixels);
+        if (pixels.Length != checked(width * height * 4))
+        {
+            throw new ArgumentException(
+                "The BGRA buffer length must match its dimensions.",
+                nameof(pixels));
+        }
 
         var bitmap = new WriteableBitmap(
             new PixelSize(width, height),
@@ -121,26 +146,20 @@ public static class BitmapConversionService
 
         using (var framebuffer = bitmap.Lock())
         {
-            var pixels = image.GetPixelsUnsafe();
-            var bytes = pixels.ToByteArray(PixelMapping.BGRA);
-
-            if (bytes != null)
+            unsafe
             {
-                unsafe
+                fixed (byte* src = pixels)
                 {
-                    fixed (byte* src = bytes)
-                    {
-                        var srcRowBytes = width * 4;
-                        var dstPtr = (byte*)framebuffer.Address;
+                    var srcRowBytes = width * 4;
+                    var dstPtr = (byte*)framebuffer.Address;
 
-                        for (int y = 0; y < height; y++)
-                        {
-                            Buffer.MemoryCopy(
-                                src + y * srcRowBytes,
-                                dstPtr + y * framebuffer.RowBytes,
-                                framebuffer.RowBytes,
-                                srcRowBytes);
-                        }
+                    for (int y = 0; y < height; y++)
+                    {
+                        Buffer.MemoryCopy(
+                            src + y * srcRowBytes,
+                            dstPtr + y * framebuffer.RowBytes,
+                            framebuffer.RowBytes,
+                            srcRowBytes);
                     }
                 }
             }

@@ -315,6 +315,19 @@ public sealed class PreviewPipelinePerformanceTests
         ImageFile file)
     {
         ForceCollection();
+        var coherentPaint = await DevelopEntryPerformanceMeasurement.MeasureAsync(
+            catalog,
+            file);
+        Assert.True(
+            coherentPaint.Latency <= TimeSpan.FromSeconds(2),
+            $"{label} first coherent Develop paint took " +
+            $"{coherentPaint.Latency.TotalMilliseconds:F1} ms.");
+        _output.WriteLine(
+            $"{label} VM first coherent paint: " +
+            $"{coherentPaint.Latency.TotalMilliseconds:F1} ms, " +
+            $"renders={coherentPaint.RenderCount}");
+
+        ForceCollection();
         var process = Process.GetCurrentProcess();
         process.Refresh();
         var memoryBefore = process.PrivateMemorySize64;
@@ -325,7 +338,7 @@ public sealed class PreviewPipelinePerformanceTests
             var (preview, _) = await service.LoadPreviewWithHistogramAsync(
                 file,
                 file.EditSettings,
-                skipHistogram: true);
+                skipHistogram: false);
             stopwatch.Stop();
             Assert.NotNull(preview);
             process.Refresh();
@@ -434,7 +447,7 @@ public sealed class PreviewPipelinePerformanceTests
             (preview, _) = await service.ApplyEditsToPreviewAsync(
                 file,
                 settings,
-                skipHistogram: true);
+                skipHistogram: false);
             stopwatch.Stop();
             Assert.NotNull(preview);
             samples.Add(stopwatch.Elapsed.TotalMilliseconds);

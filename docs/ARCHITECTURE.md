@@ -103,9 +103,11 @@ Develop mode holds one bounded preview pair from a single half-size RAW decode (
 the preview pipeline below); export decodes a fresh native-resolution base. The
 viewer's 100% geometry is anchored to original pixels, but preview detail remains
 limited by the large base; zoom beyond that ceiling is not a native-detail RAW
-inspection mode. Preview bitmap, clipping statistics, source capability, semantic
-clipping mask, and render generation travel together in `PreviewArtifacts`; the view
-model accepts or rejects that carrier atomically. Clipping masks are requested only
+inspection mode. `PreviewArtifacts` carries one render's bitmap, scopes, clipping,
+decode capability, profile, white-balance anchor, and sensor histogram facts into a
+VM-owned render outcome. The ViewModel applies that outcome atomically only when its
+image and synchronously reserved surface generation exactly match the current request;
+rejected outcomes dispose their pixels, masks, and uncommitted promotion lease. Clipping masks are requested only
 while the Develop overlay is latched or peeked, preserving a mask-free normal preview
 path. Camera compatibility follows the bundled LibRaw generation and the exact
 compression variant, not merely the file extension. The current product boundary is
@@ -528,6 +530,11 @@ threading and ownership view:
   stale state; a background base decode and fresh render confirm or replace them.
   Painting a warm cache never opens an embedded profile or hydrates a source, and
   availability is rechecked immediately before every profile content open.
+- Develop has one VM-owned render-outcome channel. Selection and availability changes
+  synchronously advance its generation and clear the surface; state-defining renders
+  publish bitmap, histogram/waveform, clipping, capability, profile, as-shot WB, and
+  RAW histogram together. Cached and resting paints are bitmap-only upgrades, and a
+  rejected outcome cannot promote a rendered thumbnail or arm a resting render.
 - An accepted edited RAW render hands ownership to a tracked background
   resize/conversion task for the ≤512px Library thumbnail — no full-size clone;
   `PreviewService` retains the result strongly and queues it to the independent
@@ -546,10 +553,15 @@ threading and ownership view:
   lease before processing; the optional sensor histogram is stored on
   `BaseImageInfo`, and its non-blocking accessor cannot decode, read, or hydrate a
   source.
-- The ViewModel debounces interaction: preview 150 ms, render stats 300 ms, thumbnail
-  refresh 500 ms, each with its own CTS. Selecting an image starts rendered-cache
-  loading and base decoding concurrently; a cloud-only original may paint a valid
-  cached preview, but fresh base decode waits for **Download and open**.
+- The ViewModel debounces interaction: preview 150 ms, Library thumbnail histogram
+  300 ms, and thumbnail refresh 500 ms, each with its own CTS. Every Develop
+  state-defining render computes the active scope from the same BGRA8 buffer as its
+  first paint. Entry paints seed both display scopes; histogram-active ticks skip the
+  waveform work, and selecting Waveform schedules a current-generation coherent
+  refresh while the prior trace remains visible. Selecting an image starts rendered-cache loading and
+  base decoding concurrently. Discovering that the selected original requires
+  hydration advances the surface generation and clears even a provisional cache paint;
+  fresh decode waits for **Download and open**.
 - Export independently re-resolves each selected profile; degraded selections use the
   built-in matrix and propagate a per-image warning.
 - Library mode never loads a 1600px preview just to draw the histogram: the UI thread
@@ -598,7 +610,7 @@ sampler.
 | RAW sensor histogram | Preview/full decode worker | One visible post-Unpack pass; same token; lease released before Process |
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
 | Resting preview render | Threadpool, at most 2 managed workers | Parent interactive generation + decode key + resting serial; edit token cancels |
-| Display histogram + waveform | Preview render worker | One shared ≤1024px Q16 RGB buffer; surrounding render cancellation checks |
+| Display histogram + waveform | Preview render worker | Exact preview BGRA8 buffer; histogram ticks skip inactive waveform accumulation |
 | Library histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |
 | Agent (MCP) tool calls | ASP.NET worker → marshaled | `AgentToolService` marshals mutations to the UI thread |

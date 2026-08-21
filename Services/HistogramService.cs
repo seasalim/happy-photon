@@ -12,11 +12,145 @@ public class HistogramService
 {
     internal const int HistogramMaxDimension = 1024;
     internal const int LibraryHistogramDimension = 150;
+    private static readonly double[] RedLuminance = CreateLuminanceTable(0.299);
+    private static readonly double[] GreenLuminance = CreateLuminanceTable(0.587);
+    private static readonly double[] BlueLuminance = CreateLuminanceTable(0.114);
 
     public void CalculateHistogram(RenderResult result, HistogramData histogram)
     {
         ArgumentNullException.ThrowIfNull(result);
         CalculateHistogram(result.Image, histogram);
+    }
+
+    internal static MagickImage CreateSamplingSnapshot(MagickImage image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+        return new MagickImage(image);
+    }
+
+    internal static void CalculateHistogramFromSnapshot(
+        MagickImage snapshot,
+        HistogramData histogram)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        BitmapConversionService.ResizeToMaxDimension(
+            snapshot,
+            HistogramMaxDimension);
+        CalculateHistogramCore(snapshot, histogram);
+    }
+
+    internal static void ResizeSamplingSnapshot(MagickImage snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        BitmapConversionService.ResizeToMaxDimension(
+            snapshot,
+            HistogramMaxDimension);
+    }
+
+    internal static void CalculateHistogramFromPreparedSnapshot(
+        MagickImage snapshot,
+        HistogramData histogram,
+        bool includeHistogram = true,
+        bool includeWaveform = true)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(histogram);
+        CalculateHistogramCore(
+            snapshot,
+            histogram,
+            includeHistogram,
+            includeWaveform);
+    }
+
+    internal static void CalculatePreviewHistogram(
+        byte[] bgra,
+        int width,
+        int height,
+        HistogramData histogram,
+        bool includeHistogram,
+        bool includeWaveform)
+    {
+        ArgumentNullException.ThrowIfNull(bgra);
+        ArgumentNullException.ThrowIfNull(histogram);
+        if (bgra.Length != checked(width * height * 4))
+        {
+            throw new ArgumentException(
+                "The BGRA buffer length must match its dimensions.",
+                nameof(bgra));
+        }
+
+        var waveform = includeWaveform ? new WaveformData() : null;
+        var columns = includeWaveform ? new int[width] : null;
+        if (columns != null)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                columns[x] = x * WaveformData.ColumnCount / width;
+            }
+        }
+
+        for (var y = 0; y < height; y++)
+        {
+            var rowOffset = y * width * 4;
+            for (var x = 0; x < width; x++)
+            {
+                var offset = rowOffset + x * 4;
+                var b = bgra[offset];
+                var g = bgra[offset + 1];
+                var r = bgra[offset + 2];
+                var luminance = Math.Clamp(
+                    (int)(RedLuminance[r] + GreenLuminance[g] +
+                        BlueLuminance[b]),
+                    0,
+                    255);
+                if (includeHistogram)
+                {
+                    histogram.Red[r]++;
+                    histogram.Green[g]++;
+                    histogram.Blue[b]++;
+                    histogram.Luminance[luminance]++;
+                }
+                if (waveform != null)
+                {
+                    var column = columns![x];
+                    waveform.Luminance[
+                        WaveformAccumulator.ToLevel(luminance) *
+                        WaveformData.ColumnCount + column]++;
+                    waveform.ColumnSampleCounts[column]++;
+                }
+            }
+        }
+
+        if (waveform != null && width < WaveformData.ColumnCount)
+        {
+            BackFillWaveformColumns(waveform);
+        }
+        histogram.Waveform = waveform;
+        if (includeHistogram)
+        {
+            histogram.Normalize();
+        }
+    }
+
+    private static void BackFillWaveformColumns(WaveformData waveform)
+    {
+        var sourceColumn = 0;
+        for (var column = 1; column < WaveformData.ColumnCount; column++)
+        {
+            if (waveform.ColumnSampleCounts[column] != 0)
+            {
+                sourceColumn = column;
+                continue;
+            }
+            waveform.ColumnSampleCounts[column] =
+                waveform.ColumnSampleCounts[sourceColumn];
+            for (var level = 0; level < WaveformData.LevelCount; level++)
+            {
+                waveform.Luminance[level * WaveformData.ColumnCount + column] =
+                    waveform.Luminance[
+                        level * WaveformData.ColumnCount + sourceColumn];
+            }
+        }
     }
 
     private static void CalculateHistogram(
@@ -32,32 +166,215 @@ public class HistogramService
             image.Height > (uint)HistogramMaxDimension
                 ? CreateHistogramImage(image)
                 : null;
-        var histogramImage = resized ?? image;
+        CalculateHistogramCore(resized ?? image, histogram);
+    }
+
+    private static void CalculateHistogramCore(
+        MagickImage histogramImage,
+        HistogramData histogram,
+        bool includeHistogram = true,
+        bool includeWaveform = true)
+    {
         using var pixels = histogramImage.GetPixelsUnsafe();
         var data = pixels.ToShortArray(PixelMapping.RGB);
 
         if (data == null) return;
 
-        for (var offset = 0; offset < data.Length; offset += 3)
-        {
-            var r = data[offset] >> 8;
-            var g = data[offset + 1] >> 8;
-            var b = data[offset + 2] >> 8;
-
-            histogram.Red[r]++;
-            histogram.Green[g]++;
-            histogram.Blue[b]++;
-
-            var lum = (int)(0.299 * r + 0.587 * g + 0.114 * b);
-            lum = Math.Clamp(lum, 0, 255);
-            histogram.Luminance[lum]++;
-        }
-
-        histogram.Waveform = WaveformAccumulator.Accumulate(
+        var waveform = includeWaveform ? new WaveformData() : null;
+        AccumulateStats(
             data,
             (int)histogramImage.Width,
-            (int)histogramImage.Height);
-        histogram.Normalize();
+            (int)histogramImage.Height,
+            histogram,
+            waveform,
+            includeHistogram);
+        histogram.Waveform = waveform;
+        if (includeHistogram)
+        {
+            histogram.Normalize();
+        }
+    }
+
+    private static void AccumulateStats(
+        ushort[] data,
+        int width,
+        int height,
+        HistogramData histogram,
+        WaveformData? waveform,
+        bool includeHistogram)
+    {
+        const int minimumParallelPixels = 512 * 512;
+        var workers = data.Length / 3 >= minimumParallelPixels
+            ? Math.Min(2, height)
+            : 1;
+        var waveformColumns = new int[width];
+        for (var x = 0; x < width; x++)
+        {
+            waveformColumns[x] = x * WaveformData.ColumnCount / width;
+        }
+        if (workers == 1)
+        {
+            AccumulateRows(
+                data,
+                width,
+                0,
+                height,
+                includeHistogram ? histogram.Red : null,
+                includeHistogram ? histogram.Green : null,
+                includeHistogram ? histogram.Blue : null,
+                includeHistogram ? histogram.Luminance : null,
+                waveform,
+                waveformColumns);
+        }
+        else
+        {
+            var partials = new StatsBuffer[workers];
+            Parallel.For(0, workers, worker =>
+            {
+                var partial = new StatsBuffer();
+                partials[worker] = partial;
+                AccumulateRows(
+                    data,
+                    width,
+                    height * worker / workers,
+                    height * (worker + 1) / workers,
+                    includeHistogram ? partial.Red : null,
+                    includeHistogram ? partial.Green : null,
+                    includeHistogram ? partial.Blue : null,
+                    includeHistogram ? partial.Luminance : null,
+                    partial.Waveform,
+                    waveformColumns);
+            });
+            foreach (var partial in partials)
+            {
+                if (includeHistogram)
+                {
+                    Merge(histogram.Red, partial.Red);
+                    Merge(histogram.Green, partial.Green);
+                    Merge(histogram.Blue, partial.Blue);
+                    Merge(histogram.Luminance, partial.Luminance);
+                }
+                if (waveform != null)
+                {
+                    Merge(waveform.Luminance, partial.Waveform.Luminance);
+                }
+            }
+        }
+
+        if (waveform == null)
+        {
+            return;
+        }
+        foreach (var column in waveformColumns)
+        {
+            waveform.ColumnSampleCounts[column] = unchecked(
+                (ushort)(waveform.ColumnSampleCounts[column] + height));
+        }
+
+        if (width >= WaveformData.ColumnCount)
+        {
+            return;
+        }
+
+        var sourceColumn = 0;
+        for (var column = 1; column < WaveformData.ColumnCount; column++)
+        {
+            if (waveform.ColumnSampleCounts[column] != 0)
+            {
+                sourceColumn = column;
+                continue;
+            }
+
+            waveform.ColumnSampleCounts[column] =
+                waveform.ColumnSampleCounts[sourceColumn];
+            for (var level = 0; level < WaveformData.LevelCount; level++)
+            {
+                waveform.Luminance[level * WaveformData.ColumnCount + column] =
+                    waveform.Luminance[level * WaveformData.ColumnCount + sourceColumn];
+            }
+        }
+    }
+
+    private static void AccumulateRows(
+        ushort[] data,
+        int width,
+        int startY,
+        int endY,
+        int[]? red,
+        int[]? green,
+        int[]? blue,
+        int[]? luminanceBins,
+        WaveformData? waveform,
+        int[] waveformColumns)
+    {
+        for (var y = startY; y < endY; y++)
+        {
+            var rowOffset = y * width * 3;
+            for (var x = 0; x < width; x++)
+            {
+                var offset = rowOffset + x * 3;
+                var r = data[offset] >> 8;
+                var g = data[offset + 1] >> 8;
+                var b = data[offset + 2] >> 8;
+                if (red != null)
+                {
+                    red[r]++;
+                    green![g]++;
+                    blue![b]++;
+                }
+
+                var luminance = (int)(
+                    RedLuminance[r] + GreenLuminance[g] + BlueLuminance[b]);
+                luminance = Math.Clamp(luminance, 0, 255);
+                if (luminanceBins != null)
+                {
+                    luminanceBins[luminance]++;
+                }
+                if (waveform != null)
+                {
+                    var column = waveformColumns[x];
+                    var level = WaveformAccumulator.ToLevel(luminance);
+                    waveform.Luminance[
+                        level * WaveformData.ColumnCount + column]++;
+                }
+            }
+        }
+    }
+
+    private static void Merge(int[] destination, int[] source)
+    {
+        for (var index = 0; index < destination.Length; index++)
+        {
+            destination[index] += source[index];
+        }
+    }
+
+    private static void Merge(ushort[] destination, ushort[] source)
+    {
+        for (var index = 0; index < destination.Length; index++)
+        {
+            destination[index] = unchecked(
+                (ushort)(destination[index] + source[index]));
+        }
+    }
+
+    private static double[] CreateLuminanceTable(double coefficient)
+    {
+        var values = new double[256];
+        for (var value = 0; value < values.Length; value++)
+        {
+            values[value] = coefficient * value;
+        }
+        return values;
+    }
+
+    private sealed class StatsBuffer
+    {
+        public int[] Red { get; } = new int[256];
+        public int[] Green { get; } = new int[256];
+        public int[] Blue { get; } = new int[256];
+        public int[] Luminance { get; } = new int[256];
+        public WaveformData Waveform { get; } = new();
     }
 
     public HistogramData CalculateHistogram(Bitmap bitmap)

@@ -77,10 +77,10 @@ internal static class RenderEffects
         {
             var start = pixelCount * worker / workers;
             var end = pixelCount * (worker + 1) / workers;
+            var x = start % width;
+            var y = start / width;
             for (var pixel = start; pixel < end; pixel++)
             {
-                var x = pixel % width;
-                var y = pixel / width;
                 var offset = pixel * layout.Channels;
                 if (settings.Vignette != 0)
                 {
@@ -105,6 +105,11 @@ internal static class RenderEffects
                         GrainSample(x, y, settings.GrainSize) *
                             Math.Clamp(settings.Grain, 0, 100) /
                             100.0 * GrainAmplitude);
+                }
+                if (++x == width)
+                {
+                    x = 0;
+                    y++;
                 }
             }
         }

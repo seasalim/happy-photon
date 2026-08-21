@@ -39,8 +39,6 @@ public partial class MainWindowViewModel
 
         // Cancel any in-progress preview loading
         _previewLoadingCts?.Cancel();
-        SetRawHistogram(null);
-
         CurrentFolderPath = folderPath;
         CurrentFolderHasSubfolders = false;
         SelectedImage = null;
@@ -144,12 +142,11 @@ public partial class MainWindowViewModel
 
     private async Task LoadPreviewAsync(
         ImageFile imageFile,
+        long surfaceGeneration,
         bool wakeActivity = true)
     {
         if (wakeActivity) SignalBackgroundActivityStarted();
         _previewLoadingCts?.Cancel();
-        SetRawHistogram(null);
-        ClearPreviewClippingArtifacts();
         // Every entry load declares fit intent; a manual zoom during the load
         // window flips it and then wins over the entry refit below.
         IsZoomFitMode = true;
@@ -160,18 +157,29 @@ public partial class MainWindowViewModel
 
         try
         {
+            var intent = _requestedPreviewIntent;
+            var renderSettings = intent == PreviewSurfaceIntent.Original
+                ? new EditSettings
+                {
+                    Rotation = imageFile.EditSettings.Rotation,
+                    HorizonRotation = imageFile.EditSettings.HorizonRotation,
+                    Crop = imageFile.EditSettings.Crop?.Clone(),
+                    Curve = new CurveData()
+                }
+                : imageFile.EditSettings;
             var cachedTask = ImageService.Previews.LoadCachedPreviewAsync(
                 imageFile,
-                imageFile.EditSettings,
+                renderSettings,
                 ct);
             var freshTask = ImageService.Previews.LoadPreviewArtifactsAsync(
                 imageFile,
-                imageFile.EditSettings,
+                renderSettings,
                 LibraryThumbnailRequest,
-                skipHistogram: true,
+                skipHistogram: false,
                 RequestedClippingOverlaySides,
-                ct);
-            ClearPreviewImage();
+                ct,
+                surfaceGeneration,
+                computeWaveform: true);
             _ = ShowBaseArmingAfterDelay(
                 requestCts,
                 freshTask,
@@ -183,18 +191,17 @@ public partial class MainWindowViewModel
                 var cached = await cachedTask;
                 if (cached != null && IsCurrentPreviewRequest(imageFile, requestCts))
                 {
-                    ReplacePreviewImage(
-                        cached.DetachBitmap(),
-                        PreviewPaintSource.CachedJpeg);
+                    ApplyRenderOutcome(RenderOutcome.Cached(
+                        imageFile,
+                        surfaceGeneration,
+                        cached.DetachBitmap()));
                 }
                 cached?.Dispose();
             }
 
             using var artifacts = await freshTask;
-            var preview = artifacts.DetachBitmap();
             if (!IsCurrentPreviewRequest(imageFile, requestCts))
             {
-                preview?.Dispose();
                 if (!cachedTask.IsCompleted)
                 {
                     _ = DisposeCachedPreviewWhenReadyAsync(cachedTask);
@@ -204,46 +211,39 @@ public partial class MainWindowViewModel
             IsBaseArming = false;
             RefreshSourceAvailability(imageFile);
 
-            if (preview != null)
+            var succeeded = artifacts.Bitmap != null;
+            var accepted = ApplyRenderOutcome(RenderOutcome.FromArtifacts(
+                imageFile,
+                surfaceGeneration,
+                intent,
+                RenderOutcomeClass.StateDefining,
+                PreviewPaintSource.FreshRender,
+                artifacts,
+                promotable: true));
+            var painted = succeeded && accepted;
+            if (painted && intent == PreviewSurfaceIntent.Edited)
             {
-                ReconcileHighlightReconstructionCapability(
-                    imageFile,
-                    artifacts.IsRawSource);
-                ApplyRawProfileState(
-                    imageFile,
-                    artifacts.IsRawSource,
-                    artifacts.ProfileState);
-                InstallPreviewClipping(artifacts);
-                ReplacePreviewImage(preview, PreviewPaintSource.FreshRender);
+                _lastAppliedEditSettings = imageFile.EditSettings.Clone();
             }
 
             // The entry refit only applies while the user hasn't taken manual
             // zoom control during the load window — their zoom wins over the
             // default fit ("snaps back after render" defect).
-            if (IsZoomFitMode)
+            if (painted && IsZoomFitMode)
             {
                 RequestZoomFit?.Invoke();
-            }
-            if (imageFile.SourceRequiresHydration)
-            {
-                Histogram = null;
-            }
-            else
-            {
-                ScheduleHistogramUpdate();
-                await RefreshWhiteBalanceContextAsync(imageFile, ct);
             }
 
             if (!ReferenceEquals(firstCompleted, cachedTask))
             {
                 using var cached = await cachedTask;
-                if (preview == null &&
-                    cached != null &&
+                if (cached != null &&
                     IsCurrentPreviewRequest(imageFile, requestCts))
                 {
-                    ReplacePreviewImage(
-                        cached.DetachBitmap(),
-                        PreviewPaintSource.CachedJpeg);
+                    ApplyRenderOutcome(RenderOutcome.Cached(
+                        imageFile,
+                        surfaceGeneration,
+                        cached.DetachBitmap()));
                 }
             }
         }
@@ -368,25 +368,24 @@ public partial class MainWindowViewModel
 
     private void OnPreviewRefreshed(object? sender, PreviewRefresh refresh)
     {
-        var bitmap = refresh.DetachBitmap();
-        var clippingMask = refresh.DetachClippingMask();
-        var imageFile = refresh.ImageFile;
-        var histogram = refresh.Histogram;
-        var rawHistogram = refresh.RawHistogram;
-        var hasHistogram = refresh.HasHistogram;
-        var generation = refresh.Generation;
-        var profileState = refresh.ProfileState;
-        Dispatcher.UIThread.Post(() => ApplyPreviewRefresh(
-            imageFile,
-            bitmap,
-            histogram,
-            hasHistogram,
-            rawHistogram,
-            generation,
-            refresh.Clipping,
-            refresh.IsRawSource,
-            profileState,
-            clippingMask));
+        var outcome = RenderOutcome.FromRefresh(
+            refresh,
+            refresh.DetachBitmap(),
+            refresh.DetachClippingMask(),
+            refresh.DetachPromotionLease(),
+            PreviewSurfaceIntent.Edited);
+        Dispatcher.UIThread.Post(() =>
+        {
+            // Requested intent belongs to the UI thread. A refresh preserves
+            // whatever intent is current when its outcome is actually applied.
+            outcome.Intent = _requestedPreviewIntent;
+            var image = outcome.Image;
+            ApplyRenderOutcome(outcome);
+            if (image != null)
+            {
+                _ = TrackDirectThumbnailOperation(RefreshThumbnailAsync(image));
+            }
+        });
     }
 
     internal void ApplyPreviewRefresh(
@@ -401,54 +400,23 @@ public partial class MainWindowViewModel
         DcpProfileState? profileState = null,
         ClippingMask? clippingMask = null)
     {
-        // A refresh can settle after its ready gate while a newer render
-        // generation has already been applied. Reject the stale bitmap the same
-        // way the main preview path rejects superseded load outcomes.
-        if (!ReferenceEquals(SelectedImage, imageFile) ||
-            generation < Volatile.Read(ref _latestPreviewOutcomeGeneration))
-        {
-            bitmap.Dispose();
-            clippingMask?.Dispose();
-            return;
-        }
-
-        if (!IsDevelopMode && !IsFullScreenMode)
-        {
-            bitmap.Dispose();
-            clippingMask?.Dispose();
-            ClearPreviewClippingArtifacts();
-            _ = TrackDirectThumbnailOperation(
-                RefreshThumbnailAsync(imageFile));
-            return;
-        }
-
-        var effectiveIsRawSource = isRawSource ?? imageFile.IsRaw;
-        if (isRawSource.HasValue)
-        {
-            ReconcileHighlightReconstructionCapability(imageFile, effectiveIsRawSource);
-        }
-        ApplyRawProfileState(imageFile, effectiveIsRawSource, profileState);
-        using var artifacts = new PreviewArtifacts(
-            null,
+        using var refresh = new PreviewRefresh(
+            imageFile,
+            bitmap,
             histogram,
-            clipping,
-            effectiveIsRawSource,
-            profileState,
+            hasHistogram,
             generation,
+            rawHistogram,
+            clipping,
+            isRawSource ?? imageFile.IsRaw,
+            profileState,
             clippingMask);
-        InstallPreviewClipping(artifacts);
-        ReplacePreviewImage(bitmap, PreviewPaintSource.BackgroundRefresh);
-        if (hasHistogram)
-        {
-            Histogram = histogram;
-            if (!IsCropMode && !IsShowingOriginal && !_isHoveringPreset)
-            {
-                OnAcceptedInteractivePreview(bitmap);
-            }
-        }
-        SetRawHistogram(rawHistogram);
-        _ = TrackDirectThumbnailOperation(
-            RefreshThumbnailAsync(imageFile));
+        ApplyRenderOutcome(RenderOutcome.FromRefresh(
+            refresh,
+            refresh.DetachBitmap(),
+            refresh.DetachClippingMask(),
+            promotionLease: null,
+            _requestedPreviewIntent));
     }
 
     private void OnBaseRefreshStateChanged(
@@ -469,7 +437,18 @@ public partial class MainWindowViewModel
                 ref _activeBaseRefreshRequestId,
                 state.RequestId);
             if (IsDevelopMode || IsFullScreenMode)
-                SetRawHistogram(null);
+            {
+                ApplyRenderOutcome(new RenderOutcome
+                {
+                    Image = state.ImageFile,
+                    Generation = Volatile.Read(
+                        ref _latestPreviewOutcomeGeneration),
+                    Class = RenderOutcomeClass.StateDefining,
+                    Intent = _requestedPreviewIntent,
+                    ClippingMode = OutcomeFieldMode.Clear,
+                    RawHistogramMode = OutcomeFieldMode.Clear
+                });
+            }
             _ = ShowReplacementBaseArmingAfterDelay(
                 state.ImageFile,
                 state.RequestId);

@@ -10,10 +10,11 @@ public sealed partial class PreviewService
         ImageFile imageFile,
         EditSettings settings,
         ThumbnailSizeRequest thumbnailRequest,
-        bool skipHistogram,
+        bool computeWaveform,
         ClippingOverlaySide overlaySides,
         BaseDecodeSettings decode,
-        long generation)
+        long generation,
+        long surfaceGeneration)
     {
         var startWorker = false;
         lock (_refreshSync)
@@ -24,14 +25,24 @@ public sealed partial class PreviewService
             }
 
             startWorker = !_pendingRefreshes.ContainsKey(refreshTask);
-            _pendingRefreshes[refreshTask] = new PendingRefresh(
+            var pending = new PendingRefresh(
                 imageFile,
                 settings.Clone(),
                 thumbnailRequest,
-                skipHistogram,
+                computeWaveform,
                 overlaySides,
                 decode,
-                generation);
+                generation,
+                surfaceGeneration);
+            if (_pendingRefreshes.TryGetValue(refreshTask, out var existing))
+            {
+                pending = pending with
+                {
+                    ComputeWaveform = existing.ComputeWaveform || computeWaveform,
+                    OverlaySides = existing.OverlaySides | overlaySides
+                };
+            }
+            _pendingRefreshes[refreshTask] = pending;
         }
 
         if (startWorker)
@@ -78,7 +89,7 @@ public sealed partial class PreviewService
                 {
                     ReportPreviewOutcome(
                         pending.ImageFile,
-                        pending.Generation,
+                        pending.SurfaceGeneration,
                         failure);
                 }
                 return;
@@ -119,18 +130,27 @@ public sealed partial class PreviewService
                 pending.ImageFile,
                 refreshed.Output.DetachBitmap()!,
                 refreshed.Output.Histogram,
-                !pending.SkipHistogram,
-                refreshGeneration,
+                hasHistogram: true,
+                pending.SurfaceGeneration,
                 refreshed.RawHistogram,
                 refreshed.Output.Clipping,
                 refreshed.Output.IsRawSource,
                 refreshed.Output.ProfileState,
-                refreshed.Output.DetachClippingMask());
+                refreshed.Output.DetachClippingMask(),
+                refreshed.Info.AsShotKelvin,
+                refreshed.Info.AsShotTint);
+            var promotionLease = CreatePromotionLease(
+                pending.ImageFile,
+                refreshed.Output,
+                refreshed.SettingsHash,
+                refreshGeneration,
+                surfaceAuthorized: true);
+            refresh.SetPromotionLease(promotionLease);
             refreshed.Output.Dispose();
             PreviewRefreshed?.Invoke(this, refresh);
             ReportPreviewOutcome(
                 pending.ImageFile,
-                refreshGeneration,
+                pending.SurfaceGeneration,
                 BaseImageLoadFailure.None);
         }
         catch (OperationCanceledException)
@@ -180,21 +200,18 @@ public sealed partial class PreviewService
                 snapshot.Base,
                 pending.Settings,
                 pending.ThumbnailRequest,
-                pending.SkipHistogram,
+                skipHistogram: false,
+                pending.ComputeWaveform,
                 pending.OverlaySides,
                 generation,
-                CancellationToken.None),
+                CancellationToken.None,
+                surfaceAuthorized: true),
             CancellationToken.None).ConfigureAwait(false);
         var settingsHash = RenderSettingsHash.Compute(
             pending.Settings,
             snapshot.Base.Info.ProfileToken);
         if (generation != Volatile.Read(ref _renderGeneration) ||
-            rendered.Bitmap == null ||
-            !TryRememberRendered(
-                pending.ImageFile,
-                rendered,
-                settingsHash,
-                generation))
+            rendered.Bitmap == null)
         {
             rendered.Dispose();
             return null;
@@ -208,10 +225,16 @@ public sealed partial class PreviewService
             settingsHash,
             snapshot.Base);
 
-        return new RefreshedRender(rendered, rawHistogram);
+        return new RefreshedRender(
+            rendered,
+            rawHistogram,
+            settingsHash,
+            snapshot.Base.Info);
     }
 
     private sealed record RefreshedRender(
         RenderOutput Output,
-        HistogramData? RawHistogram);
+        HistogramData? RawHistogram,
+        string SettingsHash,
+        BaseImageInfo Info);
 }
