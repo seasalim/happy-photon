@@ -202,7 +202,7 @@ public sealed class RenderPipeline
         var chromatic = RenderChromaticStage.CreateNormalizedMatrix(
             request.Base.Info,
             request.Settings);
-        var tone = ToneLut.Compose(new ToneParams(
+        var tone = ToneLut.ComposeCached(new ToneParams(
             request.Settings.Exposure +
                 request.Base.Info.SourceExposureBiasEv,
             chromatic.Fold,
@@ -316,7 +316,7 @@ public sealed class RenderPipeline
         var chromatic = RenderChromaticStage.CreateNormalizedMatrix(
             request.Base.Info,
             request.Settings);
-        var tone = ToneLut.Compose(new ToneParams(
+        var tone = ToneLut.ComposeCached(new ToneParams(
             request.Settings.Exposure +
                 request.Base.Info.SourceExposureBiasEv,
             chromatic.Fold,

@@ -20,6 +20,90 @@ internal sealed record ToneLuts(double[] Red, double[] Green, double[] Blue);
 internal static class ToneLut
 {
     internal const int Length = ushort.MaxValue + 1;
+    private const int CacheCapacity = 4;
+    private static readonly object CacheLock = new();
+    private static readonly List<CacheEntry> Cache = [];
+
+    // Same shape as AgxToneLut.ComposeCached: slider ticks that leave tone
+    // parameters unchanged (saturation, vignette, crop, overlay refreshes)
+    // reuse the composed LUTs instead of rebuilding three 64K tables.
+    public static ToneLuts ComposeCached(ToneParams parameters)
+    {
+        lock (CacheLock)
+        {
+            var index = Cache.FindIndex(entry => entry.Matches(parameters));
+            if (index >= 0)
+            {
+                var hit = Cache[index];
+                Cache.RemoveAt(index);
+                Cache.Insert(0, hit);
+                return hit.Lut;
+            }
+        }
+
+        var composed = Compose(parameters);
+        lock (CacheLock)
+        {
+            var existing = Cache.FindIndex(entry => entry.Matches(parameters));
+            if (existing >= 0)
+            {
+                return Cache[existing].Lut;
+            }
+
+            Cache.Insert(0, new CacheEntry(parameters, composed));
+            if (Cache.Count > CacheCapacity)
+            {
+                Cache.RemoveAt(Cache.Count - 1);
+            }
+        }
+        return composed;
+    }
+
+    private sealed class CacheEntry
+    {
+        private readonly double _exposureEv;
+        private readonly double _fold;
+        private readonly int _brightness;
+        private readonly int _contrast;
+        private readonly int _shadows;
+        private readonly int _highlights;
+        private readonly bool _baseLookEnabled;
+        private readonly AgxToneLut.CurveKey _curve;
+        private readonly AgxToneLut.CurveKey _red;
+        private readonly AgxToneLut.CurveKey _green;
+        private readonly AgxToneLut.CurveKey _blue;
+
+        internal ToneLuts Lut { get; }
+
+        internal CacheEntry(ToneParams parameters, ToneLuts lut)
+        {
+            _exposureEv = parameters.ExposureEv;
+            _fold = parameters.Fold;
+            _brightness = parameters.Brightness;
+            _contrast = parameters.Contrast;
+            _shadows = parameters.Shadows;
+            _highlights = parameters.Highlights;
+            _baseLookEnabled = parameters.BaseLookEnabled;
+            _curve = new AgxToneLut.CurveKey(parameters.Curve);
+            _red = new AgxToneLut.CurveKey(parameters.CurveRed);
+            _green = new AgxToneLut.CurveKey(parameters.CurveGreen);
+            _blue = new AgxToneLut.CurveKey(parameters.CurveBlue);
+            Lut = lut;
+        }
+
+        internal bool Matches(ToneParams parameters) =>
+            _exposureEv == parameters.ExposureEv &&
+            _fold == parameters.Fold &&
+            _brightness == parameters.Brightness &&
+            _contrast == parameters.Contrast &&
+            _shadows == parameters.Shadows &&
+            _highlights == parameters.Highlights &&
+            _baseLookEnabled == parameters.BaseLookEnabled &&
+            _curve.Matches(parameters.Curve) &&
+            _red.Matches(parameters.CurveRed) &&
+            _green.Matches(parameters.CurveGreen) &&
+            _blue.Matches(parameters.CurveBlue);
+    }
 
     public static ToneLuts Compose(ToneParams parameters) =>
         ChannelCurveLutComposer.Compose(

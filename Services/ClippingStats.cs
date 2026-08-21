@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using ImageMagick;
 
 namespace HappyPhoton.Services;
@@ -107,6 +108,12 @@ internal static class ClippingStatsCalculator
     private const ushort RawNearClipThreshold = 64880;
     private const ushort OverlayAlpha = 24576;
 
+    // The near-clip ratio depends only on the decoded base pixels, which are
+    // immutable once installed; renders clone before mutating. Cache per base
+    // so slider ticks skip the full-frame pass.
+    private static readonly ConditionalWeakTable<BaseImage, object>
+        RawNearClipCache = new();
+
     public static double CalculateRawNearClip(BaseImage image)
     {
         ArgumentNullException.ThrowIfNull(image);
@@ -115,6 +122,13 @@ internal static class ClippingStatsCalculator
             return 0;
         }
 
+        return (double)RawNearClipCache.GetValue(
+            image,
+            static current => ComputeRawNearClip(current));
+    }
+
+    private static object ComputeRawNearClip(BaseImage image)
+    {
         var samples = GetRgbSamples(image.Pixels);
         var pixels = samples.Length / 3;
         long clipped = 0;
@@ -139,7 +153,7 @@ internal static class ClippingStatsCalculator
             }
         }
 
-        return pixels == 0 ? 0 : (double)clipped / pixels;
+        return pixels == 0 ? 0d : (double)clipped / pixels;
     }
 
     public static ClippingAnalysis Analyze(

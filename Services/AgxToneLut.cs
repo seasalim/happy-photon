@@ -215,7 +215,7 @@ internal static class AgxToneLut
             _blue.Matches(parameters.CurveBlue);
     }
 
-    private sealed class CurveKey
+    internal sealed class CurveKey
     {
         private readonly bool _present;
         private readonly bool _identity;
