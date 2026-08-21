@@ -269,6 +269,10 @@ public static class ImageServiceHelpers
     {
         try
         {
+            // The file log carries wall-clock timestamps for correlating a
+            // reproduction; the in-memory test sink stays timestamp-free.
+            fullMessage =
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {fullMessage}";
             lock (DisplayTraceSync)
             {
                 var path = _displayTraceFilePathOverride

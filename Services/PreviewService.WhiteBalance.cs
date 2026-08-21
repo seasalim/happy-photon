@@ -12,7 +12,7 @@ public sealed partial class PreviewService
     {
         using var snapshot = await _baseCoordinator.GetPreviewAsync(
             imageFile,
-            BaseDecodeSettings.From(settings),
+            await ResolveDecodeAsync(imageFile, settings, cancellationToken),
             cancellationToken);
         return snapshot == null
             ? null
@@ -56,7 +56,7 @@ public sealed partial class PreviewService
     {
         using var snapshot = await _baseCoordinator.GetPreviewAsync(
             imageFile,
-            BaseDecodeSettings.From(settings),
+            await ResolveDecodeAsync(imageFile, settings, cancellationToken),
             cancellationToken);
         if (snapshot == null)
         {
@@ -66,5 +66,27 @@ public sealed partial class PreviewService
         return await Task.Run(
             () => sample(snapshot.Base.Pixels),
             cancellationToken);
+    }
+
+    // Bases are keyed by the profile selection token, so any decode this
+    // service initiates must carry the resolved profile — a selection-only
+    // decode would install a profile-less base under the resolved key.
+    private async Task<BaseDecodeSettings> ResolveDecodeAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        CancellationToken cancellationToken)
+    {
+        var decode = BaseDecodeSettings.From(settings);
+        if (settings.RawProfile == null)
+        {
+            return decode;
+        }
+
+        var resolution = await _dcpProfiles.ResolveAsync(
+            imageFile,
+            settings.RawProfile,
+            forceRefresh: false,
+            cancellationToken).ConfigureAwait(false);
+        return decode.WithProfileResolution(resolution);
     }
 }

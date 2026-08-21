@@ -56,9 +56,10 @@ public sealed class ImageServiceLoggingTests
                 LogDisplayTrace($"second");
             }
 
-            Assert.Equal(
-                ["[DisplayChain] first", "[DisplayChain] second"],
-                File.ReadAllLines(path));
+            var lines = File.ReadAllLines(path);
+            Assert.Equal(2, lines.Length);
+            Assert.Matches(TimestampedLine("first"), lines[0]);
+            Assert.Matches(TimestampedLine("second"), lines[1]);
         }
         finally
         {
@@ -80,7 +81,8 @@ public sealed class ImageServiceLoggingTests
                 LogDisplayTrace($"line");
             }
 
-            Assert.Equal(["[DisplayChain] line"], File.ReadAllLines(path));
+            var line = Assert.Single(File.ReadAllLines(path));
+            Assert.Matches(TimestampedLine("line"), line);
         }
         finally
         {
@@ -115,4 +117,8 @@ public sealed class ImageServiceLoggingTests
     }
 
     private static int Increment(ref int value) => ++value;
+
+    private static string TimestampedLine(string message) =>
+        @"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} \[DisplayChain\] " +
+        message + "$";
 }

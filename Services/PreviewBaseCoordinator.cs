@@ -48,6 +48,16 @@ internal sealed class PreviewBaseCoordinator : IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(imageFile);
         ArgumentNullException.ThrowIfNull(decode);
+        if (decode.ProfileSelection != null && decode.ProfileResolution == null)
+        {
+            // Bases are keyed by the selection token; decoding without the
+            // resolved profile would install a profile-less base under the
+            // resolved key and poison every later render from it.
+            throw new ArgumentException(
+                "A profile-selecting decode must carry its resolution before " +
+                "it can initiate a base decode.",
+                nameof(decode));
+        }
         cancellationToken.ThrowIfCancellationRequested();
 
         var identity = new BaseIdentity(
