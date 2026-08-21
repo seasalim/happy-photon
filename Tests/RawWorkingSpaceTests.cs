@@ -8,8 +8,6 @@ namespace HappyPhoton.Tests;
 
 public sealed class RawWorkingSpaceTests
 {
-    private const double NearClipFractionTolerance = 1e-4;
-
     private readonly ITestOutputHelper _output;
 
     public RawWorkingSpaceTests(ITestOutputHelper output) => _output = output;
@@ -83,35 +81,6 @@ public sealed class RawWorkingSpaceTests
             rec2020Inverse) > 0.05);
     }
 
-    [Theory]
-    [InlineData("canon-eos-350d.cr2", 0.025364244276161376)]
-    [InlineData("pentax-k-r.dng", 0.15691412317574743)]
-    public void RawNearClip_PreservesPreWideDisplayBasisMeaning(
-        string fileName,
-        double frozenPreWide)
-    {
-        var path = Path.Combine(GoldenTestPaths.AssetDirectory, fileName);
-        var baseline = Decode(path, LibRawOutputConfiguration.Linear(
-            LibRawHighlightMode.Clip,
-            LibRawFbddMode.Off,
-            halfSize: false));
-        var baselineNearClip = CalculateNearClip(baseline.Samples);
-        Assert.InRange(
-            Math.Abs(frozenPreWide - baselineNearClip),
-            0,
-            NearClipFractionTolerance);
-        using var wide = new RawBaseLoader().LoadFullBase(
-            new HappyPhoton.Models.ImageFile(path),
-            BaseDecodeSettings.Default,
-            CancellationToken.None) ?? throw new InvalidOperationException(
-                $"Raw fixture did not load: {fileName}");
-        var actual = ClippingStatsCalculator.CalculateRawNearClip(wide);
-
-        _output.WriteLine(
-            $"{fileName}: pre-wide={baselineNearClip:R}; wide={actual:R}");
-        Assert.InRange(Math.Abs(actual - baselineNearClip), 0, 5e-5);
-    }
-
     private static DecodedImage Decode(LibRawOutputConfiguration configuration)
         => Decode(CanonFixture, configuration);
 
@@ -161,21 +130,6 @@ public sealed class RawWorkingSpaceTests
             checked((int)processed.Description.Width),
             checked((int)processed.Description.Height));
         return new CharacterizedImage(characterization.Outcome, image);
-    }
-
-    private static double CalculateNearClip(ushort[] samples)
-    {
-        var clipped = 0;
-        for (var offset = 0; offset < samples.Length; offset += 3)
-        {
-            if (samples[offset] >= 64880 ||
-                samples[offset + 1] >= 64880 ||
-                samples[offset + 2] >= 64880)
-            {
-                clipped++;
-            }
-        }
-        return clipped / (double)(samples.Length / 3);
     }
 
     private static double[,] ToDouble(float[,] values)

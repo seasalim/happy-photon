@@ -12,6 +12,8 @@ public partial class MainWindowViewModel
 
     public ClippingStats? DisplayClippingStats { get; private set; }
     public bool IsClippingStatsAvailable => DisplayClippingStats != null;
+    public bool IsHighlightClippingAvailable =>
+        DisplayClippingStats?.IsHighAvailable == true;
 
     public ClippingMask? PreviewClippingMask
     {
@@ -34,10 +36,15 @@ public partial class MainWindowViewModel
 
     public ClippingOverlaySide VisibleClippingOverlaySides =>
         _peekClippingSide != ClippingOverlaySide.None
-            ? _peekClippingSide
+            ? _peekClippingSide & AvailableClippingOverlaySides
             : IsClippingOverlayLatched
-                ? ClippingOverlaySide.Both
+                ? AvailableClippingOverlaySides
                 : ClippingOverlaySide.None;
+
+    private ClippingOverlaySide AvailableClippingOverlaySides =>
+        IsHighlightClippingAvailable
+            ? ClippingOverlaySide.Both
+            : ClippingOverlaySide.DisplayFloor;
 
     internal ClippingOverlaySide RequestedClippingOverlaySides
     {
@@ -49,9 +56,11 @@ public partial class MainWindowViewModel
             }
             if (IsClippingOverlayLatched)
             {
-                return ClippingOverlaySide.Both;
+                return DisplayClippingStats == null
+                    ? ClippingOverlaySide.Both
+                    : AvailableClippingOverlaySides;
             }
-            return _peekClippingSide;
+            return _peekClippingSide & AvailableClippingOverlaySides;
         }
     }
 
@@ -98,7 +107,9 @@ public partial class MainWindowViewModel
     {
         if (!CanToggleClippingOverlay() ||
             side is not (ClippingOverlaySide.Highlights or
-                ClippingOverlaySide.DisplayFloor))
+                ClippingOverlaySide.DisplayFloor) ||
+            side == ClippingOverlaySide.Highlights &&
+                !IsHighlightClippingAvailable)
         {
             return;
         }
@@ -203,6 +214,7 @@ public partial class MainWindowViewModel
         }
         OnPropertyChanged(nameof(DisplayClippingStats));
         OnPropertyChanged(nameof(IsClippingStatsAvailable));
+        OnPropertyChanged(nameof(IsHighlightClippingAvailable));
         OnPropertyChanged(nameof(VisibleClippingOverlaySides));
     }
 

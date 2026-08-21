@@ -272,12 +272,14 @@ public sealed class RawBaseLoaderTests
 
         Assert.NotNull(preview);
         Assert.NotNull(full);
+        Assert.NotNull(preview!.SourceSaturation);
+        Assert.Null(full!.SourceSaturation);
         Assert.InRange(
-            preview!.Info.SourceExposureBiasEv,
+            preview.Info.SourceExposureBiasEv,
             -RawExposureBias.MaxAbsEv,
             RawExposureBias.MaxAbsEv);
         Assert.InRange(
-            full!.Info.SourceExposureBiasEv,
+            full.Info.SourceExposureBiasEv,
             -RawExposureBias.MaxAbsEv,
             RawExposureBias.MaxAbsEv);
         Assert.InRange(

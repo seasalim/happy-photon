@@ -109,18 +109,79 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
         vm.EndClippingPeek();
     }
 
+    [AvaloniaFact]
+    public async Task MissingSourceArtifactDisablesOnlyHighlightInteractions()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("floor-only");
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            new WhiteLoader(includeSourceSaturation: false, black: true),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
+        vm.ShowWorkspaceReady(
+            MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        vm.SelectedImage = new ImageFile(_fx.Path("photo.png"));
+        await TestWaits.UntilAsync(() => vm.DisplayClippingStats != null);
+
+        Assert.False(vm.IsHighlightClippingAvailable);
+        vm.ToggleClippingOverlayCommand.Execute(null);
+        await TestWaits.UntilAsync(() => vm.PreviewClippingMask != null);
+        Assert.Equal(
+            ClippingOverlaySide.DisplayFloor,
+            vm.PreviewClippingMask!.Sides);
+
+        vm.ToggleClippingOverlayCommand.Execute(null);
+        vm.BeginClippingPeek(ClippingOverlaySide.Highlights);
+        Assert.Equal(ClippingOverlaySide.None, vm.VisibleClippingOverlaySides);
+        Assert.Null(vm.PreviewClippingMask);
+
+        vm.BeginClippingPeek(ClippingOverlaySide.DisplayFloor);
+        await TestWaits.UntilAsync(() => vm.PreviewClippingMask != null);
+        Assert.Equal(
+            ClippingOverlaySide.DisplayFloor,
+            vm.PreviewClippingMask!.Sides);
+        vm.EndClippingPeek();
+    }
+
     public void Dispose() => _fx.Dispose();
 
     private sealed class WhiteLoader : IBaseImageLoader
     {
+        private readonly bool _includeSourceSaturation;
+        private readonly bool _black;
+
+        internal WhiteLoader(
+            bool includeSourceSaturation = true,
+            bool black = false)
+        {
+            _includeSourceSaturation = includeSourceSaturation;
+            _black = black;
+        }
+
         public bool CanLoad(ImageFile file) => true;
 
         public BaseImage LoadPreviewBase(
             ImageFile file,
             BaseDecodeSettings decode,
-            CancellationToken cancellationToken) =>
-            new(
-                new MagickImage(MagickColors.White, 64, 48),
+            CancellationToken cancellationToken)
+        {
+            SourceSaturationMask? sourceSaturation = null;
+            if (_includeSourceSaturation)
+            {
+                sourceSaturation = new SourceSaturationMask(64, 48);
+                for (var y = 0; y < sourceSaturation.Height; y++)
+                for (var x = 0; x < sourceSaturation.Width; x++)
+                {
+                    sourceSaturation.SetFlags(x, y, 7);
+                }
+            }
+            return new BaseImage(
+                new MagickImage(
+                    _black ? MagickColors.Black : MagickColors.White,
+                    64,
+                    48),
                 new BaseImageInfo(
                     BaseSourceKind.Standard,
                     false,
@@ -133,7 +194,9 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
                     null,
                     1,
                     64,
-                    48));
+                    48),
+                sourceSaturation);
+        }
 
         BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
             ImageFile file,

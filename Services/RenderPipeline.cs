@@ -20,10 +20,6 @@ public sealed class RenderPipeline
 
         var stopwatch = Stopwatch.StartNew();
         var requestedOverlaySides = request.Options.OverlaySides;
-        var rawNearClip = request.Options.ComputeStats ||
-            request.Options.ComputeOverlayMasks
-            ? ClippingStatsCalculator.CalculateRawNearClip(request.Base)
-            : 0;
 
         MagickImage? displayRec2020 = null;
         MagickImage? display = null;
@@ -37,7 +33,8 @@ public sealed class RenderPipeline
             var analyze = request.Options.ComputeStats || createOverlay;
             displayRec2020 = RenderDisplayRec2020Core(
                 request,
-                detailBandPixelLimit);
+                detailBandPixelLimit,
+                out var geometry);
             display = RenderFinalizer.FinalizeOwned(
                 Take(ref displayRec2020),
                 request.MaxDimension,
@@ -62,9 +59,16 @@ public sealed class RenderPipeline
                     {
                         if (analyze)
                         {
+                            var sourceSaturation =
+                                SourceSaturationMaskProjector.Project(
+                                    request.Base,
+                                    request.Settings,
+                                    geometry,
+                                    checked((int)display.Width),
+                                    checked((int)display.Height));
                             analysis = ClippingStatsCalculator.Analyze(
                                 display,
-                                rawNearClip,
+                                sourceSaturation,
                                 createOverlay,
                                 requestedOverlaySides);
                         }
@@ -171,7 +175,7 @@ public sealed class RenderPipeline
             working = new MagickImage(request.Base.Pixels);
             execution.ThrowIfCancellationRequested();
             execution.ReportStage("geometry");
-            RenderGeometry.Apply(working, request.Settings);
+            _ = RenderGeometry.Apply(working, request.Settings);
             execution.ThrowIfCancellationRequested();
             if (request.Base.Info.IsRawSource)
             {
@@ -269,18 +273,20 @@ public sealed class RenderPipeline
         }
         return RenderDisplayRec2020Core(
             request,
-            RenderDetail.DefaultBandPixelLimit);
+            RenderDetail.DefaultBandPixelLimit,
+            out _);
     }
 
     private static MagickImage RenderDisplayRec2020Core(
         RenderRequest request,
-        int detailBandPixelLimit)
+        int detailBandPixelLimit,
+        out RenderGeometryTrace geometry)
     {
         MagickImage? working = null;
         try
         {
             working = (MagickImage)request.Base.Pixels.Clone();
-            RenderGeometry.Apply(working, request.Settings);
+            geometry = RenderGeometry.Apply(working, request.Settings);
             if (request.Base.Info.IsRawSource)
             {
                 var whiteBalance = RenderChromaticStage.CreateWhiteBalanceMatrix(

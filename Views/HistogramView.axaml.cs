@@ -170,8 +170,11 @@ public partial class HistogramView : UserControl
 
         var clipping = Clipping;
         var hasStats = clipping != null;
+        var hasSourceSaturation = clipping?.IsHighAvailable == true;
         _displayFloorTriangle.Opacity = clipping?.LowAll > 0 ? 0.9 : 0.25;
-        _sceneHighlightTriangle.Opacity = clipping?.HighAny > 0 ? 1 : 0.25;
+        _sceneHighlightTriangle.Opacity = !hasSourceSaturation
+            ? 0.12
+            : clipping!.HighAny > 0 ? 1 : 0.25;
         _displayFloorTriangleTarget.IsHitTestVisible = true;
         _sceneHighlightTriangleTarget.IsHitTestVisible = true;
 
@@ -182,9 +185,10 @@ public partial class HistogramView : UserControl
                 : "Display-floor clipping data is unavailable.");
         ToolTip.SetTip(
             _sceneHighlightTriangleTarget,
-            hasStats
-                ? $"Output highlights: {clipping!.HighAny:P4}."
-                : "Output highlight clipping data is unavailable.");
+            hasSourceSaturation
+                ? $"Source saturation: {clipping!.HighAny:P4}. " +
+                  "RAW uses sensor saturation; JPEG/HEIC use encoded near-white samples."
+                : "Source saturation data is unavailable for this format.");
     }
 
     private void OnDisplayFloorEntered(object? sender, PointerEventArgs e) =>

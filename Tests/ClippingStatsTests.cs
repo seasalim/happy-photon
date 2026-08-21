@@ -9,150 +9,33 @@ namespace HappyPhoton.Tests;
 public sealed class ClippingStatsTests
 {
     [Fact]
-    public void Analyze_UsesPinnedDisplayThresholdSemantics()
+    public void Analyze_MergesIndependentSourceHighAndDisplayFloorBits()
     {
-        using var image = CreateImage(
-        [
-            65535, 1000, 1000,
-            65535, 65535, 65535,
-            0, 0, 0,
-            0, 1000, 65535
-        ]);
+        using var image = CreateImage([0, 0, 0]);
+        var mask = Mask(1, 1, (0, 0, (byte)1));
+        var source = new SourceSaturationProjection(
+            mask,
+            new ChannelClip(1, 0, 0),
+            1);
 
-        var result = ClippingStatsCalculator.Analyze(
+        var analysis = ClippingStatsCalculator.Analyze(
             image,
-            rawNearClip: 0.125,
+            source,
             createOverlay: true);
-        using var overlay = result.OverlayMask;
+        using var overlay = analysis.OverlayMask;
 
-        Assert.Equal(new ChannelClip(0.5, 0.25, 0.5), result.Stats.High);
-        Assert.Equal(new ChannelClip(0.5, 0.25, 0.25), result.Stats.Low);
-        Assert.Equal(0.75, result.Stats.HighAny);
-        Assert.Equal(0.25, result.Stats.LowAll);
-        Assert.Equal(0.125, result.Stats.RawNearClip);
-        Assert.NotNull(overlay);
-        Assert.Equal((int)image.Width, overlay.Width);
-        Assert.Equal((int)image.Height, overlay.Height);
+        Assert.True(analysis.Stats.IsHighAvailable);
+        Assert.Equal(new ChannelClip(1, 0, 0), analysis.Stats.High);
+        Assert.Equal(1, analysis.Stats.HighAny);
+        Assert.Equal(new ChannelClip(1, 1, 1), analysis.Stats.Low);
+        Assert.Equal(1, analysis.Stats.LowAll);
         Assert.Equal(
-            new[]
-            {
-                (byte)ClippingOverlaySide.Highlights,
-                (byte)ClippingOverlaySide.Highlights,
-                (byte)ClippingOverlaySide.DisplayFloor,
-                (byte)ClippingOverlaySide.Highlights
-            },
-            overlay.Flags.ToArray());
+            (byte)ClippingOverlaySide.Both,
+            overlay!.Flags[0]);
     }
 
     [Fact]
-    public void CalculateRawNearClip_UsesBasePixelsOnlyForRawSources()
-    {
-        using var raw = RenderPipelineTestSupport.CreateBase(
-            DisplayToWorking(
-            [
-                64000, 0, 0,
-                65535, 0, 0,
-                0, 65535, 0,
-                0, 0, 1
-            ]),
-            isRaw: true);
-        using var standard = RenderPipelineTestSupport.CreateBase(
-        [
-            65535, 65535, 65535
-        ], isRaw: false);
-
-        Assert.Equal(0.5, ClippingStatsCalculator.CalculateRawNearClip(raw));
-        Assert.Equal(0, ClippingStatsCalculator.CalculateRawNearClip(standard));
-    }
-
-    private static ushort[] DisplayToWorking(ushort[] samples)
-    {
-        var result = new ushort[samples.Length];
-        var matrix = RgbColorSpaceMatrices.LinearSrgbToLinearRec2020;
-        for (var offset = 0; offset < samples.Length; offset += 3)
-        {
-            var red = samples[offset] / (double)ushort.MaxValue;
-            var green = samples[offset + 1] / (double)ushort.MaxValue;
-            var blue = samples[offset + 2] / (double)ushort.MaxValue;
-            for (var row = 0; row < 3; row++)
-            {
-                result[offset + row] = (ushort)Math.Round(Math.Clamp(
-                    matrix[row, 0] * red + matrix[row, 1] * green +
-                    matrix[row, 2] * blue,
-                    0,
-                    1) * ushort.MaxValue);
-            }
-        }
-
-        return result;
-    }
-
-    [Fact]
-    public void Analyze_PinsInclusiveEightBitThresholdBoundary()
-    {
-        // Pin the locked inclusive 253/255 Q16 boundary exactly.
-        using var image = CreateImage(
-        [
-            65020, 65021, 65020,
-            128, 129, 128
-        ]);
-
-        var result = ClippingStatsCalculator.Analyze(
-            image,
-            rawNearClip: 0,
-            createOverlay: false);
-
-        Assert.Equal(new ChannelClip(0, 0.5, 0), result.Stats.High);
-        Assert.Equal(new ChannelClip(0.5, 0, 0.5), result.Stats.Low);
-        Assert.Equal(0.5, result.Stats.HighAny);
-        Assert.Equal(0, result.Stats.LowAll);
-    }
-
-    [Fact]
-    public void ParallelMaskWrites_MatchSequentialReferenceAcrossChunkBoundaries()
-    {
-        // 16,471 pixels: two unequal chunks, prime count. Flags are written
-        // inside the parallel loop; verify against a sequential re-derivation.
-        const int pixels = 16471;
-        var random = new Random(83);
-        var samples = new ushort[pixels * 3];
-        for (var index = 0; index < samples.Length; index++)
-        {
-            samples[index] = checked((ushort)random.Next(0, 65536));
-        }
-
-        var expected = new byte[pixels];
-        for (var pixel = 0; pixel < pixels; pixel++)
-        {
-            var offset = pixel * 3;
-            var anyHigh = samples[offset] >=
-                    ClippingStatsCalculator.HighThreshold ||
-                samples[offset + 1] >=
-                    ClippingStatsCalculator.HighThreshold ||
-                samples[offset + 2] >=
-                    ClippingStatsCalculator.HighThreshold;
-            var allLow = samples[offset] <= 128 &&
-                samples[offset + 1] <= 128 &&
-                samples[offset + 2] <= 128;
-            expected[pixel] = anyHigh
-                ? (byte)ClippingOverlaySide.Highlights
-                : allLow
-                    ? (byte)ClippingOverlaySide.DisplayFloor
-                    : (byte)0;
-        }
-
-        using var image = CreateImage(samples);
-        var result = ClippingStatsCalculator.Analyze(
-            image,
-            rawNearClip: 0,
-            createOverlay: true);
-        using var mask = result.OverlayMask;
-
-        Assert.Equal(expected, mask!.Flags.ToArray());
-    }
-
-    [Fact]
-    public void Analyze_FiltersSemanticMaskByRequestedSide()
+    public void Analyze_MissingArtifactKeepsFloorAndNeverFallsBackToOutputHigh()
     {
         using var image = CreateImage(
         [
@@ -160,97 +43,173 @@ public sealed class ClippingStatsTests
             0, 0, 0
         ]);
 
+        var analysis = ClippingStatsCalculator.Analyze(
+            image,
+            sourceSaturation: null,
+            createOverlay: true);
+        using var overlay = analysis.OverlayMask;
+
+        Assert.False(analysis.Stats.IsHighAvailable);
+        Assert.Equal(ChannelClip.Empty, analysis.Stats.High);
+        Assert.Equal(0, analysis.Stats.HighAny);
+        Assert.Equal(0.5, analysis.Stats.LowAll);
+        Assert.Equal(
+            [0, (byte)ClippingOverlaySide.DisplayFloor],
+            overlay!.Flags.ToArray());
+    }
+
+    [Fact]
+    public void Render_SourceHighIsEditInvariantWhileFloorResponds()
+    {
+        var mask = Mask(2, 1, (0, 0, (byte)1));
+        using var source = RenderPipelineTestSupport.CreateBase(
+        [
+            50, 50, 50,
+            50, 50, 50
+        ], sourceSaturation: mask);
+        using var neutral = Render(source, new EditSettings());
+        using var darkened = Render(source, new EditSettings
+        {
+            Exposure = -3,
+            Wb = new WhiteBalanceSettings
+            {
+                Mode = WbMode.Custom,
+                Kelvin = 9000,
+                Tint = 50
+            },
+            Effects = new EffectsSettings { Grain = 35 }
+        });
+
+        Assert.Equal(neutral.Clipping.High, darkened.Clipping.High);
+        Assert.Equal(neutral.Clipping.HighAny, darkened.Clipping.HighAny);
+        Assert.True(neutral.Clipping.IsHighAvailable);
+        Assert.True(darkened.Clipping.IsHighAvailable);
+        Assert.Equal(
+            neutral.OverlayMask!.Flags.ToArray().Select(HighBit),
+            darkened.OverlayMask!.Flags.ToArray().Select(HighBit));
+        Assert.NotEqual(neutral.Clipping.LowAll, darkened.Clipping.LowAll);
+    }
+
+    [Fact]
+    public void Project_RotateCropAndDownscaleKeepFlagsAligned()
+    {
+        var mask = Mask(4, 3, (1, 1, (byte)4));
+        using var source = RenderPipelineTestSupport.CreateBase(
+            Enumerable.Repeat((ushort)1000, 4 * 3 * 3).ToArray(),
+            height: 3,
+            sourceSaturation: mask);
+        var settings = new EditSettings
+        {
+            Rotation = 90,
+            Crop = new CropRegion
+            {
+                Left = 0.25,
+                Top = 0,
+                Right = 1,
+                Bottom = 1
+            }
+        };
+        using var geometryImage = new MagickImage(MagickColors.Black, 4, 3);
+        var trace = RenderGeometry.Apply(geometryImage, settings);
+
+        var projection = SourceSaturationMaskProjector.Project(
+            source,
+            settings,
+            trace,
+            targetWidth: 1,
+            targetHeight: 2);
+
+        Assert.NotNull(projection);
+        Assert.Equal(4, projection!.Mask.GetFlags(0, 0));
+        Assert.Equal(0, projection.Mask.GetFlags(0, 1));
+        Assert.Equal(new ChannelClip(0, 0, 0.5), projection.High);
+        Assert.Equal(0.5, projection.HighAny);
+    }
+
+    [Fact]
+    public void SourceMask_OrientationAndResizeKeepFlagsAligned()
+    {
+        var source = Mask(3, 2, (0, 0, (byte)1));
+
+        var oriented = source.OrientAndResize(
+            orientation: 6,
+            targetWidth: 4,
+            targetHeight: 6);
+
+        Assert.Equal(1, oriented.GetFlags(2, 0));
+        Assert.Equal(1, oriented.GetFlags(3, 1));
+        Assert.Equal(0, oriented.GetFlags(0, 0));
+        Assert.Equal(0, oriented.GetFlags(3, 2));
+    }
+
+    [Fact]
+    public void Project_HorizonAndResizePreserveAnIsolatedFlagAndCacheGeometry()
+    {
+        var mask = Mask(20, 10, (10, 5, (byte)2));
+        using var source = RenderPipelineTestSupport.CreateBase(
+            Enumerable.Repeat((ushort)1000, 20 * 10 * 3).ToArray(),
+            height: 10,
+            sourceSaturation: mask);
+        var settings = new EditSettings { HorizonRotation = 7.5 };
+        using var geometryImage = new MagickImage(MagickColors.Black, 20, 10);
+        var trace = RenderGeometry.Apply(geometryImage, settings);
+        var first = SourceSaturationMaskProjector.Project(
+            source,
+            settings,
+            trace,
+            5,
+            2);
+        var tonalEdit = settings.Clone();
+        tonalEdit.Exposure = 2;
+        tonalEdit.Highlights = -80;
+        tonalEdit.Effects = new EffectsSettings { Vignette = -50 };
+        var second = SourceSaturationMaskProjector.Project(
+            source,
+            tonalEdit,
+            trace,
+            5,
+            2);
+
+        Assert.Same(first, second);
+        Assert.True(first!.HighAny > 0);
+        Assert.InRange(first.HighAny, 0.1, 0.2);
+    }
+
+    [Fact]
+    public void Analyze_FiltersOverlayWithoutChangingStatistics()
+    {
+        using var image = CreateImage([0, 0, 0]);
+        var source = new SourceSaturationProjection(
+            Mask(1, 1, (0, 0, (byte)7)),
+            new ChannelClip(1, 1, 1),
+            1);
+
         var highlights = ClippingStatsCalculator.Analyze(
             image,
-            rawNearClip: 0,
-            createOverlay: true,
-            overlaySides: ClippingOverlaySide.Highlights);
+            source,
+            true,
+            ClippingOverlaySide.Highlights);
         var floor = ClippingStatsCalculator.Analyze(
             image,
-            rawNearClip: 0,
-            createOverlay: true,
-            overlaySides: ClippingOverlaySide.DisplayFloor);
+            source,
+            true,
+            ClippingOverlaySide.DisplayFloor);
         using var highlightMask = highlights.OverlayMask;
         using var floorMask = floor.OverlayMask;
 
         Assert.Equal(
-            [(byte)ClippingOverlaySide.Highlights, 0],
-            highlightMask!.Flags.ToArray());
+            (byte)ClippingOverlaySide.Highlights,
+            highlightMask!.Flags[0]);
         Assert.Equal(
-            [0, (byte)ClippingOverlaySide.DisplayFloor],
-            floorMask!.Flags.ToArray());
-        Assert.Equal(ClippingOverlaySide.Highlights, highlightMask.Sides);
-        Assert.Equal(ClippingOverlaySide.DisplayFloor, floorMask.Sides);
+            (byte)ClippingOverlaySide.DisplayFloor,
+            floorMask!.Flags[0]);
+        Assert.Equal(highlights.Stats, floor.Stats);
     }
 
-    [Fact]
-    public void Render_RawShoulderedHighlightUsesFinalOutput()
-    {
-        // A synthetic RAW base avoids decode variance while proving that the
-        // overlay follows AgX output instead of pre-crossing scene values.
-        using var raw = RenderPipelineTestSupport.CreateBase(
-            [ushort.MaxValue, 0, 0],
-            isRaw: true);
-        using var result = new RenderPipeline().Render(new RenderRequest(
-            raw,
-            new EditSettings
-            {
-                Detail = new DetailSettings { CaptureSharpen = 0 }
-            },
-            RenderIntent.Preview,
-            null,
-            new RenderOptions(true, true)));
-        using var pushed = new RenderPipeline().Render(new RenderRequest(
-            raw,
-            new EditSettings
-            {
-                Exposure = 3,
-                Highlights = 100,
-                Detail = new DetailSettings { CaptureSharpen = 0 }
-            },
-            RenderIntent.Preview,
-            null,
-            new RenderOptions(true, true)));
+    private static byte HighBit(byte value) =>
+        (byte)(value & (byte)ClippingOverlaySide.Highlights);
 
-        Assert.Equal(ChannelClip.Empty, result.Clipping.High);
-        Assert.Equal(0, result.Clipping.HighAny);
-        Assert.All(
-            RenderPipelineTestSupport.ReadPixels(result.Image),
-            value => Assert.True(value < ClippingStatsCalculator.HighThreshold));
-        Assert.Equal(0, result.OverlayMask!.Flags[0]);
-        Assert.Equal(1, pushed.Clipping.HighAny);
-        Assert.Equal(
-            (byte)ClippingOverlaySide.Highlights,
-            pushed.OverlayMask!.Flags[0]);
-    }
-
-    [Fact]
-    public void Render_StandardHighlightsRespondToExposureInBothDirections()
-    {
-        // Output-referred warnings must clear and return with visible edits.
-        using var white = RenderPipelineTestSupport.CreateBase(
-            [ushort.MaxValue, ushort.MaxValue, ushort.MaxValue]);
-        using var clipped = RenderWithOverlay(white, new EditSettings());
-        using var recovered = RenderWithOverlay(
-            white,
-            new EditSettings { Exposure = -3 });
-        using var clippedAgain = RenderWithOverlay(white, new EditSettings());
-
-        Assert.Equal(1, clipped.Clipping.HighAny);
-        Assert.Equal(
-            (byte)ClippingOverlaySide.Highlights,
-            clipped.OverlayMask!.Flags[0]);
-        Assert.Equal(0, recovered.Clipping.HighAny);
-        Assert.Equal(0, recovered.OverlayMask!.Flags[0]);
-        Assert.Equal(1, clippedAgain.Clipping.HighAny);
-        Assert.Equal(
-            (byte)ClippingOverlaySide.Highlights,
-            clippedAgain.OverlayMask!.Flags[0]);
-    }
-
-    private static RenderResult RenderWithOverlay(
-        BaseImage image,
-        EditSettings settings)
+    private static RenderResult Render(BaseImage image, EditSettings settings)
     {
         settings.Detail = new DetailSettings { CaptureSharpen = 0 };
         return new RenderPipeline().Render(new RenderRequest(
@@ -261,115 +220,17 @@ public sealed class ClippingStatsTests
             new RenderOptions(true, true)));
     }
 
-    [Fact]
-    public void Analyze_EightBitOriginHighlightsFlagSolidly()
+    private static SourceSaturationMask Mask(
+        int width,
+        int height,
+        params (int X, int Y, byte Flags)[] values)
     {
-        // Every 8-bit code from the locked boundary through white must flag.
-        Assert.Equal(253 * 257, ClippingStatsCalculator.HighThreshold);
-        using var image = CreateImage(
-        [
-            253 * 257, 20000, 20000,
-            254 * 257, 20000, 20000,
-            255 * 257, 20000, 20000
-        ]);
-
-        var result = ClippingStatsCalculator.Analyze(
-            image,
-            rawNearClip: 0,
-            createOverlay: true,
-            overlaySides: ClippingOverlaySide.Highlights);
-        using var mask = result.OverlayMask;
-
-        Assert.Equal(1, result.Stats.HighAny);
-        Assert.All(mask!.Flags.ToArray(), flag => Assert.Equal(
-            (byte)ClippingOverlaySide.Highlights,
-            flag));
-    }
-
-    [Fact]
-    public void ParallelAnalyses_MatchSequentialReferenceAcrossChunkBoundaries()
-    {
-        // 16,471 pixels: two unequal chunks in every parallelized analysis
-        // loop, prime so no worker count divides it evenly. The reference
-        // counts below re-derive the pinned thresholds sequentially.
-        const int pixels = 16471;
-        var random = new Random(271);
-        var samples = new ushort[pixels * 3];
-        for (var index = 0; index < samples.Length; index++)
+        var result = new SourceSaturationMask(width, height);
+        foreach (var value in values)
         {
-            samples[index] = checked((ushort)random.Next(0, 65536));
+            result.SetFlags(value.X, value.Y, value.Flags);
         }
-
-        long highR = 0, highG = 0, highB = 0;
-        long lowR = 0, lowG = 0, lowB = 0;
-        long highAny = 0, lowAll = 0;
-        for (var pixel = 0; pixel < pixels; pixel++)
-        {
-            var offset = pixel * 3;
-            var rHigh = samples[offset] >=
-                ClippingStatsCalculator.HighThreshold;
-            var gHigh = samples[offset + 1] >=
-                ClippingStatsCalculator.HighThreshold;
-            var bHigh = samples[offset + 2] >=
-                ClippingStatsCalculator.HighThreshold;
-            var rLow = samples[offset] <= 128;
-            var gLow = samples[offset + 1] <= 128;
-            var bLow = samples[offset + 2] <= 128;
-            if (rHigh) highR++;
-            if (gHigh) highG++;
-            if (bHigh) highB++;
-            if (rLow) lowR++;
-            if (gLow) lowG++;
-            if (bLow) lowB++;
-            if (rHigh || gHigh || bHigh) highAny++;
-            else if (rLow && gLow && bLow) lowAll++;
-        }
-
-        using var image = CreateImage(samples);
-        var result = ClippingStatsCalculator.Analyze(
-            image,
-            rawNearClip: 0,
-            createOverlay: false);
-
-        Assert.Equal(
-            new ChannelClip(
-                highR / (double)pixels,
-                highG / (double)pixels,
-                highB / (double)pixels),
-            result.Stats.High);
-        Assert.Equal(
-            new ChannelClip(
-                lowR / (double)pixels,
-                lowG / (double)pixels,
-                lowB / (double)pixels),
-            result.Stats.Low);
-        Assert.Equal(highAny / (double)pixels, result.Stats.HighAny);
-        Assert.Equal(lowAll / (double)pixels, result.Stats.LowAll);
-
-        using var raw = RenderPipelineTestSupport.CreateBase(
-            samples,
-            isRaw: true);
-        long nearClip = 0;
-        var matrix = RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb;
-        var threshold = 64880 / (double)ushort.MaxValue;
-        for (var pixel = 0; pixel < pixels; pixel++)
-        {
-            var offset = pixel * 3;
-            var red = samples[offset] / (double)ushort.MaxValue;
-            var green = samples[offset + 1] / (double)ushort.MaxValue;
-            var blue = samples[offset + 2] / (double)ushort.MaxValue;
-            var clipped = false;
-            for (var row = 0; row < 3 && !clipped; row++)
-            {
-                clipped = matrix[row, 0] * red + matrix[row, 1] * green +
-                    matrix[row, 2] * blue >= threshold;
-            }
-            if (clipped) nearClip++;
-        }
-
-        Assert.Equal(
-            nearClip / (double)pixels,
-            ClippingStatsCalculator.CalculateRawNearClip(raw));
+        return result;
     }
 
     private static MagickImage CreateImage(ushort[] samples)

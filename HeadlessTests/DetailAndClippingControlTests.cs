@@ -54,7 +54,7 @@ public sealed class DetailAndClippingControlTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void DisplayTrianglesUseOutputHighlightAndFloorSemantics()
+    public void DisplayTrianglesUseSourceSaturationAndFloorSemantics()
     {
         var histogram = new HistogramView
         {
@@ -65,7 +65,7 @@ public sealed class DetailAndClippingControlTests : IDisposable
                 ChannelClip.Empty,
                 HighAny: 0.2,
                 LowAll: 0.1,
-                RawNearClip: 0)
+                IsHighAvailable: true)
         };
         var window = new Window { Width = 250, Height = 100, Content = histogram };
         window.Show();
@@ -77,9 +77,9 @@ public sealed class DetailAndClippingControlTests : IDisposable
 
         Assert.True(high.IsHitTestVisible);
         Assert.True(floor.IsHitTestVisible);
-        Assert.Contains("Output highlights", ToolTip.GetTip(high)!.ToString());
+        Assert.Contains("Source saturation", ToolTip.GetTip(high)!.ToString());
         Assert.Contains("Display-floor shadows", ToolTip.GetTip(floor)!.ToString());
-        Assert.DoesNotContain("sensor", ToolTip.GetTip(high)!.ToString()!,
+        Assert.Contains("sensor saturation", ToolTip.GetTip(high)!.ToString()!,
             StringComparison.OrdinalIgnoreCase);
 
         histogram.Clipping = null;
@@ -92,9 +92,21 @@ public sealed class DetailAndClippingControlTests : IDisposable
         histogram.Clipping = new ClippingStats(
             ChannelClip.Empty,
             ChannelClip.Empty,
+            HighAny: 0,
+            LowAll: 0.1,
+            IsHighAvailable: false);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(high.IsHitTestVisible);
+        Assert.True(floor.IsHitTestVisible);
+        Assert.Contains("unavailable", ToolTip.GetTip(high)!.ToString());
+        Assert.Contains("Display-floor shadows", ToolTip.GetTip(floor)!.ToString());
+
+        histogram.Clipping = new ClippingStats(
+            ChannelClip.Empty,
+            ChannelClip.Empty,
             HighAny: 0.2,
             LowAll: 0.1,
-            RawNearClip: 0);
+            IsHighAvailable: true);
         histogram.Histogram = new HistogramData
         {
             Domain = HistogramDomain.RawSensor
@@ -124,7 +136,7 @@ public sealed class DetailAndClippingControlTests : IDisposable
             1,
             ClippingOverlaySide.Both,
             [
-                (byte)ClippingOverlaySide.Highlights,
+                (byte)ClippingOverlaySide.Both,
                 (byte)ClippingOverlaySide.DisplayFloor
             ]);
         var viewer = new ZoomPanControl
@@ -157,6 +169,18 @@ public sealed class DetailAndClippingControlTests : IDisposable
         Assert.Equal(
             Premultiply(HappyPhotonColors.DisplayFloorClipColor.R),
             pixels[6]);
+
+        viewer.VisibleClippingSides = ClippingOverlaySide.DisplayFloor;
+        Dispatcher.UIThread.RunJobs();
+        pixels = BitmapConversionService.CopyBgraPixels(
+            overlay.BitmapForTesting!);
+        Assert.Equal(
+            Premultiply(HappyPhotonColors.DisplayFloorClipColor.B),
+            pixels[0]);
+        Assert.Equal(
+            Premultiply(HappyPhotonColors.DisplayFloorClipColor.R),
+            pixels[2]);
+
         var status = viewer.FindControl<TextBlock>("ClippingStatus")!;
         var viewportLayer = viewer.FindControl<Panel>("ViewportOverlayLayer")!;
         var imagePanel = viewer.FindControl<Panel>("ImagePanel")!;

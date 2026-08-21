@@ -74,6 +74,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
 
         Assert.NotNull(result);
         AssertStandardFacts(result!, decode);
+        Assert.Null(result.SourceSaturation);
         Assert.True(result!.Info.HadIccProfile);
         Assert.False(string.IsNullOrWhiteSpace(result.Info.IccDescription));
         Assert.Null(result.Pixels.GetColorProfile());

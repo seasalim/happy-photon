@@ -10,7 +10,8 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
     private readonly bool _isAvailable;
     internal bool IsHealthRejected { get; }
     private readonly Func<LibRawContext, byte[]?> _thumbnailReader;
-    private readonly Func<LibRawContext, CancellationToken, HistogramData?> _rawHistogramSampler;
+    private readonly Func<LibRawContext, CancellationToken, HistogramData?>?
+        _rawHistogramSampler;
     public RawBaseLoader()
         : this(LibRawNativeSupport.Health)
     {
@@ -31,7 +32,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
         _isAvailable = isAvailable;
         IsHealthRejected = healthRejected;
         _thumbnailReader = thumbnailReader ?? RawThumbnailReader.Read;
-        _rawHistogramSampler = rawHistogramSampler ?? RawSensorHistogram.Sample;
+        _rawHistogramSampler = rawHistogramSampler;
     }
 
     public bool CanLoad(ImageFile file)
@@ -129,9 +130,29 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 context.GetCameraFacts(cancellationToken));
             var histogramStopwatch = Stopwatch.StartNew();
             HistogramData? rawHistogram;
+            SourceSaturationMask? sensorSaturation = null;
             try
             {
-                rawHistogram = _rawHistogramSampler(context, cancellationToken);
+                if (_rawHistogramSampler != null)
+                {
+                    rawHistogram = _rawHistogramSampler(context, cancellationToken);
+                }
+                else if (preview)
+                {
+                    var sensorArtifacts = RawSensorHistogram.SampleWithSaturation(
+                        context,
+                        Math.Max(1, (fullWidth + 1) / 2),
+                        Math.Max(1, (fullHeight + 1) / 2),
+                        cancellationToken);
+                    rawHistogram = sensorArtifacts?.Histogram;
+                    sensorSaturation = sensorArtifacts?.SourceSaturation;
+                }
+                else
+                {
+                    rawHistogram = RawSensorHistogram.Sample(
+                        context,
+                        cancellationToken);
+                }
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception exception)
@@ -179,6 +200,10 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 orientation,
                 fullWidth,
                 fullHeight);
+            var sourceSaturation = sensorSaturation?.OrientAndResize(
+                orientation,
+                checked((int)pixels.Width),
+                checked((int)pixels.Height));
             var estimateStopwatch = Stopwatch.StartNew();
             var sourceExposureBiasEv = PreviewExposureEstimator.Estimate(
                 thumbnailBytes,
@@ -242,7 +267,8 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 pair = PreviewBasePairFactory.Create(
                     pixels,
                     info,
-                    cancellationToken);
+                    cancellationToken,
+                    sourceSaturation);
             }
             else
             {

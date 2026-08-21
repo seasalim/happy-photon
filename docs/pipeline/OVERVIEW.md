@@ -144,6 +144,7 @@ public sealed class BaseImage : IDisposable
     public const int LargePreviewMaxDimension = 3200;
     public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
     public BaseImageInfo Info { get; }
+    internal SourceSaturationMask? SourceSaturation { get; } // preview-size capability
 }
 
 public sealed class PreviewBasePair : IDisposable
@@ -191,6 +192,9 @@ idempotent and accessing `Pixels` afterward throws. A loader returning `null` re
 ownership of any temporary image it created. `BaseImageInfo` is loader-produced factual
 metadata and consumers treat it as immutable.
 `RawHistogram` is a loader fact captured from the unpacked mosaic; it is not persisted.
+`SourceSaturation` is a loader-produced, per-base packed artifact. RAW derives it from
+the same unpacked-mosaic pass; JPEG/HEIC derive it from upright encoded samples before
+color normalization. Its absence is the highlight-warning capability signal.
 Because `HistogramData` is a class, generated `BaseImageInfo` record equality compares
 that member by reference. Consumers must not use whole-record equality for histogram
 content.
@@ -211,6 +215,7 @@ content.
 | `Services/DcpMatrixCalculator.cs` | as-shot DCP matrix composition for the balanced seam |
 | `Services/DcpHueSatRenderer.cs` | scene-linear ProPhoto HueSatDeltas render stage |
 | `Services/RawSensorFrame.cs` + `RawSensorHistogram.cs` | typed unpacked-mosaic lease + sensor histogram |
+| `Services/SourceSaturationMask.cs` + `SourceSaturationMaskProjector.cs` | packed source-saturation artifact + geometry projection |
 | `Services/StandardBaseLoader.cs` | Magick decode + ICC normalize → base (DECODE.md §3) |
 | `Services/WorkingSpaceIccProfile.cs` | deterministic linear-Rec.2020 ICC target |
 | `Services/OutputColorProfiles.cs` | embedded sRGB / Display P3 export profiles |

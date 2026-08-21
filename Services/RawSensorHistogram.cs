@@ -3,6 +3,10 @@ using HappyPhoton.LibRaw.Interop;
 
 namespace HappyPhoton.Services;
 
+internal sealed record RawSensorArtifacts(
+    HistogramData Histogram,
+    SourceSaturationMask? SourceSaturation);
+
 public static class RawSensorHistogram
 {
     internal const int MaxLookupBytes = 4 * 1024 * 1024;
@@ -21,12 +25,47 @@ public static class RawSensorHistogram
         return frame == null ? null : Sample(frame, cancellationToken);
     }
 
+    internal static RawSensorArtifacts? SampleWithSaturation(
+        LibRawContext context,
+        int saturationWidth,
+        int saturationHeight,
+        CancellationToken cancellationToken)
+    {
+        using var frame = RawSensorFrame.TryCreate(context, cancellationToken);
+        return frame == null
+            ? null
+            : SampleArtifacts(
+                frame,
+                cancellationToken,
+                workerLimit: null,
+                saturationWidth,
+                saturationHeight);
+    }
+
     internal static HistogramData? Sample(
         IRawSensorFrame frame,
         CancellationToken cancellationToken = default,
-        int? workerLimit = null)
+        int? workerLimit = null) =>
+        SampleArtifacts(
+            frame,
+            cancellationToken,
+            workerLimit,
+            saturationWidth: null,
+            saturationHeight: null)?.Histogram;
+
+    internal static RawSensorArtifacts? SampleArtifacts(
+        IRawSensorFrame frame,
+        CancellationToken cancellationToken,
+        int? workerLimit,
+        int? saturationWidth,
+        int? saturationHeight)
     {
         ArgumentNullException.ThrowIfNull(frame);
+        if (saturationWidth is <= 0 || saturationHeight is <= 0 ||
+            (saturationWidth == null) != (saturationHeight == null))
+        {
+            throw new ArgumentOutOfRangeException(nameof(saturationWidth));
+        }
         if (!TryGetCfaPeriod(frame, out var cfaRows, out var cfaColumns))
         {
             return null;
@@ -58,11 +97,18 @@ public static class RawSensorHistogram
         var left = checked((int)frame.LeftMargin);
         var width = checked((int)frame.VisibleWidth);
         var height = checked((int)frame.VisibleHeight);
+        var sourceSaturation = saturationWidth is { } maskWidth &&
+            saturationHeight is { } maskHeight
+            ? new SourceSaturationMask(maskWidth, maskHeight)
+            : null;
 
         // Chunked rows with per-worker bins merged under a lock: integer
         // merges are order-independent, so bins are bit-identical for any
         // worker count.
-        var workers = workerLimit ?? WorkerCount(checked(width * height));
+        var workRows = sourceSaturation?.Height ?? height;
+        var workers = Math.Min(
+            workRows,
+            workerLimit ?? WorkerCount(checked(width * height)));
         var sync = new object();
         Parallel.For(
             0,
@@ -70,7 +116,13 @@ public static class RawSensorHistogram
             new ParallelOptions { CancellationToken = cancellationToken },
             worker =>
             {
-                var (startRow, endRow) = ChunkRange(height, worker, workers);
+                var (workStart, workEnd) = ChunkRange(workRows, worker, workers);
+                var startRow = sourceSaturation == null
+                    ? workStart
+                    : CeilingDivide((long)workStart * height, workRows);
+                var endRow = sourceSaturation == null
+                    ? workEnd
+                    : CeilingDivide((long)workEnd * height, workRows);
                 var workerRed = new int[red.Length];
                 var workerGreen = new int[green.Length];
                 var workerBlue = new int[blue.Length];
@@ -111,19 +163,39 @@ public static class RawSensorHistogram
                         {
                             case 0:
                                 workerRed[bin]++;
-                                if (value >= white) workerRedClipped++;
+                                if (value >= white)
+                                {
+                                    workerRedClipped++;
+                                    SetSaturation(1);
+                                }
                                 break;
                             case 1:
                                 workerGreen[bin]++;
-                                if (value >= white) workerGreenClipped++;
+                                if (value >= white)
+                                {
+                                    workerGreenClipped++;
+                                    SetSaturation(2);
+                                }
                                 break;
                             case 2:
                                 workerBlue[bin]++;
-                                if (value >= white) workerBlueClipped++;
+                                if (value >= white)
+                                {
+                                    workerBlueClipped++;
+                                    SetSaturation(4);
+                                }
                                 break;
                             default:
                                 throw new InvalidDataException(
                                     "The CFA channel is invalid.");
+                        }
+
+                        void SetSaturation(byte flag)
+                        {
+                            sourceSaturation?.SetFlags(
+                                (int)((long)column * sourceSaturation.Width / width),
+                                (int)((long)row * sourceSaturation.Height / height),
+                                flag);
                         }
                     }
                 }
@@ -147,7 +219,7 @@ public static class RawSensorHistogram
             redClipped, greenClipped, blueClipped,
             (long)width * height, white);
         histogram.Normalize();
-        return histogram;
+        return new RawSensorArtifacts(histogram, sourceSaturation);
     }
 
     private static int WorkerCount(int pixelCount) =>
@@ -159,6 +231,9 @@ public static class RawSensorHistogram
         int workers) =>
         ((int)((long)rows * worker / workers),
             (int)((long)rows * (worker + 1) / workers));
+
+    private static int CeilingDivide(long numerator, int denominator) =>
+        checked((int)((numerator + denominator - 1) / denominator));
 
     internal static bool UsesFusedLookup(
         int cfaRows,

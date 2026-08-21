@@ -50,19 +50,69 @@ public sealed class RawBaseLoaderRawHistogramTests
     [Fact]
     public void RealSampler_IsInvariantAcrossDecodeProcessingSettings()
     {
+        using var directory = new TemporaryDirectory();
+        var profilePath = SyntheticDcpFactory.WriteTemporary(
+            directory.Path,
+            new SyntheticDcpOptions
+            {
+                Name = "Source saturation invariance",
+                ForwardMatrix1 = DcpProfileReaderTests.D50Forward(1)
+            });
+        var reader = new DcpProfileReader();
+        var snapshot = reader.ReadExternalSnapshot(profilePath);
+        var selection = new RawProfileSelection
+        {
+            Source = RawProfileSource.UserFile,
+            Location = profilePath,
+            ContentHash = snapshot.ContentHash
+        };
+        var profile = reader.ParseExternal(snapshot, "source saturation");
+        var decode = BaseDecodeSettings.From(new EditSettings
+        {
+            HlReconstruction = HlReconstructionMode.Blend,
+            Detail = new DetailSettings { NoiseReduction = FbddMode.Full },
+            RawProfile = selection
+        }).WithProfileResolution(
+            DcpProfileResolution.Success(selection, profile));
         var loader = new RawBaseLoader();
         using var clip = loader.LoadPreviewBase(FixtureFile(),
             BaseDecodeSettings.Default, CancellationToken.None);
-        using var blend = loader.LoadPreviewBase(FixtureFile(),
-            new BaseDecodeSettings(HlReconstructionMode.Blend, FbddMode.Full),
+        using var profiled = loader.LoadPreviewBase(FixtureFile(),
+            decode,
             CancellationToken.None);
 
+        Assert.Equal(DcpProfileErrorCode.None, profiled!.Info.ProfileStatus);
         Assert.NotNull(clip!.Info.RawHistogram);
-        Assert.NotNull(blend!.Info.RawHistogram);
-        Assert.Equal(clip.Info.RawHistogram!.Red, blend.Info.RawHistogram!.Red);
-        Assert.Equal(clip.Info.RawHistogram.Green, blend.Info.RawHistogram.Green);
-        Assert.Equal(clip.Info.RawHistogram.Blue, blend.Info.RawHistogram.Blue);
-        Assert.Equal(clip.Info.RawHistogram.Clipping, blend.Info.RawHistogram.Clipping);
+        Assert.NotNull(profiled.Info.RawHistogram);
+        Assert.Equal(clip.Info.RawHistogram!.Red, profiled.Info.RawHistogram!.Red);
+        Assert.Equal(clip.Info.RawHistogram.Green, profiled.Info.RawHistogram.Green);
+        Assert.Equal(clip.Info.RawHistogram.Blue, profiled.Info.RawHistogram.Blue);
+        Assert.Equal(
+            clip.Info.RawHistogram.Clipping,
+            profiled.Info.RawHistogram.Clipping);
+        Assert.NotNull(clip.SourceSaturation);
+        Assert.NotNull(profiled.SourceSaturation);
+        AssertMasksEqual(clip.SourceSaturation!, profiled.SourceSaturation!);
+
+        var renderSettings = new EditSettings
+        {
+            Detail = new DetailSettings { CaptureSharpen = 0 }
+        };
+        var pipeline = new RenderPipeline();
+        using var clipRender = pipeline.Render(new RenderRequest(
+            clip,
+            renderSettings,
+            RenderIntent.Preview,
+            1600,
+            new RenderOptions(ComputeStats: true)));
+        using var profiledRender = pipeline.Render(new RenderRequest(
+            profiled,
+            renderSettings,
+            RenderIntent.Preview,
+            1600,
+            new RenderOptions(ComputeStats: true)));
+        Assert.Equal(clipRender.Clipping.High, profiledRender.Clipping.High);
+        Assert.Equal(clipRender.Clipping.HighAny, profiledRender.Clipping.HighAny);
     }
 
     [Fact]
@@ -93,14 +143,21 @@ public sealed class RawBaseLoaderRawHistogramTests
         using var context = LibRawContext.Open(path);
         context.Unpack();
         using var frame = RawSensorFrame.TryCreate(context);
+        Assert.NotNull(frame);
         var stopwatch = Stopwatch.StartNew();
-        var histogram = RawSensorHistogram.Sample(frame!);
+        var artifacts = RawSensorHistogram.SampleArtifacts(
+            frame,
+            CancellationToken.None,
+            workerLimit: null,
+            saturationWidth: checked((int)(frame.VisibleWidth + 1) / 2),
+            saturationHeight: checked((int)(frame.VisibleHeight + 1) / 2));
         stopwatch.Stop();
 
-        Assert.NotNull(histogram);
+        Assert.NotNull(artifacts);
+        Assert.NotNull(artifacts!.SourceSaturation);
         _output.WriteLine(
             $"RawHistogram fixture=canon-eos-6d-iso-6400.cr2; " +
-            $"photosites={histogram!.Clipping!.TotalVisibleSamples}; " +
+            $"photosites={artifacts.Histogram.Clipping!.TotalVisibleSamples}; " +
             $"elapsed_ms={stopwatch.Elapsed.TotalMilliseconds:F1}");
     }
 
@@ -110,4 +167,17 @@ public sealed class RawBaseLoaderRawHistogramTests
 
     private static ImageFile FixtureFile() => new(Path.Combine(
         GoldenTestPaths.AssetDirectory, "canon-eos-350d.cr2"));
+
+    private static void AssertMasksEqual(
+        SourceSaturationMask expected,
+        SourceSaturationMask actual)
+    {
+        Assert.Equal(expected.Width, actual.Width);
+        Assert.Equal(expected.Height, actual.Height);
+        for (var y = 0; y < expected.Height; y++)
+        for (var x = 0; x < expected.Width; x++)
+        {
+            Assert.Equal(expected.GetFlags(x, y), actual.GetFlags(x, y));
+        }
+    }
 }

@@ -3,9 +3,21 @@ using ImageMagick;
 
 namespace HappyPhoton.Services;
 
+internal readonly record struct RenderGeometryTrace(
+    int QuarterTurnWidth,
+    int QuarterTurnHeight,
+    int HorizonCanvasWidth,
+    int HorizonCanvasHeight,
+    int CropX,
+    int CropY,
+    int Width,
+    int Height);
+
 internal static class RenderGeometry
 {
-    public static void Apply(MagickImage image, EditSettings settings)
+    public static RenderGeometryTrace Apply(
+        MagickImage image,
+        EditSettings settings)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(settings);
@@ -14,6 +26,9 @@ internal static class RenderGeometry
         {
             image.Rotate(settings.Rotation);
         }
+
+        var quarterTurnWidth = checked((int)image.Width);
+        var quarterTurnHeight = checked((int)image.Height);
 
         CropRegion? safeCrop = null;
         if (settings.HorizonRotation != 0.0)
@@ -30,16 +45,36 @@ internal static class RenderGeometry
                 image.Height);
         }
 
+        var horizonCanvasWidth = checked((int)image.Width);
+        var horizonCanvasHeight = checked((int)image.Height);
+
         var effectiveCrop = GetEffectiveCrop(settings.Crop, safeCrop);
         if (effectiveCrop == null || effectiveCrop.IsFullImage)
         {
-            return;
+            return new RenderGeometryTrace(
+                quarterTurnWidth,
+                quarterTurnHeight,
+                horizonCanvasWidth,
+                horizonCanvasHeight,
+                0,
+                0,
+                horizonCanvasWidth,
+                horizonCanvasHeight);
         }
 
         var (x, y, width, height) =
             effectiveCrop.ToPixels((int)image.Width, (int)image.Height);
         image.Crop(new MagickGeometry(x, y, (uint)width, (uint)height));
         image.ResetPage();
+        return new RenderGeometryTrace(
+            quarterTurnWidth,
+            quarterTurnHeight,
+            horizonCanvasWidth,
+            horizonCanvasHeight,
+            x,
+            y,
+            width,
+            height);
     }
 
     private static CropRegion? GetEffectiveCrop(

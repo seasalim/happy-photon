@@ -147,19 +147,20 @@ and nothing is rewritten at parse.
 
 ## 8. Clipping semantics
 
-Clipping overlays and `ClippingStats.High` analyze the finalized display for both tone
-regimes. An AgX-shouldered highlight below display white is therefore not flagged, and
-the warning appears or clears as edits move the output across the threshold:
+The red clipping side is source-referred and bypasses both tone regimes. RAW flags the
+unpacked mosaic at sensor maximum; JPEG/HEIC flags encoded samples at the scaled
+253/255 near-endpoint ratio before color normalization. Tone, WB, profile, curves,
+chroma, detail, and effects do not change `High`/`HighAny`. The blue side remains a
+finalized-display statistic:
 
 | Field | Crossing ON | Crossing OFF |
 |---|---|---|
-| `High`/`HighAny` | display ≥ 253/255 | same |
+| `High`/`HighAny` | aligned sensor saturation | aligned encoded near-endpoint artifact |
 | `Low`/`LowAll` | display ≤ 0.5/255 | same |
-| `RawNearClip` | unchanged decoded-near-clip fact (RENDER.md §7) | 0 |
 
-The per-photosite RAW-histogram counts remain authoritative for true sensor clip.
-Overlay masks use the same output thresholds in both regimes and stay dormant unless
-the clipping latch or a triangle peek requests them.
+TIFF, PNG, and other standard formats report the high side unavailable in v1. The
+display floor stays available. Overlay masks remain dormant unless the clipping latch
+or an available triangle peek requests them.
 
 ## 9. Validation
 

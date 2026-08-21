@@ -233,8 +233,10 @@ the final Q16 write are the only production precision boundary. The internal
 ## 7. Histogram & clipping
 
 Computed at preview scale when `Options.ComputeStats` (existing `HistogramService`
-bins stay 8-bit). Shadow and highlight statistics both sample the finalized display,
-so they follow visible edits and use one definition for RAW and standard sources.
+bins stay 8-bit). Display-floor statistics sample the finalized display. Highlight
+statistics come from the loader-produced source-saturation artifact projected through
+the render geometry and final resize; tonal, color, profile, and effect math never
+redefines those flags.
 
 The render exports one BGRA8 buffer that is both the preview-bitmap source and the
 display-scope source. Histogram-active interaction accumulates only the four 8-bit
@@ -256,32 +258,33 @@ For photosite value `v` and native channel `ch`, RAW binning uses
 `n = clamp01((v - black_ch) / max(1, maximum - black_ch))`, then
 `round(E(n) * 255)` with §3's sRGB encode via a bounded lookup (no `Math.Pow` in the
 visible pass). RAW clipping is the separate linear test `v >= maximum`, counted per
-sensor channel — never inferred from bin 255, and distinct from
-`ClippingStats.RawNearClip`, which describes already demosaiced display-basis base
-pixels.
+sensor channel and written into the spatial source-saturation artifact in the same pass
+— never inferred from bin 255. Both green CFA phases merge into the green artifact
+plane.
 
 ```csharp
 public sealed record ChannelClip(double R, double G, double B);   // fractions 0..1
 public sealed record ClippingStats(
-    ChannelClip High,        // finalized display channel ≥ 253/255, every source
+    ChannelClip High,        // aligned source-saturation fraction per channel
     ChannelClip Low,         // per channel: fraction ≤ 0.5/255
-    double HighAny,          // same output threshold, any channel
+    double HighAny,          // aligned source-saturated pixels, any channel
     double LowAll,           // all-channels-low fraction (drives the blue overlay/chip)
-    double RawNearClip);     // raw bases only, else 0: fraction of base pixels with any
-                             // display-basis channel ≥ 0.99 after linear Rec.2020→sRGB
-                             // but BEFORE the render matrix/LUT — "at or near sensor
-                             // clip *as decoded*". LibRaw's highlight reconstruction has
-                             // already run, so it flags unrecoverable areas rather than
-                             // measuring the sensor domain.
+    bool IsHighAvailable);   // artifact capability; independent of source-kind gates
 ```
 
-`High`/`HighAny` are output-referred for every source and use the inclusive Q16
-threshold 65021 (`253 × 257`). `RawNearClip` is the edit-independent
-decoded-near-clip fact above, and sensor mosaic clip counts remain authoritative for
-true sensor clip. When `Options.ComputeOverlayMasks` is true, masks follow the
-requested semantic sides (output highlights and/or display floor) for both RAW and
-standard sources. Develop requests masks only while the `J` latch or a triangle peek
-is active; ordinary preview renders remain mask-free.
+RAW `High` uses the histogram's exact sensor predicate. JPEG/HEIC use the decoded
+encoded-sample ratio `sample / encodedMaximum >= 253 / 255` before ICC/EOTF
+normalization (253/255 for 8-bit; 1015/1023 for 10-bit). TIFF, PNG, and other standard
+formats have no v1 source artifact, so only their high side is unavailable; floor
+analysis remains live and never falls back to a finalized-output high threshold.
+
+Projection follows rotate90 → horizon → crop and the final resize. Quarter turns and
+horizon use nearest categorical placement; every downscale OR-reduces source flags so
+an isolated set bit survives. A per-base single-entry geometry cache reuses the packed
+projection and its fractions across render-only edits. High and floor overlay bits are
+ORed independently, allowing one pixel to carry both. Develop requests masks only
+while the `J` latch or a triangle peek is active; ordinary preview renders remain
+mask-free.
 
 ## 8. EditSettings v2 — schema and storage
 

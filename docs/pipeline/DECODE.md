@@ -115,15 +115,20 @@ At the same seam, after camera-fact copying and before `ConfigureOutput`/`Proces
 `RawSensorFrame` combines the typed bridge sensor identity with a zero-copy
 `BorrowMosaic` lease, always released before `Process` (a held lease intentionally
 makes native process/recycle calls reject). `RawSensorHistogram` then scans the
-visible photosites once, synchronously on the decode call and token: rows are chunked
+visible photosites once, synchronously on the decode call and token, producing both
+the aggregate histogram and a packed preview-size per-channel saturation artifact
+with the exact same `value >= maximum` predicate. Rows are chunked
 across parallel workers whose per-worker bins merge into order-independent integer
 sums, so the histogram is bit-identical for any worker count. Cancellation is checked
 every 256 visible rows and immediately before processing. Cancellation escapes the
 loader; any other sampling/access fault is logged once and leaves a valid decoded base
-with a null RAW fact. Only integer CFA mosaics described by Bayer `filters > 1000` or
+with a null RAW fact and no source-saturation capability. Only integer CFA mosaics described by Bayer `filters > 1000` or
 the 36-byte X-Trans table (`filters == 9`) qualify; anything else — no-CFA, Leaf and
 other filter tables, invalid geometry/levels, bridge-unavailable mosaics — returns no
 RAW histogram. There is no second decode, source reread, or processed-RGB substitute.
+The mask maps the visible sensor window by ratio to the oriented decoded dimensions
+with OR reduction, then each preview base carries its own aligned size; full/export
+bases skip the spatial artifact.
 
 ### 2.1 RAW Library previews
 
@@ -228,7 +233,13 @@ a one-sample difference (consequences in TESTING.md §3).
    that hint, then derives both preview classes (preserves quality through DCT-scaled
    decode without upscaling smaller JPEGs).
 2. `AutoOrient()` makes the pixels upright and the applied orientation is recorded.
-3. **Color normalization:**
+3. For preview JPEG and HEIC only, capture a packed per-channel source-saturation mask
+   from these upright encoded samples before any ICC/EOTF normalization. The inclusive
+   ratio is `sample / encodedMaximum >= 253 / 255`; the reported encoded depth supplies
+   the maximum (8-bit boundary 253/255, 10-bit boundary 1015/1023). If depth is not
+   reported, the equivalent Q16 ratio is used. TIFF, PNG, and all other formats omit
+   the artifact in v1. Full/export bases skip capture.
+4. **Color normalization:**
    - Embedded ICC present → record its description, then transform from it to the
      gamma-1.0 Rec.2020 target defined in WORKING_SPACE.md.
    - No profile + CMYK colorspace → assume `ColorProfiles.USWebCoatedSWOP` as the
@@ -239,13 +250,15 @@ a one-sample difference (consequences in TESTING.md §3).
      the same direct path. This avoids lcms profile setup without changing the math.
    - Record `HadIccProfile` and the profile description, then strip **all** profiles
      after color conversion. Bases never retain ICC, EXIF/GPS, XMP, or thumbnails.
-4. The target ICC has linear TRCs, and the direct sRGB path explicitly applies its EOTF,
+5. The target ICC has linear TRCs, and the direct sRGB path explicitly applies its EOTF,
    so normalized samples are already linear. Retag them as `ColorSpace.RGB` without a
    second transfer conversion, then ensure `Depth = 16`.
-5. Preview pair: from the single color-normalized decoded buffer, independently resize
-   interactive to 1600 and large to at most 3200. JPEG's existing 3200 DCT size hint is
+6. Preview pair: from the single color-normalized decoded buffer, independently resize
+   interactive to 1600 and large to at most 3200. The source-saturation mask is attached
+   only to the interactive base because large-base renders do not compute stats or masks;
+   it must be re-attached if those renders ever do. JPEG's existing 3200 DCT size hint is
    stable across viewport changes, so repeated resizes do not change decode identity.
-6. `AsShotKelvin = 6504, AsShotTint = 0` (D65 anchor), `CamMul = null`;
+7. `AsShotKelvin = 6504, AsShotTint = 0` (D65 anchor), `CamMul = null`;
    `FullWidth/FullHeight` = the original decoded dimensions after orientation
    (captured before the preview resize in step 5).
 
@@ -253,9 +266,9 @@ GIF decoding uses the first frame only. HEIC follows the identical standard path
 through Magick.NET's HEIC coder backed by the bundled libheif for each target RID —
 never Windows HEIF Image Extensions. HEIC tests gate first on
 `MagickFormatInfo.Create(MagickFormat.Heic)?.SupportsReading`, then on an actual
-fixture decode so delegate/package gaps are explicit skips. The base depth is whatever
-the bundled codec yields; 10-bit sources may flatten to 8-bit before the Q16 promotion
-and remain a documented limitation.
+fixture decode so delegate/package gaps are explicit skips. Source-saturation capture
+uses the depth reported by that decode; the committed fixture reports 8-bit, while the
+10-bit boundary is independently pinned at 1015/1023.
 
 ## 4. Ownership and concurrency
 

@@ -39,17 +39,21 @@ public sealed class PreviewBasePairFactoryTests
     }
 
     [Fact]
-    public void Create_SmallDecodeKeepsBothBasesAtDecodeSize()
+    public void Create_SmallDecodeKeepsBothBasesAndMaskOnlyOnInteractive()
     {
         using var decoded = CreateNoise(1200, 800);
+        var sourceSaturation = new SourceSaturationMask(1200, 800);
         using var pair = PreviewBasePairFactory.Create(
             decoded,
             CreateInfo(1200, 800),
-            CancellationToken.None);
+            CancellationToken.None,
+            sourceSaturation);
 
         Assert.Equal(1200u, pair.Interactive.Pixels.Width);
+        Assert.Same(sourceSaturation, pair.Interactive.SourceSaturation);
         Assert.NotNull(pair.Large);
         Assert.Equal(1200u, pair.Large!.Pixels.Width);
+        Assert.Null(pair.Large.SourceSaturation);
         Assert.Equal(
             ReadPixels(pair.Interactive.Pixels),
             ReadPixels(pair.Large!.Pixels));

@@ -107,7 +107,7 @@ public sealed record BaseImageInfo(
 /// </summary>
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 10;
+    public const int Version = 11;
     public const int InteractivePreviewMaxDimension = 1600;
     public const int LargePreviewMaxDimension = 3200;
 
@@ -118,13 +118,24 @@ public sealed class BaseImage : IDisposable
 
     public BaseImageInfo Info { get; }
 
+    internal SourceSaturationMask? SourceSaturation { get; }
+
     public BaseImage(MagickImage pixels, BaseImageInfo info)
+        : this(pixels, info, sourceSaturation: null)
+    {
+    }
+
+    internal BaseImage(
+        MagickImage pixels,
+        BaseImageInfo info,
+        SourceSaturationMask? sourceSaturation)
     {
         ArgumentNullException.ThrowIfNull(pixels);
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(info.Decode);
         _pixels = pixels;
         Info = info;
+        SourceSaturation = sourceSaturation;
     }
 
     public void Dispose()

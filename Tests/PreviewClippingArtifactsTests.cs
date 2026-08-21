@@ -117,8 +117,15 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
             CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        private BaseImage Create(BaseDecodeSettings decode) =>
-            new(
+        private BaseImage Create(BaseDecodeSettings decode)
+        {
+            var sourceSaturation = new SourceSaturationMask(12, 8);
+            for (var y = 0; y < sourceSaturation.Height; y++)
+            for (var x = 0; x < sourceSaturation.Width; x++)
+            {
+                sourceSaturation.SetFlags(x, y, 7);
+            }
+            return new BaseImage(
                 new MagickImage(color, 12, 8)
                 {
                     ColorSpace = ColorSpace.RGB,
@@ -136,6 +143,8 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
                     null,
                     1,
                     12,
-                    8));
+                    8),
+                sourceSaturation);
+        }
     }
 }

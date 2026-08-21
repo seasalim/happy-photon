@@ -141,10 +141,11 @@ be read.
   sampling; pan/zoom gestures remain live (click-without-drag samples, drag pans).
   Rejected picks (clipped/noise-floor) show a status-bar hint ("Pick a neutral mid-tone
   area") and stay in the mode. Unavailable while the crop overlay is active.
-- **Clipping overlay** (`J`, Develop only): latches output-highlight red and
-  display-floor blue over the photograph. Hovering a display-histogram triangle peeks
+- **Clipping overlay** (`J`, Develop only): latches source-saturation red and
+  display-floor blue over the photograph. Hovering an available display-histogram triangle peeks
   that side only; while latched it temporarily isolates the hovered side, then restores
-  both on leave. Both sides are available for RAW and standard sources.
+  both on leave. RAW uses exact sensor saturation; JPEG/HEIC use encoded near-endpoint
+  samples. TIFF, PNG, and other formats disable only the red triangle as unavailable.
   The latched image carries one muted, chrome-less `CLIPPING · HIGHLIGHTS / FLOOR` line;
   toggling also uses the standard 1.5-second feedback toast.
 - **Zoom is device-true and original-relative.** `ZoomLevel = 1.0` maps one original

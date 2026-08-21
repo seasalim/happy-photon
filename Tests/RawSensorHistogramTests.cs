@@ -65,6 +65,40 @@ public sealed class RawSensorHistogramTests
     }
 
     [Fact]
+    public void SourceMask_UsesTheExactHistogramSaturationPredicate()
+    {
+        var frame = Frame(width: 4, height: 2, maximum: 4095);
+        frame.SetVisible(
+        [
+            4094, 4095, 4096, 100,
+            4095, 4094, 4095, 4096
+        ]);
+
+        var artifacts = RawSensorHistogram.SampleArtifacts(
+            frame,
+            CancellationToken.None,
+            workerLimit: 2,
+            saturationWidth: 4,
+            saturationHeight: 2)!;
+        var mask = artifacts.SourceSaturation!;
+        long red = 0, green = 0, blue = 0;
+        for (var y = 0; y < mask.Height; y++)
+        for (var x = 0; x < mask.Width; x++)
+        {
+            var flags = mask.GetFlags(x, y);
+            if ((flags & 1) != 0) red++;
+            if ((flags & 2) != 0) green++;
+            if ((flags & 4) != 0) blue++;
+        }
+
+        Assert.Equal(artifacts.Histogram.Clipping!.Red, red);
+        Assert.Equal(artifacts.Histogram.Clipping.Green, green);
+        Assert.Equal(artifacts.Histogram.Clipping.Blue, blue);
+        Assert.Equal(0, mask.GetFlags(0, 0));
+        Assert.NotEqual(0, mask.GetFlags(1, 0));
+    }
+
+    [Fact]
     public void XTrans_UsesAllThirtySixVisibleOriginPositions()
     {
         var xtrans = Enumerable.Range(0, 36)

@@ -200,12 +200,13 @@ orders above the observed difference.
 10. **Working-space suites:** `RawWorkingSpaceTests` proves the built-in
     characterization against the LibRaw Rec.2020 comparator, pins the `cam_xyz`
     semantic oracle under `LibRawOutputConfiguration.LinearCameraNative`
-    (`output_color` 0), and preserves near-clip meaning;
+    (`output_color` 0);
     `StandardWorkingSpaceTests` checks the external sRGB-profile target, native P3
     gamut vectors, the thumbnail sRGB-proxy limit, and the one-code JPEG identity gate.
 11. **RAW histogram suites:** synthetic Bayer/X-Trans geometry, black-level, sRGB-bin,
-    clipping, lookup-cap, and cancellation cases; six-fixture typed-frame oracle parity;
-    loader fault/invariance checks; exact held-base accessor and refresh identity; and
+    clipping, spatial source-saturation predicate parity, lookup-cap, and cancellation
+    cases; six-fixture typed-frame oracle parity; loader fault plus decode-setting/profile
+    mask-and-stat invariance; exact held-base accessor and refresh identity; and
     headless preferred/effective plus 16-photosite presentation boundaries.
 12. **Waveform suites:** pure accumulator tests pin the 256×128 grid, column mapping,
     level boundaries, Rec.601 parity, narrow-source back-fill, histogram-bin invariance,

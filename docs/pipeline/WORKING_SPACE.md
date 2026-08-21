@@ -119,9 +119,9 @@ selects sRGB.
 
 The crossing's normalize/fold machinery applies only to `M_inset · M_WB` (or `M_WB`
 for crossing off), with the fold refunded by the active tone regime. Target matrices
-never affect shared edits. Scene-referred RAW highlight statistics sample after WB and
-exposure but before the inset; `RawNearClip` keeps its legacy decoded display-basis
-meaning (RENDER.md §7).
+never affect shared edits. Source-saturation highlights are loader artifacts captured
+before this working-space pipeline and are only geometrically projected during render;
+display-floor statistics sample the finalized selected output (RENDER.md §7).
 
 ### 5.1 Perceptual chroma derivation and gamut projection
 

@@ -283,11 +283,12 @@ Start with the largest problem and make the smallest adjustment that solves it:
 Watch the photograph first and use the histogram as supporting information.
 Avoid correcting the histogram merely to make it fill the graph.
 
-The display histogram's right triangle reports output highlights at or above 253/255
-for every source. The left triangle reports pixels at the display floor. Hover either
-triangle to peek that side over the photograph, or press `J` in Develop to latch the
-clipping overlay. Red marks output highlights and blue marks the display floor; both
-respond as edits change the rendered output.
+The display histogram's right triangle reports source saturation: exact sensor maximum
+for RAW, or encoded near-white samples for JPEG/HEIC. TIFF, PNG, and other formats show
+that side as unavailable. The left triangle reports pixels at the finalized display
+floor. Hover an available triangle to peek that side over the photograph, or press `J`
+in Develop to latch the clipping overlay. Red stays fixed across tonal and color edits
+apart from geometry; blue responds as edits change the rendered output.
 
 ### Shape the color
 

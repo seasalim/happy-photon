@@ -82,6 +82,9 @@ public sealed class StandardBaseLoader : IBaseImageLoader
                     native.Orientation);
             }
 
+            var sourceSaturation = preview
+                ? TryCaptureSourceSaturation(image, file, cancellationToken)
+                : null;
             var profile = image.GetColorProfile();
             var hadProfile = profile != null;
             var profileDescription = profile == null
@@ -113,7 +116,8 @@ public sealed class StandardBaseLoader : IBaseImageLoader
                 var pair = PreviewBasePairFactory.Create(
                     image,
                     info,
-                    cancellationToken);
+                    cancellationToken,
+                    sourceSaturation);
                 return new LoadedBases(pair, null);
             }
 
@@ -202,6 +206,40 @@ public sealed class StandardBaseLoader : IBaseImageLoader
                 "Unable to tag working-space pixels as linear RGB.");
         }
     }
+
+    private static SourceSaturationMask? TryCaptureSourceSaturation(
+        MagickImage image,
+        ImageFile file,
+        CancellationToken cancellationToken)
+    {
+        if (!IsJpeg(file) && !IsHeic(file)) return null;
+        try
+        {
+            var encodedMaximum = IsJpeg(file)
+                ? byte.MaxValue
+                : MaximumForDepth(image.Depth);
+            return SourceSaturationMask.CaptureEncoded(
+                image,
+                encodedMaximum,
+                BaseImage.LargePreviewMaxDimension,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            LogDebug(
+                nameof(StandardBaseLoader),
+                $"Source saturation capture failed: {exception.Message}",
+                file.FilePath);
+            return null;
+        }
+    }
+
+    private static uint? MaximumForDepth(uint depth) =>
+        depth is >= 1 and <= 16 ? (1u << checked((int)depth)) - 1 : null;
 
     private static (int Width, int Height) GetOrientedDimensions(
         int width,

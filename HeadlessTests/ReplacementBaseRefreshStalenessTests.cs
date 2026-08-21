@@ -53,7 +53,7 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
                 ChannelClip.Empty,
                 0,
                 1,
-                0),
+                IsHighAvailable: false),
             isRawSource: false,
             clippingMask: staleMask);
 
