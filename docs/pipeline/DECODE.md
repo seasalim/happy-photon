@@ -115,7 +115,9 @@ At the same seam, after camera-fact copying and before `ConfigureOutput`/`Proces
 `RawSensorFrame` combines the typed bridge sensor identity with a zero-copy
 `BorrowMosaic` lease, always released before `Process` (a held lease intentionally
 makes native process/recycle calls reject). `RawSensorHistogram` then scans the
-visible photosites once on the existing decode worker and token, checking cancellation
+visible photosites once, synchronously on the decode call and token: rows are chunked
+across parallel workers whose per-worker bins merge into order-independent integer
+sums, so the histogram is bit-identical for any worker count. Cancellation is checked
 every 256 visible rows and immediately before processing. Cancellation escapes the
 loader; any other sampling/access fault is logged once and leaves a valid decoded base
 with a null RAW fact. Only integer CFA mosaics described by Bayer `filters > 1000` or

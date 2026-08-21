@@ -23,7 +23,8 @@ public static class RawSensorHistogram
 
     internal static HistogramData? Sample(
         IRawSensorFrame frame,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? workerLimit = null)
     {
         ArgumentNullException.ThrowIfNull(frame);
         if (!TryGetCfaPeriod(frame, out var cfaRows, out var cfaColumns))
@@ -57,56 +58,89 @@ public static class RawSensorHistogram
         var left = checked((int)frame.LeftMargin);
         var width = checked((int)frame.VisibleWidth);
         var height = checked((int)frame.VisibleHeight);
-        var samples = frame.Samples;
 
-        for (var row = 0; row < height; row++)
-        {
-            if ((row & 255) == 0)
+        // Chunked rows with per-worker bins merged under a lock: integer
+        // merges are order-independent, so bins are bit-identical for any
+        // worker count.
+        var workers = workerLimit ?? WorkerCount(checked(width * height));
+        var sync = new object();
+        Parallel.For(
+            0,
+            workers,
+            new ParallelOptions { CancellationToken = cancellationToken },
+            worker =>
             {
-                cancellationToken.ThrowIfCancellationRequested();
-            }
+                var (startRow, endRow) = ChunkRange(height, worker, workers);
+                var workerRed = new int[red.Length];
+                var workerGreen = new int[green.Length];
+                var workerBlue = new int[blue.Length];
+                long workerRedClipped = 0;
+                long workerGreenClipped = 0;
+                long workerBlueClipped = 0;
+                var samples = frame.Samples;
+                for (var row = startRow; row < endRow; row++)
+                {
+                    if ((row & 255) == 0)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
 
-            var rowStart = checked((top + row) * pitch + left);
-            var phaseRow = row % phaseRows;
-            var phaseColumn = 0;
-            for (var column = 0; column < width; column++)
-            {
-                var value = samples[rowStart + column];
-                var phase = phaseRow * phaseColumns + phaseColumn;
-                if (++phaseColumn == phaseColumns) phaseColumn = 0;
-                int channel;
-                int bin;
-                if (fused != null)
-                {
-                    var packed = fused[phase * SensorValueCount + value];
-                    channel = packed >> 8;
-                    bin = packed & 255;
-                }
-                else
-                {
-                    channel = channels[phase];
-                    bin = Encode(value, blacks[phase], white, encoded!);
+                    var rowStart = checked((top + row) * pitch + left);
+                    var phaseRow = row % phaseRows;
+                    var phaseColumn = 0;
+                    for (var column = 0; column < width; column++)
+                    {
+                        var value = samples[rowStart + column];
+                        var phase = phaseRow * phaseColumns + phaseColumn;
+                        if (++phaseColumn == phaseColumns) phaseColumn = 0;
+                        int channel;
+                        int bin;
+                        if (fused != null)
+                        {
+                            var packed = fused[phase * SensorValueCount + value];
+                            channel = packed >> 8;
+                            bin = packed & 255;
+                        }
+                        else
+                        {
+                            channel = channels[phase];
+                            bin = Encode(value, blacks[phase], white, encoded!);
+                        }
+
+                        switch (channel)
+                        {
+                            case 0:
+                                workerRed[bin]++;
+                                if (value >= white) workerRedClipped++;
+                                break;
+                            case 1:
+                                workerGreen[bin]++;
+                                if (value >= white) workerGreenClipped++;
+                                break;
+                            case 2:
+                                workerBlue[bin]++;
+                                if (value >= white) workerBlueClipped++;
+                                break;
+                            default:
+                                throw new InvalidDataException(
+                                    "The CFA channel is invalid.");
+                        }
+                    }
                 }
 
-                switch (channel)
+                lock (sync)
                 {
-                    case 0:
-                        red[bin]++;
-                        if (value >= white) redClipped++;
-                        break;
-                    case 1:
-                        green[bin]++;
-                        if (value >= white) greenClipped++;
-                        break;
-                    case 2:
-                        blue[bin]++;
-                        if (value >= white) blueClipped++;
-                        break;
-                    default:
-                        throw new InvalidDataException("The CFA channel is invalid.");
+                    for (var bin = 0; bin < workerRed.Length; bin++)
+                    {
+                        red[bin] += workerRed[bin];
+                        green[bin] += workerGreen[bin];
+                        blue[bin] += workerBlue[bin];
+                    }
+                    redClipped += workerRedClipped;
+                    greenClipped += workerGreenClipped;
+                    blueClipped += workerBlueClipped;
                 }
-            }
-        }
+            });
 
         cancellationToken.ThrowIfCancellationRequested();
         histogram.Clipping = new RawClipping(
@@ -115,6 +149,16 @@ public static class RawSensorHistogram
         histogram.Normalize();
         return histogram;
     }
+
+    private static int WorkerCount(int pixelCount) =>
+        Math.Min(Environment.ProcessorCount, Math.Max(1, pixelCount / 8192));
+
+    private static (int Start, int End) ChunkRange(
+        int rows,
+        int worker,
+        int workers) =>
+        ((int)((long)rows * worker / workers),
+            (int)((long)rows * (worker + 1) / workers));
 
     internal static bool UsesFusedLookup(
         int cfaRows,

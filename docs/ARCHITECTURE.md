@@ -540,8 +540,9 @@ threading and ownership view:
   selection or mode changes retire them. When a resting bitmap replaces the current
   1600 bitmap, ownership of the displaced bitmap moves to `PreviewService` until
   cache promotion or invalidation.
-- A RAW preview/full base performs one single-threaded visible-mosaic pass between
-  LibRaw `Unpack` and `Process` on the decode worker, releasing the native mosaic
+- A RAW preview/full base performs one visible-mosaic pass between LibRaw `Unpack`
+  and `Process` — row-chunked across parallel workers with bit-identical merged
+  bins, completing synchronously on the decode call — releasing the native mosaic
   lease before processing; the optional sensor histogram is stored on
   `BaseImageInfo`, and its non-blocking accessor cannot decode, read, or hydrate a
   source.

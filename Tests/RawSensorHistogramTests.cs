@@ -99,11 +99,75 @@ public sealed class RawSensorHistogramTests
     }
 
     [Fact]
+    public void ParallelSampling_MatchesSequentialReferenceAcrossChunkBoundaries()
+    {
+        // 64 x 509 = 32,576 pixels: multiple row chunks in the parallelized
+        // sampling loop, with a prime row count so no worker count divides the
+        // rows evenly. The reference bins below re-derive the RGGB assignment
+        // and encoding sequentially.
+        const int width = 64;
+        const int height = 509;
+        var frame = Frame(width: width, height: height);
+        var random = new Random(271);
+        var values = new ushort[width * height];
+        for (var index = 0; index < values.Length; index++)
+        {
+            values[index] = checked((ushort)random.Next(0, 4096));
+        }
+        frame.SetVisible(values);
+
+        var expected = new[] { new int[256], new int[256], new int[256] };
+        var expectedClipped = new long[3];
+        for (var row = 0; row < height; row++)
+        {
+            for (var column = 0; column < width; column++)
+            {
+                var value = values[row * width + column];
+                var channel = (row & 1) == 0
+                    ? (column & 1) == 0 ? 0 : 1
+                    : (column & 1) == 0 ? 1 : 2;
+                expected[channel][ExpectedBin(value, 0, 4095)]++;
+                if (value >= 4095) expectedClipped[channel]++;
+            }
+        }
+
+        // Ambient worker count plus forced caps 1 and 4: single-worker output
+        // must match the reference, and chunked runs must be bit-identical to
+        // it even on machines whose ambient count collapses to one worker.
+        foreach (var workerLimit in new int?[] { null, 1, 4 })
+        {
+            var histogram = RawSensorHistogram.Sample(
+                frame, default, workerLimit)!;
+
+            Assert.Equal(expected[0], histogram.Red);
+            Assert.Equal(expected[1], histogram.Green);
+            Assert.Equal(expected[2], histogram.Blue);
+            Assert.Equal(expectedClipped[0], histogram.Clipping!.Red);
+            Assert.Equal(expectedClipped[1], histogram.Clipping.Green);
+            Assert.Equal(expectedClipped[2], histogram.Clipping.Blue);
+            Assert.Equal(width * height, histogram.Clipping.TotalVisibleSamples);
+        }
+    }
+
+    [Fact]
     public void Cancellation_IsObservedAtRowBoundary()
     {
         var frame = Frame(width: 1, height: 257);
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
+
+        Assert.Throws<OperationCanceledException>(() =>
+            RawSensorHistogram.Sample(frame, cancellation.Token));
+    }
+
+    [Fact]
+    public void CancellationInsideWorker_SurfacesOperationCanceledException()
+    {
+        var frame = Frame(width: 1, height: 257);
+        using var cancellation = new CancellationTokenSource();
+        // Cancel from the worker's own samples fetch so the token trips at the
+        // in-loop row check rather than in Parallel.For's entry check.
+        frame.OnSamples = cancellation.Cancel;
 
         Assert.Throws<OperationCanceledException>(() =>
             RawSensorHistogram.Sample(frame, cancellation.Token));
@@ -172,9 +236,16 @@ public sealed class RawSensorHistogramTests
         public uint[] CBlack { get; } = new uint[4104];
         IReadOnlyList<uint> IRawSensorFrame.CBlack => CBlack;
         public bool ThrowOnSamples { get; set; }
-        public Span<ushort> Samples => ThrowOnSamples
-            ? throw new InvalidOperationException()
-            : _samples;
+        public Action? OnSamples { get; set; }
+        public Span<ushort> Samples
+        {
+            get
+            {
+                if (ThrowOnSamples) throw new InvalidOperationException();
+                OnSamples?.Invoke();
+                return _samples;
+            }
+        }
 
         public void SetVisible(IReadOnlyList<ushort> values)
         {
