@@ -54,19 +54,6 @@ public partial class MainWindowViewModel
         }
     }
 
-    public async Task InitializeFolderTreeAsync(string? navigateToPath = null)
-    {
-        var picturesPath = _folderTreeService.GetAvailablePicturesPath();
-        if (picturesPath == null)
-        {
-            SelectedFolder = null;
-            RootFolders = new ObservableCollection<FolderNode>();
-            return;
-        }
-
-        await InitializeFolderTreeWithRootAsync(picturesPath, navigateToPath);
-    }
-
     public void ClearFolderTree()
     {
         SelectedFolder = null;

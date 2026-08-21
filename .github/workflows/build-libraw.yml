@@ -55,11 +55,10 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-  # The 0.21.1 managed baseline job is retired: its dated baselines are
-  # recorded permanently in licenses/LibRaw-runtime-audit.md, and the
-  # per-RID build jobs carry the paired native performance gate. The
-  # migrated 0.22.2 application probe runs outside this workflow as
-  # checkpoint evidence.
+  # The 0.21.1 performance baseline is fully retired: its dated results are
+  # recorded permanently in licenses/LibRaw-runtime-audit.md. Per-RID build
+  # jobs record candidate-only native performance and peak-memory
+  # measurements for the built runtime.
 
   build:
     name: Build and validate (${{ matrix.rid }})
@@ -118,7 +117,7 @@ jobs:
           ./native/libraw/build-${{ matrix.rid }}.ps1 `
             -VcpkgRoot "${{ runner.temp }}/vcpkg" `
             -PackageVersion "${{ needs.preflight.outputs.version }}"
-      - name: Run native performance gate
+      - name: Record native performance measurements
         shell: pwsh
         run: |
           ./native/libraw/run-performance.ps1 `

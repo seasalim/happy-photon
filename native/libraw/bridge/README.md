@@ -83,19 +83,15 @@ distributable runtime. Revision `0.22.2.0` is reserved for explicitly
 non-candidate developer builds; workflow candidates must use a positive,
 never-reused `github.run_number` revision.
 
-Run the paired baseline/candidate performance processes after the candidate
-runtime is staged:
+Record candidate performance after the candidate runtime is staged:
 
 ```powershell
 ./native/libraw/run-performance.ps1 -RuntimeDirectory artifacts/libraw/win-x64/runtime -OutputDirectory artifacts/libraw/win-x64/performance
 ```
 
-The comparison fails when at least two of three paired samples and their median
-show an elapsed-time or native-process peak-memory regression above 10%.
-Managed-host absolute peaks, host baselines, and deltas remain in both reports
-as context but are not a gate because the baseline and candidate test hosts
-have different heaps. The accepted memory gate runs lean native probes against
-the audited 0.21.1 runtime and the staged bridge candidate and records their
-absolute platform peak plus pre-decode host baseline.
+The managed harness records elapsed decode times, and a lean native probe
+records the absolute platform peak plus pre-decode host baseline for the
+staged bridge candidate. The 0.21.1 baseline comparison is retired; its dated
+results are recorded in `licenses/LibRaw-runtime-audit.md`.
 Finally, `assemble_candidate.py` consumes all three per-RID artifact roots and
 creates the uncommitted multi-RID `.nupkg` candidate plus combined provenance.

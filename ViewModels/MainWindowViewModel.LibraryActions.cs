@@ -173,14 +173,6 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private async Task PickImageAsync()
-    {
-        if (IsFullScreenMode) return;
-
-        await SetFlagStateAsync(ImageFlag.Picked);
-    }
-
-    [RelayCommand]
     private async Task TogglePickedImageAsync()
     {
         if (IsFullScreenMode) return;

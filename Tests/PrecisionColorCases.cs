@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text;
 using HappyPhoton.Services;
 using Xunit;
 
@@ -7,10 +5,6 @@ namespace HappyPhoton.Tests;
 
 internal static class PrecisionColorCases
 {
-    // Published matrices use different rounding precisions. Do not report their
-    // neutral-white closure error as a Q16 range clip.
-    private const double MatrixReferenceEdgeTolerance = 0.001;
-
     internal static readonly double[,] SrgbToXyzD65 =
         RgbColorSpaceMatrices.LinearSrgbToXyzD65DerivedExact;
 
@@ -30,145 +24,6 @@ internal static class PrecisionColorCases
         { 0.2880402, 0.7118741, 0.0000857 },
         { 0.0000000, 0.0000000, 0.8252100 }
     };
-
-    public static void RunWidePrimaries(
-        StringBuilder payload,
-        PrecisionCensusManifest manifest)
-    {
-        var population = manifest.Population("wide-space-representative-colors");
-        AppendDefinitions(payload);
-        RunSpace(
-            payload,
-            population,
-            "rec2020-linear-d65",
-            Multiply(Invert(Rec2020ToXyzD65), SrgbToXyzD65),
-            manifest.WideColors);
-        RunSpace(
-            payload,
-            population,
-            "romm-linear-d50",
-            Multiply(
-                Invert(RommToXyzD50),
-                Multiply(BradfordD65ToD50, SrgbToXyzD65)),
-            manifest.WideColors);
-    }
-
-    private static void RunSpace(
-        StringBuilder payload,
-        PrecisionPopulationManifest population,
-        string space,
-        double[,] toWide,
-        IReadOnlyList<PrecisionWideColorManifest> colors)
-    {
-        var fromWide = Invert(toWide);
-        var referenceEncoded = new double[colors.Count * 3];
-        var actualEncoded = new double[colors.Count * 3];
-        var clippedPixels = new bool[colors.Count];
-        var negative = 0;
-        var above = 0;
-        for (var pixel = 0; pixel < colors.Count; pixel++)
-        {
-            var source = colors[pixel].LinearSrgb;
-            var wide = Transform(toWide, source);
-            var stored = new double[3];
-            for (var channel = 0; channel < 3; channel++)
-            {
-                negative += wide[channel] < -MatrixReferenceEdgeTolerance ? 1 : 0;
-                above += wide[channel] > 1 + MatrixReferenceEdgeTolerance ? 1 : 0;
-                clippedPixels[pixel] |=
-                    wide[channel] < -MatrixReferenceEdgeTolerance ||
-                    wide[channel] > 1 + MatrixReferenceEdgeTolerance;
-                stored[channel] = Math.Round(
-                    Math.Clamp(wide[channel], 0, 1) * ushort.MaxValue,
-                    MidpointRounding.AwayFromZero) / ushort.MaxValue;
-            }
-            var roundTrip = Transform(fromWide, stored);
-            for (var channel = 0; channel < 3; channel++)
-            {
-                var offset = pixel * 3 + channel;
-                referenceEncoded[offset] = SrgbEncode(source[channel]);
-                actualEncoded[offset] = SrgbEncode(
-                    Math.Clamp(roundTrip[channel], 0, 1));
-            }
-        }
-
-        var quality = PrecisionBoundaryCensus.AnalyzePhotographicQuality(
-            actualEncoded,
-            referenceEncoded,
-            colors.Count,
-            1,
-            clippedPixels);
-        payload.Append("CENSUS_POPULATION case=case-2-wide-primaries")
-            .Append(" id=").Append(population.Id)
-            .Append(" kind=").Append(population.Kind)
-            .Append(" rowSemantics=").Append(population.RowSemantics)
-            .Append(" intensity=").Append(population.Intensity).AppendLine();
-        payload.Append("CENSUS_WIDE case=case-2-wide-primaries")
-            .Append(" population=").Append(population.Id)
-            .Append(" space=").Append(space)
-            .Append(" operation=pure-encoding-round-trip")
-            .Append(" pipelineStagesRun=0")
-            .Append(" transfer=linear")
-            .Append(" matrixReferenceEdgeTolerance=0.001")
-            .Append(" channelSamples=").Append(colors.Count * 3)
-            .Append(" negativeClips=").Append(negative)
-            .Append(" aboveWhiteClips=").Append(above)
-            .Append(" clipBasis=exact-full-population")
-            .Append(" plannedStageContractLoss=")
-            .Append(negative + above > 0 ? "true" : "false")
-            .AppendLine();
-        PrecisionEvidenceReport.AppendQuality(
-            payload,
-            "case-2-wide-primaries",
-            population.Id,
-            space,
-            quality,
-            phaseZeroThresholdCrossed: false,
-            plannedStageContractLoss: negative + above > 0);
-    }
-
-    private static void AppendDefinitions(StringBuilder payload)
-    {
-        payload.AppendLine(
-            "CENSUS_COLOR_SCIENCE spaces=linear-srgb,linear-rec2020,linear-romm " +
-            "srgbWhite=D65 rec2020White=D65 rommWhite=D50 " +
-            "adaptation=Bradford-D65-to-D50 deltaE=CIEDE2000 " +
-            "comparisonWhite=CIE-D65-2-degree-observer deltaEInput=encoded-srgb");
-        payload.AppendLine(
-            "CENSUS_CHROMATICITIES space=linear-srgb " +
-            "r=0.6400,0.3300 g=0.3000,0.6000 b=0.1500,0.0600 w=0.3127,0.3290");
-        payload.AppendLine(
-            "CENSUS_CHROMATICITIES space=linear-rec2020 " +
-            "r=0.7080,0.2920 g=0.1700,0.7970 b=0.1310,0.0460 w=0.3127,0.3290");
-        payload.AppendLine(
-            "CENSUS_CHROMATICITIES space=linear-romm " +
-            "r=0.7347,0.2653 g=0.1596,0.8404 b=0.0366,0.0001 w=0.3457,0.3585");
-        AppendMatrix(payload, "srgb-to-xyz-d65", SrgbToXyzD65);
-        AppendMatrix(payload, "rec2020-to-xyz-d65", Rec2020ToXyzD65);
-        AppendMatrix(payload, "bradford-d65-to-d50", BradfordD65ToD50);
-        AppendMatrix(payload, "romm-to-xyz-d50", RommToXyzD50);
-    }
-
-    private static void AppendMatrix(
-        StringBuilder payload,
-        string name,
-        double[,] matrix)
-    {
-        payload.Append("CENSUS_MATRIX name=").Append(name).Append(" values=");
-        for (var row = 0; row < 3; row++)
-        {
-            for (var column = 0; column < 3; column++)
-            {
-                if (row != 0 || column != 0)
-                {
-                    payload.Append(',');
-                }
-                payload.Append(matrix[row, column].ToString(
-                    "R", CultureInfo.InvariantCulture));
-            }
-        }
-        payload.AppendLine();
-    }
 
     internal static double[] Transform(double[,] matrix, double[] value) =>
     [
@@ -203,10 +58,6 @@ internal static class PrecisionColorCases
             { (d * h - e * g) / determinant, (b * g - a * h) / determinant, (a * e - b * d) / determinant }
         };
     }
-
-    private static double SrgbEncode(double value) => value <= 0.0031308
-        ? 12.92 * value
-        : 1.055 * Math.Pow(value, 1 / 2.4) - 0.055;
 }
 
 public sealed class PrecisionColorCasesTests
@@ -217,24 +68,6 @@ public sealed class PrecisionColorCasesTests
             PrecisionColorCases.SrgbToXyzD65,
             "linear-srgb-d65",
             2e-12);
-
-    [Fact]
-    public void WideRoundTrip_DoesNotCallPublishedMatrixClosureAClip()
-    {
-        var payload = new StringBuilder();
-
-        PrecisionColorCases.RunWidePrimaries(
-            payload,
-            PrecisionCensusManifest.Load());
-
-        var plannedLossRows = payload.ToString()
-            .Split('\n')
-            .Where(line => line.Contains(
-                "plannedStageContractLoss=true",
-                StringComparison.Ordinal))
-            .ToArray();
-        Assert.True(plannedLossRows.Length == 0, string.Join('\n', plannedLossRows));
-    }
 
     [Fact]
     public void PublishedSrgbToRec2020RedVector_IsPinned()

@@ -190,41 +190,14 @@ function Invoke-LibRawNativeBuild {
         "--output-on-failure") (Join-Path $validation "ctest.log")
     if ($Sanitizers) { return }
 
-    $baselineInstalled = Join-Path $work "baseline-vcpkg-installed"
-    $baselineBuild = Join-Path $work "baseline-performance"
-    $baselineFeatures = if ($OpenMp) {
-        "libraw[dng-lossy,openmp]:$Triplet"
-    } else {
-        "libraw[dng-lossy]:$Triplet"
-    }
-    Invoke-Logged $vcpkg @("install", $baselineFeatures,
-        "--overlay-ports=$(Join-Path $PSScriptRoot 'oracle/ports')",
-        "--overlay-triplets=$(Join-Path $PSScriptRoot 'triplets')",
-        "--x-install-root=$baselineInstalled", "--disable-metrics") `
-        (Join-Path $validation "baseline-vcpkg.log")
-    Invoke-Logged "cmake" @("-S", (Join-Path $PSScriptRoot "oracle"),
-        "-B", $baselineBuild, "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release",
-        "-DCMAKE_TOOLCHAIN_FILE=$(Join-Path $VcpkgRoot 'scripts/buildsystems/vcpkg.cmake')",
-        "-DVCPKG_TARGET_TRIPLET=$Triplet", "-DVCPKG_INSTALLED_DIR=$baselineInstalled",
-        "-DVCPKG_MANIFEST_MODE=OFF", "-DHPLR_BUILD_PARITY_ORACLE=OFF",
-        "-DHPLR_USE_REENTRANT=$(if ($Reentrant) {'ON'} else {'OFF'})") `
-        (Join-Path $validation "baseline-performance-configure.log")
-    Invoke-Logged "cmake" @("--build", $baselineBuild, "--config", "Release") `
-        (Join-Path $validation "baseline-performance-build.log")
     $extension = if ($IsWindows) { ".exe" } else { "" }
     $performanceTools = New-Item -ItemType Directory -Path `
         (Join-Path $validation "native-performance")
-    $baselinePerformance = Join-Path $performanceTools "hplr_baseline_performance$extension"
     $candidatePerformance = Join-Path $performanceTools "hplr_candidate_performance$extension"
-    Copy-Item -LiteralPath (Find-SingleFile $baselineBuild `
-        "hplr_baseline_performance$extension") -Destination $baselinePerformance
     Copy-Item -LiteralPath (Find-SingleFile $bridgeBuild `
         "hplr_candidate_performance$extension") -Destination $candidatePerformance
     if ($IsMacOS) {
         $prepareMacExecutable = Join-Path $PSScriptRoot "prepare_macos_executable.py"
-        Invoke-Checked $python @($prepareMacExecutable, "--canonical-libraw",
-            (Join-Path $repoRoot "native/libraw/baseline/osx-arm64/libraw.23.dylib"),
-            "--executable", $baselinePerformance)
         Invoke-Checked $python @($prepareMacExecutable, "--canonical-libraw",
             "libraw.25.dylib", "--executable", $candidatePerformance)
     }

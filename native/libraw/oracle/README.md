@@ -13,8 +13,10 @@ the bridge parity gate. The ABI-23 oracle is a separate process and is never
 co-loaded with the ABI-25 bridge.
 
 Restore the Windows oracle runtime explicitly with
-`native/libraw/fetch-baseline-runtime.ps1 -RuntimeIdentifier win-x64`. The
-script downloads the audited Sdcb runtime package named in the runtime audit,
-verifies its package SHA-256 before extraction, and stages it outside every
-NuGet project graph. Linux uses the same command with `linux-x64`; the audited
-macOS baseline dylib is retained under `native/libraw/baseline/osx-arm64/`.
+`native/libraw/fetch-baseline-runtime.ps1`. The script downloads the audited
+Sdcb runtime package named in the runtime audit, verifies its package SHA-256
+before extraction, and stages it outside every NuGet project graph.
+
+`oracle/ports` deliberately pins the LibRaw 0.21.x port for this extractor and
+diverges from `native/libraw/ports` (the 0.22.2 production port); the two
+overlays are not duplicates.

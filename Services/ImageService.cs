@@ -272,9 +272,6 @@ public class ImageService : IAsyncDisposable
     public void ClearPreviewCache() =>
         _previewService.ClearPreviewCache();
 
-    internal void InvalidatePendingPreviewRenders() =>
-        _previewService.InvalidatePendingRenders();
-
     internal PreviewRenderIdentity? TryGetPreviewRenderIdentity(Bitmap bitmap) =>
         _previewService.TryGetPreviewRenderIdentity(bitmap);
 

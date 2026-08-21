@@ -10,10 +10,6 @@ public partial class MainWindowViewModel
     public Func<string?>? CaptureLibraryViewportAnchor { get; set; }
     public Action<string?>? RestoreLibraryViewportAnchor { get; set; }
 
-    [RelayCommand]
-    private Task ImportCatalog() =>
-        RequestCatalogImportAsync?.Invoke() ?? Task.CompletedTask;
-
     public async Task<LightroomCatalogContents> ReadLightroomCatalogAsync(
         string catalogPath,
         CancellationToken cancellationToken = default)

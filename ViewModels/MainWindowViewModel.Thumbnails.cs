@@ -350,26 +350,6 @@ public partial class MainWindowViewModel
         }
     }
 
-    private void QueueHydratedThumbnail(
-        ImageFile image,
-        int generation,
-        CancellationToken cancellationToken)
-    {
-        var scheduler = _thumbnailScheduler;
-        if (scheduler != null)
-        {
-            image.ThumbnailUpgradeDeferredDimension = 0;
-            image.ThumbnailUpgradeFailedDimension = 0;
-            scheduler.Enqueue([
-                new ThumbnailLoadRequest(image, LibraryThumbnailRequest, 0)]);
-            SignalBackgroundActivityStarted();
-            return;
-        }
-
-        _ = TrackDirectThumbnailOperation(
-            LoadThumbnailAsync(image, generation, cancellationToken));
-    }
-
     internal void ReserveThumbnailResidency(
         IReadOnlyCollection<ImageFile> requested)
     {

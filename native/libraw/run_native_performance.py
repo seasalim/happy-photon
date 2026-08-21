@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run isolated native baseline/candidate probes and enrich managed reports."""
+"""Run the isolated native candidate probe and enrich the managed report."""
 
 from __future__ import annotations
 
@@ -15,11 +15,6 @@ from pathlib import Path
 from prepare_macos_executable import prepare_macos_executable
 
 
-BASELINE_HASHES = {
-    "win-x64": ("raw_r.dll", "F500C0732FEB21B188D5B52CEA05FD824D5B3C8016EB2CA68D8312ACC9F914B9"),
-    "linux-x64": ("libraw_r.so.23", "F42039E9865385F64B708182B5ACA59D39FEB0608467E666103788D3B782E042"),
-    "osx-arm64": ("libraw.23.dylib", "F9A2CA9CEBD3DDBF134123F8DAB0A0A3B67D4CBE44B459346D31FC089B4F89B6"),
-}
 CANDIDATE_LIBRARIES = {
     "win-x64": "raw_r.dll",
     "linux-x64": "libraw_r.so.25",
@@ -53,25 +48,8 @@ def run_set(executable: Path, runtime: Path, fixture: Path,
 
 
 def enrich(path: Path, metric: str, runtime: Path, probe: Path,
-           measurements: list[dict], label: str, rid: str, fixture: Path) -> None:
-    if path.is_file():
-        report = json.loads(path.read_text(encoding="utf-8-sig"))
-    else:
-        report = {
-            "Schema": 2,
-            "Runtime": label,
-            "Rid": rid,
-            "Version": "0.21.1" if label == "baseline" else "0.22.2",
-            "Fixture": fixture.name,
-            "SamplingIntervalMilliseconds": 10,
-            "Measurements": [{
-                **item,
-                "HostBaselinePrivateBytes": item["HostBaselineBytes"],
-                "PeakPrivateBytes": item["PeakProcessBytes"],
-                "PeakPrivateDeltaBytes": item["PeakAboveHostBytes"],
-                "Sha256": item["Checksum"],
-            } for item in measurements],
-        }
+           measurements: list[dict]) -> None:
+    report = json.loads(path.read_text(encoding="utf-8-sig"))
     report["NativeMemory"] = {
         "Metric": metric,
         "AcceptedGate": True,
@@ -85,32 +63,21 @@ def enrich(path: Path, metric: str, runtime: Path, probe: Path,
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--rid", required=True, choices=BASELINE_HASHES)
+    parser.add_argument("--rid", required=True, choices=CANDIDATE_LIBRARIES)
     parser.add_argument("--fixture", required=True, type=Path)
-    parser.add_argument("--baseline-runtime", required=True, type=Path)
     parser.add_argument("--candidate-runtime", required=True, type=Path)
-    parser.add_argument("--baseline-probe", required=True, type=Path)
     parser.add_argument("--candidate-probe", required=True, type=Path)
-    parser.add_argument("--baseline-report", required=True, type=Path)
     parser.add_argument("--candidate-report", required=True, type=Path)
     args = parser.parse_args()
-    name, expected_hash = BASELINE_HASHES[args.rid]
-    baseline_library = args.baseline_runtime / name
-    if not baseline_library.is_file() or sha256(baseline_library) != expected_hash:
-        raise RuntimeError(f"baseline runtime is not the audited {args.rid} LibRaw binary")
-    baseline = run_set(args.baseline_probe.resolve(), args.baseline_runtime.resolve(),
-                       args.fixture.resolve(), name)
     candidate_name = CANDIDATE_LIBRARIES[args.rid]
-    candidate = run_set(args.candidate_probe.resolve(), args.candidate_runtime.resolve(),
-                        args.fixture.resolve(), candidate_name)
     candidate_library = args.candidate_runtime / candidate_name
     if not candidate_library.is_file():
         raise RuntimeError(f"candidate LibRaw runtime is absent: {candidate_library}")
+    candidate = run_set(args.candidate_probe.resolve(), args.candidate_runtime.resolve(),
+                        args.fixture.resolve(), candidate_name)
     metric = "peak-private-commit" if args.rid == "win-x64" else "peak-resident-set"
-    enrich(args.baseline_report, metric, baseline_library, args.baseline_probe,
-           baseline, "baseline", args.rid, args.fixture)
     enrich(args.candidate_report, metric, candidate_library, args.candidate_probe,
-           candidate, "candidate", args.rid, args.fixture)
+           candidate)
 
 
 if __name__ == "__main__":

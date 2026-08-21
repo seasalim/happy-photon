@@ -179,20 +179,6 @@ public partial class CatalogService : IDisposable
         }
     }
 
-    public async Task ReopenAsync(AppDataLocations locations)
-    {
-        await _connectionGate.WaitAsync();
-        try
-        {
-            CloseConnection();
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
-        await InitializeAsync(locations);
-    }
-
     private void EnsureInitialized()
     {
         if (!_initialized)

@@ -1,37 +1,21 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [ValidateSet("win-x64", "linux-x64", "osx-arm64")]
-    [string]$RuntimeIdentifier,
     [string]$OutputDirectory
 )
 
+# Restores the audited LibRaw 0.21.1 Windows runtime for the manual ABI-23
+# parity oracle (see oracle/README.md). Nothing in the automated builds uses it.
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 if (-not $OutputDirectory) {
-    $OutputDirectory = Join-Path $repoRoot "artifacts/libraw/baseline/$RuntimeIdentifier"
+    $OutputDirectory = Join-Path $repoRoot "artifacts/libraw/baseline/win-x64"
 }
 $output = [IO.Path]::GetFullPath($OutputDirectory)
 [IO.Directory]::CreateDirectory($output) | Out-Null
 
-if ($RuntimeIdentifier -eq "osx-arm64") {
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "baseline/osx-arm64/libraw.23.dylib") `
-        -Destination $output -Force
-    Write-Output $output
-    return
-}
-
-$package = if ($RuntimeIdentifier -eq "win-x64") {
-    "sdcb.libraw.runtime.win64"
-} else {
-    "sdcb.libraw.runtime.linux64"
-}
-$expectedHash = if ($RuntimeIdentifier -eq "win-x64") {
-    "92DC2418F4DD888AB4E0FB6CB7D8FDA98B9ECA94EBFC00EAE9F216883DA16EB8"
-} else {
-    "E1F771B685610FCE195FC591456FA4BBF567AE28E540E47BC0AC1A170F1367C9"
-}
+$package = "sdcb.libraw.runtime.win64"
+$expectedHash = "92DC2418F4DD888AB4E0FB6CB7D8FDA98B9ECA94EBFC00EAE9F216883DA16EB8"
 $temporary = Join-Path ([IO.Path]::GetTempPath()) "happy-photon-$([guid]::NewGuid().ToString('N')).nupkg"
 try {
     $url = "https://api.nuget.org/v3-flatcontainer/$package/0.21.1/$package.0.21.1.nupkg"
@@ -43,7 +27,7 @@ try {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $archive = [IO.Compression.ZipFile]::OpenRead($temporary)
     try {
-        $prefix = "runtimes/$RuntimeIdentifier/native/"
+        $prefix = "runtimes/win-x64/native/"
         foreach ($entry in $archive.Entries) {
             if ($entry.FullName.StartsWith($prefix) -and $entry.Name) {
                 $target = Join-Path $output $entry.Name

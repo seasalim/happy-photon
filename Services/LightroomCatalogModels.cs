@@ -96,7 +96,6 @@ public sealed record CatalogImportReport(
     IReadOnlyList<string> InformationalOutcomes,
     bool IsUnverifiedVersion)
 {
-    public bool HasChanges => UpdatedPhotos > 0;
     public bool NothingToImport => SourceVerdictPhotos == 0;
     public bool NothingMatched => SourceVerdictPhotos > 0 && MatchedPhotos == 0;
 }

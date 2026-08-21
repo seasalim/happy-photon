@@ -161,8 +161,6 @@ public partial class MainWindowViewModel
         StartupGateState = StartupGateState.Ready;
     }
 
-    public void SetFirstRunError(string message) => FirstRunErrorMessage = message;
-
     [RelayCommand(CanExecute = nameof(CanContinueFirstRun))]
     private async Task ContinueFirstRunAsync()
     {

@@ -185,3 +185,11 @@ Official references:
 
 - [GitHub artifact attestations](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations)
 - [Apple notarization](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution)
+
+## Website
+
+GitHub Pages deploys the site from `site/` via `.github/workflows/pages.yml`
+(`scripts/build-site.ps1` + `scripts/check-site.ps1`). The committed webp
+screenshots under `site/assets/images/` are regenerated from
+`docs/screenshots/` with `dotnet run --file scripts/generate-site-images.cs`
+when a screenshot changes; Pages builds never run the app.

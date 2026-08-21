@@ -36,18 +36,6 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private void ZoomIn()
-    {
-        ApplyManualZoom(ZoomLevel * 1.25);
-    }
-
-    [RelayCommand]
-    private void ZoomOut()
-    {
-        ApplyManualZoom(ZoomLevel / 1.25);
-    }
-
-    [RelayCommand]
     private void RotateLeft()
     {
         if (!CanEditSelectedImage || SelectedImage == null) return;
@@ -256,12 +244,6 @@ public partial class MainWindowViewModel
         }
 
         return CropGeometry.SafeBoundsAfterRotation(width, height, HorizonRotation);
-    }
-
-    [RelayCommand]
-    private void ZoomActual()
-    {
-        ApplyManualZoom(1.0);
     }
 
     public void AdjustZoom(double delta)

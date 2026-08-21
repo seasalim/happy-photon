@@ -56,14 +56,6 @@ public static class XmpSidecarPaths
             ambiguous);
     }
 
-    public static bool IsCandidateName(string sidecarPath, string imagePath)
-    {
-        var full = imagePath + ".xmp";
-        var baseName = Path.ChangeExtension(imagePath, ".xmp");
-        return string.Equals(sidecarPath, full, StringComparison.OrdinalIgnoreCase) ||
-               string.Equals(sidecarPath, baseName, StringComparison.OrdinalIgnoreCase);
-    }
-
     private static void AddExisting(
         ICollection<XmpSidecarCandidate> candidates,
         string path,

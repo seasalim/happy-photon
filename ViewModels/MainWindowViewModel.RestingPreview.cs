@@ -22,7 +22,6 @@ public partial class MainWindowViewModel
     private int _restingPaintCount;
 
     internal int RequiredDeviceLongEdge => _requiredDeviceLongEdge;
-    internal int RestingSatisfiedLongEdge => _restingSatisfiedLongEdge;
     internal int RestingPaintCount => Volatile.Read(ref _restingPaintCount);
     internal bool HasArmedRestingRender =>
         Volatile.Read(ref _restingRenderCts) != null;

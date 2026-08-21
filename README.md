@@ -39,8 +39,8 @@ favorite agent to converse and cull your images.
 
 **No images are ever sent to the model - thus, the Agent stays blind to the actual pixels**
 
-[![PixelBlind finding images with clipped highlights and marking them as
-rejected in Happy Photon](docs/screenshots/PixelBlind_Demo.webp)](docs/screenshots/Screen%20Recording_PixelBlind.mp4)
+![PixelBlind finding images with clipped highlights and marking them as
+rejected in Happy Photon](docs/screenshots/PixelBlind_Demo.webp)
 
 | Agent-visible | Blocked |
 | --- | --- |

@@ -100,7 +100,4 @@ public sealed partial class PreviewService
             cancellationToken).ConfigureAwait(false);
         return artifacts.DetachLegacyResult();
     }
-
-    internal void InvalidatePendingRenders() =>
-        Interlocked.Increment(ref _renderGeneration);
 }

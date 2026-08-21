@@ -1,7 +1,6 @@
 param(
     [Parameter(Mandatory)] [string] $RuntimeDirectory,
     [Parameter(Mandatory)] [string] $OutputDirectory,
-    [string] $BaselineRuntimeDirectory,
     [string] $Configuration = "Release")
 
 Set-StrictMode -Version Latest
@@ -14,7 +13,6 @@ $output = if ([IO.Path]::IsPathFullyQualified($OutputDirectory)) {
     [IO.Path]::GetFullPath((Join-Path $repoRoot $OutputDirectory))
 }
 New-Item -ItemType Directory -Path $output -Force | Out-Null
-$baseline = Join-Path $output "baseline-performance.json"
 $candidate = Join-Path $output "candidate-performance.json"
 $oldPerf, $oldIsolated = $env:HAPPY_PHOTON_NATIVE_PERF, $env:HAPPY_PHOTON_NATIVE_PERF_ISOLATED
 $oldOutput, $oldRuntime = $env:HAPPY_PHOTON_NATIVE_PERF_OUTPUT, $env:HAPPY_PHOTON_LIBRAW_BRIDGE_DIR
@@ -37,27 +35,14 @@ $python = if ($IsWindows) { "python" } elseif (Get-Command python3 -ErrorAction 
 } else { "python" }
 $candidateData = Get-Content -Raw -LiteralPath $candidate | ConvertFrom-Json
 $rid = $candidateData.Rid
-$baselineRuntime = if ($BaselineRuntimeDirectory) {
-    (Resolve-Path $BaselineRuntimeDirectory).Path
-} else {
-    & (Join-Path $PSScriptRoot "fetch-baseline-runtime.ps1") -RuntimeIdentifier $rid
-}
 $extension = if ($rid -eq "win-x64") { ".exe" } else { "" }
 $tools = Join-Path (Split-Path $runtime -Parent) "validation/native-performance"
-$baselineProbe = Join-Path $tools "hplr_baseline_performance$extension"
 $candidateProbe = Join-Path $tools "hplr_candidate_performance$extension"
-foreach ($path in @($baselineRuntime, $baselineProbe, $candidateProbe)) {
-    if (-not (Test-Path -LiteralPath $path)) {
-        throw "Native performance input is missing: $path. Rebuild the RID candidate."
-    }
+if (-not (Test-Path -LiteralPath $candidateProbe)) {
+    throw "Native performance input is missing: $candidateProbe. Rebuild the RID candidate."
 }
 & $python (Join-Path $PSScriptRoot "run_native_performance.py") `
     --rid $rid --fixture (Join-Path $repoRoot "Tests/assets/canon-eos-350d.cr2") `
-    --baseline-runtime $baselineRuntime --candidate-runtime $runtime `
-    --baseline-probe $baselineProbe --candidate-probe $candidateProbe `
-    --baseline-report $baseline --candidate-report $candidate
+    --candidate-runtime $runtime --candidate-probe $candidateProbe `
+    --candidate-report $candidate
 if ($LASTEXITCODE -ne 0) { throw "Native peak-memory harness failed." }
-& $python (Join-Path $PSScriptRoot "compare_performance.py") `
-    --baseline $baseline --candidate $candidate `
-    --output (Join-Path $output "performance-comparison.json")
-if ($LASTEXITCODE -ne 0) { throw "Native performance comparison requires investigation." }
