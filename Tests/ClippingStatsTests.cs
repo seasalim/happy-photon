@@ -31,18 +31,17 @@ public sealed class ClippingStatsTests
         Assert.Equal(0.25, result.Stats.LowAll);
         Assert.Equal(0.125, result.Stats.RawNearClip);
         Assert.NotNull(overlay);
-        Assert.Equal(image.Width, overlay.Width);
-        Assert.Equal(image.Height, overlay.Height);
-        var mask = overlay.GetPixelsUnsafe().ToShortArray(PixelMapping.RGBA) ??
-            throw new InvalidOperationException("Unable to read overlay pixels.");
-        Assert.Equal(ushort.MaxValue, mask[0]);
-        Assert.Equal((ushort)0, mask[1]);
-        Assert.Equal((ushort)0, mask[2]);
-        Assert.Equal((ushort)24576, mask[3]);
-        Assert.Equal((ushort)0, mask[8]);
-        Assert.Equal((ushort)0, mask[9]);
-        Assert.Equal(ushort.MaxValue, mask[10]);
-        Assert.Equal((ushort)24576, mask[11]);
+        Assert.Equal((int)image.Width, overlay.Width);
+        Assert.Equal((int)image.Height, overlay.Height);
+        Assert.Equal(
+            new[]
+            {
+                (byte)ClippingOverlaySide.SceneHighlights,
+                (byte)ClippingOverlaySide.SceneHighlights,
+                (byte)ClippingOverlaySide.DisplayFloor,
+                (byte)ClippingOverlaySide.SceneHighlights
+            },
+            overlay.Flags.ToArray());
     }
 
     [Fact]
@@ -109,6 +108,71 @@ public sealed class ClippingStatsTests
     }
 
     [Fact]
+    public void Analyze_HighlightWinsOverFloorEvenWhenOnlyFloorIsRequested()
+    {
+        // A pixel that is scene-high AND all-channels-low takes the highlight
+        // branch first; with only the floor side requested it must emit no
+        // flag rather than a floor flag.
+        var scene = new SceneHighlightAnalysis(
+            new ChannelClip(1, 0, 0),
+            1,
+            1,
+            1,
+            new[] { true });
+        using var image = CreateImage([0, 0, 0]);
+
+        var floorOnly = ClippingStatsCalculator.Analyze(
+            image,
+            rawNearClip: 0,
+            createOverlay: true,
+            sceneHighlights: scene,
+            overlaySides: ClippingOverlaySide.DisplayFloor);
+        using var mask = floorOnly.OverlayMask;
+
+        Assert.Equal([0], mask!.Flags.ToArray());
+    }
+
+    [Fact]
+    public void ParallelMaskWrites_MatchSequentialReferenceAcrossChunkBoundaries()
+    {
+        // 16,471 pixels: two unequal chunks, prime count. Flags are written
+        // inside the parallel loop; verify against a sequential re-derivation.
+        const int pixels = 16471;
+        var random = new Random(83);
+        var samples = new ushort[pixels * 3];
+        for (var index = 0; index < samples.Length; index++)
+        {
+            samples[index] = checked((ushort)random.Next(0, 65536));
+        }
+
+        var expected = new byte[pixels];
+        for (var pixel = 0; pixel < pixels; pixel++)
+        {
+            var offset = pixel * 3;
+            var anyHigh = samples[offset] >= 65407 ||
+                samples[offset + 1] >= 65407 ||
+                samples[offset + 2] >= 65407;
+            var allLow = samples[offset] <= 128 &&
+                samples[offset + 1] <= 128 &&
+                samples[offset + 2] <= 128;
+            expected[pixel] = anyHigh
+                ? (byte)ClippingOverlaySide.SceneHighlights
+                : allLow
+                    ? (byte)ClippingOverlaySide.DisplayFloor
+                    : (byte)0;
+        }
+
+        using var image = CreateImage(samples);
+        var result = ClippingStatsCalculator.Analyze(
+            image,
+            rawNearClip: 0,
+            createOverlay: true);
+        using var mask = result.OverlayMask;
+
+        Assert.Equal(expected, mask!.Flags.ToArray());
+    }
+
+    [Fact]
     public void Analyze_FiltersSemanticMaskByRequestedSide()
     {
         using var image = CreateImage(
@@ -129,15 +193,15 @@ public sealed class ClippingStatsTests
             overlaySides: ClippingOverlaySide.DisplayFloor);
         using var highlightMask = highlights.OverlayMask;
         using var floorMask = floor.OverlayMask;
-        var highlightPixels = highlightMask!.GetPixelsUnsafe()
-            .ToShortArray(PixelMapping.RGB)!;
-        var floorPixels = floorMask!.GetPixelsUnsafe()
-            .ToShortArray(PixelMapping.RGB)!;
 
-        Assert.Equal(ushort.MaxValue, highlightPixels[0]);
-        Assert.Equal((ushort)0, highlightPixels[5]);
-        Assert.Equal((ushort)0, floorPixels[0]);
-        Assert.Equal(ushort.MaxValue, floorPixels[5]);
+        Assert.Equal(
+            [(byte)ClippingOverlaySide.SceneHighlights, 0],
+            highlightMask!.Flags.ToArray());
+        Assert.Equal(
+            [0, (byte)ClippingOverlaySide.DisplayFloor],
+            floorMask!.Flags.ToArray());
+        Assert.Equal(ClippingOverlaySide.SceneHighlights, highlightMask.Sides);
+        Assert.Equal(ClippingOverlaySide.DisplayFloor, floorMask.Sides);
     }
 
     [Fact]
@@ -161,11 +225,9 @@ public sealed class ClippingStatsTests
         Assert.All(
             RenderPipelineTestSupport.ReadPixels(result.Image),
             value => Assert.True(value < 65407));
-        var mask = result.OverlayMask!.GetPixelsUnsafe()
-            .ToShortArray(PixelMapping.RGBA)!;
-        Assert.Equal(ushort.MaxValue, mask[0]);
-        Assert.Equal((ushort)0, mask[1]);
-        Assert.Equal((ushort)0, mask[2]);
+        Assert.Equal(
+            (byte)ClippingOverlaySide.SceneHighlights,
+            result.OverlayMask!.Flags[0]);
     }
 
     [Fact]

@@ -29,7 +29,7 @@ public sealed class RenderPipeline
 
         MagickImage? displayRec2020 = null;
         MagickImage? display = null;
-        MagickImage? overlay = null;
+        ClippingMask? overlay = null;
         try
         {
             var createOverlay =

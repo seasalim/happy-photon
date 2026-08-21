@@ -34,14 +34,14 @@ public sealed record RenderRequest(
 public sealed class RenderResult : IDisposable
 {
     private MagickImage? _image;
-    private MagickImage? _overlayMask;
+    private ClippingMask? _overlayMask;
 
     public MagickImage Image =>
         _image ?? throw new ObjectDisposedException(nameof(RenderResult));
 
     public ClippingStats Clipping { get; }
 
-    public MagickImage? OverlayMask
+    public ClippingMask? OverlayMask
     {
         get
         {
@@ -53,7 +53,7 @@ public sealed class RenderResult : IDisposable
     internal RenderResult(
         MagickImage image,
         ClippingStats clipping,
-        MagickImage? overlayMask)
+        ClippingMask? overlayMask)
     {
         _image = image ?? throw new ArgumentNullException(nameof(image));
         Clipping = clipping ?? throw new ArgumentNullException(nameof(clipping));
@@ -63,6 +63,12 @@ public sealed class RenderResult : IDisposable
     internal MagickImage DetachImage() =>
         Interlocked.Exchange(ref _image, null) ??
         throw new ObjectDisposedException(nameof(RenderResult));
+
+    internal ClippingMask? DetachOverlayMask()
+    {
+        ObjectDisposedException.ThrowIf(_image == null, this);
+        return Interlocked.Exchange(ref _overlayMask, null);
+    }
 
     public void Dispose()
     {

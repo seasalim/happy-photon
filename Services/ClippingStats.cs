@@ -52,47 +52,12 @@ public sealed class ClippingMask : IDisposable
         _flags = flags;
     }
 
-    internal static ClippingMask? FromSemanticChannels(
-        MagickImage? image,
-        ClippingOverlaySide sides)
-    {
-        if (image == null || sides == ClippingOverlaySide.None)
-        {
-            return null;
-        }
-
-        var samples = image.GetPixelsUnsafe().ToByteArray(PixelMapping.RGB) ??
-            throw new InvalidOperationException(
-                "Unable to read the semantic clipping mask.");
-        var flags = new byte[checked((int)(image.Width * image.Height))];
-        for (var pixel = 0; pixel < flags.Length; pixel++)
-        {
-            var offset = pixel * 3;
-            var value = ClippingOverlaySide.None;
-            if (samples[offset] != 0)
-            {
-                value |= ClippingOverlaySide.SceneHighlights;
-            }
-            if (samples[offset + 2] != 0)
-            {
-                value |= ClippingOverlaySide.DisplayFloor;
-            }
-            flags[pixel] = (byte)value;
-        }
-
-        return new ClippingMask(
-            checked((int)image.Width),
-            checked((int)image.Height),
-            sides,
-            flags);
-    }
-
     public void Dispose() => Interlocked.Exchange(ref _flags, null);
 }
 
 internal readonly record struct ClippingAnalysis(
     ClippingStats Stats,
-    MagickImage? OverlayMask);
+    ClippingMask? OverlayMask);
 
 internal sealed record SceneHighlightAnalysis(
     ChannelClip High,
@@ -106,7 +71,7 @@ internal static class ClippingStatsCalculator
     private const ushort HighThreshold = 65407;
     private const ushort LowThreshold = 128;
     private const ushort RawNearClipThreshold = 64880;
-    private const ushort OverlayAlpha = 24576;
+
 
     // The near-clip ratio depends only on the decoded base pixels, which are
     // immutable once installed; renders clone before mutating. Cache per base
@@ -191,8 +156,8 @@ internal static class ClippingStatsCalculator
                 null);
         }
 
-        var overlay = createOverlay && overlaySides != ClippingOverlaySide.None
-            ? new ushort[pixels * 4]
+        var flags = createOverlay && overlaySides != ClippingOverlaySide.None
+            ? new byte[pixels]
             : null;
         long highR = 0, highG = 0, highB = 0;
         long lowR = 0, lowG = 0, lowB = 0;
@@ -232,17 +197,19 @@ internal static class ClippingStatsCalculator
                 if (anyHigh)
                 {
                     localHighAny++;
-                    if (overlaySides.HasFlag(ClippingOverlaySide.SceneHighlights))
+                    if (flags != null && overlaySides.HasFlag(
+                            ClippingOverlaySide.SceneHighlights))
                     {
-                        SetOverlayPixel(overlay, pixel, Quantum.Max, 0, 0);
+                        flags[pixel] = (byte)ClippingOverlaySide.SceneHighlights;
                     }
                 }
                 else if (rLow && gLow && bLow)
                 {
                     localLowAll++;
-                    if (overlaySides.HasFlag(ClippingOverlaySide.DisplayFloor))
+                    if (flags != null && overlaySides.HasFlag(
+                            ClippingOverlaySide.DisplayFloor))
                     {
-                        SetOverlayPixel(overlay, pixel, 0, 0, Quantum.Max);
+                        flags[pixel] = (byte)ClippingOverlaySide.DisplayFloor;
                     }
                 }
             }
@@ -266,9 +233,13 @@ internal static class ClippingStatsCalculator
             rawNearClip);
         return new ClippingAnalysis(
             stats,
-            overlay == null
+            flags == null
                 ? null
-                : CreateOverlay(overlay, image.Width, image.Height));
+                : new ClippingMask(
+                    checked((int)image.Width),
+                    checked((int)image.Height),
+                    overlaySides,
+                    flags));
     }
 
     internal static SceneHighlightAnalysis AnalyzeSceneHighlights(
@@ -378,48 +349,4 @@ internal static class ClippingStatsCalculator
         return scene.HighMask[sourceY * checked((int)scene.Width) + sourceX];
     }
 
-    private static void SetOverlayPixel(
-        ushort[]? overlay,
-        int pixel,
-        ushort r,
-        ushort g,
-        ushort b)
-    {
-        if (overlay == null)
-        {
-            return;
-        }
-
-        var offset = pixel * 4;
-        overlay[offset] = r;
-        overlay[offset + 1] = g;
-        overlay[offset + 2] = b;
-        overlay[offset + 3] = OverlayAlpha;
-    }
-
-    private static MagickImage CreateOverlay(
-        ushort[] pixels,
-        uint width,
-        uint height)
-    {
-        var image = new MagickImage(MagickColors.Transparent, width, height);
-        try
-        {
-            var settings = new PixelImportSettings(
-                width,
-                height,
-                StorageType.Short,
-                PixelMapping.RGBA);
-            image.ImportPixels(
-                System.Runtime.InteropServices.MemoryMarshal.AsBytes(
-                    pixels.AsSpan()),
-                settings);
-            return image;
-        }
-        catch
-        {
-            image.Dispose();
-            throw;
-        }
-    }
 }

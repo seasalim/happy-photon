@@ -169,7 +169,7 @@ public sealed class RenderResult : IDisposable
 {
     public MagickImage Image { get; }        // display-referred selected output, 16-bit
     public ClippingStats Clipping { get; }   // see RENDER.md §7
-    public MagickImage? OverlayMask { get; } // only when Options.ComputeOverlayMasks
+    public ClippingMask? OverlayMask { get; } // per-pixel side flags; only when Options.ComputeOverlayMasks
 }
 ```
 

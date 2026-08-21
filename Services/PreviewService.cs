@@ -171,9 +171,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         try
         {
             preview = ConvertToBitmap(rendered.Image);
-            clippingMask = ClippingMask.FromSemanticChannels(
-                rendered.OverlayMask,
-                effectiveOverlaySides);
+            clippingMask = rendered.DetachOverlayMask();
             PreviewConverted?.Invoke();
             if (_createRenderedThumbnail &&
                 baseImage.Info.IsRawSource &&
