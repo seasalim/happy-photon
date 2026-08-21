@@ -20,6 +20,20 @@ public sealed class WindowsFactAttribute : FactAttribute
     }
 }
 
+public sealed class WindowsTheoryAttribute : TheoryAttribute
+{
+    public WindowsTheoryAttribute(
+        [CallerFilePath] string? sourceFilePath = null,
+        [CallerLineNumber] int sourceLineNumber = -1)
+        : base(sourceFilePath, sourceLineNumber)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Skip = "The platform bitmap integration test requires Windows WIC.";
+        }
+    }
+}
+
 public static class AvaloniaTestCollection
 {
     public const string Name = "Avalonia platform";

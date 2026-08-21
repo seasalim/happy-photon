@@ -7,6 +7,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
+[Collection(AvaloniaTestCollection.Name)]
 public sealed class ViewportZoomAnchorTests : IAsyncLifetime
 {
     private readonly string _directory = Path.Combine(
@@ -45,7 +46,7 @@ public sealed class ViewportZoomAnchorTests : IAsyncLifetime
                 SourceAvailability.AvailableLocally),
             timeProvider: clock);
 
-    [Fact]
+    [WindowsFact]
     public async Task ProvisionalZoom_RescalesWhenTheTrueOriginalArrives()
     {
         var loader = new GatedPairLoader();
@@ -104,7 +105,7 @@ public sealed class ViewportZoomAnchorTests : IAsyncLifetime
         await viewModel.DisposeAsync();
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task ModeRoundTrip_KeepsRestingArmed()
     {
         var lines = new List<string>();

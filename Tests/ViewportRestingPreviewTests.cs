@@ -7,6 +7,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
+[Collection(AvaloniaTestCollection.Name)]
 public sealed class ViewportRestingPreviewTests : IAsyncLifetime
 {
     private readonly string _directory = Path.Combine(
@@ -34,7 +35,7 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task RestingRender_IsDisplayOnlyAndKeepsQ90AtInteractiveSize()
     {
         var loader = new CountingPairLoader();
@@ -80,7 +81,7 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
         Assert.Equal(80u, cached.Image.Height);
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task NewInteractiveGeneration_SupersedesRestingRender()
     {
         var loader = new CountingPairLoader();
@@ -126,7 +127,7 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task DisposeAsync_WaitsForCancelledRestingRender()
     {
         var loader = new CountingPairLoader();
@@ -167,7 +168,7 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task ViewModel_SettlesAfterHistogramWithoutAnotherDecode()
     {
         var clock = new TestTimeProvider();
@@ -218,7 +219,7 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
         await viewModel.DisposeAsync();
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task ZoomSettle_RestsAtCapAndIgnoresPanAndZoomOut()
     {
         var clock = new TestTimeProvider();
@@ -259,7 +260,7 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
         await viewModel.DisposeAsync();
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task EditInput_CancelsPendingRestingSettle()
     {
         var clock = new TestTimeProvider();
@@ -293,7 +294,7 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
         await viewModel.DisposeAsync();
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task StaleHistogramAfterInput_DoesNotRearmRestingRender()
     {
         var clock = new TestTimeProvider();
@@ -330,7 +331,7 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
         await viewModel.DisposeAsync();
     }
 
-    [Theory]
+    [WindowsTheory]
     [InlineData("selection")]
     [InlineData("mode")]
     [InlineData("crop")]
