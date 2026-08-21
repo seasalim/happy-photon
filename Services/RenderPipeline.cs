@@ -83,7 +83,6 @@ public sealed class RenderPipeline
                                     checked((int)display.Width),
                                     checked((int)display.Height),
                                     histogram,
-                                    request.Options.ComputeHistogram,
                                     request.Options.ComputeWaveform);
                             }
                             if (request.Options.PreparePreviewPixels)

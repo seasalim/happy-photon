@@ -99,13 +99,13 @@ public sealed class WaveformAccumulatorTests
     public void ProductionDimensionCannotOverflowUshortCells()
     {
         var sourceColumnsPerCell =
-            (HistogramService.HistogramMaxDimension +
+            (BaseImage.InteractivePreviewMaxDimension +
              WaveformData.ColumnCount - 1) /
             WaveformData.ColumnCount;
         var maximumCellCount = sourceColumnsPerCell *
-            HistogramService.HistogramMaxDimension;
+            BaseImage.InteractivePreviewMaxDimension;
 
-        Assert.Equal(4096, maximumCellCount);
+        Assert.Equal(11200, maximumCellCount);
         Assert.True(maximumCellCount <= ushort.MaxValue);
     }
 

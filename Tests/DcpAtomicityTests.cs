@@ -132,7 +132,6 @@ public sealed class DcpAtomicityTests : IDisposable
             catalog,
             loader,
             new RenderPipeline(),
-            new HistogramService(),
             new PreviewCacheService(catalog),
             renderedCache,
             dcpProfiles: new DcpProfileService(

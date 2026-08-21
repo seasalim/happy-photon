@@ -79,8 +79,7 @@ public sealed class ThumbnailServiceTests : IDisposable
         await using var previewService = new PreviewService(
             catalog,
             new StandardBaseLoader(),
-            new RenderPipeline(),
-            new HistogramService());
+            new RenderPipeline());
         var image = new ImageFile(sourcePath);
 
         using var thumbnailResult = await thumbnailService.LoadUneditedThumbnailAsync(image);

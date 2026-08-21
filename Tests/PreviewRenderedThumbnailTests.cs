@@ -150,7 +150,6 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 catalog,
                 new CountingSolidLoader(isRaw: true),
                 new RenderPipeline(),
-                new HistogramService(),
                 new PreviewCacheService(catalog),
                 renderedCache);
             var wakeCount = 0;
@@ -256,7 +255,6 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 catalog,
                 new CountingSolidLoader(isRaw: true),
                 new RenderPipeline(),
-                new HistogramService(),
                 new PreviewCacheService(catalog),
                 new RenderedThumbnailCacheService(catalog));
             service.PreviewConverted += () =>
@@ -316,7 +314,6 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
             catalog,
             loader,
             new RenderPipeline(),
-            new HistogramService(),
             renderedThumbnailCache: new RenderedThumbnailCacheService(
                 catalog,
                 8,

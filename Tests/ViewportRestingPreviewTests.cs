@@ -44,7 +44,6 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
             _catalog,
             loader,
             new RenderPipeline(),
-            new HistogramService(),
             cache,
             new RenderedThumbnailCacheService(_catalog),
             createRenderedThumbnail: false))
@@ -390,7 +389,6 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
             _catalog,
             loader,
             new RenderPipeline(),
-            new HistogramService(),
             new PreviewCacheService(_catalog),
             new RenderedThumbnailCacheService(_catalog),
             createRenderedThumbnail: false);

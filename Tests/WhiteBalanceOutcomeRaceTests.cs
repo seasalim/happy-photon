@@ -142,8 +142,7 @@ public sealed class WhiteBalanceOutcomeRaceTests : IDisposable
         await using var service = new PreviewService(
             catalog,
             new GradientLoader(),
-            new RenderPipeline(),
-            new HistogramService());
+            new RenderPipeline());
         var image = new ImageFile(Path.Combine(_root, "replacement.dng"));
         var initial = new EditSettings();
         using (await service.ApplyEditsToPreviewArtifactsAsync(

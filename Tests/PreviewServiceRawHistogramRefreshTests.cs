@@ -160,7 +160,7 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable
     private static PreviewService CreateService(
         CatalogService catalog,
         IBaseImageLoader loader) =>
-        new(catalog, loader, new RenderPipeline(), new HistogramService());
+        new(catalog, loader, new RenderPipeline());
 
     private sealed class HistogramLoader : IBaseImageLoader
     {

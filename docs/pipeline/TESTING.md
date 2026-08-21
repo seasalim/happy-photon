@@ -375,6 +375,21 @@ executes each test in its own Release process; apply the same
 one-test-per-process rule to any new `HAPPY_PHOTON_PERF` class with latency
 budgets, and never loosen a budget to make a single-process class run pass:
 
+`WaveformTickPerformanceTests.WaveformActiveSliderTickLatency_WhenEnabled`
+drives `ApplyEditsToPreviewArtifactsAsync` over the Display P3 JPEG fixture and
+asserts waveform presence for the active measurement and absence for its paired
+histogram-only measurement. Base `4e2b350` measured 49.2/52.0 ms total and
+46.0/48.5 ms histogram-only in separate Release processes (3.2/3.5 ms deltas).
+The merge-candidate gate is total ≤ 57.0 ms, active-minus-histogram ≤ 8.5 ms,
+and the standing total ≤ 150 ms. Run it in its own process:
+
+```powershell
+$env:HAPPY_PHOTON_PERF='1'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
+  --filter "FullyQualifiedName~WaveformTickPerformanceTests.WaveformActiveSliderTickLatency_WhenEnabled" `
+  --logger "console;verbosity=detailed"
+```
+
 Effects extend the opt-in Release gate with frozen active-minus-off budgets: preview
 delta ≤25 ms while total tick remains ≤150 ms; full export delta ≤max(5%, 500 ms) for
 sRGB and Display P3; incremental private-memory peak ≤ one Q16 RGB frame at the

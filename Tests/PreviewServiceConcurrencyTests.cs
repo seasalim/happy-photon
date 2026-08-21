@@ -72,7 +72,6 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
                 catalog,
                 loader,
                 new RenderPipeline(),
-                new HistogramService(),
                 cache,
                 new RenderedThumbnailCacheService(catalog));
 
@@ -107,8 +106,7 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
             await using var service = new PreviewService(
                 catalog,
                 loader,
-                new RenderPipeline(),
-                new HistogramService());
+                new RenderPipeline());
             var refreshReady =
                 new TaskCompletionSource<Bitmap>(
                     TaskCreationOptions.RunContinuationsAsynchronously);
@@ -232,8 +230,7 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
             await using var service = new PreviewService(
                 catalog,
                 loader,
-                new RenderPipeline(),
-                new HistogramService());
+                new RenderPipeline());
             var renderStarted = new[]
             {
                 new TaskCompletionSource(
@@ -321,7 +318,6 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
             catalog,
             loader,
             new RenderPipeline(),
-            new HistogramService(),
             new PreviewCacheService(catalog),
             new RenderedThumbnailCacheService(catalog));
         service.RenderStarted += renderStarted;

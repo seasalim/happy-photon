@@ -41,8 +41,7 @@ public sealed class ProfileDecodeGuardTests : IDisposable
         await using var service = new PreviewService(
             catalog,
             new NullBaseLoader(),
-            new RenderPipeline(),
-            new HistogramService());
+            new RenderPipeline());
         var settings = new EditSettings
         {
             RawProfile = new RawProfileSelection

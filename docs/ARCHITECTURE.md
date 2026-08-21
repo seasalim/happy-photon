@@ -567,8 +567,9 @@ threading and ownership view:
 - Library mode never loads a 1600px preview just to draw the histogram: the UI thread
   copies the current thumbnail pixels into an independently owned bitmap, and a
   threadpool task scales it to a DPI-independent 150 px bitmap and calculates its
-  bins. Retirement never waits for that work; stale results are rejected by selection
-  and thumbnail-generation checks, and no waveform is calculated on this path.
+  bins through the same BGRA accumulation path as Develop, without waveform storage.
+  Retirement never waits for that work; stale results are rejected by selection and
+  thumbnail-generation checks.
 
 ### Background activity ownership
 

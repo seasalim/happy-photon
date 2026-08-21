@@ -15,7 +15,6 @@ public sealed partial class PreviewService : IAsyncDisposable
     private readonly RenderedThumbnailCacheService _renderedThumbnailCache;
     private readonly PreviewBaseCoordinator _baseCoordinator;
     private readonly RenderPipeline _renderPipeline;
-    private readonly HistogramService _histogramService;
     private readonly DcpProfileService _dcpProfiles;
     private readonly bool _createRenderedThumbnail;
     private readonly object _renderedSync = new();
@@ -78,7 +77,6 @@ public sealed partial class PreviewService : IAsyncDisposable
         CatalogService catalogService,
         IBaseImageLoader baseLoader,
         RenderPipeline renderPipeline,
-        HistogramService histogramService,
         PreviewCacheService? previewCache = null,
         RenderedThumbnailCacheService? renderedThumbnailCache = null,
         bool createRenderedThumbnail = true,
@@ -90,7 +88,6 @@ public sealed partial class PreviewService : IAsyncDisposable
             new RenderedThumbnailCacheService(catalogService);
         _baseCoordinator = new PreviewBaseCoordinator(baseLoader);
         _renderPipeline = renderPipeline;
-        _histogramService = histogramService;
         _createRenderedThumbnail = createRenderedThumbnail;
         _dcpProfiles = dcpProfiles ?? new DcpProfileService(
             new SourceAvailabilityService());

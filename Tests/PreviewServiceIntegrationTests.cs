@@ -118,8 +118,7 @@ public sealed class PreviewServiceIntegrationTests : IDisposable
         new(
             catalog,
             new StandardBaseLoader(),
-            new RenderPipeline(),
-            new HistogramService());
+            new RenderPipeline());
 
     public void Dispose()
     {

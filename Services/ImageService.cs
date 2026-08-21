@@ -112,7 +112,6 @@ public class ImageService : IAsyncDisposable
             catalogService,
             gatedBaseLoader,
             renderPipeline,
-            _histogramService,
             new PreviewCacheService(catalogService),
             renderedThumbnailCache,
             dcpProfiles: _dcpProfiles);

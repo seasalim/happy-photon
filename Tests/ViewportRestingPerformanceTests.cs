@@ -101,7 +101,6 @@ public sealed class ViewportRestingPerformanceTests
                 new RawBaseLoader(),
                 new StandardBaseLoader()),
             new RenderPipeline(),
-            new HistogramService(),
             new PreviewCacheService(catalog),
             new RenderedThumbnailCacheService(catalog),
             createRenderedThumbnail: false);

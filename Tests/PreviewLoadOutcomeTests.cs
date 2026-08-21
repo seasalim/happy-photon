@@ -20,8 +20,7 @@ public sealed class PreviewLoadOutcomeTests : IDisposable
         await using var service = new PreviewService(
             catalog,
             loader,
-            new RenderPipeline(),
-            new HistogramService());
+            new RenderPipeline());
         var outcomes = new List<PreviewLoadOutcome>();
         service.PreviewLoadCompleted += (_, outcome) => outcomes.Add(outcome);
         using var cancellation = new CancellationTokenSource();

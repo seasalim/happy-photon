@@ -28,8 +28,7 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
         await using var service = new PreviewService(
             catalog,
             new SolidLoader(isRaw: false, MagickColors.White),
-            new RenderPipeline(),
-            new HistogramService());
+            new RenderPipeline());
         var image = new ImageFile(Path.Combine(_root, "standard.jpg"));
         var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium);
 
@@ -72,8 +71,7 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
         await using var service = new PreviewService(
             catalog,
             new SolidLoader(isRaw: true, MagickColors.White),
-            new RenderPipeline(),
-            new HistogramService());
+            new RenderPipeline());
         var image = new ImageFile(Path.Combine(_root, "raw.dng"));
         var artifacts = await service.ApplyEditsToPreviewArtifactsAsync(
             image,

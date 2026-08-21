@@ -477,7 +477,6 @@ public sealed class PreviewPipelinePerformanceTests
                 new RawBaseLoader(),
                 new StandardBaseLoader()),
             new RenderPipeline(),
-            new HistogramService(),
             new PreviewCacheService(catalog),
             new RenderedThumbnailCacheService(catalog),
             createRenderedThumbnail: createRenderedThumbnail);
