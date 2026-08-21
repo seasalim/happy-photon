@@ -70,34 +70,20 @@ public sealed partial class PreviewService : IAsyncDisposable
     public int PendingCacheWrites =>
         _previewCache.PendingWrites + _renderedThumbnailCache.PendingWrites;
 
-    public PreviewService(
-        CatalogService catalogService,
-        IBaseImageLoader baseLoader,
-        RenderPipeline renderPipeline,
-        HistogramService histogramService) : this(
-            catalogService,
-            baseLoader,
-            renderPipeline,
-            histogramService,
-            new PreviewCacheService(catalogService),
-            new RenderedThumbnailCacheService(catalogService),
-            dcpProfiles: null)
-    {
-    }
-
     internal PreviewService(
         CatalogService catalogService,
         IBaseImageLoader baseLoader,
         RenderPipeline renderPipeline,
         HistogramService histogramService,
-        PreviewCacheService previewCache,
-        RenderedThumbnailCacheService renderedThumbnailCache,
+        PreviewCacheService? previewCache = null,
+        RenderedThumbnailCacheService? renderedThumbnailCache = null,
         bool createRenderedThumbnail = true,
         DcpProfileService? dcpProfiles = null)
     {
         _catalogService = catalogService;
-        _previewCache = previewCache;
-        _renderedThumbnailCache = renderedThumbnailCache;
+        _previewCache = previewCache ?? new PreviewCacheService(catalogService);
+        _renderedThumbnailCache = renderedThumbnailCache ??
+            new RenderedThumbnailCacheService(catalogService);
         _baseCoordinator = new PreviewBaseCoordinator(baseLoader);
         _renderPipeline = renderPipeline;
         _histogramService = histogramService;

@@ -22,55 +22,20 @@ public class ImageService : IAsyncDisposable
     private readonly DcpProfileService _dcpProfiles;
     private readonly DcpProfileDiscovery _dcpDiscovery;
 
-    public event EventHandler<PreviewRefresh>? PreviewRefreshed
-    {
-        add => _previewService.PreviewRefreshed += value;
-        remove => _previewService.PreviewRefreshed -= value;
-    }
-
-    public event EventHandler<PreviewLoadOutcome>? PreviewLoadCompleted
-    {
-        add => _previewService.PreviewLoadCompleted += value;
-        remove => _previewService.PreviewLoadCompleted -= value;
-    }
-
-    public event EventHandler<PreviewBaseRefreshState>?
-        BaseRefreshStateChanged
-    {
-        add => _previewService.BaseRefreshStateChanged += value;
-        remove => _previewService.BaseRefreshStateChanged -= value;
-    }
-
-    public event Action? RenderedThumbnailWorkStarted
-    {
-        add => _previewService.RenderedThumbnailWorkStarted += value;
-        remove => _previewService.RenderedThumbnailWorkStarted -= value;
-    }
-
-    public int ThumbnailActivityCount =>
-        _previewService.RenderedThumbnailTaskCount;
-
-    public int PreviewActivityCount => _previewService.PreviewActivityCount;
-
     public int CacheWriteActivityCount =>
         _thumbnailService.PendingCacheWrites + _previewService.PendingCacheWrites;
 
-    public int MetadataActivityCount => _metadataService.InFlightCount;
+    public PreviewService Previews => _previewService;
 
-    internal Func<Task>? PreviewRenderGateAsync
-    {
-        set => _previewService.RenderGateAsync = value;
-    }
+    public ThumbnailService Thumbnails => _thumbnailService;
 
-    internal Func<Task>? PreviewRefreshReadyGateAsync
-    {
-        set => _previewService.RefreshReadyGateAsync = value;
-    }
+    public HistogramService Histograms => _histogramService;
 
-    internal Action<string>? RestingStageStarted
-    {
-        set => _previewService.RestingStageStarted = value;
-    }
+    internal MetadataService Metadata => _metadataService;
+
+    internal DcpProfileDiscovery DcpDiscovery => _dcpDiscovery;
+
+    internal SourceHydrationService SourceHydration => _sourceHydrationService;
 
     public ImageService(CatalogService catalogService)
         : this(catalogService, LibRawNativeSupport.Health)
@@ -163,136 +128,6 @@ public class ImageService : IAsyncDisposable
             _availabilityService);
     }
 
-    // ===== Preview Methods (delegated to PreviewService) =====
-
-    public Task<(Bitmap? preview, HistogramData histogram)> LoadPreviewWithHistogramAsync(
-        ImageFile imageFile, EditSettings settings, bool skipHistogram = false, CancellationToken cancellationToken = default) =>
-        _previewService.LoadPreviewWithHistogramAsync(imageFile, settings, skipHistogram, cancellationToken);
-
-    public Task<(Bitmap? preview, HistogramData histogram)> LoadPreviewWithHistogramAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        ThumbnailSizeRequest thumbnailRequest,
-        bool skipHistogram = false,
-        CancellationToken cancellationToken = default) =>
-        _previewService.LoadPreviewWithHistogramAsync(
-            imageFile,
-            settings,
-            thumbnailRequest,
-            skipHistogram,
-            cancellationToken);
-
-    public Task<PreviewArtifacts> LoadPreviewArtifactsAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        ThumbnailSizeRequest thumbnailRequest,
-        bool skipHistogram,
-        ClippingOverlaySide overlaySides,
-        CancellationToken cancellationToken = default) =>
-        _previewService.LoadPreviewArtifactsAsync(
-            imageFile,
-            settings,
-            thumbnailRequest,
-            skipHistogram,
-            overlaySides,
-            cancellationToken);
-
-    public Task<CachedPreviewBitmap?> LoadCachedPreviewAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        CancellationToken cancellationToken = default) =>
-        _previewService.LoadCachedPreviewAsync(
-            imageFile,
-            settings,
-            cancellationToken);
-
-    public Task<(Bitmap? preview, HistogramData histogram)> ApplyEditsToPreviewAsync(
-        ImageFile imageFile, EditSettings settings, bool skipHistogram = false, CancellationToken cancellationToken = default) =>
-        _previewService.ApplyEditsToPreviewAsync(imageFile, settings, skipHistogram, cancellationToken);
-
-    public Task<(Bitmap? preview, HistogramData histogram)> ApplyEditsToPreviewAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        ThumbnailSizeRequest thumbnailRequest,
-        bool skipHistogram = false,
-        CancellationToken cancellationToken = default) =>
-        _previewService.ApplyEditsToPreviewAsync(
-            imageFile,
-            settings,
-            thumbnailRequest,
-            skipHistogram,
-            cancellationToken);
-
-    public Task<PreviewArtifacts> ApplyEditsToPreviewArtifactsAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        ThumbnailSizeRequest thumbnailRequest,
-        bool skipHistogram,
-        ClippingOverlaySide overlaySides,
-        CancellationToken cancellationToken = default) =>
-        _previewService.ApplyEditsToPreviewArtifactsAsync(
-            imageFile,
-            settings,
-            thumbnailRequest,
-            skipHistogram,
-            overlaySides,
-            cancellationToken);
-
-    public Task<WhiteBalanceBaseContext?> GetWhiteBalanceContextAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        CancellationToken cancellationToken = default) =>
-        _previewService.GetWhiteBalanceContextAsync(
-            imageFile,
-            settings,
-            cancellationToken);
-
-    public Task<double[]?> GetAutoWhiteBalanceAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        CancellationToken cancellationToken = default) =>
-        _previewService.GetAutoWhiteBalanceAsync(
-            imageFile,
-            settings,
-            cancellationToken);
-
-    public Task<double[]?> PickWhiteBalanceAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        double normalizedX,
-        double normalizedY,
-        CancellationToken cancellationToken = default) =>
-        _previewService.PickWhiteBalanceAsync(
-            imageFile,
-            settings,
-            normalizedX,
-            normalizedY,
-            cancellationToken);
-
-    public void ClearPreviewCache() =>
-        _previewService.ClearPreviewCache();
-
-    internal PreviewRenderIdentity? TryGetPreviewRenderIdentity(Bitmap bitmap) =>
-        _previewService.TryGetPreviewRenderIdentity(bitmap);
-
-    internal bool TransferCurrentRenderedBitmap(
-        Bitmap bitmap,
-        PreviewRenderIdentity identity) =>
-        _previewService.TransferCurrentRenderedBitmap(bitmap, identity);
-
-    internal Task<RestingPreview?> RenderRestingPreviewAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        int fittedLongEdge,
-        PreviewRenderIdentity parent,
-        CancellationToken cancellationToken) =>
-        _previewService.RenderRestingPreviewAsync(
-            imageFile,
-            settings,
-            fittedLongEdge,
-            parent,
-            cancellationToken);
-
     // ===== Thumbnail Methods (delegated to ThumbnailService) =====
 
     public Task<ThumbnailLoadResult> LoadThumbnailAsync(
@@ -331,28 +166,6 @@ public class ImageService : IAsyncDisposable
                 allowUndersizedCachePlaceholder,
                 cancellationToken);
     }
-
-    public Task<ThumbnailLoadResult> LoadUneditedThumbnailAsync(
-        ImageFile imageFile,
-        CancellationToken cancellationToken) =>
-        _thumbnailService.LoadUneditedThumbnailAsync(imageFile, cancellationToken);
-
-    public Task<ThumbnailLoadResult> LoadUneditedThumbnailAsync(
-        ImageFile imageFile,
-        ThumbnailSizeRequest request,
-        CancellationToken cancellationToken) =>
-        _thumbnailService.LoadUneditedThumbnailAsync(imageFile, request, cancellationToken);
-
-    public bool IsThumbnailCacheValid(ImageFile imageFile) =>
-        _thumbnailService.IsCacheValid(imageFile);
-
-    public bool IsThumbnailCacheValid(
-        ImageFile imageFile,
-        ThumbnailSizeRequest request) =>
-        _thumbnailService.IsCacheValid(imageFile, request);
-
-    public bool HasRenderedThumbnailCacheEntry(ImageFile imageFile) =>
-        _thumbnailService.HasRenderedCacheEntry(imageFile);
 
     public async ValueTask DisposeAsync()
     {
@@ -431,15 +244,6 @@ public class ImageService : IAsyncDisposable
             cancellationToken);
     }
 
-    internal Task<DcpDiscoveryResult> DiscoverRawProfilesAsync(
-        ImageFile image, CameraIdentity? identity,
-        CancellationToken cancellationToken,
-        bool includeImageProfiles = true) =>
-        _dcpDiscovery.DiscoverAsync(image, identity, cancellationToken, includeImageProfiles);
-
-    internal DcpProfileOption InspectRawProfileFile(string path) =>
-        _dcpDiscovery.InspectUserFile(path);
-
     internal void InvalidateRawProfiles()
     {
         _dcpProfiles.Invalidate();
@@ -486,24 +290,6 @@ public class ImageService : IAsyncDisposable
         return new ExportHydrationScope(count, bytes);
     }
 
-    // ===== Histogram Methods (delegated to HistogramService) =====
-
-    public HistogramData CalculateHistogram(Bitmap bitmap) =>
-        _histogramService.CalculateHistogram(bitmap);
-
-    public HistogramData CalculateLibraryHistogram(Bitmap bitmap) =>
-        _histogramService.CalculateLibraryHistogram(bitmap);
-
-    public HistogramData? TryGetRawHistogram(
-        ImageFile image,
-        BaseDecodeSettings decode) =>
-        _previewService.TryGetRawHistogram(image, decode);
-
-    // ===== Metadata and Full Image Loading (kept in facade) =====
-
-    public Task<MetadataLoadStatus> LoadMetadataAsync(ImageFile imageFile) =>
-        _metadataService.LoadAsync(imageFile);
-
     internal bool CanRetryBackgroundRead(ImageFile imageFile) =>
         SourceAccessPolicy.CanRead(
             GetSourceAvailability(imageFile),
@@ -511,12 +297,4 @@ public class ImageService : IAsyncDisposable
 
     internal SourceAvailability GetSourceAvailability(ImageFile imageFile) =>
         _availabilityService.GetAvailability(imageFile.FilePath);
-
-    internal Task<bool> HydrateSourceAsync(
-        ImageFile imageFile,
-        CancellationToken cancellationToken) =>
-        _sourceHydrationService.HydrateAsync(
-            imageFile,
-            cancellationToken);
-
 }

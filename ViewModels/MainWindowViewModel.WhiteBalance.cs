@@ -150,7 +150,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var gains = await ImageService.GetAutoWhiteBalanceAsync(
+        var gains = await ImageService.Previews.GetAutoWhiteBalanceAsync(
             SelectedImage,
             CaptureLiveEditState());
         if (gains == null)
@@ -180,7 +180,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var gains = await ImageService.PickWhiteBalanceAsync(
+        var gains = await ImageService.Previews.PickWhiteBalanceAsync(
             SelectedImage,
             CaptureLiveEditState(),
             normalizedX,
@@ -296,7 +296,7 @@ public partial class MainWindowViewModel
         ImageFile imageFile,
         CancellationToken cancellationToken)
     {
-        var context = await ImageService.GetWhiteBalanceContextAsync(
+        var context = await ImageService.Previews.GetWhiteBalanceContextAsync(
             imageFile,
             imageFile.EditSettings,
             cancellationToken);

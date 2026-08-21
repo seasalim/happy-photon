@@ -49,11 +49,11 @@ public partial class MainWindowViewModel
 
         if (_imageService.IsValueCreated)
         {
-            _imageService.Value.PreviewRefreshed -= OnPreviewRefreshed;
-            _imageService.Value.PreviewLoadCompleted -= OnPreviewLoadCompleted;
-            _imageService.Value.BaseRefreshStateChanged -=
-                OnBaseRefreshStateChanged;
-            _imageService.Value.RenderedThumbnailWorkStarted -=
+            var previews = _imageService.Value.Previews;
+            previews.PreviewRefreshed -= OnPreviewRefreshed;
+            previews.PreviewLoadCompleted -= OnPreviewLoadCompleted;
+            previews.BaseRefreshStateChanged -= OnBaseRefreshStateChanged;
+            previews.RenderedThumbnailWorkStarted -=
                 OnRenderedThumbnailWorkStarted;
             await _imageService.Value.DisposeAsync();
         }

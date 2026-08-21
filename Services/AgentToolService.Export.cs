@@ -40,13 +40,16 @@ public sealed partial class AgentToolService
                     "Output folder must be inside the currently open folder.");
             }
 
-            var settings = AgentExportSettingsFactory.Create(
-                output,
-                options,
-                format,
-                outputColorSpace,
-                _vm.ExportSettings.StripLocationData,
-                _vm.ExportSettings.OutputSharpening);
+            var settings = new ExportSettings
+            {
+                OutputFolder = output,
+                Quality = Math.Clamp(options.Quality, 1, 100),
+                NamingPattern = options.NamingPattern,
+                Format = format,
+                OutputColorSpace = outputColorSpace,
+                StripLocationData = _vm.ExportSettings.StripLocationData,
+                OutputSharpening = _vm.ExportSettings.OutputSharpening
+            };
             var originalPaths = ExportSafety.BuildOriginalPathSet(
                 _vm.Library.AllImages.Select(image => image.FilePath));
             return Task.FromResult((images, failed, settings, originalPaths));

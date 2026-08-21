@@ -213,7 +213,7 @@ public partial class MainWindowViewModel
             previewSettings.HorizonRotation = HorizonRotation;
             previewSettings.Crop = PreviewCrop();
 
-            using var artifacts = await ImageService.ApplyEditsToPreviewArtifactsAsync(
+            using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
                 image,
                 previewSettings,
                 LibraryThumbnailRequest,
@@ -259,7 +259,7 @@ public partial class MainWindowViewModel
             _preHoverSettings = null;
             try
             {
-                using var artifacts = await ImageService.ApplyEditsToPreviewArtifactsAsync(
+                using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
                     image,
                     preHoverSettings,
                     LibraryThumbnailRequest,
@@ -306,7 +306,7 @@ public partial class MainWindowViewModel
             };
 
             // Show original preview without any edits (same size as edited preview)
-            using var artifacts = await ImageService.ApplyEditsToPreviewArtifactsAsync(
+            using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
                 image,
                 tempSettings,
                 LibraryThumbnailRequest,

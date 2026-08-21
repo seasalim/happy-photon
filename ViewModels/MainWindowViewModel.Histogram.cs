@@ -143,7 +143,7 @@ public partial class MainWindowViewModel
                 return;
             }
 
-            SetRawHistogram(ImageService.TryGetRawHistogram(
+            SetRawHistogram(ImageService.Previews.TryGetRawHistogram(
                 imageFile,
                 BaseDecodeSettings.From(imageFile.EditSettings)));
 
@@ -160,7 +160,8 @@ public partial class MainWindowViewModel
             using var histogramSource = BitmapConversionService.CloneBitmap(
                 imageFile.Thumbnail);
             var histogram = await Task.Run(
-                () => ImageService.CalculateLibraryHistogram(histogramSource),
+                () => ImageService.Histograms.CalculateLibraryHistogram(
+                    histogramSource),
                 cancellationToken);
             if (!cancellationToken.IsCancellationRequested &&
                 ReferenceEquals(SelectedImage, imageFile) &&

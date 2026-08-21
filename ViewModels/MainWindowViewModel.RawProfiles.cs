@@ -212,7 +212,7 @@ public partial class MainWindowViewModel
         RawProfileStatusMessage = ScanningRawProfilesMessage;
         try
         {
-            var result = await ImageService.DiscoverRawProfilesAsync(
+            var result = await ImageService.DcpDiscovery.DiscoverAsync(
                 image,
                 _rawProfileCameraIdentity,
                 cts.Token,
@@ -305,7 +305,7 @@ public partial class MainWindowViewModel
     {
         var image = SelectedImage;
         if (image == null) return;
-        var option = ImageService.InspectRawProfileFile(path);
+        var option = ImageService.DcpDiscovery.InspectUserFile(path);
         if (!option.CanSelect)
         {
             RawProfileStatusMessage = UppercaseStatus(option.Message ??

@@ -18,7 +18,7 @@ public partial class MainWindowViewModel
         tempSettings.HorizonRotation = HorizonRotation;
         tempSettings.Crop = PreviewCrop();
 
-        using var artifacts = await ImageService.ApplyEditsToPreviewArtifactsAsync(
+        using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
             selectedImage,
             tempSettings,
             LibraryThumbnailRequest,

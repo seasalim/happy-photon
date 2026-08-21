@@ -55,7 +55,7 @@ public sealed partial class AgentToolService
                 _vm.SignalBackgroundActivityStarted();
                 foreach (var image in images)
                 {
-                    await _imageService.LoadMetadataAsync(image);
+                    await _imageService.Metadata.LoadAsync(image);
                 }
             }
 
@@ -84,9 +84,10 @@ public sealed partial class AgentToolService
                     var statsRequest = new ThumbnailSizeRequest(
                         ImageStatsService.CanonicalLongEdge,
                         ImageStatsService.CanonicalLongEdge);
-                    if (!_imageService.IsThumbnailCacheValid(image, statsRequest))
+                    if (!_imageService.Thumbnails.IsCacheValid(image, statsRequest))
                     {
-                        using var result = await _imageService.LoadUneditedThumbnailAsync(
+                        using var result = await _imageService.Thumbnails
+                            .LoadUneditedThumbnailAsync(
                             image,
                             statsRequest,
                             CancellationToken.None);

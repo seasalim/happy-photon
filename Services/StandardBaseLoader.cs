@@ -27,15 +27,6 @@ public sealed class StandardBaseLoader : IBaseImageLoader
             ImageFile.SupportedExtensions.Contains(file.Extension);
     }
 
-    public BaseImage? LoadPreviewBase(
-        ImageFile file,
-        BaseDecodeSettings decode,
-        CancellationToken cancellationToken) =>
-        LoadPreviewBaseWithOutcome(
-            file,
-            decode,
-            cancellationToken).DetachInteractiveImage();
-
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
         ImageFile file,
         BaseDecodeSettings decode,

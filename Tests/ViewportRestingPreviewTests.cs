@@ -312,7 +312,7 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
         using var histogramStarted = new ManualResetEventSlim();
         var releaseHistogram = new TaskCompletionSource(
             TaskCreationOptions.RunContinuationsAsynchronously);
-        viewModel.PreviewRenderGateAsync = async () =>
+        viewModel.ImageService.Previews.RenderGateAsync = async () =>
         {
             histogramStarted.Set();
             await releaseHistogram.Task;

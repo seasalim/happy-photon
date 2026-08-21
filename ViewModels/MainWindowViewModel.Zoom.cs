@@ -34,7 +34,7 @@ public partial class MainWindowViewModel
 
     private void UpdateOriginalViewPixelSize(Bitmap bitmap)
     {
-        var identity = ImageService.TryGetPreviewRenderIdentity(bitmap);
+        var identity = ImageService.Previews.TryGetPreviewRenderIdentity(bitmap);
         if (identity == null ||
             !ReferenceEquals(identity.ImageFile, SelectedImage))
         {

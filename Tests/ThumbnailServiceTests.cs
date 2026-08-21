@@ -36,8 +36,9 @@ public sealed class ThumbnailServiceTests : IDisposable
             EditSettings = new EditSettings { Exposure = 3 }
         };
 
-        using var uneditedResult = await imageService.LoadUneditedThumbnailAsync(
-            image, CancellationToken.None);
+        using var uneditedResult =
+            await imageService.Thumbnails.LoadUneditedThumbnailAsync(
+                image, CancellationToken.None);
         using var editedResult = await imageService.LoadThumbnailAsync(
             image, CancellationToken.None);
         var unedited = uneditedResult.Bitmap;
@@ -149,7 +150,7 @@ public sealed class ThumbnailServiceTests : IDisposable
         var image = new ImageFile(sourcePath);
         var request = ThumbnailSizeRequest.For(size);
 
-        using var result = await imageService.LoadUneditedThumbnailAsync(
+        using var result = await imageService.Thumbnails.LoadUneditedThumbnailAsync(
             image,
             request,
             CancellationToken.None);

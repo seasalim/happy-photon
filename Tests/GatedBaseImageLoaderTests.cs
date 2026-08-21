@@ -84,7 +84,7 @@ public sealed class GatedBaseImageLoaderTests
                 new TestSourceAvailabilityService(
                     SourceAvailability.RequiresHydration));
 
-            var (preview, _) = await service.LoadPreviewWithHistogramAsync(
+            var (preview, _) = await service.Previews.LoadPreviewWithHistogramAsync(
                 new ImageFile(Path.Combine(root, "photo.jpg")),
                 new EditSettings(),
                 skipHistogram: true);

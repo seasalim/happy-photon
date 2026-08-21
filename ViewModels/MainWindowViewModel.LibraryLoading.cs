@@ -21,21 +21,6 @@ public partial class MainWindowViewModel
     private readonly Action<Action> _postSelection;
     private long _activeBaseRefreshRequestId;
 
-    internal Func<Task>? PreviewRenderGateAsync
-    {
-        set => ImageService.PreviewRenderGateAsync = value;
-    }
-
-    internal Func<Task>? PreviewRefreshReadyGateAsync
-    {
-        set => ImageService.PreviewRefreshReadyGateAsync = value;
-    }
-
-    internal Action<string>? RestingStageStarted
-    {
-        set => ImageService.RestingStageStarted = value;
-    }
-
     public async Task<int> LoadFolderAsync(string folderPath)
     {
         var generation = Interlocked.Increment(ref _libraryGeneration);
@@ -177,11 +162,11 @@ public partial class MainWindowViewModel
 
         try
         {
-            var cachedTask = ImageService.LoadCachedPreviewAsync(
+            var cachedTask = ImageService.Previews.LoadCachedPreviewAsync(
                 imageFile,
                 imageFile.EditSettings,
                 ct);
-            var freshTask = ImageService.LoadPreviewArtifactsAsync(
+            var freshTask = ImageService.Previews.LoadPreviewArtifactsAsync(
                 imageFile,
                 imageFile.EditSettings,
                 LibraryThumbnailRequest,

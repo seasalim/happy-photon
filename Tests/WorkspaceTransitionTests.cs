@@ -22,7 +22,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
         var vm = CreateViewModel(catalog, loader);
         var refreshReady = NewSignal();
         var releaseRefresh = NewSignal();
-        vm.PreviewRefreshReadyGateAsync = () =>
+        vm.ImageService.Previews.RefreshReadyGateAsync = () =>
         {
             refreshReady.TrySetResult();
             return releaseRefresh.Task;
@@ -94,7 +94,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
         {
             await TestWaits.UntilAsync(() =>
                 vm.PreviewImage != null && vm.Histogram != null);
-            vm.PreviewRenderGateAsync = () =>
+            vm.ImageService.Previews.RenderGateAsync = () =>
             {
                 renderStarted.TrySetResult();
                 return releaseRender.Task;
@@ -141,7 +141,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
                 vm.PreviewImage != null && vm.Histogram != null);
             var originalPreview = vm.PreviewImage;
             var originalHistogram = vm.Histogram;
-            vm.PreviewRenderGateAsync = () =>
+            vm.ImageService.Previews.RenderGateAsync = () =>
             {
                 var index = Interlocked.Increment(ref gateIndex);
                 started[index].TrySetResult();
@@ -192,7 +192,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
         {
             await TestWaits.UntilAsync(() =>
                 vm.PreviewImage != null && vm.Histogram != null);
-            vm.PreviewRenderGateAsync = () =>
+            vm.ImageService.Previews.RenderGateAsync = () =>
             {
                 var index = Interlocked.Increment(ref gateIndex);
                 started[index].TrySetResult();

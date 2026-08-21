@@ -22,15 +22,6 @@ internal sealed class GatedBaseImageLoader : IBaseImageLoader
         return _inner.CanLoad(file);
     }
 
-    public BaseImage? LoadPreviewBase(
-        ImageFile file,
-        BaseDecodeSettings decode,
-        CancellationToken cancellationToken) =>
-        LoadPreviewBaseWithOutcome(
-            file,
-            decode,
-            cancellationToken).DetachInteractiveImage();
-
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
         ImageFile file,
         BaseDecodeSettings decode,
@@ -61,16 +52,6 @@ internal sealed class GatedBaseImageLoader : IBaseImageLoader
             decode,
             SourceReadIntent.Background,
             cancellationToken);
-
-    internal BaseImage? LoadPreviewBase(
-        ImageFile file,
-        BaseDecodeSettings decode,
-        SourceReadIntent intent,
-        CancellationToken cancellationToken) =>
-        Load(file, intent, cancellationToken, () => _inner.LoadPreviewBase(
-            file,
-            decode,
-            cancellationToken));
 
     internal BaseImage? LoadFullBase(
         ImageFile file,

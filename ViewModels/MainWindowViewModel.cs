@@ -59,15 +59,16 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 loader,
                 availabilityService ?? new SourceAvailabilityService(),
                 health);
-            service.PreviewRefreshed += OnPreviewRefreshed;
-            service.PreviewLoadCompleted += OnPreviewLoadCompleted;
-            service.BaseRefreshStateChanged += OnBaseRefreshStateChanged;
-            service.RenderedThumbnailWorkStarted +=
+            service.Previews.PreviewRefreshed += OnPreviewRefreshed;
+            service.Previews.PreviewLoadCompleted += OnPreviewLoadCompleted;
+            service.Previews.BaseRefreshStateChanged +=
+                OnBaseRefreshStateChanged;
+            service.Previews.RenderedThumbnailWorkStarted +=
                 OnRenderedThumbnailWorkStarted;
             return service;
         });
         _loadMetadataAsync = loadMetadataAsync ??
-            (image => ImageService.LoadMetadataAsync(image));
+            (image => ImageService.Metadata.LoadAsync(image));
         _postSelection = postSelection ??
             (action => Dispatcher.UIThread.Post(
                 action,
@@ -101,7 +102,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         return PresetService.UseDirectoryAsync(locations.PresetsRoot);
     }
 
-    private ImageService ImageService => _imageService.Value;
+    internal ImageService ImageService => _imageService.Value;
 
     private const int ThumbnailConcurrency = 6;
     private CancellationTokenSource? _thumbnailLoadingCts;

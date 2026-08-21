@@ -58,7 +58,7 @@ public partial class MainWindowViewModel
 
     private void OnAcceptedInteractivePreview(Bitmap bitmap)
     {
-        var identity = ImageService.TryGetPreviewRenderIdentity(bitmap);
+        var identity = ImageService.Previews.TryGetPreviewRenderIdentity(bitmap);
         if (identity == null ||
             !ReferenceEquals(identity.ImageFile, SelectedImage) ||
             SelectedImage == null)
@@ -187,7 +187,7 @@ public partial class MainWindowViewModel
         _restingHighestAttemptedBound = Math.Max(
             _restingHighestAttemptedBound,
             requested);
-        using var result = await ImageService.RenderRestingPreviewAsync(
+        using var result = await ImageService.Previews.RenderRestingPreviewAsync(
             image,
             settings,
             requested,
@@ -246,9 +246,10 @@ public partial class MainWindowViewModel
         var transferred = false;
         if (previous != null)
         {
-            var identity = ImageService.TryGetPreviewRenderIdentity(previous);
+            var identity = ImageService.Previews.TryGetPreviewRenderIdentity(previous);
             transferred = identity != null &&
-                ImageService.TransferCurrentRenderedBitmap(previous, identity);
+                ImageService.Previews.TransferCurrentRenderedBitmap(
+                    previous, identity);
         }
         PreviewImage = preview;
         if (previous != null && !transferred)

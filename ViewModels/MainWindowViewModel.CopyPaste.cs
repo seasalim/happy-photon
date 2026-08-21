@@ -255,7 +255,7 @@ public partial class MainWindowViewModel
         if (ReferenceEquals(image, SelectedImage) &&
             (IsDevelopMode || IsFullScreenMode)) return true;
         if (!GeometryMatches(previous, image.EditSettings)) return true;
-        return ImageService.HasRenderedThumbnailCacheEntry(image);
+        return ImageService.Thumbnails.HasRenderedCacheEntry(image);
     }
 
     private static bool GeometryMatches(EditSettings left, EditSettings right) =>

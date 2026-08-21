@@ -105,10 +105,10 @@ public partial class MainWindowViewModel
         if (_imageService.IsValueCreated)
         {
             var service = _imageService.Value;
-            serviceThumbnails = service.ThumbnailActivityCount;
-            previews = service.PreviewActivityCount;
+            serviceThumbnails = service.Previews.RenderedThumbnailTaskCount;
+            previews = service.Previews.PreviewActivityCount;
             cacheWrites = service.CacheWriteActivityCount;
-            metadata = service.MetadataActivityCount;
+            metadata = service.Metadata.InFlightCount;
         }
 
         var scheduler = Volatile.Read(ref _thumbnailScheduler);

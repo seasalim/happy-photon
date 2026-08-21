@@ -152,7 +152,7 @@ public partial class MainWindowViewModel
 
         try
         {
-            var hydrated = await ImageService.HydrateSourceAsync(
+            var hydrated = await ImageService.SourceHydration.HydrateAsync(
                 image,
                 request.Token);
             if (!hydrated ||

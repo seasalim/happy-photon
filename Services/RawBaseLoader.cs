@@ -40,15 +40,6 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
         return _isAvailable && file.IsRaw;
     }
 
-    public BaseImage? LoadPreviewBase(
-        ImageFile file,
-        BaseDecodeSettings decode,
-        CancellationToken cancellationToken) =>
-        LoadPreviewBaseWithOutcome(
-            file,
-            decode,
-            cancellationToken).DetachInteractiveImage();
-
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
         ImageFile file,
         BaseDecodeSettings decode,
@@ -261,7 +252,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
 
             ImageServiceHelpers.LogPerformance(
                 nameof(RawBaseLoader),
-                preview ? nameof(LoadPreviewBase) : nameof(LoadFullBase),
+                preview ? nameof(LoadPreviewBaseWithOutcome) : nameof(LoadFullBase),
                 stopwatch.ElapsedMilliseconds,
                 file.FilePath,
                 preview

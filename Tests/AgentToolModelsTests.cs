@@ -148,54 +148,13 @@ public sealed class AgentToolModelsTests
         Assert.Equal(options.Variants, back.Variants);
     }
 
-    [Theory]
-    [InlineData(false, false)]
-    [InlineData(false, true)]
-    [InlineData(true, false)]
-    [InlineData(true, true)]
-    public void AgentExportSettings_InheritsPreferences(
-        bool stripLocationData,
-        bool outputSharpening)
-    {
-        var options = new AgentExportOptions(
-            Quality: 92,
-            NamingPattern: "{name}_agent",
-            Format: "jpeg");
-
-        var settings = AgentExportSettingsFactory.Create(
-            "exports",
-            options,
-            ExportFormat.Jpeg,
-            OutputColorSpace.Srgb,
-            stripLocationData,
-            outputSharpening);
-
-        Assert.Equal("exports", settings.OutputFolder);
-        Assert.Equal(92, settings.Quality);
-        Assert.Equal("{name}_agent", settings.NamingPattern);
-        Assert.Equal(ExportFormat.Jpeg, settings.Format);
-        Assert.Equal(OutputColorSpace.Srgb, settings.OutputColorSpace);
-        Assert.Equal(stripLocationData, settings.StripLocationData);
-        Assert.Equal(outputSharpening, settings.OutputSharpening);
-    }
-
     [Fact]
-    public void AgentExportSettings_DefaultsToSrgbAndHonorsDisplayP3()
+    public void AgentExportOptions_DefaultOutputColorSpaceIsSrgb()
     {
         var defaults = new AgentExportOptions();
         Assert.Equal(
             OutputColorSpace.Srgb,
             AgentToolValidation.ParseOutputColorSpace(defaults.OutputColorSpace));
-
-        var settings = AgentExportSettingsFactory.Create(
-            "exports",
-            defaults,
-            ExportFormat.Jpeg,
-            OutputColorSpace.DisplayP3,
-            stripLocationData: false,
-            outputSharpening: true);
-
-        Assert.Equal(OutputColorSpace.DisplayP3, settings.OutputColorSpace);
     }
 
     [Theory]

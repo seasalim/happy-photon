@@ -105,7 +105,7 @@ public partial class MainWindowViewModel
         else
         {
             // Clear cached preview when no image is selected
-            ImageService.ClearPreviewCache();
+            ImageService.Previews.ClearPreviewCache();
 
             ClearPreviewImage();
             Histogram = null;

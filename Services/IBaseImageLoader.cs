@@ -6,11 +6,6 @@ public interface IBaseImageLoader
 {
     bool CanLoad(ImageFile file);
 
-    BaseImage? LoadPreviewBase(
-        ImageFile file,
-        BaseDecodeSettings decode,
-        CancellationToken cancellationToken);
-
     BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
         ImageFile file,
         BaseDecodeSettings decode,
@@ -20,4 +15,15 @@ public interface IBaseImageLoader
         ImageFile file,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken);
+}
+
+public static class BaseImageLoaderExtensions
+{
+    public static BaseImage? LoadPreviewBase(
+        this IBaseImageLoader loader,
+        ImageFile file,
+        BaseDecodeSettings decode,
+        CancellationToken cancellationToken) =>
+        loader.LoadPreviewBaseWithOutcome(file, decode, cancellationToken)
+            .DetachInteractiveImage();
 }

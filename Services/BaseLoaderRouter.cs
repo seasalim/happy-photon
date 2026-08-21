@@ -28,15 +28,6 @@ public sealed class BaseLoaderRouter : IBaseImageLoader
         return _rawLoader.CanLoad(file);
     }
 
-    public BaseImage? LoadPreviewBase(
-        ImageFile file,
-        BaseDecodeSettings decode,
-        CancellationToken cancellationToken) =>
-        LoadPreviewBaseWithOutcome(
-            file,
-            decode,
-            cancellationToken).DetachInteractiveImage();
-
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
         ImageFile file,
         BaseDecodeSettings decode,
@@ -52,51 +43,15 @@ public sealed class BaseLoaderRouter : IBaseImageLoader
     public BaseImage? LoadFullBase(
         ImageFile file,
         BaseDecodeSettings decode,
-        CancellationToken cancellationToken) =>
-        Load(file, decode, cancellationToken, preview: false);
-
-    private BaseImage? Load(
-        ImageFile file,
-        BaseDecodeSettings decode,
-        CancellationToken cancellationToken,
-        bool preview)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(file);
         ArgumentNullException.ThrowIfNull(decode);
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!file.IsRaw)
-        {
-            return LoadFrom(
-                _standardLoader,
-                file,
-                decode,
-                cancellationToken,
-                preview);
-        }
-
-        return LoadFrom(
-            _rawLoader,
-            file,
-            decode,
-            cancellationToken,
-            preview);
-    }
-
-    private static BaseImage? LoadFrom(
-        IBaseImageLoader loader,
-        ImageFile file,
-        BaseDecodeSettings decode,
-        CancellationToken cancellationToken,
-        bool preview)
-    {
-        if (!loader.CanLoad(file))
-        {
-            return null;
-        }
-
-        return preview
-            ? loader.LoadPreviewBase(file, decode, cancellationToken)
-            : loader.LoadFullBase(file, decode, cancellationToken);
+        var loader = file.IsRaw ? _rawLoader : _standardLoader;
+        return loader.CanLoad(file)
+            ? loader.LoadFullBase(file, decode, cancellationToken)
+            : null;
     }
 }
