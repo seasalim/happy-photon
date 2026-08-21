@@ -7,11 +7,13 @@ documents cover the individual stages in greater depth.
 | Doc | Covers |
 |-----|--------|
 | [WORKING_SPACE.md](WORKING_SPACE.md) | Canonical Rec.2020 basis, matrices, ICC target, provenance |
-| [CHARACTERIZATION.md](CHARACTERIZATION.md) | Camera-RGB contract, built-in characterization, R5b DCP math |
+| [CHARACTERIZATION.md](CHARACTERIZATION.md) | Camera-RGB contract, built-in characterization, DCP math |
 | [DECODE.md](DECODE.md) | Sources → `BaseImage` (loaders, LibRaw params, ICC normalize, caching) |
 | [RENDER.md](RENDER.md) | `BaseImage` + `EditSettings` → rendered image (stage order, LUT math) |
+| [TONE_ENGINE.md](TONE_ENGINE.md) | AgX crossing and tone engine: formula authority, clean-room provenance |
 | [WHITE_BALANCE.md](WHITE_BALANCE.md) | WB model: CCT/tint math, presets, eyedropper, matrices |
 | [OUTPUT.md](OUTPUT.md) | Export encoding, ICC tagging, metadata policy, variants |
+| [UI.md](UI.md) | Pipeline UI surface: controls, gating, interactions |
 | [TESTING.md](TESTING.md) | Golden harness, sample assets, tolerances, determinism |
 
 ## 1. The two-step model
@@ -84,13 +86,15 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
                                    │
             ┌─ RENDER.md ──────────▼──────────────────────────────────┐
             │ 1 Geometry   rotate90 → horizon(+safe crop) → crop      │
-            │ 2 Matrix     RAW: AgX inset × WB; standard: WB           │
-            │ 3 Tone LUT   RAW: gain→log2→sigmoid→channel→master;    │
+            │ 2 DCP HueSat optional scene-linear ProPhoto profile map │
+            │              (RENDER.md §2.1)                           │
+            │ 3 Matrix     RAW: AgX inset × WB; standard: WB           │
+            │ 4 Tone LUT   RAW: gain→log2→sigmoid→channel→master;    │
             │              standard: retained chain→channel→master   │
             │              retained display-domain chain (exact Q16)  │
-            │ 4 Matrix     RAW: AgX outset; standard: identity         │
-            │ 5 Chroma     saturation, vibrance (Modulate)            │
-            │ 6 Detail     capture sharpen, chroma NR (Rec.2020 luma) │
+            │ 5 Matrix     RAW: AgX outset; standard: identity         │
+            │ 6 Chroma     saturation, vibrance (Modulate)            │
+            │ 7 Detail     capture sharpen, chroma NR (Rec.2020 luma) │
             └──────────────┬───────────────────────────────┬──────────┘
                      histogram + clipping stats            │
             ┌─ OUTPUT.md ──▼───────────────────────────────▼──────────┐
@@ -135,7 +139,7 @@ public sealed record BaseImageInfo(
 
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 9;        // bump whenever decoded pixels or facts change
+    public const int Version = …;        // current value lives in code; bump whenever decoded pixels or facts change
     public const int InteractivePreviewMaxDimension = 1600;
     public const int LargePreviewMaxDimension = 3200;
     public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
@@ -247,12 +251,11 @@ settings hash.
 `;dcp={source:content-hash:resolution-status}` appended only for a selected profile.
 In-memory identity adds normalized file path and preview/full size class;
 rendered-cache settings hashes also carry the installed outcome token.
-The active markers are render v9 and base v9. Render v9 attributes the AgX crossing,
-target-convert relocation, Rec.2020 luma basis, and final numeric path. Base v8
-invalidated stale `SourceExposureBiasEv` facts; base v9 moves RAW output-space
-characterization from LibRaw into Happy Photon's fused decode import. R5b does
-not bump either version: the no-profile path is unchanged, while active and
-rejected profile outcomes are isolated by the DCP token.
+The current marker values live in code (`RenderPipeline.Version` and
+`BaseImage.Version`); the doc deliberately does not restate them. A selected
+DCP profile bumps neither version: the
+no-profile path is unchanged, while active and rejected profile outcomes are
+isolated by the DCP token.
 
 ## 7. Current boundaries
 

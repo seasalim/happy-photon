@@ -4,7 +4,7 @@ The canonical `BaseImage` color space and the transforms into and out of it. Thi
 below is derived here from published primaries or cited to a public standard. No GPL
 implementation (darktable, RawTherapee, Blender) was consulted.
 
-The numeric vectors in §7 are the run's oracle. They are derived from the citations in
+The numeric vectors in §7 are the oracle. They are derived from the citations in
 §8, independently of the implementation, and the implementation consumes them rather
 than regenerating them.
 
@@ -60,9 +60,8 @@ the requested target immediately before the common sRGB transfer is encoded.
 configuration (`output_color = 0`). LibRaw performs black subtraction, camera-WB
 scaling, normalization, demosaic, and configured highlight handling, but applies no
 output-space matrix. `CameraRgbCharacterization` composes the copied camera→sRGB fact
-with the exact §2 sRGB→Rec.2020 matrix and fuses it into the one Q16 decode write. This
-is a managed configuration/loader change — no bridge, native package, or ABI change.
-See CHARACTERIZATION.md for the neutralization state, typed fact outcomes, and R5b DCP
+with the exact §2 sRGB→Rec.2020 matrix and fuses it into the one Q16 decode write.
+See CHARACTERIZATION.md for the neutralization state, typed fact outcomes, and the DCP
 replacement contract.
 
 **The camera-matrix fact stays camera→sRGB.** Facts are copied after unpack and before the
@@ -103,11 +102,12 @@ existing linearization step must not run a second transfer over them.
 
 Why a real wide target rather than transform-to-sRGB-then-matrix: an iPhone Display-P3
 source has content outside sRGB, and the sRGB hop would clip it before it ever reached the
-wide base — which is the gamut this run exists to preserve. §7 pins that with vectors.
+wide base — exactly the gamut the wide working space exists to preserve. §7 pins that
+with vectors.
 
 ## 5. Render placement
 
-The AgX rework completed this placement: RAW composes the AgX inset with white balance,
+RAW composes the AgX inset with white balance,
 evaluates the tone engine, and applies the AgX outset; standard sources use white
 balance and the retained display-referred chain. Chroma and all detail stages then run
 on encoded display Rec.2020. After resize and optional output sharpening, vignette and

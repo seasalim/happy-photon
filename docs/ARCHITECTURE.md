@@ -1,51 +1,7 @@
 # Happy Photon Architecture
 
-## Lightroom catalog import
-
-Phase 1 imports ratings, pick/reject flags, and color labels from Lightroom Classic
-without opening original photographs. `LightroomCatalogReader` works from a temporary
-snapshot outside the Happy Photon catalog. Because read-only SQLite access can mutate an
-existing WAL shared-memory sidecar, the cross-platform verified safe path requires
-Lightroom to be fully closed and refuses catalogs with SQLite sidecars; the closed catalog
-file is held open for reading while the snapshot is copied. Orphaned snapshot directories
-are swept during deferred catalog initialization.
-
-`CatalogImportService` normalizes mapped paths, verifies each mapped file entry exists
-without opening its content, and builds a vendor-neutral preview. Missing files never
-become catalog rows, and a zero-match preview cannot persist import settings.
-`CatalogService.Import` exclusively owns persistence: it revalidates the preview's
-per-axis baseline under the connection gate, creates unknown paths, updates `images` and
-revisioned `image_assessments`, and persists import settings in one short transaction.
-Imported metadata never sets `pending_axes`, so a large import does not enter the bounded
-XMP writer. After commit, matching live `ImageFile` objects adopt snapshots only when
-their revision still matches the preview baseline, then filters refresh in place.
-
-## XMP sidecars
-
-XMP support is opt-in per catalog. Folder enumeration records `.xmp` files in
-the same pass as supported images, while XML parsing begins only after the
-thumbnail session has started and runs as cancellable background work.
-Reconciliation compares rating, flag, and label independently against the
-revisioned `image_assessments` row; catalog revisions and the active library
-generation guard UI adoption.
-
-In Read & write mode, only a committed local assessment mutation schedules a
-sidecar write. A single background writer coalesces work by target, merges the
-changed axes into parsed XML (or the complete assessment tuple for a new
-sidecar), revalidates the candidate path, timestamp, and length, then promotes a
-temporary file beside the sidecar. Writes use only standard Adobe vocabulary:
-`xmp:Rating` always holds the true 0–5 stars, `xmpDM:pick` holds `1`, `0`, or
-`-1` for picked, unflagged, or rejected, and `xmpDM:good` accompanies picked and
-rejected values for Lightroom Classic interoperability. `xmp:Label=""` is the
-explicit label clear. Reads likewise use only these standard XMP properties, and
-new writes never create or update the `happyphoton` namespace. Applications such as
-darktable and Bridge that recognize rejects only through `xmp:Rating="-1"` will not
-see Happy Photon rejects; preserving
-the true star rating and Lightroom-compatible pick state is intentional. Reader and
-writer loads reject sidecars larger than 4 MiB. Sidecar availability is checked
-independently, and this pipeline never opens the original image.
-
-Happy Photon is a desktop photo management and editing app (Avalonia UI, .NET 10) with an intentionally simple workflow. This document describes the overall structure and
+Happy Photon is a desktop photo management and editing app (Avalonia UI, .NET 10) with
+an intentionally simple workflow. This document describes the overall structure and
 then goes deep on the two most intricate subsystems: **catalog loading** and the
 **thumbnail pump**. For day-to-day agent guidance (style, shortcuts, commands), see
 [AGENTS.md](../AGENTS.md).
@@ -119,6 +75,11 @@ MainWindowViewModel
  └── McpServerHost → AgentToolService → MainWindowViewModel.Agent   (three-layer agent stack)
 ```
 
+`ImageService` exposes its sub-services directly as properties (`Previews`,
+`Thumbnails`, `Histograms`, `Metadata`) rather than forwarding their members; the
+facade itself keeps only the composed entry points that span sub-services, such as
+thumbnail promotion and export.
+
 ## Image pipeline
 
 The detailed pipeline documentation starts at
@@ -138,19 +99,18 @@ availability-gated and binds matrix, tables, typed status, and source/content ou
 token atomically to `BaseImageInfo`. Missing-WB or rejected profile content preserves the
 built-in path. No profile ships and no profile operation performs a network read.
 
-Develop mode holds one bounded preview pair from a single half-size RAW decode: an
-at-most-1600px interactive base and an at-most-3200px large base for the resting
-viewport render. Export decodes a fresh native-resolution base. The viewer's 100%
-geometry is anchored to original pixels, but preview detail remains limited by the
-large base; zoom beyond that ceiling is not a native-detail RAW inspection mode.
-Preview bitmap, clipping statistics, source capability, semantic clipping mask, and
-render generation travel together in `PreviewArtifacts`; the view model accepts or
-rejects that carrier atomically. Clipping masks are requested only while the Develop
-overlay is latched or peeked, preserving a mask-free normal preview path.
-Camera compatibility follows the bundled LibRaw generation and the exact compression
-variant, not merely the file extension. The current product boundary is global edits:
-there are no local masks, lens or perspective correction, layered compositing, HDR
-output, or custom output profiles.
+Develop mode holds one bounded preview pair from a single half-size RAW decode (see
+the preview pipeline below); export decodes a fresh native-resolution base. The
+viewer's 100% geometry is anchored to original pixels, but preview detail remains
+limited by the large base; zoom beyond that ceiling is not a native-detail RAW
+inspection mode. Preview bitmap, clipping statistics, source capability, semantic
+clipping mask, and render generation travel together in `PreviewArtifacts`; the view
+model accepts or rejects that carrier atomically. Clipping masks are requested only
+while the Develop overlay is latched or peeked, preserving a mask-free normal preview
+path. Camera compatibility follows the bundled LibRaw generation and the exact
+compression variant, not merely the file extension. The current product boundary is
+global edits: there are no local masks, lens or perspective correction, layered
+compositing, HDR output, or custom output profiles.
 
 ## Startup sequence
 
@@ -182,47 +142,42 @@ First frame is sacred: nothing non-visual happens before the window is shown.
      existing saved browsing root, or prepare an unselected Pictures tree for the
      versioned first-run wizard.
 
-Update discovery is manual-only. The app makes no automatic update network requests;
-it contacts GitHub only after the user explicitly chooses **Check for updates** on the
-About tab. The request runs off the UI thread, its result is kept only for the current
-session, and shutdown cancels an in-flight manual check.
+Update discovery is manual-only: the app contacts GitHub only after the user chooses
+**Check for updates** on the About tab, off the UI thread; the result is session-only
+and shutdown cancels an in-flight check.
 
-The first frame always paints Dark. The appearance picker stays disabled until app
+The first frame always paints Dark; the appearance picker stays disabled until app
 settings load, then the saved `AppTheme` is applied through
-`Application.RequestedThemeVariant`. Variant resources use dynamic lookups, so the
-existing realized tree repaints without replacing merged dictionaries or restarting;
-missing or invalid theme settings fall back to Dark. The brief Dark-to-saved-theme
-transition remains off the first-frame path and preserves invariant 6.
+`Application.RequestedThemeVariant`. Variant resources use dynamic lookups so the
+realized tree repaints in place; missing or invalid theme settings fall back to Dark,
+and the Dark-to-saved-theme transition stays off the first-frame path (invariant 6).
 
 The startup gate is present in the first frame and disables workspace controls and
 global shortcuts until startup reaches `Ready`. An unreadable or invalid pointer,
 including one whose persisted catalog folder is missing, stops at an explicit
-quarantine/recovery action. A schema mismatch offers journaled **Set aside and retry**
-for both roots when neither is environment-managed. Catalog or settings failures replace
-the neutral initializing state with Retry/Close. During an incomplete first run,
-shutdown saves preferences only; the browsing root, viewed folder, and completion
+quarantine/recovery action; a schema mismatch offers journaled **Set aside and retry**
+for both roots when neither is environment-managed; other catalog or settings failures
+replace the neutral initializing state with Retry/Close. During an incomplete first
+run, shutdown saves preferences only; the browsing root, viewed folder, and completion
 version are committed together when the wizard finishes. The forward-only wizard
-advances through Welcome, Storage, and Pictures, conditionally offers Lightroom import,
-and ends with an explicit choice to start or skip the tour. Its bounded Windows and
-macOS detection checks known install locations and shallow local fixed-drive
-folders off the UI thread; reparse-point descendants, remote and removable volumes,
-and broad drive scans are excluded. It reports at most five catalog candidates within
-the shared entry budget.
+advances through Welcome, Storage, and Pictures, conditionally offers Lightroom
+import, and ends with an explicit choice to start or skip the tour. Its bounded
+Windows and macOS detection checks known install locations and shallow local
+fixed-drive folders off the UI thread — no reparse-point descendants, remote or
+removable volumes, or broad drive scans — and reports at most five catalog candidates
+within the shared entry budget.
 
-Choosing **Start tour** after wizard setup starts a session-only workflow tour owned by
-`MainWindowViewModel.WorkflowTour`. Its three non-modal coachmarks are anchored to
-stable Library and Develop layout points, suspend when the user changes view, and
-resume when that view returns. While a coachmark is visible, unrelated stable
-sections are de-emphasized at a themed opacity while the active work surface stays
-fully interactive; this presentation-only dimming lifts whenever no coachmark is on
-screen, including while a step is suspended. The Library empty-state card stays hidden
-for the lifetime of an active tour so it does not compete with coachmarks. Each
-coachmark also carries a photon
-trail anchored to its own edge, plus an opt-in glow on small target regions, so the
-step names its target without any coordinate tracking between controls. Both marks
-are decorative and never hit testable. Tour navigation never changes photograph
-state, filters, or selection; its export action opens a zero-selection preview
-with a prominent return to Library action instead of an enabled export command.
+Choosing **Start tour** starts a session-only workflow tour owned by
+`MainWindowViewModel.WorkflowTour`. Its three non-modal coachmarks anchor to stable
+Library and Develop layout points, suspend when the user changes view, and resume when
+that view returns. While a coachmark is visible, unrelated stable sections are
+de-emphasized at a themed opacity while the active work surface stays fully
+interactive, and the Library empty-state card stays hidden for the tour's lifetime.
+Each coachmark carries a decorative, never hit-testable photon trail (plus an opt-in
+glow on small target regions) so the step names its target without coordinate tracking
+between controls. Tour navigation never changes photograph state, filters, or
+selection; its export action opens a zero-selection preview with a prominent
+return-to-Library action instead of an enabled export command.
 
 ## The catalog
 
@@ -322,6 +277,51 @@ WAL mode is intentionally not enabled: the app has one process and one gated
 connection, so WAL would add sidecar-file behavior without making catalog operations
 concurrent. Revisit this only if the connection model changes.
 
+## Lightroom catalog import
+
+Lightroom import brings ratings, pick/reject flags, and color labels from Lightroom
+Classic without opening original photographs. `LightroomCatalogReader` works from a
+temporary snapshot outside the Happy Photon catalog. Because read-only SQLite access
+can mutate an existing WAL shared-memory sidecar, the verified safe path requires
+Lightroom to be fully closed and refuses catalogs with SQLite sidecars; the closed
+catalog file is held open for reading while the snapshot is copied. Orphaned snapshot
+directories are swept during deferred catalog initialization.
+
+`CatalogImportService` normalizes mapped paths, verifies each mapped file entry exists
+without opening its content, and builds a vendor-neutral preview. Missing files never
+become catalog rows, and a zero-match preview cannot persist import settings.
+`CatalogService.Import` exclusively owns persistence: it revalidates the preview's
+per-axis baseline under the connection gate, creates unknown paths, updates `images` and
+revisioned `image_assessments`, and persists import settings in one short transaction.
+Imported metadata never sets `pending_axes`, so a large import does not enter the bounded
+XMP writer. After commit, matching live `ImageFile` objects adopt snapshots only when
+their revision still matches the preview baseline, then filters refresh in place.
+
+## XMP sidecars
+
+XMP support is opt-in per catalog. Folder enumeration records `.xmp` files in
+the same pass as supported images, while XML parsing begins only after the
+thumbnail session has started and runs as cancellable background work.
+Reconciliation compares rating, flag, and label independently against the
+revisioned `image_assessments` row; catalog revisions and the active library
+generation guard UI adoption.
+
+In Read & write mode, only a committed local assessment mutation schedules a
+sidecar write. A single background writer coalesces work by target, merges the
+changed axes into parsed XML (or the complete assessment tuple for a new
+sidecar), revalidates the candidate path, timestamp, and length, then promotes a
+temporary file beside the sidecar. Writes use only standard Adobe vocabulary:
+`xmp:Rating` always holds the true 0–5 stars, `xmpDM:pick` holds `1`, `0`, or
+`-1` for picked, unflagged, or rejected, and `xmpDM:good` accompanies picked and
+rejected values for Lightroom Classic interoperability. `xmp:Label=""` is the
+explicit label clear. Reads likewise use only these standard XMP properties, and
+new writes never create or update the `happyphoton` namespace. Applications such
+as darktable and Bridge that recognize rejects only through `xmp:Rating="-1"`
+will not see Happy Photon rejects; preserving the true star rating and
+Lightroom-compatible pick state is intentional. Reader and writer loads reject
+sidecars larger than 4 MiB. Sidecar availability is checked independently, and
+this pipeline never opens the original image.
+
 ## Folder load and the thumbnail pump
 
 This is the most concurrency-sensitive flow in the app. The goals, in priority order:
@@ -388,32 +388,29 @@ quality, then queues the requested Large follow-up. After that, one
   request is retained as its follow-up.
 - Active-library ownership is checked through a reference-identity set, keeping each
   completed assignment O(1). A terminal decode failure is remembered on that folder's
-  `ImageFile`, so later viewport reports do not retry corrupt or unsupported files and
-  any last successful resident bitmap remains visible. A fresh folder load creates new
+  `ImageFile`, so viewport reports do not retry corrupt or unsupported files and any
+  last successful resident bitmap remains visible; a fresh folder load creates new
   instances and permits a new attempt.
-- A cloud deferral is distinct from a decode failure. It is remembered for the current
-  folder generation, is not repeatedly re-enqueued by viewport reports, and does not
-  reserve a slot in the decoded-bitmap residency target.
-- When a usable bitmap is already resident, a failed or hydration-deferred larger
-  request is recorded only against that generation target. It neither changes the base
-  cloud badge/count nor retries on subsequent viewport reports while that bitmap remains
-  resident. Residency eviction removes the placeholder constraint, so viewport re-entry
-  may reload the bitmap. Results without a resident bitmap retain the base
-  failure/deferral behavior above.
+- A cloud deferral is distinct from a decode failure: it is remembered for the current
+  folder generation, is not re-enqueued by viewport reports, and does not reserve a
+  residency slot. When a usable bitmap is already resident, a failed or
+  hydration-deferred larger request is recorded only against that generation target
+  and neither changes the base cloud badge/count nor retries while the bitmap remains
+  resident; residency eviction removes that constraint, so viewport re-entry may
+  reload.
 - Workers wait on one shared signal, not one semaphore waiter or cancellation
   registration per image. Folder switches remain constant-time on the UI thread.
 - Capture-time metadata is not swept on folder open. Enabling Bursts starts a
-  cancellable, serial sweep over the current folder and computes burst groups over logical
-  captures; disabling Bursts or changing folders stops the remaining work. A logical
-  capture is a singleton or a path-derived RAW+JPEG pair with the same case-insensitive
-  basename in the same directory. Pairing is session-scoped, and burst size and index count
-  shutter presses while membership remains available for every file. The shared background
-  segment reports processed/total capture-time progress while analysis is active, including
-  while a newer folder waits for a cancelled sweep to yield; disabling Bursts removes
-  that activity. `MetadataService`
-  deduplicates this work with selection-triggered loads and awaits UI application
-  before grouping reads `DateTaken`. The sweep analyzes locally readable images and
-  reports cloud-only images as skipped; enabling Bursts never approves hydration.
+  cancellable, serial sweep over the current folder and computes burst groups over
+  logical captures — a singleton or a path-derived RAW+JPEG pair with the same
+  case-insensitive basename in the same directory; disabling Bursts or changing
+  folders stops the remaining work. Pairing is session-scoped; burst size and index
+  count shutter presses while membership remains available for every file. The shared
+  background segment reports processed/total progress while analysis is active.
+  `MetadataService` deduplicates this work with selection-triggered loads and awaits
+  UI application before grouping reads `DateTaken`. The sweep analyzes locally
+  readable images and reports cloud-only images as skipped; enabling Bursts never
+  approves hydration.
 
 Worker continuations post back to the UI context (the pump is started from the UI
 thread), so `ImageFile.Thumbnail` assignments — and the resulting grid updates — happen
@@ -428,8 +425,7 @@ a cheap decode rather than source-image processing.
 
 Each request carries a minimum acceptable long edge and a fresh-generation long edge:
 Small `(150, 150)`, Medium `(150, 192)`, or Large `(512, 512)`. A warm cache is checked
-first. Its JPEG dimensions are read from a bounded SOF-header parser before pixel
-decode; satisfactory larger entries decode down to at most the generation target, and
+first: satisfactory larger entries decode down to at most the generation target, and
 undersized entries paint immediately while an allowed source upgrade is queued. Cache
 writes are largest-wins for the current source version, so late Small work cannot
 replace a Large entry.
@@ -437,22 +433,21 @@ replace a Large entry.
 On a cache miss, source candidates are tried in this order:
 
 1. RAW only — **LibRaw embedded preview** (`ExtractThumbnail`), with manual EXIF
-   orientation when LibRaw output lacks it. LibRaw also reports the visible RAW frame
-   dimensions used by Develop. A preview whose aspect differs from that frame by more
-   than 3% is center-cropped toward the visible RAW aspect; the mismatch is treated as
-   camera-added padding. At or below 3%, or when visible geometry is unavailable, the
-   preview is preserved.
+   orientation when LibRaw output lacks it. A preview whose aspect differs by more
+   than 3% from the visible RAW frame LibRaw reports is center-cropped toward that
+   aspect (camera-added padding); at or below 3%, or when visible geometry is
+   unavailable, the preview is preserved.
 2. **EXIF thumbnail** via `Ping` (header-only read), accepted only if its aspect ratio
-   matches the source within 3% (`ExifThumbnailDecoder`). Unlike LibRaw previews,
-   missing geometry or a larger mismatch still rejects an EXIF thumbnail.
+   matches the source within 3% (`ExifThumbnailDecoder`); unlike LibRaw previews,
+   missing geometry or a larger mismatch rejects it.
 3. RAW only — **embedded JPEG scan** (`EmbeddedJpegExtractor`): scan the raw bytes for
-   `FFD8…FFD9` spans, validate candidates with Magick, pick the largest. Uses the
+   `FFD8…FFD9` spans, validate candidates with Magick, pick the largest, trying the
    *last* `FFD9` marker first (some vendors nest JPEGs). Results are memoized in a
-   short-lived static cache to dedupe parallel workers. This fallback is not
-   aspect-normalized.
-4. **Reduced-size decode for non-RAW files** — for JPEGs, `JpegThumbnailDecoder` uses Avalonia's platform
-   decoder (`Bitmap.DecodeToWidth/Height`) plus a manual orientation pixel-remap; other
-   standard formats go through Magick with size hints. RAW files never enter this step.
+   short-lived static cache to dedupe parallel workers; not aspect-normalized.
+4. **Reduced-size decode for non-RAW files** — for JPEGs, `JpegThumbnailDecoder` uses
+   Avalonia's platform decoder (`Bitmap.DecodeToWidth/Height`) plus a manual
+   orientation pixel-remap; other standard formats go through Magick with size hints.
+   RAW files never enter this step.
 
 RAW extraction retains the best safe embedded candidate and continues while it is
 below the generation target. It returns immediately at that target, otherwise returns
@@ -463,33 +458,26 @@ Edited standard images keep the low-resolution `RenderPipeline` path, which mirr
 `StandardBaseLoader`. Edited RAWs use a different speed-first order: an in-memory
 thumbnail from the matching accepted Develop render, a matching
 `assets/rendered-thumbs/` entry, then the unedited source thumbnail with only rotation,
-horizon rotation, and crop applied. The fallback never applies tone or color to the
-camera-rendered embedded JPEG and never upscales a crop. Opening the RAW in Develop
-replaces it after a successful LibRaw render. Folder loading never decodes a RAW base or
-a 1600px preview.
-
-The source thumbnail remains unchanged in `assets/thumbs/`; agent statistics always
-read this unedited tier and normalize it to a canonical 150 px raster. Accurate RAW
-thumbnails are q85 JPEGs with versioned metadata sidecars containing the settings hash
-and stored dimensions. Matching writes are largest-wins. Legacy plain-hash sidecars are
-accepted by inferring dimensions from the JPEG header. Both files must exist, the JPEG
-must be newer than the original, and the hash must match the current render settings.
-An accurate undersized edited-RAW entry remains visible instead of falling through to a
-sharper but edit-inaccurate source thumbnail.
+horizon rotation, and crop applied — the fallback never applies tone or color to the
+camera-rendered embedded JPEG and never upscales a crop. Folder loading never decodes a
+RAW base or a 1600px preview. The unedited source thumbnail remains unchanged in
+`assets/thumbs/` and is the only input to agent statistics (normalized to a canonical
+150 px raster). Rendered-thumbnail cache format, validity, and largest-wins rules are
+specified in [docs/pipeline/DECODE.md](pipeline/DECODE.md) §5.
 
 ### Cloud-file source access
 
 Folder enumeration captures a display-only availability hint without opening image
-content. Every actual source access rechecks the current file attributes through
-`ISourceAvailabilityService`; the hint is never authoritative because a provider may
-dehydrate a file after enumeration.
+content; every actual source access rechecks the current file attributes through
+`ISourceAvailabilityService`, because a provider may dehydrate a file after
+enumeration.
 
 `SourceReadIntent.Background` is used by thumbnails, metadata, previews, statistics,
 Bursts, agents, and unconfirmed export work. It permits local and unknown sources but
-returns a typed deferral for files that require hydration. Warm Happy Photon caches are
-checked before this gate and remain usable. `GatedBaseImageLoader` wraps both default
-and injected base loaders, while metadata and path-based statistics gate their own
-source entry points.
+returns a typed deferral for files that require hydration; warm Happy Photon caches
+are checked before this gate and remain usable. `GatedBaseImageLoader` wraps both
+default and injected base loaders, while metadata and path-based statistics gate
+their own source entry points.
 
 Only two user actions grant `UserApprovedHydration`: **Download and open** for one
 selected image, and the export dialog after it reports the selected cloud-file count
@@ -503,14 +491,13 @@ Persisting thumbnails must never slow down rendering them, so writes are decoupl
 
 - `QueueSaveToCache` clones the bitmap (pixel copy) and enqueues a `CacheWrite` into a
   **bounded channel (256 entries, drop-oldest)** — a full queue sheds the oldest write
-  rather than blocking a worker or growing memory. Dropped/failed entries dispose their
-  bitmap.
-- A **single background writer** drains the channel: encode to a GUID-named file in
-  `assets/tmp/` as an explicit JPEG from directly imported BGRA pixels, verify the
-  source file's mtime hasn't changed since capture (staleness guard), then atomically
-  `File.Move` into place. Old PNG bytes stored under `.jpg` names remain readable and
-  are re-encoded lazily when accessed. Failures clean up the temp file; startup clears
-  any orphans left by a crash.
+  rather than blocking a worker or growing memory; dropped/failed entries dispose
+  their bitmap.
+- A **single background writer** drains the channel: encode to a GUID-named JPEG in
+  `assets/tmp/`, verify the source file's mtime hasn't changed since capture
+  (staleness guard), then atomically `File.Move` into place. Old PNG bytes stored
+  under `.jpg` names remain readable and are re-encoded lazily. Failures clean up the
+  temp file; startup clears any orphans left by a crash.
 - **Shutdown**: the channel is completed and drained for at most 2 seconds; after that
   the writer is cancelled and pending entries are dropped, so a slow disk can never
   block window close. Losing queued cache writes is safe — they regenerate next visit.
@@ -525,81 +512,50 @@ touches originals or deletes the assets folder.
 
 ## Preview pipeline (Develop mode)
 
-Briefly, for contrast with thumbnails:
+Briefly, for contrast with thumbnails. The authoritative pipeline behavior lives in
+the pipeline docs: decode contract, base-pair ownership, and disk caches in
+[docs/pipeline/DECODE.md](pipeline/DECODE.md) (§4–5); render stages, budgets, resting
+renders, and rendered-thumbnail ownership in
+[docs/pipeline/RENDER.md](pipeline/RENDER.md) (§11 is the performance contract). The
+threading and ownership view:
 
-- `PreviewService` keeps one current preview-base pair: an immutable linear 1600px
-  interactive base and an at-most-3200px large base derived independently from the
-  same bounded decode. Their identity is source path plus
-  `BaseDecodeSettings.CacheKey`; viewport changes never change that identity. Slider
-  edits render only from the 1600 base and never resize or re-decode. The two bases
-  have separate lease/retirement lifetimes so a decode-settings replacement can keep
-  only the old interactive base for stale-paint continuity.
-- Camera-profile selection is part of that decode identity. One generation-scoped
-  request resolves a live immutable snapshot before exact cache matching, then the
-  resolved source/hash/status token follows the installed base into every render and
-  persisted hash. Matrix and HueSat tables therefore switch together; stale-base
-  renders are non-promotable.
-- `assets/previews/` stores the last rendered q90 JPEG, not a linear base. A `.meta`
-  sidecar stores the deterministic settings hash. Develop entry paints a valid cached
-  render even when its hash is stale, then a background base decode and fresh render
-  replace it.
-- Warm preview and rendered-thumbnail artifacts may paint immediately as last-known
-  stale state. Generation-correlated live profile resolution then confirms or replaces
-  them; merely painting a warm cache never opens an embedded profile. When make/model
-  arrives from the open LibRaw base, a background Adobe scan probes only bounded
-  `UniqueCameraModel` metadata cached by path/mtime/size, then parses and hashes the few
-  matching profiles. Picker open remains a generation-correlated refresh fallback, and
-  is the point where embedded profiles are inspected. Availability is rechecked
-  immediately before every profile content open.
-- An accepted edited RAW render also supplies an owned source for the explicit Library
-  request, capped at 512 px. After display conversion and the accepted-generation check,
-  ownership of that render moves to a tracked background resize/conversion task; no
-  full-size clone is made. `PreviewService` retains the resulting thumbnail strongly,
-  promotes clones to Library only when the candidate is already complete, and queues it
-  to the independent q85 `assets/rendered-thumbs/` writer on promotion or image/view
-  leave. Shutdown waits for tracked candidate and queue work before draining that writer.
-  Stale preview placeholders never enter this record.
-- Effects do not fork thumbnail ownership. The accepted preview is already finalized
-  with vignette and grain before the existing ≤512px detach-and-resize path. Vignette
-  is scale-invariant; grain may be resampled because rendered thumbnails are
-  navigational chrome rather than an authoritative render surface. Effects-off adds no
-  thumbnail work because inactive settings do not count as edits.
-- Rendered-cache writes happen on image/view leave, not on slider settles. A bounded
-  drop-oldest queue owns JPEG encoding, sidecar creation, and atomic moves; writes
-  re-check the source timestamp before installation.
-- The ViewModel debounces interaction: preview 150 ms, render stats 300 ms (display
-  histogram plus luminance waveform, deferred so sliders stay responsive), thumbnail
-  refresh 500 ms, each with its own CTS.
-- An accepted current 1600 render arms a display-only resting render after the stats
-  refresh. Fit and zoom settles use the active Develop/fullscreen surface's required
-  device-pixel long edge, bounded by the large base and 3200 cap. Pan and zoom-out do
-  not render. A crop-aware target-sized linear snapshot enters the unchanged render
-  math with stats disabled. Edits cancel it at input time through the preview-debounce
-  token; selection and mode changes retire it.
-  Resting generations never advance the interactive render generation and never feed
-  histograms, rendered thumbnails, or the q90 rendered-preview cache. When a resting
-  bitmap replaces the current 1600 bitmap, ownership of that displaced bitmap moves to
-  `PreviewService` until cache promotion or invalidation.
-- A RAW preview/full base also performs one single-threaded visible-mosaic pass between
-  LibRaw `Unpack` and `Process`. The pass shares the decode worker and cancellation
-  token, releases its native mosaic lease before processing, and stores the optional
-  sensor histogram on `BaseImageInfo`. Slider renders reuse the held fact; the
-  non-blocking accessor only acquires an exact held path/decode identity and cannot
-  decode, read, or hydrate a source.
-- Selecting an image starts rendered-cache loading and base decoding concurrently.
-  The thumbnail covers a cache miss; a thin line under the histogram appears only
-  when base decoding exceeds 150 ms. The fresh preview then schedules the histogram.
-- For a cloud-only original, a valid cached preview may still paint, but fresh base
-  decode is deferred until **Download and open** hydrates that one image.
-- Export independently re-resolves each selected profile. Degraded selections use the
-  built-in matrix and propagate a per-image warning through batch, desktop, and agent
-  result carriers rather than hiding preview/export divergence.
-- Library mode never loads a 1600px preview just to draw the histogram. The UI thread
-  copies the current thumbnail pixels into an independently owned bitmap, then a
-  threadpool task scales it to a DPI-independent 150 px bitmap and calculates its bins.
-  Retirement never waits for that work; selection and thumbnail-generation checks reject
-  stale results, and a later thumbnail assignment reschedules the debounce.
-  This thumbnail-only path calculates no waveform.
+- `PreviewService` keeps one current preview-base pair (immutable linear 1600px
+  interactive + at-most-3200px large) with separate lease/retirement lifetimes;
+  decodes are single-flight by identity and newest-wins, and slider edits render only
+  from the 1600 base. Camera-profile selection is part of decode identity, so matrix
+  and HueSat tables switch together and stale-base renders are non-promotable.
+- Warm cached previews and rendered thumbnails may paint immediately as last-known
+  stale state; a background base decode and fresh render confirm or replace them.
+  Painting a warm cache never opens an embedded profile or hydrates a source, and
+  availability is rechecked immediately before every profile content open.
+- An accepted edited RAW render hands ownership to a tracked background
+  resize/conversion task for the ≤512px Library thumbnail — no full-size clone;
+  `PreviewService` retains the result strongly and queues it to the independent
+  rendered-thumbs writer on promotion or image/view leave. Shutdown waits for tracked
+  candidate and queue work before draining that writer. Rendered-cache writes happen
+  on image/view leave, never per slider settle.
+- Resting (viewport-resolution) renders are display-only: they never advance the
+  interactive render generation and never feed histograms, rendered thumbnails, or
+  the q90 preview cache; edits cancel them through the preview-debounce token, and
+  selection or mode changes retire them. When a resting bitmap replaces the current
+  1600 bitmap, ownership of the displaced bitmap moves to `PreviewService` until
+  cache promotion or invalidation.
+- A RAW preview/full base performs one single-threaded visible-mosaic pass between
+  LibRaw `Unpack` and `Process` on the decode worker, releasing the native mosaic
+  lease before processing; the optional sensor histogram is stored on
+  `BaseImageInfo`, and its non-blocking accessor cannot decode, read, or hydrate a
+  source.
+- The ViewModel debounces interaction: preview 150 ms, render stats 300 ms, thumbnail
+  refresh 500 ms, each with its own CTS. Selecting an image starts rendered-cache
+  loading and base decoding concurrently; a cloud-only original may paint a valid
+  cached preview, but fresh base decode waits for **Download and open**.
+- Export independently re-resolves each selected profile; degraded selections use the
+  built-in matrix and propagate a per-image warning.
+- Library mode never loads a 1600px preview just to draw the histogram: the UI thread
+  copies the current thumbnail pixels into an independently owned bitmap, and a
+  threadpool task scales it to a DPI-independent 150 px bitmap and calculates its
+  bins. Retirement never waits for that work; stale results are rejected by selection
+  and thumbnail-generation checks, and no waveform is calculated on this path.
 
 ### Background activity ownership
 
@@ -608,16 +564,15 @@ activity epoch is open. It reads worker-owned integer state: the initial thumbna
 batch flag, scheduler desired count, operation-level direct thumbnail tasks, rendered
 thumbnail tasks, preview decode/refresh tasks, cache queues plus writer-in-hand state,
 and unique metadata loads. Burst analysis and UI or agent exports contribute one outer
-scope per batch, with processed/total progress; overlapping export scopes add their
-counts. Metadata remains accounted but is presentation-suppressed while a burst or
-export scope already explains it.
+scope per batch, with processed/total progress; metadata remains accounted but is
+presentation-suppressed while a burst or export scope already explains it.
 
 Producer and downstream cache-write phases deliberately overlap: a thumbnail or
 rendered-thumbnail task enqueues its cache write before leaving its own activity set.
 The sampler shows only after 400 ms of continuous work, hides after 600 ms of quiet,
-and stops after the hidden, all-zero snapshot has retained the same activity epoch for
-that trailing quiet interval. A rendered-thumbnail empty-to-nonempty transition can
-re-arm a stopped sampler.
+and stops once the hidden, all-zero snapshot has kept the same activity epoch for that
+trailing quiet interval; a rendered-thumbnail empty-to-nonempty transition can re-arm
+it.
 
 Shared per-image decode methods do not mutate activity state or notify the UI. Folder
 switches register one initial range and a bounded number of operation-level wakes,
@@ -665,15 +620,10 @@ sampler.
 9. Background work never hydrates a cloud-only original. Source reads enforce live
    availability; only a clearly scoped user action may use approved hydration intent.
 10. Progress indicators are indeterminate only while their represented work is active.
-    Indeterminate FluentTheme ProgressBars animate even when hidden and keep the
-    compositor rendering: Phase 0 measurement (2026-08-12, Windows 11, Release) found
-    ~0.3 % CPU / ~2.9 % GPU idling at Ready and ~2.2 % CPU / ~13.4 % GPU idling on a
-    2,000-image folder, and disabling the four always-attached bars returned every
-    case exactly to the empty-FluentTheme-window floor. Bars therefore bind
-    `IsIndeterminate` to their busy flag, and library tiles use a static loading
-     placeholder instead of a ProgressBar.
+    Hidden indeterminate FluentTheme ProgressBars animate anyway and keep the
+    compositor rendering — they were the entire measured idle CPU/GPU load — so bars
+    bind `IsIndeterminate` to their busy flag and library tiles use a static loading
+    placeholder, keeping idle usage at the empty-window floor.
 11. Interactive preview ticks stay on the pre-derived 1600 base. Viewport-resolution
-    work begins only after a current 1600 paint and never enters histogram/cache paths.
-    A Windows Debug measurement of the cap-3200/target-2826 replacement-contention
-    shape peaked at 330.2 MiB private memory (138.7 MiB baseline, +191.5 MiB); the cap
-    and current-image-only pair ownership bound that peak.
+    work begins only after a current 1600 paint and never enters histogram/cache
+    paths; the 3200 cap and current-image-only pair ownership bound its memory peak.

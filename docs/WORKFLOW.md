@@ -1,39 +1,5 @@
 # The Happy Photon Workflow
 
-## Bring assessments from Lightroom Classic
-
-Choose **Import from Lightroom…** in the Folders header's **More folder actions** menu,
-or use the optional Lightroom step during first run. When Happy Photon finds a local
-`.lrcat`, choose from the detected catalogs or browse for another; when only Lightroom
-Classic is detected, choose a catalog. Close Lightroom first.
-Happy Photon summarizes locations it matches
-automatically. Map any moved location you want to import, or leave it blank to skip those
-photos. Then choose whether Lightroom replaces differing Happy Photon values or only fills
-empty values, review the automatically updated report of what will change, and import.
-An import never clears a local rating, flag, or color label, and never writes to
-Lightroom or an original photograph.
-
-The preview checks that each mapped photo file exists without opening it. Missing files
-are skipped. If none of the mapped photos exist, copy or mount the originals or correct
-the mappings before Apply becomes available.
-
-The report reserves action-needed messages for an import where none of the assessed
-photos matched. Unmapped locations are informational skips, like virtual copies and
-unsupported files. It also warns when multiple Lightroom records map to the same
-destination path; the later record is used. “Nothing to import” means the source
-catalog has no ratings, flags, or labels; “Nothing matched” means its source paths need
-review. Re-running the same import performs no catalog writes when everything is already
-up to date.
-
-On a new installation, first read the Welcome page, confirm where the catalog and cache
-will live, and select the Pictures folder that should appear in the folder tree. Storage
-is created only when you continue from that step. If the optional Lightroom step appears,
-Apply an import or Skip it; canceling the picker or dialog returns to the step. Either
-successful path keeps the Pictures choice as the browsing root and advances to an
-all-set page, where you can start the guided workspace tour or skip it and enter the
-workspace directly. Lightroom import remains available later from the Folders header's
-**More folder actions** menu.
-
 Happy Photon is organized around three decisions:
 
 1. **Which photographs are worth keeping?** Use Library to compare, flag, rate,
@@ -68,6 +34,13 @@ presets, in normal backups.
 Edits are non-destructive: they are instructions stored in the catalog, not
 changes written into the original image. Export creates new files.
 
+On a new installation, first read the Welcome page, confirm where the catalog
+and cache will live, and select the Pictures folder that should appear in the
+folder tree. Storage is created only when you continue from that step. If the
+optional Lightroom step appears, Apply an import or Skip it. Either path keeps
+the Pictures choice as the browsing root and advances to an all-set page, where
+you can start the guided workspace tour or enter the workspace directly.
+
 Cloud Files providers such as OneDrive are supported without automatically downloading
 online-only originals. Happy Photon may show its own cached thumbnail or preview while
 the original remains online-only. It reads that original only after a clearly scoped
@@ -84,21 +57,38 @@ mode.
 
 Open **Settings** with the title-bar gear or `Ctrl+,`. The Storage tab reveals
 both roots and stages safe moves for the next launch; environment-managed roots
-explain why Change and Move are unavailable. The Metadata tab can
-enable per-catalog XMP reading or read/write interop for ratings, flags, and
+explain why Change and Move are unavailable. The Metadata tab can enable
+per-catalog XMP reading or read/write interop for ratings, flags, and
 recognized color-label names. Read/write creates or updates a sidecar only
 after you change an assessment; enabling it does not publish older catalog
-assessments. Happy Photon writes standard Adobe XMP vocabulary: true stars stay
-in `xmp:Rating`, flags use Lightroom-compatible `xmpDM:pick`, and color labels
-use `xmp:Label`. Reads likewise use only these standard XMP properties.
-Lightroom Classic can exchange the pick states, but darktable and Bridge versions
-that recognize a reject only as `xmp:Rating="-1"` will not show Happy Photon
-rejects because the rating remains the true star value. Sidecars may sync through
-the folder's cloud provider, while the original photo remains untouched and is
-never downloaded for XMP work.
-Update discovery is manual-only. Happy Photon makes no automatic update network
-requests; it contacts GitHub only when you explicitly choose **Check for updates**
-on the About tab.
+assessments. Happy Photon exchanges only standard Adobe XMP vocabulary (see
+`ARCHITECTURE.md` for the exact properties): Lightroom Classic interoperates
+fully, while darktable and Bridge versions that recognize a reject only as
+`xmp:Rating="-1"` will not show Happy Photon rejects, because the rating keeps
+its true star value. Sidecars may sync through the folder's cloud provider,
+while the original photo remains untouched and is never downloaded for XMP
+work.
+
+## Bring assessments from Lightroom Classic
+
+Choose **Import from Lightroom…** in the Folders header's **More folder actions** menu,
+or use the optional Lightroom step during first run. When Happy Photon finds a local
+`.lrcat`, choose from the detected catalogs or browse for another. Close Lightroom
+first. Happy Photon summarizes locations it matches automatically. Map any moved
+location you want to import, or leave it blank to skip those photos. Then choose
+whether Lightroom replaces differing Happy Photon values or only fills empty values,
+review the automatically updated report of what will change, and import. An import
+never clears a local rating, flag, or color label, and never writes to Lightroom or an
+original photograph.
+
+The preview checks that each mapped photo file exists without opening it. Missing
+files are skipped; if none of the mapped photos exist, copy or mount the originals or
+correct the mappings before Apply becomes available. Unmapped locations, virtual
+copies, and unsupported files are informational skips, and when multiple Lightroom
+records map to one destination path the later record is used. “Nothing to import”
+means the source catalog has no ratings, flags, or labels; “Nothing matched” means its
+source paths need review. Re-running the same import performs no catalog writes when
+everything is already up to date.
 
 ## 1. Open and survey the shoot
 
@@ -146,14 +136,15 @@ still exist.
 Burst grouping places photographs captured within two seconds into the same
 sequence. It does not choose a winner; it makes neighboring frames easier to
 recognize and compare. Happy Photon analyzes capture times only after Bursts is
-enabled. Sustained analysis appears in the shared background-activity segment with
-processed and total counts; it is absent again after the sweep finishes or Bursts is
-turned off.
+enabled; local photographs are analyzed and online-only photographs are reported
+as skipped. Sustained analysis appears in the shared background-activity segment
+with processed and total counts; it is absent again after the sweep finishes or
+Bursts is turned off.
 
 Online-only photographs stay visible with a cloud badge or placeholder. The folder
-status reports how many will not be downloaded automatically. Bursts analyzes local
-photographs and reports online-only photographs as skipped. To work with one cloud-only
-image, select it and choose **Download and open**; this downloads only that original.
+status reports how many will not be downloaded automatically. To work with one
+cloud-only image, select it and choose **Download and open**; this downloads only
+that original.
 
 Do not start adjusting every image yet. The first goal is to understand the
 shoot and remove obvious misses from consideration.
@@ -196,8 +187,7 @@ Pick and Reject buttons toggle off when clicked again.
 Stars answer a different question: **how strong or important is this frame?**
 Press `1` through `5` to set a rating and `0` to clear it.
 
-Ratings use the same targets as flags: the non-empty selection in Library, otherwise
-the active photograph, and only the active photograph in Develop.
+Ratings use the same targets as flags.
 
 A simple starting method is to flag first, then rate only the picked images:
 
@@ -211,11 +201,9 @@ rating system.
 ### Add color labels for another classification
 
 Color labels provide a third, independent assessment axis. Use the assessment swatches
-or press `6` through `9` for red, yellow, green, or blue; clicking or pressing the active
-color clears it. In Library, a label command targets the non-empty selection even when
-the active photograph is outside it, and falls back to the active photograph when the
-selection is empty. In Develop it targets only the active photograph. The swatch ring
-always describes the active photograph, not the selected target set.
+or press `6` through `9` for red, yellow, green, or blue; clicking or pressing the
+active color clears it. Label commands use the same targets as flags and ratings. The
+swatch ring always describes the active photograph, not the selected target set.
 
 ### Filter the result
 
@@ -408,11 +396,12 @@ Images that become hidden by a new filter are removed from the selection. Set th
 filters first, then make the final selection.
 
 Press `F` with two or more photos selected to review only that selection in full
-screen, starting from the first selected photo in the Library's current order. Navigation stops at the first and last
-selected photo, and the `SELECTION` badge shows the current position. The set updates
-with visible selection changes; if fewer than two selected photos remain, navigation
-returns to the full folder until full screen is entered again. With zero or one photo
-selected, full-screen navigation continues through the full folder as usual.
+screen, starting from the first selected photo in the Library's current order.
+Navigation stops at the first and last selected photo, and the `SELECTION` badge shows
+the current position. The set updates with visible selection changes; if fewer than
+two selected photos remain, navigation returns to the full folder until full screen is
+entered again. With zero or one photo selected, full-screen navigation covers the full
+folder as usual.
 
 ## 6. Export finished copies
 
@@ -488,7 +477,9 @@ remains where it started and unchanged.
 
 Use the `?` button in the title bar to open **Help & About**. The complete
 shortcut reference is selected by default, with build and project information
-available on the About tab. About can check for updates manually. Store-packaged
-Windows installations open the Microsoft Store, which manages their updates;
-other installations open the matching GitHub release. A muted dot on `?` means
-an in-session manual check found a newer release, and Help then opens on About.
+available on the About tab. Update discovery is manual-only: Happy Photon makes
+no automatic update network requests, and About contacts GitHub only when you
+choose **Check for updates**. Store-packaged Windows installations open the
+Microsoft Store, which manages their updates; other installations open the
+matching GitHub release. A muted dot on `?` means an in-session manual check
+found a newer release, and Help then opens on About.

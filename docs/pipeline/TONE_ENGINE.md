@@ -18,12 +18,11 @@ families discontinuously at the threshold.
   below. The former display-domain operators (shoulder, brightness/contrast/
   shadows/highlights polynomials, base look) do not run.
 - **Crossing OFF — display-referred sources (JPEG/HEIC/TIFF and the sRGB
-  proxy).** The pre-AgX display-domain operator chain is retained unchanged;
-  only its domain moved to encoded Rec.2020 when the target convert
-  relocated into finalization. Unedited output renders back within 1 LSB at
-  8 bits for every source class (sRGB JPEG and the proxy against their
-  source codes; profiled/HEIC/TIFF against frozen pre-AgX references from
-  `878903f` in `Tests/assets/crossing-off-identity.json`).
+  proxy).** The display-domain operator chain (RENDER.md §5) runs on encoded
+  Rec.2020, with the target convert in finalization. Unedited output renders
+  back within 1 LSB at 8 bits for every source class (sRGB JPEG and the proxy
+  against their source codes; profiled/HEIC/TIFF against the frozen references
+  in `Tests/assets/crossing-off-identity.json`).
 
 ## 2. Render placement
 
@@ -134,8 +133,7 @@ colors to different target codes alone measures ≈ 0.2 mean ΔE00.
 `Rec2020Luminance` exposes the exact Rec.2020→XYZ Y row
 (0.2627002120112671, 0.6779980715188708, 0.0593017164698620). Capture
 sharpen, chroma NR, and output sharpening all reference it; the rounded
-BT.709 constants retired with the target-convert relocation that made one
-basis both correct and target-independent.
+BT.709 constants are retired.
 
 ## 7. Retired operators
 
@@ -179,9 +177,7 @@ clip. Overlay masks follow the same thresholds per regime and stay dormant.
   scene-linear seam (cross-platform bounds mean ≤ 3.0 / max ≤ 6.5); a second
   observation through the default crossing pins look drift (≤ 6.0 / ≤ 14.0).
   TESTING.md holds the mechanics, golden attribution, WYSIWYG bounds, and
-  performance protocol; all budgets pass, with slider ticks 17–35 ms against
-  the 150 ms budget and export wall time within +2.0% … −7.6% of the pre-AgX
-  baseline.
+  performance protocol.
 
 ## 10. Sources
 

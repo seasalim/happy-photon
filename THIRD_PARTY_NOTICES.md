@@ -2,7 +2,7 @@
 
 Happy Photon is licensed under GPL-3.0-or-later. The dependencies listed here
 remain under their own licenses. This notice describes the dependency versions
-locked for the `v0.1.0` preparation branch.
+pinned by the committed package lock files.
 
 ## Direct managed dependencies
 

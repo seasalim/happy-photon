@@ -1,8 +1,7 @@
 # Pipeline Spec — Testing: Goldens, Assets, Tolerances
 
-The rework is only safe because of this harness. WP0.1 builds it; every later work
-package extends it. Unit tests follow existing conventions (`Tests/*Tests.cs`, xUnit,
-`dotnet test HappyPhoton.sln`).
+The pipeline is only safe to change because of this harness. Unit tests follow
+existing conventions (`Tests/*Tests.cs`, xUnit, `dotnet test HappyPhoton.sln`).
 
 ## 1. Sample assets (`Tests/assets/`)
 
@@ -44,19 +43,18 @@ dotnet run --file scripts/fetch-compatibility-fixtures.cs
 dotnet run --file scripts/fetch-compatibility-fixtures.cs -- sony-a9m3-lossy
 ```
 
-The provenance URL is also the download endpoint in this P0 slice. An existing cached
-length or hash mismatch fails closed, names the fixture and observed/expected values,
-and is never replaced automatically. A project-controlled mirror is deferred until a
-scheduled release gate makes upstream availability release-critical. Selected fixtures
-are capped at 30 MiB. Tests never access the network.
+The provenance URL is also the download endpoint (a project-controlled mirror
+is deferred until a release gate makes upstream availability release-critical).
+An existing cached length or hash mismatch fails closed, names the fixture and
+observed/expected values, and is never replaced automatically. Selected
+fixtures are capped at 30 MiB. Tests never access the network.
 
 The manifest uses strict JSON. `selectionStatus` is `pending` or `selected`; selected
 entries use `expectationStatus` `candidate` or `reviewed`. Candidates omit `expected`
 and run only in discovery. Reviewed entries require capability, metadata, sensor,
 camera-WB/matrix, tolerance, and review expectations appropriate to their outcome.
 Camera matrices are 3-by-the-native-multiplier-count in row-major order and each row
-sums to 1. All six P0 entries use `testLevel: smoke`; this slice creates no compatibility
-goldens or P1 placeholders.
+sums to 1. All six current entries use `testLevel: smoke`.
 
 `HAPPY_PHOTON_COMPAT` has four states:
 
@@ -67,7 +65,7 @@ goldens or P1 placeholders.
 | `discovery` | Requires every selected fixture and valid hash, records candidate and reviewed application-path observations, and never changes expectations. |
 | `strict` | Rejects pending/candidate entries and fails for a missing, invalid, or behaviorally different reviewed fixture. |
 
-Any other non-empty value fails so a misspelled gate cannot silently skip. The P0
+Any other non-empty value fails so a misspelled gate cannot silently skip. The
 harness is intentionally Windows x64 only and lives wholly in the ordinary test host,
 whose assembly fixture initializes Avalonia/WIC. It owns each fixture's metadata,
 browse-thumbnail, preview base, full base, camera facts, default and edited renders,
@@ -76,13 +74,10 @@ line per selected fixture followed by `COMPAT COMPLETE observed=N selected=N`, a
 the ignored structured report to `artifacts/compatibility-results/`. Discovery also
 writes 500 px default-render review images there.
 
-The Windows x64 review on 2026-08-16 ran six selected fixtures on the packaged LibRaw
-0.22.2.7 runtime: the Canon R5 Mark II RAW/C-RAW, Sony A9 III lossy ARW, Fujifilm X-T50
-compressed RAF, and Panasonic S9 RW2 completed every application path; the X-T50
-reported X-Trans filters `0x00000009`. Nikon Z8 HE metadata and its embedded JPEG browse
-thumbnail succeeded, while `Unpack` returned LibRaw `-2`,
-`Unsupported file format or not RAW file`; preview/full/export returned no developed
-base, and the existing Nikon-HE user status was set. Because `RawBaseLoader` catches the
+Known reviewed limitation: Nikon Z8 High Efficiency RAW. Metadata and the embedded
+JPEG browse thumbnail succeed, but `Unpack` returns LibRaw `-2`,
+`Unsupported file format or not RAW file`; preview/full/export return no developed
+base, and the existing Nikon-HE user status is set. Because `RawBaseLoader` catches the
 native exception and maps any null result to `UnsupportedRaw`, the causal link between
 that exact `-2` and the production outcome is inferred by the end-to-end fixture test,
 not proven through a production diagnostic seam.
@@ -92,69 +87,45 @@ not proven through a production diagnostic seam.
 - Goldens are rendered PNGs stored under `Tests/goldens/v<RenderPipeline.Version>/`,
   named `<asset>__<settings-case>.png`, rendered at **long edge 500** (keeps the golden
   directory ≤ 25 MB without LFS).
-- **Active baseline marker:** `Tests/goldens/ACTIVE_VERSION` (plain text: `v0`, `pending`,
-  `v1`, …). Golden and WYSIWYG suites read it; the literal value `pending` makes them
-  report **skipped-with-reason** ("awaiting re-baseline") instead of failing. This is
-  how the integration branch stays green mid-rework (roadmap: integration strategy).
+- **Active baseline marker:** `Tests/goldens/ACTIVE_VERSION` (plain text, e.g.
+  `v9` or `pending`) is the source of truth for the active generation — this doc
+  deliberately does not restate the current value. Golden and WYSIWYG suites
+  read it; the literal value `pending` makes
+  them report **skipped-with-reason** ("awaiting re-baseline") instead of failing, so
+  an integration branch stays green mid-rework.
 - Comparison: per-pixel CIE76 ΔE with an explicit domain. Render comparisons decode
   display sRGB; base comparisons interpret samples as linear Rec.2020 before XYZ/Lab.
   Report mean and p99.
 - Re-baselining: `HAPPY_PHOTON_UPDATE_GOLDENS=1 dotnet test` regenerates; CI never sets
   it. A golden diff in review must be justified by a `RenderPipeline.Version` bump or a
-  spec change in the PR.
-- Settings cases, phased with the pipeline (10 total):
-  - **Tonal set** (baselined as v1 at WP2.5, when the chromatic stage is still
-    identity): identity; +2 EV; −2 EV; highlights −100; shadows +80; contrast +50;
-    full-combo tonal preset — 7 cases.
-  - **WB set** (added at WP3.2, which bumps `RenderPipeline.Version` → 2 and
-    regenerates all baselines as v2): WB 3000 K; WB 9000 K tint +50; WB 9000 K
-    tint −50 — 3 cases. Never baseline WB cases while the chromatic stage is a stub —
-    that would golden "WB ignored" and immediately invalidate itself.
-  - v2's tonal-case renders were required to be **byte-identical** to their v1
-  counterparts when the v2 baselines were introduced (as-shot skips the chromatic
-  stage exactly). Keep only the active baseline generation; prune obsolete versions
-  whenever a new one is activated.
+  spec change in the PR. Each re-baseline records a pre/post attribution report
+  (per-image ΔE summary); only the active generation is kept, and superseded versions
+  are pruned once the report is captured.
+- Settings cases (10 total): **tonal set** — identity; +2 EV; −2 EV; highlights −100;
+  shadows +80; contrast +50; full-combo tonal preset. **WB set** — WB 3000 K;
+  WB 9000 K tint +50; WB 9000 K tint −50. Never baseline WB cases while the chromatic
+  stage is a stub — that would golden "WB ignored" and immediately invalidate itself.
 
 The full-combo tonal case is pinned to exposure +1 EV, brightness +10, contrast +25,
 shadows +35, highlights −50, and a monotone curve through `(0,0)`, `(0.25,0.20)`,
 `(0.75,0.82)`, `(1,1)`. Chroma, white balance, geometry, and preset identity remain
 at defaults.
 
-WP0.1's v0 baseline uses the v1 asset × tonal-case matrix below. It captures the
-current export-quality path as a calibration reference: full decode, current edit
-application, one resize to long edge 600, then color-profile normalization to sRGB
-for the golden PNG. It does not use the half-size preview decode or preview JPEG cache.
-
 ### 2.1 Asset × case matrix (keeps golden count and runtime bounded)
 
-| Asset | v1 cases (WP2.5) | added at v2 (WP3.2) |
-|-------|------------------|---------------------|
-| Reference Bayer raw (the CR2) | all 7 tonal | all 3 WB |
-| Display-P3 JPEG | all 7 tonal | all 3 WB |
+| Asset | Tonal cases | WB cases |
+|-------|-------------|----------|
+| Reference Bayer raw (the CR2) | all 7 | all 3 |
+| Display-P3 JPEG | all 7 | all 3 |
 | NEF, RAF, DNG, AdobeRGB JPEG, sRGB JPEG, 16-bit TIFF | identity, +2 EV | WB 3000 K |
 | HEIC | identity (skippable per §6) | — |
 
-27 golden files at v1, 39 at v2. The clipped-highlight case uses the bright water
-reflection in the reference CR2, as verified during WP4.1
-([DECODE.md §2.2](DECODE.md#22-highlight-reconstruction-evaluation)).
-
-The Rec.2020 working-space change re-baselined the same 39-case matrix once
-as v8 (against frozen v7, all 39 changed: mean ΔE 0.074–0.617, p99
-0.718–1.021). The superseded generation is pruned after the report is
-captured.
-
-The AgX rework re-baselines once as v9 and prunes v8. Its attribution has two
-measured parts: the numeric-path change (exact tables, fused finalization,
-luma basis, convert relocation) moved goldens by at most mean ΔE00 7.56
-(Fuji WB), and the AgX default changed RAW goldens by mean ΔE00 12.150 on
-average (range 6.047–20.502). Crossing-off output stayed byte-identical.
-The cache markers are `RenderPipeline.Version = 9` and `BaseImage.Version =
-8`; the latter attributes the re-derived `SourceExposureBiasEv` fact.
-
-R5a keeps render v9, bumps `BaseImage.Version` to 9, and re-baselines the v9
-directory once. Standard and HEIC outputs stayed byte-identical; all 19 RAW cases
-changed by mean ΔE76 0.003–0.015 and p99 0.000–0.677. The per-image report is
-[`Tests/goldens/v9/R5A_ATTRIBUTION.md`](../../Tests/goldens/v9/R5A_ATTRIBUTION.md).
+The matrix determines the golden count; the tracked files live under the
+generation directory named by `ACTIVE_VERSION`. The clipped-highlight case uses
+the bright water reflection in the reference CR2
+([DECODE.md §2.3](DECODE.md#23-why-clip-and-blend-are-the-supported-modes)).
+Each re-baseline keeps its attribution report beside its goldens (currently
+`Tests/goldens/v9/R5A_ATTRIBUTION.md`).
 
 ## 3. Tolerances (normative)
 
@@ -166,18 +137,17 @@ changed by mean ΔE76 0.003–0.015 and p99 0.000–0.677. The per-image report 
 | Edited sRGB vs Display P3 at the Q16 pre-encode boundary | synthetic mean ΔE00 ≤ 0.034; real RAW ≤ 0.053; sharpening off and on |
 | Full-decode base vs half-decode base (raw, at common preview size up to 1600px) | mean ΔE ≤ 2.8 (documented gap) |
 | P3-tagged vs sRGB-tagged same-picture bases | mean ΔE ≤ 1.5 |
-| Cross-platform (M6): win/linux/mac renders of same case | mean ΔE ≤ 2.0 |
-| R5a built-in matrix vs LibRaw Rec.2020 comparator, Bayer/X-Trans Clip/Blend/FBDD | mean ΔE76 ≤ 1.1, p99 ≤ 9.5 |
+| Cross-platform: win/linux/mac renders of same case | mean ΔE ≤ 2.0 |
+| Built-in characterization vs LibRaw Rec.2020 comparator, Bayer/X-Trans Clip/Blend/FBDD | mean ΔE76 ≤ 1.1, p99 ≤ 9.5 |
 
-WYSIWYG is calibrated over every v9 settings case using the actual preview
-base and a full-base export, aligning the occasional one-pixel aspect
-difference to the preview dimensions. Post-R5a crossing-on measured worst mean
-1.87233444906093 and p99 7.97110639082136; crossing-off was bit-identical.
-Each worst observation rounds up to the next 0.5, producing 2.0/8.0. The separate
-half/full base bound
-covers the decoded sampling gap before tone.
+WYSIWYG is calibrated over every active-generation settings case using the actual
+preview base and a full-base export, aligning the occasional one-pixel aspect
+difference to the preview dimensions. Crossing-on measured a worst mean of 1.87 and
+worst p99 of 7.97; crossing-off was bit-identical. Each worst observation rounds up
+to the next 0.5, producing 2.0/8.0. The separate half/full base bound covers the
+decoded sampling gap before tone.
 
-**OS gating policy at M6:** goldens are generated on Linux CI (canonical). Linux uses
+**OS gating policy:** goldens are generated on Linux CI (canonical). Linux uses
 the same-platform mean/p99 bounds above. Windows and Apple Silicon macOS compare every
 RAW and non-RAW case to that canonical baseline with the cross-platform mean ΔE ≤ 2.0
 bound. HEIC remains the only skippable golden when the platform codec reports no read
@@ -192,9 +162,11 @@ orders above the observed difference.
 
 ## 4. Required suites
 
-1. **Tone suites:** `AgxToneEngineTests`, `AgxCrossingTests`, and
-   `AgxCrossingDerivationTests` pin the crossing properties, source-derived constants,
-   exact-table interpolation, and Blender oracle. `ToneLutTests` pins the retained
+1. **Tone suites:** `AgxToneEnginePropertyTests`, `AgxToneEngineDerivationTests`,
+   `AgxBlenderOracleTests`, `AgxLookGateTests`, `AgxHighlightQualityTests`, and
+   `AgxCrossingPerformanceTests` pin the crossing properties, source-derived
+   constants, exact-table interpolation, look and highlight gates, and the Blender
+   oracle. `ToneLutTests` pins the retained
    crossing-off formulas, channel-before-master composition in both regimes,
    identity-array sharing, and monotonicity for identity/monotone user curves.
 2. **`WhiteBalanceModelTests`**: WHITE_BALANCE.md §9 list.
@@ -212,13 +184,16 @@ orders above the observed difference.
    non-v2 rows. Preset and MCP tests require explicit/current versions and reject v1.
 7. **`ExportMetadataTests`**: OUTPUT.md §6 items (EXIF copy, orientation, GPS strip,
    no stale thumbnail, ICC present, subsampling switch).
-8. **`BaseLoaderTests`**: DECODE.md §7 items; PPM16 byte-order unit test with a
-   synthetic buffer; HEIC-does-not-hit-LibRaw via log capture.
+8. **Loader suites:** `RawBaseLoaderTests` and `StandardBaseLoaderTests` cover the
+   DECODE.md §7 items, including HEIC routing to the platform reader rather than
+   LibRaw.
 9. **`RenderDetailTests`**: chroma NR preserves luma and alpha; a seeded noise image
    rendered as one band and as forced non-divisible bands is bit-identical at box
    radii 1 and 3.
-10. **Working-space suites:** `RawWorkingSpaceTests` proves LibRaw output color 8
-    numerically, pins the camera-fact semantics, and preserves near-clip meaning;
+10. **Working-space suites:** `RawWorkingSpaceTests` proves the built-in
+    characterization against the LibRaw Rec.2020 comparator, pins the `cam_xyz`
+    semantic oracle under `LibRawOutputConfiguration.LinearCameraNative`
+    (`output_color` 0), and preserves near-clip meaning;
     `StandardWorkingSpaceTests` checks the external sRGB-profile target, native P3
     gamut vectors, the thumbnail sRGB-proxy limit, and the one-code JPEG identity gate.
 11. **RAW histogram suites:** synthetic Bayer/X-Trans geometry, black-level, sRGB-bin,
@@ -236,7 +211,7 @@ orders above the observed difference.
     agreement. `WideGamutColorimetryTests` gates the Q16 finalization boundary at the
     §3 limits with output sharpening off and on, and records the expected 8-bit
     quantization floor as informational. The former frozen per-RID export
-    byte hashes are retired; v9 goldens own regression.
+    byte hashes are retired; the active goldens own regression.
 14. **DCP suites:** `DcpProfileReaderTests` is the §7.2 conformance and hostile-input
     suite; `DcpMatrixAndHueSatTests` covers balanced-seam composition, as-shot dual
     interpolation, 2.5D/single/dual tables, V-only encoding, and seeded direct/LUT
@@ -302,23 +277,20 @@ Every stage that changes pixels answers to four anchors:
    finalized sRGB output with no post-look exposure scalar. Fresh base samples are
    checked for XYZ drift but never feed back into gains or bounds.
 
-The manifest uses the precommitted “worst supported-RID observation rounded up to the
-next 0.5” rule for both anchors. Post-R5a win-x64 measures pre-crossing mean/max ΔE00
-2.6384472924778217/6.245169268388049, retaining bounds 3.0/6.5. The integrated AgX
-look measures 5.9938993948792065/13.762419710624835, retaining bounds 6.0/14.0.
-Linux-x64 measures 2.638447292477815/6.2451692683880236 and osx-arm64
-2.638449030560668/6.245169268388058 (look 5.993899394879203/13.762419710624826
-and 5.993900252729108/13.76241971062483), harvested from the PR CI test
-results; all three RIDs agree at the 1e-5 level and the retained bounds hold.
-These budgets pin characterization and look drift; they are not claims that an aged
-physical chart should be rendered colorimetrically exact.
+The manifest uses the precommitted "worst supported-RID observation rounded up to the
+next 0.5" rule for both anchors. The pre-crossing characterization anchor retains
+mean/max ΔE00 bounds 3.0/6.5; the integrated AgX look anchor retains 6.0/14.0.
+The recorded win-x64, linux-x64, and osx-arm64 observations agree at the 1e-5 level
+and all hold the retained bounds. These budgets pin characterization and look drift;
+they are not claims that an aged physical chart should be rendered colorimetrically
+exact.
 
-R5b constructs an independent, non-copyrighted DCP whose ForwardMatrix reproduces the
-established D300 built-in seam, parses the actual generated bytes, and runs the same
-non-skipping physical measurement with frozen mean/max ΔE00 bounds 3.0/6.5. The
-balanced-neutral CC/AB → D50 white test remains the matrix correctness anchor. Dev-only
-`scripts/SyntheticDcpGenerator.csproj` generates valid, malformed, and dual-table
-fixtures without checking binaries into the repository.
+The DCP anchor constructs an independent, non-copyrighted profile whose ForwardMatrix
+reproduces the established D300 built-in seam, parses the actual generated bytes, and
+runs the same non-skipping physical measurement with frozen mean/max ΔE00 bounds
+3.0/6.5. The balanced-neutral CC/AB → D50 white test remains the matrix correctness
+anchor. Dev-only `scripts/SyntheticDcpGenerator.csproj` generates valid, malformed,
+and dual-table fixtures without checking binaries into the repository.
 
 ## 5. Performance
 
@@ -337,8 +309,8 @@ export wall ≤ +5%, and private peak ≤ +16 MiB.
 profile decode deltas (≤ 50/30/15 ms), incremental matrix-kernel delta (≤ 10 ms),
 HueSat-only preview/full deltas (≤ 80/250 ms and exactly zero inactive), the standing
 150 ms slider gate, deterministic managed and retained deltas (each ≤ 8 MiB), active
-export +5%/+16 MiB, and a ≤ 2 s cold scan over a fixed 200-profile synthetic tree.
-Run it in a fresh Release process:
+export +5%/+16 MiB, and cold/warm scans over a fixed 4,000-profile synthetic Adobe
+tree (≤ 1.5 s cold, ≤ 0.3 s warm). Run it in a fresh Release process:
 
 ```powershell
 $env:HAPPY_PHOTON_R5B_PERF='1'
@@ -352,13 +324,11 @@ standard-thumbnail generation at 512px; track results in PR descriptions when
 a work package touches the hot path.
 
 `PreviewPipelinePerformanceTests` carries those preview diagnostics and their
-≤ 150 ms slider budgets. In-class execution order is a runner implementation
-detail that reshuffles as the assembly changes, and heap and thread-pool
-residue from the class's own cache and render tests can inflate a later test's
-medians past budget. The canonical run therefore executes each test in its own
-Release process; apply the same one-test-per-process rule to any new
-`HAPPY_PHOTON_PERF` class with latency budgets, and never loosen a budget to
-make a single-process class run pass:
+≤ 150 ms slider budgets. Heap and thread-pool residue from earlier tests in
+the class can inflate a later test's medians past budget, so the canonical run
+executes each test in its own Release process; apply the same
+one-test-per-process rule to any new `HAPPY_PHOTON_PERF` class with latency
+budgets, and never loosen a budget to make a single-process class run pass:
 
 Effects extend the opt-in Release gate with frozen active-minus-off budgets: preview
 delta ≤25 ms while total tick remains ≤150 ms; full export delta ≤max(5%, 500 ms) for
@@ -393,22 +363,16 @@ dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
   --filter FullyQualifiedName~WysiwygCalibrationTests
 ```
 
-Recorded win-x64 numbers: slider 29.4/35.2/17.2/16.7 ms in the fixture order
-above; sRGB variants +2.0% with +1.0 MiB private peak; P3 variants −1.5% with
-+0.3 MiB; standard export −7.6%. All budgets pass.
 RAW base decode performance output includes a `RawHistogram` step for the sensor pass;
 measure at least the 20 MP Canon EOS 6D fixture when this gate is enabled.
 
-R5a's isolated import gate uses that 20 MP Canon in camera-native output mode, one
-warm-up plus five samples. It compares direct Q16 import with fused
+The isolated characterization import gate
+(`CameraRgbCharacterizationPerformanceTests`) uses that 20 MP Canon in camera-native
+output mode, one warm-up plus five samples. It compares direct Q16 import with fused
 characterization of the same native span. The budgets are ≤ 45 ms preview,
-≤ 150 ms full (recalibrated from the checkpoint-A 30/100 ms freeze with user
-approval 2026-08-19 — the measured floor under the 4 MiB transient constraint
-left no variance margin; CHARACTERIZATION.md §4 records the evidence), and a
-≤ 4 MiB deterministic retained private-memory delta; async-sampled peaks are
-informational because native-allocator private bytes are not reproducible.
-Measured deltas on the review machine: preview 22–31 ms, full 86–136 ms,
-retained 0.0/2.0 MiB:
+≤ 150 ms full, and a ≤ 4 MiB deterministic retained private-memory delta;
+async-sampled peaks are informational because native-allocator private bytes are not
+reproducible.
 
 ```powershell
 $env:HAPPY_PHOTON_R5A_PERF='1'
@@ -485,10 +449,9 @@ $env:HAPPY_PHOTON_COMPARE='1'
 dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter FullyQualifiedName~ReferenceComparisonTests --logger "console;verbosity=detailed"
 ```
 
-The PRECISION investigation's diagnostic harness (Phase 0 ramps and the Phase 1
-Slice A boundary census) was retired after the investigation closed with the
-Q16-storage decision; the harness and its manifest live in git history before the
-sweep that removed them. The live color-science suites (`PrecisionDeltaE`,
+The PRECISION investigation's diagnostic harness (ramp goldens and the boundary
+census) was retired after the investigation closed with the Q16-storage decision;
+it lives in git history. The live color-science suites (`PrecisionDeltaE`,
 `PrecisionColorCases`, and the oracle/anchor tests) are unaffected.
 
 The LibRaw resolver's single-file extraction path has a committed publish smoke. Run
@@ -522,9 +485,8 @@ ordinary host so the native and headless Avalonia platforms never share a proces
 
 Platform and codec gaps use xUnit v3 native runtime skips (`Assert.Skip` or
 `Assert.SkipWhen`) with an explicit reason so they remain visible in logs. CI gates on
-discovery before execution: 1,294 ordinary listed cases plus 132 headless listed cases.
-The full run currently expands dynamic theories to 1,359 ordinary and 137 headless
-execution cases. Run tests with a 90-second blame
+discovery before execution with a floor, not exact counts: at least 666 ordinary
+listed cases and 35 headless listed cases. Run tests with a 90-second blame
 hang timeout while changing either host.
 
 Golden assets and baselines must keep the repo clone under control — if the goldens

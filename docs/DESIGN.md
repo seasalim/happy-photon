@@ -128,11 +128,9 @@ standard-location catalog is adopted automatically at startup. Confirming Storag
 the one catalog-creation boundary. Configured-but-empty roots remain read-only.
 
 Pictures then selects the top-level folder shown in the folder tree, using the detected
-Pictures folder when available and a picker fallback otherwise. On all supported desktop
-platforms, a shallow local probe may add a Lightroom step. Import opens the normal catalog dialog,
-pre-filled
-from the selected bounded list of detected `.lrcat` files; another catalog can be chosen
-with the normal picker, and import remains available later from Folders. Canceling stays
+Pictures folder when available and a picker fallback otherwise. A shallow local probe
+may add a Lightroom step whose dialog is pre-filled from the bounded list of detected
+`.lrcat` files; another catalog can be chosen with the normal picker. Canceling stays
 in the wizard, while Apply or explicit Skip advances to a final all-set page. **Start
 tour** and **Skip** both finish with the validated Pictures folder, open the workspace,
 and focus the folder tree; only **Start tour** begins the guided tour.
@@ -153,7 +151,6 @@ unverified-but-compatible catalog versions.
 Mapped photo files must exist when the preview runs. Missing originals are reported and
 skipped without opening or hydrating image content. When no mapped files exist, Apply is
 unavailable so the import cannot create orphan catalog paths or persist empty settings.
-
 The completion report distinguishes a catalog with no ratings, flags, or color labels
 from one whose assessed-photo paths did not match. An import into an open folder updates
 the existing Library objects and filters without reloading thumbnails. During first run,
@@ -169,11 +166,10 @@ naming controls, with immediate application and a disclosure about interop,
 cloud synchronization, and original-file safety.
 
 About carries the manual update action and its muted inline result. An available
-release adds only a small muted dot to the title-bar Help button; it does not add
-status-bar chrome. Opening Help while that dot is present selects About so the
-channel-aware Store or GitHub upgrade action is one more click away.
-Happy Photon makes no automatic update network requests; GitHub is contacted only
-when the user explicitly chooses **Check for updates**.
+release adds only a small muted dot to the title-bar Help button — no status-bar
+chrome — and opening Help while that dot is present selects About so the channel-aware
+Store or GitHub upgrade action is one more click away. Happy Photon makes no automatic
+update network requests; GitHub is contacted only on an explicit **Check for updates**.
 
 ## Brand & Style
 
@@ -252,9 +248,9 @@ The layout philosophy follows a **Fluid Grid** model with high-impact margins.
 
 Spacing rhythm is strictly based on an 8px scale. Use large `xl` (80px+) vertical spacing between sections to allow the dark background to "breathe" and create a sense of vastness.
 
-The desktop workspace keeps its side panes mode-specific. Library uses the right pane
-for review only: the fixed thumbnail histogram, metadata/EXIF, and a multi-selection
-summary. Develop owns the editing controls. The left navigator retains only the active
+The desktop workspace keeps its side panes mode-specific: Library's right pane is a
+review pane and Develop owns the editing controls (composition in
+`docs/pipeline/UI.md` §2). The left navigator retains only the active
 thumbnail and online-only download action so the folder tree receives the reclaimed
 height. When Develop is zoomed past fit, its navigator preview outlines the visible
 image region with a one-pixel primary-text hairline and dark halo. The outline maps to
@@ -271,11 +267,10 @@ photograph content, so it uses primary text at full opacity with a soft dark hal
 legibility over bright frames. It stays chrome-less — the halo replaces a boxed banner
 rather than joining one.
 
-The Develop clipping latch uses the same restrained overlay language: one muted,
-chrome-less `CLIPPING · SCENE / FLOOR` status line stays over the photograph while
-latched, and the toggle produces the standard 1.5-second feedback toast. Overlay
-colors are invariant viewing aids rather than theme accents: red means scene-highlight
-clip and blue means display floor.
+The Develop clipping latch uses the same restrained overlay language; its latch and
+peek behavior, the muted `CLIPPING · SCENE / FLOOR` status line, and the invariant red
+(scene-highlight) / blue (display-floor) viewing-aid colors are specified in
+`docs/pipeline/UI.md` §4.
 
 The review metadata is a curated FILE, CAMERA, and LOCATION summary for every supported
 format. FILE combines dimensions, megapixels, and size; a missing capture date falls

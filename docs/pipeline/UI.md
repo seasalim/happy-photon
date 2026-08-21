@@ -1,6 +1,6 @@
 # Pipeline Spec — UI: Controls, Gating, Interactions
 
-UI surface for the pipeline rework. Follows AGENTS.md UI conventions and
+UI surface for the pipeline. Follows AGENTS.md UI conventions and
 `docs/DESIGN.md` tokens throughout: `CompactSlider` for edit controls, uppercase
 `section-label` group headers, 20px between groups, theme tokens only (active states =
 `PrimaryContainer` cyan, passive edit badges = `Tertiary` lavender), no hardcoded hex.
@@ -34,11 +34,11 @@ editing surfaces remain a non-goal, §10).
 CAMERA PROFILE         (RAW only, collapsed child control)
   [profile ComboBox]
   [Browse…] [Refresh]                         status / loading
-WHITE BALANCE          (new group, WP3.3)
+WHITE BALANCE
   [mode/preset ComboBox]  [Auto button]  [eyedropper button]
   Kelvin   ────────●────────   5500K
   Tint     ──────●──────────   −12
-ADJUSTMENTS            (existing group, Temperature slider REMOVED)
+ADJUSTMENTS            (no Temperature slider)
   Exposure / Brightness / Contrast / Saturation / Vibrance / Shadows / Highlights
   Recovery                                                [Clip | Blend]  (RAW only)
 TONE CURVE             [RGB | R | G | B] [embedded Reset]
@@ -60,17 +60,17 @@ fixed. Export intentionally has no pointer action in Develop: return to the Libr
 header to click **Export**, or use the global `Ctrl+E` shortcut from either workspace.
 
 Brightness is disabled (not hidden) at `DisabledOpacity` while a RAW base is active,
-because the crossing-on engine has no Brightness parameter. It remains enabled and
-functional for JPEG/HEIC/TIFF/proxy sources. The gate follows the loaded base, falls
-back provisionally to `ImageFile.IsRaw` before load, survives filmstrip switching, and
+because the crossing-on engine has no Brightness parameter; it stays enabled for
+JPEG/HEIC/TIFF/proxy sources. The gate follows the loaded base, falls back
+provisionally to `ImageFile.IsRaw` before load, survives filmstrip switching, and
 never clears the persisted value. Base look remains persisted/MCP-settable but has no
 panel control; RAW ignores it and standard sources retain it.
 
-Recovery is a compact, exclusive Clip/Blend control directly below Highlights. It is
-enabled only for RAW sources, provisionally from `ImageFile.IsRaw` and then from the
-loaded base fact. The row remains present but dims to `DisabledOpacity` when unavailable,
-so the panel does not reflow across mixed-source filmstrips. A contradictory non-RAW
-loaded fact disables the row without changing the stored value. Clip is the default.
+Recovery is a compact, exclusive Clip/Blend control directly below Highlights, enabled
+only for RAW sources — provisionally from `ImageFile.IsRaw`, then from the loaded base
+fact. The row stays present and dims to `DisabledOpacity` when unavailable, so the
+panel does not reflow across mixed-source filmstrips; a contradictory non-RAW loaded
+fact disables the row without changing the stored value. Clip is the default.
 
 Detail follows the tone curve. Sharpen and Chroma NR are 0–100 `CompactSlider`s for
 all sources; Sharpen displays the resolved source default (RAW 25, standard 0). Noise
@@ -96,16 +96,16 @@ returns that optional field to null.
 The camera-profile child control is visible provisionally for a RAW `ImageFile` and
 confirms or retracts against the loaded `BaseImageInfo.IsRawSource`. Camera identity
 starts cached local Adobe discovery in the background; opening the picker performs a
-generation-correlated fallback refresh, adds embedded candidates, and shows its pending
-state.
-Order is persisted user file, DNG embedded, matching Adobe profiles A–Z, then built-in.
-Browse adds one local `.dcp`; Refresh invalidates discovery metadata and re-resolves the
-selection. Loading, honest empty, unavailable, corrupt, hash-mismatch, unsupported, and
-missing-WB fallback are terminal visible states. Invalid persisted choices remain
-selected with their reason while decode uses built-in characterization. The control
-never offers hydration or causes a cloud placeholder to be read.
+generation-correlated fallback refresh, adds embedded candidates, and shows its
+pending state. Order is persisted user file, DNG embedded, matching Adobe profiles
+A–Z, then built-in. Browse adds one local `.dcp`; Refresh invalidates discovery
+metadata and re-resolves the selection. Loading, honest empty, unavailable, corrupt,
+hash-mismatch, unsupported, and missing-WB fallback are terminal visible states;
+invalid persisted choices remain selected with their reason while decode uses built-in
+characterization. The control never offers hydration or causes a cloud placeholder to
+be read.
 
-## 3. White balance group (WP3.3)
+## 3. White balance group
 
 | Control | Spec |
 |---------|------|
@@ -138,20 +138,19 @@ never offers hydration or causes a cloud placeholder to be read.
   The latched image carries one muted, chrome-less `CLIPPING · SCENE / FLOOR` line;
   toggling also uses the standard 1.5-second feedback toast.
 - **Zoom is device-true and original-relative.** `ZoomLevel = 1.0` maps one original
-  image pixel to one device pixel, independent of the monitor's render scaling. The
-  mouse wheel keeps the image point under the pointer fixed while zooming.
+  image pixel to one device pixel, independent of the monitor's render scaling, and
+  the mouse wheel keeps the image point under the pointer fixed while zooming. The
   ViewModel owns this stable user-facing value; the view derives the current
-  bitmap-relative scale from decoded original dimensions. A 1600-to-resting source
-  swap therefore leaves both the zoom slider and on-screen scene geometry unchanged,
-  restoring the normalized viewport anchor without writing zoom back. Fit/manual state
-  is shared by Develop and fullscreen. Fit calculates in device pixels and remains
+  bitmap-relative scale from decoded original dimensions, so a 1600-to-resting source
+  swap leaves both the zoom slider and on-screen scene geometry unchanged. Fit/manual
+  state is shared by Develop and fullscreen; Fit calculates in device pixels and stays
   geometry-identical across source swaps. Fit and zoom-in publish the current view's
   required device-pixel long edge for resting rendering; pan and zoom-out do not
   rerender. A monitor-scaling change recomputes the same geometry and bound.
 
 ## 5. Scope box + base-arming indicator
 
-- **Scope box** (runs 106/107): the Develop panel's top slot is a scope box whose
+- **Scope box**: the Develop panel's top slot is a scope box whose
   header — the effective-scope title beside a row of three always-present icon
   toggles (mound = histogram, CFA mosaic = RAW, scanlines = waveform) — picks
   exactly one body: display histogram (default), luminance waveform, or RAW
@@ -160,16 +159,14 @@ never offers hydration or causes a cloud placeholder to be read.
   Alternate bodies may grow the box vertically only while selected, absorbed by
   the adjustment scroll area. Scope selection is session-only VM state. Scopes
   are Develop/fullscreen-only: the Library review pane shows only the fixed
-  thumbnail histogram — never a waveform or RAW data. The RAW entry is disabled
-  (never removed) when sensor data is unavailable, with reason-specific
-  tooltips; the UI never labels display-referred data RAW.
-  The selected RAW scope remains the session preference across JPEG, Library,
-  cloud-only, unsupported-CFA, stale-base, and replacement-in-flight fallback.
-  Those states effectively show `HISTOGRAM` and display data while keeping the RAW
-  entry disabled in place with `ToolTip.ShowOnDisabled` and a specific reason. A
-  replacement refresh carries the matching base's RAW fact so the preferred scope
-  reactivates without another click. RGB parade is deferred until luminance waveform
-  usage demonstrates demand.
+  thumbnail histogram — never a waveform or RAW data. When sensor data is
+  unavailable (JPEG, Library, cloud-only, unsupported-CFA, stale-base,
+  replacement-in-flight), the RAW entry stays disabled in place — never removed —
+  with a reason-specific `ToolTip.ShowOnDisabled` tooltip while display data shows
+  as `HISTOGRAM`; the UI never labels display-referred data RAW. A selected RAW
+  scope remains the session preference across those fallbacks, and a replacement
+  refresh carries the matching base's RAW fact so it reactivates without another
+  click. RGB parade is deferred until luminance waveform usage demonstrates demand.
 - **RAW clipping indication**: effective sensor mode draws the existing red, green,
   and blue channels without a luminance line. Each channel shows a dot and the
   percentage of photosites at or above LibRaw's sensor white level; the exact
@@ -182,7 +179,7 @@ never offers hydration or causes a cloud placeholder to be read.
   triangle lights for a RAW `HighAny` scene fraction; standard sources show a dimmed,
   non-interactive no-data state. The left triangle lights for `LowAll` display-floor
   clipping on every source. Missing or stale render statistics darken both immediately.
-- **Arming indicator** (WP1.3): while the linear base is decoding after Develop entry,
+- **Arming indicator**: while the linear base is decoding after Develop entry,
   show a thin indeterminate progress line under the histogram. Sliders stay **enabled**
   — edits accumulate in `EditSettings` and the first render catches up. Show only when
   the decode exceeds 150 ms (no flicker on fast paths); no modal, no disabled panel.
@@ -226,18 +223,17 @@ Small expose their existing maximum-dimension fields. Desktop output is written
 directly into the chosen folder. The export engine and agent `export_images` tool keep
 their existing multi-variant capability and per-variant subfolders.
 
-The dialog may open with no selected images without changing selection. In that state
+The dialog may open with no selected images without changing selection; in that state
 it explains how to select photographs, disables Export, and offers Close. While an
 export runs, configuration controls are disabled, progress and the current filename
 are shown, and Cancel Export requests cancellation without destroying the dialog.
 Success closes the dialog; cancellation restores the configured form; failures remain
-visible. Partial completion shows the exported count and every failed filename in the
-scrollable dialog. A selected profile that became missing, unavailable, corrupt, or
-hash-mismatched exports with built-in characterization and keeps the success path open
-long enough to report its per-image warning. Overwrite and original-file collision
-confirmations are owned by the export dialog.
+visible, with partial completion showing the exported count and every failed filename.
+A selected profile that became missing, unavailable, corrupt, or hash-mismatched
+exports with built-in characterization and reports its per-image warning. Overwrite
+and original-file collision confirmations are owned by the export dialog.
 
-The final workflow-tour coachmark remains in Library. Its primary action ends the tour
+The final workflow-tour coachmark remains in Library; its primary action ends the tour
 before opening the dialog through the normal guarded command. The modal contains no
 coachmark, and closing it does not restore the completed tour step. When the tour has
 no export selection, the dialog still shows the complete configuration surface and
@@ -245,24 +241,24 @@ relabels its primary Export action to **Return to Library**; it never starts an 
 
 | Control | Spec |
 |---------|------|
-| "Strip location data" checkbox | WP0.3. Persisted app setting, default **off** (keep GPS). Applies to both UI and agent exports. |
-| "Output sharpening" checkbox | WP5.2. Default **on**; persisted alongside existing export preferences; applies to sized variants only (OUTPUT.md §3). |
+| "Strip location data" checkbox | Persisted app setting, default **off** (keep GPS). Applies to both UI and agent exports. |
+| "Output sharpening" checkbox | Default **on**; persisted alongside existing export preferences; applies to sized variants only (OUTPUT.md §3). |
 
 No UI for quality-dependent chroma subsampling — it is automatic and stays invisible.
 
 ## 8. Keyboard
 
-| Key | Action | Scope | WP |
-|-----|--------|-------|----|
-| `W` | Toggle WB eyedropper | Develop only | 3.3 |
-| `J` | Toggle clipping overlay | Develop only | — |
-| `Ctrl+B` | Toggle color assessment mode | Develop/fullscreen | — |
+| Key | Action | Scope |
+|-----|--------|-------|
+| `W` | Toggle WB eyedropper | Develop only |
+| `J` | Toggle clipping overlay | Develop only |
+| `Ctrl+B` | Toggle color assessment mode | Develop/fullscreen |
 
 Shortcut registrations belong in
-[`Views/ShortcutCatalog.cs`](../../Views/ShortcutCatalog.cs). Each work package
-adds or changes its catalog entry in the same PR as the binding. The Help &
-About dialog reads that catalog directly, with the shortcut tab selected by
-default. Library mode ignores Develop-only keys.
+[`Views/ShortcutCatalog.cs`](../../Views/ShortcutCatalog.cs); a binding change
+updates its catalog entry in the same PR. The Help & About dialog reads that
+catalog directly, with the shortcut tab selected by default. Library mode
+ignores Develop-only keys.
 
 ## 9. Status bar
 
@@ -280,19 +276,13 @@ segment contains no animation.
 
 ## 10. Explicit UI non-goals
 
-Export is the single permitted new workflow modal. No additional pipeline workflow
-modals are introduced. There are also no collapsible panel groups, in-app
-migration/what's-new dialog (release note only), Library-mode editing surfaces (the
-Library right pane is a review pane, §2), exposure-range change (±3 EV stays), or
-slider re-ordering beyond removing Temperature.
+Export is the single permitted pipeline workflow modal. There are also no collapsible
+panel groups, in-app migration/what's-new dialog (release note only), Library-mode
+editing surfaces (the Library right pane is a review pane, §2), exposure-range change
+(±3 EV stays), or slider re-ordering beyond the absent Temperature slider. The
+histogram-plot freeze and the scope-box allowances within it are normative in §5.
 
-The histogram plot itself is frozen — bins, channel colors, geometry, and height do
-not change. Within that freeze, §5's scope box is permitted: a header selector,
-alternate scope bodies (luminance waveform and RAW sensor histogram), vertical growth
-while a taller body is selected, and RAW-only clipping indication. Scopes never
-appear in Library. RGB parade remains deferred.
-
-If a WP seems to need one of these, it's a spec question first.
+If a change seems to need one of these, it's a spec question first.
 
 ## 11. Acceptance (VM-level, per existing test patterns)
 
