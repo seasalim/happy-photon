@@ -187,9 +187,13 @@ be read.
   fully lit at 16 photosites and above; below that it remains dim. Display-domain
   histograms never show these dots.
 - **Display clipping triangles** flank only the Develop display histogram. The right
-  triangle lights for the output-referred `HighAny` fraction on every source. The left
-  triangle lights for `LowAll` display-floor clipping on every source. Missing or stale
-  render statistics darken both immediately.
+  triangle lights for the source-referred `HighAny` fraction when the loader supplied
+  a source-saturation artifact: exact sensor saturation for RAW, or encoded near-white
+  samples for JPEG/HEIC. TIFF, PNG, and other unsupported formats show that side as
+  unavailable and disable its peek interaction. The left triangle lights for `LowAll`
+  finalized display-floor clipping on every source and remains available without a
+  source-saturation artifact. Missing or stale render statistics darken both
+  immediately.
 - **Arming indicator**: while the linear base is decoding after Develop entry,
   show a thin indeterminate progress line under the histogram. Sliders stay **enabled**
   — edits accumulate in `EditSettings` and the first render catches up. Show only when
