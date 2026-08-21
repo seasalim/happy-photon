@@ -156,8 +156,8 @@ public sealed class RenderPipeline
                         request.Settings.CurveGreen,
                         request.Settings.CurveBlue),
                     whiteBalance,
-                    execution,
-                    request.Base.Info.DcpProfile?.HueSatMap);
+                    request.Base.Info.DcpProfile?.HueSatMap,
+                    execution);
                 crossing.Apply(working, execution);
             }
             else

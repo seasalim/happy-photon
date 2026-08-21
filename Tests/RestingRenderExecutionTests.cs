@@ -65,6 +65,30 @@ public sealed class RestingRenderExecutionTests
     }
 
     [Fact]
+    public void StandardRender_AppliesHueSatProfileAndMatchesResting()
+    {
+        var table = DcpProfileReaderTests.CreateTable(6, 3, 2, 8, 1.1f, 0.92f);
+        var map = new DcpHueSatMap(6, 3, 2, true, table, null, 0);
+        using var plain = CreatePatternBase(isRaw: true);
+        using var profiled = CreatePatternBase(isRaw: true, map);
+        var settings = new EditSettings { Exposure = 0.45, Contrast = 28 };
+        var pipeline = new RenderPipeline();
+
+        using var baseline = pipeline.Render(CreateRequest(plain, settings));
+        using var standard = pipeline.Render(CreateRequest(profiled, settings));
+        using var resting = pipeline.RenderResting(
+            CreateRequest(profiled, settings),
+            RenderExecutionOptions.Resting(CancellationToken.None, 2));
+
+        Assert.NotEqual(
+            RenderPipelineTestSupport.ReadPixels(baseline.Image),
+            RenderPipelineTestSupport.ReadPixels(standard.Image));
+        Assert.Equal(
+            RenderPipelineTestSupport.ReadPixels(standard.Image),
+            RenderPipelineTestSupport.ReadPixels(resting.Image));
+    }
+
+    [Fact]
     public void RestingExecution_ActiveEffectsObserveCancellationAtStageEntry()
     {
         using var baseImage = CreatePatternBase(isRaw: false);
@@ -124,7 +148,18 @@ public sealed class RestingRenderExecutionTests
         return curve;
     }
 
-    private static BaseImage CreatePatternBase(bool isRaw)
+    private static RenderRequest CreateRequest(
+        BaseImage baseImage,
+        EditSettings settings) => new(
+            baseImage,
+            settings,
+            RenderIntent.Preview,
+            MaxDimension: null,
+            new RenderOptions(false, false));
+
+    private static BaseImage CreatePatternBase(
+        bool isRaw,
+        DcpHueSatMap? hueSatMap = null)
     {
         const int width = 64;
         const int height = 48;
@@ -138,6 +173,7 @@ public sealed class RestingRenderExecutionTests
         return RenderPipelineTestSupport.CreateBase(
             samples,
             isRaw,
-            height);
+            height,
+            hueSatMap: hueSatMap);
     }
 }

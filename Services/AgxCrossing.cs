@@ -23,7 +23,8 @@ internal sealed class AgxCrossing
     internal AgxCrossing(
         AgxToneParameters parameters,
         double[,]? whiteBalanceMatrix = null,
-        DcpHueSatMap? hueSatMap = null)
+        DcpHueSatMap? hueSatMap = null,
+        RenderExecutionOptions? execution = null)
     {
         ArgumentNullException.ThrowIfNull(parameters.Curve);
         _parameters = parameters with
@@ -33,37 +34,6 @@ internal sealed class AgxCrossing
             CurveGreen = parameters.CurveGreen?.Clone(),
             CurveBlue = parameters.CurveBlue?.Clone()
         };
-
-        if (whiteBalanceMatrix == null)
-        {
-            _input = new Matrix3x3(AgxToneEngine.InsetMatrix);
-            Fold = 1;
-        }
-        else
-        {
-            var composed = ChromaticAdaptation.Multiply(
-                AgxToneEngine.InsetMatrix,
-                whiteBalanceMatrix);
-            var normalized = ChromaticAdaptation.NormalizeForRender(composed);
-            _input = new Matrix3x3(normalized.Matrix);
-            Fold = normalized.Fold;
-        }
-
-        _luts = AgxToneLut.ComposeCached(_parameters, Fold);
-        _log2Fold = Math.Log2(Fold);
-        _slope = AgxToneEngine.Slope(_parameters.Contrast);
-        _toePower = AgxToneEngine.ToePower(_parameters.Shadows);
-        _shoulderPower = AgxToneEngine.ShoulderPower(_parameters.Highlights);
-    }
-
-    internal AgxCrossing(
-        AgxToneParameters parameters,
-        double[,]? whiteBalanceMatrix,
-        RenderExecutionOptions execution,
-        DcpHueSatMap? hueSatMap = null)
-    {
-        ArgumentNullException.ThrowIfNull(parameters.Curve);
-        _parameters = parameters with { Curve = parameters.Curve.Clone() };
         _hueSatMap = hueSatMap;
 
         if (whiteBalanceMatrix == null)
@@ -81,7 +51,9 @@ internal sealed class AgxCrossing
             Fold = normalized.Fold;
         }
 
-        _luts = AgxToneLut.ComposeCached(_parameters, Fold, execution);
+        _luts = execution == null
+            ? AgxToneLut.ComposeCached(_parameters, Fold)
+            : AgxToneLut.ComposeCached(_parameters, Fold, execution.Value);
         _log2Fold = Math.Log2(Fold);
         _slope = AgxToneEngine.Slope(_parameters.Contrast);
         _toePower = AgxToneEngine.ToePower(_parameters.Shadows);
