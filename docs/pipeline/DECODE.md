@@ -152,17 +152,21 @@ with base samples passing through the same default inset → log2/sigmoid → ou
 crossing as the renderer, including the Rec.2020-to-sRGB comparison basis.
 
 The preview estimate is accepted only for thumbnails at least 64×64 with finite,
-non-degenerate medians, and a Fuji estimate that differs from its nonzero MakerNote
-bias by more than 0.5 EV is rejected (a high-dynamic-range scene can make one scalar
-median miss the camera curve's intended mid-tone lift). Missing, corrupt, too-small,
-or rejected previews fall back to the Fujifilm mid-point shift from MakerNote tag
-0x9650, then to the RAF DR200/DR400 mode when that tag is absent; all remaining
-sources fall back to 0. Every path is clamped to ±3 EV. Preview and full decodes
-estimate independently and may differ by up to 0.05 EV because their LibRaw demosaics
-are approximate rather than identical. The renderer combines the selected source fact
-with the user's relative Exposure setting inside the tone-engine gain, so estimator and
-engine share the anchored post-gain quantity `a = v·2^(EVuser+EVsource)`; an unusable
-preview falls back to a defensible decoded fact and never changes slider semantics.
+non-degenerate medians, and a Fuji estimate is clamped to within 0.5 EV of its
+nonzero MakerNote bias (a high-dynamic-range scene can make one scalar median miss
+the camera curve's intended mid-tone lift). Clamping rather than rejecting keeps the
+selection continuous: repeated decodes of the same file measure a few hundredths of
+an EV apart, so a hard accept/reject threshold flipped files sitting at the boundary
+by the full disagreement between decodes of different noise-reduction modes. Missing,
+corrupt, or too-small previews fall back to the Fujifilm mid-point shift from
+MakerNote tag 0x9650, then to the RAF DR200/DR400 mode when that tag is absent; all
+remaining sources fall back to 0. Every path is clamped to ±3 EV. Preview and full
+decodes estimate independently and may differ by up to 0.05 EV because their LibRaw
+demosaics are approximate rather than identical. The renderer combines the selected
+source fact with the user's relative Exposure setting inside the tone-engine gain, so
+estimator and engine share the anchored post-gain quantity `a = v·2^(EVuser+EVsource)`;
+an unusable preview falls back to a defensible decoded fact and never changes slider
+semantics.
 
 ### 2.3 Why Clip and Blend are the supported modes
 

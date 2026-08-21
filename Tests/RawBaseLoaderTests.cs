@@ -199,7 +199,7 @@ public sealed class RawBaseLoaderTests
     }
 
     [Fact]
-    public void PreviewBase_UsesPreviewEstimateAheadOfFujiMetadata()
+    public void PreviewBase_ClampsPreviewEstimateIntoFujiMetadataBand()
     {
         var loader = new RawBaseLoader();
 
@@ -214,7 +214,10 @@ public sealed class RawBaseLoaderTests
 
         Assert.NotNull(fuji);
         Assert.NotNull(canon);
-        Assert.InRange(fuji!.Info.SourceExposureBiasEv, 0.54, 0.74);
+        // The x30 thumbnail measures brighter than its 0.58 EV MakerNote bias
+        // by more than the trust band, so the selected bias sits at the
+        // metadata + 0.5 EV clamp ceiling (small demosaic variance allowed).
+        Assert.InRange(fuji!.Info.SourceExposureBiasEv, 1.02, 1.09);
         Assert.InRange(
             Math.Abs(fuji.Info.SourceExposureBiasEv - 0.58),
             0,

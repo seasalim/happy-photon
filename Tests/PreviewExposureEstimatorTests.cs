@@ -108,9 +108,10 @@ public sealed class PreviewExposureEstimatorTests
 
     [Theory]
     [InlineData(0.64, 0.58, 0.64)]
-    [InlineData(-0.06, 1.72, 1.72)]
+    [InlineData(-0.06, 1.72, 1.22)]
+    [InlineData(2.9, 1.72, 2.22)]
     [InlineData(1.33, 0, 1.33)]
-    public void SelectBias_RejectsOnlyGrossFujiMetadataDisagreement(
+    public void SelectBias_ClampsIntoMetadataDisagreementBand(
         double previewEstimate,
         double metadataFallback,
         double expected)
@@ -119,7 +120,23 @@ public sealed class PreviewExposureEstimatorTests
             expected,
             PreviewExposureEstimator.SelectBias(
                 previewEstimate,
-                metadataFallback));
+                metadataFallback),
+            precision: 10);
+    }
+
+    [Fact]
+    public void SelectBias_IsContinuousAcrossTheDisagreementBoundary()
+    {
+        // Regression: decodes of the same file measure a few hundredths of an
+        // EV apart, and a measurement sitting at the disagreement boundary
+        // must not flip to the metadata value (a ~0.5 EV visible brightness
+        // jump when toggling noise reduction). X-T5 repro: metadata 1.72,
+        // measurements straddling 1.22.
+        var below = PreviewExposureEstimator.SelectBias(1.2199, 1.72);
+        var above = PreviewExposureEstimator.SelectBias(1.2201, 1.72);
+        Assert.Equal(1.22, below, precision: 10);
+        Assert.Equal(1.2201, above, precision: 10);
+        Assert.True(Math.Abs(above - below) < 0.001);
     }
 
     [Fact]

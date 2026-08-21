@@ -69,8 +69,8 @@ internal static class PreviewExposureEstimator
             {
                 ImageServiceHelpers.LogDebug(
                     nameof(PreviewExposureEstimator),
-                    $"Preview bias {measured:F3} EV rejected in favor of " +
-                    $"metadata bias {fallbackEv:F3} EV",
+                    $"Preview bias {measured:F3} EV clamped to {result:F3} EV " +
+                    $"near metadata bias {fallbackEv:F3} EV",
                     filePath);
             }
             estimateElapsed = stopwatch.ElapsedMilliseconds -
@@ -212,10 +212,16 @@ internal static class PreviewExposureEstimator
             return metadataFallback;
         }
 
-        return metadataFallback != 0 &&
-            Math.Abs(measured - metadataFallback) > MaxMetadataDisagreementEv
-                ? metadataFallback
-                : measured;
+        // Clamp instead of discarding: decodes of the same file vary by a few
+        // hundredths of an EV (native demosaic is thread-nondeterministic), so
+        // a hard accept/reject threshold flips the result by the full
+        // disagreement for files that measure near the boundary.
+        return metadataFallback == 0
+            ? measured
+            : Math.Clamp(
+                measured,
+                metadataFallback - MaxMetadataDisagreementEv,
+                metadataFallback + MaxMetadataDisagreementEv);
     }
 
     internal static double DefaultRenderMedian(
