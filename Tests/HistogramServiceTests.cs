@@ -120,12 +120,20 @@ public sealed class HistogramServiceTests
     }
 
     [Theory]
-    [InlineData(181, 91)]
-    [InlineData(512, 512)]
-    [InlineData(17, 13)]
-    public void CalculatePreviewHistogram_MatchesSequentialReference(
+    [InlineData(17, 13, false)]
+    [InlineData(511, 513, false)]
+    [InlineData(512, 512, false)]
+    [InlineData(521, 509, false)]
+    [InlineData(251, 1049, false)]
+    [InlineData(17, 13, true)]
+    [InlineData(511, 513, true)]
+    [InlineData(512, 512, true)]
+    [InlineData(521, 509, true)]
+    [InlineData(251, 1049, true)]
+    public void CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(
         int width,
-        int height)
+        int height,
+        bool includeWaveform)
     {
         var samples = CreateDeterministicSamples(width, height);
         var bgra = new byte[checked(width * height * 4)];
@@ -144,7 +152,7 @@ public sealed class HistogramServiceTests
             height,
             actual,
             includeHistogram: true,
-            includeWaveform: true);
+            includeWaveform);
         var expected = CalculateSequentialReference(samples, width, height);
 
         Assert.Equal(expected.Red, actual.Red);
@@ -152,10 +160,43 @@ public sealed class HistogramServiceTests
         Assert.Equal(expected.Blue, actual.Blue);
         Assert.Equal(expected.Luminance, actual.Luminance);
         Assert.Equal(expected.MaxValue, actual.MaxValue);
-        Assert.Equal(expected.Waveform!.Luminance, actual.Waveform!.Luminance);
-        Assert.Equal(
-            expected.Waveform.ColumnSampleCounts,
-            actual.Waveform.ColumnSampleCounts);
+        if (includeWaveform)
+        {
+            Assert.Equal(
+                expected.Waveform!.Luminance,
+                actual.Waveform!.Luminance);
+            Assert.Equal(
+                expected.Waveform.ColumnSampleCounts,
+                actual.Waveform.ColumnSampleCounts);
+        }
+        else
+        {
+            Assert.Null(actual.Waveform);
+        }
+    }
+
+    [Fact]
+    public void CalculateHistogram_ParallelHistogramOnlyDoesNotCreateWaveform()
+    {
+        const int width = 512;
+        const int height = 512;
+        var samples = CreateDeterministicSamples(width, height);
+        using var result = CreateResult(width, height, samples);
+        var actual = new HistogramData();
+
+        HistogramService.CalculateHistogramFromPreparedSnapshot(
+            result.Image,
+            actual,
+            includeHistogram: true,
+            includeWaveform: false);
+        var expected = CalculateSequentialReference(samples, width, height);
+
+        Assert.Equal(expected.Red, actual.Red);
+        Assert.Equal(expected.Green, actual.Green);
+        Assert.Equal(expected.Blue, actual.Blue);
+        Assert.Equal(expected.Luminance, actual.Luminance);
+        Assert.Equal(expected.MaxValue, actual.MaxValue);
+        Assert.Null(actual.Waveform);
     }
 
     private static byte[] GoldenBytes(HistogramData histogram)
