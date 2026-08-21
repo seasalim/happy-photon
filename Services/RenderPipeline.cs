@@ -19,9 +19,7 @@ public sealed class RenderPipeline
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(detailBandPixelLimit);
 
         var stopwatch = Stopwatch.StartNew();
-        var requestedOverlaySides = request.Base.Info.IsRawSource
-            ? request.Options.OverlaySides
-            : request.Options.OverlaySides & ClippingOverlaySide.DisplayFloor;
+        var requestedOverlaySides = request.Options.OverlaySides;
         var rawNearClip = request.Options.ComputeStats ||
             request.Options.ComputeOverlayMasks
             ? ClippingStatsCalculator.CalculateRawNearClip(request.Base)
@@ -39,11 +37,7 @@ public sealed class RenderPipeline
             var analyze = request.Options.ComputeStats || createOverlay;
             displayRec2020 = RenderDisplayRec2020Core(
                 request,
-                detailBandPixelLimit,
-                analyze,
-                createOverlay && requestedOverlaySides.HasFlag(
-                    ClippingOverlaySide.SceneHighlights),
-                out var sceneHighlights);
+                detailBandPixelLimit);
             display = RenderFinalizer.FinalizeOwned(
                 Take(ref displayRec2020),
                 request.MaxDimension,
@@ -72,7 +66,6 @@ public sealed class RenderPipeline
                                 display,
                                 rawNearClip,
                                 createOverlay,
-                                sceneHighlights,
                                 requestedOverlaySides);
                         }
                     },
@@ -277,20 +270,13 @@ public sealed class RenderPipeline
         }
         return RenderDisplayRec2020Core(
             request,
-            RenderDetail.DefaultBandPixelLimit,
-            analyzeSceneHighlights: false,
-            createSceneMask: false,
-            out _);
+            RenderDetail.DefaultBandPixelLimit);
     }
 
     private static MagickImage RenderDisplayRec2020Core(
         RenderRequest request,
-        int detailBandPixelLimit,
-        bool analyzeSceneHighlights,
-        bool createSceneMask,
-        out SceneHighlightAnalysis? sceneHighlights)
+        int detailBandPixelLimit)
     {
-        sceneHighlights = null;
         MagickImage? working = null;
         try
         {
@@ -314,33 +300,7 @@ public sealed class RenderPipeline
                         request.Settings.CurveBlue),
                     whiteBalance,
                     request.Base.Info.DcpProfile?.HueSatMap);
-                if (analyzeSceneHighlights)
-                {
-                    // Materialize independent samples before crossing writes.
-                    // Magick clones may share a pixel cache until either image
-                    // writes, so clone siblings cannot safely overlap here.
-                    var sceneSamples =
-                        ClippingStatsCalculator.CopyRgbSamples(working);
-                    var sceneWidth = working.Width;
-                    var sceneHeight = working.Height;
-                    SceneHighlightAnalysis? sceneResult = null;
-                    Parallel.Invoke(
-                        () => sceneResult = ClippingStatsCalculator
-                            .AnalyzeSceneHighlights(
-                            sceneSamples,
-                            sceneWidth,
-                            sceneHeight,
-                            whiteBalance,
-                            request.Settings.Exposure +
-                                request.Base.Info.SourceExposureBiasEv,
-                            createSceneMask),
-                        () => crossing.Apply(working));
-                    sceneHighlights = sceneResult;
-                }
-                else
-                {
-                    crossing.Apply(working);
-                }
+                crossing.Apply(working);
             }
             else
             {

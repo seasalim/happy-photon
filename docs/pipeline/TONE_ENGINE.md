@@ -147,17 +147,19 @@ and nothing is rewritten at parse.
 
 ## 8. Clipping semantics
 
-Under a shoulder nothing reaches code 255, so highlight clipping is
-scene-referred for crossing-on sources (`ClippingStats`):
+Clipping overlays and `ClippingStats.High` analyze the finalized display for both tone
+regimes. An AgX-shouldered highlight below display white is therefore not flagged, and
+the warning appears or clears as edits move the output across the threshold:
 
 | Field | Crossing ON | Crossing OFF |
 |---|---|---|
-| `High`/`HighAny` | channel ≥ 1.0 in scene-linear Rec.2020 after WB and exposure gain, before the inset; WB- and exposure-sensitive by design | display ≥ 254.5/255 |
+| `High`/`HighAny` | display ≥ 253/255 | same |
 | `Low`/`LowAll` | display ≤ 0.5/255 | same |
 | `RawNearClip` | unchanged decoded-near-clip fact (RENDER.md §7) | 0 |
 
-The per-photosite RAW-histogram counts remain authoritative for true sensor
-clip. Overlay masks follow the same thresholds per regime and stay dormant.
+The per-photosite RAW-histogram counts remain authoritative for true sensor clip.
+Overlay masks use the same output thresholds in both regimes and stay dormant unless
+the clipping latch or a triangle peek requests them.
 
 ## 9. Validation
 

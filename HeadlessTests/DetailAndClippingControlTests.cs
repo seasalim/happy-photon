@@ -54,13 +54,12 @@ public sealed class DetailAndClippingControlTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void DisplayTrianglesUseSceneAndFloorSemantics()
+    public void DisplayTrianglesUseOutputHighlightAndFloorSemantics()
     {
         var histogram = new HistogramView
         {
             Histogram = new HistogramData(),
             ShowDisplayClippingIndicators = true,
-            ClippingIsRawSource = true,
             Clipping = new ClippingStats(
                 ChannelClip.Empty,
                 ChannelClip.Empty,
@@ -78,18 +77,12 @@ public sealed class DetailAndClippingControlTests : IDisposable
 
         Assert.True(high.IsHitTestVisible);
         Assert.True(floor.IsHitTestVisible);
-        Assert.Contains("Scene highlights above scene white", ToolTip.GetTip(high)!.ToString());
+        Assert.Contains("Output highlights", ToolTip.GetTip(high)!.ToString());
         Assert.Contains("Display-floor shadows", ToolTip.GetTip(floor)!.ToString());
         Assert.DoesNotContain("sensor", ToolTip.GetTip(high)!.ToString()!,
             StringComparison.OrdinalIgnoreCase);
 
-        histogram.ClippingIsRawSource = false;
-        Dispatcher.UIThread.RunJobs();
-        Assert.True(high.IsHitTestVisible);
-        Assert.Contains("RAW sources", ToolTip.GetTip(high)!.ToString());
-
         histogram.Clipping = null;
-        histogram.ClippingIsRawSource = true;
         Dispatcher.UIThread.RunJobs();
         Assert.True(high.IsHitTestVisible);
         Assert.True(floor.IsHitTestVisible);
@@ -131,7 +124,7 @@ public sealed class DetailAndClippingControlTests : IDisposable
             1,
             ClippingOverlaySide.Both,
             [
-                (byte)ClippingOverlaySide.SceneHighlights,
+                (byte)ClippingOverlaySide.Highlights,
                 (byte)ClippingOverlaySide.DisplayFloor
             ]);
         var viewer = new ZoomPanControl
@@ -168,6 +161,11 @@ public sealed class DetailAndClippingControlTests : IDisposable
         var viewportLayer = viewer.FindControl<Panel>("ViewportOverlayLayer")!;
         var imagePanel = viewer.FindControl<Panel>("ImagePanel")!;
         Assert.True(status.IsVisible);
+        Assert.Equal("CLIPPING · HIGHLIGHTS / FLOOR", status.Text);
+        Assert.Contains(
+            ShortcutCatalog.Groups.SelectMany(group => group.Entries),
+            entry => entry.Keys == "J" &&
+                entry.Action.Contains("highlight/floor"));
         Assert.Same(viewportLayer, status.Parent);
         Assert.DoesNotContain(status, imagePanel.GetLogicalDescendants());
 

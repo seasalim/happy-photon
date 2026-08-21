@@ -52,7 +52,6 @@ internal sealed partial class RenderOutcome
                 ? OutcomeFieldMode.Clear
                 : OutcomeFieldMode.Set,
             Clipping = stale ? null : artifacts.Clipping,
-            ClippingIsRawSource = artifacts.IsRawSource,
             _clippingMask = stale ? null : artifacts.DetachClippingMask()
         };
     }

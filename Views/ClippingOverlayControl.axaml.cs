@@ -93,8 +93,8 @@ public partial class ClippingOverlayControl : UserControl
                 {
                     var flag = (ClippingOverlaySide)flags[y * mask.Width + x];
                     var color = flag.HasFlag(
-                            ClippingOverlaySide.SceneHighlights) &&
-                        sides.HasFlag(ClippingOverlaySide.SceneHighlights)
+                            ClippingOverlaySide.Highlights) &&
+                        sides.HasFlag(ClippingOverlaySide.Highlights)
                             ? HappyPhotonColors.SceneHighlightClipColor
                             : flag.HasFlag(ClippingOverlaySide.DisplayFloor) &&
                               sides.HasFlag(ClippingOverlaySide.DisplayFloor)

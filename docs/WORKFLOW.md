@@ -283,11 +283,11 @@ Start with the largest problem and make the smallest adjustment that solves it:
 Watch the photograph first and use the histogram as supporting information.
 Avoid correcting the histogram merely to make it fill the graph.
 
-The display histogram's right triangle reports RAW scene highlights above scene white;
-on standard sources it remains dim because that scene fact is unavailable. The left
-triangle reports pixels at the display floor for every source. Hover either available
+The display histogram's right triangle reports output highlights at or above 253/255
+for every source. The left triangle reports pixels at the display floor. Hover either
 triangle to peek that side over the photograph, or press `J` in Develop to latch the
-clipping overlay. Red marks the scene side and blue marks the display floor.
+clipping overlay. Red marks output highlights and blue marks the display floor; both
+respond as edits change the rendered output.
 
 ### Shape the color
 

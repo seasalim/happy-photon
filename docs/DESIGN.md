@@ -268,8 +268,8 @@ legibility over bright frames. It stays chrome-less — the halo replaces a boxe
 rather than joining one.
 
 The Develop clipping latch uses the same restrained overlay language; its latch and
-peek behavior, the muted `CLIPPING · SCENE / FLOOR` status line, and the invariant red
-(scene-highlight) / blue (display-floor) viewing-aid colors are specified in
+peek behavior, the muted `CLIPPING · HIGHLIGHTS / FLOOR` status line, and the invariant
+red (output-highlight) / blue (display-floor) viewing-aid colors are specified in
 `docs/pipeline/UI.md` §4.
 
 The review metadata is a curated FILE, CAMERA, and LOCATION summary for every supported

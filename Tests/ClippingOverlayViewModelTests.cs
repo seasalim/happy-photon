@@ -35,7 +35,7 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
         Assert.True(vm.IsClippingOverlayLatched);
         Assert.Equal("Clipping indicators on", vm.AssessmentFeedback);
         Assert.Equal(
-            ClippingOverlaySide.DisplayFloor,
+            ClippingOverlaySide.Both,
             vm.RequestedClippingOverlaySides);
 
         vm.IsFullScreenMode = true;
@@ -62,7 +62,7 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
         using var catalog = await _fx.CreateCatalogAsync("masks");
         await using var vm = _fx.CreateViewModel(
             catalog,
-            new GrayLoader(),
+            new WhiteLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally));
@@ -75,6 +75,11 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
         vm.ToggleClippingOverlayCommand.Execute(null);
         await TestWaits.UntilAsync(() => vm.PreviewClippingMask != null);
         var latchedMask = vm.PreviewClippingMask;
+        // Standard-source latch and peek both retain the highlight side.
+        Assert.Equal(ClippingOverlaySide.Both, latchedMask!.Sides);
+        Assert.All(latchedMask.Flags.ToArray(), flag => Assert.Equal(
+            (byte)ClippingOverlaySide.Highlights,
+            flag));
 
         vm.BeginClippingPeek(ClippingOverlaySide.DisplayFloor);
         vm.EndClippingPeek();
@@ -92,11 +97,21 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
 
         vm.EndClippingPeek();
         Assert.Null(vm.PreviewClippingMask);
+
+        vm.BeginClippingPeek(ClippingOverlaySide.Highlights);
+        await TestWaits.UntilAsync(() => vm.PreviewClippingMask != null);
+        Assert.Equal(
+            ClippingOverlaySide.Highlights,
+            vm.PreviewClippingMask!.Sides);
+        Assert.All(vm.PreviewClippingMask.Flags.ToArray(), flag => Assert.Equal(
+            (byte)ClippingOverlaySide.Highlights,
+            flag));
+        vm.EndClippingPeek();
     }
 
     public void Dispose() => _fx.Dispose();
 
-    private sealed class GrayLoader : IBaseImageLoader
+    private sealed class WhiteLoader : IBaseImageLoader
     {
         public bool CanLoad(ImageFile file) => true;
 
@@ -105,7 +120,7 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
             BaseDecodeSettings decode,
             CancellationToken cancellationToken) =>
             new(
-                new MagickImage(MagickColors.Gray, 64, 48),
+                new MagickImage(MagickColors.White, 64, 48),
                 new BaseImageInfo(
                     BaseSourceKind.Standard,
                     false,

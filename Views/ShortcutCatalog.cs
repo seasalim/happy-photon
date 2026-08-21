@@ -44,7 +44,7 @@ public static class ShortcutCatalog
             new("Ctrl+B", "Toggle color assessment mode in Develop or fullscreen"),
             new("C", "Toggle crop mode"),
             new("W", "Toggle the white balance eyedropper"),
-            new("J", "Toggle scene/floor clipping indicators in Develop"),
+            new("J", "Toggle highlight/floor clipping indicators in Develop"),
             new("Ctrl+Shift+C", "Copy the current image's edit settings"),
             new("Ctrl+Shift+V", "Paste copied edit settings"),
             new("Ctrl+Z", "Undo the last edit in Develop"),

@@ -49,7 +49,6 @@ internal sealed partial class RenderOutcome : IDisposable
     public HistogramData? Histogram { get; init; }
     public OutcomeFieldMode ClippingMode { get; init; }
     public ClippingStats? Clipping { get; init; }
-    public bool ClippingIsRawSource { get; init; }
     public OutcomeFieldMode CapabilityMode { get; init; }
     public bool IsRawSource { get; init; }
     public OutcomeFieldMode ProfileMode { get; init; }
@@ -99,7 +98,6 @@ internal sealed partial class RenderOutcome : IDisposable
                 ? OutcomeFieldMode.Clear
                 : OutcomeFieldMode.Set,
             Clipping = stale ? null : artifacts.Clipping,
-            ClippingIsRawSource = artifacts.IsRawSource,
             _clippingMask = stale ? null : artifacts.DetachClippingMask(),
             CapabilityMode = !hasPaint || stale
                 ? OutcomeFieldMode.Preserve
@@ -144,7 +142,6 @@ internal sealed partial class RenderOutcome : IDisposable
         Histogram = refresh.Histogram,
         ClippingMode = OutcomeFieldMode.Set,
         Clipping = refresh.Clipping,
-        ClippingIsRawSource = refresh.IsRawSource,
         _clippingMask = clippingMask,
         CapabilityMode = OutcomeFieldMode.Set,
         IsRawSource = refresh.IsRawSource,
@@ -358,7 +355,6 @@ public partial class MainWindowViewModel
                 outcome.ClippingMode == OutcomeFieldMode.Clear
                     ? null
                     : outcome.Clipping,
-                outcome.ClippingIsRawSource,
                 mask,
                 preserveMask);
         }

@@ -13,9 +13,9 @@ public enum RenderIntent
 public enum ClippingOverlaySide
 {
     None = 0,
-    SceneHighlights = 1,
+    Highlights = 1,
     DisplayFloor = 2,
-    Both = SceneHighlights | DisplayFloor
+    Both = Highlights | DisplayFloor
 }
 
 public sealed record RenderOptions(

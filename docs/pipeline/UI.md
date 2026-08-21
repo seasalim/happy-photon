@@ -141,11 +141,11 @@ be read.
   sampling; pan/zoom gestures remain live (click-without-drag samples, drag pans).
   Rejected picks (clipped/noise-floor) show a status-bar hint ("Pick a neutral mid-tone
   area") and stay in the mode. Unavailable while the crop overlay is active.
-- **Clipping overlay** (`J`, Develop only): latches semantic scene-highlight red and
+- **Clipping overlay** (`J`, Develop only): latches output-highlight red and
   display-floor blue over the photograph. Hovering a display-histogram triangle peeks
   that side only; while latched it temporarily isolates the hovered side, then restores
-  both on leave. Standard sources cannot peek or render the scene-highlight side.
-  The latched image carries one muted, chrome-less `CLIPPING · SCENE / FLOOR` line;
+  both on leave. Both sides are available for RAW and standard sources.
+  The latched image carries one muted, chrome-less `CLIPPING · HIGHLIGHTS / FLOOR` line;
   toggling also uses the standard 1.5-second feedback toast.
 - **Zoom is device-true and original-relative.** `ZoomLevel = 1.0` maps one original
   image pixel to one device pixel, independent of the monitor's render scaling, and
@@ -186,9 +186,9 @@ be read.
   fully lit at 16 photosites and above; below that it remains dim. Display-domain
   histograms never show these dots.
 - **Display clipping triangles** flank only the Develop display histogram. The right
-  triangle lights for a RAW `HighAny` scene fraction; standard sources show a dimmed,
-  non-interactive no-data state. The left triangle lights for `LowAll` display-floor
-  clipping on every source. Missing or stale render statistics darken both immediately.
+  triangle lights for the output-referred `HighAny` fraction on every source. The left
+  triangle lights for `LowAll` display-floor clipping on every source. Missing or stale
+  render statistics darken both immediately.
 - **Arming indicator**: while the linear base is decoding after Develop entry,
   show a thin indeterminate progress line under the histogram. Sliders stay **enabled**
   — edits accumulate in `EditSettings` and the first render catches up. Show only when

@@ -11,7 +11,6 @@ public partial class MainWindowViewModel
     private long _clippingMaskSerial;
 
     public ClippingStats? DisplayClippingStats { get; private set; }
-    public bool DisplayClippingIsRawSource { get; private set; }
     public bool IsClippingStatsAvailable => DisplayClippingStats != null;
 
     public ClippingMask? PreviewClippingMask
@@ -37,9 +36,7 @@ public partial class MainWindowViewModel
         _peekClippingSide != ClippingOverlaySide.None
             ? _peekClippingSide
             : IsClippingOverlayLatched
-                ? DisplayClippingIsRawSource
-                    ? ClippingOverlaySide.Both
-                    : ClippingOverlaySide.DisplayFloor
+                ? ClippingOverlaySide.Both
                 : ClippingOverlaySide.None;
 
     internal ClippingOverlaySide RequestedClippingOverlaySides
@@ -52,14 +49,7 @@ public partial class MainWindowViewModel
             }
             if (IsClippingOverlayLatched)
             {
-                return IsHighlightHandlingEnabled
-                    ? ClippingOverlaySide.Both
-                    : ClippingOverlaySide.DisplayFloor;
-            }
-            if (_peekClippingSide == ClippingOverlaySide.SceneHighlights &&
-                !IsHighlightHandlingEnabled)
-            {
-                return ClippingOverlaySide.None;
+                return ClippingOverlaySide.Both;
             }
             return _peekClippingSide;
         }
@@ -107,10 +97,8 @@ public partial class MainWindowViewModel
     internal void BeginClippingPeek(ClippingOverlaySide side)
     {
         if (!CanToggleClippingOverlay() ||
-            side is not (ClippingOverlaySide.SceneHighlights or
-                ClippingOverlaySide.DisplayFloor) ||
-            side == ClippingOverlaySide.SceneHighlights &&
-                !DisplayClippingIsRawSource)
+            side is not (ClippingOverlaySide.Highlights or
+                ClippingOverlaySide.DisplayFloor))
         {
             return;
         }
@@ -201,12 +189,10 @@ public partial class MainWindowViewModel
 
     private void ApplyPreviewClipping(
         ClippingStats? clipping,
-        bool isRawSource,
         ClippingMask? clippingMask,
         bool preserveMask = false)
     {
         DisplayClippingStats = clipping;
-        DisplayClippingIsRawSource = isRawSource;
         if (!preserveMask)
         {
             PreviewClippingMask = clippingMask;
@@ -216,14 +202,13 @@ public partial class MainWindowViewModel
             clippingMask?.Dispose();
         }
         OnPropertyChanged(nameof(DisplayClippingStats));
-        OnPropertyChanged(nameof(DisplayClippingIsRawSource));
         OnPropertyChanged(nameof(IsClippingStatsAvailable));
         OnPropertyChanged(nameof(VisibleClippingOverlaySides));
     }
 
     private void ClearPreviewClippingArtifacts()
     {
-        ApplyPreviewClipping(null, false, null);
+        ApplyPreviewClipping(null, null);
     }
 
     private void LeaveDevelopClippingSurface()

@@ -40,7 +40,7 @@
                Margin="{Binding $parent[views:ZoomPanControl].ContentInset}"
                IsHitTestVisible="False">
             <TextBlock x:Name="ClippingStatus"
-                       Text="CLIPPING · SCENE / FLOOR"
+                       Text="CLIPPING · HIGHLIGHTS / FLOOR"
                        IsVisible="{Binding $parent[views:ZoomPanControl].IsClippingOverlayLatched}"
                        HorizontalAlignment="Left"
                        VerticalAlignment="Bottom"

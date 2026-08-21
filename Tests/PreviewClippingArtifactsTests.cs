@@ -19,14 +19,15 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
     }
 
     [WindowsFact]
-    public async Task UnlatchedRequestIsMaskFreeAndStandardRequestIsFloorOnly()
+    public async Task UnlatchedRequestIsMaskFreeAndStandardRequestIncludesHighlights()
     {
+        // Guard the service layer against stripping the standard-source high side.
         _fixture.RequireWindows();
         using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
         await catalog.InitializeAsync();
         await using var service = new PreviewService(
             catalog,
-            new SolidLoader(isRaw: false, MagickColors.Black),
+            new SolidLoader(isRaw: false, MagickColors.White),
             new RenderPipeline(),
             new HistogramService());
         var image = new ImageFile(Path.Combine(_root, "standard.jpg"));
@@ -53,12 +54,12 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
         Assert.NotNull(latched.Clipping);
         Assert.False(latched.IsRawSource);
         Assert.Equal(
-            ClippingOverlaySide.DisplayFloor,
+            ClippingOverlaySide.Both,
             latched.ClippingMask!.Sides);
         Assert.All(
             latched.ClippingMask.Flags.ToArray(),
             flag => Assert.Equal(
-                (byte)ClippingOverlaySide.DisplayFloor,
+                (byte)ClippingOverlaySide.Highlights,
                 flag));
     }
 

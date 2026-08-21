@@ -36,10 +36,10 @@ public sealed class ClippingStatsTests
         Assert.Equal(
             new[]
             {
-                (byte)ClippingOverlaySide.SceneHighlights,
-                (byte)ClippingOverlaySide.SceneHighlights,
+                (byte)ClippingOverlaySide.Highlights,
+                (byte)ClippingOverlaySide.Highlights,
                 (byte)ClippingOverlaySide.DisplayFloor,
-                (byte)ClippingOverlaySide.SceneHighlights
+                (byte)ClippingOverlaySide.Highlights
             },
             overlay.Flags.ToArray());
     }
@@ -88,11 +88,12 @@ public sealed class ClippingStatsTests
     }
 
     [Fact]
-    public void Analyze_PinsHalfEightBitThresholdBoundaries()
+    public void Analyze_PinsInclusiveEightBitThresholdBoundary()
     {
+        // Pin the locked inclusive 253/255 Q16 boundary exactly.
         using var image = CreateImage(
         [
-            65406, 65407, 65406,
+            65020, 65021, 65020,
             128, 129, 128
         ]);
 
@@ -105,31 +106,6 @@ public sealed class ClippingStatsTests
         Assert.Equal(new ChannelClip(0.5, 0, 0.5), result.Stats.Low);
         Assert.Equal(0.5, result.Stats.HighAny);
         Assert.Equal(0, result.Stats.LowAll);
-    }
-
-    [Fact]
-    public void Analyze_HighlightWinsOverFloorEvenWhenOnlyFloorIsRequested()
-    {
-        // A pixel that is scene-high AND all-channels-low takes the highlight
-        // branch first; with only the floor side requested it must emit no
-        // flag rather than a floor flag.
-        var scene = new SceneHighlightAnalysis(
-            new ChannelClip(1, 0, 0),
-            1,
-            1,
-            1,
-            new[] { true });
-        using var image = CreateImage([0, 0, 0]);
-
-        var floorOnly = ClippingStatsCalculator.Analyze(
-            image,
-            rawNearClip: 0,
-            createOverlay: true,
-            sceneHighlights: scene,
-            overlaySides: ClippingOverlaySide.DisplayFloor);
-        using var mask = floorOnly.OverlayMask;
-
-        Assert.Equal([0], mask!.Flags.ToArray());
     }
 
     [Fact]
@@ -149,14 +125,17 @@ public sealed class ClippingStatsTests
         for (var pixel = 0; pixel < pixels; pixel++)
         {
             var offset = pixel * 3;
-            var anyHigh = samples[offset] >= 65407 ||
-                samples[offset + 1] >= 65407 ||
-                samples[offset + 2] >= 65407;
+            var anyHigh = samples[offset] >=
+                    ClippingStatsCalculator.HighThreshold ||
+                samples[offset + 1] >=
+                    ClippingStatsCalculator.HighThreshold ||
+                samples[offset + 2] >=
+                    ClippingStatsCalculator.HighThreshold;
             var allLow = samples[offset] <= 128 &&
                 samples[offset + 1] <= 128 &&
                 samples[offset + 2] <= 128;
             expected[pixel] = anyHigh
-                ? (byte)ClippingOverlaySide.SceneHighlights
+                ? (byte)ClippingOverlaySide.Highlights
                 : allLow
                     ? (byte)ClippingOverlaySide.DisplayFloor
                     : (byte)0;
@@ -185,7 +164,7 @@ public sealed class ClippingStatsTests
             image,
             rawNearClip: 0,
             createOverlay: true,
-            overlaySides: ClippingOverlaySide.SceneHighlights);
+            overlaySides: ClippingOverlaySide.Highlights);
         var floor = ClippingStatsCalculator.Analyze(
             image,
             rawNearClip: 0,
@@ -195,18 +174,20 @@ public sealed class ClippingStatsTests
         using var floorMask = floor.OverlayMask;
 
         Assert.Equal(
-            [(byte)ClippingOverlaySide.SceneHighlights, 0],
+            [(byte)ClippingOverlaySide.Highlights, 0],
             highlightMask!.Flags.ToArray());
         Assert.Equal(
             [0, (byte)ClippingOverlaySide.DisplayFloor],
             floorMask!.Flags.ToArray());
-        Assert.Equal(ClippingOverlaySide.SceneHighlights, highlightMask.Sides);
+        Assert.Equal(ClippingOverlaySide.Highlights, highlightMask.Sides);
         Assert.Equal(ClippingOverlaySide.DisplayFloor, floorMask.Sides);
     }
 
     [Fact]
-    public void Render_RawHighlightsUsePreInsetSceneWhite()
+    public void Render_RawShoulderedHighlightUsesFinalOutput()
     {
+        // A synthetic RAW base avoids decode variance while proving that the
+        // overlay follows AgX output instead of pre-crossing scene values.
         using var raw = RenderPipelineTestSupport.CreateBase(
             [ushort.MaxValue, 0, 0],
             isRaw: true);
@@ -219,51 +200,55 @@ public sealed class ClippingStatsTests
             RenderIntent.Preview,
             null,
             new RenderOptions(true, true)));
+        using var pushed = new RenderPipeline().Render(new RenderRequest(
+            raw,
+            new EditSettings
+            {
+                Exposure = 3,
+                Highlights = 100,
+                Detail = new DetailSettings { CaptureSharpen = 0 }
+            },
+            RenderIntent.Preview,
+            null,
+            new RenderOptions(true, true)));
 
-        Assert.Equal(new ChannelClip(1, 0, 0), result.Clipping.High);
-        Assert.Equal(1, result.Clipping.HighAny);
+        Assert.Equal(ChannelClip.Empty, result.Clipping.High);
+        Assert.Equal(0, result.Clipping.HighAny);
         Assert.All(
             RenderPipelineTestSupport.ReadPixels(result.Image),
-            value => Assert.True(value < 65407));
+            value => Assert.True(value < ClippingStatsCalculator.HighThreshold));
+        Assert.Equal(0, result.OverlayMask!.Flags[0]);
+        Assert.Equal(1, pushed.Clipping.HighAny);
         Assert.Equal(
-            (byte)ClippingOverlaySide.SceneHighlights,
-            result.OverlayMask!.Flags[0]);
+            (byte)ClippingOverlaySide.Highlights,
+            pushed.OverlayMask!.Flags[0]);
     }
 
     [Fact]
-    public void Render_RawHighlightsRespondToExposureAndWhiteBalance()
+    public void Render_StandardHighlightsRespondToExposureInBothDirections()
     {
-        using var halfGrey = RenderPipelineTestSupport.CreateBase(
-            [32768, 32768, 32768],
-            isRaw: true);
-        using var neutral = RenderRaw(halfGrey, new EditSettings());
-        using var exposed = RenderRaw(
-            halfGrey,
-            new EditSettings { Exposure = 1 });
+        // Output-referred warnings must clear and return with visible edits.
+        using var white = RenderPipelineTestSupport.CreateBase(
+            [ushort.MaxValue, ushort.MaxValue, ushort.MaxValue]);
+        using var clipped = RenderWithOverlay(white, new EditSettings());
+        using var recovered = RenderWithOverlay(
+            white,
+            new EditSettings { Exposure = -3 });
+        using var clippedAgain = RenderWithOverlay(white, new EditSettings());
 
-        Assert.Equal(ChannelClip.Empty, neutral.Clipping.High);
-        Assert.Equal(0, neutral.Clipping.HighAny);
-        Assert.Equal(new ChannelClip(1, 1, 1), exposed.Clipping.High);
-        Assert.Equal(1, exposed.Clipping.HighAny);
-
-        using var wbBase = RenderPipelineTestSupport.CreateBase(
-            [40000, 40000, 40000],
-            isRaw: true);
-        using var whiteBalanced = RenderRaw(
-            wbBase,
-            new EditSettings
-            {
-                Wb = new WhiteBalanceSettings
-                {
-                    Mode = WbMode.Picked,
-                    Gains = [2, 1, 1]
-                }
-            });
-        Assert.Equal(new ChannelClip(1, 0, 0), whiteBalanced.Clipping.High);
-        Assert.Equal(1, whiteBalanced.Clipping.HighAny);
+        Assert.Equal(1, clipped.Clipping.HighAny);
+        Assert.Equal(
+            (byte)ClippingOverlaySide.Highlights,
+            clipped.OverlayMask!.Flags[0]);
+        Assert.Equal(0, recovered.Clipping.HighAny);
+        Assert.Equal(0, recovered.OverlayMask!.Flags[0]);
+        Assert.Equal(1, clippedAgain.Clipping.HighAny);
+        Assert.Equal(
+            (byte)ClippingOverlaySide.Highlights,
+            clippedAgain.OverlayMask!.Flags[0]);
     }
 
-    private static RenderResult RenderRaw(
+    private static RenderResult RenderWithOverlay(
         BaseImage image,
         EditSettings settings)
     {
@@ -273,7 +258,32 @@ public sealed class ClippingStatsTests
             settings,
             RenderIntent.Preview,
             null,
-            new RenderOptions(true, false)));
+            new RenderOptions(true, true)));
+    }
+
+    [Fact]
+    public void Analyze_EightBitOriginHighlightsFlagSolidly()
+    {
+        // Every 8-bit code from the locked boundary through white must flag.
+        Assert.Equal(253 * 257, ClippingStatsCalculator.HighThreshold);
+        using var image = CreateImage(
+        [
+            253 * 257, 20000, 20000,
+            254 * 257, 20000, 20000,
+            255 * 257, 20000, 20000
+        ]);
+
+        var result = ClippingStatsCalculator.Analyze(
+            image,
+            rawNearClip: 0,
+            createOverlay: true,
+            overlaySides: ClippingOverlaySide.Highlights);
+        using var mask = result.OverlayMask;
+
+        Assert.Equal(1, result.Stats.HighAny);
+        Assert.All(mask!.Flags.ToArray(), flag => Assert.Equal(
+            (byte)ClippingOverlaySide.Highlights,
+            flag));
     }
 
     [Fact]
@@ -296,9 +306,12 @@ public sealed class ClippingStatsTests
         for (var pixel = 0; pixel < pixels; pixel++)
         {
             var offset = pixel * 3;
-            var rHigh = samples[offset] >= 65407;
-            var gHigh = samples[offset + 1] >= 65407;
-            var bHigh = samples[offset + 2] >= 65407;
+            var rHigh = samples[offset] >=
+                ClippingStatsCalculator.HighThreshold;
+            var gHigh = samples[offset + 1] >=
+                ClippingStatsCalculator.HighThreshold;
+            var bHigh = samples[offset + 2] >=
+                ClippingStatsCalculator.HighThreshold;
             var rLow = samples[offset] <= 128;
             var gLow = samples[offset + 1] <= 128;
             var bLow = samples[offset + 2] <= 128;

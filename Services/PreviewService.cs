@@ -152,9 +152,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         bool surfaceAuthorized)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var effectiveOverlaySides = baseImage.Info.IsRawSource
-            ? overlaySides
-            : overlaySides & ClippingOverlaySide.DisplayFloor;
+        var effectiveOverlaySides = overlaySides;
         using var rendered = _renderPipeline.Render(new RenderRequest(
             baseImage,
             settings,

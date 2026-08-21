@@ -18,9 +18,6 @@ public partial class HistogramView : UserControl
     public static readonly StyledProperty<ClippingStats?> ClippingProperty =
         AvaloniaProperty.Register<HistogramView, ClippingStats?>(nameof(Clipping));
 
-    public static readonly StyledProperty<bool> ClippingIsRawSourceProperty =
-        AvaloniaProperty.Register<HistogramView, bool>(nameof(ClippingIsRawSource));
-
     public static readonly StyledProperty<bool> ShowDisplayClippingIndicatorsProperty =
         AvaloniaProperty.Register<HistogramView, bool>(
             nameof(ShowDisplayClippingIndicators));
@@ -35,12 +32,6 @@ public partial class HistogramView : UserControl
     {
         get => GetValue(ClippingProperty);
         set => SetValue(ClippingProperty, value);
-    }
-
-    public bool ClippingIsRawSource
-    {
-        get => GetValue(ClippingIsRawSourceProperty);
-        set => SetValue(ClippingIsRawSourceProperty, value);
     }
 
     public bool ShowDisplayClippingIndicators
@@ -104,7 +95,6 @@ public partial class HistogramView : UserControl
             UpdateDisplayClippingIndicators();
         }
         else if (change.Property == ClippingProperty ||
-                 change.Property == ClippingIsRawSourceProperty ||
                  change.Property == ShowDisplayClippingIndicatorsProperty)
         {
             UpdateDisplayClippingIndicators();
@@ -181,11 +171,7 @@ public partial class HistogramView : UserControl
         var clipping = Clipping;
         var hasStats = clipping != null;
         _displayFloorTriangle.Opacity = clipping?.LowAll > 0 ? 0.9 : 0.25;
-        _sceneHighlightTriangle.Opacity = !ClippingIsRawSource
-            ? 0.16
-            : clipping?.HighAny > 0
-                ? 1
-                : 0.25;
+        _sceneHighlightTriangle.Opacity = clipping?.HighAny > 0 ? 1 : 0.25;
         _displayFloorTriangleTarget.IsHitTestVisible = true;
         _sceneHighlightTriangleTarget.IsHitTestVisible = true;
 
@@ -196,11 +182,9 @@ public partial class HistogramView : UserControl
                 : "Display-floor clipping data is unavailable.");
         ToolTip.SetTip(
             _sceneHighlightTriangleTarget,
-            !ClippingIsRawSource
-                ? "Scene highlight clipping is available for RAW sources."
-                : hasStats
-                    ? $"Scene highlights above scene white: {clipping!.HighAny:P4}."
-                    : "Scene highlight clipping data is unavailable.");
+            hasStats
+                ? $"Output highlights: {clipping!.HighAny:P4}."
+                : "Output highlight clipping data is unavailable.");
     }
 
     private void OnDisplayFloorEntered(object? sender, PointerEventArgs e) =>
@@ -211,7 +195,7 @@ public partial class HistogramView : UserControl
     private void OnSceneHighlightEntered(object? sender, PointerEventArgs e) =>
         ClippingPeekStarted?.Invoke(
             this,
-            ClippingOverlaySide.SceneHighlights);
+            ClippingOverlaySide.Highlights);
 
     private void OnTriangleExited(object? sender, PointerEventArgs e) =>
         ClippingPeekEnded?.Invoke(this, EventArgs.Empty);

@@ -185,7 +185,6 @@
                                 x:Name="DevelopHistogram"
                                 Histogram="{Binding EffectiveHistogram}"
                                 Clipping="{Binding DisplayClippingStats}"
-                                ClippingIsRawSource="{Binding DisplayClippingIsRawSource}"
                                 ShowDisplayClippingIndicators="True"
                                 IsVisible="{Binding IsHistogramScopeEffective}"/>
                             <views:WaveformView

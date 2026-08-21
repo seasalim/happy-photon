@@ -233,8 +233,8 @@ the final Q16 write are the only production precision boundary. The internal
 ## 7. Histogram & clipping
 
 Computed at preview scale when `Options.ComputeStats` (existing `HistogramService`
-bins stay 8-bit). Shadow statistics always sample the finalized display. Highlight
-statistics depend on the tone regime:
+bins stay 8-bit). Shadow and highlight statistics both sample the finalized display,
+so they follow visible edits and use one definition for RAW and standard sources.
 
 The render exports one BGRA8 buffer that is both the preview-bitmap source and the
 display-scope source. Histogram-active interaction accumulates only the four 8-bit
@@ -263,10 +263,9 @@ pixels.
 ```csharp
 public sealed record ChannelClip(double R, double G, double B);   // fractions 0..1
 public sealed record ClippingStats(
-    ChannelClip High,        // RAW: scene channel ≥ 1 after WB+gain, before inset;
-                             // standard: display channel ≥ 254.5/255
+    ChannelClip High,        // finalized display channel ≥ 253/255, every source
     ChannelClip Low,         // per channel: fraction ≤ 0.5/255
-    double HighAny,          // same regime-specific high threshold, any channel
+    double HighAny,          // same output threshold, any channel
     double LowAll,           // all-channels-low fraction (drives the blue overlay/chip)
     double RawNearClip);     // raw bases only, else 0: fraction of base pixels with any
                              // display-basis channel ≥ 0.99 after linear Rec.2020→sRGB
@@ -276,13 +275,13 @@ public sealed record ClippingStats(
                              // measuring the sensor domain.
 ```
 
-For RAW, `High`/`HighAny` are exposure- and WB-sensitive scene facts; `RawNearClip` is
-the edit-independent decoded-near-clip fact above, and sensor mosaic clip counts remain
-authoritative for true sensor clip. When `Options.ComputeOverlayMasks` is true, masks
-follow the requested semantic sides (scene highlights and/or display floor);
-standard-source requests always suppress the scene-highlight side. Develop requests
-masks only while the `J` latch or a triangle peek is active; ordinary preview renders
-remain mask-free.
+`High`/`HighAny` are output-referred for every source and use the inclusive Q16
+threshold 65021 (`253 × 257`). `RawNearClip` is the edit-independent
+decoded-near-clip fact above, and sensor mosaic clip counts remain authoritative for
+true sensor clip. When `Options.ComputeOverlayMasks` is true, masks follow the
+requested semantic sides (output highlights and/or display floor) for both RAW and
+standard sources. Develop requests masks only while the `J` latch or a triangle peek
+is active; ordinary preview renders remain mask-free.
 
 ## 8. EditSettings v2 — schema and storage
 
