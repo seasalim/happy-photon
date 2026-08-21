@@ -284,7 +284,17 @@ public static class ImageServiceHelpers
                     var directory = Path.GetDirectoryName(path);
                     if (!string.IsNullOrEmpty(directory))
                         Directory.CreateDirectory(directory);
-                    File.WriteAllText(path, fullMessage + Environment.NewLine);
+                    // The header makes every capture self-identifying: a trace
+                    // is only meaningful against the build that produced it.
+                    var header =
+                        $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} " +
+                        $"[DisplayChain] trace start " +
+                        $"version={AppBuildInfo.Identity.FriendlyVersion} " +
+                        $"revision={AppBuildInfo.Identity.SourceRevision ?? "unknown"}";
+                    File.WriteAllText(
+                        path,
+                        header + Environment.NewLine +
+                        fullMessage + Environment.NewLine);
                     _displayTraceFileStarted = true;
                 }
                 else
