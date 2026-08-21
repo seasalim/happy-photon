@@ -43,6 +43,27 @@ public static class BitmapConversionService
         return pixels;
     }
 
+    /// <summary>
+    /// Sparse mean-luminance estimate for display-trace diagnostics. Samples
+    /// every 64th pixel; only called while the display trace is enabled.
+    /// </summary>
+    internal static double EstimateMeanLuma(Bitmap bitmap)
+    {
+        var pixels = CopyBgraPixels(bitmap);
+        const int strideBytes = 64 * 4;
+        long weighted = 0;
+        var samples = 0;
+        for (var offset = 0; offset + 3 < pixels.Length; offset += strideBytes)
+        {
+            weighted += 299 * pixels[offset + 2] +
+                587 * pixels[offset + 1] +
+                114 * pixels[offset];
+            samples++;
+        }
+
+        return samples == 0 ? 0 : weighted / (samples * 1000.0 * 255.0);
+    }
+
     public static MagickImage ConvertToMagickImage(Bitmap bitmap)
     {
         var pixels = CopyBgraPixels(bitmap);

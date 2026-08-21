@@ -239,9 +239,17 @@ public partial class MainWindowViewModel
             return;
         }
 
-        ImageServiceHelpers.LogDisplayTrace(
-            $"paint source={PaintSourceLabel(PreviewPaintSource.RestingRender)} " +
-            $"bitmap={preview.PixelSize.Width}x{preview.PixelSize.Height}");
+        if (ImageServiceHelpers.DisplayTraceLoggingEnabled)
+        {
+            var restingIdentity =
+                ImageService.Previews.TryGetPreviewRenderIdentity(preview);
+            ImageServiceHelpers.LogDisplayTrace(
+                $"paint source={PaintSourceLabel(PreviewPaintSource.RestingRender)} " +
+                $"bitmap={preview.PixelSize.Width}x{preview.PixelSize.Height} " +
+                $"luma={BitmapConversionService.EstimateMeanLuma(preview):F4} " +
+                $"decode={restingIdentity?.DecodeKey ?? "none"} " +
+                $"settings={restingIdentity?.SettingsHash ?? "none"}");
+        }
         var previous = PreviewImage;
         var transferred = false;
         if (previous != null)

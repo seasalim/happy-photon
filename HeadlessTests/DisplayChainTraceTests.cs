@@ -423,14 +423,20 @@ public sealed class DisplayChainTraceTests
             resting,
             PreviewPaintSource.RestingRender);
 
-        Assert.Equal(
-            [
-                "[DisplayChain] paint source=cached-jpeg bitmap=4x3",
-                "[DisplayChain] paint source=fresh-render bitmap=5x2",
-                "[DisplayChain] paint source=background-refresh bitmap=6x4",
-                "[DisplayChain] paint source=resting-render bitmap=8x5"
-            ],
-            lines);
+        var prefixes = new[]
+        {
+            "[DisplayChain] paint source=cached-jpeg bitmap=4x3 luma=",
+            "[DisplayChain] paint source=fresh-render bitmap=5x2 luma=",
+            "[DisplayChain] paint source=background-refresh bitmap=6x4 luma=",
+            "[DisplayChain] paint source=resting-render bitmap=8x5 luma="
+        };
+        Assert.Equal(prefixes.Length, lines.Count);
+        for (var index = 0; index < prefixes.Length; index++)
+        {
+            Assert.StartsWith(prefixes[index], lines[index]);
+            Assert.Contains(" decode=", lines[index]);
+            Assert.Contains(" settings=", lines[index]);
+        }
     }
 
     private static ZoomPanControl CreateBoundSurface(

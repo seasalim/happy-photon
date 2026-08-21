@@ -317,9 +317,17 @@ public partial class MainWindowViewModel
         if (ReferenceEquals(PreviewImage, preview))
             return;
 
-        ImageServiceHelpers.LogDisplayTrace(
-            $"paint source={PaintSourceLabel(source)} " +
-            $"bitmap={preview.PixelSize.Width}x{preview.PixelSize.Height}");
+        if (ImageServiceHelpers.DisplayTraceLoggingEnabled)
+        {
+            var identity =
+                ImageService.Previews.TryGetPreviewRenderIdentity(preview);
+            ImageServiceHelpers.LogDisplayTrace(
+                $"paint source={PaintSourceLabel(source)} " +
+                $"bitmap={preview.PixelSize.Width}x{preview.PixelSize.Height} " +
+                $"luma={BitmapConversionService.EstimateMeanLuma(preview):F4} " +
+                $"decode={identity?.DecodeKey ?? "none"} " +
+                $"settings={identity?.SettingsHash ?? "none"}");
+        }
         if (source is PreviewPaintSource.FreshRender or
             PreviewPaintSource.BackgroundRefresh)
         {
