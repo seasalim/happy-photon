@@ -20,6 +20,7 @@ Happy Photon is a performance-focused .NET 10/Avalonia photo workflow for browsi
 - Budgets: inline plans under 10 lines; a written plan document for even a large feature fits on roughly one page.
 - Decisions belong in plans; discovery and implementation detail do not. Never include: exhaustive code audits or inventories (file:line tables, reference counts), restated current behavior beyond a short paragraph, derivations or proofs, exact SQL, method signatures, or code snippets. The implementer finds and decides those.
 - Match detail to risk. Expand a step only when it is genuinely ambiguous or risky; routine steps get one line or none.
+- Every work-package spec carries a one-line net-LOC expectation and a "what does this delete" clause naming the code the change supersedes or retires; report the actual net production diff at the merge gate. "Nothing" is an acceptable answer only with a stated reason.
 - Do not enumerate file-by-file edits, edge-case matrices, phases, or contingency branches unless asked.
 - A plan that will not fit its budget usually means the change should be split — propose the smaller first slice instead.
 
