@@ -16,6 +16,11 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
     public RenderedThumbnailCacheServiceTests(AvaloniaTestFixture fixture) =>
         _fixture = fixture;
 
+    // The production drain timeout bounds app shutdown; these tests assert on
+    // the drained result, so the drain gets the standard wait ceiling instead.
+    private static RenderedThumbnailCacheService CreateWriter(CatalogService catalog) =>
+        new(catalog, 8, Task.CompletedTask, TestWaits.Condition);
+
     [WindowsFact]
     public async Task MatchingHashLoadsQuality85Jpeg()
     {
@@ -23,7 +28,7 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
         var (catalog, file) = await CreateFileAsync();
         using (catalog)
         {
-            var cache = new RenderedThumbnailCacheService(catalog);
+            var cache = CreateWriter(catalog);
             using var source = new MagickImage(MagickColors.Orange, 150, 100);
             using var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
 
@@ -58,16 +63,21 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
         var (catalog, file) = await CreateFileAsync();
         using (catalog)
         {
-            var cache = new RenderedThumbnailCacheService(catalog);
+            var cache = CreateWriter(catalog);
             using var source = new MagickImage(MagickColors.Blue, 30, 20);
             using var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
             cache.QueueSaveToCache(file, bitmap, "hash");
             await cache.DisposeAsync();
 
+            var reader = new RenderedThumbnailCacheService(catalog);
+            using (var loaded = reader.LoadMatching(file, "hash"))
+            {
+                Assert.NotNull(loaded);
+            }
+
             File.SetLastWriteTimeUtc(
                 file.FilePath,
                 DateTime.UtcNow.AddMinutes(2));
-            var reader = new RenderedThumbnailCacheService(catalog);
             Assert.Null(reader.LoadMatching(file, "hash"));
             await reader.DisposeAsync();
         }
@@ -86,8 +96,12 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
                 catalog,
                 1,
                 gate.Task,
-                TimeSpan.FromSeconds(5));
-            var sourceCache = new ThumbnailCacheService(catalog);
+                TestWaits.Condition);
+            var sourceCache = new ThumbnailCacheService(
+                catalog,
+                256,
+                Task.CompletedTask,
+                TestWaits.Condition);
             using var image = new MagickImage(MagickColors.Green, 20, 10);
             using var bitmap = BitmapConversionService.ConvertToBitmap(image)!;
 
@@ -138,7 +152,7 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
         var (catalog, file) = await CreateFileAsync();
         using (catalog)
         {
-            var cache = new RenderedThumbnailCacheService(catalog);
+            var cache = CreateWriter(catalog);
             using var largeImage = new MagickImage(MagickColors.Orange, 512, 341);
             using var smallImage = new MagickImage(MagickColors.Blue, 150, 100);
             using var large = BitmapConversionService.ConvertToBitmap(largeImage)!;
@@ -162,7 +176,7 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
         var (catalog, file) = await CreateFileAsync();
         using (catalog)
         {
-            var writer = new RenderedThumbnailCacheService(catalog);
+            var writer = CreateWriter(catalog);
             using var source = new MagickImage(MagickColors.Orange, 150, 100);
             using var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
             writer.QueueSaveToCache(file, bitmap, "hash");

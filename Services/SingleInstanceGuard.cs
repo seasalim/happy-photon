@@ -2,7 +2,7 @@ namespace HappyPhoton.Services;
 
 internal sealed class SingleInstanceGuard : IDisposable
 {
-    private const string ApplicationMutexName = "HappyPhoton.Application.SingleInstance";
+    internal const string ApplicationMutexName = "HappyPhoton.Application.SingleInstance";
     private Mutex? mutex;
 
     private SingleInstanceGuard(Mutex mutex)

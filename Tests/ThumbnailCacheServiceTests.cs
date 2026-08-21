@@ -17,6 +17,11 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         _fixture = fixture;
     }
 
+    // The production drain timeout bounds app shutdown; these tests assert on
+    // the drained result, so the drain gets the standard wait ceiling instead.
+    private static ThumbnailCacheService CreateWriter(CatalogService catalog) =>
+        new(catalog, 256, Task.CompletedTask, TestWaits.Condition);
+
     [WindowsFact]
     public async Task QueueSaveToCache_DropsOldestWritesWhenCapacityIsReached()
     {
@@ -27,7 +32,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
         var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var cache = new ThumbnailCacheService(
-            catalog, 3, gate.Task, TimeSpan.FromSeconds(2));
+            catalog, 3, gate.Task, TestWaits.Condition);
         var images = Enumerable.Range(1, 5)
             .Select(id => new ImageFile(sourcePath) { CatalogId = id })
             .ToArray();
@@ -102,7 +107,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
             catalog,
             2,
             Task.CompletedTask,
-            TimeSpan.FromSeconds(5),
+            TestWaits.Condition,
             writerGate.Task);
         var image = new ImageFile(sourcePath) { CatalogId = 1 };
 
@@ -137,7 +142,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         using var bitmap = JpegThumbnailDecoder.Decode(
             sourcePath, 150, CancellationToken.None);
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
-        var cache = new ThumbnailCacheService(catalog);
+        var cache = CreateWriter(catalog);
         var firstImage = new ImageFile(sourcePath) { CatalogId = 1 };
         var secondImage = new ImageFile(sourcePath) { CatalogId = 2 };
         try
@@ -176,7 +181,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         using var bitmap = JpegThumbnailDecoder.Decode(
             sourcePath, 150, CancellationToken.None);
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
-        var cache = new ThumbnailCacheService(catalog);
+        var cache = CreateWriter(catalog);
         var imageFile = new ImageFile(sourcePath) { CatalogId = 1 };
         var cachePath = cache.GetCachePath(imageFile);
         Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
@@ -200,7 +205,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         var sourcePath = CreateSource();
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
         var image = new ImageFile(sourcePath) { CatalogId = 1 };
-        var cache = new ThumbnailCacheService(catalog);
+        var cache = CreateWriter(catalog);
         using (var bitmap = JpegThumbnailDecoder.Decode(
             sourcePath, 150, CancellationToken.None))
         {
@@ -227,7 +232,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         var sourcePath = CreateSource(1200, 800);
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
         var image = new ImageFile(sourcePath) { CatalogId = 1 };
-        var cache = new ThumbnailCacheService(catalog);
+        var cache = CreateWriter(catalog);
         using (var bitmap = JpegThumbnailDecoder.Decode(
             sourcePath, 512, CancellationToken.None))
         {
@@ -254,7 +259,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         var sourcePath = CreateSource(1200, 800);
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
         var image = new ImageFile(sourcePath) { CatalogId = 1 };
-        var cache = new ThumbnailCacheService(catalog);
+        var cache = CreateWriter(catalog);
         using var large = JpegThumbnailDecoder.Decode(
             sourcePath, 512, CancellationToken.None);
         using var small = JpegThumbnailDecoder.Decode(
