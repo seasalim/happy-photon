@@ -21,9 +21,8 @@ public partial class MainWindowViewModel
         ? "1 photo is online-only. Happy Photon will not download it automatically."
         : $"{OnlineOnlyPhotoCount:N0} photos are online-only. Happy Photon will not download them automatically.";
 
-    internal void InitializeCloudSourceCount(
-        IEnumerable<ImageFile> images) =>
-        OnlineOnlyPhotoCount = images.Count(
+    internal void RefreshOnlineOnlyPhotoCount() =>
+        OnlineOnlyPhotoCount = Library.AllImages.Count(
             image => image.SourceRequiresHydration);
 
     internal void ApplyThumbnailLoadStatus(
@@ -106,9 +105,7 @@ public partial class MainWindowViewModel
         }
         if (Library.Contains(image))
         {
-            OnlineOnlyPhotoCount = Math.Max(
-                0,
-                OnlineOnlyPhotoCount + (value ? 1 : -1));
+            RefreshOnlineOnlyPhotoCount();
         }
 
         if (ReferenceEquals(SelectedImage, image))
@@ -131,8 +128,7 @@ public partial class MainWindowViewModel
     private void RefreshSourceAvailability(ImageFile image) =>
         SetSourceRequiresHydration(
             image,
-            ImageService.GetSourceAvailability(image) ==
-                SourceAvailability.RequiresHydration);
+            ImageService.GetSourceAvailability(image).IsOnlineOnly());
 
     [RelayCommand]
     private async Task DownloadAndOpenAsync()

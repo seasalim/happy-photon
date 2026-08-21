@@ -250,7 +250,7 @@ public partial class MainWindowViewModel
             EnsureCurrentSelectionSummary(generation);
 
             var availability = ImageService.GetSourceAvailability(image);
-            if (availability == SourceAvailability.RequiresHydration)
+            if (availability.IsOnlineOnly())
             {
                 SetSourceRequiresHydration(image, true);
                 members[image] = SummaryMember.OnlineOnly;
@@ -274,8 +274,8 @@ public partial class MainWindowViewModel
                     SetSourceRequiresHydration(image, false);
                     members[image] = SummaryMember.From(image);
                 }
-                else if (ImageService.GetSourceAvailability(image) ==
-                         SourceAvailability.RequiresHydration)
+                else if (ImageService.GetSourceAvailability(image)
+                             .IsOnlineOnly())
                 {
                     SetSourceRequiresHydration(image, true);
                     members[image] = SummaryMember.OnlineOnly;

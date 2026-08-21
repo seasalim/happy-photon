@@ -26,7 +26,6 @@ public sealed class ThumbnailResidentStateTests : IDisposable
             Thumbnail = CreateBitmap()
         };
         viewModel.Library.SetImages([image]);
-        viewModel.InitializeCloudSourceCount([image]);
         var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Large);
         using var result = ThumbnailLoadResult.Deferred(request);
 

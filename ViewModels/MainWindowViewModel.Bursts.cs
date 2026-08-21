@@ -176,7 +176,7 @@ public partial class MainWindowViewModel
                 try
                 {
                     var availability = ImageService.GetSourceAvailability(image);
-                    if (availability == SourceAvailability.RequiresHydration)
+                    if (availability.IsOnlineOnly())
                     {
                         if (generation == Volatile.Read(ref _libraryGeneration))
                         {
@@ -199,8 +199,8 @@ public partial class MainWindowViewModel
                         }
                         analyzedCount++;
                     }
-                    else if (ImageService.GetSourceAvailability(image) ==
-                             SourceAvailability.RequiresHydration)
+                    else if (ImageService.GetSourceAvailability(image)
+                                 .IsOnlineOnly())
                     {
                         if (generation == Volatile.Read(ref _libraryGeneration))
                         {

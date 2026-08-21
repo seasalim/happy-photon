@@ -344,7 +344,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 WaitForThumbnailAttempt(viewModel);
                 var image = Assert.Single(viewModel.Library.AllImages);
                 image.SourceRequiresHydration = true;
-                viewModel.InitializeCloudSourceCount([image]);
+                viewModel.RefreshOnlineOnlyPhotoCount();
 
                 viewModel.ShowBurstGroups = true;
                 Complete(viewModel.WaitForBurstAnalysisAsync());

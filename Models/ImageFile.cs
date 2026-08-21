@@ -145,8 +145,7 @@ public partial class ImageFile : ObservableObject
         Extension = Path.GetExtension(filePath);
         IsRaw = RawExtensions.Contains(Extension);
         SourceAvailabilityHint = sourceAvailabilityHint;
-        SourceRequiresHydration =
-            sourceAvailabilityHint == SourceAvailability.RequiresHydration;
+        SourceRequiresHydration = sourceAvailabilityHint.IsOnlineOnly();
     }
 
     internal Bitmap? SwapThumbnail(Bitmap? thumbnail)

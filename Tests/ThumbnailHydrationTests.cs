@@ -44,7 +44,6 @@ public sealed class ThumbnailHydrationTests : IDisposable
         await catalog.InitializeAsync();
         await using var viewModel = new MainWindowViewModel(catalog);
         viewModel.Library.SetImages([context.Image]);
-        viewModel.InitializeCloudSourceCount([context.Image]);
 
         using var result = await context.Service.LoadUneditedThumbnailAsync(
             context.Image,
@@ -77,7 +76,6 @@ public sealed class ThumbnailHydrationTests : IDisposable
         await catalog.InitializeAsync();
         await using var viewModel = new MainWindowViewModel(catalog);
         viewModel.Library.SetImages([context.Image]);
-        viewModel.InitializeCloudSourceCount([context.Image]);
 
         using var result = await context.Service.LoadUneditedThumbnailAsync(
             context.Image,
@@ -270,7 +268,6 @@ public sealed class ThumbnailHydrationTests : IDisposable
         try
         {
             viewModel.Library.SetImages([image]);
-            viewModel.InitializeCloudSourceCount([image]);
 
             Assert.True(image.ShowCloudPlaceholder);
             Assert.Equal(1, viewModel.OnlineOnlyPhotoCount);

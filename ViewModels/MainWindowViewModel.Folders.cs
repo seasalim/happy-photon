@@ -226,6 +226,7 @@ public partial class MainWindowViewModel
     private void OnLibraryStateChanged(object? sender, EventArgs e)
     {
         SelectedCount = Library.SelectedCount;
+        RefreshOnlineOnlyPhotoCount();
         RestartLibrarySelectionSummary();
         NotifyLibraryEmptyStateChanged();
         ReconcileFullScreenSelection();

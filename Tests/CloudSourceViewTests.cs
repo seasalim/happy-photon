@@ -347,7 +347,6 @@ public sealed class CloudSourceViewTests
             SourceRequiresHydration = true
         };
         viewModel.Library.SetImages([image]);
-        viewModel.InitializeCloudSourceCount([image]);
         viewModel.SelectedImage = image;
         viewModel.IsDevelopMode = true;
         var window = new MainWindow { DataContext = viewModel };

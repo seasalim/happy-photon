@@ -48,7 +48,6 @@ public sealed class CloudSelectionStateTests : IDisposable
                 EditSettings = CreateNonDefaultSettings()
             };
             viewModel.Library.SetImages([local, cloud]);
-            viewModel.InitializeCloudSourceCount([local, cloud]);
             viewModel.SelectedImage = local;
             viewModel.Histogram = new HistogramData();
             viewModel.IsWhiteBalanceReady = true;
@@ -111,7 +110,6 @@ public sealed class CloudSelectionStateTests : IDisposable
             viewModel.Library.ReplaceThumbnail(
                 cloud,
                 BitmapConversionService.ConvertToBitmap(source));
-            viewModel.InitializeCloudSourceCount([cloud]);
 
             viewModel.SelectedImage = cloud;
             await TestWaits.UntilAsync(() => viewModel.Histogram != null);
@@ -193,7 +191,6 @@ public sealed class CloudSelectionStateTests : IDisposable
                 EditSettings = new EditSettings { Exposure = 2 }
             };
             viewModel.Library.SetImages([local, cloud]);
-            viewModel.InitializeCloudSourceCount([local, cloud]);
             viewModel.SelectedImage = local;
             viewModel.CopyEditSettingsCommand.Execute(null);
             viewModel.ToggleImageSelection(local);

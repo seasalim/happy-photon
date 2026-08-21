@@ -85,7 +85,6 @@ public partial class MainWindowViewModel
             ResetBurstState();
             ResetThumbnailViewport();
             Library.SetImages(imageFiles);
-            InitializeCloudSourceCount(imageFiles);
 
             // Defer first image selection until after UI settles.
             if (Library.VisibleImages.Count > 0)
@@ -137,7 +136,6 @@ public partial class MainWindowViewModel
                 CurrentFolderHasSubfolders = false;
                 ResetBurstState();
                 Library.SetImages(Array.Empty<ImageFile>());
-                InitializeCloudSourceCount(Array.Empty<ImageFile>());
                 ShowTransientStatus($"Unable to load folder: {ex.Message}");
             }
             return 0;

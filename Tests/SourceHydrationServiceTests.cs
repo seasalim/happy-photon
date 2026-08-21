@@ -86,7 +86,6 @@ public sealed class SourceHydrationServiceTests : IDisposable
             EditSettings = new EditSettings { Exposure = 1.25 }
         };
         viewModel.Library.SetImages([image]);
-        viewModel.InitializeCloudSourceCount([image]);
         viewModel.SelectedImage = image;
 
         await viewModel.DownloadAndOpenCommand.ExecuteAsync(null);

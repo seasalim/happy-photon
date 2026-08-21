@@ -268,8 +268,7 @@ public class ImageService : IAsyncDisposable
         long bytes = 0;
         foreach (var image in images)
         {
-            if (GetSourceAvailability(image) !=
-                SourceAvailability.RequiresHydration)
+            if (!GetSourceAvailability(image).IsOnlineOnly())
             {
                 continue;
             }

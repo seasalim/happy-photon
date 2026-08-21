@@ -37,7 +37,6 @@ public sealed class ExportLibraryRefreshTests : IDisposable
                 ThumbnailDeferredForHydration = true
             };
             viewModel.Library.SetImages([image]);
-            viewModel.InitializeCloudSourceCount([image]);
             viewModel.ExportSettings.OutputFolder = Path.Combine(_root, "export");
 
             var exported = Complete(
@@ -86,7 +85,6 @@ public sealed class ExportLibraryRefreshTests : IDisposable
                 ThumbnailDeferredForHydration = true
             };
             viewModel.Library.SetImages([image]);
-            viewModel.InitializeCloudSourceCount([image]);
             viewModel.ExportSettings.OutputFolder = Path.Combine(_root, "failure-export");
 
             var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -131,7 +129,6 @@ public sealed class ExportLibraryRefreshTests : IDisposable
                 ThumbnailDeferredForHydration = true
             };
             viewModel.Library.SetImages([image]);
-            viewModel.InitializeCloudSourceCount([image]);
             viewModel.ExportSettings.OutputFolder = Path.Combine(_root, "canceled-export");
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();
