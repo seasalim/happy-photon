@@ -73,16 +73,6 @@
         <Style Selector="ToggleButton.develop-action:checked Path">
             <Setter Property="Stroke" Value="{StaticResource OnPrimary}"/>
         </Style>
-        <Style Selector="ToggleButton.scope-icon Path.cfa-fill">
-            <Setter Property="Stroke" Value="{x:Null}"/>
-            <Setter Property="Fill" Value="{StaticResource PrimaryContainer}"/>
-        </Style>
-        <Style Selector="ToggleButton.scope-icon:pointerover Path.cfa-fill">
-            <Setter Property="Fill" Value="{StaticResource Primary}"/>
-        </Style>
-        <Style Selector="ToggleButton.scope-icon:checked Path.cfa-fill">
-            <Setter Property="Fill" Value="{StaticResource OnPrimary}"/>
-        </Style>
         <Style Selector="Button.develop-reset">
             <Setter Property="Height" Value="24"/>
             <Setter Property="Padding" Value="4,0"/>
@@ -189,67 +179,7 @@
                         CornerRadius="8"
                         IsEnabled="{Binding HasSelectedImage}">
                     <StackPanel Spacing="5">
-                        <Grid ColumnDefinitions="*,Auto" Margin="3,2,1,0">
-                            <TextBlock x:Name="ScopeTitle"
-                                       Classes="section-label"
-                                       Text="{Binding EffectiveScopeTitle}"
-                                       VerticalAlignment="Center"/>
-                            <StackPanel Grid.Column="1"
-                                        Orientation="Horizontal"
-                                        Spacing="4">
-                                <ToggleButton x:Name="HistogramScopeButton"
-                                              Classes="develop-action scope-icon"
-                                              IsChecked="{Binding IsHistogramScopeActive, Mode=OneWay}"
-                                              Command="{Binding SelectScopeCommand}"
-                                              CommandParameter="{x:Static models:ScopeView.Histogram}"
-                                              ToolTip.Tip="Histogram"
-                                              AutomationProperties.Name="Histogram scope">
-                                    <Viewbox Width="14" Height="14">
-                                        <Canvas Width="14" Height="14">
-                                            <Path Data="M1,12 C3,12 3.5,5 5.5,5 C7.5,5 7,9.5 9,9.5 C11,9.5 11.5,3 13,3 M1,12 L13,12"
-                                                  StrokeThickness="1.3"
-                                                  StrokeLineCap="Round"
-                                                  StrokeJoin="Round"/>
-                                        </Canvas>
-                                    </Viewbox>
-                                </ToggleButton>
-                                <ToggleButton x:Name="RawHistogramScopeButton"
-                                              Classes="develop-action scope-icon"
-                                              IsChecked="{Binding IsRawHistogramScopeActive, Mode=OneWay}"
-                                              IsEnabled="{Binding IsRawHistogramAvailable}"
-                                              Command="{Binding SelectScopeCommand}"
-                                              CommandParameter="{x:Static models:ScopeView.RawHistogram}"
-                                              ToolTip.Tip="{Binding RawHistogramHint}"
-                                              ToolTip.ShowOnDisabled="True"
-                                              AutomationProperties.Name="RAW histogram scope">
-                                    <Viewbox Width="14" Height="14">
-                                        <Canvas Width="14" Height="14">
-                                            <Path Classes="cfa-fill"
-                                                  Data="M2,2 L6,2 L6,6 L2,6 Z M8,8 L12,8 L12,12 L8,12 Z"/>
-                                            <Path Data="M8,2 L12,2 L12,6 L8,6 Z M2,8 L6,8 L6,12 L2,12 Z"
-                                                  StrokeThickness="1.3"
-                                                  StrokeJoin="Round"/>
-                                        </Canvas>
-                                    </Viewbox>
-                                </ToggleButton>
-                                <ToggleButton x:Name="WaveformScopeButton"
-                                              Classes="develop-action scope-icon"
-                                              IsChecked="{Binding IsWaveformScopeActive, Mode=OneWay}"
-                                              Command="{Binding SelectScopeCommand}"
-                                              CommandParameter="{x:Static models:ScopeView.Waveform}"
-                                              ToolTip.Tip="Waveform"
-                                              AutomationProperties.Name="Waveform scope">
-                                    <Viewbox Width="14" Height="14">
-                                        <Canvas Width="14" Height="14">
-                                            <Path Data="M1,4.5 C3,3.5 5,5.5 7,4.5 C9,3.5 11,5.2 13,4.3 M1,9.5 C3,8.7 5,10.4 7,9.5 C9,8.7 11,10.3 13,9.4"
-                                                  StrokeThickness="1.3"
-                                                  StrokeLineCap="Round"
-                                                  StrokeJoin="Round"/>
-                                        </Canvas>
-                                    </Viewbox>
-                                </ToggleButton>
-                            </StackPanel>
-                        </Grid>
+                        <views:ScopeSelectorRow x:Name="ScopeSelector"/>
                         <Grid>
                             <views:HistogramView
                                 x:Name="DevelopHistogram"

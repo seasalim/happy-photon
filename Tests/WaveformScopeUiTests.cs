@@ -36,10 +36,11 @@ public sealed class WaveformScopeUiTests : IDisposable
         var window = new Window { Width = 250, Height = 660, Content = panel };
         window.Show();
         Dispatcher.UIThread.RunJobs();
-        var title = panel.FindControl<TextBlock>("ScopeTitle")!;
-        var histogramButton = panel.FindControl<ToggleButton>("HistogramScopeButton")!;
-        var waveformButton = panel.FindControl<ToggleButton>("WaveformScopeButton")!;
-        var rawButton = panel.FindControl<ToggleButton>("RawHistogramScopeButton")!;
+        var scopeSelector = panel.FindControl<ScopeSelectorRow>("ScopeSelector")!;
+        var title = scopeSelector.FindControl<TextBlock>("ScopeTitle")!;
+        var histogramButton = scopeSelector.FindControl<ToggleButton>("HistogramScopeButton")!;
+        var waveformButton = scopeSelector.FindControl<ToggleButton>("WaveformScopeButton")!;
+        var rawButton = scopeSelector.FindControl<ToggleButton>("RawHistogramScopeButton")!;
         var histogram = panel.FindControl<HistogramView>("DevelopHistogram")!;
         var waveform = panel.FindControl<WaveformView>("DevelopWaveform")!;
         var options = vm.ScopeOptions;

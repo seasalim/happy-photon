@@ -1,7 +1,9 @@
 [CmdletBinding()]
 param(
     [int]$MaximumLines = 499,
-    [string[]]$IncludePatterns = @("*.cs", "*.axaml")
+    # The ':(glob)' pathspec prefix keeps pwsh on Unix from expanding the
+    # patterns against the working directory before git sees them.
+    [string[]]$IncludePatterns = @(":(glob)**/*.cs", ":(glob)**/*.axaml")
 )
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
