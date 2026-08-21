@@ -76,7 +76,14 @@ public sealed class DcpAtomicityTests : IDisposable
             RenderIntent.Preview,
             BaseImage.InteractivePreviewMaxDimension,
             new RenderOptions(false, false)));
-        await using (var writer = new PreviewCacheService(catalog))
+        // The disposed writer's drained output is read back below, so the
+        // drain gets the standard wait ceiling instead of the production
+        // shutdown timeout.
+        await using (var writer = new PreviewCacheService(
+            catalog,
+            8,
+            Task.CompletedTask,
+            TestWaits.Condition))
         {
             writer.QueueSaveToCache(image, rendered.Image, installedHash);
         }
@@ -113,7 +120,14 @@ public sealed class DcpAtomicityTests : IDisposable
         var settingsB = WriteSettings('b', 0.9f);
         var settingsC = WriteSettings('c', 1.1f);
         var loader = new ProfileLoader();
-        var renderedCache = new RenderedThumbnailCacheService(catalog);
+        // The reader below asserts on the drained cache contents, so the
+        // drain gets the standard wait ceiling: an expired production timeout
+        // would abandon C's write and make the A/B Null asserts vacuous.
+        var renderedCache = new RenderedThumbnailCacheService(
+            catalog,
+            8,
+            Task.CompletedTask,
+            TestWaits.Condition);
         await using var service = new PreviewService(
             catalog,
             loader,

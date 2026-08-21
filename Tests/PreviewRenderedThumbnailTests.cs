@@ -193,7 +193,13 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
         using (catalog)
         {
             var settings = new EditSettings { Exposure = 0.5 };
-            var writer = new PreviewCacheService(catalog);
+            // The drained write must land before the read below, so the drain
+            // gets the standard wait ceiling instead of the production timeout.
+            var writer = new PreviewCacheService(
+                catalog,
+                8,
+                Task.CompletedTask,
+                TestWaits.Condition);
             using var placeholder = new MagickImage(MagickColors.Purple, 320, 200);
             writer.QueueSaveToCache(
                 file,
@@ -301,6 +307,8 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
         return (catalog, file);
     }
 
+    // The production drain timeout bounds app shutdown; these tests assert on
+    // the drained result, so the drain gets the standard wait ceiling instead.
     private static PreviewService CreateService(
         CatalogService catalog,
         IBaseImageLoader loader) =>
@@ -308,7 +316,12 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
             catalog,
             loader,
             new RenderPipeline(),
-            new HistogramService());
+            new HistogramService(),
+            renderedThumbnailCache: new RenderedThumbnailCacheService(
+                catalog,
+                8,
+                Task.CompletedTask,
+                TestWaits.Condition));
 
     private static Bitmap CreateExpected(EditSettings settings)
     {
