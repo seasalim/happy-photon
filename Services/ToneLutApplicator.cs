@@ -62,22 +62,31 @@ internal static class ToneLutApplicator
         var blue = GetChannelIndex(pixels, PixelChannel.Blue);
         var pixelCount = checked((int)(image.Width * image.Height));
 
+        var workers = WorkerCount(pixelCount);
         Parallel.For(
             0,
-            pixelCount,
+            workers,
             execution.ParallelOptions,
-            pixel =>
+            worker =>
             {
-                var offset = pixel * channels;
-                var r = values[offset + red] / (double)ushort.MaxValue;
-                var g = values[offset + green] / (double)ushort.MaxValue;
-                var b = values[offset + blue] / (double)ushort.MaxValue;
-                values[offset + red] = ToQuantum(Interpolate(
-                    luts.Red, Transform(matrix, 0, r, g, b)));
-                values[offset + green] = ToQuantum(Interpolate(
-                    luts.Green, Transform(matrix, 1, r, g, b)));
-                values[offset + blue] = ToQuantum(Interpolate(
-                    luts.Blue, Transform(matrix, 2, r, g, b)));
+                var (start, end) = ChunkRange(pixelCount, worker, workers);
+                for (var pixel = start; pixel < end; pixel++)
+                {
+                    if ((pixel & CancellationCheckMask) == 0)
+                    {
+                        execution.ThrowIfCancellationRequested();
+                    }
+                    var offset = pixel * channels;
+                    var r = values[offset + red] / (double)ushort.MaxValue;
+                    var g = values[offset + green] / (double)ushort.MaxValue;
+                    var b = values[offset + blue] / (double)ushort.MaxValue;
+                    values[offset + red] = ToQuantum(Interpolate(
+                        luts.Red, Transform(matrix, 0, r, g, b)));
+                    values[offset + green] = ToQuantum(Interpolate(
+                        luts.Green, Transform(matrix, 1, r, g, b)));
+                    values[offset + blue] = ToQuantum(Interpolate(
+                        luts.Blue, Transform(matrix, 2, r, g, b)));
+                }
             });
         execution.ThrowIfCancellationRequested();
         pixels.SetArea(0, 0, image.Width, image.Height, values);
@@ -109,19 +118,28 @@ internal static class ToneLutApplicator
         var blue = GetChannelIndex(pixels, PixelChannel.Blue);
         var pixelCount = checked((int)(image.Width * image.Height));
 
+        var workers = WorkerCount(pixelCount);
         Parallel.For(
             0,
-            pixelCount,
+            workers,
             execution.ParallelOptions,
-            pixel =>
+            worker =>
             {
-                var offset = pixel * channels;
-                values[offset + red] = ToQuantum(Interpolate(
-                    lut, values[offset + red] / (double)ushort.MaxValue));
-                values[offset + green] = ToQuantum(Interpolate(
-                    lut, values[offset + green] / (double)ushort.MaxValue));
-                values[offset + blue] = ToQuantum(Interpolate(
-                    lut, values[offset + blue] / (double)ushort.MaxValue));
+                var (start, end) = ChunkRange(pixelCount, worker, workers);
+                for (var pixel = start; pixel < end; pixel++)
+                {
+                    if ((pixel & CancellationCheckMask) == 0)
+                    {
+                        execution.ThrowIfCancellationRequested();
+                    }
+                    var offset = pixel * channels;
+                    values[offset + red] = ToQuantum(Interpolate(
+                        lut, values[offset + red] / (double)ushort.MaxValue));
+                    values[offset + green] = ToQuantum(Interpolate(
+                        lut, values[offset + green] / (double)ushort.MaxValue));
+                    values[offset + blue] = ToQuantum(Interpolate(
+                        lut, values[offset + blue] / (double)ushort.MaxValue));
+                }
             });
         execution.ThrowIfCancellationRequested();
         pixels.SetArea(0, 0, image.Width, image.Height, values);
@@ -148,32 +166,55 @@ internal static class ToneLutApplicator
         var blue = GetChannelIndex(pixels, PixelChannel.Blue);
         var pixelCount = checked((int)(image.Width * image.Height));
 
-        Parallel.For(0, pixelCount, pixel =>
+        var workers = WorkerCount(pixelCount);
+        Parallel.For(0, workers, worker =>
         {
-            var offset = pixel * channels;
+            var (start, end) = ChunkRange(pixelCount, worker, workers);
             if (matrix == null)
             {
-                values[offset + red] = ToQuantum(Interpolate(
-                    luts.Red, values[offset + red] / (double)ushort.MaxValue));
-                values[offset + green] = ToQuantum(Interpolate(
-                    luts.Green, values[offset + green] / (double)ushort.MaxValue));
-                values[offset + blue] = ToQuantum(Interpolate(
-                    luts.Blue, values[offset + blue] / (double)ushort.MaxValue));
+                for (var pixel = start; pixel < end; pixel++)
+                {
+                    var offset = pixel * channels;
+                    values[offset + red] = ToQuantum(Interpolate(
+                        luts.Red, values[offset + red] / (double)ushort.MaxValue));
+                    values[offset + green] = ToQuantum(Interpolate(
+                        luts.Green, values[offset + green] / (double)ushort.MaxValue));
+                    values[offset + blue] = ToQuantum(Interpolate(
+                        luts.Blue, values[offset + blue] / (double)ushort.MaxValue));
+                }
                 return;
             }
 
-            var r = values[offset + red] / (double)ushort.MaxValue;
-            var g = values[offset + green] / (double)ushort.MaxValue;
-            var b = values[offset + blue] / (double)ushort.MaxValue;
-            values[offset + red] = ToQuantum(Interpolate(
-                luts.Red, Transform(matrix, 0, r, g, b)));
-            values[offset + green] = ToQuantum(Interpolate(
-                luts.Green, Transform(matrix, 1, r, g, b)));
-            values[offset + blue] = ToQuantum(Interpolate(
-                luts.Blue, Transform(matrix, 2, r, g, b)));
+            for (var pixel = start; pixel < end; pixel++)
+            {
+                var offset = pixel * channels;
+                var r = values[offset + red] / (double)ushort.MaxValue;
+                var g = values[offset + green] / (double)ushort.MaxValue;
+                var b = values[offset + blue] / (double)ushort.MaxValue;
+                values[offset + red] = ToQuantum(Interpolate(
+                    luts.Red, Transform(matrix, 0, r, g, b)));
+                values[offset + green] = ToQuantum(Interpolate(
+                    luts.Green, Transform(matrix, 1, r, g, b)));
+                values[offset + blue] = ToQuantum(Interpolate(
+                    luts.Blue, Transform(matrix, 2, r, g, b)));
+            }
         });
         pixels.SetArea(0, 0, image.Width, image.Height, values);
     }
+
+    // Chunked partitioning matches AgxCrossing: each pixel is independent, so
+    // output is bit-identical for any worker count or cap.
+    private const int CancellationCheckMask = 0x1FFF;
+
+    private static int WorkerCount(int pixelCount) =>
+        Math.Min(Environment.ProcessorCount, Math.Max(1, pixelCount / 8192));
+
+    private static (int Start, int End) ChunkRange(
+        int pixelCount,
+        int worker,
+        int workers) =>
+        ((int)((long)pixelCount * worker / workers),
+            (int)((long)pixelCount * (worker + 1) / workers));
 
     private static void ValidateMatrix(double[,] matrix)
     {

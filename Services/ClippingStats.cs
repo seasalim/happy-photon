@@ -134,27 +134,45 @@ internal static class ClippingStatsCalculator
         long clipped = 0;
         var matrix = RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb;
         var threshold = RawNearClipThreshold / (double)ushort.MaxValue;
-        for (var i = 0; i < samples.Length; i += 3)
+        var workers = WorkerCount(pixels);
+        Parallel.For(0, workers, worker =>
         {
-            var red = samples[i] / (double)ushort.MaxValue;
-            var green = samples[i + 1] / (double)ushort.MaxValue;
-            var blue = samples[i + 2] / (double)ushort.MaxValue;
-            var displayRed = matrix[0, 0] * red +
-                matrix[0, 1] * green + matrix[0, 2] * blue;
-            var displayGreen = matrix[1, 0] * red +
-                matrix[1, 1] * green + matrix[1, 2] * blue;
-            var displayBlue = matrix[2, 0] * red +
-                matrix[2, 1] * green + matrix[2, 2] * blue;
-            if (displayRed >= threshold ||
-                displayGreen >= threshold ||
-                displayBlue >= threshold)
+            var (start, end) = ChunkRange(pixels, worker, workers);
+            long localClipped = 0;
+            for (var pixel = start; pixel < end; pixel++)
             {
-                clipped++;
+                var i = pixel * 3;
+                var red = samples[i] / (double)ushort.MaxValue;
+                var green = samples[i + 1] / (double)ushort.MaxValue;
+                var blue = samples[i + 2] / (double)ushort.MaxValue;
+                var displayRed = matrix[0, 0] * red +
+                    matrix[0, 1] * green + matrix[0, 2] * blue;
+                var displayGreen = matrix[1, 0] * red +
+                    matrix[1, 1] * green + matrix[1, 2] * blue;
+                var displayBlue = matrix[2, 0] * red +
+                    matrix[2, 1] * green + matrix[2, 2] * blue;
+                if (displayRed >= threshold ||
+                    displayGreen >= threshold ||
+                    displayBlue >= threshold)
+                {
+                    localClipped++;
+                }
             }
-        }
+            Interlocked.Add(ref clipped, localClipped);
+        });
 
         return pixels == 0 ? 0d : (double)clipped / pixels;
     }
+
+    private static int WorkerCount(int pixelCount) =>
+        Math.Min(Environment.ProcessorCount, Math.Max(1, pixelCount / 8192));
+
+    private static (int Start, int End) ChunkRange(
+        int pixelCount,
+        int worker,
+        int workers) =>
+        ((int)((long)pixelCount * worker / workers),
+            (int)((long)pixelCount * (worker + 1) / workers));
 
     public static ClippingAnalysis Analyze(
         MagickImage image,
@@ -180,46 +198,63 @@ internal static class ClippingStatsCalculator
         long lowR = 0, lowG = 0, lowB = 0;
         long highAny = 0, lowAll = 0;
 
-        for (var pixel = 0; pixel < pixels; pixel++)
+        var workers = WorkerCount(pixels);
+        Parallel.For(0, workers, worker =>
         {
-            var sample = pixel * 3;
-            var r = samples[sample];
-            var g = samples[sample + 1];
-            var b = samples[sample + 2];
-            var rHigh = sceneHighlights == null && r >= HighThreshold;
-            var gHigh = sceneHighlights == null && g >= HighThreshold;
-            var bHigh = sceneHighlights == null && b >= HighThreshold;
-            var anyHigh = sceneHighlights == null
-                ? rHigh || gHigh || bHigh
-                : IsSceneHigh(sceneHighlights, pixel, image.Width, image.Height);
-            var rLow = r <= LowThreshold;
-            var gLow = g <= LowThreshold;
-            var bLow = b <= LowThreshold;
-
-            if (rHigh) highR++;
-            if (gHigh) highG++;
-            if (bHigh) highB++;
-            if (rLow) lowR++;
-            if (gLow) lowG++;
-            if (bLow) lowB++;
-
-            if (anyHigh)
+            var (start, end) = ChunkRange(pixels, worker, workers);
+            long localHighR = 0, localHighG = 0, localHighB = 0;
+            long localLowR = 0, localLowG = 0, localLowB = 0;
+            long localHighAny = 0, localLowAll = 0;
+            for (var pixel = start; pixel < end; pixel++)
             {
-                highAny++;
-                if (overlaySides.HasFlag(ClippingOverlaySide.SceneHighlights))
+                var sample = pixel * 3;
+                var r = samples[sample];
+                var g = samples[sample + 1];
+                var b = samples[sample + 2];
+                var rHigh = sceneHighlights == null && r >= HighThreshold;
+                var gHigh = sceneHighlights == null && g >= HighThreshold;
+                var bHigh = sceneHighlights == null && b >= HighThreshold;
+                var anyHigh = sceneHighlights == null
+                    ? rHigh || gHigh || bHigh
+                    : IsSceneHigh(
+                        sceneHighlights, pixel, image.Width, image.Height);
+                var rLow = r <= LowThreshold;
+                var gLow = g <= LowThreshold;
+                var bLow = b <= LowThreshold;
+
+                if (rHigh) localHighR++;
+                if (gHigh) localHighG++;
+                if (bHigh) localHighB++;
+                if (rLow) localLowR++;
+                if (gLow) localLowG++;
+                if (bLow) localLowB++;
+
+                if (anyHigh)
                 {
-                    SetOverlayPixel(overlay, pixel, Quantum.Max, 0, 0);
+                    localHighAny++;
+                    if (overlaySides.HasFlag(ClippingOverlaySide.SceneHighlights))
+                    {
+                        SetOverlayPixel(overlay, pixel, Quantum.Max, 0, 0);
+                    }
+                }
+                else if (rLow && gLow && bLow)
+                {
+                    localLowAll++;
+                    if (overlaySides.HasFlag(ClippingOverlaySide.DisplayFloor))
+                    {
+                        SetOverlayPixel(overlay, pixel, 0, 0, Quantum.Max);
+                    }
                 }
             }
-            else if (rLow && gLow && bLow)
-            {
-                lowAll++;
-                if (overlaySides.HasFlag(ClippingOverlaySide.DisplayFloor))
-                {
-                    SetOverlayPixel(overlay, pixel, 0, 0, Quantum.Max);
-                }
-            }
-        }
+            Interlocked.Add(ref highR, localHighR);
+            Interlocked.Add(ref highG, localHighG);
+            Interlocked.Add(ref highB, localHighB);
+            Interlocked.Add(ref lowR, localLowR);
+            Interlocked.Add(ref lowG, localLowG);
+            Interlocked.Add(ref lowB, localLowB);
+            Interlocked.Add(ref highAny, localHighAny);
+            Interlocked.Add(ref lowAll, localLowAll);
+        });
 
         var divisor = (double)pixels;
         var stats = new ClippingStats(
@@ -261,27 +296,38 @@ internal static class ClippingStatsCalculator
         var mask = createMask ? new bool[pixels] : null;
         long highR = 0, highG = 0, highB = 0, highAny = 0;
         var gain = Math.Pow(2, exposureEv);
-        for (var pixel = 0; pixel < pixels; pixel++)
+        var workers = WorkerCount(pixels);
+        Parallel.For(0, workers, worker =>
         {
-            var offset = pixel * 3;
-            var red = samples[offset] / (double)ushort.MaxValue;
-            var green = samples[offset + 1] / (double)ushort.MaxValue;
-            var blue = samples[offset + 2] / (double)ushort.MaxValue;
-            var rHigh = gain * Transform(
-                whiteBalanceMatrix, 0, red, green, blue) >= 1;
-            var gHigh = gain * Transform(
-                whiteBalanceMatrix, 1, red, green, blue) >= 1;
-            var bHigh = gain * Transform(
-                whiteBalanceMatrix, 2, red, green, blue) >= 1;
-            if (rHigh) highR++;
-            if (gHigh) highG++;
-            if (bHigh) highB++;
-            if (rHigh || gHigh || bHigh)
+            var (start, end) = ChunkRange(pixels, worker, workers);
+            long localHighR = 0, localHighG = 0, localHighB = 0;
+            long localHighAny = 0;
+            for (var pixel = start; pixel < end; pixel++)
             {
-                highAny++;
-                if (mask != null) mask[pixel] = true;
+                var offset = pixel * 3;
+                var red = samples[offset] / (double)ushort.MaxValue;
+                var green = samples[offset + 1] / (double)ushort.MaxValue;
+                var blue = samples[offset + 2] / (double)ushort.MaxValue;
+                var rHigh = gain * Transform(
+                    whiteBalanceMatrix, 0, red, green, blue) >= 1;
+                var gHigh = gain * Transform(
+                    whiteBalanceMatrix, 1, red, green, blue) >= 1;
+                var bHigh = gain * Transform(
+                    whiteBalanceMatrix, 2, red, green, blue) >= 1;
+                if (rHigh) localHighR++;
+                if (gHigh) localHighG++;
+                if (bHigh) localHighB++;
+                if (rHigh || gHigh || bHigh)
+                {
+                    localHighAny++;
+                    if (mask != null) mask[pixel] = true;
+                }
             }
-        }
+            Interlocked.Add(ref highR, localHighR);
+            Interlocked.Add(ref highG, localHighG);
+            Interlocked.Add(ref highB, localHighB);
+            Interlocked.Add(ref highAny, localHighAny);
+        });
 
         var divisor = Math.Max(1, pixels);
         return new SceneHighlightAnalysis(

@@ -214,6 +214,89 @@ public sealed class ClippingStatsTests
             new RenderOptions(true, false)));
     }
 
+    [Fact]
+    public void ParallelAnalyses_MatchSequentialReferenceAcrossChunkBoundaries()
+    {
+        // 16,471 pixels: two unequal chunks in every parallelized analysis
+        // loop, prime so no worker count divides it evenly. The reference
+        // counts below re-derive the pinned thresholds sequentially.
+        const int pixels = 16471;
+        var random = new Random(271);
+        var samples = new ushort[pixels * 3];
+        for (var index = 0; index < samples.Length; index++)
+        {
+            samples[index] = checked((ushort)random.Next(0, 65536));
+        }
+
+        long highR = 0, highG = 0, highB = 0;
+        long lowR = 0, lowG = 0, lowB = 0;
+        long highAny = 0, lowAll = 0;
+        for (var pixel = 0; pixel < pixels; pixel++)
+        {
+            var offset = pixel * 3;
+            var rHigh = samples[offset] >= 65407;
+            var gHigh = samples[offset + 1] >= 65407;
+            var bHigh = samples[offset + 2] >= 65407;
+            var rLow = samples[offset] <= 128;
+            var gLow = samples[offset + 1] <= 128;
+            var bLow = samples[offset + 2] <= 128;
+            if (rHigh) highR++;
+            if (gHigh) highG++;
+            if (bHigh) highB++;
+            if (rLow) lowR++;
+            if (gLow) lowG++;
+            if (bLow) lowB++;
+            if (rHigh || gHigh || bHigh) highAny++;
+            else if (rLow && gLow && bLow) lowAll++;
+        }
+
+        using var image = CreateImage(samples);
+        var result = ClippingStatsCalculator.Analyze(
+            image,
+            rawNearClip: 0,
+            createOverlay: false);
+
+        Assert.Equal(
+            new ChannelClip(
+                highR / (double)pixels,
+                highG / (double)pixels,
+                highB / (double)pixels),
+            result.Stats.High);
+        Assert.Equal(
+            new ChannelClip(
+                lowR / (double)pixels,
+                lowG / (double)pixels,
+                lowB / (double)pixels),
+            result.Stats.Low);
+        Assert.Equal(highAny / (double)pixels, result.Stats.HighAny);
+        Assert.Equal(lowAll / (double)pixels, result.Stats.LowAll);
+
+        using var raw = RenderPipelineTestSupport.CreateBase(
+            samples,
+            isRaw: true);
+        long nearClip = 0;
+        var matrix = RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb;
+        var threshold = 64880 / (double)ushort.MaxValue;
+        for (var pixel = 0; pixel < pixels; pixel++)
+        {
+            var offset = pixel * 3;
+            var red = samples[offset] / (double)ushort.MaxValue;
+            var green = samples[offset + 1] / (double)ushort.MaxValue;
+            var blue = samples[offset + 2] / (double)ushort.MaxValue;
+            var clipped = false;
+            for (var row = 0; row < 3 && !clipped; row++)
+            {
+                clipped = matrix[row, 0] * red + matrix[row, 1] * green +
+                    matrix[row, 2] * blue >= threshold;
+            }
+            if (clipped) nearClip++;
+        }
+
+        Assert.Equal(
+            nearClip / (double)pixels,
+            ClippingStatsCalculator.CalculateRawNearClip(raw));
+    }
+
     private static MagickImage CreateImage(ushort[] samples)
     {
         var settings = new PixelReadSettings(

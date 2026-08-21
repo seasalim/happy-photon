@@ -3,16 +3,19 @@ namespace HappyPhoton.Services;
 internal readonly record struct RenderExecutionOptions(
     CancellationToken CancellationToken,
     int MaxDegreeOfParallelism,
-    Action<string>? StageStarted)
+    Action<string>? StageStarted,
+    Action? CancellationObserved = null)
 {
     internal static RenderExecutionOptions Resting(
         CancellationToken cancellationToken,
         int maxDegreeOfParallelism = 2,
-        Action<string>? stageStarted = null) =>
+        Action<string>? stageStarted = null,
+        Action? cancellationObserved = null) =>
         new(
             cancellationToken,
             Math.Max(1, maxDegreeOfParallelism),
-            stageStarted);
+            stageStarted,
+            cancellationObserved);
 
     internal ParallelOptions ParallelOptions => new()
     {
@@ -23,8 +26,11 @@ internal readonly record struct RenderExecutionOptions(
     internal int CapWorkers(int workers) =>
         Math.Min(Math.Max(1, workers), MaxDegreeOfParallelism);
 
-    internal void ThrowIfCancellationRequested() =>
+    internal void ThrowIfCancellationRequested()
+    {
+        CancellationObserved?.Invoke();
         CancellationToken.ThrowIfCancellationRequested();
+    }
 
     internal void ReportStage(string stage) => StageStarted?.Invoke(stage);
 }

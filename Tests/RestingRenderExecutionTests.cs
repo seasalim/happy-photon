@@ -1,5 +1,6 @@
 using HappyPhoton.Models;
 using HappyPhoton.Services;
+using ImageMagick;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -141,6 +142,45 @@ public sealed class RestingRenderExecutionTests
             new RenderPipeline().RenderResting(request, execution));
     }
 
+    [Fact]
+    public void RestingToneLoop_ObservesCancellationBetweenChunkPixels()
+    {
+        // Two chunks at worker cap 1; the third cancellation observation is
+        // the in-loop periodic check at pixel 0 (the first two are the method
+        // entry and post-GetArea checks). Canceling there makes a later
+        // periodic check throw mid-loop, proving the loop does not run to
+        // completion once the token trips.
+        const int width = 181;
+        const int height = 91;
+        using var image = new MagickImage(
+            MagickColors.Gray,
+            width,
+            height);
+        var lut = new double[ToneLut.Length];
+        for (var index = 0; index < lut.Length; index++)
+        {
+            lut[index] = index / (double)(ToneLut.Length - 1);
+        }
+        using var cancellation = new CancellationTokenSource();
+        var observed = 0;
+        var execution = RenderExecutionOptions.Resting(
+            cancellation.Token,
+            maxDegreeOfParallelism: 1,
+            cancellationObserved: () =>
+            {
+                if (Interlocked.Increment(ref observed) == 3)
+                {
+                    cancellation.Cancel();
+                }
+            });
+
+        Assert.ThrowsAny<OperationCanceledException>(() =>
+        {
+            ToneLutApplicator.ApplyResting(image, lut, execution);
+        });
+        Assert.True(observed >= 3);
+    }
+
     private static CurveData CreateCurve(double x, double y)
     {
         var curve = new CurveData();
@@ -161,8 +201,11 @@ public sealed class RestingRenderExecutionTests
         bool isRaw,
         DcpHueSatMap? hueSatMap = null)
     {
-        const int width = 64;
-        const int height = 48;
+        // 16,471 pixels: above the 8,192-pixel chunk threshold so the chunked
+        // per-pixel loops split into two unequal ranges, and prime so no
+        // worker count divides it evenly.
+        const int width = 181;
+        const int height = 91;
         var random = new Random(159);
         var samples = new ushort[width * height * 3];
         for (var index = 0; index < samples.Length; index++)

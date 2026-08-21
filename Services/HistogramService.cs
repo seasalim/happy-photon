@@ -25,7 +25,14 @@ public class HistogramService
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(histogram);
-        using var histogramImage = CreateHistogramImage(image);
+        // Only clone when a downscale is required; reads never mutate the
+        // source, so small frames are sampled in place.
+        using var resized =
+            image.Width > (uint)HistogramMaxDimension ||
+            image.Height > (uint)HistogramMaxDimension
+                ? CreateHistogramImage(image)
+                : null;
+        var histogramImage = resized ?? image;
         using var pixels = histogramImage.GetPixelsUnsafe();
         var data = pixels.ToShortArray(PixelMapping.RGB);
 
@@ -105,11 +112,6 @@ public class HistogramService
 
     private static MagickImage CreateHistogramImage(MagickImage source)
     {
-        if (source.Width <= (uint)HistogramMaxDimension && source.Height <= (uint)HistogramMaxDimension)
-        {
-            return new MagickImage(source);
-        }
-
         var clone = new MagickImage(source);
         BitmapConversionService.ResizeToMaxDimension(clone, HistogramMaxDimension);
         return clone;
