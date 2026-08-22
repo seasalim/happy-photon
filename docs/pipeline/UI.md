@@ -82,7 +82,8 @@ as one outcome without source access. The first accepted decode outcome confirms
 corrects source facts and publishes the fresh bitmap, display scopes, clipping,
 measured as-shot anchor, and sensor histogram together. A stale-base interim paint may
 update bitmap and display scopes only; it clears clipping and cannot replace
-decode-derived facts.
+decode-derived facts. A failed load outcome contributes failure status only: it paints
+nothing and preserves the surface, scopes, and clipping already on screen.
 
 Recovery is a compact, exclusive Clip/Blend control directly below Highlights, enabled
 only for RAW sources — provisionally from `ImageFile.IsRaw`, then from the loaded base

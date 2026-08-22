@@ -57,7 +57,9 @@ public partial class MainWindowViewModel
         }
         else
         {
-            ApplyPreviewClipping(null, null);
+            // A failure paints nothing, so the clipping on screen still
+            // describes the painted surface (possibly a settings-matched
+            // cached preview) — preserve it, exactly like the histogram.
             _previewSourceFailure =
                 outcome.Failure == BaseImageLoadFailure.SourceUnavailable;
             if (outcome.Image!.IsRaw &&

@@ -203,6 +203,11 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
         var vm = CreateViewModel(catalog, loader, availability);
         var renderCount = 0;
         var sourceSettled = NewSignal();
+        var releaseSource = NewSignal();
+        // Hold the source path until the cached scopes are painted, so the
+        // availability-failure outcome always lands on top of them — the
+        // schedule that once wiped the cached clipping.
+        vm.ImageService.Previews.SourceWorkGateAsync = () => releaseSource.Task;
         vm.ImageService.Previews.RenderStarted += () => renderCount++;
         vm.ImageService.Previews.PreviewLoadCompleted += (_, outcome) =>
         {
@@ -217,6 +222,7 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
             vm.SelectedImage = image;
             await TestWaits.UntilAsync(() => IsRed(vm.PreviewImage));
             await TestWaits.UntilAsync(() => image.SourceRequiresHydration);
+            releaseSource.TrySetResult();
             await sourceSettled.Task.WaitAsync(TestWaits.Condition);
             await Dispatcher.UIThread.InvokeAsync(() => { });
 
@@ -226,6 +232,7 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
         }
         finally
         {
+            releaseSource.TrySetResult();
             await vm.DisposeAsync();
         }
     }
