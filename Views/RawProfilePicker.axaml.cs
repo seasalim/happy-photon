@@ -48,7 +48,7 @@ public partial class RawProfilePicker : UserControl
         MainWindowViewModel viewModel)
     {
         _restoringSelection = true;
-        comboBox.SelectedItem = viewModel.SelectedRawProfileOption;
+        comboBox.SelectedItem = viewModel.RawProfilePickerState.SelectedOption;
         _restoringSelection = false;
     }
 

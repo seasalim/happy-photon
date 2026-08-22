@@ -34,13 +34,14 @@ public partial class MainWindowViewModel
             return false;
         }
 
+        var replacedProfile = image.EditSettings.RawProfile;
         image.EditSettings = previousSettings.Clone();
         image.HasEdits = image.EditSettings.HasEdits;
         _isLoadingImage = true;
         try
         {
             LoadSlidersFrom(image.EditSettings);
-            SyncRawProfilePickerSelection(image.EditSettings.RawProfile);
+            ResyncRawProfilePickerAfterRollback(image, replacedProfile);
         }
         finally
         {

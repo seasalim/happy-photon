@@ -225,7 +225,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                     ? rendered.Clipping
                     : null,
                 baseImage.Info.IsRawSource,
-                DcpProfileState.From(baseImage.Info),
+                DcpProfileState.From(baseImage.Info, settings.RawProfile),
                 clippingMask);
         }
         catch

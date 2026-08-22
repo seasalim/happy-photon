@@ -36,13 +36,13 @@
                    Margin="0,2,0,8"/>
         <Grid Classes="raw-profile-row"
               ColumnDefinitions="*,Auto"
-              IsEnabled="{Binding IsRawProfilePickerVisible}"
+              IsEnabled="{Binding RawProfilePickerState.IsVisible}"
               Margin="0,0,0,2">
             <ComboBox x:Name="RawProfileComboBox"
                       Grid.Column="0"
                       Classes="edit-dropdown"
-                      ItemsSource="{Binding RawProfileOptions}"
-                      SelectedItem="{Binding SelectedRawProfileOption, Mode=OneWay}"
+                      ItemsSource="{Binding RawProfilePickerState.Options}"
+                      SelectedItem="{Binding RawProfilePickerState.SelectedOption, Mode=OneWay}"
                       SelectionChanged="OnSelectionChanged"
                       DropDownOpened="OnDropDownOpened"
                       HorizontalAlignment="Stretch"
@@ -100,7 +100,7 @@
             </Border>
         </Grid>
         <TextBlock Classes="profile-source-line"
-                   Text="{Binding RawProfileStatusMessage}"
+                   Text="{Binding RawProfilePickerState.StatusMessage}"
                    TextWrapping="Wrap"
                    Margin="0,0,0,8"/>
     </StackPanel>

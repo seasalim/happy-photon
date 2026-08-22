@@ -47,8 +47,7 @@ public partial class MainWindowViewModel
         _isLoadingImage = false;
 
         EditSettingsTransfer.ApplySubset(state, SelectedImage.EditSettings);
-        SelectedImage.EditSettings.RawProfile = state.RawProfile?.Clone();
-        SyncRawProfilePickerSelection(SelectedImage.EditSettings.RawProfile);
+        WriteRawProfileSelection(SelectedImage, state.RawProfile);
         SelectedImage.EditSettings.AppliedPresetId = ActivePresetId;
         LoadCurrentCurveFrom(SelectedImage.EditSettings);
         SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
@@ -109,11 +108,9 @@ public partial class MainWindowViewModel
         SelectedImage.EditSettings.CurveGreen = null;
         SelectedImage.EditSettings.CurveBlue = null;
         SelectedImage.EditSettings.AppliedPresetId = null;
-        if (!preserveProfile)
-        {
-            SelectedImage.EditSettings.RawProfile = null;
-            SyncRawProfilePickerSelection(null);
-        }
+        WriteRawProfileSelection(
+            SelectedImage,
+            preserveProfile ? SelectedImage.EditSettings.RawProfile : null);
         // Note: Rotation, horizon rotation, and crop are preserved (geometric transforms)
         SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
 

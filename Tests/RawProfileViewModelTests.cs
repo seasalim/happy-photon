@@ -51,7 +51,7 @@ public sealed class RawProfileViewModelTests : IDisposable
         Assert.Equal(second.Selection?.ContentHash,
             image.EditSettings.RawProfile?.ContentHash);
         Assert.Equal(second.Selection?.ContentHash,
-            vm.SelectedRawProfileOption?.Selection?.ContentHash);
+            vm.RawProfilePickerState.SelectedOption?.Selection?.ContentHash);
     }
 
     [Fact]
@@ -72,9 +72,11 @@ public sealed class RawProfileViewModelTests : IDisposable
         AssertBuiltInAnchor(vm);
         await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
         AssertBuiltInAnchor(vm);
-        Assert.Contains(vm.RawProfileOptions, option =>
+        Assert.Contains(vm.RawProfilePickerState.Options, option =>
             option.IsGroupHeader && option.Label == "BUILT-IN");
-        Assert.Contains(vm.RawProfileOptions, option => option.IsChooseFile);
+        Assert.Contains(
+            vm.RawProfilePickerState.Options,
+            option => option.IsChooseFile);
     }
 
     [Fact]
@@ -90,15 +92,17 @@ public sealed class RawProfileViewModelTests : IDisposable
             "chosen.dcp");
 
         await vm.AddRawProfileFileAsync(profilePath);
-        Assert.Equal("Chosen profile", vm.SelectedRawProfileOption?.Label);
+        Assert.Equal(
+            "Chosen profile",
+            vm.RawProfilePickerState.SelectedOption?.Label);
 
         File.Delete(profilePath);
         await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
 
         Assert.Equal(
             "THE SELECTED CAMERA PROFILE IS MISSING.",
-            vm.RawProfileStatusMessage);
-        Assert.False(vm.SelectedRawProfileOption?.CanSelect);
+            vm.RawProfilePickerState.StatusMessage);
+        Assert.False(vm.RawProfilePickerState.SelectedOption?.CanSelect);
         AssertBuiltInPresent(vm);
     }
 
@@ -125,9 +129,9 @@ public sealed class RawProfileViewModelTests : IDisposable
         await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
         Assert.Equal(
             "The selected camera profile has changed on disk.",
-            vm.SelectedRawProfileOption?.Status);
-        Assert.False(vm.SelectedRawProfileOption?.CanSelect);
-        var rejection = vm.SelectedRawProfileOption?.Status;
+            vm.RawProfilePickerState.SelectedOption?.Status);
+        Assert.False(vm.RawProfilePickerState.SelectedOption?.CanSelect);
+        var rejection = vm.RawProfilePickerState.SelectedOption?.Status;
 
         vm.ApplyRawProfileState(
             image,
@@ -137,13 +141,15 @@ public sealed class RawProfileViewModelTests : IDisposable
                 DcpProfileErrorCode.HashMismatch,
                 "The selected camera profile has changed on disk.",
                 null,
-                new CameraIdentity("Canon", "EOS 6D")));
-        await TestWaits.UntilAsync(() => !vm.IsRawProfileLoading);
+                new CameraIdentity("Canon", "EOS 6D"),
+                selection));
+        await TestWaits.UntilAsync(() =>
+            !vm.RawProfilePickerState.IsLoading);
 
-        Assert.Equal(rejection, vm.SelectedRawProfileOption?.Status);
-        Assert.False(vm.SelectedRawProfileOption?.CanSelect);
+        Assert.Equal(rejection, vm.RawProfilePickerState.SelectedOption?.Status);
+        Assert.False(vm.RawProfilePickerState.SelectedOption?.CanSelect);
         Assert.Equal(selection.ContentHash,
-            vm.SelectedRawProfileOption?.Selection?.ContentHash);
+            vm.RawProfilePickerState.SelectedOption?.Selection?.ContentHash);
     }
 
     [Fact]
@@ -158,7 +164,7 @@ public sealed class RawProfileViewModelTests : IDisposable
         var image = new ImageFile(dngPath);
         vm.SelectedImage = image;
         await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
-        var embedded = Assert.Single(vm.RawProfileOptions, option =>
+        var embedded = Assert.Single(vm.RawProfilePickerState.Options, option =>
             option.Selection?.Source == RawProfileSource.Embedded);
 
         vm.ApplyRawProfileState(
@@ -169,10 +175,12 @@ public sealed class RawProfileViewModelTests : IDisposable
                 DcpProfileErrorCode.None,
                 null,
                 null,
-                new CameraIdentity("Canon", "EOS 6D")));
-        await TestWaits.UntilAsync(() => !vm.IsRawProfileLoading);
+                new CameraIdentity("Canon", "EOS 6D"),
+                RequestedSelection: null));
+        await TestWaits.UntilAsync(() =>
+            !vm.RawProfilePickerState.IsLoading);
 
-        var retained = Assert.Single(vm.RawProfileOptions, option =>
+        var retained = Assert.Single(vm.RawProfilePickerState.Options, option =>
             option.Selection?.Source == RawProfileSource.Embedded);
         Assert.Equal(embedded.Label, retained.Label);
         Assert.Equal(embedded.Status, retained.Status);
@@ -222,14 +230,17 @@ public sealed class RawProfileViewModelTests : IDisposable
                 DcpProfileErrorCode.None,
                 null,
                 "Render label",
-                new CameraIdentity("Canon", "EOS 6D")));
+                new CameraIdentity("Canon", "EOS 6D"),
+                selection));
         release.TrySetResult();
         await discovery;
 
         Assert.Equal(1, vm.Exposure);
-        Assert.Equal("Render label", vm.SelectedRawProfileOption?.Label);
+        Assert.Equal(
+            "Render label",
+            vm.RawProfilePickerState.SelectedOption?.Label);
         Assert.Equal(selection.ContentHash,
-            vm.SelectedRawProfileOption?.Selection?.ContentHash);
+            vm.RawProfilePickerState.SelectedOption?.Selection?.ContentHash);
     }
 
     [Fact]
@@ -308,12 +319,12 @@ public sealed class RawProfileViewModelTests : IDisposable
     {
         Assert.Equal(
             RawProfileOptionViewModel.BuiltInLabel,
-            vm.SelectedRawProfileOption?.Label);
+            vm.RawProfilePickerState.SelectedOption?.Label);
         AssertBuiltInPresent(vm);
     }
 
     private static void AssertBuiltInPresent(MainWindowViewModel vm) =>
-        Assert.Contains(vm.RawProfileOptions, option =>
+        Assert.Contains(vm.RawProfilePickerState.Options, option =>
             option.IsProfile &&
             option.Label == RawProfileOptionViewModel.BuiltInLabel);
 

@@ -193,14 +193,18 @@ internal sealed record DcpProfileState(
     DcpProfileErrorCode Status,
     string? Message,
     string? ProfileName,
-    CameraIdentity? CameraIdentity)
+    CameraIdentity? CameraIdentity,
+    RawProfileSelection? RequestedSelection = null)
 {
-    internal static DcpProfileState From(BaseImageInfo info) => new(
-        info.ProfileToken,
-        info.ProfileStatus,
-        info.ProfileMessage,
-        info.DcpProfile?.Name,
-        info.CameraIdentity);
+    internal static DcpProfileState From(
+        BaseImageInfo info,
+        RawProfileSelection? requestedSelection) => new(
+            info.ProfileToken,
+            info.ProfileStatus,
+            info.ProfileMessage,
+            info.DcpProfile?.Name,
+            info.CameraIdentity,
+            requestedSelection?.Clone());
 }
 
 public sealed class CachedPreviewBitmap : IDisposable
