@@ -90,9 +90,7 @@ public sealed record BaseImageInfo(
     int ExifOrientationApplied,
     int FullWidth,
     int FullHeight,
-    double SourceExposureBiasEv = 0,
-    // HistogramData is mutable; record equality compares this loader fact by reference.
-    HistogramData? RawHistogram = null)
+    double SourceExposureBiasEv = 0)
 {
     internal DcpProfilePayload? DcpProfile { get; init; }
     internal string ProfileToken { get; init; } = string.Empty;
@@ -118,24 +116,13 @@ public sealed class BaseImage : IDisposable
 
     public BaseImageInfo Info { get; }
 
-    internal SourceSaturationMask? SourceSaturation { get; }
-
     public BaseImage(MagickImage pixels, BaseImageInfo info)
-        : this(pixels, info, sourceSaturation: null)
-    {
-    }
-
-    internal BaseImage(
-        MagickImage pixels,
-        BaseImageInfo info,
-        SourceSaturationMask? sourceSaturation)
     {
         ArgumentNullException.ThrowIfNull(pixels);
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(info.Decode);
         _pixels = pixels;
         Info = info;
-        SourceSaturation = sourceSaturation;
     }
 
     public void Dispose()

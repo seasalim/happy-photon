@@ -1,4 +1,5 @@
 using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -14,21 +15,26 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
         $"happy-photon-cache-order-{Guid.NewGuid():N}")).FullName;
 
     [AvaloniaTheory]
-    [InlineData(true, true)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(false, false)]
+    [InlineData(true, true, true)]
+    [InlineData(true, true, false)]
+    [InlineData(true, false, true)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, true)]
+    [InlineData(false, true, false)]
+    [InlineData(false, false, true)]
+    [InlineData(false, false, false)]
     public async Task CacheAndFreshCompletionOrdersRespectSuccessfulPaintStage(
         bool cacheFirst,
-        bool freshSucceeds)
+        bool freshSucceeds,
+        bool settingsMatch)
     {
         using var catalog = new CatalogService(Path.Combine(
             _root,
-            $"{cacheFirst}-{freshSucceeds}"));
+            $"{cacheFirst}-{freshSucceeds}-{settingsMatch}"));
         await catalog.InitializeAsync();
         var path = Path.Combine(
             _root,
-            $"source-{cacheFirst}-{freshSucceeds}.jpg");
+            $"source-{cacheFirst}-{freshSucceeds}-{settingsMatch}.jpg");
         using (var source = new MagickImage(MagickColors.Gray, 64, 48))
         {
             source.Write(path);
@@ -36,6 +42,10 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
         var image = new ImageFile(path);
         await image.EnsureCatalogIdAsync(catalog);
         await SeedCacheAsync(catalog, image);
+        if (!settingsMatch)
+        {
+            image.EditSettings = new EditSettings { Exposure = 1 };
+        }
         var loader = new GatedLoader(freshSucceeds);
         var vm = CreateViewModel(catalog, loader);
         var releaseCache = NewSignal();
@@ -56,7 +66,7 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
             if (cacheFirst)
             {
                 await TestWaits.UntilAsync(() => IsRed(vm.PreviewImage));
-                Assert.Null(vm.Histogram);
+                AssertCachedScopes(vm, settingsMatch);
                 releaseRender.TrySetResult();
                 if (freshSucceeds)
                 {
@@ -67,7 +77,7 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
                 {
                     await loader.Completed.Task.WaitAsync(TestWaits.Condition);
                     Assert.True(IsRed(vm.PreviewImage));
-                    Assert.Null(vm.Histogram);
+                    AssertCachedScopes(vm, settingsMatch);
                 }
             }
             else
@@ -93,7 +103,7 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
                 else
                 {
                     await TestWaits.UntilAsync(() => IsRed(vm.PreviewImage));
-                    Assert.Null(vm.Histogram);
+                    AssertCachedScopes(vm, settingsMatch);
                 }
             }
         }
@@ -101,6 +111,121 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
         {
             releaseCache.TrySetResult();
             releaseRender.TrySetResult();
+            await vm.DisposeAsync();
+        }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MatchingCachePublishesScopesBeforeAnySourceWork(
+        bool embeddedProfile)
+    {
+        using var catalog = new CatalogService(Path.Combine(
+            _root,
+            $"source-gate-{embeddedProfile}"));
+        await catalog.InitializeAsync();
+        var path = Path.Combine(
+            _root,
+            embeddedProfile ? "source-gate.dng" : "source-gate.jpg");
+        using (var source = new MagickImage(MagickColors.Gray, 64, 48))
+        {
+            source.Write(path, MagickFormat.Jpeg);
+        }
+        var image = new ImageFile(path);
+        if (embeddedProfile)
+        {
+            image.EditSettings = new EditSettings
+            {
+                RawProfile = new RawProfileSelection
+                {
+                    Source = RawProfileSource.Embedded,
+                    ContentHash = new string('a', 64)
+                }
+            };
+        }
+        await image.EnsureCatalogIdAsync(catalog);
+        await SeedCacheAsync(catalog, image);
+        var loader = new CountingLoader();
+        var availability = new TestSourceAvailabilityService(
+            SourceAvailability.AvailableLocally);
+        var vm = CreateViewModel(catalog, loader, availability);
+        var releaseSource = NewSignal();
+        var renderCount = 0;
+        vm.ImageService.Previews.SourceWorkGateAsync = () => releaseSource.Task;
+        vm.ImageService.Previews.RenderStarted += () => renderCount++;
+
+        try
+        {
+            vm.SelectedImage = image;
+            await TestWaits.UntilAsync(() => IsRed(vm.PreviewImage));
+
+            AssertCachedScopes(vm, settingsMatch: true);
+            Assert.Equal(0, loader.LoadCount);
+            Assert.Equal(0, renderCount);
+            Assert.Equal(1, availability.CallCount);
+        }
+        finally
+        {
+            releaseSource.TrySetResult();
+            await vm.DisposeAsync();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task CloudAvailabilityTransitionKeepsMatchingCachedScopes()
+    {
+        using var catalog = new CatalogService(Path.Combine(_root, "cloud"));
+        await catalog.InitializeAsync();
+        var path = Path.Combine(_root, "cloud.dng");
+        using (var source = new MagickImage(MagickColors.Gray, 64, 48))
+        {
+            source.Write(path, MagickFormat.Jpeg);
+        }
+        var image = new ImageFile(
+            path,
+            SourceAvailability.AvailableLocally)
+        {
+            EditSettings = new EditSettings
+            {
+                RawProfile = new RawProfileSelection
+                {
+                    Source = RawProfileSource.Embedded,
+                    ContentHash = new string('b', 64)
+                }
+            }
+        };
+        await image.EnsureCatalogIdAsync(catalog);
+        await SeedCacheAsync(catalog, image);
+        var loader = new CountingLoader();
+        var availability = new TestSourceAvailabilityService(
+            SourceAvailability.RequiresHydration);
+        var vm = CreateViewModel(catalog, loader, availability);
+        var renderCount = 0;
+        var sourceSettled = NewSignal();
+        vm.ImageService.Previews.RenderStarted += () => renderCount++;
+        vm.ImageService.Previews.PreviewLoadCompleted += (_, outcome) =>
+        {
+            if (!outcome.Succeeded)
+            {
+                sourceSettled.TrySetResult();
+            }
+        };
+
+        try
+        {
+            vm.SelectedImage = image;
+            await TestWaits.UntilAsync(() => IsRed(vm.PreviewImage));
+            await TestWaits.UntilAsync(() => image.SourceRequiresHydration);
+            await sourceSettled.Task.WaitAsync(TestWaits.Condition);
+            await Dispatcher.UIThread.InvokeAsync(() => { });
+
+            AssertCachedScopes(vm, settingsMatch: true);
+            Assert.Equal(0, loader.LoadCount);
+            Assert.Equal(0, renderCount);
+        }
+        finally
+        {
             await vm.DisposeAsync();
         }
     }
@@ -164,6 +289,23 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
     private static bool IsBlue(Avalonia.Media.Imaging.Bitmap? bitmap) =>
         DominantChannel(bitmap) < 0;
 
+    private static void AssertCachedScopes(
+        MainWindowViewModel vm,
+        bool settingsMatch)
+    {
+        if (!settingsMatch)
+        {
+            Assert.Null(vm.Histogram);
+            Assert.Null(vm.DisplayClippingStats);
+            return;
+        }
+
+        Assert.NotNull(vm.Histogram);
+        Assert.NotNull(vm.Histogram!.Waveform);
+        Assert.NotNull(vm.DisplayClippingStats);
+        Assert.False(vm.DisplayClippingStats!.IsHighAvailable);
+    }
+
     private static int DominantChannel(Avalonia.Media.Imaging.Bitmap? bitmap)
     {
         if (bitmap == null)
@@ -176,13 +318,15 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
 
     private static MainWindowViewModel CreateViewModel(
         CatalogService catalog,
-        IBaseImageLoader loader) =>
+        IBaseImageLoader loader,
+        ISourceAvailabilityService? availability = null) =>
         new(
             catalog,
             loader,
             loadMetadataAsync: _ => Task.CompletedTask,
-            availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally))
+            availabilityService: availability ??
+                new TestSourceAvailabilityService(
+                    SourceAvailability.AvailableLocally))
         {
             IsDevelopMode = true
         };
@@ -234,6 +378,43 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
             BaseImageLoadOutcome.FromImage(
                 LoadPreviewBase(file, decode, cancellationToken),
                 BaseImageLoadFailure.DecodeFailed);
+
+        public BaseImage? LoadFullBase(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class CountingLoader : IBaseImageLoader
+    {
+        private int _loadCount;
+
+        public int LoadCount => Volatile.Read(ref _loadCount);
+        public bool CanLoad(ImageFile file) => true;
+
+        public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
+            ImageFile file,
+            BaseDecodeSettings decode,
+            CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref _loadCount);
+            return BaseImageLoadOutcome.Loaded(new BaseImage(
+                new MagickImage(MagickColors.Blue, 64, 48),
+                new BaseImageInfo(
+                    BaseSourceKind.Standard,
+                    false,
+                    decode,
+                    null,
+                    null,
+                    6504,
+                    0,
+                    false,
+                    null,
+                    1,
+                    64,
+                    48)));
+        }
 
         public BaseImage? LoadFullBase(
             ImageFile file,

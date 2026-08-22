@@ -111,8 +111,8 @@ camera→working-space fact. `RawWorkingSpaceTests` pins the semantics against t
 separately exposed camera-from-XYZ fact: row-normalize
 `camera_from_xyz · (sRGB→XYZ)`, then invert it to reproduce `camera_to_srgb`.
 
-At the same seam, after camera-fact copying and before `ConfigureOutput`/`Process`,
-`RawSensorFrame` combines the typed bridge sensor identity with a zero-copy
+For preview loads at the same seam, after camera-fact copying and before
+`ConfigureOutput`/`Process`, `RawSensorFrame` combines the typed bridge sensor identity with a zero-copy
 `BorrowMosaic` lease, always released before `Process` (a held lease intentionally
 makes native process/recycle calls reject). `RawSensorHistogram` then scans the
 visible photosites once, synchronously on the decode call and token, producing both
@@ -121,14 +121,15 @@ with the exact same `value >= maximum` predicate. Rows are chunked
 across parallel workers whose per-worker bins merge into order-independent integer
 sums, so the histogram is bit-identical for any worker count. Cancellation is checked
 every 256 visible rows and immediately before processing. Cancellation escapes the
-loader; any other sampling/access fault is logged once and leaves a valid decoded base
-with a null RAW fact and no source-saturation capability. Only integer CFA mosaics described by Bayer `filters > 1000` or
+loader; any other sampling/access fault is logged once and leaves a valid decoded pair
+with empty source analysis. Only integer CFA mosaics described by Bayer `filters > 1000` or
 the 36-byte X-Trans table (`filters == 9`) qualify; anything else — no-CFA, Leaf and
 other filter tables, invalid geometry/levels, bridge-unavailable mosaics — returns no
 RAW histogram. There is no second decode, source reread, or processed-RGB substitute.
 The mask maps the visible sensor window by ratio to the oriented decoded dimensions
-with OR reduction, then each preview base carries its own aligned size; full/export
-bases skip the spatial artifact.
+with OR reduction. The histogram and interactive-size mask travel together in the
+immutable `PreviewSourceAnalysis` installed beside the pair; full/export loads skip
+the entire sampling pass.
 
 ### 2.1 RAW Library previews
 
@@ -254,9 +255,9 @@ a one-sample difference (consequences in TESTING.md §3).
    so normalized samples are already linear. Retag them as `ColorSpace.RGB` without a
    second transfer conversion, then ensure `Depth = 16`.
 6. Preview pair: from the single color-normalized decoded buffer, independently resize
-   interactive to 1600 and large to at most 3200. The source-saturation mask is attached
-   only to the interactive base because large-base renders do not compute stats or masks;
-   it must be re-attached if those renders ever do. JPEG's existing 3200 DCT size hint is
+   interactive to 1600 and large to at most 3200. The interactive-size source-saturation
+   mask is returned in `PreviewSourceAnalysis` beside the pair because large-base
+   renders do not compute stats or masks. JPEG's existing 3200 DCT size hint is
    stable across viewport changes, so repeated resizes do not change decode identity.
 7. `AsShotKelvin = 6504, AsShotTint = 0` (D65 anchor), `CamMul = null`;
    `FullWidth/FullHeight` = the original decoded dimensions after orientation
@@ -272,9 +273,11 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
 
 ## 4. Ownership and concurrency
 
-- `PreviewBaseCoordinator` owns the current preview pair with separable leases. Base
-  identity is **(normalized file path, `BaseDecodeSettings.CacheKey`, preview-pair
-  class)**; viewport dimensions are not a decode key.
+- `PreviewBaseCoordinator` owns the current preview pair and immutable source analysis
+  with separable leases. Base identity is **(normalized file path,
+  `BaseDecodeSettings.CacheKey`, preview-pair class)**; viewport dimensions are not a
+  decode key. Each interactive lease exposes pixels and analysis installed by the same
+  generation; neither artifact is published through a side channel.
 - **Single-flight, newest-wins decodes:** at most one decode in flight per identity;
   a newer request (image switch, decode-settings change) cancels/supersedes it and
   stale results are disposed.
@@ -285,10 +288,11 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
 - **Only `BaseDecodeSettings` changes re-decode.** While a replacement decode is in
   flight, preview renders lease the held old base; the newest settings accumulate and
   completion emits one refresh using that latest state rather than a render backlog.
-- A path change retires both old bases immediately, subject only to outstanding leases.
-  A same-file decode-settings change retains the old interactive base for stale paint
-  but retires the old large base immediately; its only normal lease is cancellable
-  resting work.
+- A same-image Library/Develop round-trip retains the one current pair. Selection/path
+  change, live-availability invalidation, folder replacement, decode-identity change,
+  and shutdown retire it. A same-file decode-settings change retains the old interactive
+  base for stale paint but retires the old large base immediately; its only normal lease
+  is cancellable resting work.
 - `RenderPipeline` never mutates the held base (OVERVIEW invariant 8); it clones
   internally. A superseded base is disposed only after any in-progress render against
   it completes (generation check).
@@ -310,11 +314,12 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
   (8-bit JPEG q90, 1600px) plus a sidecar `<id>.meta` containing `settingsHash`.
   - `settingsHash` = SHA-256 of canonical-JSON `EditSettings` v2 + `RenderPipeline.Version`
     + `BaseImage.Version` + the installed profile outcome token.
-  - Develop entry: if cached hash matches current settings → paint instantly, decode base
-    in background for subsequent edits. Hash mismatch → paint it anyway as a stale
-    placeholder while generation-correlated live profile resolution, base decode, and
-    fresh render replace or confirm it (no flash of nothing). Cache paint itself never
-    opens an embedded profile or hydrates a source.
+  - Develop entry: if cached hash matches current settings → decode its one BGRA buffer
+    into the bitmap, display histogram, waveform, and display-floor clipping, then
+    publish them atomically while the base loads in the background. Hash mismatch →
+    paint it as a bitmap-only stale placeholder while generation-correlated live profile
+    resolution, base decode, and fresh render replace or confirm it (no flash of
+    nothing). Cache paint itself never opens an embedded profile or hydrates a source.
   - Existing atomic-write, bounded-channel, drop-oldest, 2 s drain rules all carry over.
   - Write policy: queue a cache write only on leaving the image (or a long debounce),
     never per slider settle — an edit session must not multiply write traffic.
@@ -328,7 +333,7 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
   Cache misses use the embedded source thumbnail with geometry only; they never trigger
   a RAW base decode or load the 1600px preview.
 - **Linear base disk cache:** deliberately absent. Bases are retained only in memory;
-  the rendered JPEG cache supplies immediate paint while a base is armed.
+  the rendered JPEG cache supplies immediate paint while a base loads.
 
 ## 6. Error handling
 

@@ -68,6 +68,7 @@ internal sealed class GatedPairLoader : IBaseImageLoader
 
     public ManualResetEventSlim DecodeStarted { get; } = new();
     public ManualResetEventSlim Release { get; } = new();
+    public int DecodeCount => _inner.DecodeCount;
 
     public bool CanLoad(ImageFile file) => true;
 

@@ -15,7 +15,7 @@ namespace HappyPhoton.Tests;
 // entire idle CPU/GPU cost (B1 ~0.3 % CPU / ~2.9 % GPU, B2 ~2.2 % / ~13.4 %,
 // both exactly floor with the bars disabled). These tests pin the selected
 // remediation: a bar is indeterminate only while its represented work runs,
-// and library tiles use a static placeholder instead of a ProgressBar.
+// Develop has no local progress bar, and library tiles use a static placeholder.
 public sealed class IdleAnimationQuiescenceTests
 {
     [AvaloniaFact]
@@ -34,12 +34,11 @@ public sealed class IdleAnimationQuiescenceTests
 
         var startupBar = GetBar(gate, "StartupProgressBar");
         var firstRunBar = GetBar(gate, "FirstRunProgressBar");
-        var armingBar = GetBar(develop, "BaseArmingProgressBar");
 
         Assert.True(vm.IsStartupInitializing);
         Assert.True(startupBar.IsIndeterminate);
         Assert.False(firstRunBar.IsIndeterminate);
-        Assert.False(armingBar.IsIndeterminate);
+        Assert.Empty(develop.GetLogicalDescendants().OfType<ProgressBar>());
 
         vm.ShowFirstRunWelcome(null);
         vm.IsFirstRunBusy = true;
@@ -49,15 +48,9 @@ public sealed class IdleAnimationQuiescenceTests
 
         vm.IsFirstRunBusy = false;
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        vm.IsBaseArming = true;
         Dispatcher.UIThread.RunJobs();
         Assert.False(startupBar.IsIndeterminate);
         Assert.False(firstRunBar.IsIndeterminate);
-        Assert.True(armingBar.IsIndeterminate);
-
-        vm.IsBaseArming = false;
-        Dispatcher.UIThread.RunJobs();
-        Assert.False(armingBar.IsIndeterminate);
 
         window.Close();
         await vm.DisposeAsync();

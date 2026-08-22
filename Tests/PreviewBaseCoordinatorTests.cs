@@ -32,6 +32,7 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
         Assert.NotNull(firstResult);
         Assert.NotNull(secondResult);
         Assert.Same(firstResult!.Base, secondResult!.Base);
+        Assert.Same(firstResult.Analysis, secondResult.Analysis);
     }
 
     [Fact]
@@ -57,6 +58,8 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first);
         Assert.NotNull(secondResult);
         Assert.Equal(2, loader.DecodeCount);
+        Assert.Same(loader.SecondAnalysis, secondResult!.Analysis);
+        Assert.NotSame(loader.FirstAnalysis, secondResult.Analysis);
         await Assert.ThrowsAsync<ObjectDisposedException>(
             () => Task.Run(() => _ = loader.FirstBase!.Pixels));
     }
@@ -174,6 +177,7 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
         Assert.True(loader.SecondDecodeStarted.Wait(TestWaits.Condition));
         Assert.True(stale!.IsStale);
         Assert.Same(first!.Base, stale.Base);
+        Assert.Same(first.Analysis, stale.Analysis);
         await Assert.ThrowsAsync<ObjectDisposedException>(
             () => Task.Run(() => _ = loader.FirstLargeBase!.Pixels));
         Assert.NotNull(first.Base.Pixels);
@@ -215,11 +219,13 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
             replacementDecode);
         Assert.NotNull(replacement);
         Assert.NotSame(first.Base, replacement!.Base);
+        Assert.Same(loader.SecondAnalysis, replacement.Analysis);
         Assert.Equal(replacementDecode, replacement.Base.Info.Decode);
         Assert.Null(coordinator.TryAcquireCurrent(
             file,
             BaseDecodeSettings.Default));
         Assert.Equal(2, loader.DecodeCount);
+        Assert.Equal(1, coordinator.RetainedPairCount);
     }
 
     [Fact]
@@ -342,6 +348,8 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
         public int DecodeCount => Volatile.Read(ref _decodeCount);
         public BaseImage? FirstBase { get; private set; }
         public BaseImage? FirstLargeBase { get; private set; }
+        public PreviewSourceAnalysis? FirstAnalysis { get; private set; }
+        public PreviewSourceAnalysis? SecondAnalysis { get; private set; }
 
         public ControlledLoader(
             bool blockFirst,
@@ -412,8 +420,17 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
                 FirstBase = interactive;
                 FirstLargeBase = large;
             }
+            var histogram = new HistogramData
+            {
+                Domain = HistogramDomain.RawSensor
+            };
+            histogram.Red[call] = call;
+            var analysis = new PreviewSourceAnalysis(histogram, null);
+            if (call == 1) FirstAnalysis = analysis;
+            if (call == 2) SecondAnalysis = analysis;
             return BaseImageLoadOutcome.Loaded(
-                new PreviewBasePair(interactive, large));
+                new PreviewBasePair(interactive, large),
+                analysis);
         }
 
         public BaseImage? LoadFullBase(

@@ -58,8 +58,14 @@ public sealed class PreviewServiceIntegrationTests : IDisposable
 
         Assert.NotNull(matching);
         Assert.True(matching!.SettingsMatch);
+        Assert.NotNull(matching.Histogram);
+        Assert.NotNull(matching.Histogram!.Waveform);
+        Assert.NotNull(matching.Clipping);
+        Assert.False(matching.Clipping!.IsHighAvailable);
         Assert.NotNull(stale);
         Assert.False(stale!.SettingsMatch);
+        Assert.Null(stale.Histogram);
+        Assert.Null(stale.Clipping);
     }
 
     [WindowsFact]

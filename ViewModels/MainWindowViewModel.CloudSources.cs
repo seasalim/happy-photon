@@ -105,6 +105,7 @@ public partial class MainWindowViewModel
         image.SourceRequiresHydration = value;
         if (isSelected)
         {
+            ImageService.Previews.InvalidatePreviewBase();
             ApplySurfaceClearOutcome(image, surfaceGeneration);
         }
         if (isSelected)

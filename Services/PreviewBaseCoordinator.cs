@@ -33,7 +33,7 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         }
     }
 
-    public async Task<PreviewBaseAcquisition?> GetPreviewAsync(
+    public async Task<PreviewBaseLease?> GetPreviewAsync(
         ImageFile imageFile,
         BaseDecodeSettings decode,
         CancellationToken cancellationToken,
@@ -42,7 +42,7 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
             imageFile,
             decode,
             cancellationToken,
-            surfaceGeneration).ConfigureAwait(false)).Acquisition;
+            surfaceGeneration).ConfigureAwait(false)).Lease;
 
     internal async Task<PreviewBaseResult> GetPreviewResultAsync(
         ImageFile imageFile,
@@ -106,9 +106,8 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
                             surfaceGeneration);
                     }
                 }
-                return PreviewBaseResult.Loaded(new PreviewBaseAcquisition(
-                    AcquireHeldInteractiveBase(),
-                    refreshTask));
+                return PreviewBaseResult.Loaded(
+                    AcquireHeldInteractiveBase(refreshTask));
             }
 
             if (_currentDecode is { } current &&
@@ -135,9 +134,8 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
             if (_heldInteractiveBase != null &&
                 SamePath(_heldIdentity, identity))
             {
-                return PreviewBaseResult.Loaded(new PreviewBaseAcquisition(
-                    AcquireHeldInteractiveBase(),
-                    decodeTask));
+                return PreviewBaseResult.Loaded(
+                    AcquireHeldInteractiveBase(decodeTask));
             }
         }
 
@@ -149,13 +147,21 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         {
             ThrowIfDisposed();
             return Matches(_heldIdentity, identity)
-                ? PreviewBaseResult.Loaded(new PreviewBaseAcquisition(
-                    AcquireHeldInteractiveBase(), null))
+                ? PreviewBaseResult.Loaded(
+                    AcquireHeldInteractiveBase(refreshTask: null))
                 : PreviewBaseResult.Failed(failure);
         }
     }
 
-    public PreviewBaseAcquisition? TryAcquireCurrent(
+    internal int RetainedPairCount
+    {
+        get
+        {
+            lock (_sync) return _heldInteractiveBase == null ? 0 : 1;
+        }
+    }
+
+    public PreviewBaseLease? TryAcquireCurrent(
         ImageFile imageFile,
         BaseDecodeSettings decode)
     {
@@ -169,8 +175,7 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         {
             ThrowIfDisposed();
             return _currentDecode == null && Matches(_heldIdentity, identity)
-                ? new PreviewBaseAcquisition(
-                    AcquireHeldInteractiveBase(), null)
+                ? AcquireHeldInteractiveBase(refreshTask: null)
                 : null;
         }
     }
@@ -279,7 +284,9 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
                         var large = decoded.DetachLarge();
                         supersededInteractive = _heldInteractiveBase;
                         supersededLarge = _heldLargeBase;
-                        _heldInteractiveBase = new HeldBase(interactive);
+                        _heldInteractiveBase = new HeldBase(
+                            interactive,
+                            outcome.Analysis);
                         _heldLargeBase = large == null
                             ? null
                             : new HeldBase(large);
@@ -312,11 +319,12 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         }
     }
 
-    private PreviewBaseSnapshot AcquireHeldInteractiveBase()
+    private PreviewBaseLease AcquireHeldInteractiveBase(
+        Task<BaseImageLoadFailure>? refreshTask)
     {
         var held = _heldInteractiveBase ??
             throw new InvalidOperationException("The held preview base is missing.");
-        return held.Acquire();
+        return held.AcquireLease(refreshTask);
     }
 
     private void RetireForReplacement(BaseIdentity identity)
@@ -386,113 +394,4 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         }
     }
 
-    private sealed record BaseIdentity(string Path, string DecodeKey);
-
-    private sealed class HeldBase
-    {
-        private readonly object _sync = new();
-        private BaseImage? _image;
-        private int _leases;
-        private bool _retired;
-
-        public HeldBase(BaseImage image)
-        {
-            _image = image;
-        }
-
-        public PreviewBaseSnapshot Acquire()
-        {
-            lock (_sync)
-            {
-                if (_retired || _image == null)
-                {
-                    throw new ObjectDisposedException(nameof(HeldBase));
-                }
-
-                _leases++;
-                return new PreviewBaseSnapshot(_image, Release);
-            }
-        }
-
-        public void Retire()
-        {
-            BaseImage? dispose = null;
-            lock (_sync)
-            {
-                _retired = true;
-                if (_leases == 0)
-                {
-                    dispose = _image;
-                    _image = null;
-                }
-            }
-            dispose?.Dispose();
-        }
-
-        private void Release()
-        {
-            BaseImage? dispose = null;
-            lock (_sync)
-            {
-                if (_leases <= 0)
-                {
-                    return;
-                }
-
-                _leases--;
-                if (_retired && _leases == 0)
-                {
-                    dispose = _image;
-                    _image = null;
-                }
-            }
-            dispose?.Dispose();
-        }
-    }
-
-}
-
-internal sealed class PreviewBaseAcquisition : IDisposable
-{
-    private PreviewBaseSnapshot? _snapshot;
-
-    public BaseImage Base =>
-        _snapshot?.Base ??
-        throw new ObjectDisposedException(nameof(PreviewBaseAcquisition));
-
-    public Task<BaseImageLoadFailure>? RefreshTask { get; }
-
-    public bool IsStale => RefreshTask != null;
-
-    public PreviewBaseAcquisition(
-        PreviewBaseSnapshot snapshot,
-        Task<BaseImageLoadFailure>? refreshTask)
-    {
-        _snapshot = snapshot;
-        RefreshTask = refreshTask;
-    }
-
-    public void Dispose() =>
-        Interlocked.Exchange(ref _snapshot, null)?.Dispose();
-}
-
-internal sealed class PreviewBaseSnapshot : IDisposable
-{
-    private BaseImage? _base;
-    private Action? _release;
-
-    public BaseImage Base =>
-        _base ?? throw new ObjectDisposedException(nameof(PreviewBaseSnapshot));
-
-    public PreviewBaseSnapshot(BaseImage image, Action release)
-    {
-        _base = image;
-        _release = release;
-    }
-
-    public void Dispose()
-    {
-        Interlocked.Exchange(ref _base, null);
-        Interlocked.Exchange(ref _release, null)?.Invoke();
-    }
 }

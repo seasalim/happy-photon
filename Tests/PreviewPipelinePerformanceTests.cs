@@ -407,26 +407,35 @@ public sealed class PreviewPipelinePerformanceTests
         }
 
         await using var reader = CreateService(catalog);
-        stopwatch.Restart();
-        using var cached = await reader.LoadCachedPreviewAsync(
-            file,
-            new EditSettings
+        var cachedSettings = new EditSettings
+        {
+            Exposure = 0.5,
+            Saturation = 10,
+            Effects = new EffectsSettings
             {
-                Exposure = 0.5,
-                Saturation = 10,
-                Effects = new EffectsSettings
-                {
-                    Vignette = -50,
-                    Grain = 50,
-                    GrainSize = GrainSize.Medium
-                }
-            });
-        stopwatch.Stop();
-        Assert.NotNull(cached);
-        Assert.True(cached!.SettingsMatch);
-        _output.WriteLine(
-            $"{label} rendered-cache paint: " +
-            $"{stopwatch.Elapsed.TotalMilliseconds:F1} ms");
+                Vignette = -50,
+                Grain = 50,
+                GrainSize = GrainSize.Medium
+            }
+        };
+        var cachedSamples = new List<double>();
+        for (var index = 0; index < 9; index++)
+        {
+            stopwatch.Restart();
+            using var cached = await reader.LoadCachedPreviewAsync(
+                file,
+                cachedSettings);
+            stopwatch.Stop();
+            Assert.NotNull(cached);
+            Assert.True(cached!.SettingsMatch);
+            Assert.NotNull(cached.Histogram?.Waveform);
+            Assert.NotNull(cached.Clipping);
+            cachedSamples.Add(stopwatch.Elapsed.TotalMilliseconds);
+        }
+        var cachedMedian = Median(cachedSamples);
+        _output.WriteLine($"{label} rendered-cache paint + scopes: {cachedMedian:F1} ms median");
+        Assert.True(cachedMedian <= 100,
+            $"{label} cached paint + scopes took {cachedMedian:F1} ms median.");
     }
 
     private async Task<Avalonia.Media.Imaging.Bitmap> MeasureSliderTick(

@@ -206,14 +206,19 @@ orders above the observed difference.
 11. **RAW histogram suites:** synthetic Bayer/X-Trans geometry, black-level, sRGB-bin,
     clipping, spatial source-saturation predicate parity, lookup-cap, and cancellation
     cases; six-fixture typed-frame oracle parity; loader fault plus decode-setting/profile
-    mask-and-stat invariance; exact held-base accessor and refresh identity; and
-    headless preferred/effective plus 16-photosite presentation boundaries.
+    mask-and-stat invariance; generation-matched lease analysis, full-load no-sampling,
+    refresh identity; and headless preferred/effective plus 16-photosite presentation
+    boundaries.
 12. **Waveform suites:** pure accumulator tests pin the 256×128 grid, column mapping,
     level boundaries, Rec.601 parity, narrow-source back-fill, histogram-bin invariance,
     and the production overflow bound. Painter/view tests pin square-root normalization,
     opaque premultiplied BGRA, theme-token colors, bitmap reuse/disposal and live-theme
     repaint. Headless tests cover the stable three-entry selector, RAW fallback,
     Library's fixed chrome, cloud-only no-load behavior, and same-image supersession.
+    Cached-preview ordering tests additionally hold source work before profile/base
+    acquisition and require matching bitmap/scopes with zero source reads or renders;
+    background-activity tests hold that gate through the status hysteresis and first
+    coherent render.
 13. **Wide-gamut output suites:** `WideGamutExportTests` checks the Display P3 profile,
     independently derived native-P3 codes in every format, gamut survival, and common-space
     agreement. `WideGamutColorimetryTests` gates the Q16 finalization boundary at the
@@ -424,8 +429,9 @@ dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
   --filter FullyQualifiedName~WysiwygCalibrationTests
 ```
 
-RAW base decode performance output includes a `RawHistogram` step for the sensor pass;
-measure at least the 20 MP Canon EOS 6D fixture when this gate is enabled.
+RAW preview-base decode performance output includes a `RawHistogram` step for the
+sensor pass; full/export decode has no such step. Measure at least the 20 MP Canon EOS
+6D fixture when this gate is enabled.
 
 The isolated characterization import gate
 (`CameraRgbCharacterizationPerformanceTests`) uses that 20 MP Canon in camera-native

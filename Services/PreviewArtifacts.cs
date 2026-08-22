@@ -211,11 +211,19 @@ public sealed class CachedPreviewBitmap : IDisposable
         _bitmap ?? throw new ObjectDisposedException(nameof(CachedPreviewBitmap));
 
     public bool SettingsMatch { get; }
+    public HistogramData? Histogram { get; }
+    public ClippingStats? Clipping { get; }
 
-    public CachedPreviewBitmap(Bitmap bitmap, bool settingsMatch)
+    public CachedPreviewBitmap(
+        Bitmap bitmap,
+        bool settingsMatch,
+        HistogramData? histogram = null,
+        ClippingStats? clipping = null)
     {
         _bitmap = bitmap;
         SettingsMatch = settingsMatch;
+        Histogram = histogram;
+        Clipping = clipping;
     }
 
     public Bitmap DetachBitmap() =>

@@ -86,7 +86,9 @@ The detailed pipeline documentation starts at
 [docs/pipeline/OVERVIEW.md](pipeline/OVERVIEW.md). Preview, export, and edited standard
 thumbnails share `RenderPipeline`; RAW cache-miss thumbnails deliberately apply only
 `RenderGeometry` to their embedded preview until Develop produces an accurate render.
-Source-specific behavior belongs in the loaders and `BaseImageInfo`. Standard images are
+Source-specific behavior belongs in the loaders. Render-required facts stay on
+`BaseImageInfo`; preview-only sensor histogram and source-saturation facts travel in a
+generation-matched `PreviewSourceAnalysis` beside the decoded pair. Standard images are
 color-normalized and linearized by Magick.NET. RAW images decode through the pinned
 LibRaw 0.22.2 runtime through the versioned Happy Photon bridge into the same linear Q16
 base contract. It is the only producer of RAW raster pixels: runtime rejection and
@@ -99,8 +101,10 @@ availability-gated and binds matrix, tables, typed status, and source/content ou
 token atomically to `BaseImageInfo`. Missing-WB or rejected profile content preserves the
 built-in path. No profile ships and no profile operation performs a network read.
 
-Develop mode holds one bounded preview pair from a single half-size RAW decode (see
-the preview pipeline below); export decodes a fresh native-resolution base. The
+Develop mode holds one bounded preview pair plus its source analysis from a single
+half-size RAW decode (see the preview pipeline below), retaining that current pair
+across a same-image Library/Develop round-trip; export decodes a fresh
+native-resolution base without preview analysis. The
 viewer's 100% geometry is anchored to original pixels, but preview detail remains
 limited by the large base; zoom beyond that ceiling is not a native-detail RAW
 inspection mode. `PreviewArtifacts` carries one render's bitmap, scopes, clipping,
@@ -522,19 +526,27 @@ renders, and rendered-thumbnail ownership in
 threading and ownership view:
 
 - `PreviewService` keeps one current preview-base pair (immutable linear 1600px
-  interactive + at-most-3200px large) with separate lease/retirement lifetimes;
+  interactive + at-most-3200px large) and generation-matched source analysis with
+  separate lease/retirement lifetimes;
   decodes are single-flight by identity and newest-wins, and slider edits render only
   from the 1600 base. Camera-profile selection is part of decode identity, so matrix
-  and HueSat tables switch together and stale-base renders are non-promotable.
+  and HueSat tables switch together and stale-base renders are non-promotable. A
+  same-image Library/Develop round-trip retains this one pair; selection/path,
+  availability, folder, decode-identity, and shutdown invalidation retire it.
 - Warm cached previews and rendered thumbnails may paint immediately as last-known
   stale state; a background base decode and fresh render confirm or replace them.
-  Painting a warm cache never opens an embedded profile or hydrates a source, and
-  availability is rechecked immediately before every profile content open.
+  A settings-matched rendered preview derives its display histogram, waveform, and
+  display-floor clipping from the same cached BGRA buffer; a mismatch remains
+  bitmap-only. Painting either cache outcome never opens an embedded profile or
+  hydrates a source, and availability is rechecked immediately before every profile
+  content open.
 - Develop has one VM-owned render-outcome channel. Selection and availability changes
   synchronously advance its generation and clear the surface; state-defining renders
   publish bitmap, histogram/waveform, clipping, capability, profile, as-shot WB, and
-  RAW histogram together. Cached and resting paints are bitmap-only upgrades, and a
-  rejected outcome cannot promote a rendered thumbnail or arm a resting render.
+  RAW histogram together. A matching cached paint atomically publishes bitmap plus
+  display scopes and display-floor clipping, while mismatched cached and resting paints
+  are bitmap-only upgrades. Cached outcomes never claim source-saturation or RAW facts,
+  and a rejected outcome cannot promote a rendered thumbnail or arm a resting render.
 - An accepted edited RAW render hands ownership to a tracked background
   resize/conversion task for the ≤512px Library thumbnail — no full-size clone;
   `PreviewService` retains the result strongly and queues it to the independent
@@ -547,12 +559,12 @@ threading and ownership view:
   selection or mode changes retire them. When a resting bitmap replaces the current
   1600 bitmap, ownership of the displaced bitmap moves to `PreviewService` until
   cache promotion or invalidation.
-- A RAW preview/full base performs one visible-mosaic pass between LibRaw `Unpack`
-  and `Process` — row-chunked across parallel workers with bit-identical merged
-  bins, completing synchronously on the decode call — releasing the native mosaic
-  lease before processing; the optional sensor histogram is stored on
-  `BaseImageInfo`, and its non-blocking accessor cannot decode, read, or hydrate a
-  source.
+- A RAW preview decode performs one visible-mosaic pass between LibRaw `Unpack` and
+  `Process` — row-chunked across parallel workers with bit-identical merged bins,
+  completing synchronously on the decode call — releasing the native mosaic lease
+  before processing. The optional sensor histogram and source-saturation mask install
+  atomically with the pair in its held analysis and are exposed only through the same
+  generation's `PreviewBaseLease`; full/export loads skip the pass entirely.
 - The ViewModel debounces interaction: preview 150 ms, Library thumbnail histogram
   300 ms, and thumbnail refresh 500 ms, each with its own CTS. Every Develop
   state-defining render computes the active scope from the same BGRA8 buffer as its
@@ -576,7 +588,8 @@ threading and ownership view:
 The status bar pulls one constant-size activity snapshot at 4 Hz, and only while an
 activity epoch is open. It reads worker-owned integer state: the initial thumbnail
 batch flag, scheduler desired count, operation-level direct thumbnail tasks, rendered
-thumbnail tasks, preview decode/refresh tasks, cache queues plus writer-in-hand state,
+thumbnail tasks, the complete initial preview task (cached race through first coherent
+fresh render), preview decode/refresh tasks, cache queues plus writer-in-hand state,
 and unique metadata loads. Burst analysis and UI or agent exports contribute one outer
 scope per batch, with processed/total progress; metadata remains accounted but is
 presentation-suppressed while a burst or export scope already explains it.
@@ -586,7 +599,8 @@ rendered-thumbnail task enqueues its cache write before leaving its own activity
 The sampler shows only after 400 ms of continuous work, hides after 600 ms of quiet,
 and stops once the hidden, all-zero snapshot has kept the same activity epoch for that
 trailing quiet interval; a rendered-thumbnail empty-to-nonempty transition can re-arm
-it.
+it. This status segment is the only preview-preparation activity surface; Develop has
+no histogram-local arming bar.
 
 Shared per-image decode methods do not mutate activity state or notify the UI. Folder
 switches register one initial range and a bounded number of operation-level wakes,
@@ -608,7 +622,7 @@ sampler.
 | Metadata extraction | Threadpool | Per-`ImageFile` single-flight task; selection loads drain during ViewModel teardown |
 | Metadata apply + burst grouping | UI thread | Demand-driven by Bursts; cancelled on disable or folder change |
 | Preview base decode | Threadpool | One held base; single-flight by identity; newest-wins generation |
-| RAW sensor histogram | Preview/full decode worker | One visible post-Unpack pass; same token; lease released before Process |
+| RAW sensor histogram | Preview decode worker | One visible post-Unpack pass; installed with lease analysis; full/export skip it |
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
 | Resting preview render | Threadpool, at most 2 managed workers | Parent interactive generation + decode key + resting serial; edit token cancels |
 | Display histogram + waveform | Preview render worker, at most 2 managed workers | Exact preview BGRA8 buffer; bounded row-parallel accumulation; histogram ticks skip inactive waveform accumulation |

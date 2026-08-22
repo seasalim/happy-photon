@@ -261,21 +261,20 @@ public sealed class RawBaseLoaderTests
         var loader = new RawBaseLoader();
         var file = new ImageFile(Asset(fileName));
 
-        using var preview = loader.LoadPreviewBase(
+        var previewOutcome = loader.LoadPreviewBaseWithOutcome(
             file,
             BaseDecodeSettings.Default,
             CancellationToken.None);
+        using var previewPair = Assert.IsType<PreviewBasePair>(previewOutcome.Pair);
+        var preview = previewPair.Interactive;
         using var full = loader.LoadFullBase(
             file,
             BaseDecodeSettings.Default,
             CancellationToken.None);
-
-        Assert.NotNull(preview);
         Assert.NotNull(full);
-        Assert.NotNull(preview!.SourceSaturation);
-        Assert.Null(full!.SourceSaturation);
+        Assert.NotNull(previewOutcome.Analysis.SourceSaturation);
         Assert.InRange(
-            preview.Info.SourceExposureBiasEv,
+            preview!.Info.SourceExposureBiasEv,
             -RawExposureBias.MaxAbsEv,
             RawExposureBias.MaxAbsEv);
         Assert.InRange(

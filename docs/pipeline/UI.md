@@ -68,11 +68,13 @@ panel control; RAW ignores it and standard sources retain it.
 
 Selection clears the previous Develop bitmap, scopes, clipping, and RAW histogram in
 one provisional outcome while seeding filename-derived RAW capability, profile
-visibility, and the 5500 K/6504 K as-shot placeholder. The first accepted decode
-outcome confirms or corrects those facts and publishes the fresh bitmap, display
-scopes, clipping, measured as-shot anchor, and sensor histogram together. A stale-base
-interim paint may update bitmap and display scopes only; it clears clipping and cannot
-replace decode-derived facts.
+visibility, and the 5500 K/6504 K as-shot placeholder. A settings-matched cached preview
+may first publish its bitmap, display histogram, waveform, and display-floor clipping
+as one outcome without source access. The first accepted decode outcome confirms or
+corrects source facts and publishes the fresh bitmap, display scopes, clipping,
+measured as-shot anchor, and sensor histogram together. A stale-base interim paint may
+update bitmap and display scopes only; it clears clipping and cannot replace
+decode-derived facts.
 
 Recovery is a compact, exclusive Clip/Blend control directly below Highlights, enabled
 only for RAW sources — provisionally from `ImageFile.IsRaw`, then from the loaded base
@@ -159,7 +161,7 @@ be read.
   required device-pixel long edge for resting rendering; pan and zoom-out do not
   rerender. A monitor-scaling change recomputes the same geometry and bound.
 
-## 5. Scope box + base-arming indicator
+## 5. Scope box + preview activity
 
 - **Scope box**: the Develop panel's top slot is a scope box whose
   header — the effective-scope title beside a row of three always-present icon
@@ -192,12 +194,15 @@ be read.
   samples for JPEG/HEIC. TIFF, PNG, and other unsupported formats show that side as
   unavailable and disable its peek interaction. The left triangle lights for `LowAll`
   finalized display-floor clipping on every source and remains available without a
-  source-saturation artifact. Missing or stale render statistics darken both
-  immediately.
-- **Arming indicator**: while the linear base is decoding after Develop entry,
-  show a thin indeterminate progress line under the histogram. Sliders stay **enabled**
-  — edits accumulate in `EditSettings` and the first render catches up. Show only when
-  the decode exceeds 150 ms (no flicker on fast paths); no modal, no disabled panel.
+  source-saturation artifact. A settings-matched cached outcome may light only the
+  display-floor side; source-highlight availability waits for matching fresh analysis.
+  Missing or stale render statistics darken both immediately.
+- **Preview activity**: the scope box has no local progress surface. The existing static
+  background-activity status segment shows **Preparing preview** only after its 400 ms
+  hysteresis and remains active through the complete fresh entry task (profile/base
+  acquisition plus first coherent render). Sliders stay **enabled** — edits accumulate
+  in `EditSettings` and the first render catches up. There is no modal or disabled
+  panel.
 
 ## 6. Reset / undo / presets / copy-paste scope
 
@@ -287,7 +292,7 @@ One background-activity segment may appear while sustained work is active and is
 absent at rest. It summarizes the highest-priority activity with overflow and shows a
 determinate bar only for capture-time analysis or export totals. Its dot and progress
 are explicitly static exceptions to the pulse guidance in `docs/DESIGN.md`; the
-segment contains no animation.
+segment contains no animation. Preview preparation uses this segment exclusively.
 
 ## 10. Explicit UI non-goals
 

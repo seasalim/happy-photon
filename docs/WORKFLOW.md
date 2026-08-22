@@ -232,6 +232,13 @@ system Trash. Rejecting alone never moves or deletes the original.
 Double-click a thumbnail or press `D` to enter **Develop**. Use the left and
 right arrow keys to move between visible images without returning to Library.
 
+When the rendered cache matches the current settings, the photograph, display
+histogram, waveform, and display-floor clipping become useful together before the
+original is decoded. If fresh preparation lasts beyond the normal delay, the shared
+status bar says **Preparing preview** until the first coherent fresh render settles;
+there is no separate progress line under the scopes. Returning to Library and then
+Develop on the same active photograph reuses the current in-memory preview pair.
+
 If an original is online-only, an existing cached preview can still appear, but Happy
 Photon does not start a fresh decode until you choose **Download and open**.
 If LibRaw cannot decode a locally available file, an actionable message remains pinned

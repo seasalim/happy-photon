@@ -192,12 +192,13 @@ public sealed partial class PreviewService
         {
             return null;
         }
-        var rawHistogram = snapshot.Base.Info.RawHistogram;
+        var rawHistogram = snapshot.Analysis.RawHistogram;
 
         RenderStarted?.Invoke();
         var rendered = await Task.Run(
             () => Render(
                 snapshot.Base,
+                snapshot.Analysis.SourceSaturation,
                 pending.Settings,
                 pending.ThumbnailRequest,
                 skipHistogram: false,

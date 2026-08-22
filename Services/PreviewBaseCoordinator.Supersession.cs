@@ -33,12 +33,12 @@ internal sealed partial class PreviewBaseCoordinator
 }
 
 internal sealed record PreviewBaseResult(
-    PreviewBaseAcquisition? Acquisition,
+    PreviewBaseLease? Lease,
     BaseImageLoadFailure Failure,
     bool Superseded)
 {
-    public static PreviewBaseResult Loaded(PreviewBaseAcquisition acquisition) =>
-        new(acquisition, BaseImageLoadFailure.None, Superseded: false);
+    public static PreviewBaseResult Loaded(PreviewBaseLease lease) =>
+        new(lease, BaseImageLoadFailure.None, Superseded: false);
 
     public static PreviewBaseResult Failed(BaseImageLoadFailure failure) =>
         new(null, failure, Superseded: false);

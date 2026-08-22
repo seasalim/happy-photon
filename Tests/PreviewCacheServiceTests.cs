@@ -11,6 +11,24 @@ public sealed class PreviewCacheServiceTests : IDisposable
         Path.GetTempPath(), $"HappyPhotonPreviewCache_{Guid.NewGuid():N}");
 
     [Fact]
+    public void DisplayFloorClippingUsesCachedBgraCodes()
+    {
+        var clipping = PreviewCacheService.CalculateDisplayFloorClipping(
+        [
+            0, 1, 0, 255,
+            0, 0, 0, 255
+        ],
+            width: 2,
+            height: 1);
+
+        Assert.Equal(new ChannelClip(1, 0.5, 1), clipping.Low);
+        Assert.Equal(0.5, clipping.LowAll);
+        Assert.Equal(ChannelClip.Empty, clipping.High);
+        Assert.Equal(0, clipping.HighAny);
+        Assert.False(clipping.IsHighAvailable);
+    }
+
+    [Fact]
     public async Task QueueSaveToCache_PersistsJpegAtomically()
     {
         var sourcePath = CreateSource("source.jpg");

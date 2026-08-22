@@ -24,7 +24,7 @@ public sealed partial class PreviewService
 {
     public event EventHandler<PreviewLoadOutcome>? PreviewLoadCompleted;
 
-    private async Task<PreviewBaseAcquisition?> AcquirePreviewBaseAsync(
+    private async Task<PreviewBaseLease?> AcquirePreviewBaseAsync(
         ImageFile imageFile,
         BaseDecodeSettings decode,
         long renderGeneration,
@@ -37,13 +37,13 @@ public sealed partial class PreviewService
             decode,
             cancellationToken,
             surfaceGeneration).ConfigureAwait(false);
-        if (result.Acquisition == null &&
+        if (result.Lease == null &&
             !result.Superseded &&
             renderGeneration == Volatile.Read(ref _renderGeneration))
         {
             ReportPreviewOutcome(imageFile, outcomeGeneration, result.Failure);
         }
-        return result.Acquisition;
+        return result.Lease;
     }
 
     private void ReportPreviewSuccess(ImageFile imageFile, long generation) =>

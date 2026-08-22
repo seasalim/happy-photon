@@ -171,7 +171,7 @@
     <Border Background="{DynamicResource SurfaceMid}"
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*,Auto">
-            <Grid Grid.Row="0" RowDefinitions="Auto,2">
+            <Grid Grid.Row="0">
                 <Border x:Name="DevelopScopeBox"
                         Margin="15,15,15,10"
                         Padding="5"
@@ -194,11 +194,6 @@
                         </Grid>
                     </StackPanel>
                 </Border>
-                <ProgressBar Name="BaseArmingProgressBar"
-                             Grid.Row="1"
-                             IsIndeterminate="{Binding IsBaseArming}"
-                             IsVisible="{Binding IsBaseArming}"
-                             Height="2"/>
             </Grid>
 
             <ScrollViewer Grid.Row="1"

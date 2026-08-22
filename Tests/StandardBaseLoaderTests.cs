@@ -74,11 +74,31 @@ public sealed class StandardBaseLoaderTests : IDisposable
 
         Assert.NotNull(result);
         AssertStandardFacts(result!, decode);
-        Assert.Null(result.SourceSaturation);
         Assert.True(result!.Info.HadIccProfile);
         Assert.False(string.IsNullOrWhiteSpace(result.Info.IccDescription));
         Assert.Null(result.Pixels.GetColorProfile());
         Assert.Empty(result.Pixels.ProfileNames);
+    }
+
+    [Fact]
+    public void FullBase_SkipsSourceSaturationSampling()
+    {
+        var calls = 0;
+        var loader = new StandardBaseLoader(
+            (_, _) => new MagickImage(MagickColors.Orange, 32, 16),
+            (_, _, _) =>
+            {
+                calls++;
+                return new SourceSaturationMask(32, 16);
+            });
+
+        using var result = loader.LoadFullBase(
+            new ImageFile(Path.Combine(_tempDirectory, "full.jpg")),
+            BaseDecodeSettings.Default,
+            CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(0, calls);
     }
 
     [Theory]

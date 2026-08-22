@@ -48,8 +48,7 @@ internal static class PreviewBasePairFactory
     internal static PreviewBasePair Create(
         MagickImage decoded,
         BaseImageInfo info,
-        CancellationToken cancellationToken,
-        SourceSaturationMask? sourceSaturation = null)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(decoded);
         ArgumentNullException.ThrowIfNull(info);
@@ -71,13 +70,7 @@ internal static class PreviewBasePairFactory
                 BaseImage.LargePreviewMaxDimension);
             cancellationToken.ThrowIfCancellationRequested();
 
-            var interactiveMask = sourceSaturation?.Resize(
-                checked((int)interactivePixels.Width),
-                checked((int)interactivePixels.Height));
-            var interactive = new BaseImage(
-                interactivePixels,
-                info,
-                interactiveMask);
+            var interactive = new BaseImage(interactivePixels, info);
             interactivePixels = null;
             var large = new BaseImage(largePixels, info);
             largePixels = null;

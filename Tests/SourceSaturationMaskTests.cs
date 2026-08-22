@@ -93,16 +93,19 @@ public sealed class SourceSaturationMaskTests : IDisposable
             255, 0, 0
         ]));
 
-        using var result = loader.LoadPreviewBase(
+        var outcome = loader.LoadPreviewBaseWithOutcome(
             new ImageFile(path),
             BaseDecodeSettings.Default,
             CancellationToken.None);
+        using var pair = outcome.Pair;
+        var result = pair!.Interactive;
+        var sourceSaturation = outcome.Analysis.SourceSaturation;
 
-        Assert.NotNull(result!.SourceSaturation);
-        Assert.Equal(0, result.SourceSaturation!.GetFlags(0, 0));
-        Assert.Equal(1, result.SourceSaturation.GetFlags(1, 0));
-        Assert.Equal(1, result.SourceSaturation.GetFlags(2, 0));
-        Assert.Equal(1, result.SourceSaturation.GetFlags(3, 0));
+        Assert.NotNull(sourceSaturation);
+        Assert.Equal(0, sourceSaturation!.GetFlags(0, 0));
+        Assert.Equal(1, sourceSaturation.GetFlags(1, 0));
+        Assert.Equal(1, sourceSaturation.GetFlags(2, 0));
+        Assert.Equal(1, sourceSaturation.GetFlags(3, 0));
         Assert.NotEqual(253 * 257, PixelValues(result.Pixels)[3]);
     }
 
@@ -117,15 +120,18 @@ public sealed class SourceSaturationMaskTests : IDisposable
             1023, 0, 0
         ]));
 
-        using var result = loader.LoadPreviewBase(
+        var outcome = loader.LoadPreviewBaseWithOutcome(
             new ImageFile(Path.Combine(_tempDirectory, "source-mask.heic")),
             BaseDecodeSettings.Default,
             CancellationToken.None);
+        using var pair = outcome.Pair;
+        var sourceSaturation = outcome.Analysis.SourceSaturation;
 
-        Assert.NotNull(result!.SourceSaturation);
-        Assert.Equal(0, result.SourceSaturation!.GetFlags(0, 0));
-        Assert.Equal(1, result.SourceSaturation.GetFlags(1, 0));
-        Assert.Equal(1, result.SourceSaturation.GetFlags(2, 0));
+        Assert.NotNull(pair);
+        Assert.NotNull(sourceSaturation);
+        Assert.Equal(0, sourceSaturation!.GetFlags(0, 0));
+        Assert.Equal(1, sourceSaturation.GetFlags(1, 0));
+        Assert.Equal(1, sourceSaturation.GetFlags(2, 0));
     }
 
     [Theory]
@@ -137,13 +143,14 @@ public sealed class SourceSaturationMaskTests : IDisposable
             255,
             [255, 255, 255]));
 
-        using var result = loader.LoadPreviewBase(
+        var outcome = loader.LoadPreviewBaseWithOutcome(
             new ImageFile(Path.Combine(_tempDirectory, name)),
             BaseDecodeSettings.Default,
             CancellationToken.None);
+        using var pair = outcome.Pair;
 
-        Assert.NotNull(result);
-        Assert.Null(result!.SourceSaturation);
+        Assert.NotNull(pair);
+        Assert.Null(outcome.Analysis.SourceSaturation);
     }
 
     private string WriteJpeg(string name, int width, int height)

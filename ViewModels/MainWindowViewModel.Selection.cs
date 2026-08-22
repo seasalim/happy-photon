@@ -12,6 +12,11 @@ public partial class MainWindowViewModel
         var surfaceGeneration = ReserveRenderOutcome(
             PreviewSurfaceIntent.Edited,
             promotionEligible: true);
+        if (oldValue != null && newValue != null)
+        {
+            ImageService.Previews.FlushRenderedPreviewCache();
+            ImageService.Previews.InvalidatePreviewBase();
+        }
         ClearCurveGesture();
         CancelRestingPreview(clearParent: true);
         ClearNavigatorVisibleRegion();
@@ -24,7 +29,6 @@ public partial class MainWindowViewModel
         HasSelectedImage = newValue != null;
         ResetSelectedMetadataState(newValue);
         Volatile.Write(ref _activeBaseRefreshRequestId, 0);
-        IsBaseArming = false;
         OnPropertyChanged(nameof(ActiveFileName));
         NotifySelectedImageEditStateChanged();
         NotifyFullScreenSelectionBadgeChanged();
@@ -51,6 +55,7 @@ public partial class MainWindowViewModel
             _lastAppliedEditSettings = null;
             SignalBackgroundActivityStarted();
             RefreshSourceAvailability(newValue);
+            surfaceGeneration = LatestPreviewOutcomeGeneration;
             ResetSelectedMetadataState(newValue);
             RetryDeferredThumbnailIfAvailable(newValue);
             NotifyWhiteBalanceCommandState();
@@ -72,8 +77,7 @@ public partial class MainWindowViewModel
                     {
                         _ = LoadPreviewAsync(
                             newValue,
-                            surfaceGeneration,
-                            wakeActivity: false);
+                            surfaceGeneration);
                     }
                 }
                 else
@@ -94,8 +98,7 @@ public partial class MainWindowViewModel
                 {
                     _ = LoadPreviewAsync(
                         newValue,
-                        surfaceGeneration,
-                        wakeActivity: false);
+                        surfaceGeneration);
                 }
             }
             else

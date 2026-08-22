@@ -17,7 +17,7 @@ public sealed partial class PreviewService
             using var snapshot = _baseCoordinator.TryAcquireCurrent(
                 imageFile,
                 decode);
-            return snapshot?.Base.Info.RawHistogram;
+            return snapshot?.Analysis.RawHistogram;
         }
         catch (ObjectDisposedException)
         {

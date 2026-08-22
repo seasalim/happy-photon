@@ -344,7 +344,7 @@ public partial class MainWindowViewModel
                 _ = TrackDirectThumbnailOperation(
                     RefreshThumbnailAsync(image));
             }
-            ImageService.Previews.ClearPreviewCache();
+            ImageService.Previews.FlushRenderedPreviewCache();
             ScheduleHistogramUpdate();
         }
     }
@@ -414,7 +414,7 @@ public partial class MainWindowViewModel
                 _ = TrackDirectThumbnailOperation(
                     RefreshThumbnailAsync(image));
             }
-            ImageService.Previews.ClearPreviewCache();
+            ImageService.Previews.FlushRenderedPreviewCache();
             ScheduleHistogramUpdate();
         }
     }

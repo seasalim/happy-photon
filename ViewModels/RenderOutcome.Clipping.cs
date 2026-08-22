@@ -9,7 +9,7 @@ internal sealed partial class RenderOutcome
     public static RenderOutcome Cached(
         ImageFile image,
         long generation,
-        Bitmap bitmap) => new()
+        CachedPreviewBitmap cached) => new()
     {
         Image = image,
         Generation = generation,
@@ -17,7 +17,15 @@ internal sealed partial class RenderOutcome
         Intent = PreviewSurfaceIntent.Edited,
         PaintSource = PreviewPaintSource.CachedJpeg,
         BitmapMode = OutcomeFieldMode.Set,
-        _bitmap = bitmap
+        _bitmap = cached.DetachBitmap(),
+        HistogramMode = cached.SettingsMatch
+            ? OutcomeFieldMode.Set
+            : OutcomeFieldMode.Clear,
+        Histogram = cached.Histogram,
+        ClippingMode = cached.SettingsMatch
+            ? OutcomeFieldMode.Set
+            : OutcomeFieldMode.Clear,
+        Clipping = cached.Clipping
     };
 
     public static RenderOutcome Resting(

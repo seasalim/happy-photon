@@ -164,17 +164,12 @@ public sealed class RawHistogramUiTests : IDisposable
         public BaseImage? LoadPreviewBase(ImageFile file, BaseDecodeSettings decode,
             CancellationToken cancellationToken)
         {
-            HistogramData? raw = null;
-            if (file.IsRaw)
-            {
-                raw = RawHistogram(16);
-            }
             return new BaseImage(
                 new MagickImage(MagickColors.Gray, 32, 24),
                 new BaseImageInfo(
                     file.IsRaw ? BaseSourceKind.RawLibRaw : BaseSourceKind.Standard,
                     file.IsRaw, decode, null, null, 5500, 0, false, null,
-                    1, 32, 24, RawHistogram: raw));
+                    1, 32, 24));
         }
 
         BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
@@ -182,7 +177,10 @@ public sealed class RawHistogramUiTests : IDisposable
             CancellationToken cancellationToken) =>
             BaseImageLoadOutcome.FromImage(
                 LoadPreviewBase(file, decode, cancellationToken),
-                BaseImageLoadFailure.DecodeFailed);
+                BaseImageLoadFailure.DecodeFailed,
+                new PreviewSourceAnalysis(
+                    file.IsRaw ? RawHistogram(16) : null,
+                    null));
 
         public BaseImage? LoadFullBase(ImageFile file, BaseDecodeSettings decode,
             CancellationToken cancellationToken) => throw new NotSupportedException();

@@ -19,11 +19,12 @@ public sealed class RawBaseLoaderRawHistogramTests
         var expected = new HistogramData { Domain = HistogramDomain.RawSensor };
         var loader = Loader((_, _) => expected);
 
-        using var image = loader.LoadPreviewBase(FixtureFile(),
+        var outcome = loader.LoadPreviewBaseWithOutcome(FixtureFile(),
             BaseDecodeSettings.Default, CancellationToken.None);
+        using var pair = outcome.Pair;
 
-        Assert.NotNull(image);
-        Assert.Same(expected, image!.Info.RawHistogram);
+        Assert.NotNull(pair);
+        Assert.Same(expected, outcome.Analysis.RawHistogram);
     }
 
     [Fact]
@@ -31,11 +32,12 @@ public sealed class RawBaseLoaderRawHistogramTests
     {
         var loader = Loader((_, _) => throw new InvalidDataException("bad layout"));
 
-        using var image = loader.LoadPreviewBase(FixtureFile(),
+        var outcome = loader.LoadPreviewBaseWithOutcome(FixtureFile(),
             BaseDecodeSettings.Default, CancellationToken.None);
+        using var pair = outcome.Pair;
 
-        Assert.NotNull(image);
-        Assert.Null(image!.Info.RawHistogram);
+        Assert.NotNull(pair);
+        Assert.Null(outcome.Analysis.RawHistogram);
     }
 
     [Fact]
@@ -43,7 +45,8 @@ public sealed class RawBaseLoaderRawHistogramTests
     {
         var loader = Loader((_, _) => throw new OperationCanceledException());
 
-        Assert.Throws<OperationCanceledException>(() => loader.LoadPreviewBase(
+        Assert.Throws<OperationCanceledException>(() =>
+            loader.LoadPreviewBaseWithOutcome(
             FixtureFile(), BaseDecodeSettings.Default, CancellationToken.None));
     }
 
@@ -75,24 +78,38 @@ public sealed class RawBaseLoaderRawHistogramTests
         }).WithProfileResolution(
             DcpProfileResolution.Success(selection, profile));
         var loader = new RawBaseLoader();
-        using var clip = loader.LoadPreviewBase(FixtureFile(),
+        var clipOutcome = loader.LoadPreviewBaseWithOutcome(FixtureFile(),
             BaseDecodeSettings.Default, CancellationToken.None);
-        using var profiled = loader.LoadPreviewBase(FixtureFile(),
+        using var clipPair = clipOutcome.Pair;
+        var profiledOutcome = loader.LoadPreviewBaseWithOutcome(FixtureFile(),
             decode,
             CancellationToken.None);
+        using var profiledPair = profiledOutcome.Pair;
+        var clip = clipPair!.Interactive;
+        var profiled = profiledPair!.Interactive;
+        var clipAnalysis = clipOutcome.Analysis;
+        var profiledAnalysis = profiledOutcome.Analysis;
 
-        Assert.Equal(DcpProfileErrorCode.None, profiled!.Info.ProfileStatus);
-        Assert.NotNull(clip!.Info.RawHistogram);
-        Assert.NotNull(profiled.Info.RawHistogram);
-        Assert.Equal(clip.Info.RawHistogram!.Red, profiled.Info.RawHistogram!.Red);
-        Assert.Equal(clip.Info.RawHistogram.Green, profiled.Info.RawHistogram.Green);
-        Assert.Equal(clip.Info.RawHistogram.Blue, profiled.Info.RawHistogram.Blue);
+        Assert.Equal(DcpProfileErrorCode.None, profiled.Info.ProfileStatus);
+        Assert.NotNull(clipAnalysis.RawHistogram);
+        Assert.NotNull(profiledAnalysis.RawHistogram);
         Assert.Equal(
-            clip.Info.RawHistogram.Clipping,
-            profiled.Info.RawHistogram.Clipping);
-        Assert.NotNull(clip.SourceSaturation);
-        Assert.NotNull(profiled.SourceSaturation);
-        AssertMasksEqual(clip.SourceSaturation!, profiled.SourceSaturation!);
+            clipAnalysis.RawHistogram!.Red,
+            profiledAnalysis.RawHistogram!.Red);
+        Assert.Equal(
+            clipAnalysis.RawHistogram.Green,
+            profiledAnalysis.RawHistogram.Green);
+        Assert.Equal(
+            clipAnalysis.RawHistogram.Blue,
+            profiledAnalysis.RawHistogram.Blue);
+        Assert.Equal(
+            clipAnalysis.RawHistogram.Clipping,
+            profiledAnalysis.RawHistogram.Clipping);
+        Assert.NotNull(clipAnalysis.SourceSaturation);
+        Assert.NotNull(profiledAnalysis.SourceSaturation);
+        AssertMasksEqual(
+            clipAnalysis.SourceSaturation!,
+            profiledAnalysis.SourceSaturation!);
 
         var renderSettings = new EditSettings
         {
@@ -104,15 +121,40 @@ public sealed class RawBaseLoaderRawHistogramTests
             renderSettings,
             RenderIntent.Preview,
             1600,
-            new RenderOptions(ComputeStats: true)));
+            new RenderOptions(ComputeStats: true))
+        {
+            SourceSaturation = clipAnalysis.SourceSaturation
+        });
         using var profiledRender = pipeline.Render(new RenderRequest(
             profiled,
             renderSettings,
             RenderIntent.Preview,
             1600,
-            new RenderOptions(ComputeStats: true)));
+            new RenderOptions(ComputeStats: true))
+        {
+            SourceSaturation = profiledAnalysis.SourceSaturation
+        });
         Assert.Equal(clipRender.Clipping.High, profiledRender.Clipping.High);
         Assert.Equal(clipRender.Clipping.HighAny, profiledRender.Clipping.HighAny);
+    }
+
+    [Fact]
+    public void FullBase_SkipsSourceAnalysisSampling()
+    {
+        var calls = 0;
+        var loader = Loader((_, _) =>
+        {
+            calls++;
+            return new HistogramData { Domain = HistogramDomain.RawSensor };
+        });
+
+        using var image = loader.LoadFullBase(
+            FixtureFile(),
+            BaseDecodeSettings.Default,
+            CancellationToken.None);
+
+        Assert.NotNull(image);
+        Assert.Equal(0, calls);
     }
 
     [Fact]

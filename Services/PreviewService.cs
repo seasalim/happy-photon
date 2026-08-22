@@ -48,6 +48,7 @@ public sealed partial class PreviewService : IAsyncDisposable
     internal Func<Task>? RefreshReadyGateAsync { get; set; }
     internal Func<Task>? WhiteBalanceSampleGateAsync { get; set; }
     internal Func<Task>? CachedPreviewGateAsync { get; set; }
+    internal Func<Task>? SourceWorkGateAsync { get; set; }
     internal Action<string>? RestingStageStarted { get; set; }
 
     public int PreviewActivityCount
@@ -72,6 +73,8 @@ public sealed partial class PreviewService : IAsyncDisposable
 
     public int PendingCacheWrites =>
         _previewCache.PendingWrites + _renderedThumbnailCache.PendingWrites;
+
+    internal int RetainedBasePairCount => _baseCoordinator.RetainedPairCount;
 
     internal PreviewService(
         CatalogService catalogService,
@@ -115,15 +118,34 @@ public sealed partial class PreviewService : IAsyncDisposable
                     return null;
                 }
 
-                var bitmap = ConvertToBitmap(cached.Image);
-                return bitmap == null
-                    ? null
-                    : new CachedPreviewBitmap(
-                        bitmap,
-                        string.Equals(
-                            cached.SettingsHash,
-                            RenderSettingsHash.Compute(settingsSnapshot),
-                            StringComparison.Ordinal));
+                var settingsMatch = string.Equals(
+                    cached.SettingsHash,
+                    RenderSettingsHash.Compute(settingsSnapshot),
+                    StringComparison.Ordinal);
+                var width = checked((int)cached.Image.Width);
+                var height = checked((int)cached.Image.Height);
+                var pixels = CopyBgraPixels(cached.Image);
+                HistogramData? histogram = null;
+                ClippingStats? clipping = null;
+                if (settingsMatch)
+                {
+                    histogram = new HistogramData();
+                    HistogramService.CalculatePreviewHistogram(
+                        pixels,
+                        width,
+                        height,
+                        histogram,
+                        includeWaveform: true);
+                    clipping = PreviewCacheService.CalculateDisplayFloorClipping(
+                        pixels,
+                        width,
+                        height);
+                }
+                return new CachedPreviewBitmap(
+                    ConvertToBitmap(pixels, width, height),
+                    settingsMatch,
+                    histogram,
+                    clipping);
             }
             catch (OperationCanceledException)
             {
@@ -139,6 +161,7 @@ public sealed partial class PreviewService : IAsyncDisposable
 
     private RenderOutput Render(
         BaseImage baseImage,
+        SourceSaturationMask? sourceSaturation,
         EditSettings settings,
         ThumbnailSizeRequest thumbnailRequest,
         bool skipHistogram,
@@ -163,7 +186,10 @@ public sealed partial class PreviewService : IAsyncDisposable
                 OverlaySides: effectiveOverlaySides,
                 ComputeHistogram: !skipHistogram,
                 ComputeWaveform: !skipHistogram && computeWaveform,
-                PreparePreviewPixels: true)));
+                PreparePreviewPixels: true))
+        {
+            SourceSaturation = sourceSaturation
+        });
         cancellationToken.ThrowIfCancellationRequested();
 
         var histogram = rendered.Histogram ?? new HistogramData();
@@ -278,18 +304,33 @@ public sealed partial class PreviewService : IAsyncDisposable
         Queue(leaving);
     }
 
-    public void ClearPreviewCache()
+    public void FlushRenderedPreviewCache() =>
+        ClearPreviewState(queueRendered: true, retireBase: false);
+
+    public void InvalidatePreviewBase() =>
+        ClearPreviewState(queueRendered: false, retireBase: true);
+
+    public void ClearPreviewCache() =>
+        ClearPreviewState(queueRendered: true, retireBase: true);
+
+    private void ClearPreviewState(bool queueRendered, bool retireBase)
     {
         Interlocked.Increment(ref _renderGeneration);
         Interlocked.Increment(ref _restingSerial);
-        RenderedPreview? rendered;
-        lock (_renderedSync)
+        RenderedPreview? rendered = null;
+        if (queueRendered)
         {
-            rendered = _lastRendered;
-            _lastRendered = null;
+            lock (_renderedSync)
+            {
+                rendered = _lastRendered;
+                _lastRendered = null;
+            }
         }
         Queue(rendered);
-        _baseCoordinator.Clear();
+        if (retireBase)
+        {
+            _baseCoordinator.Clear();
+        }
     }
 
     private void Queue(RenderedPreview? rendered)
@@ -391,6 +432,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         public PreviewArtifacts DetachArtifacts(
             long generation,
             BaseImageInfo info,
+            PreviewSourceAnalysis analysis,
             bool isBaseStale,
             PreviewPromotionLease? promotionLease)
         {
@@ -404,7 +446,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                 ProfileState,
                 generation,
                 mask,
-                info.RawHistogram,
+                analysis.RawHistogram,
                 info.AsShotKelvin,
                 info.AsShotTint,
                 isBaseStale,

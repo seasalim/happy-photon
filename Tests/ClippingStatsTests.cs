@@ -66,9 +66,9 @@ public sealed class ClippingStatsTests
         [
             50, 50, 50,
             50, 50, 50
-        ], sourceSaturation: mask);
-        using var neutral = Render(source, new EditSettings());
-        using var darkened = Render(source, new EditSettings
+        ]);
+        using var neutral = Render(source, mask, new EditSettings());
+        using var darkened = Render(source, mask, new EditSettings
         {
             Exposure = -3,
             Wb = new WhiteBalanceSettings
@@ -94,10 +94,6 @@ public sealed class ClippingStatsTests
     public void Project_RotateCropAndDownscaleKeepFlagsAligned()
     {
         var mask = Mask(4, 3, (1, 1, (byte)4));
-        using var source = RenderPipelineTestSupport.CreateBase(
-            Enumerable.Repeat((ushort)1000, 4 * 3 * 3).ToArray(),
-            height: 3,
-            sourceSaturation: mask);
         var settings = new EditSettings
         {
             Rotation = 90,
@@ -113,7 +109,7 @@ public sealed class ClippingStatsTests
         var trace = RenderGeometry.Apply(geometryImage, settings);
 
         var projection = SourceSaturationMaskProjector.Project(
-            source,
+            mask,
             settings,
             trace,
             targetWidth: 1,
@@ -146,15 +142,11 @@ public sealed class ClippingStatsTests
     public void Project_HorizonAndResizePreserveAnIsolatedFlagAndCacheGeometry()
     {
         var mask = Mask(20, 10, (10, 5, (byte)2));
-        using var source = RenderPipelineTestSupport.CreateBase(
-            Enumerable.Repeat((ushort)1000, 20 * 10 * 3).ToArray(),
-            height: 10,
-            sourceSaturation: mask);
         var settings = new EditSettings { HorizonRotation = 7.5 };
         using var geometryImage = new MagickImage(MagickColors.Black, 20, 10);
         var trace = RenderGeometry.Apply(geometryImage, settings);
         var first = SourceSaturationMaskProjector.Project(
-            source,
+            mask,
             settings,
             trace,
             5,
@@ -164,7 +156,7 @@ public sealed class ClippingStatsTests
         tonalEdit.Highlights = -80;
         tonalEdit.Effects = new EffectsSettings { Vignette = -50 };
         var second = SourceSaturationMaskProjector.Project(
-            source,
+            mask,
             tonalEdit,
             trace,
             5,
@@ -209,7 +201,10 @@ public sealed class ClippingStatsTests
     private static byte HighBit(byte value) =>
         (byte)(value & (byte)ClippingOverlaySide.Highlights);
 
-    private static RenderResult Render(BaseImage image, EditSettings settings)
+    private static RenderResult Render(
+        BaseImage image,
+        SourceSaturationMask sourceSaturation,
+        EditSettings settings)
     {
         settings.Detail = new DetailSettings { CaptureSharpen = 0 };
         return new RenderPipeline().Render(new RenderRequest(
@@ -217,7 +212,10 @@ public sealed class ClippingStatsTests
             settings,
             RenderIntent.Preview,
             null,
-            new RenderOptions(true, true)));
+            new RenderOptions(true, true))
+        {
+            SourceSaturation = sourceSaturation
+        });
     }
 
     private static SourceSaturationMask Mask(

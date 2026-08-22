@@ -99,6 +99,43 @@ public sealed class PreviewCacheService : IAsyncDisposable
     internal int WriterInHandCount => _writer.WriterInHandCount;
 
     internal Task ProcessingTask => _writer.ProcessingTask;
+
+    internal static ClippingStats CalculateDisplayFloorClipping(
+        byte[] bgra,
+        int width,
+        int height)
+    {
+        ArgumentNullException.ThrowIfNull(bgra);
+        var pixelCount = checked(width * height);
+        if (bgra.Length != checked(pixelCount * 4))
+        {
+            throw new ArgumentException(
+                "The BGRA buffer length must match its dimensions.",
+                nameof(bgra));
+        }
+
+        long lowR = 0, lowG = 0, lowB = 0, lowAll = 0;
+        for (var offset = 0; offset < bgra.Length; offset += 4)
+        {
+            var bLow = bgra[offset] == 0;
+            var gLow = bgra[offset + 1] == 0;
+            var rLow = bgra[offset + 2] == 0;
+            if (rLow) lowR++;
+            if (gLow) lowG++;
+            if (bLow) lowB++;
+            if (rLow && gLow && bLow) lowAll++;
+        }
+
+        return new ClippingStats(
+            ChannelClip.Empty,
+            new ChannelClip(
+                lowR / (double)pixelCount,
+                lowG / (double)pixelCount,
+                lowB / (double)pixelCount),
+            HighAny: 0,
+            lowAll / (double)pixelCount,
+            IsHighAvailable: false);
+    }
 }
 
 public sealed record CachedPreview(

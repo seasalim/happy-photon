@@ -16,8 +16,6 @@ internal enum PreviewPaintSource
 
 public partial class MainWindowViewModel
 {
-    private static readonly TimeSpan BaseArmingDelay =
-        TimeSpan.FromMilliseconds(150);
     private readonly Action<Action> _postSelection;
     private long _activeBaseRefreshRequestId;
 
@@ -142,10 +140,9 @@ public partial class MainWindowViewModel
 
     private async Task LoadPreviewAsync(
         ImageFile imageFile,
-        long surfaceGeneration,
-        bool wakeActivity = true)
+        long surfaceGeneration)
     {
-        if (wakeActivity) SignalBackgroundActivityStarted();
+        using var previewActivity = BeginInitialPreviewActivity();
         _previewLoadingCts?.Cancel();
         // Every entry load declares fit intent; a manual zoom during the load
         // window flips it and then wins over the entry refit below.
@@ -153,7 +150,6 @@ public partial class MainWindowViewModel
         var requestCts = new CancellationTokenSource();
         _previewLoadingCts = requestCts;
         var ct = requestCts.Token;
-        var armingIndicatorCts = new CancellationTokenSource();
 
         try
         {
@@ -180,10 +176,6 @@ public partial class MainWindowViewModel
                 ct,
                 surfaceGeneration,
                 computeWaveform: true);
-            _ = ShowBaseArmingAfterDelay(
-                requestCts,
-                freshTask,
-                armingIndicatorCts.Token);
 
             var firstCompleted = await Task.WhenAny(cachedTask, freshTask);
             if (ReferenceEquals(firstCompleted, cachedTask))
@@ -194,7 +186,7 @@ public partial class MainWindowViewModel
                     ApplyRenderOutcome(RenderOutcome.Cached(
                         imageFile,
                         surfaceGeneration,
-                        cached.DetachBitmap()));
+                        cached));
                 }
                 cached?.Dispose();
             }
@@ -208,7 +200,6 @@ public partial class MainWindowViewModel
                 }
                 return;
             }
-            IsBaseArming = false;
             RefreshSourceAvailability(imageFile);
 
             var succeeded = artifacts.Bitmap != null;
@@ -243,7 +234,7 @@ public partial class MainWindowViewModel
                     ApplyRenderOutcome(RenderOutcome.Cached(
                         imageFile,
                         surfaceGeneration,
-                        cached.DetachBitmap()));
+                        cached));
                 }
             }
         }
@@ -252,36 +243,12 @@ public partial class MainWindowViewModel
         }
         finally
         {
-            armingIndicatorCts.Cancel();
-            armingIndicatorCts.Dispose();
-
             if (ReferenceEquals(_previewLoadingCts, requestCts))
             {
                 _previewLoadingCts = null;
-                IsBaseArming = false;
             }
 
             requestCts.Dispose();
-        }
-    }
-
-    private async Task ShowBaseArmingAfterDelay(
-        CancellationTokenSource requestCts,
-        Task freshPreview,
-        CancellationToken ct)
-    {
-        try
-        {
-            await Task.Delay(BaseArmingDelay, _timeProvider, ct);
-            if (!freshPreview.IsCompleted &&
-                !ct.IsCancellationRequested &&
-                ReferenceEquals(_previewLoadingCts, requestCts))
-            {
-                IsBaseArming = true;
-            }
-        }
-        catch (OperationCanceledException)
-        {
         }
     }
 
@@ -449,9 +416,6 @@ public partial class MainWindowViewModel
                     RawHistogramMode = OutcomeFieldMode.Clear
                 });
             }
-            _ = ShowReplacementBaseArmingAfterDelay(
-                state.ImageFile,
-                state.RequestId);
             return;
         }
 
@@ -459,23 +423,7 @@ public partial class MainWindowViewModel
             state.RequestId)
         {
             Volatile.Write(ref _activeBaseRefreshRequestId, 0);
-            IsBaseArming = false;
             NotifyRawHistogramState();
-        }
-    }
-
-    private async Task ShowReplacementBaseArmingAfterDelay(
-        ImageFile imageFile,
-        long requestId)
-    {
-        await Task.Delay(
-            BaseArmingDelay,
-            _timeProvider,
-            CancellationToken.None);
-        if (Volatile.Read(ref _activeBaseRefreshRequestId) == requestId &&
-            ReferenceEquals(SelectedImage, imageFile))
-        {
-            IsBaseArming = true;
         }
     }
 }

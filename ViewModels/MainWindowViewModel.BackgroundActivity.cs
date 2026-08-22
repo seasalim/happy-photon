@@ -16,6 +16,7 @@ public partial class MainWindowViewModel
         BackgroundActivityDisplay.Hidden;
     private long _backgroundActivityEpoch;
     private int _initialThumbnailBatches;
+    private int _initialPreviewActivities;
     private int _backgroundActivityDisposed;
     private int _backgroundActivityPumpCount;
 
@@ -27,6 +28,9 @@ public partial class MainWindowViewModel
 
     internal int InitialThumbnailBatchCount =>
         Volatile.Read(ref _initialThumbnailBatches);
+
+    internal int InitialPreviewActivityCount =>
+        Volatile.Read(ref _initialPreviewActivities);
 
     internal int DirectThumbnailActivityCount
     {
@@ -99,14 +103,14 @@ public partial class MainWindowViewModel
     internal BackgroundActivitySnapshot CaptureBackgroundActivitySnapshot()
     {
         var serviceThumbnails = 0;
-        var previews = 0;
+        var previews = InitialPreviewActivityCount;
         var cacheWrites = 0;
         var metadata = 0;
         if (_imageService.IsValueCreated)
         {
             var service = _imageService.Value;
             serviceThumbnails = service.Previews.RenderedThumbnailTaskCount;
-            previews = service.Previews.PreviewActivityCount;
+            previews += service.Previews.PreviewActivityCount;
             cacheWrites = service.CacheWriteActivityCount;
             metadata = service.Metadata.InFlightCount;
         }
@@ -138,6 +142,16 @@ public partial class MainWindowViewModel
         }
         return new ActivityRegistration(() =>
             Interlocked.Decrement(ref _initialThumbnailBatches));
+    }
+
+    internal IDisposable BeginInitialPreviewActivity()
+    {
+        if (Interlocked.Increment(ref _initialPreviewActivities) == 1)
+        {
+            SignalBackgroundActivityStarted();
+        }
+        return new ActivityRegistration(() =>
+            Interlocked.Decrement(ref _initialPreviewActivities));
     }
 
     internal Task TrackDirectThumbnailOperation(Task operation)

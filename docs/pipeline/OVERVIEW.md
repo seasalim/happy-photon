@@ -134,8 +134,7 @@ public sealed record BaseImageInfo(
     int ExifOrientationApplied,    // for diagnostics; pixels are already upright
     int FullWidth,                 // native full-resolution dimensions after orientation —
     int FullHeight,                // set on preview bases too; RENDER.md §9 scales σ by these
-    double SourceExposureBiasEv = 0, // Fuji midpoint restoration; 0 for other sources
-    HistogramData? RawHistogram = null); // pre-process sensor fact; reference equality
+    double SourceExposureBiasEv = 0); // Fuji midpoint restoration; 0 for other sources
 
 public sealed class BaseImage : IDisposable
 {
@@ -144,13 +143,22 @@ public sealed class BaseImage : IDisposable
     public const int LargePreviewMaxDimension = 3200;
     public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
     public BaseImageInfo Info { get; }
-    internal SourceSaturationMask? SourceSaturation { get; } // preview-size capability
 }
 
 public sealed class PreviewBasePair : IDisposable
 {
     public BaseImage Interactive { get; } // pre-derived slider base
     public BaseImage? Large { get; }       // bounded resting-render base
+}
+
+internal sealed record PreviewSourceAnalysis(
+    HistogramData? RawHistogram,
+    SourceSaturationMask? SourceSaturation);
+
+internal sealed class PreviewBaseLease : IDisposable
+{
+    public BaseImage Base { get; }
+    public PreviewSourceAnalysis Analysis { get; }
 }
 
 public enum RenderIntent { Preview, Export }
@@ -164,7 +172,10 @@ public sealed record RenderOptions(
 public sealed record RenderRequest(
     BaseImage Base, EditSettings Settings, RenderIntent Intent,
     int? MaxDimension, RenderOptions Options,
-    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb); // RENDER.md §1.1
+    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb) // RENDER.md §1.1
+{
+    internal SourceSaturationMask? SourceSaturation { get; init; }
+}
 
 public sealed class RenderResult : IDisposable
 {
@@ -190,20 +201,21 @@ native-detail inspection is not part of this viewer.
 multiple renders but must dispose it only after those renders finish; disposal is
 idempotent and accessing `Pixels` afterward throws. A loader returning `null` retains
 ownership of any temporary image it created. `BaseImageInfo` is loader-produced factual
-metadata and consumers treat it as immutable.
-`RawHistogram` is a loader fact captured from the unpacked mosaic; it is not persisted.
-`SourceSaturation` is a loader-produced, per-base packed artifact. RAW derives it from
-the same unpacked-mosaic pass; JPEG/HEIC derive it from upright encoded samples before
-color normalization. Its absence is the highlight-warning capability signal.
-Because `HistogramData` is a class, generated `BaseImageInfo` record equality compares
-that member by reference. Consumers must not use whole-record equality for histogram
-content.
+metadata and consumers treat it as immutable. Preview loaders additionally return one
+immutable `PreviewSourceAnalysis`: RAW derives both fields from the same unpacked-mosaic
+pass; JPEG/HEIC derive only source saturation from upright encoded samples before color
+normalization. The coordinator installs pair and analysis atomically and exposes them
+only through a generation-matched lease, so stale work cannot mix artifacts with newer
+pixels. Full/export loads return only canonical pixels and render-required facts and do
+no histogram or saturation sampling. Source-saturation absence is the highlight-warning
+capability signal.
 
 ## 5. Service map
 
 | File | Role |
 |------|------|
 | `Services/BaseImage.cs` | `BaseImage`, `BaseImageInfo`, `BaseSourceKind`, `BaseDecodeSettings` |
+| `Services/PreviewBaseCoordinator.cs` + `.Leases.cs` | single-flight current-pair ownership and generation-matched analysis leases |
 | `Services/IBaseImageLoader.cs` + `BaseLoaderRouter.cs` | route by format |
 | `Services/GatedBaseImageLoader.cs` | live availability policy before source decode |
 | `Services/SourceAvailabilityService.cs` | cloud-file classification and read intent |

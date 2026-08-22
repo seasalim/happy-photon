@@ -137,9 +137,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private Bitmap? _previewImage;
 
     [ObservableProperty]
-    private bool _isBaseArming;
-
-    [ObservableProperty]
     private HistogramData? _histogram;
 
     [ObservableProperty]

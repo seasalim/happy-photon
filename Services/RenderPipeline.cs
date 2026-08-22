@@ -61,7 +61,7 @@ public sealed class RenderPipeline
                         {
                             var sourceSaturation =
                                 SourceSaturationMaskProjector.Project(
-                                    request.Base,
+                                    request.SourceSaturation,
                                     request.Settings,
                                     geometry,
                                     checked((int)display.Width),

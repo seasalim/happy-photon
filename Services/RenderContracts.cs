@@ -32,7 +32,10 @@ public sealed record RenderRequest(
     RenderIntent Intent,
     int? MaxDimension,
     RenderOptions Options,
-    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb);
+    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb)
+{
+    internal SourceSaturationMask? SourceSaturation { get; init; }
+}
 
 public sealed class RenderResult : IDisposable
 {

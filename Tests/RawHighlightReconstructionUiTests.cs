@@ -354,43 +354,62 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    [Fact]
-    public async Task ReplacementDecode_UsesDelayedArmingIndicator()
+    [AvaloniaFact]
+    public async Task SlowInitialPreview_UsesOneStatusActivityUntilFreshTaskSettles()
     {
-        using var catalog = _fx.CreateCatalog();
-        var vm = CreateViewModel(catalog);
-        var image = new ImageFile(_fx.Path("photo.dng"));
-        vm.SelectedImage = image;
-        var slow = new PreviewBaseRefreshState(
-            image,
-            requestId: 41,
-            isRefreshing: true);
+        using var catalog = await _fx.CreateCatalogAsync();
+        var vm = _fx.CreateViewModel(
+            catalog,
+            CreateSyntheticLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally));
+        var sourceStarted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSource = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        vm.ImageService.Previews.SourceWorkGateAsync = async () =>
+        {
+            sourceStarted.TrySetResult();
+            await releaseSource.Task;
+        };
 
-        vm.ApplyBaseRefreshState(slow);
+        try
+        {
+            vm.IsDevelopMode = true;
+            vm.SelectedImage = new ImageFile(_fx.Path("slow.png"));
+            await sourceStarted.Task.WaitAsync(TestWaits.Condition);
 
-        Assert.False(vm.IsBaseArming);
-        await TestWaits.UntilAsync(() => vm.IsBaseArming);
+            Assert.Equal(1, vm.InitialPreviewActivityCount);
+            Assert.True(vm.CaptureBackgroundActivitySnapshot().PreviewCount > 0);
+            var started = DateTimeOffset.UtcNow;
+            vm.PumpBackgroundActivity(started);
+            vm.PumpBackgroundActivity(
+                started + BackgroundActivityAggregator.ShowDelay);
 
-        vm.ApplyBaseRefreshState(new PreviewBaseRefreshState(
-            image,
-            slow.RequestId,
-            isRefreshing: false));
-        Assert.False(vm.IsBaseArming);
+            Assert.True(vm.BackgroundActivity.IsVisible);
+            Assert.Equal("Preparing preview", vm.BackgroundActivity.Label);
+            Assert.Equal(1, vm.BackgroundActivity.ActiveKindCount);
 
-        vm.ApplyBaseRefreshState(new PreviewBaseRefreshState(
-            image,
-            requestId: 42,
-            isRefreshing: true));
-        vm.ApplyBaseRefreshState(new PreviewBaseRefreshState(
-            image,
-            requestId: 42,
-            isRefreshing: false));
-        // Outlasts the 150ms arming delay to prove the superseded arm was
-        // dropped; waiting longer only strengthens the absence.
-        await Task.Delay(200);
-        Assert.False(vm.IsBaseArming);
+            releaseSource.SetResult();
+            await TestWaits.UntilAsync(() => vm.PreviewImage != null);
+            await TestWaits.UntilAsync(() =>
+                vm.InitialPreviewActivityCount == 0 &&
+                vm.CaptureBackgroundActivitySnapshot().PreviewCount == 0);
 
-        await vm.DisposeAsync();
+            var settled = started +
+                BackgroundActivityAggregator.ShowDelay +
+                TimeSpan.FromMilliseconds(1);
+            vm.PumpBackgroundActivity(settled);
+            vm.PumpBackgroundActivity(
+                settled + BackgroundActivityAggregator.HideDelay);
+            Assert.False(vm.BackgroundActivity.IsVisible);
+        }
+        finally
+        {
+            releaseSource.TrySetResult();
+            await vm.DisposeAsync();
+        }
     }
 
     public void Dispose() => _fx.Dispose();

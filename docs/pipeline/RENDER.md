@@ -236,7 +236,8 @@ Computed at preview scale when `Options.ComputeStats` (existing `HistogramServic
 bins stay 8-bit). Display-floor statistics sample the finalized display. Highlight
 statistics come from the loader-produced source-saturation artifact projected through
 the render geometry and final resize; tonal, color, profile, and effect math never
-redefines those flags.
+redefines those flags. `PreviewService` passes that artifact explicitly from the
+current `PreviewBaseLease.Analysis` on the render request; `BaseImage` does not own it.
 
 The render exports one BGRA8 buffer that is both the preview-bitmap source and the
 display-scope source. Histogram-active interaction accumulates only the four 8-bit
@@ -249,7 +250,8 @@ thumbnail histograms use the bitmap overload and never create waveform data.
 The selectable RAW histogram is deliberately outside that render stage: `RawBaseLoader`
 captures it from LibRaw's preserved post-`Unpack` mosaic before output configuration,
 white balance, demosaic, camera conversion, highlight reconstruction, and tone
-(DECODE.md §2). It walks only the visible window at `top_margin + row`,
+(DECODE.md §2), then installs it with the matching preview pair's source analysis. It
+walks only the visible window at `top_margin + row`,
 `left_margin + column` with stride `raw_pitch / sizeof(ushort)`; CFA phase and
 repeating black blocks use visible coordinates, and both green phases merge into green.
 
@@ -458,7 +460,11 @@ Preview rendering calculates the active display scope from the exact display-ref
 sRGB bytes used for bitmap conversion. Entry paints seed both scopes. Histogram-active
 ticks skip waveform accumulation and retain the last trace for an immediate scope
 switch; selecting Waveform schedules one current-generation render that replaces it
-with a coherent trace. For an edited
+with a coherent trace. A settings-matched q90 rendered-cache load likewise copies one
+BGRA buffer and derives its bitmap, both display scopes, and display-floor clipping
+without entering `RenderPipeline` or opening the source; a mismatched cache remains
+bitmap-only. Cached results never claim source-saturation clipping or a RAW histogram.
+For an edited
 RAW whose service render is still current, `PreviewService` places the detachable
 `RenderResult.Image` in the outcome's promotion lease. Only VM acceptance of a
 committed edited-state render from the current base commits that lease and starts the

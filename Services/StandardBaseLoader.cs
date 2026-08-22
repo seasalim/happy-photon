@@ -8,6 +8,8 @@ namespace HappyPhoton.Services;
 public sealed class StandardBaseLoader : IBaseImageLoader
 {
     private readonly Func<string, MagickReadSettings, MagickImage> _decode;
+    private readonly Func<MagickImage, ImageFile, CancellationToken,
+        SourceSaturationMask?> _captureSourceSaturation;
 
     public StandardBaseLoader()
         : this((path, settings) => new MagickImage(path, settings))
@@ -15,9 +17,13 @@ public sealed class StandardBaseLoader : IBaseImageLoader
     }
 
     internal StandardBaseLoader(
-        Func<string, MagickReadSettings, MagickImage> decode)
+        Func<string, MagickReadSettings, MagickImage> decode,
+        Func<MagickImage, ImageFile, CancellationToken,
+            SourceSaturationMask?>? captureSourceSaturation = null)
     {
         _decode = decode ?? throw new ArgumentNullException(nameof(decode));
+        _captureSourceSaturation = captureSourceSaturation ??
+            TryCaptureSourceSaturation;
     }
 
     public bool CanLoad(ImageFile file)
@@ -34,7 +40,7 @@ public sealed class StandardBaseLoader : IBaseImageLoader
     {
         var loaded = Load(file, decode, cancellationToken, preview: true);
         return loaded?.Pair is { } pair
-            ? BaseImageLoadOutcome.Loaded(pair)
+            ? BaseImageLoadOutcome.Loaded(pair, loaded.Analysis)
             : BaseImageLoadOutcome.Failed(BaseImageLoadFailure.DecodeFailed);
     }
 
@@ -83,7 +89,7 @@ public sealed class StandardBaseLoader : IBaseImageLoader
             }
 
             var sourceSaturation = preview
-                ? TryCaptureSourceSaturation(image, file, cancellationToken)
+                ? _captureSourceSaturation(image, file, cancellationToken)
                 : null;
             var profile = image.GetColorProfile();
             var hadProfile = profile != null;
@@ -116,14 +122,23 @@ public sealed class StandardBaseLoader : IBaseImageLoader
                 var pair = PreviewBasePairFactory.Create(
                     image,
                     info,
-                    cancellationToken,
-                    sourceSaturation);
-                return new LoadedBases(pair, null);
+                    cancellationToken);
+                var analysis = sourceSaturation == null
+                    ? PreviewSourceAnalysis.Empty
+                    : new PreviewSourceAnalysis(
+                        RawHistogram: null,
+                        sourceSaturation.Resize(
+                            checked((int)pair.Interactive.Pixels.Width),
+                            checked((int)pair.Interactive.Pixels.Height)));
+                return new LoadedBases(pair, null, analysis);
             }
 
             var full = new BaseImage(image, info);
             image = null;
-            return new LoadedBases(null, full);
+            return new LoadedBases(
+                null,
+                full,
+                PreviewSourceAnalysis.Empty);
         }
         catch (OperationCanceledException)
         {
@@ -265,5 +280,8 @@ public sealed class StandardBaseLoader : IBaseImageLoader
         int Height,
         int Orientation);
 
-    private sealed record LoadedBases(PreviewBasePair? Pair, BaseImage? Full);
+    private sealed record LoadedBases(
+        PreviewBasePair? Pair,
+        BaseImage? Full,
+        PreviewSourceAnalysis Analysis);
 }

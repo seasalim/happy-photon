@@ -190,8 +190,7 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable
                     ColorSpace = ColorSpace.RGB
                 },
                 new BaseImageInfo(BaseSourceKind.RawLibRaw, true, decode,
-                    null, null, 5500, 0, false, null, 1, 32, 24,
-                    RawHistogram: LastHistogram));
+                    null, null, 5500, 0, false, null, 1, 32, 24));
         }
 
         BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
@@ -199,7 +198,8 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable
             CancellationToken cancellationToken) =>
             BaseImageLoadOutcome.FromImage(
                 LoadPreviewBase(file, decode, cancellationToken),
-                BaseImageLoadFailure.DecodeFailed);
+                BaseImageLoadFailure.DecodeFailed,
+                new PreviewSourceAnalysis(LastHistogram, null));
 
         public BaseImage? LoadFullBase(ImageFile file, BaseDecodeSettings decode,
             CancellationToken cancellationToken) => throw new NotSupportedException();

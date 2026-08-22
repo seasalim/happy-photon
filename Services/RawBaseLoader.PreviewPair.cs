@@ -32,5 +32,6 @@ public sealed partial class RawBaseLoader
 
     private sealed record LoadedBases(
         PreviewBasePair? Pair,
-        BaseImage? Full);
+        BaseImage? Full,
+        PreviewSourceAnalysis Analysis);
 }

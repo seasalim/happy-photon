@@ -10,22 +10,21 @@ internal sealed record SourceSaturationProjection(
 
 internal static class SourceSaturationMaskProjector
 {
-    private static readonly ConditionalWeakTable<BaseImage, ProjectionSlot> Cache = new();
+    private static readonly ConditionalWeakTable<SourceSaturationMask, ProjectionSlot>
+        Cache = new();
 
     internal static SourceSaturationProjection? Project(
-        BaseImage image,
+        SourceSaturationMask? source,
         EditSettings settings,
         RenderGeometryTrace geometry,
         int targetWidth,
         int targetHeight)
     {
-        ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(settings);
-        var source = image.SourceSaturation;
         if (source == null) return null;
 
         var key = ProjectionKey.Create(settings, geometry, targetWidth, targetHeight);
-        var slot = Cache.GetOrCreateValue(image);
+        var slot = Cache.GetOrCreateValue(source);
         lock (slot)
         {
             if (slot.Key == key && slot.Value != null)

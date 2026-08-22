@@ -47,6 +47,16 @@ public sealed partial class PreviewService
 
         try
         {
+            if (SourceWorkGateAsync is { } sourceGate)
+            {
+                await sourceGate().ConfigureAwait(false);
+            }
+            if (!IsCurrentSurfaceGeneration(surfaceGeneration))
+            {
+                return PreviewArtifacts.Empty(
+                    outcomeGeneration,
+                    imageFile.IsRaw);
+            }
             var decode = BaseDecodeSettings.From(settingsSnapshot);
             if (settingsSnapshot.RawProfile != null)
             {
@@ -117,6 +127,7 @@ public sealed partial class PreviewService
             var rendered = await Task.Run(
                 () => Render(
                     snapshot.Base,
+                    snapshot.Analysis.SourceSaturation,
                     settingsSnapshot,
                     thumbnailRequest,
                     skipHistogram,
@@ -167,6 +178,7 @@ public sealed partial class PreviewService
             return rendered.DetachArtifacts(
                 outcomeGeneration,
                 snapshot.Base.Info,
+                snapshot.Analysis,
                 snapshot.IsStale,
                 promotionLease);
         }

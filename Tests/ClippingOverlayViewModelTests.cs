@@ -167,16 +167,6 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
             BaseDecodeSettings decode,
             CancellationToken cancellationToken)
         {
-            SourceSaturationMask? sourceSaturation = null;
-            if (_includeSourceSaturation)
-            {
-                sourceSaturation = new SourceSaturationMask(64, 48);
-                for (var y = 0; y < sourceSaturation.Height; y++)
-                for (var x = 0; x < sourceSaturation.Width; x++)
-                {
-                    sourceSaturation.SetFlags(x, y, 7);
-                }
-            }
             return new BaseImage(
                 new MagickImage(
                     _black ? MagickColors.Black : MagickColors.White,
@@ -194,18 +184,30 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
                     null,
                     1,
                     64,
-                    48),
-                sourceSaturation);
+                    48));
         }
 
         BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
             ImageFile file,
             BaseDecodeSettings decode,
-            CancellationToken cancellationToken) =>
-            BaseImageLoadOutcome.Loaded(LoadPreviewBase(
-                file,
-                decode,
-                cancellationToken));
+            CancellationToken cancellationToken)
+        {
+            SourceSaturationMask? sourceSaturation = null;
+            if (_includeSourceSaturation)
+            {
+                sourceSaturation = new SourceSaturationMask(64, 48);
+                for (var y = 0; y < sourceSaturation.Height; y++)
+                for (var x = 0; x < sourceSaturation.Width; x++)
+                {
+                    sourceSaturation.SetFlags(x, y, 7);
+                }
+            }
+            return BaseImageLoadOutcome.Loaded(
+                new PreviewBasePair(
+                    LoadPreviewBase(file, decode, cancellationToken),
+                    large: null),
+                new PreviewSourceAnalysis(null, sourceSaturation));
+        }
 
         public BaseImage? LoadFullBase(
             ImageFile file,

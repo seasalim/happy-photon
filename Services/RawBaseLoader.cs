@@ -60,7 +60,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
 
         var loaded = Load(file, decode, preview: true, cancellationToken);
         return loaded?.Pair is { } pair
-            ? BaseImageLoadOutcome.Loaded(pair)
+            ? BaseImageLoadOutcome.Loaded(pair, loaded.Analysis)
             : BaseImageLoadOutcome.Failed(
                 BaseImageLoadFailure.UnsupportedRaw);
     }
@@ -128,41 +128,46 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             context.Unpack(cancellationToken);
             var cameraFacts = RawCameraFactSnapshot.Copy(
                 context.GetCameraFacts(cancellationToken));
-            var histogramStopwatch = Stopwatch.StartNew();
-            HistogramData? rawHistogram;
+            HistogramData? rawHistogram = null;
             SourceSaturationMask? sensorSaturation = null;
-            try
+            if (preview)
             {
-                if (_rawHistogramSampler != null)
+                var histogramStopwatch = Stopwatch.StartNew();
+                try
                 {
-                    rawHistogram = _rawHistogramSampler(context, cancellationToken);
+                    if (_rawHistogramSampler != null)
+                    {
+                        rawHistogram = _rawHistogramSampler(
+                            context,
+                            cancellationToken);
+                    }
+                    else
+                    {
+                        var sensorArtifacts = RawSensorHistogram
+                            .SampleWithSaturation(
+                                context,
+                                Math.Max(1, (fullWidth + 1) / 2),
+                                Math.Max(1, (fullHeight + 1) / 2),
+                                cancellationToken);
+                        rawHistogram = sensorArtifacts?.Histogram;
+                        sensorSaturation = sensorArtifacts?.SourceSaturation;
+                    }
                 }
-                else if (preview)
+                catch (OperationCanceledException)
                 {
-                    var sensorArtifacts = RawSensorHistogram.SampleWithSaturation(
-                        context,
-                        Math.Max(1, (fullWidth + 1) / 2),
-                        Math.Max(1, (fullHeight + 1) / 2),
-                        cancellationToken);
-                    rawHistogram = sensorArtifacts?.Histogram;
-                    sensorSaturation = sensorArtifacts?.SourceSaturation;
+                    throw;
                 }
-                else
+                catch (Exception exception)
                 {
-                    rawHistogram = RawSensorHistogram.Sample(
-                        context,
-                        cancellationToken);
+                    ImageServiceHelpers.LogDebug(nameof(RawBaseLoader),
+                        $"RAW histogram failed: {exception.Message}", file.FilePath);
                 }
+                ImageServiceHelpers.LogPerformance(
+                    nameof(RawBaseLoader),
+                    "RawHistogram",
+                    histogramStopwatch.ElapsedMilliseconds,
+                    file.FilePath);
             }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception exception)
-            {
-                ImageServiceHelpers.LogDebug(nameof(RawBaseLoader),
-                    $"RAW histogram failed: {exception.Message}", file.FilePath);
-                rawHistogram = null;
-            }
-            ImageServiceHelpers.LogPerformance(nameof(RawBaseLoader), "RawHistogram",
-                histogramStopwatch.ElapsedMilliseconds, file.FilePath);
             cancellationToken.ThrowIfCancellationRequested();
             context.ConfigureOutput(ConfigureOutput(decode, preview), cancellationToken);
             context.Process(cancellationToken);
@@ -249,8 +254,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 ExifOrientationApplied: orientation,
                 orientedFullSize.Width,
                 orientedFullSize.Height,
-                SourceExposureBiasEv: sourceExposureBiasEv,
-                RawHistogram: rawHistogram)
+                SourceExposureBiasEv: sourceExposureBiasEv)
             {
                 DcpProfile = dcp.Payload,
                 ProfileToken = dcp.Token,
@@ -262,13 +266,20 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             };
             PreviewBasePair? pair = null;
             BaseImage? full = null;
+            var analysis = PreviewSourceAnalysis.Empty;
             if (preview)
             {
                 pair = PreviewBasePairFactory.Create(
                     pixels,
                     info,
-                    cancellationToken,
-                    sourceSaturation);
+                    cancellationToken);
+                analysis = rawHistogram == null && sourceSaturation == null
+                    ? PreviewSourceAnalysis.Empty
+                    : new PreviewSourceAnalysis(
+                        rawHistogram,
+                        sourceSaturation?.Resize(
+                            checked((int)pair.Interactive.Pixels.Width),
+                            checked((int)pair.Interactive.Pixels.Height)));
             }
             else
             {
@@ -285,7 +296,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                     ? $"size={pair!.Interactive.Pixels.Width}x{pair.Interactive.Pixels.Height};" +
                       $"large={pair.Large!.Pixels.Width}x{pair.Large.Pixels.Height}"
                     : $"size={full!.Pixels.Width}x{full.Pixels.Height}");
-            return new LoadedBases(pair, full);
+            return new LoadedBases(pair, full, analysis);
         }
         catch (OperationCanceledException)
         {
