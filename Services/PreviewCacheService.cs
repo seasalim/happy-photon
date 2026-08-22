@@ -81,6 +81,24 @@ public sealed class PreviewCacheService : IAsyncDisposable
         }
     }
 
+    internal bool HasSettingsMatchedEntry(
+        ImageFile imageFile,
+        string settingsHash,
+        DateTime? sourceWriteTime = null)
+    {
+        if (!IsCacheValid(imageFile)) return false;
+        try
+        {
+            if (sourceWriteTime.HasValue &&
+                File.GetLastWriteTimeUtc(imageFile.FilePath) != sourceWriteTime.Value)
+                return false;
+            return string.Equals(
+                File.ReadAllText(GetMetadataPath(imageFile)).Trim(),
+                settingsHash, StringComparison.Ordinal);
+        }
+        catch { return false; }
+    }
+
     public void QueueSaveToCache(
         ImageFile imageFile,
         MagickImage image,

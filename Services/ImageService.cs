@@ -114,7 +114,8 @@ public class ImageService : IAsyncDisposable
             renderPipeline,
             new PreviewCacheService(catalogService),
             renderedThumbnailCache,
-            dcpProfiles: _dcpProfiles);
+            dcpProfiles: _dcpProfiles,
+            sourceAvailability: _availabilityService);
         _exportService = new ImageExportService(
             renderPipeline,
             gatedBaseLoader,

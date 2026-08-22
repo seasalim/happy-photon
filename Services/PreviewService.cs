@@ -14,8 +14,10 @@ public sealed partial class PreviewService : IAsyncDisposable
     private readonly PreviewCacheService _previewCache;
     private readonly RenderedThumbnailCacheService _renderedThumbnailCache;
     private readonly PreviewBaseCoordinator _baseCoordinator;
+    private readonly IBaseImageLoader _baseLoader;
     private readonly RenderPipeline _renderPipeline;
     private readonly DcpProfileService _dcpProfiles;
+    private readonly ISourceAvailabilityService _sourceAvailability;
     private readonly bool _createRenderedThumbnail;
     private readonly object _renderedSync = new();
     private readonly object _refreshSync = new();
@@ -38,6 +40,7 @@ public sealed partial class PreviewService : IAsyncDisposable
     public event EventHandler<PreviewBaseRefreshState>?
         BaseRefreshStateChanged;
     public event Action? RenderedThumbnailWorkStarted;
+    internal event Action? AdjacentWarmWorkStarted;
     internal event Action? RenderStarted;
     internal event Action? PreviewConverted;
     internal event Action? RenderedThumbnailCreated;
@@ -59,7 +62,8 @@ public sealed partial class PreviewService : IAsyncDisposable
             lock (_refreshSync) pending = _pendingRefreshes.Count;
             return _baseCoordinator.DecodeTaskCount +
                 pending + Volatile.Read(ref _activeRefreshRenders) +
-                Volatile.Read(ref _activeRestingRenders);
+                Volatile.Read(ref _activeRestingRenders) +
+                Volatile.Read(ref _activeAdjacentWarmWorkers);
         }
     }
 
@@ -83,17 +87,21 @@ public sealed partial class PreviewService : IAsyncDisposable
         PreviewCacheService? previewCache = null,
         RenderedThumbnailCacheService? renderedThumbnailCache = null,
         bool createRenderedThumbnail = true,
-        DcpProfileService? dcpProfiles = null)
+        DcpProfileService? dcpProfiles = null,
+        ISourceAvailabilityService? sourceAvailability = null)
     {
         _catalogService = catalogService;
         _previewCache = previewCache ?? new PreviewCacheService(catalogService);
         _renderedThumbnailCache = renderedThumbnailCache ??
             new RenderedThumbnailCacheService(catalogService);
+        _baseLoader = baseLoader;
         _baseCoordinator = new PreviewBaseCoordinator(baseLoader);
         _renderPipeline = renderPipeline;
         _createRenderedThumbnail = createRenderedThumbnail;
+        _sourceAvailability = sourceAvailability ??
+            new SourceAvailabilityService();
         _dcpProfiles = dcpProfiles ?? new DcpProfileService(
-            new SourceAvailabilityService());
+            _sourceAvailability);
     }
 
     public async Task<CachedPreviewBitmap?> LoadCachedPreviewAsync(
@@ -112,7 +120,11 @@ public sealed partial class PreviewService : IAsyncDisposable
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                using var cached = _previewCache.LoadRenderedPreview(imageFile);
+                var expectedHash = RenderSettingsHash.Compute(settingsSnapshot);
+                using var cached = TryLoadAdjacentWarm(
+                        imageFile,
+                        expectedHash) ??
+                    _previewCache.LoadRenderedPreview(imageFile);
                 if (cached == null)
                 {
                     return null;
@@ -120,7 +132,7 @@ public sealed partial class PreviewService : IAsyncDisposable
 
                 var settingsMatch = string.Equals(
                     cached.SettingsHash,
-                    RenderSettingsHash.Compute(settingsSnapshot),
+                    expectedHash,
                     StringComparison.Ordinal);
                 var width = checked((int)cached.Image.Width);
                 var height = checked((int)cached.Image.Height);
@@ -371,6 +383,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         }
 
         ClearPreviewCache();
+        await DisposeAdjacentWarmAsync();
         await WaitForRestingRenderTasksAsync();
         await WaitForRenderedThumbnailTasksAsync();
         await _baseCoordinator.DisposeAsync();

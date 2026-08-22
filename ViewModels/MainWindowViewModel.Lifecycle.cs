@@ -40,6 +40,7 @@ public partial class MainWindowViewModel
             Task.Delay(TimeSpan.FromSeconds(2)));
 
         CancelAndDispose(ref _previewDebounce);
+        CancelAdjacentPreviewWarm(true, dropRetained: true);
         CancelAndDispose(ref _histogramDebounce);
         CancelAndDispose(ref _thumbnailDebounce);
         CancelRestingPreview(clearParent: true);
@@ -56,6 +57,8 @@ public partial class MainWindowViewModel
             previews.BaseRefreshStateChanged -= OnBaseRefreshStateChanged;
             previews.RenderedThumbnailWorkStarted -=
                 OnRenderedThumbnailWorkStarted;
+            previews.AdjacentWarmWorkStarted -=
+                OnAdjacentWarmWorkStarted;
             await _imageService.Value.DisposeAsync();
         }
 

@@ -198,6 +198,9 @@ public partial class MainWindowViewModel
         SignalBackgroundActivityStarted();
     }
 
+    private void OnAdjacentWarmWorkStarted() =>
+        SignalBackgroundActivityStarted();
+
     private void OnBackgroundActivityTimerTick(object? sender, EventArgs e) =>
         PumpBackgroundActivity();
 

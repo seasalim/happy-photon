@@ -78,6 +78,11 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
    Cached output may be displayed without source content. Only a single-image
    **Download and open** action or a confirmed export batch may use approved hydration
    intent; agents always remain background intent.
+10. **Adjacent warming is cache-only speculation.** After a settled Develop paint, at
+   most one locally readable neighbor is decoded and rendered through the normal
+   pipeline. It retains no base or source analysis and can reach the surface only as a
+   settings- and source-matched rendered-cache entry through the guarded cached
+   outcome path.
 
 ## 3. Stage diagram
 

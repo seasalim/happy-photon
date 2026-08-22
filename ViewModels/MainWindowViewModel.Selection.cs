@@ -9,6 +9,8 @@ public partial class MainWindowViewModel
 {
     partial void OnSelectedImageChanged(ImageFile? oldValue, ImageFile? newValue)
     {
+        UpdateAdjacentWarmDirection(oldValue, newValue);
+        CancelAdjacentPreviewWarm(invalidateWorker: true);
         var surfaceGeneration = ReserveRenderOutcome(
             PreviewSurfaceIntent.Edited,
             promotionEligible: true);
@@ -130,6 +132,7 @@ public partial class MainWindowViewModel
 
     private void OnLibraryFilterChanged(object? sender, EventArgs e)
     {
+        CancelAdjacentPreviewWarm(invalidateWorker: true);
         if (!Library.ContainsVisible(SelectedImage))
         {
             SelectedImage = Library.FirstVisible();

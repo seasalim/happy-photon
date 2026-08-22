@@ -98,6 +98,11 @@ public partial class MainWindowViewModel
             return;
         }
 
+        CancelAdjacentPreviewWarm(
+            invalidateWorker: true,
+            dropRetained: true,
+            imageFile: image);
+
         var isSelected = ReferenceEquals(SelectedImage, image);
         var surfaceGeneration = isSelected
             ? ReserveRenderOutcome()

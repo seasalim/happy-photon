@@ -223,10 +223,16 @@ public partial class MainWindowViewModel
         return Interlocked.Increment(ref _latestPreviewOutcomeGeneration);
     }
 
-    private long RequestEditedRender() =>
-        ReserveRenderOutcome(
+    private long RequestEditedRender()
+    {
+        CancelAdjacentPreviewWarm(
+            invalidateWorker: true,
+            dropRetained: true,
+            imageFile: SelectedImage);
+        return ReserveRenderOutcome(
             PreviewSurfaceIntent.Edited,
             promotionEligible: true);
+    }
 
     private void ApplySelectionOutcome(ImageFile? image, long generation)
     {

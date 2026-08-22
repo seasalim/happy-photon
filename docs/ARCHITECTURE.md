@@ -542,6 +542,12 @@ threading and ownership view:
   bitmap-only. Painting either cache outcome never opens an embedded profile or
   hydrates a source, and availability is rechecked immediately before every profile
   content open.
+- After a settled Develop paint, a capacity-one speculative worker may render the one
+  uncached local neighbor in the current travel direction. It never joins the current
+  base coordinator or outcome channel: its base pair is disposed after rendering and
+  its single encoded handoff is consumed by the settings-matched cached-outcome path.
+  Selection cancels in-flight work without waiting; edits, availability, folder/view
+  changes, and shutdown invalidate its ownership.
 - Develop has one VM-owned render-outcome channel. Selection and availability changes
   synchronously advance its generation and clear the surface; state-defining renders
   publish bitmap, histogram/waveform, clipping, capability, profile, as-shot WB, and
@@ -591,7 +597,7 @@ The status bar pulls one constant-size activity snapshot at 4 Hz, and only while
 activity epoch is open. It reads worker-owned integer state: the initial thumbnail
 batch flag, scheduler desired count, operation-level direct thumbnail tasks, rendered
 thumbnail tasks, the complete initial preview task (cached race through first coherent
-fresh render), preview decode/refresh tasks, cache queues plus writer-in-hand state,
+fresh render), preview decode/refresh/adjacent-warm tasks, cache queues plus writer-in-hand state,
 and unique metadata loads. Burst analysis and UI or agent exports contribute one outer
 scope per batch, with processed/total progress; metadata remains accounted but is
 presentation-suppressed while a burst or export scope already explains it.
@@ -627,6 +633,7 @@ sampler.
 | RAW sensor histogram | Preview decode worker | One visible post-Unpack pass; installed with lease analysis; full/export skip it |
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
 | Resting preview render | Threadpool, at most 2 managed workers | Parent interactive generation + decode key + resting serial; edit token cancels |
+| Adjacent preview warm | Long-running background task, capacity one | Settled Develop paint; cancel-and-drop replacement semantics; one encoded cache handoff |
 | Display histogram + waveform | Preview render worker, at most 2 managed workers | Exact preview BGRA8 buffer; bounded row-parallel accumulation; histogram ticks skip inactive waveform accumulation |
 | Library histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |

@@ -65,6 +65,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 OnBaseRefreshStateChanged;
             service.Previews.RenderedThumbnailWorkStarted +=
                 OnRenderedThumbnailWorkStarted;
+            service.Previews.AdjacentWarmWorkStarted +=
+                OnAdjacentWarmWorkStarted;
             return service;
         });
         _loadMetadataAsync = loadMetadataAsync ??
@@ -400,6 +402,10 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         if (_isLoadingImage || SelectedImage == null) return;
 
+        CancelAdjacentPreviewWarm(
+            invalidateWorker: true,
+            dropRetained: true,
+            imageFile: SelectedImage);
         var generation = ReserveRenderOutcome(
             PreviewSurfaceIntent.Edited,
             promotionEligible: false);

@@ -416,6 +416,18 @@ executes each test in its own Release process; apply the same
 one-test-per-process rule to any new `HAPPY_PHOTON_PERF` class with latency
 budgets, and never loosen a budget to make a single-process class run pass:
 
+`AdjacentPreviewPerformanceTests` drives the real `SelectedImage` cached/fresh race
+for copied JPEG and RAW fixtures. It compares warm and disabled adjacent paints,
+selects a different uncached image while a warm is active, samples private memory,
+and checks activity, decode uniqueness, and single-pair retention. Run it alone:
+
+```powershell
+$env:HAPPY_PHOTON_PERF='1'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
+  --filter FullyQualifiedName~AdjacentPreviewPerformanceTests `
+  --logger "console;verbosity=detailed"
+```
+
 `WaveformTickPerformanceTests.WaveformActiveSliderTickLatency_WhenEnabled`
 drives `ApplyEditsToPreviewArtifactsAsync` over the Display P3 JPEG fixture and
 asserts waveform presence for the active measurement and absence for its paired
