@@ -112,8 +112,8 @@ A–Z, then built-in. Browse adds one local `.dcp`; Refresh invalidates discover
 metadata and re-resolves the selection. A terminal empty line waits for both the
 current-identity Adobe scan and the image-profile pass; a completed Adobe scan with
 readable profiles but no identity matches reports the probed count instead of claiming
-the machine has no profiles. Until the required scope completes, the status stays
-neutral/scanning. Hand-picked entries show their trimmed, otherwise verbatim declared
+the machine has no profiles. Until the required scope completes, the status stays neutral: awaiting
+camera identity while none has arrived, scanning otherwise. Hand-picked entries show their trimmed, otherwise verbatim declared
 camera model as muted subtext and in the closed-row profile/body/source tooltip.
 Loading, honest empty, unavailable, corrupt,
 hash-mismatch, unsupported, and missing-WB fallback are terminal visible states;

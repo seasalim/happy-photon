@@ -49,6 +49,8 @@ internal static class RawProfilePickerProjector
         "NO READABLE CAMERA PROFILES FOUND IN ADOBE FOLDERS OR THIS FILE";
     internal const string ScanningMessage =
         "SCANNING LOCAL CAMERA PROFILES…";
+    internal const string AwaitingIdentityMessage =
+        "AWAITING CAMERA IDENTITY…";
     internal const string RejectionFallback =
         "The selected profile was rejected; using built-in characterization.";
 
@@ -238,7 +240,10 @@ internal static class RawProfilePickerProjector
         {
             if (!discoveryState.AdobeScanCompleted)
             {
-                return ScanningMessage;
+                // Without a camera identity no Adobe scan can run.
+                return string.IsNullOrWhiteSpace(cameraIdentity?.Normalized)
+                    ? AwaitingIdentityMessage
+                    : ScanningMessage;
             }
             if (discoveryState.AdobeIdentityMatchCount == 0 &&
                 discoveryState.AdobeProfilesScanned > 0)

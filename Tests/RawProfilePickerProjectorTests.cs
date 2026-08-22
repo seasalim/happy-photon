@@ -119,6 +119,17 @@ public sealed class RawProfilePickerProjectorTests
     public void EmptyClaimsRequireTheirBackingDiscoveryScopes()
     {
         Assert.Equal(
+            RawProfilePickerProjector.AwaitingIdentityMessage,
+            RawProfilePickerProjector.Project(
+                isRawCapable: true,
+                selection: null,
+                discovered: [],
+                cameraIdentity: null,
+                renderState: null,
+                RawProfileDiscoveryState.Empty,
+                isLoading: false,
+                transientError: null).StatusMessage);
+        Assert.Equal(
             RawProfilePickerProjector.ScanningMessage,
             Project(
                 selection: null,

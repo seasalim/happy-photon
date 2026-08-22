@@ -67,7 +67,7 @@ public sealed class RawProfileTransitionTests : IDisposable
         vm.SelectedImage = image;
         await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
         Assert.Equal(
-            RawProfilePickerProjector.ScanningMessage,
+            RawProfilePickerProjector.AwaitingIdentityMessage,
             vm.RawProfilePickerState.StatusMessage);
         var gate = DiscoveryGate(vm);
 

@@ -100,7 +100,7 @@ public sealed class RawProfilePickerControlTests : IDisposable
             Dispatcher.UIThread.RunJobs();
 
             Assert.Equal(
-                RawProfilePickerProjector.ScanningMessage,
+                RawProfilePickerProjector.AwaitingIdentityMessage,
                 picker.FindControl<TextBlock>("RawProfileStatusText")!.Text);
             Assert.NotEqual(
                 RawProfilePickerProjector.NoProfilesMessage,
