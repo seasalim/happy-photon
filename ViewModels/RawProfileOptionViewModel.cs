@@ -5,7 +5,7 @@ namespace HappyPhoton.ViewModels;
 
 public sealed class RawProfileOptionViewModel
 {
-    internal const string BuiltInLabel = "Happy Photon Matrix";
+    internal const string BuiltInLabel = "Happy Photon Standard";
 
     public string Label { get; }
     public bool CanSelect { get; }
