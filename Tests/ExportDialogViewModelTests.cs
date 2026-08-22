@@ -56,6 +56,39 @@ public sealed class ExportDialogViewModelTests
         Assert.Equal("example_photo.png", viewModel.PreviewFileName);
     }
 
+    [Theory]
+    [InlineData(ExportFormat.Png, ".png")]
+    [InlineData(ExportFormat.Tiff, ".tif")]
+    public void LosslessFormats_DisableQualityAndUpdatePreview(
+        ExportFormat format,
+        string extension)
+    {
+        using var viewModel = new ExportDialogViewModel(
+            new ExportSettings(),
+            1);
+
+        viewModel.SelectedFormatOption = viewModel.FormatOptions.Single(
+            option => option.Format == format);
+
+        Assert.False(viewModel.IsQualityAvailable);
+        Assert.True(viewModel.IsLosslessFormat);
+        Assert.Equal($"example_photo{extension}", viewModel.PreviewFileName);
+    }
+
+    [Fact]
+    public void OutputSharpeningChoice_RoundTripsAllModes()
+    {
+        var settings = new ExportSettings();
+        using var viewModel = new ExportDialogViewModel(settings, 1);
+
+        viewModel.IsOutputSharpeningOff = true;
+        Assert.Equal(OutputSharpeningMode.Off, settings.OutputSharpening);
+        viewModel.IsOutputSharpeningPrint = true;
+        Assert.Equal(OutputSharpeningMode.Print, settings.OutputSharpening);
+        viewModel.IsOutputSharpeningScreen = true;
+        Assert.Equal(OutputSharpeningMode.Screen, settings.OutputSharpening);
+    }
+
     [Fact]
     public void OutputColorSpace_DefaultsToSrgbAndCanSelectDisplayP3()
     {

@@ -2,6 +2,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace HappyPhoton.Models;
 
+public enum OutputSharpeningMode
+{
+    Off,
+    Screen,
+    Print
+}
+
 /// <summary>
 /// Settings for batch export operations.
 /// </summary>
@@ -41,7 +48,7 @@ public partial class ExportSettings : ObservableObject
     private bool _stripLocationData;
 
     [ObservableProperty]
-    private bool _outputSharpening = true;
+    private OutputSharpeningMode _outputSharpening = OutputSharpeningMode.Screen;
 
     /// <summary>
     /// Generate output filename based on naming pattern.
@@ -62,6 +69,7 @@ public partial class ExportSettings : ObservableObject
     {
         ExportFormat.Png => ".png",
         ExportFormat.Webp => ".webp",
+        ExportFormat.Tiff => ".tif",
         _ => ".jpg"
     };
 

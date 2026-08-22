@@ -18,8 +18,14 @@ public sealed class OutputSharpeningExportTests : IDisposable
         var enabledFolder = Path.Combine(_root, "enabled");
         var disabledFolder = Path.Combine(_root, "disabled");
 
-        await ExportAsync(sourcePath, enabledFolder, outputSharpening: true);
-        await ExportAsync(sourcePath, disabledFolder, outputSharpening: false);
+        await ExportAsync(
+            sourcePath,
+            enabledFolder,
+            OutputSharpeningMode.Screen);
+        await ExportAsync(
+            sourcePath,
+            disabledFolder,
+            OutputSharpeningMode.Off);
 
         Assert.Equal(
             ReadRgb(Path.Combine(enabledFolder, "hi-res", "edge.png")),
@@ -39,13 +45,13 @@ public sealed class OutputSharpeningExportTests : IDisposable
         await ExportAsync(
             sourcePath,
             enabledFolder,
-            outputSharpening: true,
+            OutputSharpeningMode.Screen,
             hiRes: false,
             webMaxSize: 500);
         await ExportAsync(
             sourcePath,
             disabledFolder,
-            outputSharpening: false,
+            OutputSharpeningMode.Off,
             hiRes: false,
             webMaxSize: 500);
 
@@ -85,7 +91,7 @@ public sealed class OutputSharpeningExportTests : IDisposable
     private static async Task ExportAsync(
         string sourcePath,
         string outputFolder,
-        bool outputSharpening,
+        OutputSharpeningMode outputSharpening,
         bool hiRes = true,
         int webMaxSize = 200)
     {

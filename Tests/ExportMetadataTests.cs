@@ -199,6 +199,7 @@ public sealed class ExportMetadataTests : IDisposable
     [InlineData(ExportFormat.Jpeg, ".jpg")]
     [InlineData(ExportFormat.Png, ".png")]
     [InlineData(ExportFormat.Webp, ".webp")]
+    [InlineData(ExportFormat.Tiff, ".tif")]
     public void Encode_AllFormatsKeepNormalizedExif(
         ExportFormat format,
         string extension)
@@ -207,7 +208,8 @@ public sealed class ExportMetadataTests : IDisposable
             _tempDirectory,
             "missing.dng"))
         {
-            CameraMake = "Raw Camera Co"
+            CameraMake = "Raw Camera Co",
+            DateTaken = new DateTime(2025, 11, 12, 13, 14, 15)
         };
         using var destination = new MagickImage(
             MagickColors.Blue,
@@ -228,6 +230,20 @@ public sealed class ExportMetadataTests : IDisposable
             outputPath);
 
         using var result = new MagickImage(outputPath);
+        if (format == ExportFormat.Tiff)
+        {
+            Assert.Equal("Raw Camera Co", result.GetAttribute("tiff:make"));
+            Assert.Equal(OrientationType.TopLeft, result.Orientation);
+            Assert.Equal(
+                "Happy Photon 9.8.7",
+                result.GetAttribute("tiff:software"));
+            Assert.Equal(
+                "2025:11:12 13:14:15",
+                result.GetAttribute("exif:DateTimeOriginal"));
+            Assert.NotNull(result.GetColorProfile());
+            return;
+        }
+
         var profile = result.GetExifProfile();
         Assert.NotNull(profile);
         Assert.Equal(

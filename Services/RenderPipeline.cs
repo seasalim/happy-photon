@@ -41,7 +41,7 @@ public sealed class RenderPipeline
                 request.Intent == RenderIntent.Preview
                     ? OutputColorSpace.Srgb
                     : request.OutputColorSpace,
-                outputSharpening: false,
+                OutputSharpeningMode.Off,
                 wasResized: false,
                 detailBandPixelLimit,
                 request.Settings.Effects);

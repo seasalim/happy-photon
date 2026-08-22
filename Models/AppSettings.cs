@@ -9,7 +9,8 @@ public class AppSettings
     public LibraryThumbnailSize LibraryThumbnailSize { get; set; } = LibraryThumbnailSize.Medium;
     public AppTheme AppTheme { get; set; } = AppTheme.Dark;
     public bool StripLocationData { get; set; }
-    public bool OutputSharpening { get; set; } = true;
+    public OutputSharpeningMode OutputSharpening { get; set; } =
+        OutputSharpeningMode.Screen;
     public bool McpServerEnabled { get; set; }
     public string? McpToken { get; set; }
 }

@@ -148,12 +148,13 @@
                         <StackPanel Grid.Column="2" Spacing="8">
                             <TextBlock Text="QUALITY" Classes="section-label"/>
                             <Grid ColumnDefinitions="*,52"
-                                  MinHeight="40"
-                                  IsVisible="{Binding IsQualityAvailable}">
-                                <Slider Minimum="1"
+                                  MinHeight="40">
+                                <Slider x:Name="QualitySlider"
+                                        Minimum="1"
                                         Maximum="100"
                                         TickFrequency="1"
                                         IsSnapToTickEnabled="True"
+                                        IsEnabled="{Binding IsQualityAvailable}"
                                         Value="{Binding Settings.Quality, Mode=TwoWay}"
                                         VerticalAlignment="Center"
                                         AutomationProperties.Name="Export quality"/>
@@ -162,15 +163,12 @@
                                            FontFamily="{StaticResource FontLabel}"
                                            Foreground="{StaticResource Primary}"
                                            HorizontalAlignment="Right"
-                                           VerticalAlignment="Center"/>
+                                           VerticalAlignment="Center"
+                                           IsEnabled="{Binding IsQualityAvailable}"/>
                             </Grid>
-                            <Border Classes="field-surface"
-                                    MinHeight="40"
-                                    IsVisible="{Binding IsLosslessFormat}">
-                                <TextBlock Text="Lossless"
-                                           Foreground="{DynamicResource TextSecondary}"
-                                           VerticalAlignment="Center"/>
-                            </Border>
+                            <TextBlock Text="Lossless · quality not applicable"
+                                       Classes="preview"
+                                       IsVisible="{Binding IsLosslessFormat}"/>
                         </StackPanel>
                     </Grid>
 
@@ -318,12 +316,25 @@
                 BorderThickness="0,1,0,0"
                 Padding="32,18">
             <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Spacing="5"
+                <StackPanel Spacing="7"
                             IsVisible="{Binding ShowFooterOptions}"
                             IsEnabled="{Binding IsIdle}">
-                    <CheckBox x:Name="OutputSharpeningCheckBox"
-                              Content="Output sharpening"
-                              IsChecked="{Binding Settings.OutputSharpening, Mode=TwoWay}"/>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="Output sharpening"
+                                   VerticalAlignment="Center"/>
+                        <RadioButton x:Name="OutputSharpeningOffButton"
+                                     GroupName="OutputSharpening"
+                                     Content="Off"
+                                     IsChecked="{Binding IsOutputSharpeningOff, Mode=TwoWay}"/>
+                        <RadioButton x:Name="OutputSharpeningScreenButton"
+                                     GroupName="OutputSharpening"
+                                     Content="Screen"
+                                     IsChecked="{Binding IsOutputSharpeningScreen, Mode=TwoWay}"/>
+                        <RadioButton x:Name="OutputSharpeningPrintButton"
+                                     GroupName="OutputSharpening"
+                                     Content="Print"
+                                     IsChecked="{Binding IsOutputSharpeningPrint, Mode=TwoWay}"/>
+                    </StackPanel>
                     <CheckBox Content="Strip location data"
                               IsChecked="{Binding Settings.StripLocationData, Mode=TwoWay}"/>
                 </StackPanel>

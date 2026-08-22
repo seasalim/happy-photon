@@ -72,7 +72,8 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
         [
             new("JPEG", ExportFormat.Jpeg),
             new("PNG", ExportFormat.Png),
-            new("WebP", ExportFormat.Webp)
+            new("WebP", ExportFormat.Webp),
+            new("TIFF (16-bit)", ExportFormat.Tiff)
         ];
         OutputColorSpaceOptions =
         [
@@ -112,8 +113,33 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
         $"Exporting will download {OnlineOnlyCount} online-only " +
         $"original{(OnlineOnlyCount == 1 ? string.Empty : "s")} " +
         $"(approximately {FormatLogicalSize(OnlineOnlyLogicalBytes)}).";
-    public bool IsQualityAvailable => Settings.Format != ExportFormat.Png;
+    public bool IsQualityAvailable =>
+        Settings.Format is not ExportFormat.Png and not ExportFormat.Tiff;
     public bool IsLosslessFormat => !IsQualityAvailable;
+    public bool IsOutputSharpeningOff
+    {
+        get => Settings.OutputSharpening == OutputSharpeningMode.Off;
+        set
+        {
+            if (value) Settings.OutputSharpening = OutputSharpeningMode.Off;
+        }
+    }
+    public bool IsOutputSharpeningScreen
+    {
+        get => Settings.OutputSharpening == OutputSharpeningMode.Screen;
+        set
+        {
+            if (value) Settings.OutputSharpening = OutputSharpeningMode.Screen;
+        }
+    }
+    public bool IsOutputSharpeningPrint
+    {
+        get => Settings.OutputSharpening == OutputSharpeningMode.Print;
+        set
+        {
+            if (value) Settings.OutputSharpening = OutputSharpeningMode.Print;
+        }
+    }
     public bool IsCustomNaming => SelectedNamingOption == CustomNamingOption;
     public bool CanExport => HasImages && IsIdle &&
         !string.IsNullOrWhiteSpace(Settings.OutputFolder);
@@ -334,6 +360,13 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
         {
             OnPropertyChanged(nameof(IsQualityAvailable));
             OnPropertyChanged(nameof(IsLosslessFormat));
+        }
+
+        if (args.PropertyName == nameof(ExportSettings.OutputSharpening))
+        {
+            OnPropertyChanged(nameof(IsOutputSharpeningOff));
+            OnPropertyChanged(nameof(IsOutputSharpeningScreen));
+            OnPropertyChanged(nameof(IsOutputSharpeningPrint));
         }
 
         if (args.PropertyName is nameof(ExportSettings.Format) or

@@ -162,6 +162,8 @@ public sealed class AgentToolModelsTests
     [InlineData("JPG", ExportFormat.Jpeg)]
     [InlineData("PNG", ExportFormat.Png)]
     [InlineData("WebP", ExportFormat.Webp)]
+    [InlineData("tiff", ExportFormat.Tiff)]
+    [InlineData("TIF", ExportFormat.Tiff)]
     public void ExportFormatParsing_AcceptsKnownValuesCaseInsensitive(
         string value, ExportFormat expected)
     {
@@ -172,7 +174,7 @@ public sealed class AgentToolModelsTests
     public void ExportFormatParsing_RejectsUnknownValue()
     {
         Assert.Throws<AgentToolException>(() =>
-            AgentToolValidation.ParseExportFormat("tiff"));
+            AgentToolValidation.ParseExportFormat("bmp"));
     }
 
     [Theory]

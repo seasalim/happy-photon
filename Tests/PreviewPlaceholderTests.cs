@@ -72,8 +72,12 @@ public sealed class PreviewPlaceholderTests
         var exportDialog = new BatchExportDialog(vm, [storedRaw]);
         var exportConfiguration = exportDialog.FindControl<StackPanel>(
             "ConfigurationPanel")!;
-        var outputSharpening = exportDialog.FindControl<CheckBox>(
-            "OutputSharpeningCheckBox")!;
+        var outputSharpeningOff = exportDialog.FindControl<RadioButton>(
+            "OutputSharpeningOffButton")!;
+        var outputSharpeningScreen = exportDialog.FindControl<RadioButton>(
+            "OutputSharpeningScreenButton")!;
+        var outputSharpeningPrint = exportDialog.FindControl<RadioButton>(
+            "OutputSharpeningPrintButton")!;
         var outputColorSpace = exportDialog.FindControl<ComboBox>(
             "OutputColorSpaceBox")!;
         var closeExportDialog = exportDialog.FindControl<Button>(
@@ -98,13 +102,14 @@ public sealed class PreviewPlaceholderTests
         Assert.Equal(112, exportButton.MinWidth);
         Assert.Equal(HorizontalAlignment.Center,
             exportButton.HorizontalContentAlignment);
-        Assert.True(outputSharpening.IsChecked);
+        Assert.True(outputSharpeningScreen.IsChecked);
         Assert.Equal(0, outputColorSpace.SelectedIndex);
         outputColorSpace.SelectedIndex = 1;
         Assert.Equal(OutputColorSpace.DisplayP3, vm.ExportSettings.OutputColorSpace);
-        outputSharpening.IsChecked = false;
-        Assert.False(vm.ExportSettings.OutputSharpening);
-        outputSharpening.IsChecked = true;
+        outputSharpeningOff.IsChecked = true;
+        Assert.Equal(OutputSharpeningMode.Off, vm.ExportSettings.OutputSharpening);
+        outputSharpeningPrint.IsChecked = true;
+        Assert.Equal(OutputSharpeningMode.Print, vm.ExportSettings.OutputSharpening);
         Assert.False(vm.CanUndo);
         Assert.False(fullScreenSelectionBadge.IsVisible);
         exportDialog.Close();

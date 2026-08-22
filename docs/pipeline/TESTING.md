@@ -189,8 +189,10 @@ orders above the observed difference.
    harmless extra columns, and actionable startup rejection for missing columns;
    `CatalogPersistenceTests` pins neutral no-write recovery for null, malformed, or
    non-v2 rows. Preset and MCP tests require explicit/current versions and reject v1.
-7. **`ExportMetadataTests`**: OUTPUT.md §6 items (EXIF copy, orientation, GPS strip,
-   no stale thumbnail, ICC present, subsampling switch).
+7. **Export boundary suites:** `ExportMetadataTests` covers OUTPUT.md §6 EXIF copy,
+   orientation, GPS strip, stale-thumbnail removal, ICC presence, and subsampling.
+   `TiffExportTests` pins Q16 decode-back parity in both color spaces, 16-bit ZIP,
+   exact profiles, and RGB-only output.
 8. **Loader suites:** `RawBaseLoaderTests` and `StandardBaseLoaderTests` cover the
    DECODE.md §7 items, including HEIC routing to the platform reader rather than
    LibRaw.
@@ -222,7 +224,7 @@ orders above the observed difference.
 13. **Wide-gamut output suites:** `WideGamutExportTests` checks the Display P3 profile,
     independently derived native-P3 codes in every format, gamut survival, and common-space
     agreement. `WideGamutColorimetryTests` gates the Q16 finalization boundary at the
-    §3 limits with output sharpening off and on, and records the expected 8-bit
+    §3 limits with output sharpening Off and Screen, and records the expected 8-bit
     quantization floor as informational. The former frozen per-RID export
     byte hashes are retired; the active goldens own regression.
 14. **DCP suites:** `DcpProfileReaderTests` is the §7.2 conformance and hostile-input

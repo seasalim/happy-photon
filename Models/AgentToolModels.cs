@@ -55,8 +55,9 @@ public static class AgentToolValidation
         "jpeg" or "jpg" => ExportFormat.Jpeg,
         "png" => ExportFormat.Png,
         "webp" => ExportFormat.Webp,
+        "tiff" or "tif" => ExportFormat.Tiff,
         _ => throw new AgentToolException(
-            $"Unknown format '{value}'. Use jpeg, png, or webp.")
+            $"Unknown format '{value}'. Use jpeg, png, webp, or tiff.")
     };
 
     public static OutputColorSpace ParseOutputColorSpace(string? value) =>

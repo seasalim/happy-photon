@@ -264,7 +264,9 @@ public sealed class WideGamutColorimetryTests
             shared,
             2048,
             outputColorSpace,
-            outputSharpening,
+            outputSharpening
+                ? OutputSharpeningMode.Screen
+                : OutputSharpeningMode.Off,
             wasResized: false);
 
     private static MagickImage PrepareForEligibility(
@@ -275,7 +277,9 @@ public sealed class WideGamutColorimetryTests
         RenderColorEncoding.ResizeInLinearLight(prepared, 2048);
         RenderSharpening.ApplyOutput(
             prepared,
-            outputSharpening,
+            outputSharpening
+                ? OutputSharpeningMode.Screen
+                : OutputSharpeningMode.Off,
             wasResized: true);
         return prepared;
     }

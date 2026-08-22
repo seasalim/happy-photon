@@ -11,9 +11,9 @@ internal static class RenderSharpening
     private const double MinimumEffectiveSigma = 0.3;
     private const double CaptureNativeSigma = 0.75;
     private const double CaptureThreshold = 0.01;
-    private const double OutputSigma = 0.5;
-    private const double OutputAmount = 0.3;
-    private const double OutputThreshold = 0.005;
+    private const double ScreenSigma = 0.5;
+    private const double ScreenAmount = 0.3;
+    private const double ScreenThreshold = 0.005;
     private const int MaximumOutputLongEdge = 2560;
 
     public static void ApplyCapture(
@@ -91,37 +91,70 @@ internal static class RenderSharpening
 
     public static void ApplyOutput(
         MagickImage image,
-        bool enabled,
+        OutputSharpeningMode mode,
         bool wasResized) =>
         ApplyOutput(
             image,
-            enabled,
+            mode,
             wasResized,
             RenderDetail.DefaultBandPixelLimit);
 
     internal static void ApplyOutput(
         MagickImage image,
-        bool enabled,
+        OutputSharpeningMode mode,
         bool wasResized,
         int bandPixelLimit)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
             bandPixelLimit);
-        if (!enabled ||
-            !wasResized ||
-            Math.Max(image.Width, image.Height) > MaximumOutputLongEdge)
+        var parameters = ResolveOutputParameters(
+            mode,
+            checked((int)Math.Max(image.Width, image.Height)),
+            wasResized);
+        if (parameters is not { } values)
         {
             return;
         }
 
         ApplyLuminance(
             image,
-            OutputSigma,
-            OutputAmount,
-            OutputThreshold,
+            values.Sigma,
+            values.Amount,
+            values.Threshold,
             bandPixelLimit);
     }
+
+    internal static OutputSharpeningParameters? ResolveOutputParameters(
+        OutputSharpeningMode mode,
+        int outputLongEdge,
+        bool wasResized)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(outputLongEdge);
+        if (mode == OutputSharpeningMode.Screen)
+        {
+            return wasResized && outputLongEdge <= MaximumOutputLongEdge
+                ? new(ScreenSigma, ScreenAmount, ScreenThreshold)
+                : null;
+        }
+
+        if (mode != OutputSharpeningMode.Print)
+        {
+            return null;
+        }
+
+        return outputLongEdge switch
+        {
+            <= 1600 => new(0.65, 0.45, 0.004),
+            <= 3200 => new(0.8, 0.5, 0.004),
+            _ => new(1.0, 0.55, 0.004)
+        };
+    }
+
+    internal readonly record struct OutputSharpeningParameters(
+        double Sigma,
+        double Amount,
+        double Threshold);
 
     private static void ApplyLuminance(
         MagickImage image,

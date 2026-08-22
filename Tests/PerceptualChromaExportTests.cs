@@ -82,7 +82,7 @@ public sealed class PerceptualChromaExportTests : IDisposable
             OutputFolder = outputFolder,
             Format = ExportFormat.Png,
             OutputColorSpace = outputColorSpace,
-            OutputSharpening = false
+            OutputSharpening = OutputSharpeningMode.Off
         };
         var service = new ImageExportService(
             new RenderPipeline(),

@@ -292,6 +292,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
     [InlineData(ExportFormat.Jpeg, ".jpg")]
     [InlineData(ExportFormat.Png, ".png")]
     [InlineData(ExportFormat.Webp, ".webp")]
+    [InlineData(ExportFormat.Tiff, ".tif")]
     public async Task ExportBatch_UntaggedSourceEmbedsSrgbProfile(
         ExportFormat format,
         string extension)
@@ -314,9 +315,11 @@ public sealed class ImageExportServiceVariantTests : IDisposable
     [InlineData("display-p3-reference.jpg", ExportFormat.Jpeg, ".jpg")]
     [InlineData("display-p3-reference.jpg", ExportFormat.Png, ".png")]
     [InlineData("display-p3-reference.jpg", ExportFormat.Webp, ".webp")]
+    [InlineData("display-p3-reference.jpg", ExportFormat.Tiff, ".tif")]
     [InlineData("adobe-rgb-reference.jpg", ExportFormat.Jpeg, ".jpg")]
     [InlineData("adobe-rgb-reference.jpg", ExportFormat.Png, ".png")]
     [InlineData("adobe-rgb-reference.jpg", ExportFormat.Webp, ".webp")]
+    [InlineData("adobe-rgb-reference.jpg", ExportFormat.Tiff, ".tif")]
     public async Task ExportBatch_TaggedStandardSourceEmbedsSrgbProfile(
         string assetName,
         ExportFormat format,

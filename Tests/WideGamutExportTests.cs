@@ -17,6 +17,7 @@ public sealed class WideGamutExportTests : IDisposable
     [InlineData(ExportFormat.Jpeg, ".jpg", 4)]
     [InlineData(ExportFormat.Png, ".png", 1)]
     [InlineData(ExportFormat.Webp, ".webp", 4)]
+    [InlineData(ExportFormat.Tiff, ".tif", 1)]
     public async Task DisplayP3Export_EmbedsMatchingProfileAndRecoversNativeP3(
         ExportFormat format,
         string extension,
@@ -37,7 +38,7 @@ public sealed class WideGamutExportTests : IDisposable
             OutputFolder = outputFolder,
             Format = format,
             Quality = 100,
-            OutputSharpening = false,
+            OutputSharpening = OutputSharpeningMode.Off,
             OutputColorSpace = OutputColorSpace.DisplayP3
         };
 
@@ -123,7 +124,7 @@ public sealed class WideGamutExportTests : IDisposable
             {
                 OutputFolder = outputFolder,
                 Format = ExportFormat.Png,
-                OutputSharpening = false,
+                OutputSharpening = OutputSharpeningMode.Off,
                 OutputColorSpace = outputColorSpace
             });
         return Path.Combine(

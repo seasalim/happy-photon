@@ -72,9 +72,8 @@ public class AppSettingsService
             StripLocationData = bool.TryParse(
                 await _catalogService.GetAppSettingAsync(StripLocationDataKey),
                 out var stripLocationData) && stripLocationData,
-            OutputSharpening = !bool.TryParse(
-                await _catalogService.GetAppSettingAsync(OutputSharpeningKey),
-                out var outputSharpening) || outputSharpening,
+            OutputSharpening = ParseOutputSharpening(
+                await _catalogService.GetAppSettingAsync(OutputSharpeningKey)),
             McpServerEnabled = bool.TryParse(
                 await _catalogService.GetAppSettingAsync(McpServerEnabledKey),
                 out var mcpServerEnabled) && mcpServerEnabled,
@@ -119,5 +118,23 @@ public class AppSettingsService
         return _catalogService.SetAppSettingAsync(
             FirstRunExperienceVersionKey,
             version.ToString());
+    }
+
+    private static OutputSharpeningMode ParseOutputSharpening(string? value)
+    {
+        if (Enum.TryParse<OutputSharpeningMode>(
+                value,
+                ignoreCase: true,
+                out var mode) &&
+            Enum.IsDefined(mode))
+        {
+            return mode;
+        }
+
+        return bool.TryParse(value, out var legacyEnabled)
+            ? legacyEnabled
+                ? OutputSharpeningMode.Screen
+                : OutputSharpeningMode.Off
+            : OutputSharpeningMode.Screen;
     }
 }

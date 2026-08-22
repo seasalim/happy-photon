@@ -15,7 +15,7 @@ public sealed class ExportSettingsVariantTests
         Assert.Null(variant.MaxDimension);
         Assert.Equal(".jpg", settings.FileExtension);
         Assert.Equal("photo.jpg", settings.GetOutputFileName("photo.CR2"));
-        Assert.True(settings.OutputSharpening);
+        Assert.Equal(OutputSharpeningMode.Screen, settings.OutputSharpening);
         Assert.Equal(OutputColorSpace.Srgb, settings.OutputColorSpace);
     }
 
@@ -56,6 +56,9 @@ public sealed class ExportSettingsVariantTests
 
         settings.Format = ExportFormat.Webp;
         Assert.Equal("photo_edited.webp", settings.GetOutputFileName("photo.jpg"));
+
+        settings.Format = ExportFormat.Tiff;
+        Assert.Equal("photo_edited.tif", settings.GetOutputFileName("photo.jpg"));
     }
 
     [Fact]

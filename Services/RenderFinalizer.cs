@@ -9,7 +9,7 @@ internal static class RenderFinalizer
         MagickImage displayRec2020,
         int? maxDimension,
         OutputColorSpace outputColorSpace,
-        bool outputSharpening,
+        OutputSharpeningMode outputSharpening,
         bool wasResized,
         int detailBandPixelLimit = RenderDetail.DefaultBandPixelLimit,
         EffectsSettings? effects = null)
@@ -35,7 +35,7 @@ internal static class RenderFinalizer
         MagickImage displayRec2020,
         int? maxDimension,
         OutputColorSpace outputColorSpace,
-        bool outputSharpening,
+        OutputSharpeningMode outputSharpening,
         bool wasResized,
         int detailBandPixelLimit = RenderDetail.DefaultBandPixelLimit,
         EffectsSettings? effects = null)

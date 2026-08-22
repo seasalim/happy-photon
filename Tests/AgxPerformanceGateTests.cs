@@ -261,7 +261,7 @@ public sealed class AgxPerformanceGateTests : IDisposable
             OutputFolder = Path.Combine(_output, "standard"),
             Format = ExportFormat.Jpeg,
             Quality = 85,
-            OutputSharpening = false
+            OutputSharpening = OutputSharpeningMode.Off
         };
         var service = CreateExportService();
         return await MeasureAsync(async () =>

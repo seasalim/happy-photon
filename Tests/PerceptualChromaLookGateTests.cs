@@ -301,7 +301,7 @@ public sealed class PerceptualChromaLookGateTests
                 image,
                 maxDimension,
                 OutputColorSpace.Srgb,
-                outputSharpening: false,
+                outputSharpening: OutputSharpeningMode.Off,
                 wasResized: false,
                 effects: settings.Effects);
         }

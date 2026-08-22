@@ -18,8 +18,9 @@ receive lossy encoder noise, while PNG remains an explicit 8-bit output.
 
 Nearest-level is the **only** 16-to-8 conversion in the product: display, PNG, JPEG,
 and WebP all reach it through Magick's native quantizer, so preview and an sRGB export
-agree code for code before any lossy encoding. A Display P3 export deliberately has
-different channel codes. Never call `Depth = 8` on a render — it
+agree code for code before any lossy encoding. TIFF keeps the Q16 values and performs
+no 8-bit conversion. A Display P3 export deliberately has different channel codes.
+Never call `Depth = 8` on a render — it
 quantizes toward zero and silently shifts roughly half of all samples one code below
 the preview (measured 30–51% of channel samples, `pngMinusPreview` in {−1, 0}).
 Request 8-bit output through the encoder's own define instead. The opt-in precision
@@ -59,18 +60,19 @@ download has started.
 | JPEG | quality = user setting (default 85). Chroma subsampling: `jpeg:sampling-factor` = `4:4:4` when quality ≥ 90, else `4:2:0` (explicit, no longer encoder default). Baseline (non-progressive). |
 | PNG | 8-bit output through `PngWriteDefines.BitDepth = 8`; the Q16 working pipeline does not imply 16-bit PNG output. |
 | WebP | quality = user setting, lossy. |
+| TIFF | 16-bit RGB, Deflate/ZIP compression, no alpha. Depth is selected through encoder settings; `image.Depth` remains untouched. Normalized EXIF is carried into the TIFF IFD. |
 
 **Every export embeds the profile matching its rendered target** — `ColorProfile.SRGB` for
 the default sRGB path, or the 480-byte Compact ICC Profiles `DisplayP3-v4.icc` (CC0) for
-Display P3. JPEG, PNG, and WebP each preserve the selected profile. Display P3 shares the
+Display P3. JPEG, PNG, WebP, and TIFF each preserve the selected profile. Display P3 shares the
 sRGB transfer, so resize and tone encoding continue to use the existing transfer LUTs.
 
-**Output sharpen** uses the exact Rec.2020 luma authority in RENDER.md §9 and is
-governed by exactly one condition: the export dialog's
-"Output sharpening" checkbox (default on). Checkbox on → applied after each resize to
-a sized variant ≤ 2560px (luminance unsharp `sigma 0.5, amount 0.3, threshold 0.005`).
-Checkbox off → never applied. Hi-res (unresized) variants never receive it. It is
-fully independent of the fixed capture-sharpen stage.
+**Output sharpen** uses the exact Rec.2020 luma authority in RENDER.md §9. **Off**
+never applies it. **Screen** is the compatibility default and applies after an actual
+resize to a sized variant ≤ 2560px (luminance unsharp `sigma 0.5, amount 0.3,
+threshold 0.005`); unresized output is unchanged. **Print** also applies to full-size
+output and scales stronger sigma/amount constants across ≤1600px, ≤3200px, and larger
+long-edge regimes. It remains fully independent of the fixed capture-sharpen stage.
 
 ## 4. Metadata policy (`ExportMetadataService`)
 
@@ -100,8 +102,9 @@ while private or structurally stale metadata is never carried through accidental
 ## 5. Agent (MCP) surface
 
 `export_images` uses the same encoder and metadata policy as desktop export. Its optional
-`outputColorSpace` is `srgb` by default and accepts `displayP3`; it never inherits mutable
-desktop color-space state.
+`outputColorSpace` is `srgb` by default and accepts `displayP3`; `format` also accepts
+`tiff`/`tif` for the same 16-bit lossless ICC-profiled output as the desktop dialog.
+It never inherits mutable desktop color-space state.
 `apply_edit_settings` accepts the current v2 fields, including `wb`, `baseLook`, and
 `hlReconstruction`; omitted exposed fields leave current values unchanged. Channel
 curves, the color mixer, and effects are the explicit replace/reset exception: the
@@ -135,3 +138,5 @@ online-only original return failure code `hydration_required`.
   image in the approved set.
 - Agent-statistics tests compare representative 150px and promoted-cache inputs after
   normalization, with luminance within 2 levels and relative sharpness within 35%.
+- TIFF read-back is Q16 bit-exact for both output color spaces and pins 16 bits/sample,
+  ZIP compression, RGB-only channels, exact ICC bytes, and normalized EXIF fields.

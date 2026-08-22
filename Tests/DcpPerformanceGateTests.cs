@@ -419,7 +419,7 @@ public sealed class DcpPerformanceGateTests
         OutputFolder = output,
         Format = ExportFormat.Jpeg,
         Quality = 85,
-        OutputSharpening = false
+        OutputSharpening = OutputSharpeningMode.Off
     };
 
     private static async Task Export(

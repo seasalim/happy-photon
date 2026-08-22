@@ -131,12 +131,14 @@ public sealed class McpServerHost
             async (string[] ids, AgentExportOptions options, CancellationToken ct) =>
                 await InvokeJsonAsync(() => tools.ExportImagesAsync(ids, options), ct),
             Options("export_images",
-                "Exports jpeg, png, or webp copies below the open folder without " +
+                "Exports jpeg, png, webp, or 16-bit lossless TIFF copies below " +
+                "the open folder without " +
                 "overwriting files; targets that would overwrite original image " +
                 "files are refused. Optional variants have a name and optional " +
                 "maxDimension and export into one sub-folder per variant. Result ids " +
                 "are paths relative to the output folder; existing files are skipped. " +
-                "outputColorSpace accepts srgb (default) or displayP3."))
+                "outputColorSpace accepts srgb (default) or displayP3; every TIFF " +
+                "embeds the matching ICC profile."))
     ];
 
     private static McpServerToolCreateOptions Options(string name, string description) => new()

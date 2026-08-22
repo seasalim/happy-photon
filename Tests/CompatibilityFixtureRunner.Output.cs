@@ -29,7 +29,7 @@ internal static partial class CompatibilityFixtureRunner
                 ExportHiRes = false,
                 ExportSmall = true,
                 SmallMaxSize = 500,
-                OutputSharpening = false
+                OutputSharpening = OutputSharpeningMode.Off
             };
             var count = await new ImageExportService(
                 new RenderPipeline(), loader, new ExportMetadataService())

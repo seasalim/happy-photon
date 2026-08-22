@@ -19,7 +19,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         var empty = await service.LoadAsync();
         Assert.Null(empty.FirstRunExperienceVersion);
         Assert.False(empty.StripLocationData);
-        Assert.True(empty.OutputSharpening);
+        Assert.Equal(OutputSharpeningMode.Screen, empty.OutputSharpening);
         Assert.Equal(LibraryThumbnailSize.Medium, empty.LibraryThumbnailSize);
         Assert.Equal(AppTheme.Dark, empty.AppTheme);
 
@@ -32,7 +32,7 @@ public sealed class AppSettingsServiceTests : IDisposable
             LibraryThumbnailSize = LibraryThumbnailSize.Large,
             AppTheme = AppTheme.MidGray,
             StripLocationData = true,
-            OutputSharpening = false,
+            OutputSharpening = OutputSharpeningMode.Print,
             McpServerEnabled = true,
             McpToken = "12345678901234567890123456789012"
         });
@@ -45,7 +45,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(LibraryThumbnailSize.Large, loaded.LibraryThumbnailSize);
         Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
         Assert.True(loaded.StripLocationData);
-        Assert.False(loaded.OutputSharpening);
+        Assert.Equal(OutputSharpeningMode.Print, loaded.OutputSharpening);
         Assert.True(loaded.McpServerEnabled);
         Assert.Equal("12345678901234567890123456789012", loaded.McpToken);
     }
@@ -115,6 +115,28 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
     }
 
+    [Theory]
+    [InlineData("True", OutputSharpeningMode.Screen)]
+    [InlineData("False", OutputSharpeningMode.Off)]
+    [InlineData(null, OutputSharpeningMode.Screen)]
+    [InlineData("invalid", OutputSharpeningMode.Screen)]
+    [InlineData("print", OutputSharpeningMode.Print)]
+    public async Task LoadAsync_MigratesOutputSharpeningCatalogString(
+        string? value,
+        OutputSharpeningMode expected)
+    {
+        using var catalog = new CatalogService(_catalogPath);
+        await catalog.InitializeAsync();
+        if (value != null)
+        {
+            await catalog.SetAppSettingAsync("OutputSharpening", value);
+        }
+
+        var loaded = await new AppSettingsService(catalog).LoadAsync();
+
+        Assert.Equal(expected, loaded.OutputSharpening);
+    }
+
     [Fact]
     public async Task SavePreferences_DoesNotChangeFolderOrFirstRunState()
     {
@@ -134,7 +156,7 @@ public sealed class AppSettingsServiceTests : IDisposable
             LibraryThumbnailSize = LibraryThumbnailSize.Small,
             AppTheme = AppTheme.MidGray,
             StripLocationData = true,
-            OutputSharpening = false,
+            OutputSharpening = OutputSharpeningMode.Off,
             McpServerEnabled = true,
             McpToken = "token"
         });
@@ -147,7 +169,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(LibraryThumbnailSize.Small, loaded.LibraryThumbnailSize);
         Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
         Assert.True(loaded.StripLocationData);
-        Assert.False(loaded.OutputSharpening);
+        Assert.Equal(OutputSharpeningMode.Off, loaded.OutputSharpening);
         Assert.True(loaded.McpServerEnabled);
         Assert.Equal("token", loaded.McpToken);
     }

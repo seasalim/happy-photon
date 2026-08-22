@@ -44,7 +44,7 @@ public sealed class EffectsExportTests : IDisposable
         {
             OutputFolder = output,
             Format = ExportFormat.Png,
-            OutputSharpening = true,
+            OutputSharpening = OutputSharpeningMode.Screen,
             OutputColorSpace = outputColorSpace
         };
         var loader = new PatternBaseLoader();
@@ -84,7 +84,7 @@ public sealed class EffectsExportTests : IDisposable
                 expectedSource,
                 maxDimension: null,
                 outputColorSpace,
-                outputSharpening: true,
+                outputSharpening: OutputSharpeningMode.Screen,
                 wasResized: variant.MaxDimension.HasValue,
                 effects: effects);
             using var actual = new MagickImage(Path.Combine(
@@ -158,7 +158,7 @@ public sealed class EffectsExportTests : IDisposable
         {
             OutputFolder = output,
             Format = ExportFormat.Png,
-            OutputSharpening = true,
+            OutputSharpening = OutputSharpeningMode.Screen,
             OutputColorSpace = outputColorSpace
         };
         var count = await new ImageExportService(

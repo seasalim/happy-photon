@@ -103,15 +103,81 @@ public sealed class RenderSharpeningTests
         using var tooLarge = CreateLumaEdge(width: 2561, height: 1);
         var tooLargeBefore = ReadRgb(tooLarge);
 
-        RenderSharpening.ApplyOutput(disabled, enabled: false, wasResized: true);
-        RenderSharpening.ApplyOutput(unresized, enabled: true, wasResized: false);
-        RenderSharpening.ApplyOutput(eligible, enabled: true, wasResized: true);
-        RenderSharpening.ApplyOutput(tooLarge, enabled: true, wasResized: true);
+        RenderSharpening.ApplyOutput(
+            disabled,
+            OutputSharpeningMode.Off,
+            wasResized: true);
+        RenderSharpening.ApplyOutput(
+            unresized,
+            OutputSharpeningMode.Screen,
+            wasResized: false);
+        RenderSharpening.ApplyOutput(
+            eligible,
+            OutputSharpeningMode.Screen,
+            wasResized: true);
+        RenderSharpening.ApplyOutput(
+            tooLarge,
+            OutputSharpeningMode.Screen,
+            wasResized: true);
 
         Assert.Equal(before, ReadRgb(disabled));
         Assert.Equal(before, ReadRgb(unresized));
         Assert.NotEqual(before, ReadRgb(eligible));
         Assert.Equal(tooLargeBefore, ReadRgb(tooLarge));
+    }
+
+    [Fact]
+    public void Output_PrintIsStrongerAndAppliesWithoutResize()
+    {
+        using var source = CreateLumaEdge();
+        var before = ReadRgb(source);
+        using var screen = new MagickImage(source);
+        using var print = new MagickImage(source);
+
+        RenderSharpening.ApplyOutput(
+            screen,
+            OutputSharpeningMode.Screen,
+            wasResized: false);
+        RenderSharpening.ApplyOutput(
+            print,
+            OutputSharpeningMode.Print,
+            wasResized: false);
+
+        Assert.Equal(before, ReadRgb(screen));
+        Assert.NotEqual(before, ReadRgb(print));
+
+        using var resizedScreen = new MagickImage(source);
+        using var resizedPrint = new MagickImage(source);
+        RenderSharpening.ApplyOutput(
+            resizedScreen,
+            OutputSharpeningMode.Screen,
+            wasResized: true);
+        RenderSharpening.ApplyOutput(
+            resizedPrint,
+            OutputSharpeningMode.Print,
+            wasResized: true);
+        Assert.NotEqual(ReadRgb(resizedScreen), ReadRgb(resizedPrint));
+    }
+
+    [Theory]
+    [InlineData(1600, 0.65, 0.45)]
+    [InlineData(1601, 0.8, 0.5)]
+    [InlineData(3201, 1.0, 0.55)]
+    public void Output_PrintParametersScaleWithOutputSize(
+        int longEdge,
+        double expectedSigma,
+        double expectedAmount)
+    {
+        var parameters = Assert.IsType<
+            RenderSharpening.OutputSharpeningParameters>(
+            RenderSharpening.ResolveOutputParameters(
+                OutputSharpeningMode.Print,
+                longEdge,
+                wasResized: false));
+
+        Assert.Equal(expectedSigma, parameters.Sigma);
+        Assert.Equal(expectedAmount, parameters.Amount);
+        Assert.Equal(0.004, parameters.Threshold);
     }
 
     [Fact]
@@ -146,12 +212,12 @@ public sealed class RenderSharpeningTests
 
         RenderSharpening.ApplyOutput(
             singleBand,
-            enabled: true,
+            OutputSharpeningMode.Screen,
             wasResized: true,
             int.MaxValue);
         RenderSharpening.ApplyOutput(
             multipleBands,
-            enabled: true,
+            OutputSharpeningMode.Screen,
             wasResized: true,
             forcedBandLimit);
 
