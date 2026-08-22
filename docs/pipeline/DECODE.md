@@ -62,6 +62,13 @@ image-statistics defaults:
 | `fbdd_noiserd` | 0/1/2 from `decode.NoiseReduction` (default Off) | internal decode-time NR |
 | `HalfSize` | true for `LoadPreviewBase`, false for `LoadFullBase` | perf; only remaining preview/export decode difference |
 
+True monochrome RAW is the single exception to the color-output rows above. The
+loader classifies only `LibRawSensorIdentity.Colors == 1`, then requires a one-channel
+processed image (ordinary RAW still requires three channels). It requests
+camera-native linear output with camera/auto WB and the camera matrix disabled, unit
+user multipliers, and no half-size decode. Every classification/layout mismatch is
+unsupported.
+
 The loader applies no S-curve, saturation boost, or 8-bit conversion. RAW picture
 formation belongs to the AgX crossing (TONE_ENGINE.md); no base look is applied to
 crossing-on sources.
@@ -104,6 +111,15 @@ Post-decode steps, in order:
    Characterization uses `cam_xyz` only to derive the built-in transform when
    `rgb_cam` is LibRaw's identity unavailable-transform sentinel; `linear_max` remains
    typed at the interop boundary until a consumer needs it (WHITE_BALANCE.md §5).
+
+For a monochrome preview, the loader area-averages the gray Q16 plane to the 3200-pixel
+large-preview bound while LibRaw owns it, releases the native plane, and only then
+replicates gray into the existing RGB base; the pair factory derives the 1600-pixel
+interactive base. Full/export loads replicate at native resolution in bounded bands,
+without a full-resolution managed RGB staging buffer. All three destination samples
+receive the same code. `BaseImageInfo.IsMonochrome` is set, camera and DCP facts are
+absent, and profile characterization is ignored; the 5500 K fallback remains an
+informational as-shot value.
 
 Camera facts are copied immediately after `Unpack`, before the camera-native output
 configuration is applied. `CamToSrgb` therefore remains camera→linear-sRGB and is not a

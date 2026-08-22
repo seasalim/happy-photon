@@ -313,6 +313,11 @@ Kelvin usually answers whether the photograph feels too cool or too warm.
 Vibrance and saturation answer whether the color feels too weak or too intense.
 If the image already looks right, leave them alone.
 
+For a true monochrome RAW, the camera profile, white balance, Saturation, Vibrance,
+color mixer, and R/G/B channel-curve controls stay visible but disabled. Existing saved color
+values are preserved for later color sources; Exposure, the composite curve, tone,
+detail, effects, scopes, and export continue to work normally.
+
 ### Refine the tone
 
 Use the **Tone Curve** when the basic controls cannot produce the tonal shape

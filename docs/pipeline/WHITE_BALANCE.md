@@ -18,6 +18,11 @@ Rendering neutralizes the *claimed* illuminant instead:
 
 UI: Kelvin slider 2000–12000, logarithmic; Tint slider −100 (green) … +100 (magenta).
 
+True monochrome RAW bases always supply the identity WB matrix to rendering. Their
+stored WB setting remains persisted but dormant, and the mode, preset, Auto,
+eyedropper, Kelvin, Tint, and `W` command surfaces are disabled. The loader's 5500 K
+fallback is informational UI state only; it does not characterize or balance pixels.
+
 Modes (`EditSettings.wb.mode`):
 
 | Mode | Meaning |

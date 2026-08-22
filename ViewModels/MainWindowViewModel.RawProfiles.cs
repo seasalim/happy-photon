@@ -93,6 +93,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task OpenRawProfilePickerAsync()
     {
+        if (!IsColorEditingEnabled) return;
         await RefreshRawProfilesCoreAsync(confirmSelection: true);
     }
 
@@ -101,7 +102,8 @@ public partial class MainWindowViewModel
         bool includeImageProfiles = true)
     {
         var image = SelectedImage;
-        if (image == null || !RawProfilePickerState.IsVisible) return;
+        if (image == null || !IsColorEditingEnabled ||
+            !RawProfilePickerState.IsVisible) return;
         var previousSettings = image.EditSettings.Clone();
         var previousIntent = _requestedPreviewIntent;
         long? surfaceGeneration = confirmSelection &&
@@ -203,7 +205,7 @@ public partial class MainWindowViewModel
     internal async Task SelectRawProfileAsync(RawProfileOptionViewModel? option)
     {
         var image = SelectedImage;
-        if (image == null || option == null ||
+        if (image == null || !IsColorEditingEnabled || option == null ||
             !option.IsProfile || !option.CanSelect) return;
         if (RawProfilePickerProjector.ProfilesEqual(
             image.EditSettings.RawProfile,
@@ -258,7 +260,7 @@ public partial class MainWindowViewModel
     internal async Task AddRawProfileFileAsync(string path)
     {
         var image = SelectedImage;
-        if (image == null) return;
+        if (image == null || !IsColorEditingEnabled) return;
         var option = ImageService.DcpDiscovery.InspectUserFile(path);
         if (!option.CanSelect)
         {

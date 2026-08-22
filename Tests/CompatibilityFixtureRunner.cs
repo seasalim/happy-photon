@@ -291,58 +291,6 @@ internal static partial class CompatibilityFixtureRunner
         }
     }
 
-    private static void ObserveCameraColor(
-        CompatibilityObservation observation,
-        BaseImage? fullBase)
-    {
-        if (observation.CamMul == null || observation.CamToSrgb == null ||
-            fullBase?.Info.CamMul == null || fullBase.Info.CamToSrgb == null)
-        {
-            observation.Capabilities["cameraColor"] =
-                observation.UnpackError != null ? "unsupported" : "degraded";
-            return;
-        }
-
-        try
-        {
-            var baseMatrix = Flatten(fullBase.Info.CamToSrgb);
-            Require(
-                observation.CamMul.Length is 3 or 4 &&
-                observation.MatrixRows == 3 &&
-                observation.MatrixColumns == observation.CamMul.Length &&
-                fullBase.Info.CamMul.Length == observation.CamMul.Length &&
-                baseMatrix.Length == observation.CamToSrgb.Length,
-                "Native camera-fact dimensions were invalid.");
-            for (var index = 0; index < observation.CamMul.Length; index++)
-            {
-                Require(
-                    Math.Abs(fullBase.Info.CamMul[index] - observation.CamMul[index]) <= 1e-6,
-                    $"Application CamMul differed at index {index}.");
-            }
-            for (var index = 0; index < baseMatrix.Length; index++)
-            {
-                Require(
-                    Math.Abs(baseMatrix[index] - observation.CamToSrgb[index]) <= 1e-6,
-                    $"Application CamToSrgb differed at index {index}.");
-            }
-            for (var row = 0; row < observation.MatrixRows; row++)
-            {
-                var sum = observation.CamToSrgb
-                    .Skip(row * observation.MatrixColumns)
-                    .Take(observation.MatrixColumns)
-                    .Sum();
-                Require(
-                    Math.Abs(sum - 1) <= 1e-5,
-                    $"Camera-to-sRGB row {row} summed to {sum:R}, not 1.");
-            }
-            observation.Capabilities["cameraColor"] = "pass";
-        }
-        catch (Exception exception)
-        {
-            RecordFailure(observation, "cameraColor", exception);
-        }
-    }
-
     private static void ObserveRender(
         CompatibilityObservation observation,
         CompatibilityFixture fixture,
@@ -375,6 +323,17 @@ internal static partial class CompatibilityFixtureRunner
                 Require(
                     observation.HalfFullMeanDeltaE <= 2.8,
                     $"Half/full decode mean ΔE was {observation.HalfFullMeanDeltaE:F3}.");
+            }
+
+            if (fixture.Expected?.MonochromeNeutrality == true)
+            {
+                ObserveMonochromeRender(
+                    fullBase,
+                    fixture,
+                    resultsDirectory,
+                    saveReviewImage);
+                observation.Capabilities["render"] = "pass";
+                return;
             }
 
             var pipeline = new RenderPipeline();
@@ -434,6 +393,10 @@ internal static partial class CompatibilityFixtureRunner
         Require(image.Pixels.Depth == 16, "Base storage was not 16-bit.");
         Require(image.Pixels.ColorSpace == ColorSpace.RGB, "Base was not linear RGB.");
         Require(image.Pixels.Width > 0 && image.Pixels.Height > 0, "Base was empty.");
+        if (image.Info.IsMonochrome)
+        {
+            AssertMonochromeBase(image);
+        }
         if (preview)
         {
             Require(

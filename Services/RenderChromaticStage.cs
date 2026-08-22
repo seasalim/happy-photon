@@ -36,6 +36,10 @@ internal static class RenderChromaticStage
     {
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(settings);
+        if (info.IsMonochrome)
+        {
+            return ChromaticAdaptation.Identity();
+        }
         var whiteBalance = settings.Wb ??
             throw new ArgumentException(
                 "White-balance settings are required.",

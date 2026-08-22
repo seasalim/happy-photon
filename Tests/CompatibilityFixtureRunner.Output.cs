@@ -8,6 +8,65 @@ namespace HappyPhoton.Tests;
 
 internal static partial class CompatibilityFixtureRunner
 {
+    private static async Task ObserveMonochromeExportsAsync(
+        string copiedSource,
+        string temporaryDirectory,
+        IRawProcessingService rawService,
+        IBaseImageLoader loader,
+        CancellationToken cancellationToken)
+    {
+        foreach (var format in new[] { ExportFormat.Png, ExportFormat.Tiff })
+        foreach (var outputColorSpace in new[]
+                 { OutputColorSpace.Srgb, OutputColorSpace.DisplayP3 })
+        {
+            var source = new ImageFile(copiedSource)
+            {
+                EditSettings = ExtremeMonochromeSettings()
+            };
+            source.ApplyMetadata(MetadataService.ExtractMetadata(source, rawService));
+            var outputDirectory = Path.Combine(
+                temporaryDirectory,
+                $"mono-{format}-{outputColorSpace}");
+            var settings = new ExportSettings
+            {
+                OutputFolder = outputDirectory,
+                Format = format,
+                OutputColorSpace = outputColorSpace,
+                ExportHiRes = false,
+                ExportSmall = true,
+                SmallMaxSize = 500,
+                OutputSharpening = OutputSharpeningMode.Off
+            };
+            var variant = new ExportVariant("neutral", 500);
+            var count = await new ImageExportService(
+                new RenderPipeline(), loader, new ExportMetadataService())
+                .ExportBatchAsync(
+                    [source],
+                    settings,
+                    [variant],
+                    useSubfolders: false,
+                    cancellationToken: cancellationToken);
+            Require(count == 1, $"{format} {outputColorSpace} mono export failed.");
+
+            var outputPath = settings.GetOutputPath(
+                source.FileName,
+                variant,
+                useSubfolders: false);
+            using var exported = new MagickImage(outputPath);
+            RequireNeutral(exported, $"lossless {format} {outputColorSpace} export");
+            Require(
+                exported.GetColorProfile() is { } profile &&
+                profile.ToByteArray().Length > 0,
+                $"{format} {outputColorSpace} mono export did not carry an ICC profile.");
+            var orientationNormalized = format == ExportFormat.Tiff
+                ? exported.Orientation == OrientationType.TopLeft
+                : exported.GetExifProfile()?.GetValue(ExifTag.Orientation)?.Value == 1;
+            Require(
+                orientationNormalized,
+                $"{format} {outputColorSpace} mono export orientation was not normalized.");
+        }
+    }
+
     private static async Task ObserveExportAsync(
         CompatibilityObservation observation,
         string copiedSource,
@@ -19,6 +78,17 @@ internal static partial class CompatibilityFixtureRunner
         var stopwatch = Stopwatch.StartNew();
         try
         {
+            if (observation.Sensor?.Colors == 1)
+            {
+                await ObserveMonochromeExportsAsync(
+                    copiedSource,
+                    temporaryDirectory,
+                    rawService,
+                    loader,
+                    cancellationToken);
+                observation.Capabilities["export"] = "pass";
+                return;
+            }
             var source = new ImageFile(copiedSource);
             source.ApplyMetadata(MetadataService.ExtractMetadata(source, rawService));
             var settings = new ExportSettings

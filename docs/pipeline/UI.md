@@ -114,6 +114,15 @@ label token and the composite is painted dimly behind it. The embedded Reset cle
 only the active curve; RGB remains a required identity curve, while resetting R/G/B
 returns that optional field to null.
 
+When the generation-matched preview or refresh outcome installs
+`BaseImageInfo.IsMonochrome`, Develop disables and dims the camera-profile picker,
+every white-balance surface and command, Saturation, Vibrance, the color mixer, and
+the R/G/B curve selectors. RGB/composite remains enabled. Installation atomically returns an active
+color channel to composite, and both the ViewModel and curve control reject later
+color-channel selection. Stored color edits remain untouched. The first false-to-true
+installation shows one shared transient status message; capability is never inferred
+from extension or camera model.
+
 The camera-profile child control is visible provisionally for a RAW `ImageFile` and
 confirms or retracts against the loaded `BaseImageInfo.IsRawSource`. Camera identity
 starts cached local Adobe discovery in the background; opening the picker performs a

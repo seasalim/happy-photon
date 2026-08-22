@@ -7,7 +7,8 @@ public sealed partial class RawBaseLoader
 {
     internal static LibRawOutputConfiguration ConfigureOutput(
         BaseDecodeSettings decode,
-        bool preview)
+        bool preview,
+        bool isMonochrome = false)
     {
         var highlight = decode.HlReconstruction switch
         {
@@ -24,11 +25,29 @@ public sealed partial class RawBaseLoader
             _ => throw new InvalidOperationException(
                 $"Unsupported FBDD mode: {decode.NoiseReduction}.")
         };
-        return LibRawOutputConfiguration.LinearCameraNative(
+        var configuration = LibRawOutputConfiguration.LinearCameraNative(
             highlight,
             noiseReduction,
             preview);
+        return !isMonochrome ? configuration : configuration with
+        {
+            HalfSize = false,
+            UseCameraWhiteBalance = false,
+            UseAutoWhiteBalance = false,
+            UserMultiplier0 = 1,
+            UserMultiplier1 = 1,
+            UserMultiplier2 = 1,
+            UserMultiplier3 = 1,
+            UseCameraMatrix = false
+        };
     }
+
+    internal static bool IsMonochromeSensor(LibRawSensorIdentity identity) =>
+        identity.Colors == 1;
+
+    internal static bool HasExpectedProcessedLayout(
+        bool isMonochrome,
+        uint channels) => channels == (isMonochrome ? 1u : 3u);
 
     private sealed record LoadedBases(
         PreviewBasePair? Pair,

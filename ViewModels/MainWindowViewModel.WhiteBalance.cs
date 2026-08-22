@@ -280,7 +280,7 @@ public partial class MainWindowViewModel
     }
 
     private bool CanSampleWhiteBalance() =>
-        IsWhiteBalanceReady && IsDevelopMode && !IsCropMode &&
+        IsColorEditingEnabled && IsWhiteBalanceReady && IsDevelopMode && !IsCropMode &&
         !IsFullScreenMode && CanEditSelectedImage;
 
     private void NotifyWhiteBalanceCommandState()

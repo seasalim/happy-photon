@@ -36,6 +36,8 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
   white**, orientation applied, no look of any kind baked in. RAW reaches it through
   LibRaw; JPEG/PNG/TIFF/HEIC reach it through Magick decode and either a profiled ICC
   transform or the equivalent sRGB EOTF plus matrix. See DECODE.md and WORKING_SPACE.md.
+  A true monochrome RAW is still represented as RGB, with its one gray sensor plane
+  replicated to exact equal channels and identified by `BaseImageInfo.IsMonochrome`.
 - **`RenderPipeline`** is the only code path that turns a base + settings into visible
   pixels. Preview, histogram, clipping stats, and export all call it. There is no second
   pipeline, no preview-only shortcut that changes pixels, no export-only fixup.
@@ -81,6 +83,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 ```
             ┌─ DECODE.md ─────────────────────────────────────────────┐
  RAW ──LibRaw(camera RGB, linear, camWB)──characterize→Rec.2020 ──────┤
+ mono RAW ──LibRaw(gray, linear)──bounded gray resize──replicate RGB ┤
  JPEG/PNG/TIFF/HEIC ──Magick decode ─color→linear Rec.2020 ──────────┤
             └──────────► BaseImage (linear Rec.2020 Q16 + BaseImageInfo)┘
                                    │
@@ -135,6 +138,7 @@ public sealed record BaseImageInfo(
     int FullWidth,                 // native full-resolution dimensions after orientation —
     int FullHeight,                // set on preview bases too; RENDER.md §9 scales σ by these
     double SourceExposureBiasEv = 0); // Fuji midpoint restoration; 0 for other sources
+// IsMonochrome is a loader-produced fact propagated with preview/render outcomes.
 
 public sealed class BaseImage : IDisposable
 {

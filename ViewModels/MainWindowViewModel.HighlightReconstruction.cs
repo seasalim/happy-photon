@@ -7,6 +7,16 @@ public partial class MainWindowViewModel
 {
     private const string RawFallbackStatus =
         "Decoded via fallback — RAW controls unavailable";
+    private const string MonochromeRawStatus =
+        "Monochrome RAW — color controls unavailable";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsColorEditingEnabled))]
+    [NotifyPropertyChangedFor(nameof(AreColorCurveChannelsEnabled))]
+    private bool _isMonochromeSource;
+
+    public bool IsColorEditingEnabled => !IsMonochromeSource;
+    public bool AreColorCurveChannelsEnabled => !IsMonochromeSource;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsHighlightHandlingEnabled))]
     [NotifyPropertyChangedFor(nameof(IsNoiseReductionEnabled))]
@@ -50,6 +60,26 @@ public partial class MainWindowViewModel
         if (capabilityChanged && imageFile.IsRaw && !isRawSource)
         {
             ShowTransientStatus(RawFallbackStatus);
+        }
+    }
+
+    internal void ReconcileMonochromeCapability(
+        ImageFile imageFile,
+        bool isMonochrome)
+    {
+        if (IsMonochromeSource == isMonochrome)
+        {
+            return;
+        }
+        if (isMonochrome && ActiveCurveChannel != ToneCurveChannel.Composite)
+        {
+            ActiveCurveChannel = ToneCurveChannel.Composite;
+        }
+        IsMonochromeSource = isMonochrome;
+        NotifyWhiteBalanceCommandState();
+        if (isMonochrome && imageFile.IsRaw)
+        {
+            ShowTransientStatus(MonochromeRawStatus);
         }
     }
 

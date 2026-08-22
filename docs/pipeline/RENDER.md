@@ -252,6 +252,17 @@ before pixel access only when the mixer is also pixel-inactive. All transform ma
 production precision boundary. The reference `(L,C,h) -> (L,C,h)` seam and fused Q16
 hot path apply identical mixer ordering.
 
+### 6.1 True monochrome RAW
+
+`BaseImageInfo.IsMonochrome` keeps true monochrome sources on this same RAW render
+path while making color settings dormant. Rendering uses identity WB, omits the DCP
+HueSat map and R/G/B channel curves, and skips the fused chroma pass entirely —
+Saturation, Vibrance, and the color mixer. The
+composite curve, exposure and tone engine, geometry, detail, effects, scopes, output
+conversion, and export remain shared. Persisted color settings are neither applied nor
+cleared. Exact `R = G = B` is required through preview and both sRGB and Display P3
+lossless exports.
+
 ## 7. Histogram & clipping
 
 Computed at preview scale when `Options.ComputeStats` (existing `HistogramService`

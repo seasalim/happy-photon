@@ -51,6 +51,7 @@ internal sealed partial class RenderOutcome : IDisposable
     public ClippingStats? Clipping { get; init; }
     public OutcomeFieldMode CapabilityMode { get; init; }
     public bool IsRawSource { get; init; }
+    public bool IsMonochrome { get; init; }
     public OutcomeFieldMode ProfileMode { get; init; }
     public DcpProfileState? ProfileState { get; init; }
     public OutcomeFieldMode WhiteBalanceMode { get; init; }
@@ -103,6 +104,7 @@ internal sealed partial class RenderOutcome : IDisposable
                 ? OutcomeFieldMode.Preserve
                 : OutcomeFieldMode.Set,
             IsRawSource = artifacts.IsRawSource,
+            IsMonochrome = artifacts.IsMonochrome,
             ProfileMode = !hasPaint || stale
                 ? OutcomeFieldMode.Preserve
                 : OutcomeFieldMode.Set,
@@ -145,6 +147,7 @@ internal sealed partial class RenderOutcome : IDisposable
         _clippingMask = clippingMask,
         CapabilityMode = OutcomeFieldMode.Set,
         IsRawSource = refresh.IsRawSource,
+        IsMonochrome = refresh.IsMonochrome,
         ProfileMode = OutcomeFieldMode.Set,
         ProfileState = refresh.ProfileState,
         WhiteBalanceMode = OutcomeFieldMode.Set,
@@ -231,6 +234,7 @@ public partial class MainWindowViewModel
             ClippingMode = OutcomeFieldMode.Clear,
             CapabilityMode = OutcomeFieldMode.Set,
             IsRawSource = isRaw,
+            IsMonochrome = false,
             ProfileMode = OutcomeFieldMode.Set,
             WhiteBalanceMode = OutcomeFieldMode.Set,
             AsShotKelvin = isRaw ? 5500 : 6504,
@@ -373,6 +377,9 @@ public partial class MainWindowViewModel
             ReconcileHighlightReconstructionCapability(
                 outcome.Image,
                 outcome.IsRawSource);
+            ReconcileMonochromeCapability(
+                outcome.Image,
+                outcome.IsMonochrome);
         }
         if (outcome.ProfileMode == OutcomeFieldMode.Set)
         {

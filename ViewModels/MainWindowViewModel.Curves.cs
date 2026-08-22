@@ -12,32 +12,51 @@ public partial class MainWindowViewModel
     private ToneCurveChannel _activeCurveChannel;
 
     private EditSettings? _curveGestureStartState;
+    private ToneCurveChannel _curveGestureChannel;
 
     public CurveData? CompositeCurve => SelectedImage?.EditSettings.Curve;
     public bool HasRedCurve => SelectedImage?.EditSettings.CurveRed != null;
     public bool HasGreenCurve => SelectedImage?.EditSettings.CurveGreen != null;
     public bool HasBlueCurve => SelectedImage?.EditSettings.CurveBlue != null;
 
-    partial void OnActiveCurveChannelChanged(ToneCurveChannel value) =>
+    partial void OnActiveCurveChannelChanged(ToneCurveChannel value)
+    {
+        if (IsMonochromeSource && value != ToneCurveChannel.Composite)
+        {
+            ActiveCurveChannel = ToneCurveChannel.Composite;
+            return;
+        }
         LoadCurrentCurveFrom(SelectedImage?.EditSettings);
+    }
 
     public void OnCurveEditStarted()
     {
-        if (!CanEditSelectedImage || SelectedImage == null)
+        if (!CanEditSelectedImage || SelectedImage == null ||
+            IsMonochromeSource && ActiveCurveChannel != ToneCurveChannel.Composite)
         {
             return;
         }
 
         _curveGestureStartState = CaptureLiveEditState();
+        _curveGestureChannel = ActiveCurveChannel;
     }
 
     public async Task OnCurveChangedAsync()
     {
         if (!CanEditSelectedImage ||
             SelectedImage == null ||
-            CurrentCurve == null)
+            CurrentCurve == null ||
+            IsMonochromeSource && ActiveCurveChannel != ToneCurveChannel.Composite)
         {
             _curveGestureStartState = null;
+            return;
+        }
+
+        if (_curveGestureStartState != null &&
+            _curveGestureChannel != ActiveCurveChannel)
+        {
+            _curveGestureStartState = null;
+            LoadCurrentCurveFrom(SelectedImage.EditSettings);
             return;
         }
 

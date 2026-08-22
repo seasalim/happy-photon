@@ -15,6 +15,11 @@
         <Style Selector="views|CompactSlider.crossing-dependent:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
+        <Style Selector="StackPanel.color-dependent:disabled,
+                         views|CompactSlider.color-dependent:disabled,
+                         views|MixerEditGroup.color-dependent:disabled">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        </Style>
         <Style Selector="ToggleButton.wb-picker:checked">
             <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
             <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
@@ -202,86 +207,92 @@
                 <StackPanel Margin="15,5,15,15"
                             Spacing="4"
                             IsEnabled="{Binding HasSelectedImage}">
-                        <views:RawProfilePicker/>
+                        <views:RawProfilePicker x:Name="RawProfilePicker"
+                            IsEnabled="{Binding IsColorEditingEnabled}"/>
 
-                        <TextBlock x:Name="WhiteBalanceHeading"
-                                   Classes="section-label"
-                                   Text="WHITE BALANCE"
-                                   Margin="0,2,0,12"/>
+                        <StackPanel x:Name="WhiteBalanceControls"
+                                    Classes="color-dependent"
+                                    Spacing="4"
+                                    IsEnabled="{Binding IsColorEditingEnabled}">
+                            <TextBlock x:Name="WhiteBalanceHeading"
+                                       Classes="section-label"
+                                       Text="WHITE BALANCE"
+                                       Margin="0,2,0,12"/>
 
-                        <Grid ColumnDefinitions="*,Auto,Auto"
-                              Height="28"
-                              Margin="0,0,0,8">
-                            <ComboBox x:Name="WhiteBalanceModeBox"
-                                      Grid.Column="0"
-                                      Classes="edit-dropdown"
-                                      ItemsSource="{Binding WhiteBalanceModeOptions}"
-                                      SelectedItem="{Binding SelectedWhiteBalanceMode, Mode=TwoWay}"/>
-                            <Button x:Name="WhiteBalanceAutoButton"
-                                    Grid.Column="1"
-                                    Classes="wb-auto"
-                                    Command="{Binding AutoWhiteBalanceCommand}"
-                                    Content="Auto"
-                                    Margin="6,0,0,0"
-                                    ToolTip.Tip="Automatic white balance"/>
-                            <ToggleButton x:Name="WhiteBalancePickerButton"
-                                          Grid.Column="2"
-                                          Classes="wb-picker"
-                                          Command="{Binding ToggleWhiteBalancePickerCommand}"
-                                          IsChecked="{Binding IsWhiteBalancePicking, Mode=OneWay}"
-                                          Margin="4,0,0,0"
-                                          ToolTip.Tip="White balance eyedropper (W)">
-                                <Viewbox Width="16" Height="16">
-                                    <Canvas Width="24" Height="24">
-                                        <Path Stroke="{StaticResource Primary}"
-                                              StrokeThickness="1.8"
-                                              StrokeLineCap="Round"
-                                              StrokeJoin="Round"
-                                              Data="M2,22 L3,21 L6,21 L15,12 M3,21 L3,18 L12,9 M15,6 L18.4,2.6 C19.2,1.8 20.5,1.8 21.3,2.6 C22.1,3.4 22.1,4.7 21.3,5.5 L18,9 Z M15,6 L12,9 L15,12 L18,9 Z"/>
-                                    </Canvas>
-                                </Viewbox>
-                            </ToggleButton>
-                        </Grid>
+                            <Grid ColumnDefinitions="*,Auto,Auto"
+                                  Height="28"
+                                  Margin="0,0,0,8">
+                                <ComboBox x:Name="WhiteBalanceModeBox"
+                                          Grid.Column="0"
+                                          Classes="edit-dropdown"
+                                          ItemsSource="{Binding WhiteBalanceModeOptions}"
+                                          SelectedItem="{Binding SelectedWhiteBalanceMode, Mode=TwoWay}"/>
+                                <Button x:Name="WhiteBalanceAutoButton"
+                                        Grid.Column="1"
+                                        Classes="wb-auto"
+                                        Command="{Binding AutoWhiteBalanceCommand}"
+                                        Content="Auto"
+                                        Margin="6,0,0,0"
+                                        ToolTip.Tip="Automatic white balance"/>
+                                <ToggleButton x:Name="WhiteBalancePickerButton"
+                                              Grid.Column="2"
+                                              Classes="wb-picker"
+                                              Command="{Binding ToggleWhiteBalancePickerCommand}"
+                                              IsChecked="{Binding IsWhiteBalancePicking, Mode=OneWay}"
+                                              Margin="4,0,0,0"
+                                              ToolTip.Tip="White balance eyedropper (W)">
+                                    <Viewbox Width="16" Height="16">
+                                        <Canvas Width="24" Height="24">
+                                            <Path Stroke="{StaticResource Primary}"
+                                                  StrokeThickness="1.8"
+                                                  StrokeLineCap="Round"
+                                                  StrokeJoin="Round"
+                                                  Data="M2,22 L3,21 L6,21 L15,12 M3,21 L3,18 L12,9 M15,6 L18.4,2.6 C19.2,1.8 20.5,1.8 21.3,2.6 C22.1,3.4 22.1,4.7 21.3,5.5 L18,9 Z M15,6 L12,9 L15,12 L18,9 Z"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                </ToggleButton>
+                            </Grid>
 
-                        <views:CompactSlider Label="Kelvin"
-                                             Value="{Binding WhiteBalanceKelvinPosition}"
-                                             Minimum="0"
-                                             Maximum="1"
-                                             SmallChange="0.005"
-                                             DisplayText="{Binding WhiteBalanceKelvinText}"
-                                             ShowValueFill="False">
-                            <views:CompactSlider.TrackBrush>
-                                <LinearGradientBrush StartPoint="0%,50%"
-                                                     EndPoint="100%,50%">
-                                    <GradientStop Color="{StaticResource WhiteBalanceCoolColor}"
-                                                  Offset="0"/>
-                                    <GradientStop Color="{StaticResource WhiteBalanceNeutralColor}"
-                                                  Offset="0.55"/>
-                                    <GradientStop Color="{StaticResource WhiteBalanceWarmColor}"
-                                                  Offset="1"/>
-                                </LinearGradientBrush>
-                            </views:CompactSlider.TrackBrush>
-                        </views:CompactSlider>
+                            <views:CompactSlider Label="Kelvin"
+                                                 Value="{Binding WhiteBalanceKelvinPosition}"
+                                                 Minimum="0"
+                                                 Maximum="1"
+                                                 SmallChange="0.005"
+                                                 DisplayText="{Binding WhiteBalanceKelvinText}"
+                                                 ShowValueFill="False">
+                                <views:CompactSlider.TrackBrush>
+                                    <LinearGradientBrush StartPoint="0%,50%"
+                                                         EndPoint="100%,50%">
+                                        <GradientStop Color="{StaticResource WhiteBalanceCoolColor}"
+                                                      Offset="0"/>
+                                        <GradientStop Color="{StaticResource WhiteBalanceNeutralColor}"
+                                                      Offset="0.55"/>
+                                        <GradientStop Color="{StaticResource WhiteBalanceWarmColor}"
+                                                      Offset="1"/>
+                                    </LinearGradientBrush>
+                                </views:CompactSlider.TrackBrush>
+                            </views:CompactSlider>
 
-                        <views:CompactSlider Label="Tint"
-                                             Value="{Binding WhiteBalanceTint}"
-                                             Minimum="-100"
-                                             Maximum="100"
-                                             SmallChange="1"
-                                             DisplayText="{Binding WhiteBalanceTintText}"
-                                             ShowValueFill="False">
-                            <views:CompactSlider.TrackBrush>
-                                <LinearGradientBrush StartPoint="0%,50%"
-                                                     EndPoint="100%,50%">
-                                    <GradientStop Color="{StaticResource WhiteBalanceTintGreenColor}"
-                                                  Offset="0"/>
-                                    <GradientStop Color="{StaticResource WhiteBalanceTintNeutralColor}"
-                                                  Offset="0.5"/>
-                                    <GradientStop Color="{StaticResource WhiteBalanceTintMagentaColor}"
-                                                  Offset="1"/>
-                                </LinearGradientBrush>
-                            </views:CompactSlider.TrackBrush>
-                        </views:CompactSlider>
+                            <views:CompactSlider Label="Tint"
+                                                 Value="{Binding WhiteBalanceTint}"
+                                                 Minimum="-100"
+                                                 Maximum="100"
+                                                 SmallChange="1"
+                                                 DisplayText="{Binding WhiteBalanceTintText}"
+                                                 ShowValueFill="False">
+                                <views:CompactSlider.TrackBrush>
+                                    <LinearGradientBrush StartPoint="0%,50%"
+                                                         EndPoint="100%,50%">
+                                        <GradientStop Color="{StaticResource WhiteBalanceTintGreenColor}"
+                                                      Offset="0"/>
+                                        <GradientStop Color="{StaticResource WhiteBalanceTintNeutralColor}"
+                                                      Offset="0.5"/>
+                                        <GradientStop Color="{StaticResource WhiteBalanceTintMagentaColor}"
+                                                      Offset="1"/>
+                                    </LinearGradientBrush>
+                                </views:CompactSlider.TrackBrush>
+                            </views:CompactSlider>
+                        </StackPanel>
 
                         <TextBlock Classes="section-label"
                                    Text="ADJUSTMENTS"
@@ -309,14 +320,20 @@
                                              Maximum="100"
                                              SmallChange="1"
                                              EnableDoubleClickReset="True"/>
-                        <views:CompactSlider Label="Saturation"
+                        <views:CompactSlider x:Name="SaturationSlider"
+                                             Classes="color-dependent"
+                                             Label="Saturation"
                                              Value="{Binding Saturation}"
+                                             IsEnabled="{Binding IsColorEditingEnabled}"
                                              Minimum="-100"
                                              Maximum="100"
                                              SmallChange="1"
                                              EnableDoubleClickReset="True"/>
-                        <views:CompactSlider Label="Vibrance"
+                        <views:CompactSlider x:Name="VibranceSlider"
+                                             Classes="color-dependent"
+                                             Label="Vibrance"
                                              Value="{Binding Vibrance}"
+                                             IsEnabled="{Binding IsColorEditingEnabled}"
                                              Minimum="-100"
                                              Maximum="100"
                                              SmallChange="1"
@@ -380,10 +397,13 @@
                         <views:CurveView x:Name="ToneCurveView"
                                          Curve="{Binding CurrentCurve}" CompositeCurve="{Binding CompositeCurve}" ActiveChannel="{Binding ActiveCurveChannel, Mode=TwoWay}"
                                          HasRedCurve="{Binding HasRedCurve}" HasGreenCurve="{Binding HasGreenCurve}" HasBlueCurve="{Binding HasBlueCurve}" CurveEditStarted="OnCurveEditStarted" CurveChanged="OnCurveChanged"
+                                         AreColorChannelsEnabled="{Binding AreColorCurveChannelsEnabled}"
                                          Margin="0,20,0,0"
                                          Height="180"/>
 
-                        <views:MixerEditGroup x:Name="MixerEditGroup"/>
+                        <views:MixerEditGroup x:Name="MixerEditGroup"
+                                              Classes="color-dependent"
+                                              IsEnabled="{Binding IsColorEditingEnabled}"/>
                         <views:DetailEditGroup x:Name="DetailEditGroup"/>
                         <views:EffectsEditGroup x:Name="EffectsEditGroup"/>
 

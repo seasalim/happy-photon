@@ -365,7 +365,8 @@ public partial class MainWindowViewModel
         ClippingStats? clipping = null,
         bool? isRawSource = null,
         DcpProfileState? profileState = null,
-        ClippingMask? clippingMask = null)
+        ClippingMask? clippingMask = null,
+        bool isMonochrome = false)
     {
         using var refresh = new PreviewRefresh(
             imageFile,
@@ -377,7 +378,8 @@ public partial class MainWindowViewModel
             clipping,
             isRawSource ?? imageFile.IsRaw,
             profileState,
-            clippingMask);
+            clippingMask,
+            isMonochrome: isMonochrome);
         ApplyRenderOutcome(RenderOutcome.FromRefresh(
             refresh,
             refresh.DetachBitmap(),

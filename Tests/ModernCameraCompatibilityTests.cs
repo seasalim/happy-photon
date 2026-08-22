@@ -281,21 +281,24 @@ public sealed class ModernCameraCompatibilityTests
             observation.PreviewHeight > observation.FullHeight)
             differences.Add("preview dimensions exceeded full dimensions");
 
-        var facts = expected.CameraFacts!;
-        CompareValue(differences, "sensor colors", facts.Sensor!.Colors,
+        var sensor = expected.Sensor ?? expected.CameraFacts!.Sensor!;
+        CompareValue(differences, "sensor colors", sensor.Colors,
             observation.Sensor?.Colors);
-        CompareValue(differences, "sensor filters", facts.Sensor.Filters,
+        CompareValue(differences, "sensor filters", sensor.Filters,
             observation.Sensor?.Filters);
-        CompareValue(differences, "sensor DNG version", facts.Sensor.DngVersion,
+        CompareValue(differences, "sensor DNG version", sensor.DngVersion,
             observation.Sensor?.DngVersion);
         CompareValue(differences, "sensor color description",
-            facts.Sensor.ColorDescription, observation.Sensor?.ColorDescription);
-        CompareNumbers(differences, "CamMul", facts.CamMul!.Values!,
-            observation.CamMul, facts.CamMul.AbsoluteTolerance,
-            facts.CamMul.RelativeTolerance);
-        CompareNumbers(differences, "CamToSrgb", facts.CamToSrgb!.RowMajorValues!,
-            observation.CamToSrgb, facts.CamToSrgb.AbsoluteTolerance,
-            facts.CamToSrgb.RelativeTolerance);
+            sensor.ColorDescription, observation.Sensor?.ColorDescription);
+        if (expected.CameraFacts is { } facts)
+        {
+            CompareNumbers(differences, "CamMul", facts.CamMul!.Values!,
+                observation.CamMul, facts.CamMul.AbsoluteTolerance,
+                facts.CamMul.RelativeTolerance);
+            CompareNumbers(differences, "CamToSrgb", facts.CamToSrgb!.RowMajorValues!,
+                observation.CamToSrgb, facts.CamToSrgb.AbsoluteTolerance,
+                facts.CamToSrgb.RelativeTolerance);
+        }
     }
 
     private static void CompareUnsupported(

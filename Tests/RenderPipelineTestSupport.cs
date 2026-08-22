@@ -12,7 +12,8 @@ internal static class RenderPipelineTestSupport
         bool isRaw = false,
         int height = 1,
         double sourceBiasEv = 0,
-        DcpHueSatMap? hueSatMap = null)
+        DcpHueSatMap? hueSatMap = null,
+        bool isMonochrome = false)
     {
         var width = samples.Length / 3 / height;
         var pixels = RawBaseLoader.ImportRgb16(
@@ -36,6 +37,7 @@ internal static class RenderPipelineTestSupport
                 height,
                 SourceExposureBiasEv: sourceBiasEv)
             {
+                IsMonochrome = isMonochrome,
                 DcpProfile = hueSatMap == null
                     ? null
                     : new DcpProfilePayload("synthetic", "Synthetic", hueSatMap),

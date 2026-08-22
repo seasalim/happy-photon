@@ -343,6 +343,50 @@
       "testLevel": "smoke"
     },
     {
+      "slug": "m2462362",
+      "cameraMake": "Leica",
+      "cameraModel": "M MONOCHROM (Typ 246)",
+      "captureMode": "12-bit monochrome, 3:2",
+      "extension": ".DNG",
+      "provenanceUrl": "https://raw.pixls.us/getfile.php/1087/nice/Leica%20-%20M%20Monochrom%20%28Typ%20246%29%20-%2012bit%20%283%3A2%29.DNG",
+      "license": "CC0-1.0",
+      "sizeBytes": 21700096,
+      "sha256": "3fb74d1fc402daaa48a9c3f1d6279d7e85fb58dfdaf816f036927d49ab228977",
+      "selectionStatus": "selected",
+      "expectationStatus": "reviewed",
+      "expected": {
+        "overall": "supported",
+        "capabilities": {
+          "browseThumbnail": "pass",
+          "metadata": "pass",
+          "preview": "pass",
+          "fullDecode": "pass",
+          "cameraColor": "pass",
+          "export": "pass"
+        },
+        "metadata": {
+          "visibleWidth": 5984,
+          "visibleHeight": 4000,
+          "nativeOrientation": 0,
+          "appliedOrientation": 1,
+          "requiresIso": true,
+          "requiresExposure": true,
+          "requiresCaptureTimestamp": true
+        },
+        "sensor": {
+          "colors": 1,
+          "filters": 0,
+          "dngVersion": 16973824,
+          "colorDescription": "GMCY"
+        },
+        "cameraFacts": null,
+        "monochromeNeutrality": true,
+        "limitations": []
+      },
+      "platformOverrides": [],
+      "testLevel": "smoke"
+    },
+    {
       "slug": "nikon-z8-he",
       "cameraMake": "Nikon",
       "cameraModel": "Z 8",

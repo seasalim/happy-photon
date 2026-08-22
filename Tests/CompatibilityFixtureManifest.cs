@@ -160,7 +160,9 @@ internal sealed class CompatibilityExpectation
     public string? Overall { get; init; }
     public CapabilityExpectation? Capabilities { get; init; }
     public MetadataExpectation? Metadata { get; init; }
+    public SensorExpectation? Sensor { get; init; }
     public CameraFactExpectation? CameraFacts { get; init; }
+    public bool? MonochromeNeutrality { get; init; }
     public UnpackErrorExpectation? UnpackError { get; init; }
     public List<string>? Limitations { get; init; }
 
@@ -174,16 +176,25 @@ internal sealed class CompatibilityExpectation
             $"{slug}: reviewed expectations require capabilities, metadata, and limitations.");
         Capabilities!.Validate(slug);
         Metadata!.Validate(slug);
+        Sensor?.Validate(slug);
 
         if (Overall == "supported")
         {
             CompatibilityFixtureManifest.Require(
                 Capabilities.Values.All(value => value == "pass"),
                 $"{slug}: supported fixtures require every capability to pass.");
+            var sensor = Sensor ?? CameraFacts?.Sensor;
             CompatibilityFixtureManifest.Require(
-                CameraFacts != null && UnpackError == null && Limitations!.Count == 0,
-                $"{slug}: supported expectations require camera facts and no limitations.");
-            CameraFacts!.Validate(slug);
+                sensor != null && UnpackError == null && Limitations!.Count == 0,
+                $"{slug}: supported expectations require sensor facts and no limitations.");
+            var isMonochrome = sensor!.Colors == 1;
+            CompatibilityFixtureManifest.Require(
+                isMonochrome
+                    ? CameraFacts == null && MonochromeNeutrality == true
+                    : CameraFacts != null && MonochromeNeutrality == null,
+                $"{slug}: mono support requires neutrality without camera facts; " +
+                "color support requires camera facts without a mono expectation.");
+            CameraFacts?.Validate(slug);
         }
         else if (Overall == "unsupported")
         {
@@ -274,7 +285,7 @@ internal sealed class SensorExpectation
 
     internal void Validate(string slug) =>
         CompatibilityFixtureManifest.Require(
-            Colors is 3 or 4 && !string.IsNullOrWhiteSpace(ColorDescription),
+            Colors is 1 or 3 or 4 && !string.IsNullOrWhiteSpace(ColorDescription),
             $"{slug}: invalid sensor facts.");
 }
 

@@ -14,6 +14,7 @@ public sealed class PreviewArtifacts : IDisposable
     public HistogramData Histogram { get; }
     public ClippingStats? Clipping { get; }
     public bool IsRawSource { get; }
+    public bool IsMonochrome { get; }
     internal DcpProfileState? ProfileState { get; }
     public long Generation { get; }
     public HistogramData? RawHistogram { get; }
@@ -34,12 +35,14 @@ public sealed class PreviewArtifacts : IDisposable
         double asShotKelvin = 6504,
         double asShotTint = 0,
         bool isBaseStale = false,
-        PreviewPromotionLease? promotionLease = null)
+        PreviewPromotionLease? promotionLease = null,
+        bool isMonochrome = false)
     {
         _bitmap = bitmap;
         Histogram = histogram ?? throw new ArgumentNullException(nameof(histogram));
         Clipping = clipping;
         IsRawSource = isRawSource;
+        IsMonochrome = isMonochrome;
         ProfileState = profileState;
         Generation = generation;
         _clippingMask = clippingMask;
@@ -125,6 +128,7 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
     public bool HasHistogram { get; }
     public ClippingStats? Clipping { get; }
     public bool IsRawSource { get; }
+    public bool IsMonochrome { get; }
     internal DcpProfileState? ProfileState { get; }
     public double AsShotKelvin { get; }
     public double AsShotTint { get; }
@@ -151,7 +155,8 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         DcpProfileState? profileState = null,
         ClippingMask? clippingMask = null,
         double asShotKelvin = 6504,
-        double asShotTint = 0)
+        double asShotTint = 0,
+        bool isMonochrome = false)
     {
         ImageFile = imageFile;
         _bitmap = bitmap;
@@ -161,6 +166,7 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         RawHistogram = rawHistogram;
         Clipping = clipping;
         IsRawSource = isRawSource;
+        IsMonochrome = isMonochrome;
         ProfileState = profileState;
         _clippingMask = clippingMask;
         AsShotKelvin = asShotKelvin;

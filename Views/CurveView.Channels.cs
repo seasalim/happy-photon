@@ -25,6 +25,11 @@ public partial class CurveView
     public static readonly StyledProperty<bool> HasBlueCurveProperty =
         AvaloniaProperty.Register<CurveView, bool>(nameof(HasBlueCurve));
 
+    public static readonly StyledProperty<bool> AreColorChannelsEnabledProperty =
+        AvaloniaProperty.Register<CurveView, bool>(
+            nameof(AreColorChannelsEnabled),
+            defaultValue: true);
+
     public ToneCurveChannel ActiveChannel
     {
         get => GetValue(ActiveChannelProperty);
@@ -55,6 +60,12 @@ public partial class CurveView
         set => SetValue(HasBlueCurveProperty, value);
     }
 
+    public bool AreColorChannelsEnabled
+    {
+        get => GetValue(AreColorChannelsEnabledProperty);
+        set => SetValue(AreColorChannelsEnabledProperty, value);
+    }
+
     private IBrush ActiveCurveBrush => ActiveChannel switch
     {
         ToneCurveChannel.Red => HappyPhotonColors.ColorLabelRed,
@@ -77,6 +88,10 @@ public partial class CurveView
 
     private void SelectChannel(ToneCurveChannel channel)
     {
+        if (!AreColorChannelsEnabled && channel != ToneCurveChannel.Composite)
+        {
+            return;
+        }
         SetCurrentValue(ActiveChannelProperty, channel);
         UpdateChannelSelectors();
     }
@@ -97,6 +112,9 @@ public partial class CurveView
         RedChannelButton.Classes.Set("touched", HasRedCurve);
         GreenChannelButton.Classes.Set("touched", HasGreenCurve);
         BlueChannelButton.Classes.Set("touched", HasBlueCurve);
+        RedChannelButton.IsEnabled = AreColorChannelsEnabled;
+        GreenChannelButton.IsEnabled = AreColorChannelsEnabled;
+        BlueChannelButton.IsEnabled = AreColorChannelsEnabled;
     }
 
     private void DrawCurvePath(

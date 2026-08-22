@@ -96,8 +96,11 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                         decode.ProfileSelection,
                         DcpProfileErrorCode.UnsupportedVariant,
                         "The selected profile was not resolved for this decode."));
+            using var context = LibRawContext.Open(file.FilePath, cancellationToken);
+            var sensorIdentity = context.GetSensorIdentity(cancellationToken);
+            var isMonochrome = IsMonochromeSensor(sensorIdentity);
             var cameraData = DcpCameraData.Defaults;
-            if (requestedResolution.IsActive &&
+            if (!isMonochrome && requestedResolution.IsActive &&
                 file.Extension.Equals(".dng", StringComparison.OrdinalIgnoreCase))
             {
                 var cameraResult = TryReadDngCameraData(file.FilePath);
@@ -111,7 +114,6 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                         cameraResult.Error);
                 }
             }
-            using var context = LibRawContext.Open(file.FilePath, cancellationToken);
             var dimensions = context.GetDimensions(cancellationToken);
             var rawMetadata = context.GetMetadata(cancellationToken);
             var fullWidth = checked((int)dimensions.VisibleWidth);
@@ -169,50 +171,100 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                     file.FilePath);
             }
             cancellationToken.ThrowIfCancellationRequested();
-            context.ConfigureOutput(ConfigureOutput(decode, preview), cancellationToken);
-            context.Process(cancellationToken);
-
-            using var processed = context.MakeProcessedImage(cancellationToken);
-            var description = processed.Description;
-            if (description.BitsPerSample != 16 || description.Channels != 3 ||
-                description.Width == 0 || description.Height == 0)
-            {
-                return null;
-            }
-
-            context.Recycle(cancellationToken);
             var asShot = WhiteBalanceModel.EstimateAsShot(
                 cameraFacts.CamMul,
                 cameraFacts.CamToSrgb,
                 cameraFacts.PreMul);
-            var dcp = DcpMatrixCalculator.Create(
-                requestedResolution,
-                cameraData,
-                cameraFacts,
-                asShot.kelvin);
-            var characterization = dcp.IsActive
-                ? CameraRgbCharacterization.CreateProfile(dcp.CameraToRec2020!)
-                : CameraRgbCharacterization.Create(cameraFacts);
-            pixels = characterization.ImportRgb16(
-                processed.AsSpan(),
-                checked((int)description.Width),
-                checked((int)description.Height),
+            DcpCharacterizationResult? dcp = null;
+            CameraRgbCharacterization? characterization = null;
+            if (!isMonochrome)
+            {
+                dcp = DcpMatrixCalculator.Create(
+                    requestedResolution,
+                    cameraData,
+                    cameraFacts,
+                    asShot.kelvin);
+                characterization = dcp.IsActive
+                    ? CameraRgbCharacterization.CreateProfile(dcp.CameraToRec2020!)
+                    : CameraRgbCharacterization.Create(cameraFacts);
+            }
+
+            context.ConfigureOutput(
+                ConfigureOutput(decode, preview, isMonochrome),
                 cancellationToken);
+            context.Process(cancellationToken);
+
+            ushort[]? previewGray = null;
+            var previewGrayWidth = 0;
+            var previewGrayHeight = 0;
+            using (var processed = context.MakeProcessedImage(cancellationToken))
+            {
+                var description = processed.Description;
+                if (description.BitsPerSample != 16 ||
+                    !HasExpectedProcessedLayout(
+                        isMonochrome,
+                        description.Channels) ||
+                    description.Width == 0 || description.Height == 0)
+                {
+                    return null;
+                }
+
+                var processedWidth = checked((int)description.Width);
+                var processedHeight = checked((int)description.Height);
+                if (isMonochrome && preview)
+                {
+                    previewGray = MonochromeRawImporter.AreaAverageToMaxDimension(
+                        processed.AsSpan(),
+                        processedWidth,
+                        processedHeight,
+                        BaseImage.LargePreviewMaxDimension,
+                        cancellationToken,
+                        out previewGrayWidth,
+                        out previewGrayHeight);
+                }
+                else if (isMonochrome)
+                {
+                    pixels = MonochromeRawImporter.ImportGray16(
+                        processed.AsSpan(),
+                        processedWidth,
+                        processedHeight,
+                        cancellationToken);
+                }
+                else
+                {
+                    pixels = characterization!.ImportRgb16(
+                        processed.AsSpan(),
+                        processedWidth,
+                        processedHeight,
+                        cancellationToken);
+                }
+            }
+            context.Recycle(cancellationToken);
+            if (previewGray != null)
+            {
+                pixels = MonochromeRawImporter.ImportGray16(
+                    previewGray,
+                    previewGrayWidth,
+                    previewGrayHeight,
+                    cancellationToken);
+            }
             cancellationToken.ThrowIfCancellationRequested();
+            var decodedPixels = pixels ?? throw new InvalidOperationException(
+                "LibRaw produced no decoded pixels.");
 
             ApplyOrientation(
-                pixels,
+                decodedPixels,
                 orientation,
                 fullWidth,
                 fullHeight);
             var sourceSaturation = sensorSaturation?.OrientAndResize(
                 orientation,
-                checked((int)pixels.Width),
-                checked((int)pixels.Height));
+                checked((int)decodedPixels.Width),
+                checked((int)decodedPixels.Height));
             var estimateStopwatch = Stopwatch.StartNew();
             var sourceExposureBiasEv = PreviewExposureEstimator.Estimate(
                 thumbnailBytes,
-                pixels,
+                decodedPixels,
                 metadataExposureBiasEv,
                 file.FilePath);
             var estimateElapsed = estimateStopwatch.ElapsedMilliseconds;
@@ -222,20 +274,22 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 thumbnailElapsed + estimateElapsed,
                 file.FilePath,
                 $"thumbnail={thumbnailElapsed};estimate={estimateElapsed}");
-            pixels.Depth = 16;
-            pixels.Strip();
+            decodedPixels.Depth = 16;
+            decodedPixels.Strip();
             cancellationToken.ThrowIfCancellationRequested();
 
             var orientedFullSize = GetOrientedSize(
                 fullWidth,
                 fullHeight,
                 orientation);
-            var effectiveResolution = requestedResolution.Selection == null ||
-                dcp.Status == DcpProfileErrorCode.None
+            var effectiveResolution = isMonochrome
+                ? DcpProfileResolution.BuiltIn
+                : requestedResolution.Selection == null ||
+                dcp!.Status == DcpProfileErrorCode.None
                 ? requestedResolution
                 : DcpProfileResolution.Rejected(
                     requestedResolution.Selection,
-                    dcp.Status,
+                    dcp!.Status,
                     dcp.Message ?? "The selected camera profile was rejected.") with
                 {
                     Token = dcp.Token
@@ -245,8 +299,8 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 BaseSourceKind.RawLibRaw,
                 IsRawSource: true,
                 effectiveDecode,
-                cameraFacts.CamMul,
-                cameraFacts.CamToSrgb,
+                isMonochrome ? null : cameraFacts.CamMul,
+                isMonochrome ? null : cameraFacts.CamToSrgb,
                 AsShotKelvin: asShot.kelvin,
                 AsShotTint: asShot.tint,
                 HadIccProfile: false,
@@ -256,13 +310,16 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 orientedFullSize.Height,
                 SourceExposureBiasEv: sourceExposureBiasEv)
             {
-                DcpProfile = dcp.Payload,
-                ProfileToken = dcp.Token,
-                ProfileStatus = dcp.Status,
-                ProfileMessage = dcp.Message,
-                CameraIdentity = new CameraIdentity(
-                    rawMetadata.NormalizedMake ?? rawMetadata.Make,
-                    rawMetadata.NormalizedModel ?? rawMetadata.Model)
+                IsMonochrome = isMonochrome,
+                DcpProfile = dcp?.Payload,
+                ProfileToken = dcp?.Token ?? string.Empty,
+                ProfileStatus = dcp?.Status ?? DcpProfileErrorCode.None,
+                ProfileMessage = dcp?.Message,
+                CameraIdentity = isMonochrome
+                    ? null
+                    : new CameraIdentity(
+                        rawMetadata.NormalizedMake ?? rawMetadata.Make,
+                        rawMetadata.NormalizedModel ?? rawMetadata.Model)
             };
             PreviewBasePair? pair = null;
             BaseImage? full = null;
@@ -270,7 +327,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             if (preview)
             {
                 pair = PreviewBasePairFactory.Create(
-                    pixels,
+                    decodedPixels,
                     info,
                     cancellationToken);
                 analysis = rawHistogram == null && sourceSaturation == null
@@ -283,7 +340,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             }
             else
             {
-                full = new BaseImage(pixels, info);
+                full = new BaseImage(decodedPixels, info);
                 pixels = null;
             }
 

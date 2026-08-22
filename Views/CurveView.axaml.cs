@@ -59,14 +59,23 @@ public partial class CurveView : UserControl
 
         if (change.Property == CurveProperty)
         {
+            CancelActiveDrag();
             DrawCurve();
         }
         else if (change.Property == ActiveChannelProperty ||
                  change.Property == CompositeCurveProperty ||
                  change.Property == HasRedCurveProperty ||
                  change.Property == HasGreenCurveProperty ||
-                 change.Property == HasBlueCurveProperty)
+                 change.Property == HasBlueCurveProperty ||
+                 change.Property == AreColorChannelsEnabledProperty)
         {
+            if (!AreColorChannelsEnabled &&
+                ActiveChannel != ToneCurveChannel.Composite)
+            {
+                SetCurrentValue(
+                    ActiveChannelProperty,
+                    ToneCurveChannel.Composite);
+            }
             UpdateChannelSelectors();
             DrawCurve();
         }
@@ -299,6 +308,17 @@ public partial class CurveView : UserControl
             // Always show hand cursor over the curve canvas (can always add points)
             Cursor = HandCursor;
         }
+    }
+
+    private void CancelActiveDrag()
+    {
+        if (_dragPointIndex < 0)
+        {
+            return;
+        }
+        _dragPointIndex = -1;
+        _dragTransform.X = 0;
+        _dragTransform.Y = 0;
     }
 
     private void OnCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)

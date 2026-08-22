@@ -92,6 +92,7 @@ public sealed record BaseImageInfo(
     int FullHeight,
     double SourceExposureBiasEv = 0)
 {
+    public bool IsMonochrome { get; init; }
     internal DcpProfilePayload? DcpProfile { get; init; }
     internal string ProfileToken { get; init; } = string.Empty;
     internal DcpProfileErrorCode ProfileStatus { get; init; }
@@ -105,7 +106,7 @@ public sealed record BaseImageInfo(
 /// </summary>
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 11;
+    public const int Version = 12;
     public const int InteractivePreviewMaxDimension = 1600;
     public const int LargePreviewMaxDimension = 3200;
 

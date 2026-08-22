@@ -25,6 +25,9 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
+        <Style Selector="Button.curveChannel:disabled">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        </Style>
         <Style Selector="Button.curveChannel /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>

@@ -54,7 +54,16 @@ entries use `expectationStatus` `candidate` or `reviewed`. Candidates omit `expe
 and run only in discovery. Reviewed entries require capability, metadata, sensor,
 camera-WB/matrix, tolerance, and review expectations appropriate to their outcome.
 Camera matrices are 3-by-the-native-multiplier-count in row-major order and each row
-sums to 1. All six current entries use `testLevel: smoke`.
+sums to 1. All seven current entries use `testLevel: smoke`.
+
+The selected Leica M Monochrom (Typ 246) entry pins `M2462362.DNG` by exact length
+and SHA-256 with sensor `Colors == 1` and absent camera-color expectations. Discovery
+and strict modes exercise preview and full decode, then require exact equal channels
+for the neutral render and lossless PNG and 16-bit TIFF exports in both sRGB and
+Display P3 under extreme dormant WB, profile, saturation/vibrance, mixer, and
+channel-curve settings. The local Q2 MONO file
+is not a manifest fixture; its manual preview-base gate is ≤2.5 s and ≤600 MiB peak
+private-memory delta.
 
 `HAPPY_PHOTON_COMPAT` has four states:
 

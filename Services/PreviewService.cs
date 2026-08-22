@@ -226,7 +226,8 @@ public sealed partial class PreviewService : IAsyncDisposable
                     : null,
                 baseImage.Info.IsRawSource,
                 DcpProfileState.From(baseImage.Info, settings.RawProfile),
-                clippingMask);
+                clippingMask,
+                baseImage.Info.IsMonochrome);
         }
         catch
         {
@@ -385,6 +386,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         public HistogramData Histogram { get; }
         public ClippingStats? Clipping { get; }
         public bool IsRawSource { get; }
+        public bool IsMonochrome { get; }
         public DcpProfileState ProfileState { get; }
         public ClippingMask? ClippingMask { get; private set; }
 
@@ -396,7 +398,8 @@ public sealed partial class PreviewService : IAsyncDisposable
             ClippingStats? clipping,
             bool isRawSource,
             DcpProfileState profileState,
-            ClippingMask? clippingMask)
+            ClippingMask? clippingMask,
+            bool isMonochrome)
         {
             Bitmap = bitmap;
             ThumbnailSource = thumbnailSource;
@@ -404,6 +407,7 @@ public sealed partial class PreviewService : IAsyncDisposable
             Histogram = histogram;
             Clipping = clipping;
             IsRawSource = isRawSource;
+            IsMonochrome = isMonochrome;
             ProfileState = profileState;
             ClippingMask = clippingMask;
         }
@@ -450,7 +454,8 @@ public sealed partial class PreviewService : IAsyncDisposable
                 info.AsShotKelvin,
                 info.AsShotTint,
                 isBaseStale,
-                promotionLease);
+                promotionLease,
+                IsMonochrome);
         }
 
         public void Dispose()

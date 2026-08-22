@@ -191,11 +191,13 @@ public sealed class RenderPipeline
                         request.Settings.Highlights,
                         request.Settings.Shadows,
                         request.Settings.Curve,
-                        request.Settings.CurveRed,
-                        request.Settings.CurveGreen,
-                        request.Settings.CurveBlue),
+                        ColorCurve(request, request.Settings.CurveRed),
+                        ColorCurve(request, request.Settings.CurveGreen),
+                        ColorCurve(request, request.Settings.CurveBlue)),
                     whiteBalance,
-                    request.Base.Info.DcpProfile?.HueSatMap,
+                    request.Base.Info.IsMonochrome
+                        ? null
+                        : request.Base.Info.DcpProfile?.HueSatMap,
                     execution);
                 crossing.Apply(working, execution);
             }
@@ -207,8 +209,11 @@ public sealed class RenderPipeline
             execution.ThrowIfCancellationRequested();
             execution.ReportStage("color-encoding");
             RenderColorEncoding.RetagAsSrgb(working);
-            execution.ReportStage("chroma");
-            RenderChromaStage.Apply(working, request.Settings, execution);
+            if (!request.Base.Info.IsMonochrome)
+            {
+                execution.ReportStage("chroma");
+                RenderChromaStage.Apply(working, request.Settings, execution);
+            }
             execution.ThrowIfCancellationRequested();
             execution.ReportStage("capture-sharpen");
             RenderSharpening.ApplyCaptureResting(
@@ -300,11 +305,13 @@ public sealed class RenderPipeline
                         request.Settings.Highlights,
                         request.Settings.Shadows,
                         request.Settings.Curve,
-                        request.Settings.CurveRed,
-                        request.Settings.CurveGreen,
-                        request.Settings.CurveBlue),
+                        ColorCurve(request, request.Settings.CurveRed),
+                        ColorCurve(request, request.Settings.CurveGreen),
+                        ColorCurve(request, request.Settings.CurveBlue)),
                     whiteBalance,
-                    request.Base.Info.DcpProfile?.HueSatMap);
+                    request.Base.Info.IsMonochrome
+                        ? null
+                        : request.Base.Info.DcpProfile?.HueSatMap);
                 crossing.Apply(working);
             }
             else
@@ -312,7 +319,8 @@ public sealed class RenderPipeline
                 ApplyCrossingOffTone(working, request);
             }
             RenderColorEncoding.RetagAsSrgb(working);
-            RenderChromaStage.Apply(working, request.Settings);
+            if (!request.Base.Info.IsMonochrome)
+                RenderChromaStage.Apply(working, request.Settings);
             RenderSharpening.ApplyCapture(
                 working,
                 request.Base.Info,
@@ -362,6 +370,10 @@ public sealed class RenderPipeline
         image = null;
         return result;
     }
+
+    private static CurveData? ColorCurve(
+        RenderRequest request,
+        CurveData? curve) => request.Base.Info.IsMonochrome ? null : curve;
 
     private static void Validate(RenderRequest request)
     {
