@@ -52,6 +52,18 @@ public enum GrainSize
     Coarse
 }
 
+public enum ColorMixerBand
+{
+    Red,
+    Orange,
+    Yellow,
+    Green,
+    Aqua,
+    Blue,
+    Purple,
+    Magenta
+}
+
 public sealed class WhiteBalanceSettings
 {
     [JsonPropertyName("mode")]
@@ -137,5 +149,91 @@ public sealed class EffectsSettings
         Midpoint = Midpoint,
         Grain = Grain,
         GrainSize = GrainSize
+    };
+}
+
+public sealed class ColorMixerBandSettings
+{
+    [JsonPropertyName("hue")]
+    public int Hue { get; set; }
+
+    [JsonPropertyName("saturation")]
+    public int Saturation { get; set; }
+
+    [JsonPropertyName("luminance")]
+    public int Luminance { get; set; }
+
+    [JsonIgnore]
+    public bool HasActivePixels =>
+        Hue != 0 || Saturation != 0 || Luminance != 0;
+
+    public ColorMixerBandSettings Clone() => new()
+    {
+        Hue = Hue,
+        Saturation = Saturation,
+        Luminance = Luminance
+    };
+}
+
+public sealed class ColorMixerSettings
+{
+    [JsonPropertyName("red")]
+    public ColorMixerBandSettings Red { get; set; } = new();
+
+    [JsonPropertyName("orange")]
+    public ColorMixerBandSettings Orange { get; set; } = new();
+
+    [JsonPropertyName("yellow")]
+    public ColorMixerBandSettings Yellow { get; set; } = new();
+
+    [JsonPropertyName("green")]
+    public ColorMixerBandSettings Green { get; set; } = new();
+
+    [JsonPropertyName("aqua")]
+    public ColorMixerBandSettings Aqua { get; set; } = new();
+
+    [JsonPropertyName("blue")]
+    public ColorMixerBandSettings Blue { get; set; } = new();
+
+    [JsonPropertyName("purple")]
+    public ColorMixerBandSettings Purple { get; set; } = new();
+
+    [JsonPropertyName("magenta")]
+    public ColorMixerBandSettings Magenta { get; set; } = new();
+
+    [JsonIgnore]
+    public bool HasActivePixels =>
+        Red?.HasActivePixels == true ||
+        Orange?.HasActivePixels == true ||
+        Yellow?.HasActivePixels == true ||
+        Green?.HasActivePixels == true ||
+        Aqua?.HasActivePixels == true ||
+        Blue?.HasActivePixels == true ||
+        Purple?.HasActivePixels == true ||
+        Magenta?.HasActivePixels == true;
+
+    public ColorMixerBandSettings GetBand(ColorMixerBand band) => band switch
+    {
+        ColorMixerBand.Red => Red,
+        ColorMixerBand.Orange => Orange,
+        ColorMixerBand.Yellow => Yellow,
+        ColorMixerBand.Green => Green,
+        ColorMixerBand.Aqua => Aqua,
+        ColorMixerBand.Blue => Blue,
+        ColorMixerBand.Purple => Purple,
+        ColorMixerBand.Magenta => Magenta,
+        _ => throw new ArgumentOutOfRangeException(nameof(band))
+    };
+
+    public ColorMixerSettings Clone() => new()
+    {
+        Red = Red?.Clone() ?? new(),
+        Orange = Orange?.Clone() ?? new(),
+        Yellow = Yellow?.Clone() ?? new(),
+        Green = Green?.Clone() ?? new(),
+        Aqua = Aqua?.Clone() ?? new(),
+        Blue = Blue?.Clone() ?? new(),
+        Purple = Purple?.Clone() ?? new(),
+        Magenta = Magenta?.Clone() ?? new()
     };
 }

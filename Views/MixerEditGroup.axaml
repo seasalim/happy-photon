@@ -1,0 +1,148 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:HappyPhoton.Models"
+             xmlns:views="using:HappyPhoton.Views"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.MixerEditGroup"
+             x:DataType="vm:MainWindowViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.mixer-band">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="2"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.mixer-band:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+        </Style>
+        <Style Selector="Button.mixer-band.active">
+            <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
+        <Style Selector="Button.mixer-band.active /template/ ContentPresenter#PART_ContentPresenter,
+                         Button.mixer-band.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="4">
+        <TextBlock Margin="0,20,0,8"
+                   Classes="section-label"
+                   Text="COLOR MIXER"/>
+
+        <UniformGrid x:Name="MixerBandPicker"
+                     Columns="8"
+                     Margin="0,0,0,8">
+            <Button x:Name="RedMixerButton"
+                          Classes="mixer-band"
+                          Classes.active="{Binding IsRedMixerActive}"
+                          Command="{Binding SelectMixerBandCommand}"
+                          CommandParameter="{x:Static models:ColorMixerBand.Red}"
+                          ToolTip.Tip="Red"
+                          AutomationProperties.Name="Red mixer band">
+                <Border Width="18" Height="18" CornerRadius="9" Background="{StaticResource MixerRed}">
+                    <Ellipse Width="4" Height="4" Margin="0,0,0,2" VerticalAlignment="Bottom"
+                             Fill="{DynamicResource Primary}" IsVisible="{Binding IsRedMixerTouched}"/>
+                </Border>
+            </Button>
+            <Button x:Name="OrangeMixerButton" Classes="mixer-band"
+                          Classes.active="{Binding IsOrangeMixerActive}"
+                          Command="{Binding SelectMixerBandCommand}"
+                          CommandParameter="{x:Static models:ColorMixerBand.Orange}"
+                          ToolTip.Tip="Orange" AutomationProperties.Name="Orange mixer band">
+                <Border Width="18" Height="18" CornerRadius="9" Background="{StaticResource MixerOrange}">
+                    <Ellipse x:Name="OrangeMixerTouchedDot"
+                             Width="4" Height="4" Margin="0,0,0,2" VerticalAlignment="Bottom"
+                             Fill="{DynamicResource Primary}" IsVisible="{Binding IsOrangeMixerTouched}"/>
+                </Border>
+            </Button>
+            <Button x:Name="YellowMixerButton" Classes="mixer-band"
+                          Classes.active="{Binding IsYellowMixerActive}"
+                          Command="{Binding SelectMixerBandCommand}"
+                          CommandParameter="{x:Static models:ColorMixerBand.Yellow}"
+                          ToolTip.Tip="Yellow" AutomationProperties.Name="Yellow mixer band">
+                <Border Width="18" Height="18" CornerRadius="9" Background="{StaticResource MixerYellow}">
+                    <Ellipse Width="4" Height="4" Margin="0,0,0,2" VerticalAlignment="Bottom"
+                             Fill="{DynamicResource Primary}" IsVisible="{Binding IsYellowMixerTouched}"/>
+                </Border>
+            </Button>
+            <Button x:Name="GreenMixerButton" Classes="mixer-band"
+                          Classes.active="{Binding IsGreenMixerActive}"
+                          Command="{Binding SelectMixerBandCommand}"
+                          CommandParameter="{x:Static models:ColorMixerBand.Green}"
+                          ToolTip.Tip="Green" AutomationProperties.Name="Green mixer band">
+                <Border Width="18" Height="18" CornerRadius="9" Background="{StaticResource MixerGreen}">
+                    <Ellipse Width="4" Height="4" Margin="0,0,0,2" VerticalAlignment="Bottom"
+                             Fill="{DynamicResource Primary}" IsVisible="{Binding IsGreenMixerTouched}"/>
+                </Border>
+            </Button>
+            <Button x:Name="AquaMixerButton" Classes="mixer-band"
+                          Classes.active="{Binding IsAquaMixerActive}"
+                          Command="{Binding SelectMixerBandCommand}"
+                          CommandParameter="{x:Static models:ColorMixerBand.Aqua}"
+                          ToolTip.Tip="Aqua" AutomationProperties.Name="Aqua mixer band">
+                <Border Width="18" Height="18" CornerRadius="9" Background="{StaticResource MixerAqua}">
+                    <Ellipse Width="4" Height="4" Margin="0,0,0,2" VerticalAlignment="Bottom"
+                             Fill="{DynamicResource Primary}" IsVisible="{Binding IsAquaMixerTouched}"/>
+                </Border>
+            </Button>
+            <Button x:Name="BlueMixerButton" Classes="mixer-band"
+                          Classes.active="{Binding IsBlueMixerActive}"
+                          Command="{Binding SelectMixerBandCommand}"
+                          CommandParameter="{x:Static models:ColorMixerBand.Blue}"
+                          ToolTip.Tip="Blue" AutomationProperties.Name="Blue mixer band">
+                <Border Width="18" Height="18" CornerRadius="9" Background="{StaticResource MixerBlue}">
+                    <Ellipse Width="4" Height="4" Margin="0,0,0,2" VerticalAlignment="Bottom"
+                             Fill="{DynamicResource Primary}" IsVisible="{Binding IsBlueMixerTouched}"/>
+                </Border>
+            </Button>
+            <Button x:Name="PurpleMixerButton" Classes="mixer-band"
+                          Classes.active="{Binding IsPurpleMixerActive}"
+                          Command="{Binding SelectMixerBandCommand}"
+                          CommandParameter="{x:Static models:ColorMixerBand.Purple}"
+                          ToolTip.Tip="Purple" AutomationProperties.Name="Purple mixer band">
+                <Border Width="18" Height="18" CornerRadius="9" Background="{StaticResource MixerPurple}">
+                    <Ellipse Width="4" Height="4" Margin="0,0,0,2" VerticalAlignment="Bottom"
+                             Fill="{DynamicResource Primary}" IsVisible="{Binding IsPurpleMixerTouched}"/>
+                </Border>
+            </Button>
+            <Button x:Name="MagentaMixerButton" Classes="mixer-band"
+                          Classes.active="{Binding IsMagentaMixerActive}"
+                          Command="{Binding SelectMixerBandCommand}"
+                          CommandParameter="{x:Static models:ColorMixerBand.Magenta}"
+                          ToolTip.Tip="Magenta" AutomationProperties.Name="Magenta mixer band">
+                <Border Width="18" Height="18" CornerRadius="9" Background="{StaticResource MixerMagenta}">
+                    <Ellipse Width="4" Height="4" Margin="0,0,0,2" VerticalAlignment="Bottom"
+                             Fill="{DynamicResource Primary}" IsVisible="{Binding IsMagentaMixerTouched}"/>
+                </Border>
+            </Button>
+        </UniformGrid>
+
+        <views:CompactSlider x:Name="MixerHueSlider"
+                             Label="Hue"
+                             Value="{Binding MixerHue}"
+                             Minimum="-100" Maximum="100" SmallChange="1"
+                             ShowValueFill="False"
+                             TrackBrush="{Binding ActiveMixerBand, Converter={x:Static views:MixerEditGroup.HueTrackBrushConverter}}"
+                             EnableDoubleClickReset="True"/>
+        <views:CompactSlider x:Name="MixerSaturationSlider"
+                             Label="Saturation"
+                             Value="{Binding MixerSaturation}"
+                             Minimum="-100" Maximum="100" SmallChange="1"
+                             ShowValueFill="False"
+                             TrackBrush="{Binding ActiveMixerBand, Converter={x:Static views:MixerEditGroup.SaturationTrackBrushConverter}}"
+                             EnableDoubleClickReset="True"/>
+        <views:CompactSlider x:Name="MixerLuminanceSlider"
+                             Label="Luminance"
+                             Value="{Binding MixerLuminance}"
+                             Minimum="-100" Maximum="100" SmallChange="1"
+                             ShowValueFill="False"
+                             TrackBrush="{Binding ActiveMixerBand, Converter={x:Static views:MixerEditGroup.LuminanceTrackBrushConverter}}"
+                             EnableDoubleClickReset="True"/>
+    </StackPanel>
+</UserControl>

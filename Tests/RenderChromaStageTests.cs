@@ -184,6 +184,53 @@ public sealed class RenderChromaStageTests
         Assert.InRange(AngleDistance(actual.HueRadians, source.HueRadians), 0, 2e-4);
     }
 
+    [Fact]
+    public void MixerProductionPath_TracksReferenceSeamAfterBandOffsets()
+    {
+        ushort[] input = [26000, 18000, 42000];
+        var settings = new EditSettings
+        {
+            Saturation = 18,
+            Vibrance = -27,
+            Mixer = new ColorMixerSettings()
+        };
+        settings.Mixer.Purple.Hue = -38;
+        settings.Mixer.Purple.Saturation = 47;
+        settings.Mixer.Purple.Luminance = -22;
+        settings.Mixer.Blue.Hue = 12;
+        var mixer = ColorMixerParameters.From(settings.Mixer);
+        var expected = OklabColor.TransformEncodedRec2020(
+            Encoded(input),
+            settings.Saturation,
+            settings.Vibrance,
+            in mixer);
+        using var image = CreateRgbImage(input);
+
+        Assert.True(RenderChromaStage.Apply(image, settings));
+        var actual = Encoded(RenderPipelineTestSupport.ReadPixels(image));
+
+        Assert.InRange(Math.Abs(actual.Red - expected.Red), 0, 2.0 / ushort.MaxValue);
+        Assert.InRange(Math.Abs(actual.Green - expected.Green), 0, 2.0 / ushort.MaxValue);
+        Assert.InRange(Math.Abs(actual.Blue - expected.Blue), 0, 2.0 / ushort.MaxValue);
+    }
+
+    [Fact]
+    public void MixerActivity_GovernsRenderSkipAndNeutralPixelIdentity()
+    {
+        using var identity = CreateRgbImage([12000, 24000, 36000]);
+        Assert.False(RenderChromaStage.Apply(
+            identity,
+            new EditSettings { Mixer = new ColorMixerSettings() }));
+
+        var activeSettings = new EditSettings { Mixer = new ColorMixerSettings() };
+        activeSettings.Mixer.Red.Hue = 50;
+        using var neutral = CreateRgbImage([23000, 23000, 23000]);
+        Assert.True(RenderChromaStage.Apply(neutral, activeSettings));
+        Assert.Equal(
+            [23000, 23000, 23000],
+            RenderPipelineTestSupport.ReadPixels(neutral));
+    }
+
     private static ushort[] ReferenceQ16(
         ushort[] input,
         EditSettings settings,

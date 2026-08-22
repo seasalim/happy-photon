@@ -44,6 +44,18 @@ public static class HappyPhotonColors
     public static readonly IBrush ColorLabelBlue = Brush("#4a7ce6");
     public static readonly IBrush ColorLabelPurple = Brush("#a77ad9");
 
+    public static readonly Color MixerRedColor = Color.Parse("#e34b4b");
+    public static readonly Color MixerOrangeColor = Color.Parse("#e58a42");
+    public static readonly Color MixerYellowColor = Color.Parse("#d9cf3f");
+    public static readonly Color MixerGreenColor = Color.Parse("#58be63");
+    public static readonly Color MixerAquaColor = Color.Parse("#44caca");
+    public static readonly Color MixerBlueColor = Color.Parse("#557de0");
+    public static readonly Color MixerPurpleColor = Color.Parse("#9a65d4");
+    public static readonly Color MixerMagentaColor = Color.Parse("#d455ae");
+    public static readonly Color MixerTrackNeutralColor = Color.Parse("#66666a");
+    public static readonly Color MixerTrackDarkColor = Color.Parse("#17171b");
+    public static readonly Color MixerTrackLightColor = Color.Parse("#e7e5ea");
+
     public static readonly IBrush WaveformTrace = Brush("#cfe6e8");
     public static readonly IBrush WaveformBackdrop = Brush("#1b1b20");
     public static readonly IBrush MidGrayWaveformBackdrop = Brush("#3d3d3d");
@@ -74,6 +86,58 @@ public static class HappyPhotonColors
         ColorLabel.Purple => ColorLabelPurple,
         _ => Brushes.Transparent
     };
+
+    public static Color GetMixerBandColor(ColorMixerBand band) => band switch
+    {
+        ColorMixerBand.Red => MixerRedColor,
+        ColorMixerBand.Orange => MixerOrangeColor,
+        ColorMixerBand.Yellow => MixerYellowColor,
+        ColorMixerBand.Green => MixerGreenColor,
+        ColorMixerBand.Aqua => MixerAquaColor,
+        ColorMixerBand.Blue => MixerBlueColor,
+        ColorMixerBand.Purple => MixerPurpleColor,
+        ColorMixerBand.Magenta => MixerMagentaColor,
+        _ => throw new ArgumentOutOfRangeException(nameof(band))
+    };
+
+    public static Color[] GetMixerHueTrackColors(ColorMixerBand band)
+    {
+        var index = (int)band;
+        return
+        [
+            GetMixerBandColor((ColorMixerBand)((index + 7) % 8)),
+            GetMixerBandColor(band),
+            GetMixerBandColor((ColorMixerBand)((index + 1) % 8))
+        ];
+    }
+
+    public static Color[] GetMixerSaturationTrackColors(ColorMixerBand band) =>
+    [
+        MixerTrackNeutralColor,
+        GetMixerBandColor(band)
+    ];
+
+    public static Color[] GetMixerLuminanceTrackColors(ColorMixerBand band)
+    {
+        var color = GetMixerBandColor(band);
+        return
+        [
+            Mix(color, MixerTrackDarkColor, 0.72),
+            Mix(color, MixerTrackLightColor, 0.62)
+        ];
+    }
+
+    private static Color Mix(Color color, Color target, double amount)
+    {
+        static byte Channel(byte value, byte targetValue, double amount) =>
+            (byte)Math.Round(value + (targetValue - value) * amount);
+
+        return Color.FromArgb(
+            Channel(color.A, target.A, amount),
+            Channel(color.R, target.R, amount),
+            Channel(color.G, target.G, amount),
+            Channel(color.B, target.B, amount));
+    }
 
     private static IBrush Argb(byte alpha, byte red, byte green, byte blue) =>
         new SolidColorBrush(Color.FromArgb(alpha, red, green, blue));

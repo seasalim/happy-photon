@@ -101,12 +101,12 @@ not proven through a production diagnostic seam.
   spec change in the PR. Each re-baseline records a pre/post attribution report
   (per-image ΔE summary); only the active generation is kept, and superseded versions
   are pruned once the report is captured.
-- Settings cases (16 total): **tonal set** — identity; +2 EV; −2 EV; highlights −100;
+- Settings cases (18 total): **tonal set** — identity; +2 EV; −2 EV; highlights −100;
   shadows +80; contrast +50; full-combo tonal preset. **WB set** — WB 3000 K;
   WB 9000 K tint +50; WB 9000 K tint −50. Never baseline WB cases while the chromatic
   stage is a stub — that would golden "WB ignored" and immediately invalidate itself.
-  **Chroma set** — saturation-only, vibrance-only, and combined settings on the
-  reference RAW and Display-P3 fixture (6 cases).
+  **Chroma set** — saturation-only, vibrance-only, combined, and active color-mixer
+  settings on the reference RAW and Display-P3 fixture (8 cases).
 
 The full-combo tonal case is pinned to exposure +1 EV, brightness +10, contrast +25,
 shadows +35, highlights −50, and a monotone curve through `(0,0)`, `(0.25,0.20)`,
@@ -124,7 +124,7 @@ at defaults.
 
 The matrix determines the golden count; the tracked files live under the
 generation directory named by `ACTIVE_VERSION`, with the chroma set adding its
-six cases on the reference CR2 and the Display-P3 JPEG. The clipped-highlight
+eight cases on the reference CR2 and the Display-P3 JPEG. The clipped-highlight
 case uses the bright water reflection in the reference CR2
 ([DECODE.md §2.3](DECODE.md#23-why-clip-and-blend-are-the-supported-modes)).
 The perceptual-chroma re-baseline left every neutral-chroma case
@@ -237,7 +237,9 @@ orders above the observed difference.
     skip path. No Adobe profile is committed.
 15. **Perceptual-chroma suites:** `OklabColorDerivationTests` independently derives
     the composed matrices and consumes oracle vectors; `OklabColorPropertyTests`
-    pins factor, invariance, taper, skin window, and maximal-ray projection semantics;
+    pins factor, invariance, taper, skin window, maximal-ray projection, mixer
+    partition/periodicity, achromatic reliability, uniform/global equivalence,
+    luminance bounds, and post-edit projection semantics;
     `RenderChromaStageTests` covers single-final-Q16 precision, bounded-band parity,
     identity skip, both tone regimes, resting execution, and alpha preservation.
     `PerceptualChromaExportTests` reads active RAW/standard variants back through the
@@ -335,6 +337,20 @@ dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build `
 The generated `index.html` is the maintainer product checkpoint; approval is required
 before merge and the artifacts are not a numeric-oracle substitute.
 
+`ColorMixerLookGateTests` generates the D300 ColorChecker identity plus one
+Saturation +80 render for each mixer band. The matching headless mixer UI gate writes
+Dark and Middle Gray screenshots with the mockup values, so swatch spacing, touched
+state, gradients, and the four-row treatment can be reviewed together:
+
+```powershell
+$env:HAPPY_PHOTON_MIXER_LOOKGATE='1'
+$env:HAPPY_PHOTON_MIXER_LOOKGATE_DIR='artifacts/color-mixer-lookgate'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build `
+  --filter FullyQualifiedName~ColorMixerLookGateTests
+dotnet test HeadlessTests/HappyPhoton.Headless.Tests.csproj -c Release --no-build `
+  --filter FullyQualifiedName~EffectsControlTests
+```
+
 ## 5. Performance
 
 Opt-in `HAPPY_PHOTON_PERF=1` diagnostics remain outside normal CI. The tone
@@ -347,11 +363,12 @@ sampling process private memory every 10 ms. Reports compare against the same
 harness run on the pre-AgX baseline (`878903f`); budgets are slider ≤ 150 ms,
 export wall ≤ +5%, and private peak ≤ +16 MiB.
 
-The same integrated gate includes active chroma for every slider fixture, a
-projection-heavy Canon S=+100 endpoint, and active full-resolution three-variant RAW
+The same integrated gate includes an active mixer with global chroma for every slider
+fixture, a projection-heavy Canon S=+100 active-mixer endpoint, and active-mixer
+full-resolution three-variant RAW
 exports for both targets. Active-minus-neutral private peak must stay within the same
 +16 MiB ceiling. `PerceptualChromaPerformanceTests` separately measures the complete
-pooled-band pass, including pixel-cache traffic, against a same-fixture AgX crossing
+pooled-band active-mixer pass, including pixel-cache traffic, against a same-fixture AgX crossing
 comparator and enforces the 60 ms class; the neutral identity test proves no pixel
 access instead of timing an empty call.
 

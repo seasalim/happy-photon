@@ -383,6 +383,7 @@
                                          Margin="0,20,0,0"
                                          Height="180"/>
 
+                        <views:MixerEditGroup x:Name="MixerEditGroup"/>
                         <views:DetailEditGroup x:Name="DetailEditGroup"/>
                         <views:EffectsEditGroup x:Name="EffectsEditGroup"/>
 

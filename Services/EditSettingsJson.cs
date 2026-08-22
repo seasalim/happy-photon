@@ -97,12 +97,41 @@ internal static class EditSettingsJson
                 settings.Effects = null;
             }
         }
+        if (settings.Mixer != null)
+        {
+            ClampMixer(settings.Mixer, ref changed);
+            if (!settings.Mixer.HasActivePixels)
+            {
+                settings.Mixer = null;
+            }
+        }
         settings.Curve ??= new CurveData();
         RebuildCurve(settings.Curve);
         RebuildCurve(settings.CurveRed);
         RebuildCurve(settings.CurveGreen);
         RebuildCurve(settings.CurveBlue);
         return changed;
+    }
+
+    private static void ClampMixer(ColorMixerSettings mixer, ref bool changed)
+    {
+        mixer.Red ??= new ColorMixerBandSettings();
+        mixer.Orange ??= new ColorMixerBandSettings();
+        mixer.Yellow ??= new ColorMixerBandSettings();
+        mixer.Green ??= new ColorMixerBandSettings();
+        mixer.Aqua ??= new ColorMixerBandSettings();
+        mixer.Blue ??= new ColorMixerBandSettings();
+        mixer.Purple ??= new ColorMixerBandSettings();
+        mixer.Magenta ??= new ColorMixerBandSettings();
+        foreach (var band in Enum.GetValues<ColorMixerBand>())
+        {
+            var values = mixer.GetBand(band);
+            values.Hue = Clamp(values.Hue, -100, 100, ref changed);
+            values.Saturation = Clamp(
+                values.Saturation, -100, 100, ref changed);
+            values.Luminance = Clamp(
+                values.Luminance, -100, 100, ref changed);
+        }
     }
 
     private static void RebuildCurve(CurveData? curve)

@@ -33,7 +33,7 @@ public sealed class AgxPerformanceGateTests : IDisposable
         var variants = await MeasureThreeVariants(target);
         var activeChromaVariants = await MeasureThreeVariants(
             target,
-            new EditSettings { Saturation = 100 });
+            CreateActiveMixerSettings());
         var standard = await MeasureStandardExport();
         var activeChromaPrivateDeltaBytes = Math.Max(
             0,
@@ -124,7 +124,7 @@ public sealed class AgxPerformanceGateTests : IDisposable
             var chroma = MeasureRender(
                 pipeline,
                 baseImage,
-                new EditSettings { Saturation = 50, Vibrance = 50 });
+                CreateActiveMixerSettings());
             var measurements = new List<SliderMeasurement>
             {
                 new SliderMeasurement(fixture, contrast, null),
@@ -208,6 +208,20 @@ public sealed class AgxPerformanceGateTests : IDisposable
         var curve = new CurveData();
         curve.AddPointAndReturnIndex(x, y);
         return curve;
+    }
+
+    private static EditSettings CreateActiveMixerSettings()
+    {
+        var settings = new EditSettings
+        {
+            Saturation = 50,
+            Vibrance = 50,
+            Mixer = new ColorMixerSettings()
+        };
+        settings.Mixer.Orange.Hue = 35;
+        settings.Mixer.Blue.Saturation = 40;
+        settings.Mixer.Magenta.Luminance = -20;
+        return settings;
     }
 
     private async Task<ExportMeasurement> MeasureThreeVariants(

@@ -61,6 +61,9 @@ internal static class GoldenTestCases
             Vibrance = 70
         });
 
+    public static readonly GoldenSettingsCase ColorMixer =
+        new("color-mixer", CreateColorMixer);
+
     private static readonly IReadOnlyList<GoldenSettingsCase> AllTonal =
     [
         Identity,
@@ -85,7 +88,8 @@ internal static class GoldenTestCases
         .. AllCases,
         SaturationMinus50,
         VibranceMinus100,
-        CombinedChroma
+        CombinedChroma,
+        ColorMixer
     ];
 
     private static readonly IReadOnlyList<GoldenSettingsCase> IdentityAndExposure =
@@ -139,4 +143,21 @@ internal static class GoldenTestCases
                 Tint = tint
             }
         };
+
+    private static EditSettings CreateColorMixer()
+    {
+        var settings = new EditSettings
+        {
+            Saturation = 8,
+            Vibrance = 12,
+            Mixer = new ColorMixerSettings()
+        };
+        settings.Mixer.Orange.Hue = -36;
+        settings.Mixer.Orange.Saturation = 30;
+        settings.Mixer.Green.Luminance = 24;
+        settings.Mixer.Blue.Hue = 31;
+        settings.Mixer.Blue.Saturation = -26;
+        settings.Mixer.Magenta.Luminance = -19;
+        return settings;
+    }
 }

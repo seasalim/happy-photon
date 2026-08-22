@@ -117,6 +117,36 @@ public sealed class PresetServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Save_RoundTripsActiveMixerAndCanonicalizesIdentity()
+    {
+        var service = await CreateServiceAsync();
+        var source = new EditSettings { Mixer = new ColorMixerSettings() };
+        source.Mixer.Yellow.Hue = -24;
+        source.Mixer.Aqua.Saturation = 38;
+        source.Mixer.Purple.Luminance = -17;
+
+        var active = await service.SaveUserPresetAsync("Mixer", source);
+        source.Mixer.Aqua.Saturation = 1;
+        var identity = await service.SaveUserPresetAsync(
+            "Identity Mixer",
+            new EditSettings { Mixer = new ColorMixerSettings() });
+        var reloaded = new PresetService(_tempDirectory);
+        await reloaded.InitializeAsync();
+        var loaded = reloaded.GetById(active.Id)!.Settings.Mixer;
+
+        Assert.NotSame(source.Mixer, active.Settings.Mixer);
+        Assert.Equal(-24, loaded!.Yellow.Hue);
+        Assert.Equal(38, loaded.Aqua.Saturation);
+        Assert.Equal(-17, loaded.Purple.Luminance);
+        Assert.Null(reloaded.GetById(identity.Id)!.Settings.Mixer);
+        Assert.DoesNotContain(
+            "\"mixer\"",
+            await File.ReadAllTextAsync(Path.Combine(
+                _tempDirectory,
+                $"{identity.Id}.json")));
+    }
+
+    [Fact]
     public async Task Save_ZeroesGeometryAndAppliedPresetId()
     {
         var service = await CreateServiceAsync();

@@ -38,7 +38,10 @@ internal static class RenderChromaStage
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(bandPixelLimit);
-        if (settings.Saturation == 0 && settings.Vibrance == 0)
+        var mixer = ColorMixerParameters.From(settings.Mixer);
+        if (settings.Saturation == 0 &&
+            settings.Vibrance == 0 &&
+            !mixer.HasActive)
         {
             return false;
         }
@@ -69,6 +72,7 @@ internal static class RenderChromaStage
                     layout,
                     settings.Saturation,
                     settings.Vibrance,
+                    in mixer,
                     execution);
                 execution?.ThrowIfCancellationRequested();
                 pixels.SetArea(
@@ -94,8 +98,10 @@ internal static class RenderChromaStage
         RenderKernelSupport.PixelLayout layout,
         int saturation,
         int vibrance,
+        in ColorMixerParameters mixer,
         RenderExecutionOptions? execution)
     {
+        var mixerParameters = mixer;
         var workers = Math.Min(
             Environment.ProcessorCount,
             Math.Max(1, (pixelCount + 32_767) / 32_768));
@@ -133,7 +139,8 @@ internal static class RenderChromaStage
                     green,
                     blue,
                     saturation,
-                    vibrance);
+                    vibrance,
+                    in mixerParameters);
                 values[offset + layout.Red] = transformed.Red;
                 values[offset + layout.Green] = transformed.Green;
                 values[offset + layout.Blue] = transformed.Blue;

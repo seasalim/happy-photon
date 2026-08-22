@@ -12,7 +12,7 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 3 Matrix       crossing on: AgX inset × WB; crossing off: WB (§4)
 4 Tone LUT     source-kind tone regime, fused with matrix storage (§5)
 5 Matrix       crossing on: AgX outset; crossing off: identity
-6 Chroma       one fused OKLCh saturation/vibrance pass (§6)
+6 Chroma       one fused OKLCh color-mixer/saturation/vibrance pass (§6)
 7 Detail       capture sharpen, chroma NR (§9)
 8 Output       linear resize → output sharpen → effects → target convert → encode
                (OUTPUT.md)
@@ -205,14 +205,34 @@ curves only (TESTING.md §4.1); everything upstream must stay monotone unconditi
 ## 6. Chroma stage
 
 The encoded display-Rec.2020 value is decoded, converted through linear Rec.2020 to
-OKLab/OKLCh, transformed at constant lightness and hue, returned through the inverse
-chain, encoded, and written once to Q16. Saturation and vibrance compose before the
-inverse transform:
+OKLab/OKLCh, transformed, returned through the inverse chain, encoded, and written
+once to Q16. The eight mixer bands are Red, Orange, Yellow, Green, Aqua, Blue,
+Purple, and Magenta. Adjacent band centers are joined by complementary half-cosine
+windows, including the Magenta→Red wrap, so the periodic weights are smooth and sum
+to one at every hue. Their OKLab hue centers, calibrated to the UI swatches, are
+Red 24°, Orange 56°, Yellow 105°, Green 146°, Aqua 195°, Blue 266°,
+Purple 304°, and Magenta 341°.
+
+All band values are sampled simultaneously from the source hue. With the existing
+hue-reliability ramp `r(C)` (zero through C=0.01, one from C=0.04), mixer offsets are:
+
+```
+Δh = r(C) · Σ wi(h) · Huei / 100 · 30°
+bandSat = 1 + r(C) · Σ wi(h) · Saturationi / 100
+ΔL = r(C) · Σ wi(h) · Luminancei / 100 · 0.20
+(Lm, Cm, hm) = (clamp01(L + ΔL), C · bandSat, wrap(h + Δh))
+```
+
+Hue, Saturation, and Luminance are each −100..100. The reliability factor fades all
+three aggregates to identity, so achromatic and hue-unreliable pixels take no band
+edit. Uniform saturation on all eight bands is therefore equivalent to the global
+Saturation slider wherever hue is reliable. Global saturation and vibrance compose
+after the band offsets:
 
 ```
 sat = (100 + Saturation) / 100
 vib = 1 + Vibrance / 100 · 0.5 · weight(C, h)
-C' = C · sat · vib
+C' = Cm · sat · vib(Cm, hm)
 ```
 
 `weight(C,h)` is one at zero chroma, tapers smoothly toward zero as chroma grows,
@@ -221,14 +241,16 @@ region. The same weight applies to both vibrance signs. Hue damping fades in onl
 hue becomes reliable near the achromatic axis. Saturation −100 sets C exactly to zero.
 
 An inverse result outside linear Rec.2020 [0,1] is projected to the maximal feasible
-chroma on its constant-L/h ray. The normal path solves the channel-boundary cubics and
-retains bounded bisection as a fallback; it never clips channels independently.
+chroma on the post-edit `Lm`/`hm` ray. The normal path solves the channel-boundary
+cubics and retains bounded bisection as a fallback; it never clips channels
+independently.
 
 The pass runs in bounded pooled bands, preserves alpha and extra channels, and checks
 the resting execution contract for worker limits and cancellation. S=V=0 returns
-before pixel access. All transform math is `double`; transfer lookup interpolation and
-the final Q16 write are the only production precision boundary. The internal
-`(L,C,h) -> (L,C,h)` seam is intentionally the later mixer composition point.
+before pixel access only when the mixer is also pixel-inactive. All transform math is
+`double`; transfer lookup interpolation and the final Q16 write are the only
+production precision boundary. The reference `(L,C,h) -> (L,C,h)` seam and fused Q16
+hot path apply identical mixer ordering.
 
 ## 7. Histogram & clipping
 
@@ -320,7 +342,17 @@ JSON document shape (canonical field order for hashing):
   "applied_preset_id": null,
   "rawProfile": { "source": "userFile", // omitted for built-in
                   "location": "C:\\Profiles\\Camera.dcp",
-                  "contentHash": "<lowercase SHA-256>" }
+                  "contentHash": "<lowercase SHA-256>" },
+  "mixer": {                              // optional; omitted at identity
+    "red": { "hue": 0, "saturation": 0, "luminance": 0 },
+    "orange": { "hue": 0, "saturation": 0, "luminance": 0 },
+    "yellow": { "hue": 0, "saturation": 0, "luminance": 0 },
+    "green": { "hue": 0, "saturation": 0, "luminance": 0 },
+    "aqua": { "hue": 0, "saturation": 0, "luminance": 0 },
+    "blue": { "hue": 0, "saturation": 0, "luminance": 0 },
+    "purple": { "hue": 0, "saturation": 0, "luminance": 0 },
+    "magenta": { "hue": 0, "saturation": 0, "luminance": 0 }
+  }
 }
 ```
 
@@ -328,6 +360,14 @@ The three channel fields follow `curve` in the shown order; they and `rawProfile
 null-omission semantics — `null` is never serialized, so legacy v2 documents remain
 byte-identical after normalization, and `Clamp` validates/rebuilds an optional curve
 only when the field was present. Selecting a channel in the UI does not materialize it.
+
+`mixer` is omitted unless at least one of its 24 values is nonzero. That same
+pixel-activity predicate governs `HasEdits`, hashing, and the chroma-stage skip;
+`EditSettingsJson` in both directions and preset saving canonicalize an explicit
+identity mixer to null. Clone/history, copy/paste, and presets carry active mixers.
+The selected mixer band is session view-state and is never serialized. Mixer values
+have no XMP mapping. Because absent mixers preserve canonical bytes and pixels, this
+additive optional field does not change `RenderPipeline.Version`.
 
 `effects` is omitted when neither Vignette nor Grain changes pixels; that
 `HasActivePixels` predicate governs persistence, `HasEdits`, hashing, and the render
@@ -390,8 +430,9 @@ The MCP `apply_edit_settings` input defaults an omitted `version` to 2 and accep
 version 2. Its white balance shape is the same `asShot`/`custom`/`preset`/`picked`
 model shown above; there is no scalar temperature field or generic raw-gain mode.
 Unsupported versions and modes are rejected before any image is mutated. Because the
-tool replaces tonal state without exposing channel curves, it clears all three optional
-channel curves rather than retaining stale values.
+tool replaces tonal state without exposing channel curves or the color mixer, it
+clears all three optional channel curves and `mixer` rather than retaining stale
+values.
 
 ## 9. Detail stage
 

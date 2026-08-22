@@ -115,6 +115,11 @@ public class EditSettings
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public RawProfileSelection? RawProfile { get; set; }
 
+    [JsonPropertyName("mixer")]
+    [JsonPropertyOrder(22)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ColorMixerSettings? Mixer { get; set; }
+
     [JsonIgnore]
     public bool HasEdits => Exposure != 0.0 || !Wb.IsIdentity ||
                           Brightness != 0 || Contrast != 0 ||
@@ -123,6 +128,7 @@ public class EditSettings
                           Detail.CaptureSharpen != null || Detail.NoiseReduction != FbddMode.Off ||
                           Detail.ChromaNr != 0 ||
                           Effects?.HasActivePixels == true ||
+                          Mixer?.HasActivePixels == true ||
                           Rotation != 0 || HorizonRotation != 0.0 || (Crop != null && !Crop.IsFullImage) ||
                           !Curve.IsIdentity() ||
                           (CurveRed is { } red && !red.IsIdentity()) ||
@@ -154,7 +160,8 @@ public class EditSettings
         CurveGreen = CurveGreen?.Clone(),
         CurveBlue = CurveBlue?.Clone(),
         AppliedPresetId = AppliedPresetId,
-        RawProfile = RawProfile?.Clone()
+        RawProfile = RawProfile?.Clone(),
+        Mixer = Mixer?.Clone()
     };
 
     public bool EqualsIgnoringRotation(EditSettings other)
@@ -172,6 +179,7 @@ public class EditSettings
                Detail.NoiseReduction == other.Detail.NoiseReduction &&
                Detail.ChromaNr == other.Detail.ChromaNr &&
                EffectsMatch(Effects, other.Effects) &&
+               MixersMatch(Mixer, other.Mixer) &&
                CurvesMatch(Curve, other.Curve) &&
                CurvesMatch(CurveRed, other.CurveRed) &&
                CurvesMatch(CurveGreen, other.CurveGreen) &&
@@ -217,6 +225,32 @@ public class EditSettings
                left.Midpoint == right.Midpoint &&
                left.Grain == right.Grain &&
                left.GrainSize == right.GrainSize;
+    }
+
+    private static bool MixersMatch(
+        ColorMixerSettings? left,
+        ColorMixerSettings? right)
+    {
+        var leftActive = left?.HasActivePixels == true;
+        var rightActive = right?.HasActivePixels == true;
+        if (!leftActive || !rightActive)
+        {
+            return leftActive == rightActive;
+        }
+
+        foreach (var band in Enum.GetValues<ColorMixerBand>())
+        {
+            var leftBand = left!.GetBand(band);
+            var rightBand = right!.GetBand(band);
+            if (leftBand.Hue != rightBand.Hue ||
+                leftBand.Saturation != rightBand.Saturation ||
+                leftBand.Luminance != rightBand.Luminance)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 

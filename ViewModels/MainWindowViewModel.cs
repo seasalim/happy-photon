@@ -319,6 +319,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         SaveHighlightReconstructionTo(target);
         SaveDetailTo(target);
         SaveEffectsTo(target);
+        SaveMixerTo(target);
         target.Brightness = Brightness;
         target.Contrast = Contrast;
         target.Saturation = Saturation;
@@ -337,6 +338,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         LoadHighlightReconstructionFrom(source);
         LoadDetailFrom(source);
         LoadEffectsFrom(source);
+        LoadMixerFrom(source);
         Brightness = source.Brightness;
         Contrast = source.Contrast;
         Saturation = source.Saturation;

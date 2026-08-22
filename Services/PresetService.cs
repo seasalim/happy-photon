@@ -230,6 +230,10 @@ public class PresetService
         {
             settings.Effects = null;
         }
+        if (settings.Mixer?.HasActivePixels != true)
+        {
+            settings.Mixer = null;
+        }
         settings.AppliedPresetId = null;
         settings.RawProfile = null;
         return settings;

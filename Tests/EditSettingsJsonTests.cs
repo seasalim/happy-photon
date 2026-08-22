@@ -162,6 +162,58 @@ public sealed class EditSettingsJsonTests
     }
 
     [Fact]
+    public void Mixer_IdentityCanonicalizesToNullLegacyJsonAndHash()
+    {
+        var identity = new EditSettings
+        {
+            Mixer = new ColorMixerSettings()
+        };
+        var legacy = EditSettingsJson.Serialize(new EditSettings());
+
+        var json = EditSettingsJson.Serialize(identity);
+        var roundTrip = EditSettingsJson.Deserialize(json, out var wasClamped);
+
+        Assert.False(wasClamped);
+        Assert.Equal(legacy, json);
+        Assert.Null(roundTrip.Mixer);
+        Assert.False(identity.HasEdits);
+        Assert.Equal(
+            RenderSettingsHash.Compute(new EditSettings()),
+            RenderSettingsHash.Compute(identity));
+    }
+
+    [Fact]
+    public void Mixer_ActiveSettingsClampRoundTripAndAffectHash()
+    {
+        var source = new EditSettings { Mixer = new ColorMixerSettings() };
+        source.Mixer.Red.Hue = 150;
+        source.Mixer.Orange.Saturation = -150;
+        source.Mixer.Magenta.Luminance = 47;
+
+        var json = EditSettingsJson.Serialize(source);
+        var settings = EditSettingsJson.Deserialize(json, out var wasClamped);
+
+        Assert.False(wasClamped);
+        Assert.Contains("\"mixer\"", json);
+        Assert.Equal(100, settings.Mixer!.Red.Hue);
+        Assert.Equal(-100, settings.Mixer.Orange.Saturation);
+        Assert.Equal(47, settings.Mixer.Magenta.Luminance);
+        Assert.Equal(150, source.Mixer.Red.Hue);
+        Assert.True(settings.HasEdits);
+        Assert.NotEqual(
+            RenderSettingsHash.Compute(new EditSettings()),
+            RenderSettingsHash.Compute(settings));
+
+        var outOfRange = json.Replace(
+            "\"luminance\":47",
+            "\"luminance\":147",
+            StringComparison.Ordinal);
+        var clamped = EditSettingsJson.Deserialize(outOfRange, out wasClamped);
+        Assert.True(wasClamped);
+        Assert.Equal(100, clamped.Mixer!.Magenta.Luminance);
+    }
+
+    [Fact]
     public void Deserialize_ClampsAllPersistedSliderRanges()
     {
         var json = """

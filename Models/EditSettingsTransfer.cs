@@ -23,6 +23,7 @@ public static class EditSettingsTransfer
             HlReconstruction = source.HlReconstruction,
             Detail = source.Detail.Clone(),
             Effects = source.Effects?.Clone(),
+            Mixer = source.Mixer?.Clone(),
             Curve = source.Curve.Clone(),
             CurveRed = source.CurveRed?.Clone(),
             CurveGreen = source.CurveGreen?.Clone(),
@@ -47,6 +48,7 @@ public static class EditSettingsTransfer
         target.HlReconstruction = copied.HlReconstruction;
         target.Detail = copied.Detail.Clone();
         target.Effects = copied.Effects?.Clone();
+        target.Mixer = copied.Mixer?.Clone();
         target.Curve = copied.Curve.Clone();
         target.CurveRed = copied.CurveRed?.Clone();
         target.CurveGreen = copied.CurveGreen?.Clone();

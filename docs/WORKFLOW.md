@@ -303,6 +303,11 @@ apart from geometry; blue responds as edits change the rendered output.
 - **Vibrance** changes lower-intensity colors most while protecting already-saturated
   colors and common skin hues.
 - **Saturation** scales every color's perceptual intensity uniformly; −100 is grayscale.
+- **Color Mixer** targets Red, Orange, Yellow, Green, Aqua, Blue, Purple, or Magenta.
+  Pick a swatch, then use Hue to steer that band toward its neighbors, Saturation to
+  change only its color intensity, and Luminance to lighten or darken it. A dot marks
+  every touched band; double-click resets one slider, while the Develop footer RESET
+  clears all bands with the other color and tonal adjustments.
 
 Kelvin usually answers whether the photograph feels too cool or too warm.
 Vibrance and saturation answer whether the color feels too weak or too intense.
@@ -355,15 +360,15 @@ When the current image has a useful look:
 3. Hover over the preset to preview it on another image.
 4. Click it to apply it.
 
-Applying a preset replaces the image's current color, tonal, detail, and effects
+Applying a preset replaces the image's current color, mixer, tonal, detail, and effects
 settings. Click
 the active preset again to remove it and reset those settings. Presets never
 include crop, rotation, or horizon changes.
 
 ### Copy edits between images
 
-Press `Ctrl+Shift+C` to copy the current image's color, tonal, composite and channel
-curve, detail, effects, and preset settings. Press `Ctrl+Shift+V` to paste them onto
+Press `Ctrl+Shift+C` to copy the current image's color, mixer, tonal, composite and
+channel curve, detail, effects, and preset settings. Press `Ctrl+Shift+V` to paste them onto
 another image.
 
 To apply the settings to several photographs:

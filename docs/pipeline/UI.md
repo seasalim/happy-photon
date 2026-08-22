@@ -42,6 +42,9 @@ ADJUSTMENTS            (no Temperature slider)
   Exposure / Brightness / Contrast / Saturation / Vibrance / Shadows / Highlights
   Recovery                                                [Clip | Blend]  (RAW only)
 TONE CURVE             [RGB | R | G | B] [embedded Reset]
+COLOR MIXER                                      RESET
+  [Red Orange Yellow Green Aqua Blue Purple Magenta swatches]
+  Hue / Saturation / Luminance        (selected band, −100..100)
 DETAIL
   Sharpen  ────────●────────   25
   Noise Red.                                [OFF | LIGHT | FULL]  (RAW only)
@@ -82,7 +85,15 @@ fact. The row stays present and dims to `DisabledOpacity` when unavailable, so t
 panel does not reflow across mixed-source filmstrips; a contradictory non-RAW loaded
 fact disables the row without changing the stored value. Clip is the default.
 
-Detail follows the tone curve. Sharpen and Chroma NR are 0–100 `CompactSlider`s for
+The always-expanded Color Mixer follows the tone curve and applies to every source,
+with no RAW chip or reflow. Eight code-drawn circular swatches select the working
+band; the selection resets to Red when the active image changes and is never
+persisted. A touched band shows a dot. Hue tracks tint through the neighboring band
+hues, while Saturation and Luminance tint within the selected band. Its three
+−100..100 `CompactSlider`s reset individually on double-click; the Develop footer
+Reset clears all eight bands with the other color and tonal adjustments.
+
+Detail follows the color mixer. Sharpen and Chroma NR are 0–100 `CompactSlider`s for
 all sources; Sharpen displays the resolved source default (RAW 25, standard 0). Noise
 Red. is an Off/Light/Full segmented control that stays in place with a RAW chip and
 dims to `DisabledOpacity` for standard sources. Loaded-base capability reconciliation
@@ -214,18 +225,18 @@ be read.
 
 - **Reset** returns: `wb → asShot`, `baseLook → null` (source default), all four
   curves to identity (the three optional channel fields to null),
-  `hlReconstruction → clip`, `detail → source defaults`, `effects → null`, plus all
-  existing fields.
+  `hlReconstruction → clip`, `mixer → null`, `detail → source defaults`,
+  `effects → null`, plus all existing fields.
   A selected camera profile returns to built-in. One undo step, as today.
 - **Undo/redo**: each committed control change is one step (existing granularity),
   including a full curve drag, point removal, or embedded curve reset;
   this includes each Clip/Blend or camera-profile selection; mode switches (preset
   select, eyedropper pick, Auto) are each one step.
-- **User presets** capture color, tonal, all curve, detail, and effects fields and
+- **User presets** capture color, tonal, color-mixer, all curve, detail, and effects fields and
   still never geometry or camera profiles. Hover, apply, and untoggle preserve the
   current profile.
-- **Copy/paste** (`Ctrl+Shift+C/V`) carries the same widened set, including nullable
-  channel curves but never camera profiles; geometry still never
+- **Copy/paste** (`Ctrl+Shift+C/V`) carries the same widened set, including the mixer
+  and nullable channel curves but never camera profiles; geometry still never
   transfers; Library multi-paste confirmation flow unchanged.
 
 Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields use

@@ -104,8 +104,8 @@ while private or structurally stale metadata is never carried through accidental
 desktop color-space state.
 `apply_edit_settings` accepts the current v2 fields, including `wb`, `baseLook`, and
 `hlReconstruction`; omitted exposed fields leave current values unchanged. Channel
-curves and effects are the explicit replace/reset exception: the tool does not expose
-them and clears them rather than retaining stale state. The privacy
+curves, the color mixer, and effects are the explicit replace/reset exception: the
+tool does not expose them and clears them rather than retaining stale state. The privacy
 boundary remains metadata and thumbnail-derived statistics only, and
 `get_image_stats` independently requests `(150, 150)` and measures the unedited base
 thumbnail. Before statistics are calculated, every cache input is resampled to a

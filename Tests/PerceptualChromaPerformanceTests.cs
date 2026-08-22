@@ -46,7 +46,7 @@ public sealed class PerceptualChromaPerformanceTests
         var chromaMedian = MeasureChroma(working, values);
         var crossingMedian = MeasureCrossing(values);
         _output.WriteLine(
-            $"OKLCh S=+100 pass including pixel-cache traffic: " +
+            $"OKLCh S=+100 active-mixer pass including pixel-cache traffic: " +
             $"{chromaMedian:F1} ms; same-fixture AgX array comparator: " +
             $"{crossingMedian:F1} ms; projected pixels: {projected}.");
 
@@ -59,7 +59,14 @@ public sealed class PerceptualChromaPerformanceTests
         MagickImage image,
         ushort[] source)
     {
-        var settings = new EditSettings { Saturation = 100 };
+        var settings = new EditSettings
+        {
+            Saturation = 100,
+            Mixer = new ColorMixerSettings()
+        };
+        settings.Mixer.Orange.Hue = 35;
+        settings.Mixer.Blue.Saturation = 40;
+        settings.Mixer.Magenta.Luminance = -20;
         Reset(image, source);
         RenderChromaStage.Apply(image, settings);
         var samples = new double[5];

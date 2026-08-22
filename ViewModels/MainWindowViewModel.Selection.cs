@@ -18,6 +18,7 @@ public partial class MainWindowViewModel
             ImageService.Previews.InvalidatePreviewBase();
         }
         ClearCurveGesture();
+        ActiveMixerBand = ColorMixerBand.Red;
         CancelRestingPreview(clearParent: true);
         ClearNavigatorVisibleRegion();
         OriginalViewPixelSize = default;
@@ -196,6 +197,7 @@ public partial class MainWindowViewModel
                    ChromaNr != 0 ||
                    Vignette != 0 ||
                    Grain != 0 ||
+                   _liveMixer.HasActivePixels ||
                    hasCurveEdits ||
                    ActivePresetId != null ||
                    SelectedImage?.EditSettings.RawProfile != null;
@@ -208,6 +210,7 @@ public partial class MainWindowViewModel
         ResetHighlightReconstructionUi();
         ResetDetailUi();
         ResetEffectsUi();
+        ResetMixerUi();
         Brightness = 0;
         Contrast = 0;
         Saturation = 0;

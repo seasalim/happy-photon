@@ -348,6 +348,18 @@ public sealed class AgentToolModelsTests
     }
 
     [Fact]
+    public void EditSettingsInput_ReplaceClearsColorMixer()
+    {
+        var target = new EditSettings { Mixer = new ColorMixerSettings() };
+        target.Mixer.Green.Saturation = 40;
+
+        AgentEditSettingsMapper.CreatePatch(new AgentEditSettingsInput(
+            0, 0, 0, 0, 0, 0, 0)).ApplyTo(target);
+
+        Assert.Null(target.Mixer);
+    }
+
+    [Fact]
     public void EditSettingsInput_RejectsRemovedManualWhiteBalanceMode()
     {
         var input = new AgentEditSettingsInput(

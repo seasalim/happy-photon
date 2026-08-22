@@ -43,6 +43,7 @@ public sealed class EditSettingsTransferTests
             Grain = 24,
             GrainSize = GrainSize.Coarse
         },
+        Mixer = CreateMixer(),
         Rotation = 90,
         HorizonRotation = 1.5,
         Crop = new CropRegion { Left = 0.1, Top = 0.2, Right = 0.8, Bottom = 0.9 },
@@ -80,6 +81,8 @@ public sealed class EditSettingsTransferTests
         Assert.Equal(62, copy.Effects.Midpoint);
         Assert.Equal(24, copy.Effects.Grain);
         Assert.Equal(GrainSize.Coarse, copy.Effects.GrainSize);
+        Assert.Equal(-28, copy.Mixer!.Orange.Hue);
+        Assert.Equal(44, copy.Mixer.Blue.Saturation);
         Assert.Equal("user_abc", copy.AppliedPresetId);
         Assert.Equal(source.Curve.Points.Count, copy.Curve.Points.Count);
         Assert.Equal(0.7, copy.Curve.Points[1].Y);
@@ -131,6 +134,8 @@ public sealed class EditSettingsTransferTests
         Assert.Equal(12, target.Detail.ChromaNr);
         Assert.Equal(-35, target.Effects!.Vignette);
         Assert.NotSame(copied.Effects, target.Effects);
+        Assert.Equal(-28, target.Mixer!.Orange.Hue);
+        Assert.NotSame(copied.Mixer, target.Mixer);
         Assert.Equal("user_abc", target.AppliedPresetId);
         Assert.Equal(EditSettings.CurrentVersion, target.Version);
         Assert.Equal(270, target.Rotation);
@@ -194,6 +199,23 @@ public sealed class EditSettingsTransferTests
                     GrainSize = GrainSize.Coarse
                 }
             }));
+    }
+
+    [Fact]
+    public void MixerJoinsCloneHasEditsAndHistoryEquality()
+    {
+        var source = new EditSettings { Mixer = CreateMixer() };
+        var clone = source.Clone();
+
+        Assert.True(source.HasEdits);
+        Assert.True(source.EqualsIgnoringRotation(clone));
+        Assert.NotSame(source.Mixer, clone.Mixer);
+        Assert.NotSame(source.Mixer!.Orange, clone.Mixer!.Orange);
+
+        clone.Mixer.Orange.Hue++;
+        Assert.False(source.EqualsIgnoringRotation(clone));
+        Assert.True(new EditSettings().EqualsIgnoringRotation(
+            new EditSettings { Mixer = new ColorMixerSettings() }));
     }
 
     [Fact]
@@ -309,4 +331,13 @@ public sealed class EditSettingsTransferTests
         Location = "synthetic.dcp",
         ContentHash = new string('a', 64)
     };
+
+    private static ColorMixerSettings CreateMixer()
+    {
+        var mixer = new ColorMixerSettings();
+        mixer.Orange.Hue = -28;
+        mixer.Blue.Saturation = 44;
+        mixer.Magenta.Luminance = 19;
+        return mixer;
+    }
 }

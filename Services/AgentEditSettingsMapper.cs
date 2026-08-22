@@ -108,6 +108,7 @@ internal sealed record AgentEditSettingsPatch(
         target.CurveGreen = null;
         target.CurveBlue = null;
         target.Effects = null;
+        target.Mixer = null;
         target.AppliedPresetId = null;
     }
 }

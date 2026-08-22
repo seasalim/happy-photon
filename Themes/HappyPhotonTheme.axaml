@@ -37,6 +37,17 @@
     <Color x:Key="ColorLabelGreenColor">#66c27a</Color>
     <Color x:Key="ColorLabelBlueColor">#4a7ce6</Color>
     <Color x:Key="ColorLabelPurpleColor">#a77ad9</Color>
+    <Color x:Key="MixerRedColor">#e34b4b</Color>
+    <Color x:Key="MixerOrangeColor">#e58a42</Color>
+    <Color x:Key="MixerYellowColor">#d9cf3f</Color>
+    <Color x:Key="MixerGreenColor">#58be63</Color>
+    <Color x:Key="MixerAquaColor">#44caca</Color>
+    <Color x:Key="MixerBlueColor">#557de0</Color>
+    <Color x:Key="MixerPurpleColor">#9a65d4</Color>
+    <Color x:Key="MixerMagentaColor">#d455ae</Color>
+    <Color x:Key="MixerTrackNeutralColor">#66666a</Color>
+    <Color x:Key="MixerTrackDarkColor">#17171b</Color>
+    <Color x:Key="MixerTrackLightColor">#e7e5ea</Color>
     <Color x:Key="WaveformTraceColor">#cfe6e8</Color>
 
     <SolidColorBrush x:Key="Primary" Color="{StaticResource PrimaryColor}"/>
@@ -61,6 +72,14 @@
     <SolidColorBrush x:Key="ColorLabelGreen" Color="{StaticResource ColorLabelGreenColor}"/>
     <SolidColorBrush x:Key="ColorLabelBlue" Color="{StaticResource ColorLabelBlueColor}"/>
     <SolidColorBrush x:Key="ColorLabelPurple" Color="{StaticResource ColorLabelPurpleColor}"/>
+    <SolidColorBrush x:Key="MixerRed" Color="{StaticResource MixerRedColor}"/>
+    <SolidColorBrush x:Key="MixerOrange" Color="{StaticResource MixerOrangeColor}"/>
+    <SolidColorBrush x:Key="MixerYellow" Color="{StaticResource MixerYellowColor}"/>
+    <SolidColorBrush x:Key="MixerGreen" Color="{StaticResource MixerGreenColor}"/>
+    <SolidColorBrush x:Key="MixerAqua" Color="{StaticResource MixerAquaColor}"/>
+    <SolidColorBrush x:Key="MixerBlue" Color="{StaticResource MixerBlueColor}"/>
+    <SolidColorBrush x:Key="MixerPurple" Color="{StaticResource MixerPurpleColor}"/>
+    <SolidColorBrush x:Key="MixerMagenta" Color="{StaticResource MixerMagentaColor}"/>
     <SolidColorBrush x:Key="WaveformTrace" Color="{StaticResource WaveformTraceColor}"/>
 
     <!-- Chart and crop overlays are invariant because they are drawn over pixels. -->
