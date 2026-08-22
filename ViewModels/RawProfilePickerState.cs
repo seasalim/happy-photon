@@ -51,6 +51,8 @@ internal static class RawProfilePickerProjector
         "SCANNING LOCAL CAMERA PROFILES…";
     internal const string AwaitingIdentityMessage =
         "AWAITING CAMERA IDENTITY…";
+    internal const string IdentityUnavailableMessage =
+        "CAMERA IDENTITY UNAVAILABLE";
     internal const string RejectionFallback =
         "The selected profile was rejected; using built-in characterization.";
 
@@ -242,7 +244,9 @@ internal static class RawProfilePickerProjector
             {
                 // Without a camera identity no Adobe scan can run.
                 return string.IsNullOrWhiteSpace(cameraIdentity?.Normalized)
-                    ? AwaitingIdentityMessage
+                    ? renderState == null
+                        ? AwaitingIdentityMessage
+                        : IdentityUnavailableMessage
                     : ScanningMessage;
             }
             if (discoveryState.AdobeIdentityMatchCount == 0 &&

@@ -95,6 +95,59 @@ public sealed class RawProfileTransitionTests : IDisposable
     }
 
     [Fact]
+    public async Task DecodedMonochromeRawWithoutIdentityReportsUnavailable()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("monochrome-status");
+        await using var vm = CreateViewModel(catalog);
+        var image = new ImageFile(_fx.Path("monochrome.dng"));
+        vm.SelectedImage = image;
+
+        vm.ReconcileMonochromeCapability(image, isMonochrome: true);
+        vm.ApplyRawProfileState(
+            image,
+            isRawSource: true,
+            new DcpProfileState(
+                string.Empty,
+                DcpProfileErrorCode.None,
+                null,
+                null,
+                CameraIdentity: null,
+                RequestedSelection: null));
+
+        Assert.False(vm.IsColorEditingEnabled);
+        Assert.False(vm.RawProfilePickerState.IsLoading);
+        Assert.Equal(
+            "CAMERA IDENTITY UNAVAILABLE",
+            vm.RawProfilePickerState.StatusMessage);
+    }
+
+    [Fact]
+    public async Task DecodedColorRawWithoutIdentityReportsUnavailable()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("missing-identity");
+        await using var vm = CreateViewModel(catalog);
+        var image = new ImageFile(_fx.Path("missing-identity.dng"));
+        vm.SelectedImage = image;
+
+        vm.ApplyRawProfileState(
+            image,
+            isRawSource: true,
+            new DcpProfileState(
+                string.Empty,
+                DcpProfileErrorCode.None,
+                null,
+                null,
+                CameraIdentity: null,
+                RequestedSelection: null));
+
+        Assert.True(vm.IsColorEditingEnabled);
+        Assert.False(vm.RawProfilePickerState.IsLoading);
+        Assert.Equal(
+            "CAMERA IDENTITY UNAVAILABLE",
+            vm.RawProfilePickerState.StatusMessage);
+    }
+
+    [Fact]
     public async Task SelectionSupersedesBlockedDiscoverySynchronously()
     {
         using var catalog = await _fx.CreateCatalogAsync("selection");

@@ -149,6 +149,9 @@ readable profiles but no identity matches reports the probed count instead of cl
 the machine has no profiles. Until the required scope completes, the status stays neutral: awaiting
 camera identity while none has arrived, scanning otherwise. Hand-picked entries show their trimmed, otherwise verbatim declared
 camera model as muted subtext and in the closed-row profile/body/source tooltip.
+Once any RAW decode completes without a usable camera identity, including monochrome
+decode, the pending line settles to an unavailable status because camera-matched
+discovery cannot run.
 Loading, honest empty, unavailable, corrupt,
 hash-mismatch, unsupported, and missing-WB fallback are terminal visible states;
 invalid persisted choices remain selected with their reason while decode uses built-in
