@@ -7,7 +7,7 @@ namespace HappyPhoton.Models;
 /// </summary>
 public class EditSettings
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
 
     [JsonPropertyName("version")]
     [JsonPropertyOrder(0)]
@@ -70,53 +70,57 @@ public class EditSettings
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public EffectsSettings? Effects { get; set; }
 
+    [JsonPropertyName("lens")]
+    [JsonPropertyOrder(13)]
+    public LensSettings Lens { get; set; } = new();
+
     /// <summary>Rotation in degrees clockwise (0, 90, 180, 270)</summary>
     [JsonPropertyName("rotation")]
-    [JsonPropertyOrder(13)]
+    [JsonPropertyOrder(14)]
     public int Rotation { get; set; } = 0;
 
     /// <summary>Fine horizon rotation in degrees clockwise.</summary>
     [JsonPropertyName("horizon_rotation")]
-    [JsonPropertyOrder(14)]
+    [JsonPropertyOrder(15)]
     public double HorizonRotation { get; set; } = 0.0;
 
     /// <summary>Crop region using normalized coordinates (0.0 to 1.0)</summary>
     [JsonPropertyName("crop")]
-    [JsonPropertyOrder(15)]
+    [JsonPropertyOrder(16)]
     public CropRegion? Crop { get; set; }
 
     /// <summary>Tone curve for fine tonal adjustments</summary>
     [JsonPropertyName("curve")]
-    [JsonPropertyOrder(16)]
+    [JsonPropertyOrder(17)]
     public CurveData Curve { get; set; } = new();
 
     [JsonPropertyName("curveRed")]
-    [JsonPropertyOrder(17)]
+    [JsonPropertyOrder(18)]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CurveData? CurveRed { get; set; }
 
     [JsonPropertyName("curveGreen")]
-    [JsonPropertyOrder(18)]
+    [JsonPropertyOrder(19)]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CurveData? CurveGreen { get; set; }
 
     [JsonPropertyName("curveBlue")]
-    [JsonPropertyOrder(19)]
+    [JsonPropertyOrder(20)]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CurveData? CurveBlue { get; set; }
 
     /// <summary>ID of the preset that was applied, or null if no preset is active</summary>
     [JsonPropertyName("applied_preset_id")]
-    [JsonPropertyOrder(20)]
+    [JsonPropertyOrder(21)]
     public string? AppliedPresetId { get; set; }
 
     [JsonPropertyName("rawProfile")]
-    [JsonPropertyOrder(21)]
+    [JsonPropertyOrder(22)]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public RawProfileSelection? RawProfile { get; set; }
 
     [JsonPropertyName("mixer")]
-    [JsonPropertyOrder(22)]
+    [JsonPropertyOrder(23)]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ColorMixerSettings? Mixer { get; set; }
 
@@ -129,6 +133,7 @@ public class EditSettings
                           Detail.ChromaNr != 0 ||
                           Effects?.HasActivePixels == true ||
                           Mixer?.HasActivePixels == true ||
+                          Lens.HasEdits ||
                           Rotation != 0 || HorizonRotation != 0.0 || (Crop != null && !Crop.IsFullImage) ||
                           !Curve.IsIdentity() ||
                           (CurveRed is { } red && !red.IsIdentity()) ||
@@ -152,6 +157,7 @@ public class EditSettings
         HlReconstruction = HlReconstruction,
         Detail = Detail?.Clone() ?? new DetailSettings(),
         Effects = Effects?.Clone(),
+        Lens = Lens?.Clone() ?? new LensSettings(),
         Rotation = Rotation,
         HorizonRotation = HorizonRotation,
         Crop = Crop?.Clone(),
@@ -180,6 +186,9 @@ public class EditSettings
                Detail.ChromaNr == other.Detail.ChromaNr &&
                EffectsMatch(Effects, other.Effects) &&
                MixersMatch(Mixer, other.Mixer) &&
+               Lens.Distortion == other.Lens.Distortion &&
+               Lens.ChromaticAberration == other.Lens.ChromaticAberration &&
+               Lens.Vignetting == other.Lens.Vignetting &&
                CurvesMatch(Curve, other.Curve) &&
                CurvesMatch(CurveRed, other.CurveRed) &&
                CurvesMatch(CurveGreen, other.CurveGreen) &&

@@ -59,6 +59,8 @@ internal sealed partial class RenderOutcome : IDisposable
     public double AsShotTint { get; init; }
     public OutcomeFieldMode RawHistogramMode { get; init; }
     public HistogramData? RawHistogram { get; init; }
+    public OutcomeFieldMode LensMode { get; init; }
+    public LensPrescriptionSummary? LensPrescription { get; init; }
     public PreviewSurfaceIntent? RollbackRequestedIntent { get; init; }
 
     public static RenderOutcome FromArtifacts(
@@ -120,6 +122,10 @@ internal sealed partial class RenderOutcome : IDisposable
                     ? OutcomeFieldMode.Clear
                     : OutcomeFieldMode.Set,
             RawHistogram = stale ? null : artifacts.RawHistogram,
+            LensMode = !hasPaint || stale
+                ? OutcomeFieldMode.Preserve
+                : OutcomeFieldMode.Set,
+            LensPrescription = stale ? null : artifacts.LensPrescription,
             _promotionLease = artifacts.DetachPromotionLease()
         };
     }
@@ -157,6 +163,8 @@ internal sealed partial class RenderOutcome : IDisposable
             ? OutcomeFieldMode.Clear
             : OutcomeFieldMode.Set,
         RawHistogram = refresh.RawHistogram,
+        LensMode = OutcomeFieldMode.Set,
+        LensPrescription = refresh.LensPrescription,
         Promotable = true,
         _promotionLease = promotionLease
     };
@@ -238,7 +246,8 @@ public partial class MainWindowViewModel
             ProfileMode = OutcomeFieldMode.Set,
             WhiteBalanceMode = OutcomeFieldMode.Set,
             AsShotKelvin = isRaw ? 5500 : 6504,
-            RawHistogramMode = OutcomeFieldMode.Clear
+            RawHistogramMode = OutcomeFieldMode.Clear,
+            LensMode = OutcomeFieldMode.Set
         });
     }
 
@@ -408,6 +417,10 @@ public partial class MainWindowViewModel
                 outcome.RawHistogramMode == OutcomeFieldMode.Clear
                     ? null
                     : outcome.RawHistogram);
+        }
+        if (outcome.LensMode == OutcomeFieldMode.Set)
+        {
+            ApplyLensPrescription(outcome.IsRawSource, outcome.LensPrescription);
         }
         ApplyPreviewFailure(outcome);
     }

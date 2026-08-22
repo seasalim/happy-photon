@@ -115,7 +115,7 @@ rejected outcomes dispose their pixels, masks, and uncommitted promotion lease. 
 while the Develop overlay is latched or peeked, preserving a mask-free normal preview
 path. Camera compatibility follows the bundled LibRaw generation and the exact
 compression variant, not merely the file extension. The current product boundary is
-global edits: there are no local masks, lens or perspective correction, layered
+global edits: there are no local masks, manual perspective correction, layered
 compositing, HDR output, or custom output profiles.
 
 ## Startup sequence
@@ -190,7 +190,7 @@ return-to-Library action instead of an enabled export command.
 ### Schema
 
 One `images` row per known file, keyed by autoincrement `id` (the **catalogId**) with a
-`UNIQUE COLLATE NOCASE` `file_path`. The canonical row contains `file_name`, the v2
+`UNIQUE COLLATE NOCASE` `file_path`. The canonical row contains `file_name`, the v3
 `edit_settings` JSON document and `edit_version` marker, `flag_state`, `rating`,
 `color_label`, and `updated_utc`. `app_settings` is a key/value table. The unique path constraint owns the
 required case-insensitive auto-index; no redundant named path indexes are created.
@@ -222,9 +222,11 @@ the known tiers. Legacy adoption receives one trusted bootstrap. The stamp advan
 after each single insert or insert batch. A missing cache root self-heals; a missing
 catalog root fails startup.
 
-For a row marked v2, valid JSON is parsed and out-of-range values clamp in memory. A
-null document, malformed JSON, or non-v2 marker logs once for that image and returns
-neutral current settings. Reads never rewrite or migrate rows. **Runtime cache validity
+For a row marked v2 or v3, valid JSON is parsed and out-of-range values clamp in
+memory. A v2 document materializes an explicit legacy, all-off lens baseline before it
+can be saved as v3; new rows use the standard on/on/off lens baseline. A null document,
+malformed JSON, or other marker logs once for that image and returns neutral current
+settings. Reads never rewrite catalog rows. **Runtime cache validity
 comes from asset-file timestamps, never from DB flags** (see caching below).
 
 ### The batched-load invariant

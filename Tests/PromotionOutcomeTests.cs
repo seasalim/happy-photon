@@ -190,16 +190,53 @@ public sealed class PromotionOutcomeTests : IDisposable
         }
     }
 
+    [AvaloniaFact]
+    public async Task BeforeAfterPreservesLegacyLensDecodeIdentity()
+    {
+        using var catalog = new CatalogService(Path.Combine(_root, "legacy-before"));
+        await catalog.InitializeAsync();
+        var loader = new GrayRawLoader();
+        var vm = CreateViewModel(catalog, loader);
+        var image = EditedImage("legacy-before.dng");
+        image.EditSettings.Lens = LensSettings.Legacy();
+        var expectedDecodeKey = BaseDecodeSettings.From(image.EditSettings).CacheKey;
+        vm.SelectedImage = image;
+
+        try
+        {
+            await TestWaits.UntilAsync(() => vm.PreviewImage != null);
+            await TestWaits.UntilAsync(() =>
+                vm.ImageService.Previews.RenderedThumbnailTaskCount == 0);
+
+            await vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
+
+            Assert.True(vm.IsShowingOriginal);
+            var identity = vm.ImageService.Previews.TryGetPreviewRenderIdentity(
+                vm.PreviewImage!);
+            Assert.NotNull(identity);
+            Assert.Equal(expectedDecodeKey, identity.DecodeKey);
+            Assert.NotEmpty(loader.Decodes);
+            Assert.All(loader.Decodes, decode =>
+                Assert.Equal(expectedDecodeKey, decode.CacheKey));
+        }
+        finally
+        {
+            await vm.DisposeAsync();
+        }
+    }
+
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         Directory.Delete(_root, recursive: true);
     }
 
-    private MainWindowViewModel CreateViewModel(CatalogService catalog) =>
+    private MainWindowViewModel CreateViewModel(
+        CatalogService catalog,
+        GrayRawLoader? loader = null) =>
         new(
             catalog,
-            new GrayRawLoader(),
+            loader ?? new GrayRawLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally))
@@ -219,13 +256,20 @@ public sealed class PromotionOutcomeTests : IDisposable
 
     private sealed class GrayRawLoader : IBaseImageLoader
     {
+        private readonly System.Collections.Concurrent.ConcurrentQueue<
+            BaseDecodeSettings> _decodes = new();
+
+        internal IReadOnlyList<BaseDecodeSettings> Decodes => _decodes.ToArray();
+
         public bool CanLoad(ImageFile file) => true;
 
         public BaseImage LoadPreviewBase(
             ImageFile file,
             BaseDecodeSettings decode,
-            CancellationToken cancellationToken) =>
-            new(
+            CancellationToken cancellationToken)
+        {
+            _decodes.Enqueue(decode);
+            return new(
                 new MagickImage(MagickColors.Gray, 64, 48),
                 new BaseImageInfo(
                     BaseSourceKind.RawLibRaw,
@@ -240,6 +284,7 @@ public sealed class PromotionOutcomeTests : IDisposable
                     1,
                     64,
                     48));
+        }
 
         BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
             ImageFile file,

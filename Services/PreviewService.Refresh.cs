@@ -139,7 +139,8 @@ public sealed partial class PreviewService
                 refreshed.Output.DetachClippingMask(),
                 refreshed.Info.AsShotKelvin,
                 refreshed.Info.AsShotTint,
-                refreshed.Output.IsMonochrome);
+                refreshed.Output.IsMonochrome,
+                refreshed.Info.LensPrescriptionSummary);
             var promotionLease = CreatePromotionLease(
                 pending.ImageFile,
                 refreshed.Output,

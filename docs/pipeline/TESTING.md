@@ -194,10 +194,12 @@ orders above the observed difference.
    opt-in calibration payload.
 6. **Current-format boundary tests**: `EditSettingsJsonTests` pins canonical ordering,
    clone-before-clamp behavior, range validation, removed WB modes, and rejection of
-   every non-v2 write. `CatalogSchemaTests` pins the clean new schema, acceptance of
+   every non-v3 write plus explicit v2 legacy-lens materialization.
+   `CatalogSchemaTests` pins the clean new schema, acceptance of
    harmless extra columns, and actionable startup rejection for missing columns;
    `CatalogPersistenceTests` pins neutral no-write recovery for null, malformed, or
-   non-v2 rows. Preset and MCP tests require explicit/current versions and reject v1.
+   unsupported rows. Preset and MCP tests require explicit/current versions and
+   reject old writes.
 7. **Export boundary suites:** `ExportMetadataTests` covers OUTPUT.md §6 EXIF copy,
    orientation, GPS strip, stale-thumbnail removal, ICC presence, and subsampling.
    `TiffExportTests` pins Q16 decode-back parity in both color spaces, 16-bit ZIP,
@@ -205,22 +207,27 @@ orders above the observed difference.
 8. **Loader suites:** `RawBaseLoaderTests` and `StandardBaseLoaderTests` cover the
    DECODE.md §7 items, including HEIC routing to the platform reader rather than
    LibRaw.
-9. **`RenderDetailTests`**: chroma NR preserves luma and alpha; a seeded noise image
+9. **Optics suites:** `LensPrescriptionReaderTests` pins generated DNG opcode payloads,
+   mandatory rejection, crop/trim coordinates, and the committed X30 RAF table alarm;
+   `LensCorrectionProcessorTests` pins one-pass sampling and scene-linear radial gain;
+   `LensSettingsTests` and headless `LensControlTests` pin baseline provenance,
+   transfer/cache registration, and constant-layout capability gating.
+10. **`RenderDetailTests`**: chroma NR preserves luma and alpha; a seeded noise image
    rendered as one band and as forced non-divisible bands is bit-identical at box
    radii 1 and 3.
-10. **Working-space suites:** `RawWorkingSpaceTests` proves the built-in
+11. **Working-space suites:** `RawWorkingSpaceTests` proves the built-in
     characterization against the LibRaw Rec.2020 comparator, pins the `cam_xyz`
     semantic oracle under `LibRawOutputConfiguration.LinearCameraNative`
     (`output_color` 0);
     `StandardWorkingSpaceTests` checks the external sRGB-profile target, native P3
     gamut vectors, the thumbnail sRGB-proxy limit, and the one-code JPEG identity gate.
-11. **RAW histogram suites:** synthetic Bayer/X-Trans geometry, black-level, sRGB-bin,
+12. **RAW histogram suites:** synthetic Bayer/X-Trans geometry, black-level, sRGB-bin,
     clipping, spatial source-saturation predicate parity, lookup-cap, and cancellation
     cases; six-fixture typed-frame oracle parity; loader fault plus decode-setting/profile
     mask-and-stat invariance; generation-matched lease analysis, full-load no-sampling,
     refresh identity; and headless preferred/effective plus 16-photosite presentation
     boundaries.
-12. **Waveform suites:** pure accumulator tests pin the 256×128 grid, column mapping,
+13. **Waveform suites:** pure accumulator tests pin the 256×128 grid, column mapping,
     level boundaries, Rec.601 parity, narrow-source back-fill, histogram-bin invariance,
     and the production overflow bound. Painter/view tests pin square-root normalization,
     opaque premultiplied BGRA, theme-token colors, bitmap reuse/disposal and live-theme
@@ -230,13 +237,13 @@ orders above the observed difference.
     acquisition and require matching bitmap/scopes with zero source reads or renders;
     background-activity tests hold that gate through the status hysteresis and first
     coherent render.
-13. **Wide-gamut output suites:** `WideGamutExportTests` checks the Display P3 profile,
+14. **Wide-gamut output suites:** `WideGamutExportTests` checks the Display P3 profile,
     independently derived native-P3 codes in every format, gamut survival, and common-space
     agreement. `WideGamutColorimetryTests` gates the Q16 finalization boundary at the
     §3 limits with output sharpening Off and Screen, and records the expected 8-bit
     quantization floor as informational. The former frozen per-RID export
     byte hashes are retired; the active goldens own regression.
-14. **DCP suites:** `DcpProfileReaderTests` is the §7.2 conformance and hostile-input
+15. **DCP suites:** `DcpProfileReaderTests` is the §7.2 conformance and hostile-input
     suite; `DcpMatrixAndHueSatTests` covers balanced-seam composition, as-shot dual
     interpolation, 2.5D/single/dual tables, V-only encoding, and seeded direct/LUT
     agreement. `DcpProfileDiscoveryTests` covers all local sources, precedence,
@@ -246,7 +253,7 @@ orders above the observed difference.
     determinism suites cover the integrated boundaries. `DcpColorCheckerAnchorTests`
     applies a generated synthetic profile to the D300 ground-truth fixture without a
     skip path. No Adobe profile is committed.
-15. **Perceptual-chroma suites:** `OklabColorDerivationTests` independently derives
+16. **Perceptual-chroma suites:** `OklabColorDerivationTests` independently derives
     the composed matrices and consumes oracle vectors; `OklabColorPropertyTests`
     pins factor, invariance, taper, skin window, maximal-ray projection, mixer
     partition/periodicity, achromatic reliability, uniform/global equivalence,

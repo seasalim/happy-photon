@@ -455,7 +455,8 @@ public sealed partial class PreviewService : IAsyncDisposable
                 info.AsShotTint,
                 isBaseStale,
                 promotionLease,
-                IsMonochrome);
+                IsMonochrome,
+                info.LensPrescriptionSummary);
         }
 
         public void Dispose()

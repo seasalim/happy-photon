@@ -38,6 +38,8 @@ internal sealed class CameraRgbCharacterization
 
     internal double[,] CameraToRec2020 { get; }
 
+    internal bool AppliesMatrix => _applyMatrix;
+
     internal static CameraRgbCharacterization Create(
         RawCameraFactSnapshot facts)
     {

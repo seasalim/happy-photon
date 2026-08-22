@@ -12,7 +12,10 @@ public enum BaseSourceKind
 
 public sealed record BaseDecodeSettings(
     HlReconstructionMode HlReconstruction,
-    FbddMode NoiseReduction)
+    FbddMode NoiseReduction,
+    bool Distortion = true,
+    bool ChromaticAberration = true,
+    bool Vignetting = false)
 {
     public static BaseDecodeSettings Default { get; } =
         new(HlReconstructionMode.Clip, FbddMode.Off);
@@ -22,11 +25,17 @@ public sealed record BaseDecodeSettings(
         ArgumentNullException.ThrowIfNull(settings);
         return settings.HlReconstruction == HlReconstructionMode.Clip &&
                settings.Detail.NoiseReduction == FbddMode.Off &&
+               settings.Lens.Distortion &&
+               settings.Lens.ChromaticAberration &&
+               !settings.Lens.Vignetting &&
                settings.RawProfile == null
             ? Default
             : new BaseDecodeSettings(
                 settings.HlReconstruction,
-                settings.Detail.NoiseReduction)
+                settings.Detail.NoiseReduction,
+                settings.Lens.Distortion,
+                settings.Lens.ChromaticAberration,
+                settings.Lens.Vignetting)
             {
                 ProfileSelection = settings.RawProfile?.Clone()
             };
@@ -51,6 +60,7 @@ public sealed record BaseDecodeSettings(
 
     public string CacheKey =>
         $"base-v{BaseImage.Version};hl={GetHighlightKey()};fbdd={GetNoiseReductionKey()}" +
+        $";lens={(Distortion ? 1 : 0)}{(ChromaticAberration ? 1 : 0)}{(Vignetting ? 1 : 0)}" +
         GetProfileKey();
 
     private string GetProfileKey()
@@ -98,6 +108,8 @@ public sealed record BaseImageInfo(
     internal DcpProfileErrorCode ProfileStatus { get; init; }
     internal string? ProfileMessage { get; init; }
     internal CameraIdentity? CameraIdentity { get; init; }
+    internal LensPrescription? LensPrescription { get; init; }
+    public LensPrescriptionSummary? LensPrescriptionSummary { get; init; }
 }
 
 /// <summary>
@@ -106,7 +118,7 @@ public sealed record BaseImageInfo(
 /// </summary>
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 12;
+    public const int Version = 13;
     public const int InteractivePreviewMaxDimension = 1600;
     public const int LargePreviewMaxDimension = 3200;
 

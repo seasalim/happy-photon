@@ -167,7 +167,13 @@ public record AgentEditSettingsInput(
     int Version = EditSettings.CurrentVersion,
     AgentWhiteBalanceInput? Wb = null,
     bool? BaseLook = null,
-    string? HlReconstruction = null);
+    string? HlReconstruction = null,
+    AgentLensSettingsInput? Lens = null);
+
+public record AgentLensSettingsInput(
+    bool Distortion,
+    bool ChromaticAberration,
+    bool Vignetting);
 
 public record AgentWhiteBalanceInput(
     string Mode = "asShot",

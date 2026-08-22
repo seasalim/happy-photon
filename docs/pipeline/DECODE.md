@@ -28,7 +28,7 @@ public interface IBaseImageLoader
 `LoadPreviewBaseWithOutcome` and detaches the interactive image.
 
 `BaseDecodeSettings` (OVERVIEW.md §4) carries the decode-affecting subset of
-`EditSettings` — highlight reconstruction, FBDD, and the selected camera profile.
+`EditSettings` — highlight reconstruction, FBDD, optics toggles, and the selected camera profile.
 Non-raw loaders accept and record
 it but ignore it (their `From(EditSettings)` projection is still stored on
 `BaseImageInfo.Decode` so cache keys stay uniform). The defaults are highlight clip
@@ -93,12 +93,17 @@ Post-decode steps, in order:
    rejected as unsupported rather than truncated. The binding defaults OpenMP to at
    most sixteen workers unless the process defines `OMP_NUM_THREADS`, bounding X-Trans
    scratch space without changing decode precision or pixels.
+   With an active embedded prescription, this import is OPTICS.md's fused inverse map:
+   it samples camera planes per channel, applies scene-linear vignetting gain, and only
+   then runs the characterization matrix. Inactive paths retain the former pixels.
 2. LibRaw sometimes pre-rotates. The loader detects that through the dimension swap,
    applies EXIF orientation otherwise, and records `ExifOrientationApplied`.
 3. Preview uses one LibRaw half-size decode. Two bases derive independently from that
    decoded buffer: interactive is the same one-step linear resize to 1600 as before;
    large is one resize to min(half-size result, 3200). Small sensors are never upscaled
    and preview never forces a full decode. Full bases remain native resolution.
+   Active optics writes each preview target directly rather than resizing a corrected
+   intermediate; an active full base receives its single budgeted warp pass.
 4. `BaseImageInfo` stores the raw facts — either RGB `CamMul[3]` with
    `CamToSrgb[3][3]`, or native LibRaw `cam_mul[4]` with `rgb_cam[3][4]` — from the
    wrapper's color data where exposed, else null. Preserve all four native channels;
@@ -328,7 +333,7 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
   normalize every input to a canonical 150px long edge.
 - **Rendered-preview cache:** `PreviewCacheService` stores the *last rendered output*
   (8-bit JPEG q90, 1600px) plus a sidecar `<id>.meta` containing `settingsHash`.
-  - `settingsHash` = SHA-256 of canonical-JSON `EditSettings` v2 + `RenderPipeline.Version`
+  - `settingsHash` = SHA-256 of canonical-JSON `EditSettings` v3 + `RenderPipeline.Version`
     + `BaseImage.Version` + the installed profile outcome token.
   - Develop entry: if cached hash matches current settings → decode its one BGRA buffer
     into the bitmap, display histogram, waveform, and display-floor clipping, then

@@ -8,7 +8,7 @@ namespace HappyPhoton.Tests;
 public sealed class EditSettingsJsonTests
 {
     [Fact]
-    public void Serialize_UsesCanonicalV2ShapeAndOrder()
+    public void Serialize_UsesCanonicalV3ShapeAndOrder()
     {
         var settings = new EditSettings
         {
@@ -45,7 +45,7 @@ public sealed class EditSettingsJsonTests
         [
             "version", "exposure", "wb", "highlights", "shadows",
             "brightness", "contrast", "saturation", "vibrance", "baseLook",
-            "hlReconstruction", "detail", "rotation", "horizon_rotation",
+            "hlReconstruction", "detail", "lens", "rotation", "horizon_rotation",
             "crop", "curve", "applied_preset_id"
         ], names);
         Assert.Equal(
@@ -59,15 +59,17 @@ public sealed class EditSettingsJsonTests
     }
 
     [Fact]
-    public void Serialize_WithoutChannelCurves_RemainsByteIdenticalToLegacyV2()
+    public void Serialize_AlwaysWritesSelfDescribingLensBaseline()
     {
         const string expected =
-            "{\"version\":2,\"exposure\":0,\"wb\":{\"mode\":\"asShot\"," +
+            "{\"version\":3,\"exposure\":0,\"wb\":{\"mode\":\"asShot\"," +
             "\"kelvin\":null,\"tint\":null,\"gains\":null,\"preset\":null}," +
             "\"highlights\":0,\"shadows\":0,\"brightness\":0,\"contrast\":0," +
             "\"saturation\":0,\"vibrance\":0,\"baseLook\":null," +
             "\"hlReconstruction\":\"clip\",\"detail\":{\"captureSharpen\":null," +
-            "\"noiseReduction\":\"off\",\"chromaNr\":0},\"rotation\":0," +
+            "\"noiseReduction\":\"off\",\"chromaNr\":0},\"lens\":{" +
+            "\"distortion\":true,\"chromaticAberration\":true," +
+            "\"vignetting\":false,\"baseline\":\"standard\"},\"rotation\":0," +
             "\"horizon_rotation\":0,\"crop\":null,\"curve\":{\"points\":" +
             "[{\"x\":0,\"y\":0},{\"x\":1,\"y\":1}]}," +
             "\"applied_preset_id\":null}";
@@ -96,7 +98,7 @@ public sealed class EditSettingsJsonTests
     }
 
     [Fact]
-    public void Deserialize_LegacyV2_DoesNotMaterializeOptionalChannels()
+    public void Deserialize_Current_DoesNotMaterializeOptionalChannels()
     {
         var json = EditSettingsJson.Serialize(new EditSettings());
 
@@ -258,7 +260,7 @@ public sealed class EditSettingsJsonTests
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
-    [InlineData(3)]
+    [InlineData(4)]
     [InlineData(99)]
     public void Serialize_RejectsUnsupportedVersions(int version)
     {

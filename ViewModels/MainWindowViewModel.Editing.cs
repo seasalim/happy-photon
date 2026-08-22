@@ -104,6 +104,7 @@ public partial class MainWindowViewModel
         SelectedImage.EditSettings.Detail = new DetailSettings();
         SelectedImage.EditSettings.Effects = null;
         SelectedImage.EditSettings.Mixer = null;
+        SelectedImage.EditSettings.Lens.RestoreBaseline();
         SelectedImage.EditSettings.Curve.Reset();
         SelectedImage.EditSettings.CurveRed = null;
         SelectedImage.EditSettings.CurveGreen = null;
@@ -123,6 +124,7 @@ public partial class MainWindowViewModel
         LoadDetailFrom(SelectedImage.EditSettings);
         LoadEffectsFrom(SelectedImage.EditSettings);
         LoadMixerFrom(SelectedImage.EditSettings);
+        LoadLensFrom(SelectedImage.EditSettings);
         Brightness = 0;
         Contrast = 0;
         Saturation = 0;
@@ -346,14 +348,15 @@ public partial class MainWindowViewModel
 
         if (intent == PreviewSurfaceIntent.Original)
         {
-            // Create temporary settings with only rotation and crop (no color edits)
+            // Keep geometry-like decode state while removing color edits.
             var tempSettings = new EditSettings
             {
                 Rotation = Rotation,
                 HorizonRotation = HorizonRotation,
                 // In crop mode, show the full canvas so the overlay stays aligned
                 Crop = PreviewCrop(),
-                Curve = new CurveData()
+                Curve = new CurveData(),
+                Lens = image.EditSettings.Lens.Clone()
             };
 
             // Show original preview without any edits (same size as edited preview)

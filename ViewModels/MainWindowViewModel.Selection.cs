@@ -198,6 +198,9 @@ public partial class MainWindowViewModel
                    Vignette != 0 ||
                    Grain != 0 ||
                    _liveMixer.HasActivePixels ||
+                   LensDistortion != SelectedImage!.EditSettings.Lens.BaselineDistortion ||
+                   LensChromaticAberration != SelectedImage.EditSettings.Lens.BaselineChromaticAberration ||
+                   LensVignetting != SelectedImage.EditSettings.Lens.BaselineVignetting ||
                    hasCurveEdits ||
                    ActivePresetId != null ||
                    SelectedImage?.EditSettings.RawProfile != null;
@@ -211,6 +214,7 @@ public partial class MainWindowViewModel
         ResetDetailUi();
         ResetEffectsUi();
         ResetMixerUi();
+        ResetLensUi();
         Brightness = 0;
         Contrast = 0;
         Saturation = 0;

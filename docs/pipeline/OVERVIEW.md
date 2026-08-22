@@ -9,6 +9,7 @@ documents cover the individual stages in greater depth.
 | [WORKING_SPACE.md](WORKING_SPACE.md) | Canonical Rec.2020 basis, matrices, ICC target, provenance |
 | [CHARACTERIZATION.md](CHARACTERIZATION.md) | Camera-RGB contract, built-in characterization, DCP math |
 | [DECODE.md](DECODE.md) | Sources → `BaseImage` (loaders, LibRaw params, ICC normalize, caching) |
+| [OPTICS.md](OPTICS.md) | Embedded DNG/Fuji prescriptions and fused sampling |
 | [RENDER.md](RENDER.md) | `BaseImage` + `EditSettings` → rendered image (stage order, LUT math) |
 | [TONE_ENGINE.md](TONE_ENGINE.md) | AgX crossing and tone engine: formula authority, clean-room provenance |
 | [WHITE_BALANCE.md](WHITE_BALANCE.md) | WB model: CCT/tint math, presets, eyedropper, matrices |
@@ -26,7 +27,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 ```
 
 - **`BaseDecodeSettings`** is the small, decode-affecting projection of `EditSettings`
-  (highlight reconstruction, FBDD noise reduction, and camera-profile selection — all
+  (highlight reconstruction, FBDD noise reduction, optics toggles, and camera-profile selection — all
   raw-only). Everything
   else in `EditSettings` affects only the render. Changing a decode-affecting field
   re-decodes the base in the background (DECODE.md §4); changing anything else never
@@ -82,7 +83,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 
 ```
             ┌─ DECODE.md ─────────────────────────────────────────────┐
- RAW ──LibRaw(camera RGB, linear, camWB)──characterize→Rec.2020 ──────┤
+ RAW ──LibRaw(camera RGB)──optics/sample──characterize→Rec.2020 ─────┤
  mono RAW ──LibRaw(gray, linear)──bounded gray resize──replicate RGB ┤
  JPEG/PNG/TIFF/HEIC ──Magick decode ─color→linear Rec.2020 ──────────┤
             └──────────► BaseImage (linear Rec.2020 Q16 + BaseImageInfo)┘
@@ -117,7 +118,8 @@ public enum BaseSourceKind { RawLibRaw, Standard, HeicPlatform }
 public enum HlReconstructionMode { Blend, Clip }
 public enum FbddMode { Off, Light, Full }
 
-public sealed record BaseDecodeSettings(HlReconstructionMode HlReconstruction, FbddMode NoiseReduction)
+public sealed record BaseDecodeSettings(HlReconstructionMode HlReconstruction, FbddMode NoiseReduction,
+                                        bool Distortion, bool ChromaticAberration, bool Vignetting)
 {
     public static BaseDecodeSettings Default { get; }        // Clip + Off + built-in profile
     public static BaseDecodeSettings From(EditSettings s);   // also carries rawProfile selection
@@ -139,6 +141,7 @@ public sealed record BaseImageInfo(
     int FullHeight,                // set on preview bases too; RENDER.md §9 scales σ by these
     double SourceExposureBiasEv = 0); // Fuji midpoint restoration; 0 for other sources
 // IsMonochrome is a loader-produced fact propagated with preview/render outcomes.
+// Also carries the generation-matched embedded-lens prescription summary.
 
 public sealed class BaseImage : IDisposable
 {
@@ -193,7 +196,7 @@ public sealed class RenderResult : IDisposable
 typed status/message, and normalized camera identity. These facts install with
 the characterized pixels; render never resolves or mixes profile state.
 
-`EditSettings` v2 schema and current storage contract: RENDER.md §8.
+`EditSettings` v3 schema and current storage contract: RENDER.md §8.
 
 Develop exposes capture sharpening, RAW-only FBDD noise reduction, and chroma noise
 reduction in its Detail group. Capture sharpening displays its source-kind default
@@ -224,6 +227,8 @@ capability signal.
 | `Services/GatedBaseImageLoader.cs` | live availability policy before source decode |
 | `Services/SourceAvailabilityService.cs` | cloud-file classification and read intent |
 | `Services/RawBaseLoader.cs` | LibRaw decode → base (DECODE.md §2) |
+| `Services/LensPrescription*.cs` | embedded DNG/Fuji prescription readers and model |
+| `Services/LensCorrection*.cs` | fused camera-plane inverse map and linear gain |
 | `Services/RawCameraFactSnapshot.cs` | validated pre-process camera facts |
 | `Services/CameraRgbCharacterization.cs` | camera RGB → Rec.2020 fused Q16 import |
 | `Services/DcpProfileReader.cs` + `DcpTiffReader.cs` | hardened TIFF-IFD DCP parser |
@@ -268,7 +273,7 @@ so old settings hashes and caches remain valid. Per-channel curves and the nulla
 effects object use this exception; present pixel-active fields change the canonical
 settings hash.
 `BaseDecodeSettings.CacheKey` is the invariant, culture-independent string
-`base-v{BaseImage.Version};hl={blend|clip};fbdd={off|light|full}`, with
+`base-v{BaseImage.Version};hl={blend|clip};fbdd={off|light|full};lens={ddd}`, with
 `;dcp={source:content-hash:resolution-status}` appended only for a selected profile.
 In-memory identity adds normalized file path and preview/full size class;
 rendered-cache settings hashes also carry the installed outcome token.
@@ -281,7 +286,7 @@ outcomes are isolated by the DCP token.
 
 ## 7. Current boundaries
 
-Local adjustments/masks, lens & perspective corrections, custom output ICC targets,
+Local adjustments/masks, perspective corrections, custom output ICC targets,
 display-profile awareness, XMP sidecars, HDR output, AVIF/JXL, 1:1-zoom region decode
 (zoom continues to use the bounded preview base). These are product boundaries, not
 partially implemented pipeline stages.

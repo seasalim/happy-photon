@@ -406,6 +406,7 @@
                                               IsEnabled="{Binding IsColorEditingEnabled}"/>
                         <views:DetailEditGroup x:Name="DetailEditGroup"/>
                         <views:EffectsEditGroup x:Name="EffectsEditGroup"/>
+                        <views:LensEditGroup x:Name="LensEditGroup"/>
 
                 </StackPanel>
             </ScrollViewer>

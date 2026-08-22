@@ -320,6 +320,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         SaveDetailTo(target);
         SaveEffectsTo(target);
         SaveMixerTo(target);
+        SaveLensTo(target);
         target.Brightness = Brightness;
         target.Contrast = Contrast;
         target.Saturation = Saturation;
@@ -339,6 +340,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         LoadDetailFrom(source);
         LoadEffectsFrom(source);
         LoadMixerFrom(source);
+        LoadLensFrom(source);
         Brightness = source.Brightness;
         Contrast = source.Contrast;
         Saturation = source.Saturation;

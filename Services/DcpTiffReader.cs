@@ -194,6 +194,29 @@ internal sealed class DcpTiffReader : IDisposable
         return values;
     }
 
+    internal double[] ReadUnsignedValues(TiffEntry entry)
+    {
+        if (entry.Type is not (3 or 4 or 13))
+            throw Invalid($"Tag {entry.Tag} has unsupported integer type {entry.Type}.");
+        var bytes = ReadValue(entry);
+        var size = entry.Type == 3 ? 2 : 4;
+        var values = new double[checked((int)entry.Count)];
+        for (var index = 0; index < values.Length; index++)
+        {
+            var value = bytes.AsSpan(index * size, size);
+            values[index] = entry.Type == 3 ? ReadUInt16(value) : ReadUInt32(value);
+        }
+        return values;
+    }
+
+    internal double[] ReadNumericValues(TiffEntry entry)
+    {
+        if (entry.Type is 3 or 4) return ReadUnsignedValues(entry);
+        if (entry.Type is not (5 or 10))
+            throw Invalid($"Tag {entry.Tag} has unsupported numeric type {entry.Type}.");
+        return ReadRationals(entry, checked((int)entry.Count), allowUnsigned: true);
+    }
+
     private TiffIfd ReadIfd(long absoluteOffset)
     {
         Span<byte> countBytes = stackalloc byte[2];
@@ -269,7 +292,7 @@ internal sealed class DcpTiffReader : IDisposable
     {
         1 or 2 or 6 or 7 => 1,
         3 or 8 => 2,
-        4 or 9 or 11 => 4,
+        4 or 9 or 11 or 13 => 4,
         5 or 10 or 12 => 8,
         _ => throw new DcpProfileException(
             DcpProfileErrorCode.UnsupportedVariant,

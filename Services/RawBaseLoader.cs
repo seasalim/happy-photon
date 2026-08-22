@@ -87,6 +87,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
 
         var stopwatch = Stopwatch.StartNew();
         MagickImage? pixels = null;
+        MagickImage? interactivePixels = null;
         try
         {
             var requestedResolution = decode.ProfileResolution ??
@@ -116,6 +117,14 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             }
             var dimensions = context.GetDimensions(cancellationToken);
             var rawMetadata = context.GetMetadata(cancellationToken);
+            var lensResult = isMonochrome
+                ? LensPrescriptionReadResult.None
+                : ReadLensPrescription(file, rawMetadata.Lens);
+            var lensPrescription = lensResult.Prescription;
+            var applyLens = lensPrescription != null &&
+                (decode.Distortion && lensPrescription.HasDistortion ||
+                 decode.ChromaticAberration && lensPrescription.HasChromaticAberration ||
+                 decode.Vignetting && lensPrescription.HasVignetting);
             var fullWidth = checked((int)dimensions.VisibleWidth);
             var fullHeight = checked((int)dimensions.VisibleHeight);
             var orientation = NormalizeOrientation(dimensions.Orientation);
@@ -197,6 +206,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             ushort[]? previewGray = null;
             var previewGrayWidth = 0;
             var previewGrayHeight = 0;
+            var lensOrientation = orientation;
             using (var processed = context.MakeProcessedImage(cancellationToken))
             {
                 var description = processed.Description;
@@ -211,6 +221,29 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
 
                 var processedWidth = checked((int)description.Width);
                 var processedHeight = checked((int)description.Height);
+                lensOrientation = ResolveLensOrientation(
+                    processedWidth,
+                    processedHeight,
+                    fullWidth,
+                    fullHeight,
+                    orientation);
+                if (applyLens &&
+                    (!LensCorrectionProcessor.CanApply(
+                        processedWidth, processedHeight, lensOrientation,
+                        preview ? BaseImage.InteractivePreviewMaxDimension : null,
+                        lensPrescription!, decode) ||
+                     preview && !LensCorrectionProcessor.CanApply(
+                        processedWidth, processedHeight, lensOrientation,
+                        BaseImage.LargePreviewMaxDimension,
+                        lensPrescription!, decode)))
+                {
+                    ImageServiceHelpers.LogDebug(
+                        nameof(RawBaseLoader),
+                        "Lens prescription rejected because its warp cannot cover the frame.",
+                        file.FilePath);
+                    applyLens = false;
+                    lensPrescription = null;
+                }
                 if (isMonochrome && preview)
                 {
                     previewGray = MonochromeRawImporter.AreaAverageToMaxDimension(
@@ -228,6 +261,42 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                         processed.AsSpan(),
                         processedWidth,
                         processedHeight,
+                        cancellationToken);
+                }
+                else if (applyLens && preview)
+                {
+                    var interactiveSize = LensCorrectionProcessor.GetOutputSize(
+                        processedWidth,
+                        processedHeight,
+                        lensOrientation,
+                        BaseImage.InteractivePreviewMaxDimension,
+                        lensPrescription);
+                    var largeSize = LensCorrectionProcessor.GetOutputSize(
+                        processedWidth,
+                        processedHeight,
+                        lensOrientation,
+                        BaseImage.LargePreviewMaxDimension,
+                        lensPrescription);
+                    interactivePixels = LensCorrectionProcessor.ImportCorrected(
+                        processed.AsSpan(), processedWidth, processedHeight,
+                        interactiveSize.Width, interactiveSize.Height,
+                        lensOrientation, characterization!, lensPrescription!, decode,
+                        cancellationToken);
+                    pixels = LensCorrectionProcessor.ImportCorrected(
+                        processed.AsSpan(), processedWidth, processedHeight,
+                        largeSize.Width, largeSize.Height,
+                        lensOrientation, characterization!, lensPrescription!, decode,
+                        cancellationToken);
+                }
+                else if (applyLens)
+                {
+                    var fullSize = LensCorrectionProcessor.GetOutputSize(
+                        processedWidth, processedHeight, lensOrientation, maxDimension: null,
+                        lensPrescription);
+                    pixels = LensCorrectionProcessor.ImportCorrected(
+                        processed.AsSpan(), processedWidth, processedHeight,
+                        fullSize.Width, fullSize.Height, lensOrientation,
+                        characterization!, lensPrescription!, decode,
                         cancellationToken);
                 }
                 else
@@ -252,15 +321,26 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             var decodedPixels = pixels ?? throw new InvalidOperationException(
                 "LibRaw produced no decoded pixels.");
 
-            ApplyOrientation(
-                decodedPixels,
-                orientation,
-                fullWidth,
-                fullHeight);
-            var sourceSaturation = sensorSaturation?.OrientAndResize(
-                orientation,
-                checked((int)decodedPixels.Width),
-                checked((int)decodedPixels.Height));
+            if (!applyLens)
+            {
+                ApplyOrientation(
+                    decodedPixels,
+                    orientation,
+                    fullWidth,
+                    fullHeight);
+            }
+            var sourceSaturation = applyLens && sensorSaturation != null
+                ? LensCorrectionProcessor.WarpMask(
+                    sensorSaturation,
+                    checked((int)(interactivePixels ?? decodedPixels).Width),
+                    checked((int)(interactivePixels ?? decodedPixels).Height),
+                    lensOrientation,
+                    lensPrescription!,
+                    decode)
+                : sensorSaturation?.OrientAndResize(
+                    orientation,
+                    checked((int)decodedPixels.Width),
+                    checked((int)decodedPixels.Height));
             var estimateStopwatch = Stopwatch.StartNew();
             var sourceExposureBiasEv = PreviewExposureEstimator.Estimate(
                 thumbnailBytes,
@@ -278,10 +358,11 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             decodedPixels.Strip();
             cancellationToken.ThrowIfCancellationRequested();
 
-            var orientedFullSize = GetOrientedSize(
-                fullWidth,
-                fullHeight,
-                orientation);
+            var orientedFullSize = applyLens
+                ? LensCorrectionProcessor.GetOutputSize(
+                    fullWidth, fullHeight, orientation, maxDimension: null,
+                    lensPrescription)
+                : GetOrientedSize(fullWidth, fullHeight, orientation);
             var effectiveResolution = isMonochrome
                 ? DcpProfileResolution.BuiltIn
                 : requestedResolution.Selection == null ||
@@ -319,17 +400,30 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                     ? null
                     : new CameraIdentity(
                         rawMetadata.NormalizedMake ?? rawMetadata.Make,
-                        rawMetadata.NormalizedModel ?? rawMetadata.Model)
+                        rawMetadata.NormalizedModel ?? rawMetadata.Model),
+                LensPrescription = lensPrescription,
+                LensPrescriptionSummary = lensPrescription?.Summary
             };
             PreviewBasePair? pair = null;
             BaseImage? full = null;
             var analysis = PreviewSourceAnalysis.Empty;
             if (preview)
             {
-                pair = PreviewBasePairFactory.Create(
-                    decodedPixels,
-                    info,
-                    cancellationToken);
+                if (applyLens)
+                {
+                    pair = new PreviewBasePair(
+                        new BaseImage(interactivePixels!, info),
+                        new BaseImage(decodedPixels, info));
+                    interactivePixels = null;
+                    pixels = null;
+                }
+                else
+                {
+                    pair = PreviewBasePairFactory.Create(
+                        decodedPixels,
+                        info,
+                        cancellationToken);
+                }
                 analysis = rawHistogram == null && sourceSaturation == null
                     ? PreviewSourceAnalysis.Empty
                     : new PreviewSourceAnalysis(
@@ -369,96 +463,8 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
         }
         finally
         {
+            interactivePixels?.Dispose();
             pixels?.Dispose();
-        }
-    }
-
-    internal static MagickImage ImportRgb16(
-        ReadOnlySpan<byte> data,
-        int width,
-        int height) => CameraRgbCharacterization.Passthrough.ImportRgb16(
-            data,
-            width,
-            height);
-
-    internal static bool ApplyOrientation(
-        MagickImage image,
-        int orientation,
-        int sourceWidth,
-        int sourceHeight)
-    {
-        var alreadyApplied = orientation is >= 5 and <= 8 &&
-            DimensionsAreSwapped(
-                (int)image.Width,
-                (int)image.Height,
-                sourceWidth,
-                sourceHeight);
-        if (orientation != 1 && !alreadyApplied)
-        {
-            ImageServiceHelpers.ApplyExifOrientation(image, orientation);
-        }
-
-        return alreadyApplied;
-    }
-
-    private static bool DimensionsAreSwapped(
-        int decodedWidth,
-        int decodedHeight,
-        int sourceWidth,
-        int sourceHeight)
-    {
-        var sameDelta = Math.Abs(
-            (long)decodedWidth * sourceHeight -
-            (long)decodedHeight * sourceWidth);
-        var swappedDelta = Math.Abs(
-            (long)decodedWidth * sourceWidth -
-            (long)decodedHeight * sourceHeight);
-        return swappedDelta < sameDelta;
-    }
-
-    private static (int Width, int Height) GetOrientedSize(
-        int width,
-        int height,
-        int orientation) =>
-        orientation is >= 5 and <= 8
-            ? (height, width)
-            : (width, height);
-
-    private static int NormalizeOrientation(int orientation) =>
-        orientation is >= 1 and <= 8 ? orientation : 1;
-
-    private byte[]? ReadThumbnail(LibRawContext context, string filePath)
-    {
-        try
-        {
-            return _thumbnailReader(context);
-        }
-        catch (Exception exception)
-        {
-            ImageServiceHelpers.LogDebug(
-                nameof(RawBaseLoader),
-                $"Thumbnail read failed: {exception.Message}",
-                filePath);
-            return null;
-        }
-    }
-
-    private static (DcpCameraData Data, string? Error) TryReadDngCameraData(
-        string path)
-    {
-        try
-        {
-            return (new DcpProfileReader().ReadCameraData(path), null);
-        }
-        catch (Exception exception)
-        {
-            ImageServiceHelpers.LogDebug(
-                nameof(RawBaseLoader),
-                $"DNG camera profile facts were rejected: {exception.Message}",
-                path);
-            return (
-                DcpCameraData.Defaults,
-                $"DNG camera calibration tags are invalid: {exception.Message}");
         }
     }
 

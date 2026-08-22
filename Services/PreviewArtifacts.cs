@@ -21,6 +21,7 @@ public sealed class PreviewArtifacts : IDisposable
     public double AsShotKelvin { get; }
     public double AsShotTint { get; }
     public bool IsBaseStale { get; }
+    public LensPrescriptionSummary? LensPrescription { get; }
     public ClippingMask? ClippingMask => _clippingMask;
 
     internal PreviewArtifacts(
@@ -36,7 +37,8 @@ public sealed class PreviewArtifacts : IDisposable
         double asShotTint = 0,
         bool isBaseStale = false,
         PreviewPromotionLease? promotionLease = null,
-        bool isMonochrome = false)
+        bool isMonochrome = false,
+        LensPrescriptionSummary? lensPrescription = null)
     {
         _bitmap = bitmap;
         Histogram = histogram ?? throw new ArgumentNullException(nameof(histogram));
@@ -50,6 +52,7 @@ public sealed class PreviewArtifacts : IDisposable
         AsShotKelvin = asShotKelvin;
         AsShotTint = asShotTint;
         IsBaseStale = isBaseStale;
+        LensPrescription = lensPrescription;
         _promotionLease = promotionLease;
     }
 
@@ -132,6 +135,7 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
     internal DcpProfileState? ProfileState { get; }
     public double AsShotKelvin { get; }
     public double AsShotTint { get; }
+    public LensPrescriptionSummary? LensPrescription { get; }
     public ClippingMask? ClippingMask => _clippingMask;
 
     /// <summary>
@@ -156,7 +160,8 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         ClippingMask? clippingMask = null,
         double asShotKelvin = 6504,
         double asShotTint = 0,
-        bool isMonochrome = false)
+        bool isMonochrome = false,
+        LensPrescriptionSummary? lensPrescription = null)
     {
         ImageFile = imageFile;
         _bitmap = bitmap;
@@ -171,6 +176,7 @@ public sealed class PreviewRefresh : EventArgs, IDisposable
         _clippingMask = clippingMask;
         AsShotKelvin = asShotKelvin;
         AsShotTint = asShotTint;
+        LensPrescription = lensPrescription;
     }
 
     public Bitmap DetachBitmap() =>

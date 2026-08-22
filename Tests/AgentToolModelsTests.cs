@@ -233,7 +233,7 @@ public sealed class AgentToolModelsTests
 
         var json = JsonSerializer.Serialize(input, Options);
 
-        Assert.Contains("\"version\":2", json);
+        Assert.Contains("\"version\":3", json);
         Assert.DoesNotContain("temperature", json);
     }
 
@@ -260,7 +260,7 @@ public sealed class AgentToolModelsTests
             Vibrance: 5,
             Shadows: 6,
             Highlights: 7,
-            Version: 2,
+            Version: EditSettings.CurrentVersion,
             Wb: new AgentWhiteBalanceInput(
                 "custom", Kelvin: 7200, Tint: -10),
             BaseLook: true,
@@ -285,7 +285,7 @@ public sealed class AgentToolModelsTests
     public void EditSettingsInput_AbsentWidenedFieldsPreserveCurrentValues()
     {
         var input = new AgentEditSettingsInput(
-            1, 2, 3, 4, 5, 6, 7, Version: 2);
+            1, 2, 3, 4, 5, 6, 7, Version: EditSettings.CurrentVersion);
         var target = new EditSettings
         {
             Wb = new WhiteBalanceSettings

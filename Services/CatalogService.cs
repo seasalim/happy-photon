@@ -318,7 +318,7 @@ public partial class CatalogService : IDisposable
         var editVersion = reader.IsDBNull(offset + 1)
             ? 0
             : reader.GetInt32(offset + 1);
-        if (editVersion != EditSettings.CurrentVersion)
+        if (editVersion is not (2 or EditSettings.CurrentVersion))
         {
             LogEditSettingsWarningOnce(
                 catalogId,
@@ -330,20 +330,29 @@ public partial class CatalogService : IDisposable
         {
             LogEditSettingsWarningOnce(
                 catalogId,
-                $"Missing v2 edit settings for '{filePath}'.");
+                $"Missing edit settings for '{filePath}'.");
             return new EditSettings();
         }
 
         try
         {
+            var json = reader.GetString(offset);
+            using var document = JsonDocument.Parse(json);
+            if (!document.RootElement.TryGetProperty("version", out var versionElement) ||
+                !versionElement.TryGetInt32(out var documentVersion) ||
+                documentVersion != editVersion)
+            {
+                throw new JsonException(
+                    "The edit settings document and row version markers do not match.");
+            }
             var settings = EditSettingsJson.Deserialize(
-                reader.GetString(offset),
+                json,
                 out var wasClamped);
             if (wasClamped)
             {
                 LogEditSettingsWarningOnce(
                     catalogId,
-                    $"Clamped out-of-range v2 edit settings for '{filePath}'.");
+                    $"Clamped out-of-range edit settings for '{filePath}'.");
             }
             return settings;
         }
@@ -351,7 +360,7 @@ public partial class CatalogService : IDisposable
         {
             LogEditSettingsWarningOnce(
                 catalogId,
-                $"Invalid v2 edit settings for '{filePath}': {exception.Message}");
+                $"Invalid edit settings for '{filePath}': {exception.Message}");
             return new EditSettings();
         }
     }

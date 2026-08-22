@@ -24,6 +24,12 @@ public static class EditSettingsTransfer
             Detail = source.Detail.Clone(),
             Effects = source.Effects?.Clone(),
             Mixer = source.Mixer?.Clone(),
+            Lens = new LensSettings
+            {
+                Distortion = source.Lens.Distortion,
+                ChromaticAberration = source.Lens.ChromaticAberration,
+                Vignetting = source.Lens.Vignetting
+            },
             Curve = source.Curve.Clone(),
             CurveRed = source.CurveRed?.Clone(),
             CurveGreen = source.CurveGreen?.Clone(),
@@ -49,6 +55,9 @@ public static class EditSettingsTransfer
         target.Detail = copied.Detail.Clone();
         target.Effects = copied.Effects?.Clone();
         target.Mixer = copied.Mixer?.Clone();
+        target.Lens.Distortion = copied.Lens.Distortion;
+        target.Lens.ChromaticAberration = copied.Lens.ChromaticAberration;
+        target.Lens.Vignetting = copied.Lens.Vignetting;
         target.Curve = copied.Curve.Clone();
         target.CurveRed = copied.CurveRed?.Clone();
         target.CurveGreen = copied.CurveGreen?.Clone();

@@ -64,6 +64,67 @@ public enum ColorMixerBand
     Magenta
 }
 
+public enum LensBaseline
+{
+    [JsonStringEnumMemberName("standard")]
+    Standard,
+    [JsonStringEnumMemberName("legacy")]
+    Legacy
+}
+
+public sealed class LensSettings
+{
+    [JsonPropertyName("distortion")]
+    public bool Distortion { get; set; } = true;
+
+    [JsonPropertyName("chromaticAberration")]
+    public bool ChromaticAberration { get; set; } = true;
+
+    [JsonPropertyName("vignetting")]
+    public bool Vignetting { get; set; }
+
+    [JsonPropertyName("baseline")]
+    [JsonConverter(typeof(StrictCamelCaseEnumConverter<LensBaseline>))]
+    public LensBaseline Baseline { get; set; } = LensBaseline.Standard;
+
+    [JsonIgnore]
+    public bool HasEdits => Distortion != BaselineDistortion ||
+        ChromaticAberration != BaselineChromaticAberration ||
+        Vignetting != BaselineVignetting;
+
+    [JsonIgnore]
+    public bool BaselineDistortion => Baseline == LensBaseline.Standard;
+
+    [JsonIgnore]
+    public bool BaselineChromaticAberration => Baseline == LensBaseline.Standard;
+
+    [JsonIgnore]
+    public bool BaselineVignetting => false;
+
+    public void RestoreBaseline()
+    {
+        Distortion = BaselineDistortion;
+        ChromaticAberration = BaselineChromaticAberration;
+        Vignetting = BaselineVignetting;
+    }
+
+    public LensSettings Clone() => new()
+    {
+        Distortion = Distortion,
+        ChromaticAberration = ChromaticAberration,
+        Vignetting = Vignetting,
+        Baseline = Baseline
+    };
+
+    public static LensSettings Legacy() => new()
+    {
+        Distortion = false,
+        ChromaticAberration = false,
+        Vignetting = false,
+        Baseline = LensBaseline.Legacy
+    };
+}
+
 public sealed class WhiteBalanceSettings
 {
     [JsonPropertyName("mode")]

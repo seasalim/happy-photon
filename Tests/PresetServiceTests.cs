@@ -284,7 +284,7 @@ public sealed class PresetServiceTests : IDisposable
         Directory.CreateDirectory(_tempDirectory);
         var path = Path.Combine(_tempDirectory, "user_null_curve.json");
         await File.WriteAllTextAsync(path,
-            """{"version":2,"id":"user_null_curve","name":"Null Curve","settings":{"version":2,"curve":null}}""");
+            """{"version":2,"id":"user_null_curve","name":"Null Curve","settings":{"version":3,"lens":{"distortion":true,"chromaticAberration":true,"vignetting":false,"baseline":"standard"},"curve":null}}""");
         var service = new PresetService(_tempDirectory);
 
         var exception = await Record.ExceptionAsync(service.InitializeAsync);

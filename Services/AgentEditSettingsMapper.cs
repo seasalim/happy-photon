@@ -16,7 +16,8 @@ internal static class AgentEditSettingsMapper
             CreateSettings(input),
             ApplyWb: input.Wb != null,
             ApplyBaseLook: input.BaseLook.HasValue,
-            ApplyHighlightReconstruction: input.HlReconstruction != null);
+            ApplyHighlightReconstruction: input.HlReconstruction != null,
+            ApplyLens: input.Lens != null);
     }
 
     private static EditSettings CreateSettings(AgentEditSettingsInput input)
@@ -32,7 +33,15 @@ internal static class AgentEditSettingsMapper
             Saturation = input.Saturation,
             Vibrance = input.Vibrance,
             BaseLook = input.BaseLook,
-            HlReconstruction = ParseHighlightMode(input.HlReconstruction)
+            HlReconstruction = ParseHighlightMode(input.HlReconstruction),
+            Lens = input.Lens == null
+                ? new LensSettings()
+                : new LensSettings
+                {
+                    Distortion = input.Lens.Distortion,
+                    ChromaticAberration = input.Lens.ChromaticAberration,
+                    Vignetting = input.Lens.Vignetting
+                }
         };
 
         try
@@ -86,7 +95,8 @@ internal sealed record AgentEditSettingsPatch(
     EditSettings Settings,
     bool ApplyWb,
     bool ApplyBaseLook,
-    bool ApplyHighlightReconstruction)
+    bool ApplyHighlightReconstruction,
+    bool ApplyLens = false)
 {
     public void ApplyTo(EditSettings target)
     {
@@ -102,6 +112,12 @@ internal sealed record AgentEditSettingsPatch(
         if (ApplyHighlightReconstruction)
         {
             target.HlReconstruction = Settings.HlReconstruction;
+        }
+        if (ApplyLens)
+        {
+            target.Lens.Distortion = Settings.Lens.Distortion;
+            target.Lens.ChromaticAberration = Settings.Lens.ChromaticAberration;
+            target.Lens.Vignetting = Settings.Lens.Vignetting;
         }
         target.Curve = Settings.Curve.Clone();
         target.CurveRed = null;

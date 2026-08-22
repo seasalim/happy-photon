@@ -29,22 +29,43 @@ internal static class EditSettingsJson
         if (document.RootElement.ValueKind != JsonValueKind.Object ||
             !document.RootElement.TryGetProperty("version", out var versionElement) ||
             !versionElement.TryGetInt32(out var documentVersion) ||
-            documentVersion != EditSettings.CurrentVersion)
+            documentVersion is not (2 or EditSettings.CurrentVersion))
         {
-            throw new JsonException("Edit settings document must declare version 2.");
+            throw new JsonException("Edit settings document must declare version 2 or 3.");
+        }
+        if (documentVersion == EditSettings.CurrentVersion &&
+            (!document.RootElement.TryGetProperty("lens", out var lensElement) ||
+             lensElement.ValueKind != JsonValueKind.Object ||
+             !lensElement.TryGetProperty("baseline", out _) ||
+             !HasBoolean(lensElement, "distortion") ||
+             !HasBoolean(lensElement, "chromaticAberration") ||
+             !HasBoolean(lensElement, "vignetting")))
+        {
+            throw new JsonException(
+                "Version 3 edit settings must declare an explicit lens baseline.");
         }
 
         var settings = JsonSerializer.Deserialize<EditSettings>(json, CompactOptions)
             ?? throw new JsonException("Edit settings document is null.");
-        if (settings.Version != EditSettings.CurrentVersion)
+        if (settings.Version != documentVersion)
         {
             throw new JsonException(
-                $"Edit settings document version {settings.Version} does not match v2.");
+                $"Edit settings document version {settings.Version} does not match its marker.");
+        }
+
+        if (documentVersion == 2)
+        {
+            settings.Version = EditSettings.CurrentVersion;
+            settings.Lens = LensSettings.Legacy();
         }
 
         wasClamped = Clamp(settings);
         return settings;
     }
+
+    private static bool HasBoolean(JsonElement element, string propertyName) =>
+        element.TryGetProperty(propertyName, out var value) &&
+        value.ValueKind is JsonValueKind.True or JsonValueKind.False;
 
     private static bool Clamp(EditSettings settings)
     {
@@ -76,6 +97,11 @@ internal static class EditSettingsJson
         ValidateWhiteBalance(settings.Wb);
 
         settings.Detail ??= new DetailSettings();
+        settings.Lens ??= new LensSettings();
+        if (!Enum.IsDefined(settings.Lens.Baseline))
+        {
+            throw new JsonException("Lens baseline is not supported.");
+        }
         settings.Detail.CaptureSharpen = ClampNullable(
             settings.Detail.CaptureSharpen, 0, 100, ref changed);
         settings.Detail.ChromaNr = Clamp(settings.Detail.ChromaNr, 0, 100, ref changed);

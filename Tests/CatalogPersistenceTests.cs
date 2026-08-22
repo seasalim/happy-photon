@@ -79,6 +79,30 @@ public sealed class CatalogPersistenceTests : IDisposable
     }
 
     [Fact]
+    public async Task LegacyRowMaterializesAllOffBaselineWithoutRewritingDocument()
+    {
+        var (path, id) = await CreateImageAsync("legacy.dng");
+        var current = EditSettingsJson.Serialize(new EditSettings());
+        var legacy = current
+            .Replace("\"version\":3", "\"version\":2", StringComparison.Ordinal)
+            .Replace(",\"lens\":{\"distortion\":true,\"chromaticAberration\":true," +
+                "\"vignetting\":false,\"baseline\":\"standard\"}", "",
+                StringComparison.Ordinal);
+        await UpdateEditRowAsync(id, legacy, 2);
+
+        using var service = new CatalogService(_tempDirectory);
+        await service.InitializeAsync();
+        var settings = (await service.LoadImageStatesAsync([path]))[path].EditSettings;
+
+        Assert.Equal(LensBaseline.Legacy, settings.Lens.Baseline);
+        Assert.False(settings.Lens.Distortion);
+        Assert.False(settings.Lens.ChromaticAberration);
+        Assert.False(settings.Lens.Vignetting);
+        Assert.False(settings.HasEdits);
+        Assert.Equal(new PersistedEditRow(legacy, 2), await ReadEditRowAsync(id));
+    }
+
+    [Fact]
     public async Task Save_WritesCompleteCurrentDocument()
     {
         var (_, id) = await CreateImageAsync("save.jpg");
@@ -162,7 +186,7 @@ public sealed class CatalogPersistenceTests : IDisposable
             VALUES (@badPath, 'bad.jpg', @badDocument, @badVersion);
             INSERT INTO images (
                 file_path, file_name, edit_settings, edit_version)
-            VALUES (@goodPath, 'good.jpg', @goodDocument, 2);
+            VALUES (@goodPath, 'good.jpg', @goodDocument, @goodVersion);
             """;
         command.Parameters.AddWithValue("@badPath", badPath);
         command.Parameters.AddWithValue(
@@ -171,6 +195,7 @@ public sealed class CatalogPersistenceTests : IDisposable
         command.Parameters.AddWithValue("@badVersion", badVersion);
         command.Parameters.AddWithValue("@goodPath", goodPath);
         command.Parameters.AddWithValue("@goodDocument", goodDocument);
+        command.Parameters.AddWithValue("@goodVersion", EditSettings.CurrentVersion);
         await command.ExecuteNonQueryAsync();
     }
 

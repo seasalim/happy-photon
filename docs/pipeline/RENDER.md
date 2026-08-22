@@ -321,13 +321,13 @@ ORed independently, allowing one pixel to carry both. Develop requests masks onl
 while the `J` latch or a triangle peek is active; ordinary preview renders remain
 mask-free.
 
-## 8. EditSettings v2 — schema and storage
+## 8. EditSettings v3 — schema and storage
 
 JSON document shape (canonical field order for hashing):
 
 ```jsonc
 {
-  "version": 2,
+  "version": 3,
   "exposure": 0.0,                       // EV
   "wb": { "mode": "asShot",              // asShot | custom | preset | picked
           "kelvin": null, "tint": null,  // custom/preset
@@ -345,6 +345,10 @@ JSON document shape (canonical field order for hashing):
                "midpoint": 50,            // 0..100
                "grain": 0,                // 0..100
                "grainSize": "medium" },   // fine | medium | coarse
+  "lens": { "distortion": true,
+            "chromaticAberration": true,
+            "vignetting": false,
+            "baseline": "standard" },     // standard | legacy
   "rotation": 0, "horizon_rotation": 0.0, "crop": null,
   "curve": { },
   "curveRed": { },                       // optional; omitted = identity
@@ -368,9 +372,10 @@ JSON document shape (canonical field order for hashing):
 ```
 
 The three channel fields follow `curve` in the shown order; they and `rawProfile` use
-null-omission semantics — `null` is never serialized, so legacy v2 documents remain
-byte-identical after normalization, and `Clamp` validates/rebuilds an optional curve
-only when the field was present. Selecting a channel in the UI does not materialize it.
+null-omission semantics — `null` is never serialized, and `Clamp` validates/rebuilds
+an optional curve only when the field was present. Selecting a channel in the UI does
+not materialize it. A legacy v2 document instead follows the explicit lens-baseline
+upgrade described in §8.1.
 
 `mixer` is omitted unless at least one of its 24 values is nonzero. That same
 pixel-activity predicate governs `HasEdits`, hashing, and the chroma-stage skip;
@@ -384,10 +389,10 @@ additive optional field does not change `RenderPipeline.Version`.
 `HasActivePixels` predicate governs persistence, `HasEdits`, hashing, and the render
 skip, and `EditSettingsJson` and preset saving canonicalize an explicit pixel-inactive
 object to null. Midpoint and Size choices made while both operators are off remain
-session-only UI state. Legacy v2 JSON, hashes, caches, and effects-off pixels stay
-byte-identical, so this additive optional field does not change `RenderPipeline.Version`.
+session-only UI state. Effects-off pixels stay byte-identical, so this additive
+optional field does not change `RenderPipeline.Version`.
 
-`hlReconstruction`, `detail.noiseReduction`, and `rawProfile` are the
+`hlReconstruction`, `detail.noiseReduction`, the three `lens` booleans, and `rawProfile` are the
 **decode-affecting subset**;
 they project into `BaseDecodeSettings` (OVERVIEW.md §4, DECODE.md §4) and changing
 them re-decodes the base rather than re-rendering it.
@@ -406,7 +411,7 @@ export-scale renders are the fidelity reference.
 
 The canonical `images` table contains `id`, `file_path`, `file_name`, `edit_settings`,
 `edit_version`, `flag_state`, `rating`, `color_label`, and `updated_utc`. New rows
-always receive a complete v2 JSON document and `edit_version = 2`.
+always receive a complete v3 JSON document and `edit_version = 3`.
 
 `CatalogSchema` creates the tables for a new catalog, runs the ordered transactional
 `CatalogMigrations` recorded by `app_settings.schema_version`, then validates the
@@ -419,26 +424,34 @@ is documented in [docs/ARCHITECTURE.md](../ARCHITECTURE.md) ("The catalog").
 
 The read path is row-local and never writes:
 
-- marker 2 + valid document → parse and return;
+- marker 3 + valid document → parse and return;
+- marker 2 + valid document → materialize an explicit legacy all-off lens baseline,
+  then return v3 settings without writing the row;
 - out-of-range current values → clamp in memory and log once;
-- null or malformed document, or any marker other than 2 → log once and return neutral
+- null or malformed document, or any other marker → log once and return neutral
   current settings.
 
 One corrupt row therefore cannot fail the folder's batched load. Single and batch edit
 writes serialize the complete current document and marker; batch writes retain their
 single-transaction all-or-nothing behavior.
 
+The explicit lens baseline marker prevents a legacy image from acquiring standard
+defaults after an ordinary save. New images use `standard` (distortion/CA on,
+vignetting off); legacy images use `legacy` (all off). Reset restores the image's own
+baseline. Copy/paste and preset application transfer only the three values, leaving
+the destination baseline untouched.
+
 ### 8.2 Current-format boundaries
 
-`EditSettingsJson.Serialize` requires `EditSettings.Version == 2`, clones the model,
+`EditSettingsJson.Serialize` requires the current v3 model, clones it,
 clamps and validates the clone, then writes canonical JSON; it never changes the
 caller's model and rejects every other version. Preset files must explicitly declare
 the current wrapper and settings versions — versionless or unsupported files are
 skipped, never rewritten or upgraded while loading. Copy/paste accepts only current
 in-memory settings and rejects a non-current source or target before applying values.
 
-The MCP `apply_edit_settings` input defaults an omitted `version` to 2 and accepts only
-version 2. Its white balance shape is the same `asShot`/`custom`/`preset`/`picked`
+The MCP `apply_edit_settings` input defaults an omitted `version` to 3 and accepts only
+version 3. Its white balance shape is the same `asShot`/`custom`/`preset`/`picked`
 model shown above; there is no scalar temperature field or generic raw-gain mode.
 Unsupported versions and modes are rejected before any image is mutated. Because the
 tool replaces tonal state without exposing channel curves or the color mixer, it

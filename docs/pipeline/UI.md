@@ -54,6 +54,11 @@ EFFECTS
   Midpoint ────────●─────────   50
   Grain    ───●──────────────   20
   Size                                      [FINE | MED | COARSE]
+OPTICS
+  Distortion                                      [toggle]
+  Chromatic Aberration                            [toggle]
+  Vignetting                                      [toggle]
+  LENS · EMBEDDED DNG OPCODES                     source
 DEVELOP FOOTER
   [Before/after] [Undo] [Redo]                         RESET
 ```
@@ -105,6 +110,14 @@ at `DisabledOpacity` while Vignette is zero. Grain is 0..100. Size is the standa
 compact segmented idiom: `SurfaceHigh` container, radius 4, padding 2, height 22,
 flat borderless pills, `PrimaryContainer` selected fill, and Fine/Med/Coarse labels in
 FontLabel 9 SemiBold with letter spacing 1. Medium is the default.
+
+Optics follows Effects at the tail of the scrolling edit stack. Its three fixed-height
+toggle rows control distortion, lateral chromatic aberration, and corrective
+vignetting; the latter is distinct from the aesthetic Effects vignette. The muted last
+line identifies the embedded lens prescription and source. A missing prescription
+reads `NO CORRECTION DATA FOR THIS LENS`; unavailable individual corrections dim their
+rows, and the complete group dims without hiding for JPEG/HEIC and other standard
+sources. These states never change the panel height.
 
 The tone-curve selector shares the curve control's existing header, so the panel and
 control do not grow. RGB is the default. Selecting an untouched R/G/B channel shows a

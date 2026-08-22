@@ -57,6 +57,7 @@ public partial class MainWindowViewModel
         var capabilityChanged = IsBrightnessEnabled != !isRawSource;
         IsBrightnessEnabled = !isRawSource;
         ReconcileDetailCapability(isRawSource, capabilityChanged);
+        OnPropertyChanged(nameof(IsOpticsEnabled));
         if (capabilityChanged && imageFile.IsRaw && !isRawSource)
         {
             ShowTransientStatus(RawFallbackStatus);
