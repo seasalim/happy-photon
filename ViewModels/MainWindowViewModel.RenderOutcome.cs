@@ -270,13 +270,22 @@ public partial class MainWindowViewModel
                  (_stateDefiningPaintApplied ||
                   outcome.Intent != _requestedPreviewIntent)) ||
                 (outcome.Class == RenderOutcomeClass.StateDefining &&
-                 (outcome.Intent != _requestedPreviewIntent ||
-                  outcome.IsBaseStale && _currentBasePaintApplied)) ||
+                 outcome.Intent != _requestedPreviewIntent) ||
                 (outcome.Class == RenderOutcomeClass.RestingUpgrade &&
                  (!_stateDefiningPaintApplied ||
                   _requestedPreviewIntent != PreviewSurfaceIntent.Edited)))
             {
                 return false;
+            }
+
+            if (outcome.Class == RenderOutcomeClass.StateDefining &&
+                outcome.IsBaseStale && _currentBasePaintApplied)
+            {
+                // This generation's fresh-base paint already landed, so keep
+                // its pixels and facts — but a successful stale render still
+                // counts as applied, or the edit that requested it would skip
+                // its autosave and be lost.
+                return outcome.Succeeded;
             }
 
             if (outcome.Class == RenderOutcomeClass.Rollback ||

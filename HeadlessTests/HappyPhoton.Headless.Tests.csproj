@@ -31,6 +31,7 @@
     <Compile Include="..\Tests\ClippingOverlayViewModelTests.cs" Link="ClippingOverlayViewModelTests.cs" />
     <Compile Include="..\Tests\ColorAssessmentViewTests.cs" Link="ColorAssessmentViewTests.cs" />
     <Compile Include="..\Tests\ColorAssessmentScreenshotTests.cs" Link="ColorAssessmentScreenshotTests.cs" />
+    <Compile Include="..\Tests\EditAutoSaveRefreshRaceTests.cs" Link="EditAutoSaveRefreshRaceTests.cs" />
     <Compile Include="..\Tests\FirstRunWindowTests.cs" Link="FirstRunWindowTests.cs" />
     <Compile Include="..\Tests\GoldenTestPaths.cs" Link="GoldenTestPaths.cs" />
     <Compile Include="..\Tests\HelpAboutDialogTests.cs" Link="HelpAboutDialogTests.cs" />
