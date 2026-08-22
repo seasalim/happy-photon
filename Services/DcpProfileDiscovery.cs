@@ -13,11 +13,15 @@ internal sealed record DcpProfileOption(
 {
     internal bool CanSelect => IsBuiltIn || Status == DcpProfileErrorCode.None;
     internal string? Fingerprint { get; init; }
+    internal string? DeclaredCameraModel { get; init; }
 }
 
 internal sealed record DcpDiscoveryResult(
     IReadOnlyList<DcpProfileOption> Options,
-    bool HasProfiles);
+    bool HasProfiles,
+    bool AdobeScanAttempted,
+    int AdobeProfilesScanned,
+    int AdobeIdentityMatchCount);
 
 internal sealed class DcpProfileDiscovery
 {
@@ -179,9 +183,11 @@ internal sealed class DcpProfileDiscovery
         }
 
         var identity = cameraIdentity?.Normalized ?? string.Empty;
+        DcpAdobeScanResult? adobeScan = null;
         if (identity.Length > 0)
         {
-            foreach (var path in _adobeIndex.FindMatches(identity, cancellationToken))
+            adobeScan = _adobeIndex.FindMatches(identity, cancellationToken);
+            foreach (var path in adobeScan.Matches)
             {
                 var option = InspectExternal(path, RawProfileSource.Adobe);
                 if (option?.Selection != null &&
@@ -203,7 +209,12 @@ internal sealed class DcpProfileDiscovery
             DcpProfileErrorCode.None,
             null,
             IsBuiltIn: true));
-        return new DcpDiscoveryResult(options, hasProfiles);
+        return new DcpDiscoveryResult(
+            options,
+            hasProfiles,
+            adobeScan != null,
+            adobeScan?.ProfilesScanned ?? 0,
+            adobeScan?.IdentityMatchCount ?? 0);
     }
 
     private DcpProfileOption InspectPersisted(RawProfileSelection selection)
@@ -272,8 +283,7 @@ internal sealed class DcpProfileDiscovery
                         Path.GetFileNameWithoutExtension(path)));
             });
             var option = ToOption(cached.Profile, source, Path.GetFullPath(path));
-            // Camera identity is carried transiently here and removed before UI.
-            return option with { Message = cached.Profile.UniqueCameraModel };
+            return option;
         }
         catch (DcpProfileException exception)
         {
@@ -316,9 +326,10 @@ internal sealed class DcpProfileDiscovery
                 ContentHash = profile.ContentHash
             },
             DcpProfileErrorCode.None,
-            profile.UniqueCameraModel)
+            null)
         {
-            Fingerprint = DcpProfileReader.ComputeProfileFingerprint(profile)
+            Fingerprint = DcpProfileReader.ComputeProfileFingerprint(profile),
+            DeclaredCameraModel = profile.UniqueCameraModel
         };
         return option;
     }

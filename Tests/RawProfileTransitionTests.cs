@@ -35,6 +35,66 @@ public sealed class RawProfileTransitionTests : IDisposable
     }
 
     [Fact]
+    public async Task ImageSwitchNeverClaimsEmptyBeforeScanCompletes()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("switch-honesty");
+        await using var vm = CreateViewModel(catalog);
+        var emissions = new List<string>();
+        vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(vm.RawProfilePickerState))
+            {
+                emissions.Add(vm.RawProfilePickerState.StatusMessage);
+            }
+        };
+
+        vm.SelectedImage = new ImageFile(_fx.Path("first.dng"));
+        vm.SelectedImage = new ImageFile(_fx.Path("second.dng"));
+
+        var falseEmpty = emissions.Concat([
+                vm.RawProfilePickerState.StatusMessage])
+            .Count(status =>
+                status == RawProfilePickerProjector.NoProfilesMessage);
+        Assert.Equal(0, falseEmpty);
+    }
+
+    [Fact]
+    public async Task CurrentIdentityScanSettlesOnlyAfterItsCompletion()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("identity-settlement");
+        await using var vm = CreateViewModel(catalog);
+        var image = new ImageFile(_fx.Path("identity.cr2"));
+        vm.SelectedImage = image;
+        await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
+        Assert.Equal(
+            RawProfilePickerProjector.ScanningMessage,
+            vm.RawProfilePickerState.StatusMessage);
+        var gate = DiscoveryGate(vm);
+
+        vm.ApplyRawProfileState(
+            image,
+            isRawSource: true,
+            new DcpProfileState(
+                string.Empty,
+                DcpProfileErrorCode.None,
+                null,
+                null,
+                new CameraIdentity("Fixture", "No Match"),
+                RequestedSelection: null));
+        await gate.Started.Task.WaitAsync(TestWaits.Condition);
+
+        Assert.Equal(
+            RawProfilePickerProjector.ScanningMessage,
+            vm.RawProfilePickerState.StatusMessage);
+        gate.Release.TrySetResult();
+        await TestWaits.UntilAsync(() =>
+            !vm.RawProfilePickerState.IsLoading);
+        Assert.NotEqual(
+            RawProfilePickerProjector.ScanningMessage,
+            vm.RawProfilePickerState.StatusMessage);
+    }
+
+    [Fact]
     public async Task SelectionSupersedesBlockedDiscoverySynchronously()
     {
         using var catalog = await _fx.CreateCatalogAsync("selection");

@@ -109,7 +109,13 @@ starts cached local Adobe discovery in the background; opening the picker perfor
 generation-correlated fallback refresh, adds embedded candidates, and shows its
 pending state. Order is persisted user file, DNG embedded, matching Adobe profiles
 A–Z, then built-in. Browse adds one local `.dcp`; Refresh invalidates discovery
-metadata and re-resolves the selection. Loading, honest empty, unavailable, corrupt,
+metadata and re-resolves the selection. A terminal empty line waits for both the
+current-identity Adobe scan and the image-profile pass; a completed Adobe scan with
+readable profiles but no identity matches reports the probed count instead of claiming
+the machine has no profiles. Until the required scope completes, the status stays
+neutral/scanning. Hand-picked entries show their trimmed, otherwise verbatim declared
+camera model as muted subtext and in the closed-row profile/body/source tooltip.
+Loading, honest empty, unavailable, corrupt,
 hash-mismatch, unsupported, and missing-WB fallback are terminal visible states;
 invalid persisted choices remain selected with their reason while decode uses built-in
 characterization. The control never offers hydration or causes a cloud placeholder to

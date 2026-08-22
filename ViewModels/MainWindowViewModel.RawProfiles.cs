@@ -16,6 +16,8 @@ public partial class MainWindowViewModel
     private ImmutableArray<RawProfileOptionViewModel>
         _rawProfileDiscoverySnapshot = [];
     private CameraIdentity? _rawProfileCameraIdentity;
+    private RawProfileDiscoveryState _rawProfileDiscoveryState =
+        RawProfileDiscoveryState.Empty;
     private CancellationTokenSource? _rawProfilePickerCts;
     private bool _isRawProfileDiscoveryActive;
     private CancellationTokenSource? _rawProfileSelectionCts;
@@ -28,6 +30,7 @@ public partial class MainWindowViewModel
         SupersedeRawProfileDiscovery();
         _rawProfileSelectionCts?.Cancel();
         _rawProfileCameraIdentity = null;
+        _rawProfileDiscoveryState = RawProfileDiscoveryState.Empty;
         _rawProfileDiscoverySnapshot = [];
         _renderDerivedRawProfileState = null;
         _rawProfileTransientError = null;
@@ -59,6 +62,15 @@ public partial class MainWindowViewModel
                 _rawProfileCameraIdentity,
                 state.CameraIdentity);
             _rawProfileCameraIdentity = state.CameraIdentity;
+            if (identityChanged)
+            {
+                _rawProfileDiscoveryState = _rawProfileDiscoveryState with
+                {
+                    AdobeScanCompleted = false,
+                    AdobeProfilesScanned = 0,
+                    AdobeIdentityMatchCount = 0
+                };
+            }
             _renderDerivedRawProfileState = new RawProfileRenderState(
                 state.RequestedSelection,
                 state);
@@ -132,6 +144,17 @@ public partial class MainWindowViewModel
                     _rawProfileDiscoverySnapshot,
                     options,
                     image.EditSettings.RawProfile);
+            _rawProfileDiscoveryState = new RawProfileDiscoveryState(
+                result.AdobeScanAttempted ||
+                    _rawProfileDiscoveryState.AdobeScanCompleted,
+                includeImageProfiles ||
+                    _rawProfileDiscoveryState.ImageProfilesCompleted,
+                result.AdobeScanAttempted
+                    ? result.AdobeProfilesScanned
+                    : _rawProfileDiscoveryState.AdobeProfilesScanned,
+                result.AdobeScanAttempted
+                    ? result.AdobeIdentityMatchCount
+                    : _rawProfileDiscoveryState.AdobeIdentityMatchCount);
             _isRawProfileDiscoveryActive = false;
             PublishRawProfilePickerState();
 
@@ -314,6 +337,7 @@ public partial class MainWindowViewModel
             _rawProfileDiscoverySnapshot,
             _rawProfileCameraIdentity,
             _renderDerivedRawProfileState,
+            _rawProfileDiscoveryState,
             _isRawProfileDiscoveryActive,
             _rawProfileTransientError);
     }

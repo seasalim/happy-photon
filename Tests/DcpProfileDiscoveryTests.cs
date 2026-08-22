@@ -59,8 +59,12 @@ public sealed class DcpProfileDiscoveryTests
 
         var selected = Assert.Single(result.Options, option => !option.IsBuiltIn);
         Assert.Equal(RawProfileSource.UserFile, selected.Selection?.Source);
+        Assert.Equal("Canon EOS 6D", selected.DeclaredCameraModel);
         Assert.Equal("Built-in camera color", result.Options[^1].DisplayName);
         Assert.True(result.HasProfiles);
+        Assert.True(result.AdobeScanAttempted);
+        Assert.Equal(1, result.AdobeProfilesScanned);
+        Assert.Equal(1, result.AdobeIdentityMatchCount);
     }
 
     [Fact]
@@ -100,6 +104,53 @@ public sealed class DcpProfileDiscoveryTests
             result.Options
                 .Where(option => option.Selection?.Source == RawProfileSource.Adobe)
                 .Select(option => option.DisplayName));
+        Assert.True(result.AdobeScanAttempted);
+        Assert.Equal(3, result.AdobeProfilesScanned);
+        Assert.Equal(2, result.AdobeIdentityMatchCount);
+    }
+
+    [Fact]
+    public async Task Discover_ReportsReadableAdobeProfilesWhenNoneMatch()
+    {
+        using var directory = new TemporaryDirectory();
+        SyntheticDcpFactory.WriteTemporary(directory.Path, new SyntheticDcpOptions
+        {
+            Name = "Other body",
+            UniqueCameraModel = "Nikon D850"
+        });
+        File.WriteAllText(
+            Path.Combine(directory.Path, "not-a-profile.dcp"),
+            "not a readable DCP");
+
+        var result = await new DcpProfileDiscovery(
+            new TestSourceAvailabilityService(SourceAvailability.AvailableLocally),
+            adobeRoots: [directory.Path]).DiscoverAsync(
+                new ImageFile(Path.Combine(directory.Path, "image.cr2")),
+                new CameraIdentity("Canon", "EOS 6D"),
+                CancellationToken.None);
+
+        Assert.True(result.AdobeScanAttempted);
+        Assert.Equal(1, result.AdobeProfilesScanned);
+        Assert.Equal(0, result.AdobeIdentityMatchCount);
+        Assert.DoesNotContain(result.Options, option =>
+            option.Selection?.Source == RawProfileSource.Adobe);
+    }
+
+    [Fact]
+    public async Task Discover_EmptyAdobeRootsReportsCompletedZeroScan()
+    {
+        using var directory = new TemporaryDirectory();
+        var result = await new DcpProfileDiscovery(
+            new TestSourceAvailabilityService(SourceAvailability.AvailableLocally),
+            adobeRoots: [directory.Path]).DiscoverAsync(
+                new ImageFile(Path.Combine(directory.Path, "image.cr2")),
+                new CameraIdentity("Canon", "EOS 6D"),
+                CancellationToken.None);
+
+        Assert.True(result.AdobeScanAttempted);
+        Assert.Equal(0, result.AdobeProfilesScanned);
+        Assert.Equal(0, result.AdobeIdentityMatchCount);
+        Assert.True(Assert.Single(result.Options).IsBuiltIn);
     }
 
     [Fact]
@@ -133,7 +184,7 @@ public sealed class DcpProfileDiscoveryTests
     }
 
     [Fact]
-    public async Task Discover_WithoutIdentityHasHonestEmptyState()
+    public async Task Discover_WithoutIdentityDoesNotAttemptAdobeScan()
     {
         using var directory = new TemporaryDirectory();
         var root = Path.Combine(directory.Path, "CameraProfiles");
@@ -154,6 +205,9 @@ public sealed class DcpProfileDiscoveryTests
 
         Assert.False(result.HasProfiles);
         Assert.True(Assert.Single(result.Options).IsBuiltIn);
+        Assert.False(result.AdobeScanAttempted);
+        Assert.Equal(0, result.AdobeProfilesScanned);
+        Assert.Equal(0, result.AdobeIdentityMatchCount);
     }
 
     [Fact]

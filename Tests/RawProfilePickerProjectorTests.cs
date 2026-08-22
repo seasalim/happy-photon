@@ -63,6 +63,7 @@ public sealed class RawProfilePickerProjectorTests
             discovered: [],
             new CameraIdentity("Canon", "EOS R5"),
             renderState: null,
+            RawProfileDiscoveryState.Empty,
             isLoading: true,
             transientError: "Discovery error");
 
@@ -114,19 +115,70 @@ public sealed class RawProfilePickerProjectorTests
         Assert.Equal("FIRST REJECTED", restored.StatusMessage);
     }
 
+    [Fact]
+    public void EmptyClaimsRequireTheirBackingDiscoveryScopes()
+    {
+        Assert.Equal(
+            RawProfilePickerProjector.ScanningMessage,
+            Project(
+                selection: null,
+                discovered: [],
+                renderState: null,
+                discoveryState: RawProfileDiscoveryState.Empty).StatusMessage);
+        Assert.Equal(
+            "3 LOCAL CAMERA PROFILES SCANNED · NONE DECLARE CANON EOS R5",
+            Project(
+                selection: null,
+                discovered: [],
+                renderState: null,
+                discoveryState: Completed(
+                    profilesScanned: 3,
+                    identityMatches: 0,
+                    imageProfilesCompleted: false)).StatusMessage);
+        Assert.Equal(
+            RawProfilePickerProjector.ScanningMessage,
+            Project(
+                selection: null,
+                discovered: [],
+                renderState: null,
+                discoveryState: Completed(
+                    profilesScanned: 0,
+                    identityMatches: 0,
+                    imageProfilesCompleted: false)).StatusMessage);
+        Assert.Equal(
+            RawProfilePickerProjector.NoProfilesMessage,
+            Project(
+                selection: null,
+                discovered: [],
+                renderState: null,
+                discoveryState: Completed()).StatusMessage);
+    }
+
     private static RawProfilePickerState Project(
         RawProfileSelection? selection,
         ImmutableArray<RawProfileOptionViewModel> discovered,
         RawProfileRenderState? renderState,
         bool loading = false,
-        string? error = null) => RawProfilePickerProjector.Project(
+        string? error = null,
+        RawProfileDiscoveryState? discoveryState = null) =>
+        RawProfilePickerProjector.Project(
             isRawCapable: true,
             selection,
             discovered,
             new CameraIdentity("Canon", "EOS R5"),
             renderState,
+            discoveryState ?? Completed(),
             loading,
             error);
+
+    private static RawProfileDiscoveryState Completed(
+        int profilesScanned = 0,
+        int identityMatches = 0,
+        bool imageProfilesCompleted = true) => new(
+            AdobeScanCompleted: true,
+            imageProfilesCompleted,
+            profilesScanned,
+            identityMatches);
 
     private static RawProfileOptionViewModel Option(
         RawProfileSelection selection,

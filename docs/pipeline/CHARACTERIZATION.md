@@ -293,6 +293,11 @@ never hydrated. When camera identity arrives, discovery starts an asynchronous
 local Adobe scan; picker open remains a generation-correlated refresh fallback.
 The Adobe-only identity scan caches bounded `UniqueCameraModel` probes by
 path/mtime/size and fully parses and hashes only camera-matched candidates.
+Its generation-correlated result records whether scanning was attempted, the number
+of readable lightweight probes, and the pre-dedup identity-match count. Empty-state
+projection separately tracks completion of that identity scan and the image-profile
+pass: zero matches may be reported after the former, while a true-empty claim waits
+for both. Stale results cannot complete either scope for a newer image or identity.
 Picker discovery also inspects the persisted user file and bounded DNG embedded
 profile IFDs. Adobe
 matching keys on `UniqueCameraModel` against normalized make/model from the

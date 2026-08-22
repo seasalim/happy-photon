@@ -33,10 +33,20 @@ internal sealed record RawProfileRenderState
     }
 }
 
+internal sealed record RawProfileDiscoveryState(
+    bool AdobeScanCompleted,
+    bool ImageProfilesCompleted,
+    int AdobeProfilesScanned,
+    int AdobeIdentityMatchCount)
+{
+    internal static RawProfileDiscoveryState Empty { get; } =
+        new(false, false, 0, 0);
+}
+
 internal static class RawProfilePickerProjector
 {
     internal const string NoProfilesMessage =
-        "NO CAMERA PROFILES FOUND ON THIS PC";
+        "NO READABLE CAMERA PROFILES FOUND IN ADOBE FOLDERS OR THIS FILE";
     internal const string ScanningMessage =
         "SCANNING LOCAL CAMERA PROFILES…";
     internal const string RejectionFallback =
@@ -48,6 +58,7 @@ internal static class RawProfilePickerProjector
         ImmutableArray<RawProfileOptionViewModel> discovered,
         CameraIdentity? cameraIdentity,
         RawProfileRenderState? renderState,
+        RawProfileDiscoveryState discoveryState,
         bool isLoading,
         string? transientError)
     {
@@ -69,7 +80,8 @@ internal static class RawProfilePickerProjector
             selection,
             selected,
             profiles,
-            cameraIdentity);
+            cameraIdentity,
+            discoveryState);
         return new RawProfilePickerState(
             isRawCapable,
             isRawCapable && isLoading,
@@ -198,7 +210,8 @@ internal static class RawProfilePickerProjector
         RawProfileSelection? selection,
         RawProfileOptionViewModel? selected,
         ImmutableArray<RawProfileOptionViewModel> profiles,
-        CameraIdentity? cameraIdentity)
+        CameraIdentity? cameraIdentity,
+        RawProfileDiscoveryState discoveryState)
     {
         if (!isRawCapable) return string.Empty;
         if (!string.IsNullOrWhiteSpace(transientError))
@@ -219,9 +232,32 @@ internal static class RawProfilePickerProjector
 
         var count = profiles.Count(option =>
             !option.IsBuiltIn && option.CanSelect);
-        if (count == 0) return NoProfilesMessage;
         var camera = cameraIdentity?.Normalized;
         if (string.IsNullOrWhiteSpace(camera)) camera = "RAW CAMERA";
+        if (count == 0)
+        {
+            if (!discoveryState.AdobeScanCompleted)
+            {
+                return ScanningMessage;
+            }
+            if (discoveryState.AdobeIdentityMatchCount == 0 &&
+                discoveryState.AdobeProfilesScanned > 0)
+            {
+                var scanned = discoveryState.AdobeProfilesScanned;
+                return $"{scanned} LOCAL CAMERA " +
+                    $"{(scanned == 1 ? "PROFILE" : "PROFILES")} SCANNED · " +
+                    $"NONE DECLARE {camera}";
+            }
+            if (discoveryState.AdobeIdentityMatchCount > 0)
+            {
+                return "MATCHING LOCAL CAMERA PROFILES COULD NOT BE LOADED";
+            }
+            if (discoveryState.ImageProfilesCompleted)
+            {
+                return NoProfilesMessage;
+            }
+            return ScanningMessage;
+        }
         return $"{camera} · {count} {(count == 1 ? "PROFILE" : "PROFILES")}";
     }
 

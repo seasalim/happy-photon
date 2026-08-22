@@ -28,6 +28,11 @@
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="Margin" Value="4,2"/>
         </Style>
+        <Style Selector="TextBlock.profile-menu-subtext">
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        </Style>
     </UserControl.Styles>
 
     <StackPanel>
@@ -47,6 +52,7 @@
                       DropDownOpened="OnDropDownOpened"
                       HorizontalAlignment="Stretch"
                       MaxDropDownHeight="360"
+                      ToolTip.Tip="{Binding RawProfilePickerState.SelectedOption.ClosedRowTooltip}"
                       AutomationProperties.Name="Camera profile">
                 <ComboBox.Styles>
                     <Style Selector="ComboBoxItem">
@@ -71,10 +77,17 @@
                             <TextBlock Classes="profile-menu-header"
                                        Text="{Binding Label}"
                                        IsVisible="{Binding IsGroupHeader}"/>
-                            <TextBlock Classes="profile-menu-item"
-                                       Text="{Binding Label}"
-                                       IsVisible="{Binding IsProfile}"
-                                       TextTrimming="CharacterEllipsis"/>
+                            <StackPanel Margin="4,2"
+                                        IsVisible="{Binding IsProfile}">
+                                <TextBlock Classes="profile-menu-item"
+                                           Margin="0"
+                                           Text="{Binding Label}"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Classes="profile-menu-subtext"
+                                           Text="{Binding DeclaredCameraModel}"
+                                           IsVisible="{Binding HasDeclaredCameraModel}"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
                             <Separator Margin="4,3"
                                        IsVisible="{Binding IsDivider}"/>
                             <TextBlock Classes="profile-menu-item"
@@ -99,7 +112,8 @@
                            Foreground="{DynamicResource TextMuted}"/>
             </Border>
         </Grid>
-        <TextBlock Classes="profile-source-line"
+        <TextBlock x:Name="RawProfileStatusText"
+                   Classes="profile-source-line"
                    Text="{Binding RawProfilePickerState.StatusMessage}"
                    TextWrapping="Wrap"
                    Margin="0,0,0,8"/>

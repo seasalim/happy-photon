@@ -10,6 +10,9 @@ public sealed class RawProfileOptionViewModel
     public string Label { get; }
     public bool CanSelect { get; }
     public string? Status { get; }
+    public string? DeclaredCameraModel { get; }
+    public bool HasDeclaredCameraModel => DeclaredCameraModel != null;
+    public string? ClosedRowTooltip { get; }
     public bool IsProfile { get; }
     public bool IsGroupHeader { get; }
     public bool IsDivider { get; }
@@ -25,6 +28,12 @@ public sealed class RawProfileOptionViewModel
         CanSelect = option.CanSelect;
         Status = option.Message;
         Selection = option.Selection?.Clone();
+        DeclaredCameraModel = option.Selection?.Source == RawProfileSource.UserFile
+            ? option.DeclaredCameraModel?.Trim()
+            : null;
+        ClosedRowTooltip = DeclaredCameraModel == null
+            ? null
+            : $"{Label} · {DeclaredCameraModel} · Chosen file";
         IsBuiltIn = option.IsBuiltIn;
         Fingerprint = option.Fingerprint;
         IsProfile = true;
@@ -40,7 +49,8 @@ public sealed class RawProfileOptionViewModel
         bool isGroupHeader = false,
         bool isDivider = false,
         bool isChooseFile = false,
-        string? fingerprint = null)
+        string? fingerprint = null,
+        string? declaredCameraModel = null)
     {
         Label = label;
         CanSelect = canSelect;
@@ -52,6 +62,10 @@ public sealed class RawProfileOptionViewModel
         IsDivider = isDivider;
         IsChooseFile = isChooseFile;
         Fingerprint = fingerprint;
+        DeclaredCameraModel = declaredCameraModel;
+        ClosedRowTooltip = DeclaredCameraModel == null
+            ? null
+            : $"{Label} · {DeclaredCameraModel} · Chosen file";
     }
 
     internal static RawProfileOptionViewModel BuiltIn() => new(
@@ -83,7 +97,8 @@ public sealed class RawProfileOptionViewModel
         Selection,
         IsBuiltIn,
         isProfile: true,
-        fingerprint: Fingerprint);
+        fingerprint: Fingerprint,
+        declaredCameraModel: DeclaredCameraModel);
 
     private static string ProfileLabel(RawProfileSelection selection) =>
         selection.Source == RawProfileSource.Embedded
