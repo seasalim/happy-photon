@@ -11,9 +11,14 @@ public sealed partial class PreviewService
     private int _activeAdjacentWarmWorkers;
     internal bool AdjacentWarmEnabled { get; set; } = true;
     internal int AdjacentWarmEntryCount => ReadAdjacentWarmEntry() == null ? 0 : 1;
-    internal bool TryStartAdjacentWarm(ImageFile imageFile)
+    internal bool TryStartAdjacentWarm(ImageFile imageFile) =>
+        TryStartAdjacentWarm(imageFile, out _);
+    internal bool TryStartAdjacentWarm(
+        ImageFile imageFile,
+        out Task? blockingWorker)
     {
         ArgumentNullException.ThrowIfNull(imageFile);
+        blockingWorker = null;
         var settings = imageFile.EditSettings.Clone();
         var settingsHash = RenderSettingsHash.Compute(settings);
         lock (_adjacentWarmSync)
@@ -22,6 +27,7 @@ public sealed partial class PreviewService
             if (_adjacentWarmTask?.IsCompleted == false)
             {
                 _adjacentWarmCancellation!.Cancel();
+                blockingWorker = _adjacentWarmTask;
                 return false;
             }
             if (imageFile.CatalogId == 0 || !CanReadAdjacentSource(imageFile) ||

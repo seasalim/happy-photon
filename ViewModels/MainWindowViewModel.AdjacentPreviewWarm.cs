@@ -5,8 +5,6 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private static readonly TimeSpan RawAdjacentWarmIdleDelay =
-        TimeSpan.FromSeconds(2);
     private CancellationTokenSource? _adjacentWarmCts;
     private int _adjacentWarmDirection = 1;
     private void UpdateAdjacentWarmDirection(ImageFile? oldImage, ImageFile? newImage)
@@ -26,22 +24,26 @@ public partial class MainWindowViewModel
         _adjacentWarmCts = cancellation;
         _ = DebouncedAction.RunAsync(
             "adjacent preview warm",
-            candidate.IsRaw ? RawAdjacentWarmIdleDelay : RestingSettleDelay,
+            RestingSettleDelay,
             cancellation.Token,
             () => StartAdjacentPreviewWarm(parent, cancellation),
             timeProvider: _timeProvider);
     }
-    private Task StartAdjacentPreviewWarm(
+    private async Task StartAdjacentPreviewWarm(
         PreviewRenderIdentity parent,
         CancellationTokenSource cancellation)
     {
-        if (!ReferenceEquals(_adjacentWarmCts, cancellation) ||
-            !ReferenceEquals(SelectedImage, parent.ImageFile) ||
-            !IsDevelopMode || IsFullScreenMode)
-            return Task.CompletedTask;
-        var candidate = Library.MoveVisible(SelectedImage, _adjacentWarmDirection);
-        if (candidate != null) ImageService.Previews.TryStartAdjacentWarm(candidate);
-        return Task.CompletedTask;
+        while (ReferenceEquals(_adjacentWarmCts, cancellation) &&
+               ReferenceEquals(SelectedImage, parent.ImageFile) &&
+               IsDevelopMode && !IsFullScreenMode)
+        {
+            var candidate = Library.MoveVisible(
+                SelectedImage, _adjacentWarmDirection);
+            if (candidate == null || ImageService.Previews.TryStartAdjacentWarm(
+                    candidate, out var blockingWorker)) return;
+            if (blockingWorker == null) return;
+            await blockingWorker.WaitAsync(cancellation.Token);
+        }
     }
     private void CancelAdjacentPreviewWarm(
         bool invalidateWorker,

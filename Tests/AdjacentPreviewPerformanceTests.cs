@@ -135,9 +135,7 @@ public sealed class AdjacentPreviewPerformanceTests
                 TaskCreationOptions.RunContinuationsAsynchronously);
             vm.ImageService.Previews.AdjacentWarmWorkStarted += () =>
                 warmStarted.TrySetResult();
-            var adjacentIdleDelay = images[1].IsRaw
-                ? TimeSpan.FromSeconds(2)
-                : TimeSpan.FromMilliseconds(75);
+            var adjacentIdleDelay = TimeSpan.FromMilliseconds(75);
 
             try
             {

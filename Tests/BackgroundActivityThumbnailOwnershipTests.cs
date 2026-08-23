@@ -138,10 +138,16 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
 
             Assert.True(session.ViewModel.IsThumbnailPumpPaused);
             Assert.Equal(0, session.Gate.StartedCount);
+            Assert.Equal(1, session.ViewModel.InitialThumbnailBatchCount);
+            Assert.Equal(
+                0,
+                session.ViewModel.CaptureBackgroundActivitySnapshot().ThumbnailCount);
 
             session.ViewModel.IsDevelopMode = false;
             await TestWaits.UntilAsync(() => session.Gate.StartedCount == 6);
             Assert.False(session.ViewModel.IsThumbnailPumpPaused);
+            Assert.True(
+                session.ViewModel.CaptureBackgroundActivitySnapshot().ThumbnailCount > 0);
 
             session.ViewModel.IsFullScreenMode = true;
             session.Gate.Release(6);

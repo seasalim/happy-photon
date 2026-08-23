@@ -8,7 +8,7 @@ using Xunit;
 namespace HappyPhoton.Tests;
 
 [Collection(AvaloniaTestCollection.Name)]
-public sealed class AdjacentPreviewWarmTests : IDisposable
+public sealed partial class AdjacentPreviewWarmTests : IDisposable
 {
     private readonly AvaloniaTestFixture _fixture;
     private readonly string _root = Directory.CreateDirectory(Path.Combine(
@@ -71,7 +71,7 @@ public sealed class AdjacentPreviewWarmTests : IDisposable
     }
 
     [WindowsFact]
-    public async Task ActiveWorkerCancelsAndDropsReplacementUntilItExits()
+    public async Task ActiveWorkerExposesCapacityWaitForLatestReplacement()
     {
         _fixture.RequireWindows();
         using var catalog = await CreateCatalogAsync("capacity");
@@ -91,10 +91,9 @@ public sealed class AdjacentPreviewWarmTests : IDisposable
         await activityStarted.Task.WaitAsync(TestWaits.Condition);
         Assert.True(loader.Started.Wait(TestWaits.Condition));
         Assert.Equal(1, service.PreviewActivityCount);
-        Assert.False(service.TryStartAdjacentWarm(second));
-        await TestWaits.UntilAsync(() => service.PreviewActivityCount == 0);
-
+        Assert.False(service.TryStartAdjacentWarm(second, out var blockingWorker));
         loader.Block = false;
+        await blockingWorker!.WaitAsync(TestWaits.Condition);
         Assert.True(service.TryStartAdjacentWarm(second));
         await TestWaits.UntilAsync(() => service.PreviewActivityCount == 0);
         Assert.Equal(2, loader.DecodeCount);
@@ -204,7 +203,7 @@ public sealed class AdjacentPreviewWarmTests : IDisposable
 
     [WindowsTheory]
     [InlineData(".jpg", 75)]
-    [InlineData(".cr2", 2000)]
+    [InlineData(".cr2", 75)]
     public async Task SettledDevelopSelectionWarmsInTravelDirectionWithoutWrap(
         string extension, int idleMilliseconds)
     {

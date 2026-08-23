@@ -392,6 +392,8 @@ quality, then queues the requested Large follow-up. After that, one
 Develop and full-screen close a shared admission gate before preview work starts. Up to
 six source reads already admitted by the initial range or scheduler may finish, while
 queued visible-first work remains pending and resumes when Library becomes active.
+Paused pump work is excluded from status activity; direct thumbnail operations remain
+visible, and resuming the pump re-arms the activity sampler.
 
 - `LibraryGridView` derives visible indices from the scroll offset and grid geometry.
 - The ViewModel adds one viewport of nearest-first prefetch on each side, capped at 128
@@ -548,12 +550,14 @@ threading and ownership view:
   content open.
 - After a settled Develop paint, a capacity-one speculative worker may render the one
   uncached local neighbor in the current travel direction. Standard images arm after
-  75 ms; RAW waits for two seconds without selection, edit, crop, filter, folder, or
-  mode activity. It never joins the current
+  75 ms without selection, edit, crop, filter, folder, or mode activity. It never joins
+  the current
   base coordinator or outcome channel: its base pair is disposed after rendering and
   its single encoded handoff is consumed by the settings-matched cached-outcome path.
-  Selection cancels in-flight work without waiting; edits, availability, folder/view
-  changes, and shutdown invalidate its ownership.
+  Selection cancels in-flight work without blocking the UI. If native cancellation is
+  still draining when the current neighbor is armed, the VM retries that latest-owned
+  neighbor when capacity frees; edits, availability, folder/view changes, and shutdown
+  invalidate the retry.
 - Develop has one VM-owned render-outcome channel. Selection and availability changes
   synchronously advance its generation and clear the surface; state-defining renders
   publish bitmap, histogram/waveform, clipping, capability, profile, as-shot WB, and

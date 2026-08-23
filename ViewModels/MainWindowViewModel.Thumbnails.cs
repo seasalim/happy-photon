@@ -275,8 +275,13 @@ public partial class MainWindowViewModel
         }
     }
 
-    private void UpdateThumbnailPumpAdmission() =>
-        _thumbnailPumpAdmission.SetPaused(IsDevelopMode || IsFullScreenMode);
+    private void UpdateThumbnailPumpAdmission()
+    {
+        var wasPaused = _thumbnailPumpAdmission.IsPaused;
+        var pause = IsDevelopMode || IsFullScreenMode;
+        _thumbnailPumpAdmission.SetPaused(pause);
+        if (wasPaused && !pause) SignalBackgroundActivityStarted();
+    }
 
     private void QueueRequestedThumbnailRange()
     {

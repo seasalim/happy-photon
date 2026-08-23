@@ -116,9 +116,10 @@ public partial class MainWindowViewModel
         }
 
         var scheduler = Volatile.Read(ref _thumbnailScheduler);
-        var thumbnails = InitialThumbnailBatchCount +
-            DirectThumbnailActivityCount +
-            (scheduler?.DesiredCount ?? 0) +
+        var pumpThumbnails = IsThumbnailPumpPaused
+            ? 0
+            : InitialThumbnailBatchCount + (scheduler?.DesiredCount ?? 0);
+        var thumbnails = pumpThumbnails + DirectThumbnailActivityCount +
             serviceThumbnails;
         var burst = Volatile.Read(ref _burstAnalysisActive) == 0
             ? null
