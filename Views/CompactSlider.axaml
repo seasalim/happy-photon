@@ -27,6 +27,12 @@
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+        <Style Selector="Border#ThumbDot">
+            <Setter Property="Background" Value="{DynamicResource Primary}"/>
+        </Style>
+        <Style Selector="Border#ThumbDot.pointer-captured">
+            <Setter Property="Background" Value="{DynamicResource PrimaryContainer}"/>
+        </Style>
     </UserControl.Styles>
 
     <Grid x:Name="LayoutGrid" ColumnDefinitions="70,*,40"
@@ -72,7 +78,6 @@
                 <!-- Round handle at the value position; visual only -->
                 <Border x:Name="ThumbDot"
                         Width="12" Height="12"
-                        Background="{StaticResource Primary}"
                         CornerRadius="6"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
