@@ -201,11 +201,34 @@ public partial class MainWindowViewModel
 
     private void RefreshSelectedThumbnail()
     {
+        // Async command continuations can resume after disposal's activity
+        // drain; the closed channel keeps them from arming fresh work.
+        if (_renderOutcomeChannelClosed) return;
         var image = SelectedImage;
         if (image == null) return;
         var refresh = ReplaceDebounce(ref _thumbnailDebounce);
         _ = TrackDirectThumbnailOperation(
             RefreshSelectedThumbnailAsync(image, refresh.Token));
+    }
+
+    private void ScheduleThumbnailRefresh()
+    {
+        if (_renderOutcomeChannelClosed) return;
+        var image = SelectedImage;
+        if (image == null) return;
+        var debounce = ReplaceDebounce(ref _thumbnailDebounce);
+        _ = DebouncedAction.RunAsync(
+            "thumbnail refresh",
+            TimeSpan.FromMilliseconds(500),
+            debounce.Token,
+            // Cancellation cannot stop a fired delay whose continuation is
+            // still queued; re-checking disposal (channel closes first, on
+            // this thread) stops work the activity drain could not see.
+            () => _renderOutcomeChannelClosed
+                ? Task.CompletedTask
+                : TrackDirectThumbnailOperation(
+                    RefreshSelectedThumbnailAsync(image, debounce.Token)),
+            timeProvider: _timeProvider);
     }
 
     private async Task RefreshSelectedThumbnailAsync(

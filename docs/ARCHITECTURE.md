@@ -560,7 +560,9 @@ threading and ownership view:
   RAW histogram together. A matching cached paint atomically publishes bitmap plus
   display scopes and display-floor clipping, while mismatched cached and resting paints
   are bitmap-only upgrades. Cached outcomes never claim source-saturation or RAW facts,
-  and a rejected outcome cannot promote a rendered thumbnail or arm a resting render.
+  and a rejected outcome cannot promote a rendered thumbnail or arm a resting render. A
+  stale-base render whose own base refresh already painted the same generation fresh
+  reports success without painting, so the edit it carries still autosaves.
 - An accepted edited RAW render hands ownership to a tracked background
   resize/conversion task for the ≤512px Library thumbnail — no full-size clone;
   `PreviewService` retains the result strongly and queues it to the independent

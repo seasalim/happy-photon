@@ -41,6 +41,15 @@ public partial class MainWindowViewModel
 
         CancelAndDispose(ref _previewDebounce);
         CancelAdjacentPreviewWarm(true, dropRetained: true);
+        if (Interlocked.Exchange(ref _previewDebounceTask, null) is
+            { } pendingPreviewUpdate)
+        {
+            // Cancellation cannot stop an action already past its token
+            // checks; its autosave must finish before the catalog goes away.
+            PreviewDebounceDrainStarted?.Invoke();
+            await pendingPreviewUpdate;
+            PreviewDebounceDrainCompleted?.Invoke();
+        }
         CancelAndDispose(ref _histogramDebounce);
         CancelAndDispose(ref _thumbnailDebounce);
         CancelRestingPreview(clearParent: true);

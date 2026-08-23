@@ -235,8 +235,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     // Callback for rejected-image delete failure dialog
     public Func<int, Task>? ShowDeleteRejectedFailuresAsync { get; set; }
 
-    // Debouncing for live preview
+    // Debouncing for live preview. The pending task is awaited at disposal:
+    // its action autosaves through the catalog, and a fire-and-forget write
+    // races catalog disposal once cancellation can no longer stop it. Both
+    // fields are UI-thread-owned; scheduling and disposal never race them.
     private CancellationTokenSource? _previewDebounce;
+    private Task? _previewDebounceTask;
+    internal event Action? PreviewDebounceDrainStarted;
+    internal event Action? PreviewDebounceDrainCompleted;
     private CancellationTokenSource? _histogramDebounce;
     private bool _isLoadingImage;
 
@@ -371,14 +377,18 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     private void SchedulePreviewUpdate(bool pushUndo = true)
     {
-        if (_isLoadingImage || !CanEditSelectedImage) return;
+        if (_isLoadingImage || !CanEditSelectedImage ||
+            _renderOutcomeChannelClosed)
+        {
+            return;
+        }
 
         _thumbnailDebounce?.Cancel();
         if (pushUndo) PushUndoState();
         var generation = RequestEditedRender();
 
         var debounce = ReplaceDebounce(ref _previewDebounce);
-        _ = DebouncedAction.RunAsync(
+        TrackPreviewDebounce(DebouncedAction.RunAsync(
             "preview update",
             TimeSpan.FromMilliseconds(150),
             debounce.Token,
@@ -395,12 +405,16 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             debounce.Token.ThrowIfCancellationRequested();
             ScheduleThumbnailRefresh();
         },
-            timeProvider: _timeProvider);
+            timeProvider: _timeProvider));
     }
 
     private void ScheduleCropPreviewUpdate()
     {
-        if (_isLoadingImage || SelectedImage == null) return;
+        if (_isLoadingImage || SelectedImage == null ||
+            _renderOutcomeChannelClosed)
+        {
+            return;
+        }
 
         CancelAdjacentPreviewWarm(
             invalidateWorker: true,
@@ -410,7 +424,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             PreviewSurfaceIntent.Edited,
             promotionEligible: false);
         var debounce = ReplaceDebounce(ref _previewDebounce);
-        _ = DebouncedAction.RunAsync(
+        TrackPreviewDebounce(DebouncedAction.RunAsync(
             "crop preview update",
             TimeSpan.FromMilliseconds(60),
             debounce.Token,
@@ -418,21 +432,20 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 debounce.Token,
                 generation,
                 promotable: false),
-            timeProvider: _timeProvider);
+            timeProvider: _timeProvider));
     }
 
-    private void ScheduleThumbnailRefresh()
+    internal Task? PendingPreviewDebounceTask => _previewDebounceTask;
+
+    private void TrackPreviewDebounce(Task run)
     {
-        var image = SelectedImage;
-        if (image == null) return;
-        var debounce = ReplaceDebounce(ref _thumbnailDebounce);
-        _ = DebouncedAction.RunAsync(
-            "thumbnail refresh",
-            TimeSpan.FromMilliseconds(500),
-            debounce.Token,
-            () => TrackDirectThumbnailOperation(
-                RefreshSelectedThumbnailAsync(image, debounce.Token)),
-            timeProvider: _timeProvider);
+        // A superseded debounce can already be past its cancellation checks
+        // inside the autosave, so disposal must drain every unfinished task,
+        // not just the newest one.
+        var pending = _previewDebounceTask;
+        _previewDebounceTask = pending is { IsCompleted: false }
+            ? Task.WhenAll(pending, run)
+            : run;
     }
 
     private void PushUndoState()
