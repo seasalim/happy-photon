@@ -257,10 +257,17 @@ public partial class MainWindowViewModel
         }
     }
 
-    internal async Task AddRawProfileFileAsync(string path)
+    internal async Task AddRawProfileFileAsync(string? path)
     {
         var image = SelectedImage;
         if (image == null || !IsColorEditingEnabled) return;
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            _rawProfileTransientError =
+                "The selected camera profile is not available as a local file.";
+            PublishRawProfilePickerState();
+            return;
+        }
         var option = ImageService.DcpDiscovery.InspectUserFile(path);
         if (!option.CanSelect)
         {

@@ -301,7 +301,9 @@ for both. Stale results cannot complete either scope for a newer image or identi
 Picker discovery also inspects the persisted user file and bounded DNG embedded
 profile IFDs. Adobe
 matching keys on `UniqueCameraModel` against normalized make/model from the
-already-open LibRaw decode. Picker precedence is persisted user file,
+already-open LibRaw decode. Legacy `Fujifilm FinePix …` declarations canonicalize
+to the corresponding `Fujifilm …` identity; the qualifier is removed only for
+Fujifilm so unrelated model names remain exact. Picker precedence is persisted user file,
 embedded, matching Adobe profiles A–Z, then built-in, with semantic duplicates
 owned by the earliest source. Invalid persisted choices remain visible and fall
 back to built-in rather than selecting a substitute. The no-profile pixel decode

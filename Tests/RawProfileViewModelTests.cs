@@ -107,6 +107,19 @@ public sealed class RawProfileViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task ChosenFileWithoutLocalPathReportsActionableError()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("non-local-picker");
+        await using var vm = CreateViewModel(catalog);
+        vm.SelectedImage = new ImageFile(_fx.Path("non-local.cr2"));
+
+        await vm.AddRawProfileFileAsync(null);
+
+        Assert.Contains("LOCAL FILE", vm.RawProfilePickerState.StatusMessage);
+        Assert.Null(vm.SelectedImage.EditSettings.RawProfile);
+    }
+
+    [Fact]
     public async Task IdentityPreloadPreservesInvalidPersistedSelectionStatus()
     {
         using var catalog = await _fx.CreateCatalogAsync("preload");

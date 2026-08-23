@@ -116,10 +116,14 @@ internal sealed class DcpProfileDiscovery
         {
             normalizedModel = normalizedModel[(normalizedMake.Length + 1)..];
         }
-        return string.Join(
+        var identity = string.Join(
             ' ',
             new[] { normalizedMake, normalizedModel }
                 .Where(value => value.Length > 0));
+        const string legacyFujifilmPrefix = "FUJIFILM FINEPIX ";
+        return identity.StartsWith(legacyFujifilmPrefix, StringComparison.Ordinal)
+            ? $"FUJIFILM {identity[legacyFujifilmPrefix.Length..]}"
+            : identity;
     }
 
     private DcpDiscoveryResult Discover(

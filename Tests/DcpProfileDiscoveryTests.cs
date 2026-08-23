@@ -110,6 +110,35 @@ public sealed class DcpProfileDiscoveryTests
     }
 
     [Fact]
+    public async Task Discover_AdobeMatchingTreatsFujifilmFinePixAsLegacyBranding()
+    {
+        using var directory = new TemporaryDirectory();
+        SyntheticDcpFactory.WriteTemporary(directory.Path, new SyntheticDcpOptions
+        {
+            Name = "Original X100",
+            UniqueCameraModel = "Fujifilm FinePix X100"
+        }, "x100.dcp");
+        SyntheticDcpFactory.WriteTemporary(directory.Path, new SyntheticDcpOptions
+        {
+            Name = "Unrelated branding",
+            UniqueCameraModel = "Acme FinePix X100"
+        }, "other.dcp");
+        var discovery = new DcpProfileDiscovery(
+            new TestSourceAvailabilityService(SourceAvailability.AvailableLocally),
+            adobeRoots: [directory.Path]);
+
+        var result = await discovery.DiscoverAsync(
+            new ImageFile(Path.Combine(directory.Path, "image.raf")),
+            new CameraIdentity("Fujifilm", "X100"),
+            CancellationToken.None);
+
+        var match = Assert.Single(result.Options, option =>
+            option.Selection?.Source == RawProfileSource.Adobe);
+        Assert.Equal("Original X100", match.DisplayName);
+        Assert.Equal(1, result.AdobeIdentityMatchCount);
+    }
+
+    [Fact]
     public async Task Discover_ReportsReadableAdobeProfilesWhenNoneMatch()
     {
         using var directory = new TemporaryDirectory();

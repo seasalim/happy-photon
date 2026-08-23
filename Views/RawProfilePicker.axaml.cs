@@ -72,9 +72,9 @@ public partial class RawProfilePicker : UserControl
                     }
                 ]
             });
-        if (files.Count == 1 && files[0].TryGetLocalPath() is { } path)
+        if (files.Count == 1)
         {
-            await viewModel.AddRawProfileFileAsync(path);
+            await viewModel.AddRawProfileFileAsync(files[0].TryGetLocalPath());
         }
     }
 }

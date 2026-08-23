@@ -148,7 +148,9 @@ starts cached local Adobe discovery in the background; opening the picker perfor
 generation-correlated fallback refresh, adds embedded candidates, and shows its
 pending state. Order is persisted user file, DNG embedded, matching Adobe profiles
 A–Z, then built-in. Browse adds one local `.dcp`; Refresh invalidates discovery
-metadata and re-resolves the selection. A terminal empty line waits for both the
+metadata and re-resolves the selection. A chosen storage item that cannot provide a
+local path reports that local-file requirement instead of being discarded silently.
+A terminal empty line waits for both the
 current-identity Adobe scan and the image-profile pass; a completed Adobe scan with
 readable profiles but no identity matches reports the probed count instead of claiming
 the machine has no profiles. Until the required scope completes, the status stays neutral: awaiting
