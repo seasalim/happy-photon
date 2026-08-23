@@ -15,7 +15,6 @@ pinned by the committed package lock files.
 | MetadataExtractor | 2.9.3 | Apache-2.0 |
 | Microsoft.Data.Sqlite | 10.0.9 | MIT |
 | Microsoft.NET.ILLink.Tasks | 10.0.8 | MIT |
-| ModelContextProtocol and ModelContextProtocol.AspNetCore | 1.4.1 | Apache-2.0 |
 | SQLitePCLRaw.bundle_e_sqlite3 | 3.0.3 | Apache-2.0 |
 | HappyPhoton.LibRaw.Native | 0.22.2.11 | GPL-3.0-or-later; bundled components retain their own terms |
 

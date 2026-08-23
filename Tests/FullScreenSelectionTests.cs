@@ -187,59 +187,6 @@ public sealed class FullScreenSelectionTests : IDisposable
     }
 
     [Fact]
-    public async Task AgentRatingWithFilter_ReanchorsScopeImmediately()
-    {
-        await using var vm = CreateViewModel();
-        var images = CreateImages(3);
-        foreach (var image in images)
-        {
-            image.Rating = 3;
-        }
-        vm.Library.SetImages(images);
-        vm.Library.MinimumRating = 3;
-        foreach (var image in images)
-        {
-            vm.ToggleImageSelection(image);
-        }
-        vm.SelectedImage = images[0];
-        vm.ToggleFullScreenCommand.Execute(null);
-
-        var failures = await vm.SetRatingForImagesAsync([images[0]], 1);
-
-        Assert.Empty(failures);
-        Assert.True(vm.IsFullScreenSelectionRestricted);
-        Assert.Same(images[1], vm.SelectedImage);
-        Assert.Equal("SELECTION · 1 / 2", vm.FullScreenSelectionBadgeText);
-    }
-
-    [Fact]
-    public async Task AgentFlagWithFilter_ReleasesScopeImmediately()
-    {
-        await using var vm = CreateViewModel();
-        var images = CreateImages(2);
-        foreach (var image in images)
-        {
-            image.Flag = ImageFlag.Picked;
-        }
-        vm.Library.SetImages(images);
-        vm.Library.FlagFilter = FlagFilter.Picked;
-        foreach (var image in images)
-        {
-            vm.ToggleImageSelection(image);
-        }
-        vm.SelectedImage = images[0];
-        vm.ToggleFullScreenCommand.Execute(null);
-
-        var failures = await vm.SetFlagForImagesAsync(
-            [images[0]],
-            ImageFlag.Rejected);
-
-        Assert.Empty(failures);
-        Assert.False(vm.IsFullScreenSelectionRestricted);
-        Assert.Same(images[1], vm.SelectedImage);
-    }
-
-    [Fact]
     public async Task SetImages_KeepsRetainedMembersButReleasesForReplacement()
     {
         await using var vm = CreateViewModel();

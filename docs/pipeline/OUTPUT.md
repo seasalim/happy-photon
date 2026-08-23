@@ -49,7 +49,7 @@ Before desktop export starts, the dialog classifies every selected original and 
 the logical size of files that require hydration. If the count is nonzero, it shows
 that exact scope and waits for **Download / Export** confirmation. Cancellation makes
 no base-loader or source-metadata call. Only the confirmed image list receives
-`UserApprovedHydration`; ordinary and agent exports retain background intent and cannot
+`UserApprovedHydration`; unconfirmed export work retains background intent and cannot
 silently download cloud-only originals. Provider cancellation is best effort after a
 download has started.
 
@@ -99,26 +99,7 @@ deliberately reconstructs metadata on the encoded output:
 RAW and non-RAW sources use the same policy. Capture facts survive where available,
 while private or structurally stale metadata is never carried through accidentally.
 
-## 5. Agent (MCP) surface
-
-`export_images` uses the same encoder and metadata policy as desktop export. Its optional
-`outputColorSpace` is `srgb` by default and accepts `displayP3`; `format` also accepts
-`tiff`/`tif` for the same 16-bit lossless ICC-profiled output as the desktop dialog.
-It never inherits mutable desktop color-space state.
-`apply_edit_settings` accepts the current v2 fields, including `wb`, `baseLook`, and
-`hlReconstruction`; omitted exposed fields leave current values unchanged. Channel
-curves, the color mixer, and effects are the explicit replace/reset exception: the
-tool does not expose them and clears them rather than retaining stale state. The privacy
-boundary remains metadata and thumbnail-derived statistics only, and
-`get_image_stats` independently requests `(150, 150)` and measures the unedited base
-thumbnail. Before statistics are calculated, every cache input is resampled to a
-canonical 150px long edge with Lanczos, whether the stored source thumbnail is a legacy
-150px entry or a promoted 512px entry. This keeps statistics stable without making the
-agent promote the Library cache as a side effect. Agent calls never receive hydration
-approval: image summaries expose `sourceAvailability`, and operations that need an
-online-only original return failure code `hydration_required`.
-
-## 6. Verification
+## 5. Verification
 
 - Exported JPEG opened in a color-managed browser stays within the preview's colorimetric
   bounds. sRGB retains the golden ΔE/code gates; Display P3 is converted through its
@@ -136,7 +117,5 @@ online-only original return failure code `hydration_required`.
 - Export hydration tests inject source availability and assert the selected cloud count
   and logical bytes, zero background source calls, and one base/metadata read for each
   image in the approved set.
-- Agent-statistics tests compare representative 150px and promoted-cache inputs after
-  normalization, with luminance within 2 levels and relative sharpness within 35%.
 - TIFF read-back is Q16 bit-exact for both output color spaces and pins 16 bits/sample,
   ZIP compression, RGB-only channels, exact ICC bytes, and normalized EXIF fields.

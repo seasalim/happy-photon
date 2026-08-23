@@ -399,7 +399,7 @@ them re-decodes the base rather than re-rendering it.
 
 The profile field is additive v2. Clone/history retain it, global Reset clears
 it, and it contributes to `HasEdits`. Preset hover/apply/untoggle preserve it;
-preset files, copy/paste, and MCP transfer exclude it because it is camera- and
+preset files and copy/paste exclude it because it is camera- and
 file-specific. Omitting built-in preserves legacy canonical JSON and hash identity.
 
 Capture sharpening resolves a `null` value to RAW 25 or standard 0 and canonicalizes
@@ -450,14 +450,6 @@ their wrapper and settings versions. Current and v2 settings load through the sa
 legacy lens-baseline migration as catalog rows; versionless or unsupported files are
 skipped. Loading never rewrites a preset. Copy/paste accepts only current in-memory
 settings and rejects a non-current source or target before applying values.
-
-The MCP `apply_edit_settings` input defaults an omitted `version` to 3 and accepts only
-version 3. Its white balance shape is the same `asShot`/`custom`/`preset`/`picked`
-model shown above; there is no scalar temperature field or generic raw-gain mode.
-Unsupported versions and modes are rejected before any image is mutated. Because the
-tool replaces tonal state without exposing channel curves or the color mixer, it
-clears all three optional channel curves and `mixer` rather than retaining stale
-values.
 
 ## 9. Detail stage
 

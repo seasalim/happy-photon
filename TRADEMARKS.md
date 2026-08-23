@@ -1,18 +1,17 @@
 # Happy Photon Trademark Policy
 
-The Happy Photon and PixelBlind names, the Happy Photon wordmark, and the
-Happy Photon and PixelBlind logos are trademarks claimed by Salim Alam
+The Happy Photon name, wordmark, and logo are trademarks claimed by Salim Alam
 ("seasalim"), the project maintainer.
 
 The GNU General Public License governs the Happy Photon source code. It does
-not grant permission to use the Happy Photon or PixelBlind trademarks except
+not grant permission to use the Happy Photon trademarks except
 as described in this policy or as otherwise required by law.
 
 ## Uses that do not require permission
 
 You may:
 
-- truthfully refer to Happy Photon or PixelBlind when describing,
+- truthfully refer to Happy Photon when describing,
   reviewing, discussing, teaching, or reporting on the project;
 - state that software is compatible with, interoperates with, or is derived
   from Happy Photon when the statement is accurate and does not imply
@@ -36,7 +35,7 @@ it truthfully as a fork of or software derived from Happy Photon, but that
 description must not be more prominent than the fork's own name or suggest
 that the build is official, sponsored, certified, or endorsed.
 
-Do not use Happy Photon or PixelBlind branding in a way that is likely to
+Do not use Happy Photon branding in a way that is likely to
 confuse people about who produced, maintains, supports, or distributes the
 software.
 

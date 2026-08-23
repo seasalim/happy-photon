@@ -70,7 +70,7 @@ public sealed class CatalogIdentityTests : IDisposable
             });
             await catalog.SaveFlagStateAsync(catalogId, ImageFlag.Picked);
             await catalog.SaveRatingAsync(catalogId, 5);
-            await catalog.SetAppSettingAsync("McpServerEnabled", "true");
+            await catalog.SetAppSettingAsync("identity-test", "saved");
 
             var thumbnailPath = catalog.GetThumbnailPath(catalogId);
             var previewPath = catalog.GetPreviewPath(catalogId);
@@ -103,7 +103,7 @@ public sealed class CatalogIdentityTests : IDisposable
         Assert.Equal(presetId, state.EditSettings.AppliedPresetId);
         Assert.Equal(ImageFlag.Picked, state.Flag);
         Assert.Equal(5, state.Rating);
-        Assert.Equal("true", await reopened.GetAppSettingAsync("McpServerEnabled"));
+        Assert.Equal("saved", await reopened.GetAppSettingAsync("identity-test"));
         Assert.NotNull(presetsAfterRename.GetById(presetId));
         Assert.Equal(
             [1, 2, 3],

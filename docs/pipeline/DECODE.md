@@ -331,8 +331,7 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
   dimensions come from a bounded JPEG SOF-header read before pixel decode. Existing
   150px entries satisfy Small and Medium; cache misses generate 150px, 192px, or 512px
   for Small, Medium, or Large. An undersized entry paints as a placeholder while a safe
-  source upgrade is queued. It is also the only input to agent image statistics, which
-  normalize every input to a canonical 150px long edge.
+  source upgrade is queued.
 - **Rendered-preview cache:** `PreviewCacheService` stores the *last rendered output*
   (8-bit JPEG q90, 1600px) plus a sidecar `<id>.meta` containing `settingsHash`.
   - `settingsHash` = SHA-256 of canonical-JSON `EditSettings` v3 + `RenderPipeline.Version`

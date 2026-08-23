@@ -10,7 +10,6 @@ Describe the user-visible or engineering outcome.
 - [ ] UI changes are described, with before/after screenshots if available.
 - [ ] Original-file safety remains intact.
 - [ ] Catalog or migration effects are documented.
-- [ ] Agent privacy and mutation effects are documented.
 - [ ] New third-party material includes license and attribution details.
 
 ## Notes

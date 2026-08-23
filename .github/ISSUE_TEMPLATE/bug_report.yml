@@ -6,7 +6,7 @@ labels:
 body:
   - type: markdown
     attributes:
-      value: Do not attach private catalogs, agent tokens, or photos you cannot redistribute.
+      value: Do not attach private catalogs or photos you cannot redistribute.
   - type: input
     id: version
     attributes:
@@ -47,4 +47,4 @@ body:
     id: safety
     attributes:
       label: Original-file or privacy impact
-      description: Say whether originals, exports, catalog state, or Agent access were involved.
+      description: Say whether originals, exports, or catalog state were involved.

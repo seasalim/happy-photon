@@ -7,11 +7,11 @@
 
 .section-heading { max-width: 760px; margin-bottom: 48px; }
 .centered-heading { margin-inline: auto; text-align: center; }
-.section-heading h2, .feature-copy h2, .privacy-copy h2, .pixelblind-copy h2, .open-source-section h2, .final-inner h2, .download-notes h2 {
+.section-heading h2, .feature-copy h2, .privacy-copy h2, .open-source-section h2, .final-inner h2, .download-notes h2 {
   margin-bottom: 24px;
   font-size: clamp(2.25rem, 4vw, 3.75rem);
 }
-.section-heading > p:last-child, .feature-copy > p, .privacy-copy > p, .pixelblind-copy > p, .open-source-section > div > p, .final-inner > p {
+.section-heading > p:last-child, .feature-copy > p, .privacy-copy > p, .open-source-section > div > p, .final-inner > p {
   font-size: 1.125rem;
   line-height: 1.6;
 }

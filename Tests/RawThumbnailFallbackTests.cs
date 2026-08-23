@@ -118,7 +118,7 @@ public sealed class RawThumbnailFallbackTests : IDisposable
     }
 
     [WindowsFact]
-    public async Task AgentTonalBatchInLibraryDoesNotDecodeRawBase()
+    public async Task TonalPasteInLibraryDoesNotDecodeRawBase()
     {
         _fixture.RequireWindows();
         Directory.CreateDirectory(_root);
@@ -133,20 +133,20 @@ public sealed class RawThumbnailFallbackTests : IDisposable
             catalog,
             loader,
             loadMetadataAsync: _ => Task.CompletedTask);
-        var file = new ImageFile(path);
-        viewModel.Library.SetImages([file]);
-        viewModel.SelectedImage = file;
-        var patch = new AgentEditSettingsPatch(
-            new EditSettings { Exposure = 1 },
-            ApplyWb: false,
-            ApplyBaseLook: false,
-            ApplyHighlightReconstruction: false);
+        var source = new ImageFile(Path.Combine(_root, "source.jpg"))
+        {
+            EditSettings = new EditSettings { Exposure = 1 }
+        };
+        var target = new ImageFile(path);
+        viewModel.Library.SetImages([source, target]);
+        viewModel.SelectedImage = source;
+        viewModel.CopyEditSettingsCommand.Execute(null);
+        viewModel.Library.ToggleSelection(target);
+        viewModel.ConfirmBatchApplyAsync = _ => Task.FromResult(true);
 
-        var failures = await viewModel.ApplyAgentEditSettingsToImagesAsync(
-            [file],
-            patch);
+        await viewModel.PasteEditSettingsCommand.ExecuteAsync(null);
 
-        Assert.Empty(failures);
+        Assert.Equal(1, target.EditSettings.Exposure);
         Assert.Equal(0, loader.LoadCount);
     }
 

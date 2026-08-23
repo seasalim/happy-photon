@@ -8,7 +8,7 @@ Thank you for helping make a smaller, calmer photo workflow.
 - Use the camera compatibility form for decoder- or camera-specific reports.
 - Discuss substantial workflow or architecture changes before investing in a
   large implementation.
-- Never attach private catalogs, agent tokens, or photographs you do not have
+- Never attach private catalogs or photographs you do not have
   permission to redistribute.
 
 ## Development setup
@@ -58,7 +58,7 @@ Happy Photon is intentionally AI-developed:
 ## Pull requests
 
 A pull request should explain the user-visible outcome, tests performed, and
-any effect on original-file safety, the catalog, agent access, or packaging.
+any effect on original-file safety, the catalog, or packaging.
 Keep unrelated formatting and refactoring out of the change.
 
 The project may ask for changes before merging. A submitted contribution does

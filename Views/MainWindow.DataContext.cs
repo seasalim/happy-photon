@@ -167,7 +167,6 @@ public partial class MainWindow
             vm.RestoreAppTheme(settings.AppTheme);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;
             vm.ExportSettings.OutputSharpening = settings.OutputSharpening;
-            vm.InitializeAgentSettings(settings.McpServerEnabled, settings.McpToken);
 
             var firstRunDecision =
                 MainWindowViewModel.DecideFirstRunStartup(settings);
@@ -404,15 +403,6 @@ public partial class MainWindow
         _isClosing = true;
         await PersistAppSettingsSafelyAsync(vm);
 
-        try
-        {
-            await vm.ShutdownAgentServerAsync();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Agent server shutdown failed: {ex.Message}");
-        }
-
         Hide();
         DataContext = null;
         await Dispatcher.UIThread.InvokeAsync(
@@ -460,9 +450,7 @@ public partial class MainWindow
             LibraryThumbnailSize = vm.LibraryThumbnailSize,
             AppTheme = vm.AppTheme,
             StripLocationData = vm.ExportSettings.StripLocationData,
-            OutputSharpening = vm.ExportSettings.OutputSharpening,
-            McpServerEnabled = vm.IsAgentServerEnabled,
-            McpToken = vm.AgentToken
+            OutputSharpening = vm.ExportSettings.OutputSharpening
         };
 
         return vm.CanPersistFolderSession

@@ -20,6 +20,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private readonly UiBitmapRetirement _bitmapRetirement = new();
     private readonly TimeProvider _timeProvider;
 
+    public Func<Task>? PersistAppSettingsAsync { get; set; }
+    public Func<string, Task>? CopyToClipboardAsync { get; set; }
+
     public PresetService PresetService { get; }
 
     public MainWindowViewModel(CatalogService catalogService)

@@ -14,7 +14,7 @@ Happy Photon is committed to a welcoming, constructive project community.
 
 Harassment, discrimination, threats, sexualized attention, doxxing, deliberate
 intimidation, and sustained disruption are not tolerated. Publishing another
-person's private information, photographs, credentials, or agent tokens
+person's private information, photographs, or credentials
 without permission is also prohibited.
 
 ## Scope and enforcement

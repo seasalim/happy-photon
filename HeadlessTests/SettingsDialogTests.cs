@@ -27,7 +27,7 @@ public sealed class SettingsDialogTests
 
         Assert.Equal(0, dialog.FindControl<TabControl>("SettingsTabs")!.SelectedIndex);
         Assert.Equal(3, dialog.FindControl<ComboBox>("XmpModeChoice")!.ItemCount);
-        Assert.Equal(4, dialog.FindControl<TabControl>("SettingsTabs")!.ItemCount);
+        Assert.Equal(3, dialog.FindControl<TabControl>("SettingsTabs")!.ItemCount);
         var button = titleBar.FindControl<Button>("SettingsButton")!;
         Assert.True(vm.AreXmpSettingsReady);
         Assert.True(button.IsEnabled);

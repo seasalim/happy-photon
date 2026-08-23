@@ -143,22 +143,6 @@ public sealed class BackgroundActivityViewModelTests : IDisposable
             (await vm.ExportBatchApprovedAsync(Array.Empty<ImageFile>())).ExportedCount);
         Assert.Equal(before + 1, vm.ExportActivityScopeStartCount);
 
-        await using var imageService = new ImageService(
-            catalog,
-            new NullBaseLoader(),
-            new TestSourceAvailabilityService(SourceAvailability.AvailableLocally));
-        var agent = new AgentToolService(vm, imageService, catalog);
-        before = vm.ExportActivityScopeStartCount;
-        var result = await agent.ExportResolvedImagesAsync(
-            [],
-            [],
-            new ExportSettings { OutputFolder = Path.Combine(_root, "agent-export") },
-            [],
-            useSubfolders: false,
-            []);
-
-        Assert.Empty(result.Exported);
-        Assert.Equal(before + 1, vm.ExportActivityScopeStartCount);
         await vm.DisposeAsync();
     }
 

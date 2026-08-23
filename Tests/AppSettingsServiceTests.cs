@@ -32,9 +32,7 @@ public sealed class AppSettingsServiceTests : IDisposable
             LibraryThumbnailSize = LibraryThumbnailSize.Large,
             AppTheme = AppTheme.MidGray,
             StripLocationData = true,
-            OutputSharpening = OutputSharpeningMode.Print,
-            McpServerEnabled = true,
-            McpToken = "12345678901234567890123456789012"
+            OutputSharpening = OutputSharpeningMode.Print
         });
 
         var loaded = await service.LoadAsync();
@@ -46,8 +44,6 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
         Assert.True(loaded.StripLocationData);
         Assert.Equal(OutputSharpeningMode.Print, loaded.OutputSharpening);
-        Assert.True(loaded.McpServerEnabled);
-        Assert.Equal("12345678901234567890123456789012", loaded.McpToken);
     }
 
     [Fact]
@@ -156,9 +152,7 @@ public sealed class AppSettingsServiceTests : IDisposable
             LibraryThumbnailSize = LibraryThumbnailSize.Small,
             AppTheme = AppTheme.MidGray,
             StripLocationData = true,
-            OutputSharpening = OutputSharpeningMode.Off,
-            McpServerEnabled = true,
-            McpToken = "token"
+            OutputSharpening = OutputSharpeningMode.Off
         });
 
         var loaded = await service.LoadAsync();
@@ -170,8 +164,6 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
         Assert.True(loaded.StripLocationData);
         Assert.Equal(OutputSharpeningMode.Off, loaded.OutputSharpening);
-        Assert.True(loaded.McpServerEnabled);
-        Assert.Equal("token", loaded.McpToken);
     }
 
     public void Dispose()

@@ -17,8 +17,6 @@ public class AppSettingsService
     private const string AppThemeKey = "AppTheme";
     private const string StripLocationDataKey = "StripLocationData";
     private const string OutputSharpeningKey = "OutputSharpening";
-    private const string McpServerEnabledKey = "McpServerEnabled";
-    private const string McpTokenKey = "McpToken";
 
     public AppSettingsService(CatalogService catalogService)
     {
@@ -73,11 +71,7 @@ public class AppSettingsService
                 await _catalogService.GetAppSettingAsync(StripLocationDataKey),
                 out var stripLocationData) && stripLocationData,
             OutputSharpening = ParseOutputSharpening(
-                await _catalogService.GetAppSettingAsync(OutputSharpeningKey)),
-            McpServerEnabled = bool.TryParse(
-                await _catalogService.GetAppSettingAsync(McpServerEnabledKey),
-                out var mcpServerEnabled) && mcpServerEnabled,
-            McpToken = await _catalogService.GetAppSettingAsync(McpTokenKey)
+                await _catalogService.GetAppSettingAsync(OutputSharpeningKey))
         };
     }
 
@@ -93,9 +87,7 @@ public class AppSettingsService
             [LibraryThumbnailSizeKey] = settings.LibraryThumbnailSize.ToString(),
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
-            [OutputSharpeningKey] = settings.OutputSharpening.ToString(),
-            [McpServerEnabledKey] = settings.McpServerEnabled.ToString(),
-            [McpTokenKey] = settings.McpToken
+            [OutputSharpeningKey] = settings.OutputSharpening.ToString()
         });
     }
 
@@ -107,9 +99,7 @@ public class AppSettingsService
             [LibraryThumbnailSizeKey] = settings.LibraryThumbnailSize.ToString(),
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
-            [OutputSharpeningKey] = settings.OutputSharpening.ToString(),
-            [McpServerEnabledKey] = settings.McpServerEnabled.ToString(),
-            [McpTokenKey] = settings.McpToken
+            [OutputSharpeningKey] = settings.OutputSharpening.ToString()
         });
     }
 

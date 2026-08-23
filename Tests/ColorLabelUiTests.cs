@@ -19,52 +19,28 @@ namespace HappyPhoton.Tests;
 public sealed class ColorLabelUiTests
 {
     [AvaloniaFact]
-    public async Task SetColorLabel_ThroughAgentService_NormalizesDuplicatesAndReportsMissing()
+    public async Task SetColorLabel_ThroughUiCommand_PersistsAndRefreshesOnce()
     {
         var root = NewRoot();
         using var catalog = new CatalogService(Path.Combine(root, "catalog"));
         await catalog.InitializeAsync();
         var vm = NewViewModel(catalog);
-        await using var imageService = new ImageService(catalog);
-        var service = new AgentToolService(vm, imageService, catalog);
-
         var image = new ImageFile(Path.Combine(root, "first.jpg"));
         image.CatalogId = await catalog.GetOrCreateImageAsync(image.FilePath);
         vm.Library.SetImages([image]);
         var refreshes = 0;
         vm.Library.FilterChanged += (_, _) => refreshes++;
 
-        var result = await service.SetColorLabelAsync(
-            [image.FilePath, image.FilePath, "missing.jpg"],
-            "purple");
+        vm.SelectedImage = image;
 
-        Assert.Equal([image.FilePath], result.Succeeded);
-        Assert.Equal("missing.jpg", Assert.Single(result.Failed).Id);
+        await vm.SetColorLabelCommand.ExecuteAsync(ColorLabel.Purple);
+
         Assert.Equal(ColorLabel.Purple, image.ColorLabel);
         Assert.Equal(
             ColorLabel.Purple,
             (await catalog.LoadImageStatesAsync([image.FilePath]))[image.FilePath]
                 .ColorLabel);
         Assert.Equal(1, refreshes);
-    }
-
-    [AvaloniaFact]
-    public async Task SetColorLabel_ThroughAgentService_RejectsUnknownToken()
-    {
-        var root = NewRoot();
-        using var catalog = new CatalogService(Path.Combine(root, "catalog"));
-        await catalog.InitializeAsync();
-        var vm = NewViewModel(catalog);
-        await using var imageService = new ImageService(catalog);
-        var service = new AgentToolService(vm, imageService, catalog);
-
-        var image = new ImageFile(Path.Combine(root, "first.jpg"));
-        image.CatalogId = await catalog.GetOrCreateImageAsync(image.FilePath);
-        vm.Library.SetImages([image]);
-
-        await Assert.ThrowsAsync<AgentToolException>(() =>
-            service.SetColorLabelAsync([image.FilePath], "chartreuse"));
-        Assert.Equal(ColorLabel.None, image.ColorLabel);
     }
 
     [AvaloniaFact]

@@ -192,9 +192,7 @@ public partial class MainWindow
                 MainWindowViewModel.CurrentFirstRunExperienceVersion,
             FileTypeFilter = vm.Library.FileTypeFilter,
             StripLocationData = vm.ExportSettings.StripLocationData,
-            OutputSharpening = vm.ExportSettings.OutputSharpening,
-            McpServerEnabled = vm.IsAgentServerEnabled,
-            McpToken = vm.AgentToken
+            OutputSharpening = vm.ExportSettings.OutputSharpening
         });
 
         if (ReferenceEquals(DataContext, vm))

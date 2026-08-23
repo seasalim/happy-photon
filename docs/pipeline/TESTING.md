@@ -198,9 +198,9 @@ orders above the observed difference.
    `CatalogSchemaTests` pins the clean new schema, acceptance of
    harmless extra columns, and actionable startup rejection for missing columns;
    `CatalogPersistenceTests` pins neutral no-write recovery for null, malformed, or
-   unsupported rows. Preset and MCP tests require explicit/current versions and
-   reject old writes.
-7. **Export boundary suites:** `ExportMetadataTests` covers OUTPUT.md §6 EXIF copy,
+   unsupported rows. Preset tests require explicit/current versions and reject old
+   writes.
+7. **Export boundary suites:** `ExportMetadataTests` covers OUTPUT.md §5 EXIF copy,
    orientation, GPS strip, stale-thumbnail removal, ICC presence, and subsampling.
    `TiffExportTests` pins Q16 decode-back parity in both color spaces, 16-bit ZIP,
    exact profiles, and RGB-only output.

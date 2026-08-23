@@ -11,6 +11,4 @@ public class AppSettings
     public bool StripLocationData { get; set; }
     public OutputSharpeningMode OutputSharpening { get; set; } =
         OutputSharpeningMode.Screen;
-    public bool McpServerEnabled { get; set; }
-    public string? McpToken { get; set; }
 }

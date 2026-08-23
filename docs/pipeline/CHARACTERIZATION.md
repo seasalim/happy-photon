@@ -275,15 +275,15 @@ pixels the matching matrix produced; matrix and tables switch atomically when
 the replacement base installs. The raw-only v2 `rawProfile` field persists
 source, location, and content hash; the built-in state is omitted so legacy
 canonical hashes remain unchanged. Clone and undo/redo retain the field,
-global Reset clears it, and preset hover/apply/untoggle preserve it. Presets,
-copy/paste, and MCP transfers exclude it. A selected profile counts as an edit.
+global Reset clears it, and preset hover/apply/untoggle preserve it. Presets and
+copy/paste exclude it. A selected profile counts as an edit.
 
 Each decode has one generation-scoped request snapshot. Live resolution yields
 an outcome token containing source, content hash, and rejection status; that
 token joins base and rendered-cache identity. A stale-base render cannot be
 promoted under the requested token. Export re-resolves the selection;
 missing, unavailable, corrupt, or hash-mismatched content uses the typed built-in
-fallback and reports a per-image warning through desktop and agent results.
+fallback and reports a per-image warning through desktop export results.
 
 ### 7.6 Discovery
 

@@ -10,8 +10,6 @@ then goes deep on the two most intricate subsystems: **catalog loading** and the
 
 - One process, one window. `Program` acquires `SingleInstanceGuard` before Avalonia
   starts; a second launch exits immediately.
-- The optional agent (MCP) server runs *inside* the GUI process when toggled on, bound
-  to `127.0.0.1:7326` behind a persisted token path. It never returns image pixels.
 - `AppDataLocationService` owns every application-data root. The default
   catalog remains under Pictures, while regenerable assets use the platform
   cache location:
@@ -72,7 +70,6 @@ MainWindowViewModel
  │    └── IRawProcessingService                     (thumbnails + metadata only)
  ├── FolderService / FolderTreeService              (disk enumeration)
  ├── PresetService, AppSettingsService, FileOperationService
- └── McpServerHost → AgentToolService → MainWindowViewModel.Agent   (three-layer agent stack)
 ```
 
 `ImageService` exposes its sub-services directly as properties (`Previews`,
@@ -475,8 +472,7 @@ thumbnail from the matching accepted Develop render, a matching
 horizon rotation, and crop applied — the fallback never applies tone or color to the
 camera-rendered embedded JPEG and never upscales a crop. Folder loading never decodes a
 RAW base or a 1600px preview. The unedited source thumbnail remains unchanged in
-`assets/thumbs/` and is the only input to agent statistics (normalized to a canonical
-150 px raster). Rendered-thumbnail cache format, validity, and largest-wins rules are
+`assets/thumbs/`. Rendered-thumbnail cache format, validity, and largest-wins rules are
 specified in [docs/pipeline/DECODE.md](pipeline/DECODE.md) §5.
 
 ### Cloud-file source access
@@ -486,8 +482,8 @@ content; every actual source access rechecks the current file attributes through
 `ISourceAvailabilityService`, because a provider may dehydrate a file after
 enumeration.
 
-`SourceReadIntent.Background` is used by thumbnails, metadata, previews, statistics,
-Bursts, agents, and unconfirmed export work. It permits local and unknown sources but
+`SourceReadIntent.Background` is used by thumbnails, metadata, previews, Bursts, and
+unconfirmed export work. It permits local and unknown sources but
 returns a typed deferral for files that require hydration; warm Happy Photon caches
 are checked before this gate and remain usable. `GatedBaseImageLoader` wraps both
 default and injected base loaders, while metadata and path-based statistics gate
@@ -495,9 +491,7 @@ their own source entry points.
 
 Only two user actions grant `UserApprovedHydration`: **Download and open** for one
 selected image, and the export dialog after it reports the selected cloud-file count
-and logical size. Both paths recheck live availability. Agent operations remain
-background intent and return `sourceAvailability` or a `hydration_required` failure
-code instead of downloading an original.
+and logical size. Both paths recheck live availability.
 
 ### The cache write queue (ThumbnailCacheService)
 
@@ -610,7 +604,7 @@ activity epoch is open. It reads worker-owned integer state: the initial thumbna
 batch flag, scheduler desired count, operation-level direct thumbnail tasks, rendered
 thumbnail tasks, the complete initial preview task (cached race through first coherent
 fresh render), preview decode/refresh/adjacent-warm tasks, cache queues plus writer-in-hand state,
-and unique metadata loads. Burst analysis and UI or agent exports contribute one outer
+and unique metadata loads. Burst analysis and UI exports contribute one outer
 scope per batch, with processed/total progress; metadata remains accounted but is
 presentation-suppressed while a burst or export scope already explains it.
 
@@ -649,7 +643,6 @@ sampler.
 | Display histogram + waveform | Preview render worker, at most 2 managed workers | Exact preview BGRA8 buffer; bounded row-parallel accumulation; histogram ticks skip inactive waveform accumulation |
 | Library histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |
-| Agent (MCP) tool calls | ASP.NET worker → marshaled | `AgentToolService` marshals mutations to the UI thread |
 | Explicit source hydration | Threadpool stream read | Single image or confirmed export batch; cancellation is best effort |
 
 ## Design invariants (do not break)

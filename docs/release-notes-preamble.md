@@ -24,15 +24,10 @@ trademark policy, dependency inventory, and third-party notices.
 - Camera and RAW compatibility varies by platform and capture mode.
 - HEIC/HEIF support depends on operating-system codecs.
 - Linux desktop integration is not yet a native package.
-- Agent mutations are immediate and persistent; there is no
-  activity ledger or session-wide revert.
 
 ## Privacy and original-file safety
 
 Happy Photon has no account, subscription, product telemetry, or advertising.
-Original image files are never modified. PixelBlind agent access is disabled
-by default and exposes metadata plus local thumbnail-derived statistics, not
-image pixels. A connected external agent client may transmit the returned
-data under that client's own privacy terms.
+Original image files are never modified.
 
 The generated changes section follows this release-specific guidance.

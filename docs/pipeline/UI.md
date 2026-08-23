@@ -71,7 +71,7 @@ Brightness is disabled (not hidden) at `DisabledOpacity` while a RAW base is act
 because the crossing-on engine has no Brightness parameter; it stays enabled for
 JPEG/HEIC/TIFF/proxy sources. The gate follows the loaded base, falls back
 provisionally to `ImageFile.IsRaw` before load, survives filmstrip switching, and
-never clears the persisted value. Base look remains persisted/MCP-settable but has no
+never clears the persisted value. Base look remains persisted but has no
 panel control; RAW ignores it and standard sources retain it.
 
 Selection clears the previous Develop bitmap, scopes, clipping, and RAW histogram in
@@ -290,8 +290,7 @@ selection and disables the workspace until the dialog closes.
 The desktop dialog exports exactly one size per run through a mutually exclusive
 Hi-Res, Web, or Small radio group. Hi-Res preserves the original dimensions; Web and
 Small expose their existing maximum-dimension fields. Desktop output is written
-directly into the chosen folder. The export engine and agent `export_images` tool keep
-their existing multi-variant capability and per-variant subfolders.
+directly into the chosen folder.
 
 The dialog may open with no selected images without changing selection; in that state
 it explains how to select photographs, disables Export, and offers Close. While an
@@ -311,7 +310,7 @@ relabels its primary Export action to **Return to Library**; it never starts an 
 
 | Control | Spec |
 |---------|------|
-| "Strip location data" checkbox | Persisted app setting, default **off** (keep GPS). Applies to both UI and agent exports. |
+| "Strip location data" checkbox | Persisted app setting, default **off** (keep GPS). |
 | "Output sharpening" checkbox | Default **on**; persisted alongside existing export preferences; applies to sized variants only (OUTPUT.md §3). |
 
 No UI for quality-dependent chroma subsampling — it is automatic and stays invisible.

@@ -92,7 +92,7 @@ EditSettings v3 always stores a `lens` block with the booleans and a `standard` 
 `legacy` baseline. Reading v2 materializes all-off/legacy in memory; saving writes an
 explicit v3 block, so it can never acquire defaults later. New rows use
 on/on/off/standard. `HasEdits` compares with the image's baseline, Reset restores it,
-and copy/paste, presets, and agent patches transfer only the booleans.
+and copy/paste and presets transfer only the booleans.
 
 The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 14;
 `RenderPipeline.Version` stays 10 because render-stage math is unchanged.
