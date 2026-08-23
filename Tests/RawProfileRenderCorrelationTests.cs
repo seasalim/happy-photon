@@ -6,13 +6,14 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
+[Collection(AvaloniaTestCollection.Name)]
 public sealed class RawProfileRenderCorrelationTests : IDisposable
 {
     private readonly string _root = Directory.CreateDirectory(Path.Combine(
         Path.GetTempPath(),
         $"happy-photon-profile-correlation-{Guid.NewGuid():N}")).FullName;
 
-    [Fact]
+    [WindowsFact]
     public async Task ReusedBaseCarriesCurrentRequestLocationInOutcome()
     {
         using var catalog = new CatalogService(Path.Combine(_root, "catalog"));

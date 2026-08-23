@@ -10,7 +10,7 @@ public sealed class MonochromePreviewArtifactsTests : IDisposable
 {
     private readonly CatalogVmFixture _fixture = new("mono-artifacts");
 
-    [Fact]
+    [WindowsFact]
     public async Task FreshPreviewArtifacts_CarryMonochromeCapability()
     {
         using var catalog = await _fixture.CreateCatalogAsync();

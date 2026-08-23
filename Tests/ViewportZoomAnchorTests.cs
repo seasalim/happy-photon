@@ -84,7 +84,7 @@ public sealed class ViewportZoomAnchorTests : IAsyncLifetime
         await viewModel.DisposeAsync();
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task EntryWithoutUserZoom_StillRequestsTheFit()
     {
         var loader = new GatedPairLoader();

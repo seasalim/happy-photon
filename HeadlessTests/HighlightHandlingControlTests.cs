@@ -12,14 +12,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class HighlightHandlingControlTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-highlight-control-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task EnabledStateFollowsProvisionalAndLoadedRawCapability()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var loader = new ControlledLoader(blockFirstDecode: true);
         var vm = CreateViewModel(catalog, loader);
@@ -30,7 +28,7 @@ public sealed class HighlightHandlingControlTests : IDisposable
         {
             var row = panel.FindControl<Grid>("HighlightHandlingRow")!;
             var control = panel.FindControl<ListBox>("HighlightHandlingControl")!;
-            var raw = new ImageFile(Path.Combine(_root, "raw.dng"));
+            var raw = new ImageFile(Path.Combine(_root.Path, "raw.dng"));
 
             vm.SelectedImage = raw;
 
@@ -47,7 +45,9 @@ public sealed class HighlightHandlingControlTests : IDisposable
             Assert.True(row.IsEnabled);
             Assert.True(row.IsVisible);
 
-            vm.SelectedImage = new ImageFile(Path.Combine(_root, "standard.jpg"));
+            vm.SelectedImage = new ImageFile(Path.Combine(
+                _root.Path,
+                "standard.jpg"));
             Assert.False(vm.IsHighlightHandlingEnabled);
             Assert.False(row.IsEnabled);
             Assert.True(row.IsVisible);
@@ -56,7 +56,9 @@ public sealed class HighlightHandlingControlTests : IDisposable
             Assert.False(row.IsEnabled);
             Assert.True(row.IsVisible);
 
-            vm.SelectedImage = new ImageFile(Path.Combine(_root, "guard.dng"));
+            vm.SelectedImage = new ImageFile(Path.Combine(
+                _root.Path,
+                "guard.dng"));
             Assert.True(vm.IsHighlightHandlingEnabled);
             Assert.True(row.IsEnabled);
             Assert.True(row.IsVisible);
@@ -82,7 +84,7 @@ public sealed class HighlightHandlingControlTests : IDisposable
     [AvaloniaFact]
     public async Task SelectingBlendUpdatesSettingsPreviewAndSingleStepHistory()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var loader = new ControlledLoader();
         var vm = CreateViewModel(catalog, loader);
@@ -91,7 +93,7 @@ public sealed class HighlightHandlingControlTests : IDisposable
 
         try
         {
-            var image = new ImageFile(Path.Combine(_root, "toggle.dng"));
+            var image = new ImageFile(Path.Combine(_root.Path, "toggle.dng"));
             vm.SelectedImage = image;
             await TestWaits.UntilAsync(() =>
                 vm.IsWhiteBalanceReady && vm.PreviewImage != null);
@@ -142,13 +144,7 @@ public sealed class HighlightHandlingControlTests : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _root.Dispose();
 
     private static MainWindowViewModel CreateViewModel(
         CatalogService catalog,
