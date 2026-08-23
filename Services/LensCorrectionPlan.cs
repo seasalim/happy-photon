@@ -1,9 +1,13 @@
+using System.Runtime.CompilerServices;
+
 namespace HappyPhoton.Services;
 
 internal sealed class LensCorrectionPlan
 {
     private readonly LensWarpOperation[] _warps;
+    private readonly LensTableWarpOperation[] _tableWarps;
     private readonly CompiledVignette[] _vignettes;
+    private readonly CompiledTableVignette[] _tableVignettes;
     private readonly double _originX;
     private readonly double _originY;
     private readonly double _xStepX;
@@ -23,8 +27,11 @@ internal sealed class LensCorrectionPlan
         int orientation,
         LensPrescription prescription,
         BaseDecodeSettings settings,
-        double zoom)
+        double zoom,
+        LensCorrectionReferenceFrame? referenceFrame = null)
     {
+        var referenceWidth = referenceFrame?.SourceWidth ?? sourceWidth;
+        var referenceHeight = referenceFrame?.SourceHeight ?? sourceHeight;
         var output = prescription.OutputWindow;
         var centerX = (output.Left + output.Right) * 0.5;
         var centerY = (output.Top + output.Bottom) * 0.5;
@@ -39,33 +46,60 @@ internal sealed class LensCorrectionPlan
         _yStepY = oriented.YStepY * output.Height / zoom;
 
         var source = prescription.SourceWindow;
-        var logicalWidth = Math.Max(2, (int)Math.Round(sourceWidth / source.Width));
-        var logicalHeight = Math.Max(2, (int)Math.Round(sourceHeight / source.Height));
+        var logicalWidth = Math.Max(2, (int)Math.Round(referenceWidth / source.Width));
+        var logicalHeight = Math.Max(2, (int)Math.Round(referenceHeight / source.Height));
         _sourceScaleX = sourceWidth / source.Width;
         _sourceScaleY = sourceHeight / source.Height;
         _sourceOffsetX = -source.Left * _sourceScaleX - 0.5;
         _sourceOffsetY = -source.Top * _sourceScaleY - 0.5;
         _warps = prescription.Warps.Select(warp =>
             new LensWarpOperation(warp, logicalWidth, logicalHeight, settings)).ToArray();
-        HasSharedGeometry = _warps.All(warp => warp.IsShared);
+        _tableWarps = prescription.RadialTableWarps.Select(warp =>
+            new LensTableWarpOperation(warp, logicalWidth, logicalHeight, settings)).ToArray();
+        HasSharedGeometry = _warps.All(warp => warp.IsShared) &&
+            _tableWarps.All(warp => warp.IsShared);
 
         _vignettes = settings.Vignetting
             ? prescription.Vignettes.Select(vignette =>
-                new CompiledVignette(vignette, sourceWidth, sourceHeight, source)).ToArray()
+                new CompiledVignette(
+                    vignette, referenceWidth, referenceHeight, source)).ToArray()
             : [];
+        _tableVignettes = settings.Vignetting
+            ? prescription.RadialTableVignettes.Select(vignette =>
+                new CompiledTableVignette(vignette, logicalWidth, logicalHeight)).ToArray()
+            : [];
+        HasVignetting = _vignettes.Length != 0 || _tableVignettes.Length != 0;
     }
 
     internal bool HasSharedGeometry { get; }
+    internal bool HasVignetting { get; }
 
-    internal LensPoint GetLogicalPoint(int x, int y) => new(
+    internal LensPoint GetLogicalPoint(double x, double y) => new(
         _originX + x * _xStepX + y * _yStepX,
         _originY + x * _xStepY + y * _yStepY);
 
     internal LensPoint MapShared(LensPoint point) => Map(point, 1);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal LensPoint MapShared(int x, int y)
+    {
+        var point = new LensPoint(
+            _originX + x * _xStepX + y * _yStepX,
+            _originY + x * _xStepY + y * _yStepY);
+        foreach (var warp in _warps)
+            point = warp.Apply(point, 1);
+        foreach (var warp in _tableWarps)
+            point = warp.Apply(point, 1);
+        return new LensPoint(
+            point.X * _sourceScaleX + _sourceOffsetX,
+            point.Y * _sourceScaleY + _sourceOffsetY);
+    }
+
     internal LensPoint Map(LensPoint point, int channel)
     {
         foreach (var warp in _warps)
+            point = warp.Apply(point, channel);
+        foreach (var warp in _tableWarps)
             point = warp.Apply(point, channel);
         return new LensPoint(
             point.X * _sourceScaleX + _sourceOffsetX,
@@ -76,6 +110,8 @@ internal sealed class LensCorrectionPlan
     {
         var gain = 1.0;
         foreach (var vignette in _vignettes)
+            gain *= vignette.GetGain(point);
+        foreach (var vignette in _tableVignettes)
             gain *= vignette.GetGain(point);
         return Math.Max(0, gain);
     }
@@ -175,6 +211,80 @@ internal sealed class LensCorrectionPlan
         ChromaticOnly
     }
 
+    private readonly struct LensTableWarpOperation
+    {
+        private readonly WarpMode _mode;
+        private readonly CompiledRadialTable? _distortion;
+        private readonly CompiledRadialTable? _red;
+        private readonly CompiledRadialTable? _blue;
+        private readonly double _centerX;
+        private readonly double _centerY;
+        private readonly double _width;
+        private readonly double _height;
+
+        internal LensTableWarpOperation(
+            LensTableWarp warp,
+            int width,
+            int height,
+            BaseDecodeSettings settings)
+        {
+            _distortion = settings.Distortion && warp.Distortion != null
+                ? new CompiledRadialTable(warp.Distortion, centerValue: 0)
+                : null;
+            _red = settings.ChromaticAberration && warp.ChromaticAberration != null
+                ? new CompiledRadialTable(
+                    warp.ChromaticAberration.Scale,
+                    warp.ChromaticAberration.Radii,
+                    warp.ChromaticAberration.Red,
+                    warp.ChromaticAberration.Red[0])
+                : null;
+            _blue = settings.ChromaticAberration && warp.ChromaticAberration != null
+                ? new CompiledRadialTable(
+                    warp.ChromaticAberration.Scale,
+                    warp.ChromaticAberration.Radii,
+                    warp.ChromaticAberration.Blue,
+                    warp.ChromaticAberration.Blue[0])
+                : null;
+            _centerX = warp.CenterX;
+            _centerY = warp.CenterY;
+            _width = width - 1;
+            _height = height - 1;
+            _mode = (_distortion, _red) switch
+            {
+                (null, null) => WarpMode.None,
+                (not null, null) => WarpMode.Shared,
+                (null, not null) => WarpMode.ChromaticOnly,
+                _ => WarpMode.PerPlane
+            };
+        }
+
+        internal bool IsShared => _mode is WarpMode.None or WarpMode.Shared;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal LensPoint Apply(LensPoint point, int channel)
+        {
+            if (_mode == WarpMode.None) return point;
+            var dx = (point.X - _centerX) * _width;
+            var dy = (point.Y - _centerY) * _height;
+            var radius = Math.Sqrt(dx * dx + dy * dy);
+            if (radius == 0) return point;
+
+            var offset = _distortion == null
+                ? 0
+                : radius * _distortion.Value.GetValue(radius) /
+                    45;
+            if (_red != null && channel != 1)
+            {
+                var table = channel == 0 ? _red.Value : _blue!.Value;
+                offset += radius * table.GetValue(radius);
+            }
+            var factor = (radius + offset) / radius;
+            return new LensPoint(
+                _centerX + dx * factor / _width,
+                _centerY + dy * factor / _height);
+        }
+    }
+
     private readonly struct CompiledWarp
     {
         private readonly LensWarpCoefficients _coefficients;
@@ -262,6 +372,101 @@ internal sealed class LensCorrectionPlan
             var r2 = (dx * dx + dy * dy) * _inverseMaximumSquared;
             return 1 + r2 * (_vignette.K0 + r2 * (_vignette.K1 +
                 r2 * (_vignette.K2 + r2 * (_vignette.K3 + r2 * _vignette.K4))));
+        }
+    }
+
+    private readonly struct CompiledTableVignette
+    {
+        private readonly LensTableVignette _vignette;
+        private readonly CompiledRadialTable _table;
+        private readonly double _width;
+        private readonly double _height;
+
+        internal CompiledTableVignette(
+            LensTableVignette vignette,
+            int width,
+            int height)
+        {
+            _vignette = vignette;
+            _table = new CompiledRadialTable(vignette.Table, centerValue: 100);
+            _width = width - 1;
+            _height = height - 1;
+        }
+
+        internal double GetGain(LensPoint point)
+        {
+            var dx = (point.X - _vignette.CenterX) * _width;
+            var dy = (point.Y - _vignette.CenterY) * _height;
+            var radius = Math.Sqrt(dx * dx + dy * dy);
+            var transmission = _table.GetValue(radius);
+            return transmission > 0 ? 100 / transmission : 0;
+        }
+    }
+
+    private readonly struct CompiledRadialTable
+    {
+        private const int LookupIntervals = 4096;
+        // G1 qualifies the RAF radius unit against the camera preview in the
+        // native visible frame. It is close to, but not exactly, LibRaw's
+        // two-pixel half-size step.
+        private const double NativePixelsPerTableRadiusUnit = 1.9;
+        private readonly double[] _values;
+        private readonly double _toIndex;
+
+        internal CompiledRadialTable(LensRadialTable table, double centerValue)
+            : this(table.Scale, table.Radii, table.Values, centerValue) { }
+
+        internal CompiledRadialTable(
+            double scale,
+            IReadOnlyList<double> radii,
+            IReadOnlyList<double> values,
+            double centerValue)
+        {
+            // Convert RAF table radius units once to native visible pixels;
+            // otherwise LibRaw's decode scale changes correction strength.
+            var maximumRadius = NativePixelsPerTableRadiusUnit *
+                scale * values.Count * radii[^1];
+            _toIndex = maximumRadius > 0 ? LookupIntervals / maximumRadius : 0;
+            _values = new double[LookupIntervals + 1];
+            for (var index = 0; index <= LookupIntervals; index++)
+            {
+                var normalized = index / (double)LookupIntervals * radii[^1];
+                _values[index] = Interpolate(
+                    radii, values, normalized, centerValue);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal double GetValue(double radius)
+        {
+            var position = Math.Clamp(radius * _toIndex, 0, LookupIntervals);
+            var index = (int)position;
+            if (index == LookupIntervals) return _values[index];
+            var fraction = position - index;
+            return _values[index] + (_values[index + 1] - _values[index]) * fraction;
+        }
+
+        private static double Interpolate(
+            IReadOnlyList<double> radii,
+            IReadOnlyList<double> values,
+            double normalized,
+            double centerValue)
+        {
+            if (normalized <= radii[0])
+            {
+                if (radii[0] == 0) return values[0];
+                var fraction = Math.Clamp(normalized / radii[0], 0, 1);
+                return centerValue + (values[0] - centerValue) * fraction;
+            }
+            for (var index = 1; index < radii.Count; index++)
+            {
+                if (normalized > radii[index]) continue;
+                var fraction = (normalized - radii[index - 1]) /
+                    (radii[index] - radii[index - 1]);
+                return values[index - 1] +
+                    (values[index] - values[index - 1]) * fraction;
+            }
+            return values[^1];
         }
     }
 }

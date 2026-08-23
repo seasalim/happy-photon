@@ -38,13 +38,22 @@ internal sealed record LensPrescription(
     IReadOnlyList<LensVignette> Vignettes,
     LensFrameWindow SourceWindow,
     LensFrameWindow OutputWindow,
-    FujiLensTables? FujiTables = null)
+    FujiLensTables? FujiTables = null,
+    IReadOnlyList<LensTableWarp>? TableWarps = null,
+    IReadOnlyList<LensTableVignette>? TableVignettes = null)
 {
+    internal IReadOnlyList<LensTableWarp> RadialTableWarps => TableWarps ?? [];
+    internal IReadOnlyList<LensTableVignette> RadialTableVignettes => TableVignettes ?? [];
+
     // Green (or the sole plane) is always the shared distortion reference;
     // distinct red/blue planes additionally advertise lateral CA.
-    internal bool HasDistortion => Warps.Count > 0;
-    internal bool HasChromaticAberration => Warps.Any(warp => warp.HasPerPlaneGeometry);
-    internal bool HasVignetting => Vignettes.Count > 0;
+    internal bool HasDistortion => Warps.Count > 0 ||
+        RadialTableWarps.Any(warp => warp.Distortion != null);
+    internal bool HasChromaticAberration =>
+        Warps.Any(warp => warp.HasPerPlaneGeometry) ||
+        RadialTableWarps.Any(warp => warp.ChromaticAberration != null);
+    internal bool HasVignetting => Vignettes.Count > 0 ||
+        RadialTableVignettes.Count > 0;
 
     internal LensPrescriptionSummary Summary => new(
         LensName,
@@ -117,9 +126,13 @@ internal sealed record LensVignette(
 }
 
 internal sealed record FujiLensTables(
-    LensRadialTable Distortion,
-    LensChromaticAberrationTable ChromaticAberration,
-    LensRadialTable Vignetting);
+    string Layout,
+    LensRadialTable? Distortion,
+    LensChromaticAberrationTable? ChromaticAberration,
+    LensRadialTable? Vignetting,
+    string? DistortionMessage = null,
+    string? ChromaticAberrationMessage = null,
+    string? VignettingMessage = null);
 
 internal sealed record LensRadialTable(
     double Scale,
@@ -131,3 +144,14 @@ internal sealed record LensChromaticAberrationTable(
     IReadOnlyList<double> Radii,
     IReadOnlyList<double> Red,
     IReadOnlyList<double> Blue);
+
+internal sealed record LensTableWarp(
+    LensRadialTable? Distortion,
+    LensChromaticAberrationTable? ChromaticAberration,
+    double CenterX = 0.5,
+    double CenterY = 0.5);
+
+internal sealed record LensTableVignette(
+    LensRadialTable Table,
+    double CenterX = 0.5,
+    double CenterY = 0.5);

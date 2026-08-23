@@ -118,7 +118,7 @@ public sealed record BaseImageInfo(
 /// </summary>
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 13;
+    public const int Version = 14;
     public const int InteractivePreviewMaxDimension = 1600;
     public const int LargePreviewMaxDimension = 3200;
 

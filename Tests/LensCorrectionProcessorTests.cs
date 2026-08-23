@@ -6,6 +6,8 @@ namespace HappyPhoton.Tests;
 
 public sealed class LensCorrectionProcessorTests
 {
+    private const double FujiNativePixelsPerTableRadiusUnit = 1.9;
+
     [Fact]
     public void OutputSizeMapsTrimWithinDefaultCropBeforeOrientationAndResize()
     {
@@ -65,6 +67,85 @@ public sealed class LensCorrectionProcessorTests
             $"Straight-line residual was {maximumStraightness:F3} px.");
         Assert.True(maximumChannelSeparation <= 0.25,
             $"Channel separation was {maximumChannelSeparation:F3} px.");
+    }
+
+    [Fact]
+    public void SyntheticKnotTableOracleInvertsWithinQuarterPixelAt1600()
+    {
+        const int size = 1600;
+        var maximum = Math.Sqrt(2) * (size - 1) * 0.5;
+        var distortion = new LensRadialTable(
+            maximum / (FujiNativePixelsPerTableRadiusUnit * 3),
+            [0, 0.5, 1], [0, -3, -8]);
+        var ca = new LensChromaticAberrationTable(
+            maximum / (FujiNativePixelsPerTableRadiusUnit * 3),
+            [0, 0.5, 1], [0, 0.0002, 0.0004],
+            [0, -0.00015, -0.0003]);
+        var source = InjectTableCoordinateField(size, distortion, ca);
+        var prescription = new LensPrescription(
+            LensPrescriptionSource.FujifilmMakerNote,
+            null, [], [], LensFrameWindow.Full, LensFrameWindow.Full,
+            TableWarps: [new LensTableWarp(distortion, ca)]);
+
+        using var image = LensCorrectionProcessor.ImportCorrected(
+            source, size, size, size, size, 1,
+            CameraRgbCharacterization.Passthrough,
+            prescription, BaseDecodeSettings.Default, CancellationToken.None);
+        using var pixels = image.GetPixelsUnsafe();
+        var values = pixels.ToShortArray(ImageMagick.PixelMapping.RGB)!;
+        var maximumResidual = 0.0;
+        for (var y = 53; y < size; y += 149)
+        for (var x = 47; x < size; x += 97)
+        for (var channel = 0; channel < 3; channel++)
+        {
+            var recovered = values[(y * size + x) * 3 + channel] /
+                (double)ushort.MaxValue;
+            maximumResidual = Math.Max(maximumResidual,
+                Math.Abs(recovered - (x + 0.5) / size) * size);
+        }
+
+        Assert.True(maximumResidual <= 0.25,
+            $"Knot-table residual was {maximumResidual:F3} px.");
+    }
+
+    [Fact]
+    public void SyntheticTableVignettingRestoresGainWithinOnePercent()
+    {
+        const int size = 401;
+        const ushort target = 24000;
+        var maximum = Math.Sqrt(2) * (size - 1) * 0.5;
+        var table = new LensRadialTable(
+            maximum / (FujiNativePixelsPerTableRadiusUnit * 3),
+            [0, 0.5, 1], [100, 80, 50]);
+        var values = new ushort[size * size * 3];
+        for (var y = 0; y < size; y++)
+        for (var x = 0; x < size; x++)
+        {
+            var radius = Math.Sqrt(
+                Math.Pow(x - (size - 1) * 0.5, 2) +
+                Math.Pow(y - (size - 1) * 0.5, 2)) / maximum;
+            var transmission = radius <= 0.5
+                ? 100 + (80 - 100) * radius / 0.5
+                : 80 + (50 - 80) * (radius - 0.5) / 0.5;
+            var encoded = (ushort)Math.Round(target * transmission / 100);
+            var offset = (y * size + x) * 3;
+            values[offset] = values[offset + 1] = values[offset + 2] = encoded;
+        }
+        var prescription = new LensPrescription(
+            LensPrescriptionSource.FujifilmMakerNote,
+            null, [], [], LensFrameWindow.Full, LensFrameWindow.Full,
+            TableVignettes: [new LensTableVignette(table)]);
+
+        using var image = LensCorrectionProcessor.ImportCorrected(
+            ToBytes(values), size, size, size, size, 1,
+            CameraRgbCharacterization.Passthrough,
+            prescription, BaseDecodeSettings.Default with { Vignetting = true },
+            CancellationToken.None);
+        using var pixels = image.GetPixelsUnsafe();
+        var corrected = pixels.ToShortArray(ImageMagick.PixelMapping.RGB)!;
+        var center = ((size / 2 * size) + size / 2) * 3;
+
+        Assert.InRange(corrected[0] / (double)corrected[center], 0.99, 1.01);
     }
 
     [Fact]
@@ -235,7 +316,7 @@ public sealed class LensCorrectionProcessorTests
         var output = LensCorrectionProcessor.GetOutputSize(
             sourceWidth, sourceHeight, orientation: 6, maxDimension: null, prescription);
         var zoom = LensCorrectionProcessor.FindCoverScale(
-            sourceWidth, sourceHeight, output.Width, output.Height, 6,
+            sourceWidth, sourceHeight, 6,
             prescription, BaseDecodeSettings.Default);
         var plan = new LensCorrectionPlan(
             sourceWidth, sourceHeight, output.Width, output.Height, 6,
@@ -260,6 +341,89 @@ public sealed class LensCorrectionProcessorTests
                 var point = plan.Map(logical, channel);
                 Assert.InRange(point.X, 0, sourceWidth - 1);
                 Assert.InRange(point.Y, 0, sourceHeight - 1);
+            }
+        }
+    }
+
+    [Fact]
+    public void CorrectionUsesNativeFrameAtBothDecodeScales()
+    {
+        const int fullWidth = 401;
+        const int fullHeight = 301;
+        var reference = new LensCorrectionReferenceFrame(
+            fullWidth, fullHeight, fullWidth, fullHeight);
+        var dng = new LensPrescription(
+            LensPrescriptionSource.DngOpcode,
+            null,
+            [new LensWarp(
+                [new LensWarpCoefficients(1, 0.2, 0, 0, 0, 0)],
+                0.5,
+                0.5)],
+            [], LensFrameWindow.Full, LensFrameWindow.Full);
+        var maximum = Math.Sqrt(
+            Math.Pow((fullWidth - 1) * 0.5, 2) +
+            Math.Pow((fullHeight - 1) * 0.5, 2));
+        var table = new LensRadialTable(
+            maximum / (FujiNativePixelsPerTableRadiusUnit * 2),
+            [0, 1], [0, -9]);
+        var raf = new LensPrescription(
+            LensPrescriptionSource.FujifilmMakerNote,
+            null, [], [], LensFrameWindow.Full, LensFrameWindow.Full,
+            TableWarps: [new LensTableWarp(table, null)]);
+
+        AssertInvariant(dng);
+        AssertInvariant(raf);
+
+        var anchorPlan = new LensCorrectionPlan(
+            fullWidth, fullHeight, fullWidth, fullHeight,
+            1, raf, BaseDecodeSettings.Default, zoom: 1, reference);
+        var anchor = anchorPlan.MapShared(anchorPlan.GetLogicalPoint(300, 150));
+        Assert.Equal(292.0199501246883, anchor.X, 9);
+        Assert.Equal(150, anchor.Y, 12);
+
+        void AssertInvariant(LensPrescription prescription)
+        {
+            var half = (Width: 201, Height: 151);
+            var fullOutput = LensCorrectionProcessor.GetOutputSize(
+                fullWidth, fullHeight, 1, 320, prescription, reference);
+            var halfOutput = LensCorrectionProcessor.GetOutputSize(
+                half.Width, half.Height, 1, 320, prescription, reference);
+            var fullZoom = LensCorrectionProcessor.FindCoverScale(
+                fullWidth, fullHeight, 1,
+                prescription, BaseDecodeSettings.Default, reference);
+            var halfZoom = LensCorrectionProcessor.FindCoverScale(
+                half.Width, half.Height, 1,
+                prescription, BaseDecodeSettings.Default, reference);
+            Assert.Equal(fullZoom, halfZoom, 12);
+
+            var fullPlan = new LensCorrectionPlan(
+                fullWidth, fullHeight, fullOutput.Width, fullOutput.Height,
+                1, prescription, BaseDecodeSettings.Default, fullZoom, reference);
+            var halfPlan = new LensCorrectionPlan(
+                half.Width, half.Height, halfOutput.Width, halfOutput.Height,
+                1, prescription, BaseDecodeSettings.Default, halfZoom, reference);
+            AssertSamePoint(-0.5, -0.5, -0.5, -0.5);
+            AssertSamePoint(
+                fullOutput.Width - 0.5, fullOutput.Height - 0.5,
+                halfOutput.Width - 0.5, halfOutput.Height - 0.5);
+
+            void AssertSamePoint(
+                double fullX, double fullY, double halfX, double halfY)
+            {
+                var fullLogical = fullPlan.GetLogicalPoint(fullX, fullY);
+                var halfLogical = halfPlan.GetLogicalPoint(halfX, halfY);
+                Assert.Equal(fullLogical.X, halfLogical.X, 12);
+                Assert.Equal(fullLogical.Y, halfLogical.Y, 12);
+                var fullMapped = fullPlan.MapShared(fullLogical);
+                var halfMapped = halfPlan.MapShared(halfLogical);
+                Assert.Equal(
+                    (fullMapped.X + 0.5) / fullWidth,
+                    (halfMapped.X + 0.5) / half.Width,
+                    12);
+                Assert.Equal(
+                    (fullMapped.Y + 0.5) / fullHeight,
+                    (halfMapped.Y + 0.5) / half.Height,
+                    12);
             }
         }
     }
@@ -312,6 +476,74 @@ public sealed class LensCorrectionProcessorTests
                 Math.Round(estimateX * ushort.MaxValue), 0, ushort.MaxValue);
         }
         return ToBytes(values);
+    }
+
+    private static byte[] InjectTableCoordinateField(
+        int size,
+        LensRadialTable distortion,
+        LensChromaticAberrationTable ca)
+    {
+        var values = new ushort[size * size * 3];
+        for (var y = 0; y < size; y++)
+        for (var x = 0; x < size; x++)
+        for (var channel = 0; channel < 3; channel++)
+        {
+            var targetX = (x + 0.5) / size;
+            var targetY = (y + 0.5) / size;
+            var estimateX = targetX;
+            var estimateY = targetY;
+            for (var iteration = 0; iteration < 12; iteration++)
+            {
+                var mapped = TableWarp(
+                    estimateX, estimateY, size, channel, distortion, ca);
+                estimateX += targetX - mapped.X;
+                estimateY += targetY - mapped.Y;
+            }
+            values[(y * size + x) * 3 + channel] = (ushort)Math.Clamp(
+                Math.Round(estimateX * ushort.MaxValue), 0, ushort.MaxValue);
+        }
+        return ToBytes(values);
+    }
+
+    private static (double X, double Y) TableWarp(
+        double x, double y, int size, int channel,
+        LensRadialTable distortion,
+        LensChromaticAberrationTable ca)
+    {
+        var dx = (x - 0.5) * (size - 1);
+        var dy = (y - 0.5) * (size - 1);
+        var radius = Math.Sqrt(dx * dx + dy * dy);
+        if (radius == 0) return (x, y);
+        var normalized = radius /
+            (FujiNativePixelsPerTableRadiusUnit *
+             distortion.Scale * distortion.Values.Count);
+        var offset = radius *
+            Linear(distortion.Radii, distortion.Values, normalized) /
+            45;
+        if (channel != 1)
+        {
+            var channelValues = channel == 0 ? ca.Red : ca.Blue;
+            offset += radius * Linear(ca.Radii, channelValues, normalized);
+        }
+        var factor = (radius + offset) / radius;
+        return (0.5 + dx * factor / (size - 1),
+            0.5 + dy * factor / (size - 1));
+    }
+
+    private static double Linear(
+        IReadOnlyList<double> radii,
+        IReadOnlyList<double> values,
+        double radius)
+    {
+        for (var index = 1; index < radii.Count; index++)
+        {
+            if (radius > radii[index]) continue;
+            var fraction = (radius - radii[index - 1]) /
+                (radii[index] - radii[index - 1]);
+            return values[index - 1] +
+                (values[index] - values[index - 1]) * fraction;
+        }
+        return values[^1];
     }
 
     private static (double X, double Y) RadialWarp(

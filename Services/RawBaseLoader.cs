@@ -207,6 +207,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             var previewGrayWidth = 0;
             var previewGrayHeight = 0;
             var lensOrientation = orientation;
+            LensCorrectionReferenceFrame? lensReferenceFrame = null;
             using (var processed = context.MakeProcessedImage(cancellationToken))
             {
                 var description = processed.Description;
@@ -227,15 +228,24 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                     fullWidth,
                     fullHeight,
                     orientation);
+                var lensReferenceSize = lensOrientation == orientation
+                    ? (Width: fullWidth, Height: fullHeight)
+                    : (Width: fullHeight, Height: fullWidth);
+                if (applyLens)
+                {
+                    var canonicalOutput = LensCorrectionProcessor.GetOutputSize(
+                        fullWidth, fullHeight, orientation, maxDimension: null,
+                        lensPrescription);
+                    lensReferenceFrame = new LensCorrectionReferenceFrame(
+                        lensReferenceSize.Width,
+                        lensReferenceSize.Height,
+                        canonicalOutput.Width,
+                        canonicalOutput.Height);
+                }
                 if (applyLens &&
-                    (!LensCorrectionProcessor.CanApply(
+                    !LensCorrectionProcessor.CanApply(
                         processedWidth, processedHeight, lensOrientation,
-                        preview ? BaseImage.InteractivePreviewMaxDimension : null,
-                        lensPrescription!, decode) ||
-                     preview && !LensCorrectionProcessor.CanApply(
-                        processedWidth, processedHeight, lensOrientation,
-                        BaseImage.LargePreviewMaxDimension,
-                        lensPrescription!, decode)))
+                        lensPrescription!, decode, lensReferenceFrame))
                 {
                     ImageServiceHelpers.LogDebug(
                         nameof(RawBaseLoader),
@@ -270,34 +280,36 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                         processedHeight,
                         lensOrientation,
                         BaseImage.InteractivePreviewMaxDimension,
-                        lensPrescription);
+                        lensPrescription,
+                        lensReferenceFrame);
                     var largeSize = LensCorrectionProcessor.GetOutputSize(
                         processedWidth,
                         processedHeight,
                         lensOrientation,
                         BaseImage.LargePreviewMaxDimension,
-                        lensPrescription);
+                        lensPrescription,
+                        lensReferenceFrame);
                     interactivePixels = LensCorrectionProcessor.ImportCorrected(
                         processed.AsSpan(), processedWidth, processedHeight,
                         interactiveSize.Width, interactiveSize.Height,
                         lensOrientation, characterization!, lensPrescription!, decode,
-                        cancellationToken);
+                        cancellationToken, lensReferenceFrame);
                     pixels = LensCorrectionProcessor.ImportCorrected(
                         processed.AsSpan(), processedWidth, processedHeight,
                         largeSize.Width, largeSize.Height,
                         lensOrientation, characterization!, lensPrescription!, decode,
-                        cancellationToken);
+                        cancellationToken, lensReferenceFrame);
                 }
                 else if (applyLens)
                 {
                     var fullSize = LensCorrectionProcessor.GetOutputSize(
                         processedWidth, processedHeight, lensOrientation, maxDimension: null,
-                        lensPrescription);
+                        lensPrescription, lensReferenceFrame);
                     pixels = LensCorrectionProcessor.ImportCorrected(
                         processed.AsSpan(), processedWidth, processedHeight,
                         fullSize.Width, fullSize.Height, lensOrientation,
                         characterization!, lensPrescription!, decode,
-                        cancellationToken);
+                        cancellationToken, lensReferenceFrame);
                 }
                 else
                 {
@@ -336,7 +348,8 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                     checked((int)(interactivePixels ?? decodedPixels).Height),
                     lensOrientation,
                     lensPrescription!,
-                    decode)
+                    decode,
+                    lensReferenceFrame)
                 : sensorSaturation?.OrientAndResize(
                     orientation,
                     checked((int)decodedPixels.Width),

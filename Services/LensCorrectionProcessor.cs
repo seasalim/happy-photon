@@ -6,7 +6,7 @@ namespace HappyPhoton.Services;
 
 internal static class LensCorrectionProcessor
 {
-    private const int BufferBudgetBytes = 3 * 1024 * 1024 / 2;
+    private const int BufferBudgetBytes = 12 * 1024 * 1024;
     internal static Action? SamplingPassStarted { get; set; }
 
     internal static (int Width, int Height) GetOutputSize(
@@ -14,20 +14,40 @@ internal static class LensCorrectionProcessor
         int sourceHeight,
         int orientation,
         int? maxDimension,
-        LensPrescription? prescription = null)
+        LensPrescription? prescription = null,
+        LensCorrectionReferenceFrame? referenceFrame = null)
     {
-        var croppedWidth = sourceWidth;
-        var croppedHeight = sourceHeight;
-        if (prescription != null)
+        int width;
+        int height;
+        if (referenceFrame is { } frame)
         {
-            croppedWidth = Math.Max(1, (int)Math.Round(sourceWidth *
-                prescription.OutputWindow.Width / prescription.SourceWindow.Width));
-            croppedHeight = Math.Max(1, (int)Math.Round(sourceHeight *
-                prescription.OutputWindow.Height / prescription.SourceWindow.Height));
+            width = frame.OutputWidth;
+            height = frame.OutputHeight;
         }
-        var width = orientation is >= 5 and <= 8 ? croppedHeight : croppedWidth;
-        var height = orientation is >= 5 and <= 8 ? croppedWidth : croppedHeight;
-        if (maxDimension is not { } limit || Math.Max(width, height) <= limit)
+        else
+        {
+            var croppedWidth = prescription == null
+                ? sourceWidth
+                : Math.Max(1, (int)Math.Round(sourceWidth *
+                    prescription.OutputWindow.Width /
+                    prescription.SourceWindow.Width));
+            var croppedHeight = prescription == null
+                ? sourceHeight
+                : Math.Max(1, (int)Math.Round(sourceHeight *
+                    prescription.OutputWindow.Height /
+                    prescription.SourceWindow.Height));
+            width = orientation is >= 5 and <= 8 ? croppedHeight : croppedWidth;
+            height = orientation is >= 5 and <= 8 ? croppedWidth : croppedHeight;
+        }
+        var referenceWidth = referenceFrame?.SourceWidth ?? sourceWidth;
+        var referenceHeight = referenceFrame?.SourceHeight ?? sourceHeight;
+        var availableScale = Math.Min(
+            sourceWidth / (double)referenceWidth,
+            sourceHeight / (double)referenceHeight);
+        var availableLongEdge = Math.Max(1,
+            (int)Math.Round(Math.Max(width, height) * availableScale));
+        var limit = Math.Min(maxDimension ?? int.MaxValue, availableLongEdge);
+        if (Math.Max(width, height) <= limit)
             return (width, height);
         var scale = limit / (double)Math.Max(width, height);
         return (Math.Max(1, (int)Math.Round(width * scale)),
@@ -44,7 +64,8 @@ internal static class LensCorrectionProcessor
         CameraRgbCharacterization characterization,
         LensPrescription prescription,
         BaseDecodeSettings settings,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        LensCorrectionReferenceFrame? referenceFrame = null)
     {
         Validate(sourceBytes, sourceWidth, sourceHeight, outputWidth, outputHeight);
         SamplingPassStarted?.Invoke();
@@ -66,11 +87,11 @@ internal static class LensCorrectionProcessor
                 BufferBudgetBytes / sizeof(ushort) / samplesPerRow));
             buffer = ArrayPool<ushort>.Shared.Rent(checked(samplesPerRow * bandHeight));
             var zoom = FindCoverScale(
-                sourceWidth, sourceHeight, outputWidth, outputHeight,
-                orientation, prescription, settings);
+                sourceWidth, sourceHeight, orientation,
+                prescription, settings, referenceFrame);
             var correction = new LensCorrectionPlan(
                 sourceWidth, sourceHeight, outputWidth, outputHeight,
-                orientation, prescription, settings, zoom);
+                orientation, prescription, settings, zoom, referenceFrame);
             fixed (byte* sourcePointer = sourceBytes)
             {
                 var source = (nint)sourcePointer;
@@ -104,37 +125,51 @@ internal static class LensCorrectionProcessor
         int outputHeight,
         int orientation,
         LensPrescription prescription,
-        BaseDecodeSettings settings)
+        BaseDecodeSettings settings,
+        LensCorrectionReferenceFrame? referenceFrame = null)
     {
         var result = new SourceSaturationMask(outputWidth, outputHeight);
         var zoom = FindCoverScale(
-            source.Width, source.Height, outputWidth, outputHeight,
-            orientation, prescription, settings);
+            source.Width, source.Height, orientation,
+            prescription, settings, referenceFrame);
         var correction = new LensCorrectionPlan(
             source.Width, source.Height, outputWidth, outputHeight,
-            orientation, prescription, settings, zoom);
-        for (var y = 0; y < outputHeight; y++)
-        for (var x = 0; x < outputWidth; x++)
+            orientation, prescription, settings, zoom, referenceFrame);
+        Parallel.For(0, outputHeight, y =>
         {
-            byte flags = 0;
-            for (var channel = 0; channel < 3; channel++)
+            for (var x = 0; x < outputWidth; x++)
             {
-                var logical = correction.GetLogicalPoint(x, y);
-                var point = correction.Map(logical, channel);
-                var left = Math.Clamp((int)Math.Floor(point.X), 0, source.Width - 1);
-                var top = Math.Clamp((int)Math.Floor(point.Y), 0, source.Height - 1);
-                var right = Math.Min(source.Width - 1, left + 1);
-                var bottom = Math.Min(source.Height - 1, top + 1);
-                var channelBit = (byte)(1 << channel);
-                var sampled = source.GetFlags(left, top) |
-                    source.GetFlags(right, top) |
-                    source.GetFlags(left, bottom) |
-                    source.GetFlags(right, bottom);
-                flags |= (byte)(sampled & channelBit);
+                byte flags = 0;
+                if (correction.HasSharedGeometry)
+                {
+                    flags = SampleFlags(correction.MapShared(x, y));
+                }
+                else
+                {
+                    var logical = correction.GetLogicalPoint(x, y);
+                    for (var channel = 0; channel < 3; channel++)
+                    {
+                        var channelBit = (byte)(1 << channel);
+                        flags |= (byte)(SampleFlags(
+                            correction.Map(logical, channel)) & channelBit);
+                    }
+                }
+                result.SetFlags(x, y, flags);
             }
-            result.SetFlags(x, y, flags);
-        }
+        });
         return result;
+
+        byte SampleFlags(LensPoint point)
+        {
+            var left = Math.Clamp((int)Math.Floor(point.X), 0, source.Width - 1);
+            var top = Math.Clamp((int)Math.Floor(point.Y), 0, source.Height - 1);
+            var right = Math.Min(source.Width - 1, left + 1);
+            var bottom = Math.Min(source.Height - 1, top + 1);
+            return (byte)(source.GetFlags(left, top) |
+                source.GetFlags(right, top) |
+                source.GetFlags(left, bottom) |
+                source.GetFlags(right, bottom));
+        }
     }
 
     private static unsafe void TransformBand(
@@ -163,13 +198,13 @@ internal static class LensCorrectionProcessor
                 for (var y = startY; y < endY; y++)
                 for (var x = 0; x < outputWidth; x++)
                 {
-                    var logical = correction.GetLogicalPoint(x, y);
+                    LensPoint logical = default;
                     double camera0;
                     double camera1;
                     double camera2;
                     if (correction.HasSharedGeometry)
                     {
-                        var point = correction.MapShared(logical);
+                        var point = correction.MapShared(x, y);
                         SampleBilinearRgb(
                             source, sourceWidth, sourceHeight,
                             point.X, point.Y,
@@ -177,6 +212,7 @@ internal static class LensCorrectionProcessor
                     }
                     else
                     {
+                        logical = correction.GetLogicalPoint(x, y);
                         var point = correction.Map(logical, 0);
                         camera0 = SampleBilinear(
                             source, sourceWidth, sourceHeight, point.X, point.Y, 0);
@@ -187,9 +223,11 @@ internal static class LensCorrectionProcessor
                         camera2 = SampleBilinear(
                             source, sourceWidth, sourceHeight, point.X, point.Y, 2);
                     }
-                    var gain = correction.GetVignetteGain(logical);
-                    if (gain != 1)
+                    if (correction.HasVignetting)
                     {
+                        if (correction.HasSharedGeometry)
+                            logical = correction.GetLogicalPoint(x, y);
+                        var gain = correction.GetVignetteGain(logical);
                         camera0 *= gain;
                         camera1 *= gain;
                         camera2 *= gain;
@@ -219,29 +257,26 @@ internal static class LensCorrectionProcessor
         int sourceWidth,
         int sourceHeight,
         int orientation,
-        int? maxDimension,
         LensPrescription prescription,
-        BaseDecodeSettings settings)
+        BaseDecodeSettings settings,
+        LensCorrectionReferenceFrame? referenceFrame = null)
     {
-        var output = GetOutputSize(
-            sourceWidth, sourceHeight, orientation, maxDimension, prescription);
         return TryFindCoverScale(
-            sourceWidth, sourceHeight, output.Width, output.Height,
-            orientation, prescription, settings, out _);
+            sourceWidth, sourceHeight, orientation,
+            prescription, settings, referenceFrame, out _);
     }
 
     internal static double FindCoverScale(
         int width,
         int height,
-        int outputWidth,
-        int outputHeight,
         int orientation,
         LensPrescription prescription,
-        BaseDecodeSettings settings)
+        BaseDecodeSettings settings,
+        LensCorrectionReferenceFrame? referenceFrame = null)
     {
         if (TryFindCoverScale(
-                width, height, outputWidth, outputHeight, orientation,
-                prescription, settings, out var zoom))
+                width, height, orientation,
+                prescription, settings, referenceFrame, out var zoom))
         {
             return zoom;
         }
@@ -252,20 +287,32 @@ internal static class LensCorrectionProcessor
     private static bool TryFindCoverScale(
         int width,
         int height,
-        int outputWidth,
-        int outputHeight,
         int orientation,
         LensPrescription prescription,
         BaseDecodeSettings settings,
+        LensCorrectionReferenceFrame? referenceFrame,
         out double zoom)
     {
+        LensCorrectionReferenceFrame reference;
+        if (referenceFrame is { } frame)
+        {
+            reference = frame;
+        }
+        else
+        {
+            var output = GetOutputSize(
+                width, height, orientation, maxDimension: null, prescription);
+            reference = new LensCorrectionReferenceFrame(
+                width, height, output.Width, output.Height);
+        }
         zoom = 1;
         if (!settings.Distortion && !settings.ChromaticAberration) return true;
         bool Fits(double zoom)
         {
             var correction = new LensCorrectionPlan(
-                width, height, outputWidth, outputHeight,
-                orientation, prescription, settings, zoom);
+                reference.SourceWidth, reference.SourceHeight,
+                reference.OutputWidth, reference.OutputHeight,
+                orientation, prescription, settings, zoom, reference);
             bool PointFits(int x, int y)
             {
                 var logical = correction.GetLogicalPoint(x, y);
@@ -273,18 +320,20 @@ internal static class LensCorrectionProcessor
                 {
                     var point = correction.Map(logical, channel);
                     if (!double.IsFinite(point.X) || !double.IsFinite(point.Y) ||
-                        point.X < 0 || point.X > width - 1 ||
-                        point.Y < 0 || point.Y > height - 1)
+                        point.X < 0 || point.X > reference.SourceWidth - 1 ||
+                        point.Y < 0 || point.Y > reference.SourceHeight - 1)
                     {
                         return false;
                     }
                 }
                 return true;
             }
-            for (var x = 0; x < outputWidth; x++)
-                if (!PointFits(x, 0) || !PointFits(x, outputHeight - 1)) return false;
-            for (var y = 1; y < outputHeight - 1; y++)
-                if (!PointFits(0, y) || !PointFits(outputWidth - 1, y)) return false;
+            for (var x = 0; x < reference.OutputWidth; x++)
+                if (!PointFits(x, 0) ||
+                    !PointFits(x, reference.OutputHeight - 1)) return false;
+            for (var y = 1; y < reference.OutputHeight - 1; y++)
+                if (!PointFits(0, y) ||
+                    !PointFits(reference.OutputWidth - 1, y)) return false;
             return true;
         }
         if (Fits(1)) return true;
@@ -397,3 +446,9 @@ internal static class LensCorrectionProcessor
     }
 
 }
+
+internal readonly record struct LensCorrectionReferenceFrame(
+    int SourceWidth,
+    int SourceHeight,
+    int OutputWidth,
+    int OutputHeight);

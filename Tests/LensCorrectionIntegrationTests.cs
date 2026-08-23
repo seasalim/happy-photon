@@ -11,6 +11,30 @@ public sealed class LensCorrectionIntegrationTests : IDisposable
         Path.GetTempPath(), $"happy-photon-raw-optics-{Guid.NewGuid():N}");
 
     [Fact]
+    public void X30AppliesQualifiedFujiTablesThroughTheRawLoader()
+    {
+        var path = GoldenTestPaths.Asset("fujifilm-x30.raf");
+        var file = new ImageFile(path);
+        var loader = new RawBaseLoader();
+
+        using var inactive = loader.LoadPreviewBase(
+            file, InactiveSettings(), CancellationToken.None);
+        using var corrected = loader.LoadPreviewBase(
+            file, BaseDecodeSettings.Default, CancellationToken.None);
+
+        Assert.NotNull(inactive);
+        Assert.NotNull(corrected);
+        var summary = Assert.IsType<LensPrescriptionSummary>(
+            corrected.Info.LensPrescriptionSummary);
+        Assert.True(summary.HasDistortion);
+        Assert.False(summary.HasChromaticAberration);
+        Assert.False(summary.HasVignetting);
+        Assert.NotEqual(
+            RawBaseLoaderTestSupport.PixelHash(inactive.Pixels),
+            RawBaseLoaderTestSupport.PixelHash(corrected.Pixels));
+    }
+
+    [Fact]
     public void DefaultCropMapsFromLibRawActiveAreaOutput()
     {
         var path = SyntheticRawDngFactory.Write(
@@ -176,7 +200,7 @@ public sealed class LensCorrectionIntegrationTests : IDisposable
             new ImageFile(path), settings, CancellationToken.None);
 
         Assert.NotNull(corrected);
-        Assert.Equal((200u, 271u),
+        Assert.Equal((200u, 272u),
             (corrected.Pixels.Width, corrected.Pixels.Height));
         Assert.Equal((400, 544),
             (corrected.Info.FullWidth, corrected.Info.FullHeight));

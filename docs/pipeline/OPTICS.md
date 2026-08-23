@@ -18,10 +18,12 @@ needs no resize, so active corrections add its one budgeted warp pass. Render-si
 quarter turns, horizon rotation, crop, and final output resizing are unchanged. Horizon
 remains an interactive render edit and is not folded into a decode-cached operation.
 
-One centered scale-to-cover factor is solved across all active planes so corrected
-edges stay inside the visible source. Crop coordinates remain normalized to the
-corrected base. Source-saturation flags follow the same per-channel map with categorical
-OR semantics; the RAW sensor histogram remains a pre-warp sensor measurement.
+One centered scale-to-cover factor is solved across all active planes in the native
+full-resolution logical frame so corrected edges stay inside the visible source. That
+factor and frame are invariant across half/full decode scales; only the destination
+sampling density changes. Crop coordinates remain normalized to the corrected base.
+Source-saturation flags follow the same per-channel map with categorical OR semantics;
+the RAW sensor histogram remains a pre-warp sensor measurement.
 
 ## DNG subset
 
@@ -61,14 +63,28 @@ empirically from Happy Photon's own committed RAF fixtures.
 | Source / mount | Parsing | Application | Evidence |
 |---|---|---|---|
 | DNG embedded opcodes | Supported subset above | Enabled | Synthetic authored-opcode and inversion tests |
-| Fujifilm X, X30 fixture | 23/31/23 tables pinned | Deferred | Private semantics have not passed the required embedded-preview alignment validator |
+| Fujifilm X, 23/31/23 generation | Pinned; each class independent | Non-identity distortion enabled; CA and vignetting deferred | X30 distortion reduced registered preview displacement residual 61.0%, above both split-grid 3σ floors; X100 distortion tables were identity operations |
+| Fujifilm X, 19/29/19 generation | Pinned; trailing CA scale sentinel required | Deferred per class | X-T5 corpus candidates did not pass the per-file alignment gates |
 | Monochrome RAW sensors | Not read in v1 | Uncorrected | The v1 correction pass requires three camera-native planes |
 | Sony E, Micro Four Thirds | None | None | Out of scope |
 | JPEG / HEIC | None | None | RAW-only boundary |
 
-The Fuji parser reports no applicable corrections until the in-file camera-preview
-validator proves that a candidate interpretation improves alignment. The UI therefore
-shows the honest no-data state even though the parse alarm protects future work.
+Fujifilm distortion knots are interpolated without a polynomial fit. Their values are
+empirically qualified as scaled radial source offsets: at a knot, source radius is
+`destination radius * (1 + value / 45)`. The scale and knot count normalize the table's
+radius coordinate in RAF table units. G1 qualifies one radius unit as 1.9 native visible
+pixels for the 23/31/23 generation; the processor converts that unit before lookup so
+LibRaw's half/full decode choice cannot change correction strength. Exact-zero
+distortion tables are identity prescriptions and do not advertise an operation.
+Candidate CA and vignetting interpretations remain available to the qualification
+instrument but do not advertise production capabilities.
+
+`scripts/evaluate-raf-lens-corrections.cs` selects a camera JPEG with a long edge of at
+least 1024 px and aspect within 2% of the oriented visible frame, preferring pixel count
+then file offset and recording offset, dimensions, and SHA-256. It compares isolated
+class ablations after global registration on disjoint grid halves and requires the
+class-specific reduction plus an improvement above a bootstrap 3σ floor. It is a
+developer qualification instrument, never a decode-time validator.
 
 ## Settings, cache, and compatibility
 
@@ -78,5 +94,5 @@ explicit v3 block, so it can never acquire defaults later. New rows use
 on/on/off/standard. `HasEdits` compares with the image's baseline, Reset restores it,
 and copy/paste, presets, and agent patches transfer only the booleans.
 
-The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 13;
+The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 14;
 `RenderPipeline.Version` stays 10 because render-stage math is unchanged.
