@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
+using Avalonia.Threading;
 using HappyPhoton.Models;
 using HappyPhoton.ViewModels;
 
@@ -14,6 +15,10 @@ public partial class DevelopEditPanel : UserControl
     public DevelopEditPanel()
     {
         InitializeComponent();
+        PropertyChanged += (_, change) =>
+        {
+            if (change.Property == IsVisibleProperty) ResetScrollWhenShown();
+        };
         var histogram = this.FindControl<HistogramView>("DevelopHistogram");
         histogram!.ClippingPeekStarted += (_, side) =>
         {
@@ -29,6 +34,18 @@ public partial class DevelopEditPanel : UserControl
                 viewModel.EndClippingPeek();
             }
         };
+    }
+
+    private void ResetScrollWhenShown()
+    {
+        if (!IsVisible) return;
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (IsVisible) DevelopControlsScrollViewer.Offset = default;
+            },
+            DispatcherPriority.Background);
     }
 
     private async void OnCurveChanged(object? sender, EventArgs e) =>
