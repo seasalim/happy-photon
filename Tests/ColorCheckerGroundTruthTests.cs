@@ -91,7 +91,7 @@ public sealed class ColorCheckerGroundTruthTests
     public void ColorChecker_CurrentRidMatchesRecordedObservationPayload()
     {
         var manifest = ColorCheckerManifest.Load();
-        var runtimeRid = RuntimeInformation.RuntimeIdentifier;
+        var runtimeRid = GetCanonicalReleaseRid();
         var recordedRids = manifest.Budget.Observations
             .Select(value => value.Rid)
             .Concat(manifest.Budget.PendingRidObservations)
@@ -132,6 +132,21 @@ public sealed class ColorCheckerGroundTruthTests
             value => Math.Abs(value - measurement.LookMeanDeltaE00) <= 5e-5);
         Assert.Contains(lookObservation.MaximumPatchDeltaE00,
             value => Math.Abs(value - measurement.LookMaximumDeltaE00) <= 5e-5);
+    }
+
+    private static string GetCanonicalReleaseRid()
+    {
+        var architecture = RuntimeInformation.ProcessArchitecture;
+        if (OperatingSystem.IsWindows() && architecture == Architecture.X64)
+            return "win-x64";
+        if (OperatingSystem.IsLinux() && architecture == Architecture.X64)
+            return "linux-x64";
+        if (OperatingSystem.IsMacOS() && architecture == Architecture.Arm64)
+            return "osx-arm64";
+
+        throw new PlatformNotSupportedException(
+            $"ColorChecker has no release observation for " +
+            $"'{RuntimeInformation.RuntimeIdentifier}'.");
     }
 
     private void ReportPatches(ColorCheckerMeasurement measurement)
