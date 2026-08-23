@@ -294,6 +294,29 @@ public sealed class PresetServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Initialize_MigratesV012SettingsWithoutRewritingPreset()
+    {
+        Directory.CreateDirectory(_tempDirectory);
+        var path = Path.Combine(_tempDirectory, "user_v012.json");
+        var json =
+            """{"version":2,"id":"user_v012","name":"0.1.2 Preset","settings":{"version":2,"exposure":0.75,"contrast":12}}""";
+        await File.WriteAllTextAsync(path, json);
+        var service = new PresetService(_tempDirectory);
+
+        await service.InitializeAsync();
+
+        var settings = Assert.Single(service.UserPresets).Settings;
+        Assert.Equal(EditSettings.CurrentVersion, settings.Version);
+        Assert.Equal(0.75, settings.Exposure);
+        Assert.Equal(12, settings.Contrast);
+        Assert.Equal(LensBaseline.Legacy, settings.Lens.Baseline);
+        Assert.False(settings.Lens.Distortion);
+        Assert.False(settings.Lens.ChromaticAberration);
+        Assert.False(settings.Lens.Vignetting);
+        Assert.Equal(json, await File.ReadAllTextAsync(path));
+    }
+
+    [Fact]
     public async Task Initialize_SkipsPresetWithoutExplicitVersions()
     {
         Directory.CreateDirectory(_tempDirectory);

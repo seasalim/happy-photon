@@ -446,9 +446,10 @@ the destination baseline untouched.
 `EditSettingsJson.Serialize` requires the current v3 model, clones it,
 clamps and validates the clone, then writes canonical JSON; it never changes the
 caller's model and rejects every other version. Preset files must explicitly declare
-the current wrapper and settings versions — versionless or unsupported files are
-skipped, never rewritten or upgraded while loading. Copy/paste accepts only current
-in-memory settings and rejects a non-current source or target before applying values.
+their wrapper and settings versions. Current and v2 settings load through the same
+legacy lens-baseline migration as catalog rows; versionless or unsupported files are
+skipped. Loading never rewrites a preset. Copy/paste accepts only current in-memory
+settings and rejects a non-current source or target before applying values.
 
 The MCP `apply_edit_settings` input defaults an omitted `version` to 3 and accepts only
 version 3. Its white balance shape is the same `asShot`/`custom`/`preset`/`picked`

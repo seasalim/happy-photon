@@ -267,17 +267,6 @@ public class PresetService
             throw new JsonException("Preset settings must be an object.");
         }
 
-        if (!settingsElement.TryGetProperty("version", out var versionElement))
-        {
-            throw new JsonException("Preset edit settings version is required.");
-        }
-        var settingsVersion = ReadVersion(versionElement, "edit settings");
-        if (settingsVersion != EditSettings.CurrentVersion)
-        {
-            Debug.WriteLine(
-                $"Skipping preset with unsupported edit version {settingsVersion}: {path}");
-            return null;
-        }
         var settings = EditSettingsJson.Deserialize(
             settingsElement.GetRawText(),
             out var wasClamped);
