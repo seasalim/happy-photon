@@ -389,6 +389,10 @@ paint before metadata analysis begins. A Large request stages this burst at Smal
 quality, then queues the requested Large follow-up. After that, one
 `ThumbnailLoadScheduler` owns exactly six long-lived workers for the active folder:
 
+Develop and full-screen close a shared admission gate before preview work starts. Up to
+six source reads already admitted by the initial range or scheduler may finish, while
+queued visible-first work remains pending and resumes when Library becomes active.
+
 - `LibraryGridView` derives visible indices from the scroll offset and grid geometry.
 - The ViewModel adds one viewport of nearest-first prefetch on each side, capped at 128
   images. Visible entries have higher priority than prefetch entries. Queued smaller
@@ -543,7 +547,9 @@ threading and ownership view:
   hydrates a source, and availability is rechecked immediately before every profile
   content open.
 - After a settled Develop paint, a capacity-one speculative worker may render the one
-  uncached local neighbor in the current travel direction. It never joins the current
+  uncached local neighbor in the current travel direction. Standard images arm after
+  75 ms; RAW waits for two seconds without selection, edit, crop, filter, folder, or
+  mode activity. It never joins the current
   base coordinator or outcome channel: its base pair is disposed after rendering and
   its single encoded handoff is consumed by the settings-matched cached-outcome path.
   Selection cancels in-flight work without waiting; edits, availability, folder/view

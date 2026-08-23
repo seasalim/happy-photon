@@ -5,6 +5,8 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private static readonly TimeSpan RawAdjacentWarmIdleDelay =
+        TimeSpan.FromSeconds(2);
     private CancellationTokenSource? _adjacentWarmCts;
     private int _adjacentWarmDirection = 1;
     private void UpdateAdjacentWarmDirection(ImageFile? oldImage, ImageFile? newImage)
@@ -17,13 +19,14 @@ public partial class MainWindowViewModel
     private void ScheduleAdjacentPreviewWarm(PreviewRenderIdentity parent)
     {
         CancelAdjacentPreviewWarm(invalidateWorker: false);
-        if (!IsDevelopMode || IsFullScreenMode || SelectedImage == null ||
-            Library.MoveVisible(SelectedImage, _adjacentWarmDirection) == null) return;
+        if (!IsDevelopMode || IsFullScreenMode || SelectedImage == null) return;
+        var candidate = Library.MoveVisible(SelectedImage, _adjacentWarmDirection);
+        if (candidate == null) return;
         var cancellation = new CancellationTokenSource();
         _adjacentWarmCts = cancellation;
         _ = DebouncedAction.RunAsync(
             "adjacent preview warm",
-            RestingSettleDelay,
+            candidate.IsRaw ? RawAdjacentWarmIdleDelay : RestingSettleDelay,
             cancellation.Token,
             () => StartAdjacentPreviewWarm(parent, cancellation),
             timeProvider: _timeProvider);

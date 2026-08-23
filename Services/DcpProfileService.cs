@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
@@ -24,6 +25,7 @@ internal sealed class DcpProfileService
         bool forceRefresh,
         CancellationToken cancellationToken)
     {
+        var stopwatch = Stopwatch.StartNew();
         var resolution = await ResolveCoreAsync(
             image,
             selection,
@@ -35,6 +37,13 @@ internal sealed class DcpProfileService
             $"payload={resolution.Profile != null} " +
             $"selection={selection?.CacheToken ?? "none"} " +
             $"isRaw={image.IsRaw} force={forceRefresh}");
+        ImageServiceHelpers.LogPerformance(
+            nameof(DcpProfileService),
+            nameof(ResolveAsync),
+            stopwatch.ElapsedMilliseconds,
+            image.FilePath,
+            $"selected={selection != null};status={resolution.Status};" +
+            $"active={resolution.IsActive};force={forceRefresh}");
         return resolution;
     }
 

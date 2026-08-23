@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 using HappyPhoton.Models;
 
@@ -51,17 +52,36 @@ internal sealed class DcpProfileDiscovery
         CancellationToken cancellationToken,
         bool includeImageProfiles = true)
     {
-        if (DiscoveryGateAsync is { } gate)
+        var stopwatch = Stopwatch.StartNew();
+        DcpDiscoveryResult? result = null;
+        try
         {
-            await gate().ConfigureAwait(false);
+            if (DiscoveryGateAsync is { } gate)
+            {
+                await gate().ConfigureAwait(false);
+            }
+            result = await Task.Run(
+                () => Discover(
+                    image,
+                    cameraIdentity,
+                    includeImageProfiles,
+                    cancellationToken),
+                cancellationToken).ConfigureAwait(false);
+            return result;
         }
-        return await Task.Run(
-            () => Discover(
-                image,
-                cameraIdentity,
-                includeImageProfiles,
-                cancellationToken),
-            cancellationToken).ConfigureAwait(false);
+        finally
+        {
+            ImageServiceHelpers.LogPerformance(
+                nameof(DcpProfileDiscovery),
+                nameof(DiscoverAsync),
+                stopwatch.ElapsedMilliseconds,
+                image.FilePath,
+                result == null
+                    ? "completed=false"
+                    : $"completed=true;scanned={result.AdobeProfilesScanned};" +
+                      $"matches={result.AdobeIdentityMatchCount};" +
+                      $"options={result.Options.Count}");
+        }
     }
 
     internal DcpProfileOption InspectUserFile(string path)

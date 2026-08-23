@@ -20,7 +20,9 @@ public partial class MainWindowViewModel
     private long _thumbnailAccessClock;
     private long _peakThumbnailBytes;
     private int _lastQueuedSizeGeneration = -1;
+    private readonly ThumbnailPumpAdmissionGate _thumbnailPumpAdmission = new();
     internal Func<Task>? ThumbnailLoadGateAsync { get; set; }
+    internal bool IsThumbnailPumpPaused => _thumbnailPumpAdmission.IsPaused;
 
     public long ResidentThumbnailBytes =>
         Library.AllImages.Sum(image => image.ThumbnailBytes);
@@ -207,6 +209,7 @@ public partial class MainWindowViewModel
         Bitmap? thumbnail = null;
         try
         {
+            await _thumbnailPumpAdmission.WaitAsync(cancellationToken);
             if (ThumbnailLoadGateAsync is { } gate)
             {
                 await gate();
@@ -271,6 +274,9 @@ public partial class MainWindowViewModel
             imageFile.IsLoading = false;
         }
     }
+
+    private void UpdateThumbnailPumpAdmission() =>
+        _thumbnailPumpAdmission.SetPaused(IsDevelopMode || IsFullScreenMode);
 
     private void QueueRequestedThumbnailRange()
     {

@@ -202,17 +202,20 @@ public sealed class AdjacentPreviewWarmTests : IDisposable
         await TestWaits.UntilAsync(() => service.AdjacentWarmEntryCount == 0);
     }
 
-    [WindowsFact]
-    public async Task SettledDevelopSelectionWarmsInTravelDirectionWithoutWrap()
+    [WindowsTheory]
+    [InlineData(".jpg", 75)]
+    [InlineData(".cr2", 2000)]
+    public async Task SettledDevelopSelectionWarmsInTravelDirectionWithoutWrap(
+        string extension, int idleMilliseconds)
     {
         _fixture.RequireWindows();
-        using var catalog = await CreateCatalogAsync("direction");
+        using var catalog = await CreateCatalogAsync($"direction-{extension[1..]}");
         var images = new[]
         {
-            await CreateCatalogImageAsync(catalog, "first.jpg"),
-            await CreateCatalogImageAsync(catalog, "second.jpg"),
-            await CreateCatalogImageAsync(catalog, "third.jpg"),
-            await CreateCatalogImageAsync(catalog, "fourth.jpg")
+            await CreateCatalogImageAsync(catalog, $"first{extension}"),
+            await CreateCatalogImageAsync(catalog, $"second{extension}"),
+            await CreateCatalogImageAsync(catalog, $"third{extension}"),
+            await CreateCatalogImageAsync(catalog, $"fourth{extension}")
         };
         var clock = new TestTimeProvider();
         var loader = new RecordingLoader();
@@ -227,29 +230,30 @@ public sealed class AdjacentPreviewWarmTests : IDisposable
             IsDevelopMode = true
         };
         vm.Library.SetImages(images);
-
         try
         {
             vm.SelectedImage = images[2];
             await TestWaits.UntilAsync(() => vm.PreviewImage != null);
-            clock.Advance(TimeSpan.FromMilliseconds(75));
+            clock.Advance(TimeSpan.FromMilliseconds(idleMilliseconds - 1));
+            await Task.Yield();
+            Assert.Single(loader.Paths);
+            clock.Advance(TimeSpan.FromMilliseconds(1));
             await TestWaits.UntilAsync(() => loader.Paths.Count >= 2);
-            Assert.Equal("fourth.jpg", loader.Paths.ElementAt(1));
-
+            Assert.Equal($"fourth{extension}", loader.Paths.ElementAt(1));
             vm.SelectedImage = images[3];
             await TestWaits.UntilAsync(() =>
                 vm.InitialPreviewActivityCount == 0 && vm.PreviewImage != null);
             var endDecodeCount = loader.Paths.Count;
-            clock.Advance(TimeSpan.FromMilliseconds(75));
+            clock.Advance(TimeSpan.FromMilliseconds(idleMilliseconds));
             await Task.Yield();
             Assert.Equal(endDecodeCount, loader.Paths.Count);
 
             vm.SelectedImage = images[1];
             await TestWaits.UntilAsync(() =>
                 loader.Paths.Count >= 4 && vm.PreviewImage != null);
-            clock.Advance(TimeSpan.FromMilliseconds(75));
+            clock.Advance(TimeSpan.FromMilliseconds(idleMilliseconds));
             await TestWaits.UntilAsync(() => loader.Paths.Count >= 5);
-            Assert.Equal("first.jpg", loader.Paths.ElementAt(4));
+            Assert.Equal($"first{extension}", loader.Paths.ElementAt(4));
         }
         finally
         {

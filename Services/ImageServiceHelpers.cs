@@ -181,7 +181,9 @@ public static class ImageServiceHelpers
             return;
 
         var fileName = filePath != null ? Path.GetFileName(filePath) : "n/a";
-        var message = $"[Performance] {method} - {step}: {elapsedMs}ms file={fileName}";
+        var message =
+            $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} " +
+            $"[Performance] {method} - {step}: {elapsedMs}ms file={fileName}";
         if (!string.IsNullOrWhiteSpace(extra))
             message += $" {extra}";
         Debug.WriteLine(message);

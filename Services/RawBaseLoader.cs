@@ -86,6 +86,10 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
         }
 
         var stopwatch = Stopwatch.StartNew();
+        var performanceTrace = new RawPreviewPerformanceTrace(
+            stopwatch,
+            file.FilePath,
+            preview);
         MagickImage? pixels = null;
         MagickImage? interactivePixels = null;
         try
@@ -98,6 +102,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                         DcpProfileErrorCode.UnsupportedVariant,
                         "The selected profile was not resolved for this decode."));
             using var context = LibRawContext.Open(file.FilePath, cancellationToken);
+            performanceTrace.Mark("Open");
             var sensorIdentity = context.GetSensorIdentity(cancellationToken);
             var isMonochrome = IsMonochromeSensor(sensorIdentity);
             var cameraData = DcpCameraData.Defaults;
@@ -135,8 +140,10 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             var thumbnailBytes = ReadThumbnail(context, file.FilePath);
             var thumbnailElapsed = thumbnailStopwatch.ElapsedMilliseconds;
             cancellationToken.ThrowIfCancellationRequested();
+            performanceTrace.Mark("HeadersAndThumbnail");
 
             context.Unpack(cancellationToken);
+            performanceTrace.Mark("Unpack");
             var cameraFacts = RawCameraFactSnapshot.Copy(
                 context.GetCameraFacts(cancellationToken));
             HistogramData? rawHistogram = null;
@@ -179,6 +186,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                     histogramStopwatch.ElapsedMilliseconds,
                     file.FilePath);
             }
+            performanceTrace.Mark("SensorAnalysis");
             cancellationToken.ThrowIfCancellationRequested();
             var asShot = WhiteBalanceModel.EstimateAsShot(
                 cameraFacts.CamMul,
@@ -201,7 +209,9 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             context.ConfigureOutput(
                 ConfigureOutput(decode, preview, isMonochrome),
                 cancellationToken);
+            performanceTrace.Mark("DecodeSetup");
             context.Process(cancellationToken);
+            performanceTrace.Mark("Process");
 
             ushort[]? previewGray = null;
             var previewGrayWidth = 0;
@@ -320,6 +330,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                         cancellationToken);
                 }
             }
+            performanceTrace.Mark("Import");
             context.Recycle(cancellationToken);
             if (previewGray != null)
             {
@@ -370,6 +381,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             decodedPixels.Depth = 16;
             decodedPixels.Strip();
             cancellationToken.ThrowIfCancellationRequested();
+            performanceTrace.Mark("PostProcess");
 
             var orientedFullSize = applyLens
                 ? LensCorrectionProcessor.GetOutputSize(
@@ -450,6 +462,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 full = new BaseImage(decodedPixels, info);
                 pixels = null;
             }
+            performanceTrace.Mark("PairConstruction");
 
             ImageServiceHelpers.LogPerformance(
                 nameof(RawBaseLoader),
@@ -458,7 +471,9 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 file.FilePath,
                 preview
                     ? $"size={pair!.Interactive.Pixels.Width}x{pair.Interactive.Pixels.Height};" +
-                      $"large={pair.Large!.Pixels.Width}x{pair.Large.Pixels.Height}"
+                      $"large={pair.Large!.Pixels.Width}x{pair.Large.Pixels.Height};" +
+                      $"lens={applyLens};dcp={dcp?.IsActive == true};" +
+                      $"decode={effectiveDecode.CacheKey}"
                     : $"size={full!.Pixels.Width}x{full.Pixels.Height}");
             return new LoadedBases(pair, full, analysis);
         }

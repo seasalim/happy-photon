@@ -126,6 +126,42 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
         }
     }
 
+    [WindowsFact]
+    public async Task PreviewModesPauseNewThumbnailLoadsUntilLibraryReturns()
+    {
+        var session = await CreateFolderSessionAsync("preview-pause", 40);
+        session.ViewModel.IsDevelopMode = true;
+        try
+        {
+            await session.ViewModel.LoadFolderAsync(session.Folder);
+            await Task.Delay(100);
+
+            Assert.True(session.ViewModel.IsThumbnailPumpPaused);
+            Assert.Equal(0, session.Gate.StartedCount);
+
+            session.ViewModel.IsDevelopMode = false;
+            await TestWaits.UntilAsync(() => session.Gate.StartedCount == 6);
+            Assert.False(session.ViewModel.IsThumbnailPumpPaused);
+
+            session.ViewModel.IsFullScreenMode = true;
+            session.Gate.Release(6);
+            await Task.Delay(100);
+
+            Assert.True(session.ViewModel.IsThumbnailPumpPaused);
+            Assert.Equal(6, session.Gate.StartedCount);
+
+            session.ViewModel.IsFullScreenMode = false;
+            await TestWaits.UntilAsync(() => session.Gate.StartedCount > 6);
+            Assert.False(session.ViewModel.IsThumbnailPumpPaused);
+        }
+        finally
+        {
+            session.Gate.Release(40);
+            await session.ViewModel.DisposeAsync();
+            session.Catalog.Dispose();
+        }
+    }
+
     private async Task<FolderSession> CreateFolderSessionAsync(
         string name,
         int imageCount)

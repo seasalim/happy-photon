@@ -135,6 +135,9 @@ public sealed class AdjacentPreviewPerformanceTests
                 TaskCreationOptions.RunContinuationsAsynchronously);
             vm.ImageService.Previews.AdjacentWarmWorkStarted += () =>
                 warmStarted.TrySetResult();
+            var adjacentIdleDelay = images[1].IsRaw
+                ? TimeSpan.FromSeconds(2)
+                : TimeSpan.FromMilliseconds(75);
 
             try
             {
@@ -148,7 +151,7 @@ public sealed class AdjacentPreviewPerformanceTests
                 var process = Process.GetCurrentProcess();
                 process.Refresh();
                 var beforeWarm = process.PrivateMemorySize64;
-                clock.Advance(TimeSpan.FromMilliseconds(75));
+                clock.Advance(adjacentIdleDelay);
                 long warmPeak = beforeWarm;
                 if (prefetch)
                 {
@@ -186,7 +189,7 @@ public sealed class AdjacentPreviewPerformanceTests
                     TaskCreationOptions.RunContinuationsAsynchronously);
                 vm.ImageService.Previews.AdjacentWarmWorkStarted += () =>
                     warmStarted.TrySetResult();
-                clock.Advance(TimeSpan.FromMilliseconds(75));
+                clock.Advance(adjacentIdleDelay);
                 if (prefetch)
                 {
                     await warmStarted.Task.WaitAsync(TestWaits.Condition);

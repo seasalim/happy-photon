@@ -308,6 +308,7 @@ public partial class MainWindowViewModel
 
     partial void OnIsDevelopModeChanged(bool value)
     {
+        UpdateThumbnailPumpAdmission();
         if (!value) CancelAdjacentPreviewWarm(true, dropRetained: true);
         // Cancel in-flight resting work but keep the parent: mode round-trips
         // on the same image must stay armed (publication is surface-gated and
@@ -369,6 +370,7 @@ public partial class MainWindowViewModel
 
     partial void OnIsFullScreenModeChanged(bool value)
     {
+        UpdateThumbnailPumpAdmission();
         if (value) CancelAdjacentPreviewWarm(true, dropRetained: true);
         CancelRestingPreview(clearParent: false);
         OnPropertyChanged(nameof(IsDevelopPreviewSurfaceActive));
