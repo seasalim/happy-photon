@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using HappyPhoton.Models;
 using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
@@ -159,11 +160,7 @@ public partial class MainWindowViewModel
             }
             var generation = Volatile.Read(ref _latestPreviewOutcomeGeneration);
             var intent = _requestedPreviewIntent;
-            var settings = image.EditSettings.Clone();
-            SaveSlidersTo(settings);
-            settings.Rotation = Rotation;
-            settings.HorizonRotation = HorizonRotation;
-            settings.Crop = PreviewCrop();
+            var settings = CaptureClippingRenderSettings(image);
             using var artifacts = await ImageService.Previews
                 .ApplyEditsToPreviewArtifactsAsync(
                     image,
@@ -181,16 +178,44 @@ public partial class MainWindowViewModel
 
             // Mask rendering deliberately shares the current surface generation,
             // but publishes only clipping artifacts. It cannot repaint, advance
-            // intent, arm resting, or commit a second promotion for that generation.
+            // intent, arm resting, or commit a second promotion for that
+            // generation, and it applies only while its settings identity still
+            // matches the painted surface or the currently requested settings.
+            // A preset hover paints from transient settings the edit state does
+            // not hold, so its live-settings match cannot vouch for the mask.
+            var identity = artifacts.IsBaseStale || artifacts.Bitmap == null
+                ? null
+                : ImageService.Previews
+                    .TryGetPreviewRenderIdentity(artifacts.Bitmap)?.SettingsHash;
             ApplyRenderOutcome(RenderOutcome.FromClippingArtifacts(
                 image,
                 generation,
                 intent,
-                artifacts));
+                artifacts,
+                identity,
+                identity != null && !_isHoveringPreset &&
+                    EditSettingsJson.Serialize(settings) == EditSettingsJson
+                        .Serialize(CaptureClippingRenderSettings(image))));
         }
         catch (OperationCanceledException)
         {
         }
+    }
+
+    private EditSettings CaptureClippingRenderSettings(ImageFile image)
+    {
+        if (_requestedPreviewIntent == PreviewSurfaceIntent.Original)
+        {
+            // An overlay latched over the Before/After original must describe the
+            // original frame, not the persistent edits the sliders still hold.
+            return BuildOriginalRenderSettings(image);
+        }
+        var settings = image.EditSettings.Clone();
+        SaveSlidersTo(settings);
+        settings.Rotation = Rotation;
+        settings.HorizonRotation = HorizonRotation;
+        settings.Crop = PreviewCrop();
+        return settings;
     }
 
     private void RejectPendingClippingMasks()

@@ -348,16 +348,7 @@ public partial class MainWindowViewModel
 
         if (intent == PreviewSurfaceIntent.Original)
         {
-            // Keep geometry-like decode state while removing color edits.
-            var tempSettings = new EditSettings
-            {
-                Rotation = Rotation,
-                HorizonRotation = HorizonRotation,
-                // In crop mode, show the full canvas so the overlay stays aligned
-                Crop = PreviewCrop(),
-                Curve = new CurveData(),
-                Lens = image.EditSettings.Lens.Clone()
-            };
+            var tempSettings = BuildOriginalRenderSettings(image);
 
             // Show original preview without any edits (same size as edited preview)
             using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
@@ -386,6 +377,19 @@ public partial class MainWindowViewModel
                 rollbackRequestedIntent: previousIntent);
         }
     }
+
+    // Original-surface settings keep geometry-like decode state (rotation,
+    // horizon, crop, lens) while dropping color edits; the full-canvas crop keeps
+    // any overlay aligned. Shared so the clipping overlay renders the exact frame
+    // Before/After paints, never edited settings mistaken for the original.
+    private EditSettings BuildOriginalRenderSettings(ImageFile image) => new()
+    {
+        Rotation = Rotation,
+        HorizonRotation = HorizonRotation,
+        Crop = PreviewCrop(),
+        Curve = new CurveData(),
+        Lens = image.EditSettings.Lens.Clone()
+    };
 
     private bool CanUndoEdit() =>
         CanUndo && IsDevelopMode && !IsFullScreenMode && CanEditSelectedImage;

@@ -164,6 +164,7 @@ public partial class MainWindowViewModel
                     Curve = new CurveData()
                 }
                 : imageFile.EditSettings;
+            var cachedIdentity = RenderSettingsHash.Compute(renderSettings);
             var cachedTask = ImageService.Previews.LoadCachedPreviewAsync(
                 imageFile,
                 renderSettings,
@@ -187,7 +188,8 @@ public partial class MainWindowViewModel
                     ApplyRenderOutcome(RenderOutcome.Cached(
                         imageFile,
                         surfaceGeneration,
-                        cached));
+                        cached,
+                        cachedIdentity));
                 }
                 cached?.Dispose();
             }
@@ -235,7 +237,8 @@ public partial class MainWindowViewModel
                     ApplyRenderOutcome(RenderOutcome.Cached(
                         imageFile,
                         surfaceGeneration,
-                        cached));
+                        cached,
+                        cachedIdentity));
                 }
             }
         }

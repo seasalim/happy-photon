@@ -9,8 +9,10 @@ internal sealed partial class RenderOutcome
     public static RenderOutcome Cached(
         ImageFile image,
         long generation,
-        CachedPreviewBitmap cached) => new()
+        CachedPreviewBitmap cached,
+        string? settingsIdentity) => new()
     {
+        SettingsIdentity = cached.SettingsMatch ? settingsIdentity : null,
         Image = image,
         Generation = generation,
         Class = RenderOutcomeClass.CachedUpgrade,
@@ -46,21 +48,18 @@ internal sealed partial class RenderOutcome
         ImageFile image,
         long generation,
         PreviewSurfaceIntent intent,
-        PreviewArtifacts artifacts)
+        PreviewArtifacts artifacts,
+        string? settingsIdentity,
+        bool matchesRequestedSettings) => new()
     {
-        var stale = artifacts.IsBaseStale;
-        return new RenderOutcome
-        {
-            Image = image,
-            Generation = generation,
-            Class = RenderOutcomeClass.ClippingUpgrade,
-            Intent = intent,
-            IsBaseStale = stale,
-            ClippingMode = stale
-                ? OutcomeFieldMode.Clear
-                : OutcomeFieldMode.Set,
-            Clipping = stale ? null : artifacts.Clipping,
-            _clippingMask = stale ? null : artifacts.DetachClippingMask()
-        };
-    }
+        Image = image,
+        Generation = generation,
+        Class = RenderOutcomeClass.ClippingUpgrade,
+        Intent = intent,
+        SettingsIdentity = settingsIdentity,
+        MatchesRequestedSettings = matchesRequestedSettings,
+        ClippingMode = OutcomeFieldMode.Set,
+        Clipping = artifacts.Clipping,
+        _clippingMask = artifacts.DetachClippingMask()
+    };
 }

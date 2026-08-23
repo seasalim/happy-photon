@@ -49,6 +49,8 @@ internal sealed partial class RenderOutcome : IDisposable
     public HistogramData? Histogram { get; init; }
     public OutcomeFieldMode ClippingMode { get; init; }
     public ClippingStats? Clipping { get; init; }
+    public string? SettingsIdentity { get; init; }
+    public bool MatchesRequestedSettings { get; init; }
     public OutcomeFieldMode CapabilityMode { get; init; }
     public bool IsRawSource { get; init; }
     public bool IsMonochrome { get; init; }
@@ -191,6 +193,7 @@ public partial class MainWindowViewModel
 {
     private long _latestPreviewOutcomeGeneration;
     private bool _renderOutcomeChannelClosed;
+    private string? _paintedSettingsIdentity;
     private bool _stateDefiningPaintApplied;
     private bool _currentBasePaintApplied;
     private bool _currentGenerationPromotionEligible = true;
@@ -292,7 +295,11 @@ public partial class MainWindowViewModel
                  outcome.Intent != _requestedPreviewIntent) ||
                 (outcome.Class == RenderOutcomeClass.RestingUpgrade &&
                  (!_stateDefiningPaintApplied ||
-                  _requestedPreviewIntent != PreviewSurfaceIntent.Edited)))
+                  _requestedPreviewIntent != PreviewSurfaceIntent.Edited)) ||
+                (outcome.Class == RenderOutcomeClass.ClippingUpgrade &&
+                 (outcome.SettingsIdentity == null ||
+                  (outcome.SettingsIdentity != _paintedSettingsIdentity &&
+                   !outcome.MatchesRequestedSettings))))
             {
                 return false;
             }
@@ -317,6 +324,12 @@ public partial class MainWindowViewModel
 
             ApplyOutcomeFacts(outcome);
             var painted = ApplyOutcomeBitmap(outcome);
+            if (painted && outcome.Class != RenderOutcomeClass.RestingUpgrade)
+            {
+                _paintedSettingsIdentity = ImageService.Previews
+                    .TryGetPreviewRenderIdentity(PreviewImage!)?.SettingsHash ??
+                    outcome.SettingsIdentity;
+            }
             if (outcome.Class == RenderOutcomeClass.StateDefining && painted)
             {
                 _stateDefiningPaintApplied = true;
@@ -439,6 +452,7 @@ public partial class MainWindowViewModel
         }
         if (outcome.BitmapMode == OutcomeFieldMode.Clear)
         {
+            _paintedSettingsIdentity = null;
             ClearPreviewImage();
             return false;
         }

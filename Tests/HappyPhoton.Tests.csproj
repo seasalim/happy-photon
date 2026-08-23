@@ -28,6 +28,7 @@
     <Compile Remove="CloudSourceViewTests.cs" />
     <Compile Remove="CloudSelectionStateTests.cs" />
     <Compile Remove="ClippingOverlayViewModelTests.cs" />
+    <Compile Remove="ClippingOutcomeCorrelationTests.cs" />
     <Compile Remove="ColorAssessmentViewTests.cs" />
     <Compile Remove="ColorAssessmentScreenshotTests.cs" />
     <Compile Remove="FirstRunWindowTests.cs" />

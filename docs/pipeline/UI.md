@@ -83,7 +83,12 @@ corrects source facts and publishes the fresh bitmap, display scopes, clipping,
 measured as-shot anchor, and sensor histogram together. A stale-base interim paint may
 update bitmap and display scopes only; it clears clipping and cannot replace
 decode-derived facts. A failed load outcome contributes failure status only: it paints
-nothing and preserves the surface, scopes, and clipping already on screen.
+nothing and preserves the surface, scopes, and clipping already on screen. A
+clipping-only overlay render shares the current surface generation but applies only
+while its rendered frame's settings match the painted surface — or, on the edited
+surface, the currently requested settings. A transient surface (Before/After original,
+preset hover) renders its own frame, so the overlay must match that painted surface; a
+stale, failed, or mismatched mask is dropped and the painted clipping stands.
 
 Recovery is a compact, exclusive Clip/Blend control directly below Highlights, enabled
 only for RAW sources — provisionally from `ImageFile.IsRaw`, then from the loaded base

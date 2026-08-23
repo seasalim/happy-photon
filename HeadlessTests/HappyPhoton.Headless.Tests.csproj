@@ -29,6 +29,7 @@
     <Compile Include="..\Tests\CloudSourceViewTests.cs" Link="CloudSourceViewTests.cs" />
     <Compile Include="..\Tests\CloudSelectionStateTests.cs" Link="CloudSelectionStateTests.cs" />
     <Compile Include="..\Tests\ClippingOverlayViewModelTests.cs" Link="ClippingOverlayViewModelTests.cs" />
+    <Compile Include="..\Tests\ClippingOutcomeCorrelationTests.cs" Link="ClippingOutcomeCorrelationTests.cs" />
     <Compile Include="..\Tests\ColorAssessmentViewTests.cs" Link="ColorAssessmentViewTests.cs" />
     <Compile Include="..\Tests\ColorAssessmentScreenshotTests.cs" Link="ColorAssessmentScreenshotTests.cs" />
     <Compile Include="..\Tests\EditAutoSaveRefreshRaceTests.cs" Link="EditAutoSaveRefreshRaceTests.cs" />
