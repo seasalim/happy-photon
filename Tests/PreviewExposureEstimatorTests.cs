@@ -110,7 +110,6 @@ public sealed class PreviewExposureEstimatorTests
     [InlineData(0.64, 0.58, 0.64)]
     [InlineData(-0.06, 1.72, 1.22)]
     [InlineData(2.9, 1.72, 2.22)]
-    [InlineData(1.33, 0, 1.33)]
     public void SelectBias_ClampsIntoMetadataDisagreementBand(
         double previewEstimate,
         double metadataFallback,
@@ -121,6 +120,20 @@ public sealed class PreviewExposureEstimatorTests
             PreviewExposureEstimator.SelectBias(
                 previewEstimate,
                 metadataFallback),
+            precision: 10);
+    }
+
+    [Theory]
+    [InlineData(0.75, 0.75)]
+    [InlineData(1.33, 1.0)]
+    [InlineData(-1.33, -1.0)]
+    public void SelectBias_ClampsEstimateWithoutMetadataAnchor(
+        double previewEstimate,
+        double expected)
+    {
+        Assert.Equal(
+            expected,
+            PreviewExposureEstimator.SelectBias(previewEstimate, 0),
             precision: 10);
     }
 

@@ -144,7 +144,7 @@ public sealed record BaseImageInfo(
     int ExifOrientationApplied,    // for diagnostics; pixels are already upright
     int FullWidth,                 // native full-resolution dimensions after orientation —
     int FullHeight,                // set on preview bases too; RENDER.md §9 scales σ by these
-    double SourceExposureBiasEv = 0); // Fuji midpoint restoration; 0 for other sources
+    double SourceExposureBiasEv = 0); // bounded embedded-preview/default-brightness estimate
 // IsMonochrome is a loader-produced fact propagated with preview/render outcomes.
 // Also carries the generation-matched embedded-lens prescription summary.
 

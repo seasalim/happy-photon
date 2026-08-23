@@ -9,6 +9,7 @@ internal static class PreviewExposureEstimator
     internal const int ComparisonMaxDimension = 48;
     internal const int MinimumPreviewDimension = 64;
     internal const double MaxMetadataDisagreementEv = 0.5;
+    internal const double MaxUnanchoredBiasEv = 1.0;
     private const int TransferLutLength = ToneLut.Length;
     private const double MinimumLuminance = 1e-5;
     private static readonly Lazy<AgxCrossing> DefaultCrossing =
@@ -217,7 +218,10 @@ internal static class PreviewExposureEstimator
         // a hard accept/reject threshold flips the result by the full
         // disagreement for files that measure near the boundary.
         return metadataFallback == 0
-            ? measured
+            ? Math.Clamp(
+                measured,
+                -MaxUnanchoredBiasEv,
+                MaxUnanchoredBiasEv)
             : Math.Clamp(
                 measured,
                 metadataFallback - MaxMetadataDisagreementEv,
