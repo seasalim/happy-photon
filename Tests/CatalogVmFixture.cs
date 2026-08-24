@@ -40,7 +40,8 @@ internal sealed class CatalogVmFixture : IDisposable
         ISourceAvailabilityService? availabilityService = null,
         Action<Action>? postSelection = null,
         LibRawRuntimeHealth? rawRuntimeHealth = null,
-        TimeProvider? timeProvider = null) =>
+        TimeProvider? timeProvider = null,
+        IFileOperationService? fileOperationService = null) =>
         new(
             catalog,
             baseLoader,
@@ -48,7 +49,8 @@ internal sealed class CatalogVmFixture : IDisposable
             availabilityService,
             postSelection,
             rawRuntimeHealth: rawRuntimeHealth,
-            timeProvider: timeProvider);
+            timeProvider: timeProvider,
+            fileOperationService: fileOperationService);
 
     public void Dispose()
     {

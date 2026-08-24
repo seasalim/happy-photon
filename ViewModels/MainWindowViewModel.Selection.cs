@@ -157,11 +157,15 @@ public partial class MainWindowViewModel
             var selected = Library.GetSelectedImages().ToList();
             if (selected.Count > 0)
             {
-                return new ActionTargetResolution(selected, true);
+                return new ActionTargetResolution(
+                    selected.Where(image =>
+                        !IsDeleteTargetClaimed(image.FilePath)).ToList(),
+                    true);
             }
         }
 
-        IReadOnlyList<ImageFile> targets = SelectedImage == null
+        IReadOnlyList<ImageFile> targets = SelectedImage == null ||
+            IsDeleteTargetClaimed(SelectedImage.FilePath)
             ? []
             : [SelectedImage];
         return new ActionTargetResolution(targets, false);

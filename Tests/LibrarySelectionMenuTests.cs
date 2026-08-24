@@ -1,7 +1,9 @@
+using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -12,6 +14,74 @@ namespace HappyPhoton.Tests;
 
 public sealed class LibrarySelectionMenuTests
 {
+    [AvaloniaFact]
+    public void ThumbnailContextMenu_HasFileOperationsAndRaisesRequests()
+    {
+        var image = new ImageFile(Path.Combine(Path.GetTempPath(), "menu.jpg"));
+        var control = new LibraryGridView
+        {
+            Images = new ObservableCollection<ImageFile> { image }
+        };
+        var window = new Window { Content = control };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var tile = Assert.Single(control.GetVisualDescendants().OfType<Border>(),
+            border => ReferenceEquals(border.DataContext, image) &&
+                      border.Classes.Contains("thumbnail"));
+        var menu = tile.ContextMenu!;
+        var items = menu.Items.ToArray();
+        var copy = Assert.IsType<MenuItem>(items[0]);
+        var reveal = Assert.IsType<MenuItem>(items[1]);
+        Assert.IsType<Separator>(items[2]);
+        var delete = Assert.IsType<MenuItem>(items[3]);
+        Assert.Equal(
+            ["Copy path", "Reveal in File Explorer", "Delete…"],
+            new[] { copy, reveal, delete }.Select(item => item.Header));
+        Assert.All(new[] { copy, reveal, delete }, item => Assert.True(item.IsEnabled));
+        var requests = new int[3];
+        control.CopyImagePathsRequested += (_, _) => requests[0]++;
+        control.RevealImageRequested += (_, _) => requests[1]++;
+        control.DeleteImagesRequested += (_, _) => requests[2]++;
+
+        copy.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        reveal.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        delete.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+
+        Assert.Equal([1, 1, 1], requests);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ThumbnailRightClick_SelectsOutsideTargetAndPreservesInsideSelection()
+    {
+        var images = new[]
+        {
+            new ImageFile(Path.Combine(Path.GetTempPath(), "first.jpg")),
+            new ImageFile(Path.Combine(Path.GetTempPath(), "second.jpg")),
+            new ImageFile(Path.Combine(Path.GetTempPath(), "third.jpg"))
+        };
+        var control = new LibraryGridView
+        {
+            Images = new ObservableCollection<ImageFile>(images)
+        };
+        images[0].IsSelected = true;
+        images[1].IsSelected = true;
+
+        control.ApplyRightClickSelection(images[1]);
+
+        Assert.True(images[0].IsSelected);
+        Assert.True(images[1].IsSelected);
+        Assert.False(images[2].IsSelected);
+        Assert.Same(images[1], control.SelectedImage);
+
+        control.ApplyRightClickSelection(images[2]);
+
+        Assert.False(images[0].IsSelected);
+        Assert.False(images[1].IsSelected);
+        Assert.True(images[2].IsSelected);
+        Assert.Same(images[2], control.SelectedImage);
+    }
+
     [AvaloniaFact]
     public void LibraryActions_MenuOwnsSelectionActionsAndTracksSelectionState()
     {

@@ -1,9 +1,11 @@
+using System.Collections.ObjectModel;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -15,6 +17,38 @@ namespace HappyPhoton.Tests;
 
 public sealed class ManualFolderRefreshViewTests
 {
+    [AvaloniaFact]
+    public void FolderRowContextMenu_RevealsClickedFolderOnly()
+    {
+        var selected = new FolderNode(Path.Combine(Path.GetTempPath(), "selected"));
+        var clicked = new FolderNode(Path.Combine(Path.GetTempPath(), "clicked"));
+        var panel = new FolderTreePanel
+        {
+            RootFolders = new ObservableCollection<FolderNode> { selected, clicked },
+            SelectedFolder = selected
+        };
+        var window = new Window { Content = panel };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var row = Assert.Single(panel.GetVisualDescendants().OfType<Border>(),
+            border => ReferenceEquals(border.DataContext, clicked) &&
+                      border.Classes.Contains("folder-row"));
+        var item = Assert.IsType<MenuItem>(Assert.Single(row.ContextMenu!.Items));
+        string? revealed = null;
+        panel.RevealFolderRequested += (_, path) => revealed = path;
+
+        row.ContextMenu.Open(row);
+        Dispatcher.UIThread.RunJobs();
+        item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+
+        Assert.Equal("Reveal in File Explorer", item.Header);
+        Assert.Equal(clicked.Path, revealed);
+        Assert.Same(selected, panel.SelectedFolder);
+        Assert.DoesNotContain(row.ContextMenu.Items.OfType<MenuItem>(),
+            candidate => candidate.Header?.ToString()?.Contains("Delete") == true);
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void FolderPanel_MoreActionsPreserveEventsAndAutomationNames()
     {

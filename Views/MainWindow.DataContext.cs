@@ -62,7 +62,7 @@ public partial class MainWindow
         vm.ConfirmMoveToTrashAsync = ConfirmMoveToTrashAsync;
         vm.ConfirmDeleteRejectedAsync = ConfirmDeleteRejectedAsync;
         vm.ConfirmBatchApplyAsync = ConfirmBatchApplyAsync;
-        vm.ShowDeleteRejectedFailuresAsync = ShowDeleteRejectedFailuresAsync;
+        vm.ShowFileOperationFailuresAsync = ShowFileOperationFailuresAsync;
         vm.PersistAppSettingsAsync = () => SaveAppSettingsAsync(vm);
         vm.PersistFirstRunCompletionAsync =
             path => PersistFirstRunCompletionAsync(vm, path);

@@ -36,7 +36,7 @@ public static class ShortcutCatalog
             new("Ctrl+D", "Deselect all visible images"),
             new("Ctrl+Click", "Toggle an image in the selection"),
             new("Shift+Click", "Select a range"),
-            new("Delete", "Move the current image to Trash after confirmation"),
+            new("Delete", "Move the Library selection, else active photo, to Trash after confirmation"),
         ]),
         new("Develop and edit",
         [

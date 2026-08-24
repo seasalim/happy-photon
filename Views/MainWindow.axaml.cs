@@ -59,6 +59,7 @@ public partial class MainWindow : Window
             _folderTreePanel.RefreshFolderRequested += OnRefreshFolderRequested;
             _folderTreePanel.ImportCatalogRequested += OnImportCatalogRequested;
             _folderTreePanel.PhotoNavigationRequested += OnPhotoNavigationRequested;
+            _folderTreePanel.RevealFolderRequested += OnRevealFolderRequested;
         }
 
         _presetsPanel = this.FindControl<PresetsPanel>("PresetsPanel");
@@ -80,6 +81,9 @@ public partial class MainWindow : Window
             _libraryGridView.DeselectAllRequested += OnDeselectAllRequested;
             _libraryGridView.BatchExportRequested += OnBatchExportRequested;
             _libraryGridView.DeleteRejectedRequested += OnDeleteRejectedRequested;
+            _libraryGridView.CopyImagePathsRequested += OnCopyImagePathsRequested;
+            _libraryGridView.RevealImageRequested += OnRevealImageRequested;
+            _libraryGridView.DeleteImagesRequested += OnDeleteImagesRequested;
             _libraryGridView.SelectionChanged += OnSelectionChanged;
             _libraryGridView.ImageSelectionToggled += OnImageSelectionToggled;
             _libraryGridView.RangeSelectionRequested += OnRangeSelectionRequested;
@@ -111,6 +115,15 @@ public partial class MainWindow : Window
 
     private void OnDeleteRejectedRequested(object? sender, EventArgs e) =>
         WithVm(vm => vm.DeleteRejectedImagesCommand.Execute(null));
+
+    private void OnCopyImagePathsRequested(object? sender, EventArgs e) =>
+        WithVm(vm => vm.CopyImagePathsCommand.Execute(null));
+
+    private void OnRevealImageRequested(object? sender, EventArgs e) =>
+        WithVm(vm => vm.RevealImageCommand.Execute(null));
+
+    private void OnDeleteImagesRequested(object? sender, EventArgs e) =>
+        WithVm(vm => vm.DeleteImageCommand.Execute(null));
 
     private void OnSelectionChanged(object? sender, EventArgs e) =>
         WithVm(vm => vm.RefreshSelectedCount());
@@ -169,12 +182,15 @@ public partial class MainWindow : Window
         await WithVmAsync(vm =>
             vm.ApplyWhiteBalancePickAsync(position.X, position.Y));
 
-    private Task<bool> ConfirmMoveToTrashAsync(string fileName)
+    private Task<bool> ConfirmMoveToTrashAsync(int count, string? fileName)
     {
+        var message = count == 1
+            ? $"Move \"{fileName}\" to Trash?"
+            : $"Move {count} images to Trash?";
         return ConfirmationDialog.ConfirmAsync(
             this,
             "Move to Trash",
-            $"Move \"{fileName}\" to Trash?",
+            message,
             destructive: true);
     }
 
@@ -204,16 +220,21 @@ public partial class MainWindow : Window
             message);
     }
 
-    private Task ShowDeleteRejectedFailuresAsync(int failureCount)
+    private Task ShowFileOperationFailuresAsync(
+        IReadOnlyList<FileOperationFailure> failures)
     {
-        var message = failureCount == 1
-            ? "1 rejected image could not be moved to Trash."
-            : $"{failureCount} rejected images could not be moved to Trash.";
+        var heading = failures.Count == 1
+            ? "1 file was not fully moved to Trash:"
+            : $"{failures.Count} files were not fully moved to Trash:";
+        var details = string.Join(
+            Environment.NewLine,
+            failures.Select(failure =>
+                $"{Path.GetFileName(failure.Path)} — {failure.Reason}"));
 
         return ConfirmationDialog.ShowMessageAsync(
             this,
-            "Delete Rejected Images",
-            message);
+            "Move to Trash",
+            $"{heading}{Environment.NewLine}{Environment.NewLine}{details}");
     }
 
     protected override void OnKeyDown(KeyEventArgs e)

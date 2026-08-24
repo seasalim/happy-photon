@@ -16,7 +16,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private readonly CatalogService _catalogService;
     private readonly Lazy<ImageService> _imageService;
     private readonly Func<ImageFile, Task> _loadMetadataAsync;
-    private readonly FileOperationService _fileOperationService = new();
+    private readonly IFileOperationService _fileOperationService;
+    private readonly ISourceAvailabilityService _sourceAvailabilityService;
     private readonly UiBitmapRetirement _bitmapRetirement = new();
     private readonly TimeProvider _timeProvider;
 
@@ -39,9 +40,13 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         UpdateCheckService? updateCheckService = null,
         UpdateInstallChannel? updateInstallChannel = null,
         LibRawRuntimeHealth? rawRuntimeHealth = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IFileOperationService? fileOperationService = null)
     {
         _catalogService = catalogService;
+        _fileOperationService = fileOperationService ?? new FileOperationService();
+        _sourceAvailabilityService =
+            availabilityService ?? new SourceAvailabilityService();
         _timeProvider = timeProvider ?? TimeProvider.System;
         _rawRuntimeHealth = rawRuntimeHealth;
         _updateCheckService = updateCheckService ?? new UpdateCheckService();
@@ -60,7 +65,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             var service = new ImageService(
                 catalogService,
                 loader,
-                availabilityService ?? new SourceAvailabilityService(),
+                _sourceAvailabilityService,
                 health);
             service.Previews.PreviewRefreshed += OnPreviewRefreshed;
             service.Previews.PreviewLoadCompleted += OnPreviewLoadCompleted;
@@ -230,13 +235,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     public Func<ExportDialogMode, Task>? RequestExportDialogAsync { get; set; }
 
     // Callback for delete confirmation dialog
-    public Func<string, Task<bool>>? ConfirmMoveToTrashAsync { get; set; }
+    public Func<int, string?, Task<bool>>? ConfirmMoveToTrashAsync { get; set; }
 
     // Callback for rejected-image delete confirmation dialog
     public Func<int, string?, Task<bool>>? ConfirmDeleteRejectedAsync { get; set; }
 
-    // Callback for rejected-image delete failure dialog
-    public Func<int, Task>? ShowDeleteRejectedFailuresAsync { get; set; }
+    // Callback for file-operation failure summaries
+    public Func<IReadOnlyList<FileOperationFailure>, Task>?
+        ShowFileOperationFailuresAsync { get; set; }
 
     // Debouncing for live preview. The pending task is awaited at disposal:
     // its action autosaves through the catalog, and a fire-and-forget write

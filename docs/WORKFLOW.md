@@ -133,6 +133,24 @@ re-reads the currently viewed folder and its immediate subfolder list while
 preserving active filters and cataloged edits, ratings, and flags for paths that
 still exist.
 
+Right-click a Library thumbnail to **Copy path**, **Reveal in File Explorer**, or
+**Delete…**. Right-clicking a photograph outside the current selection makes it the
+selection; right-clicking one already selected preserves the selection. Copy path
+places the selected photographs' full paths on the clipboard in grid order, one per
+line. Reveal selects the active file in Explorer or Finder; on Linux it opens the
+containing folder. The folder tree's right-click menu offers Reveal only.
+
+Delete and the `Delete` key use the same targets as other Library actions: the grid
+selection when it is non-empty, otherwise the active photograph. After confirmation,
+Happy Photon moves each original and its resolved XMP sidecar to the system Trash,
+removes its catalog state, and updates the grid. A failed file does not stop the rest
+of a batch; the final dialog names every failure or skipped sidecar. Online-only files
+and sidecars are never downloaded for deletion. Network locations and removable media
+are refused because their deletes may not be recoverable. On Windows, a fixed drive
+whose Recycle Bin was explicitly disabled remains a known limitation: Windows may
+delete permanently just as Explorer does; closing that case requires a future
+`IFileOperation` implementation with recycle-on-delete enforcement.
+
 Burst grouping places photographs captured within two seconds into the same
 sequence. It does not choose a winner; it makes neighboring frames easier to
 recognize and compare. Happy Photon analyzes capture times only after Bursts is

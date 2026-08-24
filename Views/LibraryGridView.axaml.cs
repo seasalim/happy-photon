@@ -159,6 +159,9 @@ public partial class LibraryGridView : UserControl
     public event EventHandler? DeselectAllRequested;
     public event EventHandler? BatchExportRequested;
     public event EventHandler? DeleteRejectedRequested;
+    public event EventHandler? CopyImagePathsRequested;
+    public event EventHandler? RevealImageRequested;
+    public event EventHandler? DeleteImagesRequested;
     public event EventHandler? SelectionChanged;
     public event EventHandler<ImageFile>? ImageSelectionToggled;
     public event EventHandler<(ImageFile from, ImageFile to)>? RangeSelectionRequested;
@@ -303,7 +306,11 @@ public partial class LibraryGridView : UserControl
 
         var point = e.GetCurrentPoint(border);
 
-        if (point.Properties.IsLeftButtonPressed)
+        if (point.Properties.IsRightButtonPressed)
+        {
+            ApplyRightClickSelection(image);
+        }
+        else if (point.Properties.IsLeftButtonPressed)
         {
             var modifiers = e.KeyModifiers;
 
@@ -340,6 +347,23 @@ public partial class LibraryGridView : UserControl
 
             _lastClickedImage = image;
         }
+    }
+
+    internal void ApplyRightClickSelection(ImageFile image)
+    {
+        if (!image.IsSelected)
+        {
+            if (Images != null)
+            {
+                foreach (var candidate in Images)
+                    candidate.IsSelected = false;
+            }
+            image.IsSelected = true;
+            SelectionChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        SelectedImage = image;
+        _lastClickedImage = image;
     }
 
     // View-local visual state lets groupmates react without a view-model round-trip.
@@ -395,5 +419,14 @@ public partial class LibraryGridView : UserControl
     {
         DeleteRejectedRequested?.Invoke(this, EventArgs.Empty);
     }
+
+    private void OnCopyImagePathsClick(object? sender, RoutedEventArgs e) =>
+        CopyImagePathsRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OnRevealImageClick(object? sender, RoutedEventArgs e) =>
+        RevealImageRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OnDeleteImagesClick(object? sender, RoutedEventArgs e) =>
+        DeleteImagesRequested?.Invoke(this, EventArgs.Empty);
 
 }

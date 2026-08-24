@@ -1,0 +1,499 @@
+using System.Diagnostics;
+using HappyPhoton.Models;
+using HappyPhoton.Services;
+using HappyPhoton.ViewModels;
+using Xunit;
+
+namespace HappyPhoton.Tests;
+
+public sealed class FileOperationsTests : IDisposable
+{
+    private readonly CatalogVmFixture _fx = new("file-operations");
+
+    [Fact]
+    public async Task DeleteSelection_MovesSidecarAndRemovesCatalogCachesAndGridRows()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("catalog");
+        var operations = new TestFileOperationService();
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            fileOperationService: operations);
+        var first = await CreateCatalogImageAsync(catalog, "first.jpg");
+        var second = await CreateCatalogImageAsync(catalog, "second.jpg");
+        var sidecar = first.FilePath + ".xmp";
+        var shadowedSidecar = Path.ChangeExtension(first.FilePath, ".xmp");
+        await File.WriteAllTextAsync(sidecar, "sidecar");
+        await File.WriteAllTextAsync(shadowedSidecar, "shadowed");
+        File.SetLastWriteTimeUtc(sidecar, DateTime.UtcNow.AddMinutes(1));
+        var preview = catalog.GetPreviewPath(first.CatalogId);
+        var thumbnail = catalog.GetThumbnailPath(first.CatalogId);
+        Directory.CreateDirectory(Path.GetDirectoryName(preview)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(thumbnail)!);
+        await File.WriteAllBytesAsync(preview, [1]);
+        await File.WriteAllBytesAsync(thumbnail, [1]);
+        vm.Library.SetImages([first, second]);
+        vm.SelectedImage = first;
+        vm.Library.SelectAllVisible();
+        (int count, string? name)? prompt = null;
+        vm.ConfirmMoveToTrashAsync = (count, name) =>
+        {
+            prompt = (count, name);
+            return Task.FromResult(true);
+        };
+
+        await vm.DeleteImageCommand.ExecuteAsync(null);
+
+        Assert.Equal((2, null), prompt);
+        Assert.Equal(
+            [first.FilePath, sidecar, shadowedSidecar, second.FilePath],
+            operations.MovedPaths);
+        Assert.Empty(vm.Library.AllImages);
+        Assert.Null(vm.SelectedImage);
+        Assert.False(File.Exists(first.FilePath));
+        Assert.False(File.Exists(sidecar));
+        Assert.False(File.Exists(shadowedSidecar));
+        Assert.False(File.Exists(second.FilePath));
+        Assert.False(File.Exists(preview));
+        Assert.False(File.Exists(thumbnail));
+        Assert.Empty(await catalog.LoadImageStatesAsync(
+            [first.FilePath, second.FilePath]));
+    }
+
+    [Fact]
+    public async Task Delete_RequiresConfirmationAndNamesTheSingleFile()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("confirm-catalog");
+        var operations = new TestFileOperationService();
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            fileOperationService: operations);
+        var image = await CreateCatalogImageAsync(catalog, "only.jpg");
+        vm.Library.SetImages([image]);
+        vm.SelectedImage = image;
+
+        await vm.DeleteImageCommand.ExecuteAsync(null);
+        Assert.Empty(operations.MovedPaths);
+
+        (int count, string? name)? prompt = null;
+        vm.ConfirmMoveToTrashAsync = (count, name) =>
+        {
+            prompt = (count, name);
+            return Task.FromResult(false);
+        };
+        await vm.DeleteImageCommand.ExecuteAsync(null);
+
+        Assert.Equal((1, image.FileName), prompt);
+        Assert.Empty(operations.MovedPaths);
+        Assert.True(File.Exists(image.FilePath));
+        Assert.Contains(image, vm.Library.AllImages);
+    }
+
+    [Fact]
+    public async Task DeleteBatch_ContinuesAfterLockedFileAndNamesFailure()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("failure-catalog");
+        var locked = await CreateCatalogImageAsync(catalog, "locked.jpg");
+        var moved = await CreateCatalogImageAsync(catalog, "moved.jpg");
+        var operations = new TestFileOperationService
+        {
+            MoveResult = path => path != locked.FilePath
+        };
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            fileOperationService: operations);
+        vm.Library.SetImages([locked, moved]);
+        vm.Library.SelectAllVisible();
+        vm.SelectedImage = locked;
+        vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
+        IReadOnlyList<FileOperationFailure>? summary = null;
+        vm.ShowFileOperationFailuresAsync = failures =>
+        {
+            summary = failures;
+            return Task.CompletedTask;
+        };
+
+        await vm.DeleteImageCommand.ExecuteAsync(null);
+
+        Assert.Equal([locked.FilePath, moved.FilePath], operations.MovedPaths);
+        Assert.Equal([locked], vm.Library.AllImages);
+        Assert.True(File.Exists(locked.FilePath));
+        Assert.False(File.Exists(moved.FilePath));
+        var failure = Assert.Single(summary!);
+        Assert.Equal(locked.FilePath, failure.Path);
+        Assert.Contains("could not be moved", failure.Reason);
+    }
+
+    [Fact]
+    public async Task Delete_ReportsCatalogCleanupFailureAfterFileWasTrashed()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("catalog-failure");
+        var operations = new TestFileOperationService();
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            fileOperationService: operations);
+        var image = await CreateCatalogImageAsync(catalog, "catalog-failure.jpg");
+        vm.Library.SetImages([image]);
+        vm.SelectedImage = image;
+        vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
+        IReadOnlyList<FileOperationFailure>? summary = null;
+        vm.ShowFileOperationFailuresAsync = failures =>
+        {
+            summary = failures;
+            return Task.CompletedTask;
+        };
+        catalog.Dispose();
+
+        await vm.DeleteImageCommand.ExecuteAsync(null);
+
+        Assert.Equal([image.FilePath], operations.MovedPaths);
+        Assert.Empty(vm.Library.AllImages);
+        var failure = Assert.Single(summary!);
+        Assert.Equal(image.FilePath, failure.Path);
+        Assert.Contains("moved to Trash", failure.Reason);
+        Assert.Contains("catalog entry", failure.Reason);
+        Assert.NotEqual(0, image.CatalogId);
+    }
+
+    [Fact]
+    public async Task DeleteBatch_SkipsOnlineOnlyImageAndSidecarWithoutHydration()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("cloud-catalog");
+        var online = await CreateCatalogImageAsync(catalog, "online.jpg");
+        var local = await CreateCatalogImageAsync(catalog, "local.jpg");
+        var sidecar = local.FilePath + ".xmp";
+        await File.WriteAllTextAsync(sidecar, "sidecar");
+        var availability = new TestSourceAvailabilityService(
+            SourceAvailability.AvailableLocally)
+        {
+            Resolver = path => path == online.FilePath || path == sidecar
+                ? SourceAvailability.RequiresHydration
+                : SourceAvailability.AvailableLocally
+        };
+        var operations = new TestFileOperationService();
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: availability,
+            fileOperationService: operations);
+        vm.Library.SetImages([online, local]);
+        vm.Library.SelectAllVisible();
+        vm.SelectedImage = online;
+        vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
+        IReadOnlyList<FileOperationFailure>? summary = null;
+        vm.ShowFileOperationFailuresAsync = failures =>
+        {
+            summary = failures;
+            return Task.CompletedTask;
+        };
+
+        await vm.DeleteImageCommand.ExecuteAsync(null);
+
+        Assert.Equal([local.FilePath], operations.MovedPaths);
+        Assert.Equal([online], vm.Library.AllImages);
+        Assert.True(File.Exists(online.FilePath));
+        Assert.True(File.Exists(sidecar));
+        Assert.Equal(2, summary!.Count);
+        Assert.Contains(summary, failure => failure.Path == online.FilePath &&
+            failure.Reason.Contains("online-only"));
+        Assert.Contains(summary, failure => failure.Path == sidecar &&
+            failure.Reason.Contains("online-only"));
+    }
+
+    [Fact]
+    public async Task DeleteBatch_RefusesUnsafeVolumesAndNamesEachFile()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("volume-catalog");
+        var network = await CreateCatalogImageAsync(catalog, "network.jpg");
+        var removable = await CreateCatalogImageAsync(catalog, "removable.jpg");
+        var operations = new TestFileOperationService
+        {
+            Assessment = path => new TrashPathAssessment(
+                false,
+                path == network.FilePath
+                    ? "Network files cannot be moved to Trash safely."
+                    : "Files on removable media cannot be moved to Trash safely.")
+        };
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            fileOperationService: operations);
+        vm.Library.SetImages([network, removable]);
+        vm.Library.SelectAllVisible();
+        vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
+        IReadOnlyList<FileOperationFailure>? summary = null;
+        vm.ShowFileOperationFailuresAsync = failures =>
+        {
+            summary = failures;
+            return Task.CompletedTask;
+        };
+
+        await vm.DeleteImageCommand.ExecuteAsync(null);
+
+        Assert.Empty(operations.MovedPaths);
+        Assert.Equal([network, removable], vm.Library.AllImages);
+        Assert.Equal(
+            [network.FilePath, removable.FilePath],
+            summary!.Select(failure => failure.Path));
+    }
+
+    [Fact]
+    public async Task CopyPaths_UsesSelectionInGridOrderAndVerbatimPaths()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("copy-catalog");
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask);
+        var first = new ImageFile(_fx.Path("first image.jpg"));
+        var second = new ImageFile(_fx.Path("second.jpg"));
+        var third = new ImageFile(_fx.Path("third.jpg"));
+        vm.Library.SetImages([first, second, third]);
+        vm.SelectedImage = second;
+        vm.Library.ToggleSelection(first);
+        vm.Library.ToggleSelection(third);
+        string? copied = null;
+        vm.CopyToClipboardAsync = text =>
+        {
+            copied = text;
+            return Task.CompletedTask;
+        };
+
+        await vm.CopyImagePathsCommand.ExecuteAsync(null);
+
+        Assert.Equal(
+            $"{first.FilePath}{Environment.NewLine}{third.FilePath}", copied);
+
+        vm.Library.DeselectAllVisible();
+        await vm.CopyImagePathsCommand.ExecuteAsync(null);
+        Assert.Equal(second.FilePath, copied);
+    }
+
+    [Fact]
+    public async Task DeleteClaim_ExcludesTrashedRowsFromAssessmentTargets()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("xmp-catalog");
+        await catalog.SetAppSettingAsync(
+            MainWindowViewModel.XmpSidecarModeKey,
+            XmpSidecarMode.ReadWrite.ToString());
+        var secondMoveStarted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowSecondMove = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        string? secondPath = null;
+        var operations = new TestFileOperationService
+        {
+            BeforeMoveAsync = async path =>
+            {
+                if (path != secondPath) return;
+                secondMoveStarted.TrySetResult();
+                await allowSecondMove.Task;
+            }
+        };
+        var availability = new TestSourceAvailabilityService(
+            SourceAvailability.AvailableLocally);
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: availability,
+            fileOperationService: operations);
+        await vm.RestoreXmpSettingsAsync();
+        var first = await CreateCatalogImageAsync(catalog, "claimed-first.jpg");
+        var second = await CreateCatalogImageAsync(catalog, "claimed-second.jpg");
+        var unclaimed = await CreateCatalogImageAsync(catalog, "unclaimed.jpg");
+        secondPath = second.FilePath;
+        vm.Library.SetImages([first, second, unclaimed]);
+        vm.Library.ToggleSelection(first);
+        vm.Library.ToggleSelection(second);
+        vm.SelectedImage = unclaimed;
+        vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
+
+        var deleting = vm.DeleteImageCommand.ExecuteAsync(null);
+        await secondMoveStarted.Task.WaitAsync(TestWaits.Condition);
+        await vm.SetRatingCommand.ExecuteAsync(4);
+
+        var statesWhileClaimed = await catalog.LoadImageStatesAsync([first.FilePath]);
+        var ratingWhileClaimed = first.Rating;
+        var pendingWhileClaimed = first.PendingAssessmentAxes;
+        var unclaimedRating = unclaimed.Rating;
+
+        allowSecondMove.TrySetResult();
+        await deleting;
+
+        Assert.Empty(statesWhileClaimed);
+        Assert.Equal(0, ratingWhileClaimed);
+        Assert.Equal(AssessmentAxes.None, pendingWhileClaimed);
+        Assert.Equal(0, unclaimedRating);
+        Assert.False(File.Exists(first.FilePath + ".xmp"));
+        Assert.Empty(await catalog.LoadImageStatesAsync(
+            [first.FilePath, second.FilePath]));
+        Assert.Equal([unclaimed], vm.Library.AllImages);
+    }
+
+    [Fact]
+    public async Task Delete_DrainsQueuedXmpWriteBeforeMovingResolvedSidecar()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("xmp-drain-catalog");
+        await catalog.SetAppSettingAsync(
+            MainWindowViewModel.XmpSidecarModeKey,
+            XmpSidecarMode.ReadWrite.ToString());
+        var operations = new TestFileOperationService();
+        var availability = new TestSourceAvailabilityService(
+            SourceAvailability.AvailableLocally);
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: availability,
+            fileOperationService: operations);
+        await vm.RestoreXmpSettingsAsync();
+        var image = await CreateCatalogImageAsync(catalog, "queued.jpg");
+        vm.Library.SetImages([image]);
+        vm.SelectedImage = image;
+        await vm.SetRatingCommand.ExecuteAsync(3);
+        vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
+
+        await vm.DeleteImageCommand.ExecuteAsync(null);
+
+        Assert.Equal(
+            [image.FilePath, image.FilePath + ".xmp"],
+            operations.MovedPaths);
+        Assert.False(File.Exists(image.FilePath + ".xmp"));
+    }
+
+    [Fact]
+    public async Task Reveal_UsesPlatformSpecificArgumentsAndSharedFolderLauncher()
+    {
+        var windows = FileOperationService.CreateRevealFileStartInfo(
+            FileOperationPlatform.Windows, @"C:\Photos With Spaces\one.jpg");
+        Assert.Equal("explorer.exe", windows.FileName);
+        Assert.Equal(@"/select,""C:\Photos With Spaces\one.jpg""", windows.Arguments);
+        Assert.Empty(windows.ArgumentList);
+
+        var mac = FileOperationService.CreateRevealFileStartInfo(
+            FileOperationPlatform.MacOS, "/photos/one.jpg");
+        Assert.Equal("open", mac.FileName);
+        Assert.Equal(["-R", "/photos/one.jpg"], mac.ArgumentList);
+
+        var linux = FileOperationService.CreateRevealFileStartInfo(
+            FileOperationPlatform.Linux, "/photos/one.jpg");
+        Assert.Equal("xdg-open", linux.FileName);
+        Assert.Equal(["/photos"], linux.ArgumentList);
+
+        ProcessStartInfo? launched = null;
+        var service = new FileOperationService(
+            FileOperationPlatform.Windows,
+            start =>
+            {
+                launched = start;
+                return true;
+            },
+            _ => DriveType.Fixed);
+        Assert.True(await service.OpenFolderAsync(_fx.Root));
+        Assert.Equal("explorer.exe", launched!.FileName);
+        Assert.Equal([_fx.Root], launched.ArgumentList);
+    }
+
+    [Fact]
+    public async Task Reveal_DoesNotLaunchWhenFileNoLongerExists()
+    {
+        var launchCount = 0;
+        var service = new FileOperationService(
+            FileOperationPlatform.Windows,
+            _ =>
+            {
+                launchCount++;
+                return true;
+            });
+
+        Assert.False(await service.RevealFileAsync(_fx.Path("missing.jpg")));
+        Assert.Equal(0, launchCount);
+    }
+
+    [Fact]
+    public void TrashGuard_RefusesUncNetworkAndRemovablePaths()
+    {
+        var driveType = DriveType.Fixed;
+        var service = new FileOperationService(
+            FileOperationPlatform.Windows,
+            _ => true,
+            _ => driveType);
+
+        var unc = service.AssessTrashPath(@"\\server\share\one.jpg");
+        Assert.False(unc.IsSupported);
+        Assert.Contains("Network", unc.Reason);
+
+        driveType = DriveType.Network;
+        var network = service.AssessTrashPath(@"N:\one.jpg");
+        Assert.False(network.IsSupported);
+        Assert.Contains("Network", network.Reason);
+
+        driveType = DriveType.Removable;
+        var removable = service.AssessTrashPath(@"E:\one.jpg");
+        Assert.False(removable.IsSupported);
+        Assert.Contains("removable", removable.Reason);
+
+        foreach (var unsupported in new[]
+                 { DriveType.Ram, DriveType.Unknown, DriveType.CDRom })
+        {
+            driveType = unsupported;
+            var assessment = service.AssessTrashPath(@"X:\one.jpg");
+            Assert.False(assessment.IsSupported);
+            Assert.Contains("cannot be moved to Trash safely", assessment.Reason);
+        }
+    }
+
+    [Theory]
+    [InlineData((int)FileOperationPlatform.Linux)]
+    [InlineData((int)FileOperationPlatform.MacOS)]
+    public void TrashGuard_DoesNotApplyWindowsVolumePolicy(int platform)
+    {
+        var queried = false;
+        var service = new FileOperationService((FileOperationPlatform)platform, _ => true, _ =>
+        {
+            queried = true;
+            return DriveType.Removable;
+        });
+        Assert.True(service.AssessTrashPath(_fx.Path("one.jpg")).IsSupported);
+        Assert.False(queried);
+    }
+
+    private async Task<ImageFile> CreateCatalogImageAsync(
+        CatalogService catalog,
+        string name)
+    {
+        var path = _fx.Path(name);
+        await File.WriteAllBytesAsync(path, [1]);
+        return new ImageFile(path)
+        {
+            CatalogId = await catalog.GetOrCreateImageAsync(path)
+        };
+    }
+
+    public void Dispose() => _fx.Dispose();
+
+    private sealed class TestFileOperationService : IFileOperationService
+    {
+        internal List<string> MovedPaths { get; } = [];
+        internal Func<string, bool> MoveResult { get; init; } = _ => true;
+        internal Func<string, TrashPathAssessment> Assessment { get; init; } =
+            _ => new TrashPathAssessment(true, null);
+        internal Func<string, Task>? BeforeMoveAsync { get; init; }
+
+        public TrashPathAssessment AssessTrashPath(string path) => Assessment(path);
+
+        public async Task<bool> MoveToTrashAsync(string filePath)
+        {
+            MovedPaths.Add(filePath);
+            if (BeforeMoveAsync != null) await BeforeMoveAsync(filePath);
+            if (!MoveResult(filePath)) return false;
+            File.Delete(filePath);
+            return true;
+        }
+
+        public Task<bool> RevealFileAsync(string filePath) => Task.FromResult(true);
+
+        public Task<bool> OpenFolderAsync(string folderPath) => Task.FromResult(true);
+    }
+}

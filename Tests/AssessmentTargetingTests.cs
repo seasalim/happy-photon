@@ -270,6 +270,9 @@ public sealed class AssessmentTargetingTests : IDisposable
             var action = organize.Entries.Single(entry => entry.Keys == keys).Action;
             Assert.DoesNotContain("export", action, StringComparison.OrdinalIgnoreCase);
         }
+        var delete = organize.Entries.Single(entry => entry.Keys == "Delete").Action;
+        Assert.Contains("selection", delete, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("current image", delete, StringComparison.OrdinalIgnoreCase);
 
         var xaml = File.ReadAllText(Path.Combine(
             GoldenTestPaths.RepositoryRoot, "Views", "ImageAssessmentControl.axaml"));

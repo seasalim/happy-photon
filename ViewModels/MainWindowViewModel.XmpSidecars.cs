@@ -11,6 +11,8 @@ public partial class MainWindowViewModel
     private XmpSidecarWriter? _xmpWriter;
     private IReadOnlyList<string> _xmpIndexedSidecars = [];
     private XmpSidecarMode _appliedXmpMode;
+    private readonly HashSet<string> _inFlightDeletePaths =
+        new(StringComparer.OrdinalIgnoreCase);
 
     private async Task ApplyXmpModeTransitionAsync(
         XmpSidecarMode newMode)
@@ -173,11 +175,31 @@ public partial class MainWindowViewModel
             var paths = Library.AllImages.Select(image => image.FilePath).ToArray();
             foreach (var snapshot in snapshots)
             {
+                if (IsDeleteTargetClaimed(snapshot.FilePath)) continue;
                 _xmpWriter.TryEnqueue(
                     snapshot, snapshot.PendingAxes, paths, XmpSidecarNaming);
             }
         }
         return snapshots;
+    }
+
+    private void SetDeleteTargetsClaimed(
+        IEnumerable<string> paths,
+        bool claimed)
+    {
+        lock (_inFlightDeletePaths)
+        {
+            foreach (var path in paths)
+            {
+                if (claimed) _inFlightDeletePaths.Add(path);
+                else _inFlightDeletePaths.Remove(path);
+            }
+        }
+    }
+
+    private bool IsDeleteTargetClaimed(string path)
+    {
+        lock (_inFlightDeletePaths) return _inFlightDeletePaths.Contains(path);
     }
 
     private static void ApplyAssessmentSnapshot(

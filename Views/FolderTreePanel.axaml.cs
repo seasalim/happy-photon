@@ -60,6 +60,7 @@ public partial class FolderTreePanel : UserControl
     public event EventHandler? RefreshFolderRequested;
     public event EventHandler? ImportCatalogRequested;
     public event EventHandler? PhotoNavigationRequested;
+    public event EventHandler<string>? RevealFolderRequested;
 
     private bool _selectionStartedByPointer;
 
@@ -189,5 +190,11 @@ public partial class FolderTreePanel : UserControl
         Avalonia.Interactivity.RoutedEventArgs e)
     {
         ImportCatalogRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnRevealFolderClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { CommandParameter: FolderNode { IsDummy: false } node })
+            RevealFolderRequested?.Invoke(this, node.Path);
     }
 }

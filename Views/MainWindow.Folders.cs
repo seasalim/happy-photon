@@ -24,6 +24,9 @@ public partial class MainWindow
             DispatcherPriority.Input);
     }
 
+    private async void OnRevealFolderRequested(object? sender, string path) =>
+        await WithVmAsync(vm => vm.RevealFolderAsync(path));
+
     private async void OnChangeFolderRequested(object? sender, EventArgs e)
     {
         if (DataContext is not MainWindowViewModel vm ||

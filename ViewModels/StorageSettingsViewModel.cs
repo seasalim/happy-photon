@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,22 +10,29 @@ public partial class StorageSettingsViewModel : ViewModelBase
     private readonly AppDataLocations _locations;
     private readonly CatalogLocationMigrator _migrator;
     private readonly bool _isPackagedWindows;
+    private readonly IFileOperationService _fileOperationService;
 
     public StorageSettingsViewModel(
         AppDataLocations locations,
         CatalogLocationMigrator migrator)
-        : this(locations, migrator, PackagedWindowsDetector.IsPackaged)
+        : this(
+            locations,
+            migrator,
+            PackagedWindowsDetector.IsPackaged,
+            fileOperationService: null)
     {
     }
 
     internal StorageSettingsViewModel(
         AppDataLocations locations,
         CatalogLocationMigrator migrator,
-        bool isPackagedWindows)
+        bool isPackagedWindows,
+        IFileOperationService? fileOperationService = null)
     {
         _locations = locations;
         _migrator = migrator;
         _isPackagedWindows = isPackagedWindows;
+        _fileOperationService = fileOperationService ?? new FileOperationService();
         CatalogRoot = locations.CatalogRoot;
         CacheRoot = locations.CacheRoot;
     }
@@ -74,10 +80,12 @@ public partial class StorageSettingsViewModel : ViewModelBase
     public Func<bool, Task<string?>>? RequestDestinationAsync { get; set; }
 
     [RelayCommand]
-    private void RevealCatalog() => Reveal(CatalogRoot);
+    private async Task RevealCatalogAsync() =>
+        await _fileOperationService.OpenFolderAsync(CatalogRoot);
 
     [RelayCommand]
-    private void RevealCache() => Reveal(CacheRoot);
+    private async Task RevealCacheAsync() =>
+        await _fileOperationService.OpenFolderAsync(CacheRoot);
 
     [RelayCommand(CanExecute = nameof(CanChangeCatalog))]
     private Task ChangeCatalogAsync() => GuardAsync(catalog: true, async () =>
@@ -160,18 +168,6 @@ public partial class StorageSettingsViewModel : ViewModelBase
                 ? AppDataLocationService.CacheEnvironmentVariable
                 : null
         }.Where(name => name != null));
-
-    private static void Reveal(string path)
-    {
-        if (!Directory.Exists(path)) return;
-        var start = OperatingSystem.IsWindows()
-            ? new ProcessStartInfo("explorer.exe", $"\"{path}\"")
-            : OperatingSystem.IsMacOS()
-                ? new ProcessStartInfo("open", path)
-                : new ProcessStartInfo("xdg-open", path);
-        start.UseShellExecute = false;
-        Process.Start(start);
-    }
 
     private static bool IsUnderLocalAppData(string path)
     {

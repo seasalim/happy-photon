@@ -1,0 +1,52 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Tile radius stays concentric with the image's radius 8 plus the 7px border+padding inset -->
+    <Style Selector="Border.thumbnail">
+        <Setter Property="Background" Value="{DynamicResource SurfaceLow}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.13" Easing="QuadraticEaseOut"/>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.13" Easing="QuadraticEaseOut"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.thumbnail:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+    </Style>
+    <Style Selector="Border.thumbnail.selected">
+        <Setter Property="Background" Value="{DynamicResource SelectionSurface}"/>
+    </Style>
+    <Style Selector="Border.thumbnail.active">
+        <Setter Property="BorderBrush" Value="{DynamicResource ActiveImageRing}"/>
+    </Style>
+    <Style Selector="Border.img-hairline">
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.13" Easing="QuadraticEaseOut"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.thumbnail.active Border.img-hairline">
+        <Setter Property="BorderBrush" Value="{DynamicResource SurfaceLowest}"/>
+    </Style>
+    <!-- Hidden via opacity rather than IsVisible so the entrance can animate -->
+    <Style Selector="Border.check-badge">
+        <Setter Property="Opacity" Value="0"/>
+        <Setter Property="RenderTransform" Value="scale(0.7)"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.1" Easing="QuadraticEaseOut"/>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" Easing="QuadraticEaseOut"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.check-badge.selected">
+        <Setter Property="Opacity" Value="0.8"/>
+        <Setter Property="RenderTransform" Value="scale(1)"/>
+    </Style>
+</Styles>

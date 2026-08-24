@@ -67,6 +67,14 @@
                             Classes.active="{Binding IsSelected}"
                             CornerRadius="{StaticResource RadiusSmall}"
                             Padding="7,4">
+                        <Border.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Reveal in File Explorer"
+                                          CommandParameter="{Binding}"
+                                          IsEnabled="{Binding !IsDummy}"
+                                          Click="OnRevealFolderClick"/>
+                            </ContextMenu>
+                        </Border.ContextMenu>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <!-- Folder Icon -->
                             <PathIcon Width="16" Height="16">

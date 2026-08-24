@@ -6,36 +6,19 @@ using HappyPhoton.Services;
 namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
-{    [RelayCommand]
+{
+    [RelayCommand]
     private async Task DeleteImageAsync()
     {
         if (IsFullScreenMode) return;
 
-        if (SelectedImage == null) return;
+        var targets = ResolveActionTargets().Targets;
+        if (targets.Count == 0 || ConfirmMoveToTrashAsync == null) return;
 
-        if (ConfirmMoveToTrashAsync != null)
-        {
-            var confirmed = await ConfirmMoveToTrashAsync(SelectedImage.FileName);
-            if (!confirmed) return;
-        }
-
-        var imageToDelete = SelectedImage;
-        var movedToTrash = await _fileOperationService.MoveToTrashAsync(imageToDelete.FilePath);
-        if (!movedToTrash)
-        {
-            return;
-        }
-
-        if (imageToDelete.CatalogId != 0)
-        {
-            await _catalogService.DeleteImageAsync(imageToDelete.CatalogId);
-            imageToDelete.CatalogId = 0;
-        }
-
-        var replacement = Library.ReplacementAfterRemoval(imageToDelete);
-        SelectedImage = replacement;
-        Library.Remove(imageToDelete);
-        UpdateSelectedCount();
+        var confirmed = await ConfirmMoveToTrashAsync(
+            targets.Count,
+            targets.Count == 1 ? targets[0].FileName : null);
+        if (confirmed) await DeleteBatchAsync(targets);
     }
 
     [RelayCommand]
@@ -46,59 +29,191 @@ public partial class MainWindowViewModel
         var rejectedImages = Library.GetRejectedImages().ToList();
         if (rejectedImages.Count == 0) return;
 
-        if (ConfirmDeleteRejectedAsync != null)
-        {
-            var confirmed = await ConfirmDeleteRejectedAsync(rejectedImages.Count, CurrentFolderPath);
-            if (!confirmed) return;
-        }
+        if (ConfirmDeleteRejectedAsync == null) return;
+        var confirmed = await ConfirmDeleteRejectedAsync(
+            rejectedImages.Count, CurrentFolderPath);
+        if (confirmed) await DeleteBatchAsync(rejectedImages);
+    }
 
+    private async Task DeleteBatchAsync(IReadOnlyList<ImageFile> targets)
+    {
+        var claimedPaths = targets.Select(image => image.FilePath).ToArray();
+        SetDeleteTargetsClaimed(claimedPaths, claimed: true);
+        var deletedImages = new List<ImageFile>();
+        var failures = new List<FileOperationFailure>();
         var selectedImage = SelectedImage;
-        var replacement = selectedImage != null && rejectedImages.Contains(selectedImage)
+        var replacement = selectedImage != null && targets.Contains(selectedImage)
             ? Library.ReplacementAfterRemoval(selectedImage)
             : selectedImage;
-        var deletedImages = new List<ImageFile>();
-        var failureCount = 0;
+        var folderImagePaths = Library.AllImages
+            .Select(image => image.FilePath)
+            .ToArray();
 
-        foreach (var image in rejectedImages)
+        try
         {
-            try
-            {
-                if (!await _fileOperationService.MoveToTrashAsync(image.FilePath))
-                {
-                    failureCount++;
-                    continue;
-                }
+            if (_xmpWriter != null) await _xmpWriter.DrainAsync();
 
-                if (image.CatalogId != 0)
-                {
-                    await _catalogService.DeleteImageAsync(image.CatalogId);
-                    image.CatalogId = 0;
-                }
-                deletedImages.Add(image);
-            }
-            catch
+            foreach (var image in targets)
             {
-                failureCount++;
+                await DeleteOneAsync(
+                    image, folderImagePaths, deletedImages, failures);
             }
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Delete batch failed: {exception.Message}");
+            foreach (var image in targets.Except(deletedImages))
+            {
+                failures.Add(new FileOperationFailure(
+                    image.FilePath, "The delete operation could not be completed."));
+            }
+        }
+        finally
+        {
+            SetDeleteTargetsClaimed(claimedPaths, claimed: false);
         }
 
         if (deletedImages.Count > 0)
         {
             Library.RemoveRange(deletedImages);
-
             if (selectedImage != null && deletedImages.Contains(selectedImage))
             {
                 SelectedImage = replacement != null && Library.ContainsVisible(replacement)
                     ? replacement
                     : Library.FirstVisible();
             }
-
             UpdateSelectedCount();
         }
 
-        if (failureCount > 0 && ShowDeleteRejectedFailuresAsync != null)
+        if (failures.Count > 0 && ShowFileOperationFailuresAsync != null)
         {
-            await ShowDeleteRejectedFailuresAsync(failureCount);
+            try
+            {
+                await ShowFileOperationFailuresAsync(failures);
+            }
+            catch (Exception exception)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Delete summary failed: {exception.Message}");
+            }
+        }
+    }
+
+    private async Task DeleteOneAsync(
+        ImageFile image,
+        IReadOnlyCollection<string> folderImagePaths,
+        ICollection<ImageFile> deletedImages,
+        ICollection<FileOperationFailure> failures)
+    {
+        try
+        {
+            if (_sourceAvailabilityService.GetAvailability(
+                    image.FilePath).IsOnlineOnly())
+            {
+                failures.Add(new FileOperationFailure(
+                    image.FilePath, "The file is online-only and was not downloaded."));
+                return;
+            }
+
+            var pathAssessment = _fileOperationService.AssessTrashPath(
+                image.FilePath);
+            if (!pathAssessment.IsSupported)
+            {
+                failures.Add(new FileOperationFailure(
+                    image.FilePath, pathAssessment.Reason ??
+                    "The file cannot be moved to Trash safely."));
+                return;
+            }
+
+            if (!await _fileOperationService.MoveToTrashAsync(image.FilePath))
+            {
+                failures.Add(new FileOperationFailure(
+                    image.FilePath, "The file could not be moved to Trash."));
+                return;
+            }
+
+            deletedImages.Add(image);
+            await MoveResolvedSidecarsToTrashAsync(
+                image, folderImagePaths, failures);
+
+            if (image.CatalogId != 0)
+            {
+                try
+                {
+                    await _catalogService.DeleteImageAsync(image.CatalogId);
+                    image.CatalogId = 0;
+                }
+                catch (Exception exception)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"Catalog cleanup failed: {exception.Message}");
+                    failures.Add(new FileOperationFailure(image.FilePath,
+                        "The file was moved to Trash, but its catalog entry was left behind."));
+                }
+            }
+        }
+        catch (Exception exception)
+        {
+            failures.Add(new FileOperationFailure(
+                image.FilePath, exception.Message));
+        }
+    }
+
+    private async Task MoveResolvedSidecarsToTrashAsync(
+        ImageFile image,
+        IReadOnlyCollection<string> folderImagePaths,
+        ICollection<FileOperationFailure> failures)
+    {
+        XmpSidecarResolution resolution;
+        try
+        {
+            resolution = XmpSidecarPaths.Resolve(
+                image.FilePath,
+                folderImagePaths,
+                XmpSidecarNaming);
+        }
+        catch (Exception exception)
+        {
+            failures.Add(new FileOperationFailure(
+                image.FilePath, $"The sidecar could not be resolved: {exception.Message}"));
+            return;
+        }
+
+        foreach (var sidecar in new[] { resolution.Winner, resolution.Shadowed })
+        {
+            if (sidecar == null) continue;
+
+            try
+            {
+                if (_sourceAvailabilityService.GetAvailability(
+                        sidecar.Path).IsOnlineOnly())
+                {
+                    failures.Add(new FileOperationFailure(
+                        sidecar.Path, "The sidecar is online-only and was not downloaded."));
+                    continue;
+                }
+
+                var pathAssessment = _fileOperationService.AssessTrashPath(sidecar.Path);
+                if (!pathAssessment.IsSupported)
+                {
+                    failures.Add(new FileOperationFailure(
+                        sidecar.Path, pathAssessment.Reason ??
+                        "The sidecar cannot be moved to Trash safely."));
+                    continue;
+                }
+
+                if (!await _fileOperationService.MoveToTrashAsync(sidecar.Path))
+                {
+                    failures.Add(new FileOperationFailure(
+                        sidecar.Path, "The sidecar could not be moved to Trash."));
+                }
+            }
+            catch (Exception exception)
+            {
+                failures.Add(new FileOperationFailure(
+                    sidecar.Path, exception.Message));
+            }
         }
     }
 
