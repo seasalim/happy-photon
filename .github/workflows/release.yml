@@ -8,7 +8,7 @@ on:
       version:
         description: SemVer-compatible version for a non-publishing dry run
         required: true
-        default: 0.2.0-dev.1
+        default: 0.2.1-dev.1
         type: string
 concurrency:
   group: release-${{ github.ref }}
