@@ -1,7 +1,6 @@
 #:project ../HappyPhoton.csproj
 #:property PublishAot=false
 #:property SelfContained=false
-
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -9,27 +8,31 @@ using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
-
 var inputs = new List<string>();
 var outputDirectory = Path.Combine(
     Path.GetTempPath(), "happy-photon-raf-lens-evaluation");
+var source = "embedded";
 for (var index = 0; index < args.Length; index++)
 {
     if (args[index] == "--output" && index + 1 < args.Length)
         outputDirectory = Path.GetFullPath(args[++index]);
+    else if (args[index] == "--source" && index + 1 < args.Length)
+        source = args[++index].ToLowerInvariant();
     else
         inputs.Add(Path.GetFullPath(args[index]));
 }
-if (inputs.Count == 0)
+if (inputs.Count == 0 || source is not ("embedded" or "lensfun"))
 {
     Console.Error.WriteLine(
         "Usage: dotnet run --file scripts/evaluate-raf-lens-corrections.cs -- " +
-        "<raf-file-or-directory> [...] [--output <directory>]");
+        "<raw-file-or-directory> [...] [--source embedded|lensfun] " +
+        "[--output <directory>]");
     return 2;
 }
 var paths = inputs.SelectMany(path => Directory.Exists(path)
-        ? Directory.EnumerateFiles(path, "*.raf",
-            new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive })
+        ? Directory.EnumerateFiles(path).Where(file =>
+            new[] { ".raf", ".cr2", ".cr3", ".nef", ".dng", ".arw", ".orf" }
+                .Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
         : [path])
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .Order(StringComparer.OrdinalIgnoreCase)
@@ -38,6 +41,10 @@ var readerType = typeof(RawBaseLoader).Assembly.GetType(
     "HappyPhoton.Services.FujiLensPrescriptionReader", throwOnError: true)!;
 readerType.GetProperty("IncludeUnqualifiedTables",
     BindingFlags.Static | BindingFlags.NonPublic)!.SetValue(null, true);
+var lensfunType = typeof(RawBaseLoader).Assembly.GetType(
+    "HappyPhoton.Services.LensfunPrescriptionReader", throwOnError: true)!;
+lensfunType.GetProperty("ForceSource",
+    BindingFlags.Static | BindingFlags.NonPublic)!.SetValue(null, source == "lensfun");
 Environment.SetEnvironmentVariable("OMP_NUM_THREADS", "1");
 Directory.CreateDirectory(outputDirectory);
 var reports = new List<FileReport>();
@@ -86,7 +93,7 @@ foreach (var path in paths)
         };
         failed |= gates.Any(gate => !gate.Passed);
         var report = new FileReport(
-            path,
+            path, source,
             reference.Offset,
             reference.Width,
             reference.Height,
@@ -103,16 +110,15 @@ foreach (var path in paths)
     catch (Exception exception)
     {
         failed = true;
-        reports.Add(new FileReport(path, 0, 0, 0, "", 0, [], exception.Message));
+        reports.Add(new FileReport(path, source, 0, 0, 0, "", 0, [], exception.Message));
         Console.WriteLine($"  FAILURE: {exception.Message}");
     }
 }
-var reportPath = Path.Combine(outputDirectory, "raf-lens-qualification.json");
+var reportPath = Path.Combine(outputDirectory, $"{source}-lens-qualification.json");
 File.WriteAllText(reportPath, JsonSerializer.Serialize(reports,
     new JsonSerializerOptions { WriteIndented = true }));
 Console.WriteLine($"Report: {reportPath}");
 return failed ? 1 : 0;
-
 static ReferenceCandidate SelectReference(string path)
 {
     using var context = LibRawContext.Open(path);
@@ -159,7 +165,6 @@ static ReferenceCandidate SelectReference(string path)
         if (!ReferenceEquals(candidate, selected)) candidate.Image.Dispose();
     return selected;
 }
-
 static int FindJpegEnd(byte[] bytes, int start)
 {
     var index = start;
@@ -207,7 +212,6 @@ static MagickImage Render(string path, bool distortion, bool ca, bool vignette)
         new RenderOptions(false, false)));
     return new MagickImage(result.Image);
 }
-
 static bool PixelEqual(MagickImage first, MagickImage second)
 {
     if (first.Width != second.Width || first.Height != second.Height) return false;
@@ -216,7 +220,6 @@ static bool PixelEqual(MagickImage first, MagickImage second)
     return firstPixels.ToShortArray(PixelMapping.RGB)!
         .AsSpan().SequenceEqual(secondPixels.ToShortArray(PixelMapping.RGB)!);
 }
-
 static Registration Register(Raster source, Raster reference)
 {
     var transform = new Registration(1, 1, 0, 0, double.NegativeInfinity);
@@ -474,10 +477,10 @@ sealed class Raster
     }
 }
 
-sealed record ReferenceCandidate(
-    long Offset, int Width, int Height, string Sha256, MagickImage Image);
-sealed record Registration(
-    double ScaleX, double ScaleY, double OffsetX, double OffsetY, double Score)
+sealed record ReferenceCandidate(long Offset, int Width, int Height,
+    string Sha256, MagickImage Image);
+sealed record Registration(double ScaleX, double ScaleY, double OffsetX,
+    double OffsetY, double Score)
 {
     public (double X, double Y) Map(double x, double y, int width, int height) =>
         ((x - width * 0.5) * ScaleX + width * 0.5 + OffsetX,
@@ -485,13 +488,12 @@ sealed record Registration(
 }
 sealed record CellValues(double[] Values, int[] Parity);
 readonly record struct PatchMatch(double X, double Y, double Score);
-sealed record HalfGate(
-    int Parity, double Before, double After, double Sigma, bool Passed);
-sealed record GateReport(
-    string Name, double Before, double After, double Reduction,
+sealed record HalfGate(int Parity, double Before, double After, double Sigma,
+    bool Passed);
+sealed record GateReport(string Name, double Before, double After, double Reduction,
     double ThreeSigma, bool Passed, IReadOnlyList<HalfGate> Halves,
     bool NotApplicable);
-sealed record FileReport(
-    string Path, long ReferenceOffset, int ReferenceWidth, int ReferenceHeight,
+sealed record FileReport(string Path, string Source, long ReferenceOffset,
+    int ReferenceWidth, int ReferenceHeight,
     string ReferenceSha256, double RegistrationScore,
     IReadOnlyList<GateReport> Gates, string? Error = null);

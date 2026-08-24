@@ -199,12 +199,23 @@ internal static class LensCorrectionProcessor
                 for (var x = 0; x < outputWidth; x++)
                 {
                     LensPoint logical = default;
+                    LensPoint greenPostGeometry = default;
                     double camera0;
                     double camera1;
                     double camera2;
                     if (correction.HasSharedGeometry)
                     {
-                        var point = correction.MapShared(x, y);
+                        LensPoint point;
+                        if (correction.HasVignetting)
+                        {
+                            logical = correction.GetLogicalPoint(x, y);
+                            point = correction.MapShared(
+                                logical, out greenPostGeometry);
+                        }
+                        else
+                        {
+                            point = correction.MapShared(x, y);
+                        }
                         SampleBilinearRgb(
                             source, sourceWidth, sourceHeight,
                             point.X, point.Y,
@@ -216,7 +227,8 @@ internal static class LensCorrectionProcessor
                         var point = correction.Map(logical, 0);
                         camera0 = SampleBilinear(
                             source, sourceWidth, sourceHeight, point.X, point.Y, 0);
-                        point = correction.Map(logical, 1);
+                        point = correction.Map(
+                            logical, 1, out greenPostGeometry);
                         camera1 = SampleBilinear(
                             source, sourceWidth, sourceHeight, point.X, point.Y, 1);
                         point = correction.Map(logical, 2);
@@ -225,9 +237,8 @@ internal static class LensCorrectionProcessor
                     }
                     if (correction.HasVignetting)
                     {
-                        if (correction.HasSharedGeometry)
-                            logical = correction.GetLogicalPoint(x, y);
-                        var gain = correction.GetVignetteGain(logical);
+                        var gain = correction.GetVignetteGain(
+                            logical, greenPostGeometry);
                         camera0 *= gain;
                         camera1 *= gain;
                         camera2 *= gain;

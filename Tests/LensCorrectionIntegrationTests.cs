@@ -11,7 +11,7 @@ public sealed class LensCorrectionIntegrationTests : IDisposable
         Path.GetTempPath(), $"happy-photon-raw-optics-{Guid.NewGuid():N}");
 
     [Fact]
-    public void X30AppliesQualifiedFujiTablesThroughTheRawLoader()
+    public void X30CombinesEmbeddedAndLensfunClassesThroughTheRawLoader()
     {
         var path = GoldenTestPaths.Asset("fujifilm-x30.raf");
         var file = new ImageFile(path);
@@ -27,8 +27,9 @@ public sealed class LensCorrectionIntegrationTests : IDisposable
         var summary = Assert.IsType<LensPrescriptionSummary>(
             corrected.Info.LensPrescriptionSummary);
         Assert.True(summary.HasDistortion);
-        Assert.False(summary.HasChromaticAberration);
+        Assert.True(summary.HasChromaticAberration);
         Assert.False(summary.HasVignetting);
+        Assert.Equal("FUJIFILM MAKER NOTE + LENSFUN", summary.Source);
         Assert.NotEqual(
             RawBaseLoaderTestSupport.PixelHash(inactive.Pixels),
             RawBaseLoaderTestSupport.PixelHash(corrected.Pixels));

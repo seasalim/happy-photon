@@ -76,11 +76,13 @@ public sealed partial class LensCorrectionProcessorTests
         var maximum = Math.Sqrt(2) * (size - 1) * 0.5;
         var distortion = new LensRadialTable(
             maximum / (FujiNativePixelsPerTableRadiusUnit * 3),
-            [0, 0.5, 1], [0, -3, -8]);
+            [0, 0.5, 1], [0, -3, -8],
+            FujiNativePixelsPerTableRadiusUnit, 1.0 / 45);
         var ca = new LensChromaticAberrationTable(
             maximum / (FujiNativePixelsPerTableRadiusUnit * 3),
             [0, 0.5, 1], [0, 0.0002, 0.0004],
-            [0, -0.00015, -0.0003]);
+            [0, -0.00015, -0.0003],
+            FujiNativePixelsPerTableRadiusUnit);
         var source = InjectTableCoordinateField(size, distortion, ca);
         var prescription = new LensPrescription(
             LensPrescriptionSource.FujifilmMakerNote,
@@ -116,7 +118,8 @@ public sealed partial class LensCorrectionProcessorTests
         var maximum = Math.Sqrt(2) * (size - 1) * 0.5;
         var table = new LensRadialTable(
             maximum / (FujiNativePixelsPerTableRadiusUnit * 3),
-            [0, 0.5, 1], [100, 80, 50]);
+            [0, 0.5, 1], [100, 80, 50],
+            FujiNativePixelsPerTableRadiusUnit);
         var values = new ushort[size * size * 3];
         for (var y = 0; y < size; y++)
         for (var x = 0; x < size; x++)
@@ -224,6 +227,57 @@ public sealed partial class LensCorrectionProcessorTests
         var ratio = corrected[0] / (double)corrected[center];
 
         Assert.InRange(ratio, 0.99, 1.01);
+    }
+
+    [Fact]
+    public void LensfunVignettingRestoresGainAtPostDistortionSamples()
+    {
+        const int size = 401;
+        const ushort target = 24000;
+        var values = new ushort[size * size * 3];
+        for (var y = 0; y < size; y++)
+        for (var x = 0; x < size; x++)
+        {
+            var dx = (x + 0.5) / size - 0.5;
+            var dy = (y + 0.5) / size - 0.5;
+            var radiusSquared = 4 * (dx * dx + dy * dy);
+            var encoded = (ushort)Math.Round(
+                target * (1 - 0.4 * radiusSquared));
+            var offset = (y * size + x) * 3;
+            values[offset] = values[offset + 1] = values[offset + 2] = encoded;
+        }
+        var prescription = new LensPrescription(
+            LensPrescriptionSource.Lensfun,
+            "Synthetic Lensfun Lens",
+            [], [], LensFrameWindow.Full, LensFrameWindow.Full,
+            LensfunDistortion: new LensfunDistortion(
+                LensfunDistortionModel.Poly3, [0.4], 1, 0.5, 0.5),
+            LensfunVignette: new LensfunVignette(
+                -0.4, 0, 0, 1, 0.5, 0.5));
+        var settings = BaseDecodeSettings.Default with
+        {
+            ChromaticAberration = false,
+            Vignetting = true
+        };
+
+        using var image = LensCorrectionProcessor.ImportCorrected(
+            ToBytes(values), size, size, size, size, 1,
+            CameraRgbCharacterization.Passthrough,
+            prescription, settings, CancellationToken.None);
+        using var pixels = image.GetPixelsUnsafe();
+        var corrected = pixels.ToShortArray(ImageMagick.PixelMapping.RGB)!;
+        var maximumRelativeError = 0.0;
+        for (var y = 50; y < size; y += 75)
+        for (var x = 50; x < size; x += 75)
+        {
+            var actual = corrected[(y * size + x) * 3];
+            maximumRelativeError = Math.Max(
+                maximumRelativeError,
+                Math.Abs(actual - target) / (double)target);
+        }
+
+        Assert.True(maximumRelativeError <= 0.005,
+            $"Post-distortion gain residual was {maximumRelativeError:P2}.");
     }
 
     [Fact]
@@ -365,7 +419,8 @@ public sealed partial class LensCorrectionProcessorTests
             Math.Pow((fullHeight - 1) * 0.5, 2));
         var table = new LensRadialTable(
             maximum / (FujiNativePixelsPerTableRadiusUnit * 2),
-            [0, 1], [0, -9]);
+            [0, 1], [0, -9],
+            FujiNativePixelsPerTableRadiusUnit, 1.0 / 45);
         var raf = new LensPrescription(
             LensPrescriptionSource.FujifilmMakerNote,
             null, [], [], LensFrameWindow.Full, LensFrameWindow.Full,

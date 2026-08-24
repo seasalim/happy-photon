@@ -47,6 +47,9 @@
     <None Update="THIRD_PARTY_NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Update="TRADEMARKS.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <None Update="licenses\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <None Update="data\lensfun\**"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>

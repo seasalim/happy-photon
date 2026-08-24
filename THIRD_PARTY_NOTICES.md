@@ -23,6 +23,17 @@ The canonical Apache-2.0 text is distributed in
 through package metadata and the component-specific notices below. The release
 dependency manifest enumerates transitive packages and their locked versions.
 
+## Lensfun database
+
+Happy Photon includes a Lensfun database snapshot from upstream git master at
+commit `1c8b8f0`. The database is copyright its individual contributors and is
+licensed under Creative Commons Attribution-ShareAlike 3.0 Unported. The
+complete license text is distributed with the snapshot as
+[`data/lensfun/COPYING.CC_BY-SA_3.0`](data/lensfun/COPYING.CC_BY-SA_3.0).
+
+Only the database data is included. Happy Photon does not include or link the
+Lensfun library.
+
 ## Magick.NET and ImageMagick
 
 Happy Photon uses Magick.NET 14.15.0, copyright Dirk Lemstra, under

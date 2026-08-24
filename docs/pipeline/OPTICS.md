@@ -1,15 +1,30 @@
-# Embedded lens corrections
+# Lens corrections
 
-Happy Photon applies only correction prescriptions embedded in RAW files. There is no
-lens-profile database, lens matching, or correction for JPEG/HEIC sources. Distortion
-and Chromatic aberration default on for newly seen images; Vignetting defaults off.
+Happy Photon applies embedded correction prescriptions to RAW files and resolves
+prescriptions from the pinned Lensfun database snapshot in `data/lensfun`. An exact,
+conservative Lensfun match is trusted: every supported correction class in the matched
+profile is available without a per-lens or per-class qualification gate. There is no
+correction for JPEG/HEIC sources. Distortion and Chromatic aberration default on for
+newly seen images; Vignetting defaults off.
+
+Resolution is conservative and happens independently for each correction class:
+qualified embedded data wins, Lensfun fills an unrepresented class, and otherwise the
+class remains unavailable. Camera maker/model and lens model must match exactly after
+case, whitespace, and punctuation normalization, and the lens mount must be compatible
+with the matched camera. A maker prefix may appear in either the supplied or database
+model identity for both cameras and lenses. Missing or ambiguous interchangeable-lens
+identity produces no match; a
+fixed-lens mount may omit lens identity only when it has exactly one database lens.
 
 ## Placement and interpolation ledger
 
 Corrections are decode-dependent. A corrected destination coordinate maps to the
 demosaiced camera-native source separately for R, G, and B. Bilinear sampling happens
 before the camera-to-Rec.2020 matrix, radial vignetting gain multiplies those sampled
-scene-linear camera values, and characterization writes Q16 once.
+scene-linear camera values, and characterization writes Q16 once. Embedded DNG and RAF
+table gains use the output-geometry coordinate required by their existing contracts;
+Lensfun `pa` gain uses the shared green post-geometry coordinate, where the pristine
+source was sampled.
 
 For an interactive or large preview base this fused import writes the requested size
 directly and replaces that base's existing resize. Each preview base therefore has one
@@ -65,8 +80,8 @@ empirically from Happy Photon's own committed RAF fixtures.
 | DNG embedded opcodes | Supported subset above | Enabled | Synthetic authored-opcode and inversion tests |
 | Fujifilm X, 23/31/23 generation | Pinned; each class independent | Non-identity distortion enabled; CA and vignetting deferred | X30 distortion reduced registered preview displacement residual 61.0%, above both split-grid 3σ floors; X100 distortion tables were identity operations |
 | Fujifilm X, 19/29/19 generation | Pinned; trailing CA scale sentinel required | Deferred per class | X-T5 corpus candidates did not pass the per-file alignment gates |
+| Lensfun rectilinear profiles | `poly3`, `poly5`, `ptlens` distortion; `linear`, `poly3` TCA; `pa` vignetting | Enabled for every class supplied by an exact, mount-compatible match | Formula-level synthetic oracle and full-snapshot parse tests; `acm` is unsupported |
 | Monochrome RAW sensors | Not read in v1 | Uncorrected | The v1 correction pass requires three camera-native planes |
-| Sony E, Micro Four Thirds | None | None | Out of scope |
 | JPEG / HEIC | None | None | RAW-only boundary |
 
 Fujifilm distortion knots are interpolated without a polynomial fit. Their values are
@@ -79,12 +94,71 @@ distortion tables are identity prescriptions and do not advertise an operation.
 Candidate CA and vignetting interpretations remain available to the qualification
 instrument but do not advertise production capabilities.
 
-`scripts/evaluate-raf-lens-corrections.cs` selects a camera JPEG with a long edge of at
+## Lensfun models and interpolation
+
+Lensfun radii use half the smaller calibration-sensor dimension as one unit. Happy
+Photon rescales that radius to the actual sensor using the profile crop factor and
+aspect ratio, the matched camera crop factor, and the decoded visible-frame aspect.
+The database optical-center offsets use the same smaller-dimension convention. Warp
+evaluation follows the documented destination-to-source sequence: shared distortion
+first, then per-channel lateral CA. The PA vignetting model contributes the reciprocal
+scene-linear gain at the shared green post-geometry coordinate in the same fused
+pre-matrix pass.
+
+For distortion and TCA, coefficients interpolate linearly in log focal length when
+the bracketing entries use the same model. A model-family boundary selects the nearest
+entry instead. Values clamp at the calibrated range edges. Vignetting first selects
+the largest calibrated focus distance (an infinity assumption because LibRaw does not
+provide focus distance), then interpolates over aperture and log focal length with the
+same edge clamping. `acm` calibrations produce no data in this version.
+
+The shipped database is a manual snapshot of Lensfun git master at commit `1c8b8f0`.
+There is no runtime network access or automatic update path.
+
+An exact, mount-compatible match trusts the database and exposes every supported,
+non-identity class in the matched profile. There is no production pin table or
+instrument-evidence gate. Matching remains deliberately conservative: missing or
+ambiguous identity still produces no data. `ForceSource` bypasses embedded readers for
+qualification. Resolution is independent of the application toggles, which gate
+application only; whenever an embedded prescription leaves any class unfilled, Lensfun
+is consulted. The first Lensfun resolution pays the measured one-time 162.7 ms parse
+cost and retains 6.7 MB before matching determines whether a profile applies.
+
+`scripts/evaluate-raf-lens-corrections.cs` can force either the embedded or Lensfun
+source. It selects a camera JPEG with a long edge of at
 least 1024 px and aspect within 2% of the oriented visible frame, preferring pixel count
 then file offset and recording offset, dimensions, and SHA-256. It compares isolated
 class ablations after global registration on disjoint grid halves and requires the
 class-specific reduction plus an improvement above a bootstrap 3σ floor. It is a
 developer qualification instrument, never a decode-time validator.
+
+The 2026-08-23 committed-fixture run found one conservative Lensfun match among seven
+RAW fixtures: the fixed-lens X30. No wrong-lens match was accepted. Forced Lensfun
+distortion reduced its aggregate displacement residual 40.7%, compared with the
+embedded prescription's qualified 61.0%, but one split-grid half missed the 3σ floor.
+Lensfun CA reduced the residual 3.5% and also failed; vignetting was an identity
+operation for this profile. Under the now-retired qualification policy these results
+enabled no Lensfun class. They remain informational evidence, not production gates.
+The committed 6D reports only `8mm`; multiple Canon-EF 8 mm database lenses make that
+identity ambiguous, so the matcher correctly returns no data.
+
+The subsequent 21,823-file library sweep accepted three camera/lens identities with zero
+wrong-lens matches: Canon PowerShot G11, XF27mmF2.8 R WR, and
+XF16-50mmF2.8-4.8 R LM WR. G11 distortion increased residual on every evaluable sample;
+XF27 distortion passed zero of five samples. Across the five-file samples for both Fuji
+lenses, every CA and vignetting ablation failed and increased its class residual. The
+expanded XF16-50 distortion G5 retained a 55.9% median improvement and harmed no
+evaluable file beyond its 3σ floor, though only 6 of 13 evaluable samples
+cleared the per-file split-grid gate. After visual A/B review of every
+evaluable sample, the user ruled the individual-pass criterion too strict for this case
+and accepted XF16-50 distortion under the then-current G5 gate. The later
+trust-the-database ruling retired G5 and all per-lens/class gates. The G11, XF27, and
+XF16-50 measurements are retained as history only; profiles they scored against now
+apply when exactly matched and their class toggle is on. Interpret the negative scores
+with care: the embedded-JPEG oracle measures agreement with the manufacturer's
+rendering, so on cameras whose JPEGs apply little or no distortion correction (the G11
+review case) it penalizes genuinely straightening corrections; user visual review of
+the G11 samples found the corrected geometry fine.
 
 ## Settings, cache, and compatibility
 
@@ -94,5 +168,5 @@ explicit v3 block, so it can never acquire defaults later. New rows use
 on/on/off/standard. `HasEdits` compares with the image's baseline, Reset restores it,
 and copy/paste and presets transfer only the booleans.
 
-The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 14;
+The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 16;
 `RenderPipeline.Version` stays 10 because render-stage math is unchanged.

@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace HappyPhoton.Services;
 
-internal sealed class LensCorrectionPlan
+internal sealed partial class LensCorrectionPlan
 {
     private readonly LensWarpOperation[] _warps;
     private readonly LensTableWarpOperation[] _tableWarps;
@@ -56,8 +56,11 @@ internal sealed class LensCorrectionPlan
             new LensWarpOperation(warp, logicalWidth, logicalHeight, settings)).ToArray();
         _tableWarps = prescription.RadialTableWarps.Select(warp =>
             new LensTableWarpOperation(warp, logicalWidth, logicalHeight, settings)).ToArray();
+        CompileLensfunGeometry(
+            prescription, settings, logicalWidth, logicalHeight);
         HasSharedGeometry = _warps.All(warp => warp.IsShared) &&
-            _tableWarps.All(warp => warp.IsShared);
+            _tableWarps.All(warp => warp.IsShared) &&
+            _lensfunAnalyticTca == null && _lensfunTca == null;
 
         _vignettes = settings.Vignetting
             ? prescription.Vignettes.Select(vignette =>
@@ -68,9 +71,13 @@ internal sealed class LensCorrectionPlan
             ? prescription.RadialTableVignettes.Select(vignette =>
                 new CompiledTableVignette(vignette, logicalWidth, logicalHeight)).ToArray()
             : [];
-        HasVignetting = _vignettes.Length != 0 || _tableVignettes.Length != 0;
+        _lensfunVignette = settings.Vignetting && prescription.LensfunVignette != null
+            ? new CompiledLensfunVignette(
+                prescription.LensfunVignette, logicalWidth, logicalHeight)
+            : null;
+        HasVignetting = _vignettes.Length != 0 || _tableVignettes.Length != 0 ||
+            _lensfunVignette != null;
     }
-
     internal bool HasSharedGeometry { get; }
     internal bool HasVignetting { get; }
 
@@ -80,42 +87,53 @@ internal sealed class LensCorrectionPlan
 
     internal LensPoint MapShared(LensPoint point) => Map(point, 1);
 
+    internal LensPoint MapShared(
+        LensPoint point,
+        out LensPoint prescriptionPoint) =>
+        Map(point, 1, out prescriptionPoint);
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal LensPoint MapShared(int x, int y)
     {
         var point = new LensPoint(
             _originX + x * _xStepX + y * _yStepX,
             _originY + x * _xStepY + y * _yStepY);
-        foreach (var warp in _warps)
-            point = warp.Apply(point, 1);
-        foreach (var warp in _tableWarps)
-            point = warp.Apply(point, 1);
+        point = MapGeometry(point, 1);
         return new LensPoint(
             point.X * _sourceScaleX + _sourceOffsetX,
             point.Y * _sourceScaleY + _sourceOffsetY);
     }
 
-    internal LensPoint Map(LensPoint point, int channel)
+    internal LensPoint Map(LensPoint point, int channel) =>
+        Map(point, channel, out _);
+
+    internal LensPoint Map(
+        LensPoint point,
+        int channel,
+        out LensPoint prescriptionPoint)
     {
+        prescriptionPoint = MapGeometry(point, channel);
+        return new LensPoint(
+            prescriptionPoint.X * _sourceScaleX + _sourceOffsetX,
+            prescriptionPoint.Y * _sourceScaleY + _sourceOffsetY);
+    }
+
+    private LensPoint MapGeometry(LensPoint point, int channel)
+    {
+        if (_lensfunDistortion is { } distortion)
+            point = distortion.Apply(point);
+        if (_lensfunAnalyticDistortion is { } analyticDistortion)
+            point = analyticDistortion.Apply(point, 1);
         foreach (var warp in _warps)
             point = warp.Apply(point, channel);
         foreach (var warp in _tableWarps)
             point = warp.Apply(point, channel);
-        return new LensPoint(
-            point.X * _sourceScaleX + _sourceOffsetX,
-            point.Y * _sourceScaleY + _sourceOffsetY);
+        if (_lensfunAnalyticTca is { } analyticTca)
+            point = analyticTca.Apply(point, channel);
+        if (_lensfunTca is { } tca)
+            point = tca.Apply(point, channel);
+        return point;
     }
-
-    internal double GetVignetteGain(LensPoint point)
-    {
-        var gain = 1.0;
-        foreach (var vignette in _vignettes)
-            gain *= vignette.GetGain(point);
-        foreach (var vignette in _tableVignettes)
-            gain *= vignette.GetGain(point);
-        return Math.Max(0, gain);
-    }
-
     private static PixelAffine OrientedPixelAffine(
         int width,
         int height,
@@ -217,6 +235,7 @@ internal sealed class LensCorrectionPlan
         private readonly CompiledRadialTable? _distortion;
         private readonly CompiledRadialTable? _red;
         private readonly CompiledRadialTable? _blue;
+        private readonly double _distortionValueScale;
         private readonly double _centerX;
         private readonly double _centerY;
         private readonly double _width;
@@ -236,15 +255,18 @@ internal sealed class LensCorrectionPlan
                     warp.ChromaticAberration.Scale,
                     warp.ChromaticAberration.Radii,
                     warp.ChromaticAberration.Red,
-                    warp.ChromaticAberration.Red[0])
+                    warp.ChromaticAberration.Red[0],
+                    warp.ChromaticAberration.NativePixelsPerRadiusUnit)
                 : null;
             _blue = settings.ChromaticAberration && warp.ChromaticAberration != null
                 ? new CompiledRadialTable(
                     warp.ChromaticAberration.Scale,
                     warp.ChromaticAberration.Radii,
                     warp.ChromaticAberration.Blue,
-                    warp.ChromaticAberration.Blue[0])
+                    warp.ChromaticAberration.Blue[0],
+                    warp.ChromaticAberration.NativePixelsPerRadiusUnit)
                 : null;
+            _distortionValueScale = warp.Distortion?.ValueScale ?? 1;
             _centerX = warp.CenterX;
             _centerY = warp.CenterY;
             _width = width - 1;
@@ -271,8 +293,8 @@ internal sealed class LensCorrectionPlan
 
             var offset = _distortion == null
                 ? 0
-                : radius * _distortion.Value.GetValue(radius) /
-                    45;
+                : radius * _distortion.Value.GetValue(radius) *
+                    _distortionValueScale;
             if (_red != null && channel != 1)
             {
                 var table = channel == 0 ? _red.Value : _blue!.Value;
@@ -406,25 +428,23 @@ internal sealed class LensCorrectionPlan
     private readonly struct CompiledRadialTable
     {
         private const int LookupIntervals = 4096;
-        // G1 qualifies the RAF radius unit against the camera preview in the
-        // native visible frame. It is close to, but not exactly, LibRaw's
-        // two-pixel half-size step.
-        private const double NativePixelsPerTableRadiusUnit = 1.9;
         private readonly double[] _values;
         private readonly double _toIndex;
 
         internal CompiledRadialTable(LensRadialTable table, double centerValue)
-            : this(table.Scale, table.Radii, table.Values, centerValue) { }
+            : this(table.Scale, table.Radii, table.Values, centerValue,
+                table.NativePixelsPerRadiusUnit) { }
 
         internal CompiledRadialTable(
             double scale,
             IReadOnlyList<double> radii,
             IReadOnlyList<double> values,
-            double centerValue)
+            double centerValue,
+            double nativePixelsPerRadiusUnit)
         {
             // Convert RAF table radius units once to native visible pixels;
             // otherwise LibRaw's decode scale changes correction strength.
-            var maximumRadius = NativePixelsPerTableRadiusUnit *
+            var maximumRadius = nativePixelsPerRadiusUnit *
                 scale * values.Count * radii[^1];
             _toIndex = maximumRadius > 0 ? LookupIntervals / maximumRadius : 0;
             _values = new double[LookupIntervals + 1];

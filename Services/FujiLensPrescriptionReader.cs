@@ -11,6 +11,8 @@ internal sealed class FujiLensPrescriptionReader
     private const ushort VignettingTag = 0xf010;
     private const ushort RawIfdTag = 0xf000;
     private const int RafHeaderBytes = 108;
+    private const double NativePixelsPerTableRadiusUnit = 1.9;
+    private const double DistortionValueScale = 1.0 / 45;
 
     private static readonly FujiLayout[] Layouts =
     [
@@ -54,13 +56,14 @@ internal sealed class FujiLensPrescriptionReader
 
             var distortion = TryRead(
                 "geometric distortion", distortionEntry,
-                entry => ReadRadial(reader, entry, layout.RadialKnots));
+                entry => ReadRadial(
+                    reader, entry, layout.RadialKnots, DistortionValueScale));
             var ca = TryRead(
                 "chromatic aberration", caEntry,
                 entry => ReadCa(reader, entry, layout));
             var vignetting = TryRead(
                 "vignetting", vignetteEntry,
-                entry => ReadRadial(reader, entry, layout.RadialKnots));
+                entry => ReadRadial(reader, entry, layout.RadialKnots, 1));
             if (distortion.Value == null && ca.Value == null && vignetting.Value == null)
             {
                 return Reject(string.Join(" ", new[]
@@ -159,13 +162,16 @@ internal sealed class FujiLensPrescriptionReader
     private static LensRadialTable ReadRadial(
         DcpTiffReader reader,
         TiffEntry entry,
-        int knotCount)
+        int knotCount,
+        double valueScale)
     {
         var values = reader.ReadRationals(entry, 1 + knotCount * 2);
         var table = new LensRadialTable(
             values[0],
             values[1..(1 + knotCount)],
-            values[(1 + knotCount)..]);
+            values[(1 + knotCount)..],
+            NativePixelsPerTableRadiusUnit,
+            valueScale);
         ValidateTable(table.Scale, table.Radii, table.Values);
         return table;
     }
@@ -187,7 +193,8 @@ internal sealed class FujiLensPrescriptionReader
             values[0],
             values[1..redStart],
             values[redStart..blueStart],
-            values[blueStart..(blueStart + layout.CaKnots)]);
+            values[blueStart..(blueStart + layout.CaKnots)],
+            NativePixelsPerTableRadiusUnit);
         ValidateTable(table.Scale, table.Radii, table.Red);
         ValidateTable(table.Scale, table.Radii, table.Blue);
         return table;

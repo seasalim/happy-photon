@@ -11,7 +11,8 @@ internal enum LensPrescriptionStatus
 internal enum LensPrescriptionSource
 {
     DngOpcode,
-    FujifilmMakerNote
+    FujifilmMakerNote,
+    Lensfun
 }
 
 internal sealed record LensPrescriptionReadResult(
@@ -40,30 +41,66 @@ internal sealed record LensPrescription(
     LensFrameWindow OutputWindow,
     FujiLensTables? FujiTables = null,
     IReadOnlyList<LensTableWarp>? TableWarps = null,
-    IReadOnlyList<LensTableVignette>? TableVignettes = null)
+    IReadOnlyList<LensTableVignette>? TableVignettes = null,
+    LensfunDistortion? LensfunDistortion = null,
+    LensfunTca? LensfunTca = null,
+    LensfunVignette? LensfunVignette = null,
+    LensClassSources? ClassSources = null)
 {
     internal IReadOnlyList<LensTableWarp> RadialTableWarps => TableWarps ?? [];
     internal IReadOnlyList<LensTableVignette> RadialTableVignettes => TableVignettes ?? [];
 
     // Green (or the sole plane) is always the shared distortion reference;
     // distinct red/blue planes additionally advertise lateral CA.
-    internal bool HasDistortion => Warps.Count > 0 ||
+    internal bool HasDistortion => Warps.Count > 0 || LensfunDistortion != null ||
         RadialTableWarps.Any(warp => warp.Distortion != null);
     internal bool HasChromaticAberration =>
         Warps.Any(warp => warp.HasPerPlaneGeometry) ||
+        LensfunTca != null ||
         RadialTableWarps.Any(warp => warp.ChromaticAberration != null);
     internal bool HasVignetting => Vignettes.Count > 0 ||
-        RadialTableVignettes.Count > 0;
+        RadialTableVignettes.Count > 0 || LensfunVignette != null;
 
-    internal LensPrescriptionSummary Summary => new(
+    internal LensPrescriptionSummary Summary => GetSummary(null);
+
+    internal LensPrescriptionSummary GetSummary(BaseDecodeSettings? settings) => new(
         LensName,
-        Source == LensPrescriptionSource.DngOpcode
-            ? "DNG OPCODES"
-            : "FUJIFILM MAKER NOTE",
+        string.Join(" + ", ActiveSources(settings)
+            .Distinct()
+            .Select(SourceName)),
         HasDistortion,
         HasChromaticAberration,
         HasVignetting);
+
+    private IEnumerable<LensPrescriptionSource> ActiveSources(
+        BaseDecodeSettings? settings)
+    {
+        var sources = ClassSources ?? new LensClassSources(
+            HasDistortion ? Source : null,
+            HasChromaticAberration ? Source : null,
+            HasVignetting ? Source : null);
+        if ((settings?.Distortion ?? true) && sources.Distortion is { } distortion)
+            yield return distortion;
+        if ((settings?.ChromaticAberration ?? true) &&
+            sources.ChromaticAberration is { } tca)
+            yield return tca;
+        if ((settings?.Vignetting ?? true) && sources.Vignetting is { } vignette)
+            yield return vignette;
+    }
+
+    internal static string SourceName(LensPrescriptionSource source) => source switch
+    {
+        LensPrescriptionSource.DngOpcode => "DNG OPCODES",
+        LensPrescriptionSource.FujifilmMakerNote => "FUJIFILM MAKER NOTE",
+        LensPrescriptionSource.Lensfun => "LENSFUN",
+        _ => throw new ArgumentOutOfRangeException(nameof(source))
+    };
 }
+
+internal sealed record LensClassSources(
+    LensPrescriptionSource? Distortion,
+    LensPrescriptionSource? ChromaticAberration,
+    LensPrescriptionSource? Vignetting);
 
 public sealed record LensPrescriptionSummary(
     string? LensName,
@@ -137,13 +174,16 @@ internal sealed record FujiLensTables(
 internal sealed record LensRadialTable(
     double Scale,
     IReadOnlyList<double> Radii,
-    IReadOnlyList<double> Values);
+    IReadOnlyList<double> Values,
+    double NativePixelsPerRadiusUnit = 1,
+    double ValueScale = 1);
 
 internal sealed record LensChromaticAberrationTable(
     double Scale,
     IReadOnlyList<double> Radii,
     IReadOnlyList<double> Red,
-    IReadOnlyList<double> Blue);
+    IReadOnlyList<double> Blue,
+    double NativePixelsPerRadiusUnit = 1);
 
 internal sealed record LensTableWarp(
     LensRadialTable? Distortion,
@@ -155,3 +195,29 @@ internal sealed record LensTableVignette(
     LensRadialTable Table,
     double CenterX = 0.5,
     double CenterY = 0.5);
+
+internal enum LensfunDistortionModel { Poly3, Poly5, Ptlens }
+internal enum LensfunTcaModel { Linear, Poly3 }
+
+internal sealed record LensfunDistortion(
+    LensfunDistortionModel Model,
+    IReadOnlyList<double> Coefficients,
+    double RadiusScale,
+    double CenterX,
+    double CenterY);
+
+internal sealed record LensfunTca(
+    LensfunTcaModel Model,
+    IReadOnlyList<double> Red,
+    IReadOnlyList<double> Blue,
+    double RadiusScale,
+    double CenterX,
+    double CenterY);
+
+internal sealed record LensfunVignette(
+    double K1,
+    double K2,
+    double K3,
+    double RadiusScale,
+    double CenterX,
+    double CenterY);
