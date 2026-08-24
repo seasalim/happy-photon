@@ -240,7 +240,9 @@ public sealed partial class LensCorrectionProcessorTests
         {
             var dx = (x + 0.5) / size - 0.5;
             var dy = (y + 0.5) / size - 0.5;
-            var radiusSquared = 4 * (dx * dx + dy * dy);
+            // Corner-normalized pa radius: r=1 at the frame corner, so the
+            // square frame's r-squared is 2*(dx^2+dy^2) in logical units.
+            var radiusSquared = 2 * (dx * dx + dy * dy);
             var encoded = (ushort)Math.Round(
                 target * (1 - 0.4 * radiusSquared));
             var offset = (y * size + x) * 3;

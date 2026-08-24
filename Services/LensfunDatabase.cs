@@ -112,13 +112,17 @@ internal sealed class LensfunDatabase
         var radiusScale = calibrationCrop / camera.CropFactor *
             Math.Sqrt(lens.AspectRatio * lens.AspectRatio + 1) /
             Math.Sqrt(actualAspect * actualAspect + 1);
+        // Vignetting normalizes r=1 at the frame corner (half-diagonal), so
+        // the sensor rescale is the pure crop ratio; verified differentially
+        // against liblensfun. Distortion/TCA keep the half-height convention.
+        var vignetteRadiusScale = calibrationCrop / camera.CropFactor;
         if (!double.IsFinite(radiusScale) || radiusScale <= 0) return null;
         var centerX = 0.5 + lens.CenterX /
             (2 * radiusScale * actualAspect);
         var centerY = 0.5 + lens.CenterY / (2 * radiusScale);
         return new LensfunResolvedProfile(
             lens.Model, distortion, tca, vignette,
-            radiusScale, centerX, centerY);
+            radiusScale, vignetteRadiusScale, centerX, centerY);
     }
 
     private HashSet<string> CompatibleMounts(string mount)
@@ -384,6 +388,7 @@ internal sealed record LensfunResolvedProfile(
     LensfunCalibration? Tca,
     LensfunCalibration? Vignette,
     double RadiusScale,
+    double VignetteRadiusScale,
     double CenterX,
     double CenterY);
 

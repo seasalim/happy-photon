@@ -296,12 +296,47 @@ public sealed partial class LensfunPrescriptionReaderTests : IDisposable
     }
 
     [Fact]
+    public void VignetteScaleIsPureCropRatioAcrossAspects()
+    {
+        // Calibration sensor 3:2 (default), actual frame 4:3: the
+        // distortion scale carries the aspect correction while the pa
+        // vignette scale is the bare crop ratio.
+        WriteDatabase(Lens("Exact Lens", "Mount A",
+            "<distortion model=\"poly3\" focal=\"24\" k1=\"0.1\"/>" +
+            "<vignetting model=\"pa\" focal=\"24\" aperture=\"4\" " +
+            "distance=\"1000\" k1=\"-0.3\" k2=\"0\" k3=\"0\"/>").Replace(
+            "<cropfactor>1.5</cropfactor>", "<cropfactor>2</cropfactor>"));
+        var database = new LensfunDatabase(_directory);
+
+        var match = database.Resolve(
+            "Camera Co", "Model One", "Exact Lens", 24, 4, 6000, 4500);
+
+        var expectedDistortion = 4.0 / 3 *
+            Math.Sqrt(1.5 * 1.5 + 1) / Math.Sqrt(4.0 / 3 * (4.0 / 3) + 1);
+        Assert.Equal(expectedDistortion, match!.RadiusScale, 12);
+        Assert.Equal(4.0 / 3, match.VignetteRadiusScale, 12);
+        Assert.NotEqual(match.RadiusScale, match.VignetteRadiusScale);
+
+        var reader = new LensfunPrescriptionReader(_directory);
+        var metadata = new LibRawMetadata(
+            "Camera Co", "Model One", "Camera Co", "Model One",
+            "Exact Lens", 100, 0.01f, 4f, 24,
+            null, null, 1, new LibRawGpsFacts(false, null, null, null));
+        var prescription = reader.Read(metadata, 6000, 4500).Prescription!;
+        Assert.Equal(expectedDistortion,
+            prescription.LensfunDistortion!.RadiusScale, 12);
+        Assert.Equal(4.0 / 3, prescription.LensfunVignette!.RadiusScale, 12);
+    }
+
+    [Fact]
     public void PaVignettingUsesReciprocalDocumentedGain()
     {
         var prescription = Prescription(vignette: new LensfunVignette(
             -0.4, 0.2, -0.1, 1, 0.5, 0.5));
         var plan = Plan(prescription, vignetting: true);
-        const double r2 = 0.25;
+        // Vignetting normalizes r=1 at the frame corner; on the square test
+        // frame that halves the r-squared of the half-height convention.
+        const double r2 = 0.125;
         var expected = 1 / (1 + r2 * (-0.4 + r2 * (0.2 + r2 * -0.1)));
         var point = new LensPoint(0.75, 0.5);
         plan.Map(point, 1, out var greenPostGeometry);
@@ -319,7 +354,10 @@ public sealed partial class LensfunPrescriptionReaderTests : IDisposable
             vignette: new LensfunVignette(-0.4, 0, 0, 1, 0.5, 0.5));
         var plan = Plan(prescription, vignetting: true);
         const double postDistortionRadius = 0.35;
-        var expected = 1 / (1 - 0.4 * postDistortionRadius * postDistortionRadius);
+        // Corner-normalized vignette radius on the square frame is the
+        // post-distortion half-height radius divided by sqrt(2).
+        var expected =
+            1 / (1 - 0.4 * postDistortionRadius * postDistortionRadius / 2);
         var point = new LensPoint(0.75, 0.5);
         plan.Map(point, 1, out var greenPostGeometry);
 

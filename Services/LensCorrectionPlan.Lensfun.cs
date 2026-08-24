@@ -164,7 +164,7 @@ internal sealed partial class LensCorrectionPlan
             _vignette = vignette;
             _coordinates = new LensfunCoordinates(
                 vignette.RadiusScale, vignette.CenterX, vignette.CenterY,
-                width, height);
+                width, height, halfDiagonal: true);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -190,13 +190,19 @@ internal sealed partial class LensCorrectionPlan
             double centerX,
             double centerY,
             int width,
-            int height)
+            int height,
+            bool halfDiagonal = false)
         {
             _centerX = centerX;
             _centerY = centerY;
-            var smaller = Math.Min(width - 1, height - 1);
-            _xToRadius = smaller > 0 ? 2 * radiusScale * (width - 1) / smaller : 0;
-            _yToRadius = smaller > 0 ? 2 * radiusScale * (height - 1) / smaller : 0;
+            // Distortion/TCA: r=1 at half the smaller dimension. Vignetting
+            // (pa): r=1 at the frame corner, per the reference library.
+            var normalizer = halfDiagonal
+                ? Math.Sqrt((width - 1d) * (width - 1) +
+                    (height - 1d) * (height - 1))
+                : Math.Min(width - 1, height - 1);
+            _xToRadius = normalizer > 0 ? 2 * radiusScale * (width - 1) / normalizer : 0;
+            _yToRadius = normalizer > 0 ? 2 * radiusScale * (height - 1) / normalizer : 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

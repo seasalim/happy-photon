@@ -146,7 +146,8 @@ internal sealed class LensfunPrescriptionReader
     {
         { Model: "pa", Parameters: [var k1, var k2, var k3] }
             when Effect(k1, k2, k3) => new(
-            k1, k2, k3, profile.RadiusScale, profile.CenterX, profile.CenterY),
+            k1, k2, k3, profile.VignetteRadiusScale,
+            profile.CenterX, profile.CenterY),
         _ => null
     };
 

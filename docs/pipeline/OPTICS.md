@@ -96,10 +96,13 @@ instrument but do not advertise production capabilities.
 
 ## Lensfun models and interpolation
 
-Lensfun radii use half the smaller calibration-sensor dimension as one unit. Happy
-Photon rescales that radius to the actual sensor using the profile crop factor and
-aspect ratio, the matched camera crop factor, and the decoded visible-frame aspect.
-The database optical-center offsets use the same smaller-dimension convention. Warp
+Lensfun distortion and TCA radii use half the smaller calibration-sensor dimension
+as one unit; Happy Photon rescales that radius to the actual sensor using the profile
+crop factor and aspect ratio, the matched camera crop factor, and the decoded
+visible-frame aspect. PA vignetting radii instead use half the calibration-sensor
+diagonal as one unit, so their sensor rescale is the pure crop-factor ratio (verified
+differentially against the reference library). The database optical-center offsets
+use the smaller-dimension convention. Warp
 evaluation follows the documented destination-to-source sequence: shared distortion
 first, then per-channel lateral CA. The PA vignetting model contributes the reciprocal
 scene-linear gain at the shared green post-geometry coordinate in the same fused
@@ -146,7 +149,11 @@ The subsequent 21,823-file library sweep accepted three camera/lens identities w
 wrong-lens matches: Canon PowerShot G11, XF27mmF2.8 R WR, and
 XF16-50mmF2.8-4.8 R LM WR. G11 distortion increased residual on every evaluable sample;
 XF27 distortion passed zero of five samples. Across the five-file samples for both Fuji
-lenses, every CA and vignetting ablation failed and increased its class residual. The
+lenses, every CA ablation failed and increased its class residual. The original
+vignetting measurements predated the corner-normalization fix and measured a
+systematically over-strong correction; re-measured after the fix, XF16-50 vignetting
+is mixed and mild (8 of 13 samples improved, up to 33.7%, one passing its individual
+gate; 5 mildly worse within the tone-curve confound). The
 expanded XF16-50 distortion G5 retained a 55.9% median improvement and harmed no
 evaluable file beyond its 3σ floor, though only 6 of 13 evaluable samples
 cleared the per-file split-grid gate. After visual A/B review of every
