@@ -86,9 +86,13 @@ public sealed partial class LensfunPrescriptionReaderTests : IDisposable
         var wrongMount = database.Resolve(
             "Camera Co.", "Model-One", "Wrong Mount Lens",
             35, 4, 6000, 4000);
+        var emptyNormalizedMaker = database.Resolve(
+            "...", "Model-One", "Exact Lens 24-70 f/2.8",
+            35, 4, 6000, 4000);
 
         Assert.NotNull(match);
         Assert.Null(wrongMount);
+        Assert.Null(emptyNormalizedMaker);
     }
 
     [Fact]
@@ -448,17 +452,20 @@ public sealed partial class LensfunPrescriptionReaderTests : IDisposable
     private void WriteDatabase(
         string lenses,
         string mount = "Mount A",
-        bool secondCamera = false)
+        bool secondCamera = false,
+        string cameraMaker = "Camera Co",
+        string? secondCameraMaker = null)
     {
         Directory.CreateDirectory(_directory);
         var duplicate = secondCamera
-            ? "<camera><maker>Camera Co</maker><model>Camera Co Model One</model>" +
+            ? $"<camera><maker>{secondCameraMaker ?? cameraMaker}</maker>" +
+              "<model>Camera Co Model One</model>" +
               $"<mount>{mount}</mount><cropfactor>1.5</cropfactor></camera>"
             : string.Empty;
         File.WriteAllText(Path.Combine(_directory, "fixture.xml"), $$"""
             <lensdatabase version="2">
               <mount><name>{{mount}}</name></mount>
-              <camera><maker>Camera Co</maker><model>Camera Co Model One</model>
+              <camera><maker>{{cameraMaker}}</maker><model>Camera Co Model One</model>
                 <mount>{{mount}}</mount><cropfactor>1.5</cropfactor></camera>
               {{duplicate}}
               {{lenses}}

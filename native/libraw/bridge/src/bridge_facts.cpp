@@ -102,6 +102,18 @@ void copy_linear_max(const libraw_colordata_t &color, uint32_t count,
         out.linear_max[channel] = color.linear_max[channel];
 }
 
+bool has_lens_identity(const libraw_makernotes_lens_t &lens) {
+    return lens.LensID || lens.Lens[0] || lens.LensFormat || lens.LensMount ||
+        lens.CamID || lens.CameraFormat || lens.CameraMount || lens.FocalType ||
+        lens.FocalUnits || lens.FocalLengthIn35mmFormat || lens.MinFocal ||
+        lens.MaxFocal || lens.MaxAp4MinFocal || lens.MaxAp4MaxFocal ||
+        lens.MinAp4MinFocal || lens.MinAp4MaxFocal || lens.MaxAp || lens.MinAp ||
+        lens.CurFocal || lens.CurAp || lens.MaxAp4CurFocal || lens.MinAp4CurFocal ||
+        lens.MinFocusDistance || lens.FocusRangeIndex || lens.LensFStops ||
+        lens.TeleconverterID || lens.Teleconverter[0] || lens.AdapterID ||
+        lens.Adapter[0] || lens.AttachmentID || lens.Attachment[0];
+}
+
 } // namespace
 
 extern "C" int32_t HPLR_CALL hplr_get_dimensions(hplr_handle handle,
@@ -238,6 +250,94 @@ extern "C" int32_t HPLR_CALL hplr_get_fuji_facts(hplr_handle handle,
         return static_cast<int32_t>(HPLR_OK);
     });
 }
+
+extern "C" int32_t HPLR_CALL hplr_get_lens_identity(hplr_handle handle,
+    hplr_lens_identity *out_value, hplr_error *error) {
+    return hplr::boundary(error, [&]() -> int32_t {
+        if (!prepare(out_value, error)) return HPLR_E_ABI;
+        std::unique_ptr<hplr::Operation> operation;
+        auto status = hplr::begin(handle, operation, error);
+        if (status != HPLR_OK) return status;
+        if (!usable(operation->get(), error)) return static_cast<int32_t>(HPLR_E_STATE);
+        const auto &lens = operation->get().raw.imgdata.lens.makernotes;
+        if (!has_lens_identity(lens)) return static_cast<int32_t>(HPLR_ABSENT);
+        out_value->present = 1;
+        out_value->lens_id = lens.LensID;
+        out_value->camera_id = lens.CamID;
+        out_value->teleconverter_id = lens.TeleconverterID;
+        out_value->adapter_id = lens.AdapterID;
+        out_value->attachment_id = lens.AttachmentID;
+        out_value->lens_format = lens.LensFormat;
+        out_value->lens_mount = lens.LensMount;
+        out_value->camera_format = lens.CameraFormat;
+        out_value->camera_mount = lens.CameraMount;
+        out_value->focal_type = lens.FocalType;
+        out_value->focal_units = lens.FocalUnits;
+        out_value->min_focal = lens.MinFocal;
+        out_value->max_focal = lens.MaxFocal;
+        out_value->max_aperture_at_min_focal = lens.MaxAp4MinFocal;
+        out_value->max_aperture_at_max_focal = lens.MaxAp4MaxFocal;
+        out_value->min_aperture_at_min_focal = lens.MinAp4MinFocal;
+        out_value->min_aperture_at_max_focal = lens.MinAp4MaxFocal;
+        out_value->max_aperture = lens.MaxAp;
+        out_value->min_aperture = lens.MinAp;
+        out_value->current_focal = lens.CurFocal;
+        out_value->current_aperture = lens.CurAp;
+        out_value->max_aperture_at_current_focal = lens.MaxAp4CurFocal;
+        out_value->min_aperture_at_current_focal = lens.MinAp4CurFocal;
+        out_value->min_focus_distance = lens.MinFocusDistance;
+        out_value->focus_range_index = lens.FocusRangeIndex;
+        out_value->lens_f_stops = lens.LensFStops;
+        out_value->focal_length_35mm = lens.FocalLengthIn35mmFormat;
+        out_value->lens_length = hplr::copy_native_text(
+            lens.Lens, sizeof(lens.Lens), out_value->lens, HPLR_TEXT_CAPACITY);
+        out_value->teleconverter_length = hplr::copy_native_text(
+            lens.Teleconverter, sizeof(lens.Teleconverter),
+            out_value->teleconverter, HPLR_TEXT_CAPACITY);
+        out_value->adapter_length = hplr::copy_native_text(
+            lens.Adapter, sizeof(lens.Adapter), out_value->adapter, HPLR_TEXT_CAPACITY);
+        out_value->attachment_length = hplr::copy_native_text(
+            lens.Attachment, sizeof(lens.Attachment),
+            out_value->attachment, HPLR_TEXT_CAPACITY);
+        return static_cast<int32_t>(HPLR_OK);
+    });
+}
+
+#if defined(HPLR_TESTING)
+extern "C" HPLR_API int32_t HPLR_CALL hplr_test_set_lens_identity(hplr_handle handle,
+    uint32_t present, hplr_error *error) {
+    return hplr::boundary(error, [&]() -> int32_t {
+        std::unique_ptr<hplr::Operation> operation;
+        auto status = hplr::begin(handle, operation, error);
+        if (status != HPLR_OK) return status;
+        auto &lens = operation->get().raw.imgdata.lens.makernotes;
+        std::memset(&lens, 0, sizeof(lens));
+        if (!present) return static_cast<int32_t>(HPLR_OK);
+        lens.LensID = UINT64_C(0x0123456789ABCDEF);
+        lens.CamID = UINT64_C(0x1020304050607080);
+        lens.TeleconverterID = UINT64_C(0x1112131415161718);
+        lens.AdapterID = UINT64_C(0x2122232425262728);
+        lens.AttachmentID = UINT64_C(0x3132333435363738);
+        lens.LensFormat = 1; lens.LensMount = 2;
+        lens.CameraFormat = 3; lens.CameraMount = 4;
+        lens.FocalType = 2; lens.FocalUnits = 5;
+        lens.MinFocal = 24; lens.MaxFocal = 70;
+        lens.MaxAp4MinFocal = 2.8f; lens.MaxAp4MaxFocal = 4;
+        lens.MinAp4MinFocal = 16; lens.MinAp4MaxFocal = 22;
+        lens.MaxAp = 2.8f; lens.MinAp = 22;
+        lens.CurFocal = 35; lens.CurAp = 5.6f;
+        lens.MaxAp4CurFocal = 3.2f; lens.MinAp4CurFocal = 20;
+        lens.MinFocusDistance = 0.3f; lens.FocusRangeIndex = 6;
+        lens.LensFStops = 7; lens.FocalLengthIn35mmFormat = 52;
+        const char invalid[] = {'L', static_cast<char>(0xff), 'X', 0};
+        std::memcpy(lens.Lens, invalid, sizeof(invalid));
+        std::memcpy(lens.Teleconverter, "TC", 3);
+        std::memcpy(lens.Adapter, "AD", 3);
+        std::memcpy(lens.Attachment, "AT", 3);
+        return static_cast<int32_t>(HPLR_OK);
+    });
+}
+#endif
 
 extern "C" int32_t HPLR_CALL hplr_borrow_mosaic(hplr_handle handle,
     hplr_mosaic_descriptor *out_value, hplr_error *error) {

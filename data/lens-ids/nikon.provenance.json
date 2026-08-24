@@ -1,0 +1,12 @@
+{
+  "source": "https://exiftool.sourceforge.net/TagNames/Nikon.html",
+  "retrieved": "2026-08-24",
+  "sourceSha256": "a0e84334388accf4e3344d23fb2a6e1c6e7dcaed4ffad4f8ae0a3aa0321946da",
+  "documentedRows": 618,
+  "distinctKeys": 611,
+  "resolvableKeys": 602,
+  "ambiguousKeys": 9,
+  "keysSettingLensTypeBit0x20": 0,
+  "tableSha256": "f173a6e39d1b087391b02095483d81a6f072eba61659f55ddd65703ee3cd4401",
+  "note": "Lens model names are factual identifiers transcribed from published tag documentation. No ExifTool source was consulted and no ExifTool code is used."
+}

@@ -50,6 +50,9 @@
     <None Update="data\lensfun\**"
           CopyToOutputDirectory="PreserveNewest"
           CopyToPublishDirectory="Always" />
+    <None Update="data\lens-ids\**"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>

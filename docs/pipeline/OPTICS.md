@@ -15,6 +15,14 @@ with the matched camera. A maker prefix may appear in either the supplied or dat
 model identity for both cameras and lenses. Missing or ambiguous interchangeable-lens
 identity produces no match; a
 fixed-lens mount may omit lens identity only when it has exactly one database lens.
+The EXIF lens string is the primary identity. If it produces no unique profile, bridge
+ABI 4 supplies LibRaw's already-parsed maker-note lens facts at the header stage. A
+transmitted maker-note lens name is tried next; otherwise composite IDs are resolved
+through a table selected from the normalized maker name. The shipped
+`data/lens-ids/nikon.tsv` table is derived from ExifTool's published tag documentation;
+no other maker table is currently shipped. Unknown IDs, missing tables, multi-name
+rows, and duplicate-key groups remain no-data. Focal/aperture guessing and non-CPU lens
+recovery are not implemented.
 
 ## Placement and interpolation ledger
 
@@ -121,8 +129,11 @@ There is no runtime network access or automatic update path.
 An exact, mount-compatible match trusts the database and exposes every supported,
 non-identity class in the matched profile. There is no production pin table or
 instrument-evidence gate. Matching remains deliberately conservative: missing or
-ambiguous identity still produces no data. `ForceSource` bypasses embedded readers for
-qualification. Resolution is independent of the application toggles, which gate
+ambiguous identity still produces no data. A Lensfun model may carry a trailing integer
+calibration token absent from the supplied identity; that database-only suffix is
+ignored for name equality, after which multiple calibrations still use the existing
+crop-distance ranking and tied or distinct identities remain ambiguous. `ForceSource`
+bypasses embedded readers for qualification. Resolution is independent of the application toggles, which gate
 application only; whenever an embedded prescription leaves any class unfilled, Lensfun
 is consulted. The first Lensfun resolution pays the measured one-time 162.7 ms parse
 cost and retains 6.7 MB before matching determines whether a profile applies.
@@ -144,6 +155,29 @@ operation for this profile. Under the now-retired qualification policy these res
 enabled no Lensfun class. They remain informational evidence, not production gates.
 The committed 6D reports only `8mm`; multiple Canon-EF 8 mm database lenses make that
 identity ambiguous, so the matcher correctly returns no data.
+
+The 2026-08-24 maker-note identity gate swept 10,778 local Nikon files. Every file
+carried a composite lens ID and every one resolved, across eight distinct IDs, with no
+unknown or ambiguous key; no file was skipped as unavailable. Of those files 8,952
+(83.1%) reached a Lensfun profile across six lenses. The remaining two identities stay
+no-data honestly: the database carries no profile for the 85 mm f/1.4D, and the one
+third-party lens present has none either.
+
+What that verification does and does not establish is worth stating precisely. The
+shipped table is a byte-faithful transcription of the published documentation, checked
+by hashing both the retrieved source and the generated table against the recorded
+provenance, and every resolved name is consistent with the focal length, maximum
+aperture, and lens-feature bits its own key encodes. It is not an independent check of
+the name itself: LibRaw derives those focal and aperture values from bytes 2 to 5 of the
+same composite, so a key and its range facts cannot corroborate each other. Keys that
+differ only in the lens-ID and MCU bytes are indistinguishable this way -- 321 of the 602
+resolvable published keys share their range and feature bytes with another entry, and two
+of the eight identities seen locally are such a pair. For those, correctness rests on the
+published documentation being right, which is this feature's declared source of truth.
+The safety boundary is unchanged and sits elsewhere: an unknown or ambiguous key still
+produces no data, and a recovered name still has to match a database lens exactly.
+
+This is Nikon F evidence and says nothing about other makers or uncoded lenses.
 
 The subsequent 21,823-file library sweep accepted three camera/lens identities with zero
 wrong-lens matches: Canon PowerShot G11, XF27mmF2.8 R WR, and
@@ -175,5 +209,7 @@ explicit v3 block, so it can never acquire defaults later. New rows use
 on/on/off/standard. `HasEdits` compares with the image's baseline, Reset restores it,
 and copy/paste and presets transfer only the booleans.
 
-The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 16;
-`RenderPipeline.Version` stays 10 because render-stage math is unchanged.
+The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 17 because
+maker-note identity changes which files decode with corrections applied.
+`RenderPipeline.Version` is 11, unchanged by lens identity because render-stage math
+is untouched.

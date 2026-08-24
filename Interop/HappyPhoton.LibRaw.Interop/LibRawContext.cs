@@ -43,6 +43,9 @@ public sealed unsafe class LibRawContext : IDisposable
     public LibRawFujiFacts? GetFujiFacts(CancellationToken cancellationToken = default)
         => Call(value => Convert(NativeApi.FujiFacts(value)), cancellationToken);
 
+    public LibRawLensIdentity? GetLensIdentity(CancellationToken cancellationToken = default)
+        => Call(value => ConvertLensIdentity(NativeApi.LensIdentity(value)), cancellationToken);
+
     public void Unpack(CancellationToken cancellationToken = default)
         => Call(value => NativeApi.Unpack(value), cancellationToken);
 
@@ -239,6 +242,34 @@ public sealed unsafe class LibRawContext : IDisposable
             result.Value.ExposureMidpointShift, result.Value.DynamicRange,
             result.Value.DynamicRangeSetting, result.Value.DevelopmentDynamicRange,
             result.Value.AutoDynamicRange);
+
+    internal static LibRawLensIdentity? ConvertLensIdentity(
+        (NativeStatus Status, NativeLensIdentity Value) result)
+    {
+        if (result.Status == NativeStatus.Absent) return null;
+        var value = result.Value;
+        if (value.Present == 0)
+            throw new InvalidDataException("Native lens identity is not present.");
+        byte* lens = value.Lens;
+        byte* teleconverter = value.Teleconverter;
+        byte* adapter = value.Adapter;
+        byte* attachment = value.Attachment;
+        return new(
+            value.LensId, Decode(lens, value.LensLength),
+            value.LensFormat, value.LensMount,
+            value.CameraId, value.CameraFormat, value.CameraMount,
+            value.FocalType, value.FocalUnits, value.MinFocal, value.MaxFocal,
+            value.MaxApertureAtMinFocal, value.MaxApertureAtMaxFocal,
+            value.MinApertureAtMinFocal, value.MinApertureAtMaxFocal,
+            value.MaxAperture, value.MinAperture,
+            value.CurrentFocal, value.CurrentAperture,
+            value.MaxApertureAtCurrentFocal, value.MinApertureAtCurrentFocal,
+            value.MinFocusDistance, value.FocusRangeIndex,
+            value.LensFStops, value.FocalLength35mm,
+            value.TeleconverterId, Decode(teleconverter, value.TeleconverterLength),
+            value.AdapterId, Decode(adapter, value.AdapterLength),
+            value.AttachmentId, Decode(attachment, value.AttachmentLength));
+    }
 
     private static float? Optional(uint present, float value) => present != 0 ? value : null;
     private static string? Decode(byte* value, uint length, uint capacity = 128)

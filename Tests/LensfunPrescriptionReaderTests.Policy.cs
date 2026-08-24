@@ -40,7 +40,7 @@ public sealed partial class LensfunPrescriptionReaderTests
             "8mm", "Canon", "EOS 6D", "Canon", "EOS 6D", 8, 3.5f);
 
         var result = RawBaseLoader.ReadLensPrescription(
-            new ImageFile("ambiguous.cr2"), metadata, dimensions);
+            new ImageFile("ambiguous.cr2"), metadata, null, dimensions);
 
         Assert.Equal(LensPrescriptionStatus.None, result.Status);
         Assert.Null(result.Prescription);
@@ -56,7 +56,7 @@ public sealed partial class LensfunPrescriptionReaderTests
             6000, 4000, 6000, 4000, 6000, 4000, 1);
 
         var result = RawBaseLoader.ReadLensPrescription(
-            new ImageFile(path), Metadata("Missing Lens"), dimensions);
+            new ImageFile(path), Metadata("Missing Lens"), null, dimensions);
 
         Assert.Equal(LensPrescriptionStatus.Invalid, result.Status);
         Assert.Null(result.Prescription);
@@ -70,7 +70,8 @@ public sealed partial class LensfunPrescriptionReaderTests
         LensfunPrescriptionReader.ForceSource = true;
 
         var result = RawBaseLoader.ReadLensPrescription(
-            new ImageFile(path), context.GetMetadata(), context.GetDimensions());
+            new ImageFile(path), context.GetMetadata(), context.GetLensIdentity(),
+            context.GetDimensions());
 
         Assert.Equal(LensPrescriptionStatus.Available, result.Status);
         Assert.Equal(LensPrescriptionSource.Lensfun, result.Prescription!.Source);

@@ -4,33 +4,33 @@
     "net10.0": {
       "HappyPhoton.LibRaw.Native": {
         "type": "Direct",
-        "requested": "[0.22.2.11, )",
-        "resolved": "0.22.2.11",
-        "contentHash": "mHn9hWwvru5+ST5nUYnjQiY3j1PhW6/PLZJLdOLy3k304IXLb3G6KvePjSGdcliKAmG5oaaPegssaUMxqQV+3g=="
+        "requested": "[0.22.2.12, )",
+        "resolved": "0.22.2.12",
+        "contentHash": "9MFZM3ikPlHYcUmYcg1TFbbW7KiG6Nc0dkZ/tE6Fy+0SlNUChb/jFyx0Up0aNnbFAIMSHIZg6IouXHV76n5//g=="
       }
     },
     "net10.0/linux-x64": {
       "HappyPhoton.LibRaw.Native": {
         "type": "Direct",
-        "requested": "[0.22.2.11, )",
-        "resolved": "0.22.2.11",
-        "contentHash": "mHn9hWwvru5+ST5nUYnjQiY3j1PhW6/PLZJLdOLy3k304IXLb3G6KvePjSGdcliKAmG5oaaPegssaUMxqQV+3g=="
+        "requested": "[0.22.2.12, )",
+        "resolved": "0.22.2.12",
+        "contentHash": "9MFZM3ikPlHYcUmYcg1TFbbW7KiG6Nc0dkZ/tE6Fy+0SlNUChb/jFyx0Up0aNnbFAIMSHIZg6IouXHV76n5//g=="
       }
     },
     "net10.0/osx-arm64": {
       "HappyPhoton.LibRaw.Native": {
         "type": "Direct",
-        "requested": "[0.22.2.11, )",
-        "resolved": "0.22.2.11",
-        "contentHash": "mHn9hWwvru5+ST5nUYnjQiY3j1PhW6/PLZJLdOLy3k304IXLb3G6KvePjSGdcliKAmG5oaaPegssaUMxqQV+3g=="
+        "requested": "[0.22.2.12, )",
+        "resolved": "0.22.2.12",
+        "contentHash": "9MFZM3ikPlHYcUmYcg1TFbbW7KiG6Nc0dkZ/tE6Fy+0SlNUChb/jFyx0Up0aNnbFAIMSHIZg6IouXHV76n5//g=="
       }
     },
     "net10.0/win-x64": {
       "HappyPhoton.LibRaw.Native": {
         "type": "Direct",
-        "requested": "[0.22.2.11, )",
-        "resolved": "0.22.2.11",
-        "contentHash": "mHn9hWwvru5+ST5nUYnjQiY3j1PhW6/PLZJLdOLy3k304IXLb3G6KvePjSGdcliKAmG5oaaPegssaUMxqQV+3g=="
+        "requested": "[0.22.2.12, )",
+        "resolved": "0.22.2.12",
+        "contentHash": "9MFZM3ikPlHYcUmYcg1TFbbW7KiG6Nc0dkZ/tE6Fy+0SlNUChb/jFyx0Up0aNnbFAIMSHIZg6IouXHV76n5//g=="
       }
     }
   }

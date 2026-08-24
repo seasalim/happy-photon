@@ -172,7 +172,14 @@ public sealed class ColorCheckerGroundTruthTests
     }
 
     private static ColorCheckerMeasurement Measure() =>
-        Measure(BaseDecodeSettings.Default);
+        // This gate characterizes color, so exclude geometric optics to avoid
+        // coupling its recorded observations to the Lensfun snapshot.
+        Measure(BaseDecodeSettings.Default with
+        {
+            Distortion = false,
+            ChromaticAberration = false,
+            Vignetting = false
+        });
 
     internal static ColorCheckerMeasurement Measure(BaseDecodeSettings decode)
     {

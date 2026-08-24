@@ -191,6 +191,18 @@ hplr_camera_facts camera_facts(const std::filesystem::path &fixture) {
     return facts;
 }
 
+hplr_lens_identity lens_identity(const std::filesystem::path &fixture) {
+    Error error;
+    const auto handle = open(fixture, error);
+    auto identity = output<hplr_lens_identity>();
+    CHECK(hplr_get_lens_identity(handle, &identity, &error.value) == HPLR_OK);
+    CHECK(identity.present == 1);
+    CHECK(identity.lens_id == UINT64_C(0x7658505014147A02));
+    CHECK(identity.min_focal == 50 && identity.max_focal == 50);
+    CHECK(hplr_close(handle, &error.value) == HPLR_OK);
+    return identity;
+}
+
 template<typename T>
 void print_values(const T *values, uint32_t count) {
     std::cout << '[';
@@ -236,8 +248,11 @@ int main(int argc, char **argv) {
     CHECK(runtime.thread_safe_variant == HPLR_EXPECT_REENTRANT);
     const std::filesystem::path fixture = argv[staged ? 2 : 3];
     const auto xtrans_fixture = fixture.parent_path() / "fujifilm-x30.raf";
+    const auto nikon_fixture = fixture.parent_path() / "nikon-d70-burst-1.nef";
     CHECK(std::filesystem::is_regular_file(xtrans_fixture));
+    CHECK(std::filesystem::is_regular_file(nikon_fixture));
     const auto facts = camera_facts(fixture);
+    const auto identity = lens_identity(nikon_fixture);
     const auto default_result = decode(fixture, configuration(true));
     decode(fixture, configuration(false));
     auto saturated = configuration(true);
@@ -262,6 +277,9 @@ int main(int argc, char **argv) {
                   << ",\"default_checksum\":\"" << std::hex << std::uppercase
                   << default_result.checksum << "\"" << std::dec;
         print_camera_facts(facts);
+        std::cout << ",\"nikon_lens_id\":\"" << std::hex << std::uppercase
+                  << std::setw(16) << std::setfill('0') << identity.lens_id
+                  << "\"" << std::dec;
         std::cout << "}\n";
     }
     return failures ? 1 : 0;

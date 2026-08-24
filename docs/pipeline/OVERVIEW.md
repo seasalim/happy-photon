@@ -263,7 +263,7 @@ capability signal.
 
 `IRawProcessingService` is intentionally outside this base/render path. It extracts
 encoded thumbnails and metadata for browsing through the same versioned Happy Photon
-bridge and RID-selected `HappyPhoton.LibRaw.Native` 0.22.2.11 package. A rejected runtime
+bridge and RID-selected `HappyPhoton.LibRaw.Native` 0.22.2.12 package. A rejected runtime
 disables RAW decoding until repaired; Magick does not decode RAW raster pixels.
 
 ## 6. Pipeline versioning

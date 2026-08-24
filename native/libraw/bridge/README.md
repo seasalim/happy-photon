@@ -1,6 +1,6 @@
 # Happy Photon LibRaw bridge
 
-This directory defines bridge ABI version 3. All ABI values use fixed-width
+This directory defines bridge ABI version 4. All ABI values use fixed-width
 integers and the public header is consumable as C. Inputs described as UTF-8
 are pointer-plus-length values: embedded NUL and malformed UTF-8 are rejected.
 Fixed textual outputs contain a byte length and replace invalid native bytes
@@ -14,7 +14,12 @@ return `HPLR_E_BUSY` immediately while a borrow or another handle operation is
 active. Image allocations have exactly one matching `hplr_free_image` call.
 No pointer returned by this bridge is valid after its owning token is released.
 
-Output configuration is replacing rather than cumulative. ABI v3 adds an optional
+ABI v4 adds one header-stage `hplr_get_lens_identity` call over LibRaw's generic,
+already-parsed maker-note lens block. It reports lens, camera, mount, format,
+focal/aperture, teleconverter, adapter, and attachment facts without maker-specific
+native parsing or raster decode.
+
+Output configuration is replacing rather than cumulative. ABI v3 added an optional
 post-black saturation ceiling, a named demosaic-quality request, and a full-resolution
 pre-rotation crop. Zero-filled quality and crop presence flags preserve LibRaw's own
 defaults. Accepted crops are limited to regions LibRaw uses verbatim; sensor-dependent

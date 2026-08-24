@@ -22,7 +22,7 @@ extern "C" {
 
 #pragma pack(push, 8)
 
-#define HPLR_ABI_VERSION UINT32_C(3)
+#define HPLR_ABI_VERSION UINT32_C(4)
 #define HPLR_CBLACK_COUNT UINT32_C(4104)
 #define HPLR_TEXT_CAPACITY UINT32_C(128)
 
@@ -174,6 +174,48 @@ typedef struct hplr_fuji_facts {
     uint32_t auto_dynamic_range;
 } hplr_fuji_facts;
 
+typedef struct hplr_lens_identity {
+    uint32_t abi_version;
+    uint32_t struct_size;
+    uint32_t present;
+    uint32_t reserved;
+    uint64_t lens_id;
+    uint64_t camera_id;
+    uint64_t teleconverter_id;
+    uint64_t adapter_id;
+    uint64_t attachment_id;
+    uint32_t lens_format;
+    uint32_t lens_mount;
+    uint32_t camera_format;
+    uint32_t camera_mount;
+    int32_t focal_type;
+    uint32_t focal_units;
+    float min_focal;
+    float max_focal;
+    float max_aperture_at_min_focal;
+    float max_aperture_at_max_focal;
+    float min_aperture_at_min_focal;
+    float min_aperture_at_max_focal;
+    float max_aperture;
+    float min_aperture;
+    float current_focal;
+    float current_aperture;
+    float max_aperture_at_current_focal;
+    float min_aperture_at_current_focal;
+    float min_focus_distance;
+    float focus_range_index;
+    float lens_f_stops;
+    float focal_length_35mm;
+    uint32_t lens_length;
+    uint8_t lens[HPLR_TEXT_CAPACITY];
+    uint32_t teleconverter_length;
+    uint8_t teleconverter[HPLR_TEXT_CAPACITY];
+    uint32_t adapter_length;
+    uint8_t adapter[HPLR_TEXT_CAPACITY];
+    uint32_t attachment_length;
+    uint8_t attachment[HPLR_TEXT_CAPACITY];
+} hplr_lens_identity;
+
 /* The data pointer aliases LibRaw's preserved rawdata snapshot. Managed writes
    made before release are consumed by the following process call. It remains
    valid only until the matching lease is released. Process, recycle, and close
@@ -259,6 +301,9 @@ HPLR_API int32_t HPLR_CALL hplr_get_camera_facts(hplr_handle handle,
                                                   hplr_error *error);
 HPLR_API int32_t HPLR_CALL hplr_get_fuji_facts(hplr_handle handle, hplr_fuji_facts *out_value,
                                                 hplr_error *error);
+HPLR_API int32_t HPLR_CALL hplr_get_lens_identity(hplr_handle handle,
+                                                   hplr_lens_identity *out_value,
+                                                   hplr_error *error);
 HPLR_API int32_t HPLR_CALL hplr_borrow_mosaic(hplr_handle handle,
                                                hplr_mosaic_descriptor *out_value,
                                                hplr_error *error);

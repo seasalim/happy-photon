@@ -31,7 +31,7 @@ public readonly record struct LibRawCropBox(uint X, uint Y, uint Width, uint Hei
 /// <summary>A native-independent, versioned description of LibRaw output.</summary>
 public readonly record struct LibRawOutputConfiguration
 {
-    public const uint Version = 3;
+    public const uint Version = 4;
 
     public uint AbiVersion { get; init; }
     public int OutputBits { get; init; }

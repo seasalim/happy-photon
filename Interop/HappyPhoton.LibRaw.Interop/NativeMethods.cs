@@ -51,6 +51,10 @@ internal static unsafe partial class NativeMethods
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     internal static partial int FujiFacts(ulong handle, ref NativeFujiFacts value, ref NativeError error);
 
+    [LibraryImport(LibraryName, EntryPoint = "hplr_get_lens_identity")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    internal static partial int LensIdentity(ulong handle, ref NativeLensIdentity value, ref NativeError error);
+
     [LibraryImport(LibraryName, EntryPoint = "hplr_borrow_mosaic")]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     internal static partial int BorrowMosaic(ulong handle, ref NativeMosaicDescriptor value, ref NativeError error);

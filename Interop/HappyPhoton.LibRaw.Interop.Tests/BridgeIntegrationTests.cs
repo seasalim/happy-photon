@@ -33,7 +33,7 @@ public sealed class BridgeIntegrationTests
         Environment.SetEnvironmentVariable("HAPPY_PHOTON_LIBRAW_BRIDGE_DIR", staging.Path);
 
         var runtime = LibRawContext.Runtime;
-        Assert.Equal(3u, runtime.BridgeAbiVersion);
+        Assert.Equal(4u, runtime.BridgeAbiVersion);
         Assert.Equal(0x001602u, runtime.LibRawVersionNumber);
         AssertPathAndHash(bridgeName, staging.Path, bridgeHash);
         AssertPathAndHash(librawName, staging.Path, librawHash);
@@ -56,6 +56,7 @@ public sealed class BridgeIntegrationTests
         Assert.Equal(36, sensor.XTrans.Length);
         var metadata = context.GetMetadata();
         Assert.False(string.IsNullOrWhiteSpace(metadata.Make));
+        _ = context.GetLensIdentity();
         var camera = context.GetCameraFacts();
         Assert.NotNull(camera);
         Assert.All(camera!.PreMultipliers!, value =>

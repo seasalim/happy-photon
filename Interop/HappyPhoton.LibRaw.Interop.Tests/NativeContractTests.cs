@@ -63,6 +63,27 @@ public sealed unsafe class NativeContractTests
             (nameof(NativeFujiFacts.Present), 8), (nameof(NativeFujiFacts.ExposureMidpointShift), 12),
             (nameof(NativeFujiFacts.DynamicRange), 16), (nameof(NativeFujiFacts.DynamicRangeSetting), 20),
             (nameof(NativeFujiFacts.DevelopmentDynamicRange), 24), (nameof(NativeFujiFacts.AutoDynamicRange), 28));
+        AssertLayout<NativeLensIdentity>(672,
+            (nameof(NativeLensIdentity.AbiVersion), 0), (nameof(NativeLensIdentity.StructSize), 4),
+            (nameof(NativeLensIdentity.Present), 8), (nameof(NativeLensIdentity.Reserved), 12),
+            (nameof(NativeLensIdentity.LensId), 16), (nameof(NativeLensIdentity.CameraId), 24),
+            (nameof(NativeLensIdentity.TeleconverterId), 32), (nameof(NativeLensIdentity.AdapterId), 40),
+            (nameof(NativeLensIdentity.AttachmentId), 48), (nameof(NativeLensIdentity.LensFormat), 56),
+            (nameof(NativeLensIdentity.LensMount), 60), (nameof(NativeLensIdentity.CameraFormat), 64),
+            (nameof(NativeLensIdentity.CameraMount), 68), (nameof(NativeLensIdentity.FocalType), 72),
+            (nameof(NativeLensIdentity.FocalUnits), 76), (nameof(NativeLensIdentity.MinFocal), 80),
+            (nameof(NativeLensIdentity.MaxFocal), 84), (nameof(NativeLensIdentity.MaxApertureAtMinFocal), 88),
+            (nameof(NativeLensIdentity.MaxApertureAtMaxFocal), 92), (nameof(NativeLensIdentity.MinApertureAtMinFocal), 96),
+            (nameof(NativeLensIdentity.MinApertureAtMaxFocal), 100), (nameof(NativeLensIdentity.MaxAperture), 104),
+            (nameof(NativeLensIdentity.MinAperture), 108), (nameof(NativeLensIdentity.CurrentFocal), 112),
+            (nameof(NativeLensIdentity.CurrentAperture), 116), (nameof(NativeLensIdentity.MaxApertureAtCurrentFocal), 120),
+            (nameof(NativeLensIdentity.MinApertureAtCurrentFocal), 124), (nameof(NativeLensIdentity.MinFocusDistance), 128),
+            (nameof(NativeLensIdentity.FocusRangeIndex), 132), (nameof(NativeLensIdentity.LensFStops), 136),
+            (nameof(NativeLensIdentity.FocalLength35mm), 140), (nameof(NativeLensIdentity.LensLength), 144),
+            (nameof(NativeLensIdentity.Lens), 148), (nameof(NativeLensIdentity.TeleconverterLength), 276),
+            (nameof(NativeLensIdentity.Teleconverter), 280), (nameof(NativeLensIdentity.AdapterLength), 408),
+            (nameof(NativeLensIdentity.Adapter), 412), (nameof(NativeLensIdentity.AttachmentLength), 540),
+            (nameof(NativeLensIdentity.Attachment), 544));
         AssertLayout<NativeOutputConfig>(112,
             (nameof(NativeOutputConfig.AbiVersion), 0), (nameof(NativeOutputConfig.StructSize), 4),
             (nameof(NativeOutputConfig.OutputBits), 8), (nameof(NativeOutputConfig.OutputColor), 12),
@@ -122,6 +143,41 @@ public sealed unsafe class NativeContractTests
         Assert.Equal(new uint[] { 300, 301, 302, 303 }, facts.LinearMax!);
     }
 
+    [Fact]
+    public void LensIdentityConversion_PreservesGenericFactsAndText()
+    {
+        var native = new NativeLensIdentity
+        {
+            AbiVersion = LibRawOutputConfiguration.Version,
+            StructSize = (uint)Unsafe.SizeOf<NativeLensIdentity>(),
+            Present = 1,
+            LensId = 0x0123456789ABCDEF,
+            CameraId = 2,
+            TeleconverterId = 3,
+            AdapterId = 4,
+            AttachmentId = 5,
+            LensFormat = 6,
+            LensMount = 7,
+            CameraFormat = 8,
+            CameraMount = 9,
+            MinFocal = 24,
+            MaxFocal = 70
+        };
+        native.LensLength = 4;
+        "Lens"u8.CopyTo(new Span<byte>(native.Lens, 4));
+
+        var facts = LibRawContext.ConvertLensIdentity((NativeStatus.Ok, native));
+
+        Assert.NotNull(facts);
+        Assert.Equal(0x0123456789ABCDEFul, facts!.LensId);
+        Assert.Equal("Lens", facts.Lens);
+        Assert.Equal((6u, 7u, 8u, 9u),
+            (facts.LensFormat, facts.LensMount, facts.CameraFormat, facts.CameraMount));
+        Assert.Equal((24f, 70f), (facts.MinFocal, facts.MaxFocal));
+        Assert.Null(LibRawContext.ConvertLensIdentity(
+            (NativeStatus.Absent, default)));
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -164,7 +220,7 @@ public sealed unsafe class NativeContractTests
     {
         var value = new NativeImageDescriptor
         {
-            AbiVersion = 3,
+            AbiVersion = LibRawOutputConfiguration.Version,
             StructSize = (uint)Unsafe.SizeOf<NativeImageDescriptor>(),
             Data = (byte*)1,
             ByteLength = 11,
@@ -219,7 +275,7 @@ public sealed unsafe class NativeContractTests
     {
         var native = new NativeCameraFacts
         {
-            AbiVersion = 3,
+            AbiVersion = LibRawOutputConfiguration.Version,
             StructSize = (uint)Unsafe.SizeOf<NativeCameraFacts>(),
             MultiplierCount = channelCount,
             MatrixRows = 3,

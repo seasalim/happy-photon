@@ -5,6 +5,7 @@ namespace HappyPhoton.Services;
 
 public sealed partial class RawBaseLoader
 {
+    private static readonly LensIdentityResolver LensIdentityResolver = new();
     private static readonly EmbeddedLensReader[] EmbeddedLensReaders =
     [
         new(".dng", (path, _) => new DngLensPrescriptionReader().Read(path)),
@@ -15,6 +16,7 @@ public sealed partial class RawBaseLoader
     internal static LensPrescriptionReadResult ReadLensPrescription(
         ImageFile file,
         LibRawMetadata metadata,
+        LibRawLensIdentity? lensIdentity,
         LibRawDimensions dimensions)
     {
         var embedded = LensfunPrescriptionReader.ForceSource
@@ -27,10 +29,24 @@ public sealed partial class RawBaseLoader
         var lensfun = LensPrescriptionReadResult.None;
         if (NeedsLensfun(prescription))
         {
-            lensfun = new LensfunPrescriptionReader().Read(
+            var reader = new LensfunPrescriptionReader();
+            lensfun = reader.Read(
                 metadata,
                 checked((int)dimensions.VisibleWidth),
                 checked((int)dimensions.VisibleHeight));
+            if (lensfun.Status == LensPrescriptionStatus.None)
+            {
+                var resolvedName = LensIdentityResolver.Resolve(
+                    metadata.NormalizedMake ?? metadata.Make, lensIdentity);
+                if (!string.IsNullOrWhiteSpace(resolvedName))
+                {
+                    var resolvedMetadata = metadata with { Lens = resolvedName };
+                    lensfun = reader.Read(
+                        resolvedMetadata,
+                        checked((int)dimensions.VisibleWidth),
+                        checked((int)dimensions.VisibleHeight));
+                }
+            }
             prescription = LensfunPrescriptionReader.Merge(
                 prescription, lensfun.Prescription);
         }

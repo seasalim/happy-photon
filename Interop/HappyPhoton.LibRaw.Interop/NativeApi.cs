@@ -5,7 +5,7 @@ namespace HappyPhoton.LibRaw.Interop;
 
 internal static unsafe class NativeApi
 {
-    private const uint Abi = 3;
+    private const uint Abi = 4;
     private const int ErrorCapacity = 512;
 
     internal static LibRawRuntime Runtime()
@@ -74,6 +74,14 @@ internal static unsafe class NativeApi
     {
         NativeFujiFacts value = Init<NativeFujiFacts>();
         var status = Invoke((NativeError* error) => NativeMethods.FujiFacts(handle,
+            ref value, ref *error));
+        return ((NativeStatus)status, value);
+    }
+
+    internal static (NativeStatus Status, NativeLensIdentity Value) LensIdentity(ulong handle)
+    {
+        NativeLensIdentity value = Init<NativeLensIdentity>();
+        var status = Invoke((NativeError* error) => NativeMethods.LensIdentity(handle,
             ref value, ref *error));
         return ((NativeStatus)status, value);
     }

@@ -3,7 +3,7 @@
 ## Current release — redistribution basis and sources
 
 This section always describes the CURRENT shipped release:
-**`HappyPhoton.LibRaw.Native` 0.22.2.11 (LibRaw 0.22.2)**. Component versions
+**`HappyPhoton.LibRaw.Native` 0.22.2.12 (LibRaw 0.22.2)**. Component versions
 come from the package's committed `…provenance.json`, and the notice texts in
 `licenses/` are verbatim copies of the notices produced by that build.
 
@@ -694,3 +694,56 @@ baseline-comparison variance, and the libjpeg nondeterminism reading.
 This entry records the package swap: the 0.22.2.10 pair is removed from
 `packages/native/` (its qualification above remains the historical
 record) and 0.22.2.11 is committed with its provenance file.
+
+## 2026-08-24 — Bridge ABI v4 qualifying dispatch (0.22.2.12)
+
+Workflow run 32759601211 (revision `0.22.2.12`, source commit
+`9f1eebdb5ef0`, pinned vcpkg revision
+`c4d9956c0c10a4742840a5e7d93efa2e0015c865`) built the first bridge ABI 4
+package. The change is one additive, read-only call,
+`hplr_get_lens_identity`, over LibRaw's already-parsed generic maker-note
+lens block; no existing structure changed and no maker-specific parsing
+entered native code. Every job was green on the first attempt, including
+ASAN/UBSAN and the per-RID probe validation. Downloaded and hash-verified
+by the orchestrator against the workflow's own candidate summary:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `HappyPhoton.LibRaw.Native.0.22.2.12.nupkg` (2,590,541 bytes) | `AEE7ADBC82A67EB630D5B7E1F43033706F20B6E8DD54FC4E1D94022452B48582` |
+| `native-provenance.json` (combined) | `0C482599FADA905C39A0FA6895CBE4BE53DCBDE7EA78BCC9DC130482A547F56C` |
+
+Contract results: bridge ABI 4, LibRaw `0x001602`, capability mask
+`0x000000C0` on all three RIDs, reentrant `_r` on win-x64/linux-x64,
+non-reentrant osx-arm64. The candidate smoke's default-configuration
+output checksums are **byte-identical to 0.22.2.11** — win-x64 and
+linux-x64 both `83CAD273F42C521F`, osx-arm64 `7F0B39568B21297D` —
+which is the direct evidence that an additive read-only facts call moves
+no pixels. Loader and OS floors are unchanged, with `libgomp.so.1`
+remaining the approved Linux system prerequisite.
+
+LibRaw itself is unchanged and the delta is confined to the bridge: the
+linux-x64 `libraw_r.so.25`, `liblcms2.so.2`, `libz.so.1` and the
+osx-arm64 `libraw.25.dylib` hashes are identical to the approved
+0.22.2.11 binaries. Every win-x64 binary differs, as expected MSVC
+rebuild nondeterminism and consistent with the 0.22.2.10 and 0.22.2.11
+records, and the linux-x64 `libjpeg.so.8` hash differs for the same
+build-nondeterminism reason recorded in the previous entry.
+
+Orchestrator measurement of the ABI 3 to ABI 4 delta, taken on one machine
+in one session with five paired samples alternating the two packages over
+a header-stage pass across the seven committed RAW fixtures: 2.89 ms
+median before, 2.82 ms after, against an approved threshold of 3.18 ms.
+The coarse pairs read +8.5%, well above the roughly 1% a single added
+P/Invoke can cost, so the measurement was repeated at fifty passes per
+timed sample; the delta then reverses to -4.1% (1.324 ms to 1.270 ms per
+pass) with ABI 4 faster in three of five pairs. A difference whose sign
+flips as the noise floor drops is variance, not cost, and the ABI-3
+side's own spread in the coarse run (2.48 to 3.25 ms) was wider than the
+difference being claimed. The reading is no measurable header-stage
+regression, consistent with the byte-identical output checksums above.
+The full solution suite against this package is green: 232 headless,
+1,873 main, and 52 interop tests with no failures and no bridge override.
+
+This entry records the package swap: the 0.22.2.11 pair is removed from
+`packages/native/` (its qualification above remains the historical
+record) and 0.22.2.12 is committed with its provenance file.

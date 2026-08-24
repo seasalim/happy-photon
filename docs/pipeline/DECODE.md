@@ -209,11 +209,11 @@ via `scripts/evaluate-highlight-reconstruction.cs`.
 
 ### 2.4 Platform runtime
 
-All supported platforms use `HappyPhoton.LibRaw.Native` 0.22.2.11 through the managed
+All supported platforms use `HappyPhoton.LibRaw.Native` 0.22.2.12 through the managed
 binding; NuGet selects the matching RID assets. The binding resolves the bridge and its
 LibRaw 0.22.2 companion from one package-local directory by absolute path — never a
 system or PATH copy. `LibRawNativeSupport` performs one process-wide health probe
-requiring bridge ABI 3, numeric LibRaw version `0x001602` exactly, and LibRaw's JPEG
+requiring bridge ABI 4, numeric LibRaw version `0x001602` exactly, and LibRaw's JPEG
 and zlib capability bits; an ABI mismatch stops before the versioned runtime structure
 is queried. Rejections retain bridge-versus-companion attribution, record the safely
 observed ABI, version, version string, and capability mask, and emit one error-level
@@ -223,7 +223,14 @@ the same facts in copied support text. Header-only RAW `Ping`, EXIF thumbnail
 extraction, orientation reads, and decoding already-extracted preview bytes remain
 permitted because they do not decode the RAW raster.
 
-Bridge ABI 3 exposes a mutable mosaic lease whose writes are consumed by the following
+Bridge ABI 4 adds one header-stage lens-identity read over LibRaw's parsed generic
+maker-note lens block. It carries the composite ID, maker-note name, lens/camera mount
+and format facts, focal/aperture ranges, and teleconverter, adapter, and attachment
+identifiers without decoding raster data or adding maker-specific native parsing.
+Managed Nikon resolution is data-driven; makers without a shipped table retain only a
+transmitted maker-note name.
+
+The bridge also exposes a mutable mosaic lease whose writes are consumed by the following
 LibRaw process call, plus optional `user_sat`, named `user_qual` requests, and an
 accept-only-verbatim full-resolution crop box. These are interop capabilities only:
 `RawBaseLoader` does not use them until a pipeline consumer defines the corresponding

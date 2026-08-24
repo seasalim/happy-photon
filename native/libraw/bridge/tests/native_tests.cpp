@@ -12,6 +12,9 @@
 
 namespace {
 
+extern "C" HPLR_API int32_t HPLR_CALL hplr_test_set_lens_identity(
+    hplr_handle handle, uint32_t present, hplr_error *error);
+
 int failures;
 #define CHECK(value) do { if (!(value)) { \
     std::cerr << __FILE__ << ':' << __LINE__ << " check failed: " #value "\n"; \
@@ -170,6 +173,41 @@ void facts_and_lifetime(const std::filesystem::path &fixture) {
     CHECK(hplr_make_processed_image(handle, &processed, &error.value) == HPLR_OK);
     CHECK(processed.bits_per_sample == 16 && processed.channels == 3);
     CHECK(hplr_free_image(processed.allocation, &error.value) == HPLR_OK);
+    CHECK(hplr_close(handle, &error.value) == HPLR_OK);
+}
+
+void lens_identity_facts(const std::filesystem::path &fixture) {
+    Error error;
+    const auto handle = open(fixture);
+    auto identity = output<hplr_lens_identity>();
+    identity.struct_size--;
+    CHECK(hplr_get_lens_identity(handle, &identity, &error.value) == HPLR_E_ABI);
+    CHECK(hplr_test_set_lens_identity(handle, 1, &error.value) == HPLR_OK);
+    identity = output<hplr_lens_identity>();
+    CHECK(hplr_get_lens_identity(handle, &identity, &error.value) == HPLR_OK);
+    CHECK(identity.present == 1);
+    CHECK(identity.lens_id == UINT64_C(0x0123456789ABCDEF));
+    CHECK(identity.camera_id == UINT64_C(0x1020304050607080));
+    CHECK(identity.teleconverter_id == UINT64_C(0x1112131415161718));
+    CHECK(identity.adapter_id == UINT64_C(0x2122232425262728));
+    CHECK(identity.attachment_id == UINT64_C(0x3132333435363738));
+    CHECK(identity.lens_format == 1 && identity.lens_mount == 2);
+    CHECK(identity.camera_format == 3 && identity.camera_mount == 4);
+    CHECK(identity.focal_type == 2 && identity.focal_units == 5);
+    CHECK(identity.min_focal == 24 && identity.max_focal == 70);
+    CHECK(identity.max_aperture_at_min_focal == 2.8f);
+    CHECK(identity.min_aperture_at_max_focal == 22);
+    CHECK(identity.current_focal == 35 && identity.current_aperture == 5.6f);
+    CHECK(identity.focal_length_35mm == 52);
+    const uint8_t sanitized[] = {'L', 0xef, 0xbf, 0xbd, 'X'};
+    CHECK(identity.lens_length == sizeof(sanitized));
+    CHECK(std::equal(std::begin(sanitized), std::end(sanitized), identity.lens));
+    CHECK(identity.teleconverter_length == 2 && identity.adapter_length == 2 &&
+          identity.attachment_length == 2);
+    CHECK(hplr_test_set_lens_identity(handle, 0, &error.value) == HPLR_OK);
+    identity = output<hplr_lens_identity>();
+    CHECK(hplr_get_lens_identity(handle, &identity, &error.value) == HPLR_ABSENT);
+    CHECK(identity.present == 0 && identity.lens_id == 0 && identity.lens_length == 0);
     CHECK(hplr_close(handle, &error.value) == HPLR_OK);
 }
 
@@ -392,6 +430,7 @@ int main(int argc, char **argv) {
     invalid_inputs();
     runtime_and_unicode(fixture);
     facts_and_lifetime(fixture);
+    lens_identity_facts(fixture);
     optional_camera_facts(fixture);
     configuration_and_failures(fixture);
     abi_v3_configuration(fixture);

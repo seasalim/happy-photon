@@ -16,7 +16,7 @@ pinned by the committed package lock files.
 | Microsoft.Data.Sqlite | 10.0.9 | MIT |
 | Microsoft.NET.ILLink.Tasks | 10.0.8 | MIT |
 | SQLitePCLRaw.bundle_e_sqlite3 | 3.0.3 | Apache-2.0 |
-| HappyPhoton.LibRaw.Native | 0.22.2.11 | GPL-3.0-or-later; bundled components retain their own terms |
+| HappyPhoton.LibRaw.Native | 0.22.2.12 | GPL-3.0-or-later; bundled components retain their own terms |
 
 The canonical Apache-2.0 text is distributed in
 [`licenses/Apache-2.0.txt`](licenses/Apache-2.0.txt). MIT notices are retained
@@ -34,6 +34,14 @@ complete license text is distributed with the snapshot as
 Only the database data is included. Happy Photon does not include or link the
 Lensfun library.
 
+## Nikon lens identity data
+
+Happy Photon includes factual Nikon maker-note lens identifiers and model names
+transcribed from ExifTool's published tag documentation. The source URL, retrieval
+date, and content hashes are recorded in
+[`data/lens-ids/nikon.provenance.json`](data/lens-ids/nikon.provenance.json).
+No ExifTool source code or executable code is included or used.
+
 ## Magick.NET and ImageMagick
 
 Happy Photon uses Magick.NET 14.15.0, copyright Dirk Lemstra, under
@@ -47,7 +55,7 @@ binary release archives must include that file.
 
 ## Happy Photon LibRaw native package
 
-`HappyPhoton.LibRaw.Native` 0.22.2.11 supplies the Happy Photon bridge and
+`HappyPhoton.LibRaw.Native` 0.22.2.12 supplies the Happy Photon bridge and
 LibRaw 0.22.2 runtimes selected by NuGet for Windows x64, Linux x64, and Apple
 Silicon macOS. The package was built from the audited sources and provenance
 recorded in [`licenses/LibRaw-runtime-audit.md`](licenses/LibRaw-runtime-audit.md).

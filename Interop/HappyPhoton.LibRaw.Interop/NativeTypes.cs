@@ -127,6 +127,30 @@ internal struct NativeFujiFacts
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 8)]
+internal unsafe struct NativeLensIdentity
+{
+    internal uint AbiVersion, StructSize, Present, Reserved;
+    internal ulong LensId, CameraId, TeleconverterId, AdapterId, AttachmentId;
+    internal uint LensFormat, LensMount, CameraFormat, CameraMount;
+    internal int FocalType;
+    internal uint FocalUnits;
+    internal float MinFocal, MaxFocal;
+    internal float MaxApertureAtMinFocal, MaxApertureAtMaxFocal;
+    internal float MinApertureAtMinFocal, MinApertureAtMaxFocal;
+    internal float MaxAperture, MinAperture, CurrentFocal, CurrentAperture;
+    internal float MaxApertureAtCurrentFocal, MinApertureAtCurrentFocal;
+    internal float MinFocusDistance, FocusRangeIndex, LensFStops, FocalLength35mm;
+    internal uint LensLength;
+    internal fixed byte Lens[128];
+    internal uint TeleconverterLength;
+    internal fixed byte Teleconverter[128];
+    internal uint AdapterLength;
+    internal fixed byte Adapter[128];
+    internal uint AttachmentLength;
+    internal fixed byte Attachment[128];
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 8)]
 internal unsafe struct NativeOutputConfig
 {
     internal uint AbiVersion, StructSize;

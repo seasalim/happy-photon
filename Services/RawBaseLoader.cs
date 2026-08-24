@@ -122,9 +122,9 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             }
             var dimensions = context.GetDimensions(cancellationToken);
             var rawMetadata = context.GetMetadata(cancellationToken);
-            var lensResult = isMonochrome
-                ? LensPrescriptionReadResult.None
-                : ReadLensPrescription(file, rawMetadata, dimensions);
+            var lensResult = isMonochrome ? LensPrescriptionReadResult.None
+                : ReadLensPrescription(file, rawMetadata,
+                    context.GetLensIdentity(cancellationToken), dimensions);
             var lensPrescription = lensResult.Prescription;
             var applyLens = lensPrescription != null &&
                 (decode.Distortion && lensPrescription.HasDistortion ||
