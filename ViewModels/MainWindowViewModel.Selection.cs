@@ -204,6 +204,10 @@ public partial class MainWindowViewModel
                    LensDistortion != SelectedImage!.EditSettings.Lens.BaselineDistortion ||
                    LensChromaticAberration != SelectedImage.EditSettings.Lens.BaselineChromaticAberration ||
                    LensVignetting != SelectedImage.EditSettings.Lens.BaselineVignetting ||
+                   GeometryVertical != 0 ||
+                   GeometryHorizontal != 0 ||
+                   GeometryAspect != 0 ||
+                   GeometryDistortion != 0 ||
                    hasCurveEdits ||
                    ActivePresetId != null ||
                    SelectedImage?.EditSettings.RawProfile != null;
@@ -218,6 +222,7 @@ public partial class MainWindowViewModel
         ResetEffectsUi();
         ResetMixerUi();
         ResetLensUi();
+        ResetGeometryUi();
         Brightness = 0;
         Contrast = 0;
         Saturation = 0;

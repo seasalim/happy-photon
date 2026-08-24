@@ -106,7 +106,10 @@ public sealed class ClippingStatsTests
             }
         };
         using var geometryImage = new MagickImage(MagickColors.Black, 4, 3);
-        var trace = RenderGeometry.Apply(geometryImage, settings);
+        using var corrected = RenderGeometry.Apply(
+            geometryImage,
+            settings,
+            out var trace);
 
         var projection = SourceSaturationMaskProjector.Project(
             mask,
@@ -142,9 +145,22 @@ public sealed class ClippingStatsTests
     public void Project_HorizonAndResizePreserveAnIsolatedFlagAndCacheGeometry()
     {
         var mask = Mask(20, 10, (10, 5, (byte)2));
-        var settings = new EditSettings { HorizonRotation = 7.5 };
+        var settings = new EditSettings
+        {
+            HorizonRotation = 3,
+            Geometry = new GeometrySettings
+            {
+                Vertical = 35,
+                Horizontal = -28,
+                Aspect = 22,
+                Distortion = -45
+            }
+        };
         using var geometryImage = new MagickImage(MagickColors.Black, 20, 10);
-        var trace = RenderGeometry.Apply(geometryImage, settings);
+        using var corrected = RenderGeometry.Apply(
+            geometryImage,
+            settings,
+            out var trace);
         var first = SourceSaturationMaskProjector.Project(
             mask,
             settings,

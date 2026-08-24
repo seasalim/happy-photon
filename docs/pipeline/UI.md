@@ -54,6 +54,8 @@ EFFECTS
   Midpoint ────────●─────────   50
   Grain    ───●──────────────   20
   Size                                      [FINE | MED | COARSE]
+GEOMETRY
+  Vertical / Horizontal / Aspect / Distortion       (−100..100)
 OPTICS
   Distortion                                      [toggle]
   Chromatic Aberration                            [toggle]
@@ -117,7 +119,13 @@ compact segmented idiom: `SurfaceHigh` container, radius 4, padding 2, height 22
 flat borderless pills, `PrimaryContainer` selected fill, and Fine/Med/Coarse labels in
 FontLabel 9 SemiBold with letter spacing 1. Medium is the default.
 
-Optics follows Effects at the tail of the scrolling edit stack. Its three fixed-height
+Geometry follows Effects and applies to every source, with no chip or capability
+gating. Vertical, Horizontal, Aspect, and Distortion are −100..100 bipolar
+`CompactSlider`s with unit steps and double-click reset. They are image-specific:
+history and global Reset include them, while copy/paste and presets leave the target
+values unchanged. Crop mode and its overlay use the corrected frame directly.
+
+Optics follows Geometry at the tail of the scrolling edit stack. Its three fixed-height
 toggle rows control distortion, lateral chromatic aberration, and corrective
 vignetting; the latter is distinct from the aesthetic Effects vignette. The muted last
 line identifies the embedded lens prescription and source. A missing prescription

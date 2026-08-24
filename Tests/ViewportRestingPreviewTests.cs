@@ -81,6 +81,68 @@ public sealed class ViewportRestingPreviewTests : IAsyncLifetime
     }
 
     [WindowsFact]
+    public async Task RestingRender_PreappliesManualGeometryExactlyOnce()
+    {
+        var settings = new EditSettings
+        {
+            HorizonRotation = 3,
+            Geometry = new GeometrySettings
+            {
+                Vertical = 35,
+                Horizontal = -28,
+                Aspect = 22,
+                Distortion = -45
+            },
+            Crop = new CropRegion
+            {
+                Left = 0.1,
+                Top = 0.15,
+                Right = 0.85,
+                Bottom = 0.9
+            }
+        };
+        await using var service = CreateService(new CountingPairLoader());
+        var (interactive, _) = await service.ApplyEditsToPreviewAsync(
+            _image,
+            settings,
+            skipHistogram: true);
+        using (interactive)
+        {
+            var identity = service.TryGetPreviewRenderIdentity(interactive!);
+            Assert.NotNull(identity);
+            var expectedFrame = new RenderGeometryMap(
+                400,
+                200,
+                settings.HorizonRotation,
+                settings.Geometry);
+            var (_, _, expectedWidth, expectedHeight) = settings.Crop!.ToPixels(
+                expectedFrame.OutputWidth,
+                expectedFrame.OutputHeight);
+            Assert.Equal(
+                new PixelSize(expectedWidth, expectedHeight),
+                identity!.OriginalViewSize);
+            var passes = 0;
+            GeometryWarpProcessor.SamplingPassStarted = () => passes++;
+            try
+            {
+                using var resting = await service.RenderRestingPreviewAsync(
+                    _image,
+                    settings,
+                    240,
+                    identity!,
+                    CancellationToken.None);
+
+                Assert.NotNull(resting);
+                Assert.Equal(1, passes);
+            }
+            finally
+            {
+                GeometryWarpProcessor.SamplingPassStarted = null;
+            }
+        }
+    }
+
+    [WindowsFact]
     public async Task NewInteractiveGeneration_SupersedesRestingRender()
     {
         var loader = new CountingPairLoader();

@@ -96,6 +96,7 @@ public partial class MainWindowViewModel
         var currentRotation = Rotation;
         var currentHorizonRotation = HorizonRotation;
         var currentCrop = CurrentCrop?.Clone();
+        var currentGeometry = previousSettings.Geometry?.Clone();
         var storedRotation = selectedImage.EditSettings.Rotation;
         var storedHorizonRotation = selectedImage.EditSettings.HorizonRotation;
         var storedCrop = selectedImage.EditSettings.Crop?.Clone();
@@ -106,6 +107,7 @@ public partial class MainWindowViewModel
             LoadSlidersFrom(_copiedSettings);
             Rotation = currentRotation;
             HorizonRotation = currentHorizonRotation;
+            LoadGeometryFrom(previousSettings);
             CurrentCrop = currentCrop;
         }
         finally
@@ -117,6 +119,7 @@ public partial class MainWindowViewModel
         selectedImage.EditSettings.Rotation = storedRotation;
         selectedImage.EditSettings.HorizonRotation = storedHorizonRotation;
         selectedImage.EditSettings.Crop = storedCrop;
+        selectedImage.EditSettings.Geometry = currentGeometry;
         LoadCurrentCurveFrom(selectedImage.EditSettings);
         selectedImage.HasEdits = selectedImage.EditSettings.HasEdits;
         try
@@ -280,7 +283,16 @@ public partial class MainWindowViewModel
     private static bool GeometryMatches(EditSettings left, EditSettings right) =>
         left.Rotation == right.Rotation &&
         left.HorizonRotation == right.HorizonRotation &&
+        GeometrySettingsMatch(left.Geometry, right.Geometry) &&
         CropMatches(left.Crop, right.Crop);
+
+    private static bool GeometrySettingsMatch(
+        GeometrySettings? left,
+        GeometrySettings? right) =>
+        (left?.Vertical ?? 0) == (right?.Vertical ?? 0) &&
+        (left?.Horizontal ?? 0) == (right?.Horizontal ?? 0) &&
+        (left?.Aspect ?? 0) == (right?.Aspect ?? 0) &&
+        (left?.Distortion ?? 0) == (right?.Distortion ?? 0);
 
     private static bool CropMatches(CropRegion? left, CropRegion? right)
     {

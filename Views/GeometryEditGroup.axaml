@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="using:HappyPhoton.Views"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             mc:Ignorable="d"
+             x:Class="HappyPhoton.Views.GeometryEditGroup"
+             x:DataType="vm:MainWindowViewModel">
+    <StackPanel Spacing="4">
+        <TextBlock Classes="section-label" Text="GEOMETRY" Margin="0,20,0,8"/>
+        <views:CompactSlider x:Name="GeometryVerticalSlider"
+                             Label="Vertical"
+                             Value="{Binding GeometryVertical}"
+                             Minimum="-100" Maximum="100" SmallChange="1"
+                             EnableDoubleClickReset="True"/>
+        <views:CompactSlider x:Name="GeometryHorizontalSlider"
+                             Label="Horizontal"
+                             Value="{Binding GeometryHorizontal}"
+                             Minimum="-100" Maximum="100" SmallChange="1"
+                             EnableDoubleClickReset="True"/>
+        <views:CompactSlider x:Name="GeometryAspectSlider"
+                             Label="Aspect"
+                             Value="{Binding GeometryAspect}"
+                             Minimum="-100" Maximum="100" SmallChange="1"
+                             EnableDoubleClickReset="True"/>
+        <views:CompactSlider x:Name="GeometryDistortionSlider"
+                             Label="Distortion"
+                             Value="{Binding GeometryDistortion}"
+                             Minimum="-100" Maximum="100" SmallChange="1"
+                             EnableDoubleClickReset="True"/>
+    </StackPanel>
+</UserControl>

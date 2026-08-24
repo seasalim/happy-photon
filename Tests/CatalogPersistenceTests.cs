@@ -125,6 +125,13 @@ public sealed class CatalogPersistenceTests : IDisposable
             Highlights = 90,
             Rotation = 180,
             HorizonRotation = 4,
+            Geometry = new GeometrySettings
+            {
+                Vertical = -18,
+                Horizontal = 27,
+                Aspect = -36,
+                Distortion = 45
+            },
             AppliedPresetId = "user_new",
             RawProfile = new RawProfileSelection
             {
@@ -145,10 +152,32 @@ public sealed class CatalogPersistenceTests : IDisposable
         Assert.Equal(7200, saved.Wb.Kelvin);
         Assert.Equal(-10, saved.Wb.Tint);
         Assert.Equal(180, saved.Rotation);
+        Assert.Equal(-18, saved.Geometry?.Vertical);
+        Assert.Equal(27, saved.Geometry?.Horizontal);
+        Assert.Equal(-36, saved.Geometry?.Aspect);
+        Assert.Equal(45, saved.Geometry?.Distortion);
         Assert.Equal("user_new", saved.AppliedPresetId);
         Assert.Equal(settings.RawProfile.Location, saved.RawProfile?.Location);
         Assert.Equal(settings.RawProfile.ContentHash,
             saved.RawProfile?.ContentHash);
+    }
+
+    [Fact]
+    public async Task Save_GeometryDoesNotTouchExistingSidecar()
+    {
+        var (path, id) = await CreateImageAsync("sidecar.jpg");
+        var sidecar = path + ".xmp";
+        var bytes = "<x:xmpmeta known='1' unknown='preserve'/>"u8.ToArray();
+        await File.WriteAllBytesAsync(sidecar, bytes);
+        using var service = new CatalogService(_tempDirectory);
+        await service.InitializeAsync();
+
+        await service.SaveEditSettingsAsync(id, new EditSettings
+        {
+            Geometry = new GeometrySettings { Distortion = 50 }
+        });
+
+        Assert.Equal(bytes, await File.ReadAllBytesAsync(sidecar));
     }
 
     private async Task<(string Path, long Id)> CreateImageAsync(string fileName)

@@ -26,8 +26,7 @@ internal static class WhiteBalanceSampling
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(settings);
-        using var oriented = (MagickImage)image.Clone();
-        RenderGeometry.Apply(oriented, settings);
+        using var oriented = RenderGeometry.Apply(image, settings, out _);
         var centerX = (int)Math.Round(
             Math.Clamp(normalizedX, 0, 1) * (oriented.Width - 1));
         var centerY = (int)Math.Round(

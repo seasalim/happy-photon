@@ -13,10 +13,9 @@ internal static class PreAgxRenderReference
         EditSettings settings,
         int? maxDimension)
     {
-        var output = (MagickImage)baseImage.Pixels.Clone();
+        var output = RenderGeometry.Apply(baseImage.Pixels, settings, out _);
         try
         {
-            RenderGeometry.Apply(output, settings);
             var whiteBalance = CreateWhiteBalance(baseImage.Info, settings);
             var matrix = ChromaticAdaptation.Multiply(
                 RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb,

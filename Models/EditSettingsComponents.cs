@@ -125,6 +125,33 @@ public sealed class LensSettings
     };
 }
 
+public sealed class GeometrySettings
+{
+    [JsonPropertyName("vertical")]
+    public int Vertical { get; set; }
+
+    [JsonPropertyName("horizontal")]
+    public int Horizontal { get; set; }
+
+    [JsonPropertyName("aspect")]
+    public int Aspect { get; set; }
+
+    [JsonPropertyName("distortion")]
+    public int Distortion { get; set; }
+
+    [JsonIgnore]
+    public bool IsIdentity =>
+        Vertical == 0 && Horizontal == 0 && Aspect == 0 && Distortion == 0;
+
+    public GeometrySettings Clone() => new()
+    {
+        Vertical = Vertical,
+        Horizontal = Horizontal,
+        Aspect = Aspect,
+        Distortion = Distortion
+    };
+}
+
 public sealed class WhiteBalanceSettings
 {
     [JsonPropertyName("mode")]

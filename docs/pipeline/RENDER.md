@@ -7,7 +7,7 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 ## 1. Stage order (fixed)
 
 ```
-1 Geometry     rotate90 → horizon rotation (+ safe-crop intersect) → crop
+1 Geometry     rotate90 → fused horizon/keystone/aspect/radial warp → crop
 2 DCP HueSat   optional scene-linear ProPhoto HSV profile map (§2.1)
 3 Matrix       crossing on: AgX inset × WB; crossing off: WB (§4)
 4 Tone LUT     source-kind tone regime, fused with matrix storage (§5)
@@ -18,11 +18,21 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
                (OUTPUT.md)
 ```
 
-`RenderGeometry` owns the rotation and crop sequence, including
-`CropGeometry.SafeBoundsAfterRotation`, `ResetPage`, and crop intersection. With
-horizon rotation, a null crop auto-applies the horizon safe bounds while an explicit
-full-image crop keeps the whole rotated canvas — the crop tool previews with a
-full-image crop so the overlay's normalized coordinates match the displayed bitmap.
+`RenderGeometry` owns one clone of the immutable base. Quarter turns remain a separate
+lossless operation. Any active horizon or manual geometry term then runs in one
+inverse-mapped bilinear pass; identity skips that pass. The corrected frame preserves
+the quarter-turned source aspect and is reduced, never upsampled, to the largest
+centered frame whose mapped boundary is covered by source pixels. Crop coordinates are
+normalized on that corrected frame, so both a null and an explicit full-image crop are
+blank-free.
+
+Centered keystone coordinates use `w = 1 + a·y + b·x`, with Vertical and Horizontal
+slider values mapping to `a,b = −value/200`. Aspect applies `sx=e^s`, `sy=e^−s`,
+`s=value/400`. Manual radial is destination-to-source
+`f(ru)=ru·(1+k·ru²)`, `k=−value/400`, where `ru` uses the source half-diagonal.
+Beyond `ru=1`, `f` continues linearly with value `1+k` and slope `1+3k`; the forward
+projection uses the closed-form inverse of the cubic below that knee and division
+above it. This keeps the map monotone at every slider setting.
 
 ### 1.1 Request contract
 
@@ -41,8 +51,9 @@ public sealed record RenderRequest(
   always forces sRGB. Geometry, tone, chroma, and detail are target-independent;
   `Intent`, `Options`, and `MaxDimension` otherwise change auxiliary work such as
   statistics, optional overlay masks, and the resize target.
-- **Base immutability:** `RenderPipeline` never mutates `Base.Pixels`; it clones
-  internally before stage 1. `BaseImage` lifetime is owned by the caller
+- **Base immutability:** `RenderPipeline` never mutates `Base.Pixels`;
+  `RenderGeometry.Apply` always returns the single owned clone/output used by later
+  stages. `BaseImage` lifetime is owned by the caller
   (`PreviewService` generation logic / export loop), never by the pipeline.
 - **Resize domain:** every downscale — preview `MaxDimension` and export variants —
   runs in linear light with the same filter (Magick default Lanczos): sRGB-decode →
@@ -313,8 +324,8 @@ normalization (253/255 for 8-bit; 1015/1023 for 10-bit). TIFF, PNG, and other st
 formats have no v1 source artifact, so only their high side is unavailable; floor
 analysis remains live and never falls back to a finalized-output high threshold.
 
-Projection follows rotate90 → horizon → crop and the final resize. Quarter turns and
-horizon use nearest categorical placement; every downscale OR-reduces source flags so
+Projection follows the forward direction of the exact map carried by the geometry
+trace, then crop and final resize. Every downscale OR-reduces source flags so
 an isolated set bit survives. A per-base single-entry geometry cache reuses the packed
 projection and its fractions across render-only edits. High and floor overlay bits are
 ORed independently, allowing one pixel to carry both. Develop requests masks only
@@ -367,7 +378,11 @@ JSON document shape (canonical field order for hashing):
     "blue": { "hue": 0, "saturation": 0, "luminance": 0 },
     "purple": { "hue": 0, "saturation": 0, "luminance": 0 },
     "magenta": { "hue": 0, "saturation": 0, "luminance": 0 }
-  }
+  },
+  "geometry": { "vertical": 0,           // optional; omitted at identity
+                "horizontal": 0,
+                "aspect": 0,
+                "distortion": 0 }
 }
 ```
 
@@ -391,6 +406,11 @@ skip, and `EditSettingsJson` and preset saving canonicalize an explicit pixel-in
 object to null. Midpoint and Size choices made while both operators are off remain
 session-only UI state. Effects-off pixels stay byte-identical, so this additive
 optional field does not change `RenderPipeline.Version`.
+
+`geometry` is omitted when all four values are zero. It is catalog-only and has no XMP
+payload. Clone/history and Reset include it, while copy/paste and presets exclude it
+with rotation, horizon, and crop. Although absence is identity, the corrected-frame
+change alters horizon pixels, so this feature increments `RenderPipeline.Version`.
 
 `hlReconstruction`, `detail.noiseReduction`, the three `lens` booleans, and `rawProfile` are the
 **decode-affecting subset**;

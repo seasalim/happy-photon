@@ -160,6 +160,7 @@ public partial class MainWindowViewModel
                 {
                     Rotation = imageFile.EditSettings.Rotation,
                     HorizonRotation = imageFile.EditSettings.HorizonRotation,
+                    Geometry = imageFile.EditSettings.Geometry?.Clone(),
                     Crop = imageFile.EditSettings.Crop?.Clone(),
                     Curve = new CurveData()
                 }

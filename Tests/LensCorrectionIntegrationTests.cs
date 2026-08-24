@@ -166,9 +166,7 @@ public sealed class LensCorrectionIntegrationTests : IDisposable
         using var corrected = new RawBaseLoader().LoadPreviewBase(
             new ImageFile(path), settings, CancellationToken.None);
         Assert.NotNull(corrected);
-        using var rendered = new MagickImage(corrected.Pixels);
-
-        RenderGeometry.Apply(rendered, new EditSettings
+        using var rendered = RenderGeometry.Apply(corrected.Pixels, new EditSettings
         {
             Rotation = 90,
             HorizonRotation = 7,
@@ -179,7 +177,7 @@ public sealed class LensCorrectionIntegrationTests : IDisposable
                 Right = 0.88,
                 Bottom = 0.90
             }
-        });
+        }, out _);
 
         Assert.Equal(0, CountBlackPixels(rendered));
     }

@@ -173,11 +173,11 @@ public sealed partial class PreviewService
         MagickImage? preparedPixels = null;
         try
         {
-            RestingStageStarted?.Invoke("snapshot-clone");
-            preparedPixels = new MagickImage(largeBase.Pixels);
-            execution.ThrowIfCancellationRequested();
             RestingStageStarted?.Invoke("snapshot-geometry");
-            RenderGeometry.Apply(preparedPixels, settings);
+            preparedPixels = RenderGeometry.Apply(
+                largeBase.Pixels,
+                settings,
+                out _);
             execution.ThrowIfCancellationRequested();
 
             var achievable = checked((int)Math.Max(
@@ -201,6 +201,7 @@ public sealed partial class PreviewService
             preparedSettings.Rotation = 0;
             preparedSettings.HorizonRotation = 0;
             preparedSettings.Crop = null;
+            preparedSettings.Geometry = null;
             using var preparedBase = new BaseImage(
                 preparedPixels,
                 largeBase.Info);
@@ -265,20 +266,34 @@ public sealed partial class PreviewService
         long generation,
         string decodeKey,
         string settingsHash,
-        BaseImage baseImage)
+        BaseImage baseImage,
+        EditSettings settings)
     {
         if (bitmap == null) return;
         var info = baseImage.Info;
-        var baseLongEdge = Math.Max(
-            baseImage.Pixels.Width,
-            baseImage.Pixels.Height);
-        var originalLongEdge = Math.Max(info.FullWidth, info.FullHeight);
-        var originalScale = originalLongEdge / (double)baseLongEdge;
+        var quarterTurnWidth = info.FullWidth;
+        var quarterTurnHeight = info.FullHeight;
+        if (settings.Rotation is 90 or 270)
+        {
+            (quarterTurnWidth, quarterTurnHeight) =
+                (quarterTurnHeight, quarterTurnWidth);
+        }
+        var map = new RenderGeometryMap(
+            quarterTurnWidth,
+            quarterTurnHeight,
+            settings.HorizonRotation,
+            settings.Geometry);
+        var originalViewWidth = map.OutputWidth;
+        var originalViewHeight = map.OutputHeight;
+        if (settings.Crop is { IsFullImage: false } crop)
+        {
+            (_, _, originalViewWidth, originalViewHeight) = crop.ToPixels(
+                originalViewWidth,
+                originalViewHeight);
+        }
         var originalViewSize = new PixelSize(
-            Math.Max(1, checked((int)Math.Round(
-                bitmap.PixelSize.Width * originalScale))),
-            Math.Max(1, checked((int)Math.Round(
-                bitmap.PixelSize.Height * originalScale))));
+            originalViewWidth,
+            originalViewHeight);
         _previewIdentities.Remove(bitmap);
         _previewIdentities.Add(
             bitmap,

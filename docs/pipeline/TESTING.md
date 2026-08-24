@@ -138,7 +138,7 @@ case uses the bright water reflection in the reference CR2
 ([DECODE.md §2.3](DECODE.md#23-why-clip-and-blend-are-the-supported-modes)).
 The perceptual-chroma re-baseline left every neutral-chroma case
 byte-identical. Each re-baseline keeps its attribution report beside its
-goldens (currently `Tests/goldens/v10/CHROMA_ATTRIBUTION.md`, alongside the
+goldens (currently `Tests/goldens/v11/CHROMA_ATTRIBUTION.md`, alongside the
 carried `R5A_ATTRIBUTION.md`).
 
 ## 3. Tolerances (normative)

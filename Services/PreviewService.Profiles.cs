@@ -167,7 +167,9 @@ public sealed partial class PreviewService
                 imageFile,
                 generation,
                 decode.CacheKey,
-                settingsHash, snapshot.Base);
+                settingsHash,
+                snapshot.Base,
+                settingsSnapshot);
             var promotionLease = CreatePromotionLease(
                 imageFile,
                 rendered,

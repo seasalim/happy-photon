@@ -40,13 +40,14 @@ public partial class MainWindowViewModel
         var generation = RequestEditedRender();
         _isLoadingImage = true;
         LoadSlidersFrom(state);
-        // Preserve current geometric transforms.
+        // Rotation, horizon, and crop stay outside edit history.
         Rotation = SelectedImage!.EditSettings.Rotation;
         HorizonRotation = SelectedImage.EditSettings.HorizonRotation;
         CurrentCrop = SelectedImage.EditSettings.Crop?.Clone();
         _isLoadingImage = false;
 
         EditSettingsTransfer.ApplySubset(state, SelectedImage.EditSettings);
+        SelectedImage.EditSettings.Geometry = state.Geometry?.Clone();
         WriteRawProfileSelection(SelectedImage, state.RawProfile);
         SelectedImage.EditSettings.AppliedPresetId = ActivePresetId;
         LoadCurrentCurveFrom(SelectedImage.EditSettings);
@@ -105,6 +106,7 @@ public partial class MainWindowViewModel
         SelectedImage.EditSettings.Effects = null;
         SelectedImage.EditSettings.Mixer = null;
         SelectedImage.EditSettings.Lens.RestoreBaseline();
+        SelectedImage.EditSettings.Geometry = null;
         SelectedImage.EditSettings.Curve.Reset();
         SelectedImage.EditSettings.CurveRed = null;
         SelectedImage.EditSettings.CurveGreen = null;
@@ -125,6 +127,7 @@ public partial class MainWindowViewModel
         LoadEffectsFrom(SelectedImage.EditSettings);
         LoadMixerFrom(SelectedImage.EditSettings);
         LoadLensFrom(SelectedImage.EditSettings);
+        ResetGeometryUi();
         Brightness = 0;
         Contrast = 0;
         Saturation = 0;
@@ -193,16 +196,19 @@ public partial class MainWindowViewModel
         // Push current state to undo stack before applying preset
         PushUndoState();
         var currentCrop = CurrentCrop?.Clone();
+        var currentGeometry = previousSettings.Geometry?.Clone();
 
         _isLoadingImage = true;
         LoadSlidersFrom(preset.Settings);
         ActivePresetId = presetId;
         Rotation = SelectedImage.EditSettings.Rotation;
         HorizonRotation = SelectedImage.EditSettings.HorizonRotation;
+        LoadGeometryFrom(previousSettings);
         CurrentCrop = currentCrop;
         _isLoadingImage = false;
 
         EditSettingsTransfer.ApplySubset(preset.Settings, SelectedImage.EditSettings);
+        SelectedImage.EditSettings.Geometry = currentGeometry;
         SelectedImage.EditSettings.AppliedPresetId = presetId;
         LoadCurrentCurveFrom(SelectedImage.EditSettings);
         SelectedImage.HasEdits = true;
@@ -265,6 +271,7 @@ public partial class MainWindowViewModel
             previewSettings.Rotation = Rotation;
             previewSettings.HorizonRotation = HorizonRotation;
             previewSettings.Crop = PreviewCrop();
+            previewSettings.Geometry = image.EditSettings.Geometry?.Clone();
 
             using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
                 image,
@@ -387,6 +394,7 @@ public partial class MainWindowViewModel
         Rotation = Rotation,
         HorizonRotation = HorizonRotation,
         Crop = PreviewCrop(),
+        Geometry = image.EditSettings.Geometry?.Clone(),
         Curve = new CurveData(),
         Lens = image.EditSettings.Lens.Clone()
     };

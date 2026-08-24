@@ -2,7 +2,7 @@ namespace HappyPhoton.Models;
 
 /// <summary>
 /// Policy for which Develop settings transfer between images.
-/// Geometry (rotation, horizon rotation, crop) never transfers in either direction.
+/// Geometry (rotation, horizon rotation, crop, manual geometry) never transfers.
 /// </summary>
 public static class EditSettingsTransfer
 {

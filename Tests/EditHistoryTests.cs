@@ -137,6 +137,25 @@ public sealed class EditHistoryTests
     }
 
     [Fact]
+    public void EqualityIncludesManualGeometryButStillIgnoresCropGeometry()
+    {
+        var baseline = new EditSettings();
+        var manual = new EditSettings
+        {
+            Geometry = new GeometrySettings { Vertical = 1 }
+        };
+        var crop = new EditSettings
+        {
+            Rotation = 90,
+            HorizonRotation = 3,
+            Crop = new CropRegion { Left = 0.1, Right = 0.9 }
+        };
+
+        Assert.False(baseline.EqualsIgnoringRotation(manual));
+        Assert.True(baseline.EqualsIgnoringRotation(crop));
+    }
+
+    [Fact]
     public void Clear_EmptiesBothStacks()
     {
         var history = new EditHistory();

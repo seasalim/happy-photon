@@ -9,10 +9,8 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     /// <summary>
-    /// The crop to preview with. In crop mode an explicit full-image region
-    /// makes RenderGeometry keep the whole rotated canvas (a null crop would
-    /// auto-apply the horizon safe crop), so the overlay's normalized
-    /// coordinates line up with the displayed bitmap.
+    /// The crop to preview with. Crop mode renders the full corrected frame so
+    /// the overlay's normalized coordinates line up with the displayed bitmap.
     /// </summary>
     private CropRegion? PreviewCrop() =>
         IsCropMode ? new CropRegion() : CurrentCrop;
@@ -98,8 +96,6 @@ public partial class MainWindowViewModel
 
         // Initialize CurrentCrop - use existing or create new full-image region
         CurrentCrop = SelectedImage.EditSettings.Crop?.Clone() ?? new CropRegion();
-        ConstrainCropToSafeHorizonBounds();
-
         IsCropMode = true;
 
         // Refresh preview to show uncropped image (UpdatePreviewWithCurrentSliders
@@ -121,7 +117,6 @@ public partial class MainWindowViewModel
             return;
         }
 
-        ConstrainCropToSafeHorizonBounds();
         var image = SelectedImage;
         var previousSettings = image.EditSettings.Clone();
         var previousIntent = _requestedPreviewIntent;
@@ -255,38 +250,6 @@ public partial class MainWindowViewModel
                 UpdateThumbnailMemoryDiagnostics();
             }
         }
-    }
-
-    private void ConstrainCropToSafeHorizonBounds()
-    {
-        if (CurrentCrop == null) return;
-
-        var safeCrop = GetSafeHorizonCropBounds();
-        if (safeCrop == null) return;
-
-        CurrentCrop = CropGeometry.Intersect(CurrentCrop, safeCrop);
-    }
-
-    private CropRegion? GetSafeHorizonCropBounds()
-    {
-        if (SelectedImage == null || HorizonRotation == 0.0) return null;
-
-        var width = SelectedImage.PixelWidth;
-        var height = SelectedImage.PixelHeight;
-        if ((width <= 0 || height <= 0) && PreviewImage != null)
-        {
-            width = PreviewImage.PixelSize.Width;
-            height = PreviewImage.PixelSize.Height;
-        }
-
-        if (width <= 0 || height <= 0) return null;
-
-        if (Rotation is 90 or 270)
-        {
-            (width, height) = (height, width);
-        }
-
-        return CropGeometry.SafeBoundsAfterRotation(width, height, HorizonRotation);
     }
 
     public void AdjustZoom(double delta)

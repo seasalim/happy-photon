@@ -194,10 +194,9 @@ public sealed class PerceptualChromaLookGateTests
         BaseImage baseImage,
         EditSettings settings)
     {
-        var image = new MagickImage(baseImage.Pixels);
+        var image = RenderGeometry.Apply(baseImage.Pixels, settings, out _);
         try
         {
-            RenderGeometry.Apply(image, settings);
             var whiteBalance = RenderChromaticStage.CreateWhiteBalanceMatrix(
                 baseImage.Info,
                 settings);

@@ -17,8 +17,8 @@ internal sealed class ThumbnailRenderer
         EditSettings settings,
         int generationDimension)
     {
-        using var image = ConvertToMagickImage(source);
-        RenderGeometry.Apply(image, settings);
+        using var sourceImage = ConvertToMagickImage(source);
+        using var image = RenderGeometry.Apply(sourceImage, settings, out _);
         if (image.Width > generationDimension || image.Height > generationDimension)
         {
             ApplyThumbnailSize(image, generationDimension);

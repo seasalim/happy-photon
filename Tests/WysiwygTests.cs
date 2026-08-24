@@ -133,6 +133,43 @@ public sealed class WysiwygTests
             $"{comparison.MeanDeltaE:F3}, p99 {comparison.P99DeltaE:F3}.");
     }
 
+    [Fact]
+    public void ManualGeometry_PreviewAndExportAgreeForIdenticalBase()
+    {
+        var asset = GoldenTestCases.Assets.Single(
+            value => value.Slug == "srgb-reference");
+        var renderer = new CurrentPipelineGoldenRenderer();
+        using var baseImage = renderer.LoadBase(asset);
+        var settings = new HappyPhoton.Models.EditSettings
+        {
+            HorizonRotation = 3,
+            Geometry = new HappyPhoton.Models.GeometrySettings
+            {
+                Vertical = 35,
+                Horizontal = -28,
+                Aspect = 22,
+                Distortion = -45
+            }
+        };
+        using var preview = renderer.Render(
+            baseImage,
+            settings,
+            RenderIntent.Preview);
+        using var export = renderer.Render(
+            baseImage,
+            settings,
+            RenderIntent.Export);
+
+        Assert.Equal(preview.Width, export.Width);
+        Assert.Equal(preview.Height, export.Height);
+        var comparison = GoldenImageComparer.Compare(
+            export,
+            preview,
+            GoldenComparisonDomain.DisplaySrgb);
+        Assert.Equal(0, comparison.MeanDeltaE);
+        Assert.Equal(0, comparison.P99DeltaE);
+    }
+
     [Theory]
     [InlineData("canon-eos-350d")]
     [InlineData("srgb-reference")]

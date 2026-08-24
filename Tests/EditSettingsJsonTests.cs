@@ -390,6 +390,36 @@ public sealed class EditSettingsJsonTests
         Assert.Null(EditSettingsJson.Deserialize(json, out _).RawProfile);
     }
 
+    [Fact]
+    public void Geometry_IdentityOmitsBlockAndActiveValuesRoundTrip()
+    {
+        var identity = EditSettingsJson.Serialize(new EditSettings
+        {
+            Geometry = new GeometrySettings()
+        });
+        var source = new EditSettings
+        {
+            Geometry = new GeometrySettings
+            {
+                Vertical = -18,
+                Horizontal = 27,
+                Aspect = -36,
+                Distortion = 45
+            }
+        };
+
+        var json = EditSettingsJson.Serialize(source);
+        var result = EditSettingsJson.Deserialize(json, out var wasClamped);
+
+        Assert.DoesNotContain("\"geometry\"", identity);
+        Assert.False(wasClamped);
+        Assert.Equal(-18, result.Geometry?.Vertical);
+        Assert.Equal(27, result.Geometry?.Horizontal);
+        Assert.Equal(-36, result.Geometry?.Aspect);
+        Assert.Equal(45, result.Geometry?.Distortion);
+        Assert.True(result.HasEdits);
+    }
+
     [Theory]
     [InlineData("short")]
     [InlineData("gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg")]

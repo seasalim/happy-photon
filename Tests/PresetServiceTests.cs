@@ -153,6 +153,13 @@ public sealed class PresetServiceTests : IDisposable
         var source = CreateSettings();
         source.Rotation = 90;
         source.HorizonRotation = 2.5;
+        source.Geometry = new GeometrySettings
+        {
+            Vertical = 20,
+            Horizontal = -30,
+            Aspect = 40,
+            Distortion = -50
+        };
         source.Crop = new CropRegion { Left = 0.1, Top = 0.2, Right = 0.8, Bottom = 0.9 };
         source.AppliedPresetId = "user_existing";
         source.RawProfile = new RawProfileSelection
@@ -167,6 +174,7 @@ public sealed class PresetServiceTests : IDisposable
         Assert.Equal(0, preset.Settings.Rotation);
         Assert.Equal(0, preset.Settings.HorizonRotation);
         Assert.Null(preset.Settings.Crop);
+        Assert.Null(preset.Settings.Geometry);
         Assert.Null(preset.Settings.AppliedPresetId);
         Assert.Null(preset.Settings.RawProfile);
         Assert.Equal(90, source.Rotation);

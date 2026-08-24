@@ -78,6 +78,21 @@ internal static class EditSettingsJson
         settings.Saturation = Clamp(settings.Saturation, -100, 100, ref changed);
         settings.Vibrance = Clamp(settings.Vibrance, -100, 100, ref changed);
         settings.HorizonRotation = Clamp(settings.HorizonRotation, -5, 5, ref changed);
+        if (settings.Geometry != null)
+        {
+            settings.Geometry.Vertical = Clamp(
+                settings.Geometry.Vertical, -100, 100, ref changed);
+            settings.Geometry.Horizontal = Clamp(
+                settings.Geometry.Horizontal, -100, 100, ref changed);
+            settings.Geometry.Aspect = Clamp(
+                settings.Geometry.Aspect, -100, 100, ref changed);
+            settings.Geometry.Distortion = Clamp(
+                settings.Geometry.Distortion, -100, 100, ref changed);
+            if (settings.Geometry.IsIdentity)
+            {
+                settings.Geometry = null;
+            }
+        }
 
         settings.Wb ??= new WhiteBalanceSettings();
         settings.Wb.Kelvin = ClampNullable(settings.Wb.Kelvin, 2000, 12000, ref changed);

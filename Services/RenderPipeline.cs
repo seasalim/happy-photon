@@ -6,7 +6,7 @@ namespace HappyPhoton.Services;
 
 public sealed class RenderPipeline
 {
-    public const int Version = 10;
+    public const int Version = 11;
 
     public RenderResult Render(RenderRequest request) =>
         Render(request, RenderDetail.DefaultBandPixelLimit);
@@ -171,11 +171,11 @@ public sealed class RenderPipeline
         try
         {
             execution.ThrowIfCancellationRequested();
-            execution.ReportStage("clone");
-            working = new MagickImage(request.Base.Pixels);
-            execution.ThrowIfCancellationRequested();
             execution.ReportStage("geometry");
-            _ = RenderGeometry.Apply(working, request.Settings);
+            working = RenderGeometry.Apply(
+                request.Base.Pixels,
+                request.Settings,
+                out _);
             execution.ThrowIfCancellationRequested();
             if (request.Base.Info.IsRawSource)
             {
@@ -290,8 +290,10 @@ public sealed class RenderPipeline
         MagickImage? working = null;
         try
         {
-            working = (MagickImage)request.Base.Pixels.Clone();
-            geometry = RenderGeometry.Apply(working, request.Settings);
+            working = RenderGeometry.Apply(
+                request.Base.Pixels,
+                request.Settings,
+                out geometry);
             if (request.Base.Info.IsRawSource)
             {
                 var whiteBalance = RenderChromaticStage.CreateWhiteBalanceMatrix(

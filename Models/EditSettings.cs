@@ -124,6 +124,11 @@ public class EditSettings
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ColorMixerSettings? Mixer { get; set; }
 
+    [JsonPropertyName("geometry")]
+    [JsonPropertyOrder(24)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GeometrySettings? Geometry { get; set; }
+
     [JsonIgnore]
     public bool HasEdits => Exposure != 0.0 || !Wb.IsIdentity ||
                           Brightness != 0 || Contrast != 0 ||
@@ -133,6 +138,7 @@ public class EditSettings
                           Detail.ChromaNr != 0 ||
                           Effects?.HasActivePixels == true ||
                           Mixer?.HasActivePixels == true ||
+                          Geometry?.IsIdentity == false ||
                           Lens.HasEdits ||
                           Rotation != 0 || HorizonRotation != 0.0 || (Crop != null && !Crop.IsFullImage) ||
                           !Curve.IsIdentity() ||
@@ -167,7 +173,8 @@ public class EditSettings
         CurveBlue = CurveBlue?.Clone(),
         AppliedPresetId = AppliedPresetId,
         RawProfile = RawProfile?.Clone(),
-        Mixer = Mixer?.Clone()
+        Mixer = Mixer?.Clone(),
+        Geometry = Geometry?.Clone()
     };
 
     public bool EqualsIgnoringRotation(EditSettings other)
@@ -186,6 +193,7 @@ public class EditSettings
                Detail.ChromaNr == other.Detail.ChromaNr &&
                EffectsMatch(Effects, other.Effects) &&
                MixersMatch(Mixer, other.Mixer) &&
+               GeometryMatches(Geometry, other.Geometry) &&
                Lens.Distortion == other.Lens.Distortion &&
                Lens.ChromaticAberration == other.Lens.ChromaticAberration &&
                Lens.Vignetting == other.Lens.Vignetting &&
@@ -260,6 +268,23 @@ public class EditSettings
         }
 
         return true;
+    }
+
+    private static bool GeometryMatches(
+        GeometrySettings? left,
+        GeometrySettings? right)
+    {
+        var leftActive = left?.IsIdentity == false;
+        var rightActive = right?.IsIdentity == false;
+        if (!leftActive || !rightActive)
+        {
+            return leftActive == rightActive;
+        }
+
+        return left!.Vertical == right!.Vertical &&
+               left.Horizontal == right.Horizontal &&
+               left.Aspect == right.Aspect &&
+               left.Distortion == right.Distortion;
     }
 }
 

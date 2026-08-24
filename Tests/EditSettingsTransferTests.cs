@@ -46,6 +46,13 @@ public sealed class EditSettingsTransferTests
         Mixer = CreateMixer(),
         Rotation = 90,
         HorizonRotation = 1.5,
+        Geometry = new GeometrySettings
+        {
+            Vertical = -18,
+            Horizontal = 22,
+            Aspect = 31,
+            Distortion = -44
+        },
         Crop = new CropRegion { Left = 0.1, Top = 0.2, Right = 0.8, Bottom = 0.9 },
         AppliedPresetId = "user_abc",
         RawProfile = CreateProfileSelection(),
@@ -92,6 +99,7 @@ public sealed class EditSettingsTransferTests
         Assert.Equal(0, copy.Rotation);
         Assert.Equal(0.0, copy.HorizonRotation);
         Assert.Null(copy.Crop);
+        Assert.Null(copy.Geometry);
         Assert.Null(copy.RawProfile);
         Assert.Equal(EditSettings.CurrentVersion, copy.Version);
     }
@@ -111,6 +119,7 @@ public sealed class EditSettingsTransferTests
             },
             Rotation = 270,
             HorizonRotation = -3.0,
+            Geometry = new GeometrySettings { Vertical = 73 },
             Crop = new CropRegion { Left = 0.25, Top = 0.25, Right = 0.75, Bottom = 0.75 },
             RawProfile = CreateProfileSelection()
         };
@@ -140,6 +149,7 @@ public sealed class EditSettingsTransferTests
         Assert.Equal(EditSettings.CurrentVersion, target.Version);
         Assert.Equal(270, target.Rotation);
         Assert.Equal(-3.0, target.HorizonRotation);
+        Assert.Equal(73, target.Geometry?.Vertical);
         Assert.NotNull(target.Crop);
         Assert.Equal(0.25, target.Crop!.Left);
         Assert.NotNull(target.RawProfile);
@@ -262,14 +272,25 @@ public sealed class EditSettingsTransferTests
     [Fact]
     public void ApplySubset_IgnoresGeometryOnCopiedObject()
     {
-        var copied = new EditSettings { Exposure = 0.5, Rotation = 180, HorizonRotation = 5.0 };
-        var target = new EditSettings { Rotation = 90 };
+        var copied = new EditSettings
+        {
+            Exposure = 0.5,
+            Rotation = 180,
+            HorizonRotation = 5,
+            Geometry = new GeometrySettings { Vertical = 100 }
+        };
+        var target = new EditSettings
+        {
+            Rotation = 90,
+            Geometry = new GeometrySettings { Vertical = -25 }
+        };
 
         EditSettingsTransfer.ApplySubset(copied, target);
 
         Assert.Equal(0.5, target.Exposure);
         Assert.Equal(90, target.Rotation);
         Assert.Equal(0.0, target.HorizonRotation);
+        Assert.Equal(-25, target.Geometry?.Vertical);
     }
 
     [Fact]

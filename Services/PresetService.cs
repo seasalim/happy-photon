@@ -226,6 +226,7 @@ public class PresetService
         settings.Rotation = 0;
         settings.HorizonRotation = 0;
         settings.Crop = null;
+        settings.Geometry = null;
         if (settings.Effects?.HasActivePixels != true)
         {
             settings.Effects = null;

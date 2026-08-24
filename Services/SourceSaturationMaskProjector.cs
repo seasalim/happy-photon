@@ -51,7 +51,7 @@ internal static class SourceSaturationMaskProjector
         int targetWidth,
         int targetHeight)
     {
-        if (settings.Rotation == 0 && settings.HorizonRotation == 0 &&
+        if (settings.Rotation == 0 && geometry.Map.IsIdentity &&
             geometry.CropX == 0 && geometry.CropY == 0 &&
             geometry.Width == source.Width && geometry.Height == source.Height &&
             targetWidth == source.Width && targetHeight == source.Height)
@@ -60,37 +60,32 @@ internal static class SourceSaturationMaskProjector
         }
 
         var result = new SourceSaturationMask(targetWidth, targetHeight);
-        var radians = settings.HorizonRotation * Math.PI / 180;
-        var cosine = Math.Cos(radians);
-        var sine = Math.Sin(radians);
-        var sourceCenterX = (geometry.QuarterTurnWidth - 1) / 2d;
-        var sourceCenterY = (geometry.QuarterTurnHeight - 1) / 2d;
-        var canvasCenterX = (geometry.HorizonCanvasWidth - 1) / 2d;
-        var canvasCenterY = (geometry.HorizonCanvasHeight - 1) / 2d;
-
         for (var y = 0; y < source.Height; y++)
         {
             for (var x = 0; x < source.Width; x++)
             {
                 var flags = source.GetFlags(x, y);
                 if (flags == 0) continue;
-                var (projectedX, projectedY) = QuarterTurn(
+                var (quarterTurnX, quarterTurnY) = QuarterTurn(
                     x,
                     y,
                     source.Width,
                     source.Height,
                     settings.Rotation);
-                if (settings.HorizonRotation != 0)
+                var projected = geometry.Map.MapForward(
+                    quarterTurnX,
+                    quarterTurnY);
+                if (!double.IsFinite(projected.X) ||
+                    !double.IsFinite(projected.Y))
                 {
-                    var centeredX = projectedX - sourceCenterX;
-                    var centeredY = projectedY - sourceCenterY;
-                    projectedX = checked((int)Math.Round(
-                        cosine * centeredX - sine * centeredY + canvasCenterX,
-                        MidpointRounding.AwayFromZero));
-                    projectedY = checked((int)Math.Round(
-                        sine * centeredX + cosine * centeredY + canvasCenterY,
-                        MidpointRounding.AwayFromZero));
+                    continue;
                 }
+                var projectedX = checked((int)Math.Round(
+                    projected.X,
+                    MidpointRounding.AwayFromZero));
+                var projectedY = checked((int)Math.Round(
+                    projected.Y,
+                    MidpointRounding.AwayFromZero));
                 projectedX -= geometry.CropX;
                 projectedY -= geometry.CropY;
                 if (projectedX < 0 || projectedY < 0 ||

@@ -106,6 +106,11 @@ public sealed class RenderSettingsHashTests
             {
                 Effects = new EffectsSettings { Grain = 20 }
             }));
+        Assert.NotEqual(baseline, RenderSettingsHash.Compute(
+            new EditSettings
+            {
+                Geometry = new GeometrySettings { Vertical = 20 }
+            }));
     }
 
     private static CurveData CreateCurve()

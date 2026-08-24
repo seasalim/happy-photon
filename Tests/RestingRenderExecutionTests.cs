@@ -38,6 +38,14 @@ public sealed class RestingRenderExecutionTests
                 Grain = 42,
                 GrainSize = GrainSize.Coarse
             },
+            HorizonRotation = 3,
+            Geometry = new GeometrySettings
+            {
+                Vertical = 35,
+                Horizontal = -28,
+                Aspect = 22,
+                Distortion = -45
+            },
             Curve = CreateCurve(0.5, 0.55),
             CurveRed = CreateCurve(0.4, 0.47),
             CurveGreen = CreateCurve(0.5, 0.52),

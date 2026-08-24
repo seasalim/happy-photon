@@ -226,7 +226,8 @@ public sealed partial class PreviewService
             generation,
             pending.Decode.CacheKey,
             settingsHash,
-            snapshot.Base);
+            snapshot.Base,
+            pending.Settings);
 
         return new RefreshedRender(
             rendered,

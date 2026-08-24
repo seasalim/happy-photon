@@ -94,7 +94,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
             └──────────► BaseImage (linear Rec.2020 Q16 + BaseImageInfo)┘
                                    │
             ┌─ RENDER.md ──────────▼──────────────────────────────────┐
-            │ 1 Geometry   rotate90 → horizon(+safe crop) → crop      │
+            │ 1 Geometry   rotate90 → fused corrected-frame warp → crop│
             │ 2 DCP HueSat optional scene-linear ProPhoto profile map │
             │              (RENDER.md §2.1)                           │
             │ 3 Matrix     RAW: AgX inset × WB; standard: WB           │
@@ -247,7 +247,7 @@ capability signal.
 | `Services/OutputColorProfiles.cs` | embedded sRGB / Display P3 export profiles |
 | `Services/RgbColorSpaceMatrices.cs` | authoritative published/exact RGB↔XYZ matrices |
 | `Services/RenderPipeline.cs` | stage orchestration and result ownership (RENDER.md) |
-| `Services/RenderGeometry.cs` | rotation, horizon correction, and crop |
+| `Services/RenderGeometry.cs` + `RenderGeometryMap.cs` + `GeometryWarpProcessor.cs` | lossless quarter turns, fused corrected-frame warp, and crop |
 | `Services/AgxCrossing.cs` + `AgxToneEngine.cs` | RAW inset → tone engine → outset crossing |
 | `Services/AgxToneLut.cs` | exact crossing-on tone table and bounded settings cache |
 | `Services/ToneLut.cs` | exact crossing-off LUT composition (RENDER.md §5) |
@@ -277,6 +277,9 @@ omitting the new field reproduces old pixels bit-for-bit and canonical JSON omit
 so old settings hashes and caches remain valid. Per-channel curves and the nullable
 effects object use this exception; present pixel-active fields change the canonical
 settings hash.
+Manual geometry does not use the additive exception: its unified framing changes
+existing horizon renders, so its render-version increment deliberately invalidates
+rendered caches and selects a new golden baseline.
 `BaseDecodeSettings.CacheKey` is the invariant, culture-independent string
 `base-v{BaseImage.Version};hl={blend|clip};fbdd={off|light|full};lens={ddd}`, with
 `;dcp={source:content-hash:resolution-status}` appended only for a selected profile.

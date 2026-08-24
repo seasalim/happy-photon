@@ -314,7 +314,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
         if (IsCropMode)
         {
-            ConstrainCropToSafeHorizonBounds();
             ScheduleCropPreviewUpdate();
             return;
         }
@@ -332,6 +331,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         SaveEffectsTo(target);
         SaveMixerTo(target);
         SaveLensTo(target);
+        SaveGeometryTo(target);
         target.Brightness = Brightness;
         target.Contrast = Contrast;
         target.Saturation = Saturation;
@@ -352,6 +352,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         LoadEffectsFrom(source);
         LoadMixerFrom(source);
         LoadLensFrom(source);
+        LoadGeometryFrom(source);
         Brightness = source.Brightness;
         Contrast = source.Contrast;
         Saturation = source.Saturation;

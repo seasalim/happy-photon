@@ -6,95 +6,89 @@ namespace HappyPhoton.Services;
 internal readonly record struct RenderGeometryTrace(
     int QuarterTurnWidth,
     int QuarterTurnHeight,
-    int HorizonCanvasWidth,
-    int HorizonCanvasHeight,
+    int CorrectedFrameWidth,
+    int CorrectedFrameHeight,
     int CropX,
     int CropY,
     int Width,
-    int Height);
+    int Height,
+    RenderGeometryMap Map);
 
 internal static class RenderGeometry
 {
-    public static RenderGeometryTrace Apply(
-        MagickImage image,
-        EditSettings settings)
+    public static MagickImage Apply(
+        MagickImage source,
+        EditSettings settings,
+        out RenderGeometryTrace trace)
     {
-        ArgumentNullException.ThrowIfNull(image);
+        ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(settings);
 
-        if (settings.Rotation != 0)
+        MagickImage? owned = null;
+        try
         {
-            image.Rotate(settings.Rotation);
-        }
+            if (settings.Rotation != 0)
+            {
+                owned = new MagickImage(source);
+                owned.Rotate(settings.Rotation);
+                owned.ResetPage();
+            }
 
-        var quarterTurnWidth = checked((int)image.Width);
-        var quarterTurnHeight = checked((int)image.Height);
-
-        CropRegion? safeCrop = null;
-        if (settings.HorizonRotation != 0.0)
-        {
-            var sourceWidth = image.Width;
-            var sourceHeight = image.Height;
-            image.Rotate(settings.HorizonRotation);
-            image.ResetPage();
-            safeCrop = CropGeometry.SafeBoundsAfterRotation(
-                sourceWidth,
-                sourceHeight,
-                settings.HorizonRotation,
-                image.Width,
-                image.Height);
-        }
-
-        var horizonCanvasWidth = checked((int)image.Width);
-        var horizonCanvasHeight = checked((int)image.Height);
-
-        var effectiveCrop = GetEffectiveCrop(settings.Crop, safeCrop);
-        if (effectiveCrop == null || effectiveCrop.IsFullImage)
-        {
-            return new RenderGeometryTrace(
+            var geometrySource = owned ?? source;
+            var quarterTurnWidth = checked((int)geometrySource.Width);
+            var quarterTurnHeight = checked((int)geometrySource.Height);
+            var map = new RenderGeometryMap(
                 quarterTurnWidth,
                 quarterTurnHeight,
-                horizonCanvasWidth,
-                horizonCanvasHeight,
-                0,
-                0,
-                horizonCanvasWidth,
-                horizonCanvasHeight);
+                settings.HorizonRotation,
+                settings.Geometry);
+            if (!map.IsIdentity)
+            {
+                var warped = GeometryWarpProcessor.Apply(geometrySource, map);
+                owned?.Dispose();
+                owned = warped;
+            }
+            else if (owned == null)
+            {
+                owned = new MagickImage(source);
+            }
+
+            var correctedFrameWidth = checked((int)owned.Width);
+            var correctedFrameHeight = checked((int)owned.Height);
+            var cropX = 0;
+            var cropY = 0;
+            var width = correctedFrameWidth;
+            var height = correctedFrameHeight;
+            if (settings.Crop is { IsFullImage: false } crop)
+            {
+                (cropX, cropY, width, height) = crop.ToPixels(
+                    correctedFrameWidth,
+                    correctedFrameHeight);
+                owned.Crop(new MagickGeometry(
+                    cropX,
+                    cropY,
+                    (uint)width,
+                    (uint)height));
+                owned.ResetPage();
+            }
+
+            trace = new RenderGeometryTrace(
+                quarterTurnWidth,
+                quarterTurnHeight,
+                correctedFrameWidth,
+                correctedFrameHeight,
+                cropX,
+                cropY,
+                width,
+                height,
+                map);
+            var result = owned;
+            owned = null;
+            return result;
         }
-
-        var (x, y, width, height) =
-            effectiveCrop.ToPixels((int)image.Width, (int)image.Height);
-        image.Crop(new MagickGeometry(x, y, (uint)width, (uint)height));
-        image.ResetPage();
-        return new RenderGeometryTrace(
-            quarterTurnWidth,
-            quarterTurnHeight,
-            horizonCanvasWidth,
-            horizonCanvasHeight,
-            x,
-            y,
-            width,
-            height);
-    }
-
-    private static CropRegion? GetEffectiveCrop(
-        CropRegion? crop,
-        CropRegion? safeCrop)
-    {
-        if (crop == null)
+        finally
         {
-            return safeCrop;
+            owned?.Dispose();
         }
-
-        // An explicit full-image crop requests the whole rotated canvas; the
-        // crop tool previews this way so its overlay coordinates match the
-        // displayed bitmap. Only a missing crop falls back to the automatic
-        // horizon safe bounds.
-        if (crop.IsFullImage)
-        {
-            return null;
-        }
-
-        return safeCrop == null ? crop : CropGeometry.Intersect(crop, safeCrop);
     }
 }
