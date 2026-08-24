@@ -414,6 +414,16 @@ public sealed class FileOperationsTests : IDisposable
     [Fact]
     public void TrashGuard_RefusesUncNetworkAndRemovablePaths()
     {
+        // AssessTrashPath rejects a path that is not fully qualified before it
+        // reaches the Windows policy, and that check uses the host's path
+        // semantics. On POSIX none of the drive-letter or UNC literals below are
+        // fully qualified, so every case would return the not-local reason and
+        // the policy would go unexercised. Production is unaffected: a real
+        // Windows host evaluates them with Windows semantics.
+        Assert.SkipWhen(
+            !OperatingSystem.IsWindows(),
+            "Windows trash policy needs Windows path semantics from the host.");
+
         var driveType = DriveType.Fixed;
         var service = new FileOperationService(
             FileOperationPlatform.Windows,
