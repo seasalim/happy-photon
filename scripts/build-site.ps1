@@ -342,6 +342,7 @@ $tokens = [ordered]@{
 $routes = [ordered]@{
     "index.html" = "index.html"
     "download.html" = "download/index.html"
+    "pro-editing.html" = "pro-editing/index.html"
     "photo-editor-windows.html" = "photo-editor-windows/index.html"
     "photo-editor-linux.html" = "photo-editor-linux/index.html"
     "photo-editor-macos.html" = "photo-editor-macos/index.html"
@@ -368,6 +369,13 @@ foreach ($route in $routes.GetEnumerator()) {
                 Title = "Download — Happy Photon"
                 Description = "Download Happy Photon for Windows, macOS, or Linux and review platform requirements."
                 CanonicalUrl = $canonicalBase + "download/"
+            }
+        }
+        "pro-editing.html" {
+            [ordered]@{
+                Title = "Professional RAW Photo Editing — Happy Photon"
+                Description = "Explore Happy Photon's 16-bit wide-gamut RAW pipeline, perceptual color tools, professional scopes, finishing controls, and color-managed export."
+                CanonicalUrl = $canonicalBase + "pro-editing/"
             }
         }
         "photo-editor-windows.html" {

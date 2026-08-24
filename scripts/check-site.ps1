@@ -15,6 +15,7 @@ $sitePath = [System.IO.Path]::GetFullPath($SiteRoot)
 foreach ($requiredFile in @(
     "index.html",
     "download/index.html",
+    "pro-editing/index.html",
     "photo-editor-windows/index.html",
     "photo-editor-linux/index.html",
     "photo-editor-macos/index.html",
@@ -198,7 +199,7 @@ if ($isLive) {
         throw "Live robots.txt does not allow indexing."
     }
     $sitemap = Get-Content -Raw -LiteralPath (Join-Path $sitePath "sitemap.xml")
-    foreach ($guideRoute in @("photo-editor-windows/", "photo-editor-linux/", "photo-editor-macos/", "import-from-lightroom/")) {
+    foreach ($guideRoute in @("pro-editing/", "photo-editor-windows/", "photo-editor-linux/", "photo-editor-macos/", "import-from-lightroom/")) {
         $guidePath = $guideRoute + "index.html"
         $guideHtml = $htmlByPath[$guidePath]
         foreach ($requiredMetadata in @('rel="canonical"', 'property="og:title"', 'name="twitter:description"')) {

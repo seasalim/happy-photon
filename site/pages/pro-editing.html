@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en" data-base-path="{{BASE_PATH}}">
+<head>
+  {{> shared/head-guide}}
+</head>
+<body>
+  {{> shared/header}}
+  <main id="main-content">
+    <section class="guide-hero pro-hero section-shell" aria-labelledby="pro-title">
+      <nav class="breadcrumb" aria-label="Breadcrumb"><a href="{{BASE_PATH}}">Happy Photon</a><span aria-hidden="true">/</span><span>Pro editing</span></nav>
+      <div class="guide-hero-grid">
+        <div>
+          <p class="eyebrow">PRO-LEVEL PROCESSING · HAPPY PHOTON SIMPLICITY</p>
+          <h1 id="pro-title">A serious image engine.<br><span>A calmer way to use it.</span></h1>
+          <p class="guide-summary">Develop RAW and JPEG photographs through a 16-bit, wide-gamut pipeline—without turning every edit into a project. Happy Photon puts deep color, tone, detail, and finishing controls inside one focused, non-destructive workflow.</p>
+          <div class="button-row">
+            <a class="button button-primary" href="{{BASE_PATH}}download/">Get Happy Photon</a>
+            <a class="button button-secondary" href="#inside-the-pipeline">See what is inside</a>
+          </div>
+        </div>
+        <dl class="guide-facts">
+          <div><dt>Working</dt><dd>16-bit linear Rec.2020</dd></div>
+          <div><dt>Color</dt><dd>Perceptual OKLCh</dd></div>
+          <div><dt>RAW tone</dt><dd>Scene-referred AgX</dd></div>
+          <div><dt>Output</dt><dd>sRGB or Display P3</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="guide-visual pro-visual section-shell" aria-label="Happy Photon Develop workspace">
+      <figure class="app-shot">
+        <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span><b>DEVELOP</b></div>
+        <picture>
+          <source srcset="{{BASE_PATH}}assets/images/develop-720.webp 720w, {{BASE_PATH}}assets/images/develop-1200.webp 1200w, {{BASE_PATH}}assets/images/develop-1800.webp 1800w" sizes="(max-width: 900px) 94vw, 1240px" type="image/webp">
+          <img src="{{BASE_PATH}}assets/images/develop-1200.webp" width="1200" height="715" alt="Happy Photon Develop showing a photograph, presets, histogram, tone curve, and focused adjustment controls">
+        </picture>
+      </figure>
+    </section>
+
+    <section class="pro-proof-strip" aria-label="Editing pipeline highlights">
+      <div class="section-shell">
+        <span><b>16-bit</b> processing</span>
+        <span><b>8-band</b> color mixer</span>
+        <span><b>4-channel</b> curves</span>
+        <span><b>16-bit TIFF</b> export</span>
+      </div>
+    </section>
+
+    <section id="inside-the-pipeline" class="section pro-section section-shell" aria-labelledby="pipeline-title">
+      <div class="section-heading">
+        <p class="eyebrow">COLOR SCIENCE UNDER THE HOOD</p>
+        <h2 id="pipeline-title">Built to hold up when <span>you push the photograph.</span></h2>
+        <p>Happy Photon keeps image formation, creative edits, and output conversion in a deliberate order. Preview and export share that path, so the finished file follows the photograph you developed.</p>
+      </div>
+      <ol class="pro-pipeline">
+        <li><span>01</span><b>Characterize</b><p>Measured as-shot white balance, built-in camera characterization, and DCP profiles when available.</p></li>
+        <li><span>02</span><b>Form the image</b><p>Highlight reconstruction and a scene-referred AgX tone engine shape RAW data without a baked-in picture style.</p></li>
+        <li><span>03</span><b>Shape color</b><p>White balance, color mixer, saturation, and skin-aware vibrance operate through a wide-gamut perceptual color stage.</p></li>
+        <li><span>04</span><b>Finish detail</b><p>Capture sharpening, noise reduction, output sharpening, vignette, and deterministic grain resolve at the right stage.</p></li>
+        <li><span>05</span><b>Deliver</b><p>The result converts to an embedded sRGB or Display P3 profile and carries normalized metadata under your control.</p></li>
+      </ol>
+    </section>
+
+    <section class="section pro-section pro-section-alt" aria-labelledby="control-title">
+      <div class="section-shell">
+        <div class="section-heading centered-heading">
+          <p class="eyebrow">DEEP WHERE IT COUNTS</p>
+          <h2 id="control-title">The controls to finish a photograph. <span>Not a cockpit to manage.</span></h2>
+        </div>
+        <div class="pro-card-grid">
+          <article class="pro-card">
+            <span class="pro-card-index">LIGHT / TONE</span>
+            <h3>Recover the scene, then shape it</h3>
+            <p>Set exposure, highlights, shadows, contrast, and RAW highlight recovery. Refine the result with a composite curve or independent red, green, and blue curves.</p>
+          </article>
+          <article class="pro-card">
+            <span class="pro-card-index">COLOR</span>
+            <h3>Correct neutrals. Direct attention.</h3>
+            <p>Use Kelvin and tint, Auto white balance, or an eyedropper. Then work with saturation, skin-aware vibrance, and an eight-band hue, saturation, and lightness mixer.</p>
+          </article>
+          <article class="pro-card">
+            <span class="pro-card-index">DETAIL</span>
+            <h3>Separate capture from delivery</h3>
+            <p>Apply source-aware capture sharpening, chroma noise reduction, and RAW noise reduction. Choose independent Screen or Print sharpening when you export.</p>
+          </article>
+          <article class="pro-card">
+            <span class="pro-card-index">FINISH</span>
+            <h3>Make the frame feel complete</h3>
+            <p>Crop, rotate, and straighten the horizon. Add a controlled vignette or deterministic monochrome grain that stays stable from preview to finished output.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section pro-section section-shell pro-scope-section" aria-labelledby="scope-title">
+      <div class="pro-scope-copy">
+        <p class="eyebrow">MEASURE WHAT YOU SEE</p>
+        <h2 id="scope-title">Scopes for decisions, <span>not decoration.</span></h2>
+        <p>Read the display histogram, luminance waveform, or RAW sensor histogram. Toggle highlight and shadow clipping, inspect before and after, zoom in device pixels, or enter Assess mode for an invariant mid-gray surround and white reference.</p>
+        <ul class="pro-chip-list" aria-label="Available viewing tools">
+          <li>Display histogram</li>
+          <li>Luminance waveform</li>
+          <li>RAW sensor histogram</li>
+          <li>Clipping overlays</li>
+          <li>Before / after</li>
+          <li>Assess mode</li>
+        </ul>
+      </div>
+      <figure class="app-shot pro-scope-shot">
+        <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span><b>ASSESS</b></div>
+        <picture>
+          <source srcset="{{BASE_PATH}}assets/images/assess-720.webp 720w, {{BASE_PATH}}assets/images/assess-1200.webp 1200w, {{BASE_PATH}}assets/images/assess-1800.webp 1800w" sizes="(max-width: 980px) 94vw, 54vw" type="image/webp">
+          <img src="{{BASE_PATH}}assets/images/assess-1200.webp" width="1200" height="715" loading="lazy" alt="Happy Photon Assess mode showing a photograph against a stable mid-gray surround and white reference band">
+        </picture>
+      </figure>
+    </section>
+
+    <section class="section pro-section pro-section-alt" aria-labelledby="raw-title">
+      <div class="section-shell pro-raw-grid">
+        <div>
+          <p class="eyebrow">RAW IS A FIRST-CLASS SOURCE</p>
+          <h2 id="raw-title">Camera data gets a <span>photographic path.</span></h2>
+          <p>Happy Photon starts from the sensor and builds the image deliberately: measured as-shot white balance, highlight reconstruction, camera characterization, optional DCP profiles, and true monochrome RAW handling.</p>
+        </div>
+        <ul class="pro-feature-list">
+          <li><b>Scene-referred rendering</b><span>AgX maps RAW scene values into a display-ready photograph.</span></li>
+          <li><b>Camera profiles</b><span>Use discovered DCP profiles when a compatible profile is available.</span></li>
+          <li><b>Embedded lens data</b><span>Apply qualified DNG and Fujifilm RAF lens corrections where supported.</span></li>
+          <li><b>True monochrome</b><span>Keep monochrome sensor data neutral through preview and export.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section pro-section section-shell" aria-labelledby="handoff-title">
+      <div class="section-heading centered-heading">
+        <p class="eyebrow">A PROFESSIONAL HANDOFF</p>
+        <h2 id="handoff-title">Export the file the job needs. <span>Keep the original safe.</span></h2>
+        <p>Deliver JPEG, PNG, WebP, or lossless 16-bit TIFF in sRGB or Display P3. Preserve normalized EXIF, strip GPS when needed, and rely on collision protection that refuses to overwrite a loaded original.</p>
+      </div>
+      <div class="pro-delivery-grid">
+        <article><b>JPEG · PNG · WebP</b><span>Everyday delivery formats with explicit sizing and color space.</span></article>
+        <article><b>16-bit TIFF</b><span>Lossless, wide-gamut handoff without an 8-bit conversion.</span></article>
+        <article><b>Screen · Print</b><span>Output sharpening selected independently from capture sharpening.</span></article>
+        <article><b>Metadata control</b><span>Normalized EXIF with an option to remove location data.</span></article>
+      </div>
+    </section>
+
+    <section class="pro-boundary-section">
+      <div class="section-shell pro-boundary-grid">
+        <div>
+          <p class="eyebrow">FOCUSED BY DESIGN</p>
+          <h2>Pro processing does not have to mean <span>feature sprawl.</span></h2>
+        </div>
+        <div>
+          <p>Happy Photon is built around global photographic adjustments and a fast folder-to-export workflow. It does not currently include local masks, layers, perspective correction, HDR output, custom output profiles, or a database of lens profiles.</p>
+          <a class="text-link" href="{{REPOSITORY_URL}}#supported-systems">Review formats and current boundaries <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-section">
+      <div class="final-inner section-shell">
+        <p class="eyebrow">YOUR PHOTOGRAPHS · YOUR COMPUTER · YOUR CALL</p>
+        <h2>Go deep on the image.<br><span>Stay light on the workflow.</span></h2>
+        <p>No account. No subscription. No cloud catalog. Just a serious open-source photo workflow for Windows, macOS, and Linux.</p>
+        <div class="button-row">
+          <a class="button button-primary" href="{{BASE_PATH}}download/">Download Happy Photon</a>
+          <a class="button button-secondary" href="{{REPOSITORY_URL}}" rel="noopener noreferrer">Inspect the source <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+  {{> shared/footer}}
+  <script type="module" src="{{BASE_PATH}}assets/js/navigation.js?v={{SCRIPT_VERSION}}"></script>
+</body>
+</html>
