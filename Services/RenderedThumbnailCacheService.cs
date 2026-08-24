@@ -43,7 +43,7 @@ public sealed class RenderedThumbnailCacheService : IAsyncDisposable
         => LoadMatching(
             imageFile,
             settingsHash,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             out _);
 
     public Bitmap? LoadMatching(

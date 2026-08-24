@@ -153,7 +153,7 @@ skipped without opening or hydrating image content. When no mapped files exist, 
 unavailable so the import cannot create orphan catalog paths or persist empty settings.
 The completion report distinguishes a catalog with no ratings, flags, or color labels
 from one whose assessed-photo paths did not match. An import into an open folder updates
-the existing Library objects and filters without reloading thumbnails. During first run,
+the existing Browse objects and filters without reloading thumbnails. During first run,
 the Pictures choice remains the browsing root regardless of Lightroom mappings.
 
 ## Settings
@@ -248,7 +248,7 @@ The layout philosophy follows a **Fluid Grid** model with high-impact margins.
 
 Spacing rhythm is strictly based on an 8px scale. Use large `xl` (80px+) vertical spacing between sections to allow the dark background to "breathe" and create a sense of vastness.
 
-The desktop workspace keeps its side panes mode-specific: Library's right pane is a
+The desktop workspace keeps its side panes mode-specific: Browse's right pane is a
 review pane and Develop owns the editing controls (composition in
 `docs/pipeline/UI.md` §2). The left navigator retains only the active
 thumbnail and online-only download action so the folder tree receives the reclaimed
@@ -259,7 +259,7 @@ when at least 99.5% of the image is visible. It is informational only; navigator
 remains out of scope.
 
 The Develop control bar carries actions only. Flag, color-label, and rating state
-remains visible in Library rather than resting anywhere over the Develop or full-screen
+remains visible in Browse rather than resting anywhere over the Develop or full-screen
 viewer. Develop culling shortcuts briefly show a confirmation centered over the
 photograph and clear of its bottom edge, then fade it out. Unlike the app's persistent
 overlays, this one is not muted: it appears for barely a second over unknown
@@ -298,7 +298,7 @@ The shape language is "Squircle-adjacent"—sophisticated and intentional.
 
 ## Components
 
-Color labels use fixed red, yellow, green, blue, and purple visual slots. Library
+Color labels use fixed red, yellow, green, blue, and purple visual slots. Browse
 thumbnails show the assigned color as a round marker in the caption badge row, aligned
 under the `EDIT` badge so the photograph stays unobstructed. The assessment and filter
 controls generate their swatches from the append-only label enum; the filter row shows
@@ -311,4 +311,4 @@ active swatch rather than an All swatch.
 - **Cards:** Incorporate a subtle top-down gradient stroke (1px) to catch the "light" from above. Backgrounds should use a semi-transparent dark tint with backdrop-blur.
 - **Chips:** Monospaced labels inside pill-shaped containers with high-saturation borders.
 - **Data Visualization:** Use "Photon Trails"—thin, glowing lines with gradient tails to represent motion and data flow.
-- **Progress Indicators:** Linear bars with a "pulse" animation, moving from Secondary to Primary color to represent energy charging. The pulse runs only while the represented work is actually active — an indicator never animates at rest or while hidden (hidden indeterminate bars keep the GPU rendering; see `ARCHITECTURE.md` invariant 10). Static loading placeholders, like the library tile strip, are the idle-safe alternative for transient per-item states. Sustained preview preparation uses only the existing static status-bar activity segment; the Develop scope box has no local progress bar.
+- **Progress Indicators:** Linear bars with a "pulse" animation, moving from Secondary to Primary color to represent energy charging. The pulse runs only while the represented work is actually active — an indicator never animates at rest or while hidden (hidden indeterminate bars keep the GPU rendering; see `ARCHITECTURE.md` invariant 10). Static loading placeholders, like the browse tile strip, are the idle-safe alternative for transient per-item states. Sustained preview preparation uses only the existing static status-bar activity segment; the Develop scope box has no local progress bar.

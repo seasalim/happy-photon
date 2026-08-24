@@ -30,7 +30,7 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
             new SolidLoader(isRaw: false, MagickColors.White),
             new RenderPipeline());
         var image = new ImageFile(Path.Combine(_root, "standard.jpg"));
-        var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium);
+        var request = ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium);
 
         using var unlatched = await service.ApplyEditsToPreviewArtifactsAsync(
             image,
@@ -76,7 +76,7 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
         var artifacts = await service.ApplyEditsToPreviewArtifactsAsync(
             image,
             new EditSettings(),
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram: true,
             ClippingOverlaySide.Both);
         var bitmap = artifacts.Bitmap!;

@@ -14,7 +14,7 @@ using Xunit;
 namespace HappyPhoton.Tests;
 
 /// <summary>
-/// Library controls that need a live dispatcher or a realized visual tree.
+/// Browse controls that need a live dispatcher or a realized visual tree.
 /// </summary>
 public sealed class ColorLabelUiTests
 {
@@ -27,9 +27,9 @@ public sealed class ColorLabelUiTests
         var vm = NewViewModel(catalog);
         var image = new ImageFile(Path.Combine(root, "first.jpg"));
         image.CatalogId = await catalog.GetOrCreateImageAsync(image.FilePath);
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         var refreshes = 0;
-        vm.Library.FilterChanged += (_, _) => refreshes++;
+        vm.Browse.FilterChanged += (_, _) => refreshes++;
 
         vm.SelectedImage = image;
 
@@ -82,11 +82,11 @@ public sealed class ColorLabelUiTests
     }
 
     [AvaloniaFact]
-    public void LibraryFilterBar_GroupControlsToggleAndExposeAccessibleMetadata()
+    public void BrowseFilterBar_GroupControlsToggleAndExposeAccessibleMetadata()
     {
         using var catalog = new CatalogService(NewRoot());
         var vm = NewViewModel(catalog);
-        var control = new LibraryGridView { DataContext = vm };
+        var control = new BrowseGridView { DataContext = vm };
         var window = new Window { Content = control };
         window.Show();
 
@@ -136,7 +136,7 @@ public sealed class ColorLabelUiTests
         Click(rejected);
         Assert.Equal(FlagFilter.All, control.FlagFilter);
 
-        var rating = control.FindControl<LibraryRatingFilter>("RatingFilter")!;
+        var rating = control.FindControl<BrowseRatingFilter>("RatingFilter")!;
         var thirdStar = rating.FindControl<Button>("RatingFilter3Button")!;
         Assert.Null(rating.FindControl<Border>("RatingFilterGroup"));
         Assert.Equal(18, thirdStar.Width);
@@ -164,7 +164,7 @@ public sealed class ColorLabelUiTests
         Assert.Null(control.FindControl<Button>("SelectNoneButton"));
         Assert.DoesNotContain(
             "Select",
-            control.FindControl<StackPanel>("LibraryActionsPanel")!
+            control.FindControl<StackPanel>("BrowseActionsPanel")!
                 .GetLogicalDescendants().OfType<TextBlock>().Select(text => text.Text));
 
         window.Close();
@@ -173,7 +173,7 @@ public sealed class ColorLabelUiTests
     [AvaloniaFact]
     public void RatingFilter_ThresholdStarsFillAndClearOnReclick()
     {
-        var control = new LibraryRatingFilter();
+        var control = new BrowseRatingFilter();
         var window = new Window { Content = control };
         window.Show();
 
@@ -213,7 +213,7 @@ public sealed class ColorLabelUiTests
         {
             [ColorLabel.Red] = "Select"
         });
-        var control = new LibraryColorLabelFilter
+        var control = new BrowseColorLabelFilter
         {
             Choices = vm.ColorLabelFilterChoices
         };
@@ -282,18 +282,18 @@ public sealed class ColorLabelUiTests
             Rating = 5,
             ColorLabel = ColorLabel.Red
         };
-        vm.Library.SetImages([first, second]);
+        vm.Browse.SetImages([first, second]);
         var window = new MainWindow { DataContext = vm };
 
         try
         {
             window.Show();
             Dispatcher.UIThread.RunJobs();
-            var control = window.FindControl<LibraryGridView>("LibraryGridView")!;
-            vm.Library.FileTypeFilter = ImageFileTypeFilter.Raw;
-            vm.Library.FlagFilter = FlagFilter.Picked;
-            vm.Library.MinimumRating = 5;
-            vm.Library.ColorLabelFilter = ColorLabelFilter.Purple;
+            var control = window.FindControl<BrowseGridView>("BrowseGridView")!;
+            vm.Browse.FileTypeFilter = ImageFileTypeFilter.Raw;
+            vm.Browse.FlagFilter = FlagFilter.Picked;
+            vm.Browse.MinimumRating = 5;
+            vm.Browse.ColorLabelFilter = ColorLabelFilter.Purple;
             vm.SelectedImage = null;
             Dispatcher.UIThread.RunJobs();
 
@@ -301,16 +301,16 @@ public sealed class ColorLabelUiTests
             Assert.True(filteredEmpty.IsVisible);
             var filterChanges = 0;
             var stateChanges = 0;
-            vm.Library.FilterChanged += (_, _) => filterChanges++;
-            vm.Library.StateChanged += (_, _) => stateChanges++;
+            vm.Browse.FilterChanged += (_, _) => filterChanges++;
+            vm.Browse.StateChanged += (_, _) => stateChanges++;
 
             Click(control.FindControl<Button>("FilteredEmptyClearButton")!);
             Dispatcher.UIThread.RunJobs();
 
-            Assert.Equal(ImageFileTypeFilter.All, vm.Library.FileTypeFilter);
-            Assert.Equal(FlagFilter.All, vm.Library.FlagFilter);
-            Assert.Equal(0, vm.Library.MinimumRating);
-            Assert.Equal(ColorLabelFilter.All, vm.Library.ColorLabelFilter);
+            Assert.Equal(ImageFileTypeFilter.All, vm.Browse.FileTypeFilter);
+            Assert.Equal(FlagFilter.All, vm.Browse.FlagFilter);
+            Assert.Equal(0, vm.Browse.MinimumRating);
+            Assert.Equal(ColorLabelFilter.All, vm.Browse.ColorLabelFilter);
             Assert.Equal(ImageFileTypeFilter.All, control.FileTypeFilter);
             Assert.Equal(FlagFilter.All, control.FlagFilter);
             Assert.Equal(0, control.MinimumRating);
@@ -341,7 +341,7 @@ public sealed class ColorLabelUiTests
         using var catalog = new CatalogService(Path.Combine(root, "catalog"));
         var vm = NewViewModel(catalog);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        vm.Library.SetImages(
+        vm.Browse.SetImages(
             [new ImageFile(Path.Combine(root, "first.jpg"))]);
         var window = new MainWindow { DataContext = vm };
 
@@ -349,8 +349,8 @@ public sealed class ColorLabelUiTests
         {
             window.Show();
             Dispatcher.UIThread.RunJobs();
-            var control = window.FindControl<LibraryGridView>("LibraryGridView")!;
-            vm.Library.ColorLabelFilter = ColorLabelFilter.Purple;
+            var control = window.FindControl<BrowseGridView>("BrowseGridView")!;
+            vm.Browse.ColorLabelFilter = ColorLabelFilter.Purple;
             Dispatcher.UIThread.RunJobs();
 
             Assert.True(control.FindControl<StackPanel>("FilteredEmptyState")!.IsVisible);
@@ -364,11 +364,11 @@ public sealed class ColorLabelUiTests
             Click(control.FindControl<Button>("FilteredEmptyClearButton")!);
             Dispatcher.UIThread.RunJobs();
 
-            Assert.Equal(ColorLabelFilter.All, vm.Library.ColorLabelFilter);
-            Assert.Single(vm.Library.VisibleImages);
+            Assert.Equal(ColorLabelFilter.All, vm.Browse.ColorLabelFilter);
+            Assert.Single(vm.Browse.VisibleImages);
             Assert.False(control.FindControl<StackPanel>("FilteredEmptyState")!.IsVisible);
 
-            vm.Library.SetImages([]);
+            vm.Browse.SetImages([]);
             Dispatcher.UIThread.RunJobs();
 
             Assert.True(control.FindControl<Border>("EmptyState")!.IsVisible);
@@ -386,7 +386,7 @@ public sealed class ColorLabelUiTests
     public void FilterOverflowFades_TrackBothEdgesAndResizeBackToFit()
     {
         using var catalog = new CatalogService(NewRoot());
-        var control = new LibraryGridView { DataContext = NewViewModel(catalog) };
+        var control = new BrowseGridView { DataContext = NewViewModel(catalog) };
         var window = new Window
         {
             Width = 1600,

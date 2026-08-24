@@ -186,7 +186,7 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
             using var loaded = reader.LoadMatching(
                 file,
                 "hash",
-                ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+                ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
                 out var satisfiesMinimum);
 
             Assert.NotNull(loaded);

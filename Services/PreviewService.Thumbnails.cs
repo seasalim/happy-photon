@@ -13,7 +13,7 @@ public sealed partial class PreviewService
         TryPromoteRenderedThumbnail(
             imageFile,
             settings,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium));
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium));
 
     public Bitmap? TryPromoteRenderedThumbnail(
         ImageFile imageFile,

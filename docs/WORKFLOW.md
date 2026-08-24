@@ -2,7 +2,7 @@
 
 Happy Photon is organized around three decisions:
 
-1. **Which photographs are worth keeping?** Use Library to compare, flag, rate,
+1. **Which photographs are worth keeping?** Use Browse to compare, flag, rate,
    and filter a shoot.
 2. **What should each keeper look like?** Use Develop to shape composition,
    light, color, and tone.
@@ -92,7 +92,7 @@ everything is already up to date.
 
 ## 1. Open and survey the shoot
 
-Start in **Library**. Press `G` at any time to return to it.
+Start in **Browse**. Press `G` at any time to return to it.
 
 The right review pane keeps the active photograph's thumbnail histogram and file,
 camera, exposure, and location details together. With two or more photographs
@@ -115,7 +115,7 @@ selection capture-date ranges.
 4. Turn on burst grouping with the stacked-frames icon when the folder contains
    sequences of closely spaced frames.
 
-Use the three thumbnail buttons at the right edge of the Library footer to change
+Use the three thumbnail buttons at the right edge of the Browse footer to change
 browsing density. **Small** shows the most photographs, **Medium** is the default, and
 **Large** provides a sharper comparison view. The choice is remembered across launches.
 When Large needs a better cached image, Happy Photon keeps the existing thumbnail
@@ -133,14 +133,14 @@ re-reads the currently viewed folder and its immediate subfolder list while
 preserving active filters and cataloged edits, ratings, and flags for paths that
 still exist.
 
-Right-click a Library thumbnail to **Copy path**, **Reveal in File Explorer**, or
+Right-click a Browse thumbnail to **Copy path**, **Reveal in File Explorer**, or
 **Delete…**. Right-clicking a photograph outside the current selection makes it the
 selection; right-clicking one already selected preserves the selection. Copy path
 places the selected photographs' full paths on the clipboard in grid order, one per
 line. Reveal selects the active file in Explorer or Finder; on Linux it opens the
 containing folder. The folder tree's right-click menu offers Reveal only.
 
-Delete and the `Delete` key use the same targets as other Library actions: the grid
+Delete and the `Delete` key use the same targets as other Browse actions: the grid
 selection when it is non-empty, otherwise the active photograph. After confirmation,
 Happy Photon moves each original and its resolved XMP sidecar to the system Trash,
 removes its catalog state, and updates the grid. A failed file does not stop the rest
@@ -167,8 +167,8 @@ that original.
 Do not start adjusting every image yet. The first goal is to understand the
 shoot and remove obvious misses from consideration.
 
-![Happy Photon Library showing the folder tree, filters, thumbnail grid, and
-assessment controls](screenshots/Screenshot_Library.png)
+![Happy Photon Browse showing the folder tree, filters, thumbnail grid, and
+assessment controls](screenshots/Screenshot_Browse.png)
 
 ## 2. Cull before you develop
 
@@ -178,7 +178,7 @@ Flags answer **what should happen to this frame?**
 - Press `X` to toggle **Rejected**.
 - Press `U` to return photographs to **Unflagged**.
 
-In Library, these commands affect the selection when it is non-empty, even when the
+In Browse, these commands affect the selection when it is non-empty, even when the
 active photograph is outside it. With an empty selection they affect the active
 photograph. In Develop they affect only the active photograph. Pick and Reject assign
 the whole target set unless every target already has that flag, in which case they
@@ -186,7 +186,7 @@ clear it.
 
 Develop confirms each flag, rating, and color-label change briefly over the
 photograph — "Set flag: Picked", "Unset rating: ★★★" — and shows nothing between
-changes. Library remains where a photograph's current assessment is on display.
+changes. Browse remains where a photograph's current assessment is on display.
 
 Unflagged is useful for undecided frames. Rejected does not delete a file, and
 Picked does not automatically select it for export.
@@ -225,7 +225,7 @@ swatch ring always describes the active photograph, not the selected target set.
 
 ### Filter the result
 
-The Library filter bar uses labeled groups of compact controls that can be
+The Browse filter bar uses labeled groups of compact controls that can be
 combined to show:
 
 - RAW or JPEG files;
@@ -248,20 +248,20 @@ system Trash. Rejecting alone never moves or deletes the original.
 ## 3. Develop the keepers
 
 Double-click a thumbnail or press `D` to enter **Develop**. Use the left and
-right arrow keys to move between visible images without returning to Library.
+right arrow keys to move between visible images without returning to Browse.
 
 When the rendered cache matches the current settings, the photograph, display
 histogram, waveform, and display-floor clipping become useful together before the
 original is decoded. If fresh preparation lasts beyond the normal delay, the shared
 status bar says **Preparing preview** until the first coherent fresh render settles;
-there is no separate progress line under the scopes. Returning to Library and then
+there is no separate progress line under the scopes. Returning to Browse and then
 Develop on the same active photograph reuses the current in-memory preview pair.
 
 If an original is online-only, an existing cached preview can still appear, but Happy
 Photon does not start a fresh decode until you choose **Download and open**.
 If LibRaw cannot decode a locally available file, an actionable message remains pinned
 for that photograph (including common unsupported variants such as Nikon HE), and the
-Library keeps its failure marker when you return. A successful retry clears both. Source
+Browse keeps its failure marker when you return. A successful retry clears both. Source
 availability messages take priority over file decode and global runtime messages.
 
 A useful editing order is composition, light, color, and then refinement. You
@@ -362,7 +362,7 @@ canvas used by the crop overlay, then recenters when the crop is applied.
 
 In Develop or fullscreen, press `B` to toggle between the edited image and the
 original. In Develop, use `Ctrl+Z` to undo a color or tonal edit and `Ctrl+Y` or
-`Ctrl+Shift+Z` to redo it. These editing shortcuts do nothing in Library. The reset
+`Ctrl+Shift+Z` to redo it. These editing shortcuts do nothing in Browse. The reset
 button clears the color and tonal adjustments while preserving crop, rotation,
 and horizon settings; reset those separately in the geometry controls.
 
@@ -396,7 +396,7 @@ another image.
 
 To apply the settings to several photographs:
 
-1. Return to Library with `G`.
+1. Return to Browse with `G`.
 2. Select the target images.
 3. Press `Ctrl+Shift+V`.
 4. Review and confirm the batch operation.
@@ -409,20 +409,20 @@ temperature can still vary within a series.
 
 ## 5. Build a selection
 
-Selection is a working set shared by Library assessment actions, batch paste, and
+Selection is a working set shared by Browse assessment actions, batch paste, and
 export:
 
 - **Picked** means the image passed your cull.
 - **Rating** records its relative strength or importance.
-- **Selected** means include this image in the next Library action or export.
+- **Selected** means include this image in the next Browse action or export.
 
-Filter the Library to the group you want before selecting it. Then:
+Filter the Browse to the group you want before selecting it. Then:
 
 - press `Space` to toggle the current image;
 - use `Ctrl+Click` to add or remove individual images;
 - use `Shift+Click` to select a range;
 - press `Ctrl+A` to select every image currently visible through the filters;
-- press `Ctrl+D`, or choose **Deselect All** from **More library actions**, to clear
+- press `Ctrl+D`, or choose **Deselect All** from **More browse actions**, to clear
   the visible selection.
 
 A plain click or arrow-key move replaces the selection with the newly focused
@@ -433,7 +433,7 @@ Images that become hidden by a new filter are removed from the selection. Set th
 filters first, then make the final selection.
 
 Press `F` with two or more photos selected to review only that selection in full
-screen, starting from the first selected photo in the Library's current order.
+screen, starting from the first selected photo in the Browse's current order.
 Navigation stops at the first and last selected photo, and the `SELECTION` badge shows
 the current position. The set updates with visible selection changes; if fewer than
 two selected photos remain, navigation returns to the full folder until full screen is
@@ -442,7 +442,7 @@ folder as usual.
 
 ## 6. Export finished copies
 
-From Library, choose **Export**. You can also press `Ctrl+E` from Library or Develop.
+From Browse, choose **Export**. You can also press `Ctrl+E` from Browse or Develop.
 The dialog opens even when nothing is selected and reports zero images without
 changing the selection.
 
@@ -488,7 +488,7 @@ For a first shoot, keep the process deliberately simple:
 5. Develop one representative photograph.
 6. Save its look as a preset or copy its settings to similar photographs.
 7. Review every edited image and correct it individually.
-8. Return to Library, keep the final filter active, and press `Ctrl+A`.
+8. Return to Browse, keep the final filter active, and press `Ctrl+A`.
 9. Export the preferred delivery size.
 
 The result is a small, coherent set of finished copies while every original
@@ -498,7 +498,7 @@ remains where it started and unchanged.
 
 | Key | Action |
 | --- | --- |
-| `G` | Switch to Library |
+| `G` | Switch to Browse |
 | `D` | Switch to Develop |
 | Arrow keys | Move between images |
 | `P` / `X` / `U` | Pick, reject, or unflag |

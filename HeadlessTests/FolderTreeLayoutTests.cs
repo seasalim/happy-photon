@@ -24,7 +24,7 @@ public sealed class FolderTreeLayoutTests
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
         viewModel.SetRootFolder(temporary.Path, selectRoot: false);
         var image = new ImageFile(Path.Combine(temporary.Path, "image.jpg"));
-        viewModel.Library.SetImages([image]);
+        viewModel.Browse.SetImages([image]);
         viewModel.SelectedImage = image;
         var window = new MainWindow
         {

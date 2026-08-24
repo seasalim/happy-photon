@@ -183,11 +183,11 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     }
 
     [Fact]
-    public async Task LibraryMode_GatesBeforeAfterUndoAndRedo()
+    public async Task BrowseMode_GatesBeforeAfterUndoAndRedo()
     {
         using var catalog = _fx.CreateCatalog();
         var vm = CreateViewModel(catalog);
-        var image = new ImageFile(_fx.Path("library.jpg"))
+        var image = new ImageFile(_fx.Path("browse.jpg"))
         {
             EditSettings = new EditSettings { Exposure = 1 }
         };
@@ -262,7 +262,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task DevelopToLibrary_ReschedulesHistogramFromThumbnailPixels()
+    public async Task DevelopToBrowse_ReschedulesHistogramFromThumbnailPixels()
     {
         using var catalog = await _fx.CreateCatalogAsync();
         var vm = _fx.CreateViewModel(
@@ -273,34 +273,34 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
                 SourceAvailability.AvailableLocally));
         var image = new ImageFile(_fx.Path("histogram.png"));
         using var orange = new MagickImage(MagickColors.Orange, 16, 16);
-        vm.Library.SetImages([image]);
-        vm.Library.ReplaceThumbnail(
+        vm.Browse.SetImages([image]);
+        vm.Browse.ReplaceThumbnail(
             image,
             BitmapConversionService.ConvertToBitmap(orange));
         vm.SelectedImage = image;
-        var expectedLibrary = new HistogramService().CalculateLibraryHistogram(
+        var expectedBrowse = new HistogramService().CalculateBrowseHistogram(
             image.Thumbnail!);
         await TestWaits.UntilAsync(() => HistogramsMatch(
             vm.Histogram,
-            expectedLibrary));
+            expectedBrowse));
 
         vm.IsDevelopMode = true;
         await TestWaits.UntilAsync(() =>
             vm.PreviewImage != null &&
             vm.Histogram != null &&
-            !HistogramsMatch(vm.Histogram, expectedLibrary));
+            !HistogramsMatch(vm.Histogram, expectedBrowse));
 
         vm.IsDevelopMode = false;
         await TestWaits.UntilAsync(() => HistogramsMatch(
             vm.Histogram,
-            expectedLibrary));
+            expectedBrowse));
 
-        vm.Library.ReplaceThumbnail(image, null);
+        vm.Browse.ReplaceThumbnail(image, null);
         await vm.DisposeAsync();
     }
 
     [AvaloniaFact]
-    public async Task DevelopToLibrary_WithoutThumbnailClearsRenderHistogram()
+    public async Task DevelopToBrowse_WithoutThumbnailClearsRenderHistogram()
     {
         using var catalog = await _fx.CreateCatalogAsync();
         var vm = _fx.CreateViewModel(

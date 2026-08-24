@@ -25,8 +25,8 @@ public sealed class ThumbnailResidentStateTests : IDisposable
         {
             Thumbnail = CreateBitmap()
         };
-        viewModel.Library.SetImages([image]);
-        var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Large);
+        viewModel.Browse.SetImages([image]);
+        var request = ThumbnailSizeRequest.For(BrowseThumbnailSize.Large);
         using var result = ThumbnailLoadResult.Deferred(request);
 
         viewModel.ApplyThumbnailLoadResult(image, result);
@@ -48,8 +48,8 @@ public sealed class ThumbnailResidentStateTests : IDisposable
         {
             Thumbnail = CreateBitmap()
         };
-        viewModel.Library.SetImages([image]);
-        var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Large);
+        viewModel.Browse.SetImages([image]);
+        var request = ThumbnailSizeRequest.For(BrowseThumbnailSize.Large);
         using var result = ThumbnailLoadResult.Failed(request);
 
         viewModel.ApplyThumbnailLoadResult(image, result);
@@ -79,7 +79,7 @@ public sealed class ThumbnailResidentStateTests : IDisposable
                 ThumbnailDeferredForHydration = true
             })
             .ToList();
-        viewModel.Library.SetImages(residents.Concat(deferred));
+        viewModel.Browse.SetImages(residents.Concat(deferred));
 
         viewModel.ReserveThumbnailResidency(deferred);
 

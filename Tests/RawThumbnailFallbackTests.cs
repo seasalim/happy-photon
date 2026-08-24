@@ -118,7 +118,7 @@ public sealed class RawThumbnailFallbackTests : IDisposable
     }
 
     [WindowsFact]
-    public async Task TonalPasteInLibraryDoesNotDecodeRawBase()
+    public async Task TonalPasteInBrowseDoesNotDecodeRawBase()
     {
         _fixture.RequireWindows();
         Directory.CreateDirectory(_root);
@@ -138,10 +138,10 @@ public sealed class RawThumbnailFallbackTests : IDisposable
             EditSettings = new EditSettings { Exposure = 1 }
         };
         var target = new ImageFile(path);
-        viewModel.Library.SetImages([source, target]);
+        viewModel.Browse.SetImages([source, target]);
         viewModel.SelectedImage = source;
         viewModel.CopyEditSettingsCommand.Execute(null);
-        viewModel.Library.ToggleSelection(target);
+        viewModel.Browse.ToggleSelection(target);
         viewModel.ConfirmBatchApplyAsync = _ => Task.FromResult(true);
 
         await viewModel.PasteEditSettingsCommand.ExecuteAsync(null);
@@ -434,7 +434,7 @@ public sealed class RawThumbnailFallbackTests : IDisposable
             CancellationToken cancellationToken)
         {
             LoadCount++;
-            throw new InvalidOperationException("Library batch must not decode RAW.");
+            throw new InvalidOperationException("Browse batch must not decode RAW.");
         }
 
         public BaseImage? LoadFullBase(

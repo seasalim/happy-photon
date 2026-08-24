@@ -25,7 +25,7 @@ public partial class MainWindowViewModel
         ClearNavigatorVisibleRegion();
         OriginalViewPixelSize = default;
 
-        // Update IsActive flags for visual highlighting in Library grid
+        // Update IsActive flags for visual highlighting in Browse grid
         if (oldValue != null) oldValue.IsActive = false;
         if (newValue != null) newValue.IsActive = true;
 
@@ -130,16 +130,16 @@ public partial class MainWindowViewModel
         NotifyClippingCommandState();
     }
 
-    private void OnLibraryFilterChanged(object? sender, EventArgs e)
+    private void OnBrowseFilterChanged(object? sender, EventArgs e)
     {
         CancelAdjacentPreviewWarm(invalidateWorker: true);
-        if (!Library.ContainsVisible(SelectedImage))
+        if (!Browse.ContainsVisible(SelectedImage))
         {
-            SelectedImage = Library.FirstVisible();
+            SelectedImage = Browse.FirstVisible();
         }
         else if (SelectedImage == null)
         {
-            SelectedImage = Library.FirstVisible();
+            SelectedImage = Browse.FirstVisible();
         }
 
         UpdateSelectedCount();
@@ -154,7 +154,7 @@ public partial class MainWindowViewModel
 
         if (!IsDevelopMode)
         {
-            var selected = Library.GetSelectedImages().ToList();
+            var selected = Browse.GetSelectedImages().ToList();
             if (selected.Count > 0)
             {
                 return new ActionTargetResolution(
@@ -173,7 +173,7 @@ public partial class MainWindowViewModel
 
     private readonly record struct ActionTargetResolution(
         IReadOnlyList<ImageFile> Targets,
-        bool IsLibrarySelection);
+        bool IsBrowseSelection);
 
     private void UpdateCanReset()
     {

@@ -73,12 +73,12 @@ public sealed class PreviewPipelinePerformanceTests
             await CompareRawCandidateCost(
                 catalog,
                 file,
-                ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+                ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
                 "192px");
             await CompareRawCandidateCost(
                 catalog,
                 file,
-                ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+                ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
                 "512px");
         }
         finally
@@ -109,7 +109,7 @@ public sealed class PreviewPipelinePerformanceTests
             var hash = RenderSettingsHash.Compute(
                 new EditSettings { Exposure = 0.5 });
 
-            foreach (var size in Enum.GetValues<LibraryThumbnailSize>())
+            foreach (var size in Enum.GetValues<BrowseThumbnailSize>())
             {
                 var request = ThumbnailSizeRequest.For(size);
                 MeasureCache(files, file => sourceCache.LoadFromCache(
@@ -145,7 +145,7 @@ public sealed class PreviewPipelinePerformanceTests
     }
 
     [WindowsFact]
-    public void LibraryHistogramLatency_WhenEnabled()
+    public void BrowseHistogramLatency_WhenEnabled()
     {
         _fixture.RequireWindows();
         if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1")
@@ -161,7 +161,7 @@ public sealed class PreviewPipelinePerformanceTests
         var histogramService = new HistogramService();
         using (var warmup = BitmapConversionService.CloneBitmap(bitmap))
         {
-            histogramService.CalculateLibraryHistogram(warmup);
+            histogramService.CalculateBrowseHistogram(warmup);
         }
 
         var samples = new List<double>();
@@ -169,14 +169,14 @@ public sealed class PreviewPipelinePerformanceTests
         {
             var stopwatch = Stopwatch.StartNew();
             using var snapshot = BitmapConversionService.CloneBitmap(bitmap);
-            histogramService.CalculateLibraryHistogram(snapshot);
+            histogramService.CalculateBrowseHistogram(snapshot);
             stopwatch.Stop();
             samples.Add(stopwatch.Elapsed.TotalMilliseconds);
         }
 
         var median = Median(samples);
-        _output.WriteLine($"512px Library histogram median: {median:F1} ms");
-        Assert.True(median <= 100, $"Library histogram median was {median:F1} ms.");
+        _output.WriteLine($"512px Browse histogram median: {median:F1} ms");
+        Assert.True(median <= 100, $"Browse histogram median was {median:F1} ms.");
     }
 
     private async Task CompareRawCandidateCost(

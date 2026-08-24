@@ -10,16 +10,16 @@ public sealed class PasteTargetingTests : IDisposable
     private readonly CatalogVmFixture _fx = new("paste-targets");
 
     [Fact]
-    public async Task OnePhotoLibrarySelection_UsesBatchConfirmation()
+    public async Task OnePhotoBrowseSelection_UsesBatchConfirmation()
     {
         using var catalog = await CreateCatalogAsync();
         await using var vm = CreateViewModel(catalog);
         var source = await CreateImageAsync(catalog, "source.jpg", exposure: 2);
         var target = await CreateImageAsync(catalog, "target.jpg");
-        vm.Library.SetImages([source, target]);
+        vm.Browse.SetImages([source, target]);
         vm.SelectedImage = source;
         vm.CopyEditSettingsCommand.Execute(null);
-        vm.Library.ToggleSelection(target);
+        vm.Browse.ToggleSelection(target);
         var confirmedCount = 0;
         vm.ConfirmBatchApplyAsync = count =>
         {
@@ -35,13 +35,13 @@ public sealed class PasteTargetingTests : IDisposable
     }
 
     [Fact]
-    public async Task EmptyLibrarySelection_UsesSinglePhotoPathWithoutConfirmation()
+    public async Task EmptyBrowseSelection_UsesSinglePhotoPathWithoutConfirmation()
     {
         using var catalog = await CreateCatalogAsync();
         await using var vm = CreateViewModel(catalog);
         var source = await CreateImageAsync(catalog, "source.jpg", exposure: 2);
         var target = await CreateImageAsync(catalog, "target.jpg");
-        vm.Library.SetImages([source, target]);
+        vm.Browse.SetImages([source, target]);
         vm.SelectedImage = source;
         vm.CopyEditSettingsCommand.Execute(null);
         vm.SelectedImage = target;
@@ -67,10 +67,10 @@ public sealed class PasteTargetingTests : IDisposable
         var source = await CreateImageAsync(catalog, "source.jpg", exposure: 2);
         var active = await CreateImageAsync(catalog, "active.jpg");
         var selected = await CreateImageAsync(catalog, "selected.jpg");
-        vm.Library.SetImages([source, active, selected]);
+        vm.Browse.SetImages([source, active, selected]);
         vm.SelectedImage = source;
         vm.CopyEditSettingsCommand.Execute(null);
-        vm.Library.ToggleSelection(selected);
+        vm.Browse.ToggleSelection(selected);
         selected.SourceRequiresHydration = true;
         vm.SelectedImage = active;
         Assert.False(vm.PasteEditSettingsCommand.CanExecute(null));
@@ -95,7 +95,7 @@ public sealed class PasteTargetingTests : IDisposable
     }
 
     [Fact]
-    public async Task LocalLibrarySelection_IsNotVetoedByOutsideCloudActivePhoto()
+    public async Task LocalBrowseSelection_IsNotVetoedByOutsideCloudActivePhoto()
     {
         using var catalog = await CreateCatalogAsync();
         var availability = new TestSourceAvailabilityService(
@@ -107,10 +107,10 @@ public sealed class PasteTargetingTests : IDisposable
         availability.Resolver = path => path == cloud.FilePath
             ? SourceAvailability.RequiresHydration
             : SourceAvailability.AvailableLocally;
-        vm.Library.SetImages([source, target, cloud]);
+        vm.Browse.SetImages([source, target, cloud]);
         vm.SelectedImage = source;
         vm.CopyEditSettingsCommand.Execute(null);
-        vm.Library.ToggleSelection(target);
+        vm.Browse.ToggleSelection(target);
         vm.SelectedImage = cloud;
         var confirmedCount = 0;
         vm.ConfirmBatchApplyAsync = count =>

@@ -68,7 +68,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 Assert.Equal(2, viewModel.BurstAnalysisProcessed);
                 Assert.Equal(2, viewModel.BurstAnalysisTotal);
                 Assert.All(
-                    viewModel.Library.AllImages,
+                    viewModel.Browse.AllImages,
                     image => Assert.Equal(2, image.BurstSize));
             }
             finally
@@ -98,17 +98,17 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 viewModel.ShowBurstGroups = true;
                 Complete(viewModel.WaitForBurstAnalysisAsync());
 
-                var raw = viewModel.Library.AllImages.Single(
+                var raw = viewModel.Browse.AllImages.Single(
                     image => image.FileName == "one.dng");
-                var jpeg = viewModel.Library.AllImages.Single(
+                var jpeg = viewModel.Browse.AllImages.Single(
                     image => image.FileName == "one.jpg");
-                var single = viewModel.Library.AllImages.Single(
+                var single = viewModel.Browse.AllImages.Single(
                     image => image.FileName == "two.jpg");
                 Assert.Equal(1, raw.BurstIndex);
                 Assert.Equal(raw.BurstIndex, jpeg.BurstIndex);
                 Assert.Equal(2, single.BurstIndex);
                 Assert.All(
-                    viewModel.Library.AllImages,
+                    viewModel.Browse.AllImages,
                     image => Assert.Equal(2, image.BurstSize));
                 Assert.Equal(
                     viewModel.GetBurstMembership(raw.FilePath)?.BurstId,
@@ -258,7 +258,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 Assert.Equal(1, viewModel.BurstAnalysisTotal);
                 Assert.Equal(
                     "new.jpg",
-                    Assert.Single(viewModel.Library.AllImages).FileName);
+                    Assert.Single(viewModel.Browse.AllImages).FileName);
             }
             finally
             {
@@ -300,7 +300,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 viewModel.ShowBurstGroups = true;
                 Complete(viewModel.WaitForBurstAnalysisAsync());
 
-                var cloud = viewModel.Library.AllImages.Single(
+                var cloud = viewModel.Browse.AllImages.Single(
                     image => image.FileName == "cloud.jpg");
                 Assert.Equal(1, metadataLoads);
                 Assert.Equal(2, viewModel.BurstAnalysisProcessed);
@@ -340,7 +340,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
                 TestImages.WriteJpeg(Path.Combine(photos, "local.jpg"));
                 Complete(viewModel.LoadFolderAsync(photos));
                 WaitForThumbnailAttempt(viewModel);
-                var image = Assert.Single(viewModel.Library.AllImages);
+                var image = Assert.Single(viewModel.Browse.AllImages);
                 image.SourceRequiresHydration = true;
                 viewModel.RefreshOnlineOnlyPhotoCount();
 
@@ -401,7 +401,7 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         var deadline = DateTime.UtcNow + ThumbnailAttemptTimeout;
         while (DateTime.UtcNow < deadline)
         {
-            var image = viewModel.Library.AllImages.SingleOrDefault();
+            var image = viewModel.Browse.AllImages.SingleOrDefault();
             if (image?.Thumbnail != null ||
                 image?.ThumbnailLoadFailed == true ||
                 image?.ThumbnailDeferredForHydration == true)
@@ -411,11 +411,11 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
             Thread.Sleep(10);
         }
 
-        var observed = viewModel.Library.AllImages.SingleOrDefault();
+        var observed = viewModel.Browse.AllImages.SingleOrDefault();
         throw new TimeoutException(
             $"Thumbnail attempt did not finish within " +
             $"{ThumbnailAttemptTimeout.TotalSeconds:0}s. " +
-            $"images={viewModel.Library.AllImages.Count}, " +
+            $"images={viewModel.Browse.AllImages.Count}, " +
             $"thumbnail={observed?.Thumbnail != null}, " +
             $"failed={observed?.ThumbnailLoadFailed}, " +
             $"deferred={observed?.ThumbnailDeferredForHydration}");

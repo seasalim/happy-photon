@@ -7,7 +7,7 @@ public partial class MainWindowViewModel
         CloseRenderOutcomeChannel();
         DisposeBackgroundActivity();
         await DisposeUpdatesAsync();
-        Interlocked.Increment(ref _libraryGeneration);
+        Interlocked.Increment(ref _browseGeneration);
         await CancelXmpReconcileAsync();
         if (_xmpWriter != null)
         {
@@ -15,7 +15,7 @@ public partial class MainWindowViewModel
             _xmpWriter = null;
         }
         CancelSourceHydration();
-        await CancelLibrarySelectionSummaryAsync();
+        await CancelBrowseSelectionSummaryAsync();
         _burstAnalysisRestartRequested = false;
         CancelBurstAnalysis();
         var thumbnailLoadingCts = Interlocked.Exchange(
@@ -73,7 +73,7 @@ public partial class MainWindowViewModel
 
         ClearPreviewImage();
         ClearPreviewClippingArtifacts();
-        Library.DisposeThumbnails();
+        Browse.DisposeThumbnails();
         _bitmapRetirement.Dispose();
     }
 

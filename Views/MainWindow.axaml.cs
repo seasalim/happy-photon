@@ -15,7 +15,7 @@ public partial class MainWindow : Window
     private ZoomPanControl? _fullScreenZoomPanControl;
     private FolderTreePanel? _folderTreePanel;
     private PresetsPanel? _presetsPanel;
-    private LibraryGridView? _libraryGridView;
+    private BrowseGridView? _browseGridView;
     private bool _isDevelopViewportPublicationSuppressed;
 
     public MainWindow()
@@ -73,21 +73,21 @@ public partial class MainWindow : Window
             _presetsPanel.DeletePresetRequested += OnDeletePresetRequested;
         }
 
-        _libraryGridView = this.FindControl<LibraryGridView>("LibraryGridView");
-        if (_libraryGridView != null)
+        _browseGridView = this.FindControl<BrowseGridView>("BrowseGridView");
+        if (_browseGridView != null)
         {
-            _libraryGridView.DevelopModeRequested += OnDevelopModeRequested;
-            _libraryGridView.SelectAllRequested += OnSelectAllRequested;
-            _libraryGridView.DeselectAllRequested += OnDeselectAllRequested;
-            _libraryGridView.BatchExportRequested += OnBatchExportRequested;
-            _libraryGridView.DeleteRejectedRequested += OnDeleteRejectedRequested;
-            _libraryGridView.CopyImagePathsRequested += OnCopyImagePathsRequested;
-            _libraryGridView.RevealImageRequested += OnRevealImageRequested;
-            _libraryGridView.DeleteImagesRequested += OnDeleteImagesRequested;
-            _libraryGridView.SelectionChanged += OnSelectionChanged;
-            _libraryGridView.ImageSelectionToggled += OnImageSelectionToggled;
-            _libraryGridView.RangeSelectionRequested += OnRangeSelectionRequested;
-            _libraryGridView.ViewportRangeChanged += OnThumbnailViewportRangeChanged;
+            _browseGridView.DevelopModeRequested += OnDevelopModeRequested;
+            _browseGridView.SelectAllRequested += OnSelectAllRequested;
+            _browseGridView.DeselectAllRequested += OnDeselectAllRequested;
+            _browseGridView.BatchExportRequested += OnBatchExportRequested;
+            _browseGridView.DeleteRejectedRequested += OnDeleteRejectedRequested;
+            _browseGridView.CopyImagePathsRequested += OnCopyImagePathsRequested;
+            _browseGridView.RevealImageRequested += OnRevealImageRequested;
+            _browseGridView.DeleteImagesRequested += OnDeleteImagesRequested;
+            _browseGridView.SelectionChanged += OnSelectionChanged;
+            _browseGridView.ImageSelectionToggled += OnImageSelectionToggled;
+            _browseGridView.RangeSelectionRequested += OnRangeSelectionRequested;
+            _browseGridView.ViewportRangeChanged += OnThumbnailViewportRangeChanged;
         }
     }
 
@@ -272,12 +272,12 @@ public partial class MainWindow : Window
                 return;
             }
 
-            // Up/Down/PageUp/PageDown: Row navigation (Library mode only)
+            // Up/Down/PageUp/PageDown: Row navigation (Browse mode only)
             if (!vm.IsDevelopMode)
             {
                 if (e.Key == Key.Up)
                 {
-                    var itemsPerRow = _libraryGridView?.GetItemsPerRow() ?? 1;
+                    var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
                     vm.SelectImageUp(itemsPerRow);
                     ScrollSelectedIntoView(vm);
                     e.Handled = true;
@@ -285,7 +285,7 @@ public partial class MainWindow : Window
                 }
                 else if (e.Key == Key.Down)
                 {
-                    var itemsPerRow = _libraryGridView?.GetItemsPerRow() ?? 1;
+                    var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
                     vm.SelectImageDown(itemsPerRow);
                     ScrollSelectedIntoView(vm);
                     e.Handled = true;
@@ -293,8 +293,8 @@ public partial class MainWindow : Window
                 }
                 else if (e.Key == Key.PageUp)
                 {
-                    var itemsPerRow = _libraryGridView?.GetItemsPerRow() ?? 1;
-                    var rowsPerPage = _libraryGridView?.GetRowsPerPage() ?? 1;
+                    var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
+                    var rowsPerPage = _browseGridView?.GetRowsPerPage() ?? 1;
                     vm.SelectImageUp(itemsPerRow * rowsPerPage);
                     ScrollSelectedIntoView(vm);
                     e.Handled = true;
@@ -302,8 +302,8 @@ public partial class MainWindow : Window
                 }
                 else if (e.Key == Key.PageDown)
                 {
-                    var itemsPerRow = _libraryGridView?.GetItemsPerRow() ?? 1;
-                    var rowsPerPage = _libraryGridView?.GetRowsPerPage() ?? 1;
+                    var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
+                    var rowsPerPage = _browseGridView?.GetRowsPerPage() ?? 1;
                     vm.SelectImageDown(itemsPerRow * rowsPerPage);
                     ScrollSelectedIntoView(vm);
                     e.Handled = true;
@@ -355,9 +355,9 @@ public partial class MainWindow : Window
 
     private void ScrollSelectedIntoView(MainWindowViewModel vm)
     {
-        if (_libraryGridView == null || vm.SelectedImage == null) return;
-        var index = vm.Library.VisibleImages.IndexOf(vm.SelectedImage);
-        _libraryGridView.ScrollItemIntoView(index);
+        if (_browseGridView == null || vm.SelectedImage == null) return;
+        var index = vm.Browse.VisibleImages.IndexOf(vm.SelectedImage);
+        _browseGridView.ScrollItemIntoView(index);
     }
 
 }

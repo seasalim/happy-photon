@@ -32,9 +32,9 @@ public sealed partial class FileOperationsTests : IDisposable
         Directory.CreateDirectory(Path.GetDirectoryName(thumbnail)!);
         await File.WriteAllBytesAsync(preview, [1]);
         await File.WriteAllBytesAsync(thumbnail, [1]);
-        vm.Library.SetImages([first, second]);
+        vm.Browse.SetImages([first, second]);
         vm.SelectedImage = first;
-        vm.Library.SelectAllVisible();
+        vm.Browse.SelectAllVisible();
         (int count, string? name)? prompt = null;
         vm.ConfirmMoveToTrashAsync = (count, name) =>
         {
@@ -48,7 +48,7 @@ public sealed partial class FileOperationsTests : IDisposable
         Assert.Equal(
             [first.FilePath, sidecar, shadowedSidecar, second.FilePath],
             operations.MovedPaths);
-        Assert.Empty(vm.Library.AllImages);
+        Assert.Empty(vm.Browse.AllImages);
         Assert.Null(vm.SelectedImage);
         Assert.False(File.Exists(first.FilePath));
         Assert.False(File.Exists(sidecar));
@@ -70,7 +70,7 @@ public sealed partial class FileOperationsTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask,
             fileOperationService: operations);
         var image = await CreateCatalogImageAsync(catalog, "only.jpg");
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
 
         await vm.DeleteImageCommand.ExecuteAsync(null);
@@ -87,7 +87,7 @@ public sealed partial class FileOperationsTests : IDisposable
         Assert.Equal((1, image.FileName), prompt);
         Assert.Empty(operations.MovedPaths);
         Assert.True(File.Exists(image.FilePath));
-        Assert.Contains(image, vm.Library.AllImages);
+        Assert.Contains(image, vm.Browse.AllImages);
     }
 
     [Fact]
@@ -104,8 +104,8 @@ public sealed partial class FileOperationsTests : IDisposable
             catalog,
             loadMetadataAsync: _ => Task.CompletedTask,
             fileOperationService: operations);
-        vm.Library.SetImages([locked, moved]);
-        vm.Library.SelectAllVisible();
+        vm.Browse.SetImages([locked, moved]);
+        vm.Browse.SelectAllVisible();
         vm.SelectedImage = locked;
         vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
         IReadOnlyList<FileOperationFailure>? summary = null;
@@ -118,7 +118,7 @@ public sealed partial class FileOperationsTests : IDisposable
         await vm.DeleteImageCommand.ExecuteAsync(null);
 
         Assert.Equal([locked.FilePath, moved.FilePath], operations.MovedPaths);
-        Assert.Equal([locked], vm.Library.AllImages);
+        Assert.Equal([locked], vm.Browse.AllImages);
         Assert.True(File.Exists(locked.FilePath));
         Assert.False(File.Exists(moved.FilePath));
         var failure = Assert.Single(summary!);
@@ -136,7 +136,7 @@ public sealed partial class FileOperationsTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask,
             fileOperationService: operations);
         var image = await CreateCatalogImageAsync(catalog, "catalog-failure.jpg");
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
         IReadOnlyList<FileOperationFailure>? summary = null;
@@ -150,7 +150,7 @@ public sealed partial class FileOperationsTests : IDisposable
         await vm.DeleteImageCommand.ExecuteAsync(null);
 
         Assert.Equal([image.FilePath], operations.MovedPaths);
-        Assert.Empty(vm.Library.AllImages);
+        Assert.Empty(vm.Browse.AllImages);
         var failure = Assert.Single(summary!);
         Assert.Equal(image.FilePath, failure.Path);
         Assert.Contains("moved to Trash", failure.Reason);
@@ -179,8 +179,8 @@ public sealed partial class FileOperationsTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: availability,
             fileOperationService: operations);
-        vm.Library.SetImages([online, local]);
-        vm.Library.SelectAllVisible();
+        vm.Browse.SetImages([online, local]);
+        vm.Browse.SelectAllVisible();
         vm.SelectedImage = online;
         vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
         IReadOnlyList<FileOperationFailure>? summary = null;
@@ -193,7 +193,7 @@ public sealed partial class FileOperationsTests : IDisposable
         await vm.DeleteImageCommand.ExecuteAsync(null);
 
         Assert.Equal([local.FilePath], operations.MovedPaths);
-        Assert.Equal([online], vm.Library.AllImages);
+        Assert.Equal([online], vm.Browse.AllImages);
         Assert.True(File.Exists(online.FilePath));
         Assert.True(File.Exists(sidecar));
         Assert.Equal(2, summary!.Count);
@@ -221,8 +221,8 @@ public sealed partial class FileOperationsTests : IDisposable
             catalog,
             loadMetadataAsync: _ => Task.CompletedTask,
             fileOperationService: operations);
-        vm.Library.SetImages([network, removable]);
-        vm.Library.SelectAllVisible();
+        vm.Browse.SetImages([network, removable]);
+        vm.Browse.SelectAllVisible();
         vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
         IReadOnlyList<FileOperationFailure>? summary = null;
         vm.ShowFileOperationFailuresAsync = failures =>
@@ -234,7 +234,7 @@ public sealed partial class FileOperationsTests : IDisposable
         await vm.DeleteImageCommand.ExecuteAsync(null);
 
         Assert.Empty(operations.MovedPaths);
-        Assert.Equal([network, removable], vm.Library.AllImages);
+        Assert.Equal([network, removable], vm.Browse.AllImages);
         Assert.Equal(
             [network.FilePath, removable.FilePath],
             summary!.Select(failure => failure.Path));
@@ -250,10 +250,10 @@ public sealed partial class FileOperationsTests : IDisposable
         var first = new ImageFile(_fx.Path("first image.jpg"));
         var second = new ImageFile(_fx.Path("second.jpg"));
         var third = new ImageFile(_fx.Path("third.jpg"));
-        vm.Library.SetImages([first, second, third]);
+        vm.Browse.SetImages([first, second, third]);
         vm.SelectedImage = second;
-        vm.Library.ToggleSelection(first);
-        vm.Library.ToggleSelection(third);
+        vm.Browse.ToggleSelection(first);
+        vm.Browse.ToggleSelection(third);
         string? copied = null;
         vm.CopyToClipboardAsync = text =>
         {
@@ -266,7 +266,7 @@ public sealed partial class FileOperationsTests : IDisposable
         Assert.Equal(
             $"{first.FilePath}{Environment.NewLine}{third.FilePath}", copied);
 
-        vm.Library.DeselectAllVisible();
+        vm.Browse.DeselectAllVisible();
         await vm.CopyImagePathsCommand.ExecuteAsync(null);
         Assert.Equal(second.FilePath, copied);
     }
@@ -304,9 +304,9 @@ public sealed partial class FileOperationsTests : IDisposable
         var second = await CreateCatalogImageAsync(catalog, "claimed-second.jpg");
         var unclaimed = await CreateCatalogImageAsync(catalog, "unclaimed.jpg");
         secondPath = second.FilePath;
-        vm.Library.SetImages([first, second, unclaimed]);
-        vm.Library.ToggleSelection(first);
-        vm.Library.ToggleSelection(second);
+        vm.Browse.SetImages([first, second, unclaimed]);
+        vm.Browse.ToggleSelection(first);
+        vm.Browse.ToggleSelection(second);
         vm.SelectedImage = unclaimed;
         vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
 
@@ -329,7 +329,7 @@ public sealed partial class FileOperationsTests : IDisposable
         Assert.False(File.Exists(first.FilePath + ".xmp"));
         Assert.Empty(await catalog.LoadImageStatesAsync(
             [first.FilePath, second.FilePath]));
-        Assert.Equal([unclaimed], vm.Library.AllImages);
+        Assert.Equal([unclaimed], vm.Browse.AllImages);
     }
 
     [Fact]
@@ -349,7 +349,7 @@ public sealed partial class FileOperationsTests : IDisposable
             fileOperationService: operations);
         await vm.RestoreXmpSettingsAsync();
         var image = await CreateCatalogImageAsync(catalog, "queued.jpg");
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         await vm.SetRatingCommand.ExecuteAsync(3);
         vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);

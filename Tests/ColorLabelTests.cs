@@ -83,7 +83,7 @@ public sealed class ColorLabelTests : IDisposable
 
         Assert.Equal(
             ColorLabel.Yellow,
-            Assert.Single(vm.Library.AllImages).ColorLabel);
+            Assert.Single(vm.Browse.AllImages).ColorLabel);
     }
 
     [Fact]
@@ -111,10 +111,10 @@ public sealed class ColorLabelTests : IDisposable
         var active = await CreateCatalogImageAsync(catalog, "active.jpg", ColorLabel.Blue);
         var first = await CreateCatalogImageAsync(catalog, "first.jpg", ColorLabel.Red);
         var second = await CreateCatalogImageAsync(catalog, "second.jpg", ColorLabel.Red);
-        vm.Library.SetImages([active, first, second]);
+        vm.Browse.SetImages([active, first, second]);
         vm.SelectedImage = active;
-        vm.Library.ToggleSelection(first);
-        vm.Library.ToggleSelection(second);
+        vm.Browse.ToggleSelection(first);
+        vm.Browse.ToggleSelection(second);
 
         await vm.SetColorLabelCommand.ExecuteAsync(ColorLabel.Red);
         Assert.Equal(ColorLabel.None, first.ColorLabel);
@@ -140,18 +140,18 @@ public sealed class ColorLabelTests : IDisposable
             catalog,
             "replacement.jpg",
             ColorLabel.Red);
-        vm.Library.SetImages([active, replacement, target]);
-        vm.Library.ColorLabelFilter = ColorLabelFilter.Red;
+        vm.Browse.SetImages([active, replacement, target]);
+        vm.Browse.ColorLabelFilter = ColorLabelFilter.Red;
         vm.SelectedImage = active;
-        vm.Library.ToggleSelection(active);
-        vm.Library.ToggleSelection(target);
+        vm.Browse.ToggleSelection(active);
+        vm.Browse.ToggleSelection(target);
 
         await vm.SetColorLabelCommand.ExecuteAsync(ColorLabel.Red);
 
         Assert.Equal(ColorLabel.None, active.ColorLabel);
         Assert.Equal(ColorLabel.None, target.ColorLabel);
         Assert.Same(replacement, vm.SelectedImage);
-        Assert.True(vm.Library.ContainsVisible(vm.SelectedImage));
+        Assert.True(vm.Browse.ContainsVisible(vm.SelectedImage));
     }
 
     [Fact]
@@ -170,7 +170,7 @@ public sealed class ColorLabelTests : IDisposable
             Flag = ImageFlag.Picked,
             Rating = 5
         };
-        var state = new LibraryImageState();
+        var state = new BrowseImageState();
         state.SetImages([red, blue]);
         state.FlagFilter = FlagFilter.Picked;
         state.MinimumRating = 4;

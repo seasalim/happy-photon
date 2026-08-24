@@ -17,11 +17,11 @@ public sealed class FullScreenSelectionTests : IDisposable
     }
 
     [Fact]
-    public async Task ScopedNavigation_UsesLibraryOrderAndClampedCompactOffsets()
+    public async Task ScopedNavigation_UsesBrowseOrderAndClampedCompactOffsets()
     {
         await using var vm = CreateViewModel();
         var images = CreateImages(6);
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         vm.ToggleImageSelection(images[4]);
         vm.ToggleImageSelection(images[0]);
         vm.ToggleImageSelection(images[2]);
@@ -60,7 +60,7 @@ public sealed class FullScreenSelectionTests : IDisposable
     {
         await using var vm = CreateViewModel();
         var images = CreateImages(3);
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         vm.SelectedImage = images[1];
         if (selectedCount == 1)
         {
@@ -79,7 +79,7 @@ public sealed class FullScreenSelectionTests : IDisposable
     {
         await using var vm = CreateViewModel();
         var images = CreateImages(5);
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         vm.ToggleImageSelection(images[1]);
         vm.ToggleImageSelection(images[3]);
         vm.SelectedImage = images[3];
@@ -103,7 +103,7 @@ public sealed class FullScreenSelectionTests : IDisposable
         {
             File.WriteAllBytes(image.FilePath, [1]);
         }
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         vm.ToggleImageSelection(images[0]);
         vm.ToggleImageSelection(images[2]);
         vm.SelectedImage = images[1];
@@ -131,7 +131,7 @@ public sealed class FullScreenSelectionTests : IDisposable
     {
         await using var vm = CreateViewModel();
         var images = CreateImages(4);
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         vm.ToggleImageSelection(images[0]);
         vm.ToggleImageSelection(images[2]);
         vm.SelectedImage = images[0];
@@ -168,20 +168,20 @@ public sealed class FullScreenSelectionTests : IDisposable
         var images = CreateImages(4);
         images[2].Flag = ImageFlag.Picked;
         images[3].Flag = ImageFlag.Picked;
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         vm.ToggleImageSelection(images[0]);
         vm.ToggleImageSelection(images[2]);
         vm.ToggleImageSelection(images[3]);
         vm.SelectedImage = images[0];
         vm.ToggleFullScreenCommand.Execute(null);
 
-        vm.Library.FlagFilter = FlagFilter.Picked;
+        vm.Browse.FlagFilter = FlagFilter.Picked;
 
         Assert.True(vm.IsFullScreenSelectionRestricted);
         Assert.Same(images[2], vm.SelectedImage);
         Assert.Equal("SELECTION · 1 / 2", vm.FullScreenSelectionBadgeText);
 
-        vm.Library.Remove(images[2]);
+        vm.Browse.Remove(images[2]);
 
         Assert.False(vm.IsFullScreenSelectionRestricted);
     }
@@ -191,19 +191,19 @@ public sealed class FullScreenSelectionTests : IDisposable
     {
         await using var vm = CreateViewModel();
         var images = CreateImages(3);
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         vm.ToggleImageSelection(images[0]);
         vm.ToggleImageSelection(images[1]);
         vm.SelectedImage = images[0];
         vm.ToggleFullScreenCommand.Execute(null);
 
         var inserted = CreateImage("inserted.jpg");
-        vm.Library.SetImages([inserted, images[0], images[1]]);
+        vm.Browse.SetImages([inserted, images[0], images[1]]);
 
         Assert.True(vm.IsFullScreenSelectionRestricted);
         Assert.Equal("SELECTION · 1 / 2", vm.FullScreenSelectionBadgeText);
 
-        vm.Library.SetImages(CreateImages(3, "replacement"));
+        vm.Browse.SetImages(CreateImages(3, "replacement"));
 
         Assert.True(vm.IsFullScreenMode);
         Assert.False(vm.IsFullScreenSelectionRestricted);
@@ -214,7 +214,7 @@ public sealed class FullScreenSelectionTests : IDisposable
     {
         await using var vm = CreateViewModel();
         var images = CreateImages(2);
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         vm.ToggleImageSelection(images[0]);
         vm.ToggleImageSelection(images[1]);
         vm.SelectedImage = images[0];
@@ -226,7 +226,7 @@ public sealed class FullScreenSelectionTests : IDisposable
 
         Assert.False(vm.IsFullScreenMode);
         Assert.False(vm.IsFullScreenSelectionRestricted);
-        Assert.Empty(vm.Library.VisibleImages);
+        Assert.Empty(vm.Browse.VisibleImages);
     }
 
     private MainWindowViewModel CreateViewModel() =>

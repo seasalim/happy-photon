@@ -39,7 +39,7 @@ and FBDD off with built-in characterization.
 - Mosaic RAW extensions (`.CR2 .CR3 .NEF .NRW .ARW .DNG .RAF .ORF .RW2 .PEF`)
   route only to `RawBaseLoader`. `StandardBaseLoader` rejects these extensions in both
   its capability and load paths. A rejected native runtime emits one process-level
-  diagnostic; a file LibRaw cannot decode is reported as unsupported in Library and
+  diagnostic; a file LibRaw cannot decode is reported as unsupported in Browse and
   Develop. Neither failure can route RAW pixels through Magick.
 - `.HEIC .HEIF` route to `StandardBaseLoader` with `Kind = HeicPlatform`. They are
   standard image sources rather than RAW files, including in the thumbnail path.
@@ -152,21 +152,21 @@ with OR reduction. The histogram and interactive-size mask travel together in th
 immutable `PreviewSourceAnalysis` installed beside the pair; full/export loads skip
 the entire sampling pass.
 
-### 2.1 RAW Library previews
+### 2.1 RAW Browse previews
 
-Library thumbnail extraction uses LibRaw's already-open context to return both the
+Browse thumbnail extraction uses LibRaw's already-open context to return both the
 encoded embedded preview and `ctx.Width`/`ctx.Height`, the visible dimensions rendered
 by Develop. Aspect differences at or below 3% pass through as preview padding; larger
 differences center-crop the embedded preview toward the visible RAW aspect before the
 generation-size resize. Missing or non-positive visible dimensions disable
 normalization but never reject successfully decoded preview bytes. If the result stays
-undersized, Library may try metadata-only EXIF extraction and a byte-level
+undersized, Browse may try metadata-only EXIF extraction and a byte-level
 embedded-JPEG scan, but never opens the RAW container through Magick.
 
 This policy is specific to LibRaw: EXIF thumbnails still reject missing geometry and
 mismatches above 3%, and embedded-JPEG candidates remain unnormalized. Extraction
 retains the largest safe candidate seen, continues while it is below the generation
-target, and never starts a full RAW demosaic merely to satisfy a larger Library request.
+target, and never starts a full RAW demosaic merely to satisfy a larger Browse request.
 
 ### 2.2 Raw exposure
 
@@ -175,7 +175,7 @@ estimate in `BaseImageInfo.SourceExposureBiasEv`. The loader reads LibRaw's sele
 embedded thumbnail from the already-open context, normalizes it to display sRGB, and
 compares both images on a 48px-long-edge linear sampling grid; if the preview and base
 aspect ratios differ by more than 2%, the base is center-cropped to the preview ratio
-first (deliberately the opposite crop direction from Library normalization). A bounded
+first (deliberately the opposite crop direction from Browse normalization). A bounded
 solver then finds the scalar EV whose neutral AgX render matches the preview median,
 with base samples passing through the same default inset → log2/sigmoid → outset
 crossing as the renderer, including the Rec.2020-to-sRGB comparison basis.
@@ -318,7 +318,7 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
 - **Only `BaseDecodeSettings` changes re-decode.** While a replacement decode is in
   flight, preview renders lease the held old base; the newest settings accumulate and
   completion emits one refresh using that latest state rather than a render backlog.
-- A same-image Library/Develop round-trip retains the one current pair. Selection/path
+- A same-image Browse/Develop round-trip retains the one current pair. Selection/path
   change, live-availability invalidation, folder replacement, decode-identity change,
   and shutdown retire it. A same-file decode-settings change retains the old interactive
   base for stale paint but retires the old large base immediately; its only normal lease
@@ -375,7 +375,7 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
 
 Loader failures are logged through `ImageServiceHelpers`. Request-correlated preview
 outcomes preserve source-unavailable, native-runtime rejection, and unsupported-file
-causes through the coordinator to the ViewModel. Library marks thumbnail failures and
+causes through the coordinator to the ViewModel. Browse marks thumbnail failures and
 RAW files whose Develop decode failed; Develop keeps an actionable per-image message
 even when a cached preview remains visible. Runtime rejection is one global degraded
 state rather than a per-file mark.

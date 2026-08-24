@@ -12,13 +12,13 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class LibrarySelectionMenuTests
+public sealed class BrowseSelectionMenuTests
 {
     [AvaloniaFact]
     public void ThumbnailContextMenu_HasFileOperationsAndRaisesRequests()
     {
         var image = new ImageFile(Path.Combine(Path.GetTempPath(), "menu.jpg"));
-        var control = new LibraryGridView
+        var control = new BrowseGridView
         {
             Images = new ObservableCollection<ImageFile> { image }
         };
@@ -60,7 +60,7 @@ public sealed class LibrarySelectionMenuTests
             new ImageFile(Path.Combine(Path.GetTempPath(), "second.jpg")),
             new ImageFile(Path.Combine(Path.GetTempPath(), "third.jpg"))
         };
-        var control = new LibraryGridView
+        var control = new BrowseGridView
         {
             Images = new ObservableCollection<ImageFile>(images)
         };
@@ -83,20 +83,20 @@ public sealed class LibrarySelectionMenuTests
     }
 
     [AvaloniaFact]
-    public void LibraryActions_MenuOwnsSelectionActionsAndTracksSelectionState()
+    public void BrowseActions_MenuOwnsSelectionActionsAndTracksSelectionState()
     {
         using var catalog = new CatalogService(NewRoot());
         var vm = NewViewModel(catalog);
         var image = new ImageFile(Path.Combine(Path.GetTempPath(), "selection-menu.jpg"));
-        vm.Library.SetImages([image]);
-        var control = new LibraryGridView { DataContext = vm };
+        vm.Browse.SetImages([image]);
+        var control = new BrowseGridView { DataContext = vm };
         var window = new Window { Content = control };
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var panel = control.FindControl<StackPanel>("LibraryActionsPanel")!;
-        var export = control.FindControl<Button>("LibraryExportButton")!;
-        var actions = control.FindControl<Button>("LibraryActionsButton")!;
+        var panel = control.FindControl<StackPanel>("BrowseActionsPanel")!;
+        var export = control.FindControl<Button>("BrowseExportButton")!;
+        var actions = control.FindControl<Button>("BrowseActionsButton")!;
         var flyout = Assert.IsType<MenuFlyout>(actions.Flyout);
         flyout.ShowAt(actions);
         Dispatcher.UIThread.RunJobs();
@@ -131,7 +131,7 @@ public sealed class LibrarySelectionMenuTests
         Assert.False(deselectAll.IsEnabled);
         Assert.True(deleteRejected.IsEnabled);
 
-        vm.Library.ToggleSelection(image);
+        vm.Browse.ToggleSelection(image);
         Dispatcher.UIThread.RunJobs();
         Assert.True(deselectAll.IsEnabled);
 
@@ -146,7 +146,7 @@ public sealed class LibrarySelectionMenuTests
         deleteRejected.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         Assert.Equal((1, 1, 1), (selectRequests, deselectRequests, deleteRequests));
 
-        vm.Library.SetImages([]);
+        vm.Browse.SetImages([]);
         Dispatcher.UIThread.RunJobs();
         Assert.False(actions.IsEnabled);
         Assert.False(selectAll.IsEnabled);
@@ -167,7 +167,7 @@ public sealed class LibrarySelectionMenuTests
             new ImageFile(Path.Combine(root, "first.jpg")),
             new ImageFile(Path.Combine(root, "second.jpg"))
         };
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         vm.IsDevelopMode = true;
         var window = new MainWindow { DataContext = vm };
         window.Show();
@@ -190,7 +190,7 @@ public sealed class LibrarySelectionMenuTests
         vm.IsFullScreenMode = true;
         selectAll.Command.Execute(null);
         Assert.All(images, image => Assert.False(image.IsSelected));
-        vm.Library.SelectAllVisible();
+        vm.Browse.SelectAllVisible();
         deselectAll.Command.Execute(null);
         Assert.All(images, image => Assert.True(image.IsSelected));
         window.Close();

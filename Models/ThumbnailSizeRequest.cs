@@ -23,11 +23,11 @@ public readonly record struct ThumbnailSizeRequest
     public int MinimumDimension { get; }
     public int GenerationDimension { get; }
 
-    public static ThumbnailSizeRequest For(LibraryThumbnailSize size) => size switch
+    public static ThumbnailSizeRequest For(BrowseThumbnailSize size) => size switch
     {
-        LibraryThumbnailSize.Small => new(150, 150),
-        LibraryThumbnailSize.Medium => new(150, 192),
-        LibraryThumbnailSize.Large => new(512, 512),
+        BrowseThumbnailSize.Small => new(150, 150),
+        BrowseThumbnailSize.Medium => new(150, 192),
+        BrowseThumbnailSize.Large => new(512, 512),
         _ => new(150, 192)
     };
 }

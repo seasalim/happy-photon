@@ -36,17 +36,17 @@ public sealed class HistogramServiceBitmapTests
     }
 
     [WindowsFact]
-    public void LibrarySnapshotBoundsLargeBitmapToCanonicalLongEdge()
+    public void BrowseSnapshotBoundsLargeBitmapToCanonicalLongEdge()
     {
         _fixture.RequireWindows();
         using var bitmap = CreateRedBitmap(new PixelSize(512, 341), 144);
 
-        using var snapshot = HistogramService.CreateLibrarySnapshot(bitmap);
+        using var snapshot = HistogramService.CreateBrowseSnapshot(bitmap);
         var histogram = new HistogramService().CalculateHistogram(snapshot);
         var pixelCount = snapshot.PixelSize.Width * snapshot.PixelSize.Height;
 
         Assert.Equal(
-            HistogramService.LibraryHistogramDimension,
+            HistogramService.BrowseHistogramDimension,
             Math.Max(snapshot.PixelSize.Width, snapshot.PixelSize.Height));
         Assert.Equal(pixelCount, histogram.Red[255]);
         Assert.Equal(pixelCount, histogram.Green[0]);

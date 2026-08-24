@@ -148,7 +148,7 @@ public sealed class WhiteBalanceOutcomeRaceTests : IDisposable
         using (await service.ApplyEditsToPreviewArtifactsAsync(
             image,
             initial,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram: true,
             ClippingOverlaySide.None))
         {
@@ -162,7 +162,7 @@ public sealed class WhiteBalanceOutcomeRaceTests : IDisposable
         using (await service.ApplyEditsToPreviewArtifactsAsync(
             image,
             replacement,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram: true,
             ClippingOverlaySide.None))
         {

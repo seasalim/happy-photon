@@ -11,14 +11,14 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class LibraryTileColorLabelTests
+public sealed class BrowseTileColorLabelTests
 {
     [AvaloniaTheory]
-    [InlineData(LibraryThumbnailSize.Small)]
-    [InlineData(LibraryThumbnailSize.Medium)]
-    [InlineData(LibraryThumbnailSize.Large)]
+    [InlineData(BrowseThumbnailSize.Small)]
+    [InlineData(BrowseThumbnailSize.Medium)]
+    [InlineData(BrowseThumbnailSize.Large)]
     public void MarkerStaysInCaptionBadgeRowAtEveryThumbnailSize(
-        LibraryThumbnailSize size)
+        BrowseThumbnailSize size)
     {
         var image = new ImageFile(Path.Combine(
             Path.GetTempPath(), "worst-case-color-label-tile.jpg"))
@@ -31,7 +31,7 @@ public sealed class LibraryTileColorLabelTests
             BurstIndex = 10,
             BurstSize = 10
         };
-        var control = new LibraryGridView
+        var control = new BrowseGridView
         {
             Images = new ObservableCollection<ImageFile> { image },
             TotalImageCount = 1,

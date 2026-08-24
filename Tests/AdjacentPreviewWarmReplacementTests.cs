@@ -28,7 +28,7 @@ public sealed partial class AdjacentPreviewWarmTests
         {
             IsDevelopMode = true
         };
-        vm.Library.SetImages([current, next]);
+        vm.Browse.SetImages([current, next]);
 
         try
         {

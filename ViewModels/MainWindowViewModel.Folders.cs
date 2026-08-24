@@ -14,13 +14,13 @@ public partial class MainWindowViewModel
     public string? BrowsingFolderName => RootFolders.FirstOrDefault()?.Name;
     public string? ViewingFolderName => SelectedFolder?.Name;
 
-    public string LibraryEmptyHeading
+    public string BrowseEmptyHeading
     {
         get
         {
-            if (Library.TotalCount > 0)
+            if (Browse.TotalCount > 0)
             {
-                return Library.EmptyMessage;
+                return Browse.EmptyMessage;
             }
 
             if (string.IsNullOrWhiteSpace(CurrentFolderPath))
@@ -34,11 +34,11 @@ public partial class MainWindowViewModel
         }
     }
 
-    public string LibraryEmptyMessage
+    public string BrowseEmptyMessage
     {
         get
         {
-            if (Library.TotalCount > 0)
+            if (Browse.TotalCount > 0)
             {
                 return string.Empty;
             }
@@ -104,7 +104,7 @@ public partial class MainWindowViewModel
         }
 
         OnPropertyChanged(nameof(ViewingFolderName));
-        NotifyLibraryEmptyStateChanged();
+        NotifyBrowseEmptyStateChanged();
     }
 
     public Task<int> RefreshCurrentFolderAsync() =>
@@ -138,7 +138,7 @@ public partial class MainWindowViewModel
         }
 
         var publishedGeneration = await loadFolderAsync(folderPath);
-        if (!IsLibraryGenerationCurrent(publishedGeneration) ||
+        if (!IsBrowseGenerationCurrent(publishedGeneration) ||
             !ReferenceEquals(SelectedFolder, folder))
         {
             return 0;
@@ -149,17 +149,17 @@ public partial class MainWindowViewModel
         var comparison = OperatingSystem.IsWindows()
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
-        SelectedImage = Library.VisibleImages.FirstOrDefault(image =>
+        SelectedImage = Browse.VisibleImages.FirstOrDefault(image =>
             string.Equals(image.FilePath, previousPath, comparison))
-            ?? Library.FirstVisible();
+            ?? Browse.FirstVisible();
 
-        ShowTransientStatus($"Refreshed — {Library.PhotoCountText}.");
+        ShowTransientStatus($"Refreshed — {Browse.PhotoCountText}.");
         return publishedGeneration;
     }
 
-    internal bool IsLibraryGenerationCurrent(int generation) =>
+    internal bool IsBrowseGenerationCurrent(int generation) =>
         generation != 0 &&
-        generation == Volatile.Read(ref _libraryGeneration);
+        generation == Volatile.Read(ref _browseGeneration);
 
     public void LoadFolderChildren(FolderNode node)
     {
@@ -221,21 +221,21 @@ public partial class MainWindowViewModel
     }
 
     partial void OnCurrentFolderHasSubfoldersChanged(bool value) =>
-        NotifyLibraryEmptyStateChanged();
+        NotifyBrowseEmptyStateChanged();
 
-    private void OnLibraryStateChanged(object? sender, EventArgs e)
+    private void OnBrowseStateChanged(object? sender, EventArgs e)
     {
-        SelectedCount = Library.SelectedCount;
+        SelectedCount = Browse.SelectedCount;
         RefreshOnlineOnlyPhotoCount();
-        RestartLibrarySelectionSummary();
-        NotifyLibraryEmptyStateChanged();
+        RestartBrowseSelectionSummary();
+        NotifyBrowseEmptyStateChanged();
         ReconcileFullScreenSelection();
     }
 
-    private void NotifyLibraryEmptyStateChanged()
+    private void NotifyBrowseEmptyStateChanged()
     {
-        OnPropertyChanged(nameof(LibraryEmptyHeading));
-        OnPropertyChanged(nameof(LibraryEmptyMessage));
+        OnPropertyChanged(nameof(BrowseEmptyHeading));
+        OnPropertyChanged(nameof(BrowseEmptyMessage));
     }
 
     // View Mode Methods
@@ -262,7 +262,7 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private void SwitchToLibrary()
+    private void SwitchToBrowse()
     {
         if (IsFullScreenMode)
         {

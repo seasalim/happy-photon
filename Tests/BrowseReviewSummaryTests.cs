@@ -5,9 +5,9 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class LibraryReviewSummaryTests : IDisposable
+public sealed class BrowseReviewSummaryTests : IDisposable
 {
-    private readonly CatalogVmFixture _fx = new("library-review");
+    private readonly CatalogVmFixture _fx = new("browse-review");
 
     [Fact]
     public async Task PreloadedMetadata_AggregatesCountDatesAndSize()
@@ -17,18 +17,18 @@ public sealed class LibraryReviewSummaryTests : IDisposable
         var first = CreateImage("first.jpg", 1_000, new DateTime(2026, 8, 1));
         var missingDate = CreateImage("second.jpg", 2_000, null);
         var last = CreateImage("third.jpg", 3_000, new DateTime(2026, 8, 9));
-        vm.Library.SetImages([first, missingDate, last]);
+        vm.Browse.SetImages([first, missingDate, last]);
 
         vm.ToggleImageSelection(first);
         vm.ToggleImageSelection(missingDate);
         vm.ToggleImageSelection(last);
 
-        Assert.Equal(3, vm.LibrarySelectionCount);
-        Assert.Equal(6_000, vm.LibrarySelectionCombinedFileSize);
-        Assert.Equal(new DateTime(2026, 8, 1), vm.LibrarySelectionEarliestDate);
-        Assert.Equal(new DateTime(2026, 8, 9), vm.LibrarySelectionLatestDate);
-        await vm.WaitForLibrarySelectionSummaryAsync();
-        Assert.False(vm.IsLibrarySelectionSummaryLoading);
+        Assert.Equal(3, vm.BrowseSelectionCount);
+        Assert.Equal(6_000, vm.BrowseSelectionCombinedFileSize);
+        Assert.Equal(new DateTime(2026, 8, 1), vm.BrowseSelectionEarliestDate);
+        Assert.Equal(new DateTime(2026, 8, 9), vm.BrowseSelectionLatestDate);
+        await vm.WaitForBrowseSelectionSummaryAsync();
+        Assert.False(vm.IsBrowseSelectionSummaryLoading);
     }
 
     [Fact]
@@ -46,14 +46,14 @@ public sealed class LibraryReviewSummaryTests : IDisposable
             FileSize = 2_000,
             FileModifiedDate = new DateTime(2026, 8, 14)
         });
-        vm.Library.SetImages([captured, modifiedOnly]);
+        vm.Browse.SetImages([captured, modifiedOnly]);
 
         vm.ToggleImageSelection(captured);
         vm.ToggleImageSelection(modifiedOnly);
-        await vm.WaitForLibrarySelectionSummaryAsync();
+        await vm.WaitForBrowseSelectionSummaryAsync();
 
-        Assert.Equal(new DateTime(2026, 8, 1), vm.LibrarySelectionEarliestDate);
-        Assert.Equal(new DateTime(2026, 8, 1), vm.LibrarySelectionLatestDate);
+        Assert.Equal(new DateTime(2026, 8, 1), vm.BrowseSelectionEarliestDate);
+        Assert.Equal(new DateTime(2026, 8, 1), vm.BrowseSelectionLatestDate);
     }
 
     [Fact]
@@ -87,27 +87,27 @@ public sealed class LibraryReviewSummaryTests : IDisposable
         var oldB = new ImageFile(_fx.Path("old-b.jpg"));
         var newA = new ImageFile(_fx.Path("new-a.jpg"));
         var newB = new ImageFile(_fx.Path("new-b.jpg"));
-        vm.Library.SetImages([oldA, oldB, newA, newB]);
+        vm.Browse.SetImages([oldA, oldB, newA, newB]);
 
         vm.ToggleImageSelection(oldA);
         vm.ToggleImageSelection(oldB);
         await firstLoadStarted.Task;
-        Assert.Equal(2, vm.LibrarySelectionCount);
-        Assert.True(vm.IsLibrarySelectionSummaryLoading);
+        Assert.Equal(2, vm.BrowseSelectionCount);
+        Assert.True(vm.IsBrowseSelectionSummaryLoading);
 
         vm.ToggleImageSelection(oldA);
         vm.ToggleImageSelection(oldB);
         vm.ToggleImageSelection(newA);
         vm.ToggleImageSelection(newB);
         releaseFirstLoad.TrySetResult();
-        await vm.WaitForLibrarySelectionSummaryAsync();
+        await vm.WaitForBrowseSelectionSummaryAsync();
 
-        Assert.Equal(2, vm.LibrarySelectionCount);
-        Assert.Equal(20_000, vm.LibrarySelectionCombinedFileSize);
-        Assert.Equal(new DateTime(2026, 8, 10), vm.LibrarySelectionEarliestDate);
-        Assert.Equal(new DateTime(2026, 8, 10), vm.LibrarySelectionLatestDate);
+        Assert.Equal(2, vm.BrowseSelectionCount);
+        Assert.Equal(20_000, vm.BrowseSelectionCombinedFileSize);
+        Assert.Equal(new DateTime(2026, 8, 10), vm.BrowseSelectionEarliestDate);
+        Assert.Equal(new DateTime(2026, 8, 10), vm.BrowseSelectionLatestDate);
         Assert.Equal(["old-a.jpg", "new-a.jpg", "new-b.jpg"], loadedNames);
-        Assert.False(vm.IsLibrarySelectionSummaryLoading);
+        Assert.False(vm.IsBrowseSelectionSummaryLoading);
     }
 
     [Fact]
@@ -127,44 +127,44 @@ public sealed class LibraryReviewSummaryTests : IDisposable
             availability);
         var local = CreateImage("local.jpg", 4_000, new DateTime(2026, 7, 3));
         var cloud = CreateImage("cloud.jpg", 9_000, new DateTime(2026, 6, 1));
-        vm.Library.SetImages([local, cloud]);
+        vm.Browse.SetImages([local, cloud]);
 
         vm.ToggleImageSelection(local);
         vm.ToggleImageSelection(cloud);
-        await vm.WaitForLibrarySelectionSummaryAsync();
+        await vm.WaitForBrowseSelectionSummaryAsync();
 
-        Assert.Equal(2, vm.LibrarySelectionCount);
-        Assert.Equal(1, vm.LibrarySelectionOnlineOnlyCount);
-        Assert.Equal(4_000, vm.LibrarySelectionCombinedFileSize);
-        Assert.Equal(new DateTime(2026, 7, 3), vm.LibrarySelectionEarliestDate);
+        Assert.Equal(2, vm.BrowseSelectionCount);
+        Assert.Equal(1, vm.BrowseSelectionOnlineOnlyCount);
+        Assert.Equal(4_000, vm.BrowseSelectionCombinedFileSize);
+        Assert.Equal(new DateTime(2026, 7, 3), vm.BrowseSelectionEarliestDate);
         Assert.True(cloud.SourceRequiresHydration);
     }
 
     [Fact]
-    public async Task SameCountLibraryReplacement_InvalidatesPublishedSummary()
+    public async Task SameCountBrowseReplacement_InvalidatesPublishedSummary()
     {
         using var catalog = CreateCatalog("replacement-catalog");
         await using var vm = CreateViewModel(catalog, _ => Task.CompletedTask);
         var oldA = CreateImage("old-a.jpg", 1_000, new DateTime(2026, 1, 1));
         var oldB = CreateImage("old-b.jpg", 2_000, new DateTime(2026, 1, 2));
-        vm.Library.SetImages([oldA, oldB]);
+        vm.Browse.SetImages([oldA, oldB]);
         vm.ToggleImageSelection(oldA);
         vm.ToggleImageSelection(oldB);
-        await vm.WaitForLibrarySelectionSummaryAsync();
-        Assert.Equal(3_000, vm.LibrarySelectionCombinedFileSize);
+        await vm.WaitForBrowseSelectionSummaryAsync();
+        Assert.Equal(3_000, vm.BrowseSelectionCombinedFileSize);
 
         var newA = CreateImage("new-a.jpg", 4_000, new DateTime(2026, 2, 1));
         var newB = CreateImage("new-b.jpg", 5_000, new DateTime(2026, 2, 2));
         newA.IsSelected = true;
         newB.IsSelected = true;
 
-        vm.Library.SetImages([newA, newB]);
-        await vm.WaitForLibrarySelectionSummaryAsync();
+        vm.Browse.SetImages([newA, newB]);
+        await vm.WaitForBrowseSelectionSummaryAsync();
 
-        Assert.Equal(2, vm.LibrarySelectionCount);
-        Assert.Equal(9_000, vm.LibrarySelectionCombinedFileSize);
-        Assert.Equal(new DateTime(2026, 2, 1), vm.LibrarySelectionEarliestDate);
-        Assert.Equal(new DateTime(2026, 2, 2), vm.LibrarySelectionLatestDate);
+        Assert.Equal(2, vm.BrowseSelectionCount);
+        Assert.Equal(9_000, vm.BrowseSelectionCombinedFileSize);
+        Assert.Equal(new DateTime(2026, 2, 1), vm.BrowseSelectionEarliestDate);
+        Assert.Equal(new DateTime(2026, 2, 2), vm.BrowseSelectionLatestDate);
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public sealed class LibraryReviewSummaryTests : IDisposable
         });
         var first = new ImageFile(_fx.Path("first.jpg"));
         var second = new ImageFile(_fx.Path("second.jpg"));
-        vm.Library.SetImages([first, second]);
+        vm.Browse.SetImages([first, second]);
         vm.ToggleImageSelection(first);
         vm.ToggleImageSelection(second);
         await loadStarted.Task;
@@ -195,13 +195,13 @@ public sealed class LibraryReviewSummaryTests : IDisposable
         // settles the state it asserts; it never races a deadline.
         await Task.Delay(50);
         Assert.False(folderLoad.IsCompleted);
-        Assert.Equal(0, vm.LibrarySelectionCount);
+        Assert.Equal(0, vm.BrowseSelectionCount);
 
         releaseLoad.TrySetResult();
         await folderLoad;
 
-        Assert.Equal(0, vm.LibrarySelectionCount);
-        Assert.False(vm.HasLibrarySelectionSummary);
+        Assert.Equal(0, vm.BrowseSelectionCount);
+        Assert.False(vm.HasBrowseSelectionSummary);
     }
 
     public void Dispose() => _fx.Dispose();

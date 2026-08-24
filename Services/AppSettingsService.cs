@@ -13,7 +13,7 @@ public class AppSettingsService
     private const string SelectedFolderPathKey = "SelectedFolderPath";
     private const string FirstRunExperienceVersionKey = "FirstRunExperienceVersion";
     private const string FileTypeFilterKey = "FileTypeFilter";
-    private const string LibraryThumbnailSizeKey = "LibraryThumbnailSize";
+    private const string BrowseThumbnailSizeKey = "BrowseThumbnailSize";
     private const string AppThemeKey = "AppTheme";
     private const string StripLocationDataKey = "StripLocationData";
     private const string OutputSharpeningKey = "OutputSharpening";
@@ -33,10 +33,10 @@ public class AppSettingsService
             fileTypeFilter = parsedFilter;
         }
 
-        var thumbnailSize = LibraryThumbnailSize.Medium;
-        var savedThumbnailSize = await _catalogService.GetAppSettingAsync(LibraryThumbnailSizeKey);
+        var thumbnailSize = BrowseThumbnailSize.Medium;
+        var savedThumbnailSize = await _catalogService.GetAppSettingAsync(BrowseThumbnailSizeKey);
         if (!string.IsNullOrEmpty(savedThumbnailSize) &&
-            Enum.TryParse<LibraryThumbnailSize>(savedThumbnailSize, ignoreCase: true, out var parsedSize) &&
+            Enum.TryParse<BrowseThumbnailSize>(savedThumbnailSize, ignoreCase: true, out var parsedSize) &&
             Enum.IsDefined(parsedSize))
         {
             thumbnailSize = parsedSize;
@@ -65,7 +65,7 @@ public class AppSettingsService
             SelectedFolderPath = await _catalogService.GetAppSettingAsync(SelectedFolderPathKey),
             FirstRunExperienceVersion = firstRunExperienceVersion,
             FileTypeFilter = fileTypeFilter,
-            LibraryThumbnailSize = thumbnailSize,
+            BrowseThumbnailSize = thumbnailSize,
             AppTheme = appTheme,
             StripLocationData = bool.TryParse(
                 await _catalogService.GetAppSettingAsync(StripLocationDataKey),
@@ -84,7 +84,7 @@ public class AppSettingsService
             [FirstRunExperienceVersionKey] =
                 settings.FirstRunExperienceVersion?.ToString(),
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
-            [LibraryThumbnailSizeKey] = settings.LibraryThumbnailSize.ToString(),
+            [BrowseThumbnailSizeKey] = settings.BrowseThumbnailSize.ToString(),
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString()
@@ -96,7 +96,7 @@ public class AppSettingsService
         return _catalogService.SetAppSettingsAsync(new Dictionary<string, string?>
         {
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
-            [LibraryThumbnailSizeKey] = settings.LibraryThumbnailSize.ToString(),
+            [BrowseThumbnailSizeKey] = settings.BrowseThumbnailSize.ToString(),
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString()

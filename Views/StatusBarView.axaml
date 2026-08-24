@@ -12,7 +12,7 @@
                            Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}" Margin="8,0">
                     <TextBlock.Text>
                         <MultiBinding StringFormat="{}{0} · {1} selected">
-                            <Binding Path="Library.PhotoCountText"/>
+                            <Binding Path="Browse.PhotoCountText"/>
                             <Binding Path="SelectedCount"/>
                         </MultiBinding>
                     </TextBlock.Text>

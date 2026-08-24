@@ -216,7 +216,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         await using var reader = new ThumbnailCacheService(catalog);
         using var loaded = reader.LoadFromCache(
             image,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
             out var dimensions,
             out var satisfiesMinimum);
 
@@ -243,7 +243,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         await using var reader = new ThumbnailCacheService(catalog);
         using var loaded = reader.LoadFromCache(
             image,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             out var dimensions,
             out var satisfiesMinimum);
 

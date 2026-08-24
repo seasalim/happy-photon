@@ -1,6 +1,6 @@
 namespace HappyPhoton.Models;
 
-public enum LibraryThumbnailSize
+public enum BrowseThumbnailSize
 {
     Small,
     Medium,

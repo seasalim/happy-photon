@@ -22,7 +22,7 @@ public partial class MainWindowViewModel
         : $"{OnlineOnlyPhotoCount:N0} photos are online-only. Happy Photon will not download them automatically.";
 
     internal void RefreshOnlineOnlyPhotoCount() =>
-        OnlineOnlyPhotoCount = Library.AllImages.Count(
+        OnlineOnlyPhotoCount = Browse.AllImages.Count(
             image => image.SourceRequiresHydration);
 
     internal void ApplyThumbnailLoadStatus(
@@ -117,7 +117,7 @@ public partial class MainWindowViewModel
         {
             OnPropertyChanged(nameof(StatusMessage));
         }
-        if (Library.Contains(image))
+        if (Browse.Contains(image))
         {
             RefreshOnlineOnlyPhotoCount();
         }
@@ -152,7 +152,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var generation = Volatile.Read(ref _libraryGeneration);
+        var generation = Volatile.Read(ref _browseGeneration);
         var request = CreateSourceHydrationCancellation();
         var previous = Interlocked.Exchange(ref _sourceHydrationCts, request);
         previous?.Cancel();
@@ -165,9 +165,9 @@ public partial class MainWindowViewModel
                 image,
                 request.Token);
             if (!hydrated ||
-                generation != Volatile.Read(ref _libraryGeneration) ||
+                generation != Volatile.Read(ref _browseGeneration) ||
                 !ReferenceEquals(SelectedImage, image) ||
-                !Library.Contains(image))
+                !Browse.Contains(image))
             {
                 if (!request.IsCancellationRequested && !hydrated)
                 {

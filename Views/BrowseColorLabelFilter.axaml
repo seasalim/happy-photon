@@ -3,7 +3,7 @@
              xmlns:converters="using:HappyPhoton.Converters"
              xmlns:models="using:HappyPhoton.Models"
              xmlns:views="using:HappyPhoton.Views"
-             x:Class="HappyPhoton.Views.LibraryColorLabelFilter"
+             x:Class="HappyPhoton.Views.BrowseColorLabelFilter"
              x:Name="Root">
     <UserControl.Resources>
         <converters:ColorLabelBrushConverter x:Key="ColorLabelBrushConverter"/>

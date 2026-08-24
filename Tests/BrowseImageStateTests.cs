@@ -5,19 +5,19 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class LibraryImageStateTests
+public sealed class BrowseImageStateTests
 {
     private static ImageFile CreateImage(string name, int rating = 0,
         ImageFlag flag = ImageFlag.Unflagged)
     {
-        var path = Path.Combine(Path.GetTempPath(), "happy-photon-library-state", name);
+        var path = Path.Combine(Path.GetTempPath(), "happy-photon-browse-state", name);
         var image = new ImageFile(path) { Rating = rating, Flag = flag };
         return image;
     }
 
-    private static LibraryImageState CreateState(params ImageFile[] images)
+    private static BrowseImageState CreateState(params ImageFile[] images)
     {
-        var state = new LibraryImageState();
+        var state = new BrowseImageState();
         state.SetImages(images);
         return state;
     }
@@ -194,10 +194,10 @@ public sealed class LibraryImageStateTests
         PropertyChangedEventArgs args,
         ICollection<string> changes)
     {
-        if (args.PropertyName is nameof(LibraryImageState.FileTypeFilter) or
-            nameof(LibraryImageState.FlagFilter) or
-            nameof(LibraryImageState.MinimumRating) or
-            nameof(LibraryImageState.ColorLabelFilter))
+        if (args.PropertyName is nameof(BrowseImageState.FileTypeFilter) or
+            nameof(BrowseImageState.FlagFilter) or
+            nameof(BrowseImageState.MinimumRating) or
+            nameof(BrowseImageState.ColorLabelFilter))
         {
             changes.Add(args.PropertyName);
         }

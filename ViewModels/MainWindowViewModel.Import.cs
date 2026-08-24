@@ -7,8 +7,8 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     public Func<Task>? RequestCatalogImportAsync { get; set; }
-    public Func<string?>? CaptureLibraryViewportAnchor { get; set; }
-    public Action<string?>? RestoreLibraryViewportAnchor { get; set; }
+    public Func<string?>? CaptureBrowseViewportAnchor { get; set; }
+    public Action<string?>? RestoreBrowseViewportAnchor { get; set; }
 
     public async Task<LightroomCatalogContents> ReadLightroomCatalogAsync(
         string catalogPath,
@@ -34,29 +34,29 @@ public partial class MainWindowViewModel
         CatalogImportPreview preview,
         CancellationToken cancellationToken = default)
     {
-        var viewportAnchor = CaptureLibraryViewportAnchor?.Invoke();
-        var selectedPaths = Library.AllImages
+        var viewportAnchor = CaptureBrowseViewportAnchor?.Invoke();
+        var selectedPaths = Browse.AllImages
             .Where(image => image.IsSelected)
             .Select(image => image.FilePath)
             .ToHashSet(PathComparison);
         var selectedPath = SelectedImage?.FilePath;
         var oldVisibleIndex = SelectedImage == null
             ? -1
-            : Library.VisibleImages.IndexOf(SelectedImage);
+            : Browse.VisibleImages.IndexOf(SelectedImage);
 
         var result = await new CatalogImportService(_catalogService)
             .ApplyAsync(preview, cancellationToken);
         AdoptImportedAssessments(result.Adoptions);
         if (result.Adoptions.Count > 0)
         {
-            Library.RefreshFilters();
-            foreach (var image in Library.VisibleImages)
+            Browse.RefreshFilters();
+            foreach (var image in Browse.VisibleImages)
                 image.IsSelected = selectedPaths.Contains(image.FilePath);
-            SelectedImage = Library.VisibleImages.FirstOrDefault(image =>
+            SelectedImage = Browse.VisibleImages.FirstOrDefault(image =>
                     string.Equals(image.FilePath, selectedPath, PathStringComparison))
                 ?? VisibleNearIndex(oldVisibleIndex);
             UpdateSelectedCount();
-            RestoreLibraryViewportAnchor?.Invoke(viewportAnchor);
+            RestoreBrowseViewportAnchor?.Invoke(viewportAnchor);
         }
 
         return result;
@@ -65,7 +65,7 @@ public partial class MainWindowViewModel
     internal void AdoptImportedAssessments(
         IReadOnlyList<CatalogImportAdoption> adoptions)
     {
-        var liveById = Library.AllImages
+        var liveById = Browse.AllImages
             .Where(image => image.CatalogId != 0)
             .ToDictionary(image => image.CatalogId);
         foreach (var adoption in adoptions)
@@ -88,9 +88,9 @@ public partial class MainWindowViewModel
 
     private ImageFile? VisibleNearIndex(int oldIndex)
     {
-        if (Library.VisibleImages.Count == 0) return null;
-        return Library.VisibleImages[Math.Clamp(oldIndex, 0,
-            Library.VisibleImages.Count - 1)];
+        if (Browse.VisibleImages.Count == 0) return null;
+        return Browse.VisibleImages[Math.Clamp(oldIndex, 0,
+            Browse.VisibleImages.Count - 1)];
     }
 
     private static StringComparer PathComparison => OperatingSystem.IsWindows()

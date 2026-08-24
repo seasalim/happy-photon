@@ -51,7 +51,7 @@
         <KeyBinding Gesture="D9" Command="{Binding SetColorLabelCommand}"><KeyBinding.CommandParameter><models:ColorLabel>Blue</models:ColorLabel></KeyBinding.CommandParameter></KeyBinding>
         <KeyBinding Gesture="E" Command="{Binding ToggleViewModeCommand}"/>
         <KeyBinding Gesture="Escape" Command="{Binding HandleEscapeCommand}"/>
-        <KeyBinding Gesture="G" Command="{Binding SwitchToLibraryCommand}"/>
+        <KeyBinding Gesture="G" Command="{Binding SwitchToBrowseCommand}"/>
         <KeyBinding Gesture="D" Command="{Binding SwitchToDevelopCommand}"/>
         <KeyBinding Gesture="F" Command="{Binding ToggleFullScreenCommand}"/>
     </Window.KeyBindings>
@@ -161,7 +161,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Folder Tree (Library mode) -->
+                <!-- Folder Tree (Browse mode) -->
                 <views:FolderTreePanel Grid.Row="2" x:Name="FolderTreePanel"
                                        IsVisible="{Binding !IsDevelopMode}"
                                        RootFolders="{Binding RootFolders}"
@@ -182,24 +182,24 @@
                       ResizeDirection="Columns"
                       IsEnabled="{Binding IsWorkspaceInteractionEnabled}"/>
 
-        <!-- Center Panel: Library/Develop View -->
+        <!-- Center Panel: Browse/Develop View -->
         <Border Grid.Row="1" Grid.Column="2" Background="{DynamicResource ViewerSurround}"
                 IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
             <Panel>
-                <!-- Library Grid View (when not in Develop mode) -->
-                <views:LibraryGridView x:Name="LibraryGridView"
+                <!-- Browse Grid View (when not in Develop mode) -->
+                <views:BrowseGridView x:Name="BrowseGridView"
                                        IsVisible="{Binding !IsDevelopMode}"
-                                       Images="{Binding Library.VisibleImages}"
-                                       TotalImageCount="{Binding Library.TotalCount}"
-                                       EmptyHeadingText="{Binding LibraryEmptyHeading}"
-                                       EmptyMessageText="{Binding LibraryEmptyMessage}"
+                                       Images="{Binding Browse.VisibleImages}"
+                                       TotalImageCount="{Binding Browse.TotalCount}"
+                                       EmptyHeadingText="{Binding BrowseEmptyHeading}"
+                                       EmptyMessageText="{Binding BrowseEmptyMessage}"
                                        SuppressEmptyState="{Binding IsWorkflowTourActive}"
-                                       FileTypeFilter="{Binding Library.FileTypeFilter, Mode=TwoWay}"
-                                       FlagFilter="{Binding Library.FlagFilter, Mode=TwoWay}"
-                                       MinimumRating="{Binding Library.MinimumRating, Mode=TwoWay}"
-                                       ColorLabelFilter="{Binding Library.ColorLabelFilter, Mode=TwoWay}"
+                                       FileTypeFilter="{Binding Browse.FileTypeFilter, Mode=TwoWay}"
+                                       FlagFilter="{Binding Browse.FlagFilter, Mode=TwoWay}"
+                                       MinimumRating="{Binding Browse.MinimumRating, Mode=TwoWay}"
+                                       ColorLabelFilter="{Binding Browse.ColorLabelFilter, Mode=TwoWay}"
                                        ShowBursts="{Binding ShowBurstGroups, Mode=TwoWay}"
-                                       ThumbnailSize="{Binding LibraryThumbnailSize, Mode=TwoWay}"
+                                       ThumbnailSize="{Binding BrowseThumbnailSize, Mode=TwoWay}"
                                        SelectedImage="{Binding SelectedImage, Mode=TwoWay}"/>
 
                 <!-- Develop View (when in Develop mode) -->
@@ -365,7 +365,7 @@
                                 IsVisible="{Binding IsDevelopMode}"
                                 IsEnabled="{Binding CanEditSelectedImage}"/>
 
-        <views:LibraryReviewPane x:Name="LibraryReviewPane"
+        <views:BrowseReviewPane x:Name="BrowseReviewPane"
                                  Grid.Row="1" Grid.Column="4"
                                  Classes="tour-region"
                                  Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"

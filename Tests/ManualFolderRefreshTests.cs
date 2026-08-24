@@ -18,7 +18,7 @@ public sealed class ManualFolderRefreshTests
         context.ViewModel.SelectedFolder = FolderNode.CreateDummy();
 
         Assert.Equal(0, context.Refresh());
-        Assert.Empty(context.ViewModel.Library.AllImages);
+        Assert.Empty(context.ViewModel.Browse.AllImages);
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public sealed class ManualFolderRefreshTests
         context.AddFile("alpha.jpg");
         var removed = context.AddFile("removed.jpg");
         context.LoadFolder();
-        context.ViewModel.SelectedImage = context.ViewModel.Library.AllImages
+        context.ViewModel.SelectedImage = context.ViewModel.Browse.AllImages
             .Single(image => image.FilePath == removed);
 
         File.Delete(removed);
@@ -38,12 +38,12 @@ public sealed class ManualFolderRefreshTests
         var generation = context.Refresh();
 
         Assert.True(generation > 0);
-        Assert.Equal(2, context.ViewModel.Library.TotalCount);
+        Assert.Equal(2, context.ViewModel.Browse.TotalCount);
         Assert.Contains(
-            context.ViewModel.Library.AllImages,
+            context.ViewModel.Browse.AllImages,
             image => image.FilePath == added);
         Assert.DoesNotContain(
-            context.ViewModel.Library.AllImages,
+            context.ViewModel.Browse.AllImages,
             image => image.FilePath == removed);
         Assert.Equal(added, context.ViewModel.SelectedImage?.FilePath);
         Assert.Equal("Refreshed — 2 photos.", context.ViewModel.TransientStatus);
@@ -87,7 +87,7 @@ public sealed class ManualFolderRefreshTests
     }
 
     [Fact]
-    public void MissingFolder_PreservesLibraryAndReportsSkippedStatus()
+    public void MissingFolder_PreservesBrowseAndReportsSkippedStatus()
     {
         using var context = RefreshTestContext.Create();
         var imagePath = context.AddFile("still-listed.jpg");
@@ -97,10 +97,10 @@ public sealed class ManualFolderRefreshTests
         var generation = context.Refresh();
 
         Assert.Equal(0, generation);
-        Assert.Single(context.ViewModel.Library.AllImages);
+        Assert.Single(context.ViewModel.Browse.AllImages);
         Assert.Equal(
             imagePath,
-            context.ViewModel.Library.AllImages[0].FilePath);
+            context.ViewModel.Browse.AllImages[0].FilePath);
         Assert.Equal(
             "Refresh skipped — the folder is no longer available.",
             context.ViewModel.TransientStatus);
@@ -114,7 +114,7 @@ public sealed class ManualFolderRefreshTests
         var keeperPath = context.AddFile("keeper.jpg");
         context.AddFile("ignored.txt");
         context.LoadFolder();
-        var keeper = context.ViewModel.Library.AllImages.Single(
+        var keeper = context.ViewModel.Browse.AllImages.Single(
             image => image.FilePath == keeperPath);
         var edits = new EditSettings { Exposure = 1.25, Contrast = 18 };
         Complete(context.Catalog.SaveEditSettingsAsync(keeper.CatalogId, edits));
@@ -126,14 +126,14 @@ public sealed class ManualFolderRefreshTests
         keeper.HasEdits = true;
         keeper.Flag = ImageFlag.Picked;
         keeper.Rating = 4;
-        context.ViewModel.Library.FileTypeFilter = ImageFileTypeFilter.Jpeg;
-        context.ViewModel.Library.FlagFilter = FlagFilter.Picked;
-        context.ViewModel.Library.MinimumRating = 4;
+        context.ViewModel.Browse.FileTypeFilter = ImageFileTypeFilter.Jpeg;
+        context.ViewModel.Browse.FlagFilter = FlagFilter.Picked;
+        context.ViewModel.Browse.MinimumRating = 4;
         context.ViewModel.SelectedImage = keeper;
 
         context.Refresh();
 
-        var refreshed = Assert.Single(context.ViewModel.Library.VisibleImages);
+        var refreshed = Assert.Single(context.ViewModel.Browse.VisibleImages);
         Assert.Equal(keeperPath, refreshed.FilePath);
         Assert.Equal(1.25, refreshed.EditSettings.Exposure);
         Assert.Equal(18, refreshed.EditSettings.Contrast);
@@ -141,9 +141,9 @@ public sealed class ManualFolderRefreshTests
         Assert.Equal(ImageFlag.Picked, refreshed.Flag);
         Assert.Equal(4, refreshed.Rating);
         Assert.Same(refreshed, context.ViewModel.SelectedImage);
-        Assert.Equal(ImageFileTypeFilter.Jpeg, context.ViewModel.Library.FileTypeFilter);
-        Assert.Equal(FlagFilter.Picked, context.ViewModel.Library.FlagFilter);
-        Assert.Equal(4, context.ViewModel.Library.MinimumRating);
+        Assert.Equal(ImageFileTypeFilter.Jpeg, context.ViewModel.Browse.FileTypeFilter);
+        Assert.Equal(FlagFilter.Picked, context.ViewModel.Browse.FlagFilter);
+        Assert.Equal(4, context.ViewModel.Browse.MinimumRating);
         Assert.Equal(
             "Refreshed — 1 of 2 photos.",
             context.ViewModel.TransientStatus);
@@ -158,7 +158,7 @@ public sealed class ManualFolderRefreshTests
         var generation = context.LoadFolder();
 
         Assert.True(generation > 0);
-        Assert.True(context.ViewModel.IsLibraryGenerationCurrent(generation));
+        Assert.True(context.ViewModel.IsBrowseGenerationCurrent(generation));
 
         context.Catalog.Dispose();
         var failedGeneration = Complete(context.ViewModel.LoadFolderAsync(

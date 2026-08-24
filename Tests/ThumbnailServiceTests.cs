@@ -124,11 +124,11 @@ public sealed class ThumbnailServiceTests : IDisposable
     }
 
     [Theory]
-    [InlineData(LibraryThumbnailSize.Small, 150)]
-    [InlineData(LibraryThumbnailSize.Medium, 192)]
-    [InlineData(LibraryThumbnailSize.Large, 512)]
+    [InlineData(BrowseThumbnailSize.Small, 150)]
+    [InlineData(BrowseThumbnailSize.Medium, 192)]
+    [InlineData(BrowseThumbnailSize.Large, 512)]
     public async Task CacheMiss_GeneratesRequestedLongEdge(
-        LibraryThumbnailSize size,
+        BrowseThumbnailSize size,
         int expectedLongEdge)
     {
         _fixture.RequireWindows();
@@ -173,7 +173,7 @@ public sealed class ThumbnailServiceTests : IDisposable
         TestImages.WriteJpeg(cachePath, width: 150, height: 100);
         File.SetLastWriteTimeUtc(cachePath, DateTime.UtcNow);
         await using var imageService = new ImageService(catalog);
-        var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Large);
+        var request = ThumbnailSizeRequest.For(BrowseThumbnailSize.Large);
 
         using var placeholder = await imageService.LoadThumbnailAsync(
             image,
@@ -219,7 +219,7 @@ public sealed class ThumbnailServiceTests : IDisposable
                 }
             }
         };
-        var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Large);
+        var request = ThumbnailSizeRequest.For(BrowseThumbnailSize.Large);
 
         using var result = await imageService.LoadThumbnailAsync(
             image,

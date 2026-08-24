@@ -33,7 +33,7 @@ internal static class CropGeometry
 
     /// <summary>
     /// Center-crops one frame toward another frame's aspect ratio without
-    /// mutating either frame. Library normalization crops the embedded preview
+    /// mutating either frame. Browse normalization crops the embedded preview
     /// toward the visible RAW frame; exposure estimation does the opposite and
     /// crops the RAW base toward the preview frame.
     /// </summary>

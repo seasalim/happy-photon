@@ -123,7 +123,7 @@ public sealed class PreviewPlaceholderTests
         var tourPrimaryAction = tourExportDialog.FindControl<Button>(
             "ExportButton")!;
         Assert.True(tourConfiguration.IsVisible);
-        Assert.Equal("Return to Library", tourPrimaryAction.Content);
+        Assert.Equal("Return to Browse", tourPrimaryAction.Content);
         tourExportDialog.Close();
 
         vm.SelectedImage = null;
@@ -131,8 +131,8 @@ public sealed class PreviewPlaceholderTests
             Path.Combine(GoldenTestPaths.AssetDirectory, "srgb-reference.jpg"));
         var otherImage = new ImageFile(
             Path.Combine(GoldenTestPaths.AssetDirectory, "display-p3-reference.jpg"));
-        vm.Library.SetImages([image, otherImage]);
-        vm.Library.ReplaceThumbnail(image, placeholder);
+        vm.Browse.SetImages([image, otherImage]);
+        vm.Browse.ReplaceThumbnail(image, placeholder);
         vm.SelectedImage = image;
 
         Assert.Same(placeholder, navigatorThumbnail.Source);
@@ -150,7 +150,7 @@ public sealed class PreviewPlaceholderTests
         Assert.True(developPlaceholder.IsVisible);
         Assert.True(fullScreenPlaceholder.IsVisible);
 
-        vm.Library.ReplaceThumbnail(image, replacementPlaceholder);
+        vm.Browse.ReplaceThumbnail(image, replacementPlaceholder);
         Assert.Same(replacementPlaceholder, navigatorThumbnail.Source);
         Assert.Same(replacementPlaceholder, developPlaceholder.Source);
         Assert.Same(replacementPlaceholder, fullScreenPlaceholder.Source);
@@ -182,7 +182,7 @@ public sealed class PreviewPlaceholderTests
 
         vm.PreviewImage = null;
         window.DataContext = null;
-        vm.Library.ReplaceThumbnail(image, null);
+        vm.Browse.ReplaceThumbnail(image, null);
         Dispatcher.UIThread.RunJobs();
         Assert.Throws<ObjectDisposedException>(
             () => _ = replacementPlaceholder.PixelSize);

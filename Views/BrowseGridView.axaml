@@ -7,7 +7,7 @@
              xmlns:views="using:HappyPhoton.Views"
              xmlns:vm="using:HappyPhoton.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
-             x:Class="HappyPhoton.Views.LibraryGridView"
+             x:Class="HappyPhoton.Views.BrowseGridView"
              x:Name="Root"
              x:DataType="vm:MainWindowViewModel"
              Focusable="True"
@@ -18,8 +18,8 @@
         <converters:ColorLabelBrushConverter x:Key="ColorLabelBrushConverter"/>
     </UserControl.Resources>
     <UserControl.Styles>
-        <StyleInclude Source="avares://HappyPhoton/Views/LibraryFilterBarStyles.axaml"/>
-        <StyleInclude Source="avares://HappyPhoton/Views/LibraryThumbnailStyles.axaml"/>
+        <StyleInclude Source="avares://HappyPhoton/Views/BrowseFilterBarStyles.axaml"/>
+        <StyleInclude Source="avares://HappyPhoton/Views/BrowseThumbnailStyles.axaml"/>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto">
@@ -56,9 +56,9 @@
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
                         <TextBlock Text="Rating" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
-                        <views:LibraryRatingFilter x:Name="RatingFilter"
+                        <views:BrowseRatingFilter x:Name="RatingFilter"
                             MinimumRating="{Binding MinimumRating, ElementName=Root, Mode=TwoWay}"/>
-                        <views:LibraryColorLabelFilter
+                        <views:BrowseColorLabelFilter
                             x:Name="ColorLabelFilterControl"
                             Choices="{Binding ColorLabelFilterChoices}"
                             Filter="{Binding ColorLabelFilter, ElementName=Root, Mode=TwoWay}"/>
@@ -86,32 +86,32 @@
                     </Border>
                 </Grid>
 
-                <StackPanel x:Name="LibraryActionsPanel"
+                <StackPanel x:Name="BrowseActionsPanel"
                             Grid.Column="2" Orientation="Horizontal" Spacing="5"
                             Margin="10,0,0,0"
                             Classes="tour-region tour-glow"
                             Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                             Classes.tour-focus="{Binding IsDeliverCopiesTourVisible}">
-                    <Button x:Name="LibraryExportButton" Content="Export…" FontSize="10" Padding="10,4"
+                    <Button x:Name="BrowseExportButton" Content="Export…" FontSize="10" Padding="10,4"
                             Classes="accent"
                             ToolTip.Tip="Export (Ctrl+E)"
                             Click="OnBatchExportClick"/>
-                    <Button x:Name="LibraryActionsButton" Content="⋯" FontSize="10" Width="24" Padding="4,4"
+                    <Button x:Name="BrowseActionsButton" Content="⋯" FontSize="10" Width="24" Padding="4,4"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                            IsEnabled="{Binding Library.HasVisibleImages}"
-                            ToolTip.Tip="More library actions"
-                            AutomationProperties.Name="More library actions">
+                            IsEnabled="{Binding Browse.HasVisibleImages}"
+                            ToolTip.Tip="More Browse actions"
+                            AutomationProperties.Name="More Browse actions">
                         <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedRight">
                                 <MenuItem Header="Select All" InputGesture="Ctrl+A"
-                                          IsEnabled="{Binding Library.HasVisibleImages}"
+                                          IsEnabled="{Binding Browse.HasVisibleImages}"
                                           Click="OnSelectAllClick"/>
                                 <MenuItem Header="Deselect All" InputGesture="Ctrl+D"
-                                          IsEnabled="{Binding Library.HasSelectedImages}"
+                                          IsEnabled="{Binding Browse.HasSelectedImages}"
                                           Click="OnDeselectAllClick"/>
                                 <Separator/>
                                 <MenuItem Header="Delete Rejected…"
-                                          IsEnabled="{Binding Library.HasVisibleImages}"
+                                          IsEnabled="{Binding Browse.HasVisibleImages}"
                                           Click="OnDeleteRejectedClick"/>
                             </MenuFlyout>
                         </Button.Flyout>
@@ -166,8 +166,8 @@
                                 </ContextMenu>
                             </Border.ContextMenu>
                             <StackPanel>
-                                <Panel Width="{Binding $parent[views:LibraryGridView].ImageViewportWidth}"
-                                       Height="{Binding $parent[views:LibraryGridView].ImageViewportHeight}">
+                                <Panel Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
+                                       Height="{Binding $parent[views:BrowseGridView].ImageViewportHeight}">
                                     <!-- Background: darker blue-gray for RAW, standard for others -->
                                     <Border Background="{DynamicResource RawFileBackground}" CornerRadius="8"
                                             IsVisible="{Binding IsRaw}" ToolTip.Tip="RAW file"/>
@@ -230,7 +230,7 @@
                                         <Border.Background>
                                             <MultiBinding Converter="{StaticResource BurstColorConverter}">
                                                 <Binding Path="BurstColorIndex"/>
-                                                <Binding Path="$parent[views:LibraryGridView].ActualThemeVariant"/>
+                                                <Binding Path="$parent[views:BrowseGridView].ActualThemeVariant"/>
                                             </MultiBinding>
                                         </Border.Background>
                                     </Border>
@@ -252,7 +252,7 @@
                                               StrokeJoin="Round"/>
                                     </Border>
                                 </Panel>
-                                <Grid Width="{Binding $parent[views:LibraryGridView].ImageViewportWidth}"
+                                <Grid Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
                                       Margin="0,5,0,0"
                                       RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Row="0" Grid.Column="0"
@@ -295,7 +295,7 @@
                                                 <Border.Background>
                                                     <MultiBinding Converter="{StaticResource BurstColorConverter}">
                                                         <Binding Path="BurstColorIndex"/>
-                                                        <Binding Path="$parent[views:LibraryGridView].ActualThemeVariant"/>
+                                                        <Binding Path="$parent[views:BrowseGridView].ActualThemeVariant"/>
                                                     </MultiBinding>
                                                 </Border.Background>
                                                 <TextBlock Text="{Binding BurstChipText}" FontSize="9"
@@ -388,7 +388,7 @@
                         </Button>
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="3,3"/>
                         <RadioButton x:Name="SmallThumbnailButton"
-                                     GroupName="LibraryThumbnailSize"
+                                     GroupName="BrowseThumbnailSize"
                                      Classes="thumbnail-size"
                                      Click="OnSmallThumbnailClick"
                                      ToolTip.Tip="Small thumbnails"
@@ -399,7 +399,7 @@
                                       Data="M1 1h3v3H1z M6.5 1h3v3h-3z M12 1h3v3h-3z M1 6.5h3v3H1z M6.5 6.5h3v3h-3z M12 6.5h3v3h-3z M1 12h3v3H1z M6.5 12h3v3h-3z M12 12h3v3h-3z"/>
                         </RadioButton>
                         <RadioButton x:Name="MediumThumbnailButton"
-                                     GroupName="LibraryThumbnailSize"
+                                     GroupName="BrowseThumbnailSize"
                                      Classes="thumbnail-size"
                                      Click="OnMediumThumbnailClick"
                                      ToolTip.Tip="Medium thumbnails"
@@ -410,7 +410,7 @@
                                       Data="M1 1h6v6H1z M9 1h6v6H9z M1 9h6v6H1z M9 9h6v6H9z"/>
                         </RadioButton>
                         <RadioButton x:Name="LargeThumbnailButton"
-                                     GroupName="LibraryThumbnailSize"
+                                     GroupName="BrowseThumbnailSize"
                                      Classes="thumbnail-size"
                                      Click="OnLargeThumbnailClick"
                                      ToolTip.Tip="Large thumbnails"

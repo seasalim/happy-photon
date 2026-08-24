@@ -106,7 +106,7 @@ public partial class MainWindowViewModel
     }
 
     private List<ImageFile> GetFullScreenSelectionMembers() =>
-        Library.VisibleImages.Where(image => image.IsSelected).ToList();
+        Browse.VisibleImages.Where(image => image.IsSelected).ToList();
 
     private bool ReanchorFullScreenSelection(
         IReadOnlyList<ImageFile> members,
@@ -157,18 +157,18 @@ public partial class MainWindowViewModel
 
         var activeIndex = SelectedImage == null
             ? -1
-            : Library.VisibleImages.IndexOf(SelectedImage);
+            : Browse.VisibleImages.IndexOf(SelectedImage);
         if (activeIndex < 0)
         {
             return members[0];
         }
 
         var nearest = members[0];
-        var nearestIndex = Library.VisibleImages.IndexOf(nearest);
+        var nearestIndex = Browse.VisibleImages.IndexOf(nearest);
         var nearestDistance = Math.Abs(nearestIndex - activeIndex);
         foreach (var member in members.Skip(1))
         {
-            var memberIndex = Library.VisibleImages.IndexOf(member);
+            var memberIndex = Browse.VisibleImages.IndexOf(member);
             var distance = Math.Abs(memberIndex - activeIndex);
             var winsForwardTie = distance == nearestDistance &&
                                  nearestIndex < activeIndex &&

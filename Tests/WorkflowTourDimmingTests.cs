@@ -35,9 +35,9 @@ public sealed class WorkflowTourDimmingTests
             Assert.False(vm.IsStartupGateVisible);
             Assert.False(startupGate.IsVisible);
 
-            var library = window.FindControl<LibraryGridView>(
-                "LibraryGridView")!;
-            var emptyState = library.FindControl<Border>("EmptyState")!;
+            var browse = window.FindControl<BrowseGridView>(
+                "BrowseGridView")!;
+            var emptyState = browse.FindControl<Border>("EmptyState")!;
             var developEmptyState = window.FindControl<Border>(
                 "DevelopEmptyState")!;
             var leftPanel = window.FindControl<Border>("TourLeftPanel")!;
@@ -45,20 +45,20 @@ public sealed class WorkflowTourDimmingTests
                 "TourStatusBar")!;
             var developEditPanel = window.FindControl<DevelopEditPanel>(
                 "DevelopEditPanel")!;
-            var libraryReviewPane = window.FindControl<LibraryReviewPane>(
-                "LibraryReviewPane")!;
-            var filterLabel = library.FindControl<TextBlock>("FilterLabel")!;
-            var filterScrollViewer = library.FindControl<ScrollViewer>(
+            var browseReviewPane = window.FindControl<BrowseReviewPane>(
+                "BrowseReviewPane")!;
+            var filterLabel = browse.FindControl<TextBlock>("FilterLabel")!;
+            var filterScrollViewer = browse.FindControl<ScrollViewer>(
                 "FilterScrollViewer")!;
-            var actionsPanel = library.FindControl<StackPanel>(
-                "LibraryActionsPanel")!;
-            var onlineOnlyMessage = library.FindControl<TextBlock>(
+            var actionsPanel = browse.FindControl<StackPanel>(
+                "BrowseActionsPanel")!;
+            var onlineOnlyMessage = browse.FindControl<TextBlock>(
                 "OnlineOnlyMessage")!;
-            var imageAssessment = library.FindControl<ImageAssessmentControl>(
+            var imageAssessment = browse.FindControl<ImageAssessmentControl>(
                 "ImageAssessment")!;
-            var thumbnailSizePanel = library.FindControl<StackPanel>(
+            var thumbnailSizePanel = browse.FindControl<StackPanel>(
                 "ThumbnailSizePanel")!;
-            var burstsButton = library.FindControl<Button>("BurstsButton")!;
+            var burstsButton = browse.FindControl<Button>("BurstsButton")!;
             Assert.Contains(
                 burstsButton,
                 thumbnailSizePanel.GetLogicalDescendants().OfType<Button>());
@@ -68,7 +68,7 @@ public sealed class WorkflowTourDimmingTests
                 leftPanel,
                 statusBar,
                 developEditPanel,
-                libraryReviewPane,
+                browseReviewPane,
                 filterLabel,
                 filterScrollViewer,
                 actionsPanel,
@@ -78,8 +78,8 @@ public sealed class WorkflowTourDimmingTests
             ];
             Control[] thumbnailSurface =
             [
-                library.FindControl<ScrollViewer>("ThumbnailScrollViewer")!,
-                library.FindControl<ItemsRepeater>("ThumbnailGrid")!
+                browse.FindControl<ScrollViewer>("ThumbnailScrollViewer")!,
+                browse.FindControl<ItemsRepeater>("ThumbnailGrid")!
             ];
 
             Assert.True(Application.Current!.TryGetResource(
@@ -125,7 +125,7 @@ public sealed class WorkflowTourDimmingTests
                 leftPanel,
                 statusBar,
                 developEditPanel,
-                libraryReviewPane,
+                browseReviewPane,
                 filterLabel,
                 filterScrollViewer,
                 actionsPanel,
@@ -144,7 +144,7 @@ public sealed class WorkflowTourDimmingTests
                 dimmedOpacity,
                 leftPanel,
                 statusBar,
-                libraryReviewPane,
+                browseReviewPane,
                 filterLabel,
                 filterScrollViewer,
                 actionsPanel,
@@ -165,7 +165,7 @@ public sealed class WorkflowTourDimmingTests
                 leftPanel,
                 statusBar,
                 developEditPanel,
-                libraryReviewPane,
+                browseReviewPane,
                 filterLabel,
                 filterScrollViewer,
                 onlineOnlyMessage,
@@ -236,19 +236,19 @@ public sealed class WorkflowTourDimmingTests
 
         try
         {
-            var library = window.FindControl<LibraryGridView>(
-                "LibraryGridView")!;
-            var imageAssessment = library.FindControl<ImageAssessmentControl>(
+            var browse = window.FindControl<BrowseGridView>(
+                "BrowseGridView")!;
+            var imageAssessment = browse.FindControl<ImageAssessmentControl>(
                 "ImageAssessment")!;
-            var thumbnailSizePanel = library.FindControl<StackPanel>(
+            var thumbnailSizePanel = browse.FindControl<StackPanel>(
                 "ThumbnailSizePanel")!;
 
             // Step 1 asks the user to curate, which is only possible once a
             // thumbnail is selected. The assessment control must therefore be
             // both bright and usable at that point, never dimmed with it.
-            vm.Library.SetImages(
+            vm.Browse.SetImages(
                 [new Models.ImageFile(fx.Path("photo.jpg"))]);
-            vm.SelectedImage = vm.Library.VisibleImages[0];
+            vm.SelectedImage = vm.Browse.VisibleImages[0];
             vm.StartWorkflowTour();
             Dispatcher.UIThread.RunJobs();
 

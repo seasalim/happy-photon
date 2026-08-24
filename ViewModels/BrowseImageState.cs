@@ -5,18 +5,18 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.ViewModels;
 
-public partial class LibraryImageState : ObservableObject
+public partial class BrowseImageState : ObservableObject
 {
     private readonly List<ImageFile> _allImages = new();
     private readonly HashSet<ImageFile> _allImageSet = new(ReferenceEqualityComparer.Instance);
     private readonly Action<ImageFile, Bitmap> _retireThumbnail;
 
-    public LibraryImageState()
+    public BrowseImageState()
         : this(static (_, bitmap) => bitmap.Dispose())
     {
     }
 
-    internal LibraryImageState(Action<ImageFile, Bitmap> retireThumbnail) =>
+    internal BrowseImageState(Action<ImageFile, Bitmap> retireThumbnail) =>
         _retireThumbnail = retireThumbnail;
 
     [ObservableProperty]

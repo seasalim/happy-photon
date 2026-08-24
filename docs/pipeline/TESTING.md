@@ -232,7 +232,7 @@ orders above the observed difference.
     and the production overflow bound. Painter/view tests pin square-root normalization,
     opaque premultiplied BGRA, theme-token colors, bitmap reuse/disposal and live-theme
     repaint. Headless tests cover the stable three-entry selector, RAW fallback,
-    Library's fixed chrome, cloud-only no-load behavior, and same-image supersession.
+    Browse's fixed chrome, cloud-only no-load behavior, and same-image supersession.
     Cached-preview ordering tests additionally hold source work before profile/base
     acquisition and require matching bitmap/scopes with zero source reads or renders;
     background-activity tests hold that gate through the status hysteresis and first
@@ -456,7 +456,7 @@ $env:HAPPY_PHOTON_PERF='1'
 foreach ($test in 'DevelopEntryLatencyAndMemory',
                   'RawCandidateLatency',
                   'RenderedThumbnailCacheLatency',
-                  'LibraryHistogramLatency') {
+                  'BrowseHistogramLatency') {
   dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
     --filter "FullyQualifiedName~PreviewPipelinePerformanceTests.$test" `
     --logger "console;verbosity=detailed"

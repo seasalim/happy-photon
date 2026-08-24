@@ -88,7 +88,7 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable
         using (var initial = await service.ApplyEditsToPreviewArtifactsAsync(
                    file,
                    new EditSettings(),
-                   ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+                   ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
                    skipHistogram: false,
                    ClippingOverlaySide.None,
                    surfaceGeneration: 1))
@@ -111,7 +111,7 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable
             using var stateDefining = await service.ApplyEditsToPreviewArtifactsAsync(
                 file,
                 settings,
-                ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+                ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
                 skipHistogram: false,
                 ClippingOverlaySide.None,
                 surfaceGeneration: 2);
@@ -120,7 +120,7 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable
             using var clipping = await service.ApplyEditsToPreviewArtifactsAsync(
                 file,
                 settings,
-                ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+                ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
                 skipHistogram: true,
                 ClippingOverlaySide.Both,
                 surfaceGeneration: 2);

@@ -100,7 +100,7 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
             catalog,
             loadMetadataAsync: _ => Task.CompletedTask,
             postSelection: _ => { });
-        vm.LibraryThumbnailSize = LibraryThumbnailSize.Large;
+        vm.BrowseThumbnailSize = BrowseThumbnailSize.Large;
         vm.ThumbnailLoadGateAsync = secondLoadGate.EnterAsync;
 
         try
@@ -127,7 +127,7 @@ public sealed class BackgroundActivityThumbnailOwnershipTests : IDisposable
     }
 
     [WindowsFact]
-    public async Task PreviewModesPauseNewThumbnailLoadsUntilLibraryReturns()
+    public async Task PreviewModesPauseNewThumbnailLoadsUntilBrowseReturns()
     {
         var session = await CreateFolderSessionAsync("preview-pause", 40);
         session.ViewModel.IsDevelopMode = true;

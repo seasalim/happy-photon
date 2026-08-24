@@ -5,7 +5,7 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.Views;
 
-internal readonly record struct LibraryThumbnailGeometry(
+internal readonly record struct BrowseThumbnailGeometry(
     double ImageWidth,
     double ImageHeight,
     double ItemWidth,
@@ -16,19 +16,19 @@ internal readonly record struct LibraryThumbnailGeometry(
 {
     public double RowHeight => ItemHeight + RowSpacing;
 
-    public static LibraryThumbnailGeometry For(LibraryThumbnailSize size) => size switch
+    public static BrowseThumbnailGeometry For(BrowseThumbnailSize size) => size switch
     {
-        LibraryThumbnailSize.Small => new(120, 80, 130, 135, 5, 5, 5),
-        LibraryThumbnailSize.Medium => new(180, 120, 190, 175, 5, 5, 5),
-        LibraryThumbnailSize.Large => new(280, 187, 290, 242, 5, 5, 5),
+        BrowseThumbnailSize.Small => new(120, 80, 130, 135, 5, 5, 5),
+        BrowseThumbnailSize.Medium => new(180, 120, 190, 175, 5, 5, 5),
+        BrowseThumbnailSize.Large => new(280, 187, 290, 242, 5, 5, 5),
         _ => new(180, 120, 190, 175, 5, 5, 5)
     };
 }
 
-public partial class LibraryGridView
+public partial class BrowseGridView
 {
-    private LibraryThumbnailGeometry Geometry =>
-        LibraryThumbnailGeometry.For(ThumbnailSize);
+    private BrowseThumbnailGeometry Geometry =>
+        BrowseThumbnailGeometry.For(ThumbnailSize);
 
     public double ImageViewportWidth => Geometry.ImageWidth;
     public double ImageViewportHeight => Geometry.ImageHeight;

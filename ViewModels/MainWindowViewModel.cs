@@ -53,7 +53,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         _updateInstallChannel = updateInstallChannel ?? UpdateChannelSelector.Current;
         _exportActivities = new BackgroundExportActivityRegistry(
             SignalBackgroundActivityStarted);
-        Library = new LibraryImageState(RetireThumbnail);
+        Browse = new BrowseImageState(RetireThumbnail);
         _folderTreeService = new FolderTreeService(
             catalogService.HasExplicitPath ? catalogService.CatalogPath : null);
         _imageService = new Lazy<ImageService>(() =>
@@ -84,8 +84,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 action,
                 DispatcherPriority.Background));
         PresetService = new PresetService();
-        Library.FilterChanged += OnLibraryFilterChanged;
-        Library.StateChanged += OnLibraryStateChanged;
+        Browse.FilterChanged += OnBrowseFilterChanged;
+        Browse.StateChanged += OnBrowseStateChanged;
     }
 
     // Parameterless constructor for design-time
@@ -131,14 +131,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty]
     private FolderNode? _selectedFolder;
 
-    // View mode toggle (Library vs Develop)
+    // View mode toggle (Browse vs Develop)
     [ObservableProperty]
     private bool _isDevelopMode;
 
     [ObservableProperty]
     private bool _isFullScreenMode;
 
-    public LibraryImageState Library { get; }
+    public BrowseImageState Browse { get; }
 
     [ObservableProperty]
     private ImageFile? _selectedImage;

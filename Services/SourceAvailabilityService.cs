@@ -22,7 +22,7 @@ internal interface ISourceAvailabilityService
 internal static class SourceAvailabilityExtensions
 {
     // The single definition of "online-only"; call sites differ in scope
-    // (library banner, selection summary, export estimate), not in predicate.
+    // (browse banner, selection summary, export estimate), not in predicate.
     internal static bool IsOnlineOnly(this SourceAvailability availability) =>
         availability == SourceAvailability.RequiresHydration;
 }

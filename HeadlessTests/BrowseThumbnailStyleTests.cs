@@ -10,16 +10,16 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class LibraryThumbnailStyleTests
+public sealed class BrowseThumbnailStyleTests
 {
-    // The tile styles live in their own file so LibraryGridView.axaml stays
+    // The tile styles live in their own file so BrowseGridView.axaml stays
     // within the repository line limit. A StyleInclude that stops resolving
     // fails silently, leaving unstyled tiles, so pin the setters here.
     [AvaloniaFact]
     public void IncludedThumbnailStyles_ReachTheRealizedTile()
     {
         var image = new ImageFile(Path.Combine(Path.GetTempPath(), "styled.jpg"));
-        var control = new LibraryGridView
+        var control = new BrowseGridView
         {
             Images = new ObservableCollection<ImageFile> { image }
         };

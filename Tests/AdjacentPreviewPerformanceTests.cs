@@ -129,7 +129,7 @@ public sealed class AdjacentPreviewPerformanceTests
             {
                 IsDevelopMode = true
             };
-            vm.Library.SetImages(images);
+            vm.Browse.SetImages(images);
             vm.ImageService.Previews.AdjacentWarmEnabled = prefetch;
             var warmStarted = new TaskCompletionSource(
                 TaskCreationOptions.RunContinuationsAsynchronously);

@@ -33,7 +33,7 @@ public sealed class ColorAssessmentScreenshotTests
         var image = new ImageFile(Path.Combine(
             GoldenTestPaths.AssetDirectory,
             "srgb-reference.jpg"));
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         vm.IsDevelopMode = true;
         vm.PreviewImage = bitmap;

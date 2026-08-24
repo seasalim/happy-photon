@@ -75,7 +75,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        if (resolution.IsLibrarySelection)
+        if (resolution.IsBrowseSelection)
         {
             await PasteToSelectionAsync(resolution.Targets);
             return;
@@ -312,9 +312,9 @@ public partial class MainWindowViewModel
         {
             using var result = await ImageService.LoadThumbnailAsync(
                 image,
-                LibraryThumbnailRequest,
+                BrowseThumbnailRequest,
                 CancellationToken.None);
-            if (!Library.Contains(image) ||
+            if (!Browse.Contains(image) ||
                 sizeGeneration != Volatile.Read(ref _thumbnailSizeGeneration))
             {
                 return;
@@ -323,13 +323,13 @@ public partial class MainWindowViewModel
             ApplyThumbnailLoadResult(image, result);
             if (result.Status == ThumbnailLoadStatus.Loaded)
             {
-                Library.ReplaceThumbnail(image, result.DetachBitmap());
+                Browse.ReplaceThumbnail(image, result.DetachBitmap());
                 UpdateThumbnailMemoryDiagnostics();
             }
         }
         catch (Exception ex)
         {
-            if (Library.Contains(image)) image.ThumbnailLoadFailed = true;
+            if (Browse.Contains(image)) image.ThumbnailLoadFailed = true;
             System.Diagnostics.Debug.WriteLine(
                 $"Thumbnail refresh failed for {image.FilePath}: {ex.Message}");
         }

@@ -114,7 +114,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
         var original = RedBlueDelta(image);
         var vm = CreateViewModel(catalog);
         vm.IsDevelopMode = true;
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
 
         vm.WhiteBalanceKelvinPosition = 0;

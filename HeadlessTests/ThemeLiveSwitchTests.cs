@@ -37,7 +37,7 @@ public sealed class ThemeLiveSwitchTests
             BurstIndex = 1,
             BurstSize = 2
         };
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
 
@@ -64,8 +64,8 @@ public sealed class ThemeLiveSwitchTests
             var photonWordmark = brandWordmark.Inlines!
                 .OfType<Run>()
                 .Single(run => run.Text == "Photon");
-            var libraryUnderline = titleBar.FindControl<Rectangle>(
-                "LibraryTabUnderline")!;
+            var browseUnderline = titleBar.FindControl<Rectangle>(
+                "BrowseTabUnderline")!;
             var appearance = titleBar.FindControl<Button>("AppearanceButton")!;
             Assert.False(appearance.IsEffectivelyEnabled);
             Assert.True(appearance.Focusable);
@@ -75,7 +75,7 @@ public sealed class ThemeLiveSwitchTests
             Assert.True(appearance.IsEffectivelyEnabled);
             Assert.Equal(0, persistCount);
 
-            var library = window.FindControl<LibraryGridView>("LibraryGridView")!;
+            var browse = window.FindControl<BrowseGridView>("BrowseGridView")!;
             var presetHeader = window.GetLogicalDescendants()
                 .OfType<TextBlock>()
                 .Single(text => text.Text == "My Presets");
@@ -93,14 +93,14 @@ public sealed class ThemeLiveSwitchTests
                 .Single(button => button.Name == "ResetAdjustmentsButton");
             var export = window.GetLogicalDescendants()
                 .OfType<Button>()
-                .Single(button => button.Name == "LibraryExportButton");
+                .Single(button => button.Name == "BrowseExportButton");
             var exportPresenter = export.GetVisualDescendants()
                 .OfType<ContentPresenter>()
                 .Single(presenter => presenter.Name == "PART_ContentPresenter");
 
             Assert.Equal(
                 ThemeResourceTests.Brush("ViewerSurround", Avalonia.Styling.ThemeVariant.Dark).Color,
-                ColorOf(library.Background));
+                ColorOf(browse.Background));
             Assert.Equal(Color.Parse("#e4e1e9"), ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00f0ff"), ColorOf(burstStripe.Background));
             Assert.Equal(Color.Parse("#4b4a52"), ColorOf(thumbnail.Background));
@@ -111,7 +111,7 @@ public sealed class ThemeLiveSwitchTests
             AssertBrandSurfaces(
                 brandMark,
                 photonWordmark,
-                libraryUnderline,
+                browseUnderline,
                 exportPresenter,
                 ThemeVariant.Dark,
                 pointerOver: false);
@@ -122,7 +122,7 @@ public sealed class ThemeLiveSwitchTests
             AssertBrandSurfaces(
                 brandMark,
                 photonWordmark,
-                libraryUnderline,
+                browseUnderline,
                 exportPresenter,
                 ThemeVariant.Dark,
                 pointerOver: true);
@@ -143,7 +143,7 @@ public sealed class ThemeLiveSwitchTests
             Assert.True(vm.IsMidGrayTheme);
             Assert.False(vm.IsDarkTheme);
             Assert.Equal(1, persistCount);
-            Assert.Equal(Color.Parse("#777777"), ColorOf(library.Background));
+            Assert.Equal(Color.Parse("#777777"), ColorOf(browse.Background));
             Assert.Equal(Color.Parse("#ffffff"), ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00dbe9"), ColorOf(burstStripe.Background));
             Assert.Equal(Color.Parse("#616161"), ColorOf(thumbnail.Background));
@@ -154,7 +154,7 @@ public sealed class ThemeLiveSwitchTests
             AssertBrandSurfaces(
                 brandMark,
                 photonWordmark,
-                libraryUnderline,
+                browseUnderline,
                 exportPresenter,
                 HappyPhotonThemes.MidGray,
                 pointerOver: true);
@@ -167,7 +167,7 @@ public sealed class ThemeLiveSwitchTests
             AssertBrandSurfaces(
                 brandMark,
                 photonWordmark,
-                libraryUnderline,
+                browseUnderline,
                 exportPresenter,
                 HappyPhotonThemes.MidGray,
                 pointerOver: false);

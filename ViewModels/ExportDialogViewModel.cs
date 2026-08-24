@@ -144,7 +144,7 @@ public sealed partial class ExportDialogViewModel : ObservableObject, IDisposabl
     public bool CanExport => HasImages && IsIdle &&
         !string.IsNullOrWhiteSpace(Settings.OutputFolder);
     public bool CanPrimaryAction => IsTourPreview ? IsIdle : CanExport;
-    public string PrimaryActionText => IsTourPreview ? "Return to Library" : "Export";
+    public string PrimaryActionText => IsTourPreview ? "Return to Browse" : "Export";
     public string HeaderText =>
         $"Export {ImageCount} Image{(ImageCount == 1 ? string.Empty : "s")}";
     public string PreviewFileName => Settings.GetOutputFileName("example_photo.jpg");

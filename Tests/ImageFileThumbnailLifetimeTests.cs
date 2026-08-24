@@ -20,10 +20,10 @@ public sealed class ImageFileThumbnailLifetimeTests
         var thirdBitmap = BitmapConversionService.ConvertToBitmap(source)!;
         var image = new ImageFile("image.jpg");
         using var retirement = new UiBitmapRetirement();
-        var library = CreateDeferredLibrary(retirement);
+        var browse = CreateDeferredBrowse(retirement);
 
-        library.ReplaceThumbnail(image, firstBitmap);
-        library.ReplaceThumbnail(image, secondBitmap);
+        browse.ReplaceThumbnail(image, firstBitmap);
+        browse.ReplaceThumbnail(image, secondBitmap);
 
         Assert.Same(secondBitmap, image.Thumbnail);
         Assert.Equal(4 * 3 * 4, retirement.PendingBytes);
@@ -33,13 +33,13 @@ public sealed class ImageFileThumbnailLifetimeTests
         Assert.Equal(0, retirement.PendingBytes);
         Assert.Throws<ObjectDisposedException>(() => _ = firstBitmap.PixelSize);
 
-        library.ReplaceThumbnail(image, thirdBitmap);
-        library.ReplaceThumbnail(image, secondBitmap);
+        browse.ReplaceThumbnail(image, thirdBitmap);
+        browse.ReplaceThumbnail(image, secondBitmap);
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(4, secondBitmap.PixelSize.Width);
         Assert.Throws<ObjectDisposedException>(() => _ = thirdBitmap.PixelSize);
 
-        library.ReplaceThumbnail(image, null);
+        browse.ReplaceThumbnail(image, null);
         Dispatcher.UIThread.RunJobs();
         Assert.Throws<ObjectDisposedException>(() => _ = secondBitmap.PixelSize);
     }
@@ -54,18 +54,18 @@ public sealed class ImageFileThumbnailLifetimeTests
         var first = new ImageFile("first.jpg");
         var second = new ImageFile("second.jpg");
         using var retirement = new UiBitmapRetirement();
-        var library = CreateDeferredLibrary(retirement);
-        library.ReplaceThumbnail(first, firstBitmap);
-        library.ReplaceThumbnail(second, secondBitmap);
-        library.SetImages(new[] { first });
+        var browse = CreateDeferredBrowse(retirement);
+        browse.ReplaceThumbnail(first, firstBitmap);
+        browse.ReplaceThumbnail(second, secondBitmap);
+        browse.SetImages(new[] { first });
 
-        library.SetImages(new[] { second });
+        browse.SetImages(new[] { second });
         Assert.Null(first.Thumbnail);
         Assert.Equal(4, firstBitmap.PixelSize.Width);
         Dispatcher.UIThread.RunJobs();
         Assert.Throws<ObjectDisposedException>(() => _ = firstBitmap.PixelSize);
 
-        library.Remove(second);
+        browse.Remove(second);
         Assert.Null(second.Thumbnail);
         Assert.Equal(4, secondBitmap.PixelSize.Width);
         Dispatcher.UIThread.RunJobs();
@@ -78,15 +78,15 @@ public sealed class ImageFileThumbnailLifetimeTests
         using var source = new MagickImage(MagickColors.Red, 4, 3);
         var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
         var image = new ImageFile("image.jpg");
-        var library = new LibraryImageState();
+        var browse = new BrowseImageState();
 
-        library.ReplaceThumbnail(image, bitmap);
-        library.ReplaceThumbnail(image, null);
+        browse.ReplaceThumbnail(image, bitmap);
+        browse.ReplaceThumbnail(image, null);
 
         Assert.Throws<ObjectDisposedException>(() => _ = bitmap.PixelSize);
     }
 
-    private static LibraryImageState CreateDeferredLibrary(
+    private static BrowseImageState CreateDeferredBrowse(
         UiBitmapRetirement retirement) =>
         new((image, bitmap) => retirement.Retire(
             bitmap,

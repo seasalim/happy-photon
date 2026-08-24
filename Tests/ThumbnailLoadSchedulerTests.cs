@@ -174,21 +174,21 @@ public sealed class ThumbnailLoadSchedulerTests
 
         scheduler.Enqueue([new ThumbnailLoadRequest(
             blocker,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Small),
             0)]);
         await blockerStarted.Task.WaitAsync(TestWaits.Condition);
         scheduler.Enqueue([new ThumbnailLoadRequest(
             target,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Small),
             0)]);
         scheduler.Enqueue([new ThumbnailLoadRequest(
             target,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
             0)]);
         release.SetResult();
 
         Assert.Equal(
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
             await loaded.Task.WaitAsync(TestWaits.Condition));
         cancellation.Cancel();
         await scheduler.Completion;
@@ -225,12 +225,12 @@ public sealed class ThumbnailLoadSchedulerTests
 
         scheduler.Enqueue([new ThumbnailLoadRequest(
             image,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Small),
             0)]);
         await firstStarted.Task.WaitAsync(TestWaits.Condition);
         scheduler.Enqueue([new ThumbnailLoadRequest(
             image,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
             0)]);
         release.SetResult();
         await completed.Task.WaitAsync(TestWaits.Condition);
@@ -239,8 +239,8 @@ public sealed class ThumbnailLoadSchedulerTests
 
         Assert.Equal(
             [
-                ThumbnailSizeRequest.For(LibraryThumbnailSize.Small),
-                ThumbnailSizeRequest.For(LibraryThumbnailSize.Large)
+                ThumbnailSizeRequest.For(BrowseThumbnailSize.Small),
+                ThumbnailSizeRequest.For(BrowseThumbnailSize.Large)
             ],
             requests.ToArray());
     }
@@ -264,7 +264,7 @@ public sealed class ThumbnailLoadSchedulerTests
 
         scheduler.Enqueue([new ThumbnailLoadRequest(
             image,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
             0)]);
         await loaded.Task.WaitAsync(TestWaits.Condition);
         cancellation.Cancel();
@@ -293,7 +293,7 @@ public sealed class ThumbnailLoadSchedulerTests
             },
             cancellation.Token);
 
-        var request = ThumbnailSizeRequest.For(LibraryThumbnailSize.Large);
+        var request = ThumbnailSizeRequest.For(BrowseThumbnailSize.Large);
         scheduler.Enqueue([
             new ThumbnailLoadRequest(failed, request, 0),
             new ThumbnailLoadRequest(healthy, request, 0)]);
@@ -336,7 +336,7 @@ public sealed class ThumbnailLoadSchedulerTests
 
         scheduler.Enqueue([new ThumbnailLoadRequest(
             image,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
             0)]);
         var loadedImage = await loaded.Task.WaitAsync(TestWaits.Condition);
         cancellation.Cancel();
@@ -362,7 +362,7 @@ public sealed class ThumbnailLoadSchedulerTests
 
         scheduler.Enqueue([new ThumbnailLoadRequest(
             new ImageFile("complete.jpg"),
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
             0)]);
         await loaded.Task.WaitAsync(TestWaits.Condition);
         Assert.True(SpinWait.SpinUntil(
@@ -431,16 +431,16 @@ public sealed class ThumbnailLoadSchedulerTests
         Assert.Equal(128, candidates.Count);
         var overBudget = MainWindowViewModel.AdmitPrefetch(
             candidates,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
             MainWindowViewModel.ThumbnailPixelBudget);
         Assert.Empty(overBudget);
         var admitted = MainWindowViewModel.AdmitPrefetch(
             candidates,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large),
             startingBytes: 0);
         Assert.True(admitted.Count <= 128);
         Assert.True(admitted.Count * MainWindowViewModel.EstimateRequestBytes(
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large)) <
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large)) <
             MainWindowViewModel.ThumbnailPixelBudget);
     }
 }

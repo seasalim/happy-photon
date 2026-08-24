@@ -36,7 +36,7 @@ public partial class MainWindowViewModel
             _xmpWriter.Start();
         }
         if (oldMode == XmpSidecarMode.Off && CurrentFolderPath != null)
-            await StartXmpReconcileAsync(Volatile.Read(ref _libraryGeneration));
+            await StartXmpReconcileAsync(Volatile.Read(ref _browseGeneration));
         _appliedXmpMode = newMode;
     }
 
@@ -55,14 +55,14 @@ public partial class MainWindowViewModel
     {
         await CancelXmpReconcileAsync();
         if (XmpSidecarMode == XmpSidecarMode.Off ||
-            Library.AllImages.Count == 0 ||
-            generation != Volatile.Read(ref _libraryGeneration))
+            Browse.AllImages.Count == 0 ||
+            generation != Volatile.Read(ref _browseGeneration))
         {
             return;
         }
         var cts = new CancellationTokenSource();
         _xmpReconcileCts = cts;
-        var paths = Library.AllImages.Select(image => image.FilePath).ToArray();
+        var paths = Browse.AllImages.Select(image => image.FilePath).ToArray();
         _xmpReconcileTask = Task.Run(async () =>
         {
             var reconciler = new XmpSidecarReconciler(_catalogService);
@@ -81,12 +81,12 @@ public partial class MainWindowViewModel
         CancellationTokenSource owner)
     {
         if (owner.IsCancellationRequested ||
-            generation != Volatile.Read(ref _libraryGeneration) ||
+            generation != Volatile.Read(ref _browseGeneration) ||
             !ReferenceEquals(_xmpReconcileCts, owner))
         {
             return;
         }
-        var byPath = Library.AllImages.ToDictionary(
+        var byPath = Browse.AllImages.ToDictionary(
             image => image.FilePath, StringComparer.OrdinalIgnoreCase);
         foreach (var adoption in result.Adoptions)
         {
@@ -105,7 +105,7 @@ public partial class MainWindowViewModel
                 image.ColorLabel = adoption.Snapshot.ColorLabel;
             ApplyAssessmentSnapshot(image, adoption.Snapshot);
         }
-        if (result.Adoptions.Count > 0) Library.RefreshFilters();
+        if (result.Adoptions.Count > 0) Browse.RefreshFilters();
         ReportXmpReconcileIssues(result.Reports);
     }
 
@@ -166,13 +166,13 @@ public partial class MainWindowViewModel
             mutations, pending);
         foreach (var snapshot in snapshots)
         {
-            var image = Library.AllImages.FirstOrDefault(candidate =>
+            var image = Browse.AllImages.FirstOrDefault(candidate =>
                 candidate.CatalogId == snapshot.ImageId);
             if (image != null) ApplyAssessmentSnapshot(image, snapshot);
         }
         if (pending != AssessmentAxes.None && _xmpWriter != null)
         {
-            var paths = Library.AllImages.Select(image => image.FilePath).ToArray();
+            var paths = Browse.AllImages.Select(image => image.FilePath).ToArray();
             foreach (var snapshot in snapshots)
             {
                 if (IsDeleteTargetClaimed(snapshot.FilePath)) continue;

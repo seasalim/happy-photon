@@ -228,7 +228,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
         {
             IsDevelopMode = true
         };
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         try
         {
             vm.SelectedImage = images[2];
@@ -282,7 +282,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
         {
             IsDevelopMode = true
         };
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
 
         try
         {
@@ -322,7 +322,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
     [InlineData("edit")]
     [InlineData("filter")]
     [InlineData("folder")]
-    [InlineData("library")]
+    [InlineData("browse")]
     [InlineData("fullscreen")]
     public async Task ViewTransitionsCancelAnActiveWarm(string transition)
     {
@@ -340,7 +340,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally), timeProvider: clock)
             { IsDevelopMode = true };
-        vm.Library.SetImages(images);
+        vm.Browse.SetImages(images);
         try
         {
             vm.SelectedImage = images[0];
@@ -351,10 +351,10 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
             switch (transition)
             {
                 case "edit": vm.Exposure = 0.5; break;
-                case "filter": vm.Library.FlagFilter = FlagFilter.Picked; break;
+                case "filter": vm.Browse.FlagFilter = FlagFilter.Picked; break;
                 case "folder": await vm.LoadFolderAsync(
                     Directory.CreateDirectory(Path.Combine(_root, "empty")).FullName); break;
-                case "library": vm.IsDevelopMode = false; break;
+                case "browse": vm.IsDevelopMode = false; break;
                 case "fullscreen": vm.IsFullScreenMode = true; break;
             }
             await TestWaits.UntilAsync(() =>

@@ -6,7 +6,7 @@ using HappyPhoton.ViewModels;
 
 namespace HappyPhoton.Views;
 
-public partial class LibraryGridView
+public partial class BrowseGridView
 {
     private void UpdateFilterBar()
     {
@@ -57,7 +57,7 @@ public partial class LibraryGridView
     private void OnClearFiltersClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is MainWindowViewModel viewModel)
-            viewModel.Library.ClearFilters();
+            viewModel.Browse.ClearFilters();
     }
 
     private void OnFilterRawClick(object? sender, RoutedEventArgs e) =>

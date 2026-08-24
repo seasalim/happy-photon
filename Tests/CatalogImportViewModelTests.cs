@@ -46,12 +46,12 @@ public sealed class CatalogImportViewModelTests : IDisposable
         first.IsSelected = true;
         second.IsSelected = true;
         var vm = CreateViewModel(catalog);
-        vm.Library.SetImages([first, second]);
-        vm.Library.FlagFilter = FlagFilter.Picked;
+        vm.Browse.SetImages([first, second]);
+        vm.Browse.FlagFilter = FlagFilter.Picked;
         vm.SelectedImage = first;
         var restoredAnchor = string.Empty;
-        vm.CaptureLibraryViewportAnchor = () => secondPath;
-        vm.RestoreLibraryViewportAnchor = path => restoredAnchor = path;
+        vm.CaptureBrowseViewportAnchor = () => secondPath;
+        vm.RestoreBrowseViewportAnchor = path => restoredAnchor = path;
         var source = Source(firstPath, secondPath);
         var import = new CatalogImportService(catalog, _ => true);
         var preview = await import.CreatePreviewAsync(
@@ -63,7 +63,7 @@ public sealed class CatalogImportViewModelTests : IDisposable
 
         Assert.Equal(ImageFlag.Picked, first.Flag);
         Assert.Equal(ImageFlag.Rejected, second.Flag);
-        Assert.Same(first, Assert.Single(vm.Library.VisibleImages));
+        Assert.Same(first, Assert.Single(vm.Browse.VisibleImages));
         Assert.True(first.IsSelected);
         Assert.False(second.IsSelected);
         Assert.Same(first, vm.SelectedImage);
@@ -79,7 +79,7 @@ public sealed class CatalogImportViewModelTests : IDisposable
         var state = (await catalog.LoadOrCreateImageStatesAsync([path]))[path];
         var image = ToImage(path, state);
         var vm = CreateViewModel(catalog);
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         image.AssessmentRevision = 9;
         var snapshot = new AssessmentSnapshot(
             state.CatalogId, path, ImageFlag.Picked, 5, ColorLabel.Blue,

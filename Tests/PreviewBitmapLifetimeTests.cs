@@ -73,12 +73,12 @@ public sealed class PreviewBitmapLifetimeTests
         var oldThumbnail = BitmapConversionService.ConvertToBitmap(source)!;
         var currentThumbnail = BitmapConversionService.ConvertToBitmap(source)!;
         var image = new ImageFile("image.jpg");
-        viewModel.Library.SetImages([image]);
+        viewModel.Browse.SetImages([image]);
 
         viewModel.ReplacePreviewImage(oldPreview, PreviewPaintSource.FreshRender);
         viewModel.ReplacePreviewImage(currentPreview, PreviewPaintSource.FreshRender);
-        viewModel.Library.ReplaceThumbnail(image, oldThumbnail);
-        viewModel.Library.ReplaceThumbnail(image, currentThumbnail);
+        viewModel.Browse.ReplaceThumbnail(image, oldThumbnail);
+        viewModel.Browse.ReplaceThumbnail(image, currentThumbnail);
 
         await viewModel.DisposeAsync();
 

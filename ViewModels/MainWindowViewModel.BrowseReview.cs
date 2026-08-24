@@ -6,16 +6,16 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private CancellationTokenSource? _librarySelectionSummaryCts;
-    private Task _librarySelectionSummaryTask = Task.CompletedTask;
-    private int _librarySelectionSummaryGeneration;
+    private CancellationTokenSource? _browseSelectionSummaryCts;
+    private Task _browseSelectionSummaryTask = Task.CompletedTask;
+    private int _browseSelectionSummaryGeneration;
     private bool _isSelectedMetadataLoadComplete = true;
-    private int _librarySelectionCount;
-    private int _librarySelectionOnlineOnlyCount;
-    private long _librarySelectionCombinedFileSize;
-    private DateTime? _librarySelectionEarliestDate;
-    private DateTime? _librarySelectionLatestDate;
-    private bool _isLibrarySelectionSummaryLoading;
+    private int _browseSelectionCount;
+    private int _browseSelectionOnlineOnlyCount;
+    private long _browseSelectionCombinedFileSize;
+    private DateTime? _browseSelectionEarliestDate;
+    private DateTime? _browseSelectionLatestDate;
+    private bool _isBrowseSelectionSummaryLoading;
 
     public bool IsSelectedMetadataLoading =>
         HasSelectedImage &&
@@ -29,100 +29,100 @@ public partial class MainWindowViewModel
         SelectedImage?.MetadataLoaded != true &&
         _isSelectedMetadataLoadComplete;
 
-    public int LibrarySelectionCount
+    public int BrowseSelectionCount
     {
-        get => _librarySelectionCount;
+        get => _browseSelectionCount;
         private set
         {
-            if (SetProperty(ref _librarySelectionCount, value))
+            if (SetProperty(ref _browseSelectionCount, value))
             {
-                OnPropertyChanged(nameof(HasLibrarySelectionSummary));
-                OnPropertyChanged(nameof(LibrarySelectionCountDisplay));
+                OnPropertyChanged(nameof(HasBrowseSelectionSummary));
+                OnPropertyChanged(nameof(BrowseSelectionCountDisplay));
             }
         }
     }
 
-    public bool HasLibrarySelectionSummary => LibrarySelectionCount >= 2;
+    public bool HasBrowseSelectionSummary => BrowseSelectionCount >= 2;
 
-    public string LibrarySelectionCountDisplay =>
-        $"{LibrarySelectionCount:N0} photos selected";
+    public string BrowseSelectionCountDisplay =>
+        $"{BrowseSelectionCount:N0} photos selected";
 
-    public int LibrarySelectionOnlineOnlyCount
+    public int BrowseSelectionOnlineOnlyCount
     {
-        get => _librarySelectionOnlineOnlyCount;
+        get => _browseSelectionOnlineOnlyCount;
         private set
         {
-            if (SetProperty(ref _librarySelectionOnlineOnlyCount, value))
+            if (SetProperty(ref _browseSelectionOnlineOnlyCount, value))
             {
-                OnPropertyChanged(nameof(HasLibrarySelectionOnlineOnlyImages));
-                OnPropertyChanged(nameof(LibrarySelectionOnlineOnlyNote));
+                OnPropertyChanged(nameof(HasBrowseSelectionOnlineOnlyImages));
+                OnPropertyChanged(nameof(BrowseSelectionOnlineOnlyNote));
             }
         }
     }
 
-    public bool HasLibrarySelectionOnlineOnlyImages =>
-        LibrarySelectionOnlineOnlyCount > 0;
+    public bool HasBrowseSelectionOnlineOnlyImages =>
+        BrowseSelectionOnlineOnlyCount > 0;
 
-    public string LibrarySelectionOnlineOnlyNote
+    public string BrowseSelectionOnlineOnlyNote
     {
         get
         {
-            var noun = LibrarySelectionOnlineOnlyCount == 1
+            var noun = BrowseSelectionOnlineOnlyCount == 1
                 ? "photo"
                 : "photos";
-            return $"{LibrarySelectionOnlineOnlyCount:N0} online-only {noun} excluded";
+            return $"{BrowseSelectionOnlineOnlyCount:N0} online-only {noun} excluded";
         }
     }
 
-    public long LibrarySelectionCombinedFileSize
+    public long BrowseSelectionCombinedFileSize
     {
-        get => _librarySelectionCombinedFileSize;
+        get => _browseSelectionCombinedFileSize;
         private set
         {
-            if (SetProperty(ref _librarySelectionCombinedFileSize, value))
+            if (SetProperty(ref _browseSelectionCombinedFileSize, value))
             {
-                OnPropertyChanged(nameof(LibrarySelectionCombinedFileSizeDisplay));
+                OnPropertyChanged(nameof(BrowseSelectionCombinedFileSizeDisplay));
             }
         }
     }
 
-    public string LibrarySelectionCombinedFileSizeDisplay =>
-        ImageFile.FormatFileSize(LibrarySelectionCombinedFileSize);
+    public string BrowseSelectionCombinedFileSizeDisplay =>
+        ImageFile.FormatFileSize(BrowseSelectionCombinedFileSize);
 
-    public DateTime? LibrarySelectionEarliestDate
+    public DateTime? BrowseSelectionEarliestDate
     {
-        get => _librarySelectionEarliestDate;
+        get => _browseSelectionEarliestDate;
         private set
         {
-            if (SetProperty(ref _librarySelectionEarliestDate, value))
+            if (SetProperty(ref _browseSelectionEarliestDate, value))
             {
-                OnPropertyChanged(nameof(LibrarySelectionDateRangeDisplay));
+                OnPropertyChanged(nameof(BrowseSelectionDateRangeDisplay));
             }
         }
     }
 
-    public DateTime? LibrarySelectionLatestDate
+    public DateTime? BrowseSelectionLatestDate
     {
-        get => _librarySelectionLatestDate;
+        get => _browseSelectionLatestDate;
         private set
         {
-            if (SetProperty(ref _librarySelectionLatestDate, value))
+            if (SetProperty(ref _browseSelectionLatestDate, value))
             {
-                OnPropertyChanged(nameof(LibrarySelectionDateRangeDisplay));
+                OnPropertyChanged(nameof(BrowseSelectionDateRangeDisplay));
             }
         }
     }
 
-    public string LibrarySelectionDateRangeDisplay
+    public string BrowseSelectionDateRangeDisplay
     {
         get
         {
-            if (LibrarySelectionEarliestDate is not { } earliest)
+            if (BrowseSelectionEarliestDate is not { } earliest)
             {
                 return "Dates unavailable";
             }
 
-            var latest = LibrarySelectionLatestDate ?? earliest;
+            var latest = BrowseSelectionLatestDate ?? earliest;
             if (earliest.Date == latest.Date)
             {
                 return earliest.ToString("MMM d, yyyy", CultureInfo.CurrentCulture);
@@ -132,10 +132,10 @@ public partial class MainWindowViewModel
         }
     }
 
-    public bool IsLibrarySelectionSummaryLoading
+    public bool IsBrowseSelectionSummaryLoading
     {
-        get => _isLibrarySelectionSummaryLoading;
-        private set => SetProperty(ref _isLibrarySelectionSummaryLoading, value);
+        get => _isBrowseSelectionSummaryLoading;
+        private set => SetProperty(ref _isBrowseSelectionSummaryLoading, value);
     }
 
     private void ResetSelectedMetadataState(ImageFile? image)
@@ -163,30 +163,30 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsSelectedMetadataUnavailable));
     }
 
-    private void RestartLibrarySelectionSummary()
+    private void RestartBrowseSelectionSummary()
     {
         var generation = Interlocked.Increment(
-            ref _librarySelectionSummaryGeneration);
-        var images = Library.GetSelectedImages().ToList();
-        PublishLibrarySelectionSummary(
+            ref _browseSelectionSummaryGeneration);
+        var images = Browse.GetSelectedImages().ToList();
+        PublishBrowseSelectionSummary(
             BuildInitialSelectionSummary(images),
             images.Count >= 2);
 
         var nextCts = new CancellationTokenSource();
         var previousCts = Interlocked.Exchange(
-            ref _librarySelectionSummaryCts,
+            ref _browseSelectionSummaryCts,
             nextCts);
         previousCts?.Cancel();
 
-        var previousTask = _librarySelectionSummaryTask;
-        _librarySelectionSummaryTask = RunLibrarySelectionSummaryAfterAsync(
+        var previousTask = _browseSelectionSummaryTask;
+        _browseSelectionSummaryTask = RunBrowseSelectionSummaryAfterAsync(
             previousTask,
             images,
             generation,
             nextCts);
     }
 
-    private async Task RunLibrarySelectionSummaryAfterAsync(
+    private async Task RunBrowseSelectionSummaryAfterAsync(
         Task previousTask,
         IReadOnlyList<ImageFile> images,
         int generation,
@@ -198,14 +198,14 @@ public partial class MainWindowViewModel
             summaryCts.Token.ThrowIfCancellationRequested();
             if (images.Count < 2)
             {
-                PublishLibrarySelectionSummary(
+                PublishBrowseSelectionSummary(
                     BuildInitialSelectionSummary(images),
                     isLoading: false,
                     generation);
                 return;
             }
 
-            await AggregateLibrarySelectionSummaryAsync(
+            await AggregateBrowseSelectionSummaryAsync(
                 images,
                 generation,
                 summaryCts.Token);
@@ -217,7 +217,7 @@ public partial class MainWindowViewModel
         {
             System.Diagnostics.Debug.WriteLine(
                 $"Selection summary failed: {ex.Message}");
-            PublishLibrarySelectionSummary(
+            PublishBrowseSelectionSummary(
                 BuildInitialSelectionSummary(images),
                 isLoading: false,
                 generation);
@@ -225,14 +225,14 @@ public partial class MainWindowViewModel
         finally
         {
             Interlocked.CompareExchange(
-                ref _librarySelectionSummaryCts,
+                ref _browseSelectionSummaryCts,
                 null,
                 summaryCts);
             summaryCts.Dispose();
         }
     }
 
-    private async Task AggregateLibrarySelectionSummaryAsync(
+    private async Task AggregateBrowseSelectionSummaryAsync(
         IReadOnlyList<ImageFile> images,
         int generation,
         CancellationToken cancellationToken)
@@ -286,13 +286,13 @@ public partial class MainWindowViewModel
                 }
             }
 
-            PublishLibrarySelectionSummary(
+            PublishBrowseSelectionSummary(
                 BuildSelectionSummary(members.Values),
                 isLoading: true,
                 generation);
         }
 
-        PublishLibrarySelectionSummary(
+        PublishBrowseSelectionSummary(
             BuildSelectionSummary(members.Values),
             isLoading: false,
             generation);
@@ -301,51 +301,51 @@ public partial class MainWindowViewModel
     private void EnsureCurrentSelectionSummary(int generation)
     {
         if (generation != Volatile.Read(
-                ref _librarySelectionSummaryGeneration))
+                ref _browseSelectionSummaryGeneration))
         {
             throw new OperationCanceledException();
         }
     }
 
-    private async Task CancelLibrarySelectionSummaryAsync()
+    private async Task CancelBrowseSelectionSummaryAsync()
     {
-        Interlocked.Increment(ref _librarySelectionSummaryGeneration);
-        Interlocked.Exchange(ref _librarySelectionSummaryCts, null)?.Cancel();
-        PublishLibrarySelectionSummary(
+        Interlocked.Increment(ref _browseSelectionSummaryGeneration);
+        Interlocked.Exchange(ref _browseSelectionSummaryCts, null)?.Cancel();
+        PublishBrowseSelectionSummary(
             SelectionSummary.Empty,
             isLoading: false);
         while (true)
         {
-            var observed = _librarySelectionSummaryTask;
+            var observed = _browseSelectionSummaryTask;
             await observed;
-            if (ReferenceEquals(observed, _librarySelectionSummaryTask))
+            if (ReferenceEquals(observed, _browseSelectionSummaryTask))
             {
                 return;
             }
         }
     }
 
-    internal Task WaitForLibrarySelectionSummaryAsync() =>
-        _librarySelectionSummaryTask;
+    internal Task WaitForBrowseSelectionSummaryAsync() =>
+        _browseSelectionSummaryTask;
 
-    private void PublishLibrarySelectionSummary(
+    private void PublishBrowseSelectionSummary(
         SelectionSummary summary,
         bool isLoading,
         int? generation = null)
     {
         if (generation.HasValue &&
             generation.Value != Volatile.Read(
-                ref _librarySelectionSummaryGeneration))
+                ref _browseSelectionSummaryGeneration))
         {
             return;
         }
 
-        LibrarySelectionCount = summary.Count;
-        LibrarySelectionOnlineOnlyCount = summary.OnlineOnlyCount;
-        LibrarySelectionCombinedFileSize = summary.CombinedFileSize;
-        LibrarySelectionEarliestDate = summary.EarliestDate;
-        LibrarySelectionLatestDate = summary.LatestDate;
-        IsLibrarySelectionSummaryLoading = isLoading && summary.Count >= 2;
+        BrowseSelectionCount = summary.Count;
+        BrowseSelectionOnlineOnlyCount = summary.OnlineOnlyCount;
+        BrowseSelectionCombinedFileSize = summary.CombinedFileSize;
+        BrowseSelectionEarliestDate = summary.EarliestDate;
+        BrowseSelectionLatestDate = summary.LatestDate;
+        IsBrowseSelectionSummaryLoading = isLoading && summary.Count >= 2;
     }
 
     private static SelectionSummary BuildInitialSelectionSummary(

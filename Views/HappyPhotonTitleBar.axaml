@@ -107,11 +107,11 @@
                         VerticalAlignment="Center" Spacing="0"
                         chrome:WindowDecorationProperties.ElementRole="User">
                 <Button Classes="tab" Classes.active="{Binding !IsDevelopMode}"
-                        Command="{Binding SwitchToLibraryCommand}" Focusable="False"
+                        Command="{Binding SwitchToBrowseCommand}" Focusable="False"
                         IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
                     <StackPanel Spacing="3">
-                        <TextBlock Text="Library"/>
-                        <Rectangle x:Name="LibraryTabUnderline"
+                        <TextBlock Text="Browse"/>
+                        <Rectangle x:Name="BrowseTabUnderline"
                                    Classes="tabUnderline" Height="2" Margin="-4,0"/>
                     </StackPanel>
                 </Button>

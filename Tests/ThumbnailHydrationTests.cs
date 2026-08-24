@@ -43,13 +43,13 @@ public sealed class ThumbnailHydrationTests : IDisposable
         using var catalog = new CatalogService(Path.Combine(_root, "view-model"));
         await catalog.InitializeAsync();
         await using var viewModel = new MainWindowViewModel(catalog);
-        viewModel.Library.SetImages([context.Image]);
+        viewModel.Browse.SetImages([context.Image]);
 
         using var result = await context.Service.LoadUneditedThumbnailAsync(
             context.Image,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large));
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large));
         viewModel.ApplyThumbnailLoadResult(context.Image, result);
-        viewModel.Library.ReplaceThumbnail(
+        viewModel.Browse.ReplaceThumbnail(
             context.Image,
             result.DetachBitmap());
 
@@ -75,13 +75,13 @@ public sealed class ThumbnailHydrationTests : IDisposable
         using var catalog = new CatalogService(Path.Combine(_root, "known-cloud-vm"));
         await catalog.InitializeAsync();
         await using var viewModel = new MainWindowViewModel(catalog);
-        viewModel.Library.SetImages([context.Image]);
+        viewModel.Browse.SetImages([context.Image]);
 
         using var result = await context.Service.LoadUneditedThumbnailAsync(
             context.Image,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Large));
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Large));
         viewModel.ApplyThumbnailLoadResult(context.Image, result);
-        viewModel.Library.ReplaceThumbnail(
+        viewModel.Browse.ReplaceThumbnail(
             context.Image,
             result.DetachBitmap());
 
@@ -102,7 +102,7 @@ public sealed class ThumbnailHydrationTests : IDisposable
 
         Assert.Equal(ThumbnailLoadStatus.DeferredForHydration, result.Status);
         Assert.Equal(
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             result.Request);
         Assert.Null(result.Bitmap);
         Assert.Equal(1, availability.CallCount);
@@ -135,7 +135,7 @@ public sealed class ThumbnailHydrationTests : IDisposable
 
         Assert.Equal(ThumbnailLoadStatus.Failed, result.Status);
         Assert.Equal(
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             result.Request);
         Assert.Equal(0, context.SourceCalls);
     }
@@ -202,7 +202,7 @@ public sealed class ThumbnailHydrationTests : IDisposable
         try
         {
             Complete(viewModel.LoadFolderAsync(_root));
-            var image = Assert.Single(viewModel.Library.AllImages);
+            var image = Assert.Single(viewModel.Browse.AllImages);
             TestWaits.Until(() => image.ThumbnailDeferredForHydration);
 
             Assert.False(image.ThumbnailLoadFailed);
@@ -267,7 +267,7 @@ public sealed class ThumbnailHydrationTests : IDisposable
             availability);
         try
         {
-            viewModel.Library.SetImages([image]);
+            viewModel.Browse.SetImages([image]);
 
             Assert.True(image.ShowCloudPlaceholder);
             Assert.Equal(1, viewModel.OnlineOnlyPhotoCount);
@@ -311,7 +311,7 @@ public sealed class ThumbnailHydrationTests : IDisposable
                 SourceAvailability.RequiresHydration));
         try
         {
-            viewModel.Library.SetImages([image]);
+            viewModel.Browse.SetImages([image]);
             viewModel.IsDevelopMode = true;
             viewModel.Histogram = new HistogramData();
 

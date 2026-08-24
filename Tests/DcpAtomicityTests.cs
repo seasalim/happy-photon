@@ -144,21 +144,21 @@ public sealed class DcpAtomicityTests : IDisposable
         var requestA = service.ApplyEditsToPreviewArtifactsAsync(
             image,
             settingsA,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram: true,
             ClippingOverlaySide.None);
         Assert.True(loader.StartedA.Wait(TestWaits.Condition));
         var requestB = service.ApplyEditsToPreviewArtifactsAsync(
             image,
             settingsB,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram: true,
             ClippingOverlaySide.None);
         Assert.True(loader.StartedB.Wait(TestWaits.Condition));
         using var newest = await service.ApplyEditsToPreviewArtifactsAsync(
             image,
             settingsC,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram: true,
             ClippingOverlaySide.None);
         newest.CommitPromotion();

@@ -34,7 +34,7 @@
     <Compile Remove="FirstRunWindowTests.cs" />
     <Compile Remove="HelpAboutDialogTests.cs" />
     <Compile Remove="ImageFileThumbnailLifetimeTests.cs" />
-    <Compile Remove="LibrarySelectionMenuTests.cs" />
+    <Compile Remove="BrowseSelectionMenuTests.cs" />
     <Compile Remove="ManualFolderRefreshViewTests.cs" />
     <Compile Remove="PreviewBitmapLifetimeTests.cs" />
     <Compile Remove="PreviewPlaceholderTests.cs" />

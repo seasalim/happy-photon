@@ -70,8 +70,8 @@ public partial class MainWindowViewModel
         var selectedImage = SelectedImage;
         var replacement = selectedImage != null &&
                           targets.Contains(selectedImage) &&
-                          !Library.MatchesCurrentFilters(selectedImage, next)
-            ? Library.ReplacementAfterRemoval(selectedImage)
+                          !Browse.MatchesCurrentFilters(selectedImage, next)
+            ? Browse.ReplacementAfterRemoval(selectedImage)
             : null;
 
         try
@@ -99,8 +99,8 @@ public partial class MainWindowViewModel
             target.ColorLabel = next;
         }
 
-        Library.RefreshFilters();
-        if (replacement != null && Library.ContainsVisible(replacement))
+        Browse.RefreshFilters();
+        if (replacement != null && Browse.ContainsVisible(replacement))
         {
             SelectedImage = replacement;
         }

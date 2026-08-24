@@ -5,16 +5,16 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.Views;
 
-public partial class LibraryColorLabelFilter : UserControl
+public partial class BrowseColorLabelFilter : UserControl
 {
     public static readonly StyledProperty<ColorLabelFilter> FilterProperty =
-        AvaloniaProperty.Register<LibraryColorLabelFilter, ColorLabelFilter>(
+        AvaloniaProperty.Register<BrowseColorLabelFilter, ColorLabelFilter>(
             nameof(Filter),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<IReadOnlyList<ColorLabelFilterChoice>>
         ChoicesProperty = AvaloniaProperty.Register<
-            LibraryColorLabelFilter,
+            BrowseColorLabelFilter,
             IReadOnlyList<ColorLabelFilterChoice>>(nameof(Choices));
 
     public ColorLabelFilter Filter
@@ -29,7 +29,7 @@ public partial class LibraryColorLabelFilter : UserControl
         set => SetValue(ChoicesProperty, value);
     }
 
-    public LibraryColorLabelFilter()
+    public BrowseColorLabelFilter()
     {
         InitializeComponent();
         Choices = [];

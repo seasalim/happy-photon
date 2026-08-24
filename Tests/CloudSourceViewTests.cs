@@ -42,7 +42,7 @@ public sealed class CloudSourceViewTests
             CameraMake = "Photon",
             CameraModel = "One"
         });
-        viewModel.Library.SetImages([image]);
+        viewModel.Browse.SetImages([image]);
         viewModel.SelectedImage = image;
         viewModel.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
@@ -51,8 +51,8 @@ public sealed class CloudSourceViewTests
         try
         {
             Dispatcher.UIThread.RunJobs();
-            var review = window.FindControl<LibraryReviewPane>(
-                "LibraryReviewPane")!;
+            var review = window.FindControl<BrowseReviewPane>(
+                "BrowseReviewPane")!;
             var develop = window.FindControl<DevelopEditPanel>(
                 "DevelopEditPanel")!;
             var navigator = window.FindControl<Border>("NavigatorPanel")!;
@@ -118,8 +118,8 @@ public sealed class CloudSourceViewTests
         try
         {
             Dispatcher.UIThread.RunJobs();
-            var review = window.FindControl<LibraryReviewPane>(
-                "LibraryReviewPane")!;
+            var review = window.FindControl<BrowseReviewPane>(
+                "BrowseReviewPane")!;
             Assert.True(review.FindControl<TextBlock>(
                 "ReviewEmptyHint")!.IsVisible);
             Assert.Equal(0, metadataLoads);
@@ -128,7 +128,7 @@ public sealed class CloudSourceViewTests
             var cloud = new ImageFile(
                 Path.Combine(root, "cloud.jpg"),
                 SourceAvailability.RequiresHydration);
-            viewModel.Library.SetImages([cloud]);
+            viewModel.Browse.SetImages([cloud]);
             viewModel.SelectedImage = cloud;
             Dispatcher.UIThread.RunJobs();
 
@@ -165,14 +165,14 @@ public sealed class CloudSourceViewTests
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally));
         var image = new ImageFile(Path.Combine(root, "unknown.jpg"));
-        viewModel.Library.SetImages([image]);
+        viewModel.Browse.SetImages([image]);
         viewModel.SelectedImage = image;
         var window = new MainWindow { DataContext = viewModel };
         try
         {
             Dispatcher.UIThread.RunJobs();
-            var review = window.FindControl<LibraryReviewPane>(
-                "LibraryReviewPane")!;
+            var review = window.FindControl<BrowseReviewPane>(
+                "BrowseReviewPane")!;
             Assert.False(review.FindControl<TextBlock>(
                 "ReviewMetadataLoadingHint")!.IsVisible);
             Assert.True(review.FindControl<TextBlock>(
@@ -220,7 +220,7 @@ public sealed class CloudSourceViewTests
             GpsLongitude = -122.320833,
             GpsAltitude = 12
         });
-        viewModel.Library.SetImages([image]);
+        viewModel.Browse.SetImages([image]);
         viewModel.SelectedImage = image;
         viewModel.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
@@ -229,8 +229,8 @@ public sealed class CloudSourceViewTests
         try
         {
             Dispatcher.UIThread.RunJobs();
-            var review = window.FindControl<LibraryReviewPane>(
-                "LibraryReviewPane")!;
+            var review = window.FindControl<BrowseReviewPane>(
+                "BrowseReviewPane")!;
             var panel = review.FindControl<StackPanel>(
                 "ReviewMetadataPanel")!;
             var fileName = review.FindControl<TextBlock>(
@@ -307,7 +307,7 @@ public sealed class CloudSourceViewTests
 
             var altitudeOnly = new ImageFile(Path.Combine(root, "altitude.jpg"));
             altitudeOnly.ApplyMetadata(new ImageMetadata { GpsAltitude = -12 });
-            viewModel.Library.SetImages([altitudeOnly]);
+            viewModel.Browse.SetImages([altitudeOnly]);
             viewModel.SelectedImage = altitudeOnly;
             Dispatcher.UIThread.RunJobs();
             Assert.True(review.FindControl<StackPanel>(
@@ -346,14 +346,14 @@ public sealed class CloudSourceViewTests
         {
             SourceRequiresHydration = true
         };
-        viewModel.Library.SetImages([image]);
+        viewModel.Browse.SetImages([image]);
         viewModel.SelectedImage = image;
         viewModel.IsDevelopMode = true;
         var window = new MainWindow { DataContext = viewModel };
         try
         {
             var download = window.FindControl<Button>("DownloadAndOpenButton")!;
-            var grid = window.FindControl<LibraryGridView>("LibraryGridView")!;
+            var grid = window.FindControl<BrowseGridView>("BrowseGridView")!;
             var message = grid.FindControl<TextBlock>("OnlineOnlyMessage")!;
             var develop = window.FindControl<DevelopEditPanel>(
                 "DevelopEditPanel")!;

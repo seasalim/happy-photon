@@ -165,7 +165,7 @@ public partial class MainWindowViewModel
                 .ApplyEditsToPreviewArtifactsAsync(
                     image,
                     settings,
-                    LibraryThumbnailRequest,
+                    BrowseThumbnailRequest,
                     skipHistogram: true,
                     RequestedClippingOverlaySides,
                     cancellationToken,

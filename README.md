@@ -16,8 +16,8 @@ ethos.
 Always: originals stay untouched, the catalog stays local, and no account or
 subscription is required.
 
-![Happy Photon Library view showing a wildlife shoot with ratings, burst
-groups, histogram, and review metadata](docs/screenshots/Screenshot_Library.png)
+![Happy Photon Browse view showing a wildlife shoot with ratings, burst
+groups, histogram, and review metadata](docs/screenshots/Screenshot_Browse.png)
 
 ## The Happy Photon workflow
 

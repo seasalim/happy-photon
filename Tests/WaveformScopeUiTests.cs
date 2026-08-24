@@ -88,21 +88,21 @@ public sealed class WaveformScopeUiTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task LibraryRetainsFixedChromeWithoutScopeSelector()
+    public async Task BrowseRetainsFixedChromeWithoutScopeSelector()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "library"));
+        using var catalog = new CatalogService(Path.Combine(_root, "browse"));
         await catalog.InitializeAsync();
         var vm = new MainWindowViewModel(catalog);
-        var pane = new LibraryReviewPane { DataContext = vm };
+        var pane = new BrowseReviewPane { DataContext = vm };
         var window = new Window { Width = 250, Height = 660, Content = pane };
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
             "HISTOGRAM",
-            pane.FindControl<TextBlock>("LibraryHistogramHeader")!.Text);
-        Assert.NotNull(pane.FindControl<Border>("LibraryHistogramBox"));
-        Assert.NotNull(pane.FindControl<HistogramView>("LibraryHistogram"));
+            pane.FindControl<TextBlock>("BrowseHistogramHeader")!.Text);
+        Assert.NotNull(pane.FindControl<Border>("BrowseHistogramBox"));
+        Assert.NotNull(pane.FindControl<HistogramView>("BrowseHistogram"));
         Assert.Empty(pane.GetLogicalDescendants().OfType<ComboBox>());
 
         window.DataContext = null;
@@ -126,7 +126,7 @@ public sealed class WaveformScopeUiTests : IDisposable
             Path.Combine(_root, "cloud.jpg"),
             SourceAvailability.RequiresHydration);
 
-        vm.Library.SetImages([cloud]);
+        vm.Browse.SetImages([cloud]);
         vm.SelectedImage = cloud;
         Dispatcher.UIThread.RunJobs();
         Assert.Null(vm.Histogram);

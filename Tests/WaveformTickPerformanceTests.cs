@@ -46,7 +46,7 @@ public sealed class WaveformTickPerformanceTests
             using (var warmup = await service.ApplyEditsToPreviewArtifactsAsync(
                 file,
                 settings,
-                ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+                ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
                 skipHistogram: false,
                 ClippingOverlaySide.None))
             {
@@ -99,7 +99,7 @@ public sealed class WaveformTickPerformanceTests
             using var artifacts = await service.ApplyEditsToPreviewArtifactsAsync(
                 file,
                 settings,
-                ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+                ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
                 skipHistogram: false,
                 ClippingOverlaySide.None,
                 computeWaveform: computeWaveform);

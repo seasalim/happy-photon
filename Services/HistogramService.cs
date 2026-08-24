@@ -10,7 +10,7 @@ namespace HappyPhoton.Services;
 /// </summary>
 public class HistogramService
 {
-    internal const int LibraryHistogramDimension = 150;
+    internal const int BrowseHistogramDimension = 150;
     private const int MinimumParallelPixels = 512 * 512;
     private static readonly double[] RedLuminance = CreateLuminanceTable(0.299);
     private static readonly double[] GreenLuminance = CreateLuminanceTable(0.587);
@@ -105,17 +105,17 @@ public class HistogramService
         return histogram;
     }
 
-    public HistogramData CalculateLibraryHistogram(Bitmap bitmap)
+    public HistogramData CalculateBrowseHistogram(Bitmap bitmap)
     {
         ArgumentNullException.ThrowIfNull(bitmap);
-        using var snapshot = CreateLibrarySnapshot(bitmap);
+        using var snapshot = CreateBrowseSnapshot(bitmap);
         return CalculateHistogram(snapshot);
     }
 
-    internal static Bitmap CreateLibrarySnapshot(Bitmap bitmap)
+    internal static Bitmap CreateBrowseSnapshot(Bitmap bitmap)
     {
         ArgumentNullException.ThrowIfNull(bitmap);
-        var scale = LibraryHistogramDimension /
+        var scale = BrowseHistogramDimension /
             (double)Math.Max(bitmap.PixelSize.Width, bitmap.PixelSize.Height);
         var size = new PixelSize(
             Math.Max(1, (int)Math.Round(bitmap.PixelSize.Width * scale)),
@@ -134,7 +134,7 @@ public class HistogramService
         });
         return BitmapConversionService.ConvertToBitmap(image) ??
             throw new InvalidOperationException(
-                "Unable to create the Library histogram snapshot.");
+                "Unable to create the Browse histogram snapshot.");
     }
 
     private sealed class StatsBuffer

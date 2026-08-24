@@ -20,7 +20,7 @@ public partial class MainWindow
     private void OnPhotoNavigationRequested(object? sender, EventArgs e)
     {
         Dispatcher.UIThread.Post(
-            () => _libraryGridView?.Focus(),
+            () => _browseGridView?.Focus(),
             DispatcherPriority.Input);
     }
 
@@ -134,7 +134,7 @@ public partial class MainWindow
         post(() =>
         {
             if (isDataContextCurrent() &&
-                vm.IsLibraryGenerationCurrent(generation))
+                vm.IsBrowseGenerationCurrent(generation))
             {
                 scroll();
             }
@@ -193,7 +193,7 @@ public partial class MainWindow
             SelectedFolderPath = path,
             FirstRunExperienceVersion =
                 MainWindowViewModel.CurrentFirstRunExperienceVersion,
-            FileTypeFilter = vm.Library.FileTypeFilter,
+            FileTypeFilter = vm.Browse.FileTypeFilter,
             StripLocationData = vm.ExportSettings.StripLocationData,
             OutputSharpening = vm.ExportSettings.OutputSharpening
         });

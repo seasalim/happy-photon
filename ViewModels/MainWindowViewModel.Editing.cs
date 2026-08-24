@@ -276,7 +276,7 @@ public partial class MainWindowViewModel
             using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
                 image,
                 previewSettings,
-                LibraryThumbnailRequest,
+                BrowseThumbnailRequest,
                 skipHistogram: false,
                 RequestedClippingOverlaySides,
                 token,
@@ -320,7 +320,7 @@ public partial class MainWindowViewModel
                 using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
                     image,
                     preHoverSettings,
-                    LibraryThumbnailRequest,
+                    BrowseThumbnailRequest,
                     skipHistogram: false,
                     RequestedClippingOverlaySides,
                     surfaceGeneration: generation,
@@ -361,7 +361,7 @@ public partial class MainWindowViewModel
             using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
                 image,
                 tempSettings,
-                LibraryThumbnailRequest,
+                BrowseThumbnailRequest,
                 skipHistogram: false,
                 RequestedClippingOverlaySides,
                 surfaceGeneration: generation,

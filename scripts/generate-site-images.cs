@@ -22,7 +22,7 @@ Directory.CreateDirectory(outputRoot);
 
 var images = new[]
 {
-    new SiteImage("Screenshot_Library.png", "library"),
+    new SiteImage("Screenshot_Browse.png", "library"),
     new SiteImage("Screenshot_Develop.png", "develop"),
     new SiteImage("Screenshot_Develop_MidGray_Assess.png", "assess")
 };

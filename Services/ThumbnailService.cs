@@ -44,7 +44,7 @@ public class ThumbnailService : IAsyncDisposable
         CancellationToken cancellationToken = default)
         => await LoadThumbnailAsync(
             imageFile,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             cancellationToken);
 
     public async Task<ThumbnailLoadResult> LoadThumbnailAsync(
@@ -158,7 +158,7 @@ public class ThumbnailService : IAsyncDisposable
         CancellationToken cancellationToken = default) =>
         LoadUneditedThumbnailAsync(
             imageFile,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             allowUndersizedCachePlaceholder: true,
             SourceReadIntent.Background,
             cancellationToken);

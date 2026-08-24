@@ -15,7 +15,7 @@ namespace HappyPhoton.Tests;
 // entire idle CPU/GPU cost (B1 ~0.3 % CPU / ~2.9 % GPU, B2 ~2.2 % / ~13.4 %,
 // both exactly floor with the bars disabled). These tests pin the selected
 // remediation: a bar is indeterminate only while its represented work runs,
-// Develop has no local progress bar, and library tiles use a static placeholder.
+// Develop has no local progress bar, and browse tiles use a static placeholder.
 public sealed class IdleAnimationQuiescenceTests
 {
     [AvaloniaFact]
@@ -57,17 +57,17 @@ public sealed class IdleAnimationQuiescenceTests
     }
 
     [AvaloniaFact]
-    public async Task LibraryTiles_UseStaticLoadingPlaceholderWithoutProgressBars()
+    public async Task BrowseTiles_UseStaticLoadingPlaceholderWithoutProgressBars()
     {
         var root = NewRoot();
         using var catalog = new CatalogService(root);
         var vm = NewViewModel(catalog);
         var image = new ImageFile(Path.Combine(root, "a.jpg")) { IsLoading = true };
-        vm.Library.SetImages([image]);
-        var grid = new LibraryGridView
+        vm.Browse.SetImages([image]);
+        var grid = new BrowseGridView
         {
             DataContext = vm,
-            Images = vm.Library.VisibleImages
+            Images = vm.Browse.VisibleImages
         };
         var window = new Window { Content = grid };
         window.Show();

@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace HappyPhoton.Views;
 
-public partial class LibraryReviewPane : UserControl
+public partial class BrowseReviewPane : UserControl
 {
-    public LibraryReviewPane()
+    public BrowseReviewPane()
     {
         InitializeComponent();
     }

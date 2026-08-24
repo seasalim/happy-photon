@@ -68,7 +68,7 @@ public partial class MainWindowViewModel
     private bool StartBurstAnalysisIfRequested()
     {
         if (!ShowBurstGroups || _burstGroups != null ||
-            Library.AllImages.Count == 0)
+            Browse.AllImages.Count == 0)
         {
             return false;
         }
@@ -99,12 +99,12 @@ public partial class MainWindowViewModel
         _burstAnalysisRestartRequested = false;
         Interlocked.Exchange(ref _burstAnalysisCts, analysisCts);
         Volatile.Write(ref _burstAnalysisProcessed, 0);
-        Volatile.Write(ref _burstAnalysisTotal, Library.AllImages.Count);
+        Volatile.Write(ref _burstAnalysisTotal, Browse.AllImages.Count);
         Volatile.Write(ref _burstAnalysisActive, 1);
         SignalBackgroundActivityStarted();
         _burstAnalysisTask = RunBurstAnalysisAsync(
-            Library.AllImages.ToList(),
-            Volatile.Read(ref _libraryGeneration),
+            Browse.AllImages.ToList(),
+            Volatile.Read(ref _browseGeneration),
             analysisCts);
         return true;
     }
@@ -178,7 +178,7 @@ public partial class MainWindowViewModel
                     var availability = ImageService.GetSourceAvailability(image);
                     if (availability.IsOnlineOnly())
                     {
-                        if (generation == Volatile.Read(ref _libraryGeneration))
+                        if (generation == Volatile.Read(ref _browseGeneration))
                         {
                             SetSourceRequiresHydration(image, true);
                         }
@@ -193,7 +193,7 @@ public partial class MainWindowViewModel
                     await _loadMetadataAsync(image);
                     if (image.MetadataLoaded)
                     {
-                        if (generation == Volatile.Read(ref _libraryGeneration))
+                        if (generation == Volatile.Read(ref _browseGeneration))
                         {
                             SetSourceRequiresHydration(image, false);
                         }
@@ -202,7 +202,7 @@ public partial class MainWindowViewModel
                     else if (ImageService.GetSourceAvailability(image)
                                  .IsOnlineOnly())
                     {
-                        if (generation == Volatile.Read(ref _libraryGeneration))
+                        if (generation == Volatile.Read(ref _browseGeneration))
                         {
                             SetSourceRequiresHydration(image, true);
                         }
@@ -216,7 +216,7 @@ public partial class MainWindowViewModel
             }
 
             if (cancellationToken.IsCancellationRequested ||
-                generation != Volatile.Read(ref _libraryGeneration))
+                generation != Volatile.Read(ref _browseGeneration))
             {
                 return;
             }
@@ -271,7 +271,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        foreach (var image in Library.AllImages)
+        foreach (var image in Browse.AllImages)
         {
             if (_burstMembership.TryGetValue(image.FilePath, out var membership))
             {
@@ -292,7 +292,7 @@ public partial class MainWindowViewModel
 
     private void ClearBurstIndicators()
     {
-        foreach (var image in Library.AllImages)
+        foreach (var image in Browse.AllImages)
         {
             image.BurstGroupOrdinal = 0;
             image.BurstIndex = 0;

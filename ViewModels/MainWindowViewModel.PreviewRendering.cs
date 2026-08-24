@@ -30,7 +30,7 @@ public partial class MainWindowViewModel
                 .ApplyEditsToPreviewArtifactsAsync(
                     selectedImage,
                     tempSettings,
-                    LibraryThumbnailRequest,
+                    BrowseThumbnailRequest,
                     skipHistogram: false,
                     RequestedClippingOverlaySides,
                     cancellationToken,

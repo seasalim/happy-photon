@@ -26,7 +26,7 @@ public partial class MainWindowViewModel
     {
         if (IsFullScreenMode) return;
 
-        var rejectedImages = Library.GetRejectedImages().ToList();
+        var rejectedImages = Browse.GetRejectedImages().ToList();
         if (rejectedImages.Count == 0) return;
 
         if (ConfirmDeleteRejectedAsync == null) return;
@@ -43,9 +43,9 @@ public partial class MainWindowViewModel
         var failures = new List<FileOperationFailure>();
         var selectedImage = SelectedImage;
         var replacement = selectedImage != null && targets.Contains(selectedImage)
-            ? Library.ReplacementAfterRemoval(selectedImage)
+            ? Browse.ReplacementAfterRemoval(selectedImage)
             : selectedImage;
-        var folderImagePaths = Library.AllImages
+        var folderImagePaths = Browse.AllImages
             .Select(image => image.FilePath)
             .ToArray();
 
@@ -76,12 +76,12 @@ public partial class MainWindowViewModel
 
         if (deletedImages.Count > 0)
         {
-            Library.RemoveRange(deletedImages);
+            Browse.RemoveRange(deletedImages);
             if (selectedImage != null && deletedImages.Contains(selectedImage))
             {
-                SelectedImage = replacement != null && Library.ContainsVisible(replacement)
+                SelectedImage = replacement != null && Browse.ContainsVisible(replacement)
                     ? replacement
-                    : Library.FirstVisible();
+                    : Browse.FirstVisible();
             }
             UpdateSelectedCount();
         }
@@ -222,7 +222,7 @@ public partial class MainWindowViewModel
     {
         if (TryMoveWithinFullScreenSelection(-1)) return;
 
-        MoveFocusAndSelection(Library.PreviousVisible(SelectedImage));
+        MoveFocusAndSelection(Browse.PreviousVisible(SelectedImage));
     }
 
     [RelayCommand]
@@ -230,7 +230,7 @@ public partial class MainWindowViewModel
     {
         if (TryMoveWithinFullScreenSelection(1)) return;
 
-        MoveFocusAndSelection(Library.NextVisible(SelectedImage));
+        MoveFocusAndSelection(Browse.NextVisible(SelectedImage));
     }
 
     /// <summary>
@@ -240,7 +240,7 @@ public partial class MainWindowViewModel
     {
         if (TryMoveWithinFullScreenSelection(-itemsPerRow)) return;
 
-        MoveFocusAndSelection(Library.MoveVisible(SelectedImage, -itemsPerRow));
+        MoveFocusAndSelection(Browse.MoveVisible(SelectedImage, -itemsPerRow));
     }
 
     /// <summary>
@@ -250,14 +250,14 @@ public partial class MainWindowViewModel
     {
         if (TryMoveWithinFullScreenSelection(itemsPerRow)) return;
 
-        MoveFocusAndSelection(Library.MoveVisible(SelectedImage, itemsPerRow));
+        MoveFocusAndSelection(Browse.MoveVisible(SelectedImage, itemsPerRow));
     }
 
     public void SelectFirstImage()
     {
         if (TrySelectFullScreenSelectionBoundary(last: false)) return;
 
-        SelectedImage = Library.FirstVisible();
+        SelectedImage = Browse.FirstVisible();
         if (SelectedImage != null) MoveSelectionWithFocus(SelectedImage);
     }
 
@@ -265,7 +265,7 @@ public partial class MainWindowViewModel
     {
         if (TrySelectFullScreenSelectionBoundary(last: true)) return;
 
-        SelectedImage = Library.LastVisible();
+        SelectedImage = Browse.LastVisible();
         if (SelectedImage != null) MoveSelectionWithFocus(SelectedImage);
     }
 
@@ -277,13 +277,13 @@ public partial class MainWindowViewModel
         MoveSelectionWithFocus(image);
     }
 
-    // Keyboard navigation in the Library grid carries the selection with the
+    // Keyboard navigation in the Browse grid carries the selection with the
     // focused image so assessment actions land on the photo under the ring.
     private void MoveSelectionWithFocus(ImageFile image)
     {
         if (IsDevelopMode || IsFullScreenMode) return;
 
-        Library.SelectOnly(image);
+        Browse.SelectOnly(image);
         UpdateSelectedCount();
     }
 
@@ -346,8 +346,8 @@ public partial class MainWindowViewModel
         var selectedImage = SelectedImage;
         var replacement = selectedImage != null &&
                           targets.Contains(selectedImage) &&
-                          !Library.MatchesCurrentFilters(selectedImage, next)
-            ? Library.ReplacementAfterRemoval(selectedImage)
+                          !Browse.MatchesCurrentFilters(selectedImage, next)
+            ? Browse.ReplacementAfterRemoval(selectedImage)
             : null;
 
         try
@@ -374,8 +374,8 @@ public partial class MainWindowViewModel
             target.Flag = next;
         }
 
-        Library.RefreshFilters();
-        if (replacement != null && Library.ContainsVisible(replacement))
+        Browse.RefreshFilters();
+        if (replacement != null && Browse.ContainsVisible(replacement))
         {
             SelectedImage = replacement;
         }
@@ -432,8 +432,8 @@ public partial class MainWindowViewModel
         var selectedImage = SelectedImage;
         var replacement = selectedImage != null &&
                           targets.Contains(selectedImage) &&
-                          !Library.MatchesCurrentFilters(selectedImage, rating)
-            ? Library.ReplacementAfterRemoval(selectedImage)
+                          !Browse.MatchesCurrentFilters(selectedImage, rating)
+            ? Browse.ReplacementAfterRemoval(selectedImage)
             : null;
 
         try
@@ -461,8 +461,8 @@ public partial class MainWindowViewModel
             target.Rating = rating;
         }
 
-        Library.RefreshFilters();
-        if (replacement != null && Library.ContainsVisible(replacement))
+        Browse.RefreshFilters();
+        if (replacement != null && Browse.ContainsVisible(replacement))
         {
             SelectedImage = replacement;
         }

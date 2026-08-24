@@ -135,7 +135,7 @@ public class ImageService : IAsyncDisposable
         CancellationToken cancellationToken)
         => LoadThumbnailAsync(
             imageFile,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             cancellationToken);
 
     public Task<ThumbnailLoadResult> LoadThumbnailAsync(

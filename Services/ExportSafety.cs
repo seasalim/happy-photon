@@ -19,7 +19,7 @@ public static class ExportSafety
             }
             catch (Exception)
             {
-                // Library paths come from directory enumeration; an unparseable
+                // Browse paths come from directory enumeration; an unparseable
                 // entry is near-impossible. Skip it — the set builder never throws.
             }
         }

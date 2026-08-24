@@ -162,7 +162,7 @@ public partial class MainWindowViewModel
             using var histogramSource = BitmapConversionService.CloneBitmap(
                 imageFile.Thumbnail);
             var histogram = await Task.Run(
-                () => ImageService.Histograms.CalculateLibraryHistogram(
+                () => ImageService.Histograms.CalculateBrowseHistogram(
                     histogramSource),
                 cancellationToken);
             if (!cancellationToken.IsCancellationRequested &&

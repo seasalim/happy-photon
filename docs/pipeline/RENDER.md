@@ -288,7 +288,7 @@ display-scope source. Histogram-active interaction accumulates only the four 8-b
 histogram channels; waveform-active interaction also accumulates the 256-column ×
 128-level luminance waveform. Horizontal image position maps to columns, Rec.601
 luminance maps with `level = value8 >> 1`, and each `ushort` cell stores the sample
-count. Sources narrower than 256 pixels back-fill unrepresented columns. Library
+count. Sources narrower than 256 pixels back-fill unrepresented columns. Browse
 thumbnail histograms use the bitmap overload and never create waveform data.
 
 The selectable RAW histogram is deliberately outside that render stage: `RawBaseLoader`

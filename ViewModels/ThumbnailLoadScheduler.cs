@@ -49,7 +49,7 @@ internal sealed class ThumbnailLoadScheduler : IDisposable
     public void Enqueue(IEnumerable<(ImageFile Image, int Priority)> requests) =>
         Enqueue(requests.Select(request => new ThumbnailLoadRequest(
             request.Image,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             request.Priority)));
 
     public void Enqueue(

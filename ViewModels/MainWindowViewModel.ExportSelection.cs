@@ -16,20 +16,20 @@ public partial class MainWindowViewModel
 
         if (SelectedImage != null)
         {
-            Library.ToggleSelection(SelectedImage);
+            Browse.ToggleSelection(SelectedImage);
             UpdateSelectedCount();
         }
     }
 
     public void ToggleImageSelection(ImageFile image)
     {
-        Library.ToggleSelection(image);
+        Browse.ToggleSelection(image);
         UpdateSelectedCount();
     }
 
     public void SelectRange(ImageFile fromImage, ImageFile toImage)
     {
-        Library.SelectRange(fromImage, toImage);
+        Browse.SelectRange(fromImage, toImage);
         UpdateSelectedCount();
     }
 
@@ -38,7 +38,7 @@ public partial class MainWindowViewModel
     {
         if (IsFullScreenMode) return;
 
-        Library.SelectAllVisible();
+        Browse.SelectAllVisible();
         UpdateSelectedCount();
     }
 
@@ -47,14 +47,14 @@ public partial class MainWindowViewModel
     {
         if (IsFullScreenMode) return;
 
-        Library.DeselectAllVisible();
+        Browse.DeselectAllVisible();
         UpdateSelectedCount();
     }
 
     private void UpdateSelectedCount()
     {
-        SelectedCount = Library.SelectedCount;
-        RestartLibrarySelectionSummary();
+        SelectedCount = Browse.SelectedCount;
+        RestartBrowseSelectionSummary();
         ReconcileFullScreenSelection();
     }
 
@@ -80,7 +80,7 @@ public partial class MainWindowViewModel
 
     public IEnumerable<ImageFile> GetSelectedImages()
     {
-        return Library.GetSelectedImages();
+        return Browse.GetSelectedImages();
     }
 
     public Task<ExportBatchResult> ExportBatchAsync(
@@ -113,7 +113,7 @@ public partial class MainWindowViewModel
     {
         using var activity = BeginExportActivity(imagesToExport.Count);
         var activityProgress = CreateExportActivityProgress(activity, progress);
-        var generation = Volatile.Read(ref _libraryGeneration);
+        var generation = Volatile.Read(ref _browseGeneration);
         var exported = await ImageService.ExportBatchApprovedAsync(
             imagesToExport,
             ExportSettings,
@@ -130,7 +130,7 @@ public partial class MainWindowViewModel
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine(
-                $"Post-export Library refresh failed: {ex.Message}");
+                $"Post-export Browse refresh failed: {ex.Message}");
         }
 
         return exported;
@@ -145,12 +145,12 @@ public partial class MainWindowViewModel
         foreach (var image in images)
         {
             if (cancellationToken.IsCancellationRequested ||
-                generation != Volatile.Read(ref _libraryGeneration))
+                generation != Volatile.Read(ref _browseGeneration))
             {
                 return;
             }
 
-            if (!Library.Contains(image) ||
+            if (!Browse.Contains(image) ||
                 (!image.SourceRequiresHydration &&
                  !image.ThumbnailDeferredForHydration &&
                  image.ThumbnailUpgradeDeferredDimension == 0) ||
@@ -174,7 +174,7 @@ public partial class MainWindowViewModel
             scheduler.Enqueue(targets.Select(image =>
                 new ThumbnailLoadRequest(
                     image,
-                    LibraryThumbnailRequest,
+                    BrowseThumbnailRequest,
                     0)));
             SignalBackgroundActivityStarted();
             return;
@@ -195,7 +195,7 @@ public partial class MainWindowViewModel
         foreach (var image in images)
         {
             if (cancellationToken.IsCancellationRequested ||
-                generation != Volatile.Read(ref _libraryGeneration))
+                generation != Volatile.Read(ref _browseGeneration))
             {
                 return;
             }
@@ -234,7 +234,7 @@ public partial class MainWindowViewModel
 
     /// <summary>
     /// Handles Escape key: cancels crop or exits develop mode.
-    /// Does nothing in Library view when no transient workspace mode is active.
+    /// Does nothing in Browse view when no transient workspace mode is active.
     /// </summary>
     [RelayCommand]
     private void HandleEscape()
@@ -259,7 +259,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        // Second priority: exit Develop mode to Library (but do nothing if already in Library)
+        // Second priority: exit Develop mode to Browse (but do nothing if already in Browse)
         if (IsDevelopMode)
         {
             IsDevelopMode = false;

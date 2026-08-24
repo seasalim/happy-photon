@@ -4,10 +4,10 @@ using Avalonia.Interactivity;
 
 namespace HappyPhoton.Views;
 
-public partial class LibraryRatingFilter : UserControl
+public partial class BrowseRatingFilter : UserControl
 {
     public static readonly StyledProperty<int> MinimumRatingProperty =
-        AvaloniaProperty.Register<LibraryRatingFilter, int>(
+        AvaloniaProperty.Register<BrowseRatingFilter, int>(
             nameof(MinimumRating),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
@@ -17,7 +17,7 @@ public partial class LibraryRatingFilter : UserControl
         set => SetValue(MinimumRatingProperty, value);
     }
 
-    public LibraryRatingFilter()
+    public BrowseRatingFilter()
     {
         InitializeComponent();
         UpdateStars();

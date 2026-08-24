@@ -147,7 +147,7 @@ public sealed class ExportDialogViewModelTests
         Assert.True(viewModel.ShowFooterOptions);
         Assert.True(viewModel.ShowPrimaryAction);
         Assert.True(viewModel.CanPrimaryAction);
-        Assert.Equal("Return to Library", viewModel.PrimaryActionText);
+        Assert.Equal("Return to Browse", viewModel.PrimaryActionText);
         Assert.False(viewModel.CanExport);
     }
 

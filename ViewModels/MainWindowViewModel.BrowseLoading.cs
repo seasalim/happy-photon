@@ -22,8 +22,8 @@ public partial class MainWindowViewModel
     public async Task<int> LoadFolderAsync(string folderPath)
     {
         CancelAdjacentPreviewWarm(true, dropRetained: true);
-        var generation = Interlocked.Increment(ref _libraryGeneration);
-        await CancelLibrarySelectionSummaryAsync();
+        var generation = Interlocked.Increment(ref _browseGeneration);
+        await CancelBrowseSelectionSummaryAsync();
         await CancelXmpReconcileAsync();
         _xmpIndexedSidecars = [];
         CancelSourceHydration();
@@ -81,17 +81,17 @@ public partial class MainWindowViewModel
             // Fresh ImageFile instances replace the old burst indicators immediately.
             ResetBurstState();
             ResetThumbnailViewport();
-            Library.SetImages(imageFiles);
+            Browse.SetImages(imageFiles);
 
             // Defer first image selection until after UI settles.
-            if (Library.VisibleImages.Count > 0)
+            if (Browse.VisibleImages.Count > 0)
             {
                 _postSelection(() =>
                 {
                     if (!cancellationToken.IsCancellationRequested &&
-                        Library.VisibleImages.Count > 0 && SelectedImage == null)
+                        Browse.VisibleImages.Count > 0 && SelectedImage == null)
                     {
-                        SelectedImage = Library.FirstVisible();
+                        SelectedImage = Browse.FirstVisible();
                     }
                 });
             }
@@ -132,7 +132,7 @@ public partial class MainWindowViewModel
             {
                 CurrentFolderHasSubfolders = false;
                 ResetBurstState();
-                Library.SetImages(Array.Empty<ImageFile>());
+                Browse.SetImages(Array.Empty<ImageFile>());
                 ShowTransientStatus($"Unable to load folder: {ex.Message}");
             }
             return 0;
@@ -173,7 +173,7 @@ public partial class MainWindowViewModel
             var freshTask = ImageService.Previews.LoadPreviewArtifactsAsync(
                 imageFile,
                 renderSettings,
-                LibraryThumbnailRequest,
+                BrowseThumbnailRequest,
                 skipHistogram: false,
                 RequestedClippingOverlaySides,
                 ct,

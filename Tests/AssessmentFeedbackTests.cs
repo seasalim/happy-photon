@@ -90,7 +90,7 @@ public sealed class AssessmentFeedbackTests : IDisposable
         await using var vm = await CreateViewModelAsync(catalog);
         var first = vm.SelectedImage!;
         var second = await CreateImageAsync(catalog, "second.jpg");
-        vm.Library.SetImages([first, second]);
+        vm.Browse.SetImages([first, second]);
 
         await vm.SetRatingCommand.ExecuteAsync(2);
         vm.SelectedImage = second;
@@ -116,7 +116,7 @@ public sealed class AssessmentFeedbackTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask,
             timeProvider: _clock);
         var image = await CreateImageAsync(catalog, "first.jpg");
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         return vm;
     }

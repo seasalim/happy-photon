@@ -93,7 +93,7 @@ public partial class BatchExportDialog : Window
                 useSubfolders: false))
             .ToList();
         var originalPaths = ExportSafety.BuildOriginalPathSet(
-            _mainViewModel.Library.AllImages.Select(image => image.FilePath));
+            _mainViewModel.Browse.AllImages.Select(image => image.FilePath));
         var blockedCount = targetPaths.Count(path =>
             ExportSafety.IsOriginalPath(path, originalPaths));
 

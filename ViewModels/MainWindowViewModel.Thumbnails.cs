@@ -13,7 +13,7 @@ public partial class MainWindowViewModel
     private readonly object _thumbnailSessionsSync = new();
     private readonly HashSet<Task> _thumbnailSessions = new();
     private readonly Dictionary<ImageFile, long> _thumbnailLastAccess = new();
-    private int _libraryGeneration;
+    private int _browseGeneration;
     private int _thumbnailSizeGeneration;
     private int _requestedThumbnailStart;
     private int _requestedThumbnailCount = ThumbnailConcurrency * 2;
@@ -25,7 +25,7 @@ public partial class MainWindowViewModel
     internal bool IsThumbnailPumpPaused => _thumbnailPumpAdmission.IsPaused;
 
     public long ResidentThumbnailBytes =>
-        Library.AllImages.Sum(image => image.ThumbnailBytes);
+        Browse.AllImages.Sum(image => image.ThumbnailBytes);
     public long PendingThumbnailRetirementBytes => _bitmapRetirement.PendingBytes;
     public long CombinedThumbnailBytes =>
         ResidentThumbnailBytes + PendingThumbnailRetirementBytes;
@@ -38,7 +38,7 @@ public partial class MainWindowViewModel
         QueueRequestedThumbnailRange();
     }
 
-    private void OnLibraryThumbnailSizeRequestChanged()
+    private void OnBrowseThumbnailSizeRequestChanged()
     {
         Interlocked.Increment(ref _thumbnailSizeGeneration);
         QueueRequestedThumbnailRange();
@@ -58,7 +58,7 @@ public partial class MainWindowViewModel
         CancellationTokenSource requestCts,
         int generation)
     {
-        var request = LibraryThumbnailRequest;
+        var request = BrowseThumbnailRequest;
         var sizeGeneration = Volatile.Read(ref _thumbnailSizeGeneration);
         var session = RunThumbnailSessionAsync(
             imageFiles,
@@ -146,11 +146,11 @@ public partial class MainWindowViewModel
                 scheduler.Dispose();
             }
 
-            if (generation != Volatile.Read(ref _libraryGeneration))
+            if (generation != Volatile.Read(ref _browseGeneration))
             {
                 foreach (var image in imageFiles)
                 {
-                    Library.ReplaceThumbnail(image, null);
+                    Browse.ReplaceThumbnail(image, null);
                 }
             }
 
@@ -195,7 +195,7 @@ public partial class MainWindowViewModel
         => await LoadThumbnailAsync(
             imageFile,
             generation,
-            LibraryThumbnailRequest,
+            BrowseThumbnailRequest,
             Volatile.Read(ref _thumbnailSizeGeneration),
             cancellationToken);
 
@@ -221,9 +221,9 @@ public partial class MainWindowViewModel
                 request,
                 allowUndersizedCachePlaceholder: imageFile.Thumbnail == null,
                 cancellationToken);
-            if (generation != Volatile.Read(ref _libraryGeneration) ||
+            if (generation != Volatile.Read(ref _browseGeneration) ||
                 sizeGeneration != Volatile.Read(ref _thumbnailSizeGeneration) ||
-                !Library.Contains(imageFile))
+                !Browse.Contains(imageFile))
             {
                 return;
             }
@@ -232,7 +232,7 @@ public partial class MainWindowViewModel
             if (result.Status == ThumbnailLoadStatus.Loaded)
             {
                 thumbnail = result.DetachBitmap();
-                Library.ReplaceThumbnail(imageFile, thumbnail);
+                Browse.ReplaceThumbnail(imageFile, thumbnail);
                 thumbnail = null;
                 UpdateThumbnailMemoryDiagnostics();
                 if (!result.SatisfiesMinimumDimension &&
@@ -258,9 +258,9 @@ public partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            if (generation == Volatile.Read(ref _libraryGeneration) &&
+            if (generation == Volatile.Read(ref _browseGeneration) &&
                 sizeGeneration == Volatile.Read(ref _thumbnailSizeGeneration) &&
-                Library.Contains(imageFile))
+                Browse.Contains(imageFile))
             {
                 using var failed = ThumbnailLoadResult.Failed(request);
                 ApplyThumbnailLoadResult(imageFile, failed);
@@ -286,13 +286,13 @@ public partial class MainWindowViewModel
     private void QueueRequestedThumbnailRange()
     {
         var scheduler = _thumbnailScheduler;
-        var images = Library.VisibleImages;
+        var images = Browse.VisibleImages;
         if (scheduler == null || images.Count == 0) return;
 
         var visibleStart = Math.Min(_requestedThumbnailStart, images.Count - 1);
         var visibleCount = Math.Min(_requestedThumbnailCount, images.Count - visibleStart);
         var visible = images.Skip(visibleStart).Take(visibleCount).ToList();
-        var request = LibraryThumbnailRequest;
+        var request = BrowseThumbnailRequest;
         var prefetchCandidates = BuildNearestPrefetch(
             images,
             visibleStart,
@@ -356,7 +356,7 @@ public partial class MainWindowViewModel
         if (scheduler != null)
         {
             scheduler.Enqueue([
-                new ThumbnailLoadRequest(image, LibraryThumbnailRequest, 0)]);
+                new ThumbnailLoadRequest(image, BrowseThumbnailRequest, 0)]);
             SignalBackgroundActivityStarted();
         }
     }
@@ -366,7 +366,7 @@ public partial class MainWindowViewModel
     {
         var pinned = new HashSet<ImageFile>(requested, ReferenceEqualityComparer.Instance);
         if (SelectedImage != null) pinned.Add(SelectedImage);
-        var residents = Library.AllImages.Where(image => image.Thumbnail != null).ToList();
+        var residents = Browse.AllImages.Where(image => image.Thumbnail != null).ToList();
         var pinnedBytes = pinned.Sum(image => image.ThumbnailBytes);
         var targetBytes = Math.Max(
             pinnedBytes,
@@ -374,7 +374,7 @@ public partial class MainWindowViewModel
         foreach (var image in ThumbnailResidencyPolicy.SelectEvictions(
             residents, pinned, _thumbnailLastAccess, targetBytes))
         {
-            Library.ReplaceThumbnail(image, null);
+            Browse.ReplaceThumbnail(image, null);
         }
         UpdateThumbnailMemoryDiagnostics();
     }
@@ -468,7 +468,7 @@ public partial class MainWindowViewModel
 
     internal static ThumbnailSizeRequest GetInitialThumbnailRequest(
         ThumbnailSizeRequest desiredRequest) =>
-        desiredRequest == ThumbnailSizeRequest.For(LibraryThumbnailSize.Large)
-            ? ThumbnailSizeRequest.For(LibraryThumbnailSize.Small)
+        desiredRequest == ThumbnailSizeRequest.For(BrowseThumbnailSize.Large)
+            ? ThumbnailSizeRequest.For(BrowseThumbnailSize.Small)
             : desiredRequest;
 }

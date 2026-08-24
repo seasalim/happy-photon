@@ -85,7 +85,7 @@ public sealed class SourceHydrationServiceTests : IDisposable
             ThumbnailDeferredForHydration = true,
             EditSettings = new EditSettings { Exposure = 1.25 }
         };
-        viewModel.Library.SetImages([image]);
+        viewModel.Browse.SetImages([image]);
         viewModel.SelectedImage = image;
 
         await viewModel.DownloadAndOpenCommand.ExecuteAsync(null);

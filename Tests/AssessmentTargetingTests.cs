@@ -15,7 +15,7 @@ public sealed class AssessmentTargetingTests : IDisposable
     [InlineData(AssessmentAxis.Flag)]
     [InlineData(AssessmentAxis.Rating)]
     [InlineData(AssessmentAxis.ColorLabel)]
-    public async Task LibrarySelection_WinsOverOutsideActiveAndReportsCount(
+    public async Task BrowseSelection_WinsOverOutsideActiveAndReportsCount(
         AssessmentAxis axis)
     {
         using var catalog = await CreateCatalogAsync();
@@ -23,10 +23,10 @@ public sealed class AssessmentTargetingTests : IDisposable
         var active = await CreateImageAsync(catalog, "active.jpg", axis);
         var first = await CreateImageAsync(catalog, "first.jpg");
         var second = await CreateImageAsync(catalog, "second.jpg");
-        vm.Library.SetImages([active, first, second]);
+        vm.Browse.SetImages([active, first, second]);
         vm.SelectedImage = active;
-        vm.Library.ToggleSelection(first);
-        vm.Library.ToggleSelection(second);
+        vm.Browse.ToggleSelection(first);
+        vm.Browse.ToggleSelection(second);
 
         await ExecuteAsync(vm, axis);
 
@@ -40,14 +40,14 @@ public sealed class AssessmentTargetingTests : IDisposable
     [InlineData(AssessmentAxis.Flag)]
     [InlineData(AssessmentAxis.Rating)]
     [InlineData(AssessmentAxis.ColorLabel)]
-    public async Task EmptyLibrarySelection_FallsBackToActiveWithoutStatus(
+    public async Task EmptyBrowseSelection_FallsBackToActiveWithoutStatus(
         AssessmentAxis axis)
     {
         using var catalog = await CreateCatalogAsync();
         await using var vm = CreateViewModel(catalog);
         var active = await CreateImageAsync(catalog, "active.jpg", axis);
         var other = await CreateImageAsync(catalog, "other.jpg");
-        vm.Library.SetImages([active, other]);
+        vm.Browse.SetImages([active, other]);
         vm.SelectedImage = active;
 
         await ExecuteAsync(vm, axis);
@@ -67,9 +67,9 @@ public sealed class AssessmentTargetingTests : IDisposable
         await using var vm = CreateViewModel(catalog);
         var active = await CreateImageAsync(catalog, "active.jpg", axis);
         var selected = await CreateImageAsync(catalog, "selected.jpg");
-        vm.Library.SetImages([active, selected]);
+        vm.Browse.SetImages([active, selected]);
         vm.SelectedImage = active;
-        vm.Library.ToggleSelection(selected);
+        vm.Browse.ToggleSelection(selected);
         vm.IsDevelopMode = true;
 
         await ExecuteAsync(vm, axis);
@@ -89,9 +89,9 @@ public sealed class AssessmentTargetingTests : IDisposable
         await using var vm = CreateViewModel(catalog);
         var active = await CreateImageAsync(catalog, "active.jpg", axis);
         var selected = await CreateImageAsync(catalog, "selected.jpg");
-        vm.Library.SetImages([active, selected]);
+        vm.Browse.SetImages([active, selected]);
         vm.SelectedImage = active;
-        vm.Library.ToggleSelection(selected);
+        vm.Browse.ToggleSelection(selected);
         vm.IsFullScreenMode = true;
 
         await ExecuteAsync(vm, axis);
@@ -102,29 +102,29 @@ public sealed class AssessmentTargetingTests : IDisposable
     }
 
     [Fact]
-    public async Task Navigation_MovesSelectionWithFocusOnlyInLibrary()
+    public async Task Navigation_MovesSelectionWithFocusOnlyInBrowse()
     {
         using var catalog = await CreateCatalogAsync();
         await using var vm = CreateViewModel(catalog);
         var first = await CreateImageAsync(catalog, "first.jpg");
         var second = await CreateImageAsync(catalog, "second.jpg");
         var third = await CreateImageAsync(catalog, "third.jpg");
-        vm.Library.SetImages([first, second, third]);
+        vm.Browse.SetImages([first, second, third]);
         vm.SelectedImage = first;
-        vm.Library.ToggleSelection(first);
+        vm.Browse.ToggleSelection(first);
 
         vm.SelectNextImageCommand.Execute(null);
         await vm.SetRatingCommand.ExecuteAsync(4);
 
         Assert.Equal(0, first.Rating);
         Assert.Equal(4, second.Rating);
-        Assert.Same(second, Assert.Single(vm.Library.GetSelectedImages()));
+        Assert.Same(second, Assert.Single(vm.Browse.GetSelectedImages()));
 
         vm.IsDevelopMode = true;
         vm.SelectNextImageCommand.Execute(null);
 
         Assert.Same(third, vm.SelectedImage);
-        Assert.Same(second, Assert.Single(vm.Library.GetSelectedImages()));
+        Assert.Same(second, Assert.Single(vm.Browse.GetSelectedImages()));
     }
 
     [Fact]
@@ -136,10 +136,10 @@ public sealed class AssessmentTargetingTests : IDisposable
         picked.Flag = ImageFlag.Picked;
         await catalog.SaveFlagStateAsync(picked.CatalogId, picked.Flag);
         var unflagged = await CreateImageAsync(catalog, "unflagged.jpg");
-        vm.Library.SetImages([picked, unflagged]);
+        vm.Browse.SetImages([picked, unflagged]);
         vm.SelectedImage = picked;
-        vm.Library.ToggleSelection(picked);
-        vm.Library.ToggleSelection(unflagged);
+        vm.Browse.ToggleSelection(picked);
+        vm.Browse.ToggleSelection(unflagged);
 
         await vm.TogglePickedImageCommand.ExecuteAsync(null);
         Assert.All([picked, unflagged], image =>
@@ -163,16 +163,16 @@ public sealed class AssessmentTargetingTests : IDisposable
         var active = await CreateMatchingImageAsync(catalog, "active.jpg", axis);
         var next = await CreateMatchingImageAsync(catalog, "next.jpg", axis);
         var target = await CreateMatchingImageAsync(catalog, "target.jpg", axis);
-        vm.Library.SetImages([previous, active, next, target]);
+        vm.Browse.SetImages([previous, active, next, target]);
         ApplyFilter(vm, axis);
         vm.SelectedImage = active;
-        vm.Library.ToggleSelection(active);
-        vm.Library.ToggleSelection(target);
+        vm.Browse.ToggleSelection(active);
+        vm.Browse.ToggleSelection(target);
 
         await ExecuteRemovalAsync(vm, axis);
 
         Assert.Same(next, vm.SelectedImage);
-        Assert.True(vm.Library.ContainsVisible(vm.SelectedImage));
+        Assert.True(vm.Browse.ContainsVisible(vm.SelectedImage));
     }
 
     [Theory]
@@ -188,10 +188,10 @@ public sealed class AssessmentTargetingTests : IDisposable
         {
             CatalogId = long.MaxValue
         };
-        vm.Library.SetImages([valid, missing]);
+        vm.Browse.SetImages([valid, missing]);
         vm.SelectedImage = valid;
-        vm.Library.ToggleSelection(valid);
-        vm.Library.ToggleSelection(missing);
+        vm.Browse.ToggleSelection(valid);
+        vm.Browse.ToggleSelection(missing);
 
         await ExecuteAsync(vm, axis);
 
@@ -359,13 +359,13 @@ public sealed class AssessmentTargetingTests : IDisposable
         switch (axis)
         {
             case AssessmentAxis.Flag:
-                vm.Library.FlagFilter = FlagFilter.Picked;
+                vm.Browse.FlagFilter = FlagFilter.Picked;
                 break;
             case AssessmentAxis.Rating:
-                vm.Library.MinimumRating = 4;
+                vm.Browse.MinimumRating = 4;
                 break;
             case AssessmentAxis.ColorLabel:
-                vm.Library.ColorLabelFilter = ColorLabelFilter.Red;
+                vm.Browse.ColorLabelFilter = ColorLabelFilter.Red;
                 break;
         }
     }

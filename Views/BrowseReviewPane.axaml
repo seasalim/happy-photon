@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="660"
-             x:Class="HappyPhoton.Views.LibraryReviewPane"
+             x:Class="HappyPhoton.Views.BrowseReviewPane"
              x:DataType="vm:MainWindowViewModel">
 
     <UserControl.Styles>
@@ -27,18 +27,18 @@
     <Border Background="{DynamicResource SurfaceMid}"
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*">
-            <Border x:Name="LibraryHistogramBox"
+            <Border x:Name="BrowseHistogramBox"
                     Margin="15,15,15,10"
                     Padding="5"
                     Background="{DynamicResource SurfaceLow}"
                     CornerRadius="8"
                     IsEnabled="{Binding HasSelectedImage}">
                 <Grid RowDefinitions="Auto,Auto">
-                    <TextBlock x:Name="LibraryHistogramHeader"
+                    <TextBlock x:Name="BrowseHistogramHeader"
                                Classes="section-label"
                                Text="HISTOGRAM"
                                Margin="0,0,0,5"/>
-                    <views:HistogramView x:Name="LibraryHistogram"
+                    <views:HistogramView x:Name="BrowseHistogram"
                                          Grid.Row="1"
                                          Histogram="{Binding Histogram}"/>
                 </Grid>
@@ -174,27 +174,27 @@
                             Background="{DynamicResource SurfaceLow}"
                             CornerRadius="{StaticResource RadiusSmall}"
                             Padding="10"
-                            IsVisible="{Binding HasLibrarySelectionSummary}">
+                            IsVisible="{Binding HasBrowseSelectionSummary}">
                         <StackPanel Spacing="5">
                             <TextBlock Classes="section-label" Text="SELECTION"/>
-                            <TextBlock Text="{Binding LibrarySelectionCountDisplay}"
+                            <TextBlock Text="{Binding BrowseSelectionCountDisplay}"
                                        Foreground="{DynamicResource TextPrimary}"
                                        FontSize="{DynamicResource FontSizeBody}"/>
-                            <TextBlock Text="{Binding LibrarySelectionDateRangeDisplay}"
+                            <TextBlock Text="{Binding BrowseSelectionDateRangeDisplay}"
                                        Foreground="{DynamicResource TextSecondary}"
                                        FontSize="{DynamicResource FontSizeBody}"/>
-                            <TextBlock Text="{Binding LibrarySelectionCombinedFileSizeDisplay}"
+                            <TextBlock Text="{Binding BrowseSelectionCombinedFileSizeDisplay}"
                                        Foreground="{DynamicResource TextSecondary}"
                                        FontSize="{DynamicResource FontSizeBody}"/>
                             <TextBlock Text="Updating selection details…"
                                        Foreground="{DynamicResource TextMuted}"
                                        FontSize="{DynamicResource FontSizeSmall}"
-                                       IsVisible="{Binding IsLibrarySelectionSummaryLoading}"/>
-                            <TextBlock Text="{Binding LibrarySelectionOnlineOnlyNote}"
+                                       IsVisible="{Binding IsBrowseSelectionSummaryLoading}"/>
+                            <TextBlock Text="{Binding BrowseSelectionOnlineOnlyNote}"
                                        Foreground="{DynamicResource TextMuted}"
                                        FontSize="{DynamicResource FontSizeSmall}"
                                        TextWrapping="Wrap"
-                                       IsVisible="{Binding HasLibrarySelectionOnlineOnlyImages}"/>
+                                       IsVisible="{Binding HasBrowseSelectionOnlineOnlyImages}"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>

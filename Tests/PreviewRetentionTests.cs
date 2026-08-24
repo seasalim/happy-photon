@@ -13,7 +13,7 @@ public sealed class PreviewRetentionTests : IDisposable
         $"happy-photon-preview-retention-{Guid.NewGuid():N}")).FullName;
 
     [WindowsFact]
-    public async Task SameImageDevelopLibraryDevelopReusesSettledPair()
+    public async Task SameImageDevelopBrowseDevelopReusesSettledPair()
     {
         using var catalog = await CreateCatalogAsync("settled");
         var loader = new CountingPairLoader();

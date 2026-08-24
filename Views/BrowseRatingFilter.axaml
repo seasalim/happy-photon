@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="HappyPhoton.Views.LibraryRatingFilter"
+             x:Class="HappyPhoton.Views.BrowseRatingFilter"
              x:Name="Root">
     <UserControl.Styles>
         <Style Selector="Button.rating-star">

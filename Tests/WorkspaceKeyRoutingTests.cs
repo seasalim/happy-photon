@@ -24,7 +24,7 @@ public sealed class WorkspaceKeyRoutingTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
         var image = new ImageFile(Path.Combine(_testRoot, "photo.jpg"));
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         vm.RefreshSelectedCount();
         var dialogRequests = 0;

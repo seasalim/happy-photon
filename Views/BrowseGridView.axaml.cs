@@ -9,76 +9,76 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.Views;
 
-public partial class LibraryGridView : UserControl
+public partial class BrowseGridView : UserControl
 {
     public static readonly StyledProperty<ObservableCollection<ImageFile>?> ImagesProperty =
-        AvaloniaProperty.Register<LibraryGridView, ObservableCollection<ImageFile>?>(nameof(Images));
+        AvaloniaProperty.Register<BrowseGridView, ObservableCollection<ImageFile>?>(nameof(Images));
 
     public static readonly StyledProperty<ImageFile?> SelectedImageProperty =
-        AvaloniaProperty.Register<LibraryGridView, ImageFile?>(nameof(SelectedImage), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+        AvaloniaProperty.Register<BrowseGridView, ImageFile?>(nameof(SelectedImage), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<int> TotalImageCountProperty =
-        AvaloniaProperty.Register<LibraryGridView, int>(nameof(TotalImageCount));
+        AvaloniaProperty.Register<BrowseGridView, int>(nameof(TotalImageCount));
 
     public static readonly StyledProperty<string> EmptyMessageTextProperty =
-        AvaloniaProperty.Register<LibraryGridView, string>(nameof(EmptyMessageText), "Select a folder to view images");
+        AvaloniaProperty.Register<BrowseGridView, string>(nameof(EmptyMessageText), "Select a folder to view images");
 
     public static readonly StyledProperty<string> EmptyHeadingTextProperty =
-        AvaloniaProperty.Register<LibraryGridView, string>(
+        AvaloniaProperty.Register<BrowseGridView, string>(
             nameof(EmptyHeadingText),
             "Select a folder to view photographs");
 
     public static readonly StyledProperty<bool> SuppressEmptyStateProperty =
-        AvaloniaProperty.Register<LibraryGridView, bool>(nameof(SuppressEmptyState));
+        AvaloniaProperty.Register<BrowseGridView, bool>(nameof(SuppressEmptyState));
 
     public static readonly StyledProperty<ImageFileTypeFilter> FileTypeFilterProperty =
-        AvaloniaProperty.Register<LibraryGridView, ImageFileTypeFilter>(
+        AvaloniaProperty.Register<BrowseGridView, ImageFileTypeFilter>(
             nameof(FileTypeFilter),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<FlagFilter> FlagFilterProperty =
-        AvaloniaProperty.Register<LibraryGridView, FlagFilter>(
+        AvaloniaProperty.Register<BrowseGridView, FlagFilter>(
             nameof(FlagFilter),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<int> MinimumRatingProperty =
-        AvaloniaProperty.Register<LibraryGridView, int>(
+        AvaloniaProperty.Register<BrowseGridView, int>(
             nameof(MinimumRating),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<ColorLabelFilter> ColorLabelFilterProperty =
-        AvaloniaProperty.Register<LibraryGridView, ColorLabelFilter>(
+        AvaloniaProperty.Register<BrowseGridView, ColorLabelFilter>(
             nameof(ColorLabelFilter),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<bool> ShowBurstsProperty =
-        AvaloniaProperty.Register<LibraryGridView, bool>(
+        AvaloniaProperty.Register<BrowseGridView, bool>(
             nameof(ShowBursts),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
-    public static readonly StyledProperty<LibraryThumbnailSize> ThumbnailSizeProperty =
-        AvaloniaProperty.Register<LibraryGridView, LibraryThumbnailSize>(
+    public static readonly StyledProperty<BrowseThumbnailSize> ThumbnailSizeProperty =
+        AvaloniaProperty.Register<BrowseGridView, BrowseThumbnailSize>(
             nameof(ThumbnailSize),
-            LibraryThumbnailSize.Medium,
+            BrowseThumbnailSize.Medium,
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
-    public static readonly DirectProperty<LibraryGridView, double> ImageViewportWidthProperty =
-        AvaloniaProperty.RegisterDirect<LibraryGridView, double>(
+    public static readonly DirectProperty<BrowseGridView, double> ImageViewportWidthProperty =
+        AvaloniaProperty.RegisterDirect<BrowseGridView, double>(
             nameof(ImageViewportWidth),
             view => view.ImageViewportWidth);
 
-    public static readonly DirectProperty<LibraryGridView, double> ImageViewportHeightProperty =
-        AvaloniaProperty.RegisterDirect<LibraryGridView, double>(
+    public static readonly DirectProperty<BrowseGridView, double> ImageViewportHeightProperty =
+        AvaloniaProperty.RegisterDirect<BrowseGridView, double>(
             nameof(ImageViewportHeight),
             view => view.ImageViewportHeight);
 
-    public static readonly DirectProperty<LibraryGridView, double> ThumbnailItemWidthProperty =
-        AvaloniaProperty.RegisterDirect<LibraryGridView, double>(
+    public static readonly DirectProperty<BrowseGridView, double> ThumbnailItemWidthProperty =
+        AvaloniaProperty.RegisterDirect<BrowseGridView, double>(
             nameof(ThumbnailItemWidth),
             view => view.ThumbnailItemWidth);
 
-    public static readonly DirectProperty<LibraryGridView, double> ThumbnailItemHeightProperty =
-        AvaloniaProperty.RegisterDirect<LibraryGridView, double>(
+    public static readonly DirectProperty<BrowseGridView, double> ThumbnailItemHeightProperty =
+        AvaloniaProperty.RegisterDirect<BrowseGridView, double>(
             nameof(ThumbnailItemHeight),
             view => view.ThumbnailItemHeight);
 
@@ -148,7 +148,7 @@ public partial class LibraryGridView : UserControl
         set => SetValue(ShowBurstsProperty, value);
     }
 
-    public LibraryThumbnailSize ThumbnailSize
+    public BrowseThumbnailSize ThumbnailSize
     {
         get => GetValue(ThumbnailSizeProperty);
         set => SetValue(ThumbnailSizeProperty, value);
@@ -172,7 +172,7 @@ public partial class LibraryGridView : UserControl
     private int _lastViewportStart = -1;
     private int _lastViewportCount = -1;
 
-    public LibraryGridView()
+    public BrowseGridView()
     {
         InitializeComponent();
         UpdateFilterBar();
@@ -285,19 +285,19 @@ public partial class LibraryGridView : UserControl
 
     private void UpdateThumbnailSizeButtons()
     {
-        SmallThumbnailButton.IsChecked = ThumbnailSize == LibraryThumbnailSize.Small;
-        MediumThumbnailButton.IsChecked = ThumbnailSize == LibraryThumbnailSize.Medium;
-        LargeThumbnailButton.IsChecked = ThumbnailSize == LibraryThumbnailSize.Large;
+        SmallThumbnailButton.IsChecked = ThumbnailSize == BrowseThumbnailSize.Small;
+        MediumThumbnailButton.IsChecked = ThumbnailSize == BrowseThumbnailSize.Medium;
+        LargeThumbnailButton.IsChecked = ThumbnailSize == BrowseThumbnailSize.Large;
     }
 
     private void OnSmallThumbnailClick(object? sender, RoutedEventArgs e) =>
-        ThumbnailSize = LibraryThumbnailSize.Small;
+        ThumbnailSize = BrowseThumbnailSize.Small;
 
     private void OnMediumThumbnailClick(object? sender, RoutedEventArgs e) =>
-        ThumbnailSize = LibraryThumbnailSize.Medium;
+        ThumbnailSize = BrowseThumbnailSize.Medium;
 
     private void OnLargeThumbnailClick(object? sender, RoutedEventArgs e) =>
-        ThumbnailSize = LibraryThumbnailSize.Large;
+        ThumbnailSize = BrowseThumbnailSize.Large;
 
     private void OnThumbnailPointerPressed(object? sender, PointerPressedEventArgs e)
     {

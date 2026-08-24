@@ -14,7 +14,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
         $"happy-photon-workspace-transition-{Guid.NewGuid():N}")).FullName;
 
     [AvaloniaFact]
-    public async Task ReplacementRefresh_CrossingIntoLibraryIsRejected()
+    public async Task ReplacementRefresh_CrossingIntoBrowseIsRejected()
     {
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();
@@ -41,7 +41,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
             },
             HasEdits = true
         };
-        vm.Library.SetImages([image]);
+        vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
 
         try
@@ -70,13 +70,13 @@ public sealed class WorkspaceTransitionTests : IDisposable
         finally
         {
             releaseRefresh.TrySetResult();
-            vm.Library.ReplaceThumbnail(image, null);
+            vm.Browse.ReplaceThumbnail(image, null);
             await vm.DisposeAsync();
         }
     }
 
     [AvaloniaFact]
-    public async Task BeforeAfterRender_CrossingIntoLibraryIsRejected()
+    public async Task BeforeAfterRender_CrossingIntoBrowseIsRejected()
     {
         using var catalog = new CatalogService(_root);
         await catalog.InitializeAsync();

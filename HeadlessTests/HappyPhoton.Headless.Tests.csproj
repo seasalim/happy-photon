@@ -37,7 +37,7 @@
     <Compile Include="..\Tests\GoldenTestPaths.cs" Link="GoldenTestPaths.cs" />
     <Compile Include="..\Tests\HelpAboutDialogTests.cs" Link="HelpAboutDialogTests.cs" />
     <Compile Include="..\Tests\ImageFileThumbnailLifetimeTests.cs" Link="ImageFileThumbnailLifetimeTests.cs" />
-    <Compile Include="..\Tests\LibrarySelectionMenuTests.cs" Link="LibrarySelectionMenuTests.cs" />
+    <Compile Include="..\Tests\BrowseSelectionMenuTests.cs" Link="BrowseSelectionMenuTests.cs" />
     <Compile Include="..\Tests\ManualFolderRefreshViewTests.cs" Link="ManualFolderRefreshViewTests.cs" />
     <Compile Include="..\Tests\PreviewBitmapLifetimeTests.cs" Link="PreviewBitmapLifetimeTests.cs" />
     <Compile Include="..\Tests\PreviewPlaceholderTests.cs" Link="PreviewPlaceholderTests.cs" />

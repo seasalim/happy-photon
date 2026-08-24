@@ -20,7 +20,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Null(empty.FirstRunExperienceVersion);
         Assert.False(empty.StripLocationData);
         Assert.Equal(OutputSharpeningMode.Screen, empty.OutputSharpening);
-        Assert.Equal(LibraryThumbnailSize.Medium, empty.LibraryThumbnailSize);
+        Assert.Equal(BrowseThumbnailSize.Medium, empty.BrowseThumbnailSize);
         Assert.Equal(AppTheme.Dark, empty.AppTheme);
 
         await service.SaveAsync(new AppSettings
@@ -29,7 +29,7 @@ public sealed class AppSettingsServiceTests : IDisposable
             SelectedFolderPath = @"C:\Photos\Shoot",
             FirstRunExperienceVersion = 1,
             FileTypeFilter = ImageFileTypeFilter.Raw,
-            LibraryThumbnailSize = LibraryThumbnailSize.Large,
+            BrowseThumbnailSize = BrowseThumbnailSize.Large,
             AppTheme = AppTheme.MidGray,
             StripLocationData = true,
             OutputSharpening = OutputSharpeningMode.Print
@@ -40,7 +40,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(@"C:\Photos", loaded.RootFolderPath);
         Assert.Equal(@"C:\Photos\Shoot", loaded.SelectedFolderPath);
         Assert.Equal(ImageFileTypeFilter.Raw, loaded.FileTypeFilter);
-        Assert.Equal(LibraryThumbnailSize.Large, loaded.LibraryThumbnailSize);
+        Assert.Equal(BrowseThumbnailSize.Large, loaded.BrowseThumbnailSize);
         Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
         Assert.True(loaded.StripLocationData);
         Assert.Equal(OutputSharpeningMode.Print, loaded.OutputSharpening);
@@ -64,11 +64,11 @@ public sealed class AppSettingsServiceTests : IDisposable
     {
         using var catalog = new CatalogService(_catalogPath);
         await catalog.InitializeAsync();
-        await catalog.SetAppSettingAsync("LibraryThumbnailSize", value);
+        await catalog.SetAppSettingAsync("BrowseThumbnailSize", value);
 
         var loaded = await new AppSettingsService(catalog).LoadAsync();
 
-        Assert.Equal(LibraryThumbnailSize.Medium, loaded.LibraryThumbnailSize);
+        Assert.Equal(BrowseThumbnailSize.Medium, loaded.BrowseThumbnailSize);
     }
 
     [Fact]
@@ -76,11 +76,11 @@ public sealed class AppSettingsServiceTests : IDisposable
     {
         using var catalog = new CatalogService(_catalogPath);
         await catalog.InitializeAsync();
-        await catalog.SetAppSettingAsync("LibraryThumbnailSize", "large");
+        await catalog.SetAppSettingAsync("BrowseThumbnailSize", "large");
 
         var loaded = await new AppSettingsService(catalog).LoadAsync();
 
-        Assert.Equal(LibraryThumbnailSize.Large, loaded.LibraryThumbnailSize);
+        Assert.Equal(BrowseThumbnailSize.Large, loaded.BrowseThumbnailSize);
     }
 
     [Theory]
@@ -149,7 +149,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         await service.SavePreferencesAsync(new AppSettings
         {
             FileTypeFilter = ImageFileTypeFilter.Jpeg,
-            LibraryThumbnailSize = LibraryThumbnailSize.Small,
+            BrowseThumbnailSize = BrowseThumbnailSize.Small,
             AppTheme = AppTheme.MidGray,
             StripLocationData = true,
             OutputSharpening = OutputSharpeningMode.Off
@@ -160,7 +160,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal("selected", loaded.SelectedFolderPath);
         Assert.Equal(1, loaded.FirstRunExperienceVersion);
         Assert.Equal(ImageFileTypeFilter.Jpeg, loaded.FileTypeFilter);
-        Assert.Equal(LibraryThumbnailSize.Small, loaded.LibraryThumbnailSize);
+        Assert.Equal(BrowseThumbnailSize.Small, loaded.BrowseThumbnailSize);
         Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
         Assert.True(loaded.StripLocationData);
         Assert.Equal(OutputSharpeningMode.Off, loaded.OutputSharpening);

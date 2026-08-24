@@ -22,7 +22,7 @@ public sealed class MonochromePreviewArtifactsTests : IDisposable
         using var artifacts = await service.LoadPreviewArtifactsAsync(
             new ImageFile(_fixture.Path("mono.dng")),
             new EditSettings(),
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram: true,
             ClippingOverlaySide.None);
 

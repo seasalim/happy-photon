@@ -53,10 +53,10 @@ public partial class MainWindow
         vm.RequestExportDialogAsync = ShowExportDialogAsync;
         vm.RequestCatalogImportAsync = async () =>
             await ShowImportCatalogAsync();
-        vm.CaptureLibraryViewportAnchor =
-            () => _libraryGridView?.CaptureViewportAnchorPath();
-        vm.RestoreLibraryViewportAnchor =
-            path => _libraryGridView?.RestoreViewportAnchorPath(path);
+        vm.CaptureBrowseViewportAnchor =
+            () => _browseGridView?.CaptureViewportAnchorPath();
+        vm.RestoreBrowseViewportAnchor =
+            path => _browseGridView?.RestoreViewportAnchorPath(path);
         vm.RequestSettingsDialogAsync = async () =>
             await new SettingsDialog(vm).ShowDialog(this);
         vm.ConfirmMoveToTrashAsync = ConfirmMoveToTrashAsync;
@@ -160,10 +160,10 @@ public partial class MainWindow
                 return;
             }
 
-            vm.Library.FileTypeFilter = settings.FileTypeFilter;
+            vm.Browse.FileTypeFilter = settings.FileTypeFilter;
             vm.SetColorLabelNames(colorLabelNames);
             await vm.RestoreXmpSettingsAsync();
-            vm.RestoreLibraryThumbnailSize(settings.LibraryThumbnailSize);
+            vm.RestoreBrowseThumbnailSize(settings.BrowseThumbnailSize);
             vm.RestoreAppTheme(settings.AppTheme);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;
             vm.ExportSettings.OutputSharpening = settings.OutputSharpening;
@@ -446,8 +446,8 @@ public partial class MainWindow
             RootFolderPath = vm.RootFolders.FirstOrDefault()?.Path,
             SelectedFolderPath = vm.CurrentFolderPath,
             FirstRunExperienceVersion = vm.FirstRunExperienceVersion,
-            FileTypeFilter = vm.Library.FileTypeFilter,
-            LibraryThumbnailSize = vm.LibraryThumbnailSize,
+            FileTypeFilter = vm.Browse.FileTypeFilter,
+            BrowseThumbnailSize = vm.BrowseThumbnailSize,
             AppTheme = vm.AppTheme,
             StripLocationData = vm.ExportSettings.StripLocationData,
             OutputSharpening = vm.ExportSettings.OutputSharpening

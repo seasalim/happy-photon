@@ -17,7 +17,7 @@ public sealed class RawHistogramUiTests : IDisposable
     private readonly CatalogVmFixture _fx = new("rawhist-ui");
 
     [AvaloniaFact]
-    public async Task PreferenceFallsBackForStandardLibraryAndCloudSources()
+    public async Task PreferenceFallsBackForStandardBrowseAndCloudSources()
     {
         using var catalog = await _fx.CreateCatalogAsync("catalog");
         var vm = _fx.CreateViewModel(

@@ -49,7 +49,7 @@ always restores the split layout.
 |---|---|---|
 | Models | `Models/` | Plain data + `ObservableObject` state (`ImageFile`, `EditSettings`, …). No I/O. |
 | Services | `Services/` | All image/catalog/file logic. Flat folder, focused class names, no UI types except `Avalonia.Media.Imaging.Bitmap` as an output format. |
-| ViewModels | `ViewModels/` | `MainWindowViewModel` split into partial files per workflow (`.LibraryLoading`, `.Editing`, `.Folders`, …). Owns commands, debouncing, cancellation. |
+| ViewModels | `ViewModels/` | `MainWindowViewModel` split into partial files per workflow (`.BrowseLoading`, `.Editing`, `.Folders`, …). Owns commands, debouncing, cancellation. |
 | Views | `Views/` | XAML + minimal code-behind (dialogs, pointer handling, panel wiring). |
 
 Key service composition (`ImageService` is a facade, constructed lazily on first use):
@@ -100,7 +100,7 @@ built-in path. No profile ships and no profile operation performs a network read
 
 Develop mode holds one bounded preview pair plus its source analysis from a single
 half-size RAW decode (see the preview pipeline below), retaining that current pair
-across a same-image Library/Develop round-trip; export decodes a fresh
+across a same-image Browse/Develop round-trip; export decodes a fresh
 native-resolution base without preview analysis. The
 viewer's 100% geometry is anchored to original pixels, but preview detail remains
 limited by the large base; zoom beyond that ceiling is not a native-detail RAW
@@ -172,15 +172,15 @@ within the shared entry budget.
 
 Choosing **Start tour** starts a session-only workflow tour owned by
 `MainWindowViewModel.WorkflowTour`. Its three non-modal coachmarks anchor to stable
-Library and Develop layout points, suspend when the user changes view, and resume when
+Browse and Develop layout points, suspend when the user changes view, and resume when
 that view returns. While a coachmark is visible, unrelated stable sections are
 de-emphasized at a themed opacity while the active work surface stays fully
-interactive, and the Library empty-state card stays hidden for the tour's lifetime.
+interactive, and the Browse empty-state card stays hidden for the tour's lifetime.
 Each coachmark carries a decorative, never hit-testable photon trail (plus an opt-in
 glow on small target regions) so the step names its target without coordinate tracking
 between controls. Tour navigation never changes photograph state, filters, or
 selection; its export action opens a zero-selection preview with a prominent
-return-to-Library action instead of an enabled export command.
+return-to-Browse action instead of an enabled export command.
 
 ## The catalog
 
@@ -258,7 +258,7 @@ steady-state cost is zero.
 - **Batch paste**: proposed settings are cloned without mutating live models, then one
   catalog transaction reuses a parameterized update for every target. Any missing row
   rolls back the entire batch; models update only after commit. Thumbnail refresh uses
-  at most six workers and discards results for images no longer in the library.
+  at most six workers and discards results for images no longer in the browse.
 - **Flags, ratings, and color labels**: one set-based JSON-backed `UPDATE` writes every
   target for the user action inside a transaction. A missing target rolls back the set,
   and live models change only after commit.
@@ -308,7 +308,7 @@ XMP support is opt-in per catalog. Folder enumeration records `.xmp` files in
 the same pass as supported images, while XML parsing begins only after the
 thumbnail session has started and runs as cancellable background work.
 Reconciliation compares rating, flag, and label independently against the
-revisioned `image_assessments` row; catalog revisions and the active library
+revisioned `image_assessments` row; catalog revisions and the active browse
 generation guard UI adoption.
 
 In Read & write mode, only a committed local assessment mutation schedules a
@@ -350,7 +350,7 @@ sequenceDiagram
     UI->>TP: enumerate folder (FolderService)
     UI->>TP: LoadOrCreateImageStatesAsync (batched SQL)
     TP-->>UI: catalogId + edit/flag/rating per path
-    UI->>UI: assign state to ImageFiles, Library.SetImages(...)
+    UI->>UI: assign state to ImageFiles, Browse.SetImages(...)
     UI->>UI: defer first-image selection (Dispatcher.Post, Background)
     UI->>W: initial range: first ~12 thumbnails (6 workers x 2)
     W-->>UI: imageFile.Thumbnail = bitmap (continuations on UI context)
@@ -375,7 +375,7 @@ Folder switches are frequent and races here caused real bugs, so ownership is ex
   session can never clear a newer folder's state.
 - Workers observe cancellation cooperatively; an in-flight decode may finish after
   cancel. A monotonically increasing folder generation rejects that result and disposes
-  its bitmap instead of assigning into stale state. Library replacement, removal, and
+  its bitmap instead of assigning into stale state. Browse replacement, removal, and
   shutdown also dispose resident bitmaps deterministically.
 
 ### The pump
@@ -388,16 +388,16 @@ quality, then queues the requested Large follow-up. After that, one
 
 Develop and full-screen close a shared admission gate before preview work starts. Up to
 six source reads already admitted by the initial range or scheduler may finish, while
-queued visible-first work remains pending and resumes when Library becomes active.
+queued visible-first work remains pending and resumes when Browse becomes active.
 Paused pump work is excluded from status activity; direct thumbnail operations remain
 visible, and resuming the pump re-arms the activity sampler.
 
-- `LibraryGridView` derives visible indices from the scroll offset and grid geometry.
+- `BrowseGridView` derives visible indices from the scroll offset and grid geometry.
 - The ViewModel adds one viewport of nearest-first prefetch on each side, capped at 128
   images. Visible entries have higher priority than prefetch entries. Queued smaller
   requests are superseded, while a larger request arriving behind an in-flight smaller
   request is retained as its follow-up.
-- Active-library ownership is checked through a reference-identity set, keeping each
+- Active-browse ownership is checked through a reference-identity set, keeping each
   completed assignment O(1). A terminal decode failure is remembered on that folder's
   `ImageFile`, so viewport reports do not retry corrupt or unsupported files and any
   last successful resident bitmap remains visible; a fresh folder load creates new
@@ -462,7 +462,7 @@ On a cache miss, source candidates are tried in this order:
 
 RAW extraction retains the best safe embedded candidate and continues while it is
 below the generation target. It returns immediately at that target, otherwise returns
-the best candidate after all safe sources are exhausted. Library loading never starts a
+the best candidate after all safe sources are exhausted. Browse loading never starts a
 full RAW demosaic to satisfy Large.
 
 Edited standard images keep the low-resolution `RenderPipeline` path, which mirrors
@@ -533,7 +533,7 @@ threading and ownership view:
   decodes are single-flight by identity and newest-wins, and slider edits render only
   from the 1600 base. Camera-profile selection is part of decode identity, so matrix
   and HueSat tables switch together and stale-base renders are non-promotable. A
-  same-image Library/Develop round-trip retains this one pair; selection/path,
+  same-image Browse/Develop round-trip retains this one pair; selection/path,
   availability, folder, decode-identity, and shutdown invalidation retire it.
 - Warm cached previews and rendered thumbnails may paint immediately as last-known
   stale state; a background base decode and fresh render confirm or replace them.
@@ -562,7 +562,7 @@ threading and ownership view:
   stale-base render whose own base refresh already painted the same generation fresh
   reports success without painting, so the edit it carries still autosaves.
 - An accepted edited RAW render hands ownership to a tracked background
-  resize/conversion task for the ≤512px Library thumbnail — no full-size clone;
+  resize/conversion task for the ≤512px Browse thumbnail — no full-size clone;
   `PreviewService` retains the result strongly and queues it to the independent
   rendered-thumbs writer on promotion or image/view leave. Shutdown waits for tracked
   candidate and queue work before draining that writer. Rendered-cache writes happen
@@ -579,7 +579,7 @@ threading and ownership view:
   before processing. The optional sensor histogram and source-saturation mask install
   atomically with the pair in its held analysis and are exposed only through the same
   generation's `PreviewBaseLease`; full/export loads skip the pass entirely.
-- The ViewModel debounces interaction: preview 150 ms, Library thumbnail histogram
+- The ViewModel debounces interaction: preview 150 ms, Browse thumbnail histogram
   300 ms, and thumbnail refresh 500 ms, each with its own CTS. Every Develop
   state-defining render computes the active scope from the same BGRA8 buffer as its
   first paint. Entry paints seed both display scopes; histogram-active ticks skip the
@@ -590,7 +590,7 @@ threading and ownership view:
   fresh decode waits for **Download and open**.
 - Export independently re-resolves each selected profile; degraded selections use the
   built-in matrix and propagate a per-image warning.
-- Library mode never loads a 1600px preview just to draw the histogram: the UI thread
+- Browse mode never loads a 1600px preview just to draw the histogram: the UI thread
   copies the current thumbnail pixels into an independently owned bitmap, and a
   threadpool task scales it to a DPI-independent 150 px bitmap and calculates its
   bins through the same BGRA accumulation path as Develop, without waveform storage.
@@ -618,7 +618,7 @@ no histogram-local arming bar.
 
 Shared per-image decode methods do not mutate activity state or notify the UI. Folder
 switches register one initial range and a bounded number of operation-level wakes,
-independent of folder size; samples never enumerate the Library, caches, or export
+independent of folder size; samples never enumerate the Browse, caches, or export
 lists. This preserves invariant 3 while keeping property changes bounded to the 4 Hz
 sampler.
 
@@ -641,7 +641,7 @@ sampler.
 | Resting preview render | Threadpool, at most 2 managed workers | Parent interactive generation + decode key + resting serial; edit token cancels |
 | Adjacent preview warm | Long-running background task, capacity one | Settled Develop paint; cancel-and-drop replacement semantics; one encoded cache handoff |
 | Display histogram + waveform | Preview render worker, at most 2 managed workers | Exact preview BGRA8 buffer; bounded row-parallel accumulation; histogram ticks skip inactive waveform accumulation |
-| Library histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
+| Browse histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |
 | Explicit source hydration | Threadpool stream read | Single image or confirmed export batch; cancellation is best effort |
 
@@ -664,7 +664,7 @@ sampler.
 10. Progress indicators are indeterminate only while their represented work is active.
     Hidden indeterminate FluentTheme ProgressBars animate anyway and keep the
     compositor rendering — they were the entire measured idle CPU/GPU load — so bars
-    bind `IsIndeterminate` to their busy flag and library tiles use a static loading
+    bind `IsIndeterminate` to their busy flag and browse tiles use a static loading
     placeholder, keeping idle usage at the empty-window floor.
 11. Interactive preview ticks stay on the pre-derived 1600 base. Viewport-resolution
     work begins only after a current 1600 paint and never enters histogram/cache

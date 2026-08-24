@@ -25,9 +25,9 @@ workflow partial, don't grow the root file).
 
 ## 2. Develop right panel — target layout (top → bottom)
 
-The right pane is mode-differentiated. In Library it is a **review pane** — the
+The right pane is mode-differentiated. In Browse it is a **review pane** — the
 fixed thumbnail histogram, the metadata/EXIF block, and a selection summary —
-with no editing controls; everything below is a Develop-only surface (Library
+with no editing controls; everything below is a Develop-only surface (Browse
 editing surfaces remain a non-goal, §10).
 
 ```
@@ -66,7 +66,7 @@ DEVELOP FOOTER
 ```
 
 The adjustment stack scrolls beneath the histogram while the Develop footer remains
-fixed. Export intentionally has no pointer action in Develop: return to the Library
+fixed. Export intentionally has no pointer action in Develop: return to the Browse
 header to click **Export**, or use the global `Ctrl+E` shortcut from either workspace.
 
 Brightness is disabled (not hidden) at `DisabledOpacity` while a RAW base is active,
@@ -229,9 +229,9 @@ be read.
   frozen: bins, channel colors, geometry, and 80 px height do not change.
   Alternate bodies may grow the box vertically only while selected, absorbed by
   the adjustment scroll area. Scope selection is session-only VM state. Scopes
-  are Develop/fullscreen-only: the Library review pane shows only the fixed
+  are Develop/fullscreen-only: the Browse review pane shows only the fixed
   thumbnail histogram — never a waveform or RAW data. When sensor data is
-  unavailable (JPEG, Library, cloud-only, unsupported-CFA, stale-base,
+  unavailable (JPEG, Browse, cloud-only, unsupported-CFA, stale-base,
   replacement-in-flight), the RAW entry stays disabled in place — never removed —
   with a reason-specific `ToolTip.ShowOnDisabled` tooltip while display data shows
   as `HISTOGRAM`; the UI never labels display-referred data RAW. A selected RAW
@@ -278,7 +278,7 @@ be read.
   current profile.
 - **Copy/paste** (`Ctrl+Shift+C/V`) carries the same widened set, including the mixer
   and nullable channel curves but never camera profiles; geometry still never
-  transfers; Library multi-paste confirmation flow unchanged.
+  transfers; Browse multi-paste confirmation flow unchanged.
 
 Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields use
 the controls in §2; copy/paste preserves nullable capture-sharpen semantics.
@@ -290,8 +290,8 @@ surface. Develop preview and export are the authoritative effects surfaces.
 
 ## 7. Export dialog
 
-Export is an owned modal dialog centered over the main window. The Library header is
-the sole pointer entry. `Ctrl+E` opens the dialog from Library or Develop and remains
+Export is an owned modal dialog centered over the main window. The Browse header is
+the sole pointer entry. `Ctrl+E` opens the dialog from Browse or Develop and remains
 a no-op in image-only fullscreen mode. Opening the dialog snapshots the current export
 selection and disables the workspace until the dialog closes.
 
@@ -310,11 +310,11 @@ A selected profile that became missing, unavailable, corrupt, or hash-mismatched
 exports with built-in characterization and reports its per-image warning. Overwrite
 and original-file collision confirmations are owned by the export dialog.
 
-The final workflow-tour coachmark remains in Library; its primary action ends the tour
+The final workflow-tour coachmark remains in Browse; its primary action ends the tour
 before opening the dialog through the normal guarded command. The modal contains no
 coachmark, and closing it does not restore the completed tour step. When the tour has
 no export selection, the dialog still shows the complete configuration surface and
-relabels its primary Export action to **Return to Library**; it never starts an export.
+relabels its primary Export action to **Return to Browse**; it never starts an export.
 
 | Control | Spec |
 |---------|------|
@@ -334,7 +334,7 @@ No UI for quality-dependent chroma subsampling — it is automatic and stays inv
 Shortcut registrations belong in
 [`Views/ShortcutCatalog.cs`](../../Views/ShortcutCatalog.cs); a binding change
 updates its catalog entry in the same PR. The Help & About dialog reads that
-catalog directly, with the shortcut tab selected by default. Library mode
+catalog directly, with the shortcut tab selected by default. Browse mode
 ignores Develop-only keys.
 
 ## 9. Status bar
@@ -354,8 +354,8 @@ segment contains no animation. Preview preparation uses this segment exclusively
 ## 10. Explicit UI non-goals
 
 Export is the single permitted pipeline workflow modal. There are also no collapsible
-panel groups, in-app migration/what's-new dialog (release note only), Library-mode
-editing surfaces (the Library right pane is a review pane, §2), exposure-range change
+panel groups, in-app migration/what's-new dialog (release note only), Browse-mode
+editing surfaces (the Browse right pane is a review pane, §2), exposure-range change
 (±3 EV stays), or slider re-ordering beyond the absent Temperature slider. The
 histogram-plot freeze and the scope-box allowances within it are normative in §5.
 

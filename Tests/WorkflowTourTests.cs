@@ -10,7 +10,7 @@ public sealed class WorkflowTourTests : IDisposable
     private readonly CatalogVmFixture _fx = new("tour");
 
     [Fact]
-    public async Task FirstRunStartTourChoice_StartsTourInLibrary()
+    public async Task FirstRunStartTourChoice_StartsTourInBrowse()
     {
         using var catalog = CreateCatalog();
         var vm = _fx.CreateViewModel(catalog);
@@ -51,10 +51,10 @@ public sealed class WorkflowTourTests : IDisposable
                 }
             }
         };
-        vm.Library.FileTypeFilter = ImageFileTypeFilter.Jpeg;
-        vm.Library.FlagFilter = FlagFilter.Picked;
-        vm.Library.MinimumRating = 3;
-        vm.Library.SetImages([image]);
+        vm.Browse.FileTypeFilter = ImageFileTypeFilter.Jpeg;
+        vm.Browse.FlagFilter = FlagFilter.Picked;
+        vm.Browse.MinimumRating = 3;
+        vm.Browse.SetImages([image]);
         vm.RefreshSelectedCount();
         var dialogRequests = 0;
         ExportDialogMode? requestedMode = null;
@@ -89,9 +89,9 @@ public sealed class WorkflowTourTests : IDisposable
         Assert.Equal(WbMode.Custom, image.EditSettings.Wb.Mode);
         Assert.Equal(6800, image.EditSettings.Wb.Kelvin);
         Assert.Equal(6, image.EditSettings.Wb.Tint);
-        Assert.Equal(ImageFileTypeFilter.Jpeg, vm.Library.FileTypeFilter);
-        Assert.Equal(FlagFilter.Picked, vm.Library.FlagFilter);
-        Assert.Equal(3, vm.Library.MinimumRating);
+        Assert.Equal(ImageFileTypeFilter.Jpeg, vm.Browse.FileTypeFilter);
+        Assert.Equal(FlagFilter.Picked, vm.Browse.FlagFilter);
+        Assert.Equal(3, vm.Browse.MinimumRating);
         await vm.DisposeAsync();
     }
 

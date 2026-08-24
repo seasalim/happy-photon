@@ -41,14 +41,14 @@ public sealed class RawProfileRenderCorrelationTests : IDisposable
         using var firstArtifacts = await service.ApplyEditsToPreviewArtifactsAsync(
             image,
             first,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram: true,
             ClippingOverlaySide.None);
         var firstDecodeCount = loader.DecodeCount;
         using var secondArtifacts = await service.ApplyEditsToPreviewArtifactsAsync(
             image,
             second,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram: true,
             ClippingOverlaySide.None);
 

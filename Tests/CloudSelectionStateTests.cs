@@ -14,7 +14,7 @@ public sealed class CloudSelectionStateTests : IDisposable
         $"happy-photon-cloud-selection-{Guid.NewGuid():N}");
 
     [AvaloniaFact]
-    public async Task LibrarySelection_CloudAfterLocalClearsDerivedEditUi()
+    public async Task BrowseSelection_CloudAfterLocalClearsDerivedEditUi()
     {
         Directory.CreateDirectory(_root);
         var localPath = WriteJpeg("local.jpg");
@@ -47,7 +47,7 @@ public sealed class CloudSelectionStateTests : IDisposable
             {
                 EditSettings = CreateNonDefaultSettings()
             };
-            viewModel.Library.SetImages([local, cloud]);
+            viewModel.Browse.SetImages([local, cloud]);
             viewModel.SelectedImage = local;
             viewModel.Histogram = new HistogramData();
             viewModel.IsWhiteBalanceReady = true;
@@ -88,7 +88,7 @@ public sealed class CloudSelectionStateTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task LibrarySelection_CloudUsesCachedThumbnailHistogram()
+    public async Task BrowseSelection_CloudUsesCachedThumbnailHistogram()
     {
         Directory.CreateDirectory(_root);
         var cloudPath = WriteJpeg("cached-cloud.jpg");
@@ -106,8 +106,8 @@ public sealed class CloudSelectionStateTests : IDisposable
                 cloudPath,
                 SourceAvailability.RequiresHydration);
             using var source = new MagickImage(MagickColors.Orange, 16, 16);
-            viewModel.Library.SetImages([cloud]);
-            viewModel.Library.ReplaceThumbnail(
+            viewModel.Browse.SetImages([cloud]);
+            viewModel.Browse.ReplaceThumbnail(
                 cloud,
                 BitmapConversionService.ConvertToBitmap(source));
 
@@ -125,10 +125,10 @@ public sealed class CloudSelectionStateTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task CloudStateChange_NotifiesEditStateOutsideLibrary()
+    public async Task CloudStateChange_NotifiesEditStateOutsideBrowse()
     {
         Directory.CreateDirectory(_root);
-        var imagePath = WriteJpeg("outside-library.jpg");
+        var imagePath = WriteJpeg("outside-browse.jpg");
         using var catalog = new CatalogService(Path.Combine(_root, "outside-catalog"));
         await catalog.InitializeAsync();
         var viewModel = new MainWindowViewModel(
@@ -190,7 +190,7 @@ public sealed class CloudSelectionStateTests : IDisposable
             {
                 EditSettings = new EditSettings { Exposure = 2 }
             };
-            viewModel.Library.SetImages([local, cloud]);
+            viewModel.Browse.SetImages([local, cloud]);
             viewModel.SelectedImage = local;
             viewModel.CopyEditSettingsCommand.Execute(null);
             viewModel.ToggleImageSelection(local);

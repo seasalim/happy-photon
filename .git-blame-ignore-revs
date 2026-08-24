@@ -1,0 +1,4 @@
+# Repository-wide mechanical changes that obscure useful line history.
+# Configure locally with: git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# Mechanical rename of the Library workspace to Browse: add its squash-merge hash below.

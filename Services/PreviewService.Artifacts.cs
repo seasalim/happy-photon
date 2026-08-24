@@ -56,7 +56,7 @@ public sealed partial class PreviewService
         LoadPreviewWithHistogramAsync(
             imageFile,
             settings,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram,
             cancellationToken);
 
@@ -87,7 +87,7 @@ public sealed partial class PreviewService
         ApplyEditsToPreviewAsync(
             imageFile,
             settings,
-            ThumbnailSizeRequest.For(LibraryThumbnailSize.Medium),
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
             skipHistogram,
             cancellationToken);
 

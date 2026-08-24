@@ -7,9 +7,9 @@ using Xunit;
 namespace HappyPhoton.Tests;
 
 [Collection(AvaloniaTestCollection.Name)]
-public sealed class ExportLibraryRefreshTests : IDisposable
+public sealed class ExportBrowseRefreshTests : IDisposable
 {
-    private readonly CatalogVmFixture _fx = new("export-library");
+    private readonly CatalogVmFixture _fx = new("export-browse");
 
     [WindowsFact]
     public void ApprovedExport_RefreshesThumbnailAfterHydration()
@@ -33,7 +33,7 @@ public sealed class ExportLibraryRefreshTests : IDisposable
             {
                 ThumbnailDeferredForHydration = true
             };
-            viewModel.Library.SetImages([image]);
+            viewModel.Browse.SetImages([image]);
             viewModel.ExportSettings.OutputFolder = _fx.Path("export");
 
             var exported = Complete(
@@ -55,7 +55,7 @@ public sealed class ExportLibraryRefreshTests : IDisposable
     }
 
     [WindowsFact]
-    public void ExportFailure_IsNotReplacedByLibraryRefreshFailure()
+    public void ExportFailure_IsNotReplacedByBrowseRefreshFailure()
     {
         var sourcePath = WriteJpeg("failure.jpg");
         using var catalog = _fx.CreateCatalog("failure-catalog");
@@ -80,7 +80,7 @@ public sealed class ExportLibraryRefreshTests : IDisposable
             {
                 ThumbnailDeferredForHydration = true
             };
-            viewModel.Library.SetImages([image]);
+            viewModel.Browse.SetImages([image]);
             viewModel.ExportSettings.OutputFolder = _fx.Path("failure-export");
 
             var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -98,7 +98,7 @@ public sealed class ExportLibraryRefreshTests : IDisposable
     }
 
     [WindowsFact]
-    public void CanceledExport_DoesNotRunLibraryRefreshTail()
+    public void CanceledExport_DoesNotRunBrowseRefreshTail()
     {
         var sourcePath = WriteJpeg("canceled.jpg");
         using var catalog = _fx.CreateCatalog("canceled-catalog");
@@ -123,7 +123,7 @@ public sealed class ExportLibraryRefreshTests : IDisposable
             {
                 ThumbnailDeferredForHydration = true
             };
-            viewModel.Library.SetImages([image]);
+            viewModel.Browse.SetImages([image]);
             viewModel.ExportSettings.OutputFolder = _fx.Path("canceled-export");
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();
