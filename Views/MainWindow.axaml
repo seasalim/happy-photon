@@ -111,8 +111,7 @@
                 <!-- Navigator -->
                 <Border x:Name="NavigatorPanel"
                         Grid.Row="0" Background="{DynamicResource SurfaceHigh}" Padding="8"
-                        BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1"
-                        IsVisible="{Binding HasSelectedImage}">
+                        BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1">
                     <StackPanel>
                         <TextBlock Classes="section-label" Text="NAVIGATOR" Margin="0,0,0,6"/>
                         <Border Background="{DynamicResource SurfaceLow}" CornerRadius="3"
@@ -143,7 +142,7 @@
                                 CornerRadius="{StaticResource RadiusSmall}"
                                 Padding="8"
                                 Margin="0,8,0,0"
-                                IsVisible="{Binding SelectedImage.SourceRequiresHydration}">
+                                IsVisible="{Binding SelectedImage.SourceRequiresHydration, FallbackValue=False}">
                             <StackPanel Spacing="6">
                                 <TextBlock Text="This original is online-only."
                                            Foreground="{DynamicResource TextSecondary}"
