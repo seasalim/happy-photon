@@ -6,8 +6,8 @@ raw.pixls.us files were uploaded under the
 The Dryad high-ISO dataset is also CC0. The derived standard-format fixtures therefore
 remain CC0. The compact Display P3 profile used during generation is also CC0.
 The ColorChecker fixture is the sixth distinct RAW and is an author-captured CC0
-exception to the raw.pixls.us roster. The iPhone HEIC is an original project-
-contributor capture contributed under the repository's GPL-3.0-or-later terms.
+exception to the raw.pixls.us roster. The iPhone HEIC is a second
+author-captured CC0 exception on the same footing.
 
 Downloaded modern-camera fixtures are not part of this directory. Their authoritative
 provenance, license, size, hash, and reviewed behavior are recorded in
@@ -29,7 +29,7 @@ provenance, license, size, hash, and reviewed behavior are recorded in
 | `adobe-rgb-reference.jpg` | Adobe RGB normalization sentinel | Generated from the sRGB reference with Magick.NET's Adobe RGB 1998 profile, CC0 | `acdd66bc2ea5b55de54f329e7a5c53a84f5efd7f7041812cb36501f4fd9cc4e2` |
 | `reference-16bit.tiff` | Standard-format depth preservation | Generated from the reference CR2 with `scripts/generate-pipeline-test-assets.cs`, CC0 | `2d68f4b19d0623ca220df8205e307b34a63c4be9fcc50f126ebbb20d123052d4` |
 | `reference.heic` | Platform-codec path | Encoded from `srgb-reference.jpg` with pillow-heif 1.1.1, CC0 | `297afe8c8415871966591d671e7f181a6e73a31c1dcd65dcb657d997981ff166` |
-| `iphone-14-pro-iso-1000.heic` | High-ISO standard-source luminance-NR tuning; iPhone 14 Pro, ISO 1000, captured 2025-04-18 | Original capture contributed in commit `9ea949d`; redistributable under GPL-3.0-or-later per `CONTRIBUTING.md`; 2,019,243 bytes | `e4be19fba9f585b74ac633af0e545bcb5a331db7ec3d0d8dea81d8c538cb1e02` |
+| `iphone-14-pro-iso-1000.heic` | High-ISO standard-source luminance-NR tuning; iPhone 14 Pro, ISO 1000, captured 2025-04-18 | Author capture supplied to the project and released under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/); GPS metadata stripped before commit; 2,019,243 bytes | `e4be19fba9f585b74ac633af0e545bcb5a331db7ec3d0d8dea81d8c538cb1e02` |
 
 Regenerate the JPEG and TIFF derivatives:
 

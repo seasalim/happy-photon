@@ -17,7 +17,7 @@ oldest/smallest CC0 body per mosaic type. Provenance is recorded in
 | X-Trans RAF | Fuji path | raw.pixls.us CC0 |
 | DNG | Adobe container path | raw.pixls.us CC0 |
 | High-ISO Bayer raw | luminance-NR quality/runtime tuning | CC0 research dataset |
-| High-ISO iPhone HEIC (≤ 8.5 MiB) | standard-source luminance-NR tuning | contributor original, GPL-3.0-or-later |
+| High-ISO iPhone HEIC (≤ 8.5 MiB) | standard-source luminance-NR tuning | author capture, CC0 exception |
 | Nikon D300 ColorChecker NEF | physical colorimetric ground truth | author capture, CC0 exception |
 | sRGB JPEG with EXIF+GPS+orientation 6 | metadata policy, orientation | author with exiftool from a CC0 photo |
 | Display-P3 JPEG of the same picture as an sRGB JPEG | ICC normalize sentinel — sRGB-derived content, so it cannot show gamut preservation | generate via Magick from a CC0 source |
