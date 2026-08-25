@@ -385,15 +385,29 @@ public partial class MainWindowViewModel
         }
     }
 
-    // Original-surface settings keep geometry-like decode state (rotation,
-    // horizon, crop, lens) while dropping color edits; the full-canvas crop keeps
-    // any overlay aligned. Shared so the clipping overlay renders the exact frame
+    // Reverts tone and color from live edit state; the full-canvas crop keeps any
+    // overlay aligned. Shared so the clipping overlay renders the exact frame
     // Before/After paints, never edited settings mistaken for the original.
-    private EditSettings BuildOriginalRenderSettings(ImageFile image) => new()
+    private EditSettings BuildOriginalRenderSettings(ImageFile image) =>
+        BuildOriginalRenderSettings(
+            image,
+            Rotation,
+            HorizonRotation,
+            PreviewCrop());
+
+    // The one original-surface builder: the whole geometry family (rotation,
+    // horizon, crop, geometry, lens) survives, tone and color revert. The frame
+    // is a parameter because the toggle and the overlay describe live edit
+    // state while a preview load describes the stored file.
+    private static EditSettings BuildOriginalRenderSettings(
+        ImageFile image,
+        int rotation,
+        double horizonRotation,
+        CropRegion? crop) => new()
     {
-        Rotation = Rotation,
-        HorizonRotation = HorizonRotation,
-        Crop = PreviewCrop(),
+        Rotation = rotation,
+        HorizonRotation = horizonRotation,
+        Crop = crop,
         Geometry = image.EditSettings.Geometry?.Clone(),
         Curve = new CurveData(),
         Lens = image.EditSettings.Lens.Clone()

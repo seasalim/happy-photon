@@ -156,14 +156,13 @@ public partial class MainWindowViewModel
         {
             var intent = _requestedPreviewIntent;
             var renderSettings = intent == PreviewSurfaceIntent.Original
-                ? new EditSettings
-                {
-                    Rotation = imageFile.EditSettings.Rotation,
-                    HorizonRotation = imageFile.EditSettings.HorizonRotation,
-                    Geometry = imageFile.EditSettings.Geometry?.Clone(),
-                    Crop = imageFile.EditSettings.Crop?.Clone(),
-                    Curve = new CurveData()
-                }
+                // A preview load stands the stored image back up, so its frame
+                // comes from the file rather than from live edit state.
+                ? BuildOriginalRenderSettings(
+                    imageFile,
+                    imageFile.EditSettings.Rotation,
+                    imageFile.EditSettings.HorizonRotation,
+                    imageFile.EditSettings.Crop?.Clone())
                 : imageFile.EditSettings;
             var cachedIdentity = RenderSettingsHash.Compute(renderSettings);
             var cachedTask = ImageService.Previews.LoadCachedPreviewAsync(

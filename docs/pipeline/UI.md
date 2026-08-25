@@ -187,6 +187,13 @@ be read.
 ## 4. Viewer interactions
 
 - **Before/after** (`B` or the Develop footer eye): shows the original while active.
+  The original reverts tone and color only; the whole geometry family — rotation,
+  horizon, crop, geometry, and lens corrections — survives, so before and after stay
+  registered and lens corrections the user turned off (or a Legacy lens baseline) are
+  not silently reapplied. Every path that paints an original builds those settings
+  through one shared builder, differing only in the frame it passes: live edit state
+  for the toggle and the clipping overlay, the ImageFile for a preview reloaded by a
+  workspace transition or source hydration that leaves the original intent standing.
   The toggle changes requested intent immediately, but its visible active state follows
   only an accepted render outcome. A second toggle inverts the requested intent even
   while the first render is pending. Edit mutations request edited intent; maintenance,
