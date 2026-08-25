@@ -220,6 +220,7 @@ public partial class ZoomPanControl
         _imageControl.Height = logicalSize.Height;
         UpdateCropOverlaySize();
         UpdateClippingOverlaySize();
+        UpdateAlignmentGridSize();
     }
 
     private ViewportAnchor? CaptureViewportCenterAnchor()

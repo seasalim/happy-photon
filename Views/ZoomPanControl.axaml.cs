@@ -141,6 +141,7 @@ public partial class ZoomPanControl : UserControl
         _assessmentMat = this.FindControl<Border>("AssessmentMat");
         InitializeVisibleRegionTracking();
         InitializeClippingOverlay();
+        InitializeAlignmentGrid();
         InitializeDeviceScaling();
         InitializeWheelAnchoring();
 
@@ -171,6 +172,7 @@ public partial class ZoomPanControl : UserControl
             }
             ApplyColorAssessment();
             UpdateImageSize();
+            UpdateAlignmentGridVisibility();
             if (AutoFit)
             {
                 RequestAutoFit();
@@ -201,6 +203,7 @@ public partial class ZoomPanControl : UserControl
         else if (change.Property == IsCropModeProperty)
         {
             UpdateCropOverlayVisibility();
+            UpdateAlignmentGridVisibility();
         }
         else if (change.Property == IsWhiteBalancePickingProperty)
         {
@@ -238,6 +241,10 @@ public partial class ZoomPanControl : UserControl
         else if (IsClippingProperty(change.Property))
         {
             UpdateClippingOverlaySize();
+        }
+        else if (change.Property == ShowAlignmentGridProperty)
+        {
+            UpdateAlignmentGridVisibility();
         }
 
         if (change.Property == SourceProperty ||

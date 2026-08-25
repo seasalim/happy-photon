@@ -208,6 +208,11 @@ be read.
   samples. TIFF, PNG, and other formats disable only the red triangle as unavailable.
   The latched image carries one muted, chrome-less `CLIPPING · HIGHLIGHTS / FLOOR` line;
   toggling also uses the standard 1.5-second feedback toast.
+- **Alignment grid** (Develop only): changing Vertical, Horizontal, Aspect, or
+  Distortion temporarily fades in a dense, near-square grid over the corrected
+  image bounds. It follows image pan and zoom, fades out 1.5 seconds after the
+  last geometry change, and is suppressed while crop mode owns the viewer grid.
+  The overlay is display-only and never enters edit settings or rendered output.
 - **Zoom is device-true and original-relative.** `ZoomLevel = 1.0` maps one original
   image pixel to one device pixel, independent of the monitor's render scaling, and
   the mouse wheel keeps the image point under the pointer fixed while zooming. The

@@ -296,8 +296,14 @@ public partial class MainWindowViewModel
     partial void OnIsWhiteBalanceReadyChanged(bool value) =>
         NotifyWhiteBalanceCommandState();
 
-    partial void OnIsCropModeChanged(bool value) =>
+    partial void OnIsCropModeChanged(bool value)
+    {
         NotifyWhiteBalanceCommandState();
+        if (value)
+        {
+            ClearAlignmentGrid();
+        }
+    }
 
     private void SaveWhiteBalanceTo(EditSettings target)
     {

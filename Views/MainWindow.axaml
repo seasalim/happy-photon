@@ -226,6 +226,7 @@
                                                   ClippingMask="{Binding PreviewClippingMask}"
                                                   VisibleClippingSides="{Binding VisibleClippingOverlaySides}"
                                                   IsClippingOverlayLatched="{Binding IsClippingOverlayLatched}"
+                                                  ShowAlignmentGrid="{Binding IsAlignmentGridVisible}"
                                                   IsCropAspectLocked="{Binding IsCropAspectLocked}"
                                                   Crop="{Binding CurrentCrop, Mode=TwoWay}"
                                                   ScrollBarVisibility="Hidden"

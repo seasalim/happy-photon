@@ -55,6 +55,7 @@ public partial class MainWindowViewModel
         CancelRestingPreview(clearParent: true);
         CancelAndDispose(ref _transientStatusCts);
         CancelAndDispose(ref _assessmentFeedbackCts);
+        CancelAndDispose(ref _alignmentGridCts);
         CancelAndDispose(ref _clippingOverlayCts);
         await DrainBackgroundActivityAsync();
 

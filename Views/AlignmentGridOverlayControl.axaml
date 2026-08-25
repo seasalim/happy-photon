@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="HappyPhoton.Views.AlignmentGridOverlayControl"
+             IsHitTestVisible="False">
+    <UserControl.Styles>
+        <Style Selector="Canvas.grid">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity"
+                                      Duration="0:0:0.16"
+                                      Easing="QuadraticEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Canvas.grid.visible">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Canvas x:Name="GridCanvas"
+            Classes="grid"
+            ClipToBounds="True"/>
+</UserControl>

@@ -55,6 +55,7 @@ public partial class MainWindowViewModel
         if (!ReferenceEquals(oldValue, newValue))
         {
             ClearAssessmentFeedback();
+            ClearAlignmentGrid();
         }
     }
 

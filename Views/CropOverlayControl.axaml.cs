@@ -216,34 +216,7 @@ public partial class CropOverlayControl : UserControl
     private void DrawGrid(Rect cropRect)
     {
         if (cropRect.Width < 30 || cropRect.Height < 30) return;
-
-        // Vertical lines (rule of thirds)
-        for (int i = 1; i <= 2; i++)
-        {
-            var x = cropRect.Left + cropRect.Width * i / 3.0;
-            var line = new Line
-            {
-                StartPoint = new Point(x, cropRect.Top),
-                EndPoint = new Point(x, cropRect.Bottom),
-                Stroke = GridBrush,
-                StrokeThickness = 1
-            };
-            _canvas!.Children.Add(line);
-        }
-
-        // Horizontal lines
-        for (int i = 1; i <= 2; i++)
-        {
-            var y = cropRect.Top + cropRect.Height * i / 3.0;
-            var line = new Line
-            {
-                StartPoint = new Point(cropRect.Left, y),
-                EndPoint = new Point(cropRect.Right, y),
-                Stroke = GridBrush,
-                StrokeThickness = 1
-            };
-            _canvas!.Children.Add(line);
-        }
+        OverlayGridLines.Draw(_canvas!, cropRect, GridBrush, 3, 3);
     }
 
     private void DrawHandles(Rect cropRect)

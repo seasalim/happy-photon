@@ -326,7 +326,11 @@ public partial class MainWindowViewModel
     {
         var isDevelopMode = value == WorkspaceMode.Develop;
         UpdateThumbnailPumpAdmission();
-        if (!isDevelopMode) CancelAdjacentPreviewWarm(true, dropRetained: true);
+        if (!isDevelopMode)
+        {
+            CancelAdjacentPreviewWarm(true, dropRetained: true);
+            ClearAlignmentGrid();
+        }
         // Cancel in-flight resting work but keep the parent: mode round-trips
         // on the same image must stay armed (publication is surface-gated and
         // render-time guards catch real staleness). Only selection changes
