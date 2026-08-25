@@ -173,12 +173,12 @@ public partial class ZoomPanControl
 
     private void OnProductionScalingChanged(object? sender, EventArgs e)
     {
-        var anchor = AutoFit
+        var anchor = EffectiveAutoFit
             ? null
             : CapturePendingOrViewportCenterAnchor();
         ScheduleAnchorRestoreAfterLayout(anchor);
         UpdateImageSize();
-        if (AutoFit)
+        if (EffectiveAutoFit)
         {
             RequestAutoFit();
         }
@@ -191,7 +191,7 @@ public partial class ZoomPanControl
         Bitmap? oldSource,
         Bitmap? newSource)
     {
-        if (oldSource == null || newSource == null || AutoFit)
+        if (oldSource == null || newSource == null || EffectiveAutoFit)
         {
             return null;
         }
@@ -211,7 +211,7 @@ public partial class ZoomPanControl
         var bitmapZoom = ZoomGeometryCalculator.BitmapRelativeZoom(
             Source.PixelSize,
             GetOriginalViewPixelSize(),
-            ZoomLevel);
+            EffectiveZoomLevel);
         var logicalSize = ZoomGeometryCalculator.ImageLogicalSize(
             Source.PixelSize,
             bitmapZoom,
@@ -341,7 +341,7 @@ public partial class ZoomPanControl
         }
 
         int requiredLongEdge;
-        if (AutoFit)
+        if (EffectiveAutoFit)
         {
             var fitBox = GetColorAssessmentGeometry().FitBox;
             if (fitBox.Width <= 0 || fitBox.Height <= 0)
@@ -357,7 +357,7 @@ public partial class ZoomPanControl
         {
             requiredLongEdge = ZoomGeometryCalculator.RequiredDeviceLongEdge(
                 originalViewPixels,
-                ZoomLevel);
+                EffectiveZoomLevel);
         }
 
         RequiredDeviceLongEdgeChanged?.Invoke(this, requiredLongEdge);

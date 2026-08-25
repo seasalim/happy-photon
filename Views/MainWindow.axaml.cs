@@ -331,6 +331,14 @@ public partial class MainWindow : Window
 
     private void OnWorkspaceKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape &&
+            e.KeyModifiers == KeyModifiers.None &&
+            GetActiveZoomPanControl()?.CancelLoupePeek() == true)
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Space &&
             e.KeyModifiers == KeyModifiers.None &&
             WorkspaceKeyRouting.TryHandleSpace(

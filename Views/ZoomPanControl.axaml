@@ -53,7 +53,25 @@
                        LetterSpacing="1"
                        Foreground="{DynamicResource TextMuted}">
                 <TextBlock.Effect>
-                    <DropShadowEffect Color="Black"
+                    <DropShadowEffect Color="{StaticResource ViewerStatusShadowColor}"
+                                      BlurRadius="6"
+                                      OffsetY="1"
+                                      Opacity="0.8"/>
+                </TextBlock.Effect>
+            </TextBlock>
+            <TextBlock x:Name="LoupeStatus"
+                       Text="1:1"
+                       IsVisible="{Binding $parent[views:ZoomPanControl].IsLoupePeekActive}"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Bottom"
+                       Margin="10,8"
+                       FontFamily="{StaticResource FontLabel}"
+                       FontSize="{StaticResource FontSizeLabel}"
+                       FontWeight="SemiBold"
+                       LetterSpacing="1"
+                       Foreground="{DynamicResource TextPrimary}">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="{StaticResource ViewerStatusShadowColor}"
                                       BlurRadius="6"
                                       OffsetY="1"
                                       Opacity="0.8"/>

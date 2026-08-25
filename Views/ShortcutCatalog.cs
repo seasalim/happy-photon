@@ -50,6 +50,7 @@ public static class ShortcutCatalog
             new("Ctrl+Z", "Undo the last edit in Develop"),
             new("Ctrl+Y  /  Ctrl+Shift+Z", "Redo the last undone edit in Develop"),
             new("Mouse wheel", "Zoom in Develop"),
+            new("Hold left mouse", "Peek at 1:1 below 1:1 in Develop or fullscreen"),
             new("Drag  /  Middle-drag", "Pan a zoomed image"),
             new("Double-click thumbnail", "Open the image in Develop"),
         ]),

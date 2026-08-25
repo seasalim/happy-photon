@@ -123,15 +123,15 @@ public partial class ZoomPanControl : UserControl
     private CropOverlayControl? _cropOverlay;
     private Panel? _surroundLayer;
     private Border? _assessmentMat;
-    private Point _lastPanPoint;
-    private Point _pressPoint;
-    private bool _isPanning;
-    private bool _isWhiteBalanceGesture;
-    private bool _pointerMoved;
     private readonly DisplayChainTrace? _displayChainTrace;
 
-    public ZoomPanControl()
+    public ZoomPanControl() : this(TimeProvider.System)
     {
+    }
+
+    internal ZoomPanControl(TimeProvider timeProvider)
+    {
+        _timeProvider = timeProvider;
         InitializeComponent();
 
         _imageControl = this.FindControl<Image>("ImageControl");
@@ -144,6 +144,7 @@ public partial class ZoomPanControl : UserControl
         InitializeAlignmentGrid();
         InitializeDeviceScaling();
         InitializeWheelAnchoring();
+        InitializeLoupePeek();
 
         UpdateScrollBarVisibility();
         ApplyColorAssessment();
@@ -173,7 +174,7 @@ public partial class ZoomPanControl : UserControl
             ApplyColorAssessment();
             UpdateImageSize();
             UpdateAlignmentGridVisibility();
-            if (AutoFit)
+            if (EffectiveAutoFit)
             {
                 RequestAutoFit();
             }
@@ -189,12 +190,12 @@ public partial class ZoomPanControl : UserControl
         }
         else if (change.Property == OriginalViewPixelSizeProperty)
         {
-            var anchor = AutoFit
+            var anchor = EffectiveAutoFit
                 ? null
                 : CapturePendingOrViewportCenterAnchor();
             ScheduleAnchorRestoreAfterLayout(anchor);
             UpdateImageSize();
-            if (AutoFit)
+            if (EffectiveAutoFit)
             {
                 RequestAutoFit();
             }
@@ -207,9 +208,7 @@ public partial class ZoomPanControl : UserControl
         }
         else if (change.Property == IsWhiteBalancePickingProperty)
         {
-            Cursor = IsWhiteBalancePicking
-                ? new Cursor(StandardCursorType.Cross)
-                : Cursor.Default;
+            UpdatePointerCursor();
         }
         else if (change.Property == CropProperty)
         {
@@ -238,6 +237,10 @@ public partial class ZoomPanControl : UserControl
             }
             RequestRequiredBoundPublication();
         }
+        else if (change.Property == SourceIdentityProperty)
+        {
+            OnSourceIdentityChanged(change.NewValue);
+        }
         else if (IsClippingProperty(change.Property))
         {
             UpdateClippingOverlaySize();
@@ -255,6 +258,12 @@ public partial class ZoomPanControl : UserControl
             _displayChainTrace?.OnInputChanged();
         }
         OnViewportGeometryInputChanged(change.Property);
+        if (change.Property == SourceProperty ||
+            change.Property == ZoomLevelProperty ||
+            change.Property == IsCropModeProperty)
+        {
+            UpdatePointerCursor();
+        }
     }
 
     private void ApplyColorAssessment()
@@ -322,7 +331,7 @@ public partial class ZoomPanControl : UserControl
     private void RequestAutoFit()
     {
         var fitBox = GetColorAssessmentGeometry().FitBox;
-        if (AutoFit && Source != null &&
+        if (EffectiveAutoFit && Source != null &&
             fitBox.Width > 0 && fitBox.Height > 0)
         {
             AutoFitRequested?.Invoke(this, GetFitZoomLevel());
@@ -380,119 +389,4 @@ public partial class ZoomPanControl : UserControl
         LayoutUpdated += OnLayoutUpdated;
     }
 
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
-    {
-        base.OnPointerPressed(e);
-
-        var point = e.GetCurrentPoint(this);
-        if (point.Properties.IsLeftButtonPressed &&
-            IsWhiteBalancePicking &&
-            !IsCropMode)
-        {
-            _isWhiteBalanceGesture = true;
-            _pointerMoved = false;
-            _pressPoint = e.GetPosition(this);
-            _lastPanPoint = _pressPoint;
-            _isPanning = CanPanContent();
-            e.Pointer.Capture(this);
-            e.Handled = true;
-            return;
-        }
-
-        if ((point.Properties.IsMiddleButtonPressed ||
-             point.Properties.IsLeftButtonPressed) &&
-            CanPanContent())
-        {
-            _isPanning = true;
-            _lastPanPoint = e.GetPosition(this);
-            e.Pointer.Capture(this);
-            Cursor = new Cursor(StandardCursorType.Hand);
-            e.Handled = true;
-        }
-    }
-
-    internal bool CanPanContent() =>
-        _scrollViewer != null &&
-        (_scrollViewer.Extent.Width > _scrollViewer.Viewport.Width ||
-         _scrollViewer.Extent.Height > _scrollViewer.Viewport.Height);
-
-    protected override void OnPointerMoved(PointerEventArgs e)
-    {
-        base.OnPointerMoved(e);
-
-        if (_isWhiteBalanceGesture)
-        {
-            var currentPoint = e.GetPosition(this);
-            var deltaX = _pressPoint.X - currentPoint.X;
-            var deltaY = _pressPoint.Y - currentPoint.Y;
-            _pointerMoved |= deltaX * deltaX + deltaY * deltaY > 16;
-        }
-
-        if (_isPanning && _scrollViewer != null)
-        {
-            var currentPoint = e.GetPosition(this);
-            var delta = _lastPanPoint - currentPoint;
-
-            _scrollViewer.Offset = new Vector(
-                _scrollViewer.Offset.X + delta.X,
-                _scrollViewer.Offset.Y + delta.Y);
-
-            _lastPanPoint = currentPoint;
-            e.Handled = true;
-        }
-    }
-
-    protected override void OnPointerReleased(PointerReleasedEventArgs e)
-    {
-        base.OnPointerReleased(e);
-
-        if (_isWhiteBalanceGesture)
-        {
-            var shouldPick = !_pointerMoved;
-            _isWhiteBalanceGesture = false;
-            _isPanning = false;
-            e.Pointer.Capture(null);
-            Cursor = IsWhiteBalancePicking
-                ? new Cursor(StandardCursorType.Cross)
-                : Cursor.Default;
-            if (shouldPick)
-            {
-                RequestWhiteBalancePick(e);
-            }
-            e.Handled = true;
-            return;
-        }
-
-        if (_isPanning)
-        {
-            _isPanning = false;
-            e.Pointer.Capture(null);
-            Cursor = Cursor.Default;
-            e.Handled = true;
-        }
-    }
-
-    private void RequestWhiteBalancePick(PointerReleasedEventArgs e)
-    {
-        if (_imageControl == null ||
-            _imageControl.Bounds.Width <= 0 ||
-            _imageControl.Bounds.Height <= 0)
-        {
-            return;
-        }
-
-        var position = e.GetPosition(_imageControl);
-        if (position.X < 0 || position.Y < 0 ||
-            position.X > _imageControl.Bounds.Width ||
-            position.Y > _imageControl.Bounds.Height)
-        {
-            return;
-        }
-
-        WhiteBalancePickRequested?.Invoke(
-            this,
-            (
-                position.X / _imageControl.Bounds.Width,
-                position.Y / _imageControl.Bounds.Height));
-    }
 }

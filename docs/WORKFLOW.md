@@ -272,6 +272,11 @@ an invariant white reference band and mid-gray surround. The session-only mode
 works in Develop and fullscreen, re-fits when toggled so the complete reference
 field is visible, and never changes edits or exported pixels.
 
+Below 1:1, the magnifier cursor marks where you can press and hold the left mouse
+button over the Develop or fullscreen image to peek at 1:1 under the pointer.
+Drag to pan while peeking, then release or press `Escape` to return to the
+unchanged zoom and view.
+
 ![Happy Photon Develop showing presets, the image viewer, histogram, and
 adjustment controls](screenshots/Screenshot_Develop.png)
 

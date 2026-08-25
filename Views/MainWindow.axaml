@@ -216,6 +216,7 @@
 
                             <views:ZoomPanControl x:Name="ZoomPanControl"
                                                   Source="{Binding PreviewImage}"
+                                                  SourceIdentity="{Binding SelectedImage}"
                                                   ZoomLevel="{Binding ZoomLevel}"
                                                   OriginalViewPixelSize="{Binding OriginalViewPixelSize}"
                                                   AutoFit="{Binding IsZoomFitMode}"
@@ -394,6 +395,7 @@
 
             <views:ZoomPanControl x:Name="FullScreenZoomPanControl"
                                   Source="{Binding PreviewImage}"
+                                  SourceIdentity="{Binding SelectedImage}"
                                   ZoomLevel="{Binding ZoomLevel}"
                                   OriginalViewPixelSize="{Binding OriginalViewPixelSize}"
                                   AutoFit="{Binding IsZoomFitMode}"

@@ -220,6 +220,14 @@ be read.
   image bounds. It follows image pan and zoom, fades out 1.5 seconds after the
   last geometry change, and is suppressed while crop mode owns the viewer grid.
   The overlay is display-only and never enters edit settings or rendered output.
+- **1:1 loupe peek** (Develop and fullscreen): below 1:1, a magnifier cursor marks
+  where holding the left mouse button briefly magnifies the currently displayed
+  bitmap to one original-image pixel per device pixel under the pointer. Once
+  engaged, dragging pans with the hand; moving first instead continues as an
+  ordinary pan. Release, Escape, capture loss, or a photo change restores the
+  preceding zoom and viewport. The chrome-less `1:1` line and the resting-render
+  refinement are transient view behavior: zoom, fit, edit, persistence, and undo
+  state do not move.
 - **Zoom is device-true and original-relative.** `ZoomLevel = 1.0` maps one original
   image pixel to one device pixel, independent of the monitor's render scaling, and
   the mouse wheel keeps the image point under the pointer fixed while zooming. The

@@ -50,6 +50,7 @@
     <Compile Include="..\Tests\TestBaseLoaders.cs" Link="TestBaseLoaders.cs" />
     <Compile Include="..\Tests\TestImages.cs" Link="TestImages.cs" />
     <Compile Include="..\Tests\TestSourceAvailabilityService.cs" Link="TestSourceAvailabilityService.cs" />
+    <Compile Include="..\Tests\TestTimeProvider.cs" Link="TestTimeProvider.cs" />
     <Compile Include="..\Tests\TestWaits.cs" Link="TestWaits.cs" />
     <Compile Include="..\Tests\WhiteBalanceUiTests.cs" Link="WhiteBalanceUiTests.cs" />
     <Compile Include="..\Tests\WhiteBalanceOutcomeRaceTests.cs" Link="WhiteBalanceOutcomeRaceTests.cs" />

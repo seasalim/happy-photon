@@ -93,6 +93,7 @@
     <Color x:Key="CropHandleStrokeColor">#505050</Color>
     <Color x:Key="CropGridLineColor">#64ffffff</Color>
     <Color x:Key="NavigatorViewportHaloColor">#73000000</Color>
+    <Color x:Key="ViewerStatusShadowColor">#ff000000</Color>
     <SolidColorBrush x:Key="NavigatorViewportHalo"
                      Color="{StaticResource NavigatorViewportHaloColor}"/>
 
