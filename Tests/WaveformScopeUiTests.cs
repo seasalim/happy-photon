@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
@@ -16,6 +17,43 @@ public sealed class WaveformScopeUiTests : IDisposable
     private readonly string _root = Directory.CreateDirectory(Path.Combine(
         Path.GetTempPath(),
         $"happy-photon-waveform-ui-{Guid.NewGuid():N}")).FullName;
+
+    [AvaloniaFact]
+    public async Task ScopeSelector_UsesCompactDevelopActionPresentation()
+    {
+        using var catalog = new CatalogService(Path.Combine(_root, "presentation"));
+        await catalog.InitializeAsync();
+        await using var vm = new MainWindowViewModel(catalog)
+        {
+            IsDevelopMode = true
+        };
+        var panel = new DevelopEditPanel { DataContext = vm };
+        var window = new Window { Width = 250, Height = 660, Content = panel };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var scopeSelector = panel.FindControl<ScopeSelectorRow>("ScopeSelector")!;
+        var buttons = new[]
+        {
+            scopeSelector.FindControl<ToggleButton>("HistogramScopeButton")!,
+            scopeSelector.FindControl<ToggleButton>("RawHistogramScopeButton")!,
+            scopeSelector.FindControl<ToggleButton>("WaveformScopeButton")!
+        };
+        var observed = string.Join(", ", buttons.Select(button =>
+            $"{button.Name}: property={button.Width}x{button.Height}, " +
+            $"bounds={button.Bounds.Width}x{button.Bounds.Height}, " +
+            $"padding={button.Padding}, border={button.BorderThickness}"));
+
+        Assert.True(
+            buttons.All(button =>
+                button.Width == 24 &&
+                button.Height == 24 &&
+                button.Padding == new Thickness(5) &&
+                button.BorderThickness == new Thickness(0)),
+            observed);
+
+        window.DataContext = null;
+        window.Close();
+    }
 
     [AvaloniaFact]
     public async Task ScopeSelector_HasStableEntriesAndExactlyOneBody()

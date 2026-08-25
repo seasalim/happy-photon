@@ -1,0 +1,45 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style Selector="Button.develop-action, ToggleButton.develop-action">
+        <Setter Property="Width" Value="24"/>
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Padding" Value="5"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.develop-action:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.develop-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+    </Style>
+    <Style Selector="Button.develop-action:disabled, ToggleButton.develop-action:disabled">
+        <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+    </Style>
+    <Style Selector="Button.develop-action:disabled /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.develop-action:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+    </Style>
+    <Style Selector="Button.develop-action Path, ToggleButton.develop-action Path">
+        <Setter Property="Stroke" Value="{StaticResource PrimaryContainer}"/>
+    </Style>
+    <Style Selector="Button.develop-action:pointerover Path,
+                     ToggleButton.develop-action:pointerover Path">
+        <Setter Property="Stroke" Value="{StaticResource Primary}"/>
+    </Style>
+    <Style Selector="ToggleButton.develop-action:checked">
+        <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+        <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+    </Style>
+    <Style Selector="ToggleButton.develop-action:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+        <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+    </Style>
+    <Style Selector="ToggleButton.develop-action:checked Path">
+        <Setter Property="Stroke" Value="{StaticResource OnPrimary}"/>
+    </Style>
+</Styles>

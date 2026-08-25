@@ -6,6 +6,7 @@
              x:DataType="vm:MainWindowViewModel">
 
     <UserControl.Styles>
+        <StyleInclude Source="avares://HappyPhoton/Views/DevelopActionStyles.axaml"/>
         <Style Selector="ToggleButton.scope-icon Path.cfa-fill">
             <Setter Property="Stroke" Value="{x:Null}"/>
             <Setter Property="Fill" Value="{StaticResource PrimaryContainer}"/>
