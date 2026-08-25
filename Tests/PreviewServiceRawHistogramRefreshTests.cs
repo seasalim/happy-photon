@@ -36,7 +36,7 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable
             new ImageFile(Path.Combine(_root, "other.dng")),
             BaseDecodeSettings.Default));
         Assert.Null(service.TryGetRawHistogram(file,
-            new BaseDecodeSettings(HlReconstructionMode.Blend, FbddMode.Off)));
+            new BaseDecodeSettings(HlReconstructionMode.Blend)));
         Assert.Equal(decodeCount, loader.DecodeCount);
 
         service.ClearPreviewCache();

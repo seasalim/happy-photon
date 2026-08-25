@@ -73,7 +73,6 @@ public sealed class RawBaseLoaderRawHistogramTests
         var decode = BaseDecodeSettings.From(new EditSettings
         {
             HlReconstruction = HlReconstructionMode.Blend,
-            Detail = new DetailSettings { NoiseReduction = FbddMode.Full },
             RawProfile = selection
         }).WithProfileResolution(
             DcpProfileResolution.Success(selection, profile));

@@ -150,9 +150,7 @@ public sealed class RawPreviewStagePerformanceTests
             $"loader_total={totalWatch.Elapsed.TotalMilliseconds:F1}; " +
             $"render_scopes_pixels={render:F1}; " +
             $"process_clip={variants.ClipMs:F1}; " +
-            $"process_blend={variants.BlendMs:F1}; " +
-            $"process_fbdd_light={variants.FbddLightMs:F1}; " +
-            $"process_fbdd_full={variants.FbddFullMs:F1}");
+            $"process_blend={variants.BlendMs:F1}");
     }
 
     private static NativeStages MeasureNativeStages(string path)
@@ -250,20 +248,17 @@ public sealed class RawPreviewStagePerformanceTests
 
     private static ProcessVariants MeasureProcessVariants(string path) =>
         new(
-            MeasureProcess(path, HlReconstructionMode.Clip, FbddMode.Off),
-            MeasureProcess(path, HlReconstructionMode.Blend, FbddMode.Off),
-            MeasureProcess(path, HlReconstructionMode.Clip, FbddMode.Light),
-            MeasureProcess(path, HlReconstructionMode.Clip, FbddMode.Full));
+            MeasureProcess(path, HlReconstructionMode.Clip),
+            MeasureProcess(path, HlReconstructionMode.Blend));
 
     private static double MeasureProcess(
         string path,
-        HlReconstructionMode highlight,
-        FbddMode noiseReduction)
+        HlReconstructionMode highlight)
     {
         using var context = LibRawContext.Open(path);
         context.Unpack();
         context.ConfigureOutput(RawBaseLoader.ConfigureOutput(
-            new BaseDecodeSettings(highlight, noiseReduction),
+            new BaseDecodeSettings(highlight),
             preview: true));
         var stopwatch = Stopwatch.StartNew();
         context.Process();
@@ -286,7 +281,5 @@ public sealed class RawPreviewStagePerformanceTests
 
     private sealed record ProcessVariants(
         double ClipMs,
-        double BlendMs,
-        double FbddLightMs,
-        double FbddFullMs);
+        double BlendMs);
 }

@@ -29,6 +29,7 @@ public sealed class RestingRenderExecutionTests
             Detail = new DetailSettings
             {
                 CaptureSharpen = 80,
+                LuminanceNr = 55,
                 ChromaNr = 65
             },
             Effects = new EffectsSettings
@@ -71,6 +72,34 @@ public sealed class RestingRenderExecutionTests
         Assert.Equal(
             RenderPipelineTestSupport.ReadPixels(unrestricted.Image),
             RenderPipelineTestSupport.ReadPixels(resting.Image));
+    }
+
+    [Fact]
+    public void RestingExecution_ReportsLuminanceNrBeforeCaptureSharpen()
+    {
+        using var baseImage = CreatePatternBase(isRaw: false);
+        var stages = new List<string>();
+        var request = CreateRequest(
+            baseImage,
+            new EditSettings
+            {
+                Detail = new DetailSettings
+                {
+                    LuminanceNr = 70,
+                    CaptureSharpen = 80
+                }
+            });
+
+        using var result = new RenderPipeline().RenderResting(
+            request,
+            RenderExecutionOptions.Resting(
+                CancellationToken.None,
+                stageStarted: stages.Add));
+
+        Assert.True(stages.IndexOf("luminance-nr") <
+            stages.IndexOf("capture-sharpen"));
+        Assert.True(stages.IndexOf("capture-sharpen") <
+            stages.IndexOf("detail"));
     }
 
     [Fact]

@@ -119,6 +119,8 @@ internal static class EditSettingsJson
         }
         settings.Detail.CaptureSharpen = ClampNullable(
             settings.Detail.CaptureSharpen, 0, 100, ref changed);
+        settings.Detail.LuminanceNr = Clamp(
+            settings.Detail.LuminanceNr, 0, 100, ref changed);
         settings.Detail.ChromaNr = Clamp(settings.Detail.ChromaNr, 0, 100, ref changed);
         ValidateRawProfile(settings.RawProfile);
         if (settings.Effects != null)

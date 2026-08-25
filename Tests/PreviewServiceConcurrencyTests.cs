@@ -277,7 +277,7 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
                 new EditSettings
                 {
                     HlReconstruction = HlReconstructionMode.Blend,
-                    Detail = { NoiseReduction = FbddMode.Light }
+                    Lens = { Vignetting = true }
                 },
                 skipHistogram: true);
             Assert.True(loader.RefreshStarted[1].Wait(TestWaits.Condition));

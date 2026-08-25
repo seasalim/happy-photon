@@ -12,19 +12,17 @@ public enum BaseSourceKind
 
 public sealed record BaseDecodeSettings(
     HlReconstructionMode HlReconstruction,
-    FbddMode NoiseReduction,
     bool Distortion = true,
     bool ChromaticAberration = true,
     bool Vignetting = false)
 {
     public static BaseDecodeSettings Default { get; } =
-        new(HlReconstructionMode.Clip, FbddMode.Off);
+        new(HlReconstructionMode.Clip);
 
     public static BaseDecodeSettings From(EditSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
         return settings.HlReconstruction == HlReconstructionMode.Clip &&
-               settings.Detail.NoiseReduction == FbddMode.Off &&
                settings.Lens.Distortion &&
                settings.Lens.ChromaticAberration &&
                !settings.Lens.Vignetting &&
@@ -32,7 +30,6 @@ public sealed record BaseDecodeSettings(
             ? Default
             : new BaseDecodeSettings(
                 settings.HlReconstruction,
-                settings.Detail.NoiseReduction,
                 settings.Lens.Distortion,
                 settings.Lens.ChromaticAberration,
                 settings.Lens.Vignetting)
@@ -59,7 +56,7 @@ public sealed record BaseDecodeSettings(
             };
 
     public string CacheKey =>
-        $"base-v{BaseImage.Version};hl={GetHighlightKey()};fbdd={GetNoiseReductionKey()}" +
+        $"base-v{BaseImage.Version};hl={GetHighlightKey()}" +
         $";lens={(Distortion ? 1 : 0)}{(ChromaticAberration ? 1 : 0)}{(Vignetting ? 1 : 0)}" +
         GetProfileKey();
 
@@ -75,15 +72,6 @@ public sealed record BaseDecodeSettings(
         HlReconstructionMode.Clip => "clip",
         _ => throw new InvalidOperationException(
             $"Unsupported highlight reconstruction mode: {HlReconstruction}.")
-    };
-
-    private string GetNoiseReductionKey() => NoiseReduction switch
-    {
-        FbddMode.Off => "off",
-        FbddMode.Light => "light",
-        FbddMode.Full => "full",
-        _ => throw new InvalidOperationException(
-            $"Unsupported FBDD mode: {NoiseReduction}.")
     };
 }
 

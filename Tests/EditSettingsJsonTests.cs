@@ -19,7 +19,7 @@ public sealed class EditSettingsJsonTests
                 Kelvin = 6500,
                 Tint = 10
             },
-            Detail = new DetailSettings { NoiseReduction = FbddMode.Full }
+            Detail = new DetailSettings { LuminanceNr = 64 }
         };
         settings.Crop = new CropRegion
         {
@@ -40,7 +40,7 @@ public sealed class EditSettingsJsonTests
         Assert.DoesNotContain("\"isIdentity\"", json);
         Assert.DoesNotContain("\"isFullImage\"", json);
         Assert.Contains("\"mode\":\"custom\"", json);
-        Assert.Contains("\"noiseReduction\":\"full\"", json);
+        Assert.Contains("\"luminanceNr\":64", json);
         Assert.Equal(
         [
             "version", "exposure", "wb", "highlights", "shadows",
@@ -53,7 +53,7 @@ public sealed class EditSettingsJsonTests
             document.RootElement.GetProperty("wb").EnumerateObject()
                 .Select(property => property.Name));
         Assert.Equal(
-            ["captureSharpen", "noiseReduction", "chromaNr"],
+            ["captureSharpen", "luminanceNr", "chromaNr"],
             document.RootElement.GetProperty("detail").EnumerateObject()
                 .Select(property => property.Name));
     }
@@ -67,7 +67,7 @@ public sealed class EditSettingsJsonTests
             "\"highlights\":0,\"shadows\":0,\"brightness\":0,\"contrast\":0," +
             "\"saturation\":0,\"vibrance\":0,\"baseLook\":null," +
             "\"hlReconstruction\":\"clip\",\"detail\":{\"captureSharpen\":null," +
-            "\"noiseReduction\":\"off\",\"chromaNr\":0},\"lens\":{" +
+            "\"luminanceNr\":0,\"chromaNr\":0},\"lens\":{" +
             "\"distortion\":true,\"chromaticAberration\":true," +
             "\"vignetting\":false,\"baseline\":\"standard\"},\"rotation\":0," +
             "\"horizon_rotation\":0,\"crop\":null,\"curve\":{\"points\":" +
@@ -228,8 +228,8 @@ public sealed class EditSettingsJsonTests
               "brightness": 200, "contrast": -200,
               "saturation": 101, "vibrance": -101,
               "baseLook": null, "hlReconstruction": "blend",
-              "detail": { "captureSharpen": 150, "noiseReduction": "off",
-                          "chromaNr": -1 },
+              "detail": { "captureSharpen": 150, "luminanceNr": 150,
+                          "noiseReduction": "full", "chromaNr": -1 },
               "effects": { "vignette": -150, "midpoint": 150,
                            "grain": 150, "grainSize": "coarse" },
               "rotation": 0, "horizon_rotation": 8,
@@ -250,6 +250,7 @@ public sealed class EditSettingsJsonTests
         Assert.Equal(100, settings.Brightness);
         Assert.Equal(-100, settings.Contrast);
         Assert.Equal(100, settings.Detail.CaptureSharpen);
+        Assert.Equal(100, settings.Detail.LuminanceNr);
         Assert.Equal(0, settings.Detail.ChromaNr);
         Assert.Equal(-100, settings.Effects!.Vignette);
         Assert.Equal(100, settings.Effects.Midpoint);
@@ -286,7 +287,7 @@ public sealed class EditSettingsJsonTests
         var source = new EditSettings
         {
             HlReconstruction = HlReconstructionMode.Blend,
-            Detail = new DetailSettings { NoiseReduction = FbddMode.Light }
+            Detail = new DetailSettings { LuminanceNr = 38 }
         };
 
         var json = JsonSerializer.Serialize(source);
@@ -294,7 +295,29 @@ public sealed class EditSettingsJsonTests
 
         Assert.NotNull(result);
         Assert.Equal(HlReconstructionMode.Blend, result.HlReconstruction);
-        Assert.Equal(FbddMode.Light, result.Detail.NoiseReduction);
+        Assert.Equal(38, result.Detail.LuminanceNr);
+    }
+
+    [Theory]
+    [InlineData("off")]
+    [InlineData("light")]
+    [InlineData("full")]
+    public void LegacyNoiseReduction_IsIgnoredWithoutMigration(string mode)
+    {
+        var baseline = EditSettingsJson.Serialize(new EditSettings());
+        var legacy = baseline.Replace(
+            "\"luminanceNr\":0",
+            $"\"noiseReduction\":\"{mode}\",\"luminanceNr\":0",
+            StringComparison.Ordinal);
+
+        var result = EditSettingsJson.Deserialize(legacy, out var wasClamped);
+
+        Assert.False(wasClamped);
+        Assert.Equal(0, result.Detail.LuminanceNr);
+        Assert.Equal(baseline, EditSettingsJson.Serialize(result));
+        Assert.Equal(
+            RenderSettingsHash.Compute(new EditSettings()),
+            RenderSettingsHash.Compute(result));
     }
 
     [Fact]

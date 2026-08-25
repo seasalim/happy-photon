@@ -268,8 +268,7 @@ public sealed class DcpAtomicityTests : IDisposable
             null,
             selection.ContentHash);
         return new BaseDecodeSettings(
-            HlReconstructionMode.Clip,
-            FbddMode.Off)
+            HlReconstructionMode.Clip)
         {
             ProfileSelection = selection,
             ProfileResolution = DcpProfileResolution.Success(selection, profile)

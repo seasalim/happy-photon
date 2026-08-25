@@ -28,11 +28,11 @@ public interface IBaseImageLoader
 `LoadPreviewBaseWithOutcome` and detaches the interactive image.
 
 `BaseDecodeSettings` (OVERVIEW.md §4) carries the decode-affecting subset of
-`EditSettings` — highlight reconstruction, FBDD, optics toggles, and the selected camera profile.
+`EditSettings` — highlight reconstruction, optics toggles, and the selected camera profile.
 Non-raw loaders accept and record
 it but ignore it (their `From(EditSettings)` projection is still stored on
 `BaseImageInfo.Decode` so cache keys stay uniform). The defaults are highlight clip
-and FBDD off with built-in characterization.
+with built-in characterization.
 
 `BaseLoaderRouter` picks the loader:
 
@@ -59,7 +59,7 @@ image-statistics defaults:
 | `UseCameraMatrix` | true | preserve open-time camera/DNG fact population; no matrix is applied when output color is 0 |
 | `OutputColor` | camera-native (0) | skip LibRaw output-space conversion; characterize in-app |
 | `HighlightMode` | **0 (clip)** when `decode.HlReconstruction == Clip` (default); 2 when `Blend` | Blend recovers neutral detail in partially clipped areas; output stays ≤ 1.0 |
-| `fbdd_noiserd` | 0/1/2 from `decode.NoiseReduction` (default Off) | internal decode-time NR |
+| `fbdd_noiserd` | **0 (Off)** | retained native ABI field; the app no longer exposes decode-time FBDD |
 | `HalfSize` | true for `LoadPreviewBase`, false for `LoadFullBase` | perf; only remaining preview/export decode difference |
 
 True monochrome RAW is the single exception to the color-output rows above. The
@@ -323,6 +323,8 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
   and shutdown retire it. A same-file decode-settings change retains the old interactive
   base for stale paint but retires the old large base immediately; its only normal lease
   is cancellable resting work.
+- Luminance and chroma NR are render settings and never change base identity or trigger
+  a decode. Legacy stored `detail.noiseReduction` values are ignored.
 - `RenderPipeline` never mutates the held base (OVERVIEW invariant 8); it clones
   internally. A superseded base is disposed only after any in-progress render against
   it completes (generation check).

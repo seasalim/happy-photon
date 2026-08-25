@@ -47,7 +47,7 @@ COLOR MIXER                                      RESET
   Hue / Saturation / Luminance        (selected band, −100..100)
 DETAIL
   Sharpen  ────────●────────   25
-  Noise Red.                                [OFF | LIGHT | FULL]  (RAW only)
+  Noise Reduction ─────●──────   0
   Chroma NR ──────●──────────   0
 EFFECTS
   Vignette ─────●────────────  −35
@@ -106,11 +106,10 @@ hues, while Saturation and Luminance tint within the selected band. Its three
 −100..100 `CompactSlider`s reset individually on double-click; the Develop footer
 Reset clears all eight bands with the other color and tonal adjustments.
 
-Detail follows the color mixer. Sharpen and Chroma NR are 0–100 `CompactSlider`s for
-all sources; Sharpen displays the resolved source default (RAW 25, standard 0). Noise
-Red. is an Off/Light/Full segmented control that stays in place with a RAW chip and
-dims to `DisabledOpacity` for standard sources. Loaded-base capability reconciliation
-never reflows the panel or discards stored values.
+Detail follows the color mixer. Sharpen, Noise Reduction (luminance), and Chroma NR
+are 0–100 `CompactSlider`s for all sources; Sharpen displays the resolved source
+default (RAW 25, standard 0). The two NR controls default to 0 and never reflow or
+change enablement when source kind changes.
 
 Effects follows Detail and applies to every source, with no RAW chip. Vignette is a
 −100..100 bipolar `CompactSlider`; Midpoint is 0..100 (default 50) and remains in place
@@ -301,7 +300,8 @@ be read.
   transfers; Browse multi-paste confirmation flow unchanged.
 
 Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields use
-the controls in §2; copy/paste preserves nullable capture-sharpen semantics.
+the controls in §2; copy/paste preserves nullable capture-sharpen semantics and both
+NR values.
 
 Rendered thumbnails remain navigational chrome: the existing path detaches the
 accepted finalized preview, resizes it to at most 512px, and reuses the current caches.

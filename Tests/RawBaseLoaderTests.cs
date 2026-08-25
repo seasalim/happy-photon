@@ -26,21 +26,17 @@ public sealed class RawBaseLoaderTests
     }
 
     [Theory]
-    [InlineData(HlReconstructionMode.Blend, FbddMode.Off, true, 2, 0)]
-    [InlineData(HlReconstructionMode.Blend, FbddMode.Light, false, 2, 1)]
-    [InlineData(HlReconstructionMode.Blend, FbddMode.Full, true, 2, 2)]
-    [InlineData(HlReconstructionMode.Clip, FbddMode.Off, false, 0, 0)]
-    [InlineData(HlReconstructionMode.Clip, FbddMode.Light, true, 0, 1)]
-    [InlineData(HlReconstructionMode.Clip, FbddMode.Full, false, 0, 2)]
+    [InlineData(HlReconstructionMode.Blend, true, 2)]
+    [InlineData(HlReconstructionMode.Blend, false, 2)]
+    [InlineData(HlReconstructionMode.Clip, true, 0)]
+    [InlineData(HlReconstructionMode.Clip, false, 0)]
     public void ConfigureOutput_PinsDeterministicLinearParameters(
         HlReconstructionMode highlight,
-        FbddMode noiseReduction,
         bool preview,
-        int expectedHighlight,
-        int expectedFbdd)
+        int expectedHighlight)
     {
         var parameters = RawBaseLoader.ConfigureOutput(
-            new BaseDecodeSettings(highlight, noiseReduction),
+            new BaseDecodeSettings(highlight),
             preview);
 
         Assert.Equal(16, parameters.OutputBits);
@@ -52,7 +48,7 @@ public sealed class RawBaseLoaderTests
         Assert.True(parameters.UseCameraMatrix);
         Assert.Equal(0, parameters.OutputColor);
         Assert.Equal(expectedHighlight, parameters.HighlightMode);
-        Assert.Equal(expectedFbdd, parameters.FbddNoiseReduction);
+        Assert.Equal(0, parameters.FbddNoiseReduction);
         Assert.Equal(preview, parameters.HalfSize);
     }
 

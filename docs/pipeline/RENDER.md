@@ -13,7 +13,7 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 4 Tone LUT     source-kind tone regime, fused with matrix storage (§5)
 5 Matrix       crossing on: AgX outset; crossing off: identity
 6 Chroma       one fused OKLCh color-mixer/saturation/vibrance pass (§6)
-7 Detail       capture sharpen, chroma NR (§9)
+7 Detail       luminance NR → capture sharpen → chroma NR (§9)
 8 Output       linear resize → output sharpen → effects → target convert → encode
                (OUTPUT.md)
 ```
@@ -350,7 +350,7 @@ JSON document shape (canonical field order for hashing):
   "baseLook": null,                      // null = source-kind default
   "hlReconstruction": "clip",            // raw only: blend | clip  (decode-affecting)
   "detail": { "captureSharpen": null,    // null = default (raw 25, else 0); 0-100
-              "noiseReduction": "off",   // off | light | full  (FBDD, decode-affecting)
+              "luminanceNr": 0,           // 0-100
               "chromaNr": 0 },           // 0-100
   "effects": { "vignette": 0,            // optional; -100..100
                "midpoint": 50,            // 0..100
@@ -412,7 +412,7 @@ payload. Clone/history and Reset include it, while copy/paste and presets exclud
 with rotation, horizon, and crop. Although absence is identity, the corrected-frame
 change alters horizon pixels, so this feature increments `RenderPipeline.Version`.
 
-`hlReconstruction`, `detail.noiseReduction`, the three `lens` booleans, and `rawProfile` are the
+`hlReconstruction`, the three `lens` booleans, and `rawProfile` are the
 **decode-affecting subset**;
 they project into `BaseDecodeSettings` (OVERVIEW.md §4, DECODE.md §4) and changing
 them re-decodes the base rather than re-rendering it.
@@ -423,8 +423,9 @@ preset files and copy/paste exclude it because it is camera- and
 file-specific. Omitting built-in preserves legacy canonical JSON and hash identity.
 
 Capture sharpening resolves a `null` value to RAW 25 or standard 0 and canonicalizes
-the matching default back to `null`; FBDD remains visible but disabled for standard
-sources (§9, UI.md §2). Preview detail uses the bounded preview base, while
+the matching default back to `null`. Luminance and chroma NR are always-serialized
+0–100 values for every source. Legacy `detail.noiseReduction` input is ignored without
+rewriting the stored document (§9, UI.md §2). Preview detail uses the bounded preview base, while
 export-scale renders are the fidelity reference.
 
 ### 8.1 Catalog storage ([CatalogSchema.cs](../../Services/CatalogSchema.cs))
@@ -473,9 +474,9 @@ settings and rejects a non-current source or target before applying values.
 
 ## 9. Detail stage
 
-The Develop Detail group exposes all three settings (§8, UI.md §2): a Sharpen slider,
-an Off/Light/Full Noise Red. segmented control (RAW only), and a Chroma NR slider.
-Defaults are capture sharpening 25 RAW / 0 standard, FBDD Off, chroma NR 0. The
+The Develop Detail group exposes three sliders (§8, UI.md §2): Sharpen,
+Noise Reduction (luminance), and Chroma NR. All apply to every source. Defaults are
+capture sharpening 25 RAW / 0 standard and both NR values 0. The
 implementations are part of the shared pipeline and covered by parity and performance
 tests.
 
@@ -488,6 +489,22 @@ near-no-op — exactly how its full-res effect survives downscaling. Sharpening 
 at export size (as in Lightroom); the WYSIWYG goldens compare at preview scale, where
 both paths agree by construction.
 
+- **Luminance NR** (0–100): four native à trous/starlet detail scales use the
+  separable B3-spline taps `[1 4 6 4 1]/16`. Each native support `2^s` is multiplied
+  by `renderLongEdge/nativeLongEdge`; support below 0.3 px is discarded, the remaining
+  support is rounded to the nearest dyadic octave, and a quantized index below 1 or a
+  support radius beyond one quarter of the shorter render edge is discarded. Thresholds
+  are `6200 · [0.8907963, 0.2006639, 0.0855075, 0.0412175] · v/100` Q16 at integer
+  scale indices, with log-linear evaluation at the bounded exact fractional index
+  before spatial quantization. The mapping is linear across the full slider, with
+  6200 as the tuned maximum at 100. Each detail plane is soft-thresholded and
+  reconstructed.
+  The luma delta is added equally to R, G, and B after clamping it to
+  `[−min(R,G,B), 65535−max(R,G,B)]`; Cb/Cr and alpha therefore remain unchanged even
+  at gamut boundaries. A zero value or empty surviving scale set returns before pixel
+  access. The parallel band kernel carries the full summed halo and is bit-identical
+  to a single band. It runs post-tone and before capture sharpen on interactive and
+  resting paths; large tone moves may require retuning the slider.
 - **Capture sharpen** (0–100, default 25 raw / 0 non-raw): luminance-targeted unsharp,
   `σ_native 0.75, amount = v/100 · 1.0, threshold 0.01`, applied before any resize.
   Luminance-only (Lab L or equivalent); acceptance = no chroma fringing on golden crops.
@@ -503,9 +520,6 @@ both paths agree by construction.
   band) reading `r+1` halos before writing in place — safe because the preceding tonal
   stage's full-image write already detached the working clone's pixel cache. Band
   partitioning must be bit-identical to a single band.
-- **FBDD** (raw, decode-time): `BaseDecodeSettings.NoiseReduction` → wrapper's
-  `fbdd_noiserd` 0/1/2 — lives in `RawBaseLoader`; changing it invalidates the base
-  (DECODE.md §4), not merely the render.
 - **Output sharpen**: OUTPUT.md §3.
 
 ## 10. Effects substep of output finalization

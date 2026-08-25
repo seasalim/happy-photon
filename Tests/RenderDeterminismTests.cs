@@ -93,9 +93,16 @@ public sealed class RenderDeterminismTests
     public void SettingsHash_MatchesPinnedCanonicalValue()
     {
         const string expected =
-            "25f8a93ba1cee89429c233c181654ba7633df13d4449aa430255281a58775b18";
-        var actual = RenderSettingsHash.Compute(CreateSettings());
+            "e214edd0433ae532928fdf8523aa22cb2e870ca4587cb3735c4fb4daa0cf82b5";
+        var settings = CreateSettings();
+        var canonical = EditSettingsJson.Serialize(settings);
+        var actual = RenderSettingsHash.Compute(settings);
 
+        Assert.Contains(
+            "\"detail\":{\"captureSharpen\":null," +
+            "\"luminanceNr\":0,\"chromaNr\":0}",
+            canonical);
+        Assert.DoesNotContain("noiseReduction", canonical);
         Assert.True(
             actual == expected,
             $"Expected settings hash {expected}, actual {actual}.");

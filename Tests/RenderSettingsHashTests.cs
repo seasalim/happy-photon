@@ -88,7 +88,7 @@ public sealed class RenderSettingsHashTests
             Detail = new DetailSettings
             {
                 CaptureSharpen = 20,
-                NoiseReduction = FbddMode.Light,
+                LuminanceNr = 30,
                 ChromaNr = 10
             }
         };

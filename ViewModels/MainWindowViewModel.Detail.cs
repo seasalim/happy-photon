@@ -5,29 +5,20 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    public IReadOnlyList<FbddMode> NoiseReductionOptions { get; } =
-    [
-        FbddMode.Off,
-        FbddMode.Light,
-        FbddMode.Full
-    ];
-
     [ObservableProperty]
     private int _captureSharpen;
 
     [ObservableProperty]
-    private FbddMode _noiseReduction;
+    private int _luminanceNr;
 
     [ObservableProperty]
     private int _chromaNr;
-
-    public bool IsNoiseReductionEnabled => IsHighlightHandlingEnabled;
 
     public int CaptureSharpenDefault =>
         DetailSettings.GetCaptureSharpenDefault(IsHighlightHandlingEnabled);
 
     partial void OnCaptureSharpenChanged(int value) => OnDetailValueChanged();
-    partial void OnNoiseReductionChanged(FbddMode value) => OnDetailValueChanged();
+    partial void OnLuminanceNrChanged(int value) => OnDetailValueChanged();
     partial void OnChromaNrChanged(int value) => OnDetailValueChanged();
 
     private void OnDetailValueChanged()
@@ -46,7 +37,7 @@ public partial class MainWindowViewModel
         target.Detail.CaptureSharpen = CaptureSharpen == CaptureSharpenDefault
             ? null
             : CaptureSharpen;
-        target.Detail.NoiseReduction = NoiseReduction;
+        target.Detail.LuminanceNr = LuminanceNr;
         target.Detail.ChromaNr = ChromaNr;
     }
 
@@ -54,13 +45,12 @@ public partial class MainWindowViewModel
     {
         CaptureSharpen = source.Detail.ResolveCaptureSharpen(
             IsHighlightHandlingEnabled);
-        NoiseReduction = source.Detail.NoiseReduction;
+        LuminanceNr = source.Detail.LuminanceNr;
         ChromaNr = source.Detail.ChromaNr;
     }
 
     internal void ReconcileDetailCapability(bool isRawSource, bool capabilityChanged)
     {
-        OnPropertyChanged(nameof(IsNoiseReductionEnabled));
         OnPropertyChanged(nameof(CaptureSharpenDefault));
         // Renders reconcile after every completion; snapping the displayed
         // value is only valid when the RAW capability itself flipped, or a
@@ -80,7 +70,7 @@ public partial class MainWindowViewModel
     private void ResetDetailUi()
     {
         CaptureSharpen = CaptureSharpenDefault;
-        NoiseReduction = FbddMode.Off;
+        LuminanceNr = 0;
         ChromaNr = 0;
     }
 }

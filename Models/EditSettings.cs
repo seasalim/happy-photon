@@ -134,7 +134,7 @@ public class EditSettings
                           Brightness != 0 || Contrast != 0 ||
                           Saturation != 0 || Vibrance != 0 || Shadows != 0 || Highlights != 0 ||
                           BaseLook != null || HlReconstruction != HlReconstructionMode.Clip ||
-                          Detail.CaptureSharpen != null || Detail.NoiseReduction != FbddMode.Off ||
+                          Detail.CaptureSharpen != null || Detail.LuminanceNr != 0 ||
                           Detail.ChromaNr != 0 ||
                           Effects?.HasActivePixels == true ||
                           Mixer?.HasActivePixels == true ||
@@ -189,7 +189,7 @@ public class EditSettings
                BaseLook == other.BaseLook &&
                HlReconstruction == other.HlReconstruction &&
                Detail.CaptureSharpen == other.Detail.CaptureSharpen &&
-               Detail.NoiseReduction == other.Detail.NoiseReduction &&
+               Detail.LuminanceNr == other.Detail.LuminanceNr &&
                Detail.ChromaNr == other.Detail.ChromaNr &&
                EffectsMatch(Effects, other.Effects) &&
                MixersMatch(Mixer, other.Mixer) &&

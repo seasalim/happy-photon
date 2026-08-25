@@ -215,6 +215,13 @@ public sealed class RenderPipeline
                 RenderChromaStage.Apply(working, request.Settings, execution);
             }
             execution.ThrowIfCancellationRequested();
+            execution.ReportStage("luminance-nr");
+            RenderNoiseReduction.ApplyResting(
+                working,
+                request.Base.Info,
+                request.Settings.Detail,
+                execution);
+            execution.ThrowIfCancellationRequested();
             execution.ReportStage("capture-sharpen");
             RenderSharpening.ApplyCaptureResting(
                 working,
@@ -323,6 +330,11 @@ public sealed class RenderPipeline
             RenderColorEncoding.RetagAsSrgb(working);
             if (!request.Base.Info.IsMonochrome)
                 RenderChromaStage.Apply(working, request.Settings);
+            RenderNoiseReduction.Apply(
+                working,
+                request.Base.Info,
+                request.Settings.Detail,
+                detailBandPixelLimit);
             RenderSharpening.ApplyCapture(
                 working,
                 request.Base.Info,

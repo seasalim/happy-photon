@@ -45,7 +45,6 @@ public sealed class LensCorrectionIntegrationTests : IDisposable
         var file = new ImageFile(path);
         var inactive = new BaseDecodeSettings(
             HlReconstructionMode.Clip,
-            FbddMode.Off,
             Distortion: false,
             ChromaticAberration: false,
             Vignetting: false);
@@ -223,7 +222,6 @@ public sealed class LensCorrectionIntegrationTests : IDisposable
 
     private static BaseDecodeSettings InactiveSettings() => new(
         HlReconstructionMode.Clip,
-        FbddMode.Off,
         Distortion: false,
         ChromaticAberration: false,
         Vignetting: false);

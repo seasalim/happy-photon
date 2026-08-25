@@ -32,7 +32,6 @@ public sealed class LensCorrectionPerformanceTests
         var file = new ImageFile(GoldenTestPaths.Asset("fujifilm-x30.raf"));
         var inactive = new BaseDecodeSettings(
             HlReconstructionMode.Clip,
-            FbddMode.Off,
             Distortion: false,
             ChromaticAberration: false,
             Vignetting: false);

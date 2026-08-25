@@ -27,8 +27,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 ```
 
 - **`BaseDecodeSettings`** is the small, decode-affecting projection of `EditSettings`
-  (highlight reconstruction, FBDD noise reduction, optics toggles, and camera-profile selection — all
-  raw-only). Everything
+  (highlight reconstruction, optics toggles, and camera-profile selection — all raw-only). Everything
   else in `EditSettings` affects only the render. Changing a decode-affecting field
   re-decodes the base in the background (DECODE.md §4); changing anything else never
   does. The in-memory base is keyed by (file, decode settings, size class).
@@ -103,7 +102,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
             │              retained display-domain chain (exact Q16)  │
             │ 5 Matrix     RAW: AgX outset; standard: identity         │
             │ 6 Chroma     OKLCh saturation + protected vibrance      │
-            │ 7 Detail     capture sharpen, chroma NR (Rec.2020 luma) │
+            │ 7 Detail     luminance NR → capture sharpen → chroma NR │
             └──────────────┬───────────────────────────────┬──────────┘
                      histogram + clipping stats            │
             ┌─ OUTPUT.md ──▼───────────────────────────────▼──────────┐
@@ -121,12 +120,11 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
 public enum BaseSourceKind { RawLibRaw, Standard, HeicPlatform }
 
 public enum HlReconstructionMode { Blend, Clip }
-public enum FbddMode { Off, Light, Full }
 
-public sealed record BaseDecodeSettings(HlReconstructionMode HlReconstruction, FbddMode NoiseReduction,
+public sealed record BaseDecodeSettings(HlReconstructionMode HlReconstruction,
                                         bool Distortion, bool ChromaticAberration, bool Vignetting)
 {
-    public static BaseDecodeSettings Default { get; }        // Clip + Off + built-in profile
+    public static BaseDecodeSettings Default { get; }        // Clip + built-in profile
     public static BaseDecodeSettings From(EditSettings s);   // also carries rawProfile selection
     public string CacheKey { get; }                          // adds dcp=resolved token when selected
 }
@@ -203,8 +201,8 @@ the characterized pixels; render never resolves or mixes profile state.
 
 `EditSettings` v3 schema and current storage contract: RENDER.md §8.
 
-Develop exposes capture sharpening, RAW-only FBDD noise reduction, and chroma noise
-reduction in its Detail group. Capture sharpening displays its source-kind default
+Develop exposes luminance noise reduction, capture sharpening, and chroma noise
+reduction for every source in its Detail group. Capture sharpening displays its source-kind default
 (RAW 25, standard 0) while persisting that default as `null`. Fit and 1:1 views both
 use the bounded preview base, so detail fidelity is judged on export-scale renders;
 native-detail inspection is not part of this viewer.
@@ -254,7 +252,7 @@ capability signal.
 | `Services/ToneLutApplicator.cs` | unrounded-input linear interpolation with one Q16 write |
 | `Services/RenderChromaticStage.cs` | white-balance matrix application |
 | `Services/RenderChromaStage.cs` + `OklabColor.cs` | fused OKLCh saturation/vibrance and gamut projection |
-| `Services/RenderDetail.cs` + `RenderSharpening.cs` | fixed detail operations |
+| `Services/RenderNoiseReduction.cs` + `RenderDetail.cs` + `RenderSharpening.cs` | fixed detail operations |
 | `Services/RenderEffects.cs` | post-resize vignette and deterministic film grain |
 | `Services/WhiteBalanceModel.cs` | CCT/tint ↔ gains math (WHITE_BALANCE.md) |
 | `Services/ChromaticAdaptation.cs` | Bradford matrices, normalization |
@@ -281,7 +279,7 @@ Manual geometry does not use the additive exception: its unified framing changes
 existing horizon renders, so its render-version increment deliberately invalidates
 rendered caches and selects a new golden baseline.
 `BaseDecodeSettings.CacheKey` is the invariant, culture-independent string
-`base-v{BaseImage.Version};hl={blend|clip};fbdd={off|light|full};lens={ddd}`, with
+`base-v{BaseImage.Version};hl={blend|clip};lens={ddd}`, with
 `;dcp={source:content-hash:resolution-status}` appended only for a selected profile.
 In-memory identity adds normalized file path and preview/full size class;
 rendered-cache settings hashes also carry the installed outcome token.
@@ -291,6 +289,9 @@ perceptual OKLCh chroma stage incremented the render version (its golden
 attribution lives beside the goldens); a selected DCP profile bumps neither
 version: the no-profile path is unchanged, while active and rejected profile
 outcomes are isolated by the DCP token.
+Removing the former FBDD field deliberately re-keyed every settings hash and base
+cache entry once; `RenderPipeline.Version` remains unchanged because luminance NR 0
+does not access or change pixels.
 
 ## 7. Current boundaries
 

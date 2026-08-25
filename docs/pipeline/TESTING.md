@@ -16,7 +16,8 @@ oldest/smallest CC0 body per mosaic type. Provenance is recorded in
 | Small Bayer raw ×2 (e.g. Canon CR2 + Nikon NEF, ≤ 15 MB ea. — prefer small-sensor bodies) | decode, WB, goldens | raw.pixls.us, CC0 only |
 | X-Trans RAF | Fuji path | raw.pixls.us CC0 |
 | DNG | Adobe container path | raw.pixls.us CC0 |
-| High-ISO Bayer raw | FBDD quality/runtime evaluation | CC0 research dataset |
+| High-ISO Bayer raw | luminance-NR quality/runtime tuning | CC0 research dataset |
+| High-ISO iPhone HEIC (≤ 8.5 MiB) | standard-source luminance-NR tuning | contributor original, GPL-3.0-or-later |
 | Nikon D300 ColorChecker NEF | physical colorimetric ground truth | author capture, CC0 exception |
 | sRGB JPEG with EXIF+GPS+orientation 6 | metadata policy, orientation | author with exiftool from a CC0 photo |
 | Display-P3 JPEG of the same picture as an sRGB JPEG | ICC normalize sentinel — sRGB-derived content, so it cannot show gamut preservation | generate via Magick from a CC0 source |
@@ -152,7 +153,8 @@ carried `R5A_ATTRIBUTION.md`).
 | Full-decode base vs half-decode base (raw, at common preview size up to 1600px) | mean ΔE ≤ 2.8 (documented gap) |
 | P3-tagged vs sRGB-tagged same-picture bases | mean ΔE ≤ 1.5 |
 | Cross-platform: win/linux/mac renders of same case | mean ΔE ≤ 2.0 |
-| Built-in characterization vs LibRaw Rec.2020 comparator, Bayer/X-Trans Clip/Blend/FBDD | mean ΔE76 ≤ 1.1, p99 ≤ 9.5 |
+| Built-in characterization vs LibRaw Rec.2020 comparator, Bayer/X-Trans Clip/Blend/direct-ABI FBDD | mean ΔE76 ≤ 1.1, p99 ≤ 9.5 |
+| Luminance NR at 25/50/100 on high-ISO RAW and HEIC | flat-patch σ drops ≥40% at 50; edge acutance ≥90% through 50 and ≥70% at 100; σ reduction at 100 is ≥1.15× the reduction at 50; max per-pixel ΔCb/ΔCr ≤1 Q16 LSB |
 
 WYSIWYG is calibrated over every active-generation settings case using the actual
 preview base and a full-base export, aligning the occasional one-pixel aspect
@@ -213,8 +215,11 @@ orders above the observed difference.
    `LensSettingsTests` and headless `LensControlTests` pin baseline provenance,
    transfer/cache registration, and constant-layout capability gating.
 10. **`RenderDetailTests`**: chroma NR preserves luma and alpha; a seeded noise image
-   rendered as one band and as forced non-divisible bands is bit-identical at box
-   radii 1 and 3.
+    rendered as one band and as forced non-divisible bands is bit-identical at box
+    radii 1 and 3. **`RenderNoiseReductionTests`** pins zero-access identity, native
+    scale mapping, seeded-noise reduction, gamut-boundary chroma/alpha preservation,
+    single/multiple-band identity, and resting cancellation. Pipeline composition
+    tests place luminance NR before capture sharpen on both execution paths.
 11. **Working-space suites:** `RawWorkingSpaceTests` proves the built-in
     characterization against the LibRaw Rec.2020 comparator, pins the `cam_xyz`
     semantic oracle under `LibRawOutputConfiguration.LinearCameraNative`
@@ -416,6 +421,18 @@ executes each test in its own Release process; apply the same
 one-test-per-process rule to any new `HAPPY_PHOTON_PERF` class with latency
 budgets, and never loosen a budget to make a single-process class run pass:
 
+The luminance-NR gate uses Canon RAW, Fuji RAW, JPEG, and the committed high-ISO
+iPhone HEIC at 1600px, values 50 and 100, with five alternating paired
+neutral/active samples in a Release process. Each total is ≤150 ms and each
+active-minus-neutral median delta is ≤20 ms. A stage-only diagnostic separately
+warms and measures 15 iterations at the representative two-, three-, and four-scale
+preview shapes, reporting median latency and peak private-memory delta for each.
+`RenderDetailPerformanceTests.FullResolutionLuminanceNr100_MeetsLatencyAndMemoryGate`
+uses a 5472×3648 Q16 diagnostic and requires ≤410 ms and ≤150 MiB peak private-memory
+delta. The export gate at value 50 retains the standing ≤max(5%, 500 ms) wall delta
+per full-resolution render: 1,500 ms across the three-variant RAW export and 500 ms
+for the standard export, both from five alternating paired samples per arm.
+
 `AdjacentPreviewPerformanceTests` drives the real `SelectedImage` cached/fresh race
 for copied JPEG and RAW fixtures. It compares warm and disabled adjacent paints,
 selects a different uncached image while a warm is active, samples private memory,
@@ -494,21 +511,23 @@ dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter `
   FullyQualifiedName~CameraRgbCharacterizationPerformanceTests
 ```
 
-The direct full-resolution detail diagnostic warms the optimized kernel, then uses a
+The direct full-resolution detail diagnostic warms the optimized kernels, then uses a
 5472×3648 synthetic image and reports elapsed time and peak private-memory delta:
 
 ```bash
 HAPPY_PHOTON_PERF=1 dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter RenderDetailPerformanceTests
 ```
 
-Run the following to decode the ISO 6400 fixture at Off, Light, and Full and report
-full-decode time, center-crop chroma variation, and pixel deltas:
+The luminance-NR quality gate renders the ISO 6400 Canon and iPhone HEIC fixtures at
+0/25/50/100 and reports flat-patch σ, edge acutance, and maximum per-pixel Cb/Cr delta:
 
-```bash
-HAPPY_PHOTON_FBDD_EVAL=1 dotnet test Tests/HappyPhoton.Tests.csproj --filter RawFbddEvaluationTests
+```powershell
+$env:HAPPY_PHOTON_NR_QUALITY='1'
+dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter LuminanceNoiseReductionQualityTests
 ```
 
-It is an explicit opt-in diagnostic because all three modes require full RAW decodes.
+It is explicit opt-in because the RAW arm requires a full decode. The committed HEIC
+hash and provenance are pinned by `PipelineTestAssetTests` and `Tests/assets/README.md`.
 
 ### 5.1 Display-reference comparison
 

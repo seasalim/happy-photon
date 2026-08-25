@@ -86,8 +86,8 @@ public sealed class PreviewPlaceholderTests
             "ExportButton")!;
         Assert.Null(developPanel.FindControl<CompactSlider>(
             "CaptureSharpenSlider"));
-        Assert.Null(developPanel.FindControl<Grid>(
-            "NoiseReductionControl"));
+        Assert.Null(developPanel.FindControl<CompactSlider>(
+            "LuminanceNrSlider"));
         Assert.Null(developPanel.FindControl<ComboBox>(
             "HighlightReconstructionBox"));
         Assert.Equal(

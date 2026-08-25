@@ -14,8 +14,7 @@ public sealed class BaseImageContractsTests
 
         Assert.Same(BaseDecodeSettings.Default, settings);
         Assert.Equal(HlReconstructionMode.Clip, settings.HlReconstruction);
-        Assert.Equal(FbddMode.Off, settings.NoiseReduction);
-        Assert.Equal("base-v17;hl=clip;fbdd=off;lens=110", settings.CacheKey);
+        Assert.Equal("base-v17;hl=clip;lens=110", settings.CacheKey);
         Assert.Equal(1600, BaseImage.InteractivePreviewMaxDimension);
         Assert.Equal(3200, BaseImage.LargePreviewMaxDimension);
     }
@@ -24,27 +23,24 @@ public sealed class BaseImageContractsTests
     public void DecodeSettings_AllCacheKeysAreUnique()
     {
         var keys = Enum.GetValues<HlReconstructionMode>()
-            .SelectMany(highlight => Enum.GetValues<FbddMode>()
-                .Select(noise => new BaseDecodeSettings(highlight, noise).CacheKey))
+            .Select(highlight => new BaseDecodeSettings(highlight).CacheKey)
             .ToArray();
 
         Assert.Equal(keys.Length, keys.Distinct(StringComparer.Ordinal).Count());
     }
 
     [Fact]
-    public void DecodeSettings_ProjectsV2DecodeAffectingSubset()
+    public void DecodeSettings_LuminanceNoiseReductionDoesNotInvalidateBase()
     {
         var settings = new EditSettings
         {
-            HlReconstruction = HlReconstructionMode.Clip,
-            Detail = new DetailSettings { NoiseReduction = FbddMode.Full }
+            Detail = new DetailSettings { LuminanceNr = 100 }
         };
 
         var decode = BaseDecodeSettings.From(settings);
 
-        Assert.Equal(HlReconstructionMode.Clip, decode.HlReconstruction);
-        Assert.Equal(FbddMode.Full, decode.NoiseReduction);
-        Assert.Equal("base-v17;hl=clip;fbdd=full;lens=110", decode.CacheKey);
+        Assert.Same(BaseDecodeSettings.Default, decode);
+        Assert.DoesNotContain("fbdd=", decode.CacheKey);
     }
 
     [Fact]

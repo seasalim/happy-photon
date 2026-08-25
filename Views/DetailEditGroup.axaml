@@ -7,51 +7,6 @@
              mc:Ignorable="d"
              x:Class="HappyPhoton.Views.DetailEditGroup"
              x:DataType="vm:MainWindowViewModel">
-    <UserControl.Styles>
-        <Style Selector="TextBlock.detail-control-label">
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-        <Style Selector="Grid.noise-reduction-row:disabled">
-            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
-        <Style Selector="ListBox.noise-reduction">
-            <Setter Property="Height" Value="22"/>
-            <Setter Property="Padding" Value="2"/>
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
-        </Style>
-        <Style Selector="ListBox.noise-reduction ListBoxItem">
-            <Setter Property="Height" Value="18"/>
-            <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="CornerRadius" Value="3"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
-            <Setter Property="FontSize" Value="9"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="LetterSpacing" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
-        <Style Selector="ListBox.noise-reduction ListBoxItem:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
-        </Style>
-        <Style Selector="ListBox.noise-reduction ListBoxItem:selected,
-                         ListBox.noise-reduction ListBoxItem:selected:pointerover">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
-        </Style>
-    </UserControl.Styles>
-
     <StackPanel Spacing="4">
         <TextBlock Classes="section-label" Text="DETAIL" Margin="0,20,0,8"/>
         <views:CompactSlider x:Name="CaptureSharpenSlider"
@@ -60,47 +15,11 @@
                              Minimum="0" Maximum="100" SmallChange="1"
                              DefaultValue="{Binding CaptureSharpenDefault}"
                              EnableDoubleClickReset="True"/>
-        <Grid x:Name="NoiseReductionRow"
-              Classes="noise-reduction-row"
-              ColumnDefinitions="70,*,40"
-              Height="26"
-              Margin="0,0,0,4"
-              IsEnabled="{Binding IsNoiseReductionEnabled}">
-            <TextBlock Classes="detail-control-label" Text="Noise Red."/>
-            <ListBox x:Name="NoiseReductionControl"
-                     Grid.Column="1"
-                     Margin="8,0"
-                     Classes="noise-reduction"
-                     ItemsSource="{Binding NoiseReductionOptions}"
-                     SelectedItem="{Binding NoiseReduction, Mode=TwoWay}"
-                     SelectionMode="Single,AlwaysSelected"
-                     AutomationProperties.Name="Noise reduction">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Rows="1" ColumnSpacing="2"/>
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Converter={x:Static views:DetailEditGroup.NoiseReductionLabelConverter}}"/>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-            <Border Grid.Column="2"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Center"
-                    Padding="5,1"
-                    BorderBrush="{DynamicResource OutlineVariant}"
-                    BorderThickness="1"
-                    CornerRadius="99">
-                <TextBlock Text="RAW"
-                           FontFamily="{StaticResource FontLabel}"
-                           FontSize="8"
-                           FontWeight="SemiBold"
-                           LetterSpacing="1"
-                           Foreground="{DynamicResource TextMuted}"/>
-            </Border>
-        </Grid>
+        <views:CompactSlider x:Name="LuminanceNrSlider"
+                             Label="Noise Reduction"
+                             Value="{Binding LuminanceNr}"
+                             Minimum="0" Maximum="100" SmallChange="1"
+                             EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="ChromaNrSlider"
                              Label="Chroma NR"
                              Value="{Binding ChromaNr}"

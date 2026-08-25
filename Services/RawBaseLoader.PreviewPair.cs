@@ -17,17 +17,9 @@ public sealed partial class RawBaseLoader
             _ => throw new InvalidOperationException(
                 $"Unsupported highlight reconstruction mode: {decode.HlReconstruction}.")
         };
-        var noiseReduction = decode.NoiseReduction switch
-        {
-            FbddMode.Off => LibRawFbddMode.Off,
-            FbddMode.Light => LibRawFbddMode.Light,
-            FbddMode.Full => LibRawFbddMode.Full,
-            _ => throw new InvalidOperationException(
-                $"Unsupported FBDD mode: {decode.NoiseReduction}.")
-        };
         var configuration = LibRawOutputConfiguration.LinearCameraNative(
             highlight,
-            noiseReduction,
+            LibRawFbddMode.Off,
             preview);
         return !isMonochrome ? configuration : configuration with
         {

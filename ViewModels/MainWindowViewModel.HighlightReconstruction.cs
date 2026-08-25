@@ -19,7 +19,6 @@ public partial class MainWindowViewModel
     public bool AreColorCurveChannelsEnabled => !IsMonochromeSource;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsHighlightHandlingEnabled))]
-    [NotifyPropertyChangedFor(nameof(IsNoiseReductionEnabled))]
     [NotifyPropertyChangedFor(nameof(CaptureSharpenDefault))]
     private bool _isBrightnessEnabled = true;
 

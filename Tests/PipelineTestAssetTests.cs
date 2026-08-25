@@ -1,6 +1,7 @@
 using ImageMagick;
 using HappyPhoton.LibRaw.Interop;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -52,7 +53,7 @@ public sealed class PipelineTestAssetTests
     }
 
     [Fact]
-    public void FbddReference_IsCanon6dAtIso6400()
+    public void LuminanceNrRawReference_IsCanon6dAtIso6400()
     {
         using var context = LibRawContext.Open(
             GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2"));
@@ -61,6 +62,18 @@ public sealed class PipelineTestAssetTests
         Assert.Equal("Canon", metadata.Make?.Trim());
         Assert.Equal("EOS 6D", metadata.Model?.Trim());
         Assert.Equal(6400, metadata.Iso);
+    }
+
+    [Fact]
+    public void LuminanceNrHeicReference_HashIsPinned()
+    {
+        using var stream = File.OpenRead(GoldenTestPaths.Asset(
+            "iphone-14-pro-iso-1000.heic"));
+        var hash = Convert.ToHexString(SHA256.HashData(stream));
+
+        Assert.Equal(
+            "E4BE19FBA9F585B74AC633AF0E545BCB5A331DB7EC3D0D8DEA81D8C538CB1E02",
+            hash);
     }
 
     [Fact]

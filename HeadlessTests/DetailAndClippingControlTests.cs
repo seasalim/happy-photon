@@ -21,7 +21,7 @@ public sealed class DetailAndClippingControlTests : IDisposable
         $"happy-photon-detail-clipping-ui-{Guid.NewGuid():N}")).FullName;
 
     [AvaloniaFact]
-    public async Task DetailGroupKeepsRawOnlyRowAndResolvesSourceDefault()
+    public async Task DetailGroupUsesAllSourceSlidersAndResolvesSourceDefault()
     {
         using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
         await using var vm = new MainWindowViewModel(
@@ -33,21 +33,21 @@ public sealed class DetailAndClippingControlTests : IDisposable
         window.Show();
         Dispatcher.UIThread.RunJobs();
         var detail = panel.FindControl<DetailEditGroup>("DetailEditGroup")!;
-        var row = detail.FindControl<Grid>("NoiseReductionRow")!;
+        var luminanceNr = detail.FindControl<CompactSlider>(
+            "LuminanceNrSlider")!;
 
         vm.SelectedImage = new ImageFile(Path.Combine(_root, "raw.dng"));
         Dispatcher.UIThread.RunJobs();
-        Assert.True(row.IsVisible);
-        Assert.True(row.IsEnabled);
+        Assert.True(luminanceNr.IsVisible);
+        Assert.True(luminanceNr.IsEnabled);
         Assert.Equal(25, vm.CaptureSharpen);
 
         vm.SelectedImage = new ImageFile(Path.Combine(_root, "standard.jpg"));
         Dispatcher.UIThread.RunJobs();
-        Assert.True(row.IsVisible);
-        Assert.False(row.IsEnabled);
-        Assert.Equal(0.32, row.Opacity);
+        Assert.True(luminanceNr.IsVisible);
+        Assert.True(luminanceNr.IsEnabled);
         Assert.Equal(0, vm.CaptureSharpen);
-        Assert.Equal(26, row.Height);
+        Assert.Null(detail.FindControl<ListBox>("NoiseReductionControl"));
 
         window.Close();
         panel.DataContext = null;

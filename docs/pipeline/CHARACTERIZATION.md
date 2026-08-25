@@ -134,8 +134,9 @@ source-cited constants with derivation cross-checks, independent
 
 Parity gate: rendered comparison of the fused characterization against
 LibRaw's own Rec.2020 conversion over the four RAW golden anchors +
-ColorChecker NEF + Canon 6D, including Blend and FBDD decode modes on Bayer
-and X-Trans. Differences come only from double-precision math and a single
+ColorChecker NEF + Canon 6D, including Blend and direct-interop FBDD modes on Bayer
+and X-Trans. Those FBDD arms retain ABI coverage only; every application decode passes
+Off. Differences come only from double-precision math and a single
 rounding replacing LibRaw's internal 16-bit matrix path; the gate is frozen at
 mean ΔE76 ≤ 1.1 and p99 ΔE76 ≤ 9.5 (TESTING.md §3).
 

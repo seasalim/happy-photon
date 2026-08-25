@@ -203,7 +203,7 @@ static int FindJpegEnd(byte[] bytes, int start)
 static MagickImage Render(string path, bool distortion, bool ca, bool vignette)
 {
     var settings = new BaseDecodeSettings(
-        HlReconstructionMode.Clip, FbddMode.Off, distortion, ca, vignette);
+        HlReconstructionMode.Clip, distortion, ca, vignette);
     using var baseImage = new RawBaseLoader().LoadPreviewBase(
         new ImageFile(path), settings, CancellationToken.None) ??
         throw new InvalidOperationException("RAW decode failed.");

@@ -8,6 +8,8 @@ namespace HappyPhoton.Tests;
 
 public sealed class RenderDetailPerformanceTests
 {
+    private const int PreviewDiagnosticSampleCount = 15;
+
     private readonly ITestOutputHelper _output;
 
     public RenderDetailPerformanceTests(ITestOutputHelper output) =>
@@ -69,6 +71,136 @@ public sealed class RenderDetailPerformanceTests
             $"{stopwatch.Elapsed.TotalMilliseconds:F1} ms, " +
             $"peak private-memory delta " +
             $"{(peak - baseline) / 1048576.0:F1} MiB.");
+    }
+
+    [Fact]
+    public async Task FullResolutionLuminanceNr100_MeetsLatencyAndMemoryGate()
+    {
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run detail performance diagnostics.");
+#if DEBUG
+        Assert.Skip("Run detail performance diagnostics in Release.");
+#endif
+
+        using (var warmup = CreateImage(256, 256))
+        {
+            for (var iteration = 0; iteration < 16; iteration++)
+            {
+                RenderNoiseReduction.Apply(
+                    warmup,
+                    CreateInfo(256, 256),
+                    new DetailSettings { LuminanceNr = 100 });
+            }
+        }
+        await Task.Delay(100);
+
+        const int width = 5472;
+        const int height = 3648;
+        using var image = CreateImage(width, height);
+        var process = Process.GetCurrentProcess();
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        process.Refresh();
+        var baseline = process.PrivateMemorySize64;
+        var peak = baseline;
+        var stopwatch = Stopwatch.StartNew();
+        var render = Task.Run(() => RenderNoiseReduction.Apply(
+            image,
+            CreateInfo(width, height),
+            new DetailSettings { LuminanceNr = 100 }));
+        while (!render.IsCompleted)
+        {
+            await Task.Delay(5);
+            process.Refresh();
+            peak = Math.Max(peak, process.PrivateMemorySize64);
+        }
+        await render;
+        stopwatch.Stop();
+        process.Refresh();
+        peak = Math.Max(peak, process.PrivateMemorySize64);
+        var memoryMiB = (peak - baseline) / 1048576.0;
+
+        _output.WriteLine(
+            $"Banded luminance NR 100 at {width}x{height}: " +
+            $"{stopwatch.Elapsed.TotalMilliseconds:F1} ms, " +
+            $"peak private-memory delta {memoryMiB:F1} MiB.");
+        Assert.True(
+            stopwatch.Elapsed.TotalMilliseconds <= 410,
+            $"Luminance NR took {stopwatch.Elapsed.TotalMilliseconds:F1} ms.");
+        Assert.True(memoryMiB <= 150,
+            $"Luminance NR used {memoryMiB:F1} MiB peak private memory.");
+    }
+
+    [Fact]
+    public async Task LuminanceNrPreviewScaleShapes_ReportStageCost()
+    {
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run detail performance diagnostics.");
+#if DEBUG
+        Assert.Skip("Run detail performance diagnostics in Release.");
+#endif
+
+        var shapes = new[]
+        {
+            new PreviewShape(1600, 1067, 5472, 3648, 2),
+            new PreviewShape(1600, 1200, 4032, 3024, 3),
+            new PreviewShape(1600, 1200, 1600, 1200, 4)
+        };
+        foreach (var shape in shapes)
+        {
+            using var source = CreateImage(shape.Width, shape.Height);
+            var info = CreateInfo(shape.FullWidth, shape.FullHeight);
+            Assert.Equal(shape.ScaleCount,
+                RenderNoiseReduction.ResolveScales(source, info, 1).Length);
+            using (var warmup = new MagickImage(source))
+            {
+                RenderNoiseReduction.Apply(warmup, info,
+                    new DetailSettings { LuminanceNr = 50 });
+            }
+
+            var samples = new double[PreviewDiagnosticSampleCount];
+            for (var index = 0; index < samples.Length; index++)
+            {
+                using var candidate = new MagickImage(source);
+                var stopwatch = Stopwatch.StartNew();
+                RenderNoiseReduction.Apply(candidate, info,
+                    new DetailSettings { LuminanceNr = 50 });
+                stopwatch.Stop();
+                samples[index] = stopwatch.Elapsed.TotalMilliseconds;
+            }
+
+            using var memoryCandidate = new MagickImage(source);
+            using var process = Process.GetCurrentProcess();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            process.Refresh();
+            var baseline = process.PrivateMemorySize64;
+            var peak = baseline;
+            var render = Task.Run(() => RenderNoiseReduction.Apply(
+                memoryCandidate, info,
+                new DetailSettings { LuminanceNr = 50 }));
+            while (!render.IsCompleted)
+            {
+                await Task.Delay(1);
+                process.Refresh();
+                peak = Math.Max(peak, process.PrivateMemorySize64);
+            }
+            await render;
+            process.Refresh();
+            peak = Math.Max(peak, process.PrivateMemorySize64);
+
+            Array.Sort(samples);
+            _output.WriteLine(
+                $"Luminance NR 50 stage {shape.Width}x{shape.Height} from " +
+                $"{shape.FullWidth}x{shape.FullHeight} ({shape.ScaleCount} scales): " +
+                $"median {samples[samples.Length / 2]:F2} ms over " +
+                $"{PreviewDiagnosticSampleCount} iterations, peak private delta " +
+                $"{Math.Max(0, peak - baseline) / 1048576.0:F1} MiB.");
+        }
     }
 
     [Fact]
@@ -173,4 +305,11 @@ public sealed class RenderDetailPerformanceTests
             1,
             width,
             height);
+
+    private sealed record PreviewShape(
+        int Width,
+        int Height,
+        int FullWidth,
+        int FullHeight,
+        int ScaleCount);
 }

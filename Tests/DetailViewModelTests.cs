@@ -21,23 +21,23 @@ public sealed class DetailViewModelTests : IDisposable
         Assert.Null(image.EditSettings.Detail.CaptureSharpen);
 
         vm.CaptureSharpen = 44;
-        vm.NoiseReduction = FbddMode.Full;
+        vm.LuminanceNr = 68;
         vm.ChromaNr = 57;
         await TestWaits.UntilAsync(() =>
             image.EditSettings.Detail.CaptureSharpen == 44 &&
-            image.EditSettings.Detail.NoiseReduction == FbddMode.Full &&
+            image.EditSettings.Detail.LuminanceNr == 68 &&
             image.EditSettings.Detail.ChromaNr == 57);
 
         Assert.True(vm.CanReset);
         await vm.ResetEditsCommand.ExecuteAsync(null);
         Assert.Null(image.EditSettings.Detail.CaptureSharpen);
-        Assert.Equal(FbddMode.Off, image.EditSettings.Detail.NoiseReduction);
+        Assert.Equal(0, image.EditSettings.Detail.LuminanceNr);
         Assert.Equal(0, image.EditSettings.Detail.ChromaNr);
         Assert.Equal(25, vm.CaptureSharpen);
 
         await vm.UndoCommand.ExecuteAsync(null);
         Assert.Equal(44, image.EditSettings.Detail.CaptureSharpen);
-        Assert.Equal(FbddMode.Full, image.EditSettings.Detail.NoiseReduction);
+        Assert.Equal(68, image.EditSettings.Detail.LuminanceNr);
         Assert.Equal(57, image.EditSettings.Detail.ChromaNr);
 
         vm.CaptureSharpen = 25;
@@ -76,7 +76,7 @@ public sealed class DetailViewModelTests : IDisposable
 
         Assert.Equal(0, vm.CaptureSharpen);
         Assert.Null(image.EditSettings.Detail.CaptureSharpen);
-        Assert.False(vm.IsNoiseReductionEnabled);
+        Assert.Equal(0, vm.LuminanceNr);
     }
 
     private MainWindowViewModel CreateViewModel(CatalogService catalog)

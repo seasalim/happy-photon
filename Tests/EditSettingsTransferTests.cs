@@ -33,7 +33,7 @@ public sealed class EditSettingsTransferTests
         Detail = new DetailSettings
         {
             CaptureSharpen = 35,
-            NoiseReduction = FbddMode.Light,
+            LuminanceNr = 46,
             ChromaNr = 12
         },
         Effects = new EffectsSettings
@@ -82,7 +82,7 @@ public sealed class EditSettingsTransferTests
         Assert.True(copy.BaseLook);
         Assert.Equal(HlReconstructionMode.Blend, copy.HlReconstruction);
         Assert.Equal(35, copy.Detail.CaptureSharpen);
-        Assert.Equal(FbddMode.Light, copy.Detail.NoiseReduction);
+        Assert.Equal(46, copy.Detail.LuminanceNr);
         Assert.Equal(12, copy.Detail.ChromaNr);
         Assert.Equal(-35, copy.Effects!.Vignette);
         Assert.Equal(62, copy.Effects.Midpoint);
@@ -114,7 +114,7 @@ public sealed class EditSettingsTransferTests
             Detail = new DetailSettings
             {
                 CaptureSharpen = 80,
-                NoiseReduction = FbddMode.Full,
+                LuminanceNr = 92,
                 ChromaNr = 60
             },
             Rotation = 270,
@@ -139,7 +139,7 @@ public sealed class EditSettingsTransferTests
         Assert.True(target.BaseLook);
         Assert.Equal(HlReconstructionMode.Blend, target.HlReconstruction);
         Assert.Equal(35, target.Detail.CaptureSharpen);
-        Assert.Equal(FbddMode.Light, target.Detail.NoiseReduction);
+        Assert.Equal(46, target.Detail.LuminanceNr);
         Assert.Equal(12, target.Detail.ChromaNr);
         Assert.Equal(-35, target.Effects!.Vignette);
         Assert.NotSame(copied.Effects, target.Effects);
@@ -321,7 +321,7 @@ public sealed class EditSettingsTransferTests
             Detail = new DetailSettings
             {
                 CaptureSharpen = captureSharpen,
-                NoiseReduction = FbddMode.Full,
+                LuminanceNr = 87,
                 ChromaNr = 61
             }
         };
@@ -330,7 +330,7 @@ public sealed class EditSettingsTransferTests
             Detail = new DetailSettings
             {
                 CaptureSharpen = targetSharpen,
-                NoiseReduction = FbddMode.Light,
+                LuminanceNr = 12,
                 ChromaNr = 12
             }
         };
@@ -340,7 +340,7 @@ public sealed class EditSettingsTransferTests
 
         Assert.Equal(captureSharpen, copied.Detail.CaptureSharpen);
         Assert.Equal(captureSharpen, target.Detail.CaptureSharpen);
-        Assert.Equal(FbddMode.Full, target.Detail.NoiseReduction);
+        Assert.Equal(87, target.Detail.LuminanceNr);
         Assert.Equal(61, target.Detail.ChromaNr);
         Assert.NotSame(source.Detail, copied.Detail);
         Assert.NotSame(copied.Detail, target.Detail);

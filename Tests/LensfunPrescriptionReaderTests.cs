@@ -387,7 +387,7 @@ public sealed partial class LensfunPrescriptionReaderTests : IDisposable
 
         var merged = LensfunPrescriptionReader.Merge(embedded, lensfun)!;
         var summary = merged.GetSummary(new BaseDecodeSettings(
-            HlReconstructionMode.Clip, FbddMode.Off,
+            HlReconstructionMode.Clip,
             Distortion: true, ChromaticAberration: true, Vignetting: false));
 
         Assert.Null(merged.LensfunDistortion);
@@ -431,7 +431,7 @@ public sealed partial class LensfunPrescriptionReaderTests : IDisposable
         bool vignetting = false) => new(
             1001, 1001, 1001, 1001, 1, prescription,
             new BaseDecodeSettings(
-                HlReconstructionMode.Clip, FbddMode.Off,
+                HlReconstructionMode.Clip,
                 true, true, vignetting), 1);
 
     private static LensPoint Normalize(LensPoint point) => new(

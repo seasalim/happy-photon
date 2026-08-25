@@ -163,8 +163,7 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
         await using var coordinator = new PreviewBaseCoordinator(loader);
         var file = new ImageFile(path);
         var replacementDecode = new BaseDecodeSettings(
-            HlReconstructionMode.Blend,
-            FbddMode.Light);
+            HlReconstructionMode.Blend);
 
         using var first = await coordinator.GetPreviewAsync(
             file,
@@ -186,18 +185,17 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
         await stale.RefreshTask!;
     }
 
-    [Theory]
-    [InlineData(FbddMode.Light)]
-    [InlineData(FbddMode.Full)]
-    public async Task NoiseReductionChange_ReplacesHeldBase(FbddMode mode)
+    [Fact]
+    public async Task LensChange_ReplacesHeldBaseUnderNewDecodeKey()
     {
-        var path = CreateSource($"fbdd-{mode}.cr2");
+        var path = CreateSource("lens-replacement.cr2");
         var loader = new ControlledLoader(blockFirst: false);
         await using var coordinator = new PreviewBaseCoordinator(loader);
         var file = new ImageFile(path);
-        var replacementDecode = new BaseDecodeSettings(
-            HlReconstructionMode.Blend,
-            mode);
+        var replacementDecode = BaseDecodeSettings.Default with
+        {
+            Vignetting = true
+        };
 
         using var first = await coordinator.GetPreviewAsync(
             file,
@@ -236,8 +234,7 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
         await using var coordinator = new PreviewBaseCoordinator(loader);
         var file = new ImageFile(firstPath);
         var replacementDecode = new BaseDecodeSettings(
-            HlReconstructionMode.Blend,
-            FbddMode.Off);
+            HlReconstructionMode.Blend);
 
         using var first = await coordinator.GetPreviewAsync(
             file,
@@ -272,8 +269,7 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
         await using var coordinator = new PreviewBaseCoordinator(loader);
         var file = new ImageFile(path);
         var replacementDecode = new BaseDecodeSettings(
-            HlReconstructionMode.Blend,
-            FbddMode.Off);
+            HlReconstructionMode.Blend);
 
         using var first = await coordinator.GetPreviewAsync(
             file,

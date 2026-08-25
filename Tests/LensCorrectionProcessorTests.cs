@@ -165,7 +165,6 @@ public sealed partial class LensCorrectionProcessorTests
             LensFrameWindow.Full);
         var settings = new BaseDecodeSettings(
             HlReconstructionMode.Clip,
-            FbddMode.Off,
             Distortion: false,
             ChromaticAberration: false,
             Vignetting: true);

@@ -200,7 +200,7 @@ public partial class MainWindowViewModel
                    // Keep disabled RAW-only state resettable after fallback.
                    HlReconstruction != HlReconstructionMode.Clip ||
                    CaptureSharpen != CaptureSharpenDefault ||
-                   NoiseReduction != FbddMode.Off ||
+                   LuminanceNr != 0 ||
                    ChromaNr != 0 ||
                    Vignette != 0 ||
                    Grain != 0 ||

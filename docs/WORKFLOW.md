@@ -351,10 +351,11 @@ the Develop footer RESET clears every curve and other tonal adjustments.
 
 ### Refine detail
 
-Use **Sharpen** and **Chroma NR** for final detail balance. RAW files also enable the
-Off/Light/Full **Noise Red.** control; the row stays visible but disabled for standard
-sources. The Develop viewer uses a bounded 1600px preview base even at 1:1, so judge
-capture sharpening and subtle chroma reduction on an export-scale render.
+Use **Noise Reduction** for luminance grain, **Sharpen** for capture detail, and
+**Chroma NR** for color speckling. All three work on RAW, JPEG, HEIC, and TIFF. Noise
+reduction runs after tone, so revisit it after a large shadow or exposure change. The
+Develop viewer uses a bounded 1600px preview base even at 1:1, so judge capture
+sharpening and subtle noise reduction on an export-scale render.
 
 ### Add finishing effects
 

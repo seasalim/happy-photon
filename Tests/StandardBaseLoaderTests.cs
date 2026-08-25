@@ -62,9 +62,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
     [InlineData("adobe-rgb-reference.jpg")]
     public void FullBase_NormalizesTaggedSourceAndRecordsProfile(string assetName)
     {
-        var decode = new BaseDecodeSettings(
-            HlReconstructionMode.Clip,
-            FbddMode.Full);
+        var decode = new BaseDecodeSettings(HlReconstructionMode.Clip);
         var loader = new StandardBaseLoader();
 
         using var result = loader.LoadFullBase(

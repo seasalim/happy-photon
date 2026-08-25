@@ -32,16 +32,6 @@ public enum HlReconstructionMode
     Clip
 }
 
-public enum FbddMode
-{
-    [JsonStringEnumMemberName("off")]
-    Off,
-    [JsonStringEnumMemberName("light")]
-    Light,
-    [JsonStringEnumMemberName("full")]
-    Full
-}
-
 public enum GrainSize
 {
     [JsonStringEnumMemberName("fine")]
@@ -195,9 +185,8 @@ public sealed class DetailSettings
     [JsonPropertyName("captureSharpen")]
     public int? CaptureSharpen { get; set; }
 
-    [JsonPropertyName("noiseReduction")]
-    [JsonConverter(typeof(StrictCamelCaseEnumConverter<FbddMode>))]
-    public FbddMode NoiseReduction { get; set; } = FbddMode.Off;
+    [JsonPropertyName("luminanceNr")]
+    public int LuminanceNr { get; set; }
 
     [JsonPropertyName("chromaNr")]
     public int ChromaNr { get; set; }
@@ -208,7 +197,7 @@ public sealed class DetailSettings
     public DetailSettings Clone() => new()
     {
         CaptureSharpen = CaptureSharpen,
-        NoiseReduction = NoiseReduction,
+        LuminanceNr = LuminanceNr,
         ChromaNr = ChromaNr
     };
 }

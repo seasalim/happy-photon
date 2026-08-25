@@ -62,7 +62,7 @@ public sealed class BeforeAfterOriginalSettingsTests : IDisposable
                 Detail = new DetailSettings
                 {
                     CaptureSharpen = 60,
-                    NoiseReduction = FbddMode.Full,
+                    LuminanceNr = 55,
                     ChromaNr = 40
                 },
                 Effects = new EffectsSettings
