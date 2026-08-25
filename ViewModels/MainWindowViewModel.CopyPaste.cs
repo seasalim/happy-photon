@@ -58,7 +58,9 @@ public partial class MainWindowViewModel
     partial void OnSelectedCountChanged(int value) =>
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
 
-    partial void OnIsDevelopModeChanged(bool oldValue, bool newValue) =>
+    partial void OnWorkspaceModeChanged(
+        WorkspaceMode oldValue,
+        WorkspaceMode newValue) =>
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
 
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]

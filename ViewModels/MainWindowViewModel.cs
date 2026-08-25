@@ -131,10 +131,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty]
     private FolderNode? _selectedFolder;
 
-    // View mode toggle (Browse vs Develop)
-    [ObservableProperty]
-    private bool _isDevelopMode;
-
     [ObservableProperty]
     private bool _isFullScreenMode;
 

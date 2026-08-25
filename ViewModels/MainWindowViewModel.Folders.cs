@@ -240,6 +240,22 @@ public partial class MainWindowViewModel
 
     // View Mode Methods
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDevelopMode))]
+    [NotifyPropertyChangedFor(nameof(IsBrowseMode))]
+    private WorkspaceMode _workspaceMode;
+
+    public bool IsDevelopMode
+    {
+        get => WorkspaceMode == WorkspaceMode.Develop;
+        set => WorkspaceMode = value
+            ? WorkspaceMode.Develop
+            : WorkspaceMode.Browse;
+    }
+
+    public bool IsBrowseMode =>
+        WorkspaceMode == WorkspaceMode.Browse;
+
     public bool IsDevelopPreviewSurfaceActive =>
         IsDevelopMode && !IsFullScreenMode;
 
@@ -306,10 +322,11 @@ public partial class MainWindowViewModel
         }
     }
 
-    partial void OnIsDevelopModeChanged(bool value)
+    partial void OnWorkspaceModeChanged(WorkspaceMode value)
     {
+        var isDevelopMode = value == WorkspaceMode.Develop;
         UpdateThumbnailPumpAdmission();
-        if (!value) CancelAdjacentPreviewWarm(true, dropRetained: true);
+        if (!isDevelopMode) CancelAdjacentPreviewWarm(true, dropRetained: true);
         // Cancel in-flight resting work but keep the parent: mode round-trips
         // on the same image must stay armed (publication is surface-gated and
         // render-time guards catch real staleness). Only selection changes
@@ -327,13 +344,13 @@ public partial class MainWindowViewModel
         NotifyClippingCommandState();
 
         // Load preview when entering Develop mode (if we have a selected image)
-        if (value && SelectedImage != null)
+        if (isDevelopMode && SelectedImage != null)
         {
             var generation = ReserveRenderOutcome();
             ApplySurfaceClearOutcome(SelectedImage, generation);
             _ = LoadPreviewAsync(SelectedImage, generation);
         }
-        else if (!value && !IsFullScreenMode)
+        else if (!isDevelopMode && !IsFullScreenMode)
         {
             var generation = ReserveRenderOutcome();
             ApplySurfaceClearOutcome(SelectedImage, generation);
