@@ -5,8 +5,8 @@ existing conventions (`Tests/*Tests.cs`, xUnit, `dotnet test HappyPhoton.sln`).
 
 ## 1. Sample assets (`Tests/assets/`)
 
-Committed directly (no LFS), current total **91.37 MiB** within a budget of
-**≤ 100 MiB, ≤ 30 MiB per file**. The budget covers six distinct raws plus the
+Committed directly (no LFS), current total **93.33 MiB** within a budget of
+**≤ 120 MiB, ≤ 30 MiB per file**. The budget covers six distinct raws plus the
 byte-identical burst copy; prefer the
 oldest/smallest CC0 body per mosaic type. Provenance is recorded in
 `Tests/assets/README.md` with per-file source URL + license.

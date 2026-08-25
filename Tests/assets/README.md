@@ -48,7 +48,7 @@ External reference renders follow
 accepts a fixture-keyed directory supplied by `HAPPY_PHOTON_COMPARE_REFERENCE_DIR`.
 Committed references are canonical test assets: store them losslessly with exactly the
 1600px measurement long edge (never smaller), and add their compressed size to the
-recursive 100 MiB asset budget before committing. If the two real compressed files do
+recursive 120 MiB asset budget before committing. If the two real compressed files do
 not fit the remaining budget, obtain maintainer approval for a budget change; do not
 reduce their measurement resolution.
 
