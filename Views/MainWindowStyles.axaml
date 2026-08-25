@@ -1,0 +1,33 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style Selector="GridSplitter.panel-splitter">
+        <Setter Property="Width" Value="5"/>
+        <Setter Property="Margin" Value="-2,0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Width="1" Background="{DynamicResource Divider}"
+                        HorizontalAlignment="Center"/>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector=":is(Control).tour-region.tour-dimmed">
+        <Setter Property="Opacity" Value="{DynamicResource TourDimmedOpacity}"/>
+    </Style>
+    <Style Selector=":is(Control).tour-region.tour-dimmed.tour-focus">
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+    <!-- Opt-in focus glow. Deliberately not applied to DevelopEditPanel: on a
+         full-height column the glow is invisible, while the effect would force
+         the live editing controls through an offscreen surface on every slider
+         change. Small targets only. -->
+    <Style Selector=":is(Control).tour-region.tour-dimmed.tour-focus.tour-glow">
+        <Setter Property="Effect">
+            <DropShadowEffect Color="{StaticResource PrimaryContainerColor}"
+                              BlurRadius="18"
+                              OffsetX="0"
+                              OffsetY="0"
+                              Opacity="{DynamicResource TourFocusGlowOpacity}"/>
+        </Setter>
+    </Style>
+</Styles>

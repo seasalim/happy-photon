@@ -106,7 +106,8 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
                         VerticalAlignment="Center" Spacing="0"
                         chrome:WindowDecorationProperties.ElementRole="User">
-                <Button Classes="tab" Classes.active="{Binding !IsDevelopMode}"
+                <Button x:Name="BrowseTabButton"
+                        Classes="tab" Classes.active="{Binding !IsDevelopMode}"
                         Command="{Binding SwitchToBrowseCommand}" Focusable="False"
                         IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
                     <StackPanel Spacing="3">
@@ -115,7 +116,8 @@
                                    Classes="tabUnderline" Height="2" Margin="-4,0"/>
                     </StackPanel>
                 </Button>
-                <Button Classes="tab" Classes.active="{Binding IsDevelopMode}"
+                <Button x:Name="DevelopTabButton"
+                        Classes="tab" Classes.active="{Binding IsDevelopMode}"
                         Command="{Binding SwitchToDevelopCommand}" Focusable="False"
                         IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
                     <StackPanel Spacing="3">

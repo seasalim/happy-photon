@@ -57,36 +57,7 @@
     </Window.KeyBindings>
 
     <Window.Styles>
-        <Style Selector="GridSplitter.panel-splitter">
-            <Setter Property="Width" Value="5"/>
-            <Setter Property="Margin" Value="-2,0"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Template">
-                <ControlTemplate>
-                    <Border Width="1" Background="{DynamicResource Divider}"
-                            HorizontalAlignment="Center"/>
-                </ControlTemplate>
-            </Setter>
-        </Style>
-        <Style Selector=":is(Control).tour-region.tour-dimmed">
-            <Setter Property="Opacity" Value="{DynamicResource TourDimmedOpacity}"/>
-        </Style>
-        <Style Selector=":is(Control).tour-region.tour-dimmed.tour-focus">
-            <Setter Property="Opacity" Value="1"/>
-        </Style>
-        <!-- Opt-in focus glow. Deliberately not applied to DevelopEditPanel: on a
-             full-height column the glow is invisible, while the effect would force
-             the live editing controls through an offscreen surface on every slider
-             change. Small targets only. -->
-        <Style Selector=":is(Control).tour-region.tour-dimmed.tour-focus.tour-glow">
-            <Setter Property="Effect">
-                <DropShadowEffect Color="{StaticResource PrimaryContainerColor}"
-                                  BlurRadius="18"
-                                  OffsetX="0"
-                                  OffsetY="0"
-                                  Opacity="{DynamicResource TourFocusGlowOpacity}"/>
-            </Setter>
-        </Style>
+        <StyleInclude Source="avares://HappyPhoton/Views/MainWindowStyles.axaml"/>
     </Window.Styles>
 
     <Panel>
@@ -258,6 +229,35 @@
                                 IsEnabled="{Binding HasSelectedImage}"
                                 HorizontalAlignment="Center" Margin="0,4,0,8">
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Button x:Name="PreviousImageButton"
+                                        Command="{Binding SelectPreviousImageCommand}"
+                                        ToolTip.Tip="Previous image (←)"
+                                        AutomationProperties.Name="Previous image"
+                                        Padding="7,3" BorderThickness="0">
+                                    <Viewbox Width="14" Height="14">
+                                        <Canvas Width="16" Height="16">
+                                            <Path Data="M 10,3.5 L 5.5,8 L 10,12.5" Fill="Transparent"
+                                                  Stroke="{StaticResource PrimaryContainer}"
+                                                  StrokeThickness="1.5" StrokeLineCap="Round"
+                                                  StrokeJoin="Round"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                </Button>
+                                <Button x:Name="NextImageButton"
+                                        Command="{Binding SelectNextImageCommand}"
+                                        ToolTip.Tip="Next image (→)"
+                                        AutomationProperties.Name="Next image"
+                                        Padding="7,3" BorderThickness="0">
+                                    <Viewbox Width="14" Height="14">
+                                        <Canvas Width="16" Height="16">
+                                            <Path Data="M 6,3.5 L 10.5,8 L 6,12.5" Fill="Transparent"
+                                                  Stroke="{StaticResource PrimaryContainer}"
+                                                  StrokeThickness="1.5" StrokeLineCap="Round"
+                                                  StrokeJoin="Round"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                </Button>
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}" Margin="4,0"/>
                                 <Button x:Name="RotateLeftButton"
                                         Command="{Binding RotateLeftCommand}"
                                         IsEnabled="{Binding CanEditSelectedImage}"
@@ -271,7 +271,8 @@
                                         ToolTip.Tip="Rotate Right (90° clockwise)"
                                         FontSize="14" Padding="8,3"
                                         BorderThickness="0"/>
-                                <ToggleButton IsChecked="{Binding IsCropMode, Mode=OneWay}"
+                                <ToggleButton x:Name="CropModeButton"
+                                              IsChecked="{Binding IsCropMode, Mode=OneWay}"
                                               Command="{Binding ToggleCropModeCommand}"
                                               IsEnabled="{Binding CanEditSelectedImage}"
                                               ToolTip.Tip="Crop Image (C)"
@@ -298,6 +299,21 @@
                                               ToolTip.Tip="Color assessment mode (Ctrl+B)"
                                               FontSize="10" Padding="8,3"
                                               BorderThickness="0"/>
+                                <Button x:Name="FullScreenButton"
+                                        Command="{Binding ToggleFullScreenCommand}"
+                                        IsEnabled="{Binding !IsCropMode}"
+                                        ToolTip.Tip="Fullscreen (F)"
+                                        AutomationProperties.Name="Enter fullscreen"
+                                        Padding="7,3" BorderThickness="0">
+                                    <Viewbox Width="14" Height="14">
+                                        <Canvas Width="16" Height="16">
+                                            <Path Data="M 2,6 L 2,2 L 6,2 M 10,2 L 14,2 L 14,6 M 14,10 L 14,14 L 10,14 M 6,14 L 2,14 L 2,10" Fill="Transparent"
+                                                  Stroke="{StaticResource PrimaryContainer}"
+                                                  StrokeThickness="1.5" StrokeLineCap="Round"
+                                                  StrokeJoin="Round"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                </Button>
                                 <!-- Crop action buttons (visible in crop mode) -->
                                 <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}" Margin="4,0"
                                            IsVisible="{Binding IsCropMode}"/>
@@ -317,7 +333,8 @@
                                                   BorderThickness="0">
                                         <TextBlock Text="🔒" FontSize="12"/>
                                     </ToggleButton>
-                                    <Button Command="{Binding ApplyCropCommand}"
+                                    <Button x:Name="ApplyCropButton"
+                                            Command="{Binding ApplyCropCommand}"
                                             Content="Apply"
                                             ToolTip.Tip="Apply Crop (Enter)"
                                             FontSize="10" Padding="10,4"
@@ -328,7 +345,8 @@
                                             ToolTip.Tip="Reset Crop"
                                             FontSize="10" Padding="8,4"
                                             BorderThickness="0"/>
-                                    <Button Command="{Binding CancelCropCommand}"
+                                    <Button x:Name="CancelCropButton"
+                                            Command="{Binding CancelCropCommand}"
                                             Content="Cancel"
                                             ToolTip.Tip="Cancel (Escape)"
                                             FontSize="10" Padding="8,4"
@@ -383,7 +401,8 @@
                                IsVisible="{Binding IsStartupGateVisible}"/>
     </Grid>
 
-    <Border Background="{DynamicResource FullScreenBackdrop}"
+    <Border x:Name="FullScreenOverlay"
+            Background="{DynamicResource FullScreenBackdrop}"
             IsVisible="{Binding IsFullScreenMode}">
         <Panel>
             <Image x:Name="FullScreenPlaceholderImage"
@@ -406,7 +425,7 @@
             <Border x:Name="FullScreenSelectionBadge"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Bottom"
-                    Margin="16"
+                    Margin="16,16,16,48"
                     Opacity="1"
                     IsHitTestVisible="False"
                     IsVisible="{Binding IsFullScreenSelectionRestricted}">
@@ -415,7 +434,37 @@
                            FontSize="{StaticResource FontSizeLabel}"
                            Foreground="{DynamicResource TextMuted}"/>
             </Border>
-
+            <Button x:Name="FullScreenExitButton"
+                    HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                    Margin="12" Padding="0"
+                    Background="Transparent" Foreground="{DynamicResource TextMuted}"
+                    BorderThickness="0" CornerRadius="999"
+                    Opacity="0" IsHitTestVisible="False"
+                    Command="{Binding ToggleFullScreenCommand}"
+                    ToolTip.Tip="Exit fullscreen (Escape)"
+                    AutomationProperties.Name="Exit fullscreen">
+                <Button.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.18"
+                                          Easing="QuadraticEaseOut"/>
+                    </Transitions>
+                </Button.Transitions>
+                <Grid>
+                    <Border Background="{DynamicResource SurfaceLowest}" Opacity="0.62" CornerRadius="999"/>
+                    <StackPanel Orientation="Horizontal" Spacing="7" Margin="10,4">
+                    <Viewbox Width="11" Height="11">
+                        <Canvas Width="16" Height="16">
+                            <Path Data="M 6,2 L 6,6 L 2,6 M 14,6 L 10,6 L 10,2 M 10,14 L 10,10 L 14,10 M 2,10 L 6,10 L 6,14"
+                                  Fill="Transparent" Stroke="{DynamicResource TextMuted}"
+                                  StrokeThickness="1.5" StrokeLineCap="Round"
+                                  StrokeJoin="Round"/>
+                        </Canvas>
+                    </Viewbox>
+                    <TextBlock Text="EXIT FULLSCREEN · ESC" FontFamily="{StaticResource FontLabel}"
+                               FontSize="9" LetterSpacing="1.2"/>
+                    </StackPanel>
+                </Grid>
+            </Button>
         </Panel>
     </Border>
     </Panel>

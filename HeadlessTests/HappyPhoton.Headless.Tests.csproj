@@ -46,6 +46,7 @@
     <Compile Include="..\Tests\RawHighlightReconstructionUiTests.cs" Link="RawHighlightReconstructionUiTests.cs" />
     <Compile Include="..\Tests\RawHistogramUiTests.cs" Link="RawHistogramUiTests.cs" />
     <Compile Include="..\Tests\RenderFailureRollbackTests.cs" Link="RenderFailureRollbackTests.cs" />
+    <Compile Include="..\Tests\ShortcutReachabilityTests.cs" Link="ShortcutReachabilityTests.cs" />
     <Compile Include="..\Tests\TemporaryDirectory.cs" Link="TemporaryDirectory.cs" />
     <Compile Include="..\Tests\TestBaseLoaders.cs" Link="TestBaseLoaders.cs" />
     <Compile Include="..\Tests\TestImages.cs" Link="TestImages.cs" />

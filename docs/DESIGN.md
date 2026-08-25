@@ -268,6 +268,12 @@ photograph content, so it uses primary text at full opacity with a soft dark hal
 legibility over bright frames. It stays chrome-less — the halo replaces a boxed banner
 rather than joining one.
 
+Full screen keeps the same rule with one exception, so that leaving it is not
+keyboard-only: a muted exit chip sits at the bottom of the frame, invisible while
+the pointer is still, eased in on pointer movement and faded again about two
+seconds later. It is a control rather than a hint — clicking it leaves full
+screen, as Escape and `F` do — and it is not hit-testable while hidden.
+
 The Develop clipping latch uses the same restrained overlay language; its latch and
 peek behavior, the muted `CLIPPING · HIGHLIGHTS / FLOOR` status line, and the invariant
 red (source-saturation) / blue (display-floor) viewing-aid colors are specified in

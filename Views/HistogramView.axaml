@@ -15,20 +15,36 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
                         Background="Transparent">
-                    <Path x:Name="DisplayFloorTriangle"
-                          HorizontalAlignment="Left"
-                          VerticalAlignment="Top"
-                          Data="M 0,0 L 11,0 L 0,11 Z"/>
+                    <Grid>
+                        <Path x:Name="DisplayFloorTriangle"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Top"
+                              Data="M 0,0 L 11,0 L 0,11 Z"/>
+                        <Rectangle x:Name="DisplayFloorLatchMarker"
+                                   Width="11" Height="2"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Top"
+                                   Margin="0,12,0,0"
+                                   IsVisible="False"/>
+                    </Grid>
                 </Border>
                 <Border x:Name="SceneHighlightTriangleTarget"
                         Width="20" Height="20"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Top"
                         Background="Transparent">
-                    <Path x:Name="SceneHighlightTriangle"
-                          HorizontalAlignment="Right"
-                          VerticalAlignment="Top"
-                          Data="M 0,0 L 11,0 L 11,11 Z"/>
+                    <Grid>
+                        <Path x:Name="SceneHighlightTriangle"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Top"
+                              Data="M 0,0 L 11,0 L 11,11 Z"/>
+                        <Rectangle x:Name="SceneHighlightLatchMarker"
+                                   Width="11" Height="2"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Top"
+                                   Margin="0,12,0,0"
+                                   IsVisible="False"/>
+                    </Grid>
                 </Border>
             </Grid>
         </Grid>

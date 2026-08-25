@@ -43,6 +43,7 @@
     <Compile Remove="RawHighlightReconstructionUiTests.cs" />
     <Compile Remove="RawHistogramUiTests.cs" />
     <Compile Remove="RenderFailureRollbackTests.cs" />
+    <Compile Remove="ShortcutReachabilityTests.cs" />
     <Compile Remove="WhiteBalanceUiTests.cs" />
     <Compile Remove="WhiteBalanceOutcomeRaceTests.cs" />
     <Compile Remove="WaveformScopeUiTests.cs" />

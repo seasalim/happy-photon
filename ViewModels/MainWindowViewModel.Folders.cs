@@ -230,6 +230,7 @@ public partial class MainWindowViewModel
         RestartBrowseSelectionSummary();
         NotifyBrowseEmptyStateChanged();
         ReconcileFullScreenSelection();
+        NotifyImageNavigationCommandState();
     }
 
     private void NotifyBrowseEmptyStateChanged()

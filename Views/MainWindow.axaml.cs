@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         InitializeWindowChrome();
+        HookFullScreenExitReveal();
         AddHandler(
             KeyDownEvent,
             OnWorkspaceKeyDown,

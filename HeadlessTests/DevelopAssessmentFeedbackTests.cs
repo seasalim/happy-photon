@@ -21,10 +21,16 @@ public sealed class DevelopAssessmentFeedbackTests
         {
             var controlBar = window.FindControl<Border>("DevelopControlBar")!;
             var actions = Assert.IsType<StackPanel>(controlBar.Child);
+            var previous = window.FindControl<Button>("PreviousImageButton")!;
+            var next = window.FindControl<Button>("NextImageButton")!;
             var rotateLeft = window.FindControl<Button>("RotateLeftButton")!;
 
-            // Rotate leads the bar: nothing passive sits ahead of the actions.
-            Assert.Same(rotateLeft, actions.Children[0]);
+            // Actions lead the bar; the first passive child divides navigation
+            // from the editing actions.
+            Assert.Same(previous, actions.Children[0]);
+            Assert.Same(next, actions.Children[1]);
+            Assert.IsType<Avalonia.Controls.Shapes.Rectangle>(actions.Children[2]);
+            Assert.Same(rotateLeft, actions.Children[3]);
 
             var overlay = Assert.Single(
                 window.GetLogicalDescendants().OfType<AssessmentFeedbackOverlay>());

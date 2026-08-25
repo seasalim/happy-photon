@@ -35,7 +35,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource SurfaceLowest}"/>
     </Style>
     <!-- Hidden via opacity rather than IsVisible so the entrance can animate -->
-    <Style Selector="Border.check-badge">
+    <Style Selector="Button.check-badge">
         <Setter Property="Opacity" Value="0"/>
         <Setter Property="RenderTransform" Value="scale(0.7)"/>
         <Setter Property="Transitions">
@@ -45,7 +45,11 @@
             </Transitions>
         </Setter>
     </Style>
-    <Style Selector="Border.check-badge.selected">
+    <Style Selector="Border.thumbnail:pointerover Button.check-badge">
+        <Setter Property="Opacity" Value="0.45"/>
+        <Setter Property="RenderTransform" Value="scale(1)"/>
+    </Style>
+    <Style Selector="Button.check-badge.selected">
         <Setter Property="Opacity" Value="0.8"/>
         <Setter Property="RenderTransform" Value="scale(1)"/>
     </Style>

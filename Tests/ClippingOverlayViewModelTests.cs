@@ -1,7 +1,14 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Threading;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
+using HappyPhoton.Views;
 using ImageMagick;
 using Xunit;
 
@@ -10,6 +17,46 @@ namespace HappyPhoton.Tests;
 public sealed class ClippingOverlayViewModelTests : IDisposable
 {
     private readonly CatalogVmFixture _fx = new("clipping-vm");
+
+    [AvaloniaFact]
+    public async Task TrianglePress_LatchesAndPointerExitPreservesOverlay()
+    {
+        using var catalog = _fx.CreateCatalog("triangle-latch");
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally));
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        var image = new ImageFile(_fx.Path("triangle.jpg"));
+        vm.Browse.SetImages([image]);
+        vm.SelectedImage = image;
+        vm.IsDevelopMode = true;
+        var window = new MainWindow { DataContext = vm };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var panel = window.FindControl<DevelopEditPanel>("DevelopEditPanel")!;
+        var histogram = panel.FindControl<HistogramView>("DevelopHistogram")!;
+        var target = histogram.FindControl<Border>("DisplayFloorTriangleTarget")!;
+        var marker = histogram.FindControl<Rectangle>("DisplayFloorLatchMarker")!;
+        var point = target.TranslatePoint(new Point(5, 5), window)!.Value;
+
+        window.MouseMove(point, RawInputModifiers.None);
+        window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
+        window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(vm.IsClippingOverlayLatched);
+        Assert.True(marker.IsVisible);
+        window.MouseMove(new Point(10, 10), RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(vm.IsClippingOverlayLatched);
+        Assert.True(marker.IsVisible);
+
+        window.DataContext = null;
+        window.Close();
+    }
 
     [Fact]
     public async Task Shortcut_IsDevelopOnlyAndLatchIsSessionState()

@@ -58,7 +58,9 @@ public sealed class CloudSourceViewTests
             var navigator = window.FindControl<Border>("NavigatorPanel")!;
             var metadata = review.FindControl<StackPanel>(
                 "ReviewMetadataPanel")!;
-            var beforeAfter = develop.FindControl<Button>(
+            var actionBar = develop.FindControl<DevelopActionBar>(
+                "DevelopActionBar")!;
+            var beforeAfter = actionBar.FindControl<Button>(
                 "BeforeAfterButton")!;
 
             Assert.True(review.IsVisible);

@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -14,6 +17,75 @@ namespace HappyPhoton.Tests;
 
 public sealed class BrowseSelectionMenuTests
 {
+    [AvaloniaFact]
+    public async Task UnflagAndBadgeControls_HandleMixedSelectionWithoutTileReselection()
+    {
+        using var catalog = new CatalogService(NewRoot());
+        await catalog.InitializeAsync();
+        await using var vm = NewViewModel(catalog);
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        var images = new[]
+        {
+            new ImageFile(Path.Combine(Path.GetTempPath(), "picked.jpg"))
+                { Flag = ImageFlag.Picked },
+            new ImageFile(Path.Combine(Path.GetTempPath(), "rejected.jpg"))
+                { Flag = ImageFlag.Rejected },
+            new ImageFile(Path.Combine(Path.GetTempPath(), "active.jpg"))
+        };
+        vm.Browse.SetImages(images);
+        vm.ToggleImageSelection(images[0]);
+        vm.ToggleImageSelection(images[1]);
+        vm.SelectedImage = images[2];
+        var window = new MainWindow { DataContext = vm };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var unflag = window.GetVisualDescendants().OfType<Button>()
+            .Single(button => button.Name == "UnflagImageButton");
+
+        Assert.Same(vm.UnpickImageCommand, unflag.Command);
+        await vm.UnpickImageCommand.ExecuteAsync(null);
+        Assert.Equal(ImageFlag.Unflagged, images[0].Flag);
+        Assert.Equal(ImageFlag.Unflagged, images[1].Flag);
+        Dispatcher.UIThread.RunJobs();
+
+        var badge = window.GetVisualDescendants().OfType<Button>()
+            .Single(button => button.Name == "SelectionBadgeButton" &&
+                              ReferenceEquals(button.DataContext, images[1]));
+        var unselectedBadge = window.GetVisualDescendants().OfType<Button>()
+            .Single(button => button.Name == "SelectionBadgeButton" &&
+                              ReferenceEquals(button.DataContext, images[2]));
+        Assert.Equal(0, unselectedBadge.Opacity);
+        // An invisible badge must not become a tab stop in the Browse grid.
+        Assert.False(unselectedBadge.Focusable);
+        var unselectedTile = window.GetVisualDescendants().OfType<Border>()
+            .Single(border => border.Name == "ThumbnailTile" &&
+                              ReferenceEquals(border.DataContext, images[2]));
+        var hoverPoint = unselectedTile.TranslatePoint(new Point(20, 20), window)!.Value;
+        window.MouseMove(hoverPoint, RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(unselectedBadge.Opacity > 0);
+        var point = badge.TranslatePoint(new Point(8, 8), window)!.Value;
+        var badgeTile = window.GetVisualDescendants().OfType<Border>()
+            .Single(border => border.Name == "ThumbnailTile" &&
+                              ReferenceEquals(border.DataContext, images[1]));
+        window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
+        window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(images[0].IsSelected);
+        Assert.False(images[1].IsSelected);
+        Assert.False(images[2].IsSelected);
+        Assert.Same(images[2], vm.SelectedImage);
+
+        window.MouseDown(point, MouseButton.Right, RawInputModifiers.None);
+        window.MouseUp(point, MouseButton.Right, RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(badgeTile.ContextMenu!.IsOpen);
+
+        window.DataContext = null;
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void ThumbnailContextMenu_HasFileOperationsAndRaisesRequests()
     {

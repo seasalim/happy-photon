@@ -37,9 +37,10 @@ public sealed class BrowseThumbnailStyleTests
         Assert.NotNull(tile.Transitions);
 
         var badge = Assert.Single(
-            control.GetVisualDescendants().OfType<Border>(),
-            border => border.Classes.Contains("check-badge"));
+            control.GetVisualDescendants().OfType<Button>(),
+            button => button.Classes.Contains("check-badge"));
         Assert.Equal(0d, badge.Opacity);
+        Assert.NotNull(badge.Transitions);
 
         window.Close();
     }

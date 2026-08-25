@@ -189,12 +189,14 @@ public partial class MainWindowViewModel
         if (_isFullScreenSelectionRestricted == value)
         {
             NotifyFullScreenSelectionBadgeChanged();
+            NotifyImageNavigationCommandState();
             return;
         }
 
         _isFullScreenSelectionRestricted = value;
         OnPropertyChanged(nameof(IsFullScreenSelectionRestricted));
         NotifyFullScreenSelectionBadgeChanged();
+        NotifyImageNavigationCommandState();
     }
 
     private void NotifyFullScreenSelectionBadgeChanged() =>

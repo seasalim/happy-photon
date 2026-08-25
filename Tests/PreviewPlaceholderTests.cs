@@ -1,7 +1,11 @@
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -15,6 +19,134 @@ namespace HappyPhoton.Tests;
 
 public sealed class PreviewPlaceholderTests
 {
+    [AvaloniaFact]
+    public async Task DevelopReachabilityControls_ReflectCommandAvailability()
+    {
+        using var catalog = new CatalogService(Path.Combine(
+            Path.GetTempPath(),
+            $"happy-photon-develop-controls-{Guid.NewGuid():N}"));
+        await using var vm = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            loadMetadataAsync: _ => Task.CompletedTask);
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        var images = new[]
+        {
+            new ImageFile(Path.Combine(catalog.CatalogPath, "first.jpg")),
+            new ImageFile(Path.Combine(catalog.CatalogPath, "second.jpg"))
+        };
+        vm.Browse.SetImages(images);
+        vm.SelectedImage = images[0];
+        vm.IsDevelopMode = true;
+        var window = new MainWindow { DataContext = vm };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var panel = window.FindControl<DevelopEditPanel>("DevelopEditPanel")!;
+        var actionBar = panel.FindControl<DevelopActionBar>("DevelopActionBar")!;
+        var copy = actionBar.FindControl<Button>("CopyEditSettingsButton")!;
+        var paste = actionBar.FindControl<Button>("PasteEditSettingsButton")!;
+        var previous = window.FindControl<Button>("PreviousImageButton")!;
+        var next = window.FindControl<Button>("NextImageButton")!;
+        var fullScreen = window.FindControl<Button>("FullScreenButton")!;
+
+        Assert.False(previous.IsEffectivelyEnabled);
+        Assert.True(next.IsEffectivelyEnabled);
+        Assert.True(fullScreen.IsEffectivelyEnabled);
+        Assert.True(copy.IsEffectivelyEnabled);
+        Assert.False(paste.IsEffectivelyEnabled);
+
+        copy.Command!.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(paste.IsEffectivelyEnabled);
+        next.Command!.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(previous.IsEffectivelyEnabled);
+        Assert.False(next.IsEffectivelyEnabled);
+
+        vm.IsCropMode = true;
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(fullScreen.IsEffectivelyEnabled);
+        vm.IsCropMode = false;
+        vm.SelectedImage = null;
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(fullScreen.IsEffectivelyEnabled);
+
+        window.DataContext = null;
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task FullScreenExitChip_RevealsExpiresAndCleansUpDeterministically()
+    {
+        using var catalog = new CatalogService(Path.Combine(
+            Path.GetTempPath(),
+            $"happy-photon-fullscreen-chip-{Guid.NewGuid():N}"));
+        await using var vm = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            loadMetadataAsync: _ => Task.CompletedTask);
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        var image = new ImageFile(Path.Combine(catalog.CatalogPath, "photo.jpg"));
+        vm.Browse.SetImages([image]);
+        vm.SelectedImage = image;
+        var clock = new TestTimeProvider();
+        var window = new MainWindow
+        {
+            DataContext = vm,
+            FullScreenExitTimeProvider = clock
+        };
+        window.Show();
+        vm.ToggleFullScreenCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        var chip = window.FindControl<Button>("FullScreenExitButton")!;
+
+        Assert.Equal(0, chip.Opacity);
+        Assert.False(chip.IsHitTestVisible);
+        window.MouseMove(new Point(20, 20), RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(chip.Opacity > 0);
+        Assert.True(chip.IsHitTestVisible);
+        Assert.True(window.IsFullScreenExitTimerActive);
+
+        clock.Advance(TimeSpan.FromMilliseconds(1900));
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(chip.IsHitTestVisible);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(chip.IsHitTestVisible);
+
+        // Dragging the photograph must reveal the way out too: the viewer marks
+        // pointer moves handled while panning, so the chip listens on the tunnel.
+        window.MouseDown(new Point(200, 200), MouseButton.Left, RawInputModifiers.None);
+        window.MouseMove(new Point(260, 240), RawInputModifiers.LeftMouseButton);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(chip.IsHitTestVisible);
+        window.MouseUp(new Point(260, 240), MouseButton.Left, RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        clock.Advance(TimeSpan.FromSeconds(2));
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(chip.IsHitTestVisible);
+
+        window.MouseMove(new Point(30, 30), RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        chip.Command!.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(vm.IsFullScreenMode);
+        Assert.False(window.IsFullScreenExitTimerActive);
+        Assert.False(chip.IsHitTestVisible);
+
+        vm.ToggleFullScreenCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        window.MouseMove(new Point(40, 40), RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(window.IsFullScreenExitTimerActive);
+        window.DataContext = null;
+        window.Close();
+        Assert.False(window.IsFullScreenExitTimerActive);
+    }
+
     [AvaloniaFact]
     public async Task Placeholder_HidesWhenPreviewArrives()
     {
@@ -61,13 +193,15 @@ public sealed class PreviewPlaceholderTests
             "WhiteBalancePickerButton")!;
         var whiteBalanceHeading = developPanel.FindControl<TextBlock>(
             "WhiteBalanceHeading")!;
-        var beforeAfter = developPanel.FindControl<ToggleButton>(
+        var actionBar = developPanel.FindControl<DevelopActionBar>(
+            "DevelopActionBar")!;
+        var beforeAfter = actionBar.FindControl<ToggleButton>(
             "BeforeAfterButton")!;
-        var undo = developPanel.FindControl<Button>(
+        var undo = actionBar.FindControl<Button>(
             "UndoEditButton")!;
-        var redo = developPanel.FindControl<Button>(
+        var redo = actionBar.FindControl<Button>(
             "RedoEditButton")!;
-        var reset = developPanel.FindControl<Button>(
+        var reset = actionBar.FindControl<Button>(
             "ResetAdjustmentsButton")!;
         var exportDialog = new BatchExportDialog(vm, [storedRaw]);
         var exportConfiguration = exportDialog.FindControl<StackPanel>(

@@ -34,6 +34,14 @@ public partial class DevelopEditPanel : UserControl
                 viewModel.EndClippingPeek();
             }
         };
+        histogram.ClippingLatchRequested += (_, _) =>
+        {
+            if (DataContext is MainWindowViewModel viewModel &&
+                viewModel.ToggleClippingOverlayCommand.CanExecute(null))
+            {
+                viewModel.ToggleClippingOverlayCommand.Execute(null);
+            }
+        };
     }
 
     private void ResetScrollWhenShown()

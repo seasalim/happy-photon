@@ -17,6 +17,25 @@ public sealed class FullScreenSelectionTests : IDisposable
     }
 
     [Fact]
+    public async Task NavigationCommands_TrackFullScreenSelectionBoundaries()
+    {
+        await using var vm = CreateViewModel();
+        var images = CreateImages(4);
+        vm.Browse.SetImages(images);
+        vm.ToggleImageSelection(images[0]);
+        vm.ToggleImageSelection(images[2]);
+        vm.SelectedImage = images[1];
+
+        vm.ToggleFullScreenCommand.Execute(null);
+
+        Assert.False(vm.SelectPreviousImageCommand.CanExecute(null));
+        Assert.True(vm.SelectNextImageCommand.CanExecute(null));
+        vm.SelectNextImageCommand.Execute(null);
+        Assert.True(vm.SelectPreviousImageCommand.CanExecute(null));
+        Assert.False(vm.SelectNextImageCommand.CanExecute(null));
+    }
+
+    [Fact]
     public async Task ScopedNavigation_UsesBrowseOrderAndClampedCompactOffsets()
     {
         await using var vm = CreateViewModel();

@@ -197,8 +197,9 @@ Move quickly on the first pass:
 2. Pick the strongest frame from each moment or burst.
 3. Leave uncertain comparisons unflagged and revisit them later.
 
-The assessment buttons beneath the image grid provide the same actions. The
-Pick and Reject buttons toggle off when clicked again.
+The Pick, Reject, and Unflag buttons beneath the image grid provide the same actions.
+Pick and Reject toggle off when every targeted image already has that flag; Unflag
+always clears either flag, including across a mixed selection.
 
 ### Add ratings only when they help
 
@@ -247,8 +248,9 @@ system Trash. Rejecting alone never moves or deletes the original.
 
 ## 3. Develop the keepers
 
-Double-click a thumbnail or press `D` to enter **Develop**. Use the left and
-right arrow keys to move between visible images without returning to Browse.
+Double-click a thumbnail or press `D` to enter **Develop**. Use the previous and next
+buttons below the image, or the left and right arrow keys, to move between visible
+images without returning to Browse.
 
 When the rendered cache matches the current settings, the photograph, display
 histogram, waveform, and display-floor clipping become useful together before the
@@ -316,8 +318,8 @@ Avoid correcting the histogram merely to make it fill the graph.
 The display histogram's right triangle reports source saturation: exact sensor maximum
 for RAW, or encoded near-white samples for JPEG/HEIC. TIFF, PNG, and other formats show
 that side as unavailable. The left triangle reports pixels at the finalized display
-floor. Hover an available triangle to peek that side over the photograph, or press `J`
-in Develop to latch the clipping overlay. Red stays fixed across tonal and color edits
+floor. Hover an available triangle to peek that side over the photograph. Click either
+triangle or press `J` in Develop to latch the clipping overlay. Red stays fixed across tonal and color edits
 apart from geometry; blue responds as edits change the rendered output.
 
 ### Shape the color
@@ -396,9 +398,9 @@ include crop, rotation, or horizon changes.
 
 ### Copy edits between images
 
-Press `Ctrl+Shift+C` to copy the current image's color, mixer, tonal, composite and
-channel curve, detail, effects, and preset settings. Press `Ctrl+Shift+V` to paste them onto
-another image.
+Use the copy and paste buttons in the Develop footer, or press `Ctrl+Shift+C` and
+`Ctrl+Shift+V`, to transfer the current image's color, mixer, tonal, composite and
+channel curve, detail, effects, and preset settings to another image.
 
 To apply the settings to several photographs:
 
@@ -424,7 +426,7 @@ export:
 
 Filter the Browse to the group you want before selecting it. Then:
 
-- press `Space` to toggle the current image;
+- click a thumbnail's check badge, or press `Space`, to toggle the current image;
 - use `Ctrl+Click` to add or remove individual images;
 - use `Shift+Click` to select a range;
 - press `Ctrl+A` to select every image currently visible through the filters;
@@ -438,8 +440,9 @@ use the modifiers above to build a multi-photo selection.
 Images that become hidden by a new filter are removed from the selection. Set the
 filters first, then make the final selection.
 
-Press `F` with two or more photos selected to review only that selection in full
-screen, starting from the first selected photo in the Browse's current order.
+Use the fullscreen button below the Develop image, or press `F`, with two or more
+photos selected to review only that selection in fullscreen, starting from the first
+selected photo in the Browse's current order.
 Navigation stops at the first and last selected photo, and the `SELECTION` badge shows
 the current position. The set updates with visible selection changes; if fewer than
 two selected photos remain, navigation returns to the full folder until full screen is

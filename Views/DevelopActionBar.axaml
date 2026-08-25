@@ -1,0 +1,172 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.DevelopActionBar"
+             x:DataType="vm:MainWindowViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.develop-action, ToggleButton.develop-action">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.develop-action:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                         ToggleButton.develop-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="Button.develop-action:disabled, ToggleButton.develop-action:disabled">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        </Style>
+        <Style Selector="Button.develop-action:disabled /template/ ContentPresenter#PART_ContentPresenter,
+                         ToggleButton.develop-action:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        </Style>
+        <Style Selector="Button.develop-action Path, ToggleButton.develop-action Path">
+            <Setter Property="Stroke" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
+        <Style Selector="Button.develop-action:pointerover Path,
+                         ToggleButton.develop-action:pointerover Path">
+            <Setter Property="Stroke" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="ToggleButton.develop-action:checked">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="ToggleButton.develop-action:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="ToggleButton.develop-action:checked Path">
+            <Setter Property="Stroke" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="Button.develop-reset">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.develop-reset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        </Style>
+        <Style Selector="Button.develop-reset /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
+        <Style Selector="Button.develop-reset:disabled">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDisabled}"/>
+        </Style>
+        <Style Selector="Button.develop-reset:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDisabled}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="Auto,*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+            <ToggleButton x:Name="BeforeAfterButton"
+                          Classes="develop-action"
+                          IsChecked="{Binding IsShowingOriginal, Mode=OneWay}"
+                          Command="{Binding ToggleBeforeAfterCommand}"
+                          ToolTip.Tip="Toggle original preview (B)"
+                          AutomationProperties.Name="Toggle original preview">
+                <Viewbox Width="14" Height="14">
+                    <Canvas Width="16" Height="16">
+                        <Path Fill="Transparent"
+                              Data="M 1,8 C 2.8,5.2 5.1,3.8 8,3.8 C 10.9,3.8 13.2,5.2 15,8 C 13.2,10.8 10.9,12.2 8,12.2 C 5.1,12.2 2.8,10.8 1,8 Z M 8,5.8 A 2.2,2.2 0 1 1 7.99,5.8"
+                              StrokeThickness="1.4"
+                              StrokeLineCap="Round"
+                              StrokeJoin="Round"/>
+                    </Canvas>
+                </Viewbox>
+            </ToggleButton>
+            <Button x:Name="UndoEditButton"
+                    Classes="develop-action"
+                    Command="{Binding UndoCommand}"
+                    IsEnabled="{Binding CanUndo}"
+                    ToolTip.Tip="Undo (Ctrl+Z)"
+                    AutomationProperties.Name="Undo edit">
+                <Viewbox Width="14" Height="14">
+                    <Canvas Width="16" Height="16">
+                        <Path Fill="Transparent"
+                              Data="M 6,3.5 L 2,7.5 L 6,11.5 M 2,7.5 L 9,7.5 C 12,7.5 14,9.5 14,12.5"
+                              StrokeThickness="1.5"
+                              StrokeLineCap="Round"
+                              StrokeJoin="Round"/>
+                    </Canvas>
+                </Viewbox>
+            </Button>
+            <Button x:Name="RedoEditButton"
+                    Classes="develop-action"
+                    Command="{Binding RedoCommand}"
+                    IsEnabled="{Binding CanRedo}"
+                    ToolTip.Tip="Redo (Ctrl+Y / Ctrl+Shift+Z)"
+                    AutomationProperties.Name="Redo edit">
+                <Viewbox Width="14" Height="14">
+                    <Canvas Width="16" Height="16">
+                        <Path Fill="Transparent"
+                              Data="M 10,3.5 L 14,7.5 L 10,11.5 M 14,7.5 L 7,7.5 C 4,7.5 2,9.5 2,12.5"
+                              StrokeThickness="1.5"
+                              StrokeLineCap="Round"
+                              StrokeJoin="Round"/>
+                    </Canvas>
+                </Viewbox>
+            </Button>
+            <Rectangle Width="1" Height="16" Fill="{DynamicResource Divider}" Margin="2,0"/>
+            <Button x:Name="CopyEditSettingsButton"
+                    Classes="develop-action"
+                    Command="{Binding CopyEditSettingsCommand}"
+                    ToolTip.Tip="Copy edit settings (Ctrl+Shift+C)"
+                    AutomationProperties.Name="Copy edit settings">
+                <Viewbox Width="14" Height="14">
+                    <Canvas Width="16" Height="16">
+                        <Path Fill="Transparent"
+                              Data="M 6,6 L 13,6 L 13,13 L 6,13 Z M 10,6 L 10,3 L 3,3 L 3,10 L 6,10"
+                              StrokeThickness="1.5"
+                              StrokeLineCap="Round"
+                              StrokeJoin="Round"/>
+                    </Canvas>
+                </Viewbox>
+            </Button>
+            <Button x:Name="PasteEditSettingsButton"
+                    Classes="develop-action"
+                    Command="{Binding PasteEditSettingsCommand}"
+                    ToolTip.Tip="Paste edit settings (Ctrl+Shift+V)"
+                    AutomationProperties.Name="Paste edit settings">
+                <Viewbox Width="14" Height="14">
+                    <Canvas Width="16" Height="16">
+                        <Path Fill="Transparent"
+                              Data="M 6,3.5 L 4,3.5 L 4,13.5 L 12,13.5 L 12,3.5 L 10,3.5 M 6.2,2.3 L 9.8,2.3 L 9.8,4.9 L 6.2,4.9 Z"
+                              StrokeThickness="1.5"
+                              StrokeLineCap="Round"
+                              StrokeJoin="Round"/>
+                    </Canvas>
+                </Viewbox>
+            </Button>
+        </StackPanel>
+        <Button x:Name="ResetAdjustmentsButton"
+                Grid.Column="2"
+                Classes="develop-reset"
+                VerticalAlignment="Center"
+                Command="{Binding ResetEditsCommand}"
+                Content="RESET"
+                ToolTip.Tip="Reset adjustments; crop and rotation are preserved"
+                AutomationProperties.Name="Reset adjustments"/>
+    </Grid>
+</UserControl>

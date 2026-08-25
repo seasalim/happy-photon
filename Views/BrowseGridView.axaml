@@ -103,10 +103,12 @@
                             AutomationProperties.Name="More Browse actions">
                         <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedRight">
-                                <MenuItem Header="Select All" InputGesture="Ctrl+A"
+                                <MenuItem x:Name="SelectAllMenuItem"
+                                          Header="Select All" InputGesture="Ctrl+A"
                                           IsEnabled="{Binding Browse.HasVisibleImages}"
                                           Click="OnSelectAllClick"/>
-                                <MenuItem Header="Deselect All" InputGesture="Ctrl+D"
+                                <MenuItem x:Name="DeselectAllMenuItem"
+                                          Header="Deselect All" InputGesture="Ctrl+D"
                                           IsEnabled="{Binding Browse.HasSelectedImages}"
                                           Click="OnDeselectAllClick"/>
                                 <Separator/>
@@ -146,7 +148,8 @@
                 </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate DataType="models:ImageFile">
-                        <Border Padding="5"
+                        <Border x:Name="ThumbnailTile"
+                                Padding="5"
                                 Classes="thumbnail"
                                 Classes.selected="{Binding IsSelected}"
                                 Classes.active="{Binding IsActive}"
@@ -161,7 +164,8 @@
                                     <MenuItem Header="Reveal in File Explorer"
                                               Click="OnRevealImageClick"/>
                                     <Separator/>
-                                    <MenuItem Header="Delete…"
+                                    <MenuItem x:Name="DeleteImageMenuItem"
+                                              Header="Delete…"
                                               Click="OnDeleteImagesClick"/>
                                 </ContextMenu>
                             </Border.ContextMenu>
@@ -234,23 +238,34 @@
                                             </MultiBinding>
                                         </Border.Background>
                                     </Border>
-                                    <Border Width="17" Height="17"
+                                    <Button x:Name="SelectionBadgeButton"
+                                            Width="17" Height="17"
+                                            Padding="0"
                                             CornerRadius="5"
+                                            BorderThickness="0"
                                             HorizontalAlignment="Left"
                                             VerticalAlignment="Top"
                                             Margin="8,6,0,0"
                                             Classes="check-badge"
                                             Classes.selected="{Binding IsSelected}"
-                                            Background="{DynamicResource SelectionSurface}"
-                                            BoxShadow="{StaticResource BadgeShadow}"
-                                            IsHitTestVisible="False">
-                                        <Path Data="M 3,7.5 L 6.5,11 L 12,4"
-                                              Stretch="Uniform" Width="9" Height="7"
-                                              Stroke="{DynamicResource SelectionCheck}"
-                                              StrokeThickness="1.8"
-                                              StrokeLineCap="Round"
-                                              StrokeJoin="Round"/>
-                                    </Border>
+                                            Background="Transparent"
+                                            Focusable="False"
+                                            ToolTip.Tip="Toggle selection (Space)"
+                                            AutomationProperties.Name="Toggle image selection"
+                                            PointerPressed="OnSelectionBadgePointerPressed"
+                                            Click="OnSelectionBadgeClick">
+                                        <Border Width="17" Height="17"
+                                                CornerRadius="5"
+                                                Background="{DynamicResource SelectionSurface}"
+                                                BoxShadow="{StaticResource BadgeShadow}">
+                                            <Path Data="M 3,7.5 L 6.5,11 L 12,4"
+                                                  Stretch="Uniform" Width="9" Height="7"
+                                                  Stroke="{DynamicResource SelectionCheck}"
+                                                  StrokeThickness="1.8"
+                                                  StrokeLineCap="Round"
+                                                  StrokeJoin="Round"/>
+                                        </Border>
+                                    </Button>
                                 </Panel>
                                 <Grid Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
                                       Margin="0,5,0,0"

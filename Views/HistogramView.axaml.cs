@@ -22,6 +22,10 @@ public partial class HistogramView : UserControl
         AvaloniaProperty.Register<HistogramView, bool>(
             nameof(ShowDisplayClippingIndicators));
 
+    public static readonly StyledProperty<bool> IsClippingOverlayLatchedProperty =
+        AvaloniaProperty.Register<HistogramView, bool>(
+            nameof(IsClippingOverlayLatched));
+
     public HistogramData? Histogram
     {
         get => GetValue(HistogramProperty);
@@ -40,8 +44,15 @@ public partial class HistogramView : UserControl
         set => SetValue(ShowDisplayClippingIndicatorsProperty, value);
     }
 
+    public bool IsClippingOverlayLatched
+    {
+        get => GetValue(IsClippingOverlayLatchedProperty);
+        set => SetValue(IsClippingOverlayLatchedProperty, value);
+    }
+
     public event EventHandler<ClippingOverlaySide>? ClippingPeekStarted;
     public event EventHandler? ClippingPeekEnded;
+    public event EventHandler? ClippingLatchRequested;
 
     private Canvas? _canvas;
     private StackPanel? _clippingPanel;
@@ -56,6 +67,8 @@ public partial class HistogramView : UserControl
     private Border? _sceneHighlightTriangleTarget;
     private Avalonia.Controls.Shapes.Path? _displayFloorTriangle;
     private Avalonia.Controls.Shapes.Path? _sceneHighlightTriangle;
+    private Rectangle? _displayFloorLatchMarker;
+    private Rectangle? _sceneHighlightLatchMarker;
 
     public HistogramView()
     {
@@ -78,10 +91,16 @@ public partial class HistogramView : UserControl
             this.FindControl<Avalonia.Controls.Shapes.Path>("DisplayFloorTriangle");
         _sceneHighlightTriangle =
             this.FindControl<Avalonia.Controls.Shapes.Path>("SceneHighlightTriangle");
+        _displayFloorLatchMarker =
+            this.FindControl<Rectangle>("DisplayFloorLatchMarker");
+        _sceneHighlightLatchMarker =
+            this.FindControl<Rectangle>("SceneHighlightLatchMarker");
         _displayFloorTriangleTarget!.PointerEntered += OnDisplayFloorEntered;
         _displayFloorTriangleTarget.PointerExited += OnTriangleExited;
+        _displayFloorTriangleTarget.PointerPressed += OnTrianglePressed;
         _sceneHighlightTriangleTarget!.PointerEntered += OnSceneHighlightEntered;
         _sceneHighlightTriangleTarget.PointerExited += OnTriangleExited;
+        _sceneHighlightTriangleTarget.PointerPressed += OnTrianglePressed;
         UpdateDisplayClippingIndicators();
     }
 
@@ -95,7 +114,8 @@ public partial class HistogramView : UserControl
             UpdateDisplayClippingIndicators();
         }
         else if (change.Property == ClippingProperty ||
-                 change.Property == ShowDisplayClippingIndicatorsProperty)
+                 change.Property == ShowDisplayClippingIndicatorsProperty ||
+                 change.Property == IsClippingOverlayLatchedProperty)
         {
             UpdateDisplayClippingIndicators();
         }
@@ -156,6 +176,8 @@ public partial class HistogramView : UserControl
         if (_displayClippingIndicators == null ||
             _displayFloorTriangle == null ||
             _sceneHighlightTriangle == null ||
+            _displayFloorLatchMarker == null ||
+            _sceneHighlightLatchMarker == null ||
             _displayFloorTriangleTarget == null ||
             _sceneHighlightTriangleTarget == null)
         {
@@ -167,6 +189,8 @@ public partial class HistogramView : UserControl
             ShowDisplayClippingIndicators && isDisplayHistogram;
         _displayFloorTriangle.Fill = HappyPhotonColors.DisplayFloorClip;
         _sceneHighlightTriangle.Fill = HappyPhotonColors.SceneHighlightClip;
+        _displayFloorLatchMarker.Fill = HappyPhotonColors.DisplayFloorClip;
+        _sceneHighlightLatchMarker.Fill = HappyPhotonColors.SceneHighlightClip;
 
         var clipping = Clipping;
         var hasStats = clipping != null;
@@ -175,6 +199,9 @@ public partial class HistogramView : UserControl
         _sceneHighlightTriangle.Opacity = !hasSourceSaturation
             ? 0.12
             : clipping!.HighAny > 0 ? 1 : 0.25;
+        _displayFloorLatchMarker.IsVisible = IsClippingOverlayLatched;
+        _sceneHighlightLatchMarker.IsVisible =
+            IsClippingOverlayLatched && hasSourceSaturation;
         _displayFloorTriangleTarget.IsHitTestVisible = true;
         _sceneHighlightTriangleTarget.IsHitTestVisible = true;
 
@@ -203,6 +230,18 @@ public partial class HistogramView : UserControl
 
     private void OnTriangleExited(object? sender, PointerEventArgs e) =>
         ClippingPeekEnded?.Invoke(this, EventArgs.Empty);
+
+    private void OnTrianglePressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Control target ||
+            !e.GetCurrentPoint(target).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        ClippingLatchRequested?.Invoke(this, EventArgs.Empty);
+        e.Handled = true;
+    }
 
     private static void SetClippingChannel(
         Ellipse dot,
