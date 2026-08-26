@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:HappyPhoton.ViewModels" x:Class="HappyPhoton.Views.ExportCapturePane"
+             x:DataType="vm:MainWindowViewModel">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://HappyPhoton/Views/BrowseThumbnailStyles.axaml"/>
+        <Style Selector="Border.check-badge">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SelectionCheck}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Opacity" Value="0.62"/>
+            <Setter Property="RenderTransform" Value="scale(1)"/>
+        </Style>
+        <Style Selector="Border.check-badge.selected">
+            <Setter Property="Background" Value="{DynamicResource SelectionSurface}"/>
+            <Setter Property="Opacity" Value="0.9"/>
+        </Style>
+    </UserControl.Styles>
+    <Grid RowDefinitions="Auto,*" Margin="10" Background="{DynamicResource SurfaceLow}">
+        <StackPanel Spacing="3" Margin="2,0,2,8">
+            <TextBlock Text="CAPTURES" Classes="section-label"/>
+            <TextBlock Text="Uncheck a frame to exclude it from this batch." FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+        </StackPanel>
+        <ListBox Grid.Row="1" ItemsSource="{Binding ExportCaptures}"
+                 SelectedItem="{Binding ActiveExportCapture, Mode=TwoWay}"
+                 Background="Transparent" BorderThickness="0">
+            <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+                <Style Selector="ListBoxItem:pointerover,
+                                 ListBoxItem:selected,
+                                 ListBoxItem:selected:pointerover">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+                <!-- Fluent paints selection on this template part rather than
+                     on ListBoxItem.Background. The thumbnail owns selection. -->
+                <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                                 ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter,
+                                 ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter:pointerover">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+                <Style Selector="ListBoxItem:selected Border.thumbnail">
+                    <Setter Property="BorderBrush" Value="{DynamicResource ActiveImageRing}"/>
+                </Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:ExportCaptureViewModel">
+                    <Border Margin="0,3" Padding="5"
+                            Classes="thumbnail"
+                            Classes.selected="{Binding IsIncluded}">
+                        <Grid ColumnDefinitions="56,*">
+                            <Panel Width="56" Height="42">
+                                <Border Background="{DynamicResource SurfaceHigh}"
+                                        CornerRadius="4"/>
+                                <Border CornerRadius="4" ClipToBounds="True">
+                                    <Image Source="{Binding Image.Thumbnail}"
+                                           Width="56" Height="42"
+                                           Stretch="UniformToFill"/>
+                                </Border>
+                                <!-- 15x15 at a 3px top-right inset: ~27% of
+                                     the 56x42 thumbnail. Do not resync this to
+                                     the Browse tile's 17px badge - that one is
+                                     sized for a 150px+ tile, where it reads at
+                                     ~11%, and lands at ~30% here. The mockup
+                                     specifies 11x11 (~20%); we deliberately
+                                     run larger for legibility at this size. -->
+                                <Border Width="15" Height="15"
+                                        CornerRadius="8"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Margin="0,3,3,0"
+                                        Classes="check-badge"
+                                        Classes.selected="{Binding IsIncluded}"
+                                        BoxShadow="{StaticResource BadgeShadow}"
+                                        IsHitTestVisible="False">
+                                    <Path Data="M 3,7.5 L 6.5,11 L 12,4"
+                                          Stretch="Uniform" Width="8" Height="6"
+                                          Stroke="{DynamicResource SelectionCheck}"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          StrokeJoin="Round"
+                                          IsVisible="{Binding IsIncluded}"/>
+                                </Border>
+                                <CheckBox IsChecked="{Binding IsIncluded, Mode=TwoWay}"
+                                          Width="21" Height="21"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Top"
+                                          Margin="0,0,0,0"
+                                          Opacity="0"
+                                          AutomationProperties.Name="Include capture"/>
+                            </Panel>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Image.FileName}"
+                                       Margin="8,0,3,0"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       FontSize="11"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock Grid.Row="1" Text="No captures selected in Browse" IsVisible="{Binding HasNoExportCaptures}" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap" TextAlignment="Center"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Grid>
+</UserControl>

@@ -409,7 +409,7 @@ public partial class MainWindowViewModel
             Volatile.Write(
                 ref _activeBaseRefreshRequestId,
                 state.RequestId);
-            if (IsDevelopMode || IsFullScreenMode)
+            if (IsWorkspacePreviewSurfaceActive || IsFullScreenMode)
             {
                 ApplyRenderOutcome(new RenderOutcome
                 {

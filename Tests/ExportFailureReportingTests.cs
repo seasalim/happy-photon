@@ -35,28 +35,13 @@ public sealed class ExportFailureReportingTests : IDisposable
             [exported, failedA, failedB],
             settings,
             progress);
-        using var viewModel = new ExportDialogViewModel(settings, 3);
-        viewModel.BeginExport();
-        foreach (var value in progress.Values)
-        {
-            viewModel.UpdateProgress(
-                value.current,
-                value.total,
-                value.fileName);
-        }
-        viewModel.ShowPartialExport(result);
+        var report = ExportRunReport.FromResult(result);
 
         Assert.Equal(1, result.ExportedCount);
         Assert.Equal([failedA, failedB], result.FailedImages);
-        Assert.DoesNotContain(
-            progress.Values,
-            value => value.fileName == "Complete");
-        Assert.False(viewModel.IsExporting);
-        Assert.True(viewModel.HasError);
-        Assert.Contains("Exported 1 of 3 images", viewModel.ErrorMessage);
-        Assert.Contains(failedA.FilePath, viewModel.ErrorMessage);
-        Assert.Contains(failedB.FilePath, viewModel.ErrorMessage);
-        Assert.DoesNotContain("Complete", viewModel.ProgressText);
+        Assert.Equal("Export finished with failures", report.Heading);
+        Assert.Equal("1 of 3 files exported.", report.Summary);
+        Assert.Equal(2, report.FailedTargets.Count);
     }
 
     [Fact]

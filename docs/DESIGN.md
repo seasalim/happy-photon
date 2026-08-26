@@ -249,8 +249,11 @@ The layout philosophy follows a **Fluid Grid** model with high-impact margins.
 Spacing rhythm is strictly based on an 8px scale. Use large `xl` (80px+) vertical spacing between sections to allow the dark background to "breathe" and create a sense of vastness.
 
 The desktop workspace keeps its side panes mode-specific: Browse's right pane is a
-review pane and Develop owns the editing controls (composition in
-`docs/pipeline/UI.md` §2). The left navigator retains only the active
+review pane, Develop owns the editing controls (composition in
+`docs/pipeline/UI.md` §2), and Export pairs a capture filmstrip with fixed recipe and
+shared output controls around the existing rendered preview. Export's capture include
+toggles are an exclusion layer over the Browse selection; they never rewrite it. The
+left navigator retains only the active
 thumbnail and online-only download action so the folder tree receives the reclaimed
 height. When Develop is zoomed past fit, its navigator preview outlines the visible
 image region with a one-pixel primary-text hairline and dark halo. The outline maps to

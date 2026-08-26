@@ -27,12 +27,6 @@ public sealed class WorkspaceKeyRoutingTests : IDisposable
         vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         vm.RefreshSelectedCount();
-        var dialogRequests = 0;
-        vm.RequestExportDialogAsync = _ =>
-        {
-            dialogRequests++;
-            return Task.CompletedTask;
-        };
 
         var handledDown = WorkspaceKeyRouting.TryHandleSpace(
             vm,
@@ -45,7 +39,6 @@ public sealed class WorkspaceKeyRoutingTests : IDisposable
         Assert.True(handledUp);
         Assert.True(image.IsSelected);
         Assert.Equal(1, vm.SelectedCount);
-        Assert.Equal(0, dialogRequests);
         await vm.DisposeAsync();
     }
 

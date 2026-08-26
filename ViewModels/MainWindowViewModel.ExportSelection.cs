@@ -1,4 +1,6 @@
-using Avalonia.Threading;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -8,11 +10,43 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     private string? _lastAutomaticExportFolder;
+    private ExportCaptureViewModel? _activeExportCapture;
+    private bool _exportSettingsObserved;
+
+    public ObservableCollection<ExportCaptureViewModel> ExportCaptures { get; } = [];
+
+    public ExportCaptureViewModel? ActiveExportCapture
+    {
+        get => _activeExportCapture;
+        set
+        {
+            if (!SetProperty(ref _activeExportCapture, value) || value == null) return;
+            SelectedImage = value.Image;
+        }
+    }
+
+    public bool HasNoExportCaptures => ExportCaptures.Count == 0;
+    public int IncludedExportCaptureCount =>
+        ExportCaptures.Count(capture => capture.IsIncluded);
+    public int ArmedExportRecipeCount =>
+        (ExportSettings.ExportHiRes ? 1 : 0) +
+        (ExportSettings.ExportWeb ? 1 : 0) +
+        (ExportSettings.ExportSmall ? 1 : 0);
+    public int ExportFileCount =>
+        IncludedExportCaptureCount * ArmedExportRecipeCount;
+    public string ExportCountLine =>
+        $"{IncludedExportCaptureCount} " +
+        $"{(IncludedExportCaptureCount == 1 ? "capture" : "captures")} × " +
+        $"{ArmedExportRecipeCount} " +
+        $"{(ArmedExportRecipeCount == 1 ? "recipe" : "recipes")} → " +
+        $"{ExportFileCount} {(ExportFileCount == 1 ? "file" : "files")}";
+    public bool IsExportQualityAvailable =>
+        ExportSettings.Format is not ExportFormat.Png and not ExportFormat.Tiff;
 
     [RelayCommand]
     private void ToggleSelection()
     {
-        if (IsFullScreenMode) return;
+        if (IsFullScreenMode || IsExportMode) return;
 
         if (SelectedImage != null)
         {
@@ -36,7 +70,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void SelectAll()
     {
-        if (IsFullScreenMode) return;
+        if (IsFullScreenMode || IsExportMode) return;
 
         Browse.SelectAllVisible();
         UpdateSelectedCount();
@@ -45,7 +79,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void DeselectAll()
     {
-        if (IsFullScreenMode) return;
+        if (IsFullScreenMode || IsExportMode) return;
 
         Browse.DeselectAllVisible();
         UpdateSelectedCount();
@@ -63,173 +97,9 @@ public partial class MainWindowViewModel
         UpdateSelectedCount();
     }
 
-    [RelayCommand]
-    private Task ShowExportDialogAsync() =>
-        ShowExportDialogAsync(ExportDialogMode.Standard);
-
-    private async Task ShowExportDialogAsync(ExportDialogMode mode)
-    {
-        if (IsFullScreenMode) return;
-        UpdateAutomaticExportFolder();
-
-        if (RequestExportDialogAsync != null)
-        {
-            await RequestExportDialogAsync(mode);
-        }
-    }
-
     public IEnumerable<ImageFile> GetSelectedImages()
     {
         return Browse.GetSelectedImages();
-    }
-
-    public Task<ExportBatchResult> ExportBatchAsync(
-        IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default) =>
-        ExportBatchAsync(GetSelectedImages().ToList(), progress, cancellationToken);
-
-    public async Task<ExportBatchResult> ExportBatchAsync(
-        IReadOnlyList<ImageFile> imagesToExport,
-        IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = BeginExportActivity(imagesToExport.Count);
-        var activityProgress = CreateExportActivityProgress(activity, progress);
-        return await ImageService.ExportBatchAsync(
-            imagesToExport,
-            ExportSettings,
-            activityProgress,
-            cancellationToken);
-    }
-
-    internal ExportHydrationScope GetExportHydrationScope(
-        IReadOnlyList<ImageFile> images) =>
-        ImageService.GetExportHydrationScope(images);
-
-    internal async Task<ExportBatchResult> ExportBatchApprovedAsync(
-        IReadOnlyList<ImageFile> imagesToExport,
-        IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = BeginExportActivity(imagesToExport.Count);
-        var activityProgress = CreateExportActivityProgress(activity, progress);
-        var generation = Volatile.Read(ref _browseGeneration);
-        var exported = await ImageService.ExportBatchApprovedAsync(
-            imagesToExport,
-            ExportSettings,
-            activityProgress,
-            cancellationToken);
-
-        try
-        {
-            RefreshExportHydratedSources(
-                imagesToExport,
-                generation,
-                cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine(
-                $"Post-export Browse refresh failed: {ex.Message}");
-        }
-
-        return exported;
-    }
-
-    private void RefreshExportHydratedSources(
-        IReadOnlyList<ImageFile> images,
-        int generation,
-        CancellationToken cancellationToken)
-    {
-        var targets = new List<ImageFile>();
-        foreach (var image in images)
-        {
-            if (cancellationToken.IsCancellationRequested ||
-                generation != Volatile.Read(ref _browseGeneration))
-            {
-                return;
-            }
-
-            if (!Browse.Contains(image) ||
-                (!image.SourceRequiresHydration &&
-                 !image.ThumbnailDeferredForHydration &&
-                 image.ThumbnailUpgradeDeferredDimension == 0) ||
-                !ImageService.CanRetryBackgroundRead(image))
-            {
-                continue;
-            }
-
-            SetSourceRequiresHydration(image, false);
-            image.ThumbnailDeferredForHydration = false;
-            image.ThumbnailLoadFailed = false;
-            image.ThumbnailUpgradeDeferredDimension = 0;
-            image.ThumbnailUpgradeFailedDimension = 0;
-            targets.Add(image);
-        }
-
-        if (targets.Count == 0) return;
-        var scheduler = _thumbnailScheduler;
-        if (scheduler != null)
-        {
-            scheduler.Enqueue(targets.Select(image =>
-                new ThumbnailLoadRequest(
-                    image,
-                    BrowseThumbnailRequest,
-                    0)));
-            SignalBackgroundActivityStarted();
-            return;
-        }
-
-        _ = TrackDirectThumbnailOperation(
-            RefreshExportHydratedSourcesDirectAsync(
-                targets,
-                generation,
-                cancellationToken));
-    }
-
-    private async Task RefreshExportHydratedSourcesDirectAsync(
-        IReadOnlyList<ImageFile> images,
-        int generation,
-        CancellationToken cancellationToken)
-    {
-        foreach (var image in images)
-        {
-            if (cancellationToken.IsCancellationRequested ||
-                generation != Volatile.Read(ref _browseGeneration))
-            {
-                return;
-            }
-            await LoadThumbnailAsync(image, generation, cancellationToken);
-        }
-    }
-
-    private static IProgress<(int current, int total, string fileName)>
-        CreateExportActivityProgress(
-            BackgroundExportActivityRegistry.BackgroundExportScope activity,
-            IProgress<(int current, int total, string fileName)>? progress) =>
-        new ExportActivityProgress(activity, progress);
-
-    private sealed class ExportActivityProgress :
-        IProgress<(int current, int total, string fileName)>
-    {
-        private readonly BackgroundExportActivityRegistry.BackgroundExportScope
-            _activity;
-        private readonly IProgress<(int current, int total, string fileName)>?
-            _progress;
-
-        public ExportActivityProgress(
-            BackgroundExportActivityRegistry.BackgroundExportScope activity,
-            IProgress<(int current, int total, string fileName)>? progress)
-        {
-            _activity = activity;
-            _progress = progress;
-        }
-
-        public void Report((int current, int total, string fileName) value)
-        {
-            _activity.Report(value.current);
-            _progress?.Report(value);
-        }
     }
 
     /// <summary>
@@ -256,6 +126,12 @@ public partial class MainWindowViewModel
         if (IsCropMode)
         {
             CancelCrop();
+            return;
+        }
+
+        if (IsExportMode)
+        {
+            WorkspaceMode = _workspaceModeBeforeExport;
             return;
         }
 
@@ -286,4 +162,80 @@ public partial class MainWindowViewModel
 
         _lastAutomaticExportFolder = nextDefault;
     }
+
+    private void PrepareExportWorkspace()
+    {
+        UpdateAutomaticExportFolder();
+        foreach (var capture in ExportCaptures)
+        {
+            capture.PropertyChanged -= OnExportCapturePropertyChanged;
+        }
+        ExportCaptures.Clear();
+        foreach (var image in Browse.GetSelectedImages())
+        {
+            var capture = new ExportCaptureViewModel(image);
+            capture.PropertyChanged += OnExportCapturePropertyChanged;
+            ExportCaptures.Add(capture);
+        }
+
+        ActiveExportCapture = ExportCaptures.FirstOrDefault(capture =>
+            ReferenceEquals(capture.Image, SelectedImage)) ?? ExportCaptures.FirstOrDefault();
+        if (!_exportSettingsObserved)
+        {
+            ExportSettings.PropertyChanged += OnWorkspaceExportSettingsChanged;
+            _exportSettingsObserved = true;
+        }
+        NotifyExportWorkspaceCounts();
+        OnPropertyChanged(nameof(HasNoExportCaptures));
+    }
+
+    private bool TryMoveWithinExportSelection(int offset)
+    {
+        if (!IsExportMode) return false;
+        if (ExportCaptures.Count == 0) return true;
+        var current = ActiveExportCapture == null
+            ? -1
+            : ExportCaptures.IndexOf(ActiveExportCapture);
+        var next = Math.Clamp(current + offset, 0, ExportCaptures.Count - 1);
+        if (next >= 0) ActiveExportCapture = ExportCaptures[next];
+        return true;
+    }
+
+    private void OnExportCapturePropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName == nameof(ExportCaptureViewModel.IsIncluded))
+            NotifyExportWorkspaceCounts();
+    }
+
+    private void OnWorkspaceExportSettingsChanged(
+        object? sender,
+        PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName is nameof(ExportSettings.ExportHiRes) or
+            nameof(ExportSettings.ExportWeb) or nameof(ExportSettings.ExportSmall))
+            NotifyExportWorkspaceCounts();
+        if (args.PropertyName == nameof(ExportSettings.Format))
+            OnPropertyChanged(nameof(IsExportQualityAvailable));
+        if (args.PropertyName == nameof(ExportSettings.OutputFolder))
+            NotifyExportRunCommandState();
+    }
+
+    private void NotifyExportWorkspaceCounts()
+    {
+        OnPropertyChanged(nameof(IncludedExportCaptureCount));
+        OnPropertyChanged(nameof(ArmedExportRecipeCount));
+        OnPropertyChanged(nameof(ExportFileCount));
+        OnPropertyChanged(nameof(ExportCountLine));
+        NotifyExportRunCommandState();
+    }
+}
+
+public sealed partial class ExportCaptureViewModel(ImageFile image) : ObservableObject
+{
+    public ImageFile Image { get; } = image;
+
+    [ObservableProperty]
+    private bool _isIncluded = true;
 }

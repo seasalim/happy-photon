@@ -454,21 +454,6 @@
             SecondaryText="End tour"
             SecondaryCommand="{Binding EndWorkflowTourCommand}"/>
 
-        <views:WorkflowCoachmark
-            Grid.Row="1"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Top"
-            Margin="12"
-            IsVisible="{Binding IsDeliverCopiesTourVisible}"
-            Pointer="Up"
-            PointerAlignment="End"
-            StepText="3 of 3"
-            Heading="Export the edited images"
-            Body="Select the photographs you curated, then use the Export button to save edited copies to disk. Originals remain untouched."
-            PrimaryText="Open export dialog"
-            PrimaryCommand="{Binding OpenExportFromTourCommand}"
-            SecondaryText="Finish"
-            SecondaryCommand="{Binding FinishWorkflowTourCommand}"/>
     </Grid>
 
 </UserControl>

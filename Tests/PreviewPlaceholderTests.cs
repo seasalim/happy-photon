@@ -1,14 +1,17 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -19,6 +22,106 @@ namespace HappyPhoton.Tests;
 
 public sealed class PreviewPlaceholderTests
 {
+    [AvaloniaFact]
+    public async Task ExportRegions_AreExclusiveAndSharedSettingsStayBound()
+    {
+        Dispatcher.UIThread.RunJobs();
+        using var directory = new TemporaryDirectory();
+        using var catalog = new CatalogService(directory.Path);
+        await using var vm = new MainWindowViewModel(
+            catalog,
+            new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask);
+        var image = new ImageFile(Path.Combine(directory.Path, "photo.jpg"));
+        vm.Browse.SetImages([image]);
+        vm.Browse.ToggleSelection(image);
+        vm.SelectedImage = image;
+        vm.WorkflowTourStep = WorkflowTourStep.ChooseWhatMatters;
+        var window = new MainWindow { DataContext = vm };
+        window.Show();
+
+        vm.SwitchToExportCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(vm.IsWorkflowTourPresented);
+        var capturePane = window.FindControl<ExportCapturePane>(
+            "ExportCapturePane")!;
+        Assert.True(capturePane.IsVisible);
+        Assert.True(window.FindControl<ExportPreviewPane>("ExportPreviewPane")!.IsVisible);
+        Assert.True(window.FindControl<ExportSettingsPane>("ExportSettingsPane")!.IsVisible);
+        Assert.False(window.FindControl<BrowseGridView>("BrowseGridView")!.IsVisible);
+        Assert.False(window.FindControl<DevelopEditPanel>("DevelopEditPanel")!.IsVisible);
+        var titleBar = window.FindControl<HappyPhotonTitleBar>("HappyPhotonTitleBar")!;
+        Assert.Contains("active", titleBar.FindControl<Button>("ExportWorkspaceTab")!.Classes);
+
+        var captureItem = Assert.Single(capturePane.GetVisualDescendants()
+            .OfType<ListBoxItem>());
+        var fluentSelectionSurface = Assert.Single(captureItem
+            .GetVisualDescendants()
+            .OfType<ContentPresenter>(), presenter =>
+                presenter.Name == "PART_ContentPresenter" &&
+                presenter.TemplatedParent is ListBoxItem);
+        Assert.Equal(0, Assert.IsAssignableFrom<ISolidColorBrush>(
+            fluentSelectionSurface.Background).Color.A);
+        var captureSurface = Assert.Single(captureItem.GetVisualDescendants()
+            .OfType<Border>(), border => border.Classes.Contains("thumbnail"));
+        var thumbnail = Assert.Single(captureSurface.GetVisualDescendants()
+            .OfType<Image>());
+        Assert.Equal(56, thumbnail.Width);
+        Assert.Equal(42, thumbnail.Height);
+        var includeBadge = Assert.Single(captureSurface.GetVisualDescendants()
+            .OfType<Border>(), border => border.Classes.Contains("check-badge"));
+        Assert.Contains("selected", includeBadge.Classes);
+        vm.ExportCaptures[0].IsIncluded = false;
+        Dispatcher.UIThread.RunJobs();
+        Assert.DoesNotContain("selected", includeBadge.Classes);
+        Assert.True(includeBadge.Opacity > 0);
+
+        var settingsPane = window.FindControl<ExportSettingsPane>("ExportSettingsPane")!;
+        var format = settingsPane.FindControl<ComboBox>("ExportFormatBox")!;
+        var quality = settingsPane.FindControl<Slider>("ExportQualitySlider")!;
+        format.SelectedIndex = (int)ExportFormat.Tiff;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(ExportFormat.Tiff, vm.ExportSettings.Format);
+        Assert.False(quality.IsEnabled);
+
+        window.DataContext = null;
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task ExportCaptureNavigation_PublishesAVisiblePreview()
+    {
+        Dispatcher.UIThread.RunJobs();
+        using var directory = new TemporaryDirectory();
+        using var catalog = new CatalogService(directory.Path);
+        await catalog.InitializeAsync();
+        await using var vm = new MainWindowViewModel(
+            catalog,
+            new StandardBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally));
+        var first = new ImageFile(Path.Combine(
+            GoldenTestPaths.AssetDirectory, "srgb-reference.jpg"));
+        var second = new ImageFile(Path.Combine(
+            GoldenTestPaths.AssetDirectory, "display-p3-reference.jpg"));
+        vm.Browse.SetImages([first, second]);
+        vm.Browse.ToggleSelection(first);
+        vm.Browse.ToggleSelection(second);
+        vm.SelectedImage = first;
+
+        vm.SwitchToExportCommand.Execute(null);
+        await TestWaits.UntilAsync(() => vm.PreviewImage != null);
+        vm.SelectNextImageCommand.Execute(null);
+        await TestWaits.UntilAsync(() =>
+            ReferenceEquals(vm.SelectedImage, second) && vm.PreviewImage != null);
+
+        Assert.Same(second, vm.ActiveExportCapture?.Image);
+        Assert.True(vm.IsWorkspacePreviewSurfaceActive);
+        Assert.False(vm.IsDevelopPreviewSurfaceActive);
+    }
+
     [AvaloniaFact]
     public async Task DevelopReachabilityControls_ReflectCommandAvailability()
     {
@@ -203,21 +306,14 @@ public sealed class PreviewPlaceholderTests
             "RedoEditButton")!;
         var reset = actionBar.FindControl<Button>(
             "ResetAdjustmentsButton")!;
-        var exportDialog = new BatchExportDialog(vm, [storedRaw]);
-        var exportConfiguration = exportDialog.FindControl<StackPanel>(
-            "ConfigurationPanel")!;
-        var outputSharpeningOff = exportDialog.FindControl<RadioButton>(
-            "OutputSharpeningOffButton")!;
-        var outputSharpeningScreen = exportDialog.FindControl<RadioButton>(
-            "OutputSharpeningScreenButton")!;
-        var outputSharpeningPrint = exportDialog.FindControl<RadioButton>(
-            "OutputSharpeningPrintButton")!;
-        var outputColorSpace = exportDialog.FindControl<ComboBox>(
-            "OutputColorSpaceBox")!;
-        var closeExportDialog = exportDialog.FindControl<Button>(
-            "CloseDialogButton")!;
-        var exportButton = exportDialog.FindControl<Button>(
-            "ExportButton")!;
+        var exportPane = window.FindControl<ExportSettingsPane>(
+            "ExportSettingsPane")!;
+        var outputSharpening = exportPane.FindControl<ComboBox>(
+            "ExportSharpeningBox")!;
+        var outputColorSpace = exportPane.FindControl<ComboBox>(
+            "ExportColorSpaceBox")!;
+        var exportButton = exportPane.FindControl<Button>(
+            "RunExportButton")!;
         Assert.Null(developPanel.FindControl<CompactSlider>(
             "CaptureSharpenSlider"));
         Assert.Null(developPanel.FindControl<CompactSlider>(
@@ -230,35 +326,19 @@ public sealed class PreviewPlaceholderTests
         Assert.Equal("Undo edit", AutomationProperties.GetName(undo));
         Assert.Equal("Redo edit", AutomationProperties.GetName(redo));
         Assert.Equal("Reset adjustments", AutomationProperties.GetName(reset));
-        Assert.True(exportConfiguration.IsVisible);
-        Assert.Equal(HorizontalAlignment.Center,
-            closeExportDialog.HorizontalContentAlignment);
-        Assert.Equal(112, exportButton.MinWidth);
+        Assert.Equal("EXPORT", exportButton.Content);
         Assert.Equal(HorizontalAlignment.Center,
             exportButton.HorizontalContentAlignment);
-        Assert.True(outputSharpeningScreen.IsChecked);
+        Assert.Equal(1, outputSharpening.SelectedIndex);
         Assert.Equal(0, outputColorSpace.SelectedIndex);
         outputColorSpace.SelectedIndex = 1;
         Assert.Equal(OutputColorSpace.DisplayP3, vm.ExportSettings.OutputColorSpace);
-        outputSharpeningOff.IsChecked = true;
+        outputSharpening.SelectedIndex = 0;
         Assert.Equal(OutputSharpeningMode.Off, vm.ExportSettings.OutputSharpening);
-        outputSharpeningPrint.IsChecked = true;
+        outputSharpening.SelectedIndex = 2;
         Assert.Equal(OutputSharpeningMode.Print, vm.ExportSettings.OutputSharpening);
         Assert.False(vm.CanUndo);
         Assert.False(fullScreenSelectionBadge.IsVisible);
-        exportDialog.Close();
-
-        var tourExportDialog = new BatchExportDialog(
-            vm,
-            [],
-            ExportDialogMode.TourPreview);
-        var tourConfiguration = tourExportDialog.FindControl<StackPanel>(
-            "ConfigurationPanel")!;
-        var tourPrimaryAction = tourExportDialog.FindControl<Button>(
-            "ExportButton")!;
-        Assert.True(tourConfiguration.IsVisible);
-        Assert.Equal("Return to Browse", tourPrimaryAction.Content);
-        tourExportDialog.Close();
 
         vm.SelectedImage = null;
         var image = new ImageFile(

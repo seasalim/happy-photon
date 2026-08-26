@@ -456,7 +456,7 @@ public partial class MainWindowViewModel
             ClearPreviewImage();
             return false;
         }
-        if (!IsDevelopMode && !IsFullScreenMode)
+        if (!IsWorkspacePreviewSurfaceActive && !IsFullScreenMode)
         {
             return false;
         }

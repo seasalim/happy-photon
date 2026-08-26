@@ -18,7 +18,7 @@ public partial class MainWindowViewModel
 
     public bool IsChooseWhatMattersTourVisible =>
         WorkflowTourStep == WorkflowTourStep.ChooseWhatMatters &&
-        !IsDevelopMode;
+        IsBrowseMode;
 
     public bool IsShapePhotographTourVisible =>
         WorkflowTourStep == WorkflowTourStep.ShapePhotograph &&
@@ -26,7 +26,7 @@ public partial class MainWindowViewModel
 
     public bool IsDeliverCopiesTourVisible =>
         WorkflowTourStep == WorkflowTourStep.DeliverCopies &&
-        !IsDevelopMode;
+        IsExportMode;
 
     public bool IsWorkflowTourPresented =>
         IsChooseWhatMattersTourVisible ||
@@ -56,17 +56,8 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void ShowExportTourStep()
     {
-        IsDevelopMode = false;
+        SwitchToExport();
         WorkflowTourStep = WorkflowTourStep.DeliverCopies;
-    }
-
-    [RelayCommand]
-    private async Task OpenExportFromTourAsync()
-    {
-        WorkflowTourStep = WorkflowTourStep.None;
-        IsFullScreenMode = false;
-        IsDevelopMode = false;
-        await ShowExportDialogAsync(ExportDialogMode.TourPreview);
     }
 
     [RelayCommand]

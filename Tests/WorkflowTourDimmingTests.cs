@@ -47,6 +47,8 @@ public sealed class WorkflowTourDimmingTests
                 "DevelopEditPanel")!;
             var browseReviewPane = window.FindControl<BrowseReviewPane>(
                 "BrowseReviewPane")!;
+            var exportSettingsPane = window.FindControl<ExportSettingsPane>(
+                "ExportSettingsPane")!;
             var filterLabel = browse.FindControl<TextBlock>("FilterLabel")!;
             var filterScrollViewer = browse.FindControl<ScrollViewer>(
                 "FilterScrollViewer")!;
@@ -69,6 +71,7 @@ public sealed class WorkflowTourDimmingTests
                 statusBar,
                 developEditPanel,
                 browseReviewPane,
+                exportSettingsPane,
                 filterLabel,
                 filterScrollViewer,
                 actionsPanel,
@@ -126,6 +129,7 @@ public sealed class WorkflowTourDimmingTests
                 statusBar,
                 developEditPanel,
                 browseReviewPane,
+                exportSettingsPane,
                 filterLabel,
                 filterScrollViewer,
                 actionsPanel,
@@ -145,6 +149,7 @@ public sealed class WorkflowTourDimmingTests
                 leftPanel,
                 statusBar,
                 browseReviewPane,
+                exportSettingsPane,
                 filterLabel,
                 filterScrollViewer,
                 actionsPanel,
@@ -300,8 +305,8 @@ public sealed class WorkflowTourDimmingTests
             Assert.Equal(3, coachmarks.Count);
 
             // Step 1's assessment controls sit below, step 2's edit panel to the
-            // right, step 3's Export button above and hard right - so a centred
-            // trail there would point at a thumbnail instead of the button.
+            // right, and step 3 now lives with the Export workspace in the
+            // right-hand pane rather than beneath the former Browse toolbar.
             Assert.Equal(CoachmarkPointer.Down, coachmarks["1 of 3"].Pointer);
             Assert.Equal(
                 CoachmarkPointerAlignment.Center,
@@ -310,9 +315,9 @@ public sealed class WorkflowTourDimmingTests
             Assert.Equal(
                 CoachmarkPointerAlignment.Center,
                 coachmarks["2 of 3"].PointerAlignment);
-            Assert.Equal(CoachmarkPointer.Up, coachmarks["3 of 3"].Pointer);
+            Assert.Equal(CoachmarkPointer.Left, coachmarks["3 of 3"].Pointer);
             Assert.Equal(
-                CoachmarkPointerAlignment.End,
+                CoachmarkPointerAlignment.Center,
                 coachmarks["3 of 3"].PointerAlignment);
 
             foreach (var (step, coachmark) in coachmarks)

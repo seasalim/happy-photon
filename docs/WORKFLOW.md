@@ -451,9 +451,17 @@ folder as usual.
 
 ## 6. Export finished copies
 
-From Browse, choose **Export**. You can also press `Ctrl+E` from Browse or Develop.
-The dialog opens even when nothing is selected and reports zero images without
-changing the selection.
+Choose the **Export** workspace to prepare finished copies. Its left filmstrip takes a
+snapshot of the Browse selection; uncheck a capture to exclude it from this batch
+without changing the Browse selection. The center shows the existing rendered preview.
+On the right, arm any combination of the fixed **Hi-Res**, **Web**, and **Small**
+recipes and set their shared format, quality, color space, sharpening, naming, location
+metadata, and destination controls. The count line shows captures × armed recipes,
+including zero recipes.
+
+Press `Ctrl+E` from Browse or Develop to enter Export with the current selection armed.
+Press `Enter` or choose **Export** to run the capture × recipe job. `Escape` returns to
+the workspace you came from; it does not stop a run already in progress.
 
 1. Choose an output folder. The default is an `export` folder beneath the open
    photo folder.
@@ -471,7 +479,8 @@ changing the selection.
 6. Choose **Off**, **Screen**, or **Print** output sharpening. Screen preserves the
    delivery default; Print is stronger, size-aware, and can sharpen Hi-Res output.
 7. Choose a naming pattern and check the filename preview.
-8. Start the export.
+8. Start the export. Its queue appears above the footer and continues if you switch
+   workspaces.
 
 If the selection includes online-only originals, Happy Photon first reports their exact
 count and approximate logical size. Choose **Cancel** to leave them untouched or
@@ -479,10 +488,15 @@ count and approximate logical size. Choose **Cancel** to leave them untouched or
 after approval is best effort because the cloud provider may already have started a
 download.
 
-The exported files go directly into the chosen output folder.
+Before work starts, Happy Photon refuses targets matching loaded originals or another
+target in the same job. Existing output files are confirmed together. The exported
+files then go directly into the chosen output folder; a file that appears after the
+confirmation pass is not overwritten.
 
 Export decodes and edits each photograph, then creates new output files.
 Targets that would overwrite a loaded original are refused.
+When some targets fail, the Export card lists the failed capture-recipe pairs alongside
+any warnings and offers **Retry failed only** without rerunning successful siblings.
 
 ## A complete first workflow
 
@@ -521,7 +535,8 @@ remains where it started and unchanged.
 | `J` | Toggle clipping overlay in Develop |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
 | `Ctrl+Z` / `Ctrl+Y` | Undo or redo color and tonal edits in Develop |
-| `Ctrl+E` | Open the export dialog |
+| `Ctrl+E` | Open the Export workspace |
+| `Enter` | Run Export; elsewhere apply crop or switch Browse/Develop |
 | `Ctrl+,` | Open Settings |
 | `F` | Toggle image-only fullscreen |
 

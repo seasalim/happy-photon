@@ -138,7 +138,8 @@ public partial class MainWindowViewModel
             _restingParent == null ? "no-parent"
             : _restingSettings == null ? "no-settings"
             : SelectedImage == null ? "no-image"
-            : !IsDevelopMode && !IsFullScreenMode ? "no-surface"
+            : !IsWorkspacePreviewSurfaceActive && !IsFullScreenMode
+                ? "no-surface"
             : IsCropMode ? "crop"
             : IsShowingOriginal ? "original"
             : _isHoveringPreset ? "preset-hover"
@@ -212,7 +213,8 @@ public partial class MainWindowViewModel
             : _restingParent?.Generation != parent.Generation ? "generation"
             : surfaceGeneration != Volatile.Read(
                 ref _latestPreviewOutcomeGeneration) ? "surface-generation"
-            : !IsDevelopMode && !IsFullScreenMode ? "surface"
+            : !IsWorkspacePreviewSurfaceActive && !IsFullScreenMode
+                ? "surface"
             : IsCropMode || IsShowingOriginal || _isHoveringPreset
                 ? "transient"
                 : null;

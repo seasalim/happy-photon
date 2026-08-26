@@ -23,8 +23,15 @@ public partial class MainWindowViewModel
     public BackgroundActivityDisplay BackgroundActivity
     {
         get => _backgroundActivity;
-        private set => SetProperty(ref _backgroundActivity, value);
+        private set
+        {
+            if (SetProperty(ref _backgroundActivity, value))
+                OnPropertyChanged(nameof(IsBackgroundActivityStatusVisible));
+        }
     }
+
+    public bool IsBackgroundActivityStatusVisible =>
+        BackgroundActivity.IsVisible && !IsExportQueueVisible;
 
     internal int InitialThumbnailBatchCount =>
         Volatile.Read(ref _initialThumbnailBatches);

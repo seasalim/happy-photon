@@ -9,6 +9,7 @@ public partial class MainWindowViewModel
     private void SelectPreviousImage()
     {
         if (TryMoveWithinFullScreenSelection(-1)) return;
+        if (TryMoveWithinExportSelection(-1)) return;
         MoveFocusAndSelection(Browse.PreviousVisible(SelectedImage));
     }
 
@@ -16,6 +17,7 @@ public partial class MainWindowViewModel
     private void SelectNextImage()
     {
         if (TryMoveWithinFullScreenSelection(1)) return;
+        if (TryMoveWithinExportSelection(1)) return;
         MoveFocusAndSelection(Browse.NextVisible(SelectedImage));
     }
 
@@ -87,7 +89,7 @@ public partial class MainWindowViewModel
     // focused image so assessment actions land on the photo under the ring.
     private void MoveSelectionWithFocus(ImageFile image)
     {
-        if (IsDevelopMode || IsFullScreenMode) return;
+        if (!IsBrowseMode || IsFullScreenMode) return;
 
         Browse.SelectOnly(image);
         UpdateSelectedCount();

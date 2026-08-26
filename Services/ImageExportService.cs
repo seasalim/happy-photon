@@ -10,29 +10,55 @@ public sealed record ExportWarning(
     string Code,
     string Message);
 
+public sealed record ExportTargetOutcome(
+    ImageFile Capture,
+    ExportVariant Recipe,
+    string ResolvedPath,
+    string? FailureReason)
+{
+    public bool Succeeded => FailureReason == null;
+}
+
 public sealed record ExportBatchResult
 {
+    // Image-level compatibility projections keep the dialog working until WP3b-ii.
     public int ExportedCount { get; }
     public IReadOnlyList<ImageFile> FailedImages { get; }
+    public IReadOnlyList<ExportTargetOutcome> Outcomes { get; }
+    public IReadOnlyList<ExportTargetOutcome> FailedTargets { get; }
+    public int SuccessfulTargetCount { get; }
     public IReadOnlyList<ExportWarning> Warnings { get; }
 
-    public ExportBatchResult(
-        int exportedCount,
-        IReadOnlyList<ImageFile> failedImages,
+    internal ExportBatchResult(
+        ExportJob job,
+        IReadOnlyList<ExportTargetOutcome> outcomes,
         IReadOnlyList<ExportWarning>? warnings = null)
     {
-        ExportedCount = exportedCount;
-        FailedImages = failedImages;
-        Warnings = warnings ?? Array.Empty<ExportWarning>();
+        Outcomes = Array.AsReadOnly(outcomes.ToArray());
+        FailedTargets = Array.AsReadOnly(
+            outcomes.Where(outcome => !outcome.Succeeded).ToArray());
+        SuccessfulTargetCount = Outcomes.Count(outcome => outcome.Succeeded);
+        FailedImages = Array.AsReadOnly(job.Captures
+            .Where(capture => FailedTargets.Any(outcome =>
+                ReferenceEquals(outcome.Capture, capture)))
+            .ToArray());
+        ExportedCount = job.Captures.Count(capture =>
+        {
+            var captureOutcomes = outcomes.Where(outcome =>
+                ReferenceEquals(outcome.Capture, capture)).ToList();
+            return captureOutcomes.Count > 0 &&
+                captureOutcomes.All(outcome => outcome.Succeeded);
+        });
+        Warnings = Array.AsReadOnly((warnings ?? []).ToArray());
     }
 }
 
 public sealed class ImageExportService
 {
-    private readonly RenderPipeline _renderPipeline;
     private readonly IBaseImageLoader _baseLoader;
     private readonly ExportMetadataService _metadataService;
     private readonly DcpProfileService _dcpProfiles;
+    private readonly Func<RenderRequest, MagickImage> _renderDisplayRec2020;
 
     public ImageExportService(
         RenderPipeline renderPipeline,
@@ -49,13 +75,15 @@ public sealed class ImageExportService
         RenderPipeline renderPipeline,
         IBaseImageLoader baseLoader,
         ExportMetadataService metadataService,
-        DcpProfileService dcpProfiles)
+        DcpProfileService dcpProfiles,
+        Func<RenderRequest, MagickImage>? renderDisplayRec2020 = null)
     {
-        _renderPipeline = renderPipeline;
         _baseLoader = baseLoader;
         _metadataService = metadataService;
         _dcpProfiles = dcpProfiles ??
             throw new ArgumentNullException(nameof(dcpProfiles));
+        _renderDisplayRec2020 = renderDisplayRec2020 ??
+            renderPipeline.RenderDisplayRec2020;
     }
 
     public Task<ExportBatchResult> ExportBatchAsync(
@@ -64,16 +92,22 @@ public sealed class ImageExportService
         IProgress<(int current, int total, string fileName)>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var variants = settings.GetActiveVariants();
-        return ExportBatchCoreAsync(
-            images,
-            settings,
-            variants,
-            useSubfolders: variants.Count > 1,
+        var job = settings.CreateJob(images);
+        return ExportBatchAsync(
+            job,
+            progress,
+            cancellationToken);
+    }
+
+    public Task<ExportBatchResult> ExportBatchAsync(
+        ExportJob job,
+        IProgress<(int current, int total, string fileName)>? progress = null,
+        CancellationToken cancellationToken = default) =>
+        ExportBatchCoreAsync(
+            job,
             progress,
             SourceReadIntent.Background,
             cancellationToken);
-    }
 
     public async Task<int> ExportBatchAsync(
         IEnumerable<ImageFile> images,
@@ -84,13 +118,10 @@ public sealed class ImageExportService
         CancellationToken cancellationToken = default,
         IProgress<ExportWarning>? warningProgress = null)
     {
-        var result = await ExportBatchCoreAsync(
-            images,
-            settings,
-            variants,
-            useSubfolders,
+        var job = settings.CreateJob(images, variants, useSubfolders);
+        var result = await ExportBatchAsync(
+            job,
             progress,
-            SourceReadIntent.Background,
             cancellationToken);
         foreach (var warning in result.Warnings)
         {
@@ -104,14 +135,11 @@ public sealed class ImageExportService
         ExportSettings settings,
         IReadOnlyList<ExportVariant> variants,
         bool useSubfolders,
-        CancellationToken cancellationToken) => ExportBatchCoreAsync(
-            images,
-            settings,
-            variants,
-            useSubfolders,
-            progress: null,
-            SourceReadIntent.Background,
-            cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        var job = settings.CreateJob(images, variants, useSubfolders);
+        return ExportBatchAsync(job, progress: null, cancellationToken);
+    }
 
     internal async Task<int> ExportBatchApprovedAsync(
         IEnumerable<ImageFile> images,
@@ -121,11 +149,9 @@ public sealed class ImageExportService
         IProgress<(int current, int total, string fileName)>? progress,
         CancellationToken cancellationToken)
     {
+        var job = settings.CreateJob(images, variants, useSubfolders);
         var result = await ExportBatchCoreAsync(
-            images,
-            settings,
-            variants,
-            useSubfolders,
+            job,
             progress,
             SourceReadIntent.UserApprovedHydration,
             cancellationToken);
@@ -138,91 +164,120 @@ public sealed class ImageExportService
         IProgress<(int current, int total, string fileName)>? progress,
         CancellationToken cancellationToken)
     {
-        var variants = settings.GetActiveVariants();
+        var job = settings.CreateJob(images);
         return ExportBatchCoreAsync(
-            images,
-            settings,
-            variants,
-            useSubfolders: variants.Count > 1,
+            job,
             progress,
             SourceReadIntent.UserApprovedHydration,
             cancellationToken);
     }
 
+    internal Task<ExportBatchResult> ExportBatchApprovedAsync(
+        ExportJob job,
+        IProgress<(int current, int total, string fileName)>? progress,
+        CancellationToken cancellationToken) =>
+        ExportBatchCoreAsync(
+            job,
+            progress,
+            SourceReadIntent.UserApprovedHydration,
+            cancellationToken);
+
     private async Task<ExportBatchResult> ExportBatchCoreAsync(
-        IEnumerable<ImageFile> images,
-        ExportSettings settings,
-        IReadOnlyList<ExportVariant> variants,
-        bool useSubfolders,
+        ExportJob job,
         IProgress<(int current, int total, string fileName)>? progress,
         SourceReadIntent intent,
         CancellationToken cancellationToken)
     {
-        var imageList = images.ToList();
-        var outputColorSpace = settings.OutputColorSpace;
-        var total = imageList.Count;
-        var exported = 0;
-        var failedImages = new List<ImageFile>();
+        var targetsByCapture = job.Targets.ToLookup(target => target.Capture);
+        var captures = job.Captures
+            .Where(capture => targetsByCapture.Contains(capture))
+            .ToList();
+        var total = job.Targets.Count;
+        var completed = 0;
+        var outcomes = new List<ExportTargetOutcome>(job.Targets.Count);
         var warnings = new List<ExportWarning>();
-
-        Directory.CreateDirectory(settings.OutputFolder);
-        if (useSubfolders)
+        if (captures.Count > 0)
         {
-            foreach (var variant in variants)
-            {
-                Directory.CreateDirectory(
-                    Path.Combine(settings.OutputFolder, variant.Name));
-            }
+            progress?.Report((completed, total, captures[0].FileName));
         }
 
-        foreach (var imageFile in imageList)
+        for (var captureIndex = 0; captureIndex < captures.Count; captureIndex++)
         {
+            var capture = captures[captureIndex];
             cancellationToken.ThrowIfCancellationRequested();
-            progress?.Report((exported, total, imageFile.FileName));
+            var targets = targetsByCapture[capture].ToList();
+            var completedForCapture = 0;
 
             var imageResult = await Task.Run(
                 () => ExportImage(
-                    imageFile,
-                    settings,
-                    variants,
-                    useSubfolders,
-                    outputColorSpace,
+                    job,
+                    capture,
+                    targets,
                     intent,
-                    cancellationToken),
+                    cancellationToken,
+                    outcome =>
+                    {
+                        outcomes.Add(outcome);
+                        completed++;
+                        completedForCapture++;
+                        var fileName = completedForCapture == targets.Count &&
+                                       captureIndex + 1 < captures.Count
+                            ? captures[captureIndex + 1].FileName
+                            : capture.FileName;
+                        progress?.Report((completed, total, fileName));
+                    }),
                 cancellationToken);
-            if (imageResult.WroteImage)
+            if (imageResult.Warning != null)
             {
-                exported++;
-                if (imageResult.Warning != null)
-                {
-                    warnings.Add(imageResult.Warning);
-                }
-            }
-            else
-            {
-                failedImages.Add(imageFile);
+                warnings.Add(imageResult.Warning);
             }
         }
 
-        return new ExportBatchResult(exported, failedImages, warnings);
+        return new ExportBatchResult(job, outcomes, warnings);
     }
 
     private ExportImageResult ExportImage(
+        ExportJob job,
         ImageFile imageFile,
-        ExportSettings settings,
-        IReadOnlyList<ExportVariant> variants,
-        bool useSubfolders,
-        OutputColorSpace outputColorSpace,
+        IReadOnlyList<ExportTarget> targets,
         SourceReadIntent intent,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<ExportTargetOutcome> targetCompleted)
     {
-        if (variants.Count == 0)
+        try
         {
-            return new ExportImageResult(false, null);
+            return ExportImageCore(
+                job,
+                imageFile,
+                targets,
+                intent,
+                cancellationToken,
+                targetCompleted);
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            foreach (var target in targets)
+            {
+                targetCompleted(Failed(target, exception));
+            }
+            return new ExportImageResult(null);
+        }
+    }
 
+    private ExportImageResult ExportImageCore(
+        ExportJob job,
+        ImageFile imageFile,
+        IReadOnlyList<ExportTarget> targets,
+        SourceReadIntent intent,
+        CancellationToken cancellationToken,
+        Action<ExportTargetOutcome> targetCompleted)
+    {
         var stopwatch = Stopwatch.StartNew();
-        var editSnapshot = imageFile.EditSettings.Clone();
+        var editSnapshot = job.GetEditSettings(imageFile);
         var decode = BaseDecodeSettings.From(editSnapshot);
         if (editSnapshot.RawProfile != null)
         {
@@ -247,13 +302,19 @@ public sealed class ImageExportService
                 cancellationToken);
         if (baseImage == null)
         {
-            return new ExportImageResult(false, null);
+            foreach (var target in targets)
+            {
+                targetCompleted(Failed(
+                    target,
+                    "The source image could not be loaded."));
+            }
+            return new ExportImageResult(null);
         }
 
         var warning = CreateProfileWarning(imageFile, editSnapshot, baseImage.Info);
 
         cancellationToken.ThrowIfCancellationRequested();
-        MagickImage? displayRec2020 = _renderPipeline.RenderDisplayRec2020(
+        MagickImage? displayRec2020 = _renderDisplayRec2020(
             new RenderRequest(
             baseImage,
             editSnapshot,
@@ -262,22 +323,20 @@ public sealed class ImageExportService
             new RenderOptions(
                 ComputeStats: false,
                 ComputeOverlayMasks: false),
-            outputColorSpace));
+            job.Output.OutputColorSpace));
         baseImage.Dispose();
         try
         {
-            var orderedVariants = variants
-                .OrderBy(variant => variant.MaxDimension.HasValue ? 1 : 0)
-                .ThenByDescending(variant => variant.MaxDimension ?? 0)
-                .ToList();
             var fullLongEdge = Math.Max(
                 displayRec2020.Width,
                 displayRec2020.Height);
             var fullSize = $"{displayRec2020.Width}x{displayRec2020.Height}";
+            var encoderSettings = job.Output.CreateEncoderSettings();
 
-            for (var index = 0; index < orderedVariants.Count; index++)
+            for (var index = 0; index < targets.Count; index++)
             {
-                var variant = orderedVariants[index];
+                var target = targets[index];
+                var variant = target.Recipe;
                 cancellationToken.ThrowIfCancellationRequested();
                 var shared = displayRec2020 ??
                     throw new InvalidOperationException(
@@ -289,36 +348,51 @@ public sealed class ImageExportService
                         maxDimension);
                 }
 
-                using var destination = index == orderedVariants.Count - 1
-                    ? RenderFinalizer.FinalizeOwned(
-                        Take(ref displayRec2020),
-                        maxDimension: null,
-                        outputColorSpace,
-                        settings.OutputSharpening,
-                        variant.MaxDimension is int ownedLongEdge &&
-                        ownedLongEdge < fullLongEdge,
-                        effects: editSnapshot.Effects)
-                    : RenderFinalizer.Finalize(
-                        shared,
-                        maxDimension: null,
-                        outputColorSpace,
-                        settings.OutputSharpening,
-                        variant.MaxDimension is int sizedLongEdge &&
-                        sizedLongEdge < fullLongEdge,
-                        effects: editSnapshot.Effects);
-                _metadataService.Apply(
-                    imageFile,
-                    destination,
-                    settings.StripLocationData,
-                    intent);
-                ExportEncoder.Write(
-                    destination,
-                    settings,
-                    outputColorSpace,
-                    settings.GetOutputPath(
-                        imageFile.FileName,
-                        variant,
-                        useSubfolders));
+                try
+                {
+                    var directory = Path.GetDirectoryName(target.ResolvedPath);
+                    if (!string.IsNullOrEmpty(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+                    using var destination = index == targets.Count - 1
+                        ? RenderFinalizer.FinalizeOwned(
+                            Take(ref displayRec2020),
+                            maxDimension: null,
+                            job.Output.OutputColorSpace,
+                            job.Output.OutputSharpening,
+                            variant.MaxDimension is int ownedLongEdge &&
+                            ownedLongEdge < fullLongEdge,
+                            effects: editSnapshot.Effects)
+                        : RenderFinalizer.Finalize(
+                            shared,
+                            maxDimension: null,
+                            job.Output.OutputColorSpace,
+                            job.Output.OutputSharpening,
+                            variant.MaxDimension is int sizedLongEdge &&
+                            sizedLongEdge < fullLongEdge,
+                            effects: editSnapshot.Effects);
+                    _metadataService.Apply(
+                        imageFile,
+                        destination,
+                        job.Output.StripLocationData,
+                        intent);
+                    ExportEncoder.Write(
+                        destination,
+                        encoderSettings,
+                        job.Output.OutputColorSpace,
+                        target.ResolvedPath,
+                        target.OverwriteAuthorized);
+                    targetCompleted(Succeeded(target));
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    targetCompleted(Failed(target, exception));
+                }
             }
 
             LogPerformance(
@@ -326,14 +400,37 @@ public sealed class ImageExportService
                 nameof(ExportImage),
                 stopwatch.ElapsedMilliseconds,
                 imageFile.FilePath,
-                $"variants={orderedVariants.Count};size={fullSize}");
-            return new ExportImageResult(true, warning);
+                $"variants={targets.Count};size={fullSize}");
+            return new ExportImageResult(warning);
         }
         finally
         {
             displayRec2020?.Dispose();
         }
     }
+
+    private static ExportTargetOutcome Succeeded(ExportTarget target) => new(
+        target.Capture,
+        target.Recipe,
+        target.ResolvedPath,
+        FailureReason: null);
+
+    private static ExportTargetOutcome Failed(
+        ExportTarget target,
+        Exception exception) =>
+        Failed(
+            target,
+            string.IsNullOrWhiteSpace(exception.Message)
+                ? exception.GetType().Name
+                : exception.Message);
+
+    private static ExportTargetOutcome Failed(
+        ExportTarget target,
+        string reason) => new(
+        target.Capture,
+        target.Recipe,
+        target.ResolvedPath,
+        reason);
 
     private static MagickImage Take(ref MagickImage? image)
     {
@@ -360,7 +457,5 @@ public sealed class ImageExportService
                 "The selected camera profile could not be applied; the built-in characterization was exported.");
     }
 
-    private sealed record ExportImageResult(
-        bool WroteImage,
-        ExportWarning? Warning);
+    private sealed record ExportImageResult(ExportWarning? Warning);
 }

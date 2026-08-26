@@ -107,7 +107,7 @@
                         VerticalAlignment="Center" Spacing="0"
                         chrome:WindowDecorationProperties.ElementRole="User">
                 <Button x:Name="BrowseTabButton"
-                        Classes="tab" Classes.active="{Binding !IsDevelopMode}"
+                        Classes="tab" Classes.active="{Binding IsBrowseMode}"
                         Command="{Binding SwitchToBrowseCommand}" Focusable="False"
                         IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
                     <StackPanel Spacing="3">
@@ -123,6 +123,16 @@
                     <StackPanel Spacing="3">
                         <TextBlock Text="Develop"/>
                         <Rectangle x:Name="DevelopTabUnderline"
+                                   Classes="tabUnderline" Height="2" Margin="-4,0"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="ExportWorkspaceTab"
+                        Classes="tab" Classes.active="{Binding IsExportMode}"
+                        Command="{Binding SwitchToExportCommand}" Focusable="False"
+                        IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="Export"/>
+                        <Rectangle x:Name="ExportTabUnderline"
                                    Classes="tabUnderline" Height="2" Margin="-4,0"/>
                     </StackPanel>
                 </Button>

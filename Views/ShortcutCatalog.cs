@@ -4,6 +4,7 @@ public enum ShortcutWorkspace
 {
     Browse,
     Develop,
+    Export,
     FullScreen
 }
 
@@ -46,6 +47,9 @@ public static class ShortcutCatalog
     private static ShortcutReachabilityClaim Develop(string action, string controlName) =>
         ShortcutReachabilityClaim.Control(action, controlName, ShortcutWorkspace.Develop);
 
+    private static ShortcutReachabilityClaim Export(string action, string controlName) =>
+        ShortcutReachabilityClaim.Control(action, controlName, ShortcutWorkspace.Export);
+
     private static ShortcutReachabilityClaim FullScreen(string action, string controlName) =>
         ShortcutReachabilityClaim.Control(action, controlName, ShortcutWorkspace.FullScreen);
 
@@ -66,18 +70,20 @@ public static class ShortcutCatalog
                 Browse("Switch to Browse", "BrowseTabButton"),
                 Develop("Switch to Develop", "DevelopTabButton")
             ]),
-            new("Enter", "Toggle Browse/Develop, apply crop, or confirm export",
+            new("Enter", "Run Export, toggle Browse/Develop, or apply crop",
             [
-                Browse("Switch to Browse", "BrowseTabButton"),
-                Develop("Switch to Develop", "DevelopTabButton"),
+                Browse("Switch to Develop", "DevelopTabButton"),
+                Develop("Switch to Browse", "BrowseTabButton"),
                 Develop("Apply crop", "ApplyCropButton"),
-                Dialog("Confirm a dialog")
+                Export("Run export", "RunExportButton")
             ]),
-            new("Escape", "Close the active panel, cancel crop, or return to Browse",
+            new("Escape", "Close the active panel, cancel crop, or return to the prior workspace",
             [
                 Dialog("Close the active dialog"),
                 Develop("Cancel crop", "CancelCropButton"),
-                Browse("Return to Browse", "BrowseTabButton")
+                Develop("Return to Browse", "BrowseTabButton"),
+                Export("Return to Browse", "BrowseTabButton"),
+                Export("Return to Develop", "DevelopTabButton")
             ]),
             new("F", "Toggle fullscreen; restrict navigation to 2+ selected photos",
             [
@@ -119,7 +125,7 @@ public static class ShortcutCatalog
                 [Browse("Clear ratings", "ClearRatingButton")]),
             new("6–9", "Set color labels on Browse selection, else active photo; active-only in Develop",
                 [Browse("Set a color label", "ColorLabelButton")]),
-            new("Space", "Toggle the active photo in the selection",
+            new("Space", "Toggle the active photo in the Browse selection",
                 [Browse("Toggle selection", "SelectionBadgeButton")]),
             new("Ctrl+A", "Select all visible images",
                 [Browse("Select all visible images", "SelectAllMenuItem")]),
@@ -159,8 +165,8 @@ public static class ShortcutCatalog
         ]),
         new("Export",
         [
-            new("Ctrl+E", "Open the export dialog (ignored in fullscreen)",
-                [Browse("Open the export dialog", "BrowseExportButton")]),
+            new("Ctrl+E", "Open the Export workspace (ignored in fullscreen)",
+                [Browse("Open the Export workspace", "BrowseExportButton")]),
         ]),
     ];
 }

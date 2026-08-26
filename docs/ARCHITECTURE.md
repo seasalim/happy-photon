@@ -490,8 +490,8 @@ default and injected base loaders, while metadata and path-based statistics gate
 their own source entry points.
 
 Only two user actions grant `UserApprovedHydration`: **Download and open** for one
-selected image, and the export dialog after it reports the selected cloud-file count
-and logical size. Both paths recheck live availability.
+selected image, and the Export workspace after it reports the immutable job's exact
+cloud-file count and logical size. Both paths recheck live availability.
 
 ### The cache write queue (ThumbnailCacheService)
 

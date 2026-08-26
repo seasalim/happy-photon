@@ -112,7 +112,7 @@ public partial class MainWindow : Window
         WithVm(vm => vm.DeselectAllCommand.Execute(null));
 
     private void OnBatchExportRequested(object? sender, EventArgs e) =>
-        WithVm(vm => vm.ShowExportDialogCommand.Execute(null));
+        WithVm(vm => vm.SwitchToExportCommand.Execute(null));
 
     private void OnDeleteRejectedRequested(object? sender, EventArgs e) =>
         WithVm(vm => vm.DeleteRejectedImagesCommand.Execute(null));
@@ -221,6 +221,44 @@ public partial class MainWindow : Window
             message);
     }
 
+    private Task<bool> ConfirmExportOverwriteAsync(
+        int count,
+        IReadOnlyList<string> paths)
+    {
+        var message = count == 1
+            ? $"The file \"{Path.GetFileName(paths[0])}\" already exists. Overwrite?"
+            : $"{count} export files already exist. Overwrite them?";
+        return ConfirmationDialog.ConfirmAsync(
+            this,
+            "Confirm Overwrite",
+            message);
+    }
+
+    private Task<bool> ConfirmExportHydrationAsync(ExportHydrationScope scope)
+    {
+        var noun = scope.FileCount == 1 ? "original" : "originals";
+        return ConfirmationDialog.ConfirmAsync(
+            this,
+            "Download originals for export?",
+            $"Exporting will download {scope.FileCount} online-only {noun} " +
+            $"(approximately {FormatLogicalSize(scope.LogicalBytes)}).",
+            cancelLabel: "Cancel",
+            confirmLabel: "Download / Export");
+    }
+
+    private static string FormatLogicalSize(long bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        var value = (double)Math.Max(0, bytes);
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1)
+        {
+            value /= 1024;
+            unit++;
+        }
+        return $"{value:0.#} {units[unit]}";
+    }
+
     private Task ShowFileOperationFailuresAsync(
         IReadOnlyList<FileOperationFailure> failures)
     {
@@ -261,20 +299,20 @@ public partial class MainWindow : Window
             if (e.Key == Key.Left)
             {
                 vm.SelectPreviousImageCommand.Execute(null);
-                if (!vm.IsDevelopMode) ScrollSelectedIntoView(vm);
+                if (vm.IsBrowseMode) ScrollSelectedIntoView(vm);
                 e.Handled = true;
                 return;
             }
             else if (e.Key == Key.Right)
             {
                 vm.SelectNextImageCommand.Execute(null);
-                if (!vm.IsDevelopMode) ScrollSelectedIntoView(vm);
+                if (vm.IsBrowseMode) ScrollSelectedIntoView(vm);
                 e.Handled = true;
                 return;
             }
 
             // Up/Down/PageUp/PageDown: Row navigation (Browse mode only)
-            if (!vm.IsDevelopMode)
+            if (vm.IsBrowseMode)
             {
                 if (e.Key == Key.Up)
                 {

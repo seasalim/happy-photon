@@ -104,13 +104,30 @@ public sealed class WorkspaceModeTests : IDisposable
     public async Task LeavingDevelopForExport_RunsDevelopSurfaceTeardown()
     {
         await using var vm = CreateViewModel();
+        vm.SelectedImage = new ImageFile(Path.Combine(
+            Path.GetTempPath(),
+            "workspace-mode-selected.jpg"));
         vm.WorkspaceMode = WorkspaceMode.Develop;
-        var generationBeforeExport = vm.LatestPreviewOutcomeGeneration;
+        var clippingCommandNotifications = 0;
+        vm.ToggleClippingOverlayCommand.CanExecuteChanged +=
+            (_, _) => clippingCommandNotifications++;
 
         vm.WorkspaceMode = WorkspaceMode.Export;
 
-        Assert.True(
-            vm.LatestPreviewOutcomeGeneration > generationBeforeExport);
+        Assert.Equal(2, clippingCommandNotifications);
+    }
+
+    [Fact]
+    public async Task EnteringDevelopWithoutSelection_DoesNotReserveRenderOutcome()
+    {
+        await using var vm = CreateViewModel();
+        var generationBeforeDevelop = vm.LatestPreviewOutcomeGeneration;
+
+        vm.WorkspaceMode = WorkspaceMode.Develop;
+
+        Assert.Equal(
+            generationBeforeDevelop,
+            vm.LatestPreviewOutcomeGeneration);
     }
 
     private MainWindowViewModel CreateViewModel() =>

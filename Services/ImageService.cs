@@ -183,10 +183,19 @@ public class ImageService : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         var imageList = images.ToList();
+        var job = settings.CreateJob(imageList);
+        return await ExportBatchAsync(job, progress, cancellationToken);
+    }
+
+    public async Task<ExportBatchResult> ExportBatchAsync(
+        ExportJob job,
+        IProgress<(int current, int total, string fileName)>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var imageList = job.Captures.ToList();
         await EnsureExportMetadataAsync(imageList, cancellationToken);
         return await _exportService.ExportBatchAsync(
-            imageList,
-            settings,
+            job,
             progress,
             cancellationToken);
     }
@@ -198,10 +207,19 @@ public class ImageService : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         var imageList = images.ToList();
+        var job = settings.CreateJob(imageList);
+        return await ExportBatchApprovedAsync(job, progress, cancellationToken);
+    }
+
+    internal async Task<ExportBatchResult> ExportBatchApprovedAsync(
+        ExportJob job,
+        IProgress<(int current, int total, string fileName)>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var imageList = job.Captures.ToList();
         await EnsureExportMetadataAsync(imageList, cancellationToken);
         return await _exportService.ExportBatchApprovedAsync(
-            imageList,
-            settings,
+            job,
             progress,
             cancellationToken);
     }
@@ -216,15 +234,17 @@ public class ImageService : IAsyncDisposable
         IProgress<ExportWarning>? warningProgress = null)
     {
         var imageList = images.ToList();
+        var job = settings.CreateJob(imageList, variants, useSubfolders);
         await EnsureExportMetadataAsync(imageList, cancellationToken);
-        return await _exportService.ExportBatchAsync(
-            imageList,
-            settings,
-            variants,
-            useSubfolders,
+        var result = await _exportService.ExportBatchAsync(
+            job,
             progress,
-            cancellationToken,
-            warningProgress);
+            cancellationToken);
+        foreach (var warning in result.Warnings)
+        {
+            warningProgress?.Report(warning);
+        }
+        return result.ExportedCount;
     }
 
     internal async Task<ExportBatchResult> ExportBatchVariantsAsync(
@@ -235,12 +255,11 @@ public class ImageService : IAsyncDisposable
         CancellationToken cancellationToken)
     {
         var imageList = images.ToList();
+        var job = settings.CreateJob(imageList, variants, useSubfolders);
         await EnsureExportMetadataAsync(imageList, cancellationToken);
-        return await _exportService.ExportBatchVariantsAsync(
-            imageList,
-            settings,
-            variants,
-            useSubfolders,
+        return await _exportService.ExportBatchAsync(
+            job,
+            progress: null,
             cancellationToken);
     }
 

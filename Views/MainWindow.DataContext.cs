@@ -14,6 +14,7 @@ public partial class MainWindow
 {
     private AppSettingsService? _appSettingsService;
     private MainWindowViewModel? _subscribedViewModel;
+    private MainWindowViewModel? _exportWorkspaceSettingsViewModel;
     private CatalogService? _startupCatalogService;
     private AppDataLocationService? _dataLocationService;
     private CatalogLocationMigrator? _locationMigrator;
@@ -38,6 +39,7 @@ public partial class MainWindow
 
         if (_subscribedViewModel != null && !ReferenceEquals(DataContext, _subscribedViewModel))
         {
+            SetExportWorkspaceSettingsSubscription(null);
             _subscribedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
             _subscribedViewModel = null;
         }
@@ -50,7 +52,8 @@ public partial class MainWindow
 
         vm.ZoomFitCommand = new RelayCommand(ZoomFit);
         vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(vm.ApplyFitZoom);
-        vm.RequestExportDialogAsync = ShowExportDialogAsync;
+        vm.ConfirmExportOverwriteAsync = ConfirmExportOverwriteAsync;
+        vm.ConfirmExportHydrationAsync = ConfirmExportHydrationAsync;
         vm.RequestCatalogImportAsync = async () =>
             await ShowImportCatalogAsync();
         vm.CaptureBrowseViewportAnchor =
@@ -90,6 +93,7 @@ public partial class MainWindow
         _presetsPanel?.SetPresetSource(vm.PresetService);
 
         SetSubscribedViewModel(vm);
+        SetExportWorkspaceSettingsSubscription(vm.IsExportMode ? vm : null);
         ApplyAppTheme(vm.AppTheme);
         ApplyWorkspaceKeyboardState(vm.IsWorkspaceInteractionEnabled);
         UpdateDevelopViewportPublication(vm);
@@ -331,6 +335,26 @@ public partial class MainWindow
         else if (args.PropertyName == nameof(MainWindowViewModel.AppTheme))
         {
             ApplyAppTheme(vm.AppTheme);
+        }
+        else if (args.PropertyName == nameof(MainWindowViewModel.WorkspaceMode))
+        {
+            SetExportWorkspaceSettingsSubscription(vm.IsExportMode ? vm : null);
+        }
+    }
+
+    private void SetExportWorkspaceSettingsSubscription(MainWindowViewModel? vm)
+    {
+        if (ReferenceEquals(_exportWorkspaceSettingsViewModel, vm)) return;
+        if (_exportWorkspaceSettingsViewModel != null)
+        {
+            _exportWorkspaceSettingsViewModel.ExportSettings.PropertyChanged -=
+                OnExportSettingsPropertyChanged;
+        }
+        _exportWorkspaceSettingsViewModel = vm;
+        if (_exportWorkspaceSettingsViewModel != null)
+        {
+            _exportWorkspaceSettingsViewModel.ExportSettings.PropertyChanged +=
+                OnExportSettingsPropertyChanged;
         }
     }
 

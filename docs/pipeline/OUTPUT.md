@@ -31,13 +31,19 @@ all export renders remain mask-free (RENDER.md §7).
 
 ## 2. Export flow (`ImageExportService`)
 
-Before pixel work, export snapshots `OutputColorSpace` once, so mutable dialog state
-cannot produce P3 pixels with an sRGB tag or the reverse. Per image:
+Before pixel work, export resolves an immutable job containing the captures, armed
+recipes, cloned edit settings, all output settings, and the target path for every
+capture-recipe pair. Execution reads only that job, so later workspace changes cannot
+alter pixels, metadata policy, encoding, or destinations. Outcomes are recorded per
+target pair, while each capture still follows the shared flow below:
 `LoadFullBase` → one unresized `RenderDisplayRec2020` → per variant, in descending size
 order: sRGB-decode → progressive linear-light resize → sRGB-encode → optional output
 sharpen → vignette → grain → sRGB-decode → target convert → clamp → sRGB-encode → metadata apply (§4) →
-encode (§3) → `ExportSafety` checks → write. The export loop transfers ownership of the
-last progressive variant instead of cloning it.
+encode (§3) → write-time authorization check → temporary encode → atomic install. A
+target that existed during preflight is replaceable only after the grouped overwrite
+confirmation; every other install uses create-new semantics, so a file appearing after
+preflight is never overwritten. The export loop transfers ownership of the last
+progressive variant instead of cloning it.
 
 Preview uses the same finalizer with output sharpening disabled and sRGB selected.
 All geometry, tone, chroma, detail, resize, sharpening, and effects work is
@@ -45,7 +51,7 @@ target-independent; only the trailing convert, clamp, encode, and profile differ
 between sRGB and P3. Effects are snapshotted with the edit settings and run separately
 at each variant's output dimensions, after that variant's resize and sharpen.
 
-Before desktop export starts, the dialog classifies every selected original and totals
+Before desktop export starts, the workspace classifies every selected original and totals
 the logical size of files that require hydration. If the count is nonzero, it shows
 that exact scope and waits for **Download / Export** confirmation. Cancellation makes
 no base-loader or source-metadata call. Only the confirmed image list receives
@@ -90,7 +96,7 @@ deliberately reconstructs metadata on the encoded output:
    - Remove the embedded EXIF thumbnail (stale after edits).
    - Remove `PixelXDimension`/`PixelYDimension` (or set to actual output size).
    - Set `Software = "Happy Photon <version>"`.
-3. **GPS:** kept by default; removed when the export dialog's **"Strip location data"**
+3. **GPS:** kept by default; removed when the Export workspace's **"Strip location data"**
    checkbox is set (persisted app setting, default off). Stripping removes the entire
    GPS IFD.
 4. ICC: §3's selected output profile — never the source profile.

@@ -37,13 +37,11 @@ public sealed class ExportSettingsVariantTests
     }
 
     [Fact]
-    public void NothingChecked_GuardReturnsHiRes()
+    public void NothingChecked_ReturnsNoVariants()
     {
         var settings = new ExportSettings { ExportHiRes = false };
 
-        var variant = Assert.Single(settings.GetActiveVariants());
-        Assert.Equal("hi-res", variant.Name);
-        Assert.Null(variant.MaxDimension);
+        Assert.Empty(settings.GetActiveVariants());
     }
 
     [Fact]
@@ -81,5 +79,36 @@ public sealed class ExportSettingsVariantTests
 
         var variant = Assert.Single(settings.GetActiveVariants());
         Assert.Equal(16, variant.MaxDimension);
+    }
+
+    [Fact]
+    public void Job_DetectsTwoRecipesResolvingToSamePath()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "out");
+        var capture = new ImageFile(Path.Combine(folder, "photo.raw"));
+        var job = new ExportSettings { OutputFolder = folder }.CreateJob(
+            [capture],
+            [new ExportVariant("a", null), new ExportVariant("b", 100)],
+            useSubfolders: false);
+
+        var collision = Assert.Single(job.PathCollisions);
+        Assert.Equal(2, collision.Targets.Count);
+        Assert.All(collision.Targets, target =>
+            Assert.Equal(Path.Combine(folder, "photo.jpg"), target.ResolvedPath));
+    }
+
+    [Fact]
+    public void Job_DetectsTwoCapturesWithSameBasename()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "out");
+        var job = new ExportSettings { OutputFolder = folder }.CreateJob(
+            [
+                new ImageFile(Path.Combine(folder, "one", "photo.raw")),
+                new ImageFile(Path.Combine(folder, "two", "photo.raw"))
+            ]);
+
+        var collision = Assert.Single(job.PathCollisions);
+        Assert.Equal(2, collision.Targets.Count);
+        Assert.Equal(2, collision.Targets.Select(target => target.Capture).Distinct().Count());
     }
 }

@@ -13,275 +13,124 @@ public sealed class WorkflowTourTests : IDisposable
     public async Task FirstRunStartTourChoice_StartsTourInBrowse()
     {
         using var catalog = CreateCatalog();
-        var vm = _fx.CreateViewModel(catalog);
+        await using var vm = CreateViewModel(catalog);
         vm.PersistFirstRunCompletionAsync = _ => Task.CompletedTask;
         vm.ShowFirstRunWelcome(_fx.Root);
 
         await vm.CompleteFirstRunFromLocationAsync(_fx.Root);
-        Assert.Equal(FirstRunStep.AllSet, vm.FirstRunStep);
-        Assert.Equal(WorkflowTourStep.None, vm.WorkflowTourStep);
-
         await vm.StartFirstRunTourCommand.ExecuteAsync(null);
 
-        Assert.Equal(
-            WorkflowTourStep.ChooseWhatMatters,
-            vm.WorkflowTourStep);
+        Assert.Equal(WorkflowTourStep.ChooseWhatMatters, vm.WorkflowTourStep);
         Assert.True(vm.IsChooseWhatMattersTourVisible);
-        Assert.False(vm.IsDevelopMode);
-        await vm.DisposeAsync();
+        Assert.Equal(1, MainWindowViewModel.CurrentFirstRunExperienceVersion);
     }
 
     [Fact]
-    public async Task TourTransitions_DoNotChangePhotographStateOrSelection()
+    public async Task TourStepThree_IsPinnedToExportWorkspace()
     {
         using var catalog = CreateCatalog();
-        var vm = _fx.CreateViewModel(catalog);
+        await using var vm = CreateViewModel(catalog);
         var image = new ImageFile(_fx.Path("photo.jpg"))
         {
             Flag = ImageFlag.Picked,
             Rating = 4,
-            EditSettings = new EditSettings
-            {
-                Exposure = 1.25,
-                Wb = new WhiteBalanceSettings
-                {
-                    Mode = WbMode.Custom,
-                    Kelvin = 6800,
-                    Tint = 6
-                }
-            }
+            EditSettings = new EditSettings { Exposure = 1.25 }
         };
-        vm.Browse.FileTypeFilter = ImageFileTypeFilter.Jpeg;
-        vm.Browse.FlagFilter = FlagFilter.Picked;
-        vm.Browse.MinimumRating = 3;
         vm.Browse.SetImages([image]);
+        vm.Browse.ToggleSelection(image);
         vm.RefreshSelectedCount();
-        var dialogRequests = 0;
-        ExportDialogMode? requestedMode = null;
-        vm.RequestExportDialogAsync = mode =>
-        {
-            dialogRequests++;
-            requestedMode = mode;
-            return Task.CompletedTask;
-        };
 
         vm.StartWorkflowTour();
         vm.ShowDevelopTourStepCommand.Execute(null);
-
-        Assert.Equal(WorkflowTourStep.ShapePhotograph, vm.WorkflowTourStep);
-        Assert.True(vm.IsShapePhotographTourVisible);
-
         vm.ShowExportTourStepCommand.Execute(null);
 
         Assert.Equal(WorkflowTourStep.DeliverCopies, vm.WorkflowTourStep);
+        Assert.Equal(WorkspaceMode.Export, vm.WorkspaceMode);
         Assert.True(vm.IsDeliverCopiesTourVisible);
-
-        await vm.OpenExportFromTourCommand.ExecuteAsync(null);
-
-        Assert.Equal(WorkflowTourStep.None, vm.WorkflowTourStep);
-        Assert.Equal(1, dialogRequests);
-        Assert.Equal(ExportDialogMode.TourPreview, requestedMode);
-        Assert.False(image.IsSelected);
-        Assert.Equal(0, vm.SelectedCount);
+        Assert.False(vm.IsChooseWhatMattersTourVisible);
+        Assert.False(vm.IsShapePhotographTourVisible);
+        Assert.True(image.IsSelected);
         Assert.Equal(ImageFlag.Picked, image.Flag);
         Assert.Equal(4, image.Rating);
         Assert.Equal(1.25, image.EditSettings.Exposure);
-        Assert.Equal(WbMode.Custom, image.EditSettings.Wb.Mode);
-        Assert.Equal(6800, image.EditSettings.Wb.Kelvin);
-        Assert.Equal(6, image.EditSettings.Wb.Tint);
-        Assert.Equal(ImageFileTypeFilter.Jpeg, vm.Browse.FileTypeFilter);
-        Assert.Equal(FlagFilter.Picked, vm.Browse.FlagFilter);
-        Assert.Equal(3, vm.Browse.MinimumRating);
-        await vm.DisposeAsync();
     }
 
     [Fact]
-    public async Task TipSuspendsOutsideItsViewAndReturnsWithWorkspace()
+    public async Task TourTip_SuspendsOutsideItsWorkspaceAndReturns()
     {
         using var catalog = CreateCatalog();
-        var vm = _fx.CreateViewModel(catalog);
+        await using var vm = CreateViewModel(catalog);
         vm.StartWorkflowTour();
-
-        vm.IsDevelopMode = true;
-
-        Assert.Equal(
-            WorkflowTourStep.ChooseWhatMatters,
-            vm.WorkflowTourStep);
-        Assert.False(vm.IsChooseWhatMattersTourVisible);
-
-        vm.IsDevelopMode = false;
-
-        Assert.True(vm.IsChooseWhatMattersTourVisible);
-        await vm.DisposeAsync();
-    }
-
-    [Fact]
-    public async Task PresentedTourState_TracksVisibleCoachmarksOnly()
-    {
-        using var catalog = CreateCatalog();
-        var vm = _fx.CreateViewModel(catalog);
-
-        Assert.False(vm.IsWorkflowTourPresented);
-
-        vm.StartWorkflowTour();
-        Assert.True(vm.IsWorkflowTourPresented);
-
-        vm.IsDevelopMode = true;
-        Assert.False(vm.IsWorkflowTourPresented);
-        Assert.Equal(
-            WorkflowTourStep.ChooseWhatMatters,
-            vm.WorkflowTourStep);
-
-        vm.IsDevelopMode = false;
-        Assert.True(vm.IsWorkflowTourPresented);
-
-        vm.ShowDevelopTourStepCommand.Execute(null);
-        Assert.True(vm.IsWorkflowTourPresented);
-
-        vm.IsDevelopMode = false;
-        Assert.False(vm.IsWorkflowTourPresented);
-
-        vm.IsDevelopMode = true;
-        vm.ShowExportTourStepCommand.Execute(null);
-        Assert.True(vm.IsWorkflowTourPresented);
-
-        vm.FinishWorkflowTourCommand.Execute(null);
-        Assert.False(vm.IsWorkflowTourPresented);
-
-        vm.StartWorkflowTour();
-        vm.EndWorkflowTourCommand.Execute(null);
-        Assert.False(vm.IsWorkflowTourPresented);
-        await vm.DisposeAsync();
-    }
-
-    [Fact]
-    public async Task DevelopCommand_OpensWorkspaceWithoutSelectedPhotograph()
-    {
-        using var catalog = CreateCatalog();
-        var vm = _fx.CreateViewModel(catalog);
 
         vm.SwitchToDevelopCommand.Execute(null);
+        Assert.False(vm.IsChooseWhatMattersTourVisible);
 
-        Assert.True(vm.IsDevelopMode);
-        Assert.False(vm.HasSelectedImage);
-        await vm.DisposeAsync();
+        vm.SwitchToBrowseCommand.Execute(null);
+        Assert.True(vm.IsChooseWhatMattersTourVisible);
     }
 
     [Fact]
-    public async Task ExportCommand_RequestsDialogWithNoSelectedPhotographs()
+    public async Task ExportWorkspaceCommand_FollowsAutomaticDestinationUntilCustomized()
     {
         using var catalog = CreateCatalog();
-        var vm = _fx.CreateViewModel(catalog);
-        vm.CurrentFolderPath = _fx.Root;
-        var dialogRequests = 0;
-        ExportDialogMode? requestedMode = null;
-        vm.RequestExportDialogAsync = mode =>
-        {
-            dialogRequests++;
-            requestedMode = mode;
-            return Task.CompletedTask;
-        };
-
-        await vm.ShowExportDialogCommand.ExecuteAsync(null);
-
-        Assert.Equal(1, dialogRequests);
-        Assert.Equal(ExportDialogMode.Standard, requestedMode);
-        Assert.Equal(0, vm.SelectedCount);
-        Assert.Equal(
-            _fx.Path("export"),
-            vm.ExportSettings.OutputFolder);
-        await vm.DisposeAsync();
-    }
-
-    [Fact]
-    public async Task ExportCommand_CanReopenAfterPreviousDialogCloses()
-    {
-        using var catalog = CreateCatalog();
-        var vm = _fx.CreateViewModel(catalog);
-        var dialogRequests = 0;
-        vm.RequestExportDialogAsync = _ =>
-        {
-            dialogRequests++;
-            return Task.CompletedTask;
-        };
-
-        await vm.ShowExportDialogCommand.ExecuteAsync(null);
-        await vm.ShowExportDialogCommand.ExecuteAsync(null);
-
-        Assert.Equal(2, dialogRequests);
-        await vm.DisposeAsync();
-    }
-
-    [Fact]
-    public async Task ExportCommand_IsIgnoredInFullScreen()
-    {
-        using var catalog = CreateCatalog();
-        var vm = _fx.CreateViewModel(catalog);
-        vm.IsFullScreenMode = true;
-        vm.RequestExportDialogAsync = _ =>
-            throw new InvalidOperationException("Dialog must not open in fullscreen");
-
-        await vm.ShowExportDialogCommand.ExecuteAsync(null);
-
-        Assert.Empty(vm.ExportSettings.OutputFolder);
-        await vm.DisposeAsync();
-    }
-
-    [Fact]
-    public async Task ExportCommand_FollowsFolderUntilDestinationIsCustomized()
-    {
-        using var catalog = CreateCatalog();
-        var vm = _fx.CreateViewModel(catalog);
-        vm.RequestExportDialogAsync = _ => Task.CompletedTask;
+        await using var vm = CreateViewModel(catalog);
         var folderA = _fx.Path("a");
         var folderB = _fx.Path("b");
         var folderC = _fx.Path("c");
 
         vm.CurrentFolderPath = folderA;
-        await vm.ShowExportDialogCommand.ExecuteAsync(null);
+        vm.SwitchToExportCommand.Execute(null);
         Assert.Equal(Path.Combine(folderA, "export"), vm.ExportSettings.OutputFolder);
 
+        vm.HandleEscapeCommand.Execute(null);
         vm.CurrentFolderPath = folderB;
-        await vm.ShowExportDialogCommand.ExecuteAsync(null);
+        vm.SwitchToExportCommand.Execute(null);
         Assert.Equal(Path.Combine(folderB, "export"), vm.ExportSettings.OutputFolder);
 
+        vm.HandleEscapeCommand.Execute(null);
         var customFolder = _fx.Path("deliveries");
         vm.ExportSettings.OutputFolder = customFolder;
         vm.CurrentFolderPath = folderC;
-        await vm.ShowExportDialogCommand.ExecuteAsync(null);
-
+        vm.SwitchToExportCommand.Execute(null);
         Assert.Equal(customFolder, vm.ExportSettings.OutputFolder);
-        await vm.DisposeAsync();
     }
 
     [Fact]
-    public async Task EndTour_DismissesEveryStepWithoutChangingView()
+    public async Task ExportWorkspaceCommand_IsIgnoredInFullScreen()
     {
         using var catalog = CreateCatalog();
-        var vm = _fx.CreateViewModel(catalog);
+        await using var vm = CreateViewModel(catalog);
+        vm.IsFullScreenMode = true;
 
-        vm.StartWorkflowTour();
-        vm.EndWorkflowTourCommand.Execute(null);
-        Assert.Equal(WorkflowTourStep.None, vm.WorkflowTourStep);
-        Assert.False(vm.IsDevelopMode);
+        vm.SwitchToExportCommand.Execute(null);
 
-        vm.StartWorkflowTour();
-        vm.ShowDevelopTourStepCommand.Execute(null);
-        vm.EndWorkflowTourCommand.Execute(null);
-        Assert.Equal(WorkflowTourStep.None, vm.WorkflowTourStep);
-        Assert.True(vm.IsDevelopMode);
+        Assert.False(vm.IsExportMode);
+        Assert.Empty(vm.ExportSettings.OutputFolder);
+    }
 
+    [Fact]
+    public async Task EndTour_DismissesStepWithoutChangingWorkspace()
+    {
+        using var catalog = CreateCatalog();
+        await using var vm = CreateViewModel(catalog);
         vm.StartWorkflowTour();
         vm.ShowDevelopTourStepCommand.Execute(null);
         vm.ShowExportTourStepCommand.Execute(null);
+
         vm.EndWorkflowTourCommand.Execute(null);
+
         Assert.Equal(WorkflowTourStep.None, vm.WorkflowTourStep);
-        Assert.False(vm.IsDevelopMode);
-        await vm.DisposeAsync();
+        Assert.True(vm.IsExportMode);
     }
 
     private CatalogService CreateCatalog() =>
         _fx.CreateCatalog(Guid.NewGuid().ToString("N"));
+
+    private MainWindowViewModel CreateViewModel(CatalogService catalog) =>
+        _fx.CreateViewModel(
+            catalog,
+            new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask);
 
     public void Dispose() => _fx.Dispose();
 }

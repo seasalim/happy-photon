@@ -5,6 +5,7 @@ public partial class MainWindowViewModel
     public async ValueTask DisposeAsync()
     {
         CloseRenderOutcomeChannel();
+        await CancelAndDrainExportJobAsync();
         DisposeBackgroundActivity();
         await DisposeUpdatesAsync();
         Interlocked.Increment(ref _browseGeneration);
@@ -61,6 +62,7 @@ public partial class MainWindowViewModel
 
         if (_imageService.IsValueCreated)
         {
+            DependentExportServicesDisposing?.Invoke();
             var previews = _imageService.Value.Previews;
             previews.PreviewRefreshed -= OnPreviewRefreshed;
             previews.PreviewLoadCompleted -= OnPreviewLoadCompleted;

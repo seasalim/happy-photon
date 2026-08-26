@@ -23,7 +23,7 @@
     <Window.KeyBindings>
         <KeyBinding Gesture="Enter" Command="{Binding EnterDevelopModeCommand}"/>
         <KeyBinding Gesture="Delete" Command="{Binding DeleteImageCommand}"/>
-        <KeyBinding Gesture="Ctrl+E" Command="{Binding ShowExportDialogCommand}"/>
+        <KeyBinding Gesture="Ctrl+E" Command="{Binding SwitchToExportCommand}"/>
         <KeyBinding Gesture="Ctrl+OemComma" Command="{Binding OpenSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllCommand}"/>
         <KeyBinding Gesture="Ctrl+D" Command="{Binding DeselectAllCommand}"/>
@@ -61,7 +61,7 @@
     </Window.Styles>
 
     <Panel>
-    <Grid RowDefinitions="40,*,24">
+    <Grid RowDefinitions="40,*,Auto,24">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220" MinWidth="150"/>
             <ColumnDefinition Width="1"/>
@@ -70,7 +70,7 @@
             <ColumnDefinition Width="250" MinWidth="200"/>
         </Grid.ColumnDefinitions>
 
-        <views:HappyPhotonTitleBar Grid.Row="0" Grid.ColumnSpan="5"/>
+        <views:HappyPhotonTitleBar x:Name="HappyPhotonTitleBar" Grid.Row="0" Grid.ColumnSpan="5"/>
 
         <!-- Left Panel: Navigator + Folder Tree -->
         <Border x:Name="TourLeftPanel"
@@ -78,7 +78,8 @@
                 Classes="tour-region"
                 Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                 IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
-            <Grid RowDefinitions="Auto,8,*">
+            <Panel>
+            <Grid RowDefinitions="Auto,8,*" IsVisible="{Binding IsBrowseOrDevelopMode}">
                 <!-- Navigator -->
                 <Border x:Name="NavigatorPanel"
                         Grid.Row="0" Background="{DynamicResource SurfaceHigh}" Padding="8"
@@ -134,7 +135,7 @@
 
                 <!-- Folder Tree (Browse mode) -->
                 <views:FolderTreePanel Grid.Row="2" x:Name="FolderTreePanel"
-                                       IsVisible="{Binding !IsDevelopMode}"
+                                       IsVisible="{Binding IsBrowseMode}"
                                        RootFolders="{Binding RootFolders}"
                                        SelectedFolder="{Binding SelectedFolder, Mode=TwoWay}"
                                        BrowsingFolderName="{Binding BrowsingFolderName}"
@@ -147,6 +148,8 @@
                                      CanSavePreset="{Binding CanSavePreset}"
                                      ActivePresetId="{Binding ActivePresetId}"/>
             </Grid>
+            <views:ExportCapturePane x:Name="ExportCapturePane" IsVisible="{Binding IsExportMode}"/>
+            </Panel>
         </Border>
 
         <GridSplitter Grid.Row="1" Grid.Column="1" Classes="panel-splitter"
@@ -157,9 +160,9 @@
         <Border Grid.Row="1" Grid.Column="2" Background="{DynamicResource ViewerSurround}"
                 IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
             <Panel>
-                <!-- Browse Grid View (when not in Develop mode) -->
+                <!-- Browse Grid View -->
                 <views:BrowseGridView x:Name="BrowseGridView"
-                                       IsVisible="{Binding !IsDevelopMode}"
+                                       IsVisible="{Binding IsBrowseMode}"
                                        Images="{Binding Browse.VisibleImages}"
                                        TotalImageCount="{Binding Browse.TotalCount}"
                                        EmptyHeadingText="{Binding BrowseEmptyHeading}"
@@ -355,6 +358,7 @@
                             </StackPanel>
                         </Border>
                     </Grid>
+                <views:ExportPreviewPane x:Name="ExportPreviewPane" IsVisible="{Binding IsExportMode}"/>
             </Panel>
         </Border>
 
@@ -389,10 +393,34 @@
                                  Grid.Row="1" Grid.Column="4"
                                  Classes="tour-region"
                                  Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                                 IsVisible="{Binding !IsDevelopMode}"/>
+                                 IsVisible="{Binding IsBrowseMode}"/>
+
+        <views:ExportSettingsPane x:Name="ExportSettingsPane"
+                                  Grid.Row="1" Grid.Column="4"
+                                  Classes="tour-region" Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                                  Classes.tour-focus="{Binding IsDeliverCopiesTourVisible}"
+                                  IsVisible="{Binding IsExportMode}"/>
+
+        <views:WorkflowCoachmark
+            Grid.Row="1"
+            Grid.Column="4"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Margin="12"
+            IsVisible="{Binding IsDeliverCopiesTourVisible}"
+            Pointer="Left"
+            StepText="3 of 3"
+            Heading="Export the edited images"
+            Body="Review the captures and recipes here, then export finished copies. Originals remain untouched."
+            PrimaryText="Finish"
+            PrimaryCommand="{Binding FinishWorkflowTourCommand}"
+            SecondaryText="End tour"
+            SecondaryCommand="{Binding EndWorkflowTourCommand}"/>
+
+        <views:ExportQueueStrip Grid.Row="2" Grid.ColumnSpan="5"/>
 
         <views:StatusBarView x:Name="TourStatusBar"
-                             Grid.Row="2" Grid.ColumnSpan="5"
+                             Grid.Row="3" Grid.ColumnSpan="5"
                              Classes="tour-region"
                              Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                              IsEnabled="{Binding IsWorkspaceInteractionEnabled}"/>

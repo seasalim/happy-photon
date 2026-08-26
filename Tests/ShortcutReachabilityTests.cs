@@ -102,7 +102,12 @@ public sealed class ShortcutReachabilityTests
     {
         vm.IsFullScreenMode = false;
         vm.IsCropMode = false;
-        vm.IsDevelopMode = claim.Workspace == ShortcutWorkspace.Develop;
+        vm.WorkspaceMode = claim.Workspace switch
+        {
+            ShortcutWorkspace.Develop => WorkspaceMode.Develop,
+            ShortcutWorkspace.Export => WorkspaceMode.Export,
+            _ => WorkspaceMode.Browse
+        };
         vm.IsFullScreenMode = claim.Workspace == ShortcutWorkspace.FullScreen;
         if (claim.ControlName is "ApplyCropButton" or "CancelCropButton")
         {

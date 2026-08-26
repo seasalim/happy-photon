@@ -308,38 +308,40 @@ accepted finalized preview, resizes it to at most 512px, and reuses the current 
 Vignette remains scale-invariant, while grain may be resampled in this non-authoritative
 surface. Develop preview and export are the authoritative effects surfaces.
 
-## 7. Export dialog
+## 7. Export workspace
 
-Export is an owned modal dialog centered over the main window. The Browse header is
-the sole pointer entry. `Ctrl+E` opens the dialog from Browse or Develop and remains
-a no-op in image-only fullscreen mode. Opening the dialog snapshots the current export
-selection and disables the workspace until the dialog closes.
+Export is the third workspace beside Browse and Develop. The Browse header action and
+`Ctrl+E` enter it armed; image-only fullscreen continues to refuse the transition.
+Its left filmstrip snapshots the Browse selection and adds per-capture include toggles
+without changing that selection. The center reuses the current preview until the proof
+finalizer lands. The right pane arms any combination of the fixed Hi-Res, Web, and Small
+recipes and owns the shared output controls. The capture × recipe count sits above a
+full-width primary **Export** button.
 
-The desktop dialog exports exactly one size per run through a mutually exclusive
-Hi-Res, Web, or Small radio group. Hi-Res preserves the original dimensions; Web and
-Small expose their existing maximum-dimension fields. Desktop output is written
-directly into the chosen folder.
+`Enter` runs only while Export is active. Elsewhere it retains its crop-apply and
+Browse/Develop meanings. `Escape` returns to the workspace active before Export and
+never cancels a running export. One immutable job is owned by the main view model at a
+time; it and its cancellation token survive workspace switches. Application shutdown
+cancels and drains that job before image services are disposed.
 
-The dialog may open with no selected images without changing selection; in that state
-it explains how to select photographs, disables Export, and offers Close. While an
-export runs, configuration controls are disabled, progress and the current filename
-are shown, and Cancel Export requests cancellation without destroying the dialog.
-Success closes the dialog; cancellation restores the configured form; failures remain
-visible, with partial completion showing the exported count and every failed filename.
-A selected profile that became missing, unavailable, corrupt, or hash-mismatched
-exports with built-in characterization and reports its per-image warning. Overwrite
-and original-file collision confirmations are owned by the export dialog.
+Before the queue opens, one pass over every resolved target refuses loaded-original
+collisions and duplicate output paths, identifies RAW+JPEG pair collisions with the
+filmstrip remedy, confirms all existing-file overwrites together, and confirms the exact
+cloud-source hydration scope. The workspace-local queue strip
+sits above the footer and advances per capture-recipe target. It disappears outside
+Export while the owned work continues and resumes from the same job when Export is
+re-entered.
 
-The final workflow-tour coachmark remains in Browse; its primary action ends the tour
-before opening the dialog through the normal guarded command. The modal contains no
-coachmark, and closing it does not restore the completed tour step. When the tour has
-no export selection, the dialog still shows the complete configuration surface and
-relabels its primary Export action to **Return to Browse**; it never starts an export.
+Completion remains in the workspace. One target-level report card shows successful
+counts, failed capture-recipe pairs, and profile warnings together. **Retry failed
+only** projects exactly those pairs from the immutable job, retaining its output and
+edit snapshots, then runs the same preflight again. The final workflow-tour coachmark
+also lives in Export and switches workspaces rather than opening a modal surface.
 
 | Control | Spec |
 |---------|------|
 | "Strip location data" checkbox | Persisted app setting, default **off** (keep GPS). |
-| "Output sharpening" checkbox | Default **on**; persisted alongside existing export preferences; applies to sized variants only (OUTPUT.md §3). |
+| "Output sharpening" selector | Off, Screen, or Print; persisted alongside existing export preferences (OUTPUT.md §3). |
 
 No UI for quality-dependent chroma subsampling — it is automatic and stays invisible.
 

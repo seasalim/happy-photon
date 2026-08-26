@@ -31,7 +31,7 @@
                         Margin="8,0,24,0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
-                        IsVisible="{Binding BackgroundActivity.IsVisible}"
+                        IsVisible="{Binding IsBackgroundActivityStatusVisible}"
                         ToolTip.Tip="{Binding BackgroundActivity.Tooltip}"
                         AutomationProperties.Name="Background activity"
                         AutomationProperties.LiveSetting="Polite">

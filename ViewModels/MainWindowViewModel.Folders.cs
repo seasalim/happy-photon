@@ -244,7 +244,11 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDevelopMode))]
     [NotifyPropertyChangedFor(nameof(IsBrowseMode))]
+    [NotifyPropertyChangedFor(nameof(IsExportMode))]
+    [NotifyPropertyChangedFor(nameof(IsBrowseOrDevelopMode))]
     private WorkspaceMode _workspaceMode;
+
+    private WorkspaceMode _workspaceModeBeforeExport = WorkspaceMode.Browse;
 
     public bool IsDevelopMode
     {
@@ -254,18 +258,26 @@ public partial class MainWindowViewModel
             : WorkspaceMode.Browse;
     }
 
-    public bool IsBrowseMode =>
-        WorkspaceMode == WorkspaceMode.Browse;
+    public bool IsBrowseMode => WorkspaceMode == WorkspaceMode.Browse;
+
+    public bool IsExportMode =>
+        WorkspaceMode == WorkspaceMode.Export;
+
+    public bool IsBrowseOrDevelopMode =>
+        WorkspaceMode is WorkspaceMode.Browse or WorkspaceMode.Develop;
 
     public bool IsDevelopPreviewSurfaceActive =>
         IsDevelopMode && !IsFullScreenMode;
+
+    public bool IsWorkspacePreviewSurfaceActive =>
+        (IsDevelopMode || IsExportMode) && !IsFullScreenMode;
 
     public bool IsFullScreenPreviewSurfaceActive => IsFullScreenMode;
 
     [RelayCommand]
     private void ToggleViewMode()
     {
-        if (IsFullScreenMode)
+        if (IsFullScreenMode || IsExportMode)
         {
             return;
         }
@@ -301,10 +313,32 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
+    private void SwitchToExport()
+    {
+        if (IsFullScreenMode)
+        {
+            return;
+        }
+
+        if (IsCropMode)
+        {
+            CancelCrop();
+        }
+        _workspaceModeBeforeExport = WorkspaceMode;
+        WorkspaceMode = WorkspaceMode.Export;
+    }
+
+    [RelayCommand]
     private async Task EnterDevelopModeAsync()
     {
         if (IsFullScreenMode)
         {
+            return;
+        }
+
+        if (IsExportMode)
+        {
+            await RunExportAsync();
             return;
         }
 
@@ -326,6 +360,8 @@ public partial class MainWindowViewModel
     partial void OnWorkspaceModeChanged(WorkspaceMode value)
     {
         var isDevelopMode = value == WorkspaceMode.Develop;
+        var isPreviewWorkspace = value is WorkspaceMode.Develop or
+            WorkspaceMode.Export;
         UpdateThumbnailPumpAdmission();
         if (!isDevelopMode)
         {
@@ -338,6 +374,7 @@ public partial class MainWindowViewModel
         // clear the parent.
         CancelRestingPreview(clearParent: false);
         OnPropertyChanged(nameof(IsDevelopPreviewSurfaceActive));
+        OnPropertyChanged(nameof(IsWorkspacePreviewSurfaceActive));
         UpdateNavigatorPreviewSurfaceActivity();
         OnPropertyChanged(nameof(CanSavePreset));
         NotifyWorkflowTourVisibilityChanged();
@@ -347,15 +384,23 @@ public partial class MainWindowViewModel
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         NotifyClippingCommandState();
+        NotifyExportRunCommandState();
 
-        // Load preview when entering Develop mode (if we have a selected image)
-        if (isDevelopMode && SelectedImage != null)
+        if (value == WorkspaceMode.Export)
+        {
+            PrepareExportWorkspace();
+        }
+        if (isPreviewWorkspace && SelectedImage != null)
         {
             var generation = ReserveRenderOutcome();
             ApplySurfaceClearOutcome(SelectedImage, generation);
+            if (!isDevelopMode && !IsFullScreenMode)
+            {
+                LeaveDevelopClippingSurface();
+            }
             _ = LoadPreviewAsync(SelectedImage, generation);
         }
-        else if (!isDevelopMode && !IsFullScreenMode)
+        else if (!isPreviewWorkspace && !IsFullScreenMode)
         {
             var generation = ReserveRenderOutcome();
             ApplySurfaceClearOutcome(SelectedImage, generation);
@@ -371,6 +416,10 @@ public partial class MainWindowViewModel
             ImageService.Previews.FlushRenderedPreviewCache();
             ScheduleHistogramUpdate();
         }
+        else if (!isDevelopMode && !IsFullScreenMode)
+        {
+            LeaveDevelopClippingSurface();
+        }
     }
 
     [RelayCommand]
@@ -382,7 +431,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        if (!HasSelectedImage || IsCropMode)
+        if (IsExportMode || !HasSelectedImage || IsCropMode)
         {
             return;
         }
@@ -396,6 +445,7 @@ public partial class MainWindowViewModel
         if (value) CancelAdjacentPreviewWarm(true, dropRetained: true);
         CancelRestingPreview(clearParent: false);
         OnPropertyChanged(nameof(IsDevelopPreviewSurfaceActive));
+        OnPropertyChanged(nameof(IsWorkspacePreviewSurfaceActive));
         OnPropertyChanged(nameof(IsFullScreenPreviewSurfaceActive));
         UpdateNavigatorPreviewSurfaceActivity();
         if (value)
@@ -428,7 +478,7 @@ public partial class MainWindowViewModel
         {
             RequestClippingOverlayRender();
         }
-        else if (!value && !IsDevelopMode)
+        else if (!value && IsBrowseMode)
         {
             var generation = ReserveRenderOutcome();
             ApplySurfaceClearOutcome(SelectedImage, generation);

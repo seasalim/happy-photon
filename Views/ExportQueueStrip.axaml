@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.ExportQueueStrip"
+             x:DataType="vm:MainWindowViewModel"
+             IsVisible="{Binding IsExportQueueVisible}">
+    <Border Background="{DynamicResource SurfaceMid}"
+            BorderBrush="{DynamicResource Divider}"
+            BorderThickness="0,1,0,0"
+            Padding="12,8">
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+            <TextBlock Text="EXPORT QUEUE"
+                       Classes="section-label"
+                       VerticalAlignment="Center"/>
+            <ProgressBar x:Name="ExportProgressBar"
+                         Grid.Column="1"
+                         Minimum="0"
+                         Maximum="{Binding ExportProgressMaximum}"
+                         Value="{Binding ExportProgressValue}"
+                         IsIndeterminate="False"
+                         VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="2"
+                       Text="{Binding ExportProgressText}"
+                       Foreground="{DynamicResource TextSecondary}"
+                       FontSize="11"
+                       VerticalAlignment="Center"/>
+        </Grid>
+    </Border>
+</UserControl>

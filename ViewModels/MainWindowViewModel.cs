@@ -227,9 +227,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     // Callback to request zoom-to-fit after image loads
     public Action? RequestZoomFit { get; set; }
 
-    // Callback to show the owned export dialog from the View
-    public Func<ExportDialogMode, Task>? RequestExportDialogAsync { get; set; }
-
     // Callback for delete confirmation dialog
     public Func<int, string?, Task<bool>>? ConfirmMoveToTrashAsync { get; set; }
 

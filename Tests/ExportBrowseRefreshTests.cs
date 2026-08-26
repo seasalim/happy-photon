@@ -83,10 +83,12 @@ public sealed class ExportBrowseRefreshTests : IDisposable
             viewModel.Browse.SetImages([image]);
             viewModel.ExportSettings.OutputFolder = _fx.Path("failure-export");
 
-            var exception = Assert.Throws<InvalidOperationException>(() =>
-                Complete(viewModel.ExportBatchApprovedAsync([image])));
+            var result = Complete(viewModel.ExportBatchApprovedAsync([image]));
 
-            Assert.Equal("export failed", exception.Message);
+            var failure = Assert.Single(result.FailedTargets);
+            Assert.Equal("export failed", failure.FailureReason);
+            Assert.Equal(image, failure.Capture);
+            Assert.Equal(0, result.ExportedCount);
             Assert.Equal(0, metadataLoads);
             Assert.True(image.SourceRequiresHydration);
             Assert.True(image.ThumbnailDeferredForHydration);

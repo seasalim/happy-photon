@@ -75,7 +75,7 @@ public partial class MainWindowViewModel
                 _isLoadingImage = false;
                 UpdateCanReset();
 
-                if (IsDevelopMode || IsFullScreenMode)
+                if (IsWorkspacePreviewSurfaceActive || IsFullScreenMode)
                 {
                     if (!_suppressSelectionPreviewLoad)
                     {
@@ -96,7 +96,7 @@ public partial class MainWindowViewModel
 
             _isLoadingImage = false;
 
-            if (IsDevelopMode || IsFullScreenMode)
+            if (IsWorkspacePreviewSurfaceActive || IsFullScreenMode)
             {
                 if (!_suppressSelectionPreviewLoad)
                 {
@@ -153,7 +153,12 @@ public partial class MainWindowViewModel
             return new ActionTargetResolution([], false);
         }
 
-        if (!IsDevelopMode)
+        if (IsExportMode)
+        {
+            return new ActionTargetResolution([], false);
+        }
+
+        if (IsBrowseMode)
         {
             var selected = Browse.GetSelectedImages().ToList();
             if (selected.Count > 0)

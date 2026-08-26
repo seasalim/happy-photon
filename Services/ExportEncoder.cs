@@ -13,7 +13,8 @@ internal static class ExportEncoder
         MagickImage image,
         ExportSettings settings,
         OutputColorSpace outputColorSpace,
-        string path)
+        string path,
+        bool overwriteExisting = false)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(settings);
@@ -24,26 +25,38 @@ internal static class ExportEncoder
         image.Quality = (uint)quality;
         image.SetProfile(OutputColorProfiles.Get(outputColorSpace));
 
-        switch (settings.Format)
+        var temporaryPath = Path.Combine(
+            Path.GetDirectoryName(path) ?? string.Empty,
+            $".{Path.GetFileName(path)}.{Guid.NewGuid():N}.tmp");
+        try
         {
-            case ExportFormat.Png:
-                WritePng(image, path);
-                break;
-            case ExportFormat.Webp:
-                image.Settings.SetDefine(MagickFormat.WebP, "lossless", false);
-                image.Write(path);
-                break;
-            case ExportFormat.Tiff:
-                WriteTiff(image, path);
-                break;
-            default:
-                image.Settings.Interlace = Interlace.NoInterlace;
-                image.Settings.SetDefine(
-                    MagickFormat.Jpeg,
-                    "sampling-factor",
-                    quality >= 90 ? "4:4:4" : "4:2:0");
-                image.Write(path);
-                break;
+            switch (settings.Format)
+            {
+                case ExportFormat.Png:
+                    WritePng(image, temporaryPath);
+                    break;
+                case ExportFormat.Webp:
+                    image.Settings.SetDefine(MagickFormat.WebP, "lossless", false);
+                    image.Write(temporaryPath);
+                    break;
+                case ExportFormat.Tiff:
+                    WriteTiff(image, temporaryPath);
+                    break;
+                default:
+                    image.Settings.Interlace = Interlace.NoInterlace;
+                    image.Settings.SetDefine(
+                        MagickFormat.Jpeg,
+                        "sampling-factor",
+                        quality >= 90 ? "4:4:4" : "4:2:0");
+                    image.Write(temporaryPath);
+                    break;
+            }
+
+            File.Move(temporaryPath, path, overwriteExisting);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
         }
     }
 

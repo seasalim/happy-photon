@@ -4,6 +4,7 @@ using Ellipse = Avalonia.Controls.Shapes.Ellipse;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
@@ -21,7 +22,11 @@ public sealed class BackgroundActivityStatusBarTests
         using var catalog = new CatalogService(root);
         var vm = new MainWindowViewModel(catalog);
         var view = new StatusBarView { DataContext = vm };
-        var host = new Window { Content = view };
+        var queue = new ExportQueueStrip { DataContext = vm };
+        var host = new Window
+        {
+            Content = new StackPanel { Children = { queue, view } }
+        };
         host.Show();
         var segment = view.FindControl<StackPanel>("BackgroundActivitySegment")!;
         var dot = view.FindControl<Ellipse>("BackgroundActivityDot")!;
@@ -55,6 +60,18 @@ public sealed class BackgroundActivityStatusBarTests
             Assert.Equal(4, progress.Maximum);
             Assert.Single(view.GetVisualDescendants(), control =>
                 AutomationProperties.GetName(control) == "Background activity");
+
+            vm.WorkspaceMode = WorkspaceMode.Export;
+            vm.IsExportJobRunning = true;
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(queue.IsVisible);
+            Assert.False(segment.IsVisible);
+
+            vm.WorkspaceMode = WorkspaceMode.Browse;
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(queue.IsVisible);
+            Assert.True(segment.IsVisible);
+            vm.IsExportJobRunning = false;
         }
 
         vm.PumpBackgroundActivity(started + TimeSpan.FromMilliseconds(1100));

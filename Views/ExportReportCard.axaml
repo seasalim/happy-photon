@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             xmlns:services="using:HappyPhoton.Services"
+             x:Class="HappyPhoton.Views.ExportReportCard"
+             x:DataType="vm:MainWindowViewModel"
+             IsVisible="{Binding HasExportReport}">
+    <Border Background="{DynamicResource SurfaceMid}"
+            BorderBrush="{DynamicResource OutlineVariant}"
+            BorderThickness="1"
+            CornerRadius="{StaticResource RadiusSmall}"
+            Padding="10">
+        <StackPanel Spacing="7">
+            <TextBlock Text="{Binding ExportReport.Heading}"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimary}"
+                       TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding ExportReport.Summary}"
+                       Foreground="{DynamicResource TextSecondary}"
+                       FontSize="11"
+                       TextWrapping="Wrap"/>
+            <ItemsControl ItemsSource="{Binding ExportReport.FailedTargets}"
+                          IsVisible="{Binding ExportReport.HasFailures}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="services:ExportTargetOutcome">
+                        <TextBlock FontSize="11"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   TextWrapping="Wrap">
+                            <Run Text="• "/><Run Text="{Binding Capture.FileName}"/>
+                            <Run Text=" / "/><Run Text="{Binding Recipe.Name}"/>
+                            <Run Text=" — "/><Run Text="{Binding FailureReason}"/>
+                        </TextBlock>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <ItemsControl ItemsSource="{Binding ExportReport.Warnings}"
+                          IsVisible="{Binding ExportReport.HasWarnings}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="services:ExportWarning">
+                        <TextBlock FontSize="11"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   TextWrapping="Wrap">
+                            <Run Text="• "/><Run Text="{Binding Image.FileName}"/>
+                            <Run Text=" — "/><Run Text="{Binding Message}"/>
+                        </TextBlock>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Content="Retry failed only"
+                    Command="{Binding RetryFailedExportCommand}"
+                    IsVisible="{Binding ExportReport.HasFailures}"
+                    HorizontalAlignment="Left"/>
+        </StackPanel>
+    </Border>
+</UserControl>
