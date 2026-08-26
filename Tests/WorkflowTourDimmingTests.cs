@@ -38,7 +38,9 @@ public sealed class WorkflowTourDimmingTests
             var browse = window.FindControl<BrowseGridView>(
                 "BrowseGridView")!;
             var emptyState = browse.FindControl<Border>("EmptyState")!;
-            var developEmptyState = window.FindControl<Border>(
+            var developPane = window.FindControl<DevelopViewerPane>(
+                "DevelopViewerPane")!;
+            var developEmptyState = developPane.FindControl<Border>(
                 "DevelopEmptyState")!;
             var leftPanel = window.FindControl<Border>("TourLeftPanel")!;
             var statusBar = window.FindControl<StatusBarView>(

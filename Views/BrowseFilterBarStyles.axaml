@@ -115,4 +115,7 @@
         <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
         <Setter Property="Opacity" Value="1"/>
     </Style>
+    <Style Selector="Button.view-toggle:disabled">
+        <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+    </Style>
 </Styles>

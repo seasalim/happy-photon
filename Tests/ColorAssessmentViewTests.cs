@@ -228,8 +228,10 @@ public sealed class ColorAssessmentViewTests
         {
             window.Show();
             Dispatcher.UIThread.RunJobs();
-            var viewer = window.FindControl<ZoomPanControl>("ZoomPanControl")!;
-            var button = window.FindControl<ToggleButton>(
+            var pane = window.FindControl<DevelopViewerPane>(
+                "DevelopViewerPane")!;
+            var viewer = pane.Viewer;
+            var button = pane.FindControl<ToggleButton>(
                 "ColorAssessmentButton")!;
             var binding = Assert.Single(
                 window.KeyBindings,
@@ -280,7 +282,8 @@ public sealed class ColorAssessmentViewTests
         {
             window.Show();
             Dispatcher.UIThread.RunJobs();
-            var develop = window.FindControl<ZoomPanControl>("ZoomPanControl")!;
+            var develop = window.FindControl<DevelopViewerPane>(
+                "DevelopViewerPane")!.Viewer;
             var fullScreen = window.FindControl<ZoomPanControl>(
                 "FullScreenZoomPanControl")!;
             Assert.Equal(ScrollBarVisibility.Hidden, fullScreen.ScrollBarVisibility);

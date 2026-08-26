@@ -109,6 +109,19 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void HandleEscape()
     {
+        // A held loupe outranks everything: Escape releases the peek without
+        // also leaving the view it was peeking in.
+        if (CancelActiveLoupePeek?.Invoke() == true)
+        {
+            return;
+        }
+
+        if (IsCompareMode)
+        {
+            CloseCompare();
+            return;
+        }
+
         if (IsWhiteBalancePicking)
         {
             IsWhiteBalancePicking = false;

@@ -51,6 +51,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
 
         Assert.NotNull(cached);
         Assert.True(cached!.SettingsMatch);
+        Assert.Equal(new Avalonia.PixelSize(48, 32), cached.OriginalViewPixelSize);
         Assert.NotNull(cached.Histogram?.Waveform);
         Assert.NotNull(cached.Clipping);
         Assert.Equal(0, renderEvents);

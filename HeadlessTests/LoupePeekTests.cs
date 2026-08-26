@@ -14,7 +14,6 @@ using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
 using ImageMagick;
 using Xunit;
-
 namespace HappyPhoton.Tests;
 public sealed partial class LoupePeekTests
 {
@@ -244,7 +243,7 @@ public sealed partial class LoupePeekTests
             vm.PreviewImage = bitmap;
             vm.OriginalViewPixelSize = bitmap.PixelSize;
             Drain();
-            var develop = window.FindControl<ZoomPanControl>("ZoomPanControl")!;
+            var develop = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!.Viewer;
             develop.SetLoupeTimeProvider(clock);
             var fitZoom = vm.ZoomLevel;
             var fitMode = vm.IsZoomFitMode;
@@ -256,14 +255,16 @@ public sealed partial class LoupePeekTests
                 develop.IsLoupePeekActive,
                 $"source={develop.Source != null}, autoFit={develop.AutoFit}, " +
                 $"fit={develop.GetFitZoomLevel()}, size={develop.Bounds.Size}");
-            var focusedButton = window.FindControl<Button>("RotateLeftButton")!;
+            var focusedButton = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!
+                .FindControl<Button>("RotateLeftButton")!;
             Assert.True(focusedButton.Focus());
-            focusedButton.RaiseEvent(new KeyEventArgs
-            {
-                RoutedEvent = InputElement.KeyDownEvent,
-                Key = Key.Escape,
-                KeyModifiers = KeyModifiers.None
-            });
+            // Real input pipeline: Escape is ranked by the window's KeyBinding, so
+            // raising KeyDown directly would exercise a path the app never takes.
+            window.KeyPress(
+                Key.Escape,
+                RawInputModifiers.None,
+                PhysicalKey.Escape,
+                null);
             Drain();
             Assert.False(develop.IsLoupePeekActive);
             Assert.True(vm.IsDevelopMode);

@@ -9,12 +9,15 @@ public partial class MainWindowViewModel
 {
     partial void OnSelectedImageChanged(ImageFile? oldValue, ImageFile? newValue)
     {
-        UpdateAdjacentWarmDirection(oldValue, newValue);
-        CancelAdjacentPreviewWarm(invalidateWorker: true);
+        if (!IsCompareMode)
+        {
+            UpdateAdjacentWarmDirection(oldValue, newValue);
+            CancelAdjacentPreviewWarm(invalidateWorker: true);
+        }
         var surfaceGeneration = ReserveRenderOutcome(
             PreviewSurfaceIntent.Edited,
             promotionEligible: true);
-        if (oldValue != null && newValue != null)
+        if (!IsCompareMode && oldValue != null && newValue != null)
         {
             ImageService.Previews.FlushRenderedPreviewCache();
             ImageService.Previews.InvalidatePreviewBase();
@@ -134,6 +137,11 @@ public partial class MainWindowViewModel
     private void OnBrowseFilterChanged(object? sender, EventArgs e)
     {
         CancelAdjacentPreviewWarm(invalidateWorker: true);
+        if (IsCompareMode)
+        {
+            UpdateSelectedCount();
+            return;
+        }
         if (!Browse.ContainsVisible(SelectedImage))
         {
             SelectedImage = Browse.FirstVisible();
@@ -148,6 +156,11 @@ public partial class MainWindowViewModel
 
     private ActionTargetResolution ResolveActionTargets()
     {
+        if (IsCompareMode)
+        {
+            return new ActionTargetResolution([], false);
+        }
+
         if (IsFullScreenMode)
         {
             return new ActionTargetResolution([], false);
@@ -175,6 +188,20 @@ public partial class MainWindowViewModel
             ? []
             : [SelectedImage];
         return new ActionTargetResolution(targets, false);
+    }
+
+    private ActionTargetResolution ResolveAssessmentTargets()
+    {
+        if (IsCompareMode)
+        {
+            IReadOnlyList<ImageFile> targets = SelectedImage != null &&
+                GetCompareMembers().Contains(SelectedImage)
+                ? [SelectedImage]
+                : [];
+            return new ActionTargetResolution(targets, false);
+        }
+
+        return ResolveActionTargets();
     }
 
     private readonly record struct ActionTargetResolution(

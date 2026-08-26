@@ -246,6 +246,9 @@ public partial class MainWindowViewModel
     [NotifyPropertyChangedFor(nameof(IsBrowseMode))]
     [NotifyPropertyChangedFor(nameof(IsExportMode))]
     [NotifyPropertyChangedFor(nameof(IsBrowseOrDevelopMode))]
+    // IsBrowseGridVisible also reads IsCompareMode, whose own notification fires
+    // while leaving Browse — only this one covers the return trip.
+    [NotifyPropertyChangedFor(nameof(IsBrowseGridVisible))]
     private WorkspaceMode _workspaceMode;
 
     private WorkspaceMode _workspaceModeBeforeExport = WorkspaceMode.Browse;
@@ -298,6 +301,8 @@ public partial class MainWindowViewModel
             return;
         }
 
+        // Compare is a Browse sub-state: the assignment below is a no-op here.
+        CloseCompare();
         IsDevelopMode = false;
     }
 
@@ -359,6 +364,9 @@ public partial class MainWindowViewModel
 
     partial void OnWorkspaceModeChanged(WorkspaceMode value)
     {
+        if (value != WorkspaceMode.Browse) CloseCompare();
+        // The compare gate reads the workspace too, so it needs the same re-notify.
+        NotifyCompareGateChanged();
         var isDevelopMode = value == WorkspaceMode.Develop;
         var isPreviewWorkspace = value is WorkspaceMode.Develop or
             WorkspaceMode.Export;
@@ -431,7 +439,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        if (IsExportMode || !HasSelectedImage || IsCropMode)
+        if (IsExportMode || IsCompareMode || !HasSelectedImage || IsCropMode)
         {
             return;
         }
@@ -495,5 +503,4 @@ public partial class MainWindowViewModel
         }
     }
 
-    // Selection Methods
 }

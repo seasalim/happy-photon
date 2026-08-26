@@ -1,3 +1,4 @@
+using Avalonia;
 using HappyPhoton.Models;
 using ImageMagick;
 
@@ -16,6 +17,30 @@ internal readonly record struct RenderGeometryTrace(
 
 internal static class RenderGeometry
 {
+    public static PixelSize CalculateOriginalViewSize(
+        int fullWidth,
+        int fullHeight,
+        EditSettings settings)
+    {
+        if (fullWidth <= 0 || fullHeight <= 0) return default;
+
+        var width = fullWidth;
+        var height = fullHeight;
+        if (settings.Rotation is 90 or 270) (width, height) = (height, width);
+        var map = new RenderGeometryMap(
+            width,
+            height,
+            settings.HorizonRotation,
+            settings.Geometry);
+        width = map.OutputWidth;
+        height = map.OutputHeight;
+        if (settings.Crop is { IsFullImage: false } crop)
+        {
+            (_, _, width, height) = crop.ToPixels(width, height);
+        }
+        return new PixelSize(width, height);
+    }
+
     public static MagickImage Apply(
         MagickImage source,
         EditSettings settings,

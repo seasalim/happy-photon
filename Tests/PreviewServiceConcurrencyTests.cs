@@ -89,9 +89,14 @@ public sealed class PreviewServiceConcurrencyTests : IDisposable
             result.preview!.Dispose();
             await service.DisposeAsync();
 
-            Assert.Equal(
-                expectedHash,
-                File.ReadAllText(cache.GetMetadataPath(file)));
+            // The sidecar is a versioned document now, not a bare hash; what
+            // this test pins is that the hash inside it reflects the settings
+            // as they were when the request started, not the later mutation.
+            Assert.True(PreviewCacheMetadata.TryRead(
+                cache.GetMetadataPath(file),
+                out var metadata));
+            Assert.Equal(expectedHash, metadata.SettingsHash);
+            Assert.NotNull(metadata.Identity);
         }
     }
 

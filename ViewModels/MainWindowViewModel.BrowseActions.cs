@@ -10,7 +10,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task DeleteImageAsync()
     {
-        if (IsFullScreenMode) return;
+        if (IsFullScreenMode || IsCompareMode) return;
 
         var targets = ResolveActionTargets().Targets;
         if (targets.Count == 0 || ConfirmMoveToTrashAsync == null) return;
@@ -24,7 +24,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task DeleteRejectedImagesAsync()
     {
-        if (IsFullScreenMode) return;
+        if (IsFullScreenMode || IsCompareMode) return;
 
         var rejectedImages = Browse.GetRejectedImages().ToList();
         if (rejectedImages.Count == 0) return;
@@ -253,7 +253,7 @@ public partial class MainWindowViewModel
         ImageFlag flag,
         bool toggleUniform = false)
     {
-        var targets = ResolveActionTargets().Targets;
+        var targets = ResolveAssessmentTargets().Targets;
         if (targets.Count == 0) return;
         var actedOnImage = targets.Count == 1 ? targets[0] : null;
         var previousFlag = actedOnImage?.Flag ?? ImageFlag.Unflagged;
@@ -305,7 +305,7 @@ public partial class MainWindowViewModel
         }
 
         Browse.RefreshFilters();
-        if (replacement != null && Browse.ContainsVisible(replacement))
+        if (!IsCompareMode && replacement != null && Browse.ContainsVisible(replacement))
         {
             SelectedImage = replacement;
         }
@@ -344,7 +344,7 @@ public partial class MainWindowViewModel
         if (IsFullScreenMode) return;
 
         rating = Math.Clamp(rating, 0, 5);
-        var targets = ResolveActionTargets().Targets;
+        var targets = ResolveAssessmentTargets().Targets;
         if (targets.Count == 0) return;
         var actedOnImage = targets.Count == 1 ? targets[0] : null;
         var previousRating = actedOnImage?.Rating ?? 0;
@@ -392,7 +392,7 @@ public partial class MainWindowViewModel
         }
 
         Browse.RefreshFilters();
-        if (replacement != null && Browse.ContainsVisible(replacement))
+        if (!IsCompareMode && replacement != null && Browse.ContainsVisible(replacement))
         {
             SelectedImage = replacement;
         }

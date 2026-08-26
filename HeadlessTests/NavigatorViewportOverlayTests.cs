@@ -224,7 +224,8 @@ public sealed class NavigatorViewportOverlayTests
         {
             window.Show();
             Dispatcher.UIThread.RunJobs();
-            var viewer = window.FindControl<ZoomPanControl>("ZoomPanControl")!;
+            var viewer = window.FindControl<DevelopViewerPane>(
+                "DevelopViewerPane")!.Viewer;
             var overlay = window.FindControl<NavigatorViewportOverlay>(
                 "NavigatorViewportOverlay")!;
             var scroll = viewer.FindControl<ScrollViewer>("ScrollViewer")!;
@@ -294,7 +295,8 @@ public sealed class NavigatorViewportOverlayTests
         {
             window.Show();
             Dispatcher.UIThread.RunJobs();
-            var develop = window.FindControl<ZoomPanControl>("ZoomPanControl")!;
+            var develop = window.FindControl<DevelopViewerPane>(
+                "DevelopViewerPane")!.Viewer;
             var fullScreen = window.FindControl<ZoomPanControl>(
                 "FullScreenZoomPanControl")!;
 

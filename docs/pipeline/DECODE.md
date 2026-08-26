@@ -342,7 +342,9 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
   for Small, Medium, or Large. An undersized entry paints as a placeholder while a safe
   source upgrade is queued.
 - **Rendered-preview cache:** `PreviewCacheService` stores the *last rendered output*
-  (8-bit JPEG q90, 1600px) plus a sidecar `<id>.meta` containing `settingsHash`.
+  (8-bit JPEG q90, 1600px) plus a sidecar `<id>.meta` containing `settingsHash` and
+  the render's original-image and post-geometry view dimensions. Legacy hash-only
+  sidecars remain readable but are rewritten with dimensions after the next render.
   - `settingsHash` = SHA-256 of canonical-JSON `EditSettings` v3 + `RenderPipeline.Version`
     + `BaseImage.Version` + the installed profile outcome token.
   - Develop entry: if cached hash matches current settings → decode its one BGRA buffer

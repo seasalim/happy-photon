@@ -68,12 +68,14 @@ public sealed class PreviewCacheService : IAsyncDisposable
         {
             var path = _catalogService.GetPreviewPath(imageFile.CatalogId);
             var metadataPath = Path.ChangeExtension(path, ".meta");
-            var hash = File.Exists(metadataPath)
-                ? File.ReadAllText(metadataPath).Trim()
-                : null;
+            PreviewCacheMetadata metadata = default;
+            var hasMetadata = File.Exists(metadataPath) &&
+                PreviewCacheMetadata.TryRead(metadataPath, out metadata);
             return new CachedPreview(
                 new MagickImage(path),
-                string.IsNullOrWhiteSpace(hash) ? null : hash);
+                hasMetadata ? metadata.SettingsHash : null,
+                hasMetadata ? metadata.Identity?.OriginalViewSize : null,
+                hasMetadata ? metadata.Identity?.OriginalImageSize : null);
         }
         catch
         {
@@ -92,9 +94,13 @@ public sealed class PreviewCacheService : IAsyncDisposable
             if (sourceWriteTime.HasValue &&
                 File.GetLastWriteTimeUtc(imageFile.FilePath) != sourceWriteTime.Value)
                 return false;
-            return string.Equals(
-                File.ReadAllText(GetMetadataPath(imageFile)).Trim(),
-                settingsHash, StringComparison.Ordinal);
+            return PreviewCacheMetadata.TryRead(
+                    GetMetadataPath(imageFile),
+                    out var metadata) &&
+                string.Equals(
+                    metadata.SettingsHash,
+                    settingsHash,
+                    StringComparison.Ordinal);
         }
         catch { return false; }
     }
@@ -105,11 +111,25 @@ public sealed class PreviewCacheService : IAsyncDisposable
         string settingsHash) =>
         _writer.Queue(imageFile, image, settingsHash);
 
+    internal void QueueSaveToCache(
+        ImageFile imageFile,
+        MagickImage image,
+        string settingsHash,
+        PreviewCacheIdentity identity) =>
+        _writer.Queue(imageFile, image, settingsHash, identity);
+
     public void QueueSaveToCache(
         ImageFile imageFile,
         Bitmap bitmap,
         string settingsHash) =>
         _writer.Queue(imageFile, bitmap, settingsHash);
+
+    internal void QueueSaveToCache(
+        ImageFile imageFile,
+        Bitmap bitmap,
+        string settingsHash,
+        PreviewCacheIdentity identity) =>
+        _writer.Queue(imageFile, bitmap, settingsHash, identity);
 
     public ValueTask DisposeAsync() => _writer.DisposeAsync();
 
@@ -158,7 +178,9 @@ public sealed class PreviewCacheService : IAsyncDisposable
 
 public sealed record CachedPreview(
     MagickImage Image,
-    string? SettingsHash) : IDisposable
+    string? SettingsHash,
+    Avalonia.PixelSize? OriginalViewPixelSize = null,
+    Avalonia.PixelSize? OriginalImagePixelSize = null) : IDisposable
 {
     public void Dispose() => Image.Dispose();
 }

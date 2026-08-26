@@ -149,9 +149,10 @@ public sealed class PreviewPlaceholderTests
         var actionBar = panel.FindControl<DevelopActionBar>("DevelopActionBar")!;
         var copy = actionBar.FindControl<Button>("CopyEditSettingsButton")!;
         var paste = actionBar.FindControl<Button>("PasteEditSettingsButton")!;
-        var previous = window.FindControl<Button>("PreviousImageButton")!;
-        var next = window.FindControl<Button>("NextImageButton")!;
-        var fullScreen = window.FindControl<Button>("FullScreenButton")!;
+        var viewerPane = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!;
+        var previous = viewerPane.FindControl<Button>("PreviousImageButton")!;
+        var next = viewerPane.FindControl<Button>("NextImageButton")!;
+        var fullScreen = viewerPane.FindControl<Button>("FullScreenButton")!;
 
         Assert.False(previous.IsEffectivelyEnabled);
         Assert.True(next.IsEffectivelyEnabled);
@@ -276,7 +277,9 @@ public sealed class PreviewPlaceholderTests
             Path.Combine(GoldenTestPaths.AssetDirectory, "display-p3-reference.jpg"));
         using var editedPreview = new Bitmap(
             Path.Combine(GoldenTestPaths.AssetDirectory, "adobe-rgb-reference.jpg"));
-        var developPlaceholder = window.FindControl<Image>(
+        var developPane = window.FindControl<DevelopViewerPane>(
+            "DevelopViewerPane")!;
+        var developPlaceholder = developPane.FindControl<Image>(
             "DevelopPlaceholderImage")!;
         var fullScreenPlaceholder = window.FindControl<Image>(
             "FullScreenPlaceholderImage")!;

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.Views;
 
@@ -9,10 +10,14 @@ public partial class ZoomPanControl
 {
     private bool _visibleRegionPublicationPending;
     private bool _forceVisibleRegionPublication;
+    private bool _applyingNormalizedViewport;
+    private long _normalizedViewportRestoreGeneration;
 
     public Rect? VisibleRegion { get; private set; }
 
     public event EventHandler<Rect?>? VisibleRegionChanged;
+
+    public event EventHandler<NormalizedViewport>? NormalizedViewportChanged;
 
     private void InitializeVisibleRegionTracking()
     {
@@ -51,6 +56,7 @@ public partial class ZoomPanControl
     {
         _visibleRegionPublicationPending = false;
         _forceVisibleRegionPublication = false;
+        AbandonNormalizedViewportApplication();
         SetVisibleRegion(null);
     }
 
@@ -96,6 +102,7 @@ public partial class ZoomPanControl
         SetVisibleRegion(ViewportRegion.Calculate(
             new Rect(imageOrigin.Value, _imageControl.Bounds.Size),
             new Rect(_scrollViewer.Viewport)), force);
+        CompleteNormalizedViewportApplication();
     }
 
     private void SetVisibleRegion(Rect? region, bool force = false)
@@ -107,5 +114,65 @@ public partial class ZoomPanControl
 
         VisibleRegion = region;
         VisibleRegionChanged?.Invoke(this, region);
+        if (!_applyingNormalizedViewport && Source != null)
+        {
+            NormalizedViewportChanged?.Invoke(this, CaptureNormalizedViewport());
+        }
     }
+
+    public NormalizedViewport CaptureNormalizedViewport()
+    {
+        var fit = GetFitZoomLevel();
+        var relativeZoom = fit > 0 ? ZoomLevel / fit : 1;
+        var center = VisibleRegion is { } region
+            ? new NormalizedPoint(
+                region.X + region.Width / 2,
+                region.Y + region.Height / 2)
+            : new NormalizedPoint(0.5, 0.5);
+        return new NormalizedViewport(center, relativeZoom).Clamp();
+    }
+
+    public void ApplyNormalizedViewport(NormalizedViewport viewport)
+    {
+        if (Source == null || _scrollViewer == null) return;
+
+        viewport = viewport.Clamp();
+        _applyingNormalizedViewport = true;
+        AutoFit = viewport.ZoomRelativeToFit == 1;
+        var fit = GetFitZoomLevel();
+        ZoomLevel = fit * viewport.ZoomRelativeToFit;
+        var focal = new Point(
+            _scrollViewer.Viewport.Width / 2,
+            _scrollViewer.Viewport.Height / 2);
+        _normalizedViewportRestoreGeneration =
+            ScheduleAnchorRestoreAfterLayout(new ViewportAnchor(
+                new Point(viewport.Center.X, viewport.Center.Y),
+                focal));
+        RequestVisibleRegionPublication(force: true);
+    }
+
+    private void OnNormalizedViewportAnchorRestored(long generation)
+    {
+        if (_applyingNormalizedViewport &&
+            generation == _normalizedViewportRestoreGeneration)
+        {
+            RequestVisibleRegionPublication(force: true);
+        }
+    }
+
+    private void CompleteNormalizedViewportApplication()
+    {
+        if (_applyingNormalizedViewport &&
+            _appliedAnchorRestoreGeneration ==
+                _normalizedViewportRestoreGeneration)
+        {
+            _applyingNormalizedViewport = false;
+        }
+    }
+
+    // The guard waits on a restore that can never arrive once its anchor is
+    // abandoned or the control leaves the tree; without this the pane would keep
+    // following the shared viewport but stop publishing its own forever.
+    private void AbandonNormalizedViewportApplication() =>
+        _applyingNormalizedViewport = false;
 }

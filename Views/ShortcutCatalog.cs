@@ -5,6 +5,7 @@ public enum ShortcutWorkspace
     Browse,
     Develop,
     Export,
+    Compare,
     FullScreen
 }
 
@@ -50,6 +51,9 @@ public static class ShortcutCatalog
     private static ShortcutReachabilityClaim Export(string action, string controlName) =>
         ShortcutReachabilityClaim.Control(action, controlName, ShortcutWorkspace.Export);
 
+    private static ShortcutReachabilityClaim Compare(string action, string controlName) =>
+        ShortcutReachabilityClaim.Control(action, controlName, ShortcutWorkspace.Compare);
+
     private static ShortcutReachabilityClaim FullScreen(string action, string controlName) =>
         ShortcutReachabilityClaim.Control(action, controlName, ShortcutWorkspace.FullScreen);
 
@@ -83,7 +87,8 @@ public static class ShortcutCatalog
                 Develop("Cancel crop", "CancelCropButton"),
                 Develop("Return to Browse", "BrowseTabButton"),
                 Export("Return to Browse", "BrowseTabButton"),
-                Export("Return to Develop", "DevelopTabButton")
+                Export("Return to Develop", "DevelopTabButton"),
+                Compare("Return to the Browse grid", "CompareViewButton")
             ]),
             new("F", "Toggle fullscreen; restrict navigation to 2+ selected photos",
             [
@@ -93,7 +98,9 @@ public static class ShortcutCatalog
             new("←  /  →", "Previous or next image",
             [
                 Develop("Previous image", "PreviousImageButton"),
-                Develop("Next image", "NextImageButton")
+                Develop("Next image", "NextImageButton"),
+                Compare("Previous comparison image", "ComparePreviousButton"),
+                Compare("Next comparison image", "CompareNextButton")
             ]),
             new("↑  /  ↓", "Move by one grid row in Browse",
                 [Browse("Move by one grid row", "ThumbnailTile")]),
@@ -107,13 +114,13 @@ public static class ShortcutCatalog
         ]),
         new("Organize",
         [
-            new("P", "Pick the Browse selection, else active photo; active-only in Develop",
+            new("P", "Pick the Browse selection, else active photo; active-only in Develop or Compare",
                 [Browse("Pick images", "PickImageButton")]),
-            new("U", "Unflag the Browse selection, else active photo; active-only in Develop",
+            new("U", "Unflag the Browse selection, else active photo; active-only in Develop or Compare",
                 [Browse("Unflag images", "UnflagImageButton")]),
-            new("X", "Reject the Browse selection, else active photo; active-only in Develop",
+            new("X", "Reject the Browse selection, else active photo; active-only in Develop or Compare",
                 [Browse("Reject images", "RejectImageButton")]),
-            new("1–5", "Rate the Browse selection, else active photo; active-only in Develop",
+            new("1–5", "Rate the Browse selection, else active photo; active-only in Develop or Compare",
             [
                 Browse("Set a 1-star rating", "Rating1Button"),
                 Browse("Set a 2-star rating", "Rating2Button"),
@@ -121,9 +128,9 @@ public static class ShortcutCatalog
                 Browse("Set a 4-star rating", "Rating4Button"),
                 Browse("Set a 5-star rating", "Rating5Button")
             ]),
-            new("0", "Clear ratings on the Browse selection, else active photo; active-only in Develop",
+            new("0", "Clear ratings on the Browse selection, else active photo; active-only in Develop or Compare",
                 [Browse("Clear ratings", "ClearRatingButton")]),
-            new("6–9", "Set color labels on Browse selection, else active photo; active-only in Develop",
+            new("6–9", "Set color labels on Browse selection, else active photo; active-only in Develop or Compare",
                 [Browse("Set a color label", "ColorLabelButton")]),
             new("Space", "Toggle the active photo in the Browse selection",
                 [Browse("Toggle selection", "SelectionBadgeButton")]),
@@ -157,7 +164,7 @@ public static class ShortcutCatalog
             new("Ctrl+Y  /  Ctrl+Shift+Z", "Redo the last undone edit in Develop",
                 [Develop("Redo the last undone edit", "RedoEditButton")]),
             new("Mouse wheel", "Zoom in Develop", [Accelerator("Zoom")]),
-            new("Hold left mouse", "Peek at 1:1 below 1:1 in Develop or fullscreen",
+            new("Hold left mouse", "Peek at 1:1 below 1:1 in Develop, fullscreen, or Compare",
                 [Accelerator("Peek at 1:1")]),
             new("Drag  /  Middle-drag", "Pan a zoomed image", [Accelerator("Pan")]),
             new("Double-click thumbnail", "Open the image in Develop",

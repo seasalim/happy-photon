@@ -8,6 +8,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanSelectPreviousImage))]
     private void SelectPreviousImage()
     {
+        if (TryMoveWithinCompareSet(-1)) return;
         if (TryMoveWithinFullScreenSelection(-1)) return;
         if (TryMoveWithinExportSelection(-1)) return;
         MoveFocusAndSelection(Browse.PreviousVisible(SelectedImage));
@@ -16,6 +17,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanSelectNextImage))]
     private void SelectNextImage()
     {
+        if (TryMoveWithinCompareSet(1)) return;
         if (TryMoveWithinFullScreenSelection(1)) return;
         if (TryMoveWithinExportSelection(1)) return;
         MoveFocusAndSelection(Browse.NextVisible(SelectedImage));
@@ -31,9 +33,11 @@ public partial class MainWindowViewModel
 
     private (int Index, int Count) NavigationPosition()
     {
-        IList<ImageFile> images = IsFullScreenSelectionRestricted
-            ? GetFullScreenSelectionMembers()
-            : Browse.VisibleImages;
+        IList<ImageFile> images = IsCompareMode
+            ? GetCompareMembers()
+            : IsFullScreenSelectionRestricted
+                ? GetFullScreenSelectionMembers()
+                : Browse.VisibleImages;
         return (SelectedImage == null ? -1 : images.IndexOf(SelectedImage), images.Count);
     }
 
@@ -48,6 +52,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public void SelectImageUp(int itemsPerRow)
     {
+        if (TryMoveWithinCompareRow(-1)) return;
         if (TryMoveWithinFullScreenSelection(-itemsPerRow)) return;
         MoveFocusAndSelection(Browse.MoveVisible(SelectedImage, -itemsPerRow));
     }
@@ -57,6 +62,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public void SelectImageDown(int itemsPerRow)
     {
+        if (TryMoveWithinCompareRow(1)) return;
         if (TryMoveWithinFullScreenSelection(itemsPerRow)) return;
         MoveFocusAndSelection(Browse.MoveVisible(SelectedImage, itemsPerRow));
     }
@@ -89,7 +95,7 @@ public partial class MainWindowViewModel
     // focused image so assessment actions land on the photo under the ring.
     private void MoveSelectionWithFocus(ImageFile image)
     {
-        if (!IsBrowseMode || IsFullScreenMode) return;
+        if (!IsBrowseMode || IsFullScreenMode || IsCompareMode) return;
 
         Browse.SelectOnly(image);
         UpdateSelectedCount();

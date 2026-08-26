@@ -5,6 +5,7 @@ public partial class MainWindowViewModel
     public async ValueTask DisposeAsync()
     {
         CloseRenderOutcomeChannel();
+        await CancelAndDrainCompareAsync();
         await CancelAndDrainExportJobAsync();
         DisposeBackgroundActivity();
         await DisposeUpdatesAsync();

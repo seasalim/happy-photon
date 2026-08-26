@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private FolderTreePanel? _folderTreePanel;
     private PresetsPanel? _presetsPanel;
     private BrowseGridView? _browseGridView;
+    private CompareView? _compareView;
     private bool _isDevelopViewportPublicationSuppressed;
 
     public MainWindow()
@@ -32,7 +33,9 @@ public partial class MainWindow : Window
             OnWorkspaceKeyUp,
             RoutingStrategies.Tunnel);
 
-        _zoomPanControl = this.FindControl<ZoomPanControl>("ZoomPanControl");
+        var developViewerPane =
+            this.FindControl<DevelopViewerPane>("DevelopViewerPane");
+        _zoomPanControl = developViewerPane?.Viewer;
         if (_zoomPanControl != null)
         {
             _zoomPanControl.ZoomChanged += OnZoomChanged;
@@ -90,6 +93,8 @@ public partial class MainWindow : Window
             _browseGridView.RangeSelectionRequested += OnRangeSelectionRequested;
             _browseGridView.ViewportRangeChanged += OnThumbnailViewportRangeChanged;
         }
+
+        _compareView = _browseGridView?.FindControl<CompareView>("CompareView");
     }
 
     private void WithVm(Action<MainWindowViewModel> action)
@@ -299,26 +304,27 @@ public partial class MainWindow : Window
             if (e.Key == Key.Left)
             {
                 vm.SelectPreviousImageCommand.Execute(null);
-                if (vm.IsBrowseMode) ScrollSelectedIntoView(vm);
+                if (vm.IsBrowseGridVisible) ScrollSelectedIntoView(vm);
                 e.Handled = true;
                 return;
             }
             else if (e.Key == Key.Right)
             {
                 vm.SelectNextImageCommand.Execute(null);
-                if (vm.IsBrowseMode) ScrollSelectedIntoView(vm);
+                if (vm.IsBrowseGridVisible) ScrollSelectedIntoView(vm);
                 e.Handled = true;
                 return;
             }
 
-            // Up/Down/PageUp/PageDown: Row navigation (Browse mode only)
-            if (vm.IsBrowseMode)
+            // Up/Down: row navigation in the grid, and between pane rows in
+            // compare, where the grid is hidden but its 2x2 still has rows.
+            if (vm.IsBrowseGridVisible || vm.IsCompareMode)
             {
                 if (e.Key == Key.Up)
                 {
                     var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
                     vm.SelectImageUp(itemsPerRow);
-                    ScrollSelectedIntoView(vm);
+                    if (vm.IsBrowseGridVisible) ScrollSelectedIntoView(vm);
                     e.Handled = true;
                     return;
                 }
@@ -326,11 +332,16 @@ public partial class MainWindow : Window
                 {
                     var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
                     vm.SelectImageDown(itemsPerRow);
-                    ScrollSelectedIntoView(vm);
+                    if (vm.IsBrowseGridVisible) ScrollSelectedIntoView(vm);
                     e.Handled = true;
                     return;
                 }
-                else if (e.Key == Key.PageUp)
+            }
+
+            // Paging and Home/End stay grid-only: compare has no scroll extent.
+            if (vm.IsBrowseGridVisible)
+            {
+                if (e.Key == Key.PageUp)
                 {
                     var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
                     var rowsPerPage = _browseGridView?.GetRowsPerPage() ?? 1;
@@ -370,14 +381,11 @@ public partial class MainWindow : Window
 
     private void OnWorkspaceKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape &&
-            e.KeyModifiers == KeyModifiers.None &&
-            GetActiveZoomPanControl()?.CancelLoupePeek() == true)
-        {
-            e.Handled = true;
-            return;
-        }
-
+        // Escape is not handled here. The window's Escape KeyBinding runs ahead of
+        // this tunnel handler through the real input pipeline, so anything ranked
+        // here would be dead in the app while still passing a test that raises
+        // KeyDown directly. The whole ladder, loupe included, lives in
+        // MainWindowViewModel.HandleEscape.
         if (e.Key == Key.Space &&
             e.KeyModifiers == KeyModifiers.None &&
             WorkspaceKeyRouting.TryHandleSpace(

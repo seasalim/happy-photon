@@ -19,11 +19,12 @@ public sealed class DevelopAssessmentFeedbackTests
     {
         await WithWindowAsync((window, _) =>
         {
-            var controlBar = window.FindControl<Border>("DevelopControlBar")!;
+            var pane = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!;
+            var controlBar = pane.FindControl<Border>("DevelopControlBar")!;
             var actions = Assert.IsType<StackPanel>(controlBar.Child);
-            var previous = window.FindControl<Button>("PreviousImageButton")!;
-            var next = window.FindControl<Button>("NextImageButton")!;
-            var rotateLeft = window.FindControl<Button>("RotateLeftButton")!;
+            var previous = pane.FindControl<Button>("PreviousImageButton")!;
+            var next = pane.FindControl<Button>("NextImageButton")!;
+            var rotateLeft = pane.FindControl<Button>("RotateLeftButton")!;
 
             // Actions lead the bar; the first passive child divides navigation
             // from the editing actions.
@@ -35,7 +36,7 @@ public sealed class DevelopAssessmentFeedbackTests
             var overlay = Assert.Single(
                 window.GetLogicalDescendants().OfType<AssessmentFeedbackOverlay>());
             Assert.Same(
-                window.FindControl<AssessmentFeedbackOverlay>(
+                pane.FindControl<AssessmentFeedbackOverlay>(
                     "DevelopAssessmentFeedbackOverlay"),
                 overlay);
             Assert.False(overlay.IsHitTestVisible);
@@ -51,7 +52,8 @@ public sealed class DevelopAssessmentFeedbackTests
         await WithWindowAsync((window, vm) =>
         {
             var image = vm.SelectedImage!;
-            var overlay = window.FindControl<AssessmentFeedbackOverlay>(
+            var overlay = window.FindControl<DevelopViewerPane>(
+                "DevelopViewerPane")!.FindControl<AssessmentFeedbackOverlay>(
                 "DevelopAssessmentFeedbackOverlay")!;
             var content = overlay.FindControl<Grid>(
                 "AssessmentFeedbackOverlayContent")!;

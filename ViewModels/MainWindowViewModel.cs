@@ -21,6 +21,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private readonly UiBitmapRetirement _bitmapRetirement = new();
     private readonly TimeProvider _timeProvider;
 
+    // Set by the window: releases a held loupe peek on any viewer surface and
+    // reports whether one was active, so the Escape ladder can rank it first.
+    public Func<bool>? CancelActiveLoupePeek { get; set; }
     public Func<Task>? PersistAppSettingsAsync { get; set; }
     public Func<string, Task>? CopyToClipboardAsync { get; set; }
 

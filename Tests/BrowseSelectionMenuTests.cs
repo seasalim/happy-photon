@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -12,6 +13,7 @@ using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
 using Xunit;
+using Rectangle = Avalonia.Controls.Shapes.Rectangle;
 
 namespace HappyPhoton.Tests;
 
@@ -167,6 +169,10 @@ public sealed class BrowseSelectionMenuTests
         Dispatcher.UIThread.RunJobs();
 
         var panel = control.FindControl<StackPanel>("BrowseActionsPanel")!;
+        var thumbnailControls = control.FindControl<StackPanel>(
+            "ThumbnailSizePanel")!;
+        var compareView = Assert.IsType<ToggleButton>(
+            control.FindControl<ToggleButton>("CompareViewButton"));
         var export = control.FindControl<Button>("BrowseExportButton")!;
         var actions = control.FindControl<Button>("BrowseActionsButton")!;
         var flyout = Assert.IsType<MenuFlyout>(actions.Flyout);
@@ -179,6 +185,9 @@ public sealed class BrowseSelectionMenuTests
         var deleteRejected = Assert.IsType<MenuItem>(items[3]);
 
         Assert.Equal([export, actions], panel.Children);
+        Assert.Same(compareView, thumbnailControls.Children[0]);
+        Assert.IsType<Rectangle>(thumbnailControls.Children[1]);
+        Assert.Null(control.FindControl<Button>("GridViewButton"));
         Assert.Contains("accent", export.Classes);
         Assert.DoesNotContain("accent", actions.Classes);
         Assert.Null(control.FindControl<Button>("SelectAllButton"));

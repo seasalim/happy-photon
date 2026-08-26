@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:HappyPhoton.Converters"
+             xmlns:views="using:HappyPhoton.Views"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.CompareView"
+             x:DataType="vm:MainWindowViewModel"
+             Focusable="True"
+             Background="{DynamicResource ViewerSurround}">
+    <UserControl.Resources>
+        <converters:ColorLabelBrushConverter x:Key="ColorLabelBrushConverter"/>
+    </UserControl.Resources>
+    <UserControl.Styles>
+        <Style Selector="Border.compare-pane">
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariant}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+        </Style>
+        <Style Selector="Border.compare-pane.active">
+            <Setter Property="BorderBrush" Value="{DynamicResource ActiveImageRing}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceMid}"
+                BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1"
+                Padding="10,6">
+            <Grid ColumnDefinitions="Auto,*">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="COMPARE" Classes="section-label"/>
+                    <TextBlock Text="{Binding ComparePanes.Count, StringFormat='{}{0} PHOTOS'}"
+                               Foreground="{DynamicResource TextMuted}"
+                               FontFamily="{StaticResource FontLabel}" FontSize="10"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                            HorizontalAlignment="Center">
+                    <Button x:Name="ComparePreviousButton"
+                            Command="{Binding SelectPreviousImageCommand}"
+                            Content="←" Padding="7,2" BorderThickness="0"
+                            ToolTip.Tip="Previous comparison image (←)"/>
+                    <Button x:Name="CompareNextButton"
+                            Command="{Binding SelectNextImageCommand}"
+                            Content="→" Padding="7,2" BorderThickness="0"
+                            ToolTip.Tip="Next comparison image (→)"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ItemsControl x:Name="PaneItems" Grid.Row="1"
+                      ItemsSource="{Binding ComparePanes}" Margin="6">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="2"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:ComparePaneViewModel">
+                    <Border Classes="compare-pane"
+                            Classes.active="{Binding Image.IsActive}"
+                            Background="{DynamicResource SurfaceLowest}"
+                            Margin="3">
+                        <Border CornerRadius="13" ClipToBounds="True">
+                          <Grid RowDefinitions="*,Auto">
+                            <Panel>
+                                <Image Source="{Binding Image.Thumbnail}"
+                                       Stretch="Uniform" Margin="8"
+                                       RenderOptions.BitmapInterpolationMode="LowQuality"/>
+                                <views:ZoomPanControl Source="{Binding Preview}"
+                                                      SourceIdentity="{Binding Image}"
+                                                      OriginalViewPixelSize="{Binding OriginalViewPixelSize}"
+                                                      AutoFit="True"
+                                                      ScrollBarVisibility="Hidden"
+                                                      ContentInset="8"
+                                                      AttachedToVisualTree="OnPaneAttached"
+                                                      DetachedFromVisualTree="OnPaneDetached"
+                                                      SizeChanged="OnPaneSizeChanged"/>
+                                <TextBlock Text="Loading preview…"
+                                           IsVisible="{Binding ShowLoadingMessage}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           FontSize="11"/>
+                            </Panel>
+                            <Border Grid.Row="1" Background="{DynamicResource SurfaceLow}"
+                                    BorderBrush="{DynamicResource Divider}"
+                                    BorderThickness="0,1,0,0" Padding="8,5">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="{Binding Image.FileName}"
+                                               TextTrimming="CharacterEllipsis"
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               FontSize="11" ToolTip.Tip="{Binding Image.FileName}"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                Spacing="5" Margin="8,0,0,0">
+                                        <Border Background="{StaticResource PrimaryContainer}"
+                                                CornerRadius="2" Padding="3,0"
+                                                IsVisible="{Binding Image.IsPicked}">
+                                            <TextBlock Text="P" FontSize="9"
+                                                       Foreground="{StaticResource OnPrimary}"/>
+                                        </Border>
+                                        <Border Background="{DynamicResource ErrorContainer}"
+                                                CornerRadius="2" Padding="3,0"
+                                                IsVisible="{Binding Image.IsRejected}">
+                                            <TextBlock Text="X" FontSize="9"
+                                                       Foreground="{DynamicResource OnErrorContainer}"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding Image.RatingStars}"
+                                                   FontSize="10"
+                                                   Foreground="{StaticResource SecondaryContainer}"
+                                                   IsVisible="{Binding Image.HasRating}"/>
+                                        <Border Width="11" Height="11" CornerRadius="999"
+                                                IsVisible="{Binding Image.HasColorLabel}"
+                                                Background="{Binding Image.ColorLabel, Converter={StaticResource ColorLabelBrushConverter}}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                          </Grid>
+                        </Border>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Border Grid.Row="2" Background="Transparent" Padding="8,4">
+            <TextBlock Text="FIT · ZOOM · PAN · LOUPE SYNCED"
+                       VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextMuted}"
+                       FontFamily="{StaticResource FontLabel}" FontSize="9"/>
+        </Border>
+    </Grid>
+</UserControl>

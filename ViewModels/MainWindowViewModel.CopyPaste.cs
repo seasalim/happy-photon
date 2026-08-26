@@ -55,8 +55,11 @@ public partial class MainWindowViewModel
         }
     }
 
-    partial void OnSelectedCountChanged(int value) =>
+    partial void OnSelectedCountChanged(int value)
+    {
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
+        NotifyCompareGateChanged();
+    }
 
     partial void OnWorkspaceModeChanged(
         WorkspaceMode oldValue,

@@ -42,9 +42,10 @@ public sealed class PreviewCacheServiceTests : IDisposable
 
         var cachePath = cache.GetCachePath(imageFile);
         Assert.True(File.Exists(cachePath));
-        Assert.Equal(
-            "settings-a",
-            File.ReadAllText(cache.GetMetadataPath(imageFile)));
+        Assert.True(PreviewCacheMetadata.TryRead(
+            cache.GetMetadataPath(imageFile),
+            out var metadata));
+        Assert.Equal("settings-a", metadata.SettingsHash);
         using var saved = new MagickImage(cachePath);
         Assert.Equal(MagickFormat.Jpeg, saved.Format);
         Assert.Equal(160u, saved.Width);
@@ -74,9 +75,10 @@ public sealed class PreviewCacheServiceTests : IDisposable
         Assert.False(File.Exists(cache.GetCachePath(first)));
         Assert.False(File.Exists(cache.GetMetadataPath(first)));
         Assert.True(File.Exists(cache.GetCachePath(second)));
-        Assert.Equal(
-            "second-hash",
-            File.ReadAllText(cache.GetMetadataPath(second)));
+        Assert.True(PreviewCacheMetadata.TryRead(
+            cache.GetMetadataPath(second),
+            out var survivor));
+        Assert.Equal("second-hash", survivor.SettingsHash);
     }
 
     [Fact]
@@ -116,6 +118,27 @@ public sealed class PreviewCacheServiceTests : IDisposable
         Assert.NotNull(loaded);
         Assert.Equal("settings-a", loaded!.SettingsHash);
         Assert.Equal(20u, loaded.Image.Width);
+    }
+
+    [Fact]
+    public async Task LoadRenderedPreview_ReturnsPersistedRenderIdentity()
+    {
+        var sourcePath = CreateSource("identity.jpg");
+        using var catalog = new CatalogService(Path.Combine(_tempDirectory, "identity"));
+        var cache = new PreviewCacheService(catalog);
+        var imageFile = new ImageFile(sourcePath) { CatalogId = 1 };
+        using var preview = new MagickImage(MagickColors.Purple, 20, 10);
+        var identity = new PreviewCacheIdentity(
+            new Avalonia.PixelSize(3000, 2000),
+            new Avalonia.PixelSize(6000, 4000));
+
+        cache.QueueSaveToCache(imageFile, preview, "settings-a", identity);
+        await cache.DisposeAsync();
+
+        using var loaded = cache.LoadRenderedPreview(imageFile);
+        Assert.NotNull(loaded);
+        Assert.Equal(identity.OriginalViewSize, loaded!.OriginalViewPixelSize);
+        Assert.Equal(identity.OriginalImageSize, loaded.OriginalImagePixelSize);
     }
 
     private string CreateSource(string name)

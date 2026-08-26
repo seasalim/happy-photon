@@ -157,7 +157,9 @@ public sealed partial class PreviewService : IAsyncDisposable
                     ConvertToBitmap(pixels, width, height),
                     settingsMatch,
                     histogram,
-                    clipping);
+                    clipping,
+                    cached.OriginalViewPixelSize,
+                    cached.OriginalImagePixelSize);
             }
             catch (OperationCanceledException)
             {
@@ -259,6 +261,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         long generation,
         bool surfaceAuthorized)
     {
+        _previewIdentities.TryGetValue(bitmap, out var identity);
         RenderedPreview? previous;
         lock (_renderedSync)
         {
@@ -275,6 +278,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                 new WeakReference<Bitmap>(bitmap),
                 settingsHash,
                 generation,
+                identity,
                 CreateRenderedThumbnailAsync(
                     thumbnailSource,
                     thumbnailDimension));
@@ -355,14 +359,16 @@ public sealed partial class PreviewService : IAsyncDisposable
 
         var bitmap = rendered.DetachStrongBitmap();
         var ownsBitmap = bitmap != null;
-        if (bitmap != null || rendered.Bitmap.TryGetTarget(out bitmap))
+        if ((bitmap != null || rendered.Bitmap.TryGetTarget(out bitmap)) &&
+            rendered.Identity != null)
         {
             try
             {
                 _previewCache.QueueSaveToCache(
                     rendered.ImageFile,
                     bitmap,
-                    rendered.SettingsHash);
+                    rendered.SettingsHash,
+                    rendered.Identity.CacheIdentity);
             }
             finally
             {

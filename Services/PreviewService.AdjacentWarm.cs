@@ -1,3 +1,4 @@
+using Avalonia;
 using HappyPhoton.Models;
 using ImageMagick;
 
@@ -94,9 +95,17 @@ public sealed partial class PreviewService
             if (!SourceMatches(imageFile, sourceWriteTime))
                 return;
             rendered.Image.Quality = 90;
+            var identity = new PreviewCacheIdentity(
+                RenderGeometry.CalculateOriginalViewSize(
+                    baseImage.Info.FullWidth,
+                    baseImage.Info.FullHeight,
+                    settings),
+                new PixelSize(
+                    baseImage.Info.FullWidth,
+                    baseImage.Info.FullHeight));
             var entry = new AdjacentWarmEntry(imageFile.CatalogId,
                 Path.GetFullPath(imageFile.FilePath), sourceWriteTime, writerHash,
-                rendered.Image.ToByteArray(MagickFormat.Jpeg));
+                identity, rendered.Image.ToByteArray(MagickFormat.Jpeg));
             lock (_adjacentWarmSync)
             {
                 if (token.IsCancellationRequested ||
@@ -105,7 +114,8 @@ public sealed partial class PreviewService
                     return;
                 _adjacentWarmEntry = entry;
             }
-            _previewCache.QueueSaveToCache(imageFile, rendered.Image, writerHash);
+            _previewCache.QueueSaveToCache(
+                imageFile, rendered.Image, writerHash, identity);
             _ = DropWhenPersistedAsync(imageFile, entry);
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { }
@@ -129,7 +139,8 @@ public sealed partial class PreviewService
         try
         {
             return new CachedPreview(new MagickImage(entry.EncodedJpeg),
-                entry.SettingsHash);
+                entry.SettingsHash, entry.Identity.OriginalViewSize,
+                entry.Identity.OriginalImageSize);
         }
         catch
         {
@@ -185,7 +196,8 @@ public sealed partial class PreviewService
         _adjacentWarmTask = null;
     }
     private sealed record AdjacentWarmEntry(long CatalogId, string SourcePath,
-        DateTime SourceWriteTime, string SettingsHash, byte[] EncodedJpeg)
+        DateTime SourceWriteTime, string SettingsHash,
+        PreviewCacheIdentity Identity, byte[] EncodedJpeg)
     {
         public bool MatchesIdentity(ImageFile imageFile) =>
             CatalogId == imageFile.CatalogId &&

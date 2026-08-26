@@ -48,7 +48,7 @@ public partial class MainWindowViewModel
     {
         if (IsFullScreenMode || !Enum.IsDefined(colorLabel)) return;
 
-        var targets = ResolveActionTargets().Targets;
+        var targets = ResolveAssessmentTargets().Targets;
         if (targets.Count == 0) return;
         var actedOnImage = targets.Count == 1 ? targets[0] : null;
         var previousColorLabel =
@@ -100,7 +100,7 @@ public partial class MainWindowViewModel
         }
 
         Browse.RefreshFilters();
-        if (replacement != null && Browse.ContainsVisible(replacement))
+        if (!IsCompareMode && replacement != null && Browse.ContainsVisible(replacement))
         {
             SelectedImage = replacement;
         }

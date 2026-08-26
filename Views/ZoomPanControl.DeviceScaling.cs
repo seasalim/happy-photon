@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.Views;
 
@@ -204,6 +205,39 @@ public partial class ZoomPanControl
             ? OriginalViewPixelSize
             : Source?.PixelSize ?? default;
 
+    public NormalizedCenterBounds GetNormalizedCenterBounds(
+        double zoomRelativeToFit)
+    {
+        if (Source == null || _scrollViewer == null)
+        {
+            return NormalizedCenterBounds.Unconstrained;
+        }
+
+        var pixels = GetOriginalViewPixelSize();
+        if (pixels.Width <= 0 || pixels.Height <= 0 ||
+            _scrollViewer.Viewport.Width <= 0 ||
+            _scrollViewer.Viewport.Height <= 0)
+        {
+            return NormalizedCenterBounds.Unconstrained;
+        }
+
+        zoomRelativeToFit = Math.Max(1, zoomRelativeToFit);
+        var fit = GetFitZoomLevel();
+        var imageWidth = pixels.Width * fit * zoomRelativeToFit / RenderScaling;
+        var imageHeight = pixels.Height * fit * zoomRelativeToFit / RenderScaling;
+        var halfVisibleX = Math.Min(
+            0.5,
+            _scrollViewer.Viewport.Width / (2 * imageWidth));
+        var halfVisibleY = Math.Min(
+            0.5,
+            _scrollViewer.Viewport.Height / (2 * imageHeight));
+        return new NormalizedCenterBounds(
+            halfVisibleX,
+            1 - halfVisibleX,
+            halfVisibleY,
+            1 - halfVisibleY);
+    }
+
     private void UpdateImageSize()
     {
         if (_imageControl == null || Source == null) return;
@@ -261,23 +295,25 @@ public partial class ZoomPanControl
                     1)),
             focalPoint);
 
-    private void ScheduleAnchorRestoreAfterLayout(ViewportAnchor? anchor)
+    private long ScheduleAnchorRestoreAfterLayout(ViewportAnchor? anchor)
     {
         var generation = ++_anchorRestoreGeneration;
         if (anchor == null)
         {
             _scheduledAnchorRestore = null;
-            return;
+            return generation;
         }
 
         _scheduledAnchorRestore = new ScheduledAnchorRestore(
             anchor.Value,
             generation);
+        InvalidateArrange();
         // Layout runs above Background priority. Keep the first anchor alive
         // through the batch so the layout hook applies it before rendering.
         Dispatcher.UIThread.Post(
             () => CompleteAnchorRestore(generation),
             DispatcherPriority.Background);
+        return generation;
     }
 
     private void OnAnchorLayoutUpdated(object? sender, EventArgs e)
@@ -290,9 +326,14 @@ public partial class ZoomPanControl
         }
 
         _appliedAnchorRestoreGeneration = request.Value.Generation;
-        if (!RestorePendingAnchor(request.Value.Anchor))
+        if (RestorePendingAnchor(request.Value.Anchor))
+        {
+            OnNormalizedViewportAnchorRestored(request.Value.Generation);
+        }
+        else
         {
             _appliedAnchorRestoreGeneration = 0;
+            AbandonNormalizedViewportApplication();
         }
     }
 

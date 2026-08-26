@@ -64,6 +64,9 @@ public partial class MainWindow
             await new SettingsDialog(vm).ShowDialog(this);
         vm.ConfirmMoveToTrashAsync = ConfirmMoveToTrashAsync;
         vm.ConfirmDeleteRejectedAsync = ConfirmDeleteRejectedAsync;
+        vm.CancelActiveLoupePeek = () =>
+            _compareView?.CancelLoupePeek() == true ||
+            GetActiveZoomPanControl()?.CancelLoupePeek() == true;
         vm.ConfirmBatchApplyAsync = ConfirmBatchApplyAsync;
         vm.ShowFileOperationFailuresAsync = ShowFileOperationFailuresAsync;
         vm.PersistAppSettingsAsync = () => SaveAppSettingsAsync(vm);
@@ -340,6 +343,30 @@ public partial class MainWindow
         {
             SetExportWorkspaceSettingsSubscription(vm.IsExportMode ? vm : null);
         }
+        else if (args.PropertyName == nameof(MainWindowViewModel.IsCompareMode))
+        {
+            // The grid tile holding keyboard focus collapses when compare
+            // opens; without an explicit handoff the window stops receiving
+            // key events and Escape cannot reach OnWorkspaceKeyDown.
+            Dispatcher.UIThread.Post(
+                () =>
+                {
+                    if (!ReferenceEquals(DataContext, vm)) return;
+                    if (vm.IsCompareMode)
+                    {
+                        _compareView?.Focus();
+                    }
+                    else if (vm.IsBrowseGridVisible)
+                    {
+                        // Only when the grid is actually showing: compare also
+                        // closes when the workspace leaves Browse, and focusing
+                        // a hidden control fails, stranding focus on the hidden
+                        // compare view.
+                        _browseGridView?.Focus();
+                    }
+                },
+                DispatcherPriority.Loaded);
+        }
     }
 
     private void SetExportWorkspaceSettingsSubscription(MainWindowViewModel? vm)
@@ -425,6 +452,7 @@ public partial class MainWindow
         if (_isClosing) return;
 
         _isClosing = true;
+        vm.ExitCompareCommand.Execute(null);
         await PersistAppSettingsSafelyAsync(vm);
 
         Hide();

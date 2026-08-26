@@ -58,6 +58,12 @@ public sealed class PreviewServiceIntegrationTests : IDisposable
 
         Assert.NotNull(matching);
         Assert.True(matching!.SettingsMatch);
+        Assert.Equal(
+            new Avalonia.PixelSize(64, 48),
+            matching.OriginalViewPixelSize);
+        Assert.Equal(
+            new Avalonia.PixelSize(64, 48),
+            matching.OriginalImagePixelSize);
         Assert.NotNull(matching.Histogram);
         Assert.NotNull(matching.Histogram!.Waveform);
         Assert.NotNull(matching.Clipping);

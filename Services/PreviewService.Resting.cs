@@ -271,29 +271,10 @@ public sealed partial class PreviewService
     {
         if (bitmap == null) return;
         var info = baseImage.Info;
-        var quarterTurnWidth = info.FullWidth;
-        var quarterTurnHeight = info.FullHeight;
-        if (settings.Rotation is 90 or 270)
-        {
-            (quarterTurnWidth, quarterTurnHeight) =
-                (quarterTurnHeight, quarterTurnWidth);
-        }
-        var map = new RenderGeometryMap(
-            quarterTurnWidth,
-            quarterTurnHeight,
-            settings.HorizonRotation,
-            settings.Geometry);
-        var originalViewWidth = map.OutputWidth;
-        var originalViewHeight = map.OutputHeight;
-        if (settings.Crop is { IsFullImage: false } crop)
-        {
-            (_, _, originalViewWidth, originalViewHeight) = crop.ToPixels(
-                originalViewWidth,
-                originalViewHeight);
-        }
-        var originalViewSize = new PixelSize(
-            originalViewWidth,
-            originalViewHeight);
+        var originalViewSize = RenderGeometry.CalculateOriginalViewSize(
+            info.FullWidth,
+            info.FullHeight,
+            settings);
         _previewIdentities.Remove(bitmap);
         _previewIdentities.Add(
             bitmap,

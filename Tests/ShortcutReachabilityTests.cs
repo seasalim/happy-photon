@@ -42,7 +42,9 @@ public sealed class ShortcutReachabilityTests
                 foreach (var claim in entry.Reachability.Where(claim => claim.ControlName != null))
                 {
                     var control = ResolveClaimControl(window, vm, claim);
-                    Assert.NotNull(control);
+                    Assert.True(
+                        control != null,
+                        $"{entry.Keys} target {claim.ControlName} was not found in {claim.Workspace}.");
                     Assert.True(IsValidControlTarget(control!),
                         $"{entry.Keys} target {claim.ControlName} is a container, not an interactive control.");
                     Assert.True(control!.IsEffectivelyVisible,
@@ -100,6 +102,7 @@ public sealed class ShortcutReachabilityTests
         MainWindowViewModel vm,
         ShortcutReachabilityClaim claim)
     {
+        vm.ExitCompareCommand.Execute(null);
         vm.IsFullScreenMode = false;
         vm.IsCropMode = false;
         vm.WorkspaceMode = claim.Workspace switch
@@ -108,6 +111,17 @@ public sealed class ShortcutReachabilityTests
             ShortcutWorkspace.Export => WorkspaceMode.Export,
             _ => WorkspaceMode.Browse
         };
+        if (claim.Workspace == ShortcutWorkspace.Compare)
+        {
+            if (vm.Browse.SelectedCount < 2)
+            {
+                foreach (var image in vm.Browse.VisibleImages.Take(2))
+                {
+                    if (!image.IsSelected) vm.ToggleImageSelection(image);
+                }
+            }
+            vm.EnterCompareCommand.Execute(null);
+        }
         vm.IsFullScreenMode = claim.Workspace == ShortcutWorkspace.FullScreen;
         if (claim.ControlName is "ApplyCropButton" or "CancelCropButton")
         {
@@ -144,6 +158,8 @@ public sealed class ShortcutReachabilityTests
 
         return window.GetVisualDescendants().Prepend(window)
             .OfType<Control>()
-            .FirstOrDefault(control => control.Name == claim.ControlName);
+            .FirstOrDefault(control =>
+                control.Name == claim.ControlName &&
+                control.IsEffectivelyVisible);
     }
 }

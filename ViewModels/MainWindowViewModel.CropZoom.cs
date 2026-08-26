@@ -8,6 +8,7 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    internal const double ZoomStepFactor = 1.1;
     /// <summary>
     /// The crop to preview with. Crop mode renders the full corrected frame so
     /// the overlay's normalized coordinates line up with the displayed bitmap.
@@ -255,9 +256,9 @@ public partial class MainWindowViewModel
     public void AdjustZoom(double delta)
     {
         if (delta > 0)
-            ApplyManualZoom(ZoomLevel * 1.1);
+            ApplyManualZoom(ZoomLevel * ZoomStepFactor);
         else
-            ApplyManualZoom(ZoomLevel / 1.1);
+            ApplyManualZoom(ZoomLevel / ZoomStepFactor);
     }
 
     // Folder Tree Methods

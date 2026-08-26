@@ -78,10 +78,16 @@ public partial class ZoomPanControl
         {
             var currentPoint = e.GetPosition(this);
             var delta = _lastPanPoint - currentPoint;
+            var previousOffset = _scrollViewer.Offset;
 
             _scrollViewer.Offset = new Vector(
                 _scrollViewer.Offset.X + delta.X,
                 _scrollViewer.Offset.Y + delta.Y);
+
+            if (IsLoupePeekActive)
+            {
+                PublishLoupePan(_scrollViewer.Offset - previousOffset);
+            }
 
             _lastPanPoint = currentPoint;
             e.Handled = true;

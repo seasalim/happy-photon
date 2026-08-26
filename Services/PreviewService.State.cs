@@ -18,6 +18,7 @@ public sealed partial class PreviewService
         WeakReference<Bitmap> bitmap,
         string settingsHash,
         long generation,
+        PreviewRenderIdentity? identity,
         Task<Bitmap?>? thumbnailTask)
     {
         private Bitmap? _strongBitmap;
@@ -26,6 +27,7 @@ public sealed partial class PreviewService
         public WeakReference<Bitmap> Bitmap { get; } = bitmap;
         public string SettingsHash { get; } = settingsHash;
         public long Generation { get; } = generation;
+        public PreviewRenderIdentity? Identity { get; } = identity;
         public Task<Bitmap?>? ThumbnailTask { get; } = thumbnailTask;
 
         public void Retain(Bitmap value) => _strongBitmap = value;

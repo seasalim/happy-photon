@@ -449,6 +449,14 @@ two selected photos remain, navigation returns to the full folder until full scr
 entered again. With zero or one photo selected, full-screen navigation covers the full
 folder as usual.
 
+With two to four photos selected, choose the X|Y toggle in the Browse footer before
+the burst and thumbnail-size controls. Two photos appear side by side; three or four use
+a 2×2 view. Click a
+pane or use the left and right arrows to choose the active photo, then use the usual
+flag, rating, and color-label controls. Fit, zoom, pan, and the press-and-hold loupe stay
+synchronized across every pane. Re-click the checked X|Y toggle or press `Escape` to return with
+the comparison selection and active photo preserved.
+
 ## 6. Export finished copies
 
 Choose the **Export** workspace to prepare finished copies. Its left filmstrip takes a
@@ -539,6 +547,16 @@ remains where it started and unchanged.
 | `Enter` | Run Export; elsewhere apply crop or switch Browse/Develop |
 | `Ctrl+,` | Open Settings |
 | `F` | Toggle image-only fullscreen |
+| `Escape` | Exit Compare, cancel crop, or return from a transient view |
+
+### Gesture map
+
+The review gestures deliberately keep distinct scopes: `B` shows before/after in
+Develop or fullscreen, `Ctrl+B` toggles the Develop assessment surround, `C` owns crop
+in Develop, `J` owns clipping there, and holding the left mouse button invokes the loupe
+below 1:1 in Develop, fullscreen, or Compare. Compare has no keyboard-only entry; its
+visible checked toggle teaches the 2–4-photo requirement. Future representation
+and version gestures must extend this same catalog without colliding with these keys.
 
 Use the `?` button in the title bar to open **Help & About**. The complete
 shortcut reference is selected by default, with build and project information

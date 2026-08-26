@@ -227,6 +227,8 @@ public sealed class CachedPreviewBitmap : IDisposable
         _bitmap ?? throw new ObjectDisposedException(nameof(CachedPreviewBitmap));
 
     public bool SettingsMatch { get; }
+    public PixelSize? OriginalViewPixelSize { get; }
+    public PixelSize? OriginalImagePixelSize { get; }
     public HistogramData? Histogram { get; }
     public ClippingStats? Clipping { get; }
 
@@ -234,10 +236,14 @@ public sealed class CachedPreviewBitmap : IDisposable
         Bitmap bitmap,
         bool settingsMatch,
         HistogramData? histogram = null,
-        ClippingStats? clipping = null)
+        ClippingStats? clipping = null,
+        PixelSize? originalViewPixelSize = null,
+        PixelSize? originalImagePixelSize = null)
     {
         _bitmap = bitmap;
         SettingsMatch = settingsMatch;
+        OriginalViewPixelSize = originalViewPixelSize;
+        OriginalImagePixelSize = originalImagePixelSize;
         Histogram = histogram;
         Clipping = clipping;
     }
@@ -256,7 +262,12 @@ internal sealed record PreviewRenderIdentity(
     string DecodeKey,
     string SettingsHash,
     PixelSize OriginalImageSize,
-    PixelSize OriginalViewSize);
+    PixelSize OriginalViewSize)
+{
+    public PreviewCacheIdentity CacheIdentity => new(
+        OriginalViewSize,
+        OriginalImageSize);
+}
 
 internal sealed class RestingPreview : IDisposable
 {

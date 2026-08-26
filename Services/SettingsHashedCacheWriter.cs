@@ -58,7 +58,11 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         _processingTask = Task.Run(ProcessAsync);
     }
 
-    public void Queue(ImageFile imageFile, MagickImage image, string settingsHash)
+    public void Queue(
+        ImageFile imageFile,
+        MagickImage image,
+        string settingsHash,
+        PreviewCacheIdentity? identity = null)
     {
         if (!CanQueue(imageFile, settingsHash)) return;
 
@@ -66,7 +70,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         try
         {
             clone = new MagickImage(image);
-            if (TryQueueOwned(imageFile, clone, settingsHash)) clone = null;
+            if (TryQueueOwned(imageFile, clone, settingsHash, identity)) clone = null;
         }
         catch
         {
@@ -77,7 +81,11 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         }
     }
 
-    public void Queue(ImageFile imageFile, Bitmap bitmap, string settingsHash)
+    public void Queue(
+        ImageFile imageFile,
+        Bitmap bitmap,
+        string settingsHash,
+        PreviewCacheIdentity? identity = null)
     {
         if (!CanQueue(imageFile, settingsHash)) return;
 
@@ -85,7 +93,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         try
         {
             image = ConvertToMagickImage(bitmap);
-            if (TryQueueOwned(imageFile, image, settingsHash)) image = null;
+            if (TryQueueOwned(imageFile, image, settingsHash, identity)) image = null;
         }
         catch
         {
@@ -104,13 +112,15 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
     private bool TryQueueOwned(
         ImageFile imageFile,
         MagickImage image,
-        string settingsHash)
+        string settingsHash,
+        PreviewCacheIdentity? identity)
     {
         var write = new CacheWrite(
             _getCachePath(imageFile.CatalogId),
             imageFile.FilePath,
             File.GetLastWriteTimeUtc(imageFile.FilePath),
             settingsHash,
+            identity,
             image);
         return _queue.Writer.TryWrite(write);
     }
@@ -163,7 +173,12 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
                         write.SettingsHash,
                         (int)write.Image.Width,
                         (int)write.Image.Height)
-                    : write.SettingsHash,
+                    // Always the versioned document. A write with no identity
+                    // records zero dimensions, which reads back as "hash only" —
+                    // one format on disk, no bare-hash variant to discriminate.
+                    : PreviewCacheMetadata.Serialize(
+                        write.SettingsHash,
+                        write.Identity ?? default),
                 new UTF8Encoding(false));
             if (File.GetLastWriteTimeUtc(write.SourcePath) != write.SourceWriteTime)
             {
@@ -254,5 +269,6 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         string SourcePath,
         DateTime SourceWriteTime,
         string SettingsHash,
+        PreviewCacheIdentity? Identity,
         MagickImage Image);
 }

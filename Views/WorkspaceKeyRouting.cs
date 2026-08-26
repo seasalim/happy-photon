@@ -13,7 +13,8 @@ internal static class WorkspaceKeyRouting
             return false;
         }
 
-        if (toggleSelection && !viewModel.IsExportMode)
+        if (toggleSelection && !viewModel.IsExportMode &&
+            !viewModel.IsCompareMode)
         {
             viewModel.ToggleSelectionCommand.Execute(null);
         }
