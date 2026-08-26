@@ -9,20 +9,18 @@ namespace HappyPhoton.Tests;
 
 public sealed class WhiteBalanceOutcomeRaceTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-wb-races-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
     public async Task SamplingAfterSelectionChangeCannotCommit(bool eyedropper)
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog, new GradientLoader());
-        var first = new ImageFile(Path.Combine(_root, "first.dng"));
-        var second = new ImageFile(Path.Combine(_root, "second.dng"));
+        var first = new ImageFile(Path.Combine(_root.Path, "first.dng"));
+        var second = new ImageFile(Path.Combine(_root.Path, "second.dng"));
         vm.SelectedImage = first;
         var started = NewSignal();
         var release = NewSignal();
@@ -60,10 +58,10 @@ public sealed class WhiteBalanceOutcomeRaceTests : IDisposable
     [InlineData(true)]
     public async Task SamplingAfterNewerSameImageEditCannotCommit(bool eyedropper)
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog, new GradientLoader());
-        var image = new ImageFile(Path.Combine(_root, "same.dng"));
+        var image = new ImageFile(Path.Combine(_root.Path, "same.dng"));
         vm.SelectedImage = image;
         var started = NewSignal();
         var release = NewSignal();
@@ -99,10 +97,12 @@ public sealed class WhiteBalanceOutcomeRaceTests : IDisposable
     [AvaloniaFact]
     public async Task FailedSampleDoesNotRejectPendingSliderRender()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
-        var vm = CreateViewModel(catalog, new SolidLoader(MagickColors.Black));
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "black.dng"));
+        var vm = CreateViewModel(
+            catalog,
+            new SolidWhiteBalanceLoader(MagickColors.Black));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "black.dng"));
 
         try
         {
@@ -137,13 +137,13 @@ public sealed class WhiteBalanceOutcomeRaceTests : IDisposable
     [Fact]
     public async Task SampleBaseTokenIsRejectedAfterReplacementBaseInstalls()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         await using var service = new PreviewService(
             catalog,
             new GradientLoader(),
             new RenderPipeline());
-        var image = new ImageFile(Path.Combine(_root, "replacement.dng"));
+        var image = new ImageFile(Path.Combine(_root.Path, "replacement.dng"));
         var initial = new EditSettings();
         using (await service.ApplyEditsToPreviewArtifactsAsync(
             image,
@@ -177,7 +177,7 @@ public sealed class WhiteBalanceOutcomeRaceTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 
     private static MainWindowViewModel CreateViewModel(
@@ -226,7 +226,8 @@ public sealed class WhiteBalanceOutcomeRaceTests : IDisposable
             throw new NotSupportedException();
     }
 
-    private sealed class SolidLoader(MagickColor color) : IBaseImageLoader
+    private sealed class SolidWhiteBalanceLoader(MagickColor color)
+        : IBaseImageLoader
     {
         public bool CanLoad(ImageFile file) => true;
 

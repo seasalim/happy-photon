@@ -10,9 +10,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-refresh-staleness-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
     private CatalogService? _catalog;
 
     // A replacement-base refresh can finish rendering, then wait on its ready
@@ -118,17 +116,17 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
 
     private MainWindowViewModel CreateDevelopViewModel(out ImageFile image)
     {
-        _catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        _catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         var vm = new MainWindowViewModel(
             _catalog,
-            new NullLoader(),
+            new NullBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally))
         {
             IsDevelopMode = true
         };
-        image = new ImageFile(Path.Combine(_root, "photo.jpg"));
+        image = new ImageFile(Path.Combine(_root.Path, "photo.jpg"));
         // Selecting the image starts an async preview load that is left
         // suspended (never pumped), so its render never clobbers the state
         // the test installs directly below.
@@ -139,32 +137,6 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
     public void Dispose()
     {
         _catalog?.Dispose();
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
-
-    private sealed class NullLoader : IBaseImageLoader
-    {
-        public bool CanLoad(ImageFile file) => true;
-
-        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) =>
-            BaseImageLoadOutcome.FromImage(
-                LoadPreviewBase(file, decode, cancellationToken),
-                BaseImageLoadFailure.DecodeFailed);
-
-        public BaseImage? LoadPreviewBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-
-        public BaseImage? LoadFullBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
+        _root.Dispose();
     }
 }

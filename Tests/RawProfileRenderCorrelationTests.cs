@@ -9,20 +9,18 @@ namespace HappyPhoton.Tests;
 [Collection(AvaloniaTestCollection.Name)]
 public sealed class RawProfileRenderCorrelationTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-profile-correlation-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [WindowsFact]
     public async Task ReusedBaseCarriesCurrentRequestLocationInOutcome()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
         var firstPath = SyntheticDcpFactory.WriteTemporary(
-            _root,
+            _root.Path,
             new SyntheticDcpOptions { Name = "Shared profile" },
             "first.dcp");
-        var secondPath = Path.Combine(_root, "second.dcp");
+        var secondPath = Path.Combine(_root.Path, "second.dcp");
         File.Copy(firstPath, secondPath);
         var hash = Convert.ToHexString(SHA256.HashData(
             File.ReadAllBytes(firstPath))).ToLowerInvariant();
@@ -36,7 +34,7 @@ public sealed class RawProfileRenderCorrelationTests : IDisposable
             dcpProfiles: new DcpProfileService(
                 new TestSourceAvailabilityService(
                     SourceAvailability.AvailableLocally)));
-        var image = new ImageFile(Path.Combine(_root, "image.dng"));
+        var image = new ImageFile(Path.Combine(_root.Path, "image.dng"));
 
         using var firstArtifacts = await service.ApplyEditsToPreviewArtifactsAsync(
             image,
@@ -74,7 +72,7 @@ public sealed class RawProfileRenderCorrelationTests : IDisposable
         }
     };
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    public void Dispose() => _root.Dispose();
 
     private sealed class CountingProfileLoader : IBaseImageLoader
     {

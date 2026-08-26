@@ -10,20 +10,18 @@ namespace HappyPhoton.Tests;
 public sealed class DcpAtomicityTests : IDisposable
 {
     private readonly AvaloniaTestFixture _fixture;
-    private readonly string _directory = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-dcp-atomic-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _directory = new();
 
     public DcpAtomicityTests(AvaloniaTestFixture fixture) => _fixture = fixture;
 
     [Fact]
     public async Task RapidAtoBtoC_InstallsOnlyNewestMatrixAndTablePayload()
     {
-        var path = Path.Combine(_directory, "image.cr2");
+        var path = Path.Combine(_directory.Path, "image.cr2");
         File.WriteAllBytes(path, []);
         File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(-2));
         var image = new ImageFile(path);
-        using var catalog = new CatalogService(Path.Combine(_directory, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_directory.Path, "catalog"));
         await catalog.InitializeAsync();
         await image.EnsureCatalogIdAsync(catalog);
         var loader = new ProfileLoader();
@@ -107,12 +105,12 @@ public sealed class DcpAtomicityTests : IDisposable
     public async Task RapidAtoBtoC_PromotesAndReloadsOnlyNewestRenderedPayload()
     {
         _fixture.RequireWindows();
-        var path = Path.Combine(_directory, "rendered.cr2");
+        var path = Path.Combine(_directory.Path, "rendered.cr2");
         File.WriteAllBytes(path, []);
         File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(-2));
         var image = new ImageFile(path);
         using var catalog = new CatalogService(Path.Combine(
-            _directory,
+            _directory.Path,
             "rendered-catalog"));
         await catalog.InitializeAsync();
         await image.EnsureCatalogIdAsync(catalog);
@@ -195,7 +193,7 @@ public sealed class DcpAtomicityTests : IDisposable
     private EditSettings WriteSettings(char id, float saturationScale)
     {
         var profilePath = SyntheticDcpFactory.WriteTemporary(
-            _directory,
+            _directory.Path,
             new SyntheticDcpOptions
             {
                 Name = $"Profile {id}",
@@ -275,7 +273,7 @@ public sealed class DcpAtomicityTests : IDisposable
         };
     }
 
-    public void Dispose() => Directory.Delete(_directory, recursive: true);
+    public void Dispose() => _directory.Dispose();
 
     private sealed class ProfileLoader : IBaseImageLoader
     {

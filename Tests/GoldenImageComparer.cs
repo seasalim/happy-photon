@@ -77,21 +77,21 @@ internal static class GoldenImageComparer
         return image;
     }
 
-    private static LabColor ToDisplayLab(byte[] pixels, int index) =>
-        ToLab(
-            ToLinear(pixels[index] / 255.0),
-            ToLinear(pixels[index + 1] / 255.0),
-            ToLinear(pixels[index + 2] / 255.0),
+    private static PrecisionLab ToDisplayLab(byte[] pixels, int index) =>
+        SrgbLabConverter.ToLab(
+            pixels[index] / 255.0,
+            pixels[index + 1] / 255.0,
+            pixels[index + 2] / 255.0,
             SrgbToXyzD65);
 
-    private static LabColor ToLinearLab(ushort[] pixels, int index) =>
+    private static PrecisionLab ToLinearLab(ushort[] pixels, int index) =>
         ToLab(
             pixels[index] / (double)ushort.MaxValue,
             pixels[index + 1] / (double)ushort.MaxValue,
             pixels[index + 2] / (double)ushort.MaxValue,
             RgbColorSpaceMatrices.LinearRec2020ToXyzD65DerivedExact);
 
-    private static LabColor ToLab(
+    private static PrecisionLab ToLab(
         double r,
         double g,
         double b,
@@ -106,16 +106,11 @@ internal static class GoldenImageComparer
         var fx = LabTransform(x);
         var fy = LabTransform(y);
         var fz = LabTransform(z);
-        return new LabColor(
+        return new PrecisionLab(
             116 * fy - 16,
             500 * (fx - fy),
             200 * (fy - fz));
     }
-
-    private static double ToLinear(double value) =>
-        value <= 0.04045
-            ? value / 12.92
-            : Math.Pow((value + 0.055) / 1.055, 2.4);
 
     private static double LabTransform(double value)
     {
@@ -126,13 +121,48 @@ internal static class GoldenImageComparer
             : (kappa * value + 16) / 116;
     }
 
-    private static double DeltaE(LabColor first, LabColor second)
+    private static double DeltaE(PrecisionLab first, PrecisionLab second)
     {
         var deltaL = first.L - second.L;
         var deltaA = first.A - second.A;
         var deltaB = first.B - second.B;
         return Math.Sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB);
     }
+}
 
-    private readonly record struct LabColor(double L, double A, double B);
+internal static class SrgbLabConverter
+{
+    public static PrecisionLab ToLab(
+        double red,
+        double green,
+        double blue,
+        double[,] srgbToXyzD65)
+    {
+        var r = Decode(red);
+        var g = Decode(green);
+        var b = Decode(blue);
+        var x = (srgbToXyzD65[0, 0] * r + srgbToXyzD65[0, 1] * g +
+            srgbToXyzD65[0, 2] * b) / 0.95047;
+        var y = srgbToXyzD65[1, 0] * r + srgbToXyzD65[1, 1] * g +
+            srgbToXyzD65[1, 2] * b;
+        var z = (srgbToXyzD65[2, 0] * r + srgbToXyzD65[2, 1] * g +
+            srgbToXyzD65[2, 2] * b) / 1.08883;
+        var fx = PivotXyz(x);
+        var fy = PivotXyz(y);
+        var fz = PivotXyz(z);
+        return new PrecisionLab(
+            116 * fy - 16,
+            500 * (fx - fy),
+            200 * (fy - fz));
+    }
+
+    private static double Decode(double value) =>
+        value <= 0.04045
+            ? value / 12.92
+            : Math.Pow((value + 0.055) / 1.055, 2.4);
+
+    private static double PivotXyz(double value) =>
+        value > 216.0 / 24389
+            ? Math.Cbrt(value)
+            : 841.0 / 108 * value + 4.0 / 29;
 }

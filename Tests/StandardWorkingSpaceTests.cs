@@ -7,11 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class StandardWorkingSpaceTests : IDisposable
 {
-    private readonly string _directory = Path.Combine(
-        Path.GetTempPath(),
-        $"HappyPhotonWorkingSpaceTests_{Guid.NewGuid():N}");
-
-    public StandardWorkingSpaceTests() => Directory.CreateDirectory(_directory);
+    private readonly TemporaryDirectory _directory = new();
 
     [Fact]
     public void MagickSrgbProfile_NormalizesToRec2020OracleWithoutDoubleTransfer()
@@ -147,7 +143,7 @@ public sealed class StandardWorkingSpaceTests : IDisposable
         IColorProfile profile,
         byte[] codes)
     {
-        var path = Path.Combine(_directory, fileName);
+        var path = Path.Combine(_directory.Path, fileName);
         var settings = new PixelReadSettings(
             (uint)(codes.Length / 3),
             1,
@@ -184,5 +180,5 @@ public sealed class StandardWorkingSpaceTests : IDisposable
         image.GetPixelsUnsafe().ToShortArray(PixelMapping.RGB) ??
         throw new InvalidOperationException("Could not read RGB pixels.");
 
-    public void Dispose() => Directory.Delete(_directory, recursive: true);
+    public void Dispose() => _directory.Dispose();
 }

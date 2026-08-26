@@ -9,9 +9,7 @@ namespace HappyPhoton.Tests;
 public sealed class PreviewClippingArtifactsTests : IDisposable
 {
     private readonly AvaloniaTestFixture _fixture;
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-preview-clipping-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     public PreviewClippingArtifactsTests(AvaloniaTestFixture fixture)
     {
@@ -23,13 +21,13 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
     {
         // Guard the service layer against stripping the standard-source high side.
         _fixture.RequireWindows();
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
         await using var service = new PreviewService(
             catalog,
-            new SolidLoader(isRaw: false, MagickColors.White),
+            new ClippingArtifactsLoader(isRaw: false, MagickColors.White),
             new RenderPipeline());
-        var image = new ImageFile(Path.Combine(_root, "standard.jpg"));
+        var image = new ImageFile(Path.Combine(_root.Path, "standard.jpg"));
         var request = ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium);
 
         using var unlatched = await service.ApplyEditsToPreviewArtifactsAsync(
@@ -66,13 +64,13 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
     public async Task CarrierDisposesBitmapAndSemanticMaskTogether()
     {
         _fixture.RequireWindows();
-        using var catalog = new CatalogService(Path.Combine(_root, "lifetime"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "lifetime"));
         await catalog.InitializeAsync();
         await using var service = new PreviewService(
             catalog,
-            new SolidLoader(isRaw: true, MagickColors.White),
+            new ClippingArtifactsLoader(isRaw: true, MagickColors.White),
             new RenderPipeline());
-        var image = new ImageFile(Path.Combine(_root, "raw.dng"));
+        var image = new ImageFile(Path.Combine(_root.Path, "raw.dng"));
         var artifacts = await service.ApplyEditsToPreviewArtifactsAsync(
             image,
             new EditSettings(),
@@ -91,10 +89,10 @@ public sealed class PreviewClippingArtifactsTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 
-    private sealed class SolidLoader(bool isRaw, MagickColor color)
+    private sealed class ClippingArtifactsLoader(bool isRaw, MagickColor color)
         : IBaseImageLoader
     {
         public bool CanLoad(ImageFile file) => true;

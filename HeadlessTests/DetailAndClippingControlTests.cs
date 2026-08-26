@@ -16,14 +16,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class DetailAndClippingControlTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-detail-clipping-ui-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task DetailGroupUsesAllSourceSlidersAndResolvesSourceDefault()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await using var vm = new MainWindowViewModel(
             catalog,
             new NullBaseLoader(),
@@ -36,13 +34,13 @@ public sealed class DetailAndClippingControlTests : IDisposable
         var luminanceNr = detail.FindControl<CompactSlider>(
             "LuminanceNrSlider")!;
 
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "raw.dng"));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "raw.dng"));
         Dispatcher.UIThread.RunJobs();
         Assert.True(luminanceNr.IsVisible);
         Assert.True(luminanceNr.IsEnabled);
         Assert.Equal(25, vm.CaptureSharpen);
 
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "standard.jpg"));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "standard.jpg"));
         Dispatcher.UIThread.RunJobs();
         Assert.True(luminanceNr.IsVisible);
         Assert.True(luminanceNr.IsEnabled);
@@ -203,6 +201,6 @@ public sealed class DetailAndClippingControlTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 }

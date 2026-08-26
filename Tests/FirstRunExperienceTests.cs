@@ -7,10 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class FirstRunExperienceTests : IDisposable
 {
-    private readonly string _testRoot =
-        Directory.CreateDirectory(Path.Combine(
-            Path.GetTempPath(),
-            $"happy-photon-first-run-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _testRoot = new();
 
     [Fact]
     public void StartupDecision_DistinguishesNewExistingAndCompletedInstalls()
@@ -22,7 +19,7 @@ public sealed class FirstRunExperienceTests : IDisposable
             FirstRunStartupDecision.GrandfatherExistingInstallation,
             MainWindowViewModel.DecideFirstRunStartup(new AppSettings
             {
-                RootFolderPath = _testRoot
+                RootFolderPath = _testRoot.Path
             }));
         Assert.Equal(
             FirstRunStartupDecision.Restore,
@@ -35,7 +32,7 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public async Task Completion_PersistsBeforeOpeningWorkspace()
     {
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
         string? persistedPath = null;
         var focusRequested = false;
@@ -45,16 +42,16 @@ public sealed class FirstRunExperienceTests : IDisposable
             return Task.CompletedTask;
         };
         vm.RequestFolderTreeFocus = () => focusRequested = true;
-        vm.ShowFirstRunWelcome(_testRoot);
-        vm.ResumeFirstRunAfterStorage(_testRoot);
+        vm.ShowFirstRunWelcome(_testRoot.Path);
+        vm.ResumeFirstRunAfterStorage(_testRoot.Path);
 
-        await vm.CompleteFirstRunFromLocationAsync(_testRoot);
+        await vm.CompleteFirstRunFromLocationAsync(_testRoot.Path);
 
         Assert.Equal(FirstRunStep.AllSet, vm.FirstRunStep);
         Assert.Null(persistedPath);
         await vm.StartFirstRunTourCommand.ExecuteAsync(null);
 
-        Assert.Equal(_testRoot, persistedPath);
+        Assert.Equal(_testRoot.Path, persistedPath);
         Assert.Equal(StartupGateState.Ready, vm.StartupGateState);
         Assert.Equal(1, vm.FirstRunExperienceVersion);
         Assert.True(vm.CanPersistFolderSession);
@@ -65,14 +62,14 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public async Task CompletionFailure_KeepsWelcomeVisible()
     {
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
         vm.PersistFirstRunCompletionAsync =
             _ => Task.FromException(new IOException("write failed"));
-        vm.ShowFirstRunWelcome(_testRoot);
-        vm.ResumeFirstRunAfterStorage(_testRoot);
+        vm.ShowFirstRunWelcome(_testRoot.Path);
+        vm.ResumeFirstRunAfterStorage(_testRoot.Path);
 
-        await vm.CompleteFirstRunFromLocationAsync(_testRoot);
+        await vm.CompleteFirstRunFromLocationAsync(_testRoot.Path);
         await vm.StartFirstRunTourCommand.ExecuteAsync(null);
 
         Assert.True(vm.IsFirstRunVisible);
@@ -85,7 +82,7 @@ public sealed class FirstRunExperienceTests : IDisposable
     public async Task CatalogLocation_IsRejectedWithoutPersistingCompletion()
     {
         var catalogPath = Directory.CreateDirectory(
-            Path.Combine(_testRoot, "catalog")).FullName;
+            Path.Combine(_testRoot.Path, "catalog")).FullName;
         using var catalog = new CatalogService(catalogPath);
         var vm = new MainWindowViewModel(catalog);
         var persistenceRequested = false;
@@ -94,8 +91,8 @@ public sealed class FirstRunExperienceTests : IDisposable
             persistenceRequested = true;
             return Task.CompletedTask;
         };
-        vm.ShowFirstRunWelcome(_testRoot);
-        vm.ResumeFirstRunAfterStorage(_testRoot);
+        vm.ShowFirstRunWelcome(_testRoot.Path);
+        vm.ResumeFirstRunAfterStorage(_testRoot.Path);
 
         await vm.CompleteFirstRunFromLocationAsync(catalogPath);
 
@@ -108,11 +105,11 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public void BrowseRequest_DoesNotCompleteFirstRun()
     {
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
         var browseRequested = false;
         vm.BrowseLocationRequested = () => browseRequested = true;
-        vm.ShowFirstRunWelcome(_testRoot);
+        vm.ShowFirstRunWelcome(_testRoot.Path);
 
         vm.BrowseElsewhereCommand.Execute(null);
 
@@ -124,11 +121,11 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public async Task PreparedTree_DoesNotSelectOrLoadDefaultFolder()
     {
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
 
         await vm.InitializeFolderTreeWithRootAsync(
-            _testRoot,
+            _testRoot.Path,
             selectFolder: false);
 
         Assert.Single(vm.RootFolders);
@@ -140,7 +137,7 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public void MissingPictures_UsesPickerLedPicturesStep()
     {
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
 
         vm.ShowFirstRunWelcome(null);
@@ -153,17 +150,17 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public async Task Wizard_VisitsWelcomeStorageAndPicturesInOrder()
     {
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
         var storageCommits = 0;
         vm.CompleteDataLocationSetupAsync = () =>
         {
             storageCommits++;
             vm.MarkFirstRunStorageCommitted();
-            vm.ResumeFirstRunAfterStorage(_testRoot);
+            vm.ResumeFirstRunAfterStorage(_testRoot.Path);
             return Task.CompletedTask;
         };
-        vm.ShowFirstRunWelcome(_testRoot);
+        vm.ShowFirstRunWelcome(_testRoot.Path);
 
         Assert.Equal(FirstRunStep.Welcome, vm.FirstRunStep);
         await vm.ContinueFirstRunCommand.ExecuteAsync(null);
@@ -173,7 +170,7 @@ public sealed class FirstRunExperienceTests : IDisposable
         Assert.Equal(1, storageCommits);
 
         Assert.True(vm.IsFirstRunStorageReadOnly);
-        vm.ResumeFirstRunAfterStorage(_testRoot);
+        vm.ResumeFirstRunAfterStorage(_testRoot.Path);
         Assert.Equal(FirstRunStep.Pictures, vm.FirstRunStep);
         Assert.Equal(1, storageCommits);
         await vm.DisposeAsync();
@@ -182,13 +179,13 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public async Task Welcome_DoesNotCreateStorageUntilStorageContinues()
     {
-        var pictures = Path.Combine(_testRoot, "pictures");
-        var pointer = Path.Combine(_testRoot, "pointer");
-        var data = Path.Combine(_testRoot, "data");
-        var cache = Path.Combine(_testRoot, "cache");
+        var pictures = Path.Combine(_testRoot.Path, "pictures");
+        var pointer = Path.Combine(_testRoot.Path, "pointer");
+        var data = Path.Combine(_testRoot.Path, "data");
+        var cache = Path.Combine(_testRoot.Path, "cache");
         var locations = new AppDataLocationService(new AppDataPlatformPaths(
             pictures, pointer, data, cache));
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "vm-catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "vm-catalog"));
         var vm = new MainWindowViewModel(catalog);
         var storageCommits = 0;
         vm.PrepareFirstRunStorage(locations, null);
@@ -221,9 +218,9 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public async Task PicturesDetection_DefersCompletionUntilImportApplies()
     {
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
-        var lightroomCatalog = Path.Combine(_testRoot, "photos.lrcat");
+        var lightroomCatalog = Path.Combine(_testRoot.Path, "photos.lrcat");
         var persisted = false;
         var applied = false;
         var focusRequested = false;
@@ -240,10 +237,10 @@ public sealed class FirstRunExperienceTests : IDisposable
             return Task.CompletedTask;
         };
         vm.RequestFolderTreeFocus = () => focusRequested = true;
-        vm.ShowFirstRunWelcome(_testRoot);
-        vm.ResumeFirstRunAfterStorage(_testRoot);
+        vm.ShowFirstRunWelcome(_testRoot.Path);
+        vm.ResumeFirstRunAfterStorage(_testRoot.Path);
 
-        await vm.CompleteFirstRunFromLocationAsync(_testRoot);
+        await vm.CompleteFirstRunFromLocationAsync(_testRoot.Path);
 
         Assert.Equal(FirstRunStep.Lightroom, vm.FirstRunStep);
         Assert.False(persisted);
@@ -269,7 +266,7 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public async Task LightroomSkip_UsesTheSameWizardFinishPath()
     {
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
         string? persistedPath = null;
         vm.DetectLightroomAsync = (_, _) => Task.FromResult(
@@ -279,9 +276,9 @@ public sealed class FirstRunExperienceTests : IDisposable
             persistedPath = path;
             return Task.CompletedTask;
         };
-        vm.ShowFirstRunWelcome(_testRoot);
-        vm.ResumeFirstRunAfterStorage(_testRoot);
-        await vm.CompleteFirstRunFromLocationAsync(_testRoot);
+        vm.ShowFirstRunWelcome(_testRoot.Path);
+        vm.ResumeFirstRunAfterStorage(_testRoot.Path);
+        await vm.CompleteFirstRunFromLocationAsync(_testRoot.Path);
 
         vm.SkipDetectedLightroomCommand.Execute(null);
 
@@ -289,7 +286,7 @@ public sealed class FirstRunExperienceTests : IDisposable
         Assert.Null(persistedPath);
         await vm.SkipFirstRunTourCommand.ExecuteAsync(null);
 
-        Assert.Equal(_testRoot, persistedPath);
+        Assert.Equal(_testRoot.Path, persistedPath);
         Assert.Equal(StartupGateState.Ready, vm.StartupGateState);
         Assert.Equal(WorkflowTourStep.None, vm.WorkflowTourStep);
         await vm.DisposeAsync();
@@ -299,11 +296,11 @@ public sealed class FirstRunExperienceTests : IDisposable
     public async Task StorageRows_RequestTheirOwnPickerDirectly()
     {
         var service = new AppDataLocationService(new AppDataPlatformPaths(
-            Path.Combine(_testRoot, "pictures"),
-            Path.Combine(_testRoot, "pointer"),
-            Path.Combine(_testRoot, "data"),
-            Path.Combine(_testRoot, "cache")));
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+            Path.Combine(_testRoot.Path, "pictures"),
+            Path.Combine(_testRoot.Path, "pointer"),
+            Path.Combine(_testRoot.Path, "data"),
+            Path.Combine(_testRoot.Path, "cache")));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
         vm.PrepareFirstRunStorage(service, null);
         var requested = new List<bool>();
@@ -312,7 +309,7 @@ public sealed class FirstRunExperienceTests : IDisposable
             requested.Add(catalogLocation);
             return Task.CompletedTask;
         };
-        vm.ShowFirstRunWelcome(_testRoot);
+        vm.ShowFirstRunWelcome(_testRoot.Path);
         await vm.ContinueFirstRunCommand.ExecuteAsync(null);
 
         Assert.True(vm.CanChangeFirstRunStorage);
@@ -325,11 +322,11 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public async Task LightroomCandidates_AreSelectableAndImportUsesSelection()
     {
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
-        var first = Path.Combine(_testRoot, "first.lrcat");
-        var second = Path.Combine(_testRoot, "second.lrcat");
-        var third = Path.Combine(_testRoot, "third.lrcat");
+        var first = Path.Combine(_testRoot.Path, "first.lrcat");
+        var second = Path.Combine(_testRoot.Path, "second.lrcat");
+        var third = Path.Combine(_testRoot.Path, "third.lrcat");
         string? imported = null;
         vm.DetectLightroomAsync = (_, _) => Task.FromResult(
             new LightroomDetectionResult(true, [first, second]));
@@ -339,10 +336,10 @@ public sealed class FirstRunExperienceTests : IDisposable
             return Task.FromResult(false);
         };
         vm.RequestFirstRunCatalogPathAsync = () => Task.FromResult<string?>(third);
-        vm.ShowFirstRunWelcome(_testRoot);
-        vm.ResumeFirstRunAfterStorage(_testRoot);
+        vm.ShowFirstRunWelcome(_testRoot.Path);
+        vm.ResumeFirstRunAfterStorage(_testRoot.Path);
 
-        await vm.CompleteFirstRunFromLocationAsync(_testRoot);
+        await vm.CompleteFirstRunFromLocationAsync(_testRoot.Path);
 
         Assert.Equal([first, second], vm.DetectedLightroomCatalogPaths);
         Assert.Equal(first, vm.DetectedLightroomCatalogPath);
@@ -359,7 +356,7 @@ public sealed class FirstRunExperienceTests : IDisposable
     [Fact]
     public void StartupFailure_PreservesActionableMessage()
     {
-        using var catalog = new CatalogService(Path.Combine(_testRoot, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
 
         vm.ShowStartupFailure("Move the incompatible catalog aside, then retry.");
@@ -371,11 +368,5 @@ public sealed class FirstRunExperienceTests : IDisposable
         Assert.False(vm.CanPersistFolderSession);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_testRoot))
-        {
-            Directory.Delete(_testRoot, recursive: true);
-        }
-    }
+    public void Dispose() => _testRoot.Dispose();
 }

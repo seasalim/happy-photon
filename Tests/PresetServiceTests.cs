@@ -441,23 +441,22 @@ public sealed class PresetServiceTests : IDisposable
         var curve = new CurveData();
         curve.Points.Insert(1, new CurvePoint(0.5, 0.65));
         curve.BuildLookupTable();
-        return new EditSettings
+        var settings = TestEditSettingsFactory.CreateTonal(
+            exposure: 0.75,
+            brightness: 4,
+            contrast: 12,
+            saturation: 9,
+            vibrance: 17,
+            shadows: 11,
+            highlights: -21,
+            curve: curve);
+        settings.Wb = new WhiteBalanceSettings
         {
-            Exposure = 0.75,
-            Wb = new WhiteBalanceSettings
-            {
-                Mode = WbMode.Custom,
-                Kelvin = 6800,
-                Tint = 8
-            },
-            Brightness = 4,
-            Contrast = 12,
-            Saturation = 9,
-            Vibrance = 17,
-            Shadows = 11,
-            Highlights = -21,
-            Curve = curve,
-            CurveRed = curve.Clone()
+            Mode = WbMode.Custom,
+            Kelvin = 6800,
+            Tint = 8
         };
+        settings.CurveRed = curve.Clone();
+        return settings;
     }
 }

@@ -8,17 +8,15 @@ namespace HappyPhoton.Tests;
 
 public sealed class RawDecodeFailureStatusTests : IDisposable
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-raw-status-{Guid.NewGuid():N}");
+    private readonly TemporaryDirectory _root = new();
 
     [Fact]
     public async Task UnsupportedFailure_PersistsAcrossSelectionAndRetryClearsIt()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         var vm = CreateViewModel(catalog);
-        var raw = new ImageFile(Path.Combine(_root, "unsupported.nef"));
-        var other = new ImageFile(Path.Combine(_root, "other.jpg"));
+        var raw = new ImageFile(Path.Combine(_root.Path, "unsupported.nef"));
+        var other = new ImageFile(Path.Combine(_root.Path, "other.jpg"));
         vm.SelectedImage = raw;
 
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
@@ -46,10 +44,10 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
     [Fact]
     public async Task StaleSelectionAndGenerationOutcomesCannotPinOrClearFailure()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         var vm = CreateViewModel(catalog);
-        var first = new ImageFile(Path.Combine(_root, "first.dng"));
-        var second = new ImageFile(Path.Combine(_root, "second.dng"));
+        var first = new ImageFile(Path.Combine(_root.Path, "first.dng"));
+        var second = new ImageFile(Path.Combine(_root.Path, "second.dng"));
         vm.SelectedImage = first;
         vm.SelectedImage = second;
 
@@ -75,9 +73,9 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
     [Fact]
     public async Task SourceFailureOutranksFileRuntimeAndTransientReasons()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         var vm = CreateViewModel(catalog, RejectedHealth());
-        var raw = new ImageFile(Path.Combine(_root, "priority.cr3"));
+        var raw = new ImageFile(Path.Combine(_root.Path, "priority.cr3"));
         vm.SelectedImage = raw;
         vm.TransientStatus = "transient";
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
@@ -96,9 +94,9 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
     [Fact]
     public async Task RuntimeRejectionIsGlobalAndDoesNotMarkIndividualTile()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         var vm = CreateViewModel(catalog, RejectedHealth());
-        var raw = new ImageFile(Path.Combine(_root, "runtime.raf"));
+        var raw = new ImageFile(Path.Combine(_root.Path, "runtime.raf"));
         vm.SelectedImage = raw;
 
         vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
@@ -114,7 +112,7 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
     [Fact]
     public void ThumbnailFailureMarkerRemainsVisibleWithOrWithoutPixels()
     {
-        var image = new ImageFile(Path.Combine(_root, "thumb.orf"));
+        var image = new ImageFile(Path.Combine(_root.Path, "thumb.orf"));
         image.ThumbnailLoadFailed = true;
         Assert.True(image.HasVisibleLoadFailure);
 
@@ -129,7 +127,7 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
         LibRawRuntimeHealth? health = null) =>
         new(
             catalog,
-            new NullLoader(),
+            new NullBaseLoader(BaseImageLoadFailure.UnsupportedRaw),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally),
@@ -149,28 +147,5 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
             "0.22.1-Release",
             LibRawCapabilities.Jpeg | LibRawCapabilities.Zlib));
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
-
-    private sealed class NullLoader : IBaseImageLoader
-    {
-        public bool CanLoad(ImageFile file) => true;
-
-        BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(ImageFile file, BaseDecodeSettings decode, CancellationToken cancellationToken) => BaseImageLoadOutcome.FromImage(LoadPreviewBase(file, decode, cancellationToken), BaseImageLoadFailure.UnsupportedRaw);
-
-        public BaseImage? LoadPreviewBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-
-        public BaseImage? LoadFullBase(
-            ImageFile file,
-            BaseDecodeSettings decode,
-            CancellationToken cancellationToken) => null;
-    }
+    public void Dispose() => _root.Dispose();
 }

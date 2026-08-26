@@ -8,9 +8,7 @@ namespace HappyPhoton.Tests;
 [Collection(AvaloniaTestCollection.Name)]
 public sealed class PreviewRetentionTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-preview-retention-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [WindowsFact]
     public async Task SameImageDevelopBrowseDevelopReusesSettledPair()
@@ -143,14 +141,14 @@ public sealed class PreviewRetentionTests : IDisposable
 
     private async Task<CatalogService> CreateCatalogAsync(string name)
     {
-        var catalog = new CatalogService(Path.Combine(_root, name));
+        var catalog = new CatalogService(Path.Combine(_root.Path, name));
         await catalog.InitializeAsync();
         return catalog;
     }
 
     private ImageFile CreateImage(string name)
     {
-        var path = Path.Combine(_root, name);
+        var path = Path.Combine(_root.Path, name);
         File.WriteAllBytes(path, [0]);
         return new ImageFile(path);
     }
@@ -171,9 +169,6 @@ public sealed class PreviewRetentionTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
+        _root.Dispose();
     }
 }

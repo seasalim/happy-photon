@@ -6,22 +6,20 @@ namespace HappyPhoton.Tests;
 
 public sealed class CatalogMigrationTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-migration-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [Fact]
     public async Task PreLabelCatalog_MigratesBeforeValidationAndReopensAsNoOp()
     {
         await CreatePreLabelCatalogAsync();
 
-        using (var service = new CatalogService(_root))
+        using (var service = new CatalogService(_root.Path))
         {
             await service.InitializeAsync();
         }
         var firstVersion = await ReadSettingAsync("schema_version");
 
-        using (var reopened = new CatalogService(_root))
+        using (var reopened = new CatalogService(_root.Path))
         {
             await reopened.InitializeAsync();
         }
@@ -40,7 +38,7 @@ public sealed class CatalogMigrationTests : IDisposable
     {
         await CreatePreLabelCatalogAsync(value);
 
-        using var service = new CatalogService(_root);
+        using var service = new CatalogService(_root.Path);
         var exception = await Assert.ThrowsAsync<InvalidDataException>(
             service.InitializeAsync);
 
@@ -67,7 +65,7 @@ public sealed class CatalogMigrationTests : IDisposable
             await command.ExecuteNonQueryAsync();
         }
 
-        using var service = new CatalogService(_root);
+        using var service = new CatalogService(_root.Path);
         await Assert.ThrowsAnyAsync<Exception>(service.InitializeAsync);
 
         Assert.Null(await ReadSettingAsync("schema_version"));
@@ -102,7 +100,7 @@ public sealed class CatalogMigrationTests : IDisposable
             await command.ExecuteNonQueryAsync();
         }
 
-        using (var service = new CatalogService(_root))
+        using (var service = new CatalogService(_root.Path))
             await service.InitializeAsync();
 
         await using var inspection = await OpenAsync();
@@ -121,7 +119,7 @@ public sealed class CatalogMigrationTests : IDisposable
 
     private async Task CreatePreLabelCatalogAsync(string? version = null)
     {
-        var databasePath = Path.Combine(_root, "catalog.db");
+        var databasePath = Path.Combine(_root.Path, "catalog.db");
         await using var connection = new SqliteConnection(
             $"Data Source={databasePath};Pooling=False");
         await connection.OpenAsync();
@@ -170,10 +168,10 @@ public sealed class CatalogMigrationTests : IDisposable
     private async Task<SqliteConnection> OpenAsync()
     {
         var connection = new SqliteConnection(
-            $"Data Source={Path.Combine(_root, "catalog.db")};Pooling=False");
+            $"Data Source={Path.Combine(_root.Path, "catalog.db")};Pooling=False");
         await connection.OpenAsync();
         return connection;
     }
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    public void Dispose() => _root.Dispose();
 }

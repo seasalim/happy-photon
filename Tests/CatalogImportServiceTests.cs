@@ -7,14 +7,14 @@ namespace HappyPhoton.Tests;
 
 public sealed class CatalogImportServiceTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(), $"happy-photon-import-tests-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
     private CatalogService? _catalog;
+
 
     [Fact]
     public async Task Apply_NormalizesLightroomPathAndFolderScanFindsExactlyOneRow()
     {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var photo = Path.Combine(photos, "keeper.JPG");
         File.WriteAllBytes(photo, [1]);
         var catalog = await CreateCatalogAsync();
@@ -34,7 +34,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     [Fact]
     public async Task Preview_CaseVariantMatchesExistingCatalogIdentity()
     {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var photo = Path.Combine(photos, "keeper.jpg");
         File.WriteAllBytes(photo, [1]);
         var catalog = await CreateCatalogAsync();
@@ -59,11 +59,11 @@ public sealed class CatalogImportServiceTests : IDisposable
     [Fact]
     public async Task Preview_CaseVariantsCollapseToOneCatalogIdentity()
     {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         File.WriteAllBytes(Path.Combine(photos, "keeper.jpg"), [1]);
         const string sourceRoot = "D:/Photos/";
         var source = new LightroomCatalogContents(
-            Path.Combine(_root, "source.lrcat"), 1303001, 13, true,
+            Path.Combine(_root.Path, "source.lrcat"), 1303001, 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot(sourceRoot, 2)],
             [
                 Record(sourceRoot, "keeper.jpg", CatalogImportFact<int>.Mapped(3)),
@@ -90,10 +90,10 @@ public sealed class CatalogImportServiceTests : IDisposable
     public void NormalizeMappedPath_RewritesMixedSeparatorsAndPreservesCase()
     {
         var actual = CatalogImportService.NormalizeMappedPath(
-            _root, "/Year\\Shoot/Keeper.JPG");
+            _root.Path, "/Year\\Shoot/Keeper.JPG");
 
         Assert.Equal(
-            Path.Combine(_root, "Year", "Shoot", "Keeper.JPG"),
+            Path.Combine(_root.Path, "Year", "Shoot", "Keeper.JPG"),
             actual);
     }
 
@@ -105,13 +105,13 @@ public sealed class CatalogImportServiceTests : IDisposable
         string relativePath)
     {
         Assert.Throws<InvalidDataException>(() =>
-            CatalogImportService.NormalizeMappedPath(_root, relativePath));
+            CatalogImportService.NormalizeMappedPath(_root.Path, relativePath));
     }
 
     [Fact]
     public async Task Apply_NeverClearsLocalValuesAndUnsupportedLabelIsPreserved()
     {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var photo = Path.Combine(photos, "keeper.jpg");
         var catalog = await CreateCatalogAsync();
         var id = await catalog.GetOrCreateImageAsync(photo);
@@ -138,7 +138,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     [Fact]
     public async Task Policies_OverwriteOrFillOnlyPerAxis()
     {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var first = Path.Combine(photos, "first.jpg");
         var second = Path.Combine(photos, "second.jpg");
         var catalog = await CreateCatalogAsync();
@@ -147,7 +147,7 @@ public sealed class CatalogImportServiceTests : IDisposable
             new AssessmentMutation(states[first].CatalogId, AssessmentAxes.Rating, Rating: 2)
         ], AssessmentAxes.None);
         var source = new LightroomCatalogContents(
-            Path.Combine(_root, "source.lrcat"), 1303001, 13, true,
+            Path.Combine(_root.Path, "source.lrcat"), 1303001, 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot("D:/Photos/", 2)],
             [
                 Record("D:/Photos/", "first.jpg", CatalogImportFact<int>.Mapped(5)),
@@ -171,7 +171,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     [Fact]
     public async Task IdenticalRerun_PerformsZeroWritesAndLeavesSettingsUnchanged()
     {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var source = Source(photos, "keeper.jpg",
             flag: CatalogImportFact<ImageFlag>.Mapped(ImageFlag.Picked));
         var catalog = await CreateCatalogAsync();
@@ -203,7 +203,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     [Fact]
     public async Task PreviewRace_RollsBackEverything()
     {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var photo = Path.Combine(photos, "keeper.jpg");
         var catalog = await CreateCatalogAsync();
         var id = await catalog.GetOrCreateImageAsync(photo);
@@ -226,7 +226,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     [Fact]
     public async Task InjectedFailureAfterInsertAndAssessment_RollsBackAllTablesAndSettings()
     {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var catalog = await CreateCatalogAsync();
         var source = Source(photos, "keeper.jpg",
             rating: CatalogImportFact<int>.Mapped(5));
@@ -247,7 +247,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     [Fact]
     public async Task CancellationAfterFirstMutation_RollsBackNewPath()
     {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var catalog = await CreateCatalogAsync();
         var source = Source(photos, "keeper.jpg",
             rating: CatalogImportFact<int>.Mapped(5));
@@ -289,9 +289,9 @@ public sealed class CatalogImportServiceTests : IDisposable
         Assert.Contains(unmatchedReport.InformationalOutcomes,
             message => message.Contains("unmapped Lightroom location"));
 
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var mixed = new LightroomCatalogContents(
-            Path.Combine(_root, "mixed.lrcat"), 1600000, 16, false,
+            Path.Combine(_root.Path, "mixed.lrcat"), 1600000, 16, false,
             AssessmentAxes.All, [new CatalogSourceRoot("D:/", 3)],
             [
                 Record("D:/", "one.jpg", CatalogImportFact<int>.Mapped(4)),
@@ -310,7 +310,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     [Fact]
     public async Task MissingMappedPhotosCannotWriteCatalogRowsOrSettings()
     {
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var source = Source("D:/Photos/", "missing.jpg",
             rating: CatalogImportFact<int>.Mapped(4));
         var catalog = await CreateCatalogAsync();
@@ -335,9 +335,9 @@ public sealed class CatalogImportServiceTests : IDisposable
     public async Task Preview_UnmappedRootIsAnInformationalSkipWhenAnotherRootMatches()
     {
         var catalog = await CreateCatalogAsync();
-        var photos = Directory.CreateDirectory(Path.Combine(_root, "photos")).FullName;
+        var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var source = new LightroomCatalogContents(
-            Path.Combine(_root, "partial.lrcat"), 1303001, 13, true,
+            Path.Combine(_root.Path, "partial.lrcat"), 1303001, 13, true,
             AssessmentAxes.All,
             [
                 new CatalogSourceRoot("D:/Matched/", 1),
@@ -374,7 +374,7 @@ public sealed class CatalogImportServiceTests : IDisposable
                 CatalogImportFact<int>.Mapped(index % 5 + 1)))
             .ToArray();
         var source = new LightroomCatalogContents(
-            Path.Combine(_root, "large.lrcat"), 1303001, 13, true,
+            Path.Combine(_root.Path, "large.lrcat"), 1303001, 13, true,
             AssessmentAxes.All,
             [new CatalogSourceRoot(sourceRoot, records.Length)],
             records, []);
@@ -382,7 +382,7 @@ public sealed class CatalogImportServiceTests : IDisposable
 
         var preview = await CreateImport(catalog).CreatePreviewAsync(
             source,
-            new Dictionary<string, string> { [sourceRoot] = _root },
+            new Dictionary<string, string> { [sourceRoot] = _root.Path },
             CatalogImportPolicy.LightroomWins);
 
         stopwatch.Stop();
@@ -393,7 +393,7 @@ public sealed class CatalogImportServiceTests : IDisposable
 
     private async Task<CatalogService> CreateCatalogAsync()
     {
-        _catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        _catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await _catalog.InitializeAsync();
         return _catalog;
     }
@@ -411,7 +411,7 @@ public sealed class CatalogImportServiceTests : IDisposable
     {
         var builder = new SqliteConnectionStringBuilder
         {
-            DataSource = Path.Combine(_root, "catalog", "catalog.db"),
+            DataSource = Path.Combine(_root.Path, "catalog", "catalog.db"),
             Mode = SqliteOpenMode.ReadOnly,
             Pooling = false
         };
@@ -428,12 +428,12 @@ public sealed class CatalogImportServiceTests : IDisposable
         CatalogImportFact<int>? rating = null,
         CatalogImportFact<ImageFlag>? flag = null,
         CatalogImportFact<ColorLabel>? label = null) =>
-        new(Path.Combine(_root, "source.lrcat"), 1303001, 13, true,
+        new(Path.Combine(_root.Path, "source.lrcat"), 1303001, 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot(root, 1)],
             [Record(root, relative, rating, flag, label)], []);
 
     private LightroomCatalogContents EmptySource() =>
-        new(Path.Combine(_root, "empty.lrcat"), 1303001, 13, true,
+        new(Path.Combine(_root.Path, "empty.lrcat"), 1303001, 13, true,
             AssessmentAxes.All, [], [], []);
 
     private static CatalogImportRecord Record(
@@ -457,6 +457,6 @@ public sealed class CatalogImportServiceTests : IDisposable
     public void Dispose()
     {
         _catalog?.Dispose();
-        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 }

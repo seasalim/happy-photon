@@ -5,13 +5,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class XmpSidecarPathTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(), $"happy-photon-xmp-path-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [Fact]
     public void BothNames_NewerWinsAndOtherIsReportedAsShadowed()
     {
-        var image = Path.Combine(_root, "IMG_1234.CR3");
+        var image = Path.Combine(_root.Path, "IMG_1234.CR3");
         var full = image + ".xmp";
         var baseName = Path.ChangeExtension(image, ".xmp");
         File.WriteAllText(full, "full");
@@ -30,8 +29,8 @@ public sealed class XmpSidecarPathTests : IDisposable
     [Fact]
     public void RawJpegPair_MakesBaseNameAmbiguousAndCreationUsesFullName()
     {
-        var raw = Path.Combine(_root, "PAIR.CR3");
-        var jpeg = Path.Combine(_root, "PAIR.JPG");
+        var raw = Path.Combine(_root.Path, "PAIR.CR3");
+        var jpeg = Path.Combine(_root.Path, "PAIR.JPG");
         File.WriteAllText(Path.ChangeExtension(raw, ".xmp"), "shared");
 
         var result = XmpSidecarPaths.Resolve(
@@ -45,10 +44,10 @@ public sealed class XmpSidecarPathTests : IDisposable
     [Fact]
     public void FolderScan_IndexesXmpWithoutTreatingItAsAnImage()
     {
-        File.WriteAllText(Path.Combine(_root, "one.jpg"), "image");
-        File.WriteAllText(Path.Combine(_root, "one.jpg.xmp"), "sidecar");
+        File.WriteAllText(Path.Combine(_root.Path, "one.jpg"), "image");
+        File.WriteAllText(Path.Combine(_root.Path, "one.jpg.xmp"), "sidecar");
 
-        var scan = new FolderService().ScanFolder(_root);
+        var scan = new FolderService().ScanFolder(_root.Path);
 
         Assert.Single(scan.Images);
         Assert.Single(scan.SidecarPaths);
@@ -56,5 +55,5 @@ public sealed class XmpSidecarPathTests : IDisposable
             StringComparison.OrdinalIgnoreCase);
     }
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    public void Dispose() => _root.Dispose();
 }

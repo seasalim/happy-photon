@@ -11,13 +11,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class LensControlTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(), $"happy-photon-lens-ui-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task OpticsGroupStaysAtPanelTailAndDimsByCapability()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
         await using var vm = new MainWindowViewModel(
             catalog,
@@ -27,7 +26,7 @@ public sealed class LensControlTests : IDisposable
         var window = new Window { Width = 260, Height = 820, Content = panel };
         window.Show();
         vm.IsDevelopMode = true;
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "photo.jpg"));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "photo.jpg"));
         Dispatcher.UIThread.RunJobs();
 
         var effects = panel.FindControl<EffectsEditGroup>("EffectsEditGroup")!;
@@ -38,7 +37,7 @@ public sealed class LensControlTests : IDisposable
         Assert.Equal("NO CORRECTION DATA FOR THIS LENS",
             optics.FindControl<TextBlock>("LensSourceText")!.Text);
 
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "photo.dng"));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "photo.dng"));
         vm.ApplyLensPrescription(true, new LensPrescriptionSummary(
             "Test 24mm", "DNG OPCODES", true, true, false));
         Dispatcher.UIThread.RunJobs();
@@ -59,6 +58,6 @@ public sealed class LensControlTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 }

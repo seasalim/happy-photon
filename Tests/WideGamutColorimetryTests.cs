@@ -227,23 +227,21 @@ public sealed class WideGamutColorimetryTests
         var curve = new CurveData();
         curve.AddPointAndReturnIndex(0.25, 0.22);
         curve.AddPointAndReturnIndex(0.75, 0.79);
-        return new EditSettings
+        var settings = TestEditSettingsFactory.CreateTonal(
+            exposure: 0.35,
+            brightness: 4,
+            contrast: 15,
+            saturation: 12,
+            vibrance: 8,
+            shadows: 20,
+            highlights: -30,
+            curve: curve);
+        settings.Detail = new DetailSettings
         {
-            Exposure = 0.35,
-            Brightness = 4,
-            Contrast = 15,
-            Shadows = 20,
-            Highlights = -30,
-            Saturation = 12,
-            Vibrance = 8,
-            BaseLook = false,
-            Curve = curve,
-            Detail = new DetailSettings
-            {
-                CaptureSharpen = 40,
-                ChromaNr = 40
-            }
+            CaptureSharpen = 40,
+            ChromaNr = 40
         };
+        return settings;
     }
 
     private static MagickImage RenderShared(

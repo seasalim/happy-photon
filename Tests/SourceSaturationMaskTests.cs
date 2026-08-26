@@ -8,9 +8,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class SourceSaturationMaskTests : IDisposable
 {
-    private readonly string _tempDirectory = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"HappyPhotonSourceSaturationTests_{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _tempDirectory = new();
 
     [Fact]
     public void EncodedThreshold_ScalesWithEightAndTenBitMaximum()
@@ -121,7 +119,7 @@ public sealed class SourceSaturationMaskTests : IDisposable
         ]));
 
         var outcome = loader.LoadPreviewBaseWithOutcome(
-            new ImageFile(Path.Combine(_tempDirectory, "source-mask.heic")),
+            new ImageFile(Path.Combine(_tempDirectory.Path, "source-mask.heic")),
             BaseDecodeSettings.Default,
             CancellationToken.None);
         using var pair = outcome.Pair;
@@ -144,7 +142,7 @@ public sealed class SourceSaturationMaskTests : IDisposable
             [255, 255, 255]));
 
         var outcome = loader.LoadPreviewBaseWithOutcome(
-            new ImageFile(Path.Combine(_tempDirectory, name)),
+            new ImageFile(Path.Combine(_tempDirectory.Path, name)),
             BaseDecodeSettings.Default,
             CancellationToken.None);
         using var pair = outcome.Pair;
@@ -155,7 +153,7 @@ public sealed class SourceSaturationMaskTests : IDisposable
 
     private string WriteJpeg(string name, int width, int height)
     {
-        var path = Path.Combine(_tempDirectory, name);
+        var path = Path.Combine(_tempDirectory.Path, name);
         using var image = new MagickImage(
             MagickColors.Black,
             checked((uint)width),
@@ -239,5 +237,5 @@ public sealed class SourceSaturationMaskTests : IDisposable
             throw new InvalidOperationException("Could not read image pixels.");
     }
 
-    public void Dispose() => Directory.Delete(_tempDirectory, recursive: true);
+    public void Dispose() => _tempDirectory.Dispose();
 }

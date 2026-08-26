@@ -4,6 +4,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -17,6 +18,17 @@ namespace HappyPhoton.Tests;
 public sealed class ClippingOverlayViewModelTests : IDisposable
 {
     private readonly CatalogVmFixture _fx = new("clipping-vm");
+
+    [AvaloniaFact]
+    public void OverlayColorsArePinnedThemeIndependentInvariants()
+    {
+        Assert.Equal(
+            Color.FromArgb(235, 0xff, 0x3b, 0x30),
+            HappyPhotonColors.SceneHighlightClipColor);
+        Assert.Equal(
+            Color.FromArgb(235, 0x2f, 0x6f, 0xed),
+            HappyPhotonColors.DisplayFloorClipColor);
+    }
 
     [AvaloniaFact]
     public async Task TrianglePress_LatchesAndPointerExitPreservesOverlay()

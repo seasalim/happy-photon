@@ -8,10 +8,7 @@ namespace HappyPhoton.Tests;
 public sealed class WideGamutExportTests : IDisposable
 {
     private const int PatchSize = 32;
-    private readonly string _directory = Path.Combine(
-        Path.GetTempPath(), $"HappyPhotonWideGamut_{Guid.NewGuid():N}");
-
-    public WideGamutExportTests() => Directory.CreateDirectory(_directory);
+    private readonly TemporaryDirectory _directory = new();
 
     [Theory]
     [InlineData(ExportFormat.Jpeg, ".jpg", 4)]
@@ -32,7 +29,7 @@ public sealed class WideGamutExportTests : IDisposable
                 [255, 128, 0],
                 [128, 128, 128]
             ]);
-        var outputFolder = Path.Combine(_directory, $"p3-{format}");
+        var outputFolder = Path.Combine(_directory.Path, $"p3-{format}");
         var settings = new ExportSettings
         {
             OutputFolder = outputFolder,
@@ -117,7 +114,7 @@ public sealed class WideGamutExportTests : IDisposable
         OutputColorSpace outputColorSpace,
         string folderName)
     {
-        var outputFolder = Path.Combine(_directory, folderName);
+        var outputFolder = Path.Combine(_directory.Path, folderName);
         await CreateService().ExportBatchAsync(
             [new ImageFile(source)],
             new ExportSettings
@@ -137,7 +134,7 @@ public sealed class WideGamutExportTests : IDisposable
         IColorProfile profile,
         byte[][] colors)
     {
-        var path = Path.Combine(_directory, fileName);
+        var path = Path.Combine(_directory.Path, fileName);
         var bytes = new byte[colors.Length * PatchSize * PatchSize * 3];
         for (var y = 0; y < PatchSize; y++)
         for (var x = 0; x < colors.Length * PatchSize; x++)
@@ -209,5 +206,5 @@ public sealed class WideGamutExportTests : IDisposable
         GoldenTestPaths.AssetDirectory,
         "DisplayP3-v4.icc");
 
-    public void Dispose() => Directory.Delete(_directory, recursive: true);
+    public void Dispose() => _directory.Dispose();
 }

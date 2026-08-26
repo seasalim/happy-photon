@@ -12,9 +12,7 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
     private const int SampleCount = 5;
     private const int SamplingIntervalMilliseconds = 10;
 
-    private readonly string _output = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"HappyPhotonCheckpointEPerf_{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _output = new();
 
     [Fact]
     public async Task IntegratedGate_ReportsFrozenPerformanceCases()
@@ -322,7 +320,7 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
         var settings = new ExportSettings
         {
             OutputFolder = Path.Combine(
-                _output,
+                _output.Path,
                 $"variants-{target}-{label}"),
             Format = ExportFormat.Jpeg,
             Quality = 85,
@@ -426,13 +424,7 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
             new BaseLoaderRouter(new RawBaseLoader(), new StandardBaseLoader()),
             new ExportMetadataService());
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_output))
-        {
-            Directory.Delete(_output, recursive: true);
-        }
-    }
+    public void Dispose() => _output.Dispose();
 
     private sealed record SliderMeasurement(
         string Fixture,

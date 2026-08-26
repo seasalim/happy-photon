@@ -7,11 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class StandardBaseLoaderTests : IDisposable
 {
-    private readonly string _tempDirectory = Path.Combine(
-        Path.GetTempPath(),
-        $"HappyPhotonStandardLoaderTests_{Guid.NewGuid():N}");
-
-    public StandardBaseLoaderTests() => Directory.CreateDirectory(_tempDirectory);
+    private readonly TemporaryDirectory _tempDirectory = new();
 
     [Theory]
     [InlineData("photo.jpg")]
@@ -91,7 +87,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
             });
 
         using var result = loader.LoadFullBase(
-            new ImageFile(Path.Combine(_tempDirectory, "full.jpg")),
+            new ImageFile(Path.Combine(_tempDirectory.Path, "full.jpg")),
             BaseDecodeSettings.Default,
             CancellationToken.None);
 
@@ -148,7 +144,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
     [Fact]
     public void FullBase_UntaggedCmykTransformsToLinearRec2020()
     {
-        var path = Path.Combine(_tempDirectory, "untagged-cmyk.jpg");
+        var path = Path.Combine(_tempDirectory.Path, "untagged-cmyk.jpg");
         using (var source = new MagickImage(MagickColors.Orange, 40, 20))
         {
             source.ColorSpace = ColorSpace.CMYK;
@@ -171,28 +167,24 @@ public sealed class StandardBaseLoaderTests : IDisposable
     [Fact]
     public void PreviewBase_UsesBoundedPixelsButRecordsNativeGeometry()
     {
-        var path = WriteJpeg("large.jpg", 4000, 2000);
+        // Two pixels over the preview limit is the smallest 2:1 source that
+        // distinguishes bounded pixels from recorded native geometry.
+        // Repeated decode determinism is pinned separately in this class.
+        var path = WriteJpeg("large.jpg", 1602, 801);
         var loader = new StandardBaseLoader();
 
-        using var first = loader.LoadPreviewBase(
-            new ImageFile(path),
-            BaseDecodeSettings.Default,
-            CancellationToken.None);
-        using var second = loader.LoadPreviewBase(
+        using var result = loader.LoadPreviewBase(
             new ImageFile(path),
             BaseDecodeSettings.Default,
             CancellationToken.None);
 
-        Assert.NotNull(first);
-        Assert.NotNull(second);
-        Assert.Equal(1600u, first!.Pixels.Width);
-        Assert.Equal(800u, first.Pixels.Height);
-        Assert.Equal(4000, first.Info.FullWidth);
-        Assert.Equal(2000, first.Info.FullHeight);
-        Assert.False(first.Info.HadIccProfile);
-        AssertStandardFacts(first, BaseDecodeSettings.Default);
-        Assert.Equal(PixelValues(first.Pixels), PixelValues(second!.Pixels));
-        Assert.Equal(first.Info, second.Info);
+        Assert.NotNull(result);
+        Assert.Equal(1600u, result!.Pixels.Width);
+        Assert.Equal(800u, result.Pixels.Height);
+        Assert.Equal(1602, result.Info.FullWidth);
+        Assert.Equal(801, result.Info.FullHeight);
+        Assert.False(result.Info.HadIccProfile);
+        AssertStandardFacts(result, BaseDecodeSettings.Default);
     }
 
     [Fact]
@@ -210,7 +202,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
 
         using var outcome = ((IBaseImageLoader)loader)
             .LoadPreviewBaseWithOutcome(
-                new ImageFile(Path.Combine(_tempDirectory, "pair.png")),
+                new ImageFile(Path.Combine(_tempDirectory.Path, "pair.png")),
                 BaseDecodeSettings.Default,
                 CancellationToken.None).Pair;
 
@@ -272,7 +264,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
     [Fact]
     public void FullBase_DecodesOnlyFirstGifFrame()
     {
-        var path = Path.Combine(_tempDirectory, "animated.gif");
+        var path = Path.Combine(_tempDirectory.Path, "animated.gif");
         using (var frames = new MagickImageCollection())
         {
             frames.Add(new MagickImage(MagickColors.Red, 8, 4));
@@ -362,7 +354,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
     [Fact]
     public void BadFileReturnsNullAndReleasesFile()
     {
-        var path = Path.Combine(_tempDirectory, "bad.jpg");
+        var path = Path.Combine(_tempDirectory.Path, "bad.jpg");
         File.WriteAllText(path, "not an image");
         var loader = new StandardBaseLoader();
 
@@ -435,7 +427,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
 
     private string WriteJpeg(string fileName, uint width, uint height)
     {
-        var path = Path.Combine(_tempDirectory, fileName);
+        var path = Path.Combine(_tempDirectory.Path, fileName);
         using var image = new MagickImage(MagickColors.Orange, width, height);
         image.Format = MagickFormat.Jpeg;
         image.Write(path);
@@ -470,11 +462,5 @@ public sealed class StandardBaseLoaderTests : IDisposable
         Assert.Empty(result.Pixels.ProfileNames);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_tempDirectory))
-        {
-            Directory.Delete(_tempDirectory, recursive: true);
-        }
-    }
+    public void Dispose() => _tempDirectory.Dispose();
 }

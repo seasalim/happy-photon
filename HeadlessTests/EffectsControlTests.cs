@@ -18,14 +18,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class EffectsControlTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-effects-ui-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task EffectsGroup_MatchesPanelOrderAndControlStates()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
         await using var vm = new MainWindowViewModel(
             catalog,
@@ -35,7 +33,7 @@ public sealed class EffectsControlTests : IDisposable
         var window = new Window { Width = 250, Height = 820, Content = panel };
         window.Show();
         vm.IsDevelopMode = true;
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "photo.jpg"));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "photo.jpg"));
         Dispatcher.UIThread.RunJobs();
 
         var detail = panel.FindControl<DetailEditGroup>("DetailEditGroup")!;
@@ -83,7 +81,7 @@ public sealed class EffectsControlTests : IDisposable
     [AvaloniaFact]
     public async Task MixerGroup_SwitchesBandsResetsValuesAndResetsSelectionState()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "mixer-catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "mixer-catalog"));
         await catalog.InitializeAsync();
         await using var vm = new MainWindowViewModel(
             catalog,
@@ -93,7 +91,7 @@ public sealed class EffectsControlTests : IDisposable
         var window = new Window { Width = 250, Height = 1_800, Content = panel };
         window.Show();
         vm.IsDevelopMode = true;
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "mixer-photo.jpg"));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "mixer-photo.jpg"));
         Dispatcher.UIThread.RunJobs();
 
         var curve = panel.FindControl<CurveView>("ToneCurveView")!;
@@ -164,7 +162,7 @@ public sealed class EffectsControlTests : IDisposable
         Assert.Equal(0, vm.MixerSaturation);
 
         vm.ActiveMixerBand = ColorMixerBand.Purple;
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "next-photo.jpg"));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "next-photo.jpg"));
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(ColorMixerBand.Red, vm.ActiveMixerBand);
 
@@ -184,14 +182,14 @@ public sealed class EffectsControlTests : IDisposable
         Assert.False(string.IsNullOrWhiteSpace(outputDirectory));
         outputDirectory = Path.GetFullPath(outputDirectory);
         Directory.CreateDirectory(outputDirectory);
-        using var catalog = new CatalogService(Path.Combine(_root, "screenshot-catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "screenshot-catalog"));
         await catalog.InitializeAsync();
         await using var vm = new MainWindowViewModel(
             catalog,
             new NullBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask);
         vm.IsDevelopMode = true;
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "screenshot-photo.jpg"));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "screenshot-photo.jpg"));
         vm.ActiveMixerBand = ColorMixerBand.Orange;
         vm.MixerHue = -5;
         vm.MixerSaturation = 22;
@@ -239,6 +237,6 @@ public sealed class EffectsControlTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 }

@@ -72,8 +72,9 @@ public sealed partial class LensCorrectionProcessorTests
     [Fact]
     public void SyntheticKnotTableOracleInvertsWithinQuarterPixelAt1600()
     {
-        const int size = 1600;
-        var maximum = Math.Sqrt(2) * (size - 1) * 0.5;
+        const int nativeSize = 1600;
+        const int processedSize = 640;
+        var maximum = Math.Sqrt(2) * (nativeSize - 1) * 0.5;
         var distortion = new LensRadialTable(
             maximum / (FujiNativePixelsPerTableRadiusUnit * 3),
             [0, 0.5, 1], [0, -3, -8],
@@ -83,31 +84,39 @@ public sealed partial class LensCorrectionProcessorTests
             [0, 0.5, 1], [0, 0.0002, 0.0004],
             [0, -0.00015, -0.0003],
             FujiNativePixelsPerTableRadiusUnit);
-        var source = InjectTableCoordinateField(size, distortion, ca);
+        var source = InjectTableCoordinateField(
+            processedSize,
+            nativeSize,
+            distortion,
+            ca);
         var prescription = new LensPrescription(
             LensPrescriptionSource.FujifilmMakerNote,
             null, [], [], LensFrameWindow.Full, LensFrameWindow.Full,
             TableWarps: [new LensTableWarp(distortion, ca)]);
 
         using var image = LensCorrectionProcessor.ImportCorrected(
-            source, size, size, size, size, 1,
+            source, processedSize, processedSize, processedSize, processedSize, 1,
             CameraRgbCharacterization.Passthrough,
-            prescription, BaseDecodeSettings.Default, CancellationToken.None);
+            prescription, BaseDecodeSettings.Default, CancellationToken.None,
+            new LensCorrectionReferenceFrame(
+                nativeSize, nativeSize, nativeSize, nativeSize));
         using var pixels = image.GetPixelsUnsafe();
         var values = pixels.ToShortArray(ImageMagick.PixelMapping.RGB)!;
         var maximumResidual = 0.0;
-        for (var y = 53; y < size; y += 149)
-        for (var x = 47; x < size; x += 97)
+        for (var y = 31; y < processedSize; y += 61)
+        for (var x = 23; x < processedSize; x += 47)
         for (var channel = 0; channel < 3; channel++)
         {
-            var recovered = values[(y * size + x) * 3 + channel] /
+            var recovered = values[(y * processedSize + x) * 3 + channel] /
                 (double)ushort.MaxValue;
             maximumResidual = Math.Max(maximumResidual,
-                Math.Abs(recovered - (x + 0.5) / size) * size);
+                Math.Abs(recovered - (x + 0.5) / processedSize) * nativeSize);
         }
 
         Assert.True(maximumResidual <= 0.25,
             $"Knot-table residual was {maximumResidual:F3} px.");
+
+        AssertNativeBoundaryIsCovered(nativeSize, prescription);
     }
 
     [Fact]

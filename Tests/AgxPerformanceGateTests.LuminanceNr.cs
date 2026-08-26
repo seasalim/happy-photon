@@ -18,10 +18,10 @@ public sealed partial class AgxPerformanceGateTests
         };
         var neutralSettings = CreateVariantSettings(
             target,
-            Path.Combine(_output, $"variants-{target}-nr-neutral"));
+            Path.Combine(_output.Path, $"variants-{target}-nr-neutral"));
         var activeSettings = CreateVariantSettings(
             target,
-            Path.Combine(_output, $"variants-{target}-nr-50"));
+            Path.Combine(_output.Path, $"variants-{target}-nr-50"));
         var service = CreateExportService();
         return await MeasureExportPairAsync(
             () => ExportOne(service, neutralFile, neutralSettings),
@@ -38,9 +38,9 @@ public sealed partial class AgxPerformanceGateTests
             EditSettings = CreateLuminanceNrSettings()
         };
         var neutralSettings = CreateStandardSettings(
-            Path.Combine(_output, "standard-nr-neutral"));
+            Path.Combine(_output.Path, "standard-nr-neutral"));
         var activeSettings = CreateStandardSettings(
-            Path.Combine(_output, "standard-nr-50"));
+            Path.Combine(_output.Path, "standard-nr-50"));
         var service = CreateExportService();
         return await MeasureExportPairAsync(
             () => ExportOne(service, neutralFile, neutralSettings),

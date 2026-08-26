@@ -6,8 +6,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class XmpSidecarWriterTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(), $"happy-photon-xmp-writer-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [Fact]
     public async Task CapacityCountsInFlightDistinctPathsWithoutClearingDebt()
@@ -137,7 +136,7 @@ public sealed class XmpSidecarWriterTests : IDisposable
     [Fact]
     public async Task ReaderChecksSidecarWithoutProbingOriginal()
     {
-        var original = Path.Combine(_root, "online.cr3");
+        var original = Path.Combine(_root.Path, "online.cr3");
         var sidecar = original + ".xmp";
         WriteRating(sidecar, 4);
         var info = new FileInfo(sidecar);
@@ -158,7 +157,7 @@ public sealed class XmpSidecarWriterTests : IDisposable
     public async Task FreshSidecar_WritesCompleteRejectedTupleOnRatingChange()
     {
         using var catalog = await CreateCatalogAsync();
-        var path = Path.Combine(_root, "rejected.cr3");
+        var path = Path.Combine(_root.Path, "rejected.cr3");
         var id = await catalog.GetOrCreateImageAsync(path);
         await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(
@@ -202,7 +201,7 @@ public sealed class XmpSidecarWriterTests : IDisposable
     public async Task ExistingLightroomReject_RatingChangeKeepsRejectAndTrueStars()
     {
         using var catalog = await CreateCatalogAsync();
-        var path = Path.Combine(_root, "lightroom-rejected.cr3");
+        var path = Path.Combine(_root.Path, "lightroom-rejected.cr3");
         var sidecar = path + ".xmp";
         var document = XmpSidecarDocument.Create();
         var description = document.Descendants(
@@ -247,7 +246,7 @@ public sealed class XmpSidecarWriterTests : IDisposable
     public async Task ForeignLabelReplacement_ReportsOnceAfterPromotionRetry()
     {
         using var catalog = await CreateCatalogAsync();
-        var path = Path.Combine(_root, "label.cr3");
+        var path = Path.Combine(_root.Path, "label.cr3");
         var sidecar = path + ".xmp";
         WriteLabel(sidecar, "Foreign");
         var id = await catalog.GetOrCreateImageAsync(path);
@@ -302,7 +301,7 @@ public sealed class XmpSidecarWriterTests : IDisposable
 
         Assert.Equal(original, File.ReadAllBytes(sidecar));
         Assert.Empty(Directory.GetFiles(
-            _root, $".{Path.GetFileName(sidecar)}.*.tmp"));
+            _root.Path, $".{Path.GetFileName(sidecar)}.*.tmp"));
         Assert.Equal(AssessmentAxes.Rating,
             Assert.Single(await catalog.LoadAssessmentSnapshotsAsync(
                 [snapshot.ImageId])).PendingAxes);
@@ -329,7 +328,7 @@ public sealed class XmpSidecarWriterTests : IDisposable
         string name,
         int rating)
     {
-        var path = Path.Combine(_root, name);
+        var path = Path.Combine(_root.Path, name);
         var id = await catalog.GetOrCreateImageAsync(path);
         return Assert.Single(await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: rating)],
@@ -339,7 +338,7 @@ public sealed class XmpSidecarWriterTests : IDisposable
     private async Task<CatalogService> CreateCatalogAsync()
     {
         var catalog = new CatalogService(Path.Combine(
-            _root, $"catalog-{Guid.NewGuid():N}"));
+            _root.Path, $"catalog-{Guid.NewGuid():N}"));
         await catalog.InitializeAsync();
         return catalog;
     }
@@ -370,7 +369,7 @@ public sealed class XmpSidecarWriterTests : IDisposable
     private static TaskCompletionSource NewSignal() => new(
         TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    public void Dispose() => _root.Dispose();
 
     private sealed class RecordingAvailability(string expectedPath)
         : ISourceAvailabilityService

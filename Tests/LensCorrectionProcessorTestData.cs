@@ -1,4 +1,5 @@
 using HappyPhoton.Services;
+using Xunit;
 
 namespace HappyPhoton.Tests;
 
@@ -56,6 +57,7 @@ public sealed partial class LensCorrectionProcessorTests
 
     private static byte[] InjectTableCoordinateField(
         int size,
+        int logicalSize,
         LensRadialTable distortion,
         LensChromaticAberrationTable ca)
     {
@@ -71,7 +73,7 @@ public sealed partial class LensCorrectionProcessorTests
             for (var iteration = 0; iteration < 12; iteration++)
             {
                 var mapped = TableWarp(
-                    estimateX, estimateY, size, channel, distortion, ca);
+                    estimateX, estimateY, logicalSize, channel, distortion, ca);
                 estimateX += targetX - mapped.X;
                 estimateY += targetY - mapped.Y;
             }
@@ -104,6 +106,22 @@ public sealed partial class LensCorrectionProcessorTests
         var factor = (radius + offset) / radius;
         return (0.5 + dx * factor / (size - 1),
             0.5 + dy * factor / (size - 1));
+    }
+
+    private static void AssertNativeBoundaryIsCovered(
+        int nativeSize,
+        LensPrescription prescription)
+    {
+        var plan = new LensCorrectionPlan(
+            nativeSize, nativeSize, nativeSize, nativeSize,
+            1, prescription, BaseDecodeSettings.Default, zoom: 1,
+            new LensCorrectionReferenceFrame(
+                nativeSize, nativeSize, nativeSize, nativeSize));
+        var boundary = plan.MapShared(nativeSize - 1, nativeSize / 2);
+        Assert.True(double.IsFinite(boundary.X));
+        Assert.True(double.IsFinite(boundary.Y));
+        Assert.InRange(boundary.X, 0, nativeSize - 1d);
+        Assert.InRange(boundary.Y, 0, nativeSize - 1d);
     }
 
     private static double Linear(

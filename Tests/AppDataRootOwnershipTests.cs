@@ -5,13 +5,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class AppDataRootOwnershipTests : IDisposable
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(), $"happy-photon-ownership-{Guid.NewGuid():N}");
+    private readonly TemporaryDirectory _root = new();
 
     [Fact]
     public void AssertAppOwned_RejectsMissingAndChangedMarkers()
     {
-        var target = Directory.CreateDirectory(Path.Combine(_root, "target")).FullName;
+        var target = Directory.CreateDirectory(Path.Combine(_root.Path, "target")).FullName;
         Assert.Throws<AppDataOwnershipException>(
             () => AppDataRootOwnership.AssertAppOwned(target));
 
@@ -25,7 +24,7 @@ public sealed class AppDataRootOwnershipTests : IDisposable
     [Fact]
     public void Validation_RejectsEqualAncestorAndObviousRoots()
     {
-        var catalog = Path.Combine(_root, "catalog");
+        var catalog = Path.Combine(_root.Path, "catalog");
         var cache = Path.Combine(catalog, "cache");
 
         Assert.Throws<ArgumentException>(() =>
@@ -33,7 +32,7 @@ public sealed class AppDataRootOwnershipTests : IDisposable
         Assert.Throws<ArgumentException>(() =>
             AppDataRootOwnership.ValidateProposedRoots(catalog, cache));
         Assert.Throws<ArgumentException>(() =>
-            AppDataRootOwnership.ValidateObviousTarget(Path.GetPathRoot(_root)!));
+            AppDataRootOwnership.ValidateObviousTarget(Path.GetPathRoot(_root.Path)!));
     }
 
     [Fact]
@@ -61,26 +60,26 @@ public sealed class AppDataRootOwnershipTests : IDisposable
     [Fact]
     public async Task RefusedMove_LeavesFilesystemByteIdentical()
     {
-        var source = Path.Combine(_root, "source");
-        var destination = Path.Combine(_root, "destination");
+        var source = Path.Combine(_root.Path, "source");
+        var destination = Path.Combine(_root.Path, "destination");
         Directory.CreateDirectory(source);
         Directory.CreateDirectory(destination);
         await File.WriteAllBytesAsync(Path.Combine(source, "catalog.db"), [1, 2, 3]);
         await File.WriteAllBytesAsync(Path.Combine(destination, "keep.bin"), [4, 5, 6]);
-        var before = Snapshot(_root);
+        var before = Snapshot(_root.Path);
         var locationService = new AppDataLocationService(new AppDataPlatformPaths(
-            Path.Combine(_root, "Pictures"), Path.Combine(_root, "pointer"),
-            Path.Combine(_root, "data"), Path.Combine(_root, "cache")));
+            Path.Combine(_root.Path, "Pictures"), Path.Combine(_root.Path, "pointer"),
+            Path.Combine(_root.Path, "data"), Path.Combine(_root.Path, "cache")));
         var migrator = new CatalogLocationMigrator(locationService);
         var locations = new AppDataLocations(
-            source, Path.Combine(_root, "cache-root"),
+            source, Path.Combine(_root.Path, "cache-root"),
             AppDataLocationOrigin.Persisted, AppDataLocationOrigin.Persisted);
 
         await Assert.ThrowsAsync<AppDataOwnershipException>(() =>
             migrator.StageMoveAsync(
                 locations, CatalogLocationMoveKind.Catalog, destination));
 
-        Assert.Equal(before, Snapshot(_root));
+        Assert.Equal(before, Snapshot(_root.Path));
     }
 
     private static byte[] Snapshot(string root)
@@ -96,8 +95,5 @@ public sealed class AppDataRootOwnershipTests : IDisposable
         return stream.ToArray();
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
-    }
+    public void Dispose() => _root.Dispose();
 }

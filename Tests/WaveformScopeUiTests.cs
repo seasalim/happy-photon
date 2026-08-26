@@ -14,14 +14,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class WaveformScopeUiTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-waveform-ui-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task ScopeSelector_UsesCompactDevelopActionPresentation()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "presentation"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "presentation"));
         await catalog.InitializeAsync();
         await using var vm = new MainWindowViewModel(catalog)
         {
@@ -58,7 +56,7 @@ public sealed class WaveformScopeUiTests : IDisposable
     [AvaloniaFact]
     public async Task ScopeSelector_HasStableEntriesAndExactlyOneBody()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
         var loader = new CountingLoader();
         var vm = new MainWindowViewModel(
@@ -128,7 +126,7 @@ public sealed class WaveformScopeUiTests : IDisposable
     [AvaloniaFact]
     public async Task BrowseRetainsFixedChromeWithoutScopeSelector()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "browse"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "browse"));
         await catalog.InitializeAsync();
         var vm = new MainWindowViewModel(catalog);
         var pane = new BrowseReviewPane { DataContext = vm };
@@ -151,7 +149,7 @@ public sealed class WaveformScopeUiTests : IDisposable
     [AvaloniaFact]
     public async Task CloudOnlySourcesKeepBothModesEmptyWithoutLoading()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "cloud"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "cloud"));
         await catalog.InitializeAsync();
         var loader = new CountingLoader();
         var vm = new MainWindowViewModel(
@@ -161,7 +159,7 @@ public sealed class WaveformScopeUiTests : IDisposable
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.RequiresHydration));
         var cloud = new ImageFile(
-            Path.Combine(_root, "cloud.jpg"),
+            Path.Combine(_root.Path, "cloud.jpg"),
             SourceAvailability.RequiresHydration);
 
         vm.Browse.SetImages([cloud]);
@@ -180,13 +178,7 @@ public sealed class WaveformScopeUiTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _root.Dispose();
 
     private sealed class CountingLoader : IBaseImageLoader
     {

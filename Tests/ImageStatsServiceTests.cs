@@ -6,10 +6,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class ImageStatsServiceTests : IDisposable
 {
-    private readonly string _tempDirectory = Path.Combine(
-        Path.GetTempPath(), $"HappyPhotonStatsTests_{Guid.NewGuid():N}");
-
-    public ImageStatsServiceTests() => Directory.CreateDirectory(_tempDirectory);
+    private readonly TemporaryDirectory _tempDirectory = new();
 
     [Theory]
     [InlineData("source.dng")]
@@ -17,7 +14,7 @@ public sealed class ImageStatsServiceTests : IDisposable
     [InlineData("source.raf")]
     public void RawSourcePath_IsRejectedBeforeMagickDecode(string fileName)
     {
-        var path = Path.Combine(_tempDirectory, fileName);
+        var path = Path.Combine(_tempDirectory.Path, fileName);
         File.WriteAllText(path, "not an image");
 
         var error = Assert.Throws<NotSupportedException>(() =>
@@ -30,7 +27,7 @@ public sealed class ImageStatsServiceTests : IDisposable
     {
         using var image = new MagickImage(MagickColors.Gray, 256, 256);
         mutate(image);
-        var path = Path.Combine(_tempDirectory, name);
+        var path = Path.Combine(_tempDirectory.Path, name);
         image.Write(path);
         return path;
     }
@@ -39,7 +36,7 @@ public sealed class ImageStatsServiceTests : IDisposable
     {
         using var image = new MagickImage("pattern:checkerboard", 256, 256);
         if (blurred) image.GaussianBlur(0, 6);
-        var path = Path.Combine(_tempDirectory, name);
+        var path = Path.Combine(_tempDirectory.Path, name);
         image.Write(path);
         return path;
     }
@@ -108,7 +105,7 @@ public sealed class ImageStatsServiceTests : IDisposable
     [Fact]
     public void MissingImage_ThrowsFileNotFound()
     {
-        var path = Path.Combine(_tempDirectory, "missing.jpg");
+        var path = Path.Combine(_tempDirectory.Path, "missing.jpg");
 
         Assert.Throws<FileNotFoundException>(() => new ImageStatsService().Compute(path));
     }
@@ -131,8 +128,8 @@ public sealed class ImageStatsServiceTests : IDisposable
     {
         using var original = new MagickImage("pattern:checkerboard", 900, 600);
         original.GaussianBlur(0, 1);
-        var smallPath = Path.Combine(_tempDirectory, "normalized-150.jpg");
-        var largePath = Path.Combine(_tempDirectory, "normalized-512.jpg");
+        var smallPath = Path.Combine(_tempDirectory.Path, "normalized-150.jpg");
+        var largePath = Path.Combine(_tempDirectory.Path, "normalized-512.jpg");
         WriteVariant(original, smallPath, 150);
         WriteVariant(original, largePath, 512);
         var service = new ImageStatsService();
@@ -163,9 +160,5 @@ public sealed class ImageStatsServiceTests : IDisposable
         variant.Write(path, MagickFormat.Jpeg);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_tempDirectory))
-            Directory.Delete(_tempDirectory, recursive: true);
-    }
+    public void Dispose() => _tempDirectory.Dispose();
 }

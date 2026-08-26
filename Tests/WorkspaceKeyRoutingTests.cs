@@ -8,22 +8,19 @@ namespace HappyPhoton.Tests;
 
 public sealed class WorkspaceKeyRoutingTests : IDisposable
 {
-    private readonly string _testRoot =
-        Directory.CreateDirectory(Path.Combine(
-            Path.GetTempPath(),
-            $"happy-photon-keys-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _testRoot = new();
 
     [Fact]
     public async Task SpaceShortcut_TogglesSelectionAndConsumesBothKeyPhases()
     {
         using var catalog = new CatalogService(
-            Path.Combine(_testRoot, Guid.NewGuid().ToString("N")));
+            Path.Combine(_testRoot.Path, Guid.NewGuid().ToString("N")));
         var vm = new MainWindowViewModel(
             catalog,
             baseLoader: null,
             loadMetadataAsync: _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var image = new ImageFile(Path.Combine(_testRoot, "photo.jpg"));
+        var image = new ImageFile(Path.Combine(_testRoot.Path, "photo.jpg"));
         vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         vm.RefreshSelectedCount();
@@ -42,14 +39,5 @@ public sealed class WorkspaceKeyRoutingTests : IDisposable
         await vm.DisposeAsync();
     }
 
-    public void Dispose()
-    {
-        try
-        {
-            Directory.Delete(_testRoot, recursive: true);
-        }
-        catch
-        {
-        }
-    }
+    public void Dispose() => _testRoot.Dispose();
 }

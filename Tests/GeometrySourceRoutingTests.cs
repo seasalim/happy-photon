@@ -8,9 +8,7 @@ namespace HappyPhoton.Tests;
 [Collection(CheckpointCRenderGateCollection.Name)]
 public sealed class GeometrySourceRoutingTests : IDisposable
 {
-    private readonly string _directory = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(), $"happy-photon-geometry-routing-{Guid.NewGuid():N}"))
-        .FullName;
+    private readonly TemporaryDirectory _directory = new();
 
     public static TheoryData<string> Formats => new()
     {
@@ -75,15 +73,12 @@ public sealed class GeometrySourceRoutingTests : IDisposable
 
     private string WritePng()
     {
-        var path = Path.Combine(_directory, "synthetic.png");
+        var path = Path.Combine(_directory.Path, "synthetic.png");
         if (File.Exists(path)) return path;
         using var image = new MagickImage(MagickColors.CornflowerBlue, 64, 48);
         image.Write(path);
         return path;
     }
 
-    public void Dispose()
-    {
-        Directory.Delete(_directory, recursive: true);
-    }
+    public void Dispose() => _directory.Dispose();
 }

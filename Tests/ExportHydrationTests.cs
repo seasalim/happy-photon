@@ -7,11 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class ExportHydrationTests : IDisposable
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-export-hydration-{Guid.NewGuid():N}");
-
-    public ExportHydrationTests() => Directory.CreateDirectory(_root);
+    private readonly TemporaryDirectory _root = new();
 
     [Fact]
     public async Task Scope_CountsOnlyCloudSourcesAndTheirLogicalBytes()
@@ -27,7 +23,7 @@ public sealed class ExportHydrationTests : IDisposable
                 : SourceAvailability.RequiresHydration
         };
 
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
         await using var imageService = new ImageService(
             catalog,
@@ -49,11 +45,11 @@ public sealed class ExportHydrationTests : IDisposable
         var service = CreateExportService(loader, () => profileReads++);
         var settings = new ExportSettings
         {
-            OutputFolder = Path.Combine(_root, "canceled")
+            OutputFolder = Path.Combine(_root.Path, "canceled")
         };
 
         var result = await service.ExportBatchAsync(
-            [new ImageFile(Path.Combine(_root, "cloud.jpg"))],
+            [new ImageFile(Path.Combine(_root.Path, "cloud.jpg"))],
             settings);
 
         Assert.Equal(0, result.ExportedCount);
@@ -76,7 +72,7 @@ public sealed class ExportHydrationTests : IDisposable
                 profileReads++;
                 return null;
             });
-        var source = new ImageFile(Path.Combine(_root, "cloud.jpg"));
+        var source = new ImageFile(Path.Combine(_root.Path, "cloud.jpg"));
         using var backgroundDestination = new MagickImage(
             MagickColors.Blue,
             8,
@@ -115,12 +111,12 @@ public sealed class ExportHydrationTests : IDisposable
             new RenderPipeline(),
             new GatedBaseImageLoader(loader, availability),
             metadata);
-        var first = new ImageFile(Path.Combine(_root, "first.jpg"));
-        var excluded = new ImageFile(Path.Combine(_root, "excluded.jpg"));
-        var third = new ImageFile(Path.Combine(_root, "third.jpg"));
+        var first = new ImageFile(Path.Combine(_root.Path, "first.jpg"));
+        var excluded = new ImageFile(Path.Combine(_root.Path, "excluded.jpg"));
+        var third = new ImageFile(Path.Combine(_root.Path, "third.jpg"));
         var settings = new ExportSettings
         {
-            OutputFolder = Path.Combine(_root, "approved")
+            OutputFolder = Path.Combine(_root.Path, "approved")
         };
 
         var result = await service.ExportBatchApprovedAsync(
@@ -136,13 +132,7 @@ public sealed class ExportHydrationTests : IDisposable
         Assert.DoesNotContain(excluded.FilePath, loader.FullLoads);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _root.Dispose();
 
     private ImageExportService CreateExportService(
         CountingBaseLoader loader,
@@ -165,7 +155,7 @@ public sealed class ExportHydrationTests : IDisposable
 
     private string WriteFile(string name, int length)
     {
-        var path = Path.Combine(_root, name);
+        var path = Path.Combine(_root.Path, name);
         File.WriteAllBytes(path, new byte[length]);
         return path;
     }

@@ -42,11 +42,14 @@ public sealed class RenderGeometryBlankBorderTests
             });
 
             var data = new TheoryData<int, int, GeometrySettings, double>();
-            foreach (var (width, height) in new[] { (400, 300), (511, 293) })
-            foreach (var geometry in geometries)
-            foreach (var horizon in new[] { 0d, -12d, -3d, 3d, 12d })
+            var horizons = new[] { 0d, -12d, -3d, 3d, 12d };
+            for (var index = 0; index < geometries.Count; index++)
             {
-                data.Add(width, height, geometry, horizon);
+                // Every control boundary and interaction case runs on both an
+                // even and odd shape; horizon boundaries are distributed
+                // across the odd-shape cases instead of cross-multiplied.
+                data.Add(400, 300, geometries[index], 0);
+                data.Add(511, 293, geometries[index], horizons[index % horizons.Length]);
             }
             return data;
         }

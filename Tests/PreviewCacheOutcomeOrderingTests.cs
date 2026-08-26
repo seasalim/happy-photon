@@ -10,9 +10,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-cache-order-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaTheory]
     [InlineData(true, true, true)]
@@ -29,11 +27,11 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
         bool settingsMatch)
     {
         using var catalog = new CatalogService(Path.Combine(
-            _root,
+            _root.Path,
             $"{cacheFirst}-{freshSucceeds}-{settingsMatch}"));
         await catalog.InitializeAsync();
         var path = Path.Combine(
-            _root,
+            _root.Path,
             $"source-{cacheFirst}-{freshSucceeds}-{settingsMatch}.jpg");
         using (var source = new MagickImage(MagickColors.Gray, 64, 48))
         {
@@ -122,11 +120,11 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
         bool embeddedProfile)
     {
         using var catalog = new CatalogService(Path.Combine(
-            _root,
+            _root.Path,
             $"source-gate-{embeddedProfile}"));
         await catalog.InitializeAsync();
         var path = Path.Combine(
-            _root,
+            _root.Path,
             embeddedProfile ? "source-gate.dng" : "source-gate.jpg");
         using (var source = new MagickImage(MagickColors.Gray, 64, 48))
         {
@@ -175,9 +173,9 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
     [AvaloniaFact]
     public async Task CloudAvailabilityTransitionKeepsMatchingCachedScopes()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "cloud"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "cloud"));
         await catalog.InitializeAsync();
-        var path = Path.Combine(_root, "cloud.dng");
+        var path = Path.Combine(_root.Path, "cloud.dng");
         using (var source = new MagickImage(MagickColors.Gray, 64, 48))
         {
             source.Write(path, MagickFormat.Jpeg);
@@ -240,10 +238,10 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
     [AvaloniaFact]
     public async Task ReplacementRefreshClosesStageBeforeLateStaleBasePaint()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "refresh"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "refresh"));
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog, new RedThenBlueRawLoader());
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "refresh.dng"));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "refresh.dng"));
         var staleStarted = NewSignal();
         var releaseStale = NewSignal();
 
@@ -480,6 +478,6 @@ public sealed class PreviewCacheOutcomeOrderingTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 }

@@ -7,9 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class TiffExportTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-tiff-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [Theory]
     [InlineData(OutputColorSpace.Srgb)]
@@ -21,7 +19,7 @@ public sealed class TiffExportTests : IDisposable
         var expectedPixels = ReadRgb(preEncode);
         var expectedProfile = OutputColorProfiles.Get(
             outputColorSpace).ToByteArray();
-        var path = Path.Combine(_root, $"parity-{outputColorSpace}.tif");
+        var path = Path.Combine(_root.Path, $"parity-{outputColorSpace}.tif");
 
         ExportEncoder.Write(
             preEncode,
@@ -44,7 +42,7 @@ public sealed class TiffExportTests : IDisposable
     {
         using var preEncode = CreateQ16Image(hasAlpha: true);
         Assert.True(preEncode.HasAlpha);
-        var path = Path.Combine(_root, "no-alpha.tif");
+        var path = Path.Combine(_root.Path, "no-alpha.tif");
 
         ExportEncoder.Write(
             preEncode,
@@ -60,12 +58,12 @@ public sealed class TiffExportTests : IDisposable
     [Fact]
     public async Task ExportBatch_VariantsResizeAndSharpenLargestFirst()
     {
-        var sourcePath = Path.Combine(_root, "source.png");
+        var sourcePath = Path.Combine(_root.Path, "source.png");
         using (var source = new MagickImage(MagickColors.Orange, 400, 200))
         {
             source.Write(sourcePath);
         }
-        var outputFolder = Path.Combine(_root, "variants");
+        var outputFolder = Path.Combine(_root.Path, "variants");
         var settings = new ExportSettings
         {
             OutputFolder = outputFolder,
@@ -107,7 +105,7 @@ public sealed class TiffExportTests : IDisposable
         var sourcePath = Path.Combine(
             GoldenTestPaths.AssetDirectory,
             "srgb-exif-gps-orientation-6.jpg");
-        var outputFolder = Path.Combine(_root, $"gps-{stripLocationData}");
+        var outputFolder = Path.Combine(_root.Path, $"gps-{stripLocationData}");
         var settings = new ExportSettings
         {
             OutputFolder = outputFolder,
@@ -176,11 +174,5 @@ public sealed class TiffExportTests : IDisposable
         Assert.Equal(CompressionMethod.Zip, image.Compression);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _root.Dispose();
 }

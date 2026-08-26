@@ -9,17 +9,15 @@ namespace HappyPhoton.Tests;
 
 public sealed class RenderFailureRollbackTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-render-rollback-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task CurrentEditFailureRestoresPaintedSettingsWithoutAutosave()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "render"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "render"));
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "render.jpg"));
+        var image = new ImageFile(Path.Combine(_root.Path, "render.jpg"));
         vm.SelectedImage = image;
 
         try
@@ -45,10 +43,10 @@ public sealed class RenderFailureRollbackTests : IDisposable
     [AvaloniaFact]
     public async Task CropSaveFailureRestoresSettingsAndTerminatesReservation()
     {
-        var catalog = new CatalogService(Path.Combine(_root, "crop"));
+        var catalog = new CatalogService(Path.Combine(_root.Path, "crop"));
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "crop.jpg"));
+        var image = new ImageFile(Path.Combine(_root.Path, "crop.jpg"));
         vm.SelectedImage = image;
 
         try
@@ -85,7 +83,7 @@ public sealed class RenderFailureRollbackTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 
     private static MainWindowViewModel CreateViewModel(CatalogService catalog) =>

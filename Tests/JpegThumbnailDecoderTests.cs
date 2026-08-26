@@ -8,8 +8,7 @@ namespace HappyPhoton.Tests;
 public sealed class JpegThumbnailDecoderTests : IDisposable
 {
     private readonly AvaloniaTestFixture _fixture;
-    private readonly string _tempDirectory = Path.Combine(
-        Path.GetTempPath(), $"HappyPhotonJpegTests_{Guid.NewGuid():N}");
+    private readonly TemporaryDirectory _tempDirectory = new();
 
     public JpegThumbnailDecoderTests(AvaloniaTestFixture fixture)
     {
@@ -21,9 +20,8 @@ public sealed class JpegThumbnailDecoderTests : IDisposable
     {
         _fixture.RequireWindows();
 
-        Directory.CreateDirectory(_tempDirectory);
-        var landscapePath = Path.Combine(_tempDirectory, "landscape.jpg");
-        var orientedPath = Path.Combine(_tempDirectory, "oriented.jpg");
+        var landscapePath = Path.Combine(_tempDirectory.Path, "landscape.jpg");
+        var orientedPath = Path.Combine(_tempDirectory.Path, "oriented.jpg");
         WriteJpeg(landscapePath, OrientationType.Undefined);
         WriteJpeg(orientedPath, OrientationType.RightTop);
 
@@ -45,7 +43,7 @@ public sealed class JpegThumbnailDecoderTests : IDisposable
         cancellation.Cancel();
 
         Assert.Throws<OperationCanceledException>(() => JpegThumbnailDecoder.Decode(
-            Path.Combine(_tempDirectory, "missing.jpg"), 150, cancellation.Token));
+            Path.Combine(_tempDirectory.Path, "missing.jpg"), 150, cancellation.Token));
     }
 
     [Theory]
@@ -69,8 +67,7 @@ public sealed class JpegThumbnailDecoderTests : IDisposable
     {
         _fixture.RequireWindows();
 
-        Directory.CreateDirectory(_tempDirectory);
-        var path = Path.Combine(_tempDirectory, "embedded-matching.jpg");
+        var path = Path.Combine(_tempDirectory.Path, "embedded-matching.jpg");
         WriteJpegWithExifThumbnail(path, 90, 60);
 
         using var bitmap = JpegThumbnailDecoder.Decode(path, 150, CancellationToken.None);
@@ -84,8 +81,7 @@ public sealed class JpegThumbnailDecoderTests : IDisposable
     {
         _fixture.RequireWindows();
 
-        Directory.CreateDirectory(_tempDirectory);
-        var path = Path.Combine(_tempDirectory, "embedded-mismatched.jpg");
+        var path = Path.Combine(_tempDirectory.Path, "embedded-mismatched.jpg");
         WriteJpegWithExifThumbnail(path, 80, 60);
 
         using var bitmap = JpegThumbnailDecoder.Decode(path, 150, CancellationToken.None);
@@ -181,11 +177,5 @@ public sealed class JpegThumbnailDecoderTests : IDisposable
         writer.Write(value);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_tempDirectory))
-        {
-            Directory.Delete(_tempDirectory, recursive: true);
-        }
-    }
+    public void Dispose() => _tempDirectory.Dispose();
 }

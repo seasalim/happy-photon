@@ -7,9 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class EffectsExportTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-effects-export-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [Theory]
     [InlineData(OutputColorSpace.Srgb)]
@@ -17,7 +15,7 @@ public sealed class EffectsExportTests : IDisposable
     public async Task MultiVariantExport_AppliesEffectsAfterResizeAndSharpen(
         OutputColorSpace outputColorSpace)
     {
-        var sourcePath = Path.Combine(_root, $"active-{outputColorSpace}.dng");
+        var sourcePath = Path.Combine(_root.Path, $"active-{outputColorSpace}.dng");
         File.WriteAllBytes(sourcePath, []);
         var effects = new EffectsSettings
         {
@@ -39,7 +37,7 @@ public sealed class EffectsExportTests : IDisposable
             new ExportVariant("full", null),
             new ExportVariant("small", 32)
         };
-        var output = Path.Combine(_root, $"active-out-{outputColorSpace}");
+        var output = Path.Combine(_root.Path, $"active-out-{outputColorSpace}");
         var exportSettings = new ExportSettings
         {
             OutputFolder = output,
@@ -102,15 +100,15 @@ public sealed class EffectsExportTests : IDisposable
     public async Task MultiVariantExport_InactiveObjectIsBitIdenticalToNull(
         OutputColorSpace outputColorSpace)
     {
-        var sourcePath = Path.Combine(_root, $"off-{outputColorSpace}.dng");
+        var sourcePath = Path.Combine(_root.Path, $"off-{outputColorSpace}.dng");
         File.WriteAllBytes(sourcePath, []);
         var variants = new[]
         {
             new ExportVariant("full", null),
             new ExportVariant("small", 32)
         };
-        var nullOutput = Path.Combine(_root, $"null-{outputColorSpace}");
-        var explicitOutput = Path.Combine(_root, $"explicit-{outputColorSpace}");
+        var nullOutput = Path.Combine(_root.Path, $"null-{outputColorSpace}");
+        var explicitOutput = Path.Combine(_root.Path, $"explicit-{outputColorSpace}");
 
         await ExportAsync(
             sourcePath,
@@ -195,7 +193,7 @@ public sealed class EffectsExportTests : IDisposable
         image.GetPixelsUnsafe().ToShortArray(PixelMapping.RGB) ??
         throw new InvalidOperationException("Pixels unavailable.");
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    public void Dispose() => _root.Dispose();
 
     private sealed class PatternBaseLoader : IBaseImageLoader
     {

@@ -15,19 +15,17 @@ namespace HappyPhoton.Tests;
 
 public sealed class CurveChannelControlTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-curve-channels-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task SelectorUsesHeaderWithoutMaterializingAndPaintsChannelState()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         await using var viewModel = CreateViewModel(catalog);
         var panel = new DevelopEditPanel { DataContext = viewModel };
         var window = ShowPanel(panel);
-        var image = new ImageFile(Path.Combine(_root, "channels.jpg"));
+        var image = new ImageFile(Path.Combine(_root.Path, "channels.jpg"));
 
         try
         {
@@ -74,12 +72,12 @@ public sealed class CurveChannelControlTests : IDisposable
     [AvaloniaFact]
     public async Task ChannelCurveHistoryRestoresDragsRemovalAndEmbeddedReset()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "history"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "history"));
         await catalog.InitializeAsync();
         await using var viewModel = CreateViewModel(catalog);
         var panel = new DevelopEditPanel { DataContext = viewModel };
         var window = ShowPanel(panel);
-        var image = new ImageFile(Path.Combine(_root, "history.jpg"));
+        var image = new ImageFile(Path.Combine(_root.Path, "history.jpg"));
 
         try
         {
@@ -121,7 +119,7 @@ public sealed class CurveChannelControlTests : IDisposable
     [AvaloniaFact]
     public async Task PanelResetClearsCompositeAndAllChannelCurves()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "reset"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "reset"));
         await catalog.InitializeAsync();
         await using var viewModel = CreateViewModel(catalog);
         var settings = new EditSettings
@@ -131,7 +129,7 @@ public sealed class CurveChannelControlTests : IDisposable
             CurveBlue = CreateCurve(0.6, 0.8)
         };
         settings.Curve.AddPointAndReturnIndex(0.5, 0.65);
-        var image = new ImageFile(Path.Combine(_root, "reset.jpg"))
+        var image = new ImageFile(Path.Combine(_root.Path, "reset.jpg"))
         {
             EditSettings = settings
         };
@@ -149,11 +147,11 @@ public sealed class CurveChannelControlTests : IDisposable
     [AvaloniaFact]
     public async Task UntouchedSelectionSurvivesSaveAndCopyWithoutChannelState()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "lazy"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "lazy"));
         await catalog.InitializeAsync();
         await using var viewModel = CreateViewModel(catalog);
-        var source = new ImageFile(Path.Combine(_root, "source.jpg"));
-        var target = new ImageFile(Path.Combine(_root, "target.jpg"));
+        var source = new ImageFile(Path.Combine(_root.Path, "source.jpg"));
+        var target = new ImageFile(Path.Combine(_root.Path, "target.jpg"));
 
         viewModel.SelectedImage = source;
         viewModel.ActiveCurveChannel = ToneCurveChannel.Green;
@@ -174,10 +172,10 @@ public sealed class CurveChannelControlTests : IDisposable
     [AvaloniaFact]
     public async Task InterleavedCurveAndSliderHistoryPreservesPostCurveState()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "interleaved"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "interleaved"));
         await catalog.InitializeAsync();
         await using var viewModel = CreateViewModel(catalog);
-        var image = new ImageFile(Path.Combine(_root, "interleaved.jpg"));
+        var image = new ImageFile(Path.Combine(_root.Path, "interleaved.jpg"));
         viewModel.SelectedImage = image;
         viewModel.ActiveCurveChannel = ToneCurveChannel.Blue;
         await CommitAsync(viewModel, curve =>
@@ -240,7 +238,7 @@ public sealed class CurveChannelControlTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 
     private sealed class TinyBaseLoader : IBaseImageLoader

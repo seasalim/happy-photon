@@ -7,17 +7,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class ExportMetadataTests : IDisposable
 {
-    private readonly string _tempDirectory = Path.Combine(
-        Path.GetTempPath(),
-        $"HappyPhotonMetadataTests_{Guid.NewGuid():N}");
-
-    public ExportMetadataTests() =>
-        Directory.CreateDirectory(_tempDirectory);
+    private readonly TemporaryDirectory _tempDirectory = new();
 
     [Fact]
     public void Apply_CopiesExifAndNormalizesRebuiltPixels()
     {
-        var sourcePath = Path.Combine(_tempDirectory, "source.jpg");
+        var sourcePath = Path.Combine(_tempDirectory.Path, "source.jpg");
         using (var source = new MagickImage(MagickColors.Orange, 40, 30))
         {
             var profile = new ExifProfile();
@@ -68,7 +63,7 @@ public sealed class ExportMetadataTests : IDisposable
     public void Apply_MissingExifSynthesizesRawCaptureMetadata()
     {
         var source = new ImageFile(Path.Combine(
-            _tempDirectory,
+            _tempDirectory.Path,
             "missing.dng"))
         {
             CameraMake = "Raw Camera Co",
@@ -123,7 +118,7 @@ public sealed class ExportMetadataTests : IDisposable
     [Fact]
     public void Apply_PartialExifSupplementsMissingCaptureMetadata()
     {
-        var sourcePath = Path.Combine(_tempDirectory, "partial.jpg");
+        var sourcePath = Path.Combine(_tempDirectory.Path, "partial.jpg");
         using (var image = new MagickImage(MagickColors.Orange, 40, 30))
         {
             var profile = new ExifProfile();
@@ -205,7 +200,7 @@ public sealed class ExportMetadataTests : IDisposable
         string extension)
     {
         var source = new ImageFile(Path.Combine(
-            _tempDirectory,
+            _tempDirectory.Path,
             "missing.dng"))
         {
             CameraMake = "Raw Camera Co",
@@ -220,7 +215,7 @@ public sealed class ExportMetadataTests : IDisposable
             destination,
             stripLocationData: false);
         var outputPath = Path.Combine(
-            _tempDirectory,
+            _tempDirectory.Path,
             $"metadata{extension}");
 
         ExportEncoder.Write(
@@ -288,11 +283,5 @@ public sealed class ExportMetadataTests : IDisposable
             result.GetValue(ExifTag.GPSLatitude) != null);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_tempDirectory))
-        {
-            Directory.Delete(_tempDirectory, recursive: true);
-        }
-    }
+    public void Dispose() => _tempDirectory.Dispose();
 }

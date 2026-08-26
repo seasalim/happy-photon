@@ -7,10 +7,6 @@ public readonly record struct PrecisionLab(double L, double A, double B);
 
 internal static class PrecisionDeltaE
 {
-    private const double D65X = 0.95047;
-    private const double D65Y = 1.00000;
-    private const double D65Z = 1.08883;
-
     internal static readonly double[,] SrgbToXyzD65 =
         RgbColorSpaceMatrices.LinearSrgbToXyzD65PublishedRounded;
 
@@ -25,25 +21,8 @@ internal static class PrecisionDeltaE
             ToLab(red1, green1, blue1),
             ToLab(red2, green2, blue2));
 
-    public static PrecisionLab ToLab(double red, double green, double blue)
-    {
-        var r = Decode(red);
-        var g = Decode(green);
-        var b = Decode(blue);
-        var x = (SrgbToXyzD65[0, 0] * r + SrgbToXyzD65[0, 1] * g +
-            SrgbToXyzD65[0, 2] * b) / D65X;
-        var y = (SrgbToXyzD65[1, 0] * r + SrgbToXyzD65[1, 1] * g +
-            SrgbToXyzD65[1, 2] * b) / D65Y;
-        var z = (SrgbToXyzD65[2, 0] * r + SrgbToXyzD65[2, 1] * g +
-            SrgbToXyzD65[2, 2] * b) / D65Z;
-        var fx = PivotXyz(x);
-        var fy = PivotXyz(y);
-        var fz = PivotXyz(z);
-        return new PrecisionLab(
-            116 * fy - 16,
-            500 * (fx - fy),
-            200 * (fy - fz));
-    }
+    public static PrecisionLab ToLab(double red, double green, double blue) =>
+        SrgbLabConverter.ToLab(red, green, blue, SrgbToXyzD65);
 
     public static double Ciede2000(PrecisionLab first, PrecisionLab second)
     {
@@ -87,16 +66,6 @@ internal static class PrecisionDeltaE
         var h = deltaHPrime / sh;
         return Math.Sqrt(l * l + c * c + h * h + rt * c * h);
     }
-
-    private static double Decode(double value) =>
-        value <= 0.04045
-            ? value / 12.92
-            : Math.Pow((value + 0.055) / 1.055, 2.4);
-
-    private static double PivotXyz(double value) =>
-        value > 216.0 / 24389
-            ? Math.Cbrt(value)
-            : 841.0 / 108 * value + 4.0 / 29;
 
     private static double HueDegrees(double b, double aPrime)
     {

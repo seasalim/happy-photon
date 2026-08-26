@@ -8,18 +8,14 @@ namespace HappyPhoton.Tests;
 
 public sealed class ExportFailureReportingTests : IDisposable
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-export-failures-{Guid.NewGuid():N}");
-
-    public ExportFailureReportingTests() => Directory.CreateDirectory(_root);
+    private readonly TemporaryDirectory _root = new();
 
     [Fact]
     public async Task MixedBatch_SurfacesEveryFailureWithoutCompleteProgress()
     {
-        var exported = new ImageFile(Path.Combine(_root, "exported.dng"));
-        var failedA = new ImageFile(Path.Combine(_root, "failed-a.dng"));
-        var failedB = new ImageFile(Path.Combine(_root, "failed-b.dng"));
+        var exported = new ImageFile(Path.Combine(_root.Path, "exported.dng"));
+        var failedA = new ImageFile(Path.Combine(_root.Path, "failed-a.dng"));
+        var failedB = new ImageFile(Path.Combine(_root.Path, "failed-b.dng"));
         var service = new ImageExportService(
             new RenderPipeline(),
             new SelectiveBaseLoader(exported),
@@ -27,7 +23,7 @@ public sealed class ExportFailureReportingTests : IDisposable
         var progress = new RecordingProgress();
         var settings = new ExportSettings
         {
-            OutputFolder = Path.Combine(_root, "output"),
+            OutputFolder = Path.Combine(_root.Path, "output"),
             Format = ExportFormat.Png
         };
 
@@ -47,8 +43,8 @@ public sealed class ExportFailureReportingTests : IDisposable
     [Fact]
     public async Task MissingSelectedProfile_ExportsBuiltInFallbackWithWarning()
     {
-        var image = new ImageFile(Path.Combine(_root, "source.dng"));
-        var missingProfile = Path.Combine(_root, "missing.dcp");
+        var image = new ImageFile(Path.Combine(_root.Path, "source.dng"));
+        var missingProfile = Path.Combine(_root.Path, "missing.dcp");
         image.EditSettings.RawProfile = new RawProfileSelection
         {
             Source = RawProfileSource.UserFile,
@@ -64,7 +60,7 @@ public sealed class ExportFailureReportingTests : IDisposable
             new DcpProfileService(availability));
         var settings = new ExportSettings
         {
-            OutputFolder = Path.Combine(_root, "profile-output"),
+            OutputFolder = Path.Combine(_root.Path, "profile-output"),
             Format = ExportFormat.Png
         };
 
@@ -81,11 +77,11 @@ public sealed class ExportFailureReportingTests : IDisposable
     [Fact]
     public async Task VariantCountOverload_PropagatesProfileWarning()
     {
-        var image = new ImageFile(Path.Combine(_root, "variant.dng"));
+        var image = new ImageFile(Path.Combine(_root.Path, "variant.dng"));
         image.EditSettings.RawProfile = new RawProfileSelection
         {
             Source = RawProfileSource.UserFile,
-            Location = Path.Combine(_root, "missing-variant.dcp"),
+            Location = Path.Combine(_root.Path, "missing-variant.dcp"),
             ContentHash = new string('b', 64)
         };
         var availability = new TestSourceAvailabilityService(
@@ -98,7 +94,7 @@ public sealed class ExportFailureReportingTests : IDisposable
         var warningProgress = new RecordingWarningProgress();
         var settings = new ExportSettings
         {
-            OutputFolder = Path.Combine(_root, "variant-output")
+            OutputFolder = Path.Combine(_root.Path, "variant-output")
         };
 
         var count = await service.ExportBatchAsync(
@@ -113,13 +109,7 @@ public sealed class ExportFailureReportingTests : IDisposable
         Assert.Equal("profile_missing", Assert.Single(warningProgress.Values).Code);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _root.Dispose();
 
     private sealed class SelectiveBaseLoader(ImageFile successfulImage) :
         IBaseImageLoader

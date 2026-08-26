@@ -16,14 +16,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class GeometryControlTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(), $"happy-photon-geometry-ui-{Guid.NewGuid():N}"))
-        .FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task GeometryGroupBindsFourAlwaysEnabledResettableSliders()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
         await using var vm = new MainWindowViewModel(
             catalog,
@@ -33,7 +31,7 @@ public sealed class GeometryControlTests : IDisposable
         var window = new Window { Width = 260, Height = 1_200, Content = panel };
         window.Show();
         vm.IsDevelopMode = true;
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "photo.jpg"));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "photo.jpg"));
         Dispatcher.UIThread.RunJobs();
 
         var effects = panel.FindControl<EffectsEditGroup>("EffectsEditGroup")!;
@@ -79,13 +77,13 @@ public sealed class GeometryControlTests : IDisposable
     [AvaloniaFact]
     public async Task HistoryRestorationAppliesManualGeometryOutsideTransferPolicy()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "history-catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "history-catalog"));
         await catalog.InitializeAsync();
         await using var vm = new MainWindowViewModel(
             catalog,
             new NullBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask);
-        var image = new ImageFile(Path.Combine(_root, "history.jpg"))
+        var image = new ImageFile(Path.Combine(_root.Path, "history.jpg"))
         {
             EditSettings = new EditSettings
             {
@@ -146,6 +144,6 @@ public sealed class GeometryControlTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 }

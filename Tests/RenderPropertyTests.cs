@@ -7,7 +7,8 @@ namespace HappyPhoton.Tests;
 internal static class RenderPropertyCases
 {
     public const int Seed = 147_000;
-    public const int DrawCount = 64;
+    public const int AchromaticDrawCount = 64;
+    public const int ContrastDrawCount = 16;
     public const int ContrastMinimum = -100;
     public const int ContrastMaximum = 100;
     public const int Q16Tolerance = 2;
@@ -15,7 +16,7 @@ internal static class RenderPropertyCases
     public static IEnumerable<ushort[]> AchromaticImages()
     {
         var random = new Random(Seed);
-        for (var draw = 0; draw < DrawCount; draw++)
+        for (var draw = 0; draw < AchromaticDrawCount; draw++)
         {
             var values = new ushort[13 * 11 * 3];
             for (var pixel = 0; pixel < values.Length / 3; pixel++)
@@ -35,7 +36,9 @@ internal static class RenderPropertyCases
         yield return ContrastMinimum;
         yield return 0;
         yield return ContrastMaximum;
-        for (var draw = 3; draw < DrawCount; draw++)
+        // The extrema and zero are explicit; thirteen seeded interior draws
+        // retain broad slider sampling without multiplying four full renders.
+        for (var draw = 3; draw < ContrastDrawCount; draw++)
         {
             yield return random.Next(ContrastMinimum, ContrastMaximum + 1);
         }

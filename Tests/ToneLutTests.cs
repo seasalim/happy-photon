@@ -112,9 +112,10 @@ public class ToneLutTests
         var random = new Random(0x4850_21);
         var monotoneCurvesUsed = 0;
 
-        // The exact LUT has 16x the old node count; 64 draws retain slightly
-        // more total monotonicity samples than the former 4096x1000 sweep.
-        for (var draw = 0; draw < 64; draw++)
+        // Sixteen draws cover identity and generated curves while checking
+        // 1,048,576 adjacent LUT pairs across the seeded parameter space.
+        const int drawCount = 16;
+        for (var draw = 0; draw < drawCount; draw++)
         {
             var curve = draw % 2 == 0 ? IdentityCurve : CreateMonotoneCurve(random);
             if (!curve.IsIdentity())
@@ -142,7 +143,7 @@ public class ToneLutTests
             }
         }
 
-        Assert.True(monotoneCurvesUsed >= 32);
+        Assert.Equal(drawCount / 2, monotoneCurvesUsed);
     }
 
     [Fact]

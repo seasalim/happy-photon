@@ -11,9 +11,7 @@ namespace HappyPhoton.Tests;
 public sealed partial class AdjacentPreviewWarmTests : IDisposable
 {
     private readonly AvaloniaTestFixture _fixture;
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-adjacent-warm-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     public AdjacentPreviewWarmTests(AvaloniaTestFixture fixture) =>
         _fixture = fixture;
@@ -165,7 +163,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
             $"target{extension}");
         if (selectedProfile)
         {
-            var profilePath = SyntheticDcpFactory.WriteTemporary(_root);
+            var profilePath = SyntheticDcpFactory.WriteTemporary(_root.Path);
             var snapshot = new DcpProfileReader().ReadExternalSnapshot(profilePath);
             image.EditSettings.RawProfile = new RawProfileSelection
             {
@@ -353,7 +351,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
                 case "edit": vm.Exposure = 0.5; break;
                 case "filter": vm.Browse.FlagFilter = FlagFilter.Picked; break;
                 case "folder": await vm.LoadFolderAsync(
-                    Directory.CreateDirectory(Path.Combine(_root, "empty")).FullName); break;
+                    Directory.CreateDirectory(Path.Combine(_root.Path, "empty")).FullName); break;
                 case "browse": vm.IsDevelopMode = false; break;
                 case "fullscreen": vm.IsFullScreenMode = true; break;
             }
@@ -378,7 +376,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
 
     private async Task<CatalogService> CreateCatalogAsync(string name)
     {
-        var catalog = new CatalogService(Path.Combine(_root, name));
+        var catalog = new CatalogService(Path.Combine(_root.Path, name));
         await catalog.InitializeAsync();
         return catalog;
     }
@@ -394,7 +392,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
 
     private ImageFile CreateImage(string name)
     {
-        var path = Path.Combine(_root, name);
+        var path = Path.Combine(_root.Path, name);
         File.WriteAllBytes(path, [1]);
         return new ImageFile(path);
     }
@@ -402,7 +400,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 
     private class RecordingLoader : IBaseImageLoader

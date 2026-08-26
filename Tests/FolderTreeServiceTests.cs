@@ -5,19 +5,18 @@ namespace HappyPhoton.Tests;
 
 public sealed class FolderTreeServiceTests : IDisposable
 {
-    private readonly string _testRoot =
-        Path.Combine(Path.GetTempPath(), $"happy-photon-folders-{Guid.NewGuid():N}");
+    private readonly TemporaryDirectory _testRoot = new();
 
     [Fact]
     public void Tree_ExcludesOnlyConfiguredCatalogPath()
     {
-        var browseRoot = Directory.CreateDirectory(Path.Combine(_testRoot, "browse")).FullName;
+        var browseRoot = Directory.CreateDirectory(Path.Combine(_testRoot.Path, "browse")).FullName;
         var catalogPath = Directory.CreateDirectory(
             Path.Combine(browseRoot, "Happy Photon Catalog")).FullName;
         Directory.CreateDirectory(Path.Combine(catalogPath, "assets"));
         Directory.CreateDirectory(Path.Combine(browseRoot, "Shoot"));
 
-        var otherRoot = Directory.CreateDirectory(Path.Combine(_testRoot, "other")).FullName;
+        var otherRoot = Directory.CreateDirectory(Path.Combine(_testRoot.Path, "other")).FullName;
         Directory.CreateDirectory(Path.Combine(otherRoot, "Happy Photon Catalog"));
 
         var service = new FolderTreeService(catalogPath);
@@ -37,7 +36,7 @@ public sealed class FolderTreeServiceTests : IDisposable
     [Fact]
     public void RootNode_WithTrailingSeparator_UsesFolderName()
     {
-        var root = Directory.CreateDirectory(Path.Combine(_testRoot, "Pictures")).FullName;
+        var root = Directory.CreateDirectory(Path.Combine(_testRoot.Path, "Pictures")).FullName;
         var service = new FolderTreeService();
 
         var node = service.CreateRootNode(root + Path.DirectorySeparatorChar);
@@ -49,7 +48,7 @@ public sealed class FolderTreeServiceTests : IDisposable
     [Fact]
     public void Validation_RejectsCatalogAndDescendantsButAllowsParentAndSibling()
     {
-        var browseRoot = Directory.CreateDirectory(Path.Combine(_testRoot, "browse")).FullName;
+        var browseRoot = Directory.CreateDirectory(Path.Combine(_testRoot.Path, "browse")).FullName;
         var catalogPath = Directory.CreateDirectory(
             Path.Combine(browseRoot, "Happy Photon Catalog")).FullName;
         var catalogChild = Directory.CreateDirectory(
@@ -71,10 +70,10 @@ public sealed class FolderTreeServiceTests : IDisposable
     [Fact]
     public void IsWithinRoot_DoesNotAcceptPathPrefixSibling()
     {
-        var root = Directory.CreateDirectory(Path.Combine(_testRoot, "Photos")).FullName;
+        var root = Directory.CreateDirectory(Path.Combine(_testRoot.Path, "Photos")).FullName;
         var child = Directory.CreateDirectory(Path.Combine(root, "Shoot")).FullName;
         var prefixSibling = Directory.CreateDirectory(
-            Path.Combine(_testRoot, "Photos Backup")).FullName;
+            Path.Combine(_testRoot.Path, "Photos Backup")).FullName;
         var service = new FolderTreeService();
 
         Assert.True(service.IsWithinRoot(root, child));
@@ -84,17 +83,11 @@ public sealed class FolderTreeServiceTests : IDisposable
     [Fact]
     public void MissingPicturesCandidate_ReturnsNoDefaultLocation()
     {
-        var missingPath = Path.Combine(_testRoot, "missing-pictures");
+        var missingPath = Path.Combine(_testRoot.Path, "missing-pictures");
         var service = new FolderTreeService(null, () => missingPath);
 
         Assert.Null(service.GetAvailablePicturesPath());
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_testRoot))
-        {
-            Directory.Delete(_testRoot, recursive: true);
-        }
-    }
+    public void Dispose() => _testRoot.Dispose();
 }

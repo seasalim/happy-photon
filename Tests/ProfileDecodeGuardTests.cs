@@ -6,9 +6,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class ProfileDecodeGuardTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-profile-guard-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [Fact]
     public async Task Coordinator_RejectsSelectionOnlyDecode()
@@ -19,7 +17,7 @@ public sealed class ProfileDecodeGuardTests : IDisposable
             RawProfile = new RawProfileSelection
             {
                 Source = RawProfileSource.UserFile,
-                Location = Path.Combine(_root, "missing.dcp"),
+                Location = Path.Combine(_root.Path, "missing.dcp"),
                 ContentHash = new string('a', 64)
             }
         });
@@ -28,7 +26,7 @@ public sealed class ProfileDecodeGuardTests : IDisposable
         Assert.Null(decode.ProfileResolution);
         await Assert.ThrowsAsync<ArgumentException>(() =>
             coordinator.GetPreviewAsync(
-                new ImageFile(Path.Combine(_root, "photo.cr2")),
+                new ImageFile(Path.Combine(_root.Path, "photo.cr2")),
                 decode,
                 CancellationToken.None));
     }
@@ -36,7 +34,7 @@ public sealed class ProfileDecodeGuardTests : IDisposable
     [Fact]
     public async Task WhiteBalanceContext_ResolvesProfileBeforeDecoding()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
         await using var service = new PreviewService(
             catalog,
@@ -47,7 +45,7 @@ public sealed class ProfileDecodeGuardTests : IDisposable
             RawProfile = new RawProfileSelection
             {
                 Source = RawProfileSource.UserFile,
-                Location = Path.Combine(_root, "missing.dcp"),
+                Location = Path.Combine(_root.Path, "missing.dcp"),
                 ContentHash = new string('a', 64)
             }
         };
@@ -57,7 +55,7 @@ public sealed class ProfileDecodeGuardTests : IDisposable
         // profile file resolves to a rejected outcome, which still satisfies
         // the guard — only the unresolved selection is forbidden.
         var context = await service.GetWhiteBalanceContextAsync(
-            new ImageFile(Path.Combine(_root, "photo.cr2")),
+            new ImageFile(Path.Combine(_root.Path, "photo.cr2")),
             settings);
 
         Assert.Null(context);
@@ -66,6 +64,6 @@ public sealed class ProfileDecodeGuardTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 }

@@ -7,15 +7,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class SourceHydrationServiceTests : IDisposable
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-source-hydration-{Guid.NewGuid():N}");
+    private readonly TemporaryDirectory _root = new();
 
     [Fact]
     public async Task ExplicitHydration_ReadsAndRechecksTheSelectedSource()
     {
-        Directory.CreateDirectory(_root);
-        var path = Path.Combine(_root, "photo.jpg");
+        var path = Path.Combine(_root.Path, "photo.jpg");
         await File.WriteAllBytesAsync(path, new byte[128 * 1024]);
         var checks = 0;
         var availability = new TestSourceAvailabilityService(
@@ -38,8 +35,7 @@ public sealed class SourceHydrationServiceTests : IDisposable
     [Fact]
     public async Task UnavailableSource_IsNeverOpened()
     {
-        Directory.CreateDirectory(_root);
-        var path = Path.Combine(_root, "photo.jpg");
+        var path = Path.Combine(_root.Path, "photo.jpg");
         await File.WriteAllBytesAsync(path, [1]);
         var service = new SourceHydrationService(
             new TestSourceAvailabilityService(
@@ -55,8 +51,7 @@ public sealed class SourceHydrationServiceTests : IDisposable
     [Fact]
     public async Task DownloadAndOpen_RefreshesCloudStateAndMetadata()
     {
-        Directory.CreateDirectory(_root);
-        var path = Path.Combine(_root, "photo.jpg");
+        var path = Path.Combine(_root.Path, "photo.jpg");
         await File.WriteAllBytesAsync(path, new byte[128 * 1024]);
         var checks = 0;
         var availability = new TestSourceAvailabilityService(
@@ -66,7 +61,7 @@ public sealed class SourceHydrationServiceTests : IDisposable
                 ? SourceAvailability.RequiresHydration
                 : SourceAvailability.AvailableLocally
         };
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
         var metadataLoads = 0;
         await using var viewModel = new MainWindowViewModel(
@@ -100,11 +95,5 @@ public sealed class SourceHydrationServiceTests : IDisposable
         Assert.Equal(1.25, viewModel.Exposure);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _root.Dispose();
 }

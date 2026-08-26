@@ -7,16 +7,14 @@ namespace HappyPhoton.Tests;
 
 public sealed class OutputSharpeningExportTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-output-sharpen-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [Fact]
     public async Task Export_OutputSharpeningAffectsOnlyDownsizedVariant()
     {
         var sourcePath = WriteEdgeSource();
-        var enabledFolder = Path.Combine(_root, "enabled");
-        var disabledFolder = Path.Combine(_root, "disabled");
+        var enabledFolder = Path.Combine(_root.Path, "enabled");
+        var disabledFolder = Path.Combine(_root.Path, "disabled");
 
         await ExportAsync(
             sourcePath,
@@ -39,8 +37,8 @@ public sealed class OutputSharpeningExportTests : IDisposable
     public async Task Export_SizedVariantThatDoesNotShrinkIsNotSharpened()
     {
         var sourcePath = WriteEdgeSource();
-        var enabledFolder = Path.Combine(_root, "unresized-enabled");
-        var disabledFolder = Path.Combine(_root, "unresized-disabled");
+        var enabledFolder = Path.Combine(_root.Path, "unresized-enabled");
+        var disabledFolder = Path.Combine(_root.Path, "unresized-disabled");
 
         await ExportAsync(
             sourcePath,
@@ -64,7 +62,7 @@ public sealed class OutputSharpeningExportTests : IDisposable
     public async Task Export_DuplicateSizedVariantsAreNotDoubleSharpened()
     {
         var sourcePath = WriteEdgeSource();
-        var outputFolder = Path.Combine(_root, "duplicates");
+        var outputFolder = Path.Combine(_root.Path, "duplicates");
         var service = new ImageExportService(
             new RenderPipeline(),
             new StandardBaseLoader(),
@@ -142,7 +140,7 @@ public sealed class OutputSharpeningExportTests : IDisposable
             }
         }
 
-        var path = Path.Combine(_root, "edge.png");
+        var path = Path.Combine(_root.Path, "edge.png");
         image.Write(path);
         return path;
     }
@@ -154,11 +152,5 @@ public sealed class OutputSharpeningExportTests : IDisposable
             throw new InvalidOperationException("Unable to read output pixels.");
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _root.Dispose();
 }

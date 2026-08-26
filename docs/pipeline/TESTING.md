@@ -2,6 +2,9 @@
 
 The pipeline is only safe to change because of this harness. Unit tests follow
 existing conventions (`Tests/*Tests.cs`, xUnit, `dotnet test HappyPhoton.sln`).
+Use `Tests/TemporaryDirectory.cs` for disposable test roots and
+`TestEditSettingsFactory` in `Tests/TestBaseLoaders.cs` for neutral tonal settings;
+keep every non-default setting explicit at the call site.
 
 ## 1. Sample assets (`Tests/assets/`)
 

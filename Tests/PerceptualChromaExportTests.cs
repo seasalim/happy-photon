@@ -8,9 +8,7 @@ namespace HappyPhoton.Tests;
 [Collection(CheckpointCRenderGateCollection.Name)]
 public sealed class PerceptualChromaExportTests : IDisposable
 {
-    private readonly string _output = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"HappyPhotonChromaExport_{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _output = new();
 
     [Theory]
     [InlineData(false, OutputColorSpace.Srgb)]
@@ -34,8 +32,8 @@ public sealed class PerceptualChromaExportTests : IDisposable
             new ExportVariant("large", 500),
             new ExportVariant("small", 250)
         };
-        var activeFolder = Path.Combine(_output, label, "active");
-        var neutralFolder = Path.Combine(_output, label, "neutral");
+        var activeFolder = Path.Combine(_output.Path, label, "active");
+        var neutralFolder = Path.Combine(_output.Path, label, "neutral");
 
         var activeCount = await Export(
             sourcePath,
@@ -102,11 +100,5 @@ public sealed class PerceptualChromaExportTests : IDisposable
         return new MagickImage(path, settings);
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_output))
-        {
-            Directory.Delete(_output, recursive: true);
-        }
-    }
+    public void Dispose() => _output.Dispose();
 }

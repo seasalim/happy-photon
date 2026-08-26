@@ -9,17 +9,14 @@ namespace HappyPhoton.Tests;
 
 public sealed class CloudSelectionStateTests : IDisposable
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-cloud-selection-{Guid.NewGuid():N}");
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task BrowseSelection_CloudAfterLocalClearsDerivedEditUi()
     {
-        Directory.CreateDirectory(_root);
         var localPath = WriteJpeg("local.jpg");
         var cloudPath = WriteJpeg("cloud.jpg");
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
         var availability = new TestSourceAvailabilityService(
             SourceAvailability.AvailableLocally)
@@ -90,9 +87,8 @@ public sealed class CloudSelectionStateTests : IDisposable
     [AvaloniaFact]
     public async Task BrowseSelection_CloudUsesCachedThumbnailHistogram()
     {
-        Directory.CreateDirectory(_root);
         var cloudPath = WriteJpeg("cached-cloud.jpg");
-        using var catalog = new CatalogService(Path.Combine(_root, "cached-catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "cached-catalog"));
         await catalog.InitializeAsync();
         var viewModel = new MainWindowViewModel(
             catalog,
@@ -127,9 +123,8 @@ public sealed class CloudSelectionStateTests : IDisposable
     [AvaloniaFact]
     public async Task CloudStateChange_NotifiesEditStateOutsideBrowse()
     {
-        Directory.CreateDirectory(_root);
         var imagePath = WriteJpeg("outside-browse.jpg");
-        using var catalog = new CatalogService(Path.Combine(_root, "outside-catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "outside-catalog"));
         await catalog.InitializeAsync();
         var viewModel = new MainWindowViewModel(
             catalog,
@@ -162,10 +157,9 @@ public sealed class CloudSelectionStateTests : IDisposable
     [AvaloniaFact]
     public async Task BatchPaste_RejectsCloudOnlyTargets()
     {
-        Directory.CreateDirectory(_root);
         var localPath = WriteJpeg("paste-local.jpg");
         var cloudPath = WriteJpeg("paste-cloud.jpg");
-        using var catalog = new CatalogService(Path.Combine(_root, "paste-catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "paste-catalog"));
         await catalog.InitializeAsync();
         var viewModel = new MainWindowViewModel(
             catalog,
@@ -216,40 +210,36 @@ public sealed class CloudSelectionStateTests : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _root.Dispose();
 
     private string WriteJpeg(string name)
     {
-        var path = Path.Combine(_root, name);
+        var path = Path.Combine(_root.Path, name);
         TestImages.WriteJpeg(path);
         return path;
     }
 
-    private static EditSettings CreateNonDefaultSettings() => new()
+    private static EditSettings CreateNonDefaultSettings()
     {
-        Exposure = 2,
-        Brightness = 20,
-        Contrast = 30,
-        Saturation = 40,
-        Vibrance = 50,
-        Shadows = 60,
-        Highlights = -70,
-        Rotation = 90,
-        HorizonRotation = 2,
-        Curve = new CurveData
-        {
-            Points =
-            [
-                new CurvePoint(0, 0),
-                new CurvePoint(0.5, 0.7),
-                new CurvePoint(1, 1)
-            ]
-        }
-    };
+        var settings = TestEditSettingsFactory.CreateTonal(
+            exposure: 2,
+            brightness: 20,
+            contrast: 30,
+            saturation: 40,
+            vibrance: 50,
+            shadows: 60,
+            highlights: -70,
+            curve: new CurveData
+            {
+                Points =
+                [
+                    new CurvePoint(0, 0),
+                    new CurvePoint(0.5, 0.7),
+                    new CurvePoint(1, 1)
+                ]
+            });
+        settings.Rotation = 90;
+        settings.HorizonRotation = 2;
+        return settings;
+    }
 }

@@ -8,16 +8,13 @@ namespace HappyPhoton.Tests;
 
 public sealed class ImageExportServiceVariantTests : IDisposable
 {
-    private readonly string _tempDirectory = Path.Combine(
-        Path.GetTempPath(), $"HappyPhotonExportTests_{Guid.NewGuid():N}");
-
-    public ImageExportServiceVariantTests() => Directory.CreateDirectory(_tempDirectory);
+    private readonly TemporaryDirectory _tempDirectory = new();
 
     [Fact]
     public async Task ExportBatch_WritesProgressivelySizedWebpVariants()
     {
         var sourcePath = WriteSourceImage();
-        var outputFolder = Path.Combine(_tempDirectory, "exports");
+        var outputFolder = Path.Combine(_tempDirectory.Path, "exports");
         var settings = new ExportSettings
         {
             OutputFolder = outputFolder,
@@ -42,7 +39,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
     public async Task ExportBatch_SinglePngVariantStaysFlat()
     {
         var sourcePath = WriteSourceImage();
-        var outputFolder = Path.Combine(_tempDirectory, "exports");
+        var outputFolder = Path.Combine(_tempDirectory.Path, "exports");
         var settings = new ExportSettings
         {
             OutputFolder = outputFolder,
@@ -60,7 +57,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
     public async Task ExportBatch_UnorderedVariantsResizeLargestFirst()
     {
         var sourcePath = WriteSourceImage();
-        var outputFolder = Path.Combine(_tempDirectory, "unordered");
+        var outputFolder = Path.Combine(_tempDirectory.Path, "unordered");
         var settings = new ExportSettings
         {
             OutputFolder = outputFolder,
@@ -85,7 +82,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
     public async Task ExportBatch_PngOutputIsEightBit()
     {
         var sourcePath = WriteSourceImage();
-        var outputFolder = Path.Combine(_tempDirectory, "png-depth");
+        var outputFolder = Path.Combine(_tempDirectory.Path, "png-depth");
         var settings = new ExportSettings
         {
             OutputFolder = outputFolder,
@@ -121,7 +118,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
     {
         var sourcePath = WriteSourceImage();
         var outputFolder = Path.Combine(
-            _tempDirectory,
+            _tempDirectory.Path,
             $"jpeg-{quality}");
         var settings = new ExportSettings
         {
@@ -144,9 +141,9 @@ public sealed class ImageExportServiceVariantTests : IDisposable
     [Fact]
     public async Task ExportBatch_PixelsMatchSharedRenderPipeline()
     {
-        var sourcePath = Path.Combine(_tempDirectory, "render-source.dng");
+        var sourcePath = Path.Combine(_tempDirectory.Path, "render-source.dng");
         File.WriteAllBytes(sourcePath, []);
-        var outputFolder = Path.Combine(_tempDirectory, "render-parity");
+        var outputFolder = Path.Combine(_tempDirectory.Path, "render-parity");
         var file = new ImageFile(sourcePath)
         {
             EditSettings = new EditSettings
@@ -189,9 +186,9 @@ public sealed class ImageExportServiceVariantTests : IDisposable
     [Fact]
     public async Task ExportBatch_SnapshotsSettingsBeforeDecode()
     {
-        var sourcePath = Path.Combine(_tempDirectory, "snapshot.dng");
+        var sourcePath = Path.Combine(_tempDirectory.Path, "snapshot.dng");
         File.WriteAllBytes(sourcePath, []);
-        var outputFolder = Path.Combine(_tempDirectory, "snapshot");
+        var outputFolder = Path.Combine(_tempDirectory.Path, "snapshot");
         var snapshot = new EditSettings
         {
             Exposure = 0.5,
@@ -264,7 +261,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
             GoldenTestPaths.AssetDirectory,
             "srgb-exif-gps-orientation-6.jpg");
         var outputFolder = Path.Combine(
-            _tempDirectory,
+            _tempDirectory.Path,
             stripLocationData ? "stripped" : "retained");
         var settings = new ExportSettings
         {
@@ -298,7 +295,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
         string extension)
     {
         var sourcePath = WriteSourceImage();
-        var outputFolder = Path.Combine(_tempDirectory, $"untagged-{format}");
+        var outputFolder = Path.Combine(_tempDirectory.Path, $"untagged-{format}");
         var settings = new ExportSettings
         {
             OutputFolder = outputFolder,
@@ -326,7 +323,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
         string extension)
     {
         var sourcePath = Path.Combine(GoldenTestPaths.AssetDirectory, assetName);
-        var outputFolder = Path.Combine(_tempDirectory, $"tagged-{assetName}");
+        var outputFolder = Path.Combine(_tempDirectory.Path, $"tagged-{assetName}");
         var settings = new ExportSettings
         {
             OutputFolder = outputFolder,
@@ -344,9 +341,9 @@ public sealed class ImageExportServiceVariantTests : IDisposable
     [Fact]
     public async Task ExportBatch_RawSourceEmbedsSrgbProfile()
     {
-        var sourcePath = Path.Combine(_tempDirectory, "source.dng");
+        var sourcePath = Path.Combine(_tempDirectory.Path, "source.dng");
         File.WriteAllBytes(sourcePath, []);
-        var outputFolder = Path.Combine(_tempDirectory, "raw");
+        var outputFolder = Path.Combine(_tempDirectory.Path, "raw");
         var settings = new ExportSettings { OutputFolder = outputFolder };
         var service = new ImageExportService(
             new RenderPipeline(),
@@ -360,7 +357,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
 
     private string WriteSourceImage()
     {
-        var path = Path.Combine(_tempDirectory, "source.png");
+        var path = Path.Combine(_tempDirectory.Path, "source.png");
         using var image = new MagickImage(MagickColors.Orange, 400, 200);
         image.Write(path);
         return path;
@@ -421,11 +418,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
                 1));
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_tempDirectory))
-            Directory.Delete(_tempDirectory, recursive: true);
-    }
+    public void Dispose() => _tempDirectory.Dispose();
 
     private sealed class StubBaseLoader : IBaseImageLoader
     {

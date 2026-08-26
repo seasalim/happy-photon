@@ -9,14 +9,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class PromotionOutcomeTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-promotion-outcomes-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task RejectedRenderDisposesLeaseWithoutStartingPromotion()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "rejected"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "rejected"));
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog);
         vm.SelectedImage = EditedImage("rejected.dng");
@@ -64,7 +62,7 @@ public sealed class PromotionOutcomeTests : IDisposable
     [AvaloniaFact]
     public async Task ChannelCloseRejectsCompletedOutcomeWithoutPromotion()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "shutdown"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "shutdown"));
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog);
         vm.SelectedImage = EditedImage("shutdown.dng");
@@ -95,7 +93,7 @@ public sealed class PromotionOutcomeTests : IDisposable
     [AvaloniaFact]
     public async Task ClippingRenderDoesNotRevokeAcceptedSliderPromotion()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "clipping-race"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "clipping-race"));
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog);
         vm.ShowWorkspaceReady(
@@ -145,7 +143,7 @@ public sealed class PromotionOutcomeTests : IDisposable
     [InlineData("crop")]
     public async Task TransientRenderNeverPromotes(string transition)
     {
-        using var catalog = new CatalogService(Path.Combine(_root, transition));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, transition));
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog);
         vm.SelectedImage = EditedImage($"{transition}.dng");
@@ -169,7 +167,7 @@ public sealed class PromotionOutcomeTests : IDisposable
                     break;
                 case "hover":
                     await vm.PresetService.UseDirectoryAsync(
-                        Path.Combine(_root, "presets"));
+                        Path.Combine(_root.Path, "presets"));
                     var preset = await vm.PresetService.SaveUserPresetAsync(
                         "Hover",
                         new EditSettings { Exposure = 1.5 });
@@ -193,7 +191,7 @@ public sealed class PromotionOutcomeTests : IDisposable
     [AvaloniaFact]
     public async Task BeforeAfterPreservesLegacyLensDecodeIdentity()
     {
-        using var catalog = new CatalogService(Path.Combine(_root, "legacy-before"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "legacy-before"));
         await catalog.InitializeAsync();
         var loader = new GrayRawLoader();
         var vm = CreateViewModel(catalog, loader);
@@ -228,7 +226,7 @@ public sealed class PromotionOutcomeTests : IDisposable
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        Directory.Delete(_root, recursive: true);
+        _root.Dispose();
     }
 
     private MainWindowViewModel CreateViewModel(
@@ -245,7 +243,7 @@ public sealed class PromotionOutcomeTests : IDisposable
         };
 
     private ImageFile EditedImage(string name) =>
-        new(Path.Combine(_root, name))
+        new(Path.Combine(_root.Path, name))
         {
             EditSettings = new EditSettings { Exposure = 0.5 },
             HasEdits = true

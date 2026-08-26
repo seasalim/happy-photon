@@ -9,14 +9,12 @@ namespace HappyPhoton.Tests;
 
 public sealed class WorkspaceTransitionTests : IDisposable
 {
-    private readonly string _root = Directory.CreateDirectory(Path.Combine(
-        Path.GetTempPath(),
-        $"happy-photon-workspace-transition-{Guid.NewGuid():N}")).FullName;
+    private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
     public async Task ReplacementRefresh_CrossingIntoBrowseIsRejected()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var loader = new RedThenBlueDecodeLoader();
         var vm = CreateViewModel(catalog, loader);
@@ -27,7 +25,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
             refreshReady.TrySetResult();
             return releaseRefresh.Task;
         };
-        var path = Path.Combine(_root, "replacement.png");
+        var path = Path.Combine(_root.Path, "replacement.png");
         using (var source = new MagickImage(MagickColors.Orange, 64, 48))
         {
             source.Write(path);
@@ -78,10 +76,10 @@ public sealed class WorkspaceTransitionTests : IDisposable
     [AvaloniaFact]
     public async Task BeforeAfterRender_CrossingIntoBrowseIsRejected()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog, new GraySolidLoader());
-        var image = new ImageFile(Path.Combine(_root, "original.png"))
+        var image = new ImageFile(Path.Combine(_root.Path, "original.png"))
         {
             EditSettings = new EditSettings { Exposure = 1 },
             HasEdits = true
@@ -122,10 +120,10 @@ public sealed class WorkspaceTransitionTests : IDisposable
     [AvaloniaFact]
     public async Task BeforeAfterRender_SameImageSupersededSentinelIsRejected()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog, new GraySolidLoader());
-        var image = new ImageFile(Path.Combine(_root, "before-after.png"))
+        var image = new ImageFile(Path.Combine(_root.Path, "before-after.png"))
         {
             EditSettings = new EditSettings { Exposure = 1 },
             HasEdits = true
@@ -175,10 +173,10 @@ public sealed class WorkspaceTransitionTests : IDisposable
     [AvaloniaFact]
     public async Task SharedRender_SameImageSupersededSentinelIsRejected()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog, new GraySolidLoader());
-        var image = new ImageFile(Path.Combine(_root, "shared.png"))
+        var image = new ImageFile(Path.Combine(_root.Path, "shared.png"))
         {
             EditSettings = new EditSettings { Exposure = 1 },
             HasEdits = true
@@ -228,11 +226,11 @@ public sealed class WorkspaceTransitionTests : IDisposable
     [AvaloniaFact]
     public async Task ImageSwitchClearsOldSurfaceUntilFirstCoherentPaint()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog, new PathColorLoader());
-        var first = new ImageFile(Path.Combine(_root, "first.png"));
-        var second = new ImageFile(Path.Combine(_root, "second.png"));
+        var first = new ImageFile(Path.Combine(_root.Path, "first.png"));
+        var second = new ImageFile(Path.Combine(_root.Path, "second.png"));
         var secondStarted = NewSignal();
         var releaseSecond = NewSignal();
         vm.SelectedImage = first;
@@ -271,10 +269,10 @@ public sealed class WorkspaceTransitionTests : IDisposable
     [AvaloniaFact]
     public async Task BeforeViewSurvivesLateEditedRender()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog, new GraySolidLoader());
-        var image = new ImageFile(Path.Combine(_root, "before-wins.png"))
+        var image = new ImageFile(Path.Combine(_root.Path, "before-wins.png"))
         {
             EditSettings = new EditSettings { Exposure = 1 },
             HasEdits = true
@@ -328,10 +326,10 @@ public sealed class WorkspaceTransitionTests : IDisposable
     [AvaloniaFact]
     public async Task DoubleBeforeToggleInvertsRequestedIntent()
     {
-        using var catalog = new CatalogService(_root);
+        using var catalog = new CatalogService(_root.Path);
         await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog, new GraySolidLoader());
-        vm.SelectedImage = new ImageFile(Path.Combine(_root, "double-toggle.png"))
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "double-toggle.png"))
         {
             EditSettings = new EditSettings { Exposure = 1 },
             HasEdits = true
@@ -370,13 +368,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public void Dispose() => _root.Dispose();
 
     private static MainWindowViewModel CreateViewModel(
         CatalogService catalog,
