@@ -11,6 +11,38 @@ namespace HappyPhoton.Views;
 
 public partial class BrowseGridView : UserControl
 {
+    private static readonly string[] RootControlNames =
+    [
+        "Root",
+        "SelectionBar",
+        "FilterLabel",
+        "FilterScrollViewer",
+        "FilterRawButton",
+        "FilterJpegButton",
+        "FlagFilterPickedButton",
+        "FlagFilterRejectedButton",
+        "RatingFilter",
+        "ColorLabelFilterControl",
+        "FilterLeftFade",
+        "FilterRightFade",
+        "BrowseActionsPanel",
+        "BrowseActionsButton",
+        "SelectAllMenuItem",
+        "DeselectAllMenuItem",
+        "FilteredEmptyState",
+        "FilteredEmptyClearButton",
+        "ThumbnailScrollViewer",
+        "ThumbnailGrid",
+        "ThumbnailTile",
+        "DeleteImageMenuItem",
+        "SelectionBadgeButton",
+        "EmptyState",
+        "EmptyHeading",
+        "EmptyMessage",
+        "CompareView",
+        "BrowseGridFooter"
+    ];
+
     public static readonly StyledProperty<ObservableCollection<ImageFile>?> ImagesProperty =
         AvaloniaProperty.Register<BrowseGridView, ObservableCollection<ImageFile>?>(nameof(Images));
 
@@ -174,9 +206,12 @@ public partial class BrowseGridView : UserControl
     public BrowseGridView()
     {
         InitializeComponent();
+        NameScope.SetNameScope(
+            this,
+            BrowseGridFooter.MergeWith(
+                NameScope.GetNameScope(this)!,
+                RootControlNames));
         UpdateFilterBar();
-        UpdateBurstsButton();
-        UpdateThumbnailSizeButtons();
         FilterScrollViewer.ScrollChanged += OnFilterScrollChanged;
         FilterScrollViewer.SizeChanged += OnFilterScrollViewerSizeChanged;
         ThumbnailScrollViewer.ScrollChanged += OnThumbnailScrollChanged;
@@ -220,10 +255,6 @@ public partial class BrowseGridView : UserControl
         else if (change.Property == FlagFilterProperty)
         {
             UpdateFlagFilterButtons();
-        }
-        else if (change.Property == ShowBurstsProperty)
-        {
-            UpdateBurstsButton();
         }
         else if (change.Property == ThumbnailSizeProperty)
         {
@@ -281,22 +312,6 @@ public partial class BrowseGridView : UserControl
         FilteredEmptyState.IsVisible = isFilteredEmpty;
         ThumbnailGrid.IsVisible = !isEmpty;
     }
-
-    private void UpdateThumbnailSizeButtons()
-    {
-        SmallThumbnailButton.IsChecked = ThumbnailSize == BrowseThumbnailSize.Small;
-        MediumThumbnailButton.IsChecked = ThumbnailSize == BrowseThumbnailSize.Medium;
-        LargeThumbnailButton.IsChecked = ThumbnailSize == BrowseThumbnailSize.Large;
-    }
-
-    private void OnSmallThumbnailClick(object? sender, RoutedEventArgs e) =>
-        ThumbnailSize = BrowseThumbnailSize.Small;
-
-    private void OnMediumThumbnailClick(object? sender, RoutedEventArgs e) =>
-        ThumbnailSize = BrowseThumbnailSize.Medium;
-
-    private void OnLargeThumbnailClick(object? sender, RoutedEventArgs e) =>
-        ThumbnailSize = BrowseThumbnailSize.Large;
 
     private void OnThumbnailPointerPressed(object? sender, PointerPressedEventArgs e)
     {

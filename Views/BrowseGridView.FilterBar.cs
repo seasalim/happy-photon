@@ -80,9 +80,4 @@ public partial class BrowseGridView
             ? HappyPhoton.Models.FlagFilter.All
             : HappyPhoton.Models.FlagFilter.Rejected;
 
-    private void UpdateBurstsButton() =>
-        BurstsButton.Classes.Set("active", ShowBursts);
-
-    private void OnBurstsClick(object? sender, RoutedEventArgs e) =>
-        ShowBursts = !ShowBursts;
 }

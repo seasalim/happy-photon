@@ -1,0 +1,134 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="using:HappyPhoton.Views"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="50"
+             x:Class="HappyPhoton.Views.BrowseGridFooter"
+             x:DataType="vm:MainWindowViewModel">
+
+<Border
+        Background="{DynamicResource SurfaceLow}"
+        BorderBrush="{DynamicResource Divider}"
+        BorderThickness="0,1,0,0"
+        Padding="14,8">
+    <!-- Centering the assessment on the bar needs matching space reserved on
+         the left, or it centers on whatever the right-hand controls leave
+         behind. Column 0 mirrors the controls' measured width, so the middle
+         column is symmetric about the bar and the assessment sits on its true
+         centre. The controls keep an Auto column, so they can never be
+         clipped the way the old star column let them be; when space runs
+         short the assessment compresses instead. -->
+    <Grid ColumnDefinitions="Auto,*,Auto">
+        <Panel Grid.Column="0"
+               Width="{Binding #ThumbnailSizePanel.Bounds.Width}"/>
+        <StackPanel x:Name="ThumbnailSizePanel"
+                    Grid.Column="2"
+                    Classes="tour-region"
+                    Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="4">
+                <ToggleButton x:Name="CompareViewButton"
+                              Classes="develop-action"
+                              Width="30"
+                              Padding="0"
+                              Command="{Binding ToggleCompareCommand}"
+                              IsChecked="{Binding IsCompareMode, Mode=OneWay}"
+                              IsEnabled="{Binding CanToggleCompare}"
+                              ToolTip.Tip="{Binding CompareViewToolTip}"
+                              ToolTip.ShowOnDisabled="True"
+                              AutomationProperties.Name="{Binding CompareViewToolTip}">
+                    <TextBlock Text="X|Y"
+                               FontFamily="{StaticResource FontLabel}"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               LetterSpacing="0.5"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </ToggleButton>
+                <Rectangle Width="1" Height="16"
+                           Fill="{DynamicResource Divider}"
+                           Margin="6,0"
+                           VerticalAlignment="Center"/>
+                <Button x:Name="BurstsButton" Classes="view-toggle"
+                        Click="OnBurstsClick"
+                        IsEnabled="{Binding IsBrowseGridVisible}"
+                        ToolTip.Tip="Group bursts"
+                        AutomationProperties.Name="Group bursts">
+                    <PathIcon Width="14" Height="14"
+                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              Data="M3 1h11v10H3z M1 4h2v9h9v2H1z"/>
+                </Button>
+                <Rectangle Width="1" Height="16"
+                           Fill="{DynamicResource Divider}"
+                           Margin="6,0"
+                           VerticalAlignment="Center"/>
+                <RadioButton x:Name="SmallThumbnailButton"
+                             GroupName="BrowseThumbnailSize"
+                             Classes="thumbnail-size"
+                             IsEnabled="{Binding IsBrowseGridVisible}"
+                             Click="OnSmallThumbnailClick"
+                             ToolTip.Tip="Small thumbnails"
+                             AutomationProperties.Name="Small thumbnails">
+                    <PathIcon Width="12"
+                              Height="12"
+                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                              Data="M1 1h3v3H1z M6.5 1h3v3h-3z M12 1h3v3h-3z M1 6.5h3v3H1z M6.5 6.5h3v3h-3z M12 6.5h3v3h-3z M1 12h3v3H1z M6.5 12h3v3h-3z M12 12h3v3h-3z"/>
+                </RadioButton>
+                <RadioButton x:Name="MediumThumbnailButton"
+                             GroupName="BrowseThumbnailSize"
+                             Classes="thumbnail-size"
+                             IsEnabled="{Binding IsBrowseGridVisible}"
+                             Click="OnMediumThumbnailClick"
+                             ToolTip.Tip="Medium thumbnails"
+                             AutomationProperties.Name="Medium thumbnails">
+                    <PathIcon Width="12"
+                              Height="12"
+                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                              Data="M1 1h6v6H1z M9 1h6v6H9z M1 9h6v6H1z M9 9h6v6H9z"/>
+                </RadioButton>
+                <RadioButton x:Name="LargeThumbnailButton"
+                             GroupName="BrowseThumbnailSize"
+                             Classes="thumbnail-size"
+                             IsEnabled="{Binding IsBrowseGridVisible}"
+                             Click="OnLargeThumbnailClick"
+                             ToolTip.Tip="Large thumbnails"
+                             AutomationProperties.Name="Large thumbnails">
+                    <PathIcon Width="12"
+                              Height="12"
+                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                              Data="M1 2h14v5H1z M1 9h14v5H1z"/>
+                </RadioButton>
+        </StackPanel>
+        <views:ImageAssessmentControl x:Name="ImageAssessment"
+                                      Grid.Column="1"
+                                      Classes="tour-region tour-glow"
+                                      Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                                      Classes.tour-focus="{Binding IsChooseWhatMattersTourVisible}"
+                                      IsEnabled="{Binding HasSelectedImage}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+        <!-- Bounded so a long cloud-only message cannot run under the
+             centered assessment controls. -->
+        <TextBlock x:Name="OnlineOnlyMessage"
+                   Grid.Column="0"
+                   Classes="tour-region"
+                   Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                   Text="{Binding OnlineOnlyMessage}"
+                   IsVisible="{Binding HasOnlineOnlyPhotos}"
+                   Foreground="{DynamicResource TextSecondary}"
+                   FontFamily="{StaticResource FontLabel}"
+                   FontSize="10"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   MaxWidth="220"
+                   Margin="0,0,8,0"
+                   TextTrimming="CharacterEllipsis"
+                   ToolTip.Tip="{Binding OnlineOnlyMessage}"/>
+    </Grid>
+</Border>
+
+</UserControl>

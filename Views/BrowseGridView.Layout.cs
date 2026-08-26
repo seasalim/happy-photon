@@ -48,8 +48,6 @@ public partial class BrowseGridView
         ThumbnailGrid.InvalidateMeasure();
         _lastViewportStart = -1;
         _lastViewportCount = -1;
-        UpdateThumbnailSizeButtons();
-
         Dispatcher.UIThread.Post(() =>
         {
             if (anchorIndex >= 0)
