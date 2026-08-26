@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <Compile Include="..\Tests\CatalogVmFixture.cs" Link="CatalogVmFixture.cs" />
+    <Compile Include="..\Tests\CatalogAssessmentExtensions.cs" Link="CatalogAssessmentExtensions.cs" />
     <Compile Include="..\Tests\ColorLabelUiTests.cs" Link="ColorLabelUiTests.cs" />
     <Compile Include="..\Tests\CloudSourceViewTests.cs" Link="CloudSourceViewTests.cs" />
     <Compile Include="..\Tests\CloudSelectionStateTests.cs" Link="CloudSelectionStateTests.cs" />
@@ -32,6 +33,8 @@
     <Compile Include="..\Tests\ClippingOutcomeCorrelationTests.cs" Link="ClippingOutcomeCorrelationTests.cs" />
     <Compile Include="..\Tests\ColorAssessmentViewTests.cs" Link="ColorAssessmentViewTests.cs" />
     <Compile Include="..\Tests\ColorAssessmentScreenshotTests.cs" Link="ColorAssessmentScreenshotTests.cs" />
+    <Compile Include="..\Tests\ComparePreviewCacheTests.cs" Link="ComparePreviewCacheTests.cs" />
+    <Compile Include="..\Tests\CompareViewTests.cs" Link="CompareViewTests.cs" />
     <Compile Include="..\Tests\EditAutoSaveRefreshRaceTests.cs" Link="EditAutoSaveRefreshRaceTests.cs" />
     <Compile Include="..\Tests\FirstRunWindowTests.cs" Link="FirstRunWindowTests.cs" />
     <Compile Include="..\Tests\GoldenTestPaths.cs" Link="GoldenTestPaths.cs" />

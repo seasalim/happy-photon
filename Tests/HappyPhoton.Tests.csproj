@@ -31,6 +31,8 @@
     <Compile Remove="ClippingOutcomeCorrelationTests.cs" />
     <Compile Remove="ColorAssessmentViewTests.cs" />
     <Compile Remove="ColorAssessmentScreenshotTests.cs" />
+    <Compile Remove="ComparePreviewCacheTests.cs" />
+    <Compile Remove="CompareViewTests.cs" />
     <Compile Remove="FirstRunWindowTests.cs" />
     <Compile Remove="HelpAboutDialogTests.cs" />
     <Compile Remove="ImageFileThumbnailLifetimeTests.cs" />
