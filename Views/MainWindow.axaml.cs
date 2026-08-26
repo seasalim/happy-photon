@@ -83,7 +83,6 @@ public partial class MainWindow : Window
             _browseGridView.DevelopModeRequested += OnDevelopModeRequested;
             _browseGridView.SelectAllRequested += OnSelectAllRequested;
             _browseGridView.DeselectAllRequested += OnDeselectAllRequested;
-            _browseGridView.BatchExportRequested += OnBatchExportRequested;
             _browseGridView.DeleteRejectedRequested += OnDeleteRejectedRequested;
             _browseGridView.CopyImagePathsRequested += OnCopyImagePathsRequested;
             _browseGridView.RevealImageRequested += OnRevealImageRequested;
@@ -115,9 +114,6 @@ public partial class MainWindow : Window
 
     private void OnDeselectAllRequested(object? sender, EventArgs e) =>
         WithVm(vm => vm.DeselectAllCommand.Execute(null));
-
-    private void OnBatchExportRequested(object? sender, EventArgs e) =>
-        WithVm(vm => vm.SwitchToExportCommand.Execute(null));
 
     private void OnDeleteRejectedRequested(object? sender, EventArgs e) =>
         WithVm(vm => vm.DeleteRejectedImagesCommand.Execute(null));

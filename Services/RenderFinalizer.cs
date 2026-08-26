@@ -5,6 +5,68 @@ namespace HappyPhoton.Services;
 
 internal static class RenderFinalizer
 {
+    internal static MagickImage FinalizeProof(
+        MagickImage displayRec2020,
+        int? maxDimension,
+        OutputColorSpace outputColorSpace,
+        OutputSharpeningMode outputSharpening,
+        EffectsSettings? effects = null)
+    {
+        ArgumentNullException.ThrowIfNull(displayRec2020);
+        if (maxDimension is <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxDimension));
+        }
+
+        return FinalizeOwnedProof(
+            new MagickImage(displayRec2020),
+            maxDimension,
+            outputColorSpace,
+            outputSharpening,
+            effects);
+    }
+
+    internal static MagickImage FinalizeOwnedProof(
+        MagickImage displayRec2020,
+        int? maxDimension,
+        OutputColorSpace outputColorSpace,
+        OutputSharpeningMode outputSharpening,
+        EffectsSettings? effects = null)
+    {
+        ArgumentNullException.ThrowIfNull(displayRec2020);
+        try
+        {
+            if (maxDimension is <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxDimension));
+            }
+
+            var before = Math.Max(displayRec2020.Width, displayRec2020.Height);
+            if (maxDimension is { } limit)
+            {
+                RenderColorEncoding.ResizeInLinearLight(displayRec2020, limit);
+            }
+            var wasResized = Math.Max(
+                displayRec2020.Width,
+                displayRec2020.Height) < before;
+            RenderSharpening.ApplyOutput(
+                displayRec2020,
+                outputSharpening,
+                wasResized,
+                RenderDetail.DefaultBandPixelLimit);
+            RenderEffects.Apply(displayRec2020, effects);
+            RenderColorEncoding.ConvertEncodedRec2020ToTarget(
+                displayRec2020,
+                outputColorSpace);
+            return displayRec2020;
+        }
+        catch
+        {
+            displayRec2020.Dispose();
+            throw;
+        }
+    }
+
     internal static MagickImage Finalize(
         MagickImage displayRec2020,
         int? maxDimension,

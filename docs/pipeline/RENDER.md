@@ -44,11 +44,14 @@ public sealed record RenderOptions(
 public sealed record RenderRequest(
     BaseImage Base, EditSettings Settings, RenderIntent Intent,
     int? MaxDimension, RenderOptions Options,
-    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb);
+    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb,
+    OutputSharpeningMode OutputSharpening = OutputSharpeningMode.Off);
 ```
 
 - `OutputColorSpace` selects sRGB (default) or Display P3 only in finalization. Preview
-  always forces sRGB. Geometry, tone, chroma, and detail are target-independent;
+  always forces sRGB with output sharpening off. The Export workspace's opt-in proof is
+  a distinct `RenderDisplayRec2020` plus proof-finalization path, not an exception to
+  the Preview intent contract. Geometry, tone, chroma, and detail are target-independent;
   `Intent`, `Options`, and `MaxDimension` otherwise change auxiliary work such as
   statistics, optional overlay masks, and the resize target.
 - **Base immutability:** `RenderPipeline` never mutates `Base.Pixels`;

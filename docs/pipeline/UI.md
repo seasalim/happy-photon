@@ -66,8 +66,8 @@ DEVELOP FOOTER
 ```
 
 The adjustment stack scrolls beneath the histogram while the Develop footer remains
-fixed. Export intentionally has no pointer action in Develop: return to the Browse
-header to click **Export**, or use the global `Ctrl+E` shortcut from either workspace.
+fixed. Export has no pointer action in the Develop pane itself: click the **Export**
+tab in the mode strip, or use the global `Ctrl+E` shortcut from either workspace.
 
 Brightness is disabled (not hidden) at `DisabledOpacity` while a RAW base is active,
 because the crossing-on engine has no Brightness parameter; it stays enabled for
@@ -310,13 +310,19 @@ surface. Develop preview and export are the authoritative effects surfaces.
 
 ## 7. Export workspace
 
-Export is the third workspace beside Browse and Develop. The Browse header action and
-`Ctrl+E` enter it armed; image-only fullscreen continues to refuse the transition.
+Export is the third workspace beside Browse and Develop. The mode-strip **Export** tab
+and `Ctrl+E` enter it armed; image-only fullscreen continues to refuse the transition.
 Its left filmstrip snapshots the Browse selection and adds per-capture include toggles
-without changing that selection. The center reuses the current preview until the proof
-finalizer lands. The right pane arms any combination of the fixed Hi-Res, Web, and Small
-recipes and owns the shared output controls. The capture × recipe count sits above a
-full-width primary **Export** button.
+without changing that selection. The center shows the standard preview immediately.
+Its **Proof** pill optionally renders the current capture through the armed recipe's
+color space, output sharpening, and size while leaving the preview visible until the
+proof is ready. A chrome-less bottom-left caption labels the pixels as `PREVIEW` or
+`PROOF` and names the live format and color space; it adds the recipe's pixel cap only
+for a sized recipe. This caption deliberately uses the mockup's smaller over-image
+metrics rather than §2's panel-control segmented idiom. The right pane
+arms any combination of the fixed Hi-Res, Web, and Small recipes and owns the shared
+output controls. The capture × recipe count sits above a full-width primary
+**Export** button.
 
 `Enter` runs only while Export is active. Elsewhere it retains its crop-apply and
 Browse/Develop meanings. `Escape` returns to the workspace active before Export and

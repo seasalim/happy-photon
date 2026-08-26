@@ -140,6 +140,7 @@ public partial class MainWindowViewModel
             : SelectedImage == null ? "no-image"
             : !IsWorkspacePreviewSurfaceActive && !IsFullScreenMode
                 ? "no-surface"
+            : _proofIsDisplayed ? "proof"
             : IsCropMode ? "crop"
             : IsShowingOriginal ? "original"
             : _isHoveringPreset ? "preset-hover"
@@ -215,6 +216,7 @@ public partial class MainWindowViewModel
                 ref _latestPreviewOutcomeGeneration) ? "surface-generation"
             : !IsWorkspacePreviewSurfaceActive && !IsFullScreenMode
                 ? "surface"
+            : _proofIsDisplayed ? "proof"
             : IsCropMode || IsShowingOriginal || _isHoveringPreset
                 ? "transient"
                 : null;
@@ -272,6 +274,7 @@ public partial class MainWindowViewModel
                     previous, identity);
         }
         PreviewImage = preview;
+        SetProofDisplayed(false);
         if (previous != null && !transferred)
         {
             _bitmapRetirement.Retire(

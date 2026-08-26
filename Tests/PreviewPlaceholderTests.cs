@@ -23,6 +23,36 @@ namespace HappyPhoton.Tests;
 public sealed class PreviewPlaceholderTests
 {
     [AvaloniaFact]
+    public async Task ExportProofCaption_HidesInNoCaptureEmptyState()
+    {
+        Dispatcher.UIThread.RunJobs();
+        using var directory = new TemporaryDirectory();
+        using var catalog = new CatalogService(directory.Path);
+        await using var vm = new MainWindowViewModel(
+            catalog,
+            new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask);
+        var window = new MainWindow { DataContext = vm };
+        window.Show();
+
+        vm.WorkspaceMode = WorkspaceMode.Export;
+        Dispatcher.UIThread.RunJobs();
+
+        var previewPane = window.FindControl<ExportPreviewPane>(
+            "ExportPreviewPane")!;
+        var caption = previewPane.FindControl<TextBlock>(
+            "ExportProofCaption")!;
+        var emptyState = previewPane.FindControl<TextBlock>(
+            "ExportPreviewEmptyState")!;
+        Assert.True(vm.HasNoExportCaptures);
+        Assert.True(emptyState.IsVisible);
+        Assert.False(caption.IsVisible);
+
+        window.DataContext = null;
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task ExportRegions_AreExclusiveAndSharedSettingsStayBound()
     {
         Dispatcher.UIThread.RunJobs();
@@ -47,7 +77,8 @@ public sealed class PreviewPlaceholderTests
         var capturePane = window.FindControl<ExportCapturePane>(
             "ExportCapturePane")!;
         Assert.True(capturePane.IsVisible);
-        Assert.True(window.FindControl<ExportPreviewPane>("ExportPreviewPane")!.IsVisible);
+        Assert.True(window.FindControl<ExportPreviewPane>(
+            "ExportPreviewPane")!.IsVisible);
         Assert.True(window.FindControl<ExportSettingsPane>("ExportSettingsPane")!.IsVisible);
         Assert.False(window.FindControl<BrowseGridView>("BrowseGridView")!.IsVisible);
         Assert.False(window.FindControl<DevelopEditPanel>("DevelopEditPanel")!.IsVisible);

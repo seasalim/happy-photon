@@ -143,6 +143,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private ImageFile? _selectedImage;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsExportProofCaptionVisible))]
     private Bitmap? _previewImage;
 
     [ObservableProperty]

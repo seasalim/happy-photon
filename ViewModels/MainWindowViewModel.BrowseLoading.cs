@@ -164,6 +164,20 @@ public partial class MainWindowViewModel
                     imageFile.EditSettings.HorizonRotation,
                     imageFile.EditSettings.Crop?.Clone())
                 : imageFile.EditSettings;
+            if (IsExportMode && ExportSettings.ShowProof)
+            {
+                var proofPainted = await LoadExportProofAsync(
+                    imageFile,
+                    renderSettings,
+                    surfaceGeneration,
+                    ct);
+                if (proofPainted)
+                {
+                    RefreshSourceAvailability(imageFile);
+                    if (IsZoomFitMode) RequestZoomFit?.Invoke();
+                }
+                return;
+            }
             var cachedIdentity = RenderSettingsHash.Compute(renderSettings);
             var cachedTask = ImageService.Previews.LoadCachedPreviewAsync(
                 imageFile,
@@ -280,11 +294,11 @@ public partial class MainWindowViewModel
 
     internal void ReplacePreviewImage(
         Bitmap preview,
-        PreviewPaintSource source)
+        PreviewPaintSource source,
+        bool isProof = false)
     {
         ArgumentNullException.ThrowIfNull(preview);
-        if (ReferenceEquals(PreviewImage, preview))
-            return;
+        if (ReferenceEquals(PreviewImage, preview)) return;
 
         if (ImageServiceHelpers.DisplayTraceLoggingEnabled)
         {
@@ -304,6 +318,7 @@ public partial class MainWindowViewModel
         }
         var previous = PreviewImage;
         PreviewImage = preview;
+        SetProofDisplayed(isProof);
         if (previous != null)
         {
             _bitmapRetirement.Retire(
@@ -317,6 +332,7 @@ public partial class MainWindowViewModel
         var previous = PreviewImage;
         if (previous == null) return;
         PreviewImage = null;
+        SetProofDisplayed(false);
         _bitmapRetirement.Retire(
             previous,
             () => ReferenceEquals(PreviewImage, previous));

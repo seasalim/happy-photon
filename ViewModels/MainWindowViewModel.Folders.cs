@@ -249,8 +249,8 @@ public partial class MainWindowViewModel
     // IsBrowseGridVisible also reads IsCompareMode, whose own notification fires
     // while leaving Browse — only this one covers the return trip.
     [NotifyPropertyChangedFor(nameof(IsBrowseGridVisible))]
+    [NotifyPropertyChangedFor(nameof(IsExportProofCaptionVisible))]
     private WorkspaceMode _workspaceMode;
-
     private WorkspaceMode _workspaceModeBeforeExport = WorkspaceMode.Browse;
 
     public bool IsDevelopMode
@@ -367,6 +367,7 @@ public partial class MainWindowViewModel
         if (value != WorkspaceMode.Browse) CloseCompare();
         // The compare gate reads the workspace too, so it needs the same re-notify.
         NotifyCompareGateChanged();
+        if (value != WorkspaceMode.Export) SetProofDisplayed(false);
         var isDevelopMode = value == WorkspaceMode.Develop;
         var isPreviewWorkspace = value is WorkspaceMode.Develop or
             WorkspaceMode.Export;
@@ -393,7 +394,6 @@ public partial class MainWindowViewModel
         RedoCommand.NotifyCanExecuteChanged();
         NotifyClippingCommandState();
         NotifyExportRunCommandState();
-
         if (value == WorkspaceMode.Export)
         {
             PrepareExportWorkspace();

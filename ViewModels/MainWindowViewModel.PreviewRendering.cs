@@ -26,6 +26,15 @@ public partial class MainWindowViewModel
 
         try
         {
+            if (IsExportMode && ExportSettings.ShowProof)
+            {
+                return await LoadExportProofAsync(
+                    selectedImage,
+                    tempSettings,
+                    outcomeGeneration,
+                    cancellationToken);
+            }
+
             using var artifacts = await ImageService.Previews
                 .ApplyEditsToPreviewArtifactsAsync(
                     selectedImage,

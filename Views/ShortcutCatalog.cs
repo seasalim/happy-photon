@@ -173,7 +173,7 @@ public static class ShortcutCatalog
         new("Export",
         [
             new("Ctrl+E", "Open the Export workspace (ignored in fullscreen)",
-                [Browse("Open the Export workspace", "BrowseExportButton")]),
+                [Browse("Open the Export workspace", "ExportWorkspaceTab")]),
         ]),
     ];
 }

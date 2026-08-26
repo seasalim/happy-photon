@@ -1,3 +1,4 @@
+using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
 using Xunit;
@@ -7,6 +8,54 @@ namespace HappyPhoton.Tests;
 [Collection(CheckpointCRenderGateCollection.Name)]
 public sealed class WysiwygTests
 {
+    [Fact]
+    public void DefaultExportProof_IsByteIdenticalToDevelopPreview()
+    {
+        const int width = 96;
+        const int height = 64;
+        var samples = new ushort[width * height * 3];
+        for (var y = 0; y < height; y++)
+        for (var x = 0; x < width; x++)
+        {
+            var offset = (y * width + x) * 3;
+            samples[offset] = (ushort)(x * ushort.MaxValue / (width - 1));
+            samples[offset + 1] = (ushort)(y * ushort.MaxValue / (height - 1));
+            samples[offset + 2] = (ushort)((x + y) * ushort.MaxValue /
+                (width + height - 2));
+        }
+
+        using var baseImage = RenderPipelineTestSupport.CreateBase(samples, height: height);
+        var settings = new EditSettings
+        {
+            Exposure = 0.35,
+            Contrast = 12,
+            Saturation = 8
+        };
+        var pipeline = new RenderPipeline();
+        using var preview = pipeline.Render(new RenderRequest(
+            baseImage,
+            settings,
+            RenderIntent.Preview,
+            BaseImage.InteractivePreviewMaxDimension,
+            new RenderOptions(false, false)));
+        using var upstream = pipeline.RenderDisplayRec2020(new RenderRequest(
+            baseImage,
+            settings,
+            RenderIntent.Export,
+            null,
+            new RenderOptions(false, false)));
+        using var proof = RenderFinalizer.FinalizeProof(
+            upstream,
+            maxDimension: null,
+            OutputColorSpace.Srgb,
+            OutputSharpeningMode.Off,
+            settings.Effects);
+
+        Assert.Equal(
+            RenderPipelineTestSupport.ReadPixels(preview.Image),
+            RenderPipelineTestSupport.ReadPixels(proof));
+    }
+
     public static TheoryData<GoldenAssetCase> AssetMatrix
     {
         get

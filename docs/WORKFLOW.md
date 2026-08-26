@@ -461,7 +461,12 @@ the comparison selection and active photo preserved.
 
 Choose the **Export** workspace to prepare finished copies. Its left filmstrip takes a
 snapshot of the Browse selection; uncheck a capture to exclude it from this batch
-without changing the Browse selection. The center shows the existing rendered preview.
+without changing the Browse selection. The center shows the standard preview
+immediately. Turn on **Proof** when you need to check the current photograph through
+the armed recipe's color space, output sharpening, and size; the preview stays visible
+while the full proof renders, then swaps when it is ready. The status line says whether
+the displayed pixels are `PREVIEW` or `PROOF`, followed by the live format and color
+space and, for a sized recipe, its pixel cap. Turn Proof off to return to the preview.
 On the right, arm any combination of the fixed **Hi-Res**, **Web**, and **Small**
 recipes and set their shared format, quality, color space, sharpening, naming, location
 metadata, and destination controls. The count line shows captures × armed recipes,

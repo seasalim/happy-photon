@@ -34,6 +34,12 @@ public partial class MainWindowViewModel
             // LoadPreviewAsync owns disposal after its in-flight work exits.
             await CancelAsync(previewLoadingCts);
         }
+        try
+        {
+            if (Interlocked.Exchange(ref _proofTask, null) is { } proofTask)
+                await proofTask;
+        }
+        catch (OperationCanceledException) { }
 
         await WaitForThumbnailSessionsAsync();
         await WaitForSelectionMetadataLoadsAsync();

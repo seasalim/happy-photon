@@ -43,6 +43,7 @@ public sealed class ThemeLiveSwitchTests
 
         var window = new MainWindow { DataContext = vm };
         var originalWindow = window;
+        SettingsDialog? settingsDialog = null;
         var persistCount = 0;
         vm.PersistAppSettingsAsync = () =>
         {
@@ -54,6 +55,9 @@ public sealed class ThemeLiveSwitchTests
         {
             Application.Current!.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
             window.Show();
+            Dispatcher.UIThread.RunJobs();
+            settingsDialog = new SettingsDialog();
+            settingsDialog.Show(window);
             Dispatcher.UIThread.RunJobs();
 
             var titleBar = window.GetLogicalDescendants()
@@ -91,13 +95,12 @@ public sealed class ThemeLiveSwitchTests
             var reset = window.GetLogicalDescendants()
                 .OfType<Button>()
                 .Single(button => button.Name == "ResetAdjustmentsButton");
-            var export = window.GetLogicalDescendants()
+            var accent = settingsDialog.GetLogicalDescendants()
                 .OfType<Button>()
-                .Single(button => button.Name == "BrowseExportButton");
-            var exportPresenter = export.GetVisualDescendants()
+                .Single(button => button.Classes.Contains("accent"));
+            var accentPresenter = accent.GetVisualDescendants()
                 .OfType<ContentPresenter>()
                 .Single(presenter => presenter.Name == "PART_ContentPresenter");
-
             Assert.Equal(
                 ThemeResourceTests.Brush("ViewerSurround", Avalonia.Styling.ThemeVariant.Dark).Color,
                 ColorOf(browse.Background));
@@ -112,18 +115,18 @@ public sealed class ThemeLiveSwitchTests
                 brandMark,
                 photonWordmark,
                 browseUnderline,
-                exportPresenter,
+                accentPresenter,
                 ThemeVariant.Dark,
                 pointerOver: false);
 
             var darkMarkSource = Assert.IsType<ImageBrush>(brandMark.Background).Source;
-            ((IPseudoClasses)export.Classes).Set(":pointerover", true);
+            ((IPseudoClasses)accent.Classes).Set(":pointerover", true);
             Dispatcher.UIThread.RunJobs();
             AssertBrandSurfaces(
                 brandMark,
                 photonWordmark,
                 browseUnderline,
-                exportPresenter,
+                accentPresenter,
                 ThemeVariant.Dark,
                 pointerOver: true);
 
@@ -155,20 +158,20 @@ public sealed class ThemeLiveSwitchTests
                 brandMark,
                 photonWordmark,
                 browseUnderline,
-                exportPresenter,
+                accentPresenter,
                 HappyPhotonThemes.MidGray,
                 pointerOver: true);
             Assert.NotSame(
                 darkMarkSource,
                 Assert.IsType<ImageBrush>(brandMark.Background).Source);
 
-            ((IPseudoClasses)export.Classes).Set(":pointerover", false);
+            ((IPseudoClasses)accent.Classes).Set(":pointerover", false);
             Dispatcher.UIThread.RunJobs();
             AssertBrandSurfaces(
                 brandMark,
                 photonWordmark,
                 browseUnderline,
-                exportPresenter,
+                accentPresenter,
                 HappyPhotonThemes.MidGray,
                 pointerOver: false);
 
@@ -201,6 +204,7 @@ public sealed class ThemeLiveSwitchTests
         finally
         {
             Application.Current!.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
+            settingsDialog?.Close();
             window.DataContext = null;
             window.Close();
             await vm.DisposeAsync();

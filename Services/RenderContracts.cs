@@ -32,7 +32,8 @@ public sealed record RenderRequest(
     RenderIntent Intent,
     int? MaxDimension,
     RenderOptions Options,
-    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb)
+    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb,
+    OutputSharpeningMode OutputSharpening = OutputSharpeningMode.Off)
 {
     internal SourceSaturationMask? SourceSaturation { get; init; }
 }

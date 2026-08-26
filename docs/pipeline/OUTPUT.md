@@ -45,7 +45,15 @@ confirmation; every other install uses create-new semantics, so a file appearing
 preflight is never overwritten. The export loop transfers ownership of the last
 progressive variant instead of cloning it.
 
-Preview uses the same finalizer with output sharpening disabled and sRGB selected.
+Develop preview uses the same finalizer with output sharpening disabled and sRGB
+selected. The Export workspace shows that standard preview by default. Its opt-in
+**Proof** control runs the selected image through a fresh full-resolution render and
+finalizes it for the largest armed variant (unresized when Hi-Res is armed), falling
+back to the interactive preview dimension when none are armed. Recipe changes rerun an
+enabled proof behind the normal preview activity affordance. A displayed proof
+suppresses the display-fit resting upgrade because sharpening is defined at output
+dimensions; switching Proof off returns to the standard preview path.
+
 All geometry, tone, chroma, detail, resize, sharpening, and effects work is
 target-independent; only the trailing convert, clamp, encode, and profile differ
 between sRGB and P3. Effects are snapshotted with the edit settings and run separately

@@ -41,7 +41,9 @@ public sealed class RenderPipeline
                 request.Intent == RenderIntent.Preview
                     ? OutputColorSpace.Srgb
                     : request.OutputColorSpace,
-                OutputSharpeningMode.Off,
+                request.Intent == RenderIntent.Preview
+                    ? OutputSharpeningMode.Off
+                    : request.OutputSharpening,
                 wasResized: false,
                 detailBandPixelLimit,
                 request.Settings.Effects);
@@ -406,6 +408,12 @@ public sealed class RenderPipeline
             throw new ArgumentOutOfRangeException(
                 nameof(request),
                 "OutputColorSpace is not supported.");
+        }
+        if (!Enum.IsDefined(request.OutputSharpening))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(request),
+                "OutputSharpening is not supported.");
         }
     }
 }

@@ -51,6 +51,9 @@ public partial class ExportSettings : ObservableObject
     [ObservableProperty]
     private OutputSharpeningMode _outputSharpening = OutputSharpeningMode.Screen;
 
+    [ObservableProperty]
+    private bool _showProof;
+
     /// <summary>
     /// Generate output filename based on naming pattern.
     /// </summary>

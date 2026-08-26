@@ -94,10 +94,6 @@
                             Classes="tour-region tour-glow"
                             Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                             Classes.tour-focus="{Binding IsDeliverCopiesTourVisible}">
-                    <Button x:Name="BrowseExportButton" Content="Export…" FontSize="10" Padding="10,4"
-                            Classes="accent"
-                            ToolTip.Tip="Export (Ctrl+E)"
-                            Click="OnBatchExportClick"/>
                     <Button x:Name="BrowseActionsButton" Content="⋯" FontSize="10" Width="24" Padding="4,4"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             IsEnabled="{Binding Browse.HasVisibleImages}"

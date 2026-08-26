@@ -3,16 +3,63 @@
              xmlns:vm="using:HappyPhoton.ViewModels"
              x:Class="HappyPhoton.Views.ExportPreviewPane"
              x:DataType="vm:MainWindowViewModel">
-    <Grid>
+    <UserControl.Styles>
+        <StyleInclude Source="avares://HappyPhoton/Views/DevelopActionStyles.axaml"/>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="6"
+                    Margin="14,8,14,0">
+            <ToggleButton x:Name="ExportProofToggle"
+                          Classes="develop-action tool-seg"
+                          Content="PROOF"
+                          Width="56"
+                          Height="20"
+                          Padding="8,0"
+                          Foreground="{DynamicResource TextMuted}"
+                          FontFamily="{StaticResource FontLabel}"
+                          FontSize="8"
+                          FontWeight="SemiBold"
+                          LetterSpacing="1"
+                          IsChecked="{Binding ExportSettings.ShowProof, Mode=TwoWay}"
+                          ToolTip.Tip="Render a true export proof"
+                          AutomationProperties.Name="Render a true export proof"/>
+        </StackPanel>
         <Image Source="{Binding SelectedImage.Thumbnail}"
+               Grid.Row="1"
                IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
                Stretch="Uniform"
                Margin="16"
                RenderOptions.BitmapInterpolationMode="LowQuality"/>
         <Image Source="{Binding PreviewImage}"
+               Grid.Row="1"
                Stretch="Uniform"
                Margin="16"/>
-        <TextBlock Text="Select a capture to preview"
+        <TextBlock x:Name="ExportProofCaption"
+                   Grid.Row="1"
+                   Text="{Binding ExportProofCaption}"
+                   IsVisible="{Binding IsExportProofCaptionVisible}"
+                   IsHitTestVisible="False"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Bottom"
+                   Margin="26,0,0,24"
+                   FontFamily="{StaticResource FontLabel}"
+                   FontSize="8"
+                   FontWeight="SemiBold"
+                   LetterSpacing="1"
+                   Foreground="{StaticResource ProofCaption}">
+            <TextBlock.Effect>
+                <DropShadowEffect Color="{StaticResource ViewerStatusShadowColor}"
+                                  BlurRadius="6"
+                                  OffsetY="1"
+                                  Opacity="0.8"/>
+            </TextBlock.Effect>
+        </TextBlock>
+        <TextBlock x:Name="ExportPreviewEmptyState"
+                   Grid.Row="1"
+                   Text="Select a capture to preview"
                    IsVisible="{Binding HasNoExportCaptures}"
                    Foreground="{DynamicResource TextMuted}"
                    FontSize="16"

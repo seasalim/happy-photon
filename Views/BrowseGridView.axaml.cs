@@ -157,7 +157,6 @@ public partial class BrowseGridView : UserControl
     public event EventHandler? DevelopModeRequested;
     public event EventHandler? SelectAllRequested;
     public event EventHandler? DeselectAllRequested;
-    public event EventHandler? BatchExportRequested;
     public event EventHandler? DeleteRejectedRequested;
     public event EventHandler? CopyImagePathsRequested;
     public event EventHandler? RevealImageRequested;
@@ -427,11 +426,6 @@ public partial class BrowseGridView : UserControl
     private void OnDeselectAllClick(object? sender, RoutedEventArgs e)
     {
         DeselectAllRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void OnBatchExportClick(object? sender, RoutedEventArgs e)
-    {
-        BatchExportRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnDeleteRejectedClick(object? sender, RoutedEventArgs e)
