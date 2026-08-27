@@ -92,8 +92,18 @@ internal sealed class LensfunDatabase
         else
         {
             var lensKey = Normalize(lensName);
-            matchingLenses = mounted.Where(lens => LensModelMatches(
+            var exactMatches = mounted.Where(lens => LensModelMatches(
                 lens, lensKey)).ToArray();
+            if (exactMatches.Length > 0)
+            {
+                matchingLenses = exactMatches;
+            }
+            else
+            {
+                var suppliedTokens = Tokenize(lensName);
+                matchingLenses = mounted.Where(lens => LensTokenModelMatches(
+                    lens, suppliedTokens)).ToArray();
+            }
         }
         var lens = SelectLensCalibration(matchingLenses, camera.CropFactor);
         if (lens == null) return null;
@@ -157,6 +167,30 @@ internal sealed class LensfunDatabase
         lens.VariantModelKey is { } variant &&
         ModelMatches(variant, lens.MakerKey, suppliedModel);
 
+    private static bool LensTokenModelMatches(
+        LensfunLens lens,
+        IReadOnlySet<string> suppliedModel)
+    {
+        if (TokenModelMatches(
+            lens.ModelTokens, lens.MakerTokens, suppliedModel)) return true;
+        return lens.VariantModelTokens is { } variant &&
+            TokenModelMatches(variant, lens.MakerTokens, suppliedModel);
+    }
+
+    private static bool TokenModelMatches(
+        IReadOnlySet<string> databaseModel,
+        IReadOnlySet<string> maker,
+        IReadOnlySet<string> suppliedModel)
+    {
+        if (databaseModel.SetEquals(suppliedModel)) return true;
+        var combined = new HashSet<string>(databaseModel, StringComparer.Ordinal);
+        combined.UnionWith(maker);
+        if (combined.SetEquals(suppliedModel)) return true;
+        combined = new HashSet<string>(suppliedModel, StringComparer.Ordinal);
+        combined.UnionWith(maker);
+        return combined.SetEquals(databaseModel);
+    }
+
     private static LensfunLens? SelectLensCalibration(
         IReadOnlyList<LensfunLens> matches,
         double cameraCrop)
@@ -188,12 +222,24 @@ internal sealed class LensfunDatabase
         return result.ToString();
     }
 
-    internal static string? NormalizeWithoutTrailingInteger(string value)
+    internal static IReadOnlySet<string> Tokenize(string value)
+    {
+        var separated = new StringBuilder(value.Length);
+        foreach (var character in value)
+            separated.Append(char.IsLetterOrDigit(character)
+                ? char.ToUpperInvariant(character) : ' ');
+        return separated.ToString()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
+    internal static (string? Key, IReadOnlySet<string>? Tokens) ModelVariant(string value)
     {
         var trimmed = value.TrimEnd();
         var separator = trimmed.LastIndexOfAny([' ', '\t']);
-        if (separator < 0 || !trimmed[(separator + 1)..].All(char.IsAsciiDigit)) return null;
-        return Normalize(trimmed[..separator]);
+        if (separator < 0 || !trimmed[(separator + 1)..].All(char.IsAsciiDigit)) return (null, null);
+        var model = trimmed[..separator];
+        return (Normalize(model), Tokenize(model));
     }
 
     private static void ParseMounts(
@@ -392,8 +438,12 @@ internal sealed record LensfunLens(
 {
     internal string MakerKey { get; } = LensfunDatabase.Normalize(Maker);
     internal string ModelKey { get; } = LensfunDatabase.Normalize(Model);
-    internal string? VariantModelKey { get; } =
-        LensfunDatabase.NormalizeWithoutTrailingInteger(Model);
+    internal IReadOnlySet<string> MakerTokens { get; } = LensfunDatabase.Tokenize(Maker);
+    internal IReadOnlySet<string> ModelTokens { get; } = LensfunDatabase.Tokenize(Model);
+    private (string? Key, IReadOnlySet<string>? Tokens) Variant { get; } =
+        LensfunDatabase.ModelVariant(Model);
+    internal string? VariantModelKey => Variant.Key;
+    internal IReadOnlySet<string>? VariantModelTokens => Variant.Tokens;
 }
 
 internal sealed record LensfunCalibration(

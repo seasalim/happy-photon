@@ -11,14 +11,18 @@ Resolution is conservative and happens independently for each correction class:
 qualified embedded data wins, Lensfun fills an unrepresented class, and otherwise the
 class remains unavailable. Camera maker/model and lens model must match exactly after
 case, whitespace, and punctuation normalization, and the lens mount must be compatible
-with the matched camera. A maker prefix may appear in either the supplied or database
-model identity for both cameras and lenses. Missing or ambiguous interchangeable-lens
-identity produces no match; a
+with the matched camera. When no exact lens candidate exists, equality of the distinct
+alphanumeric token sets may match the same words in a different order. A non-empty exact
+candidate set is terminal, and multiple token matches remain ambiguous. A maker prefix
+may appear in either the supplied or database model identity for both cameras and lenses.
+Missing or ambiguous interchangeable-lens identity produces no match; a
 fixed-lens mount may omit lens identity only when it has exactly one database lens.
 The EXIF lens string is the primary identity. If it produces no unique profile, bridge
 ABI 4 supplies LibRaw's already-parsed maker-note lens facts at the header stage. A
-transmitted maker-note lens name is tried next; otherwise composite IDs are resolved
-through a table selected from the normalized maker name. The shipped
+transmitted maker-note lens name is tried next, followed by the composite-ID-derived name
+when the transmitted name does not match. F-mount composite IDs are resolved only for a
+confirmed LibRaw F-mount identity through a table selected from the normalized maker
+name. The shipped
 `data/lens-ids/nikon.tsv` table is derived from ExifTool's published tag documentation;
 no other maker table is currently shipped. Unknown IDs, missing tables, multi-name
 rows, and duplicate-key groups remain no-data. Focal/aperture guessing and non-CPU lens
@@ -126,8 +130,9 @@ same edge clamping. `acm` calibrations produce no data in this version.
 The shipped database is a manual snapshot of Lensfun git master at commit `1c8b8f0`.
 There is no runtime network access or automatic update path.
 
-An exact, mount-compatible match trusts the database and exposes every supported,
-non-identity class in the matched profile. There is no production pin table or
+An exact or distinct-token-set, mount-compatible match trusts the database and exposes
+every supported, non-identity class in the matched profile. Token order and repeated
+tokens do not affect distinct-token-set equality. There is no production pin table or
 instrument-evidence gate. Matching remains deliberately conservative: missing or
 ambiguous identity still produces no data. A Lensfun model may carry a trailing integer
 calibration token absent from the supplied identity; that database-only suffix is
@@ -209,7 +214,8 @@ explicit v3 block, so it can never acquire defaults later. New rows use
 on/on/off/standard. `HasEdits` compares with the image's baseline, Reset restores it,
 and copy/paste and presets transfer only the booleans.
 
-The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 17 because
-maker-note identity changes which files decode with corrections applied.
+The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 18 because
+order-tolerant identity and the ID-derived fallback change which files decode with
+corrections applied.
 `RenderPipeline.Version` is 11, unchanged by lens identity because render-stage math
 is untouched.

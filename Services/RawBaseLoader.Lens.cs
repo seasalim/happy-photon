@@ -36,15 +36,16 @@ public sealed partial class RawBaseLoader
                 checked((int)dimensions.VisibleHeight));
             if (lensfun.Status == LensPrescriptionStatus.None)
             {
-                var resolvedName = LensIdentityResolver.Resolve(
+                var candidates = LensIdentityResolver.ResolveCandidates(
                     metadata.NormalizedMake ?? metadata.Make, lensIdentity);
-                if (!string.IsNullOrWhiteSpace(resolvedName))
+                foreach (var resolvedName in candidates)
                 {
                     var resolvedMetadata = metadata with { Lens = resolvedName };
                     lensfun = reader.Read(
                         resolvedMetadata,
                         checked((int)dimensions.VisibleWidth),
                         checked((int)dimensions.VisibleHeight));
+                    if (lensfun.Status != LensPrescriptionStatus.None) break;
                 }
             }
             prescription = LensfunPrescriptionReader.Merge(

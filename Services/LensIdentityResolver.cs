@@ -23,10 +23,28 @@ internal sealed class LensIdentityResolver
     }
 
     internal string? Resolve(string? make, LibRawLensIdentity? identity)
+        => ResolveCandidates(make, identity).FirstOrDefault();
+
+    internal IEnumerable<string> ResolveCandidates(
+        string? make,
+        LibRawLensIdentity? identity)
     {
-        if (identity == null) return null;
-        if (!string.IsNullOrWhiteSpace(identity.Lens)) return identity.Lens.Trim();
-        if (identity.LensId == 0 || string.IsNullOrWhiteSpace(make)) return null;
+        if (identity == null) yield break;
+        var transmitted = string.IsNullOrWhiteSpace(identity.Lens)
+            ? null
+            : identity.Lens.Trim();
+        if (transmitted != null) yield return transmitted;
+        var derived = ResolveId(make, identity);
+        if (derived != null && !string.Equals(
+            transmitted, derived, StringComparison.Ordinal))
+            yield return derived;
+    }
+
+    private string? ResolveId(string? make, LibRawLensIdentity identity)
+    {
+        if (identity.LensMount != LibRawLensMounts.NikonF ||
+            identity.LensId == 0 || string.IsNullOrWhiteSpace(make))
+            return null;
         var tableName = LensfunDatabase.Normalize(make).ToLowerInvariant();
         if (tableName.Length == 0) return null;
         try

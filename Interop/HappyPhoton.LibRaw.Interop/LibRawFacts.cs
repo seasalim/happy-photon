@@ -1,5 +1,11 @@
 namespace HappyPhoton.LibRaw.Interop;
 
+public static class LibRawLensMounts
+{
+    // LibRaw 0.22.2 (0x001602); committed Nikon F fixtures assert this value.
+    public const uint NikonF = 27;
+}
+
 public sealed record LibRawDimensions(
     uint RawWidth, uint RawHeight, uint VisibleWidth, uint VisibleHeight,
     uint OutputWidth, uint OutputHeight, int Orientation);

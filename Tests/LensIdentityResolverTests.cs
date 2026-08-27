@@ -56,9 +56,24 @@ public sealed class LensIdentityResolverTests : IDisposable
 
         Assert.Equal("Transmitted Lens", resolver.Resolve(
             "Other Maker", Identity(ulong.MaxValue, " Transmitted Lens ")));
+        Assert.Equal(
+            ["Transmitted Lens", "AF Nikkor 50mm f/1.8D"],
+            resolver.ResolveCandidates("Nikon", Identity(masked, " Transmitted Lens ")));
         Assert.Equal("AF Nikkor 50mm f/1.8D",
             resolver.Resolve("Nikon", Identity(masked)));
         Assert.Null(resolver.Resolve("Nikon", Identity(masked | 0x20)));
+    }
+
+    [Fact]
+    public void CompositeTableRequiresKnownNikonFMount()
+    {
+        WriteTable("nikon", "0000000000000001\tKnown Lens\n");
+        var resolver = new LensIdentityResolver(_directory);
+
+        Assert.Equal("Known Lens", resolver.Resolve(
+            "Nikon", Identity(1, mount: LibRawLensMounts.NikonF)));
+        Assert.Null(resolver.Resolve("Nikon", Identity(1, mount: 1)));
+        Assert.Null(resolver.Resolve("Nikon", Identity(1, mount: 0)));
     }
 
     private void WriteTable(string maker, string contents)
@@ -67,8 +82,11 @@ public sealed class LensIdentityResolverTests : IDisposable
         File.WriteAllText(Path.Combine(_directory, $"{maker}.tsv"), contents);
     }
 
-    private static LibRawLensIdentity Identity(ulong id, string? lens = null) => new(
-        id, lens, 0, 0, 0, 0, 0, 0, 0,
+    private static LibRawLensIdentity Identity(
+        ulong id,
+        string? lens = null,
+        uint mount = LibRawLensMounts.NikonF) => new(
+        id, lens, 0, mount, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, null, 0, null, 0, null);
 
