@@ -19,6 +19,16 @@ public GitHub assets. When the repository is public, it also creates GitHub
 build-provenance attestations for those assets. Partner Center is the source
 of the Microsoft-signed Windows package.
 
+macOS packaging keeps Mach-O files under `Contents/MacOS` and relocates every
+other publish-output file to `Contents/Resources`, preserving relative paths.
+Before signing, packaging verifies that `Contents/MacOS` contains exactly the
+Mach-O path set captured before relocation and no directories. It also verifies
+that `Contents/Resources/data` exists and every immediate data directory is
+non-empty, with both `data/lensfun` and `data/lens-ids` required by their
+runtime consumers. Bundled data resolves from `Contents/Resources` when the
+application base directory is structurally `Contents/MacOS`; Windows, Linux,
+and unbundled macOS builds continue to resolve it next to the binary.
+
 The Linux job wraps its retained `linux-x64` publish output in both the
 reproducible tar archive and an AppImage. AppImage packaging pins appimagetool
 1.9.1 and type-2 runtime 20251108; both downloads use fixed release tags and

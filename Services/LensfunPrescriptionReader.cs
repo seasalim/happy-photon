@@ -6,7 +6,7 @@ internal sealed class LensfunPrescriptionReader
 {
     private static readonly Lazy<LensfunDatabase> DefaultDatabase = new(
         () => new LensfunDatabase(Path.Combine(
-            AppContext.BaseDirectory, "data", "lensfun")),
+            PackagedDataRoot.Resolve(), "data", "lensfun")),
         LazyThreadSafetyMode.ExecutionAndPublication);
 
     private readonly Lazy<LensfunDatabase> _database;

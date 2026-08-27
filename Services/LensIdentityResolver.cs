@@ -13,7 +13,7 @@ internal sealed class LensIdentityResolver
     private readonly string _tableDirectory;
 
     internal LensIdentityResolver() : this(
-        Path.Combine(AppContext.BaseDirectory, "data", "lens-ids"))
+        Path.Combine(PackagedDataRoot.Resolve(), "data", "lens-ids"))
     {
     }
 

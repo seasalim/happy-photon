@@ -108,8 +108,14 @@ sign_app_bundle() {
 }
 
 cp -a "$publish_directory/." "$contents_directory/MacOS/"
+apphost="$contents_directory/MacOS/HappyPhoton"
 bridge_dylib="$contents_directory/MacOS/libhappyphoton_libraw_bridge.dylib"
 libraw_dylib="$contents_directory/MacOS/libraw.25.dylib"
+[[ -f "$apphost" ]] || { echo "Happy Photon apphost is absent from publish output" >&2; exit 1; }
+file -b "$apphost" | grep -q 'Mach-O' || {
+    echo "Happy Photon apphost is not Mach-O; refusing to relocate it" >&2
+    exit 1
+}
 [[ -f "$bridge_dylib" ]] || { echo "LibRaw bridge dylib is absent from publish output" >&2; exit 1; }
 [[ -f "$libraw_dylib" ]] || { echo "LibRaw companion dylib is absent from publish output" >&2; exit 1; }
 otool -D "$bridge_dylib" | grep -Fxq '@loader_path/libhappyphoton_libraw_bridge.dylib' || {
@@ -120,22 +126,67 @@ otool -D "$libraw_dylib" | grep -Fxq '@loader_path/libraw.25.dylib' || {
     echo "LibRaw companion install identity is not package-local" >&2
     exit 1
 }
-for resource in LICENSE THIRD_PARTY_NOTICES.md TRADEMARKS.md DEPENDENCIES.json; do
-    if [[ -f "$contents_directory/MacOS/$resource" ]]; then
-        mv "$contents_directory/MacOS/$resource" \
-            "$contents_directory/Resources/$resource"
+staged_file_list="$temporary_directory/staged-files"
+mach_o_file_list="$temporary_directory/mach-o-files"
+remaining_file_list="$temporary_directory/remaining-files"
+find "$contents_directory/MacOS" -type f -print0 > "$staged_file_list"
+: > "$mach_o_file_list"
+while IFS= read -r -d '' staged_file; do
+    relative_path="${staged_file#"$contents_directory/MacOS/"}"
+    if file -b "$staged_file" | grep -q 'Mach-O'; then
+        printf '%q\n' "$relative_path" >> "$mach_o_file_list"
+    else
+        destination="$contents_directory/Resources/$relative_path"
+        mkdir -p "$(dirname "$destination")"
+        mv "$staged_file" "$destination"
     fi
-done
-if [[ -d "$contents_directory/MacOS/licenses" ]]; then
-    mv "$contents_directory/MacOS/licenses" "$contents_directory/Resources/licenses"
+done < "$staged_file_list"
+
+find "$contents_directory/MacOS" -depth -mindepth 1 -type d -empty -delete
+[[ -f "$apphost" ]] || { echo "Happy Photon apphost was lost during resource relocation" >&2; exit 1; }
+if [[ -n "$(find "$contents_directory/MacOS" -mindepth 1 -type d -print -quit)" ]]; then
+    echo "Directory remains in Contents/MacOS after resource relocation" >&2
+    exit 1
 fi
+: > "$remaining_file_list"
+while IFS= read -r -d '' binary; do
+    relative_path="${binary#"$contents_directory/MacOS/"}"
+    file -b "$binary" | grep -q 'Mach-O' || {
+        echo "Non-Mach-O file remains in Contents/MacOS: $relative_path" >&2
+        exit 1
+    }
+    printf '%q\n' "$relative_path" >> "$remaining_file_list"
+done < <(find "$contents_directory/MacOS" -type f -print0)
+LC_ALL=C sort -o "$mach_o_file_list" "$mach_o_file_list"
+LC_ALL=C sort -o "$remaining_file_list" "$remaining_file_list"
+cmp -s "$mach_o_file_list" "$remaining_file_list" || {
+    echo "Contents/MacOS does not match the staged Mach-O file set" >&2
+    exit 1
+}
+packaged_data_root="$contents_directory/Resources/data"
+[[ -d "$packaged_data_root" ]] || {
+    echo "Packaged data root is absent: data" >&2
+    exit 1
+}
+for required_data_directory in lensfun lens-ids; do
+    [[ -d "$packaged_data_root/$required_data_directory" ]] || {
+        echo "Required packaged data directory is absent: data/$required_data_directory" >&2
+        exit 1
+    }
+done
+while IFS= read -r -d '' packaged_data; do
+    if [[ -z "$(find "$packaged_data" -type f -print -quit)" ]]; then
+        echo "Packaged data directory is empty: ${packaged_data#"$contents_directory/Resources/"}" >&2
+        exit 1
+    fi
+done < <(find "$packaged_data_root" -mindepth 1 -maxdepth 1 -type d -print0)
 
 cp "$project_root/Platforms/macOS/Info.plist" "$contents_directory/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $app_version" \
     "$contents_directory/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $app_version" \
     "$contents_directory/Info.plist"
-chmod +x "$contents_directory/MacOS/HappyPhoton"
+chmod +x "$apphost"
 
 while IFS= read -r -d '' binary; do
     if file -b "$binary" | grep -q 'Mach-O'; then
