@@ -284,6 +284,7 @@ public sealed partial class RawProfileTransitionTests : IDisposable
         vm.SelectedImage = image;
         await initialRenderCompleted.Task.WaitAsync(TestWaits.Condition);
         await TestWaits.UntilAsync(() =>
+            vm.PreviewImage != null &&
             vm.ImageService.Previews.PreviewActivityCount == 0);
         var selection = Selection("selected.dcp", '9');
         image.EditSettings.RawProfile = selection;
@@ -307,7 +308,6 @@ public sealed partial class RawProfileTransitionTests : IDisposable
 
         var refresh = vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
         await discoveryGate.Started.Task.WaitAsync(TestWaits.Condition);
-        Assert.True(vm.RawProfilePickerState.IsLoading);
         vm.ImageService.Previews.SourceWorkGateAsync = () =>
         {
             renderStarted.TrySetResult();

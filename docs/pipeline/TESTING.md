@@ -6,6 +6,12 @@ Use `Tests/TemporaryDirectory.cs` for disposable test roots and
 `TestEditSettingsFactory` in `Tests/TestBaseLoaders.cs` for neutral tonal settings;
 keep every non-default setting explicit at the call site.
 
+Ordinary `dotnet test` runs use `HappyPhoton.runsettings`, which gives each test
+host two logical processors. This bounds xUnit collection concurrency, managed
+pixel workers, and LibRaw's default OpenMP workers together. Opt-in performance
+measurements bypass that cap in a fresh process with
+`HAPPY_PHOTON_FULL_CPU=1`.
+
 ## 1. Sample assets (`Tests/assets/`)
 
 Committed directly (no LFS), current total **93.33 MiB** within a budget of
@@ -193,10 +199,10 @@ orders above the observed difference.
 2. **`WhiteBalanceModelTests`**: WHITE_BALANCE.md §9 list.
 3. **`RenderDeterminismTests`**: repeated render bit-identical; burst pair identical;
    settings hash stable across process runs (canonical JSON ordering).
-4. **`GoldenRenderTests`**: §2 matrix.
-5. **`WysiwygTests`**: actual preview-base vs full-export bound (§3 row 3) for both
-   regimes and every golden settings case; `WysiwygCalibrationTests` emits the
-   opt-in calibration payload.
+4. **`GoldenRenderTests`**: §2 matrix plus the actual preview-base vs full-export
+   bound (§3 row 3) for every matrix case, sharing each full decode and export render.
+5. **`WysiwygTests`**: focused proof, geometry, effects, and output-space seams;
+   `WysiwygCalibrationTests` emits the opt-in calibration payload.
 6. **Current-format boundary tests**: `EditSettingsJsonTests` pins canonical ordering,
    clone-before-clamp behavior, range validation, removed WB modes, and rejection of
    every non-v3 write plus explicit v2 legacy-lens materialization.
@@ -388,6 +394,10 @@ cold all-channel-curve ticks for one RAW and one standard fixture,
 sampling process private memory every 10 ms. Reports compare against the same
 harness run on the pre-AgX baseline (`878903f`); budgets are slider ≤ 150 ms,
 export wall ≤ +5%, and private peak ≤ +16 MiB.
+
+All performance commands in this section also set
+`HAPPY_PHOTON_FULL_CPU=1` before launching their fresh process so the ordinary
+two-processor test-host cap does not alter the measurement.
 
 The same integrated gate includes an active mixer with global chroma for every slider
 fixture, a projection-heavy Canon S=+100 active-mixer endpoint, and active-mixer

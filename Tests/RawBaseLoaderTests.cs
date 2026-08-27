@@ -10,12 +10,13 @@ namespace HappyPhoton.Tests;
 
 public sealed class RawBaseLoaderTests
 {
-    private static readonly string[] RawAssets =
+    private static readonly (string FileName, double Kelvin, double Tint)[]
+        RawAssets =
     [
-        "canon-eos-350d.cr2",
-        "nikon-d70-burst-1.nef",
-        "fujifilm-x30.raf",
-        "pentax-k-r.dng"
+        ("canon-eos-350d.cr2", 4624.520237776831, 11.157327608666723),
+        ("nikon-d70-burst-1.nef", 4651.4002190626215, -33.671729728178555),
+        ("fujifilm-x30.raf", 4975.442200153131, -23.507197134216007),
+        ("pentax-k-r.dng", 6057.343948228288, 49.92973780194121)
     ];
 
     private readonly ITestOutputHelper _output;
@@ -168,32 +169,6 @@ public sealed class RawBaseLoaderTests
         Assert.NotNull(retry);
     }
 
-    [Theory]
-    [MemberData(nameof(GetRawAssets))]
-    public void PreviewBase_IsLinearSixteenBitAndCarriesRawFacts(string fileName)
-    {
-        var loader = new RawBaseLoader();
-
-        using var image = loader.LoadPreviewBase(
-            new ImageFile(Asset(fileName)),
-            BaseDecodeSettings.Default,
-            CancellationToken.None);
-
-        Assert.NotNull(image);
-        AssertCanonicalBase(image!, BaseDecodeSettings.Default);
-        Assert.True(
-            image.Pixels.Width <= BaseImage.InteractivePreviewMaxDimension &&
-            image.Pixels.Height <= BaseImage.InteractivePreviewMaxDimension);
-        Assert.True(
-            image.Info.FullWidth >= image.Pixels.Width &&
-            image.Info.FullHeight >= image.Pixels.Height);
-        _output.WriteLine(
-            $"{fileName}: preview {image.Pixels.Width}x{image.Pixels.Height}, " +
-            $"full {image.Info.FullWidth}x{image.Info.FullHeight}, " +
-            $"camera channels {image.Info.CamMul!.Length}, " +
-            $"as-shot {image.Info.AsShotKelvin:R} K/{image.Info.AsShotTint:R}");
-    }
-
     [Fact]
     public void PreviewBase_ClampsPreviewEstimateIntoFujiMetadataBand()
     {
@@ -252,7 +227,10 @@ public sealed class RawBaseLoaderTests
 
     [Theory]
     [MemberData(nameof(GetRawAssets))]
-    public void PreviewAndFull_EstimatesAgreeWithinTolerance(string fileName)
+    public void PreviewAndFull_AreCanonicalAndAgreeWithSnapshots(
+        string fileName,
+        double expectedKelvin,
+        double expectedTint)
     {
         var loader = new RawBaseLoader();
         var file = new ImageFile(Asset(fileName));
@@ -268,9 +246,20 @@ public sealed class RawBaseLoaderTests
             BaseDecodeSettings.Default,
             CancellationToken.None);
         Assert.NotNull(full);
+        Assert.NotNull(preview);
+        AssertCanonicalBase(preview!, BaseDecodeSettings.Default);
+        AssertCanonicalBase(full, BaseDecodeSettings.Default);
+        Assert.True(
+            preview.Pixels.Width <= BaseImage.InteractivePreviewMaxDimension &&
+            preview.Pixels.Height <= BaseImage.InteractivePreviewMaxDimension);
+        Assert.True(
+            preview.Info.FullWidth >= preview.Pixels.Width &&
+            preview.Info.FullHeight >= preview.Pixels.Height);
+        Assert.Equal(expectedKelvin, preview.Info.AsShotKelvin);
+        Assert.Equal(expectedTint, preview.Info.AsShotTint);
         Assert.NotNull(previewOutcome.Analysis.SourceSaturation);
         Assert.InRange(
-            preview!.Info.SourceExposureBiasEv,
+            preview.Info.SourceExposureBiasEv,
             -RawExposureBias.MaxAbsEv,
             RawExposureBias.MaxAbsEv);
         Assert.InRange(
@@ -284,8 +273,11 @@ public sealed class RawBaseLoaderTests
             0,
             0.05);
         _output.WriteLine(
-            $"{fileName}: preview bias {preview.Info.SourceExposureBiasEv:F4} EV, " +
-            $"full bias {full.Info.SourceExposureBiasEv:F4} EV");
+            $"{fileName}: preview {preview.Pixels.Width}x{preview.Pixels.Height}, " +
+            $"full {preview.Info.FullWidth}x{preview.Info.FullHeight}, " +
+            $"as-shot {preview.Info.AsShotKelvin:R} K/{preview.Info.AsShotTint:R}, " +
+            $"bias {preview.Info.SourceExposureBiasEv:F4}/" +
+            $"{full.Info.SourceExposureBiasEv:F4} EV");
     }
 
     [Fact]
@@ -405,12 +397,12 @@ public sealed class RawBaseLoaderTests
         Assert.Equal(2u, oriented.Height);
     }
 
-    public static TheoryData<string> GetRawAssets()
+    public static TheoryData<string, double, double> GetRawAssets()
     {
-        var data = new TheoryData<string>();
+        var data = new TheoryData<string, double, double>();
         foreach (var asset in RawAssets)
         {
-            data.Add(asset);
+            data.Add(asset.FileName, asset.Kelvin, asset.Tint);
         }
 
         return data;

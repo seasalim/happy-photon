@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(HAPPY_PHOTON_FULL_CPU)' != '1'">
+    <RunSettingsFilePath>$(MSBuildThisFileDirectory)HappyPhoton.runsettings</RunSettingsFilePath>
+  </PropertyGroup>
+</Project>

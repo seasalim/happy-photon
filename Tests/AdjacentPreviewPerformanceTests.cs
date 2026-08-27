@@ -154,11 +154,17 @@ public sealed class AdjacentPreviewPerformanceTests
                 if (prefetch)
                 {
                     await warmStarted.Task.WaitAsync(TestWaits.Condition);
+                    var warmDeadline = DateTime.UtcNow + TestWaits.Condition;
                     do
                     {
                         process.Refresh();
                         warmPeak = Math.Max(warmPeak, process.PrivateMemorySize64);
-                        await Task.Yield();
+                        Assert.True(
+                            DateTime.UtcNow < warmDeadline,
+                            "Adjacent preview warm work did not settle.");
+                        await Task.Delay(
+                            10,
+                            TestContext.Current.CancellationToken);
                     }
                     while (vm.ImageService.Previews.PreviewActivityCount > 0);
                     await TestWaits.UntilAsync(() =>
