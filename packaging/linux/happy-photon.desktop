@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Happy Photon
+Comment=Open-source photo workflow for RAW and JPEG shoots
+Exec=HappyPhoton %F
+Icon=happy-photon
+Terminal=false
+Categories=Graphics;Photography;
+StartupWMClass=HappyPhoton

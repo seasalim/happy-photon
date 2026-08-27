@@ -2,10 +2,10 @@
 
 Happy Photon has two coordinated release paths:
 
-- A manual `Release` workflow run builds Windows/Linux archives and an
-  ad-hoc-signed Mac archive for private inspection. A final version also
-  produces an unsigned Microsoft Store MSIX as a separate private workflow
-  artifact. Manual runs never create a GitHub Release.
+- A manual `Release` workflow run builds Windows/Linux archives, a Linux
+  AppImage, and an ad-hoc-signed Mac archive for private inspection. A final
+  version also produces an unsigned Microsoft Store MSIX as a separate private
+  workflow artifact. Manual runs never create a GitHub Release.
 - A pushed `v*` tag builds platform-native artifacts and creates a draft
   GitHub Release for macOS and Linux. Tagged Mac builds must be Developer ID
   signed and notarized. For a final tag, Windows is distributed through the
@@ -18,6 +18,15 @@ Every release artifact includes `LICENSE`, `TRADEMARKS.md`,
 public GitHub assets. When the repository is public, it also creates GitHub
 build-provenance attestations for those assets. Partner Center is the source
 of the Microsoft-signed Windows package.
+
+The Linux job wraps its retained `linux-x64` publish output in both the
+reproducible tar archive and an AppImage. AppImage packaging pins appimagetool
+1.9.1 and type-2 runtime 20251108; both downloads use fixed release tags and
+committed SHA-256 checks before execution. The runtime is supplied explicitly
+because appimagetool otherwise downloads its latest runtime. Unlike the Linux
+tar, the AppImage is not claimed to be byte-reproducible (decision recorded
+2026-08-27). Its checksums and build-provenance attestation are its integrity
+story.
 
 ## Build identity
 
