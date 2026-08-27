@@ -195,9 +195,9 @@ public partial class CatalogService : IDisposable
             using var cmd = _connection!.CreateCommand();
             cmd.CommandText = @"
                 INSERT INTO images (
-                    file_path, file_name, edit_settings, edit_version, updated_utc)
-                VALUES (@path, @name, @editSettings, @editVersion, @updated)
-                ON CONFLICT(file_path) DO UPDATE SET file_name = excluded.file_name
+                    file_path, version, file_name, edit_settings, edit_version, updated_utc)
+                VALUES (@path, 1, @name, @editSettings, @editVersion, @updated)
+                ON CONFLICT(file_path, version) DO UPDATE SET file_name = excluded.file_name
                 RETURNING id;
             ";
             cmd.Parameters.AddWithValue("@path", filePath);
@@ -217,13 +217,14 @@ public partial class CatalogService : IDisposable
     }
 
     /// <summary>Loads catalog state for many paths in a small number of queries.</summary>
-    public async Task<IReadOnlyDictionary<string, CatalogImageState>> LoadImageStatesAsync(
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<CatalogImageState>>> LoadImageStatesAsync(
         IReadOnlyCollection<string> filePaths,
         CancellationToken cancellationToken = default)
     {
         EnsureInitialized();
 
-        var states = new Dictionary<string, CatalogImageState>(StringComparer.OrdinalIgnoreCase);
+        var states = new Dictionary<string, IReadOnlyList<CatalogImageState>>(
+            StringComparer.OrdinalIgnoreCase);
         const int batchSize = 500;
         var paths = filePaths.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 
@@ -244,7 +245,8 @@ public partial class CatalogService : IDisposable
                 }
 
                 cmd.CommandText = $@"
-                SELECT images.file_path, images.id, images.edit_settings,
+                SELECT images.file_path, images.id, images.version,
+                       images.version_label, images.edit_settings,
                        images.edit_version, images.flag_state, images.rating,
                        images.color_label, image_assessments.revision,
                        image_assessments.assessed_utc,
@@ -252,7 +254,8 @@ public partial class CatalogService : IDisposable
                 FROM images
                 LEFT JOIN image_assessments
                   ON image_assessments.image_id = images.id
-                WHERE file_path COLLATE NOCASE IN ({string.Join(", ", parameterNames)});
+                WHERE file_path COLLATE NOCASE IN ({string.Join(", ", parameterNames)})
+                ORDER BY images.file_path COLLATE NOCASE, images.version;
             ";
 
                 using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
@@ -260,25 +263,31 @@ public partial class CatalogService : IDisposable
                 {
                     var path = reader.GetString(0);
                     var catalogId = reader.GetInt64(1);
-                    var settings = ReadEditSettings(reader, 2, catalogId, path);
-                    var flag = ReadEnumColumn(reader, 4, ImageFlag.Unflagged);
-                    var rating = reader.IsDBNull(5)
+                    var settings = ReadEditSettings(reader, 4, catalogId, path);
+                    var flag = ReadEnumColumn(reader, 6, ImageFlag.Unflagged);
+                    var rating = reader.IsDBNull(7)
                         ? 0
-                        : (int)Math.Clamp(reader.GetInt64(5), 0, 5);
-                    var colorLabel = ReadEnumColumn(reader, 6, ColorLabel.None);
-                    var revision = reader.IsDBNull(7) ? 0 : reader.GetInt64(7);
-                    DateTime? assessedUtc = reader.IsDBNull(8)
+                        : (int)Math.Clamp(reader.GetInt64(7), 0, 5);
+                    var colorLabel = ReadEnumColumn(reader, 8, ColorLabel.None);
+                    var revision = reader.IsDBNull(9) ? 0 : reader.GetInt64(9);
+                    DateTime? assessedUtc = reader.IsDBNull(10)
                         ? null
                         : DateTime.Parse(
-                            reader.GetString(8),
+                            reader.GetString(10),
                             null,
                             System.Globalization.DateTimeStyles.RoundtripKind);
-                    var pendingAxes = reader.IsDBNull(9)
+                    var pendingAxes = reader.IsDBNull(11)
                         ? AssessmentAxes.None
-                        : (AssessmentAxes)reader.GetInt32(9);
-                    states[path] = new CatalogImageState(
-                        catalogId, settings, flag, rating, colorLabel,
-                        revision, assessedUtc, pendingAxes);
+                        : (AssessmentAxes)reader.GetInt32(11);
+                    var state = new CatalogImageState(
+                        catalogId, reader.GetInt32(2),
+                        reader.IsDBNull(3) ? null : reader.GetString(3),
+                        settings, flag, rating, colorLabel, revision,
+                        assessedUtc, pendingAxes);
+                    if (!states.TryGetValue(path, out var existing))
+                        states[path] = [state];
+                    else
+                        states[path] = [.. existing, state];
                 }
             }
             finally

@@ -91,6 +91,67 @@ public sealed partial class FileOperationsTests : IDisposable
     }
 
     [Fact]
+    public async Task DeleteVersionTile_DeletesTheFileAndEverySibling()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("version-file-catalog");
+        var operations = new TestFileOperationService();
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            fileOperationService: operations);
+        var primary = await CreateCatalogImageAsync(catalog, "versioned.jpg");
+        var secondState = (await catalog.CreateVersionAsync(primary.CatalogId))!;
+        var second = new ImageFile(primary.FilePath)
+        {
+            CatalogId = secondState.CatalogId,
+            Version = secondState.Version,
+            VersionCount = 2,
+            IsSelected = true
+        };
+        primary.VersionCount = 2;
+        vm.Browse.SetImages([primary, second]);
+        vm.SelectedImage = second;
+        vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
+
+        await vm.DeleteImageCommand.ExecuteAsync(null);
+
+        Assert.Equal([primary.FilePath], operations.MovedPaths);
+        Assert.Empty(vm.Browse.AllImages);
+        Assert.Empty(await catalog.LoadImageStatesAsync([primary.FilePath]));
+    }
+
+    [Fact]
+    public async Task DeleteVersionedFile_SelectsNextNonSiblingTile()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("selection-catalog");
+        var operations = new TestFileOperationService();
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            fileOperationService: operations);
+        var before = await CreateCatalogImageAsync(catalog, "before.jpg");
+        var primary = await CreateCatalogImageAsync(catalog, "versioned-selection.jpg");
+        var secondState = (await catalog.CreateVersionAsync(primary.CatalogId))!;
+        var second = new ImageFile(primary.FilePath)
+        {
+            CatalogId = secondState.CatalogId,
+            Version = secondState.Version,
+            VersionCount = 2,
+            IsSelected = true
+        };
+        var after = await CreateCatalogImageAsync(catalog, "after.jpg");
+        primary.VersionCount = 2;
+        vm.Browse.SetImages([before, primary, second, after]);
+        vm.SelectedImage = second;
+        vm.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
+
+        await vm.DeleteImageCommand.ExecuteAsync(null);
+
+        Assert.Equal([before, after], vm.Browse.AllImages);
+        Assert.Same(after, vm.SelectedImage);
+    }
+
+    [Fact]
     public async Task DeleteBatch_ContinuesAfterLockedFileAndNamesFailure()
     {
         using var catalog = await _fx.CreateCatalogAsync("failure-catalog");

@@ -186,16 +186,20 @@ return-to-Browse action instead of an enabled export command.
 
 ### Schema
 
-One `images` row per known file, keyed by autoincrement `id` (the **catalogId**) with a
-`UNIQUE COLLATE NOCASE` `file_path`. The canonical row contains `file_name`, the v3
+One `images` row per `(file_path, version)`, keyed by autoincrement `id` (the
+**catalogId**), with version numbers limited to 1–8 and a case-insensitive unique
+constraint on that pair. The canonical row contains the optional `version_label`,
+`file_name`, the v3
 `edit_settings` JSON document and `edit_version` marker, `flag_state`, `rating`,
-`color_label`, and `updated_utc`. `app_settings` is a key/value table. The unique path constraint owns the
-required case-insensitive auto-index; no redundant named path indexes are created.
+`color_label`, and `updated_utc`. `app_settings` is a key/value table. Each row is an
+independent interpretation and owns its edits and assessments; the source file is shared.
 
 `CatalogSchema` creates this shape for new catalogs, runs ordered transactional
 migrations recorded by `app_settings.schema_version`, and then validates the required
 image columns through `PRAGMA table_info` on every startup. Migration 1 adds the native
-`color_label` slot before validation so pre-label catalogs remain readable.
+`color_label` slot before validation so pre-label catalogs remain readable. Migration 3
+backs up the database before rebuilding `images`; existing ids and the autoincrement
+high-water mark are preserved because they are cache identity.
 Extra columns are ignored so catalogs created by recent development builds still open;
 missing required columns fail inside startup initialization. The error panel names the
 missing columns and offers to set the catalog and paired cache aside together before
@@ -233,10 +237,9 @@ The catalog's central design rule: **folder loads never issue per-image queries.
 statements:
 
 1. `LoadImageStatesAsync` — `SELECT … WHERE file_path IN (…)` in batches of 500
-   parameters, returning `CatalogImageState` (catalogId, edit settings, flag, rating)
-   keyed by path (case-insensitive).
+   parameters, returning each path's ordered list of `CatalogImageState` versions.
 2. Any paths missing from the result are bulk-inserted with multi-row
-   `INSERT … ON CONFLICT(file_path) DO NOTHING`, 300 rows per statement.
+   `INSERT … ON CONFLICT(file_path, version) DO NOTHING` for V1, 300 rows per statement.
 3. If anything was inserted, re-run step 1 to pick up the new ids.
 
 So a 5,000-image folder costs ~10 SELECT batches + inserts on first visit, and ~10
@@ -309,7 +312,8 @@ the same pass as supported images, while XML parsing begins only after the
 thumbnail session has started and runs as cancellable background work.
 Reconciliation compares rating, flag, and label independently against the
 revisioned `image_assessments` row; catalog revisions and the active browse
-generation guard UI adoption.
+generation guard UI adoption. A file's V1 is the permanent XMP primary: sidecar
+adoption and publication target V1 only, while other versions remain catalog-only.
 
 In Read & write mode, only a committed local assessment mutation schedules a
 sidecar write. A single background writer coalesces work by target, merges the
@@ -349,8 +353,8 @@ sequenceDiagram
     UI->>UI: LoadFolderAsync: swap in new CTS (Interlocked.Exchange), cancel old
     UI->>TP: enumerate folder (FolderService)
     UI->>TP: LoadOrCreateImageStatesAsync (batched SQL)
-    TP-->>UI: catalogId + edit/flag/rating per path
-    UI->>UI: assign state to ImageFiles, Browse.SetImages(...)
+    TP-->>UI: ordered version states per path
+    UI->>UI: fan each file out into sibling ImageFiles, Browse.SetImages(...)
     UI->>UI: defer first-image selection (Dispatcher.Post, Background)
     UI->>W: initial range: first ~12 thumbnails (6 workers x 2)
     W-->>UI: imageFile.Thumbnail = bitmap (continuations on UI context)

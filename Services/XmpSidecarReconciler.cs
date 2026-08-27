@@ -33,10 +33,12 @@ public sealed class XmpSidecarReconciler
         CancellationToken cancellationToken = default)
     {
         var reports = new List<string>();
-        var paths = folderImagePaths.ToArray();
+        var paths = folderImagePaths.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var states = await _catalog.LoadImageStatesAsync(paths, cancellationToken);
         var snapshots = await _catalog.LoadAssessmentSnapshotsAsync(
-            states.Values.Select(state => state.CatalogId).ToArray(),
+            states.Values.SelectMany(versions => versions)
+                .Where(state => state.Version == 1)
+                .Select(state => state.CatalogId).ToArray(),
             cancellationToken);
         var byId = snapshots.ToDictionary(snapshot => snapshot.ImageId);
         var pending = new List<XmpReconcileItem>();
@@ -60,7 +62,8 @@ public sealed class XmpSidecarReconciler
                 continue;
             }
             AssessmentSnapshot snapshot;
-            if (states.TryGetValue(path, out var state) &&
+            if (states.TryGetValue(path, out var versions) &&
+                versions.FirstOrDefault(state => state.Version == 1) is { } state &&
                 byId.TryGetValue(state.CatalogId, out var existing))
             {
                 snapshot = existing;

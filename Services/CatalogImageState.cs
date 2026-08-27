@@ -4,6 +4,8 @@ namespace HappyPhoton.Services;
 
 public sealed record CatalogImageState(
     long CatalogId,
+    int Version,
+    string? VersionLabel,
     EditSettings EditSettings,
     ImageFlag Flag,
     int Rating,

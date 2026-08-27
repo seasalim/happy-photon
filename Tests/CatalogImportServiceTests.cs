@@ -28,7 +28,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         await catalog.LoadOrCreateImageStatesAsync([photo]);
 
         Assert.Equal(1, await CountImagesAsync());
-        Assert.Equal(5, (await catalog.LoadImageStatesAsync([photo]))[photo].Rating);
+        Assert.Equal(5, (await catalog.LoadImageStatesAsync([photo]))[photo].Single().Rating);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         var id = await catalog.GetOrCreateImageAsync(photo);
         await catalog.MutateAssessmentsAsync([
             new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 2)
-        ], AssessmentAxes.None);
+        ]);
         var source = Source(photos, "KEEPER.JPG",
             rating: CatalogImportFact<int>.Mapped(5));
         var import = new CatalogImportService(catalog);
@@ -53,7 +53,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         Assert.Equal(1, preview.Report.ExistingCatalogRows);
         Assert.Equal(0, preview.Report.NewlyStoredPaths);
         Assert.Equal(1, await CountImagesAsync());
-        Assert.Equal(5, (await catalog.LoadImageStatesAsync([photo]))[photo].Rating);
+        Assert.Equal(5, (await catalog.LoadImageStatesAsync([photo]))[photo].Single().Rating);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         Assert.Equal(1, preview.Report.MatchedPhotos);
         Assert.Equal(1, await CountImagesAsync());
         Assert.Equal(5,
-            (await catalog.LoadImageStatesAsync([importedPath]))[importedPath].Rating);
+            (await catalog.LoadImageStatesAsync([importedPath]))[importedPath].Single().Rating);
         Assert.Contains(preview.Report.InformationalOutcomes,
             message => message ==
                 "1 additional Lightroom record mapped to 1 destination path already used by another record. The later record was used.");
@@ -118,7 +118,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         await catalog.MutateAssessmentsAsync([
             new AssessmentMutation(id, AssessmentAxes.Rating | AssessmentAxes.Label,
                 Rating: 4, ColorLabel: ColorLabel.Red)
-        ], AssessmentAxes.None);
+        ]);
         var source = Source(photos, "keeper.jpg",
             label: CatalogImportFact<ColorLabel>.Unsupported("Client Pick"));
         var import = CreateImport(catalog);
@@ -128,7 +128,7 @@ public sealed class CatalogImportServiceTests : IDisposable
             var preview = await import.CreatePreviewAsync(
                 source, Map(source, photos), policy);
             var result = await import.ApplyAsync(preview);
-            var state = (await catalog.LoadImageStatesAsync([photo]))[photo];
+            var state = (await catalog.LoadImageStatesAsync([photo]))[photo].Single();
             Assert.Equal(4, state.Rating);
             Assert.Equal(ColorLabel.Red, state.ColorLabel);
             Assert.Equal(1, result.Report.ColorLabel.Unsupported);
@@ -144,8 +144,8 @@ public sealed class CatalogImportServiceTests : IDisposable
         var catalog = await CreateCatalogAsync();
         var states = await catalog.LoadOrCreateImageStatesAsync([first, second]);
         await catalog.MutateAssessmentsAsync([
-            new AssessmentMutation(states[first].CatalogId, AssessmentAxes.Rating, Rating: 2)
-        ], AssessmentAxes.None);
+            new AssessmentMutation(states[first].Single().CatalogId, AssessmentAxes.Rating, Rating: 2)
+        ]);
         var source = new LightroomCatalogContents(
             Path.Combine(_root.Path, "source.lrcat"), 1303001, 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot("D:/Photos/", 2)],
@@ -159,13 +159,13 @@ public sealed class CatalogImportServiceTests : IDisposable
             source, Map(source, photos), CatalogImportPolicy.FillEmptyOnly);
         await import.ApplyAsync(fill);
         var afterFill = await catalog.LoadImageStatesAsync([first, second]);
-        Assert.Equal(2, afterFill[first].Rating);
-        Assert.Equal(4, afterFill[second].Rating);
+        Assert.Equal(2, afterFill[first].Single().Rating);
+        Assert.Equal(4, afterFill[second].Single().Rating);
 
         var overwrite = await import.CreatePreviewAsync(
             source, Map(source, photos), CatalogImportPolicy.LightroomWins);
         await import.ApplyAsync(overwrite);
-        Assert.Equal(5, (await catalog.LoadImageStatesAsync([first]))[first].Rating);
+        Assert.Equal(5, (await catalog.LoadImageStatesAsync([first]))[first].Single().Rating);
     }
 
     [Fact]
@@ -181,13 +181,13 @@ public sealed class CatalogImportServiceTests : IDisposable
         await import.ApplyAsync(firstPreview);
         var stored = await catalog.GetAppSettingAsync(firstPreview.SettingsKey);
         var firstState = (await catalog.LoadImageStatesAsync(firstPreview.ImportedPaths))
-            .Values.Single();
+            .Values.Single().Single();
 
         var secondPreview = await import.CreatePreviewAsync(
             source, Map(source, photos), CatalogImportPolicy.LightroomWins);
         var second = await import.ApplyAsync(secondPreview);
         var secondState = (await catalog.LoadImageStatesAsync(secondPreview.ImportedPaths))
-            .Values.Single();
+            .Values.Single().Single();
 
         Assert.Equal(0, second.DatabaseWrites);
         Assert.Equal(stored, await catalog.GetAppSettingAsync(secondPreview.SettingsKey));
@@ -214,12 +214,12 @@ public sealed class CatalogImportServiceTests : IDisposable
             source, Map(source, photos), CatalogImportPolicy.LightroomWins);
         await catalog.MutateAssessmentsAsync([
             new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 3)
-        ], AssessmentAxes.None);
+        ]);
 
         await Assert.ThrowsAsync<CatalogImportConflictException>(() =>
             import.ApplyAsync(preview));
 
-        Assert.Equal(3, (await catalog.LoadImageStatesAsync([photo]))[photo].Rating);
+        Assert.Equal(3, (await catalog.LoadImageStatesAsync([photo]))[photo].Single().Rating);
         Assert.Null(await catalog.GetAppSettingAsync(preview.SettingsKey));
     }
 

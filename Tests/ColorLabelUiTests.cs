@@ -39,7 +39,7 @@ public sealed class ColorLabelUiTests
         Assert.Equal(
             ColorLabel.Purple,
             (await catalog.LoadImageStatesAsync([image.FilePath]))[image.FilePath]
-                .ColorLabel);
+                .Single().ColorLabel);
         Assert.Equal(1, refreshes);
     }
 

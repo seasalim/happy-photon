@@ -63,6 +63,11 @@ public partial class MainWindow
         vm.RequestSettingsDialogAsync = async () =>
             await new SettingsDialog(vm).ShowDialog(this);
         vm.ConfirmMoveToTrashAsync = ConfirmMoveToTrashAsync;
+        vm.RequestVersionLabelAsync = image => TextInputDialog.ShowAsync(
+            this,
+            "Rename Version",
+            "Version label (leave blank to use V-number):",
+            image.VersionLabel ?? string.Empty);
         vm.ConfirmDeleteRejectedAsync = ConfirmDeleteRejectedAsync;
         vm.CancelActiveLoupePeek = () =>
             _compareView?.CancelLoupePeek() == true ||

@@ -87,6 +87,9 @@ public partial class MainWindow : Window
             _browseGridView.CopyImagePathsRequested += OnCopyImagePathsRequested;
             _browseGridView.RevealImageRequested += OnRevealImageRequested;
             _browseGridView.DeleteImagesRequested += OnDeleteImagesRequested;
+            _browseGridView.NewVersionRequested += OnNewVersionRequested;
+            _browseGridView.RenameVersionRequested += OnRenameVersionRequested;
+            _browseGridView.DeleteVersionRequested += OnDeleteVersionRequested;
             _browseGridView.SelectionChanged += OnSelectionChanged;
             _browseGridView.ImageSelectionToggled += OnImageSelectionToggled;
             _browseGridView.RangeSelectionRequested += OnRangeSelectionRequested;
@@ -126,6 +129,15 @@ public partial class MainWindow : Window
 
     private void OnDeleteImagesRequested(object? sender, EventArgs e) =>
         WithVm(vm => vm.DeleteImageCommand.Execute(null));
+
+    private void OnNewVersionRequested(object? sender, ImageFile image) =>
+        WithVm(vm => vm.NewVersionFromCurrentCommand.Execute(image));
+
+    private void OnRenameVersionRequested(object? sender, ImageFile image) =>
+        WithVm(vm => vm.RenameVersionLabelCommand.Execute(image));
+
+    private void OnDeleteVersionRequested(object? sender, ImageFile image) =>
+        WithVm(vm => vm.DeleteVersionCommand.Execute(image));
 
     private void OnSelectionChanged(object? sender, EventArgs e) =>
         WithVm(vm => vm.RefreshSelectedCount());

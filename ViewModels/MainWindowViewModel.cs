@@ -161,7 +161,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty]
     private int _selectedCount;
 
-    public string? ActiveFileName => SelectedImage?.FileName;
+    public string? ActiveFileName => SelectedImage is { } image
+        ? $"{image.FileName} · {image.VersionDisplayLabel}"
+        : null;
 
     public ExportSettings ExportSettings { get; } = new();
 

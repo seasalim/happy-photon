@@ -64,7 +64,7 @@ public sealed class CatalogServiceRatingTests : IDisposable
     private static async Task<int> LoadRatingAsync(CatalogService service, string path)
     {
         var states = await service.LoadImageStatesAsync(new[] { path });
-        return states[path].Rating;
+        return states[path].Single().Rating;
     }
 
     public void Dispose()

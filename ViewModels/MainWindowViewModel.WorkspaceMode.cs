@@ -159,6 +159,7 @@ public partial class MainWindowViewModel
         RedoCommand.NotifyCanExecuteChanged();
         NotifyClippingCommandState();
         NotifyExportRunCommandState();
+        NotifyVersionCommandState();
         if (value == WorkspaceMode.Export)
         {
             PrepareExportWorkspace();
@@ -238,6 +239,7 @@ public partial class MainWindowViewModel
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         NotifyClippingCommandState();
+        NotifyVersionCommandState();
 
         if (value && SelectedImage != null)
         {

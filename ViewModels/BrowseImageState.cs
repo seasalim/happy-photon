@@ -175,11 +175,25 @@ public partial class BrowseImageState : ObservableObject
     }
 
     public ImageFile? ReplacementAfterRemoval(ImageFile image)
+        => ReplacementAfterRemoval(image, _ => true);
+
+    public ImageFile? ReplacementAfterRemoval(
+        ImageFile image,
+        Func<ImageFile, bool> canReplace)
     {
         var index = VisibleImages.IndexOf(image);
         if (index < 0 || VisibleImages.Count <= 1) return null;
 
-        return index < VisibleImages.Count - 1 ? VisibleImages[index + 1] : VisibleImages[index - 1];
+        for (var distance = 1; distance < VisibleImages.Count; distance++)
+        {
+            var next = index + distance;
+            if (next < VisibleImages.Count && canReplace(VisibleImages[next]))
+                return VisibleImages[next];
+            var previous = index - distance;
+            if (previous >= 0 && canReplace(VisibleImages[previous]))
+                return VisibleImages[previous];
+        }
+        return null;
     }
 
     public bool MatchesCurrentFilters(ImageFile image) =>
@@ -208,6 +222,16 @@ public partial class BrowseImageState : ObservableObject
         VisibleImages.Remove(image);
         ReplaceThumbnail(image, null);
         NotifyCountsChanged();
+    }
+
+    public void InsertVersion(ImageFile image)
+    {
+        var index = _allImages.FindLastIndex(candidate =>
+            string.Equals(candidate.FilePath, image.FilePath,
+                StringComparison.OrdinalIgnoreCase));
+        _allImages.Insert(index < 0 ? _allImages.Count : index + 1, image);
+        _allImageSet.Add(image);
+        ApplyFilter();
     }
 
     public void RemoveRange(IEnumerable<ImageFile> images)

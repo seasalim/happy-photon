@@ -65,6 +65,7 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         cancellationToken.ThrowIfCancellationRequested();
 
         var identity = new BaseIdentity(
+            imageFile.CatalogId,
             Path.GetFullPath(imageFile.FilePath),
             decode.CacheKey);
         Task<BaseImageLoadFailure> decodeTask;
@@ -168,6 +169,7 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(imageFile);
         ArgumentNullException.ThrowIfNull(decode);
         var identity = new BaseIdentity(
+            imageFile.CatalogId,
             Path.GetFullPath(imageFile.FilePath),
             decode.CacheKey);
 
@@ -187,6 +189,7 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(imageFile);
         ArgumentNullException.ThrowIfNull(decode);
         var identity = new BaseIdentity(
+            imageFile.CatalogId,
             Path.GetFullPath(imageFile.FilePath),
             decode.CacheKey);
 
@@ -348,11 +351,13 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
 
     private static bool Matches(BaseIdentity? left, BaseIdentity right) =>
         left != null &&
+        left.CatalogId == right.CatalogId &&
         PathComparer.Equals(left.Path, right.Path) &&
         string.Equals(left.DecodeKey, right.DecodeKey, StringComparison.Ordinal);
 
     private static bool SamePath(BaseIdentity? left, BaseIdentity right) =>
-        left != null && PathComparer.Equals(left.Path, right.Path);
+        left != null && left.CatalogId == right.CatalogId &&
+        PathComparer.Equals(left.Path, right.Path);
 
     private void ThrowIfDisposed()
     {

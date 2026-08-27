@@ -37,23 +37,31 @@ public partial class MainWindowViewModel
 
     private async Task DeleteBatchAsync(IReadOnlyList<ImageFile> targets)
     {
-        var claimedPaths = targets.Select(image => image.FilePath).ToArray();
+        var fileTargets = targets.GroupBy(image => image.FilePath,
+                StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First()).ToList();
+        var claimedPaths = fileTargets.Select(image => image.FilePath).ToArray();
         SetDeleteTargetsClaimed(claimedPaths, claimed: true);
         var deletedImages = new List<ImageFile>();
         var failures = new List<FileOperationFailure>();
         var selectedImage = SelectedImage;
-        var replacement = selectedImage != null && targets.Contains(selectedImage)
-            ? Browse.ReplacementAfterRemoval(selectedImage)
+        var claimedPathSet = claimedPaths.ToHashSet(
+            StringComparer.OrdinalIgnoreCase);
+        var replacement = selectedImage != null &&
+                          claimedPathSet.Contains(selectedImage.FilePath)
+            ? Browse.ReplacementAfterRemoval(selectedImage,
+                candidate => !claimedPathSet.Contains(candidate.FilePath))
             : selectedImage;
         var folderImagePaths = Browse.AllImages
             .Select(image => image.FilePath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
         try
         {
             if (_xmpWriter != null) await _xmpWriter.DrainAsync();
 
-            foreach (var image in targets)
+            foreach (var image in fileTargets)
             {
                 await DeleteOneAsync(
                     image, folderImagePaths, deletedImages, failures);
@@ -63,7 +71,10 @@ public partial class MainWindowViewModel
         {
             System.Diagnostics.Debug.WriteLine(
                 $"Delete batch failed: {exception.Message}");
-            foreach (var image in targets.Except(deletedImages))
+            foreach (var image in fileTargets.Where(image =>
+                         !deletedImages.Any(deleted => string.Equals(
+                             deleted.FilePath, image.FilePath,
+                             StringComparison.OrdinalIgnoreCase))))
             {
                 failures.Add(new FileOperationFailure(
                     image.FilePath, "The delete operation could not be completed."));
@@ -133,7 +144,10 @@ public partial class MainWindowViewModel
                 return;
             }
 
-            deletedImages.Add(image);
+            foreach (var sibling in Browse.AllImages.Where(candidate =>
+                         string.Equals(candidate.FilePath, image.FilePath,
+                             StringComparison.OrdinalIgnoreCase)))
+                deletedImages.Add(sibling);
             await MoveResolvedSidecarsToTrashAsync(
                 image, folderImagePaths, failures);
 
@@ -141,8 +155,11 @@ public partial class MainWindowViewModel
             {
                 try
                 {
-                    await _catalogService.DeleteImageAsync(image.CatalogId);
-                    image.CatalogId = 0;
+                    await _catalogService.DeleteFileAsync(image.FilePath);
+                    foreach (var sibling in deletedImages.Where(candidate =>
+                                 string.Equals(candidate.FilePath, image.FilePath,
+                                     StringComparison.OrdinalIgnoreCase)))
+                        sibling.CatalogId = 0;
                 }
                 catch (Exception exception)
                 {

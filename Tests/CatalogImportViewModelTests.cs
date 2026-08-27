@@ -35,14 +35,14 @@ public sealed class CatalogImportViewModelTests : IDisposable
         var secondPath = _fx.Path("second.jpg");
         var states = await catalog.LoadOrCreateImageStatesAsync([firstPath, secondPath]);
         await catalog.MutateAssessmentsAsync([
-            new AssessmentMutation(states[firstPath].CatalogId,
+            new AssessmentMutation(states[firstPath].Single().CatalogId,
                 AssessmentAxes.Flag, Flag: ImageFlag.Picked),
-            new AssessmentMutation(states[secondPath].CatalogId,
+            new AssessmentMutation(states[secondPath].Single().CatalogId,
                 AssessmentAxes.Flag, Flag: ImageFlag.Picked)
-        ], AssessmentAxes.None);
+        ]);
         states = await catalog.LoadImageStatesAsync([firstPath, secondPath]);
-        var first = ToImage(firstPath, states[firstPath]);
-        var second = ToImage(secondPath, states[secondPath]);
+        var first = ToImage(firstPath, states[firstPath].Single());
+        var second = ToImage(secondPath, states[secondPath].Single());
         first.IsSelected = true;
         second.IsSelected = true;
         var vm = CreateViewModel(catalog);
@@ -76,7 +76,7 @@ public sealed class CatalogImportViewModelTests : IDisposable
     {
         using var catalog = await _fx.CreateCatalogAsync("catalog");
         var path = _fx.Path("photo.jpg");
-        var state = (await catalog.LoadOrCreateImageStatesAsync([path]))[path];
+        var state = (await catalog.LoadOrCreateImageStatesAsync([path]))[path].Single();
         var image = ToImage(path, state);
         var vm = CreateViewModel(catalog);
         vm.Browse.SetImages([image]);

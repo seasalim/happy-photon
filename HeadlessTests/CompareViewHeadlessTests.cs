@@ -34,7 +34,7 @@ public sealed partial class CompareViewHeadlessTests
         var states = await catalog.LoadOrCreateImageStatesAsync(
             images.Select(image => image.FilePath).ToArray());
         foreach (var image in images)
-            image.CatalogId = states[image.FilePath].CatalogId;
+            image.CatalogId = states[image.FilePath].Single().CatalogId;
         vm.Browse.SetImages(images);
         vm.SelectedImage = images[0];
         vm.ToggleImageSelection(images[0]);
@@ -174,7 +174,7 @@ public sealed partial class CompareViewHeadlessTests
         var states = await catalog.LoadOrCreateImageStatesAsync(
             images.Select(image => image.FilePath).ToArray());
         foreach (var image in images)
-            image.CatalogId = states[image.FilePath].CatalogId;
+            image.CatalogId = states[image.FilePath].Single().CatalogId;
         vm.Browse.SetImages(images);
         vm.SelectedImage = images[0];
         foreach (var image in images) vm.ToggleImageSelection(image);

@@ -312,13 +312,13 @@ public sealed partial class PreviewService : IAsyncDisposable
         lock (_renderedSync)
         {
             if (_lastRendered != null &&
-                !PathsEqual(_lastRendered.ImageFile.FilePath, nextImage.FilePath))
+                !ReferenceEquals(_lastRendered.ImageFile, nextImage))
             {
                 leaving = _lastRendered;
                 _lastRendered = null;
             }
+            Queue(leaving);
         }
-        Queue(leaving);
     }
 
     public void FlushRenderedPreviewCache() =>
@@ -341,9 +341,9 @@ public sealed partial class PreviewService : IAsyncDisposable
             {
                 rendered = _lastRendered;
                 _lastRendered = null;
+                Queue(rendered);
             }
         }
-        Queue(rendered);
         if (retireBase)
         {
             _baseCoordinator.Clear();

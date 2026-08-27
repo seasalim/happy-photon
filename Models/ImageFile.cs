@@ -29,6 +29,34 @@ public partial class ImageFile : ObservableObject
     public string Extension { get; }
     internal SourceAvailability SourceAvailabilityHint { get; }
 
+    public int Version { get; set; } = 1;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(VersionDisplayLabel))]
+    [NotifyPropertyChangedFor(nameof(VersionReportLabel))]
+    private string? _versionLabel;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanCreateVersion))]
+    [NotifyPropertyChangedFor(nameof(CreateVersionToolTip))]
+    [NotifyPropertyChangedFor(nameof(HasVersions))]
+    private int _versionCount = 1;
+
+    public string VersionDisplayLabel =>
+        string.IsNullOrWhiteSpace(VersionLabel) ? $"V{Version}" : VersionLabel;
+    public string VersionReportLabel => string.IsNullOrWhiteSpace(VersionLabel)
+        ? $"V{Version}"
+        : $"V{Version} · {VersionLabel}";
+    public bool HasVersions => VersionCount > 1;
+    public bool CanCreateVersion => VersionCount < 8;
+    public bool CanDeleteVersion => Version > 1;
+    public string? DeleteVersionToolTip => CanDeleteVersion
+        ? null
+        : "V1 is the permanent primary version.";
+    public string? CreateVersionToolTip => CanCreateVersion
+        ? null
+        : "A file can have at most 8 versions.";
+
     [ObservableProperty]
     private Bitmap? _thumbnail;
 
@@ -202,5 +230,33 @@ public partial class ImageFile : ObservableObject
         GpsLongitude = metadata.GpsLongitude;
         GpsAltitude = metadata.GpsAltitude;
         MetadataLoaded = true;
+    }
+
+    internal void CopyMetadataFrom(ImageFile source)
+    {
+        if (!source.MetadataLoaded) return;
+        ApplyMetadata(new ImageMetadata
+        {
+            FileSize = source.FileSize,
+            PixelWidth = source.PixelWidth,
+            PixelHeight = source.PixelHeight,
+            DateTaken = source.DateTaken,
+            FileModifiedDate = source.FileModifiedDate,
+            CameraMake = source.CameraMake,
+            CameraModel = source.CameraModel,
+            FNumber = source.FNumber,
+            ExposureTime = source.ExposureTime,
+            Iso = source.Iso,
+            FocalLength = source.FocalLength,
+            FocalLengthIn35mmFilm = source.FocalLengthIn35mmFilm,
+            ExposureBias = source.ExposureBias,
+            MeteringMode = source.MeteringMode,
+            WhiteBalanceMode = source.WhiteBalanceMode,
+            FlashValue = source.FlashValue,
+            LensModel = source.LensModel,
+            GpsLatitude = source.GpsLatitude,
+            GpsLongitude = source.GpsLongitude,
+            GpsAltitude = source.GpsAltitude
+        });
     }
 }

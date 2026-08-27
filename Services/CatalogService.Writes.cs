@@ -101,18 +101,7 @@ public partial class CatalogService
     public async Task DeleteImageAsync(long catalogId)
     {
         EnsureInitialized();
-        var thumbPath = GetThumbnailPath(catalogId);
-        var previewPath = GetPreviewPath(catalogId);
-        var previewMetadataPath = Path.ChangeExtension(previewPath, ".meta");
-        var renderedThumbnailPath = GetRenderedThumbnailPath(catalogId);
-        var renderedThumbnailMetadataPath =
-            Path.ChangeExtension(renderedThumbnailPath, ".meta");
-        if (File.Exists(thumbPath)) File.Delete(thumbPath);
-        if (File.Exists(previewPath)) File.Delete(previewPath);
-        if (File.Exists(previewMetadataPath)) File.Delete(previewMetadataPath);
-        if (File.Exists(renderedThumbnailPath)) File.Delete(renderedThumbnailPath);
-        if (File.Exists(renderedThumbnailMetadataPath))
-            File.Delete(renderedThumbnailMetadataPath);
+        DeleteCacheAssets(catalogId);
 
         await _connectionGate.WaitAsync();
         try
@@ -132,5 +121,21 @@ public partial class CatalogService
         {
             _connectionGate.Release();
         }
+    }
+
+    private void DeleteCacheAssets(long catalogId)
+    {
+        var thumbPath = GetThumbnailPath(catalogId);
+        var previewPath = GetPreviewPath(catalogId);
+        var previewMetadataPath = Path.ChangeExtension(previewPath, ".meta");
+        var renderedThumbnailPath = GetRenderedThumbnailPath(catalogId);
+        var renderedThumbnailMetadataPath =
+            Path.ChangeExtension(renderedThumbnailPath, ".meta");
+        if (File.Exists(thumbPath)) File.Delete(thumbPath);
+        if (File.Exists(previewPath)) File.Delete(previewPath);
+        if (File.Exists(previewMetadataPath)) File.Delete(previewMetadataPath);
+        if (File.Exists(renderedThumbnailPath)) File.Delete(renderedThumbnailPath);
+        if (File.Exists(renderedThumbnailMetadataPath))
+            File.Delete(renderedThumbnailMetadataPath);
     }
 }

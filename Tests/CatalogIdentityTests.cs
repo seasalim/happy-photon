@@ -29,8 +29,8 @@ public sealed class CatalogIdentityTests : IDisposable
         var states = await reopened.LoadImageStatesAsync(new[] { photoPath });
 
         Assert.True(File.Exists(Path.Combine(catalogPath, "catalog.db")));
-        Assert.Equal(catalogId, states[photoPath].CatalogId);
-        Assert.Equal(3, states[photoPath].Rating);
+        Assert.Equal(catalogId, states[photoPath].Single().CatalogId);
+        Assert.Equal(3, states[photoPath].Single().Rating);
         Assert.Equal("saved", await reopened.GetAppSettingAsync("identity-test"));
     }
 
@@ -87,7 +87,7 @@ public sealed class CatalogIdentityTests : IDisposable
         using var reopened = new CatalogService(happyPhotonCatalogPath);
         await reopened.InitializeAsync();
         var states = await reopened.LoadImageStatesAsync(new[] { photoPath });
-        var state = states[photoPath];
+        var state = states[photoPath].Single();
         var presetsAfterRename = new PresetService(
             Path.Combine(reopened.CatalogPath, "presets"));
         await presetsAfterRename.InitializeAsync();

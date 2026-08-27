@@ -257,7 +257,6 @@ public sealed partial class PreviewService
         PreviewRenderIdentity parent) =>
         parent.Generation == Volatile.Read(ref _renderGeneration) &&
         ReferenceEquals(parent.ImageFile, imageFile) &&
-        PathsEqual(parent.ImageFile.FilePath, imageFile.FilePath) &&
         string.Equals(parent.DecodeKey, decode.CacheKey, StringComparison.Ordinal);
 
     private void TagPreview(

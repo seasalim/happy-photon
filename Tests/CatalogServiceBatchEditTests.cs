@@ -39,12 +39,12 @@ public sealed class CatalogServiceBatchEditTests : IDisposable
         });
 
         var states = await service.LoadImageStatesAsync(new[] { firstPath, secondPath });
-        Assert.Equal(1.5, states[firstPath].EditSettings.Exposure);
-        Assert.Equal(20, states[firstPath].EditSettings.Contrast);
-        Assert.Equal(WbMode.Custom, states[secondPath].EditSettings.Wb.Mode);
-        Assert.Equal(7000, states[secondPath].EditSettings.Wb.Kelvin);
-        Assert.Equal(12, states[secondPath].EditSettings.Wb.Tint);
-        Assert.Equal(15, states[secondPath].EditSettings.Saturation);
+        Assert.Equal(1.5, states[firstPath].Single().EditSettings.Exposure);
+        Assert.Equal(20, states[firstPath].Single().EditSettings.Contrast);
+        Assert.Equal(WbMode.Custom, states[secondPath].Single().EditSettings.Wb.Mode);
+        Assert.Equal(7000, states[secondPath].Single().EditSettings.Wb.Kelvin);
+        Assert.Equal(12, states[secondPath].Single().EditSettings.Wb.Tint);
+        Assert.Equal(15, states[secondPath].Single().EditSettings.Saturation);
     }
 
     [Fact]
@@ -68,8 +68,8 @@ public sealed class CatalogServiceBatchEditTests : IDisposable
             }));
 
         var states = await service.LoadImageStatesAsync(new[] { firstPath, secondPath });
-        Assert.Equal(0.5, states[firstPath].EditSettings.Exposure);
-        Assert.Equal(0.75, states[secondPath].EditSettings.Exposure);
+        Assert.Equal(0.5, states[firstPath].Single().EditSettings.Exposure);
+        Assert.Equal(0.75, states[secondPath].Single().EditSettings.Exposure);
     }
 
     [Fact]

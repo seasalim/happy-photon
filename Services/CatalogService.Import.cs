@@ -28,6 +28,7 @@ public partial class CatalogService
                        image_assessments.pending_axes
                 FROM json_each(@paths) requested
                 JOIN images ON images.file_path = requested.value COLLATE NOCASE
+                           AND images.version = 1
                 LEFT JOIN image_assessments
                   ON image_assessments.image_id = images.id;
                 """;
@@ -164,7 +165,8 @@ public partial class CatalogService
                    image_assessments.pending_axes, images.file_path
             FROM images
             LEFT JOIN image_assessments ON image_assessments.image_id = images.id
-            WHERE images.file_path = @path COLLATE NOCASE;
+            WHERE images.file_path = @path COLLATE NOCASE
+              AND images.version = 1;
             """;
         command.Parameters.AddWithValue("@path", filePath);
         using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -199,8 +201,8 @@ public partial class CatalogService
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO images (
-                file_path, file_name, edit_settings, edit_version, updated_utc)
-            VALUES (@path, @name, @editSettings, @editVersion, @updated)
+                file_path, version, file_name, edit_settings, edit_version, updated_utc)
+            VALUES (@path, 1, @name, @editSettings, @editVersion, @updated)
             RETURNING id;
             """;
         command.Parameters.AddWithValue("@path", filePath);

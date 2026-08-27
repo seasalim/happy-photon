@@ -11,7 +11,10 @@ internal sealed record PreviewSourceAnalysis(
 
 internal sealed partial class PreviewBaseCoordinator
 {
-    private sealed record BaseIdentity(string Path, string DecodeKey);
+    private sealed record BaseIdentity(
+        long CatalogId,
+        string Path,
+        string DecodeKey);
 
     private sealed class HeldBase
     {

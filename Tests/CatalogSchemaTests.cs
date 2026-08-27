@@ -72,6 +72,8 @@ public sealed class CatalogSchemaTests : IDisposable
         [
             "id",
             "file_path",
+            "version",
+            "version_label",
             "file_name",
             "edit_settings",
             "edit_version",
@@ -162,6 +164,8 @@ public sealed class CatalogSchemaTests : IDisposable
         [
             "id",
             "file_path",
+            "version",
+            "version_label",
             "file_name",
             "edit_settings",
             "edit_version",

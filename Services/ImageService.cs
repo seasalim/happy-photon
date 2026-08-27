@@ -273,10 +273,14 @@ public class ImageService : IAsyncDisposable
         IReadOnlyList<ImageFile> images,
         CancellationToken cancellationToken)
     {
-        foreach (var image in images)
+        foreach (var group in images.GroupBy(image => image.FilePath,
+                     StringComparer.OrdinalIgnoreCase))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var image = group.First();
             await _metadataService.LoadAsync(image);
+            foreach (var sibling in group.Skip(1))
+                sibling.CopyMetadataFrom(image);
         }
     }
 
@@ -285,7 +289,9 @@ public class ImageService : IAsyncDisposable
     {
         var count = 0;
         long bytes = 0;
-        foreach (var image in images)
+        foreach (var image in images.GroupBy(candidate => candidate.FilePath,
+                     StringComparer.OrdinalIgnoreCase)
+                 .Select(group => group.First()))
         {
             if (!GetSourceAvailability(image).IsOnlineOnly())
             {

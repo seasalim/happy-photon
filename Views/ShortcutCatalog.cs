@@ -143,6 +143,8 @@ public static class ShortcutCatalog
             new("Shift+Click", "Select a range", [Accelerator("Select a range")]),
             new("Delete", "Move the Browse selection, else active photo, to Trash after confirmation",
                 [Browse("Move images to Trash", "DeleteImageMenuItem")]),
+            new("Ctrl+'", "Create a version from the current interpretation in Browse or Develop",
+                [Browse("Create a version from the current interpretation", "NewVersionMenuItem")]),
         ]),
         new("Develop and edit",
         [

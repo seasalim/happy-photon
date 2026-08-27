@@ -17,7 +17,7 @@ public sealed class CatalogPersistenceTests : IDisposable
 
         using var service = new CatalogService(_tempDirectory);
         await service.InitializeAsync();
-        var state = (await service.LoadImageStatesAsync([path]))[path];
+        var state = (await service.LoadImageStatesAsync([path]))[path].Single();
         var row = await ReadEditRowAsync(id);
 
         Assert.Equal(EditSettings.CurrentVersion, state.EditSettings.Version);
@@ -54,9 +54,9 @@ public sealed class CatalogPersistenceTests : IDisposable
         await service.InitializeAsync();
         var states = await service.LoadImageStatesAsync([badPath, goodPath]);
 
-        Assert.False(states[badPath].EditSettings.HasEdits);
-        Assert.Equal(EditSettings.CurrentVersion, states[badPath].EditSettings.Version);
-        Assert.Equal(1.25, states[goodPath].EditSettings.Exposure);
+        Assert.False(states[badPath].Single().EditSettings.HasEdits);
+        Assert.Equal(EditSettings.CurrentVersion, states[badPath].Single().EditSettings.Version);
+        Assert.Equal(1.25, states[goodPath].Single().EditSettings.Exposure);
         var persisted = await ReadEditRowAsync(badPath);
         Assert.Equal(editVersion, persisted.Version);
         Assert.Equal(document, persisted.Document);
@@ -72,7 +72,7 @@ public sealed class CatalogPersistenceTests : IDisposable
 
         using var service = new CatalogService(_tempDirectory);
         await service.InitializeAsync();
-        var state = (await service.LoadImageStatesAsync([path]))[path];
+        var state = (await service.LoadImageStatesAsync([path]))[path].Single();
 
         Assert.Equal(3, state.EditSettings.Exposure);
         Assert.Equal(document, (await ReadEditRowAsync(id)).Document);
@@ -92,7 +92,8 @@ public sealed class CatalogPersistenceTests : IDisposable
 
         using var service = new CatalogService(_tempDirectory);
         await service.InitializeAsync();
-        var settings = (await service.LoadImageStatesAsync([path]))[path].EditSettings;
+        var settings = (await service.LoadImageStatesAsync([path]))[path]
+            .Single().EditSettings;
 
         Assert.Equal(LensBaseline.Legacy, settings.Lens.Baseline);
         Assert.False(settings.Lens.Distortion);

@@ -12,8 +12,7 @@ internal static class CatalogAssessmentExtensions
     public static Task SaveFlagStateAsync(
         this CatalogService catalog, long catalogId, ImageFlag flag) =>
         catalog.MutateAssessmentsAsync(
-            [new AssessmentMutation(catalogId, AssessmentAxes.Flag, Flag: flag)],
-            AssessmentAxes.None);
+            [new AssessmentMutation(catalogId, AssessmentAxes.Flag, Flag: flag)]);
 
     public static Task SaveFlagStateAsync(
         this CatalogService catalog,
@@ -21,15 +20,13 @@ internal static class CatalogAssessmentExtensions
         ImageFlag flag) =>
         catalog.MutateAssessmentsAsync(
             catalogIds.Distinct().Select(id => new AssessmentMutation(
-                id, AssessmentAxes.Flag, Flag: flag)).ToArray(),
-            AssessmentAxes.None);
+                id, AssessmentAxes.Flag, Flag: flag)).ToArray());
 
     public static Task SaveRatingAsync(
         this CatalogService catalog, long catalogId, int rating) =>
         catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(catalogId, AssessmentAxes.Rating,
-                Rating: Math.Clamp(rating, 0, 5))],
-            AssessmentAxes.None);
+                Rating: Math.Clamp(rating, 0, 5))]);
 
     public static Task SaveRatingAsync(
         this CatalogService catalog,
@@ -38,8 +35,7 @@ internal static class CatalogAssessmentExtensions
         catalog.MutateAssessmentsAsync(
             catalogIds.Distinct().Select(id => new AssessmentMutation(
                 id, AssessmentAxes.Rating,
-                Rating: Math.Clamp(rating, 0, 5))).ToArray(),
-            AssessmentAxes.None);
+                Rating: Math.Clamp(rating, 0, 5))).ToArray());
 
     public static Task SaveColorLabelAsync(
         this CatalogService catalog,
@@ -47,6 +43,5 @@ internal static class CatalogAssessmentExtensions
         ColorLabel colorLabel) =>
         catalog.MutateAssessmentsAsync(
             catalogIds.Distinct().Select(id => new AssessmentMutation(
-                id, AssessmentAxes.Label, ColorLabel: colorLabel)).ToArray(),
-            AssessmentAxes.None);
+                id, AssessmentAxes.Label, ColorLabel: colorLabel)).ToArray());
 }

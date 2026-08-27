@@ -35,11 +35,11 @@ public partial class MainWindowViewModel
         CancellationToken cancellationToken = default)
     {
         var viewportAnchor = CaptureBrowseViewportAnchor?.Invoke();
-        var selectedPaths = Browse.AllImages
+        var selectedIds = Browse.AllImages
             .Where(image => image.IsSelected)
-            .Select(image => image.FilePath)
-            .ToHashSet(PathComparison);
-        var selectedPath = SelectedImage?.FilePath;
+            .Select(image => image.CatalogId)
+            .ToHashSet();
+        var selectedId = SelectedImage?.CatalogId;
         var oldVisibleIndex = SelectedImage == null
             ? -1
             : Browse.VisibleImages.IndexOf(SelectedImage);
@@ -51,9 +51,9 @@ public partial class MainWindowViewModel
         {
             Browse.RefreshFilters();
             foreach (var image in Browse.VisibleImages)
-                image.IsSelected = selectedPaths.Contains(image.FilePath);
+                image.IsSelected = selectedIds.Contains(image.CatalogId);
             SelectedImage = Browse.VisibleImages.FirstOrDefault(image =>
-                    string.Equals(image.FilePath, selectedPath, PathStringComparison))
+                    image.CatalogId == selectedId)
                 ?? VisibleNearIndex(oldVisibleIndex);
             UpdateSelectedCount();
             RestoreBrowseViewportAnchor?.Invoke(viewportAnchor);

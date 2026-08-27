@@ -34,6 +34,7 @@ public partial class MainWindowViewModel
 
         HasSelectedImage = newValue != null;
         NotifyImageNavigationCommandState();
+        NotifyVersionCommandState();
         ResetSelectedMetadataState(newValue);
         Volatile.Write(ref _activeBaseRefreshRequestId, 0);
         OnPropertyChanged(nameof(ActiveFileName));

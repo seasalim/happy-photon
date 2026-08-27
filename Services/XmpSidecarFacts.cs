@@ -64,7 +64,8 @@ public sealed record AssessmentMutation(
     AssessmentAxes Axes,
     ImageFlag? Flag = null,
     int? Rating = null,
-    ColorLabel? ColorLabel = null);
+    ColorLabel? ColorLabel = null,
+    AssessmentAxes PendingAxes = AssessmentAxes.None);
 
 public sealed record XmpReconcileItem(
     AssessmentSnapshot Snapshot,

@@ -38,19 +38,19 @@ public sealed class CatalogServiceImageStateTests : IDisposable
         });
 
         Assert.Equal(2, states.Count);
-        Assert.Equal(firstId, states[firstPath].CatalogId);
-        Assert.Equal(1.25, states[firstPath].EditSettings.Exposure);
-        Assert.Equal(20, states[firstPath].EditSettings.Contrast);
-        Assert.Equal(ImageFlag.Picked, states[firstPath].Flag);
-        Assert.Equal(4, states[firstPath].Rating);
-        Assert.Equal(ColorLabel.Blue, states[firstPath].ColorLabel);
-        Assert.Equal(secondId, states[secondPath].CatalogId);
+        Assert.Equal(firstId, states[firstPath].Single().CatalogId);
+        Assert.Equal(1.25, states[firstPath].Single().EditSettings.Exposure);
+        Assert.Equal(20, states[firstPath].Single().EditSettings.Contrast);
+        Assert.Equal(ImageFlag.Picked, states[firstPath].Single().Flag);
+        Assert.Equal(4, states[firstPath].Single().Rating);
+        Assert.Equal(ColorLabel.Blue, states[firstPath].Single().ColorLabel);
+        Assert.Equal(secondId, states[secondPath].Single().CatalogId);
         Assert.Equal(
             WbMode.AsShot,
-            states[secondPath].EditSettings.Wb.Mode);
+            states[secondPath].Single().EditSettings.Wb.Mode);
         Assert.Equal(
             EditSettings.CurrentVersion,
-            states[secondPath].EditSettings.Version);
+            states[secondPath].Single().EditSettings.Version);
     }
 
     [Fact]
@@ -78,13 +78,13 @@ public sealed class CatalogServiceImageStateTests : IDisposable
         var states = await service.LoadOrCreateImageStatesAsync(new[] { existingPath, newPath });
 
         Assert.Equal(2, states.Count);
-        Assert.Equal(existingId, states[existingPath].CatalogId);
-        Assert.Equal(5, states[existingPath].Rating);
-        Assert.True(states[newPath].CatalogId > 0);
-        Assert.Equal(WbMode.AsShot, states[newPath].EditSettings.Wb.Mode);
+        Assert.Equal(existingId, states[existingPath].Single().CatalogId);
+        Assert.Equal(5, states[existingPath].Single().Rating);
+        Assert.True(states[newPath].Single().CatalogId > 0);
+        Assert.Equal(WbMode.AsShot, states[newPath].Single().EditSettings.Wb.Mode);
         Assert.Equal(
             EditSettings.CurrentVersion,
-            states[newPath].EditSettings.Version);
+            states[newPath].Single().EditSettings.Version);
     }
 
     [Fact]
@@ -101,7 +101,8 @@ public sealed class CatalogServiceImageStateTests : IDisposable
         var states = await service.LoadOrCreateImageStatesAsync(requestedPaths);
 
         Assert.Equal(paths.Length, states.Count);
-        Assert.Equal(paths.Length, states.Values.Select(state => state.CatalogId).Distinct().Count());
+        Assert.Equal(paths.Length, states.Values.SelectMany(versions => versions)
+            .Select(state => state.CatalogId).Distinct().Count());
     }
 
     [Fact]
@@ -119,8 +120,8 @@ public sealed class CatalogServiceImageStateTests : IDisposable
         var lookupId = await service.GetOrCreateImageAsync(changedCasePath);
 
         Assert.Single(states);
-        Assert.Equal(originalId, states[changedCasePath].CatalogId);
-        Assert.Equal(3, states[changedCasePath].Rating);
+        Assert.Equal(originalId, states[changedCasePath].Single().CatalogId);
+        Assert.Equal(3, states[changedCasePath].Single().Rating);
         Assert.Equal(originalId, lookupId);
     }
 

@@ -64,7 +64,7 @@ public sealed class EditAutoSaveRefreshRaceTests : IDisposable
             while (true)
             {
                 var state = (await catalog.LoadOrCreateImageStatesAsync(
-                    [image.FilePath]))[image.FilePath];
+                    [image.FilePath]))[image.FilePath].Single();
                 if (state.EditSettings.HlReconstruction ==
                     HlReconstructionMode.Blend)
                 {

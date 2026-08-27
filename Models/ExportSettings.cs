@@ -236,6 +236,11 @@ public sealed class ExportJob
             settings.OutputSharpening);
         var dateToken = DateTime.Now.ToString("yyyyMMdd");
         var edits = new Dictionary<ImageFile, EditSettings>();
+        var versionedPaths = captureSnapshot
+            .GroupBy(capture => capture.FilePath, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Select(capture => capture.Version).Distinct().Count() > 1)
+            .Select(group => group.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var targets = new List<ExportTarget>(
             captureSnapshot.Count * recipeSnapshot.Count);
         foreach (var capture in captureSnapshot)
@@ -247,7 +252,10 @@ public sealed class ExportJob
                     capture,
                     recipe,
                     output,
-                    ResolvePath(capture.FileName, recipe, output, useSubfolders, dateToken)));
+                    ResolvePath(capture.FileName, recipe, output, useSubfolders,
+                        dateToken, versionedPaths.Contains(capture.FilePath)
+                            ? $"-V{capture.Version}"
+                            : string.Empty)));
             }
         }
 
@@ -277,12 +285,14 @@ public sealed class ExportJob
         ExportVariant recipe,
         ExportOutputSettings output,
         bool useSubfolders,
-        string dateToken)
+        string dateToken,
+        string versionSuffix)
     {
         var name = Path.GetFileNameWithoutExtension(originalFileName);
         var fileName = output.NamingPattern
             .Replace("{name}", name)
-            .Replace("{date}", dateToken) + GetExtension(output.Format);
+            .Replace("{date}", dateToken) + versionSuffix +
+            GetExtension(output.Format);
         var folder = useSubfolders
             ? Path.Combine(output.OutputFolder, recipe.Name)
             : output.OutputFolder;

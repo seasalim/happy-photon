@@ -99,11 +99,15 @@ public partial class MainWindowViewModel
         _burstAnalysisRestartRequested = false;
         Interlocked.Exchange(ref _burstAnalysisCts, analysisCts);
         Volatile.Write(ref _burstAnalysisProcessed, 0);
-        Volatile.Write(ref _burstAnalysisTotal, Browse.AllImages.Count);
+        Volatile.Write(ref _burstAnalysisTotal, Browse.AllImages
+            .Select(image => image.FilePath)
+            .Distinct(StringComparer.OrdinalIgnoreCase).Count());
         Volatile.Write(ref _burstAnalysisActive, 1);
         SignalBackgroundActivityStarted();
         _burstAnalysisTask = RunBurstAnalysisAsync(
-            Browse.AllImages.ToList(),
+            Browse.AllImages.GroupBy(image => image.FilePath,
+                    StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First()).ToList(),
             Volatile.Read(ref _browseGeneration),
             analysisCts);
         return true;
@@ -178,10 +182,7 @@ public partial class MainWindowViewModel
                     var availability = ImageService.GetSourceAvailability(image);
                     if (availability.IsOnlineOnly())
                     {
-                        if (generation == Volatile.Read(ref _browseGeneration))
-                        {
-                            SetSourceRequiresHydration(image, true);
-                        }
+                        SetSiblingHydrationState(image, true, generation);
                         skippedCount++;
                         continue;
                     }
@@ -193,19 +194,17 @@ public partial class MainWindowViewModel
                     await _loadMetadataAsync(image);
                     if (image.MetadataLoaded)
                     {
-                        if (generation == Volatile.Read(ref _browseGeneration))
-                        {
-                            SetSourceRequiresHydration(image, false);
-                        }
+                        foreach (var sibling in Browse.AllImages.Where(candidate =>
+                            string.Equals(candidate.FilePath, image.FilePath,
+                                StringComparison.OrdinalIgnoreCase)))
+                            sibling.CopyMetadataFrom(image);
+                        SetSiblingHydrationState(image, false, generation);
                         analyzedCount++;
                     }
                     else if (ImageService.GetSourceAvailability(image)
                                  .IsOnlineOnly())
                     {
-                        if (generation == Volatile.Read(ref _browseGeneration))
-                        {
-                            SetSourceRequiresHydration(image, true);
-                        }
+                        SetSiblingHydrationState(image, true, generation);
                         skippedCount++;
                     }
                 }
@@ -264,6 +263,18 @@ public partial class MainWindowViewModel
         }
     }
 
+    private void SetSiblingHydrationState(
+        ImageFile image,
+        bool requiresHydration,
+        int generation)
+    {
+        if (generation != Volatile.Read(ref _browseGeneration)) return;
+        foreach (var sibling in Browse.AllImages.Where(candidate =>
+                     string.Equals(candidate.FilePath, image.FilePath,
+                         StringComparison.OrdinalIgnoreCase)))
+            SetSourceRequiresHydration(sibling, requiresHydration);
+    }
+
     private void ApplyBurstIndicators()
     {
         if (_burstMembership == null)
@@ -273,21 +284,27 @@ public partial class MainWindowViewModel
 
         foreach (var image in Browse.AllImages)
         {
-            if (_burstMembership.TryGetValue(image.FilePath, out var membership))
-            {
-                image.BurstGroupOrdinal = membership.Ordinal;
-                image.BurstIndex = membership.Index;
-                image.BurstSize = membership.Size;
-            }
-            else
-            {
-                image.BurstGroupOrdinal = 0;
-                image.BurstIndex = 0;
-                image.BurstSize = 0;
-            }
-
-            image.IsBurstHighlighted = false;
+            ApplyBurstIndicator(image);
         }
+    }
+
+    private void ApplyBurstIndicator(ImageFile image)
+    {
+        if (ShowBurstGroups && _burstMembership != null &&
+            _burstMembership.TryGetValue(image.FilePath, out var membership))
+        {
+            image.BurstGroupOrdinal = membership.Ordinal;
+            image.BurstIndex = membership.Index;
+            image.BurstSize = membership.Size;
+        }
+        else
+        {
+            image.BurstGroupOrdinal = 0;
+            image.BurstIndex = 0;
+            image.BurstSize = 0;
+        }
+
+        image.IsBurstHighlighted = false;
     }
 
     private void ClearBurstIndicators()

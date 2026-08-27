@@ -55,11 +55,11 @@ public sealed class ColorLabelTests : IDisposable
         var id = await catalog.GetOrCreateImageAsync(path);
         await catalog.SaveColorLabelAsync([id], ColorLabel.Green);
         Assert.Equal(ColorLabel.Green,
-            (await catalog.LoadImageStatesAsync([path]))[path].ColorLabel);
+            (await catalog.LoadImageStatesAsync([path]))[path].Single().ColorLabel);
         await WriteLabelAsync(id, 99);
 
         Assert.Equal(ColorLabel.None,
-            (await catalog.LoadImageStatesAsync([path]))[path].ColorLabel);
+            (await catalog.LoadImageStatesAsync([path]))[path].Single().ColorLabel);
         Assert.Equal(99, await ReadLabelAsync(id));
     }
 
@@ -94,7 +94,7 @@ public sealed class ColorLabelTests : IDisposable
             .Select(index => _fx.Path($"{index}.jpg"))
             .ToArray();
         var states = await catalog.LoadOrCreateImageStatesAsync(paths);
-        var ids = paths.Select(path => states[path].CatalogId).ToList();
+        var ids = paths.Select(path => states[path].Single().CatalogId).ToList();
         await catalog.SaveColorLabelAsync(ids.Concat([ids[0]]).ToArray(), ColorLabel.Blue);
         Assert.Equal(2000, await CountLabelAsync(ColorLabel.Blue));
 

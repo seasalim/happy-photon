@@ -91,7 +91,12 @@ public sealed class BrowseSelectionMenuTests
     [AvaloniaFact]
     public void ThumbnailContextMenu_HasFileOperationsAndRaisesRequests()
     {
-        var image = new ImageFile(Path.Combine(Path.GetTempPath(), "menu.jpg"));
+        var image = new ImageFile(Path.Combine(Path.GetTempPath(), "menu.jpg"))
+        {
+            CatalogId = 2,
+            Version = 2,
+            VersionCount = 2
+        };
         var control = new BrowseGridView
         {
             Images = new ObservableCollection<ImageFile> { image }
@@ -107,21 +112,89 @@ public sealed class BrowseSelectionMenuTests
         var copy = Assert.IsType<MenuItem>(items[0]);
         var reveal = Assert.IsType<MenuItem>(items[1]);
         Assert.IsType<Separator>(items[2]);
-        var delete = Assert.IsType<MenuItem>(items[3]);
+        var createVersion = Assert.IsType<MenuItem>(items[3]);
+        var renameVersion = Assert.IsType<MenuItem>(items[4]);
+        var deleteVersion = Assert.IsType<MenuItem>(items[5]);
+        Assert.IsType<Separator>(items[6]);
+        var delete = Assert.IsType<MenuItem>(items[7]);
         Assert.Equal(
-            ["Copy path", "Reveal in File Explorer", "Delete…"],
-            new[] { copy, reveal, delete }.Select(item => item.Header));
-        Assert.All(new[] { copy, reveal, delete }, item => Assert.True(item.IsEnabled));
-        var requests = new int[3];
+            ["Copy path", "Reveal in File Explorer", "New Version from Current",
+                "Rename version label…", "Delete version", "Delete…"],
+            new[] { copy, reveal, createVersion, renameVersion, deleteVersion, delete }
+                .Select(item => item.Header));
+        Assert.All(new[]
+            {
+                copy, reveal, createVersion, renameVersion, deleteVersion, delete
+            }, item => Assert.True(item.IsEnabled));
+        var requests = new int[6];
         control.CopyImagePathsRequested += (_, _) => requests[0]++;
         control.RevealImageRequested += (_, _) => requests[1]++;
-        control.DeleteImagesRequested += (_, _) => requests[2]++;
+        control.NewVersionRequested += (_, target) =>
+        {
+            Assert.Same(image, target);
+            requests[2]++;
+        };
+        control.RenameVersionRequested += (_, target) =>
+        {
+            Assert.Same(image, target);
+            requests[3]++;
+        };
+        control.DeleteVersionRequested += (_, target) =>
+        {
+            Assert.Same(image, target);
+            requests[4]++;
+        };
+        control.DeleteImagesRequested += (_, _) => requests[5]++;
 
+        menu.PlacementTarget = tile;
+        menu.Open();
+        Dispatcher.UIThread.RunJobs();
         copy.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         reveal.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        createVersion.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        renameVersion.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        deleteVersion.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         delete.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
 
-        Assert.Equal([1, 1, 1], requests);
+        Assert.Equal([1, 1, 1, 1, 1, 1], requests);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void VersionContextMenu_FolderSwitchCannotTargetPreviousFolder()
+    {
+        var previous = new ImageFile(Path.Combine(Path.GetTempPath(), "previous.jpg"));
+        var current = new ImageFile(Path.Combine(Path.GetTempPath(), "current.jpg"));
+        var control = new BrowseGridView
+        {
+            Images = new ObservableCollection<ImageFile> { previous }
+        };
+        var window = new Window { Content = control };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var tile = Assert.Single(control.GetVisualDescendants().OfType<Border>(),
+            border => ReferenceEquals(border.DataContext, previous) &&
+                      border.Classes.Contains("thumbnail"));
+        var menu = tile.ContextMenu!;
+        var createVersion = Assert.IsType<MenuItem>(menu.Items.ElementAt(3));
+        control.ApplyRightClickSelection(previous);
+        menu.PlacementTarget = tile;
+        menu.Open();
+        Dispatcher.UIThread.RunJobs();
+
+        control.Images = new ObservableCollection<ImageFile> { current };
+        control.SelectedImage = current;
+        ImageFile? requested = null;
+        control.NewVersionRequested += (_, target) => requested = target;
+
+        createVersion.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        Assert.Same(current, requested);
+
+        requested = null;
+        control.Images = [];
+        control.SelectedImage = null;
+        createVersion.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        Assert.Null(requested);
         window.Close();
     }
 

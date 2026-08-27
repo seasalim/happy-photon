@@ -157,11 +157,26 @@
                                 PointerExited="OnThumbnailPointerExited"
                                 DoubleTapped="OnThumbnailDoubleTapped">
                             <Border.ContextMenu>
-                                <ContextMenu>
+                                <ContextMenu Opened="OnThumbnailContextMenuOpened">
                                     <MenuItem Header="Copy path"
                                               Click="OnCopyImagePathsClick"/>
                                     <MenuItem Header="Reveal in File Explorer"
                                               Click="OnRevealImageClick"/>
+                                    <Separator/>
+                                    <MenuItem x:Name="NewVersionMenuItem"
+                                              Header="New Version from Current"
+                                              IsEnabled="{Binding CanCreateVersion}"
+                                              ToolTip.ShowOnDisabled="True"
+                                              ToolTip.Tip="{Binding CreateVersionToolTip}"
+                                              Click="OnNewVersionClick"/>
+                                    <MenuItem Header="Rename version label…"
+                                              Click="OnRenameVersionClick"/>
+                                    <MenuItem x:Name="DeleteVersionMenuItem"
+                                              Header="Delete version"
+                                              IsEnabled="{Binding CanDeleteVersion}"
+                                              ToolTip.ShowOnDisabled="True"
+                                              ToolTip.Tip="{Binding DeleteVersionToolTip}"
+                                              Click="OnDeleteVersionClick"/>
                                     <Separator/>
                                     <MenuItem x:Name="DeleteImageMenuItem"
                                               Header="Delete…"
@@ -268,13 +283,26 @@
                                 </Panel>
                                 <Grid Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
                                       Margin="0,5,0,0"
-                                      RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                                      RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
                                     <TextBlock Grid.Row="0" Grid.Column="0"
                                                Text="{Binding FileName}"
                                                FontSize="11" Foreground="{DynamicResource TextSecondary}"
                                                TextTrimming="CharacterEllipsis"
                                                ToolTip.Tip="{Binding FileName}"/>
                                     <Border Grid.Row="0" Grid.Column="1"
+                                            Background="{StaticResource PrimaryContainer}"
+                                            CornerRadius="{StaticResource RadiusSmall}"
+                                            Padding="4,1" Margin="6,0,0,0"
+                                            IsVisible="{Binding HasVersions}"
+                                            ToolTip.Tip="Version">
+                                        <TextBlock Text="{Binding VersionDisplayLabel}"
+                                                   FontSize="9"
+                                                   MaxWidth="72"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   FontFamily="{StaticResource FontLabel}"
+                                                   Foreground="{StaticResource OnPrimary}"/>
+                                    </Border>
+                                    <Border Grid.Row="0" Grid.Column="2"
                                             Background="{StaticResource Tertiary}"
                                             CornerRadius="{StaticResource RadiusSmall}"
                                             Padding="4,1"
@@ -287,7 +315,7 @@
                                                    FontFamily="{StaticResource FontLabel}"
                                                    Foreground="{StaticResource OnTertiary}"/>
                                     </Border>
-                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto"
+                                    <Grid Grid.Row="1" Grid.ColumnSpan="3" ColumnDefinitions="*,Auto"
                                           Margin="0,2,0,0">
                                         <StackPanel Orientation="Horizontal" Spacing="3">
                                             <Border Background="{StaticResource PrimaryContainer}" CornerRadius="2"

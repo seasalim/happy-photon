@@ -19,6 +19,13 @@ public partial class MainWindowViewModel
         try
         {
             await _loadMetadataAsync(image);
+            if (image.MetadataLoaded)
+            {
+                foreach (var sibling in Browse.AllImages.Where(candidate =>
+                    string.Equals(candidate.FilePath, image.FilePath,
+                        StringComparison.OrdinalIgnoreCase)))
+                    sibling.CopyMetadataFrom(image);
+            }
         }
         catch (Exception ex)
         {

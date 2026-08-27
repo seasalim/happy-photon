@@ -36,6 +36,24 @@ public sealed class PreviewBaseCoordinatorTests : IDisposable
     }
 
     [Fact]
+    public async Task SamePathDifferentVersionIds_DoNotShareRuntimeBaseIdentity()
+    {
+        var path = CreateSource("versions.jpg");
+        var loader = new ControlledLoader(blockFirst: false);
+        await using var coordinator = new PreviewBaseCoordinator(loader);
+        var primary = new ImageFile(path) { CatalogId = 11, Version = 1 };
+        var second = new ImageFile(path) { CatalogId = 12, Version = 2 };
+
+        using var first = await coordinator.GetPreviewAsync(
+            primary, BaseDecodeSettings.Default, CancellationToken.None);
+        using var next = await coordinator.GetPreviewAsync(
+            second, BaseDecodeSettings.Default, CancellationToken.None);
+
+        Assert.Equal(2, loader.DecodeCount);
+        Assert.NotSame(first!.Base, next!.Base);
+    }
+
+    [Fact]
     public async Task NewIdentity_SupersedesAndDisposesLateResult()
     {
         var firstPath = CreateSource("first.jpg");

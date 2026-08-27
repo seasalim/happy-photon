@@ -202,7 +202,7 @@ public sealed class AssessmentTargetingTests : IDisposable
                 ? "Unable to update flags"
                 : "Unable to update ratings",
             vm.TransientStatus);
-        var state = (await catalog.LoadImageStatesAsync([valid.FilePath]))[valid.FilePath];
+        var state = (await catalog.LoadImageStatesAsync([valid.FilePath]))[valid.FilePath].Single();
         if (axis == AssessmentAxis.Flag)
             Assert.Equal(ImageFlag.Unflagged, state.Flag);
         else
@@ -220,7 +220,7 @@ public sealed class AssessmentTargetingTests : IDisposable
             .Select(index => _fx.Path($"batch-{index}.jpg"))
             .ToArray();
         var states = await catalog.LoadOrCreateImageStatesAsync(paths);
-        var ids = paths.Select(path => states[path].CatalogId).ToArray();
+        var ids = paths.Select(path => states[path].Single().CatalogId).ToArray();
 
         if (axis == AssessmentAxis.Flag)
             await catalog.SaveFlagStateAsync(ids, ImageFlag.Picked);
@@ -228,7 +228,7 @@ public sealed class AssessmentTargetingTests : IDisposable
             await catalog.SaveRatingAsync(ids, 4);
 
         var written = await catalog.LoadImageStatesAsync(paths);
-        Assert.All(written.Values, state =>
+        Assert.All(written.Values.SelectMany(versions => versions), state =>
         {
             if (axis == AssessmentAxis.Flag)
                 Assert.Equal(ImageFlag.Picked, state.Flag);
@@ -247,7 +247,7 @@ public sealed class AssessmentTargetingTests : IDisposable
                 catalog.SaveRatingAsync([ids[0], long.MaxValue], 1));
         }
 
-        var first = (await catalog.LoadImageStatesAsync([paths[0]]))[paths[0]];
+        var first = (await catalog.LoadImageStatesAsync([paths[0]]))[paths[0]].Single();
         if (axis == AssessmentAxis.Flag)
             Assert.Equal(ImageFlag.Picked, first.Flag);
         else

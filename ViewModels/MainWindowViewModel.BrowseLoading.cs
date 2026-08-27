@@ -51,29 +51,29 @@ public partial class MainWindowViewModel
                     hasSubfolders: _folderTreeService.HasSubfolders(folderPath)),
                 cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            var imageFiles = folderContents.scan.Images.ToList();
+            var sourceFiles = folderContents.scan.Images.ToList();
             _xmpIndexedSidecars = folderContents.scan.SidecarPaths;
             CurrentFolderHasSubfolders = folderContents.hasSubfolders;
-            var imagePaths = imageFiles.Select(image => image.FilePath).ToArray();
+            var imagePaths = sourceFiles.Select(image => image.FilePath).ToArray();
             // Microsoft.Data.Sqlite async APIs can perform synchronous disk work.
             var catalogStates = await Task.Run(
                 () => _catalogService.LoadOrCreateImageStatesAsync(
                     imagePaths, cancellationToken),
                 cancellationToken);
-            foreach (var imageFile in imageFiles)
+            var imageFiles = new List<ImageFile>();
+            foreach (var source in sourceFiles)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                var state = catalogStates[imageFile.FilePath];
-                imageFile.CatalogId = state.CatalogId;
-                imageFile.EditSettings = state.EditSettings;
-                imageFile.HasEdits = state.EditSettings.HasEdits;
-                imageFile.Flag = state.Flag;
-                imageFile.Rating = state.Rating;
-                imageFile.ColorLabel = state.ColorLabel;
-                imageFile.AssessmentRevision = state.AssessmentRevision;
-                imageFile.AssessedUtc = state.AssessedUtc;
-                imageFile.PendingAssessmentAxes = state.PendingAxes;
+                var versions = catalogStates[source.FilePath];
+                foreach (var state in versions)
+                {
+                    var imageFile = state.Version == 1
+                        ? source
+                        : new ImageFile(
+                            source.FilePath, source.SourceAvailabilityHint);
+                    ApplyCatalogState(imageFile, state, versions.Count);
+                    imageFiles.Add(imageFile);
+                }
             }
 
             cancellationToken.ThrowIfCancellationRequested();

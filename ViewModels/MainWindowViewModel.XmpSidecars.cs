@@ -62,7 +62,8 @@ public partial class MainWindowViewModel
         }
         var cts = new CancellationTokenSource();
         _xmpReconcileCts = cts;
-        var paths = Browse.AllImages.Select(image => image.FilePath).ToArray();
+        var paths = Browse.AllImages.Where(image => image.Version == 1)
+            .Select(image => image.FilePath).ToArray();
         _xmpReconcileTask = Task.Run(async () =>
         {
             var reconciler = new XmpSidecarReconciler(_catalogService);
@@ -86,7 +87,7 @@ public partial class MainWindowViewModel
         {
             return;
         }
-        var byPath = Browse.AllImages.ToDictionary(
+        var byPath = Browse.AllImages.Where(image => image.Version == 1).ToDictionary(
             image => image.FilePath, StringComparer.OrdinalIgnoreCase);
         foreach (var adoption in result.Adoptions)
         {
@@ -158,24 +159,35 @@ public partial class MainWindowViewModel
     private async Task<IReadOnlyList<AssessmentSnapshot>> CommitAssessmentAsync(
         IReadOnlyCollection<AssessmentMutation> mutations)
     {
-        var pending = XmpSidecarMode == XmpSidecarMode.ReadWrite
-            ? mutations.Aggregate(AssessmentAxes.None,
-                (axes, mutation) => axes | mutation.Axes)
-            : AssessmentAxes.None;
+        var primaryIds = Browse.AllImages
+            .Where(image => image.Version == 1)
+            .Select(image => image.CatalogId)
+            .ToHashSet();
+        var catalogMutations = mutations.Select(mutation => mutation with
+        {
+            PendingAxes = XmpSidecarMode == XmpSidecarMode.ReadWrite &&
+                primaryIds.Contains(mutation.ImageId)
+                ? mutation.Axes
+                : AssessmentAxes.None
+        }).ToArray();
         var snapshots = await _catalogService.MutateAssessmentsAsync(
-            mutations, pending);
+            catalogMutations);
         foreach (var snapshot in snapshots)
         {
             var image = Browse.AllImages.FirstOrDefault(candidate =>
                 candidate.CatalogId == snapshot.ImageId);
             if (image != null) ApplyAssessmentSnapshot(image, snapshot);
         }
-        if (pending != AssessmentAxes.None && _xmpWriter != null)
+        if (catalogMutations.Any(mutation =>
+                mutation.PendingAxes != AssessmentAxes.None) &&
+            _xmpWriter != null)
         {
-            var paths = Browse.AllImages.Select(image => image.FilePath).ToArray();
+            var paths = Browse.AllImages.Where(image => image.Version == 1)
+                .Select(image => image.FilePath).ToArray();
             foreach (var snapshot in snapshots)
             {
-                if (IsDeleteTargetClaimed(snapshot.FilePath)) continue;
+                if (!primaryIds.Contains(snapshot.ImageId) ||
+                    IsDeleteTargetClaimed(snapshot.FilePath)) continue;
                 _xmpWriter.TryEnqueue(
                     snapshot, snapshot.PendingAxes, paths, XmpSidecarNaming);
             }
@@ -214,6 +226,7 @@ public partial class MainWindowViewModel
     private void ReportPendingXmpAssessments(IEnumerable<ImageFile> images)
     {
         var count = images.Count(image =>
+            image.Version == 1 &&
             image.PendingAssessmentAxes != AssessmentAxes.None);
         if (count == 0) return;
         var noun = count == 1 ? "photo" : "photos";

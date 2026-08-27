@@ -195,7 +195,7 @@ public sealed class ComparePreviewCacheTests : IDisposable
             images.Select(image => image.FilePath).ToArray());
         foreach (var image in images)
         {
-            image.CatalogId = states[image.FilePath].CatalogId;
+            image.CatalogId = states[image.FilePath].Single().CatalogId;
             File.WriteAllBytes(image.FilePath, [0]);
         }
         return images;

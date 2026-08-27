@@ -294,21 +294,26 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
             try
             {
                 TestImages.WriteJpeg(Path.Combine(photos, "local.jpg"));
-                TestImages.WriteJpeg(Path.Combine(photos, "cloud.jpg"));
+                var cloudPath = Path.Combine(photos, "cloud.jpg");
+                TestImages.WriteJpeg(cloudPath);
+                var cloudPrimary = Complete(catalog.GetOrCreateImageAsync(cloudPath));
+                Assert.NotNull(Complete(catalog.CreateVersionAsync(cloudPrimary)));
                 Complete(viewModel.LoadFolderAsync(photos));
 
                 viewModel.ShowBurstGroups = true;
                 Complete(viewModel.WaitForBurstAnalysisAsync());
 
-                var cloud = viewModel.Browse.AllImages.Single(
-                    image => image.FileName == "cloud.jpg");
+                var cloud = viewModel.Browse.AllImages.Where(
+                    image => image.FileName == "cloud.jpg").ToArray();
+                Assert.Equal(2, cloud.Length);
                 Assert.Equal(1, metadataLoads);
                 Assert.Equal(2, viewModel.BurstAnalysisProcessed);
                 Assert.Equal(2, viewModel.BurstAnalysisTotal);
-                Assert.False(cloud.MetadataLoaded);
-                Assert.False(cloud.HasBurstGroup);
-                Assert.True(cloud.SourceRequiresHydration);
-                Assert.Equal(1, viewModel.OnlineOnlyPhotoCount);
+                Assert.All(cloud, image => Assert.False(image.MetadataLoaded));
+                Assert.All(cloud, image => Assert.False(image.HasBurstGroup));
+                Assert.All(cloud,
+                    image => Assert.True(image.SourceRequiresHydration));
+                Assert.Equal(2, viewModel.OnlineOnlyPhotoCount);
                 Assert.Equal(
                     "Burst analysis complete — 1 local photo analyzed; " +
                     "1 online-only photo skipped.",
@@ -337,18 +342,24 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         {
             try
             {
-                TestImages.WriteJpeg(Path.Combine(photos, "local.jpg"));
+                var path = Path.Combine(photos, "local.jpg");
+                TestImages.WriteJpeg(path);
+                var primary = Complete(catalog.GetOrCreateImageAsync(path));
+                Assert.NotNull(Complete(catalog.CreateVersionAsync(primary)));
                 Complete(viewModel.LoadFolderAsync(photos));
                 WaitForThumbnailAttempt(viewModel);
-                var image = Assert.Single(viewModel.Browse.AllImages);
-                image.SourceRequiresHydration = true;
+                var images = viewModel.Browse.AllImages.ToArray();
+                Assert.Equal(2, images.Length);
+                foreach (var image in images)
+                    image.SourceRequiresHydration = true;
                 viewModel.RefreshOnlineOnlyPhotoCount();
 
                 viewModel.ShowBurstGroups = true;
                 Complete(viewModel.WaitForBurstAnalysisAsync());
 
-                Assert.True(image.MetadataLoaded);
-                Assert.False(image.SourceRequiresHydration);
+                Assert.All(images, image => Assert.True(image.MetadataLoaded));
+                Assert.All(images,
+                    image => Assert.False(image.SourceRequiresHydration));
                 Assert.Equal(0, viewModel.OnlineOnlyPhotoCount);
             }
             finally
@@ -401,17 +412,18 @@ public sealed class BurstAnalysisLifecycleTests : IDisposable
         var deadline = DateTime.UtcNow + ThumbnailAttemptTimeout;
         while (DateTime.UtcNow < deadline)
         {
-            var image = viewModel.Browse.AllImages.SingleOrDefault();
-            if (image?.Thumbnail != null ||
-                image?.ThumbnailLoadFailed == true ||
-                image?.ThumbnailDeferredForHydration == true)
+            var images = viewModel.Browse.AllImages;
+            if (images.Count > 0 && images.All(image =>
+                    image.Thumbnail != null ||
+                    image.ThumbnailLoadFailed ||
+                    image.ThumbnailDeferredForHydration))
             {
                 return;
             }
             Thread.Sleep(10);
         }
 
-        var observed = viewModel.Browse.AllImages.SingleOrDefault();
+        var observed = viewModel.Browse.AllImages.FirstOrDefault();
         throw new TimeoutException(
             $"Thumbnail attempt did not finish within " +
             $"{ThumbnailAttemptTimeout.TotalSeconds:0}s. " +

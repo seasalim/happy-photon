@@ -85,8 +85,8 @@ public sealed class XmpSidecarWriterTests : IDisposable
             {
                 await catalog.MutateAssessmentsAsync(
                     [new AssessmentMutation(
-                        original.ImageId, AssessmentAxes.Rating, Rating: 5)],
-                    AssessmentAxes.Rating);
+                        original.ImageId, AssessmentAxes.Rating, Rating: 5,
+                        PendingAxes: AssessmentAxes.Rating)]);
             }
         };
         writer.Start();
@@ -161,11 +161,10 @@ public sealed class XmpSidecarWriterTests : IDisposable
         var id = await catalog.GetOrCreateImageAsync(path);
         await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(
-                id, AssessmentAxes.Flag, Flag: ImageFlag.Rejected)],
-            AssessmentAxes.None);
+                id, AssessmentAxes.Flag, Flag: ImageFlag.Rejected)]);
         var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
-            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 4)],
-            AssessmentAxes.Rating));
+            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 4,
+                PendingAxes: AssessmentAxes.Rating)]));
         await using var writer = new XmpSidecarWriter(
             catalog, ColorLabelNames.Defaults);
         writer.Start();
@@ -216,11 +215,10 @@ public sealed class XmpSidecarWriterTests : IDisposable
         await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(
                 id, AssessmentAxes.Flag | AssessmentAxes.Rating,
-                Flag: ImageFlag.Rejected, Rating: 3)],
-            AssessmentAxes.None);
+                Flag: ImageFlag.Rejected, Rating: 3)]);
         var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
-            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 4)],
-            AssessmentAxes.Rating));
+            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 4,
+                PendingAxes: AssessmentAxes.Rating)]));
         await using var writer = new XmpSidecarWriter(
             catalog, ColorLabelNames.Defaults);
         writer.Start();
@@ -252,8 +250,8 @@ public sealed class XmpSidecarWriterTests : IDisposable
         var id = await catalog.GetOrCreateImageAsync(path);
         var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(
-                id, AssessmentAxes.Label, ColorLabel: ColorLabel.Blue)],
-            AssessmentAxes.Label));
+                id, AssessmentAxes.Label, ColorLabel: ColorLabel.Blue,
+                PendingAxes: AssessmentAxes.Label)]));
         var promotions = 0;
         var reports = new List<string>();
         await using var writer = new XmpSidecarWriter(
@@ -331,8 +329,8 @@ public sealed class XmpSidecarWriterTests : IDisposable
         var path = Path.Combine(_root.Path, name);
         var id = await catalog.GetOrCreateImageAsync(path);
         return Assert.Single(await catalog.MutateAssessmentsAsync(
-            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: rating)],
-            AssessmentAxes.Rating));
+            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: rating,
+                PendingAxes: AssessmentAxes.Rating)]));
     }
 
     private async Task<CatalogService> CreateCatalogAsync()

@@ -34,6 +34,8 @@ public partial class BrowseGridView : UserControl
         "ThumbnailScrollViewer",
         "ThumbnailGrid",
         "ThumbnailTile",
+        "NewVersionMenuItem",
+        "DeleteVersionMenuItem",
         "DeleteImageMenuItem",
         "SelectionBadgeButton",
         "EmptyState",
@@ -193,12 +195,16 @@ public partial class BrowseGridView : UserControl
     public event EventHandler? CopyImagePathsRequested;
     public event EventHandler? RevealImageRequested;
     public event EventHandler? DeleteImagesRequested;
+    public event EventHandler<ImageFile>? NewVersionRequested;
+    public event EventHandler<ImageFile>? RenameVersionRequested;
+    public event EventHandler<ImageFile>? DeleteVersionRequested;
     public event EventHandler? SelectionChanged;
     public event EventHandler<ImageFile>? ImageSelectionToggled;
     public event EventHandler<(ImageFile from, ImageFile to)>? RangeSelectionRequested;
     public event EventHandler<(int StartIndex, int Count)>? ViewportRangeChanged;
 
     private ImageFile? _lastClickedImage;
+    private ImageFile? _versionMenuTarget;
     private ObservableCollection<ImageFile>? _subscribedImages;
     private int _lastViewportStart = -1;
     private int _lastViewportCount = -1;
@@ -224,6 +230,7 @@ public partial class BrowseGridView : UserControl
 
         if (change.Property == ImagesProperty)
         {
+            _lastClickedImage = _versionMenuTarget = null;
             if (_subscribedImages != null)
             {
                 _subscribedImages.CollectionChanged -= OnImagesCollectionChanged;
@@ -457,4 +464,31 @@ public partial class BrowseGridView : UserControl
     private void OnDeleteImagesClick(object? sender, RoutedEventArgs e) =>
         DeleteImagesRequested?.Invoke(this, EventArgs.Empty);
 
+    private void OnThumbnailContextMenuOpened(object? sender, RoutedEventArgs e) =>
+        _versionMenuTarget = (sender as ContextMenu)?.PlacementTarget?.DataContext as ImageFile;
+
+    private void OnNewVersionClick(object? sender, RoutedEventArgs e) =>
+        RaiseVersionRequest(NewVersionRequested);
+
+    private void OnRenameVersionClick(object? sender, RoutedEventArgs e) =>
+        RaiseVersionRequest(RenameVersionRequested);
+
+    private void OnDeleteVersionClick(object? sender, RoutedEventArgs e) =>
+        RaiseVersionRequest(DeleteVersionRequested);
+
+    private void RaiseVersionRequest(EventHandler<ImageFile>? request)
+    {
+        var target = ResolveVersionMenuTarget();
+        if (target != null)
+            request?.Invoke(this, target);
+    }
+
+    private ImageFile? ResolveVersionMenuTarget()
+    {
+        if (_versionMenuTarget != null && Images?.Contains(_versionMenuTarget) == true)
+            return _versionMenuTarget;
+        return SelectedImage != null && Images?.Contains(SelectedImage) == true
+            ? SelectedImage
+            : null;
+    }
 }

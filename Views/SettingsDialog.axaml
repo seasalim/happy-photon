@@ -66,7 +66,7 @@
                             <ComboBoxItem Content="Read only"/>
                             <ComboBoxItem Content="Read &amp; write"/>
                         </ComboBox>
-                        <TextBlock Text="Off keeps today’s catalog-only behavior. Read only adopts newer supported facts. Read &amp; write also writes an axis after you change it locally."
+                        <TextBlock Text="Off keeps today’s catalog-only behavior. Read only adopts newer supported facts onto V1. Read &amp; write publishes V1 assessments; other versions stay catalog-only."
                                    Classes="setting-note"/>
                         <TextBlock Text="Naming for new sidecars"
                                    Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,0"/>

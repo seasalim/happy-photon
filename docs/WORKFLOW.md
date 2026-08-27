@@ -69,6 +69,10 @@ its true star value. Sidecars may sync through the folder's cloud provider,
 while the original photo remains untouched and is never downloaded for XMP
 work.
 
+Each file's primary version (V1) is the only interpretation that exchanges
+assessments with its XMP sidecar. Ratings, flags, and labels on V2–V8 stay in the
+Happy Photon catalog.
+
 ## Bring assessments from Lightroom Classic
 
 Choose **Import from Lightroom…** in the Folders header's **More folder actions** menu,
@@ -134,7 +138,11 @@ preserving active filters and cataloged edits, ratings, and flags for paths that
 still exist.
 
 Right-click a Browse thumbnail to **Copy path**, **Reveal in File Explorer**, or
-**Delete…**. Right-clicking a photograph outside the current selection makes it the
+manage its Versions. **New Version from Current** copies the active interpretation's
+settings into a sibling tile, up to eight versions. **Rename version label…** sets a
+short optional badge label; blank labels display as `V<n>`. **Delete version** removes
+only V2–V8 catalog state and cache assets, never the original file. Right-clicking a
+photograph outside the current selection makes it the
 selection; right-clicking one already selected preserves the selection. Copy path
 places the selected photographs' full paths on the clipboard in grid order, one per
 line. Reveal selects the active file in Explorer or Finder; on Linux it opens the
@@ -150,6 +158,7 @@ are refused because their deletes may not be recoverable. On Windows, a fixed dr
 whose Recycle Bin was explicitly disabled remains a known limitation: Windows may
 delete permanently just as Explorer does; closing that case requires a future
 `IFileOperation` implementation with recycle-on-delete enforcement.
+Deleting a file removes all of its versions from the catalog and grid.
 
 Burst grouping places photographs captured within two seconds into the same
 sequence. It does not choose a winner; it makes neighboring frames easier to
@@ -472,6 +481,10 @@ recipes and set their shared format, quality, color space, sharpening, naming, l
 metadata, and destination controls. The count line shows captures × armed recipes,
 including zero recipes.
 
+Versions export as independent interpretations. Exporting either version by itself
+keeps the ordinary name; when one job includes multiple versions of the same file,
+their outputs gain stable `-V<n>` suffixes and the report identifies both file and version.
+
 Press `Ctrl+E` from Browse or Develop to enter Export with the current selection armed.
 Press `Enter` or choose **Export** to run the capture × recipe job. `Escape` returns to
 the workspace you came from; it does not stop a run already in progress.
@@ -542,6 +555,7 @@ remains where it started and unchanged.
 | `6`–`9` | Set red, yellow, green, or blue color label |
 | `Space` | Toggle the active photo in the selection |
 | `Ctrl+A` / `Ctrl+D` | Select or deselect all visible images |
+| `Ctrl+'` | Create a version from the current interpretation in Browse or Develop |
 | `C` | Toggle crop mode |
 | `B` | Toggle before/after in Develop or fullscreen |
 | `Ctrl+B` | Toggle color assessment mode in Develop or fullscreen |

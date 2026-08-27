@@ -36,7 +36,8 @@ public sealed class CatalogServiceConcurrencyTests : IDisposable
 
         var states = await service.LoadImageStatesAsync(paths);
         Assert.Equal(paths.Length, states.Count);
-        Assert.Equal(paths.Length, states.Values.Select(state => state.CatalogId).Distinct().Count());
+        Assert.Equal(paths.Length, states.Values.SelectMany(versions => versions)
+            .Select(state => state.CatalogId).Distinct().Count());
         for (var index = 0; index < ids.Length; index++)
         {
             Assert.Equal(index.ToString(), await service.GetAppSettingAsync($"key-{index}"));
@@ -58,7 +59,7 @@ public sealed class CatalogServiceConcurrencyTests : IDisposable
         Assert.Single(ids.Distinct());
         Assert.Equal(ids[0], secondId);
         var states = await service.LoadImageStatesAsync(new[] { path });
-        Assert.Equal(4, states[path].Rating);
+        Assert.Equal(4, states[path].Single().Rating);
     }
 
     [Fact]

@@ -5,7 +5,7 @@ namespace HappyPhoton.Services;
 public partial class CatalogService
 {
     /// <summary>Creates missing image records in batches and loads their state.</summary>
-    public async Task<IReadOnlyDictionary<string, CatalogImageState>> LoadOrCreateImageStatesAsync(
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<CatalogImageState>>> LoadOrCreateImageStatesAsync(
         IReadOnlyCollection<string> filePaths,
         CancellationToken cancellationToken = default)
     {
@@ -31,7 +31,7 @@ public partial class CatalogService
                     var pathParameter = $"@path{index}";
                     var nameParameter = $"@name{index}";
                     values[index] =
-                        $"({pathParameter}, {nameParameter}, " +
+                        $"({pathParameter}, 1, {nameParameter}, " +
                         "@editSettings, @editVersion, @updated)";
                     cmd.Parameters.AddWithValue(pathParameter, missingPaths[offset + index]);
                     cmd.Parameters.AddWithValue(nameParameter, Path.GetFileName(missingPaths[offset + index]));
@@ -46,9 +46,9 @@ public partial class CatalogService
                 cmd.Parameters.AddWithValue("@updated", DateTime.UtcNow.ToString("O"));
                 cmd.CommandText = $@"
                     INSERT INTO images (
-                        file_path, file_name, edit_settings, edit_version, updated_utc)
+                        file_path, version, file_name, edit_settings, edit_version, updated_utc)
                     VALUES {string.Join(", ", values)}
-                    ON CONFLICT(file_path) DO NOTHING;
+                    ON CONFLICT(file_path, version) DO NOTHING;
                 ";
                 await cmd.ExecuteNonQueryAsync(cancellationToken);
                 await RefreshCacheStampAsync();

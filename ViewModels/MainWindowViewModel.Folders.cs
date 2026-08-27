@@ -123,6 +123,7 @@ public partial class MainWindowViewModel
 
         var folderPath = folder.Path;
         var previousPath = SelectedImage?.FilePath;
+        var previousVersion = SelectedImage?.Version;
         var exists = await directoryExistsAsync(folderPath);
         if (!ReferenceEquals(SelectedFolder, folder))
         {
@@ -149,7 +150,8 @@ public partial class MainWindowViewModel
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
         SelectedImage = Browse.VisibleImages.FirstOrDefault(image =>
-            string.Equals(image.FilePath, previousPath, comparison))
+            string.Equals(image.FilePath, previousPath, comparison) &&
+            image.Version == previousVersion)
             ?? Browse.FirstVisible();
 
         ShowTransientStatus($"Refreshed — {Browse.PhotoCountText}.");

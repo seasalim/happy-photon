@@ -24,16 +24,17 @@ public sealed class CatalogMigrationTests : IDisposable
             await reopened.InitializeAsync();
         }
 
-        Assert.Equal("2", firstVersion);
-        Assert.Equal("2", await ReadSettingAsync("schema_version"));
+        Assert.Equal("3", firstVersion);
+        Assert.Equal("3", await ReadSettingAsync("schema_version"));
         Assert.Contains("color_label", await ReadColumnsAsync());
+        Assert.Contains("version", await ReadColumnsAsync());
     }
 
     [Theory]
     [InlineData("")]
     [InlineData("abc")]
     [InlineData("-1")]
-    [InlineData("3")]
+    [InlineData("4")]
     public async Task PresentInvalidVersion_FailsWithoutChangingSchema(string value)
     {
         await CreatePreLabelCatalogAsync(value);

@@ -31,7 +31,7 @@ public sealed class RenderFailureRollbackTests : IDisposable
                 vm.Exposure == 0 && image.EditSettings.Exposure == 0);
             var states = await catalog.LoadImageStatesAsync([image.FilePath]);
 
-            Assert.Equal(0, states[image.FilePath].EditSettings.Exposure);
+            Assert.Equal(0, states[image.FilePath].Single().EditSettings.Exposure);
             Assert.False(image.HasEdits);
         }
         finally

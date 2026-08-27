@@ -332,7 +332,7 @@ public sealed class CompareViewTests : IDisposable
         var states = await catalog.LoadOrCreateImageStatesAsync(
             images.Select(image => image.FilePath).ToArray());
         foreach (var image in images)
-            image.CatalogId = states[image.FilePath].CatalogId;
+            image.CatalogId = states[image.FilePath].Single().CatalogId;
         return images;
     }
 

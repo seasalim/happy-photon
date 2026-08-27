@@ -8,7 +8,6 @@ public partial class CatalogService
 {
     public async Task<IReadOnlyList<AssessmentSnapshot>> MutateAssessmentsAsync(
         IReadOnlyCollection<AssessmentMutation> mutations,
-        AssessmentAxes pendingAxes,
         CancellationToken cancellationToken = default)
     {
         EnsureInitialized();
@@ -28,7 +27,8 @@ public partial class CatalogService
             {
                 await ApplyAssessmentMutationAsync(
                     _connection, transaction, mutation,
-                    pendingAxes & mutation.Axes, assessedUtc,
+                    mutation.PendingAxes & mutation.Axes,
+                    assessedUtc,
                     cancellationToken);
             }
 
@@ -191,7 +191,7 @@ public partial class CatalogService
         assignments.Add("updated_utc = @updated");
         command.CommandText = $"""
             UPDATE images SET {string.Join(", ", assignments)}
-            WHERE id = @id AND EXISTS (
+            WHERE id = @id AND version = 1 AND EXISTS (
                 SELECT 1 FROM image_assessments
                 WHERE image_id = @id AND revision = @revision
                   AND (pending_axes & @axes) = 0);
@@ -253,7 +253,9 @@ public partial class CatalogService
         assessment.CommandText = """
             INSERT INTO image_assessments (
                 image_id, revision, assessed_utc, pending_axes)
-            VALUES (@id, 1, @assessedUtc, @pendingAxes)
+            SELECT @id, 1, @assessedUtc,
+                   CASE WHEN images.version = 1 THEN @pendingAxes ELSE 0 END
+            FROM images WHERE images.id = @id
             ON CONFLICT(image_id) DO UPDATE SET
                 revision = revision + 1,
                 assessed_utc = excluded.assessed_utc,

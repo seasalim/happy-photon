@@ -146,7 +146,7 @@ public sealed class ShortcutReachabilityTests
                 .FirstOrDefault(control => control.Name == claim.ControlName);
         }
 
-        if (claim.ControlName == "DeleteImageMenuItem")
+        if (claim.ControlName is "DeleteImageMenuItem" or "NewVersionMenuItem")
         {
             var tile = window.GetVisualDescendants().OfType<Border>()
                 .First(control => control.Name == "ThumbnailTile");

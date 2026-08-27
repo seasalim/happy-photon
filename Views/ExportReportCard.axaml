@@ -27,6 +27,7 @@
                                    Foreground="{DynamicResource TextSecondary}"
                                    TextWrapping="Wrap">
                             <Run Text="• "/><Run Text="{Binding Capture.FileName}"/>
+                            <Run Text=" · "/><Run Text="{Binding Capture.VersionReportLabel}"/>
                             <Run Text=" / "/><Run Text="{Binding Recipe.Name}"/>
                             <Run Text=" — "/><Run Text="{Binding FailureReason}"/>
                         </TextBlock>
@@ -41,6 +42,7 @@
                                    Foreground="{DynamicResource TextSecondary}"
                                    TextWrapping="Wrap">
                             <Run Text="• "/><Run Text="{Binding Image.FileName}"/>
+                            <Run Text=" · "/><Run Text="{Binding Image.VersionReportLabel}"/>
                             <Run Text=" — "/><Run Text="{Binding Message}"/>
                         </TextBlock>
                     </DataTemplate>

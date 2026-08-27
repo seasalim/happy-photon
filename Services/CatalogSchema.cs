@@ -15,6 +15,8 @@ internal static class CatalogSchema
     [
         "id",
         "file_path",
+        "version",
+        "version_label",
         "file_name",
         "edit_settings",
         "edit_version",
@@ -55,14 +57,17 @@ internal static class CatalogSchema
         cmd.CommandText = @"
             CREATE TABLE IF NOT EXISTS images (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                file_path TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                file_path TEXT NOT NULL COLLATE NOCASE,
+                version INTEGER NOT NULL DEFAULT 1 CHECK (version BETWEEN 1 AND 8),
+                version_label TEXT,
                 file_name TEXT NOT NULL,
                 edit_settings TEXT NOT NULL,
                 edit_version INTEGER NOT NULL,
                 flag_state INTEGER NOT NULL DEFAULT 0,
                 rating INTEGER NOT NULL DEFAULT 0,
                 color_label INTEGER NOT NULL DEFAULT 0,
-                updated_utc TEXT
+                updated_utc TEXT,
+                UNIQUE (file_path, version)
             );
         ";
         await cmd.ExecuteNonQueryAsync();

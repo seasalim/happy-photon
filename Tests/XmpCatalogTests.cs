@@ -17,8 +17,8 @@ public sealed class XmpCatalogTests : IDisposable
         var id = await catalog.GetOrCreateImageAsync(_fx.Path("a.jpg"));
 
         var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
-            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 4)],
-            AssessmentAxes.Rating));
+            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 4,
+                PendingAxes: AssessmentAxes.Rating)]));
 
         Assert.Equal(1, snapshot.Revision);
         Assert.Equal(AssessmentAxes.Rating, snapshot.PendingAxes);
@@ -37,8 +37,8 @@ public sealed class XmpCatalogTests : IDisposable
         var photo = _fx.Path("photo.cr3");
         var id = await catalog.GetOrCreateImageAsync(photo);
         var local = Assert.Single(await catalog.MutateAssessmentsAsync(
-            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 1)],
-            AssessmentAxes.Rating));
+            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 1,
+                PendingAxes: AssessmentAxes.Rating)]));
         var sidecar = photo + ".xmp";
         var document = XmpSidecarDocument.Create();
         document.Root!.Descendants(XmpSidecarDocument.Rdf + "Description")
@@ -50,7 +50,7 @@ public sealed class XmpCatalogTests : IDisposable
 
         var result = await new XmpSidecarReconciler(catalog).ReconcileAsync(
             [photo], ColorLabelNames.Defaults, XmpSidecarNaming.FullName);
-        var state = (await catalog.LoadImageStatesAsync([photo]))[photo];
+        var state = (await catalog.LoadImageStatesAsync([photo]))[photo].Single();
 
         Assert.Equal(1, state.Rating);
         Assert.Equal(ColorLabel.Blue, state.ColorLabel);
@@ -74,7 +74,8 @@ public sealed class XmpCatalogTests : IDisposable
         var result = await new XmpSidecarReconciler(catalog).ReconcileAsync(
             [photo], ColorLabelNames.Defaults, XmpSidecarNaming.FullName);
 
-        var state = Assert.Single(await catalog.LoadImageStatesAsync([photo])).Value;
+        var state = Assert.Single(await catalog.LoadImageStatesAsync([photo]))
+            .Value.Single();
         Assert.Equal(4, state.Rating);
         var adoption = Assert.Single(result.Adoptions);
         Assert.Equal(state.CatalogId, adoption.Snapshot.ImageId);
@@ -90,7 +91,7 @@ public sealed class XmpCatalogTests : IDisposable
         var id = await catalog.GetOrCreateImageAsync(photo);
         var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
             [new AssessmentMutation(id, AssessmentAxes.Flag,
-                Flag: ImageFlag.Picked)], AssessmentAxes.Flag));
+                Flag: ImageFlag.Picked, PendingAxes: AssessmentAxes.Flag)]));
         await using var writer = new XmpSidecarWriter(
             catalog, ColorLabelNames.Defaults);
         writer.Start();
@@ -129,9 +130,9 @@ public sealed class XmpCatalogTests : IDisposable
         var states = await catalog.LoadImageStatesAsync(
             [rejected.FilePath, picked.FilePath, pending.FilePath]);
 
-        Assert.Equal(ImageFlag.Unflagged, states[rejected.FilePath].Flag);
-        Assert.Equal(ImageFlag.Picked, states[picked.FilePath].Flag);
-        Assert.Equal(ImageFlag.Rejected, states[pending.FilePath].Flag);
+        Assert.Equal(ImageFlag.Unflagged, states[rejected.FilePath].Single().Flag);
+        Assert.Equal(ImageFlag.Picked, states[picked.FilePath].Single().Flag);
+        Assert.Equal(ImageFlag.Rejected, states[pending.FilePath].Single().Flag);
         Assert.True(result.Adoptions.Single(adoption =>
             adoption.Snapshot.FilePath == rejected.FilePath).AdoptedAxes
             .HasFlag(AssessmentAxes.Flag));
@@ -150,8 +151,7 @@ public sealed class XmpCatalogTests : IDisposable
         var photo = _fx.Path("oversized.cr3");
         var id = await catalog.GetOrCreateImageAsync(photo);
         await catalog.MutateAssessmentsAsync(
-            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 1)],
-            AssessmentAxes.None);
+            [new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 1)]);
         var sidecar = photo + ".xmp";
         using (var stream = new FileStream(sidecar, FileMode.CreateNew))
             stream.SetLength(XmpSidecarReader.MaximumSidecarBytes + 1);
@@ -162,7 +162,7 @@ public sealed class XmpCatalogTests : IDisposable
         Assert.Empty(result.Adoptions);
         Assert.Contains("4 MiB", Assert.Single(result.Reports),
             StringComparison.Ordinal);
-        Assert.Equal(1, (await catalog.LoadImageStatesAsync([photo]))[photo].Rating);
+        Assert.Equal(1, (await catalog.LoadImageStatesAsync([photo]))[photo].Single().Rating);
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public sealed class XmpCatalogTests : IDisposable
     }
 
     [Fact]
-    public async Task FreshSchema_HasFullAssessmentShapeAtVersionTwo()
+    public async Task FreshSchema_HasFullAssessmentShapeAtVersionThree()
     {
         using var catalog = await CreateCatalogAsync();
         await using var connection = new SqliteConnection(
@@ -228,8 +228,8 @@ public sealed class XmpCatalogTests : IDisposable
         var path = _fx.Path(name);
         var id = await catalog.GetOrCreateImageAsync(path);
         var snapshot = Assert.Single(await catalog.MutateAssessmentsAsync(
-            [new AssessmentMutation(id, AssessmentAxes.Flag, Flag: flag)],
-            pendingAxes));
+            [new AssessmentMutation(id, AssessmentAxes.Flag, Flag: flag,
+                PendingAxes: pendingAxes)]));
         var document = XmpSidecarDocument.Create();
         document.Root!.Descendants(XmpSidecarDocument.Rdf + "Description")
             .Single().SetAttributeValue(XmpSidecarDocument.Xmp + "Rating", "3");
