@@ -284,7 +284,7 @@ public sealed partial class RawProfileTransitionTests : IDisposable
         vm.SelectedImage = image;
         await initialRenderCompleted.Task.WaitAsync(TestWaits.Condition);
         await TestWaits.UntilAsync(() =>
-            vm.PreviewImage != null &&
+            vm.InitialPreviewActivityCount == 0 &&
             vm.ImageService.Previews.PreviewActivityCount == 0);
         var selection = Selection("selected.dcp", '9');
         image.EditSettings.RawProfile = selection;
