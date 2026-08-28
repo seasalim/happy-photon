@@ -112,8 +112,8 @@ rejected outcomes dispose their pixels, masks, and uncommitted promotion lease. 
 while the Develop overlay is latched or peeked, preserving a mask-free normal preview
 path. Camera compatibility follows the bundled LibRaw generation and the exact
 compression variant, not merely the file extension. The current product boundary is
-global edits: there are no local masks, manual perspective correction, layered
-compositing, HDR output, or custom output profiles.
+global edits: there are no local masks, layered compositing, HDR output, or custom
+output profiles.
 
 ## Startup sequence
 

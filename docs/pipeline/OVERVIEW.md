@@ -295,7 +295,7 @@ does not access or change pixels.
 
 ## 7. Current boundaries
 
-Local adjustments/masks, perspective corrections, custom output ICC targets,
-display-profile awareness, XMP sidecars, HDR output, AVIF/JXL, 1:1-zoom region decode
-(zoom continues to use the bounded preview base). These are product boundaries, not
-partially implemented pipeline stages.
+Local adjustments/masks, custom output ICC targets, display-profile awareness, XMP
+develop-settings sidecars (XMP exchanges assessments only), HDR output, AVIF/JXL,
+1:1-zoom region decode (zoom continues to use the bounded preview base). These are
+product boundaries, not partially implemented pipeline stages.
