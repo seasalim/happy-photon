@@ -28,7 +28,6 @@ public partial class BrowseGridFooter : UserControl
     public static readonly StyledProperty<bool> ShowPairsProperty =
         AvaloniaProperty.Register<BrowseGridFooter, bool>(
             nameof(ShowPairs),
-            true,
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<BrowseThumbnailSize> ThumbnailSizeProperty =

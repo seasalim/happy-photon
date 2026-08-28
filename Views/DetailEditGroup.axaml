@@ -16,7 +16,7 @@
                              DefaultValue="{Binding CaptureSharpenDefault}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="LuminanceNrSlider"
-                             Label="Noise Reduction"
+                             Label="Luma NR"
                              Value="{Binding LuminanceNr}"
                              Minimum="0" Maximum="100" SmallChange="1"
                              EnableDoubleClickReset="True"/>

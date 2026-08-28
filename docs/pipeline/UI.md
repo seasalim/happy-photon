@@ -46,9 +46,9 @@ COLOR MIXER                                      RESET
   [Red Orange Yellow Green Aqua Blue Purple Magenta swatches]
   Hue / Saturation / Luminance        (selected band, −100..100)
 DETAIL
-  Sharpen  ────────●────────   25
-  Noise Reduction ─────●──────   0
-  Chroma NR ──────●──────────   0
+  Sharpen   ────────●────────   25
+  Luma NR   ─────●───────────    0
+  Chroma NR ──────●──────────    0
 EFFECTS
   Vignette ─────●────────────  −35
   Midpoint ────────●─────────   50
@@ -106,7 +106,7 @@ hues, while Saturation and Luminance tint within the selected band. Its three
 −100..100 `CompactSlider`s reset individually on double-click; the Develop footer
 Reset clears all eight bands with the other color and tonal adjustments.
 
-Detail follows the color mixer. Sharpen, Noise Reduction (luminance), and Chroma NR
+Detail follows the color mixer. Sharpen, Luma NR, and Chroma NR
 are 0–100 `CompactSlider`s for all sources; Sharpen displays the resolved source
 default (RAW 25, standard 0). The two NR controls default to 0 and never reflow or
 change enablement when source kind changes.

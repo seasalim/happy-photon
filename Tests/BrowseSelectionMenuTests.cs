@@ -119,7 +119,7 @@ public sealed class BrowseSelectionMenuTests
         var delete = Assert.IsType<MenuItem>(items[7]);
         Assert.Equal(
             ["Copy path", "Reveal in File Explorer", "New Version from Current",
-                "Rename version label…", "Delete version", "Delete…"],
+                "Rename version label…", "Delete version", "Delete selection…"],
             new[] { copy, reveal, createVersion, renameVersion, deleteVersion, delete }
                 .Select(item => item.Header));
         Assert.All(new[]
@@ -195,6 +195,78 @@ public sealed class BrowseSelectionMenuTests
         control.SelectedImage = null;
         createVersion.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         Assert.Null(requested);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task DeleteVersionContextMenu_UsesConfirmationAndCancelKeepsVersion()
+    {
+        var root = NewRoot();
+        using var catalog = new CatalogService(Path.Combine(root, "catalog"));
+        await catalog.InitializeAsync();
+        var path = Path.Combine(root, "versioned.jpg");
+        await File.WriteAllBytesAsync(path, [1]);
+        var primaryId = await catalog.GetOrCreateImageAsync(path);
+        var secondState = (await catalog.CreateVersionAsync(primaryId))!;
+        var primary = new ImageFile(path)
+        {
+            CatalogId = primaryId,
+            VersionCount = 2
+        };
+        var second = new ImageFile(path)
+        {
+            CatalogId = secondState.CatalogId,
+            Version = secondState.Version,
+            VersionCount = 2
+        };
+        await using var vm = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            loadMetadataAsync: _ => Task.CompletedTask);
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        vm.Browse.SetImages([primary, second]);
+        vm.SelectedImage = second;
+        var window = new MainWindow
+        {
+            Width = 900,
+            Height = 700,
+            DataContext = vm
+        };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        DeleteConfirmationRequest? prompt = null;
+        var prompted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        vm.ConfirmDeleteAsync = request =>
+        {
+            prompt = request;
+            prompted.TrySetResult();
+            return Task.FromResult(false);
+        };
+
+        var browse = window.FindControl<BrowseGridView>("BrowseGridView")!;
+        var tile = Assert.Single(browse.GetVisualDescendants().OfType<Border>(),
+            border => ReferenceEquals(border.DataContext, second) &&
+                      border.Classes.Contains("thumbnail"));
+        var menu = tile.ContextMenu!;
+        menu.PlacementTarget = tile;
+        menu.Open();
+        Dispatcher.UIThread.RunJobs();
+        Assert.IsType<MenuItem>(menu.Items.ElementAt(5))
+            .RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        await prompted.Task.WaitAsync(TestWaits.Condition);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Same(second, Assert.Single(prompt!.Versions));
+        Assert.Contains(
+            "The original file is not affected.",
+            MainWindow.DeleteConfirmationContent(prompt).Message);
+        Assert.Contains(second, vm.Browse.AllImages);
+        var states = await catalog.LoadImageStatesAsync([path]);
+        Assert.Equal(
+            new[] { 1, 2 },
+            states[path].Select(state => state.Version).ToArray());
+        window.DataContext = null;
         window.Close();
     }
 

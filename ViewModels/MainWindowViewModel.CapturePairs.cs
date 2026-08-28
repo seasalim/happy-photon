@@ -6,13 +6,15 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private bool _restoringShowCapturePairs;
+
     private static readonly StringComparer CapturePathComparer =
         OperatingSystem.IsWindows()
             ? StringComparer.OrdinalIgnoreCase
             : StringComparer.Ordinal;
 
     [ObservableProperty]
-    private bool _showCapturePairs = true;
+    private bool _showCapturePairs;
 
     private readonly HashSet<string> _pairedRawPaths = new(CapturePathComparer);
     private readonly HashSet<string> _pairedJpegPaths = new(CapturePathComparer);
@@ -23,6 +25,13 @@ public partial class MainWindowViewModel
     {
         Browse.CaptureIsVisible = IsCaptureVisible;
         Browse.CaptureMatchesFileType = CaptureMatchesFileType;
+    }
+
+    public void RestoreShowCapturePairs(bool value)
+    {
+        _restoringShowCapturePairs = true;
+        try { ShowCapturePairs = value; }
+        finally { _restoringShowCapturePairs = false; }
     }
 
     partial void OnShowCapturePairsChanged(bool value)
@@ -43,6 +52,10 @@ public partial class MainWindowViewModel
 
         Browse.RefreshFilters();
         RefreshVisibleThumbnailQueue();
+        if (!_restoringShowCapturePairs)
+        {
+            _ = PersistBrowsePreferenceAsync("Capture-pair");
+        }
     }
 
     private bool IsCaptureVisible(ImageFile image) =>

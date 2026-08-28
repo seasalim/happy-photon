@@ -196,30 +196,68 @@ public partial class MainWindow : Window
         await WithVmAsync(vm =>
             vm.ApplyWhiteBalancePickAsync(position.X, position.Y));
 
-    private Task<bool> ConfirmMoveToTrashAsync(int count, string? fileName)
+    private Task<bool> ConfirmDeleteAsync(DeleteConfirmationRequest request)
     {
-        var message = count == 1
-            ? $"Move \"{fileName}\" to Trash?"
-            : $"Move {count} images to Trash?";
-        return ConfirmationDialog.ConfirmAsync(
-            this,
-            "Move to Trash",
-            message,
-            destructive: true);
+        var (title, message) = DeleteConfirmationContent(request);
+        return ConfirmDestructiveAsync(title, message);
     }
 
-    private Task<bool> ConfirmDeleteRejectedAsync(int rejectedCount, string? folderPath)
+    private Task<bool> ConfirmDestructiveAsync(string title, string message) =>
+        ConfirmationDialog.ConfirmAsync(this, title, message, destructive: true);
+
+    internal static (string Title, string Message) DeleteConfirmationContent(
+        DeleteConfirmationRequest request)
+    {
+        var versions = request.Versions.Count;
+        var primaries = request.Primaries.Count;
+        return (versions, primaries) switch
+        {
+            (0, 1) => ("Move to Trash",
+                $"Move \"{request.Primaries[0].FileName}\" to Trash?"),
+            (0, _) => ("Move to Trash", $"Move {primaries} images to Trash?"),
+            (1, 0) => ("Delete Version",
+                $"Delete version \"{request.Versions[0].VersionReportLabel}\" of " +
+                $"{request.Versions[0].FileName}? The original file is not affected."),
+            (_, 0) => ("Delete Version",
+                $"Delete {versions} versions? The original files are not affected."),
+            _ => ("Delete Versions and Move to Trash",
+                $"Delete {versions} version{PluralSuffix(versions)} and move " +
+                $"{primaries} image{PluralSuffix(primaries)} to Trash?")
+        };
+    }
+
+    private static string PluralSuffix(int count) => count == 1 ? "" : "s";
+
+    private Task<bool> ConfirmDeleteRejectedAsync(
+        int rejectedVersions,
+        int rejectedPrimaries,
+        string? folderPath)
+    {
+        var (title, message) = DeleteRejectedConfirmationContent(
+            rejectedVersions, rejectedPrimaries, folderPath);
+        return ConfirmDestructiveAsync(title, message);
+    }
+
+    internal static (string Title, string Message) DeleteRejectedConfirmationContent(
+        int versions,
+        int primaries,
+        string? folderPath)
     {
         var folder = string.IsNullOrWhiteSpace(folderPath) ? "the current folder" : folderPath;
-        var message = rejectedCount == 1
-            ? $"Move 1 rejected image from \"{folder}\" to Trash?"
-            : $"Move {rejectedCount} rejected images from \"{folder}\" to Trash?";
+        var message = (versions, primaries) switch
+        {
+            (0, 1) => $"Move 1 rejected image from \"{folder}\" to Trash?",
+            (0, _) => $"Move {primaries} rejected images from \"{folder}\" to Trash?",
+            (1, 0) => $"Delete 1 rejected version from \"{folder}\"? " +
+                "The original file is not affected.",
+            (_, 0) => $"Delete {versions} rejected versions from \"{folder}\"? " +
+                "The original files are not affected.",
+            _ => $"Delete {versions} rejected version{PluralSuffix(versions)} and move " +
+                $"{primaries} rejected image{PluralSuffix(primaries)} from \"{folder}\" " +
+                "to Trash? The original files for the deleted versions are not affected."
+        };
 
-        return ConfirmationDialog.ConfirmAsync(
-            this,
-            "Delete Rejected Images",
-            message,
-            destructive: true);
+        return ("Delete Rejected Images", message);
     }
 
     private Task<bool> ConfirmBatchApplyAsync(int count)

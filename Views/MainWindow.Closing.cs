@@ -67,6 +67,7 @@ public partial class MainWindow
             FirstRunExperienceVersion = vm.FirstRunExperienceVersion,
             FileTypeFilter = vm.Browse.FileTypeFilter,
             BrowseThumbnailSize = vm.BrowseThumbnailSize,
+            ShowCapturePairs = vm.ShowCapturePairs,
             AppTheme = vm.AppTheme,
             StripLocationData = vm.ExportSettings.StripLocationData,
             OutputSharpening = vm.ExportSettings.OutputSharpening

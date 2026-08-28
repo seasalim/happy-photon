@@ -135,12 +135,12 @@ public sealed class CompareViewTests : IDisposable
         vm.SelectedImage = images[0];
         var confirmations = 0;
         var copies = 0;
-        vm.ConfirmMoveToTrashAsync = (_, _) =>
+        vm.ConfirmDeleteAsync = _ =>
         {
             confirmations++;
             return Task.FromResult(true);
         };
-        vm.ConfirmDeleteRejectedAsync = (_, _) =>
+        vm.ConfirmDeleteRejectedAsync = (_, _, _) =>
         {
             confirmations++;
             return Task.FromResult(true);

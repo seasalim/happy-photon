@@ -16,7 +16,9 @@ public sealed class CapturePairingBrowseTests : IDisposable
         using (catalog)
         await using (viewModel)
         {
-            Assert.True(viewModel.ShowCapturePairs);
+            Assert.False(viewModel.ShowCapturePairs);
+            AssertPairState(viewModel, visible: 8, pairChips: 0);
+            viewModel.ShowCapturePairs = true;
             AssertPairState(viewModel, visible: 5, pairChips: 3);
             Assert.Equal("5 photos", viewModel.Browse.PhotoCountText);
             AssertFilterCount(viewModel, ImageFileTypeFilter.Raw, 4);
@@ -105,14 +107,17 @@ public sealed class CapturePairingBrowseTests : IDisposable
         using (catalog)
         await using (viewModel)
         {
-            viewModel.ConfirmMoveToTrashAsync = (_, _) => Task.FromResult(true);
+            viewModel.ConfirmDeleteAsync = _ => Task.FromResult(true);
+            viewModel.ShowCapturePairs = true;
             var jpeg = Find(viewModel, "pair-a.jpg");
+            Assert.True(jpeg.IsRawJpegPair);
             viewModel.Browse.SelectOnly(jpeg);
             viewModel.SelectedImage = jpeg;
 
             await viewModel.DeleteImageCommand.ExecuteAsync(null);
 
             var exposedRaw = Find(viewModel, "pair-a.dng");
+            Assert.Contains(jpeg.FilePath, operations.MovedPaths);
             Assert.Contains(exposedRaw, viewModel.Browse.VisibleImages);
             Assert.False(exposedRaw.IsRawJpegPair);
 
@@ -124,9 +129,87 @@ public sealed class CapturePairingBrowseTests : IDisposable
             viewModel.ShowCapturePairs = true;
 
             var plainJpeg = Find(viewModel, "pair-b.jpg");
+            Assert.Contains(raw.FilePath, operations.MovedPaths);
             Assert.Contains(plainJpeg, viewModel.Browse.VisibleImages);
             Assert.False(plainJpeg.IsRawJpegPair);
         }
+    }
+
+    [Fact]
+    public async Task PairPreference_RoundTripsAndAppliesBeforeFolderLoad()
+    {
+        var folder = _fixture.Path($"persisted-pairs-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(folder);
+        foreach (var name in new[] { "pair.jpg", "pair.dng", "single.jpg" })
+        {
+            TestImages.WriteJpeg(Path.Combine(folder, name));
+        }
+
+        using var catalog = await _fixture.CreateUniqueCatalogAsync();
+        var settingsService = new AppSettingsService(catalog);
+        await using (var savingViewModel = _fixture.CreateViewModel(
+                         catalog,
+                         loadMetadataAsync: _ => Task.CompletedTask,
+                         postSelection: action => action()))
+        {
+            var restoreWrites = 0;
+            savingViewModel.PersistAppSettingsAsync = () =>
+            {
+                restoreWrites++;
+                return Task.CompletedTask;
+            };
+            savingViewModel.RestoreShowCapturePairs(true);
+            savingViewModel.RestoreShowCapturePairs(false);
+            Assert.Equal(0, restoreWrites);
+
+            var saved = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            savingViewModel.PersistAppSettingsAsync = async () =>
+            {
+                await settingsService.SavePreferencesAsync(new AppSettings
+                {
+                    ShowCapturePairs = savingViewModel.ShowCapturePairs
+                });
+                saved.TrySetResult();
+            };
+            savingViewModel.ShowCapturePairs = true;
+            await saved.Task.WaitAsync(TestWaits.Condition);
+        }
+
+        var restoredOn = await settingsService.LoadAsync();
+        Assert.True(restoredOn.ShowCapturePairs);
+        await using (var restoredOnViewModel = _fixture.CreateViewModel(
+                         catalog,
+                         loadMetadataAsync: _ => Task.CompletedTask,
+                         postSelection: action => action()))
+        {
+            restoredOnViewModel.RestoreShowCapturePairs(restoredOn.ShowCapturePairs);
+            await restoredOnViewModel.LoadFolderAsync(folder);
+            AssertPairState(restoredOnViewModel, visible: 2, pairChips: 1);
+
+            var saved = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            restoredOnViewModel.PersistAppSettingsAsync = async () =>
+            {
+                await settingsService.SavePreferencesAsync(new AppSettings
+                {
+                    ShowCapturePairs = restoredOnViewModel.ShowCapturePairs
+                });
+                saved.TrySetResult();
+            };
+            restoredOnViewModel.ShowCapturePairs = false;
+            await saved.Task.WaitAsync(TestWaits.Condition);
+        }
+
+        var restoredOff = await settingsService.LoadAsync();
+        Assert.False(restoredOff.ShowCapturePairs);
+        await using var restoredOffViewModel = _fixture.CreateViewModel(
+            catalog,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            postSelection: action => action());
+        restoredOffViewModel.RestoreShowCapturePairs(restoredOff.ShowCapturePairs);
+        await restoredOffViewModel.LoadFolderAsync(folder);
+        AssertPairState(restoredOffViewModel, visible: 3, pairChips: 0);
     }
 
     private async Task<(CatalogService Catalog, MainWindowViewModel ViewModel, string Folder)>
@@ -190,11 +273,15 @@ public sealed class CapturePairingBrowseTests : IDisposable
 
     private sealed class SuccessfulTrashService : IFileOperationService
     {
+        internal List<string> MovedPaths { get; } = [];
+
         public TrashPathAssessment AssessTrashPath(string path) => new(true, null);
 
         public Task<bool> MoveToTrashAsync(string filePath)
         {
-            File.Delete(filePath);
+            // Physical deletion races the thumbnail reader under assembly load,
+            // turning this successful fake into a failed file operation.
+            MovedPaths.Add(filePath);
             return Task.FromResult(true);
         }
 

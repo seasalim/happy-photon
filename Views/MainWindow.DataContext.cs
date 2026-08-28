@@ -62,7 +62,7 @@ public partial class MainWindow
             path => _browseGridView?.RestoreViewportAnchorPath(path);
         vm.RequestSettingsDialogAsync = async () =>
             await new SettingsDialog(vm).ShowDialog(this);
-        vm.ConfirmMoveToTrashAsync = ConfirmMoveToTrashAsync;
+        vm.ConfirmDeleteAsync = ConfirmDeleteAsync;
         vm.RequestVersionLabelAsync = image => TextInputDialog.ShowAsync(
             this,
             "Rename Version",
@@ -176,6 +176,7 @@ public partial class MainWindow
             vm.SetColorLabelNames(colorLabelNames);
             await vm.RestoreXmpSettingsAsync();
             vm.RestoreBrowseThumbnailSize(settings.BrowseThumbnailSize);
+            vm.RestoreShowCapturePairs(settings.ShowCapturePairs);
             vm.RestoreAppTheme(settings.AppTheme);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;
             vm.ExportSettings.OutputSharpening = settings.OutputSharpening;

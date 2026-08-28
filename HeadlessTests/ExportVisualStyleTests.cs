@@ -99,6 +99,9 @@ public sealed class ExportVisualStyleTests : IDisposable
             AssertBrush("SurfaceLow", reportSurface.Background);
 
             var quality = pane.FindControl<CompactSlider>("ExportQualitySlider")!;
+            // The control once advertised a dead 22px self-style. Pin both the
+            // real 20px contract and its shared Develop/Export metric.
+            Assert.Equal(20, quality.Bounds.Height);
             Assert.Equal(DevelopCompactSliderHeight(viewModel), quality.Bounds.Height);
             Assert.Equal(11, quality.FindControl<TextBlock>("LabelText")!.FontSize);
             quality.Value = 92;
@@ -230,9 +233,6 @@ public sealed class ExportVisualStyleTests : IDisposable
 
     public void Dispose() => _fixture.Dispose();
 
-    // Pinned against a live Develop slider, not a literal: CompactSlider's own
-    // Selector="UserControl" style never applies to the control itself, so the
-    // rendered height comes from its content and would drift silently.
     private static double DevelopCompactSliderHeight(MainWindowViewModel viewModel)
     {
         var panel = new DevelopEditPanel { DataContext = viewModel };

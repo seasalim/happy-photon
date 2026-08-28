@@ -70,7 +70,7 @@
                         AutomationProperties.Name="Pair RAW+JPEG">
                     <TextBlock Text="J+R"
                                FontFamily="{StaticResource FontLabel}"
-                               FontSize="8"
+                               FontSize="10"
                                FontWeight="Bold"
                                LetterSpacing="0.5"
                                HorizontalAlignment="Center"

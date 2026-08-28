@@ -52,7 +52,7 @@ public sealed class ExportWorkspaceTests : IDisposable
         vm.Browse.ToggleSelection(second);
         vm.RefreshSelectedCount();
         var deleteConfirmations = 0;
-        vm.ConfirmMoveToTrashAsync = (_, _) =>
+        vm.ConfirmDeleteAsync = _ =>
         {
             deleteConfirmations++;
             return Task.FromResult(true);

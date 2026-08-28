@@ -140,8 +140,8 @@ still exist.
 Right-click a Browse thumbnail to **Copy path**, **Reveal in File Explorer**, or
 manage its Versions. **New Version from Current** copies the active interpretation's
 settings into a sibling tile, up to eight versions. **Rename version label…** sets a
-short optional badge label; blank labels display as `V<n>`. **Delete version** removes
-only V2–V8 catalog state and cache assets, never the original file. Right-clicking a
+short optional badge label; blank labels display as `V<n>`. **Delete version** confirms,
+then removes only V2–V8 catalog state and cache assets, never the original file. Right-clicking a
 photograph outside the current selection makes it the
 selection; right-clicking one already selected preserves the selection. Copy path
 places the selected photographs' full paths on the clipboard in grid order, one per
@@ -149,9 +149,10 @@ line. Reveal selects the active file in Explorer or Finder; on Linux it opens th
 containing folder. The folder tree's right-click menu offers Reveal only.
 
 Delete and the `Delete` key use the same targets as other Browse actions: the grid
-selection when it is non-empty, otherwise the active photograph. After confirmation,
-Happy Photon moves each original and its resolved XMP sidecar to the system Trash,
-removes its catalog state, and updates the grid. A failed file does not stop the rest
+selection when it is non-empty, otherwise the active photograph. After one confirmation,
+Happy Photon deletes selected V2–V8 interpretations from the catalog without affecting
+their original files, and moves selected primary originals and their resolved XMP
+sidecars to the system Trash. A failed file does not stop the rest
 of a batch; the final dialog names every failure or skipped sidecar. Online-only files
 and sidecars are never downloaded for deletion. Network locations and removable media
 are refused because their deletes may not be recoverable. On Windows, a fixed drive
@@ -168,8 +169,8 @@ as skipped. Sustained analysis appears in the shared background-activity segment
 with processed and total counts; it is absent again after the sweep finishes or
 Bursts is turned off.
 
-The checked **J+R** footer toggle pairs same-folder, same-name RAW and JPEG files into
-one JPEG tile; turn it off to browse both physical files separately for this session.
+The **J+R** footer toggle starts off, showing RAW and JPEG files separately. Turn it on
+to combine same-folder, same-name files into one JPEG tile; the choice is remembered.
 
 Online-only photographs stay visible with a cloud badge or placeholder. The folder
 status reports how many will not be downloaded automatically. To work with one
@@ -365,7 +366,7 @@ the Develop footer RESET clears every curve and other tonal adjustments.
 
 ### Refine detail
 
-Use **Noise Reduction** for luminance grain, **Sharpen** for capture detail, and
+Use **Luma NR** for luma grain, **Sharpen** for capture detail, and
 **Chroma NR** for color speckling. All three work on RAW, JPEG, HEIC, and TIFF. Noise
 reduction runs after tone, so revisit it after a large shadow or exposure change. The
 Develop viewer uses a bounded 1600px preview base even at 1:1, so judge capture

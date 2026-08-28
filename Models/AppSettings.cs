@@ -7,6 +7,7 @@ public class AppSettings
     public int? FirstRunExperienceVersion { get; set; }
     public ImageFileTypeFilter FileTypeFilter { get; set; } = ImageFileTypeFilter.All;
     public BrowseThumbnailSize BrowseThumbnailSize { get; set; } = BrowseThumbnailSize.Medium;
+    public bool ShowCapturePairs { get; set; }
     public AppTheme AppTheme { get; set; } = AppTheme.Dark;
     public bool StripLocationData { get; set; }
     public OutputSharpeningMode OutputSharpening { get; set; } =

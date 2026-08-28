@@ -41,7 +41,8 @@ internal sealed class CatalogVmFixture : IDisposable
         Action<Action>? postSelection = null,
         LibRawRuntimeHealth? rawRuntimeHealth = null,
         TimeProvider? timeProvider = null,
-        IFileOperationService? fileOperationService = null) =>
+        IFileOperationService? fileOperationService = null,
+        Func<long, Task<bool>>? deleteCatalogVersionAsync = null) =>
         new(
             catalog,
             baseLoader,
@@ -50,7 +51,8 @@ internal sealed class CatalogVmFixture : IDisposable
             postSelection,
             rawRuntimeHealth: rawRuntimeHealth,
             timeProvider: timeProvider,
-            fileOperationService: fileOperationService);
+            fileOperationService: fileOperationService,
+            deleteCatalogVersionAsync: deleteCatalogVersionAsync);
 
     public void Dispose()
     {

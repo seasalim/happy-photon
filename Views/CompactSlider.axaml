@@ -4,9 +4,6 @@
              x:Name="SliderRoot">
 
     <UserControl.Styles>
-        <Style Selector="UserControl">
-            <Setter Property="Height" Value="22"/>
-        </Style>
         <Style Selector="TextBlock#LabelText">
             <Setter Property="Grid.Column" Value="0"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
@@ -41,7 +38,9 @@
           Cursor="SizeWestEast">
         <!-- Label on the left -->
         <TextBlock x:Name="LabelText"
-                   Grid.Row="0"/>
+                   Grid.Row="0"
+                   TextTrimming="CharacterEllipsis"
+                   ToolTip.Tip="{Binding Label, ElementName=SliderRoot}"/>
 
         <!-- Track area (clickable/draggable) -->
         <Border x:Name="TrackArea"

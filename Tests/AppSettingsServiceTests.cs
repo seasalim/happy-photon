@@ -19,6 +19,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         var empty = await service.LoadAsync();
         Assert.Null(empty.FirstRunExperienceVersion);
         Assert.False(empty.StripLocationData);
+        Assert.False(empty.ShowCapturePairs);
         Assert.Equal(OutputSharpeningMode.Screen, empty.OutputSharpening);
         Assert.Equal(BrowseThumbnailSize.Medium, empty.BrowseThumbnailSize);
         Assert.Equal(AppTheme.Dark, empty.AppTheme);
@@ -30,6 +31,7 @@ public sealed class AppSettingsServiceTests : IDisposable
             FirstRunExperienceVersion = 1,
             FileTypeFilter = ImageFileTypeFilter.Raw,
             BrowseThumbnailSize = BrowseThumbnailSize.Large,
+            ShowCapturePairs = true,
             AppTheme = AppTheme.MidGray,
             StripLocationData = true,
             OutputSharpening = OutputSharpeningMode.Print
@@ -41,6 +43,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(@"C:\Photos\Shoot", loaded.SelectedFolderPath);
         Assert.Equal(ImageFileTypeFilter.Raw, loaded.FileTypeFilter);
         Assert.Equal(BrowseThumbnailSize.Large, loaded.BrowseThumbnailSize);
+        Assert.True(loaded.ShowCapturePairs);
         Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
         Assert.True(loaded.StripLocationData);
         Assert.Equal(OutputSharpeningMode.Print, loaded.OutputSharpening);
@@ -150,6 +153,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         {
             FileTypeFilter = ImageFileTypeFilter.Jpeg,
             BrowseThumbnailSize = BrowseThumbnailSize.Small,
+            ShowCapturePairs = false,
             AppTheme = AppTheme.MidGray,
             StripLocationData = true,
             OutputSharpening = OutputSharpeningMode.Off
@@ -161,6 +165,7 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(1, loaded.FirstRunExperienceVersion);
         Assert.Equal(ImageFileTypeFilter.Jpeg, loaded.FileTypeFilter);
         Assert.Equal(BrowseThumbnailSize.Small, loaded.BrowseThumbnailSize);
+        Assert.False(loaded.ShowCapturePairs);
         Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
         Assert.True(loaded.StripLocationData);
         Assert.Equal(OutputSharpeningMode.Off, loaded.OutputSharpening);

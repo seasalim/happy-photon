@@ -115,7 +115,7 @@ public sealed class ColorLabelUiTests
         Assert.Equal("Group bursts", AutomationProperties.GetName(bursts));
         Assert.IsType<Button>(pairs);
         Assert.Contains("view-toggle", pairs.Classes);
-        Assert.Contains("active", pairs.Classes);
+        Assert.DoesNotContain("active", pairs.Classes);
         Assert.Equal("Pair RAW+JPEG", ToolTip.GetTip(pairs));
         Assert.Equal("Pair RAW+JPEG", AutomationProperties.GetName(pairs));
         Assert.Equal("J+R", Assert.IsType<TextBlock>(pairs.Content).Text);
@@ -163,11 +163,11 @@ public sealed class ColorLabelUiTests
         Assert.False(control.ShowBursts);
 
         Click(pairs);
-        Assert.False(control.ShowPairs);
-        Assert.DoesNotContain("active", pairs.Classes);
-        Click(pairs);
         Assert.True(control.ShowPairs);
         Assert.Contains("active", pairs.Classes);
+        Click(pairs);
+        Assert.False(control.ShowPairs);
+        Assert.DoesNotContain("active", pairs.Classes);
 
         var filterControls = control.FindControl<ScrollViewer>("FilterScrollViewer")!;
         var captions = filterControls.GetLogicalDescendants()

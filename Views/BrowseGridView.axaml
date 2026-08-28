@@ -179,7 +179,7 @@
                                               Click="OnDeleteVersionClick"/>
                                     <Separator/>
                                     <MenuItem x:Name="DeleteImageMenuItem"
-                                              Header="Delete…"
+                                              Header="Delete selection…"
                                               Click="OnDeleteImagesClick"/>
                                 </ContextMenu>
                             </Border.ContextMenu>

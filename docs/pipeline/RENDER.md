@@ -478,7 +478,7 @@ settings and rejects a non-current source or target before applying values.
 ## 9. Detail stage
 
 The Develop Detail group exposes three sliders (§8, UI.md §2): Sharpen,
-Noise Reduction (luminance), and Chroma NR. All apply to every source. Defaults are
+Luma NR, and Chroma NR. All apply to every source. Defaults are
 capture sharpening 25 RAW / 0 standard and both NR values 0. The
 implementations are part of the shared pipeline and covered by parity and performance
 tests.

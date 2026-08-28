@@ -32,11 +32,11 @@ public partial class MainWindowViewModel
         OnBrowseThumbnailSizeRequestChanged();
         if (!_restoringBrowseThumbnailSize)
         {
-            _ = PersistBrowseThumbnailSizeAsync();
+            _ = PersistBrowsePreferenceAsync("Thumbnail-size");
         }
     }
 
-    private async Task PersistBrowseThumbnailSizeAsync()
+    private async Task PersistBrowsePreferenceAsync(string description)
     {
         try
         {
@@ -48,7 +48,7 @@ public partial class MainWindowViewModel
         catch (Exception exception)
         {
             System.Diagnostics.Debug.WriteLine(
-                $"Thumbnail-size persistence failed: {exception.Message}");
+                $"{description} persistence failed: {exception.Message}");
         }
     }
 }

@@ -14,6 +14,7 @@ public class AppSettingsService
     private const string FirstRunExperienceVersionKey = "FirstRunExperienceVersion";
     private const string FileTypeFilterKey = "FileTypeFilter";
     private const string BrowseThumbnailSizeKey = "BrowseThumbnailSize";
+    private const string ShowCapturePairsKey = "ShowCapturePairs";
     private const string AppThemeKey = "AppTheme";
     private const string StripLocationDataKey = "StripLocationData";
     private const string OutputSharpeningKey = "OutputSharpening";
@@ -66,6 +67,9 @@ public class AppSettingsService
             FirstRunExperienceVersion = firstRunExperienceVersion,
             FileTypeFilter = fileTypeFilter,
             BrowseThumbnailSize = thumbnailSize,
+            ShowCapturePairs = bool.TryParse(
+                await _catalogService.GetAppSettingAsync(ShowCapturePairsKey),
+                out var showCapturePairs) && showCapturePairs,
             AppTheme = appTheme,
             StripLocationData = bool.TryParse(
                 await _catalogService.GetAppSettingAsync(StripLocationDataKey),
@@ -85,6 +89,7 @@ public class AppSettingsService
                 settings.FirstRunExperienceVersion?.ToString(),
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
             [BrowseThumbnailSizeKey] = settings.BrowseThumbnailSize.ToString(),
+            [ShowCapturePairsKey] = settings.ShowCapturePairs.ToString(),
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString()
@@ -97,6 +102,7 @@ public class AppSettingsService
         {
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
             [BrowseThumbnailSizeKey] = settings.BrowseThumbnailSize.ToString(),
+            [ShowCapturePairsKey] = settings.ShowCapturePairs.ToString(),
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString()

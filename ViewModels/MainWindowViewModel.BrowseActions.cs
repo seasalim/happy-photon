@@ -5,6 +5,9 @@ using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
 
+internal sealed record DeleteConfirmationRequest(
+    IReadOnlyList<ImageFile> Versions, IReadOnlyList<ImageFile> Primaries);
+
 public partial class MainWindowViewModel
 {
     [RelayCommand]
@@ -13,12 +16,17 @@ public partial class MainWindowViewModel
         if (IsFullScreenMode || IsCompareMode) return;
 
         var targets = ResolveActionTargets().Targets;
-        if (targets.Count == 0 || ConfirmMoveToTrashAsync == null) return;
+        if (targets.Count == 0) return;
+        await ConfirmAndDeleteAsync(targets);
+    }
 
-        var confirmed = await ConfirmMoveToTrashAsync(
-            targets.Count,
-            targets.Count == 1 ? targets[0].FileName : null);
-        if (confirmed) await DeleteBatchAsync(targets);
+    private async Task ConfirmAndDeleteAsync(IReadOnlyList<ImageFile> targets)
+    {
+        var request = PartitionDeleteTargets(targets);
+        if (ConfirmDeleteAsync == null ||
+            !await ConfirmDeleteAsync(request)) return;
+
+        await DeleteConfirmedTargetsAsync(request);
     }
 
     [RelayCommand]
@@ -29,10 +37,32 @@ public partial class MainWindowViewModel
         var rejectedImages = Browse.GetRejectedImages().ToList();
         if (rejectedImages.Count == 0) return;
 
+        var request = PartitionDeleteTargets(rejectedImages);
         if (ConfirmDeleteRejectedAsync == null) return;
         var confirmed = await ConfirmDeleteRejectedAsync(
-            rejectedImages.Count, CurrentFolderPath);
-        if (confirmed) await DeleteBatchAsync(rejectedImages);
+            request.Versions.Count,
+            request.Primaries.Count,
+            CurrentFolderPath);
+        if (confirmed) await DeleteConfirmedTargetsAsync(request);
+    }
+
+    private static DeleteConfirmationRequest PartitionDeleteTargets(
+        IReadOnlyList<ImageFile> targets)
+    {
+        var primaries = targets.Where(image => image.Version <= 1).ToList();
+        var primaryPaths = primaries.Select(image => image.FilePath).ToHashSet(
+            StringComparer.OrdinalIgnoreCase);
+        var versions = targets.Where(image => image.Version > 1 &&
+            !primaryPaths.Contains(image.FilePath)).ToList();
+        return new DeleteConfirmationRequest(versions, primaries);
+    }
+
+    private async Task DeleteConfirmedTargetsAsync(DeleteConfirmationRequest request)
+    {
+        if (request.Versions.Count > 0)
+            await DeleteVersionsBatchAsync(request.Versions);
+        if (request.Primaries.Count > 0)
+            await DeleteBatchAsync(request.Primaries);
     }
 
     private async Task DeleteBatchAsync(IReadOnlyList<ImageFile> targets)

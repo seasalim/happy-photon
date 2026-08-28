@@ -386,7 +386,7 @@ Folder switches are frequent and races here caused real bugs, so ownership is ex
 
 The first `2 × workers` visible Browse images are loaded by `LoadThumbnailRangeAsync`,
 whose six workers pull indices from a shared `Interlocked` counter. Paired RAW paths
-are excluded while the session-only Pairs toggle is on; disabling it adds those files
+are excluded while the stored Pairs preference is on; disabling it adds those files
 to visibility-driven scheduling without another catalog read. This preserves a fast first
 paint before metadata analysis begins. A Large request stages this burst at Small
 quality, then queues the requested Large follow-up. After that, one
@@ -421,8 +421,9 @@ visible, and resuming the pump re-arms the activity sampler.
   cancellable, serial sweep over the current folder and computes burst groups over
   logical captures — a singleton or a path-derived RAW+JPEG pair with the same
   case-insensitive basename in the same directory; disabling Bursts or changing
-  folders stops the remaining work. Pairing is session-scoped; burst size and index
-  count shutter presses while membership remains available for every file. The shared
+  folders stops the remaining work. The pairing preference persists in `app_settings`;
+  burst size and index count shutter presses while membership remains available for
+  every file. The shared
   background segment reports processed/total progress while analysis is active.
   `MetadataService` deduplicates this work with selection-triggered loads and awaits
   UI application before grouping reads `DateTaken`. The sweep analyzes locally
