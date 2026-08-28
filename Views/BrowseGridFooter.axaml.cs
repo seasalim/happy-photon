@@ -12,6 +12,7 @@ public partial class BrowseGridFooter : UserControl
         "ThumbnailSizePanel",
         "CompareViewButton",
         "BurstsButton",
+        "PairsButton",
         "SmallThumbnailButton",
         "MediumThumbnailButton",
         "LargeThumbnailButton",
@@ -22,6 +23,12 @@ public partial class BrowseGridFooter : UserControl
     public static readonly StyledProperty<bool> ShowBurstsProperty =
         AvaloniaProperty.Register<BrowseGridFooter, bool>(
             nameof(ShowBursts),
+            defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+
+    public static readonly StyledProperty<bool> ShowPairsProperty =
+        AvaloniaProperty.Register<BrowseGridFooter, bool>(
+            nameof(ShowPairs),
+            true,
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<BrowseThumbnailSize> ThumbnailSizeProperty =
@@ -36,6 +43,12 @@ public partial class BrowseGridFooter : UserControl
         set => SetValue(ShowBurstsProperty, value);
     }
 
+    public bool ShowPairs
+    {
+        get => GetValue(ShowPairsProperty);
+        set => SetValue(ShowPairsProperty, value);
+    }
+
     public BrowseThumbnailSize ThumbnailSize
     {
         get => GetValue(ThumbnailSizeProperty);
@@ -46,6 +59,7 @@ public partial class BrowseGridFooter : UserControl
     {
         InitializeComponent();
         UpdateBurstsButton();
+        UpdatePairsButton();
         UpdateThumbnailSizeButtons();
     }
 
@@ -56,6 +70,10 @@ public partial class BrowseGridFooter : UserControl
         if (change.Property == ShowBurstsProperty)
         {
             UpdateBurstsButton();
+        }
+        else if (change.Property == ShowPairsProperty)
+        {
+            UpdatePairsButton();
         }
         else if (change.Property == ThumbnailSizeProperty)
         {
@@ -68,6 +86,12 @@ public partial class BrowseGridFooter : UserControl
 
     private void OnBurstsClick(object? sender, RoutedEventArgs e) =>
         ShowBursts = !ShowBursts;
+
+    private void UpdatePairsButton() =>
+        PairsButton.Classes.Set("active", ShowPairs);
+
+    private void OnPairsClick(object? sender, RoutedEventArgs e) =>
+        ShowPairs = !ShowPairs;
 
     private void UpdateThumbnailSizeButtons()
     {

@@ -85,11 +85,6 @@ public partial class BrowseGridView : UserControl
             nameof(ColorLabelFilter),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
-    public static readonly StyledProperty<bool> ShowBurstsProperty =
-        AvaloniaProperty.Register<BrowseGridView, bool>(
-            nameof(ShowBursts),
-            defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
-
     public static readonly StyledProperty<BrowseThumbnailSize> ThumbnailSizeProperty =
         AvaloniaProperty.Register<BrowseGridView, BrowseThumbnailSize>(
             nameof(ThumbnailSize),
@@ -174,12 +169,6 @@ public partial class BrowseGridView : UserControl
     {
         get => GetValue(ColorLabelFilterProperty);
         set => SetValue(ColorLabelFilterProperty, value);
-    }
-
-    public bool ShowBursts
-    {
-        get => GetValue(ShowBurstsProperty);
-        set => SetValue(ShowBurstsProperty, value);
     }
 
     public BrowseThumbnailSize ThumbnailSize

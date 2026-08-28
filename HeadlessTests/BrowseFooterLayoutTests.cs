@@ -119,6 +119,7 @@ public sealed class BrowseFooterLayoutTests
             [
                 "CompareViewButton",
                 "BurstsButton",
+                "PairsButton",
                 "SmallThumbnailButton",
                 "MediumThumbnailButton",
                 "LargeThumbnailButton"

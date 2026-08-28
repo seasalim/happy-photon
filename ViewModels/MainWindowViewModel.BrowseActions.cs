@@ -88,6 +88,7 @@ public partial class MainWindowViewModel
         if (deletedImages.Count > 0)
         {
             Browse.RemoveRange(deletedImages);
+            RefreshCapturePairsAfterRemoval();
             if (selectedImage != null && deletedImages.Contains(selectedImage))
             {
                 SelectedImage = replacement != null && Browse.ContainsVisible(replacement)

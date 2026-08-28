@@ -1,10 +1,12 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -95,6 +97,7 @@ public sealed class ColorLabelUiTests
         var raw = control.FindControl<Button>("FilterRawButton")!;
         var jpeg = control.FindControl<Button>("FilterJpegButton")!;
         var bursts = control.FindControl<Button>("BurstsButton")!;
+        var pairs = control.FindControl<Button>("PairsButton")!;
         var filterLabel = control.FindControl<TextBlock>("FilterLabel")!;
         Assert.IsType<PathIcon>(bursts.Content);
         Assert.Contains("view-toggle", bursts.Classes);
@@ -110,6 +113,14 @@ public sealed class ColorLabelUiTests
             Assert.Contains("filter", button.Classes));
         Assert.Equal("Group bursts", ToolTip.GetTip(bursts));
         Assert.Equal("Group bursts", AutomationProperties.GetName(bursts));
+        Assert.IsType<Button>(pairs);
+        Assert.Contains("view-toggle", pairs.Classes);
+        Assert.Contains("active", pairs.Classes);
+        Assert.Equal("Pair RAW+JPEG", ToolTip.GetTip(pairs));
+        Assert.Equal("Pair RAW+JPEG", AutomationProperties.GetName(pairs));
+        Assert.Equal("J+R", Assert.IsType<TextBlock>(pairs.Content).Text);
+        Assert.Contains("JetBrains Mono",
+            Assert.IsType<TextBlock>(pairs.Content).FontFamily.ToString());
         Assert.Null(control.FindControl<Button>("FilterAllButton"));
         Assert.Null(control.FindControl<Button>("FlagFilterAllButton"));
         Assert.Null(control.FindControl<Button>("RatingFilterAllButton"));
@@ -151,6 +162,13 @@ public sealed class ColorLabelUiTests
         Click(bursts);
         Assert.False(control.ShowBursts);
 
+        Click(pairs);
+        Assert.False(control.ShowPairs);
+        Assert.DoesNotContain("active", pairs.Classes);
+        Click(pairs);
+        Assert.True(control.ShowPairs);
+        Assert.Contains("active", pairs.Classes);
+
         var filterControls = control.FindControl<ScrollViewer>("FilterScrollViewer")!;
         var captions = filterControls.GetLogicalDescendants()
             .OfType<TextBlock>()
@@ -166,6 +184,37 @@ public sealed class ColorLabelUiTests
             "Select",
             control.FindControl<StackPanel>("BrowseActionsPanel")!
                 .GetLogicalDescendants().OfType<TextBlock>().Select(text => text.Text));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void BrowseTile_ShowsPairChipOnlyForPairedJpeg()
+    {
+        using var catalog = new CatalogService(NewRoot());
+        var viewModel = NewViewModel(catalog);
+        var paired = new ImageFile(Path.Combine(catalog.CatalogPath, "pair.jpg"))
+        {
+            IsRawJpegPair = true
+        };
+        viewModel.Browse.SetImages([
+            paired,
+            new ImageFile(Path.Combine(catalog.CatalogPath, "single.jpg"))
+        ]);
+        var control = new BrowseGridView
+        {
+            DataContext = viewModel,
+            Images = viewModel.Browse.VisibleImages
+        };
+        var window = new Window { Width = 800, Height = 600, Content = control };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var chip = Assert.Single(
+            control.GetVisualDescendants().OfType<Border>(),
+            border => border.Name == "RawJpegPairChip" &&
+                      border.IsEffectivelyVisible);
+        Assert.Equal("J+R", Assert.IsType<TextBlock>(chip.Child).Text);
 
         window.Close();
     }

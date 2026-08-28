@@ -168,6 +168,9 @@ as skipped. Sustained analysis appears in the shared background-activity segment
 with processed and total counts; it is absent again after the sweep finishes or
 Bursts is turned off.
 
+The checked **J+R** footer toggle pairs same-folder, same-name RAW and JPEG files into
+one JPEG tile; turn it off to browse both physical files separately for this session.
+
 Online-only photographs stay visible with a cloud badge or placeholder. The folder
 status reports how many will not be downloaded automatically. To work with one
 cloud-only image, select it and choose **Download and open**; this downloads only

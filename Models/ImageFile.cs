@@ -91,6 +91,9 @@ public partial class ImageFile : ObservableObject
     private bool _isBurstHighlighted;
 
     [ObservableProperty]
+    private bool _isRawJpegPair;
+
+    [ObservableProperty]
     private bool _isLoading;
 
     [ObservableProperty]

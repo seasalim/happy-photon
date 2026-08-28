@@ -95,6 +95,8 @@ public sealed partial class CompareViewHeadlessTests
                 .IsEffectivelyVisible);
             Assert.False(Descendant<Button>(browse, "BurstsButton")
                 .IsEffectivelyEnabled);
+            Assert.False(Descendant<Button>(browse, "PairsButton")
+                .IsEffectivelyEnabled);
             Assert.False(Descendant<RadioButton>(browse, "SmallThumbnailButton")
                 .IsEffectivelyEnabled);
             Assert.False(Descendant<RadioButton>(browse, "MediumThumbnailButton")

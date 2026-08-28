@@ -11,6 +11,10 @@ public partial class BrowseImageState : ObservableObject
     private readonly HashSet<ImageFile> _allImageSet = new(ReferenceEqualityComparer.Instance);
     private readonly Action<ImageFile, Bitmap> _retireThumbnail;
 
+    internal Func<ImageFile, bool> CaptureIsVisible { get; set; } = static _ => true;
+    internal Func<ImageFileTypeFilter, ImageFile, bool> CaptureMatchesFileType { get; set; } =
+        static (filter, image) => filter.Matches(image);
+
     public BrowseImageState()
         : this(static (_, bitmap) => bitmap.Dispose())
     {
@@ -38,7 +42,7 @@ public partial class BrowseImageState : ObservableObject
     public event EventHandler? StateChanged;
 
     public IReadOnlyList<ImageFile> AllImages => _allImages;
-    public int TotalCount => _allImages.Count;
+    public int TotalCount => _allImages.Count(CaptureIsVisible);
     public int VisibleCount => VisibleImages.Count;
     public int SelectedCount => VisibleImages.Count(i => i.IsSelected);
     public bool HasVisibleImages => VisibleCount > 0;
@@ -197,19 +201,23 @@ public partial class BrowseImageState : ObservableObject
     }
 
     public bool MatchesCurrentFilters(ImageFile image) =>
-        FileTypeFilter.Matches(image) && MatchesFlagFilter(image) &&
+        CaptureIsVisible(image) && CaptureMatchesFileType(FileTypeFilter, image) &&
+        MatchesFlagFilter(image) &&
         image.Rating >= MinimumRating && MatchesColorLabelFilter(image.ColorLabel);
 
     public bool MatchesCurrentFilters(ImageFile image, ImageFlag flag) =>
-        FileTypeFilter.Matches(image) && MatchesFlagFilter(flag) &&
+        CaptureIsVisible(image) && CaptureMatchesFileType(FileTypeFilter, image) &&
+        MatchesFlagFilter(flag) &&
         image.Rating >= MinimumRating && MatchesColorLabelFilter(image.ColorLabel);
 
     public bool MatchesCurrentFilters(ImageFile image, int rating) =>
-        FileTypeFilter.Matches(image) && MatchesFlagFilter(image) &&
+        CaptureIsVisible(image) && CaptureMatchesFileType(FileTypeFilter, image) &&
+        MatchesFlagFilter(image) &&
         rating >= MinimumRating && MatchesColorLabelFilter(image.ColorLabel);
 
     public bool MatchesCurrentFilters(ImageFile image, ColorLabel colorLabel) =>
-        FileTypeFilter.Matches(image) && MatchesFlagFilter(image) &&
+        CaptureIsVisible(image) && CaptureMatchesFileType(FileTypeFilter, image) &&
+        MatchesFlagFilter(image) &&
         image.Rating >= MinimumRating && MatchesColorLabelFilter(colorLabel);
 
     public IReadOnlyList<ImageFile> GetRejectedImages() =>
@@ -320,7 +328,8 @@ public partial class BrowseImageState : ObservableObject
     private void ApplyFilter()
     {
         var visible = _allImages
-            .Where(image => FileTypeFilter.Matches(image))
+            .Where(CaptureIsVisible)
+            .Where(image => CaptureMatchesFileType(FileTypeFilter, image))
             .Where(MatchesFlagFilter)
             .Where(image => image.Rating >= MinimumRating)
             .Where(image => MatchesColorLabelFilter(image.ColorLabel))

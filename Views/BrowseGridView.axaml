@@ -332,6 +332,17 @@
                                                        Foreground="{StaticResource SecondaryContainer}"
                                                        VerticalAlignment="Center" IsVisible="{Binding HasRating}"
                                                        ToolTip.Tip="Rating"/>
+                                            <Border x:Name="RawJpegPairChip"
+                                                    Background="{DynamicResource SurfaceHighest}"
+                                                    CornerRadius="2" Padding="3,0"
+                                                    IsVisible="{Binding IsRawJpegPair}"
+                                                    ToolTip.Tip="RAW+JPEG pair">
+                                                <TextBlock Text="J+R"
+                                                           FontFamily="{StaticResource FontLabel}"
+                                                           FontSize="9"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextSecondary}"/>
+                                            </Border>
                                             <Border CornerRadius="2" Padding="3,0"
                                                     IsVisible="{Binding HasBurstGroup}" ToolTip.Tip="Burst frame">
                                                 <Border.Background>
@@ -394,6 +405,7 @@
         <views:BrowseGridFooter x:Name="BrowseGridFooter"
                                 Grid.Row="2"
                                 ShowBursts="{Binding ShowBursts, ElementName=Root, Mode=TwoWay}"
+                                ShowPairs="{Binding ShowPairs, ElementName=Root, Mode=TwoWay}"
                                 ThumbnailSize="{Binding ThumbnailSize, ElementName=Root, Mode=TwoWay}"/>
 
         <views:WorkflowCoachmark

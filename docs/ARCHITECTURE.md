@@ -354,7 +354,7 @@ sequenceDiagram
     UI->>TP: enumerate folder (FolderService)
     UI->>TP: LoadOrCreateImageStatesAsync (batched SQL)
     TP-->>UI: ordered version states per path
-    UI->>UI: fan each file out into sibling ImageFiles, Browse.SetImages(...)
+    UI->>UI: derive RAW+JPEG pairs, fan files into sibling ImageFiles, Browse.SetImages(...)
     UI->>UI: defer first-image selection (Dispatcher.Post, Background)
     UI->>W: initial range: first ~12 thumbnails (6 workers x 2)
     W-->>UI: imageFile.Thumbnail = bitmap (continuations on UI context)
@@ -384,8 +384,10 @@ Folder switches are frequent and races here caused real bugs, so ownership is ex
 
 ### The pump
 
-The first `2 × workers` images are loaded by `LoadThumbnailRangeAsync`, whose six
-workers pull indices from a shared `Interlocked` counter. This preserves a fast first
+The first `2 × workers` visible Browse images are loaded by `LoadThumbnailRangeAsync`,
+whose six workers pull indices from a shared `Interlocked` counter. Paired RAW paths
+are excluded while the session-only Pairs toggle is on; disabling it adds those files
+to visibility-driven scheduling without another catalog read. This preserves a fast first
 paint before metadata analysis begins. A Large request stages this burst at Small
 quality, then queues the requested Large follow-up. After that, one
 `ThumbnailLoadScheduler` owns exactly six long-lived workers for the active folder:
@@ -426,6 +428,10 @@ visible, and resuming the pump re-arms the activity sampler.
   UI application before grouping reads `DateTaken`. The sweep analyzes locally
   readable images and reports cloud-only images as skipped; enabling Bursts never
   approves hydration.
+- Browse derives the same basename RAW+JPEG groups from distinct physical paths.
+  Pairing hides every version of the RAW path and badges every JPEG version; visibility,
+  file-type filtering, navigation, selection, counts, bursts, and thumbnail scheduling
+  then operate on the capture tiles. Deletion recomputes the path-derived groups.
 
 Worker continuations post back to the UI context (the pump is started from the UI
 thread), so `ImageFile.Thumbnail` assignments — and the resulting grid updates — happen

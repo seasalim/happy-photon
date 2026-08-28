@@ -13,16 +13,17 @@
         BorderBrush="{DynamicResource Divider}"
         BorderThickness="0,1,0,0"
         Padding="14,8">
-    <!-- Centering the assessment on the bar needs matching space reserved on
-         the left, or it centers on whatever the right-hand controls leave
-         behind. Column 0 mirrors the controls' measured width, so the middle
-         column is symmetric about the bar and the assessment sits on its true
-         centre. The controls keep an Auto column, so they can never be
-         clipped the way the old star column let them be; when space runs
-         short the assessment compresses instead. -->
-    <Grid ColumnDefinitions="Auto,*,Auto">
-        <Panel Grid.Column="0"
-               Width="{Binding #ThumbnailSizePanel.Bounds.Width}"/>
+    <!-- The left reserve grows from the pre-Pairs control width to the status
+         message cap. The right controls keep an Auto column, so the added 24px
+         Pairs button and 4px gap remain inside the narrowest supported Browse
+         pane while the assessment takes the flexible middle column. -->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MinWidth="176" MaxWidth="220"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Panel Grid.Column="0"/>
         <StackPanel x:Name="ThumbnailSizePanel"
                     Grid.Column="2"
                     Classes="tour-region"
@@ -61,6 +62,19 @@
                     <PathIcon Width="14" Height="14"
                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                               Data="M3 1h11v10H3z M1 4h2v9h9v2H1z"/>
+                </Button>
+                <Button x:Name="PairsButton" Classes="view-toggle"
+                        Click="OnPairsClick"
+                        IsEnabled="{Binding IsBrowseGridVisible}"
+                        ToolTip.Tip="Pair RAW+JPEG"
+                        AutomationProperties.Name="Pair RAW+JPEG">
+                    <TextBlock Text="J+R"
+                               FontFamily="{StaticResource FontLabel}"
+                               FontSize="8"
+                               FontWeight="Bold"
+                               LetterSpacing="0.5"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
                 </Button>
                 <Rectangle Width="1" Height="16"
                            Fill="{DynamicResource Divider}"

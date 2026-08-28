@@ -32,6 +32,7 @@ public partial class MainWindowViewModel
                 source.FilePath, source.SourceAvailabilityHint);
             ApplyCatalogState(sibling, state, source.VersionCount + 1);
             sibling.CopyMetadataFrom(source);
+            ApplyCapturePairIndicator(sibling);
             Browse.InsertVersion(sibling);
             ApplyBurstIndicator(sibling);
             UpdateVersionCounts(source.FilePath);
@@ -63,6 +64,7 @@ public partial class MainWindowViewModel
             !await _catalogService.DeleteVersionAsync(image.CatalogId)) return;
         var replacement = Browse.ReplacementAfterRemoval(image);
         Browse.Remove(image);
+        RefreshCapturePairsAfterRemoval();
         UpdateVersionCounts(image.FilePath);
         if (ReferenceEquals(SelectedImage, image))
             SelectedImage = replacement ?? Browse.FirstVisible();

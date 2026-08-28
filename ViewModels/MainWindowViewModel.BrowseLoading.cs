@@ -81,6 +81,7 @@ public partial class MainWindowViewModel
             // Fresh ImageFile instances replace the old burst indicators immediately.
             ResetBurstState();
             ResetThumbnailViewport();
+            RecomputeCapturePairs(imageFiles);
             Browse.SetImages(imageFiles);
 
             // Defer first image selection until after UI settles.
@@ -97,7 +98,8 @@ public partial class MainWindowViewModel
             }
 
             pumpStarted = true;
-            StartThumbnailSession(imageFiles, requestCts, generation);
+            StartThumbnailSession(
+                Browse.VisibleImages.ToList(), imageFiles, requestCts, generation);
             await StartXmpReconcileAsync(generation);
             ReportPendingXmpAssessments(imageFiles);
             StartBurstAnalysisIfRequested();

@@ -54,14 +54,16 @@ public partial class MainWindowViewModel
     }
 
     private void StartThumbnailSession(
-        List<ImageFile> imageFiles,
+        List<ImageFile> initialImages,
+        List<ImageFile> physicalImages,
         CancellationTokenSource requestCts,
         int generation)
     {
         var request = BrowseThumbnailRequest;
         var sizeGeneration = Volatile.Read(ref _thumbnailSizeGeneration);
         var session = RunThumbnailSessionAsync(
-            imageFiles,
+            initialImages,
+            physicalImages,
             requestCts,
             generation,
             request,
@@ -95,7 +97,8 @@ public partial class MainWindowViewModel
     }
 
     private async Task RunThumbnailSessionAsync(
-        List<ImageFile> imageFiles,
+        List<ImageFile> initialImages,
+        List<ImageFile> physicalImages,
         CancellationTokenSource requestCts,
         int generation,
         ThumbnailSizeRequest desiredRequest,
@@ -105,12 +108,12 @@ public partial class MainWindowViewModel
         ThumbnailLoadScheduler? scheduler = null;
         try
         {
-            var initialCount = Math.Min(imageFiles.Count, ThumbnailConcurrency * 2);
+            var initialCount = Math.Min(initialImages.Count, ThumbnailConcurrency * 2);
             var initialRequest = GetInitialThumbnailRequest(desiredRequest);
             using (initialCount > 0 ? BeginInitialThumbnailBatch() : null)
             {
                 await LoadThumbnailRangeAsync(
-                    imageFiles,
+                    initialImages,
                     0,
                     initialCount,
                     generation,
@@ -148,7 +151,7 @@ public partial class MainWindowViewModel
 
             if (generation != Volatile.Read(ref _browseGeneration))
             {
-                foreach (var image in imageFiles)
+                foreach (var image in physicalImages)
                 {
                     Browse.ReplaceThumbnail(image, null);
                 }
@@ -333,6 +336,12 @@ public partial class MainWindowViewModel
         {
             SignalBackgroundActivityStarted();
         }
+    }
+
+    private void RefreshVisibleThumbnailQueue()
+    {
+        _lastQueuedSizeGeneration = -1;
+        QueueRequestedThumbnailRange();
     }
 
     private void RetryDeferredThumbnailIfAvailable(ImageFile image)
