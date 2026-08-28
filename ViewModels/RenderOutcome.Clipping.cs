@@ -18,6 +18,7 @@ internal sealed partial class RenderOutcome
         Class = RenderOutcomeClass.CachedUpgrade,
         Intent = PreviewSurfaceIntent.Edited,
         PaintSource = PreviewPaintSource.CachedJpeg,
+        OriginalViewPixelSize = cached.OriginalViewPixelSize,
         BitmapMode = OutcomeFieldMode.Set,
         _bitmap = cached.DetachBitmap(),
         HistogramMode = cached.SettingsMatch

@@ -54,18 +54,43 @@ public partial class MainWindow
         vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(vm.ApplyFitZoom);
         vm.CaptureDevelopViewport = () =>
             _zoomPanControl?.CaptureNormalizedViewport();
-        vm.RestoreDevelopViewport = (target, viewport) => Dispatcher.UIThread.Post(() =>
+        vm.RestoreDevelopViewport = (target, viewport) =>
         {
-            if (!ReferenceEquals(DataContext, vm) ||
-                !ReferenceEquals(vm.SelectedImage, target) ||
-                !vm.IsDevelopPreviewSurfaceActive ||
-                _zoomPanControl is not { } control)
-                return;
-            var fit = control.GetFitZoomLevel();
-            if (viewport.ZoomRelativeToFit == 1) vm.ApplyFitZoom(fit);
-            else vm.ApplyManualZoom(fit * viewport.ZoomRelativeToFit);
-            control.ApplyNormalizedViewport(viewport);
-        }, DispatcherPriority.Loaded);
+            void RestoreWhenPreviewIsBound()
+            {
+                if (!ReferenceEquals(DataContext, vm) ||
+                    !ReferenceEquals(vm.SelectedImage, target) ||
+                    !vm.IsDevelopPreviewSurfaceActive ||
+                    _zoomPanControl is not { } control)
+                    return;
+                if (vm.PreviewImage is not { } preview ||
+                    !ReferenceEquals(control.Source, preview))
+                {
+                    void OnViewerPropertyChanged(
+                        object? sender,
+                        AvaloniaPropertyChangedEventArgs change)
+                    {
+                        if (change.Property != ZoomPanControl.SourceProperty) return;
+                        control.PropertyChanged -= OnViewerPropertyChanged;
+                        Dispatcher.UIThread.Post(
+                            RestoreWhenPreviewIsBound,
+                            DispatcherPriority.Loaded);
+                    }
+
+                    control.PropertyChanged += OnViewerPropertyChanged;
+                    return;
+                }
+                control.UpdateLayout();
+                var fit = control.GetFitZoomLevel();
+                if (viewport.ZoomRelativeToFit == 1) vm.ApplyFitZoom(fit);
+                else vm.ApplyManualZoom(fit * viewport.ZoomRelativeToFit);
+                control.ApplyNormalizedViewport(viewport);
+            }
+
+            Dispatcher.UIThread.Post(
+                RestoreWhenPreviewIsBound,
+                DispatcherPriority.Loaded);
+        };
         vm.ConfirmExportOverwriteAsync = ConfirmExportOverwriteAsync;
         vm.ConfirmExportHydrationAsync = ConfirmExportHydrationAsync;
         vm.RequestCatalogImportAsync = async () =>

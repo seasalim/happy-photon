@@ -19,6 +19,7 @@ public sealed class RawJpegOneCaptureHeadlessTests
         var viewer = window.FindControl<DevelopViewerPane>(
             "DevelopViewerPane")!.Viewer;
         await PumpUntilAsync(() => viewer.Source != null);
+        await PumpUntilAsync(() => viewer.GetFitZoomLevel() > 1);
         var target = new NormalizedViewport(new NormalizedPoint(0.7, 0.3), 2);
         vm.ApplyManualZoom(viewer.GetFitZoomLevel() * target.ZoomRelativeToFit);
         viewer.ApplyNormalizedViewport(target);
@@ -50,6 +51,7 @@ public sealed class RawJpegOneCaptureHeadlessTests
         var viewer = window.FindControl<DevelopViewerPane>(
             "DevelopViewerPane")!.Viewer;
         await PumpUntilAsync(() => viewer.Source != null);
+        await PumpUntilAsync(() => viewer.GetFitZoomLevel() > 1);
         var jpeg = vm.SelectedImage;
         var target = new NormalizedViewport(new NormalizedPoint(0.7, 0.3), 2);
         vm.ApplyManualZoom(viewer.GetFitZoomLevel() * target.ZoomRelativeToFit);
@@ -61,9 +63,9 @@ public sealed class RawJpegOneCaptureHeadlessTests
         vm.SwitchCaptureMemberCommand.Execute(null);
         vm.SwitchCaptureMemberCommand.Execute(null);
 
+        await PumpUntilAsync(() => ReferenceEquals(vm.SelectedImage, jpeg));
+        await PumpUntilAsync(() => viewer.Source != null);
         await PumpUntilAsync(() =>
-            ReferenceEquals(vm.SelectedImage, jpeg) &&
-            viewer.Source != null &&
             Math.Abs(viewer.CaptureNormalizedViewport().ZoomRelativeToFit -
                 before.ZoomRelativeToFit) < 0.001);
         var after = viewer.CaptureNormalizedViewport();
@@ -84,6 +86,7 @@ public sealed class RawJpegOneCaptureHeadlessTests
         var viewer = window.FindControl<DevelopViewerPane>(
             "DevelopViewerPane")!.Viewer;
         await PumpUntilAsync(() => viewer.Source != null);
+        await PumpUntilAsync(() => viewer.GetFitZoomLevel() > 1);
         var plain = vm.Browse.AllImages.Single(image =>
             image.FileName == "plain.jpg");
         var target = new NormalizedViewport(new NormalizedPoint(0.7, 0.3), 2);

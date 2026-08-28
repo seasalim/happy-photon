@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Media.Imaging;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -44,6 +45,7 @@ internal sealed partial class RenderOutcome : IDisposable
     public BaseImageLoadFailure Failure { get; init; }
     public bool IsBaseStale { get; init; }
     public bool Promotable { get; init; }
+    public PixelSize? OriginalViewPixelSize { get; init; }
     public OutcomeFieldMode BitmapMode { get; init; }
     public OutcomeFieldMode HistogramMode { get; init; }
     public HistogramData? Histogram { get; init; }
@@ -369,6 +371,8 @@ public partial class MainWindowViewModel
 
     private void ApplyOutcomeFacts(RenderOutcome outcome)
     {
+        if (outcome.OriginalViewPixelSize is { } originalViewPixelSize)
+            OriginalViewPixelSize = originalViewPixelSize;
         if (outcome.HistogramMode != OutcomeFieldMode.Preserve)
         {
             var nextHistogram = outcome.HistogramMode == OutcomeFieldMode.Clear
