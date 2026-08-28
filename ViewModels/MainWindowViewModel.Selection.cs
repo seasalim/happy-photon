@@ -9,6 +9,8 @@ public partial class MainWindowViewModel
 {
     partial void OnSelectedImageChanged(ImageFile? oldValue, ImageFile? newValue)
     {
+        KeepCaptureMemberViewportOnlyFor(newValue);
+        NotifyCaptureMemberStateChanged();
         ResetBeforeAfterRender();
         if (!IsCompareMode)
         {
@@ -144,7 +146,7 @@ public partial class MainWindowViewModel
             UpdateSelectedCount();
             return;
         }
-        if (!Browse.ContainsVisible(SelectedImage))
+        if (!Browse.ContainsVisible(VisibleRepresentative(SelectedImage)))
         {
             SelectedImage = Browse.FirstVisible();
         }
@@ -160,17 +162,17 @@ public partial class MainWindowViewModel
     {
         if (IsCompareMode)
         {
-            return new ActionTargetResolution([], false);
+            return new ActionTargetResolution([], [], false);
         }
 
         if (IsFullScreenMode)
         {
-            return new ActionTargetResolution([], false);
+            return new ActionTargetResolution([], [], false);
         }
 
         if (IsExportMode)
         {
-            return new ActionTargetResolution([], false);
+            return new ActionTargetResolution([], [], false);
         }
 
         if (IsBrowseMode)
@@ -181,6 +183,7 @@ public partial class MainWindowViewModel
                 return new ActionTargetResolution(
                     selected.Where(image =>
                         !IsDeleteTargetClaimed(image.FilePath)).ToList(),
+                    [],
                     true);
             }
         }
@@ -189,7 +192,7 @@ public partial class MainWindowViewModel
             IsDeleteTargetClaimed(SelectedImage.FilePath)
             ? []
             : [SelectedImage];
-        return new ActionTargetResolution(targets, false);
+        return new ActionTargetResolution(targets, [], false);
     }
 
     private ActionTargetResolution ResolveAssessmentTargets()
@@ -200,14 +203,22 @@ public partial class MainWindowViewModel
                 GetCompareMembers().Contains(SelectedImage)
                 ? [SelectedImage]
                 : [];
-            return new ActionTargetResolution(targets, false);
+            return new ActionTargetResolution(
+                targets,
+                ResolveAssessmentCompanions(targets),
+                false);
         }
 
-        return ResolveActionTargets();
+        var resolution = ResolveActionTargets();
+        return resolution with
+        {
+            Companions = ResolveAssessmentCompanions(resolution.Targets)
+        };
     }
 
     private readonly record struct ActionTargetResolution(
         IReadOnlyList<ImageFile> Targets,
+        IReadOnlyList<ImageFile> Companions,
         bool IsBrowseSelection);
 
     private void UpdateCanReset()

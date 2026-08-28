@@ -432,7 +432,9 @@ visible, and resuming the pump re-arms the activity sampler.
 - Browse derives the same basename RAW+JPEG groups from distinct physical paths.
   Pairing hides every version of the RAW path and badges every JPEG version; visibility,
   file-type filtering, navigation, selection, counts, bursts, and thumbnail scheduling
-  then operate on the capture tiles. Deletion recomputes the path-derived groups.
+  then operate on the capture tiles. Pair assessments fan out to both primary catalog
+  rows, while Develop may transiently display the hidden RAW through the same per-file
+  preview path. Deletion recomputes the path-derived groups.
 
 Worker continuations post back to the UI context (the pump is started from the UI
 thread), so `ImageFile.Thumbnail` assignments — and the resulting grid updates — happen

@@ -171,6 +171,11 @@ Bursts is turned off.
 
 The **J+R** footer toggle starts off, showing RAW and JPEG files separately. Turn it on
 to combine same-folder, same-name files into one JPEG tile; the choice is remembered.
+Rating, flagging, or labeling that tile assesses both primary files. In Develop, press
+`R` or use **J|R** beside Before/After to switch instantly between the camera JPEG and
+RAW while keeping the zoomed viewport. The switch changes files, so it clears undo
+history; moving to another capture returns to its JPEG. Turn pairing off to browse,
+assess, or export the physical files separately.
 
 Online-only photographs stay visible with a cloud badge or placeholder. The folder
 status reports how many will not be downloaded automatically. To work with one
@@ -565,6 +570,7 @@ remains where it started and unchanged.
 | `C` | Toggle crop mode |
 | `B` / `\` | Toggle before/after in Develop or fullscreen |
 | `Y` | Show Before and After side by side in Develop |
+| `R` | Switch between a paired JPEG and RAW in Develop |
 | `Ctrl+B` | Toggle color assessment mode in Develop or fullscreen |
 | `J` | Toggle clipping overlay in Develop |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
@@ -579,11 +585,12 @@ remains where it started and unchanged.
 
 The review gestures deliberately keep distinct scopes: `B` or `\` shows before/after in
 Develop or fullscreen, `Ctrl+B` toggles the Develop assessment surround, `C` owns crop
-in Develop, `Y` opens the synchronized Before | After split, `J` owns clipping there,
+in Develop, `Y` opens the synchronized Before | After split, `R` switches a paired
+capture's representation, `J` owns clipping there,
 and holding the left mouse button invokes the loupe
 below 1:1 in Develop, fullscreen, or Compare. Compare has no keyboard-only entry; its
-visible checked toggle teaches the 2–4-photo requirement. Future representation
-and version gestures must extend this same catalog without colliding with these keys.
+visible checked toggle teaches the 2–4-photo requirement. Future version gestures
+must extend this same catalog without colliding with these keys.
 
 Use the `?` button in the title bar to open **Help & About**. The complete
 shortcut reference is selected by default, with build and project information

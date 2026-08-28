@@ -96,18 +96,22 @@ public partial class MainWindowViewModel
             {
                 continue;
             }
-            if (image.CatalogId == 0)
-                image.CatalogId = adoption.Snapshot.ImageId;
-            if (adoption.AdoptedAxes.HasFlag(AssessmentAxes.Rating))
-                image.Rating = adoption.Snapshot.Rating;
-            if (adoption.AdoptedAxes.HasFlag(AssessmentAxes.Flag))
-                image.Flag = adoption.Snapshot.Flag;
-            if (adoption.AdoptedAxes.HasFlag(AssessmentAxes.Label))
-                image.ColorLabel = adoption.Snapshot.ColorLabel;
-            ApplyAssessmentSnapshot(image, adoption.Snapshot);
+            ApplyXmpAdoption(image, adoption);
         }
         if (result.Adoptions.Count > 0) Browse.RefreshFilters();
         ReportXmpReconcileIssues(result.Reports);
+    }
+
+    internal static void ApplyXmpAdoption(
+        ImageFile image,
+        XmpReconcileAdoption adoption)
+    {
+        if (image.CatalogId == 0)
+            image.CatalogId = adoption.Snapshot.ImageId;
+        ApplyAssessmentSnapshot(
+            image,
+            adoption.Snapshot,
+            adoption.AdoptedAxes);
     }
 
     internal void ReportXmpReconcileIssues(IReadOnlyList<string> reports)
@@ -216,8 +220,15 @@ public partial class MainWindowViewModel
 
     private static void ApplyAssessmentSnapshot(
         ImageFile image,
-        AssessmentSnapshot snapshot)
+        AssessmentSnapshot snapshot,
+        AssessmentAxes appliedAxes = AssessmentAxes.All)
     {
+        if (appliedAxes.HasFlag(AssessmentAxes.Flag))
+            image.Flag = snapshot.Flag;
+        if (appliedAxes.HasFlag(AssessmentAxes.Rating))
+            image.Rating = snapshot.Rating;
+        if (appliedAxes.HasFlag(AssessmentAxes.Label))
+            image.ColorLabel = snapshot.ColorLabel;
         image.AssessmentRevision = snapshot.Revision;
         image.AssessedUtc = snapshot.AssessedUtc;
         image.PendingAssessmentAxes = snapshot.PendingAxes;

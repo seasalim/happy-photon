@@ -38,6 +38,7 @@
         <KeyBinding Gesture="Oem5" Command="{Binding ToggleBeforeAfterCommand}"/>
         <KeyBinding Gesture="OemBackslash" Command="{Binding ToggleBeforeAfterCommand}"/>
         <KeyBinding Gesture="Y" Command="{Binding ToggleBeforeAfterSplitCommand}"/>
+        <KeyBinding Gesture="R" Command="{Binding SwitchCaptureMemberCommand}"/>
         <KeyBinding Gesture="W" Command="{Binding ToggleWhiteBalancePickerCommand}"/>
         <KeyBinding Gesture="J" Command="{Binding ToggleClippingOverlayCommand}"/>
         <KeyBinding Gesture="P" Command="{Binding TogglePickedImageCommand}"/>

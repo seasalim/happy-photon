@@ -44,6 +44,7 @@
     <Compile Include="..\Tests\ManualFolderRefreshViewTests.cs" Link="ManualFolderRefreshViewTests.cs" />
     <Compile Include="..\Tests\PreviewBitmapLifetimeTests.cs" Link="PreviewBitmapLifetimeTests.cs" />
     <Compile Include="..\Tests\PreviewPlaceholderTests.cs" Link="PreviewPlaceholderTests.cs" />
+    <Compile Include="..\Tests\PreviewPairTestLoaders.cs" Link="PreviewPairTestLoaders.cs" />
     <Compile Include="..\Tests\PreviewCacheOutcomeOrderingTests.cs" Link="PreviewCacheOutcomeOrderingTests.cs" />
     <Compile Include="..\Tests\PromotionOutcomeTests.cs" Link="PromotionOutcomeTests.cs" />
     <Compile Include="..\Tests\RawHighlightReconstructionUiTests.cs" Link="RawHighlightReconstructionUiTests.cs" />

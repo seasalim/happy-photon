@@ -208,8 +208,9 @@ public partial class MainWindowViewModel
             ExportCaptures.Add(capture);
         }
 
+        var activeImage = VisibleRepresentative(SelectedImage);
         ActiveExportCapture = ExportCaptures.FirstOrDefault(capture =>
-            ReferenceEquals(capture.Image, SelectedImage)) ?? ExportCaptures.FirstOrDefault();
+            ReferenceEquals(capture.Image, activeImage)) ?? ExportCaptures.FirstOrDefault();
         if (!_exportSettingsObserved)
         {
             ExportSettings.PropertyChanged += OnWorkspaceExportSettingsChanged;

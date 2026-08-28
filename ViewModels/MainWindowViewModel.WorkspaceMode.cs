@@ -137,6 +137,8 @@ public partial class MainWindowViewModel
         var isDevelopMode = value == WorkspaceMode.Develop;
         var isPreviewWorkspace = value is WorkspaceMode.Develop or
             WorkspaceMode.Export;
+        if (!isDevelopMode)
+            SelectedImage = VisibleRepresentative(SelectedImage);
         UpdateThumbnailPumpAdmission();
         if (!isDevelopMode)
         {
@@ -157,6 +159,7 @@ public partial class MainWindowViewModel
         ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
         ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
         ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
+        NotifyCaptureMemberStateChanged();
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         NotifyClippingCommandState();
@@ -240,6 +243,7 @@ public partial class MainWindowViewModel
         ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
         ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
         ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
+        NotifyCaptureMemberStateChanged();
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         NotifyClippingCommandState();

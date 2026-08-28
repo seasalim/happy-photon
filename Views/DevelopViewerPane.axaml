@@ -136,6 +136,14 @@
                               FontSize="10" Padding="8,3" BorderThickness="0">
                     <TextBlock Text="Y|Y" FontFamily="{StaticResource FontLabel}" FontSize="10"/>
                 </ToggleButton>
+                <ToggleButton x:Name="RawJpegSwitchButton"
+                              IsChecked="{Binding IsViewingPairedRaw, Mode=OneWay}"
+                              Command="{Binding SwitchCaptureMemberCommand}"
+                              IsEnabled="{Binding CanSwitchCaptureMember}"
+                              ToolTip.Tip="Switch JPEG / RAW (R)"
+                              AutomationProperties.Name="Switch JPEG and RAW"
+                              Content="J|R" FontFamily="{StaticResource FontLabel}"
+                              FontSize="10" Padding="8,3" BorderThickness="0"/>
                 <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}"
                            Margin="4,0" IsVisible="{Binding IsCropMode}"/>
                 <StackPanel Orientation="Horizontal" Spacing="4"

@@ -301,7 +301,9 @@ public partial class MainWindowViewModel
         ImageFlag flag,
         bool toggleUniform = false)
     {
-        var targets = ResolveAssessmentTargets().Targets;
+        var resolution = ResolveAssessmentTargets();
+        var targets = resolution.Targets;
+        var participants = targets.Concat(resolution.Companions).ToArray();
         if (targets.Count == 0) return;
         var actedOnImage = targets.Count == 1 ? targets[0] : null;
         var previousFlag = actedOnImage?.Flag ?? ImageFlag.Unflagged;
@@ -322,20 +324,22 @@ public partial class MainWindowViewModel
         }
 
         var selectedImage = SelectedImage;
+        var representative = VisibleRepresentative(selectedImage);
         var replacement = selectedImage != null &&
                           targets.Contains(selectedImage) &&
-                          !Browse.MatchesCurrentFilters(selectedImage, next)
-            ? Browse.ReplacementAfterRemoval(selectedImage)
+                          representative != null &&
+                          !Browse.MatchesCurrentFilters(representative, next)
+            ? Browse.ReplacementAfterRemoval(representative)
             : null;
 
         try
         {
-            foreach (var target in targets)
+            foreach (var target in participants)
             {
                 await target.EnsureCatalogIdAsync(_catalogService);
             }
 
-            await CommitAssessmentAsync(targets.Select(target =>
+            await CommitAssessmentAsync(participants.Select(target =>
                 new AssessmentMutation(
                     target.CatalogId, AssessmentAxes.Flag, Flag: next)).ToArray());
         }
@@ -345,11 +349,6 @@ public partial class MainWindowViewModel
                 $"Flag update failed: {ex.Message}");
             ShowTransientStatus("Unable to update flags");
             return;
-        }
-
-        foreach (var target in targets)
-        {
-            target.Flag = next;
         }
 
         Browse.RefreshFilters();
@@ -392,7 +391,9 @@ public partial class MainWindowViewModel
         if (IsFullScreenMode) return;
 
         rating = Math.Clamp(rating, 0, 5);
-        var targets = ResolveAssessmentTargets().Targets;
+        var resolution = ResolveAssessmentTargets();
+        var targets = resolution.Targets;
+        var participants = targets.Concat(resolution.Companions).ToArray();
         if (targets.Count == 0) return;
         var actedOnImage = targets.Count == 1 ? targets[0] : null;
         var previousRating = actedOnImage?.Rating ?? 0;
@@ -408,20 +409,22 @@ public partial class MainWindowViewModel
         }
 
         var selectedImage = SelectedImage;
+        var representative = VisibleRepresentative(selectedImage);
         var replacement = selectedImage != null &&
                           targets.Contains(selectedImage) &&
-                          !Browse.MatchesCurrentFilters(selectedImage, rating)
-            ? Browse.ReplacementAfterRemoval(selectedImage)
+                          representative != null &&
+                          !Browse.MatchesCurrentFilters(representative, rating)
+            ? Browse.ReplacementAfterRemoval(representative)
             : null;
 
         try
         {
-            foreach (var target in targets)
+            foreach (var target in participants)
             {
                 await target.EnsureCatalogIdAsync(_catalogService);
             }
 
-            await CommitAssessmentAsync(targets.Select(target =>
+            await CommitAssessmentAsync(participants.Select(target =>
                 new AssessmentMutation(
                     target.CatalogId, AssessmentAxes.Rating,
                     Rating: rating)).ToArray());
@@ -432,11 +435,6 @@ public partial class MainWindowViewModel
                 $"Rating update failed: {ex.Message}");
             ShowTransientStatus("Unable to update ratings");
             return;
-        }
-
-        foreach (var target in targets)
-        {
-            target.Rating = rating;
         }
 
         Browse.RefreshFilters();

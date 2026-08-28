@@ -59,6 +59,35 @@ public sealed class XmpCatalogTests : IDisposable
     }
 
     [Fact]
+    public void ViewModelReconcile_UpdatesOnlyAdoptedAxesInMemory()
+    {
+        var image = new ImageFile(_fx.Path("photo.jpg"))
+        {
+            Rating = 4,
+            Flag = ImageFlag.Picked
+        };
+        var snapshot = new AssessmentSnapshot(
+            42,
+            image.FilePath,
+            ImageFlag.Unflagged,
+            1,
+            ColorLabel.Blue,
+            3,
+            DateTime.UtcNow,
+            AssessmentAxes.Rating);
+
+        MainWindowViewModel.ApplyXmpAdoption(
+            image,
+            new XmpReconcileAdoption(snapshot, AssessmentAxes.Label));
+
+        Assert.Equal(4, image.Rating);
+        Assert.Equal(ImageFlag.Picked, image.Flag);
+        Assert.Equal(ColorLabel.Blue, image.ColorLabel);
+        Assert.Equal(42, image.CatalogId);
+        Assert.Equal(3, image.AssessmentRevision);
+    }
+
+    [Fact]
     public async Task Reconcile_RegistersAndAdoptsImageMissingFromFreshCatalog()
     {
         using var catalog = await CreateCatalogAsync();

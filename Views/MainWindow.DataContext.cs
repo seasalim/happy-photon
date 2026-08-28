@@ -52,6 +52,20 @@ public partial class MainWindow
 
         vm.ZoomFitCommand = new RelayCommand(ZoomFit);
         vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(vm.ApplyFitZoom);
+        vm.CaptureDevelopViewport = () =>
+            _zoomPanControl?.CaptureNormalizedViewport();
+        vm.RestoreDevelopViewport = (target, viewport) => Dispatcher.UIThread.Post(() =>
+        {
+            if (!ReferenceEquals(DataContext, vm) ||
+                !ReferenceEquals(vm.SelectedImage, target) ||
+                !vm.IsDevelopPreviewSurfaceActive ||
+                _zoomPanControl is not { } control)
+                return;
+            var fit = control.GetFitZoomLevel();
+            if (viewport.ZoomRelativeToFit == 1) vm.ApplyFitZoom(fit);
+            else vm.ApplyManualZoom(fit * viewport.ZoomRelativeToFit);
+            control.ApplyNormalizedViewport(viewport);
+        }, DispatcherPriority.Loaded);
         vm.ConfirmExportOverwriteAsync = ConfirmExportOverwriteAsync;
         vm.ConfirmExportHydrationAsync = ConfirmExportHydrationAsync;
         vm.RequestCatalogImportAsync = async () =>

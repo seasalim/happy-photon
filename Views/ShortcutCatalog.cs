@@ -152,6 +152,8 @@ public static class ShortcutCatalog
                 [Develop("Toggle before/after", "BeforeAfterButton")]),
             new("Y", "Show Before and After side by side in Develop",
                 [Develop("Show Before and After side by side", "BeforeAfterSplitButton")]),
+            new("R", "Switch between the paired JPEG and RAW in Develop",
+                [Develop("Switch JPEG and RAW", "RawJpegSwitchButton")]),
             new("Ctrl+B", "Toggle color assessment mode in Develop or fullscreen",
                 [Develop("Toggle color assessment", "ColorAssessmentButton")]),
             new("C", "Toggle crop mode", [Develop("Toggle crop mode", "CropModeButton")]),

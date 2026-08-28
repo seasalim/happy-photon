@@ -11,7 +11,8 @@ public partial class MainWindowViewModel
         if (TryMoveWithinCompareSet(-1)) return;
         if (TryMoveWithinFullScreenSelection(-1)) return;
         if (TryMoveWithinExportSelection(-1)) return;
-        MoveFocusAndSelection(Browse.PreviousVisible(SelectedImage));
+        MoveFocusAndSelection(Browse.PreviousVisible(
+            VisibleRepresentative(SelectedImage)));
     }
 
     [RelayCommand(CanExecute = nameof(CanSelectNextImage))]
@@ -20,7 +21,8 @@ public partial class MainWindowViewModel
         if (TryMoveWithinCompareSet(1)) return;
         if (TryMoveWithinFullScreenSelection(1)) return;
         if (TryMoveWithinExportSelection(1)) return;
-        MoveFocusAndSelection(Browse.NextVisible(SelectedImage));
+        MoveFocusAndSelection(Browse.NextVisible(
+            VisibleRepresentative(SelectedImage)));
     }
 
     private bool CanSelectPreviousImage() => NavigationPosition().Index > 0;
@@ -38,7 +40,10 @@ public partial class MainWindowViewModel
             : IsFullScreenSelectionRestricted
                 ? GetFullScreenSelectionMembers()
                 : Browse.VisibleImages;
-        return (SelectedImage == null ? -1 : images.IndexOf(SelectedImage), images.Count);
+        var active = IsCompareMode || IsFullScreenSelectionRestricted
+            ? SelectedImage
+            : VisibleRepresentative(SelectedImage);
+        return (active == null ? -1 : images.IndexOf(active), images.Count);
     }
 
     private void NotifyImageNavigationCommandState()
@@ -54,7 +59,8 @@ public partial class MainWindowViewModel
     {
         if (TryMoveWithinCompareRow(-1)) return;
         if (TryMoveWithinFullScreenSelection(-itemsPerRow)) return;
-        MoveFocusAndSelection(Browse.MoveVisible(SelectedImage, -itemsPerRow));
+        MoveFocusAndSelection(Browse.MoveVisible(
+            VisibleRepresentative(SelectedImage), -itemsPerRow));
     }
 
     /// <summary>
@@ -64,7 +70,8 @@ public partial class MainWindowViewModel
     {
         if (TryMoveWithinCompareRow(1)) return;
         if (TryMoveWithinFullScreenSelection(itemsPerRow)) return;
-        MoveFocusAndSelection(Browse.MoveVisible(SelectedImage, itemsPerRow));
+        MoveFocusAndSelection(Browse.MoveVisible(
+            VisibleRepresentative(SelectedImage), itemsPerRow));
     }
 
     public void SelectFirstImage()

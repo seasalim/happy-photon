@@ -48,7 +48,9 @@ public partial class MainWindowViewModel
     {
         if (IsFullScreenMode || !Enum.IsDefined(colorLabel)) return;
 
-        var targets = ResolveAssessmentTargets().Targets;
+        var resolution = ResolveAssessmentTargets();
+        var targets = resolution.Targets;
+        var participants = targets.Concat(resolution.Companions).ToArray();
         if (targets.Count == 0) return;
         var actedOnImage = targets.Count == 1 ? targets[0] : null;
         var previousColorLabel =
@@ -68,20 +70,22 @@ public partial class MainWindowViewModel
             return;
         }
         var selectedImage = SelectedImage;
+        var representative = VisibleRepresentative(selectedImage);
         var replacement = selectedImage != null &&
                           targets.Contains(selectedImage) &&
-                          !Browse.MatchesCurrentFilters(selectedImage, next)
-            ? Browse.ReplacementAfterRemoval(selectedImage)
+                          representative != null &&
+                          !Browse.MatchesCurrentFilters(representative, next)
+            ? Browse.ReplacementAfterRemoval(representative)
             : null;
 
         try
         {
-            foreach (var target in targets)
+            foreach (var target in participants)
             {
                 await target.EnsureCatalogIdAsync(_catalogService);
             }
 
-            await CommitAssessmentAsync(targets.Select(target =>
+            await CommitAssessmentAsync(participants.Select(target =>
                 new AssessmentMutation(
                     target.CatalogId, AssessmentAxes.Label,
                     ColorLabel: next)).ToArray());
@@ -92,11 +96,6 @@ public partial class MainWindowViewModel
                 $"Color label update failed: {ex.Message}");
             ShowTransientStatus("Unable to update color labels");
             return;
-        }
-
-        foreach (var target in targets)
-        {
-            target.ColorLabel = next;
         }
 
         Browse.RefreshFilters();

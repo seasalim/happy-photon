@@ -147,9 +147,9 @@ public partial class MainWindowViewModel
     {
         using var previewActivity = BeginInitialPreviewActivity();
         _previewLoadingCts?.Cancel();
-        // Every entry load declares fit intent; a manual zoom during the load
-        // window flips it and then wins over the entry refit below.
-        IsZoomFitMode = true;
+        // Ordinary entry loads declare fit intent. A representation switch
+        // carries its viewport until the first accepted paint instead.
+        if (!PrepareCaptureMemberViewport(imageFile)) IsZoomFitMode = true;
         var requestCts = new CancellationTokenSource();
         _previewLoadingCts = requestCts;
         var ct = requestCts.Token;
@@ -201,11 +201,13 @@ public partial class MainWindowViewModel
                 var cached = await cachedTask;
                 if (cached != null && IsCurrentPreviewRequest(imageFile, requestCts))
                 {
-                    ApplyRenderOutcome(RenderOutcome.Cached(
+                    var cachedAccepted = ApplyRenderOutcome(RenderOutcome.Cached(
                         imageFile,
                         surfaceGeneration,
                         cached,
                         cachedIdentity));
+                    if (cachedAccepted)
+                        RestoreCaptureMemberViewportAfterPaint(imageFile);
                 }
                 cached?.Dispose();
             }
@@ -231,6 +233,7 @@ public partial class MainWindowViewModel
                 artifacts,
                 promotable: true));
             var painted = succeeded && accepted;
+            if (painted) RestoreCaptureMemberViewportAfterPaint(imageFile);
             if (painted && intent == PreviewSurfaceIntent.Edited)
             {
                 _lastAppliedEditSettings = imageFile.EditSettings.Clone();

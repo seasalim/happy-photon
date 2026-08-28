@@ -357,6 +357,7 @@ No UI for quality-dependent chroma subsampling — it is automatic and stays inv
 |-----|--------|-------|
 | `W` | Toggle WB eyedropper | Develop only |
 | `J` | Toggle clipping overlay | Develop only |
+| `R` | Switch between paired JPEG and RAW | Develop only |
 | `Ctrl+B` | Toggle color assessment mode | Develop/fullscreen |
 
 Shortcut registrations belong in

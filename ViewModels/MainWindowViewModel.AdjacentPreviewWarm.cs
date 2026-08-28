@@ -9,8 +9,14 @@ public partial class MainWindowViewModel
     private int _adjacentWarmDirection = 1;
     private void UpdateAdjacentWarmDirection(ImageFile? oldImage, ImageFile? newImage)
     {
-        var oldIndex = oldImage == null ? -1 : Browse.VisibleImages.IndexOf(oldImage);
-        var newIndex = newImage == null ? -1 : Browse.VisibleImages.IndexOf(newImage);
+        var oldRepresentative = VisibleRepresentative(oldImage);
+        var newRepresentative = VisibleRepresentative(newImage);
+        var oldIndex = oldRepresentative == null
+            ? -1
+            : Browse.VisibleImages.IndexOf(oldRepresentative);
+        var newIndex = newRepresentative == null
+            ? -1
+            : Browse.VisibleImages.IndexOf(newRepresentative);
         if (oldIndex >= 0 && newIndex >= 0 && oldIndex != newIndex)
             _adjacentWarmDirection = newIndex < oldIndex ? -1 : 1;
     }
@@ -18,7 +24,8 @@ public partial class MainWindowViewModel
     {
         CancelAdjacentPreviewWarm(invalidateWorker: false);
         if (!IsDevelopMode || IsFullScreenMode || SelectedImage == null) return;
-        var candidate = Browse.MoveVisible(SelectedImage, _adjacentWarmDirection);
+        var candidate = Browse.MoveVisible(
+            VisibleRepresentative(SelectedImage), _adjacentWarmDirection);
         if (candidate == null) return;
         var cancellation = new CancellationTokenSource();
         _adjacentWarmCts = cancellation;
@@ -38,7 +45,7 @@ public partial class MainWindowViewModel
                IsDevelopMode && !IsFullScreenMode)
         {
             var candidate = Browse.MoveVisible(
-                SelectedImage, _adjacentWarmDirection);
+                VisibleRepresentative(SelectedImage), _adjacentWarmDirection);
             if (candidate == null || ImageService.Previews.TryStartAdjacentWarm(
                     candidate, out var blockingWorker)) return;
             if (blockingWorker == null) return;

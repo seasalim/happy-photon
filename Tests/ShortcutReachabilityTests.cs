@@ -66,6 +66,9 @@ public sealed class ShortcutReachabilityTests
     [Fact]
     public void Claims_RejectMissingAmbiguousAndContainerDeclarations()
     {
+        var representationSwitch = ShortcutCatalog.Groups
+            .SelectMany(group => group.Entries)
+            .Single(entry => entry.Keys == "R");
         var missing = new ShortcutEntry("K", "Missing", []);
         var ambiguous = new ShortcutEntry("K", "Ambiguous",
         [
@@ -76,6 +79,9 @@ public sealed class ShortcutReachabilityTests
                 ShortcutExemption.DialogAffordance)
         ]);
 
+        Assert.Contains(representationSwitch.Reachability, claim =>
+            claim.Workspace == ShortcutWorkspace.Develop &&
+            claim.ControlName == "RawJpegSwitchButton");
         Assert.False(HasValidReachability(missing));
         Assert.False(HasValidReachability(ambiguous));
         Assert.False(IsValidControlTarget(new UserControl()));
