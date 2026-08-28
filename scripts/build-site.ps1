@@ -360,7 +360,7 @@ foreach ($route in $routes.GetEnumerator()) {
         "index.html" {
             [ordered]@{
                 Title = "Happy Photon — Photo Editing, Simplified"
-                Description = "A focused, open-source desktop workflow for browsing, non-destructively editing, and exporting JPEG and RAW photographs."
+                Description = "Photo editing, simplified: a focused, open-source desktop workflow for browsing, editing, and exporting JPEG and RAW photographs—easy for beginners, with a pro-grade wide-gamut pipeline underneath."
                 CanonicalUrl = $canonicalBase
             }
         }

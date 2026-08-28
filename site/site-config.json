@@ -29,7 +29,7 @@
     "linux": {
       "label": "Linux",
       "architecture": "x64",
-      "minimumOs": "Portable archive",
+      "minimumOs": "AppImage or portable archive",
       "status": "Public release archive verified"
     }
   }

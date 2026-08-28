@@ -32,7 +32,7 @@
         <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span><b>DEVELOP</b></div>
         <picture>
           <source srcset="{{BASE_PATH}}assets/images/develop-720.webp 720w, {{BASE_PATH}}assets/images/develop-1200.webp 1200w, {{BASE_PATH}}assets/images/develop-1800.webp 1800w" sizes="(max-width: 900px) 94vw, 1240px" type="image/webp">
-          <img src="{{BASE_PATH}}assets/images/develop-1200.webp" width="1200" height="715" alt="Happy Photon Develop showing a photograph, presets, histogram, tone curve, and focused adjustment controls">
+          <img src="{{BASE_PATH}}assets/images/develop-1200.webp" width="1200" height="686" alt="Happy Photon Develop showing a photograph, presets, histogram, tone curve, and focused adjustment controls">
         </picture>
       </figure>
     </section>
@@ -54,7 +54,7 @@
       </div>
       <ol class="pro-pipeline">
         <li><span>01</span><b>Characterize</b><p>Measured as-shot white balance, built-in camera characterization, and DCP profiles when available.</p></li>
-        <li><span>02</span><b>Form the image</b><p>Highlight reconstruction and a scene-referred AgX tone engine shape RAW data without a baked-in picture style.</p></li>
+        <li><span>02</span><b>Form the image</b><p>Lens corrections, highlight reconstruction, and a scene-referred AgX tone engine shape RAW data without a baked-in picture style.</p></li>
         <li><span>03</span><b>Shape color</b><p>White balance, color mixer, saturation, and skin-aware vibrance operate through a wide-gamut perceptual color stage.</p></li>
         <li><span>04</span><b>Finish detail</b><p>Capture sharpening, noise reduction, output sharpening, vignette, and deterministic grain resolve at the right stage.</p></li>
         <li><span>05</span><b>Deliver</b><p>The result converts to an embedded sRGB or Display P3 profile and carries normalized metadata under your control.</p></li>
@@ -81,12 +81,12 @@
           <article class="pro-card">
             <span class="pro-card-index">DETAIL</span>
             <h3>Separate capture from delivery</h3>
-            <p>Apply source-aware capture sharpening, chroma noise reduction, and RAW noise reduction. Choose independent Screen or Print sharpening when you export.</p>
+            <p>Apply source-aware capture sharpening, wavelet luminance noise reduction, chroma noise reduction, and RAW noise reduction. Choose independent Screen or Print sharpening when you export.</p>
           </article>
           <article class="pro-card">
             <span class="pro-card-index">FINISH</span>
             <h3>Make the frame feel complete</h3>
-            <p>Crop, rotate, and straighten the horizon. Add a controlled vignette or deterministic monochrome grain that stays stable from preview to finished output.</p>
+            <p>Crop, rotate, straighten the horizon, and correct vertical and horizontal perspective against an alignment grid. Add a controlled vignette or deterministic monochrome grain that stays stable from preview to finished output.</p>
           </article>
         </div>
       </div>
@@ -96,13 +96,15 @@
       <div class="pro-scope-copy">
         <p class="eyebrow">MEASURE WHAT YOU SEE</p>
         <h2 id="scope-title">Scopes for decisions, <span>not decoration.</span></h2>
-        <p>Read the display histogram, luminance waveform, or RAW sensor histogram. Toggle highlight and shadow clipping, inspect before and after, zoom in device pixels, or enter Assess mode for an invariant mid-gray surround and white reference.</p>
+        <p>Read the display histogram, luminance waveform, or RAW sensor histogram. Toggle highlight and shadow clipping, inspect before and after in a synchronized split, press and hold for a 1:1 loupe, zoom in device pixels, or enter Assess mode for an invariant mid-gray surround and white reference.</p>
         <ul class="pro-chip-list" aria-label="Available viewing tools">
           <li>Display histogram</li>
           <li>Luminance waveform</li>
           <li>RAW sensor histogram</li>
           <li>Clipping overlays</li>
-          <li>Before / after</li>
+          <li>Before / after split</li>
+          <li>1:1 loupe</li>
+          <li>Side-by-side compare</li>
           <li>Assess mode</li>
         </ul>
       </div>
@@ -110,7 +112,7 @@
         <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span><b>ASSESS</b></div>
         <picture>
           <source srcset="{{BASE_PATH}}assets/images/assess-720.webp 720w, {{BASE_PATH}}assets/images/assess-1200.webp 1200w, {{BASE_PATH}}assets/images/assess-1800.webp 1800w" sizes="(max-width: 980px) 94vw, 54vw" type="image/webp">
-          <img src="{{BASE_PATH}}assets/images/assess-1200.webp" width="1200" height="715" loading="lazy" alt="Happy Photon Assess mode showing a photograph against a stable mid-gray surround and white reference band">
+          <img src="{{BASE_PATH}}assets/images/assess-1200.webp" width="1200" height="700" loading="lazy" alt="Happy Photon Assess mode showing a bear photograph against a stable mid-gray surround and white reference border">
         </picture>
       </figure>
     </section>
@@ -120,12 +122,12 @@
         <div>
           <p class="eyebrow">RAW IS A FIRST-CLASS SOURCE</p>
           <h2 id="raw-title">Camera data gets a <span>photographic path.</span></h2>
-          <p>Happy Photon starts from the sensor and builds the image deliberately: measured as-shot white balance, highlight reconstruction, camera characterization, optional DCP profiles, and true monochrome RAW handling.</p>
+          <p>Happy Photon starts from the sensor and builds the image deliberately: measured as-shot white balance, highlight reconstruction, camera characterization, optional DCP profiles, database and embedded lens corrections, and true monochrome RAW handling.</p>
         </div>
         <ul class="pro-feature-list">
           <li><b>Scene-referred rendering</b><span>AgX maps RAW scene values into a display-ready photograph.</span></li>
           <li><b>Camera profiles</b><span>Use discovered DCP profiles when a compatible profile is available.</span></li>
-          <li><b>Embedded lens data</b><span>Apply qualified DNG and Fujifilm RAF lens corrections where supported.</span></li>
+          <li><b>Lens corrections</b><span>Apply embedded DNG and Fujifilm RAF prescriptions or an exact camera and lens match from the bundled Lensfun database.</span></li>
           <li><b>True monochrome</b><span>Keep monochrome sensor data neutral through preview and export.</span></li>
         </ul>
       </div>

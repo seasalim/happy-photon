@@ -21,7 +21,7 @@
         <dl class="guide-facts" aria-label="Linux requirements">
           <div><dt>System</dt><dd>Linux desktop</dd></div>
           <div><dt>Architecture</dt><dd>x64</dd></div>
-          <div><dt>Package</dt><dd>Portable archive</dd></div>
+          <div><dt>Package</dt><dd>AppImage or portable archive</dd></div>
         </dl>
       </div>
     </section>
@@ -52,22 +52,22 @@
 
         <section id="install" aria-labelledby="install-title">
           <p class="eyebrow">INSTALL ON LINUX</p>
-          <h2 id="install-title">Run the portable x64 release</h2>
+          <h2 id="install-title">Run the x64 AppImage</h2>
           <ol class="numbered-steps">
-            <li><span>01</span><div><h3>Download the Linux archive</h3><p>Choose the current <code>linux-x64</code> archive from the verified GitHub release linked on the download page.</p></div></li>
-            <li><span>02</span><div><h3>Verify and extract it</h3><p>Compare the archive with <code>SHA256SUMS.txt</code>, then extract it to a folder you control.</p></div></li>
-            <li><span>03</span><div><h3>Run Happy Photon</h3><p>Launch the <code>HappyPhoton</code> executable and choose an existing folder of photographs. The release is portable rather than a native distribution package.</p></div></li>
+            <li><span>01</span><div><h3>Download the AppImage</h3><p>Choose the current x86_64 AppImage from the verified GitHub release linked on the download page, or the <code>linux-x64</code> archive if you prefer a plain folder.</p></div></li>
+            <li><span>02</span><div><h3>Verify and make it executable</h3><p>Compare the file with <code>SHA256SUMS.txt</code>, then mark the AppImage executable with <code>chmod +x</code>, or extract the archive to a folder you control.</p></div></li>
+            <li><span>03</span><div><h3>Run Happy Photon</h3><p>Launch the AppImage, or the <code>HappyPhoton</code> executable from the archive, and choose an existing folder of photographs. The AppImage runtime is statically linked, so no <code>libfuse2</code> package is needed; on a system without FUSE, run it with <code>--appimage-extract-and-run</code>.</p></div></li>
           </ol>
-          <aside class="notice-panel"><strong>Current packaging boundary.</strong><p>The initial Linux release does not provide native package-manager or desktop integration. The project publishes one verified x64 portable archive and invites specific compatibility reports.</p></aside>
+          <aside class="notice-panel"><strong>Current packaging boundary.</strong><p>Desktop integration is limited to the AppImage's own desktop entry and icon; there is no Flatpak or package-manager installation. The project invites specific compatibility reports.</p></aside>
         </section>
 
         <section id="workflow" aria-labelledby="workflow-guide-title">
           <p class="eyebrow">FOLDER TO EXPORT</p>
           <h2 id="workflow-guide-title">Finish a shoot in three decisions</h2>
           <div class="guide-step-grid">
-            <article><span>01</span><h3>Choose the keepers</h3><p>Browse the folder in place, group bursts, and use picks, rejects, ratings, color labels, and filters to find the strongest frames.</p></article>
-            <article><span>02</span><h3>Develop the photographs</h3><p>Crop, rotate, and adjust light, white balance, color, contrast, and tone without modifying the source file.</p></article>
-            <article><span>03</span><h3>Export what you need</h3><p>Create new JPEG, PNG, or WebP files in high-resolution, web, or smaller output sizes.</p></article>
+            <article><span>01</span><h3>Choose the keepers</h3><p>Browse the folder in place, compare candidates side by side, group bursts, and use picks, rejects, ratings, color labels, and filters to find the strongest frames.</p></article>
+            <article><span>02</span><h3>Develop the photographs</h3><p>Crop, straighten, correct perspective, and adjust light, white balance, color, contrast, tone, and detail without modifying the source file.</p></article>
+            <article><span>03</span><h3>Export what you need</h3><p>Proof the output, then create new JPEG, PNG, WebP, or 16-bit TIFF files in high-resolution, web, or smaller output sizes.</p></article>
           </div>
           <p><a class="text-link" href="{{REPOSITORY_URL}}/blob/main/docs/WORKFLOW.md">Follow the complete Happy Photon workflow <span aria-hidden="true">↗</span></a></p>
         </section>
@@ -97,7 +97,7 @@
           <h2 id="questions-title">Before you download</h2>
           <div class="faq-list">
             <details><summary>Is Happy Photon open source?</summary><p>Yes. Happy Photon is licensed GPL-3.0-or-later. The repository includes source code, build instructions, dependency notices, and the contribution process.</p></details>
-            <details><summary>Does the Linux release install system packages?</summary><p>No. The initial release is a portable archive, not a native package-manager installation.</p></details>
+            <details><summary>Does the Linux release install system packages?</summary><p>No. The AppImage and the portable archive run from wherever you put them; nothing is installed through a package manager.</p></details>
             <details><summary>Can I report my camera or distribution?</summary><p>Yes. Use the project’s GitHub issue forms for a reproducible compatibility failure and Discussions for broader workflow or packaging feedback.</p></details>
           </div>
         </section>
