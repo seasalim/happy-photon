@@ -133,6 +133,12 @@ public partial class MainWindowViewModel
             return;
         }
 
+        if (IsBeforeAfterSplit)
+        {
+            CloseBeforeAfterSplit();
+            return;
+        }
+
         if (IsWhiteBalancePicking)
         {
             IsWhiteBalancePicking = false;

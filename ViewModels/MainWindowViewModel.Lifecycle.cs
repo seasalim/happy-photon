@@ -6,6 +6,7 @@ public partial class MainWindowViewModel
     {
         CloseRenderOutcomeChannel();
         await CancelAndDrainCompareAsync();
+        CloseBeforeAfterSplit();
         await CancelAndDrainExportJobAsync();
         DisposeBackgroundActivity();
         await DisposeUpdatesAsync();

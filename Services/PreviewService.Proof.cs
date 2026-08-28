@@ -30,16 +30,11 @@ public sealed partial class PreviewService
 
         var settingsSnapshot = settings.Clone();
         await imageFile.EnsureCatalogIdAsync(_catalogService);
-        var decode = BaseDecodeSettings.From(settingsSnapshot);
-        if (settingsSnapshot.RawProfile != null)
-        {
-            var resolution = await _dcpProfiles.ResolveAsync(
-                imageFile,
-                settingsSnapshot.RawProfile,
-                forceRefresh: true,
-                cancellationToken).ConfigureAwait(false);
-            decode = decode.WithProfileResolution(resolution);
-        }
+        var decode = await ResolveDecodeAsync(
+            imageFile,
+            settingsSnapshot,
+            cancellationToken,
+            forceProfileRefresh: true).ConfigureAwait(false);
 
         return await Task.Run(() =>
         {

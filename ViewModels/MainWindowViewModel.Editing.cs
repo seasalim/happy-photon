@@ -403,14 +403,26 @@ public partial class MainWindowViewModel
         ImageFile image,
         int rotation,
         double horizonRotation,
-        CropRegion? crop) => new()
+        CropRegion? crop)
     {
-        Rotation = rotation,
-        HorizonRotation = horizonRotation,
-        Crop = crop,
-        Geometry = image.EditSettings.Geometry?.Clone(),
+        var settings = image.EditSettings.Clone();
+        settings.Rotation = rotation;
+        settings.HorizonRotation = horizonRotation;
+        settings.Crop = crop;
+        return BuildOriginalRenderSettings(settings);
+    }
+
+    private static EditSettings BuildOriginalRenderSettings(
+        EditSettings settings) => new()
+    {
+        Rotation = settings.Rotation,
+        HorizonRotation = settings.HorizonRotation,
+        Crop = settings.Crop?.Clone(),
+        Geometry = settings.Geometry?.Clone(),
+        HlReconstruction = settings.HlReconstruction,
+        RawProfile = settings.RawProfile?.Clone(),
         Curve = new CurveData(),
-        Lens = image.EditSettings.Lens.Clone()
+        Lens = settings.Lens.Clone()
     };
 
     private bool CanUndoEdit() =>
@@ -420,7 +432,8 @@ public partial class MainWindowViewModel
         CanRedo && IsDevelopMode && !IsFullScreenMode && CanEditSelectedImage;
 
     private bool CanToggleBeforeAfter() =>
-        CanReset && CanEditSelectedImage && CanUseBeforeAfterWorkspace();
+        !IsBeforeAfterSplit && CanReset && CanEditSelectedImage &&
+        CanUseBeforeAfterWorkspace();
 
     private bool CanUseBeforeAfterWorkspace() =>
         IsDevelopMode || IsFullScreenMode;

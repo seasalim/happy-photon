@@ -28,16 +28,8 @@ public sealed partial class PreviewService
         }
 
         var snapshot = settings.Clone();
-        var decode = BaseDecodeSettings.From(snapshot);
-        if (snapshot.RawProfile != null)
-        {
-            var resolution = await _dcpProfiles.ResolveAsync(
-                imageFile,
-                snapshot.RawProfile,
-                forceRefresh: false,
-                cancellationToken).ConfigureAwait(false);
-            decode = decode.WithProfileResolution(resolution);
-        }
+        var decode = await ResolveDecodeAsync(
+            imageFile, snapshot, cancellationToken).ConfigureAwait(false);
 
         cancellationToken.ThrowIfCancellationRequested();
         PreviewBasePair? pair = null;

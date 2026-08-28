@@ -136,33 +136,41 @@ public sealed class ClippingOutcomeCorrelationTests : IDisposable
     {
         var catalog = await _fx.CreateCatalogAsync("original-overlay");
         _catalogs.Add(catalog);
+        var loader = new HlToneLoader();
         var vm = _fx.CreateViewModel(
             catalog,
-            new HlToneLoader(),
+            loader,
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally));
         vm.IsDevelopMode = true;
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        vm.SelectedImage = new ImageFile(_fx.Path("original-overlay.dng"));
+        var curve = new CurveData();
+        curve.MovePoint(1, 1, 0);
+        vm.SelectedImage = new ImageFile(_fx.Path("original-overlay.dng"))
+        {
+            EditSettings = new EditSettings
+            {
+                Curve = curve,
+                HlReconstruction = HlReconstructionMode.Blend
+            }
+        };
 
         try
         {
             await TestWaits.UntilAsync(() => vm.PreviewImage != null);
-            // Decode-changing edit: Blend renders white (near-zero floor clip).
-            vm.HlReconstruction = HlReconstructionMode.Blend;
-            await TestWaits.UntilAsync(() =>
-                vm.DisplayClippingStats is { LowAll: < 0.5 } ||
-                vm.DisplayClippingStats == null);
+            // The edited curve maps the white Blend base to black.
+            await TestWaits.UntilAsync(
+                () => vm.DisplayClippingStats is { LowAll: > 0.5 });
             vm.ToggleClippingOverlayCommand.Execute(null);
             await TestWaits.UntilAsync(() => vm.PreviewClippingMask != null);
 
-            // Before/After Original renders Clip → black (near-full floor clip).
+            // Before/After reverts the curve but keeps the Blend decode family.
             await vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
             await TestWaits.UntilAsync(() => vm.IsShowingOriginal);
             await TestWaits.UntilAsync(
-                () => vm.DisplayClippingStats is { LowAll: > 0.5 });
+                () => vm.DisplayClippingStats is { LowAll: < 0.5 });
 
             // Force a standalone overlay render while the original is shown.
             var renders = 0;
@@ -174,9 +182,12 @@ public sealed class ClippingOutcomeCorrelationTests : IDisposable
             await TestWaits.UntilAsync(() => vm.PreviewClippingMask != null);
             await Dispatcher.UIThread.InvokeAsync(() => { });
 
-            // The overlay must describe the painted original (black), not the
-            // edited surface the sliders still hold (white).
-            Assert.True(vm.DisplayClippingStats!.LowAll > 0.5);
+            // The overlay describes the painted original (white), not the
+            // curve-darkened edited surface, without changing decode family.
+            Assert.True(vm.DisplayClippingStats!.LowAll < 0.5);
+            Assert.All(loader.Decodes, decode => Assert.Equal(
+                HlReconstructionMode.Blend,
+                decode.HlReconstruction));
         }
         finally
         {
@@ -266,17 +277,17 @@ public sealed class ClippingOutcomeCorrelationTests : IDisposable
 
     private sealed class HlToneLoader : IBaseImageLoader
     {
+        public List<BaseDecodeSettings> Decodes { get; } = [];
         public bool CanLoad(ImageFile file) => true;
 
         public BaseImage LoadPreviewBase(
             ImageFile file,
             BaseDecodeSettings decode,
-            CancellationToken cancellationToken) =>
-            new(
-                new MagickImage(
-                    decode.HlReconstruction == HlReconstructionMode.Blend
-                        ? MagickColors.White
-                        : MagickColors.Black,
+            CancellationToken cancellationToken)
+        {
+            Decodes.Add(decode);
+            return new(
+                new MagickImage(MagickColors.White,
                     64,
                     48),
                 new BaseImageInfo(
@@ -292,6 +303,7 @@ public sealed class ClippingOutcomeCorrelationTests : IDisposable
                     1,
                     64,
                     48));
+        }
 
         BaseImageLoadOutcome IBaseImageLoader.LoadPreviewBaseWithOutcome(
             ImageFile file,

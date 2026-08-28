@@ -9,6 +9,7 @@ public partial class MainWindowViewModel
 {
     partial void OnSelectedImageChanged(ImageFile? oldValue, ImageFile? newValue)
     {
+        ResetBeforeAfterRender();
         if (!IsCompareMode)
         {
             UpdateAdjacentWarmDirection(oldValue, newValue);

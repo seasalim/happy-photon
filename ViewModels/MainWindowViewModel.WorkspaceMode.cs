@@ -129,6 +129,7 @@ public partial class MainWindowViewModel
 
     partial void OnWorkspaceModeChanged(WorkspaceMode value)
     {
+        if (value != WorkspaceMode.Develop) CloseBeforeAfterSplit();
         if (value != WorkspaceMode.Browse) CloseCompare();
         // The compare gate reads the workspace too, so it needs the same re-notify.
         NotifyCompareGateChanged();
@@ -155,6 +156,7 @@ public partial class MainWindowViewModel
         NotifyWhiteBalanceCommandState();
         ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
         ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
+        ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         NotifyClippingCommandState();
@@ -215,6 +217,7 @@ public partial class MainWindowViewModel
 
     partial void OnIsFullScreenModeChanged(bool value)
     {
+        if (value) CloseBeforeAfterSplit();
         UpdateThumbnailPumpAdmission();
         if (value) CancelAdjacentPreviewWarm(true, dropRetained: true);
         CancelRestingPreview(clearParent: false);
@@ -236,6 +239,7 @@ public partial class MainWindowViewModel
         NotifyWhiteBalanceCommandState();
         ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
         ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
+        ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         NotifyClippingCommandState();

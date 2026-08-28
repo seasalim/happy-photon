@@ -35,6 +35,9 @@
         <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}"/>
         <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleColorAssessmentModeCommand}"/>
         <KeyBinding Gesture="B" Command="{Binding ToggleBeforeAfterCommand}"/>
+        <KeyBinding Gesture="Oem5" Command="{Binding ToggleBeforeAfterCommand}"/>
+        <KeyBinding Gesture="OemBackslash" Command="{Binding ToggleBeforeAfterCommand}"/>
+        <KeyBinding Gesture="Y" Command="{Binding ToggleBeforeAfterSplitCommand}"/>
         <KeyBinding Gesture="W" Command="{Binding ToggleWhiteBalancePickerCommand}"/>
         <KeyBinding Gesture="J" Command="{Binding ToggleClippingOverlayCommand}"/>
         <KeyBinding Gesture="P" Command="{Binding TogglePickedImageCommand}"/>

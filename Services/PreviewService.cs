@@ -32,6 +32,7 @@ public sealed partial class PreviewService : IAsyncDisposable
     private long _latestSurfaceGeneration;
     private long _baseRefreshGeneration;
     private long _restingSerial;
+    private long _sideSurfaceSerial;
     private int _activeRefreshRenders;
     private int _activeRestingRenders;
     private int _disposed;
@@ -50,6 +51,7 @@ public sealed partial class PreviewService : IAsyncDisposable
     internal Func<Task>? RefreshRenderGateAsync { get; set; }
     internal Func<Task>? RefreshReadyGateAsync { get; set; }
     internal Func<Task>? WhiteBalanceSampleGateAsync { get; set; }
+    internal Func<Task>? SideSurfaceRenderGateAsync { get; set; }
     internal Func<Task>? CachedPreviewGateAsync { get; set; }
     internal Func<Task>? SourceWorkGateAsync { get; set; }
     internal Action<string>? RestingStageStarted { get; set; }

@@ -298,6 +298,8 @@ public partial class MainWindowViewModel
 
     partial void OnIsCropModeChanged(bool value)
     {
+        if (value) CloseBeforeAfterSplit();
+        ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
         NotifyWhiteBalanceCommandState();
         if (value)
         {

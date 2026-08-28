@@ -69,14 +69,8 @@ public sealed partial class PreviewService
         try
         {
             var sourceWriteTime = File.GetLastWriteTimeUtc(imageFile.FilePath);
-            var decode = BaseDecodeSettings.From(settings);
-            if (settings.RawProfile != null)
-            {
-                var resolution = await _dcpProfiles.ResolveAsync(
-                    imageFile, settings.RawProfile, false, token)
-                    .ConfigureAwait(false);
-                decode = decode.WithProfileResolution(resolution);
-            }
+            var decode = await ResolveDecodeAsync(imageFile, settings, token)
+                .ConfigureAwait(false);
             token.ThrowIfCancellationRequested();
             var outcome = _baseLoader.LoadPreviewBaseWithOutcome(imageFile,
                 decode, token);

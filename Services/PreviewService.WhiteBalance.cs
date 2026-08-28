@@ -123,7 +123,8 @@ public sealed partial class PreviewService
     private async Task<BaseDecodeSettings> ResolveDecodeAsync(
         ImageFile imageFile,
         EditSettings settings,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool forceProfileRefresh = false)
     {
         var decode = BaseDecodeSettings.From(settings);
         if (settings.RawProfile == null)
@@ -134,7 +135,7 @@ public sealed partial class PreviewService
         var resolution = await _dcpProfiles.ResolveAsync(
             imageFile,
             settings.RawProfile,
-            forceRefresh: false,
+            forceRefresh: forceProfileRefresh,
             cancellationToken).ConfigureAwait(false);
         return decode.WithProfileResolution(resolution);
     }

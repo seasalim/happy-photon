@@ -73,8 +73,7 @@
                                                       ScrollBarVisibility="Hidden"
                                                       ContentInset="8"
                                                       AttachedToVisualTree="OnPaneAttached"
-                                                      DetachedFromVisualTree="OnPaneDetached"
-                                                      SizeChanged="OnPaneSizeChanged"/>
+                                                      DetachedFromVisualTree="OnPaneDetached"/>
                                 <TextBlock Text="Loading preview…"
                                            IsVisible="{Binding ShowLoadingMessage}"
                                            HorizontalAlignment="Center"

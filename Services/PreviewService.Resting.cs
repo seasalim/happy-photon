@@ -150,6 +150,7 @@ public sealed partial class PreviewService
     {
         lock (_disposalSync)
         {
+            Interlocked.Increment(ref _sideSurfaceSerial);
             return Interlocked.Exchange(ref _disposed, 1) == 0;
         }
     }

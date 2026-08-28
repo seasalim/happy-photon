@@ -94,22 +94,14 @@ public sealed class BeforeAfterOriginalSettingsTests : IDisposable
             HorizonRotation = 1.5,
             Crop = image.EditSettings.Crop!.Clone(),
             Geometry = image.EditSettings.Geometry!.Clone(),
-            Lens = LensSettings.Legacy()
+            Lens = LensSettings.Legacy(),
+            HlReconstruction = HlReconstructionMode.Blend
         });
 
         try
         {
             vm.SelectedImage = image;
             await TestWaits.UntilAsync(() => vm.PreviewImage != null);
-
-            // The last sentinel, added once the edited render is done with it:
-            // a profile in the initial settings would send that render off to
-            // resolve a DCP that does not exist.
-            image.EditSettings.RawProfile = new RawProfileSelection
-            {
-                Source = RawProfileSource.Embedded,
-                ContentHash = "deadbeef"
-            };
 
             await vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
             await TestWaits.UntilAsync(() => vm.IsShowingOriginal);

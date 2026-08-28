@@ -148,8 +148,10 @@ public static class ShortcutCatalog
         ]),
         new("Develop and edit",
         [
-            new("B", "Toggle before/after in Develop or fullscreen",
+            new("B  /  \\", "Toggle before/after in Develop or fullscreen",
                 [Develop("Toggle before/after", "BeforeAfterButton")]),
+            new("Y", "Show Before and After side by side in Develop",
+                [Develop("Show Before and After side by side", "BeforeAfterSplitButton")]),
             new("Ctrl+B", "Toggle color assessment mode in Develop or fullscreen",
                 [Develop("Toggle color assessment", "ColorAssessmentButton")]),
             new("C", "Toggle crop mode", [Develop("Toggle crop mode", "CropModeButton")]),

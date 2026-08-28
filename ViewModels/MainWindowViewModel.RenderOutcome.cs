@@ -353,6 +353,13 @@ public partial class MainWindowViewModel
                 outcome.CommitPromotion(PreviewImage!);
                 OnAcceptedInteractivePreview(PreviewImage!);
             }
+            if (painted && IsBeforeAfterSplit &&
+                outcome.Class == RenderOutcomeClass.StateDefining &&
+                outcome.Intent == PreviewSurfaceIntent.Edited &&
+                SelectedImage != null)
+            {
+                RequestBeforeAfterRender(CaptureRestingSettings());
+            }
 
             return painted || outcome.Class is not
                 (RenderOutcomeClass.CachedUpgrade or

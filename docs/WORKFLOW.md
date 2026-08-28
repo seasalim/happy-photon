@@ -380,8 +380,10 @@ grain; choose Fine, Med, or Coarse for its output-pixel size. Both effects apply
 and standard sources. During crop mode the vignette is temporarily centered on the full
 canvas used by the crop overlay, then recenters when the crop is applied.
 
-In Develop or fullscreen, press `B` to toggle between the edited image and the
-original. In Develop, use `Ctrl+Z` to undo a color or tonal edit and `Ctrl+Y` or
+In Develop or fullscreen, press `B` or `\` to toggle between the edited image and the
+original. In Develop, choose **Y|Y** or press `Y` to compare that original beside the
+live edited image; fit, zoom, pan, and the press-and-hold loupe stay synchronized.
+Re-click **Y|Y** or press `Escape` to leave the split. In Develop, use `Ctrl+Z` to undo a color or tonal edit and `Ctrl+Y` or
 `Ctrl+Shift+Z` to redo it. These editing shortcuts do nothing in Browse. The reset
 button clears the color and tonal adjustments while preserving crop, rotation,
 and horizon settings; reset those separately in the geometry controls.
@@ -560,7 +562,8 @@ remains where it started and unchanged.
 | `Ctrl+A` / `Ctrl+D` | Select or deselect all visible images |
 | `Ctrl+'` | Create a version from the current interpretation in Browse or Develop |
 | `C` | Toggle crop mode |
-| `B` | Toggle before/after in Develop or fullscreen |
+| `B` / `\` | Toggle before/after in Develop or fullscreen |
+| `Y` | Show Before and After side by side in Develop |
 | `Ctrl+B` | Toggle color assessment mode in Develop or fullscreen |
 | `J` | Toggle clipping overlay in Develop |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
@@ -573,9 +576,10 @@ remains where it started and unchanged.
 
 ### Gesture map
 
-The review gestures deliberately keep distinct scopes: `B` shows before/after in
+The review gestures deliberately keep distinct scopes: `B` or `\` shows before/after in
 Develop or fullscreen, `Ctrl+B` toggles the Develop assessment surround, `C` owns crop
-in Develop, `J` owns clipping there, and holding the left mouse button invokes the loupe
+in Develop, `Y` opens the synchronized Before | After split, `J` owns clipping there,
+and holding the left mouse button invokes the loupe
 below 1:1 in Develop, fullscreen, or Compare. Compare has no keyboard-only entry; its
 visible checked toggle teaches the 2–4-photo requirement. Future representation
 and version gestures must extend this same catalog without colliding with these keys.

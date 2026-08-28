@@ -284,6 +284,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         OnPropertyChanged(nameof(CanSavePreset));
         CopyEditSettingsCommand.NotifyCanExecuteChanged();
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
+        ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
         NotifyClippingCommandState();
     }
     partial void OnCanResetChanged(bool value)

@@ -47,9 +47,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
             await TestWaits.UntilAsync(() =>
                 vm.PreviewImage != null && vm.Histogram != null);
 
-            var toggle = vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
-            await toggle;
-            Assert.True(vm.IsShowingOriginal);
+            vm.HlReconstruction = HlReconstructionMode.Clip;
             await refreshReady.Task.WaitAsync(TestWaits.Condition);
 
             vm.IsDevelopMode = false;

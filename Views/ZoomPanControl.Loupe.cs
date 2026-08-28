@@ -35,12 +35,12 @@ public partial class ZoomPanControl
         Point CurrentPoint,
         object? SourceIdentity);
 
-    private readonly record struct LoupePeek(
-        ViewportAnchor? RestoreAnchor,
-        object? SourceIdentity,
-        NormalizedPoint SharedPoint);
+    private readonly record struct LoupePeek(ViewportAnchor? RestoreAnchor,
+        object? SourceIdentity, NormalizedPoint SharedPoint,
+        NormalizedPoint FocalFraction);
 
     public bool IsLoupePeekActive => _loupePeek != null;
+    internal NormalizedPoint? LoupeFocalFraction => _loupePeek?.FocalFraction;
 
     public event EventHandler<NormalizedPoint>? LoupePeekStarted;
     public event EventHandler<NormalizedPoint>? LoupePeekMoved;
@@ -129,10 +129,9 @@ public partial class ZoomPanControl
         var normalizedPoint = new NormalizedPoint(
             anchor.NormalizedImagePoint.X,
             anchor.NormalizedImagePoint.Y);
-        SetLoupePeek(new LoupePeek(
-            restoreAnchor,
-            hold.SourceIdentity,
-            normalizedPoint));
+        SetLoupePeek(new LoupePeek(restoreAnchor, hold.SourceIdentity, normalizedPoint,
+            new NormalizedPoint(pressPoint.Value.X / _scrollViewer.Viewport.Width,
+                pressPoint.Value.Y / _scrollViewer.Viewport.Height).Clamp()));
         ScheduleAnchorRestoreAfterLayout(anchor);
         UpdateImageSize();
         RequestRequiredBoundPublication();
@@ -174,17 +173,19 @@ public partial class ZoomPanControl
 
     internal bool CancelLoupePeek() => EndLoupePeek(releaseCapture: true);
 
-    public void BeginSynchronizedLoupePeek(NormalizedPoint point)
+    public void BeginSynchronizedLoupePeek(NormalizedPoint point,
+        NormalizedPoint? focalFraction = null)
     {
         if (_loupePeek != null || !CanStartLoupePeek() || _scrollViewer == null)
             return;
 
         point = point.Clamp();
+        var fraction = (focalFraction ?? new NormalizedPoint(0.5, 0.5)).Clamp();
         var restoreAnchor = CaptureViewportCenterAnchor();
         var focal = new Point(
-            _scrollViewer.Viewport.Width / 2,
-            _scrollViewer.Viewport.Height / 2);
-        SetLoupePeek(new LoupePeek(restoreAnchor, SourceIdentity, point));
+            _scrollViewer.Viewport.Width * fraction.X,
+            _scrollViewer.Viewport.Height * fraction.Y);
+        SetLoupePeek(new LoupePeek(restoreAnchor, SourceIdentity, point, fraction));
         ScheduleAnchorRestoreAfterLayout(new ViewportAnchor(
             new Point(point.X, point.Y),
             focal));
@@ -192,8 +193,7 @@ public partial class ZoomPanControl
         RequestRequiredBoundPublication();
     }
 
-    public bool EndSynchronizedLoupePeek() =>
-        EndLoupePeek(releaseCapture: false);
+    public bool EndSynchronizedLoupePeek() => EndLoupePeek(releaseCapture: false);
 
     public void MoveSynchronizedLoupePeek(NormalizedPoint point)
     {
@@ -205,11 +205,11 @@ public partial class ZoomPanControl
         point = point.Clamp();
         _loupePeek = peek with { SharedPoint = point };
         var focal = new Point(
-            _scrollViewer.Viewport.Width / 2,
-            _scrollViewer.Viewport.Height / 2);
-        ScheduleAnchorRestoreAfterLayout(new ViewportAnchor(
-            new Point(point.X, point.Y),
-            focal));
+            _scrollViewer.Viewport.Width * peek.FocalFraction.X,
+            _scrollViewer.Viewport.Height * peek.FocalFraction.Y);
+        var anchor = new ViewportAnchor(new Point(point.X, point.Y), focal);
+        ScheduleAnchorRestoreAfterLayout(anchor);
+        RestorePendingAnchor(anchor);
     }
 
     private void PublishLoupePan(Vector appliedOffsetDelta)

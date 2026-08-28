@@ -43,7 +43,7 @@
                           Classes="develop-action"
                           IsChecked="{Binding IsShowingOriginal, Mode=OneWay}"
                           Command="{Binding ToggleBeforeAfterCommand}"
-                          ToolTip.Tip="Toggle original preview (B)"
+                          ToolTip.Tip="Toggle original preview (B or \)"
                           AutomationProperties.Name="Toggle original preview">
                 <Viewbox Width="14" Height="14">
                     <Canvas Width="16" Height="16">

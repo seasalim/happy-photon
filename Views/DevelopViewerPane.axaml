@@ -5,7 +5,23 @@
              x:Class="HappyPhoton.Views.DevelopViewerPane"
              x:DataType="vm:MainWindowViewModel">
     <Grid RowDefinitions="*,Auto">
-        <Panel Grid.Row="0">
+        <Grid x:Name="ViewerGrid" Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Panel x:Name="BeforePane" Grid.Column="0" IsVisible="{Binding IsBeforeAfterSplit}">
+                <views:ZoomPanControl x:Name="BeforeZoomPanControl"
+                                      Source="{Binding BeforeAfterPreviewImage}"
+                                      SourceIdentity="{Binding SelectedImage}"
+                                      ZoomLevel="{Binding ZoomLevel}"
+                                      OriginalViewPixelSize="{Binding BeforeAfterOriginalViewPixelSize}"
+                                      AutoFit="{Binding IsZoomFitMode}"
+                                      ScrollBarVisibility="Hidden" ContentInset="10"/>
+                <TextBlock Classes="section-label" Text="BEFORE" Margin="16,12" Foreground="{DynamicResource TextMuted}"
+                           HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            </Panel>
+            <Panel Grid.Column="1">
             <Image x:Name="DevelopPlaceholderImage"
                    Source="{Binding SelectedImage.Thumbnail}"
                    IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
@@ -28,6 +44,8 @@
                                   IsCropAspectLocked="{Binding IsCropAspectLocked}"
                                   Crop="{Binding CurrentCrop, Mode=TwoWay}"
                                   ScrollBarVisibility="Hidden" ContentInset="10"/>
+                <TextBlock Classes="section-label" Text="AFTER" Margin="16,12" Foreground="{DynamicResource TextMuted}"
+                           HorizontalAlignment="Left" VerticalAlignment="Top" IsVisible="{Binding IsBeforeAfterSplit}"/>
             <views:AssessmentFeedbackOverlay x:Name="DevelopAssessmentFeedbackOverlay"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Bottom"
@@ -40,7 +58,8 @@
                 <TextBlock Text="Select an image to edit"
                            Foreground="{DynamicResource TextMuted}" FontSize="16"/>
             </Border>
-        </Panel>
+            </Panel>
+        </Grid>
         <Border x:Name="DevelopControlBar" Grid.Row="1" Padding="12,6"
                 Background="{DynamicResource ViewerControlBarBackground}"
                 CornerRadius="{StaticResource RadiusMedium}"
@@ -109,6 +128,14 @@
                               StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
                     </Canvas></Viewbox>
                 </Button>
+                <ToggleButton x:Name="BeforeAfterSplitButton"
+                              IsChecked="{Binding IsBeforeAfterSplit, Mode=OneWay}"
+                              Command="{Binding ToggleBeforeAfterSplitCommand}"
+                              ToolTip.Tip="Before | After (Y)"
+                              AutomationProperties.Name="Show Before and After side by side"
+                              FontSize="10" Padding="8,3" BorderThickness="0">
+                    <TextBlock Text="Y|Y" FontFamily="{StaticResource FontLabel}" FontSize="10"/>
+                </ToggleButton>
                 <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}"
                            Margin="4,0" IsVisible="{Binding IsCropMode}"/>
                 <StackPanel Orientation="Horizontal" Spacing="4"
