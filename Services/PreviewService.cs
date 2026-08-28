@@ -53,6 +53,7 @@ public sealed partial class PreviewService : IAsyncDisposable
     internal Func<Task>? CachedPreviewGateAsync { get; set; }
     internal Func<Task>? SourceWorkGateAsync { get; set; }
     internal Action<string>? RestingStageStarted { get; set; }
+    internal Action? DisposalTaskWaitStarted { get; set; }
 
     public int PreviewActivityCount
     {
@@ -102,75 +103,6 @@ public sealed partial class PreviewService : IAsyncDisposable
             new SourceAvailabilityService();
         _dcpProfiles = dcpProfiles ?? new DcpProfileService(
             _sourceAvailability);
-    }
-
-    public async Task<CachedPreviewBitmap?> LoadCachedPreviewAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        CancellationToken cancellationToken = default)
-    {
-        var settingsSnapshot = settings.Clone();
-        await imageFile.EnsureCatalogIdAsync(_catalogService);
-        if (CachedPreviewGateAsync is { } gate)
-        {
-            await gate().ConfigureAwait(false);
-        }
-        return await Task.Run(() =>
-        {
-            try
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var expectedHash = RenderSettingsHash.Compute(settingsSnapshot);
-                using var cached = TryLoadAdjacentWarm(
-                        imageFile,
-                        expectedHash) ??
-                    _previewCache.LoadRenderedPreview(imageFile);
-                if (cached == null)
-                {
-                    return null;
-                }
-
-                var settingsMatch = string.Equals(
-                    cached.SettingsHash,
-                    expectedHash,
-                    StringComparison.Ordinal);
-                var width = checked((int)cached.Image.Width);
-                var height = checked((int)cached.Image.Height);
-                var pixels = CopyBgraPixels(cached.Image);
-                HistogramData? histogram = null;
-                ClippingStats? clipping = null;
-                if (settingsMatch)
-                {
-                    histogram = new HistogramData();
-                    HistogramService.CalculatePreviewHistogram(
-                        pixels,
-                        width,
-                        height,
-                        histogram,
-                        includeWaveform: true);
-                    clipping = PreviewCacheService.CalculateDisplayFloorClipping(
-                        pixels,
-                        width,
-                        height);
-                }
-                return new CachedPreviewBitmap(
-                    ConvertToBitmap(pixels, width, height),
-                    settingsMatch,
-                    histogram,
-                    clipping,
-                    cached.OriginalViewPixelSize,
-                    cached.OriginalImagePixelSize);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch
-            {
-                return null;
-            }
-        },
-            cancellationToken);
     }
 
     private RenderOutput Render(
@@ -390,7 +322,7 @@ public sealed partial class PreviewService : IAsyncDisposable
 
         ClearPreviewCache();
         await DisposeAdjacentWarmAsync();
-        await WaitForRestingRenderTasksAsync();
+        await WaitForDisposalTasksAsync();
         await WaitForRenderedThumbnailTasksAsync();
         await _baseCoordinator.DisposeAsync();
         await _previewCache.DisposeAsync();

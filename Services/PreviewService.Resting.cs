@@ -7,8 +7,8 @@ namespace HappyPhoton.Services;
 
 public sealed partial class PreviewService
 {
-    private readonly object _restingSync = new();
-    private readonly HashSet<Task> _restingRenderTasks = new(
+    private readonly object _disposalSync = new();
+    private readonly HashSet<Task> _disposalTasks = new(
         ReferenceEqualityComparer.Instance);
 
     internal PreviewRenderIdentity? TryGetPreviewRenderIdentity(Bitmap bitmap)
@@ -47,24 +47,30 @@ public sealed partial class PreviewService
         EditSettings settings,
         int fittedLongEdge,
         PreviewRenderIdentity parent,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken) =>
+        TrackDisposalTask(() => RenderRestingPreviewCoreAsync(
+            imageFile,
+            settings,
+            fittedLongEdge,
+            parent,
+            cancellationToken));
+
+    private Task<T> TrackDisposalTask<T>(Func<Task<T>> start,
+        bool declineDisposed = false)
     {
-        lock (_restingSync)
+        lock (_disposalSync)
         {
-            ObjectDisposedException.ThrowIf(
-                Volatile.Read(ref _disposed) != 0,
-                this);
-            var task = RenderRestingPreviewCoreAsync(
-                imageFile,
-                settings,
-                fittedLongEdge,
-                parent,
-                cancellationToken);
-            _restingRenderTasks.Add(task);
+            var disposed = Volatile.Read(ref _disposed) != 0;
+            if (disposed && declineDisposed) return Task.FromResult(default(T)!);
+            ObjectDisposedException.ThrowIf(disposed, this);
+            // Started on the caller's thread so its settings snapshot is taken
+            // before an edit can race it.
+            var task = start();
+            _disposalTasks.Add(task);
             _ = task.ContinueWith(
                 completed =>
                 {
-                    lock (_restingSync) _restingRenderTasks.Remove(completed);
+                    lock (_disposalSync) _disposalTasks.Remove(completed);
                 },
                 CancellationToken.None,
                 TaskContinuationOptions.ExecuteSynchronously,
@@ -142,18 +148,19 @@ public sealed partial class PreviewService
 
     private bool TryBeginDispose()
     {
-        lock (_restingSync)
+        lock (_disposalSync)
         {
             return Interlocked.Exchange(ref _disposed, 1) == 0;
         }
     }
 
-    private async Task WaitForRestingRenderTasksAsync()
+    private async Task WaitForDisposalTasksAsync()
     {
+        DisposalTaskWaitStarted?.Invoke();
         while (true)
         {
             Task[] tasks;
-            lock (_restingSync) tasks = _restingRenderTasks.ToArray();
+            lock (_disposalSync) tasks = _disposalTasks.ToArray();
             if (tasks.Length == 0) return;
             await Task.WhenAll(tasks)
                 .ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
