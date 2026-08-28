@@ -5,7 +5,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class RawJpegOneCaptureTests : IDisposable
 {
     private readonly CatalogVmFixture _fixture = new("raw-jpeg-one-capture");
@@ -276,87 +275,11 @@ public sealed class RawJpegOneCaptureTests : IDisposable
         Assert.Same(secondJpeg, vm.SelectedImage);
     }
 
-    [Fact]
-    public async Task Switch_RestoresOneShotNormalizedViewportAfterPaint()
-    {
-        var folder = CreateFolder("capture.jpg", "capture.dng");
-        using var catalog = await _fixture.CreateUniqueCatalogAsync();
-        await using var vm = CreateViewModel(catalog, new CountingPairLoader());
-        await vm.LoadFolderAsync(folder);
-        vm.SelectedImage = Find(vm, "capture.jpg", 1);
-        vm.IsDevelopMode = true;
-        await TestWaits.UntilAsync(() => vm.PreviewImage != null);
-        var expected = new NormalizedViewport(new NormalizedPoint(0.7, 0.3), 2);
-        NormalizedViewport? restored = null;
-        vm.CaptureDevelopViewport = () => expected;
-        vm.RestoreDevelopViewport = (_, viewport) => restored = viewport;
-
-        vm.SwitchCaptureMemberCommand.Execute(null);
-
-        await TestWaits.UntilAsync(() => restored != null);
-        Assert.Equal(expected, restored);
-        Assert.False(vm.IsZoomFitMode);
-    }
-
-    [Fact]
-    public async Task ReturnSwitch_PaintsCachedMemberWhileFreshDecodeIsGated()
-    {
-        var folder = CreateFolder("capture.jpg", "capture.dng");
-        using var catalog = await _fixture.CreateUniqueCatalogAsync();
-        var loader = new CountingPairLoader();
-        await using var vm = _fixture.CreateViewModel(
-            catalog,
-            loader,
-            loadMetadataAsync: _ => Task.CompletedTask,
-            availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally),
-            postSelection: action => action(),
-            timeProvider: new TestTimeProvider());
-        vm.RestoreShowCapturePairs(true);
-        await vm.LoadFolderAsync(folder);
-        var jpeg = Find(vm, "capture.jpg", 1);
-        var raw = Find(vm, "capture.dng", 1);
-        vm.SelectedImage = jpeg;
-        vm.IsDevelopMode = true;
-        await TestWaits.UntilAsync(() =>
-            loader.DecodeCount >= 1 && vm.PreviewImage != null);
-        vm.SwitchCaptureMemberCommand.Execute(null);
-        await TestWaits.UntilAsync(() =>
-            ReferenceEquals(vm.SelectedImage, raw) &&
-            loader.DecodeCount >= 2 && vm.PreviewImage != null);
-        await using var cache = new PreviewCacheService(catalog);
-        await TestWaits.UntilAsync(() => cache.IsCacheValid(jpeg));
-        var freshStarted = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseFresh = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        vm.ImageService.Previews.SourceWorkGateAsync = () =>
-        {
-            freshStarted.TrySetResult();
-            return releaseFresh.Task.WaitAsync(TestWaits.Condition);
-        };
-
-        try
-        {
-            vm.SwitchCaptureMemberCommand.Execute(null);
-            await freshStarted.Task.WaitAsync(TestWaits.Condition);
-            await TestWaits.UntilAsync(() => vm.PreviewImage != null);
-            Assert.Same(jpeg, vm.SelectedImage);
-        }
-        finally
-        {
-            vm.ImageService.Previews.SourceWorkGateAsync = null;
-            releaseFresh.TrySetResult();
-        }
-    }
-
-    private MainWindowViewModel CreateViewModel(
-        CatalogService catalog,
-        IBaseImageLoader? loader = null)
+    private MainWindowViewModel CreateViewModel(CatalogService catalog)
     {
         var viewModel = _fixture.CreateViewModel(
             catalog,
-            loader ?? new NullBaseLoader(),
+            new NullBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally),

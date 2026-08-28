@@ -120,6 +120,51 @@ public sealed class RawJpegOneCaptureHeadlessTests
     }
 
     [AvaloniaFact]
+    public async Task ReturnSwitch_PaintsCachedMemberWhileFreshDecodeIsGated()
+    {
+        var loader = new CountingPairLoader();
+        await using var context = await CreateContextAsync(loader);
+        var (window, vm) = context;
+        var viewer = window.FindControl<DevelopViewerPane>(
+            "DevelopViewerPane")!.Viewer;
+        await PumpUntilAsync(() => viewer.Source != null && loader.DecodeCount >= 1);
+        var jpeg = vm.SelectedImage;
+
+        vm.SwitchCaptureMemberCommand.Execute(null);
+        await PumpUntilAsync(() =>
+            vm.SelectedImage?.IsRaw == true &&
+            viewer.Source != null &&
+            loader.DecodeCount >= 2);
+        var rawSource = viewer.Source;
+        await using var cache = new PreviewCacheService(context.Catalog);
+        await TestWaits.UntilAsync(() => cache.IsCacheValid(jpeg!));
+        var freshStarted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFresh = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        vm.ImageService.Previews.SourceWorkGateAsync = () =>
+        {
+            freshStarted.TrySetResult();
+            return releaseFresh.Task.WaitAsync(TestWaits.Condition);
+        };
+
+        try
+        {
+            vm.SwitchCaptureMemberCommand.Execute(null);
+            await freshStarted.Task.WaitAsync(TestWaits.Condition);
+            await PumpUntilAsync(() =>
+                ReferenceEquals(vm.SelectedImage, jpeg) &&
+                viewer.Source != null &&
+                !ReferenceEquals(viewer.Source, rawSource));
+        }
+        finally
+        {
+            vm.ImageService.Previews.SourceWorkGateAsync = null;
+            releaseFresh.TrySetResult();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task Assessment_EnqueuesBothPrimarySidecars()
     {
         using var root = new TemporaryDirectory();
@@ -247,6 +292,8 @@ public sealed class RawJpegOneCaptureHeadlessTests
         MainWindowViewModel viewModel,
         MainWindow window) : IAsyncDisposable
     {
+        public CatalogService Catalog => catalog;
+
         public void Deconstruct(out MainWindow windowValue, out MainWindowViewModel vm)
         {
             windowValue = window;

@@ -93,9 +93,11 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
             AssertClose(after.CaptureNormalizedViewport(), before.CaptureNormalizedViewport());
             window.Width += 120;
             window.Height += 40;
+            window.UpdateLayout();
             Drain();
             await TestWaits.UntilAsync(() =>
-                vm.BeforeAfterPreviewImage?.PixelSize.Width == 1280);
+                vm.BeforeAfterPreviewImage?.PixelSize.Width == 1280 &&
+                BeforeAfterRenderIsIdle(vm));
             Drain();
             Assert.Equal(vm.ZoomLevel, after.ZoomLevel, 8);
             AssertClose(after.CaptureNormalizedViewport(), before.CaptureNormalizedViewport());

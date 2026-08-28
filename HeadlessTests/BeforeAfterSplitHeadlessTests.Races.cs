@@ -42,4 +42,10 @@ public sealed partial class BeforeAfterSplitHeadlessTests
             System.Reflection.BindingFlags.Instance |
             System.Reflection.BindingFlags.NonPublic)!
             .GetValue(vm.ImageService.Previews)!;
+
+    private static bool BeforeAfterRenderIsIdle(MainWindowViewModel vm) =>
+        typeof(MainWindowViewModel).GetField(
+            "_beforeAfterRenderCts",
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.NonPublic)!.GetValue(vm) == null;
 }
