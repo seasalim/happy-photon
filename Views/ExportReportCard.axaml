@@ -5,7 +5,7 @@
              x:Class="HappyPhoton.Views.ExportReportCard"
              x:DataType="vm:MainWindowViewModel"
              IsVisible="{Binding HasExportReport}">
-    <Border Background="{DynamicResource SurfaceMid}"
+    <Border Background="{DynamicResource SurfaceLow}"
             BorderBrush="{DynamicResource OutlineVariant}"
             BorderThickness="1"
             CornerRadius="{StaticResource RadiusSmall}"
@@ -49,6 +49,7 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
             <Button Content="Retry failed only"
+                    Classes="quiet-button"
                     Command="{Binding RetryFailedExportCommand}"
                     IsVisible="{Binding ExportReport.HasFailures}"
                     HorizontalAlignment="Left"/>

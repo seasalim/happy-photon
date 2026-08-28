@@ -26,7 +26,7 @@ public sealed class BatchExportFormatTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask);
         viewModel.SwitchToExportCommand.Execute(null);
         var pane = new ExportSettingsPane { DataContext = viewModel };
-        var slider = pane.FindControl<Slider>("ExportQualitySlider")!;
+        var slider = pane.FindControl<CompactSlider>("ExportQualitySlider")!;
         var countLine = pane.FindControl<TextBlock>("ExportCountLineText")!;
         var exportButton = pane.FindControl<Button>("RunExportButton")!;
 

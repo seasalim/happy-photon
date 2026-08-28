@@ -16,13 +16,6 @@
         <Style Selector="Grid.optics-row:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
-        <Style Selector="CheckBox.optics-toggle">
-            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
     </UserControl.Styles>
 
     <StackPanel x:Name="OpticsGroup"
@@ -34,7 +27,7 @@
               Classes="optics-row"
               IsEnabled="{Binding HasLensDistortion}">
             <CheckBox x:Name="DistortionToggle"
-                      Classes="optics-toggle"
+                      Classes="edit-toggle"
                       Content="Distortion"
                       IsChecked="{Binding LensDistortion, Mode=TwoWay}"/>
         </Grid>
@@ -42,7 +35,7 @@
               Classes="optics-row"
               IsEnabled="{Binding HasLensChromaticAberration}">
             <CheckBox x:Name="ChromaticAberrationToggle"
-                      Classes="optics-toggle"
+                      Classes="edit-toggle"
                       Content="Chromatic aberration"
                       IsChecked="{Binding LensChromaticAberration, Mode=TwoWay}"/>
         </Grid>
@@ -50,7 +43,7 @@
               Classes="optics-row"
               IsEnabled="{Binding HasLensVignetting}">
             <CheckBox x:Name="VignettingToggle"
-                      Classes="optics-toggle"
+                      Classes="edit-toggle"
                       Content="Vignetting"
                       IsChecked="{Binding LensVignetting, Mode=TwoWay}"/>
         </Grid>

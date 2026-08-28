@@ -18,11 +18,15 @@
                          Maximum="{Binding ExportProgressMaximum}"
                          Value="{Binding ExportProgressValue}"
                          IsIndeterminate="False"
+                         Height="2"
                          VerticalAlignment="Center"/>
-            <TextBlock Grid.Column="2"
+            <TextBlock x:Name="ExportProgressLabel"
+                       Grid.Column="2"
                        Text="{Binding ExportProgressText}"
                        Foreground="{DynamicResource TextSecondary}"
-                       FontSize="11"
+                       FontFamily="{StaticResource FontLabel}"
+                       FontSize="9"
+                       LetterSpacing="1"
                        VerticalAlignment="Center"/>
         </Grid>
     </Border>

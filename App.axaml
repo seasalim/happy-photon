@@ -37,6 +37,86 @@
         <Style Selector="ToggleButton">
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
         </Style>
+        <Style Selector="ComboBox.edit-dropdown">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MaxHeight" Value="28"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
+        </Style>
+        <Style Selector="TextBox.edit-field">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MaxHeight" Value="28"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="FontWeight" Value="Regular"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
+        </Style>
+        <Style Selector="ListBox.segmented">
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Padding" Value="2"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem">
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        </Style>
+        <Style Selector="ListBox.segmented ListBoxItem:selected,
+                         ListBox.segmented ListBoxItem:selected:pointerover">
+            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        </Style>
+        <Style Selector="CheckBox.edit-toggle">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MaxHeight" Value="28"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.quiet-button">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MaxHeight" Value="28"/>
+            <Setter Property="Padding" Value="10,2"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+        </Style>
         <!-- Happy Photon accent rule: brand accent = actions/active state, magenta = highlights. -->
         <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource BrandAccent}"/>

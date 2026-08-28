@@ -42,7 +42,7 @@ public sealed class PreviewPlaceholderTests
             "ExportPreviewPane")!;
         var caption = previewPane.FindControl<TextBlock>(
             "ExportProofCaption")!;
-        var emptyState = previewPane.FindControl<TextBlock>(
+        var emptyState = previewPane.FindControl<Border>(
             "ExportPreviewEmptyState")!;
         Assert.True(vm.HasNoExportCaptures);
         Assert.True(emptyState.IsVisible);
@@ -110,7 +110,7 @@ public sealed class PreviewPlaceholderTests
 
         var settingsPane = window.FindControl<ExportSettingsPane>("ExportSettingsPane")!;
         var format = settingsPane.FindControl<ComboBox>("ExportFormatBox")!;
-        var quality = settingsPane.FindControl<Slider>("ExportQualitySlider")!;
+        var quality = settingsPane.FindControl<CompactSlider>("ExportQualitySlider")!;
         format.SelectedIndex = (int)ExportFormat.Tiff;
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(ExportFormat.Tiff, vm.ExportSettings.Format);
@@ -342,9 +342,9 @@ public sealed class PreviewPlaceholderTests
             "ResetAdjustmentsButton")!;
         var exportPane = window.FindControl<ExportSettingsPane>(
             "ExportSettingsPane")!;
-        var outputSharpening = exportPane.FindControl<ComboBox>(
+        var outputSharpening = exportPane.FindControl<ListBox>(
             "ExportSharpeningBox")!;
-        var outputColorSpace = exportPane.FindControl<ComboBox>(
+        var outputColorSpace = exportPane.FindControl<ListBox>(
             "ExportColorSpaceBox")!;
         var exportButton = exportPane.FindControl<Button>(
             "RunExportButton")!;

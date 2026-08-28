@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:HappyPhoton.ViewModels"
+             xmlns:views="using:HappyPhoton.Views"
              x:Class="HappyPhoton.Views.ExportPreviewPane"
              x:DataType="vm:MainWindowViewModel">
     <UserControl.Styles>
@@ -13,7 +14,7 @@
                     Spacing="6"
                     Margin="14,8,14,0">
             <ToggleButton x:Name="ExportProofToggle"
-                          Classes="develop-action tool-seg"
+                          Classes="develop-action"
                           Content="PROOF"
                           Width="56"
                           Height="20"
@@ -27,43 +28,45 @@
                           ToolTip.Tip="Render a true export proof"
                           AutomationProperties.Name="Render a true export proof"/>
         </StackPanel>
-        <Image Source="{Binding SelectedImage.Thumbnail}"
-               Grid.Row="1"
-               IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
-               Stretch="Uniform"
-               Margin="16"
-               RenderOptions.BitmapInterpolationMode="LowQuality"/>
-        <Image Source="{Binding PreviewImage}"
-               Grid.Row="1"
-               Stretch="Uniform"
-               Margin="16"/>
-        <TextBlock x:Name="ExportProofCaption"
-                   Grid.Row="1"
-                   Text="{Binding ExportProofCaption}"
-                   IsVisible="{Binding IsExportProofCaptionVisible}"
-                   IsHitTestVisible="False"
-                   HorizontalAlignment="Left"
-                   VerticalAlignment="Bottom"
-                   Margin="26,0,0,24"
-                   FontFamily="{StaticResource FontLabel}"
-                   FontSize="8"
-                   FontWeight="SemiBold"
-                   LetterSpacing="1"
-                   Foreground="{StaticResource ProofCaption}">
-            <TextBlock.Effect>
-                <DropShadowEffect Color="{StaticResource ViewerStatusShadowColor}"
-                                  BlurRadius="6"
-                                  OffsetY="1"
-                                  Opacity="0.8"/>
-            </TextBlock.Effect>
-        </TextBlock>
-        <TextBlock x:Name="ExportPreviewEmptyState"
-                   Grid.Row="1"
-                   Text="Select a capture to preview"
-                   IsVisible="{Binding HasNoExportCaptures}"
-                   Foreground="{DynamicResource TextMuted}"
-                   FontSize="16"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"/>
+        <views:UniformImageOverlayPanel x:Name="ExportPreviewImageFrame"
+                                        Grid.Row="1"
+                                        Margin="16">
+            <Image x:Name="ExportPlaceholderImage"
+                   Source="{Binding SelectedImage.Thumbnail}"
+                   IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
+                   Stretch="Uniform"
+                   RenderOptions.BitmapInterpolationMode="LowQuality"/>
+            <Image x:Name="ExportPreviewImage"
+                   Source="{Binding PreviewImage}"
+                   Stretch="Uniform"/>
+            <TextBlock x:Name="ExportProofCaption"
+                       Text="{Binding ExportProofCaption}"
+                       IsVisible="{Binding IsExportProofCaptionVisible}"
+                       IsHitTestVisible="False"
+                       FontFamily="{StaticResource FontLabel}"
+                       FontSize="8"
+                       FontWeight="SemiBold"
+                       LetterSpacing="1"
+                       Foreground="{StaticResource ProofCaption}">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="{StaticResource ViewerStatusShadowColor}"
+                                      BlurRadius="6"
+                                      OffsetY="1"
+                                      Opacity="0.8"/>
+                </TextBlock.Effect>
+            </TextBlock>
+        </views:UniformImageOverlayPanel>
+        <Border x:Name="ExportPreviewEmptyState"
+                Grid.Row="1"
+                IsVisible="{Binding HasNoExportCaptures}"
+                Background="{DynamicResource SurfaceLow}"
+                CornerRadius="{StaticResource RadiusMedium}"
+                Padding="20"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <TextBlock Text="Select a capture to preview"
+                       Foreground="{DynamicResource TextMuted}"
+                       FontSize="16"/>
+        </Border>
     </Grid>
 </UserControl>

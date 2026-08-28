@@ -24,18 +24,6 @@
             <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
             <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
         </Style>
-        <Style Selector="ComboBox.edit-dropdown">
-            <Setter Property="MinHeight" Value="28"/>
-            <Setter Property="Height" Value="28"/>
-            <Setter Property="MaxHeight" Value="28"/>
-            <Setter Property="Padding" Value="8,2"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
-        </Style>
         <Style Selector="Button.wb-auto">
             <Setter Property="MinWidth" Value="50"/>
             <Setter Property="MinHeight" Value="28"/>
@@ -61,43 +49,6 @@
         </Style>
         <Style Selector="Grid.highlight-handling-row:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
-        <Style Selector="ListBox.highlight-handling">
-            <Setter Property="Height" Value="22"/>
-            <Setter Property="Padding" Value="2"/>
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
-        </Style>
-        <Style Selector="ListBox.highlight-handling ListBoxItem">
-            <Setter Property="Height" Value="18"/>
-            <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="CornerRadius" Value="3"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
-            <Setter Property="FontSize" Value="9"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="LetterSpacing" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
-        <Style Selector="ListBox.highlight-handling ListBoxItem:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-        </Style>
-        <Style Selector="ListBox.highlight-handling ListBoxItem:selected">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
-        </Style>
-        <Style Selector="ListBox.highlight-handling ListBoxItem:selected:pointerover">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
         </Style>
     </UserControl.Styles>
 
@@ -292,7 +243,7 @@
                             <ListBox x:Name="HighlightHandlingControl"
                                      Grid.Column="1"
                                      Margin="8,0"
-                                     Classes="highlight-handling"
+                                     Classes="segmented"
                                      ItemsSource="{Binding HighlightHandlingOptions}"
                                      SelectedItem="{Binding HlReconstruction, Mode=TwoWay}"
                                      SelectionMode="Single,AlwaysSelected"

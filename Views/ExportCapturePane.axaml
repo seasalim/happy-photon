@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:HappyPhoton.ViewModels" x:Class="HappyPhoton.Views.ExportCapturePane"
+﻿<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:HappyPhoton.ViewModels" x:Class="HappyPhoton.Views.ExportCapturePane"
              x:DataType="vm:MainWindowViewModel">
     <UserControl.Styles>
         <StyleInclude Source="avares://HappyPhoton/Views/BrowseThumbnailStyles.axaml"/>
@@ -21,6 +21,8 @@
         </StackPanel>
         <ListBox Grid.Row="1" ItemsSource="{Binding ExportCaptures}"
                  SelectedItem="{Binding ActiveExportCapture, Mode=TwoWay}"
+                 ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  Background="Transparent" BorderThickness="0">
             <ListBox.Styles>
                 <Style Selector="ListBoxItem">

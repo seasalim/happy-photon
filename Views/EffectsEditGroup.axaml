@@ -23,39 +23,6 @@
         <Style Selector="Grid.midpoint-row.active">
             <Setter Property="Opacity" Value="1"/>
         </Style>
-        <Style Selector="ListBox.grain-size">
-            <Setter Property="Height" Value="22"/>
-            <Setter Property="Padding" Value="2"/>
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="4"/>
-        </Style>
-        <Style Selector="ListBox.grain-size ListBoxItem">
-            <Setter Property="Height" Value="18"/>
-            <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="CornerRadius" Value="3"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
-            <Setter Property="FontSize" Value="9"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="LetterSpacing" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
-        <Style Selector="ListBox.grain-size ListBoxItem:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
-        </Style>
-        <Style Selector="ListBox.grain-size ListBoxItem:selected,
-                         ListBox.grain-size ListBoxItem:selected:pointerover">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
-        </Style>
     </UserControl.Styles>
 
     <StackPanel Spacing="4">
@@ -90,7 +57,7 @@
                      Grid.Column="1"
                      Grid.ColumnSpan="2"
                      Margin="8,0,0,0"
-                     Classes="grain-size"
+                     Classes="segmented"
                      ItemsSource="{Binding GrainSizeOptions}"
                      SelectedItem="{Binding GrainSize, Mode=TwoWay}"
                      SelectionMode="Single,AlwaysSelected"
