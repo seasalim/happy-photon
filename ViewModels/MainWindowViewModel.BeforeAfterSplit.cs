@@ -10,7 +10,7 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     private CancellationTokenSource? _beforeAfterRenderCts;
-    private string? _beforeAfterRenderedHash;
+    private (string? Hash, int MaxDimension) _beforeAfterRendered;
     private (string? Hash, int MaxDimension) _beforeAfterRequest;
     [ObservableProperty] private bool _isBeforeAfterSplit;
     [ObservableProperty] private Bitmap? _beforeAfterPreviewImage;
@@ -51,11 +51,10 @@ public partial class MainWindowViewModel
         if (!IsBeforeAfterSplit || SelectedImage is not { } image) return;
         var settings = BuildOriginalRenderSettings(edited);
         var hash = RenderSettingsHash.Compute(settings);
-        var renderedEdge = BeforeAfterPreviewImage is { } bitmap
-            ? Math.Max(bitmap.PixelSize.Width, bitmap.PixelSize.Height) : 0;
         if (hash == _beforeAfterRequest.Hash &&
             maxDimension <= _beforeAfterRequest.MaxDimension ||
-            hash == _beforeAfterRenderedHash && maxDimension <= renderedEdge) return;
+            hash == _beforeAfterRendered.Hash &&
+            maxDimension <= _beforeAfterRendered.MaxDimension) return;
         var cts = new CancellationTokenSource();
         var previous = Interlocked.Exchange(ref _beforeAfterRenderCts, cts);
         previous?.Cancel();
@@ -81,7 +80,7 @@ public partial class MainWindowViewModel
             var previous = BeforeAfterPreviewImage;
             BeforeAfterPreviewImage = result.Bitmap;
             BeforeAfterOriginalViewPixelSize = result.OriginalViewPixelSize;
-            _beforeAfterRenderedHash = hash;
+            _beforeAfterRendered = (hash, maxDimension);
             if (previous != null)
                 _bitmapRetirement.Retire(previous,
                     () => ReferenceEquals(BeforeAfterPreviewImage, previous));
@@ -100,7 +99,7 @@ public partial class MainWindowViewModel
     private void ResetBeforeAfterRender()
     {
         CancelAndDispose(ref _beforeAfterRenderCts);
-        _beforeAfterRenderedHash = null;
+        _beforeAfterRendered = default;
         _beforeAfterRequest = default;
         BeforeAfterOriginalViewPixelSize = default;
         var bitmap = BeforeAfterPreviewImage;
