@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "projects": [
+    "Tests/HappyPhoton.Tests.csproj",
+    "HeadlessTests/HappyPhoton.Headless.Tests.csproj"
+  ],
+  "tests": [
+    {
+      "fullyQualifiedName": "HappyPhoton.Tests.BeforeAfterSplitHeadlessTests.ToggleRendersAndSynchronizesBeforeWhileAfterStaysLive",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "issue": "https://github.com/seasalim/happy-photon/issues/6",
+      "owner": "@seasalim",
+      "reason": "The histogram identity assertion can race a refresh under full-suite load while isolated retries pass.",
+      "introducedOn": "2026-08-29",
+      "expiresOn": "2026-11-27"
+    }
+  ]
+}

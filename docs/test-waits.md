@@ -48,3 +48,7 @@ arrive and assert the earlier one never did.
 
 `CatalogImportServiceTests` bounds a 50k-row import at 30 s. That one is a
 deliberate performance guard, not a wait, and stays as it is.
+
+Quarantine does not replace these deterministic fixes. A repeatedly flaky test
+may use the temporary, issue-backed process in [test-quarantine.md](test-quarantine.md)
+while its root cause is repaired.

@@ -20,6 +20,7 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
 {
     private readonly CatalogVmFixture _fx = new("before-after-split");
 
+    [Trait("Category", "Quarantined")]
     [AvaloniaFact]
     public async Task ToggleRendersAndSynchronizesBeforeWhileAfterStaysLive()
     {

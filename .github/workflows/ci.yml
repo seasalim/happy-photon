@@ -112,6 +112,11 @@ jobs:
             throw "Test discovery fell below the expected minimum (666 native, 35 headless)."
           }
 
+      - name: Validate test quarantine
+        if: matrix.rid == 'linux-x64'
+        shell: pwsh
+        run: ./scripts/check-test-quarantine.ps1 -NoBuild -NoRestore
+
       - name: Test
         run: >
           dotnet test HappyPhoton.sln

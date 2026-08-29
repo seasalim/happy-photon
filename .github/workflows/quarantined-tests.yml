@@ -1,0 +1,79 @@
+name: Quarantined tests
+
+on:
+  schedule:
+    - cron: "37 9 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: quarantined-tests-main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+  NUGET_XMLDOC_MODE: skip
+
+jobs:
+  observe:
+    name: Windows full-suite observation
+    runs-on: windows-2025
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore locked dependencies and run NuGet audit
+        run: dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
+
+      - name: Build
+        run: >
+          dotnet build HappyPhoton.sln
+          --configuration Release
+          --no-restore
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Validate quarantine registry and discovery
+        shell: pwsh
+        run: ./scripts/check-test-quarantine.ps1 -NoBuild -NoRestore
+
+      - name: Run full observation suite
+        id: observation
+        continue-on-error: true
+        run: >
+          dotnet test HappyPhoton.sln
+          --configuration Release
+          --no-build
+          --no-restore
+          --settings HappyPhoton.AllTests.runsettings
+          --blame-hang
+          --blame-hang-timeout 90s
+          --logger "trx;LogFilePrefix=quarantine-observation"
+          --results-directory artifacts/test-results/quarantine
+
+      - name: Summarize quarantined outcomes
+        if: always()
+        shell: pwsh
+        run: >
+          ./scripts/check-test-quarantine.ps1
+          -Mode Results
+          -ResultsDirectory artifacts/test-results/quarantine
+          -TestStepOutcome "${{ steps.observation.outcome }}"
+
+      - name: Upload observation results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: quarantined-test-results-${{ github.run_id }}
+          path: artifacts/test-results/quarantine
+          if-no-files-found: error
+          retention-days: 14
