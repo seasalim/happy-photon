@@ -46,7 +46,7 @@ Describe "Happy Photon download manifests" {
         $manifest = New-UnavailableSiteManifest -Config (Read-SiteConfig)
         $manifest.selectedChannel | Should -BeNullOrEmpty
         $manifest.platforms.windows.availability | Should -Be "verified"
-        $manifest.platforms.windows.note | Should -Be "Microsoft Store · 0.1.0"
+        $manifest.platforms.windows.note | Should -Be "Microsoft Store · 0.2.2"
         $manifest.platforms.windows.url | Should -BeNullOrEmpty
         $manifest.platforms.macos.availability | Should -Be "unavailable"
         $manifest.platforms.linux.availability | Should -Be "unavailable"
