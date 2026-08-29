@@ -52,9 +52,9 @@ public sealed partial class PreviewService
                 RenderIntent.Export,
                 MaxDimension: null,
                 new RenderOptions(false, false));
-            using var upstream = (ProofRenderDisplayRec2020 ??
+            var upstream = (ProofRenderDisplayRec2020 ??
                 _renderPipeline.RenderDisplayRec2020)(request);
-            using var finalized = RenderFinalizer.FinalizeProof(
+            using var finalized = RenderFinalizer.FinalizeOwnedProof(
                 upstream,
                 maxDimension,
                 outputColorSpace,
