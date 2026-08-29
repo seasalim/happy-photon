@@ -151,6 +151,14 @@ package committed or integrated.
 
 Never treat the ad-hoc-signed manual Mac build as a public release.
 
+## Starting the next development line
+
+After the release is complete and its certified Microsoft Store version is live
+on the website, optionally start the next development line in a separate commit.
+Advance both `HappyPhoton.csproj` and the manual `Release` workflow default to
+the same `<next-version>-dev.1` value. Verify the resolved project version and
+the full solution tests without changing the published tag or release assets.
+
 ## Microsoft Store package
 
 Generate the committed Store assets after changing the application icon:
