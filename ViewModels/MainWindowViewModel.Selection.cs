@@ -12,7 +12,7 @@ public partial class MainWindowViewModel
         KeepCaptureMemberViewportOnlyFor(newValue);
         NotifyCaptureMemberStateChanged();
         ResetBeforeAfterRender();
-        if (!IsCompareMode)
+        if (!IsCompareMode && !IsLoupeMode)
         {
             UpdateAdjacentWarmDirection(oldValue, newValue);
             CancelAdjacentPreviewWarm(invalidateWorker: true);
@@ -20,7 +20,7 @@ public partial class MainWindowViewModel
         var surfaceGeneration = ReserveRenderOutcome(
             PreviewSurfaceIntent.Edited,
             promotionEligible: true);
-        if (!IsCompareMode && oldValue != null && newValue != null)
+        if (!IsCompareMode && !IsLoupeMode && oldValue != null && newValue != null)
         {
             ImageService.Previews.FlushRenderedPreviewCache();
             ImageService.Previews.InvalidatePreviewBase();
@@ -36,6 +36,7 @@ public partial class MainWindowViewModel
         if (newValue != null) newValue.IsActive = true;
 
         HasSelectedImage = newValue != null;
+        if (IsLoupeMode) ReloadLoupe(newValue);
         NotifyImageNavigationCommandState();
         NotifyVersionCommandState();
         ResetSelectedMetadataState(newValue);
@@ -141,7 +142,7 @@ public partial class MainWindowViewModel
     private void OnBrowseFilterChanged(object? sender, EventArgs e)
     {
         CancelAdjacentPreviewWarm(invalidateWorker: true);
-        if (IsCompareMode)
+        if (IsCompareMode || IsLoupeMode)
         {
             UpdateSelectedCount();
             return;
@@ -197,12 +198,11 @@ public partial class MainWindowViewModel
 
     private ActionTargetResolution ResolveAssessmentTargets()
     {
-        if (IsCompareMode)
+        if (IsCompareMode || IsLoupeMode)
         {
-            IReadOnlyList<ImageFile> targets = SelectedImage != null &&
-                GetCompareMembers().Contains(SelectedImage)
-                ? [SelectedImage]
-                : [];
+            IReadOnlyList<ImageFile> targets = SelectedImage == null
+                ? []
+                : [SelectedImage];
             return new ActionTargetResolution(
                 targets,
                 ResolveAssessmentCompanions(targets),

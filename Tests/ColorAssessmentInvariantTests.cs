@@ -158,7 +158,7 @@ public sealed class ColorAssessmentInvariantTests : IDisposable
     {
         Assert.Contains(
             ShortcutCatalog.Groups.SelectMany(group => group.Entries),
-            entry => entry.Keys == "Ctrl+B" &&
+            entry => entry.Keys == "L" &&
                      entry.Action.Contains(
                          "color assessment",
                          StringComparison.OrdinalIgnoreCase));

@@ -2,6 +2,8 @@ using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
+using Avalonia.Controls;
+using System.Runtime.CompilerServices;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -11,7 +13,7 @@ public sealed class WorkspaceKeyRoutingTests : IDisposable
     private readonly TemporaryDirectory _testRoot = new();
 
     [Fact]
-    public async Task SpaceShortcut_TogglesSelectionAndConsumesBothKeyPhases()
+    public async Task SpaceShortcut_OpensLoupeThenTogglesActualSize()
     {
         using var catalog = new CatalogService(
             Path.Combine(_testRoot.Path, Guid.NewGuid().ToString("N")));
@@ -25,17 +27,20 @@ public sealed class WorkspaceKeyRoutingTests : IDisposable
         vm.SelectedImage = image;
         vm.RefreshSelectedCount();
 
-        var handledDown = WorkspaceKeyRouting.TryHandleSpace(
-            vm,
-            toggleSelection: true);
-        var handledUp = WorkspaceKeyRouting.TryHandleSpace(
-            vm,
-            toggleSelection: false);
+        var focusedGrid = (BrowseGridView)RuntimeHelpers.GetUninitializedObject(
+            typeof(BrowseGridView));
+        var opened = WorkspaceKeyRouting.TryHandleSpace(vm, focusedGrid);
+        var zoomed = WorkspaceKeyRouting.TryHandleSpace(vm, focusedGrid);
 
-        Assert.True(handledDown);
-        Assert.True(handledUp);
-        Assert.True(image.IsSelected);
-        Assert.Equal(1, vm.SelectedCount);
+        Assert.True(opened);
+        Assert.True(zoomed);
+        Assert.True(vm.IsLoupeMode);
+        Assert.False(vm.IsZoomFitMode);
+        Assert.False(image.IsSelected);
+        Assert.Equal(0, vm.SelectedCount);
+        Assert.False(WorkspaceKeyRouting.TryHandleSpace(vm, new TextBox()));
+        Assert.False(WorkspaceKeyRouting.TryHandleSpace(vm, new Button()));
+        Assert.False(WorkspaceKeyRouting.TryHandleSpace(vm, new TreeView()));
         await vm.DisposeAsync();
     }
 

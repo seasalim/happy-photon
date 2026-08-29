@@ -110,6 +110,7 @@ public partial class MainWindow
         vm.ConfirmDeleteRejectedAsync = ConfirmDeleteRejectedAsync;
         vm.CancelActiveLoupePeek = () =>
             _compareView?.CancelLoupePeek() == true ||
+            _loupeView?.CancelLoupePeek() == true ||
             GetActiveZoomPanControl()?.CancelLoupePeek() == true;
         vm.ConfirmBatchApplyAsync = ConfirmBatchApplyAsync;
         vm.ShowFileOperationFailuresAsync = ShowFileOperationFailuresAsync;
@@ -390,27 +391,11 @@ public partial class MainWindow
         }
         else if (args.PropertyName == nameof(MainWindowViewModel.IsCompareMode))
         {
-            // The grid tile holding keyboard focus collapses when compare
-            // opens; without an explicit handoff the window stops receiving
-            // key events and Escape cannot reach OnWorkspaceKeyDown.
-            Dispatcher.UIThread.Post(
-                () =>
-                {
-                    if (!ReferenceEquals(DataContext, vm)) return;
-                    if (vm.IsCompareMode)
-                    {
-                        _compareView?.Focus();
-                    }
-                    else if (vm.IsBrowseGridVisible)
-                    {
-                        // Only when the grid is actually showing: compare also
-                        // closes when the workspace leaves Browse, and focusing
-                        // a hidden control fails, stranding focus on the hidden
-                        // compare view.
-                        _browseGridView?.Focus();
-                    }
-                },
-                DispatcherPriority.Loaded);
+            ScheduleCompareFocusHandoff(vm);
+        }
+        else if (args.PropertyName == nameof(MainWindowViewModel.IsLoupeMode))
+        {
+            ScheduleLoupeFocusHandoff(vm);
         }
     }
 
@@ -484,5 +469,4 @@ public partial class MainWindow
             application.RequestedThemeVariant = HappyPhotonThemes.For(theme);
         }
     }
-
 }

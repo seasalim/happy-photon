@@ -67,7 +67,7 @@ DEVELOP FOOTER
 
 The adjustment stack scrolls beneath the histogram while the Develop footer remains
 fixed. Export has no pointer action in the Develop pane itself: click the **Export**
-tab in the mode strip, or use the global `Ctrl+E` shortcut from either workspace.
+tab in the mode strip, or use the global `Ctrl+Shift+E` shortcut from either workspace.
 
 Brightness is disabled (not hidden) at `DisabledOpacity` while a RAW base is active,
 because the crossing-on engine has no Brightness parameter; it stays enabled for
@@ -185,7 +185,7 @@ be read.
 
 ## 4. Viewer interactions
 
-- **Before/after** (`B` or the Develop footer eye): shows the original while active.
+- **Before/after** (`\` or the Develop footer eye): shows the original while active.
   The original reverts tone and color only; the whole geometry family — rotation,
   horizon, crop, geometry, and lens corrections — survives, so before and after stay
   registered and lens corrections the user turned off (or a Legacy lens baseline) are
@@ -219,7 +219,7 @@ be read.
   image bounds. It follows image pan and zoom, fades out 1.5 seconds after the
   last geometry change, and is suppressed while crop mode owns the viewer grid.
   The overlay is display-only and never enters edit settings or rendered output.
-- **1:1 loupe peek** (Develop and fullscreen): below 1:1, a magnifier cursor marks
+- **1:1 loupe peek** (Develop, Browse Loupe, fullscreen, and Compare): below 1:1, a magnifier cursor marks
   where holding the left mouse button briefly magnifies the currently displayed
   bitmap to one original-image pixel per device pixel under the pointer. Once
   engaged, dragging pans with the hand; moving first instead continues as an
@@ -311,7 +311,7 @@ surface. Develop preview and export are the authoritative effects surfaces.
 ## 7. Export workspace
 
 Export is the third workspace beside Browse and Develop. The mode-strip **Export** tab
-and `Ctrl+E` enter it armed; image-only fullscreen continues to refuse the transition.
+and `Ctrl+Shift+E` enter it armed; image-only fullscreen continues to refuse the transition.
 Its left filmstrip snapshots the Browse selection and adds per-capture include toggles
 without changing that selection. The center shows the standard preview immediately.
 Its **Proof** pill optionally renders the current capture through the armed recipe's
@@ -357,8 +357,15 @@ No UI for quality-dependent chroma subsampling — it is automatic and stays inv
 |-----|--------|-------|
 | `W` | Toggle WB eyedropper | Develop only |
 | `J` | Toggle clipping overlay | Develop only |
-| `R` | Switch between paired JPEG and RAW | Develop only |
-| `Ctrl+B` | Toggle color assessment mode | Develop/fullscreen |
+| `R` | Toggle crop | Develop only |
+| `Shift+R` | Switch between paired JPEG and RAW | Develop only |
+| `C` | Enter Compare with 2–4 selected photos | Browse grid/Loupe |
+| `L` | Toggle color assessment mode | Develop/fullscreen |
+| `E` / `Enter` / `Space` | Enter Browse Loupe | Browse grid |
+| `E` / `G` / `Escape` | Return from Browse Loupe | Browse Loupe |
+| `Space` / `Z` | Toggle Fit and 1:1 | Develop/Browse Loupe |
+| `Ctrl+Space` | Toggle active photo in selection | Browse/Develop/Loupe |
+| `Ctrl+Shift+E` | Enter Export | Browse/Develop |
 
 Shortcut registrations belong in
 [`Views/ShortcutCatalog.cs`](../../Views/ShortcutCatalog.cs); a binding change

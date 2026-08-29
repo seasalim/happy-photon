@@ -431,14 +431,16 @@ public sealed class WorkflowTourDimmingTests
         var zoomControls = window.GetLogicalDescendants()
             .OfType<ZoomPanControl>()
             .ToArray();
-        Assert.Equal(3, zoomControls.Length);
+        // Compare and Loupe viewer surfaces stay undimmed; their surrounding
+        // Browse controls own the tour treatment.
+        Assert.Equal(4, zoomControls.Length);
         AssertOpacity(1, zoomControls);
         var assessmentElements = zoomControls.SelectMany(control => new Control[]
         {
             control.FindControl<Panel>("SurroundLayer")!,
             control.FindControl<Border>("AssessmentMat")!
         }).ToArray();
-        Assert.Equal(6, assessmentElements.Length);
+        Assert.Equal(8, assessmentElements.Length);
         AssertOpacity(1, assessmentElements);
 
         var expectedNonUnit = new HashSet<Control>(

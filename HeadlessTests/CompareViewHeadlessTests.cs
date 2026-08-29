@@ -85,7 +85,10 @@ public sealed partial class CompareViewHeadlessTests
 
             Assert.True(vm.IsCompareMode);
             var compare = Descendant<CompareView>(browse, "CompareView");
+            var reviewPane = Descendant<BrowseReviewPane>(
+                window, "BrowseReviewPane");
             Assert.True(compare.IsEffectivelyVisible);
+            Assert.True(reviewPane.IsEffectivelyVisible);
             Assert.True(compareButton.IsEffectivelyVisible);
             Assert.True(compareButton.IsEffectivelyEnabled);
             Assert.True(compareButton.IsChecked);

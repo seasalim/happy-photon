@@ -101,7 +101,7 @@
                               IsChecked="{Binding IsCropMode, Mode=OneWay}"
                               Command="{Binding ToggleCropModeCommand}"
                               IsEnabled="{Binding CanEditSelectedImage}"
-                              ToolTip.Tip="Crop Image (C)" FontSize="14"
+                              ToolTip.Tip="Crop Image (R)" FontSize="14"
                               Padding="8,3" BorderThickness="0">
                     <TextBlock Text="⬚" FontSize="14"/>
                 </ToggleButton>
@@ -113,10 +113,15 @@
                 <Button Command="{Binding ZoomFitCommand}" Content="Fit"
                         ToolTip.Tip="Fit to View" FontSize="10"
                         Padding="8,3" BorderThickness="0"/>
+                <ToggleButton x:Name="ActualSizeButton"
+                              IsChecked="{Binding !IsZoomFitMode, Mode=OneWay}"
+                              Command="{Binding ToggleActualSizeCommand}"
+                              Content="1:1" ToolTip.Tip="Fit / 1:1 (Space or Z)"
+                              FontSize="10" Padding="8,3" BorderThickness="0"/>
                 <ToggleButton x:Name="ColorAssessmentButton"
                               IsChecked="{Binding IsColorAssessmentMode, Mode=OneWay}"
                               Command="{Binding ToggleColorAssessmentModeCommand}"
-                              Content="Assess" ToolTip.Tip="Color assessment mode (Ctrl+B)"
+                              Content="Assess" ToolTip.Tip="Color assessment mode (L)"
                               FontSize="10" Padding="8,3" BorderThickness="0"/>
                 <Button x:Name="FullScreenButton" Command="{Binding ToggleFullScreenCommand}"
                         IsEnabled="{Binding !IsCropMode}" ToolTip.Tip="Fullscreen (F)"
@@ -140,7 +145,7 @@
                               IsChecked="{Binding IsViewingPairedRaw, Mode=OneWay}"
                               Command="{Binding SwitchCaptureMemberCommand}"
                               IsEnabled="{Binding CanSwitchCaptureMember}"
-                              ToolTip.Tip="Switch JPEG / RAW (R)"
+                              ToolTip.Tip="Switch JPEG / RAW (Shift+R)"
                               AutomationProperties.Name="Switch JPEG and RAW"
                               Content="J|R" FontFamily="{StaticResource FontLabel}"
                               FontSize="10" Padding="8,3" BorderThickness="0"/>

@@ -117,6 +117,7 @@ public sealed class BrowseFooterLayoutTests
             .ToArray();
         Assert.Equal(
             [
+                "LoupeViewButton",
                 "CompareViewButton",
                 "BurstsButton",
                 "PairsButton",

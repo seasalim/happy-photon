@@ -65,7 +65,7 @@ public sealed class ExportWorkspaceTests : IDisposable
         Assert.Equal(2, vm.SelectedCount);
         Assert.Equal("1 capture × 1 recipe → 1 file", vm.ExportCountLine);
 
-        WorkspaceKeyRouting.TryHandleSpace(vm, toggleSelection: true);
+        WorkspaceKeyRouting.TryHandleSpace(vm, focusedElement: null);
         vm.SelectNextImageCommand.Execute(null);
         vm.SelectAllCommand.Execute(null);
         vm.DeselectAllCommand.Execute(null);
@@ -118,7 +118,7 @@ public sealed class ExportWorkspaceTests : IDisposable
             Bottom = 0.9
         };
 
-        await vm.EnterDevelopModeCommand.ExecuteAsync(null);
+        await vm.HandleEnterCommand.ExecuteAsync(null);
 
         Assert.False(vm.IsCropMode);
         Assert.Equal(0.1, image.EditSettings.Crop?.Left);
@@ -126,21 +126,21 @@ public sealed class ExportWorkspaceTests : IDisposable
     }
 
     [Fact]
-    public async Task Enter_SwitchesBrowseToDevelop()
+    public async Task ThumbnailEntry_SwitchesBrowseToDevelop()
     {
         await using var vm = CreateViewModel(new NullBaseLoader());
         var image = new ImageFile(_fx.Path("develop.jpg"));
         vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
 
-        await vm.EnterDevelopModeCommand.ExecuteAsync(null);
+        vm.EnterDevelopModeCommand.Execute(null);
 
         Assert.True(vm.IsDevelopMode);
         Assert.Null(vm.ExportReport);
     }
 
     [Fact]
-    public async Task Enter_ReturnsDevelopToBrowse()
+    public async Task ThumbnailEntry_LeavesDevelopActive()
     {
         await using var vm = CreateViewModel(new NullBaseLoader());
         var image = new ImageFile(_fx.Path("browse.jpg"));
@@ -148,9 +148,9 @@ public sealed class ExportWorkspaceTests : IDisposable
         vm.SelectedImage = image;
         vm.SwitchToDevelopCommand.Execute(null);
 
-        await vm.EnterDevelopModeCommand.ExecuteAsync(null);
+        vm.EnterDevelopModeCommand.Execute(null);
 
-        Assert.True(vm.IsBrowseMode);
+        Assert.True(vm.IsDevelopMode);
         Assert.Null(vm.ExportReport);
     }
 
@@ -166,7 +166,7 @@ public sealed class ExportWorkspaceTests : IDisposable
         vm.SwitchToExportCommand.Execute(null);
         vm.ExportSettings.ExportHiRes = false;
 
-        await vm.EnterDevelopModeCommand.ExecuteAsync(null);
+        await vm.HandleEnterCommand.ExecuteAsync(null);
 
         Assert.True(vm.IsExportMode);
         Assert.Equal("Nothing to export", vm.ExportReport?.Heading);

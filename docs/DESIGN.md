@@ -264,7 +264,7 @@ informational only; navigator panning remains out of scope.
 
 The Develop control bar carries actions only. Flag, color-label, and rating state
 remains visible in Browse rather than resting anywhere over the Develop or full-screen
-viewer. Develop culling shortcuts briefly show a confirmation centered over the
+viewer. Develop and Browse Loupe culling shortcuts briefly show a confirmation centered over the
 photograph and clear of its bottom edge, then fade it out. Unlike the app's persistent
 overlays, this one is not muted: it appears for barely a second over unknown
 photograph content, so it uses primary text at full opacity with a soft dark halo for

@@ -172,7 +172,7 @@ Bursts is turned off.
 The **J+R** footer toggle starts off, showing RAW and JPEG files separately. Turn it on
 to combine same-folder, same-name files into one JPEG tile; the choice is remembered.
 Rating, flagging, or labeling that tile assesses both primary files. In Develop, press
-`R` or use **J|R** beside Before/After to switch instantly between the camera JPEG and
+`Shift+R` or use **J|R** beside Before/After to switch instantly between the camera JPEG and
 RAW while keeping the zoomed viewport. The switch changes files, so it clears undo
 history; moving to another capture returns to its JPEG. Turn pairing off to browse,
 assess, or export the physical files separately.
@@ -192,17 +192,18 @@ assessment controls](screenshots/Screenshot_Browse.png)
 
 Flags answer **what should happen to this frame?**
 
-- Press `P` to toggle **Picked**.
-- Press `X` to toggle **Rejected**.
+- Press `P` to set **Picked**.
+- Press `X` to set **Rejected**.
 - Press `U` to return photographs to **Unflagged**.
+- Press `` ` `` to toggle **Picked** and **Unflagged**.
 
 In Browse, these commands affect the selection when it is non-empty, even when the
 active photograph is outside it. With an empty selection they affect the active
-photograph. In Develop they affect only the active photograph. Pick and Reject assign
-the whole target set unless every target already has that flag, in which case they
-clear it.
+photograph. In Develop, Browse Loupe, and Compare they affect only the active
+photograph. Pick and Reject are set-only; the backtick toggle clears a uniformly
+Picked target or sets Picked otherwise.
 
-Develop confirms each flag, rating, and color-label change briefly over the
+Develop and Browse Loupe confirm each flag, rating, and color-label change briefly over the
 photograph — "Set flag: Picked", "Unset rating: ★★★" — and shows nothing between
 changes. Browse remains where a photograph's current assessment is on display.
 
@@ -216,13 +217,14 @@ Move quickly on the first pass:
 3. Leave uncertain comparisons unflagged and revisit them later.
 
 The Pick, Reject, and Unflag buttons beneath the image grid provide the same actions.
-Pick and Reject toggle off when every targeted image already has that flag; Unflag
-always clears either flag, including across a mixed selection.
+Pick and Reject always set their flag; Unflag always clears either flag, including
+across a mixed selection.
 
 ### Add ratings only when they help
 
 Stars answer a different question: **how strong or important is this frame?**
-Press `1` through `5` to set a rating and `0` to clear it.
+Press `1` through `5` to set a rating; repeating a star value clears it when every
+target already has that rating. Press `0` to clear it directly.
 
 Ratings use the same targets as flags.
 
@@ -287,13 +289,13 @@ availability messages take priority over file decode and global runtime messages
 A useful editing order is composition, light, color, and then refinement. You
 do not have to touch every control.
 
-Use **Assess** beside **Fit**, or press `Ctrl+B`, to judge the photograph against
+Use **Assess** beside **Fit**, or press `L`, to judge the photograph against
 an invariant white reference band and mid-gray surround. The session-only mode
 works in Develop and fullscreen, re-fits when toggled so the complete reference
 field is visible, and never changes edits or exported pixels.
 
 Below 1:1, the magnifier cursor marks where you can press and hold the left mouse
-button over the Develop or fullscreen image to peek at 1:1 under the pointer.
+button over the Develop, Browse Loupe, fullscreen, or Compare image to peek at 1:1 under the pointer.
 Drag to pan while peeking, then release or press `Escape` to return to the
 unchanged zoom and view.
 
@@ -305,7 +307,7 @@ adjustment controls](screenshots/Screenshot_Develop.png)
 Use the controls below the image to:
 
 - rotate in 90-degree steps;
-- enter crop mode with `C`;
+- enter crop mode with `R`;
 - straighten the horizon within the crop controls;
 - lock the current crop aspect ratio when needed.
 
@@ -386,7 +388,7 @@ grain; choose Fine, Med, or Coarse for its output-pixel size. Both effects apply
 and standard sources. During crop mode the vignette is temporarily centered on the full
 canvas used by the crop overlay, then recenters when the crop is applied.
 
-In Develop or fullscreen, press `B` or `\` to toggle between the edited image and the
+In Develop or fullscreen, press `\` to toggle between the edited image and the
 original. In Develop, choose **Y|Y** or press `Y` to compare that original beside the
 live edited image; fit, zoom, pan, and the press-and-hold loupe stay synchronized.
 Re-click **Y|Y** or press `Escape` to leave the split. In Develop, use `Ctrl+Z` to undo a color or tonal edit and `Ctrl+Y` or
@@ -446,7 +448,7 @@ export:
 
 Filter the Browse to the group you want before selecting it. Then:
 
-- click a thumbnail's check badge, or press `Space`, to toggle the current image;
+- click a thumbnail's check badge, or press `Ctrl+Space`, to toggle the current image;
 - use `Ctrl+Click` to add or remove individual images;
 - use `Shift+Click` to select a range;
 - press `Ctrl+A` to select every image currently visible through the filters;
@@ -469,13 +471,22 @@ two selected photos remain, navigation returns to the full folder until full scr
 entered again. With zero or one photo selected, full-screen navigation covers the full
 folder as usual.
 
+Press `E`, `Enter`, or `Space` in the Browse grid, or choose the **E** footer toggle,
+to open the active photograph in Browse Loupe. The folder tree, review pane, and
+assessment footer remain available while the grid becomes one large image. Arrow keys
+move through the current 2+ photo selection without changing it, or through visible
+photos when the selection has fewer members. `Space` or `Z` toggles Fit and 1:1;
+`E`, `G`, or `Escape` returns to the same active grid tile, `D` enters Develop, and `F`
+enters fullscreen.
+
 With two to four photos selected, choose the X|Y toggle in the Browse footer before
 the burst and thumbnail-size controls. Two photos appear side by side; three or four use
 a 2×2 view. Click a
 pane or use the left and right arrows to choose the active photo, then use the usual
 flag, rating, and color-label controls. Fit, zoom, pan, and the press-and-hold loupe stay
 synchronized across every pane. Re-click the checked X|Y toggle or press `Escape` to return with
-the comparison selection and active photo preserved.
+the comparison selection and active photo preserved. Press `C` from Browse Loupe to
+enter the same comparison directly; with fewer than two selected photos it does nothing.
 
 ## 6. Export finished copies
 
@@ -496,7 +507,7 @@ Versions export as independent interpretations. Exporting either version by itse
 keeps the ordinary name; when one job includes multiple versions of the same file,
 their outputs gain stable `-V<n>` suffixes and the report identifies both file and version.
 
-Press `Ctrl+E` from Browse or Develop to enter Export with the current selection armed.
+Press `Ctrl+Shift+E` from Browse or Develop to enter Export with the current selection armed.
 Press `Enter` or choose **Export** to run the capture × recipe job. `Escape` returns to
 the workspace you came from; it does not stop a run already in progress.
 
@@ -560,36 +571,40 @@ remains where it started and unchanged.
 | --- | --- |
 | `G` | Switch to Browse |
 | `D` | Switch to Develop |
+| `E` / `Enter` / `Space` | Open Browse Loupe from the grid |
 | Arrow keys | Move between images |
 | `P` / `X` / `U` | Pick, reject, or unflag |
+| `` ` `` | Toggle Picked / Unflagged |
 | `1`–`5` / `0` | Set or clear a rating |
 | `6`–`9` | Set red, yellow, green, or blue color label |
-| `Space` | Toggle the active photo in the selection |
+| `Ctrl+Space` | Toggle the active photo in the selection |
 | `Ctrl+A` / `Ctrl+D` | Select or deselect all visible images |
 | `Ctrl+'` | Create a version from the current interpretation in Browse or Develop |
-| `C` | Toggle crop mode |
-| `B` / `\` | Toggle before/after in Develop or fullscreen |
+| `C` | Compare 2–4 selected photos |
+| `R` | Toggle crop mode in Develop |
+| `\` | Toggle before/after in Develop or fullscreen |
 | `Y` | Show Before and After side by side in Develop |
-| `R` | Switch between a paired JPEG and RAW in Develop |
-| `Ctrl+B` | Toggle color assessment mode in Develop or fullscreen |
+| `Shift+R` | Switch between a paired JPEG and RAW in Develop |
+| `L` | Toggle color assessment mode in Develop or fullscreen |
+| `Space` / `Z` | Toggle Fit and 1:1 in Develop or Browse Loupe |
 | `J` | Toggle clipping overlay in Develop |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
 | `Ctrl+Z` / `Ctrl+Y` | Undo or redo color and tonal edits in Develop |
-| `Ctrl+E` | Open the Export workspace |
-| `Enter` | Run Export; elsewhere apply crop or switch Browse/Develop |
+| `Ctrl+Shift+E` | Open the Export workspace |
+| `Enter` | Run Export, apply crop, or move from Browse Loupe to Develop |
 | `Ctrl+,` | Open Settings |
 | `F` | Toggle image-only fullscreen |
-| `Escape` | Exit Compare, cancel crop, or return from a transient view |
+| `Escape` | Exit Browse Loupe or Compare, cancel crop, or return from a transient view |
 
 ### Gesture map
 
-The review gestures deliberately keep distinct scopes: `B` or `\` shows before/after in
-Develop or fullscreen, `Ctrl+B` toggles the Develop assessment surround, `C` owns crop
-in Develop, `Y` opens the synchronized Before | After split, `R` switches a paired
-capture's representation, `J` owns clipping there,
+The review gestures deliberately keep distinct scopes: `\` shows before/after in
+Develop or fullscreen, `L` toggles the Develop assessment surround, `R` owns crop
+in Develop, `Y` opens the synchronized Before | After split, `Shift+R` switches a paired
+capture's representation, `C` opens Compare from Browse, `J` owns clipping in Develop,
 and holding the left mouse button invokes the loupe
-below 1:1 in Develop, fullscreen, or Compare. Compare has no keyboard-only entry; its
-visible checked toggle teaches the 2–4-photo requirement. Future version gestures
+below 1:1 in Develop, Browse Loupe, fullscreen, or Compare. The visible E and X|Y
+toggles teach the Loupe and 2–4-photo Compare entries. Future version gestures
 must extend this same catalog without colliding with these keys.
 
 Use the `?` button in the title bar to open **Help & About**. The complete

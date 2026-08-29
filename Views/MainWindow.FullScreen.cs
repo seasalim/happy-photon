@@ -34,6 +34,11 @@ public partial class MainWindow
             return _fullScreenZoomPanControl;
         }
 
+        if (DataContext is MainWindowViewModel { IsLoupeMode: true })
+        {
+            return _loupeView?.Viewer;
+        }
+
         return _zoomPanControl;
     }
 

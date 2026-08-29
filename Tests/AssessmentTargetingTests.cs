@@ -128,7 +128,7 @@ public sealed class AssessmentTargetingTests : IDisposable
     }
 
     [Fact]
-    public async Task Pick_MixedSetAssignsAndUniformSetClears()
+    public async Task Pick_IsSetOnlyAndBacktickClearsAUniformSet()
     {
         using var catalog = await CreateCatalogAsync();
         await using var vm = CreateViewModel(catalog);
@@ -147,7 +147,32 @@ public sealed class AssessmentTargetingTests : IDisposable
 
         await vm.TogglePickedImageCommand.ExecuteAsync(null);
         Assert.All([picked, unflagged], image =>
+            Assert.Equal(ImageFlag.Picked, image.Flag));
+
+        await vm.ToggleFlagCommand.ExecuteAsync(null);
+        Assert.All([picked, unflagged], image =>
             Assert.Equal(ImageFlag.Unflagged, image.Flag));
+    }
+
+    [Fact]
+    public async Task Rating_UniformRepeatedValueClearsAndMixedValuesSet()
+    {
+        using var catalog = await CreateCatalogAsync();
+        await using var vm = CreateViewModel(catalog);
+        var first = await CreateImageAsync(catalog, "first.jpg");
+        var second = await CreateImageAsync(catalog, "second.jpg");
+        first.Rating = 3;
+        second.Rating = 1;
+        vm.Browse.SetImages([first, second]);
+        vm.SelectedImage = first;
+        vm.Browse.ToggleSelection(first);
+        vm.Browse.ToggleSelection(second);
+
+        await vm.SetRatingCommand.ExecuteAsync(3);
+        Assert.All([first, second], image => Assert.Equal(3, image.Rating));
+
+        await vm.SetRatingCommand.ExecuteAsync(3);
+        Assert.All([first, second], image => Assert.Equal(0, image.Rating));
     }
 
     [Theory]
@@ -265,7 +290,7 @@ public sealed class AssessmentTargetingTests : IDisposable
             Assert.Contains("Develop", action, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("current image", action, StringComparison.OrdinalIgnoreCase);
         }
-        foreach (var keys in new[] { "Space", "Ctrl+A", "Ctrl+Click", "Shift+Click" })
+        foreach (var keys in new[] { "Ctrl+Space", "Ctrl+A", "Ctrl+Click", "Shift+Click" })
         {
             var action = organize.Entries.Single(entry => entry.Keys == keys).Action;
             Assert.DoesNotContain("export", action, StringComparison.OrdinalIgnoreCase);
@@ -339,7 +364,7 @@ public sealed class AssessmentTargetingTests : IDisposable
         MainWindowViewModel vm,
         AssessmentAxis axis) => axis switch
         {
-            AssessmentAxis.Flag => vm.TogglePickedImageCommand.ExecuteAsync(null),
+            AssessmentAxis.Flag => vm.ToggleFlagCommand.ExecuteAsync(null),
             AssessmentAxis.Rating => vm.SetRatingCommand.ExecuteAsync(2),
             _ => vm.SetColorLabelCommand.ExecuteAsync(ColorLabel.Red)
         };

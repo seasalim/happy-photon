@@ -263,7 +263,7 @@
                                             Classes.selected="{Binding IsSelected}"
                                             Background="Transparent"
                                             Focusable="False"
-                                            ToolTip.Tip="Toggle selection (Space)"
+                                            ToolTip.Tip="Toggle selection (Ctrl+Space)"
                                             AutomationProperties.Name="Toggle image selection"
                                             PointerPressed="OnSelectionBadgePointerPressed"
                                             Click="OnSelectionBadgeClick">
@@ -400,6 +400,8 @@
 
         <views:CompareView x:Name="CompareView" Grid.Row="1"
                            IsVisible="{Binding IsCompareMode}"/>
+        <views:LoupeView x:Name="LoupeView" Grid.Row="1"
+                         IsVisible="{Binding IsLoupeMode}"/>
 
         <views:BrowseGridFooter x:Name="BrowseGridFooter"
                                 Grid.Row="2"

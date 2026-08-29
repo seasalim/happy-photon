@@ -211,7 +211,7 @@ public sealed class ExportWorkspaceRunTests : IDisposable
         Assert.False(vm.IsExportQueueVisible);
         vm.SwitchToExportCommand.Execute(null);
         Assert.True(vm.IsExportQueueVisible);
-        await vm.EnterDevelopModeCommand.ExecuteAsync(null);
+        await vm.HandleEnterCommand.ExecuteAsync(null);
         Assert.Equal(1, vm.DuplicateExportStartRefusalCount);
 
         loader.Release();

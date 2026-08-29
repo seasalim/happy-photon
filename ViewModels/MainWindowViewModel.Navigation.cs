@@ -102,7 +102,8 @@ public partial class MainWindowViewModel
     // focused image so assessment actions land on the photo under the ring.
     private void MoveSelectionWithFocus(ImageFile image)
     {
-        if (!IsBrowseMode || IsFullScreenMode || IsCompareMode) return;
+        if (!IsBrowseMode || IsFullScreenMode || IsCompareMode ||
+            IsLoupeMode && IsFullScreenSelectionRestricted) return;
 
         Browse.SelectOnly(image);
         UpdateSelectedCount();

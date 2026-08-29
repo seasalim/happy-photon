@@ -33,12 +33,16 @@ public sealed class DevelopAssessmentFeedbackTests
             Assert.IsType<Avalonia.Controls.Shapes.Rectangle>(actions.Children[2]);
             Assert.Same(rotateLeft, actions.Children[3]);
 
-            var overlay = Assert.Single(
-                window.GetLogicalDescendants().OfType<AssessmentFeedbackOverlay>());
-            Assert.Same(
-                pane.FindControl<AssessmentFeedbackOverlay>(
-                    "DevelopAssessmentFeedbackOverlay"),
-                overlay);
+            var overlays = window.GetLogicalDescendants()
+                .OfType<AssessmentFeedbackOverlay>().ToArray();
+            Assert.Equal(2, overlays.Length);
+            var overlay = pane.FindControl<AssessmentFeedbackOverlay>(
+                "DevelopAssessmentFeedbackOverlay")!;
+            Assert.Contains(overlay, overlays);
+            Assert.Contains(
+                overlays.Single(candidate =>
+                    candidate.Name == "LoupeAssessmentFeedbackOverlay"),
+                overlays);
             Assert.False(overlay.IsHitTestVisible);
             Assert.Equal(HorizontalAlignment.Center, overlay.HorizontalAlignment);
             Assert.Equal(VerticalAlignment.Bottom, overlay.VerticalAlignment);

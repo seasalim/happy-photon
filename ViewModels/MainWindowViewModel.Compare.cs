@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
@@ -15,11 +14,14 @@ public partial class MainWindowViewModel
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBrowseGridVisible))]
+    [NotifyPropertyChangedFor(nameof(IsBrowseChromeVisible))]
     private bool _isCompareMode;
 
-    public bool IsBrowseGridVisible => IsBrowseMode && !IsCompareMode;
+    public bool IsBrowseGridVisible =>
+        IsBrowseMode && !IsCompareMode && !IsLoupeMode;
+    public bool IsBrowseChromeVisible => IsBrowseMode && !IsCompareMode;
     public bool CanEnterCompare =>
-        IsBrowseGridVisible && Browse.SelectedCount is >= 2 and <= 4;
+        IsBrowseChromeVisible && Browse.SelectedCount is >= 2 and <= 4;
     public bool CanToggleCompare => IsCompareMode || CanEnterCompare;
     public string CompareViewToolTip => IsCompareMode
         ? "Return to grid"
@@ -35,6 +37,8 @@ public partial class MainWindowViewModel
     private void EnterCompare()
     {
         if (!CanEnterCompare) return;
+
+        CloseLoupe();
 
         var members = Browse.VisibleImages
             .Where(image => image.IsSelected)
@@ -97,50 +101,11 @@ public partial class MainWindowViewModel
     {
         foreach (var pane in ComparePanes.ToArray())
         {
-            try
-            {
-                using var cached = await ImageService.Previews.LoadCachedPreviewAsync(
-                    pane.Image,
-                    pane.Image.EditSettings,
-                    cancellationToken);
-                if (cached != null)
-                {
-                    var cachedSize = cached.SettingsMatch
-                        ? cached.OriginalViewPixelSize
-                        : null;
-                    ApplyCompareBitmap(pane, cached.DetachBitmap());
-                    if (cachedSize is { Width: > 0, Height: > 0 })
-                    {
-                        pane.OriginalViewPixelSize = cachedSize.Value;
-                        continue;
-                    }
-                }
-
-                using var fresh = await ImageService.Previews.LoadComparePreviewAsync(
-                    pane.Image,
-                    pane.Image.EditSettings,
-                    cancellationToken: cancellationToken);
-                if (fresh != null)
-                {
-                    ApplyCompareBitmap(
-                        pane,
-                        fresh.DetachBitmap(),
-                        fresh.OriginalViewPixelSize);
-                }
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
-            catch (Exception exception)
-            {
-                System.Diagnostics.Debug.WriteLine(
-                    $"Compare preview failed for {pane.Image.FilePath}: {exception.Message}");
-            }
-            finally
-            {
-                pane.IsLoading = false;
-            }
+            await LoadPreviewPaneAsync(
+                pane,
+                () => IsCompareMode && ComparePanes.Contains(pane),
+                cancellationToken);
+            if (cancellationToken.IsCancellationRequested) return;
         }
     }
 
@@ -169,10 +134,10 @@ public partial class MainWindowViewModel
         pane.IsLoupeRefinementRequested = isLoupePeekActive;
         if (!isLoupePeekActive)
         {
-            RestoreComparePreview(pane);
+            RestorePreviewPane(pane);
             return;
         }
-        if (!ComparePaneNeedsRefinement(pane) ||
+        if (!PreviewPaneNeedsRefinement(pane) ||
             pane.IsRefinementQueued ||
             _compareLoadingCts is not { } cancellation)
         {
@@ -180,133 +145,12 @@ public partial class MainWindowViewModel
         }
 
         pane.IsRefinementQueued = true;
-        _compareLoadingTask = LoadCompareRefinementAfterAsync(
+        _compareLoadingTask = LoadPreviewPaneRefinementAfterAsync(
             _compareLoadingTask,
             pane,
+            () => IsCompareMode && ComparePanes.Contains(pane),
             cancellation.Token);
     }
-
-    private async Task LoadCompareRefinementAfterAsync(
-        Task? previous,
-        ComparePaneViewModel pane,
-        CancellationToken cancellationToken)
-    {
-        if (previous != null)
-        {
-            await previous.ConfigureAwait(
-                ConfigureAwaitOptions.ContinueOnCapturedContext |
-                ConfigureAwaitOptions.SuppressThrowing);
-        }
-
-        try
-        {
-            while (IsCompareMode && ComparePanes.Contains(pane) &&
-                   ComparePaneNeedsRefinement(pane))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var requested = pane.RequiredDeviceLongEdge;
-                using var refined =
-                    await ImageService.Previews.LoadComparePreviewAsync(
-                        pane.Image,
-                        pane.Image.EditSettings,
-                        requested,
-                        cancellationToken);
-                if (refined == null) return;
-                if (!ComparePaneNeedsRefinement(pane))
-                {
-                    return;
-                }
-                ApplyCompareBitmap(
-                    pane,
-                    refined.DetachBitmap(),
-                    refined.OriginalViewPixelSize,
-                    isRefinement: true);
-            }
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-        }
-        catch (Exception exception)
-        {
-            System.Diagnostics.Debug.WriteLine(
-                $"Compare refinement failed for {pane.Image.FilePath}: " +
-                exception.Message);
-        }
-        finally
-        {
-            pane.IsRefinementQueued = false;
-        }
-    }
-
-    private static bool ComparePaneNeedsRefinement(ComparePaneViewModel pane) =>
-        pane.IsLoupeRefinementRequested &&
-        pane.RequiredDeviceLongEdge > pane.RenderedLongEdge &&
-        (pane.AchievableLongEdge == 0 ||
-         pane.RenderedLongEdge < pane.AchievableLongEdge);
-
-    private void ApplyCompareBitmap(
-        ComparePaneViewModel pane,
-        Bitmap bitmap,
-        Avalonia.PixelSize originalViewPixelSize = default,
-        bool isRefinement = false)
-    {
-        if (!IsCompareMode || !ComparePanes.Contains(pane))
-        {
-            bitmap.Dispose();
-            return;
-        }
-
-        var previous = pane.Preview;
-        pane.Preview = bitmap;
-        pane.RenderedLongEdge = Math.Max(
-            bitmap.PixelSize.Width,
-            bitmap.PixelSize.Height);
-        if (!isRefinement)
-        {
-            var previousPreviewResolution = pane.PreviewResolutionBitmap;
-            pane.PreviewResolutionBitmap = bitmap;
-            pane.PreviewResolutionLongEdge = pane.RenderedLongEdge;
-            if (previousPreviewResolution != null &&
-                !ReferenceEquals(previousPreviewResolution, previous))
-            {
-                RetireCompareBitmap(pane, previousPreviewResolution);
-            }
-        }
-        if (originalViewPixelSize.Width > 0 && originalViewPixelSize.Height > 0)
-        {
-            pane.OriginalViewPixelSize = originalViewPixelSize;
-            pane.AchievableLongEdge = Math.Max(
-                originalViewPixelSize.Width,
-                originalViewPixelSize.Height);
-        }
-        if (previous != null &&
-            !ReferenceEquals(previous, pane.PreviewResolutionBitmap))
-        {
-            RetireCompareBitmap(pane, previous);
-        }
-    }
-
-    private void RestoreComparePreview(ComparePaneViewModel pane)
-    {
-        var preview = pane.PreviewResolutionBitmap;
-        if (preview == null || ReferenceEquals(pane.Preview, preview))
-        {
-            return;
-        }
-
-        var refinement = pane.Preview;
-        pane.Preview = preview;
-        pane.RenderedLongEdge = pane.PreviewResolutionLongEdge;
-        if (refinement != null) RetireCompareBitmap(pane, refinement);
-    }
-
-    private void RetireCompareBitmap(
-        ComparePaneViewModel pane,
-        Bitmap bitmap) =>
-        _bitmapRetirement.Retire(
-            bitmap,
-            () => ReferenceEquals(pane.Preview, bitmap) ||
-                ReferenceEquals(pane.PreviewResolutionBitmap, bitmap));
 
     private void CloseCompare()
     {
@@ -318,16 +162,7 @@ public partial class MainWindowViewModel
         IsCompareMode = false;
         foreach (var pane in ComparePanes)
         {
-            var bitmap = pane.Preview;
-            var previewResolution = pane.PreviewResolutionBitmap;
-            pane.Preview = null;
-            pane.PreviewResolutionBitmap = null;
-            if (bitmap != null) _bitmapRetirement.Retire(bitmap, () => false);
-            if (previewResolution != null &&
-                !ReferenceEquals(previewResolution, bitmap))
-            {
-                _bitmapRetirement.Retire(previewResolution, () => false);
-            }
+            DisposePreviewPane(pane);
         }
         ComparePanes.Clear();
 

@@ -235,7 +235,7 @@ public sealed class ColorAssessmentViewTests
                 "ColorAssessmentButton")!;
             var binding = Assert.Single(
                 window.KeyBindings,
-                keyBinding => keyBinding.Gesture.ToString() == "Ctrl+B");
+                keyBinding => keyBinding.Gesture.ToString() == "L");
 
             Assert.Same(vm.ToggleColorAssessmentModeCommand, button.Command);
             Assert.Same(vm.ToggleColorAssessmentModeCommand, binding.Command);

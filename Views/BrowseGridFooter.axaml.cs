@@ -10,6 +10,7 @@ public partial class BrowseGridFooter : UserControl
     private static readonly string[] ControlNames =
     [
         "ThumbnailSizePanel",
+        "LoupeViewButton",
         "CompareViewButton",
         "BurstsButton",
         "PairsButton",

@@ -42,6 +42,7 @@ public partial class BrowseGridView : UserControl
         "EmptyHeading",
         "EmptyMessage",
         "CompareView",
+        "LoupeView",
         "BrowseGridFooter"
     ];
 

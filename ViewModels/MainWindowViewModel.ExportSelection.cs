@@ -133,6 +133,12 @@ public partial class MainWindowViewModel
             return;
         }
 
+        if (IsLoupeMode)
+        {
+            CloseLoupe();
+            return;
+        }
+
         if (IsBeforeAfterSplit)
         {
             CloseBeforeAfterSplit();

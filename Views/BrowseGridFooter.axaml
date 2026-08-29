@@ -13,13 +13,12 @@
         BorderBrush="{DynamicResource Divider}"
         BorderThickness="0,1,0,0"
         Padding="14,8">
-    <!-- The left reserve grows from the pre-Pairs control width to the status
-         message cap. The right controls keep an Auto column, so the added 24px
-         Pairs button and 4px gap remain inside the narrowest supported Browse
-         pane while the assessment takes the flexible middle column. -->
+    <!-- The left reserve yields at narrow widths so the Loupe, Compare, and
+         thumbnail controls stay inside the Browse pane. The status message
+         truncates before the centered assessment controls. -->
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" MinWidth="176" MaxWidth="220"/>
+            <ColumnDefinition Width="*" MinWidth="142" MaxWidth="220"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
@@ -32,6 +31,17 @@
                     VerticalAlignment="Center"
                     Orientation="Horizontal"
                     Spacing="4">
+                <ToggleButton x:Name="LoupeViewButton"
+                              Classes="develop-action"
+                              Width="30" Padding="0"
+                              Command="{Binding ToggleLoupeCommand}"
+                              IsChecked="{Binding IsLoupeMode, Mode=OneWay}"
+                              ToolTip.Tip="Loupe (E)"
+                              AutomationProperties.Name="Open Browse Loupe">
+                    <PathIcon Width="14" Height="14"
+                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}"
+                              Data="M1 2h12v10H1z M3 4v6h8V4z"/>
+                </ToggleButton>
                 <ToggleButton x:Name="CompareViewButton"
                               Classes="develop-action"
                               Width="30"

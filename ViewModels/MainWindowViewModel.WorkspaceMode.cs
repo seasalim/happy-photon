@@ -14,6 +14,7 @@ public partial class MainWindowViewModel
     // IsBrowseGridVisible also reads IsCompareMode, whose own notification fires
     // while leaving Browse — only this one covers the return trip.
     [NotifyPropertyChangedFor(nameof(IsBrowseGridVisible))]
+    [NotifyPropertyChangedFor(nameof(IsBrowseChromeVisible))]
     [NotifyPropertyChangedFor(nameof(IsExportProofCaptionVisible))]
     private WorkspaceMode _workspaceMode;
     private WorkspaceMode _workspaceModeBeforeExport = WorkspaceMode.Browse;
@@ -43,22 +44,6 @@ public partial class MainWindowViewModel
     public bool IsFullScreenPreviewSurfaceActive => IsFullScreenMode;
 
     [RelayCommand]
-    private void ToggleViewMode()
-    {
-        if (IsFullScreenMode || IsExportMode)
-        {
-            return;
-        }
-
-        if (IsCropMode)
-        {
-            CancelCrop();
-            return;
-        }
-        IsDevelopMode = !IsDevelopMode;
-    }
-
-    [RelayCommand]
     private void SwitchToBrowse()
     {
         if (IsFullScreenMode)
@@ -66,7 +51,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        // Compare is a Browse sub-state: the assignment below is a no-op here.
+        CloseLoupe();
         CloseCompare();
         IsDevelopMode = false;
     }
@@ -79,6 +64,7 @@ public partial class MainWindowViewModel
             return;
         }
 
+        CloseLoupe();
         IsDevelopMode = true;
     }
 
@@ -99,38 +85,51 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private async Task EnterDevelopModeAsync()
+    private void EnterDevelopMode()
     {
-        if (IsFullScreenMode)
+        if (!IsFullScreenMode && HasSelectedImage)
         {
-            return;
+            IsDevelopMode = true;
         }
+    }
 
+    [RelayCommand]
+    private async Task HandleEnterAsync()
+    {
+        if (IsFullScreenMode) return;
         if (IsExportMode)
         {
             await RunExportAsync();
             return;
         }
-
         if (IsCropMode)
         {
             await ApplyCropAsync();
             return;
         }
-        if (IsDevelopMode)
+        if (IsLoupeMode)
         {
-            IsDevelopMode = false;
+            CloseLoupe();
+            IsDevelopMode = true;
         }
-        else if (HasSelectedImage)
+        else if (IsCompareMode)
         {
             IsDevelopMode = true;
+        }
+        else if (IsBrowseGridVisible)
+        {
+            EnterLoupe();
         }
     }
 
     partial void OnWorkspaceModeChanged(WorkspaceMode value)
     {
         if (value != WorkspaceMode.Develop) CloseBeforeAfterSplit();
-        if (value != WorkspaceMode.Browse) CloseCompare();
+        if (value != WorkspaceMode.Browse)
+        {
+            CloseLoupe();
+            CloseCompare();
+        }
         // The compare gate reads the workspace too, so it needs the same re-notify.
         NotifyCompareGateChanged();
         if (value != WorkspaceMode.Export) SetProofDisplayed(false);
@@ -215,6 +214,7 @@ public partial class MainWindowViewModel
             return;
         }
 
+        CloseLoupe();
         IsFullScreenMode = true;
     }
 

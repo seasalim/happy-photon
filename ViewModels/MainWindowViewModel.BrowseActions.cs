@@ -270,7 +270,7 @@ public partial class MainWindowViewModel
     {
         if (IsFullScreenMode) return;
 
-        await SetFlagStateAsync(ImageFlag.Picked, toggleUniform: true);
+        await SetFlagStateAsync(ImageFlag.Picked);
     }
 
     [RelayCommand]
@@ -294,7 +294,15 @@ public partial class MainWindowViewModel
     {
         if (IsFullScreenMode) return;
 
-        await SetFlagStateAsync(ImageFlag.Rejected, toggleUniform: true);
+        await SetFlagStateAsync(ImageFlag.Rejected);
+    }
+
+    [RelayCommand]
+    private async Task ToggleFlagAsync()
+    {
+        if (IsFullScreenMode) return;
+
+        await SetFlagStateAsync(ImageFlag.Picked, toggleUniform: true);
     }
 
     private async Task SetFlagStateAsync(
@@ -397,13 +405,16 @@ public partial class MainWindowViewModel
         if (targets.Count == 0) return;
         var actedOnImage = targets.Count == 1 ? targets[0] : null;
         var previousRating = actedOnImage?.Rating ?? 0;
-        if (targets.All(image => image.Rating == rating))
+        var next = rating > 0 && targets.All(image => image.Rating == rating)
+            ? 0
+            : rating;
+        if (targets.All(image => image.Rating == next))
         {
             if (actedOnImage != null)
             {
                 ShowAssessmentFeedback(
                     actedOnImage,
-                    DescribeRatingFeedback(rating, previousRating));
+                    DescribeRatingFeedback(next, previousRating));
             }
             return;
         }
@@ -413,7 +424,7 @@ public partial class MainWindowViewModel
         var replacement = selectedImage != null &&
                           targets.Contains(selectedImage) &&
                           representative != null &&
-                          !Browse.MatchesCurrentFilters(representative, rating)
+                          !Browse.MatchesCurrentFilters(representative, next)
             ? Browse.ReplacementAfterRemoval(representative)
             : null;
 
@@ -427,7 +438,7 @@ public partial class MainWindowViewModel
             await CommitAssessmentAsync(participants.Select(target =>
                 new AssessmentMutation(
                     target.CatalogId, AssessmentAxes.Rating,
-                    Rating: rating)).ToArray());
+                    Rating: next)).ToArray());
         }
         catch (Exception ex)
         {
@@ -452,7 +463,7 @@ public partial class MainWindowViewModel
         {
             ShowAssessmentFeedback(
                 actedOnImage,
-                DescribeRatingFeedback(rating, previousRating));
+                DescribeRatingFeedback(next, previousRating));
         }
     }
 

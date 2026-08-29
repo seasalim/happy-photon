@@ -25,7 +25,7 @@ public sealed record ColorLabelChoice(ColorLabel Value, string Name)
 {
     public string ToolTip =>
         $"Set {Name.ToLowerInvariant()} label on the Browse selection when non-empty, " +
-        "otherwise the active photo; active photo only in Develop; click again to clear";
+        "otherwise the active photo; active photo only in Develop, Loupe, or Compare; click again to clear";
     public string AutomationName => $"Set {Name.ToLowerInvariant()} color label";
 }
 

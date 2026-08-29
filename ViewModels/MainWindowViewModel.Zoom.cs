@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace HappyPhoton.ViewModels;
 
@@ -30,6 +31,14 @@ public partial class MainWindowViewModel
         if (!double.IsFinite(zoom) || zoom <= 0) return;
         IsZoomFitMode = false;
         ZoomLevel = Math.Clamp(zoom, MinZoom, MaxZoom);
+    }
+
+    [RelayCommand]
+    private void ToggleActualSize()
+    {
+        if (!IsDevelopMode && !IsLoupeMode) return;
+        if (IsZoomFitMode) ApplyManualZoom(1.0);
+        else RequestZoomFit?.Invoke();
     }
 
     private void UpdateOriginalViewPixelSize(Bitmap bitmap)

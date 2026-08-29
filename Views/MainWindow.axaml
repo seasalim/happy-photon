@@ -21,9 +21,9 @@
     </Design.DataContext>
 
     <Window.KeyBindings>
-        <KeyBinding Gesture="Enter" Command="{Binding EnterDevelopModeCommand}"/>
+        <KeyBinding Gesture="Enter" Command="{Binding HandleEnterCommand}"/>
         <KeyBinding Gesture="Delete" Command="{Binding DeleteImageCommand}"/>
-        <KeyBinding Gesture="Ctrl+E" Command="{Binding SwitchToExportCommand}"/>
+        <KeyBinding Gesture="Ctrl+Shift+E" Command="{Binding SwitchToExportCommand}"/>
         <KeyBinding Gesture="Ctrl+OemComma" Command="{Binding OpenSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+OemQuotes" Command="{Binding NewVersionFromCurrentCommand}"/>
         <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllCommand}"/>
@@ -33,17 +33,17 @@
         <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}"/>
         <KeyBinding Gesture="Ctrl+Y" Command="{Binding RedoCommand}"/>
         <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}"/>
-        <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleColorAssessmentModeCommand}"/>
-        <KeyBinding Gesture="B" Command="{Binding ToggleBeforeAfterCommand}"/>
         <KeyBinding Gesture="Oem5" Command="{Binding ToggleBeforeAfterCommand}"/>
         <KeyBinding Gesture="OemBackslash" Command="{Binding ToggleBeforeAfterCommand}"/>
         <KeyBinding Gesture="Y" Command="{Binding ToggleBeforeAfterSplitCommand}"/>
-        <KeyBinding Gesture="R" Command="{Binding SwitchCaptureMemberCommand}"/>
+        <KeyBinding Gesture="Shift+R" Command="{Binding SwitchCaptureMemberCommand}"/>
         <KeyBinding Gesture="W" Command="{Binding ToggleWhiteBalancePickerCommand}"/>
         <KeyBinding Gesture="J" Command="{Binding ToggleClippingOverlayCommand}"/>
+        <KeyBinding Gesture="L" Command="{Binding ToggleColorAssessmentModeCommand}"/>
         <KeyBinding Gesture="P" Command="{Binding TogglePickedImageCommand}"/>
         <KeyBinding Gesture="X" Command="{Binding ToggleRejectedImageCommand}"/>
         <KeyBinding Gesture="U" Command="{Binding UnpickImageCommand}"/>
+        <KeyBinding Gesture="OemTilde" Command="{Binding ToggleFlagCommand}"/>
         <KeyBinding Gesture="D0" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>0</x:Int32></KeyBinding.CommandParameter></KeyBinding>
         <KeyBinding Gesture="D1" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>1</x:Int32></KeyBinding.CommandParameter></KeyBinding>
         <KeyBinding Gesture="D2" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>2</x:Int32></KeyBinding.CommandParameter></KeyBinding>
@@ -54,10 +54,12 @@
         <KeyBinding Gesture="D7" Command="{Binding SetColorLabelCommand}"><KeyBinding.CommandParameter><models:ColorLabel>Yellow</models:ColorLabel></KeyBinding.CommandParameter></KeyBinding>
         <KeyBinding Gesture="D8" Command="{Binding SetColorLabelCommand}"><KeyBinding.CommandParameter><models:ColorLabel>Green</models:ColorLabel></KeyBinding.CommandParameter></KeyBinding>
         <KeyBinding Gesture="D9" Command="{Binding SetColorLabelCommand}"><KeyBinding.CommandParameter><models:ColorLabel>Blue</models:ColorLabel></KeyBinding.CommandParameter></KeyBinding>
-        <KeyBinding Gesture="E" Command="{Binding ToggleViewModeCommand}"/>
+        <KeyBinding Gesture="E" Command="{Binding ToggleLoupeCommand}"/>
         <KeyBinding Gesture="Escape" Command="{Binding HandleEscapeCommand}"/>
         <KeyBinding Gesture="G" Command="{Binding SwitchToBrowseCommand}"/>
         <KeyBinding Gesture="D" Command="{Binding SwitchToDevelopCommand}"/>
+        <KeyBinding Gesture="C" Command="{Binding EnterCompareCommand}"/>
+        <KeyBinding Gesture="Z" Command="{Binding ToggleActualSizeCommand}"/>
         <KeyBinding Gesture="F" Command="{Binding ToggleFullScreenCommand}"/>
     </Window.KeyBindings>
 
@@ -140,7 +142,7 @@
 
                 <!-- Folder Tree (Browse mode) -->
                 <views:FolderTreePanel Grid.Row="2" x:Name="FolderTreePanel"
-                                       IsVisible="{Binding IsBrowseGridVisible}"
+                                       IsVisible="{Binding IsBrowseChromeVisible}"
                                        RootFolders="{Binding RootFolders}"
                                        SelectedFolder="{Binding SelectedFolder, Mode=TwoWay}"
                                        BrowsingFolderName="{Binding BrowsingFolderName}"

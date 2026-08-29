@@ -68,7 +68,7 @@ public sealed class ShortcutReachabilityTests
     {
         var representationSwitch = ShortcutCatalog.Groups
             .SelectMany(group => group.Entries)
-            .Single(entry => entry.Keys == "R");
+            .Single(entry => entry.Keys == "Shift+R");
         var missing = new ShortcutEntry("K", "Missing", []);
         var ambiguous = new ShortcutEntry("K", "Ambiguous",
         [
@@ -109,6 +109,7 @@ public sealed class ShortcutReachabilityTests
         ShortcutReachabilityClaim claim)
     {
         vm.ExitCompareCommand.Execute(null);
+        vm.ExitLoupeCommand.Execute(null);
         vm.IsFullScreenMode = false;
         vm.IsCropMode = false;
         vm.WorkspaceMode = claim.Workspace switch
@@ -127,6 +128,10 @@ public sealed class ShortcutReachabilityTests
                 }
             }
             vm.EnterCompareCommand.Execute(null);
+        }
+        if (claim.Workspace == ShortcutWorkspace.Loupe)
+        {
+            vm.EnterLoupeCommand.Execute(null);
         }
         vm.IsFullScreenMode = claim.Workspace == ShortcutWorkspace.FullScreen;
         if (claim.ControlName is "ApplyCropButton" or "CancelCropButton")

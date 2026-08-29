@@ -281,7 +281,7 @@ public partial class MainWindowViewModel
     private void UpdateThumbnailPumpAdmission()
     {
         var wasPaused = _thumbnailPumpAdmission.IsPaused;
-        var pause = IsDevelopMode || IsFullScreenMode || IsCompareMode;
+        var pause = IsDevelopMode || IsFullScreenMode || IsCompareMode || IsLoupeMode;
         _thumbnailPumpAdmission.SetPaused(pause);
         if (wasPaused && !pause) SignalBackgroundActivityStarted();
     }

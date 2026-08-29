@@ -59,7 +59,7 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
             var eye = Descendant<ToggleButton>(window, "BeforeAfterButton");
             Assert.Equal("Y|Y", Assert.IsType<TextBlock>(split.Content).Text);
             Assert.Equal("Before | After (Y)", ToolTip.GetTip(split));
-            Assert.Equal("Toggle original preview (B or \\)", ToolTip.GetTip(eye));
+            Assert.Equal("Toggle original preview (\\)", ToolTip.GetTip(eye));
             Assert.Contains(ShortcutCatalog.Groups.SelectMany(group => group.Entries),
                 entry => entry.Keys == "Y" &&
                     entry.Reachability.Any(claim =>

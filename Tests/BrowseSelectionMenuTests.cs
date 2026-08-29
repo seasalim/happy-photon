@@ -316,6 +316,8 @@ public sealed class BrowseSelectionMenuTests
         var panel = control.FindControl<StackPanel>("BrowseActionsPanel")!;
         var thumbnailControls = control.FindControl<StackPanel>(
             "ThumbnailSizePanel")!;
+        var loupeView = Assert.IsType<ToggleButton>(
+            control.FindControl<ToggleButton>("LoupeViewButton"));
         var compareView = Assert.IsType<ToggleButton>(
             control.FindControl<ToggleButton>("CompareViewButton"));
         var actions = control.FindControl<Button>("BrowseActionsButton")!;
@@ -329,8 +331,9 @@ public sealed class BrowseSelectionMenuTests
         var deleteRejected = Assert.IsType<MenuItem>(items[3]);
 
         Assert.Equal([actions], panel.Children);
-        Assert.Same(compareView, thumbnailControls.Children[0]);
-        Assert.IsType<Rectangle>(thumbnailControls.Children[1]);
+        Assert.Same(loupeView, thumbnailControls.Children[0]);
+        Assert.Same(compareView, thumbnailControls.Children[1]);
+        Assert.IsType<Rectangle>(thumbnailControls.Children[2]);
         Assert.Null(control.FindControl<Button>("GridViewButton"));
         Assert.DoesNotContain("accent", actions.Classes);
         Assert.Null(control.FindControl<Button>("SelectAllButton"));

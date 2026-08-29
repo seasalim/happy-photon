@@ -19,6 +19,8 @@ public sealed class AssessmentFeedbackTests : IDisposable
         await vm.TogglePickedImageCommand.ExecuteAsync(null);
         Assert.Equal("Set flag: Picked", vm.AssessmentFeedback);
         await vm.TogglePickedImageCommand.ExecuteAsync(null);
+        Assert.Equal("Set flag: Picked", vm.AssessmentFeedback);
+        await vm.ToggleFlagCommand.ExecuteAsync(null);
         Assert.Equal("Unset flag: Picked", vm.AssessmentFeedback);
         await vm.ToggleRejectedImageCommand.ExecuteAsync(null);
         Assert.Equal("Set flag: Rejected", vm.AssessmentFeedback);
@@ -32,8 +34,6 @@ public sealed class AssessmentFeedbackTests : IDisposable
         await vm.SetRatingCommand.ExecuteAsync(3);
         Assert.Equal("Set rating: ★★★", vm.AssessmentFeedback);
         await vm.SetRatingCommand.ExecuteAsync(3);
-        Assert.Equal("Set rating: ★★★", vm.AssessmentFeedback);
-        await vm.SetRatingCommand.ExecuteAsync(0);
         Assert.Equal("Unset rating: ★★★", vm.AssessmentFeedback);
         await vm.SetRatingCommand.ExecuteAsync(0);
         Assert.Equal("Unset rating", vm.AssessmentFeedback);
@@ -77,9 +77,9 @@ public sealed class AssessmentFeedbackTests : IDisposable
         _clock.Advance(TimeSpan.FromMilliseconds(1400));
 
         Assert.True(vm.IsAssessmentFeedbackVisible);
-        Assert.Equal("Set rating: ★★", vm.AssessmentFeedback);
+        Assert.Equal("Unset rating: ★★", vm.AssessmentFeedback);
         await WaitUntilAsync(() => !vm.IsAssessmentFeedbackVisible);
-        Assert.Equal("Set rating: ★★", vm.AssessmentFeedback);
+        Assert.Equal("Unset rating: ★★", vm.AssessmentFeedback);
         await WaitUntilAsync(() => vm.AssessmentFeedback == null);
     }
 

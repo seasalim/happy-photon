@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private PresetsPanel? _presetsPanel;
     private BrowseGridView? _browseGridView;
     private CompareView? _compareView;
+    private LoupeView? _loupeView;
     private bool _isDevelopViewportPublicationSuppressed;
 
     public MainWindow()
@@ -28,11 +29,6 @@ public partial class MainWindow : Window
             KeyDownEvent,
             OnWorkspaceKeyDown,
             RoutingStrategies.Tunnel);
-        AddHandler(
-            KeyUpEvent,
-            OnWorkspaceKeyUp,
-            RoutingStrategies.Tunnel);
-
         var developViewerPane =
             this.FindControl<DevelopViewerPane>("DevelopViewerPane");
         _zoomPanControl = developViewerPane?.Viewer;
@@ -97,6 +93,7 @@ public partial class MainWindow : Window
         }
 
         _compareView = _browseGridView?.FindControl<CompareView>("CompareView");
+        _loupeView = _browseGridView?.FindControl<LoupeView>("LoupeView");
     }
 
     private void WithVm(Action<MainWindowViewModel> action)
@@ -337,8 +334,8 @@ public partial class MainWindow : Window
                 return;
             }
 
-            // C key: Toggle crop mode (in Develop mode)
-            if (e.Key == Key.C && e.KeyModifiers == KeyModifiers.None &&
+            // R key: Toggle crop mode (in Develop mode)
+            if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.None &&
                 vm.IsDevelopMode && !vm.IsFullScreenMode && vm.HasSelectedImage)
             {
                 vm.ToggleCropModeCommand.Execute(null);
@@ -433,22 +430,20 @@ public partial class MainWindow : Window
         // KeyDown directly. The whole ladder, loupe included, lives in
         // MainWindowViewModel.HandleEscape.
         if (e.Key == Key.Space &&
-            e.KeyModifiers == KeyModifiers.None &&
-            WorkspaceKeyRouting.TryHandleSpace(
-                DataContext as MainWindowViewModel,
-                toggleSelection: true))
+            e.KeyModifiers == KeyModifiers.Control &&
+            DataContext is MainWindowViewModel
+            {
+                IsWorkspaceInteractionEnabled: true
+            } selectionViewModel)
         {
+            selectionViewModel.ToggleSelectionCommand.Execute(null);
             e.Handled = true;
         }
-    }
-
-    private void OnWorkspaceKeyUp(object? sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Space &&
+        else if (e.Key == Key.Space &&
             e.KeyModifiers == KeyModifiers.None &&
             WorkspaceKeyRouting.TryHandleSpace(
                 DataContext as MainWindowViewModel,
-                toggleSelection: false))
+                TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement()))
         {
             e.Handled = true;
         }
