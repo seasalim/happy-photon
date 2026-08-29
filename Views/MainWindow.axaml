@@ -229,19 +229,17 @@
 
         <views:WorkflowCoachmark
             Grid.Row="1"
-            Grid.Column="4"
-            HorizontalAlignment="Left"
+            Grid.Column="2"
+            HorizontalAlignment="Right"
             VerticalAlignment="Top"
             Margin="12"
             IsVisible="{Binding IsDeliverCopiesTourVisible}"
-            Pointer="Left"
+            Pointer="Right"
             StepText="3 of 3"
             Heading="Export the edited images"
             Body="Review the captures and recipes here, then export finished copies. Originals remain untouched."
             PrimaryText="Finish"
-            PrimaryCommand="{Binding FinishWorkflowTourCommand}"
-            SecondaryText="End tour"
-            SecondaryCommand="{Binding EndWorkflowTourCommand}"/>
+            PrimaryCommand="{Binding FinishWorkflowTourCommand}"/>
 
         <views:ExportQueueStrip Grid.Row="2" Grid.ColumnSpan="5"/>
 

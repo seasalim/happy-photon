@@ -128,6 +128,7 @@
                             Padding="12,6"/>
                     <Button Content="{Binding SecondaryText, ElementName=Root}"
                             Command="{Binding SecondaryCommand, ElementName=Root}"
+                            IsVisible="{Binding SecondaryText, ElementName=Root, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                             Margin="0,0,8,8"
                             Padding="12,6"/>
                 </WrapPanel>

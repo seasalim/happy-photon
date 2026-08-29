@@ -91,9 +91,8 @@
                 <StackPanel x:Name="BrowseActionsPanel"
                             Grid.Column="2" Orientation="Horizontal" Spacing="5"
                             Margin="10,0,0,0"
-                            Classes="tour-region tour-glow"
-                            Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                            Classes.tour-focus="{Binding IsDeliverCopiesTourVisible}">
+                            Classes="tour-region"
+                            Classes.tour-dimmed="{Binding IsWorkflowTourPresented}">
                     <Button x:Name="BrowseActionsButton" Content="⋯" FontSize="10" Width="24" Padding="4,4"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             IsEnabled="{Binding Browse.HasVisibleImages}"

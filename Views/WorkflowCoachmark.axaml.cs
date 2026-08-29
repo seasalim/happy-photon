@@ -15,9 +15,8 @@ public enum CoachmarkPointer
 }
 
 /// <summary>
-/// Where the trail sits along the edge it leaves from. Needed because a target is
-/// not always opposite the middle of the bubble: step 3's Export button is at the
-/// far right of the toolbar above, so a centred trail would point at a thumbnail.
+/// Where the trail sits along the edge it leaves from when the target is not
+/// opposite the middle of the bubble.
 /// </summary>
 public enum CoachmarkPointerAlignment
 {

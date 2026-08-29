@@ -175,6 +175,7 @@ public sealed class WorkflowTourDimmingTests
                 browseReviewPane,
                 filterLabel,
                 filterScrollViewer,
+                actionsPanel,
                 onlineOnlyMessage,
                 imageAssessment,
                 thumbnailSizePanel);
@@ -297,6 +298,7 @@ public sealed class WorkflowTourDimmingTests
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
         var window = new MainWindow { DataContext = vm };
+        window.Show();
 
         try
         {
@@ -306,9 +308,8 @@ public sealed class WorkflowTourDimmingTests
                 .ToDictionary(coachmark => coachmark.StepText);
             Assert.Equal(3, coachmarks.Count);
 
-            // Step 1's assessment controls sit below, step 2's edit panel to the
-            // right, and step 3 now lives with the Export workspace in the
-            // right-hand pane rather than beneath the former Browse toolbar.
+            // Step 1's assessment controls sit below. Steps 2 and 3 point right
+            // from the preview toward their respective settings panes.
             Assert.Equal(CoachmarkPointer.Down, coachmarks["1 of 3"].Pointer);
             Assert.Equal(
                 CoachmarkPointerAlignment.Center,
@@ -317,7 +318,6 @@ public sealed class WorkflowTourDimmingTests
             Assert.Equal(
                 CoachmarkPointerAlignment.Center,
                 coachmarks["2 of 3"].PointerAlignment);
-            Assert.Equal(CoachmarkPointer.Left, coachmarks["3 of 3"].Pointer);
             Assert.Equal(
                 CoachmarkPointerAlignment.Center,
                 coachmarks["3 of 3"].PointerAlignment);
@@ -333,7 +333,42 @@ public sealed class WorkflowTourDimmingTests
             }
 
             var step3Arrow = coachmarks["3 of 3"].FindControl<AvaloniaPath>("TourArrow")!;
-            Assert.Equal(HorizontalAlignment.Right, step3Arrow.HorizontalAlignment);
+
+            vm.StartWorkflowTour();
+            vm.ShowDevelopTourStepCommand.Execute(null);
+            vm.ShowExportTourStepCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            var step3 = coachmarks["3 of 3"];
+            var settings = window.FindControl<ExportSettingsPane>(
+                "ExportSettingsPane")!;
+            var step3Origin = step3.TranslatePoint(default, window)!.Value;
+            var settingsOrigin = settings.TranslatePoint(default, window)!.Value;
+            var overlapWidth = Math.Max(
+                0,
+                Math.Min(
+                    step3Origin.X + step3.Bounds.Width,
+                    settingsOrigin.X + settings.Bounds.Width) -
+                Math.Max(step3Origin.X, settingsOrigin.X));
+            Assert.True(
+                step3.Pointer == CoachmarkPointer.Right &&
+                step3Arrow.HorizontalAlignment == HorizontalAlignment.Left &&
+                overlapWidth == 0 &&
+                step3Origin.X + step3.Bounds.Width <= settingsOrigin.X,
+                $"pointer={step3.Pointer}; " +
+                $"arrow_alignment={step3Arrow.HorizontalAlignment}; " +
+                $"overlap_px={overlapWidth:F1}; " +
+                $"coachmark_right={step3Origin.X + step3.Bounds.Width:F1}; " +
+                $"settings_left={settingsOrigin.X:F1}");
+
+            var step3Actions = step3.GetLogicalDescendants()
+                .OfType<Button>()
+                .Where(button => button.IsVisible)
+                .ToArray();
+            var finish = Assert.Single(step3Actions);
+            Assert.Equal("Finish", finish.Content);
+            finish.Command!.Execute(null);
+            Assert.Equal(WorkflowTourStep.None, vm.WorkflowTourStep);
 
             // No pointer means no trail, so the control stays usable elsewhere.
             coachmarks["1 of 3"].Pointer = CoachmarkPointer.None;
