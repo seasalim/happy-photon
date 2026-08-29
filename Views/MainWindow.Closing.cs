@@ -19,6 +19,7 @@ public partial class MainWindow
         if (_isClosing) return;
 
         _isClosing = true;
+        SaveWindowPlacement();
         vm.ExitCompareCommand.Execute(null);
         await PersistAppSettingsSafelyAsync(vm);
 

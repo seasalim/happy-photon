@@ -117,7 +117,11 @@ output profiles.
 
 ## Startup sequence
 
-First frame is sacred: nothing non-visual happens before the window is shown.
+First frame is sacred: nothing non-visual happens before the window is shown. The one
+exception is the bounded synchronous read of `window.txt` from the app-data pointer
+root: window placement is visual configuration and must be applied before `Show()` to
+avoid a visible jump. The file is plain key=value lines so no JSON library loads before
+the first frame. Failure silently preserves the centered 1200×700 default.
 
 1. `Program.Main`: single-instance guard, then Avalonia lifetime.
 2. `App.OnFrameworkInitializationCompleted`: construct path-free services +

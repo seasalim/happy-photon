@@ -19,12 +19,15 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            var locationService = new AppDataLocationService();
             var catalogService = new CatalogService();
             var viewModel = new MainWindowViewModel(catalogService);
             var window = new MainWindow
             {
                 DataContext = viewModel,
             };
+            var placementStore = new WindowPlacementStore(locationService.PointerRoot);
+            window.RestoreWindowPlacement(placementStore, placementStore.Load());
 
             desktop.MainWindow = window;
             window.Show();
@@ -33,7 +36,8 @@ public partial class App : Application
                 () => _ = CompleteStartupAsync(
                     window,
                     viewModel,
-                    catalogService),
+                    catalogService,
+                    locationService),
                 DispatcherPriority.Background);
         }
 
@@ -43,9 +47,9 @@ public partial class App : Application
     private static async Task CompleteStartupAsync(
         MainWindow window,
         MainWindowViewModel viewModel,
-        CatalogService catalogService)
+        CatalogService catalogService,
+        AppDataLocationService locationService)
     {
-        var locationService = new AppDataLocationService();
         var locationMigrator = new CatalogLocationMigrator(locationService);
         var picturesPath = viewModel.GetAvailablePicturesPath();
         await window.InitializeApplicationAsync(

@@ -47,6 +47,7 @@ public sealed class AppDataLocationService
     }
 
     public string PointerPath => Path.Combine(_paths.PointerRoot, PointerFileName);
+    internal string PointerRoot => _paths.PointerRoot;
     public string DefaultCatalogRoot => Path.Combine(
         _paths.PicturesRoot, "Happy Photon Catalog");
     public string StandardCatalogRoot => _paths.StandardCatalogRoot;
