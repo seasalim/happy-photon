@@ -240,6 +240,92 @@ public sealed class EditHistoryConcurrencyTests : IDisposable
     }
 
     [Fact]
+    public async Task TrimPublishesAfterOneWriteAndRemainsUndoable()
+    {
+        using var catalog = await _fixture.CreateCatalogAsync("trim-gate");
+        var image = await SeedAsync(catalog, "trim.jpg", 3);
+        var started = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var writes = 0;
+        catalog.EditHistoryWriteGateAsync = () =>
+        {
+            writes++;
+            started.TrySetResult();
+            return release.Task;
+        };
+        await using var vm = CreateViewModel(catalog);
+        vm.SelectedImage = image;
+        await TestWaits.UntilAsync(() => vm.IsHistoryLoaded);
+        var labels = vm.HistoryEntries.Select(entry => entry.Label).ToArray();
+        var current = Current(vm);
+        var target = vm.HistoryEntries.Single(
+            entry => entry.Label == "Exposure +1.00");
+
+        var trim = vm.ClearHistoryAboveStepCommand.ExecuteAsync(target);
+        await started.Task.WaitAsync(TestWaits.Condition);
+
+        Assert.Equal(1, writes);
+        Assert.Equal(labels, vm.HistoryEntries.Select(entry => entry.Label));
+        Assert.Same(current, Current(vm));
+        Assert.True(vm.CanUndo);
+        Assert.False(vm.CanRedo);
+        var blockedState = await catalog.LoadEditHistoryAsync(image.CatalogId);
+        Assert.Equal(4, blockedState.Entries.Count);
+        Assert.Equal(3, blockedState.Position);
+
+        release.TrySetResult();
+        await trim;
+
+        Assert.Equal(["Exposure +1.00", "Original"],
+            vm.HistoryEntries.Select(entry => entry.Label));
+        Assert.Equal(1, image.EditSettings.Exposure);
+        Assert.True(vm.CanUndo);
+        Assert.False(vm.CanRedo);
+        var trimmedState = await catalog.LoadEditHistoryAsync(image.CatalogId);
+        Assert.Equal([0d, 1d],
+            trimmedState.Entries.Select(entry => entry.Settings.Exposure));
+        Assert.Equal(1, trimmedState.Position);
+
+        await vm.UndoCommand.ExecuteAsync(null);
+        Assert.Equal(0, image.EditSettings.Exposure);
+        Assert.Equal(0, (await catalog.LoadEditHistoryAsync(image.CatalogId)).Position);
+        await vm.RedoCommand.ExecuteAsync(null);
+        Assert.Equal(1, image.EditSettings.Exposure);
+        Assert.Equal(1, (await catalog.LoadEditHistoryAsync(image.CatalogId)).Position);
+    }
+
+    [Fact]
+    public async Task TrimFailureLeavesMemoryAndCatalogUnchanged()
+    {
+        using var catalog = await _fixture.CreateCatalogAsync("trim-failure");
+        var image = await SeedAsync(catalog, "trim-failure.jpg", 3);
+        await using var vm = CreateViewModel(catalog);
+        vm.SelectedImage = image;
+        await TestWaits.UntilAsync(() => vm.IsHistoryLoaded);
+        var labels = vm.HistoryEntries.Select(entry => entry.Label).ToArray();
+        var current = Current(vm);
+        var target = vm.HistoryEntries.Single(
+            entry => entry.Label == "Exposure +1.00");
+        catalog.EditHistoryWriteGateAsync = () =>
+            Task.FromException(new IOException("Injected trim failure"));
+
+        await Assert.ThrowsAsync<IOException>(() =>
+            vm.ClearHistoryAboveStepCommand.ExecuteAsync(target));
+
+        Assert.Equal(labels, vm.HistoryEntries.Select(entry => entry.Label));
+        Assert.Same(current, Current(vm));
+        Assert.Equal(3, image.EditSettings.Exposure);
+        Assert.True(vm.CanUndo);
+        Assert.False(vm.CanRedo);
+        var state = await catalog.LoadEditHistoryAsync(image.CatalogId);
+        Assert.Equal([0d, 1d, 2d, 3d],
+            state.Entries.Select(entry => entry.Settings.Exposure));
+        Assert.Equal(3, state.Position);
+    }
+
+    [Fact]
     public async Task AppendJumpAndClearFailuresLeavePublishedHistoryUnchanged()
     {
         using var catalog = await _fixture.CreateCatalogAsync("write-failure");

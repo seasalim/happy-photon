@@ -42,6 +42,25 @@ public sealed class EditHistoryTests
         Assert.False(history.CanRedo);
     }
 
+    [Theory]
+    [InlineData(2, 3, true)]
+    [InlineData(0, 1, false)]
+    public void TruncateAbovePublishesWithoutAnAppend(
+        int position,
+        int expectedCount,
+        bool canUndo)
+    {
+        var history = Loaded(0, 1, 2, 3);
+
+        history.Publish(new CatalogEditHistoryMutation(position, [], position));
+
+        Assert.Equal(expectedCount, history.Entries.Count);
+        Assert.Equal(position, history.Position);
+        Assert.Equal(canUndo, history.CanUndo);
+        Assert.False(history.CanRedo);
+        Assert.True(history.Entries[position].IsCurrent);
+    }
+
     [Fact]
     public void EditAfterMiddleJumpDoesNotInsertOriginal()
     {

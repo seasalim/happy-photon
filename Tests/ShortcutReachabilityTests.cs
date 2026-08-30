@@ -19,11 +19,27 @@ public sealed class ShortcutReachabilityTests
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),
             $"happy-photon-reachability-{Guid.NewGuid():N}"));
+        await catalog.InitializeAsync();
+        var firstSettings = new EditSettings { Exposure = 1 };
+        var firstPath = Path.Combine(catalog.CatalogPath, "first.jpg");
+        var firstId = await catalog.GetOrCreateImageAsync(firstPath);
+        await catalog.SaveEditSettingsWithHistoryAsync(
+            firstId,
+            firstSettings,
+            new CatalogEditHistoryMutation(-1,
+            [
+                new(0, "Original", new EditSettings()),
+                new(1, "Exposure +1.00", firstSettings)
+            ], 1));
         await using var vm = new MainWindowViewModel(catalog);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
         var images = new[]
         {
-            new ImageFile(Path.Combine(catalog.CatalogPath, "first.jpg")),
+            new ImageFile(firstPath)
+            {
+                CatalogId = firstId,
+                EditSettings = firstSettings
+            },
             new ImageFile(Path.Combine(catalog.CatalogPath, "second.jpg"))
         };
         vm.Browse.SetImages(images);
@@ -41,7 +57,7 @@ public sealed class ShortcutReachabilityTests
                     $"{entry.Keys} has an invalid reachability declaration.");
                 foreach (var claim in entry.Reachability.Where(claim => claim.ControlName != null))
                 {
-                    var control = ResolveClaimControl(window, vm, claim);
+                    var control = await ResolveClaimControl(window, vm, claim);
                     Assert.True(
                         control != null,
                         $"{entry.Keys} target {claim.ControlName} was not found in {claim.Workspace}.");
@@ -103,7 +119,7 @@ public sealed class ShortcutReachabilityTests
     private static bool IsValidControlTarget(Control control) =>
         control is not UserControl and not Panel;
 
-    private static Control? ResolveClaimControl(
+    private static async Task<Control?> ResolveClaimControl(
         MainWindow window,
         MainWindowViewModel vm,
         ShortcutReachabilityClaim claim)
@@ -164,6 +180,21 @@ public sealed class ShortcutReachabilityTests
             tile.ContextMenu!.Open(tile);
             Dispatcher.UIThread.RunJobs();
             return tile.ContextMenu.Items.OfType<Control>()
+                .FirstOrDefault(control => control.Name == claim.ControlName);
+        }
+
+        if (claim.ControlName == "ClearHistoryAboveStepMenuItem")
+        {
+            await TestWaits.UntilAsync(() =>
+                vm.IsHistoryLoaded && vm.HistoryEntries.Count > 1);
+            Dispatcher.UIThread.RunJobs();
+            var row = window.GetVisualDescendants().OfType<Button>()
+                .First(control => control.Classes.Contains("history-row") &&
+                                  control.DataContext is EditHistoryEntry entry &&
+                                  entry.Sequence == 0);
+            row.ContextMenu!.Open(row);
+            Dispatcher.UIThread.RunJobs();
+            return row.ContextMenu.Items.OfType<Control>()
                 .FirstOrDefault(control => control.Name == claim.ControlName);
         }
 

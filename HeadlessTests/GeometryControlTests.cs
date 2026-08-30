@@ -111,7 +111,17 @@ public sealed class GeometryControlTests : IDisposable
             "_historySubjectGeneration",
             BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
 
-        await (Task)method.Invoke(vm, [image, generation, restored, 0])!;
+        // Bind by parameter name so optional additions to the apply signature
+        // do not break this test again.
+        var args = method.GetParameters().Select(parameter => parameter.Name switch
+        {
+            "image" => (object?)image,
+            "historyGeneration" => generation,
+            "state" => restored,
+            "position" => 0,
+            _ => parameter.HasDefaultValue ? parameter.DefaultValue : null
+        }).ToArray();
+        await (Task)method.Invoke(vm, args)!;
 
         Assert.Equal(-18, image.EditSettings.Geometry?.Vertical);
         Assert.Equal(27, vm.GeometryHorizontal);

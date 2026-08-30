@@ -83,6 +83,30 @@ public sealed class CatalogServiceHistoryTests : IDisposable
     }
 
     [Fact]
+    public async Task EmptyAppendMutationTruncatesAbovePosition()
+    {
+        using var catalog = new CatalogService(_root);
+        await catalog.InitializeAsync();
+        var id = await catalog.GetOrCreateImageAsync(Path.Combine(_root, "trim.jpg"));
+        var states = Enumerable.Range(0, 4)
+            .Select(index => new CatalogEditHistoryEntry(
+                index,
+                index == 0 ? "Original" : $"Edit {index}",
+                new EditSettings { Exposure = index }))
+            .ToArray();
+        await catalog.SaveEditSettingsWithHistoryAsync(id, states[^1].Settings,
+            new CatalogEditHistoryMutation(-1, states, 3));
+
+        await catalog.SaveEditSettingsWithHistoryAsync(id, states[1].Settings,
+            new CatalogEditHistoryMutation(1, [], 1));
+
+        var loaded = await catalog.LoadEditHistoryAsync(id);
+        Assert.Equal(["Original", "Edit 1"],
+            loaded.Entries.Select(entry => entry.Label));
+        Assert.Equal(1, loaded.Position);
+    }
+
+    [Fact]
     public async Task VersionStartsEmptyAndBothDeletePathsRemoveRows()
     {
         using (var catalog = new CatalogService(_root))

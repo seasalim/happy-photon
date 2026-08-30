@@ -100,6 +100,30 @@ public partial class MainWindowViewModel
             image, generation, target.Settings, position);
     }
 
+    private bool CanClearHistoryAboveStep(EditHistoryEntry? entry)
+    {
+        if (!IsHistoryLoaded || entry == null) return false;
+        var position = _history.PositionOf(entry);
+        return position >= 0 && position < _history.Entries.Count - 1;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanClearHistoryAboveStep))]
+    private async Task ClearHistoryAboveStepAsync(EditHistoryEntry? entry)
+    {
+        var image = SelectedImage;
+        var generation = Volatile.Read(ref _historySubjectGeneration);
+        if (entry == null || image == null) return;
+        await WaitForPendingHistoryWorkAsync();
+        if (!IsCurrentHistorySubject(image, generation) || !IsHistoryLoaded)
+            return;
+        var position = _history.PositionOf(entry);
+        var target = _history.EntryAt(position);
+        if (target == null || position >= _history.Entries.Count - 1) return;
+        await ApplyHistoryStateAsync(
+            image, generation, target.Settings, position,
+            new CatalogEditHistoryMutation(position, [], position));
+    }
+
     private bool CanClearHistory() =>
         IsHistoryLoaded && _history.Entries.Count > 1;
 

@@ -296,7 +296,9 @@ be read.
   `Ctrl+Z`/`Ctrl+Y`, and the Develop action-bar Undo/Redo buttons all move one
   shared current position;
   later rows remain redoable until a new edit truncates them. Clear History removes
-  the rows without changing the current edit. Rotation, horizon, and crop are not
+  the rows without changing the current edit. A row's context menu, or Alt-clicking
+  it, returns to that snapshot and clears every later step in the same commit.
+  Rotation, horizon, and crop are not
   history fields in this slice; manual geometry remains a history field.
 - **User presets** capture color, tonal, color-mixer, all curve, detail, and effects fields and
   still never geometry or camera profiles. Hover, apply, and untoggle preserve the

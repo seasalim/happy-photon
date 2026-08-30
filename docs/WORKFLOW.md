@@ -394,7 +394,9 @@ live edited image; fit, zoom, pan, and the press-and-hold loupe stay synchronize
 Re-click **Y|Y** or press `Escape` to leave the split. The History panel above Presets
 lists committed edits newest-first; click a step to return to it, or use `Ctrl+Z` to
 move back and `Ctrl+Y` or `Ctrl+Shift+Z` to move forward. A new edit after moving back
-discards the later steps. These editing shortcuts do nothing in Browse. The reset
+discards the later steps; to discard them immediately, right-click the target step and
+choose **Clear History Above This Step**, or Alt-click it. These editing shortcuts do
+nothing in Browse. The reset
 button clears the color and tonal adjustments while preserving crop, rotation,
 and horizon settings; reset those separately in the geometry controls.
 

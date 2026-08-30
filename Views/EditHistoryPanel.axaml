@@ -51,7 +51,16 @@
                         <Button x:CompileBindings="False" Content="{Binding Label}" Classes="history-row"
                                 Classes.current="{Binding IsCurrent}"
                                 Command="{Binding DataContext.JumpToHistoryStepCommand, ElementName=Root}"
-                                CommandParameter="{Binding}"/>
+                                CommandParameter="{Binding}">
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem x:Name="ClearHistoryAboveStepMenuItem"
+                                              Header="Clear History Above This Step"
+                                              Command="{Binding DataContext.ClearHistoryAboveStepCommand, ElementName=Root}"
+                                              CommandParameter="{Binding}"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

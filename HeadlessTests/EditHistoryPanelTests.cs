@@ -1,6 +1,10 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using HappyPhoton.Models;
@@ -69,11 +73,73 @@ public sealed class EditHistoryPanelTests
             Assert.True(clear.Bounds.Left >= label.Bounds.Right);
             Assert.True(clear.Bounds.Right >= header.Bounds.Width - 1);
 
-            await vm.JumpToHistoryStepCommand.ExecuteAsync(vm.HistoryEntries[^1]);
+            var plainTarget = rows.Single(row =>
+                ((EditHistoryEntry)row.DataContext!).Settings.Exposure == .38);
+            plainTarget.Command!.Execute(plainTarget.CommandParameter);
+            await TestWaits.UntilAsync(() => image.EditSettings.Exposure == .38);
+            var plainJump = Assert.IsAssignableFrom<Task>(
+                vm.JumpToHistoryStepCommand.ExecutionTask);
+            await plainJump;
+            Assert.Equal(40, vm.HistoryEntries.Count);
+            Assert.True(vm.CanRedo);
+
+            Dispatcher.UIThread.RunJobs();
+            var menuTarget = history.GetVisualDescendants().OfType<Button>().Single(row =>
+                row.Classes.Contains("history-row") &&
+                ((EditHistoryEntry)row.DataContext!).Settings.Exposure == .37);
+            menuTarget.ContextMenu!.Open(menuTarget);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(menuTarget.ContextMenu!.IsOpen);
+            var trim = Assert.Single(menuTarget.ContextMenu.Items.OfType<MenuItem>());
+            Assert.Equal("Clear History Above This Step", trim.Header);
+            Assert.True(trim.IsEffectivelyEnabled);
+            trim.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            await TestWaits.UntilAsync(() => vm.HistoryEntries.Count == 38);
+            await Assert.IsAssignableFrom<Task>(
+                vm.ClearHistoryAboveStepCommand.ExecutionTask);
+            Assert.Equal(.37, image.EditSettings.Exposure);
+            Assert.False(vm.CanRedo);
+
+            Dispatcher.UIThread.RunJobs();
+            var currentRow = history.GetVisualDescendants().OfType<Button>()
+                .Single(row => row.Classes.Contains("history-row") &&
+                               row.Classes.Contains("current"));
+            currentRow.ContextMenu!.Open(currentRow);
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(Assert.Single(
+                currentRow.ContextMenu.Items.OfType<MenuItem>()).IsEffectivelyEnabled);
+            currentRow.ContextMenu.Close();
+            Dispatcher.UIThread.RunJobs();
+
+            var scroll = history.GetVisualDescendants().OfType<ScrollViewer>().First();
+            scroll.ScrollToEnd();
+            Dispatcher.UIThread.RunJobs();
+            var original = history.GetVisualDescendants().OfType<Button>()
+                .Single(row => row.Classes.Contains("history-row") &&
+                               ((EditHistoryEntry)row.DataContext!).Sequence == 0);
+            Assert.True(vm.ClearHistoryAboveStepCommand.CanExecute(original.DataContext));
+            var writes = 0;
+            catalog.EditHistoryWriteGateAsync = () =>
+            {
+                writes++;
+                return Task.CompletedTask;
+            };
+            var originalPoint = original.TranslatePoint(
+                new Point(original.Bounds.Width / 2, original.Bounds.Height / 2),
+                window)!.Value;
+            window.MouseDown(originalPoint, MouseButton.Left,
+                RawInputModifiers.Alt);
+            window.MouseUp(originalPoint, MouseButton.Left,
+                RawInputModifiers.Alt);
+            await Assert.IsAssignableFrom<Task>(
+                vm.ClearHistoryAboveStepCommand.ExecutionTask);
+            Assert.Equal(1, writes);
+            Assert.Same(plainJump, vm.JumpToHistoryStepCommand.ExecutionTask);
+            Assert.Single(vm.HistoryEntries);
             Assert.Equal(0, image.EditSettings.Exposure);
-            Assert.True(vm.ClearHistoryCommand.CanExecute(null));
-            await vm.ClearHistoryCommand.ExecuteAsync(null);
-            Assert.Empty(vm.HistoryEntries);
+            Assert.Equal("Original", vm.HistoryEntries[0].Label);
+            Assert.Equal(0,
+                (await catalog.LoadEditHistoryAsync(image.CatalogId)).Position);
             Assert.False(vm.ClearHistoryCommand.CanExecute(null));
             Assert.False(clear.IsEffectivelyEnabled);
         }

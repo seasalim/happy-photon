@@ -371,6 +371,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         CanRedo = IsHistoryLoaded && _history.CanRedo;
         OnPropertyChanged(nameof(HistoryEntries));
         ClearHistoryCommand.NotifyCanExecuteChanged();
+        ClearHistoryAboveStepCommand.NotifyCanExecuteChanged();
     }
 
     private async Task AutoSaveAsync(

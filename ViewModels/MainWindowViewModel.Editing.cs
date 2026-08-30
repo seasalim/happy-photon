@@ -43,10 +43,11 @@ public partial class MainWindowViewModel
         ImageFile image,
         long historyGeneration,
         EditSettings state,
-        int position)
+        int position,
+        CatalogEditHistoryMutation? mutation = null)
     {
         var apply = ApplyHistoryStateCoreAsync(
-            image, historyGeneration, state, position);
+            image, historyGeneration, state, position, mutation);
         _serializedHistoryCommit = apply;
         _serializedHistoryImage = image;
         _serializedHistorySettings = image.EditSettings.Clone();
@@ -58,7 +59,8 @@ public partial class MainWindowViewModel
         ImageFile image,
         long historyGeneration,
         EditSettings state,
-        int position)
+        int position,
+        CatalogEditHistoryMutation? mutation)
     {
         _previewDebounce?.Cancel();
         var previousSettings = CaptureLiveEditState();
@@ -82,7 +84,7 @@ public partial class MainWindowViewModel
         {
             await image.EnsureCatalogIdAsync(_catalogService);
             await _catalogService.SaveEditSettingsWithHistoryAsync(
-                image.CatalogId, image.EditSettings, null, position);
+                image.CatalogId, image.EditSettings, mutation, position);
         }
         catch
         {
@@ -94,7 +96,10 @@ public partial class MainWindowViewModel
             throw;
         }
         if (!IsCurrentHistorySubject(image, historyGeneration)) return;
-        _history.PublishPosition(position);
+        if (mutation == null)
+            _history.PublishPosition(position);
+        else
+            _history.Publish(mutation);
         SyncHistoryFlags();
         _lastSavedState = image.EditSettings.Clone();
 

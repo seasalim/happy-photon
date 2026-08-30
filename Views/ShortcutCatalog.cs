@@ -197,6 +197,8 @@ public static class ShortcutCatalog
                 [Develop("Undo the last edit", "UndoEditButton")]),
             new("Ctrl+Y  /  Ctrl+Shift+Z", "Redo the last undone edit in Develop",
                 [Develop("Redo the last undone edit", "RedoEditButton")]),
+            new("Alt+Click", "Clear history above this step",
+                [Develop("Clear history above this step", "ClearHistoryAboveStepMenuItem")]),
             new("Mouse wheel", "Zoom in Develop", [Accelerator("Zoom")]),
             new("Hold left mouse", "Peek at 1:1 below 1:1 in Develop, Loupe, fullscreen, or Compare",
                 [Accelerator("Peek at 1:1")]),
