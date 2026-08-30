@@ -41,7 +41,14 @@ public partial class MainWindowViewModel
         _curveGestureChannel = ActiveCurveChannel;
     }
 
-    public async Task OnCurveChangedAsync()
+    public Task OnCurveChangedAsync()
+    {
+        var commit = CommitCurveChangeAsync();
+        TrackHistoryCommit(commit);
+        return commit;
+    }
+
+    private async Task CommitCurveChangeAsync()
     {
         if (!CanEditSelectedImage ||
             SelectedImage == null ||
@@ -76,12 +83,10 @@ public partial class MainWindowViewModel
         }
 
         var surfaceGeneration = RequestEditedRender();
-        _history.PushEdit(before, dedup: false);
-        SyncHistoryFlags();
         SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
         if (await UpdatePreviewWithCurrentSliders(generation: surfaceGeneration))
         {
-            await AutoSaveAsync();
+            await AutoSaveAsync("Curve", before);
         }
     }
 

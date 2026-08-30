@@ -231,6 +231,18 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     // Undo/redo history for edit state
     private readonly EditHistory _history = new();
     private EditSettings? _lastSavedState;
+    private Task? _pendingHistoryLoad;
+    private Task? _pendingHistoryCommit;
+    private Task? _serializedHistoryCommit;
+    private ImageFile? _serializedHistoryImage;
+    private EditSettings? _serializedHistorySettings;
+    private long _historySubjectGeneration;
+
+    public IReadOnlyList<EditHistoryEntry> HistoryEntries =>
+        _history.Entries.Reverse().ToArray();
+
+    [ObservableProperty]
+    private bool _isHistoryLoaded;
 
     // Hover preview state
     private bool _isHoveringPreset;
@@ -276,7 +288,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         return next;
     }
 
-    private void SchedulePreviewUpdate(bool pushUndo = true)
+    private void SchedulePreviewUpdate(string? historyLabel = null)
     {
         if (_isLoadingImage || !CanEditSelectedImage ||
             _renderOutcomeChannelClosed)
@@ -285,7 +297,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
 
         _thumbnailDebounce?.Cancel();
-        if (pushUndo) PushUndoState();
         var generation = RequestEditedRender();
 
         var debounce = ReplaceDebounce(ref _previewDebounce);
@@ -302,7 +313,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 return;
             }
             debounce.Token.ThrowIfCancellationRequested();
-            await AutoSaveAsync();
+            if (IsSliderEditActive) return;
+            await AutoSaveAsync(historyLabel);
             debounce.Token.ThrowIfCancellationRequested();
             ScheduleThumbnailRefresh();
         },
@@ -338,6 +350,10 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     internal Task? PendingPreviewDebounceTask => _previewDebounceTask;
 
+    internal Task? PendingHistoryLoadTask => _pendingHistoryLoad;
+
+    internal Task? PendingHistoryCommitTask => _pendingHistoryCommit;
+
     private void TrackPreviewDebounce(Task run)
     {
         // A superseded debounce can already be past its cancellation checks
@@ -349,42 +365,133 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             : run;
     }
 
-    private void PushUndoState()
-    {
-        if (SelectedImage == null) return;
-
-        _history.PushEdit(SelectedImage.EditSettings.Clone());
-        SyncHistoryFlags();
-    }
-
     private void SyncHistoryFlags()
     {
-        CanUndo = _history.CanUndo;
-        CanRedo = _history.CanRedo;
+        CanUndo = IsHistoryLoaded && _history.CanUndo;
+        CanRedo = IsHistoryLoaded && _history.CanRedo;
+        OnPropertyChanged(nameof(HistoryEntries));
+        ClearHistoryCommand.NotifyCanExecuteChanged();
     }
 
-    private async Task AutoSaveAsync()
+    private async Task AutoSaveAsync(
+        string? historyLabel = null,
+        EditSettings? before = null)
     {
-        if (SelectedImage == null) return;
+        var image = SelectedImage;
+        if (image == null) return;
 
-        SaveSlidersTo(SelectedImage.EditSettings);
-        SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
+        SaveSlidersTo(image.EditSettings);
+        image.HasEdits = image.EditSettings.HasEdits;
 
-        await SaveEditSettingsAsync(SelectedImage);
-        _lastSavedState = SelectedImage.EditSettings.Clone();
+        await SaveEditSettingsAsync(image, historyLabel, before);
+        if (ReferenceEquals(image, SelectedImage))
+            _lastSavedState = image.EditSettings.Clone();
     }
 
     private async Task SaveEditSettingsAsync(ImageFile imageFile)
     {
-        await SaveEditSettingsAsync(imageFile, imageFile.EditSettings);
+        await SaveEditSettingsAsync(imageFile, null, null);
     }
 
     private async Task SaveEditSettingsAsync(
         ImageFile imageFile,
-        EditSettings settings)
+        EditSettings settings,
+        bool recordHistory = true)
+    {
+        await SaveEditSettingsCoreAsync(
+            imageFile, settings, null, null, recordHistory);
+    }
+
+    private Task SaveEditSettingsAsync(
+        ImageFile imageFile,
+        string? historyLabel,
+        EditSettings? before = null) =>
+        SaveEditSettingsCoreAsync(
+            imageFile, imageFile.EditSettings, historyLabel, before, true);
+
+    private Task SaveEditSettingsCoreAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        string? historyLabel,
+        EditSettings? before,
+        bool recordHistory)
+    {
+        var settingsSnapshot = settings.Clone();
+        var tracksHistory = recordHistory && IsDevelopMode &&
+                            ReferenceEquals(imageFile, SelectedImage);
+        var historyGeneration = Volatile.Read(ref _historySubjectGeneration);
+        var predecessor = tracksHistory ? _serializedHistoryCommit : null;
+        var predecessorSettings = predecessor is { IsCompleted: false } &&
+                                  ReferenceEquals(
+                                      imageFile, _serializedHistoryImage)
+            ? _serializedHistorySettings
+            : null;
+        var beforeSnapshot = (before ?? predecessorSettings ??
+                              _lastSavedState ?? settings).Clone();
+        var load = tracksHistory ? _pendingHistoryLoad : null;
+        var save = SaveEditSettingsOperationAsync(
+            imageFile,
+            settingsSnapshot,
+            historyLabel,
+            beforeSnapshot,
+            tracksHistory,
+            historyGeneration,
+            predecessor,
+            load);
+        if (tracksHistory)
+        {
+            _serializedHistoryCommit = save;
+            _serializedHistoryImage = imageFile;
+            _serializedHistorySettings = settingsSnapshot;
+            TrackHistoryCommit(save);
+        }
+        return save;
+    }
+
+    private async Task SaveEditSettingsOperationAsync(
+        ImageFile imageFile,
+        EditSettings settings,
+        string? historyLabel,
+        EditSettings before,
+        bool tracksHistory,
+        long historyGeneration,
+        Task? predecessor,
+        Task? load)
     {
         await imageFile.EnsureCatalogIdAsync(_catalogService);
-        await _catalogService.SaveEditSettingsAsync(imageFile.CatalogId, settings);
+        if (predecessor != null)
+            await ObservePendingHistoryWorkAsync(predecessor);
+        if (load != null)
+            await load;
+
+        var mutation = tracksHistory &&
+                       IsCurrentHistorySubject(imageFile, historyGeneration) &&
+                       IsHistoryLoaded
+            ? _history.PrepareAppend(
+                before,
+                settings,
+                historyLabel)
+            : null;
+        await _catalogService.SaveEditSettingsWithHistoryAsync(
+            imageFile.CatalogId, settings, mutation);
+        if (ReferenceEquals(imageFile, SelectedImage) &&
+            (!tracksHistory ||
+             IsCurrentHistorySubject(imageFile, historyGeneration)))
+            _lastSavedState = settings.Clone();
+        if (mutation != null &&
+            IsCurrentHistorySubject(imageFile, historyGeneration))
+        {
+            _history.Publish(mutation);
+            SyncHistoryFlags();
+        }
+    }
+
+    private void TrackHistoryCommit(Task commit)
+    {
+        var pending = _pendingHistoryCommit;
+        _pendingHistoryCommit = pending is { IsCompleted: false }
+            ? Task.WhenAll(pending, commit)
+            : commit;
     }
 
 }

@@ -5,6 +5,10 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private int _activeSliderEditCount;
+
+    private bool IsSliderEditActive => _activeSliderEditCount > 0;
+
     [ObservableProperty]
     private double _exposure;
 
@@ -44,6 +48,16 @@ public partial class MainWindowViewModel
     partial void OnHighlightsChanged(int value) => OnEditValueChanged();
     partial void OnHorizonRotationChanged(double value) => OnHorizonRotationValueChanged();
 
+    public void OnSliderEditStarted() => _activeSliderEditCount++;
+
+    public void OnSliderEditCompleted()
+    {
+        if (_activeSliderEditCount == 0) return;
+
+        _activeSliderEditCount--;
+        if (_activeSliderEditCount == 0) SchedulePreviewUpdate();
+    }
+
     private void OnEditValueChanged()
     {
         if (_isLoadingImage || !CanEditSelectedImage)
@@ -67,7 +81,7 @@ public partial class MainWindowViewModel
         }
 
         image.EditSettings.HorizonRotation = HorizonRotation;
-        SchedulePreviewUpdate(pushUndo: false);
+        SchedulePreviewUpdate();
     }
 
     private void SaveSlidersTo(EditSettings target)

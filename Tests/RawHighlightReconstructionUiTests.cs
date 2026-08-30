@@ -92,8 +92,10 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         using var catalog = _fx.CreateCatalog();
         catalog.InitializeAsync().GetAwaiter().GetResult();
         var vm = CreateViewModel(catalog);
+        vm.IsDevelopMode = true;
         var image = new ImageFile(_fx.Path("missing.jpg"));
         vm.SelectedImage = image;
+        await TestWaits.UntilAsync(() => vm.IsHistoryLoaded);
         var panel = new DevelopEditPanel
         {
             DataContext = vm
@@ -112,10 +114,12 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
 
         Assert.True(curveChanged);
         Assert.Same(vm, panel.DataContext);
+        await TestWaits.UntilAsync(() =>
+            vm.PendingHistoryCommitTask is { IsCompleted: true } &&
+            vm.CanUndo);
         Assert.True(vm.CanUndo);
         Assert.True(image.EditSettings.Curve.IsIdentity());
 
-        await Task.Delay(250);
         panel.DataContext = null;
         await vm.DisposeAsync();
     }
@@ -186,14 +190,25 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
     public async Task BrowseMode_GatesBeforeAfterUndoAndRedo()
     {
         using var catalog = _fx.CreateCatalog();
+        await catalog.InitializeAsync();
         var vm = CreateViewModel(catalog);
         var image = new ImageFile(_fx.Path("browse.jpg"))
         {
             EditSettings = new EditSettings { Exposure = 1 }
         };
+        await image.EnsureCatalogIdAsync(catalog);
+        await catalog.SaveEditSettingsWithHistoryAsync(
+            image.CatalogId,
+            image.EditSettings,
+            new CatalogEditHistoryMutation(
+                -1,
+                [
+                    new(0, "Original", new EditSettings()),
+                    new(1, "Exposure +1.00", image.EditSettings),
+                    new(2, "Exposure +2.00", new EditSettings { Exposure = 2 })
+                ],
+                1));
         vm.SelectedImage = image;
-        vm.CanUndo = true;
-        vm.CanRedo = true;
         var undoNotifications = 0;
         var redoNotifications = 0;
         var beforeNotifications = 0;
@@ -213,6 +228,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         Assert.Null(vm.PreviewImage);
 
         vm.IsDevelopMode = true;
+        await TestWaits.UntilAsync(() => vm.IsHistoryLoaded);
         Assert.True(vm.UndoCommand.CanExecute(null));
         Assert.True(vm.RedoCommand.CanExecute(null));
         Assert.True(vm.ToggleBeforeAfterCommand.CanExecute(null));

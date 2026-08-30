@@ -148,12 +148,16 @@
                                        BrowsingFolderName="{Binding BrowsingFolderName}"
                                        ViewingFolderName="{Binding ViewingFolderName}"/>
 
-                <!-- Presets Panel (Develop mode) -->
-                <views:PresetsPanel Grid.Row="2" x:Name="PresetsPanel"
-                                     IsVisible="{Binding IsDevelopMode}"
-                                     IsEnabled="{Binding CanEditSelectedImage}"
-                                     CanSavePreset="{Binding CanSavePreset}"
-                                     ActivePresetId="{Binding ActivePresetId}"/>
+                <Grid Grid.Row="2" x:Name="DevelopLeftPane" RowDefinitions="Auto,8,*"
+                      IsVisible="{Binding IsDevelopMode}">
+                    <views:EditHistoryPanel Grid.Row="0" x:Name="EditHistoryPanel"
+                                            MaxHeight="{Binding #DevelopLeftPane.Bounds.Height, Converter={x:Static views:EditHistoryLayoutConverters.FortyPercent}}"
+                                            IsEnabled="{Binding CanEditSelectedImage}"/>
+                    <views:PresetsPanel Grid.Row="2" x:Name="PresetsPanel"
+                                         IsEnabled="{Binding CanEditSelectedImage}"
+                                         CanSavePreset="{Binding CanSavePreset}"
+                                         ActivePresetId="{Binding ActivePresetId}"/>
+                </Grid>
             </Grid>
             <views:ExportCapturePane x:Name="ExportCapturePane" IsVisible="{Binding IsExportMode}"/>
             </Panel>

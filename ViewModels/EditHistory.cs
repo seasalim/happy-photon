@@ -1,54 +1,73 @@
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
 
-/// <summary>
-/// Per-image, session-scoped undo/redo stacks of color/tonal edit states.
-/// Callers pass snapshots; this class never mutates or clones them.
-/// </summary>
-public class EditHistory
+public sealed record EditHistoryEntry(int Sequence, string Label, EditSettings Settings)
 {
-    private readonly Stack<EditSettings> _undoStack = new();
-    private readonly Stack<EditSettings> _redoStack = new();
+    public bool IsCurrent { get; internal set; }
+}
 
-    public bool CanUndo => _undoStack.Count > 0;
-    public bool CanRedo => _redoStack.Count > 0;
+/// <summary>One ordered, persistent list of edit snapshots and its current position.</summary>
+public sealed class EditHistory
+{
+    private readonly List<EditHistoryEntry> _entries = [];
 
-    /// <summary>
-    /// Records the state that precedes a new user edit. By default dedups
-    /// against the top entry; pass dedup: false to always push — required for
-    /// gesture transactions that must preserve their explicit start snapshot.
-    /// A new edit always invalidates the redo branch, even when the push dedups.
-    /// </summary>
-    public void PushEdit(EditSettings currentState, bool dedup = true)
+    public IReadOnlyList<EditHistoryEntry> Entries => _entries;
+    public int Position { get; private set; } = -1;
+    public bool CanUndo => Position > 0;
+    public bool CanRedo => Position >= 0 && Position < _entries.Count - 1;
+
+    public void Load(IEnumerable<CatalogEditHistoryEntry> entries, int position)
     {
-        if (!dedup || _undoStack.Count == 0 ||
-            !currentState.EqualsIgnoringRotation(_undoStack.Peek()))
-        {
-            _undoStack.Push(currentState);
-        }
-        _redoStack.Clear();
+        _entries.Clear();
+        _entries.AddRange(entries.OrderBy(entry => entry.Sequence).Select(entry =>
+            new EditHistoryEntry(entry.Sequence, entry.Label, entry.Settings)));
+        Position = _entries.Count == 0 ? -1 : Math.Clamp(position, 0, _entries.Count - 1);
+        MarkCurrent();
     }
 
-    /// <summary>Pops the previous state; currentState becomes redoable. Null when nothing to undo.</summary>
-    public EditSettings? Undo(EditSettings currentState)
+    public CatalogEditHistoryMutation? PrepareAppend(
+        EditSettings before,
+        EditSettings after,
+        string? operation = null)
+        => CatalogEditHistory.PrepareAppend(
+            new CatalogEditHistoryState(
+                _entries.Select(entry => new CatalogEditHistoryEntry(
+                    entry.Sequence, entry.Label, entry.Settings)).ToArray(),
+                Position),
+            before,
+            after,
+            operation);
+
+    public void Publish(CatalogEditHistoryMutation mutation)
     {
-        if (_undoStack.Count == 0) return null;
-        _redoStack.Push(currentState);
-        return _undoStack.Pop();
+        if (_entries.Count > mutation.TruncateAfter + 1)
+            _entries.RemoveRange(
+                mutation.TruncateAfter + 1,
+                _entries.Count - mutation.TruncateAfter - 1);
+        _entries.AddRange(mutation.Appended.Select(entry =>
+            new EditHistoryEntry(entry.Sequence, entry.Label, entry.Settings)));
+        Position = mutation.Position;
+        MarkCurrent();
     }
 
-    /// <summary>Pops the next state; currentState becomes undoable. Null when nothing to redo.</summary>
-    public EditSettings? Redo(EditSettings currentState)
+    public EditHistoryEntry? EntryAt(int position) =>
+        position >= 0 && position < _entries.Count ? _entries[position] : null;
+
+    public int PositionOf(EditHistoryEntry entry) => _entries.IndexOf(entry);
+
+    public void PublishPosition(int position)
     {
-        if (_redoStack.Count == 0) return null;
-        _undoStack.Push(currentState);
-        return _redoStack.Pop();
+        Position = position;
+        MarkCurrent();
     }
 
-    public void Clear()
+    public void Clear() => Load([], -1);
+
+    private void MarkCurrent()
     {
-        _undoStack.Clear();
-        _redoStack.Clear();
+        for (var index = 0; index < _entries.Count; index++)
+            _entries[index].IsCurrent = index == Position;
     }
 }

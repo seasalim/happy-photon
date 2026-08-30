@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.EditHistoryPanel"
+             x:DataType="vm:MainWindowViewModel"
+             x:Name="Root">
+    <UserControl.Styles>
+        <!-- Mirrors Button.preset in PresetsPanel; "current" is Presets' "active". -->
+        <Style Selector="Button.history-row">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+        <Style Selector="Button.history-row:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        </Style>
+        <Style Selector="Button.history-row.current">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
+        <Style Selector="Button.history-row.current /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+        </Style>
+        <Style Selector="Button.history-row.current:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+        </Style>
+    </UserControl.Styles>
+    <Grid RowDefinitions="Auto,*">
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceLow}" Padding="10,4,10,4">
+            <Grid x:Name="HistoryHeader" ColumnDefinitions="*,Auto" MinHeight="24">
+                <TextBlock x:Name="HistoryLabel" Classes="section-label" Text="HISTORY"
+                           VerticalAlignment="Center"/>
+                <Button Grid.Column="1" x:Name="ClearHistoryButton" Content="Clear" Classes="quiet-button"
+                        Height="22" MinHeight="22" MaxHeight="22" VerticalAlignment="Center"
+                        Command="{Binding ClearHistoryCommand}"/>
+            </Grid>
+        </Border>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding HistoryEntries}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:EditHistoryEntry">
+                        <Button x:CompileBindings="False" Content="{Binding Label}" Classes="history-row"
+                                Classes.current="{Binding IsCurrent}"
+                                Command="{Binding DataContext.JumpToHistoryStepCommand, ElementName=Root}"
+                                CommandParameter="{Binding}"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

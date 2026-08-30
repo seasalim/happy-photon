@@ -11,15 +11,18 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var source = SelectedImage.EditSettings.Clone();
+        var image = SelectedImage;
+        var source = image.EditSettings.Clone();
         SaveSlidersTo(source);
 
         var preset = await PresetService.SaveUserPresetAsync(name, source, overwriteId);
+        if (!ReferenceEquals(image, SelectedImage)) return;
         ActivePresetId = preset.Id;
-        SaveSlidersTo(SelectedImage.EditSettings);
-        SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
-        await SaveEditSettingsAsync(SelectedImage);
-        _lastSavedState = SelectedImage.EditSettings.Clone();
+        SaveSlidersTo(image.EditSettings);
+        image.HasEdits = image.EditSettings.HasEdits;
+        await SaveEditSettingsAsync(image, image.EditSettings, recordHistory: false);
+        if (!ReferenceEquals(image, SelectedImage)) return;
+        _lastSavedState = image.EditSettings.Clone();
         UpdateCanReset();
     }
 

@@ -8,6 +8,26 @@ namespace HappyPhoton.Views;
 
 public partial class CompactSlider : UserControl
 {
+    public static readonly RoutedEvent<RoutedEventArgs> DragStartedEvent =
+        RoutedEvent.Register<CompactSlider, RoutedEventArgs>(
+            nameof(DragStarted), RoutingStrategies.Bubble);
+
+    public static readonly RoutedEvent<RoutedEventArgs> DragCompletedEvent =
+        RoutedEvent.Register<CompactSlider, RoutedEventArgs>(
+            nameof(DragCompleted), RoutingStrategies.Bubble);
+
+    public event EventHandler<RoutedEventArgs> DragStarted
+    {
+        add => AddHandler(DragStartedEvent, value);
+        remove => RemoveHandler(DragStartedEvent, value);
+    }
+
+    public event EventHandler<RoutedEventArgs> DragCompleted
+    {
+        add => AddHandler(DragCompletedEvent, value);
+        remove => RemoveHandler(DragCompletedEvent, value);
+    }
+
     public static readonly StyledProperty<string> LabelProperty =
         AvaloniaProperty.Register<CompactSlider, string>(nameof(Label), "Label");
 
@@ -277,6 +297,7 @@ public partial class CompactSlider : UserControl
         _thumbDot?.Classes.Set(
             "pointer-captured",
             e.Pointer.Captured == _layoutGrid);
+        RaiseEvent(new RoutedEventArgs(DragStartedEvent));
         e.Handled = true;
     }
 
@@ -303,9 +324,7 @@ public partial class CompactSlider : UserControl
             }
         }
 
-        _isDragging = false;
-        _hasDragStarted = false;
-        _thumbDot?.Classes.Set("pointer-captured", false);
+        CompleteDrag();
         e.Pointer.Capture(null);
         e.Handled = true;
     }
@@ -314,9 +333,17 @@ public partial class CompactSlider : UserControl
         object? sender,
         PointerCaptureLostEventArgs e)
     {
+        CompleteDrag();
+    }
+
+    private void CompleteDrag()
+    {
+        if (!_isDragging) return;
+
         _isDragging = false;
         _hasDragStarted = false;
         _thumbDot?.Classes.Set("pointer-captured", false);
+        RaiseEvent(new RoutedEventArgs(DragCompletedEvent));
     }
 
     private void UpdateValueFromDrag(double pointerX)

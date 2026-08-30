@@ -104,7 +104,7 @@ public partial class MainWindowViewModel
             return false;
         }
 
-        await SaveEditSettingsAsync(image, previousSettings);
+        await SaveEditSettingsAsync(image, previousSettings, recordHistory: false);
         return true;
     }
 }

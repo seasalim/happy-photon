@@ -10,51 +10,79 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanUndoEdit))]
     private async Task UndoAsync()
     {
-        if (!CanUndoEdit()) return;
-        if (SelectedImage == null) return;
+        var image = SelectedImage;
+        var generation = Volatile.Read(ref _historySubjectGeneration);
+        if (!IsDevelopMode || IsFullScreenMode || image == null) return;
+        await WaitForPendingHistoryWorkAsync();
+        if (!IsCurrentHistorySubject(image, generation) || !CanUndoEdit()) return;
 
-        var target = _history.Undo(CaptureLiveEditState());
+        var position = _history.Position - 1;
+        var target = _history.EntryAt(position);
         if (target == null) return;
-        SyncHistoryFlags();
-        await ApplyHistoryStateAsync(target);
+        await ApplyHistoryStateAsync(
+            image, generation, target.Settings, position);
     }
 
     [RelayCommand(CanExecute = nameof(CanRedoEdit))]
     private async Task RedoAsync()
     {
-        if (!CanRedoEdit()) return;
-        if (SelectedImage == null) return;
+        var image = SelectedImage;
+        var generation = Volatile.Read(ref _historySubjectGeneration);
+        if (!IsDevelopMode || IsFullScreenMode || image == null) return;
+        await WaitForPendingHistoryWorkAsync();
+        if (!IsCurrentHistorySubject(image, generation) || !CanRedoEdit()) return;
 
-        var target = _history.Redo(CaptureLiveEditState());
+        var position = _history.Position + 1;
+        var target = _history.EntryAt(position);
         if (target == null) return;
-        SyncHistoryFlags();
-        await ApplyHistoryStateAsync(target);
+        await ApplyHistoryStateAsync(
+            image, generation, target.Settings, position);
     }
 
-    private async Task ApplyHistoryStateAsync(EditSettings state)
+    private Task ApplyHistoryStateAsync(
+        ImageFile image,
+        long historyGeneration,
+        EditSettings state,
+        int position)
+    {
+        var apply = ApplyHistoryStateCoreAsync(
+            image, historyGeneration, state, position);
+        _serializedHistoryCommit = apply;
+        _serializedHistoryImage = image;
+        _serializedHistorySettings = image.EditSettings.Clone();
+        TrackHistoryCommit(apply);
+        return apply;
+    }
+
+    private async Task ApplyHistoryStateCoreAsync(
+        ImageFile image,
+        long historyGeneration,
+        EditSettings state,
+        int position)
     {
         _previewDebounce?.Cancel();
-        var image = SelectedImage!;
         var previousSettings = CaptureLiveEditState();
         var previousIntent = _requestedPreviewIntent;
         var generation = RequestEditedRender();
         _isLoadingImage = true;
         LoadSlidersFrom(state);
         // Rotation, horizon, and crop stay outside edit history.
-        Rotation = SelectedImage!.EditSettings.Rotation;
-        HorizonRotation = SelectedImage.EditSettings.HorizonRotation;
-        CurrentCrop = SelectedImage.EditSettings.Crop?.Clone();
+        Rotation = image.EditSettings.Rotation;
+        HorizonRotation = image.EditSettings.HorizonRotation;
+        CurrentCrop = image.EditSettings.Crop?.Clone();
         _isLoadingImage = false;
 
-        EditSettingsTransfer.ApplySubset(state, SelectedImage.EditSettings);
-        SelectedImage.EditSettings.Geometry = state.Geometry?.Clone();
-        WriteRawProfileSelection(SelectedImage, state.RawProfile);
-        SelectedImage.EditSettings.AppliedPresetId = ActivePresetId;
-        LoadCurrentCurveFrom(SelectedImage.EditSettings);
-        SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
+        EditSettingsTransfer.ApplySubset(state, image.EditSettings);
+        image.EditSettings.Geometry = state.Geometry?.Clone();
+        WriteRawProfileSelection(image, state.RawProfile);
+        image.EditSettings.AppliedPresetId = ActivePresetId;
+        LoadCurrentCurveFrom(image.EditSettings);
+        image.HasEdits = image.EditSettings.HasEdits;
         try
         {
-            await SaveEditSettingsAsync(SelectedImage);
+            await image.EnsureCatalogIdAsync(_catalogService);
+            await _catalogService.SaveEditSettingsWithHistoryAsync(
+                image.CatalogId, image.EditSettings, null, position);
         }
         catch
         {
@@ -65,7 +93,10 @@ public partial class MainWindowViewModel
                 previousIntent);
             throw;
         }
-        _lastSavedState = SelectedImage.EditSettings.Clone();
+        if (!IsCurrentHistorySubject(image, historyGeneration)) return;
+        _history.PublishPosition(position);
+        SyncHistoryFlags();
+        _lastSavedState = image.EditSettings.Clone();
 
         await UpdatePreviewWithCurrentSliders(generation: generation);
         UpdateCanReset();
@@ -74,17 +105,18 @@ public partial class MainWindowViewModel
 
     [RelayCommand(CanExecute = nameof(CanReset))]
     private Task ResetEditsAsync() => ResetEditsCoreAsync(
-        preserveProfile: false);
+        preserveProfile: false,
+        historyLabel: "Reset");
 
-    private async Task ResetEditsCoreAsync(bool preserveProfile)
+    private async Task ResetEditsCoreAsync(
+        bool preserveProfile,
+        string historyLabel)
     {
         if (!CanEditSelectedImage || SelectedImage == null) return;
         var image = SelectedImage;
         var previousSettings = CaptureLiveEditState();
         var previousIntent = _requestedPreviewIntent;
         var generation = RequestEditedRender();
-
-        PushLiveUndoState();
 
         // Preserve rotation and crop - Reset only affects color/tonal adjustments
         var currentRotation = Rotation;
@@ -144,7 +176,8 @@ public partial class MainWindowViewModel
         // Save to catalog (geometric transforms are preserved)
         try
         {
-            await SaveEditSettingsAsync(SelectedImage);
+            await SaveEditSettingsAsync(
+                SelectedImage, historyLabel, previousSettings);
         }
         catch
         {
@@ -193,8 +226,6 @@ public partial class MainWindowViewModel
         var previousIntent = _requestedPreviewIntent;
         var generation = RequestEditedRender();
 
-        // Push current state to undo stack before applying preset
-        PushUndoState();
         var currentCrop = CurrentCrop?.Clone();
         var currentGeometry = previousSettings.Geometry?.Clone();
 
@@ -216,7 +247,8 @@ public partial class MainWindowViewModel
         // Save to catalog
         try
         {
-            await SaveEditSettingsAsync(SelectedImage);
+            await SaveEditSettingsAsync(
+                SelectedImage, $"Preset: {preset.Name}", previousSettings);
         }
         catch
         {
@@ -297,7 +329,9 @@ public partial class MainWindowViewModel
 
     private async Task UntogglePresetAsync()
     {
-        await ResetEditsCoreAsync(preserveProfile: true);
+        await ResetEditsCoreAsync(
+            preserveProfile: true,
+            historyLabel: "Preset: None");
     }
 
     /// <summary>

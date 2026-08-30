@@ -1,4 +1,5 @@
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using Xunit;
 
@@ -6,114 +7,78 @@ namespace HappyPhoton.Tests;
 
 public sealed class EditHistoryTests
 {
-    // Most test states differ by Exposure (compared by EqualsIgnoringRotation).
     private static EditSettings S(double exposure) => new() { Exposure = exposure };
 
     [Fact]
-    public void FreshHistory_NothingToUndoOrRedo()
+    public void AppendCreatesOriginalAndCurrentStep()
     {
         var history = new EditHistory();
+        var mutation = history.PrepareAppend(S(0), S(1), "Exposure +1.00");
 
-        Assert.False(history.CanUndo);
-        Assert.False(history.CanRedo);
-        // Argument is required but unused on the empty-stack path.
-        Assert.Null(history.Undo(S(9)));
-        Assert.Null(history.Redo(S(9)));
-    }
+        history.Publish(Assert.IsType<CatalogEditHistoryMutation>(mutation));
 
-    [Fact]
-    public void UndoThenRedo_RoundTripsSingleEdit()
-    {
-        var history = new EditHistory();
-        var a = S(1);
-        var b = S(2);
-
-        history.PushEdit(a);
-        Assert.True(history.CanUndo);
-
-        var undone = history.Undo(b);
-        Assert.Same(a, undone);
-        Assert.False(history.CanUndo);
-        Assert.True(history.CanRedo);
-
-        var redone = history.Redo(a);
-        Assert.Same(b, redone);
+        Assert.Equal(2, history.Entries.Count);
+        Assert.Equal(["Original", "Exposure +1.00"],
+            history.Entries.Select(entry => entry.Label));
+        Assert.Equal(1, history.Position);
         Assert.True(history.CanUndo);
         Assert.False(history.CanRedo);
     }
 
     [Fact]
-    public void MultiStepSequence_UndoesAndRedoesInOrder()
+    public void PositionMovesPreserveRedoAndNextAppendTruncatesIt()
     {
-        var history = new EditHistory();
-        var a = S(1);
-        var b = S(2);
-        var c = S(3);
+        var history = Loaded(0, 1, 2);
+        history.PublishPosition(1);
 
-        history.PushEdit(a);
-        history.PushEdit(b);
-
-        Assert.Same(b, history.Undo(c));
-        Assert.Same(a, history.Undo(b));
-        Assert.False(history.CanUndo);
-
-        Assert.Same(b, history.Redo(a));
-        Assert.Same(c, history.Redo(b));
-        Assert.False(history.CanRedo);
-    }
-
-    [Fact]
-    public void PushEditAfterUndo_ClearsRedoBranch()
-    {
-        var history = new EditHistory();
-        history.PushEdit(S(1));
-        history.Undo(S(2));
+        Assert.True(history.CanUndo);
         Assert.True(history.CanRedo);
 
-        history.PushEdit(S(3));
+        history.Publish(history.PrepareAppend(S(1), S(4), "Exposure +4.00")!);
 
-        Assert.False(history.CanRedo);
-        Assert.Null(history.Redo(S(4)));
-
-        // Cleared branch stays gone through a further undo/redo cycle.
-        history.Undo(S(5));
-        history.Redo(S(6));
+        Assert.Equal([0d, 1d, 4d],
+            history.Entries.Select(entry => entry.Settings.Exposure));
+        Assert.Equal(2, history.Position);
         Assert.False(history.CanRedo);
     }
 
     [Fact]
-    public void PushEdit_DedupsEqualState_AndStillClearsRedo()
+    public void EditAfterMiddleJumpDoesNotInsertOriginal()
     {
-        var history = new EditHistory();
-        var a = S(1);
-        history.PushEdit(a);
-        history.PushEdit(S(2));
-        history.Undo(S(3));           // undo = [a], redo = [S(3)]
-        Assert.True(history.CanRedo);
+        var history = Loaded(0, 1, 2);
+        history.PublishPosition(1);
 
-        history.PushEdit(S(1));       // equal to a via EqualsIgnoringRotation
+        history.Publish(history.PrepareAppend(S(1), S(3))!);
 
-        Assert.False(history.CanRedo);          // redo cleared despite dedup
-        Assert.Same(a, history.Undo(S(1)));     // only one entry
-        Assert.False(history.CanUndo);
+        Assert.Equal(3, history.Entries.Count);
+        Assert.Single(history.Entries, entry => entry.Label == "Original");
     }
 
     [Fact]
-    public void PushEdit_NoDedup_PushesEqualState()
+    public void DivergedSavedStateIsReconciledBeforeEdit()
+    {
+        var history = Loaded(0, 1);
+        var mutation = history.PrepareAppend(S(9), S(10), "Edit")!;
+
+        Assert.Equal(["Original", "Edit"],
+            mutation.Appended.Select(entry => entry.Label));
+        Assert.Equal(9, mutation.Appended[0].Settings.Exposure);
+    }
+
+    [Fact]
+    public void RotationHorizonAndCropDoNotAppendButManualGeometryDoes()
     {
         var history = new EditHistory();
-        var a = S(1);
-        var a2 = S(1);                // equal to a via EqualsIgnoringRotation
-        history.PushEdit(a);
-        history.PushEdit(S(2));
-        history.Undo(S(3));           // undo = [a], redo = [S(3)]
+        var geometryOnly = new EditSettings
+        {
+            Rotation = 90,
+            HorizonRotation = 2,
+            Crop = new CropRegion { Left = .1, Right = .9 }
+        };
+        Assert.Null(history.PrepareAppend(new EditSettings(), geometryOnly));
 
-        history.PushEdit(a2, dedup: false);
-
-        Assert.False(history.CanRedo);          // redo still cleared
-        Assert.Same(a2, history.Undo(S(1)));    // both entries present
-        Assert.Same(a, history.Undo(a2));
-        Assert.False(history.CanUndo);
+        geometryOnly.Geometry = new GeometrySettings { Vertical = 1 };
+        Assert.NotNull(history.PrepareAppend(new EditSettings(), geometryOnly));
     }
 
     [Fact]
@@ -156,15 +121,29 @@ public sealed class EditHistoryTests
     }
 
     [Fact]
-    public void Clear_EmptiesBothStacks()
+    public void EqualSnapshotIsDeduplicated()
     {
-        var history = new EditHistory();
-        history.PushEdit(S(1));
-        history.Undo(S(2));
+        var history = Loaded(0, 1);
+        Assert.Null(history.PrepareAppend(S(1), S(1)));
+    }
 
+    [Fact]
+    public void ClearResetsListAndPosition()
+    {
+        var history = Loaded(0, 1);
         history.Clear();
-
+        Assert.Empty(history.Entries);
+        Assert.Equal(-1, history.Position);
         Assert.False(history.CanUndo);
         Assert.False(history.CanRedo);
+    }
+
+    private static EditHistory Loaded(params double[] values)
+    {
+        var history = new EditHistory();
+        history.Load(values.Select((value, index) => new CatalogEditHistoryEntry(
+            index, index == 0 ? "Original" : $"Edit {index}", S(value))),
+            values.Length - 1);
+        return history;
     }
 }

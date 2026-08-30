@@ -80,6 +80,7 @@ public sealed class CatalogSchemaTests : IDisposable
             "flag_state",
             "rating",
             "color_label",
+            "history_position",
             "updated_utc"
         ],
         columns);
@@ -172,6 +173,7 @@ public sealed class CatalogSchemaTests : IDisposable
             "flag_state",
             "rating",
             "color_label",
+            "history_position",
             "updated_utc"
         ],
         await ReadImageColumnsAsync(replacement));

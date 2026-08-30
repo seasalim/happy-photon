@@ -155,6 +155,54 @@ public sealed class CompactSliderInputGateTests
         }
     }
 
+    [AvaloniaFact]
+    public void DragLifecycle_CompletesOnceOnReleaseOrCaptureLoss()
+    {
+        var (slider, window) = ShowSlider();
+        IPointer? pressedPointer = null;
+        var started = 0;
+        var completed = 0;
+        slider.DragStarted += (_, _) => started++;
+        slider.DragCompleted += (_, _) => completed++;
+        window.AddHandler(
+            InputElement.PointerPressedEvent,
+            (_, args) => pressedPointer = args.Pointer,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+
+        try
+        {
+            window.MouseDown(
+                new Point(110, 11),
+                MouseButton.Left,
+                RawInputModifiers.None);
+            window.MouseUp(
+                new Point(150, 11),
+                MouseButton.Left,
+                RawInputModifiers.None);
+            Assert.Equal(1, started);
+            Assert.Equal(1, completed);
+
+            window.MouseDown(
+                new Point(110, 11),
+                MouseButton.Left,
+                RawInputModifiers.None);
+            Assert.NotNull(pressedPointer);
+            pressedPointer.Capture(null);
+            Dispatcher.UIThread.RunJobs();
+            window.MouseUp(
+                new Point(150, 11),
+                MouseButton.Left,
+                RawInputModifiers.None);
+            Assert.Equal(2, started);
+            Assert.Equal(2, completed);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     private static (CompactSlider Slider, Window Window) ShowSlider()
     {
         var slider = new CompactSlider

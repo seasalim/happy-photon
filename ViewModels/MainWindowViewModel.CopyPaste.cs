@@ -97,7 +97,6 @@ public partial class MainWindowViewModel
         var previousIntent = _requestedPreviewIntent;
         var surfaceGeneration = RequestEditedRender();
 
-        PushLiveUndoState();
         var currentRotation = Rotation;
         var currentHorizonRotation = HorizonRotation;
         var currentCrop = CurrentCrop?.Clone();
@@ -129,7 +128,8 @@ public partial class MainWindowViewModel
         selectedImage.HasEdits = selectedImage.EditSettings.HasEdits;
         try
         {
-            await SaveEditSettingsAsync(selectedImage);
+            await SaveEditSettingsAsync(
+                selectedImage, "Paste settings", previousSettings);
         }
         catch
         {
@@ -155,13 +155,6 @@ public partial class MainWindowViewModel
         _ = TrackDirectThumbnailOperation(
             RefreshThumbnailAsync(selectedImage));
         ShowTransientStatus("Pasted edit settings");
-    }
-
-    private void PushLiveUndoState()
-    {
-        // Paste owns one explicit pre-apply history snapshot.
-        _history.PushEdit(CaptureLiveEditState(), dedup: false);
-        SyncHistoryFlags();
     }
 
     private EditSettings CaptureLiveEditState()
@@ -194,11 +187,12 @@ public partial class MainWindowViewModel
                 EditSettingsTransfer.ApplySubset(_copiedSettings, settings);
                 return (Target: target, Previous: previous, Settings: settings);
             }).ToList();
-            await _catalogService.SaveEditSettingsBatchAsync(proposed
+            await _catalogService.SaveEditSettingsBatchWithHistoryAsync(proposed
                 .Select(update => new CatalogEditSettingsUpdate(
                     update.Target.CatalogId,
-                    update.Settings))
-                .ToList());
+                    update.Settings,
+                    update.Previous))
+                .ToList(), "Paste settings");
 
             foreach (var update in proposed)
             {
@@ -217,9 +211,6 @@ public partial class MainWindowViewModel
         if (SelectedImage != null && targets.Contains(SelectedImage))
         {
             surfaceGeneration = RequestEditedRender();
-            _history.Clear();
-            SyncHistoryFlags();
-
             _isLoadingImage = true;
             try
             {
@@ -231,6 +222,14 @@ public partial class MainWindowViewModel
             }
 
             _lastSavedState = SelectedImage.EditSettings.Clone();
+            if (IsDevelopMode)
+            {
+                BeginDevelopHistoryLoad(SelectedImage);
+                if (_pendingHistoryLoad is { } load)
+                {
+                    await load;
+                }
+            }
             if (IsDevelopMode || IsFullScreenMode)
             {
                 await UpdatePreviewWithCurrentSliders(

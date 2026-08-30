@@ -107,7 +107,11 @@ public sealed class GeometryControlTests : IDisposable
             "ApplyHistoryStateAsync",
             BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-        await (Task)method.Invoke(vm, [restored])!;
+        var generation = (long)typeof(MainWindowViewModel).GetField(
+            "_historySubjectGeneration",
+            BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
+
+        await (Task)method.Invoke(vm, [image, generation, restored, 0])!;
 
         Assert.Equal(-18, image.EditSettings.Geometry?.Vertical);
         Assert.Equal(27, vm.GeometryHorizontal);

@@ -5,23 +5,6 @@
              mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="500"
              x:Class="HappyPhoton.Views.PresetsPanel">
 
-    <!-- Override FluentTheme Expander resources -->
-    <UserControl.Resources>
-        <SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="Transparent"/>
-        <SolidColorBrush x:Key="ExpanderHeaderBorderPointerOverBrush" Color="Transparent"/>
-        <SolidColorBrush x:Key="ExpanderHeaderBorderPressedBrush" Color="Transparent"/>
-        <SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="Transparent"/>
-        <SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{DynamicResource SurfaceMidColor}"/>
-        <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{DynamicResource SurfaceHighestColor}"/>
-        <SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="{DynamicResource SurfaceHighestColor}"/>
-        <Thickness x:Key="ExpanderHeaderBorderThickness">0</Thickness>
-        <Thickness x:Key="ExpanderContentDownBorderThickness">0</Thickness>
-        <Thickness x:Key="ExpanderContentPadding">0</Thickness>
-        <Thickness x:Key="ExpanderHeaderPadding">8,4</Thickness>
-        <x:Double x:Key="ExpanderMinHeight">0</x:Double>
-        <x:Double x:Key="ExpanderHeaderMinHeight">0</x:Double>
-    </UserControl.Resources>
-
     <UserControl.Styles>
         <Style Selector="TextBlock.preset-header">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
@@ -54,56 +37,6 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
         </Style>
 
-        <!-- Expander styling -->
-        <Style Selector="Expander">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="IsExpanded" Value="True"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        </Style>
-        <Style Selector="Expander /template/ ToggleButton#PART_toggle">
-            <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-        </Style>
-        <Style Selector="Expander /template/ ToggleButton#PART_toggle /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0"/>
-        </Style>
-        <Style Selector="Expander /template/ ToggleButton#PART_toggle:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
-        </Style>
-        <!-- Style toggle button internal border -->
-        <Style Selector="Expander /template/ ToggleButton#PART_toggle /template/ Border#ToggleButtonBackground">
-            <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-        </Style>
-        <Style Selector="Expander /template/ ToggleButton#PART_toggle:pointerover /template/ Border#ToggleButtonBackground">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
-        </Style>
-        <!-- Remove borders and padding from expander content area -->
-        <Style Selector="Expander /template/ Border#ExpanderContent">
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Padding" Value="0"/>
-        </Style>
-        <Style Selector="Expander /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        </Style>
-        <!-- Style chevron icon -->
-        <Style Selector="Expander /template/ Path">
-            <Setter Property="Stroke" Value="{DynamicResource TextMuted}"/>
-        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">

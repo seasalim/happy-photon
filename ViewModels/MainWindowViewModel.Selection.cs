@@ -55,9 +55,7 @@ public partial class MainWindowViewModel
             _horizonRotationBeforeEdit = 0.0;
         }
 
-        // Clear undo/redo history when switching images
-        _history.Clear();
-        SyncHistoryFlags();
+        BeginDevelopHistoryLoad(newValue);
 
         // Prevent slider changes from triggering preview updates while loading
         _isLoadingImage = true;

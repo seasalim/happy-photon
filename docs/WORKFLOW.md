@@ -391,8 +391,10 @@ canvas used by the crop overlay, then recenters when the crop is applied.
 In Develop or fullscreen, press `\` to toggle between the edited image and the
 original. In Develop, choose **Y|Y** or press `Y` to compare that original beside the
 live edited image; fit, zoom, pan, and the press-and-hold loupe stay synchronized.
-Re-click **Y|Y** or press `Escape` to leave the split. In Develop, use `Ctrl+Z` to undo a color or tonal edit and `Ctrl+Y` or
-`Ctrl+Shift+Z` to redo it. These editing shortcuts do nothing in Browse. The reset
+Re-click **Y|Y** or press `Escape` to leave the split. The History panel above Presets
+lists committed edits newest-first; click a step to return to it, or use `Ctrl+Z` to
+move back and `Ctrl+Y` or `Ctrl+Shift+Z` to move forward. A new edit after moving back
+discards the later steps. These editing shortcuts do nothing in Browse. The reset
 button clears the color and tonal adjustments while preserving crop, rotation,
 and horizon settings; reset those separately in the geometry controls.
 
@@ -431,7 +433,8 @@ To apply the settings to several photographs:
 3. Press `Ctrl+Shift+V`.
 4. Review and confirm the batch operation.
 
-Batch paste is not undoable. Crop, rotation, and horizon settings on every
+Batch paste adds a **Paste settings** step to every target, so it can be undone when
+that photograph is opened in Develop. Crop, rotation, and horizon settings on every
 target remain unchanged.
 
 After sharing a starting point, inspect the images individually. Exposure and
@@ -589,7 +592,7 @@ remains where it started and unchanged.
 | `Space` / `Z` | Toggle Fit and 1:1 in Develop or Browse Loupe |
 | `J` | Toggle clipping overlay in Develop |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
-| `Ctrl+Z` / `Ctrl+Y` | Undo or redo color and tonal edits in Develop |
+| `Ctrl+Z` / `Ctrl+Y` | Move backward or forward through Develop history |
 | `Ctrl+Shift+E` | Open the Export workspace |
 | `Enter` | Run Export, apply crop, or move from Browse Loupe to Develop |
 | `Ctrl+,` | Open Settings |

@@ -1,0 +1,133 @@
+using CommunityToolkit.Mvvm.Input;
+using HappyPhoton.Models;
+using HappyPhoton.Services;
+
+namespace HappyPhoton.ViewModels;
+
+public partial class MainWindowViewModel
+{
+    private void BeginDevelopHistoryLoad(ImageFile? image)
+    {
+        var generation = Interlocked.Increment(ref _historySubjectGeneration);
+        _history.Clear();
+        IsHistoryLoaded = false;
+        SyncHistoryFlags();
+        _pendingHistoryLoad = IsDevelopMode && image != null
+            ? LoadDevelopHistoryAsync(image, generation)
+            : null;
+    }
+
+    private async Task LoadDevelopHistoryAsync(ImageFile image, long generation)
+    {
+        CatalogEditHistoryState state;
+        try
+        {
+            await image.EnsureCatalogIdAsync(_catalogService);
+            state = await Task.Run(() => _catalogService.LoadEditHistoryAsync(
+                image.CatalogId));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Edit history load failed: {ex.Message}");
+            return;
+        }
+
+        if (!IsCurrentHistorySubject(image, generation)) return;
+        _history.Load(state.Entries, state.Position);
+        IsHistoryLoaded = true;
+        SyncHistoryFlags();
+    }
+
+    private bool IsCurrentHistorySubject(ImageFile image, long generation) =>
+        generation == Volatile.Read(ref _historySubjectGeneration) &&
+        IsDevelopMode &&
+        ReferenceEquals(SelectedImage, image);
+
+    private async Task WaitForPendingHistoryWorkAsync()
+    {
+        while (true)
+        {
+            var preview = _previewDebounceTask;
+            if (preview is { IsCompleted: false })
+            {
+                await ObservePendingHistoryWorkAsync(preview);
+            }
+
+            var commit = _pendingHistoryCommit;
+            if (commit is { IsCompleted: false })
+            {
+                await ObservePendingHistoryWorkAsync(commit);
+            }
+
+            if (ReferenceEquals(preview, _previewDebounceTask) &&
+                ReferenceEquals(commit, _pendingHistoryCommit))
+            {
+                return;
+            }
+        }
+    }
+
+    private static async Task ObservePendingHistoryWorkAsync(Task pending)
+    {
+        try
+        {
+            await pending;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Pending edit commit failed: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task JumpToHistoryStepAsync(EditHistoryEntry? entry)
+    {
+        var image = SelectedImage;
+        var generation = Volatile.Read(ref _historySubjectGeneration);
+        if (entry == null || image == null) return;
+        await WaitForPendingHistoryWorkAsync();
+        if (!IsCurrentHistorySubject(image, generation) || !IsHistoryLoaded)
+            return;
+        var position = _history.PositionOf(entry);
+        var target = _history.EntryAt(position);
+        if (target == null || position == _history.Position) return;
+        await ApplyHistoryStateAsync(
+            image, generation, target.Settings, position);
+    }
+
+    private bool CanClearHistory() =>
+        IsHistoryLoaded && _history.Entries.Count > 1;
+
+    [RelayCommand(CanExecute = nameof(CanClearHistory))]
+    private async Task ClearHistoryAsync()
+    {
+        var image = SelectedImage;
+        var generation = Volatile.Read(ref _historySubjectGeneration);
+        if (image == null) return;
+        await WaitForPendingHistoryWorkAsync();
+        if (!IsCurrentHistorySubject(image, generation) || !IsHistoryLoaded ||
+            _history.Entries.Count == 0)
+        {
+            return;
+        }
+        var clear = ClearHistoryCoreAsync(image, generation);
+        _serializedHistoryCommit = clear;
+        _serializedHistoryImage = image;
+        _serializedHistorySettings = image.EditSettings.Clone();
+        TrackHistoryCommit(clear);
+        await clear;
+    }
+
+    private async Task ClearHistoryCoreAsync(ImageFile image, long generation)
+    {
+        await _catalogService.ClearEditHistoryAsync(image.CatalogId);
+        if (!IsCurrentHistorySubject(image, generation)) return;
+        _history.Clear();
+        SyncHistoryFlags();
+    }
+}

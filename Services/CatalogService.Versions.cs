@@ -167,6 +167,13 @@ public partial class CatalogService
                     WHERE file_path = @path COLLATE NOCASE);
                 """;
             await command.ExecuteNonQueryAsync();
+            command.CommandText = """
+                DELETE FROM edit_history
+                WHERE image_id IN (
+                    SELECT id FROM images
+                    WHERE file_path = @path COLLATE NOCASE);
+                """;
+            await command.ExecuteNonQueryAsync();
             command.CommandText =
                 "DELETE FROM images WHERE file_path = @path COLLATE NOCASE;";
             await command.ExecuteNonQueryAsync();

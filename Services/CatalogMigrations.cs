@@ -4,7 +4,7 @@ namespace HappyPhoton.Services;
 
 internal static class CatalogMigrations
 {
-    internal const int CurrentVersion = 3;
+    internal const int CurrentVersion = 4;
     private const string SchemaVersionKey = "schema_version";
 
     public static async Task RunAsync(SqliteConnection connection)
@@ -61,9 +61,36 @@ internal static class CatalogMigrations
             1 => AddColorLabelAsync(connection, transaction),
             2 => AddImageAssessmentsAsync(connection, transaction),
             3 => AddVersionsAsync(connection, transaction),
+            4 => AddEditHistoryAsync(connection, transaction),
             _ => throw new InvalidDataException(
                 $"Catalog migration {version} is not available.")
         };
+
+    private static async Task AddEditHistoryAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction)
+    {
+        if (!await HasImageColumnAsync(connection, "history_position", transaction))
+        {
+            using var alter = connection.CreateCommand();
+            alter.Transaction = transaction;
+            alter.CommandText =
+                "ALTER TABLE images ADD COLUMN history_position INTEGER NOT NULL DEFAULT -1;";
+            await alter.ExecuteNonQueryAsync();
+        }
+
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            CREATE TABLE IF NOT EXISTS edit_history (
+                image_id INTEGER NOT NULL,
+                seq INTEGER NOT NULL,
+                label TEXT NOT NULL,
+                settings_json TEXT NOT NULL,
+                PRIMARY KEY (image_id, seq));
+            """;
+        await command.ExecuteNonQueryAsync();
+    }
 
     private static async Task<bool> HasImageColumnAsync(
         SqliteConnection connection,

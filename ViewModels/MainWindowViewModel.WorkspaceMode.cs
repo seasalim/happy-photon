@@ -164,6 +164,7 @@ public partial class MainWindowViewModel
         NotifyClippingCommandState();
         NotifyExportRunCommandState();
         NotifyVersionCommandState();
+        BeginDevelopHistoryLoad(isDevelopMode ? SelectedImage : null);
         if (value == WorkspaceMode.Export)
         {
             PrepareExportWorkspace();

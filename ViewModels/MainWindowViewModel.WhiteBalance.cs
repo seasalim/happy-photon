@@ -91,7 +91,7 @@ public partial class MainWindowViewModel
             resolved.Kelvin ?? _asShotKelvin,
             resolved.Tint ?? _asShotTint);
         UpdateCanReset();
-        SchedulePreviewUpdate();
+        SchedulePreviewUpdate(historyLabel: $"White balance: {value}");
     }
 
     private void ApplySliderWhiteBalance()
@@ -143,7 +143,14 @@ public partial class MainWindowViewModel
         };
 
     [RelayCommand(CanExecute = nameof(CanSampleWhiteBalance))]
-    private async Task AutoWhiteBalanceAsync()
+    private Task AutoWhiteBalanceAsync()
+    {
+        var commit = ApplyAutoWhiteBalanceAsync();
+        TrackHistoryCommit(commit);
+        return commit;
+    }
+
+    private async Task ApplyAutoWhiteBalanceAsync()
     {
         if (SelectedImage == null)
         {
@@ -174,7 +181,8 @@ public partial class MainWindowViewModel
             return;
         }
         var surfaceGeneration = RequestEditedRender();
-        await ApplyPickedWhiteBalanceAsync(sample.Gains, surfaceGeneration);
+        await ApplyPickedWhiteBalanceAsync(
+            sample.Gains, surfaceGeneration, "Auto white balance");
     }
 
     [RelayCommand(CanExecute = nameof(CanSampleWhiteBalance))]
@@ -186,7 +194,16 @@ public partial class MainWindowViewModel
             : "White balance picker canceled");
     }
 
-    public async Task ApplyWhiteBalancePickAsync(
+    public Task ApplyWhiteBalancePickAsync(
+        double normalizedX,
+        double normalizedY)
+    {
+        var commit = ApplyWhiteBalancePickCoreAsync(normalizedX, normalizedY);
+        TrackHistoryCommit(commit);
+        return commit;
+    }
+
+    private async Task ApplyWhiteBalancePickCoreAsync(
         double normalizedX,
         double normalizedY)
     {
@@ -222,7 +239,8 @@ public partial class MainWindowViewModel
         }
         var surfaceGeneration = RequestEditedRender();
         IsWhiteBalancePicking = false;
-        await ApplyPickedWhiteBalanceAsync(sample.Gains, surfaceGeneration);
+        await ApplyPickedWhiteBalanceAsync(
+            sample.Gains, surfaceGeneration, "White balance pick");
     }
 
     private async Task<bool> IsCurrentWhiteBalanceSampleAsync(
@@ -256,14 +274,15 @@ public partial class MainWindowViewModel
 
     private async Task ApplyPickedWhiteBalanceAsync(
         double[] gains,
-        long generation)
+        long generation,
+        string historyLabel)
     {
         if (SelectedImage == null)
         {
             return;
         }
 
-        PushUndoState();
+        var before = CaptureLiveEditState();
         _liveWhiteBalance = new WhiteBalanceSettings
         {
             Mode = WbMode.Picked,
@@ -274,7 +293,7 @@ public partial class MainWindowViewModel
         SetModeLabel("Picked");
         if (await UpdatePreviewWithCurrentSliders(generation: generation))
         {
-            await AutoSaveAsync();
+            await AutoSaveAsync(historyLabel, before);
         }
         UpdateCanReset();
     }

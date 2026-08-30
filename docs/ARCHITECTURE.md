@@ -195,15 +195,18 @@ One `images` row per `(file_path, version)`, keyed by autoincrement `id` (the
 constraint on that pair. The canonical row contains the optional `version_label`,
 `file_name`, the v3
 `edit_settings` JSON document and `edit_version` marker, `flag_state`, `rating`,
-`color_label`, and `updated_utc`. `app_settings` is a key/value table. Each row is an
-independent interpretation and owns its edits and assessments; the source file is shared.
+`color_label`, `history_position`, and `updated_utc`. `edit_history` stores full,
+labeled edit snapshots keyed by `(image_id, seq)`; `app_settings` is a key/value table.
+Each image row is an independent interpretation and owns its edits, history, and
+assessments; the source file is shared.
 
 `CatalogSchema` creates this shape for new catalogs, runs ordered transactional
 migrations recorded by `app_settings.schema_version`, and then validates the required
 image columns through `PRAGMA table_info` on every startup. Migration 1 adds the native
 `color_label` slot before validation so pre-label catalogs remain readable. Migration 3
 backs up the database before rebuilding `images`; existing ids and the autoincrement
-high-water mark are preserved because they are cache identity.
+high-water mark are preserved because they are cache identity. Migration 4 adds edit
+history without back-filling existing image rows.
 Extra columns are ignored so catalogs created by recent development builds still open;
 missing required columns fail inside startup initialization. The error panel names the
 missing columns and offers to set the catalog and paired cache aside together before
@@ -260,11 +263,14 @@ steady-state cost is zero.
 
 ### Write patterns
 
-- **Edit autosave**: slider changes debounce 150 ms, then one `UPDATE images SET …`
-  writes the current JSON document and version marker. No save per slider tick.
+- **Edit autosave**: slider changes debounce 150 ms, then one transaction writes the
+  current JSON document and appends its labeled history snapshot. A divergent or empty
+  list first receives an Original snapshot; rotation/horizon/crop-only saves append
+  nothing. No save occurs per slider tick.
 - **Batch paste**: proposed settings are cloned without mutating live models, then one
   catalog transaction reuses a parameterized update for every target. Any missing row
-  rolls back the entire batch; models update only after commit. Thumbnail refresh uses
+  also appends Paste settings to every target's history. Any missing row rolls back the
+  entire batch; models update only after commit. Thumbnail refresh uses
   at most six workers and discards results for images no longer in the browse.
 - **Flags, ratings, and color labels**: one set-based JSON-backed `UPDATE` writes every
   target for the user action inside a transaction. A missing target rolls back the set,
@@ -660,6 +666,7 @@ sampler.
 | Display histogram + waveform | Preview render worker, at most 2 managed workers | Exact preview BGRA8 buffer; bounded row-parallel accumulation; histogram ticks skip inactive waveform accumulation |
 | Browse histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |
+| Develop-subject history load | Threadpool (`Task.Run`) | Subject generation; load publishes before a waiting edit append |
 | Explicit source hydration | Threadpool stream read | Single image or confirmed export batch; cancellation is best effort |
 
 ## Design invariants (do not break)

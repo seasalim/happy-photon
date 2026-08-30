@@ -291,7 +291,13 @@ be read.
 - **Undo/redo**: each committed control change is one step (existing granularity),
   including a full curve drag, point removal, or embedded curve reset;
   this includes each Clip/Blend or camera-profile selection; mode switches (preset
-  select, eyedropper pick, Auto) are each one step.
+  select, eyedropper pick, Auto) are each one step. The persistent History panel in
+  the Develop left pane shows those labeled snapshots newest-first. Clicking a row,
+  `Ctrl+Z`/`Ctrl+Y`, and the Develop action-bar Undo/Redo buttons all move one
+  shared current position;
+  later rows remain redoable until a new edit truncates them. Clear History removes
+  the rows without changing the current edit. Rotation, horizon, and crop are not
+  history fields in this slice; manual geometry remains a history field.
 - **User presets** capture color, tonal, color-mixer, all curve, detail, and effects fields and
   still never geometry or camera profiles. Hover, apply, and untoggle preserve the
   current profile.

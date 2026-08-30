@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using HappyPhoton.Models;
 using HappyPhoton.ViewModels;
@@ -15,6 +16,8 @@ public partial class DevelopEditPanel : UserControl
     public DevelopEditPanel()
     {
         InitializeComponent();
+        AddHandler(CompactSlider.DragStartedEvent, OnSliderDragStarted);
+        AddHandler(CompactSlider.DragCompletedEvent, OnSliderDragCompleted);
         PropertyChanged += (_, change) =>
         {
             if (change.Property == IsVisibleProperty) ResetScrollWhenShown();
@@ -61,6 +64,12 @@ public partial class DevelopEditPanel : UserControl
 
     private void OnCurveEditStarted(object? sender, EventArgs e) =>
         (DataContext as MainWindowViewModel)?.OnCurveEditStarted();
+
+    private void OnSliderDragStarted(object? sender, RoutedEventArgs e) =>
+        (DataContext as MainWindowViewModel)?.OnSliderEditStarted();
+
+    private void OnSliderDragCompleted(object? sender, RoutedEventArgs e) =>
+        (DataContext as MainWindowViewModel)?.OnSliderEditCompleted();
 
     internal Task ForwardCurveChangedAsync() =>
         DataContext is MainWindowViewModel viewModel

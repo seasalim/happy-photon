@@ -14,56 +14,13 @@ public partial class CatalogService
         WHERE id = @id;
     ";
 
-    /// <summary>Saves edit settings for an image.</summary>
-    public async Task SaveEditSettingsAsync(long catalogId, EditSettings settings)
-    {
-        EnsureInitialized();
-        var update = SerializeUpdate(new CatalogEditSettingsUpdate(catalogId, settings));
+    /// <summary>Saves edit settings for an image without touching its history.</summary>
+    public Task SaveEditSettingsAsync(long catalogId, EditSettings settings) =>
+        SaveEditSettingsWithHistoryAsync(catalogId, settings, null);
 
-        await _connectionGate.WaitAsync();
-        try
-        {
-            using var cmd = CreateSaveEditSettingsCommand();
-            ApplyUpdateParameters(cmd, update);
-            await cmd.ExecuteNonQueryAsync();
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
-    }
-
-    /// <summary>Saves edit settings atomically for a group of images.</summary>
-    public async Task SaveEditSettingsBatchAsync(
-        IReadOnlyList<CatalogEditSettingsUpdate> updates)
-    {
-        EnsureInitialized();
-        if (updates.Count == 0) return;
-        var serializedUpdates = updates.Select(SerializeUpdate).ToArray();
-
-        await _connectionGate.WaitAsync();
-        try
-        {
-            using var transaction = _connection!.BeginTransaction();
-            using var cmd = CreateSaveEditSettingsCommand();
-            cmd.Transaction = transaction;
-            foreach (var update in serializedUpdates)
-            {
-                ApplyUpdateParameters(cmd, update);
-                var affected = await cmd.ExecuteNonQueryAsync();
-                if (affected != 1)
-                {
-                    throw new InvalidOperationException(
-                        $"Catalog image {update.CatalogId} was not updated.");
-                }
-            }
-            await transaction.CommitAsync();
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
-    }
+    /// <summary>Saves edit settings atomically for a group of images without history rows.</summary>
+    public Task SaveEditSettingsBatchAsync(IReadOnlyList<CatalogEditSettingsUpdate> updates) =>
+        SaveEditSettingsBatchWithHistoryAsync(updates, operation: string.Empty);
 
     private Microsoft.Data.Sqlite.SqliteCommand CreateSaveEditSettingsCommand()
     {
@@ -112,6 +69,8 @@ public partial class CatalogService
             cmd.CommandText =
                 "DELETE FROM image_assessments WHERE image_id = @id;";
             cmd.Parameters.AddWithValue("@id", catalogId);
+            await cmd.ExecuteNonQueryAsync();
+            cmd.CommandText = "DELETE FROM edit_history WHERE image_id = @id;";
             await cmd.ExecuteNonQueryAsync();
             cmd.CommandText = "DELETE FROM images WHERE id = @id;";
             await cmd.ExecuteNonQueryAsync();

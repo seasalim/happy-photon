@@ -60,6 +60,11 @@ public partial class MainWindowViewModel
             await pendingPreviewUpdate;
             PreviewDebounceDrainCompleted?.Invoke();
         }
+        if (Interlocked.Exchange(ref _pendingHistoryCommit, null) is
+            { } pendingHistoryCommit)
+        {
+            await ObservePendingHistoryWorkAsync(pendingHistoryCommit);
+        }
         CancelAndDispose(ref _histogramDebounce);
         CancelAndDispose(ref _thumbnailDebounce);
         CancelRestingPreview(clearParent: true);

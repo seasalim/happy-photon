@@ -201,7 +201,6 @@ public class EditSettings
                CurvesMatch(CurveRed, other.CurveRed) &&
                CurvesMatch(CurveGreen, other.CurveGreen) &&
                CurvesMatch(CurveBlue, other.CurveBlue) &&
-               AppliedPresetId == other.AppliedPresetId &&
                ProfilesEqual(RawProfile, other.RawProfile);
     }
 

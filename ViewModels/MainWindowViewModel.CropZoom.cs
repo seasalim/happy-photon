@@ -44,7 +44,7 @@ public partial class MainWindowViewModel
         Rotation = (Rotation - 90 + 360) % 360;
         SelectedImage.EditSettings.Rotation = Rotation;
         
-        SchedulePreviewUpdate(pushUndo: false);
+        SchedulePreviewUpdate();
         
         // Refresh thumbnail with new rotation
         RefreshSelectedThumbnail();
@@ -60,7 +60,7 @@ public partial class MainWindowViewModel
         Rotation = (Rotation + 90) % 360;
         SelectedImage.EditSettings.Rotation = Rotation;
 
-        SchedulePreviewUpdate(pushUndo: false);
+        SchedulePreviewUpdate();
 
         // Refresh thumbnail with new rotation
         RefreshSelectedThumbnail();
@@ -101,7 +101,7 @@ public partial class MainWindowViewModel
 
         // Refresh preview to show uncropped image (UpdatePreviewWithCurrentSliders
         // will skip crop when IsCropMode is true)
-        SchedulePreviewUpdate(pushUndo: false);
+        SchedulePreviewUpdate();
     }
 
     /// <summary>
@@ -192,7 +192,7 @@ public partial class MainWindowViewModel
         _cropBeforeEdit = null;
 
         // Refresh preview to show image with original crop applied
-        SchedulePreviewUpdate(pushUndo: false);
+        SchedulePreviewUpdate();
     }
 
     private void RefreshSelectedThumbnail()

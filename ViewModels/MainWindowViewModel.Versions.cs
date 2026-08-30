@@ -25,8 +25,7 @@ public partial class MainWindowViewModel
             {
                 SaveSlidersTo(source.EditSettings);
                 source.HasEdits = source.EditSettings.HasEdits;
-                await _catalogService.SaveEditSettingsAsync(
-                    source.CatalogId, source.EditSettings);
+                await SaveEditSettingsAsync(source);
             }
             var state = await _catalogService.CreateVersionAsync(source.CatalogId);
             if (state == null) return;

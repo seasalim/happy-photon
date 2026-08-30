@@ -23,6 +23,7 @@ internal static class CatalogSchema
         "flag_state",
         "rating",
         "color_label",
+        "history_position",
         "updated_utc"
     ];
 
@@ -66,6 +67,7 @@ internal static class CatalogSchema
                 flag_state INTEGER NOT NULL DEFAULT 0,
                 rating INTEGER NOT NULL DEFAULT 0,
                 color_label INTEGER NOT NULL DEFAULT 0,
+                history_position INTEGER NOT NULL DEFAULT -1,
                 updated_utc TEXT,
                 UNIQUE (file_path, version)
             );

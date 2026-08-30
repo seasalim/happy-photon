@@ -214,14 +214,13 @@ public partial class MainWindowViewModel
         var previousIntent = _requestedPreviewIntent;
         var surfaceGeneration = RequestEditedRender();
 
-        _history.PushEdit(image.EditSettings.Clone());
-        SyncHistoryFlags();
         WriteRawProfileSelection(image, option.Selection, option);
         image.HasEdits = image.EditSettings.HasEdits;
         UpdateCanReset();
         try
         {
-            await SaveEditSettingsAsync(image);
+            await SaveEditSettingsAsync(
+                image, $"Profile: {option.Label}", previousSettings);
         }
         catch
         {
