@@ -367,6 +367,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     private void SyncHistoryFlags()
     {
+        CancelHistoryHover();
         CanUndo = IsHistoryLoaded && _history.CanUndo;
         CanRedo = IsHistoryLoaded && _history.CanRedo;
         OnPropertyChanged(nameof(HistoryEntries));

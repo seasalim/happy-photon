@@ -3,7 +3,8 @@
              xmlns:vm="using:HappyPhoton.ViewModels"
              x:Class="HappyPhoton.Views.EditHistoryPanel"
              x:DataType="vm:MainWindowViewModel"
-             x:Name="Root">
+             x:Name="Root"
+             PointerExited="OnPanelPointerExited">
     <UserControl.Styles>
         <!-- Mirrors Button.preset in PresetsPanel; "current" is Presets' "active". -->
         <Style Selector="Button.history-row">
@@ -50,6 +51,8 @@
                     <DataTemplate x:DataType="vm:EditHistoryEntry">
                         <Button x:CompileBindings="False" Content="{Binding Label}" Classes="history-row"
                                 Classes.current="{Binding IsCurrent}"
+                                PointerEntered="OnHistoryRowPointerEntered"
+                                PointerExited="OnHistoryRowPointerExited"
                                 Command="{Binding DataContext.JumpToHistoryStepCommand, ElementName=Root}"
                                 CommandParameter="{Binding}">
                             <Button.ContextMenu>

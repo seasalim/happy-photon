@@ -8,6 +8,7 @@ public partial class MainWindowViewModel
         await CancelAndDrainLoupeAsync();
         await CancelAndDrainCompareAsync();
         CloseBeforeAfterSplit();
+        CancelHistoryHover();
         await CancelAndDrainExportJobAsync();
         DisposeBackgroundActivity();
         await DisposeUpdatesAsync();

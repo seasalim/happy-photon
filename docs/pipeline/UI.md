@@ -298,6 +298,9 @@ be read.
   later rows remain redoable until a new edit truncates them. Clear History removes
   the rows without changing the current edit. A row's context menu, or Alt-clicking
   it, returns to that snapshot and clears every later step in the same commit.
+  Hovering a non-current row previews its snapshot only in the Navigator; leaving
+  restores the live preview. Steps whose camera profile, lens corrections, or
+  highlight reconstruction differ show no hover and start no decode; clicking stays exact.
   Rotation, horizon, crop, and manual geometry are history fields. Applying crop
   commits its crop region and any provisional horizon change as one step; cancelling
   crop commits nothing. History commands are unavailable while crop mode is active.

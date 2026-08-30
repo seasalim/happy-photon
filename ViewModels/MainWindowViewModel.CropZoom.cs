@@ -255,6 +255,7 @@ public partial class MainWindowViewModel
     {
         if (_cropModeTransitionRequested == value) return;
         _cropModeTransitionRequested = value;
+        if (value) CancelHistoryHover();
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         JumpToHistoryStepCommand.NotifyCanExecuteChanged();

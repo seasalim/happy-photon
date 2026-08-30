@@ -1,3 +1,5 @@
+using Avalonia.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -6,6 +8,69 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private const int NavigatorHoverMaxDimension = 280;
+    private static readonly TimeSpan HistoryHoverDelay = TimeSpan.FromMilliseconds(80);
+    private CancellationTokenSource? _historyHoverCts;
+    private EditHistoryEntry? _hoveredHistoryEntry;
+
+    [ObservableProperty]
+    private Bitmap? _navigatorHoverImage;
+
+    public async Task PreviewHistoryHoverAsync(EditHistoryEntry entry)
+    {
+        EndHistoryHover();
+        var image = SelectedImage;
+        if (image == null || entry.IsCurrent || !IsDevelopMode ||
+            IsHistoryBlockedByCrop || _isHoveringPreset || IsBeforeAfterSplit ||
+            _isBeforeAfterSplitTransitioning ||
+            !IsHistoryLoaded || _history.PositionOf(entry) < 0) return;
+
+        _hoveredHistoryEntry = entry;
+        CancelRestingPreview(clearParent: true);
+        var cts = new CancellationTokenSource();
+        _historyHoverCts = cts;
+        await DebouncedAction.RunAsync(
+            "history hover", HistoryHoverDelay, cts.Token,
+            async () =>
+            {
+                var result = await ImageService.Previews
+                    .RenderCurrentBaseSideSurfaceAsync(
+                        image, entry.Settings, NavigatorHoverMaxDimension, cts.Token);
+                if (result.Bitmap == null || cts.IsCancellationRequested ||
+                    !ReferenceEquals(_historyHoverCts, cts) ||
+                    !ReferenceEquals(_hoveredHistoryEntry, entry) ||
+                    !ReferenceEquals(SelectedImage, image))
+                {
+                    result.Bitmap?.Dispose();
+                    return;
+                }
+                var previous = NavigatorHoverImage;
+                NavigatorHoverImage = result.Bitmap;
+                if (previous != null)
+                    _bitmapRetirement.Retire(previous,
+                        () => ReferenceEquals(NavigatorHoverImage, previous));
+            },
+            timeProvider: _timeProvider);
+    }
+
+    public void EndHistoryHover()
+    {
+        var wasHovering = _hoveredHistoryEntry != null;
+        CancelHistoryHover();
+        if (wasHovering && PreviewImage is { } preview)
+            OnAcceptedInteractivePreview(preview, scheduleAdjacentWarm: false);
+    }
+
+    private void CancelHistoryHover()
+    {
+        _hoveredHistoryEntry = null;
+        CancelAndDispose(ref _historyHoverCts);
+        var bitmap = NavigatorHoverImage;
+        NavigatorHoverImage = null;
+        if (bitmap != null)
+            _bitmapRetirement.Retire(bitmap, () => false);
+    }
+
     private void BeginDevelopHistoryLoad(ImageFile? image)
     {
         var generation = Interlocked.Increment(ref _historySubjectGeneration);

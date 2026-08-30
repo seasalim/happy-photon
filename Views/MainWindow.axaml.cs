@@ -73,6 +73,12 @@ public partial class MainWindow : Window
             _presetsPanel.DeletePresetRequested += OnDeletePresetRequested;
         }
 
+        if (this.FindControl<EditHistoryPanel>("EditHistoryPanel") is { } historyPanel)
+        {
+            historyPanel.HistoryHoverEnter += OnHistoryHoverEnter;
+            historyPanel.HistoryHoverLeave += OnHistoryHoverLeave;
+        }
+
         _browseGridView = this.FindControl<BrowseGridView>("BrowseGridView");
         if (_browseGridView != null)
         {
@@ -155,6 +161,12 @@ public partial class MainWindow : Window
 
     private async void OnPresetHoverLeave(object? sender, string presetId) =>
         await WithVmAsync(vm => vm.RestoreFromHoverAsync());
+
+    private async void OnHistoryHoverEnter(object? sender, EditHistoryEntry entry) =>
+        await WithVmAsync(vm => vm.PreviewHistoryHoverAsync(entry));
+
+    private void OnHistoryHoverLeave(object? sender, EventArgs e) =>
+        WithVm(vm => vm.EndHistoryHover());
 
     private void OnZoomChanged(object? sender, double delta)
     {

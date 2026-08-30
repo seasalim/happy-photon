@@ -48,6 +48,7 @@ public partial class MainWindowViewModel
         int position,
         CatalogEditHistoryMutation? mutation = null)
     {
+        CancelHistoryHover();
         var apply = ApplyHistoryStateCoreAsync(
             image, historyGeneration, state, position, mutation);
         _serializedHistoryCommit = apply;
@@ -281,6 +282,9 @@ public partial class MainWindowViewModel
     public async Task PreviewPresetHoverAsync(string presetId)
     {
         if (SelectedImage == null) return;
+        var preset = PresetService.GetById(presetId);
+        if (preset == null) return;
+        CancelHistoryHover();
         var image = SelectedImage;
         CancelRestingPreview(clearParent: true);
 
@@ -288,8 +292,6 @@ public partial class MainWindowViewModel
         _hoverPreviewCts = new CancellationTokenSource();
         var token = _hoverPreviewCts.Token;
 
-        var preset = PresetService.GetById(presetId);
-        if (preset == null) return;
         var generation = ReserveRenderOutcome(
             PreviewSurfaceIntent.Edited,
             promotionEligible: false);

@@ -57,7 +57,9 @@ public partial class MainWindowViewModel
         }
     }
 
-    private void OnAcceptedInteractivePreview(Bitmap bitmap)
+    private void OnAcceptedInteractivePreview(
+        Bitmap bitmap,
+        bool scheduleAdjacentWarm = true)
     {
         var identity = ImageService.Previews.TryGetPreviewRenderIdentity(bitmap);
         if (identity == null ||
@@ -101,7 +103,7 @@ public partial class MainWindowViewModel
         _restingEditCancellationRegistration = editDebounce.Token.Register(
             () => InvalidateRestingParent(identity));
         ScheduleRestingRender();
-        ScheduleAdjacentPreviewWarm(identity);
+        if (scheduleAdjacentWarm) ScheduleAdjacentPreviewWarm(identity);
     }
 
     // Never hand out a cancelled edit-debounce source: registering on a
@@ -144,6 +146,7 @@ public partial class MainWindowViewModel
             : IsCropMode ? "crop"
             : IsShowingOriginal ? "original"
             : _isHoveringPreset ? "preset-hover"
+            : _hoveredHistoryEntry != null ? "history-hover"
             : !ExceedsRestingBound(_restingSatisfiedLongEdge) ? "satisfied"
             : !ExceedsRestingBound(_restingHighestAttemptedBound) ? "attempted"
             : _restingAchievableLongEdge > 0 &&
@@ -217,7 +220,8 @@ public partial class MainWindowViewModel
             : !IsWorkspacePreviewSurfaceActive && !IsFullScreenMode
                 ? "surface"
             : _proofIsDisplayed ? "proof"
-            : IsCropMode || IsShowingOriginal || _isHoveringPreset
+            : IsCropMode || IsShowingOriginal || _isHoveringPreset ||
+              _hoveredHistoryEntry != null
                 ? "transient"
                 : null;
         if (dropped != null)

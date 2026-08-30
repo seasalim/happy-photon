@@ -105,6 +105,11 @@
                                        IsVisible="{Binding IsDevelopMode}"
                                        Stretch="Uniform"
                                        Margin="4"/>
+                                <Image x:Name="NavigatorHoverImage"
+                                       Source="{Binding NavigatorHoverImage}"
+                                       IsVisible="{Binding NavigatorHoverImage, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                       IsHitTestVisible="False"
+                                       Stretch="Uniform" Margin="4"/>
                                 <views:NavigatorViewportOverlay x:Name="NavigatorViewportOverlay"
                                                                 Source="{Binding PreviewImage}"
                                                                 VisibleRegion="{Binding NavigatorVisibleRegion}"

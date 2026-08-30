@@ -10,6 +10,7 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     private CancellationTokenSource? _beforeAfterRenderCts;
+    private bool _isBeforeAfterSplitTransitioning;
     private (string? Hash, int MaxDimension) _beforeAfterRendered;
     private (string? Hash, int MaxDimension) _beforeAfterRequest;
     [ObservableProperty] private bool _isBeforeAfterSplit;
@@ -25,16 +26,26 @@ public partial class MainWindowViewModel
             return;
         }
         if (!CanToggleBeforeAfterSplit() || SelectedImage == null) return;
-        if (_requestedPreviewIntent == PreviewSurfaceIntent.Original)
+        _isBeforeAfterSplitTransitioning = true;
+        CancelHistoryHover();
+        try
         {
-            var generation = RequestEditedRender();
-            if (!await UpdatePreviewWithCurrentSliders(generation: generation)) return;
+            if (_requestedPreviewIntent == PreviewSurfaceIntent.Original)
+            {
+                var generation = RequestEditedRender();
+                if (!await UpdatePreviewWithCurrentSliders(generation: generation)) return;
+            }
+            IsBeforeAfterSplit = true;
+            RequestBeforeAfterRender(CaptureRestingSettings());
         }
-        IsBeforeAfterSplit = true;
-        RequestBeforeAfterRender(CaptureRestingSettings());
+        finally
+        {
+            _isBeforeAfterSplitTransitioning = false;
+        }
     }
     private bool CanToggleBeforeAfterSplit() => IsBeforeAfterSplit ||
-        IsDevelopMode && !IsFullScreenMode && !IsCropMode && CanEditSelectedImage;
+        !_isBeforeAfterSplitTransitioning && IsDevelopMode &&
+        !IsFullScreenMode && !IsCropMode && CanEditSelectedImage;
     partial void OnIsBeforeAfterSplitChanged(bool value) =>
         ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
     internal void PublishBeforeAfterRequiredDeviceLongEdge(int longEdge)
