@@ -12,7 +12,8 @@ public partial class MainWindowViewModel
     {
         var image = SelectedImage;
         var generation = Volatile.Read(ref _historySubjectGeneration);
-        if (!IsDevelopMode || IsFullScreenMode || image == null) return;
+        if (!IsDevelopMode || IsFullScreenMode ||
+            IsHistoryBlockedByCrop || image == null) return;
         await WaitForPendingHistoryWorkAsync();
         if (!IsCurrentHistorySubject(image, generation) || !CanUndoEdit()) return;
 
@@ -28,7 +29,8 @@ public partial class MainWindowViewModel
     {
         var image = SelectedImage;
         var generation = Volatile.Read(ref _historySubjectGeneration);
-        if (!IsDevelopMode || IsFullScreenMode || image == null) return;
+        if (!IsDevelopMode || IsFullScreenMode ||
+            IsHistoryBlockedByCrop || image == null) return;
         await WaitForPendingHistoryWorkAsync();
         if (!IsCurrentHistorySubject(image, generation) || !CanRedoEdit()) return;
 
@@ -68,13 +70,12 @@ public partial class MainWindowViewModel
         var generation = RequestEditedRender();
         _isLoadingImage = true;
         LoadSlidersFrom(state);
-        // Rotation, horizon, and crop stay outside edit history.
-        Rotation = image.EditSettings.Rotation;
-        HorizonRotation = image.EditSettings.HorizonRotation;
-        CurrentCrop = image.EditSettings.Crop?.Clone();
         _isLoadingImage = false;
 
         EditSettingsTransfer.ApplySubset(state, image.EditSettings);
+        image.EditSettings.Rotation = state.Rotation;
+        image.EditSettings.HorizonRotation = state.HorizonRotation;
+        image.EditSettings.Crop = state.Crop?.Clone();
         image.EditSettings.Geometry = state.Geometry?.Clone();
         WriteRawProfileSelection(image, state.RawProfile);
         image.EditSettings.AppliedPresetId = ActivePresetId;
@@ -465,10 +466,12 @@ public partial class MainWindowViewModel
     };
 
     private bool CanUndoEdit() =>
-        CanUndo && IsDevelopMode && !IsFullScreenMode && CanEditSelectedImage;
+        CanUndo && IsDevelopMode && !IsFullScreenMode &&
+        !IsHistoryBlockedByCrop && CanEditSelectedImage;
 
     private bool CanRedoEdit() =>
-        CanRedo && IsDevelopMode && !IsFullScreenMode && CanEditSelectedImage;
+        CanRedo && IsDevelopMode && !IsFullScreenMode &&
+        !IsHistoryBlockedByCrop && CanEditSelectedImage;
 
     private bool CanToggleBeforeAfter() =>
         !IsBeforeAfterSplit && CanReset && CanEditSelectedImage &&

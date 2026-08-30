@@ -85,19 +85,41 @@ public sealed class EditHistoryTests
     }
 
     [Fact]
-    public void RotationHorizonAndCropDoNotAppendButManualGeometryDoes()
+    public void CropDivergenceSeedsTheSavedStateAsOriginal()
     {
-        var history = new EditHistory();
-        var geometryOnly = new EditSettings
+        var history = Loaded(0);
+        var cropped = new EditSettings
         {
-            Rotation = 90,
-            HorizonRotation = 2,
             Crop = new CropRegion { Left = .1, Right = .9 }
         };
-        Assert.Null(history.PrepareAppend(new EditSettings(), geometryOnly));
+        var edited = cropped.Clone();
+        edited.Exposure = 1;
 
-        geometryOnly.Geometry = new GeometrySettings { Vertical = 1 };
-        Assert.NotNull(history.PrepareAppend(new EditSettings(), geometryOnly));
+        var mutation = history.PrepareAppend(cropped, edited)!;
+
+        Assert.Equal(["Original", "Exposure +1.00 (+1.00)"],
+            mutation.Appended.Select(entry => entry.Label));
+        Assert.Equal(.1, mutation.Appended[0].Settings.Crop!.Left);
+    }
+
+    [Fact]
+    public void RotationHorizonCropAndManualGeometryAppend()
+    {
+        var history = new EditHistory();
+        Assert.NotNull(history.PrepareAppend(
+            new EditSettings(), new EditSettings { Rotation = 90 }));
+        Assert.NotNull(history.PrepareAppend(
+            new EditSettings(), new EditSettings { HorizonRotation = 2 }));
+        Assert.NotNull(history.PrepareAppend(
+            new EditSettings(), new EditSettings
+            {
+                Crop = new CropRegion { Left = .1, Right = .9 }
+            }));
+        Assert.NotNull(history.PrepareAppend(
+            new EditSettings(), new EditSettings
+            {
+                Geometry = new GeometrySettings { Vertical = 1 }
+            }));
     }
 
     [Fact]
@@ -113,15 +135,15 @@ public sealed class EditHistoryTests
         var blue = baseline.Clone();
         blue.CurveBlue = new CurveData();
 
-        Assert.False(baseline.EqualsIgnoringRotation(composite));
-        Assert.False(baseline.EqualsIgnoringRotation(red));
-        Assert.False(baseline.EqualsIgnoringRotation(green));
-        Assert.False(baseline.EqualsIgnoringRotation(blue));
-        Assert.False(red.EqualsIgnoringRotation(green));
+        Assert.False(baseline.HasSameEdits(composite));
+        Assert.False(baseline.HasSameEdits(red));
+        Assert.False(baseline.HasSameEdits(green));
+        Assert.False(baseline.HasSameEdits(blue));
+        Assert.False(red.HasSameEdits(green));
     }
 
     [Fact]
-    public void EqualityIncludesManualGeometryButStillIgnoresCropGeometry()
+    public void EqualityIncludesEveryGeometryField()
     {
         var baseline = new EditSettings();
         var manual = new EditSettings
@@ -135,8 +157,12 @@ public sealed class EditHistoryTests
             Crop = new CropRegion { Left = 0.1, Right = 0.9 }
         };
 
-        Assert.False(baseline.EqualsIgnoringRotation(manual));
-        Assert.True(baseline.EqualsIgnoringRotation(crop));
+        Assert.False(baseline.HasSameEdits(manual));
+        Assert.False(baseline.HasSameEdits(crop));
+        Assert.False(baseline.HasSameEdits(new EditSettings
+        {
+            Crop = new CropRegion()
+        }));
     }
 
     [Fact]

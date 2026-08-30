@@ -17,10 +17,10 @@ public static class CatalogEditHistory
         CatalogEditHistoryState state, EditSettings before, EditSettings after,
         string? operation = null)
     {
-        if (before.EqualsIgnoringRotation(after)) return null;
+        if (before.HasSameEdits(after)) return null;
         var appended = new List<CatalogEditHistoryEntry>(2);
         var sequence = state.Position + 1;
-        if (state.Position < 0 || !before.EqualsIgnoringRotation(
+        if (state.Position < 0 || !before.HasSameEdits(
                 state.Entries[state.Position].Settings))
         {
             appended.Add(new(sequence++, "Original", before.Clone()));

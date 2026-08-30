@@ -9,6 +9,12 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     internal const double ZoomStepFactor = 1.1;
+    private bool _cropModeTransitionRequested;
+    private bool _restoreCropModeOnRollback;
+
+    private bool IsHistoryBlockedByCrop =>
+        IsCropMode || _cropModeTransitionRequested;
+
     /// <summary>
     /// The crop to preview with. Crop mode renders the full corrected frame so
     /// the overlay's normalized coordinates line up with the displayed bitmap.
@@ -34,74 +40,104 @@ public partial class MainWindowViewModel
         }
     }
 
-    [RelayCommand]
+    private bool CanRotate() =>
+        !IsHistoryBlockedByCrop && CanEditSelectedImage;
+
+    [RelayCommand(CanExecute = nameof(CanRotate))]
     private void RotateLeft()
     {
-        if (!CanEditSelectedImage || SelectedImage == null) return;
-        
-        // Rotate counter-clockwise (subtract 90, wrap around)
-        // Note: Rotation is separate from undo/reset - it's a geometric transform
-        Rotation = (Rotation - 90 + 360) % 360;
-        SelectedImage.EditSettings.Rotation = Rotation;
-        
-        SchedulePreviewUpdate();
-        
-        // Refresh thumbnail with new rotation
+        CommitRotation(-90, "Rotate left");
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRotate))]
+    private void RotateRight()
+    {
+        CommitRotation(90, "Rotate right");
+    }
+
+    private void CommitRotation(int delta, string label)
+    {
+        if (!CanEditSelectedImage || IsHistoryBlockedByCrop ||
+            SelectedImage is not { } image)
+            return;
+
+        var before = CaptureLiveEditState();
+        Rotation = (Rotation + delta + 360) % 360;
+        image.EditSettings.Rotation = Rotation;
+        var after = CaptureLiveEditState();
+        var previousIntent = _requestedPreviewIntent;
+        var generation = RequestEditedRender();
+        _ = SaveEditSettingsCoreAsync(
+            image, after, label, before, recordHistory: true,
+            beforeSave: () => RenderCommittedGeometryAsync(
+                image, before, generation, previousIntent));
         RefreshSelectedThumbnail();
     }
 
-    [RelayCommand]
-    private void RotateRight()
+    private async Task<bool> RenderCommittedGeometryAsync(
+        ImageFile image,
+        EditSettings previousSettings,
+        long generation,
+        PreviewSurfaceIntent previousIntent)
     {
-        if (!CanEditSelectedImage || SelectedImage == null) return;
-
-        // Rotate clockwise (add 90, wrap around)
-        // Note: Rotation is separate from undo/reset - it's a geometric transform
-        Rotation = (Rotation + 90) % 360;
-        SelectedImage.EditSettings.Rotation = Rotation;
-
-        SchedulePreviewUpdate();
-
-        // Refresh thumbnail with new rotation
-        RefreshSelectedThumbnail();
+        var renderSucceeded = false;
+        await UpdatePreviewWithCurrentSliders(
+            generation: generation,
+            observeRenderSucceeded: value => renderSucceeded = value);
+        if (!renderSucceeded && generation == LatestPreviewOutcomeGeneration)
+        {
+            RollbackEditReservation(
+                image, previousSettings, generation, previousIntent);
+            return false;
+        }
+        return ReferenceEquals(SelectedImage, image);
     }
 
     /// <summary>
     /// Toggles crop mode on/off. When entering, initializes crop region.
     /// </summary>
     [RelayCommand]
-    private void ToggleCropMode()
+    private async Task ToggleCropModeAsync()
     {
         if (!CanEditSelectedImage || SelectedImage == null) return;
 
         if (IsCropMode)
         {
-            // Exiting crop mode without applying - restore original
-            CancelCrop();
+            await CancelCropCoreAsync();
         }
         else
         {
-            // Entering crop mode
-            EnterCropMode();
+            await EnterCropModeAsync();
         }
     }
 
-    private void EnterCropMode()
+    private async Task EnterCropModeAsync()
     {
-        if (!CanEditSelectedImage || SelectedImage == null) return;
-        CancelRestingPreview(clearParent: true);
+        var image = SelectedImage;
+        if (!CanEditSelectedImage || image == null) return;
+        SetCropModeTransitionRequested(true);
+        try
+        {
+            await WaitForPendingHistoryWorkAsync();
+            if (!CanEditSelectedImage ||
+                !ReferenceEquals(SelectedImage, image) || IsCropMode)
+            {
+                return;
+            }
+            CancelRestingPreview(clearParent: true);
 
-        // Save original crop for cancel
-        _cropBeforeEdit = SelectedImage.EditSettings.Crop?.Clone();
-        _horizonRotationBeforeEdit = SelectedImage.EditSettings.HorizonRotation;
+            _cropBeforeEdit = image.EditSettings.Crop?.Clone();
+            _horizonRotationBeforeEdit = image.EditSettings.HorizonRotation;
 
-        // Initialize CurrentCrop - use existing or create new full-image region
-        CurrentCrop = SelectedImage.EditSettings.Crop?.Clone() ?? new CropRegion();
-        IsCropMode = true;
+            CurrentCrop = image.EditSettings.Crop?.Clone() ?? new CropRegion();
+            IsCropMode = true;
 
-        // Refresh preview to show uncropped image (UpdatePreviewWithCurrentSliders
-        // will skip crop when IsCropMode is true)
-        SchedulePreviewUpdate();
+            ScheduleCropPreviewUpdate();
+        }
+        finally
+        {
+            SetCropModeTransitionRequested(false);
+        }
     }
 
     /// <summary>
@@ -110,57 +146,67 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task ApplyCropAsync()
     {
-        if (!CanEditSelectedImage ||
-            SelectedImage == null ||
-            CurrentCrop == null)
-        {
-            IsCropMode = false;
-            return;
-        }
-
         var image = SelectedImage;
-        var previousSettings = image.EditSettings.Clone();
-        var previousIntent = _requestedPreviewIntent;
-        _previewDebounce?.Cancel();
-        var generation = RequestEditedRender();
-
-        // Apply crop to settings
-        if (CurrentCrop.IsFullImage)
-        {
-            image.EditSettings.Crop = null;
-        }
-        else
-        {
-            image.EditSettings.Crop = CurrentCrop.Clone();
-        }
-        image.EditSettings.HorizonRotation = HorizonRotation;
-
-        image.HasEdits = image.EditSettings.HasEdits;
-
-        // Save to catalog
+        SetCropModeTransitionRequested(true);
         try
         {
-            await SaveEditSettingsAsync(image);
-        }
-        catch
-        {
-            RollbackCropReservation(
-                image,
-                previousSettings,
-                generation,
-                previousIntent);
-            throw;
-        }
-        _lastSavedState = image.EditSettings.Clone();
+            await WaitForPendingHistoryWorkAsync();
+            if (image == null || !CanEditSelectedImage || !IsCropMode ||
+                !ReferenceEquals(SelectedImage, image) || CurrentCrop == null)
+            {
+                return;
+            }
 
-        // Exit crop mode first, so preview update shows cropped result
-        IsCropMode = false;
-        _cropBeforeEdit = null;
+            var previousSettings = _lastSavedState?.Clone() ??
+                image.EditSettings.Clone();
+            var previousIntent = _requestedPreviewIntent;
+            _previewDebounce?.Cancel();
 
-        // Update preview and thumbnail (no undo for crop - it's a geometric transform)
-        if (await UpdatePreviewWithCurrentSliders(generation: generation))
-        {
+            image.EditSettings.Crop = CurrentCrop.IsFullImage
+                ? null
+                : CurrentCrop.Clone();
+            image.EditSettings.HorizonRotation = HorizonRotation;
+            image.HasEdits = image.EditSettings.HasEdits;
+            var appliedSettings = CaptureLiveEditState();
+
+            _restoreCropModeOnRollback = true;
+            IsCropMode = false;
+            var generation = RequestEditedRender();
+            try
+            {
+                await SaveEditSettingsCoreAsync(
+                    image,
+                    appliedSettings,
+                    EditHistoryLabel.CropOperation(
+                        previousSettings, appliedSettings),
+                    previousSettings,
+                    recordHistory: true,
+                    beforeSave: () => RenderCommittedGeometryAsync(
+                        image, previousSettings, generation, previousIntent));
+            }
+            catch
+            {
+                if (RollbackEditReservation(
+                        image, previousSettings, generation, previousIntent))
+                {
+                    var rollbackGeneration = ReserveRenderOutcome(
+                        PreviewSurfaceIntent.Edited,
+                        promotionEligible: false);
+                    await UpdatePreviewWithCurrentSliders(
+                        generation: rollbackGeneration,
+                        promotable: false);
+                }
+                throw;
+            }
+            if (IsCropMode) return;
+            _restoreCropModeOnRollback = false;
+            _cropBeforeEdit = null;
             RefreshSelectedThumbnail();
+        }
+        finally
+        {
+            _restoreCropModeOnRollback = false;
+            SetCropModeTransitionRequested(false);
         }
     }
 
@@ -182,17 +228,40 @@ public partial class MainWindowViewModel
     /// Cancels crop mode and restores original crop.
     /// </summary>
     [RelayCommand]
-    private void CancelCrop()
+    private Task CancelCropAsync() => CancelCropCoreAsync();
+
+    private async Task CancelCropCoreAsync()
     {
-        // Restore original crop
-        CurrentCrop = _cropBeforeEdit?.Clone();
-        HorizonRotation = _horizonRotationBeforeEdit;
+        var image = SelectedImage;
+        SetCropModeTransitionRequested(true);
+        try
+        {
+            await WaitForPendingHistoryWorkAsync();
+            if (!IsCropMode || !ReferenceEquals(SelectedImage, image)) return;
 
-        IsCropMode = false;
-        _cropBeforeEdit = null;
+            CurrentCrop = _cropBeforeEdit?.Clone();
+            HorizonRotation = _horizonRotationBeforeEdit;
+            IsCropMode = false;
+            _cropBeforeEdit = null;
+            ScheduleCropPreviewUpdate();
+        }
+        finally
+        {
+            SetCropModeTransitionRequested(false);
+        }
+    }
 
-        // Refresh preview to show image with original crop applied
-        SchedulePreviewUpdate();
+    private void SetCropModeTransitionRequested(bool value)
+    {
+        if (_cropModeTransitionRequested == value) return;
+        _cropModeTransitionRequested = value;
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+        JumpToHistoryStepCommand.NotifyCanExecuteChanged();
+        ClearHistoryCommand.NotifyCanExecuteChanged();
+        ClearHistoryAboveStepCommand.NotifyCanExecuteChanged();
+        RotateLeftCommand.NotifyCanExecuteChanged();
+        RotateRightCommand.NotifyCanExecuteChanged();
     }
 
     private void RefreshSelectedThumbnail()

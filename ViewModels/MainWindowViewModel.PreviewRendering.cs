@@ -9,7 +9,8 @@ public partial class MainWindowViewModel
         long? generation = null,
         PreviewSurfaceIntent intent = PreviewSurfaceIntent.Edited,
         bool promotable = true,
-        PreviewSurfaceIntent? rollbackRequestedIntent = null)
+        PreviewSurfaceIntent? rollbackRequestedIntent = null,
+        Action<bool>? observeRenderSucceeded = null)
     {
         var selectedImage = SelectedImage;
         if (selectedImage == null || !CanEditSelectedImage) return false;
@@ -28,11 +29,13 @@ public partial class MainWindowViewModel
         {
             if (IsExportMode && ExportSettings.ShowProof)
             {
-                return await LoadExportProofAsync(
+                var proofSucceeded = await LoadExportProofAsync(
                     selectedImage,
                     tempSettings,
                     outcomeGeneration,
                     cancellationToken);
+                observeRenderSucceeded?.Invoke(proofSucceeded);
+                return proofSucceeded;
             }
 
             using var artifacts = await ImageService.Previews
@@ -47,6 +50,7 @@ public partial class MainWindowViewModel
                     computeWaveform: IsWaveformScopeEffective);
             cancellationToken.ThrowIfCancellationRequested();
             var succeeded = artifacts.Bitmap != null;
+            observeRenderSucceeded?.Invoke(succeeded);
             var painted = ApplyRenderOutcome(RenderOutcome.FromArtifacts(
                 selectedImage,
                 outcomeGeneration,
@@ -64,11 +68,8 @@ public partial class MainWindowViewModel
                     previousIntent);
                 return !rolledBack;
             }
-            if (painted && promotable &&
-                intent == PreviewSurfaceIntent.Edited)
-            {
-                _lastAppliedEditSettings = tempSettings.Clone();
-            }
+            _hasPromotableEditedRender |= painted && promotable &&
+                intent == PreviewSurfaceIntent.Edited;
             return painted;
         }
         catch (OperationCanceledException)
@@ -90,11 +91,12 @@ public partial class MainWindowViewModel
         long generation,
         PreviewSurfaceIntent previousIntent)
     {
-        if (_lastAppliedEditSettings == null)
+        if (!_hasPromotableEditedRender || _lastSavedState == null)
         {
             return false;
         }
-        var previousSettings = _lastAppliedEditSettings.Clone();
+        var previousSettings = _lastSavedState.Clone();
+        var needsSave = !image.EditSettings.HasSameEdits(previousSettings);
         if (!RollbackEditReservation(
                 image,
                 previousSettings,
@@ -104,7 +106,9 @@ public partial class MainWindowViewModel
             return false;
         }
 
-        await SaveEditSettingsAsync(image, previousSettings, recordHistory: false);
+        if (needsSave)
+            await SaveEditSettingsAsync(
+                image, previousSettings, recordHistory: false);
         return true;
     }
 }

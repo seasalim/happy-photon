@@ -177,7 +177,7 @@ public class EditSettings
         Geometry = Geometry?.Clone()
     };
 
-    public bool EqualsIgnoringRotation(EditSettings other)
+    public bool HasSameEdits(EditSettings other)
     {
         return Exposure == other.Exposure && Wb.Mode == other.Wb.Mode &&
                Enumerable.SequenceEqual(Wb.Gains ?? [], other.Wb.Gains ?? []) &&
@@ -197,12 +197,21 @@ public class EditSettings
                Lens.Distortion == other.Lens.Distortion &&
                Lens.ChromaticAberration == other.Lens.ChromaticAberration &&
                Lens.Vignetting == other.Lens.Vignetting &&
+               Rotation == other.Rotation &&
+               HorizonRotation == other.HorizonRotation &&
+               CropsMatch(Crop, other.Crop) &&
                CurvesMatch(Curve, other.Curve) &&
                CurvesMatch(CurveRed, other.CurveRed) &&
                CurvesMatch(CurveGreen, other.CurveGreen) &&
                CurvesMatch(CurveBlue, other.CurveBlue) &&
                ProfilesEqual(RawProfile, other.RawProfile);
     }
+
+    private static bool CropsMatch(CropRegion? left, CropRegion? right) =>
+        ReferenceEquals(left, right) ||
+        left != null && right != null &&
+        left.Left == right.Left && left.Top == right.Top &&
+        left.Right == right.Right && left.Bottom == right.Bottom;
 
     private static bool CurvesMatch(CurveData? left, CurveData? right)
     {

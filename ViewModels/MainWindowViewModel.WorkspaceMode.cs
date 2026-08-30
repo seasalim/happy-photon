@@ -69,7 +69,7 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private void SwitchToExport()
+    private async Task SwitchToExportAsync()
     {
         if (IsFullScreenMode)
         {
@@ -78,7 +78,7 @@ public partial class MainWindowViewModel
 
         if (IsCropMode)
         {
-            CancelCrop();
+            await CancelCropAsync();
         }
         _workspaceModeBeforeExport = WorkspaceMode;
         WorkspaceMode = WorkspaceMode.Export;

@@ -396,7 +396,9 @@ lists committed edits newest-first; click a step to return to it, or use `Ctrl+Z
 move back and `Ctrl+Y` or `Ctrl+Shift+Z` to move forward. A new edit after moving back
 discards the later steps; to discard them immediately, right-click the target step and
 choose **Clear History Above This Step**, or Alt-click it. These editing shortcuts do
-nothing in Browse. The reset
+nothing in Browse or while crop mode is active. Rotation, horizon, and an applied crop
+each appear in History; a crop session combines its region and horizon into one step.
+The reset
 button clears the color and tonal adjustments while preserving crop, rotation,
 and horizon settings; reset those separately in the geometry controls.
 

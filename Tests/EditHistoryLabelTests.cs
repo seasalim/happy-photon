@@ -124,6 +124,43 @@ public sealed class EditHistoryLabelTests
             new EditSettings(), new EditSettings { BaseLook = true }));
     }
 
+    [Theory]
+    [InlineData(0, 90, "Rotate right")]
+    [InlineData(270, 0, "Rotate right")]
+    [InlineData(0, 270, "Rotate left")]
+    [InlineData(90, 0, "Rotate left")]
+    [InlineData(0, 180, "Rotate 180°")]
+    public void RotationUsesModularDirection(int before, int after, string expected)
+    {
+        Assert.Equal(expected, EditHistoryLabel.Derive(
+            new EditSettings { Rotation = before },
+            new EditSettings { Rotation = after }));
+    }
+
+    [Fact]
+    public void HorizonIncludesDegreesValueAndDelta()
+    {
+        Assert.Equal("Horizon +1.50° (+0.50°)", EditHistoryLabel.Derive(
+            new EditSettings { HorizonRotation = 1 },
+            new EditSettings { HorizonRotation = 1.5 }));
+    }
+
+    [Fact]
+    public void CropLabelsSetClearAndCropModeOperation()
+    {
+        var uncropped = new EditSettings();
+        var cropped = new EditSettings
+        {
+            Crop = new CropRegion { Left = .1, Right = .9 }
+        };
+        var horizonOnly = new EditSettings { HorizonRotation = 1 };
+
+        Assert.Equal("Crop", EditHistoryLabel.Derive(uncropped, cropped));
+        Assert.Equal("Crop cleared", EditHistoryLabel.Derive(cropped, uncropped));
+        Assert.Equal("Crop", EditHistoryLabel.CropOperation(uncropped, cropped));
+        Assert.Null(EditHistoryLabel.CropOperation(uncropped, horizonOnly));
+    }
+
     private static void AssertLabel(string expected, Action<EditSettings> change)
     {
         var before = new EditSettings();

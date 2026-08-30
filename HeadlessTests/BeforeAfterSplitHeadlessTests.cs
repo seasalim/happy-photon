@@ -324,10 +324,10 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
             !ReferenceEquals(firstBefore, vm.BeforeAfterPreviewImage));
         Assert.True(vm.IsBeforeAfterSplit);
 
-        vm.ToggleCropModeCommand.Execute(null);
+        await vm.ToggleCropModeCommand.ExecuteAsync(null);
         Assert.True(vm.IsCropMode);
         Assert.False(vm.IsBeforeAfterSplit);
-        vm.CancelCropCommand.Execute(null);
+        await vm.CancelCropCommand.ExecuteAsync(null);
 
         await vm.ToggleBeforeAfterSplitCommand.ExecuteAsync(null);
         await TestWaits.UntilAsync(() => vm.BeforeAfterPreviewImage != null);

@@ -104,12 +104,12 @@ public sealed class ExportWorkspaceTests : IDisposable
     public async Task Enter_AppliesCropInCropMode()
     {
         using var catalog = await _fx.CreateCatalogAsync("enter-crop");
-        await using var vm = CreateViewModel(new NullBaseLoader(), catalog);
+        await using var vm = CreateViewModel(new CountingPairLoader(), catalog);
         var image = await CreateImageAsync(catalog, "crop.jpg");
         vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         vm.SwitchToDevelopCommand.Execute(null);
-        vm.ToggleCropModeCommand.Execute(null);
+        await vm.ToggleCropModeCommand.ExecuteAsync(null);
         vm.CurrentCrop = new CropRegion
         {
             Left = 0.1,

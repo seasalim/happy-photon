@@ -52,7 +52,7 @@ public sealed class RenderFailureRollbackTests : IDisposable
         try
         {
             await TestWaits.UntilAsync(() => vm.PreviewImage != null);
-            vm.ToggleCropModeCommand.Execute(null);
+            await vm.ToggleCropModeCommand.ExecuteAsync(null);
             var draft = new CropRegion
             {
                 Left = 0.1,

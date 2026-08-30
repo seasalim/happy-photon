@@ -265,8 +265,9 @@ steady-state cost is zero.
 
 - **Edit autosave**: slider changes debounce 150 ms, then one transaction writes the
   current JSON document and appends its labeled history snapshot. A divergent or empty
-  list first receives an Original snapshot; rotation/horizon/crop-only saves append
-  nothing. No save occurs per slider tick.
+  list first receives an Original snapshot. Rotation clicks commit discretely, horizon
+  drags use the slider gesture boundary, and applying crop commits the crop and its
+  provisional horizon together. No save occurs per slider tick.
 - **Batch paste**: proposed settings are cloned without mutating live models, then one
   catalog transaction reuses a parameterized update for every target. Any missing row
   also appends Paste settings to every target's history. Any missing row rolls back the

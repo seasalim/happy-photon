@@ -234,11 +234,8 @@ public partial class MainWindowViewModel
                 promotable: true));
             var painted = succeeded && accepted;
             if (painted) RestoreCaptureMemberViewportAfterPaint(imageFile);
-            if (painted && intent == PreviewSurfaceIntent.Edited)
-            {
-                _lastAppliedEditSettings = imageFile.EditSettings.Clone();
-            }
-
+            _hasPromotableEditedRender |= painted &&
+                intent == PreviewSurfaceIntent.Edited;
             // The entry refit only applies while the user hasn't taken manual
             // zoom control during the load window — their zoom wins over the
             // default fit ("snaps back after render" defect).

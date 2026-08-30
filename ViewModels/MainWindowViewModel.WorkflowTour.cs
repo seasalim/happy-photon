@@ -54,9 +54,9 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private void ShowExportTourStep()
+    private async Task ShowExportTourStepAsync()
     {
-        SwitchToExport();
+        await SwitchToExportAsync();
         WorkflowTourStep = WorkflowTourStep.DeliverCopies;
     }
 

@@ -195,12 +195,12 @@ public sealed class EditSettingsTransferTests
         var clone = source.Clone();
 
         Assert.True(source.HasEdits);
-        Assert.True(source.EqualsIgnoringRotation(clone));
+        Assert.True(source.HasSameEdits(clone));
         Assert.NotSame(source.Effects, clone.Effects);
 
         clone.Effects!.Grain = 19;
-        Assert.False(source.EqualsIgnoringRotation(clone));
-        Assert.True(new EditSettings().EqualsIgnoringRotation(
+        Assert.False(source.HasSameEdits(clone));
+        Assert.True(new EditSettings().HasSameEdits(
             new EditSettings
             {
                 Effects = new EffectsSettings
@@ -218,13 +218,13 @@ public sealed class EditSettingsTransferTests
         var clone = source.Clone();
 
         Assert.True(source.HasEdits);
-        Assert.True(source.EqualsIgnoringRotation(clone));
+        Assert.True(source.HasSameEdits(clone));
         Assert.NotSame(source.Mixer, clone.Mixer);
         Assert.NotSame(source.Mixer!.Orange, clone.Mixer!.Orange);
 
         clone.Mixer.Orange.Hue++;
-        Assert.False(source.EqualsIgnoringRotation(clone));
-        Assert.True(new EditSettings().EqualsIgnoringRotation(
+        Assert.False(source.HasSameEdits(clone));
+        Assert.True(new EditSettings().HasSameEdits(
             new EditSettings { Mixer = new ColorMixerSettings() }));
     }
 

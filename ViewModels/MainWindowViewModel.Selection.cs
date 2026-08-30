@@ -59,10 +59,10 @@ public partial class MainWindowViewModel
 
         // Prevent slider changes from triggering preview updates while loading
         _isLoadingImage = true;
+        _hasPromotableEditedRender = false;
 
         if (newValue != null)
         {
-            _lastAppliedEditSettings = null;
             SignalBackgroundActivityStarted();
             RefreshSourceAvailability(newValue);
             surfaceGeneration = LatestPreviewOutcomeGeneration;
@@ -122,7 +122,6 @@ public partial class MainWindowViewModel
         }
         else
         {
-            _lastAppliedEditSettings = null;
             // Clear cached preview when no image is selected
             ImageService.Previews.ClearPreviewCache();
 

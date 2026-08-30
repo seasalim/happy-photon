@@ -319,6 +319,13 @@ public partial class MainWindowViewModel
     {
         if (value) CloseBeforeAfterSplit();
         ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+        JumpToHistoryStepCommand.NotifyCanExecuteChanged();
+        ClearHistoryCommand.NotifyCanExecuteChanged();
+        ClearHistoryAboveStepCommand.NotifyCanExecuteChanged();
+        RotateLeftCommand.NotifyCanExecuteChanged();
+        RotateRightCommand.NotifyCanExecuteChanged();
         NotifyWhiteBalanceCommandState();
         if (value)
         {

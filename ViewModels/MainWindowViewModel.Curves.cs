@@ -77,7 +77,7 @@ public partial class MainWindowViewModel
         var after = CaptureLiveEditState();
         NotifyCurveStateChanged();
         UpdateCanReset();
-        if (before.EqualsIgnoringRotation(after))
+        if (before.HasSameEdits(after))
         {
             return;
         }

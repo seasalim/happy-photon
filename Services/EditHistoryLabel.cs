@@ -18,6 +18,12 @@ public static class EditHistoryLabel
         AddScalar(changes, "Saturation", before.Saturation, after.Saturation);
         AddScalar(changes, "Vibrance", before.Vibrance, after.Vibrance);
         Add(changes, "Base look", before.BaseLook, after.BaseLook);
+        AddRotation(changes, before.Rotation, after.Rotation);
+        AddHorizon(changes, before.HorizonRotation, after.HorizonRotation);
+        if (!CropsMatch(before.Crop, after.Crop))
+            changes.Add(after.Crop == null || after.Crop.IsFullImage
+                ? "Crop cleared"
+                : "Crop");
 
         var beforeWb = before.Wb ?? new WhiteBalanceSettings();
         var afterWb = after.Wb ?? new WhiteBalanceSettings();
@@ -99,6 +105,42 @@ public static class EditHistoryLabel
             _ => string.Join(", ", changes.Take(3))
         };
     }
+
+    public static string? CropOperation(EditSettings before, EditSettings after) =>
+        CropsMatch(before.Crop, after.Crop) ? null : "Crop";
+
+    private static void AddRotation(
+        ICollection<string> changes,
+        int before,
+        int after)
+    {
+        var delta = ((after - before) % 360 + 360) % 360;
+        if (delta == 0) return;
+        changes.Add(delta switch
+        {
+            90 => "Rotate right",
+            180 => "Rotate 180°",
+            270 => "Rotate left",
+            _ => $"Rotate {delta}°"
+        });
+    }
+
+    private static void AddHorizon(
+        ICollection<string> changes,
+        double before,
+        double after)
+    {
+        if (before == after) return;
+        var format = "+0.00;-0.00;0.00";
+        changes.Add($"Horizon {after.ToString(format)}° " +
+                    $"({(after - before).ToString(format)}°)");
+    }
+
+    private static bool CropsMatch(CropRegion? left, CropRegion? right) =>
+        ReferenceEquals(left, right) ||
+        left != null && right != null &&
+        left.Left == right.Left && left.Top == right.Top &&
+        left.Right == right.Right && left.Bottom == right.Bottom;
 
     private static void AddScalar(
         ICollection<string> changes,

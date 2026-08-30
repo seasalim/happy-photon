@@ -201,7 +201,7 @@ public partial class MainWindowViewModel
     private bool _currentGenerationPromotionEligible = true;
     private PreviewSurfaceIntent _requestedPreviewIntent;
     private PreviewSurfaceIntent _appliedPreviewIntent;
-    private EditSettings? _lastAppliedEditSettings;
+    private bool _hasPromotableEditedRender;
 
     internal long LatestPreviewOutcomeGeneration =>
         Volatile.Read(ref _latestPreviewOutcomeGeneration);

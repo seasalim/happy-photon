@@ -84,14 +84,18 @@ public partial class MainWindowViewModel
         }
     }
 
-    [RelayCommand]
+    private bool CanJumpToHistoryStep(EditHistoryEntry? entry) =>
+        !IsHistoryBlockedByCrop && IsHistoryLoaded && entry != null;
+
+    [RelayCommand(CanExecute = nameof(CanJumpToHistoryStep))]
     private async Task JumpToHistoryStepAsync(EditHistoryEntry? entry)
     {
         var image = SelectedImage;
         var generation = Volatile.Read(ref _historySubjectGeneration);
         if (entry == null || image == null) return;
         await WaitForPendingHistoryWorkAsync();
-        if (!IsCurrentHistorySubject(image, generation) || !IsHistoryLoaded)
+        if (IsHistoryBlockedByCrop ||
+            !IsCurrentHistorySubject(image, generation) || !IsHistoryLoaded)
             return;
         var position = _history.PositionOf(entry);
         var target = _history.EntryAt(position);
@@ -102,7 +106,8 @@ public partial class MainWindowViewModel
 
     private bool CanClearHistoryAboveStep(EditHistoryEntry? entry)
     {
-        if (!IsHistoryLoaded || entry == null) return false;
+        if (IsHistoryBlockedByCrop || !IsHistoryLoaded || entry == null)
+            return false;
         var position = _history.PositionOf(entry);
         return position >= 0 && position < _history.Entries.Count - 1;
     }
@@ -114,7 +119,8 @@ public partial class MainWindowViewModel
         var generation = Volatile.Read(ref _historySubjectGeneration);
         if (entry == null || image == null) return;
         await WaitForPendingHistoryWorkAsync();
-        if (!IsCurrentHistorySubject(image, generation) || !IsHistoryLoaded)
+        if (IsHistoryBlockedByCrop ||
+            !IsCurrentHistorySubject(image, generation) || !IsHistoryLoaded)
             return;
         var position = _history.PositionOf(entry);
         var target = _history.EntryAt(position);
@@ -125,7 +131,8 @@ public partial class MainWindowViewModel
     }
 
     private bool CanClearHistory() =>
-        IsHistoryLoaded && _history.Entries.Count > 1;
+        !IsHistoryBlockedByCrop && IsHistoryLoaded &&
+        _history.Entries.Count > 1;
 
     [RelayCommand(CanExecute = nameof(CanClearHistory))]
     private async Task ClearHistoryAsync()
@@ -134,7 +141,8 @@ public partial class MainWindowViewModel
         var generation = Volatile.Read(ref _historySubjectGeneration);
         if (image == null) return;
         await WaitForPendingHistoryWorkAsync();
-        if (!IsCurrentHistorySubject(image, generation) || !IsHistoryLoaded ||
+        if (IsHistoryBlockedByCrop ||
+            !IsCurrentHistorySubject(image, generation) || !IsHistoryLoaded ||
             _history.Entries.Count == 0)
         {
             return;

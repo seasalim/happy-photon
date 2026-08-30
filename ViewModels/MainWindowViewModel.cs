@@ -372,6 +372,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         OnPropertyChanged(nameof(HistoryEntries));
         ClearHistoryCommand.NotifyCanExecuteChanged();
         ClearHistoryAboveStepCommand.NotifyCanExecuteChanged();
+        JumpToHistoryStepCommand.NotifyCanExecuteChanged();
     }
 
     private async Task AutoSaveAsync(
@@ -415,7 +416,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         EditSettings settings,
         string? historyLabel,
         EditSettings? before,
-        bool recordHistory)
+        bool recordHistory,
+        Func<Task<bool>>? beforeSave = null)
     {
         var settingsSnapshot = settings.Clone();
         var tracksHistory = recordHistory && IsDevelopMode &&
@@ -431,14 +433,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                               _lastSavedState ?? settings).Clone();
         var load = tracksHistory ? _pendingHistoryLoad : null;
         var save = SaveEditSettingsOperationAsync(
-            imageFile,
-            settingsSnapshot,
-            historyLabel,
-            beforeSnapshot,
-            tracksHistory,
-            historyGeneration,
-            predecessor,
-            load);
+            imageFile, settingsSnapshot, historyLabel, beforeSnapshot,
+            tracksHistory, historyGeneration, predecessor, load, beforeSave);
         if (tracksHistory)
         {
             _serializedHistoryCommit = save;
@@ -457,8 +453,10 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         bool tracksHistory,
         long historyGeneration,
         Task? predecessor,
-        Task? load)
+        Task? load,
+        Func<Task<bool>>? beforeSave = null)
     {
+        if (beforeSave != null && !await beforeSave()) return;
         await imageFile.EnsureCatalogIdAsync(_catalogService);
         if (predecessor != null)
             await ObservePendingHistoryWorkAsync(predecessor);

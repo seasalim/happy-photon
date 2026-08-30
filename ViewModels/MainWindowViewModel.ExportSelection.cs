@@ -118,7 +118,7 @@ public partial class MainWindowViewModel
     /// Does nothing in Browse view when no transient workspace mode is active.
     /// </summary>
     [RelayCommand]
-    private void HandleEscape()
+    private async Task HandleEscapeAsync()
     {
         // A held loupe outranks everything: Escape releases the peek without
         // also leaving the view it was peeking in.
@@ -161,7 +161,7 @@ public partial class MainWindowViewModel
         // First priority: cancel crop mode if active
         if (IsCropMode)
         {
-            CancelCrop();
+            await CancelCropAsync();
             return;
         }
 
@@ -378,7 +378,7 @@ public partial class MainWindowViewModel
 
         CancelRestingPreview(clearParent: true);
         ReplacePreviewImage(bitmap, PreviewPaintSource.FreshRender, isProof: true);
-        _lastAppliedEditSettings = settings.Clone();
+        _hasPromotableEditedRender = true;
         return true;
     }
 

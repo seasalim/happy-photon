@@ -101,7 +101,8 @@ public partial class MainWindowViewModel
         target.Shadows = Shadows;
         target.Highlights = Highlights;
         target.Rotation = Rotation;
-        target.HorizonRotation = HorizonRotation;
+        if (!IsCropMode)
+            target.HorizonRotation = HorizonRotation;
         target.AppliedPresetId = ActivePresetId;
     }
 
