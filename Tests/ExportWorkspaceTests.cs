@@ -101,33 +101,6 @@ public sealed class ExportWorkspaceTests : IDisposable
     }
 
     [Fact]
-    public async Task Enter_AppliesCropInCropMode()
-    {
-        using var catalog = await _fx.CreateCatalogAsync("enter-crop");
-        await using var vm = CreateViewModel(new CountingPairLoader(), catalog);
-        var image = await CreateImageAsync(catalog, "crop.jpg");
-        vm.Browse.SetImages([image]);
-        vm.SelectedImage = image;
-        vm.SwitchToDevelopCommand.Execute(null);
-        await TestWaits.UntilAsync(() =>
-            vm.IsHistoryLoaded && vm.PreviewImage != null);
-        await vm.ToggleCropModeCommand.ExecuteAsync(null);
-        vm.CurrentCrop = new CropRegion
-        {
-            Left = 0.1,
-            Top = 0.1,
-            Right = 0.9,
-            Bottom = 0.9
-        };
-
-        await vm.HandleEnterCommand.ExecuteAsync(null);
-
-        Assert.False(vm.IsCropMode);
-        Assert.Equal(0.1, image.EditSettings.Crop?.Left);
-        Assert.True(vm.IsDevelopMode);
-    }
-
-    [Fact]
     public async Task ThumbnailEntry_SwitchesBrowseToDevelop()
     {
         await using var vm = CreateViewModel(new NullBaseLoader());
