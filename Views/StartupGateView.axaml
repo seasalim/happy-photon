@@ -34,9 +34,9 @@
                                TextWrapping="Wrap" TextAlignment="Center"/>
                     <StackPanel Orientation="Horizontal" Spacing="10"
                                 HorizontalAlignment="Center">
-                        <Button Classes="accent" Content="RECOVER POINTER"
+                        <Button Classes="accent" Content="Recover pointer"
                                 Command="{Binding RecoverLocationPointerCommand}"/>
-                        <Button Content="CLOSE" Command="{Binding CloseApplicationCommand}"/>
+                        <Button Content="Close" Command="{Binding CloseApplicationCommand}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -83,14 +83,14 @@
                                 Spacing="10"
                                 HorizontalAlignment="Center">
                         <Button Classes="accent"
-                                Content="RETRY"
+                                Content="Retry"
                                 Command="{Binding RetryStartupCommand}"
                                 AutomationProperties.Name="Retry opening the local catalog"/>
-                        <Button Content="SET ASIDE AND RETRY"
+                        <Button Content="Set aside and retry"
                                 IsVisible="{Binding CanSetAsideCatalog}"
                                 Command="{Binding SetAsideCatalogCommand}"
                                 AutomationProperties.Name="Set catalog and cache aside and retry"/>
-                        <Button Content="CLOSE"
+                        <Button Content="Close"
                                 Command="{Binding CloseApplicationCommand}"
                                 AutomationProperties.Name="Close Happy Photon"/>
                     </StackPanel>

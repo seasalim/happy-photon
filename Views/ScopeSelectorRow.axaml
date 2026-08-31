@@ -9,13 +9,13 @@
         <StyleInclude Source="avares://HappyPhoton/Views/DevelopActionStyles.axaml"/>
         <Style Selector="ToggleButton.scope-icon Path.cfa-fill">
             <Setter Property="Stroke" Value="{x:Null}"/>
-            <Setter Property="Fill" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Fill" Value="{DynamicResource ControlActive}"/>
         </Style>
         <Style Selector="ToggleButton.scope-icon:pointerover Path.cfa-fill">
-            <Setter Property="Fill" Value="{StaticResource Primary}"/>
+            <Setter Property="Fill" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="ToggleButton.scope-icon:checked Path.cfa-fill">
-            <Setter Property="Fill" Value="{StaticResource OnPrimary}"/>
+            <Setter Property="Fill" Value="{DynamicResource OnControlActive}"/>
         </Style>
     </UserControl.Styles>
 

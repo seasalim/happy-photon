@@ -7,7 +7,7 @@
         <Style Selector="TextBlock#LabelText">
             <Setter Property="Grid.Column" Value="0"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
@@ -25,10 +25,10 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         <Style Selector="Border#ThumbDot">
-            <Setter Property="Background" Value="{DynamicResource Primary}"/>
+            <Setter Property="Background" Value="{DynamicResource TextMuted}"/>
         </Style>
         <Style Selector="Border#ThumbDot.pointer-captured">
-            <Setter Property="Background" Value="{DynamicResource PrimaryContainer}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
         </Style>
     </UserControl.Styles>
 
@@ -48,9 +48,9 @@
             <Grid x:Name="TrackGrid" Height="20" VerticalAlignment="Center">
                 <!-- Track background line -->
                 <Border x:Name="TrackLine"
-                        Background="{DynamicResource SurfaceHighest}"
-                        Height="4"
-                        CornerRadius="2"
+                        Background="{DynamicResource OutlineVariant}"
+                        Height="2"
+                        CornerRadius="1"
                         VerticalAlignment="Center"/>
 
                 <Border Background="{Binding TrackBrush, ElementName=SliderRoot}"
@@ -60,9 +60,9 @@
 
                 <!-- Fill bar (shows value position) - uses margin for positioning -->
                 <Border x:Name="FillBar"
-                        Background="{StaticResource PrimaryContainer}"
-                        Height="4"
-                        CornerRadius="2"
+                        Background="{DynamicResource TextMuted}"
+                        Height="2"
+                        CornerRadius="1"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Left"/>
 
@@ -76,8 +76,8 @@
 
                 <!-- Round handle at the value position; visual only -->
                 <Border x:Name="ThumbDot"
-                        Width="12" Height="12"
-                        CornerRadius="6"
+                        Width="8" Height="10"
+                        CornerRadius="4,4,4,1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         IsHitTestVisible="False"/>

@@ -7,8 +7,9 @@
              mc:Ignorable="d"
              x:Class="HappyPhoton.Views.GeometryEditGroup"
              x:DataType="vm:MainWindowViewModel">
+    <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0">
     <StackPanel Spacing="4">
-        <TextBlock Classes="section-label" Text="GEOMETRY" Margin="0,20,0,8"/>
+        <TextBlock Classes="section-label" Text="Geometry" Margin="0,19,0,8"/>
         <views:CompactSlider x:Name="GeometryVerticalSlider"
                              Label="Vertical"
                              Value="{Binding GeometryVertical}"
@@ -30,4 +31,5 @@
                              Minimum="-100" Maximum="100" SmallChange="1"
                              EnableDoubleClickReset="True"/>
     </StackPanel>
+    </Border>
 </UserControl>

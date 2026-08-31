@@ -19,7 +19,7 @@
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.tab:pointerover">
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.tab.active">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
@@ -28,7 +28,7 @@
             <Setter Property="Fill" Value="Transparent"/>
         </Style>
         <Style Selector="Button.tab.active Rectangle.tabUnderline">
-            <Setter Property="Fill" Value="{DynamicResource BrandAccent}"/>
+            <Setter Property="Fill" Value="{DynamicResource ControlActive}"/>
         </Style>
         <Style Selector="Button.caption">
             <Setter Property="Width" Value="46"/>
@@ -55,7 +55,7 @@
         </Style>
         <Style Selector="Button.caption:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.caption.close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
@@ -65,7 +65,7 @@
             <Setter Property="Stroke" Value="{DynamicResource TextSecondary}"/>
         </Style>
         <Style Selector="Button.caption:pointerover Path">
-            <Setter Property="Stroke" Value="{StaticResource Primary}"/>
+            <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.caption.close:pointerover Path">
             <Setter Property="Stroke" Value="{StaticResource OnErrorContainer}"/>
@@ -79,7 +79,7 @@
         <Style Selector="Button.caption.appearance">
             <Setter Property="Width" Value="78"/>
             <Setter Property="Focusable" Value="True"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="10"/>
         </Style>
     </UserControl.Styles>
@@ -99,7 +99,7 @@
                            FontWeight="Bold" FontSize="16"
                            VerticalAlignment="Center">
                     <Run Text="Happy " Foreground="{DynamicResource TextPrimary}"/>
-                    <Run Text="Photon" Foreground="{DynamicResource BrandAccent}"/>
+                    <Run Text="Photon" Foreground="{StaticResource BrandCyan}"/>
                 </TextBlock>
             </StackPanel>
 

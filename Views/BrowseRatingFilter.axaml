@@ -21,7 +21,7 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
         </Style>
         <Style Selector="TextBlock.rating-filled">
-            <Setter Property="Foreground" Value="{StaticResource SecondaryContainer}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
     </UserControl.Styles>
 

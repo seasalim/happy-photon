@@ -7,8 +7,9 @@
              mc:Ignorable="d"
              x:Class="HappyPhoton.Views.DetailEditGroup"
              x:DataType="vm:MainWindowViewModel">
+    <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0">
     <StackPanel Spacing="4">
-        <TextBlock Classes="section-label" Text="DETAIL" Margin="0,20,0,8"/>
+        <TextBlock Classes="section-label" Text="Detail" Margin="0,19,0,8"/>
         <views:CompactSlider x:Name="CaptureSharpenSlider"
                              Label="Sharpen"
                              Value="{Binding CaptureSharpen}"
@@ -26,4 +27,5 @@
                              Minimum="0" Maximum="100" SmallChange="1"
                              EnableDoubleClickReset="True"/>
     </StackPanel>
+    </Border>
 </UserControl>

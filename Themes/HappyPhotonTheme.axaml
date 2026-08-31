@@ -13,17 +13,9 @@
     <Color x:Key="AssessmentWhiteColor">#FFFFFF</Color>
     <SolidColorBrush x:Key="AssessmentWhite" Color="{StaticResource AssessmentWhiteColor}"/>
 
-    <!-- Photon accents and semantic colors are invariant in the dark family. -->
-    <Color x:Key="PrimaryColor">#dbfcff</Color>
-    <Color x:Key="PrimaryContainerColor">#00f0ff</Color>
-    <Color x:Key="PrimaryHoverColor">#7df4ff</Color>
-    <Color x:Key="OnPrimaryColor">#00363a</Color>
-    <Color x:Key="SecondaryColor">#fface8</Color>
-    <Color x:Key="SecondaryContainerColor">#ff24e4</Color>
-    <Color x:Key="SecondaryHoverColor">#ffd7f0</Color>
-    <Color x:Key="OnSecondaryColor">#520049</Color>
-    <Color x:Key="TertiaryColor">#e1d2ff</Color>
-    <Color x:Key="OnTertiaryColor">#23005b</Color>
+    <!-- Hue is reserved for brand and color-semantic data. -->
+    <Color x:Key="BrandCyanColor">#00f0ff</Color>
+    <SolidColorBrush x:Key="BrandCyan" Color="{StaticResource BrandCyanColor}"/>
     <Color x:Key="WhiteBalanceCoolColor">#74f7ff</Color>
     <Color x:Key="WhiteBalanceNeutralColor">#9df7b0</Color>
     <Color x:Key="WhiteBalanceWarmColor">#f4ff69</Color>
@@ -32,6 +24,11 @@
     <Color x:Key="WhiteBalanceTintMagentaColor">#ec3c7e</Color>
     <Color x:Key="ErrorContainerColor">#93000a</Color>
     <Color x:Key="OnErrorContainerColor">#ffdad6</Color>
+    <!-- Reject is a culling mark, not an error state. These invariant brushes
+         stay legible when drawn over either chrome or photograph pixels. -->
+    <Color x:Key="RejectSurfaceColor">#111111</Color>
+    <Color x:Key="RejectGlyphColor">#f0f0f0</Color>
+    <Color x:Key="RejectOutlineColor">#9a9a9a</Color>
     <!-- Proof caption ink is invariant because it is drawn over photograph pixels. -->
     <Color x:Key="ProofCaptionColor">#FFFFFFFF</Color>
     <Color x:Key="ColorLabelRedColor">#e34b4b</Color>
@@ -52,16 +49,6 @@
     <Color x:Key="MixerTrackLightColor">#e7e5ea</Color>
     <Color x:Key="WaveformTraceColor">#cfe6e8</Color>
 
-    <SolidColorBrush x:Key="Primary" Color="{StaticResource PrimaryColor}"/>
-    <SolidColorBrush x:Key="PrimaryContainer" Color="{StaticResource PrimaryContainerColor}"/>
-    <SolidColorBrush x:Key="PrimaryHover" Color="{StaticResource PrimaryHoverColor}"/>
-    <SolidColorBrush x:Key="OnPrimary" Color="{StaticResource OnPrimaryColor}"/>
-    <SolidColorBrush x:Key="Secondary" Color="{StaticResource SecondaryColor}"/>
-    <SolidColorBrush x:Key="SecondaryContainer" Color="{StaticResource SecondaryContainerColor}"/>
-    <SolidColorBrush x:Key="SecondaryHover" Color="{StaticResource SecondaryHoverColor}"/>
-    <SolidColorBrush x:Key="OnSecondary" Color="{StaticResource OnSecondaryColor}"/>
-    <SolidColorBrush x:Key="Tertiary" Color="{StaticResource TertiaryColor}"/>
-    <SolidColorBrush x:Key="OnTertiary" Color="{StaticResource OnTertiaryColor}"/>
     <SolidColorBrush x:Key="WhiteBalanceCool" Color="{StaticResource WhiteBalanceCoolColor}"/>
     <SolidColorBrush x:Key="WhiteBalanceNeutral" Color="{StaticResource WhiteBalanceNeutralColor}"/>
     <SolidColorBrush x:Key="WhiteBalanceWarm" Color="{StaticResource WhiteBalanceWarmColor}"/>
@@ -69,6 +56,9 @@
     <SolidColorBrush x:Key="WhiteBalanceTintMagenta" Color="{StaticResource WhiteBalanceTintMagentaColor}"/>
     <SolidColorBrush x:Key="ErrorContainer" Color="{StaticResource ErrorContainerColor}"/>
     <SolidColorBrush x:Key="OnErrorContainer" Color="{StaticResource OnErrorContainerColor}"/>
+    <SolidColorBrush x:Key="RejectSurface" Color="{StaticResource RejectSurfaceColor}"/>
+    <SolidColorBrush x:Key="RejectGlyph" Color="{StaticResource RejectGlyphColor}"/>
+    <SolidColorBrush x:Key="RejectOutline" Color="{StaticResource RejectOutlineColor}"/>
     <SolidColorBrush x:Key="ProofCaption" Color="{StaticResource ProofCaptionColor}"/>
     <SolidColorBrush x:Key="ColorLabelRed" Color="{StaticResource ColorLabelRedColor}"/>
     <SolidColorBrush x:Key="ColorLabelYellow" Color="{StaticResource ColorLabelYellowColor}"/>
@@ -106,6 +96,7 @@
     <CornerRadius x:Key="RadiusMedium">8</CornerRadius>
     <CornerRadius x:Key="RadiusLarge">16</CornerRadius>
     <CornerRadius x:Key="RadiusCard">24</CornerRadius>
+    <x:Double x:Key="TreeViewItemMinHeight">24</x:Double>
 
     <!-- Compact desktop type scale -->
     <FontFamily x:Key="FontHeading">avares://HappyPhoton/Assets/Fonts#Sora, Segoe UI, sans-serif</FontFamily>
@@ -119,32 +110,19 @@
     <x:Double x:Key="FontSizeBody">11</x:Double>
     <x:Double x:Key="FontSizeSmall">10</x:Double>
 
-    <!-- Workflow tour trail. -->
-    <Color x:Key="TourArrowFadeColor">#0000f0ff</Color>
+    <Color x:Key="TourArrowFadeColor">#00ffffff</Color>
     <LinearGradientBrush x:Key="TourArrowTrail"
                          StartPoint="0%,50%"
                          EndPoint="100%,50%">
         <GradientStop Offset="0" Color="{StaticResource TourArrowFadeColor}"/>
-        <GradientStop Offset="0.55" Color="{StaticResource PrimaryHoverColor}"/>
-        <GradientStop Offset="1" Color="{StaticResource PrimaryContainerColor}"/>
+        <GradientStop Offset="0.55" Color="#b9b9b9"/>
+        <GradientStop Offset="1" Color="#e4e4e4"/>
     </LinearGradientBrush>
 
-    <!-- Fluent controls inherit the electric-cyan photon accent. -->
-    <Color x:Key="SystemAccentColor">#00dbe9</Color>
-    <Color x:Key="SystemAccentColorLight1">#00f0ff</Color>
-    <Color x:Key="SystemAccentColorLight2">#7df4ff</Color>
-    <Color x:Key="SystemAccentColorLight3">#dbfcff</Color>
-    <Color x:Key="SystemAccentColorDark1">#00c3cf</Color>
-    <Color x:Key="SystemAccentColorDark2">#008c95</Color>
-    <Color x:Key="SystemAccentColorDark3">#006970</Color>
     <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
 
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Dark">
-            <!-- Existing Dark palette, preserved verbatim. -->
-            <SolidColorBrush x:Key="BrandAccent" Color="{StaticResource PrimaryContainerColor}"/>
-            <SolidColorBrush x:Key="BrandAccentHover" Color="{StaticResource PrimaryHoverColor}"/>
-            <SolidColorBrush x:Key="OnBrandAccent" Color="{StaticResource OnPrimaryColor}"/>
             <ImageBrush x:Key="BrandMark"
                         Source="/Assets/happy-photon-icon.png"
                         Stretch="Uniform"/>
@@ -166,7 +144,17 @@
             <Color x:Key="ViewerSurroundColor">#131318</Color>
             <Color x:Key="FullScreenBackdropColor">#000000</Color>
             <Color x:Key="SelectionSurfaceColor">#4b4a52</Color>
-            <Color x:Key="RejectMarkColor">#e67c73</Color>
+            <Color x:Key="ControlHoverColor">#353535</Color>
+            <Color x:Key="ControlSelectedColor">#4b4b4b</Color>
+            <Color x:Key="ControlActiveColor">#e4e4e4</Color>
+            <Color x:Key="OnControlActiveColor">#131313</Color>
+            <Color x:Key="SystemAccentColor">#ffffff</Color>
+            <Color x:Key="SystemAccentColorLight1">#ffffff</Color>
+            <Color x:Key="SystemAccentColorLight2">#f0f0f0</Color>
+            <Color x:Key="SystemAccentColorLight3">#e4e4e4</Color>
+            <Color x:Key="SystemAccentColorDark1">#d4d4d4</Color>
+            <Color x:Key="SystemAccentColorDark2">#b9b9b9</Color>
+            <Color x:Key="SystemAccentColorDark3">#9a9a9a</Color>
 
             <SolidColorBrush x:Key="SurfaceLowest" Color="{StaticResource SurfaceLowestColor}"/>
             <SolidColorBrush x:Key="SurfaceBase" Color="{StaticResource SurfaceBaseColor}"/>
@@ -190,10 +178,12 @@
             <SolidColorBrush x:Key="ViewerSurround" Color="{StaticResource ViewerSurroundColor}"/>
             <SolidColorBrush x:Key="FullScreenBackdrop" Color="{StaticResource FullScreenBackdropColor}"/>
             <SolidColorBrush x:Key="SelectionSurface" Color="{StaticResource SelectionSurfaceColor}"/>
-            <!-- Softened accent for the active-image ring so it does not overpower photo content -->
-            <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource PrimaryContainerColor}" Opacity="0.77"/>
-            <SolidColorBrush x:Key="SelectionCheck" Color="{StaticResource PrimaryContainerColor}"/>
-            <SolidColorBrush x:Key="RejectMark" Color="{StaticResource RejectMarkColor}"/>
+            <SolidColorBrush x:Key="ControlHover" Color="{StaticResource ControlHoverColor}"/>
+            <SolidColorBrush x:Key="ControlSelected" Color="{StaticResource ControlSelectedColor}"/>
+            <SolidColorBrush x:Key="ControlActive" Color="{StaticResource ControlActiveColor}"/>
+            <SolidColorBrush x:Key="OnControlActive" Color="{StaticResource OnControlActiveColor}"/>
+            <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource ControlActiveColor}" Opacity="0.77"/>
+            <SolidColorBrush x:Key="SelectionCheck" Color="{StaticResource ControlActiveColor}"/>
             <SolidColorBrush x:Key="ViewerControlBarBackground" Color="Transparent"/>
             <BoxShadows x:Key="CoachmarkShadow">0 12 30 0 #99000000</BoxShadows>
             <x:Double x:Key="TourDimmedOpacity">0.48</x:Double>
@@ -203,26 +193,23 @@
 
             <SolidColorBrush x:Key="ButtonBackground" Color="{StaticResource SurfaceHighColor}"/>
             <SolidColorBrush x:Key="ButtonForeground" Color="{StaticResource TextPrimaryColor}"/>
-            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{StaticResource SurfaceHighestColor}"/>
-            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{StaticResource PrimaryColor}"/>
+            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{StaticResource ControlHoverColor}"/>
+            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{StaticResource TextPrimaryColor}"/>
             <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{StaticResource SurfaceBrightColor}"/>
             <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{StaticResource TextPrimaryColor}"/>
             <SolidColorBrush x:Key="ButtonBorderBrush" Color="{StaticResource OutlineVariantColor}"/>
             <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{StaticResource OutlineColor}"/>
-            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="{StaticResource PrimaryContainerColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="{StaticResource PrimaryContainerColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{StaticResource OnPrimaryColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="{StaticResource PrimaryHoverColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{StaticResource OnPrimaryColor}"/>
+            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="{StaticResource ControlActiveColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="{StaticResource ControlActiveColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{StaticResource OnControlActiveColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="{StaticResource ControlActiveColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{StaticResource OnControlActiveColor}"/>
         </ResourceDictionary>
 
         <ResourceDictionary x:Key="{x:Static views:HappyPhotonThemes.MidGray}">
             <!-- Neutral chrome stays below the L* 50 image surround. -->
-            <SolidColorBrush x:Key="BrandAccent" Color="#d4d4d4"/>
-            <SolidColorBrush x:Key="BrandAccentHover" Color="#f0f0f0"/>
-            <SolidColorBrush x:Key="OnBrandAccent" Color="#303030"/>
             <ImageBrush x:Key="BrandMark"
-                        Source="/Assets/happy-photon-icon-mono.png"
+                        Source="/Assets/happy-photon-icon.png"
                         Stretch="Uniform"/>
             <Color x:Key="SurfaceLowestColor">#303030</Color>
             <Color x:Key="SurfaceBaseColor">#363636</Color>
@@ -245,13 +232,22 @@
             <Color x:Key="ViewerSurroundColor">#777777</Color>
             <Color x:Key="FullScreenBackdropColor">#777777</Color>
             <Color x:Key="SelectionSurfaceColor">#616161</Color>
+            <Color x:Key="ControlHoverColor">#535353</Color>
+            <Color x:Key="ControlSelectedColor">#616161</Color>
+            <Color x:Key="ControlActiveColor">#e4e4e4</Color>
+            <Color x:Key="OnControlActiveColor">#303030</Color>
             <!-- Muted accents for chrome that borders photo pixels: reduced chroma
                  limits simultaneous-contrast shifts against the L* 50 surround. -->
             <!-- Achromatic at the same relative luminance the muted teal carried,
                  so the ring keeps its former visual weight against the surround. -->
             <Color x:Key="ActiveImageRingColor">#bbbbbb</Color>
-            <Color x:Key="SelectionCheckColor">#9adfe4</Color>
-            <Color x:Key="RejectMarkColor">#f2aaa4</Color>
+            <Color x:Key="SystemAccentColor">#ffffff</Color>
+            <Color x:Key="SystemAccentColorLight1">#ffffff</Color>
+            <Color x:Key="SystemAccentColorLight2">#f0f0f0</Color>
+            <Color x:Key="SystemAccentColorLight3">#e4e4e4</Color>
+            <Color x:Key="SystemAccentColorDark1">#d4d4d4</Color>
+            <Color x:Key="SystemAccentColorDark2">#b9b9b9</Color>
+            <Color x:Key="SystemAccentColorDark3">#9a9a9a</Color>
 
             <SolidColorBrush x:Key="SurfaceLowest" Color="{StaticResource SurfaceLowestColor}"/>
             <SolidColorBrush x:Key="SurfaceBase" Color="{StaticResource SurfaceBaseColor}"/>
@@ -275,9 +271,12 @@
             <SolidColorBrush x:Key="ViewerSurround" Color="{StaticResource ViewerSurroundColor}"/>
             <SolidColorBrush x:Key="FullScreenBackdrop" Color="{StaticResource FullScreenBackdropColor}"/>
             <SolidColorBrush x:Key="SelectionSurface" Color="{StaticResource SelectionSurfaceColor}"/>
+            <SolidColorBrush x:Key="ControlHover" Color="{StaticResource ControlHoverColor}"/>
+            <SolidColorBrush x:Key="ControlSelected" Color="{StaticResource ControlSelectedColor}"/>
+            <SolidColorBrush x:Key="ControlActive" Color="{StaticResource ControlActiveColor}"/>
+            <SolidColorBrush x:Key="OnControlActive" Color="{StaticResource OnControlActiveColor}"/>
             <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource ActiveImageRingColor}"/>
-            <SolidColorBrush x:Key="SelectionCheck" Color="{StaticResource SelectionCheckColor}"/>
-            <SolidColorBrush x:Key="RejectMark" Color="{StaticResource RejectMarkColor}"/>
+            <SolidColorBrush x:Key="SelectionCheck" Color="{StaticResource ControlActiveColor}"/>
             <SolidColorBrush x:Key="ViewerControlBarBackground" Color="{StaticResource SurfaceLowColor}"/>
             <BoxShadows x:Key="CoachmarkShadow">0 12 30 0 #b3000000</BoxShadows>
             <x:Double x:Key="TourDimmedOpacity">0.44</x:Double>
@@ -287,17 +286,17 @@
 
             <SolidColorBrush x:Key="ButtonBackground" Color="{StaticResource SurfaceHighColor}"/>
             <SolidColorBrush x:Key="ButtonForeground" Color="{StaticResource TextPrimaryColor}"/>
-            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{StaticResource SurfaceHighestColor}"/>
-            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{StaticResource PrimaryColor}"/>
+            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{StaticResource ControlHoverColor}"/>
+            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{StaticResource TextPrimaryColor}"/>
             <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{StaticResource SurfaceBrightColor}"/>
             <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{StaticResource TextPrimaryColor}"/>
             <SolidColorBrush x:Key="ButtonBorderBrush" Color="{StaticResource OutlineVariantColor}"/>
             <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{StaticResource OutlineColor}"/>
-            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="{StaticResource PrimaryContainerColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="{StaticResource PrimaryContainerColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{StaticResource OnPrimaryColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="{StaticResource PrimaryHoverColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{StaticResource OnPrimaryColor}"/>
+            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="{StaticResource ControlActiveColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="{StaticResource ControlActiveColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{StaticResource OnControlActiveColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="{StaticResource ControlActiveColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{StaticResource OnControlActiveColor}"/>
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>

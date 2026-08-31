@@ -28,7 +28,7 @@
                 Padding="10,6">
             <Grid ColumnDefinitions="Auto,*">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <TextBlock Text="COMPARE" Classes="section-label"/>
+                    <TextBlock Text="Compare" Classes="section-label"/>
                     <TextBlock Text="{Binding ComparePanes.Count, StringFormat='{}{0} PHOTOS'}"
                                Foreground="{DynamicResource TextMuted}"
                                FontFamily="{StaticResource FontLabel}" FontSize="10"/>
@@ -91,21 +91,23 @@
                                                FontSize="11" ToolTip.Tip="{Binding Image.FileName}"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                 Spacing="5" Margin="8,0,0,0">
-                                        <Border Background="{StaticResource PrimaryContainer}"
+                                        <Border Background="{DynamicResource ControlActive}"
                                                 CornerRadius="2" Padding="3,0"
                                                 IsVisible="{Binding Image.IsPicked}">
                                             <TextBlock Text="P" FontSize="9"
-                                                       Foreground="{StaticResource OnPrimary}"/>
+                                                       Foreground="{DynamicResource OnControlActive}"/>
                                         </Border>
-                                        <Border Background="{DynamicResource ErrorContainer}"
+                                        <Border Background="{StaticResource RejectSurface}"
+                                                BorderBrush="{StaticResource RejectOutline}"
+                                                BorderThickness="1"
                                                 CornerRadius="2" Padding="3,0"
                                                 IsVisible="{Binding Image.IsRejected}">
                                             <TextBlock Text="X" FontSize="9"
-                                                       Foreground="{DynamicResource OnErrorContainer}"/>
+                                                       Foreground="{StaticResource RejectGlyph}"/>
                                         </Border>
                                         <TextBlock Text="{Binding Image.RatingStars}"
                                                    FontSize="10"
-                                                   Foreground="{StaticResource SecondaryContainer}"
+                                                   Foreground="{DynamicResource TextPrimary}"
                                                    IsVisible="{Binding Image.HasRating}"/>
                                         <Border Width="11" Height="11" CornerRadius="999"
                                                 IsVisible="{Binding Image.HasColorLabel}"
@@ -124,7 +126,7 @@
             <TextBlock Text="FIT · ZOOM · PAN · LOUPE SYNCED"
                        VerticalAlignment="Center"
                        Foreground="{DynamicResource TextMuted}"
-                       FontFamily="{StaticResource FontLabel}" FontSize="9"/>
+                       FontFamily="{StaticResource FontBody}" FontSize="9"/>
         </Border>
     </Grid>
 </UserControl>

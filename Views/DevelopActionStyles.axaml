@@ -4,8 +4,8 @@
         <Setter Property="Width" Value="24"/>
         <Setter Property="Height" Value="24"/>
         <Setter Property="Padding" Value="5"/>
-        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-        <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ControlActive}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -14,7 +14,7 @@
     <Style Selector="Button.develop-action:pointerover /template/ ContentPresenter#PART_ContentPresenter,
                      ToggleButton.develop-action:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-        <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
     <Style Selector="Button.develop-action:disabled, ToggleButton.develop-action:disabled">
         <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
@@ -25,21 +25,21 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
     </Style>
     <Style Selector="Button.develop-action Path, ToggleButton.develop-action Path">
-        <Setter Property="Stroke" Value="{StaticResource PrimaryContainer}"/>
+        <Setter Property="Stroke" Value="{DynamicResource ControlActive}"/>
     </Style>
     <Style Selector="Button.develop-action:pointerover Path,
                      ToggleButton.develop-action:pointerover Path">
-        <Setter Property="Stroke" Value="{StaticResource Primary}"/>
+        <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
     </Style>
     <Style Selector="ToggleButton.develop-action:checked">
-        <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-        <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
     </Style>
     <Style Selector="ToggleButton.develop-action:checked /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-        <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
     </Style>
     <Style Selector="ToggleButton.develop-action:checked Path">
-        <Setter Property="Stroke" Value="{StaticResource OnPrimary}"/>
+        <Setter Property="Stroke" Value="{DynamicResource OnControlActive}"/>
     </Style>
 </Styles>

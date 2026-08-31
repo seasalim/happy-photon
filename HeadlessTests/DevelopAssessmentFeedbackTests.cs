@@ -15,13 +15,17 @@ namespace HappyPhoton.Tests;
 public sealed class DevelopAssessmentFeedbackTests
 {
     [AvaloniaFact]
-    public async Task DevelopBarContainsActionsOnlyAndHostsSingleCenteredToast()
+    public async Task DevelopBarSplitsActionsAndViewStateAndHostsSingleCenteredToast()
     {
         await WithWindowAsync((window, _) =>
         {
             var pane = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!;
             var controlBar = pane.FindControl<Border>("DevelopControlBar")!;
-            var actions = Assert.IsType<StackPanel>(controlBar.Child);
+            var layout = Assert.IsType<Grid>(controlBar.Child);
+            var actions = pane.FindControl<StackPanel>(
+                "DevelopImageActionsPanel")!;
+            var viewState = pane.FindControl<StackPanel>(
+                "DevelopViewStatePanel")!;
             var previous = pane.FindControl<Button>("PreviousImageButton")!;
             var next = pane.FindControl<Button>("NextImageButton")!;
             var rotateLeft = pane.FindControl<Button>("RotateLeftButton")!;
@@ -32,6 +36,9 @@ public sealed class DevelopAssessmentFeedbackTests
             Assert.Same(next, actions.Children[1]);
             Assert.IsType<Avalonia.Controls.Shapes.Rectangle>(actions.Children[2]);
             Assert.Same(rotateLeft, actions.Children[3]);
+            Assert.Same(actions, layout.Children[0]);
+            Assert.Same(viewState, layout.Children[1]);
+            Assert.True(actions.Bounds.Left < viewState.Bounds.Left);
 
             var overlays = window.GetLogicalDescendants()
                 .OfType<AssessmentFeedbackOverlay>().ToArray();

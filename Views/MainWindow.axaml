@@ -70,7 +70,7 @@
     <Panel>
     <Grid RowDefinitions="40,*,Auto,24">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220" MinWidth="150"/>
+            <ColumnDefinition Width="240" MinWidth="150"/>
             <ColumnDefinition Width="1"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="1"/>
@@ -92,9 +92,10 @@
                         Grid.Row="0" Background="{DynamicResource SurfaceHigh}" Padding="8"
                         BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1">
                     <StackPanel>
-                        <TextBlock Classes="section-label" Text="NAVIGATOR" Margin="0,0,0,6"/>
-                        <Border Background="{DynamicResource SurfaceLow}" CornerRadius="3"
-                                Height="140" HorizontalAlignment="Stretch">
+                        <TextBlock Classes="section-label" Text="Navigator" Margin="0,0,0,6"/>
+                        <Border x:Name="NavigatorPreviewFrame"
+                                Background="{DynamicResource SurfaceLow}" CornerRadius="3"
+                                Height="168" HorizontalAlignment="Stretch">
                             <Grid>
                                 <Image x:Name="NavigatorThumbnailImage"
                                        Source="{Binding SelectedImage.Thumbnail}"
@@ -153,15 +154,15 @@
                                        BrowsingFolderName="{Binding BrowsingFolderName}"
                                        ViewingFolderName="{Binding ViewingFolderName}"/>
 
-                <Grid Grid.Row="2" x:Name="DevelopLeftPane" RowDefinitions="Auto,8,*"
+                <Grid Grid.Row="2" x:Name="DevelopLeftPane" RowDefinitions="*,8,Auto"
                       IsVisible="{Binding IsDevelopMode}">
-                    <views:EditHistoryPanel Grid.Row="0" x:Name="EditHistoryPanel"
-                                            MaxHeight="{Binding #DevelopLeftPane.Bounds.Height, Converter={x:Static views:EditHistoryLayoutConverters.FortyPercent}}"
-                                            IsEnabled="{Binding CanEditSelectedImage}"/>
-                    <views:PresetsPanel Grid.Row="2" x:Name="PresetsPanel"
+                    <views:PresetsPanel Grid.Row="0" x:Name="PresetsPanel"
                                          IsEnabled="{Binding CanEditSelectedImage}"
                                          CanSavePreset="{Binding CanSavePreset}"
                                          ActivePresetId="{Binding ActivePresetId}"/>
+                    <views:EditHistoryPanel Grid.Row="2" x:Name="EditHistoryPanel"
+                                            MaxHeight="{Binding #DevelopLeftPane.Bounds.Height, Converter={x:Static views:EditHistoryLayoutConverters.FortyPercent}}"
+                                            IsEnabled="{Binding CanEditSelectedImage}"/>
                 </Grid>
             </Grid>
             <views:ExportCapturePane x:Name="ExportCapturePane" IsVisible="{Binding IsExportMode}"/>
@@ -293,7 +294,7 @@
                     IsHitTestVisible="False"
                     IsVisible="{Binding IsFullScreenSelectionRestricted}">
                 <TextBlock Text="{Binding FullScreenSelectionBadgeText}"
-                           FontFamily="{StaticResource FontLabel}"
+                           FontFamily="{StaticResource FontBody}"
                            FontSize="{StaticResource FontSizeLabel}"
                            Foreground="{DynamicResource TextMuted}"/>
             </Border>
@@ -323,8 +324,8 @@
                                   StrokeJoin="Round"/>
                         </Canvas>
                     </Viewbox>
-                    <TextBlock Text="EXIT FULLSCREEN · ESC" FontFamily="{StaticResource FontLabel}"
-                               FontSize="9" LetterSpacing="1.2"/>
+                    <TextBlock Text="Exit fullscreen · Esc" FontFamily="{StaticResource FontBody}"
+                               FontSize="9" LetterSpacing="0"/>
                     </StackPanel>
                 </Grid>
             </Button>

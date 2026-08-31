@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using HappyPhoton.Models;
@@ -32,6 +34,7 @@ public sealed class BrowseFooterLayoutTests
         };
         vm.Browse.SetImages(images);
         vm.SelectedImage = images[0];
+        images[0].Flag = ImageFlag.Rejected;
         foreach (var image in images) vm.ToggleImageSelection(image);
         var window = new MainWindow
         {
@@ -45,6 +48,14 @@ public sealed class BrowseFooterLayoutTests
         try
         {
             var browse = Descendant<BrowseGridView>(window, "BrowseGridView");
+            var reject = Descendant<Button>(browse, "RejectImageButton");
+            Assert.Equal(
+                ThemeResourceTests.Brush("RejectSurface", ThemeVariant.Dark).Color,
+                Assert.IsType<SolidColorBrush>(reject.Background).Color);
+            Assert.Equal(
+                ThemeResourceTests.Brush("RejectOutline", ThemeVariant.Dark).Color,
+                Assert.IsType<SolidColorBrush>(reject.BorderBrush).Color);
+            Assert.Equal(new Thickness(1), reject.BorderThickness);
             var message = Descendant<TextBlock>(browse, "OnlineOnlyMessage");
             message.Text = "A deliberately long cloud-only status message that must " +
                 "truncate before the assessment controls instead of rendering beneath them.";
@@ -54,7 +65,7 @@ public sealed class BrowseFooterLayoutTests
                 window.Width = width;
                 Drain();
                 AssertControlsFit(browse, width, expectedChecked: false);
-                AssertMessageStopsBeforeAssessment(browse, width);
+                AssertMessageFitsBetweenControlGroups(browse, width);
 
                 var compareToggle = Descendant<ToggleButton>(
                     browse,
@@ -75,26 +86,24 @@ public sealed class BrowseFooterLayoutTests
         }
     }
 
-    private static void AssertMessageStopsBeforeAssessment(
+    private static void AssertMessageFitsBetweenControlGroups(
         BrowseGridView browse,
         double windowWidth)
     {
         var message = Descendant<TextBlock>(browse, "OnlineOnlyMessage");
-        var assessment = Descendant<ImageAssessmentControl>(
-            browse,
-            "ImageAssessment");
-        var footer = Assert.IsAssignableFrom<Panel>(assessment.Parent);
+        var state = Descendant<StackPanel>(browse, "ThumbnailSizePanel");
+        var footer = Assert.IsAssignableFrom<Panel>(state.Parent);
         var messageOrigin = message.TranslatePoint(default, footer);
-        var assessmentOrigin = assessment.TranslatePoint(default, footer);
+        var stateOrigin = state.TranslatePoint(default, footer);
 
-        Assert.True(messageOrigin.HasValue && assessmentOrigin.HasValue);
+        Assert.True(messageOrigin.HasValue && stateOrigin.HasValue);
         Assert.True(
             message.Bounds.Width == 0 ||
-            messageOrigin.Value.X + message.Bounds.Width <=
-                assessmentOrigin.Value.X,
+            (messageOrigin.Value.X >= 0 &&
+             messageOrigin.Value.X + message.Bounds.Width <= stateOrigin.Value.X),
             $"OnlineOnlyMessage right edge " +
             $"{messageOrigin.Value.X + message.Bounds.Width} overlaps " +
-            $"ImageAssessment left edge {assessmentOrigin.Value.X} at " +
+            $"ThumbnailSizePanel left edge {stateOrigin.Value.X} at " +
             $"window width {windowWidth}.");
     }
 

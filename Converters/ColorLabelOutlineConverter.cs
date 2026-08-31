@@ -17,6 +17,6 @@ public sealed class ColorLabelOutlineConverter : IMultiValueConverter
         values[1] is Enum candidate &&
         active.GetType() == candidate.GetType() &&
         active.Equals(candidate)
-            ? Views.HappyPhotonColors.Primary
+            ? Views.HappyPhotonColors.ControlActive
             : parameter as IBrush ?? Brushes.Transparent;
 }

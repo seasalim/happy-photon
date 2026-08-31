@@ -16,17 +16,17 @@
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
     </Style>
     <Style Selector="Button.filter:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
     <Style Selector="Button.filter.active">
-        <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-        <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
     </Style>
     <Style Selector="Button.filter.active /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-        <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
     <Style Selector="Button.filter-clear">
         <Setter Property="MinWidth" Value="0"/>
@@ -75,18 +75,20 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Opacity" Value="0.86"/>
     </Style>
-    <Style Selector="RadioButton.thumbnail-size:checked">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
-        <Setter Property="Opacity" Value="0.82"/>
-    </Style>
-    <Style Selector="RadioButton.thumbnail-size:checked:pointerover">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+    <Style Selector="RadioButton.thumbnail-size:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlActive}"/>
+        <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Opacity" Value="1"/>
     </Style>
-    <Style Selector="RadioButton.thumbnail-size:focus-visible">
-        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+    <Style Selector="RadioButton.thumbnail-size:checked">
+        <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+    <Style Selector="RadioButton.thumbnail-size:checked:pointerover">
+        <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Opacity" Value="1"/>
     </Style>
     <Style Selector="Button.view-toggle">
@@ -102,17 +104,22 @@
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
     <Style Selector="Button.view-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Opacity" Value="0.86"/>
     </Style>
     <Style Selector="Button.view-toggle.active">
-        <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
-        <Setter Property="Opacity" Value="0.82"/>
+        <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+    <Style Selector="Button.view-toggle.active /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
     <Style Selector="Button.view-toggle.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-        <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Opacity" Value="1"/>
     </Style>
     <Style Selector="Button.view-toggle:disabled">

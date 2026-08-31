@@ -29,7 +29,7 @@
                  background: full opacity, and a soft dark halo that carries the
                  text across bright frames without adding a boxed banner. -->
             <TextBlock Text="{Binding AssessmentFeedback}"
-                       FontFamily="{StaticResource FontLabel}"
+                       FontFamily="{StaticResource FontBody}"
                        FontSize="18"
                        FontWeight="Medium"
                        Foreground="{DynamicResource TextPrimary}">

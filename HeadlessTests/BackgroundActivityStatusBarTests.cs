@@ -4,6 +4,7 @@ using Ellipse = Avalonia.Controls.Shapes.Ellipse;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Avalonia.Styling;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -40,6 +41,11 @@ public sealed class BackgroundActivityStatusBarTests
         Assert.Equal(6, dot.Width);
         Assert.Equal(6, dot.Height);
         Assert.True(dot.Transitions == null || dot.Transitions.Count == 0);
+        Assert.Equal(
+            ThemeResourceTests.Resource<Avalonia.Media.FontFamily>(
+                "FontBody",
+                ThemeVariant.Dark),
+            label.FontFamily);
 
         var started = DateTimeOffset.UtcNow;
         using (var export = vm.BeginExportActivity(4))

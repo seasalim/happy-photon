@@ -19,7 +19,7 @@
     </Window.Styles>
     <Grid RowDefinitions="Auto,*,Auto" Margin="24">
         <StackPanel Spacing="7">
-            <TextBlock Text="IMPORT FROM LIGHTROOM CLASSIC"
+            <TextBlock Text="Import From Lightroom Classic"
                        Classes="section-label"/>
             <TextBlock x:Name="CatalogPathText"
                        Foreground="{DynamicResource TextSecondary}"
@@ -36,7 +36,7 @@
                       VerticalScrollBarVisibility="Auto">
             <StackPanel Spacing="18">
                 <StackPanel x:Name="MappingSection" Spacing="10" IsVisible="False">
-                    <TextBlock Text="SOURCE ROOTS" Classes="section-label"/>
+                    <TextBlock Text="Source Roots" Classes="section-label"/>
                     <TextBlock x:Name="MappingHelpText"
                                Text="Map Lightroom locations that are not available at their original path. Paths are matched without opening photo files."
                                Foreground="{DynamicResource TextSecondary}"
@@ -45,7 +45,7 @@
                 </StackPanel>
 
                 <StackPanel x:Name="PolicySection" Spacing="8" IsVisible="False">
-                    <TextBlock Text="IMPORT POLICY" Classes="section-label"/>
+                    <TextBlock Text="Import Policy" Classes="section-label"/>
                     <ComboBox x:Name="PolicyPicker" SelectedIndex="0">
                         <ComboBoxItem Content="Merge — Lightroom wins"/>
                         <ComboBoxItem Content="Merge — fill empty values only"/>
@@ -56,17 +56,17 @@
                 </StackPanel>
 
                 <StackPanel x:Name="ReportSection" Spacing="10" IsVisible="False">
-                    <TextBlock x:Name="ReportSectionLabel" Text="WHAT WILL CHANGE"
+                    <TextBlock x:Name="ReportSectionLabel" Text="What Will Change"
                                Classes="section-label"/>
                     <TextBlock x:Name="HeadlineText" FontSize="18"
                                FontWeight="SemiBold" TextWrapping="Wrap"/>
                     <TextBlock x:Name="OutcomeText" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondary}"/>
-                    <TextBlock x:Name="ActionableHeading" Text="ACTION NEEDED"
+                    <TextBlock x:Name="ActionableHeading" Text="Action Needed"
                                Classes="section-label" IsVisible="False"/>
                     <TextBlock x:Name="ActionableText" TextWrapping="Wrap"
                                Foreground="{StaticResource OnErrorContainer}"/>
-                    <TextBlock x:Name="InformationHeading" Text="INFORMATION"
+                    <TextBlock x:Name="InformationHeading" Text="Information"
                                Classes="section-label" IsVisible="False"/>
                     <TextBlock x:Name="InformationText" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondary}"/>

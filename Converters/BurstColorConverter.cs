@@ -11,12 +11,12 @@ public class BurstColorConverter : IMultiValueConverter
 {
     private static readonly IBrush[] DarkPalette =
     {
-        Views.HappyPhotonColors.BurstCyan,
-        Views.HappyPhotonColors.BurstMagenta,
-        Views.HappyPhotonColors.BurstPurple,
-        Views.HappyPhotonColors.BurstIce,
-        Views.HappyPhotonColors.BurstPink,
-        Views.HappyPhotonColors.BurstViolet,
+        HappyPhotonColors.BurstCyan,
+        HappyPhotonColors.BurstMagenta,
+        HappyPhotonColors.BurstPurple,
+        HappyPhotonColors.BurstIce,
+        HappyPhotonColors.BurstPink,
+        HappyPhotonColors.BurstViolet,
     };
 
     private static readonly IBrush[] MidGrayPalette =

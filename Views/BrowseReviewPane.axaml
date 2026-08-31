@@ -17,10 +17,10 @@
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Foreground" Value="{DynamicResource Primary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.metadata-link:pointerover">
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryHover}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
     </UserControl.Styles>
 
@@ -36,7 +36,7 @@
                 <Grid RowDefinitions="Auto,Auto">
                     <TextBlock x:Name="BrowseHistogramHeader"
                                Classes="section-label"
-                               Text="HISTOGRAM"
+                               Text="Histogram"
                                Margin="0,0,0,5"/>
                     <views:HistogramView x:Name="BrowseHistogram"
                                          Grid.Row="1"
@@ -70,7 +70,7 @@
                             </ContextMenu>
                         </StackPanel.ContextMenu>
                         <StackPanel Spacing="4">
-                            <TextBlock Classes="section-label" Text="FILE"/>
+                            <TextBlock Classes="section-label" Text="File"/>
                             <TextBlock x:Name="ReviewFileNameText"
                                        Text="{Binding SelectedImage.FileName}"
                                        Foreground="{DynamicResource TextPrimary}"
@@ -119,7 +119,7 @@
                             <StackPanel x:Name="ReviewCameraSection"
                                         Spacing="4"
                                         IsVisible="{Binding SelectedImage.HasCameraMetadata}">
-                                <TextBlock Classes="section-label" Text="CAMERA"/>
+                                <TextBlock Classes="section-label" Text="Camera"/>
                                 <TextBlock x:Name="ReviewCameraText"
                                            Text="{Binding SelectedImage.CameraDisplay}"
                                            Foreground="{DynamicResource TextPrimary}"
@@ -152,7 +152,7 @@
                             <StackPanel x:Name="ReviewLocationSection"
                                         Margin="0,8,0,0" Spacing="4"
                                         IsVisible="{Binding SelectedImage.HasLocationMetadata}">
-                                <TextBlock Classes="section-label" Text="LOCATION"/>
+                                <TextBlock Classes="section-label" Text="Location"/>
                                 <Button x:Name="ReviewMapLink"
                                         Classes="metadata-link"
                                         Content="{Binding SelectedImage.GpsDisplay}"
@@ -176,7 +176,7 @@
                             Padding="10"
                             IsVisible="{Binding HasBrowseSelectionSummary}">
                         <StackPanel Spacing="5">
-                            <TextBlock Classes="section-label" Text="SELECTION"/>
+                            <TextBlock Classes="section-label" Text="Selection"/>
                             <TextBlock Text="{Binding BrowseSelectionCountDisplay}"
                                        Foreground="{DynamicResource TextPrimary}"
                                        FontSize="{DynamicResource FontSizeBody}"/>

@@ -60,7 +60,7 @@ public partial class CompactSlider : UserControl
         AvaloniaProperty.Register<CompactSlider, IBrush?>(nameof(TrackBrush));
 
     public static readonly StyledProperty<bool> ShowValueFillProperty =
-        AvaloniaProperty.Register<CompactSlider, bool>(nameof(ShowValueFill), true);
+        AvaloniaProperty.Register<CompactSlider, bool>(nameof(ShowValueFill), false);
 
     public string Label
     {
@@ -262,7 +262,7 @@ public partial class CompactSlider : UserControl
             // Thumb center sits at the value position (NOT at fill-width: for a
             // negative bipolar value the fill's left edge is the value side).
             var thumbWidth = double.IsNaN(_thumbDot.Width)
-                ? 12
+                ? 8
                 : _thumbDot.Width;
             var thumbLeft = Math.Clamp(
                 valueX - thumbWidth / 2,

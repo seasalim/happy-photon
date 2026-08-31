@@ -84,6 +84,17 @@ public sealed class ExportVisualStyleTests : IDisposable
             var recipeToggle = pane.GetVisualDescendants().OfType<CheckBox>().First();
             Assert.Equal(28, recipeToggle.Height);
             Assert.Equal(11, recipeToggle.FontSize);
+            Assert.Equal(new CornerRadius(3), recipeToggle.CornerRadius);
+            var checkBox = Assert.Single(
+                recipeToggle.GetVisualDescendants().OfType<Border>(),
+                border => border.Name == "NormalRectangle");
+            var checkGlyph = Assert.Single(
+                recipeToggle.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>(),
+                path => path.Name == "CheckGlyph");
+            Assert.Equal(0.8, checkBox.RenderTransform!.Value.M11, precision: 3);
+            Assert.Equal(0.8, checkBox.RenderTransform.Value.M22, precision: 3);
+            AssertBrush("ControlActive", checkBox.Background);
+            AssertBrush("OnControlActive", checkGlyph.Fill);
             var browse = pane.GetVisualDescendants().OfType<Button>()
                 .Single(button => Equals(button.Content, "Browse…"));
             Assert.Equal(28, browse.Height);

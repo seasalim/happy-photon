@@ -66,7 +66,7 @@ public sealed class BatchExportFormatTests : IDisposable
             actionStack.Children.IndexOf(countLine) <
             actionStack.Children.IndexOf(exportButton));
         Assert.Equal(10, actionStack.Spacing);
-        Assert.Equal("EXPORT", exportButton.Content);
+        Assert.Equal("Export", exportButton.Content);
         Assert.Equal(30, exportButton.Height);
         Assert.Equal(HorizontalAlignment.Stretch, exportButton.HorizontalAlignment);
         Assert.Equal(
@@ -80,13 +80,13 @@ public sealed class BatchExportFormatTests : IDisposable
         Assert.Equal(11, exportButton.FontSize);
         Assert.Equal(2, exportButton.LetterSpacing);
         Assert.Equal(
-            ThemeResourceTests.Resource<FontFamily>("FontLabel", ThemeVariant.Dark),
+            ThemeResourceTests.Resource<FontFamily>("FontBody", ThemeVariant.Dark),
             exportButton.FontFamily);
         Assert.Equal(
-            ThemeResourceTests.Brush("PrimaryContainer", ThemeVariant.Dark).Color,
+            ThemeResourceTests.Brush("ControlActive", ThemeVariant.Dark).Color,
             Assert.IsType<SolidColorBrush>(exportButton.Background).Color);
         Assert.Equal(
-            ThemeResourceTests.Brush("OnPrimary", ThemeVariant.Dark).Color,
+            ThemeResourceTests.Brush("OnControlActive", ThemeVariant.Dark).Color,
             Assert.IsType<SolidColorBrush>(exportButton.Foreground).Color);
 
         window.Close();

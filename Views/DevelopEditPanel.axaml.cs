@@ -11,7 +11,7 @@ public partial class DevelopEditPanel : UserControl
 {
     public static FuncValueConverter<HlReconstructionMode, string>
         HighlightHandlingLabelConverter { get; } =
-        new(value => value.ToString().ToUpperInvariant());
+        new(value => value.ToString());
 
     public DevelopEditPanel()
     {

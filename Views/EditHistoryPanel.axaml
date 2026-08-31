@@ -21,24 +21,24 @@
             <Setter Property="FontSize" Value="11"/>
         </Style>
         <Style Selector="Button.history-row:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
         </Style>
         <Style Selector="Button.history-row.current">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.history-row.current /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.history-row.current:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceBright}"/>
         </Style>
     </UserControl.Styles>
     <Grid RowDefinitions="Auto,*">
         <Border Grid.Row="0" Background="{DynamicResource SurfaceLow}" Padding="10,4,10,4">
             <Grid x:Name="HistoryHeader" ColumnDefinitions="*,Auto" MinHeight="24">
-                <TextBlock x:Name="HistoryLabel" Classes="section-label" Text="HISTORY"
+                <TextBlock x:Name="HistoryLabel" Classes="section-label" Text="History"
                            VerticalAlignment="Center"/>
                 <Button Grid.Column="1" x:Name="ClearHistoryButton" Content="Clear" Classes="quiet-button"
                         Height="22" MinHeight="22" MaxHeight="22" VerticalAlignment="Center"

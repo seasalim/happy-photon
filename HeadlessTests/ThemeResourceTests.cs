@@ -50,39 +50,73 @@ public sealed class ThemeResourceTests
         AssertContrast(4.5, "TextSecondary", "SurfaceLow", variant);
         AssertContrast(4.5, "TextMuted", "SurfaceLowest", variant);
         AssertContrast(4.5, "TextPrimary", "SelectionSurface", variant);
-        AssertContrast(3, "PrimaryContainer", "SurfaceBright", variant);
+        AssertContrast(3, "ControlActive", "SurfaceHigh", variant);
         AssertContrast(3, "ActiveImageRing", "SelectionSurface", variant);
         AssertContrast(3, "SelectionCheck", "SelectionSurface", variant);
     }
 
     [AvaloniaFact]
-    public void RejectMark_MeetsContrastTargetOnControlBarBackground()
+    public void RejectTreatment_IsInvariantNearBlackAndReadable()
     {
-        AssertContrast(3, "RejectMark", "ViewerSurround", ThemeVariant.Dark);
-        AssertContrast(3, "RejectMark", "SurfaceLow", HappyPhotonThemes.MidGray);
+        var darkSurface = Brush("RejectSurface", ThemeVariant.Dark);
+        var midSurface = Brush("RejectSurface", HappyPhotonThemes.MidGray);
+        var glyph = Brush("RejectGlyph", ThemeVariant.Dark);
+        var outline = Brush("RejectOutline", ThemeVariant.Dark);
+
+        Assert.Equal(Color.Parse("#111111"), darkSurface.Color);
+        Assert.Same(darkSurface, midSurface);
+        AssertContrast(4.5, "RejectGlyph", "RejectSurface", ThemeVariant.Dark);
+        AssertContrast(3, "RejectOutline", "RejectSurface", ThemeVariant.Dark);
+        Assert.NotEqual(Brush("ErrorContainer", ThemeVariant.Dark).Color,
+            darkSurface.Color);
+        AssertAchromatic("RejectSurface", darkSurface.Color);
+        AssertAchromatic("RejectGlyph", glyph.Color);
+        AssertAchromatic("RejectOutline", outline.Color);
     }
 
     [AvaloniaTheory]
     [MemberData(nameof(Variants))]
-    public void Theme_BrandAccentPairsMeetContrastTargets(ThemeVariant variant)
+    public void Theme_ControlStatesAreDistinctAndReadable(ThemeVariant variant)
     {
-        AssertContrast(4.5, "OnBrandAccent", "BrandAccent", variant);
-        AssertContrast(4.5, "OnBrandAccent", "BrandAccentHover", variant);
-        AssertContrast(3, "BrandAccent", "SurfaceLowest", variant);
+        AssertContrast(1.1, "ControlHover", "SurfaceHigh", variant);
+        AssertContrast(1.35, "ControlSelected", "SurfaceHigh", variant);
+        AssertContrast(1.15, "ControlSelected", "ControlHover", variant);
+        AssertContrast(3, "ControlActive", "SurfaceHigh", variant);
+        AssertContrast(4.5, "OnControlActive", "ControlActive", variant);
+        var focusContrast = Contrast(
+            Resource<Color>("SystemAccentColor", variant),
+            Brush("SurfaceHigh", variant).Color);
+        Assert.True(focusContrast >= 3,
+            $"SystemAccentColor focus proxy resolved to {focusContrast:F2}:1.");
+
+        Assert.NotEqual(Brush("SurfaceHigh", variant).Color,
+            Brush("ControlHover", variant).Color);
+        Assert.NotEqual(Brush("ControlHover", variant).Color,
+            Brush("ControlSelected", variant).Color);
     }
 
-    [AvaloniaFact]
-    public void Dark_BrandAccentTokensPreserveExistingPalette()
+    [AvaloniaTheory]
+    [MemberData(nameof(Variants))]
+    public void Theme_ControlAndFluentAccentTokensAreAchromatic(ThemeVariant variant)
     {
-        Assert.Equal(
-            Resource<Color>("PrimaryContainerColor", ThemeVariant.Dark),
-            Brush("BrandAccent", ThemeVariant.Dark).Color);
-        Assert.Equal(
-            Resource<Color>("PrimaryHoverColor", ThemeVariant.Dark),
-            Brush("BrandAccentHover", ThemeVariant.Dark).Color);
-        Assert.Equal(
-            Resource<Color>("OnPrimaryColor", ThemeVariant.Dark),
-            Brush("OnBrandAccent", ThemeVariant.Dark).Color);
+        foreach (var key in new[]
+        {
+            "ControlHover", "ControlSelected", "ControlActive", "OnControlActive"
+        })
+        {
+            AssertAchromatic(key, Brush(key, variant).Color);
+        }
+
+        foreach (var key in new[]
+        {
+            "SystemAccentColor", "SystemAccentColorLight1",
+            "SystemAccentColorLight2", "SystemAccentColorLight3",
+            "SystemAccentColorDark1", "SystemAccentColorDark2",
+            "SystemAccentColorDark3"
+        })
+        {
+            AssertAchromatic(key, Resource<Color>(key, variant));
+        }
     }
 
     [AvaloniaFact]
@@ -95,7 +129,8 @@ public sealed class ThemeResourceTests
             "Outline", "OutlineVariant", "TextPrimary", "TextSecondary",
             "TextMuted", "TextDisabled", "RawFileBackground",
             "ViewerSurround", "FullScreenBackdrop", "SelectionSurface",
-            "BrandAccent", "BrandAccentHover", "OnBrandAccent",
+            "ControlHover", "ControlSelected", "ControlActive",
+            "OnControlActive",
             "ActiveImageRing"
         })
         {
@@ -111,11 +146,11 @@ public sealed class ThemeResourceTests
     // character. Checking the rendered pixels rather than a file path also keeps
     // the test honest if the mark is ever redrawn or renamed.
     [AvaloniaFact]
-    public void BrandMark_ResolvesToAChromaticMarkOnlyUnderDark()
+    public void BrandMark_StaysChromaticInBothThemes()
     {
-        Assert.False(
+        Assert.True(
             HasChroma(HappyPhotonThemes.MidGray),
-            "The Middle Gray brand mark carries a color cast.");
+            "The Middle Gray brand mark lost its cyan.");
         Assert.True(
             HasChroma(ThemeVariant.Dark),
             "The Dark brand mark lost its cyan.");
@@ -184,6 +219,14 @@ public sealed class ThemeResourceTests
         Assert.NotNull(Resource<object>("CoachmarkShadow", variant));
     }
 
+    [AvaloniaTheory]
+    [MemberData(nameof(Variants))]
+    public void CodeDrawnControlTwinsMatchTheme(ThemeVariant variant)
+    {
+        Assert.Equal(Brush("ControlActive", variant).Color,
+            Assert.IsType<SolidColorBrush>(HappyPhotonColors.ControlActive).Color);
+    }
+
     [AvaloniaFact]
     public void BurstPalette_KeepsChipInkReadableOnEveryHue()
     {
@@ -233,6 +276,10 @@ public sealed class ThemeResourceTests
             actual >= minimum,
             $"{foreground} on {background} resolved to {actual:F2}:1.");
     }
+
+    private static void AssertAchromatic(string key, Color color) =>
+        Assert.True(color.R == color.G && color.G == color.B,
+            $"{key} resolved to {color}, which carries a color cast.");
 
     internal static SolidColorBrush Brush(string key, ThemeVariant variant) =>
         Assert.IsType<SolidColorBrush>(Resource<object>(key, variant));

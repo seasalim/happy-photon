@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:HappyPhoton.ViewModels"
              xmlns:views="using:HappyPhoton.Views"
@@ -7,7 +7,7 @@
     <Border Background="{DynamicResource SurfaceMid}">
         <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="15,0,15,15" Spacing="4">
-                <TextBlock Text="RECIPES" Classes="section-label" Margin="0,20,0,8"/>
+                <TextBlock Text="Recipes" Classes="section-label" Margin="0,20,0,8"/>
                 <CheckBox Classes="edit-toggle" Content="Hi-Res · Original dimensions"
                           IsChecked="{Binding ExportSettings.ExportHiRes, Mode=TwoWay}"/>
                 <Grid ColumnDefinitions="70,*,Auto" Height="28">
@@ -27,14 +27,14 @@
                     <TextBlock Grid.Column="2" Text="px" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
                 </Grid>
 
-                <TextBlock Text="DESTINATION" Classes="section-label" Margin="0,20,0,8"/>
+                <TextBlock Text="Destination" Classes="section-label" Margin="0,20,0,8"/>
                 <TextBox x:Name="ExportFolderField" Classes="edit-field"
                          Text="{Binding ExportSettings.OutputFolder, Mode=TwoWay}"
                          ToolTip.Tip="{Binding ExportSettings.OutputFolder}" AutomationProperties.Name="Export folder"/>
                 <Button Classes="quiet-button" Content="Browse…" HorizontalAlignment="Left" Margin="0,4,0,0"
                         Click="OnBrowseClick" AutomationProperties.Name="Browse export folder"/>
 
-                <TextBlock Text="FORMAT" Classes="section-label" Margin="0,20,0,8"/>
+                <TextBlock Text="Format" Classes="section-label" Margin="0,20,0,8"/>
                 <ComboBox x:Name="ExportFormatBox" Classes="edit-dropdown" SelectedIndex="{Binding ExportSettings.Format, Mode=TwoWay}">
                     <ComboBoxItem Content="JPEG"/>
                     <ComboBoxItem Content="PNG"/>
@@ -46,7 +46,7 @@
                                      IsEnabled="{Binding IsExportQualityAvailable}"
                                      Value="{Binding ExportSettings.Quality, Mode=TwoWay}" Margin="0,4,0,0"/>
 
-                <TextBlock Text="COLOR SPACE" Classes="section-label" Margin="0,20,0,8"/>
+                <TextBlock Text="Color Space" Classes="section-label" Margin="0,20,0,8"/>
                 <ListBox x:Name="ExportColorSpaceBox" Classes="segmented" SelectedIndex="{Binding ExportSettings.OutputColorSpace, Mode=TwoWay}"
                          SelectionMode="Single,AlwaysSelected">
                     <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
@@ -54,7 +54,7 @@
                     <ListBoxItem Content="Display P3"/>
                 </ListBox>
 
-                <TextBlock Text="OUTPUT SHARPENING" Classes="section-label" Margin="0,20,0,8"/>
+                <TextBlock Text="Output Sharpening" Classes="section-label" Margin="0,20,0,8"/>
                 <ListBox x:Name="ExportSharpeningBox" Classes="segmented" SelectedIndex="{Binding ExportSettings.OutputSharpening, Mode=TwoWay}"
                          SelectionMode="Single,AlwaysSelected">
                     <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
@@ -63,7 +63,7 @@
                     <ListBoxItem Content="Print"/>
                 </ListBox>
 
-                <TextBlock Text="NAMING PATTERN" Classes="section-label" Margin="0,20,0,8"/>
+                <TextBlock Text="Naming Pattern" Classes="section-label" Margin="0,20,0,8"/>
                 <TextBox x:Name="ExportNamingPatternField" Classes="edit-field"
                          Text="{Binding ExportSettings.NamingPattern, Mode=TwoWay}"
                          PlaceholderText="{}{name}, {date}" AutomationProperties.Name="Export naming pattern"/>
@@ -74,14 +74,14 @@
                     <TextBlock x:Name="ExportCountLineText" Text="{Binding ExportCountLine}" FontSize="11"
                                Foreground="{DynamicResource TextSecondary}"
                                TextWrapping="Wrap" VerticalAlignment="Center"/>
-                    <Button x:Name="RunExportButton" Content="EXPORT" Height="30"
+                    <Button x:Name="RunExportButton" Content="Export" Height="30"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             VerticalContentAlignment="Center"
-                            Background="{DynamicResource PrimaryContainer}"
-                            Foreground="{DynamicResource OnPrimary}"
+                            Background="{DynamicResource ControlActive}"
+                            Foreground="{DynamicResource OnControlActive}"
                             BorderThickness="0" CornerRadius="{StaticResource RadiusMedium}"
-                            FontFamily="{StaticResource FontLabel}" FontSize="{StaticResource FontSizeBody}"
+                            FontFamily="{StaticResource FontBody}" FontSize="{StaticResource FontSizeBody}"
                             FontWeight="Bold" LetterSpacing="2"
                             Command="{Binding RunExportCommand}"
                             AutomationProperties.Name="Run export"/>

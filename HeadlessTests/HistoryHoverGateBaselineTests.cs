@@ -97,6 +97,8 @@ public sealed class HistoryHoverGateBaselineTests : IDisposable
             foreach (var row in rows)
             {
                 settled = Assert.IsType<EditHistoryEntry>(row.DataContext);
+                row.BringIntoView();
+                Dispatcher.UIThread.RunJobs();
                 var center = row.TranslatePoint(
                     new Point(row.Bounds.Width / 2, row.Bounds.Height / 2), window)!.Value;
                 window.MouseMove(center, RawInputModifiers.None);

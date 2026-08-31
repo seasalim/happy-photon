@@ -32,7 +32,7 @@ public partial class CurveView : UserControl
     private const double SelectRadius = 10;    // Increase for easier grabbing
 
     // Cached brushes and cursors to avoid GC pressure
-    private static readonly IBrush ActiveFillBrush = HappyPhotonColors.PrimaryContainer;
+    private static readonly IBrush ActiveFillBrush = HappyPhotonColors.ControlActive;
     private static readonly IBrush NormalFillBrush = HappyPhotonColors.CurveControlPoint;
     private static readonly IBrush ActiveStrokeBrush = HappyPhotonColors.CurveControlPoint;
     private static readonly IBrush NormalStrokeBrush = HappyPhotonColors.CurveNormalStroke;

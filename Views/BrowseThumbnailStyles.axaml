@@ -14,7 +14,7 @@
         </Setter>
     </Style>
     <Style Selector="Border.thumbnail:pointerover">
-        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
     </Style>
     <Style Selector="Border.thumbnail.selected">
         <Setter Property="Background" Value="{DynamicResource SelectionSurface}"/>

@@ -12,11 +12,11 @@ public partial class MainWindowViewModel
 
     public IReadOnlyList<ScopeOption> ScopeOptions { get; } =
     [
-        new(ScopeView.Histogram, "HISTOGRAM"),
-        new(ScopeView.Waveform, "WAVEFORM"),
+        new(ScopeView.Histogram, "Histogram"),
+        new(ScopeView.Waveform, "Waveform"),
         new(
             ScopeView.RawHistogram,
-            "RAW HISTOGRAM",
+            "RAW Histogram",
             isEnabled: false,
             hint: "Select a RAW photograph.")
     ];

@@ -183,7 +183,7 @@ public sealed class DetailAndClippingControlTests : IDisposable
         var viewportLayer = viewer.FindControl<Panel>("ViewportOverlayLayer")!;
         var imagePanel = viewer.FindControl<Panel>("ImagePanel")!;
         Assert.True(status.IsVisible);
-        Assert.Equal("CLIPPING · HIGHLIGHTS / FLOOR", status.Text);
+        Assert.Equal("Clipping · highlights / floor", status.Text);
         Assert.Contains(
             ShortcutCatalog.Groups.SelectMany(group => group.Entries),
             entry => entry.Keys == "J" &&

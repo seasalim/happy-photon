@@ -10,8 +10,8 @@ public partial class EffectsEditGroup : UserControl
         GrainSizeLabelConverter { get; } =
         new(value => value switch
         {
-            GrainSize.Medium => "MED",
-            _ => value.ToString().ToUpperInvariant()
+            GrainSize.Medium => "Med",
+            _ => value.ToString()
         });
 
     public EffectsEditGroup()

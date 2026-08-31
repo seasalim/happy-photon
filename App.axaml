@@ -15,7 +15,7 @@
             <SolidColorBrush x:Key="ExpanderHeaderBorderPressedBrush" Color="Transparent"/>
             <SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="Transparent"/>
             <SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{DynamicResource SurfaceMidColor}"/>
-            <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{DynamicResource SurfaceHighestColor}"/>
+            <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{DynamicResource ControlHoverColor}"/>
             <SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="{DynamicResource SurfaceHighestColor}"/>
             <Thickness x:Key="ExpanderHeaderBorderThickness">0</Thickness>
             <Thickness x:Key="ExpanderContentDownBorderThickness">0</Thickness>
@@ -38,17 +38,17 @@
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
         </Style>
         <Style Selector="TextBlock.section-label">
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
-            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="LetterSpacing" Value="0"/>
         </Style>
         <Style Selector="Button">
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
         </Style>
         <Style Selector="ToggleButton">
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
         </Style>
         <Style Selector="Expander">
             <Setter Property="Background" Value="Transparent"/>
@@ -65,7 +65,7 @@
             <Setter Property="MinHeight" Value="0"/>
         </Style>
         <Style Selector="Expander /template/ ToggleButton#PART_toggle:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
         </Style>
         <Style Selector="Expander /template/ Border#ExpanderContent">
             <Setter Property="BorderThickness" Value="0"/>
@@ -82,7 +82,7 @@
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
         </Style>
@@ -117,20 +117,53 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="9"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="LetterSpacing" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
+        <Style Selector="Border.raw-chip">
+            <Setter Property="Padding" Value="5,1"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariant}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="99"/>
+        </Style>
+        <Style Selector="Border.raw-chip TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        </Style>
         <Style Selector="ListBox.segmented ListBoxItem:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         </Style>
         <Style Selector="ListBox.segmented ListBoxItem:selected,
                          ListBox.segmented ListBoxItem:selected:pointerover">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="CornerRadius" Value="3"/>
+        </Style>
+        <Style Selector="CheckBox /template/ Border#NormalRectangle,
+                         CheckBox /template/ Viewbox">
+            <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+            <Setter Property="RenderTransform" Value="scale(0.8)"/>
+        </Style>
+        <Style Selector="CheckBox:checked /template/ Border#NormalRectangle,
+                         CheckBox:checked:pointerover /template/ Border#NormalRectangle,
+                         CheckBox:checked:pressed /template/ Border#NormalRectangle">
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlActive}"/>
+        </Style>
+        <Style Selector="CheckBox:checked /template/ Path#CheckGlyph,
+                         CheckBox:checked:pointerover /template/ Path#CheckGlyph,
+                         CheckBox:checked:pressed /template/ Path#CheckGlyph">
+            <Setter Property="Fill" Value="{DynamicResource OnControlActive}"/>
         </Style>
         <Style Selector="CheckBox.edit-toggle">
             <Setter Property="MinHeight" Value="28"/>
@@ -149,19 +182,19 @@
             <Setter Property="Padding" Value="10,2"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
             <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
         </Style>
-        <!-- Happy Photon accent rule: brand accent = actions/active state, magenta = highlights. -->
+        <!-- Active controls use value contrast; hue is reserved for semantic data. -->
         <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource BrandAccent}"/>
-            <Setter Property="Foreground" Value="{DynamicResource OnBrandAccent}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
         </Style>
         <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource BrandAccentHover}"/>
-            <Setter Property="Foreground" Value="{DynamicResource OnBrandAccent}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
         </Style>
         <Style Selector="Button.destructive /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>

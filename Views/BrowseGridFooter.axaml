@@ -8,23 +8,15 @@
              x:Class="HappyPhoton.Views.BrowseGridFooter"
              x:DataType="vm:MainWindowViewModel">
 
-<Border
+<Border x:Name="BrowseFooterSurface"
         Background="{DynamicResource SurfaceLow}"
         BorderBrush="{DynamicResource Divider}"
         BorderThickness="0,1,0,0"
-        Padding="14,8">
-    <!-- The left reserve yields at narrow widths so the Loupe, Compare, and
-         thumbnail controls stay inside the Browse pane. The status message
-         truncates before the centered assessment controls. -->
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" MinWidth="142" MaxWidth="220"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
-        <Panel Grid.Column="0"/>
+        Padding="10,2">
+    <!-- Culling actions anchor left; view and thumbnail state anchor right. -->
+    <Grid ColumnDefinitions="*,Auto">
         <StackPanel x:Name="ThumbnailSizePanel"
-                    Grid.Column="2"
+                    Grid.Column="1"
                     Classes="tour-region"
                     Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                     HorizontalAlignment="Right"
@@ -53,7 +45,7 @@
                               ToolTip.ShowOnDisabled="True"
                               AutomationProperties.Name="{Binding CompareViewToolTip}">
                     <TextBlock Text="X|Y"
-                               FontFamily="{StaticResource FontLabel}"
+                               FontFamily="{StaticResource FontBody}"
                                FontSize="10"
                                FontWeight="Bold"
                                LetterSpacing="0.5"
@@ -79,7 +71,7 @@
                         ToolTip.Tip="Pair RAW+JPEG"
                         AutomationProperties.Name="Pair RAW+JPEG">
                     <TextBlock Text="J+R"
-                               FontFamily="{StaticResource FontLabel}"
+                               FontFamily="{StaticResource FontBody}"
                                FontSize="10"
                                FontWeight="Bold"
                                LetterSpacing="0.5"
@@ -127,31 +119,31 @@
                               Data="M1 2h14v5H1z M1 9h14v5H1z"/>
                 </RadioButton>
         </StackPanel>
-        <views:ImageAssessmentControl x:Name="ImageAssessment"
-                                      Grid.Column="1"
-                                      Classes="tour-region tour-glow"
-                                      Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                                      Classes.tour-focus="{Binding IsChooseWhatMattersTourVisible}"
-                                      IsEnabled="{Binding HasSelectedImage}"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"/>
-        <!-- Bounded so a long cloud-only message cannot run under the
-             centered assessment controls. -->
-        <TextBlock x:Name="OnlineOnlyMessage"
-                   Grid.Column="0"
-                   Classes="tour-region"
-                   Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                   Text="{Binding OnlineOnlyMessage}"
-                   IsVisible="{Binding HasOnlineOnlyPhotos}"
-                   Foreground="{DynamicResource TextSecondary}"
-                   FontFamily="{StaticResource FontLabel}"
-                   FontSize="10"
-                   HorizontalAlignment="Left"
-                   VerticalAlignment="Center"
-                   MaxWidth="220"
-                   Margin="0,0,8,0"
-                   TextTrimming="CharacterEllipsis"
-                   ToolTip.Tip="{Binding OnlineOnlyMessage}"/>
+        <Grid Grid.Column="0" ColumnDefinitions="Auto,*">
+            <views:ImageAssessmentControl x:Name="ImageAssessment"
+                                          Classes="tour-region tour-glow"
+                                          Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                                          Classes.tour-focus="{Binding IsChooseWhatMattersTourVisible}"
+                                          IsEnabled="{Binding HasSelectedImage}"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Center"/>
+            <!-- Bounded so a long cloud-only message yields to both control groups. -->
+            <TextBlock x:Name="OnlineOnlyMessage"
+                       Grid.Column="1"
+                       Classes="tour-region"
+                       Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
+                       Text="{Binding OnlineOnlyMessage}"
+                       IsVisible="{Binding HasOnlineOnlyPhotos}"
+                       Foreground="{DynamicResource TextSecondary}"
+                       FontFamily="{StaticResource FontBody}"
+                       FontSize="10"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Center"
+                       MaxWidth="180"
+                       Margin="12,0,8,0"
+                       TextTrimming="CharacterEllipsis"
+                       ToolTip.Tip="{Binding OnlineOnlyMessage}"/>
+        </Grid>
     </Grid>
 </Border>
 

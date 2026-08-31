@@ -16,34 +16,38 @@
     <UserControl.Styles>
         <Style Selector="Button.assessment">
             <Setter Property="Height" Value="26"/>
-            <Setter Property="Padding" Value="7,2"/>
+            <Setter Property="Padding" Value="5,2"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.assessment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.flag.active">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
         </Style>
         <Style Selector="Button.flag.active /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
         </Style>
         <Style Selector="Button.reject.active">
-            <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnErrorContainer}"/>
+            <Setter Property="Background" Value="{StaticResource RejectSurface}"/>
+            <Setter Property="Foreground" Value="{StaticResource RejectGlyph}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource RejectOutline}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="Button.reject.active /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnErrorContainer}"/>
+            <Setter Property="Background" Value="{StaticResource RejectSurface}"/>
+            <Setter Property="Foreground" Value="{StaticResource RejectGlyph}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource RejectOutline}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="Button.flag Path">
             <Setter Property="Stroke" Value="{DynamicResource TextSecondary}"/>
@@ -52,10 +56,10 @@
             <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.flag.active Path">
-            <Setter Property="Stroke" Value="{StaticResource OnPrimary}"/>
+            <Setter Property="Stroke" Value="{DynamicResource OnControlActive}"/>
         </Style>
         <Style Selector="Button.reject.active Path">
-            <Setter Property="Stroke" Value="{StaticResource OnErrorContainer}"/>
+            <Setter Property="Stroke" Value="{StaticResource RejectGlyph}"/>
         </Style>
         <Style Selector="Button.star">
             <Setter Property="Width" Value="24"/>
@@ -92,7 +96,6 @@
                                   StrokeThickness="1.4"
                                   StrokeLineCap="Round"
                                   StrokeJoin="Round"/>
-                            <TextBlock Text="Pick" VerticalAlignment="Center"/>
                             <TextBlock Text="P" Classes="shortcut" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
@@ -107,7 +110,6 @@
                                   Data="M 7,1 A 6,6 0 1 1 6.99,1 M 3,3 L 11,11"
                                   StrokeThickness="1.4"
                                   StrokeLineCap="Round"/>
-                            <TextBlock Text="Reject" VerticalAlignment="Center"/>
                             <TextBlock Text="X" Classes="shortcut" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
@@ -122,7 +124,6 @@
                                   StrokeThickness="1.4"
                                   StrokeLineCap="Round"
                                   StrokeJoin="Round"/>
-                            <TextBlock Text="Unflag" VerticalAlignment="Center"/>
                             <TextBlock Text="U" Classes="shortcut" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
@@ -142,7 +143,7 @@
                     </Button.CommandParameter>
                     <Grid>
                         <TextBlock Text="☆" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock Text="★" Foreground="{StaticResource SecondaryContainer}"
+                        <TextBlock Text="★" Foreground="{DynamicResource TextPrimary}"
                                    IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=1, FallbackValue=False}"/>
                     </Grid>
                 </Button>
@@ -156,7 +157,7 @@
                     </Button.CommandParameter>
                     <Grid>
                         <TextBlock Text="☆" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock Text="★" Foreground="{StaticResource SecondaryContainer}"
+                        <TextBlock Text="★" Foreground="{DynamicResource TextPrimary}"
                                    IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=2, FallbackValue=False}"/>
                     </Grid>
                 </Button>
@@ -170,7 +171,7 @@
                     </Button.CommandParameter>
                     <Grid>
                         <TextBlock Text="☆" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock Text="★" Foreground="{StaticResource SecondaryContainer}"
+                        <TextBlock Text="★" Foreground="{DynamicResource TextPrimary}"
                                    IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=3, FallbackValue=False}"/>
                     </Grid>
                 </Button>
@@ -184,7 +185,7 @@
                     </Button.CommandParameter>
                     <Grid>
                         <TextBlock Text="☆" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock Text="★" Foreground="{StaticResource SecondaryContainer}"
+                        <TextBlock Text="★" Foreground="{DynamicResource TextPrimary}"
                                    IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=4, FallbackValue=False}"/>
                     </Grid>
                 </Button>
@@ -198,7 +199,7 @@
                     </Button.CommandParameter>
                     <Grid>
                         <TextBlock Text="☆" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock Text="★" Foreground="{StaticResource SecondaryContainer}"
+                        <TextBlock Text="★" Foreground="{DynamicResource TextPrimary}"
                                    IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=5, FallbackValue=False}"/>
                     </Grid>
                 </Button>
@@ -217,7 +218,6 @@
                           Data="M 7,1 A 6,6 0 1 1 6.99,1 M 4,7 L 10,7"
                           StrokeThickness="1.4"
                           StrokeLineCap="Round"/>
-                    <TextBlock Text="Clear" VerticalAlignment="Center"/>
                     <TextBlock Text="0" Classes="shortcut" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>

@@ -8,14 +8,14 @@
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
         <Style Selector="TextBlock.profile-source-line">
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="LetterSpacing" Value="1"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         </Style>
         <Style Selector="TextBlock.profile-menu-header">
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="LetterSpacing" Value="1"/>
@@ -37,7 +37,7 @@
 
     <StackPanel>
         <TextBlock Classes="section-label"
-                   Text="PROFILE"
+                   Text="Profile"
                    Margin="0,2,0,8"/>
         <Grid Classes="raw-profile-row"
               ColumnDefinitions="*,Auto"
@@ -98,18 +98,9 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
             <Border Grid.Column="1"
-                    Margin="6,0,0,0"
-                    Padding="5,1"
-                    VerticalAlignment="Center"
-                    BorderBrush="{DynamicResource OutlineVariant}"
-                    BorderThickness="1"
-                    CornerRadius="99">
-                <TextBlock Text="RAW"
-                           FontFamily="{StaticResource FontLabel}"
-                           FontSize="{StaticResource FontSizeSmall}"
-                           FontWeight="SemiBold"
-                           LetterSpacing="1"
-                           Foreground="{DynamicResource TextMuted}"/>
+                    Classes="raw-chip"
+                    Margin="6,0,0,0">
+                <TextBlock Text="RAW"/>
             </Border>
         </Grid>
         <TextBlock x:Name="RawProfileStatusText"

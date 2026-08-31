@@ -23,8 +23,7 @@ public static class HappyPhotonColors
     public static readonly IBrush ProofCaption =
         new SolidColorBrush(ProofCaptionColor);
 
-    public static readonly IBrush Primary = Brush("#dbfcff");
-    public static readonly IBrush PrimaryContainer = Brush("#00f0ff");
+    public static readonly IBrush ControlActive = Brush("#e4e4e4");
 
     public static readonly IBrush BurstCyan = Brush("#00f0ff");
     public static readonly IBrush BurstMagenta = Brush("#ff24e4");

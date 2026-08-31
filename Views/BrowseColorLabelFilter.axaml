@@ -37,10 +37,10 @@
             <Setter Property="BorderBrush" Value="{DynamicResource Outline}"/>
         </Style>
         <Style Selector="Button.swatch.active Border.swatch-dot">
-            <Setter Property="BorderBrush" Value="{x:Static views:HappyPhotonColors.Primary}"/>
+            <Setter Property="BorderBrush" Value="{x:Static views:HappyPhotonColors.ControlActive}"/>
         </Style>
         <Style Selector="Button.swatch.active Border.none-ring">
-            <Setter Property="BorderBrush" Value="{x:Static views:HappyPhotonColors.Primary}"/>
+            <Setter Property="BorderBrush" Value="{x:Static views:HappyPhotonColors.ControlActive}"/>
         </Style>
     </UserControl.Styles>
 
@@ -48,7 +48,7 @@
         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
         <TextBlock Text="Label" FontSize="10"
                    Foreground="{DynamicResource TextMuted}"
-                   FontFamily="{StaticResource FontLabel}"
+                   FontFamily="{StaticResource FontBody}"
                    VerticalAlignment="Center" Margin="0,0,2,0"/>
         <ItemsControl ItemsSource="{Binding Choices, ElementName=Root}">
             <ItemsControl.ItemsPanel>

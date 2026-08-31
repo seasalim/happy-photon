@@ -15,7 +15,7 @@
             <Setter Property="FontSize" Value="9"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="LetterSpacing" Value="1"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -35,7 +35,7 @@
             <Setter Property="BorderBrush" Value="Transparent"/>
         </Style>
         <Style Selector="Button.curveChannel:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         </Style>
         <Style Selector="Button.curveChannel.red.touched /template/ ContentPresenter#PART_ContentPresenter">
@@ -49,8 +49,8 @@
         </Style>
         <Style Selector="Button.curveChannel.composite.active /template/ ContentPresenter#PART_ContentPresenter,
                          Button.curveChannel.composite.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{DynamicResource OnPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
         </Style>
         <Style Selector="Button.curveChannel.red.active /template/ ContentPresenter#PART_ContentPresenter,
                          Button.curveChannel.red.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -82,13 +82,13 @@
             <Setter Property="Background" Value="Transparent"/>
         </Style>
         <Style Selector="Button.curveReset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
         </Style>
         <Style Selector="Button.curveReset Path">
             <Setter Property="Stroke" Value="{DynamicResource TextMuted}"/>
         </Style>
         <Style Selector="Button.curveReset:pointerover Path">
-            <Setter Property="Stroke" Value="{StaticResource Primary}"/>
+            <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
         </Style>
     </UserControl.Styles>
 
@@ -96,7 +96,7 @@
         <Grid RowDefinitions="Auto,*,Auto">
             <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,8">
                 <TextBlock Text="Tone Curve" FontSize="11" Foreground="{DynamicResource TextMuted}"
-                           FontFamily="{StaticResource FontLabel}"
+                           FontFamily="{StaticResource FontBody}"
                            VerticalAlignment="Center"/>
                 <Border Grid.Column="2" Width="112" Height="22" Margin="4,0"
                         Background="{DynamicResource SurfaceHigh}"

@@ -71,7 +71,7 @@ public partial class CurveView
         ToneCurveChannel.Red => HappyPhotonColors.ColorLabelRed,
         ToneCurveChannel.Green => HappyPhotonColors.ColorLabelGreen,
         ToneCurveChannel.Blue => HappyPhotonColors.ColorLabelBlue,
-        _ => HappyPhotonColors.PrimaryContainer
+        _ => HappyPhotonColors.ControlActive
     };
 
     private void OnCompositeChannelClick(object? sender, RoutedEventArgs e) =>

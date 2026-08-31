@@ -83,7 +83,7 @@
               Data="M 0,27 L 40,27 L 40,21.5 L 56,28 L 40,34.5 L 40,29 Z"
               Fill="{StaticResource TourArrowTrail}">
             <Path.Effect>
-                <DropShadowEffect Color="{StaticResource PrimaryContainerColor}"
+                <DropShadowEffect Color="{DynamicResource ControlActiveColor}"
                                   BlurRadius="12"
                                   OffsetX="0"
                                   OffsetY="0"
@@ -103,10 +103,10 @@
                 BoxShadow="{DynamicResource CoachmarkShadow}">
             <StackPanel Spacing="10">
                 <TextBlock Text="{Binding StepText, ElementName=Root}"
-                           FontFamily="{StaticResource FontLabel}"
+                           FontFamily="{StaticResource FontBody}"
                            FontSize="{StaticResource FontSizeSmall}"
                            FontWeight="SemiBold"
-                           Foreground="{StaticResource PrimaryContainer}"
+                           Foreground="{DynamicResource ControlActive}"
                            LetterSpacing="1"/>
                 <TextBlock Text="{Binding Heading, ElementName=Root}"
                            FontFamily="{StaticResource FontHeading}"
@@ -136,4 +136,3 @@
         </Border>
     </Grid>
 </UserControl>
-

@@ -1,9 +1,11 @@
 # Pipeline Spec — UI: Controls, Gating, Interactions
 
 UI surface for the pipeline. Follows AGENTS.md UI conventions and
-`docs/DESIGN.md` tokens throughout: `CompactSlider` for edit controls, uppercase
-`section-label` group headers, 20px between groups, theme tokens only (active states =
-`PrimaryContainer` cyan, passive edit badges = `Tertiary` lavender), no hardcoded hex.
+`docs/DESIGN.md` tokens throughout: `CompactSlider` for edit controls, mixed-case
+Hanken Grotesk `section-label` group headers, 20px between groups, and theme tokens
+only. Control states are monochrome; hue is reserved for semantic image data —
+including burst-group identity — and errors. The edit-status badge is a muted glyph
+with no background.
 `ViewerSurround` is the variant-specific image surround; `AssessmentGray` and
 `AssessmentWhite` are the invariant color-assessment references. They are deliberately
 distinct from themed resources and must not be aliased. Color assessment mode is a
@@ -31,43 +33,46 @@ with no editing controls; everything below is a Develop-only surface (Browse
 editing surfaces remain a non-goal, §10).
 
 ```
-CAMERA PROFILE         (RAW only, collapsed child control)
+Camera Profile         (RAW only, collapsed child control)
   [profile ComboBox]
   [Browse…] [Refresh]                         status / loading
-WHITE BALANCE
+White Balance
   [mode/preset ComboBox]  [Auto button]  [eyedropper button]
   Kelvin   ────────●────────   5500K
   Tint     ──────●──────────   −12
-ADJUSTMENTS            (no Temperature slider)
+Adjustments            (no Temperature slider)
   Exposure / Brightness / Contrast / Saturation / Vibrance / Shadows / Highlights
   Recovery                                                [Clip | Blend]  (RAW only)
-TONE CURVE             [RGB | R | G | B] [embedded Reset]
-COLOR MIXER                                      RESET
+Tone Curve             [RGB | R | G | B] [embedded Reset]
+Color Mixer                                      Reset
   [Red Orange Yellow Green Aqua Blue Purple Magenta swatches]
   Hue / Saturation / Luminance        (selected band, −100..100)
-DETAIL
+Detail
   Sharpen   ────────●────────   25
   Luma NR   ─────●───────────    0
   Chroma NR ──────●──────────    0
-EFFECTS
+Effects
   Vignette ─────●────────────  −35
   Midpoint ────────●─────────   50
   Grain    ───●──────────────   20
-  Size                                      [FINE | MED | COARSE]
-GEOMETRY
+  Size                                      [Fine | Med | Coarse]
+Geometry
   Vertical / Horizontal / Aspect / Distortion       (−100..100)
-OPTICS
+Optics
   Distortion                                      [toggle]
   Chromatic Aberration                            [toggle]
   Vignetting                                      [toggle]
   LENS · EMBEDDED DNG OPCODES                     source
-DEVELOP FOOTER
-  [Before/after] [Undo] [Redo]                         RESET
+Develop Footer
+  [Before/after] [Undo] [Redo]                         Reset
 ```
 
 The adjustment stack scrolls beneath the histogram while the Develop footer remains
 fixed. Export has no pointer action in the Develop pane itself: click the **Export**
 tab in the mode strip, or use the global `Ctrl+Shift+E` shortcut from either workspace.
+The Browse bottom toolbar places culling actions at the left and view/thumbnail state
+at the right; Develop mirrors that rhythm with navigation/rotation/crop at the left
+and zoom/view state at the right.
 
 Brightness is disabled (not hidden) at `DisabledOpacity` while a RAW base is active,
 because the crossing-on engine has no Brightness parameter; it stays enabled for
@@ -115,8 +120,8 @@ Effects follows Detail and applies to every source, with no RAW chip. Vignette i
 −100..100 bipolar `CompactSlider`; Midpoint is 0..100 (default 50) and remains in place
 at `DisabledOpacity` while Vignette is zero. Grain is 0..100. Size is the standard
 compact segmented idiom: `SurfaceHigh` container, radius 4, padding 2, height 22,
-flat borderless pills, `PrimaryContainer` selected fill, and Fine/Med/Coarse labels in
-FontLabel 9 SemiBold with letter spacing 1. Medium is the default.
+flat borderless pills, `ControlSelected` selected fill, and Fine/Med/Coarse labels in
+FontBody 9 SemiBold without tracking. Medium is the default.
 
 Geometry follows Effects and applies to every source, with no chip or capability
 gating. Vertical, Horizontal, Aspect, and Distortion are −100..100 bipolar
@@ -181,7 +186,7 @@ be read.
 | Tint slider | −100…+100, label shows signed integer. |
 | Drag behavior | Dragging either slider from any mode switches to `mode: custom`, seeded from the currently displayed kelvin/tint. From gain-backed settings this **discards gains** — acceptable and deliberate; the previous state lands on the undo stack like any edit. |
 | Auto button | Runs WHITE_BALANCE.md §8 once, stores as `picked`. Disabled until the base is loaded (§5). |
-| Eyedropper button | Toggles viewer sampling mode (§4). Active state uses the standard `PrimaryContainer` treatment. |
+| Eyedropper button | Toggles viewer sampling mode (§4). Active state uses the standard `ControlActive` treatment. |
 
 ## 4. Viewer interactions
 
@@ -253,7 +258,7 @@ be read.
   unavailable (JPEG, Browse, cloud-only, unsupported-CFA, stale-base,
   replacement-in-flight), the RAW entry stays disabled in place — never removed —
   with a reason-specific `ToolTip.ShowOnDisabled` tooltip while display data shows
-  as `HISTOGRAM`; the UI never labels display-referred data RAW. A selected RAW
+  as `Histogram`; the UI never labels display-referred data RAW. A selected RAW
   scope remains the session preference across those fallbacks, and a replacement
   refresh carries the matching base's RAW fact so it reactivates without another
   click. RGB parade is deferred until luminance waveform usage demonstrates demand.

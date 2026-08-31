@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="using:Avalonia.Controls.Converters"
              xmlns:models="using:HappyPhoton.Models"
              mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="500"
              x:Name="Root"
@@ -11,7 +12,7 @@
         <!-- Header -->
         <Border Grid.Row="0" Background="{DynamicResource SurfaceLow}" Padding="10">
             <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto,Auto">
-                <TextBlock Classes="section-label" Text="FOLDERS"
+                <TextBlock Classes="section-label" Text="Folders"
                            VerticalAlignment="Center"/>
                 <Button Grid.Column="1" x:Name="RefreshFolderButton"
                         Width="24" Height="24" Padding="5"
@@ -61,12 +62,15 @@
                   ScrollViewer.HorizontalScrollBarVisibility="Hidden"
                   ScrollViewer.VerticalScrollBarVisibility="Hidden"
                   SelectionMode="Single">
+            <TreeView.Resources>
+                <x:Double x:Key="CompactTreeViewItemIndent">12</x:Double>
+            </TreeView.Resources>
             <TreeView.ItemTemplate>
                 <TreeDataTemplate DataType="models:FolderNode" ItemsSource="{Binding Children}">
                     <Border Classes="folder-row"
                             Classes.active="{Binding IsSelected}"
                             CornerRadius="{StaticResource RadiusSmall}"
-                            Padding="7,4">
+                            Padding="7,3">
                         <Border.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="Reveal in File Explorer"
@@ -94,6 +98,75 @@
                 <Style Selector="TreeViewItem" x:DataType="models:FolderNode">
                     <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}"/>
                     <Setter Property="IsSelected" Value="{ReflectionBinding IsSelected, Mode=TwoWay}"/>
+                    <Setter Property="Template">
+                        <ControlTemplate>
+                            <StackPanel>
+                                <Border Name="PART_LayoutRoot"
+                                        Focusable="True"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="{TemplateBinding CornerRadius}"
+                                        MinHeight="{TemplateBinding MinHeight}"
+                                        TemplatedControl.IsTemplateFocusTarget="True">
+                                    <Grid Name="PART_Header" ColumnDefinitions="20,*">
+                                        <Grid.Margin>
+                                            <MultiBinding Converter="{x:Static converters:TreeViewItemIndentConverter.Instance}">
+                                                <Binding Path="Level" RelativeSource="{RelativeSource TemplatedParent}"/>
+                                                <DynamicResource ResourceKey="CompactTreeViewItemIndent"/>
+                                            </MultiBinding>
+                                        </Grid.Margin>
+                                        <Panel Name="PART_ExpandCollapseChevronContainer" Width="20">
+                                            <ToggleButton Name="PART_ExpandCollapseChevron"
+                                                          Width="20"
+                                                          Height="20"
+                                                          Focusable="False"
+                                                          IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}">
+                                                <ToggleButton.Template>
+                                                    <ControlTemplate>
+                                                        <Border Width="20" Height="20" Background="Transparent">
+                                                            <Path Name="ChevronPath"
+                                                                  Width="7" Height="7"
+                                                                  Data="{StaticResource TreeViewItemCollapsedChevronPathData}"
+                                                                  Fill="{DynamicResource TextMuted}"
+                                                                  Stretch="Uniform"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"
+                                                                  RenderTransformOrigin="50%,50%"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </ToggleButton.Template>
+                                            </ToggleButton>
+                                        </Panel>
+                                        <ContentPresenter Name="PART_HeaderPresenter"
+                                                          Grid.Column="1"
+                                                          Focusable="False"
+                                                          Background="Transparent"
+                                                          Content="{TemplateBinding Header}"
+                                                          ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                                          HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+                                                          VerticalAlignment="{TemplateBinding VerticalAlignment}"
+                                                          Margin="{TemplateBinding Padding}"/>
+                                    </Grid>
+                                </Border>
+                                <ItemsPresenter Name="PART_ItemsPresenter"
+                                                IsVisible="{TemplateBinding IsExpanded}"
+                                                ItemsPanel="{TemplateBinding ItemsPanel}"/>
+                            </StackPanel>
+                        </ControlTemplate>
+                    </Setter>
+                </Style>
+                <Style Selector="TreeViewItem /template/ ToggleButton#PART_ExpandCollapseChevron">
+                    <Setter Property="Opacity" Value="0.62"/>
+                </Style>
+                <Style Selector="TreeViewItem /template/ ToggleButton#PART_ExpandCollapseChevron:pointerover">
+                    <Setter Property="Opacity" Value="0.9"/>
+                </Style>
+                <Style Selector="TreeViewItem:empty /template/ Panel#PART_ExpandCollapseChevronContainer">
+                    <Setter Property="Width" Value="20"/>
+                </Style>
+                <Style Selector="TreeViewItem /template/ ToggleButton#PART_ExpandCollapseChevron:checked /template/ Path#ChevronPath">
+                    <Setter Property="RenderTransform" Value="rotate(90deg)"/>
                 </Style>
                 <Style Selector="TreeViewItem /template/ ContentPresenter#PART_HeaderPresenter">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -114,13 +187,13 @@
                     <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                 </Style>
                 <Style Selector="Border.folder-row.active">
-                    <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
+                    <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
                 </Style>
                 <Style Selector="Border.folder-row.active TextBlock">
-                    <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                 </Style>
                 <Style Selector="Border.folder-row.active PathIcon">
-                    <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                 </Style>
             </TreeView.Styles>
         </TreeView>

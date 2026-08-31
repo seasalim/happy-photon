@@ -9,7 +9,7 @@
         <Grid ColumnDefinitions="*,Auto" ClipToBounds="True">
             <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center">
                 <TextBlock Grid.Column="0"
-                           Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}" Margin="8,0">
+                           Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontBody}" Margin="8,0">
                     <TextBlock.Text>
                         <MultiBinding StringFormat="{}{0} · {1} selected">
                             <Binding Path="Browse.PhotoCountText"/>
@@ -18,10 +18,10 @@
                     </TextBlock.Text>
                 </TextBlock>
                 <TextBlock Grid.Column="1" Text="{Binding ActiveFileName}"
-                           Foreground="{DynamicResource TextSecondary}" FontFamily="{StaticResource FontLabel}"
+                           Foreground="{DynamicResource TextSecondary}" FontFamily="{StaticResource FontBody}"
                            TextTrimming="CharacterEllipsis" MaxWidth="480" Margin="8,0"/>
                 <TextBlock Grid.Column="2" Text="{Binding StatusMessage}"
-                           Foreground="{StaticResource PrimaryContainer}" FontFamily="{StaticResource FontLabel}"
+                           Foreground="{DynamicResource ControlActive}" FontFamily="{StaticResource FontBody}"
                            TextTrimming="CharacterEllipsis" Margin="8,0"/>
             </Grid>
             <StackPanel x:Name="BackgroundActivitySegment"
@@ -37,11 +37,11 @@
                         AutomationProperties.LiveSetting="Polite">
                 <Ellipse x:Name="BackgroundActivityDot"
                          Width="6" Height="6"
-                         Fill="{StaticResource PrimaryContainer}"/>
+                         Fill="{DynamicResource ControlActive}"/>
                 <TextBlock x:Name="BackgroundActivityLabel"
                            Text="{Binding BackgroundActivity.Label}"
                            Foreground="{DynamicResource TextSecondary}"
-                           FontFamily="{StaticResource FontLabel}"
+                           FontFamily="{StaticResource FontBody}"
                            TextTrimming="CharacterEllipsis"
                            MaxWidth="280"
                            VerticalAlignment="Center"/>

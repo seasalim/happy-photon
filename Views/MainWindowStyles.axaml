@@ -23,7 +23,7 @@
          change. Small targets only. -->
     <Style Selector=":is(Control).tour-region.tour-dimmed.tour-focus.tour-glow">
         <Setter Property="Effect">
-            <DropShadowEffect Color="{StaticResource PrimaryContainerColor}"
+            <DropShadowEffect Color="{DynamicResource ControlActiveColor}"
                               BlurRadius="18"
                               OffsetX="0"
                               OffsetY="0"

@@ -24,9 +24,9 @@
                                TextWrapping="Wrap"/>
                     <TextBlock Text="{Binding PendingCatalogRoot}" Classes="setting-note"/>
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="REVEAL" Command="{Binding RevealCatalogCommand}"/>
-                        <Button Content="CHANGE" Command="{Binding ChangeCatalogCommand}"/>
-                        <Button Content="MOVE" Command="{Binding MoveCatalogCommand}"/>
+                        <Button Content="Reveal" Command="{Binding RevealCatalogCommand}"/>
+                        <Button Content="Change" Command="{Binding ChangeCatalogCommand}"/>
+                        <Button Content="Move" Command="{Binding MoveCatalogCommand}"/>
                     </StackPanel>
                     <TextBlock x:Name="CatalogStatus" Text="{Binding CatalogStatus}"
                                IsVisible="{Binding CatalogStatus,
@@ -50,9 +50,9 @@
                     <TextBlock Text="{Binding CacheManagementNote}" Classes="setting-note"/>
                     <TextBlock Text="{Binding PendingCacheRoot}" Classes="setting-note"/>
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="REVEAL" Command="{Binding RevealCacheCommand}"/>
-                        <Button Content="CHANGE" Command="{Binding ChangeCacheCommand}"/>
-                        <Button Content="MOVE" Command="{Binding MoveCacheCommand}"/>
+                        <Button Content="Reveal" Command="{Binding RevealCacheCommand}"/>
+                        <Button Content="Change" Command="{Binding ChangeCacheCommand}"/>
+                        <Button Content="Move" Command="{Binding MoveCacheCommand}"/>
                     </StackPanel>
                     <TextBlock x:Name="CacheStatus" Text="{Binding CacheStatus}"
                                IsVisible="{Binding CacheStatus,

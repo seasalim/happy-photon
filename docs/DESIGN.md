@@ -88,17 +88,17 @@ typography:
     fontWeight: '400'
     lineHeight: 24px
   label-md:
-    fontFamily: JetBrains Mono
+    fontFamily: Hanken Grotesk
     fontSize: 14px
     fontWeight: '500'
     lineHeight: 20px
-    letterSpacing: 0.05em
+    letterSpacing: 0
   label-sm:
-    fontFamily: JetBrains Mono
+    fontFamily: Hanken Grotesk
     fontSize: 12px
     fontWeight: '500'
     lineHeight: 16px
-    letterSpacing: 0.08em
+    letterSpacing: 0
 rounded:
   sm: 0.25rem
   DEFAULT: 0.5rem
@@ -175,14 +175,19 @@ update network requests; GitHub is contacted only on an explicit **Check for upd
 
 The brand personality for the design system is energetic, luminous, and high-velocity. It targets a tech-forward audience that values performance and visual stimulation. The UI should evoke a sense of "captured light"—vibrant, focused, and humming with energy.
 
-The aesthetic follows a **Vivid Chroma** style: a dark-mode foundation where components appear as light-emitting objects rather than static surfaces. It blends elements of **Glassmorphism** (for depth and light refraction) with **Modern Corporate** precision. Every interaction should feel like a burst of photons—instant, bright, and purposeful.
+The workspace uses restrained, monochrome chrome so photographs and color-semantic
+data carry the visual energy. Cyan remains a title-bar brand signature; controls use
+neutral value shifts for hover, selection, active, and focus states.
 
 ## Colors
 
-The palette is anchored in deep space blacks to allow the "photons" to pop.
-- **Primary (Electric Cyan):** Used for core actions and active states. It represents pure light energy.
-- **Secondary (Neon Magenta):** Used for accents, highlights, ratings, and secondary interactions.
-- **Tertiary (Proton Purple):** Used for deep gradients, subtle background glows, and passive edit badges.
+The palette is anchored in deep space blacks so image color remains authoritative.
+- **Control chrome:** Achromatic surface steps distinguish hover, selection, active,
+  and focus states. Active fills use a high-contrast neutral on-color.
+- **Brand cyan:** Reserved for the title-bar mark and wordmark.
+- **Semantic color:** Reserved for burst-group identity, color labels, mixer bands,
+  white-balance gradients, clipping and scope channels, errors/destructive actions,
+  while reject uses an invariant near-black surface with a light glyph and hairline.
 - **White balance spectrum:** The Kelvin and tint tracks use dedicated cyan→green→yellow and green→magenta functional gradients so their direction is readable at a glance.
 - **Neutral:** A range of ultra-dark navys and blacks (`#0A0A0F` to `#1A1A24`) to provide a high-contrast canvas for the vivid accents.
 
@@ -192,7 +197,7 @@ Avoid muddy colors. Use high-saturation tones and implement luminosity masks to 
 
 The themes present as **Dark** (the default) and **Middle Gray** in the UI; the
 Middle Gray internal identifier remains `MidGray` because that spelling matches the
-enum naming style. Middle Gray keeps the same magenta and semantic accents while
+enum naming style. Middle Gray keeps the same semantic data colors while
 raising the neutral chrome. Its photograph surround is `#777777`, the nearest
 integer sRGB encoding of CIE L\* 50. That code
 value is about 47% of the encoded channel range but decodes to roughly 18.4% relative
@@ -210,29 +215,30 @@ photograph carries a color cast. Accents that border photo pixels drop the elect
 cyan under Middle Gray. The active-image ring goes fully achromatic (`#bbbbbb`),
 chosen at the relative luminance its former muted teal carried so the focus rectangle
 keeps its visual weight while adding no chroma beside the photograph. The selection
-check mark (`#9adfe4`) is not a border and keeps reduced chroma, limiting
-simultaneous-contrast shifts against the L\* 50 surround while staying recognizably
-in the accent family.
-The `BrandAccent`, `BrandAccentHover`, and `OnBrandAccent` tokens isolate brand chrome
-from the invariant cyan palette. Dark maps them to the existing cyan values; Middle
-Gray uses `#D4D4D4`, `#F0F0F0`, and `#303030` so the title-bar wordmark and active-tab
-underline, plus every accent button, are monochrome. The `BrandMark` image-brush token
-selects the matching cyan or neutral title-bar mark and switches live with the theme.
+check mark is achromatic and high-contrast. `ControlHover`, `ControlSelected`,
+`ControlActive`, and `OnControlActive` are variant-specific neutral state tokens; the
+Fluent `SystemAccentColor*` ramp is achromatic as well. `BrandCyan` is separate and
+serves only the title-bar identity. The `BrandMark` image-brush keeps that cyan mark
+in both themes.
 `AssessmentGray` uses the same shipped value but is an invariant assessment reference,
 not an alias to the theme surround. `AssessmentWhite` is the invariant `#FFFFFF`
 reference band used with it. Theme resources live in
 `Themes/HappyPhotonTheme.axaml`; code-drawn photograph overlays use the matching
 invariant values in `Views/HappyPhotonColors.cs`.
 
-The title-bar icon has cyan and neutral theme variants selected by `BrandMark`. Other
-interface marks are text or vector paths and inherit theme resources.
+The title-bar icon and Photon wordmark stay cyan. Other interface marks are text or
+vector paths and inherit neutral theme resources.
 
 ## Typography
 
 Typography in this design system emphasizes a technical yet premium feel. 
 - **Headlines:** Sora provides a geometric, futuristic weight that feels bold and innovative. Use "Display" sizes for hero sections with tight letter spacing to mimic high-end editorial tech layouts.
 - **Body:** Hanken Grotesk offers high legibility and a contemporary edge for long-form content and UI descriptions.
-- **Labels/Data:** JetBrains Mono is utilized for small metadata, tags, and "technical" specs to reinforce the "Photon" precision theme. 
+- **Panel headers:** Hanken Grotesk SemiBold, mixed case, muted, without tracking.
+- **Chrome:** Hanken Grotesk is the single face for buttons, pills, filters, toolbars,
+  status text, and metadata labels; button and pill text uses mixed case.
+- **Fixed-width data:** JetBrains Mono is reserved for slider value columns, numeric
+  readouts such as EXIF, histogram statistics, and dimensions, and keyboard hints.
 
 The desktop welcome surface uses named display tokens rather than local sizes:
 `FontSizeHero` (48px) for the cyan welcome wordmark and `FontSizeFeature` (34px)
@@ -262,9 +268,11 @@ when at least 99.5% of the image is visible; the transient 1:1 loupe peek is the
 exception, showing the outline from an otherwise mostly visible sub-1:1 view. It is
 informational only; navigator panning remains out of scope.
 
-The Develop control bar carries actions only. Flag, color-label, and rating state
-remains visible in Browse rather than resting anywhere over the Develop or full-screen
-viewer. Develop and Browse Loupe culling shortcuts briefly show a confirmation centered over the
+The Browse bottom toolbar anchors culling actions left and view/thumbnail state right.
+Develop mirrors that split: navigation, rotation, and crop actions anchor left while
+zoom and view state anchor right. Flag, color-label, and rating state remains visible
+in Browse rather than resting anywhere over the Develop or full-screen viewer. Develop
+and Browse Loupe culling shortcuts briefly show a confirmation centered over the
 photograph and clear of its bottom edge, then fade it out. Unlike the app's persistent
 overlays, this one is not muted: it appears for barely a second over unknown
 photograph content, so it uses primary text at full opacity with a soft dark halo for

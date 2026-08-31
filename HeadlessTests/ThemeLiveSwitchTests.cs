@@ -20,6 +20,44 @@ namespace HappyPhoton.Tests;
 
 public sealed class ThemeLiveSwitchTests
 {
+    [AvaloniaTheory]
+    [MemberData(
+        nameof(ThemeResourceTests.Variants),
+        MemberType = typeof(ThemeResourceTests))]
+    public void CheckedCheckbox_UsesCompactHighContrastBox(ThemeVariant variant)
+    {
+        Application.Current!.RequestedThemeVariant = variant;
+        var checkBox = new CheckBox { IsChecked = true };
+        var window = new Window { Content = checkBox };
+
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var box = Assert.Single(
+                checkBox.GetVisualDescendants().OfType<Border>(),
+                border => border.Name == "NormalRectangle");
+            var glyph = Assert.Single(
+                checkBox.GetVisualDescendants()
+                    .OfType<Avalonia.Controls.Shapes.Path>(),
+                path => path.Name == "CheckGlyph");
+
+            Assert.Equal(new CornerRadius(3), checkBox.CornerRadius);
+            Assert.Equal(0.8, box.RenderTransform!.Value.M11, precision: 3);
+            Assert.Equal(
+                ThemeResourceTests.Brush("ControlActive", variant).Color,
+                ColorOf(box.Background));
+            Assert.Equal(
+                ThemeResourceTests.Brush("OnControlActive", variant).Color,
+                ColorOf(glyph.Fill));
+        }
+        finally
+        {
+            Application.Current.RequestedThemeVariant = ThemeVariant.Dark;
+            window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public async Task SameWindow_RepaintsCodeBuiltAndRealizedContentWithoutRestart()
     {
@@ -107,7 +145,9 @@ public sealed class ThemeLiveSwitchTests
             Assert.Equal(Color.Parse("#e4e1e9"), ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00f0ff"), ColorOf(burstStripe.Background));
             Assert.Equal(Color.Parse("#4b4a52"), ColorOf(thumbnail.Background));
-            Assert.Equal(Color.Parse("#00f0ff"), ColorOf(thumbnail.BorderBrush));
+            Assert.Equal(
+                ThemeResourceTests.Brush("ActiveImageRing", ThemeVariant.Dark).Color,
+                ColorOf(thumbnail.BorderBrush));
             Assert.Equal(0.32, undo.Opacity);
             Assert.Equal(0.32, reset.Opacity);
             Assert.Equal(Color.Parse("#849495"), ColorOf(reset.Foreground));
@@ -116,8 +156,7 @@ public sealed class ThemeLiveSwitchTests
                 photonWordmark,
                 browseUnderline,
                 accentPresenter,
-                ThemeVariant.Dark,
-                pointerOver: false);
+                ThemeVariant.Dark);
 
             var darkMarkSource = Assert.IsType<ImageBrush>(brandMark.Background).Source;
             ((IPseudoClasses)accent.Classes).Set(":pointerover", true);
@@ -127,8 +166,7 @@ public sealed class ThemeLiveSwitchTests
                 photonWordmark,
                 browseUnderline,
                 accentPresenter,
-                ThemeVariant.Dark,
-                pointerOver: true);
+                ThemeVariant.Dark);
 
             vm.SetAppThemeCommand.Execute(AppTheme.MidGray);
             Dispatcher.UIThread.RunJobs();
@@ -150,7 +188,9 @@ public sealed class ThemeLiveSwitchTests
             Assert.Equal(Color.Parse("#ffffff"), ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00dbe9"), ColorOf(burstStripe.Background));
             Assert.Equal(Color.Parse("#616161"), ColorOf(thumbnail.Background));
-            Assert.Equal(Color.Parse("#bbbbbb"), ColorOf(thumbnail.BorderBrush));
+            Assert.Equal(
+                ThemeResourceTests.Brush("ActiveImageRing", HappyPhotonThemes.MidGray).Color,
+                ColorOf(thumbnail.BorderBrush));
             Assert.Equal(0.62, undo.Opacity);
             Assert.Equal(0.62, reset.Opacity);
             Assert.Equal(Color.Parse("#c8c8c8"), ColorOf(reset.Foreground));
@@ -159,8 +199,7 @@ public sealed class ThemeLiveSwitchTests
                 photonWordmark,
                 browseUnderline,
                 accentPresenter,
-                HappyPhotonThemes.MidGray,
-                pointerOver: true);
+                HappyPhotonThemes.MidGray);
             Assert.NotSame(
                 darkMarkSource,
                 Assert.IsType<ImageBrush>(brandMark.Background).Source);
@@ -172,8 +211,7 @@ public sealed class ThemeLiveSwitchTests
                 photonWordmark,
                 browseUnderline,
                 accentPresenter,
-                HappyPhotonThemes.MidGray,
-                pointerOver: false);
+                HappyPhotonThemes.MidGray);
 
             var flyout = Assert.IsType<MenuFlyout>(appearance.Flyout);
             flyout.ShowAt(appearance);
@@ -272,26 +310,23 @@ public sealed class ThemeLiveSwitchTests
         Run photonWordmark,
         Rectangle underline,
         ContentPresenter accentPresenter,
-        ThemeVariant variant,
-        bool pointerOver)
+        ThemeVariant variant)
     {
         var expectedMark = ThemeResourceTests.Resource<ImageBrush>("BrandMark", variant);
         Assert.Same(
             expectedMark.Source,
             Assert.IsType<ImageBrush>(mark.Background).Source);
         Assert.Equal(
-            ThemeResourceTests.Brush("BrandAccent", variant).Color,
+            ThemeResourceTests.Brush("BrandCyan", variant).Color,
             ColorOf(photonWordmark.Foreground));
         Assert.Equal(
-            ThemeResourceTests.Brush("BrandAccent", variant).Color,
+            ThemeResourceTests.Brush("ControlActive", variant).Color,
             ColorOf(underline.Fill));
         Assert.Equal(
-            ThemeResourceTests.Brush(
-                pointerOver ? "BrandAccentHover" : "BrandAccent",
-                variant).Color,
+            ThemeResourceTests.Brush("ControlActive", variant).Color,
             ColorOf(accentPresenter.Background));
         Assert.Equal(
-            ThemeResourceTests.Brush("OnBrandAccent", variant).Color,
+            ThemeResourceTests.Brush("OnControlActive", variant).Color,
             ColorOf(accentPresenter.Foreground));
     }
 

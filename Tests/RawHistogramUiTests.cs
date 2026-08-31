@@ -34,14 +34,14 @@ public sealed class RawHistogramUiTests : IDisposable
         vm.SelectedScope = ScopeView.RawHistogram;
         Assert.Equal(ScopeView.RawHistogram, vm.SelectedScope);
         Assert.Equal(ScopeView.RawHistogram, vm.EffectiveScope);
-        Assert.Equal("RAW HISTOGRAM", vm.EffectiveScopeTitle);
+        Assert.Equal("RAW Histogram", vm.EffectiveScopeTitle);
 
         vm.SelectedImage = new ImageFile(_fx.Path("display.jpg"));
         await TestWaits.UntilAsync(() => !vm.IsRawHistogramAvailable);
         Assert.Same(stableOptions, vm.ScopeOptions);
         Assert.Equal(ScopeView.RawHistogram, vm.SelectedScope);
         Assert.Equal(ScopeView.Histogram, vm.EffectiveScope);
-        Assert.Equal("HISTOGRAM", vm.EffectiveScopeTitle);
+        Assert.Equal("Histogram", vm.EffectiveScopeTitle);
         Assert.False(vm.ScopeOptions[2].IsEnabled);
         Assert.Contains("Display-referred", vm.RawHistogramHint);
 

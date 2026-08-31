@@ -200,11 +200,10 @@ public sealed class RawJpegOneCaptureHeadlessTests
         var pane = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!;
         var toggle = pane.FindControl<ToggleButton>("RawJpegSwitchButton")!;
         var beforeAfter = pane.FindControl<ToggleButton>("BeforeAfterSplitButton")!;
-        var actions = Assert.IsType<StackPanel>(
-            pane.FindControl<Border>("DevelopControlBar")!.Child);
+        var viewState = pane.FindControl<StackPanel>("DevelopViewStatePanel")!;
         Assert.Equal(
-            actions.Children.IndexOf(beforeAfter) + 1,
-            actions.Children.IndexOf(toggle));
+            viewState.Children.IndexOf(beforeAfter) + 1,
+            viewState.Children.IndexOf(toggle));
         var jpeg = vm.Browse.AllImages.Single(image =>
             image.FileName == "capture.jpg");
         var raw = vm.Browse.AllImages.Single(image =>

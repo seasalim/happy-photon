@@ -7,7 +7,7 @@
         <Style Selector="Button.wizard-primary">
             <Setter Property="MinWidth" Value="150"/>
             <Setter Property="Padding" Value="18,11"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -32,7 +32,7 @@
                 BorderBrush="{DynamicResource Divider}" BorderThickness="1"
                 CornerRadius="{StaticResource RadiusCard}">
             <StackPanel Spacing="18">
-                <TextBlock Text="FIRST RUN"
+                <TextBlock Text="First Run"
                            Classes="section-label"
                            HorizontalAlignment="Center"/>
 
@@ -42,21 +42,21 @@
                                FontFamily="{StaticResource FontHeading}"
                                FontSize="{StaticResource FontSizeHero}"
                                FontWeight="Bold"
-                               Foreground="{StaticResource PrimaryContainer}"
+                               Foreground="{DynamicResource ControlActive}"
                                TextAlignment="Center" TextWrapping="Wrap"/>
                     <TextBlock Text="A calm, local workspace for browsing and non-destructive photo editing."
                                Foreground="{DynamicResource TextSecondary}"
                                LineHeight="22" TextAlignment="Center"
                                TextWrapping="Wrap"/>
                     <TextBlock Text="LOCAL CATALOG  •  NO PHOTO IMPORT  •  ORIGINALS UNTOUCHED"
-                               FontFamily="{StaticResource FontLabel}"
+                               FontFamily="{StaticResource FontBody}"
                                FontSize="{StaticResource FontSizeSmall}"
                                Foreground="{DynamicResource TextMuted}"
                                HorizontalAlignment="Center"
                                TextAlignment="Center" TextWrapping="Wrap"/>
                     <Button x:Name="WelcomeContinueButton"
                             Classes="accent wizard-primary"
-                            Content="CONTINUE"
+                            Content="Continue"
                             HorizontalAlignment="Center"
                             Command="{Binding ContinueFirstRunCommand}"/>
                 </StackPanel>
@@ -117,7 +117,7 @@
                                TextAlignment="Center" TextWrapping="Wrap"/>
                     <Button x:Name="StorageContinueButton"
                             Classes="accent wizard-primary"
-                            Content="CONTINUE"
+                            Content="Continue"
                             HorizontalAlignment="Center"
                             Command="{Binding ContinueFirstRunCommand}"/>
                 </StackPanel>
@@ -152,13 +152,13 @@
                                TextAlignment="Center" TextWrapping="Wrap"/>
                     <Button x:Name="PicturesDefaultButton"
                             Classes="accent wizard-primary"
-                            Content="CONTINUE"
+                            Content="Continue"
                             IsVisible="{Binding HasDefaultFirstRunLocation}"
                             HorizontalAlignment="Center"
                             Command="{Binding StartInDefaultLocationCommand}"/>
                     <Button x:Name="PicturesChooseButton"
                             Classes="accent wizard-primary"
-                            Content="CHOOSE A FOLDER"
+                            Content="Choose a folder"
                             IsVisible="{Binding IsPickerLedFirstRun}"
                             HorizontalAlignment="Center"
                             Command="{Binding BrowseElsewhereCommand}"/>
@@ -189,9 +189,9 @@
                                 HorizontalAlignment="Center">
                         <Button x:Name="LightroomImportButton"
                                 Classes="accent wizard-primary"
-                                Content="IMPORT"
+                                Content="Import"
                                 Command="{Binding ImportDetectedLightroomCommand}"/>
-                        <Button Content="SKIP"
+                        <Button Content="Skip"
                                 Command="{Binding SkipDetectedLightroomCommand}"/>
                     </StackPanel>
                 </StackPanel>
@@ -209,7 +209,7 @@
                                 HorizontalAlignment="Center">
                         <Button x:Name="StartTourButton"
                                 Classes="accent wizard-primary"
-                                Content="START TOUR"
+                                Content="Start tour"
                                 Command="{Binding StartFirstRunTourCommand}"/>
                         <Button Content="Skip"
                                 Classes="wizard-quiet"

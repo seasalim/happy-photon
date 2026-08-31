@@ -25,6 +25,24 @@ public partial class ImageFile
     }
 
     public DateTime? DisplayDate => DateTaken ?? FileModifiedDate;
+    public string GridToolTip
+    {
+        get
+        {
+            if (!MetadataLoaded) return FileName;
+
+            var lines = new List<string> { FileName };
+            if (PixelWidth > 0 && PixelHeight > 0)
+            {
+                lines.Add($"{PixelWidth}×{PixelHeight} pixels");
+            }
+            if (DateTaken is { } dateTaken)
+            {
+                lines.Add(dateTaken.ToString("MMM d, yyyy · h:mm tt"));
+            }
+            return string.Join(Environment.NewLine, lines);
+        }
+    }
     public bool HasCaptureDate => DateTaken.HasValue;
     public bool IsFileModifiedDateFallback =>
         !DateTaken.HasValue && FileModifiedDate.HasValue;
@@ -204,16 +222,25 @@ public partial class ImageFile
         OnPropertyChanged(nameof(FileSizeDisplay));
         OnPropertyChanged(nameof(FileDetailsDisplay));
     }
-    partial void OnPixelWidthChanged(int value) =>
+    partial void OnPixelWidthChanged(int value)
+    {
         OnPropertyChanged(nameof(FileDetailsDisplay));
-    partial void OnPixelHeightChanged(int value) =>
+        OnPropertyChanged(nameof(GridToolTip));
+    }
+    partial void OnPixelHeightChanged(int value)
+    {
         OnPropertyChanged(nameof(FileDetailsDisplay));
+        OnPropertyChanged(nameof(GridToolTip));
+    }
     partial void OnDateTakenChanged(DateTime? value)
     {
         OnPropertyChanged(nameof(DisplayDate));
         OnPropertyChanged(nameof(HasCaptureDate));
         OnPropertyChanged(nameof(IsFileModifiedDateFallback));
+        OnPropertyChanged(nameof(GridToolTip));
     }
+    partial void OnMetadataLoadedChanged(bool value) =>
+        OnPropertyChanged(nameof(GridToolTip));
     partial void OnFileModifiedDateChanged(DateTime? value)
     {
         OnPropertyChanged(nameof(DisplayDate));

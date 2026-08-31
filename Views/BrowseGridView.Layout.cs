@@ -18,10 +18,10 @@ internal readonly record struct BrowseThumbnailGeometry(
 
     public static BrowseThumbnailGeometry For(BrowseThumbnailSize size) => size switch
     {
-        BrowseThumbnailSize.Small => new(120, 80, 130, 135, 5, 5, 5),
-        BrowseThumbnailSize.Medium => new(180, 120, 190, 175, 5, 5, 5),
-        BrowseThumbnailSize.Large => new(280, 187, 290, 242, 5, 5, 5),
-        _ => new(180, 120, 190, 175, 5, 5, 5)
+        BrowseThumbnailSize.Small => new(120, 80, 130, 117, 5, 5, 5),
+        BrowseThumbnailSize.Medium => new(180, 120, 190, 157, 5, 5, 5),
+        BrowseThumbnailSize.Large => new(280, 187, 290, 224, 5, 5, 5),
+        _ => new(180, 120, 190, 157, 5, 5, 5)
     };
 }
 

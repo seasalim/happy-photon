@@ -96,6 +96,25 @@ public sealed class ImageFileMetadataDisplayTests
     }
 
     [Fact]
+    public void GridToolTip_UsesOnlyAlreadyLoadedCatalogMetadata()
+    {
+        var image = CreateImage();
+        Assert.Equal("a.jpg", image.GridToolTip);
+
+        image.ApplyMetadata(new ImageMetadata
+        {
+            PixelWidth = 6000,
+            PixelHeight = 4000,
+            DateTaken = new DateTime(2026, 8, 30, 14, 15, 0)
+        });
+
+        Assert.Equal(
+            $"a.jpg{Environment.NewLine}6000×4000 pixels{Environment.NewLine}" +
+            "Aug 30, 2026 · 2:15 PM",
+            image.GridToolTip);
+    }
+
+    [Fact]
     public void FileModifiedFallback_DoesNotChangeCaptureTimeSemantics()
     {
         var modified = new DateTime(2026, 8, 14, 12, 30, 0);

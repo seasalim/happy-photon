@@ -354,7 +354,7 @@ apart from geometry; blue responds as edits change the rendered output.
 - **Color Mixer** targets Red, Orange, Yellow, Green, Aqua, Blue, Purple, or Magenta.
   Pick a swatch, then use Hue to steer that band toward its neighbors, Saturation to
   change only its color intensity, and Luminance to lighten or darken it. A dot marks
-  every touched band; double-click resets one slider, while the Develop footer RESET
+  every touched band; double-click resets one slider, while the Develop footer Reset
   clears all bands with the other color and tonal adjustments.
 
 Kelvin usually answers whether the photograph feels too cool or too warm.
@@ -372,7 +372,7 @@ Use the **Tone Curve** when the basic controls cannot produce the tonal shape
 you want. It is a finishing tool, not a required step. RGB shapes the composite
 curve. Choose R, G, or B for channel-specific balance and split-tone effects; edited
 channel letters stay tinted. The curve's Reset clears only the active channel, while
-the Develop footer RESET clears every curve and other tonal adjustments.
+the Develop footer Reset clears every curve and other tonal adjustments.
 
 ### Refine detail
 

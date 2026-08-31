@@ -9,7 +9,7 @@
             BorderThickness="0,1,0,0"
             Padding="12,8">
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-            <TextBlock Text="EXPORT QUEUE"
+            <TextBlock Text="Export Queue"
                        Classes="section-label"
                        VerticalAlignment="Center"/>
             <ProgressBar x:Name="ExportProgressBar"
@@ -24,7 +24,7 @@
                        Grid.Column="2"
                        Text="{Binding ExportProgressText}"
                        Foreground="{DynamicResource TextSecondary}"
-                       FontFamily="{StaticResource FontLabel}"
+                       FontFamily="{StaticResource FontBody}"
                        FontSize="9"
                        LetterSpacing="1"
                        VerticalAlignment="Center"/>

@@ -1,10 +1,13 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using HappyPhoton.Models;
@@ -18,7 +21,7 @@ namespace HappyPhoton.Tests;
 public sealed class EditHistoryPanelTests
 {
     [AvaloniaFact]
-    public async Task DevelopShowsBoundedHistoryAbovePresetsWithCurrentStepAndClear()
+    public async Task DevelopShowsPresetsAboveBoundedHistoryWithCurrentStepAndClear()
     {
         using var root = new TemporaryDirectory();
         using var catalog = new CatalogService(root.Path);
@@ -54,8 +57,8 @@ public sealed class EditHistoryPanelTests
             var clear = history.FindControl<Button>("ClearHistoryButton")!;
             var rows = history.GetVisualDescendants().OfType<Button>()
                 .Where(button => button.Classes.Contains("history-row")).ToArray();
-            // The same 8px breathing row the Navigator gets separates History from Presets.
-            Assert.True(presets.Bounds.Top - history.Bounds.Bottom >= 8);
+            // The same 8px breathing row the Navigator gets separates Presets from History.
+            Assert.True(history.Bounds.Top - presets.Bounds.Bottom >= 8);
             Assert.Equal(ScrollBarVisibility.Hidden,
                 history.GetVisualDescendants().OfType<ScrollViewer>().First().VerticalScrollBarVisibility);
             Assert.True(history.Bounds.Height <= shared.Bounds.Height * .4 + 1);
@@ -104,6 +107,18 @@ public sealed class EditHistoryPanelTests
             var currentRow = history.GetVisualDescendants().OfType<Button>()
                 .Single(row => row.Classes.Contains("history-row") &&
                                row.Classes.Contains("current"));
+            var currentPresenter = currentRow.GetVisualDescendants()
+                .OfType<ContentPresenter>()
+                .Single(presenter => presenter.Name == "PART_ContentPresenter");
+            Assert.Equal(
+                ThemeResourceTests.Brush("ControlSelected", ThemeVariant.Dark).Color,
+                Assert.IsType<SolidColorBrush>(currentPresenter.Background).Color);
+            ((IPseudoClasses)currentRow.Classes).Set(":pointerover", true);
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal(
+                ThemeResourceTests.Brush("SurfaceBright", ThemeVariant.Dark).Color,
+                Assert.IsType<SolidColorBrush>(currentPresenter.Background).Color);
+            ((IPseudoClasses)currentRow.Classes).Set(":pointerover", false);
             currentRow.ContextMenu!.Open(currentRow);
             Dispatcher.UIThread.RunJobs();
             Assert.False(Assert.Single(

@@ -21,8 +21,8 @@
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
         <Style Selector="ToggleButton.wb-picker:checked">
-            <Setter Property="Background" Value="{StaticResource PrimaryContainer}"/>
-            <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
         </Style>
         <Style Selector="Button.wb-auto">
             <Setter Property="MinWidth" Value="50"/>
@@ -31,7 +31,7 @@
             <Setter Property="MaxHeight" Value="28"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="ToggleButton.wb-picker">
             <Setter Property="MinWidth" Value="28"/>
@@ -39,10 +39,10 @@
             <Setter Property="Height" Value="28"/>
             <Setter Property="MaxHeight" Value="28"/>
             <Setter Property="Padding" Value="6"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="TextBlock.edit-control-label">
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -95,10 +95,13 @@
                                     Classes="color-dependent"
                                     Spacing="4"
                                     IsEnabled="{Binding IsColorEditingEnabled}">
-                            <TextBlock x:Name="WhiteBalanceHeading"
-                                       Classes="section-label"
-                                       Text="WHITE BALANCE"
-                                       Margin="0,2,0,12"/>
+                            <Border BorderBrush="{DynamicResource Divider}"
+                                    BorderThickness="0,1,0,0"
+                                    Margin="0,1,0,12">
+                                <TextBlock x:Name="WhiteBalanceHeading"
+                                           Classes="section-label"
+                                           Text="White Balance"/>
+                            </Border>
 
                             <Grid ColumnDefinitions="*,Auto,Auto"
                                   Height="28"
@@ -124,7 +127,7 @@
                                               ToolTip.Tip="White balance eyedropper (W)">
                                     <Viewbox Width="16" Height="16">
                                         <Canvas Width="24" Height="24">
-                                            <Path Stroke="{StaticResource Primary}"
+                                            <Path Stroke="{DynamicResource TextPrimary}"
                                                   StrokeThickness="1.8"
                                                   StrokeLineCap="Round"
                                                   StrokeJoin="Round"
@@ -175,9 +178,11 @@
                             </views:CompactSlider>
                         </StackPanel>
 
-                        <TextBlock Classes="section-label"
-                                   Text="ADJUSTMENTS"
-                                   Margin="0,20,0,8"/>
+                        <Border BorderBrush="{DynamicResource Divider}"
+                                BorderThickness="0,1,0,0"
+                                Margin="0,19,0,8">
+                            <TextBlock Classes="section-label" Text="Adjustments"/>
+                        </Border>
 
                         <views:CompactSlider Label="Exposure"
                                              Value="{Binding Exposure}"
@@ -260,18 +265,9 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
                             <Border Grid.Column="2"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
-                                    Padding="5,1"
-                                    BorderBrush="{DynamicResource OutlineVariant}"
-                                    BorderThickness="1"
-                                    CornerRadius="99">
-                                <TextBlock Text="RAW"
-                                           FontFamily="{StaticResource FontLabel}"
-                                           FontSize="8"
-                                           FontWeight="SemiBold"
-                                           LetterSpacing="1"
-                                           Foreground="{DynamicResource TextMuted}"/>
+                                    Classes="raw-chip"
+                                    HorizontalAlignment="Right">
+                                <TextBlock Text="RAW"/>
                             </Border>
                         </Grid>
 

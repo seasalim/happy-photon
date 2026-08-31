@@ -30,7 +30,7 @@ public sealed class BrowseThumbnailSizeTests
     [Theory]
     [InlineData(BrowseThumbnailSize.Small, 120, 80, 5, 5)]
     [InlineData(BrowseThumbnailSize.Medium, 180, 120, 4, 4)]
-    [InlineData(BrowseThumbnailSize.Large, 280, 187, 2, 2)]
+    [InlineData(BrowseThumbnailSize.Large, 280, 187, 2, 3)]
     public void Geometry_DrivesGridCalculations(
         BrowseThumbnailSize size,
         double width,

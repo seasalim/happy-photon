@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using HappyPhoton.Models;
@@ -16,6 +17,100 @@ namespace HappyPhoton.Tests;
 
 public sealed class SliderAndFooterMetricTests
 {
+    [AvaloniaFact]
+    public async Task ControlBars_SplitActionsFromViewStateWithoutGrowingFootprint()
+    {
+        using var root = new TemporaryDirectory();
+        using var catalog = new CatalogService(Path.Combine(root.Path, "catalog"));
+        await using var vm = new MainWindowViewModel(
+            catalog,
+            new NullBaseLoader(),
+            _ => Task.CompletedTask);
+        vm.SelectedImage = new ImageFile(Path.Combine(root.Path, "image.jpg"));
+        var browse = new BrowseGridFooter { DataContext = vm };
+        var browseHost = new StackPanel { Children = { browse } };
+        var browseWindow = new Window { Width = 800, Height = 200, Content = browseHost };
+        browseWindow.Show();
+        Dispatcher.UIThread.RunJobs();
+        var develop = new DevelopViewerPane { DataContext = vm };
+        var developWindow = new Window { Width = 800, Height = 600, Content = develop };
+        developWindow.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var browseSurface = browse.FindControl<Border>("BrowseFooterSurface")!;
+        var browseActions = browse.FindControl<ImageAssessmentControl>("ImageAssessment")!;
+        var browseState = browse.FindControl<StackPanel>("ThumbnailSizePanel")!;
+        var developBar = develop.FindControl<Border>("DevelopControlBar")!;
+        var developActions = develop.FindControl<StackPanel>(
+            "DevelopImageActionsPanel")!;
+        var developState = develop.FindControl<StackPanel>(
+            "DevelopViewStatePanel")!;
+
+        Assert.True(
+            browseSurface.Bounds.Height <= 38,
+            $"The shortened Browse footer measured {browseSurface.Bounds.Height}px; " +
+            $"padding={browseSurface.Padding}; actions={browseActions.Bounds}; " +
+            $"state={browseState.Bounds}.");
+        AssertAnchoredAtOppositeEnds(browseSurface, browseActions, browseState);
+        AssertAnchoredAtOppositeEnds(developBar, developActions, developState);
+        Assert.True(
+            developActions.Bounds.Width + developState.Bounds.Width +
+            developBar.Padding.Left + developBar.Padding.Right <= 683,
+            "The split Develop groups exceed the measured 683px baseline.");
+
+        browseWindow.Close();
+        developWindow.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task RawChipsShareBodyFaceAndSize()
+    {
+        using var root = new TemporaryDirectory();
+        using var catalog = new CatalogService(Path.Combine(root.Path, "catalog"));
+        await using var vm = new MainWindowViewModel(
+            catalog,
+            new NullBaseLoader(),
+            _ => Task.CompletedTask);
+        vm.IsDevelopMode = true;
+        vm.SelectedImage = new ImageFile(Path.Combine(root.Path, "image.dng"));
+        var panel = new DevelopEditPanel { DataContext = vm };
+        var window = new Window { Width = 260, Height = 700, Content = panel };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var chips = panel.GetVisualDescendants().OfType<Border>()
+            .Where(border => border.Classes.Contains("raw-chip"))
+            .ToArray();
+        Assert.Equal(2, chips.Length);
+        Assert.All(chips, chip =>
+        {
+            var text = Assert.IsType<TextBlock>(chip.Child);
+            Assert.Equal(10, text.FontSize);
+            Assert.Equal(
+                ThemeResourceTests.Resource<FontFamily>("FontBody", ThemeVariant.Dark),
+                text.FontFamily);
+            Assert.Equal(new Thickness(5, 1), chip.Padding);
+            Assert.Equal(new Thickness(1), chip.BorderThickness);
+        });
+        Assert.Equal(
+            ["Clip", "Blend"],
+            panel.FindControl<ListBox>("HighlightHandlingControl")!
+                .GetVisualDescendants().OfType<TextBlock>()
+                .Where(text => text.IsEffectivelyVisible)
+                .Select(text => text.Text!)
+                .ToArray());
+        Assert.Equal(
+            ["Fine", "Med", "Coarse"],
+            panel.FindControl<EffectsEditGroup>("EffectsEditGroup")!
+                .FindControl<ListBox>("GrainSizeControl")!
+                .GetVisualDescendants().OfType<TextBlock>()
+                .Where(text => text.IsEffectivelyVisible)
+                .Select(text => text.Text!)
+                .ToArray());
+
+        window.Close();
+    }
+
     [AvaloniaFact]
     public async Task ProductionSliderLabels_FitTheSharedLabelColumn()
     {
@@ -148,5 +243,20 @@ public sealed class SliderAndFooterMetricTests
         };
         probe.Measure(Size.Infinity);
         return probe.DesiredSize.Width;
+    }
+
+    private static void AssertAnchoredAtOppositeEnds(
+        Border surface,
+        Control actions,
+        Control state)
+    {
+        var actionOrigin = actions.TranslatePoint(default, surface)!.Value;
+        var stateOrigin = state.TranslatePoint(default, surface)!.Value;
+        Assert.Equal(surface.Padding.Left, actionOrigin.X, precision: 3);
+        Assert.Equal(
+            surface.Bounds.Width - surface.Padding.Right,
+            stateOrigin.X + state.Bounds.Width,
+            precision: 3);
+        Assert.True(actionOrigin.X + actions.Bounds.Width <= stateOrigin.X);
     }
 }

@@ -34,7 +34,7 @@
                            Classes="tour-region"
                            Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                            Text="Filter" FontSize="10" Foreground="{DynamicResource TextMuted}"
-                           FontFamily="{StaticResource FontLabel}"
+                           FontFamily="{StaticResource FontBody}"
                            VerticalAlignment="Center" Margin="0,0,7,0"/>
 
                 <Grid Grid.Column="1" ClipToBounds="True">
@@ -49,14 +49,14 @@
                         <Button x:Name="FilterJpegButton" Content="JPEG" Classes="filter"
                                 Click="OnFilterJpegClick"/>
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
-                        <TextBlock Text="Pick" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                        <TextBlock Text="Pick" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontBody}"
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
                         <Button x:Name="FlagFilterPickedButton" Content="Picked" Classes="filter"
                                 Click="OnFlagFilterPickedClick"/>
                         <Button x:Name="FlagFilterRejectedButton" Content="Rejected" Classes="filter"
                                 Click="OnFlagFilterRejectedClick"/>
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
-                        <TextBlock Text="Rating" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontLabel}"
+                        <TextBlock Text="Rating" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontBody}"
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
                         <views:BrowseRatingFilter x:Name="RatingFilter"
                             MinimumRating="{Binding MinimumRating, ElementName=Root, Mode=TwoWay}"/>
@@ -151,6 +151,7 @@
                                 Classes="thumbnail"
                                 Classes.selected="{Binding IsSelected}"
                                 Classes.active="{Binding IsActive}"
+                                ToolTip.Tip="{Binding GridToolTip}"
                                 PointerPressed="OnThumbnailPointerPressed"
                                 PointerEntered="OnThumbnailPointerEntered"
                                 PointerExited="OnThumbnailPointerExited"
@@ -191,7 +192,11 @@
                                     <Border Background="{DynamicResource SurfaceHigh}" CornerRadius="8"
                                             IsVisible="{Binding !IsRaw}"/>
                                     <!-- Thumbnail content -->
-                                    <Border CornerRadius="8" ClipToBounds="True">
+                                    <Border x:Name="ThumbnailContentClip" CornerRadius="8">
+                                        <Border.Clip>
+                                            <RectangleGeometry Rect="{Binding Bounds, ElementName=ThumbnailContentClip}"
+                                                               RadiusX="8" RadiusY="8"/>
+                                        </Border.Clip>
                                         <Panel>
                                             <Image Source="{Binding Thumbnail}"
                                                    Stretch="Uniform"
@@ -208,10 +213,10 @@
                                                         VerticalAlignment="Center"
                                                         Spacing="2">
                                                 <TextBlock Text="☁" FontSize="24"
-                                                           Foreground="{StaticResource PrimaryContainer}"
+                                                           Foreground="{DynamicResource ControlActive}"
                                                            HorizontalAlignment="Center"/>
-                                                <TextBlock Text="ONLINE" FontSize="9"
-                                                           FontFamily="{StaticResource FontLabel}"
+                                                <TextBlock Text="Online" FontSize="9"
+                                                           FontFamily="{StaticResource FontBody}"
                                                            Foreground="{DynamicResource TextMuted}"/>
                                             </StackPanel>
                                         </Panel>
@@ -219,7 +224,7 @@
                                     <Border Classes="img-hairline" CornerRadius="8"
                                             IsHitTestVisible="False"/>
                                     <Border Background="{DynamicResource SurfaceHighest}"
-                                            BorderBrush="{StaticResource PrimaryContainer}"
+                                            BorderBrush="{DynamicResource ControlActive}"
                                             BorderThickness="1"
                                             CornerRadius="999"
                                             Padding="5,1"
@@ -229,12 +234,12 @@
                                             IsVisible="{Binding SourceRequiresHydration}"
                                             ToolTip.Tip="Online-only original">
                                         <TextBlock Text="☁" FontSize="10"
-                                                   Foreground="{StaticResource PrimaryContainer}"/>
+                                                   Foreground="{DynamicResource ControlActive}"/>
                                     </Border>
                                     <Border Background="{DynamicResource ErrorContainer}" CornerRadius="999"
                                             Padding="6,2" Margin="0,5,5,0" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                             IsVisible="{Binding HasVisibleLoadFailure}" ToolTip.Tip="{Binding LoadFailureText}">
-                                        <TextBlock Text="!" FontFamily="{StaticResource FontLabel}" FontWeight="Bold"
+                                        <TextBlock Text="!" FontFamily="{StaticResource FontBody}" FontWeight="Bold"
                                                    Foreground="{DynamicResource OnErrorContainer}"/>
                                     </Border>
                                     <Border Width="4" HorizontalAlignment="Left"
@@ -282,53 +287,35 @@
                                 </Panel>
                                 <Grid Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
                                       Margin="0,5,0,0"
-                                      RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
-                                    <TextBlock Grid.Row="0" Grid.Column="0"
-                                               Text="{Binding FileName}"
-                                               FontSize="11" Foreground="{DynamicResource TextSecondary}"
-                                               TextTrimming="CharacterEllipsis"
-                                               ToolTip.Tip="{Binding FileName}"/>
-                                    <Border Grid.Row="0" Grid.Column="1"
-                                            Background="{StaticResource PrimaryContainer}"
-                                            CornerRadius="{StaticResource RadiusSmall}"
-                                            Padding="4,1" Margin="6,0,0,0"
-                                            IsVisible="{Binding HasVersions}"
-                                            ToolTip.Tip="Version">
-                                        <TextBlock Text="{Binding VersionDisplayLabel}"
-                                                   FontSize="9"
-                                                   MaxWidth="72"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   FontFamily="{StaticResource FontLabel}"
-                                                   Foreground="{StaticResource OnPrimary}"/>
-                                    </Border>
-                                    <Border Grid.Row="0" Grid.Column="2"
-                                            Background="{StaticResource Tertiary}"
-                                            CornerRadius="{StaticResource RadiusSmall}"
-                                            Padding="4,1"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Center"
-                                            Margin="6,0,8,0"
-                                            IsVisible="{Binding HasEdits}"
-                                            ToolTip.Tip="Has edits">
-                                        <TextBlock Text="EDIT" FontSize="9" FontWeight="SemiBold"
-                                                   FontFamily="{StaticResource FontLabel}"
-                                                   Foreground="{StaticResource OnTertiary}"/>
-                                    </Border>
-                                    <Grid Grid.Row="1" Grid.ColumnSpan="3" ColumnDefinitions="*,Auto"
-                                          Margin="0,2,0,0">
-                                        <StackPanel Orientation="Horizontal" Spacing="3">
-                                            <Border Background="{StaticResource PrimaryContainer}" CornerRadius="2"
+                                      ColumnDefinitions="*,Auto">
+                                    <StackPanel Orientation="Horizontal" Spacing="3">
+                                            <Border Background="{DynamicResource ControlActive}"
+                                                    CornerRadius="{StaticResource RadiusSmall}"
+                                                    Padding="4,1"
+                                                    IsVisible="{Binding HasVersions}"
+                                                    ToolTip.Tip="Version">
+                                                <TextBlock Text="{Binding VersionDisplayLabel}"
+                                                           FontSize="9"
+                                                           MaxWidth="72"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           FontFamily="{StaticResource FontBody}"
+                                                           Foreground="{DynamicResource OnControlActive}"/>
+                                            </Border>
+                                            <Border Background="{DynamicResource ControlActive}" CornerRadius="2"
                                                     Padding="3,0" IsVisible="{Binding IsPicked}" ToolTip.Tip="Picked">
                                                 <TextBlock Text="P" FontSize="9" FontWeight="SemiBold"
-                                                           Foreground="{StaticResource OnPrimary}"/>
+                                                           Foreground="{DynamicResource OnControlActive}"/>
                                             </Border>
-                                            <Border Background="{StaticResource ErrorContainer}" CornerRadius="2"
-                                                    Padding="3,0" IsVisible="{Binding IsRejected}" ToolTip.Tip="Rejected">
+                                            <Border Background="{StaticResource RejectSurface}"
+                                                    BorderBrush="{StaticResource RejectOutline}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="2" Padding="3,0"
+                                                    IsVisible="{Binding IsRejected}" ToolTip.Tip="Rejected">
                                                 <TextBlock Text="X" FontSize="9" FontWeight="SemiBold"
-                                                           Foreground="{StaticResource OnErrorContainer}"/>
+                                                           Foreground="{StaticResource RejectGlyph}"/>
                                             </Border>
                                             <TextBlock Text="{Binding RatingStars}" FontSize="10"
-                                                       Foreground="{StaticResource SecondaryContainer}"
+                                                       Foreground="{DynamicResource TextPrimary}"
                                                        VerticalAlignment="Center" IsVisible="{Binding HasRating}"
                                                        ToolTip.Tip="Rating"/>
                                             <Border x:Name="RawJpegPairChip"
@@ -337,7 +324,7 @@
                                                     IsVisible="{Binding IsRawJpegPair}"
                                                     ToolTip.Tip="RAW+JPEG pair">
                                                 <TextBlock Text="J+R"
-                                                           FontFamily="{StaticResource FontLabel}"
+                                                           FontFamily="{StaticResource FontBody}"
                                                            FontSize="9"
                                                            FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextSecondary}"/>
@@ -354,14 +341,23 @@
                                                            FontWeight="SemiBold"
                                                            Foreground="{x:Static views:HappyPhotonColors.BurstChipInk}"/>
                                             </Border>
-                                        </StackPanel>
-                                        <Border Grid.Column="1" Width="12" Height="12" CornerRadius="999"
-                                                Margin="3,0,8,0" VerticalAlignment="Center"
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3"
+                                                Margin="3,0,8,0">
+                                        <Border Background="Transparent"
+                                                Padding="2,1"
+                                                IsVisible="{Binding HasEdits}"
+                                                ToolTip.Tip="Has edits">
+                                            <TextBlock Text="±" FontSize="11"
+                                                       Foreground="{DynamicResource TextMuted}"/>
+                                        </Border>
+                                        <Border Width="12" Height="12" CornerRadius="999"
+                                                VerticalAlignment="Center"
                                                 Classes="color-label-marker"
                                                 IsVisible="{Binding HasColorLabel}" IsHitTestVisible="False"
                                                 ToolTip.Tip="Color label"
                                                 Background="{Binding ColorLabel, Converter={StaticResource ColorLabelBrushConverter}}"/>
-                                    </Grid>
+                                    </StackPanel>
                                 </Grid>
                             </StackPanel>
                         </Border>

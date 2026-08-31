@@ -82,9 +82,9 @@ public sealed class WaveformScopeUiTests : IDisposable
         var options = vm.ScopeOptions;
 
         Assert.Equal(
-            ["HISTOGRAM", "WAVEFORM", "RAW HISTOGRAM"],
+            ["Histogram", "Waveform", "RAW Histogram"],
             options.Select(option => option.DisplayName));
-        Assert.Equal("HISTOGRAM", title.Text);
+        Assert.Equal("Histogram", title.Text);
         Assert.True(histogramButton.IsChecked);
         Assert.False(waveformButton.IsChecked);
         Assert.False(rawButton.IsChecked);
@@ -100,7 +100,7 @@ public sealed class WaveformScopeUiTests : IDisposable
         waveformButton.Command!.Execute(waveformButton.CommandParameter);
         Dispatcher.UIThread.RunJobs();
         Assert.Same(options, vm.ScopeOptions);
-        Assert.Equal("WAVEFORM", title.Text);
+        Assert.Equal("Waveform", title.Text);
         Assert.False(histogramButton.IsChecked);
         Assert.True(waveformButton.IsChecked);
         Assert.False(histogram.IsVisible);
@@ -112,7 +112,7 @@ public sealed class WaveformScopeUiTests : IDisposable
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(ScopeView.RawHistogram, vm.SelectedScope);
         Assert.Equal(ScopeView.Histogram, vm.EffectiveScope);
-        Assert.Equal("HISTOGRAM", title.Text);
+        Assert.Equal("Histogram", title.Text);
         Assert.True(histogramButton.IsChecked);
         Assert.False(rawButton.IsChecked);
         Assert.True(histogram.IsVisible);
@@ -135,7 +135,7 @@ public sealed class WaveformScopeUiTests : IDisposable
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
-            "HISTOGRAM",
+            "Histogram",
             pane.FindControl<TextBlock>("BrowseHistogramHeader")!.Text);
         Assert.NotNull(pane.FindControl<Border>("BrowseHistogramBox"));
         Assert.NotNull(pane.FindControl<HistogramView>("BrowseHistogram"));

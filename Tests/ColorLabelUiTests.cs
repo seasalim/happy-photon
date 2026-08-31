@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using HappyPhoton.Models;
@@ -99,6 +100,10 @@ public sealed class ColorLabelUiTests
         var bursts = control.FindControl<Button>("BurstsButton")!;
         var pairs = control.FindControl<Button>("PairsButton")!;
         var filterLabel = control.FindControl<TextBlock>("FilterLabel")!;
+        var medium = control.FindControl<RadioButton>("MediumThumbnailButton")!;
+        Assert.Equal(
+            ThemeResourceTests.Brush("ControlSelected", Avalonia.Styling.ThemeVariant.Dark).Color,
+            Assert.IsAssignableFrom<ISolidColorBrush>(medium.Background).Color);
         Assert.IsType<PathIcon>(bursts.Content);
         Assert.Contains("view-toggle", bursts.Classes);
         Assert.DoesNotContain("filter", bursts.Classes);
@@ -119,7 +124,7 @@ public sealed class ColorLabelUiTests
         Assert.Equal("Pair RAW+JPEG", ToolTip.GetTip(pairs));
         Assert.Equal("Pair RAW+JPEG", AutomationProperties.GetName(pairs));
         Assert.Equal("J+R", Assert.IsType<TextBlock>(pairs.Content).Text);
-        Assert.Contains("JetBrains Mono",
+        Assert.Contains("Hanken Grotesk",
             Assert.IsType<TextBlock>(pairs.Content).FontFamily.ToString());
         Assert.Null(control.FindControl<Button>("FilterAllButton"));
         Assert.Null(control.FindControl<Button>("FlagFilterAllButton"));
@@ -165,6 +170,9 @@ public sealed class ColorLabelUiTests
         Click(pairs);
         Assert.True(control.ShowPairs);
         Assert.Contains("active", pairs.Classes);
+        Assert.Equal(
+            ThemeResourceTests.Brush("ControlSelected", Avalonia.Styling.ThemeVariant.Dark).Color,
+            Assert.IsAssignableFrom<ISolidColorBrush>(pairs.Background).Color);
         Click(pairs);
         Assert.False(control.ShowPairs);
         Assert.DoesNotContain("active", pairs.Classes);
@@ -310,7 +318,7 @@ public sealed class ColorLabelUiTests
         Assert.Equal("Show select label only", ToolTip.GetTip(red));
         Click(red);
         Assert.Equal(ColorLabelFilter.Red, control.Filter);
-        Assert.Equal(HappyPhotonColors.Primary, redDot.BorderBrush);
+        Assert.Equal(HappyPhotonColors.ControlActive, redDot.BorderBrush);
         Click(red);
         Assert.Equal(ColorLabelFilter.All, control.Filter);
 

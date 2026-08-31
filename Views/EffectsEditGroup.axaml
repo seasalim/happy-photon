@@ -9,7 +9,7 @@
              x:DataType="vm:MainWindowViewModel">
     <UserControl.Styles>
         <Style Selector="TextBlock.effects-control-label">
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -25,8 +25,9 @@
         </Style>
     </UserControl.Styles>
 
+    <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0">
     <StackPanel Spacing="4">
-        <TextBlock Classes="section-label" Text="EFFECTS" Margin="0,20,0,8"/>
+        <TextBlock Classes="section-label" Text="Effects" Margin="0,19,0,8"/>
         <views:CompactSlider x:Name="VignetteSlider"
                              Label="Vignette"
                              Value="{Binding Vignette}"
@@ -75,4 +76,5 @@
             </ListBox>
         </Grid>
     </StackPanel>
+    </Border>
 </UserControl>

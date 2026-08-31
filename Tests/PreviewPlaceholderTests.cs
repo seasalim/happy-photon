@@ -360,7 +360,7 @@ public sealed class PreviewPlaceholderTests
         Assert.Equal("Undo edit", AutomationProperties.GetName(undo));
         Assert.Equal("Redo edit", AutomationProperties.GetName(redo));
         Assert.Equal("Reset adjustments", AutomationProperties.GetName(reset));
-        Assert.Equal("EXPORT", exportButton.Content);
+        Assert.Equal("Export", exportButton.Content);
         Assert.Equal(HorizontalAlignment.Center,
             exportButton.HorizontalContentAlignment);
         Assert.Equal(1, outputSharpening.SelectedIndex);
@@ -392,7 +392,7 @@ public sealed class PreviewPlaceholderTests
         Assert.Equal(28, whiteBalancePicker.Height);
         Assert.Equal(28, whiteBalancePicker.MinWidth);
         Assert.Equal(12, whiteBalanceHeading.FontSize);
-        Assert.Equal(1, whiteBalanceHeading.LetterSpacing);
+        Assert.Equal(0, whiteBalanceHeading.LetterSpacing);
         Assert.Same(placeholder, developPlaceholder.Source);
         Assert.Same(placeholder, fullScreenPlaceholder.Source);
         Assert.True(developPlaceholder.IsVisible);

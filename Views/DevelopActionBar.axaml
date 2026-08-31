@@ -9,10 +9,10 @@
             <Setter Property="Height" Value="24"/>
             <Setter Property="Padding" Value="4,0"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ControlActive}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="LetterSpacing" Value="1"/>
@@ -21,11 +21,11 @@
         </Style>
         <Style Selector="Button.develop-reset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.develop-reset /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ControlActive}"/>
         </Style>
         <Style Selector="Button.develop-reset:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
@@ -124,7 +124,7 @@
                 Classes="develop-reset"
                 VerticalAlignment="Center"
                 Command="{Binding ResetEditsCommand}"
-                Content="RESET"
+                Content="Reset"
                 ToolTip.Tip="Reset adjustments; crop and rotation are preserved"
                 AutomationProperties.Name="Reset adjustments"/>
     </Grid>

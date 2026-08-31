@@ -25,11 +25,11 @@
         <Style Selector="Border.key TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
             <Setter Property="FontSize" Value="10"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.about-link">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,5"/>
@@ -37,12 +37,12 @@
         </Style>
         <Style Selector="Button.about-link:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryHover}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
         </Style>
         <Style Selector="Button.about-link:focus-visible">
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlActive}"/>
         </Style>
     </Window.Styles>
 
@@ -121,7 +121,7 @@
                                            FontWeight="Bold"
                                            AutomationProperties.Name="Product name">
                                     <Run Text="Happy " Foreground="{DynamicResource TextPrimary}"/>
-                                    <Run Text="Photon" Foreground="{StaticResource PrimaryContainer}"/>
+                                    <Run Text="Photon" Foreground="{DynamicResource ControlActive}"/>
                                 </TextBlock>
                                 <TextBlock Text="A fast, non-destructive photo workflow for RAW and JPEG shoots."
                                            FontSize="13"
@@ -212,9 +212,9 @@
 
                         <StackPanel Spacing="7">
                             <TextBlock Text="GPL-3.0-or-later"
-                                       FontFamily="{StaticResource FontLabel}"
+                                       FontFamily="{StaticResource FontBody}"
                                        FontWeight="SemiBold"
-                                       Foreground="{StaticResource Primary}"/>
+                                       Foreground="{DynamicResource TextPrimary}"/>
                             <TextBlock Text="Original images are never modified. Happy Photon has no account, advertising, or product telemetry."
                                        Foreground="{DynamicResource TextSecondary}"
                                        TextWrapping="Wrap"/>

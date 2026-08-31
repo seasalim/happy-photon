@@ -15,7 +15,7 @@
     </Style>
     <Style Selector="TabItem.dialog-tab:focus-visible">
         <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-        <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
     <Style Selector="TabItem.dialog-tab:selected">
         <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>

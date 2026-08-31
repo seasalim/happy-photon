@@ -23,18 +23,18 @@
             <Setter Property="FontSize" Value="11"/>
         </Style>
         <Style Selector="Button.preset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
         </Style>
         <Style Selector="Button.preset.active">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.preset.active /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryContainer}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="Button.preset.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
         </Style>
 
     </UserControl.Styles>
@@ -42,7 +42,7 @@
     <Grid RowDefinitions="Auto,*">
         <!-- Header -->
         <Border Grid.Row="0" Background="{DynamicResource SurfaceLow}" Padding="10">
-            <TextBlock Classes="section-label" Text="PRESETS"/>
+            <TextBlock Classes="section-label" Text="Presets"/>
         </Border>
 
         <!-- Presets List -->
