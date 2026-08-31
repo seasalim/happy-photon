@@ -109,6 +109,8 @@ public sealed class ExportWorkspaceTests : IDisposable
         vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         vm.SwitchToDevelopCommand.Execute(null);
+        await TestWaits.UntilAsync(() =>
+            vm.IsHistoryLoaded && vm.PreviewImage != null);
         await vm.ToggleCropModeCommand.ExecuteAsync(null);
         vm.CurrentCrop = new CropRegion
         {

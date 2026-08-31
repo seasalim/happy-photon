@@ -26,7 +26,9 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
         vm.HlReconstruction = HlReconstructionMode.Blend;
         await TestWaits.UntilAsync(
             () => image.EditSettings.HlReconstruction ==
-                  HlReconstructionMode.Blend);
+                  HlReconstructionMode.Blend &&
+                  vm.PendingHistoryCommitTask is { IsCompleted: true } &&
+                  vm.CanUndo);
 
         Assert.True(vm.CanReset);
         Assert.True(vm.CanUndo);
