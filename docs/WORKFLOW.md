@@ -124,7 +124,9 @@ selection capture-date ranges.
 
 Use the three thumbnail buttons at the right edge of the Browse footer to change
 browsing density. **Small** shows the most photographs, **Medium** is the default, and
-**Large** provides a sharper comparison view. The choice is remembered across launches.
+**Large** provides a sharper comparison view. Each size sets a minimum cell width;
+cells expand evenly to fill the row while the gutter stays fixed. The choice is
+remembered across launches.
 When Large needs a better cached image, Happy Photon keeps the existing thumbnail
 visible while it upgrades locally available sources in the background. It never
 downloads an online-only original for that quality upgrade.

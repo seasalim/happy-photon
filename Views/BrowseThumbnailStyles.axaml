@@ -1,10 +1,10 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- Tile radius stays concentric with the image's radius 8 plus the 7px border+padding inset -->
+    <!-- Tile radius stays concentric with the image's radius 8 plus the 5px border+padding inset -->
     <Style Selector="Border.thumbnail">
         <Setter Property="Background" Value="{DynamicResource SurfaceLow}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="CornerRadius" Value="12"/>
         <Setter Property="BorderThickness" Value="2"/>
         <Setter Property="Transitions">
             <Transitions>
@@ -21,6 +21,38 @@
     </Style>
     <Style Selector="Border.thumbnail.active">
         <Setter Property="BorderBrush" Value="{DynamicResource ActiveImageRing}"/>
+    </Style>
+    <Style Selector="Path.corner-bite">
+        <Setter Property="Fill" Value="{DynamicResource SurfaceLow}"/>
+        <Setter Property="Width" Value="8"/>
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="Stretch" Value="None"/>
+        <Setter Property="IsHitTestVisible" Value="False"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Fill" Duration="0:0:0.13" Easing="QuadraticEaseOut"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Path.corner-bite.backdrop-bite">
+        <Setter Property="Fill" Value="{DynamicResource SurfaceHigh}"/>
+    </Style>
+    <Style Selector="Path.corner-bite.backdrop-bite.raw">
+        <Setter Property="Fill" Value="{DynamicResource RawFileBackground}"/>
+    </Style>
+    <Style Selector="Border.thumbnail:pointerover Path.corner-bite">
+        <Setter Property="Fill" Value="{DynamicResource ControlHover}"/>
+    </Style>
+    <Style Selector="Border.thumbnail.selected Path.corner-bite">
+        <Setter Property="Fill" Value="{DynamicResource SelectionSurface}"/>
+    </Style>
+    <Style Selector="Border.thumbnail:pointerover Path.corner-bite.backdrop-bite,
+                     Border.thumbnail.selected Path.corner-bite.backdrop-bite">
+        <Setter Property="Fill" Value="{DynamicResource SurfaceHigh}"/>
+    </Style>
+    <Style Selector="Border.thumbnail:pointerover Path.corner-bite.backdrop-bite.raw,
+                     Border.thumbnail.selected Path.corner-bite.backdrop-bite.raw">
+        <Setter Property="Fill" Value="{DynamicResource RawFileBackground}"/>
     </Style>
     <Style Selector="Border.img-hairline">
         <Setter Property="BorderBrush" Value="Transparent"/>

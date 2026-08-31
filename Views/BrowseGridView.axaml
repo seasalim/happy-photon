@@ -137,17 +137,17 @@
                       VerticalScrollBarVisibility="Hidden"
                       IsVisible="{Binding IsBrowseGridVisible}"
                       x:Name="ThumbnailScrollViewer">
-            <ItemsRepeater x:Name="ThumbnailGrid" Margin="5">
+            <ItemsRepeater x:Name="ThumbnailGrid" Margin="4">
                 <ItemsRepeater.Layout>
-                    <UniformGridLayout MinItemWidth="{Binding ThumbnailItemWidth, ElementName=Root}"
+                    <UniformGridLayout MinItemWidth="{Binding ThumbnailMinimumItemWidth, ElementName=Root}"
                                        MinItemHeight="{Binding ThumbnailItemHeight, ElementName=Root}"
-                                       MinRowSpacing="5" MinColumnSpacing="5"
-                                       ItemsStretch="None"/>
+                                       MinRowSpacing="4" MinColumnSpacing="4"
+                                       ItemsStretch="Fill"/>
                 </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate DataType="models:ImageFile">
                         <Border x:Name="ThumbnailTile"
-                                Padding="5"
+                                Padding="3"
                                 Classes="thumbnail"
                                 Classes.selected="{Binding IsSelected}"
                                 Classes.active="{Binding IsActive}"
@@ -155,6 +155,7 @@
                                 PointerPressed="OnThumbnailPointerPressed"
                                 PointerEntered="OnThumbnailPointerEntered"
                                 PointerExited="OnThumbnailPointerExited"
+                                SizeChanged="OnThumbnailTileSizeChanged"
                                 DoubleTapped="OnThumbnailDoubleTapped">
                             <Border.ContextMenu>
                                 <ContextMenu Opened="OnThumbnailContextMenuOpened">
@@ -192,15 +193,30 @@
                                     <Border Background="{DynamicResource SurfaceHigh}" CornerRadius="8"
                                             IsVisible="{Binding !IsRaw}"/>
                                     <!-- Thumbnail content -->
-                                    <Border x:Name="ThumbnailContentClip" CornerRadius="8">
-                                        <Border.Clip>
-                                            <RectangleGeometry Rect="{Binding Bounds, ElementName=ThumbnailContentClip}"
-                                                               RadiusX="8" RadiusY="8"/>
-                                        </Border.Clip>
+                                    <Border x:Name="ThumbnailContentClip">
                                         <Panel>
-                                            <Image Source="{Binding Thumbnail}"
-                                                   Stretch="Uniform"
-                                                   IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                            <!-- The frame hugs the letterboxed image so the inner
+                                                 bites round the image's own corners; backdrop-colored
+                                                 fills match what sits behind the photo, and the
+                                                 card-colored viewport bites paint over them when the
+                                                 image runs full-bleed. -->
+                                            <Grid x:Name="ThumbnailImageFrame"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                <Image Source="{Binding Thumbnail}" Stretch="Uniform"/>
+                                                <Path Classes="corner-bite backdrop-bite" Classes.raw="{Binding IsRaw}"
+                                                      HorizontalAlignment="Left" VerticalAlignment="Top"
+                                                      Data="M 0,0 L 8,0 A 8,8 0 0 0 0,8 Z"/>
+                                                <Path Classes="corner-bite backdrop-bite" Classes.raw="{Binding IsRaw}"
+                                                      HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                      Data="M 8,0 L 0,0 A 8,8 0 0 1 8,8 Z"/>
+                                                <Path Classes="corner-bite backdrop-bite" Classes.raw="{Binding IsRaw}"
+                                                      HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                                      Data="M 0,8 L 0,0 A 8,8 0 0 0 8,8 Z"/>
+                                                <Path Classes="corner-bite backdrop-bite" Classes.raw="{Binding IsRaw}"
+                                                      HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                      Data="M 8,8 L 8,0 A 8,8 0 0 1 0,8 Z"/>
+                                            </Grid>
                                             <Border Name="TileLoadingPlaceholder"
                                                     Background="{DynamicResource SurfaceHighest}"
                                                     IsVisible="{Binding IsLoading}"
@@ -221,6 +237,18 @@
                                             </StackPanel>
                                         </Panel>
                                     </Border>
+                                    <!-- Solid corner bites: the GPU renderer draws bitmap
+                                         content square regardless of rounded clips or
+                                         rounded-fill brushes, so the card color is painted
+                                         back over the image corners instead. -->
+                                    <Path Classes="corner-bite" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                          Data="M 0,0 L 8,0 A 8,8 0 0 0 0,8 Z"/>
+                                    <Path Classes="corner-bite" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                          Data="M 8,0 L 0,0 A 8,8 0 0 1 8,8 Z"/>
+                                    <Path Classes="corner-bite" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                          Data="M 0,8 L 0,0 A 8,8 0 0 0 8,8 Z"/>
+                                    <Path Classes="corner-bite" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                          Data="M 8,8 L 8,0 A 8,8 0 0 1 0,8 Z"/>
                                     <Border Classes="img-hairline" CornerRadius="8"
                                             IsHitTestVisible="False"/>
                                     <Border Background="{DynamicResource SurfaceHighest}"
@@ -285,10 +313,13 @@
                                         </Border>
                                     </Button>
                                 </Panel>
+                                <!-- Alignment-based placement: an Auto column caches a
+                                     zero width when the dot's visibility flips on a recycled
+                                     container, pushing it outside the tile. -->
                                 <Grid Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
-                                      Margin="0,5,0,0"
-                                      ColumnDefinitions="*,Auto">
-                                    <StackPanel Orientation="Horizontal" Spacing="3">
+                                      Margin="0,3,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="3"
+                                                HorizontalAlignment="Left">
                                             <Border Background="{DynamicResource ControlActive}"
                                                     CornerRadius="{StaticResource RadiusSmall}"
                                                     Padding="4,1"
@@ -342,8 +373,8 @@
                                                            Foreground="{x:Static views:HappyPhotonColors.BurstChipInk}"/>
                                             </Border>
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3"
-                                                Margin="3,0,8,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="3"
+                                                HorizontalAlignment="Right" Margin="3,0,0,0">
                                         <Border Background="Transparent"
                                                 Padding="2,1"
                                                 IsVisible="{Binding HasEdits}"

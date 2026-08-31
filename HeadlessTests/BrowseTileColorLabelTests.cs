@@ -89,10 +89,12 @@ public sealed class BrowseTileColorLabelTests
             Assert.Contains(image.FileName, tooltip);
             Assert.Contains("6000×4000 pixels", tooltip);
             Assert.Contains("Aug 30, 2026", tooltip);
-            var roundedClip = Assert.IsType<RectangleGeometry>(clippedContent.Clip);
-            Assert.Equal(8, roundedClip.RadiusX);
-            Assert.Equal(8, roundedClip.RadiusY);
-            Assert.Equal(clippedContent.Bounds, roundedClip.Rect);
+            var bites = tile.GetVisualDescendants()
+                .OfType<Avalonia.Controls.Shapes.Path>()
+                .Where(path => path.Classes.Contains("corner-bite"))
+                .ToArray();
+            Assert.Equal(8, bites.Length);
+            Assert.All(bites, bite => Assert.False(bite.IsHitTestVisible));
             Assert.Equal(
                 ThemeResourceTests.Brush("RejectSurface", ThemeVariant.Dark).Color,
                 Assert.IsType<SolidColorBrush>(rejectBadge.Background).Color);
@@ -114,7 +116,7 @@ public sealed class BrowseTileColorLabelTests
             Assert.True(markerRight <= status.Bounds.Width);
 
             tile.Measure(new Size(
-                control.ThumbnailItemWidth,
+                tile.Bounds.Width,
                 double.PositiveInfinity));
             Assert.True(
                 marker.Bounds.Height <= 12,

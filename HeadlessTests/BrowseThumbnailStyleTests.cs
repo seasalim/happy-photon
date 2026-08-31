@@ -31,7 +31,7 @@ public sealed class BrowseThumbnailStyleTests
             control.GetVisualDescendants().OfType<Border>(),
             border => ReferenceEquals(border.DataContext, image) &&
                       border.Classes.Contains("thumbnail"));
-        Assert.Equal(new CornerRadius(14), tile.CornerRadius);
+        Assert.Equal(new CornerRadius(12), tile.CornerRadius);
         Assert.Equal(new Thickness(2), tile.BorderThickness);
         Assert.NotNull(tile.Background);
         Assert.NotNull(tile.Transitions);

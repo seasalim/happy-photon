@@ -28,9 +28,9 @@ public sealed class BrowseThumbnailSizeTests
             new ThumbnailSizeRequest(512, 192));
 
     [Theory]
-    [InlineData(BrowseThumbnailSize.Small, 120, 80, 5, 5)]
-    [InlineData(BrowseThumbnailSize.Medium, 180, 120, 4, 4)]
-    [InlineData(BrowseThumbnailSize.Large, 280, 187, 2, 3)]
+    [InlineData(BrowseThumbnailSize.Small, 116, 77, 6, 6)]
+    [InlineData(BrowseThumbnailSize.Medium, 176, 117, 4, 4)]
+    [InlineData(BrowseThumbnailSize.Large, 276, 184, 2, 3)]
     public void Geometry_DrivesGridCalculations(
         BrowseThumbnailSize size,
         double width,
@@ -45,6 +45,8 @@ public sealed class BrowseThumbnailSizeTests
         Assert.Equal(itemsPerRow, (int)Math.Floor(
             (780 + geometry.ColumnSpacing) /
             (geometry.ItemWidth + geometry.ColumnSpacing)));
+        Assert.Equal(width + 10, geometry.ItemWidth);
+        Assert.Equal(height + 35, geometry.ItemHeight);
         Assert.Equal(rowsPerPage, (int)Math.Floor(720 / geometry.RowHeight));
     }
 

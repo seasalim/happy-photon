@@ -102,10 +102,10 @@ public partial class BrowseGridView : UserControl
             nameof(ImageViewportHeight),
             view => view.ImageViewportHeight);
 
-    public static readonly DirectProperty<BrowseGridView, double> ThumbnailItemWidthProperty =
+    public static readonly DirectProperty<BrowseGridView, double> ThumbnailMinimumItemWidthProperty =
         AvaloniaProperty.RegisterDirect<BrowseGridView, double>(
-            nameof(ThumbnailItemWidth),
-            view => view.ThumbnailItemWidth);
+            nameof(ThumbnailMinimumItemWidth),
+            view => view.ThumbnailMinimumItemWidth);
 
     public static readonly DirectProperty<BrowseGridView, double> ThumbnailItemHeightProperty =
         AvaloniaProperty.RegisterDirect<BrowseGridView, double>(
