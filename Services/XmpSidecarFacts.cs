@@ -87,7 +87,7 @@ public readonly record struct XmpCropProjection(
         !CropsMatch(before.Crop, after.Crop) ||
         !GeometryMatches(before.Geometry, after.Geometry);
 
-    private static bool CropsMatch(CropRegion? left, CropRegion? right) =>
+    internal static bool CropsMatch(CropRegion? left, CropRegion? right) =>
         ReferenceEquals(left, right) ||
         left != null && right != null &&
         left.Left == right.Left && left.Top == right.Top &&

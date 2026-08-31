@@ -88,12 +88,19 @@ review the automatically updated report of what will change, and import. An impo
 never clears a local rating, flag, or color label, and never writes to Lightroom or an
 original photograph.
 
+Crop import is a separate option and is off by default. Enabling it clearly approves
+a header-only orientation check for each locally available crop candidate; Happy
+Photon never decodes the photo or downloads an online-only original for this check.
+Supported zero-angle Lightroom crops fill only images with no existing crop, rotation,
+horizon, or manual geometry. Existing geometry and unsupported angled or warped crops
+are left unchanged.
+
 The preview checks that each mapped photo file exists without opening it. Missing
 files are skipped; if none of the mapped photos exist, copy or mount the originals or
 correct the mappings before Apply becomes available. Unmapped locations, virtual
 copies, and unsupported files are informational skips, and when multiple Lightroom
 records map to one destination path the later record is used. “Nothing to import”
-means the source catalog has no ratings, flags, or labels; “Nothing matched” means its
+means the source catalog has no ratings, flags, labels, or supported crops; “Nothing matched” means its
 source paths need review. Re-running the same import performs no catalog writes when
 everything is already up to date.
 

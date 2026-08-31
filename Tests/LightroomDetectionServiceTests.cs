@@ -53,6 +53,31 @@ public sealed class LightroomDetectionServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task DetectAsync_CustomPicturesFolderOutranksDefaultLightroom()
+    {
+        var defaults = Directory.CreateDirectory(Path.Combine(_root.Path, "default-pictures"));
+        var lightroom = Directory.CreateDirectory(Path.Combine(defaults.FullName, "Lightroom"));
+        var defaultCatalog = Path.Combine(lightroom.FullName, "default.lrcat");
+        await File.WriteAllBytesAsync(defaultCatalog, [1]);
+        var custom = Directory.CreateDirectory(Path.Combine(_root.Path, "chosen"));
+        var customCatalog = Path.Combine(custom.FullName, "chosen.lrcat");
+        await File.WriteAllBytesAsync(customCatalog, [1]);
+        var archive = Directory.CreateDirectory(Path.Combine(custom.FullName, "archive"));
+        var staleCatalog = Path.Combine(archive.FullName, "stale.lrcat");
+        await File.WriteAllBytesAsync(staleCatalog, [1]);
+        File.SetLastWriteTimeUtc(staleCatalog, DateTime.UtcNow.AddDays(-30));
+        var service = CreateService(defaultPicturesRoot: defaults.FullName);
+
+        var chosenResult = await service.DetectAsync(custom.FullName, null);
+        var defaultResult = await service.DetectAsync(defaults.FullName, null);
+
+        Assert.Equal(customCatalog, chosenResult.CatalogPaths.First());
+        Assert.Contains(staleCatalog, chosenResult.CatalogPaths);
+        Assert.Contains(defaultCatalog, chosenResult.CatalogPaths);
+        Assert.Equal(defaultCatalog, defaultResult.CatalogPaths.First());
+    }
+
+    [Fact]
     public async Task DetectAsync_RespectsPerDirectoryEntryLimit()
     {
         var pictures = Directory.CreateDirectory(Path.Combine(_root.Path, "pictures"));
@@ -77,12 +102,15 @@ public sealed class LightroomDetectionServiceTests : IDisposable
     {
         var defaultPictures = Directory.CreateDirectory(Path.Combine(
             _root.Path, "default-pictures"));
-        var firstRoot = Directory.CreateDirectory(Path.Combine(
+        var lightroom = Directory.CreateDirectory(Path.Combine(
             defaultPictures.FullName, "Lightroom"));
         await File.WriteAllBytesAsync(
-            Path.Combine(firstRoot.FullName, "ordinary.jpg"), [1]);
+            Path.Combine(lightroom.FullName, "photos.lrcat"), [1]);
+        // The chosen root probes first and its lone entry exhausts the
+        // aggregate budget before the default Lightroom root is reached.
         var pictures = Directory.CreateDirectory(Path.Combine(_root.Path, "pictures"));
-        await File.WriteAllBytesAsync(Path.Combine(pictures.FullName, "photos.lrcat"), [1]);
+        await File.WriteAllBytesAsync(
+            Path.Combine(pictures.FullName, "ordinary.jpg"), [1]);
         var service = CreateService(
             defaultPicturesRoot: defaultPictures.FullName,
             totalEntryLimit: 1);

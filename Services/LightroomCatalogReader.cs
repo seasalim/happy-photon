@@ -1,5 +1,7 @@
 using HappyPhoton.Models;
 using Microsoft.Data.Sqlite;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace HappyPhoton.Services;
 
@@ -122,10 +124,17 @@ public sealed class LightroomCatalogReader
         var version = await ReadVersionAsync(connection, cancellationToken);
         var major = checked((int)(version / 100000));
         var carriedAxes = GetCarriedAxes(columns["Adobe_images"]);
-        var warnings = GetSchemaWarnings(carriedAxes);
+        var cropColumns = tables.Contains("Adobe_imageDevelopSettings")
+            ? await ReadColumnsAsync(connection, "Adobe_imageDevelopSettings", cancellationToken)
+            : [];
+        var carriesCrops = columns["Adobe_images"].Contains("orientation") &&
+            new[] { "image", "text", "fileWidth", "fileHeight", "croppedWidth", "croppedHeight" }
+                .All(cropColumns.Contains);
+        var warnings = GetSchemaWarnings(carriedAxes).ToList();
+        if (!carriesCrops) warnings.Add("Crops are unavailable in this catalog schema.");
         var roots = await ReadRootsAsync(connection, cancellationToken);
         var records = await ReadRecordsAsync(
-            connection, carriedAxes, colorLabelNames, cancellationToken);
+            connection, carriedAxes, carriesCrops, colorLabelNames, cancellationToken);
         var rootCounts = records
             .GroupBy(record => record.SourceRoot, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
@@ -234,6 +243,7 @@ public sealed class LightroomCatalogReader
     private static async Task<IReadOnlyList<CatalogImportRecord>> ReadRecordsAsync(
         SqliteConnection connection,
         AssessmentAxes carriedAxes,
+        bool carriesCrops,
         IReadOnlyDictionary<ColorLabel, string> colorLabelNames,
         CancellationToken cancellationToken)
     {
@@ -244,13 +254,22 @@ public sealed class LightroomCatalogReader
         if (carriedAxes.HasFlag(AssessmentAxes.Rating)) terms.Add("i.rating IS NOT NULL");
         if (carriedAxes.HasFlag(AssessmentAxes.Flag)) terms.Add("i.pick <> 0");
         if (carriedAxes.HasFlag(AssessmentAxes.Label)) terms.Add("i.colorLabels <> ''");
+        if (carriesCrops) terms.Add("ds.text IS NOT NULL");
         if (terms.Count == 0) return [];
+
+        var cropColumns = carriesCrops
+            ? "i.orientation, ds.text, ds.fileWidth, ds.fileHeight, ds.croppedWidth, ds.croppedHeight"
+            : "NULL, NULL, NULL, NULL, NULL, NULL";
+        var cropJoin = carriesCrops
+            ? "LEFT JOIN Adobe_imageDevelopSettings ds ON ds.image = i.id_local"
+            : string.Empty;
 
         using var command = connection.CreateCommand();
         command.CommandText = $"""
             SELECT rf.absolutePath, fo.pathFromRoot, fi.idx_filename,
-                   {rating}, {flag}, {label}, i.masterImage
+                   {rating}, {flag}, {label}, i.masterImage, {cropColumns}
             FROM Adobe_images i
+            {cropJoin}
             JOIN AgLibraryFile fi ON fi.id_local = i.rootFile
             JOIN AgLibraryFolder fo ON fo.id_local = fi.folder
             JOIN AgLibraryRootFolder rf ON rf.id_local = fo.rootFolder
@@ -262,15 +281,126 @@ public sealed class LightroomCatalogReader
         {
             var relativePath = (reader.IsDBNull(1) ? string.Empty : reader.GetString(1)) +
                                (reader.IsDBNull(2) ? string.Empty : reader.GetString(2));
-            result.Add(new CatalogImportRecord(
+            var crop = carriesCrops ? ReadCrop(reader, 7) : null;
+            var record = new CatalogImportRecord(
                 reader.GetString(0), relativePath,
                 ReadRating(reader, 3, carriedAxes),
                 ReadFlag(reader, 4, carriedAxes),
                 ReadLabel(reader, 5, carriedAxes, colorLabelNames),
-                !reader.IsDBNull(6)));
+                !reader.IsDBNull(6), crop);
+            if (record.Rating.Kind is CatalogImportFactKind.Empty or CatalogImportFactKind.NotCarried &&
+                record.Flag.Kind is CatalogImportFactKind.Empty or CatalogImportFactKind.NotCarried &&
+                record.ColorLabel.Kind is CatalogImportFactKind.Empty or CatalogImportFactKind.NotCarried &&
+                crop?.Kind is null or XmpFactKind.Empty)
+                continue;
+            result.Add(record);
         }
         return result;
     }
+
+    internal static LightroomCropFact ParseCrop(
+        string? blob, string? orientation, double? fileWidth, double? fileHeight,
+        double? croppedWidth, double? croppedHeight)
+    {
+        if (blob == null) return LightroomCropFact.Empty;
+        if (!TryScanTopLevel(blob, out var values)) return LightroomCropFact.Unsupported;
+        var edges = new[] { "CropLeft", "CropTop", "CropRight", "CropBottom" };
+        var present = edges.Count(values.ContainsKey);
+        if (present == 0) return LightroomCropFact.Empty;
+        if (present != 4 || !edges.Select(name => ParseNumber(values[name])).All(value => value is >= 0 and <= 1))
+            return LightroomCropFact.Unsupported;
+        var left = ParseNumber(values[edges[0]])!.Value;
+        var top = ParseNumber(values[edges[1]])!.Value;
+        var right = ParseNumber(values[edges[2]])!.Value;
+        var bottom = ParseNumber(values[edges[3]])!.Value;
+        if (left == 0 && top == 0 && right == 1 && bottom == 1) return LightroomCropFact.Empty;
+        if (left >= right || top >= bottom || !IsZero(values, "CropAngle") ||
+            !IsZero(values, "CropConstrainToWarp", allowFalse: true) || orientation != "AB" ||
+            fileWidth is not > 0 || fileHeight is not > 0 ||
+            croppedWidth is not > 0 || croppedHeight is not > 0 ||
+            Math.Abs((right - left) * fileWidth.Value - croppedWidth.Value) > 1 ||
+            Math.Abs((bottom - top) * fileHeight.Value - croppedHeight.Value) > 1)
+            return LightroomCropFact.Unsupported;
+        return new(XmpFactKind.Matched,
+            new CropRegion { Left = left, Top = top, Right = right, Bottom = bottom },
+            orientation);
+    }
+
+    private static LightroomCropFact ReadCrop(SqliteDataReader reader, int ordinal) =>
+        ParseCrop(reader.IsDBNull(ordinal + 1) ? null : reader.GetString(ordinal + 1),
+            reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal),
+            ReadNullableDouble(reader, ordinal + 2), ReadNullableDouble(reader, ordinal + 3),
+            ReadNullableDouble(reader, ordinal + 4), ReadNullableDouble(reader, ordinal + 5));
+
+    private static double? ReadNullableDouble(SqliteDataReader reader, int ordinal) =>
+        reader.IsDBNull(ordinal) ? null : double.TryParse(Convert.ToString(reader.GetValue(ordinal)),
+            NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && double.IsFinite(value)
+            ? value : null;
+
+    private static double? ParseNumber(string value) =>
+        double.TryParse(value.Trim().TrimEnd(','), NumberStyles.Float,
+            CultureInfo.InvariantCulture, out var parsed) && double.IsFinite(parsed) ? parsed : null;
+
+    private static bool IsZero(
+        IReadOnlyDictionary<string, string> values, string key, bool allowFalse = false) =>
+        !values.TryGetValue(key, out var text) || ParseNumber(text) == 0 ||
+        allowFalse && text.Trim().TrimEnd(',').Equals("false", StringComparison.OrdinalIgnoreCase);
+
+    private static bool TryScanTopLevel(string blob, out Dictionary<string, string> values)
+    {
+        values = new(StringComparer.Ordinal);
+        var depth = 0;
+        var quoted = false;
+        var escaped = false;
+        var duplicate = false;
+        var unconsumedCrop = false;
+        foreach (var line in blob.Replace("\r\n", "\n").Split('\n'))
+        {
+            var consumedCropIndex = -1;
+            if (depth == 1)
+            {
+                var match = TopLevelAssignment.Match(line);
+                if (!match.Success && line.TrimStart().StartsWith("Crop", StringComparison.Ordinal)) return false;
+                if (match.Success && !values.TryAdd(match.Groups[1].Value, match.Groups[2].Value))
+                    duplicate = true;
+                if (match.Success && match.Groups[1].Value.StartsWith("Crop", StringComparison.Ordinal))
+                    consumedCropIndex = match.Groups[1].Index;
+            }
+            for (var index = 0; index < line.Length; index++)
+            {
+                var character = line[index];
+                if (!quoted && depth == 1 && index != consumedCropIndex &&
+                    StartsCropAssignment(line, index))
+                    unconsumedCrop = true;
+                if (quoted)
+                {
+                    if (escaped) escaped = false;
+                    else if (character == '\\') escaped = true;
+                    else if (character == '"') quoted = false;
+                }
+                else if (character == '"') quoted = true;
+                else if (character == '{') depth++;
+                else if (character == '}') depth--;
+                if (depth < 0) return false;
+            }
+        }
+        return !duplicate && !unconsumedCrop && !quoted && depth == 0 &&
+            blob.TrimStart().StartsWith("s = {");
+    }
+
+    private static bool StartsCropAssignment(string line, int index)
+    {
+        if (!line.AsSpan(index).StartsWith("Crop") || index > 0 &&
+            (char.IsLetterOrDigit(line[index - 1]) || line[index - 1] == '_')) return false;
+        var end = index + 4;
+        while (end < line.Length && (char.IsLetterOrDigit(line[end]) || line[end] == '_')) end++;
+        while (end < line.Length && char.IsWhiteSpace(line[end])) end++;
+        return end < line.Length && line[end] == '=';
+    }
+
+    private static readonly Regex TopLevelAssignment = new(
+        @"^\s*([A-Za-z][A-Za-z0-9_]*)\s*=\s*(.*?)\s*,?\s*$",
+        RegexOptions.CultureInvariant);
 
     private static CatalogImportFact<int> ReadRating(
         SqliteDataReader reader, int ordinal, AssessmentAxes axes)

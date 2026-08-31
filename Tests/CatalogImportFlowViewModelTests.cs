@@ -113,6 +113,23 @@ public sealed class CatalogImportFlowViewModelTests
     }
 
     [Fact]
+    public async Task CropImportStartsOffAndOptInChecksAgain()
+    {
+        var harness = new FlowHarness();
+        using var flow = harness.CreateFlow();
+        await CompleteInitializationAsync(flow, harness);
+
+        Assert.False(flow.ImportCrops);
+        var cropRun = flow.SetImportCropsAsync(true);
+        Assert.True(harness.Requests[1].ImportCrops);
+        harness.Requests[1].Complete(1);
+        await cropRun;
+
+        Assert.True(flow.ImportCrops);
+        Assert.True(flow.CanApply);
+    }
+
+    [Fact]
     public async Task ApplyReceivesExactPreviewedPayload()
     {
         var harness = new FlowHarness();
@@ -211,12 +228,13 @@ public sealed class CatalogImportFlowViewModelTests
                     "source.lrcat",
                     new Dictionary<string, string> { [SourceRoot] = InitialPath },
                     new Dictionary<string, CatalogImportPolicy>())),
-                (source, mappings, policy, token) =>
+                (source, mappings, policy, importCrops, token) =>
                 {
                     var request = new PreviewRequest(
                         source,
                         new Dictionary<string, string>(mappings),
                         policy,
+                        importCrops,
                         token);
                     Requests.Add(request);
                     return request.Task;
@@ -234,6 +252,7 @@ public sealed class CatalogImportFlowViewModelTests
         LightroomCatalogContents source,
         IReadOnlyDictionary<string, string> mappings,
         CatalogImportPolicy policy,
+        bool importCrops,
         CancellationToken token)
     {
         private readonly TaskCompletionSource<CatalogImportPreview> _completion =
@@ -241,6 +260,7 @@ public sealed class CatalogImportFlowViewModelTests
 
         public IReadOnlyDictionary<string, string> Mappings { get; } = mappings;
         public CatalogImportPolicy Policy { get; } = policy;
+        public bool ImportCrops { get; } = importCrops;
         public CancellationToken Token { get; } = token;
         public Task<CatalogImportPreview> Task => _completion.Task;
         public CatalogImportPreview? Preview { get; private set; }

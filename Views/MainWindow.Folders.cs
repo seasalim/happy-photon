@@ -97,11 +97,14 @@ public partial class MainWindow
 
     private async Task<string?> PickLightroomCatalogPathAsync()
     {
+        var picturesPath = (DataContext as MainWindowViewModel)?.FirstRunPicturesPath;
         var files = await StorageProvider.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
                 Title = "Choose a Lightroom Classic Catalog",
                 AllowMultiple = false,
+                SuggestedStartLocation =
+                    await TryGetSuggestedStartFolderAsync(picturesPath),
                 FileTypeFilter =
                 [
                     new FilePickerFileType("Lightroom Classic catalog")

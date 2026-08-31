@@ -37,7 +37,8 @@ internal sealed class LightroomCatalogFixture : IDisposable
         if (includeRating) optional.Add("rating REAL");
         if (includeFlag) optional.Add("pick REAL");
         if (includeLabel) optional.Add("colorLabels TEXT");
-        Execute($"CREATE TABLE Adobe_images (rootFile INTEGER, masterImage INTEGER{(optional.Count == 0 ? "" : ", " + string.Join(", ", optional))});");
+        Execute($"CREATE TABLE Adobe_images (id_local INTEGER PRIMARY KEY, rootFile INTEGER, masterImage INTEGER, orientation TEXT{(optional.Count == 0 ? "" : ", " + string.Join(", ", optional))});");
+        Execute("CREATE TABLE Adobe_imageDevelopSettings (image INTEGER, text TEXT, fileWidth REAL, fileHeight REAL, croppedWidth REAL, croppedHeight REAL);");
     }
 
     public void AddPhoto(
@@ -58,11 +59,12 @@ internal sealed class LightroomCatalogFixture : IDisposable
             ("@id", id), ("@folder", id), ("@name", fileName));
 
         var columns = GetImageColumns();
-        var names = new List<string> { "rootFile", "masterImage" };
-        var values = new List<string> { "@rootFile", "@master" };
+        var names = new List<string> { "id_local", "rootFile", "masterImage", "orientation" };
+        var values = new List<string> { "@id", "@rootFile", "@master", "@orientation" };
         var parameters = new List<(string, object?)>
         {
-            ("@rootFile", id), ("@master", virtualCopy ? 1 : null)
+            ("@id", id), ("@rootFile", id), ("@master", virtualCopy ? 1 : null),
+            ("@orientation", "AB")
         };
         if (columns.Contains("rating"))
         {
@@ -79,6 +81,27 @@ internal sealed class LightroomCatalogFixture : IDisposable
         Execute(
             $"INSERT INTO Adobe_images ({string.Join(",", names)}) VALUES ({string.Join(",", values)});",
             parameters.ToArray());
+    }
+
+    public void AddDevelopSettings(
+        int imageId, string text, string orientation = "AB",
+        double fileWidth = 4000, double fileHeight = 3000,
+        double croppedWidth = 3200, double croppedHeight = 2400)
+    {
+        AddDevelopSettingsRaw(imageId, text, orientation,
+            fileWidth, fileHeight, croppedWidth, croppedHeight);
+    }
+
+    public void AddDevelopSettingsRaw(
+        int imageId, string text, string orientation,
+        object? fileWidth, object? fileHeight,
+        object? croppedWidth, object? croppedHeight)
+    {
+        Execute("UPDATE Adobe_images SET orientation = @orientation WHERE id_local = @id;",
+            ("@orientation", orientation), ("@id", imageId));
+        Execute("INSERT INTO Adobe_imageDevelopSettings VALUES (@id, @text, @fw, @fh, @cw, @ch);",
+            ("@id", imageId), ("@text", text), ("@fw", fileWidth),
+            ("@fh", fileHeight), ("@cw", croppedWidth), ("@ch", croppedHeight));
     }
 
     public void Execute(string sql, params (string Name, object? Value)[] parameters)

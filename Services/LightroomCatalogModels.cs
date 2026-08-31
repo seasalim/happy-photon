@@ -31,6 +31,14 @@ public readonly record struct CatalogImportFact<T>(
         new(CatalogImportFactKind.Value, value);
 }
 
+public sealed record LightroomCropFact(
+    XmpFactKind Kind,
+    CropRegion? Crop = null,
+    string? Orientation = null)
+{
+    public static LightroomCropFact Empty { get; } = new(XmpFactKind.Empty);
+    public static LightroomCropFact Unsupported { get; } = new(XmpFactKind.Unsupported);
+}
 public sealed record CatalogSourceRoot(string SourcePath, int PhotoCount);
 
 public sealed record CatalogImportRecord(
@@ -39,7 +47,8 @@ public sealed record CatalogImportRecord(
     CatalogImportFact<int> Rating,
     CatalogImportFact<ImageFlag> Flag,
     CatalogImportFact<ColorLabel> ColorLabel,
-    bool IsVirtualCopy);
+    bool IsVirtualCopy,
+    LightroomCropFact? Crop = null);
 
 public sealed record LightroomCatalogContents(
     string CatalogPath,
@@ -60,7 +69,8 @@ public sealed record CatalogImportBaseline(
     long Revision,
     DateTime? AssessedUtc,
     AssessmentAxes PendingAxes,
-    string? FilePath);
+    string? FilePath,
+    EditSettings? EditSettings = null);
 
 public sealed record CatalogImportChange(
     string FilePath,
@@ -69,7 +79,8 @@ public sealed record CatalogImportChange(
     AssessmentAxes Axes,
     ImageFlag? Flag,
     int? Rating,
-    ColorLabel? ColorLabel);
+    ColorLabel? ColorLabel,
+    CropRegion? Crop = null);
 
 public sealed record CatalogImportAxisSummary(
     int Written,
@@ -94,7 +105,8 @@ public sealed record CatalogImportReport(
     IReadOnlyDictionary<string, int> UnsupportedLabelTokens,
     IReadOnlyList<string> ActionableOutcomes,
     IReadOnlyList<string> InformationalOutcomes,
-    bool IsUnverifiedVersion)
+    bool IsUnverifiedVersion,
+    CatalogImportAxisSummary? Crop = null)
 {
     public bool NothingToImport => SourceVerdictPhotos == 0;
     public bool NothingMatched => SourceVerdictPhotos > 0 && MatchedPhotos == 0;
@@ -109,11 +121,13 @@ public sealed record CatalogImportPreview(
     string SettingsKey,
     string? BaselineSettingsJson,
     string SettingsJson,
-    IReadOnlyList<string> ImportedPaths);
+    IReadOnlyList<string> ImportedPaths,
+    bool ImportCrops = false);
 
 public sealed record CatalogImportAdoption(
     long BaselineRevision,
-    AssessmentSnapshot Snapshot);
+    AssessmentSnapshot Snapshot,
+    CropRegion? AdoptedCrop = null);
 
 public sealed record CatalogImportApplyResult(
     CatalogImportReport Report,

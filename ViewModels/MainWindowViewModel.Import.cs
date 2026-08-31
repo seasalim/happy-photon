@@ -26,9 +26,10 @@ public partial class MainWindowViewModel
         LightroomCatalogContents source,
         IReadOnlyDictionary<string, string> rootMappings,
         CatalogImportPolicy policy,
+        bool importCrops,
         CancellationToken cancellationToken = default) =>
         new CatalogImportService(_catalogService).CreatePreviewAsync(
-            source, rootMappings, policy, cancellationToken);
+            source, rootMappings, policy, importCrops, cancellationToken);
 
     public async Task<CatalogImportApplyResult> ApplyCatalogImportAsync(
         CatalogImportPreview preview,
@@ -46,7 +47,8 @@ public partial class MainWindowViewModel
 
         var result = await new CatalogImportService(_catalogService)
             .ApplyAsync(preview, cancellationToken);
-        AdoptImportedAssessments(result.Adoptions);
+        var adoptedCrops = AdoptImportedAssessments(result.Adoptions);
+        RefreshAdoptedCrops(adoptedCrops);
         if (result.Adoptions.Count > 0)
         {
             Browse.RefreshFilters();
@@ -62,9 +64,10 @@ public partial class MainWindowViewModel
         return result;
     }
 
-    internal void AdoptImportedAssessments(
+    internal IReadOnlyList<ImageFile> AdoptImportedAssessments(
         IReadOnlyList<CatalogImportAdoption> adoptions)
     {
+        var adoptedCrops = new List<ImageFile>();
         var liveById = Browse.AllImages
             .Where(image => image.CatalogId != 0)
             .ToDictionary(image => image.CatalogId);
@@ -77,13 +80,15 @@ public partial class MainWindowViewModel
             }
 
             var snapshot = adoption.Snapshot;
-            image.Flag = snapshot.Flag;
-            image.Rating = snapshot.Rating;
-            image.ColorLabel = snapshot.ColorLabel;
-            image.AssessmentRevision = snapshot.Revision;
-            image.AssessedUtc = snapshot.AssessedUtc;
-            image.PendingAssessmentAxes = snapshot.PendingAxes;
+            if (adoption.AdoptedCrop != null && ApplyXmpAdoption(image,
+                    new XmpReconcileAdoption(snapshot,
+                        AssessmentAxes.All | AssessmentAxes.Crop,
+                        adoption.AdoptedCrop)))
+                adoptedCrops.Add(image);
+            else
+                ApplyAssessmentSnapshot(image, snapshot);
         }
+        return adoptedCrops;
     }
 
     private ImageFile? VisibleNearIndex(int oldIndex)

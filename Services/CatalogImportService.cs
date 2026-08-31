@@ -9,14 +9,22 @@ public sealed class CatalogImportService
 {
     private readonly CatalogService _catalogService;
     private readonly Func<string, bool> _fileExists;
+    private readonly ISourceAvailabilityService _availability;
+    private readonly TryReadExifOrientation _readOrientation;
 
     public CatalogImportService(CatalogService catalogService) =>
-        (_catalogService, _fileExists) = (catalogService, File.Exists);
+        (_catalogService, _fileExists, _availability, _readOrientation) =
+        (catalogService, File.Exists, new SourceAvailabilityService(),
+            ImageServiceHelpers.TryGetExifOrientation);
 
     internal CatalogImportService(
         CatalogService catalogService,
-        Func<string, bool> fileExists) =>
-        (_catalogService, _fileExists) = (catalogService, fileExists);
+        Func<string, bool> fileExists,
+        ISourceAvailabilityService? availability = null,
+        TryReadExifOrientation? readOrientation = null) =>
+        (_catalogService, _fileExists, _availability, _readOrientation) =
+        (catalogService, fileExists, availability ?? new SourceAvailabilityService(),
+            readOrientation ?? ImageServiceHelpers.TryGetExifOrientation);
 
     public async Task<CatalogImportStoredSettings?> LoadSettingsAsync(
         string catalogPath)
@@ -38,6 +46,7 @@ public sealed class CatalogImportService
         LightroomCatalogContents source,
         IReadOnlyDictionary<string, string> requestedMappings,
         CatalogImportPolicy policy,
+        bool importCrops = false,
         CancellationToken cancellationToken = default)
     {
         var mappings = ResolveMappings(source.Roots, requestedMappings);
@@ -84,10 +93,12 @@ public sealed class CatalogImportService
         var rating = new MutableAxisSummary();
         var flag = new MutableAxisSummary();
         var label = new MutableAxisSummary();
+        var crop = new MutableAxisSummary();
         var unsupportedLabels = new Dictionary<string, int>(StringComparer.Ordinal);
         var updatedPhotos = 0;
         var existingRows = 0;
         var unavailableFiles = 0;
+        string? unsupportedCropExample = null;
 
         foreach (var (path, record) in normalized)
         {
@@ -101,38 +112,44 @@ public sealed class CatalogImportService
                 unavailableFiles++;
                 continue;
             }
-            if (baseline.Exists) existingRows++;
-
             var axes = AssessmentAxes.None;
             int? nextRating = null;
             ImageFlag? nextFlag = null;
             ColorLabel? nextLabel = null;
+            CropRegion? nextCrop = null;
             Evaluate(record.Rating, baseline.Rating, 0, policy, rating,
                 AssessmentAxes.Rating, ref axes, ref nextRating);
             Evaluate(record.Flag, baseline.Flag, ImageFlag.Unflagged, policy, flag,
                 AssessmentAxes.Flag, ref axes, ref nextFlag);
             Evaluate(record.ColorLabel, baseline.ColorLabel, ColorLabel.None, policy, label,
                 AssessmentAxes.Label, ref axes, ref nextLabel);
+            nextCrop = await EvaluateCropAsync(record.Crop,
+                baseline.EditSettings ?? new EditSettings(), availablePath,
+                importCrops, crop, cancellationToken);
+            if (crop.Unsupported > 0 && unsupportedCropExample == null)
+                unsupportedCropExample = availablePath;
             if (record.ColorLabel.Kind == CatalogImportFactKind.Unsupported &&
                 !string.IsNullOrEmpty(record.ColorLabel.SourceToken))
             {
                 unsupportedLabels[record.ColorLabel.SourceToken] =
                     unsupportedLabels.GetValueOrDefault(record.ColorLabel.SourceToken) + 1;
             }
-            if (axes != AssessmentAxes.None) updatedPhotos++;
+            if (axes == AssessmentAxes.None && nextCrop == null) continue;
+            if (baseline.Exists) existingRows++;
+            updatedPhotos++;
             changes.Add(new CatalogImportChange(
                 availablePath, baseline, source.CarriedAxes, axes,
-                nextFlag, nextRating, nextLabel));
+                nextFlag, nextRating, nextLabel, nextCrop));
         }
 
         var actionable = new List<string>();
         var informational = new List<string>();
         if (source.Records.Count > 0 && changes.Count == 0)
             actionable.Add(unavailableFiles > 0
-                ? "None of the Lightroom photos with ratings, flags, or color labels exist at their mapped paths. Copy or mount the originals, review the location mappings, and try again."
-                : "None of the Lightroom photos with ratings, flags, or color labels matched a supported photo path. Review the location mappings and try again.");
+                ? "None of the Lightroom photos with importable metadata exist at their mapped paths. Copy or mount the originals, review the location mappings, and try again."
+                : "None of the Lightroom photos with importable metadata matched a supported photo path. Review the location mappings and try again.");
         if (source.Records.Count == 0)
-            informational.Add("This catalog has no ratings, picks, rejects, or color labels to import.");
+            informational.Add("This catalog has no ratings, picks, rejects, color labels, or crops to import.");
         if (unresolved > 0)
             informational.Add(unresolved == 1
                 ? "1 photo under an unmapped Lightroom location was not imported."
@@ -164,13 +181,17 @@ public sealed class CatalogImportService
             informational.Add(
                 $"{unsupportedLabels.Values.Sum()} photos use color labels Happy Photon cannot map. Their labels will be left unchanged.");
         }
+        if (crop.PreservedByPolicy > 0)
+            informational.Add($"Crops kept because Happy Photon geometry already exists: {crop.PreservedByPolicy}.");
+        if (crop.Unsupported > 0)
+            informational.Add($"Unsupported Lightroom crops skipped: {crop.Unsupported}; example: {unsupportedCropExample}");
 
         var report = new CatalogImportReport(
             source.Records.Count, changes.Count, updatedPhotos,
             existingRows, changes.Count - existingRows,
             unresolved, unavailableFiles, unsupportedFiles, virtualCopies,
             rating.Freeze(), flag.Freeze(), label.Freeze(), unsupportedLabels,
-            actionable, informational, !source.IsVerifiedVersion);
+            actionable, informational, !source.IsVerifiedVersion, crop.Freeze());
         var settingsKey = GetSettingsKey(source.CatalogPath);
         var baselineSettings = await _catalogService.GetAppSettingAsync(settingsKey);
         var stored = new CatalogImportStoredSettings(
@@ -179,13 +200,59 @@ public sealed class CatalogImportService
             {
                 ["rating"] = policy,
                 ["flag"] = policy,
-                ["colorLabel"] = policy
+                ["colorLabel"] = policy,
+                ["crop"] = CatalogImportPolicy.FillEmptyOnly
             });
         var settingsJson = JsonSerializer.Serialize(stored);
         return new CatalogImportPreview(
             source.CatalogPath, policy, mappings, changes, report,
             settingsKey, baselineSettings, settingsJson,
-            changes.Select(change => change.FilePath).ToArray());
+            changes.Select(change => change.FilePath).ToArray(), importCrops);
+    }
+
+    private async Task<CropRegion?> EvaluateCropAsync(
+        LightroomCropFact? source,
+        EditSettings local,
+        string path,
+        bool importCrops,
+        MutableAxisSummary summary,
+        CancellationToken cancellationToken)
+    {
+        if (!importCrops || source == null || source.Kind == XmpFactKind.Empty)
+        {
+            summary.NotImported++;
+            return null;
+        }
+        if (source.Kind != XmpFactKind.Matched || source.Crop == null ||
+            !await Task.Run(() => OrientationMatches(source.Orientation, path), cancellationToken))
+        {
+            summary.Unsupported++;
+            return null;
+        }
+        var value = source.Crop!;
+        if (XmpCropProjection.CropsMatch(local.Crop, value) && local.Rotation == 0 &&
+            local.HorizonRotation == 0 && local.Geometry?.IsIdentity != false)
+        {
+            summary.Unchanged++;
+            return null;
+        }
+        if (XmpCropProjection.HasGeometryEdits(local))
+        {
+            summary.PreservedByPolicy++;
+            return null;
+        }
+        summary.Written++;
+        return value.Clone();
+    }
+
+    private bool OrientationMatches(string? orientation, string path)
+    {
+        // 0 = the container hides EXIF from the header ping (RAW files);
+        // only a contradicting known value disproves AB, matching the
+        // sidecar reconciler's orientation gate.
+        return SourceAccessPolicy.CanRead(_availability.GetAvailability(path), SourceReadIntent.Background) &&
+            _readOrientation(path, out var fileOrientation) &&
+            orientation == "AB" && fileOrientation is 0 or 1;
     }
 
     public Task<CatalogImportApplyResult> ApplyAsync(
@@ -346,7 +413,7 @@ public sealed class CatalogImportService
 
     private static readonly CatalogImportBaseline EmptyBaseline =
         new(false, 0, ImageFlag.Unflagged, 0, ColorLabel.None,
-            0, null, AssessmentAxes.None, null);
+            0, null, AssessmentAxes.None, null, new EditSettings());
 
     private sealed class MutableAxisSummary
     {

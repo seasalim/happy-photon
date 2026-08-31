@@ -7,7 +7,7 @@ public sealed record CatalogImportFlowOperations(
     Func<string, CancellationToken, Task<LightroomCatalogContents>> ReadCatalogAsync,
     Func<string, CancellationToken, Task<CatalogImportStoredSettings?>> LoadSettingsAsync,
     Func<LightroomCatalogContents, IReadOnlyDictionary<string, string>,
-        CatalogImportPolicy, CancellationToken, Task<CatalogImportPreview>> CreatePreviewAsync,
+        CatalogImportPolicy, bool, CancellationToken, Task<CatalogImportPreview>> CreatePreviewAsync,
     Func<CatalogImportPreview, CancellationToken,
         Task<CatalogImportApplyResult>> ApplyAsync)
 {
@@ -71,6 +71,7 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
     public IReadOnlyDictionary<string, string> RootMappings => _rootMappings;
     public CatalogImportPolicy Policy { get; private set; } =
         CatalogImportPolicy.LightroomWins;
+    public bool ImportCrops { get; private set; }
     public bool IsReimport => StoredSettings != null;
     public bool IsInitialized => _isInitialized;
     public bool IsInitializing => _isInitializing;
@@ -173,6 +174,15 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
         if (!InputsEnabled || Policy == policy) return;
         Policy = policy;
         OnPropertyChanged(nameof(Policy));
+        InputsChanged();
+        await CommitInputsAsync();
+    }
+
+    public async Task SetImportCropsAsync(bool value)
+    {
+        if (!InputsEnabled || ImportCrops == value) return;
+        ImportCrops = value;
+        OnPropertyChanged(nameof(ImportCrops));
         InputsChanged();
         await CommitInputsAsync();
     }
@@ -325,7 +335,7 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
         try
         {
             var preview = await _operations.CreatePreviewAsync(
-                Source, mappings, Policy, cancellation.Token);
+                Source, mappings, Policy, ImportCrops, cancellation.Token);
             if (generation != _previewGeneration ||
                 signature != _liveSignature ||
                 !ReferenceEquals(_previewCancellation, cancellation))
@@ -405,7 +415,7 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
     {
         var parts = _rootMappings.OrderBy(pair => pair.Key, StringComparer.Ordinal)
             .Select(pair => $"{pair.Key.Length}:{pair.Key}{pair.Value.Length}:{pair.Value}");
-        return $"{(int)Policy}|{string.Concat(parts)}";
+        return $"{(int)Policy}|{ImportCrops}|{string.Concat(parts)}";
     }
 
     private string GetRootMapping(string sourceRoot) =>

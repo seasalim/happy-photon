@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HappyPhoton.csproj" />
+    <None Update="assets\lightroom\*.lua" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="assets\lightroom\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

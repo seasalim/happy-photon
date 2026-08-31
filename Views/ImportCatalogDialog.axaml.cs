@@ -67,6 +67,7 @@ public partial class ImportCatalogDialog : Window
             PolicyPicker.SelectionChanged += OnPolicyChanged;
             _policyEventsAttached = true;
         }
+        CropImportCheckBox.IsChecked = _flow.ImportCrops;
         MappingSection.IsVisible = true;
         PolicySection.IsVisible = true;
         UpdateUi();
@@ -139,7 +140,7 @@ public partial class ImportCatalogDialog : Window
         if (importableRoots.Length == 0)
         {
             MappingHelpText.Text =
-                "No Lightroom locations contain photos with ratings, flags, or color labels.";
+                "No Lightroom locations contain photos with importable metadata.";
         }
         else if (unresolved == 0)
         {
@@ -171,8 +172,8 @@ public partial class ImportCatalogDialog : Window
         var notice = new TextBlock
         {
             Text = zeroCountRoots == 1
-                ? "1 Lightroom location without ratings, flags, or color labels is not shown."
-                : $"{zeroCountRoots} Lightroom locations without ratings, flags, or color labels are not shown.",
+                ? "1 Lightroom location without importable metadata is not shown."
+                : $"{zeroCountRoots} Lightroom locations without importable metadata are not shown.",
             TextWrapping = Avalonia.Media.TextWrapping.Wrap
         };
         notice.Classes.Add("root-count");
@@ -198,7 +199,7 @@ public partial class ImportCatalogDialog : Window
         labels.Children.Add(location);
         var count = new TextBlock
         {
-            Text = $"{root.PhotoCount} photos with ratings, flags, or color labels",
+            Text = $"{root.PhotoCount} photos with importable metadata",
             TextWrapping = Avalonia.Media.TextWrapping.Wrap
         };
         count.Classes.Add("root-count");
@@ -255,7 +256,7 @@ public partial class ImportCatalogDialog : Window
         var labels = new StackPanel { Spacing = 3 };
         labels.Children.Add(new TextBlock
         {
-            Text = $"{root.SourcePath}  ·  {root.PhotoCount} photos with ratings, flags, or color labels",
+            Text = $"{root.SourcePath}  ·  {root.PhotoCount} photos with importable metadata",
             TextWrapping = Avalonia.Media.TextWrapping.Wrap
         });
         labels.Children.Add(editor);
@@ -305,6 +306,12 @@ public partial class ImportCatalogDialog : Window
             : CatalogImportPolicy.LightroomWins);
     }
 
+    private async void OnCropImportChanged(object? sender, RoutedEventArgs e)
+    {
+        if (_flow != null)
+            await _flow.SetImportCropsAsync(CropImportCheckBox.IsChecked == true);
+    }
+
     private async void OnApplyClick(object? sender, RoutedEventArgs e)
     {
         if (_flow != null) await _flow.ApplyAsync();
@@ -332,6 +339,7 @@ public partial class ImportCatalogDialog : Window
             ? "\nKept values may include ones you changed in Happy Photon since the last import."
             : string.Empty;
         var updated = applied ? "updated" : "to update";
+        var crops = report.Crop ?? new CatalogImportAxisSummary(0, 0, 0, 0, 0);
         var unavailable = report.UnavailableFilePhotos == 0
             ? string.Empty
             : $"\nMapped files not found: {report.UnavailableFilePhotos}";
@@ -340,7 +348,8 @@ public partial class ImportCatalogDialog : Window
             unavailable + "\n" +
             $"Ratings — {report.Rating.Written} {updated} · {report.Rating.Unchanged} already match · {report.Rating.PreservedByPolicy} kept your value\n" +
             $"Flags — {report.Flag.Written} {updated} · {report.Flag.Unchanged} already match · {report.Flag.PreservedByPolicy} kept your value\n" +
-            $"Color labels — {report.ColorLabel.Written} {updated} · {report.ColorLabel.Unchanged} already match · {report.ColorLabel.PreservedByPolicy} kept your value · {report.ColorLabel.Unsupported} unrecognized left as-is" +
+            $"Color labels — {report.ColorLabel.Written} {updated} · {report.ColorLabel.Unchanged} already match · {report.ColorLabel.PreservedByPolicy} kept your value · {report.ColorLabel.Unsupported} unrecognized left as-is\n" +
+            $"Crops — {crops.Written} to import · {crops.Unchanged} already match · {crops.Unsupported} unsupported (left unchanged)" +
             rerunNote;
         ActionableHeading.IsVisible = report.ActionableOutcomes.Count > 0;
         ActionableText.Text = string.Join("\n",

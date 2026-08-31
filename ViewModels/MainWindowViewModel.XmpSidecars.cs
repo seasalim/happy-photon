@@ -99,24 +99,8 @@ public partial class MainWindowViewModel
             }
             var appliedCrop = ApplyXmpAdoption(image, adoption);
             if (appliedCrop) cropRefreshes.Add(image);
-            if (appliedCrop && ReferenceEquals(image, SelectedImage) &&
-                image.EditSettings.Crop != null)
-            {
-                CurrentCrop = image.EditSettings.Crop.Clone();
-                BeginDevelopHistoryLoad(IsDevelopMode ? image : null);
-                if (IsDevelopMode)
-                {
-                    var renderGeneration = RequestEditedRender();
-                    TrackPreviewDebounce(UpdatePreviewWithCurrentSliders(
-                        generation: renderGeneration));
-                }
-            }
         }
-        if (cropRefreshes.Count > 0)
-        {
-            _ = TrackDirectThumbnailOperation(
-                RefreshThumbnailsAsync(cropRefreshes));
-        }
+        RefreshAdoptedCrops(cropRefreshes);
         if (result.Adoptions.Count > 0) Browse.RefreshFilters();
         ReportXmpReconcileIssues(result.Reports);
     }
@@ -141,6 +125,24 @@ public partial class MainWindowViewModel
             adoption.Snapshot,
             adoption.AdoptedAxes);
         return appliedCrop;
+    }
+
+    private void RefreshAdoptedCrops(IReadOnlyList<ImageFile> images)
+    {
+        if (images.Count == 0) return;
+        if (SelectedImage is { } selected && images.Contains(selected) &&
+            selected.EditSettings.Crop != null)
+        {
+            CurrentCrop = selected.EditSettings.Crop.Clone();
+            BeginDevelopHistoryLoad(IsDevelopMode ? selected : null);
+            if (IsDevelopMode)
+            {
+                var renderGeneration = RequestEditedRender();
+                TrackPreviewDebounce(UpdatePreviewWithCurrentSliders(
+                    generation: renderGeneration));
+            }
+        }
+        _ = TrackDirectThumbnailOperation(RefreshThumbnailsAsync(images));
     }
 
     internal void ReportXmpReconcileIssues(IReadOnlyList<string> reports)

@@ -22,8 +22,11 @@ public sealed class ImportCatalogDialogTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Null(dialog.FindControl<Button>("PreviewButton"));
+        Assert.False(dialog.FindControl<CheckBox>("CropImportCheckBox")!.IsChecked);
         Assert.Equal("WHAT WILL CHANGE",
             dialog.FindControl<TextBlock>("ReportSectionLabel")!.Text);
+        Assert.Contains("Crops — 2 to import · 3 already match · 4 unsupported (left unchanged)",
+            dialog.FindControl<TextBlock>("OutcomeText")!.Text);
         var apply = dialog.FindControl<Button>("ApplyButton")!;
         apply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await WaitForAsync(() => flow.IsApplied);
@@ -86,7 +89,7 @@ public sealed class ImportCatalogDialogTests
             new CatalogImportFlowOperations(
                 (_, _) => Task.FromResult(source),
                 (_, _) => Task.FromResult<CatalogImportStoredSettings?>(null),
-                (_, _, _, _) => Task.FromResult(preview),
+                (_, _, _, _, _) => Task.FromResult(preview),
                 (_, _) => Task.FromResult(new CatalogImportApplyResult(
                     preview.Report, [], 1))),
             source.CatalogPath);
@@ -102,7 +105,7 @@ public sealed class ImportCatalogDialogTests
             new CatalogImportFlowOperations(
                 (_, _) => Task.FromResult(source),
                 (_, _) => Task.FromResult<CatalogImportStoredSettings?>(null),
-                async (_, _, _, token) =>
+                async (_, _, _, _, token) =>
                 {
                     tokenSource.SetResult(token);
                     await Task.Delay(Timeout.InfiniteTimeSpan, token);
@@ -122,7 +125,8 @@ public sealed class ImportCatalogDialogTests
         var axis = new CatalogImportAxisSummary(1, 0, 0, 0, 0);
         var report = new CatalogImportReport(
             1, 1, 1, 1, 0, 0, 0, 0, 0,
-            axis, axis, axis, new Dictionary<string, int>(), [], [], false);
+            axis, axis, axis, new Dictionary<string, int>(), [], [], false,
+            new CatalogImportAxisSummary(2, 3, 0, 4, 0));
         return new CatalogImportPreview(
             source.CatalogPath,
             CatalogImportPolicy.LightroomWins,

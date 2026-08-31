@@ -88,7 +88,13 @@ public sealed class LightroomDetectionService
         foreach (var root in CatalogProbeRoots(picturesRoot, catalogRoot))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var found = catalogs.Count;
             FindCatalogs(root, budget, catalogs, cancellationToken);
+            // Within a probed root the newest catalog leads: stale archives
+            // must not become the populated first-run default.
+            catalogs.Sort(found, catalogs.Count - found,
+                Comparer<string>.Create((left, right) =>
+                    LastWrite(right).CompareTo(LastWrite(left))));
             if (budget.IsExhausted || catalogs.Count == MaxReportedCatalogs) break;
         }
 
@@ -105,11 +111,28 @@ public sealed class LightroomDetectionService
             ? StringComparer.OrdinalIgnoreCase
             : StringComparer.Ordinal;
         var roots = new List<string>();
+        // A custom pictures folder outranks the conventional
+        // Pictures\Lightroom location: the first catalog found becomes the
+        // populated first-run default.
+        var customPictures = !string.IsNullOrWhiteSpace(picturesRoot) &&
+            !string.Equals(picturesRoot, _defaultPicturesRoot,
+                OperatingSystem.IsWindows()
+                    ? StringComparison.OrdinalIgnoreCase
+                    : StringComparison.Ordinal);
+        if (customPictures) roots.Add(picturesRoot!);
         if (!string.IsNullOrWhiteSpace(_defaultPicturesRoot))
             roots.Add(Path.Combine(_defaultPicturesRoot, "Lightroom"));
-        if (!string.IsNullOrWhiteSpace(picturesRoot)) roots.Add(picturesRoot);
+        if (!customPictures && !string.IsNullOrWhiteSpace(picturesRoot))
+            roots.Add(picturesRoot);
         if (!string.IsNullOrWhiteSpace(catalogRoot)) roots.Add(catalogRoot);
         return roots.Distinct(comparison);
+    }
+
+    private static DateTime LastWrite(string path)
+    {
+        try { return File.GetLastWriteTimeUtc(path); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        { return DateTime.MinValue; }
     }
 
     private void FindCatalogs(

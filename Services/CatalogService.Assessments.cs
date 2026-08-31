@@ -69,9 +69,10 @@ public partial class CatalogService
     private static async Task EnsureAssessmentRowsAsync(
         SqliteConnection connection,
         IReadOnlyCollection<long> imageIds,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, SqliteTransaction? transaction = null)
     {
         using var command = connection.CreateCommand();
+        command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO image_assessments (
                 image_id, revision, assessed_utc, pending_axes)

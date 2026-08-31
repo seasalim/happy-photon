@@ -93,6 +93,30 @@ public sealed class CatalogImportViewModelTests : IDisposable
         await vm.DisposeAsync();
     }
 
+    [Fact]
+    public async Task CropAdoption_UsesLiveXmpSeamAndMarksImageEdited()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("crop-catalog");
+        var path = _fx.Path("crop.jpg");
+        var state = (await catalog.LoadOrCreateImageStatesAsync([path]))[path].Single();
+        var image = ToImage(path, state);
+        var vm = CreateViewModel(catalog);
+        vm.Browse.SetImages([image]);
+        var snapshot = new AssessmentSnapshot(state.CatalogId, path,
+            state.Flag, state.Rating, state.ColorLabel, state.AssessmentRevision + 1,
+            DateTime.UtcNow, AssessmentAxes.None);
+        var crop = new CropRegion { Left = .1, Top = .2, Right = .8, Bottom = .9 };
+
+        var adopted = vm.AdoptImportedAssessments([
+            new CatalogImportAdoption(state.AssessmentRevision, snapshot, crop)
+        ]);
+
+        Assert.Same(image, Assert.Single(adopted));
+        Assert.Equal(.1, image.EditSettings.Crop!.Left);
+        Assert.True(image.HasEdits);
+        await vm.DisposeAsync();
+    }
+
     private LightroomCatalogContents Source(string firstPath, string secondPath) =>
         new(_fx.Path("source.lrcat"), 1303001, 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot("D:/Photos/", 2)],
@@ -118,7 +142,8 @@ public sealed class CatalogImportViewModelTests : IDisposable
             ColorLabel = state.ColorLabel,
             AssessmentRevision = state.AssessmentRevision,
             AssessedUtc = state.AssessedUtc,
-            PendingAssessmentAxes = state.PendingAxes
+            PendingAssessmentAxes = state.PendingAxes,
+            EditSettings = state.EditSettings
         };
 
     private MainWindowViewModel CreateViewModel(CatalogService catalog) =>

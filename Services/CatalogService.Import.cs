@@ -25,7 +25,8 @@ public partial class CatalogService
                        images.rating, images.color_label,
                        image_assessments.revision,
                        image_assessments.assessed_utc,
-                       image_assessments.pending_axes
+                       image_assessments.pending_axes, images.edit_settings,
+                       images.edit_version
                 FROM json_each(@paths) requested
                 JOIN images ON images.file_path = requested.value COLLATE NOCASE
                            AND images.version = 1
@@ -52,7 +53,8 @@ public partial class CatalogService
                         System.Globalization.DateTimeStyles.RoundtripKind),
                     reader.IsDBNull(7) ? AssessmentAxes.None :
                         (AssessmentAxes)reader.GetInt32(7),
-                    reader.GetString(0));
+                    reader.GetString(0),
+                    ReadEditSettings(reader, 8, reader.GetInt64(1), reader.GetString(0)));
             }
             return result;
         }
@@ -90,16 +92,22 @@ public partial class CatalogService
                     await ObserveImportWriteAsync(++writes, cancellationToken);
                 }
 
-                if (change.Axes == AssessmentAxes.None) continue;
-                var assessedUtc = DateTime.UtcNow;
-                await UpdateImportedAssessmentAsync(
-                    _connection, transaction, imageId, change,
-                    assessedUtc, cancellationToken);
-                await ObserveImportWriteAsync(++writes, cancellationToken);
+                var adoptedCrop = await AdoptImportedCropAsync(
+                    transaction, imageId, current.EditSettings ?? new EditSettings(),
+                    change.Crop, cancellationToken);
+                if (adoptedCrop != null)
+                    await ObserveImportWriteAsync(++writes, cancellationToken);
+                if (change.Axes == AssessmentAxes.None && adoptedCrop == null) continue;
+                if (change.Axes == AssessmentAxes.None)
+                    await EnsureAssessmentRowsAsync(_connection, [imageId], cancellationToken, transaction);
+                else
+                    await UpdateImportedAssessmentAsync(_connection, transaction, imageId, change, DateTime.UtcNow, cancellationToken);
+                if (change.Axes != AssessmentAxes.None) await ObserveImportWriteAsync(++writes, cancellationToken);
 
                 var snapshot = (await ReadAssessmentSnapshotsAsync(
                     _connection, transaction, [imageId], cancellationToken)).Single();
-                adoptions.Add(new CatalogImportAdoption(current.Revision, snapshot));
+                adoptions.Add(new CatalogImportAdoption(
+                    current.Revision, snapshot, adoptedCrop));
             }
 
             var currentSettings = await ReadSettingAsync(
@@ -151,7 +159,7 @@ public partial class CatalogService
                 expected.ColorLabel == current.ColorLabel);
     }
 
-    private static async Task<CatalogImportBaseline> ReadImportBaselineAsync(
+    private async Task<CatalogImportBaseline> ReadImportBaselineAsync(
         SqliteConnection connection,
         SqliteTransaction transaction,
         string filePath,
@@ -162,7 +170,8 @@ public partial class CatalogService
         command.CommandText = """
             SELECT images.id, images.flag_state, images.rating, images.color_label,
                    image_assessments.revision, image_assessments.assessed_utc,
-                   image_assessments.pending_axes, images.file_path
+                   image_assessments.pending_axes, images.file_path,
+                   images.edit_settings, images.edit_version
             FROM images
             LEFT JOIN image_assessments ON image_assessments.image_id = images.id
             WHERE images.file_path = @path COLLATE NOCASE
@@ -188,7 +197,28 @@ public partial class CatalogService
                 System.Globalization.DateTimeStyles.RoundtripKind),
             reader.IsDBNull(6) ? AssessmentAxes.None :
                 (AssessmentAxes)reader.GetInt32(6),
-            reader.GetString(7));
+            reader.GetString(7),
+            ReadEditSettings(reader, 8, reader.GetInt64(0), reader.GetString(7)));
+    }
+
+    private async Task<CropRegion?> AdoptImportedCropAsync(
+        SqliteTransaction transaction,
+        long imageId,
+        EditSettings current,
+        CropRegion? crop,
+        CancellationToken cancellationToken)
+    {
+        if (crop == null || XmpCropProjection.HasGeometryEdits(current)) return null;
+        var updated = current.Clone();
+        updated.Crop = crop.Clone();
+        var history = await ReadHistoryAsync(_connection!, transaction, imageId);
+        var mutation = CatalogEditHistory.PrepareAppend(
+            history, current, updated, "Crop from Lightroom");
+        await WriteSettingsAsync(transaction, SerializeUpdate(new(imageId, updated)));
+        if (mutation != null)
+            await WriteHistoryMutationAsync(transaction, imageId, mutation);
+        cancellationToken.ThrowIfCancellationRequested();
+        return crop.Clone();
     }
 
     private static async Task<long> InsertImportedPathAsync(

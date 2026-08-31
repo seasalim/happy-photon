@@ -298,8 +298,8 @@ concurrent. Revisit this only if the connection model changes.
 
 ## Lightroom catalog import
 
-Lightroom import brings ratings, pick/reject flags, and color labels from Lightroom
-Classic without opening original photographs. `LightroomCatalogReader` works from a
+Lightroom import brings ratings, pick/reject flags, color labels, and optional crops
+from Lightroom Classic. `LightroomCatalogReader` works from a
 temporary snapshot outside the Happy Photon catalog. Because read-only SQLite access
 can mutate an existing WAL shared-memory sidecar, the verified safe path requires
 Lightroom to be fully closed and refuses catalogs with SQLite sidecars; the closed
@@ -309,12 +309,21 @@ directories are swept during deferred catalog initialization.
 `CatalogImportService` normalizes mapped paths, verifies each mapped file entry exists
 without opening its content, and builds a vendor-neutral preview. Missing files never
 become catalog rows, and a zero-match preview cannot persist import settings.
+The automatic preview performs no source-content reads. Crop import is separately
+opted in in the dialog; only then does the service availability-gate and ping the
+local source's EXIF orientation header, cancellably off the UI thread. It never
+decodes or hydrates an original. Catalog crop blobs are scanned as depth-aware,
+top-level `key = value` text; unsupported, malformed, or cross-check-mismatched crops
+remain unchanged.
 `CatalogService.Import` exclusively owns persistence: it revalidates the preview's
 per-axis baseline under the connection gate, creates unknown paths, updates `images` and
 revisioned `image_assessments`, and persists import settings in one short transaction.
+Crop adoption re-reads current edit settings in that transaction and merges only into
+empty geometry, preserving tonal edits and adding a Lightroom-labeled history step.
 Imported metadata never sets `pending_axes`, so a large import does not enter the bounded
 XMP writer. After commit, matching live `ImageFile` objects adopt snapshots only when
-their revision still matches the preview baseline, then filters refresh in place.
+their revision still matches the preview baseline; adopted crops also refresh the live
+render, history, and edited thumbnail through the XMP crop-adoption seam.
 
 ## XMP sidecars
 

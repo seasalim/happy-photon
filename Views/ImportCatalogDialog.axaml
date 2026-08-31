@@ -53,6 +53,9 @@
                     <TextBlock Text="Fill empty applies Lightroom values only where Happy Photon has none. Values you cleared yourself count as empty. An import never clears local values."
                                Foreground="{DynamicResource TextMuted}"
                                FontSize="11" TextWrapping="Wrap"/>
+                    <CheckBox x:Name="CropImportCheckBox" Content="Import crops (reads local photo orientation headers only)" IsCheckedChanged="OnCropImportChanged"/>
+                    <TextBlock Text="Crops always fill empty geometry only. This check never downloads an online-only original."
+                               Foreground="{DynamicResource TextMuted}" FontSize="11" TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <StackPanel x:Name="ReportSection" Spacing="10" IsVisible="False">

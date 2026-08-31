@@ -5,11 +5,10 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class CatalogImportServiceTests : IDisposable
+public sealed partial class CatalogImportServiceTests : IDisposable
 {
     private readonly TemporaryDirectory _root = new();
     private CatalogService? _catalog;
-
 
     [Fact]
     public async Task Apply_NormalizesLightroomPathAndFolderScanFindsExactlyOneRow()
@@ -186,7 +185,7 @@ public sealed class CatalogImportServiceTests : IDisposable
         var secondPreview = await import.CreatePreviewAsync(
             source, Map(source, photos), CatalogImportPolicy.LightroomWins);
         var second = await import.ApplyAsync(secondPreview);
-        var secondState = (await catalog.LoadImageStatesAsync(secondPreview.ImportedPaths))
+        var secondState = (await catalog.LoadImageStatesAsync(firstPreview.ImportedPaths))
             .Values.Single().Single();
 
         Assert.Equal(0, second.DatabaseWrites);
@@ -285,7 +284,7 @@ public sealed class CatalogImportServiceTests : IDisposable
             unmatched, new Dictionary<string, string>(), CatalogImportPolicy.LightroomWins)).Report;
         Assert.True(unmatchedReport.NothingMatched);
         Assert.Contains(unmatchedReport.ActionableOutcomes,
-            message => message.Contains("ratings, flags, or color labels"));
+            message => message.Contains("importable metadata"));
         Assert.Contains(unmatchedReport.InformationalOutcomes,
             message => message.Contains("unmapped Lightroom location"));
 
@@ -427,10 +426,11 @@ public sealed class CatalogImportServiceTests : IDisposable
         string relative,
         CatalogImportFact<int>? rating = null,
         CatalogImportFact<ImageFlag>? flag = null,
-        CatalogImportFact<ColorLabel>? label = null) =>
+        CatalogImportFact<ColorLabel>? label = null,
+        LightroomCropFact? crop = null) =>
         new(Path.Combine(_root.Path, "source.lrcat"), 1303001, 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot(root, 1)],
-            [Record(root, relative, rating, flag, label)], []);
+            [Record(root, relative, rating, flag, label, crop: crop)], []);
 
     private LightroomCatalogContents EmptySource() =>
         new(Path.Combine(_root.Path, "empty.lrcat"), 1303001, 13, true,
@@ -442,12 +442,22 @@ public sealed class CatalogImportServiceTests : IDisposable
         CatalogImportFact<int>? rating = null,
         CatalogImportFact<ImageFlag>? flag = null,
         CatalogImportFact<ColorLabel>? label = null,
-        bool virtualCopy = false) =>
+        bool virtualCopy = false,
+        LightroomCropFact? crop = null) =>
         new(root, relative,
             rating ?? CatalogImportFact<int>.Empty,
             flag ?? CatalogImportFact<ImageFlag>.Empty,
             label ?? CatalogImportFact<ColorLabel>.Empty,
-            virtualCopy);
+            virtualCopy, crop);
+
+    private static LightroomCropFact CropFact(string orientation = "AB") =>
+        new(XmpFactKind.Matched, Crop(), orientation);
+
+    private static CropRegion Crop() =>
+        new() { Left = .1, Top = .1, Right = .9, Bottom = .9 };
+
+    private static string ReadCropAsset(string name) => File.ReadAllText(
+        Path.Combine(AppContext.BaseDirectory, "assets", "lightroom", name));
 
     private static IReadOnlyDictionary<string, string> Map(
         LightroomCatalogContents source,
