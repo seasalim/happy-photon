@@ -1,0 +1,101 @@
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00        ">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about=""
+    xmlns:tiff="http://ns.adobe.com/tiff/1.0/"
+    xmlns:exif="http://ns.adobe.com/exif/1.0/"
+    xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+    xmlns:aux="http://ns.adobe.com/exif/1.0/aux/"
+    xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/"
+    xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/"
+    xmlns:stEvt="http://ns.adobe.com/xap/1.0/sType/ResourceEvent#"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:crd="http://ns.adobe.com/camera-raw-defaults/1.0/"
+    xmlns:xmpDM="http://ns.adobe.com/xmp/1.0/DynamicMedia/"
+    xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
+   tiff:Make="NIKON CORPORATION"
+   tiff:Model="NIKON D70"
+   tiff:Orientation="1"
+   tiff:ImageWidth="3008"
+   tiff:ImageLength="2000"
+   exif:ExifVersion="0231"
+   exif:ExposureTime="1/200"
+   exif:ShutterSpeedValue="7643856/1000000"
+   exif:FNumber="32/10"
+   exif:ApertureValue="3356144/1000000"
+   exif:ExposureProgram="3"
+   exif:ExposureBiasValue="0/6"
+   exif:MaxApertureValue="16/10"
+   exif:MeteringMode="5"
+   exif:LightSource="0"
+   exif:FocalLength="500/10"
+   exif:SensingMethod="2"
+   exif:FileSource="3"
+   exif:SceneType="1"
+   exif:FocalLengthIn35mmFilm="75"
+   exif:CustomRendered="0"
+   exif:ExposureMode="0"
+   exif:WhiteBalance="0"
+   exif:SceneCaptureType="0"
+   exif:GainControl="0"
+   exif:Contrast="0"
+   exif:Saturation="0"
+   exif:Sharpness="0"
+   exif:SubjectDistanceRange="0"
+   exif:DigitalZoomRatio="1/1"
+   exif:DateTimeOriginal="2017-09-02T16:55:01.80"
+   exif:PixelXDimension="3008"
+   exif:PixelYDimension="2000"
+   xmp:CreatorTool="Ver.2.00"
+   xmp:ModifyDate="2017-09-02T16:55:01.80"
+   xmp:CreateDate="2017-09-02T16:55:01.80"
+   xmp:Rating="3"
+   xmp:MetadataDate="2026-08-30T19:48:21-07:00"
+   aux:SerialNumber="000290ab"
+   aux:LensInfo="500/10 500/10 18/10 18/10"
+   aux:Lens="50.0 mm f/1.8"
+   aux:LensID="118"
+   aux:ImageNumber="2921"
+   aux:ApproximateFocusDistance="355/100"
+   photoshop:DateCreated="2017-09-02T16:55:01.80"
+   photoshop:SidecarForExtension="NEF"
+   photoshop:EmbeddedXMPDigest="00000000000000000000000000000000"
+   xmpMM:DocumentID="76D4703A1D9D6D11E5C9C7035F913612"
+   xmpMM:PreservedFileName="nikon-d70-burst-1.nef"
+   xmpMM:OriginalDocumentID="76D4703A1D9D6D11E5C9C7035F913612"
+   xmpMM:InstanceID="xmp.iid:10e0821c-5f6f-9f47-b156-e95b64197be2"
+   dc:format="image/x-nikon-nef"
+   crd:CameraProfile="Camera Standard"
+   crd:LookName=""
+   xmpDM:pick="0"
+   crs:CropTop="0"
+   crs:CropLeft="0"
+   crs:CropBottom="1"
+   crs:CropRight="1"
+   crs:CropAngle="0"
+   crs:CropConstrainToWarp="0"
+   crs:CropConstrainToUnitSquare="1"
+   crs:RawFileName="nikon-d70-burst-1.nef">
+   <exif:ISOSpeedRatings>
+    <rdf:Seq>
+     <rdf:li>200</rdf:li>
+    </rdf:Seq>
+   </exif:ISOSpeedRatings>
+   <exif:Flash
+    exif:Fired="False"
+    exif:Return="0"
+    exif:Mode="0"
+    exif:Function="False"
+    exif:RedEyeMode="False"/>
+   <xmpMM:History>
+    <rdf:Seq>
+     <rdf:li
+      stEvt:action="saved"
+      stEvt:instanceID="xmp.iid:10e0821c-5f6f-9f47-b156-e95b64197be2"
+      stEvt:when="2026-08-30T19:48:21-07:00"
+      stEvt:softwareAgent="Adobe Photoshop Lightroom Classic 15.5.1 (Windows)"
+      stEvt:changed="/metadata"/>
+    </rdf:Seq>
+   </xmpMM:History>
+  </rdf:Description>
+ </rdf:RDF>
+</x:xmpmeta>

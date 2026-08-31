@@ -41,6 +41,34 @@ dotnet run --file scripts/generate-pipeline-test-assets.cs -- `
 The HEIC was encoded at quality 90 with pillow-heif 1.1.1. Its decode test is
 skipped with an explicit reason when the platform codec is unavailable.
 
+## XMP sidecar fixtures (`xmp/`)
+
+Real third-party XMP for sidecar/interop tests. The `lightroom-*` files were
+authored for the project with Adobe Lightroom Classic 15.5.1 (crs 18.5.1,
+Process Version 15.4) by editing the committed CC0 fixtures per the capture
+matrix in the 2026-08-30 trial (run 220; findings log kept with the capture
+set). They are derivatives of CC0 content and are released CC0. Sidecars are
+committed verbatim; `-embedded`/`-jpg` files are XMP packets extracted
+byte-for-byte from files Lightroom rewrote in place.
+
+| File | Purpose | SHA-256 |
+|------|---------|---------|
+| `darktable-rating.xmp` | Third-party (darktable) rating sidecar | `62b6db507e953b1cc83e92e305e086a3595d3315b3f607cc643c97b06fe466e4` |
+| `lightroom-baseline-nocrop.xmp` | LR no-crop state: crop edges 0,0,1,1 present WITHOUT `HasCrop` -> must read Empty | `7209c3e37e04fe4f0cbe13c7ab63b7a4d00dfe219ffd019251f9ad8feab7d1e7` |
+| `lightroom-assessed.xmp` | Rating 3, `xmp:Label="Yellow"`, `xmpDM:pick="1"` | `18cfc318336b0e3f1f43f56aec11b7bbef9adef0532a815000770294fc51bf3d` |
+| `lightroom-crop-plain.xmp` | Asymmetric user crop, `HasCrop="True"`, angle 0 -> Matched; also carries `crss:SavedSettings` snapshot copies (top-level-only parsing trap) | `466bd6d1b8f28b653e5ecfaae2e522b494e13fd17380061cd34102d2a731f0e5` |
+| `lightroom-crop-angled.xmp` | `CropAngle="-3"` (UI +3) -> Unsupported | `b85f4a276b0b06feb19839919414caf42de1d91f161fb96f4404a64c9bf12d9d` |
+| `lightroom-crop-rotated.xmp` | 90-degree LR rotation: `tiff:Orientation="6"`, crop fractions byte-identical to plain -> Unsupported via orientation guard | `1e2ae582a4d4d3680e922acdfeabdb452b0815097b63f4d6748e0363b2495d21` |
+| `lightroom-crop-warp.xmp` | `CropConstrainToWarp="1"` + Transform, fractions byte-identical to plain -> Unsupported | `db3be712ae5934f6c9876f0a2c1accc1a258fcdff3752d62fe3c426809be5911` |
+| `lightroom-cleared-reject.xmp` | `xmpDM:pick="-1"`; rating/label/`HasCrop` REMOVED (clears are removals) | `0a9a6dece6560256ff4be471b0494a02d1fc7b3c3cca97170578a65d529f6f37` |
+| `lightroom-camera-crop-baseline.xmp` | In-camera 1:1 aspect crop: camera-authored `HasCrop="True"` at import | `ed20909550d7e60a028ca7252f5c924715ef8d80c3241bf8cce9d295e5f1bc19` |
+| `lightroom-camera-crop-reset.xmp` | After user crop reset: camera-crop edges persist WITHOUT `HasCrop` -> Empty | `07c39df84edc7b5e404d5dd02001dde57883183a713c4a09c16f15978af1365e` |
+| `lightroom-label-custom.xmp` | `xmp:Label="CustomRed"` — custom label-set name (name-map / Unsupported-token tests) | `93a481aa09d8e0e81b42cfed2669466a9d2fa133ae68bab650fc21745152335f` |
+| `lightroom-label-custom-embedded.xmp` | `xmp:Label="CustomGreen"` packet extracted from an LR-rewritten HEIC | `637b5a5fe0001d827bb525fecd1b918c2e973871d0dee50905ec6a82b5eb5ca5` |
+| `lightroom-pair-raw-owner.xmp` | RAW+JPEG stacked mode: single sidecar owns the pair's assessment (JPEG untouched) | `d9a7685779495023a9e9af13684a54a5cf6b45a9b38abc3565f7098120c89547` |
+| `lightroom-pair-separate-nef.xmp` | Separate-photos mode, NEF sidecar (rating 3, pick 0) — basename shared with the JPEG twin (ambiguity tests) | `ab68b30d3ebc230c9af12c35cebc7c958bc7809b68db005fa60df79e66dc1f47` |
+| `lightroom-pair-separate-jpg.xmp` | Separate-photos mode, packet from the rewritten JPEG twin (rating 4, pick 1) — diverges from the NEF sidecar | `7780c259157a3c1e6db61164fba5f41e849a04de2cf29a87b4528fbe7138e9d2` |
+
 ## Display-reference comparison assets
 
 External reference renders follow

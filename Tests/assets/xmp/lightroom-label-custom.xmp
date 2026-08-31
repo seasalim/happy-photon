@@ -1,0 +1,812 @@
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00        ">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about=""
+    xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+    xmlns:tiff="http://ns.adobe.com/tiff/1.0/"
+    xmlns:exif="http://ns.adobe.com/exif/1.0/"
+    xmlns:aux="http://ns.adobe.com/exif/1.0/aux/"
+    xmlns:exifEX="http://cipa.jp/exif/1.0/"
+    xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/"
+    xmlns:stCamera="http://ns.adobe.com/photoshop/1.0/camera-profile"
+    xmlns:crlcp="http://ns.adobe.com/camera-raw-embedded-lens-profile/1.0/"
+    xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/"
+    xmlns:stEvt="http://ns.adobe.com/xap/1.0/sType/ResourceEvent#"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:crd="http://ns.adobe.com/camera-raw-defaults/1.0/"
+    xmlns:xmpDM="http://ns.adobe.com/xmp/1.0/DynamicMedia/"
+    xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
+    xmlns:crss="http://ns.adobe.com/camera-raw-saved-settings/1.0/"
+   xmp:ModifyDate="2024-08-20T15:24:41.32+02:00"
+   xmp:CreateDate="2024-08-20T15:24:41.32+02:00"
+   xmp:MetadataDate="2026-08-30T19:35:02-07:00"
+   xmp:Label="CustomRed"
+   tiff:Make="Canon"
+   tiff:Model="Canon EOS R5m2"
+   tiff:Orientation="1"
+   tiff:ImageWidth="5088"
+   tiff:ImageLength="3392"
+   exif:ExifVersion="0231"
+   exif:ExposureTime="1/15"
+   exif:ShutterSpeedValue="3906891/1000000"
+   exif:FNumber="32/10"
+   exif:ApertureValue="3356144/1000000"
+   exif:ExposureProgram="1"
+   exif:SensitivityType="2"
+   exif:RecommendedExposureIndex="125"
+   exif:ExposureBiasValue="0/1"
+   exif:MaxApertureValue="175/100"
+   exif:MeteringMode="5"
+   exif:FocalLength="135/1"
+   exif:CustomRendered="0"
+   exif:ExposureMode="1"
+   exif:WhiteBalance="0"
+   exif:SceneCaptureType="0"
+   exif:FocalPlaneXResolution="8192000/1419"
+   exif:FocalPlaneYResolution="5464000/947"
+   exif:FocalPlaneResolutionUnit="2"
+   exif:DateTimeOriginal="2024-08-20T15:24:41.32+02:00"
+   exif:PixelXDimension="5088"
+   exif:PixelYDimension="3392"
+   aux:SerialNumber="143302103530"
+   aux:LensInfo="135/1 135/1 0/0 0/0"
+   aux:Lens="RF135mm F1.8 L IS USM"
+   aux:LensID="61182"
+   aux:LensSerialNumber="3014000013"
+   aux:ImageNumber="0"
+   aux:ApproximateFocusDistance="108/100"
+   aux:FlashCompensation="0/1"
+   aux:Firmware="1.0.0"
+   exifEX:LensModel="RF135mm F1.8 L IS USM"
+   photoshop:DateCreated="2024-08-20T15:24:41.32+02:00"
+   photoshop:LabelColor="red"
+   photoshop:SidecarForExtension="CR3"
+   photoshop:EmbeddedXMPDigest="120B7B9CF9D08EF4F483A77E5B485EA7"
+   xmpMM:DocumentID="88D296AEED473B0DAECEEFF31526A234"
+   xmpMM:PreservedFileName="canon-r5m2-craw-apsc.CR3"
+   xmpMM:OriginalDocumentID="88D296AEED473B0DAECEEFF31526A234"
+   xmpMM:InstanceID="xmp.iid:ed27d658-e131-c64c-9335-9a7a19c482ed"
+   dc:format="image/x-canon-cr3"
+   crd:CameraProfile="Camera Standard"
+   crd:LookName=""
+   crd:LensProfileEnable="1"
+   xmpDM:pick="-1"
+   xmpDM:good="false"
+   crs:Version="18.5.1"
+   crs:ProcessVersion="15.4"
+   crs:WhiteBalance="As Shot"
+   crs:Temperature="4400"
+   crs:Tint="+27"
+   crs:Exposure2012="0.00"
+   crs:Contrast2012="0"
+   crs:Highlights2012="0"
+   crs:Shadows2012="0"
+   crs:Whites2012="0"
+   crs:Blacks2012="0"
+   crs:Texture="0"
+   crs:Clarity2012="0"
+   crs:Dehaze="0"
+   crs:Vibrance="0"
+   crs:Saturation="0"
+   crs:ParametricShadows="0"
+   crs:ParametricDarks="0"
+   crs:ParametricLights="0"
+   crs:ParametricHighlights="0"
+   crs:ParametricShadowSplit="25"
+   crs:ParametricMidtoneSplit="50"
+   crs:ParametricHighlightSplit="75"
+   crs:Sharpness="40"
+   crs:SharpenRadius="+1.0"
+   crs:SharpenDetail="25"
+   crs:SharpenEdgeMasking="0"
+   crs:LuminanceSmoothing="0"
+   crs:ColorNoiseReduction="25"
+   crs:ColorNoiseReductionDetail="50"
+   crs:ColorNoiseReductionSmoothness="50"
+   crs:HueAdjustmentRed="0"
+   crs:HueAdjustmentOrange="0"
+   crs:HueAdjustmentYellow="0"
+   crs:HueAdjustmentGreen="0"
+   crs:HueAdjustmentAqua="0"
+   crs:HueAdjustmentBlue="0"
+   crs:HueAdjustmentPurple="0"
+   crs:HueAdjustmentMagenta="0"
+   crs:SaturationAdjustmentRed="0"
+   crs:SaturationAdjustmentOrange="0"
+   crs:SaturationAdjustmentYellow="0"
+   crs:SaturationAdjustmentGreen="0"
+   crs:SaturationAdjustmentAqua="0"
+   crs:SaturationAdjustmentBlue="0"
+   crs:SaturationAdjustmentPurple="0"
+   crs:SaturationAdjustmentMagenta="0"
+   crs:LuminanceAdjustmentRed="0"
+   crs:LuminanceAdjustmentOrange="0"
+   crs:LuminanceAdjustmentYellow="0"
+   crs:LuminanceAdjustmentGreen="0"
+   crs:LuminanceAdjustmentAqua="0"
+   crs:LuminanceAdjustmentBlue="0"
+   crs:LuminanceAdjustmentPurple="0"
+   crs:LuminanceAdjustmentMagenta="0"
+   crs:SplitToningShadowHue="0"
+   crs:SplitToningShadowSaturation="0"
+   crs:SplitToningHighlightHue="0"
+   crs:SplitToningHighlightSaturation="0"
+   crs:SplitToningBalance="0"
+   crs:ColorGradeMidtoneHue="0"
+   crs:ColorGradeMidtoneSat="0"
+   crs:ColorGradeShadowLum="0"
+   crs:ColorGradeMidtoneLum="0"
+   crs:ColorGradeHighlightLum="0"
+   crs:ColorGradeBlending="50"
+   crs:ColorGradeGlobalHue="0"
+   crs:ColorGradeGlobalSat="0"
+   crs:ColorGradeGlobalLum="0"
+   crs:AutoLateralCA="1"
+   crs:LensProfileEnable="1"
+   crs:LensManualDistortionAmount="0"
+   crs:VignetteAmount="0"
+   crs:DefringePurpleAmount="0"
+   crs:DefringePurpleHueLo="30"
+   crs:DefringePurpleHueHi="70"
+   crs:DefringeGreenAmount="0"
+   crs:DefringeGreenHueLo="40"
+   crs:DefringeGreenHueHi="60"
+   crs:PerspectiveUpright="0"
+   crs:PerspectiveVertical="0"
+   crs:PerspectiveHorizontal="0"
+   crs:PerspectiveRotate="0.0"
+   crs:PerspectiveAspect="0"
+   crs:PerspectiveScale="100"
+   crs:PerspectiveX="0.00"
+   crs:PerspectiveY="0.00"
+   crs:GrainAmount="0"
+   crs:PostCropVignetteAmount="0"
+   crs:ShadowTint="0"
+   crs:RedHue="0"
+   crs:RedSaturation="0"
+   crs:GreenHue="0"
+   crs:GreenSaturation="0"
+   crs:BlueHue="0"
+   crs:BlueSaturation="0"
+   crs:HDREditMode="0"
+   crs:OverrideLookVignette="False"
+   crs:ToneCurveName2012="Linear"
+   crs:CameraProfile="Adobe Standard"
+   crs:CameraProfileDigest="34CFA4AC8E3861352E9AE36290FF5B0C"
+   crs:LensProfileSetup="LensDefaults"
+   crs:LensProfileName="Camera Settings"
+   crs:LensProfileDigest="980A02E7FB263D9EFC578EA98C98EC58"
+   crs:LensProfileIsEmbedded="True"
+   crs:LensProfileDistortionScale="100"
+   crs:LensProfileVignettingScale="100"
+   crs:HasSettings="True"
+   crs:AlreadyApplied="False"
+   crs:RawFileName="canon-r5m2-craw-apsc.CR3">
+   <exif:ISOSpeedRatings>
+    <rdf:Seq>
+     <rdf:li>125</rdf:li>
+    </rdf:Seq>
+   </exif:ISOSpeedRatings>
+   <exif:Flash
+    exif:Fired="False"
+    exif:Return="0"
+    exif:Mode="0"
+    exif:Function="False"
+    exif:RedEyeMode="False"/>
+   <photoshop:CameraProfiles>
+    <rdf:Seq>
+     <rdf:li>
+      <rdf:Description
+       stCamera:Author="Adobe"
+       stCamera:Make="Canon"
+       stCamera:Model="Canon EOS R5m2"
+       stCamera:UniqueCameraModel="Canon EOS R5 Mark II"
+       stCamera:CameraRawProfile="True"
+       stCamera:AutoScale="False"
+       stCamera:Lens="RF135mm F1.8 L IS USM"
+       stCamera:CameraPrettyName="Canon EOS R5 Mark II"
+       stCamera:LensPrettyName="RF135mm F1.8 L IS USM"
+       stCamera:ProfileName="Camera Settings"
+       stCamera:SensorFormatFactor="1.621622"
+       stCamera:FocalLength="135"
+       stCamera:FocusDistance="10000"
+       stCamera:ApertureValue="3.356144">
+      <crlcp:PerspectiveModel>
+       <rdf:Description
+        stCamera:Version="2"
+        stCamera:ImageXCenter="0.499805"
+        stCamera:ImageYCenter="0.5"
+        stCamera:ScaleFactor="0.989178"
+        stCamera:RadialDistortParam1="1.156747"
+        stCamera:RadialDistortParam2="0.405296"
+        stCamera:RadialDistortParam3="-444.53528">
+       <crlcp:VignetteModel>
+        <rdf:Description
+         stCamera:VignetteModelParam1="1">
+        <stCamera:VignetteModelPiecewiseParam>
+         <rdf:Seq>
+          <rdf:li>0.000000, 1.000000</rdf:li>
+          <rdf:li>0.029800, 0.995239</rdf:li>
+          <rdf:li>0.059600, 0.981931</rdf:li>
+          <rdf:li>0.074520, 0.972653</rdf:li>
+          <rdf:li>0.089400, 0.961543</rdf:li>
+          <rdf:li>0.104320, 0.936882</rdf:li>
+          <rdf:li>0.119201, 0.902698</rdf:li>
+          <rdf:li>0.134120, 0.853742</rdf:li>
+          <rdf:li>0.141560, 0.816384</rdf:li>
+          <rdf:li>0.149040, 0.774753</rdf:li>
+          <rdf:li>0.156480, 0.730436</rdf:li>
+          <rdf:li>0.160929, 0.693810</rdf:li>
+          <rdf:li>0.163920, 0.662923</rdf:li>
+          <rdf:li>0.167660, 0.619216</rdf:li>
+          <rdf:li>0.171361, 0.569161</rdf:li>
+          <rdf:li>0.175100, 0.519228</rdf:li>
+          <rdf:li>0.178840, 0.469173</rdf:li>
+         </rdf:Seq>
+        </stCamera:VignetteModelPiecewiseParam>
+        </rdf:Description>
+       </crlcp:VignetteModel>
+       </rdf:Description>
+      </crlcp:PerspectiveModel>
+      </rdf:Description>
+     </rdf:li>
+    </rdf:Seq>
+   </photoshop:CameraProfiles>
+   <xmpMM:History>
+    <rdf:Seq>
+     <rdf:li
+      stEvt:action="saved"
+      stEvt:instanceID="xmp.iid:ed27d658-e131-c64c-9335-9a7a19c482ed"
+      stEvt:when="2026-08-30T19:35:02-07:00"
+      stEvt:softwareAgent="Adobe Photoshop Lightroom Classic 15.5.1 (Windows)"
+      stEvt:changed="/metadata"/>
+    </rdf:Seq>
+   </xmpMM:History>
+   <crs:ToneCurvePV2012>
+    <rdf:Seq>
+     <rdf:li>0, 0</rdf:li>
+     <rdf:li>255, 255</rdf:li>
+    </rdf:Seq>
+   </crs:ToneCurvePV2012>
+   <crs:ToneCurvePV2012Red>
+    <rdf:Seq>
+     <rdf:li>0, 0</rdf:li>
+     <rdf:li>255, 255</rdf:li>
+    </rdf:Seq>
+   </crs:ToneCurvePV2012Red>
+   <crs:ToneCurvePV2012Green>
+    <rdf:Seq>
+     <rdf:li>0, 0</rdf:li>
+     <rdf:li>255, 255</rdf:li>
+    </rdf:Seq>
+   </crs:ToneCurvePV2012Green>
+   <crs:ToneCurvePV2012Blue>
+    <rdf:Seq>
+     <rdf:li>0, 0</rdf:li>
+     <rdf:li>255, 255</rdf:li>
+    </rdf:Seq>
+   </crs:ToneCurvePV2012Blue>
+   <crs:PointColors>
+    <rdf:Seq>
+     <rdf:li>-1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000</rdf:li>
+    </rdf:Seq>
+   </crs:PointColors>
+   <crs:ColorVariance>
+    <rdf:Seq>
+     <rdf:li>-50.000000</rdf:li>
+    </rdf:Seq>
+   </crs:ColorVariance>
+   <crs:Look>
+    <rdf:Description
+     crs:Name="Adobe Color"
+     crs:Amount="1"
+     crs:UUID="B952C231111CD8E0ECCF14B86BAA7077"
+     crs:SupportsAmount="false"
+     crs:SupportsMonochrome="false"
+     crs:SupportsOutputReferred="false"
+     crs:Copyright="© 2018 Adobe Systems, Inc.">
+    <crs:Group>
+     <rdf:Alt>
+      <rdf:li xml:lang="x-default">Profiles</rdf:li>
+     </rdf:Alt>
+    </crs:Group>
+    <crs:Parameters>
+     <rdf:Description
+      crs:Version="18.5.1"
+      crs:ProcessVersion="15.4"
+      crs:ConvertToGrayscale="False"
+      crs:CameraProfile="Adobe Standard"
+      crs:LookTable="E1095149FDB39D7A057BAB208837E2E1">
+     <crs:ToneCurvePV2012>
+      <rdf:Seq>
+       <rdf:li>0, 0</rdf:li>
+       <rdf:li>22, 16</rdf:li>
+       <rdf:li>40, 35</rdf:li>
+       <rdf:li>127, 127</rdf:li>
+       <rdf:li>224, 230</rdf:li>
+       <rdf:li>240, 246</rdf:li>
+       <rdf:li>255, 255</rdf:li>
+      </rdf:Seq>
+     </crs:ToneCurvePV2012>
+     <crs:ToneCurvePV2012Red>
+      <rdf:Seq>
+       <rdf:li>0, 0</rdf:li>
+       <rdf:li>255, 255</rdf:li>
+      </rdf:Seq>
+     </crs:ToneCurvePV2012Red>
+     <crs:ToneCurvePV2012Green>
+      <rdf:Seq>
+       <rdf:li>0, 0</rdf:li>
+       <rdf:li>255, 255</rdf:li>
+      </rdf:Seq>
+     </crs:ToneCurvePV2012Green>
+     <crs:ToneCurvePV2012Blue>
+      <rdf:Seq>
+       <rdf:li>0, 0</rdf:li>
+       <rdf:li>255, 255</rdf:li>
+      </rdf:Seq>
+     </crs:ToneCurvePV2012Blue>
+     <crs:PointColors>
+      <rdf:Seq>
+       <rdf:li>-1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000</rdf:li>
+      </rdf:Seq>
+     </crs:PointColors>
+     <crs:ColorVariance>
+      <rdf:Seq>
+       <rdf:li>-50.000000</rdf:li>
+      </rdf:Seq>
+     </crs:ColorVariance>
+     </rdf:Description>
+    </crs:Parameters>
+    </rdf:Description>
+   </crs:Look>
+   <crss:SavedSettings>
+    <rdf:Bag>
+     <rdf:li>
+      <rdf:Description
+       crss:Name="step0"
+       crss:Type="Snapshot"
+       crss:TIFFOrientation="1">
+      <crss:Parameters>
+       <rdf:Description
+        crs:Version="18.5.1"
+        crs:ProcessVersion="15.4"
+        crs:WhiteBalance="As Shot"
+        crs:Temperature="4400"
+        crs:Tint="+27"
+        crs:Exposure2012="0.00"
+        crs:Contrast2012="0"
+        crs:Highlights2012="0"
+        crs:Shadows2012="0"
+        crs:Whites2012="0"
+        crs:Blacks2012="0"
+        crs:Texture="0"
+        crs:Clarity2012="0"
+        crs:Dehaze="0"
+        crs:Vibrance="0"
+        crs:Saturation="0"
+        crs:ParametricShadows="0"
+        crs:ParametricDarks="0"
+        crs:ParametricLights="0"
+        crs:ParametricHighlights="0"
+        crs:ParametricShadowSplit="25"
+        crs:ParametricMidtoneSplit="50"
+        crs:ParametricHighlightSplit="75"
+        crs:Sharpness="40"
+        crs:SharpenRadius="+1.0"
+        crs:SharpenDetail="25"
+        crs:SharpenEdgeMasking="0"
+        crs:LuminanceSmoothing="0"
+        crs:ColorNoiseReduction="25"
+        crs:ColorNoiseReductionDetail="50"
+        crs:ColorNoiseReductionSmoothness="50"
+        crs:HueAdjustmentRed="0"
+        crs:HueAdjustmentOrange="0"
+        crs:HueAdjustmentYellow="0"
+        crs:HueAdjustmentGreen="0"
+        crs:HueAdjustmentAqua="0"
+        crs:HueAdjustmentBlue="0"
+        crs:HueAdjustmentPurple="0"
+        crs:HueAdjustmentMagenta="0"
+        crs:SaturationAdjustmentRed="0"
+        crs:SaturationAdjustmentOrange="0"
+        crs:SaturationAdjustmentYellow="0"
+        crs:SaturationAdjustmentGreen="0"
+        crs:SaturationAdjustmentAqua="0"
+        crs:SaturationAdjustmentBlue="0"
+        crs:SaturationAdjustmentPurple="0"
+        crs:SaturationAdjustmentMagenta="0"
+        crs:LuminanceAdjustmentRed="0"
+        crs:LuminanceAdjustmentOrange="0"
+        crs:LuminanceAdjustmentYellow="0"
+        crs:LuminanceAdjustmentGreen="0"
+        crs:LuminanceAdjustmentAqua="0"
+        crs:LuminanceAdjustmentBlue="0"
+        crs:LuminanceAdjustmentPurple="0"
+        crs:LuminanceAdjustmentMagenta="0"
+        crs:SplitToningShadowHue="0"
+        crs:SplitToningShadowSaturation="0"
+        crs:SplitToningHighlightHue="0"
+        crs:SplitToningHighlightSaturation="0"
+        crs:SplitToningBalance="0"
+        crs:ColorGradeMidtoneHue="0"
+        crs:ColorGradeMidtoneSat="0"
+        crs:ColorGradeShadowLum="0"
+        crs:ColorGradeMidtoneLum="0"
+        crs:ColorGradeHighlightLum="0"
+        crs:ColorGradeBlending="50"
+        crs:ColorGradeGlobalHue="0"
+        crs:ColorGradeGlobalSat="0"
+        crs:ColorGradeGlobalLum="0"
+        crs:AutoLateralCA="1"
+        crs:LensProfileEnable="1"
+        crs:LensManualDistortionAmount="0"
+        crs:VignetteAmount="0"
+        crs:DefringePurpleAmount="0"
+        crs:DefringePurpleHueLo="30"
+        crs:DefringePurpleHueHi="70"
+        crs:DefringeGreenAmount="0"
+        crs:DefringeGreenHueLo="40"
+        crs:DefringeGreenHueHi="60"
+        crs:PerspectiveUpright="0"
+        crs:PerspectiveVertical="0"
+        crs:PerspectiveHorizontal="0"
+        crs:PerspectiveRotate="0.0"
+        crs:PerspectiveAspect="0"
+        crs:PerspectiveScale="100"
+        crs:PerspectiveX="0.00"
+        crs:PerspectiveY="0.00"
+        crs:GrainAmount="0"
+        crs:PostCropVignetteAmount="0"
+        crs:ShadowTint="0"
+        crs:RedHue="0"
+        crs:RedSaturation="0"
+        crs:GreenHue="0"
+        crs:GreenSaturation="0"
+        crs:BlueHue="0"
+        crs:BlueSaturation="0"
+        crs:HDREditMode="0"
+        crs:OverrideLookVignette="False"
+        crs:ToneCurveName2012="Linear"
+        crs:CameraProfile="Adobe Standard"
+        crs:LensProfileSetup="LensDefaults"
+        crs:LensProfileName="Camera Settings"
+        crs:LensProfileDigest="980A02E7FB263D9EFC578EA98C98EC58"
+        crs:LensProfileIsEmbedded="True"
+        crs:LensProfileDistortionScale="100"
+        crs:LensProfileVignettingScale="100"
+        crs:CropTop="0"
+        crs:CropLeft="0"
+        crs:CropBottom="1"
+        crs:CropRight="1"
+        crs:CropAngle="0"
+        crs:CropConstrainToWarp="0"
+        crs:CropConstrainToUnitSquare="1">
+       <crs:ToneCurvePV2012>
+        <rdf:Seq>
+         <rdf:li>0, 0</rdf:li>
+         <rdf:li>255, 255</rdf:li>
+        </rdf:Seq>
+       </crs:ToneCurvePV2012>
+       <crs:ToneCurvePV2012Red>
+        <rdf:Seq>
+         <rdf:li>0, 0</rdf:li>
+         <rdf:li>255, 255</rdf:li>
+        </rdf:Seq>
+       </crs:ToneCurvePV2012Red>
+       <crs:ToneCurvePV2012Green>
+        <rdf:Seq>
+         <rdf:li>0, 0</rdf:li>
+         <rdf:li>255, 255</rdf:li>
+        </rdf:Seq>
+       </crs:ToneCurvePV2012Green>
+       <crs:ToneCurvePV2012Blue>
+        <rdf:Seq>
+         <rdf:li>0, 0</rdf:li>
+         <rdf:li>255, 255</rdf:li>
+        </rdf:Seq>
+       </crs:ToneCurvePV2012Blue>
+       <crs:PointColors>
+        <rdf:Seq>
+         <rdf:li>-1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000</rdf:li>
+        </rdf:Seq>
+       </crs:PointColors>
+       <crs:ColorVariance>
+        <rdf:Seq>
+         <rdf:li>-50.000000</rdf:li>
+        </rdf:Seq>
+       </crs:ColorVariance>
+       <crs:Look>
+        <rdf:Description
+         crss:Name="Adobe Color"
+         crss:Amount="1"
+         crss:UUID="B952C231111CD8E0ECCF14B86BAA7077"
+         crss:SupportsAmount="false"
+         crss:SupportsMonochrome="false"
+         crss:SupportsOutputReferred="false"
+         crss:Copyright="© 2018 Adobe Systems, Inc.">
+        <crss:Group>
+         <rdf:Alt>
+          <rdf:li xml:lang="x-default">Profiles</rdf:li>
+         </rdf:Alt>
+        </crss:Group>
+        <crss:Parameters>
+         <rdf:Description
+          crss:Version="18.5.1"
+          crss:ProcessVersion="15.4"
+          crss:ConvertToGrayscale="False"
+          crss:CameraProfile="Adobe Standard"
+          crss:LookTable="E1095149FDB39D7A057BAB208837E2E1">
+         <crss:ToneCurvePV2012>
+          <rdf:Seq>
+           <rdf:li>0, 0</rdf:li>
+           <rdf:li>22, 16</rdf:li>
+           <rdf:li>40, 35</rdf:li>
+           <rdf:li>127, 127</rdf:li>
+           <rdf:li>224, 230</rdf:li>
+           <rdf:li>240, 246</rdf:li>
+           <rdf:li>255, 255</rdf:li>
+          </rdf:Seq>
+         </crss:ToneCurvePV2012>
+         <crss:ToneCurvePV2012Red>
+          <rdf:Seq>
+           <rdf:li>0, 0</rdf:li>
+           <rdf:li>255, 255</rdf:li>
+          </rdf:Seq>
+         </crss:ToneCurvePV2012Red>
+         <crss:ToneCurvePV2012Green>
+          <rdf:Seq>
+           <rdf:li>0, 0</rdf:li>
+           <rdf:li>255, 255</rdf:li>
+          </rdf:Seq>
+         </crss:ToneCurvePV2012Green>
+         <crss:ToneCurvePV2012Blue>
+          <rdf:Seq>
+           <rdf:li>0, 0</rdf:li>
+           <rdf:li>255, 255</rdf:li>
+          </rdf:Seq>
+         </crss:ToneCurvePV2012Blue>
+         <crss:PointColors>
+          <rdf:Seq>
+           <rdf:li>-1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000</rdf:li>
+          </rdf:Seq>
+         </crss:PointColors>
+         <crss:ColorVariance>
+          <rdf:Seq>
+           <rdf:li>-50.000000</rdf:li>
+          </rdf:Seq>
+         </crss:ColorVariance>
+         </rdf:Description>
+        </crss:Parameters>
+        </rdf:Description>
+       </crs:Look>
+       </rdf:Description>
+      </crss:Parameters>
+      </rdf:Description>
+     </rdf:li>
+     <rdf:li>
+      <rdf:Description
+       crss:Name="step2"
+       crss:Type="Snapshot"
+       crss:TIFFOrientation="1">
+      <crss:Parameters>
+       <rdf:Description
+        crs:Version="18.5.1"
+        crs:ProcessVersion="15.4"
+        crs:WhiteBalance="As Shot"
+        crs:Temperature="4400"
+        crs:Tint="+27"
+        crs:Exposure2012="0.00"
+        crs:Contrast2012="0"
+        crs:Highlights2012="0"
+        crs:Shadows2012="0"
+        crs:Whites2012="0"
+        crs:Blacks2012="0"
+        crs:Texture="0"
+        crs:Clarity2012="0"
+        crs:Dehaze="0"
+        crs:Vibrance="0"
+        crs:Saturation="0"
+        crs:ParametricShadows="0"
+        crs:ParametricDarks="0"
+        crs:ParametricLights="0"
+        crs:ParametricHighlights="0"
+        crs:ParametricShadowSplit="25"
+        crs:ParametricMidtoneSplit="50"
+        crs:ParametricHighlightSplit="75"
+        crs:Sharpness="40"
+        crs:SharpenRadius="+1.0"
+        crs:SharpenDetail="25"
+        crs:SharpenEdgeMasking="0"
+        crs:LuminanceSmoothing="0"
+        crs:ColorNoiseReduction="25"
+        crs:ColorNoiseReductionDetail="50"
+        crs:ColorNoiseReductionSmoothness="50"
+        crs:HueAdjustmentRed="0"
+        crs:HueAdjustmentOrange="0"
+        crs:HueAdjustmentYellow="0"
+        crs:HueAdjustmentGreen="0"
+        crs:HueAdjustmentAqua="0"
+        crs:HueAdjustmentBlue="0"
+        crs:HueAdjustmentPurple="0"
+        crs:HueAdjustmentMagenta="0"
+        crs:SaturationAdjustmentRed="0"
+        crs:SaturationAdjustmentOrange="0"
+        crs:SaturationAdjustmentYellow="0"
+        crs:SaturationAdjustmentGreen="0"
+        crs:SaturationAdjustmentAqua="0"
+        crs:SaturationAdjustmentBlue="0"
+        crs:SaturationAdjustmentPurple="0"
+        crs:SaturationAdjustmentMagenta="0"
+        crs:LuminanceAdjustmentRed="0"
+        crs:LuminanceAdjustmentOrange="0"
+        crs:LuminanceAdjustmentYellow="0"
+        crs:LuminanceAdjustmentGreen="0"
+        crs:LuminanceAdjustmentAqua="0"
+        crs:LuminanceAdjustmentBlue="0"
+        crs:LuminanceAdjustmentPurple="0"
+        crs:LuminanceAdjustmentMagenta="0"
+        crs:SplitToningShadowHue="0"
+        crs:SplitToningShadowSaturation="0"
+        crs:SplitToningHighlightHue="0"
+        crs:SplitToningHighlightSaturation="0"
+        crs:SplitToningBalance="0"
+        crs:ColorGradeMidtoneHue="0"
+        crs:ColorGradeMidtoneSat="0"
+        crs:ColorGradeShadowLum="0"
+        crs:ColorGradeMidtoneLum="0"
+        crs:ColorGradeHighlightLum="0"
+        crs:ColorGradeBlending="50"
+        crs:ColorGradeGlobalHue="0"
+        crs:ColorGradeGlobalSat="0"
+        crs:ColorGradeGlobalLum="0"
+        crs:AutoLateralCA="1"
+        crs:LensProfileEnable="1"
+        crs:LensManualDistortionAmount="0"
+        crs:VignetteAmount="0"
+        crs:DefringePurpleAmount="0"
+        crs:DefringePurpleHueLo="30"
+        crs:DefringePurpleHueHi="70"
+        crs:DefringeGreenAmount="0"
+        crs:DefringeGreenHueLo="40"
+        crs:DefringeGreenHueHi="60"
+        crs:PerspectiveUpright="0"
+        crs:PerspectiveVertical="0"
+        crs:PerspectiveHorizontal="0"
+        crs:PerspectiveRotate="0.0"
+        crs:PerspectiveAspect="0"
+        crs:PerspectiveScale="100"
+        crs:PerspectiveX="0.00"
+        crs:PerspectiveY="0.00"
+        crs:GrainAmount="0"
+        crs:PostCropVignetteAmount="0"
+        crs:ShadowTint="0"
+        crs:RedHue="0"
+        crs:RedSaturation="0"
+        crs:GreenHue="0"
+        crs:GreenSaturation="0"
+        crs:BlueHue="0"
+        crs:BlueSaturation="0"
+        crs:HDREditMode="0"
+        crs:OverrideLookVignette="False"
+        crs:ToneCurveName2012="Linear"
+        crs:CameraProfile="Adobe Standard"
+        crs:LensProfileSetup="LensDefaults"
+        crs:LensProfileName="Camera Settings"
+        crs:LensProfileDigest="980A02E7FB263D9EFC578EA98C98EC58"
+        crs:LensProfileIsEmbedded="True"
+        crs:LensProfileDistortionScale="100"
+        crs:LensProfileVignettingScale="100"
+        crs:CropTop="0.102141"
+        crs:CropLeft="0.101098"
+        crs:CropBottom="0.874794"
+        crs:CropRight="0.894505"
+        crs:CropAngle="0"
+        crs:CropConstrainToWarp="0"
+        crs:CropConstrainToUnitSquare="1">
+       <crs:ToneCurvePV2012>
+        <rdf:Seq>
+         <rdf:li>0, 0</rdf:li>
+         <rdf:li>255, 255</rdf:li>
+        </rdf:Seq>
+       </crs:ToneCurvePV2012>
+       <crs:ToneCurvePV2012Red>
+        <rdf:Seq>
+         <rdf:li>0, 0</rdf:li>
+         <rdf:li>255, 255</rdf:li>
+        </rdf:Seq>
+       </crs:ToneCurvePV2012Red>
+       <crs:ToneCurvePV2012Green>
+        <rdf:Seq>
+         <rdf:li>0, 0</rdf:li>
+         <rdf:li>255, 255</rdf:li>
+        </rdf:Seq>
+       </crs:ToneCurvePV2012Green>
+       <crs:ToneCurvePV2012Blue>
+        <rdf:Seq>
+         <rdf:li>0, 0</rdf:li>
+         <rdf:li>255, 255</rdf:li>
+        </rdf:Seq>
+       </crs:ToneCurvePV2012Blue>
+       <crs:PointColors>
+        <rdf:Seq>
+         <rdf:li>-1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000</rdf:li>
+        </rdf:Seq>
+       </crs:PointColors>
+       <crs:ColorVariance>
+        <rdf:Seq>
+         <rdf:li>-50.000000</rdf:li>
+        </rdf:Seq>
+       </crs:ColorVariance>
+       <crs:Look>
+        <rdf:Description
+         crss:Name="Adobe Color"
+         crss:Amount="1"
+         crss:UUID="B952C231111CD8E0ECCF14B86BAA7077"
+         crss:SupportsAmount="false"
+         crss:SupportsMonochrome="false"
+         crss:SupportsOutputReferred="false"
+         crss:Copyright="© 2018 Adobe Systems, Inc.">
+        <crss:Group>
+         <rdf:Alt>
+          <rdf:li xml:lang="x-default">Profiles</rdf:li>
+         </rdf:Alt>
+        </crss:Group>
+        <crss:Parameters>
+         <rdf:Description
+          crss:Version="18.5.1"
+          crss:ProcessVersion="15.4"
+          crss:ConvertToGrayscale="False"
+          crss:CameraProfile="Adobe Standard"
+          crss:LookTable="E1095149FDB39D7A057BAB208837E2E1">
+         <crss:ToneCurvePV2012>
+          <rdf:Seq>
+           <rdf:li>0, 0</rdf:li>
+           <rdf:li>22, 16</rdf:li>
+           <rdf:li>40, 35</rdf:li>
+           <rdf:li>127, 127</rdf:li>
+           <rdf:li>224, 230</rdf:li>
+           <rdf:li>240, 246</rdf:li>
+           <rdf:li>255, 255</rdf:li>
+          </rdf:Seq>
+         </crss:ToneCurvePV2012>
+         <crss:ToneCurvePV2012Red>
+          <rdf:Seq>
+           <rdf:li>0, 0</rdf:li>
+           <rdf:li>255, 255</rdf:li>
+          </rdf:Seq>
+         </crss:ToneCurvePV2012Red>
+         <crss:ToneCurvePV2012Green>
+          <rdf:Seq>
+           <rdf:li>0, 0</rdf:li>
+           <rdf:li>255, 255</rdf:li>
+          </rdf:Seq>
+         </crss:ToneCurvePV2012Green>
+         <crss:ToneCurvePV2012Blue>
+          <rdf:Seq>
+           <rdf:li>0, 0</rdf:li>
+           <rdf:li>255, 255</rdf:li>
+          </rdf:Seq>
+         </crss:ToneCurvePV2012Blue>
+         <crss:PointColors>
+          <rdf:Seq>
+           <rdf:li>-1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000</rdf:li>
+          </rdf:Seq>
+         </crss:PointColors>
+         <crss:ColorVariance>
+          <rdf:Seq>
+           <rdf:li>-50.000000</rdf:li>
+          </rdf:Seq>
+         </crss:ColorVariance>
+         </rdf:Description>
+        </crss:Parameters>
+        </rdf:Description>
+       </crs:Look>
+       </rdf:Description>
+      </crss:Parameters>
+      </rdf:Description>
+     </rdf:li>
+    </rdf:Bag>
+   </crss:SavedSettings>
+  </rdf:Description>
+ </rdf:RDF>
+</x:xmpmeta>
