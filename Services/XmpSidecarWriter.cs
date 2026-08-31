@@ -8,6 +8,7 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
     private const int DefaultCapacity = 512;
     private readonly CatalogService _catalog;
     private readonly ISourceAvailabilityService _availability;
+    private readonly TryReadExifOrientation _readOrientation;
     private readonly IReadOnlyDictionary<ColorLabel, string> _labelNames;
     private readonly int _capacity;
     private readonly object _gate = new();
@@ -28,7 +29,8 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
         CatalogService catalog,
         IReadOnlyDictionary<ColorLabel, string> labelNames,
         int capacity = DefaultCapacity)
-        : this(catalog, labelNames, new SourceAvailabilityService(), capacity)
+        : this(catalog, labelNames, new SourceAvailabilityService(), capacity,
+            ImageServiceHelpers.TryGetExifOrientation)
     {
     }
 
@@ -36,11 +38,14 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
         CatalogService catalog,
         IReadOnlyDictionary<ColorLabel, string> labelNames,
         ISourceAvailabilityService availability,
-        int capacity = DefaultCapacity)
+        int capacity = DefaultCapacity,
+        TryReadExifOrientation? readOrientation = null)
     {
         _catalog = catalog;
         _labelNames = labelNames;
         _availability = availability;
+        _readOrientation = readOrientation ??
+            ImageServiceHelpers.TryGetExifOrientation;
         _capacity = Math.Max(1, capacity);
     }
 
@@ -168,22 +173,24 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
     {
         try
         {
-            if (!await TryWriteAsync(job, cancellationToken))
+            var result = await TryWriteAsync(job, cancellationToken);
+            if (!result.Succeeded)
             {
                 Report?.Invoke($"XMP write failed for {job.Snapshot.FilePath}");
                 return;
             }
+            if (result.ResolvedAxes == AssessmentAxes.None) return;
 
             if (await _catalog.ClearPendingAxesAsync(
                     job.Snapshot.ImageId, job.Snapshot.Revision,
-                    job.Axes, cancellationToken))
+                    result.ResolvedAxes, cancellationToken))
             {
                 return;
             }
 
             var current = (await _catalog.LoadAssessmentSnapshotsAsync(
                 [job.Snapshot.ImageId], cancellationToken)).Single();
-            var unresolved = current.PendingAxes & job.Axes;
+            var unresolved = current.PendingAxes & result.ResolvedAxes;
             if (unresolved != AssessmentAxes.None &&
                 !TryEnqueue(current, unresolved, job.FolderImagePaths, job.Naming))
             {
@@ -201,19 +208,40 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
         }
     }
 
-    private async Task<bool> TryWriteAsync(
+    private async Task<WriteResult> TryWriteAsync(
         WriteJob job,
         CancellationToken cancellationToken)
     {
         for (var attempt = 0; attempt < 3; attempt++)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            XmpCropProjection? cropProjection = null;
+            string? cropSkipReason = null;
+            var resolvedAxes = job.Axes;
+            if (job.Axes.HasFlag(AssessmentAxes.Crop))
+            {
+                var crop = await LoadCropProjectionAsync(job, cancellationToken);
+                cropProjection = crop.Projection;
+                cropSkipReason = crop.SkipReason;
+                if (crop.RetryPending)
+                    resolvedAxes &= ~AssessmentAxes.Crop;
+            }
+
+            var mergeAxes = job.Axes;
+            if (!resolvedAxes.HasFlag(AssessmentAxes.Crop))
+                mergeAxes &= ~AssessmentAxes.Crop;
+            if (mergeAxes == AssessmentAxes.None)
+            {
+                ReportCropOutcome(job, cropProjection, cropSkipReason, default);
+                return new(true, resolvedAxes);
+            }
+
             var before = XmpSidecarPaths.Resolve(
                 job.Snapshot.FilePath, job.FolderImagePaths, job.Naming);
             if (before.Shadowed != null)
                 Report?.Invoke($"Shadowed XMP sidecar left untouched: {before.Shadowed.Path}");
             var target = before.Winner?.Path ?? before.CreationPath;
-            if (!CanAccessTarget(target, before.Winner != null)) return false;
+            if (!CanAccessTarget(target, before.Winner != null)) return default;
 
             XDocument document;
             try
@@ -231,8 +259,27 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
 
             var merge = XmpSidecarDocument.Merge(
                 document, job.Snapshot,
-                before.Winner == null ? AssessmentAxes.All : job.Axes,
-                _labelNames);
+                mergeAxes,
+                _labelNames, cropProjection);
+            if (!merge.Changed)
+            {
+                ReportCropOutcome(job, cropProjection, cropSkipReason, merge);
+                return new(true, resolvedAxes);
+            }
+            if (before.Winner == null)
+            {
+                var bootstrap = XmpSidecarDocument.Merge(
+                    document, job.Snapshot,
+                    AssessmentAxes.Rating | AssessmentAxes.Flag |
+                    AssessmentAxes.Label,
+                    _labelNames);
+                merge = merge with
+                {
+                    ReplacedUnsupportedLabel = merge.ReplacedUnsupportedLabel ||
+                                               bootstrap.ReplacedUnsupportedLabel,
+                    Changed = true
+                };
+            }
             var temporary = Path.Combine(
                 Path.GetDirectoryName(target)!,
                 $".{Path.GetFileName(target)}.{Guid.NewGuid():N}.tmp");
@@ -246,10 +293,8 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
                     job.Snapshot.FilePath, job.FolderImagePaths, job.Naming);
                 if (!SameResolution(before, after)) continue;
                 File.Move(temporary, target, overwrite: true);
-                if (merge.ReplacedUnsupportedLabel)
-                    Report?.Invoke(
-                        $"Unsupported XMP label replaced for {job.Snapshot.FilePath}");
-                return true;
+                ReportMergeOutcome(job, cropProjection, cropSkipReason, merge);
+                return new(true, resolvedAxes);
             }
             catch (IOException) when (attempt < 2) { }
             catch (UnauthorizedAccessException) when (attempt < 2) { }
@@ -259,7 +304,62 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
                 catch { }
             }
         }
-        return false;
+        return default;
+    }
+
+    private async Task<CropProjectionResult>
+        LoadCropProjectionAsync(
+        WriteJob job,
+        CancellationToken cancellationToken)
+    {
+        var projection = await _catalog.LoadCropProjectionAsync(
+            job.Snapshot.ImageId, cancellationToken);
+        if (projection.Kind != XmpCropProjectionKind.Portable)
+            return new(projection, null, false);
+        if (!SourceAccessPolicy.CanRead(
+                _availability.GetAvailability(job.Snapshot.FilePath),
+                SourceReadIntent.Background))
+        {
+            return new(projection, "source orientation is unavailable", true);
+        }
+        if (!_readOrientation(job.Snapshot.FilePath, out var orientation))
+            return new(projection, "source orientation could not be read", true);
+        return orientation is 0 or 1
+            ? new(projection, null, false)
+            : new(new(XmpCropProjectionKind.NotPortable, null,
+                "source orientation is not 1"), null, false);
+    }
+
+    private void ReportMergeOutcome(
+        WriteJob job,
+        XmpCropProjection? cropProjection,
+        string? cropSkipReason,
+        XmpMergeResult merge)
+    {
+        if (merge.ReplacedUnsupportedLabel)
+            Report?.Invoke(
+                $"Unsupported XMP label replaced for {job.Snapshot.FilePath}");
+        if (merge.ReplacedUnsupportedCrop)
+            Report?.Invoke(
+                $"Unsupported XMP crop replaced for {job.Snapshot.FilePath}");
+        ReportCropOutcome(job, cropProjection, cropSkipReason, merge);
+    }
+
+    private void ReportCropOutcome(
+        WriteJob job,
+        XmpCropProjection? cropProjection,
+        string? cropSkipReason,
+        XmpMergeResult merge)
+    {
+        if (cropSkipReason == null &&
+            cropProjection?.Kind != XmpCropProjectionKind.NotPortable &&
+            !merge.SkippedCrop)
+        {
+            return;
+        }
+        Report?.Invoke(
+            $"XMP crop skipped for {job.Snapshot.FilePath}: " +
+            (cropSkipReason ?? merge.CropSkipReason ?? cropProjection?.Reason));
     }
 
     private bool CanAccessTarget(string path, bool exists)
@@ -331,4 +431,13 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
         AssessmentAxes Axes,
         IReadOnlyCollection<string> FolderImagePaths,
         XmpSidecarNaming Naming);
+
+    private readonly record struct WriteResult(
+        bool Succeeded,
+        AssessmentAxes ResolvedAxes);
+
+    private readonly record struct CropProjectionResult(
+        XmpCropProjection Projection,
+        string? SkipReason,
+        bool RetryPending);
 }

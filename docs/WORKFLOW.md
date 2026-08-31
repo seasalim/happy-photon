@@ -58,16 +58,19 @@ mode.
 Open **Settings** with the title-bar gear or `Ctrl+,`. The Storage tab reveals
 both roots and stages safe moves for the next launch; environment-managed roots
 explain why Change and Move are unavailable. The Metadata tab can enable
-per-catalog XMP reading or read/write interop for ratings, flags, and
-recognized color-label names. Read/write creates or updates a sidecar only
-after you change an assessment; enabling it does not publish older catalog
-assessments. Happy Photon exchanges only standard Adobe XMP vocabulary (see
+per-catalog XMP reading or read/write interop for ratings, flags, recognized
+color-label names, and crops. A plain Lightroom crop fills an image whose Happy
+Photon geometry is still empty; it never replaces or clears existing geometry.
+Read/write creates or updates a sidecar only after you change an assessment or
+geometry, and publishes crops only when rotation, horizon, perspective geometry,
+and source orientation need no coordinate conversion. Enabling it does not publish
+older catalog state. Happy Photon exchanges only standard Adobe XMP vocabulary (see
 `ARCHITECTURE.md` for the exact properties): Lightroom Classic interoperates
 fully, while darktable and Bridge versions that recognize a reject only as
 `xmp:Rating="-1"` will not show Happy Photon rejects, because the rating keeps
-its true star value. Sidecars may sync through the folder's cloud provider,
-while the original photo remains untouched and is never downloaded for XMP
-work.
+its true star value. Sidecars may sync through the folder's cloud provider. The
+original photo remains untouched; crop interop reads only a locally available
+orientation header and never downloads an original for XMP work.
 
 Each file's primary version (V1) is the only interpretation that exchanges
 assessments with its XMP sidecar. Ratings, flags, and labels on V2–V8 stay in the

@@ -22,6 +22,7 @@ public enum AssessmentAxes
     Rating = 1,
     Flag = 2,
     Label = 4,
+    Crop = 8,
     All = Rating | Flag | Label
 }
 
@@ -47,7 +48,64 @@ public readonly record struct XmpFact<T>(XmpFactKind Kind, T Value)
 public sealed record XmpSidecarFacts(
     XmpFact<int> Rating,
     XmpFact<ImageFlag> Flag,
-    XmpFact<ColorLabel> Label);
+    XmpFact<ColorLabel> Label,
+    XmpFact<CropRegion> Crop);
+
+public enum XmpCropProjectionKind
+{
+    None,
+    Portable,
+    NotPortable
+}
+
+public readonly record struct XmpCropProjection(
+    XmpCropProjectionKind Kind,
+    CropRegion? Crop,
+    string? Reason = null)
+{
+    public static XmpCropProjection From(EditSettings settings)
+    {
+        if (settings.Rotation != 0 || settings.HorizonRotation != 0 ||
+            settings.Geometry?.IsIdentity == false)
+        {
+            return new(XmpCropProjectionKind.NotPortable, null,
+                "frame-changing geometry is active");
+        }
+        return settings.Crop is { IsFullImage: false } crop
+            ? new(XmpCropProjectionKind.Portable, crop.Clone())
+            : new(XmpCropProjectionKind.None, null);
+    }
+
+    public static bool HasGeometryEdits(EditSettings settings) =>
+        settings.Rotation != 0 || settings.HorizonRotation != 0 ||
+        settings.Crop is { IsFullImage: false } ||
+        settings.Geometry?.IsIdentity == false;
+
+    public static bool GeometryChanged(EditSettings before, EditSettings after) =>
+        before.Rotation != after.Rotation ||
+        before.HorizonRotation != after.HorizonRotation ||
+        !CropsMatch(before.Crop, after.Crop) ||
+        !GeometryMatches(before.Geometry, after.Geometry);
+
+    private static bool CropsMatch(CropRegion? left, CropRegion? right) =>
+        ReferenceEquals(left, right) ||
+        left != null && right != null &&
+        left.Left == right.Left && left.Top == right.Top &&
+        left.Right == right.Right && left.Bottom == right.Bottom;
+
+    private static bool GeometryMatches(
+        GeometrySettings? left,
+        GeometrySettings? right)
+    {
+        var leftActive = left?.IsIdentity == false;
+        var rightActive = right?.IsIdentity == false;
+        return leftActive == rightActive && (!leftActive ||
+            left!.Vertical == right!.Vertical &&
+            left.Horizontal == right.Horizontal &&
+            left.Aspect == right.Aspect &&
+            left.Distortion == right.Distortion);
+    }
+}
 
 public sealed record AssessmentSnapshot(
     long ImageId,
@@ -74,4 +132,5 @@ public sealed record XmpReconcileItem(
 
 public sealed record XmpReconcileAdoption(
     AssessmentSnapshot Snapshot,
-    AssessmentAxes AdoptedAxes);
+    AssessmentAxes AdoptedAxes,
+    CropRegion? AdoptedCrop = null);

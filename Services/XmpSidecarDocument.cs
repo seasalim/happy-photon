@@ -1,14 +1,22 @@
 using System.Xml.Linq;
+using System.Globalization;
 using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
 
-public readonly record struct XmpMergeResult(bool ReplacedUnsupportedLabel);
+public readonly record struct XmpMergeResult(
+    bool ReplacedUnsupportedLabel,
+    bool ReplacedUnsupportedCrop,
+    bool SkippedCrop,
+    bool Changed = false,
+    string? CropSkipReason = null);
 
 public static class XmpSidecarDocument
 {
     public const string XmpDynamicMediaNamespaceUri =
         "http://ns.adobe.com/xmp/1.0/DynamicMedia/";
+    public const string CameraRawNamespaceUri =
+        "http://ns.adobe.com/camera-raw-settings/1.0/";
     internal static readonly XNamespace Xmp = "http://ns.adobe.com/xap/1.0/";
     internal static readonly XNamespace Rdf =
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
@@ -16,6 +24,8 @@ public static class XmpSidecarDocument
         "http://happyphoton.app/xmp/1.0/";
     internal static readonly XNamespace XmpDynamicMedia =
         XmpDynamicMediaNamespaceUri;
+    internal static readonly XNamespace CameraRaw = CameraRawNamespaceUri;
+    internal static readonly XNamespace Tiff = "http://ns.adobe.com/tiff/1.0/";
 
     public static XDocument Create() => new(
         new XElement(XNamespace.Get("adobe:ns:meta/") + "xmpmeta",
@@ -31,7 +41,8 @@ public static class XmpSidecarDocument
 
     public static XmpSidecarFacts ReadFacts(
         XDocument document,
-        IReadOnlyDictionary<ColorLabel, string> labelNames)
+        IReadOnlyDictionary<ColorLabel, string> labelNames,
+        int fileExifOrientation = 1)
     {
         var ratingText = ReadValue(document, Xmp, "Rating");
         var pickText = ReadValue(document, XmpDynamicMedia, "pick");
@@ -42,23 +53,36 @@ public static class XmpSidecarDocument
             : ParseRating(ratingText);
         var flag = ParseFlag(ratingText, pickText);
         var label = ParseLabel(labelText, labelNames);
-        return new XmpSidecarFacts(rating, flag, label);
+        return new XmpSidecarFacts(
+            rating, flag, label, ParseCrop(document, fileExifOrientation));
     }
 
     public static XmpMergeResult Merge(
         XDocument document,
         AssessmentSnapshot snapshot,
         AssessmentAxes axes,
-        IReadOnlyDictionary<ColorLabel, string> labelNames)
+        IReadOnlyDictionary<ColorLabel, string> labelNames,
+        XmpCropProjection? cropProjection = null)
     {
+        var original = new XDocument(document);
         if (axes.HasFlag(AssessmentAxes.Rating))
             MergeRating(document, snapshot);
         if (axes.HasFlag(AssessmentAxes.Flag))
             MergeFlag(document, snapshot);
         var replacedUnsupportedLabel = axes.HasFlag(AssessmentAxes.Label) &&
             MergeLabel(document, snapshot.ColorLabel, labelNames);
-        SetValue(document, Xmp, "MetadataDate", DateTime.UtcNow.ToString("O"));
-        return new XmpMergeResult(replacedUnsupportedLabel);
+        var cropResult = axes.HasFlag(AssessmentAxes.Crop) && cropProjection.HasValue
+            ? MergeCrop(document, cropProjection.Value)
+            : default;
+        var changed = !XNode.DeepEquals(original, document);
+        if (changed)
+            SetValue(document, Xmp, "MetadataDate", DateTime.UtcNow.ToString("O"));
+        return new XmpMergeResult(
+            replacedUnsupportedLabel,
+            cropResult.ReplacedUnsupportedCrop,
+            cropResult.SkippedCrop,
+            changed,
+            cropResult.CropSkipReason);
     }
 
     internal static string? ReadValue(
@@ -122,6 +146,193 @@ public static class XmpSidecarDocument
                 return XmpFact<ColorLabel>.Matched(label);
         }
         return XmpFact<ColorLabel>.Unsupported;
+    }
+
+    private static XmpFact<CropRegion> ParseCrop(
+        XDocument document,
+        int fileExifOrientation)
+    {
+        if (!TryReadLiveValue(document, CameraRaw, "HasCrop", out var hasCrop))
+            return XmpFact<CropRegion>.Unsupported;
+        if (hasCrop == null || string.Equals(
+                hasCrop.Trim(), "False", StringComparison.OrdinalIgnoreCase))
+        {
+            return XmpFact<CropRegion>.Empty;
+        }
+        if (!string.Equals(
+                hasCrop.Trim(), "True", StringComparison.OrdinalIgnoreCase) ||
+            HasConflictingCropValues(document) ||
+            fileExifOrientation != 1 || !HasPortableOrientation(document) ||
+            !IsZero(ReadLiveValue(document, CameraRaw, "CropAngle")) ||
+            IsWarpEntangled(document))
+        {
+            return XmpFact<CropRegion>.Unsupported;
+        }
+
+        if (!TryReadEdge(document, "CropLeft", out var left) ||
+            !TryReadEdge(document, "CropTop", out var top) ||
+            !TryReadEdge(document, "CropRight", out var right) ||
+            !TryReadEdge(document, "CropBottom", out var bottom) ||
+            left >= right || top >= bottom)
+        {
+            return XmpFact<CropRegion>.Unsupported;
+        }
+        return XmpFact<CropRegion>.Matched(new CropRegion
+        {
+            Left = left,
+            Top = top,
+            Right = right,
+            Bottom = bottom
+        });
+    }
+
+    private static bool HasPortableOrientation(XDocument document)
+    {
+        if (!TryReadLiveValue(document, Tiff, "Orientation", out var value))
+            return false;
+        return value == null || int.TryParse(
+            value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture,
+            out var orientation) && orientation == 1;
+    }
+
+    private static bool TryReadEdge(
+        XDocument document,
+        string name,
+        out double value)
+    {
+        if (!TryReadLiveValue(document, CameraRaw, name, out var text))
+        {
+            value = default;
+            return false;
+        }
+        return double.TryParse(text, NumberStyles.Float,
+                   CultureInfo.InvariantCulture, out value) &&
+               double.IsFinite(value) && value is >= 0 and <= 1;
+    }
+
+    private static bool IsZero(string? text) =>
+        text == null || double.TryParse(text, NumberStyles.Float,
+            CultureInfo.InvariantCulture, out var value) &&
+        double.IsFinite(value) && value == 0;
+
+    internal static bool IsWarpEntangled(XDocument document)
+    {
+        if (!TryReadLiveValue(
+                document, CameraRaw, "CropConstrainToWarp", out var text))
+        {
+            return true;
+        }
+        return text != null && text.Trim() is not "0" &&
+            !string.Equals(text.Trim(), "False", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static XmpMergeResult MergeCrop(
+        XDocument document,
+        XmpCropProjection projection)
+    {
+        if (HasConflictingCropValues(document))
+            return new(false, false, true, CropSkipReason:
+                "sidecar has conflicting crop tuples");
+        if (IsWarpEntangled(document) || !HasPortableOrientation(document))
+            return new(false, false, true, CropSkipReason:
+                "sidecar crop uses unsupported geometry");
+
+        var existing = ParseCrop(document, 1);
+        if (projection.Kind != XmpCropProjectionKind.Portable)
+        {
+            RemoveCrop(document);
+            return new(false, false,
+                projection.Kind == XmpCropProjectionKind.NotPortable);
+        }
+
+        var crop = projection.Crop!;
+        SetLiveValue(document, CameraRaw, "HasCrop", "True");
+        SetLiveValue(document, CameraRaw, "CropLeft", Format(crop.Left));
+        SetLiveValue(document, CameraRaw, "CropTop", Format(crop.Top));
+        SetLiveValue(document, CameraRaw, "CropRight", Format(crop.Right));
+        SetLiveValue(document, CameraRaw, "CropBottom", Format(crop.Bottom));
+        SetLiveValue(document, CameraRaw, "CropAngle", "0");
+        return new(false, existing.Kind == XmpFactKind.Unsupported, false);
+    }
+
+    private static string Format(double value) =>
+        value.ToString("R", CultureInfo.InvariantCulture);
+
+    private static void RemoveCrop(XDocument document)
+    {
+        foreach (var name in new[]
+                 {
+                     "HasCrop", "CropLeft", "CropTop", "CropRight", "CropBottom"
+                 })
+        {
+            RemoveLiveValue(document, CameraRaw, name);
+        }
+    }
+
+    private static string? ReadLiveValue(
+        XDocument document,
+        XNamespace xmlNamespace,
+        string localName) => TryReadLiveValue(
+            document, xmlNamespace, localName, out var value) ? value : null;
+
+    private static bool TryReadLiveValue(
+        XDocument document,
+        XNamespace xmlNamespace,
+        string localName,
+        out string? value)
+    {
+        value = null;
+        var found = false;
+        foreach (var description in LiveDescriptions(document))
+        {
+            var attribute = description.Attribute(xmlNamespace + localName);
+            if (attribute == null) continue;
+            if (found && !string.Equals(
+                    value, attribute.Value, StringComparison.Ordinal))
+            {
+                return false;
+            }
+            value = attribute.Value;
+            found = true;
+        }
+        return true;
+    }
+
+    private static bool HasConflictingCropValues(XDocument document) =>
+        CropPropertyNames.Any(name => !TryReadLiveValue(
+            document, CameraRaw, name, out _));
+
+    private static void SetLiveValue(
+        XDocument document,
+        XNamespace xmlNamespace,
+        string localName,
+        string value)
+    {
+        var description = LiveDescriptions(document).FirstOrDefault(candidate =>
+                CropPropertyNames.Any(name => candidate.Attribute(
+                    CameraRaw + name) != null)) ?? Description(document);
+        if (xmlNamespace == CameraRaw)
+        {
+            foreach (var other in LiveDescriptions(document).Where(candidate =>
+                         !ReferenceEquals(candidate, description)))
+                other.Attribute(xmlNamespace + localName)?.Remove();
+        }
+        if (xmlNamespace == CameraRaw &&
+            description.GetPrefixOfNamespace(CameraRaw) == null)
+        {
+            description.SetAttributeValue(
+                XNamespace.Xmlns + "crs", CameraRaw.NamespaceName);
+        }
+        description.SetAttributeValue(xmlNamespace + localName, value);
+    }
+
+    private static void RemoveLiveValue(
+        XDocument document,
+        XNamespace xmlNamespace,
+        string localName)
+    {
+        foreach (var description in LiveDescriptions(document))
+            description.Attribute(xmlNamespace + localName)?.Remove();
     }
 
     private static void MergeRating(
@@ -224,7 +435,7 @@ public static class XmpSidecarDocument
 
     private static XElement Description(XDocument document)
     {
-        var description = document.Descendants(Rdf + "Description").FirstOrDefault();
+        var description = LiveDescription(document);
         if (description != null) return description;
         var rdf = document.Descendants(Rdf + "RDF").FirstOrDefault();
         if (rdf == null)
@@ -239,4 +450,17 @@ public static class XmpSidecarDocument
         rdf.Add(description);
         return description;
     }
+
+    private static XElement? LiveDescription(XDocument document) =>
+        LiveDescriptions(document).FirstOrDefault();
+
+    private static IEnumerable<XElement> LiveDescriptions(XDocument document) =>
+        document.Descendants(Rdf + "RDF")
+            .SelectMany(rdf => rdf.Elements(Rdf + "Description"));
+
+    private static readonly string[] CropPropertyNames =
+    [
+        "HasCrop", "CropLeft", "CropTop", "CropRight", "CropBottom",
+        "CropAngle", "CropConstrainToWarp"
+    ];
 }

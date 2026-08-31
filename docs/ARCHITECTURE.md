@@ -321,10 +321,12 @@ their revision still matches the preview baseline, then filters refresh in place
 XMP support is opt-in per catalog. Folder enumeration records `.xmp` files in
 the same pass as supported images, while XML parsing begins only after the
 thumbnail session has started and runs as cancellable background work.
-Reconciliation compares rating, flag, and label independently against the
+Reconciliation compares rating, flag, label, and crop independently against the
 revisioned `image_assessments` row; catalog revisions and the active browse
-generation guard UI adoption. A file's V1 is the permanent XMP primary: sidecar
-adoption and publication target V1 only, while other versions remain catalog-only.
+generation guard UI adoption. Crop is fill-empty and recency-exempt: a supported
+Adobe crop is adopted through ordinary edit history only while persisted and live
+geometry are both empty. A file's V1 is the permanent XMP primary: sidecar adoption
+and publication target V1 only, while other versions remain catalog-only.
 
 In Read & write mode, only a committed local assessment mutation schedules a
 sidecar write. A single background writer coalesces work by target, merges the
@@ -334,13 +336,17 @@ temporary file beside the sidecar. Writes use only standard Adobe vocabulary:
 `xmp:Rating` always holds the true 0–5 stars, `xmpDM:pick` holds `1`, `0`, or
 `-1` for picked, unflagged, or rejected, and `xmpDM:good` accompanies picked and
 rejected values for Lightroom Classic interoperability. `xmp:Label=""` is the
-explicit label clear. Reads likewise use only these standard XMP properties, and
-new writes never create or update the `happyphoton` namespace. Applications such
+explicit label clear. Portable zero-rotation crops use only `crs:HasCrop`, the four
+normalized crop edges, and `crs:CropAngle="0"`; every other Camera Raw property is
+left untouched. Angled, warp-relative, perspective-corrected, and orientation-
+transposed crops are skipped. Reads likewise use only these standard XMP properties,
+and new writes never create or update the `happyphoton` namespace. Applications such
 as darktable and Bridge that recognize rejects only through `xmp:Rating="-1"`
 will not see Happy Photon rejects; preserving the true star rating and
 Lightroom-compatible pick state is intentional. Reader and writer loads reject
-sidecars larger than 4 MiB. Sidecar availability is checked independently, and
-this pipeline never opens the original image.
+sidecars larger than 4 MiB. Sidecar availability is checked independently. Crop
+interop may perform an availability-gated, header-only EXIF orientation ping on an
+original; it never decodes the original or approves cloud hydration.
 
 ## Folder load and the thumbnail pump
 

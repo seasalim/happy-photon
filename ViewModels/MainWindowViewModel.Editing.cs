@@ -49,8 +49,10 @@ public partial class MainWindowViewModel
         CatalogEditHistoryMutation? mutation = null)
     {
         CancelHistoryHover();
+        var cropWriteContext = CaptureCropWriteContext(image);
         var apply = ApplyHistoryStateCoreAsync(
-            image, historyGeneration, state, position, mutation);
+            image, historyGeneration, state, position, mutation,
+            cropWriteContext);
         _serializedHistoryCommit = apply;
         _serializedHistoryImage = image;
         _serializedHistorySettings = image.EditSettings.Clone();
@@ -63,7 +65,8 @@ public partial class MainWindowViewModel
         long historyGeneration,
         EditSettings state,
         int position,
-        CatalogEditHistoryMutation? mutation)
+        CatalogEditHistoryMutation? mutation,
+        CropWriteContext cropWriteContext)
     {
         _previewDebounce?.Cancel();
         var previousSettings = CaptureLiveEditState();
@@ -87,6 +90,8 @@ public partial class MainWindowViewModel
             await image.EnsureCatalogIdAsync(_catalogService);
             await _catalogService.SaveEditSettingsWithHistoryAsync(
                 image.CatalogId, image.EditSettings, mutation, position);
+            await CommitCropAxisIfGeometryChangedAsync(
+                image, previousSettings, image.EditSettings, cropWriteContext);
         }
         catch
         {

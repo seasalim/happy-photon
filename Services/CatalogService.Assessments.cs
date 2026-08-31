@@ -112,6 +112,30 @@ public partial class CatalogService
         }
     }
 
+    public async Task<XmpCropProjection> LoadCropProjectionAsync(
+        long imageId,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureInitialized();
+        await _connectionGate.WaitAsync(cancellationToken);
+        try
+        {
+            using var command = _connection!.CreateCommand();
+            command.CommandText =
+                "SELECT edit_settings FROM images WHERE id = @id AND version = 1;";
+            command.Parameters.AddWithValue("@id", imageId);
+            var json = await command.ExecuteScalarAsync(cancellationToken) as string;
+            if (json == null)
+                throw new InvalidOperationException(
+                    $"Catalog image {imageId} was not found or is not V1.");
+            return XmpCropProjection.From(EditSettingsJson.Deserialize(json, out _));
+        }
+        finally
+        {
+            _connectionGate.Release();
+        }
+    }
+
     public async Task<IReadOnlyList<XmpReconcileAdoption>> AdoptSidecarFactsAsync(
         IReadOnlyCollection<XmpReconcileItem> items,
         CancellationToken cancellationToken = default)
@@ -127,13 +151,18 @@ public partial class CatalogService
             {
                 var axes = SelectAdoptableAxes(item);
                 if (axes == AssessmentAxes.None) continue;
-                if (await AdoptOneAsync(_connection, transaction, item, axes,
-                    cancellationToken))
+                var adoptedAxes = await AdoptOneAsync(
+                    _connection, transaction, item, axes, cancellationToken);
+                if (adoptedAxes != AssessmentAxes.None)
                 {
                     var refreshed = (await ReadAssessmentSnapshotsAsync(
                         _connection, transaction, [item.Snapshot.ImageId],
                         cancellationToken)).Single();
-                    adopted.Add(new XmpReconcileAdoption(refreshed, axes));
+                    adopted.Add(new XmpReconcileAdoption(
+                        refreshed, adoptedAxes,
+                        adoptedAxes.HasFlag(AssessmentAxes.Crop)
+                            ? item.Facts.Crop.Value.Clone()
+                            : null));
                 }
             }
             await transaction.CommitAsync(cancellationToken);
@@ -147,10 +176,15 @@ public partial class CatalogService
 
     private static AssessmentAxes SelectAdoptableAxes(XmpReconcileItem item)
     {
-        if (item.Snapshot.AssessedUtc.AddSeconds(2) >= item.Sidecar.LastWriteUtc)
-            return AssessmentAxes.None;
         var pending = item.Snapshot.PendingAxes;
         var axes = AssessmentAxes.None;
+        if (item.Facts.Crop.Kind == XmpFactKind.Matched &&
+            !pending.HasFlag(AssessmentAxes.Crop))
+        {
+            axes |= AssessmentAxes.Crop;
+        }
+        if (item.Snapshot.AssessedUtc.AddSeconds(2) >= item.Sidecar.LastWriteUtc)
+            return axes;
         if (item.Facts.Rating.CanAdopt && !pending.HasFlag(AssessmentAxes.Rating))
             axes |= AssessmentAxes.Rating;
         var canAdoptFlag = item.Facts.Flag.CanAdopt ||
@@ -163,13 +197,26 @@ public partial class CatalogService
         return axes;
     }
 
-    private static async Task<bool> AdoptOneAsync(
+    private async Task<AssessmentAxes> AdoptOneAsync(
         SqliteConnection connection,
         SqliteTransaction transaction,
         XmpReconcileItem item,
         AssessmentAxes axes,
         CancellationToken cancellationToken)
     {
+        EditSettings? currentSettings = null;
+        if (axes.HasFlag(AssessmentAxes.Crop))
+        {
+            currentSettings = await ReadAdoptableCropSettingsAsync(
+                connection, transaction, item, axes, cancellationToken);
+            if (currentSettings == null ||
+                XmpCropProjection.HasGeometryEdits(currentSettings))
+            {
+                axes &= ~AssessmentAxes.Crop;
+            }
+        }
+        if (axes == AssessmentAxes.None) return AssessmentAxes.None;
+
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
         var assignments = new List<string>();
@@ -200,7 +247,26 @@ public partial class CatalogService
         command.Parameters.AddWithValue("@revision", item.Snapshot.Revision);
         command.Parameters.AddWithValue("@axes", (int)axes);
         command.Parameters.AddWithValue("@updated", DateTime.UtcNow.ToString("O"));
-        if (await command.ExecuteNonQueryAsync(cancellationToken) != 1) return false;
+        if (await command.ExecuteNonQueryAsync(cancellationToken) != 1)
+            return AssessmentAxes.None;
+
+        if (axes.HasFlag(AssessmentAxes.Crop))
+        {
+            var updatedSettings = currentSettings!.Clone();
+            updatedSettings.Crop = item.Facts.Crop.Value.Clone();
+            var history = await ReadHistoryAsync(
+                connection, transaction, item.Snapshot.ImageId);
+            var mutation = CatalogEditHistory.PrepareAppend(
+                history, currentSettings, updatedSettings, "Crop from XMP");
+            await WriteSettingsAsync(
+                transaction, SerializeUpdate(new(
+                    item.Snapshot.ImageId, updatedSettings)));
+            if (mutation != null)
+            {
+                await WriteHistoryMutationAsync(
+                    transaction, item.Snapshot.ImageId, mutation);
+            }
+        }
 
         command.Parameters.Clear();
         command.CommandText = """
@@ -211,8 +277,37 @@ public partial class CatalogService
         command.Parameters.AddWithValue("@id", item.Snapshot.ImageId);
         command.Parameters.AddWithValue("@revision", item.Snapshot.Revision);
         command.Parameters.AddWithValue(
-            "@assessedUtc", item.Sidecar.LastWriteUtc.ToString("O"));
-        return await command.ExecuteNonQueryAsync(cancellationToken) == 1;
+            "@assessedUtc",
+            (item.Sidecar.LastWriteUtc > item.Snapshot.AssessedUtc
+                ? item.Sidecar.LastWriteUtc
+                : item.Snapshot.AssessedUtc).ToString("O"));
+        return await command.ExecuteNonQueryAsync(cancellationToken) == 1
+            ? axes
+            : AssessmentAxes.None;
+    }
+
+    private static async Task<EditSettings?> ReadAdoptableCropSettingsAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        XmpReconcileItem item,
+        AssessmentAxes axes,
+        CancellationToken cancellationToken)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT images.edit_settings
+            FROM images
+            JOIN image_assessments ON image_assessments.image_id = images.id
+            WHERE images.id = @id AND images.version = 1
+              AND image_assessments.revision = @revision
+              AND (image_assessments.pending_axes & @axes) = 0;
+            """;
+        command.Parameters.AddWithValue("@id", item.Snapshot.ImageId);
+        command.Parameters.AddWithValue("@revision", item.Snapshot.Revision);
+        command.Parameters.AddWithValue("@axes", (int)axes);
+        var json = await command.ExecuteScalarAsync(cancellationToken) as string;
+        return json == null ? null : EditSettingsJson.Deserialize(json, out _);
     }
 
     private static async Task ApplyAssessmentMutationAsync(

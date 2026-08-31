@@ -112,7 +112,7 @@ public partial class CatalogService
             throw new InvalidOperationException(
                 $"Catalog image {update.CatalogId} was not updated.");
     }
-    private static async Task<CatalogEditHistoryState> ReadHistoryAsync(
+    internal static async Task<CatalogEditHistoryState> ReadHistoryAsync(
         SqliteConnection connection, SqliteTransaction? transaction, long catalogId)
     {
         using var command = connection.CreateCommand();
@@ -133,7 +133,7 @@ public partial class CatalogService
         return new(entries, position);
     }
 
-    private async Task WriteHistoryMutationAsync(
+    internal async Task WriteHistoryMutationAsync(
         SqliteTransaction transaction, long catalogId,
         CatalogEditHistoryMutation mutation)
     {

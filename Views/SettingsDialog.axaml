@@ -66,7 +66,7 @@
                             <ComboBoxItem Content="Read only"/>
                             <ComboBoxItem Content="Read &amp; write"/>
                         </ComboBox>
-                        <TextBlock Text="Off keeps today’s catalog-only behavior. Read only adopts newer supported facts onto V1. Read &amp; write publishes V1 assessments; other versions stay catalog-only."
+                        <TextBlock Text="Off keeps today’s catalog-only behavior. Read only adopts supported ratings, flags, labels, and fill-empty crops onto V1. Read &amp; write also publishes V1 assessments and portable crops; other versions stay catalog-only."
                                    Classes="setting-note"/>
                         <TextBlock Text="Naming for new sidecars"
                                    Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,0"/>
@@ -80,7 +80,7 @@
                                 BorderBrush="{DynamicResource Divider}" BorderThickness="1"
                                 CornerRadius="{StaticResource RadiusMedium}" Padding="14" Margin="0,8,0,0">
                             <TextBlock Classes="setting-note"
-                                       Text="Sidecars are created beside photos and may sync through cloud providers. Originals are never modified. Ratings interoperate well; labels and flags may not. Enabling writing does not bulk-create sidecars for previously assessed images."/>
+                                       Text="Sidecars are created beside photos and may sync through cloud providers. Originals are never modified. Ratings and zero-rotation crops interoperate with Lightroom; labels and flags may not. Enabling writing does not bulk-create sidecars for previously assessed images."/>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>

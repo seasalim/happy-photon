@@ -89,6 +89,7 @@ public partial class MainWindowViewModel
         }
         var byPath = Browse.AllImages.Where(image => image.Version == 1).ToDictionary(
             image => image.FilePath, StringComparer.OrdinalIgnoreCase);
+        var cropRefreshes = new List<ImageFile>();
         foreach (var adoption in result.Adoptions)
         {
             if (!byPath.TryGetValue(adoption.Snapshot.FilePath, out var image) ||
@@ -96,22 +97,50 @@ public partial class MainWindowViewModel
             {
                 continue;
             }
-            ApplyXmpAdoption(image, adoption);
+            var appliedCrop = ApplyXmpAdoption(image, adoption);
+            if (appliedCrop) cropRefreshes.Add(image);
+            if (appliedCrop && ReferenceEquals(image, SelectedImage) &&
+                image.EditSettings.Crop != null)
+            {
+                CurrentCrop = image.EditSettings.Crop.Clone();
+                BeginDevelopHistoryLoad(IsDevelopMode ? image : null);
+                if (IsDevelopMode)
+                {
+                    var renderGeneration = RequestEditedRender();
+                    TrackPreviewDebounce(UpdatePreviewWithCurrentSliders(
+                        generation: renderGeneration));
+                }
+            }
+        }
+        if (cropRefreshes.Count > 0)
+        {
+            _ = TrackDirectThumbnailOperation(
+                RefreshThumbnailsAsync(cropRefreshes));
         }
         if (result.Adoptions.Count > 0) Browse.RefreshFilters();
         ReportXmpReconcileIssues(result.Reports);
     }
 
-    internal static void ApplyXmpAdoption(
+    internal static bool ApplyXmpAdoption(
         ImageFile image,
         XmpReconcileAdoption adoption)
     {
         if (image.CatalogId == 0)
             image.CatalogId = adoption.Snapshot.ImageId;
+        var appliedCrop = false;
+        if (adoption.AdoptedAxes.HasFlag(AssessmentAxes.Crop) &&
+            adoption.AdoptedCrop != null &&
+            !XmpCropProjection.HasGeometryEdits(image.EditSettings))
+        {
+            image.EditSettings.Crop = adoption.AdoptedCrop.Clone();
+            image.HasEdits = image.EditSettings.HasEdits;
+            appliedCrop = true;
+        }
         ApplyAssessmentSnapshot(
             image,
             adoption.Snapshot,
             adoption.AdoptedAxes);
+        return appliedCrop;
     }
 
     internal void ReportXmpReconcileIssues(IReadOnlyList<string> reports)
@@ -199,6 +228,46 @@ public partial class MainWindowViewModel
         return snapshots;
     }
 
+    private CropWriteContext CaptureCropWriteContext(ImageFile image)
+    {
+        var folderImagePaths = Browse.AllImages
+            .Where(candidate => candidate.Version == 1)
+            .Select(candidate => candidate.FilePath)
+            .Append(image.FilePath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        return new CropWriteContext(
+            image.Version == 1 && XmpSidecarMode == XmpSidecarMode.ReadWrite,
+            _xmpWriter,
+            folderImagePaths,
+            XmpSidecarNaming);
+    }
+
+    private async Task CommitCropAssessmentAsync(
+        ImageFile image,
+        CropWriteContext writeContext)
+    {
+        var snapshot = (await _catalogService.MutateAssessmentsAsync([
+            new AssessmentMutation(
+                image.CatalogId,
+                AssessmentAxes.Crop,
+                PendingAxes: writeContext.WritePending
+                    ? AssessmentAxes.Crop
+                    : AssessmentAxes.None)
+        ])).Single();
+        ApplyAssessmentSnapshot(image, snapshot);
+        if (!writeContext.WritePending || writeContext.Writer == null ||
+            IsDeleteTargetClaimed(snapshot.FilePath))
+        {
+            return;
+        }
+        writeContext.Writer.TryEnqueue(
+            snapshot,
+            AssessmentAxes.Crop,
+            writeContext.FolderImagePaths,
+            writeContext.Naming);
+    }
+
     private void SetDeleteTargetsClaimed(
         IEnumerable<string> paths,
         bool claimed)
@@ -243,4 +312,10 @@ public partial class MainWindowViewModel
         var noun = count == 1 ? "photo" : "photos";
         ShowTransientStatus($"XMP writes remain pending for {count} {noun}");
     }
+
+    private readonly record struct CropWriteContext(
+        bool WritePending,
+        XmpSidecarWriter? Writer,
+        IReadOnlyCollection<string> FolderImagePaths,
+        XmpSidecarNaming Naming);
 }

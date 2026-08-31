@@ -5,6 +5,10 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
 
+internal delegate bool TryReadExifOrientation(
+    string filePath,
+    out int orientation);
+
 /// <summary>
 /// Static helper methods for image service operations including EXIF handling,
 /// error detection, and logging.
@@ -49,18 +53,27 @@ public static class ImageServiceHelpers
     /// Reads the EXIF orientation value from a file without fully decoding it.
     /// </summary>
     /// <returns>EXIF orientation value (1-8), or 1 if not found</returns>
-    public static int GetExifOrientation(string filePath)
+    public static int GetExifOrientation(string filePath) =>
+        TryGetExifOrientation(filePath, out var orientation) ? orientation : 1;
+
+    /// <summary>
+    /// Tries to read the EXIF orientation without fully decoding the file.
+    /// </summary>
+    public static bool TryGetExifOrientation(
+        string filePath,
+        out int orientation)
     {
         try
         {
             using var image = new MagickImage();
             image.Ping(filePath);
-            var orientation = image.Orientation;
-            return (int)orientation;
+            orientation = (int)image.Orientation;
+            return true;
         }
         catch
         {
-            return 1;
+            orientation = 0;
+            return false;
         }
     }
 
