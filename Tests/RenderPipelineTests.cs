@@ -281,7 +281,7 @@ public sealed class RenderPipelineTests
             new EditSettings { Saturation = 30 },
             baseImage);
         using var expected = new MagickImage(chromaOnly);
-        RenderDetail.Apply(expected, baseImage.Info, settings.Detail);
+        RenderNoiseReduction.Apply(expected, baseImage.Info, settings.Detail);
 
         using var actual = RenderShared(settings, baseImage);
 

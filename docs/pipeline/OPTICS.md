@@ -217,5 +217,5 @@ and copy/paste and presets transfer only the booleans.
 The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 18 because
 order-tolerant identity and the ID-derived fallback change which files decode with
 corrections applied.
-`RenderPipeline.Version` is 11, unchanged by lens identity because render-stage math
+`RenderPipeline.Version` is 12, unchanged by lens identity because render-stage math
 is untouched.

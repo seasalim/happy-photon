@@ -24,7 +24,7 @@ internal static class RenderSharpening
             image,
             info,
             detail,
-            RenderDetail.DefaultBandPixelLimit);
+            DefaultBandPixelLimit);
 
     internal static void ApplyCapture(
         MagickImage image,
@@ -41,7 +41,7 @@ internal static class RenderSharpening
         var value = detail.ResolveCaptureSharpen(
             info.IsRawSource);
         var amount = Math.Clamp(value, 0, 100) / 100.0;
-        var sigma = RenderDetail.CalculateEffectiveSigma(
+        var sigma = CalculateEffectiveSigma(
             image,
             info,
             CaptureNativeSigma);
@@ -71,7 +71,7 @@ internal static class RenderSharpening
 
         var value = detail.ResolveCaptureSharpen(info.IsRawSource);
         var amount = Math.Clamp(value, 0, 100) / 100.0;
-        var sigma = RenderDetail.CalculateEffectiveSigma(
+        var sigma = CalculateEffectiveSigma(
             image,
             info,
             CaptureNativeSigma);
@@ -85,7 +85,7 @@ internal static class RenderSharpening
             sigma,
             amount,
             CaptureThreshold,
-            RenderDetail.DefaultBandPixelLimit,
+            DefaultBandPixelLimit,
             execution);
     }
 
@@ -97,7 +97,7 @@ internal static class RenderSharpening
             image,
             mode,
             wasResized,
-            RenderDetail.DefaultBandPixelLimit);
+            DefaultBandPixelLimit);
 
     internal static void ApplyOutput(
         MagickImage image,

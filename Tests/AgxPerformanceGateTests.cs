@@ -13,6 +13,7 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
     private const int SamplingIntervalMilliseconds = 10;
 
     private readonly TemporaryDirectory _output = new();
+    private int _exportSequence;
 
     [Fact]
     public async Task IntegratedGate_ReportsFrozenPerformanceCases()
@@ -33,11 +34,18 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
             target,
             "chroma",
             CreateActiveMixerSettings());
-        var luminanceNrVariantPair = await MeasureThreeVariantPair(target);
-        var standardPair = await MeasureStandardExportPair();
+        var luminanceNrVariantPair = await MeasureThreeVariantNrPair(
+            target,
+            chroma: false);
+        var chromaNrVariantPair = await MeasureThreeVariantNrPair(
+            target,
+            chroma: true);
+        var standardPair = await MeasureStandardNrExportPair(chroma: false);
+        var chromaNrStandardPair = await MeasureStandardNrExportPair(chroma: true);
         var activeChromaPrivateDeltaBytes = Math.Max(
             0,
             activeChromaVariants.PeakPrivateBytes - variants.PeakPrivateBytes);
+        Directory.CreateDirectory(Path.GetDirectoryName(reportPath) ?? ".");
         File.WriteAllText(
             reportPath,
             JsonSerializer.Serialize(
@@ -48,7 +56,7 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
                         warmups = 1,
                         samples = SampleCount,
                         statistic = "median",
-                        pairedNeutralAndLuminanceNr = true,
+                        pairedNeutralAndNoiseReduction = true,
                         memorySamplingIntervalMs =
                             SamplingIntervalMilliseconds
                     },
@@ -59,8 +67,11 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
                     activeChromaPrivateDeltaBytes,
                     luminanceNrNeutralVariants = luminanceNrVariantPair.Neutral,
                     luminanceNrVariants = luminanceNrVariantPair.Active,
+                    chromaNrNeutralVariants = chromaNrVariantPair.Neutral,
+                    chromaNrVariants = chromaNrVariantPair.Active,
                     standard = standardPair.Neutral.ElapsedMs,
-                    luminanceNrStandard = standardPair.Active.ElapsedMs
+                    luminanceNrStandard = standardPair.Active.ElapsedMs,
+                    chromaNrStandard = chromaNrStandardPair.Active.ElapsedMs
                 },
                 new JsonSerializerOptions
                 {
@@ -95,6 +106,16 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
             "standard luminance NR 50",
             standardPair.Neutral.ElapsedMs,
             standardPair.Active.ElapsedMs,
+            fullResolutionRenderCount: 1);
+        AssertExportWallDelta(
+            "three-variant RAW chroma NR 50",
+            chromaNrVariantPair.Neutral.ElapsedMs,
+            chromaNrVariantPair.Active.ElapsedMs,
+            fullResolutionRenderCount: 3);
+        AssertExportWallDelta(
+            "standard chroma NR 50",
+            chromaNrStandardPair.Neutral.ElapsedMs,
+            chromaNrStandardPair.Active.ElapsedMs,
             fullResolutionRenderCount: 1);
     }
 
@@ -308,6 +329,14 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
         Detail = new DetailSettings { LuminanceNr = value }
     };
 
+    private static EditSettings CreateNoiseReductionSettings(bool chroma) =>
+        chroma
+            ? new EditSettings
+            {
+                Detail = new DetailSettings { ChromaNr = 50 }
+            }
+            : CreateLuminanceNrSettings();
+
     private async Task<ExportMeasurement> MeasureThreeVariants(
         OutputColorSpace target,
         string label = "off",
@@ -333,10 +362,17 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
         var service = CreateExportService();
         return await MeasureExportAsync(async () =>
         {
+            PrepareUniqueExport(settings);
             var result = await service.ExportBatchAsync([file], settings);
-            Assert.Equal(1, result.ExportedCount);
+            Assert.True(result.ExportedCount == 1,
+                string.Join("; ", result.FailedTargets.Select(target =>
+                    $"{target.Recipe}: {target.FailureReason}")));
         });
     }
+
+    private void PrepareUniqueExport(ExportSettings settings) =>
+        settings.NamingPattern =
+            $"{{name}}-{Interlocked.Increment(ref _exportSequence)}";
 
     private static double Measure(Func<IDisposable> operation)
     {

@@ -75,7 +75,7 @@ public sealed class RestingRenderExecutionTests
     }
 
     [Fact]
-    public void RestingExecution_ReportsLuminanceNrBeforeCaptureSharpen()
+    public void RestingExecution_ReportsNoiseReductionBeforeCaptureSharpen()
     {
         using var baseImage = CreatePatternBase(isRaw: false);
         var stages = new List<string>();
@@ -96,10 +96,9 @@ public sealed class RestingRenderExecutionTests
                 CancellationToken.None,
                 stageStarted: stages.Add));
 
-        Assert.True(stages.IndexOf("luminance-nr") <
+        Assert.True(stages.IndexOf("noise-reduction") <
             stages.IndexOf("capture-sharpen"));
-        Assert.True(stages.IndexOf("capture-sharpen") <
-            stages.IndexOf("detail"));
+        Assert.DoesNotContain("detail", stages);
     }
 
     [Fact]

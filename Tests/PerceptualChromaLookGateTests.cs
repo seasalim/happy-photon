@@ -294,8 +294,8 @@ public sealed class PerceptualChromaLookGateTests
     {
         try
         {
+            RenderNoiseReduction.Apply(image, info, settings.Detail);
             RenderSharpening.ApplyCapture(image, info, settings.Detail);
-            RenderDetail.Apply(image, info, settings.Detail);
             return RenderFinalizer.FinalizeOwned(
                 image,
                 maxDimension,

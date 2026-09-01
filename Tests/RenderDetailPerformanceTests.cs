@@ -6,75 +6,41 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class RenderDetailPerformanceTests
+public sealed class RenderNoiseReductionPerformanceTests
 {
     private const int PreviewDiagnosticSampleCount = 15;
+    private const int FullResolutionSampleCount = 5;
 
     private readonly ITestOutputHelper _output;
 
-    public RenderDetailPerformanceTests(ITestOutputHelper output) =>
+    public RenderNoiseReductionPerformanceTests(ITestOutputHelper output) =>
         _output = output;
 
     [Fact]
-    public async Task FullResolutionBandedRender_ReportsLatencyAndPeakMemory()
-    {
-        Assert.SkipWhen(
-            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
-            "Set HAPPY_PHOTON_PERF=1 to run detail performance diagnostics.");
-#if DEBUG
-        Assert.Skip("Run detail performance diagnostics in Release.");
-#endif
-
-        using (var warmup = CreateImage(256, 256))
-        {
-            for (var iteration = 0; iteration < 32; iteration++)
-            {
-                RenderDetail.Apply(
-                    warmup,
-                    CreateInfo(256, 256),
-                    new DetailSettings { ChromaNr = 100 });
-            }
-        }
-        await Task.Delay(100);
-
-        const int width = 5472;
-        const int height = 3648;
-        using var image = CreateImage(width, height);
-        var process = Process.GetCurrentProcess();
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
-        process.Refresh();
-        var baseline = process.PrivateMemorySize64;
-        var peak = baseline;
-        var stopwatch = Stopwatch.StartNew();
-
-        var render = Task.Run(() => RenderDetail.Apply(
-            image,
-            CreateInfo(width, height),
-            new DetailSettings { ChromaNr = 100 }));
-        while (!render.IsCompleted)
-        {
-            await Task.Delay(5);
-            process.Refresh();
-            peak = Math.Max(peak, process.PrivateMemorySize64);
-        }
-        await render;
-        stopwatch.Stop();
-        process.Refresh();
-        peak = Math.Max(peak, process.PrivateMemorySize64);
-
-        Assert.Equal((uint)width, image.Width);
-        Assert.Equal((uint)height, image.Height);
-        _output.WriteLine(
-            $"Banded chroma NR 100 at {width}x{height}: " +
-            $"{stopwatch.Elapsed.TotalMilliseconds:F1} ms, " +
-            $"peak private-memory delta " +
-            $"{(peak - baseline) / 1048576.0:F1} MiB.");
-    }
+    public Task FullResolutionChromaNr100_MeetsLatencyAndMemoryGate() =>
+        AssertFullResolutionGate(
+            "Banded chroma NR 100",
+            new DetailSettings { ChromaNr = 100 },
+            maximumMedianMilliseconds: 550);
 
     [Fact]
-    public async Task FullResolutionLuminanceNr100_MeetsLatencyAndMemoryGate()
+    public Task FullResolutionLuminanceNr100_MeetsLatencyAndMemoryGate() =>
+        AssertFullResolutionGate(
+            "Banded luminance NR 100",
+            new DetailSettings { LuminanceNr = 100 },
+            maximumMedianMilliseconds: 500);
+
+    [Fact]
+    public Task FullResolutionCombinedNr100_MeetsLatencyAndMemoryGate() =>
+        AssertFullResolutionGate(
+            "Banded combined NR 100",
+            new DetailSettings { LuminanceNr = 100, ChromaNr = 100 },
+            maximumMedianMilliseconds: 1000);
+
+    private async Task AssertFullResolutionGate(
+        string label,
+        DetailSettings settings,
+        double maximumMedianMilliseconds)
     {
         Assert.SkipWhen(
             Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
@@ -90,47 +56,58 @@ public sealed class RenderDetailPerformanceTests
                 RenderNoiseReduction.Apply(
                     warmup,
                     CreateInfo(256, 256),
-                    new DetailSettings { LuminanceNr = 100 });
+                    settings);
             }
         }
-        await Task.Delay(100);
 
         const int width = 5472;
         const int height = 3648;
-        using var image = CreateImage(width, height);
-        var process = Process.GetCurrentProcess();
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
-        process.Refresh();
-        var baseline = process.PrivateMemorySize64;
-        var peak = baseline;
-        var stopwatch = Stopwatch.StartNew();
-        var render = Task.Run(() => RenderNoiseReduction.Apply(
-            image,
-            CreateInfo(width, height),
-            new DetailSettings { LuminanceNr = 100 }));
-        while (!render.IsCompleted)
+        using var process = Process.GetCurrentProcess();
+        var latencySamples = new double[FullResolutionSampleCount];
+        var memorySamples = new double[FullResolutionSampleCount];
+        for (var sample = 0; sample < FullResolutionSampleCount; sample++)
         {
-            await Task.Delay(5);
+            using var image = CreateImage(width, height);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            process.Refresh();
+            var baseline = process.PrivateMemorySize64;
+            var peak = baseline;
+            var stopwatch = Stopwatch.StartNew();
+            var render = Task.Run(() => RenderNoiseReduction.Apply(
+                image,
+                CreateInfo(width, height),
+                settings));
+            while (!render.IsCompleted)
+            {
+                await Task.Delay(5);
+                process.Refresh();
+                peak = Math.Max(peak, process.PrivateMemorySize64);
+            }
+            await render;
+            stopwatch.Stop();
             process.Refresh();
             peak = Math.Max(peak, process.PrivateMemorySize64);
+            latencySamples[sample] = stopwatch.Elapsed.TotalMilliseconds;
+            memorySamples[sample] = Math.Max(0, peak - baseline) / 1048576.0;
+            Assert.Equal((uint)width, image.Width);
+            Assert.Equal((uint)height, image.Height);
         }
-        await render;
-        stopwatch.Stop();
-        process.Refresh();
-        peak = Math.Max(peak, process.PrivateMemorySize64);
-        var memoryMiB = (peak - baseline) / 1048576.0;
 
+        var orderedLatency = latencySamples.Order().ToArray();
+        var medianLatency = orderedLatency[orderedLatency.Length / 2];
         _output.WriteLine(
-            $"Banded luminance NR 100 at {width}x{height}: " +
-            $"{stopwatch.Elapsed.TotalMilliseconds:F1} ms, " +
-            $"peak private-memory delta {memoryMiB:F1} MiB.");
-        Assert.True(
-            stopwatch.Elapsed.TotalMilliseconds <= 410,
-            $"Luminance NR took {stopwatch.Elapsed.TotalMilliseconds:F1} ms.");
-        Assert.True(memoryMiB <= 150,
-            $"Luminance NR used {memoryMiB:F1} MiB peak private memory.");
+            $"{label} at {width}x{height}: median {medianLatency:F1} ms " +
+            $"over {FullResolutionSampleCount} runs " +
+            $"[{string.Join(", ", latencySamples.Select(value => $"{value:F1}"))}]; " +
+            $"peak private-memory deltas " +
+            $"[{string.Join(", ", memorySamples.Select(value => $"{value:F1}"))}] MiB.");
+        Assert.True(medianLatency <= maximumMedianMilliseconds,
+            $"{label} median was {medianLatency:F1} ms; limit is " +
+            $"{maximumMedianMilliseconds:F0} ms.");
+        Assert.All(memorySamples, memoryMiB => Assert.True(memoryMiB <= 150,
+            $"{label} used {memoryMiB:F1} MiB peak private memory."));
     }
 
     [Fact]

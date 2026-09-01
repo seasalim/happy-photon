@@ -21,9 +21,38 @@ public sealed class RenderNoiseReductionTests
         var exception = Record.Exception(() => RenderNoiseReduction.Apply(
             image,
             CreateInfo(3, 2, kind, isRaw),
-            new DetailSettings { LuminanceNr = 0 }));
+            new DetailSettings { LuminanceNr = 0, ChromaNr = 0 }));
 
         Assert.Null(exception);
+    }
+
+    [Fact]
+    public void MonochromeChromaNr_ReturnsBeforePixelAccess()
+    {
+        var image = new MagickImage(MagickColors.Black, 3, 2);
+        image.Dispose();
+        var info = CreateInfo(3, 2) with { IsMonochrome = true };
+
+        var exception = Record.Exception(() => RenderNoiseReduction.Apply(
+            image,
+            info,
+            new DetailSettings { ChromaNr = 100 }));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void EmptyChromaScaleSet_IsBitIdentical()
+    {
+        using var image = new MagickImage(MagickColors.CornflowerBlue, 3, 2);
+        var before = ReadRgb(image);
+
+        RenderNoiseReduction.Apply(
+            image,
+            CreateInfo(300, 200),
+            new DetailSettings { ChromaNr = 100 });
+
+        Assert.Equal(before, ReadRgb(image));
     }
 
     [Fact]
@@ -44,6 +73,31 @@ public sealed class RenderNoiseReductionTests
         Assert.Equal([1, 2, 4, 8], fullScales.Select(scale => scale.Dilation));
         Assert.Equal([1, 2], previewScales.Select(scale => scale.Dilation));
         Assert.True(previewScales[0].Threshold > previewScales[1].Threshold);
+    }
+
+    [Fact]
+    public void ChromaScaleMapping_KeepsOneDeeperScaleThanLuma()
+    {
+        using var image = new MagickImage(MagickColors.Black, 256, 192);
+        var info = CreateInfo(256, 192);
+
+        var luma = RenderNoiseReduction.ResolveScales(image, info, 1);
+        var chroma = RenderNoiseReduction.ResolveChromaScales(image, info, 1);
+
+        Assert.Equal([1, 2, 4, 8], luma.Select(scale => scale.Dilation));
+        Assert.Equal([1, 2, 4, 8, 16], chroma.Select(scale => scale.Dilation));
+        Assert.True(chroma[^1].Threshold > 0);
+    }
+
+    [Fact]
+    public void ChromaScaleMapping_KeepsAllResolutionMappedPreviewScales()
+    {
+        using var image = new MagickImage(MagickColors.Black, 1600, 1200);
+
+        var chroma = RenderNoiseReduction.ResolveChromaScales(
+            image, CreateInfo(4032, 3024), 1);
+
+        Assert.Equal([1, 2, 4, 8], chroma.Select(scale => scale.Dilation));
     }
 
     [Theory]
@@ -115,6 +169,59 @@ public sealed class RenderNoiseReductionTests
         Assert.Equal(ReadRgb(singleBand), ReadRgb(multipleBands));
     }
 
+    [Theory]
+    [InlineData(50, 0)]
+    [InlineData(100, 0)]
+    [InlineData(100, 100)]
+    public void ChromaMultipleBandsMatchSingleBandBitForBit(
+        int chromaNr,
+        int luminanceNr)
+    {
+        using var singleBand = CreateChromaNoisePattern(257, 151);
+        using var multipleBands = new MagickImage(singleBand);
+        var info = CreateInfo(257, 151);
+        var settings = new DetailSettings
+        {
+            LuminanceNr = luminanceNr,
+            ChromaNr = chromaNr
+        };
+
+        RenderNoiseReduction.Apply(
+            singleBand,
+            info,
+            settings,
+            bandPixelLimit: int.MaxValue);
+        RenderNoiseReduction.Apply(
+            multipleBands,
+            info,
+            settings,
+            bandPixelLimit: 257 * 37);
+
+        Assert.Equal(ReadRgb(singleBand), ReadRgb(multipleBands));
+    }
+
+    [Fact]
+    public void ChromaNr_PreservesQuantizedLumaAlphaAndGamut()
+    {
+        using var image = CreateChromaNoisePattern(73, 61, withAlpha: true);
+        var before = ReadRgba(image);
+
+        RenderNoiseReduction.Apply(
+            image,
+            CreateInfo(checked((int)image.Width), checked((int)image.Height)),
+            new DetailSettings { ChromaNr = 100 });
+
+        var after = ReadRgba(image);
+        Assert.NotEqual(before, after);
+        for (var offset = 0; offset < after.Length; offset += 4)
+        {
+            Assert.Equal(
+                QuantizedLuma(before, offset),
+                QuantizedLuma(after, offset));
+            Assert.Equal(before[offset + 3], after[offset + 3]);
+        }
+    }
+
     [Fact]
     public void RestingPathObservesCancellationBeforePixelAccess()
     {
@@ -150,6 +257,42 @@ public sealed class RenderNoiseReductionTests
                 0,
                 ushort.MaxValue));
             pixels.SetPixel(x, y, [sample, sample, sample]);
+        }
+        return image;
+    }
+
+    private static MagickImage CreateChromaNoisePattern(
+        int width,
+        int height,
+        bool withAlpha = false)
+    {
+        var image = new MagickImage(
+            withAlpha ? MagickColors.Transparent : MagickColors.Black,
+            (uint)width,
+            (uint)height)
+        {
+            ColorSpace = ColorSpace.sRGB
+        };
+        var random = new Random(225);
+        using var pixels = image.GetPixels();
+        for (var y = 0; y < height; y++)
+        for (var x = 0; x < width; x++)
+        {
+            var luma = 32000;
+            var red = checked((ushort)(luma + random.Next(-5000, 5001)));
+            var blue = checked((ushort)(luma + random.Next(-5000, 5001)));
+            var green = checked((ushort)Math.Clamp(
+                (luma - Rec2020Luminance.Red * red -
+                 Rec2020Luminance.Blue * blue) /
+                Rec2020Luminance.Green,
+                0,
+                ushort.MaxValue));
+            pixels.SetPixel(
+                x,
+                y,
+                withAlpha
+                    ? [red, green, blue, checked((ushort)(y * 1000))]
+                    : [red, green, blue]);
         }
         return image;
     }
@@ -207,6 +350,12 @@ public sealed class RenderNoiseReductionTests
         Rec2020Luminance.Red * values[offset] +
         Rec2020Luminance.Green * values[offset + 1] +
         Rec2020Luminance.Blue * values[offset + 2];
+
+    private static ushort QuantizedLuma(ushort[] values, int offset) =>
+        checked((ushort)Math.Clamp(
+            Math.Round(Luma(values, offset)),
+            ushort.MinValue,
+            ushort.MaxValue));
 
     private static ushort[] ReadRgb(MagickImage image) =>
         image.GetPixelsUnsafe().ToShortArray(PixelMapping.RGB) ??

@@ -8,20 +8,24 @@ namespace HappyPhoton.Tests;
 public sealed partial class AgxPerformanceGateTests
 {
     private async Task<(ExportMeasurement Neutral, ExportMeasurement Active)>
-        MeasureThreeVariantPair(OutputColorSpace target)
+        MeasureThreeVariantNrPair(OutputColorSpace target, bool chroma)
     {
         var neutralFile = new ImageFile(
             GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2"));
         var activeFile = new ImageFile(neutralFile.FilePath)
         {
-            EditSettings = CreateLuminanceNrSettings()
+            EditSettings = CreateNoiseReductionSettings(chroma)
         };
         var neutralSettings = CreateVariantSettings(
             target,
-            Path.Combine(_output.Path, $"variants-{target}-nr-neutral"));
+            Path.Combine(
+                _output.Path,
+                $"variants-{target}-{(chroma ? "chroma" : "luma")}-nr-neutral"));
         var activeSettings = CreateVariantSettings(
             target,
-            Path.Combine(_output.Path, $"variants-{target}-nr-50"));
+            Path.Combine(
+                _output.Path,
+                $"variants-{target}-{(chroma ? "chroma" : "luma")}-nr-50"));
         var service = CreateExportService();
         return await MeasureExportPairAsync(
             () => ExportOne(service, neutralFile, neutralSettings),
@@ -29,18 +33,22 @@ public sealed partial class AgxPerformanceGateTests
     }
 
     private async Task<(ExportMeasurement Neutral, ExportMeasurement Active)>
-        MeasureStandardExportPair()
+        MeasureStandardNrExportPair(bool chroma)
     {
         var neutralFile = new ImageFile(
             GoldenTestPaths.Asset("srgb-reference.jpg"));
         var activeFile = new ImageFile(neutralFile.FilePath)
         {
-            EditSettings = CreateLuminanceNrSettings()
+            EditSettings = CreateNoiseReductionSettings(chroma)
         };
         var neutralSettings = CreateStandardSettings(
-            Path.Combine(_output.Path, "standard-nr-neutral"));
+            Path.Combine(
+                _output.Path,
+                $"standard-{(chroma ? "chroma" : "luma")}-nr-neutral"));
         var activeSettings = CreateStandardSettings(
-            Path.Combine(_output.Path, "standard-nr-50"));
+            Path.Combine(
+                _output.Path,
+                $"standard-{(chroma ? "chroma" : "luma")}-nr-50"));
         var service = CreateExportService();
         return await MeasureExportPairAsync(
             () => ExportOne(service, neutralFile, neutralSettings),
@@ -70,13 +78,16 @@ public sealed partial class AgxPerformanceGateTests
             OutputSharpening = OutputSharpeningMode.Off
         };
 
-    private static async Task ExportOne(
+    private async Task ExportOne(
         ImageExportService service,
         ImageFile file,
         ExportSettings settings)
     {
+        PrepareUniqueExport(settings);
         var result = await service.ExportBatchAsync([file], settings);
-        Assert.Equal(1, result.ExportedCount);
+        Assert.True(result.ExportedCount == 1,
+            string.Join("; ", result.FailedTargets.Select(target =>
+                $"{target.Recipe}: {target.FailureReason}")));
     }
 
     private static (double Neutral, double Active) MeasurePair(

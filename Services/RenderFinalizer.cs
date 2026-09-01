@@ -1,5 +1,6 @@
 using HappyPhoton.Models;
 using ImageMagick;
+using static HappyPhoton.Services.RenderKernelSupport;
 
 namespace HappyPhoton.Services;
 
@@ -53,7 +54,7 @@ internal static class RenderFinalizer
                 displayRec2020,
                 outputSharpening,
                 wasResized,
-                RenderDetail.DefaultBandPixelLimit);
+                DefaultBandPixelLimit);
             RenderEffects.Apply(displayRec2020, effects);
             RenderColorEncoding.ConvertEncodedRec2020ToTarget(
                 displayRec2020,
@@ -73,7 +74,7 @@ internal static class RenderFinalizer
         OutputColorSpace outputColorSpace,
         OutputSharpeningMode outputSharpening,
         bool wasResized,
-        int detailBandPixelLimit = RenderDetail.DefaultBandPixelLimit,
+        int detailBandPixelLimit = DefaultBandPixelLimit,
         EffectsSettings? effects = null)
     {
         ArgumentNullException.ThrowIfNull(displayRec2020);
@@ -99,7 +100,7 @@ internal static class RenderFinalizer
         OutputColorSpace outputColorSpace,
         OutputSharpeningMode outputSharpening,
         bool wasResized,
-        int detailBandPixelLimit = RenderDetail.DefaultBandPixelLimit,
+        int detailBandPixelLimit = DefaultBandPixelLimit,
         EffectsSettings? effects = null)
     {
         ArgumentNullException.ThrowIfNull(displayRec2020);

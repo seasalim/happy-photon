@@ -33,11 +33,14 @@ internal static class PreAgxRenderReference
             Apply(output, normalized.Matrix, ComposeLut(parameters));
             RenderColorEncoding.RetagAsSrgb(output);
             RenderChromaStage.Apply(output, settings);
+            RenderNoiseReduction.Apply(
+                output,
+                baseImage.Info,
+                settings.Detail);
             RenderSharpening.ApplyCapture(
                 output,
                 baseImage.Info,
                 settings.Detail);
-            RenderDetail.Apply(output, baseImage.Info, settings.Detail);
             if (maxDimension is { } limit)
             {
                 RenderColorEncoding.ResizeInLinearLight(output, limit);

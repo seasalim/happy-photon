@@ -64,6 +64,12 @@ internal static class GoldenTestCases
     public static readonly GoldenSettingsCase ColorMixer =
         new("color-mixer", CreateColorMixer);
 
+    public static readonly GoldenSettingsCase ChromaNr50 =
+        new("chroma-nr-50", () => new EditSettings
+        {
+            Detail = new DetailSettings { ChromaNr = 50 }
+        });
+
     private static readonly IReadOnlyList<GoldenSettingsCase> AllTonal =
     [
         Identity,
@@ -89,7 +95,8 @@ internal static class GoldenTestCases
         SaturationMinus50,
         VibranceMinus100,
         CombinedChroma,
-        ColorMixer
+        ColorMixer,
+        ChromaNr50
     ];
 
     private static readonly IReadOnlyList<GoldenSettingsCase> IdentityAndExposure =

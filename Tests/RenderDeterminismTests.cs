@@ -93,7 +93,7 @@ public sealed class RenderDeterminismTests
     public void SettingsHash_MatchesPinnedCanonicalValue()
     {
         const string expected =
-            "381e56767b97ca6208dab655cb5f9978b7523dc437b22bffeabdfa3d6e1e7088";
+            "f4f2503497502d4fc6f57e9bff65e298bb5d475bb9bb601b9fd421e1b633b5a9";
         var settings = CreateSettings();
         var canonical = EditSettingsJson.Serialize(settings);
         var actual = RenderSettingsHash.Compute(settings);

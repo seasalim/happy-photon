@@ -8,6 +8,36 @@ namespace HappyPhoton.Tests;
 public sealed class RenderSharpeningTests
 {
     [Fact]
+    public void EffectiveSigma_ScalesFromNativeLongEdge()
+    {
+        using var image = new MagickImage(MagickColors.Black, 160, 100);
+        var info = CreateInfo(image, isRaw: false, nativeScale: 5);
+
+        var sigma = RenderKernelSupport.CalculateEffectiveSigma(
+            image,
+            info,
+            nativeSigma: 2);
+
+        Assert.Equal(0.4, sigma, precision: 12);
+    }
+
+    [Fact]
+    public void RestingTargetScale_KeepsCaptureSharpenBelowThreshold()
+    {
+        var info = CreateInfo(7500, 5000, isRaw: true);
+        using var capped = new MagickImage(MagickColors.Black, 3200, 2000);
+        using var fitted = new MagickImage(MagickColors.Black, 2826, 1766);
+
+        var capSigma = RenderKernelSupport.CalculateEffectiveSigma(
+            capped, info, nativeSigma: 0.75);
+        var targetSigma = RenderKernelSupport.CalculateEffectiveSigma(
+            fitted, info, nativeSigma: 0.75);
+
+        Assert.True(capSigma >= 0.3);
+        Assert.True(targetSigma < 0.3);
+    }
+
+    [Fact]
     public void Capture_ResolvesSourceDefaults()
     {
         using var source = CreateLumaEdge();
@@ -347,6 +377,15 @@ public sealed class RenderSharpeningTests
         MagickImage image,
         bool isRaw,
         int nativeScale = 1) =>
+        CreateInfo(
+            checked((int)image.Width * nativeScale),
+            checked((int)image.Height * nativeScale),
+            isRaw);
+
+    private static BaseImageInfo CreateInfo(
+        int width,
+        int height,
+        bool isRaw) =>
         new(
             isRaw ? BaseSourceKind.RawLibRaw : BaseSourceKind.Standard,
             isRaw,
@@ -358,6 +397,6 @@ public sealed class RenderSharpeningTests
             false,
             null,
             1,
-            checked((int)image.Width * nativeScale),
-            checked((int)image.Height * nativeScale));
+            width,
+            height);
 }

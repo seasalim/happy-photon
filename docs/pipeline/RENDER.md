@@ -13,7 +13,7 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 4 Tone LUT     source-kind tone regime, fused with matrix storage (§5)
 5 Matrix       crossing on: AgX outset; crossing off: identity
 6 Chroma       one fused OKLCh color-mixer/saturation/vibrance pass (§6)
-7 Detail       luminance NR → capture sharpen → chroma NR (§9)
+7 Detail       luminance/chroma NR → capture sharpen (§9)
 8 Output       linear resize → output sharpen → effects → target convert → encode
                (OUTPUT.md)
 ```
@@ -511,18 +511,28 @@ both paths agree by construction.
 - **Capture sharpen** (0–100, default 25 raw / 0 non-raw): luminance-targeted unsharp,
   `σ_native 0.75, amount = v/100 · 1.0, threshold 0.01`, applied before any resize.
   Luminance-only (Lab L or equivalent); acceptance = no chroma fringing on golden crops.
-- **Chroma NR** (0–100): preserve the authoritative Rec.2020 luma
-  `Y = 0.2627002120112671R + 0.6779980715188708G + 0.0593017164698620B`;
-  blur `Cb = B−Y` and `Cr = R−Y` with an
-  edge-clamped separable box, then reconstruct RGB at the original Y.
-  `σ_native = v/100 · 2.0`; choose the integer radius
-  `r = max(1, round((√(1 + 12σ²) − 1) / 2))`. When its variance `r(r+1)/3`
-  exceeds `σ²`, blend the blurred chroma over the original by
-  `σ² / (r(r+1)/3)`.
-  The implementation is one parallel banded kernel (at most 8 million core pixels per
-  band) reading `r+1` halos before writing in place — safe because the preceding tonal
-  stage's full-image write already detached the working clone's pixel cache. Band
-  partitioning must be bit-identical to a single band.
+- **Chroma NR** (0–100): five native wavelet scales denoise
+  `Cb = B−Y` and `Cr = R−Y`, where authoritative Rec.2020 luma is
+  `Y = 0.2627002120112671R + 0.6779980715188708G + 0.0593017164698620B`.
+  Chroma uses the same support resolution and B3-spline soft-threshold engine as luma,
+  with independently tuned thresholds
+  `6500 · [0.90, 0.25, 0.12, 0.08, 0.05] · v/100` Q16. The finest scale remains
+  full-resolution; each deeper scale downsamples the prior approximation by two, uses
+  dilation-one B3 taps, and upsamples its thresholded adjustment. Preview and export
+  both retain every scale that survives the native-to-render support mapping. At the
+  finest scale, the
+  larger of the horizontal and vertical cross-plane chroma gradients above four
+  thresholds uses 0.35× the threshold so real color edges retain their local contrast
+  independent of orientation. Luma and chroma share each source-band read;
+  when both are active their plane passes reuse one workspace. The summed support of
+  the deepest active plane determines the halo, and banded output is bit-identical to
+  a single band.
+  Reconstruction retains Y, then scales the complete `(ΔR, ΔG, ΔB)` chroma vector
+  toward zero only as far as needed to keep every channel in gamut. Quantization
+  selects the green code that keeps authoritative quantized Y exact; alpha is untouched.
+  Value 0 and an empty surviving scale set return before pixel access, and monochrome
+  sources skip chroma NR. The noise-reduction stage runs before capture sharpen on
+  interactive, resting, and export paths.
 - **Output sharpen**: OUTPUT.md §3.
 
 ## 10. Effects substep of output finalization

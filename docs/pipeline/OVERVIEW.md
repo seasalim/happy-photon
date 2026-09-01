@@ -102,7 +102,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
             │              retained display-domain chain (exact Q16)  │
             │ 5 Matrix     RAW: AgX outset; standard: identity         │
             │ 6 Chroma     OKLCh saturation + protected vibrance      │
-            │ 7 Detail     luminance NR → capture sharpen → chroma NR │
+            │ 7 Detail     luminance/chroma NR → capture sharpen      │
             └──────────────┬───────────────────────────────┬──────────┘
                      histogram + clipping stats            │
             ┌─ OUTPUT.md ──▼───────────────────────────────▼──────────┐
@@ -252,7 +252,7 @@ capability signal.
 | `Services/ToneLutApplicator.cs` | unrounded-input linear interpolation with one Q16 write |
 | `Services/RenderChromaticStage.cs` | white-balance matrix application |
 | `Services/RenderChromaStage.cs` + `OklabColor.cs` | fused OKLCh saturation/vibrance and gamut projection |
-| `Services/RenderNoiseReduction.cs` + `RenderDetail.cs` + `RenderSharpening.cs` | fixed detail operations |
+| `Services/RenderNoiseReduction*.cs` + `RenderSharpening.cs` | wavelet noise reduction and fixed sharpening operations |
 | `Services/RenderEffects.cs` | post-resize vignette and deterministic film grain |
 | `Services/WhiteBalanceModel.cs` | CCT/tint ↔ gains math (WHITE_BALANCE.md) |
 | `Services/ChromaticAdaptation.cs` | Bradford matrices, normalization |
@@ -292,6 +292,8 @@ outcomes are isolated by the DCP token.
 Removing the former FBDD field deliberately re-keyed every settings hash and base
 cache entry once; `RenderPipeline.Version` remains unchanged because luminance NR 0
 does not access or change pixels.
+Replacing box-blur chroma NR with the shared wavelet engine increments the render
+version because every active chroma-NR render changes; value 0 remains pixel-identical.
 
 ## 7. Current boundaries
 

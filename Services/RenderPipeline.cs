@@ -1,22 +1,31 @@
 using System.Diagnostics;
 using HappyPhoton.Models;
 using ImageMagick;
+using static HappyPhoton.Services.RenderKernelSupport;
 
 namespace HappyPhoton.Services;
 
 public sealed class RenderPipeline
 {
-    public const int Version = 11;
+    public const int Version = 12;
 
     public RenderResult Render(RenderRequest request) =>
-        Render(request, RenderDetail.DefaultBandPixelLimit);
+        RenderCore(request, DefaultBandPixelLimit, null);
 
     internal RenderResult Render(
         RenderRequest request,
         int detailBandPixelLimit)
+        => RenderCore(request, detailBandPixelLimit, detailBandPixelLimit);
+
+    private static RenderResult RenderCore(
+        RenderRequest request,
+        int detailBandPixelLimit,
+        int? noiseReductionBandPixelLimit)
     {
         Validate(request);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(detailBandPixelLimit);
+        if (noiseReductionBandPixelLimit is { } noiseBandPixelLimit)
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(noiseBandPixelLimit);
 
         var stopwatch = Stopwatch.StartNew();
         var requestedOverlaySides = request.Options.OverlaySides;
@@ -33,7 +42,7 @@ public sealed class RenderPipeline
             var analyze = request.Options.ComputeStats || createOverlay;
             displayRec2020 = RenderDisplayRec2020Core(
                 request,
-                detailBandPixelLimit,
+                noiseReductionBandPixelLimit,
                 out var geometry);
             display = RenderFinalizer.FinalizeOwned(
                 Take(ref displayRec2020),
@@ -217,7 +226,7 @@ public sealed class RenderPipeline
                 RenderChromaStage.Apply(working, request.Settings, execution);
             }
             execution.ThrowIfCancellationRequested();
-            execution.ReportStage("luminance-nr");
+            execution.ReportStage("noise-reduction");
             RenderNoiseReduction.ApplyResting(
                 working,
                 request.Base.Info,
@@ -226,12 +235,6 @@ public sealed class RenderPipeline
             execution.ThrowIfCancellationRequested();
             execution.ReportStage("capture-sharpen");
             RenderSharpening.ApplyCaptureResting(
-                working,
-                request.Base.Info,
-                request.Settings.Detail,
-                execution);
-            execution.ReportStage("detail");
-            RenderDetail.ApplyResting(
                 working,
                 request.Base.Info,
                 request.Settings.Detail,
@@ -287,13 +290,13 @@ public sealed class RenderPipeline
         }
         return RenderDisplayRec2020Core(
             request,
-            RenderDetail.DefaultBandPixelLimit,
+            null,
             out _);
     }
 
     private static MagickImage RenderDisplayRec2020Core(
         RenderRequest request,
-        int detailBandPixelLimit,
+        int? noiseReductionBandPixelLimit,
         out RenderGeometryTrace geometry)
     {
         MagickImage? working = null;
@@ -332,20 +335,25 @@ public sealed class RenderPipeline
             RenderColorEncoding.RetagAsSrgb(working);
             if (!request.Base.Info.IsMonochrome)
                 RenderChromaStage.Apply(working, request.Settings);
-            RenderNoiseReduction.Apply(
-                working,
-                request.Base.Info,
-                request.Settings.Detail,
-                detailBandPixelLimit);
+            if (noiseReductionBandPixelLimit is { } bandPixelLimit)
+            {
+                RenderNoiseReduction.Apply(
+                    working,
+                    request.Base.Info,
+                    request.Settings.Detail,
+                    bandPixelLimit);
+            }
+            else
+            {
+                RenderNoiseReduction.Apply(
+                    working,
+                    request.Base.Info,
+                    request.Settings.Detail);
+            }
             RenderSharpening.ApplyCapture(
                 working,
                 request.Base.Info,
                 request.Settings.Detail);
-            RenderDetail.Apply(
-                working,
-                request.Base.Info,
-                request.Settings.Detail,
-                detailBandPixelLimit);
             var result = working;
             working = null;
             return result;

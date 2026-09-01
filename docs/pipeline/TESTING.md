@@ -120,12 +120,12 @@ not proven through a production diagnostic seam.
   spec change in the PR. Each re-baseline records a pre/post attribution report
   (per-image ΔE summary); only the active generation is kept, and superseded versions
   are pruned once the report is captured.
-- Settings cases (18 total): **tonal set** — identity; +2 EV; −2 EV; highlights −100;
+- Settings cases (20 total): **tonal set** — identity; +2 EV; −2 EV; highlights −100;
   shadows +80; contrast +50; full-combo tonal preset. **WB set** — WB 3000 K;
   WB 9000 K tint +50; WB 9000 K tint −50. Never baseline WB cases while the chromatic
   stage is a stub — that would golden "WB ignored" and immediately invalidate itself.
-  **Chroma set** — saturation-only, vibrance-only, combined, and active color-mixer
-  settings on the reference RAW and Display-P3 fixture (8 cases).
+  **Chroma set** — saturation-only, vibrance-only, combined, active color-mixer, and
+  Chroma NR 50 settings on the reference RAW and Display-P3 fixture (10 cases).
 
 The full-combo tonal case is pinned to exposure +1 EV, brightness +10, contrast +25,
 shadows +35, highlights −50, and a monotone curve through `(0,0)`, `(0.25,0.20)`,
@@ -143,13 +143,13 @@ at defaults.
 
 The matrix determines the golden count; the tracked files live under the
 generation directory named by `ACTIVE_VERSION`, with the chroma set adding its
-eight cases on the reference CR2 and the Display-P3 JPEG. The clipped-highlight
+ten cases on the reference CR2 and the Display-P3 JPEG. The clipped-highlight
 case uses the bright water reflection in the reference CR2
 ([DECODE.md §2.3](DECODE.md#23-why-clip-and-blend-are-the-supported-modes)).
 The perceptual-chroma re-baseline left every neutral-chroma case
 byte-identical. Each re-baseline keeps its attribution report beside its
-goldens (currently `Tests/goldens/v11/CHROMA_ATTRIBUTION.md`, alongside the
-carried `R5A_ATTRIBUTION.md`).
+goldens (currently `Tests/goldens/v12/CHROMA_NR_ATTRIBUTION.md`, alongside the
+active generation).
 
 ## 3. Tolerances (normative)
 
@@ -223,12 +223,14 @@ orders above the observed difference.
    `LensCorrectionProcessorTests` pins one-pass sampling and scene-linear radial gain;
    `LensSettingsTests` and headless `LensControlTests` pin baseline provenance,
    transfer/cache registration, and constant-layout capability gating.
-10. **`RenderDetailTests`**: chroma NR preserves luma and alpha; a seeded noise image
-    rendered as one band and as forced non-divisible bands is bit-identical at box
-    radii 1 and 3. **`RenderNoiseReductionTests`** pins zero-access identity, native
-    scale mapping, seeded-noise reduction, gamut-boundary chroma/alpha preservation,
-    single/multiple-band identity, and resting cancellation. Pipeline composition
-    tests place luminance NR before capture sharpen on both execution paths.
+10. **`RenderNoiseReductionTests`** pins zero-access identity, monochrome skip, native
+    luma/chroma scale mapping, seeded-noise reduction, exact gamut-boundary luma and
+    alpha preservation, single/multiple-band identity, and resting cancellation.
+    **`ChromaNoiseReductionQualityTests`** pins seeded-noise and low-frequency-blotch
+    residuals against the retired box blur plus vertical and horizontal chroma-edge
+    retention. Pipeline
+    composition tests place both NR planes before capture sharpen on shared/export and
+    resting paths.
 11. **Working-space suites:** `RawWorkingSpaceTests` proves the built-in
     characterization against the LibRaw Rec.2020 comparator, pins the `cam_xyz`
     semantic oracle under `LibRawOutputConfiguration.LinearCameraNative`
@@ -440,11 +442,20 @@ neutral/active samples in a Release process. Each total is ≤150 ms and each
 active-minus-neutral median delta is ≤20 ms. A stage-only diagnostic separately
 warms and measures 15 iterations at the representative two-, three-, and four-scale
 preview shapes, reporting median latency and peak private-memory delta for each.
-`RenderDetailPerformanceTests.FullResolutionLuminanceNr100_MeetsLatencyAndMemoryGate`
-uses a 5472×3648 Q16 diagnostic and requires ≤410 ms and ≤150 MiB peak private-memory
-delta. The export gate at value 50 retains the standing ≤max(5%, 500 ms) wall delta
+The three `RenderNoiseReductionPerformanceTests` full-resolution gates use a
+5472×3648 Q16 diagnostic, warm the kernel, then measure five runs in one process.
+They assert the median latency and require every run's peak private-memory delta to
+remain ≤150 MiB. Luma NR 100 is ≤500 ms (the typical isolated range is 391–471 ms),
+Chroma NR 100 is ≤550 ms, and combined Luma/Chroma NR 100 is ≤1,000 ms. The export
+gate at value 50 retains the standing ≤max(5%, 500 ms) wall delta
 per full-resolution render: 1,500 ms across the three-variant RAW export and 500 ms
 for the standard export, both from five alternating paired samples per arm.
+
+The chroma-NR preview gate mirrors that protocol for the same four sources and values.
+Each active-minus-neutral median delta is ≤45 ms and each active total is
+≤max(150 ms, neutral + 45 ms); the stage-only diagnostic covers the corresponding
+multi-scale shapes. Chroma NR 50 also shares the standing RAW and standard export-wall
+bounds above.
 
 `AdjacentPreviewPerformanceTests` drives the real `SelectedImage` cached/fresh race
 for copied JPEG and RAW fixtures. It compares warm and disabled adjacent paints,
@@ -528,7 +539,7 @@ The direct full-resolution detail diagnostic warms the optimized kernels, then u
 5472×3648 synthetic image and reports elapsed time and peak private-memory delta:
 
 ```bash
-HAPPY_PHOTON_PERF=1 dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter RenderDetailPerformanceTests
+HAPPY_PHOTON_PERF=1 dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter RenderNoiseReductionPerformanceTests
 ```
 
 The luminance-NR quality gate renders the ISO 6400 Canon and iPhone HEIC fixtures at
