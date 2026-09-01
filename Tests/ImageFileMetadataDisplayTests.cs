@@ -6,7 +6,8 @@ namespace HappyPhoton.Tests;
 
 public sealed class ImageFileMetadataDisplayTests
 {
-    private static ImageFile CreateImage() => new(@"C:\photos\a.jpg");
+    private static ImageFile CreateImage() => new(
+        Path.Combine(Path.GetTempPath(), "photos", "a.jpg"));
 
     [Fact]
     public void ExposureDisplay_AllFields_FocalLengthFirst()

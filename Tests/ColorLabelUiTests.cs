@@ -19,7 +19,7 @@ namespace HappyPhoton.Tests;
 /// <summary>
 /// Browse controls that need a live dispatcher or a realized visual tree.
 /// </summary>
-public sealed class ColorLabelUiTests
+public sealed partial class ColorLabelUiTests
 {
     [AvaloniaFact]
     public async Task SetColorLabel_ThroughUiCommand_PersistsAndRefreshesOnce()
@@ -484,20 +484,4 @@ public sealed class ColorLabelUiTests
         window.Close();
     }
 
-    private static List<Button> SwatchButtons(ImageAssessmentControl control) =>
-        control.GetLogicalDescendants()
-            .OfType<Button>()
-            .Where(button => button.CommandParameter is ColorLabel)
-            .ToList();
-
-    private static void Click(Button button) =>
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-    private static string NewRoot() =>
-        Directory.CreateDirectory(Path.Combine(
-            Path.GetTempPath(),
-            $"happy-photon-label-ui-{Guid.NewGuid():N}")).FullName;
-
-    private static MainWindowViewModel NewViewModel(CatalogService catalog) =>
-        new(catalog, baseLoader: null, loadMetadataAsync: _ => Task.CompletedTask);
 }
