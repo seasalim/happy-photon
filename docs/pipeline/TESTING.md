@@ -399,7 +399,11 @@ export wall ≤ +5%, and private peak ≤ +16 MiB.
 
 All performance commands in this section also set
 `HAPPY_PHOTON_FULL_CPU=1` before launching their fresh process so the ordinary
-two-processor test-host cap does not alter the measurement.
+two-processor test-host cap does not alter the measurement. This is enforced:
+building a test project with `HAPPY_PHOTON_PERF=1` but without
+`HAPPY_PHOTON_FULL_CPU=1` fails in MSBuild, and the budget-bearing perf tests
+throw at runtime when they detect a capped host — a capped measurement fails
+loudly instead of misreading full-width budgets.
 
 The same integrated gate includes an active mixer with global chroma for every slider
 fixture, a projection-heavy Canon S=+100 active-mixer endpoint, and active-mixer
@@ -445,8 +449,10 @@ preview shapes, reporting median latency and peak private-memory delta for each.
 The three `RenderNoiseReductionPerformanceTests` full-resolution gates use a
 5472×3648 Q16 diagnostic, warm the kernel, then measure five runs in one process.
 They assert the median latency and require every run's peak private-memory delta to
-remain ≤150 MiB. Luma NR 100 is ≤500 ms (the typical isolated range is 391–471 ms),
-Chroma NR 100 is ≤550 ms, and combined Luma/Chroma NR 100 is ≤1,000 ms. The export
+remain ≤150 MiB. Budgets are calibrated on the full-width host (`HAPPY_PHOTON_FULL_CPU=1`):
+Luma NR 100 is ≤200 ms (observed medians 126–133 ms), Chroma NR 100 is ≤350 ms
+(observed 200–238 ms), and combined Luma/Chroma NR 100 is ≤450 ms (observed
+293–307 ms). The export
 gate at value 50 retains the standing ≤max(5%, 500 ms) wall delta
 per full-resolution render: 1,500 ms across the three-variant RAW export and 500 ms
 for the standard export, both from five alternating paired samples per arm.

@@ -21,21 +21,21 @@ public sealed class RenderNoiseReductionPerformanceTests
         AssertFullResolutionGate(
             "Banded chroma NR 100",
             new DetailSettings { ChromaNr = 100 },
-            maximumMedianMilliseconds: 550);
+            maximumMedianMilliseconds: 350);
 
     [Fact]
     public Task FullResolutionLuminanceNr100_MeetsLatencyAndMemoryGate() =>
         AssertFullResolutionGate(
             "Banded luminance NR 100",
             new DetailSettings { LuminanceNr = 100 },
-            maximumMedianMilliseconds: 500);
+            maximumMedianMilliseconds: 200);
 
     [Fact]
     public Task FullResolutionCombinedNr100_MeetsLatencyAndMemoryGate() =>
         AssertFullResolutionGate(
             "Banded combined NR 100",
             new DetailSettings { LuminanceNr = 100, ChromaNr = 100 },
-            maximumMedianMilliseconds: 1000);
+            maximumMedianMilliseconds: 450);
 
     private async Task AssertFullResolutionGate(
         string label,
@@ -48,6 +48,7 @@ public sealed class RenderNoiseReductionPerformanceTests
 #if DEBUG
         Assert.Skip("Run detail performance diagnostics in Release.");
 #endif
+        PerfEnvironment.AssertFullCpu();
 
         using (var warmup = CreateImage(256, 256))
         {
@@ -119,6 +120,7 @@ public sealed class RenderNoiseReductionPerformanceTests
 #if DEBUG
         Assert.Skip("Run detail performance diagnostics in Release.");
 #endif
+        PerfEnvironment.AssertFullCpu();
 
         var shapes = new[]
         {
@@ -189,6 +191,7 @@ public sealed class RenderNoiseReductionPerformanceTests
 #if DEBUG
         Assert.Skip("Run detail performance diagnostics in Release.");
 #endif
+        PerfEnvironment.AssertFullCpu();
 
         using (var warmup = CreateImage(256, 256))
         {

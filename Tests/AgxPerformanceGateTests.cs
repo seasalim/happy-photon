@@ -27,6 +27,7 @@ public sealed partial class AgxPerformanceGateTests : IDisposable
                 "HAPPY_PHOTON_AGX_PERF_REPORT is required.");
         var target = ParseTarget(Environment.GetEnvironmentVariable(
             "HAPPY_PHOTON_AGX_PERF_TARGET"));
+        PerfEnvironment.AssertFullCpu();
 
         var sliders = MeasureSliderTicks();
         var variants = await MeasureThreeVariants(target);

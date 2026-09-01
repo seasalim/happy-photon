@@ -27,6 +27,7 @@ public sealed class PreviewPipelinePerformanceTests
         {
             return;
         }
+        PerfEnvironment.AssertFullCpu();
 
         var root = Path.Combine(
             Path.GetTempPath(),
@@ -61,6 +62,7 @@ public sealed class PreviewPipelinePerformanceTests
         {
             return;
         }
+        PerfEnvironment.AssertFullCpu();
 
         var root = Path.Combine(
             Path.GetTempPath(),
@@ -95,6 +97,7 @@ public sealed class PreviewPipelinePerformanceTests
         {
             return;
         }
+        PerfEnvironment.AssertFullCpu();
 
         var root = Path.Combine(
             Path.GetTempPath(),
@@ -152,6 +155,7 @@ public sealed class PreviewPipelinePerformanceTests
         {
             return;
         }
+        PerfEnvironment.AssertFullCpu();
 
         using var source = new ImageMagick.MagickImage(
             ImageMagick.MagickColors.Orange,

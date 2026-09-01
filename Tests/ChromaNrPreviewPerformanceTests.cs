@@ -28,6 +28,7 @@ public sealed class ChromaNrPreviewPerformanceTests
 #if DEBUG
         Assert.Skip("Run preview performance diagnostics in Release.");
 #endif
+        PerfEnvironment.AssertFullCpu();
         Assert.SkipWhen(
             Path.GetExtension(fixture).Equals(".heic",
                 StringComparison.OrdinalIgnoreCase) &&
@@ -76,6 +77,7 @@ public sealed class ChromaNrPreviewPerformanceTests
 #if DEBUG
         Assert.Skip("Run preview performance diagnostics in Release.");
 #endif
+        PerfEnvironment.AssertFullCpu();
         var shapes = new[]
         {
             new PreviewShape(1600, 1067, 5472, 3648),
