@@ -22,10 +22,10 @@ public sealed class ComparePreviewCacheTests : IDisposable
         SelectAll(vm, images);
 
         vm.EnterCompareCommand.Execute(null);
-        await loader.FirstStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await loader.FirstStarted.Task.WaitAsync(TestWaits.Condition);
         vm.ActivateComparePaneCommand.Execute(vm.ComparePanes[2]);
         release.Set();
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
 
         Assert.Same(images[2], vm.SelectedImage);
         Assert.Equal(4, loader.LoadCount);
