@@ -171,18 +171,20 @@ public sealed class EffectsControlTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task MixerGroup_GeneratesMockupReviewScreenshots()
+    public Task MixerGroup_ShowcaseRendersInDarkTheme() =>
+        CaptureMixerShowcaseAsync(ThemeVariant.Dark, "color-mixer-dark");
+
+    [AvaloniaFact]
+    public Task MixerGroup_ShowcaseRendersInMidGrayTheme() =>
+        CaptureMixerShowcaseAsync(
+            HappyPhotonThemes.MidGray,
+            "color-mixer-middle-gray");
+
+    private async Task CaptureMixerShowcaseAsync(
+        ThemeVariant theme,
+        string scene)
     {
-        Assert.SkipWhen(
-            Environment.GetEnvironmentVariable("HAPPY_PHOTON_MIXER_LOOKGATE") != "1",
-            "Set HAPPY_PHOTON_MIXER_LOOKGATE=1 and " +
-            "HAPPY_PHOTON_MIXER_LOOKGATE_DIR to generate mixer screenshots.");
-        var outputDirectory = Environment.GetEnvironmentVariable(
-            "HAPPY_PHOTON_MIXER_LOOKGATE_DIR");
-        Assert.False(string.IsNullOrWhiteSpace(outputDirectory));
-        outputDirectory = Path.GetFullPath(outputDirectory);
-        Directory.CreateDirectory(outputDirectory);
-        using var catalog = new CatalogService(Path.Combine(_root.Path, "screenshot-catalog"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "showcase-catalog"));
         await catalog.InitializeAsync();
         await using var vm = new MainWindowViewModel(
             catalog,
@@ -194,43 +196,27 @@ public sealed class EffectsControlTests : IDisposable
         vm.MixerHue = -5;
         vm.MixerSaturation = 22;
         vm.MixerLuminance = 10;
-        var application = Application.Current!;
+        var group = new MixerEditGroup
+        {
+            DataContext = vm,
+            Margin = new Thickness(15)
+        };
+        var window = new Window
+        {
+            Content = group,
+            Background = ThemeResourceTests.Brush("SurfaceLow", theme)
+        };
         try
         {
-            foreach (var (theme, name) in new[]
-                     {
-                         (ThemeVariant.Dark, "dark"),
-                         (HappyPhotonThemes.MidGray, "middle-gray")
-                     })
-            {
-                application.RequestedThemeVariant = theme;
-                Dispatcher.UIThread.RunJobs();
-                var group = new MixerEditGroup
-                {
-                    DataContext = vm,
-                    Margin = new Thickness(15)
-                };
-                var window = new Window
-                {
-                    Width = 250,
-                    Height = 190,
-                    Content = group,
-                    Background = ThemeResourceTests.Brush("SurfaceLow", theme)
-                };
-                window.Show();
-                Dispatcher.UIThread.RunJobs();
-                using var frame = window.CaptureRenderedFrame() ??
-                    throw new InvalidOperationException("Mixer screenshot was empty.");
-                frame.Save(Path.Combine(
-                    outputDirectory,
-                    $"color-mixer-{name}.png"));
-                window.Close();
-                group.DataContext = null;
-            }
+            ShowcaseTestHelper.Capture(
+                scene,
+                window,
+                new PixelSize(250, 190),
+                theme);
         }
         finally
         {
-            application.RequestedThemeVariant = ThemeVariant.Dark;
+            group.DataContext = null;
         }
     }
 

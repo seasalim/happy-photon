@@ -372,17 +372,22 @@ The generated `index.html` is the maintainer product checkpoint; approval is req
 before merge and the artifacts are not a numeric-oracle substitute.
 
 `ColorMixerLookGateTests` generates the D300 ColorChecker identity plus one
-Saturation +80 render for each mixer band. The matching headless mixer UI gate writes
-Dark and Middle Gray screenshots with the mockup values, so swatch spacing, touched
-state, gradients, and the four-row treatment can be reviewed together:
+Saturation +80 render for each mixer band. The matching headless mixer showcases write
+Dark and Middle Gray scenes with the mockup values to `artifacts/shots/`, so swatch
+spacing, touched state, gradients, and the four-row treatment can be reviewed together:
 
 ```powershell
 $env:HAPPY_PHOTON_MIXER_LOOKGATE='1'
 $env:HAPPY_PHOTON_MIXER_LOOKGATE_DIR='artifacts/color-mixer-lookgate'
 dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build `
   --filter FullyQualifiedName~ColorMixerLookGateTests
+```
+
+The headless showcase is always on:
+
+```powershell
 dotnet test HeadlessTests/HappyPhoton.Headless.Tests.csproj -c Release --no-build `
-  --filter FullyQualifiedName~EffectsControlTests
+  --filter FullyQualifiedName~MixerGroup_Showcase
 ```
 
 ## 5. Performance
@@ -645,6 +650,11 @@ integration tests live in `Tests/HappyPhoton.Tests.csproj`; UI and dispatcher te
 through the supported Avalonia headless integration in
 `HeadlessTests/HappyPhoton.Headless.Tests.csproj`. Keep Windows WIC coverage in the
 ordinary host so the native and headless Avalonia platforms never share a process.
+
+`ShowcaseTestHelper` stages and captures named headless scenes in
+`artifacts/shots/<scene>.png` under the repository root. A showcase test asserts only
+that its frame rendered at the requested pixel size; the PNG is evidence for a reviewer,
+not a pixel-comparison gate.
 
 Platform and codec gaps use xUnit v3 native runtime skips (`Assert.Skip` or
 `Assert.SkipWhen`) with an explicit reason so they remain visible in logs. CI gates on
