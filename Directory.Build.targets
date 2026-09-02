@@ -2,6 +2,9 @@
   <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(HAPPY_PHOTON_FULL_CPU)' != '1'">
     <RunSettingsFilePath>$(MSBuildThisFileDirectory)HappyPhoton.runsettings</RunSettingsFilePath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(HAPPY_PHOTON_FULL_CPU)' == '1'">
+    <RunSettingsFilePath>$(MSBuildThisFileDirectory)HappyPhoton.FullCpu.runsettings</RunSettingsFilePath>
+  </PropertyGroup>
   <Target Name="RequireFullCpuForPerfGates" BeforeTargets="Build"
           Condition="'$(IsTestProject)' == 'true' and '$(HAPPY_PHOTON_PERF)' == '1' and '$(HAPPY_PHOTON_FULL_CPU)' != '1'">
     <Error Text="HAPPY_PHOTON_PERF=1 requires HAPPY_PHOTON_FULL_CPU=1: the default test host caps DOTNET_PROCESSOR_COUNT at 2 and invalidates budget measurements." />

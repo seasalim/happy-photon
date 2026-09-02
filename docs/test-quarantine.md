@@ -20,8 +20,9 @@ sets.
 ## Execution lanes
 
 `HappyPhoton.runsettings` excludes quarantined tests from ordinary local runs,
-three-platform CI, and release qualification. This keeps those gates strict for
-every non-quarantined test.
+three-platform CI, and release qualification, and `HappyPhoton.FullCpu.runsettings`
+keeps the same exclusion for `HAPPY_PHOTON_FULL_CPU=1` runs. This keeps those
+gates strict for every non-quarantined test.
 
 The `Quarantined tests` workflow runs nightly and on manual dispatch. It uses
 `HappyPhoton.AllTests.runsettings` to execute the entire Windows suite, keeping

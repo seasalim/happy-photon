@@ -10,7 +10,8 @@ Ordinary `dotnet test` runs use `HappyPhoton.runsettings`, which gives each test
 host two logical processors. This bounds xUnit collection concurrency, managed
 pixel workers, and LibRaw's default OpenMP workers together. Opt-in performance
 measurements bypass that cap in a fresh process with
-`HAPPY_PHOTON_FULL_CPU=1`.
+`HAPPY_PHOTON_FULL_CPU=1`, which switches to `HappyPhoton.FullCpu.runsettings`:
+the same quarantine filter without the processor cap.
 
 ## 1. Sample assets (`Tests/assets/`)
 
