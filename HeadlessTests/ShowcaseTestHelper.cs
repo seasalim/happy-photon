@@ -65,6 +65,21 @@ internal static class ShowcaseTestHelper
         }
     }
 
+    /// <summary>Advances the headless render clock until a transition settles.</summary>
+    public static void Settle(Func<bool> settled, string what)
+    {
+        var deadline = DateTime.UtcNow + TestWaits.Condition;
+        while (DateTime.UtcNow < deadline)
+        {
+            AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+            Dispatcher.UIThread.RunJobs();
+            if (settled()) return;
+            Thread.Sleep(10);
+        }
+
+        Assert.True(settled(), $"{what} never settled.");
+    }
+
     private static void ValidateScene(string scene)
     {
         if (string.IsNullOrEmpty(scene) || scene.Any(character =>

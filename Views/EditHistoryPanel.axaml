@@ -45,7 +45,7 @@
                         Command="{Binding ClearHistoryCommand}"/>
             </Grid>
         </Border>
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" x:Name="HistoryScrollViewer" Classes="overlay-scrollbar" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <ItemsControl ItemsSource="{Binding HistoryEntries}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:EditHistoryEntry">

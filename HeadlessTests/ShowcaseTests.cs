@@ -1,10 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
+using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -17,6 +19,104 @@ namespace HappyPhoton.Tests;
 public sealed class ShowcaseTests
 {
     private static readonly PixelSize DevelopSize = new(1200, 700);
+
+    [AvaloniaFact]
+    public async Task BrowseGridRest_RendersShowcase()
+    {
+        using var root = new TemporaryDirectory();
+        using var catalog = new CatalogService(Path.Combine(root.Path, "catalog"));
+        await catalog.InitializeAsync();
+        await using var viewModel = new MainWindowViewModel(
+            catalog,
+            new NullBaseLoader(),
+            _ => Task.CompletedTask);
+        viewModel.Browse.SetImages(Enumerable.Range(0, 60)
+            .Select(index => new ImageFile($"browse-grid-{index:D2}.jpg"))
+            .ToArray());
+        viewModel.ShowWorkspaceReady(
+            MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        var window = new MainWindow { DataContext = viewModel };
+
+        try
+        {
+            ShowcaseTestHelper.Capture(
+                "browse-grid-rest",
+                window,
+                DevelopSize,
+                ThemeVariant.Dark);
+        }
+        finally
+        {
+            window.DataContext = null;
+        }
+    }
+
+    [AvaloniaTheory]
+    [InlineData("develop-history-rest", false)]
+    [InlineData("develop-history-hover", true)]
+    public async Task DevelopHistory_RendersShowcase(string scene, bool hover)
+    {
+        using var root = new TemporaryDirectory();
+        using var catalog = new CatalogService(Path.Combine(root.Path, "catalog"));
+        await catalog.InitializeAsync();
+        await using var viewModel = new MainWindowViewModel(
+            catalog,
+            new NullBaseLoader(),
+            _ => Task.CompletedTask);
+        var assetPath = GoldenTestPaths.Asset("srgb-reference.jpg");
+        using var bitmap = new Bitmap(assetPath);
+        var settings = new EditSettings { Exposure = .39 };
+        var image = new ImageFile(assetPath) { EditSettings = settings };
+        image.CatalogId = await catalog.GetOrCreateImageAsync(image.FilePath);
+        var entries = Enumerable.Range(0, 40)
+            .Select(index => new CatalogEditHistoryEntry(
+                index,
+                index == 0 ? "Original" : $"Exposure +{index / 100d:0.00}",
+                new EditSettings { Exposure = index / 100d }))
+            .ToArray();
+        await catalog.SaveEditSettingsWithHistoryAsync(
+            image.CatalogId,
+            settings,
+            new CatalogEditHistoryMutation(-1, entries, 39));
+        viewModel.ShowWorkspaceReady(
+            MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        viewModel.Browse.SetImages([image]);
+        viewModel.IsDevelopMode = true;
+        viewModel.SelectedImage = image;
+        await TestWaits.UntilAsync(() => viewModel.IsHistoryLoaded);
+        viewModel.PreviewImage = bitmap;
+        var window = new MainWindow { DataContext = viewModel };
+
+        try
+        {
+            ShowcaseTestHelper.Capture(
+                scene,
+                window,
+                DevelopSize,
+                ThemeVariant.Dark,
+                stagedWindow =>
+                {
+                    viewModel.PreviewImage = bitmap;
+                    if (hover)
+                    {
+                        var scroll = stagedWindow.GetVisualDescendants()
+                            .OfType<ScrollViewer>()
+                            .Single(candidate => candidate.Name ==
+                                "HistoryScrollViewer");
+                        var point = scroll.TranslatePoint(
+                            new Point(scroll.Bounds.Width / 2, scroll.Bounds.Height / 2),
+                            stagedWindow)!.Value;
+                        stagedWindow.MouseMove(point, RawInputModifiers.None);
+                        SettleRevealedThumb(scroll);
+                    }
+                });
+        }
+        finally
+        {
+            viewModel.PreviewImage = null;
+            window.DataContext = null;
+        }
+    }
 
     [AvaloniaTheory]
     [InlineData("develop-basic", false, false)]
@@ -69,6 +169,7 @@ public sealed class ShowcaseTests
                         new Point(tree.Bounds.Width / 2, tree.Bounds.Height / 2),
                         stagedWindow)!.Value;
                     stagedWindow.MouseMove(point, RawInputModifiers.None);
+                    SettleRevealedThumb(tree);
                 }) : null);
         }
         finally
@@ -153,5 +254,13 @@ public sealed class ShowcaseTests
             viewModel.PreviewImage = null;
             window.DataContext = null;
         }
+    }
+
+    private static void SettleRevealedThumb(Visual host)
+    {
+        var thumb = host.GetVisualDescendants().OfType<ScrollBar>()
+            .Single(bar => bar.Orientation == Avalonia.Layout.Orientation.Vertical)
+            .GetVisualDescendants().OfType<Thumb>().Single();
+        ShowcaseTestHelper.Settle(() => thumb.Opacity >= 1, "The revealed thumb");
     }
 }

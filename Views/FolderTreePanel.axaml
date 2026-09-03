@@ -56,7 +56,7 @@
 
         <!-- Folder Tree -->
         <TreeView x:Name="FolderTree"
-                  Classes="folder-tree-overlay-scrollbar"
+                  Classes="overlay-scrollbar"
                   Grid.Row="1"
                   Background="Transparent"
                   AutoScrollToSelectedItem="False"

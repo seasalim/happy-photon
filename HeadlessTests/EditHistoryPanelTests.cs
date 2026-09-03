@@ -59,7 +59,7 @@ public sealed class EditHistoryPanelTests
                 .Where(button => button.Classes.Contains("history-row")).ToArray();
             // The same 8px breathing row the Navigator gets separates Presets from History.
             Assert.True(history.Bounds.Top - presets.Bounds.Bottom >= 8);
-            Assert.Equal(ScrollBarVisibility.Hidden,
+            Assert.Equal(ScrollBarVisibility.Auto,
                 history.GetVisualDescendants().OfType<ScrollViewer>().First().VerticalScrollBarVisibility);
             Assert.True(history.Bounds.Height <= shared.Bounds.Height * .4 + 1);
             Assert.True(presets.Bounds.Height >= shared.Bounds.Height * .5);

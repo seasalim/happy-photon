@@ -74,12 +74,14 @@
         <Style Selector="Expander /template/ Path">
             <Setter Property="Stroke" Value="{DynamicResource TextMuted}"/>
         </Style>
-        <Style Selector="TreeView.folder-tree-overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar">
+        <Style Selector="ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar,
+                         TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar">
             <Setter Property="Width" Value="12"/>
             <Setter Property="MinWidth" Value="12"/>
             <Setter Property="ShowDelay" Value="0:0:0.1"/>
         </Style>
-        <Style Selector="TreeView.folder-tree-overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb">
+        <Style Selector="ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb,
+                         TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb">
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="Width" Value="6"/>
             <Setter Property="Background" Value="{DynamicResource TextMuted}"/>
@@ -89,25 +91,34 @@
                 <Transitions><DoubleTransition Property="Opacity" Duration="0:0:0.3"/></Transitions>
             </Setter>
         </Style>
-        <Style Selector="TreeView.folder-tree-overlay-scrollbar:pointerover /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb,
-                         TreeView.folder-tree-overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Thumb">
+        <Style Selector="ScrollViewer.overlay-scrollbar:pointerover /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb,
+                         ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Thumb,
+                         TreeView.overlay-scrollbar:pointerover /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb,
+                         TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Thumb">
             <Setter Property="Opacity" Value="1"/>
         </Style>
-        <Style Selector="TreeView.folder-tree-overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Thumb">
+        <Style Selector="ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Thumb,
+                         TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Thumb">
             <Setter Property="Width" Value="10"/>
         </Style>
-        <Style Selector="TreeView.folder-tree-overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb:pointerover /template/ Border,
-                         TreeView.folder-tree-overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb:pressed /template/ Border">
+        <Style Selector="ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb:pointerover /template/ Border,
+                         ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb:pressed /template/ Border,
+                         TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb:pointerover /template/ Border,
+                         TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ Thumb:pressed /template/ Border">
             <Setter Property="Background" Value="{DynamicResource TextSecondary}"/>
         </Style>
-        <Style Selector="TreeView.folder-tree-overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Grid#Root">
+        <Style Selector="ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Grid#Root,
+                         TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Grid#Root">
             <Setter Property="Background" Value="{x:Null}"/>
         </Style>
-        <Style Selector="TreeView.folder-tree-overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Rectangle#TrackRect">
+        <Style Selector="ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Rectangle#TrackRect,
+                         TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar[IsExpanded=true] /template/ Rectangle#TrackRect">
             <Setter Property="Opacity" Value="0"/>
         </Style>
-        <Style Selector="TreeView.folder-tree-overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ RepeatButton#PART_LineUpButton,
-                         TreeView.folder-tree-overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ RepeatButton#PART_LineDownButton">
+        <Style Selector="ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar /template/ RepeatButton#PART_LineUpButton,
+                         ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar /template/ RepeatButton#PART_LineDownButton,
+                         TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ RepeatButton#PART_LineUpButton,
+                         TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar /template/ RepeatButton#PART_LineDownButton">
             <Setter Property="IsVisible" Value="False"/>
         </Style>
         <Style Selector="ComboBox.edit-dropdown">
