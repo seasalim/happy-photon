@@ -178,6 +178,7 @@ The brand personality for the design system is energetic, luminous, and high-vel
 The workspace uses restrained, monochrome chrome so photographs and color-semantic
 data carry the visual energy. Cyan remains a title-bar brand signature; controls use
 neutral value shifts for hover, selection, active, and focus states.
+Workspace scrollbars are hidden; the folder tree is the overlay exception.
 
 ## Colors
 

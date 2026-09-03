@@ -56,11 +56,12 @@
 
         <!-- Folder Tree -->
         <TreeView x:Name="FolderTree"
+                  Classes="folder-tree-overlay-scrollbar"
                   Grid.Row="1"
                   Background="Transparent"
                   AutoScrollToSelectedItem="False"
                   ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                  ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                   SelectionMode="Single">
             <TreeView.Resources>
                 <x:Double x:Key="CompactTreeViewItemIndent">12</x:Double>

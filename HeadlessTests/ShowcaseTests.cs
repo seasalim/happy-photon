@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using HappyPhoton.Models;
@@ -25,6 +27,55 @@ public sealed class ShowcaseTests
             scene,
             midGray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark,
             assessment);
+
+    [AvaloniaTheory]
+    [InlineData("folder-tree-rest", false)]
+    [InlineData("folder-tree-hover", true)]
+    public async Task FolderTree_RendersShowcase(string scene, bool hover)
+    {
+        using var root = new TemporaryDirectory();
+        using var catalog = new CatalogService(Path.Combine(root.Path, "catalog"));
+        await using var viewModel = new MainWindowViewModel(
+            catalog,
+            baseLoader: null,
+            loadMetadataAsync: _ => Task.CompletedTask);
+        var browseRoot = Directory.CreateDirectory(Path.Combine(
+            root.Path,
+            "photos")).FullName;
+        for (var index = 1; index <= 40; index++)
+        {
+            Directory.CreateDirectory(Path.Combine(
+                browseRoot,
+                $"Folder {index:00}"));
+        }
+
+        viewModel.SetRootFolder(browseRoot, selectRoot: false);
+        viewModel.ShowWorkspaceReady(
+            MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        var window = new MainWindow { DataContext = viewModel };
+
+        try
+        {
+            ShowcaseTestHelper.Capture(
+                scene,
+                window,
+                DevelopSize,
+                ThemeVariant.Dark,
+                hover ? (Action<Window>)(stagedWindow =>
+                {
+                    var tree = stagedWindow.FindControl<FolderTreePanel>(
+                        "FolderTreePanel")!.FindControl<TreeView>("FolderTree")!;
+                    var point = tree.TranslatePoint(
+                        new Point(tree.Bounds.Width / 2, tree.Bounds.Height / 2),
+                        stagedWindow)!.Value;
+                    stagedWindow.MouseMove(point, RawInputModifiers.None);
+                }) : null);
+        }
+        finally
+        {
+            window.DataContext = null;
+        }
+    }
 
     [AvaloniaFact]
     public void SizeMismatch_ThrowsAssertionAndClosesWindow()
