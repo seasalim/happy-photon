@@ -34,8 +34,23 @@ env:
   NUGET_XMLDOC_MODE: skip
 
 jobs:
+  policy:
+    name: Repository policy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Verify repository policy
+        shell: pwsh
+        run: ./scripts/verify.ps1 -PolicyOnly
+
   build-test:
     name: ${{ matrix.name }}
+    needs: policy
     strategy:
       fail-fast: false
       matrix:
@@ -61,11 +76,6 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-
-      - name: Check source file lengths
-        if: matrix.rid == 'linux-x64'
-        shell: pwsh
-        run: ./scripts/check-source-lines.ps1
 
       - name: Restore locked dependencies and run NuGet audit
         run: |
@@ -112,20 +122,23 @@ jobs:
             throw "Test discovery fell below the expected minimum (666 native, 35 headless)."
           }
 
-      - name: Validate test quarantine
-        if: matrix.rid == 'linux-x64'
+      - name: Verify repository
         shell: pwsh
-        run: ./scripts/check-test-quarantine.ps1 -NoBuild -NoRestore
-
-      - name: Test
-        run: >
-          dotnet test HappyPhoton.sln
-          --configuration Release
-          --no-build
-          --blame-hang
-          --blame-hang-timeout 90s
-          --logger "trx;LogFilePrefix=happy-photon-${{ matrix.rid }}"
-          --results-directory artifacts/test-results/${{ matrix.rid }}
+        run: |
+          $verifyArguments = @{
+            Configuration = "Release"
+            NoBuild = $true
+            NoRestore = $true
+            SkipPolicy = $true
+            BlameHang = $true
+            BlameHangTimeout = "90s"
+            LogFilePrefix = "happy-photon-${{ matrix.rid }}"
+            ResultsDirectory = "artifacts/test-results/${{ matrix.rid }}"
+          }
+          if ("${{ matrix.rid }}" -ne "linux-x64") {
+            $verifyArguments.SkipQuarantine = $true
+          }
+          ./scripts/verify.ps1 @verifyArguments
 
       - name: Resolve source identity
         id: source-identity

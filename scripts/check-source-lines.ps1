@@ -13,9 +13,9 @@ try {
     if ($IncludePatterns.Count -eq 0) {
         throw "At least one include pattern is required."
     }
-    $sourceFiles = @(git ls-files -- $IncludePatterns)
+    $sourceFiles = @(git ls-files --cached --others --exclude-standard -- $IncludePatterns)
     if ($LASTEXITCODE -ne 0) {
-        throw "Could not enumerate tracked source files."
+        throw "Could not enumerate source files."
     }
 
     $violations = foreach ($sourceFile in $sourceFiles) {

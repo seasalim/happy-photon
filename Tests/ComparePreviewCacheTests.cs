@@ -35,7 +35,7 @@ public sealed class ComparePreviewCacheTests : IDisposable
 
         vm.ExitCompareCommand.Execute(null);
         vm.EnterCompareCommand.Execute(null);
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
 
         Assert.Equal(4, loader.LoadCount);
         AssertPaintedWithIdentity(vm);
@@ -58,13 +58,13 @@ public sealed class ComparePreviewCacheTests : IDisposable
         SelectAll(vm, images);
 
         vm.EnterCompareCommand.Execute(null);
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
         await DrainPreviewWritesAsync(vm);
         vm.ExitCompareCommand.Execute(null);
         images[0].EditSettings.Exposure = 0.5;
 
         vm.EnterCompareCommand.Execute(null);
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
 
         Assert.Equal(3, loader.LoadCount);
         AssertPaintedWithIdentity(vm);
@@ -108,12 +108,12 @@ public sealed class ComparePreviewCacheTests : IDisposable
         SelectAll(vm, images);
 
         vm.EnterCompareCommand.Execute(null);
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
         Assert.Equal(2, loader.LoadCount);
         await DrainPreviewWritesAsync(vm);
         vm.ExitCompareCommand.Execute(null);
         vm.EnterCompareCommand.Execute(null);
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
 
         Assert.Equal(2, loader.LoadCount);
         AssertPaintedWithIdentity(vm);
@@ -178,7 +178,7 @@ public sealed class ComparePreviewCacheTests : IDisposable
         SelectAll(vm, images);
 
         vm.EnterCompareCommand.Execute(null);
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
 
         Assert.Equal(1, loader.LoadCount);
         AssertPaintedWithIdentity(vm);

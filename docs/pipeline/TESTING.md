@@ -1,7 +1,7 @@
 # Pipeline Spec — Testing: Goldens, Assets, Tolerances
 
 The pipeline is only safe to change because of this harness. Unit tests follow
-existing conventions (`Tests/*Tests.cs`, xUnit, `dotnet test HappyPhoton.sln`).
+existing conventions (`Tests/*Tests.cs`, xUnit, `./scripts/verify.ps1`).
 Use `Tests/TemporaryDirectory.cs` for disposable test roots and
 `TestEditSettingsFactory` in `Tests/TestBaseLoaders.cs` for neutral tonal settings;
 keep every non-default setting explicit at the call site.

@@ -262,7 +262,7 @@ public sealed class LoupeGateBaselineMeasurementTests(ITestOutputHelper output)
             }
             _lines.Clear();
             ViewModel.EnterCompareCommand.Execute(null);
-            await ViewModel.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(30));
+            await ViewModel.CompareLoadingTask.WaitAsync(TestWaits.Condition);
             return TraceCounts.From(_lines);
         }
 
@@ -271,7 +271,7 @@ public sealed class LoupeGateBaselineMeasurementTests(ITestOutputHelper output)
             if (!_warm) await ClearPreviewAssetsAsync();
             _lines.Clear();
             ViewModel.EnterLoupeCommand.Execute(null);
-            await ViewModel.LoupeLoadingTask.WaitAsync(TimeSpan.FromSeconds(30));
+            await ViewModel.LoupeLoadingTask.WaitAsync(TestWaits.Condition);
             var result = TraceCounts.From(_lines);
             Assert.NotNull(ViewModel.LoupePane?.Preview);
             if (close)
@@ -287,7 +287,7 @@ public sealed class LoupeGateBaselineMeasurementTests(ITestOutputHelper output)
             _lines.Clear();
             ViewModel.ToggleActualSizeCommand.Execute(null);
             ViewModel.PublishLoupeRequiredDeviceLongEdge(640, false);
-            await ViewModel.LoupeLoadingTask.WaitAsync(TimeSpan.FromSeconds(30));
+            await ViewModel.LoupeLoadingTask.WaitAsync(TestWaits.Condition);
             var result = TraceCounts.From(_lines);
             ViewModel.ExitLoupeCommand.Execute(null);
             Drain();

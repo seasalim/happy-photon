@@ -51,4 +51,4 @@ Treat code and tests as the specification for details not covered there. Update 
 
 ## Verify
 
-Run `dotnet test HappyPhoton.sln`.
+Run `./scripts/verify.ps1`.

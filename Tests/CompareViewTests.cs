@@ -244,7 +244,7 @@ public sealed class CompareViewTests : IDisposable
         vm.SelectedImage = images[0];
 
         vm.EnterCompareCommand.Execute(null);
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(10));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
 
         Assert.All(vm.ComparePanes, pane =>
         {
@@ -255,7 +255,7 @@ public sealed class CompareViewTests : IDisposable
                 1800,
                 isLoupePeekActive: true);
         });
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(10));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
 
         Assert.Equal(2, loader.FullLoadCount);
         Assert.Equal(1, loader.MaximumConcurrentFullLoads);
@@ -278,7 +278,7 @@ public sealed class CompareViewTests : IDisposable
                 pane,
                 3600,
                 isLoupePeekActive: true);
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(10));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
         Assert.Equal(4, loader.FullLoadCount);
         Assert.Equal(1, loader.MaximumConcurrentFullLoads);
         Assert.All(vm.ComparePanes, pane => Assert.Equal(1800, pane.RenderedLongEdge));

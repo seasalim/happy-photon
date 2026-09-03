@@ -30,6 +30,11 @@ no signal exists. Same ceiling; the wait ends on the state change itself.
 under the 90 s `--blame-hang-timeout` so a real hang still reports as a hang.
 Tune it in one place; do not add a per-call-site value.
 
+`scripts/check-test-waits.ps1` enforces that rule for `WaitAsync` calls. A
+deliberate latency assertion must carry `test-wait-policy: allow - <reason>` on
+the same or preceding line. `scripts/verify.ps1` runs this policy together with
+the source-length and quarantine checks before the solution tests.
+
 ## The shape that is not allowed
 
 Sleeping less than a production timeout and asserting the state has not changed

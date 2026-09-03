@@ -223,7 +223,7 @@ public sealed partial class CompareViewHeadlessTests
         };
 
         vm.EnterCompareCommand.Execute(null);
-        await gateEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await gateEntered.Task.WaitAsync(TestWaits.Condition);
         vm.ExitCompareCommand.Execute(null);
         vm.EnterCompareCommand.Execute(null);
         var updatedOffThread = 0;
@@ -241,7 +241,7 @@ public sealed partial class CompareViewHeadlessTests
         }
 
         releaseGate.TrySetResult();
-        await vm.CompareLoadingTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await vm.CompareLoadingTask.WaitAsync(TestWaits.Condition);
 
         Assert.Equal(0, Volatile.Read(ref updatedOffThread));
         Assert.All(vm.ComparePanes, pane => Assert.False(pane.IsLoading));
