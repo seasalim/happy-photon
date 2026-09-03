@@ -19,12 +19,12 @@ public sealed class RawJpegOneCaptureHeadlessTests
         var viewer = window.FindControl<DevelopViewerPane>(
             "DevelopViewerPane")!.Viewer;
         await PumpUntilAsync(() => viewer.Source != null);
-        await PumpUntilAsync(() => viewer.GetFitZoomLevel() > 1);
-        var target = new NormalizedViewport(new NormalizedPoint(0.7, 0.3), 2);
+        await PumpUntilAsync(() => viewer.Bounds.Width > 0);
+        var target = new NormalizedViewport(new NormalizedPoint(0.7, 0.3), 4);
         vm.ApplyManualZoom(viewer.GetFitZoomLevel() * target.ZoomRelativeToFit);
         viewer.ApplyNormalizedViewport(target);
         await PumpUntilAsync(() =>
-            Math.Abs(viewer.CaptureNormalizedViewport().ZoomRelativeToFit - 2) < 0.001);
+            Math.Abs(viewer.CaptureNormalizedViewport().ZoomRelativeToFit - 4) < 0.001);
         var before = viewer.CaptureNormalizedViewport();
 
         vm.SwitchCaptureMemberCommand.Execute(null);
@@ -51,13 +51,13 @@ public sealed class RawJpegOneCaptureHeadlessTests
         var viewer = window.FindControl<DevelopViewerPane>(
             "DevelopViewerPane")!.Viewer;
         await PumpUntilAsync(() => viewer.Source != null);
-        await PumpUntilAsync(() => viewer.GetFitZoomLevel() > 1);
+        await PumpUntilAsync(() => viewer.Bounds.Width > 0);
         var jpeg = vm.SelectedImage;
-        var target = new NormalizedViewport(new NormalizedPoint(0.7, 0.3), 2);
+        var target = new NormalizedViewport(new NormalizedPoint(0.7, 0.3), 4);
         vm.ApplyManualZoom(viewer.GetFitZoomLevel() * target.ZoomRelativeToFit);
         viewer.ApplyNormalizedViewport(target);
         await PumpUntilAsync(() =>
-            Math.Abs(viewer.CaptureNormalizedViewport().ZoomRelativeToFit - 2) < 0.001);
+            Math.Abs(viewer.CaptureNormalizedViewport().ZoomRelativeToFit - 4) < 0.001);
         var before = viewer.CaptureNormalizedViewport();
 
         vm.SwitchCaptureMemberCommand.Execute(null);
@@ -86,7 +86,7 @@ public sealed class RawJpegOneCaptureHeadlessTests
         var viewer = window.FindControl<DevelopViewerPane>(
             "DevelopViewerPane")!.Viewer;
         await PumpUntilAsync(() => viewer.Source != null);
-        await PumpUntilAsync(() => viewer.GetFitZoomLevel() > 1);
+        await PumpUntilAsync(() => viewer.Bounds.Width > 0);
         var plain = vm.Browse.AllImages.Single(image =>
             image.FileName == "plain.jpg");
         var target = new NormalizedViewport(new NormalizedPoint(0.7, 0.3), 2);

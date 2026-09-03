@@ -43,6 +43,19 @@ public sealed class DisplayChainTraceTests
         Assert.True(mapping.IsOneToOne);
     }
 
+    [Fact]
+    public void FitZoomLevel_NeverEnlargesPastOneToOne()
+    {
+        var small = new PixelSize(256, 256);
+        var fitBox = new Size(1900, 1200);
+
+        Assert.Equal(1, ZoomGeometryCalculator.FitZoomLevel(small, fitBox, 1));
+        Assert.Equal(1, ZoomGeometryCalculator.FitZoomLevel(small, fitBox, 1.5));
+        Assert.Equal(256, ZoomGeometryCalculator.FittedDeviceLongEdge(small, fitBox, 1.5));
+        Assert.Equal(0.6, ZoomGeometryCalculator.FitZoomLevel(
+            new PixelSize(2000, 2000), fitBox, 1), 10);
+    }
+
     [AvaloniaFact]
     public void RealizedControl_ReportsEveryMappingFieldAndCoalescesChanges()
     {
@@ -122,7 +135,7 @@ public sealed class DisplayChainTraceTests
     {
         var pixels = new PixelSize(1500, 1000);
         var original = new PixelSize(6000, 4000);
-        var fitBox = new Size(2068, 1256);
+        var fitBox = new Size(1034, 628);
 
         Assert.Equal(4, ZoomGeometryCalculator.BitmapRelativeZoom(
             pixels, original, 1));
@@ -151,7 +164,7 @@ public sealed class DisplayChainTraceTests
 
         Assert.Equal(logicalAtOne.Width, logicalAtOnePointFive.Width, 10);
         Assert.Equal(logicalAtOne.Height, logicalAtOnePointFive.Height, 10);
-        Assert.Equal(2826, ZoomGeometryCalculator.FittedDeviceLongEdge(
+        Assert.Equal(1413, ZoomGeometryCalculator.FittedDeviceLongEdge(
             pixels,
             fitBox,
             1.5));
@@ -284,7 +297,7 @@ public sealed class DisplayChainTraceTests
     [AvaloniaFact]
     public void ScalingTransition_RecomputesFitAndManualGeometry()
     {
-        using var bitmap = CreateBitmap(800, 400);
+        using var bitmap = CreateBitmap(1600, 800);
         foreach (var autoFit in new[] { false, true })
         {
             var control = new ZoomPanControl
@@ -320,8 +333,8 @@ public sealed class DisplayChainTraceTests
                 else
                 {
                     Assert.Equal(1, control.ZoomLevel);
-                    Assert.Equal(800, after.Width * 1.5, 6);
-                    Assert.Equal(400, after.Height * 1.5, 6);
+                    Assert.Equal(1600, after.Width * 1.5, 6);
+                    Assert.Equal(800, after.Height * 1.5, 6);
                 }
             }
             finally

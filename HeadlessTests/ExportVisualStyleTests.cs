@@ -242,6 +242,55 @@ public sealed class ExportVisualStyleTests : IDisposable
         }
     }
 
+    [AvaloniaFact]
+    public void ProofCaption_SmallSourceShowsAtNativeSize()
+    {
+        using var source = new WriteableBitmap(
+            new PixelSize(256, 256),
+            new Vector(96, 96),
+            PixelFormat.Bgra8888,
+            AlphaFormat.Opaque);
+        var pane = new ExportPreviewPane();
+        var frame = pane.FindControl<UniformImageOverlayPanel>(
+            "ExportPreviewImageFrame")!;
+        var image = pane.FindControl<Image>("ExportPreviewImage")!;
+        var caption = pane.FindControl<TextBlock>("ExportProofCaption")!;
+        pane.FindControl<Image>("ExportPlaceholderImage")!.IsVisible = false;
+        pane.FindControl<Border>("ExportPreviewEmptyState")!.IsVisible = false;
+        image.Source = source;
+        caption.Text = "PREVIEW · JPEG · sRGB · 256 PX";
+        caption.IsVisible = true;
+        var window = new Window { Width = 800, Height = 600, Content = pane };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        pane.UpdateLayout();
+
+        try
+        {
+            var imageOrigin = image.TranslatePoint(default, frame)!.Value;
+            var captionOrigin = caption.TranslatePoint(default, frame)!.Value;
+
+            Assert.Equal(256, image.Bounds.Width, precision: 3);
+            Assert.Equal(256, image.Bounds.Height, precision: 3);
+            Assert.Equal((frame.Bounds.Width - 256) / 2, imageOrigin.X, precision: 3);
+            Assert.Equal((frame.Bounds.Height - 256) / 2, imageOrigin.Y, precision: 3);
+            Assert.InRange(
+                Math.Abs(captionOrigin.X -
+                    (imageOrigin.X + UniformImageOverlayPanel.OverlayInset)),
+                0,
+                1);
+            Assert.InRange(
+                Math.Abs(captionOrigin.Y + caption.Bounds.Height -
+                    (imageOrigin.Y + 256 - UniformImageOverlayPanel.OverlayInset)),
+                0,
+                1);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     public void Dispose() => _fixture.Dispose();
 
     private static double DevelopCompactSliderHeight(MainWindowViewModel viewModel)

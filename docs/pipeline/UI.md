@@ -242,8 +242,9 @@ be read.
   ViewModel owns this stable user-facing value; the view derives the current
   bitmap-relative scale from decoded original dimensions, so a 1600-to-resting source
   swap leaves both the zoom slider and on-screen scene geometry unchanged. Fit/manual
-  state is shared by Develop and fullscreen; Fit calculates in device pixels and stays
-  geometry-identical across source swaps. Fit and zoom-in publish the current view's
+  state is shared by Develop and fullscreen; Fit calculates in device pixels, never
+  enlarges past 1:1 (a small source shows its true size, as does the Export preview),
+  and stays geometry-identical across source swaps. Fit and zoom-in publish the current view's
   required device-pixel long edge for resting rendering; pan and zoom-out do not
   rerender. A monitor-scaling change recomputes the same geometry and bound.
 

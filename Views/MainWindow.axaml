@@ -269,8 +269,10 @@
             Background="{DynamicResource FullScreenBackdrop}"
             IsVisible="{Binding IsFullScreenMode}">
         <Panel>
-            <Image x:Name="FullScreenPlaceholderImage"
+            <views:PlaceholderImage x:Name="FullScreenPlaceholderImage"
                    Source="{Binding SelectedImage.Thumbnail}"
+                   OriginalPixelWidth="{Binding SelectedImage.PixelWidth, FallbackValue=0}"
+                   OriginalPixelHeight="{Binding SelectedImage.PixelHeight, FallbackValue=0}"
                    IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
                    Stretch="Uniform"
                    Margin="24"

@@ -22,8 +22,10 @@
                            HorizontalAlignment="Left" VerticalAlignment="Top"/>
             </Panel>
             <Panel Grid.Column="1">
-            <Image x:Name="DevelopPlaceholderImage"
+            <views:PlaceholderImage x:Name="DevelopPlaceholderImage"
                    Source="{Binding SelectedImage.Thumbnail}"
+                   OriginalPixelWidth="{Binding SelectedImage.PixelWidth, FallbackValue=0}"
+                   OriginalPixelHeight="{Binding SelectedImage.PixelHeight, FallbackValue=0}"
                    IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
                    Stretch="Uniform" Margin="10"
                    RenderOptions.BitmapInterpolationMode="LowQuality"/>

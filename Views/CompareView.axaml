@@ -63,7 +63,9 @@
                         <Border CornerRadius="13" ClipToBounds="True">
                           <Grid RowDefinitions="*,Auto">
                             <Panel>
-                                <Image Source="{Binding Image.Thumbnail}"
+                                <views:PlaceholderImage Source="{Binding Image.Thumbnail}"
+                                       OriginalPixelWidth="{Binding Image.PixelWidth, FallbackValue=0}"
+                                       OriginalPixelHeight="{Binding Image.PixelHeight, FallbackValue=0}"
                                        Stretch="Uniform" Margin="8"
                                        RenderOptions.BitmapInterpolationMode="LowQuality"/>
                                 <views:ZoomPanControl Source="{Binding Preview}"

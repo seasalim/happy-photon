@@ -31,14 +31,17 @@
         <views:UniformImageOverlayPanel x:Name="ExportPreviewImageFrame"
                                         Grid.Row="1"
                                         Margin="16">
-            <Image x:Name="ExportPlaceholderImage"
+            <views:PlaceholderImage x:Name="ExportPlaceholderImage"
                    Source="{Binding SelectedImage.Thumbnail}"
+                   OriginalPixelWidth="{Binding SelectedImage.PixelWidth, FallbackValue=0}"
+                   OriginalPixelHeight="{Binding SelectedImage.PixelHeight, FallbackValue=0}"
                    IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
                    Stretch="Uniform"
                    RenderOptions.BitmapInterpolationMode="LowQuality"/>
             <Image x:Name="ExportPreviewImage"
                    Source="{Binding PreviewImage}"
-                   Stretch="Uniform"/>
+                   Stretch="Uniform"
+                   StretchDirection="DownOnly"/>
             <TextBlock x:Name="ExportProofCaption"
                        Text="{Binding ExportProofCaption}"
                        IsVisible="{Binding IsExportProofCaptionVisible}"

@@ -54,16 +54,19 @@ internal static class ViewportRegion
             normalizedBottom - normalizedTop);
     }
 
-    public static Rect UniformImageBounds(Size availableSize, Size imageSize)
+    public static Rect UniformImageBounds(
+        Size availableSize,
+        Size imageSize,
+        double maxScale = double.PositiveInfinity)
     {
         if (!IsValid(availableSize) || !IsValid(imageSize))
         {
             return default;
         }
 
-        var scale = Math.Min(
+        var scale = Math.Min(maxScale, Math.Min(
             availableSize.Width / imageSize.Width,
-            availableSize.Height / imageSize.Height);
+            availableSize.Height / imageSize.Height));
         var width = imageSize.Width * scale;
         var height = imageSize.Height * scale;
         return new Rect(

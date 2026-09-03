@@ -51,9 +51,10 @@ internal static class ZoomGeometryCalculator
         {
             return 1;
         }
-        return Math.Min(
+        // Fit never enlarges past 1:1 so a small source shows its true size.
+        return Math.Min(1, Math.Min(
             fitBox.Width * renderScaling / pixels.Width,
-            fitBox.Height * renderScaling / pixels.Height);
+            fitBox.Height * renderScaling / pixels.Height));
     }
 
     internal static int FittedDeviceLongEdge(
