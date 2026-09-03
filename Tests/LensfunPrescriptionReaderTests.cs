@@ -22,6 +22,8 @@ public sealed partial class LensfunPrescriptionReaderTests : IDisposable
         Assert.Equal(56, expected);
         Assert.True(database.CameraCount > 1000);
         Assert.True(database.LensCount > 1500);
+        Assert.Equal(615, database.EnglishAliasCameraCount);
+        Assert.Equal(684, database.EnglishAliasLensCount);
         Assert.True(File.Exists(Path.Combine(path, "COPYING.CC_BY-SA_3.0")));
     }
 
@@ -454,9 +456,13 @@ public sealed partial class LensfunPrescriptionReaderTests : IDisposable
         string mount = "Mount A",
         bool secondCamera = false,
         string cameraMaker = "Camera Co",
-        string? secondCameraMaker = null)
+        string? secondCameraMaker = null,
+        string? cameraAlias = null,
+        string cameraAliasLanguage = "en")
     {
         Directory.CreateDirectory(_directory);
+        var alias = cameraAlias == null ? string.Empty :
+            $"<model lang=\"{cameraAliasLanguage}\">{cameraAlias}</model>";
         var duplicate = secondCamera
             ? $"<camera><maker>{secondCameraMaker ?? cameraMaker}</maker>" +
               "<model>Camera Co Model One</model>" +
@@ -466,6 +472,7 @@ public sealed partial class LensfunPrescriptionReaderTests : IDisposable
             <lensdatabase version="2">
               <mount><name>{{mount}}</name></mount>
               <camera><maker>{{cameraMaker}}</maker><model>Camera Co Model One</model>
+                {{alias}}
                 <mount>{{mount}}</mount><cropfactor>1.5</cropfactor></camera>
               {{duplicate}}
               {{lenses}}

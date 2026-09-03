@@ -5,7 +5,7 @@ using System.Xml.Linq;
 
 namespace HappyPhoton.Services;
 
-internal sealed class LensfunDatabase
+internal sealed partial class LensfunDatabase
 {
     private readonly LensfunCamera[] _cameras;
     private readonly LensfunLens[] _lenses;
@@ -59,6 +59,8 @@ internal sealed class LensfunDatabase
 
     internal int CameraCount => _cameras.Length;
     internal int LensCount => _lenses.Length;
+    internal int EnglishAliasCameraCount => _cameras.Count(item => item.Aliases.Count > 0);
+    internal int EnglishAliasLensCount => _lenses.Count(item => item.Aliases.Count > 0);
 
     internal LensfunResolvedProfile? Resolve(
         string? make,
@@ -76,9 +78,7 @@ internal sealed class LensfunDatabase
         var makeKey = Normalize(make);
         var modelKey = Normalize(model);
         if (makeKey.Length == 0 || modelKey.Length == 0) return null;
-        var cameras = _cameras.Where(camera =>
-            MakerMatches(camera.MakerKey, makeKey) && CameraModelMatches(
-                camera.ModelKey, makeKey, modelKey)).ToArray();
+        var cameras = MatchingCameras(makeKey, modelKey);
         if (cameras.Length != 1) return null;
         var camera = cameras[0];
         var allowedMounts = CompatibleMounts(camera.Mount);
@@ -91,19 +91,7 @@ internal sealed class LensfunDatabase
         }
         else
         {
-            var lensKey = Normalize(lensName);
-            var exactMatches = mounted.Where(lens => LensModelMatches(
-                lens, lensKey)).ToArray();
-            if (exactMatches.Length > 0)
-            {
-                matchingLenses = exactMatches;
-            }
-            else
-            {
-                var suppliedTokens = Tokenize(lensName);
-                matchingLenses = mounted.Where(lens => LensTokenModelMatches(
-                    lens, suppliedTokens)).ToArray();
-            }
+            matchingLenses = MatchingLenses(mounted, lensName);
         }
         var lens = SelectLensCalibration(matchingLenses, camera.CropFactor);
         if (lens == null) return null;
@@ -143,72 +131,6 @@ internal sealed class LensfunDatabase
         if (_mounts.TryGetValue(key, out var compatible))
             result.UnionWith(compatible);
         return result;
-    }
-
-    private static bool CameraModelMatches(
-        string databaseModel,
-        string make,
-        string suppliedModel) => ModelMatches(databaseModel, make, suppliedModel);
-
-    private static bool MakerMatches(string databaseMaker, string suppliedMaker) =>
-        databaseMaker.StartsWith(suppliedMaker, StringComparison.Ordinal) ||
-        suppliedMaker.StartsWith(databaseMaker, StringComparison.Ordinal);
-
-    private static bool ModelMatches(
-        string databaseModel,
-        string maker,
-        string suppliedModel) =>
-        databaseModel == suppliedModel ||
-        databaseModel == maker + suppliedModel ||
-        maker + databaseModel == suppliedModel;
-
-    private static bool LensModelMatches(LensfunLens lens, string suppliedModel) =>
-        ModelMatches(lens.ModelKey, lens.MakerKey, suppliedModel) ||
-        lens.VariantModelKey is { } variant &&
-        ModelMatches(variant, lens.MakerKey, suppliedModel);
-
-    private static bool LensTokenModelMatches(
-        LensfunLens lens,
-        IReadOnlySet<string> suppliedModel)
-    {
-        if (TokenModelMatches(
-            lens.ModelTokens, lens.MakerTokens, suppliedModel)) return true;
-        return lens.VariantModelTokens is { } variant &&
-            TokenModelMatches(variant, lens.MakerTokens, suppliedModel);
-    }
-
-    private static bool TokenModelMatches(
-        IReadOnlySet<string> databaseModel,
-        IReadOnlySet<string> maker,
-        IReadOnlySet<string> suppliedModel)
-    {
-        if (databaseModel.SetEquals(suppliedModel)) return true;
-        var combined = new HashSet<string>(databaseModel, StringComparer.Ordinal);
-        combined.UnionWith(maker);
-        if (combined.SetEquals(suppliedModel)) return true;
-        combined = new HashSet<string>(suppliedModel, StringComparer.Ordinal);
-        combined.UnionWith(maker);
-        return combined.SetEquals(databaseModel);
-    }
-
-    private static LensfunLens? SelectLensCalibration(
-        IReadOnlyList<LensfunLens> matches,
-        double cameraCrop)
-    {
-        if (matches.Count == 1) return matches[0];
-        if (matches.Count == 0 || matches.Select(item =>
-            item.VariantModelKey ?? item.ModelKey).Distinct().Count() != 1)
-            return null;
-        var ranked = matches.Select(item => new
-            {
-                Lens = item,
-                Distance = Math.Abs(Math.Log((item.CropFactor ?? cameraCrop) / cameraCrop))
-            })
-            .OrderBy(item => item.Distance)
-            .ToArray();
-        return ranked.Length > 1 && Math.Abs(ranked[0].Distance - ranked[1].Distance) < 1e-12
-            ? null
-            : ranked[0].Lens;
     }
 
     internal static string Normalize(string value)
@@ -261,6 +183,7 @@ internal sealed class LensfunDatabase
     private static LensfunCamera ParseCamera(XElement element) => new(
         Text(element, "maker") ?? string.Empty,
         Text(element, "model") ?? string.Empty,
+        EnglishModels(element, Normalize),
         Text(element, "mount") ?? string.Empty,
         Number(element.Element("cropfactor"), 0));
 
@@ -270,6 +193,7 @@ internal sealed class LensfunDatabase
         return new LensfunLens(
             Text(element, "maker") ?? string.Empty,
             Text(element, "model") ?? string.Empty,
+            EnglishModels(element, value => new LensfunModelIdentity(value)),
             element.Elements("mount").Select(item => Normalize(item.Value)).ToArray(),
             OptionalNumber(element.Element("cropfactor")),
             Aspect(element.Element("aspect-ratio")?.Value),
@@ -397,6 +321,15 @@ internal sealed class LensfunDatabase
         parent.Elements(name).FirstOrDefault(element => element.Attribute("lang") == null)
             ?.Value.Trim();
 
+    private static T[] EnglishModels<T>(XElement parent, Func<string, T> select) =>
+        parent.Elements("model")
+            .Where(element => (string?)element.Attribute("lang") == "en")
+            .Select(element => element.Value.Trim())
+            .Where(value => value.Length > 0)
+            .Distinct(StringComparer.Ordinal)
+            .Select(select)
+            .ToArray();
+
     private static double Aspect(string? value)
     {
         if (value?.Split(':') is [var left, var right])
@@ -418,7 +351,8 @@ internal sealed class LensfunDatabase
 }
 
 internal sealed record LensfunCamera(
-    string Maker, string Model, string Mount, double CropFactor)
+    string Maker, string Model, IReadOnlyList<string> Aliases,
+    string Mount, double CropFactor)
 {
     internal string MakerKey { get; } = LensfunDatabase.Normalize(Maker);
     internal string ModelKey { get; } = LensfunDatabase.Normalize(Model);
@@ -427,6 +361,7 @@ internal sealed record LensfunCamera(
 internal sealed record LensfunLens(
     string Maker,
     string Model,
+    IReadOnlyList<LensfunModelIdentity> Aliases,
     IReadOnlyList<string> Mounts,
     double? CropFactor,
     double AspectRatio,
@@ -444,6 +379,16 @@ internal sealed record LensfunLens(
         LensfunDatabase.ModelVariant(Model);
     internal string? VariantModelKey => Variant.Key;
     internal IReadOnlySet<string>? VariantModelTokens => Variant.Tokens;
+}
+
+internal sealed class LensfunModelIdentity(string model)
+{
+    internal string Key { get; } = LensfunDatabase.Normalize(model);
+    internal IReadOnlySet<string> Tokens { get; } = LensfunDatabase.Tokenize(model);
+    private (string? Key, IReadOnlySet<string>? Tokens) Variant { get; } =
+        LensfunDatabase.ModelVariant(model);
+    internal string? VariantKey => Variant.Key;
+    internal IReadOnlySet<string>? VariantTokens => Variant.Tokens;
 }
 
 internal sealed record LensfunCalibration(

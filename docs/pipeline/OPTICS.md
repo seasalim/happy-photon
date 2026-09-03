@@ -11,10 +11,13 @@ Resolution is conservative and happens independently for each correction class:
 qualified embedded data wins, Lensfun fills an unrepresented class, and otherwise the
 class remains unavailable. Camera maker/model and lens model must match exactly after
 case, whitespace, and punctuation normalization, and the lens mount must be compatible
-with the matched camera. When no exact lens candidate exists, equality of the distinct
-alphanumeric token sets may match the same words in a different order. A non-empty exact
-candidate set is terminal, and multiple token matches remain ambiguous. A maker prefix
-may appear in either the supplied or database model identity for both cameras and lenses.
+with the matched camera. Cameras try exact primary names before exact English aliases.
+Lenses exhaust primary exact and distinct-token-set tiers before English aliases
+participate in the same tiers. Aliases in other languages do not participate. Equality
+of the distinct alphanumeric token sets may match the same lens words in a different
+order. A non-empty candidate set is terminal within that order, and multiple matches
+remain ambiguous. A maker prefix may appear in either the supplied or database model
+identity for both cameras and lenses.
 Missing or ambiguous interchangeable-lens identity produces no match; a
 fixed-lens mount may omit lens identity only when it has exactly one database lens.
 The EXIF lens string is the primary identity. If it produces no unique profile, bridge
@@ -214,8 +217,8 @@ explicit v3 block, so it can never acquire defaults later. New rows use
 on/on/off/standard. `HasEdits` compares with the image's baseline, Reset restores it,
 and copy/paste and presets transfer only the booleans.
 
-The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 18 because
-order-tolerant identity and the ID-derived fallback change which files decode with
-corrections applied.
+The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 19 because
+English Lensfun aliases change which files decode with corrections applied; version 18
+introduced order-tolerant identity and the ID-derived fallback for the same reason.
 `RenderPipeline.Version` is 12, unchanged by lens identity because render-stage math
 is untouched.
