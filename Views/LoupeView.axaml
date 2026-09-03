@@ -13,6 +13,7 @@
                    Stretch="Uniform" Margin="10" RenderOptions.BitmapInterpolationMode="LowQuality"/>
             <views:ZoomPanControl x:Name="LoupeZoomPanControl"
                                   Source="{Binding LoupePane.Preview}"
+                                  DisplayTransform="{Binding DisplayTransform}"
                                   SourceIdentity="{Binding LoupePane.Image}"
                                   ZoomLevel="{Binding ZoomLevel}"
                                   OriginalViewPixelSize="{Binding LoupePane.OriginalViewPixelSize}"

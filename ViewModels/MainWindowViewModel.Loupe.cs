@@ -53,6 +53,7 @@ public partial class MainWindowViewModel
 
         var pane = new ComparePaneViewModel(image)
         {
+            DisplayTransform = DisplayTransform,
             OriginalViewPixelSize = RenderGeometry.CalculateOriginalViewSize(
                 image.PixelWidth,
                 image.PixelHeight,

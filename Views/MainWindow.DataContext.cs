@@ -141,6 +141,7 @@ public partial class MainWindow
         _presetsPanel?.SetPresetSource(vm.PresetService);
 
         SetSubscribedViewModel(vm);
+        QueueDisplayProfileResolution();
         SetExportWorkspaceSettingsSubscription(vm.IsExportMode ? vm : null);
         ApplyAppTheme(vm.AppTheme);
         ApplyWorkspaceKeyboardState(vm.IsWorkspaceInteractionEnabled);

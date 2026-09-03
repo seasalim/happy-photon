@@ -195,7 +195,7 @@
                                        SelectedImage="{Binding SelectedImage, Mode=TwoWay}"/>
 
                 <views:DevelopViewerPane x:Name="DevelopViewerPane"
-                                         IsVisible="{Binding IsDevelopMode}"/>
+                                         IsVisible="{Binding IsDevelopPreviewSurfaceActive}"/>
                 <views:ExportPreviewPane x:Name="ExportPreviewPane" IsVisible="{Binding IsExportMode}"/>
             </Panel>
         </Border>
@@ -280,6 +280,8 @@
 
             <views:ZoomPanControl x:Name="FullScreenZoomPanControl"
                                   Source="{Binding PreviewImage}"
+                                  DisplayTransform="{Binding DisplayTransform}"
+                                  DisplaySourceColorSpace="{Binding PreviewDisplayColorSpace}"
                                   SourceIdentity="{Binding SelectedImage}"
                                   ZoomLevel="{Binding ZoomLevel}"
                                   OriginalViewPixelSize="{Binding OriginalViewPixelSize}"

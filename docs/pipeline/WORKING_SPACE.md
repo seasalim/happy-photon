@@ -242,6 +242,14 @@ embedded. The embedded profile's primaries **and** its parametric transfer must 
 against the pixels the renderer produced — a file tagged with primaries it was not rendered
 for is this feature's characteristic failure and is invisible on inspection.
 
+Output-space pixels remain canonical after finalization. Windows display color
+management is a separate, non-retained view-boundary leg over 8-bit BGRA. Its source is
+sRGB for Develop, Loupe, Compare, and Before/After, and the armed output target for an
+Export proof. Supported matrix/TRC monitor profiles receive a relative-colorimetric
+source→D50 PCS→monitor conversion. No profile, an sRGB-shaped profile, a LUT/MHC2
+profile, or active Windows Auto Color Management treats the monitor as sRGB; in those
+cases an sRGB source is identity while a Display P3 proof still converts to sRGB.
+
 ### 9.2 Oracle vectors
 
 Equivalence — the same color encoded in each target, both under the sRGB transfer. A P3

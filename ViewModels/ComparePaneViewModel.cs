@@ -2,12 +2,16 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
 
 public partial class ComparePaneViewModel(ImageFile image) : ObservableObject
 {
     public ImageFile Image { get; } = image;
+
+    [ObservableProperty]
+    private DisplayTransformSnapshot _displayTransform = DisplayTransformSnapshot.None;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowLoadingMessage))]

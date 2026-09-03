@@ -13,6 +13,7 @@ public partial class MainWindowViewModel
     private ExportCaptureViewModel? _activeExportCapture;
     private bool _exportSettingsObserved;
     private bool _proofIsDisplayed;
+    private OutputColorSpace _displayedProofColorSpace = OutputColorSpace.Srgb;
     private Task? _proofTask;
 
     public ObservableCollection<ExportCaptureViewModel> ExportCaptures { get; } = [];
@@ -384,9 +385,14 @@ public partial class MainWindowViewModel
 
     private void SetProofDisplayed(bool value)
     {
-        if (_proofIsDisplayed == value) return;
+        var colorSpace = value
+            ? ExportSettings.OutputColorSpace
+            : OutputColorSpace.Srgb;
+        if (_proofIsDisplayed == value && _displayedProofColorSpace == colorSpace) return;
         _proofIsDisplayed = value;
+        _displayedProofColorSpace = colorSpace;
         OnPropertyChanged(nameof(ExportProofCaption));
+        OnPropertyChanged(nameof(PreviewDisplayColorSpace));
     }
 
     internal static string FormatExportProofCaption(

@@ -194,6 +194,12 @@ be read.
 
 ## 4. Viewer interactions
 
+- **Windows display color management:** Develop, Before/After, Compare, Loupe, and
+  fullscreen viewer surfaces show a display copy converted from their retained
+  canonical bitmap to the current monitor's supported matrix/TRC ICC profile. Moving
+  the window to another monitor re-resolves the profile and rederives surfaces without
+  a source read or render. Identity cases show the canonical object directly.
+  Thumbnails and placeholders remain unmanaged in this slice.
 - **Before/after** (`\` or the Develop footer eye): shows the original while active.
   The original reverts tone and color only; the whole geometry family — rotation,
   horizon, crop, geometry, and lens corrections — survives, so before and after stay
@@ -394,6 +400,11 @@ Shortcut registrations belong in
 updates its catalog entry in the same PR. The Help & About dialog reads that
 catalog directly, with the shortcut tab selected by default. Browse mode
 ignores Develop-only keys.
+
+The About tab includes one display-profile diagnostic line. It names the active
+profile and whether its matrix/TRC transform is active, Windows Auto Color Management
+owns conversion, or the profile is treated as sRGB because it is LUT-based, MHC2, or
+invalid. This is diagnostic text only; there are no display-profile controls.
 
 ## 9. Status bar
 

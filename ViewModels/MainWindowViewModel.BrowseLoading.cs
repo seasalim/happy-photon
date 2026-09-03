@@ -319,8 +319,8 @@ public partial class MainWindowViewModel
             UpdateOriginalViewPixelSize(preview);
         }
         var previous = PreviewImage;
-        PreviewImage = preview;
         SetProofDisplayed(isProof);
+        PreviewImage = preview;
         if (previous != null)
         {
             _bitmapRetirement.Retire(

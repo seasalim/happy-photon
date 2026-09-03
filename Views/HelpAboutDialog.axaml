@@ -173,6 +173,12 @@
                                        FontSize="11"
                                        TextWrapping="Wrap"
                                        AutomationProperties.Name="RAW runtime status"/>
+                            <TextBlock x:Name="DisplayProfileStatusText"
+                                       Text="{Binding ViewModel.DisplayProfileStatusText}"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Display color profile status"/>
                         </StackPanel>
 
                         <StackPanel Spacing="6">

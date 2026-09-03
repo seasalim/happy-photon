@@ -27,6 +27,7 @@
     <Compile Include="..\Tests\CatalogVmFixture.cs" Link="CatalogVmFixture.cs" />
     <Compile Include="..\Tests\CatalogAssessmentExtensions.cs" Link="CatalogAssessmentExtensions.cs" />
     <Compile Include="..\Tests\ColorLabelUiTests.cs" Link="ColorLabelUiTests.cs" />
+    <Compile Include="..\Tests\DisplayColorViewTests.cs" Link="DisplayColorViewTests.cs" />
     <Compile Include="..\Tests\CloudSourceViewTests.cs" Link="CloudSourceViewTests.cs" />
     <Compile Include="..\Tests\CloudSelectionStateTests.cs" Link="CloudSelectionStateTests.cs" />
     <Compile Include="..\Tests\ClippingOverlayViewModelTests.cs" Link="ClippingOverlayViewModelTests.cs" />

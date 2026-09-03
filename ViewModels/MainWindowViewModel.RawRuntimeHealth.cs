@@ -21,8 +21,10 @@ public partial class MainWindowViewModel
     public string RawRuntimeSupportText => IsRawRuntimeDegraded
         ? AppBuildInfo.Identity.SupportText + Environment.NewLine +
           "RAW runtime: degraded" + Environment.NewLine +
-          _rawRuntimeHealth!.DiagnosticText
-        : AppBuildInfo.Identity.SupportText;
+          _rawRuntimeHealth!.DiagnosticText + Environment.NewLine +
+          DisplayProfileStatusText
+        : AppBuildInfo.Identity.SupportText + Environment.NewLine +
+          DisplayProfileStatusText;
 
     internal async Task EnsureRawRuntimeReadyAsync(
         Func<Task<LibRawRuntimeHealth>>? probe = null)

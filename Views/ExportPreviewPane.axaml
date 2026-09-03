@@ -38,10 +38,12 @@
                    IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
                    Stretch="Uniform"
                    RenderOptions.BitmapInterpolationMode="LowQuality"/>
-            <Image x:Name="ExportPreviewImage"
-                   Source="{Binding PreviewImage}"
-                   Stretch="Uniform"
-                   StretchDirection="DownOnly"/>
+            <views:DisplayImage x:Name="ExportPreviewImage"
+                                CanonicalSource="{Binding PreviewImage}"
+                                DisplayTransform="{Binding DisplayTransform}"
+                                DisplaySourceColorSpace="{Binding PreviewDisplayColorSpace}"
+                                Stretch="Uniform"
+                                StretchDirection="DownOnly"/>
             <TextBlock x:Name="ExportProofCaption"
                        Text="{Binding ExportProofCaption}"
                        IsVisible="{Binding IsExportProofCaptionVisible}"

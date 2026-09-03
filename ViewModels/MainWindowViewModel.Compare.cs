@@ -50,6 +50,7 @@ public partial class MainWindowViewModel
         {
             ComparePanes.Add(new ComparePaneViewModel(member)
             {
+                DisplayTransform = DisplayTransform,
                 OriginalViewPixelSize =
                     RenderGeometry.CalculateOriginalViewSize(
                         member.PixelWidth,

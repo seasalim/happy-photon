@@ -277,8 +277,8 @@ public partial class MainWindowViewModel
                 ImageService.Previews.TransferCurrentRenderedBitmap(
                     previous, identity);
         }
-        PreviewImage = preview;
         SetProofDisplayed(false);
+        PreviewImage = preview;
         if (previous != null && !transferred)
         {
             _bitmapRetirement.Retire(

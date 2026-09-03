@@ -69,6 +69,7 @@
                                        Stretch="Uniform" Margin="8"
                                        RenderOptions.BitmapInterpolationMode="LowQuality"/>
                                 <views:ZoomPanControl Source="{Binding Preview}"
+                                                      DisplayTransform="{Binding DisplayTransform}"
                                                       SourceIdentity="{Binding Image}"
                                                       OriginalViewPixelSize="{Binding OriginalViewPixelSize}"
                                                       AutoFit="True"

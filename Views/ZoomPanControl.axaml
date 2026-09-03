@@ -26,8 +26,11 @@
                       Background="Transparent">
             <Border x:Name="AssessmentMat">
                 <Panel x:Name="ImagePanel">
-                    <Image x:Name="ImageControl"
-                           Stretch="Uniform"/>
+                    <views:DisplayImage x:Name="ImageControl"
+                                        CanonicalSource="{Binding $parent[views:ZoomPanControl].Source}"
+                                        DisplayTransform="{Binding $parent[views:ZoomPanControl].DisplayTransform}"
+                                        DisplaySourceColorSpace="{Binding $parent[views:ZoomPanControl].DisplaySourceColorSpace}"
+                                        Stretch="Uniform"/>
                     <views:ClippingOverlayControl x:Name="ClippingOverlay"
                                                    Mask="{Binding $parent[views:ZoomPanControl].ClippingMask}"
                                                    VisibleSides="{Binding $parent[views:ZoomPanControl].VisibleClippingSides}"/>

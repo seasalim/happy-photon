@@ -8,6 +8,15 @@ can no longer inherit source profiles or orientation tags safely.
 
 The preview `RenderResult.Image` (display-referred sRGB, Q16) passes through
 `BitmapConversionService.ConvertToBitmap` to become an 8-bit BGRA Avalonia bitmap.
+That bitmap remains the canonical sRGB object used by preview promotion, Compare,
+Before/After, and the preview cache. On Windows, viewer surfaces synchronously derive a
+separate 8-bit BGRA display copy at the view boundary when the window's monitor has a
+supported non-sRGB matrix/TRC profile. The display leg is decode LUT → 3×3 matrix →
+encode LUT; it never feeds the histogram, clipping mask, white-balance picker, cache,
+promotion, or export. An absent or sRGB-shaped profile shows the canonical bitmap
+directly with no allocation. LUT-based and MHC2 profiles are reported in About and
+treat the monitor as sRGB; Windows Auto Color Management does the same to avoid a
+second correction.
 The 16-to-8-bit step deliberately uses native nearest-level quantization without
 dithering. On the generated 4096-step gradient, it measured 0.2499 LSB mean absolute
 error and 0.4981 LSB maximum error. Deterministic ordered 8×8 dithering reduced 8×8
@@ -53,6 +62,10 @@ back to the interactive preview dimension when none are armed. Recipe changes re
 enabled proof behind the normal preview activity affordance. A displayed proof
 suppresses the display-fit resting upgrade because sharpening is defined at output
 dimensions; switching Proof off returns to the standard preview path.
+A proof retains the selected output encoding as its canonical pixels. Its Export image
+surface identifies that source encoding to the display leg, so a Display P3 proof is
+converted to either the supported monitor profile or sRGB when the monitor is treated
+as sRGB. The exported pixels and embedded output profile are unaffected.
 
 All geometry, tone, chroma, detail, resize, sharpening, and effects work is
 target-independent; only the trailing convert, clamp, encode, and profile differ

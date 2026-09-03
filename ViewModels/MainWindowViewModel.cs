@@ -20,6 +20,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private readonly ISourceAvailabilityService _sourceAvailabilityService;
     private readonly UiBitmapRetirement _bitmapRetirement = new();
     private readonly TimeProvider _timeProvider;
+    private readonly DisplayColorManagementService _displayColorManagementService;
 
     // Set by the window: releases a held loupe peek on any viewer surface and
     // reports whether one was active, so the Escape ladder can rank it first.
@@ -45,7 +46,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         LibRawRuntimeHealth? rawRuntimeHealth = null,
         TimeProvider? timeProvider = null,
         IFileOperationService? fileOperationService = null,
-        Func<long, Task<bool>>? deleteCatalogVersionAsync = null)
+        Func<long, Task<bool>>? deleteCatalogVersionAsync = null,
+        DisplayColorManagementService? displayColorManagementService = null)
     {
         _catalogService = catalogService;
         _deleteCatalogVersionAsync =
@@ -54,6 +56,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         _sourceAvailabilityService =
             availabilityService ?? new SourceAvailabilityService();
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _displayColorManagementService =
+            displayColorManagementService ?? new DisplayColorManagementService();
         _rawRuntimeHealth = rawRuntimeHealth;
         _updateCheckService = updateCheckService ?? new UpdateCheckService();
         _updateInstallChannel = updateInstallChannel ?? UpdateChannelSelector.Current;

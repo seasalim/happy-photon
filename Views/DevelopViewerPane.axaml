@@ -13,6 +13,7 @@
             <Panel x:Name="BeforePane" Grid.Column="0" IsVisible="{Binding IsBeforeAfterSplit}">
                 <views:ZoomPanControl x:Name="BeforeZoomPanControl"
                                       Source="{Binding BeforeAfterPreviewImage}"
+                                      DisplayTransform="{Binding DisplayTransform}"
                                       SourceIdentity="{Binding SelectedImage}"
                                       ZoomLevel="{Binding ZoomLevel}"
                                       OriginalViewPixelSize="{Binding BeforeAfterOriginalViewPixelSize}"
@@ -31,6 +32,7 @@
                    RenderOptions.BitmapInterpolationMode="LowQuality"/>
             <views:ZoomPanControl x:Name="ZoomPanControl"
                                   Source="{Binding PreviewImage}"
+                                  DisplayTransform="{Binding DisplayTransform}"
                                   SourceIdentity="{Binding SelectedImage}"
                                   ZoomLevel="{Binding ZoomLevel}"
                                   OriginalViewPixelSize="{Binding OriginalViewPixelSize}"

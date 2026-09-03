@@ -48,6 +48,14 @@ public partial class ZoomPanControl : UserControl
         AvaloniaProperty.Register<ZoomPanControl, bool>(
             nameof(IsDisplayTraceActive));
 
+    public static readonly StyledProperty<DisplayTransformSnapshot> DisplayTransformProperty =
+        AvaloniaProperty.Register<ZoomPanControl, DisplayTransformSnapshot>(
+            nameof(DisplayTransform), DisplayTransformSnapshot.None);
+
+    public static readonly StyledProperty<DisplaySourceColorSpace> DisplaySourceColorSpaceProperty =
+        AvaloniaProperty.Register<ZoomPanControl, DisplaySourceColorSpace>(
+            nameof(DisplaySourceColorSpace), DisplaySourceColorSpace.Srgb);
+
     public Bitmap? Source
     {
         get => GetValue(SourceProperty);
@@ -114,11 +122,23 @@ public partial class ZoomPanControl : UserControl
         set => SetValue(IsDisplayTraceActiveProperty, value);
     }
 
+    public DisplayTransformSnapshot DisplayTransform
+    {
+        get => GetValue(DisplayTransformProperty);
+        set => SetValue(DisplayTransformProperty, value);
+    }
+
+    public DisplaySourceColorSpace DisplaySourceColorSpace
+    {
+        get => GetValue(DisplaySourceColorSpaceProperty);
+        set => SetValue(DisplaySourceColorSpaceProperty, value);
+    }
+
     public event EventHandler<double>? ZoomChanged;
     public event EventHandler<double>? AutoFitRequested;
     public event EventHandler<(double X, double Y)>? WhiteBalancePickRequested;
 
-    private Image? _imageControl;
+    private DisplayImage? _imageControl;
     private ScrollViewer? _scrollViewer;
     private CropOverlayControl? _cropOverlay;
     private Panel? _surroundLayer;
@@ -134,7 +154,7 @@ public partial class ZoomPanControl : UserControl
         _timeProvider = timeProvider;
         InitializeComponent();
 
-        _imageControl = this.FindControl<Image>("ImageControl");
+        _imageControl = this.FindControl<DisplayImage>("ImageControl");
         _scrollViewer = this.FindControl<ScrollViewer>("ScrollViewer");
         _cropOverlay = this.FindControl<CropOverlayControl>("CropOverlay");
         _surroundLayer = this.FindControl<Panel>("SurroundLayer");
@@ -167,10 +187,6 @@ public partial class ZoomPanControl : UserControl
                 change.OldValue as Bitmap,
                 change.NewValue as Bitmap);
             ScheduleAnchorRestoreAfterLayout(anchor);
-            if (_imageControl != null)
-            {
-                _imageControl.Source = Source;
-            }
             ApplyColorAssessment();
             UpdateImageSize();
             UpdateAlignmentGridVisibility();

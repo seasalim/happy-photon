@@ -191,12 +191,12 @@ public sealed class ExportVisualStyleTests : IDisposable
         var pane = new ExportPreviewPane();
         var frame = pane.FindControl<UniformImageOverlayPanel>(
             "ExportPreviewImageFrame")!;
-        var image = pane.FindControl<Image>("ExportPreviewImage")!;
+        var image = pane.FindControl<DisplayImage>("ExportPreviewImage")!;
         var placeholder = pane.FindControl<Image>("ExportPlaceholderImage")!;
         var caption = pane.FindControl<TextBlock>("ExportProofCaption")!;
         var emptyState = pane.FindControl<Border>("ExportPreviewEmptyState")!;
         placeholder.IsVisible = false;
-        image.Source = source;
+        image.CanonicalSource = source;
         caption.Text = "PREVIEW · JPEG · Display P3 · 65536 PX";
         caption.IsVisible = true;
         emptyState.IsVisible = false;
@@ -253,11 +253,11 @@ public sealed class ExportVisualStyleTests : IDisposable
         var pane = new ExportPreviewPane();
         var frame = pane.FindControl<UniformImageOverlayPanel>(
             "ExportPreviewImageFrame")!;
-        var image = pane.FindControl<Image>("ExportPreviewImage")!;
+        var image = pane.FindControl<DisplayImage>("ExportPreviewImage")!;
         var caption = pane.FindControl<TextBlock>("ExportProofCaption")!;
         pane.FindControl<Image>("ExportPlaceholderImage")!.IsVisible = false;
         pane.FindControl<Border>("ExportPreviewEmptyState")!.IsVisible = false;
-        image.Source = source;
+        image.CanonicalSource = source;
         caption.Text = "PREVIEW · JPEG · sRGB · 256 PX";
         caption.IsVisible = true;
         var window = new Window { Width = 800, Height = 600, Content = pane };
