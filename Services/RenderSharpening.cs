@@ -12,6 +12,7 @@ internal static class RenderSharpening
     private const double CaptureNativeSigma = 0.75;
     private const double CaptureThreshold = 0.01;
     private const double ScreenSigma = 0.5;
+    private const double PreviewFloorSigma = 1.0;
     private const double ScreenAmount = 0.3;
     private const double ScreenThreshold = 0.005;
     private const int MaximumOutputLongEdge = 2560;
@@ -19,18 +20,21 @@ internal static class RenderSharpening
     public static void ApplyCapture(
         MagickImage image,
         BaseImageInfo info,
-        DetailSettings detail) =>
+        DetailSettings detail,
+        int bandPixelLimit = DefaultBandPixelLimit) =>
         ApplyCapture(
             image,
             info,
             detail,
-            DefaultBandPixelLimit);
+            RenderIntent.Export,
+            bandPixelLimit);
 
     internal static void ApplyCapture(
         MagickImage image,
         BaseImageInfo info,
         DetailSettings detail,
-        int bandPixelLimit)
+        RenderIntent intent,
+        int bandPixelLimit = DefaultBandPixelLimit)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(info);
@@ -41,10 +45,7 @@ internal static class RenderSharpening
         var value = detail.ResolveCaptureSharpen(
             info.IsRawSource);
         var amount = Math.Clamp(value, 0, 100) / 100.0;
-        var sigma = CalculateEffectiveSigma(
-            image,
-            info,
-            CaptureNativeSigma);
+        var sigma = ResolveCaptureSigma(image, info, intent);
         if (amount <= 0 || sigma < MinimumEffectiveSigma)
         {
             return;
@@ -62,6 +63,7 @@ internal static class RenderSharpening
         MagickImage image,
         BaseImageInfo info,
         DetailSettings detail,
+        RenderIntent intent,
         RenderExecutionOptions execution)
     {
         ArgumentNullException.ThrowIfNull(image);
@@ -71,10 +73,7 @@ internal static class RenderSharpening
 
         var value = detail.ResolveCaptureSharpen(info.IsRawSource);
         var amount = Math.Clamp(value, 0, 100) / 100.0;
-        var sigma = CalculateEffectiveSigma(
-            image,
-            info,
-            CaptureNativeSigma);
+        var sigma = ResolveCaptureSigma(image, info, intent);
         if (amount <= 0 || sigma < MinimumEffectiveSigma)
         {
             return;
@@ -87,6 +86,20 @@ internal static class RenderSharpening
             CaptureThreshold,
             DefaultBandPixelLimit,
             execution);
+    }
+
+    internal static double ResolveCaptureSigma(
+        MagickImage image,
+        BaseImageInfo info,
+        RenderIntent intent)
+    {
+        var sigma = CalculateEffectiveSigma(
+            image,
+            info,
+            CaptureNativeSigma);
+        return intent == RenderIntent.Preview
+            ? Math.Max(sigma, PreviewFloorSigma)
+            : sigma;
     }
 
     public static void ApplyOutput(

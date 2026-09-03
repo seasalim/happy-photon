@@ -149,7 +149,7 @@ case uses the bright water reflection in the reference CR2
 ([DECODE.md §2.3](DECODE.md#23-why-clip-and-blend-are-the-supported-modes)).
 The perceptual-chroma re-baseline left every neutral-chroma case
 byte-identical. Each re-baseline keeps its attribution report beside its
-goldens (currently `Tests/goldens/v12/CHROMA_NR_ATTRIBUTION.md`, alongside the
+goldens (currently `Tests/goldens/v13/CHROMA_NR_ATTRIBUTION.md`, alongside the
 active generation).
 
 ## 3. Tolerances (normative)
@@ -468,6 +468,13 @@ Each active-minus-neutral median delta is ≤45 ms and each active total is
 ≤max(150 ms, neutral + 45 ms); the stage-only diagnostic covers the corresponding
 multi-scale shapes. Chroma NR 50 also shares the standing RAW and standard export-wall
 bounds above.
+
+`RenderSharpeningPreviewGateTests` gates capture sharpening on a Canon-shaped
+1600×1067 Q16 buffer at Sharpen 100. After one warm-up it times five fresh images and
+requires the median stage cost to remain ≤15 ms (observed 11.2–11.8 ms at the 1.0 px
+preview floor). Run it in its own Release process
+with `HAPPY_PHOTON_PERF=1` and `HAPPY_PHOTON_FULL_CPU=1`; the unchanged full-resolution
+luma, chroma, and combined NR gates above remain required when sharpening changes.
 
 `AdjacentPreviewPerformanceTests` drives the real `SelectedImage` cached/fresh race
 for copied JPEG and RAW fixtures. It compares warm and disabled adjacent paints,

@@ -27,9 +27,11 @@ public sealed class RenderPipelineNoiseReductionTests
             baseImage);
         using var expected = new MagickImage(upstream);
         RenderNoiseReduction.Apply(expected, baseImage.Info, settings.Detail);
-        RenderSharpening.ApplyCapture(expected, baseImage.Info, settings.Detail);
+        RenderSharpening.ApplyCapture(
+            expected, baseImage.Info, settings.Detail, RenderIntent.Preview);
         using var reversed = new MagickImage(upstream);
-        RenderSharpening.ApplyCapture(reversed, baseImage.Info, settings.Detail);
+        RenderSharpening.ApplyCapture(
+            reversed, baseImage.Info, settings.Detail, RenderIntent.Preview);
         RenderNoiseReduction.Apply(reversed, baseImage.Info, settings.Detail);
 
         using var actual = RenderShared(pipeline, settings, baseImage);
@@ -54,9 +56,11 @@ public sealed class RenderPipelineNoiseReductionTests
             baseImage);
         using var expected = new MagickImage(upstream);
         RenderNoiseReduction.Apply(expected, baseImage.Info, settings.Detail);
-        RenderSharpening.ApplyCapture(expected, baseImage.Info, settings.Detail);
+        RenderSharpening.ApplyCapture(
+            expected, baseImage.Info, settings.Detail, RenderIntent.Preview);
         using var reversed = new MagickImage(upstream);
-        RenderSharpening.ApplyCapture(reversed, baseImage.Info, settings.Detail);
+        RenderSharpening.ApplyCapture(
+            reversed, baseImage.Info, settings.Detail, RenderIntent.Preview);
         RenderNoiseReduction.Apply(reversed, baseImage.Info, settings.Detail);
 
         using var actual = RenderShared(pipeline, settings, baseImage);
@@ -87,7 +91,8 @@ public sealed class RenderPipelineNoiseReductionTests
         RenderSharpening.ApplyCapture(
             expectedDisplay,
             baseImage.Info,
-            settings.Detail);
+            settings.Detail,
+            RenderIntent.Preview);
         using var expected = RenderFinalizer.Finalize(
             expectedDisplay,
             maxDimension: null,
@@ -98,7 +103,8 @@ public sealed class RenderPipelineNoiseReductionTests
         RenderSharpening.ApplyCapture(
             reversedDisplay,
             baseImage.Info,
-            settings.Detail);
+            settings.Detail,
+            RenderIntent.Preview);
         RenderNoiseReduction.Apply(
             reversedDisplay,
             baseImage.Info,

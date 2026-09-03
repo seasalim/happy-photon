@@ -74,6 +74,10 @@ The Browse bottom toolbar places culling actions at the left and view/thumbnail 
 at the right; Develop mirrors that rhythm with navigation/rotation/crop at the left
 and zoom/view state at the right.
 
+Develop previews floor capture sharpening at 1.0 screen px so Sharpen responds at Fit
+and at the bounded zoom base. This deliberately overstates sharpening relative to an
+export; the approximation has no warning icon.
+
 Brightness is disabled (not hidden) at `DisabledOpacity` while a RAW base is active,
 because the crossing-on engine has no Brightness parameter; it stays enabled for
 JPEG/HEIC/TIFF/proxy sources. The gate follows the loaded base, falls back

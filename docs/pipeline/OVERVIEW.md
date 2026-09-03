@@ -294,6 +294,9 @@ cache entry once; `RenderPipeline.Version` remains unchanged because luminance N
 does not access or change pixels.
 Replacing box-blur chroma NR with the shared wavelet engine increments the render
 version because every active chroma-NR render changes; value 0 remains pixel-identical.
+Flooring capture-sharpen sigma for Preview intent increments the render version so
+cached interactive previews cannot retain the former no-op appearance; Export intent
+and its golden pixels remain unchanged.
 
 ## 7. Current boundaries
 

@@ -22,19 +22,34 @@ public sealed class RenderSharpeningTests
     }
 
     [Fact]
-    public void RestingTargetScale_KeepsCaptureSharpenBelowThreshold()
+    public void CaptureSigma_PreviewsFloorWhileExportKeepsNativeScale()
     {
-        var info = CreateInfo(7500, 5000, isRaw: true);
-        using var capped = new MagickImage(MagickColors.Black, 3200, 2000);
-        using var fitted = new MagickImage(MagickColors.Black, 2826, 1766);
+        var info = CreateInfo(5472, 3648, isRaw: true);
+        using var fit = new MagickImage(MagickColors.Black, 1600, 1067);
+        using var zoom = new MagickImage(MagickColors.Black, 3200, 2133);
+        using var full = new MagickImage(MagickColors.Black, 5472, 3648);
 
-        var capSigma = RenderKernelSupport.CalculateEffectiveSigma(
-            capped, info, nativeSigma: 0.75);
-        var targetSigma = RenderKernelSupport.CalculateEffectiveSigma(
-            fitted, info, nativeSigma: 0.75);
+        var previewSigmas = new[]
+        {
+            RenderSharpening.ResolveCaptureSigma(fit, info, RenderIntent.Preview),
+            RenderSharpening.ResolveCaptureSigma(zoom, info, RenderIntent.Preview),
+            RenderSharpening.ResolveCaptureSigma(full, info, RenderIntent.Preview)
+        };
+        var exportSigmas = new[]
+        {
+            RenderSharpening.ResolveCaptureSigma(fit, info, RenderIntent.Export),
+            RenderSharpening.ResolveCaptureSigma(zoom, info, RenderIntent.Export),
+            RenderSharpening.ResolveCaptureSigma(full, info, RenderIntent.Export)
+        };
 
-        Assert.True(capSigma >= 0.3);
-        Assert.True(targetSigma < 0.3);
+        Assert.Equal(1.0, previewSigmas[0], precision: 12);
+        Assert.Equal(1.0, previewSigmas[1], precision: 12);
+        Assert.Equal(1.0, previewSigmas[2], precision: 12);
+        Assert.Equal(0.75 * 1600 / 5472, exportSigmas[0], precision: 12);
+        Assert.Equal(0.75 * 3200 / 5472, exportSigmas[1], precision: 12);
+        Assert.Equal(0.75, exportSigmas[2], precision: 12);
+        Assert.True(previewSigmas[0] <= previewSigmas[1]);
+        Assert.True(previewSigmas[1] <= previewSigmas[2]);
     }
 
     [Fact]

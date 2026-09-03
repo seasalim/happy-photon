@@ -485,12 +485,14 @@ tests.
 
 All spatial parameters are **defined at native (full-base) resolution** and scale with
 the render: `σ_effective = σ_native · renderLongEdge / max(Info.FullWidth, Info.FullHeight)`
-(the native dimensions live on `BaseImageInfo`, set for preview bases too); skip the op
-when `σ_effective < 0.3` px (perceptually nil). This keeps preview and export
-consistent: at a 1600px preview of a 24MP image, capture sharpening is a deliberate
-near-no-op — exactly how its full-res effect survives downscaling. Sharpening is judged
-at export size (as in Lightroom); the WYSIWYG goldens compare at preview scale, where
-both paths agree by construction.
+(the native dimensions live on `BaseImageInfo`, set for preview bases too). Export
+capture sharpening skips the operation when `σ_effective < 0.3` px (perceptually
+nil). Preview intent instead floors capture sharpening at 1.0 screen px (Lightroom's
+native default radius) for both interactive and resting renders, so Fit and the 3200px
+zoom base share one sigma and never pop between sizes. Fit therefore deliberately
+overstates sharpening relative to a downscaled or even full-resolution export so the
+Develop control remains judgeable; no warning icon accompanies this preview
+approximation.
 
 - **Luminance NR** (0–100): four native à trous/starlet detail scales use the
   separable B3-spline taps `[1 4 6 4 1]/16`. Each native support `2^s` is multiplied
@@ -510,6 +512,8 @@ both paths agree by construction.
   resting paths; large tone moves may require retuning the slider.
 - **Capture sharpen** (0–100, default 25 raw / 0 non-raw): luminance-targeted unsharp,
   `σ_native 0.75, amount = v/100 · 1.0, threshold 0.01`, applied before any resize.
+  Preview intent resolves `σ = max(σ_effective, 1.0)`; export intent retains the
+  native-scaled sigma and sub-0.3 px skip.
   Luminance-only (Lab L or equivalent); acceptance = no chroma fringing on golden crops.
 - **Chroma NR** (0–100): five native wavelet scales denoise
   `Cb = B−Y` and `Cr = R−Y`, where authoritative Rec.2020 luma is

@@ -7,7 +7,7 @@ namespace HappyPhoton.Services;
 
 public sealed class RenderPipeline
 {
-    public const int Version = 12;
+    public const int Version = 13;
 
     public RenderResult Render(RenderRequest request) =>
         RenderCore(request, DefaultBandPixelLimit, null);
@@ -238,6 +238,7 @@ public sealed class RenderPipeline
                 working,
                 request.Base.Info,
                 request.Settings.Detail,
+                request.Intent,
                 execution);
             execution.ThrowIfCancellationRequested();
             var result = working;
@@ -353,7 +354,8 @@ public sealed class RenderPipeline
             RenderSharpening.ApplyCapture(
                 working,
                 request.Base.Info,
-                request.Settings.Detail);
+                request.Settings.Detail,
+                request.Intent);
             var result = working;
             working = null;
             return result;
