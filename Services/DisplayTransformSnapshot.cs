@@ -20,6 +20,7 @@ public enum DisplayProfileSupport
     Invalid,
     AcmManaged,
     AcmQueryFailed,
+    OsManaged,
 }
 
 public sealed class DisplayTransformSnapshot

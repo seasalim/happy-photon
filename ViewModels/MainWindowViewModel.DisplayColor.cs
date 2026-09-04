@@ -27,6 +27,16 @@ public partial class MainWindowViewModel
             ? DisplaySourceColorSpace.DisplayP3
             : DisplaySourceColorSpace.Srgb;
 
+    // macOS creates the window's Metal layer only after the first frame: the window
+    // retries resolution on a short timer until the layer is tagged, bounded here.
+    internal const int MaxMacOsDisplayProfileAttempts = 20;
+
+    internal static bool ShouldRetryMacOsDisplayProfile(
+        DisplayProfileSupport support,
+        int attempts) =>
+        support != DisplayProfileSupport.OsManaged &&
+        attempts < MaxMacOsDisplayProfileAttempts;
+
     internal bool ResolveDisplayProfile(nint windowHandle)
     {
         var resolved = _displayColorManagementService.Resolve(

@@ -403,8 +403,8 @@ ignores Develop-only keys.
 
 The About tab includes one display-profile diagnostic line. It names the active
 profile and whether its matrix/TRC transform is active, Windows Auto Color Management
-owns conversion, or the profile is treated as sRGB because it is LUT-based, MHC2, or
-invalid. This is diagnostic text only; there are no display-profile controls.
+owns conversion, macOS owns it (the window's Metal layer is tagged sRGB), or the profile
+is treated as sRGB because it is LUT-based, MHC2, or invalid. This is diagnostic text only; there are no display-profile controls.
 
 ## 9. Status bar
 

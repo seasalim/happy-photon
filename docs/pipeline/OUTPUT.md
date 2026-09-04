@@ -17,6 +17,9 @@ promotion, or export. An absent or sRGB-shaped profile shows the canonical bitma
 directly with no allocation. LUT-based and MHC2 profiles are reported in About and
 treat the monitor as sRGB; Windows Auto Color Management does the same to avoid a
 second correction.
+On macOS the app tags the window's CAMetalLayer as sRGB once it exists (after the first
+frame) and the compositor color-matches the whole window, thumbnails and chrome included;
+the display leg stays identity there and About reports "managed by macOS".
 The 16-to-8-bit step deliberately uses native nearest-level quantization without
 dithering. On the generated 4096-step gradient, it measured 0.2499 LSB mean absolute
 error and 0.4981 LSB maximum error. Deterministic ordered 8×8 dithering reduced 8×8

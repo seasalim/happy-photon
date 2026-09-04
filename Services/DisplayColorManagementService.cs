@@ -6,6 +6,9 @@ internal enum DisplayAcmState
     Off,
     On,
     Failed,
+    OsManaged,
+    OsUnmanaged,
+    OsIncompatible,
 }
 
 internal readonly record struct DisplayPlatformResult(
@@ -27,8 +30,9 @@ internal sealed class DisplayColorManagementService
         IDisplayProfilePlatform? platform = null,
         Func<string, byte[]>? readProfile = null)
     {
-        _platform = platform ?? (OperatingSystem.IsWindows()
-            ? new WindowsDisplayProfilePlatform()
+        _platform = platform ?? (
+            OperatingSystem.IsWindows() ? new WindowsDisplayProfilePlatform()
+            : OperatingSystem.IsMacOS() ? new MacOsDisplayProfilePlatform()
             : new NullDisplayProfilePlatform());
         _readProfile = readProfile ?? File.ReadAllBytes;
     }
@@ -72,6 +76,24 @@ internal sealed class DisplayColorManagementService
             ? "ACM off"
             : "ACM unavailable";
 
+        if (resolved.AcmState == DisplayAcmState.OsManaged)
+        {
+            return DisplayTransformSnapshot.CreateTreatedSrgb(
+                identity, "none", DisplayProfileSupport.OsManaged,
+                "Display profile · managed by macOS (window tagged sRGB)");
+        }
+        if (resolved.AcmState == DisplayAcmState.OsUnmanaged)
+        {
+            return DisplayTransformSnapshot.CreateTreatedSrgb(
+                identity, "none", DisplayProfileSupport.Absent,
+                "Display profile · none (sRGB) · macOS window not tagged; no Metal layer yet");
+        }
+        if (resolved.AcmState == DisplayAcmState.OsIncompatible)
+        {
+            return DisplayTransformSnapshot.CreateTreatedSrgb(
+                identity, "none", DisplayProfileSupport.Absent,
+                "Display profile · none (sRGB) · macOS window layer already tagged with a non-sRGB colorspace; left unmanaged");
+        }
         if (resolved.AcmState == DisplayAcmState.On)
         {
             return DisplayTransformSnapshot.CreateTreatedSrgb(

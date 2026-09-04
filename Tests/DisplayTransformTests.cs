@@ -210,6 +210,86 @@ public sealed class DisplayTransformTests
     }
 
     [Fact]
+    public void MacOsManagedWindow_IsIdentityForSrgbAndConvertsP3ProofsLikeSrgbMonitor()
+    {
+        using var canonical = LoadBitmap("softproof-chart.png");
+        var managed = Resolve(null, DisplayAcmState.OsManaged);
+        var untagged = Resolve(null, DisplayAcmState.OsUnmanaged);
+        var incompatible = Resolve(null, DisplayAcmState.OsIncompatible);
+        var treatedAsSrgb = Resolve(null, DisplayAcmState.Unavailable);
+
+        Assert.Equal(DisplayProfileSupport.OsManaged, managed.Support);
+        Assert.Equal(
+            "Display profile · managed by macOS (window tagged sRGB)",
+            managed.DiagnosticText);
+        Assert.Same(canonical, managed.Derive(canonical, DisplaySourceColorSpace.Srgb));
+        using var managedP3 = managed.Derive(canonical, DisplaySourceColorSpace.DisplayP3);
+        using var expectedP3 = treatedAsSrgb.Derive(canonical, DisplaySourceColorSpace.DisplayP3);
+        Assert.Equal(
+            BitmapConversionService.CopyBgraPixels(expectedP3),
+            BitmapConversionService.CopyBgraPixels(managedP3));
+
+        Assert.Equal(DisplayProfileSupport.Absent, untagged.Support);
+        Assert.Equal(
+            "Display profile · none (sRGB) · macOS window not tagged; no Metal layer yet",
+            untagged.DiagnosticText);
+        Assert.Same(canonical, untagged.Derive(canonical, DisplaySourceColorSpace.Srgb));
+        Assert.Equal(DisplayProfileSupport.Absent, incompatible.Support);
+        Assert.Contains("non-sRGB colorspace", incompatible.DiagnosticText);
+        Assert.NotEqual(managed.Identity, untagged.Identity);
+    }
+
+    // Enum arguments are ints: the enums are internal and xUnit theories must be public.
+    [Theory]
+    [InlineData((int)MacOsLayerKind.None, (int)MacOsLayerColorSpace.None, (int)DisplayAcmState.OsUnmanaged, false)]
+    [InlineData((int)MacOsLayerKind.NotMetal, (int)MacOsLayerColorSpace.None, (int)DisplayAcmState.OsUnmanaged, false)]
+    [InlineData((int)MacOsLayerKind.Metal, (int)MacOsLayerColorSpace.None, (int)DisplayAcmState.OsManaged, true)]
+    [InlineData((int)MacOsLayerKind.Metal, (int)MacOsLayerColorSpace.Srgb, (int)DisplayAcmState.OsManaged, false)]
+    [InlineData((int)MacOsLayerKind.Metal, (int)MacOsLayerColorSpace.Other, (int)DisplayAcmState.OsIncompatible, false)]
+    public void MacOsPlatform_TagsOnlyUntaggedMetalLayers(
+        int kindValue,
+        int colorSpaceValue,
+        int expectedValue,
+        bool expectTag)
+    {
+        var expected = (DisplayAcmState)expectedValue;
+        var layer = new FakeMetalLayer((MacOsLayerKind)kindValue, (MacOsLayerColorSpace)colorSpaceValue);
+        var platform = new MacOsDisplayProfilePlatform(layer);
+
+        var result = platform.Resolve(1);
+
+        Assert.Equal(expected, result.AcmState);
+        Assert.Equal(expectTag ? 1 : 0, layer.TagCalls);
+        Assert.Equal(DisplayAcmState.OsUnmanaged, platform.Resolve(0).AcmState);
+    }
+
+    [Theory]
+    [InlineData(DisplayProfileSupport.OsManaged, 0, false)]
+    [InlineData(DisplayProfileSupport.Absent, 0, true)]
+    [InlineData(DisplayProfileSupport.Absent, 19, true)]
+    [InlineData(DisplayProfileSupport.Absent, 20, false)]
+    public void MacOsRetry_StopsWhenManagedOrAtTheBound(
+        DisplayProfileSupport support,
+        int attempts,
+        bool expected) =>
+        Assert.Equal(expected, HappyPhoton.ViewModels.MainWindowViewModel
+            .ShouldRetryMacOsDisplayProfile(support, attempts));
+
+    private sealed class FakeMetalLayer(MacOsLayerKind kind, MacOsLayerColorSpace colorSpace)
+        : IMacOsMetalLayer
+    {
+        private MacOsLayerColorSpace _colorSpace = colorSpace;
+        public int TagCalls { get; private set; }
+        public MacOsLayerKind GetLayerKind(nint nsView) => kind;
+        public MacOsLayerColorSpace GetColorSpace(nint nsView) => _colorSpace;
+        public void TagSrgb(nint nsView)
+        {
+            TagCalls++;
+            _colorSpace = MacOsLayerColorSpace.Srgb;
+        }
+    }
+
+    [Fact]
     public void DeriveCost_MeetsApprovedFullCpuGate()
     {
 #if DEBUG
