@@ -52,3 +52,7 @@ Treat code and tests as the specification for details not covered there. Update 
 ## Verify
 
 Run `./scripts/verify.ps1`.
+
+In Codex's restricted filesystem sandbox, run this script with escalated permissions
+from the start. Avalonia BuildServices writes its telemetry log under `%LOCALAPPDATA%`,
+so a sandboxed run fails with `UnauthorizedAccessException` before test discovery.
