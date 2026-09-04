@@ -5,7 +5,6 @@ using Avalonia.Threading;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
-using Microsoft.Data.Sqlite;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -40,7 +39,6 @@ public sealed class SettingsDialogTests
         titleBar.DataContext = null;
         await vm.DisposeAsync();
         catalog.Dispose();
-        SqliteConnection.ClearAllPools();
         Directory.Delete(root, recursive: true);
     }
 

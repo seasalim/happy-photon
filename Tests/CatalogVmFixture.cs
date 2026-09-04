@@ -2,7 +2,6 @@ using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
-using Microsoft.Data.Sqlite;
 
 namespace HappyPhoton.Tests;
 
@@ -56,7 +55,6 @@ internal sealed class CatalogVmFixture : IDisposable
 
     public void Dispose()
     {
-        SqliteConnection.ClearAllPools();
         Directory.Delete(Root, recursive: true);
     }
 }

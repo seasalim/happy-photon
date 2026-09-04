@@ -176,7 +176,6 @@ public sealed class HelpAboutDialogTests
         dialog.Close();
         await vm.DisposeAsync();
         catalog.Dispose();
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         Directory.Delete(root, recursive: true);
     }
 
@@ -204,7 +203,6 @@ public sealed class HelpAboutDialogTests
         titleBar.DataContext = null;
         await vm.DisposeAsync();
         catalog.Dispose();
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         Directory.Delete(root, recursive: true);
     }
 
@@ -250,7 +248,6 @@ public sealed class HelpAboutDialogTests
         dialog.Close();
         await vm.DisposeAsync();
         catalog.Dispose();
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         Directory.Delete(root, recursive: true);
     }
 

@@ -297,7 +297,6 @@ public sealed class CatalogLocationMigratorTests : IDisposable
 
     public void Dispose()
     {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
     }
 

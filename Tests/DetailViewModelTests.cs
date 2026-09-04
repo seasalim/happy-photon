@@ -23,10 +23,13 @@ public sealed class DetailViewModelTests : IDisposable
         vm.CaptureSharpen = 44;
         vm.LuminanceNr = 68;
         vm.ChromaNr = 57;
-        await TestWaits.UntilAsync(() =>
-            image.EditSettings.Detail.CaptureSharpen == 44 &&
-            image.EditSettings.Detail.LuminanceNr == 68 &&
-            image.EditSettings.Detail.ChromaNr == 57);
+        var save = vm.PendingPreviewDebounceTask;
+        Assert.NotNull(save);
+        await save;
+
+        Assert.Equal(44, image.EditSettings.Detail.CaptureSharpen);
+        Assert.Equal(68, image.EditSettings.Detail.LuminanceNr);
+        Assert.Equal(57, image.EditSettings.Detail.ChromaNr);
 
         Assert.True(vm.CanReset);
         await vm.ResetEditsCommand.ExecuteAsync(null);

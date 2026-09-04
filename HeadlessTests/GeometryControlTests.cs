@@ -157,7 +157,6 @@ public sealed class GeometryControlTests : IDisposable
 
     public void Dispose()
     {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         _root.Dispose();
     }
 }

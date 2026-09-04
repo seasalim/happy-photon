@@ -197,7 +197,6 @@ public sealed class AppDataLocationServiceTests : IDisposable
 
     public void Dispose()
     {
-        SqliteConnection.ClearAllPools();
         if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
     }
 }

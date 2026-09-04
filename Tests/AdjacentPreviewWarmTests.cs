@@ -400,7 +400,6 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
 
     public void Dispose()
     {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         _root.Dispose();
     }
 

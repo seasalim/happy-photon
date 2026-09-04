@@ -200,7 +200,6 @@ public sealed class DetailAndClippingControlTests : IDisposable
 
     public void Dispose()
     {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         _root.Dispose();
     }
 }
