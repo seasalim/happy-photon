@@ -37,30 +37,28 @@ into three matching workspaces: **Browse**, **Develop**, and **Export**.
 ![Happy Photon Develop view editing a bear photo with presets, histogram, white
 balance, adjustments, and tone curve](docs/screenshots/Screenshot_Develop.png)
 
-## New in this release
+## New in 0.2.4
 
-- **An Export workspace.** Export is now a third workspace beside Browse and Develop
-  rather than a dialog: a filmstrip of the selected captures, a preview that is a true
-  proof of the output pixels, and a queue that keeps running while you move on.
-- **RAW + JPEG as one capture.** Turn on **J+R** in Browse to fold a same-name RAW and
-  JPEG into a single tile that is flagged, rated, and labeled together; in Develop,
-  **J|R** switches between the camera JPEG and the RAW without losing your viewport.
-- **Versions.** Keep up to eight independent interpretations of one file, each with its
-  own edits and optional label, and export them side by side.
-- **Compare and before/after.** Select two to four photos and choose **X|Y** in Browse
-  for a synchronized comparison; choose **Y|Y** in Develop for a synchronized
-  before-and-after split. Press and hold anywhere below 1:1 for an instant loupe.
-- **Lens corrections from a lens database.** RAW files whose camera and lens match the
-  bundled Lensfun snapshot receive distortion, chromatic aberration, and vignetting
-  corrections, in addition to the embedded prescriptions already supported. Nikon lens
-  identities are recovered from maker notes so more bodies match.
-- **Perspective and geometry.** Vertical and horizontal perspective controls join crop,
-  rotation, and horizon, with an alignment grid while you adjust.
-- **Luminance noise reduction.** A wavelet luminance denoiser runs inside the detail
-  stage alongside the existing chroma noise reduction.
-- **Browse file operations.** Right-click a photo to copy its path, reveal it in the
-  system file manager, or delete the selection.
-- **Linux AppImage.** Linux releases ship as a self-contained AppImage.
+- **Bring more of Lightroom with you.** Import ratings, flags, color labels, and
+  supported crops from Lightroom Classic. Opt-in XMP sidecars keep those decisions
+  portable between applications while the original pixels remain untouched.
+- **A Develop history built for real exploration.** Every committed adjustment has a
+  visible step—including rotation, horizon, and applied crops. Click to travel back,
+  undo and redo freely, preview a step in the Navigator, or clear everything above a
+  chosen point.
+- **Cull big without leaving Browse.** The new Browse Loupe opens with `E`, `Enter`, or
+  `Space`, keeps the folder tree and assessment controls close, and moves straight into
+  Compare or Develop without losing your selection. The keyboard map now feels at home
+  to Lightroom users.
+- **Color that reaches the display intact.** Preview surfaces follow the active Windows
+  monitor profile, while macOS surfaces carry the correct sRGB intent into the system
+  compositor. What you judge on screen is much closer to what the pipeline produced.
+- **Cleaner detail, quicker judgment.** Wavelet chroma denoising replaces the old blur,
+  capture sharpening responds clearly at Fit, and Fit never enlarges a photograph past
+  1:1.
+- **A denser, calmer workspace.** Stretched Browse rows put more of the shoot on screen,
+  monochrome Lightroom-style controls keep attention on the photographs, and overlay
+  scrollbars stay out of the way until needed.
 
 Every keyboard shortcut and gesture also has a visible control, so nothing is hidden
 behind a key you have to know.
