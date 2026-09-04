@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <Compile Remove="ColorLabelUiTests.cs" />
+    <Compile Remove="DisplayTransformTests.cs" />
     <Compile Remove="DisplayColorViewTests.cs" />
     <Compile Remove="EditAutoSaveRefreshRaceTests.cs" />
     <Compile Remove="CloudSourceViewTests.cs" />

@@ -135,10 +135,6 @@ public sealed class DcpAtomicityTests : IDisposable
             dcpProfiles: new DcpProfileService(
                 new TestSourceAvailabilityService(
                     SourceAvailability.AvailableLocally)));
-        var thumbnailCreated = new TaskCompletionSource(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        service.RenderedThumbnailCreated += () => thumbnailCreated.TrySetResult();
-
         var requestA = service.ApplyEditsToPreviewArtifactsAsync(
             image,
             settingsA,
@@ -165,7 +161,7 @@ public sealed class DcpAtomicityTests : IDisposable
         loader.ReleaseB.Set();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => requestA);
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => requestB);
-        await thumbnailCreated.Task.WaitAsync(TestWaits.Condition);
+        await TestWaits.UntilAsync(() => service.RenderedThumbnailTaskCount == 0);
         Assert.Equal(
             settingsC.RawProfile!.CacheToken,
             newest.ProfileState?.Token);
