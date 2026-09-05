@@ -26,10 +26,9 @@ public sealed partial class BeforeAfterBaselineMeasurementTests
     public async Task BeforeAfterDecodeAndLatencyBaselines_WhenEnabled()
     {
         _fixture.RequireWindows();
-        if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1")
-        {
-            return;
-        }
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run before/after baseline measurements.");
 
         var raw = await MeasureFixtureAsync(
             "RAW",

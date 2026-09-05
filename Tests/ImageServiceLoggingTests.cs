@@ -9,7 +9,8 @@ public sealed class ImageServiceLoggingTests
     [Fact]
     public void DisabledDebugLogging_DoesNotEvaluateInterpolatedValues()
     {
-        if (DebugLoggingEnabled) return;
+        Assert.SkipWhen(DebugLoggingEnabled,
+            "Unset HAPPY_PHOTON_DEBUG to test the disabled logging default.");
         var evaluations = 0;
 
         LogDebug("test", $"value={Increment(ref evaluations)}");
@@ -20,7 +21,8 @@ public sealed class ImageServiceLoggingTests
     [Fact]
     public void DisabledPerformanceLogging_DoesNotEvaluateInterpolatedExtra()
     {
-        if (PerfLoggingEnabled) return;
+        Assert.SkipWhen(PerfLoggingEnabled,
+            "Unset HAPPY_PHOTON_PERF to test the disabled logging default.");
         var evaluations = 0;
 
         LogPerformance("test", "step", 1, null, $"value={Increment(ref evaluations)}");
@@ -31,7 +33,8 @@ public sealed class ImageServiceLoggingTests
     [Fact]
     public void DisabledDisplayTrace_DoesNotEvaluateBitmapDimensions()
     {
-        if (DisplayTraceLoggingEnabled) return;
+        Assert.SkipWhen(DisplayTraceLoggingEnabled,
+            "Unset HAPPY_PHOTON_DISPLAY_TRACE to test the disabled logging default.");
         var evaluations = 0;
 
         LogDisplayTrace($"bitmap={Increment(ref evaluations)}x1");

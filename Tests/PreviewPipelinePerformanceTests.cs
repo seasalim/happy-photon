@@ -23,7 +23,9 @@ public sealed class PreviewPipelinePerformanceTests
     public async Task DevelopEntryLatencyAndMemory_WhenEnabled()
     {
         _fixture.RequireWindows();
-        if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1") return;
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run preview performance diagnostics.");
         PerfEnvironment.AssertFullCpu();
 
         var root = Path.Combine(
@@ -55,7 +57,9 @@ public sealed class PreviewPipelinePerformanceTests
     public async Task RawCandidateLatency_WhenEnabled()
     {
         _fixture.RequireWindows();
-        if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1") return;
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run preview performance diagnostics.");
         PerfEnvironment.AssertFullCpu();
 
         var root = Path.Combine(
@@ -87,7 +91,9 @@ public sealed class PreviewPipelinePerformanceTests
     public async Task RenderedThumbnailCacheLatency_WhenEnabled()
     {
         _fixture.RequireWindows();
-        if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1") return;
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run preview performance diagnostics.");
         PerfEnvironment.AssertFullCpu();
 
         var root = Path.Combine(
@@ -142,7 +148,9 @@ public sealed class PreviewPipelinePerformanceTests
     public void BrowseHistogramLatency_WhenEnabled()
     {
         _fixture.RequireWindows();
-        if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1") return;
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run preview performance diagnostics.");
         PerfEnvironment.AssertFullCpu();
 
         using var source = new ImageMagick.MagickImage(

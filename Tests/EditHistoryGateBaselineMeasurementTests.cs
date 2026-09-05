@@ -26,7 +26,8 @@ public sealed class EditHistoryGateBaselineMeasurementTests
     public async Task Gate3_PerEditCommitBaseline_WhenEnabled()
     {
         _fixture.RequireWindows();
-        if (!IsEnabled()) return;
+        Assert.SkipWhen(!IsEnabled(),
+            "Set HAPPY_PHOTON_PERF=1 to run edit-history baseline measurements.");
 
         var runCount = GetRunCount();
         var runs = new List<CommitRun>(runCount);
@@ -58,7 +59,8 @@ public sealed class EditHistoryGateBaselineMeasurementTests
     public async Task Gate4_DevelopSubjectHistoryLoad_WhenEnabled()
     {
         _fixture.RequireWindows();
-        if (!IsEnabled()) return;
+        Assert.SkipWhen(!IsEnabled(),
+            "Set HAPPY_PHOTON_PERF=1 to run edit-history baseline measurements.");
 
         var runCount = GetRunCount();
         var runs = new List<SelectionRun>(runCount);

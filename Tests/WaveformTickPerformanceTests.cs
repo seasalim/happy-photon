@@ -23,10 +23,9 @@ public sealed class WaveformTickPerformanceTests
     public async Task WaveformActiveSliderTickLatency_WhenEnabled()
     {
         _fixture.RequireWindows();
-        if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1")
-        {
-            return;
-        }
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run waveform-tick performance diagnostics.");
 
         var root = Path.Combine(
             Path.GetTempPath(),

@@ -16,10 +16,9 @@ public sealed class StandardBaseLoaderPerformanceTests
     [Fact]
     public void PreviewDecodePerformance_WhenEnabled()
     {
-        if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1")
-        {
-            return;
-        }
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run standard-base-loader performance diagnostics.");
 
         _output.WriteLine($"Magick.NET: {MagickNET.Version}");
         _output.WriteLine($"Delegates: {MagickNET.Delegates}");
@@ -38,10 +37,9 @@ public sealed class StandardBaseLoaderPerformanceTests
     [Fact]
     public void EditedThumbnailRenderPerformance_WhenEnabled()
     {
-        if (Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1")
-        {
-            return;
-        }
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run standard-base-loader performance diagnostics.");
 
         using var sourceImage = new MagickImage(
             Asset("display-p3-reference.jpg").FilePath);
