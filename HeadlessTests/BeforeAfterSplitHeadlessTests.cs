@@ -65,10 +65,10 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
                     entry.Reachability.Any(claim =>
                         claim.ControlName == "BeforeAfterSplitButton"));
 
+            using var renderSetup = new RenderSetup(vm);
             vm.SelectedScope = ScopeView.Waveform;
-            await TestWaits.UntilAsync(() => vm.EffectiveWaveform != null);
             vm.ToggleClippingOverlayCommand.Execute(null);
-            await TestWaits.UntilAsync(() => vm.PreviewClippingMask != null);
+            await renderSetup.WaitAsync();
             var histogram = vm.Histogram;
             var waveform = vm.EffectiveWaveform;
             var rawHistogram = vm.RawHistogram;
@@ -102,14 +102,13 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
             Drain();
             Assert.Equal(vm.ZoomLevel, after.ZoomLevel, 8);
             AssertClose(after.CaptureNormalizedViewport(), before.CaptureNormalizedViewport());
-            Assert.True(Descendant<TextBlock>(pane, text: "BEFORE").IsVisible);
-            Assert.True(Descendant<TextBlock>(pane, text: "AFTER").IsVisible);
+            Assert.True(Descendant<TextBlock>(pane, text: "Before").IsVisible);
+            Assert.True(Descendant<TextBlock>(pane, text: "After").IsVisible);
             Assert.Same(histogram, vm.Histogram);
             Assert.Same(waveform, vm.EffectiveWaveform);
             Assert.Same(rawHistogram, vm.RawHistogram);
             Assert.Same(clipping, vm.DisplayClippingStats);
             Assert.Same(clippingMask, vm.PreviewClippingMask);
-
             var priorViewport = after.CaptureNormalizedViewport();
             var panStart = CenterOf(before, window);
             var panEnd = panStart - new Vector(32, 20);
