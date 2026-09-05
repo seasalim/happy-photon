@@ -212,7 +212,7 @@ public sealed class RestingRenderExecutionTests
 
         Assert.ThrowsAny<OperationCanceledException>(() =>
         {
-            ToneLutApplicator.ApplyResting(image, lut, execution);
+            ToneLutApplicator.Apply(image, lut, execution);
         });
         Assert.True(observed >= 3);
     }

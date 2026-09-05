@@ -16,19 +16,16 @@ internal static partial class RenderNoiseReduction
     internal static void Apply(
         MagickImage image,
         BaseImageInfo info,
-        DetailSettings settings) =>
-        Apply(image, info, settings, NoiseReductionBandPixelLimit);
-
-    internal static void Apply(
-        MagickImage image,
-        BaseImageInfo info,
         DetailSettings settings,
-        int bandPixelLimit)
+        int? bandPixelLimit = null,
+        RenderExecutionOptions? execution = null)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(settings);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(bandPixelLimit);
+        var effectiveBandPixelLimit = bandPixelLimit ?? NoiseReductionBandPixelLimit;
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(effectiveBandPixelLimit);
+        execution?.ThrowIfCancellationRequested();
 
         var lumaAmount = SliderAmount(settings.LuminanceNr);
         var chromaAmount = info.IsMonochrome
@@ -50,41 +47,7 @@ internal static partial class RenderNoiseReduction
             image,
             lumaScales,
             chromaScales,
-            bandPixelLimit);
-    }
-
-    internal static void ApplyResting(
-        MagickImage image,
-        BaseImageInfo info,
-        DetailSettings settings,
-        RenderExecutionOptions execution)
-    {
-        ArgumentNullException.ThrowIfNull(image);
-        ArgumentNullException.ThrowIfNull(info);
-        ArgumentNullException.ThrowIfNull(settings);
-        execution.ThrowIfCancellationRequested();
-
-        var lumaAmount = SliderAmount(settings.LuminanceNr);
-        var chromaAmount = info.IsMonochrome
-            ? 0
-            : SliderAmount(settings.ChromaNr);
-        if (lumaAmount <= 0 && chromaAmount <= 0)
-        {
-            return;
-        }
-
-        var lumaScales = ResolveScales(image, info, lumaAmount);
-        var chromaScales = ResolveChromaScales(image, info, chromaAmount);
-        if (lumaScales.Length == 0 && chromaScales.Length == 0)
-        {
-            return;
-        }
-
-        ApplyBanded(
-            image,
-            lumaScales,
-            chromaScales,
-            NoiseReductionBandPixelLimit,
+            effectiveBandPixelLimit,
             execution);
     }
 

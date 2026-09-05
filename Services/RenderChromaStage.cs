@@ -26,7 +26,7 @@ internal static class RenderChromaStage
     internal static bool Apply(
         MagickImage image,
         EditSettings settings,
-        RenderExecutionOptions execution)
+        RenderExecutionOptions? execution)
         => Apply(image, settings, DefaultBandPixelLimit, execution);
 
     private static bool Apply(

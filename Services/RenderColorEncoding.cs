@@ -47,14 +47,14 @@ internal static class RenderColorEncoding
             return;
         }
 
-        ToneLutApplicator.ApplyResting(
+        ToneLutApplicator.Apply(
             image,
             SrgbDecodeLut.Value,
             execution);
         execution.ThrowIfCancellationRequested();
         BitmapConversionService.ResizeToMaxDimension(image, maxDimension);
         execution.ThrowIfCancellationRequested();
-        ToneLutApplicator.ApplyResting(
+        ToneLutApplicator.Apply(
             image,
             SrgbEncodeLut.Value,
             execution);

@@ -43,6 +43,7 @@ public sealed class RenderPipeline
             displayRec2020 = RenderDisplayRec2020Core(
                 request,
                 noiseReductionBandPixelLimit,
+                null,
                 out var geometry);
             display = RenderFinalizer.FinalizeOwned(
                 Take(ref displayRec2020),
@@ -148,7 +149,8 @@ public sealed class RenderPipeline
         MagickImage? display = null;
         try
         {
-            displayRec2020 = RenderDisplayRec2020Resting(request, execution);
+            displayRec2020 = RenderDisplayRec2020Core(
+                request, null, execution, out _);
             execution.ThrowIfCancellationRequested();
             execution.ReportStage("finalization");
             display = RenderFinalizer.FinalizeOwnedResting(
@@ -174,23 +176,41 @@ public sealed class RenderPipeline
         }
     }
 
-    private static MagickImage RenderDisplayRec2020Resting(
+    internal MagickImage RenderDisplayRec2020(RenderRequest request)
+    {
+        Validate(request);
+        if (request.MaxDimension != null)
+        {
+            throw new ArgumentException(
+                "The shared display-Rec.2020 render must remain unresized.",
+                nameof(request));
+        }
+        return RenderDisplayRec2020Core(
+            request,
+            null,
+            null,
+            out _);
+    }
+
+    private static MagickImage RenderDisplayRec2020Core(
         RenderRequest request,
-        RenderExecutionOptions execution)
+        int? noiseReductionBandPixelLimit,
+        RenderExecutionOptions? execution,
+        out RenderGeometryTrace geometry)
     {
         MagickImage? working = null;
         try
         {
-            execution.ThrowIfCancellationRequested();
-            execution.ReportStage("geometry");
+            execution?.ThrowIfCancellationRequested();
+            execution?.ReportStage("geometry");
             working = RenderGeometry.Apply(
                 request.Base.Pixels,
                 request.Settings,
-                out _);
-            execution.ThrowIfCancellationRequested();
+                out geometry);
+            execution?.ThrowIfCancellationRequested();
             if (request.Base.Info.IsRawSource)
             {
-                execution.ReportStage("raw-crossing");
+                execution?.ReportStage("raw-crossing");
                 var whiteBalance = RenderChromaticStage.CreateWhiteBalanceMatrix(
                     request.Base.Info,
                     request.Settings);
@@ -214,148 +234,34 @@ public sealed class RenderPipeline
             }
             else
             {
-                execution.ReportStage("standard-tone");
-                ApplyCrossingOffToneResting(working, request, execution);
+                execution?.ReportStage("standard-tone");
+                ApplyCrossingOffTone(working, request, execution);
             }
-            execution.ThrowIfCancellationRequested();
-            execution.ReportStage("color-encoding");
+            execution?.ThrowIfCancellationRequested();
+            execution?.ReportStage("color-encoding");
             RenderColorEncoding.RetagAsSrgb(working);
             if (!request.Base.Info.IsMonochrome)
             {
-                execution.ReportStage("chroma");
+                execution?.ReportStage("chroma");
                 RenderChromaStage.Apply(working, request.Settings, execution);
             }
-            execution.ThrowIfCancellationRequested();
-            execution.ReportStage("noise-reduction");
-            RenderNoiseReduction.ApplyResting(
+            execution?.ThrowIfCancellationRequested();
+            execution?.ReportStage("noise-reduction");
+            RenderNoiseReduction.Apply(
                 working,
                 request.Base.Info,
                 request.Settings.Detail,
+                noiseReductionBandPixelLimit,
                 execution);
-            execution.ThrowIfCancellationRequested();
-            execution.ReportStage("capture-sharpen");
-            RenderSharpening.ApplyCaptureResting(
-                working,
-                request.Base.Info,
-                request.Settings.Detail,
-                request.Intent,
-                execution);
-            execution.ThrowIfCancellationRequested();
-            var result = working;
-            working = null;
-            return result;
-        }
-        finally
-        {
-            working?.Dispose();
-        }
-    }
-
-    private static void ApplyCrossingOffToneResting(
-        MagickImage working,
-        RenderRequest request,
-        RenderExecutionOptions execution)
-    {
-        var chromatic = RenderChromaticStage.CreateNormalizedMatrix(
-            request.Base.Info,
-            request.Settings);
-        var tone = ToneLut.ComposeCached(new ToneParams(
-            request.Settings.Exposure +
-                request.Base.Info.SourceExposureBiasEv,
-            chromatic.Fold,
-            request.Settings.Brightness,
-            request.Settings.Contrast,
-            request.Settings.Shadows,
-            request.Settings.Highlights,
-            request.Settings.BaseLook ?? false,
-            request.Settings.Curve,
-            request.Settings.CurveRed,
-            request.Settings.CurveGreen,
-            request.Settings.CurveBlue));
-        execution.ThrowIfCancellationRequested();
-        ToneLutApplicator.ApplyResting(
-            working,
-            chromatic.Matrix,
-            tone,
-            execution);
-    }
-
-    internal MagickImage RenderDisplayRec2020(RenderRequest request)
-    {
-        Validate(request);
-        if (request.MaxDimension != null)
-        {
-            throw new ArgumentException(
-                "The shared display-Rec.2020 render must remain unresized.",
-                nameof(request));
-        }
-        return RenderDisplayRec2020Core(
-            request,
-            null,
-            out _);
-    }
-
-    private static MagickImage RenderDisplayRec2020Core(
-        RenderRequest request,
-        int? noiseReductionBandPixelLimit,
-        out RenderGeometryTrace geometry)
-    {
-        MagickImage? working = null;
-        try
-        {
-            working = RenderGeometry.Apply(
-                request.Base.Pixels,
-                request.Settings,
-                out geometry);
-            if (request.Base.Info.IsRawSource)
-            {
-                var whiteBalance = RenderChromaticStage.CreateWhiteBalanceMatrix(
-                    request.Base.Info,
-                    request.Settings);
-                var crossing = new AgxCrossing(
-                    new AgxToneParameters(
-                        request.Settings.Exposure,
-                        request.Base.Info.SourceExposureBiasEv,
-                        request.Settings.Contrast,
-                        request.Settings.Highlights,
-                        request.Settings.Shadows,
-                        request.Settings.Curve,
-                        ColorCurve(request, request.Settings.CurveRed),
-                        ColorCurve(request, request.Settings.CurveGreen),
-                        ColorCurve(request, request.Settings.CurveBlue)),
-                    whiteBalance,
-                    request.Base.Info.IsMonochrome
-                        ? null
-                        : request.Base.Info.DcpProfile?.HueSatMap);
-                crossing.Apply(working);
-            }
-            else
-            {
-                ApplyCrossingOffTone(working, request);
-            }
-            RenderColorEncoding.RetagAsSrgb(working);
-            if (!request.Base.Info.IsMonochrome)
-                RenderChromaStage.Apply(working, request.Settings);
-            if (noiseReductionBandPixelLimit is { } bandPixelLimit)
-            {
-                RenderNoiseReduction.Apply(
-                    working,
-                    request.Base.Info,
-                    request.Settings.Detail,
-                    bandPixelLimit);
-            }
-            else
-            {
-                RenderNoiseReduction.Apply(
-                    working,
-                    request.Base.Info,
-                    request.Settings.Detail);
-            }
+            execution?.ThrowIfCancellationRequested();
+            execution?.ReportStage("capture-sharpen");
             RenderSharpening.ApplyCapture(
                 working,
                 request.Base.Info,
                 request.Settings.Detail,
-                request.Intent);
+                request.Intent,
+                execution: execution);
+            execution?.ThrowIfCancellationRequested();
             var result = working;
             working = null;
             return result;
@@ -368,7 +274,8 @@ public sealed class RenderPipeline
 
     private static void ApplyCrossingOffTone(
         MagickImage working,
-        RenderRequest request)
+        RenderRequest request,
+        RenderExecutionOptions? execution)
     {
         var chromatic = RenderChromaticStage.CreateNormalizedMatrix(
             request.Base.Info,
@@ -386,7 +293,8 @@ public sealed class RenderPipeline
             request.Settings.CurveRed,
             request.Settings.CurveGreen,
             request.Settings.CurveBlue));
-        ToneLutApplicator.Apply(working, chromatic.Matrix, tone);
+        execution?.ThrowIfCancellationRequested();
+        ToneLutApplicator.Apply(working, chromatic.Matrix, tone, execution);
     }
 
     private static MagickImage Take(ref MagickImage? image)

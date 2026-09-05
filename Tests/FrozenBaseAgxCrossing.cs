@@ -1,11 +1,13 @@
+// Frozen verbatim from 73d631c; only namespace and type names changed.
 using System.Runtime.CompilerServices;
 using ImageMagick;
 
-namespace HappyPhoton.Services;
+using HappyPhoton.Services;
+namespace HappyPhoton.Tests;
 
-internal readonly record struct AgxRgb(double Red, double Green, double Blue);
+internal readonly record struct FrozenBaseAgxRgb(double Red, double Green, double Blue);
 
-internal sealed class AgxCrossing
+internal sealed class FrozenBaseAgxCrossing
 {
     private const double Q16ToUnit = 1.0 / ushort.MaxValue;
 
@@ -20,7 +22,7 @@ internal sealed class AgxCrossing
 
     private readonly DcpHueSatMap? _hueSatMap;
 
-    internal AgxCrossing(
+    internal FrozenBaseAgxCrossing(
         AgxToneParameters parameters,
         double[,]? whiteBalanceMatrix = null,
         DcpHueSatMap? hueSatMap = null,
@@ -64,16 +66,12 @@ internal sealed class AgxCrossing
 
     internal void Apply(ushort[] rgb) => Apply(rgb, rgb);
 
-    internal void Apply(
-        MagickImage image,
-        RenderExecutionOptions? execution = null)
+    internal void Apply(MagickImage image)
     {
         ArgumentNullException.ThrowIfNull(image);
-        execution?.ThrowIfCancellationRequested();
         using var pixels = image.GetPixels();
         var values = pixels.GetArea(0, 0, image.Width, image.Height) ??
             throw new InvalidOperationException("Unable to access Q16 pixels.");
-        execution?.ThrowIfCancellationRequested();
         var layout = RenderKernelSupport.GetLayout(pixels);
         var pixelCount = checked((int)(image.Width * image.Height));
         if (_hueSatMap != null)
@@ -88,7 +86,6 @@ internal sealed class AgxCrossing
                 layout.Green,
                 layout.Blue,
                 _hueSatMap);
-            execution?.ThrowIfCancellationRequested();
         }
         Apply(
             values,
@@ -96,11 +93,47 @@ internal sealed class AgxCrossing
             layout.Channels,
             layout.Red,
             layout.Green,
+            layout.Blue);
+        pixels.SetArea(0, 0, image.Width, image.Height, values);
+    }
+
+    internal void Apply(
+        MagickImage image,
+        RenderExecutionOptions execution)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+        execution.ThrowIfCancellationRequested();
+        using var pixels = image.GetPixels();
+        var values = pixels.GetArea(0, 0, image.Width, image.Height) ??
+            throw new InvalidOperationException("Unable to access Q16 pixels.");
+        execution.ThrowIfCancellationRequested();
+        var layout = RenderKernelSupport.GetLayout(pixels);
+        var restingPixelCount = checked((int)(image.Width * image.Height));
+        if (_hueSatMap != null)
+        {
+            // Keep resting renders pixel-identical to interactive ones: the
+            // fused DCP HueSat pass runs on the same working array here too.
+            DcpHueSatRenderer.ApplyValues(
+                values,
+                restingPixelCount,
+                layout.Channels,
+                layout.Red,
+                layout.Green,
+                layout.Blue,
+                _hueSatMap);
+            execution.ThrowIfCancellationRequested();
+        }
+        ApplyResting(
+            values,
+            restingPixelCount,
+            layout.Channels,
+            layout.Red,
+            layout.Green,
             layout.Blue,
             execution);
-        execution?.ThrowIfCancellationRequested();
+        execution.ThrowIfCancellationRequested();
         pixels.SetArea(0, 0, image.Width, image.Height, values);
-        execution?.ThrowIfCancellationRequested();
+        execution.ThrowIfCancellationRequested();
     }
 
     internal void Apply(ushort[] source, ushort[] destination)
@@ -137,19 +170,16 @@ internal sealed class AgxCrossing
         int channels,
         int redChannel,
         int greenChannel,
-        int blueChannel,
-        RenderExecutionOptions? execution = null)
+        int blueChannel)
     {
         var workers = Math.Min(
             Environment.ProcessorCount,
             Math.Max(1, (pixelCount + 32_767) / 32_768));
-        workers = execution?.CapWorkers(workers) ?? workers;
-        var options = execution?.ParallelOptions ?? new ParallelOptions();
         var input = _input;
         var outset = _outset;
         var luts = _luts;
 
-        Parallel.For(0, workers, options, worker =>
+        Parallel.For(0, workers, worker =>
         {
             var start = pixelCount * worker / workers;
             var end = pixelCount * (worker + 1) / workers;
@@ -177,7 +207,57 @@ internal sealed class AgxCrossing
         });
     }
 
-    internal AgxRgb TransformAnalytic(AgxRgb input)
+    private void ApplyResting(
+        ushort[] values,
+        int pixelCount,
+        int channels,
+        int redChannel,
+        int greenChannel,
+        int blueChannel,
+        RenderExecutionOptions execution)
+    {
+        var workers = execution.CapWorkers(Math.Min(
+            Environment.ProcessorCount,
+            Math.Max(1, (pixelCount + 32_767) / 32_768)));
+        var input = _input;
+        var outset = _outset;
+        var luts = _luts;
+
+        Parallel.For(0, workers, execution.ParallelOptions, worker =>
+        {
+            var start = pixelCount * worker / workers;
+            var end = pixelCount * (worker + 1) / workers;
+            for (var pixel = start; pixel < end; pixel++)
+            {
+                var offset = pixel * channels;
+                var red = values[offset + redChannel] * Q16ToUnit;
+                var green = values[offset + greenChannel] * Q16ToUnit;
+                var blue = values[offset + blueChannel] * Q16ToUnit;
+
+                var insetRed = Clamp01(input.Row0(red, green, blue));
+                var insetGreen = Clamp01(input.Row1(red, green, blue));
+                var insetBlue = Clamp01(input.Row2(red, green, blue));
+                var toneRed = AgxToneLut.InterpolateUnchecked(
+                    luts.Red,
+                    insetRed);
+                var toneGreen = AgxToneLut.InterpolateUnchecked(
+                    luts.Green,
+                    insetGreen);
+                var toneBlue = AgxToneLut.InterpolateUnchecked(
+                    luts.Blue,
+                    insetBlue);
+
+                values[offset + redChannel] = EncodeQ16(
+                    outset.Row0(toneRed, toneGreen, toneBlue));
+                values[offset + greenChannel] = EncodeQ16(
+                    outset.Row1(toneRed, toneGreen, toneBlue));
+                values[offset + blueChannel] = EncodeQ16(
+                    outset.Row2(toneRed, toneGreen, toneBlue));
+            }
+        });
+    }
+
+    internal FrozenBaseAgxRgb TransformAnalytic(FrozenBaseAgxRgb input)
     {
         var inset = TransformInput(input, _input);
         var exposureGain = Math.Pow(
@@ -186,8 +266,8 @@ internal sealed class AgxCrossing
         return TransformAnalytic(inset, exposureGain);
     }
 
-    internal AgxRgb TransformAnalyticAtExposure(
-        AgxRgb input,
+    internal FrozenBaseAgxRgb TransformAnalyticAtExposure(
+        FrozenBaseAgxRgb input,
         double exposureEv)
     {
         if (!double.IsFinite(exposureEv))
@@ -200,9 +280,9 @@ internal sealed class AgxCrossing
             Math.Pow(2, exposureEv));
     }
 
-    private AgxRgb TransformAnalytic(AgxRgb inset, double exposureGain)
+    private FrozenBaseAgxRgb TransformAnalytic(FrozenBaseAgxRgb inset, double exposureGain)
     {
-        var tone = new AgxRgb(
+        var tone = new FrozenBaseAgxRgb(
             EvaluateTone(inset.Red, exposureGain, _parameters.CurveRed),
             EvaluateTone(inset.Green, exposureGain, _parameters.CurveGreen),
             EvaluateTone(inset.Blue, exposureGain, _parameters.CurveBlue));
@@ -224,25 +304,25 @@ internal sealed class AgxCrossing
             _shoulderPower,
             channelCurve);
 
-    internal AgxRgb TransformInterpolated(AgxRgb input)
+    internal FrozenBaseAgxRgb TransformInterpolated(FrozenBaseAgxRgb input)
     {
         var inset = TransformInput(input, _input);
-        var tone = new AgxRgb(
+        var tone = new FrozenBaseAgxRgb(
             AgxToneLut.InterpolateUnchecked(_luts.Red, inset.Red),
             AgxToneLut.InterpolateUnchecked(_luts.Green, inset.Green),
             AgxToneLut.InterpolateUnchecked(_luts.Blue, inset.Blue));
         return TransformOutput(tone, _outset);
     }
 
-    internal static AgxRgb TransformAnalytic(
-        AgxRgb input,
+    internal static FrozenBaseAgxRgb TransformAnalytic(
+        FrozenBaseAgxRgb input,
         AgxToneParameters parameters)
     {
         AgxToneEngine.Validate(parameters, fold: 1);
         var inset = TransformInput(
             input,
             new Matrix3x3(AgxToneEngine.InsetMatrix));
-        var tone = new AgxRgb(
+        var tone = new FrozenBaseAgxRgb(
             AgxToneEngine.EvaluateTone(
                 inset.Red, parameters, fold: 1, parameters.CurveRed),
             AgxToneEngine.EvaluateTone(
@@ -254,13 +334,13 @@ internal sealed class AgxCrossing
             new Matrix3x3(AgxToneEngine.OutsetMatrix));
     }
 
-    private static AgxRgb TransformInput(AgxRgb value, Matrix3x3 matrix) =>
+    private static FrozenBaseAgxRgb TransformInput(FrozenBaseAgxRgb value, Matrix3x3 matrix) =>
         new(
             Clamp01(matrix.Row0(value.Red, value.Green, value.Blue)),
             Clamp01(matrix.Row1(value.Red, value.Green, value.Blue)),
             Clamp01(matrix.Row2(value.Red, value.Green, value.Blue)));
 
-    private static AgxRgb TransformOutput(AgxRgb value, Matrix3x3 matrix) =>
+    private static FrozenBaseAgxRgb TransformOutput(FrozenBaseAgxRgb value, Matrix3x3 matrix) =>
         new(
             Encode(matrix.Row0(value.Red, value.Green, value.Blue)),
             Encode(matrix.Row1(value.Red, value.Green, value.Blue)),
@@ -314,3 +394,4 @@ internal sealed class AgxCrossing
             M20 * red + M21 * green + M22 * blue;
     }
 }
+

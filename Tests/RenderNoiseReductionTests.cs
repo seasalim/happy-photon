@@ -231,11 +231,11 @@ public sealed class RenderNoiseReductionTests
         cancellation.Cancel();
 
         Assert.Throws<OperationCanceledException>(() =>
-            RenderNoiseReduction.ApplyResting(
+            RenderNoiseReduction.Apply(
                 image,
                 CreateInfo(3, 2),
                 new DetailSettings { LuminanceNr = 100 },
-                RenderExecutionOptions.Resting(cancellation.Token)));
+                execution: RenderExecutionOptions.Resting(cancellation.Token)));
     }
 
     private static MagickImage CreateLuminanceNoisePattern(int width, int height)

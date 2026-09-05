@@ -34,13 +34,15 @@ internal static class RenderSharpening
         BaseImageInfo info,
         DetailSettings detail,
         RenderIntent intent,
-        int bandPixelLimit = DefaultBandPixelLimit)
+        int bandPixelLimit = DefaultBandPixelLimit,
+        RenderExecutionOptions? execution = null)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(detail);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(
             bandPixelLimit);
+        execution?.ThrowIfCancellationRequested();
 
         var value = detail.ResolveCaptureSharpen(
             info.IsRawSource);
@@ -56,35 +58,7 @@ internal static class RenderSharpening
             sigma,
             amount,
             CaptureThreshold,
-            bandPixelLimit);
-    }
-
-    internal static void ApplyCaptureResting(
-        MagickImage image,
-        BaseImageInfo info,
-        DetailSettings detail,
-        RenderIntent intent,
-        RenderExecutionOptions execution)
-    {
-        ArgumentNullException.ThrowIfNull(image);
-        ArgumentNullException.ThrowIfNull(info);
-        ArgumentNullException.ThrowIfNull(detail);
-        execution.ThrowIfCancellationRequested();
-
-        var value = detail.ResolveCaptureSharpen(info.IsRawSource);
-        var amount = Math.Clamp(value, 0, 100) / 100.0;
-        var sigma = ResolveCaptureSigma(image, info, intent);
-        if (amount <= 0 || sigma < MinimumEffectiveSigma)
-        {
-            return;
-        }
-
-        ApplyLuminance(
-            image,
-            sigma,
-            amount,
-            CaptureThreshold,
-            DefaultBandPixelLimit,
+            bandPixelLimit,
             execution);
     }
 

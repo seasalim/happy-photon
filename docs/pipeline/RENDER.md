@@ -1,6 +1,7 @@
 # Render: `BaseImage` × `EditSettings` to Pixels
 
 `RenderPipeline` is the single pixel path shared by preview, histogram, and export.
+The resting policy is an optional `RenderExecutionOptions` on the single display-stage sequence.
 The formulas below explain how it preserves linear-light headroom while reducing the
 tonal work to one quantization step. All Magick.NET processing remains Q16.
 
