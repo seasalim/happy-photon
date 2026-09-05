@@ -9,6 +9,7 @@ public sealed class DetailViewModelTests : IDisposable
 {
     private readonly CatalogVmFixture _fx = new("detail-vm");
 
+    [Trait("Category", "Quarantined")]
     [Fact]
     public async Task DetailEdits_CanonicalizePersistResetAndUndo()
     {

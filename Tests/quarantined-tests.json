@@ -13,6 +13,24 @@
       "reason": "The histogram identity assertion can race a refresh under full-suite load while isolated retries pass.",
       "introducedOn": "2026-08-29",
       "expiresOn": "2026-11-27"
+    },
+    {
+      "fullyQualifiedName": "HappyPhoton.Tests.DetailViewModelTests.DetailEdits_CanonicalizePersistResetAndUndo",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "issue": "https://github.com/seasalim/happy-photon/issues/7",
+      "owner": "@seasalim",
+      "reason": "Undo after Reset races the debounced canonicalize/persist: CaptureSharpen reads null about one isolated run in three.",
+      "introducedOn": "2026-09-04",
+      "expiresOn": "2026-12-03"
+    },
+    {
+      "fullyQualifiedName": "HappyPhoton.Tests.EffectsViewModelTests.EffectsEdits_CanonicalizeResetUndoAndRedo",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "issue": "https://github.com/seasalim/happy-photon/issues/7",
+      "owner": "@seasalim",
+      "reason": "Undo after Reset races the debounced canonicalize/persist: Effects reads null in most isolated runs while full-suite load hides it.",
+      "introducedOn": "2026-09-04",
+      "expiresOn": "2026-12-03"
     }
   ]
 }

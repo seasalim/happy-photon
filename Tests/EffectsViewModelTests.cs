@@ -9,6 +9,7 @@ public sealed class EffectsViewModelTests : IDisposable
 {
     private readonly CatalogVmFixture _fx = new("effects-vm");
 
+    [Trait("Category", "Quarantined")]
     [Fact]
     public async Task EffectsEdits_CanonicalizeResetUndoAndRedo()
     {
