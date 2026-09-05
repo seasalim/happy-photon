@@ -38,7 +38,7 @@ public sealed class CompareLoupeMappingTests
             Height = 500,
             Content = host
         };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Drain();
 
         try

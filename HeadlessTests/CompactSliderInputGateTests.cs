@@ -17,7 +17,8 @@ public sealed class CompactSliderInputGateTests
     public void FirstPress_CapturesWhenAnAncestorHandledTheRoutedEvent()
     {
         const int attemptCount = 100;
-        var (slider, window) = ShowSlider();
+        var (slider, window, scope) = ShowSlider();
+        using var windowScope = scope;
         var layout = slider.FindControl<Grid>("LayoutGrid")!;
         IPointer? pressedPointer = null;
         window.AddHandler(
@@ -65,7 +66,8 @@ public sealed class CompactSliderInputGateTests
     public void CapturedPress_ChangesThumbColorUntilRelease()
     {
         const int attemptCount = 100;
-        var (slider, window) = ShowSlider();
+        var (slider, window, scope) = ShowSlider();
+        using var windowScope = scope;
         var thumb = slider.FindControl<Border>("ThumbDot")!;
         var inactiveColor = Assert.IsAssignableFrom<ISolidColorBrush>(
             thumb.Background).Color;
@@ -121,7 +123,8 @@ public sealed class CompactSliderInputGateTests
     public void CoalescedDrag_AppliesReleasePositionOnEveryAttempt()
     {
         const int attemptCount = 100;
-        var (slider, window) = ShowSlider();
+        var (slider, window, scope) = ShowSlider();
+        using var windowScope = scope;
 
         try
         {
@@ -158,7 +161,8 @@ public sealed class CompactSliderInputGateTests
     [AvaloniaFact]
     public void DragLifecycle_CompletesOnceOnReleaseOrCaptureLoss()
     {
-        var (slider, window) = ShowSlider();
+        var (slider, window, scope) = ShowSlider();
+        using var windowScope = scope;
         IPointer? pressedPointer = null;
         var started = 0;
         var completed = 0;
@@ -203,7 +207,7 @@ public sealed class CompactSliderInputGateTests
         }
     }
 
-    private static (CompactSlider Slider, Window Window) ShowSlider()
+    private static (CompactSlider Slider, Window Window, TestUiScope Scope) ShowSlider()
     {
         var slider = new CompactSlider
         {
@@ -218,8 +222,16 @@ public sealed class CompactSliderInputGateTests
             Height = 22,
             Content = slider
         };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        return (slider, window);
+        var scope = new TestUiScope(window);
+        try
+        {
+            Dispatcher.UIThread.RunJobs();
+            return (slider, window, scope);
+        }
+        catch
+        {
+            scope.Dispose();
+            throw;
+        }
     }
 }

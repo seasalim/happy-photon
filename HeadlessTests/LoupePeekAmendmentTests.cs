@@ -16,7 +16,8 @@ public sealed partial class LoupePeekTests
         using var bitmap = CreateBitmap(2400, 1800);
         var viewer = CreateViewer(clock, bitmap, new object());
         viewer.OriginalViewPixelSize = bitmap.PixelSize;
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             viewer.AutoFit = false;
@@ -62,7 +63,8 @@ public sealed partial class LoupePeekTests
         using var bitmap = CreateBitmap(2400, 1800);
         var viewer = CreateViewer(clock, bitmap, new object());
         viewer.OriginalViewPixelSize = bitmap.PixelSize;
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             viewer.AutoFit = false;
@@ -98,7 +100,8 @@ public sealed partial class LoupePeekTests
         var clock = new TestTimeProvider();
         using var bitmap = CreateBitmap(1200, 900);
         var viewer = CreateViewer(clock, bitmap, new object());
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var loupeCursor = viewer.Cursor;

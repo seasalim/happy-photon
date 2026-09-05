@@ -61,8 +61,8 @@ public sealed class HistoryHoverGateBaselineTests : IDisposable
             return Task.CompletedTask;
         };
 
-        var window = new MainWindow { Width = 800, Height = 900, DataContext = vm };
-        window.Show();
+        var window = new MainWindow { Width = 800, Height = 900 };
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Dispatcher.UIThread.RunJobs(); Dispatcher.UIThread.RunJobs();
         try
         {
@@ -149,8 +149,7 @@ public sealed class HistoryHoverGateBaselineTests : IDisposable
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await vm.DisposeAsync();
         }
     }

@@ -29,7 +29,7 @@ public sealed class GeometryControlTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask);
         var panel = new DevelopEditPanel { DataContext = vm };
         var window = new Window { Width = 260, Height = 1_200, Content = panel };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         vm.IsDevelopMode = true;
         vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "photo.jpg"));
         Dispatcher.UIThread.RunJobs();

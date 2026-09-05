@@ -23,6 +23,7 @@ public sealed class WindowPlacementHeadlessTests
     public void Restore_AppliesValidPlacementBeforeShowWithoutCatalog()
     {
         using var directory = new TemporaryDirectory();
+        // test-teardown-policy: allow - never shown or bound; placement-only construction.
         var window = new MainWindow();
         var saved = new WindowPlacement(1, 120, 90, 1000, 620, 1, true);
 
@@ -42,6 +43,7 @@ public sealed class WindowPlacementHeadlessTests
     public void Restore_InvalidPlacement_ExplicitlyUsesCenteredDefault()
     {
         using var directory = new TemporaryDirectory();
+        // test-teardown-policy: allow - never shown or bound; placement-only construction.
         var window = new MainWindow();
 
         window.RestoreWindowPlacement(
@@ -58,14 +60,15 @@ public sealed class WindowPlacementHeadlessTests
     {
         using var directory = new TemporaryDirectory();
         using var catalog = new CatalogService(Path.Combine(directory.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
-        var window = new MainWindow { DataContext = vm };
+        await using var vm = new MainWindowViewModel(catalog);
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
         var normal = new WindowPlacement(1, 140, 110, 980, 610, 1, false);
         window.RestoreWindowPlacement(
             new WindowPlacementStore(Path.Combine(directory.Path, "pointer")),
             normal,
             Screens);
-        window.Show();
+        windowScope.Show();
         Dispatcher.UIThread.RunJobs();
 
         window.WindowState = WindowState.Maximized;
@@ -90,9 +93,7 @@ public sealed class WindowPlacementHeadlessTests
         Assert.False(window.CaptureWindowPlacement().Maximized);
         AssertNormalBounds(normal, window.CaptureWindowPlacement());
 
-        window.DataContext = null;
-        window.Close();
-        await vm.DisposeAsync();
+        windowScope.Dispose();
     }
 
     [AvaloniaFact]
@@ -100,12 +101,13 @@ public sealed class WindowPlacementHeadlessTests
     {
         using var directory = new TemporaryDirectory();
         using var catalog = new CatalogService(Path.Combine(directory.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
-        var window = new MainWindow { DataContext = vm };
+        await using var vm = new MainWindowViewModel(catalog);
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
         var normal = new WindowPlacement(1, 140, 110, 980, 610, 1, false);
         window.RestoreWindowPlacement(
             new WindowPlacementStore(directory.Path), normal, Screens);
-        window.Show();
+        windowScope.Show();
         Dispatcher.UIThread.RunJobs();
 
         window.Position = new PixelPoint(-8, -8);
@@ -116,32 +118,41 @@ public sealed class WindowPlacementHeadlessTests
         Assert.Equal(140, captured.X);
         Assert.Equal(110, captured.Y);
         Assert.True(captured.Maximized);
-        window.DataContext = null;
-        window.Close();
-        await vm.DisposeAsync();
+        windowScope.Dispose();
     }
 
     [AvaloniaFact]
-    public void Close_CapturesPendingNormalGeometrySynchronously()
+    public async Task Close_CapturesPendingNormalGeometrySynchronously()
     {
         using var directory = new TemporaryDirectory();
         using var catalog = new CatalogService(Path.Combine(directory.Path, "catalog"));
         var vm = new MainWindowViewModel(catalog);
         var store = new WindowPlacementStore(Path.Combine(directory.Path, "pointer"));
+        using var themeScope = new TestUiScope(theme: Application.Current!.RequestedThemeVariant);
+        // test-teardown-policy: allow - themeScope restores binding theme; finally awaits real Closed event.
         var window = new MainWindow { DataContext = vm };
         window.RestoreWindowPlacement(store, null, Screens);
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
+        var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        window.Closed += (_, _) => closed.TrySetResult();
+        try
+        {
+            // test-teardown-policy: allow - finally awaits real Closed event; themeScope restores theme.
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            window.Position = new PixelPoint(240, 180);
+            window.Close();
 
-        window.Position = new PixelPoint(240, 180);
-        window.Close();
-
-        var saved = Assert.IsType<WindowPlacement>(store.Load());
-        Assert.Equal(240, saved.X);
-        Assert.Equal(180, saved.Y);
-        Assert.Equal(1200, saved.Width);
-        Assert.Equal(700, saved.Height);
-        Dispatcher.UIThread.RunJobs();
+            var saved = Assert.IsType<WindowPlacement>(store.Load());
+            Assert.Equal(240, saved.X);
+            Assert.Equal(180, saved.Y);
+            Assert.Equal(1200, saved.Width);
+            Assert.Equal(700, saved.Height);
+        }
+        finally
+        {
+            window.Close();
+            await closed.Task.WaitAsync(TestWaits.Condition);
+        }
     }
 
     private static void AssertNormalBounds(

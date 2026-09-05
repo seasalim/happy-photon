@@ -39,7 +39,7 @@ public sealed class RawProfilePickerControlTests : IDisposable
         vm.SelectedImage = image;
         var picker = new RawProfilePicker { DataContext = vm };
         var window = new Window { Width = 260, Height = 180, Content = picker };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try
@@ -91,7 +91,7 @@ public sealed class RawProfilePickerControlTests : IDisposable
         vm.IsDevelopMode = true;
         var picker = new RawProfilePicker { DataContext = vm };
         var window = new Window { Width = 260, Height = 180, Content = picker };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
 
         try
         {
@@ -140,7 +140,7 @@ public sealed class RawProfilePickerControlTests : IDisposable
         });
         var picker = new RawProfilePicker { DataContext = vm };
         var window = new Window { Width = 260, Height = 180, Content = picker };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
 
         try
         {

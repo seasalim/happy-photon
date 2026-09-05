@@ -46,10 +46,9 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
         var window = new MainWindow
         {
             Width = 1100,
-            Height = 720,
-            DataContext = vm
+            Height = 720
         };
-        window.Show();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Drain();
         try
         {
@@ -171,8 +170,7 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 
@@ -346,8 +344,8 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
         using var catalog = _fx.CreateCatalog();
         await using var vm = _fx.CreateViewModel(catalog);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         try
         {
             foreach (var key in new[] { Key.Oem5, Key.OemBackslash })
@@ -360,8 +358,7 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 
@@ -383,8 +380,8 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
         vm.SelectedImage = image;
         await TestWaits.UntilAsync(() => vm.PreviewImage != null);
 
-        var window = new MainWindow { Width = 800, Height = 600, DataContext = vm };
-        window.Show();
+        var window = new MainWindow { Width = 800, Height = 600 };
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Drain();
         try
         {
@@ -401,8 +398,7 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 

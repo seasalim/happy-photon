@@ -22,7 +22,8 @@ public sealed class HighlightHandlingControlTests : IDisposable
         var loader = new ControlledLoader(blockFirstDecode: true);
         var vm = CreateViewModel(catalog, loader);
         var panel = new DevelopEditPanel { DataContext = vm };
-        var window = ShowPanel(panel);
+        using var windowScope = ShowPanel(panel);
+        var window = windowScope.Window!;
 
         try
         {
@@ -89,7 +90,8 @@ public sealed class HighlightHandlingControlTests : IDisposable
         var loader = new ControlledLoader();
         var vm = CreateViewModel(catalog, loader);
         var panel = new DevelopEditPanel { DataContext = vm };
-        var window = ShowPanel(panel);
+        using var windowScope = ShowPanel(panel);
+        var window = windowScope.Window!;
 
         try
         {
@@ -159,7 +161,7 @@ public sealed class HighlightHandlingControlTests : IDisposable
             IsDevelopMode = true
         };
 
-    private static Window ShowPanel(DevelopEditPanel panel)
+    private static TestUiScope ShowPanel(DevelopEditPanel panel)
     {
         var window = new Window
         {
@@ -167,8 +169,7 @@ public sealed class HighlightHandlingControlTests : IDisposable
             Height = 660,
             Content = panel
         };
-        window.Show();
-        return window;
+        return new TestUiScope(window);
     }
 
     private sealed class ControlledLoader(bool blockFirstDecode) : IBaseImageLoader

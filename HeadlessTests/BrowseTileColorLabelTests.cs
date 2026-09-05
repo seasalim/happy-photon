@@ -51,7 +51,7 @@ public sealed class BrowseTileColorLabelTests
             Height = 500,
             Content = control
         };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try

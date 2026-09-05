@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -16,7 +17,8 @@ public sealed partial class CursorAnchoredZoomTests
             bitmap,
             autoFit: false,
             zoomLevel: 0.75);
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var scroll = Scroll(viewer);
@@ -60,7 +62,8 @@ public sealed partial class CursorAnchoredZoomTests
         using var provisional = CreateBitmap(1200, 900);
         using var fresh = CreateBitmap(1800, 1350);
         var viewer = CreateViewer(provisional);
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var scroll = Scroll(viewer);
@@ -97,5 +100,27 @@ public sealed partial class CursorAnchoredZoomTests
         {
             window.Close();
         }
+    }
+
+    private static TestUiScope Show(
+        Control content,
+        double width,
+        double height,
+        double renderScaling = 1)
+    {
+        var window = new Window
+        {
+            Width = width,
+            Height = height,
+            Content = content
+        };
+        return new TestUiScope(window, afterShow: () =>
+        {
+            if (renderScaling != 1)
+            {
+                window.SetRenderScaling(renderScaling);
+            }
+            Drain();
+        });
     }
 }

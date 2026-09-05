@@ -23,6 +23,8 @@ if ($PolicyOnly -and $SkipPolicy) {
 if (-not $SkipPolicy) {
     & (Join-Path $PSScriptRoot "check-source-lines.ps1")
     & (Join-Path $PSScriptRoot "check-test-waits.ps1")
+    & (Join-Path $PSScriptRoot "check-test-teardown.ps1")
+    & (Join-Path $PSScriptRoot "check-test-teardown-fixtures.ps1")
     & (Join-Path $PSScriptRoot "check-test-sqlite-pools.ps1")
 }
 if ($PolicyOnly) {

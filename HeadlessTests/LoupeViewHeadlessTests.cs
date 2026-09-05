@@ -372,6 +372,7 @@ public sealed class LoupeViewHeadlessTests
     {
         private readonly TemporaryDirectory _root;
         private readonly CatalogService _catalog;
+        private readonly TestUiScope _scope;
 
         public MainWindowViewModel ViewModel { get; }
         public MainWindow Window { get; }
@@ -380,12 +381,13 @@ public sealed class LoupeViewHeadlessTests
             TemporaryDirectory root,
             CatalogService catalog,
             MainWindowViewModel viewModel,
-            MainWindow window)
+            MainWindow window, TestUiScope scope)
         {
             _root = root;
             _catalog = catalog;
             ViewModel = viewModel;
             Window = window;
+            _scope = scope;
         }
 
         public static async Task<Fixture> CreateAsync(int count)
@@ -407,16 +409,14 @@ public sealed class LoupeViewHeadlessTests
             vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
             vm.Browse.SetImages(images);
             vm.SelectedImage = images[0];
-            var window = new MainWindow { DataContext = vm };
-            window.Show();
-            Drain();
-            return new Fixture(root, catalog, vm, window);
+            var window = new MainWindow();
+            var windowScope = TestUiScope.ForMainWindow(window, vm, afterShow: Drain);
+            return new Fixture(root, catalog, vm, window, windowScope);
         }
 
         public async ValueTask DisposeAsync()
         {
-            Window.DataContext = null;
-            Window.Close();
+            _scope.Dispose();
             await ViewModel.DisposeAsync();
             _catalog.Dispose();
             _root.Dispose();

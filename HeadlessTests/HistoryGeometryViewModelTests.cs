@@ -307,10 +307,9 @@ public sealed class HistoryGeometryViewModelTests : IDisposable
         var window = new MainWindow
         {
             Width = 900,
-            Height = 650,
-            DataContext = vm
+            Height = 650
         };
-        window.Show();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Dispatcher.UIThread.RunJobs();
         try
         {
@@ -333,8 +332,7 @@ public sealed class HistoryGeometryViewModelTests : IDisposable
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 

@@ -123,18 +123,19 @@ public sealed class DevelopAssessmentFeedbackTests
         vm.IsDevelopMode = true;
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
         try
         {
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             Dispatcher.UIThread.RunJobs();
             assertion(window, vm);
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             Directory.Delete(root, recursive: true);
         }
     }

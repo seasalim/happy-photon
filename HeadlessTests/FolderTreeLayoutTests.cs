@@ -22,7 +22,8 @@ public sealed class FolderTreeLayoutTests
     [AvaloniaFact]
     public async Task TallFolderTreeRevealsThinOverlayScrollBar()
     {
-        var (window, tree) = ShowFolderTree(childCount: 40);
+        var (window, tree, scope) = ShowFolderTree(childCount: 40);
+        using var windowScope = scope;
 
         try
         {
@@ -90,7 +91,8 @@ public sealed class FolderTreeLayoutTests
     [AvaloniaFact]
     public void ShortFolderTreeDoesNotShowScrollBar()
     {
-        var (window, tree) = ShowFolderTree(childCount: 2);
+        var (window, tree, scope) = ShowFolderTree(childCount: 2);
+        using var windowScope = scope;
 
         try
         {
@@ -113,7 +115,8 @@ public sealed class FolderTreeLayoutTests
     [AvaloniaFact]
     public void DraggingFolderTreeThumbScrollsContent()
     {
-        var (window, tree) = ShowFolderTree(childCount: 40);
+        var (window, tree, scope) = ShowFolderTree(childCount: 40);
+        using var windowScope = scope;
 
         try
         {
@@ -178,10 +181,9 @@ public sealed class FolderTreeLayoutTests
         var window = new MainWindow
         {
             Width = 1200,
-            Height = 800,
-            DataContext = viewModel
+            Height = 800
         };
-        window.Show();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel);
         Dispatcher.UIThread.RunJobs();
         Dispatcher.UIThread.RunJobs();
 
@@ -236,12 +238,11 @@ public sealed class FolderTreeLayoutTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 
-    private static (Window Window, TreeView Tree) ShowFolderTree(int childCount)
+    private static (Window Window, TreeView Tree, TestUiScope Scope) ShowFolderTree(int childCount)
     {
         var root = new FolderNode("root") { IsExpanded = true };
         for (var index = 1; index <= childCount; index++)
@@ -259,9 +260,17 @@ public sealed class FolderTreeLayoutTests
             Height = 300,
             Content = panel
         };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        Dispatcher.UIThread.RunJobs();
-        return (window, panel.FindControl<TreeView>("FolderTree")!);
+        var scope = new TestUiScope(window);
+        try
+        {
+            Dispatcher.UIThread.RunJobs();
+            Dispatcher.UIThread.RunJobs();
+            return (window, panel.FindControl<TreeView>("FolderTree")!, scope);
+        }
+        catch
+        {
+            scope.Dispose();
+            throw;
+        }
     }
 }

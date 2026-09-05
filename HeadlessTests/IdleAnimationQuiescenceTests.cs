@@ -29,7 +29,7 @@ public sealed class IdleAnimationQuiescenceTests
         {
             Content = new StackPanel { Children = { gate, develop } }
         };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         var startupBar = GetBar(gate, "StartupProgressBar");
@@ -70,7 +70,7 @@ public sealed class IdleAnimationQuiescenceTests
             Images = vm.Browse.VisibleImages
         };
         var window = new Window { Content = grid };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Empty(grid.GetVisualDescendants().OfType<ProgressBar>());

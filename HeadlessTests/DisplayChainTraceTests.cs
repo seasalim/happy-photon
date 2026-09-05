@@ -40,6 +40,7 @@ public sealed class DisplayChainTraceTests
 
         try
         {
+            // test-teardown-policy: allow - enclosing try/finally closes window.
             window.Show();
             Dispatcher.UIThread.RunJobs();
             Assert.Equal(
@@ -156,6 +157,7 @@ public sealed class DisplayChainTraceTests
 
         try
         {
+            // test-teardown-policy: allow - enclosing try/finally closes window.
             window.Show();
             Dispatcher.UIThread.RunJobs();
             control.Source = second;
@@ -199,6 +201,7 @@ public sealed class DisplayChainTraceTests
 
         try
         {
+            // test-teardown-policy: allow - enclosing try/finally closes manualWindow.
             manualWindow.Show();
             manualWindow.SetRenderScaling(1.5);
             Dispatcher.UIThread.RunJobs();
@@ -236,6 +239,7 @@ public sealed class DisplayChainTraceTests
 
         try
         {
+            // test-teardown-policy: allow - enclosing try/finally closes fitWindow.
             fitWindow.Show();
             fitWindow.SetRenderScaling(1.5);
             Dispatcher.UIThread.RunJobs();
@@ -276,6 +280,7 @@ public sealed class DisplayChainTraceTests
 
             try
             {
+                // test-teardown-policy: allow - enclosing try/finally closes window.
                 window.Show();
                 Dispatcher.UIThread.RunJobs();
                 var image = control.FindControl<Image>("ImageControl")!;
@@ -331,6 +336,7 @@ public sealed class DisplayChainTraceTests
 
         try
         {
+            // test-teardown-policy: allow - enclosing try/finally closes window.
             window.Show();
             Dispatcher.UIThread.RunJobs();
             Assert.Empty(MappingLines(lines));

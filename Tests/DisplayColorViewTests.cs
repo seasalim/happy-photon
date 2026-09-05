@@ -27,7 +27,8 @@ public sealed class DisplayColorViewTests
             CanonicalSource = canonical,
             DisplayTransform = DisplayTransformSnapshot.None,
         };
-        var window = Show(image);
+        using var windowScope = Show(image);
+        var window = windowScope.Window!;
 
         Assert.Same(canonical, image.DisplayedBitmap);
         Assert.Null(image.DisplayCopy);
@@ -43,7 +44,8 @@ public sealed class DisplayColorViewTests
             CanonicalSource = canonical,
             DisplayTransform = Resolve("monitor-a"),
         };
-        var window = Show(image);
+        using var windowScope = Show(image);
+        var window = windowScope.Window!;
         var previousCopy = Assert.IsAssignableFrom<Avalonia.Media.Imaging.Bitmap>(
             image.DisplayCopy);
         var before = image.DerivationCount;
@@ -62,7 +64,8 @@ public sealed class DisplayColorViewTests
         var canonicals = new List<Avalonia.Media.Imaging.Bitmap>();
         var retiredCopies = new List<Avalonia.Media.Imaging.Bitmap>();
         var image = new DisplayImage { DisplayTransform = Resolve("monitor-0") };
-        var window = Show(image);
+        using var windowScope = Show(image);
+        var window = windowScope.Window!;
         try
         {
             for (var index = 0; index < 50; index++)
@@ -116,7 +119,8 @@ public sealed class DisplayColorViewTests
         image.Bind(
             DisplayImage.CanonicalSourceProperty,
             new Binding(nameof(MainWindowViewModel.PreviewImage)));
-        var window = Show(image);
+        using var windowScope = Show(image);
+        var window = windowScope.Window!;
         var first = CreateBitmap(31);
         var second = CreateBitmap(47);
 
@@ -188,10 +192,9 @@ public sealed class DisplayColorViewTests
         var window = new MainWindow
         {
             Width = 1000,
-            Height = 700,
-            DataContext = viewModel,
+            Height = 700
         };
-        window.Show();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel);
         Dispatcher.UIThread.RunJobs();
 
         var developPane = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!;
@@ -260,7 +263,7 @@ public sealed class DisplayColorViewTests
             beforeCanonical.Dispose();
             viewModel.ClearPreviewImage();
             Dispatcher.UIThread.RunJobs();
-            window.Close();
+            windowScope.Dispose();
         }
     }
 
@@ -287,7 +290,7 @@ public sealed class DisplayColorViewTests
             DisplayImage.DisplaySourceColorSpaceProperty,
             new Binding(nameof(MainWindowViewModel.PreviewDisplayColorSpace)));
         var window = new Window { Content = image };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var previous = CreateBitmap(17);
         viewModel.ReplacePreviewImage(previous, PreviewPaintSource.FreshRender);
@@ -307,7 +310,6 @@ public sealed class DisplayColorViewTests
         Assert.Equal(expected, BitmapConversionService.CopyBgraPixels(canonical));
         viewModel.ClearPreviewImage();
         Dispatcher.UIThread.RunJobs();
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -343,12 +345,13 @@ public sealed class DisplayColorViewTests
     private static DisplayImage DisplaySurface(ZoomPanControl viewer) =>
         viewer.FindControl<DisplayImage>("ImageControl")!;
 
-    private static Window Show(DisplayImage image)
+    private static TestUiScope Show(DisplayImage image)
     {
         var window = new Window { Content = image };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        return window;
+        return new TestUiScope(window, afterShow: () =>
+        {
+            Dispatcher.UIThread.RunJobs();
+        });
     }
 
     private void AssertCopyCounts(

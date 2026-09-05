@@ -38,8 +38,8 @@ public sealed class BrowseSelectionMenuTests
         vm.ToggleImageSelection(images[0]);
         vm.ToggleImageSelection(images[1]);
         vm.SelectedImage = images[2];
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Dispatcher.UIThread.RunJobs();
         var unflag = window.GetVisualDescendants().OfType<Button>()
             .Single(button => button.Name == "UnflagImageButton");
@@ -84,8 +84,7 @@ public sealed class BrowseSelectionMenuTests
         Dispatcher.UIThread.RunJobs();
         Assert.True(badgeTile.ContextMenu!.IsOpen);
 
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
     }
 
     [AvaloniaFact]
@@ -102,7 +101,7 @@ public sealed class BrowseSelectionMenuTests
             Images = new ObservableCollection<ImageFile> { image }
         };
         var window = new Window { Content = control };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var tile = Assert.Single(control.GetVisualDescendants().OfType<Border>(),
             border => ReferenceEquals(border.DataContext, image) &&
@@ -157,7 +156,6 @@ public sealed class BrowseSelectionMenuTests
         delete.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
 
         Assert.Equal([1, 1, 1, 1, 1, 1], requests);
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -170,7 +168,7 @@ public sealed class BrowseSelectionMenuTests
             Images = new ObservableCollection<ImageFile> { previous }
         };
         var window = new Window { Content = control };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var tile = Assert.Single(control.GetVisualDescendants().OfType<Border>(),
             border => ReferenceEquals(border.DataContext, previous) &&
@@ -195,7 +193,6 @@ public sealed class BrowseSelectionMenuTests
         control.SelectedImage = null;
         createVersion.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         Assert.Null(requested);
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -229,10 +226,9 @@ public sealed class BrowseSelectionMenuTests
         var window = new MainWindow
         {
             Width = 900,
-            Height = 700,
-            DataContext = vm
+            Height = 700
         };
-        window.Show();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Dispatcher.UIThread.RunJobs();
         DeleteConfirmationRequest? prompt = null;
         var prompted = new TaskCompletionSource(
@@ -266,8 +262,7 @@ public sealed class BrowseSelectionMenuTests
         Assert.Equal(
             new[] { 1, 2 },
             states[path].Select(state => state.Version).ToArray());
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
     }
 
     [AvaloniaFact]
@@ -310,7 +305,7 @@ public sealed class BrowseSelectionMenuTests
         vm.Browse.SetImages([image]);
         var control = new BrowseGridView { DataContext = vm };
         var window = new Window { Content = control };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         var panel = control.FindControl<StackPanel>("BrowseActionsPanel")!;
@@ -379,7 +374,6 @@ public sealed class BrowseSelectionMenuTests
         Assert.False(selectAll.IsEnabled);
         Assert.False(deselectAll.IsEnabled);
         Assert.False(deleteRejected.IsEnabled);
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -396,8 +390,8 @@ public sealed class BrowseSelectionMenuTests
         };
         vm.Browse.SetImages(images);
         vm.IsDevelopMode = true;
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Dispatcher.UIThread.RunJobs();
 
         var selectAll = Assert.Single(
@@ -420,7 +414,6 @@ public sealed class BrowseSelectionMenuTests
         vm.Browse.SelectAllVisible();
         deselectAll.Command.Execute(null);
         Assert.All(images, image => Assert.True(image.IsSelected));
-        window.Close();
     }
 
     [Fact]

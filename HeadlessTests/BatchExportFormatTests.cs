@@ -54,7 +54,7 @@ public sealed class BatchExportFormatTests : IDisposable
         viewModel.SwitchToExportCommand.Execute(null);
         var pane = new ExportSettingsPane { DataContext = viewModel };
         var window = new Window { Content = pane };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var countLine = pane.FindControl<TextBlock>("ExportCountLineText")!;
         var exportButton = pane.FindControl<Button>("RunExportButton")!;

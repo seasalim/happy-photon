@@ -130,7 +130,8 @@ public sealed class NavigatorViewportOverlayTests
                 "NavigatorViewportHalo",
                 ThemeVariant.Dark)
         };
-        var window = Show(overlay, 200, 132);
+        using var windowScope = Show(overlay, 200, 132);
+        var window = windowScope.Window!;
         try
         {
             AssertRect(new Rect(1, 0, 198, 132), overlay.ImageBounds);
@@ -167,7 +168,8 @@ public sealed class NavigatorViewportOverlayTests
         var viewer = new ZoomPanControl { Source = landscape };
         var publications = new List<Rect?>();
         viewer.VisibleRegionChanged += (_, region) => publications.Add(region);
-        var window = Show(viewer, 400, 300);
+        using var windowScope = Show(viewer, 400, 300);
+        var window = windowScope.Window!;
         try
         {
             viewer.ZoomLevel = viewer.GetFitZoomLevel();
@@ -219,10 +221,12 @@ public sealed class NavigatorViewportOverlayTests
         vm.IsDevelopMode = true;
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
         try
         {
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             Dispatcher.UIThread.RunJobs();
             var viewer = window.FindControl<DevelopViewerPane>(
                 "DevelopViewerPane")!.Viewer;
@@ -274,8 +278,7 @@ public sealed class NavigatorViewportOverlayTests
         finally
         {
             vm.PreviewImage = null;
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             Directory.Delete(root, recursive: true);
         }
     }
@@ -290,10 +293,12 @@ public sealed class NavigatorViewportOverlayTests
         vm.HasSelectedImage = true;
         vm.PreviewImage = bitmap;
         vm.IsDevelopMode = true;
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
         try
         {
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             Dispatcher.UIThread.RunJobs();
             var develop = window.FindControl<DevelopViewerPane>(
                 "DevelopViewerPane")!.Viewer;
@@ -370,8 +375,7 @@ public sealed class NavigatorViewportOverlayTests
         finally
         {
             vm.PreviewImage = null;
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             Directory.Delete(root, recursive: true);
         }
     }
@@ -397,7 +401,7 @@ public sealed class NavigatorViewportOverlayTests
             control.Bounds.Height / 2);
     }
 
-    private static Window Show(Control content, double width, double height)
+    private static TestUiScope Show(Control content, double width, double height)
     {
         var window = new Window
         {
@@ -405,9 +409,10 @@ public sealed class NavigatorViewportOverlayTests
             Height = height,
             Content = content
         };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        return window;
+        return new TestUiScope(window, afterShow: () =>
+        {
+            Dispatcher.UIThread.RunJobs();
+        });
     }
 
     private static Bitmap CreateBitmap(int width, int height)

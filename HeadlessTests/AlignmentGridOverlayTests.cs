@@ -31,7 +31,8 @@ public sealed class AlignmentGridOverlayTests
             Height = 180,
             Crop = new CropRegion()
         };
-        var window = Show(crop, 300, 180);
+        using var windowScope = Show(crop, 300, 180);
+        var window = windowScope.Window!;
         try
         {
             var cropCanvas = crop.FindControl<Canvas>("OverlayCanvas")!;
@@ -58,7 +59,8 @@ public sealed class AlignmentGridOverlayTests
             ZoomLevel = 0.5,
             ShowAlignmentGrid = true
         };
-        var window = Show(viewer, 500, 300);
+        using var windowScope = Show(viewer, 500, 300);
+        var window = windowScope.Window!;
         try
         {
             var imagePanel = viewer.FindControl<Panel>("ImagePanel")!;
@@ -95,7 +97,7 @@ public sealed class AlignmentGridOverlayTests
         }
     }
 
-    private static Window Show(Control content, double width, double height)
+    private static TestUiScope Show(Control content, double width, double height)
     {
         var window = new Window
         {
@@ -103,9 +105,7 @@ public sealed class AlignmentGridOverlayTests
             Height = height,
             Content = content
         };
-        window.Show();
-        Drain();
-        return window;
+        return new TestUiScope(window, afterShow: Drain);
     }
 
     private static void Drain()

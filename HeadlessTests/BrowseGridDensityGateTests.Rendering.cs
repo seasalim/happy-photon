@@ -45,7 +45,7 @@ public sealed partial class BrowseGridDensityGateTests
             DataContext = viewModel
         };
         var window = new Window { Width = 777, Height = 500, Content = grid };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try
@@ -160,7 +160,7 @@ public sealed partial class BrowseGridDensityGateTests
             ThumbnailSize = BrowseThumbnailSize.Medium
         };
         var window = new Window { Width = 900, Height = 600, Content = grid };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         // Simulate the Picked filter: swap the collection down to one image.
         var filtered = new ObservableCollection<ImageFile> { images[2] };

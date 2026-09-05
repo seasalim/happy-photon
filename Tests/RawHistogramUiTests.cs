@@ -71,7 +71,8 @@ public sealed class RawHistogramUiTests : IDisposable
     public void RawPresentation_HasNoLuminanceAndUsesSixteenDotBoundary()
     {
         var view = new HistogramView();
-        var window = Show(view);
+        using var windowScope = Show(view);
+        var window = windowScope.Window!;
         view.Histogram = RawHistogram(15);
         var canvas = view.FindControl<Canvas>("HistogramCanvas")!;
         var panel = view.FindControl<StackPanel>("RawClippingPanel")!;
@@ -93,7 +94,8 @@ public sealed class RawHistogramUiTests : IDisposable
     public void LitChannelWithTinyFraction_ShowsSubThresholdInsteadOfZero()
     {
         var view = new HistogramView();
-        var window = Show(view);
+        using var windowScope = Show(view);
+        var window = windowScope.Window!;
         var histogram = new HistogramData
         {
             Domain = HistogramDomain.RawSensor,
@@ -116,7 +118,8 @@ public sealed class RawHistogramUiTests : IDisposable
     public void DisplayPresentation_KeepsLuminanceAndNeverShowsRawDots()
     {
         var view = new HistogramView();
-        var window = Show(view);
+        using var windowScope = Show(view);
+        var window = windowScope.Window!;
         var display = new HistogramData();
         display.Red[128] = display.Green[128] = display.Blue[128] = 1;
         display.Luminance[128] = 1;
@@ -133,7 +136,7 @@ public sealed class RawHistogramUiTests : IDisposable
 
     public void Dispose() => _fx.Dispose();
 
-    private static Window Show(HistogramView view)
+    private static TestUiScope Show(HistogramView view)
     {
         var window = new Window
         {
@@ -141,8 +144,7 @@ public sealed class RawHistogramUiTests : IDisposable
             Height = 140,
             Content = view
         };
-        window.Show();
-        return window;
+        return new TestUiScope(window);
     }
 
     private static HistogramData RawHistogram(long redClipped)

@@ -114,10 +114,9 @@ public sealed partial class BrowseGridDensityGateTests
         var window = new MainWindow
         {
             Width = 1400,
-            Height = 800,
-            DataContext = viewModel
+            Height = 800
         };
-        window.Show();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel);
         Dispatcher.UIThread.RunJobs();
 
         try
@@ -153,8 +152,7 @@ public sealed partial class BrowseGridDensityGateTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 
@@ -203,7 +201,7 @@ public sealed partial class BrowseGridDensityGateTests
             Height = 500,
             Content = grid
         };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try
@@ -297,7 +295,7 @@ public sealed partial class BrowseGridDensityGateTests
             Height = 500,
             Content = grid
         };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try

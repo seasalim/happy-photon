@@ -25,7 +25,8 @@ public sealed partial class CursorAnchoredZoomTests
     {
         using var bitmap = CreateBitmap(1200, 950);
         var viewer = CreateViewer(bitmap);
-        var window = Show(viewer, 500, 400, renderScaling);
+        using var windowScope = Show(viewer, 500, 400, renderScaling);
+        var window = windowScope.Window!;
         try
         {
             var scroll = Scroll(viewer);
@@ -49,7 +50,8 @@ public sealed partial class CursorAnchoredZoomTests
     {
         using var bitmap = CreateBitmap(1600, 600);
         var viewer = CreateViewer(bitmap, assessment: true);
-        var window = Show(viewer, 600, 450);
+        using var windowScope = Show(viewer, 600, 450);
+        var window = windowScope.Window!;
         try
         {
             viewer.AutoFit = false;
@@ -82,7 +84,8 @@ public sealed partial class CursorAnchoredZoomTests
     {
         using var bitmap = CreateBitmap(1200, 900);
         var viewer = CreateViewer(bitmap, autoFit: false, zoomLevel: 0.75);
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var scroll = Scroll(viewer);
@@ -107,7 +110,8 @@ public sealed partial class CursorAnchoredZoomTests
     {
         using var bitmap = CreateBitmap(800, 600);
         var viewer = CreateViewer(bitmap, autoFit: false, zoomLevel: 1);
-        var window = Show(viewer, 400, 300);
+        using var windowScope = Show(viewer, 400, 300);
+        var window = windowScope.Window!;
         try
         {
             var scroll = Scroll(viewer);
@@ -148,7 +152,8 @@ public sealed partial class CursorAnchoredZoomTests
             bitmap,
             autoFit: false,
             zoomLevel: 5.0 / 1.1);
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var scroll = Scroll(viewer);
@@ -185,7 +190,8 @@ public sealed partial class CursorAnchoredZoomTests
         using var bitmap = CreateBitmap(1000, 800);
         var viewer = CreateViewer(bitmap, autoFit: false, zoomLevel: limit);
         viewer.OriginalViewPixelSize = new PixelSize(6000, 4800);
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var scroll = Scroll(viewer);
@@ -219,7 +225,8 @@ public sealed partial class CursorAnchoredZoomTests
         using var second = CreateBitmap(500, 400);
         var viewer = CreateViewer(first, autoFit: false, zoomLevel: 0.5);
         viewer.OriginalViewPixelSize = new PixelSize(2000, 1600);
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var scroll = Scroll(viewer);
@@ -252,7 +259,8 @@ public sealed partial class CursorAnchoredZoomTests
     {
         using var bitmap = CreateBitmap(1000, 800);
         var viewer = CreateViewer(source: null, autoFit: false, zoomLevel: 0.1);
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             window.MouseWheel(
@@ -298,13 +306,14 @@ public sealed partial class CursorAnchoredZoomTests
         var window = new MainWindow
         {
             Width = 900,
-            Height = 650,
-            DataContext = viewModel
+            Height = 650
         };
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel, show: false);
 
         try
         {
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             viewModel.IsFullScreenMode = true;
             Drain();
             var viewer = window.FindControl<ZoomPanControl>(
@@ -328,8 +337,7 @@ public sealed partial class CursorAnchoredZoomTests
         finally
         {
             viewModel.PreviewImage = null;
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             Directory.Delete(root, recursive: true);
         }
     }
@@ -360,27 +368,6 @@ public sealed partial class CursorAnchoredZoomTests
                 5);
         };
         return viewer;
-    }
-
-    private static Window Show(
-        Control content,
-        double width,
-        double height,
-        double renderScaling = 1)
-    {
-        var window = new Window
-        {
-            Width = width,
-            Height = height,
-            Content = content
-        };
-        window.Show();
-        if (renderScaling != 1)
-        {
-            window.SetRenderScaling(renderScaling);
-        }
-        Drain();
-        return window;
     }
 
     private static Point ViewportPoint(

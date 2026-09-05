@@ -80,11 +80,13 @@ public sealed class LoupeGateBaselineMeasurementTests(ITestOutputHelper output)
             loadMetadataAsync: _ => Task.CompletedTask);
         viewModel.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = viewModel };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel, show: false);
 
         try
         {
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             Drain();
             viewModel.SwitchToExportCommand.Execute(null);
             Drain();
@@ -151,8 +153,7 @@ public sealed class LoupeGateBaselineMeasurementTests(ITestOutputHelper output)
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 

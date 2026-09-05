@@ -46,8 +46,8 @@ public sealed class CloudSourceViewTests
         viewModel.SelectedImage = image;
         viewModel.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = viewModel };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel);
         try
         {
             Dispatcher.UIThread.RunJobs();
@@ -85,8 +85,7 @@ public sealed class CloudSourceViewTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await viewModel.DisposeAsync();
             catalog.Dispose();
             Directory.Delete(root, recursive: true);
@@ -116,7 +115,8 @@ public sealed class CloudSourceViewTests
                 SourceAvailability.RequiresHydration));
         viewModel.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = viewModel };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel, show: false);
         try
         {
             Dispatcher.UIThread.RunJobs();
@@ -143,8 +143,7 @@ public sealed class CloudSourceViewTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await viewModel.DisposeAsync();
             catalog.Dispose();
             Directory.Delete(root, recursive: true);
@@ -169,7 +168,8 @@ public sealed class CloudSourceViewTests
         var image = new ImageFile(Path.Combine(root, "unknown.jpg"));
         viewModel.Browse.SetImages([image]);
         viewModel.SelectedImage = image;
-        var window = new MainWindow { DataContext = viewModel };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel, show: false);
         try
         {
             Dispatcher.UIThread.RunJobs();
@@ -184,8 +184,7 @@ public sealed class CloudSourceViewTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await viewModel.DisposeAsync();
             catalog.Dispose();
             Directory.Delete(root, recursive: true);
@@ -226,8 +225,8 @@ public sealed class CloudSourceViewTests
         viewModel.SelectedImage = image;
         viewModel.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = viewModel };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel);
         try
         {
             Dispatcher.UIThread.RunJobs();
@@ -321,8 +320,7 @@ public sealed class CloudSourceViewTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await viewModel.DisposeAsync();
             catalog.Dispose();
             Directory.Delete(root, recursive: true);
@@ -351,7 +349,8 @@ public sealed class CloudSourceViewTests
         viewModel.Browse.SetImages([image]);
         viewModel.SelectedImage = image;
         viewModel.IsDevelopMode = true;
-        var window = new MainWindow { DataContext = viewModel };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel, show: false);
         try
         {
             var download = window.FindControl<Button>("DownloadAndOpenButton")!;
@@ -374,8 +373,7 @@ public sealed class CloudSourceViewTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await viewModel.DisposeAsync();
             catalog.Dispose();
             Directory.Delete(root, recursive: true);

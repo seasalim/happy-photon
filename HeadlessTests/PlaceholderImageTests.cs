@@ -34,7 +34,7 @@ public sealed class PlaceholderImageTests
         };
         var host = new Panel { Width = 800, Height = 600, Children = { placeholder } };
         var window = new Window { Width = 800, Height = 600, Content = host };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try

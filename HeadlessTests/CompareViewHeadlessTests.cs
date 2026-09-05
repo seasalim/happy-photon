@@ -38,8 +38,8 @@ public sealed partial class CompareViewHeadlessTests
         vm.Browse.SetImages(images);
         vm.SelectedImage = images[0];
         vm.ToggleImageSelection(images[0]);
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Drain();
 
         try
@@ -155,8 +155,7 @@ public sealed partial class CompareViewHeadlessTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 
@@ -183,8 +182,8 @@ public sealed partial class CompareViewHeadlessTests
         vm.Browse.SetImages(images);
         vm.SelectedImage = images[0];
         foreach (var image in images) vm.ToggleImageSelection(image);
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Drain();
 
         try
@@ -234,8 +233,7 @@ public sealed partial class CompareViewHeadlessTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 

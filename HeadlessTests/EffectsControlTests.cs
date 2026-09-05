@@ -31,7 +31,7 @@ public sealed class EffectsControlTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask);
         var panel = new DevelopEditPanel { DataContext = vm };
         var window = new Window { Width = 250, Height = 820, Content = panel };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         vm.IsDevelopMode = true;
         vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "photo.jpg"));
         Dispatcher.UIThread.RunJobs();
@@ -89,7 +89,7 @@ public sealed class EffectsControlTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask);
         var panel = new DevelopEditPanel { DataContext = vm };
         var window = new Window { Width = 250, Height = 1_800, Content = panel };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         vm.IsDevelopMode = true;
         vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "mixer-photo.jpg"));
         Dispatcher.UIThread.RunJobs();

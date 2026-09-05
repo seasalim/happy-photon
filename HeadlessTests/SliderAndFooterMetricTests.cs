@@ -30,11 +30,11 @@ public sealed class SliderAndFooterMetricTests
         var browse = new BrowseGridFooter { DataContext = vm };
         var browseHost = new StackPanel { Children = { browse } };
         var browseWindow = new Window { Width = 800, Height = 200, Content = browseHost };
-        browseWindow.Show();
+        using var browseWindowScope = new TestUiScope(browseWindow);
         Dispatcher.UIThread.RunJobs();
         var develop = new DevelopViewerPane { DataContext = vm };
         var developWindow = new Window { Width = 800, Height = 600, Content = develop };
-        developWindow.Show();
+        using var developWindowScope = new TestUiScope(developWindow);
         Dispatcher.UIThread.RunJobs();
 
         var browseSurface = browse.FindControl<Border>("BrowseFooterSurface")!;
@@ -59,7 +59,6 @@ public sealed class SliderAndFooterMetricTests
             "The split Develop groups exceed the measured 683px baseline.");
 
         browseWindow.Close();
-        developWindow.Close();
     }
 
     [AvaloniaFact]
@@ -75,7 +74,7 @@ public sealed class SliderAndFooterMetricTests
         vm.SelectedImage = new ImageFile(Path.Combine(root.Path, "image.dng"));
         var panel = new DevelopEditPanel { DataContext = vm };
         var window = new Window { Width = 260, Height = 700, Content = panel };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         var chips = panel.GetVisualDescendants().OfType<Border>()
@@ -108,7 +107,6 @@ public sealed class SliderAndFooterMetricTests
                 .Select(text => text.Text!)
                 .ToArray());
 
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -131,7 +129,7 @@ public sealed class SliderAndFooterMetricTests
             }
         };
         var window = new Window { Width = 900, Height = 2200, Content = content };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try
@@ -164,14 +162,13 @@ public sealed class SliderAndFooterMetricTests
         const string fullLabel = "A deliberately over-long slider label";
         var slider = new CompactSlider { Label = fullLabel, Width = 260 };
         var window = new Window { Content = slider };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         var label = slider.FindControl<TextBlock>("LabelText")!;
         Assert.True(IntrinsicWidth(label) > label.Bounds.Width);
         Assert.Equal(TextTrimming.CharacterEllipsis, label.TextTrimming);
         Assert.Equal(fullLabel, ToolTip.GetTip(label));
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -194,7 +191,7 @@ public sealed class SliderAndFooterMetricTests
             Images = vm.Browse.VisibleImages
         };
         var window = new Window { Width = 900, Height = 700, Content = browse };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         var pairsButton = browse.FindControl<Button>("PairsButton")!;

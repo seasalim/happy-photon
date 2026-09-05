@@ -28,7 +28,7 @@ public sealed class ManualFolderRefreshViewTests
             SelectedFolder = selected
         };
         var window = new Window { Content = panel };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var row = Assert.Single(panel.GetVisualDescendants().OfType<Border>(),
             border => ReferenceEquals(border.DataContext, clicked) &&
@@ -46,7 +46,6 @@ public sealed class ManualFolderRefreshViewTests
         Assert.Same(selected, panel.SelectedFolder);
         Assert.DoesNotContain(row.ContextMenu.Items.OfType<MenuItem>(),
             candidate => candidate.Header?.ToString()?.Contains("Delete") == true);
-        window.Close();
     }
 
     [AvaloniaFact]

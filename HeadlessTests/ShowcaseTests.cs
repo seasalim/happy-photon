@@ -35,19 +35,20 @@ public sealed class ShowcaseTests
             .ToArray());
         viewModel.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = viewModel };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel, show: false);
 
         try
         {
             ShowcaseTestHelper.Capture(
                 "browse-grid-rest",
-                window,
+                windowScope,
                 DevelopSize,
                 ThemeVariant.Dark);
         }
         finally
         {
-            window.DataContext = null;
+            windowScope.Dispose();
         }
     }
 
@@ -85,13 +86,14 @@ public sealed class ShowcaseTests
         viewModel.SelectedImage = image;
         await TestWaits.UntilAsync(() => viewModel.IsHistoryLoaded);
         viewModel.PreviewImage = bitmap;
-        var window = new MainWindow { DataContext = viewModel };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel, show: false);
 
         try
         {
             ShowcaseTestHelper.Capture(
                 scene,
-                window,
+                windowScope,
                 DevelopSize,
                 ThemeVariant.Dark,
                 stagedWindow =>
@@ -114,7 +116,7 @@ public sealed class ShowcaseTests
         finally
         {
             viewModel.PreviewImage = null;
-            window.DataContext = null;
+            windowScope.Dispose();
         }
     }
 
@@ -152,13 +154,14 @@ public sealed class ShowcaseTests
         viewModel.SetRootFolder(browseRoot, selectRoot: false);
         viewModel.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = viewModel };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel, show: false);
 
         try
         {
             ShowcaseTestHelper.Capture(
                 scene,
-                window,
+                windowScope,
                 DevelopSize,
                 ThemeVariant.Dark,
                 hover ? (Action<Window>)(stagedWindow =>
@@ -174,7 +177,7 @@ public sealed class ShowcaseTests
         }
         finally
         {
-            window.DataContext = null;
+            windowScope.Dispose();
         }
     }
 
@@ -231,12 +234,13 @@ public sealed class ShowcaseTests
         viewModel.IsDevelopMode = true;
         viewModel.PreviewImage = bitmap;
         viewModel.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = viewModel };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, viewModel, show: false);
 
         try
         {
             ShowcaseTestHelper.Capture(
-                scene, window, DevelopSize, theme,
+                scene, windowScope, DevelopSize, theme,
                 stagedWindow =>
                 {
                     viewModel.PreviewImage = bitmap;
@@ -252,7 +256,7 @@ public sealed class ShowcaseTests
         finally
         {
             viewModel.PreviewImage = null;
-            window.DataContext = null;
+            windowScope.Dispose();
         }
     }
 

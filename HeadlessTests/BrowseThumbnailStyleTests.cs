@@ -24,7 +24,7 @@ public sealed class BrowseThumbnailStyleTests
             Images = new ObservableCollection<ImageFile> { image }
         };
         var window = new Window { Content = control };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         var tile = Assert.Single(
@@ -42,6 +42,5 @@ public sealed class BrowseThumbnailStyleTests
         Assert.Equal(0d, badge.Opacity);
         Assert.NotNull(badge.Transitions);
 
-        window.Close();
     }
 }

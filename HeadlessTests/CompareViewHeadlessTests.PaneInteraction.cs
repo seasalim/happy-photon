@@ -63,10 +63,9 @@ public sealed partial class CompareViewHeadlessTests
         var window = new MainWindow
         {
             Width = 1100,
-            Height = 720,
-            DataContext = vm
+            Height = 720
         };
-        window.Show();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Drain();
 
         try
@@ -189,8 +188,7 @@ public sealed partial class CompareViewHeadlessTests
                 pane.PreviewResolutionBitmap = null;
                 pane.Preview = null;
             }
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 
@@ -330,8 +328,8 @@ public sealed partial class CompareViewHeadlessTests
         vm.Browse.SetImages(images);
         vm.SelectedImage = images[0];
         foreach (var image in images) vm.ToggleImageSelection(image);
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Drain();
 
         try
@@ -360,8 +358,7 @@ public sealed partial class CompareViewHeadlessTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 
@@ -387,8 +384,8 @@ public sealed partial class CompareViewHeadlessTests
         vm.Browse.SetImages(images);
         vm.SelectedImage = images[0];
         foreach (var image in images) vm.ToggleImageSelection(image);
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Drain();
 
         try
@@ -422,8 +419,7 @@ public sealed partial class CompareViewHeadlessTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 

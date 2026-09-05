@@ -27,7 +27,7 @@ public sealed class WaveformScopeUiTests : IDisposable
         };
         var panel = new DevelopEditPanel { DataContext = vm };
         var window = new Window { Width = 250, Height = 660, Content = panel };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var scopeSelector = panel.FindControl<ScopeSelectorRow>("ScopeSelector")!;
         var buttons = new[]
@@ -50,7 +50,6 @@ public sealed class WaveformScopeUiTests : IDisposable
             observed);
 
         window.DataContext = null;
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -70,7 +69,7 @@ public sealed class WaveformScopeUiTests : IDisposable
         };
         var panel = new DevelopEditPanel { DataContext = vm };
         var window = new Window { Width = 250, Height = 660, Content = panel };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var scopeSelector = panel.FindControl<ScopeSelectorRow>("ScopeSelector")!;
         var title = scopeSelector.FindControl<TextBlock>("ScopeTitle")!;
@@ -131,7 +130,7 @@ public sealed class WaveformScopeUiTests : IDisposable
         var vm = new MainWindowViewModel(catalog);
         var pane = new BrowseReviewPane { DataContext = vm };
         var window = new Window { Width = 250, Height = 660, Content = pane };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(

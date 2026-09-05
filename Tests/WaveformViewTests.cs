@@ -19,11 +19,11 @@ public sealed class WaveformViewTests
     [AvaloniaFact]
     public void Bitmap_IsReusedRepaintedForThemeAndDisposedOnDetach()
     {
-        Application.Current!.RequestedThemeVariant =
-            Avalonia.Styling.ThemeVariant.Dark;
+        using var themeScope = new TestUiScope(
+            theme: Avalonia.Styling.ThemeVariant.Dark);
         var view = new WaveformView { Waveform = FilledWaveform(level: 64) };
         var window = new Window { Width = 256, Height = 80, Content = view };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var bitmap = Assert.IsType<Avalonia.Media.Imaging.WriteableBitmap>(
             view.BitmapForTesting);
@@ -54,7 +54,8 @@ public sealed class WaveformViewTests
         Assert.True(repaintAllocation < 4096);
         Assert.Same(bitmap, view.BitmapForTesting);
 
-        Application.Current.RequestedThemeVariant = HappyPhotonThemes.MidGray;
+        // test-teardown-policy: allow - themeScope restores the prior variant.
+        Application.Current!.RequestedThemeVariant = HappyPhotonThemes.MidGray;
         Dispatcher.UIThread.RunJobs();
         Assert.Same(bitmap, view.BitmapForTesting);
         Assert.Equal(
@@ -64,8 +65,6 @@ public sealed class WaveformViewTests
         window.Close();
         Assert.Null(view.BitmapForTesting);
         Assert.Throws<ObjectDisposedException>(() => _ = bitmap.PixelSize);
-        Application.Current.RequestedThemeVariant =
-            Avalonia.Styling.ThemeVariant.Dark;
     }
 
     [AvaloniaTheory]

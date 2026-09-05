@@ -249,10 +249,10 @@ public sealed class RawJpegOneCaptureHeadlessTests
             image.FileName == "capture.jpg");
         vm.IsDevelopMode = true;
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        return new WindowContext(root, catalog, vm, window);
+        var window = new MainWindow();
+        var windowScope = TestUiScope.ForMainWindow(window, vm,
+            afterShow: () => Dispatcher.UIThread.RunJobs());
+        return new WindowContext(root, catalog, vm, window, windowScope);
     }
 
     private static MainWindowViewModel CreateViewModel(
@@ -289,7 +289,7 @@ public sealed class RawJpegOneCaptureHeadlessTests
         TemporaryDirectory root,
         CatalogService catalog,
         MainWindowViewModel viewModel,
-        MainWindow window) : IAsyncDisposable
+        MainWindow window, TestUiScope scope) : IAsyncDisposable
     {
         public CatalogService Catalog => catalog;
 
@@ -301,8 +301,7 @@ public sealed class RawJpegOneCaptureHeadlessTests
 
         public async ValueTask DisposeAsync()
         {
-            window.DataContext = null;
-            window.Close();
+            scope.Dispose();
             await viewModel.DisposeAsync();
             catalog.Dispose();
             root.Dispose();

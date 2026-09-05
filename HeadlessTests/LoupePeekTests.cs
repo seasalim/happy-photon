@@ -30,7 +30,8 @@ public sealed partial class LoupePeekTests
         var requiredBounds = new List<int>();
         viewer.RequiredDeviceLongEdgeChanged +=
             (_, bound) => requiredBounds.Add(bound);
-        var window = Show(viewer, 500, 400, renderScaling);
+        using var windowScope = Show(viewer, 500, 400, renderScaling);
+        var window = windowScope.Window!;
         try
         {
             var scroll = Scroll(viewer);
@@ -83,7 +84,8 @@ public sealed partial class LoupePeekTests
         var clock = new TestTimeProvider();
         using var bitmap = CreateBitmap(1200, 900);
         var viewer = CreateViewer(clock, bitmap, new object());
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var image = Image(viewer);
@@ -123,7 +125,8 @@ public sealed partial class LoupePeekTests
         if (state == "at-one-to-one" || state == "zoomed") viewer.AutoFit = false;
         if (state == "at-one-to-one") viewer.ZoomLevel = 1;
         if (state == "zoomed") viewer.ZoomLevel = 1.25;
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var pointer = Center(viewer, window);
@@ -154,7 +157,8 @@ public sealed partial class LoupePeekTests
             (_, e) => pointerDevice = e.Pointer,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var image = Image(viewer);
@@ -194,7 +198,8 @@ public sealed partial class LoupePeekTests
         var clock = new TestTimeProvider();
         using var bitmap = CreateBitmap(1200, 900);
         var viewer = CreateViewer(clock, bitmap, new object());
-        var window = Show(viewer, 500, 400);
+        using var windowScope = Show(viewer, 500, 400);
+        var window = windowScope.Window!;
         try
         {
             var pointer = Center(viewer, window);
@@ -235,10 +240,12 @@ public sealed partial class LoupePeekTests
         vm.IsDevelopMode = true;
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
         try
         {
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             Drain();
             vm.PreviewImage = bitmap;
             vm.OriginalViewPixelSize = bitmap.PixelSize;
@@ -312,8 +319,7 @@ public sealed partial class LoupePeekTests
         finally
         {
             vm.PreviewImage = null;
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             Directory.Delete(root, recursive: true);
         }
     }
@@ -344,20 +350,21 @@ public sealed partial class LoupePeekTests
         return viewer;
     }
 
-    private static Window Show(
+    private static TestUiScope Show(
         Control content,
         double width,
         double height,
         double renderScaling = 1)
     {
         var window = new Window { Width = width, Height = height, Content = content };
-        window.Show();
-        if (renderScaling != 1)
+        return new TestUiScope(window, afterShow: () =>
         {
-            window.SetRenderScaling(renderScaling);
-        }
-        Drain();
-        return window;
+            if (renderScaling != 1)
+            {
+                window.SetRenderScaling(renderScaling);
+            }
+            Drain();
+        });
     }
 
     private static void Engage(Window window, TestTimeProvider clock, Point point)

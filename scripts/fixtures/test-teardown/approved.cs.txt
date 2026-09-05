@@ -1,0 +1,19 @@
+using var scope = new TestUiScope(window, ThemeVariant.Dark);
+// test-teardown-policy: allow - scope restores prior theme after this live switch.
+application.RequestedThemeVariant = HappyPhotonThemes.MidGray;
+
+try
+{
+    // test-teardown-policy: allow - enclosing try/finally closes the owned window.
+    dialog.Show(owner);
+}
+finally
+{
+    dialog.Close();
+}
+
+var mainWindow = new MainWindow();
+using var mainScope = TestUiScope.ForMainWindow(mainWindow, vm, show: false);
+mainScope.Show();
+// test-teardown-policy: allow - never shown or bound; placement-only construction.
+var placement = new MainWindow();

@@ -28,7 +28,7 @@ public sealed class DetailAndClippingControlTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask);
         var panel = new DevelopEditPanel { DataContext = vm };
         var window = new Window { Width = 250, Height = 660, Content = panel };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var detail = panel.FindControl<DetailEditGroup>("DetailEditGroup")!;
         var luminanceNr = detail.FindControl<CompactSlider>(
@@ -66,7 +66,7 @@ public sealed class DetailAndClippingControlTests : IDisposable
                 IsHighAvailable: true)
         };
         var window = new Window { Width = 250, Height = 100, Content = histogram };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var high = histogram.FindControl<Border>(
             "SceneHighlightTriangleTarget")!;
@@ -118,7 +118,6 @@ public sealed class DetailAndClippingControlTests : IDisposable
         Assert.True(histogram.FindControl<Grid>(
             "DisplayClippingIndicators")!.IsVisible);
 
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -146,7 +145,7 @@ public sealed class DetailAndClippingControlTests : IDisposable
             IsClippingOverlayLatched = true
         };
         var window = new Window { Width = 200, Height = 120, Content = viewer };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var overlay = viewer.FindControl<ClippingOverlayControl>(
             "ClippingOverlay")!;
@@ -191,7 +190,6 @@ public sealed class DetailAndClippingControlTests : IDisposable
         Assert.Same(viewportLayer, status.Parent);
         Assert.DoesNotContain(status, imagePanel.GetLogicalDescendants());
 
-        window.Close();
     }
 
     private static byte Premultiply(byte channel) => (byte)Math.Round(

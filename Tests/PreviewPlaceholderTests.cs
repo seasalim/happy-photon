@@ -32,8 +32,8 @@ public sealed class PreviewPlaceholderTests
             catalog,
             new NullBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask);
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
 
         vm.WorkspaceMode = WorkspaceMode.Export;
         Dispatcher.UIThread.RunJobs();
@@ -48,8 +48,7 @@ public sealed class PreviewPlaceholderTests
         Assert.True(emptyState.IsVisible);
         Assert.False(caption.IsVisible);
 
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
     }
 
     [AvaloniaFact]
@@ -67,8 +66,8 @@ public sealed class PreviewPlaceholderTests
         vm.Browse.ToggleSelection(image);
         vm.SelectedImage = image;
         vm.WorkflowTourStep = WorkflowTourStep.ChooseWhatMatters;
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
 
         vm.SwitchToExportCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
@@ -116,8 +115,7 @@ public sealed class PreviewPlaceholderTests
         Assert.Equal(ExportFormat.Tiff, vm.ExportSettings.Format);
         Assert.False(quality.IsEnabled);
 
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
     }
 
     [AvaloniaFact]
@@ -172,8 +170,8 @@ public sealed class PreviewPlaceholderTests
         vm.Browse.SetImages(images);
         vm.SelectedImage = images[0];
         vm.IsDevelopMode = true;
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Dispatcher.UIThread.RunJobs();
 
         var panel = window.FindControl<DevelopEditPanel>("DevelopEditPanel")!;
@@ -208,8 +206,7 @@ public sealed class PreviewPlaceholderTests
         Dispatcher.UIThread.RunJobs();
         Assert.False(fullScreen.IsEffectivelyEnabled);
 
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
     }
 
     [AvaloniaFact]
@@ -229,10 +226,9 @@ public sealed class PreviewPlaceholderTests
         var clock = new TestTimeProvider();
         var window = new MainWindow
         {
-            DataContext = vm,
             FullScreenExitTimeProvider = clock
         };
-        window.Show();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         vm.ToggleFullScreenCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
         var chip = window.FindControl<Button>("FullScreenExitButton")!;
@@ -277,8 +273,7 @@ public sealed class PreviewPlaceholderTests
         window.MouseMove(new Point(40, 40), RawInputModifiers.None);
         Dispatcher.UIThread.RunJobs();
         Assert.True(window.IsFullScreenExitTimerActive);
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
         Assert.False(window.IsFullScreenExitTimerActive);
     }
 
@@ -296,10 +291,8 @@ public sealed class PreviewPlaceholderTests
         var storedRaw = new ImageFile(
             Path.Combine(catalog.CatalogPath, "missing.dng"));
         vm.SelectedImage = storedRaw;
-        var window = new MainWindow
-        {
-            DataContext = vm
-        };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
         var placeholder = new Bitmap(
             Path.Combine(GoldenTestPaths.AssetDirectory, "srgb-reference.jpg"));
         var replacementPlaceholder = new Bitmap(
@@ -429,12 +422,12 @@ public sealed class PreviewPlaceholderTests
         Assert.False(fullScreenSelectionBadge.IsVisible);
 
         vm.PreviewImage = null;
-        window.DataContext = null;
+        windowScope.Dispose();
         vm.Browse.ReplaceThumbnail(image, null);
         Dispatcher.UIThread.RunJobs();
         Assert.Throws<ObjectDisposedException>(
             () => _ = replacementPlaceholder.PixelSize);
-        window.Close();
+        windowScope.Dispose();
         await vm.DisposeAsync();
     }
 }

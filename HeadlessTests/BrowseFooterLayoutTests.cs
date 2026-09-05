@@ -39,10 +39,9 @@ public sealed class BrowseFooterLayoutTests
         var window = new MainWindow
         {
             Width = 1400,
-            Height = 700,
-            DataContext = vm
+            Height = 700
         };
-        window.Show();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Drain();
 
         try
@@ -81,8 +80,7 @@ public sealed class BrowseFooterLayoutTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 

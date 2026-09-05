@@ -28,7 +28,7 @@ public sealed class BackgroundActivityStatusBarTests
         {
             Content = new StackPanel { Children = { queue, view } }
         };
-        host.Show();
+        using var hostScope = new TestUiScope(host);
         var segment = view.FindControl<StackPanel>("BackgroundActivitySegment")!;
         var dot = view.FindControl<Ellipse>("BackgroundActivityDot")!;
         var label = view.FindControl<TextBlock>("BackgroundActivityLabel")!;

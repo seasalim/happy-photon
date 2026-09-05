@@ -62,7 +62,7 @@ public sealed class MonochromeRawUiTests : IDisposable
             Height = 660,
             Content = panel
         };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         panel.Measure(new Size(250, 660));
         panel.Arrange(new Rect(0, 0, 250, 660));
 

@@ -45,8 +45,8 @@ public sealed class ShortcutReachabilityTests
         vm.Browse.SetImages(images);
         vm.SelectedImage = images[0];
         vm.ToggleImageSelection(images[0]);
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Dispatcher.UIThread.RunJobs();
 
         try
@@ -74,8 +74,7 @@ public sealed class ShortcutReachabilityTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 

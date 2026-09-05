@@ -7,6 +7,7 @@ using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
 using Xunit;
+using Xunit.Sdk;
 
 namespace HappyPhoton.Tests;
 
@@ -17,24 +18,25 @@ public sealed class ImportCatalogDialogTests
     {
         using var flow = CreateCompletedFlow();
         var dialog = new ImportCatalogDialog(flow, "source.lrcat");
-        dialog.Show();
-        await WaitForAsync(() => flow.CanApply);
-        Dispatcher.UIThread.RunJobs();
+        await WithDialogAsync(dialog, flow, async () =>
+        {
+            await WaitForAsync(() => flow.CanApply);
+            Dispatcher.UIThread.RunJobs();
 
-        Assert.Null(dialog.FindControl<Button>("PreviewButton"));
-        Assert.False(dialog.FindControl<CheckBox>("CropImportCheckBox")!.IsChecked);
-        Assert.Equal("WHAT WILL CHANGE",
-            dialog.FindControl<TextBlock>("ReportSectionLabel")!.Text);
-        Assert.Contains("Crops — 2 to import · 3 already match · 4 unsupported (left unchanged)",
-            dialog.FindControl<TextBlock>("OutcomeText")!.Text);
-        var apply = dialog.FindControl<Button>("ApplyButton")!;
-        apply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        await WaitForAsync(() => flow.IsApplied);
-        Dispatcher.UIThread.RunJobs();
+            Assert.Null(dialog.FindControl<Button>("PreviewButton"));
+            Assert.False(dialog.FindControl<CheckBox>("CropImportCheckBox")!.IsChecked);
+            Assert.Equal("WHAT WILL CHANGE",
+                dialog.FindControl<TextBlock>("ReportSectionLabel")!.Text);
+            Assert.Contains("Crops — 2 to import · 3 already match · 4 unsupported (left unchanged)",
+                dialog.FindControl<TextBlock>("OutcomeText")!.Text);
+            var apply = dialog.FindControl<Button>("ApplyButton")!;
+            apply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await WaitForAsync(() => flow.IsApplied);
+            Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("WHAT CHANGED",
-            dialog.FindControl<TextBlock>("ReportSectionLabel")!.Text);
-        dialog.Close();
+            Assert.Equal("WHAT CHANGED",
+                dialog.FindControl<TextBlock>("ReportSectionLabel")!.Text);
+        });
     }
 
     [AvaloniaFact]
@@ -44,18 +46,19 @@ public sealed class ImportCatalogDialogTests
         using (flow)
         {
             var dialog = new ImportCatalogDialog(flow, "source.lrcat");
-            dialog.Show();
-            var token = await tokenTask;
-            Dispatcher.UIThread.RunJobs();
+            await WithDialogAsync(dialog, flow, async () =>
+            {
+                var token = await tokenTask;
+                Dispatcher.UIThread.RunJobs();
 
-            dialog.FindControl<Button>("CancelButton")!
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            await WaitForAsync(() => !flow.HasInFlightOperation);
-            Dispatcher.UIThread.RunJobs();
+                dialog.FindControl<Button>("CancelButton")!
+                    .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await WaitForAsync(() => !flow.HasInFlightOperation);
+                Dispatcher.UIThread.RunJobs();
 
-            Assert.True(token.IsCancellationRequested);
-            Assert.True(dialog.IsVisible);
-            dialog.Close();
+                Assert.True(token.IsCancellationRequested);
+                Assert.True(dialog.IsVisible);
+            });
         }
     }
 
@@ -66,18 +69,61 @@ public sealed class ImportCatalogDialogTests
         using (flow)
         {
             var dialog = new ImportCatalogDialog(flow, "source.lrcat");
-            dialog.Show();
-            var token = await tokenTask;
-            Dispatcher.UIThread.RunJobs();
+            await WithDialogAsync(dialog, flow, async () =>
+            {
+                var token = await tokenTask;
+                Dispatcher.UIThread.RunJobs();
 
-            dialog.Close();
-            Assert.True(dialog.IsVisible);
+                dialog.Close();
+                Assert.True(dialog.IsVisible);
+                Assert.True(token.IsCancellationRequested);
+                await WaitForAsync(() => !flow.HasInFlightOperation);
+                Dispatcher.UIThread.RunJobs();
+
+                dialog.Close();
+                Assert.False(dialog.IsVisible);
+            });
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task AssertionFailureDuringCheck_CancelsCompletesAndClosesDialog()
+    {
+        var (flow, tokenTask) = CreateBlockedFlow();
+        using (flow)
+        {
+            var dialog = new ImportCatalogDialog(flow, "source.lrcat");
+            CancellationToken token = default;
+            var exception = await Record.ExceptionAsync(() =>
+                WithDialogAsync(dialog, flow, async () =>
+                {
+                    token = await tokenTask.WaitAsync(TestWaits.Condition);
+                    Assert.True(flow.HasInFlightOperation);
+                    Assert.True(dialog.IsVisible);
+                    Assert.Fail("Injected mid-operation assertion failure");
+                }));
+
+            Assert.IsType<FailException>(exception);
             Assert.True(token.IsCancellationRequested);
-            await WaitForAsync(() => !flow.HasInFlightOperation);
-            Dispatcher.UIThread.RunJobs();
-
-            dialog.Close();
+            Assert.False(flow.HasInFlightOperation);
             Assert.False(dialog.IsVisible);
+        }
+    }
+
+    private static async Task WithDialogAsync(
+        ImportCatalogDialog dialog, CatalogImportFlowViewModel flow, Func<Task> body)
+    {
+        try
+        {
+            // test-teardown-policy: allow - WithDialogAsync finally cancels, waits, then closes.
+            dialog.Show();
+            await body();
+        }
+        finally
+        {
+            flow.CancelCurrentOperation();
+            await WaitForAsync(() => !flow.HasInFlightOperation);
+            dialog.Close();
         }
     }
 

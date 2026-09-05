@@ -26,12 +26,13 @@ public sealed class ThemeLiveSwitchTests
         MemberType = typeof(ThemeResourceTests))]
     public void CheckedCheckbox_UsesCompactHighContrastBox(ThemeVariant variant)
     {
-        Application.Current!.RequestedThemeVariant = variant;
+        using var themeScope = new TestUiScope(theme: variant);
         var checkBox = new CheckBox { IsChecked = true };
         var window = new Window { Content = checkBox };
 
         try
         {
+            // test-teardown-policy: allow - enclosing try/finally closes window.
             window.Show();
             Dispatcher.UIThread.RunJobs();
             var box = Assert.Single(
@@ -53,7 +54,6 @@ public sealed class ThemeLiveSwitchTests
         }
         finally
         {
-            Application.Current.RequestedThemeVariant = ThemeVariant.Dark;
             window.Close();
         }
     }
@@ -79,7 +79,9 @@ public sealed class ThemeLiveSwitchTests
         vm.SelectedImage = image;
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
 
-        var window = new MainWindow { DataContext = vm };
+        using var themeScope = new TestUiScope(theme: ThemeVariant.Dark);
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
         var originalWindow = window;
         SettingsDialog? settingsDialog = null;
         var persistCount = 0;
@@ -91,10 +93,11 @@ public sealed class ThemeLiveSwitchTests
 
         try
         {
-            Application.Current!.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             Dispatcher.UIThread.RunJobs();
             settingsDialog = new SettingsDialog();
+            // test-teardown-policy: allow - enclosing try/finally closes settingsDialog.
             settingsDialog.Show(window);
             Dispatcher.UIThread.RunJobs();
 
@@ -179,7 +182,7 @@ public sealed class ThemeLiveSwitchTests
                 ColorOf(thumbnail.BorderBrush) == Color.Parse("#bbbbbb"));
 
             Assert.Same(originalWindow, window);
-            Assert.Equal(HappyPhotonThemes.MidGray, Application.Current.RequestedThemeVariant);
+            Assert.Equal(HappyPhotonThemes.MidGray, Application.Current!.RequestedThemeVariant);
             Assert.Equal(AppTheme.MidGray, vm.AppTheme);
             Assert.True(vm.IsMidGrayTheme);
             Assert.False(vm.IsDarkTheme);
@@ -241,10 +244,8 @@ public sealed class ThemeLiveSwitchTests
         }
         finally
         {
-            Application.Current!.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
             settingsDialog?.Close();
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await vm.DisposeAsync();
             Directory.Delete(root, recursive: true);
         }
@@ -269,21 +270,22 @@ public sealed class ThemeLiveSwitchTests
             panel.Children.Add(control);
         }
 
+        using var themeScope = new TestUiScope(theme: ThemeVariant.Dark);
         var window = new Window { Content = panel };
         try
         {
-            Application.Current!.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
+            // test-teardown-policy: allow - enclosing try/finally closes window.
             window.Show();
             Dispatcher.UIThread.RunJobs();
             AssertDisabledControls(controls, Avalonia.Styling.ThemeVariant.Dark);
 
-            Application.Current.RequestedThemeVariant = HappyPhotonThemes.MidGray;
+            // test-teardown-policy: allow - themeScope restores the prior variant.
+            Application.Current!.RequestedThemeVariant = HappyPhotonThemes.MidGray;
             Dispatcher.UIThread.RunJobs();
             AssertDisabledControls(controls, HappyPhotonThemes.MidGray);
         }
         finally
         {
-            Application.Current!.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
             window.Close();
         }
     }

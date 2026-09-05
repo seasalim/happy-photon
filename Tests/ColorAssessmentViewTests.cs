@@ -23,7 +23,8 @@ public sealed class ColorAssessmentViewTests
     {
         using var bitmap = LoadBitmap();
         var viewer = new ZoomPanControl { Source = bitmap };
-        var window = Show(viewer, 800, 600);
+        using var windowScope = Show(viewer, 800, 600);
+        var window = windowScope.Window!;
         try
         {
             var scroll = viewer.FindControl<ScrollViewer>("ScrollViewer")!;
@@ -60,7 +61,8 @@ public sealed class ColorAssessmentViewTests
             IsWhiteBalancePicking = true,
             IsColorAssessment = true
         };
-        var window = Show(viewer, 1000, 800);
+        using var windowScope = Show(viewer, 1000, 800);
+        var window = windowScope.Window!;
         try
         {
             var scroll = viewer.FindControl<ScrollViewer>("ScrollViewer")!;
@@ -103,7 +105,8 @@ public sealed class ColorAssessmentViewTests
         {
             IsColorAssessment = true
         };
-        var window = Show(viewer, 800, 600);
+        using var windowScope = Show(viewer, 800, 600);
+        var window = windowScope.Window!;
         try
         {
             var surround = viewer.FindControl<Panel>("SurroundLayer")!;
@@ -125,14 +128,15 @@ public sealed class ColorAssessmentViewTests
     public void LiveThemeSwitch_PreservesReferenceBrushInstances()
     {
         var application = Application.Current!;
-        application.RequestedThemeVariant = ThemeVariant.Dark;
+        using var themeScope = new TestUiScope(theme: ThemeVariant.Dark);
         using var bitmap = LoadBitmap();
         var viewer = new ZoomPanControl
         {
             Source = bitmap,
             IsColorAssessment = true
         };
-        var window = Show(viewer, 800, 600);
+        using var windowScope = Show(viewer, 800, 600);
+        var window = windowScope.Window!;
         try
         {
             var surround = viewer.FindControl<Panel>("SurroundLayer")!;
@@ -147,6 +151,7 @@ public sealed class ColorAssessmentViewTests
             Assert.Same(gray, surround.Background);
             Assert.Same(white, mat.Background);
 
+            // test-teardown-policy: allow - themeScope restores the prior variant.
             application.RequestedThemeVariant = HappyPhotonThemes.MidGray;
             Dispatcher.UIThread.RunJobs();
 
@@ -165,7 +170,6 @@ public sealed class ColorAssessmentViewTests
         }
         finally
         {
-            application.RequestedThemeVariant = ThemeVariant.Dark;
             window.Close();
         }
     }
@@ -183,7 +187,8 @@ public sealed class ColorAssessmentViewTests
             ZoomLevel = 2,
             ScrollBarVisibility = scrollBarVisibility
         };
-        var window = Show(viewer, 400, 300);
+        using var windowScope = Show(viewer, 400, 300);
+        var window = windowScope.Window!;
         try
         {
             var scroll = viewer.FindControl<ScrollViewer>("ScrollViewer")!;
@@ -223,10 +228,12 @@ public sealed class ColorAssessmentViewTests
         vm.PreviewImage = bitmap;
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
         try
         {
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             Dispatcher.UIThread.RunJobs();
             var pane = window.FindControl<DevelopViewerPane>(
                 "DevelopViewerPane")!;
@@ -261,8 +268,7 @@ public sealed class ColorAssessmentViewTests
         finally
         {
             vm.PreviewImage = null;
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             Directory.Delete(root, recursive: true);
         }
     }
@@ -277,10 +283,12 @@ public sealed class ColorAssessmentViewTests
         vm.SelectedImage = new ImageFile(Path.Combine(root, "photo.jpg"));
         vm.IsDevelopMode = true;
         vm.PreviewImage = bitmap;
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
         try
         {
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             Dispatcher.UIThread.RunJobs();
             var develop = window.FindControl<DevelopViewerPane>(
                 "DevelopViewerPane")!.Viewer;
@@ -301,8 +309,7 @@ public sealed class ColorAssessmentViewTests
         finally
         {
             vm.PreviewImage = null;
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             Directory.Delete(root, recursive: true);
         }
     }
@@ -344,7 +351,7 @@ public sealed class ColorAssessmentViewTests
             BindingFlags.Instance | BindingFlags.NonPublic)!
         .Invoke(window, [sender, value]);
 
-    private static Window Show(Control content, double width, double height)
+    private static TestUiScope Show(Control content, double width, double height)
     {
         var window = new Window
         {
@@ -352,9 +359,10 @@ public sealed class ColorAssessmentViewTests
             Height = height,
             Content = content
         };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        return window;
+        return new TestUiScope(window, afterShow: () =>
+        {
+            Dispatcher.UIThread.RunJobs();
+        });
     }
 
     private static Bitmap LoadBitmap() => new(Path.Combine(

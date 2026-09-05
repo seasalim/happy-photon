@@ -24,7 +24,8 @@ public sealed class CurveChannelControlTests : IDisposable
         await catalog.InitializeAsync();
         await using var viewModel = CreateViewModel(catalog);
         var panel = new DevelopEditPanel { DataContext = viewModel };
-        var window = ShowPanel(panel);
+        using var windowScope = ShowPanel(panel);
+        var window = windowScope.Window!;
         var image = new ImageFile(Path.Combine(_root.Path, "channels.jpg"));
 
         try
@@ -76,7 +77,8 @@ public sealed class CurveChannelControlTests : IDisposable
         await catalog.InitializeAsync();
         await using var viewModel = CreateViewModel(catalog);
         var panel = new DevelopEditPanel { DataContext = viewModel };
-        var window = ShowPanel(panel);
+        using var windowScope = ShowPanel(panel);
+        var window = windowScope.Window!;
         var image = new ImageFile(Path.Combine(_root.Path, "history.jpg"));
 
         try
@@ -222,7 +224,7 @@ public sealed class CurveChannelControlTests : IDisposable
             IsDevelopMode = true
         };
 
-    private static Window ShowPanel(DevelopEditPanel panel)
+    private static TestUiScope ShowPanel(DevelopEditPanel panel)
     {
         var window = new Window
         {
@@ -230,9 +232,10 @@ public sealed class CurveChannelControlTests : IDisposable
             Height = 660,
             Content = panel
         };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        return window;
+        return new TestUiScope(window, afterShow: () =>
+        {
+            Dispatcher.UIThread.RunJobs();
+        });
     }
 
     public void Dispose()

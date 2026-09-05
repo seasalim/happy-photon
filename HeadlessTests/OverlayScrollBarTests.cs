@@ -19,7 +19,8 @@ public sealed class OverlayScrollBarTests
     [AvaloniaFact]
     public async Task TallHistoryRevealsAndDragsOverlayScrollBar()
     {
-        var (window, _, scroll) = ShowHistory(40);
+        var (window, _, scroll, scope) = ShowHistory(40);
+        using var windowScope = scope;
 
         try
         {
@@ -34,7 +35,8 @@ public sealed class OverlayScrollBarTests
     [AvaloniaFact]
     public void ShortHistoryDoesNotShowScrollBar()
     {
-        var (window, _, scroll) = ShowHistory(2);
+        var (window, _, scroll, scope) = ShowHistory(2);
+        using var windowScope = scope;
 
         try
         {
@@ -143,25 +145,33 @@ public sealed class OverlayScrollBarTests
         Assert.InRange(scroll.Offset.Y, maximum * .4, maximum * .6);
     }
 
-    private static (Window Window, EditHistoryPanel Panel, ScrollViewer Scroll)
+    private static (Window Window, EditHistoryPanel Panel, ScrollViewer Scroll, TestUiScope Scope)
         ShowHistory(int entryCount)
     {
         var panel = new EditHistoryPanel { Width = 240, Height = 300 };
         var window = new Window { Width = 240, Height = 300, Content = panel };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        var items = Assert.Single(
-            panel.GetVisualDescendants().OfType<ItemsControl>());
-        items.ItemsSource = Enumerable.Range(0, entryCount)
-            .Select(index => new EditHistoryEntry(
-                index,
-                index == 0 ? "Original" : $"Exposure +{index / 100d:0.00}",
-                new EditSettings { Exposure = index / 100d }))
-            .ToArray();
-        Dispatcher.UIThread.RunJobs();
-        Dispatcher.UIThread.RunJobs();
-        return (window, panel,
-            panel.FindControl<ScrollViewer>("HistoryScrollViewer")!);
+        var scope = new TestUiScope(window);
+        try
+        {
+            Dispatcher.UIThread.RunJobs();
+            var items = Assert.Single(
+                panel.GetVisualDescendants().OfType<ItemsControl>());
+            items.ItemsSource = Enumerable.Range(0, entryCount)
+                .Select(index => new EditHistoryEntry(
+                    index,
+                    index == 0 ? "Original" : $"Exposure +{index / 100d:0.00}",
+                    new EditSettings { Exposure = index / 100d }))
+                .ToArray();
+            Dispatcher.UIThread.RunJobs();
+            Dispatcher.UIThread.RunJobs();
+            return (window, panel,
+                panel.FindControl<ScrollViewer>("HistoryScrollViewer")!, scope);
+        }
+        catch
+        {
+            scope.Dispose();
+            throw;
+        }
     }
 
     private static ScrollBar VerticalScrollBar(ScrollViewer scroll) =>

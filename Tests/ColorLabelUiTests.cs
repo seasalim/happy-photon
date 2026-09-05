@@ -53,7 +53,7 @@ public sealed partial class ColorLabelUiTests
         var vm = NewViewModel(catalog);
         var control = new ImageAssessmentControl { DataContext = vm };
         var window = new Window { Content = control };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
 
         var swatches = SwatchButtons(control);
         Assert.Equal(vm.ColorLabelChoices.Count, swatches.Count);
@@ -73,7 +73,7 @@ public sealed partial class ColorLabelUiTests
         });
         var control = new ImageAssessmentControl { DataContext = vm };
         var window = new Window { Content = control };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
 
         var red = Assert.Single(
             SwatchButtons(control),
@@ -91,7 +91,7 @@ public sealed partial class ColorLabelUiTests
         var vm = NewViewModel(catalog);
         var control = new BrowseGridView { DataContext = vm };
         var window = new Window { Content = control };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
 
         var picked = control.FindControl<Button>("FlagFilterPickedButton")!;
         var rejected = control.FindControl<Button>("FlagFilterRejectedButton")!;
@@ -193,7 +193,6 @@ public sealed partial class ColorLabelUiTests
             control.FindControl<StackPanel>("BrowseActionsPanel")!
                 .GetLogicalDescendants().OfType<TextBlock>().Select(text => text.Text));
 
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -215,7 +214,7 @@ public sealed partial class ColorLabelUiTests
             Images = viewModel.Browse.VisibleImages
         };
         var window = new Window { Width = 800, Height = 600, Content = control };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         var chip = Assert.Single(
@@ -224,7 +223,6 @@ public sealed partial class ColorLabelUiTests
                       border.IsEffectivelyVisible);
         Assert.Equal("J+R", Assert.IsType<TextBlock>(chip.Child).Text);
 
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -232,7 +230,7 @@ public sealed partial class ColorLabelUiTests
     {
         var control = new BrowseRatingFilter();
         var window = new Window { Content = control };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
 
         var buttons = Enumerable.Range(1, 5)
             .Select(rating => control.FindControl<Button>(
@@ -258,7 +256,6 @@ public sealed partial class ColorLabelUiTests
             rating => Assert.False(control.FindControl<TextBlock>(
                 $"RatingFilter{rating}Filled")!.IsVisible));
 
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -275,7 +272,7 @@ public sealed partial class ColorLabelUiTests
             Choices = vm.ColorLabelFilterChoices
         };
         var window = new Window { Content = control };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
 
         Assert.DoesNotContain(
             control.Choices,
@@ -322,7 +319,6 @@ public sealed partial class ColorLabelUiTests
         Click(red);
         Assert.Equal(ColorLabelFilter.All, control.Filter);
 
-        window.Close();
     }
 
     [AvaloniaFact]
@@ -340,11 +336,13 @@ public sealed partial class ColorLabelUiTests
             ColorLabel = ColorLabel.Red
         };
         vm.Browse.SetImages([first, second]);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
         try
         {
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             Dispatcher.UIThread.RunJobs();
             var control = window.FindControl<BrowseGridView>("BrowseGridView")!;
             vm.Browse.FileTypeFilter = ImageFileTypeFilter.Raw;
@@ -385,8 +383,7 @@ public sealed partial class ColorLabelUiTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await vm.DisposeAsync();
         }
     }
@@ -400,11 +397,13 @@ public sealed partial class ColorLabelUiTests
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
         vm.Browse.SetImages(
             [new ImageFile(Path.Combine(root, "first.jpg"))]);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
         try
         {
-            window.Show();
+            // test-teardown-policy: allow - enclosing try/finally closes window.
+            windowScope.Show();
             Dispatcher.UIThread.RunJobs();
             var control = window.FindControl<BrowseGridView>("BrowseGridView")!;
             vm.Browse.ColorLabelFilter = ColorLabelFilter.Purple;
@@ -433,8 +432,7 @@ public sealed partial class ColorLabelUiTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await vm.DisposeAsync();
         }
     }
@@ -450,7 +448,7 @@ public sealed partial class ColorLabelUiTests
             Height = 500,
             Content = control
         };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         var scroll = control.FindControl<ScrollViewer>("FilterScrollViewer")!;
         var left = control.FindControl<Border>("FilterLeftFade")!;
@@ -481,7 +479,6 @@ public sealed partial class ColorLabelUiTests
         Dispatcher.UIThread.RunJobs();
         Assert.False(left.IsVisible);
         Assert.False(right.IsVisible);
-        window.Close();
     }
 
 }

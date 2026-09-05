@@ -45,7 +45,7 @@ public sealed class ExportReportCardTests
         warningItems.ItemsSource = report.Warnings;
         warningItems.IsVisible = true;
         var window = new Window { Width = 600, Height = 400, Content = card };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try

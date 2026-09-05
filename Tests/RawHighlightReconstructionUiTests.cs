@@ -146,7 +146,7 @@ public sealed class RawHighlightReconstructionUiTests : IDisposable
             Height = 660,
             Content = panel
         };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         var slider = panel.FindControl<CompactSlider>("BrightnessSlider")!;
 
         vm.SelectedImage = raw;

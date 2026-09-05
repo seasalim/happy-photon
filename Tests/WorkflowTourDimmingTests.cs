@@ -24,7 +24,8 @@ public sealed class WorkflowTourDimmingTests
             loadMetadataAsync: _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
         try
         {
@@ -222,8 +223,7 @@ public sealed class WorkflowTourDimmingTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await vm.DisposeAsync();
             catalog.Dispose();
             fx.Dispose();
@@ -240,7 +240,8 @@ public sealed class WorkflowTourDimmingTests
             loadMetadataAsync: _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
         try
         {
@@ -279,8 +280,7 @@ public sealed class WorkflowTourDimmingTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await vm.DisposeAsync();
             catalog.Dispose();
             fx.Dispose();
@@ -297,8 +297,8 @@ public sealed class WorkflowTourDimmingTests
             loadMetadataAsync: _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
 
         try
         {
@@ -379,8 +379,7 @@ public sealed class WorkflowTourDimmingTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
             await vm.DisposeAsync();
             catalog.Dispose();
             fx.Dispose();

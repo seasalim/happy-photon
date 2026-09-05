@@ -32,7 +32,7 @@ public sealed class DevelopEditPanelScrollTests : IDisposable
             Height = 500,
             Content = panel
         };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try

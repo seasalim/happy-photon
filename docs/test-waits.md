@@ -57,3 +57,24 @@ deliberate performance guard, not a wait, and stays as it is.
 Quarantine does not replace these deterministic fixes. A repeatedly flaky test
 may use the temporary, issue-backed process in [test-quarantine.md](test-quarantine.md)
 while its root cause is repaired.
+
+## Shared UI teardown
+
+Use `TestUiScope` in a `using` declaration for shown windows and application
+theme changes. It restores the prior requested variant, including after a
+failed assertion, and closes windows before restoring the theme. Helpers that
+show and drain before returning must transfer the scope to the caller; put
+setup in `afterShow` so acquisition failures also clean up. Import catalog
+dialogs use `WithDialogAsync` to cancel and observe an in-flight operation
+before closing. For MainWindow, acquire `TestUiScope.ForMainWindow` before
+binding: it records the theme, binds the test-owned view model, then detaches
+before closing. Use `show: false` when setup must precede `scope.Show()` or
+the test only needs binding. Real shutdown tests retain binding and await the
+`Closed` event in `finally`, with a theme scope acquired before binding.
+
+`scripts/check-test-teardown.ps1`, run by `verify.ps1`, counts theme assignments,
+MainWindow constructions, and `.Show(` calls in both test trees. Direct scope acquisitions and scope-owned shows are accepted. Other sites
+must carry `test-teardown-policy: allow - <reason>` on the same or preceding
+line, naming the covering scope or failure-safe `try/finally`. An annotation
+requires review of the actual cleanup; it is not proof by itself. The policy's
+positive and negative fixtures run alongside it.

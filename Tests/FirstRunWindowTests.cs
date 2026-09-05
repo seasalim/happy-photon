@@ -20,10 +20,8 @@ public sealed class FirstRunWindowTests
             Path.GetTempPath(),
             $"happy-photon-window-{Guid.NewGuid():N}"));
         var vm = new MainWindowViewModel(catalog);
-        var window = new MainWindow
-        {
-            DataContext = vm
-        };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
         Assert.False(window.WorkspaceKeyboardEnabled);
         Assert.Empty(window.KeyBindings);
@@ -37,8 +35,7 @@ public sealed class FirstRunWindowTests
         Assert.True(
             window.FindControl<FolderTreePanel>("FolderTreePanel")!.IsEffectivelyEnabled);
 
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
         await vm.DisposeAsync();
     }
 
@@ -52,7 +49,7 @@ public sealed class FirstRunWindowTests
         vm.ShowFirstRunWelcome(Path.GetTempPath());
         var view = new FirstRunView { DataContext = vm };
         var window = new Window { Content = view };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(view.FindControl<Button>("WelcomeContinueButton")!.IsFocused);
@@ -104,7 +101,8 @@ public sealed class FirstRunWindowTests
         var migrator = new CatalogLocationMigrator(locationService);
         using var catalog = new CatalogService();
         var vm = new MainWindowViewModel(catalog);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
         await window.InitializeApplicationAsync(
             vm, catalog, locationService, migrator, pictures.FullName);
@@ -124,8 +122,7 @@ public sealed class FirstRunWindowTests
         Assert.True(File.Exists(locationService.PointerPath));
         Assert.True(File.Exists(Path.Combine(
             locationService.DefaultCatalogRoot, "catalog.db")));
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
         await vm.DisposeAsync();
         catalog.Dispose();
         Directory.Delete(root.FullName, recursive: true);
@@ -147,7 +144,8 @@ public sealed class FirstRunWindowTests
         var migrator = new CatalogLocationMigrator(locationService);
         using var catalog = new CatalogService();
         var vm = new MainWindowViewModel(catalog);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
         await window.InitializeApplicationAsync(
             vm, catalog, locationService, migrator, pictures.FullName);
@@ -160,8 +158,7 @@ public sealed class FirstRunWindowTests
 
         Assert.Equal(FirstRunStep.Pictures, vm.FirstRunStep);
         Assert.True(File.Exists(configured.DatabasePath));
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
         await vm.DisposeAsync();
         catalog.Dispose();
         Directory.Delete(root.FullName, recursive: true);
@@ -184,7 +181,8 @@ public sealed class FirstRunWindowTests
         var migrator = new CatalogLocationMigrator(locationService);
         using var catalog = new CatalogService();
         var vm = new MainWindowViewModel(catalog);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
         await window.InitializeApplicationAsync(
             vm, catalog, locationService, migrator, pictures.FullName);
@@ -202,8 +200,7 @@ public sealed class FirstRunWindowTests
         Assert.False(File.Exists(locationService.PointerPath));
         Assert.Single(Directory.EnumerateFiles(
             Path.GetDirectoryName(locationService.PointerPath)!, "*.corrupt"));
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
         await vm.DisposeAsync();
         catalog.Dispose();
         Directory.Delete(root.FullName, recursive: true);
@@ -229,7 +226,8 @@ public sealed class FirstRunWindowTests
         var migrator = new CatalogLocationMigrator(locationService);
         using var catalog = new CatalogService();
         var vm = new MainWindowViewModel(catalog);
-        var window = new MainWindow { DataContext = vm };
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
         Assert.False(Directory.Exists(environmentCatalog));
         await window.InitializeApplicationAsync(
@@ -239,8 +237,7 @@ public sealed class FirstRunWindowTests
         Assert.Equal(FirstRunStep.Welcome, vm.FirstRunStep);
         Assert.True(vm.IsFirstRunStorageReadOnly);
         Assert.False(File.Exists(locationService.PointerPath));
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
         await vm.DisposeAsync();
         catalog.Dispose();
         Directory.Delete(root.FullName, recursive: true);

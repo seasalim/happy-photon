@@ -30,7 +30,7 @@ public sealed class ExportVisualStyleTests : IDisposable
             "finished copies");
         var pane = new ExportSettingsPane { DataContext = viewModel };
         var window = new Window { Width = 280, Height = 1100, Content = pane };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try
@@ -134,7 +134,7 @@ public sealed class ExportVisualStyleTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask);
         var pane = new ExportCapturePane { DataContext = viewModel };
         var window = new Window { Width = 220, Height = 400, Content = pane };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try
@@ -159,7 +159,7 @@ public sealed class ExportVisualStyleTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask);
         var panel = new DevelopEditPanel { DataContext = viewModel };
         var window = new Window { Width = 280, Height = 900, Content = panel };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
         try
@@ -201,7 +201,7 @@ public sealed class ExportVisualStyleTests : IDisposable
         caption.IsVisible = true;
         emptyState.IsVisible = false;
         var window = new Window { Width = hostWidth, Height = 600, Content = pane };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         pane.UpdateLayout();
 
@@ -261,7 +261,7 @@ public sealed class ExportVisualStyleTests : IDisposable
         caption.Text = "PREVIEW · JPEG · sRGB · 256 PX";
         caption.IsVisible = true;
         var window = new Window { Width = 800, Height = 600, Content = pane };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         pane.UpdateLayout();
 
@@ -297,7 +297,7 @@ public sealed class ExportVisualStyleTests : IDisposable
     {
         var panel = new DevelopEditPanel { DataContext = viewModel };
         var window = new Window { Width = 280, Height = 900, Content = panel };
-        window.Show();
+        using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
         try
         {

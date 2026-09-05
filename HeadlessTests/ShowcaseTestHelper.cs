@@ -10,8 +10,13 @@ namespace HappyPhoton.Tests;
 internal static class ShowcaseTestHelper
 {
     public static void Capture(
+        string scene, TestUiScope scope, PixelSize pixelSize, ThemeVariant theme,
+        Action<Window>? stage = null) =>
+        Capture(scene, scope.Window!, pixelSize, theme, stage, scope);
+
+    public static void Capture(
         string scene, Window window, PixelSize pixelSize, ThemeVariant theme,
-        Action<Window>? stage = null)
+        Action<Window>? stage = null, TestUiScope? mainWindowScope = null)
     {
         ValidateScene(scene);
         var outputDirectory = Path.GetFullPath(Path.Combine(
@@ -31,38 +36,24 @@ internal static class ShowcaseTestHelper
                 nameof(scene));
         }
 
-        var application = Application.Current!;
-        var previousTheme = application.RequestedThemeVariant;
-        try
+        window.Width = pixelSize.Width;
+        window.Height = pixelSize.Height;
+        using var scope = mainWindowScope ?? new TestUiScope(window, theme);
+        using var themeScope = new TestUiScope(theme: theme);
+        // test-teardown-policy: allow - using scope owns the caller-transferred MainWindow binding.
+        if (mainWindowScope is not null) scope.Show();
+        Dispatcher.UIThread.RunJobs();
+        if (stage is not null)
         {
-            application.RequestedThemeVariant = theme;
-            window.Width = pixelSize.Width;
-            window.Height = pixelSize.Height;
-            window.Show();
+            stage(window);
             Dispatcher.UIThread.RunJobs();
-            if (stage is not null)
-            {
-                stage(window);
-                Dispatcher.UIThread.RunJobs();
-            }
+        }
 
-            using var frame = window.CaptureRenderedFrame();
-            Assert.NotNull(frame);
-            Assert.Equal(pixelSize, frame.PixelSize);
-            Directory.CreateDirectory(outputDirectory);
-            frame.Save(outputPath);
-        }
-        finally
-        {
-            try
-            {
-                window.Close();
-            }
-            finally
-            {
-                application.RequestedThemeVariant = previousTheme;
-            }
-        }
+        using var frame = window.CaptureRenderedFrame();
+        Assert.NotNull(frame);
+        Assert.Equal(pixelSize, frame.PixelSize);
+        Directory.CreateDirectory(outputDirectory);
+        frame.Save(outputPath);
     }
 
     /// <summary>Advances the headless render clock until a transition settles.</summary>

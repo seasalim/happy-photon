@@ -45,8 +45,8 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
         vm.Browse.SetImages([image]);
         vm.SelectedImage = image;
         vm.IsDevelopMode = true;
-        var window = new MainWindow { DataContext = vm };
-        window.Show();
+        var window = new MainWindow();
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Dispatcher.UIThread.RunJobs();
         var panel = window.FindControl<DevelopEditPanel>("DevelopEditPanel")!;
         var histogram = panel.FindControl<HistogramView>("DevelopHistogram")!;
@@ -66,8 +66,7 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
         Assert.True(vm.IsClippingOverlayLatched);
         Assert.True(marker.IsVisible);
 
-        window.DataContext = null;
-        window.Close();
+        windowScope.Dispose();
     }
 
     [Fact]

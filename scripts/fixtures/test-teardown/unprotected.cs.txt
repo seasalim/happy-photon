@@ -1,0 +1,18 @@
+application.RequestedThemeVariant =
+    ThemeVariant.Dark;
+window.Show();
+dialog.Show(owner);
+Assert.True(false);
+window.Close();
+dialog.Close();
+
+// test-teardown-policy: allow -
+window.Show();
+
+var mainWindow = new MainWindow { DataContext = vm };
+using var wrongScope = new TestUiScope(mainWindow);
+var unscoped = new MainWindow();
+unscoped.Show();
+
+var wrongWindow = new MainWindow();
+using var unrelated = TestUiScope.ForMainWindow(anotherWindow, vm);

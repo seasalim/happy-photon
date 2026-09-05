@@ -46,8 +46,8 @@ public sealed class EditHistoryPanelTests
         vm.SelectedImage = image;
         await TestWaits.UntilAsync(() => vm.IsHistoryLoaded);
 
-        var window = new MainWindow { Width = 800, Height = 500, DataContext = vm };
-        window.Show();
+        var window = new MainWindow { Width = 800, Height = 500 };
+        using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Dispatcher.UIThread.RunJobs(); Dispatcher.UIThread.RunJobs();
         try
         {
@@ -160,8 +160,7 @@ public sealed class EditHistoryPanelTests
         }
         finally
         {
-            window.DataContext = null;
-            window.Close();
+            windowScope.Dispose();
         }
     }
 }
