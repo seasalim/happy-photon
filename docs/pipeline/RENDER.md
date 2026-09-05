@@ -467,6 +467,8 @@ the destination baseline untouched.
 
 ### 8.2 Current-format boundaries
 
+`EditSettingsJson` owns supported document versions, sequential in-memory migration, and the shared current-model check.
+
 `EditSettingsJson.Serialize` requires the current v3 model, clones it,
 clamps and validates the clone, then writes canonical JSON; it never changes the
 caller's model and rejects every other version. Preset files must explicitly declare

@@ -121,18 +121,9 @@ public partial class MainWindowViewModel
         return current;
     }
 
-    // Mirrors the interactive temp-settings construction exactly (Clone
-    // carries the curve set) so the resting settings hash always matches an
-    // accepted interactive paint.
-    private EditSettings CaptureRestingSettings()
-    {
-        var settings = SelectedImage!.EditSettings.Clone();
-        SaveSlidersTo(settings);
-        settings.Rotation = Rotation;
-        settings.HorizonRotation = HorizonRotation;
-        settings.Crop = CurrentCrop?.Clone();
-        return settings;
-    }
+    // Resting, before/after and export retain the committed crop during crop interaction.
+    private EditSettings CaptureRestingSettings() =>
+        CaptureRenderSettings(CurrentCrop?.Clone());
 
     private void ScheduleRestingRender()
     {

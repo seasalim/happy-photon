@@ -327,7 +327,7 @@ public partial class CatalogService : IDisposable
         var editVersion = reader.IsDBNull(offset + 1)
             ? 0
             : reader.GetInt32(offset + 1);
-        if (editVersion is not (2 or EditSettings.CurrentVersion))
+        if (!EditSettingsJson.IsSupportedVersion(editVersion))
         {
             LogEditSettingsWarningOnce(
                 catalogId,

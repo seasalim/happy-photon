@@ -210,12 +210,7 @@ public partial class MainWindowViewModel
             // original frame, not the persistent edits the sliders still hold.
             return BuildOriginalRenderSettings(image);
         }
-        var settings = image.EditSettings.Clone();
-        SaveSlidersTo(settings);
-        settings.Rotation = Rotation;
-        settings.HorizonRotation = HorizonRotation;
-        settings.Crop = PreviewCrop();
-        return settings;
+        return CaptureRenderSettings(PreviewCrop());
     }
 
     private void RejectPendingClippingMasks()

@@ -216,12 +216,7 @@ public class PresetService
 
     private static EditSettings CreatePresetSettings(EditSettings source)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        if (source.Version != EditSettings.CurrentVersion)
-        {
-            throw new NotSupportedException(
-                $"Edit settings version {source.Version} is not supported.");
-        }
+        EditSettingsJson.EnsureCurrent(source);
         var settings = source.Clone();
         settings.Rotation = 0;
         settings.HorizonRotation = 0;

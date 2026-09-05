@@ -239,7 +239,6 @@ public partial class MainWindowViewModel
         var generation = RequestEditedRender();
 
         var currentCrop = CurrentCrop?.Clone();
-        var currentGeometry = previousSettings.Geometry?.Clone();
 
         _isLoadingImage = true;
         LoadSlidersFrom(preset.Settings);
@@ -250,8 +249,8 @@ public partial class MainWindowViewModel
         CurrentCrop = currentCrop;
         _isLoadingImage = false;
 
+        SelectedImage.EditSettings = previousSettings.Clone();
         EditSettingsTransfer.ApplySubset(preset.Settings, SelectedImage.EditSettings);
-        SelectedImage.EditSettings.Geometry = currentGeometry;
         SelectedImage.EditSettings.AppliedPresetId = presetId;
         LoadCurrentCurveFrom(SelectedImage.EditSettings);
         SelectedImage.HasEdits = true;
@@ -311,12 +310,8 @@ public partial class MainWindowViewModel
 
         try
         {
-            var previewSettings = EditSettingsTransfer.CopySubset(preset.Settings);
-            previewSettings.RawProfile = image.EditSettings.RawProfile?.Clone();
-            previewSettings.Rotation = Rotation;
-            previewSettings.HorizonRotation = HorizonRotation;
-            previewSettings.Crop = PreviewCrop();
-            previewSettings.Geometry = image.EditSettings.Geometry?.Clone();
+            var previewSettings = CaptureRenderSettings(PreviewCrop());
+            EditSettingsTransfer.ApplySubset(preset.Settings, previewSettings);
 
             using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
                 image,

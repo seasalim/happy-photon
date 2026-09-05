@@ -1,3 +1,5 @@
+using HappyPhoton.Services;
+
 namespace HappyPhoton.Models;
 
 /// <summary>
@@ -8,40 +10,15 @@ public static class EditSettingsTransfer
 {
     public static EditSettings CopySubset(EditSettings source)
     {
-        EnsureCurrent(source);
-        return new EditSettings
-        {
-            Exposure = source.Exposure,
-            Wb = source.Wb.Clone(),
-            Brightness = source.Brightness,
-            Contrast = source.Contrast,
-            Saturation = source.Saturation,
-            Vibrance = source.Vibrance,
-            Shadows = source.Shadows,
-            Highlights = source.Highlights,
-            BaseLook = source.BaseLook,
-            HlReconstruction = source.HlReconstruction,
-            Detail = source.Detail.Clone(),
-            Effects = source.Effects?.Clone(),
-            Mixer = source.Mixer?.Clone(),
-            Lens = new LensSettings
-            {
-                Distortion = source.Lens.Distortion,
-                ChromaticAberration = source.Lens.ChromaticAberration,
-                Vignetting = source.Lens.Vignetting
-            },
-            Curve = source.Curve.Clone(),
-            CurveRed = source.CurveRed?.Clone(),
-            CurveGreen = source.CurveGreen?.Clone(),
-            CurveBlue = source.CurveBlue?.Clone(),
-            AppliedPresetId = source.AppliedPresetId
-        };
+        var target = new EditSettings();
+        ApplySubset(source, target);
+        return target;
     }
 
     public static void ApplySubset(EditSettings copied, EditSettings target)
     {
-        EnsureCurrent(copied);
-        EnsureCurrent(target);
+        EditSettingsJson.EnsureCurrent(copied);
+        EditSettingsJson.EnsureCurrent(target);
         target.Exposure = copied.Exposure;
         target.Wb = copied.Wb.Clone();
         target.Brightness = copied.Brightness;
@@ -63,15 +40,5 @@ public static class EditSettingsTransfer
         target.CurveGreen = copied.CurveGreen?.Clone();
         target.CurveBlue = copied.CurveBlue?.Clone();
         target.AppliedPresetId = copied.AppliedPresetId;
-    }
-
-    private static void EnsureCurrent(EditSettings settings)
-    {
-        ArgumentNullException.ThrowIfNull(settings);
-        if (settings.Version != EditSettings.CurrentVersion)
-        {
-            throw new NotSupportedException(
-                $"Edit settings version {settings.Version} is not supported.");
-        }
     }
 }

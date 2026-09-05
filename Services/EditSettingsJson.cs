@@ -10,15 +10,22 @@ internal static class EditSettingsJson
         WriteIndented = false
     };
 
-    public static string Serialize(EditSettings settings)
+    public static bool IsSupportedVersion(int version) => version is 2 or EditSettings.CurrentVersion;
+
+    public static void EnsureCurrent(EditSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        var current = settings.Clone();
-        if (current.Version != EditSettings.CurrentVersion)
+        if (settings.Version != EditSettings.CurrentVersion)
         {
             throw new NotSupportedException(
-                $"Edit settings version {current.Version} is not supported.");
+                $"Edit settings version {settings.Version} is not supported.");
         }
+    }
+
+    public static string Serialize(EditSettings settings)
+    {
+        EnsureCurrent(settings);
+        var current = settings.Clone();
         Clamp(current);
         return JsonSerializer.Serialize(current, CompactOptions);
     }
@@ -29,11 +36,11 @@ internal static class EditSettingsJson
         if (document.RootElement.ValueKind != JsonValueKind.Object ||
             !document.RootElement.TryGetProperty("version", out var versionElement) ||
             !versionElement.TryGetInt32(out var documentVersion) ||
-            documentVersion is not (2 or EditSettings.CurrentVersion))
+            !IsSupportedVersion(documentVersion))
         {
             throw new JsonException("Edit settings document must declare version 2 or 3.");
         }
-        if (documentVersion == EditSettings.CurrentVersion &&
+        if (documentVersion >= 3 &&
             (!document.RootElement.TryGetProperty("lens", out var lensElement) ||
              lensElement.ValueKind != JsonValueKind.Object ||
              !lensElement.TryGetProperty("baseline", out _) ||
@@ -53,10 +60,10 @@ internal static class EditSettingsJson
                 $"Edit settings document version {settings.Version} does not match its marker.");
         }
 
-        if (documentVersion == 2)
+        if (settings.Version == 2)
         {
-            settings.Version = EditSettings.CurrentVersion;
             settings.Lens = LensSettings.Legacy();
+            settings.Version = EditSettings.CurrentVersion;
         }
 
         wasClamped = Clamp(settings);

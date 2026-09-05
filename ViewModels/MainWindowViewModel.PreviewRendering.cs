@@ -4,6 +4,16 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private EditSettings CaptureRenderSettings(CropRegion? crop)
+    {
+        var settings = SelectedImage!.EditSettings.Clone();
+        SaveSlidersTo(settings);
+        settings.Rotation = Rotation;
+        settings.HorizonRotation = HorizonRotation;
+        settings.Crop = crop;
+        return settings;
+    }
+
     private async Task<bool> UpdatePreviewWithCurrentSliders(
         CancellationToken cancellationToken = default,
         long? generation = null,
@@ -19,11 +29,7 @@ public partial class MainWindowViewModel
             ReserveRenderOutcome(intent);
         SignalBackgroundActivityStarted();
 
-        var tempSettings = selectedImage.EditSettings.Clone();
-        SaveSlidersTo(tempSettings);
-        tempSettings.Rotation = Rotation;
-        tempSettings.HorizonRotation = HorizonRotation;
-        tempSettings.Crop = PreviewCrop();
+        var tempSettings = CaptureRenderSettings(PreviewCrop());
 
         try
         {
