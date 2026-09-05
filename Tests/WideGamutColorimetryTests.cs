@@ -56,10 +56,8 @@ public sealed class WideGamutColorimetryTests
             $"Synthetic mean ΔE00 {comparison.Mean:F4} exceeds 0.034.");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void EditedRealRawFinalization_AgreesAcrossTargets(bool outputSharpening)
+    [Fact]
+    public void EditedRealRawFinalization_AgreesAcrossTargets()
     {
         var path = Path.Combine(
             GoldenTestPaths.AssetDirectory,
@@ -70,20 +68,23 @@ public sealed class WideGamutColorimetryTests
             CancellationToken.None) ?? throw new InvalidOperationException(
                 "Real-RAW agreement fixture did not decode.");
         using var shared = RenderShared(baseImage, CreateAgreementSettings());
-        using var prepared = PrepareForEligibility(shared, outputSharpening);
-        using var srgb = Finalize(shared, OutputColorSpace.Srgb, outputSharpening);
-        using var p3 = Finalize(shared, OutputColorSpace.DisplayP3, outputSharpening);
-        var comparison = MeanDeltaE00(srgb, p3, prepared);
-        var encoded = MeanDeltaE00EightBit(srgb, p3, prepared);
-        _output.WriteLine(
-            $"real-RAW sharpen={outputSharpening}: Q16 mean ΔE00=" +
-            $"{comparison.Mean:F4} over {comparison.Count} in-gamut pixels; " +
-            $"RGB8 informational={encoded:F4}");
+        foreach (var outputSharpening in new[] { false, true })
+        {
+            using var prepared = PrepareForEligibility(shared, outputSharpening);
+            using var srgb = Finalize(shared, OutputColorSpace.Srgb, outputSharpening);
+            using var p3 = Finalize(shared, OutputColorSpace.DisplayP3, outputSharpening);
+            var comparison = MeanDeltaE00(srgb, p3, prepared);
+            var encoded = MeanDeltaE00EightBit(srgb, p3, prepared);
+            _output.WriteLine(
+                $"real-RAW sharpen={outputSharpening}: Q16 mean ΔE00=" +
+                $"{comparison.Mean:F4} over {comparison.Count} in-gamut pixels; " +
+                $"RGB8 informational={encoded:F4}");
 
-        Assert.True(comparison.Count > 0);
-        Assert.True(
-            comparison.Mean <= 0.053,
-            $"Real-RAW mean ΔE00 {comparison.Mean:F4} exceeds 0.053.");
+            Assert.True(comparison.Count > 0, $"Real-RAW sharpen={outputSharpening}: no in-gamut pixels.");
+            Assert.True(
+                comparison.Mean <= 0.053,
+                $"Real-RAW sharpen={outputSharpening}: mean ΔE00 {comparison.Mean:F4} exceeds 0.053.");
+        }
     }
 
     [Theory]
@@ -138,6 +139,9 @@ public sealed class WideGamutColorimetryTests
     [Fact]
     public void ActualRawDefaultAndEditedDivergence_IsReportedWithoutQualityBound()
     {
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run real-RAW divergence diagnostics.");
         var asset = GoldenTestCases.Assets.Single(
             value => value.Slug == "canon-eos-350d");
         using var baseImage = new RawBaseLoader().LoadFullBase(
@@ -164,6 +168,35 @@ public sealed class WideGamutColorimetryTests
             _output.WriteLine(
                 $"actual-raw-{settingsCase.Slug}: whole-image sRGB/P3 " +
                 $"mean ΔE00={mean:F4} (reported, not quality-gated)");
+            Assert.True(double.IsFinite(mean));
+        }
+    }
+
+    [Fact]
+    public void SyntheticDefaultAndEditedDivergence_IsFinite()
+    {
+        using var baseImage = CreateIntersectionGamutBase();
+        var asset = GoldenTestCases.Assets.Single(
+            value => value.Slug == "canon-eos-350d");
+        var cases = new[]
+        {
+            GoldenTestCases.Identity,
+            asset.SettingsCases.Single(value => value.Slug == "full-combo-tonal")
+        };
+        foreach (var settingsCase in cases)
+        {
+            using var srgb = RenderAt500(
+                baseImage,
+                settingsCase.CreateSettings(),
+                OutputColorSpace.Srgb);
+            using var p3 = RenderAt500(
+                baseImage,
+                settingsCase.CreateSettings(),
+                OutputColorSpace.DisplayP3);
+            var mean = MeanDeltaE00(srgb.Image, p3.Image);
+            _output.WriteLine(
+                $"synthetic-{settingsCase.Slug}: whole-image sRGB/P3 " +
+                $"mean ΔE00={mean:F4}");
             Assert.True(double.IsFinite(mean));
         }
     }

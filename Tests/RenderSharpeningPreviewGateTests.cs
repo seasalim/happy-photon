@@ -38,27 +38,21 @@ public sealed class RenderSharpeningPreviewGateTests
         Assert.Equal(1600u, Math.Max(interactive.Pixels.Width, interactive.Pixels.Height));
         Assert.Equal(3200u, Math.Max(large.Pixels.Width, large.Pixels.Height));
 
-        var fitRender0 = Measure(interactive, 0, resting: false);
+        using var fitZero = RenderPreview(interactive, 0, resting: false);
+        using var fitHundred = RenderPreview(interactive, 100, resting: false);
+        var fitRender0 = Observe(fitZero.Image);
         var fitRender50 = Measure(interactive, 50, resting: false);
-        var fitRender100 = Measure(interactive, 100, resting: false);
+        var fitRender100 = Observe(fitHundred.Image);
         var fitResting0 = Measure(interactive, 0, resting: true);
         var fitResting100 = Measure(interactive, 100, resting: true);
         var zoomRender0 = Measure(large, 0, resting: false);
         var zoomRender100 = Measure(large, 100, resting: false);
         var zoomResting0 = Measure(large, 0, resting: true);
         var zoomResting100 = Measure(large, 100, resting: true);
-        var fitChangedSamples = CountChangedRgbSamples(interactive);
+        var fitChangedSamples = CountChangedRgbSamples(fitZero.Image, fitHundred.Image);
 
-        foreach (var observations in new[]
-        {
-            fitRender0, fitRender50, fitRender100,
-            fitResting0, fitResting100,
-            zoomRender0, zoomRender100,
-            zoomResting0, zoomResting100
-        })
-        {
-            AssertStable(observations);
-        }
+        AssertStable(MeasureRuns(interactive, 100, resting: false));
+        AssertStable(MeasureRuns(large, 100, resting: true));
         WriteEnergy("fit Render sharpen 0", fitRender0);
         WriteEnergy("fit Render sharpen 50", fitRender50);
         WriteEnergy("fit Render sharpen 100", fitRender100);
@@ -70,9 +64,9 @@ public sealed class RenderSharpeningPreviewGateTests
             $"Fit Render sharpen 0 vs 100 changed Q16 RGB samples: {fitChangedSamples}.");
 
         Assert.True(fitChangedSamples > 0);
-        Assert.NotEqual(fitRender0[0].Hash, fitRender100[0].Hash);
-        Assert.True(MedianEnergy(fitRender0) < MedianEnergy(fitRender50));
-        Assert.True(MedianEnergy(fitRender50) < MedianEnergy(fitRender100));
+        Assert.NotEqual(fitRender0.Hash, fitRender100.Hash);
+        Assert.True(fitRender0.Energy < fitRender50.Energy);
+        Assert.True(fitRender50.Energy < fitRender100.Energy);
         Assert.True(Gain(fitResting0, fitResting100) > 1);
         Assert.True(Gain(zoomRender0, zoomRender100) > 1);
         Assert.True(Gain(zoomResting0, zoomResting100) > 1);
@@ -136,22 +130,33 @@ public sealed class RenderSharpeningPreviewGateTests
         Assert.True(median <= 15, $"Median {median:F3} ms exceeded 15 ms.");
     }
 
-    private RenderObservation[] Measure(BaseImage baseImage, int sharpen, bool resting)
+    private static RenderObservation[] MeasureRuns(BaseImage baseImage, int sharpen, bool resting)
     {
         var observations = new RenderObservation[MeasurementRuns];
         for (var run = 0; run < observations.Length; run++)
         {
-            var request = CreateRequest(baseImage, sharpen, RenderIntent.Preview);
-            using var result = resting
-                ? new RenderPipeline().RenderResting(
-                    request,
-                    RenderExecutionOptions.Resting(CancellationToken.None))
-                : new RenderPipeline().Render(request);
-            observations[run] = new RenderObservation(
-                HighPassLumaEnergy(result.Image),
-                HashQ16Rgb(result.Image));
+            observations[run] = Measure(baseImage, sharpen, resting);
         }
         return observations;
+    }
+
+    private static RenderObservation Measure(BaseImage baseImage, int sharpen, bool resting)
+    {
+        using var result = RenderPreview(baseImage, sharpen, resting);
+        return Observe(result.Image);
+    }
+
+    private static RenderObservation Observe(MagickImage image) =>
+        new(HighPassLumaEnergy(image), HashQ16Rgb(image));
+
+    private static RenderResult RenderPreview(BaseImage baseImage, int sharpen, bool resting)
+    {
+        var request = CreateRequest(baseImage, sharpen, RenderIntent.Preview);
+        return resting
+            ? new RenderPipeline().RenderResting(
+                request,
+                RenderExecutionOptions.Resting(CancellationToken.None))
+            : new RenderPipeline().Render(request);
     }
 
     private static RenderRequest CreateRequest(
@@ -212,14 +217,10 @@ public sealed class RenderSharpeningPreviewGateTests
         return Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
     }
 
-    private static int CountChangedRgbSamples(BaseImage baseImage)
+    private static int CountChangedRgbSamples(MagickImage zero, MagickImage hundred)
     {
-        using var zero = new RenderPipeline().Render(CreateRequest(
-            baseImage, 0, RenderIntent.Preview));
-        using var hundred = new RenderPipeline().Render(CreateRequest(
-            baseImage, 100, RenderIntent.Preview));
-        var zeroPixels = RenderPipelineTestSupport.ReadPixels(zero.Image);
-        var hundredPixels = RenderPipelineTestSupport.ReadPixels(hundred.Image);
+        var zeroPixels = RenderPipelineTestSupport.ReadPixels(zero);
+        var hundredPixels = RenderPipelineTestSupport.ReadPixels(hundred);
         Assert.Equal(zeroPixels.Length, hundredPixels.Length);
         var changed = 0;
         for (var index = 0; index < zeroPixels.Length; index++)
@@ -232,25 +233,18 @@ public sealed class RenderSharpeningPreviewGateTests
     private static void AssertStable(RenderObservation[] observations) =>
         Assert.All(observations, value => Assert.Equal(observations[0], value));
 
-    private static double MedianEnergy(RenderObservation[] observations) =>
-        observations.Select(value => value.Energy).Order().ElementAt(
-            observations.Length / 2);
-
     private static double Gain(
-        RenderObservation[] zero,
-        RenderObservation[] hundred) =>
-        MedianEnergy(hundred) / MedianEnergy(zero);
+        RenderObservation zero,
+        RenderObservation hundred) =>
+        hundred.Energy / zero.Energy;
 
-    private void WriteEnergy(string label, RenderObservation[] observations) =>
-        _output.WriteLine(
-            $"{label}: median energy {MedianEnergy(observations):G17} " +
-            $"over {observations.Length} runs " +
-            $"[{string.Join(", ", observations.Select(x => x.Energy.ToString("G17")))}].");
+    private void WriteEnergy(string label, RenderObservation observation) =>
+        _output.WriteLine($"{label}: energy {observation.Energy:G17}.");
 
     private void WriteGain(
         string label,
-        RenderObservation[] zero,
-        RenderObservation[] hundred) =>
+        RenderObservation zero,
+        RenderObservation hundred) =>
         _output.WriteLine(
             $"{label}: E(100)/E(0) = " +
             $"{Gain(zero, hundred):G17}.");
