@@ -230,11 +230,10 @@ the known tiers. Legacy adoption receives one trusted bootstrap. The stamp advan
 after each single insert or insert batch. A missing cache root self-heals; a missing
 catalog root fails startup.
 
-For a row marked v2 or v3, valid JSON is parsed and out-of-range values clamp in
-memory. A v2 document materializes an explicit legacy, all-off lens baseline before it
-can be saved as v3; new rows use the standard on/on/off lens baseline. A null document,
-malformed JSON, or other marker logs once for that image and returns neutral current
-settings. Reads never rewrite catalog rows. **Runtime cache validity
+For a row marked v3, valid JSON is parsed and out-of-range values clamp in memory.
+Lens defaults are distortion and chromatic aberration on, vignetting off. A null
+document, malformed JSON, or any other marker (including the retired v2) logs once for
+that image and returns neutral current settings. Reads never rewrite catalog rows. **Runtime cache validity
 comes from asset-file timestamps, never from DB flags** (see caching below).
 
 ### The batched-load invariant

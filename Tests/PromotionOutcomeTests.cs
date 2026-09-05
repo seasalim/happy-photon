@@ -188,41 +188,6 @@ public sealed class PromotionOutcomeTests : IDisposable
         }
     }
 
-    [AvaloniaFact]
-    public async Task BeforeAfterPreservesLegacyLensDecodeIdentity()
-    {
-        using var catalog = new CatalogService(Path.Combine(_root.Path, "legacy-before"));
-        await catalog.InitializeAsync();
-        var loader = new GrayRawLoader();
-        var vm = CreateViewModel(catalog, loader);
-        var image = EditedImage("legacy-before.dng");
-        image.EditSettings.Lens = LensSettings.Legacy();
-        var expectedDecodeKey = BaseDecodeSettings.From(image.EditSettings).CacheKey;
-        vm.SelectedImage = image;
-
-        try
-        {
-            await TestWaits.UntilAsync(() => vm.PreviewImage != null);
-            await TestWaits.UntilAsync(() =>
-                vm.ImageService.Previews.RenderedThumbnailTaskCount == 0);
-
-            await vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
-
-            Assert.True(vm.IsShowingOriginal);
-            var identity = vm.ImageService.Previews.TryGetPreviewRenderIdentity(
-                vm.PreviewImage!);
-            Assert.NotNull(identity);
-            Assert.Equal(expectedDecodeKey, identity.DecodeKey);
-            Assert.NotEmpty(loader.Decodes);
-            Assert.All(loader.Decodes, decode =>
-                Assert.Equal(expectedDecodeKey, decode.CacheKey));
-        }
-        finally
-        {
-            await vm.DisposeAsync();
-        }
-    }
-
     public void Dispose()
     {
         _root.Dispose();

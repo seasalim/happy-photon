@@ -13,7 +13,6 @@ internal static class ConstructionBaselineAssert
         var expected = name switch
         {
             "render" => ConstructionBaselineGoldens.render,
-            "transfer" => ConstructionBaselineGoldens.transfer,
             "migration" => ConstructionBaselineGoldens.migration,
             "warnings" => ConstructionBaselineGoldens.warnings,
             _ => throw new ArgumentOutOfRangeException(nameof(name))

@@ -20,21 +20,19 @@ public sealed class EditConstructionVmBaselineTests
             "ViewModels", "MainWindowViewModel.BeforeAfterSplit.cs"));
         Assert.Contains("RequestBeforeAfterRender(CaptureRestingSettings());", splitSource);
         var observations = new List<string>();
-        foreach (var baseline in new[] { LensBaseline.Standard, LensBaseline.Legacy })
         foreach (var state in States)
         {
             using var fx = new CatalogVmFixture("construction-vm");
             using var catalog = await fx.CreateCatalogAsync();
             await using var vm = CreateVm(fx, catalog);
-            await Configure(vm, fx, catalog, baseline, state);
+            await Configure(vm, fx, catalog, state);
             var interactive = await Capture(vm, () => (Task)Call(vm, "UpdatePreviewWithCurrentSliders")!);
             var clipping = (EditSettings)Call(vm, "CaptureClippingRenderSettings", vm.SelectedImage)!;
             var resting = (EditSettings)Call(vm, "CaptureRestingSettings")!;
             // The edited capture passed into the split's original-frame projection.
             var beforeAfter = (EditSettings)Call(vm, "CaptureRestingSettings")!;
             var hover = await Capture(vm, () => vm.PreviewPresetHoverAsync("baseline-preset"));
-            // Reverse only the two approved hover corrections to retain the base goldens.
-            Assert.Equal(baseline, hover.Lens.Baseline);
+            // Reverse the approved live-geometry hover correction to retain the base goldens.
             Assert.Equal(interactive.Geometry?.Vertical, hover.Geometry?.Vertical);
             Assert.Equal(interactive.Geometry?.Horizontal, hover.Geometry?.Horizontal);
             Assert.Equal(interactive.Geometry?.Aspect, hover.Geometry?.Aspect);
@@ -48,11 +46,11 @@ public sealed class EditConstructionVmBaselineTests
                 committed.AppliedPresetId = hover.AppliedPresetId;
                 Assert.Equal(RenderSettingsHash.Compute(committed), RenderSettingsHash.Compute(hover));
             }
-            hover.Lens.Baseline = LensBaseline.Standard;
             hover.Geometry = storedGeometry;
-            observations.Add($"{baseline}/{state}|" + string.Join("|", new[] { interactive, clipping, resting, beforeAfter, hover }.Select(s => RenderSettingsHash.Compute(s))));
+            var cells = new[] { interactive, clipping, resting, beforeAfter, hover };
+            observations.Add($"Standard/{state}|" + string.Join("|", cells.Select(s => ConstructionCompatibilityHash.Compute(s))));
         }
-        Assert.Equal(20, observations.Count);
+        Assert.Equal(10, observations.Count);
         ConstructionBaselineAssert.Match("render", observations);
     }
 
@@ -62,7 +60,7 @@ public sealed class EditConstructionVmBaselineTests
         using var fx = new CatalogVmFixture("construction-transfer");
         using var catalog = await fx.CreateCatalogAsync();
         await using var vm = CreateVm(fx, catalog);
-        await Configure(vm, fx, catalog, LensBaseline.Legacy, "transfer");
+        await Configure(vm, fx, catalog, "transfer");
         Call(vm, "BeginDevelopHistoryLoad", vm.SelectedImage);
         await TestWaits.UntilAsync(() => vm.IsHistoryLoaded);
         var stored = vm.SelectedImage!.EditSettings.Clone();
@@ -73,11 +71,6 @@ public sealed class EditConstructionVmBaselineTests
         var committed = (await catalog.LoadImageStatesAsync([image.FilePath]))[image.FilePath].Single().EditSettings;
         var history = await catalog.LoadEditHistoryAsync(image.CatalogId);
         var last = history.Entries.Last().Settings;
-        // Rows are stored base, live base, hover argument, committed catalog, history.
-        var baseHover = hover.Clone();
-        baseHover.Lens.Baseline = LensBaseline.Standard;
-        baseHover.Geometry = stored.Geometry?.Clone();
-        ConstructionBaselineAssert.Match("transfer", new[] { stored, live, baseHover, committed, last }.Select(EditSettingsJson.Serialize));
         var normalizedCommit = committed.Clone();
         normalizedCommit.AppliedPresetId = hover.AppliedPresetId;
         Assert.Equal(EditSettingsJson.Serialize(normalizedCommit), EditSettingsJson.Serialize(hover));
@@ -86,8 +79,6 @@ public sealed class EditConstructionVmBaselineTests
         Assert.Equal(EditSettingsJson.Serialize(committed), EditSettingsJson.Serialize(last));
         Assert.Equal(31, committed.Geometry!.Vertical);
         Assert.Equal(31, hover.Geometry!.Vertical);
-        Assert.Equal(LensBaseline.Legacy, committed.Lens.Baseline);
-        Assert.Equal(LensBaseline.Legacy, hover.Lens.Baseline);
         foreach (var result in new[] { hover, committed, last })
         {
             Assert.Equal(stored.RawProfile!.Location, result.RawProfile!.Location);
@@ -108,10 +99,9 @@ public sealed class EditConstructionVmBaselineTests
             postSelection: _ => { }, timeProvider: new TestTimeProvider());
 
     private static async Task Configure(MainWindowViewModel vm, CatalogVmFixture fx,
-        CatalogService catalog, LensBaseline baseline, string state)
+        CatalogService catalog, string state)
     {
         var settings = new EditSettings();
-        settings.Lens.Baseline = baseline;
         var framed = state is "committed-crop" or "draft-crop" or "live-crop-horizon" or "transfer";
         if (framed)
         {

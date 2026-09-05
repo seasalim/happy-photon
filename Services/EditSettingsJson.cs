@@ -10,7 +10,7 @@ internal static class EditSettingsJson
         WriteIndented = false
     };
 
-    public static bool IsSupportedVersion(int version) => version is 2 or EditSettings.CurrentVersion;
+    public static bool IsSupportedVersion(int version) => version == EditSettings.CurrentVersion;
 
     public static void EnsureCurrent(EditSettings settings)
     {
@@ -38,18 +38,16 @@ internal static class EditSettingsJson
             !versionElement.TryGetInt32(out var documentVersion) ||
             !IsSupportedVersion(documentVersion))
         {
-            throw new JsonException("Edit settings document must declare version 2 or 3.");
+            throw new JsonException("Edit settings document must declare version 3.");
         }
-        if (documentVersion >= 3 &&
-            (!document.RootElement.TryGetProperty("lens", out var lensElement) ||
-             lensElement.ValueKind != JsonValueKind.Object ||
-             !lensElement.TryGetProperty("baseline", out _) ||
-             !HasBoolean(lensElement, "distortion") ||
-             !HasBoolean(lensElement, "chromaticAberration") ||
-             !HasBoolean(lensElement, "vignetting")))
+        if (!document.RootElement.TryGetProperty("lens", out var lensElement) ||
+            lensElement.ValueKind != JsonValueKind.Object ||
+            !HasBoolean(lensElement, "distortion") ||
+            !HasBoolean(lensElement, "chromaticAberration") ||
+            !HasBoolean(lensElement, "vignetting"))
         {
             throw new JsonException(
-                "Version 3 edit settings must declare an explicit lens baseline.");
+                "Version 3 edit settings must declare all three lens booleans.");
         }
 
         var settings = JsonSerializer.Deserialize<EditSettings>(json, CompactOptions)
@@ -58,12 +56,6 @@ internal static class EditSettingsJson
         {
             throw new JsonException(
                 $"Edit settings document version {settings.Version} does not match its marker.");
-        }
-
-        if (settings.Version == 2)
-        {
-            settings.Lens = LensSettings.Legacy();
-            settings.Version = EditSettings.CurrentVersion;
         }
 
         wasClamped = Clamp(settings);
@@ -120,10 +112,6 @@ internal static class EditSettingsJson
 
         settings.Detail ??= new DetailSettings();
         settings.Lens ??= new LensSettings();
-        if (!Enum.IsDefined(settings.Lens.Baseline))
-        {
-            throw new JsonException("Lens baseline is not supported.");
-        }
         settings.Detail.CaptureSharpen = ClampNullable(
             settings.Detail.CaptureSharpen, 0, 100, ref changed);
         settings.Detail.LuminanceNr = Clamp(

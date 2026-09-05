@@ -206,7 +206,9 @@ orders above the observed difference.
    `WysiwygCalibrationTests` emits the opt-in calibration payload.
 6. **Current-format boundary tests**: `EditSettingsJsonTests` pins canonical ordering,
    clone-before-clamp behavior, range validation, removed WB modes, and rejection of
-   every non-v3 write plus explicit v2 legacy-lens materialization.
+   every non-v3 document; `EditDocumentBoundaryBaselineTests` pins the unsupported
+   outcome for v2 and v4 documents at the image-row, history, assessment, and preset
+   boundaries.
    `CatalogSchemaTests` pins the clean new schema, acceptance of
    harmless extra columns, and actionable startup rejection for missing columns;
    `CatalogPersistenceTests` pins neutral no-write recovery for null, malformed, or
@@ -222,7 +224,7 @@ orders above the observed difference.
 9. **Optics suites:** `LensPrescriptionReaderTests` pins generated DNG opcode payloads,
    mandatory rejection, crop/trim coordinates, and the committed X30 RAF table alarm;
    `LensCorrectionProcessorTests` pins one-pass sampling and scene-linear radial gain;
-   `LensSettingsTests` and headless `LensControlTests` pin baseline provenance,
+   `LensSettingsTests` and headless `LensControlTests` pin lens defaults,
    transfer/cache registration, and constant-layout capability gating.
 10. **`RenderNoiseReductionTests`** pins zero-access identity, monochrome skip, native
     luma/chroma scale mapping, seeded-noise reduction, exact gamut-boundary luma and

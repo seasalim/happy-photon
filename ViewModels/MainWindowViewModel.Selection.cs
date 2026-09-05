@@ -248,9 +248,9 @@ public partial class MainWindowViewModel
                    Vignette != 0 ||
                    Grain != 0 ||
                    _liveMixer.HasActivePixels ||
-                   LensDistortion != SelectedImage!.EditSettings.Lens.BaselineDistortion ||
-                   LensChromaticAberration != SelectedImage.EditSettings.Lens.BaselineChromaticAberration ||
-                   LensVignetting != SelectedImage.EditSettings.Lens.BaselineVignetting ||
+                   LensDistortion != LensSettings.DefaultDistortion ||
+                   LensChromaticAberration != LensSettings.DefaultChromaticAberration ||
+                   LensVignetting != LensSettings.DefaultVignetting ||
                    GeometryVertical != 0 ||
                    GeometryHorizontal != 0 ||
                    GeometryAspect != 0 ||

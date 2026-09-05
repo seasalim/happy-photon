@@ -361,8 +361,7 @@ JSON document shape (canonical field order for hashing):
                "grainSize": "medium" },   // fine | medium | coarse
   "lens": { "distortion": true,
             "chromaticAberration": true,
-            "vignetting": false,
-            "baseline": "standard" },     // standard | legacy
+            "vignetting": false },
   "rotation": 0, "horizon_rotation": 0.0, "crop": null,
   "curve": { },
   "curveRed": { },                       // optional; omitted = identity
@@ -392,8 +391,7 @@ JSON document shape (canonical field order for hashing):
 The three channel fields follow `curve` in the shown order; they and `rawProfile` use
 null-omission semantics — `null` is never serialized, and `Clamp` validates/rebuilds
 an optional curve only when the field was present. Selecting a channel in the UI does
-not materialize it. A legacy v2 document instead follows the explicit lens-baseline
-upgrade described in §8.1.
+not materialize it.
 
 `mixer` is omitted unless at least one of its 24 values is nonzero. That same
 pixel-activity predicate governs `HasEdits`, hashing, and the chroma-stage skip;
@@ -449,8 +447,6 @@ is documented in [docs/ARCHITECTURE.md](../ARCHITECTURE.md) ("The catalog").
 The read path is row-local and never writes:
 
 - marker 3 + valid document → parse and return;
-- marker 2 + valid document → materialize an explicit legacy all-off lens baseline,
-  then return v3 settings without writing the row;
 - out-of-range current values → clamp in memory and log once;
 - null or malformed document, or any other marker → log once and return neutral
   current settings.
@@ -459,22 +455,19 @@ One corrupt row therefore cannot fail the folder's batched load. Single and batc
 writes serialize the complete current document and marker; batch writes retain their
 single-transaction all-or-nothing behavior.
 
-The explicit lens baseline marker prevents a legacy image from acquiring standard
-defaults after an ordinary save. New images use `standard` (distortion/CA on,
-vignetting off); legacy images use `legacy` (all off). Reset restores the image's own
-baseline. Copy/paste and preset application transfer only the three values, leaving
-the destination baseline untouched.
+Lens defaults are distortion and chromatic aberration on, vignetting off. Reset,
+the has-edits predicate, and reset-enabled state compare against these constants.
+Copy/paste and preset application transfer the three values.
 
 ### 8.2 Current-format boundaries
 
-`EditSettingsJson` owns supported document versions, sequential in-memory migration, and the shared current-model check.
+`EditSettingsJson` owns the current-only document version policy and the shared current-model check.
 
 `EditSettingsJson.Serialize` requires the current v3 model, clones it,
 clamps and validates the clone, then writes canonical JSON; it never changes the
 caller's model and rejects every other version. Preset files must explicitly declare
-their wrapper and settings versions. Current and v2 settings load through the same
-legacy lens-baseline migration as catalog rows; versionless or unsupported files are
-skipped. Loading never rewrites a preset. Copy/paste accepts only current in-memory
+their wrapper and settings versions. Only current v3 settings are accepted;
+versionless or unsupported files are skipped. Loading never rewrites a preset. Copy/paste accepts only current in-memory
 settings and rejects a non-current source or target before applying values.
 
 ## 9. Detail stage

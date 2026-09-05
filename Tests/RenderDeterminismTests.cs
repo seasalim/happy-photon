@@ -92,8 +92,10 @@ public sealed class RenderDeterminismTests
     [Fact]
     public void SettingsHash_MatchesPinnedCanonicalValue()
     {
-        const string expected =
+        const string previousExpected =
             "6835a2a1f3aabb9f97171b8a1787d48589ad7dee99ab06afcf8ffff23ca9c2e5";
+        const string expected =
+            "1532de45cec56a58aec384c117bdccdfc8990a63808775588c6599f846fc68d9";
         var settings = CreateSettings();
         var canonical = EditSettingsJson.Serialize(settings);
         var actual = RenderSettingsHash.Compute(settings);
@@ -103,6 +105,8 @@ public sealed class RenderDeterminismTests
             "\"luminanceNr\":0,\"chromaNr\":0}",
             canonical);
         Assert.DoesNotContain("noiseReduction", canonical);
+        // Restoring only the removed lens property must reproduce the old pin.
+        Assert.Equal(previousExpected, ConstructionCompatibilityHash.Compute(settings));
         Assert.True(
             actual == expected,
             $"Expected settings hash {expected}, actual {actual}.");

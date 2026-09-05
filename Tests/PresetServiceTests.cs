@@ -302,7 +302,7 @@ public sealed class PresetServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task Initialize_MigratesV012SettingsWithoutRewritingPreset()
+    public async Task Initialize_SkipsV012SettingsWithoutRewritingPreset()
     {
         Directory.CreateDirectory(_tempDirectory);
         var path = Path.Combine(_tempDirectory, "user_v012.json");
@@ -313,14 +313,7 @@ public sealed class PresetServiceTests : IDisposable
 
         await service.InitializeAsync();
 
-        var settings = Assert.Single(service.UserPresets).Settings;
-        Assert.Equal(EditSettings.CurrentVersion, settings.Version);
-        Assert.Equal(0.75, settings.Exposure);
-        Assert.Equal(12, settings.Contrast);
-        Assert.Equal(LensBaseline.Legacy, settings.Lens.Baseline);
-        Assert.False(settings.Lens.Distortion);
-        Assert.False(settings.Lens.ChromaticAberration);
-        Assert.False(settings.Lens.Vignetting);
+        Assert.Empty(service.UserPresets);
         Assert.Equal(json, await File.ReadAllTextAsync(path));
     }
 

@@ -79,14 +79,14 @@ public sealed class CatalogPersistenceTests : IDisposable
     }
 
     [Fact]
-    public async Task LegacyRowMaterializesAllOffBaselineWithoutRewritingDocument()
+    public async Task VersionTwoRowReturnsNeutralWithoutRewritingDocument()
     {
         var (path, id) = await CreateImageAsync("legacy.dng");
         var current = EditSettingsJson.Serialize(new EditSettings());
         var legacy = current
             .Replace("\"version\":3", "\"version\":2", StringComparison.Ordinal)
             .Replace(",\"lens\":{\"distortion\":true,\"chromaticAberration\":true," +
-                "\"vignetting\":false,\"baseline\":\"standard\"}", "",
+                "\"vignetting\":false}", "",
                 StringComparison.Ordinal);
         await UpdateEditRowAsync(id, legacy, 2);
 
@@ -95,9 +95,8 @@ public sealed class CatalogPersistenceTests : IDisposable
         var settings = (await service.LoadImageStatesAsync([path]))[path]
             .Single().EditSettings;
 
-        Assert.Equal(LensBaseline.Legacy, settings.Lens.Baseline);
-        Assert.False(settings.Lens.Distortion);
-        Assert.False(settings.Lens.ChromaticAberration);
+        Assert.True(settings.Lens.Distortion);
+        Assert.True(settings.Lens.ChromaticAberration);
         Assert.False(settings.Lens.Vignetting);
         Assert.False(settings.HasEdits);
         Assert.Equal(new PersistedEditRow(legacy, 2), await ReadEditRowAsync(id));

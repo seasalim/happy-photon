@@ -59,7 +59,7 @@ public sealed class EditSettingsJsonTests
     }
 
     [Fact]
-    public void Serialize_AlwaysWritesSelfDescribingLensBaseline()
+    public void Serialize_AlwaysWritesLensToggles()
     {
         const string expected =
             "{\"version\":3,\"exposure\":0,\"wb\":{\"mode\":\"asShot\"," +
@@ -69,7 +69,7 @@ public sealed class EditSettingsJsonTests
             "\"hlReconstruction\":\"clip\",\"detail\":{\"captureSharpen\":null," +
             "\"luminanceNr\":0,\"chromaNr\":0},\"lens\":{" +
             "\"distortion\":true,\"chromaticAberration\":true," +
-            "\"vignetting\":false,\"baseline\":\"standard\"},\"rotation\":0," +
+            "\"vignetting\":false},\"rotation\":0," +
             "\"horizon_rotation\":0,\"crop\":null,\"curve\":{\"points\":" +
             "[{\"x\":0,\"y\":0},{\"x\":1,\"y\":1}]}," +
             "\"applied_preset_id\":null}";
@@ -220,7 +220,8 @@ public sealed class EditSettingsJsonTests
     {
         var json = """
             {
-              "version": 2,
+              "version": 3,
+              "lens": { "distortion": true, "chromaticAberration": true, "vignetting": false },
               "exposure": 9,
               "wb": { "mode": "custom", "kelvin": 18000, "tint": -300,
                       "gains": [0.1, 1, 9], "preset": null },

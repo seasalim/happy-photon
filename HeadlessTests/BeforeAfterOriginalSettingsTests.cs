@@ -43,7 +43,7 @@ public sealed class BeforeAfterOriginalSettingsTests : IDisposable
                     Bottom = 0.9
                 },
                 Geometry = new GeometrySettings { Vertical = 12 },
-                Lens = LensSettings.Legacy(),
+                Lens = new LensSettings { Distortion = false, ChromaticAberration = false },
                 Exposure = 0.5,
                 Brightness = 15,
                 Contrast = 40,
@@ -94,7 +94,7 @@ public sealed class BeforeAfterOriginalSettingsTests : IDisposable
             HorizonRotation = 1.5,
             Crop = image.EditSettings.Crop!.Clone(),
             Geometry = image.EditSettings.Geometry!.Clone(),
-            Lens = LensSettings.Legacy(),
+            Lens = new LensSettings { Distortion = false, ChromaticAberration = false },
             HlReconstruction = HlReconstructionMode.Blend
         });
 

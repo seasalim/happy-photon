@@ -63,10 +63,9 @@ public partial class MainWindowViewModel
 
     private void ResetLensUi()
     {
-        var lens = SelectedImage?.EditSettings.Lens ?? new LensSettings();
-        LensDistortion = lens.BaselineDistortion;
-        LensChromaticAberration = lens.BaselineChromaticAberration;
-        LensVignetting = lens.BaselineVignetting;
+        LensDistortion = LensSettings.DefaultDistortion;
+        LensChromaticAberration = LensSettings.DefaultChromaticAberration;
+        LensVignetting = LensSettings.DefaultVignetting;
     }
 
     internal void ApplyLensPrescription(

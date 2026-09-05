@@ -94,7 +94,7 @@ public static class EditHistoryLabel
                 after.Lens.ChromaticAberration),
             Toggle("Optics: vignetting", before.Lens.Vignetting,
                 after.Lens.Vignetting)
-        ], before.Lens.Baseline != after.Lens.Baseline);
+        ]);
         Add(changes, "Highlight handling", before.HlReconstruction,
             after.HlReconstruction);
         Add(changes, "Profile", before.RawProfile, after.RawProfile);
