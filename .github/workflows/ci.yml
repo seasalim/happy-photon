@@ -89,42 +89,13 @@ jobs:
           --no-restore
           -p:ContinuousIntegrationBuild=true
 
-      - name: Verify test discovery
-        shell: pwsh
-        run: |
-          function Get-DiscoveredTestCount {
-            param([string] $Project)
-
-            $output = dotnet test $Project `
-              --configuration Release `
-              --no-build `
-              --no-restore `
-              --list-tests 2>&1
-            if ($LASTEXITCODE -ne 0) {
-              $output | ForEach-Object { Write-Host $_ }
-              throw "Test discovery failed for $Project."
-            }
-
-            return @($output | Where-Object {
-                $_ -match '^\s+HappyPhoton\.Tests\.'
-              }).Count
-          }
-
-          $nativeCount = Get-DiscoveredTestCount `
-            "Tests/HappyPhoton.Tests.csproj"
-          $headlessCount = Get-DiscoveredTestCount `
-            "HeadlessTests/HappyPhoton.Headless.Tests.csproj"
-          $totalCount = $nativeCount + $headlessCount
-
-          Write-Host "Discovered $nativeCount native and $headlessCount headless tests ($totalCount total)."
-          # Catch missing test assemblies or discovery regressions without failing when tests are added.
-          if ($nativeCount -lt 666 -or $headlessCount -lt 35) {
-            throw "Test discovery fell below the expected minimum (666 native, 35 headless)."
-          }
-
       - name: Verify repository
         shell: pwsh
         run: |
+          # Discovery (one in-process manifest per test project with count minima and
+          # quarantine registry validation), the solution tests, and the manifest-to-TRX
+          # reconciliation all run inside verify.ps1 on every platform. The build step
+          # above is the only build; the checker never builds.
           $verifyArguments = @{
             Configuration = "Release"
             NoBuild = $true
@@ -134,9 +105,6 @@ jobs:
             BlameHangTimeout = "90s"
             LogFilePrefix = "happy-photon-${{ matrix.rid }}"
             ResultsDirectory = "artifacts/test-results/${{ matrix.rid }}"
-          }
-          if ("${{ matrix.rid }}" -ne "linux-x64") {
-            $verifyArguments.SkipQuarantine = $true
           }
           ./scripts/verify.ps1 @verifyArguments
 

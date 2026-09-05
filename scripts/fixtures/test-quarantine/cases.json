@@ -1,0 +1,18 @@
+[
+  {
+    "project": "Tests/HappyPhoton.Tests.csproj",
+    "assembly": "HappyPhoton.Tests",
+    "tests": [
+      { "Class": "Other.Namespace.Tests", "Method": "Stable", "DisplayName": "Other.Namespace.Tests.Stable", "Traits": {} },
+      { "Class": "Other.Namespace.Tests", "Method": "Theory", "DisplayName": "Other.Namespace.Tests.Theory", "Traits": {} }
+    ]
+  },
+  {
+    "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+    "assembly": "HappyPhoton.Headless.Tests",
+    "tests": [
+      { "Class": "Other.Headless.Tests", "Method": "Stable", "DisplayName": "Other.Headless.Tests.Stable", "Traits": {} },
+      { "Class": "Other.Headless.Tests", "Method": "Flaky", "DisplayName": "Other.Headless.Tests.Flaky", "Traits": { "Category": ["Quarantined"] } }
+    ]
+  }
+]

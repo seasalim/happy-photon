@@ -44,7 +44,7 @@ jobs:
 
       - name: Validate quarantine registry and discovery
         shell: pwsh
-        run: ./scripts/check-test-quarantine.ps1 -NoBuild -NoRestore
+        run: ./scripts/check-test-quarantine.ps1 -ResultsDirectory artifacts/test-results/quarantine
 
       - name: Run full observation suite
         id: observation
