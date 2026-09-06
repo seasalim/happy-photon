@@ -143,6 +143,9 @@ public sealed class SliderAndFooterMetricTests
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
             Assert.Equal(35, sliders.Length);
+            var horizon = Assert.Single(sliders, slider => slider.Label == "Horizon");
+            Assert.Single(horizon.GetLogicalAncestors().OfType<CropEditSection>());
+            Assert.Empty(horizon.GetLogicalAncestors().OfType<DevelopViewerPane>());
             foreach (var name in new[] { "Temperature", "Tint", "Saturation" })
                 Assert.Contains(sliders, slider => slider.Label == name &&
                     slider.GetLogicalAncestors().OfType<LocalsEditSection>().Any());

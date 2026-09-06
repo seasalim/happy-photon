@@ -316,15 +316,16 @@ adjustment controls](screenshots/Screenshot_Develop.png)
 
 ### Set the composition
 
-Use the controls below the image to:
+Rotate in 90-degree steps with the controls below the image. Enter crop mode
+with the **Crop** toggle beneath the histogram or with `R`; its settings then sit
+at the top of the adjustment stack:
 
-- rotate in 90-degree steps;
-- enter crop mode with `R`;
-- straighten the horizon within the crop controls;
-- lock the current crop aspect ratio when needed.
+- straighten the horizon;
+- lock the current crop aspect ratio when needed;
+- reset the crop.
 
-Apply the crop with **Apply** or `Enter`. Use **Cancel** or `Escape` to abandon
-the current crop operation. Geometry belongs to the individual frame, so crop,
+Apply the crop with **Apply** in the crop header or `Enter`. Use **Cancel** or
+`Escape` to abandon the current crop operation. Geometry belongs to the individual frame, so crop,
 rotation, and horizon settings are never transferred by presets or copy/paste.
 
 ### Shape the light

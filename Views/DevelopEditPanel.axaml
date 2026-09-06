@@ -12,6 +12,29 @@
              x:DataType="vm:MainWindowViewModel">
 
     <UserControl.Styles>
+        <StyleInclude Source="avares://HappyPhoton/Views/DevelopActionStyles.axaml"/>
+        <Style Selector="ToggleButton.tool">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="AutomationProperties.HelpText" Value=""/>
+        </Style>
+        <Style Selector="ToggleButton.tool-mask:checked">
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
+        </Style>
+        <Style Selector="ToggleButton.tool Ellipse">
+            <Setter Property="Fill" Value="{DynamicResource ControlActive}"/>
+        </Style>
+        <Style Selector="ToggleButton.tool:checked Ellipse">
+            <Setter Property="Fill" Value="{DynamicResource OnControlActive}"/>
+        </Style>
+        <Style Selector="ToggleButton.crop.has-content">
+            <Setter Property="AutomationProperties.HelpText" Value="contains a committed crop"/>
+        </Style>
+        <Style Selector="ToggleButton.locals.has-content">
+            <Setter Property="AutomationProperties.HelpText" Value="contains saved locals"/>
+        </Style>
         <Style Selector="StackPanel.global-edits.locked">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
@@ -65,7 +88,7 @@
     <Border Background="{DynamicResource SurfaceMid}"
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*,Auto">
-            <Grid Grid.Row="0">
+            <StackPanel Grid.Row="0" IsEnabled="{Binding HasSelectedImage}">
                 <Border x:Name="DevelopScopeBox"
                         Margin="15,15,15,10"
                         Padding="5"
@@ -89,7 +112,41 @@
                         </Grid>
                     </StackPanel>
                 </Border>
-            </Grid>
+                <StackPanel x:Name="DevelopToolRow" Orientation="Horizontal" Spacing="4" Margin="15,0,15,8">
+                    <ToggleButton x:Name="CropModeButton" Classes="develop-action tool crop" Classes.has-content="{Binding HasCommittedCrop}"
+                                  IsChecked="{Binding IsCropMode, Mode=OneWay}" Command="{Binding ToggleCropModeCommand}"
+                                  AutomationProperties.Name="Crop" ToolTip.Tip="Crop Image (R)" IsEnabled="{Binding CanEditSelectedImage}">
+                        <Grid>
+                            <TextBlock Text="⬚" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <Ellipse Width="4" Height="4" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                     Margin="0,-2,-3,0" IsVisible="{Binding HasCommittedCrop}"/>
+                        </Grid>
+                    </ToggleButton>
+                    <ToggleButton x:Name="LocalsModeButton" Classes="develop-action tool locals" Classes.has-content="{Binding HasLocals}"
+                                  IsChecked="{Binding IsLocalsMode, Mode=OneWay}" Command="{Binding ToggleLocalsModeCommand}"
+                                  AutomationProperties.Name="Locals" ToolTip.Tip="Locals">
+                        <Grid>
+                            <TextBlock Text="◩" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <Ellipse Width="4" Height="4" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                     Margin="0,-2,-3,0" IsVisible="{Binding HasLocals}"/>
+                        </Grid>
+                    </ToggleButton>
+                </StackPanel>
+                <Grid x:Name="CropToolHeader" ColumnDefinitions="*,Auto,Auto" Margin="15,0,15,8"
+                      IsVisible="{Binding IsCropMode}" IsEnabled="{Binding CanEditSelectedImage}">
+                    <TextBlock Text="CROP" Classes="section-label" VerticalAlignment="Center"/>
+                    <Button x:Name="CancelCropButton" Grid.Column="1" Content="Cancel" Command="{Binding CancelCropCommand}"
+                            ToolTip.Tip="Cancel (Escape)" FontSize="10" Padding="8,4" BorderThickness="0"/>
+                    <Button x:Name="ApplyCropButton" Grid.Column="2" Content="Apply" Command="{Binding ApplyCropCommand}"
+                            ToolTip.Tip="Apply Crop (Enter)" FontSize="10" Padding="10,4" Classes="accent" BorderThickness="0"/>
+                </Grid>
+                <Grid x:Name="LocalsToolHeader" ColumnDefinitions="*,Auto,Auto" Margin="15,0,15,8" IsVisible="{Binding IsLocalsMode}">
+                    <TextBlock Text="LOCALS" Classes="section-label" VerticalAlignment="Center"/>
+                    <ToggleButton x:Name="ShowLocalMaskButton" Classes="tool-mask" Grid.Column="1" Content="Show Mask"
+                                  IsChecked="{Binding ShowLocalMask}" AutomationProperties.Name="Show selected mask" Padding="5,3" FontSize="10"/>
+                    <Button x:Name="CloseLocalsButton" Grid.Column="2" Content="Close" Command="{Binding CloseLocalsCommand}" Padding="5,3" FontSize="10"/>
+                </Grid>
+            </StackPanel>
 
             <ScrollViewer x:Name="DevelopControlsScrollViewer"
                           Grid.Row="1"
@@ -98,8 +155,9 @@
                 <StackPanel Margin="15,5,15,15"
                             Spacing="4"
                             IsEnabled="{Binding HasSelectedImage}">
+                    <views:CropEditSection/>
                     <views:LocalsEditSection/>
-                    <StackPanel Classes="global-edits" Classes.locked="{Binding IsLocalsMode}" Spacing="4" IsEnabled="{Binding !IsLocalsMode}">
+                    <StackPanel Classes="global-edits" Classes.locked="{Binding IsToolActive}" Spacing="4" IsEnabled="{Binding !IsToolActive}">
                         <views:RawProfilePicker x:Name="RawProfilePicker"
                             IsEnabled="{Binding IsColorEditingEnabled}"/>
 

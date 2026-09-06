@@ -6,6 +6,10 @@
              x:Class="HappyPhoton.Views.LocalsEditSection"
              x:DataType="vm:MainWindowViewModel" IsVisible="{Binding IsLocalsMode}">
     <UserControl.Styles>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="MinHeight" Value="0"/>
+        </Style>
         <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter,
                          ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SelectionSurface}"/>
@@ -27,18 +31,11 @@
         </Style>
     </UserControl.Styles>
     <StackPanel Spacing="8" Margin="0,0,0,12">
-        <Grid ColumnDefinitions="*,Auto,Auto">
-            <TextBlock Text="LOCALS" Classes="section-label" VerticalAlignment="Center"/>
-            <ToggleButton Classes="mask" Grid.Column="1" Content="Show Mask" IsChecked="{Binding ShowLocalMask}"
-                          AutomationProperties.Name="Show selected mask" Padding="5,3" FontSize="10"/>
-            <Button Grid.Column="2" Content="Close" Command="{Binding CloseLocalsCommand}"
-                    Padding="5,3" FontSize="10"/>
-        </Grid>
         <ListBox x:Name="LocalList" ItemsSource="{Binding LocalRows}" SelectedItem="{Binding SelectedLocalRow}"
-                 IsEnabled="{Binding CanEditLocals}" MaxHeight="144" AutomationProperties.Name="Local adjustments">
+                 IsEnabled="{Binding CanEditLocals}" MaxHeight="120" AutomationProperties.Name="Local adjustments">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="vm:LocalRowViewModel">
-                    <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="30">
+                    <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="24">
                         <CheckBox IsChecked="{Binding Enabled, Mode=OneWay}" Padding="0" Margin="0,0,5,0"
                                   AutomationProperties.Name="Enable local"
                                   Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).ToggleLocalEnabledCommand}"
@@ -61,11 +58,27 @@
         <views:CompactSlider Label="Exposure" Value="{Binding LocalExposure}" Minimum="-4" Maximum="4"
                              SmallChange="0.1" StringFormat="{}{0:+0.00;-0.00;0.00}"
                              EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
-        <StackPanel IsEnabled="{Binding CanEditLocalColor}">
+        <StackPanel Spacing="8" IsEnabled="{Binding CanEditLocalColor}">
             <views:CompactSlider Label="Temperature" Value="{Binding LocalTemperature}" Minimum="-50" Maximum="50"
-                                 SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
+                                 SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True" ShowValueFill="False">
+                <views:CompactSlider.TrackBrush>
+                    <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                        <GradientStop Color="{StaticResource WhiteBalanceCoolColor}" Offset="0"/>
+                        <GradientStop Color="{StaticResource WhiteBalanceNeutralColor}" Offset="0.5"/>
+                        <GradientStop Color="{StaticResource WhiteBalanceWarmColor}" Offset="1"/>
+                    </LinearGradientBrush>
+                </views:CompactSlider.TrackBrush>
+            </views:CompactSlider>
             <views:CompactSlider Label="Tint" Value="{Binding LocalTint}" Minimum="-50" Maximum="50"
-                                 SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
+                                 SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True" ShowValueFill="False">
+                <views:CompactSlider.TrackBrush>
+                    <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                        <GradientStop Color="{StaticResource WhiteBalanceTintGreenColor}" Offset="0"/>
+                        <GradientStop Color="{StaticResource WhiteBalanceTintNeutralColor}" Offset="0.5"/>
+                        <GradientStop Color="{StaticResource WhiteBalanceTintMagentaColor}" Offset="1"/>
+                    </LinearGradientBrush>
+                </views:CompactSlider.TrackBrush>
+            </views:CompactSlider>
             <views:CompactSlider Label="Saturation" Value="{Binding LocalSaturation}" Minimum="-100" Maximum="100"
                                  SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
         </StackPanel>
@@ -132,5 +145,6 @@
                    Foreground="{DynamicResource TextMuted}"/>
         <Button Content="Return to local editing" Command="{Binding ResumeLocalEditingCommand}"
                 IsVisible="{Binding !CanEditLocals}" FontSize="10" Padding="5,3"/>
+        <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0"/>
     </StackPanel>
 </UserControl>

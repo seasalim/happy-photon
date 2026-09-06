@@ -271,7 +271,7 @@ exception, showing the outline from an otherwise mostly visible sub-1:1 view. It
 informational only; navigator panning remains out of scope.
 
 The Browse bottom toolbar anchors culling actions left and view/thumbnail state right.
-Develop mirrors that split: navigation, rotation, and crop actions anchor left while
+Develop mirrors that split: navigation and rotation anchor left while
 zoom and view state anchor right. Flag, color-label, and rating state remains visible
 in Browse rather than resting anywhere over the Develop or full-screen viewer. Develop
 and Browse Loupe culling shortcuts briefly show a confirmation centered over the

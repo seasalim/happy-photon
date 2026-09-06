@@ -8,6 +8,9 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    // Locals.State's HasLocals notification hook also refreshes this on selection/history rebinds.
+    public bool HasCommittedCrop => SelectedImage?.EditSettings.Crop is { IsFullImage: false };
+
     internal const double ZoomStepFactor = 1.1;
     private bool _cropModeTransitionRequested;
     private bool _restoreCropModeOnRollback;
@@ -169,6 +172,7 @@ public partial class MainWindowViewModel
             image.EditSettings.Crop = CurrentCrop.IsFullImage
                 ? null
                 : CurrentCrop.Clone();
+            OnPropertyChanged(nameof(HasCommittedCrop));
             image.EditSettings.HorizonRotation = HorizonRotation;
             image.HasEdits = image.EditSettings.HasEdits;
             var appliedSettings = CaptureLiveEditState();

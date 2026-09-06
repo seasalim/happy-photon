@@ -188,7 +188,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanSampleWhiteBalance))]
     private void ToggleWhiteBalancePicker()
     {
-        if (IsLocalsMode) return;
+        if (IsToolActive) return;
         IsWhiteBalancePicking = !IsWhiteBalancePicking;
         ShowTransientStatus(IsWhiteBalancePicking
             ? "Click a neutral area — Esc to cancel"

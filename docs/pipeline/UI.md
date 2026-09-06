@@ -27,6 +27,20 @@ workflow partial, don't grow the root file).
 
 ## 2. Develop right panel — target layout (top → bottom)
 
+Crop and Locals are compact icon-only toggles in the panel's shared develop-action
+style (the scope selector's and action bar's 24 px buttons; tooltip and accessible
+name carry the label) in a fixed tool row beneath the scope box, in the Lightroom
+tool-strip idiom. Pressed state identifies the active tool; a corner dot and accessible
+description identify a committed crop or stored locals, independently of tool state.
+While either tool is active the global stack below is locked and dimmed exactly as it
+is for Locals, and the white-balance picker is inert.
+The fixed active-tool header holds CROP with Cancel / Apply, or LOCALS with Show Mask /
+Close. Entering either tool reveals its settings at the top of the scrolling stack.
+Crop settings contain Horizon, aspect lock, Reset crop and a one-line instruction.
+Horizon stays draft-only until Apply; Cancel discards it. Clicking active Crop cancels,
+clicking active Locals closes, and switching tools discards unfinished input while
+retaining committed locals.
+
 Locals is a tool mode beside Crop. Its toggle shows a dot for any stored local,
 including disabled and neutral ones. Entering selects the first local and reveals
 the docked section beneath the histogram; Close retains committed edits. The list
@@ -43,7 +57,9 @@ command (including W) is inert until Locals closes.
 
 The Adjustments group contains Exposure plus relative Temperature/Tint [-50, +50]
 and Saturation [-100, +100]. Positive Temperature is warmer. Signed CompactSlider
-rows use zero neutral, double-click reset, keyboard stepping and the existing
+rows share an 8 px rhythm. Temperature and Tint reuse the global white-balance
+gradient tokens, with neutral centered at 0.5 and value fill off. Rows use zero
+neutral, double-click reset, keyboard stepping and the existing
 slider-release transaction. Reset adjustments clears these four values as one
 named undoable step, retaining geometry, polarity and enablement. On monochrome
 RAW the color rows remain visible but disabled with one shared explanation; stored
@@ -101,8 +117,15 @@ with no editing controls; everything below is a Develop-only surface (Browse
 editing surfaces remain a non-goal, §10).
 
 ```
-Locals                 (only while the tool mode is open)
-  [local list] [Exposure / Temperature / Tint / Saturation] [Reset adjustments] [Show Mask] [Close] [Add Linear] [Place at center]
+Scope box              (fixed)
+[Crop] [Locals]         (fixed tool row)
+CROP [Cancel] [Apply] / LOCALS [Show Mask] [Close]  (fixed active-tool header)
+Scrolling stack:
+Crop                   (only in Crop mode)
+  [Horizon] [Lock aspect ratio] [Reset crop] [instruction]
+Locals                 (only in Locals mode)
+  [local list] [Exposure / Temperature / Tint / Saturation] [Reset adjustments]
+  [polarity] [Geometry disclosure] [Add Linear] [Add Radial] [Place at center]
 Camera Profile         (RAW only, collapsed child control)
   [profile ComboBox]
   [Browse…] [Refresh]                         status / loading
@@ -137,11 +160,11 @@ Develop Footer
   [Before/after] [Undo] [Redo]                         Reset
 ```
 
-The adjustment stack scrolls beneath the histogram while the Develop footer remains
+The adjustment stack scrolls beneath the scope box, tool row and header; the Develop footer remains
 fixed. Export has no pointer action in the Develop pane itself: click the **Export**
 tab in the mode strip, or use the global `Ctrl+Shift+E` shortcut from either workspace.
 The Browse bottom toolbar places culling actions at the left and view/thumbnail state
-at the right; Develop mirrors that rhythm with navigation/rotation/crop at the left
+at the right; Develop mirrors that rhythm with navigation/rotation at the left
 and zoom/view state at the right.
 
 Develop previews floor capture sharpening at 1.0 screen px so Sharpen responds at Fit
