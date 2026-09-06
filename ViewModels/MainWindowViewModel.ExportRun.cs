@@ -105,6 +105,7 @@ public partial class MainWindowViewModel
 
     private Task TryStartExportAsync(ExportJob? job)
     {
+        DiscardLocalsGesture();
         if (Interlocked.CompareExchange(ref _exportStartOwned, 1, 0) != 0)
         {
             Interlocked.Increment(ref _duplicateExportStartRefusals);

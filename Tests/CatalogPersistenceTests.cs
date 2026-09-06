@@ -84,7 +84,7 @@ public sealed class CatalogPersistenceTests : IDisposable
         var (path, id) = await CreateImageAsync("legacy.dng");
         var current = EditSettingsJson.Serialize(new EditSettings());
         var legacy = current
-            .Replace("\"version\":3", "\"version\":2", StringComparison.Ordinal)
+            .Replace("\"version\":4", "\"version\":2", StringComparison.Ordinal)
             .Replace(",\"lens\":{\"distortion\":true,\"chromaticAberration\":true," +
                 "\"vignetting\":false}", "",
                 StringComparison.Ordinal);
@@ -100,6 +100,35 @@ public sealed class CatalogPersistenceTests : IDisposable
         Assert.False(settings.Lens.Vignetting);
         Assert.False(settings.HasEdits);
         Assert.Equal(new PersistedEditRow(legacy, 2), await ReadEditRowAsync(id));
+    }
+
+    [Fact]
+    public async Task VersionThreeRowsAndHistoryMigrateWithoutRewriting()
+    {
+        var (path, id) = await CreateImageAsync("v3.jpg");
+        var json = EditSettingsJson.Serialize(new EditSettings { Exposure = .75 })
+            .Replace("\"version\":4", "\"version\":3");
+        await UpdateEditRowAsync(id, json, 3);
+        await using var connection = new SqliteConnection(
+            $"Data Source={Path.Combine(_tempDirectory, "catalog.db")};Pooling=False");
+        await connection.OpenAsync();
+        using var insert = connection.CreateCommand();
+        insert.CommandText = "INSERT INTO edit_history(image_id, seq, label, settings_json) VALUES(@id, 0, 'Old', @json)";
+        insert.Parameters.AddWithValue("@id", id);
+        insert.Parameters.AddWithValue("@json", json);
+        await insert.ExecuteNonQueryAsync();
+        using var service = new CatalogService(_tempDirectory);
+        await service.InitializeAsync();
+        var row = (await service.LoadImageStatesAsync([path]))[path].Single();
+        var history = Assert.Single((await service.LoadEditHistoryAsync(id)).Entries);
+        Assert.Equal(4, row.EditSettings.Version);
+        Assert.Equal(.75, row.EditSettings.Exposure);
+        Assert.Equal(4, history.Settings.Version);
+        Assert.Equal(.75, history.Settings.Exposure);
+        Assert.Null(history.Settings.Locals);
+        Assert.Equal(new PersistedEditRow(json, 3), await ReadEditRowAsync(id));
+        insert.CommandText = "SELECT settings_json FROM edit_history WHERE image_id = @id";
+        Assert.Equal(json, await insert.ExecuteScalarAsync());
     }
 
     [Fact]

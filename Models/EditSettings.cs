@@ -7,7 +7,7 @@ namespace HappyPhoton.Models;
 /// </summary>
 public class EditSettings
 {
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
 
     [JsonPropertyName("version")]
     [JsonPropertyOrder(0)]
@@ -129,6 +129,17 @@ public class EditSettings
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public GeometrySettings? Geometry { get; set; }
 
+    private List<LocalAdjustment>? _locals;
+
+    [JsonPropertyName("locals")]
+    [JsonPropertyOrder(25)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<LocalAdjustment>? Locals
+    {
+        get => _locals is { Count: > 0 } ? _locals : null;
+        set => _locals = value;
+    }
+
     [JsonIgnore]
     public bool HasEdits => Exposure != 0.0 || !Wb.IsIdentity ||
                           Brightness != 0 || Contrast != 0 ||
@@ -146,7 +157,7 @@ public class EditSettings
                           (CurveGreen is { } green && !green.IsIdentity()) ||
                           (CurveBlue is { } blue && !blue.IsIdentity()) ||
                           AppliedPresetId != null ||
-                          RawProfile != null;
+                          RawProfile != null || Locals != null;
 
     public EditSettings Clone() => new()
     {
@@ -174,7 +185,8 @@ public class EditSettings
         AppliedPresetId = AppliedPresetId,
         RawProfile = RawProfile?.Clone(),
         Mixer = Mixer?.Clone(),
-        Geometry = Geometry?.Clone()
+        Geometry = Geometry?.Clone(),
+        Locals = Locals?.Select(local => local with { }).ToList()
     };
 
     public bool HasSameEdits(EditSettings other)
@@ -204,7 +216,8 @@ public class EditSettings
                CurvesMatch(CurveRed, other.CurveRed) &&
                CurvesMatch(CurveGreen, other.CurveGreen) &&
                CurvesMatch(CurveBlue, other.CurveBlue) &&
-               ProfilesEqual(RawProfile, other.RawProfile);
+               ProfilesEqual(RawProfile, other.RawProfile) &&
+               (Locals ?? []).SequenceEqual(other.Locals ?? []);
     }
 
     private static bool CropsMatch(CropRegion? left, CropRegion? right) =>

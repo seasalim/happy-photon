@@ -61,9 +61,12 @@ public partial class MainWindowViewModel
             SelectedImage is not { } image)
             return;
 
+        DiscardLocalsGesture();
         var before = CaptureLiveEditState();
         Rotation = (Rotation + delta + 360) % 360;
         image.EditSettings.Rotation = Rotation;
+        foreach (var local in Locals) local.Rotate(delta);
+        NotifyLocalsState();
         var after = CaptureLiveEditState();
         var previousIntent = _requestedPreviewIntent;
         var generation = RequestEditedRender();
@@ -113,6 +116,7 @@ public partial class MainWindowViewModel
 
     private async Task EnterCropModeAsync()
     {
+        CloseLocals();
         var image = SelectedImage;
         if (!CanEditSelectedImage || image == null) return;
         SetCropModeTransitionRequested(true);

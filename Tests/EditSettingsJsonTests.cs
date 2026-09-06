@@ -8,7 +8,7 @@ namespace HappyPhoton.Tests;
 public sealed class EditSettingsJsonTests
 {
     [Fact]
-    public void Serialize_UsesCanonicalV3ShapeAndOrder()
+    public void Serialize_UsesCanonicalV4ShapeAndOrder()
     {
         var settings = new EditSettings
         {
@@ -62,7 +62,7 @@ public sealed class EditSettingsJsonTests
     public void Serialize_AlwaysWritesLensToggles()
     {
         const string expected =
-            "{\"version\":3,\"exposure\":0,\"wb\":{\"mode\":\"asShot\"," +
+            "{\"version\":4,\"exposure\":0,\"wb\":{\"mode\":\"asShot\"," +
             "\"kelvin\":null,\"tint\":null,\"gains\":null,\"preset\":null}," +
             "\"highlights\":0,\"shadows\":0,\"brightness\":0,\"contrast\":0," +
             "\"saturation\":0,\"vibrance\":0,\"baseLook\":null," +
@@ -262,7 +262,7 @@ public sealed class EditSettingsJsonTests
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
-    [InlineData(4)]
+    [InlineData(3)]
     [InlineData(99)]
     public void Serialize_RejectsUnsupportedVersions(int version)
     {

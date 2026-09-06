@@ -38,6 +38,7 @@
                                   OriginalViewPixelSize="{Binding OriginalViewPixelSize}"
                                   AutoFit="{Binding IsZoomFitMode}"
                                   IsCropMode="{Binding IsCropMode}"
+                                  IsLocalsMode="{Binding CanEditLocals}"
                                   IsWhiteBalancePicking="{Binding IsWhiteBalancePicking}"
                                   IsColorAssessment="{Binding IsColorAssessmentMode}"
                                   IsDisplayTraceActive="{Binding IsDevelopPreviewSurfaceActive}"
@@ -104,6 +105,14 @@
                         IsEnabled="{Binding CanEditSelectedImage}" Content="↷"
                         ToolTip.Tip="Rotate Right (90° clockwise)"
                         FontSize="14" Padding="8,3" BorderThickness="0"/>
+                <ToggleButton x:Name="LocalsModeButton" ToolTip.Tip="Locals" FontSize="14" AutomationProperties.Name="Locals" IsChecked="{Binding IsLocalsMode, Mode=OneWay}"
+                              Command="{Binding ToggleLocalsModeCommand}" Padding="8,3" BorderThickness="0">
+                    <Grid>
+                        <TextBlock Text="◩" FontSize="14"/>
+                        <Ellipse Width="4" Height="4" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                 Margin="0,-2,-3,0" Fill="{DynamicResource ControlActive}" IsVisible="{Binding HasLocals}"/>
+                    </Grid>
+                </ToggleButton>
                 <ToggleButton x:Name="CropModeButton"
                               IsChecked="{Binding IsCropMode, Mode=OneWay}"
                               Command="{Binding ToggleCropModeCommand}"

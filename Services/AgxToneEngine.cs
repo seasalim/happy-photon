@@ -73,6 +73,12 @@ internal static class AgxToneEngine
         double slope,
         double toePower,
         double shoulderPower)
+        => EvaluateSigmoid(x, slope, toePower, shoulderPower,
+            x < XPivot ? TailScale(XPivot, YPivot, slope, toePower) : 0,
+            x > XPivot ? TailScale(1 - XPivot, 1 - YPivot, slope, shoulderPower) : 0);
+
+    private static double EvaluateSigmoid(double x, double slope, double toePower,
+        double shoulderPower, double toeScale, double shoulderScale)
     {
         x = Math.Clamp(x, 0, 1);
         if (x == XPivot)
@@ -82,7 +88,7 @@ internal static class AgxToneEngine
 
         if (x < XPivot)
         {
-            var scale = TailScale(XPivot, YPivot, slope, toePower);
+            var scale = toeScale;
             var distance = slope * (XPivot - x) / scale;
             return Math.Clamp(
                 YPivot - scale * PowerHyperbolic(distance, toePower),
@@ -90,11 +96,6 @@ internal static class AgxToneEngine
                 1);
         }
 
-        var shoulderScale = TailScale(
-            1 - XPivot,
-            1 - YPivot,
-            slope,
-            shoulderPower);
         var shoulderDistance = slope * (x - XPivot) / shoulderScale;
         return Math.Clamp(
             YPivot + shoulderScale *
@@ -130,17 +131,43 @@ internal static class AgxToneEngine
         double toePower,
         double shoulderPower,
         CurveData? channelCurve = null)
+        => EvaluateToneExtendedUnchecked(Math.Clamp(value, 0, 1), parameters,
+            exposureGain, log2Fold, slope, toePower, shoulderPower, channelCurve);
+
+    internal static double EvaluateToneExtendedUnchecked(
+        double value,
+        AgxToneParameters parameters,
+        double exposureGain,
+        double log2Fold,
+        double slope,
+        double toePower,
+        double shoulderPower,
+        CurveData? channelCurve = null)
+    {
+        var x = NormalizeLog(Math.Max(value, 0), exposureGain, log2Fold);
+        var encoded22 = EvaluateSigmoid(x, slope, toePower, shoulderPower);
+        var displayLinear = Math.Pow(encoded22, DisplayGamma);
+        var curveOutput = ToneLut.EvaluateComposedCurve(parameters.Curve,
+            channelCurve, ToneLut.SrgbEncode(displayLinear));
+        return ToneLut.SrgbDecode(Math.Clamp(curveOutput, 0, 1));
+    }
+
+    internal static double EvaluateToneExtendedUnchecked(double value,
+        AgxToneParameters parameters, double exposureGain, double log2Fold,
+        double slope, double toePower, double shoulderPower, CurveData? channelCurve,
+        double toeScale, double shoulderScale, bool identityCurves)
     {
         var x = NormalizeLog(
-            Math.Clamp(value, 0, 1),
+            Math.Max(value, 0),
             exposureGain,
             log2Fold);
         var encoded22 = EvaluateSigmoid(
             x,
             slope,
             toePower,
-            shoulderPower);
+            shoulderPower, toeScale, shoulderScale);
         var displayLinear = Math.Pow(encoded22, DisplayGamma);
+        if (identityCurves) return displayLinear;
         var curveInput = ToneLut.SrgbEncode(displayLinear);
         var curveOutput = ToneLut.EvaluateComposedCurve(
             parameters.Curve,
@@ -189,7 +216,7 @@ internal static class AgxToneEngine
         }
     }
 
-    private static double TailScale(
+    internal static double TailScale(
         double limitX,
         double limitY,
         double slope,

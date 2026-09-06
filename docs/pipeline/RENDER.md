@@ -336,13 +336,13 @@ ORed independently, allowing one pixel to carry both. Develop requests masks onl
 while the `J` latch or a triangle peek is active; ordinary preview renders remain
 mask-free.
 
-## 8. EditSettings v3 — schema and storage
+## 8. EditSettings v4 — schema and storage
 
 JSON document shape (canonical field order for hashing):
 
 ```jsonc
 {
-  "version": 3,
+  "version": 4,
   "exposure": 0.0,                       // EV
   "wb": { "mode": "asShot",              // asShot | custom | preset | picked
           "kelvin": null, "tint": null,  // custom/preset
@@ -389,6 +389,34 @@ JSON document shape (canonical field order for hashing):
 }
 ```
 
+The optional `locals` array follows `geometry` and is omitted when empty. Each linear
+local stores `id` (32-hex GUID), `type` (`linear`), stable positive `ordinal`, `enabled`,
+`cu`, `cv`, `angle`, `feather`, and `exposure`. Disabled and neutral locals retain all
+fields and count as edits; snapshots deep-copy them and undo equality compares every
+stored field. Centers clamp to [-1, 2], feather to [0.001, 2] long-edge units, and
+Exposure to [-4, 4] EV; clockwise angles normalize to [0, 360). Unknown types, more
+than eight entries, invalid identities, and non-finite values reject the document.
+Preset save strips locals, preset load ignores them, and the transfer allowlist
+preserves destination locals. Version 3 image/history/preset settings migrate in
+memory to version 4 with no locals; catalog row/document marker checks still apply,
+and reading never rewrites stored version 3 bytes. Version 2 remains unsupported.
+
+Linear coordinates belong to the corrected frame after quarter-turn and warp,
+before crop. The metric uses its long edge: angle zero points right and positive
+angles turn clockwise. Weight is `1 - smoothstep((s + feather/2)/feather)` for
+signed distance along that direction, so the negative rail has full effect.
+Quarter-turn commits carry centers and directions with the photograph; clockwise
+90° maps `(cu, cv, angle)` to `(1-cv, cu, angle+90)` and preserves feather.
+The viewer obtains frame dimensions from the retained matching preview base and
+uses `RenderGeometry` for corrected-frame/crop mapping, without source reads.
+Resting preparation carries that mapping from the large base through an internal
+render-request override, preserving local coordinates after geometry and resize.
+Develop Reset clears locals; preset removal preserves them. A completed geometry
+gesture commits once, while unfinished geometry is discarded before export or
+version duplication.
+Navigation during a completed local gesture's render still saves its captured
+settings to the original image's catalog row.
+
 The three channel fields follow `curve` in the shown order; they and `rawProfile` use
 null-omission semantics — `null` is never serialized, and `Clamp` validates/rebuilds
 an optional curve only when the field was present. Selecting a channel in the UI does
@@ -434,7 +462,7 @@ export-scale renders are the fidelity reference.
 
 The canonical `images` table contains `id`, `file_path`, `file_name`, `edit_settings`,
 `edit_version`, `flag_state`, `rating`, `color_label`, and `updated_utc`. New rows
-always receive a complete v3 JSON document and `edit_version = 3`.
+always receive a complete v4 JSON document and `edit_version = 4`.
 
 `CatalogSchema` creates the tables for a new catalog, runs the ordered transactional
 `CatalogMigrations` recorded by `app_settings.schema_version`, then validates the
@@ -447,7 +475,8 @@ is documented in [docs/ARCHITECTURE.md](../ARCHITECTURE.md) ("The catalog").
 
 The read path is row-local and never writes:
 
-- marker 3 + valid document → parse and return;
+- marker 3 + matching valid document → migrate in memory and return;
+- marker 4 + matching valid document → parse and return;
 - out-of-range current values → clamp in memory and log once;
 - null or malformed document, or any other marker → log once and return neutral
   current settings.
@@ -462,12 +491,12 @@ Copy/paste and preset application transfer the three values.
 
 ### 8.2 Current-format boundaries
 
-`EditSettingsJson` owns the current-only document version policy and the shared current-model check.
+`EditSettingsJson` owns document version acceptance and migration and the shared current-model check.
 
-`EditSettingsJson.Serialize` requires the current v3 model, clones it,
+`EditSettingsJson.Serialize` requires the current v4 model, clones it,
 clamps and validates the clone, then writes canonical JSON; it never changes the
 caller's model and rejects every other version. Preset files must explicitly declare
-their wrapper and settings versions. Only current v3 settings are accepted;
+their wrapper and settings versions. Version 3 settings migrate in memory; version 4 settings are accepted;
 versionless or unsupported files are skipped. Loading never rewrites a preset. Copy/paste accepts only current in-memory
 settings and rejects a non-current source or target before applying values.
 

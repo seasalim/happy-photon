@@ -17,6 +17,18 @@ internal readonly record struct RenderGeometryTrace(
 
 internal static class RenderGeometry
 {
+    internal static LocalsFrame CalculateLocalsFrame(int width, int height, EditSettings settings)
+    {
+        if (settings.Rotation is 90 or 270) (width, height) = (height, width);
+        var map = new RenderGeometryMap(width, height, settings.HorizonRotation, settings.Geometry);
+        width = map.OutputWidth;
+        height = map.OutputHeight;
+        var crop = settings.Crop is { IsFullImage: false } region
+            ? region.ToPixels(width, height) : (0, 0, width, height);
+        return new(width, height, crop.Item1 / (double)width, crop.Item2 / (double)height,
+            crop.Item3 / (double)width, crop.Item4 / (double)height);
+    }
+
     public static PixelSize CalculateOriginalViewSize(
         int fullWidth,
         int fullHeight,

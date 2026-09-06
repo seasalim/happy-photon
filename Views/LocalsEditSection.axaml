@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             xmlns:models="using:HappyPhoton.Models"
+             xmlns:views="using:HappyPhoton.Views"
+             x:Class="HappyPhoton.Views.LocalsEditSection"
+             x:DataType="vm:MainWindowViewModel" IsVisible="{Binding IsLocalsMode}">
+    <UserControl.Styles>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter,
+                         ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SelectionSurface}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="ToggleButton.mask:checked">
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
+        </Style>
+        <Style Selector="views|CompactSlider:disabled">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        </Style>
+    </UserControl.Styles>
+    <StackPanel Spacing="8" Margin="0,0,0,12">
+        <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBlock Text="LOCALS" Classes="section-label" VerticalAlignment="Center"/>
+            <ToggleButton Classes="mask" Grid.Column="1" Content="Show Mask" IsChecked="{Binding ShowLocalMask}"
+                          AutomationProperties.Name="Show selected mask" Padding="5,3" FontSize="10"/>
+            <Button Grid.Column="2" Content="Close" Command="{Binding CloseLocalsCommand}"
+                    Padding="5,3" FontSize="10"/>
+        </Grid>
+        <ListBox x:Name="LocalList" ItemsSource="{Binding LocalRows}" SelectedItem="{Binding SelectedLocalRow}"
+                 IsEnabled="{Binding CanEditLocals}" MaxHeight="144" AutomationProperties.Name="Local adjustments">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:LocalRowViewModel">
+                    <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="30">
+                        <CheckBox IsChecked="{Binding Enabled, Mode=OneWay}" Padding="0" Margin="0,0,5,0"
+                                  AutomationProperties.Name="Enable local"
+                                  Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).ToggleLocalEnabledCommand}"
+                                  CommandParameter="{Binding Local}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Name}" FontSize="11"/>
+                            <TextBlock Text="Disabled" IsVisible="{Binding !Enabled}" FontSize="9"
+                                       Foreground="{DynamicResource TextMuted}"/>
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="×" Padding="5,2" AutomationProperties.Name="Delete local"
+                                Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).DeleteLocalCommand}"
+                                CommandParameter="{Binding Local}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <views:CompactSlider Label="Exposure" Value="{Binding LocalExposure}" Minimum="-4" Maximum="4"
+                             SmallChange="0.1" StringFormat="{}{0:+0.00;-0.00;0.00}"
+                             EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
+        <StackPanel Orientation="Horizontal" Spacing="5" IsEnabled="{Binding CanEditLocals}">
+            <Button Content="Add Linear" Command="{Binding AddLinearCommand}" Padding="8,4" FontSize="10"/>
+            <Button Content="Place at center" Command="{Binding PlaceLocalAtCenterCommand}" Padding="8,4" FontSize="10"/>
+        </StackPanel>
+        <TextBlock Text="{Binding LocalsInstruction}" TextWrapping="Wrap" FontSize="10"
+                   Foreground="{DynamicResource TextMuted}"/>
+        <Button Content="Return to local editing" Command="{Binding ResumeLocalEditingCommand}"
+                IsVisible="{Binding !CanEditLocals}" FontSize="10" Padding="5,3"/>
+    </StackPanel>
+</UserControl>

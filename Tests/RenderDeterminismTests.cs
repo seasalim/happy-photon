@@ -94,8 +94,9 @@ public sealed class RenderDeterminismTests
     {
         const string previousExpected =
             "6835a2a1f3aabb9f97171b8a1787d48589ad7dee99ab06afcf8ffff23ca9c2e5";
+        // Settings v4 and render v14 deliberately re-key canonical hashes for Locals.
         const string expected =
-            "1532de45cec56a58aec384c117bdccdfc8990a63808775588c6599f846fc68d9";
+            "65ecfb85e3b901ca9cb1a3dd512c6861bca716e80fdab17cb8ba58965f686c36";
         var settings = CreateSettings();
         var canonical = EditSettingsJson.Serialize(settings);
         var actual = RenderSettingsHash.Compute(settings);
@@ -105,7 +106,7 @@ public sealed class RenderDeterminismTests
             "\"luminanceNr\":0,\"chromaNr\":0}",
             canonical);
         Assert.DoesNotContain("noiseReduction", canonical);
-        // Restoring only the removed lens property must reproduce the old pin.
+        // Restoring settings/render versions and the removed lens property reproduces the old pin.
         Assert.Equal(previousExpected, ConstructionCompatibilityHash.Compute(settings));
         Assert.True(
             actual == expected,

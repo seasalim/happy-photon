@@ -17,6 +17,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanCreateVersion))]
     private async Task NewVersionFromCurrentAsync(ImageFile? requested)
     {
+        DiscardLocalsGesture();
         var source = requested ?? SelectedImage;
         if (!CanCreateVersion(source) || source == null) return;
         try

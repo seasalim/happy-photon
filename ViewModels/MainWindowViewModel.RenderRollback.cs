@@ -35,6 +35,7 @@ public partial class MainWindowViewModel
             _isLoadingImage = false;
         }
         _lastSavedState = image.EditSettings.Clone();
+        RebindLocalSelection();
         UpdateCanReset();
         ApplyRollbackOutcome(image, generation, previousIntent);
         return true;

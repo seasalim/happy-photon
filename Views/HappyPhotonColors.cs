@@ -9,6 +9,7 @@ namespace HappyPhoton.Views;
 /// </summary>
 public static class HappyPhotonColors
 {
+    public static readonly Color LocalMaskColor = Color.FromRgb(0xff, 0x24, 0xe4);
     public static readonly Color SceneHighlightClipColor =
         Color.FromArgb(235, 0xff, 0x3b, 0x30);
     public static readonly Color DisplayFloorClipColor =

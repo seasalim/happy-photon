@@ -36,6 +36,7 @@ public sealed record RenderRequest(
     OutputSharpeningMode OutputSharpening = OutputSharpeningMode.Off)
 {
     internal SourceSaturationMask? SourceSaturation { get; init; }
+    internal LocalsFrame? LocalsFrameOverride { get; init; }
 }
 
 public sealed class RenderResult : IDisposable

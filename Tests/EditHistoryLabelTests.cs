@@ -7,6 +7,22 @@ namespace HappyPhoton.Tests;
 public sealed class EditHistoryLabelTests
 {
     [Fact]
+    public void LocalExposureNamesTheLocalAndOtherChangesStayGrouped()
+    {
+        var before = new EditSettings { Locals = [new() { Ordinal = 3 }, new() { Ordinal = 4 }] };
+        var after = before.Clone();
+        after.Locals![0].Exposure = 1;
+        Assert.Equal("Linear 3 exposure +1.00 (+1.00)", EditHistoryLabel.Derive(before, after));
+        after.Locals[0].Cu = .7;
+        Assert.Equal("Locals", EditHistoryLabel.Derive(before, after));
+        after = before.Clone();
+        after.Locals![0].Exposure = 1;
+        after.Locals[1].Exposure = -1;
+        Assert.Equal("Locals", EditHistoryLabel.Derive(before, after));
+        Assert.Equal("Enable Linear 3", EditHistoryLabel.Derive(before, after, "Enable Linear 3"));
+    }
+
+    [Fact]
     public void ExposureIncludesNewValueAndDelta()
     {
         Assert.Equal("Exposure +0.30 (+0.30)", EditHistoryLabel.Derive(

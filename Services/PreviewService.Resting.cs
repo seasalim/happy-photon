@@ -182,6 +182,8 @@ public sealed partial class PreviewService
         try
         {
             RestingStageStarted?.Invoke("snapshot-geometry");
+            var localsFrame = RenderGeometry.CalculateLocalsFrame(
+                (int)largeBase.Pixels.Width, (int)largeBase.Pixels.Height, settings);
             preparedPixels = RenderGeometry.Apply(
                 largeBase.Pixels,
                 settings,
@@ -224,7 +226,10 @@ public sealed partial class PreviewService
                     target,
                     new RenderOptions(
                         ComputeStats: false,
-                        ComputeOverlayMasks: false)),
+                        ComputeOverlayMasks: false))
+                {
+                    LocalsFrameOverride = localsFrame
+                },
                 execution);
             execution.ThrowIfCancellationRequested();
             RestingStageStarted?.Invoke("bitmap-conversion");

@@ -128,6 +128,8 @@ public sealed class SliderAndFooterMetricTests
                 new ExportSettingsPane { DataContext = vm }
             }
         };
+        // Measure the mode-only local Exposure alongside the global controls.
+        content.GetLogicalDescendants().OfType<LocalsEditSection>().Single().IsVisible = true;
         var window = new Window { Width = 900, Height = 2200, Content = content };
         using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
@@ -136,7 +138,9 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(25, sliders.Length);
+            Assert.Equal(26, sliders.Length);
+            Assert.Contains(sliders, slider => slider.Label == "Exposure" &&
+                slider.GetLogicalAncestors().OfType<LocalsEditSection>().Any());
             Assert.Contains(sliders, slider => slider.Label == "Luma NR");
             foreach (var slider in sliders)
             {

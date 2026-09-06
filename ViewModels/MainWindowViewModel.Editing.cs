@@ -10,6 +10,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanUndoEdit))]
     private async Task UndoAsync()
     {
+        if (DiscardLocalsGesture()) return;
         var image = SelectedImage;
         var generation = Volatile.Read(ref _historySubjectGeneration);
         if (!IsDevelopMode || IsFullScreenMode ||
@@ -27,6 +28,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanRedoEdit))]
     private async Task RedoAsync()
     {
+        DiscardLocalsGesture();
         var image = SelectedImage;
         var generation = Volatile.Read(ref _historySubjectGeneration);
         if (!IsDevelopMode || IsFullScreenMode ||
@@ -48,6 +50,7 @@ public partial class MainWindowViewModel
         int position,
         CatalogEditHistoryMutation? mutation = null)
     {
+        DiscardLocalsGesture();
         CancelHistoryHover();
         var cropWriteContext = CaptureCropWriteContext(image);
         var apply = ApplyHistoryStateCoreAsync(
@@ -81,6 +84,8 @@ public partial class MainWindowViewModel
         image.EditSettings.HorizonRotation = state.HorizonRotation;
         image.EditSettings.Crop = state.Crop?.Clone();
         image.EditSettings.Geometry = state.Geometry?.Clone();
+        image.EditSettings.Locals = state.Locals?.Select(local => local with { }).ToList();
+        RebindLocalSelection();
         WriteRawProfileSelection(image, state.RawProfile);
         image.EditSettings.AppliedPresetId = ActivePresetId;
         LoadCurrentCurveFrom(image.EditSettings);
@@ -122,8 +127,9 @@ public partial class MainWindowViewModel
 
     private async Task ResetEditsCoreAsync(
         bool preserveProfile,
-        string historyLabel)
+        string historyLabel, bool preserveLocals = false)
     {
+        DiscardLocalsGesture();
         if (!CanEditSelectedImage || SelectedImage == null) return;
         var image = SelectedImage;
         var previousSettings = CaptureLiveEditState();
@@ -136,6 +142,8 @@ public partial class MainWindowViewModel
         var currentCrop = CurrentCrop;
 
         // Reset color/tonal adjustments (not rotation or crop)
+        if (!preserveLocals) SelectedImage.EditSettings.Locals = null;
+        RebindLocalSelection();
         SelectedImage.EditSettings.Exposure = 0;
         SelectedImage.EditSettings.Wb = new WhiteBalanceSettings();
         SelectedImage.EditSettings.Brightness = 0;
@@ -217,6 +225,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public async Task ApplyPresetAsync(string presetId)
     {
+        DiscardLocalsGesture();
         if (!CanEditSelectedImage || SelectedImage == null) return;
         var image = SelectedImage;
 
@@ -285,6 +294,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public async Task PreviewPresetHoverAsync(string presetId)
     {
+        DiscardLocalsGesture();
         if (SelectedImage == null) return;
         var preset = PresetService.GetById(presetId);
         if (preset == null) return;
@@ -306,6 +316,7 @@ public partial class MainWindowViewModel
             SaveSlidersTo(_preHoverSettings);
             _preHoverSettings.Crop = CurrentCrop?.Clone();
             _isHoveringPreset = true;
+            NotifyLocalsState();
         }
 
         try
@@ -339,7 +350,7 @@ public partial class MainWindowViewModel
     {
         await ResetEditsCoreAsync(
             preserveProfile: true,
-            historyLabel: "Preset: None");
+            historyLabel: "Preset: None", preserveLocals: true);
     }
 
     /// <summary>
@@ -353,6 +364,7 @@ public partial class MainWindowViewModel
 
         _hoverPreviewCts?.Cancel();
         _isHoveringPreset = false;
+        NotifyLocalsState();
 
         if (_preHoverSettings is { } preHoverSettings)
         {
@@ -383,6 +395,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanToggleBeforeAfter))]
     private async Task ToggleBeforeAfterAsync()
     {
+        DiscardLocalsGesture();
         if (!CanToggleBeforeAfter() || SelectedImage == null) return;
 
         var image = SelectedImage;
@@ -468,7 +481,7 @@ public partial class MainWindowViewModel
     };
 
     private bool CanUndoEdit() =>
-        CanUndo && IsDevelopMode && !IsFullScreenMode &&
+        (CanUndo || IsLocalsGestureActive) && IsDevelopMode && !IsFullScreenMode &&
         !IsHistoryBlockedByCrop && CanEditSelectedImage;
 
     private bool CanRedoEdit() =>

@@ -218,6 +218,7 @@ public partial class MainWindowViewModel
         if (requestedIntent.HasValue)
         {
             _requestedPreviewIntent = requestedIntent.Value;
+            NotifyLocalsState();
         }
         if (promotionEligible.HasValue)
         {

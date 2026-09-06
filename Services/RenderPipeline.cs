@@ -7,7 +7,7 @@ namespace HappyPhoton.Services;
 
 public sealed class RenderPipeline
 {
-    public const int Version = 13;
+    public const int Version = 14;
 
     public RenderResult Render(RenderRequest request) =>
         RenderCore(request, DefaultBandPixelLimit, null);
@@ -208,6 +208,8 @@ public sealed class RenderPipeline
                 request.Settings,
                 out geometry);
             execution?.ThrowIfCancellationRequested();
+            var locals = RenderLocals.Create(request.Settings, geometry,
+                (int)working.Width, (int)working.Height, request.LocalsFrameOverride);
             if (request.Base.Info.IsRawSource)
             {
                 execution?.ReportStage("raw-crossing");
@@ -229,13 +231,13 @@ public sealed class RenderPipeline
                     request.Base.Info.IsMonochrome
                         ? null
                         : request.Base.Info.DcpProfile?.HueSatMap,
-                    execution);
+                    execution, locals);
                 crossing.Apply(working, execution);
             }
             else
             {
                 execution?.ReportStage("standard-tone");
-                ApplyCrossingOffTone(working, request, execution);
+                ApplyCrossingOffTone(working, request, execution, locals);
             }
             execution?.ThrowIfCancellationRequested();
             execution?.ReportStage("color-encoding");
@@ -275,12 +277,12 @@ public sealed class RenderPipeline
     private static void ApplyCrossingOffTone(
         MagickImage working,
         RenderRequest request,
-        RenderExecutionOptions? execution)
+        RenderExecutionOptions? execution, RenderLocals? locals)
     {
         var chromatic = RenderChromaticStage.CreateNormalizedMatrix(
             request.Base.Info,
             request.Settings);
-        var tone = ToneLut.ComposeCached(new ToneParams(
+        var parameters = new ToneParams(
             request.Settings.Exposure +
                 request.Base.Info.SourceExposureBiasEv,
             chromatic.Fold,
@@ -292,9 +294,11 @@ public sealed class RenderPipeline
             request.Settings.Curve,
             request.Settings.CurveRed,
             request.Settings.CurveGreen,
-            request.Settings.CurveBlue));
+            request.Settings.CurveBlue);
+        var tone = ToneLut.ComposeCached(parameters);
         execution?.ThrowIfCancellationRequested();
-        ToneLutApplicator.Apply(working, chromatic.Matrix, tone, execution);
+        if (locals == null) ToneLutApplicator.Apply(working, chromatic.Matrix, tone, execution);
+        else ToneLutApplicator.ApplyLocals(working, chromatic.Matrix, tone, parameters, locals, execution);
     }
 
     private static MagickImage Take(ref MagickImage? image)

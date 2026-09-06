@@ -95,7 +95,7 @@ public partial class ZoomPanControl
     private bool CanStartLoupePeek()
     {
         return Source != null &&
-            !IsCropMode &&
+            !IsCropMode && !IsLocalsMode &&
             !IsWhiteBalancePicking &&
             ZoomLevel < 1;
     }

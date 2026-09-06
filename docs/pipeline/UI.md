@@ -27,12 +27,39 @@ workflow partial, don't grow the root file).
 
 ## 2. Develop right panel — target layout (top → bottom)
 
+Locals is a tool mode beside Crop. Its toggle shows a dot for any stored local,
+including disabled and neutral ones. Entering selects the first local and reveals
+the docked section beneath the histogram; Close retains committed edits. The list
+scrolls after four rows and supports up to eight linear masks, each with Exposure
+[-4, +4] EV, an enabled checkbox, explicit Disabled label, and Delete. Selection
+and Show Mask are session state. Presets and paste preserve destination locals;
+Develop Reset clears them with global adjustments, and Undo restores them.
+
+Add Linear arms a drag from full effect to zero effect. A click or drag shorter
+than eight logical pixels creates nothing. Place at center creates a neutral mask
+at (0.5, 0.5), angle 90°, feather 0.25. Selected handles translate the center,
+rotate the direction, or change feather symmetrically; subdued pins select others.
+Middle-button pan and wheel zoom remain available, while the loupe is suspended.
+Show Mask visualizes the selected geometry even when disabled or neutral, using
+the invariant `LocalMaskColor` token and a smoothstep-sampled gradient brush. It
+temporarily suppresses clipping presentation without changing the clipping latch.
+
+One completed geometry drag is one history step; Escape or capture loss restores
+its starting state. Escape then cancels armed creation, then closes Locals. Undo
+during a drag only cancels that drag. Navigation and commands that replace or
+snapshot settings discard unfinished geometry. Crop and Locals are exclusive.
+Original view, split, fullscreen, and preset/history hover suspend canvas editing
+and visualization while preserving selection; Return to local editing resumes it.
+No tint is rendered into image pixels, scopes, thumbnails, or exports.
+
 The right pane is mode-differentiated. In Browse it is a **review pane** — the
 fixed thumbnail histogram, the metadata/EXIF block, and a selection summary —
 with no editing controls; everything below is a Develop-only surface (Browse
 editing surfaces remain a non-goal, §10).
 
 ```
+Locals                 (only while the tool mode is open)
+  [local list] [Exposure] [Show Mask] [Close] [Add Linear] [Place at center]
 Camera Profile         (RAW only, collapsed child control)
   [profile ComboBox]
   [Browse…] [Refresh]                         status / loading

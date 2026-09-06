@@ -11,11 +11,11 @@ namespace HappyPhoton.Tests;
 public sealed class EditDocumentBoundaryBaselineTests(ITestOutputHelper output)
 {
     private const string V3 = """{"version":3,"exposure":0.75,"lens":{"distortion":true,"chromaticAberration":false,"vignetting":true,"baseline":"standard"}}""";
-    private const string Unsupported = "System.Text.Json.JsonException|Edit settings document must declare version 3.";
+    private const string Unsupported = "System.Text.Json.JsonException|Edit settings document must declare version 3 or 4.";
 
     [Theory]
     [InlineData(2)]
-    [InlineData(4)]
+    [InlineData(5)]
     public async Task UnsupportedOutcomesAtEveryBoundary(int version)
     {
         using var fx = new CatalogVmFixture("document-boundary");

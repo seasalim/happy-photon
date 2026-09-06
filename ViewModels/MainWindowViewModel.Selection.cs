@@ -9,6 +9,7 @@ public partial class MainWindowViewModel
 {
     partial void OnSelectedImageChanged(ImageFile? oldValue, ImageFile? newValue)
     {
+        RebindLocalSelection(first: true);
         KeepCaptureMemberViewportOnlyFor(newValue);
         NotifyCaptureMemberStateChanged();
         ResetBeforeAfterRender();
@@ -232,7 +233,7 @@ public partial class MainWindowViewModel
             SelectedImage?.EditSettings.CurveRed is { } red && !red.IsIdentity() ||
             SelectedImage?.EditSettings.CurveGreen is { } green && !green.IsIdentity() ||
             SelectedImage?.EditSettings.CurveBlue is { } blue && !blue.IsIdentity();
-        CanReset = Exposure != 0.0 ||
+        CanReset = HasLocals || Exposure != 0.0 ||
                    !_liveWhiteBalance.IsIdentity ||
                    Brightness != 0 ||
                    Contrast != 0 ||

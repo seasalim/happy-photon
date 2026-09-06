@@ -88,6 +88,7 @@
                 <StackPanel Margin="15,5,15,15"
                             Spacing="4"
                             IsEnabled="{Binding HasSelectedImage}">
+                    <views:LocalsEditSection/>
                         <views:RawProfilePicker x:Name="RawProfilePicker"
                             IsEnabled="{Binding IsColorEditingEnabled}"/>
 

@@ -164,7 +164,8 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
 
     public PreviewBaseLease? TryAcquireCurrent(
         ImageFile imageFile,
-        BaseDecodeSettings decode)
+        BaseDecodeSettings decode,
+        bool allowProfileOutcome = false)
     {
         ArgumentNullException.ThrowIfNull(imageFile);
         ArgumentNullException.ThrowIfNull(decode);
@@ -176,7 +177,13 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         lock (_sync)
         {
             ThrowIfDisposed();
-            return _currentDecode == null && Matches(_heldIdentity, identity)
+            // Geometry also works with a retained rejected-profile fallback. The
+            // outcome suffix does not change which source/settings own this base.
+            var matches = Matches(_heldIdentity, identity) || allowProfileOutcome &&
+                decode.ProfileSelection != null && _heldIdentity is { } held &&
+                held.CatalogId == identity.CatalogId && PathComparer.Equals(held.Path, identity.Path) &&
+                held.DecodeKey.StartsWith(identity.DecodeKey + ":", StringComparison.Ordinal);
+            return _currentDecode == null && matches
                 ? AcquireHeldInteractiveBase(refreshTask: null)
                 : null;
         }

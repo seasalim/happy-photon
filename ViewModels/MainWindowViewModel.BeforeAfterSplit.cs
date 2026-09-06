@@ -20,6 +20,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanToggleBeforeAfterSplit))]
     private async Task ToggleBeforeAfterSplitAsync()
     {
+        DiscardLocalsGesture();
         if (IsBeforeAfterSplit)
         {
             CloseBeforeAfterSplit();
@@ -41,6 +42,7 @@ public partial class MainWindowViewModel
         finally
         {
             _isBeforeAfterSplitTransitioning = false;
+            NotifyLocalsState();
         }
     }
     private bool CanToggleBeforeAfterSplit() => IsBeforeAfterSplit ||

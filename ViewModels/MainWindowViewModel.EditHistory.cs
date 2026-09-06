@@ -18,6 +18,7 @@ public partial class MainWindowViewModel
 
     public async Task PreviewHistoryHoverAsync(EditHistoryEntry entry)
     {
+        DiscardLocalsGesture();
         EndHistoryHover();
         var image = SelectedImage;
         if (image == null || entry.IsCurrent || !IsDevelopMode ||
@@ -26,6 +27,7 @@ public partial class MainWindowViewModel
             !IsHistoryLoaded || _history.PositionOf(entry) < 0) return;
 
         _hoveredHistoryEntry = entry;
+        NotifyLocalsState();
         CancelRestingPreview(clearParent: true);
         var cts = new CancellationTokenSource();
         _historyHoverCts = cts;
@@ -64,6 +66,7 @@ public partial class MainWindowViewModel
     private void CancelHistoryHover()
     {
         _hoveredHistoryEntry = null;
+        NotifyLocalsState();
         CancelAndDispose(ref _historyHoverCts);
         var bitmap = NavigatorHoverImage;
         NavigatorHoverImage = null;

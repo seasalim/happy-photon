@@ -97,6 +97,7 @@ public static class EditHistoryLabel
         ]);
         Add(changes, "Highlight handling", before.HlReconstruction,
             after.HlReconstruction);
+        AddLocals(changes, before.Locals, after.Locals);
         Add(changes, "Profile", before.RawProfile, after.RawProfile);
         return changes.Count switch
         {
@@ -104,6 +105,23 @@ public static class EditHistoryLabel
             1 => changes[0],
             _ => string.Join(", ", changes.Take(3))
         };
+    }
+
+    private static void AddLocals(ICollection<string> changes,
+        List<LocalAdjustment>? before, List<LocalAdjustment>? after)
+    {
+        if (before != null && after != null && before.Count == after.Count)
+        {
+            var changed = before.Zip(after).Where(pair => pair.First != pair.Second).ToArray();
+            if (changed.Length == 1 &&
+                changed[0].First with { Exposure = changed[0].Second.Exposure } == changed[0].Second)
+            {
+                AddScalar(changes, $"{changed[0].Second.Name} exposure",
+                    changed[0].First.Exposure, changed[0].Second.Exposure, "0.00");
+                return;
+            }
+        }
+        Add(changes, "Locals", before, after);
     }
 
     public static string? CropOperation(EditSettings before, EditSettings after) =>

@@ -217,6 +217,11 @@ public partial class ZoomPanControl : UserControl
             }
             RequestRequiredBoundPublication();
         }
+        else if (change.Property == IsLocalsModeProperty)
+        {
+            CancelLoupePeek();
+            UpdatePointerCursor();
+        }
         else if (change.Property == IsCropModeProperty)
         {
             UpdateCropOverlayVisibility();

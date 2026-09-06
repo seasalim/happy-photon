@@ -7,7 +7,7 @@ public partial class MainWindowViewModel
 {
     private int _activeSliderEditCount;
 
-    private bool IsSliderEditActive => _activeSliderEditCount > 0;
+    private bool IsSliderEditActive => _activeSliderEditCount > 0 || IsLocalsGestureActive;
 
     [ObservableProperty]
     private double _exposure;

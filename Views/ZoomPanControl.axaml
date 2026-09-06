@@ -36,6 +36,8 @@
                                                    VisibleSides="{Binding $parent[views:ZoomPanControl].VisibleClippingSides}"/>
                     <views:AlignmentGridOverlayControl x:Name="AlignmentGridOverlay"
                                                        IsVisible="False"/>
+                    <views:LocalsOverlayControl x:Name="LocalsOverlay" IsVisible="False"
+                                               Width="{Binding #ImageControl.Width}" Height="{Binding #ImageControl.Height}"/>
                     <views:CropOverlayControl x:Name="CropOverlay"
                                               IsVisible="False"/>
                 </Panel>

@@ -149,7 +149,7 @@ case uses the bright water reflection in the reference CR2
 ([DECODE.md §2.3](DECODE.md#23-why-clip-and-blend-are-the-supported-modes)).
 The perceptual-chroma re-baseline left every neutral-chroma case
 byte-identical. Each re-baseline keeps its attribution report beside its
-goldens (currently `Tests/goldens/v13/CHROMA_NR_ATTRIBUTION.md`, alongside the
+goldens (currently `Tests/goldens/v14/CHROMA_NR_ATTRIBUTION.md`, alongside the
 active generation).
 
 ## 3. Tolerances (normative)
@@ -206,8 +206,8 @@ orders above the observed difference.
    `WysiwygCalibrationTests` emits the opt-in calibration payload.
 6. **Current-format boundary tests**: `EditSettingsJsonTests` pins canonical ordering,
    clone-before-clamp behavior, range validation, removed WB modes, and rejection of
-   every non-v3 document; `EditDocumentBoundaryBaselineTests` pins the unsupported
-   outcome for v2 and v4 documents at the image-row, history, assessment, and preset
+   documents outside versions 3 and 4; `EditDocumentBoundaryBaselineTests` pins the unsupported
+   outcome for v2 and v5 documents at the image-row, history, assessment, and preset
    boundaries.
    `CatalogSchemaTests` pins the clean new schema, acceptance of
    harmless extra columns, and actionable startup rejection for missing columns;
@@ -394,6 +394,21 @@ dotnet test HeadlessTests/HappyPhoton.Headless.Tests.csproj -c Release --no-buil
 ```
 
 ## 5. Performance
+
+Locals opt-in qualification uses `LocalsFusedBaselineTests.Qualified*`, with
+`HAPPY_PHOTON_PERF=1`, `HAPPY_PHOTON_FULL_CPU=1`, and
+`HAPPY_PHOTON_LOCALS_FIXTURE=raw|standard|synthetic` (locally available fixtures).
+Run one Qualified test per fresh Release process; use `LOCALS_SAMPLES=15` for G2.
+G1 requires a <=150 ms preview tick and <=45 ms stage delta; G2 requires monotone
+coverage cost and <=150 ms ticks. G5 freezes mean/p99 delta-E bounds for feather .25/.001:
+RAW 3/15 and 3.6/18, HEIC 1.3/14.5 and 1.6/18.5; synthetic is report-only.
+G6 allows <=1 Q16 code at the RAW crossing (final sRGB is report-only).
+G7 allows one 1600 px Q16 RGB frame of incremental private memory and <=64 KB
+caller allocation. G8 requires a <=150 ms contended tick; G9 allows export delta
+<=max(5%, 500 ms per full-resolution render). Headless
+`LocalsShowcaseTests.MaskBrushMeetsWeightAndBuildGates` owns G10: <=.002 weight
+error, <5 ms brush construction, and no base-pixel access.
+
 
 Opt-in `HAPPY_PHOTON_PERF=1` diagnostics remain outside normal CI. The tone
 gate is `AgxPerformanceGateTests`: one warm-up, median of five, a separate

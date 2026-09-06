@@ -8,7 +8,7 @@ using Xunit;
 namespace HappyPhoton.Tests;
 
 [Collection(AvaloniaTestCollection.Name)]
-public sealed class ViewportRestingPreviewTests : IAsyncLifetime
+public sealed partial class ViewportRestingPreviewTests : IAsyncLifetime
 {
     private readonly string _directory = Path.Combine(
         Path.GetTempPath(),

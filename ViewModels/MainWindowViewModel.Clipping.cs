@@ -36,6 +36,7 @@ public partial class MainWindowViewModel
     public bool IsClippingOverlayLatched { get; private set; }
 
     public ClippingOverlaySide VisibleClippingOverlaySides =>
+        IsLocalMaskVisible ? ClippingOverlaySide.None :
         _peekClippingSide != ClippingOverlaySide.None
             ? _peekClippingSide & AvailableClippingOverlaySides
             : IsClippingOverlayLatched

@@ -159,6 +159,8 @@ public partial class MainWindowViewModel
             return;
         }
 
+        if (EscapeLocals()) return;
+
         // First priority: cancel crop mode if active
         if (IsCropMode)
         {

@@ -69,6 +69,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]
     private async Task PasteEditSettingsAsync()
     {
+        DiscardLocalsGesture();
         if (_copiedSettings == null) return;
 
         var resolution = ResolveActionTargets();

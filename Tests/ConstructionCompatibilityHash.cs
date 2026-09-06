@@ -14,6 +14,7 @@ internal static class ConstructionCompatibilityHash
 
     internal static string RestoreStandardBaseline(string json)
     {
+        json = json.Replace("\"version\":4", "\"version\":3", StringComparison.Ordinal);
         using var document = JsonDocument.Parse(json);
         var lens = document.RootElement.GetProperty("lens");
         if (lens.TryGetProperty("baseline", out _)) return json;
@@ -27,7 +28,7 @@ internal static class ConstructionCompatibilityHash
 
     private static string Hash(string json, string? token)
     {
-        var payload = $"{{\"renderVersion\":{RenderPipeline.Version}," +
+        var payload = $"{{\"renderVersion\":{13}," +
             $"\"baseVersion\":{BaseImage.Version},\"settings\":{json}}}" +
             (string.IsNullOrEmpty(token) ? string.Empty : $"|dcp={token}");
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)))

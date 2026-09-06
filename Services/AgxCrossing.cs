@@ -5,7 +5,7 @@ namespace HappyPhoton.Services;
 
 internal readonly record struct AgxRgb(double Red, double Green, double Blue);
 
-internal sealed class AgxCrossing
+internal sealed partial class AgxCrossing
 {
     private const double Q16ToUnit = 1.0 / ushort.MaxValue;
 
@@ -18,14 +18,18 @@ internal sealed class AgxCrossing
     private readonly double _toePower;
     private readonly double _shoulderPower;
 
+    private readonly RenderLocals? _locals;
+
     private readonly DcpHueSatMap? _hueSatMap;
 
     internal AgxCrossing(
         AgxToneParameters parameters,
         double[,]? whiteBalanceMatrix = null,
         DcpHueSatMap? hueSatMap = null,
-        RenderExecutionOptions? execution = null)
+        RenderExecutionOptions? execution = null,
+        RenderLocals? locals = null)
     {
+        _locals = locals;
         ArgumentNullException.ThrowIfNull(parameters.Curve);
         _parameters = parameters with
         {
@@ -140,6 +144,11 @@ internal sealed class AgxCrossing
         int blueChannel,
         RenderExecutionOptions? execution = null)
     {
+        if (_locals != null)
+        {
+            ApplyLocals(values, pixelCount, channels, redChannel, greenChannel, blueChannel, execution);
+            return;
+        }
         var workers = Math.Min(
             Environment.ProcessorCount,
             Math.Max(1, (pixelCount + 32_767) / 32_768));

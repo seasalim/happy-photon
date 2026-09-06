@@ -3,7 +3,7 @@ using ImageMagick;
 
 namespace HappyPhoton.Services;
 
-internal static class ToneLutApplicator
+internal static partial class ToneLutApplicator
 {
     public static void Apply(
         MagickImage image,

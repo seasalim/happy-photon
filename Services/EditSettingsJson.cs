@@ -3,14 +3,14 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
 
-internal static class EditSettingsJson
+internal static partial class EditSettingsJson
 {
     private static readonly JsonSerializerOptions CompactOptions = new()
     {
         WriteIndented = false
     };
 
-    public static bool IsSupportedVersion(int version) => version == EditSettings.CurrentVersion;
+    public static bool IsSupportedVersion(int version) => version is 3 or EditSettings.CurrentVersion;
 
     public static void EnsureCurrent(EditSettings settings)
     {
@@ -30,7 +30,7 @@ internal static class EditSettingsJson
         return JsonSerializer.Serialize(current, CompactOptions);
     }
 
-    public static EditSettings Deserialize(string json, out bool wasClamped)
+    public static EditSettings Deserialize(string json, out bool wasClamped, bool ignoreLocals = false)
     {
         using var document = JsonDocument.Parse(json);
         if (document.RootElement.ValueKind != JsonValueKind.Object ||
@@ -38,7 +38,7 @@ internal static class EditSettingsJson
             !versionElement.TryGetInt32(out var documentVersion) ||
             !IsSupportedVersion(documentVersion))
         {
-            throw new JsonException("Edit settings document must declare version 3.");
+            throw new JsonException("Edit settings document must declare version 3 or 4.");
         }
         if (!document.RootElement.TryGetProperty("lens", out var lensElement) ||
             lensElement.ValueKind != JsonValueKind.Object ||
@@ -50,7 +50,15 @@ internal static class EditSettingsJson
                 "Version 3 edit settings must declare all three lens booleans.");
         }
 
-        var settings = JsonSerializer.Deserialize<EditSettings>(json, CompactOptions)
+        EditSettings? parsed;
+        if (ignoreLocals || documentVersion == 3)
+        {
+            var payload = System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject();
+            payload.Remove("locals");
+            parsed = payload.Deserialize<EditSettings>(CompactOptions);
+        }
+        else parsed = document.RootElement.Deserialize<EditSettings>(CompactOptions);
+        var settings = parsed
             ?? throw new JsonException("Edit settings document is null.");
         if (settings.Version != documentVersion)
         {
@@ -58,6 +66,7 @@ internal static class EditSettingsJson
                 $"Edit settings document version {settings.Version} does not match its marker.");
         }
 
+        settings.Version = EditSettings.CurrentVersion;
         wasClamped = Clamp(settings);
         return settings;
     }
@@ -69,6 +78,7 @@ internal static class EditSettingsJson
     private static bool Clamp(EditSettings settings)
     {
         var changed = false;
+        ClampLocals(settings, ref changed);
         settings.Exposure = Clamp(settings.Exposure, -3, 3, ref changed);
         settings.Highlights = Clamp(settings.Highlights, -100, 100, ref changed);
         settings.Shadows = Clamp(settings.Shadows, -100, 100, ref changed);

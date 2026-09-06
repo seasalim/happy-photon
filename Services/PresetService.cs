@@ -222,6 +222,7 @@ public class PresetService
         settings.HorizonRotation = 0;
         settings.Crop = null;
         settings.Geometry = null;
+        settings.Locals = null;
         if (settings.Effects?.HasActivePixels != true)
         {
             settings.Effects = null;
@@ -265,7 +266,7 @@ public class PresetService
 
         var settings = EditSettingsJson.Deserialize(
             settingsElement.GetRawText(),
-            out var wasClamped);
+            out var wasClamped, ignoreLocals: true);
         // Camera profiles are image-specific and never transfer through a
         // preset file, including a hand-edited one.
         settings.RawProfile = null;

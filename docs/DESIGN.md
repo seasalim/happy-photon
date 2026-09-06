@@ -34,6 +34,7 @@ colors:
   white-balance-warm: '#f4ff69'
   white-balance-tint-green: '#73b95a'
   white-balance-tint-magenta: '#ec3c7e'
+  local-mask: '#ff24e4'
   error: '#ffb4ab'
   on-error: '#690005'
   error-container: '#93000a'
