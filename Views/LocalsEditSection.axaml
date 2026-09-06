@@ -19,6 +19,12 @@
         <Style Selector="views|CompactSlider:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
+        <Style Selector="ToggleButton.geometry-disclosure Path">
+            <Setter Property="Data" Value="M 0,0 L 3,3 L 0,6"/>
+        </Style>
+        <Style Selector="ToggleButton.geometry-disclosure:checked Path">
+            <Setter Property="Data" Value="M 0,0 L 3,3 L 6,0"/>
+        </Style>
     </UserControl.Styles>
     <StackPanel Spacing="8" Margin="0,0,0,12">
         <Grid ColumnDefinitions="*,Auto,Auto">
@@ -52,6 +58,40 @@
         <views:CompactSlider Label="Exposure" Value="{Binding LocalExposure}" Minimum="-4" Maximum="4"
                              SmallChange="0.1" StringFormat="{}{0:+0.00;-0.00;0.00}"
                              EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
+        <ToggleButton x:Name="LocalGeometryDisclosure" Classes="geometry-disclosure"
+                      IsChecked="{Binding IsLocalGeometryExpanded}" AutomationProperties.Name="Geometry"
+                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="0"
+                      Background="Transparent" BorderThickness="0" MinHeight="20">
+            <ToggleButton.Template>
+                <ControlTemplate>
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Background="{TemplateBinding Background}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="Center"/>
+                </ControlTemplate>
+            </ToggleButton.Template>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="Geometry" Classes="section-label" FontSize="10"/>
+                <Path Width="6" Height="6" VerticalAlignment="Center"
+                      Stroke="{DynamicResource TextMuted}" StrokeThickness="1"/>
+            </StackPanel>
+        </ToggleButton>
+        <StackPanel IsVisible="{Binding IsLocalGeometryExpanded}" IsEnabled="{Binding CanEditLocalGeometry}">
+            <views:CompactSlider x:Name="LocalXSlider" Classes="local-geometry" Label="X"
+                                 Value="{Binding LocalX}" Minimum="-100" Maximum="200" SmallChange="0.1"
+                                 StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local X"/>
+            <views:CompactSlider x:Name="LocalYSlider" Classes="local-geometry" Label="Y"
+                                 Value="{Binding LocalY}" Minimum="-100" Maximum="200" SmallChange="0.1"
+                                 StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local Y"/>
+            <views:CompactSlider x:Name="LocalAngleSlider" Classes="local-geometry" Label="Angle"
+                                 Value="{Binding LocalAngle}" Minimum="0" Maximum="360" SmallChange="1"
+                                 WrapValue="True" StringFormat="{}{0:0}°" AutomationProperties.Name="Local angle"/>
+            <views:CompactSlider x:Name="LocalWidthSlider" Classes="local-geometry" Label="Width"
+                                 Value="{Binding LocalWidth}" Minimum="0.1" Maximum="200" SmallChange="0.1"
+                                 StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local width"/>
+            <Button x:Name="CenterLocalInViewButton" Content="Center in view"
+                    Command="{Binding CenterLocalInViewCommand}" Padding="8,4" FontSize="10"/>
+        </StackPanel>
         <StackPanel Orientation="Horizontal" Spacing="5" IsEnabled="{Binding CanEditLocals}">
             <Button Content="Add Linear" Command="{Binding AddLinearCommand}" Padding="8,4" FontSize="10"/>
             <Button Content="Place at center" Command="{Binding PlaceLocalAtCenterCommand}" Padding="8,4" FontSize="10"/>

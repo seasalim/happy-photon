@@ -12,6 +12,9 @@
              x:DataType="vm:MainWindowViewModel">
 
     <UserControl.Styles>
+        <Style Selector="StackPanel.global-edits.locked">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        </Style>
         <Style Selector="views|CompactSlider.crossing-dependent:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
@@ -49,6 +52,13 @@
         </Style>
         <Style Selector="Grid.highlight-handling-row:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        </Style>
+        <Style Selector="StackPanel.global-edits.locked > StackPanel.color-dependent,
+                         StackPanel.global-edits.locked > views|CompactSlider.color-dependent,
+                         StackPanel.global-edits.locked > views|CompactSlider.crossing-dependent,
+                         StackPanel.global-edits.locked > views|MixerEditGroup.color-dependent,
+                         StackPanel.global-edits.locked > Grid.highlight-handling-row">
+            <Setter Property="Opacity" Value="1"/>
         </Style>
     </UserControl.Styles>
 
@@ -89,6 +99,7 @@
                             Spacing="4"
                             IsEnabled="{Binding HasSelectedImage}">
                     <views:LocalsEditSection/>
+                    <StackPanel Classes="global-edits" Classes.locked="{Binding IsLocalsMode}" Spacing="4" IsEnabled="{Binding !IsLocalsMode}">
                         <views:RawProfilePicker x:Name="RawProfilePicker"
                             IsEnabled="{Binding IsColorEditingEnabled}"/>
 
@@ -286,7 +297,7 @@
                         <views:EffectsEditGroup x:Name="EffectsEditGroup"/>
                         <views:GeometryEditGroup x:Name="GeometryEditGroup"/>
                         <views:LensEditGroup x:Name="LensEditGroup"/>
-
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
 

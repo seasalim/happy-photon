@@ -69,7 +69,10 @@ public sealed class EditHistoryViewModelTests : IDisposable
                 clock,
                 () => vm.SelectedWhiteBalanceMode = "Cloudy"));
         await AssertStepAsync(vm, "White balance pick", () =>
-            vm.ApplyWhiteBalancePickAsync(0.5, 0.5));
+        {
+            vm.ToggleWhiteBalancePickerCommand.Execute(null);
+            return vm.ApplyWhiteBalancePickAsync(0.5, 0.5);
+        });
 
         await AssertStepAsync(vm, "Preset: History preset", () =>
             vm.ApplyPresetAsync(preset.Id));

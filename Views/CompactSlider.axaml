@@ -30,6 +30,9 @@
         <Style Selector="Border#ThumbDot.pointer-captured">
             <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
         </Style>
+        <Style Selector="UserControl:focus-visible Border#ThumbDot">
+            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+        </Style>
     </UserControl.Styles>
 
     <Grid x:Name="LayoutGrid" ColumnDefinitions="70,*,40"

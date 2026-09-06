@@ -35,6 +35,28 @@ scrolls after four rows and supports up to eight linear masks, each with Exposur
 and Show Mask are session state. Presets and paste preserve destination locals;
 Develop Reset clears them with global adjustments, and Undo restores them.
 
+While Locals is open, the global edit stack below it is disabled and dimmed,
+including in transient views and with an unavailable source. Closing restores
+its independent capability gates. Scopes, the Develop action bar, viewer controls,
+and filmstrip stay live. Entering cancels white balance picking; the picker
+command (including W) is inert until Locals closes.
+
+The Geometry disclosure below local Exposure starts collapsed and retains its
+expanded state for the session. X/Y display cu/cv × 100 in corrected-frame percent
+[-100, 200]; Angle wraps in [0, 360) degrees clockwise; Width displays feather × 100
+in long-edge percent [0.1, 200]. These sliders are disabled without an editable
+selection, never reset on double-click, and update the stored local directly.
+CompactSlider is keyboard-focusable: arrows step by SmallChange (Shift ×10),
+consume photo navigation, and use the drag edit boundary. Geometry drags commit
+on release or capture loss; keyboard bursts debounce into one “Local geometry”
+history row. Canvas gestures retain their cancellation behavior below.
+
+Center in view preserves the selected local's other fields and commits one
+“Center in view” operation. The navigator visible region's center maps through
+the overlay's LocalsFrame crop trace to pre-crop coordinates. A suppressed region
+(at least 99.5% visible) uses the displayed frame center; navigation clears stale
+regions. The command remains available for disabled locals when editing is possible.
+
 Add Linear arms a drag from full effect to zero effect. A click or drag shorter
 than eight logical pixels creates nothing. Place at center creates a neutral mask
 at (0.5, 0.5), angle 90°, feather 0.25. Selected handles translate the center,

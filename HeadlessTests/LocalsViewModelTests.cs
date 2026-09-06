@@ -78,9 +78,10 @@ public sealed partial class LocalsViewModelTests : IDisposable
         Assert.Equal((before.Angle + 90) % 360, vm.SelectedLocal!.Angle);
     }
 
-    private MainWindowViewModel CreateVm(CatalogService catalog, TimeProvider? clock = null)
+    private MainWindowViewModel CreateVm(CatalogService catalog, TimeProvider? clock = null,
+        bool raw = false, bool mono = false)
     {
-        var vm = _fixture.CreateViewModel(catalog, new LocalTestLoader(),
+        var vm = _fixture.CreateViewModel(catalog, new LocalTestLoader(raw, mono),
             _ => Task.CompletedTask, new TestSourceAvailabilityService(SourceAvailability.AvailableLocally), timeProvider: clock);
         vm.IsDevelopMode = true;
         return vm;
@@ -96,7 +97,7 @@ public sealed partial class LocalsViewModelTests : IDisposable
     public void Dispose() => _fixture.Dispose();
 }
 
-internal sealed class LocalTestLoader : IBaseImageLoader
+internal sealed class LocalTestLoader(bool raw = false, bool mono = false) : IBaseImageLoader
 {
     public bool CanLoad(ImageFile file) => true;
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(ImageFile file,
@@ -104,8 +105,8 @@ internal sealed class LocalTestLoader : IBaseImageLoader
         BaseImageLoadOutcome.Loaded(Create(decode));
     public BaseImage LoadFullBase(ImageFile file, BaseDecodeSettings decode,
         CancellationToken cancellationToken) => Create(decode);
-    private static BaseImage Create(BaseDecodeSettings decode) => new(
+    private BaseImage Create(BaseDecodeSettings decode) => new(
         new MagickImage(MagickColors.Gray, 64, 48) { ColorSpace = ColorSpace.RGB },
-        new BaseImageInfo(BaseSourceKind.Standard, false, decode, null, null,
-            6504, 0, false, null, 1, 64, 48));
+        new BaseImageInfo(raw ? BaseSourceKind.RawLibRaw : BaseSourceKind.Standard, raw, decode, null, null,
+            6504, 0, false, null, 1, 64, 48) { IsMonochrome = mono });
 }

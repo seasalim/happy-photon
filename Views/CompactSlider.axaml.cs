@@ -50,6 +50,15 @@ public partial class CompactSlider : UserControl
     public static readonly StyledProperty<double> SmallChangeProperty =
         AvaloniaProperty.Register<CompactSlider, double>(nameof(SmallChange), 1.0);
 
+    public static readonly StyledProperty<bool> WrapValueProperty =
+        AvaloniaProperty.Register<CompactSlider, bool>(nameof(WrapValue));
+
+    public bool WrapValue
+    {
+        get => GetValue(WrapValueProperty);
+        set => SetValue(WrapValueProperty, value);
+    }
+
     public static readonly StyledProperty<double> DefaultValueProperty =
         AvaloniaProperty.Register<CompactSlider, double>(nameof(DefaultValue), 0.0);
 
@@ -145,6 +154,7 @@ public partial class CompactSlider : UserControl
     public CompactSlider()
     {
         InitializeComponent();
+        Focusable = true;
 
         _layoutGrid = this.FindControl<Grid>("LayoutGrid");
         _trackGrid = this.FindControl<Grid>("TrackGrid");
@@ -176,6 +186,24 @@ public partial class CompactSlider : UserControl
 
         UpdateDisplay();
     }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (IsEffectivelyEnabled && e.Key is Key.Left or Key.Right or Key.Down or Key.Up)
+        {
+            var direction = e.Key is Key.Right or Key.Up ? 1 : -1;
+            var step = SmallChange * (e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? 10 : 1);
+            RaiseEvent(new RoutedEventArgs(DragStartedEvent));
+            SetCurrentValue(ValueProperty, BoundValue(Value + direction * step));
+            RaiseEvent(new RoutedEventArgs(DragCompletedEvent));
+            e.Handled = true;
+        }
+        base.OnKeyDown(e);
+    }
+
+    private double BoundValue(double value) => WrapValue && Maximum > Minimum
+        ? Minimum + ((value - Minimum) % (Maximum - Minimum) + Maximum - Minimum) % (Maximum - Minimum)
+        : Math.Clamp(value, Minimum, Maximum);
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
@@ -277,6 +305,7 @@ public partial class CompactSlider : UserControl
         if (_layoutGrid == null || _trackGrid == null) return;
         if (e.Pointer.Type == PointerType.Mouse &&
             !e.GetCurrentPoint(_layoutGrid).Properties.IsLeftButtonPressed) return;
+        Focus();
 
         if (EnableDoubleClickReset && e.ClickCount == 2)
         {
@@ -357,7 +386,7 @@ public partial class CompactSlider : UserControl
         var newValue = _dragStartValue + ((pointerX - _dragStartX) / trackWidth * range);
 
         newValue = Math.Round(newValue / SmallChange) * SmallChange;
-        newValue = Math.Clamp(newValue, Minimum, Maximum);
+        newValue = BoundValue(newValue);
 
         Value = newValue;
     }

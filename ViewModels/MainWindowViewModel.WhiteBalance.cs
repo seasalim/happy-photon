@@ -188,6 +188,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanSampleWhiteBalance))]
     private void ToggleWhiteBalancePicker()
     {
+        if (IsLocalsMode) return;
         IsWhiteBalancePicking = !IsWhiteBalancePicking;
         ShowTransientStatus(IsWhiteBalancePicking
             ? "Click a neutral area — Esc to cancel"
@@ -220,6 +221,7 @@ public partial class MainWindowViewModel
             settings,
             normalizedX,
             normalizedY);
+        if (!IsWhiteBalancePicking) return;
         if (sample == null)
         {
             if (IsCurrentWhiteBalanceRequest(image, generation, settings))
@@ -237,6 +239,7 @@ public partial class MainWindowViewModel
         {
             return;
         }
+        if (!IsWhiteBalancePicking) return;
         var surfaceGeneration = RequestEditedRender();
         IsWhiteBalancePicking = false;
         await ApplyPickedWhiteBalanceAsync(

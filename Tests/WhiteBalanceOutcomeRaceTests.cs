@@ -11,6 +11,55 @@ public sealed class WhiteBalanceOutcomeRaceTests : IDisposable
 {
     private readonly TemporaryDirectory _root = new();
 
+    [AvaloniaFact]
+    public async Task EnteringLocalsCancelsInFlightWhiteBalancePick()
+    {
+        using var catalog = new CatalogService(_root.Path);
+        await catalog.InitializeAsync();
+        var vm = CreateViewModel(catalog, new GradientLoader());
+        var image = new ImageFile(Path.Combine(_root.Path, "locals.dng"));
+        image.CatalogId = await catalog.GetOrCreateImageAsync(image.FilePath);
+        vm.SelectedImage = image;
+        var started = NewSignal();
+        var release = NewSignal();
+
+        try
+        {
+            await TestWaits.UntilAsync(() => vm.IsWhiteBalanceReady && vm.IsHistoryLoaded);
+            var before = image.EditSettings.Clone();
+            var history = vm.HistoryEntries.ToArray();
+            var kelvin = vm.WhiteBalanceKelvinPosition;
+            var tint = vm.WhiteBalanceTint;
+            vm.ToggleWhiteBalancePickerCommand.Execute(null);
+            Assert.True(vm.IsWhiteBalancePicking);
+            vm.ImageService.Previews.WhiteBalanceSampleGateAsync = () =>
+            {
+                started.TrySetResult();
+                return release.Task;
+            };
+            var sample = vm.ApplyWhiteBalancePickAsync(0.5, 0.5);
+            await started.Task.WaitAsync(TestWaits.Condition);
+
+            await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
+            release.TrySetResult();
+            await sample.WaitAsync(TestWaits.Condition);
+
+            Assert.Equal("As Shot", vm.SelectedWhiteBalanceMode);
+            Assert.Equal(WbMode.AsShot, image.EditSettings.Wb.Mode);
+            Assert.True(before.HasSameEdits(image.EditSettings));
+            Assert.Equal(kelvin, vm.WhiteBalanceKelvinPosition);
+            Assert.Equal(tint, vm.WhiteBalanceTint);
+            Assert.False(vm.IsWhiteBalancePicking);
+            Assert.True(vm.CanEditLocals);
+            Assert.Equal(history, vm.HistoryEntries.ToArray());
+        }
+        finally
+        {
+            release.TrySetResult();
+            await vm.DisposeAsync();
+        }
+    }
+
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]

@@ -50,12 +50,12 @@ public partial class MainWindowViewModel
 
     public void OnSliderEditStarted() => _activeSliderEditCount++;
 
-    public void OnSliderEditCompleted()
+    public void OnSliderEditCompleted(string? historyLabel = null)
     {
         if (_activeSliderEditCount == 0) return;
 
         _activeSliderEditCount--;
-        if (_activeSliderEditCount == 0) SchedulePreviewUpdate();
+        if (_activeSliderEditCount == 0) SchedulePreviewUpdate(historyLabel);
     }
 
     private void OnEditValueChanged()

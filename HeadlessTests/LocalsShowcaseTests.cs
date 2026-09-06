@@ -18,6 +18,8 @@ public sealed class LocalsShowcaseTests(ITestOutputHelper output)
     [InlineData("develop-locals-linear-selected", true, false, false)]
     [InlineData("develop-locals-mask-overlay", true, true, false)]
     [InlineData("develop-locals-exited", true, false, true)]
+    [InlineData("develop-locals-locked", true, false, false)]
+    [InlineData("develop-locals-geometry", true, false, false)]
     public async Task RenderScene(string scene, bool hasLocal, bool mask, bool closed)
     {
         using var fixture = new CatalogVmFixture("locals-shots");
@@ -38,6 +40,7 @@ public sealed class LocalsShowcaseTests(ITestOutputHelper output)
         await TestWaits.UntilAsync(() => vm.PreviewImage != null && vm.IsHistoryLoaded);
         await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         vm.ShowLocalMask = mask;
+        vm.IsLocalGeometryExpanded = scene == "develop-locals-geometry";
         if (closed) vm.CloseLocalsCommand.Execute(null);
         var window = new MainWindow();
         using var scope = TestUiScope.ForMainWindow(window, vm, show: false);

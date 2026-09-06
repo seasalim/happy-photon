@@ -66,6 +66,7 @@ public partial class MainWindowViewModel
         if (!IsDevelopMode || SelectedImage == null) return;
         if (IsCropMode) await CancelCropCoreAsync();
         if (IsCropMode) return;
+        IsWhiteBalancePicking = false;
         IsLocalsMode = true;
         RebindLocalSelection(first: true);
     }
@@ -205,10 +206,12 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(SelectedLocalRow));
         foreach (var property in new[] { nameof(Locals), nameof(HasLocals), nameof(SelectedLocal),
             nameof(HasSelectedLocal), nameof(LocalExposure), nameof(CanAddLocal), nameof(CanEditLocals),
-            nameof(IsLocalMaskVisible), nameof(LocalsInstruction), nameof(LocalsFrame) })
+            nameof(IsLocalMaskVisible), nameof(LocalsInstruction), nameof(LocalsFrame),
+            nameof(LocalX), nameof(LocalY), nameof(LocalAngle), nameof(LocalWidth), nameof(CanEditLocalGeometry) })
             OnPropertyChanged(property);
         AddLinearCommand.NotifyCanExecuteChanged();
         PlaceLocalAtCenterCommand.NotifyCanExecuteChanged();
+        CenterLocalInViewCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();
     }
 

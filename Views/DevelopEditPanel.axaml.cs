@@ -69,7 +69,9 @@ public partial class DevelopEditPanel : UserControl
         (DataContext as MainWindowViewModel)?.OnSliderEditStarted();
 
     private void OnSliderDragCompleted(object? sender, RoutedEventArgs e) =>
-        (DataContext as MainWindowViewModel)?.OnSliderEditCompleted();
+        (DataContext as MainWindowViewModel)?.OnSliderEditCompleted(
+            e.Source is CompactSlider slider && slider.Classes.Contains("local-geometry")
+                ? "Local geometry" : null);
 
     internal Task ForwardCurveChangedAsync() =>
         DataContext is MainWindowViewModel viewModel
