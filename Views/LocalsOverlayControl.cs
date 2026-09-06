@@ -72,8 +72,9 @@ public sealed class LocalsOverlayControl : Control
         return new(Math.Cos(angle) * frame.LongEdge / frame.Width / frame.CropWidth * size.Width,
             Math.Sin(angle) * frame.LongEdge / frame.Height / frame.CropHeight * size.Height);
     }
-    internal static LinearGradientBrush BuildMaskBrush(LocalAdjustment local, LocalsFrame frame, Size size)
+    internal static GradientBrush BuildMaskBrush(LocalAdjustment local, LocalsFrame frame, Size size)
     {
+        if (local.IsRadial) return BuildRadialBrush(local, frame, size);
         var center = ToCanvas(local, frame, size);
         var direction = Direction(local, frame, size);
         var brush = new LinearGradientBrush
@@ -92,6 +93,64 @@ public sealed class LocalsOverlayControl : Control
         return brush;
     }
 
+    private static Matrix RadialTransform(LocalAdjustment local, LocalsFrame frame, Size size)
+    {
+        var c = ToCanvas(local, frame, size);
+        var x = Direction(local, frame, size) * local.Rx;
+        var y = Direction(local with { Angle = local.Angle + 90 }, frame, size) * local.Ry;
+        return new Matrix(x.X, x.Y, y.X, y.Y, c.X, c.Y);
+    }
+
+    private static RadialGradientBrush BuildRadialBrush(LocalAdjustment local, LocalsFrame frame, Size size)
+    {
+        var brush = new RadialGradientBrush
+        {
+            Center = new RelativePoint(0, 0, RelativeUnit.Absolute),
+            GradientOrigin = new RelativePoint(0, 0, RelativeUnit.Absolute),
+            RadiusX = new RelativeScalar(1, RelativeUnit.Absolute),
+            RadiusY = new RelativeScalar(1, RelativeUnit.Absolute),
+            TransformOrigin = new RelativePoint(0, 0, RelativeUnit.Absolute),
+            Transform = new MatrixTransform(RadialTransform(local, frame, size)), Opacity = .35
+        };
+        var color = HappyPhotonColors.LocalMaskColor;
+        for (var i = 0; i <= 256; i++)
+        {
+            var t = i / 256d;
+            var weight = 1 - t * t * (3 - 2 * t);
+            brush.GradientStops.Add(new GradientStop(new Color(
+                (byte)Math.Round(255 * (local.Outside ? 1 - weight : weight)), color.R, color.G, color.B),
+                1 - local.Feather + t * local.Feather));
+        }
+        return brush;
+    }
+
+    private static readonly (LocalHandle Handle, Point Point)[] RadialKnobs =
+    [ (LocalHandle.AxisXPositive, new(1, 0)), (LocalHandle.AxisXNegative, new(-1, 0)),
+      (LocalHandle.AxisYPositive, new(0, 1)), (LocalHandle.AxisYNegative, new(0, -1)) ];
+
+    private void DrawRadial(DrawingContext context, LocalAdjustment local, LocalsFrame frame)
+    {
+        var matrix = RadialTransform(local, frame, Bounds.Size);
+        foreach (var scale in new[] { 1d, 1 - local.Feather })
+        {
+            var ellipse = new StreamGeometry();
+            using (var shape = ellipse.Open())
+            {
+                shape.BeginFigure(new Point(scale, 0).Transform(matrix), false);
+                for (var i = 1; i < 128; i++)
+                    shape.LineTo(new Point(scale * Math.Cos(i * Math.PI / 64), scale * Math.Sin(i * Math.PI / 64)).Transform(matrix));
+                shape.EndFigure(true);
+            }
+            context.DrawGeometry(null, Guide, ellipse);
+        }
+        var rotation = new Point(1 + .08 / local.Rx, 0).Transform(matrix);
+        context.DrawLine(Guide, new Point(1, 0).Transform(matrix), rotation);
+        foreach (var knob in RadialKnobs)
+            context.DrawEllipse(HappyPhotonColors.CropHandleFill, Guide, knob.Point.Transform(matrix), 4, 4);
+        context.DrawEllipse(null, Guide, rotation, 5, 5);
+        context.DrawEllipse(HappyPhotonColors.CropHandleFill, Subdued, ToCanvas(local, frame, Bounds.Size), 7, 7);
+    }
+
     public override void Render(DrawingContext context)
     {
         base.Render(context);
@@ -107,6 +166,7 @@ public sealed class LocalsOverlayControl : Control
                 context.DrawEllipse(HappyPhotonColors.CropHandleFill, Subdued, center, 3, 3);
         }
         if (selected == null) return;
+        if (selected.IsRadial) { DrawRadial(context, selected, frame); return; }
         var c = ToCanvas(selected, frame, Bounds.Size);
         var d = Direction(selected, frame, Bounds.Size);
         var rail = new Vector(-d.Y, d.X).Normalize() * (Bounds.Width + Bounds.Height);
@@ -136,6 +196,20 @@ public sealed class LocalsOverlayControl : Control
 
     internal LocalHandle? HitHandle(Point point, LocalAdjustment local, LocalsFrame frame)
     {
+        if (local.IsRadial)
+        {
+            var matrix = RadialTransform(local, frame, Bounds.Size);
+            foreach (var knob in RadialKnobs)
+                if (((Vector)(point - knob.Point.Transform(matrix))).Length <= 10) return knob.Handle;
+            if (((Vector)(point - new Point(1 + .08 / local.Rx, 0).Transform(matrix))).Length <= 10) return LocalHandle.Rotation;
+            if (((Vector)(point - ToCanvas(local, frame, Bounds.Size))).Length <= 10) return LocalHandle.Center;
+            var unitPoint = point.Transform(matrix.Invert());
+            var rho = ((Vector)unitPoint).Length;
+            if (rho > 0 && ((Vector)(point - new Point(unitPoint.X / rho * (1 - local.Feather),
+                    unitPoint.Y / rho * (1 - local.Feather)).Transform(matrix))).Length <= 6)
+                return LocalHandle.FeatherRing;
+            return null;
+        }
         var c = ToCanvas(local, frame, Bounds.Size);
         var d = Direction(local, frame, Bounds.Size);
         if (((Vector)(point - c)).Length <= 10) return LocalHandle.Center;

@@ -11,18 +11,31 @@ public sealed partial class LocalsFusedBaselineTests
 {
     [Fact]
     public async Task QualifiedG8()
+        => await ContendedTick(false);
+
+    [Fact]
+    public async Task QualifiedLinearContention() => await ContendedTick(true);
+
+    [Fact]
+    public async Task QualifiedRadialG9() => await ContendedTick(true, true);
+
+    private async Task ContendedTick(bool realFixture, bool radial = false)
     {
         OptIn();
         const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Static;
-        using var large = (BaseImage)typeof(RenderSequenceGoldenTests)
-            .GetMethod("CreateBase", flags)!.Invoke(null, ["raw", 3200, 2133])!;
+        using var loaded = realFixture ? Load(true) : null;
+        var largePixels = realFixture ? new MagickImage(loaded!.Pixels) : null;
+        if (largePixels != null) BitmapConversionService.ResizeToMaxDimension(largePixels, 3200);
+        using var large = largePixels != null ? new BaseImage(largePixels, loaded!.Info) :
+            (BaseImage)typeof(RenderSequenceGoldenTests)
+                .GetMethod("CreateBase", flags)!.Invoke(null, ["raw", 3200, 2133])!;
         var settings = (EditSettings)typeof(RenderSequenceGoldenTests)
             .GetMethod("Settings", flags)!.Invoke(null, null)!;
         var pixels = new MagickImage(large.Pixels);
-        pixels.Resize(1600, 1067);
+        BitmapConversionService.ResizeToMaxDimension(pixels, 1600);
         using var small = new BaseImage(pixels, large.Info);
         var localSettings = settings.Clone();
-        localSettings.Locals = LocalSettings(small, .25, .45).Locals;
+        localSettings.Locals = (radial ? RadialSettings(small) : LocalSettings(small, .25, .45)).Locals;
         var interactive = new RenderRequest(small, localSettings, RenderIntent.Preview, 1600, new(false, false));
         var restingRequest = new RenderRequest(large, settings, RenderIntent.Preview, 3200, new(false, false));
         var pipeline = new RenderPipeline();
@@ -34,7 +47,7 @@ public sealed partial class LocalsFusedBaselineTests
             alone[sample] = Tick();
             using var started = new ManualResetEventSlim();
             var execution = RenderExecutionOptions.Resting(CancellationToken.None, 2,
-                stage => { if (stage == "raw-crossing") started.Set(); });
+                stage => { if (stage == (large.Info.IsRawSource ? "raw-crossing" : "standard-tone")) started.Set(); });
             var resting = Task.Run(() => pipeline.RenderResting(restingRequest, execution));
             try
             {
@@ -44,7 +57,7 @@ public sealed partial class LocalsFusedBaselineTests
             }
             finally { using var result = await resting; }
         }
-        output.WriteLine($"G8 synthetic-RAW cpu={Environment.ProcessorCount} process={Environment.ProcessId} " +
+        output.WriteLine($"contention fixture={(realFixture ? Fixture : "synthetic-RAW")} radial={radial} cpu={Environment.ProcessorCount} process={Environment.ProcessId} " +
             $"alone={Median(alone):F4} concurrent={Median(concurrent):F4} " +
             $"concurrent_samples=[{string.Join(',', concurrent)}] resting=3200x2133 cap=2");
         Assert.True(Median(concurrent) <= 150, "G8 contended tick");
@@ -53,7 +66,12 @@ public sealed partial class LocalsFusedBaselineTests
     }
 
     [Fact]
-    public async Task QualifiedG9()
+    public async Task QualifiedG9() => await ExportDelta(false);
+
+    [Fact]
+    public async Task QualifiedRadialG10() => await ExportDelta(true);
+
+    private async Task ExportDelta(bool radial)
     {
         OptIn();
         using var preview = Load(false);
@@ -72,7 +90,7 @@ public sealed partial class LocalsFusedBaselineTests
                 return pipeline.RenderDisplayRec2020(request);
             });
         var file = new ImageFile(GoldenTestPaths.Asset(Fixture));
-        var active = LocalSettings(preview, .25, .45);
+        var active = radial ? RadialSettings(preview) : LocalSettings(preview, .25, .45);
         var off = new double[Samples]; var on = new double[Samples];
         for (var sample = -1; sample < Samples; sample++)
         {

@@ -44,7 +44,10 @@
                                   Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).ToggleLocalEnabledCommand}"
                                   CommandParameter="{Binding Local}"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Name}" FontSize="11"/>
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <TextBlock Text="{Binding Glyph}" FontSize="11"/>
+                                <TextBlock Text="{Binding Name}" FontSize="11"/>
+                            </StackPanel>
                             <TextBlock Text="Disabled" IsVisible="{Binding !Enabled}" FontSize="9"
                                        Foreground="{DynamicResource TextMuted}"/>
                         </StackPanel>
@@ -58,6 +61,14 @@
         <views:CompactSlider Label="Exposure" Value="{Binding LocalExposure}" Minimum="-4" Maximum="4"
                              SmallChange="0.1" StringFormat="{}{0:+0.00;-0.00;0.00}"
                              EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
+        <Grid ColumnDefinitions="*,*" IsVisible="{Binding IsRadialLocal}" IsEnabled="{Binding CanEditLocalGeometry}">
+            <ToggleButton Classes="mask" Content="Inside" IsChecked="{Binding IsLocalInside, Mode=OneWay}"
+                          Command="{Binding SetLocalPolarityCommand}" CommandParameter="inside" HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
+            <ToggleButton Classes="mask" Grid.Column="1" Content="Outside" IsChecked="{Binding IsLocalOutside, Mode=OneWay}"
+                          Command="{Binding SetLocalPolarityCommand}" CommandParameter="outside" HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
+        </Grid>
         <ToggleButton x:Name="LocalGeometryDisclosure" Classes="geometry-disclosure"
                       IsChecked="{Binding IsLocalGeometryExpanded}" AutomationProperties.Name="Geometry"
                       HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="0"
@@ -87,14 +98,23 @@
                                  Value="{Binding LocalAngle}" Minimum="0" Maximum="360" SmallChange="1"
                                  WrapValue="True" StringFormat="{}{0:0}°" AutomationProperties.Name="Local angle"/>
             <views:CompactSlider x:Name="LocalWidthSlider" Classes="local-geometry" Label="Width"
-                                 Value="{Binding LocalWidth}" Minimum="0.1" Maximum="200" SmallChange="0.1"
+                                 Value="{Binding LocalWidth}" Minimum="{Binding LocalWidthMinimum}" Maximum="200" SmallChange="0.1"
                                  StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local width"/>
+            <views:CompactSlider x:Name="LocalHeightSlider" Classes="local-geometry" Label="Height" IsVisible="{Binding IsRadialLocal}"
+                                 Value="{Binding LocalHeight}" Minimum="0.2" Maximum="200" SmallChange="0.1"
+                                 StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local height"/>
+            <views:CompactSlider x:Name="LocalFeatherSlider" Classes="local-geometry" Label="Feather" IsVisible="{Binding IsRadialLocal}"
+                                 Value="{Binding LocalFeather}" Minimum="0" Maximum="100" SmallChange="1"
+                                 StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local feather"/>
             <Button x:Name="CenterLocalInViewButton" Content="Center in view"
                     Command="{Binding CenterLocalInViewCommand}" Padding="8,4" FontSize="10"/>
         </StackPanel>
         <StackPanel Orientation="Horizontal" Spacing="5" IsEnabled="{Binding CanEditLocals}">
             <Button Content="Add Linear" Command="{Binding AddLinearCommand}" Padding="8,4" FontSize="10"/>
-            <Button Content="Place at center" Command="{Binding PlaceLocalAtCenterCommand}" Padding="8,4" FontSize="10"/>
+            <Button Content="Add Radial" Command="{Binding AddRadialCommand}" Padding="8,4" FontSize="10"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" IsEnabled="{Binding CanEditLocals}">
+            <Button Content="{Binding PlaceLocalAtCenterCaption}" Command="{Binding PlaceLocalAtCenterCommand}" Padding="8,4" FontSize="10"/>
         </StackPanel>
         <TextBlock Text="{Binding LocalsInstruction}" TextWrapping="Wrap" FontSize="10"
                    Foreground="{DynamicResource TextMuted}"/>

@@ -30,7 +30,7 @@ workflow partial, don't grow the root file).
 Locals is a tool mode beside Crop. Its toggle shows a dot for any stored local,
 including disabled and neutral ones. Entering selects the first local and reveals
 the docked section beneath the histogram; Close retains committed edits. The list
-scrolls after four rows and supports up to eight linear masks, each with Exposure
+scrolls after four rows and supports up to eight linear or radial masks, each with Exposure
 [-4, +4] EV, an enabled checkbox, explicit Disabled label, and Delete. Selection
 and Show Mask are session state. Presets and paste preserve destination locals;
 Develop Reset clears them with global adjustments, and Undo restores them.
@@ -65,6 +65,19 @@ Middle-button pan and wheel zoom remain available, while the loupe is suspended.
 Show Mask visualizes the selected geometry even when disabled or neutral, using
 the invariant `LocalMaskColor` token and a smoothstep-sampled gradient brush. It
 temporarily suppresses clipping presentation without changing the clipping latch.
+
+Add Radial arms a center-to-corner drag: the projected horizontal/vertical distances
+set the semi-axes, with angle 0°, inward feather 50%, and Inside polarity. Either
+radius below .001 long-edge units creates nothing. Place at center uses the armed
+type (initially linear), named in the button caption and retained after Escape or
+creation; a radial starts at (.5, .5) with both radii .25. Radial
+knobs resize four axis ends without moving the center, rotate beyond the first
+axis with a hollow rotation knob, and adjust the inner feather ring; axis/rotation
+knobs and the selected center win over the ring, including at 100% feather. Its
+Inside/Outside segment commits one “Local polarity” operation. Geometry Width
+and Height show diameters in long-edge percent [.2, 200], with Feather [0, 100].
+Rows share creation ordinals across types and display a geometry glyph. The radial
+tint uses one transformed gradient brush with complementary alpha for Outside.
 
 One completed geometry drag is one history step; Escape or capture loss restores
 its starting state. Escape then cancels armed creation, then closes Locals. Undo

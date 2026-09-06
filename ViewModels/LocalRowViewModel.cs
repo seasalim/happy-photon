@@ -7,12 +7,14 @@ public sealed class LocalRowViewModel(LocalAdjustment local) : ObservableObject
 {
     public LocalAdjustment Local { get; private set; } = local;
     public string Name => Local.Name;
+    public string Glyph => Local.IsRadial ? "○" : "▱";
     public bool Enabled => Local.Enabled;
     internal void Refresh(LocalAdjustment value)
     {
         Local = value;
         OnPropertyChanged(nameof(Local));
         OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(Glyph));
         OnPropertyChanged(nameof(Enabled));
     }
 }

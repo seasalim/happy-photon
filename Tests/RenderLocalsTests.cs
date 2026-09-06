@@ -5,7 +5,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class RenderLocalsTests
+public sealed partial class RenderLocalsTests
 {
     [Theory]
     [InlineData(0, 0)]

@@ -11,7 +11,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class LocalsShowcaseTests(ITestOutputHelper output)
+public sealed partial class LocalsShowcaseTests(ITestOutputHelper output)
 {
     [AvaloniaTheory]
     [InlineData("develop-locals-empty", false, false, false)]
@@ -20,6 +20,9 @@ public sealed class LocalsShowcaseTests(ITestOutputHelper output)
     [InlineData("develop-locals-exited", true, false, true)]
     [InlineData("develop-locals-locked", true, false, false)]
     [InlineData("develop-locals-geometry", true, false, false)]
+    [InlineData("develop-locals-radial-selected", true, false, false)]
+    [InlineData("develop-locals-radial-outside", true, true, false)]
+    [InlineData("develop-locals-radial-geometry", true, false, false)]
     public async Task RenderScene(string scene, bool hasLocal, bool mask, bool closed)
     {
         using var fixture = new CatalogVmFixture("locals-shots");
@@ -32,6 +35,9 @@ public sealed class LocalsShowcaseTests(ITestOutputHelper output)
         {
             EditSettings = new EditSettings { Locals = hasLocal ? [new() { Exposure = -1 }] : null }
         };
+        if (scene.Contains("radial")) image.EditSettings.Locals = [new()
+        { Type = "radial", Rx = .28, Ry = .18, Angle = 30, Feather = .5, Exposure = -1,
+            Outside = scene.EndsWith("outside") }];
         image.CatalogId = await catalog.GetOrCreateImageAsync(path);
         await catalog.SaveEditSettingsAsync(image.CatalogId, image.EditSettings);
         vm.Browse.SetImages([image]);
@@ -40,7 +46,7 @@ public sealed class LocalsShowcaseTests(ITestOutputHelper output)
         await TestWaits.UntilAsync(() => vm.PreviewImage != null && vm.IsHistoryLoaded);
         await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         vm.ShowLocalMask = mask;
-        vm.IsLocalGeometryExpanded = scene == "develop-locals-geometry";
+        vm.IsLocalGeometryExpanded = scene.EndsWith("geometry");
         if (closed) vm.CloseLocalsCommand.Execute(null);
         var window = new MainWindow();
         using var scope = TestUiScope.ForMainWindow(window, vm, show: false);

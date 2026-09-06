@@ -252,7 +252,7 @@ public partial class CompactSlider : UserControl
         var range = Maximum - Minimum;
         if (range <= 0) return;
 
-        var normalizedValue = (Value - Minimum) / range;
+        var normalizedValue = Math.Clamp((Value - Minimum) / range, 0, 1);
         var normalizedZero = (0 - Minimum) / range;
 
         bool isBipolar = Minimum < 0 && Maximum > 0;

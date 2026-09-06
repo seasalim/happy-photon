@@ -51,10 +51,38 @@ public sealed class LocalPersistenceTests
             loaded.Locals[0].Exposure));
         source.Locals = Enumerable.Range(1, 9).Select(i => new LocalAdjustment { Ordinal = i }).ToList();
         Assert.Throws<JsonException>(() => EditSettingsJson.Deserialize(JsonSerializer.Serialize(source), out _));
-        source.Locals = [new() { Type = "radial" }];
+        source.Locals = [new() { Type = "unknown" }];
         Assert.Throws<JsonException>(() => EditSettingsJson.Deserialize(JsonSerializer.Serialize(source), out _));
         source.Locals = [new() { Angle = double.NaN }];
         Assert.Throws<JsonException>(() => EditSettingsJson.Serialize(source));
+    }
+
+    [Fact]
+    public void RadialsRoundTripClampPerTypeAndCarryWithRotation()
+    {
+        var radial = new LocalAdjustment { Type = "radial", Ordinal = 2, Rx = -1, Ry = 3,
+            Feather = -1, Outside = true, Cu = .2, Cv = .3, Angle = 30 };
+        var settings = new EditSettings { Locals = [new() { Feather = 0 }, radial] };
+        var loaded = EditSettingsJson.Deserialize(JsonSerializer.Serialize(settings), out var clamped);
+        Assert.True(clamped);
+        Assert.Equal(.001, loaded.Locals![0].Feather);
+        var local = loaded.Locals[1];
+        Assert.Equal((.001, 1d, 0d, true), (local.Rx, local.Ry, local.Feather, local.Outside));
+        Assert.Equal("Radial 2", local.Name);
+        var canonical = EditSettingsJson.Serialize(loaded);
+        Assert.True(loaded.HasSameEdits(EditSettingsJson.Deserialize(canonical, out _)));
+        using var json = JsonDocument.Parse(canonical);
+        Assert.False(json.RootElement.GetProperty("locals")[0].TryGetProperty("rx", out _));
+        Assert.True(json.RootElement.GetProperty("locals")[1].GetProperty("outside").GetBoolean());
+        var before = local with { };
+        local.Rotate(90);
+        Assert.Equal(.7, local.Cu, 12);
+        Assert.Equal(.2, local.Cv, 12);
+        Assert.Equal(120, local.Angle);
+        Assert.Equal((before.Rx, before.Ry, before.Feather, before.Outside),
+            (local.Rx, local.Ry, local.Feather, local.Outside));
+        local.Rx = double.NaN;
+        Assert.Throws<JsonException>(() => EditSettingsJson.Serialize(loaded));
     }
 
     [Fact]

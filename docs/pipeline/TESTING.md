@@ -409,6 +409,24 @@ caller allocation. G8 requires a <=150 ms contended tick; G9 allows export delta
 `LocalsShowcaseTests.MaskBrushMeetsWeightAndBuildGates` owns G10: <=.002 weight
 error, <5 ms brush construction, and no base-pixel access.
 
+Radial qualification adds `QualifiedRadialG1G7`, `G2`, `G5`, `G9` and `G10`
+in that same class, each in a fresh process with five timing pairs. R1 is a
+centered 30° ellipse covering 45% of the frame, ry=2rx/3, feather .5, Inside,
++2 EV; R8 uses eight radius-.11 circles on the fixed 4×2 grid, whose union
+coverage depends on the fixture aspect (RAW 44%, portrait HEIC 34%; asserted in
+30–50%). Both assert geometric coverage equals non-identity coverage. G5 names
+off/linear/global/soft-radial/hard-radial arms explicitly and reports every arm
+before failing. Radial bounds (run 245) are RAW 3.2/17.5 soft and 4.0/20.5 hard,
+HEIC 1.6/21.0 soft and 1.8/23.5 hard; every radial arm must also stay below the
+global +2 EV arm, because the radial excess over linear is exposure
+non-commutation with the resize, not mask sampling: the closed-form weight field
+at preview resolution is pinned against the full-resolution field binned into
+the preview grid (feather .5: mean <=.001, p99 <=.005; hard edge: boundary
+pixels <=.3%). `LocalsLinearParitySentinelTests` freezes active linear
+interactive/resting pixels and JSON/hash at 1191d2d. Radial headless tests sample
+the rendered brush against an independent spatial oracle in both polarities at
+feather 0/.5/1, with <=.02 spatial error, <=.002 stop error, and zero base reads.
+
 
 Opt-in `HAPPY_PHOTON_PERF=1` diagnostics remain outside normal CI. The tone
 gate is `AgxPerformanceGateTests`: one warm-up, median of five, a separate

@@ -24,9 +24,17 @@ public sealed record LocalAdjustment
     public double Feather { get; set; } = 0.25;
     [JsonPropertyName("exposure")]
     public double Exposure { get; set; }
+    [JsonPropertyName("rx")]
+    public double Rx { get; set; } = .25;
+    [JsonPropertyName("ry")]
+    public double Ry { get; set; } = .25;
+    [JsonPropertyName("outside")]
+    public bool Outside { get; set; }
 
     [JsonIgnore]
-    public string Name => $"Linear {Ordinal}";
+    public bool IsRadial => Type == "radial";
+    [JsonIgnore]
+    public string Name => $"{(IsRadial ? "Radial" : "Linear")} {Ordinal}";
 
     public void Rotate(int clockwiseDegrees)
     {

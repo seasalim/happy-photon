@@ -10,6 +10,8 @@ public partial class MainWindowViewModel
     [ObservableProperty] private bool _isLocalCreationArmed;
     [ObservableProperty] private bool _showLocalMask;
     private string? _selectedLocalId;
+    private string _localCreationType = "linear";
+    public string PlaceLocalAtCenterCaption => _localCreationType == "radial" ? "Place Radial at center" : "Place Linear at center";
     public System.Collections.ObjectModel.ObservableCollection<LocalRowViewModel> LocalRows { get; } = [];
     public LocalRowViewModel? SelectedLocalRow
     {
@@ -41,7 +43,7 @@ public partial class MainWindowViewModel
     public string LocalsInstruction => Locals.Count == 8
         ? "8 of 8 locals — delete a local to add another"
         : IsLocalCreationArmed ? "Drag to place; Escape cancels"
-        : !HasLocals ? "Add Linear, then drag on the image, or Place at center."
+        : !HasLocals ? "Add Linear or Radial, then drag, or Place at center."
         : SelectedLocal is { Enabled: false } ? "Disabled" : "";
     public LocalsFrame? LocalsFrame => SelectedImage is { } image && IsLocalsMode
         ? ImageService.Previews.GetLocalsFrame(image, CaptureLiveEditState()) : null;
@@ -82,14 +84,25 @@ public partial class MainWindowViewModel
     private void AddLinear()
     {
         DiscardLocalsGesture();
+        _localCreationType = "linear";
+        OnPropertyChanged(nameof(PlaceLocalAtCenterCaption));
         IsLocalCreationArmed = true;
     }
 
     [RelayCommand(CanExecute = nameof(CanAddLocal))]
-    private Task PlaceLocalAtCenterAsync() => ChangeLocalAsync("Add Linear", () =>
+    private void AddRadial()
+    {
+        DiscardLocalsGesture();
+        _localCreationType = "radial";
+        OnPropertyChanged(nameof(PlaceLocalAtCenterCaption));
+        IsLocalCreationArmed = true;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanAddLocal))]
+    private Task PlaceLocalAtCenterAsync() => ChangeLocalAsync(_localCreationType == "radial" ? "Add Radial" : "Add Linear", () =>
     {
         if (Locals.Count >= LocalAdjustment.MaximumCount) return;
-        var local = NewLinear();
+        var local = NewLocal();
         (SelectedImage!.EditSettings.Locals ??= []).Add(local);
         _selectedLocalId = local.Id;
     });
@@ -122,8 +135,18 @@ public partial class MainWindowViewModel
         });
     }
 
-    private LocalAdjustment NewLinear() => new()
-    { Ordinal = Locals.Select(local => local.Ordinal).DefaultIfEmpty(0).Max() + 1 };
+    private LocalAdjustment NewLocal() => new()
+    {
+        Type = _localCreationType, Angle = _localCreationType == "radial" ? 0 : 90,
+        Feather = _localCreationType == "radial" ? .5 : .25,
+        Ordinal = Locals.Select(local => local.Ordinal).DefaultIfEmpty(0).Max() + 1
+    };
+
+    [RelayCommand]
+    private Task SetLocalPolarityAsync(string polarity) => ChangeLocalAsync("Local polarity", () =>
+    {
+        if (SelectedLocal is { IsRadial: true } local) local.Outside = polarity == "outside";
+    });
 
     [RelayCommand]
     private async Task ResumeLocalEditingAsync()
@@ -207,9 +230,12 @@ public partial class MainWindowViewModel
         foreach (var property in new[] { nameof(Locals), nameof(HasLocals), nameof(SelectedLocal),
             nameof(HasSelectedLocal), nameof(LocalExposure), nameof(CanAddLocal), nameof(CanEditLocals),
             nameof(IsLocalMaskVisible), nameof(LocalsInstruction), nameof(LocalsFrame),
-            nameof(LocalX), nameof(LocalY), nameof(LocalAngle), nameof(LocalWidth), nameof(CanEditLocalGeometry) })
+            nameof(LocalX), nameof(LocalY), nameof(LocalAngle), nameof(LocalWidthMinimum), nameof(LocalWidth),
+            nameof(CanEditLocalGeometry), nameof(IsRadialLocal), nameof(LocalHeight), nameof(LocalFeather),
+            nameof(IsLocalInside), nameof(IsLocalOutside) })
             OnPropertyChanged(property);
         AddLinearCommand.NotifyCanExecuteChanged();
+        AddRadialCommand.NotifyCanExecuteChanged();
         PlaceLocalAtCenterCommand.NotifyCanExecuteChanged();
         CenterLocalInViewCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();

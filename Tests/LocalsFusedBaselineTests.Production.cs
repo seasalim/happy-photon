@@ -17,10 +17,19 @@ public sealed partial class LocalsFusedBaselineTests
     }
 
     [Fact]
-    public void QualifiedG1G7()
+    public void QualifiedG1G7() => TickAndMemory(false);
+
+    [Fact]
+    public void QualifiedRadialG1G7() => TickAndMemory(true);
+
+    [Fact]
+    public void QualifiedRadialG2() => TickAndMemory(true, true);
+
+    private void TickAndMemory(bool radial, bool eight = false)
     {
         OptIn(); using var b = Load(false);
-        var settings = LocalSettings(b, .25, .45);
+        var settings = radial ? RadialSettings(b, eight) : LocalSettings(b, .25, .45);
+        var coverage = radial ? _radialCoverage : .45;
         var off = new double[Samples]; var on = new double[Samples];
         var memory = new double[Samples]; var allocation = new double[Samples];
         void Tick(EditSettings s) { using var result = new RenderPipeline().Render(
@@ -33,7 +42,7 @@ public sealed partial class LocalsFusedBaselineTests
             memory[i] = z.Peak - a.Peak; allocation[i] = z.Allocated - a.Allocated;
         }
         var delta = Median(on.Zip(off, (z, a) => z - a).ToArray());
-        Print(.45, $"production_tick_off={Median(off):F4} on={Median(on):F4} paired_delta={delta:F4} " +
+        Print(coverage, $"production_tick_off={Median(off):F4} on={Median(on):F4} paired_delta={delta:F4} " +
             $"private_delta={Median(memory)} caller_allocation_delta={Median(allocation)}");
         output.WriteLine($"tick_off_samples=[{string.Join(',', off)}] tick_on_samples=[{string.Join(',', on)}]");
         // G1 bounds the complete tick and the adjustment-stage delta separately.
@@ -46,11 +55,14 @@ public sealed partial class LocalsFusedBaselineTests
             stageOn[i] = Measure(() => Stage(settings)).Ms;
         }
         var stageDelta = Median(stageOn.Zip(stageOff, (z, a) => z - a).ToArray());
-        Print(.45, $"production_stage_off={Median(stageOff):F4} on={Median(stageOn):F4} paired_delta={stageDelta:F4}");
+        Print(coverage, $"production_stage_off={Median(stageOff):F4} on={Median(stageOn):F4} paired_delta={stageDelta:F4}");
         Assert.True(Median(on) <= 150, "G1 tick");
         Assert.True(stageDelta <= 45, "G1 stage delta");
         Assert.True(Median(memory) <= b.Pixels.Width * b.Pixels.Height * 6, "G7 private memory");
         Assert.True(Median(allocation) <= 65536, "G7 allocation");
+        // R8 is frozen geometry; its union coverage depends on the fixture aspect (run 245:
+        // RAW 3:2 44.45 %, HEIC portrait 4:3 34.32 %), so the window records rather than sizes it.
+        if (eight) Assert.InRange(_radialCoverage, .30, .50);
     }
 
     [Fact]

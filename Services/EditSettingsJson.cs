@@ -7,7 +7,8 @@ internal static partial class EditSettingsJson
 {
     private static readonly JsonSerializerOptions CompactOptions = new()
     {
-        WriteIndented = false
+        WriteIndented = false,
+        TypeInfoResolver = LocalTypeResolver()
     };
 
     public static bool IsSupportedVersion(int version) => version is 3 or EditSettings.CurrentVersion;

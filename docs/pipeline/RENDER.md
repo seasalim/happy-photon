@@ -417,6 +417,17 @@ version duplication.
 Navigation during a completed local gesture's render still saves its captured
 settings to the original image's catalog row.
 
+Radial locals use `type: "radial"` and additionally store semi-axes `rx`, `ry`
+in [.001, 1] long-edge units and boolean `outside`; these fields are omitted for
+linear documents, preserving their canonical bytes and settings hashes. Radial
+`feather` is an inward radius fraction [0, 1]. Rotate the metric center offset
+by minus `angle` and compute `rho = sqrt((x/rx)^2 + (y/ry)^2)`; inside weight is
+1 below `1-feather`, 0 at or beyond 1, and inverse smoothstep in between (zero
+feather is a hard edge). Outside complements that weight. The existing fused
+scalar gain composition and exact identity LUT path remain unchanged, including
+on the resting frame override; no render-version bump or mask buffer is needed.
+Quarter-turns carry the center and angle while preserving radii and feather.
+
 The three channel fields follow `curve` in the shown order; they and `rawProfile` use
 null-omission semantics — `null` is never serialized, and `Clamp` validates/rebuilds
 an optional curve only when the field was present. Selecting a channel in the UI does

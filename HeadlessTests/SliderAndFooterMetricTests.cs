@@ -131,6 +131,9 @@ public sealed class SliderAndFooterMetricTests
         // Measure local Exposure and expanded Geometry alongside the global controls.
         content.GetLogicalDescendants().OfType<LocalsEditSection>().Single().IsVisible = true;
         vm.IsLocalGeometryExpanded = true;
+        foreach (var slider in content.GetLogicalDescendants().OfType<CompactSlider>()
+                     .Where(slider => slider.Classes.Contains("local-geometry")))
+            slider.IsVisible = true;
         var window = new Window { Width = 900, Height = 2200, Content = content };
         using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
@@ -139,12 +142,12 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(30, sliders.Length);
+            Assert.Equal(32, sliders.Length);
             Assert.Contains(sliders, slider => slider.Label == "Exposure" &&
                 slider.GetLogicalAncestors().OfType<LocalsEditSection>().Any());
             Assert.Contains(sliders, slider => slider.Label == "Luma NR");
             var geometry = sliders.Where(slider => slider.Classes.Contains("local-geometry")).ToArray();
-            Assert.Equal(["X", "Y", "Angle", "Width"], geometry.Select(slider => slider.Label));
+            Assert.Equal(["X", "Y", "Angle", "Width", "Height", "Feather"], geometry.Select(slider => slider.Label));
             Assert.All(geometry, slider => Assert.True(slider.IsEffectivelyVisible && slider.Bounds.Height > 0));
             foreach (var slider in sliders)
             {

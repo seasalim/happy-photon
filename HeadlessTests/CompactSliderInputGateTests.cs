@@ -13,6 +13,28 @@ namespace HappyPhoton.Tests;
 
 public sealed class CompactSliderInputGateTests
 {
+    [AvaloniaTheory]
+    [InlineData(.2, .1)]
+    [InlineData(.2, 300)]
+    [InlineData(-100, -200)]
+    [InlineData(-100, 300)]
+    public void OutOfRangeValueKeepsFillAndThumbWithinTrack(double minimum, double value)
+    {
+        var (slider, window, scope) = ShowSlider();
+        using var windowScope = scope;
+        slider.Value = 50;
+        slider.Minimum = minimum;
+        Assert.Null(Record.Exception(() => slider.Value = value));
+        var trackWidth = slider.FindControl<Grid>("TrackGrid")!.Bounds.Width;
+        var fill = slider.FindControl<Border>("FillBar")!;
+        var thumb = slider.FindControl<Border>("ThumbDot")!;
+        Assert.True(trackWidth > 0);
+        Assert.InRange(fill.Width, 0, trackWidth);
+        Assert.InRange(fill.Margin.Left, 0, trackWidth - fill.Width);
+        Assert.InRange(thumb.Margin.Left, 0, trackWidth - thumb.Width);
+        Assert.Equal(value, slider.Value);
+    }
+
     [AvaloniaFact]
     public void FirstPress_CapturesWhenAnAncestorHandledTheRoutedEvent()
     {

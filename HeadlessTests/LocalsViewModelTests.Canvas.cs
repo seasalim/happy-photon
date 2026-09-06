@@ -49,8 +49,10 @@ public sealed partial class LocalsViewModelTests
         finally { release.TrySetResult(); }
     }
 
-    [AvaloniaFact]
-    public async Task CanvasCreatesOnlyWhenArmedAndCaptureLossRestores()
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CanvasCreatesOnlyWhenArmedAndCaptureLossRestores(bool radial)
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog);
@@ -62,7 +64,8 @@ public sealed partial class LocalsViewModelTests
         window.MouseDown(new(100, 100), MouseButton.Left, RawInputModifiers.None);
         window.MouseUp(new(100, 100), MouseButton.Left, RawInputModifiers.None);
         Assert.Empty(vm.Locals);
-        vm.AddLinearCommand.Execute(null);
+        if (radial) vm.AddRadialCommand.Execute(null);
+        else vm.AddLinearCommand.Execute(null);
         window.MouseDown(new(100, 100), MouseButton.Left, RawInputModifiers.None);
         window.MouseMove(new(400, 350), RawInputModifiers.LeftMouseButton);
         Assert.True(vm.IsLocalsGestureActive);

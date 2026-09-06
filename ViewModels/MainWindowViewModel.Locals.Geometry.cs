@@ -9,6 +9,10 @@ public partial class MainWindowViewModel
 {
     [ObservableProperty] private bool _isLocalGeometryExpanded;
     public bool CanEditLocalGeometry => CanEditLocals && HasSelectedLocal;
+    public bool IsRadialLocal => SelectedLocal?.IsRadial == true;
+    public bool IsLocalOutside => IsRadialLocal && SelectedLocal!.Outside;
+    public bool IsLocalInside => IsRadialLocal && !SelectedLocal!.Outside;
+    public double LocalWidthMinimum => IsRadialLocal ? .2 : .1;
 
     public double LocalX
     {
@@ -27,8 +31,18 @@ public partial class MainWindowViewModel
     }
     public double LocalWidth
     {
-        get => (SelectedLocal?.Feather ?? .25) * 100;
-        set => SetLocalGeometry(value, LocalHandle.Feather);
+        get => IsRadialLocal ? SelectedLocal!.Rx * 200 : (SelectedLocal?.Feather ?? .25) * 100;
+        set => SetLocalGeometry(value, IsRadialLocal ? LocalHandle.AxisXPositive : LocalHandle.Feather);
+    }
+    public double LocalHeight
+    {
+        get => (SelectedLocal?.Ry ?? .25) * 200;
+        set => SetLocalGeometry(value, LocalHandle.AxisYPositive);
+    }
+    public double LocalFeather
+    {
+        get => (SelectedLocal?.Feather ?? .5) * 100;
+        set => SetLocalGeometry(value, LocalHandle.FeatherRing);
     }
 
     private void SetLocalGeometry(double value, LocalHandle handle, bool horizontal = false)
@@ -44,6 +58,9 @@ public partial class MainWindowViewModel
                 break;
             case LocalHandle.Direction: local.Angle = (value % 360 + 360) % 360; break;
             case LocalHandle.Feather: local.Feather = Math.Clamp(value, .1, 200) / 100; break;
+            case LocalHandle.AxisXPositive: local.Rx = Math.Clamp(value, .2, 200) / 200; break;
+            case LocalHandle.AxisYPositive: local.Ry = Math.Clamp(value, .2, 200) / 200; break;
+            case LocalHandle.FeatherRing: local.Feather = Math.Clamp(value, 0, 100) / 100; break;
         }
         if (before == local) return;
         NotifyLocalsState();
