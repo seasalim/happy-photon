@@ -147,7 +147,7 @@ function Test-Discovery([string[]] $projects, $entries) {
             if (-not (Test-Path -LiteralPath $binary)) {
                 throw "Prebuilt test executable is missing: $binary. Run dotnet build HappyPhoton.sln --configuration $Configuration first."
             }
-            $output = & dotnet $binary -list full/json 2>&1
+            $output = & dotnet $binary -list full/json -noColor 2>&1
             if ($LASTEXITCODE -ne 0) {
                 throw "In-process test listing failed for ${project}: $($output -join "`n")"
             }

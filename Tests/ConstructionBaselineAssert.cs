@@ -1,12 +1,10 @@
-using System.Runtime.CompilerServices;
 using Xunit;
 
 namespace HappyPhoton.Tests;
 
 internal static class ConstructionBaselineAssert
 {
-    internal static string Root => Path.GetDirectoryName(Path.GetDirectoryName(Source()))!;
-    private static string Source([CallerFilePath] string path = "") => path;
+    internal static string Root => GoldenTestPaths.RepositoryRoot;
     internal static void Match(string name, IEnumerable<string> observations)
     {
         var actual = string.Join("\n", observations) + "\n";
