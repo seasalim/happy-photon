@@ -83,7 +83,7 @@ public sealed class LocalsLinearParitySentinelTests(ITestOutputHelper output)
     private void Check(string name, string expected, string actual)
     {
         output.WriteLine($"SENTINEL {name} {actual}");
-        Assert.Equal(expected, actual);
+        Assert.Equal(PlatformRenderGoldens.Expected("linear", name, expected), actual);
     }
 
     private static EditSettings Settings() => new()

@@ -49,7 +49,7 @@ public sealed class RenderSequenceGoldenTests(ITestOutputHelper output)
         output.WriteLine($"GOLDEN {key} {hash}");
         Assert.Equal(400u, reference.Image.Width);
         Assert.Equal(300u, reference.Image.Height);
-        Assert.Equal(Goldens[key], hash);
+        Assert.Equal(PlatformRenderGoldens.Expected("sequence", key, Goldens[key]), hash);
         foreach (var cap in new[] { 1, 2, Environment.ProcessorCount })
         {
             var stages = new List<string>();

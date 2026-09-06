@@ -427,6 +427,14 @@ interactive/resting pixels and JSON/hash at 1191d2d. Radial headless tests sampl
 the rendered brush against an independent spatial oracle in both polarities at
 feather 0/.5/1, with <=.02 spatial error, <=.002 stop error, and zero base reads.
 
+`PlatformRenderGoldens` preserves exact per-platform pixel hashes for the
+render-sequence and linear parity sentinels. Linux x64 and macOS ARM64 hashes
+were measured at their original frozen commits (73d631c and 1191d2d), then
+compared with ac89bc6 in [historical CI run 34060709129](https://github.com/seasalim/happy-photon/actions/runs/34060709129).
+All 16 cases per Unix platform matched their historical reference exactly;
+the Windows expectations remain unchanged. These native-library-dependent
+hashes assert same-platform regression, not cross-platform byte equality.
+
 
 Local color qualification (run 246) adds `QualifiedColorG1G7`, `G2`, `G4b`, `G5`,
 `G8Export`, `G9`, and `G9Eight` in `LocalsFusedBaselineTests`. Run each separately
