@@ -28,7 +28,6 @@ jobs:
       source-revision: ${{ steps.metadata.outputs.source-revision }}
       build-timestamp: ${{ steps.metadata.outputs.build-timestamp }}
       is-tag: ${{ steps.metadata.outputs.is-tag }}
-      is-final: ${{ steps.metadata.outputs.is-final }}
       is-prerelease: ${{ steps.metadata.outputs.is-prerelease }}
     steps:
       - name: Check out source
@@ -57,10 +56,6 @@ jobs:
           if [[ "$version" == *-* ]]; then
             is_prerelease=true
           fi
-          is_final=false
-          if [[ "$is_tag" == "true" && "$is_prerelease" == "false" ]]; then
-            is_final=true
-          fi
           if [[ "$is_tag" == "true" && "${MACOS_SIGNING_ENABLED,,}" != "true" ]]; then
             echo "::error::Set MACOS_SIGNING_ENABLED=true before pushing a release tag."
             exit 1
@@ -72,7 +67,6 @@ jobs:
           echo "source-revision=$source_revision" >> "$GITHUB_OUTPUT"
           echo "build-timestamp=$build_timestamp" >> "$GITHUB_OUTPUT"
           echo "is-tag=$is_tag" >> "$GITHUB_OUTPUT"
-          echo "is-final=$is_final" >> "$GITHUB_OUTPUT"
           echo "is-prerelease=$is_prerelease" >> "$GITHUB_OUTPUT"
 
   windows:
@@ -119,7 +113,6 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Publish
-        if: needs.prepare.outputs.is-final != 'true'
         shell: pwsh
         run: |
           dotnet publish HappyPhoton.csproj `
@@ -132,7 +125,6 @@ jobs:
             --output artifacts/release/win-x64 `
             -p:ContinuousIntegrationBuild=true
       - name: Write dependency manifest
-        if: needs.prepare.outputs.is-final != 'true'
         shell: pwsh
         run: |
           ./scripts/write-dependency-manifest.ps1 `
@@ -140,7 +132,6 @@ jobs:
             -Version ${{ needs.prepare.outputs.version }} `
             -RuntimeIdentifier win-x64
       - name: Create Windows ZIP
-        if: needs.prepare.outputs.is-final != 'true'
         shell: pwsh
         run: |
           $artifact = "artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-win-x64.zip"
@@ -150,7 +141,6 @@ jobs:
             -CompressionLevel Optimal
 
       - name: Upload Windows package
-        if: needs.prepare.outputs.is-final != 'true'
         uses: actions/upload-artifact@v7
         with:
           name: package-win-x64

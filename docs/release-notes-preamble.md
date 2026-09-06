@@ -7,7 +7,9 @@ cameras important to your work.
 - **Windows:** install
   [Happy Photon from the Microsoft Store](https://apps.microsoft.com/detail/9N45WWF08BP8).
   The Store build is Microsoft-signed and receives updates through the Store;
-  Windows ZIPs are not distributed on GitHub.
+  alternatively, download the `win-x64` ZIP below, extract the complete archive,
+  and run `HappyPhoton.exe`. The ZIP is unsigned and requires manual updates;
+  Windows may warn about it or block it under system policy.
 - **Linux:** download the x86_64 AppImage, make it executable, and run it, or
   download the `linux-x64` archive, extract it, and run `HappyPhoton`. The
   AppImage's pinned type-2 runtime is statically linked, so no `libfuse2`
@@ -20,7 +22,7 @@ cameras important to your work.
   Tagged Mac artifacts are Developer ID signed and notarized.
 
 Checksums remain available in `SHA256SUMS.txt` for people who want to verify a
-download manually. The Linux and macOS archives contain the GPL license,
+download manually. All platform archives contain the GPL license,
 trademark policy, dependency inventory, and third-party notices.
 
 ## Known limitations

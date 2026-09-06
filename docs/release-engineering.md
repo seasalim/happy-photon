@@ -7,10 +7,11 @@ Happy Photon has two coordinated release paths:
   version also produces an unsigned Microsoft Store MSIX as a separate private
   workflow artifact. Manual runs never create a GitHub Release.
 - A pushed `v*` tag builds platform-native artifacts and creates a draft
-  GitHub Release for macOS and Linux. Tagged Mac builds must be Developer ID
+  GitHub Release for Windows, macOS, and Linux. Tagged Mac builds must be Developer ID
   signed and notarized. For a final tag, Windows is distributed through the
-  Microsoft Store: the workflow retains the unsigned MSIX privately for manual
-  Partner Center upload and does not publish a Windows ZIP on GitHub.
+  Microsoft Store by default: the workflow retains the unsigned MSIX privately
+  for manual Partner Center upload and publishes an unsigned Windows x64 ZIP
+  on GitHub as a direct-download fallback with manual updates.
 
 Every release artifact includes `LICENSE`, `TRADEMARKS.md`,
 `THIRD_PARTY_NOTICES.md`, the `licenses/` bundle, and a generated
@@ -18,6 +19,13 @@ Every release artifact includes `LICENSE`, `TRADEMARKS.md`,
 public GitHub assets. When the repository is public, it also creates GitHub
 build-provenance attestations for those assets. Partner Center is the source
 of the Microsoft-signed Windows package.
+
+The Windows ZIP uses the same source revision and version as the Store MSIX.
+It is self-contained: extract the complete archive and run `HappyPhoton.exe`.
+It does not inherit Microsoft's Store signature and may trigger Windows trust
+warnings or be blocked by system policy. Keep the Store as the recommended
+website download and link to GitHub Releases for the fallback. Older releases
+may not include a Windows ZIP.
 
 macOS packaging keeps Mach-O files under `Contents/MacOS` and relocates every
 other publish-output file to `Contents/Resources`, preserving relative paths.
@@ -143,6 +151,8 @@ package committed or integrated.
 6. Review the draft GitHub assets on clean machines, including checksums,
    Gatekeeper behavior, launch, import (including a RAW file, which proves
    the packaged native LibRaw runtime loads and decodes), edit, and export.
+   Include the extracted Windows ZIP and its normal download trust behavior;
+   Store MSIX validation alone does not qualify the ZIP.
 7. Download the private MSIX from the tagged workflow run and upload that exact
    file manually to the Happy Photon submission in Partner Center. Complete
    the `runFullTrust` restricted-capability justification there.
