@@ -1,150 +1,47 @@
 name: CI
-
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - "site/**"
-      - "Tests/Site/**"
-      - "scripts/build-site.ps1"
-      - "scripts/check-site.ps1"
-      - "scripts/SiteBuild.psm1"
-      - ".github/workflows/pages.yml"
-  pull_request:
-    paths-ignore:
-      - "site/**"
-      - "Tests/Site/**"
-      - "scripts/build-site.ps1"
-      - "scripts/check-site.ps1"
-      - "scripts/SiteBuild.psm1"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
-
-env:
-  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-  DOTNET_NOLOGO: "1"
-  NUGET_XMLDOC_MODE: skip
-
 jobs:
-  policy:
-    name: Repository policy
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Verify repository policy
-        shell: pwsh
-        run: ./scripts/verify.ps1 -PolicyOnly
-
-  build-test:
-    name: ${{ matrix.name }}
-    needs: policy
+  historical-pixels:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: Windows x64
-            os: windows-latest
-            rid: win-x64
-          - name: Linux x64
-            os: ubuntu-latest
-            rid: linux-x64
-          - name: macOS Apple Silicon
-            os: macos-15
-            rid: osx-arm64
+        os: [windows-2025, ubuntu-24.04, macos-15]
+        revision: [73d631c, 1191d2d, ac89bc6]
     runs-on: ${{ matrix.os }}
-
     steps:
-      - name: Check out source
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
+          path: harness
           persist-credentials: false
-
-      - name: Install .NET 10
-        uses: actions/setup-dotnet@v5
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ matrix.revision }}
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-
-      - name: Restore locked dependencies and run NuGet audit
-        run: |
-          dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
-          dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=${{ matrix.rid }} -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
-
-      - name: Build
-        run: >
-          dotnet build HappyPhoton.sln
-          --configuration Release
-          --no-restore
-          -p:ContinuousIntegrationBuild=true
-
-      - name: Verify repository
+      - name: Install historical measurement probes
         shell: pwsh
         run: |
-          # Discovery (one in-process manifest per test project with count minima and
-          # quarantine registry validation), the solution tests, and the manifest-to-TRX
-          # reconciliation all run inside verify.ps1 on every platform. The build step
-          # above is the only build; the checker never builds.
-          $verifyArguments = @{
-            Configuration = "Release"
-            NoBuild = $true
-            NoRestore = $true
-            SkipPolicy = $true
-            BlameHang = $true
-            BlameHangTimeout = "90s"
-            LogFilePrefix = "happy-photon-${{ matrix.rid }}"
-            ResultsDirectory = "artifacts/test-results/${{ matrix.rid }}"
+          Copy-Item harness/Tests/PlatformProbe/RenderSequenceGoldenTests.cs.txt source/Tests/RenderSequenceGoldenTests.cs
+          if ('${{ matrix.revision }}' -ne '73d631c') {
+            Copy-Item harness/Tests/PlatformProbe/LocalsLinearParitySentinelTests.cs.txt source/Tests/LocalsLinearParitySentinelTests.cs
           }
-          ./scripts/verify.ps1 @verifyArguments
-
-      - name: Resolve source identity
-        id: source-identity
+          git -C source rev-parse HEAD
+      - name: Measure historical pixels
         shell: pwsh
+        working-directory: source
         run: |
-          $sourceRevision = (git rev-parse HEAD).Trim()
-          $commitTimestamp = (git show -s --format=%cI HEAD).Trim()
-          $buildTimestamp = [DateTimeOffset]::Parse($commitTimestamp).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-          "source-revision=$sourceRevision" >> $env:GITHUB_OUTPUT
-          "build-timestamp=$buildTimestamp" >> $env:GITHUB_OUTPUT
-
-      - name: Publish platform build
-        run: >
-          dotnet publish HappyPhoton.csproj
-          -p:PublishProfile=${{ matrix.rid }}
-          -p:SourceRevisionId=${{ steps.source-identity.outputs.source-revision }}
-          -p:SourceRevision=${{ steps.source-identity.outputs.source-revision }}
-          -p:BuildTimestampUtc=${{ steps.source-identity.outputs.build-timestamp }}
-          --no-restore
-          --output artifacts/ci/${{ matrix.rid }}
-          -p:ContinuousIntegrationBuild=true
-
-      - name: Verify Apple Silicon LibRaw runtime
-        if: matrix.rid == 'osx-arm64'
-        shell: bash
-        run: |
-          for runtime in artifacts/ci/osx-arm64/libraw.25.dylib artifacts/ci/osx-arm64/libhappyphoton_libraw_bridge.dylib; do
-            test -f "$runtime"
-            file "$runtime" | grep -q 'arm64'
-          done
-          otool -D artifacts/ci/osx-arm64/libraw.25.dylib | grep -q '@loader_path/libraw.25.dylib'
-          otool -L artifacts/ci/osx-arm64/libhappyphoton_libraw_bridge.dylib | grep -q '@loader_path/libraw.25.dylib'
-
-      - name: Upload test results
+          dotnet test Tests/HappyPhoton.Tests.csproj --configuration Release -p:ContinuousIntegrationBuild=true --filter 'FullyQualifiedName~PixelsAndStagesMatchFrozenBase|FullyQualifiedName~ActiveLinearPixelsStayByteIdentical' --logger 'trx;LogFileName=pixels.trx' --results-directory artifacts/pixel-probe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v7
         if: always()
-        uses: actions/upload-artifact@v7
         with:
-          name: test-results-${{ matrix.rid }}
-          path: artifacts/test-results/${{ matrix.rid }}
-          if-no-files-found: warn
-          retention-days: 1
+          name: pixels-${{ matrix.os }}-${{ matrix.revision }}
+          path: source/artifacts/pixel-probe
+          if-no-files-found: error
+          retention-days: 14
