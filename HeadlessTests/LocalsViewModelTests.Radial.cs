@@ -43,7 +43,7 @@ public sealed partial class LocalsViewModelTests
     }
 
     [AvaloniaFact]
-    public async Task PlacementCaptionFollowsStickyCreationType()
+    public async Task InlinePlacementPreservesStickyCreationType()
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog);
@@ -54,18 +54,18 @@ public sealed partial class LocalsViewModelTests
         using var scope = new TestUiScope(window);
         var place = section.GetVisualDescendants().OfType<Button>()
             .Single(b => b.Command == vm.PlaceLocalAtCenterCommand);
-        Assert.Equal("Place Linear at center", place.Content);
+        Assert.False(place.IsEffectivelyVisible);
         foreach (var radial in new[] { true, false })
         {
             if (radial) vm.AddRadialCommand.Execute(null);
             else vm.AddLinearCommand.Execute(null);
-            var caption = radial ? "Place Radial at center" : "Place Linear at center";
-            Assert.Equal(caption, place.Content);
+            Assert.Equal("Place at center", place.Content);
+            Assert.True(place.IsEffectivelyVisible);
             vm.EscapeLocals();
-            Assert.Equal(caption, place.Content);
+            Assert.False(place.IsEffectivelyVisible);
             await vm.PlaceLocalAtCenterCommand.ExecuteAsync(null);
             Assert.Equal(radial ? "radial" : "linear", vm.SelectedLocal!.Type);
-            Assert.Equal(caption, place.Content);
+            Assert.False(place.IsEffectivelyVisible);
         }
     }
 

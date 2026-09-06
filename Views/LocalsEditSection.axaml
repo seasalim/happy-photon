@@ -31,118 +31,130 @@
         </Style>
     </UserControl.Styles>
     <StackPanel Spacing="8" Margin="0,0,0,12">
-        <ListBox x:Name="LocalList" ItemsSource="{Binding LocalRows}" SelectedItem="{Binding SelectedLocalRow}"
-                 IsEnabled="{Binding CanEditLocals}" MaxHeight="120" AutomationProperties.Name="Local adjustments">
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="vm:LocalRowViewModel">
-                    <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="24">
-                        <CheckBox IsChecked="{Binding Enabled, Mode=OneWay}" Padding="0" Margin="0,0,5,0"
-                                  AutomationProperties.Name="Enable local"
-                                  Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).ToggleLocalEnabledCommand}"
-                                  CommandParameter="{Binding Local}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                <TextBlock Text="{Binding Glyph}" FontSize="11"/>
-                                <TextBlock Text="{Binding Name}" FontSize="11"/>
-                            </StackPanel>
-                            <TextBlock Text="Disabled" IsVisible="{Binding !Enabled}" FontSize="9"
-                                       Foreground="{DynamicResource TextMuted}"/>
-                        </StackPanel>
-                        <Button Grid.Column="2" Content="×" Padding="5,2" AutomationProperties.Name="Delete local"
-                                Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).DeleteLocalCommand}"
-                                CommandParameter="{Binding Local}"/>
-                    </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        <views:CompactSlider Label="Exposure" Value="{Binding LocalExposure}" Minimum="-4" Maximum="4"
-                             SmallChange="0.1" StringFormat="{}{0:+0.00;-0.00;0.00}"
-                             EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
-        <StackPanel Spacing="8" IsEnabled="{Binding CanEditLocalColor}">
-            <views:CompactSlider Label="Temperature" Value="{Binding LocalTemperature}" Minimum="-50" Maximum="50"
-                                 SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True" ShowValueFill="False">
-                <views:CompactSlider.TrackBrush>
-                    <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
-                        <GradientStop Color="{StaticResource WhiteBalanceCoolColor}" Offset="0"/>
-                        <GradientStop Color="{StaticResource WhiteBalanceNeutralColor}" Offset="0.5"/>
-                        <GradientStop Color="{StaticResource WhiteBalanceWarmColor}" Offset="1"/>
-                    </LinearGradientBrush>
-                </views:CompactSlider.TrackBrush>
-            </views:CompactSlider>
-            <views:CompactSlider Label="Tint" Value="{Binding LocalTint}" Minimum="-50" Maximum="50"
-                                 SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True" ShowValueFill="False">
-                <views:CompactSlider.TrackBrush>
-                    <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
-                        <GradientStop Color="{StaticResource WhiteBalanceTintGreenColor}" Offset="0"/>
-                        <GradientStop Color="{StaticResource WhiteBalanceTintNeutralColor}" Offset="0.5"/>
-                        <GradientStop Color="{StaticResource WhiteBalanceTintMagentaColor}" Offset="1"/>
-                    </LinearGradientBrush>
-                </views:CompactSlider.TrackBrush>
-            </views:CompactSlider>
-            <views:CompactSlider Label="Saturation" Value="{Binding LocalSaturation}" Minimum="-100" Maximum="100"
-                                 SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
+        <StackPanel x:Name="LocalCreationRow" Orientation="Horizontal" Spacing="5" IsEnabled="{Binding CanAddLocal}">
+            <Button x:Name="AddLinearButton" Content="+ Linear" Command="{Binding AddLinearCommand}" Padding="8,4" FontSize="10"/>
+            <Button x:Name="AddRadialButton" Content="+ Radial" Command="{Binding AddRadialCommand}" Padding="8,4" FontSize="10"/>
         </StackPanel>
-        <TextBlock Text="Monochrome RAW — color controls unavailable" IsVisible="{Binding IsMonochromeSource}"
-                   TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-        <Button Content="Reset adjustments" Command="{Binding ResetLocalAdjustmentsCommand}"
-                IsEnabled="{Binding HasSelectedLocal}" Padding="8,4" FontSize="10"/>
-        <Grid ColumnDefinitions="*,*" IsVisible="{Binding IsRadialLocal}" IsEnabled="{Binding CanEditLocalGeometry}">
-            <ToggleButton Classes="mask" Content="Inside" IsChecked="{Binding IsLocalInside, Mode=OneWay}"
-                          Command="{Binding SetLocalPolarityCommand}" CommandParameter="inside" HorizontalAlignment="Stretch"
-                          HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
-            <ToggleButton Classes="mask" Grid.Column="1" Content="Outside" IsChecked="{Binding IsLocalOutside, Mode=OneWay}"
-                          Command="{Binding SetLocalPolarityCommand}" CommandParameter="outside" HorizontalAlignment="Stretch"
-                          HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
-        </Grid>
-        <ToggleButton x:Name="LocalGeometryDisclosure" Classes="geometry-disclosure"
-                      IsChecked="{Binding IsLocalGeometryExpanded}" AutomationProperties.Name="Geometry"
-                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="0"
-                      Background="Transparent" BorderThickness="0" MinHeight="20">
-            <ToggleButton.Template>
-                <ControlTemplate>
-                    <ContentPresenter Content="{TemplateBinding Content}"
-                                      Background="{TemplateBinding Background}"
-                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                      VerticalContentAlignment="Center"/>
-                </ControlTemplate>
-            </ToggleButton.Template>
-            <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBlock Text="Geometry" Classes="section-label" FontSize="10"/>
-                <Path Width="6" Height="6" VerticalAlignment="Center"
-                      Stroke="{DynamicResource TextMuted}" StrokeThickness="1"/>
+        <StackPanel x:Name="LocalDetailsArea" MinHeight="40" Spacing="8">
+            <StackPanel x:Name="LocalEditor" Spacing="8" IsVisible="{Binding HasLocals}">
+                <ListBox x:Name="LocalList" ItemsSource="{Binding LocalRows}" SelectedItem="{Binding SelectedLocalRow}"
+                         IsEnabled="{Binding CanEditLocals}" MaxHeight="120" AutomationProperties.Name="Local adjustments">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LocalRowViewModel">
+                            <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="24">
+                                <CheckBox IsChecked="{Binding Enabled, Mode=OneWay}" Padding="0" Margin="0,0,5,0"
+                                          AutomationProperties.Name="Enable local"
+                                          Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).ToggleLocalEnabledCommand}"
+                                          CommandParameter="{Binding Local}"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <TextBlock Text="{Binding Glyph}" FontSize="11"/>
+                                        <TextBlock Text="{Binding Name}" FontSize="11"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Disabled" IsVisible="{Binding !Enabled}" FontSize="9"
+                                               Foreground="{DynamicResource TextMuted}"/>
+                                </StackPanel>
+                                <Button Grid.Column="2" Content="×" Padding="5,2" AutomationProperties.Name="Delete local"
+                                        Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).DeleteLocalCommand}"
+                                        CommandParameter="{Binding Local}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <views:CompactSlider Label="Exposure" Value="{Binding LocalExposure}" Minimum="-4" Maximum="4"
+                                     SmallChange="0.1" StringFormat="{}{0:+0.00;-0.00;0.00}"
+                                     EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
+                <StackPanel Spacing="8" IsEnabled="{Binding CanEditLocalColor}">
+                    <views:CompactSlider Label="Temperature" Value="{Binding LocalTemperature}" Minimum="-50" Maximum="50"
+                                         SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True" ShowValueFill="False">
+                        <views:CompactSlider.TrackBrush>
+                            <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                <GradientStop Color="{StaticResource WhiteBalanceCoolColor}" Offset="0"/>
+                                <GradientStop Color="{StaticResource WhiteBalanceNeutralColor}" Offset="0.5"/>
+                                <GradientStop Color="{StaticResource WhiteBalanceWarmColor}" Offset="1"/>
+                            </LinearGradientBrush>
+                        </views:CompactSlider.TrackBrush>
+                    </views:CompactSlider>
+                    <views:CompactSlider Label="Tint" Value="{Binding LocalTint}" Minimum="-50" Maximum="50"
+                                         SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True" ShowValueFill="False">
+                        <views:CompactSlider.TrackBrush>
+                            <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                <GradientStop Color="{StaticResource WhiteBalanceTintGreenColor}" Offset="0"/>
+                                <GradientStop Color="{StaticResource WhiteBalanceTintNeutralColor}" Offset="0.5"/>
+                                <GradientStop Color="{StaticResource WhiteBalanceTintMagentaColor}" Offset="1"/>
+                            </LinearGradientBrush>
+                        </views:CompactSlider.TrackBrush>
+                    </views:CompactSlider>
+                    <views:CompactSlider Label="Saturation" Value="{Binding LocalSaturation}" Minimum="-100" Maximum="100"
+                                         SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
+                </StackPanel>
+                <TextBlock Text="Monochrome RAW — color controls unavailable" IsVisible="{Binding IsMonochromeSource}"
+                           TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                    <Button Content="Reset adjustments" Command="{Binding ResetLocalAdjustmentsCommand}"
+                            IsEnabled="{Binding HasSelectedLocal}" Padding="8,4" FontSize="10"/>
+                    <Button x:Name="CenterLocalInViewButton" Content="Center in view"
+                            IsEnabled="{Binding CanEditLocalGeometry}" Command="{Binding CenterLocalInViewCommand}" Padding="8,4" FontSize="10"/>
+                </StackPanel>
+                <Grid ColumnDefinitions="*,*" IsVisible="{Binding IsRadialLocal}" IsEnabled="{Binding CanEditLocalGeometry}">
+                    <ToggleButton Classes="mask" Content="Inside" IsChecked="{Binding IsLocalInside, Mode=OneWay}"
+                                  Command="{Binding SetLocalPolarityCommand}" CommandParameter="inside" HorizontalAlignment="Stretch"
+                                  HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
+                    <ToggleButton Classes="mask" Grid.Column="1" Content="Outside" IsChecked="{Binding IsLocalOutside, Mode=OneWay}"
+                                  Command="{Binding SetLocalPolarityCommand}" CommandParameter="outside" HorizontalAlignment="Stretch"
+                                  HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
+                </Grid>
+                <ToggleButton x:Name="LocalGeometryDisclosure" Classes="geometry-disclosure"
+                              IsChecked="{Binding IsLocalGeometryExpanded}" AutomationProperties.Name="Geometry"
+                              HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="0"
+                              Background="Transparent" BorderThickness="0" MinHeight="20">
+                    <ToggleButton.Template>
+                        <ControlTemplate>
+                            <ContentPresenter Content="{TemplateBinding Content}"
+                                              Background="{TemplateBinding Background}"
+                                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalContentAlignment="Center"/>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="Geometry" Classes="section-label" FontSize="10"/>
+                        <Path Width="6" Height="6" VerticalAlignment="Center"
+                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1"/>
+                    </StackPanel>
+                </ToggleButton>
+                <StackPanel IsVisible="{Binding IsLocalGeometryExpanded}" IsEnabled="{Binding CanEditLocalGeometry}">
+                    <views:CompactSlider x:Name="LocalXSlider" Classes="local-geometry" Label="X"
+                                         Value="{Binding LocalX}" Minimum="-100" Maximum="200" SmallChange="0.1"
+                                         StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local X"/>
+                    <views:CompactSlider x:Name="LocalYSlider" Classes="local-geometry" Label="Y"
+                                         Value="{Binding LocalY}" Minimum="-100" Maximum="200" SmallChange="0.1"
+                                         StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local Y"/>
+                    <views:CompactSlider x:Name="LocalAngleSlider" Classes="local-geometry" Label="Angle"
+                                         Value="{Binding LocalAngle}" Minimum="0" Maximum="360" SmallChange="1"
+                                         WrapValue="True" StringFormat="{}{0:0}°" AutomationProperties.Name="Local angle"/>
+                    <views:CompactSlider x:Name="LocalWidthSlider" Classes="local-geometry" Label="Width"
+                                         Value="{Binding LocalWidth}" Minimum="{Binding LocalWidthMinimum}" Maximum="200" SmallChange="0.1"
+                                         StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local width"/>
+                    <views:CompactSlider x:Name="LocalHeightSlider" Classes="local-geometry" Label="Height" IsVisible="{Binding IsRadialLocal}"
+                                         Value="{Binding LocalHeight}" Minimum="0.2" Maximum="200" SmallChange="0.1"
+                                         StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local height"/>
+                    <views:CompactSlider x:Name="LocalFeatherSlider" Classes="local-geometry" Label="Feather" IsVisible="{Binding IsRadialLocal}"
+                                         Value="{Binding LocalFeather}" Minimum="0" Maximum="100" SmallChange="1"
+                                         StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local feather"/>
+                </StackPanel>
             </StackPanel>
-        </ToggleButton>
-        <StackPanel IsVisible="{Binding IsLocalGeometryExpanded}" IsEnabled="{Binding CanEditLocalGeometry}">
-            <views:CompactSlider x:Name="LocalXSlider" Classes="local-geometry" Label="X"
-                                 Value="{Binding LocalX}" Minimum="-100" Maximum="200" SmallChange="0.1"
-                                 StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local X"/>
-            <views:CompactSlider x:Name="LocalYSlider" Classes="local-geometry" Label="Y"
-                                 Value="{Binding LocalY}" Minimum="-100" Maximum="200" SmallChange="0.1"
-                                 StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local Y"/>
-            <views:CompactSlider x:Name="LocalAngleSlider" Classes="local-geometry" Label="Angle"
-                                 Value="{Binding LocalAngle}" Minimum="0" Maximum="360" SmallChange="1"
-                                 WrapValue="True" StringFormat="{}{0:0}°" AutomationProperties.Name="Local angle"/>
-            <views:CompactSlider x:Name="LocalWidthSlider" Classes="local-geometry" Label="Width"
-                                 Value="{Binding LocalWidth}" Minimum="{Binding LocalWidthMinimum}" Maximum="200" SmallChange="0.1"
-                                 StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local width"/>
-            <views:CompactSlider x:Name="LocalHeightSlider" Classes="local-geometry" Label="Height" IsVisible="{Binding IsRadialLocal}"
-                                 Value="{Binding LocalHeight}" Minimum="0.2" Maximum="200" SmallChange="0.1"
-                                 StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local height"/>
-            <views:CompactSlider x:Name="LocalFeatherSlider" Classes="local-geometry" Label="Feather" IsVisible="{Binding IsRadialLocal}"
-                                 Value="{Binding LocalFeather}" Minimum="0" Maximum="100" SmallChange="1"
-                                 StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local feather"/>
-            <Button x:Name="CenterLocalInViewButton" Content="Center in view"
-                    Command="{Binding CenterLocalInViewCommand}" Padding="8,4" FontSize="10"/>
+            <TextBlock Text="{Binding LocalsInstruction}" IsVisible="{Binding !IsLocalCreationArmed}"
+                       TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+            <StackPanel Orientation="Horizontal" IsVisible="{Binding IsLocalCreationArmed}"
+                        AutomationProperties.Name="{Binding LocalsInstruction}">
+                <TextBlock Text="Drag to place, or " FontSize="9" VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextMuted}"/>
+                <Button x:Name="PlaceLocalAtCenterButton" Content="Place at center"
+                        Command="{Binding PlaceLocalAtCenterCommand}" Padding="3,2" FontSize="9"/>
+                <TextBlock Text=" · Escape cancels" FontSize="9" VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextMuted}"/>
+            </StackPanel>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" Spacing="5" IsEnabled="{Binding CanEditLocals}">
-            <Button Content="Add Linear" Command="{Binding AddLinearCommand}" Padding="8,4" FontSize="10"/>
-            <Button Content="Add Radial" Command="{Binding AddRadialCommand}" Padding="8,4" FontSize="10"/>
-        </StackPanel>
-        <StackPanel Orientation="Horizontal" IsEnabled="{Binding CanEditLocals}">
-            <Button Content="{Binding PlaceLocalAtCenterCaption}" Command="{Binding PlaceLocalAtCenterCommand}" Padding="8,4" FontSize="10"/>
-        </StackPanel>
-        <TextBlock Text="{Binding LocalsInstruction}" TextWrapping="Wrap" FontSize="10"
-                   Foreground="{DynamicResource TextMuted}"/>
         <Button Content="Return to local editing" Command="{Binding ResumeLocalEditingCommand}"
                 IsVisible="{Binding !CanEditLocals}" FontSize="10" Padding="5,3"/>
         <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0"/>

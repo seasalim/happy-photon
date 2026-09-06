@@ -104,6 +104,9 @@ public sealed partial class LocalsViewModelTests
         var disclosure = section.FindControl<Avalonia.Controls.Primitives.ToggleButton>("LocalGeometryDisclosure")!;
         Assert.False(vm.IsLocalGeometryExpanded);
         Assert.Equal("Geometry", Avalonia.Automation.AutomationProperties.GetName(disclosure));
+        Assert.False(disclosure.IsEffectivelyVisible);
+        Assert.False(section.FindControl<Button>("CenterLocalInViewButton")!.IsEffectivelyEnabled);
+        await vm.PlaceLocalAtCenterCommand.ExecuteAsync(null);
         Dispatcher.UIThread.RunJobs();
         window.GetVisualDescendants().OfType<ScrollViewer>()
             .Single(control => control.Name == "DevelopControlsScrollViewer").Offset = default;
@@ -114,8 +117,6 @@ public sealed partial class LocalsViewModelTests
             .Where(control => control.Name is "LocalXSlider" or "LocalYSlider" or "LocalAngleSlider"
                 or "LocalWidthSlider" or "CenterLocalInViewButton").ToArray();
         Assert.Equal(5, controls.Length);
-        Assert.All(controls, control => Assert.False(control.IsEffectivelyEnabled));
-        await vm.PlaceLocalAtCenterCommand.ExecuteAsync(null);
         foreach (var control in controls)
         {
             Assert.True(control.IsEffectivelyEnabled);

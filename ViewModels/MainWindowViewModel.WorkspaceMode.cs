@@ -93,6 +93,8 @@ public partial class MainWindowViewModel
         }
     }
 
+    public Func<bool>? IsEnterTextInputFocused { get; set; }
+
     [RelayCommand]
     private async Task HandleEnterAsync()
     {
@@ -100,6 +102,13 @@ public partial class MainWindowViewModel
         if (IsExportMode)
         {
             await RunExportAsync();
+            return;
+        }
+        if (IsDevelopMode && IsLocalCreationArmed)
+        {
+            if (IsEnterTextInputFocused?.Invoke() != true && CanAddLocal)
+                await PlaceLocalAtCenterCommand.ExecuteAsync(null);
+            // Armed creation owns Enter even at the cap; do not fall through to other actions.
             return;
         }
         if (IsCropMode)

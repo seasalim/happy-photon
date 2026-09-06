@@ -43,8 +43,13 @@ retaining committed locals.
 
 Locals is a tool mode beside Crop. Its toggle shows a dot for any stored local,
 including disabled and neutral ones. Entering selects the first local and reveals
-the docked section beneath the histogram; Close retains committed edits. The list
-scrolls after four rows and supports up to eight linear or radial masks, each with Exposure
+the docked section beneath the histogram; Close retains committed edits. A compact
+**+ Linear / + Radial** creation row leads directly above the list. At eight locals it
+is disabled and the instruction reads “8 of 8 locals — delete a local to add another”.
+An empty section hides the list and editor and places the creation instruction directly
+beneath the creation row in a compact placeholder of small stable height; the first
+local swaps in the editor and deleting the last local restores the placeholder; armed
+creation replaces the instruction with its inline action. The list scrolls after four rows and supports up to eight linear or radial masks, each with Exposure
 [-4, +4] EV, an enabled checkbox, explicit Disabled label, and Delete. Selection
 and Show Mask are session state. Presets and paste preserve destination locals;
 Develop Reset clears them with global adjustments, and Undo restores them.
@@ -75,7 +80,8 @@ consume photo navigation, and use the drag edit boundary. Geometry drags commit
 on release or capture loss; keyboard bursts debounce into one “Local geometry”
 history row. Canvas gestures retain their cancellation behavior below.
 
-Center in view preserves the selected local's other fields and commits one
+Center in view sits beside Reset adjustments, outside Geometry. It preserves the
+selected local's other fields and commits one
 “Center in view” operation. The navigator visible region's center maps through
 the overlay's LocalsFrame crop trace to pre-crop coordinates. A suppressed region
 (at least 99.5% visible) uses the displayed frame center; navigation clears stale
@@ -93,8 +99,8 @@ temporarily suppresses clipping presentation without changing the clipping latch
 Add Radial arms a center-to-corner drag: the projected horizontal/vertical distances
 set the semi-axes, with angle 0°, inward feather 50%, and Inside polarity. Either
 radius below .001 long-edge units creates nothing. Place at center uses the armed
-type (initially linear), named in the button caption and retained after Escape or
-creation; a radial starts at (.5, .5) with both radii .25. Radial
+type (initially linear), retained after Escape or creation; a radial starts at
+(.5, .5) with both radii .25. Radial
 knobs resize four axis ends without moving the center, rotate beyond the first
 axis with a hollow rotation knob, and adjust the inner feather ring; axis/rotation
 knobs and the selected center win over the ring, including at 100% feather. Its
@@ -102,6 +108,12 @@ Inside/Outside segment commits one “Local polarity” operation. Geometry Widt
 and Height show diameters in long-edge percent [.2, 200], with Feather [0, 100].
 Rows share creation ordinals across types and display a geometry glyph. The radial
 tint uses one transformed gradient brush with complementary alpha for Outside.
+
+While creation is armed, the instruction reads “Drag to place, or Place at center ·
+Escape cancels”, with Place at center as an inline button. Enter creates through the
+same command and consumes the key, including with button focus; text-input focus
+excludes creation. There is no standing centered-creation button. Creation retains
+“Add Linear” / “Add Radial” history labels.
 
 One completed geometry drag is one history step; Escape or capture loss restores
 its starting state. Escape then cancels armed creation, then closes Locals. Undo
@@ -124,8 +136,12 @@ Scrolling stack:
 Crop                   (only in Crop mode)
   [Horizon] [Lock aspect ratio] [Reset crop] [instruction]
 Locals                 (only in Locals mode)
-  [local list] [Exposure / Temperature / Tint / Saturation] [Reset adjustments]
-  [polarity] [Geometry disclosure] [Add Linear] [Add Radial] [Place at center]
+  [+ Linear] [+ Radial]
+  Empty: [stable-height instruction / armed creation placeholder]
+  With locals:
+  [local list] [Exposure / Temperature / Tint / Saturation]
+  [Reset adjustments] [Center in view]
+  [polarity (radial)] [Geometry disclosure] [instruction / armed creation] [divider]
 Camera Profile         (RAW only, collapsed child control)
   [profile ComboBox]
   [Browse…] [Refresh]                         status / loading

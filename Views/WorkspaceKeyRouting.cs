@@ -6,6 +6,10 @@ namespace HappyPhoton.Views;
 
 internal static class WorkspaceKeyRouting
 {
+    internal static bool IsEnterTextInputFocused(object? focusedElement) =>
+        focusedElement is Avalonia.Visual focused &&
+        (focused is TextBox || focused.GetVisualAncestors().Any(control => control is TextBox));
+
     internal static bool TryHandleSpace(
         MainWindowViewModel? viewModel,
         object? focusedElement)

@@ -130,6 +130,8 @@ public sealed class SliderAndFooterMetricTests
         };
         // Measure local Adjustments and expanded Geometry alongside the global controls.
         content.GetLogicalDescendants().OfType<LocalsEditSection>().Single().IsVisible = true;
+        // The editor hides while no local exists; the metric needs its sliders laid out.
+        content.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "LocalEditor").IsVisible = true;
         vm.IsLocalGeometryExpanded = true;
         foreach (var slider in content.GetLogicalDescendants().OfType<CompactSlider>()
                      .Where(slider => slider.Classes.Contains("local-geometry")))

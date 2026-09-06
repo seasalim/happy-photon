@@ -40,6 +40,7 @@ public partial class MainWindow
         if (_subscribedViewModel != null && !ReferenceEquals(DataContext, _subscribedViewModel))
         {
             SetExportWorkspaceSettingsSubscription(null);
+            _subscribedViewModel.IsEnterTextInputFocused = null;
             _subscribedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
             _subscribedViewModel = null;
         }
@@ -50,6 +51,8 @@ public partial class MainWindow
             return;
         }
 
+        vm.IsEnterTextInputFocused = () => WorkspaceKeyRouting.IsEnterTextInputFocused(
+            FocusManager?.GetFocusedElement());
         vm.ZoomFitCommand = new RelayCommand(ZoomFit);
         vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(vm.ApplyFitZoom);
         vm.CaptureDevelopViewport = () =>

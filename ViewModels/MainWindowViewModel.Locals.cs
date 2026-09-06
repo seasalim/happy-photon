@@ -11,7 +11,6 @@ public partial class MainWindowViewModel
     [ObservableProperty] private bool _showLocalMask;
     private string? _selectedLocalId;
     private string _localCreationType = "linear";
-    public string PlaceLocalAtCenterCaption => _localCreationType == "radial" ? "Place Radial at center" : "Place Linear at center";
     public System.Collections.ObjectModel.ObservableCollection<LocalRowViewModel> LocalRows { get; } = [];
     public LocalRowViewModel? SelectedLocalRow
     {
@@ -42,8 +41,8 @@ public partial class MainWindowViewModel
         (ShowLocalMask || IsLocalCreationArmed);
     public string LocalsInstruction => Locals.Count == 8
         ? "8 of 8 locals — delete a local to add another"
-        : IsLocalCreationArmed ? "Drag to place; Escape cancels"
-        : !HasLocals ? "Add Linear or Radial, then drag, or Place at center."
+        : IsLocalCreationArmed ? "Drag to place, or Place at center · Escape cancels"
+        : !HasLocals ? "Choose + Linear or + Radial to create a local."
         : SelectedLocal is { Enabled: false } ? "Disabled" : "";
     public LocalsFrame? LocalsFrame => SelectedImage is { } image && IsLocalsMode
         ? ImageService.Previews.GetLocalsFrame(image, CaptureLiveEditState()) : null;
@@ -119,7 +118,6 @@ public partial class MainWindowViewModel
     {
         DiscardLocalsGesture();
         _localCreationType = "linear";
-        OnPropertyChanged(nameof(PlaceLocalAtCenterCaption));
         IsLocalCreationArmed = true;
     }
 
@@ -128,7 +126,6 @@ public partial class MainWindowViewModel
     {
         DiscardLocalsGesture();
         _localCreationType = "radial";
-        OnPropertyChanged(nameof(PlaceLocalAtCenterCaption));
         IsLocalCreationArmed = true;
     }
 

@@ -14,6 +14,7 @@ namespace HappyPhoton.Tests;
 public sealed partial class LocalsShowcaseTests(ITestOutputHelper output)
 {
     [AvaloniaTheory]
+    [InlineData("develop-locals-armed", false, false, false)]
     [InlineData("develop-locals-empty", false, false, false)]
     [InlineData("develop-locals-linear-selected", true, false, false)]
     [InlineData("develop-locals-mask-overlay", true, true, false)]
@@ -49,6 +50,7 @@ public sealed partial class LocalsShowcaseTests(ITestOutputHelper output)
         vm.SelectedImage = image;
         await TestWaits.UntilAsync(() => vm.PreviewImage != null && vm.IsHistoryLoaded);
         await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
+        if (scene == "develop-locals-armed") vm.AddLinearCommand.Execute(null);
         vm.ShowLocalMask = mask;
         vm.IsLocalGeometryExpanded = scene.EndsWith("geometry");
         if (closed) vm.CloseLocalsCommand.Execute(null);
