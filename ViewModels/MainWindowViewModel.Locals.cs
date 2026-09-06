@@ -61,6 +61,40 @@ public partial class MainWindowViewModel
         }
     }
 
+    public bool CanEditLocalColor => CanEditLocals && HasSelectedLocal && IsColorEditingEnabled;
+    public double LocalTemperature
+    {
+        get => SelectedLocal?.Temperature ?? 0;
+        set => SetLocalColor(value, 50, local => local.Temperature, (local, v) => local.Temperature = v);
+    }
+    public double LocalTint
+    {
+        get => SelectedLocal?.Tint ?? 0;
+        set => SetLocalColor(value, 50, local => local.Tint, (local, v) => local.Tint = v);
+    }
+    public double LocalSaturation
+    {
+        get => SelectedLocal?.Saturation ?? 0;
+        set => SetLocalColor(value, 100, local => local.Saturation, (local, v) => local.Saturation = v);
+    }
+    private void SetLocalColor(double value, double limit, Func<LocalAdjustment, double> get,
+        Action<LocalAdjustment, double> set)
+    {
+        if (!CanEditLocalColor || SelectedLocal is not { } local || !double.IsFinite(value)) return;
+        value = Math.Clamp(value, -limit, limit);
+        if (get(local) == value) return;
+        set(local, value);
+        NotifyLocalsState();
+        OnEditValueChanged();
+    }
+
+    [RelayCommand]
+    private Task ResetLocalAdjustmentsAsync() => ChangeLocalAsync("Reset adjustments", () =>
+    {
+        if (SelectedLocal is { } local)
+            local.Exposure = local.Temperature = local.Tint = local.Saturation = 0;
+    });
+
     [RelayCommand]
     private async Task ToggleLocalsModeAsync()
     {
@@ -228,6 +262,7 @@ public partial class MainWindowViewModel
         }
         OnPropertyChanged(nameof(SelectedLocalRow));
         foreach (var property in new[] { nameof(Locals), nameof(HasLocals), nameof(SelectedLocal),
+            nameof(LocalTemperature), nameof(LocalTint), nameof(LocalSaturation), nameof(CanEditLocalColor),
             nameof(HasSelectedLocal), nameof(LocalExposure), nameof(CanAddLocal), nameof(CanEditLocals),
             nameof(IsLocalMaskVisible), nameof(LocalsInstruction), nameof(LocalsFrame),
             nameof(LocalX), nameof(LocalY), nameof(LocalAngle), nameof(LocalWidthMinimum), nameof(LocalWidth),

@@ -12,6 +12,8 @@ internal sealed partial class AgxCrossing
             AgxToneEngine.YPivot, _slope, _toePower);
         var shoulderScale = AgxToneEngine.TailScale(1 - AgxToneEngine.XPivot,
             1 - AgxToneEngine.YPivot, _slope, _shoulderPower);
+        var hasColor = _locals!.HasColor;
+        var inset = new Matrix3x3(AgxToneEngine.InsetMatrix);
         var masterIdentity = _parameters.Curve.IsIdentity();
         var redIdentity = masterIdentity && (_parameters.CurveRed?.IsIdentity() ?? true);
         var greenIdentity = masterIdentity && (_parameters.CurveGreen?.IsIdentity() ?? true);
@@ -22,7 +24,7 @@ internal sealed partial class AgxCrossing
             for (var pixel = count * worker / workers; pixel < end; pixel++)
             {
                 if ((pixel & 8191) == 0) execution?.ThrowIfCancellationRequested();
-                var gain = _locals!.Gain(pixel);
+                var gain = hasColor ? 1 : _locals!.Gain(pixel);
                 var offset = pixel * channels;
                 var r = values[offset + red] * Q16ToUnit;
                 var g = values[offset + green] * Q16ToUnit;
@@ -30,8 +32,20 @@ internal sealed partial class AgxCrossing
                 var ir = _input.Row0(r, g, b);
                 var ig = _input.Row1(r, g, b);
                 var ib = _input.Row2(r, g, b);
+                var adjusted = gain != 1;
+                if (hasColor)
+                {
+                    var cr = _localWhiteBalance.Row0(r, g, b);
+                    var cg = _localWhiteBalance.Row1(r, g, b);
+                    var cb = _localWhiteBalance.Row2(r, g, b);
+                    if (_locals!.ApplyColor(pixel, ref cr, ref cg, ref cb))
+                    {
+                        ir = inset.Row0(cr, cg, cb); ig = inset.Row1(cr, cg, cb); ib = inset.Row2(cr, cg, cb);
+                        adjusted = true;
+                    }
+                }
                 double tr, tg, tb;
-                if (gain == 1)
+                if (!adjusted)
                 {
                     tr = AgxToneLut.InterpolateUnchecked(_luts.Red, Clamp01(ir));
                     tg = AgxToneLut.InterpolateUnchecked(_luts.Green, Clamp01(ig));

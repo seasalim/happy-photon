@@ -128,7 +128,7 @@ public sealed class SliderAndFooterMetricTests
                 new ExportSettingsPane { DataContext = vm }
             }
         };
-        // Measure local Exposure and expanded Geometry alongside the global controls.
+        // Measure local Adjustments and expanded Geometry alongside the global controls.
         content.GetLogicalDescendants().OfType<LocalsEditSection>().Single().IsVisible = true;
         vm.IsLocalGeometryExpanded = true;
         foreach (var slider in content.GetLogicalDescendants().OfType<CompactSlider>()
@@ -142,7 +142,10 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(32, sliders.Length);
+            Assert.Equal(35, sliders.Length);
+            foreach (var name in new[] { "Temperature", "Tint", "Saturation" })
+                Assert.Contains(sliders, slider => slider.Label == name &&
+                    slider.GetLogicalAncestors().OfType<LocalsEditSection>().Any());
             Assert.Contains(sliders, slider => slider.Label == "Exposure" &&
                 slider.GetLogicalAncestors().OfType<LocalsEditSection>().Any());
             Assert.Contains(sliders, slider => slider.Label == "Luma NR");

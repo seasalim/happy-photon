@@ -81,7 +81,7 @@ public sealed partial class LocalsViewModelTests
         using var scope = TestUiScope.ForMainWindow(window, vm);
         var section = window.GetVisualDescendants().OfType<LocalsEditSection>().Single();
         var sliders = section.GetVisualDescendants().OfType<CompactSlider>().Where(s => s.IsVisible).ToArray();
-        Assert.Equal(5, sliders.Length);
+        Assert.Equal(8, sliders.Length);
         foreach (var slider in sliders)
         {
             slider.BringIntoView();
@@ -97,7 +97,7 @@ public sealed partial class LocalsViewModelTests
             clock.Advance(TimeSpan.FromMilliseconds(200));
             await vm.PendingPreviewDebounceTask!;
             Assert.Equal(count + 1, vm.HistoryEntries.Count);
-            if (slider.Label != "Exposure") Assert.Equal("Local geometry", vm.HistoryEntries[0].Label);
+            if (slider.Classes.Contains("local-geometry")) Assert.Equal("Local geometry", vm.HistoryEntries[0].Label);
             window.KeyPress(Key.Down, RawInputModifiers.Shift, PhysicalKey.None, null);
             Assert.Equal(old - 8 * slider.SmallChange, slider.Value, 10);
             clock.Advance(TimeSpan.FromMilliseconds(200));

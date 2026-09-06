@@ -428,6 +428,44 @@ the rendered brush against an independent spatial oracle in both polarities at
 feather 0/.5/1, with <=.02 spatial error, <=.002 stop error, and zero base reads.
 
 
+Local color qualification (run 246) adds `QualifiedColorG1G7`, `G2`, `G4b`, `G5`,
+`G8Export`, `G9`, and `G9Eight` in `LocalsFusedBaselineTests`. Run each separately
+in a fresh Release process, full CPU, five paired samples, on the Canon ISO-6400
+RAW and iPhone ISO-1000 HEIC. C1 is the 45% linear +2 EV control plus Temperature
++50, Tint -50, Saturation +100; C8 uses those values on the frozen R8 grid.
+G1 pairs an exposure-only control in the same process: frozen color stage ceilings
+are RAW 38.9 / HEIC 44.4 ms; control ceilings are 23.9 / 29.4 ms. C1/C8 ticks,
+including under the 3200px cap-2 resting render, must be <=150 ms. C8 export delta
+must be <=500 ms. Memory permits one preview Q16 RGB frame (W*H*6) and <=64 KB
+caller allocation, with no per-render mask field.
+G4b compares full-weight local WB (no local Exposure/Saturation) against global
+Custom WB at the identical relative white at the crossing/tone-stage output,
+<=1 Q16 code. Final-preview max code difference and the count of pixels with any
+channel differing by more than one code are reported, not asserted. The worst
+stage pixel diagnostic distinguishes analytic/LUT rounding from downstream
+NR/sharpen amplification. G5 uses C1 without Exposure and aligns preview/export at 1600: mean/p99
+DeltaE00 ceilings are RAW 4.0/20.5 and HEIC 1.8/23.5; off/local/global-W ordering
+is reported only. `LocalsContractPrototypeTests.ProductionColor*` compares the
+production kernels with the independent Reference oracle at <=1 Q16 code,
+including non-unit Fold, order, near-zero weight and standard negative channels.
+Neutral/monochrome tests and the unchanged linear sentinels pin exact bypass.
+`LocalsViewModelTests` covers release/reset undo and mono dormancy; the 1200x700
+Dark scenes `develop-locals-color` and `develop-locals-mono` supply review images.
+
+Local color qualification measurements (24 CPUs, five pairs, 2026-09-06):
+
+| Metric | RAW | HEIC |
+| --- | --- | --- |
+| C1 tick / stage delta, ms | 50.1 / 17.2 | 50.2 / 22.6 |
+| Paired control stage delta, ms | 20.1 (frozen 18.9) | 23.4 (frozen 24.4) |
+| C8 tick, ms | 55.7 (base R8 70.7) | 51.4 (base R8 60.2) |
+| C1 / C8 contended tick, ms | 114.3 / 123.1 | 121.2 / 129.4 |
+| C8 export delta, ms | 317.1 (base R8 245.3) | 169.7 (base R8 160.6) |
+| C1 mean / p99 DeltaE00 | 1.855 / 11.626 | 0.988 / 11.057 |
+| C1 caller allocation, bytes | 2064 | 1888 |
+| G4b crossing / final preview max Q16 codes | 1 / 167 | 1 / 3 |
+| G4b final-preview pixels over one code | 2192 | 742 |
+
 Opt-in `HAPPY_PHOTON_PERF=1` diagnostics remain outside normal CI. The tone
 gate is `AgxPerformanceGateTests`: one warm-up, median of five, a separate
 process per output target, and a required JSON report. It covers 1600px

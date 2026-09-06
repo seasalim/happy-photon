@@ -19,6 +19,7 @@ internal sealed partial class AgxCrossing
     private readonly double _shoulderPower;
 
     private readonly RenderLocals? _locals;
+    private readonly Matrix3x3 _localWhiteBalance;
 
     private readonly DcpHueSatMap? _hueSatMap;
 
@@ -55,6 +56,12 @@ internal sealed partial class AgxCrossing
             Fold = normalized.Fold;
         }
 
+        if (locals?.HasColor == true)
+        {
+            var wb = (double[,])(whiteBalanceMatrix ?? ChromaticAdaptation.Identity()).Clone();
+            for (var row = 0; row < 3; row++) for (var col = 0; col < 3; col++) wb[row, col] /= Fold;
+            _localWhiteBalance = new(wb);
+        }
         _luts = execution == null
             ? AgxToneLut.ComposeCached(_parameters, Fold)
             : AgxToneLut.ComposeCached(_parameters, Fold, execution.Value);
@@ -288,7 +295,7 @@ internal sealed partial class AgxCrossing
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double Clamp01(double value) => Math.Clamp(value, 0, 1);
 
-    private readonly record struct Matrix3x3(
+    internal readonly record struct Matrix3x3(
         double M00,
         double M01,
         double M02,

@@ -61,6 +61,18 @@
         <views:CompactSlider Label="Exposure" Value="{Binding LocalExposure}" Minimum="-4" Maximum="4"
                              SmallChange="0.1" StringFormat="{}{0:+0.00;-0.00;0.00}"
                              EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
+        <StackPanel IsEnabled="{Binding CanEditLocalColor}">
+            <views:CompactSlider Label="Temperature" Value="{Binding LocalTemperature}" Minimum="-50" Maximum="50"
+                                 SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
+            <views:CompactSlider Label="Tint" Value="{Binding LocalTint}" Minimum="-50" Maximum="50"
+                                 SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
+            <views:CompactSlider Label="Saturation" Value="{Binding LocalSaturation}" Minimum="-100" Maximum="100"
+                                 SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
+        </StackPanel>
+        <TextBlock Text="Monochrome RAW — color controls unavailable" IsVisible="{Binding IsMonochromeSource}"
+                   TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+        <Button Content="Reset adjustments" Command="{Binding ResetLocalAdjustmentsCommand}"
+                IsEnabled="{Binding HasSelectedLocal}" Padding="8,4" FontSize="10"/>
         <Grid ColumnDefinitions="*,*" IsVisible="{Binding IsRadialLocal}" IsEnabled="{Binding CanEditLocalGeometry}">
             <ToggleButton Classes="mask" Content="Inside" IsChecked="{Binding IsLocalInside, Mode=OneWay}"
                           Command="{Binding SetLocalPolarityCommand}" CommandParameter="inside" HorizontalAlignment="Stretch"

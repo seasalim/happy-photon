@@ -41,7 +41,15 @@ its independent capability gates. Scopes, the Develop action bar, viewer control
 and filmstrip stay live. Entering cancels white balance picking; the picker
 command (including W) is inert until Locals closes.
 
-The Geometry disclosure below local Exposure starts collapsed and retains its
+The Adjustments group contains Exposure plus relative Temperature/Tint [-50, +50]
+and Saturation [-100, +100]. Positive Temperature is warmer. Signed CompactSlider
+rows use zero neutral, double-click reset, keyboard stepping and the existing
+slider-release transaction. Reset adjustments clears these four values as one
+named undoable step, retaining geometry, polarity and enablement. On monochrome
+RAW the color rows remain visible but disabled with one shared explanation; stored
+values persist, and Exposure remains live.
+
+The Geometry disclosure below local Adjustments starts collapsed and retains its
 expanded state for the session. X/Y display cu/cv × 100 in corrected-frame percent
 [-100, 200]; Angle wraps in [0, 360) degrees clockwise; Width displays feather × 100
 in long-edge percent [0.1, 200]. These sliders are disabled without an editable
@@ -94,7 +102,7 @@ editing surfaces remain a non-goal, §10).
 
 ```
 Locals                 (only while the tool mode is open)
-  [local list] [Exposure] [Show Mask] [Close] [Add Linear] [Place at center]
+  [local list] [Exposure / Temperature / Tint / Saturation] [Reset adjustments] [Show Mask] [Close] [Add Linear] [Place at center]
 Camera Profile         (RAW only, collapsed child control)
   [profile ComboBox]
   [Browse…] [Refresh]                         status / loading

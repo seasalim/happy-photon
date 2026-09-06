@@ -23,13 +23,15 @@ public sealed partial class LocalsShowcaseTests(ITestOutputHelper output)
     [InlineData("develop-locals-radial-selected", true, false, false)]
     [InlineData("develop-locals-radial-outside", true, true, false)]
     [InlineData("develop-locals-radial-geometry", true, false, false)]
+    [InlineData("develop-locals-color", true, false, false)]
+    [InlineData("develop-locals-mono", true, false, false)]
     public async Task RenderScene(string scene, bool hasLocal, bool mask, bool closed)
     {
         using var fixture = new CatalogVmFixture("locals-shots");
         using var catalog = await fixture.CreateCatalogAsync();
         var path = GoldenTestPaths.Asset("srgb-reference.jpg");
         Assert.Equal(0, (int)File.GetAttributes(path) & (0x1000 | 0x40000 | 0x400000));
-        await using var vm = fixture.CreateViewModel(catalog, new StandardBaseLoader(), _ => Task.CompletedTask);
+        await using var vm = fixture.CreateViewModel(catalog, scene.EndsWith("mono") ? new LocalTestLoader(true, true) : new StandardBaseLoader(), _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
         var image = new ImageFile(path)
         {
@@ -38,6 +40,8 @@ public sealed partial class LocalsShowcaseTests(ITestOutputHelper output)
         if (scene.Contains("radial")) image.EditSettings.Locals = [new()
         { Type = "radial", Rx = .28, Ry = .18, Angle = 30, Feather = .5, Exposure = -1,
             Outside = scene.EndsWith("outside") }];
+        if (scene is "develop-locals-color" or "develop-locals-mono")
+        { image.EditSettings.Locals![0].Temperature = 30; image.EditSettings.Locals[0].Tint = -20; image.EditSettings.Locals[0].Saturation = 40; }
         image.CatalogId = await catalog.GetOrCreateImageAsync(path);
         await catalog.SaveEditSettingsAsync(image.CatalogId, image.EditSettings);
         vm.Browse.SetImages([image]);

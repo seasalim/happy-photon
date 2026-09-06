@@ -91,14 +91,23 @@ public sealed partial class LocalsFusedBaselineTests
         OptIn();
         using var full = Fixture.StartsWith("synthetic") ? Synthetic() : Load(true);
         using var preview = Fixture.StartsWith("synthetic") ? SyntheticPreview(full) : Load(false);
-        foreach (var feather in new[] { 0d, -1d, .25, .001 })
+        var kg = preview.Info.AsShotKelvin;
+        var tg = preview.Info.AsShotTint;
+        var ks = 1e6 / (1e6 / kg - 50);
+        var ts = tg - 50;
+        Print(0, $"G5 global-W K_g={kg:R} t_g={tg:R} K_s={ks:R} t_s={ts:R}");
+        foreach (var feather in new[] { 0d, -1d, .25, .001, -2d })
         {
             var settings = feather > 0 ? LocalSettings(preview, feather, .45) : new EditSettings { Exposure = feather < 0 ? 2 : 0 };
+            if (feather == -2)
+                settings = new EditSettings { Wb = new() { Mode = WbMode.Custom, Kelvin = ks, Tint = ts } };
             using var p = ProductionGeometry(preview, settings);
             using var e = ProductionGeometry(full, settings);
             WysiwygTests.AlignForComparison(e, p);
             var comparison = GoldenImageComparer.Compare(e, p, GoldenComparisonDomain.DisplaySrgb);
             Print(feather > 0 ? .45 : 0, $"production_G5 feather={feather} mean={comparison.MeanDeltaE:F6} p99={comparison.P99DeltaE:F6}");
+            if (feather == -2)
+                Print(0, $"G5 arm=global-W mean={comparison.MeanDeltaE:F6} p99={comparison.P99DeltaE:F6}");
             if (feather <= 0 || Fixture.StartsWith("synthetic")) continue;
             var (mean, p99) = Fixture.EndsWith("cr2") ? (feather == .25 ? (3d, 15d) : (3.6, 18d)) :
                 (feather == .25 ? (1.3, 14.5) : (1.6, 18.5));
@@ -109,7 +118,7 @@ public sealed partial class LocalsFusedBaselineTests
     private static MagickImage ProductionGeometry(BaseImage b, EditSettings settings, bool finalize = true)
     {
         using var geometry = RenderGeometry.Apply(b.Pixels, settings, out var trace);
-        var locals = RenderLocals.Create(settings, trace, (int)geometry.Width, (int)geometry.Height);
+        var locals = RenderLocals.Create(settings, trace, (int)geometry.Width, (int)geometry.Height, info: b.Info);
         var wb = RenderChromaticStage.CreateWhiteBalanceMatrix(b.Info, settings);
         if (b.Info.IsRawSource)
             new AgxCrossing(new(settings.Exposure, b.Info.SourceExposureBiasEv, 0, 0, 0, settings.Curve), wb,

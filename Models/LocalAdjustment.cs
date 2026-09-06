@@ -24,6 +24,12 @@ public sealed record LocalAdjustment
     public double Feather { get; set; } = 0.25;
     [JsonPropertyName("exposure")]
     public double Exposure { get; set; }
+    [JsonPropertyName("temperature")]
+    public double Temperature { get; set; }
+    [JsonPropertyName("tint")]
+    public double Tint { get; set; }
+    [JsonPropertyName("saturation")]
+    public double Saturation { get; set; }
     [JsonPropertyName("rx")]
     public double Rx { get; set; } = .25;
     [JsonPropertyName("ry")]

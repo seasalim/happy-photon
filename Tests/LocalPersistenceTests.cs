@@ -8,6 +8,41 @@ namespace HappyPhoton.Tests;
 public sealed class LocalPersistenceTests
 {
     [Fact]
+    public void ColorFieldsOmitZeroClampAndPreserveCopiesAndRotation()
+    {
+        var settings = new EditSettings { Locals = [new() { Enabled = false }] };
+        var neutral = EditSettingsJson.Serialize(settings);
+        using var document = JsonDocument.Parse(neutral);
+        foreach (var field in new[] { "temperature", "tint", "saturation" })
+            Assert.False(document.RootElement.GetProperty("locals")[0].TryGetProperty(field, out _));
+        settings.Locals[0].Temperature = 90;
+        settings.Locals[0].Tint = -70;
+        settings.Locals[0].Saturation = 200;
+        var loaded = EditSettingsJson.Deserialize(JsonSerializer.Serialize(settings), out var clamped);
+        Assert.True(clamped);
+        var local = loaded.Locals![0];
+        Assert.Equal((50d, -50d, 100d), (local.Temperature, local.Tint, local.Saturation));
+        var copy = loaded.Clone();
+        Assert.True(copy.HasSameEdits(loaded));
+        Assert.NotSame(local, copy.Locals![0]);
+        local.Rotate(90);
+        Assert.Equal((50d, -50d, 100d), (local.Temperature, local.Tint, local.Saturation));
+        foreach (var name in new[] { "Temperature", "Tint", "Saturation" })
+        {
+            var changed = copy.Clone();
+            typeof(LocalAdjustment).GetProperty(name)!.SetValue(changed.Locals![0], 0d);
+            Assert.False(copy.HasSameEdits(changed));
+            typeof(LocalAdjustment).GetProperty(name)!.SetValue(changed.Locals[0], double.NaN);
+            Assert.Throws<JsonException>(() => EditSettingsJson.Serialize(changed));
+            var json = EditSettingsJson.Serialize(copy).Replace($"\"{name.ToLowerInvariant()}\":{(name == "Tint" ? "-50" : name == "Temperature" ? "50" : "100")}", $"\"{name.ToLowerInvariant()}\":1e999");
+            Assert.Throws<JsonException>(() => EditSettingsJson.Deserialize(json, out _));
+        }
+        Assert.Null(EditSettingsTransfer.CopySubset(copy).Locals);
+        EditSettingsTransfer.ApplySubset(new EditSettings { Exposure = 2 }, copy);
+        Assert.Equal((50d, -50d, 100d), (copy.Locals![0].Temperature, copy.Locals[0].Tint, copy.Locals[0].Saturation));
+    }
+
+    [Fact]
     public void MigrationAndCanonicalEmptyPreserveGlobalMeaning()
     {
         var source = new EditSettings { Exposure = 1.25, Locals = [] };

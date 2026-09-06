@@ -91,6 +91,25 @@ whole-frame working array — one read and one write total, in both the interact
 resting render paths. With no active table the crossing runs its unmodified math,
 preserving exact no-profile output.
 
+### 2.2 Local color before tone
+
+Locals compose in creation order after global WB in linear Rec.2020 and before
+AgX inset/tone. Render setup resolves the effective global white from Custom/Preset
+Kelvin+tint, the base's as-shot estimate, or `EstimateFromGains` for Picked.
+Each color-active local prepares `M = 2^EV · S · A` once: A is
+`CreateMatrix(1e6/(1e6/Kg - temperature), tg + tint, Kg, tg)` with the WB model's
+white-point limits; S scales chroma about Rec.2020 luminance by `1+saturation/100`.
+Pixels blend linear results as `v += weight * (M*v - v)`, never parameters.
+RAW starts with WB divided by the existing composed inset×WB Fold, applies locals,
+then the unnormalized inset. Standard starts with its normalized WB. Both retain
+the existing Fold refund. No intermediate image or mask field is allocated and
+no local result is clamped; only tone input handles negatives (RAW's existing
+non-positive branch, standard's `Max(0, value)`), preserving overflow above one.
+Unchanged pixels keep the existing LUT path. Documents without active local color
+retain the scalar Gain kernel, byte-identical exposure-only pixels and render
+version 14. Monochrome bases prepare no color terms: stored color stays dormant,
+while local Exposure preserves equal RGB channels.
+
 ## 3. Notation
 
 - `E(x)`: sRGB encode. `E(x) = 12.92x` for `x ≤ 0.0031308`, else `1.055·x^(1/2.4) − 0.055`.
@@ -391,7 +410,9 @@ JSON document shape (canonical field order for hashing):
 
 The optional `locals` array follows `geometry` and is omitted when empty. Each linear
 local stores `id` (32-hex GUID), `type` (`linear`), stable positive `ordinal`, `enabled`,
-`cu`, `cv`, `angle`, `feather`, and `exposure`. Disabled and neutral locals retain all
+`cu`, `cv`, `angle`, `feather`, and `exposure`. Optional `temperature` and `tint`
+clamp to [-50, 50], `saturation` to [-100, 100]; all must be finite. Zero color
+fields are omitted so exposure-only documents retain canonical bytes and hashes. Disabled and neutral locals retain all
 fields and count as edits; snapshots deep-copy them and undo equality compares every
 stored field. Centers clamp to [-1, 2], feather to [0.001, 2] long-edge units, and
 Exposure to [-4, 4] EV; clockwise angles normalize to [0, 360). Unknown types, more

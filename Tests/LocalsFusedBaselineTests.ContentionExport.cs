@@ -19,7 +19,10 @@ public sealed partial class LocalsFusedBaselineTests
     [Fact]
     public async Task QualifiedRadialG9() => await ContendedTick(true, true);
 
-    private async Task ContendedTick(bool realFixture, bool radial = false)
+    [Fact]
+    public async Task QualifiedRadialG9Eight() => await ContendedTick(true, true, true);
+
+    private async Task ContendedTick(bool realFixture, bool radial = false, bool eight = false, bool color = false)
     {
         OptIn();
         const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Static;
@@ -35,7 +38,8 @@ public sealed partial class LocalsFusedBaselineTests
         BitmapConversionService.ResizeToMaxDimension(pixels, 1600);
         using var small = new BaseImage(pixels, large.Info);
         var localSettings = settings.Clone();
-        localSettings.Locals = (radial ? RadialSettings(small) : LocalSettings(small, .25, .45)).Locals;
+        localSettings.Locals = (radial ? RadialSettings(small, eight) : LocalSettings(small, .25, .45)).Locals;
+        if (color) Colorize(localSettings);
         var interactive = new RenderRequest(small, localSettings, RenderIntent.Preview, 1600, new(false, false));
         var restingRequest = new RenderRequest(large, settings, RenderIntent.Preview, 3200, new(false, false));
         var pipeline = new RenderPipeline();
@@ -57,9 +61,10 @@ public sealed partial class LocalsFusedBaselineTests
             }
             finally { using var result = await resting; }
         }
-        output.WriteLine($"contention fixture={(realFixture ? Fixture : "synthetic-RAW")} radial={radial} cpu={Environment.ProcessorCount} process={Environment.ProcessId} " +
+        output.WriteLine($"contention fixture={(realFixture ? Fixture : "synthetic-RAW")} radial={radial} eight={eight} cpu={Environment.ProcessorCount} process={Environment.ProcessId} " +
             $"alone={Median(alone):F4} concurrent={Median(concurrent):F4} " +
-            $"concurrent_samples=[{string.Join(',', concurrent)}] resting=3200x2133 cap=2");
+            $"alone_samples=[{string.Join(',', alone)}] concurrent_samples=[{string.Join(',', concurrent)}] " +
+            $"resting={large.Pixels.Width}x{large.Pixels.Height} cap=2 samples={Samples}");
         Assert.True(Median(concurrent) <= 150, "G8 contended tick");
 
         double Tick() => Time(() => { using var result = pipeline.Render(interactive); });
@@ -71,7 +76,7 @@ public sealed partial class LocalsFusedBaselineTests
     [Fact]
     public async Task QualifiedRadialG10() => await ExportDelta(true);
 
-    private async Task ExportDelta(bool radial)
+    private async Task ExportDelta(bool radial, bool color = false)
     {
         OptIn();
         using var preview = Load(false);
@@ -90,7 +95,8 @@ public sealed partial class LocalsFusedBaselineTests
                 return pipeline.RenderDisplayRec2020(request);
             });
         var file = new ImageFile(GoldenTestPaths.Asset(Fixture));
-        var active = radial ? RadialSettings(preview) : LocalSettings(preview, .25, .45);
+        var active = radial ? RadialSettings(preview, color) : LocalSettings(preview, .25, .45);
+        if (color) Colorize(active);
         var off = new double[Samples]; var on = new double[Samples];
         for (var sample = -1; sample < Samples; sample++)
         {

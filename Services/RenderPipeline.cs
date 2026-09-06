@@ -209,7 +209,7 @@ public sealed class RenderPipeline
                 out geometry);
             execution?.ThrowIfCancellationRequested();
             var locals = RenderLocals.Create(request.Settings, geometry,
-                (int)working.Width, (int)working.Height, request.LocalsFrameOverride);
+                (int)working.Width, (int)working.Height, request.LocalsFrameOverride, request.Base.Info);
             if (request.Base.Info.IsRawSource)
             {
                 execution?.ReportStage("raw-crossing");

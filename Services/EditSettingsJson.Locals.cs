@@ -12,6 +12,8 @@ internal static partial class EditSettingsJson
         resolver.Modifiers.Add(info =>
         {
             if (info.Type != typeof(LocalAdjustment)) return;
+            foreach (var property in info.Properties.Where(p => p.Name is "temperature" or "tint" or "saturation"))
+                property.ShouldSerialize = (_, value) => (double)value! != 0;
             foreach (var property in info.Properties.Where(p => p.Name is "rx" or "ry" or "outside"))
                 property.ShouldSerialize = (owner, _) => ((LocalAdjustment)owner).IsRadial;
         });
@@ -43,6 +45,9 @@ internal static partial class EditSettingsJson
                 local.Ry = Clamp(local.Ry, .001, 1, ref changed);
             }
             local.Exposure = Clamp(local.Exposure, -4, 4, ref changed);
+            local.Temperature = Clamp(local.Temperature, -50, 50, ref changed);
+            local.Tint = Clamp(local.Tint, -50, 50, ref changed);
+            local.Saturation = Clamp(local.Saturation, -100, 100, ref changed);
             if (!double.IsFinite(local.Angle))
                 throw new JsonException("Local adjustment angle must be finite.");
             var angle = (local.Angle % 360 + 360) % 360;

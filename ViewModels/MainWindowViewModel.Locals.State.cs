@@ -14,7 +14,7 @@ public partial class MainWindowViewModel
     {
         base.OnPropertyChanged(e);
         if (e.PropertyName is nameof(PreviewImage) or nameof(IsFullScreenMode) or
-            nameof(IsBeforeAfterSplit) or nameof(CanEditSelectedImage) or
+            nameof(IsBeforeAfterSplit) or nameof(CanEditSelectedImage) or nameof(IsColorEditingEnabled) or
             nameof(IsWhiteBalancePicking) or nameof(IsShowingOriginal) or nameof(CurrentCrop) or nameof(HorizonRotation))
             NotifyLocalsState();
         if (e.PropertyName == nameof(IsLocalMaskVisible))
