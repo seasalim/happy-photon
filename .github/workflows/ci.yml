@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2025, ubuntu-24.04, macos-15]
-        revision: [73d631c, 1191d2d, ac89bc6]
+        revision: [73d631ce9fbb24924a066db211fd1075207de692, 1191d2d1e2186c33823596bc3eb02cb39cf7ad40, ac89bc67a2618d2bb2eb6704426b0b400852c2d4]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -28,7 +28,7 @@ jobs:
         shell: pwsh
         run: |
           Copy-Item harness/Tests/PlatformProbe/RenderSequenceGoldenTests.cs.txt source/Tests/RenderSequenceGoldenTests.cs
-          if ('${{ matrix.revision }}' -ne '73d631c') {
+          if ('${{ matrix.revision }}' -ne '73d631ce9fbb24924a066db211fd1075207de692') {
             Copy-Item harness/Tests/PlatformProbe/LocalsLinearParitySentinelTests.cs.txt source/Tests/LocalsLinearParitySentinelTests.cs
           }
           git -C source rev-parse HEAD
