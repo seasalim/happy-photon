@@ -233,6 +233,7 @@ public class PresetService
         }
         settings.AppliedPresetId = null;
         settings.RawProfile = null;
+        settings.Lens.ProfileOverride = null;
         return settings;
     }
 
@@ -267,9 +268,10 @@ public class PresetService
         var settings = EditSettingsJson.Deserialize(
             settingsElement.GetRawText(),
             out var wasClamped, ignoreLocals: true);
-        // Camera profiles are image-specific and never transfer through a
+        // Camera and lens profiles are image-specific and never transfer through a
         // preset file, including a hand-edited one.
         settings.RawProfile = null;
+        settings.Lens.ProfileOverride = null;
         if (wasClamped)
         {
             Debug.WriteLine($"Clamped out-of-range preset settings: {path}");

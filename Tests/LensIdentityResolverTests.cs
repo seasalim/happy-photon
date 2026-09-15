@@ -76,6 +76,38 @@ public sealed class LensIdentityResolverTests : IDisposable
         Assert.Null(resolver.Resolve("Nikon", Identity(1, mount: 0)));
     }
 
+    [Theory]
+    [InlineData("AF Nikkor 20mm f/2.8", "Nikon AF Nikkor 20mm f/2.8D")]
+    [InlineData("Nikon AF Nikkor 20mm f/2.8", "Nikon AF Nikkor 20mm f/2.8D")]
+    [InlineData("Rokinon 20mm f/1.8 ED AS UMC", "Samyang 20mm f/1.8 ED AS UMC")]
+    [InlineData("AF Nikkor 28mm f/2.8", null)]
+    public void ShippedAliasesAreLimitedToCuratedOpticalPairs(string name, string? expected)
+        => Assert.Equal(expected, new LensIdentityResolver().ResolveAlias(name, "Nikon"));
+
+    [Theory]
+    [InlineData("# comment\n\nSelf\tSelf\nSource\tTarget\n", "Target")]
+    [InlineData("Source\tTarget\nMalformed\n", null)]
+    [InlineData("Source\tTarget\tExtra\n", null)]
+    [InlineData("Source\t \n", null)]
+    [InlineData("Source\tTarget\nSource\tOther\n", null)]
+    public void AliasTableRejectsMalformedRowsAndIgnoresSelfAliases(string data, string? expected)
+    {
+        WriteTable("same-optics", data);
+        var resolver = new LensIdentityResolver(_directory);
+        Assert.Equal(expected, resolver.ResolveAlias("Source"));
+        Assert.Null(resolver.ResolveAlias("Self"));
+    }
+
+    [Theory]
+    [InlineData("Canon", " CANON: Source Lens ")]
+    [InlineData("Nikon", "NIKON\tSource-Lens")]
+    [InlineData("Other Maker", "Other Maker Source Lens")]
+    public void AliasLookupNormalizesSuppliedMakerPrefix(string make, string name)
+    {
+        WriteTable("same-optics", "Source Lens\tTarget Lens\n");
+        Assert.Equal("Target Lens", new LensIdentityResolver(_directory).ResolveAlias(name, make));
+    }
+
     private void WriteTable(string maker, string contents)
     {
         Directory.CreateDirectory(_directory);

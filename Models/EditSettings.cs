@@ -209,6 +209,7 @@ public class EditSettings
                Lens.Distortion == other.Lens.Distortion &&
                Lens.ChromaticAberration == other.Lens.ChromaticAberration &&
                Lens.Vignetting == other.Lens.Vignetting &&
+               Lens.ProfileOverride == other.Lens.ProfileOverride &&
                Rotation == other.Rotation &&
                HorizonRotation == other.HorizonRotation &&
                CropsMatch(Crop, other.Crop) &&

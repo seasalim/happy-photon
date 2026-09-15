@@ -10,7 +10,46 @@ internal sealed class LensIdentityResolver
         Lazy<IReadOnlyDictionary<ulong, string>>> Tables = new(
             StringComparer.OrdinalIgnoreCase);
 
+    private static readonly ConcurrentDictionary<string,
+        Lazy<IReadOnlyDictionary<string, string>>> Aliases = new();
     private readonly string _tableDirectory;
+
+    internal string? ResolveAlias(string? name, string? make = null)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return null;
+        name = LensfunDatabase.Normalize(name);
+        var maker = LensfunDatabase.Normalize(make ?? string.Empty);
+        if (maker.Length > 0 && name.StartsWith(maker, StringComparison.Ordinal))
+            name = name[maker.Length..];
+        try
+        {
+            var path = Path.Combine(_tableDirectory, "same-optics.tsv");
+            return Aliases.GetOrAdd(path, value => new(() => LoadAliases(value)))
+                .Value.GetValueOrDefault(name);
+        }
+        catch (Exception exception) when (exception is IOException or
+            UnauthorizedAccessException or InvalidDataException or ArgumentException)
+        {
+            return null;
+        }
+    }
+
+    private static IReadOnlyDictionary<string, string> LoadAliases(string path)
+    {
+        var aliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in File.ReadLines(path))
+        {
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#')) continue;
+            var fields = line.Split('\t');
+            if (fields.Length != 2 || fields.Any(string.IsNullOrWhiteSpace))
+                throw new InvalidDataException("Same-optics alias table is invalid.");
+            var source = LensfunDatabase.Normalize(fields[0]);
+            var target = fields[1].Trim();
+            if (source == LensfunDatabase.Normalize(target)) continue;
+            aliases.Add(source, target);
+        }
+        return aliases;
+    }
 
     internal LensIdentityResolver() : this(
         Path.Combine(PackagedDataRoot.Resolve(), "data", "lens-ids"))

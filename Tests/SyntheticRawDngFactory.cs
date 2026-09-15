@@ -5,6 +5,9 @@ namespace HappyPhoton.Tests;
 
 internal sealed record SyntheticRawDngOptions
 {
+    internal string Make { get; init; } = "Happy Photon";
+    internal string Model { get; init; } = "Synthetic Bayer DNG";
+    internal bool IncludeChromaticAberration { get; init; }
     internal int Scale { get; init; } = 1;
     internal bool IncludeOpcodes { get; init; } = true;
     internal bool UseInsetDefaultCrop { get; init; } = true;
@@ -101,8 +104,8 @@ internal static class SyntheticRawDngFactory
             E(258, Short, Shorts(16)),
             E(259, Short, Shorts(1)),
             E(262, Short, Shorts(32803)),
-            E(271, Ascii, Text("Happy Photon")),
-            E(272, Ascii, Text("Synthetic Bayer DNG")),
+            E(271, Ascii, Text(options.Make)),
+            E(272, Ascii, Text(options.Model)),
             E(273, Long, UInts(0)),
             E(274, Short, Shorts(options.Orientation)),
             E(277, Short, Shorts(1)),
@@ -132,7 +135,7 @@ internal static class SyntheticRawDngFactory
         if (options.IncludeOpcodes)
         {
             result.Add(E(51022, Undefined, OpcodeList(
-                Opcode(1, WarpPayload(options.WarpKr1)),
+                Opcode(1, WarpPayload(options.WarpKr1, options.IncludeChromaticAberration)),
                 Opcode(3, VignettePayload(options.VignetteK0)))));
         }
         return result;
@@ -234,11 +237,15 @@ internal static class SyntheticRawDngFactory
         return result;
     }
 
-    private static byte[] WarpPayload(double kr1)
+    private static byte[] WarpPayload(double kr1, bool chromaticAberration)
     {
-        var result = new byte[68];
-        BinaryPrimitives.WriteUInt32BigEndian(result, 1);
-        WriteDoubles(result, 4, 1, kr1, 0, 0, 0, 0, 0.5, 0.5);
+        var planes = chromaticAberration ? 3 : 1;
+        var result = new byte[4 + planes * 48 + 16];
+        BinaryPrimitives.WriteUInt32BigEndian(result, (uint)planes);
+        for (var plane = 0; plane < planes; plane++)
+            WriteDoubles(result, 4 + plane * 48, 1,
+                kr1 + (chromaticAberration ? (plane - 1) * 0.001 : 0), 0, 0, 0, 0);
+        WriteDoubles(result, 4 + planes * 48, 0.5, 0.5);
         return result;
     }
 

@@ -12,7 +12,8 @@ public sealed class LocalsLinearParitySentinelTests(ITestOutputHelper output)
     // G6 frozen at 1191d2d1e2186c33823596bc3eb02cb39cf7ad40, render v14.
     // Do not regenerate for the additive radial slice. Q16 RGB is hashed little-endian.
     private const string CanonicalJson = """{"version":4,"exposure":0.45,"wb":{"mode":"asShot","kelvin":null,"tint":null,"gains":null,"preset":null},"highlights":-31,"shadows":24,"brightness":12,"contrast":28,"saturation":19,"vibrance":16,"baseLook":null,"hlReconstruction":"clip","detail":{"captureSharpen":80,"luminanceNr":55,"chromaNr":65},"effects":{"vignette":-37,"midpoint":61,"grain":42,"grainSize":"coarse"},"lens":{"distortion":true,"chromaticAberration":true,"vignetting":false},"rotation":0,"horizon_rotation":0,"crop":{"left":0.1,"top":0.1,"right":0.9,"bottom":0.9},"curve":{"points":[{"x":0,"y":0},{"x":1,"y":1}]},"applied_preset_id":null,"locals":[{"id":"11111111111111111111111111111111","type":"linear","ordinal":1,"enabled":true,"cu":0.42,"cv":0.46,"angle":32,"feather":0.35,"exposure":1.5},{"id":"22222222222222222222222222222222","type":"linear","ordinal":2,"enabled":true,"cu":0.58,"cv":0.54,"angle":137,"feather":0.55,"exposure":-1}]}""";
-    private const string SettingsHash = "9925ec66622900962369abbaff1fc33f9d0dfad3d87604cf5dc6ba0b60b2f7b6";
+    // Base v20 re-key only; canonical JSON and pixel sentinels remain frozen.
+    private const string SettingsHash = "ef6fa96fa4629d625d93099e4d9d84c4d734cae7f00c619ac18a5eadd15df0d0";
     private const string RawInteractive = "E263BABC98787437F4404E34FD11A67A781B5072D233425FD1F2717231773B27";
     private const string RawResting = "1B9D7022375137C0E965803461FD5D560E8E6869372231466EE3C650E0E1B072";
     private const string StandardInteractive = "E650EE39F5CF1134BB2D13EC974AF08974C2E8210461CD263807728784741774";

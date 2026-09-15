@@ -1,7 +1,34 @@
+using System.Collections.Concurrent;
+
 namespace HappyPhoton.Services;
 
 internal sealed partial class LensfunDatabase
 {
+    private readonly ConcurrentDictionary<LensfunCamera,
+        IReadOnlyList<string>> _compatibleLenses = new();
+
+    internal (string? Camera, IReadOnlyList<string> Lenses) ListCompatibleLenses(
+        string? make, string? model)
+    {
+        if (string.IsNullOrWhiteSpace(make) || string.IsNullOrWhiteSpace(model))
+            return (null, []);
+        var cameras = MatchingCameras(Normalize(make), Normalize(model));
+        if (cameras.Length != 1) return (null, []);
+        var camera = cameras[0];
+        var lenses = _compatibleLenses.GetOrAdd(camera, matched =>
+        {
+            var mounts = CompatibleMounts(matched.Mount);
+            return Array.AsReadOnly(_lenses.Where(lens => lens.Mounts.Any(mounts.Contains))
+                .GroupBy(PrimaryIdentityKey)
+                .Select(group => group.Select(lens => lens.VariantModelKey == null
+                    ? lens.Model
+                    : lens.Model.TrimEnd()[..lens.Model.TrimEnd().LastIndexOfAny([' ', '\t'])])
+                    .Order(StringComparer.Ordinal).First())
+                .Order(StringComparer.Ordinal).ToArray());
+        });
+        return ($"{camera.Maker} {camera.Model}", lenses);
+    }
+
     private LensfunCamera[] MatchingCameras(string make, string model)
     {
         var matches = _cameras.Where(camera =>

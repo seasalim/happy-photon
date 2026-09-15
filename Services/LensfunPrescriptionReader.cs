@@ -23,6 +23,23 @@ internal sealed class LensfunPrescriptionReader
             LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
+    internal (string? Camera, IReadOnlyList<string> Lenses) ListCompatibleLenses(
+        LibRawMetadata metadata)
+    {
+        try
+        {
+            return _database.Value.ListCompatibleLenses(
+                metadata.NormalizedMake ?? metadata.Make,
+                metadata.NormalizedModel ?? metadata.Model);
+        }
+        catch (Exception exception) when (exception is IOException or
+            UnauthorizedAccessException or InvalidDataException or
+            System.Xml.XmlException or ArgumentException or AggregateException)
+        {
+            return (null, []);
+        }
+    }
+
     internal static bool ForceSource { get; set; }
 
     internal LensPrescriptionReadResult Read(

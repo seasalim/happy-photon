@@ -110,6 +110,7 @@ public partial class MainWindowViewModel
         try
         {
             LoadSlidersFrom(_copiedSettings);
+            LensProfileOverride = previousSettings.Lens.ProfileOverride;
             Rotation = currentRotation;
             HorizonRotation = currentHorizonRotation;
             LoadGeometryFrom(previousSettings);

@@ -95,6 +95,8 @@ public static class EditHistoryLabel
             Toggle("Optics: vignetting", before.Lens.Vignetting,
                 after.Lens.Vignetting)
         ]);
+        Add(changes, "Optics: lens profile", before.Lens.ProfileOverride,
+            after.Lens.ProfileOverride);
         Add(changes, "Highlight handling", before.HlReconstruction,
             after.HlReconstruction);
         AddLocals(changes, before.Locals, after.Locals);

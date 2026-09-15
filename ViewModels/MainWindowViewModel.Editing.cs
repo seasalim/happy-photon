@@ -80,6 +80,7 @@ public partial class MainWindowViewModel
         _isLoadingImage = false;
 
         EditSettingsTransfer.ApplySubset(state, image.EditSettings);
+        image.EditSettings.Lens.ProfileOverride = state.Lens.ProfileOverride;
         image.EditSettings.Rotation = state.Rotation;
         image.EditSettings.HorizonRotation = state.HorizonRotation;
         image.EditSettings.Crop = state.Crop?.Clone();
@@ -158,6 +159,8 @@ public partial class MainWindowViewModel
         SelectedImage.EditSettings.Effects = null;
         SelectedImage.EditSettings.Mixer = null;
         SelectedImage.EditSettings.Lens.RestoreBaseline();
+        if (preserveProfile)
+            SelectedImage.EditSettings.Lens.ProfileOverride = previousSettings.Lens.ProfileOverride;
         SelectedImage.EditSettings.Geometry = null;
         SelectedImage.EditSettings.Curve.Reset();
         SelectedImage.EditSettings.CurveRed = null;
@@ -169,7 +172,6 @@ public partial class MainWindowViewModel
             preserveProfile ? SelectedImage.EditSettings.RawProfile : null);
         // Note: Rotation, horizon rotation, and crop are preserved (geometric transforms)
         SelectedImage.HasEdits = SelectedImage.EditSettings.HasEdits;
-
         // Prevent spurious preview updates while resetting sliders
         _isLoadingImage = true;
         Exposure = 0;
@@ -248,9 +250,9 @@ public partial class MainWindowViewModel
         var generation = RequestEditedRender();
 
         var currentCrop = CurrentCrop?.Clone();
-
         _isLoadingImage = true;
         LoadSlidersFrom(preset.Settings);
+        LensProfileOverride = previousSettings.Lens.ProfileOverride;
         ActivePresetId = presetId;
         Rotation = SelectedImage.EditSettings.Rotation;
         HorizonRotation = SelectedImage.EditSettings.HorizonRotation;

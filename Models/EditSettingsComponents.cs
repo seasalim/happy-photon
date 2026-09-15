@@ -69,8 +69,12 @@ public sealed class LensSettings
     [JsonPropertyName("vignetting")]
     public bool Vignetting { get; set; } = DefaultVignetting;
 
+    [JsonPropertyName("profileOverride")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ProfileOverride { get; set; }
+
     [JsonIgnore]
-    public bool HasEdits => Distortion != DefaultDistortion ||
+    public bool HasEdits => ProfileOverride != null || Distortion != DefaultDistortion ||
         ChromaticAberration != DefaultChromaticAberration ||
         Vignetting != DefaultVignetting;
 
@@ -79,13 +83,15 @@ public sealed class LensSettings
         Distortion = DefaultDistortion;
         ChromaticAberration = DefaultChromaticAberration;
         Vignetting = DefaultVignetting;
+        ProfileOverride = null;
     }
 
     public LensSettings Clone() => new()
     {
         Distortion = Distortion,
         ChromaticAberration = ChromaticAberration,
-        Vignetting = Vignetting
+        Vignetting = Vignetting,
+        ProfileOverride = ProfileOverride
     };
 }
 

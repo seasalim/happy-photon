@@ -26,6 +26,7 @@ public sealed record BaseDecodeSettings(
                settings.Lens.Distortion &&
                settings.Lens.ChromaticAberration &&
                !settings.Lens.Vignetting &&
+               settings.Lens.ProfileOverride == null &&
                settings.RawProfile == null
             ? Default
             : new BaseDecodeSettings(
@@ -34,9 +35,12 @@ public sealed record BaseDecodeSettings(
                 settings.Lens.ChromaticAberration,
                 settings.Lens.Vignetting)
             {
+                LensProfileOverride = settings.Lens.ProfileOverride,
                 ProfileSelection = settings.RawProfile?.Clone()
             };
     }
+
+    public string? LensProfileOverride { get; init; }
 
     internal RawProfileSelection? ProfileSelection { get; init; }
 
@@ -58,7 +62,8 @@ public sealed record BaseDecodeSettings(
     public string CacheKey =>
         $"base-v{BaseImage.Version};hl={GetHighlightKey()}" +
         $";lens={(Distortion ? 1 : 0)}{(ChromaticAberration ? 1 : 0)}{(Vignetting ? 1 : 0)}" +
-        GetProfileKey();
+        (LensProfileOverride == null ? string.Empty :
+            $";lens-profile={Uri.EscapeDataString(LensProfileOverride)}") + GetProfileKey();
 
     private string GetProfileKey()
     {
@@ -106,7 +111,7 @@ public sealed record BaseImageInfo(
 /// </summary>
 public sealed class BaseImage : IDisposable
 {
-    public const int Version = 19;
+    public const int Version = 20;
     public const int InteractivePreviewMaxDimension = 1600;
     public const int LargePreviewMaxDimension = 3200;
 

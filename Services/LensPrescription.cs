@@ -20,6 +20,24 @@ internal sealed record LensPrescriptionReadResult(
     LensPrescriptionStatus Status,
     string? Message)
 {
+    internal LensPrescriptionSummary? Summary { get; init; }
+
+    internal LensPrescriptionSummary? GetSummary(LensPrescription? prescription)
+    {
+        // A rejected warp on an unknown camera retains the no-capability contract.
+        var rejectedOnUnknownCamera = Prescription != null &&
+            prescription == null && Summary?.Camera == null;
+        if (Summary == null || rejectedOnUnknownCamera) return null;
+        return (prescription?.Summary ??
+            new LensPrescriptionSummary(null, string.Empty, false, false, false)) with
+        {
+            Camera = Summary.Camera,
+            CompatibleLenses = Summary.CompatibleLenses,
+            IsManual = Summary.IsManual,
+            LensName = Summary.IsManual ? Summary.LensName : prescription?.LensName
+        };
+    }
+
     internal static LensPrescriptionReadResult None { get; } =
         new(null, LensPrescriptionStatus.None, null);
 
@@ -109,6 +127,9 @@ public sealed record LensPrescriptionSummary(
     bool HasChromaticAberration,
     bool HasVignetting)
 {
+    public string? Camera { get; init; }
+    public IReadOnlyList<string> CompatibleLenses { get; init; } = [];
+    public bool IsManual { get; init; }
     public bool HasAny => HasDistortion || HasChromaticAberration || HasVignetting;
 }
 

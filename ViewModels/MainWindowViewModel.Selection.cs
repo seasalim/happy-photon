@@ -249,6 +249,7 @@ public partial class MainWindowViewModel
                    Vignette != 0 ||
                    Grain != 0 ||
                    _liveMixer.HasActivePixels ||
+                   LensProfileOverride != null ||
                    LensDistortion != LensSettings.DefaultDistortion ||
                    LensChromaticAberration != LensSettings.DefaultChromaticAberration ||
                    LensVignetting != LensSettings.DefaultVignetting ||

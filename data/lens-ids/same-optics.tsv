@@ -1,0 +1,12 @@
+# Same-optics aliases; source name<TAB>Lensfun primary model.
+# Curated AF/AF-D optical carry-overs and one Samyang brand alias.
+# Provenance and exclusions: docs/pipeline/OPTICS.md, Same-optics aliases.
+AF Nikkor 20mm f/2.8	Nikon AF Nikkor 20mm f/2.8D
+AF Nikkor 24mm f/2.8	Nikon AF Nikkor 24mm f/2.8D
+AF Nikkor 35mm f/2	Nikon AF Nikkor 35mm f/2D 66
+AF Nikkor 50mm f/1.4	Nikon AF Nikkor 50mm f/1.4D
+AF Nikkor 50mm f/1.8	Nikon AF Nikkor 50mm f/1.8D
+AF Nikkor 50mm f/1.8 N	Nikon AF Nikkor 50mm f/1.8D
+AF Nikkor 85mm f/1.8	Nikon AF Nikkor 85mm f/1.8D
+AF Nikkor 180mm f/2.8 IF-ED	Nikon AF Nikkor 180mm f/2.8D IF-ED
+Rokinon 20mm f/1.8 ED AS UMC	Samyang 20mm f/1.8 ED AS UMC

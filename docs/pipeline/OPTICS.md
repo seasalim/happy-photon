@@ -31,6 +31,49 @@ no other maker table is currently shipped. Unknown IDs, missing tables, multi-na
 rows, and duplicate-key groups remain no-data. Focal/aperture guessing and non-CPU lens
 recovery are not implemented.
 
+## Same-optics aliases and manual selection
+
+`data/lens-ids/same-optics.tsv` is a curated, two-column source-name to Lensfun-model
+map. It is consulted only after EXIF, transmitted maker-note, and ID-derived exact
+candidates all miss; aliases of those three names then run in the same order.
+Comments and blank lines are ignored, self-aliases are ignored, and malformed or
+conflicting rows reject the table. Aliases are single-hop, case-insensitive name
+lookups normalized like Lensfun names (the supplied camera maker prefix is optional),
+never focal-range guesses.
+
+The Nikon rows cover the AF prime families introduced in 1986–1995: 20/2.8, 24/2.8,
+35/2, 50/1.4, 50/1.8 (including N), 85/1.8, and 180/2.8 IF-ED. Their D successors
+retain the optical formula; distance reporting, barrel, and coating changes do not
+create a new optical prescription. The 50/1.8D successor arrived later, in 2002.
+Provenance: Nikon's [24mm history](https://imaging.nikon.com/imaging/information/story/0086/)
+and [50mm f/1.8 history](https://imaging.nikon.com/imaging/information/story/0060/),
+MIR's [20mm history](https://www.mir.com.my/rb/photography/companies/nikon/nikkoresources/AFNikkor/AFNikkor20mmf28D/index1.htm),
+MIR's [35mm comparison](https://www.mir.com.my/rb/photography/companies/nikon/nikkoresources/AFNikkor/AF35mm/index.htm)
+and [85mm comparison](https://www.mir.com.my/rb/photography/companies/nikon/nikkoresources/AFNikkor/AF85mm/index1.htm),
+Richard Haw's [50mm f/1.4 optical history](https://richardhaw.com/2019/05/03/repair-nikkor-50mm-f-1-4-ai-s/),
+and the [180mm teardown comparison](https://phillipreeve.net/blog/nikon-af-180mm-2-8d-versions-teardown-and-repair-guide/).
+The AF 28mm f/2.8 is deliberately excluded: its D successor changed optical design.
+The Rokinon row is the Samyang 20mm f/1.8 ED AS UMC sold under the Rokinon brand;
+see the distributor's [brand information](https://rokinon.com/pages/about-us) and
+[20mm specification](https://rokinon.com/products/20mm-f1-8-full-frame-wide-angle).
+These are curated identity equivalences, not new measured calibrations.
+
+Develop's Optics picker offers Automatic followed by sorted mount-compatible logical
+Lensfun names. Numeric-suffix and crop-factor variants consolidate into one choice;
+manual selection uses the automatic matcher's crop ranking. The shared database
+memoizes choices per matched camera during decode, and the summary references that
+list. No UI lookup or second database instance is involved. Non-monochrome RAWs carry
+this summary even with no profile or complete embedded corrections. A rejected warp
+on an unknown camera retains the existing null-summary contract; it has no picker.
+
+The nullable `lens.profileOverride` is per image, survives JSON and history, counts as
+an edit, and Reset clears it. Copy/paste and presets transfer only the class booleans.
+Applying or removing a preset and pasting edits preserve the destination's manual lens.
+Changing the override re-decodes via `BaseDecodeSettings`; its escaped model joins the
+cache key. Embedded corrections still win per class. The source line marks a manual
+choice with MANUAL and reports NO CORRECTION DATA when it offers no classes.
+JPEG/HEIC and monochrome boundaries are unchanged.
+
 ## Placement and interpolation ledger
 
 Corrections are decode-dependent. A corrected destination coordinate maps to the
@@ -143,7 +186,8 @@ ignored for name equality, after which multiple calibrations still use the exist
 crop-distance ranking and tied or distinct identities remain ambiguous. `ForceSource`
 bypasses embedded readers for qualification. Resolution is independent of the application toggles, which gate
 application only; whenever an embedded prescription leaves any class unfilled, Lensfun
-is consulted. The first Lensfun resolution pays the measured one-time 162.7 ms parse
+is consulted for correction data. Every non-monochrome RAW also resolves its camera
+and compatible picker choices, including when embedded corrections are complete. The first Lensfun resolution pays the measured one-time 162.7 ms parse
 cost and retains 6.7 MB before matching determines whether a profile applies.
 
 `scripts/evaluate-raf-lens-corrections.cs` can force either the embedded or Lensfun
@@ -217,8 +261,9 @@ explicit v3 block, so it can never acquire defaults later. New rows use
 on/on/off/standard. `HasEdits` compares with the image's baseline, Reset restores it,
 and copy/paste and presets transfer only the booleans.
 
-The three bits join `BaseDecodeSettings.CacheKey`. `BaseImage.Version` is 19 because
-English Lensfun aliases change which files decode with corrections applied; version 18
+The three bits and any manual lens override join `BaseDecodeSettings.CacheKey`.
+`BaseImage.Version` is 20 because same-optics aliases change corrected decodes; version 19
+introduced English Lensfun aliases, and version 18
 introduced order-tolerant identity and the ID-derived fallback for the same reason.
 `RenderPipeline.Version` is 12, unchanged by lens identity because render-stage math
 is untouched.

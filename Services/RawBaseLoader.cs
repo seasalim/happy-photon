@@ -124,7 +124,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             var rawMetadata = context.GetMetadata(cancellationToken);
             var lensResult = isMonochrome ? LensPrescriptionReadResult.None
                 : ReadLensPrescription(file, rawMetadata,
-                    context.GetLensIdentity(cancellationToken), dimensions);
+                    context.GetLensIdentity(cancellationToken), dimensions, decode.LensProfileOverride);
             var lensPrescription = lensResult.Prescription;
             var applyLens = lensPrescription != null &&
                 (decode.Distortion && lensPrescription.HasDistortion ||
@@ -427,7 +427,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                         rawMetadata.NormalizedMake ?? rawMetadata.Make,
                         rawMetadata.NormalizedModel ?? rawMetadata.Model),
                 LensPrescription = lensPrescription,
-                LensPrescriptionSummary = lensPrescription?.Summary
+                LensPrescriptionSummary = lensResult.GetSummary(lensPrescription)
             };
             PreviewBasePair? pair = null;
             BaseImage? full = null;
