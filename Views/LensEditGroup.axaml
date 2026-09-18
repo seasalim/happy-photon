@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:HappyPhoton.ViewModels"
+             xmlns:views="using:HappyPhoton.Views"
              mc:Ignorable="d"
              x:Class="HappyPhoton.Views.LensEditGroup"
              x:DataType="vm:MainWindowViewModel">
@@ -24,13 +25,32 @@
                 Spacing="2"
                 IsEnabled="{Binding IsOpticsEnabled}">
         <TextBlock Classes="section-label" Text="Optics" Margin="0,19,0,8"/>
-        <ComboBox x:Name="LensPicker"
-                  Classes="edit-dropdown"
-                  HorizontalAlignment="Stretch"
-                  IsVisible="{Binding HasLensChoices}"
-                  ItemsSource="{Binding LensChoices}"
-                  SelectedItem="{Binding SelectedLensName, Mode=OneWay}"
-                  SelectionChanged="OnLensSelectionChanged"/>
+        <Grid ColumnDefinitions="*" IsVisible="{Binding HasLensChoices}">
+            <ComboBox x:Name="LensPicker"
+                      Classes="edit-dropdown"
+                      HorizontalAlignment="Stretch"
+                      MinWidth="0"
+                      MaxDropDownHeight="360"
+                      ItemsSource="{Binding LensChoices}"
+                      SelectedItem="{Binding SelectedLensName, Mode=OneWay}"
+                      SelectionChanged="OnLensSelectionChanged"
+                      ToolTip.Tip="{Binding LensProfileOverride}"
+                      AutomationProperties.Name="Lens profile">
+                <ComboBox.SelectionBoxItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis"/>
+                    </DataTemplate>
+                </ComboBox.SelectionBoxItemTemplate>
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <TextBlock Text="{Binding}"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding}"
+                                   MaxWidth="{Binding $parent[ComboBox].Bounds.Width, Converter={x:Static views:LensEditGroup.ItemTextWidth}}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </Grid>
         <Grid x:Name="DistortionRow"
               Classes="optics-row"
               IsEnabled="{Binding HasLensDistortion}">

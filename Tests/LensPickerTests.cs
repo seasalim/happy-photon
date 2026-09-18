@@ -62,7 +62,23 @@ public sealed class LensPickerTests : IDisposable
         Assert.Single(choices.Lenses, lens => lens == Nikon24);
         Assert.DoesNotContain(choices.Lenses, lens => lens.EndsWith("f/2.8D 54"));
         Assert.DoesNotContain(choices.Lenses, lens => lens.StartsWith("Canon EF"));
-        Assert.Equal(choices.Lenses.Order(StringComparer.Ordinal), choices.Lenses);
+        // The camera maker's lenses lead, then everyone else; both blocks sorted.
+        var nikon = choices.Lenses.TakeWhile(lens =>
+            lens.StartsWith("Nikon ", StringComparison.Ordinal)).ToArray();
+        Assert.True(nikon.Length > 100, $"Nikon block has {nikon.Length} entries.");
+        Assert.Equal(choices.Lenses.Count(lens =>
+            lens.StartsWith("Nikon ", StringComparison.Ordinal)), nikon.Length);
+        Assert.Equal(nikon.Order(StringComparer.OrdinalIgnoreCase), nikon);
+        var others = choices.Lenses.Skip(nikon.Length).ToArray();
+        Assert.Equal(others.Order(StringComparer.OrdinalIgnoreCase), others);
+        // Every name carries its maker, including Sigma entries whose Lensfun
+        // model string omits it, and the prefixed name resolves like the bare one.
+        Assert.All(choices.Lenses, lens => Assert.True(char.IsLetter(lens[0]), lens));
+        const string sigma = "Sigma 105mm F1.4 DG HSM | Art";
+        Assert.Contains(sigma, choices.Lenses);
+        Assert.Equal(
+            database.Resolve("Nikon", "D750", "105mm F1.4 DG HSM | Art", 105, 1.4, 6016, 4016)?.LensName,
+            database.Resolve("Nikon", "D750", sigma, 105, 1.4, 6016, 4016)?.LensName);
         Assert.Same(choices.Lenses, database.ListCompatibleLenses("Nikon", "D750").Lenses);
         Assert.Null(database.ListCompatibleLenses("Unknown", "Camera").Camera);
     }

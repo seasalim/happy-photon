@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -62,6 +63,46 @@ public sealed class LensPickerControlTests : IDisposable
                 optics.FindControl<TextBlock>("LensSourceText")!.Text);
         }
         ShowcaseTestHelper.Capture(scene, scope, new PixelSize(800, 500), ThemeVariant.Dark);
+        optics.DataContext = null;
+    }
+
+    [AvaloniaFact]
+    public async Task PickerStaysInsideNarrowPaneAndTrimsLongNames()
+    {
+        const string longName =
+            "Sigma 100-300mm f/4 APO EX DG HSM + Kenko Teleplus PRO 300 AF 1.4x DGX extender";
+        using var catalog = await _fx.CreateCatalogAsync();
+        await using var vm = _fx.CreateViewModel(catalog, new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask);
+        vm.ApplyLensPrescription(true, new LensPrescriptionSummary(
+            longName, "LENSFUN", true, true, true)
+        {
+            IsManual = true,
+            Camera = "Nikon D750",
+            CompatibleLenses = [longName, LensA]
+        });
+        vm.LensProfileOverride = longName;
+        var optics = new LensEditGroup { DataContext = vm };
+        var window = new Window { Width = 240, Height = 320, Content = optics };
+        using var scope = new TestUiScope(window, ThemeVariant.Dark);
+        Dispatcher.UIThread.RunJobs();
+        var picker = optics.FindControl<ComboBox>("LensPicker")!;
+        Assert.True(Equals(longName, picker.SelectedItem),
+            $"selected='{picker.SelectedItem}' override='{vm.LensProfileOverride}' name='{vm.SelectedLensName}' items={picker.ItemCount}");
+        Assert.True(picker.Bounds.Width <= 240, $"picker width {picker.Bounds.Width}");
+        Assert.True(optics.DesiredSize.Width <= 240, $"group width {optics.DesiredSize.Width}");
+        Assert.Equal(longName, ToolTip.GetTip(picker));
+
+        picker.IsDropDownOpen = true;
+        Dispatcher.UIThread.RunJobs();
+        var row = Assert.IsType<ComboBoxItem>(picker.ContainerFromIndex(1));
+        var text = row.GetVisualDescendants().OfType<TextBlock>().Single();
+        Assert.Equal(longName, ToolTip.GetTip(text));
+        Assert.True(text.MaxWidth < picker.Bounds.Width, $"row text max {text.MaxWidth}");
+        Assert.True(text.Bounds.Width <= text.MaxWidth, $"row text width {text.Bounds.Width}");
+        picker.IsDropDownOpen = false;
+        Dispatcher.UIThread.RunJobs();
+        ShowcaseTestHelper.Capture("optics-picker-narrow", scope, new PixelSize(240, 320), ThemeVariant.Dark);
         optics.DataContext = null;
     }
 

@@ -58,8 +58,9 @@ see the distributor's [brand information](https://rokinon.com/pages/about-us) an
 [20mm specification](https://rokinon.com/products/20mm-f1-8-full-frame-wide-angle).
 These are curated identity equivalences, not new measured calibrations.
 
-Develop's Optics picker offers Automatic followed by sorted mount-compatible logical
-Lensfun names. Numeric-suffix and crop-factor variants consolidate into one choice;
+Develop's Optics picker offers Automatic followed by mount-compatible logical Lensfun
+names, the camera maker's own lenses first and every name carrying its maker (Lensfun
+omits it from some model strings). Numeric-suffix and crop-factor variants consolidate into one choice;
 manual selection uses the automatic matcher's crop ranking. The shared database
 memoizes choices per matched camera during decode, and the summary references that
 list. No UI lookup or second database instance is involved. Non-monochrome RAWs carry

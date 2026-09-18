@@ -20,13 +20,30 @@ internal sealed partial class LensfunDatabase
             var mounts = CompatibleMounts(matched.Mount);
             return Array.AsReadOnly(_lenses.Where(lens => lens.Mounts.Any(mounts.Contains))
                 .GroupBy(PrimaryIdentityKey)
-                .Select(group => group.Select(lens => lens.VariantModelKey == null
-                    ? lens.Model
-                    : lens.Model.TrimEnd()[..lens.Model.TrimEnd().LastIndexOfAny([' ', '\t'])])
-                    .Order(StringComparer.Ordinal).First())
-                .Order(StringComparer.Ordinal).ToArray());
+                .Select(group => (
+                    Name: group.Select(DisplayName)
+                        .Order(StringComparer.OrdinalIgnoreCase).First(),
+                    OwnMaker: group.Any(lens =>
+                        MakerMatches(lens.MakerKey, matched.MakerKey))))
+                .OrderBy(item => item.OwnMaker ? 0 : 1)
+                .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(item => item.Name)
+                .ToArray());
         });
         return ($"{camera.Maker} {camera.Model}", lenses);
+    }
+
+    // Menu names always carry the maker: Lensfun omits it from some model
+    // strings (most Sigma entries), and the matcher accepts either form.
+    private static string DisplayName(LensfunLens lens)
+    {
+        var model = lens.Model.TrimEnd();
+        if (lens.VariantModelKey != null)
+            model = model[..model.LastIndexOfAny([' ', '\t'])].TrimEnd();
+        return lens.MakerTokens.Count == 0 ||
+            lens.MakerTokens.Overlaps(Tokenize(model))
+            ? model
+            : $"{lens.Maker.Trim()} {model}";
     }
 
     private LensfunCamera[] MatchingCameras(string make, string model)
