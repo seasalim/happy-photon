@@ -32,7 +32,9 @@ internal sealed record CullPerfGateFile(
     Dictionary<string, string> FixtureHashes,
     CullPerfMetric[] Metrics,
     CullPerfWorkload[] Workloads,
-    string[]? KnownMissingEvidence = null);
+    string[]? KnownMissingEvidence = null,
+    double RegressionFloorMs = 0,
+    int RegressionMinimumSamples = 1);
 
 internal sealed record CullPerfSample(long OperationId, double Value);
 

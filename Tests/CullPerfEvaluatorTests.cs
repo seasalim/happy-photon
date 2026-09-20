@@ -43,6 +43,22 @@ public sealed class CullPerfEvaluatorTests
         AssertInconclusive(CullPerfEvaluator.Evaluate(Gates(), "gate-hash", [Fragment(), Fragment()]));
     }
 
+    [Fact]
+    public void BaselineComparison_UsesAbsoluteAndSampleFloors()
+    {
+        var gates = Gates() with { RegressionFloorMs = 1.0, RegressionMinimumSamples = 20,
+            Metrics = [new("feedback", "p95", 1, 50, true)] };
+        var tiny = CullPerfEvaluator.Evaluate(gates, "gate-hash", [Fragment(0.3)], [Fragment(0.2)]);
+        Assert.Equal(CullPerfVerdict.Pass, tiny.Verdict);
+        var thin = CullPerfEvaluator.Evaluate(gates, "gate-hash", [Fragment(48, 5)], [Fragment(40, 5)]);
+        var thinGate = Assert.Single(thin.Gates, gate => gate.MetricId.EndsWith(".regression"));
+        Assert.Equal(CullPerfVerdict.Pass, thinGate.Verdict);
+        Assert.Contains("sample floor", thinGate.Reason);
+        Assert.Equal(48, thinGate.After);
+        var real = CullPerfEvaluator.Evaluate(gates, "gate-hash", [Fragment(45)], [Fragment(40)]);
+        Assert.Equal(CullPerfVerdict.Fail, real.Verdict);
+    }
+
     [Theory]
     [InlineData("missing-events")]
     [InlineData("skipped")]
@@ -226,9 +242,9 @@ public sealed class CullPerfEvaluatorTests
         [new("feedback", "p95", 100, 50, true)],
         [new("loupe-steady", "loupe", "steady", "jpeg", "default", "matched", 100, ["feedback"])]);
 
-    private static CullPerfFragment Fragment(double value = 40) => new(
+    private static CullPerfFragment Fragment(double value = 40, int samples = 100) => new(
         "loupe-steady", "gate-hash", "test-host", new() { ["jpeg"] = "fixture-hash" },
         "matched", true, false, 0, 100, 100, 0, 0, 0, [],
-        new() { ["feedback"] = Enumerable.Range(1, 100).Select(id => new CullPerfSample(id, value)).ToArray() },
+        new() { ["feedback"] = Enumerable.Range(1, samples).Select(id => new CullPerfSample(id, value)).ToArray() },
         new());
 }

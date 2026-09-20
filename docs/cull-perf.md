@@ -172,7 +172,10 @@ pending axes despite immediate feedback and a drained writer.
 ## Reviewing and comparing results
 
 Comparison requires the same gate hash, fixture hashes, machine identity and
-cache condition. Foreground metrics also enforce candidate ≤ baseline × 1.10.
+cache condition. Foreground metrics enforce candidate ≤ max(baseline × 1.10,
+baseline + `regressionFloorMs`), and a metric with fewer than
+`regressionMinimumSamples` samples on either side is reported, not gated: a
+percentage alone flagged sub-millisecond spans and single samples as regressions.
 A named baseline with missing, null, empty, or unreadable fragments is inconclusive
 with the reason "Baseline evidence unreadable".
 Missing/skipped cases, missing fragments, lost events, insufficient samples,

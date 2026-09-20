@@ -4,6 +4,8 @@
   "overheadObservation": "PreviewImage PropertyChanged with Histogram present; the identical observer is used on both sides",
   "id": "cullperf-dwell-1",
   "maximumForegroundRegression": 0.1,
+  "regressionFloorMs": 1.0,
+  "regressionMinimumSamples": 20,
   "fixtureHashes": {
     "legacy-jpeg": "bcc8f43999e4881575df3fca8b04abdf12c03ff9d51e1eb1b26345f14608e34b",
     "legacy-raw": "8cbb84e04d93b005fe082da9c954122a612b5281af00aa088d767850f343fd38",

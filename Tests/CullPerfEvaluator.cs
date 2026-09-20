@@ -47,7 +47,7 @@ internal static class CullPerfEvaluator
                     metric.Maximum == null ? "Report only." : passed ? "Within threshold." : "Threshold exceeded.",
                     statistics, metric.Maximum, After: after));
                 if (baseline != null)
-                    results.Add(Compare(gates, gateHash, workload, metric, fragment, baseline, after));
+                    results.Add(Compare(gates, gateHash, workload, metric, fragment, baseline, after, statistics.Count));
             }
         }
         if (gates.Workloads.Length == 0 || gates.Metrics.Length == 0)
@@ -110,7 +110,8 @@ internal static class CullPerfEvaluator
         CullPerfMetric metric,
         CullPerfFragment candidate,
         IReadOnlyList<CullPerfFragment> baseline,
-        double after)
+        double after,
+        int afterCount)
     {
         var id = metric.Id + (metric.Foreground ? ".regression" : ".comparison");
         var matches = baseline.Where(fragment => fragment.WorkloadId == workload.Id).ToArray();
@@ -130,7 +131,13 @@ internal static class CullPerfEvaluator
         var before = statistics.Select(metric.Statistic);
         if (!metric.Foreground)
             return new(workload.Id, id, CullPerfVerdict.Pass, "Report-only baseline comparison.", Before: before, After: after);
-        var maximum = before * (1 + gates.MaximumForegroundRegression);
+        // A percentage alone gates on noise for sub-millisecond spans and single
+        // samples, so the allowance is the larger of the rate and an absolute floor,
+        // and thin samples are reported rather than gated.
+        var maximum = Math.Max(before * (1 + gates.MaximumForegroundRegression), before + gates.RegressionFloorMs);
+        if (statistics.Count < gates.RegressionMinimumSamples || afterCount < gates.RegressionMinimumSamples)
+            return new(workload.Id, id, CullPerfVerdict.Pass, "Below the regression sample floor; reported, not gated.",
+                Threshold: maximum, Before: before, After: after);
         return new(workload.Id, id, after <= maximum ? CullPerfVerdict.Pass : CullPerfVerdict.Fail,
             after <= maximum ? "Within foreground regression allowance." : "Foreground regression exceeded.",
             Threshold: maximum, Before: before, After: after);
