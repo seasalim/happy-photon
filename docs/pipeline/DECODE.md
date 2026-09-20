@@ -354,8 +354,10 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
     resolution, base decode, and fresh render replace or confirm it (no flash of
     nothing). Cache paint itself never opens an embedded profile or hydrates a source.
   - Existing atomic-write, bounded-channel, drop-oldest, 2 s drain rules all carry over.
-  - A settled Develop selection may warm one neighbor in the inferred travel direction.
-    The capacity-one worker drops replacement requests while cancellation drains,
+  - A settled Develop or loupe selection warms up to five neighbors in the inferred
+    travel direction, one at a time; each warm waits for the previous entry's disk
+    handoff before decoding. The capacity-one worker drops replacement requests while
+    cancellation drains,
     skips nonlocal sources and existing matches, disposes its decoded pair after one
     1600px render, and temporarily retains only the encoded q90 entry until its queued
     disk write lands. Selection reads that entry through the same cache/outcome path;

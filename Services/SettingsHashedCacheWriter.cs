@@ -23,10 +23,12 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
     private readonly CancellationTokenSource _cancellation = new();
     private readonly Task _processingTask;
     private int _activeWrites;
+    private int _outstandingWrites;
     private int _disposed;
 
-    public int PendingWrites =>
-        _queue.Reader.Count + Volatile.Read(ref _activeWrites);
+    // Counted from enqueue until the write lands, fails, or is dropped, so a
+    // reader never sees zero while a write is merely between queue and hand.
+    public int PendingWrites => Volatile.Read(ref _outstandingWrites);
     internal int WriterInHandCount => Volatile.Read(ref _activeWrites);
 
     public SettingsHashedCacheWriter(
@@ -54,7 +56,11 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
                 SingleReader = true,
                 SingleWriter = false
             },
-            dropped => dropped.Image.Dispose());
+            dropped =>
+            {
+                dropped.Image.Dispose();
+                Interlocked.Decrement(ref _outstandingWrites);
+            });
         _processingTask = Task.Run(ProcessAsync);
     }
 
@@ -122,7 +128,10 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             settingsHash,
             identity,
             image);
-        return _queue.Writer.TryWrite(write);
+        Interlocked.Increment(ref _outstandingWrites);
+        if (_queue.Writer.TryWrite(write)) return true;
+        Interlocked.Decrement(ref _outstandingWrites);
+        return false;
     }
 
     private async Task ProcessAsync()
@@ -142,6 +151,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
                 finally
                 {
                     Interlocked.Decrement(ref _activeWrites);
+                    Interlocked.Decrement(ref _outstandingWrites);
                 }
             }
         }
@@ -150,7 +160,11 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         }
         finally
         {
-            while (_queue.Reader.TryRead(out var pending)) pending.Image.Dispose();
+            while (_queue.Reader.TryRead(out var pending))
+            {
+                pending.Image.Dispose();
+                Interlocked.Decrement(ref _outstandingWrites);
+            }
         }
     }
 

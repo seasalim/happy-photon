@@ -30,6 +30,10 @@
                    IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
                    Stretch="Uniform" Margin="10"
                    RenderOptions.BitmapInterpolationMode="LowQuality"/>
+            <TextBlock Text="Loading preview…"
+                       IsVisible="{Binding ShowDevelopLoadingMessage}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextMuted}" FontSize="11"/>
             <views:ZoomPanControl x:Name="ZoomPanControl"
                                   Source="{Binding PreviewImage}"
                                   DisplayTransform="{Binding DisplayTransform}"

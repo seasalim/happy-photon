@@ -580,13 +580,18 @@ threading and ownership view:
   bitmap-only. Painting either cache outcome never opens an embedded profile or
   hydrates a source, and availability is rechecked immediately before every profile
   content open.
-- After a settled Develop paint, a capacity-one speculative worker may render the one
-  uncached local neighbor in the current travel direction. Standard images arm after
-  75 ms without selection, edit, crop, filter, folder, or mode activity. It never joins
-  the current
-  base coordinator or outcome channel: its base pair is disposed after rendering and
-  its single encoded handoff is consumed by the settings-matched cached-outcome path.
-  Selection cancels in-flight work without blocking the UI. If native cancellation is
+- After a settled Develop or loupe paint, a capacity-one speculative worker walks up to
+  five uncached local neighbors in the current travel direction, one at a time, each
+  waiting for the previous entry's disk handoff before decoding. Standard images arm
+  after 75 ms without selection, edit, crop, filter, folder, or mode activity. It never
+  joins the current base coordinator or outcome channel: its base pair is disposed after
+  rendering and its single encoded handoff is consumed by the settings-matched
+  cached-outcome path. Selection cancels in-flight work without blocking the UI, with
+  two exceptions: in the loupe, landing on the image the worker is already decoding
+  keeps that worker and the fresh render joins it while the cached read still paints
+  whatever the cache holds; on either surface, a worker whose
+  target is still within the next walk keeps going, so steady stepping does not restart
+  the buffer. A parked worker is never joined, and a cancelled one is never kept. If native cancellation is
   still draining when the current neighbor is armed, the VM retries that latest-owned
   neighbor when capacity frees; edits, availability, folder/view changes, and shutdown
   invalidate the retry.
@@ -677,7 +682,7 @@ sampler.
 | RAW sensor histogram | Preview decode worker | One visible post-Unpack pass; installed with lease analysis; full/export skip it |
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
 | Resting preview render | Threadpool, at most 2 managed workers | Parent interactive generation + decode key + resting serial; edit token cancels |
-| Adjacent preview warm | Long-running background task, capacity one | Settled Develop paint; cancel-and-drop replacement semantics; one encoded cache handoff |
+| Adjacent preview warm | Long-running background task, capacity one | Settled Develop or loupe paint; walks up to five neighbors ahead; cancel-and-drop replacement semantics; one encoded cache handoff, held until persisted |
 | Display histogram + waveform | Preview render worker, at most 2 managed workers | Exact preview BGRA8 buffer; bounded row-parallel accumulation; histogram ticks skip inactive waveform accumulation |
 | Browse histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |

@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using Avalonia.Threading;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
@@ -141,6 +142,19 @@ public partial class MainWindowViewModel
         }
     }
 
+    [ObservableProperty]
+    private bool _isDevelopPreviewLoading;
+
+    // The loupe rule for its loading message: only while nothing has painted.
+    public bool ShowDevelopLoadingMessage =>
+        IsDevelopPreviewLoading && PreviewImage == null && HasSelectedImage;
+
+    partial void OnIsDevelopPreviewLoadingChanged(bool value) =>
+        OnPropertyChanged(nameof(ShowDevelopLoadingMessage));
+
+    partial void OnPreviewImageChanged(Bitmap? value) =>
+        OnPropertyChanged(nameof(ShowDevelopLoadingMessage));
+
     private async Task LoadPreviewAsync(
         ImageFile imageFile,
         long surfaceGeneration)
@@ -152,6 +166,7 @@ public partial class MainWindowViewModel
         if (!PrepareCaptureMemberViewport(imageFile)) IsZoomFitMode = true;
         var requestCts = new CancellationTokenSource();
         _previewLoadingCts = requestCts;
+        IsDevelopPreviewLoading = true;
         var ct = requestCts.Token;
 
         try
@@ -266,6 +281,7 @@ public partial class MainWindowViewModel
             if (ReferenceEquals(_previewLoadingCts, requestCts))
             {
                 _previewLoadingCts = null;
+                IsDevelopPreviewLoading = false;
             }
 
             requestCts.Dispose();

@@ -8,6 +8,7 @@ public partial class MainWindowViewModel
 {
     private CancellationTokenSource? _loupeLoadingCts;
     private Task? _loupeLoadingTask;
+    private Task? _loupeThumbnailTask;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBrowseGridVisible))]
@@ -61,10 +62,60 @@ public partial class MainWindowViewModel
         };
         LoupePane = pane;
         _loupeLoadingCts = new CancellationTokenSource();
-        _loupeLoadingTask = LoadPreviewPaneAfterAsync(
-            _loupeLoadingTask, pane,
-            () => IsLoupeMode && ReferenceEquals(LoupePane, pane),
-            _loupeLoadingCts.Token);
+        // The thumbnail pump is paused in the loupe, so an image beyond the
+        // grid's window has no thumbnail, and that thumbnail is all the pane
+        // can show while its preview loads. Fetch it directly.
+        if (image.Thumbnail == null)
+        {
+            _loupeThumbnailTask = TrackDirectThumbnailOperation(
+                LoadLoupeThumbnailAsync(
+                    _loupeThumbnailTask, image, _loupeLoadingCts.Token));
+        }
+        Func<bool> isActive = () => IsLoupeMode && ReferenceEquals(LoupePane, pane);
+        _loupeLoadingTask = WarmAfterLoupeLoadAsync(
+            LoadPreviewPaneAfterAsync(
+                _loupeLoadingTask, pane, isActive, _loupeLoadingCts.Token),
+            pane, isActive, _loupeLoadingCts.Token);
+    }
+
+    // Serialized like the pane loads, latest selection wins: a source read
+    // cannot see cancellation until it returns, so holding an arrow key must
+    // not stack them. Loupe steps never move the grid window that enforces
+    // the thumbnail budget either, so each load settles the budget itself,
+    // keeping the selected image and the neighbors the walk is about to visit.
+    private async Task LoadLoupeThumbnailAsync(
+        Task? previous,
+        Models.ImageFile image,
+        CancellationToken cancellationToken)
+    {
+        if (previous != null)
+        {
+            await previous.ConfigureAwait(
+                ConfigureAwaitOptions.ContinueOnCapturedContext |
+                ConfigureAwaitOptions.SuppressThrowing);
+        }
+        if (cancellationToken.IsCancellationRequested || !IsLoupeMode ||
+            !ReferenceEquals(SelectedImage, image) || image.Thumbnail != null)
+            return;
+        await RefreshSelectedThumbnailAsync(image, cancellationToken);
+        if (!IsLoupeMode || !ReferenceEquals(SelectedImage, image)) return;
+        _thumbnailLastAccess[image] = ++_thumbnailAccessClock;
+        ReserveThumbnailResidency(UpcomingAdjacentWarmCandidates());
+    }
+
+    private async Task WarmAfterLoupeLoadAsync(
+        Task load,
+        ComparePaneViewModel pane,
+        Func<bool> isActive,
+        CancellationToken cancellationToken)
+    {
+        await load;
+        // A refinement queued behind this load schedules the warm itself.
+        if (isActive() && !cancellationToken.IsCancellationRequested &&
+            pane.Preview != null && !pane.IsRefinementQueued)
+        {
+            ScheduleAdjacentPreviewWarm(pane.Image);
+        }
     }
 
     internal void PublishLoupeRequiredDeviceLongEdge(int longEdge, bool isLoupePeekActive)
@@ -85,10 +136,13 @@ public partial class MainWindowViewModel
         }
 
         pane.IsRefinementQueued = true;
-        _loupeLoadingTask = LoadPreviewPaneRefinementAfterAsync(
-            _loupeLoadingTask, pane,
-            () => IsLoupeMode && ReferenceEquals(LoupePane, pane),
-            cancellation.Token);
+        // A 1:1 refinement is a full decode; speculative work waits for it.
+        CancelAdjacentPreviewWarm(invalidateWorker: true);
+        Func<bool> isActive = () => IsLoupeMode && ReferenceEquals(LoupePane, pane);
+        _loupeLoadingTask = WarmAfterLoupeLoadAsync(
+            LoadPreviewPaneRefinementAfterAsync(
+                _loupeLoadingTask, pane, isActive, cancellation.Token),
+            pane, isActive, cancellation.Token);
     }
 
     private void CloseLoupe()
@@ -99,6 +153,7 @@ public partial class MainWindowViewModel
         cancellation?.Cancel();
         cancellation?.Dispose();
         IsLoupeMode = false;
+        CancelAdjacentPreviewWarm(invalidateWorker: true);
         if (LoupePane != null) DisposePreviewPane(LoupePane);
         LoupePane = null;
         ReleaseFullScreenSelection();

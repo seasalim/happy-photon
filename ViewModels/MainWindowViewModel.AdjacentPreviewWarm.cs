@@ -20,13 +20,13 @@ public partial class MainWindowViewModel
         if (oldIndex >= 0 && newIndex >= 0 && oldIndex != newIndex)
             _adjacentWarmDirection = newIndex < oldIndex ? -1 : 1;
     }
-    private void ScheduleAdjacentPreviewWarm(PreviewRenderIdentity parent)
+    private bool IsAdjacentWarmSurfaceActive =>
+        (IsDevelopMode || IsLoupeMode) && !IsFullScreenMode;
+    private void ScheduleAdjacentPreviewWarm(ImageFile parent)
     {
         CancelAdjacentPreviewWarm(invalidateWorker: false);
-        if (!IsDevelopMode || IsFullScreenMode || SelectedImage == null) return;
-        var candidate = Browse.MoveVisible(
-            VisibleRepresentative(SelectedImage), _adjacentWarmDirection);
-        if (candidate == null) return;
+        if (!IsAdjacentWarmSurfaceActive || SelectedImage == null) return;
+        if (AdjacentWarmCandidate(_adjacentWarmDirection) == null) return;
         var cancellation = new CancellationTokenSource();
         _adjacentWarmCts = cancellation;
         _ = DebouncedAction.RunAsync(
@@ -36,30 +36,72 @@ public partial class MainWindowViewModel
             () => StartAdjacentPreviewWarm(parent, cancellation),
             timeProvider: _timeProvider);
     }
+    // One worker walks ahead in the travel direction, one neighbor at a time,
+    // so lingering on an image fills a buffer that a burst of steps drains.
+    private const int AdjacentWarmDepth = 5;
     private async Task StartAdjacentPreviewWarm(
-        PreviewRenderIdentity parent,
+        ImageFile parent,
         CancellationTokenSource cancellation)
     {
-        while (ReferenceEquals(_adjacentWarmCts, cancellation) &&
-               ReferenceEquals(SelectedImage, parent.ImageFile) &&
-               IsDevelopMode && !IsFullScreenMode)
+        for (var offset = 1; offset <= AdjacentWarmDepth; offset++)
         {
-            var candidate = Browse.MoveVisible(
-                VisibleRepresentative(SelectedImage), _adjacentWarmDirection);
-            if (candidate == null || ImageService.Previews.TryStartAdjacentWarm(
-                    candidate, out var blockingWorker)) return;
-            if (blockingWorker == null) return;
-            await blockingWorker.WaitAsync(cancellation.Token);
+            while (true)
+            {
+                if (!ReferenceEquals(_adjacentWarmCts, cancellation) ||
+                    !ReferenceEquals(SelectedImage, parent) ||
+                    !IsAdjacentWarmSurfaceActive)
+                    return;
+                var candidate = AdjacentWarmCandidate(
+                    _adjacentWarmDirection * offset);
+                if (candidate == null) return;
+                var active = ImageService.Previews.ActiveAdjacentWarm;
+                if (active != null)
+                {
+                    await active.WaitAsync(cancellation.Token);
+                    continue;
+                }
+                if (ImageService.Previews.TryStartAdjacentWarm(
+                        candidate, out var blockingWorker) ||
+                    blockingWorker == null)
+                    break;
+                await blockingWorker.WaitAsync(cancellation.Token);
+            }
         }
+    }
+    // Arrow keys in the loupe walk the armed selection, so the warm must too.
+    private ImageFile? AdjacentWarmCandidate(int offset)
+    {
+        if (!_isFullScreenSelectionRestricted)
+            return Browse.MoveVisible(VisibleRepresentative(SelectedImage), offset);
+        var members = GetFullScreenSelectionMembers();
+        var index = members.IndexOf(SelectedImage!);
+        var target = index + offset;
+        return index >= 0 && target >= 0 && target < members.Count
+            ? members[target]
+            : null;
     }
     private void CancelAdjacentPreviewWarm(
         bool invalidateWorker,
         bool dropRetained = false,
-        ImageFile? imageFile = null)
+        ImageFile? imageFile = null,
+        ImageFile? joinFor = null,
+        IReadOnlyList<ImageFile>? keepAheadFor = null)
     {
         CancelAndDispose(ref _adjacentWarmCts);
         if (invalidateWorker && _imageService.IsValueCreated)
             _imageService.Value.Previews.InvalidateAdjacentWarm(
-                imageFile, dropRetained);
+                imageFile, dropRetained, joinFor, keepAheadFor);
+    }
+    // The neighbors the next walk from the current selection will want.
+    private List<ImageFile> UpcomingAdjacentWarmCandidates()
+    {
+        var upcoming = new List<ImageFile>(AdjacentWarmDepth);
+        for (var offset = 1; offset <= AdjacentWarmDepth; offset++)
+        {
+            var candidate = AdjacentWarmCandidate(_adjacentWarmDirection * offset);
+            if (candidate == null) break;
+            upcoming.Add(candidate);
+        }
+        return upcoming;
     }
 }

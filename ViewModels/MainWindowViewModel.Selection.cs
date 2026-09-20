@@ -13,10 +13,22 @@ public partial class MainWindowViewModel
         KeepCaptureMemberViewportOnlyFor(newValue);
         NotifyCaptureMemberStateChanged();
         ResetBeforeAfterRender();
-        if (!IsCompareMode && !IsLoupeMode)
+        if (!IsCompareMode)
         {
-            UpdateAdjacentWarmDirection(oldValue, newValue);
-            CancelAdjacentPreviewWarm(invalidateWorker: true);
+            // A programmatic re-anchor into the armed selection is not travel.
+            if (!_suppressSelectionPreviewLoad)
+                UpdateAdjacentWarmDirection(oldValue, newValue);
+            // In the loupe, landing on the image being warmed lets that decode
+            // finish and the cached read waits for it. Develop decodes the
+            // selection for editing regardless, so there it cancels. A worker
+            // on an image still ahead keeps going on both surfaces: stepping
+            // at a steady pace must not restart the buffer every time.
+            CancelAdjacentPreviewWarm(
+                invalidateWorker: true,
+                joinFor: IsLoupeMode ? newValue : null,
+                keepAheadFor: IsAdjacentWarmSurfaceActive
+                    ? UpcomingAdjacentWarmCandidates()
+                    : null);
         }
         var surfaceGeneration = ReserveRenderOutcome(
             PreviewSurfaceIntent.Edited,

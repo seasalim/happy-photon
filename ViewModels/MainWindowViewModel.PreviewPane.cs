@@ -34,7 +34,9 @@ public partial class MainWindowViewModel
 
             using var fresh = await ImageService.Previews.LoadComparePreviewAsync(
                 pane.Image,
-                pane.Image.EditSettings, cancellationToken: cancellationToken);
+                pane.Image.EditSettings,
+                cancellationToken: cancellationToken,
+                joinAdjacentWarm: true);
             if (fresh != null)
             {
                 ImageServiceHelpers.LogDisplayTrace(

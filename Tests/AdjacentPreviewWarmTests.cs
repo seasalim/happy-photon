@@ -419,7 +419,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
 
         public bool CanLoad(ImageFile file) => true;
 
-        public BaseImage? LoadFullBase(
+        public virtual BaseImage? LoadFullBase(
             ImageFile file,
             BaseDecodeSettings decode,
             CancellationToken cancellationToken) =>
@@ -478,6 +478,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
     private sealed class AdjacentBlockingLoader(string target) : RecordingLoader
     {
         public ManualResetEventSlim Started { get; } = new();
+        public int Attempts;
 
         public override BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
             ImageFile file,
@@ -486,6 +487,7 @@ public sealed partial class AdjacentPreviewWarmTests : IDisposable
         {
             if (file.FileName == target)
             {
+                Interlocked.Increment(ref Attempts);
                 Started.Set();
                 cancellationToken.WaitHandle.WaitOne();
                 cancellationToken.ThrowIfCancellationRequested();

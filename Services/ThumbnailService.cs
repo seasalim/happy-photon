@@ -57,12 +57,19 @@ public class ThumbnailService : IAsyncDisposable
             allowUndersizedCachePlaceholder: true,
             cancellationToken);
 
+    // Test seam: holds every thumbnail load before it touches a source.
+    internal Func<Task>? SourceLoadGateAsync { get; set; }
+
     internal async Task<ThumbnailLoadResult> LoadThumbnailAsync(
         ImageFile imageFile,
         ThumbnailSizeRequest request,
         bool allowUndersizedCachePlaceholder,
         CancellationToken cancellationToken = default)
     {
+        if (SourceLoadGateAsync is { } gate)
+        {
+            await gate().ConfigureAwait(false);
+        }
         var settings = imageFile.EditSettings.Clone();
         if (imageFile.IsRaw && settings.HasEdits)
         {

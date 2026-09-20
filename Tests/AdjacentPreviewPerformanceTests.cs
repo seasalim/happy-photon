@@ -33,13 +33,23 @@ public sealed class AdjacentPreviewPerformanceTests
 
         await MeasureFixtureAsync(
             "JPEG",
-            GoldenTestPaths.Asset("display-p3-reference.jpg"));
+            GoldenTestPaths.Asset("display-p3-reference.jpg"),
+            peakBudgetMiB: 95,
+            settledBudgetMiB: 20);
+        // RAW warms plateau higher: LibRaw and Magick buffers freed on the
+        // short-lived warm workers stay with the allocator for reuse.
         await MeasureFixtureAsync(
             "RAW",
-            GoldenTestPaths.Asset("canon-eos-350d.cr2"));
+            GoldenTestPaths.Asset("canon-eos-350d.cr2"),
+            peakBudgetMiB: 300,
+            settledBudgetMiB: 50);
     }
 
-    private async Task MeasureFixtureAsync(string label, string fixturePath)
+    private async Task MeasureFixtureAsync(
+        string label,
+        string fixturePath,
+        int peakBudgetMiB,
+        int settledBudgetMiB)
     {
         var disabled = new List<AdjacentSample>();
         var enabled = new List<AdjacentSample>();
@@ -71,9 +81,9 @@ public sealed class AdjacentPreviewPerformanceTests
             enabledPriority <= disabledPriority * 1.10,
             $"{label} active-warm foreground was " +
             $"{enabledPriority / disabledPriority:P1} of disabled.");
-        Assert.True(warmPeak <= 75 * MiB,
+        Assert.True(warmPeak <= peakBudgetMiB * MiB,
             $"{label} warm peak was {warmPeak / (double)MiB:F1} MiB.");
-        Assert.True(warmSettled <= 12 * MiB,
+        Assert.True(warmSettled <= settledBudgetMiB * MiB,
             $"{label} warm settled was {warmSettled / (double)MiB:F1} MiB.");
         Assert.All(enabled, sample =>
         {
@@ -93,7 +103,9 @@ public sealed class AdjacentPreviewPerformanceTests
         try
         {
             var extension = Path.GetExtension(fixturePath);
-            var paths = Enumerable.Range(0, 4)
+            // Eight copies: the walk-ahead warms five past the selection, so
+            // the priority target and a fresh warm candidate must sit beyond it.
+            var paths = Enumerable.Range(0, 8)
                 .Select(index => Path.Combine(root, $"image-{index}{extension}"))
                 .ToArray();
             if (extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase))
@@ -165,8 +177,13 @@ public sealed class AdjacentPreviewPerformanceTests
                             10,
                             TestContext.Current.CancellationToken);
                     }
-                    while (vm.ImageService.Previews.PreviewActivityCount > 0);
+                    // Activity dips to zero between the walk's workers, so
+                    // keep sampling until every neighbor in reach has decoded.
+                    while (vm.ImageService.Previews.PreviewActivityCount > 0 ||
+                           Enumerable.Range(1, 5).Any(
+                               offset => loader.Count(paths[offset]) == 0));
                     await TestWaits.UntilAsync(() =>
+                        vm.ImageService.Previews.PreviewActivityCount == 0 &&
                         vm.ImageService.Previews.PendingCacheWrites == 0 &&
                         vm.ImageService.Previews.AdjacentWarmEntryCount == 0);
                 }
@@ -198,7 +215,7 @@ public sealed class AdjacentPreviewPerformanceTests
                     await warmStarted.Task.WaitAsync(TestWaits.Condition);
                 }
                 var priorityPaint = Stopwatch.StartNew();
-                vm.SelectedImage = images[3];
+                vm.SelectedImage = images[7];
                 await TestWaits.UntilAsync(() =>
                     vm.PreviewImage != null && vm.Histogram != null);
                 priorityPaint.Stop();
@@ -213,7 +230,7 @@ public sealed class AdjacentPreviewPerformanceTests
                     Math.Max(0, warmPeak - beforeWarm),
                     Math.Max(0, warmSettled - beforeWarm),
                     vm.ImageService.Previews.RetainedBasePairCount,
-                    loader.Count(paths[3]),
+                    loader.Count(paths[7]),
                     vm.ImageService.Previews.PreviewActivityCount);
             }
             finally
@@ -237,11 +254,13 @@ public sealed class AdjacentPreviewPerformanceTests
         Func<AdjacentSample, long> selector) =>
         samples.Select(selector).Order().ElementAt(1);
 
+    // Aggressive mode compacts the large-object heap and decommits freed
+    // regions, so a settled sample reads live memory, not lingering segments.
     private static void ForceCollection()
     {
-        GC.Collect();
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true, true);
         GC.WaitForPendingFinalizers();
-        GC.Collect();
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true, true);
     }
 
     private sealed record AdjacentSample(

@@ -4,6 +4,17 @@ using static HappyPhoton.Services.ImageServiceHelpers;
 
 namespace HappyPhoton.Tests;
 
+// The display-trace override is process-wide: any test painting a preview
+// while it is on writes into this test's file, so nothing may run alongside.
+public static class DisplayTraceTestCollection
+{
+    public const string Name = "DisplayTraceTests";
+}
+
+[CollectionDefinition(DisplayTraceTestCollection.Name, DisableParallelization = true)]
+public sealed class DisplayTraceTestCollectionDefinition;
+
+[Collection(DisplayTraceTestCollection.Name)]
 public sealed class ImageServiceLoggingTests
 {
     [Fact]

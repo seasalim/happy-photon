@@ -265,6 +265,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         NotifySelectedImageEditStateChanged();
         OnPropertyChanged(nameof(IsDevelopEmptyStateVisible));
+        OnPropertyChanged(nameof(ShowDevelopLoadingMessage));
     }
 
     private void NotifySelectedImageEditStateChanged()

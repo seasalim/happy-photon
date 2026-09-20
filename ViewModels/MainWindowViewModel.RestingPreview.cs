@@ -103,7 +103,7 @@ public partial class MainWindowViewModel
         _restingEditCancellationRegistration = editDebounce.Token.Register(
             () => InvalidateRestingParent(identity));
         ScheduleRestingRender();
-        if (scheduleAdjacentWarm) ScheduleAdjacentPreviewWarm(identity);
+        if (scheduleAdjacentWarm) ScheduleAdjacentPreviewWarm(identity.ImageFile);
     }
 
     // Never hand out a cancelled edit-debounce source: registering on a
