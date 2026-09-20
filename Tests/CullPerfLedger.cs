@@ -35,6 +35,16 @@ internal static class CullPerfLedger
             operations[input.Id] = receipt.OperationId;
             Add("input-receipt-ms", input, receipt.Timestamp);
             if (receipt.Kind == "NoOp") { noOp++; continue; }
+            foreach (var start in events.Where(item => item.Kind == "CacheEnqueueStart" &&
+                item.WorkerId == receipt.WorkerId && item.Timestamp >= receipt.Timestamp && item.Timestamp < next))
+            {
+                var end = events.FirstOrDefault(item => item.Kind == "CacheEnqueueEnd" &&
+                    item.OperationId == start.OperationId);
+                if (end.Timestamp == 0) { failures.Add("Unclosed cache enqueue span."); continue; }
+                if (!samples.TryGetValue("ui-enqueue-ms", out var spans)) samples["ui-enqueue-ms"] = spans = [];
+                spans.Add(new(start.OperationId, Stopwatch.GetElapsedTime(start.Timestamp, end.Timestamp).TotalMilliseconds));
+            }
+
             var selection = events.FirstOrDefault(item => item.Kind == "Selection" &&
                 item.OperationId == receipt.OperationId);
             var matching = events.Where(item => item.Timestamp >= receipt.Timestamp &&

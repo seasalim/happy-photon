@@ -39,7 +39,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
             preview!.Dispose();
             await thumbnailCreated.Task.WaitAsync(TestWaits.Condition);
 
-            using var promoted = service.TryPromoteRenderedThumbnail(file, settings);
+            using var promoted = await service.TryPromoteRenderedThumbnailAsync(file, settings);
             Assert.NotNull(promoted);
             Assert.Equal(192, promoted!.PixelSize.Width);
             Assert.Equal(128, promoted.PixelSize.Height);
@@ -49,8 +49,8 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
                 BitmapConversionService.CopyBgraPixels(promoted));
 
             var other = new ImageFile(file.FilePath) { CatalogId = file.CatalogId };
-            Assert.Null(service.TryPromoteRenderedThumbnail(other, settings));
-            Assert.Null(service.TryPromoteRenderedThumbnail(
+            Assert.Null(await service.TryPromoteRenderedThumbnailAsync(other, settings));
+            Assert.Null(await service.TryPromoteRenderedThumbnailAsync(
                 file,
                 new EditSettings { Exposure = 1 }));
 
@@ -212,7 +212,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
 
             Assert.NotNull(cached);
             Assert.False(cached!.SettingsMatch);
-            Assert.Null(service.TryPromoteRenderedThumbnail(file, settings));
+            Assert.Null(await service.TryPromoteRenderedThumbnailAsync(file, settings));
             Assert.Equal(0, loader.LoadCount);
         }
     }
@@ -235,7 +235,7 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
 
             Assert.NotNull(preview);
             Assert.Null(service.GetRetainedThumbnailReference());
-            Assert.Null(service.TryPromoteRenderedThumbnail(file, settings));
+            Assert.Null(await service.TryPromoteRenderedThumbnailAsync(file, settings));
             preview?.Dispose();
         }
     }
@@ -291,6 +291,34 @@ public sealed class PreviewRenderedThumbnailTests : IDisposable
         }
     }
 
+    [WindowsFact]
+    public async Task CreatedEventObservesPublishedThumbnailAcrossReplacements()
+    {
+        _fixture.RequireWindows();
+        var (catalog, file) = await CreateFileAsync("publication.dng");
+        using (catalog)
+        {
+            await using var service = CreateService(catalog, new CountingSolidLoader(isRaw: true));
+            for (var iteration = 0; iteration < 30; iteration++)
+            {
+                var published = new TaskCompletionSource<WeakReference<Bitmap>?>(
+                    TaskCreationOptions.RunContinuationsAsynchronously);
+                void Observe() => published.TrySetResult(service.GetRetainedThumbnailReference());
+                service.RenderedThumbnailCreated += Observe;
+                try
+                {
+                    var (preview, _) = await service.ApplyEditsToPreviewAsync(
+                        file, new EditSettings { Exposure = 0.25 + iteration * 0.01 }, skipHistogram: true);
+                    using var owned = preview;
+                    var retained = await published.Task.WaitAsync(TestWaits.Condition);
+                    Assert.NotNull(retained);
+                    Assert.True(retained.TryGetTarget(out var thumbnail));
+                    Assert.True(thumbnail.PixelSize.Width > 0);
+                }
+                finally { service.RenderedThumbnailCreated -= Observe; }
+            }
+        }
+    }
     private async Task<(CatalogService Catalog, ImageFile File)> CreateFileAsync(
         string name)
     {

@@ -148,19 +148,19 @@ public class ImageService : IAsyncDisposable
             allowUndersizedCachePlaceholder: true,
             cancellationToken);
 
-    internal Task<ThumbnailLoadResult> LoadThumbnailAsync(
+    internal async Task<ThumbnailLoadResult> LoadThumbnailAsync(
         ImageFile imageFile,
         ThumbnailSizeRequest request,
         bool allowUndersizedCachePlaceholder,
         CancellationToken cancellationToken)
     {
-        var promoted = _previewService.TryPromoteRenderedThumbnail(
+        var promoted = await _previewService.TryPromoteRenderedThumbnailAsync(
             imageFile,
             imageFile.EditSettings,
-            request);
+            request, cancellationToken).ConfigureAwait(false);
         return promoted != null
-            ? Task.FromResult(ThumbnailLoadResult.Loaded(promoted, request))
-            : _thumbnailService.LoadThumbnailAsync(
+            ? ThumbnailLoadResult.Loaded(promoted, request)
+            : await _thumbnailService.LoadThumbnailAsync(
                 imageFile,
                 request,
                 allowUndersizedCachePlaceholder,

@@ -13,7 +13,13 @@ public sealed partial class PreviewService : IAsyncDisposable
     internal CullPerfRecorder? CullPerf
     {
         get;
-        set { field = value; _previewCache.CullPerf = value; _renderedThumbnailCache.CullPerf = value; }
+        set
+        {
+            field = value;
+            _previewCache.CullPerf = value;
+            _renderedThumbnailCache.CullPerf = value;
+            _baseCoordinator.CullPerf = value;
+        }
     }
     private readonly CatalogService _catalogService;
     private readonly PreviewCacheService _previewCache;
@@ -224,6 +230,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                 CreateRenderedThumbnailAsync(
                     thumbnailSource,
                     thumbnailDimension));
+            TrackRenderedThumbnailTask(NotifyRenderedThumbnailWhenReadyAsync(_lastRendered));
         }
         DisposeRenderedPreviewWhenReady(previous);
     }
@@ -259,8 +266,8 @@ public sealed partial class PreviewService : IAsyncDisposable
                 leaving = _lastRendered;
                 _lastRendered = null;
             }
-            Queue(leaving);
         }
+        Queue(leaving);
     }
 
     public void FlushRenderedPreviewCache() =>
@@ -283,8 +290,8 @@ public sealed partial class PreviewService : IAsyncDisposable
             {
                 rendered = _lastRendered;
                 _lastRendered = null;
-                Queue(rendered);
             }
+            Queue(rendered);
         }
         if (retireBase)
         {
@@ -301,24 +308,12 @@ public sealed partial class PreviewService : IAsyncDisposable
 
         var bitmap = rendered.DetachStrongBitmap();
         var ownsBitmap = bitmap != null;
-        if ((bitmap != null || rendered.Bitmap.TryGetTarget(out bitmap)) &&
-            rendered.Identity != null)
+        if (bitmap != null || rendered.Bitmap.TryGetTarget(out bitmap))
         {
-            try
-            {
-                _previewCache.QueueSaveToCache(
-                    rendered.ImageFile,
-                    bitmap,
-                    rendered.SettingsHash,
-                    rendered.Identity.CacheIdentity);
-            }
-            finally
-            {
-                if (ownsBitmap)
-                {
-                    bitmap.Dispose();
-                }
-            }
+            _previewCache.QueueSaveToCache(
+                rendered.ImageFile, bitmap, rendered.SettingsHash,
+                rendered.Identity?.CacheIdentity ?? default,
+                rendered.Identity?.SourceWriteTime, ownsBitmap);
         }
         QueueRenderedThumbnailWhenReady(rendered);
     }

@@ -404,7 +404,9 @@ Folder switches are frequent and races here caused real bugs, so ownership is ex
   session can never clear a newer folder's state.
 - Workers observe cancellation cooperatively; an in-flight decode may finish after
   cancel. A monotonically increasing folder generation rejects that result and disposes
-  its bitmap instead of assigning into stale state. Browse replacement, removal, and
+  its bitmap instead of assigning into stale state. Direct refreshes and pump loads also
+  share a per-image request generation: an older completion cannot replace a newer
+  edited thumbnail or publish its failure state. Browse replacement, removal, and
   shutdown also dispose resident bitmaps deterministically.
 
 ### The pump
@@ -609,7 +611,21 @@ threading and ownership view:
   `PreviewService` retains the result strongly and queues it to the independent
   rendered-thumbs writer on promotion or image/view leave. Shutdown waits for tracked
   candidate and queue work before draining that writer. Rendered-cache writes happen
-  on image/view leave, never per slider settle.
+  on image/view leave, never per slider settle. Bitmap enqueue transfers an owned
+  bitmap or copies its pixels into an owned byte array; conversion and source timestamp
+  re-checks run
+  on the single writer. Payload provenance comes from the retained base's decode,
+  never enqueue time; absent provenance and dropped writes are counted. Thumbnail
+  promotion snapshots under the retention lock, then resizes and enqueues on a
+  worker. Cached/warm preview reads and promotion share a cancellable capacity-two
+  gate; a completed Loupe warm entry is decoded and converted inside that worker,
+  with its live availability check preserved immediately before the read.
+  Selection detaches the held base pair and retires it on a worker. Replacement base
+  decodes await that retirement, bounding deferred pairs without blocking navigation;
+  outstanding render leases retain their existing lifetime protection. Shutdown drains
+  retirement.
+  Thumbnail-created observers run only after the completed thumbnail is retained,
+  under the same lock used to replace or clear that retained reference.
 - Resting (viewport-resolution) renders are display-only: they never advance the
   interactive render generation and never feed histograms, rendered thumbnails, or
   the q90 preview cache; edits cancel them through the preview-debounce token, and

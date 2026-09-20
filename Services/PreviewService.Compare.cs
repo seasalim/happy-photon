@@ -36,15 +36,9 @@ public sealed partial class PreviewService
             // decode the same thing twice. The cached read never waits, so a
             // stale preview paints first. Refinements never join; they need a
             // render at their own size.
-            using var warmed = await JoinAdjacentWarmAsync(
+            var warmed = await JoinAdjacentWarmAsync(
                 imageFile, snapshot, cancellationToken).ConfigureAwait(false);
-            if (warmed != null)
-            {
-                var warmBitmap = ConvertToBitmap(warmed.Image);
-                if (warmBitmap != null)
-                    return new ComparePreviewResult(
-                        warmBitmap, warmed.OriginalViewPixelSize ?? default);
-            }
+            if (warmed != null) return warmed;
         }
         var decode = await ResolveDecodeAsync(
             imageFile, snapshot, cancellationToken).ConfigureAwait(false);
@@ -115,7 +109,7 @@ public sealed partial class PreviewService
     // A warm may finish between the caller's cached read and this request,
     // so the retained entry and the disk cache are both checked after the
     // optional wait: a completed warm must never be decoded a second time.
-    private async Task<CachedPreview?> JoinAdjacentWarmAsync(
+    private async Task<ComparePreviewResult?> JoinAdjacentWarmAsync(
         ImageFile imageFile,
         EditSettings settings,
         CancellationToken cancellationToken)
@@ -125,21 +119,20 @@ public sealed partial class PreviewService
         CullPerf?.Record(activeWarm == null ? "WarmJoinMiss" : "WarmJoin", imageFile.CatalogId);
         if (activeWarm != null)
             await activeWarm.WaitAsync(cancellationToken).ConfigureAwait(false);
-        return TryLoadAdjacentWarm(imageFile, hash) ??
-            await Task.Run(() =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (!_previewCache.HasSettingsMatchedEntry(imageFile, hash))
-                    return null;
-                // An entry without its original dimensions cannot stand in
-                // for a fresh render: 1:1 zoom would inherit preview size.
-                var persisted = _previewCache.LoadRenderedPreview(imageFile);
-                if (persisted?.SettingsHash == hash &&
-                    persisted.OriginalViewPixelSize is { Width: > 0, Height: > 0 })
-                    return persisted;
-                persisted?.Dispose();
+        return await RunCacheWorkerAsync(imageFile, () =>
+        {
+            if (!CanReadAdjacentSource(imageFile)) return null;
+            CullPerf?.Record("CacheJoinDecode", imageFile.CatalogId);
+            using var cached = TryLoadAdjacentWarm(imageFile, hash) ??
+                (_previewCache.HasSettingsMatchedEntry(imageFile, hash)
+                    ? _previewCache.LoadRenderedPreview(imageFile) : null);
+            // A legacy entry cannot supply original-pixel zoom geometry.
+            if (cached?.SettingsHash != hash ||
+                cached.OriginalViewPixelSize is not { Width: > 0, Height: > 0 } size)
                 return null;
-            }, cancellationToken).ConfigureAwait(false);
+            var bitmap = ConvertToBitmap(cached.Image);
+            return bitmap == null ? null : new ComparePreviewResult(bitmap, size);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     private static PreviewCacheIdentity CreatePreviewCacheIdentity(

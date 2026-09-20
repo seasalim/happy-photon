@@ -2,6 +2,7 @@
 param(
     [string] $Baseline,
     [string] $Case,
+    [string] $GateFile = 'Tests/CullPerfGates.json',
     [switch] $NoBuild
 )
 
@@ -9,7 +10,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'CullPerf.psm1') -Force
 $repo = Split-Path -Parent $PSScriptRoot
-$gatePath = Join-Path $repo 'Tests/CullPerfGates.json'
+$gatePath = if ([IO.Path]::IsPathRooted($GateFile)) { $GateFile } else { Join-Path $repo $GateFile }
 $gate = Get-Content -LiteralPath $gatePath -Raw | ConvertFrom-Json
 $sha = (& git -C $repo rev-parse HEAD).Trim()
 if ($LASTEXITCODE) { throw 'Cannot identify candidate commit.' }
@@ -52,10 +53,10 @@ $result = [ordered]@{
     error = $null
 }
 
-function Invoke-Case([string] $Name, [string] $Project, [string] $Filter, [int] $Expected = 1) {
+function Invoke-Case([string] $Name, [string] $Project, [string] $Filter, [int] $Expected = 1, [string] $HangTimeout = '90s') {
     $directory = Join-Path $run ('trx-' + $Name)
     New-Item -ItemType Directory -Path $directory | Out-Null
-    $hangTimeout = if ($Name -eq "recording-overhead") { "5m" } else { "90s" }
+    if ($Name -eq "recording-overhead") { $HangTimeout = "5m" }
     & dotnet test (Join-Path $repo $Project) -c Release --no-build --no-restore `
         --settings (Join-Path $repo 'HappyPhoton.FullCpu.runsettings') --filter $Filter `
         --logger 'trx;LogFileName=case.trx' --results-directory $directory `
@@ -99,7 +100,8 @@ try {
                 Invoke-Case $workload.id 'Tests/HappyPhoton.Tests.csproj' 'FullyQualifiedName=HappyPhoton.Tests.AdjacentPreviewPerformanceTests.AdjacentSelectionGates_WhenEnabled'
             }
         } else {
-            Invoke-Case $workload.id 'Tests/HappyPhoton.Tests.csproj' 'FullyQualifiedName=HappyPhoton.Tests.CullPerfWorkloadTests.QualifiedWorkload'
+            $timeout = if ($workload.pattern -eq 'dwell') { '4m' } else { '90s' }
+            Invoke-Case $workload.id 'Tests/HappyPhoton.Tests.csproj' 'FullyQualifiedName=HappyPhoton.Tests.CullPerfWorkloadTests.QualifiedWorkload' -HangTimeout $timeout
         }
     }
     foreach ($check in $gate.requiredChecks) {

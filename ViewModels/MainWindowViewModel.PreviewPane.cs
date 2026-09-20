@@ -158,7 +158,7 @@ public partial class MainWindowViewModel
 
         if (source != null)
         {
-            ImageServiceHelpers.LogDisplayTrace(
+            if (ImageServiceHelpers.DisplayTraceLoggingEnabled) ImageServiceHelpers.LogDisplayTrace(
                 $"paint source={PaintSourceLabel(source.Value)} bitmap={bitmap.PixelSize.Width}x{bitmap.PixelSize.Height} luma={BitmapConversionService.EstimateMeanLuma(bitmap):F4} decode=pane settings=pane");
         }
         var previous = pane.Preview;

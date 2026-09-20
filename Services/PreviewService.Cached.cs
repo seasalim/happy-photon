@@ -5,6 +5,27 @@ namespace HappyPhoton.Services;
 
 public sealed partial class PreviewService
 {
+    private readonly SemaphoreSlim _cacheDecodeGate = new(2, 2);
+    internal Func<Task>? CacheDecodeGateAsync { get; set; }
+
+    private async Task<T> RunCacheWorkerAsync<T>(ImageFile imageFile,
+        Func<T> work, CancellationToken cancellationToken)
+    {
+        await _cacheDecodeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return await Task.Run(async () =>
+            {
+                if (CacheDecodeGateAsync is { } gate) await gate().ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
+                var operation = CullPerf?.Record("CacheDecodeStart", imageFile.CatalogId, operation: -1) ?? 0;
+                try { return work(); }
+                finally { CullPerf?.Record("CacheDecodeEnd", imageFile.CatalogId, operation: operation); }
+            }, cancellationToken).ConfigureAwait(false);
+        }
+        finally { _cacheDecodeGate.Release(); }
+    }
+
     public Task<CachedPreviewBitmap?> LoadCachedPreviewAsync(
         ImageFile imageFile,
         EditSettings settings,
@@ -25,7 +46,7 @@ public sealed partial class PreviewService
         {
             await gate().ConfigureAwait(false);
         }
-        return await Task.Run(() =>
+        return await RunCacheWorkerAsync(imageFile, () =>
         {
             try
             {

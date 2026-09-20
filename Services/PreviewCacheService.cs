@@ -122,15 +122,18 @@ public sealed class PreviewCacheService : IAsyncDisposable
     public void QueueSaveToCache(
         ImageFile imageFile,
         Bitmap bitmap,
-        string settingsHash) =>
-        _writer.Queue(imageFile, bitmap, settingsHash);
+        string settingsHash,
+        DateTime? sourceWriteTime = null) =>
+        _writer.Queue(imageFile, bitmap, settingsHash, sourceWriteTime: sourceWriteTime);
 
     internal void QueueSaveToCache(
         ImageFile imageFile,
         Bitmap bitmap,
         string settingsHash,
-        PreviewCacheIdentity identity) =>
-        _writer.Queue(imageFile, bitmap, settingsHash, identity);
+        PreviewCacheIdentity identity,
+        DateTime? sourceWriteTime,
+        bool ownsBitmap) =>
+        _writer.Queue(imageFile, bitmap, settingsHash, identity, sourceWriteTime, ownsBitmap);
 
     public ValueTask DisposeAsync() => _writer.DisposeAsync();
 

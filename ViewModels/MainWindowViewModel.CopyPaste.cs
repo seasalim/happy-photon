@@ -314,13 +314,16 @@ public partial class MainWindowViewModel
     private async Task RefreshThumbnailAsync(ImageFile image)
     {
         var sizeGeneration = Volatile.Read(ref _thumbnailSizeGeneration);
+        var requestState = _thumbnailRequests.GetOrCreateValue(image);
+        var requestGeneration = Interlocked.Increment(ref requestState.Value);
         try
         {
             using var result = await ImageService.LoadThumbnailAsync(
                 image,
                 BrowseThumbnailRequest,
                 CancellationToken.None);
-            if (!Browse.Contains(image) ||
+            if (requestGeneration != Volatile.Read(ref requestState.Value) ||
+                !Browse.Contains(image) ||
                 sizeGeneration != Volatile.Read(ref _thumbnailSizeGeneration))
             {
                 return;
@@ -335,7 +338,8 @@ public partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            if (Browse.Contains(image)) image.ThumbnailLoadFailed = true;
+            if (requestGeneration == Volatile.Read(ref requestState.Value) &&
+                Browse.Contains(image)) image.ThumbnailLoadFailed = true;
             System.Diagnostics.Debug.WriteLine(
                 $"Thumbnail refresh failed for {image.FilePath}: {ex.Message}");
         }

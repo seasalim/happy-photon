@@ -25,6 +25,8 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
     private int _activeWrites;
     private int _outstandingWrites;
     private int _disposed;
+    private int _droppedWrites;
+    internal int DroppedWrites => Volatile.Read(ref _droppedWrites);
 
     // Counted from enqueue until the write lands, fails, or is dropped, so a
     // reader never sees zero while a write is merely between queue and hand.
@@ -59,8 +61,8 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             },
             dropped =>
             {
-                CullPerf?.Record("CacheWriteDropped", dropped.ImageId);
-                dropped.Image.Dispose();
+                Drop(dropped.ImageId);
+                (dropped.Image as IDisposable)?.Dispose();
                 Interlocked.Decrement(ref _outstandingWrites);
             });
         _processingTask = Task.Run(ProcessAsync);
@@ -78,7 +80,8 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         try
         {
             clone = new MagickImage(image);
-            if (TryQueueOwned(imageFile, clone, settingsHash, identity)) clone = null;
+            if (TryQueueOwned(imageFile, clone, settingsHash, identity,
+                    File.GetLastWriteTimeUtc(imageFile.FilePath))) clone = null;
         }
         catch
         {
@@ -93,23 +96,35 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         ImageFile imageFile,
         Bitmap bitmap,
         string settingsHash,
-        PreviewCacheIdentity? identity = null)
+        PreviewCacheIdentity? identity = null,
+        DateTime? sourceWriteTime = null,
+        bool ownsBitmap = false)
     {
-        if (!CanQueue(imageFile, settingsHash)) return;
-
-        MagickImage? image = null;
+        var operation = CullPerf?.Record("CacheEnqueueStart", imageFile.CatalogId, operation: -1) ?? 0;
+        object? snapshot = ownsBitmap ? bitmap : null;
         try
         {
-            image = ConvertToMagickImage(bitmap);
-            if (TryQueueOwned(imageFile, image, settingsHash, identity)) image = null;
+            if (!CanQueue(imageFile, settingsHash) || sourceWriteTime == null)
+            {
+                Drop(imageFile.CatalogId);
+                return;
+            }
+            snapshot ??= SnapshotBitmap(bitmap);
+            if (TryQueueOwned(imageFile, snapshot, settingsHash, identity, sourceWriteTime.Value))
+                snapshot = null;
         }
-        catch
-        {
-        }
+        catch { Drop(imageFile.CatalogId); }
         finally
         {
-            image?.Dispose();
+            (snapshot as IDisposable)?.Dispose();
+            CullPerf?.Record("CacheEnqueueEnd", imageFile.CatalogId, operation: operation);
         }
+    }
+
+    private void Drop(long imageId)
+    {
+        Interlocked.Increment(ref _droppedWrites);
+        CullPerf?.Record("CacheWriteDropped", imageId);
     }
 
     private bool CanQueue(ImageFile imageFile, string settingsHash) =>
@@ -119,20 +134,21 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
 
     private bool TryQueueOwned(
         ImageFile imageFile,
-        MagickImage image,
+        object image,
         string settingsHash,
-        PreviewCacheIdentity? identity)
+        PreviewCacheIdentity? identity,
+        DateTime sourceWriteTime)
     {
         var write = new CacheWrite(
             _getCachePath(imageFile.CatalogId), imageFile.CatalogId,
             imageFile.FilePath,
-            File.GetLastWriteTimeUtc(imageFile.FilePath),
+            sourceWriteTime,
             settingsHash,
             identity,
             image);
         Interlocked.Increment(ref _outstandingWrites);
         if (_queue.Writer.TryWrite(write)) return true;
-        CullPerf?.Record("CacheWriteDropped", write.ImageId);
+        Drop(write.ImageId);
         Interlocked.Decrement(ref _outstandingWrites);
         return false;
     }
@@ -165,8 +181,8 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         {
             while (_queue.Reader.TryRead(out var pending))
             {
-                CullPerf?.Record("CacheWriteDropped", pending.ImageId);
-                pending.Image.Dispose();
+                Drop(pending.ImageId);
+                (pending.Image as IDisposable)?.Dispose();
                 Interlocked.Decrement(ref _outstandingWrites);
             }
         }
@@ -178,19 +194,27 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         var temporaryPath = $"{stem}.jpg";
         var temporaryMetadataPath = $"{stem}.meta";
         var metadataPath = Path.ChangeExtension(write.CachePath, ".meta");
+        MagickImage? converted = null;
         try
         {
+            if (write.Image is not MagickImage) CullPerf?.Record("CacheConvert", write.ImageId);
+            var image = write.Image switch
+            {
+                Bitmap bitmap => converted = ConvertToMagickImage(bitmap),
+                BitmapSnapshot snapshot => converted = snapshot.ToMagickImage(),
+                _ => (MagickImage)write.Image
+            };
             Directory.CreateDirectory(_temporaryDirectory);
             Directory.CreateDirectory(Path.GetDirectoryName(write.CachePath)!);
-            write.Image.Quality = (uint)_jpegQuality;
-            write.Image.Write(temporaryPath, MagickFormat.Jpeg);
+            image.Quality = (uint)_jpegQuality;
+            image.Write(temporaryPath, MagickFormat.Jpeg);
             File.WriteAllText(
                 temporaryMetadataPath,
                 _versionedDimensionMetadata
                     ? RenderedThumbnailMetadata.Serialize(
                         write.SettingsHash,
-                        (int)write.Image.Width,
-                        (int)write.Image.Height)
+                        (int)image.Width,
+                        (int)image.Height)
                     // Always the versioned document. A write with no identity
                     // records zero dimensions, which reads back as "hash only" —
                     // one format on disk, no bare-hash variant to discriminate.
@@ -198,22 +222,14 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
                         write.SettingsHash,
                         write.Identity ?? default),
                 new UTF8Encoding(false));
-            if (File.GetLastWriteTimeUtc(write.SourcePath) != write.SourceWriteTime)
+            if (write.Image is not MagickImage) CullPerf?.Record("CacheMetadataRead", write.ImageId);
+            if (File.GetLastWriteTimeUtc(write.SourcePath) != write.SourceWriteTime ||
+                (_versionedDimensionMetadata &&
+                    HasEqualOrLargerMatchingEntry(write, metadataPath, temporaryPath)))
             {
                 File.Delete(temporaryPath);
                 File.Delete(temporaryMetadataPath);
-                CullPerf?.Record("CacheWriteDropped", write.ImageId);
-                return;
-            }
-            if (_versionedDimensionMetadata &&
-                HasEqualOrLargerMatchingEntry(
-                    write,
-                    metadataPath,
-                    temporaryPath))
-            {
-                File.Delete(temporaryPath);
-                File.Delete(temporaryMetadataPath);
-                CullPerf?.Record("CacheWriteDropped", write.ImageId);
+                Drop(write.ImageId);
                 return;
             }
 
@@ -224,13 +240,14 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         }
         catch
         {
-            CullPerf?.Record("CacheWriteDropped", write.ImageId);
+            Drop(write.ImageId);
             TryDelete(temporaryPath);
             TryDelete(temporaryMetadataPath);
         }
         finally
         {
-            write.Image.Dispose();
+            converted?.Dispose();
+            (write.Image as IDisposable)?.Dispose();
         }
     }
 
@@ -292,5 +309,5 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         DateTime SourceWriteTime,
         string SettingsHash,
         PreviewCacheIdentity? Identity,
-        MagickImage Image);
+        object Image);
 }

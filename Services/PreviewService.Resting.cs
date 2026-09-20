@@ -296,6 +296,7 @@ public sealed partial class PreviewService
                 decodeKey,
                 settingsHash,
                 new PixelSize(info.FullWidth, info.FullHeight),
-                originalViewSize));
+                originalViewSize,
+                baseImage.SourceWriteTime));
     }
 }

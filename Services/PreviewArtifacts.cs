@@ -262,7 +262,8 @@ internal sealed record PreviewRenderIdentity(
     string DecodeKey,
     string SettingsHash,
     PixelSize OriginalImageSize,
-    PixelSize OriginalViewSize)
+    PixelSize OriginalViewSize,
+    DateTime? SourceWriteTime = null)
 {
     public PreviewCacheIdentity CacheIdentity => new(
         OriginalViewSize,

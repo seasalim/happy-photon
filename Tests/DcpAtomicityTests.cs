@@ -167,9 +167,9 @@ public sealed class DcpAtomicityTests : IDisposable
             newest.ProfileState?.Token);
         Assert.Equal(DcpProfileErrorCode.None, newest.ProfileState?.Status);
         Assert.Equal("Profile c", newest.ProfileState?.ProfileName);
-        Assert.Null(service.TryPromoteRenderedThumbnail(image, settingsA));
-        Assert.Null(service.TryPromoteRenderedThumbnail(image, settingsB));
-        using var promoted = service.TryPromoteRenderedThumbnail(image, settingsC);
+        Assert.Null(await service.TryPromoteRenderedThumbnailAsync(image, settingsA));
+        Assert.Null(await service.TryPromoteRenderedThumbnailAsync(image, settingsB));
+        using var promoted = await service.TryPromoteRenderedThumbnailAsync(image, settingsC);
         Assert.NotNull(promoted);
 
         service.ClearPreviewCache();

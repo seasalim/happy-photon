@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Avalonia.Media.Imaging;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -13,6 +14,7 @@ public partial class MainWindowViewModel
     private readonly object _thumbnailSessionsSync = new();
     private readonly HashSet<Task> _thumbnailSessions = new();
     private readonly Dictionary<ImageFile, long> _thumbnailLastAccess = new();
+    private readonly ConditionalWeakTable<ImageFile, StrongBox<long>> _thumbnailRequests = new();
     private int _browseGeneration;
     private int _thumbnailSizeGeneration;
     private int _requestedThumbnailStart;
@@ -210,6 +212,8 @@ public partial class MainWindowViewModel
         CancellationToken cancellationToken)
     {
         Bitmap? thumbnail = null;
+        var requestState = _thumbnailRequests.GetOrCreateValue(imageFile);
+        var requestGeneration = 0L;
         try
         {
             await _thumbnailPumpAdmission.WaitAsync(cancellationToken);
@@ -218,13 +222,15 @@ public partial class MainWindowViewModel
                 await gate();
             }
             cancellationToken.ThrowIfCancellationRequested();
+            requestGeneration = Interlocked.Increment(ref requestState.Value);
             imageFile.IsLoading = true;
             using var result = await ImageService.LoadThumbnailAsync(
                 imageFile,
                 request,
                 allowUndersizedCachePlaceholder: imageFile.Thumbnail == null,
                 cancellationToken);
-            if (generation != Volatile.Read(ref _browseGeneration) ||
+            if (requestGeneration != Volatile.Read(ref requestState.Value) ||
+                generation != Volatile.Read(ref _browseGeneration) ||
                 sizeGeneration != Volatile.Read(ref _thumbnailSizeGeneration) ||
                 !Browse.Contains(imageFile))
             {
@@ -261,7 +267,8 @@ public partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            if (generation == Volatile.Read(ref _browseGeneration) &&
+            if (requestGeneration == Volatile.Read(ref requestState.Value) &&
+                generation == Volatile.Read(ref _browseGeneration) &&
                 sizeGeneration == Volatile.Read(ref _thumbnailSizeGeneration) &&
                 Browse.Contains(imageFile))
             {

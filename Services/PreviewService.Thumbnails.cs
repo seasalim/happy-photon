@@ -7,53 +7,54 @@ namespace HappyPhoton.Services;
 
 public sealed partial class PreviewService
 {
-    public Bitmap? TryPromoteRenderedThumbnail(
-        ImageFile imageFile,
-        EditSettings settings) =>
-        TryPromoteRenderedThumbnail(
-            imageFile,
-            settings,
-            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium));
-
-    public Bitmap? TryPromoteRenderedThumbnail(
+    public Task<Bitmap?> TryPromoteRenderedThumbnailAsync(
         ImageFile imageFile,
         EditSettings settings,
-        ThumbnailSizeRequest request)
+        CancellationToken cancellationToken = default) =>
+        TryPromoteRenderedThumbnailAsync(imageFile, settings,
+            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium), cancellationToken);
+
+    public Task<Bitmap?> TryPromoteRenderedThumbnailAsync(
+        ImageFile imageFile, EditSettings settings, ThumbnailSizeRequest request,
+        CancellationToken cancellationToken = default) =>
+        TrackDisposalTask(() => PromoteRenderedThumbnailAsync(
+            imageFile, settings, request, cancellationToken), declineDisposed: true);
+
+    private async Task<Bitmap?> PromoteRenderedThumbnailAsync(
+        ImageFile imageFile, EditSettings settings, ThumbnailSizeRequest request,
+        CancellationToken cancellationToken)
     {
         if (!imageFile.IsRaw || !settings.HasEdits) return null;
-
-        Task<Bitmap?> thumbnailTask;
-        string hash;
+        Bitmap snapshot;
         RenderedPreview rendered;
+        var hash = RenderSettingsHash.Compute(settings);
         lock (_renderedSync)
         {
-            var current = _lastRendered;
-            if (current == null ||
+            if (_lastRendered is not { } current ||
                 !ReferenceEquals(current.ImageFile, imageFile) ||
-                current.ThumbnailTask is not { IsCompletedSuccessfully: true })
-            {
-                return null;
-            }
-
-            hash = RenderSettingsHash.Compute(settings);
-            if (!string.Equals(current.SettingsHash, hash, StringComparison.Ordinal))
-            {
-                return null;
-            }
+                current.SettingsHash != hash ||
+                current.ThumbnailTask is not { IsCompletedSuccessfully: true } task ||
+                task.Result is not { } thumbnail) return null;
             rendered = current;
-            thumbnailTask = current.ThumbnailTask;
+            var operation = CullPerf?.Record("CacheEnqueueStart", imageFile.CatalogId, operation: -1) ?? 0;
+            try { snapshot = CloneBitmap(thumbnail); }
+            finally { CullPerf?.Record("CacheEnqueueEnd", imageFile.CatalogId, operation: operation); }
         }
-
-        var thumbnail = thumbnailTask.GetAwaiter().GetResult();
-        if (thumbnail == null) return null;
-        Bitmap promoted;
-        lock (_renderedSync)
+        var transferred = false;
+        try
         {
-            if (!ReferenceEquals(_lastRendered, rendered)) return null;
-            promoted = CloneForRequest(thumbnail, request);
-            _renderedThumbnailCache.QueueSaveToCache(imageFile, thumbnail, hash);
+            return await RunCacheWorkerAsync(imageFile, () =>
+            {
+                if (Math.Max(snapshot.PixelSize.Width, snapshot.PixelSize.Height) > request.GenerationDimension)
+                    CullPerf?.Record("CacheThumbnailResize", imageFile.CatalogId);
+                var result = CloneForRequest(snapshot, request);
+                _renderedThumbnailCache.QueueSaveToCache(imageFile, snapshot, hash,
+                    rendered.Identity?.SourceWriteTime, ownsBitmap: true);
+                transferred = true;
+                return result;
+            }, cancellationToken).ConfigureAwait(false);
         }
-        return promoted;
+        finally { if (!transferred) snapshot.Dispose(); }
     }
 
     private Task<Bitmap?>? CreateRenderedThumbnailAsync(
@@ -68,9 +69,7 @@ public sealed partial class PreviewService
                 try
                 {
                     RenderColorEncoding.ResizeInLinearLight(source, dimension);
-                    var thumbnail = ConvertToBitmap(source);
-                    RenderedThumbnailCreated?.Invoke();
-                    return thumbnail;
+                    return ConvertToBitmap(source);
                 }
                 catch (Exception ex)
                 {
@@ -82,6 +81,14 @@ public sealed partial class PreviewService
         });
         TrackRenderedThumbnailTask(task);
         return task;
+    }
+
+    private async Task NotifyRenderedThumbnailWhenReadyAsync(RenderedPreview rendered)
+    {
+        if (rendered.ThumbnailTask == null ||
+            await rendered.ThumbnailTask.ConfigureAwait(false) == null) return;
+        lock (_renderedSync)
+            if (ReferenceEquals(_lastRendered, rendered)) RenderedThumbnailCreated?.Invoke();
     }
 
     private void QueueRenderedThumbnailWhenReady(RenderedPreview rendered)
@@ -100,7 +107,8 @@ public sealed partial class PreviewService
             _renderedThumbnailCache.QueueSaveToCache(
                 rendered.ImageFile,
                 thumbnail,
-                rendered.SettingsHash);
+                rendered.SettingsHash,
+                rendered.Identity?.SourceWriteTime);
             if (RenderedThumbnailCacheQueuedAsync is { } cacheQueued)
             {
                 await cacheQueued();

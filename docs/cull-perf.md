@@ -17,6 +17,38 @@ inconclusive (exit 2). Full qualification always builds.
 The full invocation's elapsed seconds are recorded for the 30-minute FINALIZE
 budget. The implementor's targeted runs do not certify that full-run budget.
 
+## Supplemental dwell workloads
+
+Use `./scripts/cull-perf.ps1 -GateFile Tests/CullPerfGates.dwell.json`, adding
+`-Baseline <dwell-attempt>/result.json` to compare within this supplemental series.
+Relative gate paths resolve from the repository root. The selected file is copied
+and hashed independently; the default frozen table is unchanged.
+
+Dwell takes 100 steady steps at 1500 ms intervals on each of Loupe and Develop,
+using the Canon fixture, default settings, and an empty application cache.
+Adjacent warming stays on. Develop requires an initial fresh preview and a fresh
+publication per step, so a rendered preview departs each time. Loupe accepts a
+matched warm paint per step. A missed completion fails the workload. Cadence
+remains independent of completion; the final step must also publish.
+`dwell-fresh-before-next-input` reports the number of validated steps.
+Each dwell case has a four-minute hang watchdog.
+
+The three foreground/publication metric definitions are copied from the frozen
+table unchanged. `ui-enqueue-ms` adds caller-thread `CacheEnqueueStart/End` spans,
+including snapshot preparation, correlated by operation id and restricted to the
+thread that received that input. Caller `BaseRetireStart/End` spans bracket base detachment and worker scheduling;
+`BaseDisposeStart/End` spans cover retirement on the worker. Worker `CacheDecodeStart/End` spans bracket the
+cached/warm reads and promotion. `events-CacheConvert`, `events-CacheWarmDecode`,
+`events-CacheJoinDecode`, and `events-CacheThumbnailResize` report exercised paths.
+The dispatcher-backed `CacheOffThreadTests` proves placement with positive path
+counts; workload thread ids alone do not prove dispatcher placement. Adding this
+attribution metric changes only the supplemental file's hash; compare the earlier
+instrumented-base feedback samples directly, preserving their original gate file.
+In the existing ledger their spans start at submission immediately before command
+invocation, not at the recorder's Receipt event. These view-model measurements
+exclude dispatcher queue delay. This supplemental run does not qualify the frozen
+workloads or repeat their required correctness checks.
+
 ## Frozen workloads
 
 `Tests/CullPerfGates.json` is the authoritative, SHA-256 identified table. It

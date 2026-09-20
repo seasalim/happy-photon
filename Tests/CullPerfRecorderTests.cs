@@ -96,6 +96,27 @@ public sealed class CullPerfRecorderTests
     }
 
     [Fact]
+    public void EnqueueSpansIncludeOnlyTheReceiptThreadAndPairByOperation()
+    {
+        CullPerfSubmission[] ledger = [new(1, 10, 42, false)];
+        CullPerfEvent[] events =
+        [
+            new(11, "Receipt", 1, 42, 0, 7, 0),
+            new(12, "CacheEnqueueStart", 2, 41, 0, 7, 0),
+            new(13, "CacheEnqueueStart", 3, 40, 0, 8, 0),
+            new(14, "CacheEnqueueEnd", 3, 40, 0, 8, 0),
+            new(15, "CacheEnqueueEnd", 2, 41, 0, 7, 0),
+            new(16, "Selection", 1, 42, 9, 7, 0),
+            new(17, "FreshRender", 1, 42, 9, 7, 0)
+        ];
+        var result = CullPerfLedger.Reconcile(ledger, events);
+        Assert.Empty(result.Failures);
+        var span = Assert.Single(result.Samples["ui-enqueue-ms"]);
+        Assert.Equal(2, span.OperationId);
+        Assert.Equal(Stopwatch.GetElapsedTime(12, 15).TotalMilliseconds, span.Value);
+    }
+
+    [Fact]
     public void MissingTerminalIsNotInferredFromLaterSelection()
     {
         var recorder = new CullPerfRecorder();

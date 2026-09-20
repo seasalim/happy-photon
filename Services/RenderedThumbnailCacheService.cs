@@ -128,8 +128,11 @@ public sealed class RenderedThumbnailCacheService : IAsyncDisposable
     public void QueueSaveToCache(
         ImageFile imageFile,
         Bitmap bitmap,
-        string settingsHash) =>
-        _writer.Queue(imageFile, bitmap, settingsHash);
+        string settingsHash,
+        DateTime? sourceWriteTime = null,
+        bool ownsBitmap = false) =>
+        _writer.Queue(imageFile, bitmap, settingsHash,
+            sourceWriteTime: sourceWriteTime, ownsBitmap: ownsBitmap);
 
     public ValueTask DisposeAsync() => _writer.DisposeAsync();
 

@@ -75,6 +75,38 @@ public static class BitmapConversionService
         return new MagickImage(pixels, settings);
     }
 
+    internal static unsafe BitmapSnapshot SnapshotBitmap(Bitmap bitmap)
+    {
+        var format = bitmap.Format ?? throw new NotSupportedException("Bitmap pixel format is unavailable.");
+        var size = bitmap.PixelSize;
+        var stride = checked((size.Width * format.BitsPerPixel + 7) / 8);
+        var pixels = GC.AllocateUninitializedArray<byte>(checked(stride * size.Height));
+        fixed (byte* address = pixels)
+            bitmap.CopyPixels(new PixelRect(size), (IntPtr)address, pixels.Length, stride);
+        return new(pixels, size, format, bitmap.AlphaFormat ?? AlphaFormat.Unpremul, stride);
+    }
+
+    internal sealed record BitmapSnapshot(byte[] Pixels, PixelSize Size,
+        PixelFormat Format, AlphaFormat Alpha, int Stride)
+    {
+        public unsafe MagickImage ToMagickImage()
+        {
+            // Preserve the converter's premultiplied BGRA contract for transparent pixels.
+            var direct = Format == PixelFormat.Bgra8888;
+            if (direct && Alpha == AlphaFormat.Unpremul)
+                for (var offset = 3; offset < Pixels.Length && direct; offset += 4)
+                    direct = Pixels[offset] == 255;
+            if (direct)
+                return new MagickImage(Pixels, new PixelReadSettings(
+                    (uint)Size.Width, (uint)Size.Height, StorageType.Char, PixelMapping.BGRA));
+            fixed (byte* address = Pixels)
+            {
+                using var bitmap = new Bitmap(Format, Alpha, (IntPtr)address, Size, new Vector(96, 96), Stride);
+                return ConvertToMagickImage(bitmap);
+            }
+        }
+    }
+
     public static WriteableBitmap CloneBitmap(Bitmap bitmap)
     {
         var clone = new WriteableBitmap(

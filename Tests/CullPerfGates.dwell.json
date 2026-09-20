@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "recorderCapacity": 16384,
+  "overheadObservation": "PreviewImage PropertyChanged with Histogram present; the identical observer is used on both sides",
+  "id": "cullperf-dwell-1",
+  "maximumForegroundRegression": 0.1,
+  "fixtureHashes": {
+    "legacy-jpeg": "bcc8f43999e4881575df3fca8b04abdf12c03ff9d51e1eb1b26345f14608e34b",
+    "legacy-raw": "8cbb84e04d93b005fe082da9c954122a612b5281af00aa088d767850f343fd38",
+    "jpeg": "57a64cb89f769436241477d4a2468f8a48d4b3d4b36561342865536eed504ae7",
+    "canon": "7727ee0280b44ea1d633962f49942f37f3c7ec6d704d22e108a5223666327c32",
+    "fuji": "1f65f680600c85a6f561d2b0ad7cd1f9d93ee7f733aafe4ecd37667d984dd6c4"
+  },
+  "requiredChecks": [],
+  "applicability": {
+    "loupe": [
+      "dwell"
+    ],
+    "develop": [
+      "dwell"
+    ]
+  },
+  "knownMissingEvidence": [
+    "aggregate owned retained-base bytes",
+    "complete operation and stage correlation"
+  ],
+  "coverage": "Cold Canon dwell with warming on; Develop requires a fresh render per step and Loupe requires an accepted paint.",
+  "metrics": [
+    {
+      "id": "input-feedback-ms",
+      "statistic": "p95",
+      "minimumSamples": 100,
+      "maximum": 50,
+      "foreground": true
+    },
+    {
+      "id": "first-publication-ms",
+      "statistic": "p95",
+      "minimumSamples": 1,
+      "maximum": null,
+      "foreground": false
+    },
+    {
+      "id": "accurate-ready-ms",
+      "statistic": "p95",
+      "minimumSamples": 1,
+      "maximum": null,
+      "foreground": true
+    },
+    {
+      "id": "ui-enqueue-ms",
+      "statistic": "p95",
+      "minimumSamples": 1,
+      "maximum": null,
+      "foreground": false
+    }
+  ],
+  "workloads": [
+    {
+      "id": "loupe-dwell-canon-cold-default",
+      "surface": "loupe",
+      "pattern": "dwell",
+      "fixture": "canon",
+      "settings": "default",
+      "cacheCondition": "cold",
+      "actions": 100,
+      "metrics": [
+        "input-feedback-ms",
+        "first-publication-ms",
+        "accurate-ready-ms"
+      ],
+      "intervalMs": 1500,
+      "burstSize": 1,
+      "burstStepMs": 0,
+      "reversalLength": 5,
+      "exposure": 0,
+      "staleExposureDelta": 0.5
+    },
+    {
+      "id": "develop-dwell-canon-cold-default",
+      "surface": "develop",
+      "pattern": "dwell",
+      "fixture": "canon",
+      "settings": "default",
+      "cacheCondition": "cold",
+      "actions": 100,
+      "metrics": [
+        "input-feedback-ms",
+        "first-publication-ms",
+        "accurate-ready-ms",
+        "ui-enqueue-ms"
+      ],
+      "intervalMs": 1500,
+      "burstSize": 1,
+      "burstStepMs": 0,
+      "reversalLength": 5,
+      "exposure": 0,
+      "staleExposureDelta": 0.5
+    }
+  ]
+}

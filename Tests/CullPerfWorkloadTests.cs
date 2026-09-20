@@ -57,7 +57,10 @@ public sealed class CullPerfWorkloadTests
             await CullPerfPreparation.PrepareAsync(catalog, vm, active, workload);
             vm.Browse.SetImages(workload.Pattern == "picks" ? images : active);
             if (workload.Pattern == "picks") vm.RestoreShowCapturePairs(true);
+            // Five-ahead stays on for every pattern, dwell included: the departing
+            // preview is queued whether or not the next step was warmed.
             vm.ImageService.Previews.AdjacentWarmEnabled = true;
+            if (workload.Pattern == "dwell") vm.ImageService.Previews.CullPerf = recorder;
             vm.IsDevelopMode = workload.Surface == "develop";
             vm.SelectedImage = active[0];
             if (workload.Surface == "loupe") vm.EnterLoupeCommand.Execute(null);
@@ -132,6 +135,10 @@ public sealed class CullPerfWorkloadTests
             await vm.DisposeAsync();
         }
         var events = recorder.Snapshot();
+        if (workload.Pattern == "dwell")
+            counters["dwell-fresh-before-next-input"] =
+                CullPerfDwell.Validate(ledger, events, active[0].CatalogId, failures,
+                    requireFreshRender: workload.Surface == "develop");
         var accounting = CullPerfLedger.Reconcile(ledger, events, workload.CacheCondition == "matched");
         foreach (var pair in CullPerfCounters.Derive(events)) counters[pair.Key] = pair.Value;
         var fragment = new CullPerfFragment(workload.Id, CullPerfFiles.Hash(CullPerfFiles.GatePath),

@@ -32,7 +32,7 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
             using var source = new MagickImage(MagickColors.Orange, 150, 100);
             using var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
 
-            cache.QueueSaveToCache(file, bitmap, "matching-hash");
+            cache.QueueSaveToCache(file, bitmap, "matching-hash", File.GetLastWriteTimeUtc(file.FilePath));
             await cache.DisposeAsync();
 
             var path = catalog.GetRenderedThumbnailPath(file.CatalogId);
@@ -66,7 +66,7 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
             var cache = CreateWriter(catalog);
             using var source = new MagickImage(MagickColors.Blue, 30, 20);
             using var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
-            cache.QueueSaveToCache(file, bitmap, "hash");
+            cache.QueueSaveToCache(file, bitmap, "hash", File.GetLastWriteTimeUtc(file.FilePath));
             await cache.DisposeAsync();
 
             var reader = new RenderedThumbnailCacheService(catalog);
@@ -105,7 +105,7 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
             using var image = new MagickImage(MagickColors.Green, 20, 10);
             using var bitmap = BitmapConversionService.ConvertToBitmap(image)!;
 
-            renderedCache.QueueSaveToCache(file, bitmap, "promotion");
+            renderedCache.QueueSaveToCache(file, bitmap, "promotion", File.GetLastWriteTimeUtc(file.FilePath));
             for (var index = 0; index < 300; index++)
             {
                 sourceCache.QueueSaveToCache(file, bitmap);
@@ -158,8 +158,8 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
             using var large = BitmapConversionService.ConvertToBitmap(largeImage)!;
             using var small = BitmapConversionService.ConvertToBitmap(smallImage)!;
 
-            cache.QueueSaveToCache(file, large, "hash");
-            cache.QueueSaveToCache(file, small, "hash");
+            cache.QueueSaveToCache(file, large, "hash", File.GetLastWriteTimeUtc(file.FilePath));
+            cache.QueueSaveToCache(file, small, "hash", File.GetLastWriteTimeUtc(file.FilePath));
             await cache.DisposeAsync();
 
             Assert.True(JpegDimensions.TryRead(
@@ -179,7 +179,7 @@ public sealed class RenderedThumbnailCacheServiceTests : IDisposable
             var writer = CreateWriter(catalog);
             using var source = new MagickImage(MagickColors.Orange, 150, 100);
             using var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
-            writer.QueueSaveToCache(file, bitmap, "hash");
+            writer.QueueSaveToCache(file, bitmap, "hash", File.GetLastWriteTimeUtc(file.FilePath));
             await writer.DisposeAsync();
 
             await using var reader = new RenderedThumbnailCacheService(catalog);

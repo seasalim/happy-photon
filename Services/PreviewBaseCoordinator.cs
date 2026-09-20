@@ -19,6 +19,9 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
     private long _generation;
     private long _latestSurfaceGeneration;
     private bool _disposed;
+    private Task _retirementTask = Task.CompletedTask;
+    internal Func<Task>? RetirementGateAsync { get; set; }
+    internal CullPerfRecorder? CullPerf { get; set; }
 
     public PreviewBaseCoordinator(IBaseImageLoader loader)
     {
@@ -211,6 +214,7 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
 
     public void Clear()
     {
+        var operation = CullPerf?.Record("BaseRetireStart", operation: -1) ?? 0;
         HeldBase? interactive;
         HeldBase? large;
         lock (_sync)
@@ -223,9 +227,16 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
             _heldInteractiveBase = null;
             _heldLargeBase = null;
             _heldIdentity = null;
+            if (interactive != null || large != null)
+                _retirementTask = Task.Run(async () =>
+                {
+                    if (RetirementGateAsync is { } gate) await gate().ConfigureAwait(false);
+                    CullPerf?.Record("BaseDisposeStart", operation: operation);
+                    try { large?.Retire(); interactive?.Retire(); }
+                    finally { CullPerf?.Record("BaseDisposeEnd", operation: operation); }
+                });
         }
-        large?.Retire();
-        interactive?.Retire();
+        CullPerf?.Record("BaseRetireEnd", operation: operation);
     }
 
     private Task<BaseImageLoadFailure> StartDecode(
@@ -240,9 +251,13 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
             ++_generation,
             surfaceGeneration);
         _currentDecode = session;
-        session.Task = Task.Run(
-            () => DecodeAndInstall(imageFile, decode, session),
-            CancellationToken.None);
+        // A cleared pair must retire before another decode allocates its replacement.
+        var retirement = _retirementTask;
+        session.Task = Task.Run(async () =>
+        {
+            await retirement.ConfigureAwait(false);
+            return DecodeAndInstall(imageFile, decode, session);
+        }, CancellationToken.None);
         _decodeTasks.Add(session.Task);
         _ = session.Task.ContinueWith(
             completed =>
@@ -274,6 +289,11 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         var failure = BaseImageLoadFailure.DecodeFailed;
         try
         {
+            DateTime? sourceWriteTime = null;
+            CullPerf?.Record("CacheSourceMetadata", imageFile.CatalogId);
+            try { sourceWriteTime = File.GetLastWriteTimeUtc(imageFile.FilePath); }
+            catch (IOException) { } // A render can still paint; its cache payload will be dropped.
+            catch (UnauthorizedAccessException) { }
             var outcome = _loader.LoadPreviewBaseWithOutcome(
                 imageFile,
                 decode,
@@ -292,6 +312,8 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
                     {
                         var interactive = decoded.DetachInteractive();
                         var large = decoded.DetachLarge();
+                        interactive.SourceWriteTime = sourceWriteTime;
+                        if (large != null) large.SourceWriteTime = sourceWriteTime;
                         supersededInteractive = _heldInteractiveBase;
                         supersededLarge = _heldLargeBase;
                         _heldInteractiveBase = new HeldBase(
@@ -389,7 +411,7 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
             _heldLargeBase = null;
             _heldInteractiveBase = null;
             _heldIdentity = null;
-            pending = [.. _decodeTasks];
+            pending = [.. _decodeTasks, _retirementTask];
         }
 
         try

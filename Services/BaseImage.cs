@@ -121,6 +121,7 @@ public sealed class BaseImage : IDisposable
         _pixels ?? throw new ObjectDisposedException(nameof(BaseImage));
 
     public BaseImageInfo Info { get; }
+    internal DateTime? SourceWriteTime { get; set; }
 
     public BaseImage(MagickImage pixels, BaseImageInfo info)
     {

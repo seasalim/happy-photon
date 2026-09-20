@@ -204,6 +204,7 @@ public sealed partial class PreviewService
         }
         try
         {
+            CullPerf?.Record("CacheWarmDecode", imageFile.CatalogId);
             return new CachedPreview(new MagickImage(entry.EncodedJpeg),
                 entry.SettingsHash, entry.Identity.OriginalViewSize,
                 entry.Identity.OriginalImageSize);
