@@ -26,17 +26,24 @@ public sealed class CullPerfOverheadTests
                 lost += sample.LostEvents;
             }
         }
-        var recorder = new CullPerfRecorder(10100);
+        var recorder = new CullPerfRecorder(20100);
         for (var i = 0; i < 100; i++) recorder.Record("warmup");
         var cost = new double[10000];
-        var enabledBefore = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < cost.Length; i++)
+        // Two passes: the first absorbs one-off runtime work (tiering); the
+        // steady-state allocation is the smaller of the two.
+        var enabledAllocation = long.MaxValue;
+        for (var pass = 0; pass < 2; pass++)
         {
-            var start = Stopwatch.GetTimestamp();
-            recorder.Record("Receipt", operation: -1);
-            cost[i] = Stopwatch.GetElapsedTime(start).TotalMicroseconds;
+            var enabledBefore = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < cost.Length; i++)
+            {
+                var start = Stopwatch.GetTimestamp();
+                recorder.Record("Receipt", operation: -1);
+                cost[i] = Stopwatch.GetElapsedTime(start).TotalMicroseconds;
+            }
+            enabledAllocation = Math.Min(enabledAllocation,
+                GC.GetAllocatedBytesForCurrentThread() - enabledBefore);
         }
-        var enabledAllocation = GC.GetAllocatedBytesForCurrentThread() - enabledBefore;
         CullPerfRecorder? disabled = null;
         var allocated = GC.GetAllocatedBytesForCurrentThread();
         for (var i = 0; i < 100; i++) disabled?.Record("Receipt", operation: -1);

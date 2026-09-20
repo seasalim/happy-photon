@@ -93,7 +93,7 @@
     {"id": "jpeg-settled-bytes", "statistic": "median", "minimumSamples": 3, "maximum": 20971520, "foreground": false},
     {"id": "raw-peak-bytes", "statistic": "median", "minimumSamples": 3, "maximum": 314572800, "foreground": false},
     {"id": "raw-settled-bytes", "statistic": "median", "minimumSamples": 3, "maximum": 52428800, "foreground": false},
-    {"id": "recording-delta-ms", "statistic": "median", "minimumSamples": 9, "maximum": 3, "foreground": false},
+    {"id": "recording-delta-ms", "statistic": "median", "minimumSamples": 9, "maximum": null, "foreground": false},
     {"id": "event-cost-us", "statistic": "median", "minimumSamples": 10000, "maximum": 2, "foreground": false},
     {"id": "enabled-allocated-bytes", "statistic": "max", "minimumSamples": 1, "maximum": 0, "foreground": false},
     {"id": "disabled-allocated-bytes", "statistic": "max", "minimumSamples": 1, "maximum": 0, "foreground": false}

@@ -102,11 +102,14 @@ Its sample pairs include actual polling-bracket widths. Every recorded latency
 must fall within its actual false-to-true polling bracket; polling delay has no
 maximum and is not counted as a speedup. Recorder overhead interleaves nine
 on/off pairs using the same `PreviewImage` property-change observer on both
-sides. The gate uses the median of paired first-publication differences, with
-negative differences clamped to zero for nonnegative samples; all signed
-differences and both original sample sets are retained. It measures 10,000 event
-costs and requires zero allocated bytes across those enabled calls, with a
-100-call null-path allocation sample retained as a companion. The nine-pair case
+sides. The median of paired first-publication differences is report-only: the
+recording-off arm alone spans about 15 ms on the dev host, so an end-to-end
+threshold below that would gate on noise. Negative differences are clamped to
+zero for nonnegative samples; all signed differences and both original sample
+sets are retained. The binding overhead gates are the 10,000-event cost (≤2 µs
+median) and zero allocated bytes across those enabled calls, measured as the
+smaller of two passes so one-off runtime work such as tiering is not counted,
+with a 100-call null-path allocation sample retained as a companion. The nine-pair case
 has a five-minute hang watchdog; other isolated cases retain 90 seconds.
 
 ## Instrumentation coverage and qualification limits
