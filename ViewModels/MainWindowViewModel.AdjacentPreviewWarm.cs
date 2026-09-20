@@ -68,6 +68,7 @@ public partial class MainWindowViewModel
                 await blockingWorker.WaitAsync(cancellation.Token);
             }
         }
+        CullPerf?.Record("WalkComplete", parent.CatalogId);
     }
     // Arrow keys in the loupe walk the armed selection, so the warm must too.
     private ImageFile? AdjacentWarmCandidate(int offset)

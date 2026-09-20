@@ -7,7 +7,8 @@ internal sealed record CullPerfMetric(
     string Statistic,
     int MinimumSamples,
     double? Maximum,
-    bool Foreground);
+    bool Foreground,
+    double? MaximumBaselineRatio = null);
 
 internal sealed record CullPerfWorkload(
     string Id,
@@ -23,7 +24,14 @@ internal sealed record CullPerfWorkload(
     double BurstStepMs = 0,
     int ReversalLength = 5,
     double Exposure = 0,
-    double StaleExposureDelta = 0.5);
+    double StaleExposureDelta = 0.5,
+    int MinimumWalks = 0,
+    CullPerfMetric[]? MetricOverrides = null)
+{
+    internal CullPerfMetric Metric(CullPerfGateFile gates, string id) =>
+        MetricOverrides?.SingleOrDefault(metric => metric.Id == id) ??
+        gates.Metrics.Single(metric => metric.Id == id);
+}
 
 internal sealed record CullPerfGateFile(
     int Version,

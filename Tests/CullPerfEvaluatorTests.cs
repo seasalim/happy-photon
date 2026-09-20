@@ -228,6 +228,83 @@ public sealed class CullPerfEvaluatorTests
         Assert.Contains(result.Gates, gate => gate.Reason == "Baseline evidence unreadable");
     }
 
+    [Theory]
+    [InlineData(0.85, 1, true, true)]
+    [InlineData(0.851, 1, true, false)]
+    [InlineData(0.851, 100, true, false)]
+    [InlineData(0.851, 1, false, false)]
+    public void MaximumBaselineRatio_IsIndependentOfRegressionFloors(
+        double after, int count, bool foreground, bool passes)
+    {
+        var gates = Gates() with
+        {
+            RegressionFloorMs = 100,
+            RegressionMinimumSamples = 20,
+            Metrics = [new("feedback", "p95", 1, null, foreground, 0.85)]
+        };
+        var result = CullPerfEvaluator.Evaluate(gates, "gate-hash", [Fragment(after, count)], [Fragment(1, count)]);
+        var comparison = result.Gates.Single(gate => gate.Before != null);
+        Assert.Equal(passes ? CullPerfVerdict.Pass : CullPerfVerdict.Fail, comparison.Verdict);
+        Assert.Equal(0.85, comparison.Threshold);
+    }
+
+    [Fact]
+    public void MaximumBaselineRatio_DoesNotReplaceStricterRegressionAllowance()
+    {
+        var gates = Gates() with { Metrics = [new("feedback", "p95", 1, null, true, 2)] };
+        var result = CullPerfEvaluator.Evaluate(gates, "gate-hash", [Fragment(45)], [Fragment(40)]);
+        Assert.Equal(CullPerfVerdict.Fail, result.Verdict);
+    }
+
+    [Fact]
+    public void RatioMetric_CannotBeSkippedAsReportOnly()
+    {
+        var gates = Gates() with { Metrics = [new("feedback", "p95", 1, null, false, 0.85)] };
+        AssertInconclusive(CullPerfEvaluator.Evaluate(gates, "gate-hash",
+            [Fragment() with { NotMeasured = ["feedback"] }]));
+        AssertInconclusive(CullPerfEvaluator.Evaluate(gates, "gate-hash",
+            [Fragment()], [Fragment() with { NotMeasured = ["feedback"] }]));
+    }
+
+    [Theory]
+    [InlineData("dwell", 50, 49, false)]
+    [InlineData("dwell", 50, 50, true)]
+    [InlineData("jump", 15, 14, false)]
+    [InlineData("jump", 15, 15, true)]
+    public void WorkloadRequiresConfiguredCompletedStepWalks(string pattern, int minimum, int completed, bool passes)
+    {
+        var gates = Gates() with
+        {
+            Metrics = [new("step-refill-ms", "p95", 50, null, true, 0.85)],
+            Workloads = [Gates().Workloads[0] with { Pattern = pattern, MinimumWalks = minimum, Metrics = ["step-refill-ms"] }]
+        };
+        var fragment = Fragment() with
+        {
+            Samples = new() { ["step-refill-ms"] = Fragment().Samples["feedback"] },
+            Counters = new() { ["step-walks-completed"] = completed }
+        };
+        var result = CullPerfEvaluator.Evaluate(gates, "gate-hash", [fragment]);
+        Assert.Equal(passes ? CullPerfVerdict.Pass : CullPerfVerdict.Inconclusive, result.Verdict);
+        if (!passes) Assert.Equal("evidence", Assert.Single(result.Gates).MetricId);
+    }
+
+    [Fact]
+    public void WorkloadMetricOverrideRemovesBindingLimitsAndBaselineRatio()
+    {
+        var gates = Gates();
+        gates = gates with
+        {
+            Metrics = [new("feedback", "p95", 100, 5, true, 0.85)],
+            Workloads = [gates.Workloads[0] with
+            {
+                MetricOverrides = [new("feedback", "p95", 1, null, false)]
+            }]
+        };
+        var result = CullPerfEvaluator.Evaluate(gates, "gate-hash", [Fragment(1000)], [Fragment(1)]);
+        Assert.Equal(CullPerfVerdict.Pass, result.Verdict);
+        Assert.Contains(result.Gates, item => item.MetricId == "feedback.comparison");
+    }
+
     private static void AssertInconclusive(CullPerfEvaluation result)
     {
         Assert.Equal(CullPerfVerdict.Inconclusive, result.Verdict);

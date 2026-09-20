@@ -215,7 +215,7 @@ public sealed class LoupeGateBaselineMeasurementTests(ITestOutputHelper output)
                         MagickColors.DarkSlateGray,
                         48,
                         32);
-                    cache.QueueSaveToCache(
+                    _ = cache.QueueSaveToCache(
                         image,
                         preview,
                         RenderSettingsHash.Compute(image.EditSettings),

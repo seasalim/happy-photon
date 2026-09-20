@@ -4,7 +4,7 @@ namespace HappyPhoton.Tests;
 
 internal static class CullPerfCounters
 {
-    internal static Dictionary<string, double> Derive(CullPerfEvent[] events)
+    internal static Dictionary<string, double> Derive(CullPerfEvent[] events, long firstInput = long.MaxValue)
     {
         var result = events.GroupBy(item => item.Kind)
             .ToDictionary(group => "events-" + group.Key, group => (double)group.Count());
@@ -42,6 +42,10 @@ internal static class CullPerfCounters
         result["superseded-native-still-running-at-end"] = superseded.Count;
         result["published-bitmap-bytes-max"] = events.Where(CullPerfLedger.IsPaint)
             .Select(item => (double)item.Value).DefaultIfEmpty().Max();
+        var walks = CullPerfLedger.Walks(events).ToArray();
+        result["walks-without-complete"] = walks.Count(walk => walk.End == null);
+        result["step-walks-completed"] = walks.Count(walk => walk.Start.Timestamp >= firstInput && walk.End != null);
+        result["step-walks-excluded"] = walks.Count(walk => walk.Start.Timestamp >= firstInput && walk.End == null);
         return result;
     }
 }

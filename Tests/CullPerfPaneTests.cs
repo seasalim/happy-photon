@@ -26,7 +26,7 @@ public sealed class CullPerfPaneTests
         await using (var cache = new PreviewCacheService(catalog))
         {
             using var pixels = new MagickImage(MagickColors.Gray, 48, 32);
-            cache.QueueSaveToCache(image, pixels, RenderSettingsHash.Compute(image.EditSettings),
+            _ = cache.QueueSaveToCache(image, pixels, RenderSettingsHash.Compute(image.EditSettings),
                 new PreviewCacheIdentity(new PixelSize(48, 32), new PixelSize(48, 32)));
         }
         await using var vm = new MainWindowViewModel(catalog, baseLoader: null,

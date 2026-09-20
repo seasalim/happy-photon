@@ -339,7 +339,8 @@ public sealed partial class AdjacentPreviewWarmTests
             vm.SelectedImage = images[1];
             await SettleAsync(vm, surface);
             Assert.Equal(1, loader.Attempts);
-            Assert.Equal(1, vm.ImageService.Previews.PreviewActivityCount);
+            await TestWaits.UntilAsync(() =>
+                vm.ImageService.Previews.PreviewActivityCount == 1);
             clock.Advance(TimeSpan.FromMilliseconds(75));
 
             loader.Release.Set();

@@ -8,7 +8,7 @@ public sealed class PreviewCacheService : IAsyncDisposable
 {
     private readonly CatalogService _catalogService;
     private readonly SettingsHashedCacheWriter _writer;
-    internal CullPerfRecorder? CullPerf { set => _writer.CullPerf = value; }
+    internal CullPerfRecorder? CullPerf { set { _writer.CullPerf = value; _writer.Tier = 1; } }
 
     public PreviewCacheService(CatalogService catalogService) : this(
         catalogService,
@@ -23,7 +23,8 @@ public sealed class PreviewCacheService : IAsyncDisposable
         int queueCapacity,
         Task processingGate,
         TimeSpan shutdownDrainTimeout,
-        Task? writerInHandGate = null)
+        Task? writerInHandGate = null,
+        Func<Task>? beforeWrite = null)
     {
         _catalogService = catalogService;
         _writer = new SettingsHashedCacheWriter(
@@ -33,7 +34,7 @@ public sealed class PreviewCacheService : IAsyncDisposable
             queueCapacity,
             processingGate,
             shutdownDrainTimeout,
-            writerInHandGate: writerInHandGate);
+            writerInHandGate: writerInHandGate, beforeWrite: beforeWrite);
     }
 
     public string GetCachePath(ImageFile imageFile)
@@ -112,7 +113,7 @@ public sealed class PreviewCacheService : IAsyncDisposable
         string settingsHash) =>
         _writer.Queue(imageFile, image, settingsHash);
 
-    internal void QueueSaveToCache(
+    internal Task<bool> QueueSaveToCache(
         ImageFile imageFile,
         MagickImage image,
         string settingsHash,

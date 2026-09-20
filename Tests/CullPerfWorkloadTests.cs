@@ -60,12 +60,19 @@ public sealed class CullPerfWorkloadTests
             // Five-ahead stays on for every pattern, dwell included: the departing
             // preview is queued whether or not the next step was warmed.
             vm.ImageService.Previews.AdjacentWarmEnabled = true;
-            if (workload.Pattern == "dwell") vm.ImageService.Previews.CullPerf = recorder;
+            if (workload.Pattern is "dwell" or "jump") vm.ImageService.Previews.CullPerf = recorder;
             vm.IsDevelopMode = workload.Surface == "develop";
             vm.SelectedImage = active[0];
             if (workload.Surface == "loupe") vm.EnterLoupeCommand.Execute(null);
             if (workload.Surface == "fullscreen") vm.ToggleFullScreenCommand.Execute(null);
             await IdleAsync(vm);
+            if (workload.Pattern is "dwell" or "jump")
+            {
+                // The initial walk must finish, including its last warm's publication,
+                // before the first input so no step cancels it.
+                await TestWaits.UntilAsync(() => recorder.Snapshot().Any(item => item.Kind == "WalkComplete"));
+                await IdleAsync(vm);
+            }
             vm.ImageService.Previews.CullPerf = recorder;
             if (workload.Pattern == "ahead")
             {
@@ -97,6 +104,12 @@ public sealed class CullPerfWorkloadTests
                 {
                     ledger.Add(new(i + 1, Stopwatch.GetTimestamp(), vm.SelectedImage!.CatalogId, true));
                     pending.Add((i % 2 == 0 ? vm.TogglePickedImageCommand : vm.UnpickImageCommand).ExecuteAsync(null));
+                }
+                else if (workload.Pattern == "jump")
+                {
+                    var target = CullPerfPreparation.JumpTarget(active, vm.SelectedImage!);
+                    ledger.Add(new(i + 1, Stopwatch.GetTimestamp(), target.CatalogId, false, DirectSelection: true));
+                    vm.SelectedImage = target;
                 }
                 else
                 {
@@ -135,19 +148,19 @@ public sealed class CullPerfWorkloadTests
             await vm.DisposeAsync();
         }
         var events = recorder.Snapshot();
-        if (workload.Pattern == "dwell")
+        if (workload.Pattern is "dwell" or "jump")
             counters["dwell-fresh-before-next-input"] =
                 CullPerfDwell.Validate(ledger, events, active[0].CatalogId, failures,
                     requireFreshRender: workload.Surface == "develop");
         var accounting = CullPerfLedger.Reconcile(ledger, events, workload.CacheCondition == "matched");
-        foreach (var pair in CullPerfCounters.Derive(events)) counters[pair.Key] = pair.Value;
+        foreach (var pair in CullPerfCounters.Derive(events, ledger.Count == 0 ? long.MaxValue : ledger[0].Timestamp)) counters[pair.Key] = pair.Value;
         var fragment = new CullPerfFragment(workload.Id, CullPerfFiles.Hash(CullPerfFiles.GatePath),
             Environment.GetEnvironmentVariable("CULL_PERF_MACHINE") ?? "", fixtures.Hashes,
             workload.CacheCondition, true, false, recorder.LostEvents, ledger.Count,
             accounting.Completed, accounting.Cancelled, accounting.Superseded, accounting.NoOp,
             failures.Concat(accounting.Failures).ToArray(), accounting.Samples, counters,
             workload.Metrics.Where(id => !accounting.Samples.ContainsKey(id) &&
-                gates.Metrics.Any(metric => metric.Id == id && metric.Maximum == null && !metric.Foreground)).ToArray());
+                workload.Metric(gates, id) is { Maximum: null, Foreground: false, MaximumBaselineRatio: null }).ToArray());
         CullPerfFiles.WriteNew(Path.Combine(directory, "events.json"), new { ledger, accounting.Operations, events });
         CullPerfFiles.WriteNew(Path.Combine(directory, "fragment.json"), fragment);
         Assert.Empty(failures);

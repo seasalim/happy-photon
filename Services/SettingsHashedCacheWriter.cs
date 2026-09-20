@@ -18,10 +18,11 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
     private readonly string _temporaryDirectory;
     private readonly Channel<CacheWrite> _queue;
     private readonly Task _processingGate;
-    private readonly Task _writerInHandGate;
+    private readonly Func<Task> _writerInHandGate;
     private readonly TimeSpan _drainTimeout;
     private readonly CancellationTokenSource _cancellation = new();
     private readonly Task _processingTask;
+    private readonly HashSet<CacheWrite> _outcomes = [];
     private int _activeWrites;
     private int _outstandingWrites;
     private int _disposed;
@@ -32,6 +33,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
     // reader never sees zero while a write is merely between queue and hand.
     public int PendingWrites => Volatile.Read(ref _outstandingWrites);
     internal CullPerfRecorder? CullPerf { get; set; }
+    internal int Tier { get; set; }
     internal int WriterInHandCount => Volatile.Read(ref _activeWrites);
 
     public SettingsHashedCacheWriter(
@@ -42,7 +44,8 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         Task? processingGate = null,
         TimeSpan? drainTimeout = null,
         bool versionedDimensionMetadata = false,
-        Task? writerInHandGate = null)
+        Task? writerInHandGate = null,
+        Func<Task>? beforeWrite = null)
     {
         _catalogService = catalogService;
         _getCachePath = getCachePath;
@@ -50,7 +53,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         _versionedDimensionMetadata = versionedDimensionMetadata;
         _temporaryDirectory = catalogService.TemporaryAssetsPath;
         _processingGate = processingGate ?? Task.CompletedTask;
-        _writerInHandGate = writerInHandGate ?? Task.CompletedTask;
+        _writerInHandGate = beforeWrite ?? (() => writerInHandGate ?? Task.CompletedTask);
         _drainTimeout = drainTimeout ?? DefaultDrainTimeout;
         _queue = Channel.CreateBounded<CacheWrite>(
             new BoundedChannelOptions(queueCapacity)
@@ -61,35 +64,43 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             },
             dropped =>
             {
-                Drop(dropped.ImageId);
+                Complete(dropped, persisted: false);
                 (dropped.Image as IDisposable)?.Dispose();
                 Interlocked.Decrement(ref _outstandingWrites);
             });
         _processingTask = Task.Run(ProcessAsync);
     }
 
-    public void Queue(
+    public Task<bool> Queue(
         ImageFile imageFile,
         MagickImage image,
         string settingsHash,
         PreviewCacheIdentity? identity = null)
     {
-        if (!CanQueue(imageFile, settingsHash)) return;
+        if (!CanQueue(imageFile, settingsHash))
+        {
+            Drop(imageFile.CatalogId);
+            return Task.FromResult(false);
+        }
+        var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         MagickImage? clone = null;
         try
         {
             clone = new MagickImage(image);
             if (TryQueueOwned(imageFile, clone, settingsHash, identity,
-                    File.GetLastWriteTimeUtc(imageFile.FilePath))) clone = null;
+                    File.GetLastWriteTimeUtc(imageFile.FilePath), completion)) clone = null;
         }
         catch
         {
+            Drop(imageFile.CatalogId);
+            completion.TrySetResult(false);
         }
         finally
         {
             clone?.Dispose();
         }
+        return completion.Task;
     }
 
     public void Queue(
@@ -124,7 +135,18 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
     private void Drop(long imageId)
     {
         Interlocked.Increment(ref _droppedWrites);
-        CullPerf?.Record("CacheWriteDropped", imageId);
+        CullPerf?.Record("CacheWriteDropped", imageId, value: Tier);
+    }
+
+    private void Complete(CacheWrite write, bool persisted)
+    {
+        lock (_outcomes)
+        {
+            if (!_outcomes.Remove(write)) return;
+            if (persisted) CullPerf?.Record("CacheWriteComplete", write.ImageId, value: Tier);
+            else Drop(write.ImageId);
+            write.Completion.TrySetResult(persisted);
+        }
     }
 
     private bool CanQueue(ImageFile imageFile, string settingsHash) =>
@@ -137,7 +159,8 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         object image,
         string settingsHash,
         PreviewCacheIdentity? identity,
-        DateTime sourceWriteTime)
+        DateTime sourceWriteTime,
+        TaskCompletionSource<bool>? completion = null)
     {
         var write = new CacheWrite(
             _getCachePath(imageFile.CatalogId), imageFile.CatalogId,
@@ -145,10 +168,12 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             sourceWriteTime,
             settingsHash,
             identity,
-            image);
+            image,
+            completion ?? new(TaskCreationOptions.RunContinuationsAsynchronously));
+        lock (_outcomes) _outcomes.Add(write);
         Interlocked.Increment(ref _outstandingWrites);
         if (_queue.Writer.TryWrite(write)) return true;
-        Drop(write.ImageId);
+        Complete(write, persisted: false);
         Interlocked.Decrement(ref _outstandingWrites);
         return false;
     }
@@ -164,7 +189,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
                 Interlocked.Increment(ref _activeWrites);
                 try
                 {
-                    await _writerInHandGate.ConfigureAwait(false);
+                    await _writerInHandGate().ConfigureAwait(false);
                     Save(write);
                 }
                 finally
@@ -181,7 +206,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         {
             while (_queue.Reader.TryRead(out var pending))
             {
-                Drop(pending.ImageId);
+                Complete(pending, persisted: false);
                 (pending.Image as IDisposable)?.Dispose();
                 Interlocked.Decrement(ref _outstandingWrites);
             }
@@ -195,6 +220,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         var temporaryMetadataPath = $"{stem}.meta";
         var metadataPath = Path.ChangeExtension(write.CachePath, ".meta");
         MagickImage? converted = null;
+        var persisted = false;
         try
         {
             if (write.Image is not MagickImage) CullPerf?.Record("CacheConvert", write.ImageId);
@@ -229,18 +255,16 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             {
                 File.Delete(temporaryPath);
                 File.Delete(temporaryMetadataPath);
-                Drop(write.ImageId);
                 return;
             }
 
             File.Delete(metadataPath);
             File.Move(temporaryPath, write.CachePath, overwrite: true);
             File.Move(temporaryMetadataPath, metadataPath);
-            CullPerf?.Record("CacheWriteComplete", write.ImageId);
+            persisted = true;
         }
         catch
         {
-            Drop(write.ImageId);
             TryDelete(temporaryPath);
             TryDelete(temporaryMetadataPath);
         }
@@ -248,6 +272,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         {
             converted?.Dispose();
             (write.Image as IDisposable)?.Dispose();
+            Complete(write, persisted);
         }
     }
 
@@ -298,6 +323,9 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         else
         {
             _cancellation.Cancel();
+            // Outcomes never own pixels: an in-hand Save still disposes its image.
+            lock (_outcomes)
+                foreach (var write in _outcomes.ToArray()) Complete(write, persisted: false);
         }
     }
 
@@ -309,5 +337,6 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         DateTime SourceWriteTime,
         string SettingsHash,
         PreviewCacheIdentity? Identity,
-        object Image);
+        object Image,
+        TaskCompletionSource<bool> Completion);
 }

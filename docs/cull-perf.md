@@ -17,7 +17,7 @@ inconclusive (exit 2). Full qualification always builds.
 The full invocation's elapsed seconds are recorded for the 30-minute FINALIZE
 budget. The implementor's targeted runs do not certify that full-run budget.
 
-## Supplemental dwell workloads
+## Supplemental dwell and jump workloads
 
 Use `./scripts/cull-perf.ps1 -GateFile Tests/CullPerfGates.dwell.json`, adding
 `-Baseline <dwell-attempt>/result.json` to compare within this supplemental series.
@@ -31,7 +31,18 @@ publication per step, so a rendered preview departs each time. Loupe accepts a
 matched warm paint per step. A missed completion fails the workload. Cadence
 remains independent of completion; the final step must also publish.
 `dwell-fresh-before-next-input` reports the number of validated steps.
-Each dwell case has a four-minute hang watchdog.
+Dwell has a three-minute hang watchdog; jump has a six-minute watchdog.
+The four-workload supplemental file has a 15-minute runtime budget.
+
+Jump takes 20 inputs at 9000 ms intervals on each of Loupe and Develop, with
+the same cold Canon fixture, default settings, and warming enabled. Each input
+selects the image six positions ahead of the current image, leaving all five
+forward neighbors uncached for a consecutive warm walk. The ledger records the
+target image and submission timestamp before assigning SelectedImage, then
+reconciles selection, feedback and publication as navigation. Direct assignments
+have no command Receipt event: their matching Selection acknowledges the input,
+and their ledger IDs identify samples. Feedback latency still starts before the
+assignment.
 
 The three foreground/publication metric definitions are copied from the frozen
 table unchanged. `ui-enqueue-ms` adds caller-thread `CacheEnqueueStart/End` spans,
@@ -48,6 +59,39 @@ In the existing ledger their spans start at submission immediately before comman
 invocation, not at the recorder's Receipt event. These view-model measurements
 exclude dispatcher queue delay. This supplemental run does not qualify the frozen
 workloads or repeat their required correctness checks.
+
+The dwell harness waits for the initial walk to complete before submitting inputs.
+Three warm metrics use one-based recorder positions as their sample operation IDs:
+
+- `handoff-gap-ms`: each `WarmHandoffResolved` with value 1 (the worker actually
+  waited), minus the previous warm target's first tier-1 `CacheWriteComplete` or
+  `CacheWriteDropped` after its `WarmEnqueue`. Later outcomes for that image,
+  unrelated images, and tier-2 thumbnail writes cannot replace that outcome.
+  The handoff awaits its own write outcome directly; every drop path, including
+  shutdown timeout, resolves it without waiting for other pending writes.
+  Resolves without a preceding matching outcome yield no sample. The p95 maximum
+  is 5 ms, with at least 20 samples, on both jump workloads.
+- `step-refill-ms`: each post-input `BufferRefill` to its next `WalkComplete`,
+  provided no further `BufferRefill` intervenes and the parent image matches.
+  Cancelled or unfinished walks yield no latency sample. `step-walks-completed`
+  and `step-walks-excluded` count the two outcomes; `walks-without-complete`
+  includes initial walks too. The per-workload minimumWalks floor (15 for jump,
+  zero for report-only dwell) makes thinner binding fragments inconclusive. Both jump workloads require
+  15 samples and a p95 at most 0.85 times the named baseline.
+- `initial-walk-ms`: the first walk's `BufferRefill` to `WalkComplete`, both
+  before the first ledger input; one separate, report-only p95 sample.
+
+Handoff gap and step refill are foreground metrics on jump workloads. Dwell
+overrides both to report-only (no maximum, foreground comparison, or ratio).
+Workload metricOverrides replace the matching global metric definition; jump
+also sets input-feedback-ms to 20 samples, retaining its 50 ms p95 maximum.
+The initial walk remains report-only on all four workloads. A metric's optional
+`maximumBaselineRatio` also enforces candidate <= baseline times that ratio,
+independently of both regression floors. Existing evidence validity, minimum
+sample counts, correctness checks, and any stricter foreground regression limit
+still apply. An unnamed baseline run reports absolute values without enforcing
+an improvement ratio. A single initial-walk sample cannot establish variability;
+repeat runs are needed for that comparison.
 
 ## Frozen workloads
 

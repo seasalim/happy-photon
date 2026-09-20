@@ -44,7 +44,7 @@ public sealed partial class AdjacentPreviewWarmTests
             await TestWaits.UntilAsync(() => loader.Paths.Count >= 2);
             Assert.Equal("fourth.jpg", loader.Paths.ElementAt(1));
             await TestWaits.UntilAsync(() =>
-                vm.ImageService.Previews.AdjacentWarmEntryCount == 1);
+                vm.ImageService.Previews.PreviewActivityCount == 0);
 
             vm.SelectedImage = images[3];
             await vm.LoupeLoadingTask;

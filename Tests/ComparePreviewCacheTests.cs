@@ -158,7 +158,7 @@ public sealed class ComparePreviewCacheTests : IDisposable
         var cache = new PreviewCacheService(catalog);
         using (var preview = new MagickImage(MagickColors.Purple, 24, 16))
         {
-            cache.QueueSaveToCache(
+            _ = cache.QueueSaveToCache(
                 images[0],
                 preview,
                 RenderSettingsHash.Compute(images[0].EditSettings),

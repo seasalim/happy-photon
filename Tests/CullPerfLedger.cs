@@ -3,7 +3,7 @@ using HappyPhoton.Services;
 
 namespace HappyPhoton.Tests;
 
-internal sealed record CullPerfSubmission(long Id, long Timestamp, long ImageId, bool Pick);
+internal sealed record CullPerfSubmission(long Id, long Timestamp, long ImageId, bool Pick, bool DirectSelection = false);
 internal sealed record CullPerfAccounting(int Completed, int Cancelled, int Superseded,
     int NoOp, string[] Failures, Dictionary<string, CullPerfSample[]> Samples,
     Dictionary<long, long> Operations);
@@ -25,14 +25,18 @@ internal static class CullPerfLedger
             var input = ledger[index];
             var next = index + 1 < ledger.Count ? ledger[index + 1].Timestamp : long.MaxValue;
             var receipts = events.Where(item => item.Timestamp >= input.Timestamp &&
-                item.Timestamp < next && item.Kind is "Receipt" or "PickReceipt" or "NoOp").ToArray();
+                item.Timestamp < next && (input.DirectSelection
+                    ? item.Kind == "Selection" && item.ImageId == input.ImageId
+                    : item.Kind is "Receipt" or "PickReceipt" or "NoOp")).ToArray();
             if (receipts.Length != 1)
             {
                 failures.Add($"Input {input.Id}: expected one receipt, found {receipts.Length}.");
                 continue;
             }
             var receipt = receipts[0];
-            operations[input.Id] = receipt.OperationId;
+            // Direct assignments have no command receipt or operation id; the
+            // matching Selection acknowledges the input and its ledger id is unique.
+            operations[input.Id] = input.DirectSelection ? input.Id : receipt.OperationId;
             Add("input-receipt-ms", input, receipt.Timestamp);
             if (receipt.Kind == "NoOp") { noOp++; continue; }
             foreach (var start in events.Where(item => item.Kind == "CacheEnqueueStart" &&
@@ -45,7 +49,7 @@ internal static class CullPerfLedger
                 spans.Add(new(start.OperationId, Stopwatch.GetElapsedTime(start.Timestamp, end.Timestamp).TotalMilliseconds));
             }
 
-            var selection = events.FirstOrDefault(item => item.Kind == "Selection" &&
+            var selection = input.DirectSelection ? receipt : events.FirstOrDefault(item => item.Kind == "Selection" &&
                 item.OperationId == receipt.OperationId);
             var matching = events.Where(item => item.Timestamp >= receipt.Timestamp &&
                 item.ImageId == input.ImageId && (input.Pick
@@ -72,6 +76,8 @@ internal static class CullPerfLedger
             var ready = matching.FirstOrDefault(item => item.Kind is "FreshRender" or "MatchedCacheReady");
             if (ready.Timestamp != 0) Add("accurate-ready-ms", input, ready.Timestamp);
         }
+        if (ledger.Count != 0)
+            foreach (var pair in WarmSamples(events, ledger[0].Timestamp)) samples[pair.Key] = pair.Value.ToList();
         return new(completed, cancelled, superseded, noOp, failures.ToArray(),
             samples.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray()), operations);
 
@@ -81,4 +87,61 @@ internal static class CullPerfLedger
             values.Add(new(operations[input.Id], Stopwatch.GetElapsedTime(input.Timestamp, end).TotalMilliseconds));
         }
     }
+
+    // Sample IDs here are one-based recorder positions, not receipt operation IDs.
+    internal static Dictionary<string, CullPerfSample[]> WarmSamples(CullPerfEvent[] events, long firstInput)
+    {
+        var handoffs = new List<CullPerfSample>();
+        CullPerfEvent? previousWarm = null, outcome = null;
+        for (var index = 0; index < events.Length; index++)
+        {
+            var item = events[index];
+            if (item.Kind == "WarmEnqueue")
+            {
+                previousWarm = item;
+                outcome = null;
+            }
+            else if (previousWarm is { } warm && outcome == null && item.ImageId == warm.ImageId &&
+                item.Value == 1 && item.Kind is "CacheWriteComplete" or "CacheWriteDropped")
+                outcome = item;
+            else if (item.Kind == "WarmHandoffResolved" && item.Value == 1 && outcome is { } write)
+                handoffs.Add(new(index + 1, Stopwatch.GetElapsedTime(write.Timestamp, item.Timestamp).TotalMilliseconds));
+        }
+        var walks = Walks(events).ToArray();
+        var initial = walks.FirstOrDefault();
+        return new()
+        {
+            ["handoff-gap-ms"] = handoffs.ToArray(),
+            ["step-refill-ms"] = walks.Where(walk => walk.Start.Timestamp >= firstInput && walk.End != null)
+                .Select(walk => Sample(walk.Id, walk.Start, walk.End!.Value)).ToArray(),
+            ["initial-walk-ms"] = initial.Start.Timestamp < firstInput && initial.End is { } end && end.Timestamp < firstInput
+                ? [Sample(initial.Id, initial.Start, end)] : []
+        };
+
+        static CullPerfSample Sample(long id, CullPerfEvent start, CullPerfEvent end) =>
+            new(id, Stopwatch.GetElapsedTime(start.Timestamp, end.Timestamp).TotalMilliseconds);
+    }
+
+    internal static IEnumerable<(long Id, CullPerfEvent Start, CullPerfEvent? End)> Walks(CullPerfEvent[] events)
+    {
+        for (var index = 0; index < events.Length; index++)
+        {
+            if (events[index].Kind != "BufferRefill") continue;
+            CullPerfEvent? launched = null, end = null;
+            for (var next = index + 1; next < events.Length; next++)
+            {
+                if (events[next].Kind == "BufferRefill") break;
+                if (launched == null && events[next].Kind == "WalkComplete" &&
+                    events[next].ImageId == events[index].ImageId)
+                    launched = events[next];
+                // The walk loop records WalkComplete when its last warm launches;
+                // the buffer is refilled only when that warm publishes, so a
+                // walk whose last warm is cancelled has no end.
+                else if (launched != null && events[next].Kind == "WarmComplete")
+                    end = events[next];
+            }
+            yield return (index + 1, events[index], end);
+        }
+    }
+
 }

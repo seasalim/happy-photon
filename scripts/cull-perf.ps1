@@ -100,7 +100,7 @@ try {
                 Invoke-Case $workload.id 'Tests/HappyPhoton.Tests.csproj' 'FullyQualifiedName=HappyPhoton.Tests.AdjacentPreviewPerformanceTests.AdjacentSelectionGates_WhenEnabled'
             }
         } else {
-            $timeout = if ($workload.pattern -eq 'dwell') { '4m' } else { '90s' }
+            $timeout = if ($workload.pattern -eq 'jump') { '6m' } elseif ($workload.pattern -eq 'dwell') { '3m' } else { '90s' }
             Invoke-Case $workload.id 'Tests/HappyPhoton.Tests.csproj' 'FullyQualifiedName=HappyPhoton.Tests.CullPerfWorkloadTests.QualifiedWorkload' -HangTimeout $timeout
         }
     }

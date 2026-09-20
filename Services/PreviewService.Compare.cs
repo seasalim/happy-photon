@@ -87,7 +87,7 @@ public sealed partial class PreviewService
                 snapshot,
                 baseImage.Info.ProfileToken);
             var identity = CreatePreviewCacheIdentity(baseImage.Info, snapshot);
-            _previewCache.QueueSaveToCache(
+            _ = _previewCache.QueueSaveToCache(
                 imageFile,
                 rendered.Image,
                 settingsHash,

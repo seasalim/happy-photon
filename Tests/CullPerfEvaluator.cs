@@ -31,9 +31,9 @@ internal static class CullPerfEvaluator
 
             foreach (var metricId in workload.Metrics)
             {
-                var metric = gates.Metrics.Single(metric => metric.Id == metricId);
+                var metric = workload.Metric(gates, metricId);
                 if (fragment.NotMeasured?.Contains(metric.Id) == true &&
-                    metric.Maximum == null && !metric.Foreground) continue;
+                    metric.Maximum == null && !metric.Foreground && metric.MaximumBaselineRatio == null) continue;
                 var statistics = ReadStatistics(fragment, metric, out var reason);
                 if (statistics == null)
                 {
@@ -80,6 +80,9 @@ internal static class CullPerfEvaluator
         if ((long)fragment.Completed + fragment.Cancelled + fragment.Superseded + fragment.NoOp != fragment.Submitted)
             return "Operation ledger does not reconcile.";
         if (fragment.NoOp != 0) return "Guarded no-op cannot qualify as an action.";
+        if (workload.MinimumWalks > 0 &&
+            (!fragment.Counters.TryGetValue("step-walks-completed", out var walks) || walks < workload.MinimumWalks))
+            return $"Fewer than {workload.MinimumWalks} step walks completed.";
         return null;
     }
 
@@ -124,20 +127,29 @@ internal static class CullPerfEvaluator
             return Inconclusive(workload.Id, id, "Baseline machine identity mismatch.");
         if (beforeFragment.CorrectnessFailures.Length != 0)
             return Inconclusive(workload.Id, id, "Baseline has correctness failures.");
-        if (beforeFragment.NotMeasured?.Contains(metric.Id) == true && metric.Maximum == null && !metric.Foreground)
+        if (beforeFragment.NotMeasured?.Contains(metric.Id) == true && metric.Maximum == null && !metric.Foreground && metric.MaximumBaselineRatio == null)
             return new(workload.Id, id, CullPerfVerdict.Pass, "Report-only baseline metric was not measured.", After: after);
         var statistics = ReadStatistics(beforeFragment, metric, out var reason);
         if (statistics == null) return Inconclusive(workload.Id, id, "Baseline: " + reason);
         var before = statistics.Select(metric.Statistic);
+        var ratioMaximum = metric.MaximumBaselineRatio is { } ratio ? before * ratio : (double?)null;
+        if (ratioMaximum is { } limit && after > limit)
+            return new(workload.Id, id, CullPerfVerdict.Fail, "Maximum baseline ratio exceeded.",
+                Threshold: limit, Before: before, After: after);
         if (!metric.Foreground)
-            return new(workload.Id, id, CullPerfVerdict.Pass, "Report-only baseline comparison.", Before: before, After: after);
+            return new(workload.Id, id, CullPerfVerdict.Pass,
+                ratioMaximum == null ? "Report-only baseline comparison." : "Within maximum baseline ratio.",
+                Threshold: ratioMaximum, Before: before, After: after);
         // A percentage alone gates on noise for sub-millisecond spans and single
         // samples, so the allowance is the larger of the rate and an absolute floor,
         // and thin samples are reported rather than gated.
         var maximum = Math.Max(before * (1 + gates.MaximumForegroundRegression), before + gates.RegressionFloorMs);
         if (statistics.Count < gates.RegressionMinimumSamples || afterCount < gates.RegressionMinimumSamples)
-            return new(workload.Id, id, CullPerfVerdict.Pass, "Below the regression sample floor; reported, not gated.",
-                Threshold: maximum, Before: before, After: after);
+            return new(workload.Id, id, CullPerfVerdict.Pass,
+                ratioMaximum == null ? "Below the regression sample floor; reported, not gated."
+                    : "Within maximum baseline ratio; below regression sample floor.",
+                Threshold: ratioMaximum ?? maximum, Before: before, After: after);
+        if (ratioMaximum is { } ratioLimit) maximum = Math.Min(maximum, ratioLimit);
         return new(workload.Id, id, after <= maximum ? CullPerfVerdict.Pass : CullPerfVerdict.Fail,
             after <= maximum ? "Within foreground regression allowance." : "Foreground regression exceeded.",
             Threshold: maximum, Before: before, After: after);

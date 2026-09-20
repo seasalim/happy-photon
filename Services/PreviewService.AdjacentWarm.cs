@@ -126,7 +126,9 @@ public sealed partial class PreviewService
             // cache writer lands it, and this warm's entry will replace it, so
             // wait before decoding: a result that cannot be published yet
             // would be lost to the next selection change.
+            var waited = !_adjacentWarmHandoff.IsCompleted;
             await _adjacentWarmHandoff.WaitAsync(token).ConfigureAwait(false);
+            CullPerf?.Record("WarmHandoffResolved", imageFile.CatalogId, value: waited ? 1 : 0);
             lock (_adjacentWarmSync)
             {
                 if (ReferenceEquals(_adjacentWarmCancellation, cancellation))
@@ -137,6 +139,7 @@ public sealed partial class PreviewService
                 .ConfigureAwait(false);
             token.ThrowIfCancellationRequested();
             AdjacentWarmEntry entry;
+            Task<bool> writeOutcome;
             {
                 var outcome = _baseLoader.LoadPreviewBaseWithOutcome(imageFile,
                     decode, token);
@@ -168,7 +171,7 @@ public sealed partial class PreviewService
                     writerHash, identity,
                     rendered.Image.ToByteArray(MagickFormat.Jpeg));
                 CullPerf?.Record("WarmEnqueue", imageFile.CatalogId);
-                _previewCache.QueueSaveToCache(
+                writeOutcome = _previewCache.QueueSaveToCache(
                     imageFile, rendered.Image, writerHash, identity);
             }
             lock (_adjacentWarmSync)
@@ -179,7 +182,7 @@ public sealed partial class PreviewService
                     return;
                 _adjacentWarmEntry = entry;
                 CullPerf?.Record("WarmComplete", imageFile.CatalogId);
-                _adjacentWarmHandoff = DropWhenPersistedAsync(imageFile, entry);
+                _adjacentWarmHandoff = DropWhenPersistedAsync(imageFile, entry, writeOutcome);
             }
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
@@ -216,23 +219,14 @@ public sealed partial class PreviewService
         }
     }
     private async Task DropWhenPersistedAsync(ImageFile imageFile,
-        AdjacentWarmEntry entry)
+        AdjacentWarmEntry entry, Task<bool> writeOutcome)
     {
-        while (ReferenceEquals(ReadAdjacentWarmEntry(), entry) &&
-               Volatile.Read(ref _disposed) == 0)
-        {
-            if (!SourceMatches(imageFile, entry.SourceWriteTime) ||
-                _previewCache.HasSettingsMatchedEntry(imageFile,
-                    entry.SettingsHash, entry.SourceWriteTime))
-            {
-                DropAdjacentWarmEntry(entry);
-                return;
-            }
-            // A write the cache writer abandoned never lands; the entry then
-            // stays as the only copy until the next warm replaces it.
-            if (_previewCache.PendingWrites == 0) return;
-            await Task.Delay(250).ConfigureAwait(false);
-        }
+        var persisted = await writeOutcome.ConfigureAwait(false);
+        if (persisted || !SourceMatches(imageFile, entry.SourceWriteTime) ||
+            _previewCache.HasSettingsMatchedEntry(imageFile,
+                entry.SettingsHash, entry.SourceWriteTime))
+            DropAdjacentWarmEntry(entry);
+        // An abandoned write leaves this entry as the only copy until replaced.
     }
     private bool CanReadAdjacentSource(ImageFile imageFile) =>
         SourceAccessPolicy.CanRead(_sourceAvailability.GetAvailability(

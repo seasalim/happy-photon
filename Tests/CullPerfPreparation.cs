@@ -6,6 +6,9 @@ namespace HappyPhoton.Tests;
 
 internal static class CullPerfPreparation
 {
+    internal static ImageFile JumpTarget(ImageFile[] images, ImageFile selected) =>
+        images[Array.IndexOf(images, selected) + 6];
+
     internal static double DueMilliseconds(CullPerfWorkload workload, int index) =>
         index / workload.BurstSize * workload.IntervalMs + index % workload.BurstSize * workload.BurstStepMs;
 

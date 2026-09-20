@@ -16,18 +16,42 @@
   "requiredChecks": [],
   "applicability": {
     "loupe": [
-      "dwell"
+      "dwell",
+      "jump"
     ],
     "develop": [
-      "dwell"
+      "dwell",
+      "jump"
     ]
   },
   "knownMissingEvidence": [
     "aggregate owned retained-base bytes",
     "complete operation and stage correlation"
   ],
-  "coverage": "Cold Canon dwell with warming on; Develop requires a fresh render per step and Loupe requires an accepted paint.",
+  "coverage": "Cold Canon dwell and six-image jumps with warming on; Develop requires a fresh render per input and Loupe requires an accepted paint.",
   "metrics": [
+    {
+      "id": "handoff-gap-ms",
+      "statistic": "p95",
+      "minimumSamples": 20,
+      "maximum": 5,
+      "foreground": true
+    },
+    {
+      "id": "step-refill-ms",
+      "statistic": "p95",
+      "minimumSamples": 15,
+      "maximum": null,
+      "foreground": true,
+      "maximumBaselineRatio": 0.85
+    },
+    {
+      "id": "initial-walk-ms",
+      "statistic": "p95",
+      "minimumSamples": 1,
+      "maximum": null,
+      "foreground": false
+    },
     {
       "id": "input-feedback-ms",
       "statistic": "p95",
@@ -59,6 +83,68 @@
   ],
   "workloads": [
     {
+      "id": "loupe-jump-canon-cold-default",
+      "surface": "loupe",
+      "pattern": "jump",
+      "fixture": "canon",
+      "settings": "default",
+      "cacheCondition": "cold",
+      "actions": 20,
+      "metrics": [
+        "handoff-gap-ms",
+        "step-refill-ms",
+        "initial-walk-ms",
+        "input-feedback-ms"
+      ],
+      "intervalMs": 9000,
+      "burstSize": 1,
+      "burstStepMs": 0,
+      "reversalLength": 5,
+      "exposure": 0,
+      "staleExposureDelta": 0.5,
+      "minimumWalks": 15,
+      "metricOverrides": [
+        {
+          "id": "input-feedback-ms",
+          "statistic": "p95",
+          "minimumSamples": 20,
+          "maximum": 50,
+          "foreground": true
+        }
+      ]
+    },
+    {
+      "id": "develop-jump-canon-cold-default",
+      "surface": "develop",
+      "pattern": "jump",
+      "fixture": "canon",
+      "settings": "default",
+      "cacheCondition": "cold",
+      "actions": 20,
+      "metrics": [
+        "handoff-gap-ms",
+        "step-refill-ms",
+        "initial-walk-ms",
+        "input-feedback-ms"
+      ],
+      "intervalMs": 9000,
+      "burstSize": 1,
+      "burstStepMs": 0,
+      "reversalLength": 5,
+      "exposure": 0,
+      "staleExposureDelta": 0.5,
+      "minimumWalks": 15,
+      "metricOverrides": [
+        {
+          "id": "input-feedback-ms",
+          "statistic": "p95",
+          "minimumSamples": 20,
+          "maximum": 50,
+          "foreground": true
+        }
+      ]
+    },
+    {
       "id": "loupe-dwell-canon-cold-default",
       "surface": "loupe",
       "pattern": "dwell",
@@ -67,6 +153,9 @@
       "cacheCondition": "cold",
       "actions": 100,
       "metrics": [
+        "handoff-gap-ms",
+        "step-refill-ms",
+        "initial-walk-ms",
         "input-feedback-ms",
         "first-publication-ms",
         "accurate-ready-ms"
@@ -76,7 +165,24 @@
       "burstStepMs": 0,
       "reversalLength": 5,
       "exposure": 0,
-      "staleExposureDelta": 0.5
+      "staleExposureDelta": 0.5,
+      "minimumWalks": 0,
+      "metricOverrides": [
+        {
+          "id": "handoff-gap-ms",
+          "statistic": "p95",
+          "minimumSamples": 1,
+          "maximum": null,
+          "foreground": false
+        },
+        {
+          "id": "step-refill-ms",
+          "statistic": "p95",
+          "minimumSamples": 1,
+          "maximum": null,
+          "foreground": false
+        }
+      ]
     },
     {
       "id": "develop-dwell-canon-cold-default",
@@ -87,6 +193,9 @@
       "cacheCondition": "cold",
       "actions": 100,
       "metrics": [
+        "handoff-gap-ms",
+        "step-refill-ms",
+        "initial-walk-ms",
         "input-feedback-ms",
         "first-publication-ms",
         "accurate-ready-ms",
@@ -97,7 +206,24 @@
       "burstStepMs": 0,
       "reversalLength": 5,
       "exposure": 0,
-      "staleExposureDelta": 0.5
+      "staleExposureDelta": 0.5,
+      "minimumWalks": 0,
+      "metricOverrides": [
+        {
+          "id": "handoff-gap-ms",
+          "statistic": "p95",
+          "minimumSamples": 1,
+          "maximum": null,
+          "foreground": false
+        },
+        {
+          "id": "step-refill-ms",
+          "statistic": "p95",
+          "minimumSamples": 1,
+          "maximum": null,
+          "foreground": false
+        }
+      ]
     }
   ]
 }
