@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 
@@ -13,6 +14,102 @@ public partial class MainWindowViewModel
     private XmpSidecarMode _appliedXmpMode;
     private readonly HashSet<string> _inFlightDeletePaths =
         new(StringComparer.OrdinalIgnoreCase);
+
+    [RelayCommand]
+    private async Task WriteXmpSidecarsAsync()
+    {
+        var writer = _xmpWriter;
+        if (!IsXmpReadWrite || writer == null) return;
+        var targets = ResolveActionTargets().Targets.Where(image => image.Version == 1).ToArray();
+        var generation = Volatile.Read(ref _browseGeneration);
+        bool IsCurrent() => generation == Volatile.Read(ref _browseGeneration);
+        Dictionary<long, ImageFile> livePrimaryRows = [];
+        void RefreshLiveRows() => livePrimaryRows = Browse.AllImages
+            .Where(image => image.Version == 1 && image.CatalogId != 0)
+            .ToDictionary(image => image.CatalogId);
+        bool IsLive(long id, string path) => !IsDeleteTargetClaimed(path) &&
+            livePrimaryRows.ContainsKey(id);
+        try
+        {
+            if (_xmpReconcileTask is { } reconcile)
+            {
+                try { await reconcile; }
+                catch (Exception exception) when (exception is not OperationCanceledException)
+                {
+                    // The reconcile observer reports failures; catalog state remains publishable.
+                }
+            }
+            if (!IsCurrent() || !IsXmpReadWrite) return;
+            RefreshLiveRows();
+            var ids = targets.Where(image => IsLive(image.CatalogId, image.FilePath))
+                .Select(image => image.CatalogId).Where(id => id != 0).ToArray();
+            // SQLite's async APIs still perform synchronous work; keep bulk calls off the UI thread.
+            var marked = await Task.Run(() => _catalogService.MarkXmpPublicationPendingAsync(ids));
+            if (!IsCurrent() || !IsXmpReadWrite) return;
+            if (marked.Count == 0)
+            {
+                ShowTransientStatus("No XMP sidecars to write");
+                return;
+            }
+            RefreshLiveRows();
+            var paths = Browse.AllImages.Where(image => image.Version == 1)
+                .Select(image => image.FilePath).ToArray();
+            foreach (var (snapshot, _) in marked)
+            {
+                if (livePrimaryRows.TryGetValue(snapshot.ImageId, out var image))
+                    ApplyAssessmentSnapshot(image, snapshot);
+            }
+            var current = marked.ToDictionary(row => row.Snapshot.ImageId, row => row.Snapshot);
+            foreach (var (snapshot, axes) in marked)
+            {
+                while (!writer.CanAdmitPublication(out var stopped))
+                {
+                    if (stopped) break;
+                    await writer.DrainAsync();
+                    if (!IsCurrent() || !IsXmpReadWrite) return;
+                    RefreshLiveRows();
+                    // A mutation may have completed for a later target during the drain.
+                    var liveIds = marked.Where(row => IsLive(row.Snapshot.ImageId, row.Snapshot.FilePath))
+                        .Select(row => row.Snapshot.ImageId).ToArray();
+                    current = (await Task.Run(() => _catalogService.LoadAssessmentSnapshotsAsync(liveIds)))
+                        .ToDictionary(row => row.ImageId);
+                    if (!IsCurrent() || !IsXmpReadWrite) return;
+                    RefreshLiveRows();
+                }
+                if (!IsXmpReadWrite || !writer.CanAdmitPublication(out _)) break;
+                if (!IsLive(snapshot.ImageId, snapshot.FilePath)) continue;
+                if (current.TryGetValue(snapshot.ImageId, out var latest))
+                    writer.TryEnqueue(latest, axes, paths, XmpSidecarNaming);
+            }
+            await writer.DrainAsync();
+            if (!IsCurrent() || !IsXmpReadWrite) return;
+            RefreshLiveRows();
+            var remaining = marked.Where(row => IsLive(row.Snapshot.ImageId, row.Snapshot.FilePath))
+                .ToDictionary(row => row.Snapshot.ImageId, row => row.Axes);
+            var remainingIds = remaining.Keys.ToArray();
+            var refreshed = await Task.Run(() => _catalogService.LoadAssessmentSnapshotsAsync(remainingIds));
+            if (!IsCurrent() || !IsXmpReadWrite) return;
+            RefreshLiveRows();
+            foreach (var snapshot in refreshed)
+            {
+                if (livePrimaryRows.TryGetValue(snapshot.ImageId, out var image))
+                    ApplyAssessmentSnapshot(image, snapshot);
+            }
+            var written = refreshed.Count(row => (row.PendingAxes & remaining[row.ImageId]) == 0);
+            var pending = refreshed.Count - written;
+            var message = $"XMP sidecars written for {written} " + (written == 1 ? "photo" : "photos");
+            if (pending > 0)
+                message += $"; XMP writes remain pending for {pending} " +
+                    (pending == 1 ? "photo" : "photos");
+            ShowTransientStatus(message);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine($"XMP publication failed: {exception.Message}");
+            if (IsCurrent()) ShowTransientStatus("Unable to write XMP sidecars");
+        }
+    }
 
     private async Task ApplyXmpModeTransitionAsync(
         XmpSidecarMode newMode)

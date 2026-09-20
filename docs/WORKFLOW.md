@@ -61,11 +61,15 @@ explain why Change and Move are unavailable. The Metadata tab can enable
 per-catalog XMP reading or read/write interop for ratings, flags, recognized
 color-label names, and crops. A plain Lightroom crop fills an image whose Happy
 Photon geometry is still empty; it never replaces or clears existing geometry.
-Read/write creates or updates a sidecar only after you change an assessment or
+Read/write creates or updates a sidecar after you change an assessment or
 geometry, and publishes crops only when rotation, horizon, perspective geometry,
-and source orientation need no coordinate conversion. Enabling it does not publish
-older catalog state. Happy Photon exchanges only standard Adobe XMP vocabulary (see
-`ARCHITECTURE.md` for the exact properties): Lightroom Classic interoperates
+and source orientation need no coordinate conversion. To publish older catalog state,
+choose **Write XMP sidecars** from the Library thumbnail context menu in Read & write
+mode. It acts on the selection, or the active photo if nothing is selected; use
+`Ctrl+A` for the folder. Only V1 photos with an assessment or persisted crop are
+published. Re-run the command for writes still pending, including publication
+interrupted by a folder switch. Happy Photon exchanges only standard Adobe XMP
+vocabulary (see `ARCHITECTURE.md` for the exact properties): Lightroom Classic interoperates
 fully, while darktable and Bridge versions that recognize a reject only as
 `xmp:Rating="-1"` will not show Happy Photon rejects, because the rating keeps
 its true star value. Sidecars may sync through the folder's cloud provider. The

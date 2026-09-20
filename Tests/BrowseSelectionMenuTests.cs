@@ -110,22 +110,23 @@ public sealed class BrowseSelectionMenuTests
         var items = menu.Items.ToArray();
         var copy = Assert.IsType<MenuItem>(items[0]);
         var reveal = Assert.IsType<MenuItem>(items[1]);
-        Assert.IsType<Separator>(items[2]);
-        var createVersion = Assert.IsType<MenuItem>(items[3]);
-        var renameVersion = Assert.IsType<MenuItem>(items[4]);
-        var deleteVersion = Assert.IsType<MenuItem>(items[5]);
-        Assert.IsType<Separator>(items[6]);
-        var delete = Assert.IsType<MenuItem>(items[7]);
+        var writeXmp = Assert.IsType<MenuItem>(items[2]);
+        Assert.IsType<Separator>(items[3]);
+        var createVersion = Assert.IsType<MenuItem>(items[4]);
+        var renameVersion = Assert.IsType<MenuItem>(items[5]);
+        var deleteVersion = Assert.IsType<MenuItem>(items[6]);
+        Assert.IsType<Separator>(items[7]);
+        var delete = Assert.IsType<MenuItem>(items[8]);
         Assert.Equal(
-            ["Copy path", "Reveal in File Explorer", "New Version from Current",
+            ["Copy path", "Reveal in File Explorer", "Write XMP sidecars", "New Version from Current",
                 "Rename version label…", "Delete version", "Delete selection…"],
-            new[] { copy, reveal, createVersion, renameVersion, deleteVersion, delete }
+            new[] { copy, reveal, writeXmp, createVersion, renameVersion, deleteVersion, delete }
                 .Select(item => item.Header));
         Assert.All(new[]
             {
                 copy, reveal, createVersion, renameVersion, deleteVersion, delete
             }, item => Assert.True(item.IsEnabled));
-        var requests = new int[6];
+        var requests = new int[7];
         control.CopyImagePathsRequested += (_, _) => requests[0]++;
         control.RevealImageRequested += (_, _) => requests[1]++;
         control.NewVersionRequested += (_, target) =>
@@ -144,18 +145,20 @@ public sealed class BrowseSelectionMenuTests
             requests[4]++;
         };
         control.DeleteImagesRequested += (_, _) => requests[5]++;
+        control.WriteXmpSidecarsRequested += (_, _) => requests[6]++;
 
         menu.PlacementTarget = tile;
         menu.Open();
         Dispatcher.UIThread.RunJobs();
         copy.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         reveal.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        writeXmp.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         createVersion.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         renameVersion.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         deleteVersion.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         delete.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
 
-        Assert.Equal([1, 1, 1, 1, 1, 1], requests);
+        Assert.Equal([1, 1, 1, 1, 1, 1, 1], requests);
     }
 
     [AvaloniaFact]
@@ -174,7 +177,7 @@ public sealed class BrowseSelectionMenuTests
             border => ReferenceEquals(border.DataContext, previous) &&
                       border.Classes.Contains("thumbnail"));
         var menu = tile.ContextMenu!;
-        var createVersion = Assert.IsType<MenuItem>(menu.Items.ElementAt(3));
+        var createVersion = Assert.IsType<MenuItem>(menu.Items.ElementAt(4));
         control.ApplyRightClickSelection(previous);
         menu.PlacementTarget = tile;
         menu.Open();
@@ -248,7 +251,7 @@ public sealed class BrowseSelectionMenuTests
         menu.PlacementTarget = tile;
         menu.Open();
         Dispatcher.UIThread.RunJobs();
-        Assert.IsType<MenuItem>(menu.Items.ElementAt(5))
+        Assert.IsType<MenuItem>(menu.Items.ElementAt(6))
             .RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         await prompted.Task.WaitAsync(TestWaits.Condition);
         Dispatcher.UIThread.RunJobs();

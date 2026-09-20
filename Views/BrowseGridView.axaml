@@ -163,6 +163,12 @@
                                               Click="OnCopyImagePathsClick"/>
                                     <MenuItem Header="Reveal in File Explorer"
                                               Click="OnRevealImageClick"/>
+                                    <MenuItem x:Name="WriteXmpSidecarsMenuItem"
+                                              Header="Write XMP sidecars"
+                                              IsEnabled="{Binding $parent[views:BrowseGridView].DataContext.IsXmpReadWrite}"
+                                              ToolTip.ShowOnDisabled="True"
+                                              ToolTip.Tip="Enable Read &amp; write in Settings → Metadata to write XMP sidecars"
+                                              Click="OnWriteXmpSidecarsClick"/>
                                     <Separator/>
                                     <MenuItem x:Name="NewVersionMenuItem"
                                               Header="New Version from Current"

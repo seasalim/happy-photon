@@ -184,6 +184,7 @@ public partial class BrowseGridView : UserControl
     public event EventHandler? DeleteRejectedRequested;
     public event EventHandler? CopyImagePathsRequested;
     public event EventHandler? RevealImageRequested;
+    public event EventHandler? WriteXmpSidecarsRequested;
     public event EventHandler? DeleteImagesRequested;
     public event EventHandler<ImageFile>? NewVersionRequested;
     public event EventHandler<ImageFile>? RenameVersionRequested;
@@ -447,6 +448,9 @@ public partial class BrowseGridView : UserControl
 
     private void OnCopyImagePathsClick(object? sender, RoutedEventArgs e) =>
         CopyImagePathsRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OnWriteXmpSidecarsClick(object? sender, RoutedEventArgs e) =>
+        WriteXmpSidecarsRequested?.Invoke(this, EventArgs.Empty);
 
     private void OnRevealImageClick(object? sender, RoutedEventArgs e) =>
         RevealImageRequested?.Invoke(this, EventArgs.Empty);

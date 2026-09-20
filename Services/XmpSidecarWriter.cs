@@ -105,6 +105,17 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
         lock (_gate) return _idle.Task;
     }
 
+    // Foreground producers run on the UI thread; reserve headroom for mutations.
+    internal bool CanAdmitPublication(out bool stopped)
+    {
+        lock (_gate)
+        {
+            stopped = !_accepting;
+            return _accepting &&
+                _jobs.Count + _active.Count < Math.Max(1, _capacity / 2);
+        }
+    }
+
     public async Task StopAsync()
     {
         Task? worker;

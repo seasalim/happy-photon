@@ -89,6 +89,7 @@ public partial class MainWindow : Window
             _browseGridView.DeleteRejectedRequested += OnDeleteRejectedRequested;
             _browseGridView.CopyImagePathsRequested += OnCopyImagePathsRequested;
             _browseGridView.RevealImageRequested += OnRevealImageRequested;
+            _browseGridView.WriteXmpSidecarsRequested += OnWriteXmpSidecarsRequested;
             _browseGridView.DeleteImagesRequested += OnDeleteImagesRequested;
             _browseGridView.NewVersionRequested += OnNewVersionRequested;
             _browseGridView.RenameVersionRequested += OnRenameVersionRequested;
@@ -127,6 +128,9 @@ public partial class MainWindow : Window
 
     private void OnCopyImagePathsRequested(object? sender, EventArgs e) =>
         WithVm(vm => vm.CopyImagePathsCommand.Execute(null));
+
+    private void OnWriteXmpSidecarsRequested(object? sender, EventArgs e) =>
+        WithVm(vm => vm.WriteXmpSidecarsCommand.Execute(null));
 
     private void OnRevealImageRequested(object? sender, EventArgs e) =>
         WithVm(vm => vm.RevealImageCommand.Execute(null));

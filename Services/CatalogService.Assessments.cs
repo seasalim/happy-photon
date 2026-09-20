@@ -45,6 +45,61 @@ public partial class CatalogService
         }
     }
 
+    public async Task<IReadOnlyList<(AssessmentSnapshot Snapshot, AssessmentAxes Axes)>>
+        MarkXmpPublicationPendingAsync(
+            IReadOnlyCollection<long> imageIds, CancellationToken cancellationToken = default)
+    {
+        EnsureInitialized();
+        if (imageIds.Count == 0) return [];
+        await _connectionGate.WaitAsync(cancellationToken);
+        try
+        {
+            using var transaction = _connection!.BeginTransaction();
+            using var command = _connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = """
+                SELECT id, edit_settings FROM images
+                WHERE version = 1 AND id IN (SELECT value FROM json_each(@ids));
+                """;
+            command.Parameters.AddWithValue("@ids", JsonSerializer.Serialize(imageIds));
+            var crops = new Dictionary<long, bool>();
+            using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+            {
+                while (await reader.ReadAsync(cancellationToken))
+                    crops.Add(reader.GetInt64(0), EditSettingsJson.Deserialize(
+                        reader.GetString(1), out _).Crop is { IsFullImage: false });
+            }
+            var ids = crops.Keys.ToArray();
+            await EnsureAssessmentRowsAsync(_connection, ids, cancellationToken, transaction);
+            var snapshots = await ReadAssessmentSnapshotsAsync(
+                _connection, transaction, ids, cancellationToken);
+            var marked = new List<(AssessmentSnapshot, AssessmentAxes)>();
+            foreach (var snapshot in snapshots)
+            {
+                var hasCrop = crops[snapshot.ImageId];
+                if (snapshot.Rating == 0 && snapshot.Flag == ImageFlag.Unflagged &&
+                    snapshot.ColorLabel == ColorLabel.None && !hasCrop) continue;
+                var axes = AssessmentAxes.All |
+                    (hasCrop ? AssessmentAxes.Crop : AssessmentAxes.None);
+                command.Parameters.Clear();
+                command.CommandText = """
+                    UPDATE image_assessments SET pending_axes = pending_axes | @axes
+                    WHERE image_id = @id;
+                    """;
+                command.Parameters.AddWithValue("@axes", (int)axes);
+                command.Parameters.AddWithValue("@id", snapshot.ImageId);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+                marked.Add((snapshot with { PendingAxes = snapshot.PendingAxes | axes }, axes));
+            }
+            await transaction.CommitAsync(cancellationToken);
+            return marked;
+        }
+        finally
+        {
+            _connectionGate.Release();
+        }
+    }
+
     public async Task<IReadOnlyList<AssessmentSnapshot>> LoadAssessmentSnapshotsAsync(
         IReadOnlyCollection<long> imageIds,
         CancellationToken cancellationToken = default)

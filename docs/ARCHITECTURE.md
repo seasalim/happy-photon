@@ -336,9 +336,15 @@ Adobe crop is adopted through ordinary edit history only while persisted and liv
 geometry are both empty. A file's V1 is the permanent XMP primary: sidecar adoption
 and publication target V1 only, while other versions remain catalog-only.
 
-In Read & write mode, only a committed local assessment mutation schedules a
-sidecar write. A single background writer coalesces work by target, merges the
-changed axes into parsed XML (or the complete assessment tuple for a new
+In Read & write mode, a committed local assessment mutation or the explicit
+**Write XMP sidecars** command schedules sidecar writes. The command awaits folder
+reconciliation, marks publishable V1 rows pending without changing their assessment
+revision, and feeds the writer with half-capacity headroom for interactive mutations.
+Bulk marking and snapshot reloads run on worker threads; live-row lookup and snapshot
+application stay on the UI thread with a per-pass dictionary keyed by catalog id.
+It marks Crop only for persisted non-full crops and stops admitting work when the
+browse generation changes. A single background writer coalesces work by target,
+merges the changed axes into parsed XML (or the complete assessment tuple for a new
 sidecar), revalidates the candidate path, timestamp, and length, then promotes a
 temporary file beside the sidecar. Writes use only standard Adobe vocabulary:
 `xmp:Rating` always holds the true 0–5 stars, `xmpDM:pick` holds `1`, `0`, or
