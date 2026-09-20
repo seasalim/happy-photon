@@ -117,20 +117,26 @@ public sealed partial class AdjacentPreviewWarmTests
         _fixture.RequireWindows();
         using var catalog = await CreateCatalogAsync("handoff-draining");
         var target = await CreateCatalogImageAsync(catalog, "target.jpg");
-        var loader = new DrainingLoader();
+        var recorder = new CullPerfRecorder();
+        var loader = new DrainingLoader(recorder);
         await using var service = CreateService(
             catalog,
             loader,
             new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally));
 
+        service.CullPerf = recorder;
         try
         {
             Assert.True(service.TryStartAdjacentWarm(target));
             Assert.True(loader.Started.Wait(TestWaits.Condition));
+            Assert.Equal(0, CullPerfCounters.Derive(recorder.Snapshot())["superseded-native-still-running-at-end"]);
             // Develop cancels on selection; the native decode keeps draining.
             service.InvalidateAdjacentWarm();
             Assert.Equal(1, service.PreviewActivityCount);
+            var counters = CullPerfCounters.Derive(recorder.Snapshot());
+            Assert.Equal(1, counters["superseded-native-still-running-maximum"]);
+            Assert.Equal(1, counters["superseded-native-still-running-at-end"]);
 
             using var cached = await service
                 .LoadCachedPreviewAsync(target, target.EditSettings)
@@ -144,6 +150,8 @@ public sealed partial class AdjacentPreviewWarmTests
             loader.Release.Set();
         }
         await TestWaits.UntilAsync(() => service.PreviewActivityCount == 0);
+        Assert.Equal(0, CullPerfCounters.Derive(recorder.Snapshot())["superseded-native-still-running-at-end"]);
+        Assert.Equal(0, CullPerfCounters.Derive(recorder.Snapshot())["native-active-at-end"]);
     }
 
     [WindowsTheory]
@@ -250,7 +258,7 @@ public sealed partial class AdjacentPreviewWarmTests
         await cache.DisposeAsync();
     }
 
-    private sealed class DrainingLoader : RecordingLoader
+    private sealed class DrainingLoader(CullPerfRecorder recorder) : RecordingLoader
     {
         public ManualResetEventSlim Started { get; } = new();
         public ManualResetEventSlim Release { get; } = new();
@@ -260,9 +268,14 @@ public sealed partial class AdjacentPreviewWarmTests
             BaseDecodeSettings decode,
             CancellationToken cancellationToken)
         {
-            Started.Set();
-            Release.Wait();
-            return base.LoadPreviewBaseWithOutcome(file, decode, cancellationToken);
+            recorder.Record("NativeStart", file.CatalogId);
+            try
+            {
+                Started.Set();
+                Release.Wait();
+                return base.LoadPreviewBaseWithOutcome(file, decode, cancellationToken);
+            }
+            finally { recorder.Record("NativeEnd", file.CatalogId); }
         }
     }
 }

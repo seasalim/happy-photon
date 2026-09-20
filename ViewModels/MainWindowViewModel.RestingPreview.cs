@@ -270,6 +270,8 @@ public partial class MainWindowViewModel
         }
         SetProofDisplayed(false);
         PreviewImage = preview;
+        CullPerf?.Record("RestingRender", SelectedImage?.CatalogId ?? 0, LatestPreviewOutcomeGeneration,
+            _cullOperation, (long)preview.PixelSize.Width * preview.PixelSize.Height * 4);
         if (previous != null && !transferred)
         {
             _bitmapRetirement.Retire(

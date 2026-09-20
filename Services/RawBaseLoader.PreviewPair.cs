@@ -5,6 +5,12 @@ namespace HappyPhoton.Services;
 
 public sealed partial class RawBaseLoader
 {
+    public bool CanLoad(ImageFile file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        return _isAvailable && file.IsRaw;
+    }
+
     internal static LibRawOutputConfiguration ConfigureOutput(
         BaseDecodeSettings decode,
         bool preview,

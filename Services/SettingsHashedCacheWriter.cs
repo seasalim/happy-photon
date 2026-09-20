@@ -29,6 +29,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
     // Counted from enqueue until the write lands, fails, or is dropped, so a
     // reader never sees zero while a write is merely between queue and hand.
     public int PendingWrites => Volatile.Read(ref _outstandingWrites);
+    internal CullPerfRecorder? CullPerf { get; set; }
     internal int WriterInHandCount => Volatile.Read(ref _activeWrites);
 
     public SettingsHashedCacheWriter(
@@ -58,6 +59,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             },
             dropped =>
             {
+                CullPerf?.Record("CacheWriteDropped", dropped.ImageId);
                 dropped.Image.Dispose();
                 Interlocked.Decrement(ref _outstandingWrites);
             });
@@ -122,7 +124,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         PreviewCacheIdentity? identity)
     {
         var write = new CacheWrite(
-            _getCachePath(imageFile.CatalogId),
+            _getCachePath(imageFile.CatalogId), imageFile.CatalogId,
             imageFile.FilePath,
             File.GetLastWriteTimeUtc(imageFile.FilePath),
             settingsHash,
@@ -130,6 +132,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             image);
         Interlocked.Increment(ref _outstandingWrites);
         if (_queue.Writer.TryWrite(write)) return true;
+        CullPerf?.Record("CacheWriteDropped", write.ImageId);
         Interlocked.Decrement(ref _outstandingWrites);
         return false;
     }
@@ -162,6 +165,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         {
             while (_queue.Reader.TryRead(out var pending))
             {
+                CullPerf?.Record("CacheWriteDropped", pending.ImageId);
                 pending.Image.Dispose();
                 Interlocked.Decrement(ref _outstandingWrites);
             }
@@ -198,6 +202,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             {
                 File.Delete(temporaryPath);
                 File.Delete(temporaryMetadataPath);
+                CullPerf?.Record("CacheWriteDropped", write.ImageId);
                 return;
             }
             if (_versionedDimensionMetadata &&
@@ -208,15 +213,18 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
             {
                 File.Delete(temporaryPath);
                 File.Delete(temporaryMetadataPath);
+                CullPerf?.Record("CacheWriteDropped", write.ImageId);
                 return;
             }
 
             File.Delete(metadataPath);
             File.Move(temporaryPath, write.CachePath, overwrite: true);
             File.Move(temporaryMetadataPath, metadataPath);
+            CullPerf?.Record("CacheWriteComplete", write.ImageId);
         }
         catch
         {
+            CullPerf?.Record("CacheWriteDropped", write.ImageId);
             TryDelete(temporaryPath);
             TryDelete(temporaryMetadataPath);
         }
@@ -279,7 +287,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
     internal Task ProcessingTask => _processingTask;
 
     private sealed record CacheWrite(
-        string CachePath,
+        string CachePath, long ImageId,
         string SourcePath,
         DateTime SourceWriteTime,
         string SettingsHash,

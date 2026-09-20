@@ -230,6 +230,7 @@ public partial class MainWindowViewModel
             using var artifacts = await freshTask;
             if (!IsCurrentPreviewRequest(imageFile, requestCts))
             {
+                CullPerf?.Record("Superseded", imageFile.CatalogId, surfaceGeneration);
                 if (!cachedTask.IsCompleted)
                 {
                     _ = DisposeCachedPreviewWhenReadyAsync(cachedTask);
@@ -275,6 +276,7 @@ public partial class MainWindowViewModel
         }
         catch (OperationCanceledException)
         {
+            CullPerf?.Record("Cancelled", imageFile.CatalogId, surfaceGeneration);
         }
         finally
         {
@@ -337,6 +339,10 @@ public partial class MainWindowViewModel
         var previous = PreviewImage;
         SetProofDisplayed(isProof);
         PreviewImage = preview;
+        CullPerf?.Record(source switch { PreviewPaintSource.CachedJpeg => "CachedJpeg",
+            PreviewPaintSource.FreshRender => "FreshRender", _ => "Refinement" },
+            SelectedImage?.CatalogId ?? 0, LatestPreviewOutcomeGeneration, _cullOperation,
+            (long)preview.PixelSize.Width * preview.PixelSize.Height * 4);
         if (previous != null)
         {
             _bitmapRetirement.Retire(
@@ -350,6 +356,7 @@ public partial class MainWindowViewModel
         var previous = PreviewImage;
         if (previous == null) return;
         PreviewImage = null;
+        CullPerf?.Record("Cleared", SelectedImage?.CatalogId ?? 0, LatestPreviewOutcomeGeneration);
         SetProofDisplayed(false);
         _bitmapRetirement.Retire(
             previous,

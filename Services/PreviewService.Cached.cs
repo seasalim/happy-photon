@@ -30,11 +30,13 @@ public sealed partial class PreviewService
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                CullPerf?.Record("CacheStart", imageFile.CatalogId);
                 var expectedHash = RenderSettingsHash.Compute(settingsSnapshot);
                 using var cached = TryLoadAdjacentWarm(
                         imageFile,
                         expectedHash) ??
                     _previewCache.LoadRenderedPreview(imageFile);
+                CullPerf?.Record(cached == null ? "CacheMiss" : "CacheHit", imageFile.CatalogId);
                 if (cached == null)
                 {
                     return null;
@@ -63,6 +65,7 @@ public sealed partial class PreviewService
                         width,
                         height);
                 }
+                CullPerf?.Record("CacheDecoded", imageFile.CatalogId);
                 return new CachedPreviewBitmap(
                     ConvertToBitmap(pixels, width, height),
                     settingsMatch,

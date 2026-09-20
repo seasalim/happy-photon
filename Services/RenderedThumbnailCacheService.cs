@@ -8,6 +8,7 @@ public sealed class RenderedThumbnailCacheService : IAsyncDisposable
 {
     private readonly CatalogService _catalogService;
     private readonly SettingsHashedCacheWriter _writer;
+    internal CullPerfRecorder? CullPerf { set => _writer.CullPerf = value; }
     private readonly ConcurrentDictionary<long, CachedHash> _hashes = new();
 
     public RenderedThumbnailCacheService(CatalogService catalogService)

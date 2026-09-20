@@ -5,6 +5,7 @@ namespace HappyPhoton.Services;
 
 public sealed class XmpSidecarWriter : IAsyncDisposable
 {
+    internal CullPerfRecorder? CullPerf { get; set; }
     private const int DefaultCapacity = 512;
     private readonly CatalogService _catalog;
     private readonly ISourceAvailabilityService _availability;
@@ -163,7 +164,10 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
                 {
                     _active.Remove(job.QueueKey);
                     if (_jobs.Count == 0 && _active.Count == 0)
+                    {
+                        CullPerf?.Record("SidecarIdle");
                         _idle.TrySetResult();
+                    }
                 }
             }
         }
@@ -174,6 +178,7 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
         try
         {
             var result = await TryWriteAsync(job, cancellationToken);
+            CullPerf?.Record(result.Succeeded ? "SidecarSucceeded" : "SidecarFailed", job.Snapshot.ImageId);
             if (!result.Succeeded)
             {
                 Report?.Invoke($"XMP write failed for {job.Snapshot.FilePath}");
@@ -199,10 +204,12 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            CullPerf?.Record("SidecarCancelled", job.Snapshot.ImageId);
             Report?.Invoke($"XMP write canceled for {job.Snapshot.FilePath}");
         }
         catch (Exception exception)
         {
+            CullPerf?.Record("SidecarFailed", job.Snapshot.ImageId);
             Report?.Invoke(
                 $"XMP write failed for {job.Snapshot.FilePath}: {exception.Message}");
         }

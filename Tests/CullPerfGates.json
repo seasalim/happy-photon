@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "recorderCapacity": 16384,
+  "overheadObservation": "PreviewImage PropertyChanged with Histogram present; the identical observer is used on both sides",
+  "id": "cullperf-1",
+  "maximumForegroundRegression": 0.1,
+  "fixtureHashes": {
+    "legacy-jpeg": "bcc8f43999e4881575df3fca8b04abdf12c03ff9d51e1eb1b26345f14608e34b",
+    "legacy-raw": "8cbb84e04d93b005fe082da9c954122a612b5281af00aa088d767850f343fd38",
+    "jpeg": "57a64cb89f769436241477d4a2468f8a48d4b3d4b36561342865536eed504ae7",
+    "canon": "7727ee0280b44ea1d633962f49942f37f3c7ec6d704d22e108a5223666327c32",
+    "fuji": "1f65f680600c85a6f561d2b0ad7cd1f9d93ee7f733aafe4ecd37667d984dd6c4"
+  },
+  "requiredChecks": [
+    {
+      "id": "surviving-warm",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "filter": "FullyQualifiedName=HappyPhoton.Tests.AdjacentPreviewWarmTests.SteppingWhileTheWalkIsAheadKeepsThatWorkerInsteadOfRestartingIt",
+      "expected": 2
+    },
+    {
+      "id": "cancelled-native",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "filter": "FullyQualifiedName=HappyPhoton.Tests.AdjacentPreviewWarmTests.ACancelledWorkerStillDrainingItsDecodeIsNotJoinedByTheCachedRead",
+      "expected": 1
+    },
+    {
+      "id": "handoff",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "filter": "FullyQualifiedName=HappyPhoton.Tests.AdjacentPreviewWarmTests.NextWarmWaitsForTheStalledHandoffBeforeDecodingSoCancelWastesNothing",
+      "expected": 1
+    },
+    {
+      "id": "pair-assessments",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "filter": "FullyQualifiedName=HappyPhoton.Tests.RawJpegOneCaptureTests.PairedAssessment_UpdatesBothPrimaryRowsButNotRawVersion",
+      "expected": 3
+    },
+    {
+      "id": "failed-write",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "filter": "FullyQualifiedName=HappyPhoton.Tests.XmpSidecarWriterTests.OversizedSidecar_IsUntouchedAndLeavesWritePending",
+      "expected": 1
+    },
+    {
+      "id": "pick-sidecars",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "filter": "FullyQualifiedName=HappyPhoton.Tests.CullPerfPickTests.FeedbackAndWriterIdleRequirePersistedPairsAndSuccessfulSidecars",
+      "expected": 2
+    }
+  ],
+  "applicability": {
+    "fullscreen": [
+      "steady",
+      "burst",
+      "reversal"
+    ],
+    "loupe": [
+      "steady",
+      "burst",
+      "reversal",
+      "picks",
+      "ahead"
+    ],
+    "develop": [
+      "steady",
+      "burst",
+      "reversal",
+      "picks",
+      "ahead"
+    ]
+  },
+  "knownMissingEvidence": [
+    "aggregate owned retained-base bytes",
+    "complete operation and stage correlation"
+  ],
+  "coverage": "Stratified table: every applicable surface/pattern/fixture; every surface/fixture/cache; default and edited settings per surface/fixture. Not a Cartesian expansion.",
+  "aheadCondition": "Ahead cases evict the entry two images ahead and start its normal warm worker before the first scheduled foreground step; first input must overlap that real decode.",
+  "metrics": [
+    {"id": "input-feedback-ms", "statistic": "p95", "minimumSamples": 100, "maximum": 50, "foreground": true},
+    {"id": "pick-feedback-ms", "statistic": "p95", "minimumSamples": 100, "maximum": 50, "foreground": true},
+    {"id": "first-publication-ms", "statistic": "p95", "minimumSamples": 1, "maximum": null, "foreground": false},
+    {"id": "accurate-ready-ms", "statistic": "p95", "minimumSamples": 1, "maximum": null, "foreground": true},
+    {"id": "matched-preview-ms", "statistic": "p95", "minimumSamples": 20, "maximum": 150, "foreground": true},
+    {"id": "placeholder-frame-ms", "statistic": "p95", "minimumSamples": 1, "maximum": 100, "foreground": true},
+    {"id": "preview-frame-ms", "statistic": "p95", "minimumSamples": 1, "maximum": null, "foreground": false},
+    {"id": "dispatcher-ms", "statistic": "p95", "minimumSamples": 1, "maximum": null, "foreground": false},
+    {"id": "warm-first-ms", "statistic": "median", "minimumSamples": 3, "maximum": 100, "foreground": true},
+    {"id": "priority-first-ms", "statistic": "median", "minimumSamples": 3, "maximum": null, "foreground": true},
+    {"id": "warm-ratio", "statistic": "median", "minimumSamples": 1, "maximum": 0.3, "foreground": false},
+    {"id": "priority-ratio", "statistic": "median", "minimumSamples": 1, "maximum": 1.1, "foreground": false},
+    {"id": "jpeg-peak-bytes", "statistic": "median", "minimumSamples": 3, "maximum": 99614720, "foreground": false},
+    {"id": "jpeg-settled-bytes", "statistic": "median", "minimumSamples": 3, "maximum": 20971520, "foreground": false},
+    {"id": "raw-peak-bytes", "statistic": "median", "minimumSamples": 3, "maximum": 314572800, "foreground": false},
+    {"id": "raw-settled-bytes", "statistic": "median", "minimumSamples": 3, "maximum": 52428800, "foreground": false},
+    {"id": "recording-delta-ms", "statistic": "median", "minimumSamples": 9, "maximum": 3, "foreground": false},
+    {"id": "event-cost-us", "statistic": "median", "minimumSamples": 10000, "maximum": 2, "foreground": false},
+    {"id": "enabled-allocated-bytes", "statistic": "max", "minimumSamples": 1, "maximum": 0, "foreground": false},
+    {"id": "disabled-allocated-bytes", "statistic": "max", "minimumSamples": 1, "maximum": 0, "foreground": false}
+  ],
+  "workloads": [
+    {"id": "loupe-steady-jpeg-thumbnail-default", "surface": "loupe", "pattern": "steady", "fixture": "jpeg", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "loupe-burst-jpeg-matched-edited", "surface": "loupe", "pattern": "burst", "fixture": "jpeg", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 250, "burstSize": 5, "burstStepMs": 10, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "loupe-reversal-jpeg-stale-default", "surface": "loupe", "pattern": "reversal", "fixture": "jpeg", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "loupe-picks-jpeg-cold-edited", "surface": "loupe", "pattern": "picks", "fixture": "jpeg", "settings": "edited", "cacheCondition": "cold", "actions": 100, "metrics": ["input-feedback-ms", "pick-feedback-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "loupe-ahead-jpeg-thumbnail-default", "surface": "loupe", "pattern": "ahead", "fixture": "jpeg", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "loupe-steady-canon-matched-edited", "surface": "loupe", "pattern": "steady", "fixture": "canon", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms", "matched-preview-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "loupe-burst-canon-stale-default", "surface": "loupe", "pattern": "burst", "fixture": "canon", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 250, "burstSize": 5, "burstStepMs": 10, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "loupe-reversal-canon-cold-edited", "surface": "loupe", "pattern": "reversal", "fixture": "canon", "settings": "edited", "cacheCondition": "cold", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "loupe-picks-canon-thumbnail-default", "surface": "loupe", "pattern": "picks", "fixture": "canon", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "pick-feedback-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "loupe-ahead-canon-matched-edited", "surface": "loupe", "pattern": "ahead", "fixture": "canon", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "loupe-steady-fuji-stale-default", "surface": "loupe", "pattern": "steady", "fixture": "fuji", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "loupe-burst-fuji-cold-edited", "surface": "loupe", "pattern": "burst", "fixture": "fuji", "settings": "edited", "cacheCondition": "cold", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 250, "burstSize": 5, "burstStepMs": 10, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "loupe-reversal-fuji-thumbnail-default", "surface": "loupe", "pattern": "reversal", "fixture": "fuji", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "loupe-picks-fuji-matched-edited", "surface": "loupe", "pattern": "picks", "fixture": "fuji", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "pick-feedback-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "loupe-ahead-fuji-stale-default", "surface": "loupe", "pattern": "ahead", "fixture": "fuji", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "develop-steady-jpeg-thumbnail-default", "surface": "develop", "pattern": "steady", "fixture": "jpeg", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "develop-burst-jpeg-matched-edited", "surface": "develop", "pattern": "burst", "fixture": "jpeg", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 250, "burstSize": 5, "burstStepMs": 10, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "develop-reversal-jpeg-stale-default", "surface": "develop", "pattern": "reversal", "fixture": "jpeg", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "develop-picks-jpeg-cold-edited", "surface": "develop", "pattern": "picks", "fixture": "jpeg", "settings": "edited", "cacheCondition": "cold", "actions": 100, "metrics": ["input-feedback-ms", "pick-feedback-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "develop-ahead-jpeg-thumbnail-default", "surface": "develop", "pattern": "ahead", "fixture": "jpeg", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "develop-steady-canon-matched-edited", "surface": "develop", "pattern": "steady", "fixture": "canon", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms", "matched-preview-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "develop-burst-canon-stale-default", "surface": "develop", "pattern": "burst", "fixture": "canon", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 250, "burstSize": 5, "burstStepMs": 10, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "develop-reversal-canon-cold-edited", "surface": "develop", "pattern": "reversal", "fixture": "canon", "settings": "edited", "cacheCondition": "cold", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "develop-picks-canon-thumbnail-default", "surface": "develop", "pattern": "picks", "fixture": "canon", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "pick-feedback-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "develop-ahead-canon-matched-edited", "surface": "develop", "pattern": "ahead", "fixture": "canon", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "develop-steady-fuji-stale-default", "surface": "develop", "pattern": "steady", "fixture": "fuji", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "develop-burst-fuji-cold-edited", "surface": "develop", "pattern": "burst", "fixture": "fuji", "settings": "edited", "cacheCondition": "cold", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 250, "burstSize": 5, "burstStepMs": 10, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "develop-reversal-fuji-thumbnail-default", "surface": "develop", "pattern": "reversal", "fixture": "fuji", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "develop-picks-fuji-matched-edited", "surface": "develop", "pattern": "picks", "fixture": "fuji", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "pick-feedback-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "develop-ahead-fuji-stale-default", "surface": "develop", "pattern": "ahead", "fixture": "fuji", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-steady-jpeg-thumbnail-default", "surface": "fullscreen", "pattern": "steady", "fixture": "jpeg", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-burst-jpeg-matched-edited", "surface": "fullscreen", "pattern": "burst", "fixture": "jpeg", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 250, "burstSize": 5, "burstStepMs": 10, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-reversal-jpeg-stale-default", "surface": "fullscreen", "pattern": "reversal", "fixture": "jpeg", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-steady-jpeg-cold-edited", "surface": "fullscreen", "pattern": "steady", "fixture": "jpeg", "settings": "edited", "cacheCondition": "cold", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-steady-canon-matched-edited", "surface": "fullscreen", "pattern": "steady", "fixture": "canon", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms", "matched-preview-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-burst-canon-stale-default", "surface": "fullscreen", "pattern": "burst", "fixture": "canon", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 250, "burstSize": 5, "burstStepMs": 10, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-reversal-canon-cold-edited", "surface": "fullscreen", "pattern": "reversal", "fixture": "canon", "settings": "edited", "cacheCondition": "cold", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-steady-canon-thumbnail-default", "surface": "fullscreen", "pattern": "steady", "fixture": "canon", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-steady-fuji-stale-default", "surface": "fullscreen", "pattern": "steady", "fixture": "fuji", "settings": "default", "cacheCondition": "stale", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-burst-fuji-cold-edited", "surface": "fullscreen", "pattern": "burst", "fixture": "fuji", "settings": "edited", "cacheCondition": "cold", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 250, "burstSize": 5, "burstStepMs": 10, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-reversal-fuji-thumbnail-default", "surface": "fullscreen", "pattern": "reversal", "fixture": "fuji", "settings": "default", "cacheCondition": "thumbnail", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms"], "intervalMs": 100, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 0, "staleExposureDelta": 0.5},
+    {"id": "fullscreen-steady-fuji-matched-edited", "surface": "fullscreen", "pattern": "steady", "fixture": "fuji", "settings": "edited", "cacheCondition": "matched", "actions": 100, "metrics": ["input-feedback-ms", "first-publication-ms", "accurate-ready-ms", "matched-preview-ms"], "intervalMs": 150, "burstSize": 1, "burstStepMs": 0, "reversalLength": 5, "exposure": 1, "staleExposureDelta": 0.5},
+    {"id": "window-loupe", "surface": "window", "pattern": "blocked-steady", "fixture": "synthetic-400x200", "settings": "default", "cacheCondition": "blocked-source", "actions": 1, "metrics": ["placeholder-frame-ms", "preview-frame-ms", "dispatcher-ms"]},
+    {"id": "migrated-jpeg", "surface": "migrated", "pattern": "paired-warm", "fixture": "jpeg", "settings": "default", "cacheCondition": "paired-warm", "actions": 3, "metrics": ["warm-first-ms", "priority-first-ms", "warm-ratio", "priority-ratio", "jpeg-peak-bytes", "jpeg-settled-bytes"]},
+    {"id": "migrated-raw", "surface": "migrated", "pattern": "paired-warm", "fixture": "raw", "settings": "default", "cacheCondition": "paired-warm", "actions": 3, "metrics": ["warm-first-ms", "priority-first-ms", "warm-ratio", "priority-ratio", "raw-peak-bytes", "raw-settled-bytes"]},
+    {"id": "recording-overhead", "surface": "recorder", "pattern": "interleaved-pairs", "fixture": "legacy-jpeg", "settings": "default", "cacheCondition": "paired-recording", "actions": 9, "metrics": ["recording-delta-ms", "event-cost-us", "enabled-allocated-bytes", "disabled-allocated-bytes"]}
+  ]
+}

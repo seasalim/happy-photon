@@ -19,6 +19,7 @@ public partial class MainWindowViewModel
 
         AssessmentFeedback = text;
         IsAssessmentFeedbackVisible = true;
+        CullPerf?.Record("Feedback", image.CatalogId);
         var debounce = ReplaceDebounce(ref _assessmentFeedbackCts);
         _ = DebouncedAction.RunAsync(
             "assessment feedback",

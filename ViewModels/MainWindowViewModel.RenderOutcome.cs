@@ -288,6 +288,7 @@ public partial class MainWindowViewModel
                     ref _latestPreviewOutcomeGeneration) ||
                 !ReferenceEquals(SelectedImage, outcome.Image))
             {
+                CullPerf?.Record("Superseded", outcome.Image?.CatalogId ?? 0, outcome.Generation);
                 return false;
             }
 
@@ -494,5 +495,4 @@ public partial class MainWindowViewModel
         _renderOutcomeChannelClosed = true;
         Interlocked.Increment(ref _latestPreviewOutcomeGeneration);
     }
-
 }

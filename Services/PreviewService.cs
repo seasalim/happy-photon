@@ -10,6 +10,11 @@ namespace HappyPhoton.Services;
 
 public sealed partial class PreviewService : IAsyncDisposable
 {
+    internal CullPerfRecorder? CullPerf
+    {
+        get;
+        set { field = value; _previewCache.CullPerf = value; _renderedThumbnailCache.CullPerf = value; }
+    }
     private readonly CatalogService _catalogService;
     private readonly PreviewCacheService _previewCache;
     private readonly RenderedThumbnailCacheService _renderedThumbnailCache;
@@ -121,6 +126,7 @@ public sealed partial class PreviewService : IAsyncDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
         var effectiveOverlaySides = overlaySides;
+        CullPerf?.Record("RenderStart", generation: generation);
         using var rendered = _renderPipeline.Render(new RenderRequest(
             baseImage,
             settings,
@@ -140,6 +146,7 @@ public sealed partial class PreviewService : IAsyncDisposable
         });
         cancellationToken.ThrowIfCancellationRequested();
 
+        CullPerf?.Record("RenderEnd", generation: generation);
         var histogram = rendered.Histogram ?? new HistogramData();
         Bitmap? preview = null;
         MagickImage? thumbnailSource = null;
@@ -154,6 +161,7 @@ public sealed partial class PreviewService : IAsyncDisposable
                     checked((int)rendered.Image.Height));
             cancellationToken.ThrowIfCancellationRequested();
             clippingMask = rendered.DetachOverlayMask();
+            CullPerf?.Record("ConversionEnd", generation: generation);
             PreviewConverted?.Invoke();
             if (_createRenderedThumbnail &&
                 baseImage.Info.IsRawSource &&

@@ -33,13 +33,17 @@ public sealed class PreviewCacheServiceTests : IDisposable
     {
         var sourcePath = CreateSource("source.jpg");
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
-        var cache = new PreviewCacheService(catalog);
+        var recorder = new CullPerfRecorder();
+        var cache = new PreviewCacheService(catalog) { CullPerf = recorder };
         var imageFile = new ImageFile(sourcePath) { CatalogId = 1 };
         using var preview = new MagickImage(MagickColors.Blue, 160, 100);
 
         cache.QueueSaveToCache(imageFile, preview, "settings-a");
         await cache.DisposeAsync();
 
+        var completed = Assert.Single(recorder.Snapshot());
+        Assert.Equal("CacheWriteComplete", completed.Kind);
+        Assert.Equal(imageFile.CatalogId, completed.ImageId);
         var cachePath = cache.GetCachePath(imageFile);
         Assert.True(File.Exists(cachePath));
         Assert.True(PreviewCacheMetadata.TryRead(
@@ -61,8 +65,9 @@ public sealed class PreviewCacheServiceTests : IDisposable
         var processingGate = new TaskCompletionSource(
             TaskCreationOptions.RunContinuationsAsynchronously);
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
+        var recorder = new CullPerfRecorder();
         var cache = new PreviewCacheService(
-            catalog, 1, processingGate.Task, TimeSpan.FromSeconds(5));
+            catalog, 1, processingGate.Task, TimeSpan.FromSeconds(5)) { CullPerf = recorder };
         var first = new ImageFile(firstSource) { CatalogId = 1 };
         var second = new ImageFile(secondSource) { CatalogId = 2 };
         using var preview = new MagickImage(MagickColors.Red, 32, 24);
@@ -79,6 +84,9 @@ public sealed class PreviewCacheServiceTests : IDisposable
             cache.GetMetadataPath(second),
             out var survivor));
         Assert.Equal("second-hash", survivor.SettingsHash);
+        Assert.Collection(recorder.Snapshot(),
+            dropped => { Assert.Equal("CacheWriteDropped", dropped.Kind); Assert.Equal(1, dropped.ImageId); },
+            complete => { Assert.Equal("CacheWriteComplete", complete.Kind); Assert.Equal(2, complete.ImageId); });
     }
 
     [Fact]
@@ -88,8 +96,9 @@ public sealed class PreviewCacheServiceTests : IDisposable
         var processingGate = new TaskCompletionSource(
             TaskCreationOptions.RunContinuationsAsynchronously);
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
+        var recorder = new CullPerfRecorder();
         var cache = new PreviewCacheService(
-            catalog, 2, processingGate.Task, TimeSpan.FromSeconds(5));
+            catalog, 2, processingGate.Task, TimeSpan.FromSeconds(5)) { CullPerf = recorder };
         var imageFile = new ImageFile(sourcePath) { CatalogId = 1 };
         using var preview = new MagickImage(MagickColors.Green, 32, 24);
 
@@ -98,6 +107,7 @@ public sealed class PreviewCacheServiceTests : IDisposable
         processingGate.SetResult();
         await cache.DisposeAsync();
 
+        Assert.Equal("CacheWriteDropped", Assert.Single(recorder.Snapshot()).Kind);
         Assert.False(File.Exists(cache.GetCachePath(imageFile)));
         Assert.False(File.Exists(cache.GetMetadataPath(imageFile)));
     }

@@ -31,18 +31,20 @@ public sealed class AdjacentPreviewPerformanceTests
             Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
             "Set HAPPY_PHOTON_PERF=1 to run adjacent-preview performance diagnostics.");
 
-        await MeasureFixtureAsync(
+        var jpegFailure = await Record.ExceptionAsync(() => MeasureFixtureAsync(
             "JPEG",
             GoldenTestPaths.Asset("display-p3-reference.jpg"),
             peakBudgetMiB: 95,
-            settledBudgetMiB: 20);
+            settledBudgetMiB: 20));
         // RAW warms plateau higher: LibRaw and Magick buffers freed on the
         // short-lived warm workers stay with the allocator for reuse.
-        await MeasureFixtureAsync(
+        var rawFailure = await Record.ExceptionAsync(() => MeasureFixtureAsync(
             "RAW",
             GoldenTestPaths.Asset("canon-eos-350d.cr2"),
             peakBudgetMiB: 300,
-            settledBudgetMiB: 50);
+            settledBudgetMiB: 50));
+        Assert.Null(jpegFailure);
+        Assert.Null(rawFailure);
     }
 
     private async Task MeasureFixtureAsync(
@@ -73,6 +75,7 @@ public sealed class AdjacentPreviewPerformanceTests
             $"(disabled {disabledPriority:F1} ms), peak={warmPeak / (double)MiB:F1} MiB, " +
             $"settled={warmSettled / (double)MiB:F1} MiB, " +
             $"disabled fresh={disabledFreshMemory / (double)MiB:F1} MiB");
+        CullPerfMigratedEvidence.Write(label, disabled.ToArray(), enabled.ToArray());
         Assert.True(enabledPaint <= 100, $"{label} warm paint was {enabledPaint:F1} ms.");
         Assert.True(
             enabledPaint <= disabledPaint * 0.30,
@@ -93,9 +96,9 @@ public sealed class AdjacentPreviewPerformanceTests
         });
     }
 
-    private static async Task<AdjacentSample> MeasureAsync(
+    internal static async Task<AdjacentSample> MeasureAsync(
         string fixturePath,
-        bool prefetch)
+        bool prefetch, bool recording = true, bool measureAtNotification = false)
     {
         var root = Directory.CreateDirectory(Path.Combine(
             Path.GetTempPath(),
@@ -140,6 +143,8 @@ public sealed class AdjacentPreviewPerformanceTests
             {
                 IsDevelopMode = true
             };
+            var recorder = recording ? new CullPerfRecorder() : null;
+            vm.ImageService.Previews.CullPerf = recorder;
             vm.Browse.SetImages(images);
             vm.ImageService.Previews.AdjacentWarmEnabled = prefetch;
             var warmStarted = new TaskCompletionSource(
@@ -191,11 +196,7 @@ public sealed class AdjacentPreviewPerformanceTests
                 process.Refresh();
                 var warmSettled = process.PrivateMemorySize64;
 
-                var firstPaint = Stopwatch.StartNew();
-                vm.SelectedImage = images[1];
-                await TestWaits.UntilAsync(() =>
-                    vm.PreviewImage != null && vm.Histogram != null);
-                firstPaint.Stop();
+                var firstPaint = await CullPerfPublication.MeasureAsync(vm, images[1], recorder, measureAtNotification);
                 process.Refresh();
                 var freshDelta = Math.Max(
                     0,
@@ -214,24 +215,22 @@ public sealed class AdjacentPreviewPerformanceTests
                 {
                     await warmStarted.Task.WaitAsync(TestWaits.Condition);
                 }
-                var priorityPaint = Stopwatch.StartNew();
-                vm.SelectedImage = images[7];
-                await TestWaits.UntilAsync(() =>
-                    vm.PreviewImage != null && vm.Histogram != null);
-                priorityPaint.Stop();
+                var priorityPaint = await CullPerfPublication.MeasureAsync(vm, images[7], recorder, measureAtNotification);
                 vm.ImageService.Previews.InvalidateAdjacentWarm();
                 await TestWaits.UntilAsync(() =>
                     vm.ImageService.Previews.PreviewActivityCount == 0);
 
                 return new AdjacentSample(
-                    firstPaint.Elapsed.TotalMilliseconds,
-                    priorityPaint.Elapsed.TotalMilliseconds,
+                    firstPaint.Milliseconds,
+                    priorityPaint.Milliseconds,
                     freshDelta,
                     Math.Max(0, warmPeak - beforeWarm),
                     Math.Max(0, warmSettled - beforeWarm),
                     vm.ImageService.Previews.RetainedBasePairCount,
                     loader.Count(paths[7]),
-                    vm.ImageService.Previews.PreviewActivityCount);
+                    vm.ImageService.Previews.PreviewActivityCount,
+                    firstPaint.BracketMilliseconds, priorityPaint.BracketMilliseconds,
+                    recorder?.LostEvents ?? 0);
             }
             finally
             {
@@ -263,7 +262,7 @@ public sealed class AdjacentPreviewPerformanceTests
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true, true);
     }
 
-    private sealed record AdjacentSample(
+    internal sealed record AdjacentSample(
         double FirstPaintMs,
         double PriorityPaintMs,
         long FreshDeltaBytes,
@@ -271,7 +270,10 @@ public sealed class AdjacentPreviewPerformanceTests
         long WarmSettledDeltaBytes,
         int RetainedPairCount,
         int ThirdDecodeCount,
-        int FinalActivityCount);
+        int FinalActivityCount,
+        double FirstPollingBracketMs,
+        double PriorityPollingBracketMs,
+        long LostEvents);
 
     private sealed class CountingLoader(IBaseImageLoader inner) : IBaseImageLoader
     {

@@ -10,6 +10,7 @@ public partial class MainWindowViewModel
         Func<bool> isActive,
         CancellationToken cancellationToken)
     {
+        var generation = LatestPreviewOutcomeGeneration;
         try
         {
             using var cached = await ImageService.Previews.LoadCachedPreviewAsync(
@@ -24,7 +25,9 @@ public partial class MainWindowViewModel
                     pane,
                     cached.DetachBitmap(),
                     isActive,
-                    source: PreviewPaintSource.CachedJpeg);
+                    source: PreviewPaintSource.CachedJpeg,
+                    generation: generation,
+                    matchedCache: cachedSize is { Width: > 0, Height: > 0 });
                 if (cachedSize is { Width: > 0, Height: > 0 })
                 {
                     pane.OriginalViewPixelSize = cachedSize.Value;
@@ -46,11 +49,12 @@ public partial class MainWindowViewModel
                     fresh.DetachBitmap(),
                     isActive,
                     fresh.OriginalViewPixelSize,
-                    source: PreviewPaintSource.FreshRender);
+                    source: PreviewPaintSource.FreshRender, generation: generation);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            CullPerf?.Record("Cancelled", pane.Image.CatalogId, generation);
         }
         catch (Exception exception)
         {
@@ -69,12 +73,14 @@ public partial class MainWindowViewModel
         Func<bool> isActive,
         CancellationToken cancellationToken)
     {
+        var generation = LatestPreviewOutcomeGeneration;
         if (previous != null)
         {
             await previous.ConfigureAwait(
                 ConfigureAwaitOptions.ContinueOnCapturedContext |
                 ConfigureAwaitOptions.SuppressThrowing);
         }
+        if (cancellationToken.IsCancellationRequested) CullPerf?.Record("Cancelled", pane.Image.CatalogId, generation);
         cancellationToken.ThrowIfCancellationRequested();
         await LoadPreviewPaneAsync(pane, isActive, cancellationToken);
     }
@@ -141,10 +147,11 @@ public partial class MainWindowViewModel
         Func<bool> isActive,
         Avalonia.PixelSize originalViewPixelSize = default,
         bool isRefinement = false,
-        PreviewPaintSource? source = null)
+        PreviewPaintSource? source = null, long generation = 0, bool matchedCache = false)
     {
         if (!isActive())
         {
+            CullPerf?.Record("PaneSuperseded", pane.Image.CatalogId, generation);
             bitmap.Dispose();
             return;
         }
@@ -156,6 +163,10 @@ public partial class MainWindowViewModel
         }
         var previous = pane.Preview;
         pane.Preview = bitmap;
+        CullPerf?.Record(source == PreviewPaintSource.CachedJpeg ? "CachedJpeg" : "FreshRender",
+            pane.Image.CatalogId, generation == 0 ? LatestPreviewOutcomeGeneration : generation, _cullOperation,
+            (long)bitmap.PixelSize.Width * bitmap.PixelSize.Height * 4);
+        if (matchedCache) CullPerf?.Record("MatchedCacheReady", pane.Image.CatalogId, generation);
         pane.RenderedLongEdge = Math.Max(bitmap.PixelSize.Width, bitmap.PixelSize.Height);
         if (!isRefinement)
         {

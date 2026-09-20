@@ -395,6 +395,16 @@ dotnet test HeadlessTests/HappyPhoton.Headless.Tests.csproj -c Release --no-buil
 
 ## 5. Performance
 
+The opt-in [culling qualification runner](../cull-perf.md) runs frozen workloads
+in fresh full-CPU Release processes and retains JSON, event, and TRX evidence.
+`Tests/CullPerfGates.json` owns its reviewed thresholds and comparison identities.
+Informational `coverageGaps` describe instrumentation limits; only missing required
+metric evidence blocks qualification. Unavailable report-only metrics are marked
+`notMeasured`, and measured gates can pass or fail.
+The migrated adjacent-preview measurement retains its approved budgets and memory
+sampler; latency comes from publication events checked against actual polling
+brackets, with polling delay reported separately.
+
 Locals opt-in qualification uses `LocalsFusedBaselineTests.Qualified*`, with
 `HAPPY_PHOTON_PERF=1`, `HAPPY_PHOTON_FULL_CPU=1`, and
 `HAPPY_PHOTON_LOCALS_FIXTURE=raw|standard|synthetic` (locally available fixtures).

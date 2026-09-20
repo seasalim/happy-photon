@@ -247,6 +247,8 @@ public sealed partial class ViewportRestingPreviewTests : IAsyncLifetime
 
         await TestWaits.UntilAsync(() => viewModel.PreviewImage != null);
         Assert.Equal(160, viewModel.PreviewImage!.PixelSize.Width);
+        var recorder = new CullPerfRecorder();
+        viewModel.ImageService.Previews.CullPerf = recorder;
         clock.Advance(TimeSpan.FromMilliseconds(300));
         await TestWaits.UntilAsync(() => viewModel.Histogram != null);
         await TestWaits.UntilAsync(() => viewModel.HasArmedRestingRender);
@@ -256,6 +258,9 @@ public sealed partial class ViewportRestingPreviewTests : IAsyncLifetime
             viewModel.PreviewImage.PixelSize.Width == 240);
 
         Assert.Equal(1, viewModel.RestingPaintCount);
+        var publication = Assert.Single(recorder.Snapshot(), item => item.Kind == "RestingRender");
+        Assert.Equal(_image.CatalogId, publication.ImageId);
+        Assert.Equal(240 * 120 * 4, publication.Value);
         Assert.Equal(1, loader.DecodeCount);
 
         viewModel.PublishRequiredDeviceLongEdge(242);

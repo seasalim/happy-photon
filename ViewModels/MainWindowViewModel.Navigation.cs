@@ -1,13 +1,19 @@
 using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private long _cullOperation;
+    private CullPerfRecorder? CullPerf =>
+        _imageService.IsValueCreated ? _imageService.Value.Previews.CullPerf : null;
+
     [RelayCommand(CanExecute = nameof(CanSelectPreviousImage))]
     private void SelectPreviousImage()
     {
+        _cullOperation = CullPerf?.Record(CanSelectPreviousImage() ? "Receipt" : "NoOp", operation: -1) ?? 0;
         if (TryMoveWithinCompareSet(-1)) return;
         if (TryMoveWithinFullScreenSelection(-1)) return;
         if (TryMoveWithinExportSelection(-1)) return;
@@ -18,6 +24,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanSelectNextImage))]
     private void SelectNextImage()
     {
+        _cullOperation = CullPerf?.Record(CanSelectNextImage() ? "Receipt" : "NoOp", operation: -1) ?? 0;
         if (TryMoveWithinCompareSet(1)) return;
         if (TryMoveWithinFullScreenSelection(1)) return;
         if (TryMoveWithinExportSelection(1)) return;

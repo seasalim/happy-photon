@@ -7,6 +7,7 @@ namespace HappyPhoton.Services;
 
 public sealed partial class RawBaseLoader : IBaseImageLoader
 {
+    internal CullPerfRecorder? CullPerf { get; set; }
     private readonly bool _isAvailable;
     internal bool IsHealthRejected { get; }
     private readonly Func<LibRawContext, byte[]?> _thumbnailReader;
@@ -33,12 +34,6 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
         IsHealthRejected = healthRejected;
         _thumbnailReader = thumbnailReader ?? RawThumbnailReader.Read;
         _rawHistogramSampler = rawHistogramSampler;
-    }
-
-    public bool CanLoad(ImageFile file)
-    {
-        ArgumentNullException.ThrowIfNull(file);
-        return _isAvailable && file.IsRaw;
     }
 
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(
@@ -142,7 +137,9 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             cancellationToken.ThrowIfCancellationRequested();
             performanceTrace.Mark("HeadersAndThumbnail");
 
-            context.Unpack(cancellationToken);
+            CullPerf?.Record("NativeStart", file.CatalogId);
+            try { context.Unpack(cancellationToken); }
+            finally { CullPerf?.Record("NativeEnd", file.CatalogId); }
             performanceTrace.Mark("Unpack");
             var cameraFacts = RawCameraFactSnapshot.Copy(
                 context.GetCameraFacts(cancellationToken));
@@ -210,7 +207,9 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 ConfigureOutput(decode, preview, isMonochrome),
                 cancellationToken);
             performanceTrace.Mark("DecodeSetup");
-            context.Process(cancellationToken);
+            CullPerf?.Record("NativeStart", file.CatalogId);
+            try { context.Process(cancellationToken); }
+            finally { CullPerf?.Record("NativeEnd", file.CatalogId); }
             performanceTrace.Mark("Process");
 
             ushort[]? previewGray = null;

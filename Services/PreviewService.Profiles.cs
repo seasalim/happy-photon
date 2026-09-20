@@ -43,6 +43,7 @@ public sealed partial class PreviewService
         {
             outcomeGeneration = generation;
         }
+        CullPerf?.Record("Generation", imageFile.CatalogId, outcomeGeneration, value: generation);
         var stopwatch = Stopwatch.StartNew();
 
         try
@@ -123,6 +124,7 @@ public sealed partial class PreviewService
                     outcomeGeneration,
                     snapshot.Base.Info.IsRawSource);
             }
+            CullPerf?.Record("RenderQueued", imageFile.CatalogId, generation);
             RenderStarted?.Invoke();
             var rendered = await Task.Run(
                 () => Render(
@@ -196,6 +198,7 @@ public sealed partial class PreviewService
         }
         finally
         {
+            CullPerf?.Record("WorkerDone", imageFile.CatalogId, outcomeGeneration);
             RenderRequestCompleted?.Invoke(outcomeGeneration);
         }
     }

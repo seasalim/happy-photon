@@ -43,6 +43,7 @@ public partial class MainWindowViewModel
         ImageFile parent,
         CancellationTokenSource cancellation)
     {
+        CullPerf?.Record("BufferRefill", parent.CatalogId);
         for (var offset = 1; offset <= AdjacentWarmDepth; offset++)
         {
             while (true)

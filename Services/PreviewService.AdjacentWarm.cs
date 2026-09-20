@@ -106,6 +106,8 @@ public sealed partial class PreviewService
         {
             var keep = joinFor != null && IsDecodingAdjacentWarmTarget(joinFor) ||
                 keepAheadFor != null && IsLiveAdjacentWarmTargetIn(keepAheadFor);
+            if (!keep && _adjacentWarmTask?.IsCompleted == false)
+                CullPerf?.Record("WarmCancelRequested", _adjacentWarmTarget?.CatalogId ?? 0);
             if (!keep) _adjacentWarmCancellation?.Cancel();
             if (dropRetained && (imageFile == null ||
                 _adjacentWarmEntry?.MatchesIdentity(imageFile) == true))
@@ -117,6 +119,7 @@ public sealed partial class PreviewService
         CancellationTokenSource cancellation)
     {
         var token = cancellation.Token;
+        CullPerf?.Record("WarmStart", imageFile.CatalogId);
         try
         {
             // The previous entry is the only copy of its preview until the
@@ -164,6 +167,7 @@ public sealed partial class PreviewService
                     Path.GetFullPath(imageFile.FilePath), sourceWriteTime,
                     writerHash, identity,
                     rendered.Image.ToByteArray(MagickFormat.Jpeg));
+                CullPerf?.Record("WarmEnqueue", imageFile.CatalogId);
                 _previewCache.QueueSaveToCache(
                     imageFile, rendered.Image, writerHash, identity);
             }
@@ -174,10 +178,13 @@ public sealed partial class PreviewService
                     _disposed != 0)
                     return;
                 _adjacentWarmEntry = entry;
+                CullPerf?.Record("WarmComplete", imageFile.CatalogId);
                 _adjacentWarmHandoff = DropWhenPersistedAsync(imageFile, entry);
             }
         }
-        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+        }
         catch (Exception exception)
         {
             ImageServiceHelpers.LogDebug(nameof(PreviewService),
@@ -243,7 +250,11 @@ public sealed partial class PreviewService
     {
         lock (_adjacentWarmSync)
         {
-            if (ReferenceEquals(_adjacentWarmEntry, entry)) _adjacentWarmEntry = null;
+            if (ReferenceEquals(_adjacentWarmEntry, entry))
+            {
+                CullPerf?.Record("WarmDrop", entry.CatalogId);
+                _adjacentWarmEntry = null;
+            }
         }
     }
     private async Task DisposeAdjacentWarmAsync()

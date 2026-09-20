@@ -24,6 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Tests\CullPerfFiles.cs" Link="CullPerfFiles.cs" />
+    <Compile Include="..\Tests\CullPerfEvidence.cs" Link="CullPerfEvidence.cs" />
     <Compile Include="..\Tests\CatalogVmFixture.cs" Link="CatalogVmFixture.cs" />
     <Compile Include="..\Tests\CatalogAssessmentExtensions.cs" Link="CatalogAssessmentExtensions.cs" />
     <Compile Include="..\Tests\ColorLabelUiTests.cs" Link="ColorLabelUiTests.cs" />

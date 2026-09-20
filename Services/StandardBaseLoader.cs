@@ -7,6 +7,7 @@ namespace HappyPhoton.Services;
 
 public sealed class StandardBaseLoader : IBaseImageLoader
 {
+    internal CullPerfRecorder? CullPerf { get; set; }
     private readonly Func<string, MagickReadSettings, MagickImage> _decode;
     private readonly Func<MagickImage, ImageFile, CancellationToken,
         SourceSaturationMask?> _captureSourceSaturation;
@@ -73,7 +74,9 @@ public sealed class StandardBaseLoader : IBaseImageLoader
             var readSettings = CreateReadSettings(file, preview, nativeGeometry);
             cancellationToken.ThrowIfCancellationRequested();
 
-            image = _decode(file.FilePath, readSettings);
+            CullPerf?.Record("NativeStart", file.CatalogId);
+            try { image = _decode(file.FilePath, readSettings); }
+            finally { CullPerf?.Record("NativeEnd", file.CatalogId); }
             cancellationToken.ThrowIfCancellationRequested();
 
             var orientation = NormalizeOrientation(image.Orientation);

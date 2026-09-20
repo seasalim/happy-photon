@@ -266,49 +266,31 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private async Task TogglePickedImageAsync()
-    {
-        if (IsFullScreenMode) return;
-
-        await SetFlagStateAsync(ImageFlag.Picked);
-    }
+    private Task TogglePickedImageAsync() =>
+        SetFlagStateAsync(ImageFlag.Picked);
 
     [RelayCommand]
-    private async Task UnpickImageAsync()
-    {
-        if (IsFullScreenMode) return;
-
-        await SetFlagStateAsync(ImageFlag.Unflagged);
-    }
+    private Task UnpickImageAsync() =>
+        SetFlagStateAsync(ImageFlag.Unflagged);
 
     [RelayCommand]
-    private async Task RejectImageAsync()
-    {
-        if (IsFullScreenMode) return;
-
-        await SetFlagStateAsync(ImageFlag.Rejected);
-    }
+    private Task RejectImageAsync() =>
+        SetFlagStateAsync(ImageFlag.Rejected);
 
     [RelayCommand]
-    private async Task ToggleRejectedImageAsync()
-    {
-        if (IsFullScreenMode) return;
-
-        await SetFlagStateAsync(ImageFlag.Rejected);
-    }
+    private Task ToggleRejectedImageAsync() =>
+        SetFlagStateAsync(ImageFlag.Rejected);
 
     [RelayCommand]
-    private async Task ToggleFlagAsync()
-    {
-        if (IsFullScreenMode) return;
-
-        await SetFlagStateAsync(ImageFlag.Picked, toggleUniform: true);
-    }
+    private Task ToggleFlagAsync() =>
+        SetFlagStateAsync(ImageFlag.Picked, toggleUniform: true);
 
     private async Task SetFlagStateAsync(
         ImageFlag flag,
         bool toggleUniform = false)
     {
+        if (IsFullScreenMode) return;
+        CullPerf?.Record("PickReceipt", SelectedImage?.CatalogId ?? 0, operation: -1);
         var resolution = ResolveAssessmentTargets();
         var targets = resolution.Targets;
         var participants = targets.Concat(resolution.Companions).ToArray();
@@ -350,6 +332,7 @@ public partial class MainWindowViewModel
             await CommitAssessmentAsync(participants.Select(target =>
                 new AssessmentMutation(
                     target.CatalogId, AssessmentAxes.Flag, Flag: next)).ToArray());
+            CullPerf?.Record("CatalogCommit", actedOnImage?.CatalogId ?? 0);
         }
         catch (Exception ex)
         {
@@ -397,7 +380,7 @@ public partial class MainWindowViewModel
     private async Task SetRatingAsync(int rating)
     {
         if (IsFullScreenMode) return;
-
+        CullPerf?.Record("PickReceipt", SelectedImage?.CatalogId ?? 0, operation: -1);
         rating = Math.Clamp(rating, 0, 5);
         var resolution = ResolveAssessmentTargets();
         var targets = resolution.Targets;
@@ -439,6 +422,7 @@ public partial class MainWindowViewModel
                 new AssessmentMutation(
                     target.CatalogId, AssessmentAxes.Rating,
                     Rating: next)).ToArray());
+            CullPerf?.Record("CatalogCommit", actedOnImage?.CatalogId ?? 0);
         }
         catch (Exception ex)
         {

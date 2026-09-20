@@ -8,6 +8,7 @@ public sealed class PreviewCacheService : IAsyncDisposable
 {
     private readonly CatalogService _catalogService;
     private readonly SettingsHashedCacheWriter _writer;
+    internal CullPerfRecorder? CullPerf { set => _writer.CullPerf = value; }
 
     public PreviewCacheService(CatalogService catalogService) : this(
         catalogService,

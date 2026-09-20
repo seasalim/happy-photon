@@ -38,6 +38,7 @@ public partial class MainWindowViewModel
             ImageService.Previews.FlushRenderedPreviewCache();
             ImageService.Previews.InvalidatePreviewBase();
         }
+        CullPerf?.Record("Selection", newValue?.CatalogId ?? 0, surfaceGeneration, _cullOperation);
         ClearCurveGesture();
         ActiveMixerBand = ColorMixerBand.Red;
         CancelRestingPreview(clearParent: true);
@@ -59,6 +60,7 @@ public partial class MainWindowViewModel
         NotifyFullScreenSelectionBadgeChanged();
         OnPreviewFailureSelectionChanged();
         ApplySelectionOutcome(newValue, surfaceGeneration);
+        CullPerf?.Record("SelectionFeedback", newValue?.CatalogId ?? 0, surfaceGeneration, _cullOperation);
 
         // Exit crop mode when switching images
         if (IsCropMode)

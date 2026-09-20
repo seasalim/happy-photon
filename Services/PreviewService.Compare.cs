@@ -122,6 +122,7 @@ public sealed partial class PreviewService
     {
         var hash = RenderSettingsHash.Compute(settings);
         var activeWarm = ActiveAdjacentWarmFor(imageFile, hash);
+        CullPerf?.Record(activeWarm == null ? "WarmJoinMiss" : "WarmJoin", imageFile.CatalogId);
         if (activeWarm != null)
             await activeWarm.WaitAsync(cancellationToken).ConfigureAwait(false);
         return TryLoadAdjacentWarm(imageFile, hash) ??
