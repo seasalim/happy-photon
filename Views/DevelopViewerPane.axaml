@@ -3,6 +3,7 @@
              xmlns:views="using:HappyPhoton.Views"
              xmlns:vm="using:HappyPhoton.ViewModels"
              x:Class="HappyPhoton.Views.DevelopViewerPane"
+             Focusable="True"
              x:DataType="vm:MainWindowViewModel">
     <Grid RowDefinitions="*,Auto">
         <Grid x:Name="ViewerGrid" Grid.Row="0">

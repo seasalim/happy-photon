@@ -76,9 +76,14 @@ expanded state for the session. X/Y display cu/cv × 100 in corrected-frame perc
 in long-edge percent [0.1, 200]. These sliders are disabled without an editable
 selection, never reset on double-click, and update the stored local directly.
 CompactSlider is keyboard-focusable: arrows step by SmallChange (Shift ×10),
-consume photo navigation, and use the drag edit boundary. Geometry drags commit
-on release or capture loss; keyboard bursts debounce into one “Local geometry”
-history row. Canvas gestures retain their cancellation behavior below.
+consume photo navigation, and use the drag edit boundary. A pointer drag clears
+focus on release or capture loss so arrows return to photo navigation; a release
+that crosses the 2 px threshold without a move event also counts as a drag. A
+plain click within the threshold or Tab keeps slider focus for keyboard stepping.
+Clicking the Develop photo focuses its viewer pane; controls inside retain their
+own focus behavior. Geometry drags commit on release or capture loss; keyboard
+bursts debounce into one “Local geometry” history row. Canvas gestures retain
+their cancellation behavior below.
 
 Center in view sits beside Reset adjustments, outside Geometry. It preserves the
 selected local's other fields and commits one

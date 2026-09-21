@@ -229,6 +229,59 @@ public sealed class CompactSliderInputGateTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PointerDrag_ReleasesFocusButPlainClickKeepsIt(bool captureLoss)
+    {
+        var (slider, window, scope) = ShowSlider();
+        using var windowScope = scope;
+        IPointer? pressedPointer = null;
+        window.AddHandler(
+            InputElement.PointerPressedEvent,
+            (_, args) => pressedPointer = args.Pointer,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+
+        try
+        {
+            window.MouseDown(new Point(110, 11), MouseButton.Left, RawInputModifiers.None);
+            Assert.True(slider.IsFocused);
+            window.MouseMove(new Point(130, 11), RawInputModifiers.LeftMouseButton);
+            if (captureLoss)
+            {
+                Assert.NotNull(pressedPointer);
+                pressedPointer.Capture(null);
+                Dispatcher.UIThread.RunJobs();
+            }
+            else
+            {
+                window.MouseUp(new Point(130, 11), MouseButton.Left, RawInputModifiers.None);
+            }
+
+            Assert.False(slider.IsFocused);
+            Assert.Null(window.FocusManager!.GetFocusedElement());
+
+            // A release past the threshold with no intermediate move is a drag too.
+            window.MouseDown(new Point(110, 11), MouseButton.Left, RawInputModifiers.None);
+            Assert.True(slider.IsFocused);
+            window.MouseUp(new Point(150, 11), MouseButton.Left, RawInputModifiers.None);
+            Assert.False(slider.IsFocused);
+            Assert.Null(window.FocusManager!.GetFocusedElement());
+
+            window.MouseDown(new Point(110, 11), MouseButton.Left, RawInputModifiers.None);
+            window.MouseUp(new Point(110, 11), MouseButton.Left, RawInputModifiers.None);
+            Assert.True(slider.IsFocused);
+            var old = slider.Value;
+            window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.None, null);
+            Assert.Equal(old + slider.SmallChange, slider.Value, 10);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     private static (CompactSlider Slider, Window Window, TestUiScope Scope) ShowSlider()
     {
         var slider = new CompactSlider

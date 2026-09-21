@@ -99,7 +99,6 @@ public sealed partial class LocalsViewModelTests
         var window = new MainWindow { Width = 1200, Height = 700 };
         using var scope = TestUiScope.ForMainWindow(window, vm);
         var viewer = window.GetVisualDescendants().OfType<DevelopViewerPane>().Single();
-        viewer.Focusable = true;
         Assert.True(viewer.Focus());
         var count = vm.HistoryEntries.Count;
         await Enter();

@@ -349,6 +349,7 @@ public partial class CompactSlider : UserControl
             var pointerX = e.GetPosition(_trackGrid).X;
             if (_hasDragStarted || Math.Abs(pointerX - _dragStartX) >= DragThreshold)
             {
+                _hasDragStarted = true;
                 UpdateValueFromDrag(pointerX);
             }
         }
@@ -369,10 +370,15 @@ public partial class CompactSlider : UserControl
     {
         if (!_isDragging) return;
 
+        var wasDragged = _hasDragStarted;
         _isDragging = false;
         _hasDragStarted = false;
         _thumbDot?.Classes.Set("pointer-captured", false);
         RaiseEvent(new RoutedEventArgs(DragCompletedEvent));
+        if (wasDragged && IsFocused)
+        {
+            TopLevel.GetTopLevel(this)?.FocusManager?.Focus(null);
+        }
     }
 
     private void UpdateValueFromDrag(double pointerX)
