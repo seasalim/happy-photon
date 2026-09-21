@@ -92,6 +92,8 @@ internal static class CullPerfLedger
     internal static Dictionary<string, CullPerfSample[]> WarmSamples(CullPerfEvent[] events, long firstInput)
     {
         var handoffs = new List<CullPerfSample>();
+        var saves = new List<CullPerfSample>();
+        var pendingWarms = new HashSet<long>();
         CullPerfEvent? previousWarm = null, outcome = null;
         for (var index = 0; index < events.Length; index++)
         {
@@ -100,18 +102,31 @@ internal static class CullPerfLedger
             {
                 previousWarm = item;
                 outcome = null;
+                pendingWarms.Add(item.ImageId);
             }
             else if (previousWarm is { } warm && outcome == null && item.ImageId == warm.ImageId &&
                 item.Value == 1 && item.Kind is "CacheWriteComplete" or "CacheWriteDropped")
                 outcome = item;
             else if (item.Kind == "WarmHandoffResolved" && item.Value == 1 && outcome is { } write)
                 handoffs.Add(new(index + 1, Stopwatch.GetElapsedTime(write.Timestamp, item.Timestamp).TotalMilliseconds));
+            // The FIFO writer's first preview-tier save for a warmed image is the
+            // warm's own write; a later departing-preview save is not, and a
+            // write dropped before it reached the writer's hand has no save.
+            if (item.Kind == "CacheSaveStart" && item.Value == 1 && pendingWarms.Remove(item.ImageId))
+            {
+                var saveEnd = events.Skip(index + 1).FirstOrDefault(next => next.Kind == "CacheSaveEnd" &&
+                    next.OperationId == item.OperationId);
+                if (saveEnd.Timestamp != 0)
+                    saves.Add(new(index + 1, Stopwatch.GetElapsedTime(item.Timestamp, saveEnd.Timestamp).TotalMilliseconds));
+            }
+            else if (item.Kind == "CacheWriteDropped" && item.Value == 1) pendingWarms.Remove(item.ImageId);
         }
         var walks = Walks(events).ToArray();
         var initial = walks.FirstOrDefault();
         return new()
         {
             ["handoff-gap-ms"] = handoffs.ToArray(),
+            ["warm-save-ms"] = saves.ToArray(),
             ["step-refill-ms"] = walks.Where(walk => walk.Start.Timestamp >= firstInput && walk.End != null)
                 .Select(walk => Sample(walk.Id, walk.Start, walk.End!.Value)).ToArray(),
             ["initial-walk-ms"] = initial.Start.Timestamp < firstInput && initial.End is { } end && end.Timestamp < firstInput

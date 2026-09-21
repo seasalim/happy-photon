@@ -20,8 +20,10 @@ public sealed class CullPerfDwellTests
             dwell.Metrics.Single(metric => metric.Id == "ui-enqueue-ms"));
         Assert.Equal(new CullPerfMetric("handoff-gap-ms", "p95", 20, 5, true),
             dwell.Metrics.Single(metric => metric.Id == "handoff-gap-ms"));
-        Assert.Equal(new CullPerfMetric("step-refill-ms", "p95", 15, null, true, 0.85),
+        Assert.Equal(new CullPerfMetric("step-refill-ms", "p95", 15, null, true, 1.1),
             dwell.Metrics.Single(metric => metric.Id == "step-refill-ms"));
+        Assert.Equal(new CullPerfMetric("warm-save-ms", "p95", 80, null, true, 0.5),
+            dwell.Metrics.Single(metric => metric.Id == "warm-save-ms"));
         Assert.Equal(new CullPerfMetric("initial-walk-ms", "p95", 1, null, false),
             dwell.Metrics.Single(metric => metric.Id == "initial-walk-ms"));
         Assert.All(dwell.Workloads, item =>
@@ -33,10 +35,14 @@ public sealed class CullPerfDwellTests
             var jump = item.Pattern == "jump";
             Assert.Contains(item.Pattern, new[] { "dwell", "jump" });
             Assert.Equal(jump ? 15 : 0, item.MinimumWalks);
-            Assert.Equal(new CullPerfMetric("handoff-gap-ms", "p95", jump ? 20 : 1, jump ? 5 : null, jump),
+            // Report-only everywhere since the single-encode series: the write lands
+            // before the next worker arrives, so a wait, and thus a sample, is rare.
+            Assert.Equal(new CullPerfMetric("handoff-gap-ms", "p95", 1, null, false),
                 item.Metric(dwell, "handoff-gap-ms"));
-            Assert.Equal(new CullPerfMetric("step-refill-ms", "p95", jump ? 15 : 1, null, jump, jump ? 0.85 : null),
+            Assert.Equal(new CullPerfMetric("step-refill-ms", "p95", jump ? 15 : 1, null, jump, jump ? 1.1 : null),
                 item.Metric(dwell, "step-refill-ms"));
+            Assert.Equal(new CullPerfMetric("warm-save-ms", "p95", jump ? 80 : 1, null, jump, jump ? 0.5 : null),
+                item.Metric(dwell, "warm-save-ms"));
             Assert.Equal(jump ? 20 : 100, item.Metric(dwell, "input-feedback-ms").MinimumSamples);
             Assert.Equal("canon", item.Fixture);
             Assert.Equal("cold", item.CacheCondition);

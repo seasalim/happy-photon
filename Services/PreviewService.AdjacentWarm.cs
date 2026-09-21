@@ -172,7 +172,7 @@ public sealed partial class PreviewService
                     rendered.Image.ToByteArray(MagickFormat.Jpeg));
                 CullPerf?.Record("WarmEnqueue", imageFile.CatalogId);
                 writeOutcome = _previewCache.QueueSaveToCache(
-                    imageFile, rendered.Image, writerHash, identity);
+                    imageFile, entry.EncodedJpeg, writerHash, identity);
             }
             lock (_adjacentWarmSync)
             {

@@ -361,6 +361,45 @@ public sealed partial class AdjacentPreviewWarmTests
         }
     }
 
+    [WindowsFact]
+    public async Task WarmPersistsTheRetainedBytesWithoutAWriterEncode()
+    {
+        _fixture.RequireWindows();
+        using var catalog = await CreateCatalogAsync("single-encode");
+        var target = await CreateCatalogImageAsync(catalog, "target.jpg");
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var cache = new PreviewCacheService(catalog, 1, release.Task, TimeSpan.Zero);
+        var recorder = new CullPerfRecorder();
+        await using var service = CreateService(catalog, new RecordingLoader(),
+            new TestSourceAvailabilityService(SourceAvailability.AvailableLocally), cache);
+        service.CullPerf = recorder;
+        try
+        {
+            Assert.True(service.TryStartAdjacentWarm(target));
+            await TestWaits.UntilAsync(() => service.PreviewActivityCount == 0);
+            Assert.Equal(1, service.AdjacentWarmEntryCount);
+            // Inspect the private entry without adding a mutable production accessor.
+            var entry = typeof(PreviewService).GetField("_adjacentWarmEntry",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                .GetValue(service)!;
+            var bytes = Assert.IsType<byte[]>(entry.GetType().GetProperty("EncodedJpeg")!.GetValue(entry));
+
+            release.SetResult();
+            await TestWaits.UntilAsync(() => cache.PendingWrites == 0 && service.AdjacentWarmEntryCount == 0);
+
+            Assert.Equal(bytes, File.ReadAllBytes(cache.GetCachePath(target)));
+            var events = recorder.Snapshot().Where(e => e.ImageId == target.CatalogId).ToArray();
+            Assert.DoesNotContain(events, e => e.Kind is "CacheEncode" or "CacheConvert");
+            Assert.Single(events, e => e.Kind == "CacheWriteComplete" && e.Value == 1);
+            Assert.True(cache.HasSettingsMatchedEntry(target, RenderSettingsHash.Compute(target.EditSettings)));
+        }
+        finally
+        {
+            release.TrySetResult();
+            await TestWaits.UntilAsync(() => cache.PendingWrites == 0);
+        }
+    }
+
     private sealed class DrainingLoader(CullPerfRecorder recorder) : RecordingLoader
     {
         public ManualResetEventSlim Started { get; } = new();

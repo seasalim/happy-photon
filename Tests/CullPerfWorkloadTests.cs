@@ -76,6 +76,9 @@ public sealed class CullPerfWorkloadTests
             vm.ImageService.Previews.CullPerf = recorder;
             if (workload.Pattern == "ahead")
             {
+                // The initial walk's last worker may outlive the idle counters; admission
+                // refuses while any worker is live, so wait for it rather than race it.
+                await TestWaits.UntilAsync(() => vm.ImageService.Previews.ActiveAdjacentWarm == null);
                 // Remove only the selected warm target's rendered entry; the gate names this condition.
                 var cachePath = catalog.GetPreviewPath(active[2].CatalogId);
                 if (File.Exists(cachePath)) File.Delete(cachePath);
@@ -159,7 +162,7 @@ public sealed class CullPerfWorkloadTests
             workload.CacheCondition, true, false, recorder.LostEvents, ledger.Count,
             accounting.Completed, accounting.Cancelled, accounting.Superseded, accounting.NoOp,
             failures.Concat(accounting.Failures).ToArray(), accounting.Samples, counters,
-            workload.Metrics.Where(id => !accounting.Samples.ContainsKey(id) &&
+            workload.Metrics.Where(id => (!accounting.Samples.TryGetValue(id, out var samples) || samples.Length == 0) &&
                 workload.Metric(gates, id) is { Maximum: null, Foreground: false, MaximumBaselineRatio: null }).ToArray());
         CullPerfFiles.WriteNew(Path.Combine(directory, "events.json"), new { ledger, accounting.Operations, events });
         CullPerfFiles.WriteNew(Path.Combine(directory, "fragment.json"), fragment);

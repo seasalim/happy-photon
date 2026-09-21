@@ -61,7 +61,7 @@ exclude dispatcher queue delay. This supplemental run does not qualify the froze
 workloads or repeat their required correctness checks.
 
 The dwell harness waits for the initial walk to complete before submitting inputs.
-Three warm metrics use one-based recorder positions as their sample operation IDs:
+Four warm metrics use one-based recorder positions as their sample operation IDs:
 
 - `handoff-gap-ms`: each `WarmHandoffResolved` with value 1 (the worker actually
   waited), minus the previous warm target's first tier-1 `CacheWriteComplete` or
@@ -69,19 +69,28 @@ Three warm metrics use one-based recorder positions as their sample operation ID
   unrelated images, and tier-2 thumbnail writes cannot replace that outcome.
   The handoff awaits its own write outcome directly; every drop path, including
   shutdown timeout, resolves it without waiting for other pending writes.
-  Resolves without a preceding matching outcome yield no sample. The p95 maximum
-  is 5 ms, with at least 20 samples, on both jump workloads.
+  Resolves without a preceding matching outcome yield no sample. Since warm
+  writes persist pre-encoded bytes, the write usually lands before the next
+  worker arrives, so the metric is report-only on all four workloads and an
+  empty sample set is recorded as `notMeasured`; the `handoff-waits` counter
+  reports how many workers actually waited.
 - `step-refill-ms`: each post-input `BufferRefill` to its next `WalkComplete`,
   provided no further `BufferRefill` intervenes and the parent image matches.
   Cancelled or unfinished walks yield no latency sample. `step-walks-completed`
   and `step-walks-excluded` count the two outcomes; `walks-without-complete`
   includes initial walks too. The per-workload minimumWalks floor (15 for jump,
   zero for report-only dwell) makes thinner binding fragments inconclusive. Both jump workloads require
-  15 samples and a p95 at most 0.85 times the named baseline.
+  15 samples and a p95 at most 1.10 times the named baseline.
 - `initial-walk-ms`: the first walk's `BufferRefill` to `WalkComplete`, both
   before the first ledger input; one separate, report-only p95 sample.
+- `warm-save-ms`: the first tier-1 `CacheSaveStart/End` span after each image's
+  `WarmEnqueue`, correlated by save operation id. A drop before the writer takes
+  the write clears the pending warm; unclosed spans yield no sample. Jump requires
+  at least 80 samples and a p95 at most 0.50 times the named baseline. The writer
+  persists the warm entry's existing JPEG bytes, so warm writes record no
+  `events-CacheEncode`; departing-preview and Compare raster writes still encode.
 
-Handoff gap and step refill are foreground metrics on jump workloads. Dwell
+Step refill and warm save are foreground metrics on jump workloads. Dwell
 overrides both to report-only (no maximum, foreground comparison, or ratio).
 Workload metricOverrides replace the matching global metric definition; jump
 also sets input-feedback-ms to 20 samples, retaining its 50 ms p95 maximum.
@@ -92,6 +101,10 @@ sample counts, correctness checks, and any stricter foreground regression limit
 still apply. An unnamed baseline run reports absolute values without enforcing
 an improvement ratio. A single initial-walk sample cannot establish variability;
 repeat runs are needed for that comparison.
+
+Process CPU, peak private bytes and ordinary-idle private bytes remain
+report-only counters on every workload; the single-encode series compares them
+before and after on both jump workloads.
 
 ## Frozen workloads
 

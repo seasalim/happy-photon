@@ -46,6 +46,9 @@ internal static class CullPerfCounters
         result["walks-without-complete"] = walks.Count(walk => walk.End == null);
         result["step-walks-completed"] = walks.Count(walk => walk.Start.Timestamp >= firstInput && walk.End != null);
         result["step-walks-excluded"] = walks.Count(walk => walk.Start.Timestamp >= firstInput && walk.End == null);
+        // A worker that found the previous write already landed did not wait; the
+        // gap metric samples only waits, so their count explains an empty metric.
+        result["handoff-waits"] = events.Count(item => item.Kind == "WarmHandoffResolved" && item.Value == 1);
         return result;
     }
 }

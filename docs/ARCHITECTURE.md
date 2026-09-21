@@ -585,11 +585,15 @@ threading and ownership view:
 - After a settled Develop or loupe paint, a capacity-one speculative worker walks up to
   five uncached local neighbors in the current travel direction, one at a time, each
   waiting for the outcome of the previous entry's own cache write before decoding.
+  Each warm encodes its rendered preview once at JPEG quality 90; the retained entry
+  and queued preview write share that array read-only. The writer persists those exact
+  bytes without cloning the raster or encoding again. Encoded writes are preview-only;
+  versioned thumbnail writers reject them because dimension metadata needs a raster.
   Persisted writes release the retained entry after both file moves; dropped writes
   retain the only copy unless the source changed or a matched disk entry exists.
   Unrelated writes never hold up this handoff. Every write outcome resolves, including
   queued and in-hand writes abandoned at the shutdown drain timeout; the writer keeps
-  ownership of in-hand pixels until its save finishes. Standard images arm
+  ownership of in-hand payloads until its save finishes. Standard images arm
   after 75 ms without selection, edit, crop, filter, folder, or mode activity. It never
   joins the current base coordinator or outcome channel: its base pair is disposed after
   rendering and its single encoded handoff is consumed by the settings-matched

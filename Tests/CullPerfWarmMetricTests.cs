@@ -34,6 +34,26 @@ public sealed class CullPerfWarmMetricTests
         Assert.Equal(2, samples.Length);
         Assert.All(samples, sample => Assert.Equal(Stopwatch.GetElapsedTime(5, 8).TotalMilliseconds, sample.Value));
         Assert.Equal(new long[] { 7, 13 }, samples.Select(sample => sample.OperationId));
+        Assert.Equal(3, CullPerfCounters.Derive(events)["handoff-waits"]);
+    }
+
+    [Fact]
+    public void WarmSaveIsTheFirstPreviewTierSaveAfterEachWarmEnqueue()
+    {
+        CullPerfEvent[] events =
+        [
+            S(1, "CacheSaveStart", 10, 1, 1), S(3, "CacheSaveEnd", 10, 1, 1), // Before the warm: a departing write.
+            E(4, "WarmEnqueue", 10),
+            S(5, "CacheSaveStart", 10, 2, 2), S(6, "CacheSaveEnd", 10, 2, 2), // Thumbnail tier is ineligible.
+            S(7, "CacheSaveStart", 10, 3, 1), S(12, "CacheSaveEnd", 10, 3, 1), // The warm's own save.
+            S(13, "CacheSaveStart", 10, 4, 1), S(20, "CacheSaveEnd", 10, 4, 1), // Later departing write: ineligible.
+            E(21, "WarmEnqueue", 11), E(22, "CacheWriteDropped", 11, 1), // Dropped before the writer's hand.
+            S(23, "CacheSaveStart", 11, 5, 1), S(30, "CacheSaveEnd", 11, 5, 1),
+            E(31, "WarmEnqueue", 12), S(32, "CacheSaveStart", 12, 6, 1) // Unclosed span: no sample.
+        ];
+        var sample = Assert.Single(CullPerfLedger.WarmSamples(events, 1)["warm-save-ms"]);
+        Assert.Equal(6, sample.OperationId);
+        Assert.Equal(Stopwatch.GetElapsedTime(7, 12).TotalMilliseconds, sample.Value);
     }
 
     [Fact]
@@ -92,4 +112,7 @@ public sealed class CullPerfWarmMetricTests
 
     private static CullPerfEvent E(long time, string kind, long image, long value = 0) =>
         new(time, kind, 0, image, 0, 1, value);
+
+    private static CullPerfEvent S(long time, string kind, long image, long operation, long value) =>
+        new(time, kind, operation, image, 0, 1, value);
 }

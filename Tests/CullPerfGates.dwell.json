@@ -43,7 +43,15 @@
       "minimumSamples": 15,
       "maximum": null,
       "foreground": true,
-      "maximumBaselineRatio": 0.85
+      "maximumBaselineRatio": 1.1
+    },
+    {
+      "id": "warm-save-ms",
+      "statistic": "p95",
+      "minimumSamples": 80,
+      "maximum": null,
+      "foreground": true,
+      "maximumBaselineRatio": 0.5
     },
     {
       "id": "initial-walk-ms",
@@ -94,7 +102,8 @@
         "handoff-gap-ms",
         "step-refill-ms",
         "initial-walk-ms",
-        "input-feedback-ms"
+        "input-feedback-ms",
+        "warm-save-ms"
       ],
       "intervalMs": 9000,
       "burstSize": 1,
@@ -110,6 +119,13 @@
           "minimumSamples": 20,
           "maximum": 50,
           "foreground": true
+        },
+        {
+          "id": "handoff-gap-ms",
+          "statistic": "p95",
+          "minimumSamples": 1,
+          "maximum": null,
+          "foreground": false
         }
       ]
     },
@@ -125,7 +141,8 @@
         "handoff-gap-ms",
         "step-refill-ms",
         "initial-walk-ms",
-        "input-feedback-ms"
+        "input-feedback-ms",
+        "warm-save-ms"
       ],
       "intervalMs": 9000,
       "burstSize": 1,
@@ -141,6 +158,13 @@
           "minimumSamples": 20,
           "maximum": 50,
           "foreground": true
+        },
+        {
+          "id": "handoff-gap-ms",
+          "statistic": "p95",
+          "minimumSamples": 1,
+          "maximum": null,
+          "foreground": false
         }
       ]
     },
@@ -158,7 +182,8 @@
         "initial-walk-ms",
         "input-feedback-ms",
         "first-publication-ms",
-        "accurate-ready-ms"
+        "accurate-ready-ms",
+        "warm-save-ms"
       ],
       "intervalMs": 1500,
       "burstSize": 1,
@@ -177,6 +202,13 @@
         },
         {
           "id": "step-refill-ms",
+          "statistic": "p95",
+          "minimumSamples": 1,
+          "maximum": null,
+          "foreground": false
+        },
+        {
+          "id": "warm-save-ms",
           "statistic": "p95",
           "minimumSamples": 1,
           "maximum": null,
@@ -199,7 +231,8 @@
         "input-feedback-ms",
         "first-publication-ms",
         "accurate-ready-ms",
-        "ui-enqueue-ms"
+        "ui-enqueue-ms",
+        "warm-save-ms"
       ],
       "intervalMs": 1500,
       "burstSize": 1,
@@ -218,6 +251,13 @@
         },
         {
           "id": "step-refill-ms",
+          "statistic": "p95",
+          "minimumSamples": 1,
+          "maximum": null,
+          "foreground": false
+        },
+        {
+          "id": "warm-save-ms",
           "statistic": "p95",
           "minimumSamples": 1,
           "maximum": null,

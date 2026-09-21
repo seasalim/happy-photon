@@ -103,6 +103,30 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         return completion.Task;
     }
 
+    // The preview entry and writer share this array read-only until the write resolves.
+    public Task<bool> Queue(
+        ImageFile imageFile, byte[] encodedJpeg, string settingsHash,
+        PreviewCacheIdentity identity)
+    {
+        if (_versionedDimensionMetadata || !CanQueue(imageFile, settingsHash))
+        {
+            Drop(imageFile.CatalogId);
+            return Task.FromResult(false);
+        }
+        var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        try
+        {
+            TryQueueOwned(imageFile, encodedJpeg, settingsHash, identity,
+                File.GetLastWriteTimeUtc(imageFile.FilePath), completion);
+        }
+        catch
+        {
+            Drop(imageFile.CatalogId);
+            completion.TrySetResult(false);
+        }
+        return completion.Task;
+    }
+
     public void Queue(
         ImageFile imageFile,
         Bitmap bitmap,
@@ -221,25 +245,32 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         var metadataPath = Path.ChangeExtension(write.CachePath, ".meta");
         MagickImage? converted = null;
         var persisted = false;
+        var operation = CullPerf?.Record("CacheSaveStart", write.ImageId, operation: -1, value: Tier) ?? 0;
         try
         {
-            if (write.Image is not MagickImage) CullPerf?.Record("CacheConvert", write.ImageId);
+            if (write.Image is Bitmap or BitmapSnapshot) CullPerf?.Record("CacheConvert", write.ImageId);
             var image = write.Image switch
             {
                 Bitmap bitmap => converted = ConvertToMagickImage(bitmap),
                 BitmapSnapshot snapshot => converted = snapshot.ToMagickImage(),
+                byte[] => null,
                 _ => (MagickImage)write.Image
             };
             Directory.CreateDirectory(_temporaryDirectory);
             Directory.CreateDirectory(Path.GetDirectoryName(write.CachePath)!);
-            image.Quality = (uint)_jpegQuality;
-            image.Write(temporaryPath, MagickFormat.Jpeg);
+            if (write.Image is byte[] encodedJpeg) File.WriteAllBytes(temporaryPath, encodedJpeg);
+            else
+            {
+                image!.Quality = (uint)_jpegQuality;
+                CullPerf?.Record("CacheEncode", write.ImageId, value: Tier);
+                image.Write(temporaryPath, MagickFormat.Jpeg);
+            }
             File.WriteAllText(
                 temporaryMetadataPath,
                 _versionedDimensionMetadata
                     ? RenderedThumbnailMetadata.Serialize(
                         write.SettingsHash,
-                        (int)image.Width,
+                        (int)image!.Width,
                         (int)image.Height)
                     // Always the versioned document. A write with no identity
                     // records zero dimensions, which reads back as "hash only" —
@@ -248,7 +279,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
                         write.SettingsHash,
                         write.Identity ?? default),
                 new UTF8Encoding(false));
-            if (write.Image is not MagickImage) CullPerf?.Record("CacheMetadataRead", write.ImageId);
+            if (write.Image is Bitmap or BitmapSnapshot) CullPerf?.Record("CacheMetadataRead", write.ImageId);
             if (File.GetLastWriteTimeUtc(write.SourcePath) != write.SourceWriteTime ||
                 (_versionedDimensionMetadata &&
                     HasEqualOrLargerMatchingEntry(write, metadataPath, temporaryPath)))
@@ -272,6 +303,7 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         {
             converted?.Dispose();
             (write.Image as IDisposable)?.Dispose();
+            CullPerf?.Record("CacheSaveEnd", write.ImageId, operation: operation, value: Tier);
             Complete(write, persisted);
         }
     }

@@ -28,8 +28,10 @@ public sealed class PreviewCacheServiceTests : IDisposable
         Assert.False(clipping.IsHighAvailable);
     }
 
-    [Fact]
-    public async Task QueueSaveToCache_PersistsJpegAtomically()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task QueueSaveToCache_PersistsJpegAtomically(bool encoded)
     {
         var sourcePath = CreateSource("source.jpg");
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
@@ -38,14 +40,19 @@ public sealed class PreviewCacheServiceTests : IDisposable
         var imageFile = new ImageFile(sourcePath) { CatalogId = 1 };
         using var preview = new MagickImage(MagickColors.Blue, 160, 100);
 
-        var outcome = cache.QueueSaveToCache(imageFile, preview, "settings-a", default);
+        var bytes = preview.ToByteArray(MagickFormat.Jpeg);
+        var outcome = encoded
+            ? cache.QueueSaveToCache(imageFile, bytes, "settings-a", default)
+            : cache.QueueSaveToCache(imageFile, preview, "settings-a", default);
         Assert.True(await outcome.WaitAsync(TestWaits.Condition));
         await cache.DisposeAsync();
 
-        var completed = Assert.Single(recorder.Snapshot());
+        var completed = Assert.Single(Outcomes(recorder));
         Assert.Equal("CacheWriteComplete", completed.Kind);
         Assert.Equal(imageFile.CatalogId, completed.ImageId);
+        Assert.Equal(encoded ? 0 : 1, recorder.Snapshot().Count(e => e.Kind == "CacheEncode"));
         var cachePath = cache.GetCachePath(imageFile);
+        if (encoded) Assert.Equal(bytes, File.ReadAllBytes(cachePath));
         Assert.True(File.Exists(cachePath));
         Assert.True(PreviewCacheMetadata.TryRead(
             cache.GetMetadataPath(imageFile),
@@ -58,8 +65,10 @@ public sealed class PreviewCacheServiceTests : IDisposable
             Path.Combine(catalog.CatalogPath, "assets", "tmp")));
     }
 
-    [Fact]
-    public async Task QueueSaveToCache_DropsOldestWhenQueueIsFull()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task QueueSaveToCache_DropsOldestWhenQueueIsFull(bool encoded)
     {
         var firstSource = CreateSource("first.jpg");
         var secondSource = CreateSource("second.jpg");
@@ -73,8 +82,8 @@ public sealed class PreviewCacheServiceTests : IDisposable
         var second = new ImageFile(secondSource) { CatalogId = 2 };
         using var preview = new MagickImage(MagickColors.Red, 32, 24);
 
-        var firstOutcome = cache.QueueSaveToCache(first, preview, "first-hash", default);
-        var secondOutcome = cache.QueueSaveToCache(second, preview, "second-hash", default);
+        var firstOutcome = Queue(cache, first, preview, "first-hash", default, encoded);
+        var secondOutcome = Queue(cache, second, preview, "second-hash", default, encoded);
         Assert.False(await firstOutcome.WaitAsync(TestWaits.Condition));
         Assert.False(secondOutcome.IsCompleted);
         processingGate.SetResult();
@@ -88,13 +97,15 @@ public sealed class PreviewCacheServiceTests : IDisposable
             cache.GetMetadataPath(second),
             out var survivor));
         Assert.Equal("second-hash", survivor.SettingsHash);
-        Assert.Collection(recorder.Snapshot(),
+        Assert.Collection(Outcomes(recorder),
             dropped => { Assert.Equal("CacheWriteDropped", dropped.Kind); Assert.Equal(1, dropped.ImageId); },
             complete => { Assert.Equal("CacheWriteComplete", complete.Kind); Assert.Equal(2, complete.ImageId); });
     }
 
-    [Fact]
-    public async Task QueueSaveToCache_RejectsResultWhenSourceChanges()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task QueueSaveToCache_RejectsResultWhenSourceChanges(bool encoded)
     {
         var sourcePath = CreateSource("source.jpg");
         var processingGate = new TaskCompletionSource(
@@ -106,13 +117,13 @@ public sealed class PreviewCacheServiceTests : IDisposable
         var imageFile = new ImageFile(sourcePath) { CatalogId = 1 };
         using var preview = new MagickImage(MagickColors.Green, 32, 24);
 
-        var outcome = cache.QueueSaveToCache(imageFile, preview, "settings-a", default);
+        var outcome = Queue(cache, imageFile, preview, "settings-a", default, encoded);
         File.SetLastWriteTimeUtc(sourcePath, DateTime.UtcNow.AddMinutes(1));
         processingGate.SetResult();
         await cache.DisposeAsync();
 
         Assert.False(await outcome.WaitAsync(TestWaits.Condition));
-        Assert.Equal("CacheWriteDropped", Assert.Single(recorder.Snapshot()).Kind);
+        Assert.Equal("CacheWriteDropped", Assert.Single(Outcomes(recorder)).Kind);
         Assert.False(File.Exists(cache.GetCachePath(imageFile)));
         Assert.False(File.Exists(cache.GetMetadataPath(imageFile)));
     }
@@ -135,8 +146,10 @@ public sealed class PreviewCacheServiceTests : IDisposable
         Assert.Equal(20u, loaded.Image.Width);
     }
 
-    [Fact]
-    public async Task LoadRenderedPreview_ReturnsPersistedRenderIdentity()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task LoadRenderedPreview_ReturnsPersistedRenderIdentity(bool encoded)
     {
         var sourcePath = CreateSource("identity.jpg");
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "identity"));
@@ -147,22 +160,26 @@ public sealed class PreviewCacheServiceTests : IDisposable
             new Avalonia.PixelSize(3000, 2000),
             new Avalonia.PixelSize(6000, 4000));
 
-        Assert.True(await cache.QueueSaveToCache(imageFile, preview, "settings-a", identity)
+        Assert.True(await Queue(cache, imageFile, preview, "settings-a", identity, encoded)
             .WaitAsync(TestWaits.Condition));
         await cache.DisposeAsync();
 
         using var loaded = cache.LoadRenderedPreview(imageFile);
         Assert.NotNull(loaded);
-        Assert.Equal(identity.OriginalViewSize, loaded!.OriginalViewPixelSize);
+        Assert.Equal("settings-a", loaded!.SettingsHash);
+        Assert.Equal(identity.OriginalViewSize, loaded.OriginalViewPixelSize);
         Assert.Equal(identity.OriginalImageSize, loaded.OriginalImagePixelSize);
     }
 
     [Theory]
-    [InlineData("disposed")]
-    [InlineData("invalid-id")]
-    [InlineData("invalid-hash")]
-    [InlineData("clone-exception")]
-    public async Task QueueSaveToCache_CompletesRejectedWrites(string reason)
+    [InlineData("disposed", false)]
+    [InlineData("disposed", true)]
+    [InlineData("invalid-id", false)]
+    [InlineData("invalid-id", true)]
+    [InlineData("invalid-hash", false)]
+    [InlineData("invalid-hash", true)]
+    [InlineData("clone-exception", false)]
+    public async Task QueueSaveToCache_CompletesRejectedWrites(string reason, bool encoded)
     {
         var source = CreateSource("rejected.jpg");
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
@@ -172,16 +189,18 @@ public sealed class PreviewCacheServiceTests : IDisposable
         if (reason == "disposed") await cache.DisposeAsync();
         if (reason == "clone-exception") pixels.Dispose();
 
-        var outcome = cache.QueueSaveToCache(image, pixels,
-            reason == "invalid-hash" ? "" : "hash", default);
+        var outcome = Queue(cache, image, pixels,
+            reason == "invalid-hash" ? "" : "hash", default, encoded);
 
         Assert.True(outcome.IsCompleted);
         Assert.False(await outcome.WaitAsync(TestWaits.Condition));
         Assert.Equal(0, cache.PendingWrites);
     }
 
-    [Fact]
-    public async Task QueueSaveToCache_CompletesChannelRejectionDuringShutdown()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task QueueSaveToCache_CompletesChannelRejectionDuringShutdown(bool encoded)
     {
         var source = CreateSource("rejected.jpg");
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
@@ -195,7 +214,10 @@ public sealed class PreviewCacheServiceTests : IDisposable
         }, 90);
         using var pixels = new MagickImage(MagickColors.Blue, 32, 24);
 
-        var outcome = writer.Queue(new ImageFile(source) { CatalogId = 1 }, pixels, "hash");
+        var image = new ImageFile(source) { CatalogId = 1 };
+        var outcome = encoded
+            ? writer.Queue(image, pixels.ToByteArray(MagickFormat.Jpeg), "hash", default)
+            : writer.Queue(image, pixels, "hash");
 
         Assert.False(await outcome.WaitAsync(TestWaits.Condition));
         await disposal!.WaitAsync(TestWaits.Condition);
@@ -203,8 +225,10 @@ public sealed class PreviewCacheServiceTests : IDisposable
         Assert.Equal(1, writer.DroppedWrites);
     }
 
-    [Fact]
-    public async Task QueueSaveToCache_CompletesSaveExceptionAsDropped()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task QueueSaveToCache_CompletesSaveExceptionAsDropped(bool encoded)
     {
         var source = CreateSource("exception.jpg");
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
@@ -214,7 +238,7 @@ public sealed class PreviewCacheServiceTests : IDisposable
         Directory.CreateDirectory(cache.GetCachePath(image));
         using var pixels = new MagickImage(MagickColors.Blue, 32, 24);
 
-        var outcome = cache.QueueSaveToCache(image, pixels, "hash", default);
+        var outcome = Queue(cache, image, pixels, "hash", default, encoded);
         release.SetResult();
 
         Assert.False(await outcome.WaitAsync(TestWaits.Condition));
@@ -248,9 +272,11 @@ public sealed class PreviewCacheServiceTests : IDisposable
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task DisposeAsync_CompletesOutstandingOutcomesWithoutReleasingWriter(bool inHand)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task DisposeAsync_CompletesOutstandingOutcomesWithoutReleasingWriter(bool inHand, bool encoded)
     {
         var source = CreateSource("shutdown.jpg");
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
@@ -262,11 +288,11 @@ public sealed class PreviewCacheServiceTests : IDisposable
         using var pixels = new MagickImage(MagickColors.Blue, 32, 24);
         try
         {
-            var first = cache.QueueSaveToCache(new ImageFile(source) { CatalogId = 1 },
-                pixels, "hash", default);
+            var first = Queue(cache, new ImageFile(source) { CatalogId = 1 },
+                pixels, "hash", default, encoded);
             if (inHand) await TestWaits.UntilAsync(() => cache.WriterInHandCount == 1);
-            var second = cache.QueueSaveToCache(new ImageFile(source) { CatalogId = 2 },
-                pixels, "hash", default);
+            var second = Queue(cache, new ImageFile(source) { CatalogId = 2 },
+                pixels, "hash", default, encoded);
             Assert.False(first.IsCompleted);
             Assert.False(second.IsCompleted);
 
@@ -279,8 +305,8 @@ public sealed class PreviewCacheServiceTests : IDisposable
             Assert.False(await first);
             Assert.False(await second);
             Assert.Equal(2, cache.PendingWrites);
-            Assert.All(recorder.Snapshot(), e => Assert.Equal("CacheWriteDropped", e.Kind));
-            Assert.Equal(2, recorder.Snapshot().Length);
+            Assert.All(Outcomes(recorder), e => Assert.Equal("CacheWriteDropped", e.Kind));
+            Assert.Equal(2, Outcomes(recorder).Length);
         }
         finally
         {
@@ -290,8 +316,37 @@ public sealed class PreviewCacheServiceTests : IDisposable
             await cache.DisposeAsync();
         }
         Assert.Equal(0, cache.PendingWrites);
-        Assert.Equal(2, recorder.Snapshot().Length);
+        Assert.Equal(2, Outcomes(recorder).Length);
     }
+
+    [Fact]
+    public async Task EncodedWrite_RejectsVersionedDimensionMetadata()
+    {
+        var source = CreateSource("versioned.jpg");
+        using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
+        await using var writer = new SettingsHashedCacheWriter(catalog,
+            catalog.GetRenderedThumbnailPath, 85, versionedDimensionMetadata: true);
+        using var pixels = new MagickImage(MagickColors.Blue, 32, 24);
+        var image = new ImageFile(source) { CatalogId = 1 };
+
+        var outcome = writer.Queue(image, pixels.ToByteArray(MagickFormat.Jpeg), "hash", default);
+
+        Assert.True(outcome.IsCompletedSuccessfully);
+        Assert.False(await outcome.WaitAsync(TestWaits.Condition));
+        Assert.Equal(0, writer.PendingWrites);
+        Assert.Equal(1, writer.DroppedWrites);
+        Assert.False(File.Exists(catalog.GetRenderedThumbnailPath(image.CatalogId)));
+    }
+
+    private static Task<bool> Queue(PreviewCacheService cache, ImageFile image,
+        MagickImage pixels, string hash, PreviewCacheIdentity identity, bool encoded) =>
+        encoded
+            ? cache.QueueSaveToCache(image, pixels.ToByteArray(MagickFormat.Jpeg), hash, identity)
+            : cache.QueueSaveToCache(image, pixels, hash, identity);
+
+    // The writer also records save spans and encodes; these tests observe outcomes.
+    private static CullPerfEvent[] Outcomes(CullPerfRecorder recorder) =>
+        recorder.Snapshot().Where(e => e.Kind is "CacheWriteComplete" or "CacheWriteDropped").ToArray();
 
     private string CreateSource(string name)
     {

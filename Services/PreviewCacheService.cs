@@ -120,6 +120,11 @@ public sealed class PreviewCacheService : IAsyncDisposable
         PreviewCacheIdentity identity) =>
         _writer.Queue(imageFile, image, settingsHash, identity);
 
+    internal Task<bool> QueueSaveToCache(
+        ImageFile imageFile, byte[] encodedJpeg, string settingsHash,
+        PreviewCacheIdentity identity) =>
+        _writer.Queue(imageFile, encodedJpeg, settingsHash, identity);
+
     public void QueueSaveToCache(
         ImageFile imageFile,
         Bitmap bitmap,
