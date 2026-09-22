@@ -152,8 +152,11 @@ public partial class MainWindowViewModel
     partial void OnIsDevelopPreviewLoadingChanged(bool value) =>
         OnPropertyChanged(nameof(ShowDevelopLoadingMessage));
 
-    partial void OnPreviewImageChanged(Bitmap? value) =>
+    partial void OnPreviewImageChanged(Bitmap? value)
+    {
         OnPropertyChanged(nameof(ShowDevelopLoadingMessage));
+        OnPropertyChanged(nameof(ExportPreviewNativePixelSize));
+    }
 
     private async Task LoadPreviewAsync(
         ImageFile imageFile,

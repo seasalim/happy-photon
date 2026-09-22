@@ -14,7 +14,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class ExportVisualStyleTests : IDisposable
+public sealed partial class ExportVisualStyleTests : IDisposable
 {
     private readonly CatalogVmFixture _fixture = new("export-visual-style");
 

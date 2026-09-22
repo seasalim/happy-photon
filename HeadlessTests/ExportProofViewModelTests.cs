@@ -1,7 +1,13 @@
+using System.Runtime.InteropServices;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
+using HappyPhoton.Views;
 using ImageMagick;
 using Xunit;
 
@@ -52,23 +58,28 @@ public sealed class ExportProofViewModelTests
 
         vm.WorkspaceMode = WorkspaceMode.Export;
         await TestWaits.UntilAsync(() => vm.PreviewImage?.PixelSize.Width == 128);
+        using var paneScope = ShowPreview(vm);
+        AssertPaintedPreviewSize(paneScope, 320, 160);
 
         vm.ExportSettings.ShowProof = true;
         await TestWaits.UntilAsync(() =>
             vm.PreviewImage?.PixelSize.Width == 96 &&
             vm.ExportProofCaption == "PROOF · JPEG · sRGB · 96 PX");
         Assert.Equal(1, loader.FullLoadCount);
+        AssertPaintedPreviewSize(paneScope, 96, 48);
 
         vm.ExportSettings.WebMaxSize = 48;
         await TestWaits.UntilAsync(() =>
             vm.PreviewImage?.PixelSize.Width == 48 &&
             loader.FullLoadCount == 2);
+        AssertPaintedPreviewSize(paneScope, 48, 24);
 
         vm.ExportSettings.ShowProof = false;
         await TestWaits.UntilAsync(() =>
             vm.PreviewImage?.PixelSize.Width == 128 &&
             vm.ExportProofCaption == "PREVIEW · JPEG · sRGB · 48 PX");
         Assert.Equal(2, loader.FullLoadCount);
+        AssertPaintedPreviewSize(paneScope, 320, 160);
     }
 
     [AvaloniaFact]
@@ -83,20 +94,25 @@ public sealed class ExportProofViewModelTests
         ArmSizedRecipe(vm, 96);
         vm.WorkspaceMode = WorkspaceMode.Export;
         await TestWaits.UntilAsync(() => vm.PreviewImage?.PixelSize.Width == 128);
+        using var paneScope = ShowPreview(vm);
+        AssertPaintedPreviewSize(paneScope, 320, 160);
         loader.PauseFullLoads = true;
 
         vm.ExportSettings.ShowProof = true;
         Assert.True(loader.FullLoadStarted.Wait(TestWaits.Condition));
         Assert.Equal("PREVIEW · JPEG · sRGB · 96 PX", vm.ExportProofCaption);
+        AssertPaintedPreviewSize(paneScope, 320, 160);
 
         vm.ExportSettings.WebMaxSize = 48;
         await TestWaits.UntilAsync(() => loader.FullLoadCount >= 2);
         Assert.Equal("PREVIEW · JPEG · sRGB · 48 PX", vm.ExportProofCaption);
+        AssertPaintedPreviewSize(paneScope, 320, 160);
 
         loader.ReleaseFullLoads.Set();
         await TestWaits.UntilAsync(() =>
             vm.PreviewImage?.PixelSize.Width == 48 &&
             vm.ExportProofCaption == "PROOF · JPEG · sRGB · 48 PX");
+        AssertPaintedPreviewSize(paneScope, 48, 24);
     }
 
     [AvaloniaFact]
@@ -155,6 +171,47 @@ public sealed class ExportProofViewModelTests
         await vm.DisposeAsync();
 
         Assert.True(proofExitedBeforeServices);
+    }
+
+    private static TestUiScope ShowPreview(MainWindowViewModel vm)
+    {
+        var pane = new ExportPreviewPane { DataContext = vm };
+        // Caption positioning is covered separately; isolate the solid image pixels.
+        pane.FindControl<TextBlock>("ExportProofCaption")!.Opacity = 0;
+        var window = new Window { Width = 832, Height = 660, Content = pane };
+        return new TestUiScope(window, afterShow: () =>
+        {
+            window.SetRenderScaling(1.5);
+            Dispatcher.UIThread.RunJobs();
+            pane.UpdateLayout();
+        });
+    }
+
+    private static void AssertPaintedPreviewSize(TestUiScope scope, int width, int height)
+    {
+        var window = scope.Window!;
+        var pane = (ExportPreviewPane)window.Content!;
+        Dispatcher.UIThread.RunJobs();
+        pane.UpdateLayout();
+        var frame = pane.FindControl<UniformImageOverlayPanel>("ExportPreviewImageFrame")!;
+        using var capture = window.CaptureRenderedFrame() ??
+            throw new InvalidOperationException("Export proof frame was empty.");
+        using var buffer = capture.Lock();
+        var origin = frame.TranslatePoint(default, window)!.Value;
+        var left = (int)Math.Round(origin.X * window.RenderScaling);
+        var top = (int)Math.Round(origin.Y * window.RenderScaling);
+        var fw = (int)Math.Round(frame.Bounds.Width * window.RenderScaling);
+        var fh = (int)Math.Round(frame.Bounds.Height * window.RenderScaling);
+        int Pixel(int x, int y) =>
+            Marshal.ReadInt32(buffer.Address + y * buffer.RowBytes + x * 4);
+        var center = Pixel(left + fw / 2, top + fh / 2);
+        Assert.NotEqual(Pixel(left, top), center);
+        var paintedWidth = Enumerable.Range(left, fw).Count(x => Pixel(x, top + fh / 2) == center);
+        var paintedHeight = Enumerable.Range(top, fh).Count(y => Pixel(left + fw / 2, y) == center);
+        Assert.True(Math.Abs(paintedWidth - width) <= 1,
+            $"Painted {paintedWidth}x{paintedHeight}; expected {width}x{height}");
+        Assert.True(Math.Abs(paintedHeight - height) <= 1,
+            $"Painted {paintedWidth}x{paintedHeight}; expected {width}x{height}");
     }
 
     private static MainWindowViewModel CreateViewModel(

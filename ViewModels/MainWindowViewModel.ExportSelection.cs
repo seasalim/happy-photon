@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
@@ -54,6 +55,26 @@ public partial class MainWindowViewModel
         ArmedExportRecipeCount > 0
             ? ResolveExportProofMaxDimension()
             : null);
+
+    public PixelSize ExportPreviewNativePixelSize
+    {
+        get
+        {
+            if (_proofIsDisplayed) return PreviewImage?.PixelSize ?? default;
+            if (OriginalViewPixelSize.Width > 0 && OriginalViewPixelSize.Height > 0)
+                return OriginalViewPixelSize;
+            if (SelectedImage is { } image)
+            {
+                var size = RenderGeometry.CalculateOriginalViewSize(
+                    image.PixelWidth, image.PixelHeight, image.EditSettings);
+                if (size.Width > 0 && size.Height > 0) return size;
+            }
+            return PreviewImage?.PixelSize ?? default;
+        }
+    }
+
+    partial void OnOriginalViewPixelSizeChanged(PixelSize value) =>
+        OnPropertyChanged(nameof(ExportPreviewNativePixelSize));
 
     [RelayCommand]
     private void ToggleSelection()
@@ -395,6 +416,7 @@ public partial class MainWindowViewModel
         _displayedProofColorSpace = colorSpace;
         OnPropertyChanged(nameof(ExportProofCaption));
         OnPropertyChanged(nameof(PreviewDisplayColorSpace));
+        OnPropertyChanged(nameof(ExportPreviewNativePixelSize));
     }
 
     internal static string FormatExportProofCaption(

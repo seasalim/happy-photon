@@ -60,6 +60,7 @@ public partial class MainWindowViewModel
         NotifyFullScreenSelectionBadgeChanged();
         OnPreviewFailureSelectionChanged();
         ApplySelectionOutcome(newValue, surfaceGeneration);
+        OnPropertyChanged(nameof(ExportPreviewNativePixelSize));
         CullPerf?.Record("SelectionFeedback", newValue?.CatalogId ?? 0, surfaceGeneration, _cullOperation);
 
         // Exit crop mode when switching images

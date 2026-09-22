@@ -30,7 +30,8 @@
         </StackPanel>
         <views:UniformImageOverlayPanel x:Name="ExportPreviewImageFrame"
                                         Grid.Row="1"
-                                        Margin="16">
+                                        Margin="16"
+                                        NativePixelSize="{Binding ExportPreviewNativePixelSize}">
             <views:PlaceholderImage x:Name="ExportPlaceholderImage"
                    Source="{Binding SelectedImage.Thumbnail}"
                    OriginalPixelWidth="{Binding SelectedImage.PixelWidth, FallbackValue=0}"
@@ -42,8 +43,7 @@
                                 CanonicalSource="{Binding PreviewImage}"
                                 DisplayTransform="{Binding DisplayTransform}"
                                 DisplaySourceColorSpace="{Binding PreviewDisplayColorSpace}"
-                                Stretch="Uniform"
-                                StretchDirection="DownOnly"/>
+                                Stretch="Uniform"/>
             <TextBlock x:Name="ExportProofCaption"
                        Text="{Binding ExportProofCaption}"
                        IsVisible="{Binding IsExportProofCaptionVisible}"

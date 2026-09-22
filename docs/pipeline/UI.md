@@ -366,6 +366,13 @@ be read.
   and stays geometry-identical across source swaps. Fit and zoom-in publish the current view's
   required device-pixel long edge for resting rendering; pan and zoom-out do not
   rerender. A monitor-scaling change recomputes the same geometry and bound.
+- **Export fit** uses accepted edited-original dimensions, falling back to selected
+  metadata and then bitmap dimensions. Changing preview resolution does not change
+  the fitted scene; monitor scaling preserves the original-relative 1:1 cap.
+  A pending proof keeps the current preview geometry. Only an accepted proof uses
+  its output pixel dimensions as the native-size cap; Proof off restores the
+  original-relative fit. Thumbnail placeholders retain their own source aspect,
+  so an unedited thumbnail can differ from a rotated or cropped preview.
 
 ## 5. Scope box + preview activity
 
