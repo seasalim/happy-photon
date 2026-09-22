@@ -4,6 +4,7 @@ public partial class MainWindowViewModel
 {
     public async ValueTask DisposeAsync()
     {
+        _historyLoadsClosed = true;
         CloseRenderOutcomeChannel();
         await CancelAndDrainLoupeAsync();
         await CancelAndDrainCompareAsync();
@@ -65,6 +66,11 @@ public partial class MainWindowViewModel
             { } pendingHistoryCommit)
         {
             await ObservePendingHistoryWorkAsync(pendingHistoryCommit);
+        }
+        if (Interlocked.Exchange(ref _historyLoadsTask, null) is
+            { } historyLoads)
+        {
+            await historyLoads;
         }
         CancelAndDispose(ref _histogramDebounce);
         CancelAndDispose(ref _thumbnailDebounce);

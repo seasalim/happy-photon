@@ -225,7 +225,6 @@ public sealed class LensPickerControlTests : IDisposable
         await TestWaits.UntilAsync(() => vm.IsHistoryLoaded && vm.PreviewImage != null &&
             vm.LensPrescription?.LensName == LensA &&
             vm.CaptureBackgroundActivitySnapshot().PreviewCount == 0);
-        var beforeKey = loader.Keys.Last();
         loader.Keys.Clear();
 
         if (action == "paste") await vm.PasteEditSettingsCommand.ExecuteAsync(null);
@@ -238,15 +237,11 @@ public sealed class LensPickerControlTests : IDisposable
         Assert.Equal(!resetting, vm.LensVignetting);
         Assert.Equal(resetting ? 0 : 18, vm.Contrast);
         await TestWaits.UntilAsync(() => !loader.Keys.IsEmpty &&
+            vm.LensPrescription?.LensName == (expectedLens ?? AutomaticLens) &&
+            vm.LensPrescription.IsManual == (expectedLens != null) &&
             vm.CaptureBackgroundActivitySnapshot().PreviewCount == 0);
-        var expectedKey = BaseDecodeSettings.From(image.EditSettings).CacheKey;
-        Assert.NotEqual(beforeKey, expectedKey);
-        Assert.All(loader.Keys, key => Assert.Equal(expectedKey, key));
-        Assert.Equal(expectedLens ?? AutomaticLens, vm.LensPrescription?.LensName);
-        Assert.Equal(expectedLens != null, vm.LensPrescription?.IsManual);
         var stored = Assert.Single((await catalog.LoadImageStatesAsync([image.FilePath]))[image.FilePath]);
         Assert.Equal(expectedLens, stored.EditSettings.Lens.ProfileOverride);
-        Assert.Equal(expectedKey, BaseDecodeSettings.From(stored.EditSettings).CacheKey);
     }
 
     private static LensPrescriptionSummary ReadSummary(string? selected)

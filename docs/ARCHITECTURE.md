@@ -291,6 +291,12 @@ statements so autosaves and direct user actions can make progress. Composite met
 must not acquire an outer lease and then call another gated catalog method because the
 gate is intentionally non-reentrant.
 
+The ViewModel owns every accepted Develop history read, including reads superseded
+by selection changes. Shutdown stops new history loads, finishes accepted edit
+commits, then drains all remaining reads before teardown can return to the catalog
+owner. The current load remains available to pending edits until they commit, so
+closing during a history load preserves the final edit and its history entry.
+
 WAL mode is intentionally not enabled: the app has one process and one gated
 connection, so WAL would add sidecar-file behavior without making catalog operations
 concurrent. Revisit this only if the connection model changes.

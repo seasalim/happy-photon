@@ -12,6 +12,8 @@ public partial class MainWindowViewModel
     private static readonly TimeSpan HistoryHoverDelay = TimeSpan.FromMilliseconds(80);
     private CancellationTokenSource? _historyHoverCts;
     private EditHistoryEntry? _hoveredHistoryEntry;
+    private Task? _historyLoadsTask;
+    private bool _historyLoadsClosed;
 
     [ObservableProperty]
     private Bitmap? _navigatorHoverImage;
@@ -76,6 +78,7 @@ public partial class MainWindowViewModel
 
     private void BeginDevelopHistoryLoad(ImageFile? image)
     {
+        if (_historyLoadsClosed) return;
         var generation = Interlocked.Increment(ref _historySubjectGeneration);
         _history.Clear();
         IsHistoryLoaded = false;
@@ -83,6 +86,15 @@ public partial class MainWindowViewModel
         _pendingHistoryLoad = IsDevelopMode && image != null
             ? LoadDevelopHistoryAsync(image, generation)
             : null;
+
+        // Edits wait for the current load; shutdown also owns superseded reads.
+        if (_pendingHistoryLoad is { } load)
+        {
+            var pending = _historyLoadsTask;
+            _historyLoadsTask = pending is { IsCompleted: false }
+                ? Task.WhenAll(pending, load)
+                : load;
+        }
     }
 
     private async Task LoadDevelopHistoryAsync(ImageFile image, long generation)
