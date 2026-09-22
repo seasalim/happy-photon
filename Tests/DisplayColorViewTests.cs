@@ -268,7 +268,7 @@ public sealed class DisplayColorViewTests
     }
 
     [AvaloniaFact]
-    public async Task ExportProof_UsesArmedSourceSpaceWithoutChangingCanonicalPixels()
+    public async Task ExportProof_UsesAcceptedSourceSpaceWithoutChangingCanonicalPixels()
     {
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(), $"happy-photon-proof-color-{Guid.NewGuid():N}"));
@@ -298,10 +298,9 @@ public sealed class DisplayColorViewTests
         var derivationsBeforeProof = image.DerivationCount;
         var canonical = CreateBitmap(23);
         var expected = BitmapConversionService.CopyBgraPixels(canonical);
-        viewModel.ExportSettings.OutputColorSpace = Models.OutputColorSpace.DisplayP3;
-
-        viewModel.ReplacePreviewImage(
-            canonical, PreviewPaintSource.FreshRender, isProof: true);
+        viewModel.ReplaceExportProof(
+            canonical, new ExportProofSize("Web", 2048), Models.OutputColorSpace.DisplayP3);
+        viewModel.ExportSettings.OutputColorSpace = Models.OutputColorSpace.Srgb;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(DisplaySourceColorSpace.DisplayP3,

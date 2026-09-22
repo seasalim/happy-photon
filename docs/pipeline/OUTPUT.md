@@ -71,12 +71,16 @@ construct a job. Path collisions and RAW+JPEG remedies direct selection changes 
 
 Develop preview uses the same finalizer with output sharpening disabled and sRGB
 selected. The Export workspace shows that standard preview by default. Its opt-in
-**Proof** control runs the selected image through a fresh full-resolution render and
-finalizes it for the largest valid enabled variant (unresized when Full size is enabled), falling
-back to the interactive preview dimension when none are armed. Size changes rerun an
-enabled proof behind the normal preview activity affordance. A displayed proof
-suppresses the display-fit resting upgrade because sharpening is defined at output
-dimensions; switching Proof off returns to the standard preview path.
+**Preview output** control uses the existing explicitly requested proof render, finalizing
+the chosen valid enabled size with its color space and output sharpening. JPEG/WebP
+compression quality is not previewed. The chooser defaults and falls back to the largest
+valid enabled size (Full means no resizing); no-upscale remains in the finalizer.
+The caption captures size name, cap and color space when the bitmap is accepted, alongside
+the display interpretation. A refresh appends **UPDATING…** to those accepted facts until
+replacement; it never relabels old pixels. No automatic full-resolution decode or cloud
+hydration is added. A displayed proof suppresses the display-fit resting upgrade because
+sharpening is defined at output dimensions; switching it off restores
+**PREVIEW · edits applied** and the standard preview path.
 A proof retains the selected output encoding as its canonical pixels. Its Export image
 surface identifies that source encoding to the display leg, so a Display P3 proof is
 converted to either the supported monitor profile or sRGB when the monitor is treated

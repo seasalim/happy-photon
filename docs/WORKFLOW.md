@@ -540,17 +540,20 @@ Changing photos or settings during a run prepares the next batch; the running jo
 7. Choose **Export N files** or press `Enter`. The fixed footer keeps the photo/size count,
    validation reason and action visible, including at the minimum window size.
 
-The center shows the standard preview immediately. **Proof** optionally renders the active
-photo through the largest valid enabled size, color space and output sharpening. Its caption
-identifies PREVIEW/PROOF, the live format/color space and any size cap. Turn Proof off to return
-to the standard preview. `Ctrl+Shift+E` enters Export from Browse or Develop; `Escape` returns
-to the previous workspace without stopping a run. The queue continues across workspaces.
+The center shows the standard preview immediately. **Preview output** is opt-in: it previews
+size, color space and output sharpening, not JPEG/WebP compression quality. Its chooser
+offers valid enabled sizes, initially the largest (Full means no resizing), and falls back
+to the largest valid enabled size when the choice becomes disabled or invalid. The caption
+names the accepted size and cap, not measured bitmap dimensions, and color space. While a
+refresh is pending, **UPDATING…** is appended to the facts for the pixels still displayed.
+Turning it off restores **PREVIEW · edits applied** and the standard preview. This adds no
+automatic full-resolution decode or cloud download.
 
 If the selection includes online-only originals, Happy Photon first reports their exact
 count and approximate logical size. Choose **Cancel** to leave them untouched or
-**Download / Export** to approve downloads for that selected batch. Stopping an export
-after approval is best effort because the cloud provider may already have started a
-download.
+**Download / Export** to approve downloads for that selected batch. Stopping prevents further
+output installation; cancellation of an already-started cloud download is best effort because
+the provider may finish it.
 
 Before work starts, Happy Photon refuses targets matching loaded originals or another
 target in the same job. Existing output files are confirmed together. Copies go to the
@@ -559,8 +562,15 @@ the confirmation pass is not overwritten.
 
 Export decodes and edits each photograph, then creates new output files.
 Targets that would overwrite a loaded original are refused.
-The footer report keeps completion counts visible. **Show details** reveals failures and
-warnings in a bounded scrolling area; **Retry failed only** retries the saved targets
+The **Exporting** strip shows **Exporting k of N files** and **Stop export**. Stop keeps
+already-written files and reports **Export stopped** with **k of N files completed and kept.**
+The disabled footer action reads **Export in progress…** and explains that changes prepare
+the next batch. Ctrl+Shift+E enters Export; Escape returns to the previous workspace
+without stopping the job. The job continues across workspaces.
+The footer report keeps completion counts visible. **Open folder** appears when files were
+written and opens that job's destination, even if the current settings have changed.
+**Show details** reveals failures and warnings in a bounded scrolling area; **Retry failed only**
+retries the saved targets
 without rerunning successful siblings. Collision remedies point back to Browse.
 
 ## A complete first workflow

@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using Avalonia;
 using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -12,9 +11,6 @@ public partial class MainWindowViewModel
     private string? _lastAutomaticExportFolder;
     private ExportCaptureViewModel? _activeExportCapture;
     private bool _exportSettingsObserved;
-    private bool _proofIsDisplayed;
-    private OutputColorSpace _displayedProofColorSpace = OutputColorSpace.Srgb;
-    private Task? _proofTask;
 
     public ObservableCollection<ExportCaptureViewModel> ExportCaptures { get; } = [];
 
@@ -39,36 +35,6 @@ public partial class MainWindowViewModel
     public string ExportCountLine => $"{ExportPhotoCount} · {ArmedExportSizeCount} {(ArmedExportSizeCount == 1 ? "size" : "sizes")}";
     public bool IsExportQualityAvailable =>
         ExportSettings.Format is not ExportFormat.Png and not ExportFormat.Tiff;
-    public bool IsExportProofCaptionVisible =>
-        IsExportMode && !HasNoExportCaptures && PreviewImage != null;
-    public string ExportProofCaption => FormatExportProofCaption(
-        _proofIsDisplayed,
-        ExportSettings.Format,
-        ExportSettings.OutputColorSpace,
-        ArmedExportSizeCount > 0
-            ? ResolveExportProofMaxDimension()
-            : null);
-
-    public PixelSize ExportPreviewNativePixelSize
-    {
-        get
-        {
-            if (_proofIsDisplayed) return PreviewImage?.PixelSize ?? default;
-            if (OriginalViewPixelSize.Width > 0 && OriginalViewPixelSize.Height > 0)
-                return OriginalViewPixelSize;
-            if (SelectedImage is { } image)
-            {
-                var size = RenderGeometry.CalculateOriginalViewSize(
-                    image.PixelWidth, image.PixelHeight, image.EditSettings);
-                if (size.Width > 0 && size.Height > 0) return size;
-            }
-            return PreviewImage?.PixelSize ?? default;
-        }
-    }
-
-    partial void OnOriginalViewPixelSizeChanged(PixelSize value) =>
-        OnPropertyChanged(nameof(ExportPreviewNativePixelSize));
-
     [RelayCommand]
     private void ToggleSelection()
     {
@@ -234,6 +200,7 @@ public partial class MainWindowViewModel
             Browse.StateChanged += (_, _) => NotifyExportBatchSettings();
             _exportSettingsObserved = true;
         }
+        RefreshExportProofSizes();
         NotifyExportWorkspaceCounts();
         OnPropertyChanged(nameof(HasNoExportCaptures));
     }
@@ -263,8 +230,7 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(IsExportQualityAvailable));
         if (property == nameof(ExportSettings.OutputFolder))
             NotifyExportRunCommandState();
-        if (ChangesProofFacts(property))
-            OnPropertyChanged(nameof(ExportProofCaption));
+        if (ChangesProofSizes(property)) RefreshExportProofSizes();
         if (property == nameof(ExportSettings.ShowProof))
         {
             if (ExportSettings.ShowProof) RequestExportProofRefresh();
@@ -272,149 +238,6 @@ public partial class MainWindowViewModel
         }
         else if (ExportSettings.ShowProof && ChangesProofPixels(property))
             RequestExportProofRefresh();
-    }
-
-    private static bool ChangesProofFacts(string? property) => property is
-        nameof(ExportSettings.Format) or nameof(ExportSettings.OutputColorSpace) or
-        nameof(ExportSettings.ExportHiRes) or nameof(ExportSettings.ExportWeb) or
-        nameof(ExportSettings.ExportSmall) or nameof(ExportSettings.WebMaxSize) or
-        nameof(ExportSettings.SmallMaxSize);
-
-    private static bool ChangesProofPixels(string? property) =>
-        ChangesProofFacts(property) ||
-        property == nameof(ExportSettings.OutputSharpening);
-
-    private int? ResolveExportProofMaxDimension() =>
-        ExportSettings.GetActiveVariants()
-            .Where(variant => variant.MaxDimension is null ||
-                ExportSettings.IsValidSize(variant.MaxDimension.Value)).ToList() is { Count: > 0 } variants
-            ? variants[0].MaxDimension
-            : BaseImage.InteractivePreviewMaxDimension;
-
-    private void RequestExportProofRefresh()
-    {
-        var image = SelectedImage;
-        if (!IsExportMode || !ExportSettings.ShowProof || image == null ||
-            _renderOutcomeChannelClosed) return;
-
-        var generation = ReserveRenderOutcome(
-            PreviewSurfaceIntent.Edited,
-            promotionEligible: false);
-        _previewLoadingCts?.Cancel();
-        var requestCts = new CancellationTokenSource();
-        _previewLoadingCts = requestCts;
-        _ = RefreshExportProofAsync(image, generation, requestCts);
-    }
-
-    private void RestoreExportPreview()
-    {
-        SetProofDisplayed(false);
-        var image = SelectedImage;
-        if (!IsExportMode || image == null || _renderOutcomeChannelClosed) return;
-
-        var generation = ReserveRenderOutcome();
-        ApplySurfaceClearOutcome(image, generation);
-        _ = LoadPreviewAsync(image, generation);
-    }
-
-    private async Task RefreshExportProofAsync(
-        ImageFile image,
-        long generation,
-        CancellationTokenSource requestCts)
-    {
-        using var previewActivity = BeginInitialPreviewActivity();
-        try
-        {
-            await LoadExportProofAsync(
-                image,
-                CaptureRestingSettings(),
-                generation,
-                requestCts.Token);
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        finally
-        {
-            if (ReferenceEquals(_previewLoadingCts, requestCts))
-            {
-                _previewLoadingCts = null;
-            }
-            requestCts.Dispose();
-        }
-    }
-
-    private Task<bool> LoadExportProofAsync(
-        ImageFile image,
-        EditSettings settings,
-        long generation,
-        CancellationToken cancellationToken)
-    {
-        var task = RenderExportProofAsync(
-            image, settings, generation, cancellationToken);
-        var pending = _proofTask;
-        _proofTask = pending is { IsCompleted: false }
-            ? Task.WhenAll(pending, task)
-            : task;
-        return task;
-    }
-
-    private async Task<bool> RenderExportProofAsync(
-        ImageFile image,
-        EditSettings settings,
-        long generation,
-        CancellationToken cancellationToken)
-    {
-        var bitmap = await ImageService.Previews.RenderProofAsync(
-            image,
-            settings,
-            ResolveExportProofMaxDimension(),
-            ExportSettings.OutputColorSpace,
-            ExportSettings.OutputSharpening,
-            cancellationToken);
-        cancellationToken.ThrowIfCancellationRequested();
-        if (bitmap == null ||
-            !IsExportMode ||
-            !ExportSettings.ShowProof ||
-            generation != LatestPreviewOutcomeGeneration ||
-            !ReferenceEquals(SelectedImage, image))
-        {
-            bitmap?.Dispose();
-            return false;
-        }
-
-        CancelRestingPreview(clearParent: true);
-        ReplacePreviewImage(bitmap, PreviewPaintSource.FreshRender, isProof: true);
-        _hasPromotableEditedRender = true;
-        return true;
-    }
-
-    private void SetProofDisplayed(bool value)
-    {
-        var colorSpace = value
-            ? ExportSettings.OutputColorSpace
-            : OutputColorSpace.Srgb;
-        if (_proofIsDisplayed == value && _displayedProofColorSpace == colorSpace) return;
-        _proofIsDisplayed = value;
-        _displayedProofColorSpace = colorSpace;
-        OnPropertyChanged(nameof(ExportProofCaption));
-        OnPropertyChanged(nameof(PreviewDisplayColorSpace));
-        OnPropertyChanged(nameof(ExportPreviewNativePixelSize));
-    }
-
-    internal static string FormatExportProofCaption(
-        bool proofIsDisplayed,
-        ExportFormat format,
-        OutputColorSpace outputColorSpace,
-        int? longEdge)
-    {
-        if (longEdge is <= 0) throw new ArgumentOutOfRangeException(nameof(longEdge));
-        var label = proofIsDisplayed ? "PROOF" : "PREVIEW";
-        var caption = $"{label} · {format.ToString().ToUpperInvariant()} · " +
-            (outputColorSpace == OutputColorSpace.Srgb ? "sRGB" : "Display P3");
-        return longEdge is { } pixels
-            ? $"{caption} · {pixels} PX"
-            : caption;
     }
 
     private void NotifyExportWorkspaceCounts()

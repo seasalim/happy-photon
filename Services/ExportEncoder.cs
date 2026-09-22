@@ -8,18 +8,21 @@ namespace HappyPhoton.Services;
 internal static class ExportEncoder
 {
     private const uint PngAdaptiveFilterQuality = 85;
+    internal static Action<string>? InstallStarting { get; set; }
 
     public static void Write(
         MagickImage image,
         ExportSettings settings,
         OutputColorSpace outputColorSpace,
         string path,
-        bool overwriteExisting = false)
+        bool overwriteExisting = false,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
+        cancellationToken.ThrowIfCancellationRequested();
         var quality = Math.Clamp(settings.Quality, 1, 100);
         image.Format = GetFormat(settings.Format);
         image.Quality = (uint)quality;
@@ -52,6 +55,8 @@ internal static class ExportEncoder
                     break;
             }
 
+            InstallStarting?.Invoke(temporaryPath);
+            cancellationToken.ThrowIfCancellationRequested();
             File.Move(temporaryPath, path, overwriteExisting);
         }
         finally

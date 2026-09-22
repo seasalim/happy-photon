@@ -75,6 +75,51 @@ public sealed class ExportFailureReportingTests : IDisposable
     }
 
     [Fact]
+    public async Task StopBetweenSizes_KeepsProfileWarningForInstalledFile()
+    {
+        var image = new ImageFile(Path.Combine(_root.Path, "stopped.dng"));
+        image.EditSettings.RawProfile = new RawProfileSelection
+        {
+            Source = RawProfileSource.UserFile,
+            Location = Path.Combine(_root.Path, "missing.dcp"),
+            ContentHash = new string('a', 64)
+        };
+        var availability = new TestSourceAvailabilityService(SourceAvailability.AvailableLocally);
+        var service = new ImageExportService(new RenderPipeline(), new ProfileStatusBaseLoader(),
+            new ExportMetadataService("test", availability), new DcpProfileService(availability));
+        var settings = new ExportSettings
+        {
+            OutputFolder = Path.Combine(_root.Path, "stopped-output"),
+            Format = ExportFormat.Png
+        };
+        var job = settings.CreateJob([image], [new("full", null), new("small", 16)], useSubfolders: true);
+        using var cancellation = new CancellationTokenSource();
+        var installations = 0;
+        ExportEncoder.InstallStarting = path =>
+        {
+            if (!path.StartsWith(settings.OutputFolder + Path.DirectorySeparatorChar, StringComparison.Ordinal)) return;
+            Assert.True(File.Exists(path));
+            if (++installations == 2) cancellation.Cancel();
+        };
+        ExportBatchResult result;
+        try { result = await service.ExportBatchAsync(job, cancellationToken: cancellation.Token); }
+        finally { ExportEncoder.InstallStarting = null; }
+
+        Assert.True(result.Stopped);
+        Assert.Equal(1, result.SuccessfulTargetCount);
+        Assert.Single(Directory.GetFiles(settings.OutputFolder, "*", SearchOption.AllDirectories));
+        Assert.True(File.Exists(job.Targets[0].ResolvedPath));
+        Assert.False(File.Exists(job.Targets[1].ResolvedPath));
+        var report = ExportRunReport.FromResult(result);
+        Assert.Equal("1 of 2 files completed and kept.", report.Summary);
+        var warning = Assert.Single(result.Warnings);
+        Assert.Same(image, warning.Image);
+        Assert.Equal("profile_missing", warning.Code);
+        Assert.Contains("no longer exists", warning.Message);
+        Assert.True(report.HasDetails);
+    }
+
+    [Fact]
     public async Task VariantCountOverload_PropagatesProfileWarning()
     {
         var image = new ImageFile(Path.Combine(_root.Path, "variant.dng"));

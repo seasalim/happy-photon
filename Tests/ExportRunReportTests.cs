@@ -8,6 +8,10 @@ namespace HappyPhoton.Tests;
 public sealed class ExportRunReportTests
 {
     [Fact]
+    public void PreflightMessageHasNoDestination() =>
+        Assert.False(ExportRunReport.Message("Export blocked", "Choose another folder.").CanOpenFolder);
+
+    [Fact]
     public void PartialFailureAndWarnings_AreReportedTogetherPerTarget()
     {
         var capture = new ImageFile("photo.dng");
@@ -35,6 +39,9 @@ public sealed class ExportRunReportTests
 
         var report = ExportRunReport.FromResult(result);
 
+        Assert.True(report.CanOpenFolder);
+        Assert.Equal(job.Output.OutputFolder, report.DestinationFolder);
+        Assert.Equal(1, report.SuccessfulCount);
         Assert.True(report.HasFailures);
         Assert.True(report.HasWarnings);
         Assert.Equal("1 of 2 files exported.", report.Summary);

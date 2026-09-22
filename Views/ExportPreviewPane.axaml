@@ -9,25 +9,42 @@
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
-        <StackPanel Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    Spacing="6"
-                    Margin="14,8,14,0">
-            <ToggleButton x:Name="ExportProofToggle"
-                          Classes="develop-action"
-                          Content="Proof"
-                          Width="56"
-                          Height="20"
-                          Padding="8,0"
-                          Foreground="{DynamicResource TextMuted}"
-                          FontFamily="{StaticResource FontBody}"
-                          FontSize="8"
-                          FontWeight="SemiBold"
-                          LetterSpacing="1"
-                          IsChecked="{Binding ExportSettings.ShowProof, Mode=TwoWay}"
-                          ToolTip.Tip="Render a true export proof"
-                          AutomationProperties.Name="Render a true export proof"/>
-        </StackPanel>
+        <Grid RowDefinitions="Auto,Auto" Margin="14,8,14,0">
+            <WrapPanel HorizontalAlignment="Right" Orientation="Horizontal" ItemSpacing="6" LineSpacing="6">
+                <ToggleButton x:Name="ExportProofToggle"
+                              Classes="develop-action"
+                              Content="Preview output"
+                              Width="112"
+                              Height="20"
+                              Padding="8,0"
+                              Foreground="{DynamicResource TextMuted}"
+                              FontFamily="{StaticResource FontBody}"
+                              FontSize="8"
+                              FontWeight="SemiBold"
+                              LetterSpacing="1"
+                              IsChecked="{Binding ExportSettings.ShowProof, Mode=TwoWay}"
+                              ToolTip.Tip="Preview size, color space and output sharpening; JPEG/WebP compression quality is not previewed."
+                              AutomationProperties.Name="Preview size, color space and output sharpening; JPEG/WebP compression quality is not previewed."/>
+                <ComboBox x:Name="ExportProofSizeChooser" Width="176" MinHeight="20" Height="20"
+                          FontSize="10" Padding="6,0"
+                          ItemsSource="{Binding ExportProofSizes}"
+                          SelectedItem="{Binding SelectedExportProofSize, Mode=TwoWay}"
+                          IsEnabled="{Binding ExportSettings.ShowProof}"
+                          AutomationProperties.Name="Preview output size">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ExportProofSize">
+                            <TextBlock Text="{Binding Label}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </WrapPanel>
+            <TextBlock x:Name="ExportProofHelp" Grid.Row="1" Margin="0,6,0,0"
+                       Text="Previews size, color space and output sharpening — not JPEG/WebP compression quality."
+                       IsVisible="{Binding ExportSettings.ShowProof}"
+                       Foreground="{DynamicResource TextMuted}"
+                       FontFamily="{StaticResource FontBody}"
+                       FontSize="9" TextWrapping="Wrap" VerticalAlignment="Center"/>
+        </Grid>
         <views:UniformImageOverlayPanel x:Name="ExportPreviewImageFrame"
                                         Grid.Row="1"
                                         Margin="16"

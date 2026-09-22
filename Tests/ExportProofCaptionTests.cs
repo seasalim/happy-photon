@@ -6,51 +6,13 @@ namespace HappyPhoton.Tests;
 
 public sealed class ExportProofCaptionTests
 {
-    [Fact]
-    public void SizedPreview_ReportsRecipeCap()
-    {
-        Assert.Equal(
-            "PREVIEW · JPEG · sRGB · 2048 PX",
-            MainWindowViewModel.FormatExportProofCaption(
-                proofIsDisplayed: false,
-                ExportFormat.Jpeg,
-                OutputColorSpace.Srgb,
-                2048));
-    }
-
-    [Fact]
-    public void UnresizedHiRes_OmitsSizeSegment()
-    {
-        Assert.Equal(
-            "PROOF · TIFF · sRGB",
-            MainWindowViewModel.FormatExportProofCaption(
-                proofIsDisplayed: true,
-                ExportFormat.Tiff,
-                OutputColorSpace.Srgb,
-                longEdge: null));
-    }
-
-    [Fact]
-    public void DisplayP3Proof_PreservesDisplayCasing()
-    {
-        Assert.Equal(
-            "PROOF · PNG · Display P3 · 1024 PX",
-            MainWindowViewModel.FormatExportProofCaption(
-                proofIsDisplayed: true,
-                ExportFormat.Png,
-                OutputColorSpace.DisplayP3,
-                1024));
-    }
-
-    [Fact]
-    public void ZeroArmedRecipes_OmitsSizeSegment()
-    {
-        Assert.Equal(
-            "PREVIEW · WEBP · sRGB",
-            MainWindowViewModel.FormatExportProofCaption(
-                proofIsDisplayed: false,
-                ExportFormat.Webp,
-                OutputColorSpace.Srgb,
-                longEdge: null));
-    }
+    [Theory]
+    [InlineData(false, "Web", 2048, OutputColorSpace.DisplayP3, "PREVIEW · edits applied")]
+    [InlineData(true, "Full size", null, OutputColorSpace.Srgb, "PROOF · Full size · No resizing · sRGB")]
+    [InlineData(true, "Web", 2048, OutputColorSpace.Srgb, "PROOF · Web · 2048 PX · sRGB")]
+    [InlineData(true, "Small", 1024, OutputColorSpace.DisplayP3, "PROOF · Small · 1024 PX · Display P3")]
+    public void CaptionNamesAcceptedSizeCapAndColorSpace(
+        bool displayed, string name, int? cap, OutputColorSpace colorSpace, string expected) =>
+        Assert.Equal(expected, MainWindowViewModel.FormatExportProofCaption(
+            displayed, new ExportProofSize(name, cap), colorSpace));
 }

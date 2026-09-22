@@ -57,11 +57,17 @@
                     </StackPanel>
                 </ScrollViewer>
             </Expander>
-            <Button Content="Retry failed only"
-                    Classes="quiet-button"
-                    Command="{Binding RetryFailedExportCommand}"
-                    IsVisible="{Binding ExportReport.HasFailures}"
-                    HorizontalAlignment="Left"/>
+            <WrapPanel Orientation="Horizontal">
+                <Button x:Name="OpenExportFolderButton" Content="Open folder"
+                        Classes="quiet-button" Margin="0,0,6,0"
+                        Command="{Binding OpenExportFolderCommand}"
+                        IsVisible="{Binding ExportReport.CanOpenFolder}"/>
+                <Button x:Name="RetryFailedExportButton" Content="Retry failed only"
+                        Classes="quiet-button"
+                        Command="{Binding RetryFailedExportCommand}"
+                        IsVisible="{Binding ExportReport.HasFailures}"
+                        HorizontalAlignment="Left"/>
+            </WrapPanel>
         </StackPanel>
     </Border>
 </UserControl>

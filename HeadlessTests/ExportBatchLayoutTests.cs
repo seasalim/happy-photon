@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Input.Raw;
 using Avalonia.LogicalTree;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
@@ -39,6 +41,8 @@ public sealed class ExportBatchLayoutTests(ITestOutputHelper output)
         output.WriteLine($"shell={width}x{height} settings extent={scroll.Extent.Height} viewport={scroll.Viewport.Height} overflow={scroll.Extent.Height - scroll.Viewport.Height}");
         if (width == 1200) Assert.True(scroll.Extent.Height <= scroll.Viewport.Height);
         vm.ExportReport = Report(vm);
+        vm.IsExportJobRunning = true;
+        vm.ExportProgressText = "Exporting 4 of 12 files";
         if (longSummary)
         {
             var basename = new string('a', 240);
@@ -60,7 +64,10 @@ public sealed class ExportBatchLayoutTests(ITestOutputHelper output)
             pane.FindControl<TextBlock>("ExportCountLineText")!,
             pane.FindControl<TextBlock>("ExportValidationText")!,
             pane.FindControl<Button>("RunExportButton")!,
-            report.FindControl<TextBlock>("ExportReportHeading")! })
+            report.FindControl<TextBlock>("ExportReportHeading")!,
+            report.FindControl<Button>("OpenExportFolderButton")!,
+            report.FindControl<Button>("RetryFailedExportButton")!,
+            window.GetLogicalDescendants().OfType<ExportQueueStrip>().Single() })
         {
             Assert.True(control.IsEffectivelyVisible);
             var origin = control.TranslatePoint(default, window)!.Value;
@@ -146,6 +153,61 @@ public sealed class ExportBatchLayoutTests(ITestOutputHelper output)
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData(1200, 700)]
+    [InlineData(800, 500)]
+    public async Task ProofToolbarStaysInsidePreview(int width, int height)
+    {
+        using var fixture = new CatalogVmFixture("export-proof-toolbar");
+        using var catalog = fixture.CreateCatalog();
+        await catalog.InitializeAsync();
+        await using var vm = CreateVm(fixture, catalog);
+        Stage(vm, fixture, empty: false);
+        vm.ExportSettings.ShowProof = true;
+        var window = new MainWindow { Width = width, Height = height };
+        using var scope = TestUiScope.ForMainWindow(window, vm);
+        var pane = window.FindControl<ExportPreviewPane>("ExportPreviewPane")!;
+        var help = pane.FindControl<TextBlock>("ExportProofHelp")!;
+        var chooser = pane.FindControl<ComboBox>("ExportProofSizeChooser")!;
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        var origin = chooser.TranslatePoint(default, pane)!.Value;
+        output.WriteLine($"shell={width}x{height} pane={pane.Bounds.Size} helpWidth={help.Bounds.Width} chooser={origin} size={chooser.Bounds.Size}");
+        Assert.True(help.IsEffectivelyVisible);
+        Assert.True(help.Bounds.Width > 0);
+        Assert.True(help.Bounds.Height > 0);
+        Assert.Equal(176, chooser.Bounds.Width);
+        Assert.InRange(origin.X, 0, pane.Bounds.Width - chooser.Bounds.Width);
+        Assert.InRange(origin.Y, 0, pane.Bounds.Height - chooser.Bounds.Height);
+    }
+
+    [AvaloniaFact]
+    public async Task ProofChooser_DoesNotStealBatchArrowNavigation()
+    {
+        using var fixture = new CatalogVmFixture("export-proof-navigation");
+        using var catalog = fixture.CreateCatalog();
+        await catalog.InitializeAsync();
+        await using var vm = CreateVm(fixture, catalog);
+        Stage(vm, fixture, empty: false);
+        var window = new MainWindow { Width = 1200, Height = 700 };
+        using var scope = TestUiScope.ForMainWindow(window, vm);
+        var chooser = window.FindControl<ExportPreviewPane>("ExportPreviewPane")!
+            .FindControl<ComboBox>("ExportProofSizeChooser")!;
+        Assert.False(vm.ExportSettings.ShowProof);
+        vm.ExportSettings.ShowProof = true;
+        chooser.SelectedIndex = 1;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("Web", vm.SelectedExportProofSize!.Name);
+        var batch = window.GetLogicalDescendants().OfType<ExportCapturePane>().Single()
+            .GetLogicalDescendants().OfType<ListBox>().Single();
+        batch.ContainerFromIndex(0)!.Focus();
+        window.KeyPress(Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown, null);
+        window.KeyRelease(Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown, null);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Same(vm.ExportCaptures[1], vm.ActiveExportCapture);
+        Assert.Equal("Web", vm.SelectedExportProofSize.Name);
+    }
+
     [AvaloniaFact]
     public async Task ChangePhotosMenu_OffersExactlyTwoScopedActions()
     {
@@ -228,6 +290,7 @@ public sealed class ExportBatchLayoutTests(ITestOutputHelper output)
         var image = vm.ExportCaptures[0].Image;
         return new("Export finished with failures", "11 of 12 files exported.",
             [new(image, new("web", 2048), "web/photo-0-V1.jpg", "Destination unavailable")],
-            [new(image, "profile", "Source profile unavailable; used sRGB")]);
+            [new(image, "profile", "Source profile unavailable; used sRGB")],
+            vm.ExportSettings.OutputFolder, 11);
     }
 }

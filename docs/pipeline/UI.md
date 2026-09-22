@@ -468,8 +468,13 @@ under current Browse filters. At zero it is disabled with “No picked photos in
 view”. Neither starts work or changes a running job. Re-entry rebuilds the batch; the empty
 state offers Choose in Browse. Export has no inclusion, rating, filter or range-selection UI.
 
-The center retains the preview and optional **Proof** for the largest valid enabled size,
-with its existing PREVIEW/PROOF format, color-space and size caption. The right scrolling
+The center retains the preview and opt-in **Preview output**, with a chooser for valid
+enabled sizes. It defaults and falls back to the largest valid enabled size; Full means
+no resizing. Help explains size, color space and output sharpening are previewed, not
+JPEG/WebP compression quality. The caption names the accepted size and cap plus color
+space; **UPDATING…** marks pending work while the caption and display interpretation stay
+with the pixels on screen. Switching off restores **PREVIEW · edits applied**.
+The right scrolling
 settings show Destination, **Output sizes**, Format with Quality or **Lossless** for PNG/TIFF,
 and **Remove location data**. Sizes are independently selectable: **Full size · No resizing**,
 Web and Small long-edge pixels. Raw size text is validated (whole number, 16–65,536), never
@@ -497,13 +502,20 @@ cancels and drains that job before image services are disposed.
 Before the queue opens, one pass over every resolved target refuses loaded-original
 collisions and duplicate output paths, identifies RAW+JPEG pair collisions with the
 Browse selection remedy, confirms all existing-file overwrites together, and confirms the exact
-cloud-source hydration scope. The workspace-local queue strip
-sits above the footer and advances per photo-size target. It disappears outside
+cloud-source hydration scope. The **Exporting** strip sits in its existing row and shows
+**Exporting k of N files** with **Stop export**. Stop returns partial outcomes and retains
+installed files; a cancellation check after encoding and immediately before atomic
+installation drops the pending target and cleans its temporary file. Cancellation of
+an already-started cloud download is best effort. The footer reads **Export in progress…**
+and explains that edits prepare the next batch. It disappears outside
 Export while the owned work continues and resumes from the same job when Export is
 re-entered.
 
 Completion remains in the workspace. One target-level report card shows successful
-counts, failed photo-size pairs, and profile warnings together. **Retry failed
+counts, failed photo-size pairs, and profile warnings together, with details collapsed.
+Stopped jobs say **Export stopped** / **k of N files completed and kept.**
+**Open folder** appears when at least one file was written and opens the completed job's
+snapshot destination, never the live settings folder. **Retry failed
 only** projects exactly those pairs from the immutable job, retaining its output and
 edit snapshots, then runs the same preflight again. The final workflow-tour coachmark
 also lives in Export and switches workspaces rather than opening a modal surface.

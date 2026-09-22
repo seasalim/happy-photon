@@ -14,7 +14,7 @@ public partial class MainWindowViewModel
     public string UsePickedPhotosScope => CanUsePickedPhotos
         ? "Replaces the selection with picked photos in the current Browse view."
         : "No picked photos in the current view";
-    public string ExportButtonLabel => $"Export {ExportFileCount} {(ExportFileCount == 1 ? "file" : "files")}";
+    public string ExportButtonLabel => IsExportJobRunning ? "Export in progress…" : $"Export {ExportFileCount} {(ExportFileCount == 1 ? "file" : "files")}";
     public string ExportValidationReason => IsExportJobRunning
         ? "An export is running. Changes prepare the next batch."
         : HasNoExportCaptures ? "Choose photos in Browse to begin." : ExportSettings.ValidationReason;

@@ -8,8 +8,8 @@
             BorderBrush="{DynamicResource Divider}"
             BorderThickness="0,1,0,0"
             Padding="12,8">
-        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-            <TextBlock Text="Export Queue"
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+            <TextBlock Text="Exporting"
                        Classes="section-label"
                        VerticalAlignment="Center"/>
             <ProgressBar x:Name="ExportProgressBar"
@@ -28,6 +28,9 @@
                        FontSize="9"
                        LetterSpacing="1"
                        VerticalAlignment="Center"/>
+            <Button x:Name="StopExportButton" Grid.Column="3" Content="Stop export"
+                    Classes="quiet-button" Command="{Binding StopExportCommand}"
+                    ToolTip.Tip="Keep completed files and stop exporting. An active cloud download may finish."/>
         </Grid>
     </Border>
 </UserControl>

@@ -10,11 +10,14 @@ public sealed record ExportRunReport(
     string Heading,
     string Summary,
     IReadOnlyList<ExportTargetOutcome> FailedTargets,
-    IReadOnlyList<ExportWarning> Warnings)
+    IReadOnlyList<ExportWarning> Warnings,
+    string? DestinationFolder = null,
+    int SuccessfulCount = 0)
 {
     public bool IsVisible => !string.IsNullOrEmpty(Heading);
     public bool HasFailures => FailedTargets.Count > 0;
     public bool HasWarnings => Warnings.Count > 0;
+    public bool CanOpenFolder => SuccessfulCount > 0 && DestinationFolder != null;
     public bool HasDetails => HasFailures || HasWarnings;
 
     public static ExportRunReport Message(string heading, string summary) =>
@@ -22,18 +25,21 @@ public sealed record ExportRunReport(
 
     public static ExportRunReport FromResult(ExportBatchResult result)
     {
-        var total = result.Outcomes.Count;
+        var total = result.TotalTargetCount;
         var successful = result.SuccessfulTargetCount;
-        var heading = result.FailedTargets.Count > 0
+        var heading = result.Stopped ? "Export stopped" : result.FailedTargets.Count > 0
             ? "Export finished with failures"
             : result.Warnings.Count > 0
                 ? "Export finished with warnings"
                 : "Export complete";
         return new ExportRunReport(
             heading,
-            $"{successful} of {total} files exported.",
+            result.Stopped ? $"{successful} of {total} files completed and kept." :
+                $"{successful} of {total} files exported.",
             result.FailedTargets,
-            result.Warnings);
+            result.Warnings,
+            result.DestinationFolder,
+            successful);
     }
 }
 
@@ -89,6 +95,14 @@ public partial class MainWindowViewModel
     internal Task RunExportJobForTestAsync(ExportJob job) =>
         TryStartExportAsync(job);
 
+    [RelayCommand(CanExecute = nameof(IsExportJobRunning))]
+    private void StopExport() => _exportJobCancellation?.Cancel();
+
+    [RelayCommand]
+    private Task OpenExportFolderAsync() => ExportReport is { CanOpenFolder: true } report
+        ? RevealFolderAsync(report.DestinationFolder!)
+        : Task.CompletedTask;
+
     [RelayCommand(CanExecute = nameof(CanRunExport))]
     private Task RunExportAsync()
     {
@@ -141,7 +155,7 @@ public partial class MainWindowViewModel
             IsExportJobRunning = true;
             ExportProgressValue = 0;
             ExportProgressMaximum = Math.Max(1, preflight.Job.Targets.Count);
-            ExportProgressText = "Preparing export…";
+            ExportProgressText = $"Exporting 0 of {preflight.Job.Targets.Count} files";
             NotifyExportRunCommandState();
 
             var result = await ExportJobAsync(
@@ -155,12 +169,6 @@ public partial class MainWindowViewModel
         }
         catch (OperationCanceledException)
         {
-            if (Volatile.Read(ref _exportDisposing) == 0)
-            {
-                ExportReport = ExportRunReport.Message(
-                    "Export stopped",
-                    "No further files will be exported.");
-            }
         }
         catch (Exception exception)
         {
@@ -276,9 +284,7 @@ public partial class MainWindowViewModel
     {
         ExportProgressMaximum = Math.Max(1, value.total);
         ExportProgressValue = Math.Clamp(value.current, 0, value.total);
-        ExportProgressText = value.current >= value.total
-            ? $"{value.total}/{value.total} files finished"
-            : $"Exporting {value.current}/{value.total} — {value.fileName}";
+        ExportProgressText = $"Exporting {value.current} of {value.total} files";
     }
 
     private static ExportJob? ProjectFailedTargets(
@@ -298,6 +304,8 @@ public partial class MainWindowViewModel
 
     private void NotifyExportRunCommandState()
     {
+        StopExportCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ExportButtonLabel));
         RunExportCommand.NotifyCanExecuteChanged();
         RetryFailedExportCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ExportValidationReason));
@@ -367,15 +375,23 @@ public partial class MainWindowViewModel
         using var activity = BeginExportActivity(job.Targets.Count);
         var activityProgress = CreateExportActivityProgress(activity, progress);
         var generation = Volatile.Read(ref _browseGeneration);
-        var result = hydrationApproved
-            ? await ImageService.ExportBatchApprovedAsync(
-                job,
-                activityProgress,
-                cancellationToken)
-            : await ImageService.ExportBatchAsync(
-                job,
-                activityProgress,
-                cancellationToken);
+        ExportBatchResult result;
+        try
+        {
+            result = hydrationApproved
+                ? await ImageService.ExportBatchApprovedAsync(
+                    job,
+                    activityProgress,
+                    cancellationToken)
+                : await ImageService.ExportBatchAsync(
+                    job,
+                    activityProgress,
+                    cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            result = new ExportBatchResult(job, [], stopped: true);
+        }
         if (hydrationApproved)
         {
             RefreshExportHydratedSources(

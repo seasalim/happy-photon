@@ -130,10 +130,12 @@ public sealed class ExportBrowseRefreshTests : IDisposable
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();
 
-            Assert.ThrowsAny<OperationCanceledException>(() => Complete(
+            var result = Complete(
                 viewModel.ExportBatchApprovedAsync(
                     [image],
-                    cancellationToken: cancellation.Token)));
+                    cancellationToken: cancellation.Token));
+            Assert.True(result.Stopped);
+            Assert.Empty(result.Outcomes);
 
             Assert.Equal(0, metadataLoads);
             Assert.True(image.SourceRequiresHydration);
