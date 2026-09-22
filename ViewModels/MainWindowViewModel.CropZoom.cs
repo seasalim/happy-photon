@@ -75,12 +75,12 @@ public partial class MainWindowViewModel
         var generation = RequestEditedRender();
         _ = SaveEditSettingsCoreAsync(
             image, after, label, before, recordHistory: true,
-            beforeSave: () => RenderCommittedGeometryAsync(
+            beforeSave: () => RenderCommittedEditAsync(
                 image, before, generation, previousIntent));
-        RefreshSelectedThumbnail();
+        RefreshSelectedThumbnail(image);
     }
 
-    private async Task<bool> RenderCommittedGeometryAsync(
+    private async Task<bool> RenderCommittedEditAsync(
         ImageFile image,
         EditSettings previousSettings,
         long generation,
@@ -96,7 +96,8 @@ public partial class MainWindowViewModel
                 image, previousSettings, generation, previousIntent);
             return false;
         }
-        return ReferenceEquals(SelectedImage, image);
+        // A superseded preview still belongs to its captured image's completed edit.
+        return true;
     }
 
     /// <summary>
@@ -189,7 +190,7 @@ public partial class MainWindowViewModel
                         previousSettings, appliedSettings),
                     previousSettings,
                     recordHistory: true,
-                    beforeSave: () => RenderCommittedGeometryAsync(
+                    beforeSave: () => RenderCommittedEditAsync(
                         image, previousSettings, generation, previousIntent));
             }
             catch
@@ -209,7 +210,7 @@ public partial class MainWindowViewModel
             if (IsCropMode) return;
             _restoreCropModeOnRollback = false;
             _cropBeforeEdit = null;
-            RefreshSelectedThumbnail();
+            RefreshSelectedThumbnail(image);
         }
         finally
         {
@@ -273,12 +274,12 @@ public partial class MainWindowViewModel
         RotateRightCommand.NotifyCanExecuteChanged();
     }
 
-    private void RefreshSelectedThumbnail()
+    private void RefreshSelectedThumbnail(ImageFile? image = null)
     {
         // Async command continuations can resume after disposal's activity
         // drain; the closed channel keeps them from arming fresh work.
         if (_renderOutcomeChannelClosed) return;
-        var image = SelectedImage;
+        image ??= SelectedImage;
         if (image == null) return;
         var refresh = ReplaceDebounce(ref _thumbnailDebounce);
         _ = TrackDirectThumbnailOperation(
@@ -320,7 +321,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        if (ReferenceEquals(SelectedImage, image) && Browse.Contains(image))
+        if (Browse.Contains(image))
         {
             ApplyThumbnailLoadResult(image, result);
             if (result.Status == ThumbnailLoadStatus.Loaded)

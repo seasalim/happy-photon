@@ -29,12 +29,17 @@ public partial class CatalogService
 
     public async Task SaveEditSettingsWithHistoryAsync(
         long catalogId, EditSettings settings, CatalogEditHistoryMutation? mutation,
-        int? position = null)
+        int? position = null, EditSettings? before = null, string? historyLabel = null)
     {
         EnsureInitialized();
         var update = SerializeUpdate(new(catalogId, settings));
         await InHistoryTransactionAsync(async transaction =>
         {
+            if (before != null)
+            {
+                var state = await ReadHistoryAsync(_connection!, transaction, catalogId);
+                mutation = CatalogEditHistory.PrepareAppend(state, before, settings, historyLabel);
+            }
             await WriteSettingsAsync(transaction, update);
             if (mutation != null)
                 await WriteHistoryMutationAsync(transaction, catalogId, mutation);

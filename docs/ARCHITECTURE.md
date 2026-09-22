@@ -297,6 +297,12 @@ commits, then drains all remaining reads before teardown can return to the catal
 owner. The current load remains available to pending edits until they commit, so
 closing during a history load preserves the final edit and its history entry.
 
+Completed Develop saves are tracked by case-insensitive source path across image-instance
+replacement. Before reading catalog states, a folder load asynchronously observes saves
+for that folder; cancellation abandons the wait without cancelling the edits. History
+loads also observe earlier saves for their source path. This keeps reloaded settings and
+history aligned with completed edits without extra catalog queries or live-instance repair.
+
 WAL mode is intentionally not enabled: the app has one process and one gated
 connection, so WAL would add sidecar-file behavior without making catalog operations
 concurrent. Revisit this only if the connection model changes.

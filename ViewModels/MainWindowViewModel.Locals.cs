@@ -212,7 +212,7 @@ public partial class MainWindowViewModel
         var previousIntent = _requestedPreviewIntent;
         var generation = RequestEditedRender();
         var save = SaveEditSettingsCoreAsync(image, after, label, before, recordHistory: true,
-            beforeSave: () => RenderCommittedLocalAsync(image, before, generation, previousIntent));
+            beforeSave: () => RenderCommittedEditAsync(image, before, generation, previousIntent));
         TrackHistoryCommit(save);
         try { await save; }
         catch
@@ -222,23 +222,7 @@ public partial class MainWindowViewModel
         }
         RebindLocalSelection();
         UpdateCanReset();
-        RefreshSelectedThumbnail();
-    }
-
-    private async Task<bool> RenderCommittedLocalAsync(ImageFile image, EditSettings before,
-        long generation, PreviewSurfaceIntent previousIntent)
-    {
-        var renderSucceeded = false;
-        await UpdatePreviewWithCurrentSliders(generation: generation,
-            observeRenderSucceeded: value => renderSucceeded = value);
-        if (!renderSucceeded && generation == LatestPreviewOutcomeGeneration)
-        {
-            RollbackEditReservation(image, before, generation, previousIntent);
-            return false;
-        }
-        // Navigation may supersede the preview, but the released gesture still
-        // belongs in its captured image's catalog row.
-        return true;
+        RefreshSelectedThumbnail(image);
     }
 
     private void RebindLocalSelection(bool first = false)

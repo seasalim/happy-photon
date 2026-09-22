@@ -5,6 +5,8 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private readonly Dictionary<string, Task> _imageHistorySaves = new(StringComparer.OrdinalIgnoreCase);
+
     private async Task AutoSaveAsync(
         string? historyLabel = null,
         EditSettings? before = null)
@@ -72,6 +74,9 @@ public partial class MainWindowViewModel
             cropWriteContext, beforeSave);
         if (tracksHistory)
         {
+            foreach (var completed in _imageHistorySaves.Where(pair => pair.Value.IsCompleted).ToArray())
+                _imageHistorySaves.Remove(completed.Key);
+            _imageHistorySaves[imageFile.FilePath] = save;
             _serializedHistoryCommit = save;
             _serializedHistoryImage = imageFile;
             _serializedHistorySettings = settingsSnapshot;
@@ -99,13 +104,15 @@ public partial class MainWindowViewModel
         if (load != null)
             await load;
 
-        var mutation = tracksHistory &&
-                       IsCurrentHistorySubject(imageFile, historyGeneration) &&
-                       IsHistoryLoaded
+        var ownsHistory = tracksHistory &&
+                          IsCurrentHistorySubject(imageFile, historyGeneration);
+        var mutation = ownsHistory && IsHistoryLoaded
             ? _history.PrepareAppend(before, settings, historyLabel)
             : null;
         await _catalogService.SaveEditSettingsWithHistoryAsync(
-            imageFile.CatalogId, settings, mutation);
+            imageFile.CatalogId, settings, mutation,
+            before: tracksHistory && !ownsHistory ? before : null,
+            historyLabel: historyLabel);
         await CommitCropAxisIfGeometryChangedAsync(
             imageFile, before, settings, cropWriteContext);
         if (ReferenceEquals(imageFile, SelectedImage) &&

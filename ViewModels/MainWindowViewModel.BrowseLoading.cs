@@ -56,6 +56,12 @@ public partial class MainWindowViewModel
             _xmpIndexedSidecars = folderContents.scan.SidecarPaths;
             CurrentFolderHasSubfolders = folderContents.hasSubfolders;
             var imagePaths = sourceFiles.Select(image => image.FilePath).ToArray();
+            // Replacement instances must load settings after their captured edits finish.
+            var folderIdentity = Path.TrimEndingDirectorySeparator(Path.GetFullPath(folderPath));
+            var saves = _imageHistorySaves.Where(pair => string.Equals(
+                    Path.GetDirectoryName(pair.Key), folderIdentity, StringComparison.OrdinalIgnoreCase))
+                .Select(pair => pair.Value).ToArray();
+            await ObservePendingHistoryWorkAsync(Task.WhenAll(saves)).WaitAsync(cancellationToken);
             // Microsoft.Data.Sqlite async APIs can perform synchronous disk work.
             var catalogStates = await Task.Run(
                 () => _catalogService.LoadOrCreateImageStatesAsync(

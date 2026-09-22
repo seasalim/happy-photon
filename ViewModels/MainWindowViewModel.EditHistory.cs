@@ -102,6 +102,9 @@ public partial class MainWindowViewModel
         CatalogEditHistoryState state;
         try
         {
+            // Capture older commits before this load can become a new edit's dependency.
+            if (_imageHistorySaves.TryGetValue(image.FilePath, out var commit))
+                await ObservePendingHistoryWorkAsync(commit);
             await image.EnsureCatalogIdAsync(_catalogService);
             state = await Task.Run(() => _catalogService.LoadEditHistoryAsync(
                 image.CatalogId));
