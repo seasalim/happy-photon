@@ -15,6 +15,7 @@ public sealed record ExportRunReport(
     public bool IsVisible => !string.IsNullOrEmpty(Heading);
     public bool HasFailures => FailedTargets.Count > 0;
     public bool HasWarnings => Warnings.Count > 0;
+    public bool HasDetails => HasFailures || HasWarnings;
 
     public static ExportRunReport Message(string heading, string summary) =>
         new(heading, summary, [], []);
@@ -74,7 +75,7 @@ public partial class MainWindowViewModel
     public bool HasExportReport => ExportReport?.IsVisible == true;
     public bool CanRunExport => IsExportMode && !IsExportJobRunning &&
         ExportFileCount > 0 &&
-        !string.IsNullOrWhiteSpace(ExportSettings.OutputFolder);
+        ExportSettings.ValidationReason.Length == 0;
     public bool CanRetryFailedExport => IsExportMode && !IsExportJobRunning &&
         _failedExportJob is { Targets.Count: > 0 };
 
@@ -105,6 +106,7 @@ public partial class MainWindowViewModel
 
     private Task TryStartExportAsync(ExportJob? job)
     {
+        if (job == null && ExportSettings.ValidationReason.Length > 0) return Task.CompletedTask;
         DiscardLocalsGesture();
         if (Interlocked.CompareExchange(ref _exportStartOwned, 1, 0) != 0)
         {
@@ -129,7 +131,6 @@ public partial class MainWindowViewModel
             _failedExportJob = null;
             NotifyExportRunCommandState();
             var job = retryJob ?? ExportSettings.CreateJob(ExportCaptures
-                .Where(capture => capture.IsIncluded)
                 .Select(capture => capture.Image));
             var preflight = await PreflightExportAsync(
                 job,
@@ -188,7 +189,7 @@ public partial class MainWindowViewModel
         {
             ExportReport = ExportRunReport.Message(
                 "Nothing to export",
-                "Include at least one capture and arm at least one recipe.");
+                "Choose photos in Browse and at least one output size.");
             return null;
         }
 
@@ -260,14 +261,14 @@ public partial class MainWindowViewModel
 
             return $"{captures[0].FileName} and {captures[1].FileName} are one " +
                 "capture shot RAW+JPEG. Both would export to " +
-                $"{Path.GetFileName(collision.ResolvedPath)}. Uncheck one in the " +
-                "Export filmstrip and run Export again.";
+                $"{Path.GetFileName(collision.ResolvedPath)}. Choose one in Browse " +
+                "and run Export again.";
         }
 
         return $"{job.PathCollisions.Count} output path" +
             $"{(job.PathCollisions.Count == 1 ? string.Empty : "s")} is shared " +
-            "by multiple targets. Adjust the armed recipes or uncheck one of the " +
-            "colliding captures in the Export filmstrip.";
+            "by multiple targets. Adjust the output sizes or change the " +
+            "colliding photos in Browse.";
     }
 
     private void UpdateExportProgress(
@@ -299,6 +300,8 @@ public partial class MainWindowViewModel
     {
         RunExportCommand.NotifyCanExecuteChanged();
         RetryFailedExportCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ExportValidationReason));
+        OnPropertyChanged(nameof(HasExportValidationReason));
         OnPropertyChanged(nameof(CanRunExport));
         OnPropertyChanged(nameof(CanRetryFailedExport));
         OnPropertyChanged(nameof(IsExportQueueVisible));

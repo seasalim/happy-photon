@@ -37,14 +37,17 @@ public sealed partial class ExportVisualStyleTests : IDisposable
         {
             var surface = Assert.IsType<Border>(pane.Content);
             AssertBrush("SurfaceMid", surface.Background);
-            var scroll = Assert.IsType<ScrollViewer>(surface.Child);
+            pane.FindControl<Expander>("ExportMoreOptions")!.IsExpanded = true;
+            viewModel.ExportFilenameChoice = 1;
+            Dispatcher.UIThread.RunJobs();
+            var scroll = pane.FindControl<ScrollViewer>("ExportSettingsScroll")!;
             Assert.Equal(ScrollBarVisibility.Hidden, scroll.VerticalScrollBarVisibility);
             var stack = Assert.IsType<StackPanel>(scroll.Content);
             Assert.Equal(new Thickness(15, 0, 15, 15), stack.Margin);
             Assert.All(
                 stack.Children.OfType<TextBlock>()
                     .Where(text => text.Classes.Contains("section-label")),
-                heading => Assert.Equal(new Thickness(0, 20, 0, 8), heading.Margin));
+                heading => Assert.Equal(new Thickness(0, 12, 0, 4), heading.Margin));
 
             var format = pane.FindControl<ComboBox>("ExportFormatBox")!;
             Assert.Equal(28, format.Height);

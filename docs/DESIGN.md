@@ -258,9 +258,14 @@ Spacing rhythm is strictly based on an 8px scale. Use large `xl` (80px+) vertica
 
 The desktop workspace keeps its side panes mode-specific: Browse's right pane is a
 review pane, Develop owns the editing controls (composition in
-`docs/pipeline/UI.md` §2), and Export pairs a capture filmstrip with fixed recipe and
-shared output controls around the existing rendered preview. Export's capture include
-toggles are an exclusion layer over the Browse selection; they never rewrite it. The
+`docs/pipeline/UI.md` §2), and Export pairs a batch preview list with output settings
+around the existing rendered preview. Browse owns selection; every listed photo exports,
+and clicking a row changes only the preview. Change photos offers Choose in Browse or
+replacement with the picked photos in the current filtered Browse view. Destination,
+Output sizes, Format/Quality (Lossless for PNG/TIFF), and Remove location data appear
+above collapsed More options (color space, sharpening, filenames), with a resolved path
+example below. The batch summary, validation, report and Export N files button occupy
+a fixed footer outside scrolling settings. Report details are collapsed and height-bounded. The
 left navigator retains only the active
 thumbnail and online-only download action so the folder tree receives the reclaimed
 height. When Develop is zoomed past fit, its navigator preview outlines the visible

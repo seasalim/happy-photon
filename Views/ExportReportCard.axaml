@@ -11,43 +11,52 @@
             CornerRadius="{StaticResource RadiusSmall}"
             Padding="10">
         <StackPanel Spacing="7">
-            <TextBlock Text="{Binding ExportReport.Heading}"
+            <TextBlock x:Name="ExportReportHeading" Text="{Binding ExportReport.Heading}" ToolTip.Tip="{Binding ExportReport.Heading}"
                        FontWeight="SemiBold"
                        Foreground="{DynamicResource TextPrimary}"
-                       TextWrapping="Wrap"/>
-            <TextBlock Text="{Binding ExportReport.Summary}"
+                       TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+            <TextBlock Text="{Binding ExportReport.Summary}" ToolTip.Tip="{Binding ExportReport.Summary}"
                        Foreground="{DynamicResource TextSecondary}"
                        FontSize="11"
-                       TextWrapping="Wrap"/>
-            <ItemsControl ItemsSource="{Binding ExportReport.FailedTargets}"
-                          IsVisible="{Binding ExportReport.HasFailures}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="services:ExportTargetOutcome">
-                        <TextBlock FontSize="11"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   TextWrapping="Wrap">
-                            <Run Text="• "/><Run Text="{Binding Capture.FileName}"/>
-                            <Run Text=" · "/><Run Text="{Binding Capture.VersionReportLabel}"/>
-                            <Run Text=" / "/><Run Text="{Binding Recipe.Name}"/>
-                            <Run Text=" — "/><Run Text="{Binding FailureReason}"/>
-                        </TextBlock>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <ItemsControl ItemsSource="{Binding ExportReport.Warnings}"
-                          IsVisible="{Binding ExportReport.HasWarnings}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="services:ExportWarning">
-                        <TextBlock FontSize="11"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   TextWrapping="Wrap">
-                            <Run Text="• "/><Run Text="{Binding Image.FileName}"/>
-                            <Run Text=" · "/><Run Text="{Binding Image.VersionReportLabel}"/>
-                            <Run Text=" — "/><Run Text="{Binding Message}"/>
-                        </TextBlock>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                       TextWrapping="Wrap" MaxLines="3" TextTrimming="CharacterEllipsis"/>
+            <Expander x:Name="ExportReportDetails" IsVisible="{Binding ExportReport.HasDetails}" IsExpanded="False">
+                <Expander.Header>
+                    <TextBlock Text="Show details" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                </Expander.Header>
+                <ScrollViewer MaxHeight="75" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="7">
+                        <ItemsControl ItemsSource="{Binding ExportReport.FailedTargets}"
+                                      IsVisible="{Binding ExportReport.HasFailures}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="services:ExportTargetOutcome">
+                                    <TextBlock FontSize="11"
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               TextWrapping="Wrap">
+                                        <Run Text="• "/><Run Text="{Binding Capture.FileName}"/>
+                                        <Run Text=" · "/><Run Text="{Binding Capture.VersionReportLabel}"/>
+                                        <Run Text=" / "/><Run Text="{Binding Recipe.Name}"/>
+                                        <Run Text=" — "/><Run Text="{Binding FailureReason}"/>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ItemsControl ItemsSource="{Binding ExportReport.Warnings}"
+                                      IsVisible="{Binding ExportReport.HasWarnings}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="services:ExportWarning">
+                                    <TextBlock FontSize="11"
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               TextWrapping="Wrap">
+                                        <Run Text="• "/><Run Text="{Binding Image.FileName}"/>
+                                        <Run Text=" · "/><Run Text="{Binding Image.VersionReportLabel}"/>
+                                        <Run Text=" — "/><Run Text="{Binding Message}"/>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Expander>
             <Button Content="Retry failed only"
                     Classes="quiet-button"
                     Command="{Binding RetryFailedExportCommand}"

@@ -13,8 +13,7 @@ public sealed class ExportSettingsVariantTests
         var variant = Assert.Single(settings.GetActiveVariants());
         Assert.Equal("hi-res", variant.Name);
         Assert.Null(variant.MaxDimension);
-        Assert.Equal(".jpg", settings.FileExtension);
-        Assert.Equal("photo.jpg", settings.GetOutputFileName("photo.CR2"));
+        Assert.Equal("photo.jpg", Path.GetFileName(Resolve(settings, "photo.CR2")));
         Assert.Equal(OutputSharpeningMode.Screen, settings.OutputSharpening);
         Assert.Equal(OutputColorSpace.Srgb, settings.OutputColorSpace);
     }
@@ -50,13 +49,13 @@ public sealed class ExportSettingsVariantTests
         var settings = new ExportSettings { NamingPattern = "{name}_edited" };
 
         settings.Format = ExportFormat.Png;
-        Assert.Equal("photo_edited.png", settings.GetOutputFileName("photo.jpg"));
+        Assert.Equal("photo_edited.png", Path.GetFileName(Resolve(settings, "photo.jpg")));
 
         settings.Format = ExportFormat.Webp;
-        Assert.Equal("photo_edited.webp", settings.GetOutputFileName("photo.jpg"));
+        Assert.Equal("photo_edited.webp", Path.GetFileName(Resolve(settings, "photo.jpg")));
 
         settings.Format = ExportFormat.Tiff;
-        Assert.Equal("photo_edited.tif", settings.GetOutputFileName("photo.jpg"));
+        Assert.Equal("photo_edited.tif", Path.GetFileName(Resolve(settings, "photo.jpg")));
     }
 
     [Fact]
@@ -67,18 +66,20 @@ public sealed class ExportSettingsVariantTests
         var web = new ExportVariant("web", 2048);
 
         Assert.Equal(Path.Combine(outputFolder, "photo.jpg"),
-            settings.GetOutputPath("photo.jpg", web, useSubfolders: false));
+            Resolve(settings, "photo.jpg", web, false));
         Assert.Equal(Path.Combine(outputFolder, "web", "photo.jpg"),
-            settings.GetOutputPath("photo.jpg", web, useSubfolders: true));
+            Resolve(settings, "photo.jpg", web, true));
     }
 
     [Fact]
-    public void SizesAreClamped()
+    public void InvalidSizesAreRejectedWithoutClamping()
     {
         var settings = new ExportSettings { ExportHiRes = false, ExportWeb = true, WebMaxSize = 4 };
 
         var variant = Assert.Single(settings.GetActiveVariants());
-        Assert.Equal(16, variant.MaxDimension);
+        Assert.Equal(4, variant.MaxDimension);
+        Assert.Contains("long edge", settings.ValidationReason);
+        Assert.Throws<InvalidOperationException>(() => settings.CreateJob([]));
     }
 
     [Fact]
@@ -111,4 +112,9 @@ public sealed class ExportSettingsVariantTests
         Assert.Equal(2, collision.Targets.Count);
         Assert.Equal(2, collision.Targets.Select(target => target.Capture).Distinct().Count());
     }
+    private static string Resolve(ExportSettings settings, string name,
+        ExportVariant? variant = null, bool subfolders = false) => ExportJob.ResolvePath(
+            name, variant ?? new ExportVariant("hi-res", null),
+            settings.SnapshotOutput() with { OutputFolder = string.IsNullOrEmpty(settings.OutputFolder) ? Path.GetTempPath() : settings.OutputFolder },
+            subfolders, "20260921", string.Empty);
 }

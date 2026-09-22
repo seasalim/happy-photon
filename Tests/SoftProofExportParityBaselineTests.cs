@@ -37,8 +37,7 @@ public sealed class SoftProofExportParityBaselineTests : IDisposable
             var result = await CreateService().ExportBatchAsync([source], settings);
             Assert.Equal(1, result.SuccessfulTargetCount);
 
-            var path = Path.Combine(outputFolder,
-                $"canon-eos-6d-iso-6400{settings.FileExtension}");
+            var path = Assert.Single(result.Outcomes).ResolvedPath;
             if (format == ExportFormat.Tiff)
             {
                 using var image = new MagickImage(path);

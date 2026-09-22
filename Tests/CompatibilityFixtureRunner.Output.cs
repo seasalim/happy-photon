@@ -48,10 +48,10 @@ internal static partial class CompatibilityFixtureRunner
                     cancellationToken: cancellationToken);
             Require(count == 1, $"{format} {outputColorSpace} mono export failed.");
 
-            var outputPath = settings.GetOutputPath(
+            var outputPath = ExportJob.ResolvePath(
                 source.FileName,
                 variant,
-                useSubfolders: false);
+                settings.SnapshotOutput(), false, DateTime.Now.ToString("yyyyMMdd"), string.Empty);
             using var exported = new MagickImage(outputPath);
             RequireNeutral(exported, $"lossless {format} {outputColorSpace} export");
             Require(
@@ -117,10 +117,10 @@ internal static partial class CompatibilityFixtureRunner
             }
 
             Require(count == 1, $"Expected one export, observed {count}.");
-            var outputPath = settings.GetOutputPath(
+            var outputPath = ExportJob.ResolvePath(
                 source.FileName,
                 new ExportVariant("review", 500),
-                useSubfolders: false);
+                settings.SnapshotOutput(), false, DateTime.Now.ToString("yyyyMMdd"), string.Empty);
             using var exported = new MagickImage(outputPath);
             Require(
                 Math.Max(exported.Width, exported.Height) == 500,

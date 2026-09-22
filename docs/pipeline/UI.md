@@ -460,17 +460,33 @@ surface. Develop preview and export are the authoritative effects surfaces.
 
 Export is the third workspace beside Browse and Develop. The mode-strip **Export** tab
 and `Ctrl+Shift+E` enter it armed; image-only fullscreen continues to refuse the transition.
-Its left filmstrip snapshots the Browse selection and adds per-capture include toggles
-without changing that selection. The center shows the standard preview immediately.
-Its **Proof** pill optionally renders the current capture through the armed recipe's
-color space, output sharpening, and size while leaving the preview visible until the
-proof is ready. A chrome-less bottom-left caption labels the pixels as `PREVIEW` or
-`PROOF` and names the live format and color space; it adds the recipe's pixel cap only
-for a sized recipe. This caption deliberately uses the mockup's smaller over-image
-metrics rather than §2's panel-control segmented idiom. The right pane
-arms any combination of the fixed Hi-Res, Web, and Small recipes and owns the shared
-output controls. The capture × recipe count sits above a full-width primary
-**Export** button.
+Its left batch preview list snapshots Browse selection: thumbnail, filename and version
+label, one photo count and an active-preview ring. Every listed photo exports; row activation
+changes only the preview. **Change photos…** offers **Choose in Browse…** with selection
+intact, and **Use picked photos (N)**, which replaces selection with visible picked photos
+under current Browse filters. At zero it is disabled with “No picked photos in the current
+view”. Neither starts work or changes a running job. Re-entry rebuilds the batch; the empty
+state offers Choose in Browse. Export has no inclusion, rating, filter or range-selection UI.
+
+The center retains the preview and optional **Proof** for the largest valid enabled size,
+with its existing PREVIEW/PROOF format, color-space and size caption. The right scrolling
+settings show Destination, **Output sizes**, Format with Quality or **Lossless** for PNG/TIFF,
+and **Remove location data**. Sizes are independently selectable: **Full size · No resizing**,
+Web and Small long-edge pixels. Raw size text is validated (whole number, 16–65,536), never
+clamped. No size, invalid size, empty destination or invalid custom pattern blocks new jobs,
+including Enter. Proof never receives an invalid size.
+
+Collapsed **More options** holds color space, sharpening and filenames, summarizing their
+current values in the header. Keep original filename maps to `{name}`; Custom pattern help
+identifies `{date}` as export date. The filename choice initializes from the pattern on
+Export entry and stays fixed while typing; choosing Keep original resets it to `{name}`.
+**Example for this photo** shares the job path resolver,
+including extension, multi-size subfolder and version suffix, without constructing a job.
+The fixed footer contains `N photos · M sizes`, the inline disabled reason, report and
+**Export N files** button. Failure/warning details use collapsed **Show details** with a
+75 px bounded scroll when expanded. Report headings and summaries are limited to two and
+three lines respectively, with ellipsis and full-text tooltips, keeping the footer visible
+at 1200×700 and 800×500 even for long collision or exception messages.
 
 `Enter` runs only while Export is active. Elsewhere it retains its crop-apply and
 Browse/Develop meanings. `Escape` returns to the workspace active before Export and
@@ -480,21 +496,21 @@ cancels and drains that job before image services are disposed.
 
 Before the queue opens, one pass over every resolved target refuses loaded-original
 collisions and duplicate output paths, identifies RAW+JPEG pair collisions with the
-filmstrip remedy, confirms all existing-file overwrites together, and confirms the exact
+Browse selection remedy, confirms all existing-file overwrites together, and confirms the exact
 cloud-source hydration scope. The workspace-local queue strip
-sits above the footer and advances per capture-recipe target. It disappears outside
+sits above the footer and advances per photo-size target. It disappears outside
 Export while the owned work continues and resumes from the same job when Export is
 re-entered.
 
 Completion remains in the workspace. One target-level report card shows successful
-counts, failed capture-recipe pairs, and profile warnings together. **Retry failed
+counts, failed photo-size pairs, and profile warnings together. **Retry failed
 only** projects exactly those pairs from the immutable job, retaining its output and
 edit snapshots, then runs the same preflight again. The final workflow-tour coachmark
 also lives in Export and switches workspaces rather than opening a modal surface.
 
 | Control | Spec |
 |---------|------|
-| "Strip location data" checkbox | Persisted app setting, default **off** (keep GPS). |
+| "Remove location data" checkbox | Persisted app setting, default **off** (keep GPS). |
 | "Output sharpening" selector | Off, Screen, or Print; persisted alongside existing export preferences (OUTPUT.md §3). |
 
 No UI for quality-dependent chroma subsampling — it is automatic and stays invisible.

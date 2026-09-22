@@ -39,7 +39,7 @@ public sealed class ExportWorkspaceTests : IDisposable
     }
 
     [Fact]
-    public async Task ExportActionsAndIncludeLayer_LeaveBrowseSelectionUntouched()
+    public async Task ExportPreviewActions_LeaveBrowseSelectionUntouched()
     {
         using var catalog = await _fx.CreateCatalogAsync("actions");
         await using var vm = CreateViewModel(new NullBaseLoader(), catalog);
@@ -59,11 +59,10 @@ public sealed class ExportWorkspaceTests : IDisposable
         };
 
         vm.SwitchToExportCommand.Execute(null);
-        Assert.Equal("2 captures × 1 recipe → 2 files", vm.ExportCountLine);
-        vm.ExportCaptures[0].IsIncluded = false;
-        Assert.Equal(1, vm.IncludedExportCaptureCount);
+        Assert.Equal("2 photos · 1 size", vm.ExportCountLine);
+        vm.ActiveExportCapture = vm.ExportCaptures[1];
+        Assert.Same(second, vm.SelectedImage);
         Assert.Equal(2, vm.SelectedCount);
-        Assert.Equal("1 capture × 1 recipe → 1 file", vm.ExportCountLine);
 
         WorkspaceKeyRouting.TryHandleSpace(vm, focusedElement: null);
         vm.SelectNextImageCommand.Execute(null);
@@ -83,9 +82,9 @@ public sealed class ExportWorkspaceTests : IDisposable
         Assert.Equal(0, deleteConfirmations);
 
         vm.ExportSettings.ExportHiRes = false;
-        Assert.Equal(0, vm.ArmedExportRecipeCount);
+        Assert.Equal(0, vm.ArmedExportSizeCount);
         Assert.Equal(0, vm.ExportFileCount);
-        Assert.Equal("1 capture × 0 recipes → 0 files", vm.ExportCountLine);
+        Assert.Equal("2 photos · 0 sizes", vm.ExportCountLine);
     }
 
     [Fact]
@@ -144,7 +143,9 @@ public sealed class ExportWorkspaceTests : IDisposable
         await vm.HandleEnterCommand.ExecuteAsync(null);
 
         Assert.True(vm.IsExportMode);
-        Assert.Equal("Nothing to export", vm.ExportReport?.Heading);
+        Assert.Null(vm.ExportReport);
+        Assert.False(vm.CanRunExport);
+        Assert.Contains("output size", vm.ExportValidationReason);
     }
 
     private MainWindowViewModel CreateViewModel(

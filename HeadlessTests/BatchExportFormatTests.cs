@@ -18,7 +18,7 @@ public sealed class BatchExportFormatTests : IDisposable
     private readonly CatalogVmFixture _fixture = new("export-format");
 
     [AvaloniaFact]
-    public async Task LosslessQualitySlider_RemainsVisibleAndDisabled()
+    public async Task LosslessFormats_ReplaceQualityWithLosslessLabel()
     {
         using var catalog = _fixture.CreateCatalog();
         var viewModel = _fixture.CreateViewModel(
@@ -37,8 +37,8 @@ public sealed class BatchExportFormatTests : IDisposable
             viewModel.ExportSettings.Format = format;
             Dispatcher.UIThread.RunJobs();
 
-            Assert.True(slider.IsVisible);
-            Assert.False(slider.IsEnabled);
+            Assert.False(slider.IsVisible);
+            Assert.True(pane.FindControl<TextBlock>("ExportLosslessLabel")!.IsVisible);
         }
 
         await viewModel.DisposeAsync();
@@ -66,7 +66,7 @@ public sealed class BatchExportFormatTests : IDisposable
             actionStack.Children.IndexOf(countLine) <
             actionStack.Children.IndexOf(exportButton));
         Assert.Equal(10, actionStack.Spacing);
-        Assert.Equal("Export", exportButton.Content);
+        Assert.Equal("Export 0 files", exportButton.Content);
         Assert.Equal(30, exportButton.Height);
         Assert.Equal(HorizontalAlignment.Stretch, exportButton.HorizontalAlignment);
         Assert.Equal(
@@ -78,7 +78,7 @@ public sealed class BatchExportFormatTests : IDisposable
         Assert.Equal(new CornerRadius(8), exportButton.CornerRadius);
         Assert.Equal(FontWeight.Bold, exportButton.FontWeight);
         Assert.Equal(11, exportButton.FontSize);
-        Assert.Equal(2, exportButton.LetterSpacing);
+        Assert.Equal(0, exportButton.LetterSpacing);
         Assert.Equal(
             ThemeResourceTests.Resource<FontFamily>("FontBody", ThemeVariant.Dark),
             exportButton.FontFamily);

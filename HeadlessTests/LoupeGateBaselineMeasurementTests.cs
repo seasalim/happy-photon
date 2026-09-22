@@ -94,6 +94,8 @@ public sealed class LoupeGateBaselineMeasurementTests(ITestOutputHelper output)
                 "ExportSettingsPane")!;
             var naming = export.FindControl<TextBox>(
                 "ExportNamingPatternField")!;
+            export.FindControl<Expander>("ExportMoreOptions")!.IsExpanded = true;
+            viewModel.ExportFilenameChoice = 1;
             viewModel.ExportSettings.NamingPattern = "base";
             Drain();
             naming.CaretIndex = naming.Text?.Length ?? 0;

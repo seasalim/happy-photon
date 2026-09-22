@@ -16,6 +16,7 @@ public enum OutputSharpeningMode
 public partial class ExportSettings : ObservableObject
 {
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValidationReason))]
     private string _outputFolder = string.Empty;
 
     [ObservableProperty]
@@ -28,21 +29,29 @@ public partial class ExportSettings : ObservableObject
     private OutputColorSpace _outputColorSpace = OutputColorSpace.Srgb;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValidationReason))]
     private bool _exportHiRes = true;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValidationReason))]
     private bool _exportWeb;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValidationReason))]
     private bool _exportSmall;
 
     [ObservableProperty]
-    private int _webMaxSize = 2048;
+    [NotifyPropertyChangedFor(nameof(ValidationReason))]
+    [NotifyPropertyChangedFor(nameof(WebMaxSize))]
+    private string _webMaxSizeText = "2048";
 
     [ObservableProperty]
-    private int _smallMaxSize = 1024;
+    [NotifyPropertyChangedFor(nameof(ValidationReason))]
+    [NotifyPropertyChangedFor(nameof(SmallMaxSize))]
+    private string _smallMaxSizeText = "1024";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValidationReason))]
     private string _namingPattern = "{name}";
 
     [ObservableProperty]
@@ -54,35 +63,40 @@ public partial class ExportSettings : ObservableObject
     [ObservableProperty]
     private bool _showProof;
 
-    /// <summary>
-    /// Generate output filename based on naming pattern.
-    /// </summary>
-    public string GetOutputFileName(string originalFileName)
+    public int WebMaxSize
     {
-        var nameWithoutExt = Path.GetFileNameWithoutExtension(originalFileName);
-        var date = DateTime.Now.ToString("yyyyMMdd");
-
-        var result = NamingPattern
-            .Replace("{name}", nameWithoutExt)
-            .Replace("{date}", date);
-
-        return result + FileExtension;
+        get => int.TryParse(WebMaxSizeText, out var value) ? value : 0;
+        set => WebMaxSizeText = value.ToString();
     }
 
-    public string FileExtension => Format switch
+    public int SmallMaxSize
     {
-        ExportFormat.Png => ".png",
-        ExportFormat.Webp => ".webp",
-        ExportFormat.Tiff => ".tif",
-        _ => ".jpg"
-    };
+        get => int.TryParse(SmallMaxSizeText, out var value) ? value : 0;
+        set => SmallMaxSizeText = value.ToString();
+    }
+
+    public string ValidationReason =>
+        !ExportHiRes && !ExportWeb && !ExportSmall ? "Choose at least one output size." :
+        ExportWeb && !IsValidSize(WebMaxSize) ? "Web long edge must be 16–65,536 pixels." :
+        ExportSmall && !IsValidSize(SmallMaxSize) ? "Small long edge must be 16–65,536 pixels." :
+        string.IsNullOrWhiteSpace(OutputFolder) ? "Choose a destination folder." :
+        string.IsNullOrWhiteSpace(NamingPattern) ||
+        NamingPattern.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+        NamingPattern.IndexOfAny("<>:\"/\\|?*".ToCharArray()) >= 0
+            ? "Enter a valid filename pattern." : string.Empty;
+
+    public static bool IsValidSize(int value) => value is >= 16 and <= 65536;
+
+    public ExportOutputSettings SnapshotOutput() => new(
+        OutputFolder, Quality, Format, OutputColorSpace, NamingPattern,
+        StripLocationData, OutputSharpening);
 
     public IReadOnlyList<ExportVariant> GetActiveVariants()
     {
         var variants = new List<ExportVariant>();
         if (ExportHiRes) variants.Add(new ExportVariant("hi-res", null));
-        if (ExportWeb) variants.Add(new ExportVariant("web", Math.Clamp(WebMaxSize, 16, 65536)));
-        if (ExportSmall) variants.Add(new ExportVariant("small", Math.Clamp(SmallMaxSize, 16, 65536)));
+        if (ExportWeb) variants.Add(new ExportVariant("web", WebMaxSize));
+        if (ExportSmall) variants.Add(new ExportVariant("small", SmallMaxSize));
 
         return variants
             .OrderBy(v => v.MaxDimension.HasValue ? 1 : 0)
@@ -90,25 +104,19 @@ public partial class ExportSettings : ObservableObject
             .ToList();
     }
 
-    public string GetOutputPath(string originalFileName, ExportVariant variant, bool useSubfolders)
-    {
-        var folder = useSubfolders
-            ? Path.Combine(OutputFolder, variant.Name)
-            : OutputFolder;
-        return Path.Combine(folder, GetOutputFileName(originalFileName));
-    }
-
     public ExportJob CreateJob(
         IEnumerable<ImageFile> captures,
         IReadOnlyList<ExportVariant>? recipes = null,
         bool? useSubfolders = null)
     {
-        var resolvedRecipes = recipes ?? GetActiveVariants();
+        if (ValidationReason.Length > 0)
+            throw new InvalidOperationException(ValidationReason);
+        var resolvedVariants = recipes ?? GetActiveVariants();
         return ExportJob.Create(
             captures,
             this,
-            resolvedRecipes,
-            useSubfolders ?? resolvedRecipes.Count > 1);
+            resolvedVariants,
+            useSubfolders ?? resolvedVariants.Count > 1);
     }
 }
 
@@ -149,7 +157,7 @@ public sealed class ExportJob
     private readonly IReadOnlyDictionary<ImageFile, EditSettings> _editSettings;
 
     public IReadOnlyList<ImageFile> Captures { get; }
-    public IReadOnlyList<ExportVariant> Recipes { get; }
+    public IReadOnlyList<ExportVariant> Variants { get; }
     public ExportOutputSettings Output { get; }
     public IReadOnlyList<ExportTarget> Targets { get; }
     public IReadOnlyList<ExportPathCollision> PathCollisions { get; }
@@ -164,7 +172,7 @@ public sealed class ExportJob
         IReadOnlyList<ExportPathCollision> pathCollisions)
     {
         Captures = captures;
-        Recipes = recipes;
+        Variants = recipes;
         Output = output;
         _editSettings = editSettings;
         Targets = targets;
@@ -193,7 +201,7 @@ public sealed class ExportJob
             .Where(capture => targetSnapshot.Any(target =>
                 ReferenceEquals(target.Capture, capture)))
             .ToArray());
-        var recipes = Array.AsReadOnly(Recipes
+        var recipes = Array.AsReadOnly(Variants
             .Where(recipe => targetSnapshot.Any(target =>
                 target.Recipe == recipe))
             .ToArray());
@@ -220,27 +228,22 @@ public sealed class ExportJob
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(recipes);
 
+        if (settings.ValidationReason.Length > 0)
+            throw new InvalidOperationException(settings.ValidationReason);
+        if (recipes.Count == 0 || recipes.Any(recipe =>
+                recipe.MaxDimension is { } size && !ExportSettings.IsValidSize(size)))
+            throw new ArgumentOutOfRangeException(nameof(recipes));
+
         var captureSnapshot = Array.AsReadOnly(captures.ToArray());
         var recipeSnapshot = Array.AsReadOnly(recipes
             .Select(recipe => new ExportVariant(recipe.Name, recipe.MaxDimension))
             .OrderBy(recipe => recipe.MaxDimension.HasValue ? 1 : 0)
             .ThenByDescending(recipe => recipe.MaxDimension ?? 0)
             .ToArray());
-        var output = new ExportOutputSettings(
-            settings.OutputFolder,
-            settings.Quality,
-            settings.Format,
-            settings.OutputColorSpace,
-            settings.NamingPattern,
-            settings.StripLocationData,
-            settings.OutputSharpening);
+        var output = settings.SnapshotOutput();
         var dateToken = DateTime.Now.ToString("yyyyMMdd");
         var edits = new Dictionary<ImageFile, EditSettings>();
-        var versionedPaths = captureSnapshot
-            .GroupBy(capture => capture.FilePath, StringComparer.OrdinalIgnoreCase)
-            .Where(group => group.Select(capture => capture.Version).Distinct().Count() > 1)
-            .Select(group => group.Key)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var versionedPaths = FindVersionedPaths(captureSnapshot);
         var targets = new List<ExportTarget>(
             captureSnapshot.Count * recipeSnapshot.Count);
         foreach (var capture in captureSnapshot)
@@ -280,7 +283,12 @@ public sealed class ExportJob
             .ToList()
             .AsReadOnly();
 
-    private static string ResolvePath(
+    public static HashSet<string> FindVersionedPaths(IEnumerable<ImageFile> captures) => captures
+        .GroupBy(capture => capture.FilePath, StringComparer.OrdinalIgnoreCase)
+        .Where(group => group.Select(capture => capture.Version).Distinct().Count() > 1)
+        .Select(group => group.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    public static string ResolvePath(
         string originalFileName,
         ExportVariant recipe,
         ExportOutputSettings output,

@@ -39,6 +39,7 @@ public sealed class ExportReportCardTests
             DataContext = new ReportHost(report)
         };
         card.IsVisible = true;
+        card.FindControl<Expander>("ExportReportDetails")!.IsExpanded = true;
         var warningItems = card.GetLogicalDescendants()
             .OfType<ItemsControl>()
             .ElementAt(1);

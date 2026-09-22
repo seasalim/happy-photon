@@ -69,9 +69,12 @@
                 Padding="20"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
-            <TextBlock Text="Select a capture to preview"
-                       Foreground="{DynamicResource TextMuted}"
-                       FontSize="16"/>
+            <StackPanel Spacing="8">
+                <TextBlock Text="Choose photos to export"
+                           Foreground="{DynamicResource TextMuted}"
+                           FontSize="16"/>
+                <Button Content="Choose in Browse…" Classes="quiet-button" Command="{Binding ChooseExportPhotosInBrowseCommand}" HorizontalAlignment="Center"/>
+            </StackPanel>
         </Border>
     </Grid>
 </UserControl>

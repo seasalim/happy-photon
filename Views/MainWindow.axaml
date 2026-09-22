@@ -249,7 +249,7 @@
             Pointer="Right"
             StepText="3 of 3"
             Heading="Export the edited images"
-            Body="Review the captures and recipes here, then export finished copies. Originals remain untouched."
+            Body="Choose photos in Browse. Here, review the batch, destination, output sizes and filename example, then export copies. Originals remain untouched."
             PrimaryText="Finish"
             PrimaryCommand="{Binding FinishWorkflowTourCommand}"/>
 

@@ -514,45 +514,37 @@ enter the same comparison directly; with fewer than two selected photos it does 
 
 ## 6. Export finished copies
 
-Choose the **Export** workspace to prepare finished copies. Its left filmstrip takes a
-snapshot of the Browse selection; uncheck a capture to exclude it from this batch
-without changing the Browse selection. The center shows the standard preview
-immediately. Turn on **Proof** when you need to check the current photograph through
-the armed recipe's color space, output sharpening, and size; the preview stays visible
-while the full proof renders, then swaps when it is ready. The status line says whether
-the displayed pixels are `PREVIEW` or `PROOF`, followed by the live format and color
-space and, for a sized recipe, its pixel cap. Turn Proof off to return to the preview.
-On the right, arm any combination of the fixed **Hi-Res**, **Web**, and **Small**
-recipes and set their shared format, quality, color space, sharpening, naming, location
-metadata, and destination controls. The count line shows captures × armed recipes,
-including zero recipes.
+Choose the **Export** workspace to prepare finished copies of the Browse selection.
+The left batch list shows thumbnails, filenames and version labels; all listed photos
+export. Clicking a row changes only the preview. **Change photos…** offers exactly
+**Choose in Browse…** (preserves selection) and **Use picked photos (N)** (replaces the
+selection with picked photos in the current Browse view, respecting filters). With no
+visible picks, it is disabled with “No picked photos in the current view”. Re-entering
+Export rebuilds the batch. The empty state also offers **Choose in Browse…**.
+Changing photos or settings during a run prepares the next batch; the running job is fixed.
 
-Versions export as independent interpretations. Exporting either version by itself
-keeps the ordinary name; when one job includes multiple versions of the same file,
-their outputs gain stable `-V<n>` suffixes and the report identifies both file and version.
+1. Choose a **Destination** folder; the default is `export` beneath the open folder.
+2. Choose any combination of **Output sizes**: **Full size · No resizing**, **Web**, and
+   **Small**. Web and Small specify long-edge pixels and preserve aspect ratio. Enabled
+   sizes must be whole numbers from 16 to 65,536; invalid text stays visible and blocks
+   Export with an inline reason. Values are never silently clamped.
+3. Choose JPEG, PNG, WebP, or 16-bit TIFF. JPEG/WebP show Quality; PNG/TIFF show **Lossless**.
+4. Choose **Remove location data** if the copies should omit GPS metadata.
+5. Expand **More options** for color space, output sharpening and filenames. Its summary
+   shows the current choices. **Keep original filename** is the default; **Custom pattern**
+   accepts `{name}` and `{date}`, where `{date}` is the export date.
+6. Review **Example for this photo**: the relative output path includes the format extension,
+   size subfolder and any version suffix. One size goes directly into the destination;
+   multiple sizes each get a subfolder. Multiple versions of the same file in a batch get
+   stable `-V<n>` suffixes; a single version keeps its ordinary name.
+7. Choose **Export N files** or press `Enter`. The fixed footer keeps the photo/size count,
+   validation reason and action visible, including at the minimum window size.
 
-Press `Ctrl+Shift+E` from Browse or Develop to enter Export with the current selection armed.
-Press `Enter` or choose **Export** to run the capture × recipe job. `Escape` returns to
-the workspace you came from; it does not stop a run already in progress.
-
-1. Choose an output folder. The default is an `export` folder beneath the open
-   photo folder.
-2. Choose JPEG, PNG, WebP, or 16-bit TIFF. TIFF is lossless, uses ZIP compression,
-   and is intended for a high-precision handoff to another editor.
-3. Choose **sRGB** for the broadly compatible default, or **Display P3** when the delivery
-   software and display are color-managed and a wider gamut is useful. Preview remains
-   sRGB; the embedded export profile lets color-managed software reproduce the same color.
-4. Set the quality when the selected format uses it. The quality control remains visible
-   but disabled for lossless PNG and TIFF.
-5. Choose one size:
-   - **Hi-Res** applies no output-size limit.
-   - **Web** constrains the longest dimension to the specified size.
-   - **Small** creates a smaller longest-dimension copy.
-6. Choose **Off**, **Screen**, or **Print** output sharpening. Screen preserves the
-   delivery default; Print is stronger, size-aware, and can sharpen Hi-Res output.
-7. Choose a naming pattern and check the filename preview.
-8. Start the export. Its queue appears above the footer and continues if you switch
-   workspaces.
+The center shows the standard preview immediately. **Proof** optionally renders the active
+photo through the largest valid enabled size, color space and output sharpening. Its caption
+identifies PREVIEW/PROOF, the live format/color space and any size cap. Turn Proof off to return
+to the standard preview. `Ctrl+Shift+E` enters Export from Browse or Develop; `Escape` returns
+to the previous workspace without stopping a run. The queue continues across workspaces.
 
 If the selection includes online-only originals, Happy Photon first reports their exact
 count and approximate logical size. Choose **Cancel** to leave them untouched or
@@ -561,14 +553,15 @@ after approval is best effort because the cloud provider may already have starte
 download.
 
 Before work starts, Happy Photon refuses targets matching loaded originals or another
-target in the same job. Existing output files are confirmed together. The exported
-files then go directly into the chosen output folder; a file that appears after the
-confirmation pass is not overwritten.
+target in the same job. Existing output files are confirmed together. Copies go to the
+chosen destination (in size subfolders for multiple sizes); a file that appears after
+the confirmation pass is not overwritten.
 
 Export decodes and edits each photograph, then creates new output files.
 Targets that would overwrite a loaded original are refused.
-When some targets fail, the Export card lists the failed capture-recipe pairs alongside
-any warnings and offers **Retry failed only** without rerunning successful siblings.
+The footer report keeps completion counts visible. **Show details** reveals failures and
+warnings in a bounded scrolling area; **Retry failed only** retries the saved targets
+without rerunning successful siblings. Collision remedies point back to Browse.
 
 ## A complete first workflow
 

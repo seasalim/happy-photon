@@ -5,76 +5,102 @@
              x:Class="HappyPhoton.Views.ExportSettingsPane"
              x:DataType="vm:MainWindowViewModel">
     <Border Background="{DynamicResource SurfaceMid}">
-        <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="15,0,15,15" Spacing="4">
-                <TextBlock Text="Recipes" Classes="section-label" Margin="0,20,0,8"/>
-                <CheckBox Classes="edit-toggle" Content="Hi-Res · Original dimensions"
-                          IsChecked="{Binding ExportSettings.ExportHiRes, Mode=TwoWay}"/>
-                <Grid ColumnDefinitions="70,*,Auto" Height="28">
-                    <CheckBox Classes="edit-toggle" Content="Web" IsChecked="{Binding ExportSettings.ExportWeb, Mode=TwoWay}"/>
-                    <TextBox x:Name="WebMaxSizeField" Grid.Column="1" Classes="edit-field" Margin="0,0,5,0"
-                             IsEnabled="{Binding ExportSettings.ExportWeb}"
-                             Text="{Binding ExportSettings.WebMaxSize, Mode=TwoWay}"
-                             AutomationProperties.Name="Web maximum dimension"/>
-                    <TextBlock Grid.Column="2" Text="px" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                </Grid>
-                <Grid ColumnDefinitions="70,*,Auto" Height="28">
-                    <CheckBox Classes="edit-toggle" Content="Small" IsChecked="{Binding ExportSettings.ExportSmall, Mode=TwoWay}"/>
-                    <TextBox x:Name="SmallMaxSizeField" Grid.Column="1" Classes="edit-field" Margin="0,0,5,0"
-                             IsEnabled="{Binding ExportSettings.ExportSmall}"
-                             Text="{Binding ExportSettings.SmallMaxSize, Mode=TwoWay}"
-                             AutomationProperties.Name="Small maximum dimension"/>
-                    <TextBlock Grid.Column="2" Text="px" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
-                </Grid>
+        <Grid RowDefinitions="*,Auto">
+            <ScrollViewer x:Name="ExportSettingsScroll" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="15,0,15,15" Spacing="4">
+                    <TextBlock Text="Destination" Classes="section-label" Margin="0,12,0,4"/>
+                    <TextBox x:Name="ExportFolderField" Classes="edit-field"
+                             Text="{Binding ExportSettings.OutputFolder, Mode=TwoWay}"
+                             ToolTip.Tip="{Binding ExportSettings.OutputFolder}" AutomationProperties.Name="Export folder"/>
+                    <Button Classes="quiet-button" Content="Browse…" HorizontalAlignment="Left" Margin="0,4,0,0"
+                            Click="OnBrowseClick" AutomationProperties.Name="Browse export folder"/>
 
-                <TextBlock Text="Destination" Classes="section-label" Margin="0,20,0,8"/>
-                <TextBox x:Name="ExportFolderField" Classes="edit-field"
-                         Text="{Binding ExportSettings.OutputFolder, Mode=TwoWay}"
-                         ToolTip.Tip="{Binding ExportSettings.OutputFolder}" AutomationProperties.Name="Export folder"/>
-                <Button Classes="quiet-button" Content="Browse…" HorizontalAlignment="Left" Margin="0,4,0,0"
-                        Click="OnBrowseClick" AutomationProperties.Name="Browse export folder"/>
+                    <TextBlock Text="Output sizes" Classes="section-label" Margin="0,12,0,4"/>
+                    <CheckBox Classes="edit-toggle" Content="Full size · No resizing"
+                              IsChecked="{Binding ExportSettings.ExportHiRes, Mode=TwoWay}"/>
+                    <Grid ColumnDefinitions="70,*,Auto" Height="28">
+                        <CheckBox Classes="edit-toggle" Content="Web" IsChecked="{Binding ExportSettings.ExportWeb, Mode=TwoWay}"/>
+                        <TextBox x:Name="WebMaxSizeField" Grid.Column="1" Classes="edit-field" Margin="0,0,5,0"
+                                 IsEnabled="{Binding ExportSettings.ExportWeb}"
+                                 Text="{Binding ExportSettings.WebMaxSizeText, Mode=TwoWay}"
+                                 AutomationProperties.Name="Web long edge in pixels"/>
+                        <TextBlock Grid.Column="2" Text="px" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="70,*,Auto" Height="28">
+                        <CheckBox Classes="edit-toggle" Content="Small" IsChecked="{Binding ExportSettings.ExportSmall, Mode=TwoWay}"/>
+                        <TextBox x:Name="SmallMaxSizeField" Grid.Column="1" Classes="edit-field" Margin="0,0,5,0"
+                                 IsEnabled="{Binding ExportSettings.ExportSmall}"
+                                 Text="{Binding ExportSettings.SmallMaxSizeText, Mode=TwoWay}"
+                                 AutomationProperties.Name="Small long edge in pixels"/>
+                        <TextBlock Grid.Column="2" Text="px" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                    </Grid>
 
-                <TextBlock Text="Format" Classes="section-label" Margin="0,20,0,8"/>
-                <ComboBox x:Name="ExportFormatBox" Classes="edit-dropdown" SelectedIndex="{Binding ExportSettings.Format, Mode=TwoWay}">
-                    <ComboBoxItem Content="JPEG"/>
-                    <ComboBoxItem Content="PNG"/>
-                    <ComboBoxItem Content="WebP"/>
-                    <ComboBoxItem Content="TIFF (16-bit)"/>
-                </ComboBox>
-                <views:CompactSlider x:Name="ExportQualitySlider" Label="Quality"
-                                     Minimum="1" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%"
-                                     IsEnabled="{Binding IsExportQualityAvailable}"
-                                     Value="{Binding ExportSettings.Quality, Mode=TwoWay}" Margin="0,4,0,0"/>
+                    <TextBlock Text="Long edge · preserves aspect ratio" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
 
-                <TextBlock Text="Color Space" Classes="section-label" Margin="0,20,0,8"/>
-                <ListBox x:Name="ExportColorSpaceBox" Classes="segmented" SelectedIndex="{Binding ExportSettings.OutputColorSpace, Mode=TwoWay}"
-                         SelectionMode="Single,AlwaysSelected">
-                    <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
-                    <ListBoxItem Content="sRGB"/>
-                    <ListBoxItem Content="Display P3"/>
-                </ListBox>
+                    <TextBlock Text="Format" Classes="section-label" Margin="0,12,0,4"/>
+                    <ComboBox x:Name="ExportFormatBox" Classes="edit-dropdown" SelectedIndex="{Binding ExportSettings.Format, Mode=TwoWay}">
+                        <ComboBoxItem Content="JPEG"/>
+                        <ComboBoxItem Content="PNG"/>
+                        <ComboBoxItem Content="WebP"/>
+                        <ComboBoxItem Content="TIFF (16-bit)"/>
+                    </ComboBox>
+                    <views:CompactSlider x:Name="ExportQualitySlider" Label="Quality"
+                                         Minimum="1" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%"
+                                         IsVisible="{Binding IsExportQualityAvailable}"
+                                         Value="{Binding ExportSettings.Quality, Mode=TwoWay}" Margin="0,4,0,0"/>
 
-                <TextBlock Text="Output Sharpening" Classes="section-label" Margin="0,20,0,8"/>
-                <ListBox x:Name="ExportSharpeningBox" Classes="segmented" SelectedIndex="{Binding ExportSettings.OutputSharpening, Mode=TwoWay}"
-                         SelectionMode="Single,AlwaysSelected">
-                    <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
-                    <ListBoxItem Content="Off"/>
-                    <ListBoxItem Content="Screen"/>
-                    <ListBoxItem Content="Print"/>
-                </ListBox>
+                    <TextBlock x:Name="ExportLosslessLabel" Text="Lossless" IsVisible="{Binding !IsExportQualityAvailable}" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                    <CheckBox Classes="edit-toggle" Content="Remove location data" IsChecked="{Binding ExportSettings.StripLocationData, Mode=TwoWay}"/>
+                    <Expander x:Name="ExportMoreOptions" IsExpanded="False" Margin="0,8,0,0">
+                        <Expander.Header>
+                            <StackPanel>
+                                <TextBlock Text="More options" FontSize="12"/>
+                                <TextBlock Text="{Binding ExportOptionsSummary}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Expander.Header>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Color space" Classes="section-label" Margin="0,12,0,4"/>
+                            <ListBox x:Name="ExportColorSpaceBox" Classes="segmented" SelectedIndex="{Binding ExportSettings.OutputColorSpace, Mode=TwoWay}"
+                                     SelectionMode="Single,AlwaysSelected">
+                                <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                                <ListBoxItem Content="sRGB"/>
+                                <ListBoxItem Content="Display P3"/>
+                            </ListBox>
 
-                <TextBlock Text="Naming Pattern" Classes="section-label" Margin="0,20,0,8"/>
-                <TextBox x:Name="ExportNamingPatternField" Classes="edit-field"
-                         Text="{Binding ExportSettings.NamingPattern, Mode=TwoWay}"
-                         PlaceholderText="{}{name}, {date}" AutomationProperties.Name="Export naming pattern"/>
-                <CheckBox Classes="edit-toggle" Content="Strip location data" IsChecked="{Binding ExportSettings.StripLocationData, Mode=TwoWay}"/>
+                            <TextBlock Text="Output sharpening" Classes="section-label" Margin="0,12,0,4"/>
+                            <ListBox x:Name="ExportSharpeningBox" Classes="segmented" SelectedIndex="{Binding ExportSettings.OutputSharpening, Mode=TwoWay}"
+                                     SelectionMode="Single,AlwaysSelected">
+                                <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                                <ListBoxItem Content="Off"/>
+                                <ListBoxItem Content="Screen"/>
+                                <ListBoxItem Content="Print"/>
+                            </ListBox>
 
-                <views:ExportReportCard Margin="0,16,0,0"/>
-                <StackPanel Spacing="10" Margin="0,16,0,0">
+                            <TextBlock Text="Filenames" Classes="section-label" Margin="0,12,0,4"/>
+                            <ComboBox Classes="edit-dropdown" SelectedIndex="{Binding ExportFilenameChoice, Mode=TwoWay}">
+                                <ComboBoxItem Content="Keep original filename"/>
+                                <ComboBoxItem Content="Custom pattern"/>
+                            </ComboBox>
+                            <TextBox x:Name="ExportNamingPatternField" Classes="edit-field" IsVisible="{Binding IsCustomExportFilename}"
+                                     Text="{Binding ExportSettings.NamingPattern, Mode=TwoWay}"
+                                     PlaceholderText="{}{name}, {date}" AutomationProperties.Name="Export naming pattern"/>
+                            <TextBlock Text="{}{name} = original name · {date} = export date" IsVisible="{Binding IsCustomExportFilename}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Expander>
+                    <TextBlock Text="Example for this photo" FontSize="10" Foreground="{DynamicResource TextMuted}" Margin="0,8,0,0"/>
+                    <TextBlock Text="{Binding ExportPathExample}" FontSize="10" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding ExportSubfolderHelp}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+                </StackPanel>
+            </ScrollViewer>
+            <StackPanel x:Name="ExportFooter" Grid.Row="1" Margin="15,8,15,15" Spacing="8">
+
+                <views:ExportReportCard x:Name="ExportReport"/>
+                <TextBlock x:Name="ExportValidationText" Text="{Binding ExportValidationReason}" IsVisible="{Binding HasExportValidationReason}" FontSize="11" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
+                <StackPanel Spacing="10">
                     <TextBlock x:Name="ExportCountLineText" Text="{Binding ExportCountLine}" FontSize="11"
                                Foreground="{DynamicResource TextSecondary}"
                                TextWrapping="Wrap" VerticalAlignment="Center"/>
-                    <Button x:Name="RunExportButton" Content="Export" Height="30"
+                    <Button x:Name="RunExportButton" Content="{Binding ExportButtonLabel}" Height="30"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             VerticalContentAlignment="Center"
@@ -82,11 +108,11 @@
                             Foreground="{DynamicResource OnControlActive}"
                             BorderThickness="0" CornerRadius="{StaticResource RadiusMedium}"
                             FontFamily="{StaticResource FontBody}" FontSize="{StaticResource FontSizeBody}"
-                            FontWeight="Bold" LetterSpacing="2"
+                            FontWeight="Bold"
                             Command="{Binding RunExportCommand}"
                             AutomationProperties.Name="Run export"/>
                 </StackPanel>
             </StackPanel>
-        </ScrollViewer>
+        </Grid>
     </Border>
 </UserControl>

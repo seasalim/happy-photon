@@ -82,6 +82,30 @@ public sealed class ExportProofViewModelTests
         AssertPaintedPreviewSize(paneScope, 320, 160);
     }
 
+    [AvaloniaTheory]
+    [InlineData("abc")]
+    [InlineData("0")]
+    [InlineData("70000")]
+    public async Task InvalidSize_ProofUsesLargestValidEnabledSize(string invalidSize)
+    {
+        using var root = new TemporaryDirectory();
+        using var catalog = new CatalogService(root.Path);
+        await catalog.InitializeAsync();
+        var loader = new ProofLoader();
+        await using var vm = CreateViewModel(catalog, loader);
+        PrepareOneCapture(vm, root.Path);
+        ArmSizedRecipe(vm, 96);
+        vm.ExportSettings.ExportSmall = true;
+        vm.ExportSettings.SmallMaxSize = 48;
+        vm.ExportSettings.WebMaxSizeText = invalidSize;
+        vm.WorkspaceMode = WorkspaceMode.Export;
+        await TestWaits.UntilAsync(() => vm.PreviewImage?.PixelSize.Width == 128);
+        vm.ExportSettings.ShowProof = true;
+        await TestWaits.UntilAsync(() => vm.ExportProofCaption == "PROOF · JPEG · sRGB · 48 PX");
+        Assert.Equal(48, vm.PreviewImage!.PixelSize.Width);
+        Assert.False(vm.CanRunExport);
+    }
+
     [AvaloniaFact]
     public async Task SupersededPausedProof_LabelsOnlyTheAcceptedPaintAsProof()
     {

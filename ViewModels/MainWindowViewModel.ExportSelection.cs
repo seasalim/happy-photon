@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Avalonia;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -26,24 +25,18 @@ public partial class MainWindowViewModel
         {
             if (!SetProperty(ref _activeExportCapture, value) || value == null) return;
             SelectedImage = value.Image;
+            OnPropertyChanged(nameof(ExportPathExample));
         }
     }
 
     public bool HasNoExportCaptures => ExportCaptures.Count == 0;
-    public int IncludedExportCaptureCount =>
-        ExportCaptures.Count(capture => capture.IsIncluded);
-    public int ArmedExportRecipeCount =>
+    public int ArmedExportSizeCount =>
         (ExportSettings.ExportHiRes ? 1 : 0) +
         (ExportSettings.ExportWeb ? 1 : 0) +
         (ExportSettings.ExportSmall ? 1 : 0);
-    public int ExportFileCount =>
-        IncludedExportCaptureCount * ArmedExportRecipeCount;
-    public string ExportCountLine =>
-        $"{IncludedExportCaptureCount} " +
-        $"{(IncludedExportCaptureCount == 1 ? "capture" : "captures")} × " +
-        $"{ArmedExportRecipeCount} " +
-        $"{(ArmedExportRecipeCount == 1 ? "recipe" : "recipes")} → " +
-        $"{ExportFileCount} {(ExportFileCount == 1 ? "file" : "files")}";
+    public int ExportFileCount => ExportCaptures.Count * ArmedExportSizeCount;
+    public string ExportPhotoCount => $"{ExportCaptures.Count} {(ExportCaptures.Count == 1 ? "photo" : "photos")}";
+    public string ExportCountLine => $"{ExportPhotoCount} · {ArmedExportSizeCount} {(ArmedExportSizeCount == 1 ? "size" : "sizes")}";
     public bool IsExportQualityAvailable =>
         ExportSettings.Format is not ExportFormat.Png and not ExportFormat.Tiff;
     public bool IsExportProofCaptionVisible =>
@@ -52,7 +45,7 @@ public partial class MainWindowViewModel
         _proofIsDisplayed,
         ExportSettings.Format,
         ExportSettings.OutputColorSpace,
-        ArmedExportRecipeCount > 0
+        ArmedExportSizeCount > 0
             ? ResolveExportProofMaxDimension()
             : null);
 
@@ -226,17 +219,11 @@ public partial class MainWindowViewModel
     private void PrepareExportWorkspace()
     {
         UpdateAutomaticExportFolder();
-        foreach (var capture in ExportCaptures)
-        {
-            capture.PropertyChanged -= OnExportCapturePropertyChanged;
-        }
         ExportCaptures.Clear();
         foreach (var image in Browse.GetSelectedImages())
-        {
-            var capture = new ExportCaptureViewModel(image);
-            capture.PropertyChanged += OnExportCapturePropertyChanged;
-            ExportCaptures.Add(capture);
-        }
+            ExportCaptures.Add(new ExportCaptureViewModel(image));
+        _exportVersionedPaths = ExportJob.FindVersionedPaths(
+            ExportCaptures.Select(capture => capture.Image));
 
         var activeImage = VisibleRepresentative(SelectedImage);
         ActiveExportCapture = ExportCaptures.FirstOrDefault(capture =>
@@ -244,6 +231,7 @@ public partial class MainWindowViewModel
         if (!_exportSettingsObserved)
         {
             ExportSettings.PropertyChanged += OnWorkspaceExportSettingsChanged;
+            Browse.StateChanged += (_, _) => NotifyExportBatchSettings();
             _exportSettingsObserved = true;
         }
         NotifyExportWorkspaceCounts();
@@ -262,14 +250,6 @@ public partial class MainWindowViewModel
         return true;
     }
 
-    private void OnExportCapturePropertyChanged(
-        object? sender,
-        PropertyChangedEventArgs args)
-    {
-        if (args.PropertyName == nameof(ExportCaptureViewModel.IsIncluded))
-            NotifyExportWorkspaceCounts();
-    }
-
     private void OnWorkspaceExportSettingsChanged(
         object? sender,
         PropertyChangedEventArgs args)
@@ -277,6 +257,7 @@ public partial class MainWindowViewModel
         if (args.PropertyName is nameof(ExportSettings.ExportHiRes) or
             nameof(ExportSettings.ExportWeb) or nameof(ExportSettings.ExportSmall))
             NotifyExportWorkspaceCounts();
+        NotifyExportBatchSettings();
         var property = args.PropertyName;
         if (property == nameof(ExportSettings.Format))
             OnPropertyChanged(nameof(IsExportQualityAvailable));
@@ -304,7 +285,9 @@ public partial class MainWindowViewModel
         property == nameof(ExportSettings.OutputSharpening);
 
     private int? ResolveExportProofMaxDimension() =>
-        ExportSettings.GetActiveVariants() is { Count: > 0 } variants
+        ExportSettings.GetActiveVariants()
+            .Where(variant => variant.MaxDimension is null ||
+                ExportSettings.IsValidSize(variant.MaxDimension.Value)).ToList() is { Count: > 0 } variants
             ? variants[0].MaxDimension
             : BaseImage.InteractivePreviewMaxDimension;
 
@@ -436,8 +419,9 @@ public partial class MainWindowViewModel
 
     private void NotifyExportWorkspaceCounts()
     {
-        OnPropertyChanged(nameof(IncludedExportCaptureCount));
-        OnPropertyChanged(nameof(ArmedExportRecipeCount));
+        OnPropertyChanged(nameof(ExportPhotoCount));
+        NotifyExportBatchSettings();
+        OnPropertyChanged(nameof(ArmedExportSizeCount));
         OnPropertyChanged(nameof(ExportFileCount));
         OnPropertyChanged(nameof(ExportCountLine));
         OnPropertyChanged(nameof(IsExportProofCaptionVisible));
@@ -446,10 +430,4 @@ public partial class MainWindowViewModel
     }
 }
 
-public sealed partial class ExportCaptureViewModel(ImageFile image) : ObservableObject
-{
-    public ImageFile Image { get; } = image;
-
-    [ObservableProperty]
-    private bool _isIncluded = true;
-}
+public sealed record ExportCaptureViewModel(ImageFile Image);

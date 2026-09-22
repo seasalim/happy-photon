@@ -220,6 +220,12 @@ public partial class BrowseImageState : ObservableObject
         MatchesFlagFilter(image) &&
         image.Rating >= MinimumRating && MatchesColorLabelFilter(colorLabel);
 
+    public void ReplaceSelection(IReadOnlySet<ImageFile> selection)
+    {
+        foreach (var image in VisibleImages) image.IsSelected = selection.Contains(image);
+        NotifySelectedCountChanged();
+    }
+
     public IReadOnlyList<ImageFile> GetRejectedImages() =>
         _allImages.Where(image => image.Flag == ImageFlag.Rejected).ToList();
 

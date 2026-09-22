@@ -133,12 +133,8 @@ public sealed class ExportJobContractTests : IDisposable
             ExportHiRes = false
         };
 
-        var result = await CreateService(loader).ExportBatchAsync(
-            [new ImageFile(WriteSourceImage("none.png"))],
-            settings);
-
-        Assert.Empty(result.Outcomes);
-        Assert.Equal(0, result.ExportedCount);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => CreateService(loader).ExportBatchAsync(
+            [new ImageFile(WriteSourceImage("none.png"))], settings));
         Assert.Equal(0, loader.FullLoadCount);
         Assert.False(Directory.Exists(settings.OutputFolder));
     }

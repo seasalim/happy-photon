@@ -44,8 +44,8 @@ all export renders remain mask-free (RENDER.md §7).
 ## 2. Export flow (`ImageExportService`)
 
 Before pixel work, export resolves an immutable job containing the captures, armed
-recipes, cloned edit settings, all output settings, and the target path for every
-capture-recipe pair. Execution reads only that job, so later workspace changes cannot
+output sizes, cloned edit settings, all output settings, and the target path for every
+photo-size pair. Execution reads only that job, so later workspace changes cannot
 alter pixels, metadata policy, encoding, or destinations. Outcomes are recorded per
 target pair, while each capture still follows the shared flow below:
 `LoadFullBase` → one unresized `RenderDisplayRec2020` → per variant, in descending size
@@ -57,11 +57,23 @@ confirmation; every other install uses create-new semantics, so a file appearing
 preflight is never overwritten. The export loop transfers ownership of the last
 progressive variant instead of cloning it.
 
+Browse selection is authoritative: every photo in the Export batch becomes a job capture.
+Change photos and settings edits affect only the next batch. Before constructing any new
+job, settings reject no enabled sizes, non-numeric/out-of-range long edges (16–65,536), an
+empty destination or an empty/illegal naming pattern. Explicit variants are range-checked too.
+Retry uses the saved job. There is no silent size clamping.
+
+The default naming pattern is `{name}`; `{date}` is the export date. The active-photo example
+and job targets share one path resolver for extension, size subfolders and `-V<n>` suffixes
+when multiple versions of the same source are present. One size writes directly into the
+destination; multiple sizes use their own subfolders. The example does not clone edits or
+construct a job. Path collisions and RAW+JPEG remedies direct selection changes to Browse.
+
 Develop preview uses the same finalizer with output sharpening disabled and sRGB
 selected. The Export workspace shows that standard preview by default. Its opt-in
 **Proof** control runs the selected image through a fresh full-resolution render and
-finalizes it for the largest armed variant (unresized when Hi-Res is armed), falling
-back to the interactive preview dimension when none are armed. Recipe changes rerun an
+finalizes it for the largest valid enabled variant (unresized when Full size is enabled), falling
+back to the interactive preview dimension when none are armed. Size changes rerun an
 enabled proof behind the normal preview activity affordance. A displayed proof
 suppresses the display-fit resting upgrade because sharpening is defined at output
 dimensions; switching Proof off returns to the standard preview path.
@@ -120,7 +132,7 @@ deliberately reconstructs metadata on the encoded output:
    - Remove the embedded EXIF thumbnail (stale after edits).
    - Remove `PixelXDimension`/`PixelYDimension` (or set to actual output size).
    - Set `Software = "Happy Photon <version>"`.
-3. **GPS:** kept by default; removed when the Export workspace's **"Strip location data"**
+3. **GPS:** kept by default; removed when the Export workspace's **"Remove location data"**
    checkbox is set (persisted app setting, default off). Stripping removes the entire
    GPS IFD.
 4. ICC: §3's selected output profile — never the source profile.
@@ -131,6 +143,11 @@ while private or structurally stale metadata is never carried through accidental
 
 ## 5. Verification
 
+- Typed invalid sizes block both the button and Enter with an inline reason; correcting to
+  3000 yields a 3000-pixel job target. Explicit invalid variants cannot bypass validation.
+- Filename examples equal relative job paths for one/multiple sizes and V1/V2 pairs.
+- Batch changes preserve running jobs; footer summary/action/report remain visible with
+  collapsed and expanded failure/warning details at default and minimum window sizes.
 - Exported JPEG opened in a color-managed browser stays within the preview's colorimetric
   bounds. sRGB retains the golden ΔE/code gates; Display P3 is converted through its
   embedded profile before comparison, and the synthetic native-P3 fixture is the
@@ -140,7 +157,7 @@ while private or structurally stale metadata is never carried through accidental
 - Export of a RAW carries capture date, camera, exposure EXIF; orientation displays
   upright everywhere; no embedded stale thumbnail (verify with exiftool in CI or a
   Magick profile read-back test).
-- "Strip location data" removes all GPS tags; default keeps them (round-trip test with
+- "Remove location data" removes all GPS tags; default keeps them (round-trip test with
   a GPS-tagged asset).
 - Subsampling: quality 92 export shows `4:4:4`, quality 80 shows `4:2:0` (read back via
   Magick attributes).

@@ -99,13 +99,7 @@ public sealed class PreviewPlaceholderTests
             .OfType<Image>());
         Assert.Equal(56, thumbnail.Width);
         Assert.Equal(42, thumbnail.Height);
-        var includeBadge = Assert.Single(captureSurface.GetVisualDescendants()
-            .OfType<Border>(), border => border.Classes.Contains("check-badge"));
-        Assert.Contains("selected", includeBadge.Classes);
-        vm.ExportCaptures[0].IsIncluded = false;
-        Dispatcher.UIThread.RunJobs();
-        Assert.DoesNotContain("selected", includeBadge.Classes);
-        Assert.True(includeBadge.Opacity > 0);
+        Assert.Empty(captureSurface.GetVisualDescendants().OfType<CheckBox>());
 
         var settingsPane = window.FindControl<ExportSettingsPane>("ExportSettingsPane")!;
         var format = settingsPane.FindControl<ComboBox>("ExportFormatBox")!;
@@ -113,7 +107,7 @@ public sealed class PreviewPlaceholderTests
         format.SelectedIndex = (int)ExportFormat.Tiff;
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(ExportFormat.Tiff, vm.ExportSettings.Format);
-        Assert.False(quality.IsEnabled);
+        Assert.False(quality.IsVisible);
 
         windowScope.Dispose();
     }
@@ -353,7 +347,7 @@ public sealed class PreviewPlaceholderTests
         Assert.Equal("Undo edit", AutomationProperties.GetName(undo));
         Assert.Equal("Redo edit", AutomationProperties.GetName(redo));
         Assert.Equal("Reset adjustments", AutomationProperties.GetName(reset));
-        Assert.Equal("Export", exportButton.Content);
+        Assert.Equal("Export 0 files", exportButton.Content);
         Assert.Equal(HorizontalAlignment.Center,
             exportButton.HorizontalContentAlignment);
         Assert.Equal(1, outputSharpening.SelectedIndex);

@@ -176,6 +176,7 @@ public partial class MainWindowViewModel
         BeginDevelopHistoryLoad(isDevelopMode ? SelectedImage : null);
         if (value == WorkspaceMode.Export)
         {
+            ExportFilenameChoice = ExportSettings.NamingPattern == "{name}" ? 0 : 1;
             PrepareExportWorkspace();
         }
         if (isPreviewWorkspace && SelectedImage != null)

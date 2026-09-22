@@ -68,7 +68,8 @@ public sealed class ExportWorkspaceRunTests : IDisposable
         Assert.Contains("DSCF8280.RAF", vm.ExportReport?.Summary);
         Assert.Contains("DSCF8280.JPG", vm.ExportReport?.Summary);
         Assert.Contains("one capture shot RAW+JPEG", vm.ExportReport?.Summary);
-        Assert.Contains("Uncheck one in the Export filmstrip", vm.ExportReport?.Summary);
+        Assert.Contains("Choose one in Browse", vm.ExportReport?.Summary);
+        Assert.DoesNotContain("uncheck", vm.ExportReport!.Summary, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(loader.FullLoads);
         Assert.Equal(0, vm.ExportActivityScopeStartCount);
     }
@@ -240,6 +241,34 @@ public sealed class ExportWorkspaceRunTests : IDisposable
             ["drain-start", "drain-complete", "services-dispose"],
             order);
         Assert.True(vm.ActiveExportJobTask?.IsCompleted);
+    }
+
+    [Fact]
+    public async Task UsePickedDuringRun_PreparesNextBatchWithoutChangingJob()
+    {
+        var loader = new BlockingBaseLoader();
+        await using var vm = CreateViewModel(loader);
+        var captures = CreateCaptures("running.jpg", "next.jpg");
+        SelectForExport(vm, captures);
+        captures[1].Flag = ImageFlag.Picked;
+        var job = vm.ExportSettings.CreateJob(captures);
+        var run = vm.RunExportJobForTestAsync(job);
+        try
+        {
+            Assert.True(loader.WaitUntilStarted());
+            vm.UsePickedPhotosCommand.Execute(null);
+            Assert.Equal(captures, job.Captures);
+            Assert.Same(captures[1], Assert.Single(vm.ExportCaptures).Image);
+            Assert.True(vm.IsExportJobRunning);
+            Assert.Equal(1, vm.ExportActivityScopeStartCount);
+        }
+        finally
+        {
+            loader.Release();
+            await run.WaitAsync(TestWaits.Condition);
+        }
+        Assert.Equal(2, loader.FullLoads.Count);
+        Assert.Equal("2 of 2 files exported.", vm.ExportReport?.Summary);
     }
 
     private MainWindowViewModel CreateViewModel(
