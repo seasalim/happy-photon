@@ -470,6 +470,70 @@ Neutral/monochrome tests and the unchanged linear sentinels pin exact bypass.
 `LocalsViewModelTests` covers release/reset undo and mono dormancy; the 1200x700
 Dark scenes `develop-locals-color` and `develop-locals-mono` supply review images.
 
+Range qualification uses
+`./Tests/RunLocalsBaseline.ps1 -Gate <gate> -Fixture raw|standard`; run each
+gate in a fresh Release process with five pairs (default), full CPU, and a 120 s
+limit.
+
+| Gate | Workload / measurement |
+| --- | --- |
+| `QualifiedRangeControlTick` | Current C8 color-radial 1600 px tick and allocation |
+| `QualifiedRangeControlContention` | C8 tick during a cap-2 3200 px resting render |
+| `QualifiedRangeControlExport` | C8 off/on export; three RAW variants, one HEIC |
+| `QualifiedRangeClassification` | RGB-read control; double classification; double/FAST eight-window arms, unculled and CULLED |
+| `QualifiedRangeClassificationExport` | Same arms at full resolution, excluding encoding |
+| `QualifiedRangeOverlay` | Selected-mask field/tint computation and separate allocation/page-commit timing |
+| `QualifiedRangeReliability` | Both noisy fixtures' pre-tone 3×3 hue deviation and declared EV sweep |
+
+Setup prepares geometry/DCP and Q16 RGB; timed arms apply global WB and share
+one classification across locals. For i=0…7, L bounds are .08i / (.4+.08i), hue
+center 45i, width 60 (360 at i=7); L/hue softness is 0 at i=0,3,6, otherwise
+.1/30°. CULLED uses `RadialSettings`' frozen R8 terms: classify only their union
+and evaluate each window only where its own geometric weight >0, including
+culling cost. FAST uses a shared 2 MiB cube-root LUT: interpolation on
+.01≤|LMS|<4, double oracle elsewhere. Proven bounds |ΔL|≤2e-8 and |Δab|≤9e-8
+determine boundary guards; hard boundaries and steep shoulders fall back once
+per pixel. `LocalsContractPrototypeTests.RangeFast*` checks
+adjacent-double/extended-RGB fidelity (zero hard flips, soft-weight error
+≤1e-3); `RangeOracle*` pins windows, picker and basis equivalence, including RAW
+exposure-only and monochrome cases. No classification image is retained. Overlay
+uses the first window and analytic 45% linear mask, allocating 4N-byte float and
+4N-byte BGRA buffers; native upload is excluded. Private-memory sampling remains
+10 ms plus the final live sample; caller allocation excludes workers. Shared
+LUT/setup is outside per-render timing.
+
+Observations: Windows, 24 CPUs, resident Canon ISO-6400 CR2 / iPhone ISO-1000
+HEIC; paired medians in ms.
+
+| Observation | RAW | HEIC |
+| --- | ---: | ---: |
+| C8 tick / contended control | 56.33 / 131.48 | 55.76 / 123.71 |
+| Export off / C8 delta control | 2747.15 / +337.83 | 840.12 / +167.52 |
+| Double classifier preview / full increment | 18.18 / 136.44 | 17.72 / 92.22 |
+| Double + eight windows, unculled / CULLED increment | 28.47 / 19.09 | 28.84 / 17.00 |
+| FAST + eight windows, unculled / CULLED increment | 66.20 / 15.72 | 28.25 / 15.93 |
+| R8 preview union / mean windows per pixel | 44.45% / .456 | 34.32% / .406 |
+| Projected ordinary / contended, CULLED double | 77.49 / 144.89 | 71.60 / 149.00 |
+| Projected ordinary / contended, CULLED FAST | 74.12 / 141.52 | 70.53 / 147.93 |
+| Full double + windows, unculled / CULLED increment | 254.25 / 168.78 | 181.61 / 109.49 |
+| Full FAST + windows, unculled / CULLED increment | 276.30 / 177.93 | 175.02 / 104.89 |
+| Overlay allocate+commit / field+tint / total | 1.64 / 52.87 / 54.52 | 2.18 / 34.59 / 36.89 |
+| Classifier max arm-median private / caller bytes (preview+full) | 28672 / 3008 | 4096 / 2880 |
+| Overlay incremental private / caller bytes | 0 / 13673072 | 15257600 / 15362800 |
+
+Projections add paired increments to supplied tick/contended baselines
+58.4/125.8 RAW and 54.6/132.0 HEIC; they are **not fused measurements**. Full
+increments are per upstream render shared by variants. Warmup variance remains
+visible in per-arm samples; passing a measurement gate does not qualify
+production. Reliability bins pre-tone C in .002 steps (≥100 samples); D is
+median 3×3 circular deviation √(−2 ln R), where R is the length of the mean unit
+hue vector (zero at C=0), borders excluded, then prefix-min ≥45° / suffix-max
+≤15° crossings. The worse-fixture envelope requires both crossings, ≤2× fixture
+disagreement and start<end; missing bins break evidence: INCONCLUSIVE (RAW
+noise-dominated 70–84° through C=.09; HEIC codec-smoothed near 1°). The pinned
+absolute pre-tone r(C) is smoothstep .01–.04; for Rec.2020 [.0005,.00075,.0075]
+scaled by 2^EV in .01 EV steps, r<1 at −1.31 EV and r<.5 at −3.34 EV.
+
 Local color qualification measurements (24 CPUs, five pairs, 2026-09-06):
 
 | Metric | RAW | HEIC |
