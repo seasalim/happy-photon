@@ -11,8 +11,10 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
   </PropertyGroup>
+  <Import Project="..\Magick.props" />
 
   <ItemGroup>
+    <AssemblyMetadata Include="MagickFlavor" Value="$(MagickFlavor)" />
     <PackageReference Include="Avalonia.Headless.XUnit" Version="12.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
@@ -24,6 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Tests\OpenMpRuntimeTests.cs" Link="OpenMpRuntimeTests.cs" />
+    <Compile Include="..\Tests\OpenMpStartup.cs" Link="OpenMpStartup.cs" />
     <Compile Include="..\Tests\CullPerfFiles.cs" Link="CullPerfFiles.cs" />
     <Compile Include="..\Tests\CullPerfEvidence.cs" Link="CullPerfEvidence.cs" />
     <Compile Include="..\Tests\CatalogVmFixture.cs" Link="CatalogVmFixture.cs" />

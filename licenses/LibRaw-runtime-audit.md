@@ -747,3 +747,24 @@ The full solution suite against this package is green: 232 headless,
 This entry records the package swap: the 0.22.2.11 pair is removed from
 `packages/native/` (its qualification above remains the historical
 record) and 0.22.2.12 is committed with its provenance file.
+
+## 2026-09-23 — shared ImageMagick OpenMP runtime
+
+PERFBASE WP1 Step 2 switches win-x64/linux-x64 to
+`Magick.NET-Q16-OpenMP-x64` 14.15.0; macOS retains Q16 AnyCPU. Windows now ships
+that package's `vcomp140.dll` (14.51.36247) app-local. LibRaw's `VCOMP140.DLL`
+import binds to the same module, replacing the System32 prerequisite policy.
+The native-limit tests verify one loaded runtime and app-local Windows resolution
+for both Magick-first and LibRaw-first load orders.
+
+The existing `min(cores, 16)` memory cap moves to process entry, with the lazy
+LibRaw hook retained. It defaults both `OMP_NUM_THREADS` and `MAGICK_THREAD_LIMIT`
+without loading either image library; explicit values remain authoritative.
+ImageMagick otherwise reserves one worker. On Unix, libc `setenv` also makes
+these defaults visible to native code without overwriting inherited settings.
+
+Linux retains the approved system `libgomp.so.1` policy, with no bundled copy.
+It is now required for all image decoding, including JPEG, because ImageMagick
+also links it. Missing libgomp prevents both decoders from loading. Native Linux
+limits and platform pixel hashes require CI qualification; Windows native-limit
+checks do not establish Linux behavior.

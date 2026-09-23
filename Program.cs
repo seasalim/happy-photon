@@ -11,6 +11,7 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        LibRaw.Interop.NativeLibraryResolver.ConfigureOpenMpThreadLimit();
         using var singleInstance = SingleInstanceGuard.TryAcquire();
         if (singleInstance is null)
         {

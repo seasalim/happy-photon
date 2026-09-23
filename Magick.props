@@ -1,0 +1,14 @@
+<Project>
+  <!-- Resolve a profile's RID before choosing its package graph. -->
+  <Import Project="$(MSBuildSDKsPath)/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.ImportPublishProfile.targets"
+          Condition="'$(PublishProfile)' != '' And '$(PublishProfileImported)' != 'true'" />
+  <PropertyGroup>
+    <!-- Explicit RIDs win over the host; the override supports package A/B measurements. -->
+    <MagickFlavor Condition="'$(MagickFlavor)' == '' And ('$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'linux-x64')">OpenMP-x64</MagickFlavor>
+    <MagickFlavor Condition="'$(MagickFlavor)' == '' And '$(RuntimeIdentifier)' == '' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'X64' And ($([MSBuild]::IsOSPlatform('Windows')) Or $([MSBuild]::IsOSPlatform('Linux')))">OpenMP-x64</MagickFlavor>
+    <MagickFlavor Condition="'$(MagickFlavor)' == ''">AnyCPU</MagickFlavor>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NuGetLockFilePath Condition="'$(MagickFlavor)' == 'AnyCPU'">packages.AnyCPU.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+</Project>

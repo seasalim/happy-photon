@@ -8,7 +8,9 @@ keep every non-default setting explicit at the call site.
 
 Ordinary `dotnet test` runs use `HappyPhoton.runsettings`, which gives each test
 host two logical processors. This bounds xUnit collection concurrency, managed
-pixel workers, and LibRaw's default OpenMP workers together. Opt-in performance
+pixel workers, and the shared Magick/LibRaw OpenMP budget together. Each test
+assembly sets the budget before native loading, including `MAGICK_THREAD_LIMIT`,
+so the default host uses two native workers. Explicit environment limits win. Opt-in performance
 measurements bypass that cap in a fresh process with
 `HAPPY_PHOTON_FULL_CPU=1`, which switches to `HappyPhoton.FullCpu.runsettings`:
 the same quarantine filter without the processor cap.

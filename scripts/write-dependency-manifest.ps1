@@ -14,19 +14,19 @@ param(
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $projectPath = Join-Path $projectRoot "HappyPhoton.csproj"
 $arguments = @(
-    "package",
-    "list",
-    "--project",
-    $projectPath,
-    "--no-restore",
-    "--include-transitive",
-    "--format",
-    "json",
-    "--output-version",
-    "1"
+    "package", "list", "--project", $projectPath,
+    "--no-restore", "--include-transitive",
+    "--format", "json", "--output-version", "1"
 )
 
-$packageReportText = (& dotnet @arguments) -join [Environment]::NewLine
+# Package list has no RID argument; evaluate the graph for the published target.
+$previousRid = $env:RuntimeIdentifier
+try {
+    $env:RuntimeIdentifier = $RuntimeIdentifier
+    $packageReportText = (& dotnet @arguments) -join [Environment]::NewLine
+} finally {
+    $env:RuntimeIdentifier = $previousRid
+}
 if ($LASTEXITCODE -ne 0) {
     throw "Could not generate the dependency inventory."
 }
@@ -144,12 +144,25 @@ try {
     $archive.Dispose()
 }
 
+$magickPackage = $packageReport.projects.frameworks.topLevelPackages |
+    Where-Object { $_.id -like 'Magick.NET-Q16-*' } | Select-Object -First 1
+if ($RuntimeIdentifier -eq 'win-x64' -and $magickPackage.id -eq 'Magick.NET-Q16-OpenMP-x64') {
+    $bundledNativeInventory += [ordered]@{
+        name = 'Microsoft Visual C++ OpenMP runtime'
+        package = $magickPackage.id
+        packageVersion = $magickPackage.resolvedVersion
+        file = 'vcomp140.dll'
+        license = 'Microsoft Visual Studio License Terms'
+    }
+}
+$lockFile = if ($magickPackage.id -like '*-AnyCPU') { 'packages.AnyCPU.lock.json' } else { 'packages.lock.json' }
+
 $manifest = [ordered]@{
     schemaVersion = 1
     product = "Happy Photon"
     version = $Version
     runtimeIdentifier = $RuntimeIdentifier
-    generatedFrom = @("packages.lock.json")
+    generatedFrom = @($lockFile)
     licenseNotices = @(
         "LICENSE",
         "THIRD_PARTY_NOTICES.md",

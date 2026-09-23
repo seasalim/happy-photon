@@ -72,6 +72,23 @@ Release versions may be final (`0.1.0`) or include a prerelease suffix
 is rejected because the SDK appends the source revision to the assembly's
 informational version.
 
+## ImageMagick packages and native prerequisites
+
+`MagickFlavor` selects `Magick.NET-Q16-OpenMP-x64` 14.15.0 for win-x64 and
+linux-x64, and `Magick.NET-Q16-AnyCPU` for osx-arm64. Without a RID it follows
+the host: OpenMP on x64 Windows/Linux, AnyCPU otherwise. Use
+`-p:MagickFlavor=AnyCPU` or `-p:MagickFlavor=OpenMP-x64` for build-time A/B checks.
+The app and both test projects use `packages.lock.json` for OpenMP and
+`packages.AnyCPU.lock.json` for AnyCPU. Refresh either family with the matching
+override; CI's existing locked solution and RID restores require no changes.
+
+Each publish includes exactly one RID-specific Magick native. Windows includes
+its package's `vcomp140.dll` app-local (also used by LibRaw), including in the
+single-file bundle. Validate the resulting MSIX with WACK at release qualification.
+Linux requires system `libgomp.so.1` for **all image decoding**, including JPEG,
+not only RAW: without it ImageMagick cannot load. The AppImage does not bundle it.
+macOS keeps the AnyCPU arm64 native and has no OpenMP runtime dependency.
+
 ## Repository variables
 
 Set these non-secret repository variables:

@@ -97,7 +97,7 @@ public sealed class RenderSequenceGoldenTests(ITestOutputHelper output)
             hueSatMap: map, isMonochrome: kind == "monochrome");
     }
 
-    private static EditSettings Settings() => new()
+    internal static EditSettings Settings() => new()
     {
         Exposure = 0.45, Brightness = 12, Contrast = 28, Highlights = -31,
         Shadows = 24, Saturation = 19, Vibrance = 16,

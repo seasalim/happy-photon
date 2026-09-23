@@ -259,6 +259,16 @@ a one-sample difference (consequences in TESTING.md §3).
 
 ## 3. `StandardBaseLoader` (Magick.NET)
 
+Windows/Linux x64 use Magick.NET Q16 OpenMP 14.15.0; macOS keeps Q16 AnyCPU.
+Before either native decoder loads, process entry fixes the shared OpenMP budget
+at `min(Environment.ProcessorCount, 16)` via `OMP_NUM_THREADS`. The same default
+is set in `MAGICK_THREAD_LIMIT` because ImageMagick otherwise reserves one worker.
+Non-blank explicit values win; Unix defaults also reach native `environ` through libc
+`setenv` replacing unset or blank values. This hook loads no image library. LibRaw retains
+its lazy fallback. Native whole-frame operations share this process-wide budget;
+the resting-render two-worker limit applies only to managed workers.
+
+
 1. JPEG sources are pinged for native geometry before decoding. Preview loading uses the
    `jpeg:size` hint at `LargePreviewMaxDimension` only when the native long edge exceeds
    that hint, then derives both preview classes (preserves quality through DCT-scaled

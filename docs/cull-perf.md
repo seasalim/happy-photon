@@ -115,6 +115,8 @@ The table is stratified: every applicable surface/pattern/fixture combination
 and every surface/fixture/cache combination occurs. Both settings variants occur
 for each surface/fixture; it is not a Cartesian expansion of all dimensions.
 Fullscreen only exercises navigation, consistent with its production guards.
+The 12 JPEG workloads that collect accurate-ready gate its p95 at 1,200 ms
+(PERFBASE WP1 G3), while RAW stays report-only.
 
 Preparation generates a 6000×4000 JPEG and hashes it and the repository RAW and
 legacy fixtures. A persistent hash-keyed root contains 627 JPEG/RAW pairs,

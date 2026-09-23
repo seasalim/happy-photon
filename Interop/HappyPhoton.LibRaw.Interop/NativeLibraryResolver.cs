@@ -60,19 +60,26 @@ internal static class NativeLibraryResolver
         return handle;
     }
 
-    private static void ConfigureOpenMpThreadLimit()
+    internal static void ConfigureOpenMpThreadLimit()
     {
-        if (!string.IsNullOrWhiteSpace(
-                Environment.GetEnvironmentVariable("OMP_NUM_THREADS")))
-        {
-            return;
-        }
-
-        Environment.SetEnvironmentVariable(
-            "OMP_NUM_THREADS",
-            GetDefaultOpenMpThreadCount(Environment.ProcessorCount).ToString(
-                CultureInfo.InvariantCulture));
+        var threads = Environment.GetEnvironmentVariable("OMP_NUM_THREADS");
+        if (string.IsNullOrWhiteSpace(threads))
+            threads = GetDefaultOpenMpThreadCount(Environment.ProcessorCount).ToString(CultureInfo.InvariantCulture);
+        SetDefaultEnvironment("OMP_NUM_THREADS", threads);
+        // ImageMagick otherwise reserves one worker, leaving a two-CPU test host single-threaded.
+        SetDefaultEnvironment("MAGICK_THREAD_LIMIT", threads.Split(',')[0]);
     }
+
+    private static void SetDefaultEnvironment(string name, string value)
+    {
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(name))) return;
+        Environment.SetEnvironmentVariable(name, value);
+        // Unix managed environment writes do not update the native OpenMP runtime's environ.
+        if (!OperatingSystem.IsWindows()) SetEnvironment(name, value, 1);
+    }
+
+    [DllImport("libc", EntryPoint = "setenv", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int SetEnvironment(string name, string value, int overwrite);
 
     internal static int GetDefaultOpenMpThreadCount(int processorCount) =>
         Math.Clamp(processorCount, 1, 16);

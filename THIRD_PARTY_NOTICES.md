@@ -11,7 +11,7 @@ pinned by the committed package lock files.
 | Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent | 12.0.4 | MIT |
 | Avalonia.Controls.ItemsRepeater | 12.0.0 | MIT |
 | CommunityToolkit.Mvvm | 8.4.2 | MIT |
-| Magick.NET-Q16-AnyCPU | 14.15.0 | Apache-2.0 |
+| Magick.NET-Q16-OpenMP-x64 (Windows/Linux), Magick.NET-Q16-AnyCPU (macOS) | 14.15.0 | Apache-2.0 |
 | MetadataExtractor | 2.9.3 | Apache-2.0 |
 | Microsoft.Data.Sqlite | 10.0.9 | MIT |
 | Microsoft.NET.ILLink.Tasks | 10.0.8 | MIT |
@@ -45,7 +45,11 @@ No ExifTool source code or executable code is included or used.
 ## Magick.NET and ImageMagick
 
 Happy Photon uses Magick.NET 14.15.0, copyright Dirk Lemstra, under
-Apache-2.0. The package embeds ImageMagick and supporting codec libraries.
+Apache-2.0. Windows/Linux x64 use `Magick.NET-Q16-OpenMP-x64`; macOS uses
+`Magick.NET-Q16-AnyCPU`. Both packages embed ImageMagick and supporting codecs.
+Windows also ships the OpenMP package's Microsoft `vcomp140.dll` app-local,
+shared by ImageMagick and LibRaw. See
+[`licenses/Microsoft-OpenMP-Notice.md`](licenses/Microsoft-OpenMP-Notice.md).
 
 The complete notice shipped by the exact NuGet package—including the
 ImageMagick license and notices for bundled codec libraries—is preserved
@@ -84,7 +88,8 @@ only the bridge and LibRaw. Each notice is a verbatim copy of the text
 produced by the audited build.
 
 Linux links the system `libgomp.so.1` rather than redistributing it, so
-no libgomp binary ships. The GPLv3 and GCC Runtime Library Exception
+no libgomp binary ships. It is required for all image decoding, including JPEG;
+without it ImageMagick and LibRaw cannot load. The GPLv3 and GCC Runtime Library Exception
 texts are retained because the native package declares
 `GPL-3.0-or-later` as its own license expression. The former Sdcb managed
 wrapper notice was removed with the wrapper because no copied Sdcb code
