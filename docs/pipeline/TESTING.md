@@ -573,6 +573,335 @@ cover persistence, oracle agreement, edit ownership, endpoint key handling, stal
 masks and read-only base sampling; `LocalsShowcaseTests.RenderLuminanceScene`
 writes `artifacts/shots/locals-luminance-{panel,mask,off}.png`.
 
+### WP4 combined luminance × hue qualification (run 263)
+
+The `QualifiedRangeHue{Tick,Contention,Export,ClassificationMemory,Bypass,Agreement}`
+tests extend the same R8/C8 workload with run 261's exact eight L×H windows
+(hue centers i×45°, width 60° except the last full circle, softness 0° for
+indices divisible by three and 30° otherwise). Run each in its own fresh Release
+process using the environment above. `QualifiedRangeHueRequestedOverlay` and
+`QualifiedRangeHuePick` live in `LocalRangeOverlayGateTests` in the headless project.
+No-hue bypass compares the frozen `6303626` evaluator at every fixture pixel,
+including luminance-only and hue-off. Full-frame Q16 sentinels also match an isolated
+Release build of `6303626` for luminance-only and disabled-hue variants with/without
+local color; unrestricted hashes retain their prior sentinel values.
+
+Measured Windows, 24 CPUs, 2026-09-22, five pairs unless noted. Before values are
+Claude's fresh approved L8 baseline at `6303626`; C8 ordinary controls were
+52.6 / 45.9 ms before and 52.0 / 47.1 ms in this run. Restricted ticks can be faster
+because windows skip blend/tone work. RAW render gates use Canon EOS 6D ISO 6400;
+HEIC uses iPhone 14 Pro ISO 1000. All originals passed the live local-file check.
+
+| Gate | Before RAW / HEIC | After RAW / HEIC | Limit |
+| --- | --- | --- | --- |
+| Ordinary LH8 tick | L8 51.4 / 44.6 ms | 43.7 / 40.8 ms | 150 ms |
+| Contended LH8 tick | L8 124.9 / 120.6 ms | 110.5 / 116.4 ms | 150 ms |
+| Range increment over C8 | L8 −1.0 / +0.3 ms | −8.7 / −6.2 ms | 22 ms |
+| Export increment over no locals | L8 +279.6 / +166.0 ms | +220.6 / +127.9 ms | max(5%, 500 ms) |
+| Requested overlay | L 35.5 / 40.1 ms | L×H 34.4 / 50.2 ms | 60 ms median |
+| Overlay private increment | 6.8 / 7.7 MB | 6.85 / 8.07 MB | max(150% Q16 frame, 16 MiB) |
+| Classification private increment | ~0 / ~0 | 0 / 0 bytes median | max(1% frame, 1 MiB) |
+| Classification caller allocation | ~14.3 KB | 14.4 / 14.4 KB | 64 KiB |
+| No-hue evaluator / Q16 sentinel differences | 0 | 0 / 0 | exactly zero |
+| Accepted picker, 15 samples | new | 0.056 / 0.075 ms | 60 ms median, every pick accepted |
+
+Picker-only fixture deviation: a 199×199 normalized-point scan of the Canon fixture
+found no accepted default-basis sample. The accepted RAW gate instead uses the existing
+Pentax K-r DNG at corrected-frame (0.35, 0.345), returning 258.167496° from 128 pixels.
+HEIC uses (0.5, 0.5), returning 324.282920° from 124 pixels. Every timed sample
+is accepted; no rejection fallback is part of the gate. Timing includes matching-base
+acquisition, geometry/DCP/WB seam, footprint, and averaging; it excludes history/render.
+Canon remains the fixture for every other RAW gate. The review-turn scan summary is
+recorded below and in `artifacts/fix1/pick-raw.log`; the original performance logs
+remain under `artifacts/hue-gates/`.
+
+All samples below are in ms unless labeled bytes (negative private increments are
+paired process-memory noise). Overlay includes its first measured 130.961 ms RAW sample;
+its gate is explicitly the median. No full-frame L/hue field is allocated or retained.
+
+**Canon RAW samples**
+
+```text
+C8 tick: [52.5768, 51.8647, 54.403, 51.5549, 51.9969]
+LH8 tick: [43.8482, 43.7269, 43.897, 43.2418, 42.095]
+range increment: [-8.7286, -8.1378, -10.506, -8.3131, -9.9019]
+contended alone: [100.6143, 98.7375, 98.3193, 97.2726, 96.7785]
+contended concurrent: [111.7849, 107.774, 109.2049, 110.5213, 112.7772]
+export off: [2817.4939, 2822.8367, 2848.7516, 2807.4247, 2804.5595]
+export LH8: [3035.4021, 3095.1477, 3052.4512, 3039.7604, 3025.1748]
+classification private bytes: [0, 0, 0, 0, 0]
+classification caller bytes: [14384, 14448, 14384, 14448, 14216]
+overlay: [130.961, 32.5828, 34.425, 33.1673, 36.4665]
+overlay private bytes: [6438912, 6848512, 6848512, 7634944, 7770112]
+```
+
+**iPhone HEIC samples**
+
+```text
+C8 tick: [45.7093, 47.1299, 47.2419, 47.1297, 45.928]
+LH8 tick: [40.2237, 40.9467, 38.9242, 40.8412, 40.9759]
+range increment: [-5.4856, -6.1832, -8.3177, -6.2885, -4.9521]
+contended alone: [101.7871, 99.6395, 107.2269, 99.7174, 104.4362]
+contended concurrent: [115.3177, 118.5664, 116.3569, 115.7435, 119.2711]
+export off: [842.7486, 844.4557, 846.9536, 844.4365, 841.8009]
+export LH8: [971.1254, 983.0724, 968.3041, 966.5912, 969.6753]
+classification private bytes: [196608, 0, -98304, -12288, 98304]
+classification caller bytes: [14576, 14384, 14384, 14320, 14344]
+overlay: [50.185, 52.5323, 51.5893, 38.952, 27.6519]
+overlay private bytes: [6639616, 6656000, 8069120, 8609792, 8093696]
+```
+
+Pentax RAW accepted picker ms: [2.0025, 0.0959, 0.0586, 0.0559, 0.0530, 0.0574, 0.0557, 0.0568, 0.0547, 0.0545, 0.0517, 0.0512, 0.0696, 0.0521, 0.0580].
+
+iPhone HEIC accepted picker ms: [2.7676, 0.1206, 0.0865, 0.0747, 0.0795, 0.0748, 0.0767, 0.0701, 0.0699, 0.0733, 0.0669, 0.0835, 0.0697, 0.0694, 0.0674].
+
+Restricted preview/export agreement remains observation-only: image mean/p99 ΔE
+is 2.145257 / 18.182220 on RAW and 1.143132 / 15.039284 on HEIC. The production R8
+settings are compared with `WysiwygTests.AlignForComparison`; individual weight
+fields use the existing linear Rec.2020 Magick resize. Local 1–8 weight statistics:
+
+RAW (mean / p99 / max): 1: 0.007472 / 0.267628 / 0.985199; 2: 0.002292 / 0.072847 / 0.977035; 3: 0.002615 / 0.082643 / 1.000000; 4: 0.000672 / 0.000000 / 0.999756; 5: 0.000001 / 0.000000 / 0.038651; 6: 0.000003 / 0.000000 / 0.983215; 7: 0.000000 / 0.000000 / 0.000000; 8: 0.000000 / 0.000000 / 0.003052.
+
+HEIC (mean / p99 / max): 1: 0.000001 / 0.000000 / 0.199100; 2: 0.000880 / 0.008499 / 1.000000; 3: 0.002348 / 0.042130 / 1.000000; 4: 0.000162 / 0.000000 / 1.000000; 5: 0.000173 / 0.000031 / 0.871748; 6: 0.000000 / 0.000000 / 0.000153; 7: 0.000000 / 0.000000 / 0.000000; 8: 0.000098 / 0.000000 / 0.811749.
+
+`HueRangeTests`, the combined `ProductionLuminanceMatchesIndependentOracle` cases,
+and the Hue/HueInput locals VM tests cover windows, DCP/WB basis, persistence,
+monochrome dormancy, history/transfer/reset, key wrapping, picker arbitration,
+base/settings staleness, and read-only masks. `RenderHueScene` writes
+`artifacts/shots/locals-hue-{panel,mask,monochrome}.png`; the monochrome scene uses
+a synthetic monochrome RAW base as a UI capability fixture. Full-suite verification
+belongs to the orchestrator; implementor validation uses targeted filters plus
+`./scripts/verify.ps1 -PolicyOnly`.
+
+### WP4 review turn 1 requalification
+
+The review reproduced RAW first-use tiering regressions (hue medians 84.7 / 72.0 ms;
+luminance first samples 85.8 / 85.0 ms). Per-pixel sampling, classification and
+window helpers now request eager optimization/inlining. Range capabilities are
+resolved once per mask, and luminance-only masks retain the WP3 lightness-only
+classifier through the shared read-only sampling seam. No classification image
+is allocated and the math and source ownership are unchanged.
+
+Final fresh-process Release measurements (24 CPUs, same environment and workload
+as above) are the `overlay-complete-*` entries below. L / L×H medians are
+27.5909 / 28.3120 ms RAW and 38.4260 / 38.6732 ms HEIC, all below 60 ms.
+The first two measured luminance samples are 47.7307 / 27.5909 ms RAW and
+37.6488 / 39.1073 ms HEIC, below the corresponding WP3 values
+49.8 / 49.8 and 37.7830 / 40.1216 ms. The previously unreported initial request
+is now separately timed before the existing five samples; every initial request
+in the final run is also below 60 ms. Private increments remain within their gates.
+
+All review-turn overlay measurements follow, including the intermediate builds:
+`overlay-raw/standard` added helper optimization; `overlay-final` also hoisted
+capability checks and optimized the luminance window; `overlay-complete` restored
+lightness-only classification. No samples were discarded. Times are ms and private
+increments are bytes; logs and TRX evidence are under `artifacts/fix1/`.
+
+```text
+overlay-complete-raw-Hue.log
+first_request_ms=45.7754
+production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=28.3120 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[52.3466,27.7699,28.312,28.8245,27.583] private=[7180288,6848512,6848512,6848512,7110656]
+overlay-complete-raw-Production.log
+first_request_ms=44.6143
+production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=27.5909 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[47.7307,27.5909,27.3613,27.4475,27.7841] private=[6524928,6848512,6848512,6848512,6848512]
+overlay-complete-standard-Hue.log
+first_request_ms=47.9419
+production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=38.6732 private_increment=7692288 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[38.309,39.112,39.646,38.6732,29.4119] private=[7319552,6647808,8069120,7692288,8597504]
+overlay-complete-standard-Production.log
+first_request_ms=48.8031
+production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=38.4260 private_increment=7700480 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[37.6488,39.1073,40.0306,38.426,30.7562] private=[6639616,6647808,8069120,7700480,8396800]
+overlay-final-raw-Hue.log
+first_request_ms=44.2920
+production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=28.0299 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[52.293,28.0299,28.5951,27.8094,27.2971] private=[5853184,6848512,6848512,6848512,7110656]
+overlay-final-raw-Production.log
+first_request_ms=43.2341
+production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=28.5343 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[50.6761,28.6088,28.388,27.9137,28.5343] private=[6610944,6848512,6848512,7110656,7110656]
+overlay-final-standard-Hue.log
+first_request_ms=47.6782
+production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=37.5083 private_increment=7692288 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[37.5646,36.949,37.9481,37.5083,33.1344] private=[2789376,6647808,8060928,7692288,8396800]
+overlay-final-standard-Production.log
+first_request_ms=48.8013
+production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=40.2826 private_increment=7696384 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[38.1944,40.7116,40.2826,40.3519,22.7968] private=[7311360,6651904,8065024,7696384,8208384]
+overlay-raw-Hue.log
+first_request_ms=45.7752
+production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=28.9691 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[43.6407,28.3978,27.8139,28.9691,30.027] private=[12611584,6848512,6848512,6848512,6848512]
+overlay-raw-Production.log
+first_request_ms=45.3771
+production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=28.6793 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[46.9467,28.2388,28.6793,28.6944,27.891] private=[12857344,6848512,6848512,6848512,6848512]
+overlay-standard-Hue.log
+first_request_ms=49.6430
+production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=40.8162 private_increment=7692288 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[39.4416,41.143,41.2296,40.8162,25.8205] private=[7319552,6647808,8069120,7692288,8060928]
+overlay-standard-Production.log
+first_request_ms=44.7594
+production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=39.6647 private_increment=7696384 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[39.6647,39.9411,40.1303,39.1556,33.0809] private=[6656000,6651904,8065024,7696384,8273920]
+```
+
+The accepted picker gate still uses Pentax RAW and HEIC; all 15 samples per fixture
+passed. The Canon scan now runs after RAW timing, using the production sampler on
+its matching 1600×1068 base at the 199×199 points (x/200, y/200), x,y=1…199.
+Of 39,601 points, 39,599 reject as too neutral and 2 as mixed colors; 0 are accepted.
+Best r(C̄) is 0.664880775 at (0.685, 0.155), with coherence 0.618040694;
+the best coherence anywhere is 0.685853528. This evidences the fixture substitution.
+Production sampling exposes these two diagnostics without changing the rejection
+thresholds. Complete picker timing output follows.
+
+```text
+pick-raw.log
+sample=0 ms=4.0200 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=1 ms=0.1137 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=2 ms=0.0537 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=3 ms=0.0521 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=4 ms=0.0485 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=5 ms=0.0490 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=6 ms=0.0511 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=7 ms=0.0585 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=8 ms=0.0505 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=9 ms=0.0476 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=10 ms=0.0493 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=11 ms=0.0465 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=12 ms=0.0651 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=13 ms=0.0473 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=14 ms=0.0647 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+pick fixture=Pentax-RAW median_ms=0.0511 all_accepted=True
+Canon scan grid=199x199 points=39601 base=1600x1068 reasons=[mixed colors=2, too neutral=39599] best_reliability=0.664880775 coherence_at_best=0.618040694 best_point=0.685, 0.155 best_coherence=0.685853528
+pick-standard.log
+sample=0 ms=4.2333 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=1 ms=0.1148 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=2 ms=0.0806 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=3 ms=0.0645 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=4 ms=0.0649 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=5 ms=0.0603 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=6 ms=0.0672 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=7 ms=0.0615 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=8 ms=0.0607 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=9 ms=0.0696 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=10 ms=0.0587 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=11 ms=0.0793 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=12 ms=0.0623 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=13 ms=0.0596 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=14 ms=0.0584 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+pick fixture=HEIC median_ms=0.0645 all_accepted=True
+```
+
+Final-build fused tick and bypass gates also passed on both fixtures: RAW LH8 median
+46.5211 ms (C8 55.2650), HEIC 42.0910 ms (C8 52.5338), below 150 ms with range
+increments below 22 ms. Bypass reported zero differing evaluator doubles and Q16
+codes for all no-hue cases. Every fused timing sample and the final-build picker
+repeat are below; final picker medians are 0.0483 ms RAW and 0.0653 ms HEIC.
+
+```text
+QualifiedRangeHueTick-raw.log
+fixture=canon-eos-6d-iso-6400.cr2 coverage=0.4445318352059925 cpu=24 process=3508 LH8 fused control=55.2650 tick=46.5211 increment=-8.8252 private_increment=-196608 caller_increment=-56 no_retained_L=True off=[55.8931,54.7993,54.3514,55.265,58.2022] on=[46.352,47.1191,46.5211,46.4398,49.1252] delta=[-9.5411,-7.680199999999999,-7.830300000000001,-8.825200000000002,-9.076999999999998] private=[-10190848,-196608,0,-10272768,0] caller=[-88,-56,144,-560,336]
+QualifiedRangeHueTick-standard.log
+fixture=iphone-14-pro-iso-1000.heic coverage=0.34319791666666666 cpu=24 process=30728 LH8 fused control=52.5338 tick=42.0910 increment=-10.8631 private_increment=61440 caller_increment=272 no_retained_L=True off=[51.7194,52.3432,53.6079,53.5639,52.5338] on=[45.3089,42.0413,42.7448,42.091,41.2397] delta=[-6.410499999999999,-10.301900000000003,-10.863100000000003,-11.472899999999996,-11.2941] private=[397312,11497472,-32768,61440,-8192] caller=[528,272,272,400,144]
+pick-complete-raw.log
+sample=0 ms=3.9930 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=1 ms=0.0951 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=2 ms=0.0499 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=3 ms=0.0488 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=4 ms=0.0454 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=5 ms=0.0461 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=6 ms=0.0483 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=7 ms=0.0524 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=8 ms=0.0482 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=9 ms=0.0458 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=10 ms=0.0458 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=11 ms=0.0445 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=12 ms=0.0645 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=13 ms=0.0529 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=14 ms=0.0464 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+pick fixture=Pentax-RAW median_ms=0.0483 all_accepted=True
+Canon scan grid=199x199 points=39601 base=1600x1068 reasons=[mixed colors=2, too neutral=39599] best_reliability=0.664880775 coherence_at_best=0.618040694 best_point=0.685, 0.155 best_coherence=0.685853528
+pick-complete-standard.log
+sample=0 ms=4.1373 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=1 ms=0.1071 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=2 ms=0.0805 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=3 ms=0.0640 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=4 ms=0.0665 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=5 ms=0.0653 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=6 ms=0.0672 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=7 ms=0.0624 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=8 ms=0.0618 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=9 ms=0.0650 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=10 ms=0.0608 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=11 ms=0.0786 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=12 ms=0.0631 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=13 ms=0.0668 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=14 ms=0.0613 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+pick fixture=HEIC median_ms=0.0653 all_accepted=True
+```
+
+The mask showcase picks foliage at (0.75, 0.35), yielding 73.061229°, so the magenta
+tint is visible on the branches; the panel retains its 350° wrap-crossing selection.
+`locals-hue-picking.png` additionally records the pressed toggle and armed instruction.
+The existing panel, mask, and monochrome PNGs were regenerated and inspected.
+Final net production diff versus `6303626`: **+388 lines** (+32 for this review).
+The review removes repeated base acquisition from binding getters and moves hue
+color conversion to the shared color owner; no new full-frame buffers or source reads.
+
+Review turn 3 - displayed-surface hue sampling (2026-09-22): the new alternating-hue
+regression reproduced the defect before the production change: a 1000x100 base
+shown at 100x10 was rejected as mixed colors although the mask classified a
+coherent selected color. It now passes with a one-pixel accepted sample matching
+the mask classification within 1e-10 degrees. The picker and mask share preparation
+through the surface resize; the corrected-frame disk maps into those pixels.
+Independent cropped/resized footprint tests and same-base surface-size change /
+revert stale-result tests pass. No source reads or retained classification buffers
+were added. The ViewModel owns surface-size identity, and Services owns sampling.
+
+The approved `QualifiedRangeHuePick` gate was rerun in separate fresh Release
+processes on Pentax RAW and iPhone HEIC, with the actual preview surface size
+passed to the sampler. All 15 samples per fixture were accepted. Median before /
+after: RAW 0.0483 / 0.0398 ms; HEIC 0.0653 / 0.0671 ms (limit <=60 ms).
+Every sample follows; full logs are under `artifacts/hue-gates/review3-pick-*.log`.
+
+```text
+review3-pick-raw.log
+sample=0 ms=3.8120 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=1 ms=0.0861 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=2 ms=0.0462 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=3 ms=0.0404 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=4 ms=0.0398 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=5 ms=0.0396 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=6 ms=0.0382 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=7 ms=0.0398 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=8 ms=0.0399 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=9 ms=0.0397 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=10 ms=0.0389 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=11 ms=0.0386 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=12 ms=0.0906 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=13 ms=0.0405 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+sample=14 ms=0.0388 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
+pick fixture=Pentax-RAW median_ms=0.0398 all_accepted=True
+Canon scan grid=199x199 points=39601 base=1600x1068 reasons=[mixed colors=2, too neutral=39599] best_reliability=0.664880775 coherence_at_best=0.618040694 best_point=0.685, 0.155 best_coherence=0.685853528
+review3-pick-standard.log
+sample=0 ms=4.0621 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=1 ms=0.1126 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=2 ms=0.0860 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=3 ms=0.0657 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=4 ms=0.0671 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=5 ms=0.0621 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=6 ms=0.0686 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=7 ms=0.1137 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=8 ms=0.0665 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=9 ms=0.0677 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=10 ms=0.0636 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=11 ms=0.0843 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=12 ms=0.0662 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=13 ms=0.0643 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+sample=14 ms=0.0619 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
+pick fixture=HEIC median_ms=0.0671 all_accepted=True
+```
+
+R3-2 corrects the UI documentation to keyboard-stepped degree sliders. R3-3 shares
+the range-header column so the enable checkboxes align. The seven hue/luminance
+showcase scenes were regenerated. Release build passed (one pre-existing xUnit2020
+warning); 8 hue unit tests and 134 targeted headless tests passed. Policy-only
+verification and diff whitespace checks passed; the full suite remains with Claude.
+Net production diff for this review: **+21 lines**, branch total **+409** versus
+`6303626`. The mask renderer's private resize is deleted in favor of the shared
+preparation step; no capability is removed.
+
 Local color qualification measurements (24 CPUs, five pairs, 2026-09-06):
 
 | Metric | RAW | HEIC |

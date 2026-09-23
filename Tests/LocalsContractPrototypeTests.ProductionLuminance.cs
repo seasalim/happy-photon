@@ -11,7 +11,11 @@ public sealed partial class LocalsContractPrototypeTests
     [InlineData(true, true, false)]
     [InlineData(true, false, true)]
     [InlineData(false, false, false)]
-    public void ProductionLuminanceMatchesIndependentOracle(bool isRaw, bool dcp, bool mono)
+    [InlineData(true, false, false, true)]
+    [InlineData(true, true, false, true)]
+    [InlineData(true, false, true, true)]
+    [InlineData(false, false, false, true)]
+    public void ProductionLuminanceMatchesIndependentOracle(bool isRaw, bool dcp, bool mono, bool hue = false)
     {
         var random = new Random(262);
         var source = Enumerable.Range(0, 64 * 32 * 3).Select(_ => (ushort)random.Next(65536)).ToArray();
@@ -33,6 +37,7 @@ public sealed partial class LocalsContractPrototypeTests
                 Ordinal = i + 1, Angle = 0, Cu = .3 + i * .1, Feather = .5,
                 Exposure = i % 2 == 0 ? 1 : -1, Temperature = color ? 50 : 0,
                 Tint = color ? -50 : 0, Saturation = color ? 100 : 0,
+                Hue = hue ? new() { Enabled = true, Center = (350 + i * 40) % 360, Width = i == 7 ? 360 : 60, Softness = i % 3 == 0 ? 0 : 30 } : null,
                 Luminance = new() { Enabled = true, Lower = i * .08, Upper = .4 + i * .08, Softness = i % 3 == 0 ? 0 : .1 }
             }).ToList();
             var raw = Raw(-2) with { Contrast = 25, Highlights = -40, Shadows = 15 };
@@ -56,7 +61,7 @@ public sealed partial class LocalsContractPrototypeTests
             {
                 var offset = pixel * 3;
                 var input = new Rgb(classified[offset] / 65535d, classified[offset + 1] / 65535d, classified[offset + 2] / 65535d);
-                var lightness = LocalsRangeOracle.ClassifyLightness(
+                var lab = LocalsRangeOracle.Classify(
                     wb[0, 0] * input.R + wb[0, 1] * input.G + wb[0, 2] * input.B,
                     wb[1, 0] * input.R + wb[1, 1] * input.G + wb[1, 2] * input.B,
                     wb[2, 0] * input.R + wb[2, 1] * input.G + wb[2, 2] * input.B);
@@ -65,7 +70,9 @@ public sealed partial class LocalsContractPrototypeTests
                     var t = Math.Clamp(((pixel % 64 + .5) / 64 - l.Cu) / l.Feather + .5, 0, 1);
                     var range = l.Luminance!;
                     var weight = (1 - t * t * (3 - 2 * t)) *
-                        new LocalsRangeOracle.LightWindow(range.Lower, range.Upper, range.Softness).Weight(lightness);
+                        new LocalsRangeOracle.LightWindow(range.Lower, range.Upper, range.Softness).Weight(lab.L);
+                    if (l.Hue is { } h && !mono)
+                        weight *= new LocalsRangeOracle.HueWindow(h.Center, h.Width, h.Softness).Weight(lab.Hue) * LocalsRangeOracle.Reliability(lab.C);
                     return Local.Create(l.Exposure, weight, -l.Temperature, l.Tint, l.Saturation, kg, tg);
                 }).ToArray();
                 if (terms.All(l => l.Weight == 0)) continue;

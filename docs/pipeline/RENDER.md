@@ -140,6 +140,34 @@ read-only, with no retained L field or intermediate tint buffer. Disabled/neutra
 locals remain visualizable; unrestricted masks keep the zero-read gradient brush.
 The bitmap belongs only to the Locals view and never enters other pipeline outputs.
 
+### 2.4 Local Hue Range and picking
+
+An optional immutable `hue` object beside `luminance` stores `enabled`, `center`,
+`width`, and `softness` in degrees. First enable uses 240 / 60 / 30; disabling
+preserves values. Load clamps center to [0, BitDecrement(360)], width to [0, 360],
+and softness to [0, 90], rejecting non-finite fields. Only interactive stepping
+and circular distance wrap. Absent objects preserve canonical bytes and caches;
+there is no render-version bump.
+
+An enabled hue term multiplies geometry and luminance by a circular full-weight
+window of half-width width/2, outward smoothstep shoulders, and chroma reliability
+`smoothstep((C - .01) / .03)`. Full-circle hue still applies reliability; width and
+softness both zero select nothing. Monochrome ignores hue without disabling either
+geometry or luminance. The fused evaluator shares the original pixel's three cube
+roots across all ranges and computes C/hue only after nonzero geometry and
+luminance. No classification image is retained. No-hue paths remain bit-exact.
+
+`LocalRangeSampling` supplies the shared geometry → DCP HueSat → global WB seam
+for mask visualization and Pick Hue, including geometry resize to the displayed
+surface before classification. The picker leases the displayed preview's
+matching base, never decodes, and samples a disk of radius .004 corrected-frame
+long edge including the clicked pixel. It averages OKLab a/b; reliability below
+.5 or coherence below .75 rejects, as do an off-image click and missing base.
+The VM drops stale image/base/local/settings/surface-size results, commits accepted picks as
+one “Pick Hue” history operation, preserves width/softness, and restores Show Mask
+on exit. Restricted-mask identities also include hue and monochrome state.
+
+
 ## 3. Notation
 
 - `E(x)`: sRGB encode. `E(x) = 12.92x` for `x ≤ 0.0031308`, else `1.055·x^(1/2.4) − 0.055`.

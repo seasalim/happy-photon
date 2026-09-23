@@ -9,10 +9,15 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class LocalRangeOverlayGateTests(ITestOutputHelper output)
+public sealed partial class LocalRangeOverlayGateTests(ITestOutputHelper output)
 {
     [AvaloniaFact]
-    public async Task QualifiedRangeProductionRequestedOverlay()
+    public Task QualifiedRangeProductionRequestedOverlay() => RequestedOverlay(false);
+
+    [AvaloniaFact]
+    public Task QualifiedRangeHueRequestedOverlay() => RequestedOverlay(true);
+
+    private async Task RequestedOverlay(bool hue)
     {
         Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1", "Opt-in overlay gate");
         Assert.True(Environment.ProcessorCount > 2, "Full CPU required");
@@ -23,7 +28,7 @@ public sealed class LocalRangeOverlayGateTests(ITestOutputHelper output)
         using var catalog = await fixture.CreateCatalogAsync();
         await using var vm = fixture.CreateViewModel(catalog, new BaseLoaderRouter(new RawBaseLoader(), new StandardBaseLoader()), _ => Task.CompletedTask);
         var settings = new EditSettings { Locals = [new() { Type = "radial", Rx = .3, Ry = .2,
-            Angle = 30, Feather = .5, Luminance = new() { Enabled = true, Lower = .47 } }] };
+            Angle = 30, Feather = .5, Hue = hue ? new() { Enabled = true, Center = 350 } : null, Luminance = new() { Enabled = true, Lower = .47 } }] };
         var image = new ImageFile(path) { EditSettings = settings };
         image.CatalogId = await catalog.GetOrCreateImageAsync(path);
         await catalog.SaveEditSettingsAsync(image.CatalogId, settings);
@@ -43,7 +48,10 @@ public sealed class LocalRangeOverlayGateTests(ITestOutputHelper output)
             drawable = LocalRangeMaskRenderer.Render(lease.Base, settings, settings.Locals![0], size, tint, CancellationToken.None);
             Assert.Equal(size, drawable.PixelSize);
         }
-        Request(); drawable!.Dispose(); drawable = null;
+        var firstRequest = Stopwatch.StartNew();
+        Request();
+        output.WriteLine($"first_request_ms={firstRequest.Elapsed.TotalMilliseconds:F4}");
+        drawable!.Dispose(); drawable = null;
         var times = new double[5]; var increments = new long[5];
         using var process = Process.GetCurrentProcess();
         for (var i = 0; i < times.Length; i++)

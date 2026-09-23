@@ -18,11 +18,14 @@ public sealed partial class LocalsFusedBaselineTests
     [Fact] public Task QualifiedRangeProductionExport() => ExportDelta(true, true, true);
 
     [Fact]
-    public void QualifiedRangeProductionTick()
+    public void QualifiedRangeProductionTick() => RangeProductionTick(false);
+
+    private void RangeProductionTick(bool hue)
     {
         OptIn(); using var basis = Load(false);
         var control = Colorize(RadialSettings(basis, true));
         var ranged = RestrictLuminance(control.Clone());
+        if (hue) RestrictHue(ranged);
         void Tick(EditSettings s) { using var result = new RenderPipeline().Render(new(basis, s, RenderIntent.Preview, 1600, new(false, false))); }
         for (var warm = 0; warm < 10; warm++) { Tick(control); Tick(ranged); }
         var off = new double[Samples]; var on = new double[Samples];
@@ -33,7 +36,7 @@ public sealed partial class LocalsFusedBaselineTests
             off[i] = a.Ms; on[i] = b.Ms; memory[i] = b.Peak - a.Peak; allocation[i] = b.Allocated - a.Allocated;
         }
         var increment = on.Zip(off, (a, b) => a - b).ToArray();
-        Print(_radialCoverage, $"L8 fused control={Median(off):F4} tick={Median(on):F4} increment={Median(increment):F4} " +
+        Print(_radialCoverage, $"{(hue ? "LH8" : "L8")} fused control={Median(off):F4} tick={Median(on):F4} increment={Median(increment):F4} " +
             $"private_increment={Median(memory)} caller_increment={Median(allocation)} no_retained_L=True " +
             $"off=[{string.Join(',', off)}] on=[{string.Join(',', on)}] delta=[{string.Join(',', increment)}] " +
             $"private=[{string.Join(',', memory)}] caller=[{string.Join(',', allocation)}]");
@@ -44,11 +47,14 @@ public sealed partial class LocalsFusedBaselineTests
     }
 
     [Fact]
-    public void QualifiedRangeProductionClassificationMemory()
+    public void QualifiedRangeProductionClassificationMemory() => RangeProductionClassificationMemory(false);
+
+    private void RangeProductionClassificationMemory(bool hue)
     {
         OptIn(); using var basis = Load(false);
         var control = Colorize(RadialSettings(basis, true));
         var ranged = RestrictLuminance(control.Clone());
+        if (hue) RestrictHue(ranged);
         using var geometry = RenderGeometry.Apply(basis.Pixels, control, out var trace);
         DcpHueSatRenderer.Apply(geometry, basis.Info.DcpProfile?.HueSatMap);
         var source = RenderPipelineTestSupport.ReadPixels(geometry);
@@ -143,7 +149,7 @@ public sealed partial class LocalsFusedBaselineTests
     {
         var image = RenderGeometry.Apply(basis.Pixels, settings, out var trace);
         DcpHueSatRenderer.Apply(image, basis.Info.DcpProfile?.HueSatMap);
-        var neutral = settings.Clone(); neutral.Locals![0].Exposure = 1; neutral.Locals[0].Luminance = null;
+        var neutral = settings.Clone(); neutral.Locals![0].Exposure = 1; neutral.Locals[0].Luminance = null; neutral.Locals[0].Hue = null;
         var plan = RenderLocals.Create(neutral, trace, (int)image.Width, (int)image.Height)!;
         var wb = new AgxCrossing.Matrix3x3(RenderChromaticStage.CreateWhiteBalanceMatrix(basis.Info, settings));
         using var pixels = image.GetPixels();
@@ -154,6 +160,11 @@ public sealed partial class LocalsFusedBaselineTests
             var r = values[o] / 65535d; var g = values[o + 1] / 65535d; var b = values[o + 2] / 65535d;
             var weight = (plan.Gain(pixel) - 1) * LuminanceWindow.Weight(settings.Locals![0].Luminance!,
                 OklabColor.ClassifyLightness(wb.Row0(r, g, b), wb.Row1(r, g, b), wb.Row2(r, g, b)));
+            if (settings.Locals[0].Hue is { } hue)
+            {
+                var lab = OklabColor.Classify(wb.Row0(r, g, b), wb.Row1(r, g, b), wb.Row2(r, g, b));
+                weight *= HueWindow.Weight(hue, lab.Hue, lab.Chroma);
+            }
             values[o] = values[o + 1] = values[o + 2] = (ushort)Math.Round(weight * 65535);
         });
         pixels.SetArea(0, 0, image.Width, image.Height, values);

@@ -22,7 +22,7 @@ public sealed partial class LocalsFusedBaselineTests
     [Fact]
     public async Task QualifiedRadialG9Eight() => await ContendedTick(true, true, true);
 
-    private async Task ContendedTick(bool realFixture, bool radial = false, bool eight = false, bool color = false, bool range = false)
+    private async Task ContendedTick(bool realFixture, bool radial = false, bool eight = false, bool color = false, bool range = false, bool hue = false)
     {
         OptIn();
         const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Static;
@@ -41,6 +41,7 @@ public sealed partial class LocalsFusedBaselineTests
         localSettings.Locals = (radial ? RadialSettings(small, eight) : LocalSettings(small, .25, .45)).Locals;
         if (color) Colorize(localSettings);
         if (range) RestrictLuminance(localSettings);
+        if (hue) RestrictHue(localSettings);
         var interactive = new RenderRequest(small, localSettings, RenderIntent.Preview, 1600, new(false, false));
         var restingRequest = new RenderRequest(large, settings, RenderIntent.Preview, 3200, new(false, false));
         var pipeline = new RenderPipeline();
@@ -62,7 +63,7 @@ public sealed partial class LocalsFusedBaselineTests
             }
             finally { using var result = await resting; }
         }
-        output.WriteLine($"contention fixture={(realFixture ? Fixture : "synthetic-RAW")} radial={radial} eight={eight} cpu={Environment.ProcessorCount} process={Environment.ProcessId} " +
+        output.WriteLine($"contention fixture={(realFixture ? Fixture : "synthetic-RAW")} radial={radial} eight={eight} range={range} hue={hue} cpu={Environment.ProcessorCount} process={Environment.ProcessId} " +
             $"alone={Median(alone):F4} concurrent={Median(concurrent):F4} " +
             $"alone_samples=[{string.Join(',', alone)}] concurrent_samples=[{string.Join(',', concurrent)}] " +
             $"resting={large.Pixels.Width}x{large.Pixels.Height} cap=2 samples={Samples}");
@@ -77,7 +78,7 @@ public sealed partial class LocalsFusedBaselineTests
     [Fact]
     public async Task QualifiedRadialG10() => await ExportDelta(true);
 
-    private async Task ExportDelta(bool radial, bool color = false, bool range = false)
+    private async Task ExportDelta(bool radial, bool color = false, bool range = false, bool hue = false)
     {
         OptIn();
         using var preview = Load(false);
@@ -99,6 +100,7 @@ public sealed partial class LocalsFusedBaselineTests
         var active = radial ? RadialSettings(preview, color) : LocalSettings(preview, .25, .45);
         if (color) Colorize(active);
         if (range) RestrictLuminance(active);
+        if (hue) RestrictHue(active);
         var off = new double[Samples]; var on = new double[Samples];
         for (var sample = -1; sample < Samples; sample++)
         {
@@ -110,7 +112,7 @@ public sealed partial class LocalsFusedBaselineTests
         // All variants share one full-resolution upstream render.
         var limit = Math.Max((range ? Median(off) : raw ? 2911.2468 : 865.4567) * .05, 500);
         Print(.45, $"G9 export_off={Median(off):F4} on={Median(on):F4} paired_delta={delta:F4} " +
-            $"limit={limit:F4} variants={(raw ? 3 : 1)} range={range} off=[{string.Join(',', off)}] on=[{string.Join(',', on)}]");
+            $"limit={limit:F4} variants={(raw ? 3 : 1)} range={range} hue={hue} off=[{string.Join(',', off)}] on=[{string.Join(',', on)}]");
         Assert.True(delta <= limit, "G9 export delta");
 
         async Task<double> Export(EditSettings edits, string arm)

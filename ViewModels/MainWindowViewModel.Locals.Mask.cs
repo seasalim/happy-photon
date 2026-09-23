@@ -9,7 +9,7 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     private sealed record LocalMaskIdentity(ImageFile Image, BaseImage Base, string Settings,
-        string LocalId, PixelSize Size);
+        string LocalId, PixelSize Size, bool Monochrome);
     private LocalMaskIdentity? _localMaskIdentity;
     private LocalMaskIdentity? _failedLocalMaskIdentity;
     private WriteableBitmap? _localRangeMask;
@@ -17,7 +17,7 @@ public partial class MainWindowViewModel
     private Task _localMaskTask = Task.CompletedTask;
     internal Task PendingLocalMaskTask => _localMaskTask;
     internal Func<Task>? LocalMaskRenderGateAsync { get; set; }
-    public bool IsLocalRangeMaskUpdating => IsLocalMaskVisible && SelectedLocal?.Luminance?.IsEffective == true &&
+    public bool IsLocalRangeMaskUpdating => IsLocalMaskVisible && IsSelectedLocalRangeRestricted &&
         _localRangeMask == null && (_localMaskIdentity == null || _localMaskIdentity != _failedLocalMaskIdentity);
     public Bitmap? LocalRangeMask => _localRangeMask;
 
@@ -29,7 +29,7 @@ public partial class MainWindowViewModel
             Decode = BaseDecodeSettings.From(settings).CacheKey,
             Wb = new { settings.Wb.Mode, settings.Wb.Kelvin, settings.Wb.Tint, settings.Wb.Gains },
             Local = new { local.Type, local.Cu, local.Cv, local.Angle, local.Feather,
-                local.Rx, local.Ry, local.Outside, local.Luminance }
+                local.Rx, local.Ry, local.Outside, local.Luminance, local.Hue }
         });
 
     private bool IsCurrentLocalMask(LocalMaskIdentity identity)
@@ -45,11 +45,11 @@ public partial class MainWindowViewModel
     private void RefreshLocalRangeMask()
     {
         var settings = SelectedImage == null ? new EditSettings() : CaptureLiveEditState();
-        using var lease = IsLocalMaskVisible && SelectedLocal?.Luminance?.IsEffective == true &&
+        using var lease = IsLocalMaskVisible && IsSelectedLocalRangeRestricted &&
             SelectedImage is { } image && PreviewImage is { } preview
             ? ImageService.Previews.AcquireLocalRangeBase(image, settings, Math.Max(preview.PixelSize.Width, preview.PixelSize.Height), preview) : null;
         var identity = lease == null ? null : new LocalMaskIdentity(SelectedImage!, lease.Base,
-            LocalMaskSettingsKey(settings, SelectedLocal!), SelectedLocal!.Id, PreviewImage!.PixelSize);
+            LocalMaskSettingsKey(settings, SelectedLocal!), SelectedLocal!.Id, PreviewImage!.PixelSize, lease.Base.Info.IsMonochrome);
         if (identity == _localMaskIdentity) { NotifyLocalMask(); return; }
         _localMaskCancellation?.Cancel();
         _localMaskIdentity = identity;

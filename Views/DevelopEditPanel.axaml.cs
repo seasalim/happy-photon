@@ -72,7 +72,7 @@ public partial class DevelopEditPanel : UserControl
         (DataContext as MainWindowViewModel)?.OnSliderEditCompleted(
             e.Source is CompactSlider slider && slider.Classes.Contains("local-geometry")
                 ? "Local geometry" : e.Source is DualRangeTrack || e.Source is CompactSlider range && range.Classes.Contains("local-range")
-                    ? "Luminance Range" : null);
+                    ? "Luminance Range" : e.Source is CompactSlider hue && hue.Classes.Contains("local-hue") ? "Hue Range" : null);
 
     internal Task ForwardCurveChangedAsync() =>
         DataContext is MainWindowViewModel viewModel

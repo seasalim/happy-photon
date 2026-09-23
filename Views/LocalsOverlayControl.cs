@@ -40,12 +40,13 @@ public sealed class LocalsOverlayControl : Control
     private void OnOwnerChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainWindowViewModel.Locals) or
-            nameof(MainWindowViewModel.CanEditLocals) or nameof(MainWindowViewModel.LocalRangeMask) or nameof(MainWindowViewModel.IsLocalMaskVisible))
+            nameof(MainWindowViewModel.IsLocalHuePicking) or nameof(MainWindowViewModel.CanEditLocals) or nameof(MainWindowViewModel.LocalRangeMask) or nameof(MainWindowViewModel.IsLocalMaskVisible))
             Refresh();
     }
     private void Refresh()
     {
         IsVisible = _owner?.CanEditLocals == true;
+        Cursor = _owner?.IsLocalHuePicking == true ? new Cursor(StandardCursorType.Cross) : Cursor.Default;
         if (_owner?.IsLocalsGestureActive != true && _pointer != null) CancelCapture();
         InvalidateVisual();
     }
@@ -159,7 +160,7 @@ public sealed class LocalsOverlayControl : Control
         var selected = vm.SelectedLocal;
         if (vm.IsLocalMaskVisible && selected != null)
         {
-            if (selected.Luminance?.IsEffective != true)
+            if (!vm.IsSelectedLocalRangeRestricted)
                 context.DrawRectangle(BuildMaskBrush(selected, frame, Bounds.Size), null, new Rect(Bounds.Size));
             else if (vm.LocalRangeMask is { } mask)
                 context.DrawImage(mask, new Rect(mask.Size), new Rect(Bounds.Size));
@@ -223,12 +224,18 @@ public sealed class LocalsOverlayControl : Control
         var distance = Math.Abs(Vector.Dot(point - c, unit));
         return Math.Abs(distance - d.Length * local.Feather / 2) <= 6 ? LocalHandle.Feather : null;
     }
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    protected override async void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
         if (_owner is not { CanEditLocals: true } vm || vm.LocalsFrame is not { } frame ||
             !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
         var p = e.GetPosition(this);
+        if (vm.IsLocalHuePicking)
+        {
+            Focus(); e.Handled = true;
+            await vm.PickLocalHueAsync(Normalize(p, frame));
+            return;
+        }
         var handle = vm.IsLocalCreationArmed ? LocalHandle.Create : vm.SelectedLocal is { } selected
             ? HitHandle(p, selected, frame) : null;
         if (handle == null)

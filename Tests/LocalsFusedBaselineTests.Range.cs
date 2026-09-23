@@ -1,4 +1,5 @@
 using HappyPhoton.Services;
+using HueWindow = HappyPhoton.Tests.LocalsRangeOracle.HueWindow;
 using HappyPhoton.Views;
 using Xunit;
 using static HappyPhoton.Tests.LocalsRangeOracle;

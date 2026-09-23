@@ -1,15 +1,18 @@
 using HappyPhoton.Models;
 
-namespace HappyPhoton.Services;
+using HappyPhoton.Services;
 
-internal sealed class RenderLocals
+namespace HappyPhoton.Tests;
+
+// Frozen WP3 evaluator from 6303626; independent no-hue bit-exactness control.
+
+internal sealed class Wp3RenderLocals
 {
     private readonly Term[] _terms;
     private readonly AgxCrossing.Matrix3x3?[]? _colors;
     private readonly int _width;
     private readonly LuminanceRange?[]? _ranges;
-    private readonly HueRange?[]? _hues;
-    internal bool HasRange => _ranges != null || _hues != null;
+    internal bool HasRange => _ranges != null;
     internal bool NeedsBasis => HasColor || HasRange;
     private readonly record struct Term(double X, double Y, double Origin, double Gain,
         bool Radial = false, double AcrossX = 0, double AcrossY = 0, double AcrossOrigin = 0,
@@ -17,10 +20,10 @@ internal sealed class RenderLocals
 
     internal bool HasColor => _colors != null;
 
-    private RenderLocals(Term[] terms, int width, AgxCrossing.Matrix3x3?[]? colors, HueRange?[]? hues, LuminanceRange?[]? ranges) =>
-        (_terms, _width, _colors, _hues, _ranges) = (terms, width, colors, hues, ranges);
+    private Wp3RenderLocals(Term[] terms, int width, AgxCrossing.Matrix3x3?[]? colors, LuminanceRange?[]? ranges) =>
+        (_terms, _width, _colors, _ranges) = (terms, width, colors, ranges);
 
-    internal static RenderLocals? Create(EditSettings settings, RenderGeometryTrace frame,
+    internal static Wp3RenderLocals? Create(EditSettings settings, RenderGeometryTrace frame,
         int width, int height, LocalsFrame? frameOverride = null, BaseImageInfo? info = null)
     {
         bool ColorActive(LocalAdjustment local) => info?.IsMonochrome != true &&
@@ -65,9 +68,7 @@ internal sealed class RenderLocals
         }).ToArray();
         var ranges = active.Any(local => local.Luminance?.IsEffective == true)
             ? active.Select(local => local.Luminance?.IsEffective == true ? local.Luminance : null).ToArray() : null;
-        var hues = info?.IsMonochrome != true && active.Any(local => local.Hue?.Enabled == true)
-            ? active.Select(local => local.Hue?.Enabled == true ? local.Hue : null).ToArray() : null;
-        return new RenderLocals(linears, width, colors, hues, ranges);
+        return new Wp3RenderLocals(linears, width, colors, ranges);
     }
 
     private static AgxCrossing.Matrix3x3 PrepareColor(LocalAdjustment local, double kelvin, double tint)
@@ -91,8 +92,6 @@ internal sealed class RenderLocals
         var y = pixel / _width + .5;
         var original = (r, g, b);
         double? lightness = null;
-        OklabColor.Classification? classification = null;
-        double? hue = null, chroma = null;
         for (var i = 0; i < _terms.Length; i++)
         {
             var term = _terms[i];
@@ -111,18 +110,8 @@ internal sealed class RenderLocals
             if (weight == 0) continue;
             if (_ranges?[i] is { } range)
             {
-                lightness ??= _hues == null
-                    ? OklabColor.ClassifyLightness(original.r * fold, original.g * fold, original.b * fold)
-                    : (classification ??= OklabColor.Classify(original.r * fold, original.g * fold, original.b * fold)).L;
+                lightness ??= OklabColor.ClassifyLightness(original.r * fold, original.g * fold, original.b * fold);
                 weight *= LuminanceWindow.Weight(range, lightness.Value);
-                if (weight == 0) continue;
-            }
-            if (_hues?[i] is { } hueRange)
-            {
-                classification ??= OklabColor.Classify(original.r * fold, original.g * fold, original.b * fold);
-                hue ??= classification.Value.Hue;
-                chroma ??= classification.Value.Chroma;
-                weight *= HueWindow.Weight(hueRange, hue.Value, chroma.Value);
                 if (weight == 0) continue;
             }
             if (_colors?[i] is { } matrix)

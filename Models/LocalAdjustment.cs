@@ -41,6 +41,10 @@ public sealed record LocalAdjustment
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public LuminanceRange? Luminance { get; set; }
 
+    [JsonPropertyName("hue")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public HueRange? Hue { get; set; }
+
     [JsonIgnore]
     public bool IsRadial => Type == "radial";
     [JsonIgnore]

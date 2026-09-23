@@ -22,6 +22,7 @@ public partial class MainWindowViewModel
         if (!CanEditLocals || LocalsFrame is not { } frame ||
             handle == LocalHandle.Create && (!IsLocalCreationArmed || !CanAddLocal) ||
             handle != LocalHandle.Create && SelectedLocal == null) return false;
+        CancelLocalHuePick();
         _previewDebounce?.Cancel();
         _localsGestureBefore = CaptureLiveEditState();
         _localsGestureImage = SelectedImage;
@@ -126,6 +127,7 @@ public partial class MainWindowViewModel
 
     public bool DiscardLocalsGesture()
     {
+        CancelLocalHuePick();
         var before = _localsGestureBefore;
         var image = _localsGestureImage;
         _localsGestureBefore = null;
@@ -146,6 +148,7 @@ public partial class MainWindowViewModel
     public bool EscapeLocals()
     {
         if (!IsLocalsMode) return false;
+        if (IsLocalHuePicking) { CancelLocalHuePick(); return true; }
         if (IsLocalsGestureActive || IsLocalCreationArmed) DiscardLocalsGesture();
         else CloseLocals();
         return true;

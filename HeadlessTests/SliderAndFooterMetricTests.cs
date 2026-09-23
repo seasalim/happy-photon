@@ -134,6 +134,7 @@ public sealed class SliderAndFooterMetricTests
         content.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "LocalEditor").IsVisible = true;
         vm.IsLocalGeometryExpanded = true;
         vm.IsLocalLuminanceExpanded = true;
+        vm.IsLocalHueExpanded = true;
         foreach (var slider in content.GetLogicalDescendants().OfType<CompactSlider>()
                      .Where(slider => slider.Classes.Contains("local-geometry")))
             slider.IsVisible = true;
@@ -145,7 +146,10 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(36, sliders.Length);
+            Assert.Equal(39, sliders.Length);
+            var hue = sliders.Where(slider => slider.Classes.Contains("local-hue")).ToArray();
+            Assert.Equal(["Center", "Width", "Softness"], hue.Select(slider => slider.Label));
+            Assert.All(hue, slider => Assert.True(slider.IsEffectivelyVisible && slider.Bounds.Height > 0));
             var softness = Assert.Single(sliders, slider => slider.Classes.Contains("local-range"));
             Assert.Equal("Softness", softness.Label);
             Assert.True(softness.IsEffectivelyVisible && softness.Bounds.Height > 0);

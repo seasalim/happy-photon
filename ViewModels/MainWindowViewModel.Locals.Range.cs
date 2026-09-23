@@ -54,6 +54,7 @@ public partial class MainWindowViewModel
         foreach (var name in new[] { nameof(LocalRangeEditIdentity), nameof(IsLocalLuminanceEnabled), nameof(CanEditLocalLuminance),
             nameof(LocalLuminanceLower), nameof(LocalLuminanceUpper), nameof(LocalLuminanceSoftness) })
             OnPropertyChanged(name);
+        NotifyLocalHueState();
         RefreshLocalRangeMask();
     }
 }

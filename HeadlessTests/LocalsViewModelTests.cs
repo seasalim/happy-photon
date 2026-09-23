@@ -97,7 +97,7 @@ public sealed partial class LocalsViewModelTests : IDisposable
     public void Dispose() => _fixture.Dispose();
 }
 
-internal sealed class LocalTestLoader(bool raw = false, bool mono = false) : IBaseImageLoader
+internal sealed class LocalTestLoader(bool raw = false, bool mono = false, bool saturated = false, int width = 64, int height = 48) : IBaseImageLoader
 {
     public bool CanLoad(ImageFile file) => true;
     public BaseImageLoadOutcome LoadPreviewBaseWithOutcome(ImageFile file,
@@ -106,7 +106,7 @@ internal sealed class LocalTestLoader(bool raw = false, bool mono = false) : IBa
     public BaseImage LoadFullBase(ImageFile file, BaseDecodeSettings decode,
         CancellationToken cancellationToken) => Create(decode);
     private BaseImage Create(BaseDecodeSettings decode) => new(
-        new MagickImage(MagickColors.Gray, 64, 48) { ColorSpace = ColorSpace.RGB },
+        new MagickImage(saturated ? MagickColors.Red : MagickColors.Gray, (uint)width, (uint)height) { ColorSpace = ColorSpace.RGB },
         new BaseImageInfo(raw ? BaseSourceKind.RawLibRaw : BaseSourceKind.Standard, raw, decode, null, null,
-            6504, 0, false, null, 1, 64, 48) { IsMonochrome = mono });
+            6504, 0, false, null, 1, width, height) { IsMonochrome = mono });
 }

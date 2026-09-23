@@ -98,6 +98,23 @@ the overlay's LocalsFrame crop trace to pre-crop coordinates. A suppressed regio
 (at least 99.5% visible) uses the displayed frame center; navigation clears stale
 regions. The command remains available for disabled locals when editing is possible.
 
+Hue Range starts collapsed below Luminance Range, with a header enable checkbox,
+center swatch, one-shot Pick Hue, and keyboard-stepped Center, Width, Softness sliders in
+degrees. Its circular hue strip centers the selection so crossing 0/360 stays
+continuous, with a tick marking the center hue. The single magenta overlay style
+reads weakly over selections close to its own hue; a contrasting selected hue makes
+the restricted tint easier to assess. Off controls are dimmed; monochrome keeps values visible and dormant
+with the shared color-control explanation. List rows show “Luminance”, “Hue”, or
+“Luminance · Hue”. Reset adjustments and presets/paste preserve ranges; Develop
+Reset removes the locals.
+
+Pick Hue temporarily shows the selected mask. An accepted click enables hue,
+preserves width/softness, and exits with one history step. Neutral/mixed or
+out-of-image clicks explain the rejection and remain armed. No matching loaded
+base disables picking with a reason. Escape cancels picking first. Navigation,
+selection changes, tool exit, crop, transient views, WB picking, creation, and
+geometry gestures cancel or arbitrate it before any canvas handle hit test.
+
 Add Linear arms a drag from full effect to zero effect. A click or drag shorter
 than eight logical pixels creates nothing. Place at center creates a neutral mask
 at (0.5, 0.5), angle 90°, feather 0.25. Selected handles translate the center,

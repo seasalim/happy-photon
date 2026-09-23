@@ -4,7 +4,7 @@ namespace HappyPhoton.Services;
 
 internal static class LuminanceWindow
 {
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining | System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
     internal static double Weight(LuminanceRange range, double lightness)
     {
         if (!range.IsEffective) return 1;
@@ -15,6 +15,7 @@ internal static class LuminanceWindow
         return left * right;
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     private static double Smooth(double value)
     {
         var t = Math.Clamp(value, 0, 1);

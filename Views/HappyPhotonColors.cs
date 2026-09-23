@@ -1,5 +1,6 @@
 using Avalonia.Media;
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.Views;
 
@@ -81,6 +82,16 @@ public static class HappyPhotonColors
     public static readonly IBrush CropGridLine = Brush("#64ffffff");
 
     private static IBrush Brush(string value) => new SolidColorBrush(Color.Parse(value));
+
+    // Image-content hue for the local range swatch and circular strip, independent of theme.
+    public static Color GetLocalHueColor(double hue)
+    {
+        var rgb = OklabColor.ToLinearRec2020(new(.72, .12, hue * Math.PI / 180));
+        var matrix = new AgxCrossing.Matrix3x3(RgbColorSpaceMatrices.LinearRec2020ToLinearSrgb);
+        static byte Encode(double value) => (byte)Math.Round(Math.Clamp(ToneLut.SrgbEncode(value), 0, 1) * 255);
+        return Color.FromRgb(Encode(matrix.Row0(rgb.Red, rgb.Green, rgb.Blue)),
+            Encode(matrix.Row1(rgb.Red, rgb.Green, rgb.Blue)), Encode(matrix.Row2(rgb.Red, rgb.Green, rgb.Blue)));
+    }
 
     public static IBrush GetColorLabelBrush(ColorLabel label) => label switch
     {

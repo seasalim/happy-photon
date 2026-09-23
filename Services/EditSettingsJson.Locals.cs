@@ -56,6 +56,9 @@ internal static partial class EditSettingsJson
                 changed |= lower > upper;
                 local.Luminance = range with { Lower = Math.Min(lower, upper), Upper = upper, Softness = softness };
             }
+            if (local.Hue is { } hue)
+                local.Hue = hue with { Center = Clamp(hue.Center, 0, Math.BitDecrement(360d), ref changed),
+                    Width = Clamp(hue.Width, 0, 360, ref changed), Softness = Clamp(hue.Softness, 0, 90, ref changed) };
             if (!double.IsFinite(local.Angle))
                 throw new JsonException("Local adjustment angle must be finite.");
             var angle = (local.Angle % 360 + 360) % 360;
