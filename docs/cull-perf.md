@@ -137,9 +137,11 @@ moving all workloads onto a dedicated dispatcher is a follow-up candidate.
 Input due times are independent of preview completion. A ledger records actual
 submission before command invocation. Receipt and selection/assessment feedback
 are separate samples. Cached/fresh bitmap publication is recorded at the sink;
-it is not a displayed frame. The window check captures a blocked-source Loupe
-resident-thumbnail placeholder and then a preview after a headless render tick, and probes a posted
-background-priority dispatcher callback. It uses a signal-gated synthetic loader
+it is not a displayed frame. The window check reads the first frame after one forced headless
+render tick: a blocked-source Loupe resident-thumbnail placeholder, then a preview. It also probes a
+posted background-priority dispatcher callback. It does not use `CaptureRenderedFrame`: in
+Avalonia 12 that helper renders until the dispatcher is idle, so it also waits out unrelated
+transitions, such as the loupe-hidden browse tiles that each selection restyles (about 110 ms). It uses a signal-gated synthetic loader
 and a stopped test clock for scheduling correctness, not native decode timing.
 
 ## Result schema, version 1

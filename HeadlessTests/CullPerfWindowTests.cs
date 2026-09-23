@@ -57,7 +57,10 @@ public sealed class CullPerfWindowTests
             loader.DecodeStarted.Reset();
             var submitted = Stopwatch.GetTimestamp();
             vm.SelectNextImageCommand.Execute(null);
-            await TestWaits.UntilAsync(() => loader.DecodeStarted.IsSet);
+            // Wait on the loader's signal off the UI thread: polling would add a timer tick
+            // to the measured span, and blocking here could stall the decode's scheduling.
+            Assert.True(await Task.Run(() => loader.DecodeStarted.Wait(TestWaits.Condition)),
+                "The gated decode did not start.");
             var loupe = Assert.Single(window.GetVisualDescendants().OfType<LoupeView>());
             var placeholder = Assert.Single(loupe.GetVisualDescendants().OfType<Image>(),
                 image => ReferenceEquals(image.Source, images[1].Thumbnail));
@@ -103,8 +106,11 @@ public sealed class CullPerfWindowTests
 
         Bitmap Capture(string kind, long start)
         {
+            // Read the first frame after the change. CaptureRenderedFrame keeps running jobs
+            // and rendering until the dispatcher is idle, so it would also wait out unrelated
+            // transitions, such as the loupe-hidden browse tiles restyled by each selection.
             AvaloniaHeadlessPlatform.ForceRenderTimerTick();
-            var frame = window.CaptureRenderedFrame();
+            var frame = window.GetLastRenderedFrame();
             Assert.NotNull(frame);
             Assert.True(frame.PixelSize.Width > 0 && frame.PixelSize.Height > 0);
             var timestamp = Stopwatch.GetTimestamp();
