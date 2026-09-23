@@ -1103,12 +1103,22 @@ allocation. With the switch off or no listener, it reads no clock and allocates 
 - the real 1600 px `PreviewService` tick, with process allocation and GC counts
 - the 2-worker 3200 px resting render
 - raw Q16 round-trip cost
-- preview-base load, with the loaders' `Preview.*` step log
+- preview-base load, with the first and warm-median time of each loader `Preview.*` step
 
+`BaseLoadControlPerformanceTests` adds two report-only base-load arms: a full-base (export)
+load of the generated 24 MP JPEG, and a preview load of the same picture tagged Display P3.
 Run each test in its own process. Set `HAPPY_PHOTON_STAGE_REPORT_DIR` to also write JSON.
 Perf hosts are JIT-only, so early ticks in a fresh process run tier-0 code;
 `DOTNET_TieredCompilation=0` shows steady-state cost. `FolderLoadPerformanceTests` scales
 with `HAPPY_PHOTON_FOLDER_LOAD_FILES` (default 200) and includes a first-visit case.
+
+`WorkingSpaceColorConversionTests` pins the managed untagged-sRGB conversion bit-identical
+to the replaced Magick transform, kept there as the oracle. It covers every Q16 code per
+channel, 1M seeded RGB triples, and the RGB, RGBA, gray, gray+alpha, 8/16-bit PNG, GIF and
+TIFF layouts, and it checks that converting a clone leaves its source untouched. Two arms are
+opt-in under `HAPPY_PHOTON_PERF=1`: the generated 24 MP JPEG at preview and full decode, and a
+disk-backed pixel cache. The disk-backed arm also needs `MAGICK_MAP_LIMIT=0` set before the
+test host starts, and it is the only guard of the kernel's commit step.
 
 `scripts/startup-perf.ps1` publishes the win-x64-msix profile and launches it against an
 isolated seeded catalog (`HAPPY_PHOTON_CATALOG_ROOT` / `HAPPY_PHOTON_CACHE_ROOT`). It

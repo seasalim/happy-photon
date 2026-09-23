@@ -22,21 +22,26 @@ internal static class CullPerfPublication
         vm.SelectedImage = image;
         var lastFalse = start;
         long firstTrue = 0;
+        long publication = 0;
         // The polling bracket is equivalence evidence only; its delay is never latency.
+        // The UI thread assigns PreviewImage before its handlers stamp the notification and
+        // before it records the paint, so a poll counts as true only once that timestamp
+        // exists, and is stamped after reading it.
         await TestWaits.UntilAsync(() =>
         {
             var observed = Stopwatch.GetTimestamp();
-            if (vm.PreviewImage == null || vm.Histogram == null)
+            publication = recorder?.Snapshot().Where(item => item.Timestamp >= start &&
+                item.ImageId == image.CatalogId && CullPerfLedger.IsPaint(item))
+                .Select(item => item.Timestamp).FirstOrDefault() ?? Volatile.Read(ref observedPublication);
+            if (vm.PreviewImage == null || vm.Histogram == null || publication == 0)
             {
                 lastFalse = observed;
                 return false;
             }
-            firstTrue = observed;
+            firstTrue = Stopwatch.GetTimestamp();
             return true;
         });
         vm.PropertyChanged -= OnChanged;
-        var publication = recorder?.Snapshot().First(item => item.Timestamp >= start &&
-            item.ImageId == image.CatalogId && CullPerfLedger.IsPaint(item)).Timestamp ?? observedPublication;
         Assert.InRange(publication, lastFalse, firstTrue);
         var width = Stopwatch.GetElapsedTime(lastFalse, firstTrue).TotalMilliseconds;
         TestContext.Current.TestOutputHelper?.WriteLine($"Publication polling bracket: {width:F3} ms.");

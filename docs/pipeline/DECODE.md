@@ -278,7 +278,13 @@ a one-sample difference (consequences in TESTING.md §3).
    - No profile otherwise → assume sRGB (industry default), apply the sRGB EOTF, then
      the exact sRGB→Rec.2020 matrix from WORKING_SPACE.md §2. The bitmap-backed
      edited-thumbnail proxy, whose upstream profile has already been discarded, uses
-     the same direct path. This avoids lcms profile setup without changing the math.
+     the same direct path. A managed kernel writes the Q16 pixel cache in place,
+     using one worker per 262,144 pixels, capped at the processor count. A lazy,
+     process-wide decode table comes from Magick's transform of all 65,536 Q16
+     codes; its rounded samples feed the double-precision matrix and a second
+     clamp-and-round-half-up write. This is bit-identical to the whole-frame
+     Magick transform it replaced, including each platform's EOTF approximation.
+     A native-buffer span commits the result even when Magick caches pixels to disk.
    - Record `HadIccProfile` and the profile description, then strip **all** profiles
      after color conversion. Bases never retain ICC, EXIF/GPS, XMP, or thumbnails.
 5. The target ICC has linear TRCs, and the direct sRGB path explicitly applies its EOTF,

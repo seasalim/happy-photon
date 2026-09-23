@@ -191,7 +191,11 @@ The legacy measurement retains its 100 ms warm first-paint, 0.30 warm/control,
 1.10 priority/control, JPEG 95/20 MiB and RAW 300/50 MiB peak/forced-GC budgets.
 Its sample pairs include actual polling-bracket widths. Every recorded latency
 must fall within its actual false-to-true polling bracket; polling delay has no
-maximum and is not counted as a speedup. Recorder overhead interleaves nine
+maximum and is not counted as a speedup. A poll is true only once the publication
+timestamp (recorded paint, or the property-change stamp when recording is off) is
+visible to it, and its time is read after that check. The UI thread assigns
+`PreviewImage` before either stamp exists, so an off-thread poll could otherwise
+land in that gap. Recorder overhead interleaves nine
 on/off pairs using the same `PreviewImage` property-change observer on both
 sides. The median of paired first-publication differences is report-only: the
 recording-off arm alone spans about 15 ms on the dev host, so an end-to-end

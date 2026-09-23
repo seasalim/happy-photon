@@ -162,38 +162,9 @@ public sealed class RenderStageBreakdownPerformanceTests(
     {
         RequirePerf();
         var loader = new BaseLoaderRouter(new RawBaseLoader(), new StandardBaseLoader());
-        var reports = new List<object>();
-        var console = Console.Out;
+        var reports = new List<BaseLoadMeasurement.Report>();
         foreach (var (label, path) in Fixtures())
-        {
-            var samples = new List<double>();
-            var log = new StringWriter();
-            for (var index = 0; index <= 5; index++)
-            {
-                Console.SetOut(index == 0 ? log : TextWriter.Null);
-                try
-                {
-                    var stopwatch = Stopwatch.StartNew();
-                    using var pair = LoadPair(loader, path);
-                    samples.Add(stopwatch.Elapsed.TotalMilliseconds);
-                    if (index == 0)
-                    {
-                        output.WriteLine(
-                            $"base-load fixture={label} interactive={pair.Interactive.Pixels.Width}x{pair.Interactive.Pixels.Height} " +
-                            $"large={pair.Large?.Pixels.Width}x{pair.Large?.Pixels.Height}");
-                    }
-                }
-                finally
-                {
-                    Console.SetOut(console);
-                }
-            }
-            var warm = Median(samples.Skip(1));
-            output.WriteLine($"base-load fixture={label} firstMs={samples[0]:F1} warmMedianMs={warm:F1}");
-            foreach (var line in log.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries))
-                output.WriteLine("  " + line.Trim());
-            reports.Add(new { fixture = label, firstMs = samples[0], warmMedianMs = warm, trace = log.ToString() });
-        }
+            reports.Add(BaseLoadMeasurement.Measure(label, () => LoadPair(loader, path), output));
         WriteReport(nameof(PreviewBaseLoad_ReportsColdAndWarmDecodeCost_WhenEnabled), reports);
         Assert.Equal(3, reports.Count);
     }
