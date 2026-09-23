@@ -30,6 +30,7 @@ public partial class App : Application
             window.RestoreWindowPlacement(placementStore, placementStore.Load());
 
             desktop.MainWindow = window;
+            StartupTrace.Attach(window, viewModel);
             window.Show();
 
             Dispatcher.UIThread.Post(

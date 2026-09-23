@@ -1095,6 +1095,27 @@ dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter LuminanceNoiseRed
 It is explicit opt-in because the RAW arm requires a full decode. The committed HEIC
 hash and provenance are pinned by `PipelineTestAssetTests` and `Tests/assets/README.md`.
 
+`RenderStageBreakdownPerformanceTests` is report-only attribution. Under
+`HAPPY_PHOTON_PERF=1`, `RenderStageProbe` times each render stage and counts caller-thread
+allocation. With the switch off or no listener, it reads no clock and allocates nothing
+(`RenderStageProbeTests`). The class reports:
+
+- the real 1600 px `PreviewService` tick, with process allocation and GC counts
+- the 2-worker 3200 px resting render
+- raw Q16 round-trip cost
+- preview-base load, with the loaders' `Preview.*` step log
+
+Run each test in its own process. Set `HAPPY_PHOTON_STAGE_REPORT_DIR` to also write JSON.
+Perf hosts are JIT-only, so early ticks in a fresh process run tier-0 code;
+`DOTNET_TieredCompilation=0` shows steady-state cost. `FolderLoadPerformanceTests` scales
+with `HAPPY_PHOTON_FOLDER_LOAD_FILES` (default 200) and includes a first-visit case.
+
+`scripts/startup-perf.ps1` publishes the win-x64-msix profile and launches it against an
+isolated seeded catalog (`HAPPY_PHOTON_CATALOG_ROOT` / `HAPPY_PHOTON_CACHE_ROOT`). It
+records `StartupTrace` milestones (show, first frame, startup gate) per run.
+`-RuntimeEnvironment` sets A/B runtime knobs, and `-Cold` launches each run from a fresh
+unbuffered copy.
+
 ### 5.1 Display-reference comparison
 
 `ReferenceComparisonTests` is a report-only comparison of the two committed diagnostic

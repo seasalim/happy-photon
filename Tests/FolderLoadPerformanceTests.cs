@@ -10,7 +10,11 @@ namespace HappyPhoton.Tests;
 
 public sealed class FolderLoadPerformanceTests
 {
-    private const int FileCount = 200;
+    // HAPPY_PHOTON_FOLDER_LOAD_FILES scales the folder (e.g. 5000) to check that
+    // statement counts stay batched rather than growing per file.
+    private static readonly int FileCount = int.TryParse(
+        Environment.GetEnvironmentVariable("HAPPY_PHOTON_FOLDER_LOAD_FILES"),
+        out var count) && count > 0 ? count : 200;
     private const int SampleCount = 9;
     private readonly ITestOutputHelper _output;
 
@@ -49,9 +53,9 @@ public sealed class FolderLoadPerformanceTests
             .Select(sample => sample.SqlStatementCount)
             .ToArray();
         _output.WriteLine(
-            $"folder_load_200_files_ms_samples=[{string.Join(", ", samples.Select(sample => sample.ElapsedMilliseconds.ToString("F3")))}]");
+            $"folder_load_{FileCount}_files_ms_samples=[{string.Join(", ", samples.Select(sample => sample.ElapsedMilliseconds.ToString("F3")))}]");
         _output.WriteLine(
-            $"folder_load_200_files_ms_median={elapsed[elapsed.Length / 2]:F3}; " +
+            $"folder_load_{FileCount}_files_ms_median={elapsed[elapsed.Length / 2]:F3}; " +
             $"warm_up=1; measured_runs={SampleCount}; configuration=" +
 #if DEBUG
             "Debug"
@@ -60,7 +64,7 @@ public sealed class FolderLoadPerformanceTests
 #endif
         );
         _output.WriteLine(
-            $"folder_load_200_files_sql_statement_counts=[{string.Join(", ", counts)}]; " +
+            $"folder_load_{FileCount}_files_sql_statement_counts=[{string.Join(", ", counts)}]; " +
             $"median={counts.Order().ElementAt(counts.Length / 2)}");
 
         Assert.All(samples, sample => Assert.Equal(FileCount, sample.ImageCount));
@@ -93,7 +97,7 @@ public sealed class FolderLoadPerformanceTests
         var elapsed = samples.Select(s => s.ElapsedMilliseconds).Order().ToArray();
         var counts = samples.Select(s => s.SqlStatementCount).ToArray();
         _output.WriteLine(
-            $"versioned_folder_load_400_tiles_ms_median={elapsed[elapsed.Length / 2]:F3}; " +
+            $"versioned_folder_load_{FileCount * 2}_tiles_ms_median={elapsed[elapsed.Length / 2]:F3}; " +
             $"warm_up=1; measured_runs={SampleCount}");
         _output.WriteLine(
             $"versioned_folder_load_sql_statement_counts=[{string.Join(", ", counts)}]");
@@ -125,6 +129,39 @@ public sealed class FolderLoadPerformanceTests
         Assert.Equal(FileCount * 2, viewModel.Browse.AllImages.Count);
         Assert.Equal(FileCount, metadataReads);
         await viewModel.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task FirstVisitFolderLoad_ReportsWallTimeAndSqlStatements()
+    {
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
+            "Set HAPPY_PHOTON_PERF=1 to run folder-load performance diagnostics.");
+
+        using var fixture = new CatalogVmFixture("folder-load-perf-first-visit");
+        var photos = fixture.Path("photos");
+        Directory.CreateDirectory(photos);
+        CreatePhotos(photos);
+
+        // Each sample opens a fresh catalog, so every row is created by this load.
+        var samples = new FolderLoadSample[SampleCount + 1];
+        for (var index = 0; index < samples.Length; index++)
+        {
+            using var catalog = await fixture.CreateCatalogAsync($"catalog-{index}");
+            using var statements = new SqlStatementCounter(catalog);
+            samples[index] = await MeasureAsync(fixture, catalog, photos, statements);
+        }
+
+        var measured = samples.Skip(1).ToArray();
+        var elapsed = measured.Select(s => s.ElapsedMilliseconds).Order().ToArray();
+        var counts = measured.Select(s => s.SqlStatementCount).ToArray();
+        _output.WriteLine(
+            $"first_visit_folder_load_{FileCount}_files_ms_median={elapsed[elapsed.Length / 2]:F3}; " +
+            $"max={elapsed[^1]:F3}; warm_up=1; measured_runs={SampleCount}");
+        _output.WriteLine(
+            $"first_visit_folder_load_sql_statement_counts=[{string.Join(", ", counts)}]");
+
+        Assert.All(measured, sample => Assert.Equal(FileCount, sample.ImageCount));
     }
 
     private static async Task<FolderLoadSample> MeasureAsync(

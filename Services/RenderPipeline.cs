@@ -66,6 +66,7 @@ public sealed class RenderPipeline
             if (analyze || histogram != null ||
                 request.Options.PreparePreviewPixels)
             {
+                var probe = RenderStageProbe.Begin();
                 Parallel.Invoke(
                     () =>
                     {
@@ -111,6 +112,7 @@ public sealed class RenderPipeline
                             previewPixels = null;
                         }
                     });
+                RenderStageProbe.End(probe, "analysis", display);
             }
             overlay = analysis.OverlayMask;
 
@@ -203,13 +205,18 @@ public sealed class RenderPipeline
         {
             execution?.ThrowIfCancellationRequested();
             execution?.ReportStage("geometry");
+            var probe = RenderStageProbe.Begin();
             working = RenderGeometry.Apply(
                 request.Base.Pixels,
                 request.Settings,
                 out geometry);
+            RenderStageProbe.End(probe, "geometry", working);
             execution?.ThrowIfCancellationRequested();
+            probe = RenderStageProbe.Begin();
             var locals = RenderLocals.Create(request.Settings, geometry,
                 (int)working.Width, (int)working.Height, request.LocalsFrameOverride, request.Base.Info);
+            RenderStageProbe.End(probe, "locals", working);
+            probe = RenderStageProbe.Begin();
             if (request.Base.Info.IsRawSource)
             {
                 execution?.ReportStage("raw-crossing");
@@ -232,12 +239,16 @@ public sealed class RenderPipeline
                         ? null
                         : request.Base.Info.DcpProfile?.HueSatMap,
                     execution, locals);
+                RenderStageProbe.End(probe, "raw-crossing-setup", working);
+                probe = RenderStageProbe.Begin();
                 crossing.Apply(working, execution);
+                RenderStageProbe.End(probe, "raw-crossing", working);
             }
             else
             {
                 execution?.ReportStage("standard-tone");
                 ApplyCrossingOffTone(working, request, execution, locals);
+                RenderStageProbe.End(probe, "standard-tone", working);
             }
             execution?.ThrowIfCancellationRequested();
             execution?.ReportStage("color-encoding");
@@ -245,24 +256,30 @@ public sealed class RenderPipeline
             if (!request.Base.Info.IsMonochrome)
             {
                 execution?.ReportStage("chroma");
+                probe = RenderStageProbe.Begin();
                 RenderChromaStage.Apply(working, request.Settings, execution);
+                RenderStageProbe.End(probe, "chroma", working);
             }
             execution?.ThrowIfCancellationRequested();
             execution?.ReportStage("noise-reduction");
+            probe = RenderStageProbe.Begin();
             RenderNoiseReduction.Apply(
                 working,
                 request.Base.Info,
                 request.Settings.Detail,
                 noiseReductionBandPixelLimit,
                 execution);
+            RenderStageProbe.End(probe, "noise-reduction", working);
             execution?.ThrowIfCancellationRequested();
             execution?.ReportStage("capture-sharpen");
+            probe = RenderStageProbe.Begin();
             RenderSharpening.ApplyCapture(
                 working,
                 request.Base.Info,
                 request.Settings.Detail,
                 request.Intent,
                 execution: execution);
+            RenderStageProbe.End(probe, "capture-sharpen", working);
             execution?.ThrowIfCancellationRequested();
             var result = working;
             working = null;
@@ -295,7 +312,9 @@ public sealed class RenderPipeline
             request.Settings.CurveRed,
             request.Settings.CurveGreen,
             request.Settings.CurveBlue);
+        var probe = RenderStageProbe.Begin();
         var tone = ToneLut.ComposeCached(parameters);
+        RenderStageProbe.End(probe, "standard-tone-lut", working);
         execution?.ThrowIfCancellationRequested();
         if (locals == null) ToneLutApplicator.Apply(working, chromatic.Matrix, tone, execution);
         else ToneLutApplicator.ApplyLocals(working, chromatic.Matrix, tone, parameters, locals, execution);

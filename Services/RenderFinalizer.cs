@@ -111,6 +111,7 @@ internal static class RenderFinalizer
                 throw new ArgumentOutOfRangeException(nameof(maxDimension));
             }
 
+            var probe = RenderStageProbe.Begin();
             if (maxDimension is { } limit)
             {
                 var before = Math.Max(
@@ -123,16 +124,23 @@ internal static class RenderFinalizer
                     displayRec2020.Width,
                     displayRec2020.Height) < before;
             }
+            RenderStageProbe.End(probe, "resize", displayRec2020);
 
+            probe = RenderStageProbe.Begin();
             RenderSharpening.ApplyOutput(
                 displayRec2020,
                 outputSharpening,
                 wasResized,
                 detailBandPixelLimit);
+            RenderStageProbe.End(probe, "output-sharpen", displayRec2020);
+            probe = RenderStageProbe.Begin();
             RenderEffects.Apply(displayRec2020, effects);
+            RenderStageProbe.End(probe, "effects", displayRec2020);
+            probe = RenderStageProbe.Begin();
             RenderColorEncoding.ConvertEncodedRec2020ToTarget(
                 displayRec2020,
                 outputColorSpace);
+            RenderStageProbe.End(probe, "encode-target", displayRec2020);
             return displayRec2020;
         }
         catch
@@ -156,6 +164,7 @@ internal static class RenderFinalizer
             {
                 throw new ArgumentOutOfRangeException(nameof(maxDimension));
             }
+            var probe = RenderStageProbe.Begin();
             if (maxDimension is { } limit)
             {
                 RenderColorEncoding.ResizeInLinearLightResting(
@@ -163,15 +172,20 @@ internal static class RenderFinalizer
                     limit,
                     execution);
             }
+            RenderStageProbe.End(probe, "resize", displayRec2020);
             execution.ThrowIfCancellationRequested();
+            probe = RenderStageProbe.Begin();
             RenderEffects.ApplyResting(
                 displayRec2020,
                 effects,
                 execution);
+            RenderStageProbe.End(probe, "effects", displayRec2020);
+            probe = RenderStageProbe.Begin();
             RenderColorEncoding.ConvertEncodedRec2020ToTargetResting(
                 displayRec2020,
                 outputColorSpace,
                 execution);
+            RenderStageProbe.End(probe, "encode-target", displayRec2020);
             return displayRec2020;
         }
         catch

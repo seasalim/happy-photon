@@ -68,19 +68,36 @@ public sealed class StandardBaseLoader : IBaseImageLoader
         }
 
         MagickImage? image = null;
+        var trace = new RawPreviewPerformanceTrace(
+            System.Diagnostics.Stopwatch.StartNew(),
+            file.FilePath,
+            preview,
+            nameof(StandardBaseLoader));
         try
         {
             var nativeGeometry = GetNativeGeometry(file, preview);
             var readSettings = CreateReadSettings(file, preview, nativeGeometry);
             cancellationToken.ThrowIfCancellationRequested();
+            trace.Mark("NativeGeometry");
 
             CullPerf?.Record("NativeStart", file.CatalogId);
             try { image = _decode(file.FilePath, readSettings); }
             finally { CullPerf?.Record("NativeEnd", file.CatalogId); }
             cancellationToken.ThrowIfCancellationRequested();
+            trace.Mark("Decode");
+            if (preview)
+            {
+                LogPerformance(
+                    nameof(StandardBaseLoader),
+                    "Preview.DecodedSize",
+                    0,
+                    file.FilePath,
+                    $"size={image.Width}x{image.Height}");
+            }
 
             var orientation = NormalizeOrientation(image.Orientation);
             image.AutoOrient();
+            trace.Mark("Orient");
             var fullWidth = checked((int)image.Width);
             var fullHeight = checked((int)image.Height);
             if (nativeGeometry is { } native)
@@ -94,6 +111,7 @@ public sealed class StandardBaseLoader : IBaseImageLoader
             var sourceSaturation = preview
                 ? _captureSourceSaturation(image, file, cancellationToken)
                 : null;
+            trace.Mark("SourceSaturation");
             var profile = image.GetColorProfile();
             var hadProfile = profile != null;
             var profileDescription = profile == null
@@ -104,6 +122,7 @@ public sealed class StandardBaseLoader : IBaseImageLoader
             NormalizeColor(image, profile);
             image.Strip();
             cancellationToken.ThrowIfCancellationRequested();
+            trace.Mark("NormalizeColor");
 
             image.Depth = 16;
             cancellationToken.ThrowIfCancellationRequested();
@@ -126,6 +145,7 @@ public sealed class StandardBaseLoader : IBaseImageLoader
                     image,
                     info,
                     cancellationToken);
+                trace.Mark("PairConstruction");
                 var analysis = sourceSaturation == null
                     ? PreviewSourceAnalysis.Empty
                     : new PreviewSourceAnalysis(

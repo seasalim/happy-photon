@@ -43,7 +43,7 @@ internal static class CullPerfFiles
         JsonSerializer.Serialize(stream, value, value.GetType(), Json);
     }
 
-    internal static (string Root, Dictionary<string, string> Hashes) Fixtures()
+    internal static string GeneratedJpeg()
     {
         var generated = Path.Combine(Root, "artifacts", "cull-perf-fixtures");
         Directory.CreateDirectory(generated);
@@ -56,6 +56,13 @@ internal static class CullPerfFiles
             image.Quality = 90;
             image.Write(jpeg, MagickFormat.Jpeg);
         }
+        return jpeg;
+    }
+
+    internal static (string Root, Dictionary<string, string> Hashes) Fixtures()
+    {
+        var generated = Path.Combine(Root, "artifacts", "cull-perf-fixtures");
+        var jpeg = GeneratedJpeg();
         var sources = new Dictionary<string, string>
         {
             ["jpeg"] = jpeg,
