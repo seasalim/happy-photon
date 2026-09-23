@@ -445,7 +445,6 @@ All 16 cases per Unix platform matched their historical reference exactly;
 the Windows expectations remain unchanged. These native-library-dependent
 hashes assert same-platform regression, not cross-platform byte equality.
 
-
 Local color qualification (run 246) adds `QualifiedColorG1G7`, `G2`, `G4b`, `G5`,
 `G8Export`, `G9`, and `G9Eight` in `LocalsFusedBaselineTests`. Run each separately
 in a fresh Release process, full CPU, five paired samples, on the Canon ISO-6400
@@ -481,11 +480,14 @@ limit.
 | `QualifiedRangeControlContention` | C8 tick during a cap-2 3200 px resting render |
 | `QualifiedRangeControlExport` | C8 off/on export; three RAW variants, one HEIC |
 | `QualifiedRangeClassification` | RGB-read control; double classification; double/FAST eight-window arms, unculled and CULLED |
+| `QualifiedRangeLuminanceClassification` | Exact double OKLab L for the eight luminance windows only, CULLED; no hue term |
 | `QualifiedRangeClassificationExport` | Same arms at full resolution, excluding encoding |
 | `QualifiedRangeOverlay` | Selected-mask field/tint computation and separate allocation/page-commit timing |
+| `QualifiedRangeRequestedOverlay` | Requested mask prototype from a loaded base to a drawable bitmap |
 | `QualifiedRangeReliability` | Both noisy fixtures' pre-tone 3×3 hue deviation and declared EV sweep |
 
-Setup prepares geometry/DCP and Q16 RGB; timed arms apply global WB and share
+Except for `QualifiedRangeRequestedOverlay`, setup prepares geometry/DCP and
+Q16 RGB; timed arms apply global WB and share
 one classification across locals. For i=0…7, L bounds are .08i / (.4+.08i), hue
 center 45i, width 60 (360 at i=7); L/hue softness is 0 at i=0,3,6, otherwise
 .1/30°. CULLED uses `RadialSettings`' frozen R8 terms: classify only their union
@@ -533,6 +535,43 @@ disagreement and start<end; missing bins break evidence: INCONCLUSIVE (RAW
 noise-dominated 70–84° through C=.09; HEIC codec-smoothed near 1°). The pinned
 absolute pre-tone r(C) is smoothstep .01–.04; for Rec.2020 [.0005,.00075,.0075]
 scaled by 2^EV in .01 EV steps, r<1 at −1.31 EV and r<.5 at −3.34 EV.
+
+Luminance Range production gates measure the shipped renderer with every R8
+local carrying its luminance window above and no hue term:
+`LocalsFusedBaselineTests.QualifiedRangeProduction{Tick,Contention,Export,Bypass,Agreement,ClassificationMemory}`
+in `Tests/` and `LocalRangeOverlayGateTests.QualifiedRangeProductionRequestedOverlay`
+in `HeadlessTests/`. Build Release with `HAPPY_PHOTON_FULL_CPU` unset, then run
+each test by exact `FullyQualifiedName` in a fresh process with `HAPPY_PHOTON_PERF=1`,
+`HAPPY_PHOTON_FULL_CPU=1`, `LOCALS_SAMPLES=5` and
+`HAPPY_PHOTON_LOCALS_FIXTURE=raw|standard`; every sample is printed. The overlay
+gate times the selected R1 radial (L .47–1, softness .1) from acquiring the loaded
+matching base to a drawable `WriteableBitmap`, against the resting preview with
+Show Mask off as the memory control.
+
+| Gate | Limit | RAW | HEIC |
+| --- | --- | ---: | ---: |
+| Ordinary tick | ≤ 150 ms | 60.9 ms | 49.7 ms |
+| Contended tick (3200 px resting render) | ≤ 150 ms, every sample | 129.3 ms | 130.6 ms |
+| Range increment over the same unrestricted locals | ≤ 22 ms | −1.1 ms | −1.7 ms |
+| Export delta over no locals | ≤ max(5 %, 500 ms) | +339 ms | +219 ms |
+| Requested mask, median | ≤ 60 ms | 28.1 ms | 39.2 ms |
+| Requested mask private increment | ≤ max(150 % preview Q16 frame, 16 MiB) | 6.8 MB | 7.7 MB |
+| Classification private / caller allocation | ≤ max(1 % frame, 1 MiB) / ≤ 64 KiB | 0 / 14 KB | 0.04 MB / 14 KB |
+| Absent, off or fully open range vs unrestricted | 0 differing Q16 codes | 0 | 0 |
+
+Measured 2026-09-22, Windows, 24 CPUs. The increment can be negative because a
+restricted local skips blend and tone work where its window is zero. The mask
+worker is eagerly optimized, but the first request in a process still pays JIT
+(about 50 ms on RAW). Restricted preview/export agreement (R1 as above,
+`WysiwygTests.AlignForComparison`) is image mean/p99 ΔE 1.68/10.05 RAW and
+1.36/19.19 HEIC, weight mean/p99 .0003/.0012 and .0095/.265. A lightness window
+over fine texture does not commute with downsampling, so isolated weights can
+differ by up to 1; these are observations, not pinned bounds.
+`LuminanceRangeTests`, `LocalsContractPrototypeTests.ProductionLuminance*`,
+`LocalsViewModelTests.Range*`, `DualRangeTrackTests` and `LocalRangeMaskTests`
+cover persistence, oracle agreement, edit ownership, endpoint key handling, stale
+masks and read-only base sampling; `LocalsShowcaseTests.RenderLuminanceScene`
+writes `artifacts/shots/locals-luminance-{panel,mask,off}.png`.
 
 Local color qualification measurements (24 CPUs, five pairs, 2026-09-06):
 

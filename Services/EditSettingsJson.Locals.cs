@@ -48,6 +48,14 @@ internal static partial class EditSettingsJson
             local.Temperature = Clamp(local.Temperature, -50, 50, ref changed);
             local.Tint = Clamp(local.Tint, -50, 50, ref changed);
             local.Saturation = Clamp(local.Saturation, -100, 100, ref changed);
+            if (local.Luminance is { } range)
+            {
+                var lower = Clamp(range.Lower, 0, 1, ref changed);
+                var upper = Clamp(range.Upper, 0, 1, ref changed);
+                var softness = Clamp(range.Softness, 0, .5, ref changed);
+                changed |= lower > upper;
+                local.Luminance = range with { Lower = Math.Min(lower, upper), Upper = upper, Softness = softness };
+            }
             if (!double.IsFinite(local.Angle))
                 throw new JsonException("Local adjustment angle must be finite.");
             var angle = (local.Angle % 360 + 360) % 360;

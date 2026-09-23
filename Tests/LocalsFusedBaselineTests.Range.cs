@@ -13,8 +13,9 @@ public sealed partial class LocalsFusedBaselineTests
     [Fact] public void QualifiedRangeClassification() => RangeCost(false, false);
     [Fact] public void QualifiedRangeClassificationExport() => RangeCost(true, false);
     [Fact] public void QualifiedRangeOverlay() => RangeCost(false, true);
+    [Fact] public void QualifiedRangeLuminanceClassification() => RangeCost(false, false, true);
 
-    private void RangeCost(bool full, bool overlay)
+    private void RangeCost(bool full, bool overlay, bool luminanceOnly = false)
     {
         OptIn();
         using var basis = Load(full);
@@ -67,9 +68,16 @@ public sealed partial class LocalsFusedBaselineTests
                     var o = p * 3;
                     var r = source[o] / 65535d; var g = source[o + 1] / 65535d; var b = source[o + 2] / 65535d;
                     if (arm == 0) { sum += r + g + b; continue; }
-                    var active = arm is 4 or 6 ? RangeActive(terms!, p, width, edge) : (byte)255;
+                    var active = arm is 4 or 6 or 7 ? RangeActive(terms!, p, width, edge) : (byte)255;
                     if (active == 0) continue;
                     var wr = matrix.Row0(r, g, b); var wg = matrix.Row1(r, g, b); var wbValue = matrix.Row2(r, g, b);
+                    if (arm == 7)
+                    {
+                        var lightness = ClassifyLightness(wr, wg, wbValue);
+                        for (var j = 0; j < windows.Length; j++)
+                            if ((active & (1 << j)) != 0) sum += windows[j].L.Weight(lightness);
+                        continue;
+                    }
                     Lab lab; double c, h;
                     if (arm is 5 or 6) lab = fast.ClassifyGuarded(wr, wg, wbValue, active, out _, out c, out h);
                     else { lab = Classify(wr, wg, wbValue); c = lab.C; h = lab.Hue; }
@@ -80,7 +88,7 @@ public sealed partial class LocalsFusedBaselineTests
                         foreach (var window in windows)
                             sum += window.L.Weight(lab.L) * window.H.Weight(h) * reliability;
                     }
-                    else if (arm is 4 or 6)
+                    else if (arm is 4 or 6 or 7)
                     {
                         for (var j = 0; j < windows.Length; j++)
                             if ((active & (1 << j)) != 0)
@@ -104,10 +112,10 @@ public sealed partial class LocalsFusedBaselineTests
             computeMs = System.Diagnostics.Stopwatch.GetElapsedTime(computeStart).TotalMilliseconds;
             Assert.True(double.IsFinite(totals.Sum()));
         }
-        var arms = overlay ? new[] { 0, 3 } : new[] { 0, 1, 2, 4, 5, 6 };
+        var arms = luminanceOnly ? new[] { 0, 7 } : overlay ? new[] { 0, 3 } : new[] { 0, 1, 2, 4, 5, 6 };
         foreach (var arm in arms) Run(arm);
         var allocationsMs = new double[Samples]; var computationsMs = new double[Samples];
-        var checksums = new double[7];
+        var checksums = new double[8];
         var times = arms.ToDictionary(a => a, _ => new double[Samples]);
         var memory = arms.ToDictionary(a => a, _ => new double[Samples]);
         var allocation = arms.ToDictionary(a => a, _ => new double[Samples]);
@@ -124,22 +132,27 @@ public sealed partial class LocalsFusedBaselineTests
         {
             var delta = Median(times[arm].Zip(times[0], (a, b) => a - b).ToArray());
             var privateDelta = Median(memory[arm].Zip(memory[0], (a, b) => a - b).ToArray());
-            Print(arm is 4 or 6 ? covered / (double)pixels : overlay ? .45 : 1, $"range arm={arm} full={full} pixels={pixels} samples={Samples} candidate={(arm is 5 or 6 ? "FAST-guarded" : "double-oracle")} culled={arm is 4 or 6} " +
+            Print(arm is 4 or 6 or 7 ? covered / (double)pixels : overlay ? .45 : 1, $"range arm={arm} full={full} pixels={pixels} samples={Samples} candidate={(arm is 5 or 6 ? "FAST-guarded" : "double-oracle")} culled={arm is 4 or 6 or 7} luminance_only={luminanceOnly} " +
                 $"baseline_ms={Median(times[0]):F4} total_ms={Median(times[arm]):F4} increment_ms={delta:F4} " +
                 $"ns_per_pixel={delta * 1e6 / pixels:F4} private_delta={privateDelta} " +
                 $"caller_allocation={Median(allocation[arm])} checksum={checksums[arm]:R} " +
                 $"times=[{string.Join(',', times[arm])}] private=[{string.Join(',', memory[arm])}]");
             if (arm != 3) Assert.True(Median(allocation[arm]) <= 65536, "Classification caller allocation");
         }
-        if (!overlay)
+        if (luminanceOnly)
+        {
+            Assert.Equal(covered / (double)pixels, _radialCoverage);
+            Print(_radialCoverage, $"L8 window_evaluations={windowEvaluations} no_hue=True no_reliability=True");
+        }
+        else if (!overlay)
         {
             Assert.Equal(covered / (double)pixels, _radialCoverage);
             foreach (var arm in new[] { 2, 4, 5, 6 })
             {
                 var increment = Median(times[arm].Zip(times[0], (a, b) => a - b).ToArray());
                 Print(covered / (double)pixels, $"range_projection arm={arm} full={full} " +
-                    $"window_evaluations={(arm is 4 or 6 ? windowEvaluations : pixels * 8L)} " +
-                    $"windows_per_pixel={(arm is 4 or 6 ? windowEvaluations / (double)pixels : 8):F4} " +
+                    $"window_evaluations={(arm is 4 or 6 or 7 ? windowEvaluations : pixels * 8L)} " +
+                    $"windows_per_pixel={(arm is 4 or 6 or 7 ? windowEvaluations / (double)pixels : 8):F4} " +
                     $"increment_ms={increment:F4} " + (full ? $"projected_export_increment_ms={increment:F4}" :
                     $"projected_tick_ms={(basis.Info.IsRawSource ? 58.4 : 54.6) + increment:F4} " +
                     $"projected_contended_ms={(basis.Info.IsRawSource ? 125.8 : 132.0) + increment:F4}") +

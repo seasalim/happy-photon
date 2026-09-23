@@ -16,6 +16,12 @@
     <!-- Hue is reserved for brand and color-semantic data. -->
     <Color x:Key="BrandCyanColor">#00f0ff</Color>
     <Color x:Key="LocalMaskColor">#ff24e4</Color>
+    <Color x:Key="LuminanceTrackDarkColor">#171717</Color>
+    <Color x:Key="LuminanceTrackLightColor">#e7e7e7</Color>
+    <LinearGradientBrush x:Key="LuminanceTrack" StartPoint="0%,0%" EndPoint="100%,0%">
+        <GradientStop Offset="0" Color="{StaticResource LuminanceTrackDarkColor}"/>
+        <GradientStop Offset="1" Color="{StaticResource LuminanceTrackLightColor}"/>
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="BrandCyan" Color="{StaticResource BrandCyanColor}"/>
     <Color x:Key="WhiteBalanceCoolColor">#74f7ff</Color>
     <Color x:Key="WhiteBalanceNeutralColor">#9df7b0</Color>

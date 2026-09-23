@@ -244,6 +244,7 @@ public sealed partial class PreviewService
                     return null;
                 }
 
+                _localRangeBases.Add(bitmap, largeBase);
                 var preview = new RestingPreview(
                     bitmap,
                     parentGeneration,
@@ -282,6 +283,7 @@ public sealed partial class PreviewService
         EditSettings settings)
     {
         if (bitmap == null) return;
+        _localRangeBases.AddOrUpdate(bitmap, baseImage);
         var info = baseImage.Info;
         var originalViewSize = RenderGeometry.CalculateOriginalViewSize(
             info.FullWidth,

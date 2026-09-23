@@ -6,6 +6,10 @@ public partial class MainWindowViewModel
     {
         _historyLoadsClosed = true;
         CloseRenderOutcomeChannel();
+        _localMaskCancellation?.Cancel();
+        await _localMaskTask;
+        _localRangeMask?.Dispose();
+        _localRangeMask = null;
         await CancelAndDrainLoupeAsync();
         await CancelAndDrainCompareAsync();
         CloseBeforeAfterSplit();

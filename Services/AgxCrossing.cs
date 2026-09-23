@@ -56,7 +56,7 @@ internal sealed partial class AgxCrossing
             Fold = normalized.Fold;
         }
 
-        if (locals?.HasColor == true)
+        if (locals?.NeedsBasis == true)
         {
             var wb = (double[,])(whiteBalanceMatrix ?? ChromaticAdaptation.Identity()).Clone();
             for (var row = 0; row < 3; row++) for (var col = 0; col < 3; col++) wb[row, col] /= Fold;

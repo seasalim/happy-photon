@@ -7,14 +7,17 @@ internal sealed class RenderLocals
     private readonly Term[] _terms;
     private readonly AgxCrossing.Matrix3x3?[]? _colors;
     private readonly int _width;
+    private readonly LuminanceRange?[]? _ranges;
+    internal bool HasRange => _ranges != null;
+    internal bool NeedsBasis => HasColor || HasRange;
     private readonly record struct Term(double X, double Y, double Origin, double Gain,
         bool Radial = false, double AcrossX = 0, double AcrossY = 0, double AcrossOrigin = 0,
         double Feather = 0, bool Outside = false);
 
     internal bool HasColor => _colors != null;
 
-    private RenderLocals(Term[] terms, int width, AgxCrossing.Matrix3x3?[]? colors) =>
-        (_terms, _width, _colors) = (terms, width, colors);
+    private RenderLocals(Term[] terms, int width, AgxCrossing.Matrix3x3?[]? colors, LuminanceRange?[]? ranges) =>
+        (_terms, _width, _colors, _ranges) = (terms, width, colors, ranges);
 
     internal static RenderLocals? Create(EditSettings settings, RenderGeometryTrace frame,
         int width, int height, LocalsFrame? frameOverride = null, BaseImageInfo? info = null)
@@ -59,7 +62,9 @@ internal sealed class RenderLocals
                 (cropY - local.Cv * correctedHeight) * sin) / edge / local.Feather + .5;
             return new Term(x, y, origin, Math.Pow(2, local.Exposure) - 1);
         }).ToArray();
-        return new RenderLocals(linears, width, colors);
+        var ranges = active.Any(local => local.Luminance?.IsEffective == true)
+            ? active.Select(local => local.Luminance?.IsEffective == true ? local.Luminance : null).ToArray() : null;
+        return new RenderLocals(linears, width, colors, ranges);
     }
 
     private static AgxCrossing.Matrix3x3 PrepareColor(LocalAdjustment local, double kelvin, double tint)
@@ -77,11 +82,12 @@ internal sealed class RenderLocals
         return new(matrix);
     }
 
-    internal bool ApplyColor(int pixel, ref double r, ref double g, ref double b)
+    internal bool ApplyColor(int pixel, ref double r, ref double g, ref double b, double fold = 1)
     {
         var x = pixel % _width + .5;
         var y = pixel / _width + .5;
         var original = (r, g, b);
+        double? lightness = null;
         for (var i = 0; i < _terms.Length; i++)
         {
             var term = _terms[i];
@@ -98,6 +104,12 @@ internal sealed class RenderLocals
             }
             else { t = Math.Clamp(t, 0, 1); weight = 1 - t * t * (3 - 2 * t); }
             if (weight == 0) continue;
+            if (_ranges?[i] is { } range)
+            {
+                lightness ??= OklabColor.ClassifyLightness(original.r * fold, original.g * fold, original.b * fold);
+                weight *= LuminanceWindow.Weight(range, lightness.Value);
+                if (weight == 0) continue;
+            }
             if (_colors?[i] is { } matrix)
                 (r, g, b) = (r + weight * (matrix.Row0(r, g, b) - r),
                     g + weight * (matrix.Row1(r, g, b) - g), b + weight * (matrix.Row2(r, g, b) - b));
@@ -106,6 +118,7 @@ internal sealed class RenderLocals
         return original != (r, g, b);
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
     internal double Gain(int pixel)
     {
         var gain = 1d;

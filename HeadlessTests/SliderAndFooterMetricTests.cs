@@ -133,6 +133,7 @@ public sealed class SliderAndFooterMetricTests
         // The editor hides while no local exists; the metric needs its sliders laid out.
         content.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "LocalEditor").IsVisible = true;
         vm.IsLocalGeometryExpanded = true;
+        vm.IsLocalLuminanceExpanded = true;
         foreach (var slider in content.GetLogicalDescendants().OfType<CompactSlider>()
                      .Where(slider => slider.Classes.Contains("local-geometry")))
             slider.IsVisible = true;
@@ -144,7 +145,10 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(35, sliders.Length);
+            Assert.Equal(36, sliders.Length);
+            var softness = Assert.Single(sliders, slider => slider.Classes.Contains("local-range"));
+            Assert.Equal("Softness", softness.Label);
+            Assert.True(softness.IsEffectivelyVisible && softness.Bounds.Height > 0);
             var horizon = Assert.Single(sliders, slider => slider.Label == "Horizon");
             Assert.Single(horizon.GetLogicalAncestors().OfType<CropEditSection>());
             Assert.Empty(horizon.GetLogicalAncestors().OfType<DevelopViewerPane>());

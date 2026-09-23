@@ -454,6 +454,7 @@ public partial class MainWindowViewModel
             return;
         }
 
+        RefreshLocalRangeMask();
         if (state.IsRefreshing)
         {
             Volatile.Write(

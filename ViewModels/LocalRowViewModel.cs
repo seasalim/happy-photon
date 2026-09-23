@@ -9,6 +9,7 @@ public sealed class LocalRowViewModel(LocalAdjustment local) : ObservableObject
     public string Name => Local.Name;
     public string Glyph => Local.IsRadial ? "○" : "▱";
     public bool Enabled => Local.Enabled;
+    public bool HasLuminance => Local.Luminance?.IsEffective == true;
     internal void Refresh(LocalAdjustment value)
     {
         Local = value;
@@ -16,5 +17,6 @@ public sealed class LocalRowViewModel(LocalAdjustment local) : ObservableObject
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Glyph));
         OnPropertyChanged(nameof(Enabled));
+        OnPropertyChanged(nameof(HasLuminance));
     }
 }

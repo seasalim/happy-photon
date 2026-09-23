@@ -85,6 +85,12 @@ own focus behavior. Geometry drags commit on release or capture loss; keyboard
 bursts debounce into one “Local geometry” history row. Canvas gestures retain
 their cancellation behavior below.
 
+Luminance Range endpoint entries own text-editing keys while focused, including
+rating and label digits, letters, Delete/Backspace, and text selection shortcuts.
+Enter commits one “Luminance Range” edit and returns focus to its thumb. Escape
+restores the displayed value and returns focus without closing Locals; subsequent
+focus loss or reopening cannot commit the cancelled draft.
+
 Center in view sits beside Reset adjustments, outside Geometry. It preserves the
 selected local's other fields and commits one
 “Center in view” operation. The navigator visible region's center maps through

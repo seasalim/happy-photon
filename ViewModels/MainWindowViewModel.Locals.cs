@@ -250,6 +250,7 @@ public partial class MainWindowViewModel
             nameof(CanEditLocalGeometry), nameof(IsRadialLocal), nameof(LocalHeight), nameof(LocalFeather),
             nameof(IsLocalInside), nameof(IsLocalOutside) })
             OnPropertyChanged(property);
+        NotifyLocalRangeState();
         AddLinearCommand.NotifyCanExecuteChanged();
         AddRadialCommand.NotifyCanExecuteChanged();
         PlaceLocalAtCenterCommand.NotifyCanExecuteChanged();

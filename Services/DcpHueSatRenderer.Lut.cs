@@ -41,7 +41,7 @@ internal static partial class DcpHueSatRenderer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void ApplyLut(
+    internal static void ApplyLut(
         ushort[] values,
         int offset,
         int redChannel,

@@ -51,6 +51,8 @@
                                         <TextBlock Text="{Binding Glyph}" FontSize="11"/>
                                         <TextBlock Text="{Binding Name}" FontSize="11"/>
                                     </StackPanel>
+                                    <TextBlock Text="Luminance" IsVisible="{Binding HasLuminance}" FontSize="9"
+                                               Foreground="{DynamicResource TextMuted}"/>
                                     <TextBlock Text="Disabled" IsVisible="{Binding !Enabled}" FontSize="9"
                                                Foreground="{DynamicResource TextMuted}"/>
                                 </StackPanel>
@@ -142,6 +144,38 @@
                                          Value="{Binding LocalFeather}" Minimum="0" Maximum="100" SmallChange="1"
                                          StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local feather"/>
                 </StackPanel>
+                <Grid ColumnDefinitions="Auto,Auto">
+                    <ToggleButton x:Name="LocalLuminanceDisclosure" Classes="geometry-disclosure" IsChecked="{Binding IsLocalLuminanceExpanded}"
+                                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="0"
+                                  Background="Transparent" BorderThickness="0" MinHeight="20" AutomationProperties.Name="Luminance Range">
+                        <ToggleButton.Template>
+                            <ControlTemplate><ContentPresenter Content="{TemplateBinding Content}" Background="{TemplateBinding Background}"
+                                HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/></ControlTemplate>
+                        </ToggleButton.Template>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="Luminance Range" Classes="section-label" FontSize="10"/>
+                            <Path Width="6" Height="6" VerticalAlignment="Center" Stroke="{DynamicResource TextMuted}" StrokeThickness="1"/>
+                        </StackPanel>
+                    </ToggleButton>
+                    <CheckBox x:Name="LocalLuminanceEnabled" Grid.Column="1" Margin="8,0,0,0" MinHeight="20"
+                              AutomationProperties.Name="Enable Luminance Range" ToolTip.Tip="Enable Luminance Range"
+                              IsChecked="{Binding IsLocalLuminanceEnabled, Mode=OneWay}"
+                              IsEnabled="{Binding CanEditLocalGeometry}" Command="{Binding ToggleLocalLuminanceCommand}"/>
+                </Grid>
+                <StackPanel Spacing="8" IsVisible="{Binding IsLocalLuminanceExpanded}">
+                        <StackPanel Spacing="8" IsEnabled="{Binding CanEditLocalLuminance}">
+                            <StackPanel.Styles>
+                                <Style Selector="StackPanel:disabled"><Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/></Style>
+                            </StackPanel.Styles>
+                            <views:DualRangeTrack EditIdentity="{Binding LocalRangeEditIdentity}" Lower="{Binding LocalLuminanceLower}" Upper="{Binding LocalLuminanceUpper}"/>
+                            <views:CompactSlider Classes="local-range" Label="Softness" Value="{Binding LocalLuminanceSoftness}"
+                                                 Minimum="0" Maximum="50" SmallChange="1" AutomationProperties.Name="Luminance softness"/>
+                        </StackPanel>
+                        <TextBlock Text="Ranges follow the base image before local adjustments. Global white balance or profile changes may change the mask."
+                                   TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                </StackPanel>
+                <TextBlock Text="Updating mask" IsVisible="{Binding IsLocalRangeMaskUpdating}" FontSize="10"
+                           Foreground="{DynamicResource TextMuted}"/>
             </StackPanel>
             <TextBlock Text="{Binding LocalsInstruction}" IsVisible="{Binding !IsLocalCreationArmed}"
                        TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>

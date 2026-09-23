@@ -64,6 +64,14 @@ internal static class LocalsRangeOracle
         }, xyz);
     }
 
+    internal static double ClassifyLightness(double r, double g, double b)
+    {
+        var l = Math.Cbrt(ToLms[0, 0] * r + ToLms[0, 1] * g + ToLms[0, 2] * b);
+        var m = Math.Cbrt(ToLms[1, 0] * r + ToLms[1, 1] * g + ToLms[1, 2] * b);
+        var s = Math.Cbrt(ToLms[2, 0] * r + ToLms[2, 1] * g + ToLms[2, 2] * b);
+        return .2104542553 * l + .7936177850 * m - .0040720468 * s;
+    }
+
     internal static Lab Classify(double r, double g, double b)
     {
         var l = Math.Cbrt(ToLms[0, 0] * r + ToLms[0, 1] * g + ToLms[0, 2] * b);

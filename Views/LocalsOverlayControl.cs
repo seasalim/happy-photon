@@ -40,7 +40,7 @@ public sealed class LocalsOverlayControl : Control
     private void OnOwnerChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainWindowViewModel.Locals) or
-            nameof(MainWindowViewModel.CanEditLocals) or nameof(MainWindowViewModel.IsLocalMaskVisible))
+            nameof(MainWindowViewModel.CanEditLocals) or nameof(MainWindowViewModel.LocalRangeMask) or nameof(MainWindowViewModel.IsLocalMaskVisible))
             Refresh();
     }
     private void Refresh()
@@ -158,7 +158,12 @@ public sealed class LocalsOverlayControl : Control
         context.DrawRectangle(Brushes.Transparent, null, new Rect(Bounds.Size));
         var selected = vm.SelectedLocal;
         if (vm.IsLocalMaskVisible && selected != null)
-            context.DrawRectangle(BuildMaskBrush(selected, frame, Bounds.Size), null, new Rect(Bounds.Size));
+        {
+            if (selected.Luminance?.IsEffective != true)
+                context.DrawRectangle(BuildMaskBrush(selected, frame, Bounds.Size), null, new Rect(Bounds.Size));
+            else if (vm.LocalRangeMask is { } mask)
+                context.DrawImage(mask, new Rect(mask.Size), new Rect(Bounds.Size));
+        }
         foreach (var local in vm.Locals)
         {
             var center = ToCanvas(local, frame, Bounds.Size);

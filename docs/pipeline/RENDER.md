@@ -105,10 +105,40 @@ then the unnormalized inset. Standard starts with its normalized WB. Both retain
 the existing Fold refund. No intermediate image or mask field is allocated and
 no local result is clamped; only tone input handles negatives (RAW's existing
 non-positive branch, standard's `Max(0, value)`), preserving overflow above one.
-Unchanged pixels keep the existing LUT path. Documents without active local color
+Unchanged pixels keep the existing LUT path. Documents without active local color or an effective range
 retain the scalar Gain kernel, byte-identical exposure-only pixels and render
 version 14. Monochrome bases prepare no color terms: stored color stays dormant,
 while local Exposure preserves equal RGB channels.
+
+### 2.3 Local Luminance Range
+
+An optional immutable `luminance` object stores `enabled`, `lower`, `upper`, and
+`softness`. A missing `enabled` field defaults off. First enable uses 0, 1, and .1;
+disabling preserves all values. Load clamps endpoints to [0, 1], enforces lower <= upper, and clamps softness to [0, .5]; non-finite
+values reject. Absent objects are omitted from canonical v4 JSON, preserving old
+bytes and hashes. Present values participate in `RenderSettingsHash`; no version bump.
+
+An enabled, non-open window multiplies the geometric weight. The fused locals
+loop computes exact double OKLab L once, only when a restricted local has nonzero
+geometry. Classification uses the original post-DCP/global-WB Rec.2020 pixel with
+Fold undone, before locals, global exposure, inset, and tone. Restricted exposure
+also prepares the RAW WB basis. Open endpoints include extended L; shoulders fall
+outward by smoothstep. Equal interior endpoints with zero softness select nothing.
+Off and fully open ranges retain the previous scalar/color paths exactly.
+
+Requested restricted-mask visualization leases the loaded base associated with the
+accepted preview bitmap, including large-base resting replacements. The ViewModel
+owns cancellation and an identity containing image/base, output size, selected local
+ID and geometry/polarity/window, crop/rotation/geometry, decode/profile, and global WB.
+It validates on input changes and completion; the drawable getter only reads a field.
+Local adjustment and global tone edits retain the mask. Mismatches show “Updating mask”;
+a failed identity clears that status, logs the error, and retries only when identity changes.
+No decode or hydration is requested.
+Geometry and resize precede DCP/global WB, then classification and geometry weight
+write directly to a separate themed premultiplied bitmap. Native source pixels are
+read-only, with no retained L field or intermediate tint buffer. Disabled/neutral
+locals remain visualizable; unrestricted masks keep the zero-read gradient brush.
+The bitmap belongs only to the Locals view and never enters other pipeline outputs.
 
 ## 3. Notation
 
