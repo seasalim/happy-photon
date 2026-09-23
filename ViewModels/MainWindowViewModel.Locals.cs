@@ -9,6 +9,7 @@ public partial class MainWindowViewModel
     [ObservableProperty] private bool _isLocalsMode;
     [ObservableProperty] private bool _isLocalCreationArmed;
     [ObservableProperty] private bool _showLocalMask;
+    [ObservableProperty] private bool _isLocalMaskHeld;
     private string? _selectedLocalId;
     private string _localCreationType = "linear";
     public System.Collections.ObjectModel.ObservableCollection<LocalRowViewModel> LocalRows { get; } = [];
@@ -38,7 +39,7 @@ public partial class MainWindowViewModel
         _requestedPreviewIntent != PreviewSurfaceIntent.Original &&
         !_isHoveringPreset && _hoveredHistoryEntry == null && !IsWhiteBalancePicking;
     public bool IsLocalMaskVisible => CanEditLocals && HasSelectedLocal &&
-        (ShowLocalMask || IsLocalCreationArmed);
+        (ShowLocalMask || IsLocalMaskHeld || IsLocalCreationArmed);
     public string LocalsInstruction => Locals.Count == 8
         ? "8 of 8 locals — delete a local to add another"
         : IsLocalCreationArmed ? "Drag to place, or Place at center · Escape cancels"
@@ -258,7 +259,12 @@ public partial class MainWindowViewModel
         UndoCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnIsLocalsModeChanged(bool value) => NotifyLocalsState();
+    partial void OnIsLocalsModeChanged(bool value)
+    {
+        if (!value) IsLocalMaskHeld = false;
+        NotifyLocalsState();
+    }
+    partial void OnIsLocalMaskHeldChanged(bool value) => NotifyLocalsState();
     partial void OnIsLocalCreationArmedChanged(bool value) => NotifyLocalsState();
     partial void OnShowLocalMaskChanged(bool value) => NotifyLocalsState();
 }

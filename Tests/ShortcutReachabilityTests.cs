@@ -103,6 +103,18 @@ public sealed class ShortcutReachabilityTests
         Assert.False(IsValidControlTarget(new StackPanel()));
     }
 
+    [Theory]
+    [InlineData("Shift+W", "LocalsModeButton")]
+    [InlineData("O", "ShowLocalMaskButton")]
+    [InlineData("Hold M", "ShowLocalMaskButton")]
+    public void LocalsShortcutsDeclareDevelopControls(string keys, string control)
+    {
+        var entry = Assert.Single(ShortcutCatalog.Groups.Single(group => group.Title == "Develop and edit")
+            .Entries, entry => entry.Keys == keys);
+        Assert.Contains(entry.Reachability, claim => claim.ControlName == control &&
+            claim.Workspace == ShortcutWorkspace.Develop);
+    }
+
     private static bool HasValidReachability(ShortcutEntry entry) =>
         entry.Reachability.Count > 0 && entry.Reachability.All(claim =>
         {
@@ -127,6 +139,7 @@ public sealed class ShortcutReachabilityTests
         vm.ExitLoupeCommand.Execute(null);
         vm.IsFullScreenMode = false;
         vm.IsCropMode = false;
+        vm.CloseLocalsCommand.Execute(null);
         vm.WorkspaceMode = claim.Workspace switch
         {
             ShortcutWorkspace.Develop => WorkspaceMode.Develop,
@@ -153,6 +166,8 @@ public sealed class ShortcutReachabilityTests
         {
             vm.IsCropMode = true;
         }
+        if (claim.ControlName == "ShowLocalMaskButton")
+            await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         Dispatcher.UIThread.RunJobs();
         if (claim.Workspace == ShortcutWorkspace.FullScreen)
         {

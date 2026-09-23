@@ -609,6 +609,8 @@ remains where it started and unchanged.
 | `Ctrl+'` | Create a version from the current interpretation in Browse or Develop |
 | `C` | Compare 2–4 selected photos |
 | `R` | Toggle crop mode in Develop |
+| `Shift+W` | Toggle Locals in Develop |
+| `O` / hold `M` | Toggle Show Mask / temporarily show the mask while Locals is open |
 | `\` | Toggle before/after in Develop or fullscreen |
 | `Y` | Show Before and After side by side in Develop |
 | `Shift+R` | Switch between a paired JPEG and RAW in Develop |

@@ -30,6 +30,13 @@ public partial class MainWindow : Window
             KeyDownEvent,
             OnWorkspaceKeyDown,
             RoutingStrategies.Tunnel);
+        AddHandler(KeyUpEvent, OnLocalsKeyUp, RoutingStrategies.Tunnel, handledEventsToo: true);
+        Deactivated += (_, _) => WithVm(vm => vm.IsLocalMaskHeld = false);
+        LostFocus += (_, _) =>
+        {
+            if (FocusManager?.GetFocusedElement() is not Visual focused || GetTopLevel(focused) != this)
+                WithVm(vm => vm.IsLocalMaskHeld = false);
+        };
         var developViewerPane =
             this.FindControl<DevelopViewerPane>("DevelopViewerPane");
         _zoomPanControl = developViewerPane?.Viewer;
@@ -350,6 +357,8 @@ public partial class MainWindow : Window
                 base.OnKeyDown(e);
                 return;
             }
+
+            if (TryHandleLocalsKey(e, vm)) return;
 
             // R key: Toggle crop mode (in Develop mode)
             if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.None &&

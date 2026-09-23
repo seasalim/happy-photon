@@ -124,7 +124,7 @@
                     </ToggleButton>
                     <ToggleButton x:Name="LocalsModeButton" Classes="develop-action tool locals" Classes.has-content="{Binding HasLocals}"
                                   IsChecked="{Binding IsLocalsMode, Mode=OneWay}" Command="{Binding ToggleLocalsModeCommand}"
-                                  AutomationProperties.Name="Locals" ToolTip.Tip="Locals">
+                                  AutomationProperties.Name="Locals" ToolTip.Tip="Locals (Shift+W)">
                         <Grid>
                             <TextBlock Text="◩" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             <Ellipse Width="4" Height="4" HorizontalAlignment="Right" VerticalAlignment="Top"
@@ -143,6 +143,7 @@
                 <Grid x:Name="LocalsToolHeader" ColumnDefinitions="*,Auto,Auto" Margin="15,0,15,8" IsVisible="{Binding IsLocalsMode}">
                     <TextBlock Text="LOCALS" Classes="section-label" VerticalAlignment="Center"/>
                     <ToggleButton x:Name="ShowLocalMaskButton" Classes="tool-mask" Grid.Column="1" Content="Show Mask"
+                                  ToolTip.Tip="Show Mask (O) · Hold M to show temporarily"
                                   IsChecked="{Binding ShowLocalMask}" AutomationProperties.Name="Show selected mask" Padding="5,3" FontSize="10"/>
                     <Button x:Name="CloseLocalsButton" Grid.Column="2" Content="Close" Command="{Binding CloseLocalsCommand}" Padding="5,3" FontSize="10"/>
                 </Grid>
