@@ -42,7 +42,7 @@
                                FontFamily="{StaticResource FontHeading}"
                                FontSize="{StaticResource FontSizeHero}"
                                FontWeight="Bold"
-                               Foreground="{DynamicResource ControlActive}"
+                               Foreground="{StaticResource BrandCyan}"
                                TextAlignment="Center" TextWrapping="Wrap"/>
                     <TextBlock Text="A calm, local workspace for browsing and non-destructive photo editing."
                                Foreground="{DynamicResource TextSecondary}"

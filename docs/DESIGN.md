@@ -177,7 +177,8 @@ update network requests; GitHub is contacted only on an explicit **Check for upd
 The brand personality for the design system is energetic, luminous, and high-velocity. It targets a tech-forward audience that values performance and visual stimulation. The UI should evoke a sense of "captured light"—vibrant, focused, and humming with energy.
 
 The workspace uses restrained, monochrome chrome so photographs and color-semantic
-data carry the visual energy. Cyan remains a title-bar brand signature; controls use
+data carry the visual energy. Cyan remains the brand signature in the title bar and
+the first-run welcome heading; controls use
 neutral value shifts for hover, selection, active, and focus states.
 Workspace scrollbars are hidden; the folder tree and History are the overlay exceptions.
 
@@ -186,7 +187,8 @@ Workspace scrollbars are hidden; the folder tree and History are the overlay exc
 The palette is anchored in deep space blacks so image color remains authoritative.
 - **Control chrome:** Achromatic surface steps distinguish hover, selection, active,
   and focus states. Active fills use a high-contrast neutral on-color.
-- **Brand cyan:** Reserved for the title-bar mark and wordmark.
+- **Brand cyan:** Reserved for the title-bar mark and wordmark and the first-run
+  welcome heading.
 - **Semantic color:** Reserved for burst-group identity, color labels, mixer bands,
   white-balance gradients, clipping and scope channels, errors/destructive actions,
   while reject uses an invariant near-black surface with a light glyph and hairline.
@@ -220,7 +222,8 @@ keeps its visual weight while adding no chroma beside the photograph. The select
 check mark is achromatic and high-contrast. `ControlHover`, `ControlSelected`,
 `ControlActive`, and `OnControlActive` are variant-specific neutral state tokens; the
 Fluent `SystemAccentColor*` ramp is achromatic as well. `BrandCyan` is separate and
-serves only the title-bar identity. The `BrandMark` image-brush keeps that cyan mark
+serves only the brand identity: the title bar and the first-run welcome heading. The
+`BrandMark` image-brush keeps that cyan mark
 in both themes.
 `AssessmentGray` uses the same shipped value but is an invariant assessment reference,
 not an alias to the theme surround. `AssessmentWhite` is the invariant `#FFFFFF`
