@@ -9,6 +9,10 @@ namespace HappyPhoton.Tests;
 
 public sealed partial class LocalsFusedBaselineTests
 {
+    private static void AssertControlValid(double observed, double reference, string arm) =>
+        Assert.True(observed >= reference * .75 && observed <= reference * 1.25,
+            $"Invalid qualification run: {arm} median {observed:F4} ms is outside ±25% of {reference} ms");
+
     [Fact]
     public async Task QualifiedG8()
         => await ContendedTick(false);
@@ -67,7 +71,7 @@ public sealed partial class LocalsFusedBaselineTests
             $"alone={Median(alone):F4} concurrent={Median(concurrent):F4} " +
             $"alone_samples=[{string.Join(',', alone)}] concurrent_samples=[{string.Join(',', concurrent)}] " +
             $"resting={large.Pixels.Width}x{large.Pixels.Height} cap=2 samples={Samples}");
-        Assert.True(Median(concurrent) <= 150, "G8 contended tick");
+        Assert.True(Median(concurrent) <= 150, "G8 contended tick median (individual samples reported)");
 
         double Tick() => Time(() => { using var result = pipeline.Render(interactive); });
     }
@@ -113,6 +117,7 @@ public sealed partial class LocalsFusedBaselineTests
         var limit = Math.Max((range ? Median(off) : raw ? 2911.2468 : 865.4567) * .05, 500);
         Print(.45, $"G9 export_off={Median(off):F4} on={Median(on):F4} paired_delta={delta:F4} " +
             $"limit={limit:F4} variants={(raw ? 3 : 1)} range={range} hue={hue} off=[{string.Join(',', off)}] on=[{string.Join(',', on)}]");
+        if (range) AssertControlValid(Median(off), raw ? 2300 : 950, "Locals-off export");
         Assert.True(delta <= limit, "G9 export delta");
 
         async Task<double> Export(EditSettings edits, string arm)

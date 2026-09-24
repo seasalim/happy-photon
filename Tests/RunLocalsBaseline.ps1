@@ -1,4 +1,4 @@
-param([ValidateSet('G1','G2','G5','G9','G9Stage','QualifiedG5','QualifiedRadialG9Eight','QualifiedRangeControlTick','QualifiedRangeControlContention','QualifiedRangeControlExport','QualifiedRangeClassification','QualifiedRangeClassificationExport','QualifiedRangeOverlay','QualifiedRangeReliability','QualifiedRangeLuminanceClassification','QualifiedRangeRequestedOverlay')][string]$Gate = 'G1',
+param([ValidateSet('QualifiedRangeHueAgreement','QualifiedRangeAdversarialAgreement','G1','G2','G5','G9','G9Stage','QualifiedG5','QualifiedRadialG9Eight','QualifiedRangeControlTick','QualifiedRangeControlContention','QualifiedRangeControlExport','QualifiedRangeClassification','QualifiedRangeClassificationExport','QualifiedRangeOverlay','QualifiedRangeReliability','QualifiedRangeLuminanceClassification','QualifiedRangeRequestedOverlay')][string]$Gate = 'G1',
     [ValidateSet('raw','standard','synthetic')][string]$Fixture = 'raw',
     [ValidateRange(1,100)][int]$Samples = 5,
     [ValidateRange(1,120)][int]$TimeoutSeconds = 120)

@@ -77,7 +77,11 @@ public sealed partial class LocalsFusedBaselineTests
         using var e = pipeline.Render(new(full, settings, RenderIntent.Export, null, new(false, false)));
         WysiwygTests.AlignForComparison(e.Image, p.Image);
         var result = GoldenImageComparer.Compare(e.Image, p.Image, GoldenComparisonDomain.DisplaySrgb);
-        Print(_radialCoverage, $"LH8 preview_export mean_deltaE={result.MeanDeltaE:F6} p99_deltaE={result.P99DeltaE:F6} observation_only=True");
+        Print(_radialCoverage, $"LH8 preview_export mean_deltaE={result.MeanDeltaE:F6} p99_deltaE={result.P99DeltaE:F6} bounds=WP6");
+        Assert.InRange(result.MeanDeltaE, 0, preview.Info.IsRawSource ? 2.4 : 1.3);
+        Assert.InRange(result.P99DeltaE, 0, preview.Info.IsRawSource ? 20 : 16.5);
+        double supportError = 0;
+        var supportPixels = 0;
         foreach (var local in settings.Locals!)
         {
             var isolated = settings.Clone(); isolated.Locals = [local];
@@ -86,6 +90,15 @@ public sealed partial class LocalsFusedBaselineTests
             var errors = RenderPipelineTestSupport.ReadPixels(pm).Zip(RenderPipelineTestSupport.ReadPixels(em),
                 (a, b) => Math.Abs(a - b) / 65535d).Order().ToArray();
             Print(_radialCoverage, $"local={local.Ordinal} weight_mean={errors.Average():F6} weight_p99={errors[(int)(errors.Length * .99)]:F6} weight_max={errors[^1]:F6}");
+            var support = PrintSupportDisagreement(pm, em, local.Ordinal);
+            supportPixels += support.Count;
+            supportError += support.Sum;
+            if (support.Count >= 10000)
+                Assert.InRange(support.P99!.Value, 0, preview.Info.IsRawSource ? .75 : .95);
         }
+        Assert.True(supportPixels > 0, "LH8 must have measurable support");
+        var pooledMean = supportError / supportPixels;
+        Print(_radialCoverage, $"LH8 pooled_support_pixels={supportPixels} pooled_support_weight_mean={pooledMean:F6}");
+        Assert.InRange(pooledMean, 0, preview.Info.IsRawSource ? .09 : .065);
     }
 }

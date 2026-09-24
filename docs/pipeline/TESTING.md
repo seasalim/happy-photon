@@ -553,7 +553,7 @@ Show Mask off as the memory control.
 | Gate | Limit | RAW | HEIC |
 | --- | --- | ---: | ---: |
 | Ordinary tick | ≤ 150 ms | 60.9 ms | 49.7 ms |
-| Contended tick (3200 px resting render) | ≤ 150 ms, every sample | 129.3 ms | 130.6 ms |
+| Contended tick (3200 px resting render) | ≤ 150 ms, median (all samples reported) | 129.3 ms | 130.6 ms |
 | Range increment over the same unrestricted locals | ≤ 22 ms | −1.1 ms | −1.7 ms |
 | Export delta over no locals | ≤ max(5 %, 500 ms) | +339 ms | +219 ms |
 | Requested mask, median | ≤ 60 ms | 28.1 ms | 39.2 ms |
@@ -568,7 +568,8 @@ worker is eagerly optimized, but the first request in a process still pays JIT
 `WysiwygTests.AlignForComparison`) is image mean/p99 ΔE 1.68/10.05 RAW and
 1.36/19.19 HEIC, weight mean/p99 .0003/.0012 and .0095/.265. A lightness window
 over fine texture does not commute with downsampling, so isolated weights can
-differ by up to 1; these are observations, not pinned bounds.
+differ by up to 1. WP6 below pins the image bounds and the support-restricted
+weight bounds for the eight-local workload.
 `LuminanceRangeTests`, `LocalsContractPrototypeTests.ProductionLuminance*`,
 `LocalsViewModelTests.Range*`, `DualRangeTrackTests` and `LocalRangeMaskTests`
 cover persistence, oracle agreement, edit ownership, endpoint key handling, stale
@@ -657,7 +658,7 @@ Pentax RAW accepted picker ms: [2.0025, 0.0959, 0.0586, 0.0559, 0.0530, 0.0574, 
 
 iPhone HEIC accepted picker ms: [2.7676, 0.1206, 0.0865, 0.0747, 0.0795, 0.0748, 0.0767, 0.0701, 0.0699, 0.0733, 0.0669, 0.0835, 0.0697, 0.0694, 0.0674].
 
-Restricted preview/export agreement remains observation-only: image mean/p99 ΔE
+Restricted preview/export agreement is bounded by the WP6 limits below: image mean/p99 ΔE
 is 2.145257 / 18.182220 on RAW and 1.143132 / 15.039284 on HEIC. The production R8
 settings are compared with `WysiwygTests.AlignForComparison`; individual weight
 fields use the existing linear Rec.2020 Magick resize. Local 1–8 weight statistics:
@@ -1127,6 +1128,154 @@ isolated seeded catalog (`HAPPY_PHOTON_CATALOG_ROOT` / `HAPPY_PHOTON_CACHE_ROOT`
 records `StartupTrace` milestones (show, first frame, startup gate) per run.
 `-RuntimeEnvironment` sets A/B runtime knobs, and `-Cold` launches each run from a fresh
 unbuffered copy.
+
+### WP6 complete eight-local qualification (run 269)
+
+User-approved 2026-09-23 at `7039006` (`c277527` plus test-only measurement
+instrumentation), Windows, 24 CPUs, fresh Release process per gate, five pairs.
+RAW is Canon EOS 6D ISO 6400; HEIC is iPhone 14 Pro ISO 1000. The same-time A/B
+against `938032f` was indistinguishable. The approved measurements below supersede
+the WP3/WP4 limits where explicitly changed; recipes remain unchanged.
+Run each named gate separately with the environment described above and no sibling
+test hosts. All timing and memory samples are printed, including both paired arms.
+The dedicated classification test owns the memory gate: tick private increments
+are report-only because a 10–11 MB Q16 frame can commit in either arm (three of
+twelve base/head runs failed the old tick cap).
+
+| Gate | Measured RAW / HEIC | Approved assertion |
+| --- | --- | --- |
+| LH8 ordinary tick | 50.0411 / 44.5273 ms | median ≤ 150 ms |
+| LH8 contended tick, cap-2 3200 px resting | 115.0545 / 134.7549 ms | median ≤ 150 ms; individual samples reported |
+| Range increment over C8 | −8.3875 / −10.0930 ms | median ≤ 22 ms (unchanged) |
+| LH8 export delta over locals off | +183.9665 / +145.1171 ms | paired median ≤ max(5% of off median, 500 ms) |
+| Classification private increment | 0 / 49,152 bytes | median ≤ max(1% Q16 frame, 1 MiB) |
+| Classification caller allocation | about 14.4 / 14.4 KB | every sample ≤ 64 KiB |
+| R1 requested overlay | 29.6904 / 39.0982 ms; 6.86 / 8.00 MB | median ≤ 60 ms; private median ≤ max(150% Q16 frame, 16 MiB) |
+| LH8 requested overlay, largest support | 7.5779 / 12.3784 ms; 6.85 / 8.00 MB | same asserted limits as R1 |
+| C8 tick control validity | 58.5349 / 55.0678 ms | median within ±25% of 55 / 50 ms |
+| Locals-off export validity | 2304.9359 / 951.4228 ms | median within ±25% of 2300 / 950 ms |
+| Absent, off or fully open range bypass | 0 / 0 differing codes | exactly zero (unchanged) |
+
+A control outside its validity band fails the run as invalid; it cannot certify a
+gate pass. Contention and classification private memory use the median by explicit
+user decision. The HEIC classification sample of 1,396,736 bytes below failed the
+former per-sample rule; its 49,152-byte median passes the approved rule. The two
+requested-overlay tests are `QualifiedRangeHueRequestedOverlay` (R1) and
+`QualifiedRangeHueEightRequestedOverlay` (LH8). Largest-support selection is outside
+timing: local 1 on RAW, local 3 on HEIC. Both include matching-base acquisition
+through drawable bitmap creation, against the Show Mask off resting preview.
+
+Agreement limits are frozen absolute bounds. `QualifiedRangeHueAgreement` and
+`QualifiedRangeProductionAgreement` retain their WP3/WP4 settings and alignment.
+Images align export to preview via `WysiwygTests.AlignForComparison`, Magick's
+existing default resize in display sRGB, and `GoldenImageComparer` ΔE00. Weight
+fields use the existing default Magick resize in linear Rec.2020 to the preview
+width/height. Support is the union where either aligned Q16 weight is positive,
+counted once per pixel. Pooled mean weights each local by its support population
+(overlapping local supports count separately). Per-local p99 is asserted only for
+locals with at least 10,000 support pixels; local 7 is empty on both sides for both
+fixtures and is explicitly reported as empty, excluded from per-local bounds.
+
+| Agreement gate | Measured RAW / HEIC | Approved RAW / HEIC bounds |
+| --- | --- | --- |
+| LH8 image mean / p99 ΔE | 2.145257 / 18.182220; 1.143132 / 15.039284 | ≤ 2.4 / 20.0; ≤ 1.3 / 16.5 |
+| R1-L image mean / p99 ΔE | 1.679 / 10.05; 1.357 / 19.19 | ≤ 1.85 / 11.1; ≤ 1.5 / 21.1 |
+| LH8 pooled support weight mean | 0.082 / 0.059 | ≤ 0.09 / 0.065 |
+| LH8 worst eligible per-local support p99 | 0.666773 / 0.859281 | ≤ 0.75 / 0.95 |
+| Adversarial image mean / p99 ΔE | 1.686699 / 10.128109; 1.292924 / 17.933345 | ≤ 1.9 / 11.2; ≤ 1.45 / 19.7 |
+| Adversarial support weight mean | 0.024098 / 0.104430 | ≤ 0.027 / 0.115 |
+| Synthetic adversarial image mean / p99 ΔE | 19.477438 / 55.341839 | ≤ 21.4 / 60.9 |
+| Synthetic adversarial support weight mean | 0.674035 | ≤ 0.74 |
+
+`QualifiedRangeAdversarialAgreement` uses R1 +2 EV, feather .001, zero-softness
+luminance [.35,.75] and hue center 30°/width 90°. Its synthetic image contains
+hard vertical edges and 1/3/16 px texture. Global +2 EV controls measure mean/p99
+ΔE 5.877696/20.550526 RAW, 2.164370/25.734525 HEIC, and 17.796725/47.003965
+synthetic; the synthetic ranged excess is +1.680713/+8.337874. Those controls
+informed the approved absolute bounds, rather than an assertion that every ranged
+arm must improve on its control. Adversarial weight p99 remains unbounded by user
+decision: hard windows over single-pixel texture inherently reach 1.0.
+All five fresh-process LH8 and adversarial agreement measurements were identical
+at the printed precision (samples 1–5 equal the values above).
+
+**Approved timing/memory samples.** Milliseconds unless labeled bytes. Negative
+paired private increments are process-memory noise. These are the original
+`gates-before/` measurements; the report-only tick private cap and the former
+classification every-sample cap do not invalidate the newly approved median rules.
+
+**Canon RAW**
+
+```text
+Tick:
+  off: [58.3797,62.4159,58.5349,56.7796,70.4632]
+  on: [50.0411,50.948,51.8735,48.3921,47.5304]
+  delta: [-8.3386,-11.4679,-6.6614,-8.387500000000003,-22.9328]
+  private: [-9228288,-196608,-9596928,4096,110592]
+  caller: [272,504,416,168,-48]
+Contention:
+  alone_samples: [115.2269,114.909,103.1793,107.6704,98.1118]
+  concurrent_samples: [136.3342,119.6787,115.0545,108.9896,113.6978]
+Export:
+  off: [2252.5396,2219.5469,2304.9359,2651.6878,2745.0121]
+  on: [2453.766,2427.8524,2488.9024,2613.4182,2507.9362]
+ClassificationMemory:
+  classification_private: [0,0,712704,0,0]
+  caller_absolute: [14344,14344,14152,14408,14216]
+  private_increment_off_bytes: [0,0,0,0,0]
+  private_increment_on_bytes: [0,0,712704,0,0]
+  caller_off_bytes: [13880,13880,14032,13984,13880]
+  caller_on_bytes: [14344,14344,14152,14408,14216]
+  off_ms: [13.8243,11.4112,12.2691,11.7614,11.1368]
+  on_ms: [17.5519,17.6488,19.2834,18.2691,18.0121]
+RequestedOverlay:
+  times: [54.0997,30.1162,29.5161,29.6904,29.4271]
+  private: [6516736,6856704,6852608,7049216,7114752]
+EightRequestedOverlay:
+  times: [7.7434,7.0165,7.5779,7.7382,7.4924]
+  private: [6496256,6852608,6852608,6852608,6852608]
+```
+
+**iPhone HEIC**
+
+```text
+Tick:
+  off: [56.9299,55.8987,53.3945,52.2834,55.0678]
+  on: [46.4537,43.2632,43.8398,44.5273,44.9748]
+  delta: [-10.476200000000006,-12.6355,-9.554700000000004,-7.7561000000000035,-10.092999999999996]
+  private: [-13692928,11776000,77824,11591680,81920]
+  caller: [40,-64,0,88,232]
+Contention:
+  alone_samples: [115.0774,123.6933,160.5568,148.7349,121.381]
+  concurrent_samples: [134.7549,151.0803,146.0728,131.306,123.8568]
+Export:
+  off: [918.9893,920.6516,951.4228,1004.1902,994.991]
+  on: [1064.1064,1037.7235,1169.6428,1139.6494,1197.0671]
+ClassificationMemory:
+  classification_private: [196608,1396736,49152,0,-98304]
+  caller_absolute: [14192,14344,14320,14320,12592]
+  private_increment_off_bytes: [0,8192,81920,0,98304]
+  private_increment_on_bytes: [196608,1404928,131072,0,0]
+  caller_off_bytes: [14176,13816,13984,14368,12320]
+  caller_on_bytes: [14192,14344,14320,14320,12592]
+  off_ms: [58.4386,63.1514,11.3339,10.4214,10.1381]
+  on_ms: [67.5019,122.2066,55.1693,23.4977,18.7395]
+RequestedOverlay:
+  times: [46.9851,40.5334,39.0982,37.069,17.941]
+  private: [0,8065024,7999488,8073216,7696384]
+EightRequestedOverlay:
+  times: [13.5922,12.4226,11.8522,12.177,12.3784]
+  private: [7618560,8003584,8003584,7831552,8003584]
+```
+
+Visual evidence is generated by `LocalsShowcaseTests`: empty entry, linear editing,
+radial Outside, luminance and hue restrictions, monochrome and exited tool, plus
+`develop-locals-eight-disabled` (Middle Gray, 1200 × 700) and
+`develop-locals-unavailable` (Dark, 1440 × 900). PNGs are saved under
+`artifacts/shots/`. The eight-local scene asserts the bounded 120 px list viewport
+scrolls, the disabled selected row is visible, all four adjustment sliders fit in the
+visible panel, and keyboard focus reaches the list and sliders. The unavailable scene
+uses the cloud-only availability seam, disabled controls and the visible online-only
+reason.
 
 ### 5.1 Display-reference comparison
 

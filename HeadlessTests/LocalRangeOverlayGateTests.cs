@@ -17,7 +17,10 @@ public sealed partial class LocalRangeOverlayGateTests(ITestOutputHelper output)
     [AvaloniaFact]
     public Task QualifiedRangeHueRequestedOverlay() => RequestedOverlay(true);
 
-    private async Task RequestedOverlay(bool hue)
+    [AvaloniaFact]
+    public Task QualifiedRangeHueEightRequestedOverlay() => RequestedOverlay(true, true);
+
+    private async Task RequestedOverlay(bool hue, bool eight = false)
     {
         Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1", "Opt-in overlay gate");
         Assert.True(Environment.ProcessorCount > 2, "Full CPU required");
@@ -29,6 +32,7 @@ public sealed partial class LocalRangeOverlayGateTests(ITestOutputHelper output)
         await using var vm = fixture.CreateViewModel(catalog, new BaseLoaderRouter(new RawBaseLoader(), new StandardBaseLoader()), _ => Task.CompletedTask);
         var settings = new EditSettings { Locals = [new() { Type = "radial", Rx = .3, Ry = .2,
             Angle = 30, Feather = .5, Hue = hue ? new() { Enabled = true, Center = 350 } : null, Luminance = new() { Enabled = true, Lower = .47 } }] };
+        if (eight) settings = EightRangeSettings();
         var image = new ImageFile(path) { EditSettings = settings };
         image.CatalogId = await catalog.GetOrCreateImageAsync(path);
         await catalog.SaveEditSettingsAsync(image.CatalogId, settings);
@@ -36,8 +40,18 @@ public sealed partial class LocalRangeOverlayGateTests(ITestOutputHelper output)
         await TestWaits.UntilAsync(() => vm.PreviewImage != null && vm.IsHistoryLoaded);
         var size = vm.PreviewImage!.PixelSize;
         var edge = Math.Max(size.Width, size.Height);
-        settings.Locals![0].Rx = Math.Sqrt(.45 * size.Width / edge * size.Height / edge / (Math.PI * 2 / 3));
-        settings.Locals[0].Ry = settings.Locals[0].Rx * 2 / 3;
+        if (!eight)
+        {
+            settings.Locals![0].Rx = Math.Sqrt(.45 * size.Width / edge * size.Height / edge / (Math.PI * 2 / 3));
+            settings.Locals[0].Ry = settings.Locals[0].Rx * 2 / 3;
+        }
+        var selected = settings.Locals![0];
+        if (eight)
+        {
+            using var lease = vm.ImageService.Previews.AcquireLocalRangeBase(image, settings, edge);
+            selected = LargestSupport(lease!.Base, settings, size);
+            vm.SelectedLocal = vm.Locals.Single(local => local.Id == selected.Id);
+        }
         WriteableBitmap? drawable = null;
         var color = HappyPhotonColors.LocalMaskColor;
         var tint = (uint)(color.R << 16 | color.G << 8 | color.B);
@@ -45,7 +59,7 @@ public sealed partial class LocalRangeOverlayGateTests(ITestOutputHelper output)
         {
             using var lease = vm.ImageService.Previews.AcquireLocalRangeBase(image, settings, Math.Max(size.Width, size.Height));
             Assert.NotNull(lease);
-            drawable = LocalRangeMaskRenderer.Render(lease.Base, settings, settings.Locals![0], size, tint, CancellationToken.None);
+            drawable = LocalRangeMaskRenderer.Render(lease.Base, settings, selected, size, tint, CancellationToken.None);
             Assert.Equal(size, drawable.PixelSize);
         }
         var firstRequest = Stopwatch.StartNew();
@@ -71,7 +85,7 @@ public sealed partial class LocalRangeOverlayGateTests(ITestOutputHelper output)
         var ms = times.Order().ElementAt(2); var memory = increments.Order().ElementAt(2);
         var limit = Math.Max(size.Width * (long)size.Height * 6 * 1.5, 16 * 1048576);
         output.WriteLine($"production_overlay fixture={(standard ? "HEIC" : "RAW")} size={size} cpu={Environment.ProcessorCount} " +
-            $"median_ms={ms:F4} private_increment={memory} limit={limit} coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off " +
+            $"median_ms={ms:F4} private_increment={memory} limit={limit} workload={(eight ? "LH8" : "R1")} selected={selected.Ordinal} bounds=WP6 upload=WriteableBitmap control=resting_preview_ShowMask_off " +
             $"times=[{string.Join(',', times)}] private=[{string.Join(',', increments)}]");
         Assert.True(ms <= 60, "Requested overlay time"); Assert.True(memory <= limit, "Requested overlay private increment");
         GC.KeepAlive(vm.PreviewImage);
