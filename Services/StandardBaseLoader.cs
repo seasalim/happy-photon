@@ -127,7 +127,7 @@ public sealed class StandardBaseLoader : IBaseImageLoader
             image.Depth = 16;
             cancellationToken.ThrowIfCancellationRequested();
             var info = new BaseImageInfo(
-                IsHeic(file) ? BaseSourceKind.HeicPlatform : BaseSourceKind.Standard,
+                IsHeic(file) ? BaseSourceKind.Heic : BaseSourceKind.Standard,
                 false,
                 decode,
                 null,

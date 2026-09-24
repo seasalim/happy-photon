@@ -10,7 +10,7 @@ public sealed class RenderNoiseReductionTests
     [Theory]
     [InlineData(BaseSourceKind.RawLibRaw, true)]
     [InlineData(BaseSourceKind.Standard, false)]
-    [InlineData(BaseSourceKind.HeicPlatform, false)]
+    [InlineData(BaseSourceKind.Heic, false)]
     public void Zero_ReturnsBeforePixelAccessForEverySourceKind(
         BaseSourceKind kind,
         bool isRaw)

@@ -21,7 +21,7 @@ with built-in characterization.
 `BaseLoaderRouter` sends RAW only to `RawBaseLoader`; `StandardBaseLoader` rejects
 RAW in both capability and load paths. A rejected native runtime or unsupported file
 cannot fall back to Magick raster decode. HEIC/HEIF and other standard formats use
-`StandardBaseLoader`; HEIC's internal source-kind name is `HeicPlatform`.
+`StandardBaseLoader`.
 
 ## 2. `RawBaseLoader` (LibRaw via the Happy Photon bridge)
 

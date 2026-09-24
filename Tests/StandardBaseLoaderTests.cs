@@ -347,7 +347,7 @@ public sealed class StandardBaseLoaderTests : IDisposable
             CancellationToken.None);
 
         Assert.NotNull(result);
-        Assert.Equal(BaseSourceKind.HeicPlatform, result!.Info.Kind);
+        Assert.Equal(BaseSourceKind.Heic, result!.Info.Kind);
         AssertStandardFacts(result, BaseDecodeSettings.Default);
     }
 

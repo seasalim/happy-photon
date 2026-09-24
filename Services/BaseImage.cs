@@ -7,7 +7,7 @@ public enum BaseSourceKind
 {
     RawLibRaw,
     Standard,
-    HeicPlatform
+    Heic
 }
 
 public sealed record BaseDecodeSettings(
