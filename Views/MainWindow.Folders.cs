@@ -198,6 +198,8 @@ public partial class MainWindow
                 MainWindowViewModel.CurrentFirstRunExperienceVersion,
             FileTypeFilter = vm.Browse.FileTypeFilter,
             StripLocationData = vm.ExportSettings.StripLocationData,
+            Watermark = vm.ExportSettings.Watermark.Capture(),
+            WatermarkEnabled = vm.ExportSettings.Watermark.Enabled,
             OutputSharpening = vm.ExportSettings.OutputSharpening
         });
 

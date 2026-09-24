@@ -266,8 +266,18 @@ around the existing rendered preview. Browse owns selection; every listed photo 
 and clicking a row changes only the preview. Change photos offers Choose in Browse or
 replacement with the picked photos in the current filtered Browse view. Destination,
 Output sizes, Format/Quality (Lossless for PNG/TIFF), and Remove location data appear
-above collapsed More options (color space, sharpening, filenames), with a resolved path
-example below. The batch summary, validation, report and Export N files button occupy
+above collapsed More options (color space, sharpening, filenames), followed by a
+Watermark expander and the resolved path example. Watermark offers Add watermark,
+single-line text, installed font family, bold/italic, short-edge size percentage,
+White/Black, opacity, edge, edge-aware alignment, optional side-edge rotation, and
+short-edge margin percentage. The body is disabled while off; the summary is "Off"
+or quoted text and position. Center hides alignment; Left/Right expose rotation.
+Missing saved fonts keep their name with "(not installed)" and use the platform default.
+Side-edge summaries name the edge, alignment and rotation. Settings persist across
+sessions; watermark changes coalesce for 250 ms before saving or refreshing an open
+Preview output proof. Closing saves the final values after pending writes.
+Enabled blank text blocks export. Develop and thumbnails remain unmarked.
+The batch summary, validation, report and Export N files button occupy
 a fixed footer outside scrolling settings. Report details are collapsed and height-bounded. The
 left navigator retains only the active
 thumbnail and online-only download action so the folder tree receives the reclaimed

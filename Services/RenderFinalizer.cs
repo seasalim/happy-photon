@@ -11,7 +11,8 @@ internal static class RenderFinalizer
         int? maxDimension,
         OutputColorSpace outputColorSpace,
         OutputSharpeningMode outputSharpening,
-        EffectsSettings? effects = null)
+        EffectsSettings? effects = null,
+        WatermarkSpec? watermark = null)
     {
         ArgumentNullException.ThrowIfNull(displayRec2020);
         if (maxDimension is <= 0)
@@ -24,7 +25,7 @@ internal static class RenderFinalizer
             maxDimension,
             outputColorSpace,
             outputSharpening,
-            effects);
+            effects, watermark);
     }
 
     internal static MagickImage FinalizeOwnedProof(
@@ -32,7 +33,8 @@ internal static class RenderFinalizer
         int? maxDimension,
         OutputColorSpace outputColorSpace,
         OutputSharpeningMode outputSharpening,
-        EffectsSettings? effects = null)
+        EffectsSettings? effects = null,
+        WatermarkSpec? watermark = null)
     {
         ArgumentNullException.ThrowIfNull(displayRec2020);
         try
@@ -59,6 +61,12 @@ internal static class RenderFinalizer
             RenderColorEncoding.ConvertEncodedRec2020ToTarget(
                 displayRec2020,
                 outputColorSpace);
+            if (watermark != null)
+            {
+                var watermarkProbe = RenderStageProbe.Begin();
+                WatermarkRenderer.Apply(displayRec2020, watermark);
+                RenderStageProbe.End(watermarkProbe, "watermark", displayRec2020);
+            }
             return displayRec2020;
         }
         catch
@@ -75,7 +83,8 @@ internal static class RenderFinalizer
         OutputSharpeningMode outputSharpening,
         bool wasResized,
         int detailBandPixelLimit = DefaultBandPixelLimit,
-        EffectsSettings? effects = null)
+        EffectsSettings? effects = null,
+        WatermarkSpec? watermark = null)
     {
         ArgumentNullException.ThrowIfNull(displayRec2020);
         if (maxDimension is <= 0)
@@ -91,7 +100,7 @@ internal static class RenderFinalizer
             outputSharpening,
             wasResized,
             detailBandPixelLimit,
-            effects);
+            effects, watermark);
     }
 
     internal static MagickImage FinalizeOwned(
@@ -101,7 +110,8 @@ internal static class RenderFinalizer
         OutputSharpeningMode outputSharpening,
         bool wasResized,
         int detailBandPixelLimit = DefaultBandPixelLimit,
-        EffectsSettings? effects = null)
+        EffectsSettings? effects = null,
+        WatermarkSpec? watermark = null)
     {
         ArgumentNullException.ThrowIfNull(displayRec2020);
         try
@@ -141,6 +151,12 @@ internal static class RenderFinalizer
                 displayRec2020,
                 outputColorSpace);
             RenderStageProbe.End(probe, "encode-target", displayRec2020);
+            if (watermark != null)
+            {
+                var watermarkProbe = RenderStageProbe.Begin();
+                WatermarkRenderer.Apply(displayRec2020, watermark);
+                RenderStageProbe.End(watermarkProbe, "watermark", displayRec2020);
+            }
             return displayRec2020;
         }
         catch

@@ -18,7 +18,8 @@ public sealed partial class PreviewService
         int? maxDimension,
         OutputColorSpace outputColorSpace,
         OutputSharpeningMode outputSharpening,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        WatermarkSpec? watermark = null)
     {
         ArgumentNullException.ThrowIfNull(imageFile);
         ArgumentNullException.ThrowIfNull(settings);
@@ -59,7 +60,7 @@ public sealed partial class PreviewService
                 maxDimension,
                 outputColorSpace,
                 outputSharpening,
-                settingsSnapshot.Effects);
+                settingsSnapshot.Effects, watermark);
             cancellationToken.ThrowIfCancellationRequested();
             return BitmapConversionService.ConvertToBitmap(finalized);
         }, cancellationToken).ConfigureAwait(false);

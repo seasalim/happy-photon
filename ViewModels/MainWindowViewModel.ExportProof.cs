@@ -85,6 +85,7 @@ public partial class MainWindowViewModel
 
     private void RequestExportProofRefresh()
     {
+        CancelAndDispose(ref _watermarkProofDebounce);
         var image = SelectedImage;
         if (!IsExportMode || !ExportSettings.ShowProof || image == null ||
             _renderOutcomeChannelClosed) return;
@@ -100,6 +101,7 @@ public partial class MainWindowViewModel
 
     private void RestoreExportPreview()
     {
+        CancelAndDispose(ref _watermarkProofDebounce);
         SetProofDisplayed(false);
         var image = SelectedImage;
         if (!IsExportMode || image == null || _renderOutcomeChannelClosed) return;
@@ -142,6 +144,7 @@ public partial class MainWindowViewModel
         long generation,
         CancellationToken cancellationToken)
     {
+        CancelAndDispose(ref _watermarkProofDebounce);
         var task = RenderExportProofAsync(
             image, settings, generation, cancellationToken);
         var pending = _proofTask;
@@ -175,7 +178,7 @@ public partial class MainWindowViewModel
                 size.MaxDimension,
                 colorSpace,
                 ExportSettings.OutputSharpening,
-                cancellationToken);
+                cancellationToken, ExportSettings.Watermark.Snapshot());
             if (bitmap == null || cancellationToken.IsCancellationRequested ||
                 !IsExportMode ||
                 !ExportSettings.ShowProof ||

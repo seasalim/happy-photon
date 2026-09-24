@@ -378,7 +378,7 @@ public sealed class ImageExportService
                             job.Output.OutputSharpening,
                             variant.MaxDimension is int ownedLongEdge &&
                             ownedLongEdge < fullLongEdge,
-                            effects: editSnapshot.Effects)
+                            effects: editSnapshot.Effects, watermark: job.Output.Watermark)
                         : RenderFinalizer.Finalize(
                             shared,
                             maxDimension: null,
@@ -386,7 +386,7 @@ public sealed class ImageExportService
                             job.Output.OutputSharpening,
                             variant.MaxDimension is int sizedLongEdge &&
                             sizedLongEdge < fullLongEdge,
-                            effects: editSnapshot.Effects);
+                            effects: editSnapshot.Effects, watermark: job.Output.Watermark);
                     _metadataService.Apply(
                         imageFile,
                         destination,

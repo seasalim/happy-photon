@@ -15,6 +15,17 @@ public enum OutputSharpeningMode
 /// </summary>
 public partial class ExportSettings : ObservableObject
 {
+    public ExportWatermark Watermark { get; } = new();
+
+    public ExportSettings()
+    {
+        Watermark.PropertyChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(Watermark));
+            OnPropertyChanged(nameof(ValidationReason));
+        };
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ValidationReason))]
     private string _outputFolder = string.Empty;
@@ -76,6 +87,7 @@ public partial class ExportSettings : ObservableObject
     }
 
     public string ValidationReason =>
+        Watermark.Enabled && string.IsNullOrWhiteSpace(Watermark.Text) ? "Enter watermark text." :
         !ExportHiRes && !ExportWeb && !ExportSmall ? "Choose at least one output size." :
         ExportWeb && !IsValidSize(WebMaxSize) ? "Web long edge must be 16–65,536 pixels." :
         ExportSmall && !IsValidSize(SmallMaxSize) ? "Small long edge must be 16–65,536 pixels." :
@@ -89,7 +101,7 @@ public partial class ExportSettings : ObservableObject
 
     public ExportOutputSettings SnapshotOutput() => new(
         OutputFolder, Quality, Format, OutputColorSpace, NamingPattern,
-        StripLocationData, OutputSharpening);
+        StripLocationData, OutputSharpening, Watermark.Snapshot());
 
     public IReadOnlyList<ExportVariant> GetActiveVariants()
     {
@@ -127,7 +139,8 @@ public sealed record ExportOutputSettings(
     OutputColorSpace OutputColorSpace,
     string NamingPattern,
     bool StripLocationData,
-    OutputSharpeningMode OutputSharpening)
+    OutputSharpeningMode OutputSharpening,
+    WatermarkSpec? Watermark = null)
 {
     internal ExportSettings CreateEncoderSettings() => new()
     {

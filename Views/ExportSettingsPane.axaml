@@ -51,7 +51,7 @@
 
                     <TextBlock x:Name="ExportLosslessLabel" Text="Lossless" IsVisible="{Binding !IsExportQualityAvailable}" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
                     <CheckBox Classes="edit-toggle" Content="Remove location data" IsChecked="{Binding ExportSettings.StripLocationData, Mode=TwoWay}"/>
-                    <Expander x:Name="ExportMoreOptions" IsExpanded="False" Margin="0,8,0,0">
+                    <Expander x:Name="ExportMoreOptions" IsExpanded="False">
                         <Expander.Header>
                             <StackPanel>
                                 <TextBlock Text="More options" FontSize="12"/>
@@ -87,7 +87,19 @@
                             <TextBlock Text="{}{name} = original name · {date} = export date" IsVisible="{Binding IsCustomExportFilename}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Expander>
-                    <TextBlock Text="Example for this photo" FontSize="10" Foreground="{DynamicResource TextMuted}" Margin="0,8,0,0"/>
+                    <Expander x:Name="ExportWatermarkExpander" IsExpanded="{Binding IsWatermarkExpanded, Mode=TwoWay}">
+                        <Expander.Header>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Watermark" FontSize="12"/>
+                                    <TextBlock Text="Off" IsVisible="{Binding !ExportSettings.Watermark.Enabled}" FontSize="10" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding WatermarkSummary}" IsVisible="{Binding ExportSettings.Watermark.Enabled}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Expander.Header>
+                        <views:ExportWatermarkOptions/>
+                    </Expander>
+                    <TextBlock Text="Example for this photo" FontSize="10" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
                     <TextBlock Text="{Binding ExportPathExample}" FontSize="10" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
                     <TextBlock Text="{Binding ExportSubfolderHelp}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
                 </StackPanel>

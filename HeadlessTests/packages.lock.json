@@ -484,7 +484,8 @@
           "Magick.NET-Q16-OpenMP-x64": "[14.15.0, )",
           "MetadataExtractor": "[2.9.3, )",
           "Microsoft.Data.Sqlite": "[10.0.9, )",
-          "SQLitePCLRaw.bundle_e_sqlite3": "[3.0.3, )"
+          "SQLitePCLRaw.bundle_e_sqlite3": "[3.0.3, )",
+          "SkiaSharp": "[3.119.4, )"
         }
       },
       "happyphoton.libraw.interop": {

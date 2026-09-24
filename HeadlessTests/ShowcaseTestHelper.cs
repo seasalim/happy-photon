@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Styling;
+using Avalonia.Media;
+using Avalonia.VisualTree;
 using Avalonia.Threading;
 using Xunit;
 
@@ -69,6 +71,21 @@ internal static class ShowcaseTestHelper
         }
 
         Assert.True(settled(), $"{what} never settled.");
+    }
+
+    public static void SettleExpanderChevrons(Control root)
+    {
+        var chevrons = root.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>()
+            .Where(path => path.Name == "ExpandCollapseChevron" && path.IsEffectivelyVisible).ToArray();
+        Assert.NotEmpty(chevrons);
+        // Fluent animates newly attached headers too. Capturing the first frame can
+        // freeze a partly rotated chevron even when the content layout is settled.
+        Settle(() => chevrons.All(path =>
+        {
+            var rotation = Assert.IsType<RotateTransform>(path.RenderTransform);
+            var expanded = path.GetVisualAncestors().OfType<Expander>().First().IsExpanded;
+            return rotation.Angle == (expanded ? 180 : 0);
+        }), "Expander chevrons");
     }
 
     private static void ValidateScene(string scene)

@@ -9,6 +9,8 @@ public class AppSettings
     public BrowseThumbnailSize BrowseThumbnailSize { get; set; } = BrowseThumbnailSize.Medium;
     public bool ShowCapturePairs { get; set; }
     public AppTheme AppTheme { get; set; } = AppTheme.Dark;
+    public WatermarkSpec Watermark { get; set; } = new("");
+    public bool WatermarkEnabled { get; set; }
     public bool StripLocationData { get; set; }
     public OutputSharpeningMode OutputSharpening { get; set; } =
         OutputSharpeningMode.Screen;

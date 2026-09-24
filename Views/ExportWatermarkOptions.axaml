@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             xmlns:views="using:HappyPhoton.Views"
+             x:Class="HappyPhoton.Views.ExportWatermarkOptions" x:DataType="vm:MainWindowViewModel">
+    <UserControl.Styles>
+        <Style Selector="StackPanel#WatermarkBody:disabled">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        </Style>
+    </UserControl.Styles>
+    <StackPanel Spacing="6" Margin="0,10,0,0">
+        <CheckBox x:Name="WatermarkEnabled" Classes="edit-toggle" Content="Add watermark" IsChecked="{Binding ExportSettings.Watermark.Enabled, Mode=TwoWay}"/>
+        <StackPanel x:Name="WatermarkBody" Spacing="6" IsEnabled="{Binding ExportSettings.Watermark.Enabled}">
+            <TextBlock Text="Text" Classes="section-label"/>
+            <TextBox x:Name="WatermarkText" Classes="edit-field" Text="{Binding ExportSettings.Watermark.Text, Mode=TwoWay}"
+                     AcceptsReturn="False" AutomationProperties.Name="Watermark text"/>
+            <TextBlock Text="Font" Classes="section-label"/>
+            <ComboBox x:Name="WatermarkFontBox" Classes="edit-dropdown" HorizontalAlignment="Stretch" ItemsSource="{Binding WatermarkFonts}"
+                      SelectedItem="{Binding SelectedWatermarkFont, Mode=TwoWay}" AutomationProperties.Name="Watermark font">
+                <ComboBox.ItemsPanel><ItemsPanelTemplate><VirtualizingStackPanel/></ItemsPanelTemplate></ComboBox.ItemsPanel>
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:WatermarkFont"><TextBlock Text="{Binding Label}" FontFamily="{Binding Face}"/></DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Grid ColumnDefinitions="*,*">
+                <CheckBox Classes="edit-toggle" Content="Bold" FontWeight="Bold" IsChecked="{Binding ExportSettings.Watermark.Bold, Mode=TwoWay}"/>
+                <CheckBox Grid.Column="1" Classes="edit-toggle" Content="Italic" FontStyle="Italic" IsChecked="{Binding ExportSettings.Watermark.Italic, Mode=TwoWay}"/>
+            </Grid>
+            <views:CompactSlider Label="Size" Minimum="1" Maximum="20" SmallChange="0.5" StringFormat="{}{0:0.#}%" Value="{Binding ExportSettings.Watermark.Size, Mode=TwoWay}"/>
+            <TextBlock Text="Color" Classes="section-label"/>
+            <ListBox Classes="segmented" SelectedIndex="{Binding ExportSettings.Watermark.Color, Mode=TwoWay}" SelectionMode="Single,AlwaysSelected">
+                <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                <ListBoxItem Content="White"/><ListBoxItem Content="Black"/>
+            </ListBox>
+            <views:CompactSlider Label="Opacity" Minimum="5" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%" Value="{Binding ExportSettings.Watermark.Opacity, Mode=TwoWay}"/>
+            <TextBlock Text="Edge" Classes="section-label"/>
+            <ListBox x:Name="WatermarkEdgeBox" Classes="segmented" SelectedIndex="{Binding ExportSettings.Watermark.Edge, Mode=TwoWay}" SelectionMode="Single,AlwaysSelected">
+                <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                <ListBoxItem Content="Top"/><ListBoxItem Content="Bottom"/><ListBoxItem Content="Left"/><ListBoxItem Content="Right"/><ListBoxItem Content="Center"/>
+            </ListBox>
+            <StackPanel x:Name="WatermarkAlignmentRow" Spacing="6" IsVisible="{Binding IsWatermarkAlignmentVisible}">
+                <TextBlock Text="Alignment" Classes="section-label"/>
+                <ListBox x:Name="WatermarkAlignmentBox" Classes="segmented"
+                         SelectedIndex="{Binding ExportSettings.Watermark.Alignment, Mode=TwoWay}" SelectionMode="Single,AlwaysSelected">
+                    <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                    <ListBoxItem Content="{Binding WatermarkAlignmentLabels[0]}"/>
+                    <ListBoxItem Content="{Binding WatermarkAlignmentLabels[1]}"/>
+                    <ListBoxItem Content="{Binding WatermarkAlignmentLabels[2]}"/>
+                </ListBox>
+            </StackPanel>
+            <CheckBox x:Name="WatermarkRotate" Classes="edit-toggle" Content="Rotate along edge" IsVisible="{Binding IsWatermarkSide}"
+                      IsChecked="{Binding ExportSettings.Watermark.RotateAlongEdge, Mode=TwoWay}"/>
+            <views:CompactSlider Label="Margin" Minimum="0" Maximum="20" SmallChange="0.5" StringFormat="{}{0:0.#}%" Value="{Binding ExportSettings.Watermark.Margin, Mode=TwoWay}"/>
+            <TextBlock Text="Size and margin are % of the photo’s short edge." FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

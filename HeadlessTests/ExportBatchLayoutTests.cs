@@ -258,7 +258,8 @@ public sealed class ExportBatchLayoutTests(ITestOutputHelper output)
         var window = new MainWindow();
         using var scope = TestUiScope.ForMainWindow(window, vm, show: false);
         ShowcaseTestHelper.Capture(scene, scope, new PixelSize(width, height),
-            report ? HappyPhotonThemes.MidGray : ThemeVariant.Dark);
+            report ? HappyPhotonThemes.MidGray : ThemeVariant.Dark, shown =>
+                ShowcaseTestHelper.SettleExpanderChevrons(shown.FindControl<ExportSettingsPane>("ExportSettingsPane")!));
     }
 
     private static MainWindowViewModel CreateVm(CatalogVmFixture fixture, CatalogService catalog) =>

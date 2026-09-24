@@ -50,12 +50,23 @@ alter pixels, metadata policy, encoding, or destinations. Outcomes are recorded 
 target pair, while each capture still follows the shared flow below:
 `LoadFullBase` → one unresized `RenderDisplayRec2020` → per variant, in descending size
 order: sRGB-decode → progressive linear-light resize → sRGB-encode → optional output
-sharpen → vignette → grain → sRGB-decode → target convert → clamp → sRGB-encode → metadata apply (§4) →
+sharpen → vignette → grain → sRGB-decode → target convert → clamp → sRGB-encode → optional text watermark → metadata apply (§4) →
 encode (§3) → write-time authorization check → temporary encode → atomic install. A
 target that existed during preflight is replaceable only after the grouped overwrite
 confirmation; every other install uses create-new semantics, so a file appearing after
 preflight is never overwritten. The export loop transfers ownership of the last
 progressive variant instead of cloning it.
+
+The optional single-line watermark is snapshotted with output settings and drawn last
+at each finished size, after target color encoding. Export and Preview output share
+this finalizer step; Develop, resting previews and thumbnails never draw it. SkiaSharp
+places text by the advance-width by ascent-plus-descent layout box and rasterizes
+grayscale coverage over its union with the measured ink bounds, preserving italic
+overhangs. Only that image-clamped rectangle is blended into Q16 output-encoded RGB,
+preserving alpha. Size and margin use the short edge; long text fits the union of
+layout and ink bounds within both margins, and side-edge rotation faces the letters
+toward the edge. With watermark disabled the snapshot is null and the
+step is skipped. Enabled blank text blocks export with "Enter watermark text."
 
 Browse selection is authoritative: every photo in the Export batch becomes a job capture.
 Change photos and settings edits affect only the next batch. Before constructing any new

@@ -6,6 +6,8 @@ public partial class MainWindowViewModel
     {
         _historyLoadsClosed = true;
         CloseRenderOutcomeChannel();
+        CancelAndDispose(ref _watermarkProofDebounce);
+        CancelWatermarkSettingsSave();
         _localMaskCancellation?.Cancel();
         await _localMaskTask;
         _localRangeMask?.Dispose();

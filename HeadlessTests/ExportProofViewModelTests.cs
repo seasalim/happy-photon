@@ -263,6 +263,48 @@ public sealed class ExportProofViewModelTests
             $"Painted {paintedWidth}x{paintedHeight}; expected {width}x{height}");
     }
 
+    [AvaloniaFact]
+    public async Task WatermarkBurst_RequestsOneProofAfterTrailingDelay()
+    {
+        using var root = new TemporaryDirectory();
+        using var catalog = new CatalogService(root.Path);
+        await catalog.InitializeAsync();
+        var clock = new TestTimeProvider();
+        var loader = new ProofLoader();
+        await using var vm = CreateViewModel(catalog, loader, clock);
+        PrepareOneCapture(vm, root.Path);
+        vm.WorkspaceMode = WorkspaceMode.Export;
+        await TestWaits.UntilAsync(() => vm.PreviewImage != null);
+        vm.ExportSettings.ShowProof = true;
+        await TestWaits.UntilAsync(() => vm.ExportProofCaption.StartsWith("PROOF") &&
+            !vm.ExportProofCaption.Contains("UPDATING"));
+        Assert.Equal(1, loader.FullLoadCount);
+        var previous = vm.PreviewImage;
+        for (var i = 0; i < 10; i++)
+        {
+            vm.ExportSettings.Watermark.Text = $"Text {i}";
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal(1, loader.FullLoadCount);
+        }
+        clock.Advance(TimeSpan.FromMilliseconds(149));
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(1, loader.FullLoadCount);
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        await TestWaits.UntilAsync(() => vm.PreviewImage != previous &&
+            !vm.ExportProofCaption.Contains("UPDATING"));
+        Assert.Equal(2, loader.FullLoadCount);
+
+        // An immediate non-watermark trigger consumes any pending watermark refresh.
+        vm.ExportSettings.Watermark.Size = 4;
+        previous = vm.PreviewImage;
+        vm.ExportSettings.OutputSharpening = OutputSharpeningMode.Off;
+        await TestWaits.UntilAsync(() => vm.PreviewImage != previous);
+        clock.Advance(TimeSpan.FromSeconds(1));
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(3, loader.FullLoadCount);
+    }
+
     private static MainWindowViewModel CreateViewModel(
         CatalogService catalog,
         ProofLoader loader,

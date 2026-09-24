@@ -5,7 +5,7 @@ namespace HappyPhoton.Services;
 /// <summary>
 /// Service for loading and saving application settings via the catalog.
 /// </summary>
-public class AppSettingsService
+public partial class AppSettingsService
 {
     private readonly CatalogService _catalogService;
 
@@ -62,6 +62,8 @@ public class AppSettingsService
 
         return new AppSettings
         {
+            Watermark = await LoadWatermarkAsync(),
+            WatermarkEnabled = bool.TryParse(await _catalogService.GetAppSettingAsync("WatermarkEnabled"), out var enabled) && enabled,
             RootFolderPath = await _catalogService.GetAppSettingAsync(RootFolderPathKey),
             SelectedFolderPath = await _catalogService.GetAppSettingAsync(SelectedFolderPathKey),
             FirstRunExperienceVersion = firstRunExperienceVersion,
@@ -81,7 +83,7 @@ public class AppSettingsService
 
     public Task SaveAsync(AppSettings settings)
     {
-        return _catalogService.SetAppSettingsAsync(new Dictionary<string, string?>
+        return _catalogService.SetAppSettingsAsync(WithWatermark(settings, new Dictionary<string, string?>
         {
             [RootFolderPathKey] = settings.RootFolderPath,
             [SelectedFolderPathKey] = settings.SelectedFolderPath,
@@ -93,12 +95,12 @@ public class AppSettingsService
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString()
-        });
+        }));
     }
 
     public Task SavePreferencesAsync(AppSettings settings)
     {
-        return _catalogService.SetAppSettingsAsync(new Dictionary<string, string?>
+        return _catalogService.SetAppSettingsAsync(WithWatermark(settings, new Dictionary<string, string?>
         {
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
             [BrowseThumbnailSizeKey] = settings.BrowseThumbnailSize.ToString(),
@@ -106,7 +108,7 @@ public class AppSettingsService
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString()
-        });
+        }));
     }
 
     public Task SaveFirstRunVersionAsync(int version)

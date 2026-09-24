@@ -39,6 +39,7 @@ public partial class MainWindow
 
         if (_subscribedViewModel != null && !ReferenceEquals(DataContext, _subscribedViewModel))
         {
+            _subscribedViewModel.CancelWatermarkSettingsSave();
             SetExportWorkspaceSettingsSubscription(null);
             _subscribedViewModel.IsEnterTextInputFocused = null;
             _subscribedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
@@ -224,6 +225,7 @@ public partial class MainWindow
             vm.RestoreAppTheme(settings.AppTheme);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;
             vm.ExportSettings.OutputSharpening = settings.OutputSharpening;
+            vm.ExportSettings.Watermark.Restore(settings.Watermark, settings.WatermarkEnabled);
 
             var firstRunDecision =
                 MainWindowViewModel.DecideFirstRunStartup(settings);
@@ -301,6 +303,11 @@ public partial class MainWindow
             return;
         }
 
+        if (args.PropertyName == nameof(ExportSettings.Watermark))
+        {
+            if (!_isClosing) vm.RequestWatermarkSettingsSave();
+            return;
+        }
         if (args.PropertyName is not nameof(ExportSettings.StripLocationData) and
             not nameof(ExportSettings.OutputSharpening))
         {

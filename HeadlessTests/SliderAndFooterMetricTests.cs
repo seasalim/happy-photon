@@ -135,6 +135,7 @@ public sealed class SliderAndFooterMetricTests
         vm.IsLocalGeometryExpanded = true;
         vm.IsLocalLuminanceExpanded = true;
         vm.IsLocalHueExpanded = true;
+        vm.IsWatermarkExpanded = true;
         foreach (var slider in content.GetLogicalDescendants().OfType<CompactSlider>()
                      .Where(slider => slider.Classes.Contains("local-geometry")))
             slider.IsVisible = true;
@@ -146,7 +147,11 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(39, sliders.Length);
+            Assert.Equal(42, sliders.Length);
+            var watermark = sliders.Where(slider => slider.GetLogicalAncestors()
+                .OfType<ExportWatermarkOptions>().Any()).ToArray();
+            Assert.Equal(["Size", "Opacity", "Margin"], watermark.Select(slider => slider.Label));
+            Assert.All(watermark, slider => Assert.True(slider.IsEffectivelyVisible && slider.Bounds.Height > 0));
             var hue = sliders.Where(slider => slider.Classes.Contains("local-hue")).ToArray();
             Assert.Equal(["Center", "Width", "Softness"], hue.Select(slider => slider.Label));
             Assert.All(hue, slider => Assert.True(slider.IsEffectivelyVisible && slider.Bounds.Height > 0));

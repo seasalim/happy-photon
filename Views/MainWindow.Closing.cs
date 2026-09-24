@@ -21,6 +21,7 @@ public partial class MainWindow
         _isClosing = true;
         SaveWindowPlacement();
         vm.ExitCompareCommand.Execute(null);
+        vm.CancelWatermarkSettingsSave();
         await PersistAppSettingsSafelyAsync(vm);
 
         Hide();
@@ -54,7 +55,16 @@ public partial class MainWindow
         }
     }
 
-    private Task SaveAppSettingsAsync(MainWindowViewModel vm)
+    private readonly SemaphoreSlim _appSettingsSaveGate = new(1, 1);
+
+    private async Task SaveAppSettingsAsync(MainWindowViewModel vm)
+    {
+        await _appSettingsSaveGate.WaitAsync();
+        try { await SaveCurrentAppSettingsAsync(vm); }
+        finally { _appSettingsSaveGate.Release(); }
+    }
+
+    private Task SaveCurrentAppSettingsAsync(MainWindowViewModel vm)
     {
         if (_appSettingsService == null)
         {
@@ -71,6 +81,8 @@ public partial class MainWindow
             ShowCapturePairs = vm.ShowCapturePairs,
             AppTheme = vm.AppTheme,
             StripLocationData = vm.ExportSettings.StripLocationData,
+            Watermark = vm.ExportSettings.Watermark.Capture(),
+            WatermarkEnabled = vm.ExportSettings.Watermark.Enabled,
             OutputSharpening = vm.ExportSettings.OutputSharpening
         };
 

@@ -196,6 +196,7 @@ public partial class MainWindowViewModel
             ReferenceEquals(capture.Image, activeImage)) ?? ExportCaptures.FirstOrDefault();
         if (!_exportSettingsObserved)
         {
+            InitializeExportWatermark();
             ExportSettings.PropertyChanged += OnWorkspaceExportSettingsChanged;
             Browse.StateChanged += (_, _) => NotifyExportBatchSettings();
             _exportSettingsObserved = true;
@@ -236,6 +237,8 @@ public partial class MainWindowViewModel
             if (ExportSettings.ShowProof) RequestExportProofRefresh();
             else RestoreExportPreview();
         }
+        else if (ExportSettings.ShowProof && property == nameof(ExportSettings.Watermark))
+            RequestWatermarkProofRefresh();
         else if (ExportSettings.ShowProof && ChangesProofPixels(property))
             RequestExportProofRefresh();
     }
