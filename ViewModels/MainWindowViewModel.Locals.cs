@@ -38,12 +38,14 @@ public partial class MainWindowViewModel
         !IsFullScreenMode && !IsBeforeAfterSplit && !_isBeforeAfterSplitTransitioning &&
         _requestedPreviewIntent != PreviewSurfaceIntent.Original &&
         !_isHoveringPreset && _hoveredHistoryEntry == null && !IsWhiteBalancePicking;
-    public bool IsLocalMaskVisible => CanEditLocals && HasSelectedLocal &&
-        (ShowLocalMask || IsLocalMaskHeld || IsLocalCreationArmed);
-    public string LocalsInstruction => Locals.Count == 8
+    public bool IsLocalMaskVisible => CanEditLocals && (HasSelectedLocal || IsBrushCreationArmed) &&
+        (ShowLocalMask || IsLocalMaskHeld || IsLocalCreationArmed || IsBrushStrokeActive || IsNeutralBrush);
+    public string LocalsInstruction => IsBrushSectionVisible && BrushLimitInstruction.Length > 0 ? BrushLimitInstruction
+        : IsBrushCreationArmed ? "Paint to create · Escape cancels"
+        : Locals.Count == 8
         ? "8 of 8 locals — delete a local to add another"
         : IsLocalCreationArmed ? "Drag to place, or Place at center · Escape cancels"
-        : !HasLocals ? "Choose + Linear or + Radial to create a local."
+        : !HasLocals ? "Choose + Linear, + Radial or + Brush to create a local."
         : SelectedLocal is { Enabled: false } ? "Disabled" : "";
     public LocalsFrame? LocalsFrame => SelectedImage is { } image && IsLocalsMode
         ? ImageService.Previews.GetLocalsFrame(image, CaptureLiveEditState()) : null;
@@ -131,7 +133,7 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand(CanExecute = nameof(CanAddLocal))]
-    private Task PlaceLocalAtCenterAsync() => ChangeLocalAsync(_localCreationType == "radial" ? "Add Radial" : "Add Linear", () =>
+    private Task PlaceLocalAtCenterAsync() => IsBrushCreationArmed ? Task.CompletedTask : ChangeLocalAsync(_localCreationType == "radial" ? "Add Radial" : "Add Linear", () =>
     {
         if (Locals.Count >= LocalAdjustment.MaximumCount) return;
         var local = NewLocal();
@@ -169,7 +171,7 @@ public partial class MainWindowViewModel
 
     private LocalAdjustment NewLocal() => new()
     {
-        Type = _localCreationType, Angle = _localCreationType == "radial" ? 0 : 90,
+        Type = _localCreationType, Strokes = _localCreationType == "brush" ? [] : null, Angle = _localCreationType == "radial" ? 0 : 90,
         Feather = _localCreationType == "radial" ? .5 : .25,
         Ordinal = Locals.Select(local => local.Ordinal).DefaultIfEmpty(0).Max() + 1
     };
@@ -251,6 +253,7 @@ public partial class MainWindowViewModel
             nameof(CanEditLocalGeometry), nameof(IsRadialLocal), nameof(LocalHeight), nameof(LocalFeather),
             nameof(IsLocalInside), nameof(IsLocalOutside) })
             OnPropertyChanged(property);
+        NotifyBrushState();
         NotifyLocalRangeState();
         AddLinearCommand.NotifyCanExecuteChanged();
         AddRadialCommand.NotifyCanExecuteChanged();

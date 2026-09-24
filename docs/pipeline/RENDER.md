@@ -415,7 +415,13 @@ then divide the remainder by segment count. Scratch arrays are bounded before al
 coarsening always accepts a one-cell grid. No pixel-sized mask plane is retained.
 `RenderLocals` maps crop/scale and resting frame overrides into the same corrected
 coordinates on both Gain and color/range paths. Requested brush masks use this
-weight and only read base pixels when a range restriction needs them.
+weight through LocalRangeMask, with stroke content in its identity. Unrestricted
+brush masks use a numeric frame without acquiring a range base or reading pixels;
+restricted masks retain the matching loaded base. During painting, both request and
+currency checks use the gesture's before-snapshot, allowing one pending pre-stroke
+mask to publish while live points only update the ribbon and throttled preview.
+Release unpins and refreshes the mask; discard/navigation cancel pending work so
+old results cannot publish. Updating mask follows the existing requested-mask path.
 
 `EditSettingsJson` validates finite values, local identities/types and the eight-local
 limit. Disabled and neutral locals remain stored edits. Range disabling preserves its

@@ -62,6 +62,10 @@ public partial class AppSettingsService
 
         return new AppSettings
         {
+            BrushMode = await _catalogService.GetAppSettingAsync("BrushMode") == "erase" ? "erase" : "paint",
+            BrushSize = await LoadBrushNumberAsync("BrushSize", 65, 1, 100),
+            BrushFeather = await LoadBrushNumberAsync("BrushFeather", 50, 0, 100),
+            BrushFlow = await LoadBrushNumberAsync("BrushFlow", 100, 5, 100),
             Watermark = await LoadWatermarkAsync(),
             WatermarkEnabled = bool.TryParse(await _catalogService.GetAppSettingAsync("WatermarkEnabled"), out var enabled) && enabled,
             RootFolderPath = await _catalogService.GetAppSettingAsync(RootFolderPathKey),
@@ -81,6 +85,11 @@ public partial class AppSettingsService
         };
     }
 
+    private async Task<double> LoadBrushNumberAsync(string key, double fallback, double min, double max) =>
+        double.TryParse(await _catalogService.GetAppSettingAsync(key), System.Globalization.NumberStyles.Float,
+            System.Globalization.CultureInfo.InvariantCulture, out var value) && double.IsFinite(value)
+            ? Math.Clamp(value, min, max) : fallback;
+
     public Task SaveAsync(AppSettings settings)
     {
         return _catalogService.SetAppSettingsAsync(WithWatermark(settings, new Dictionary<string, string?>
@@ -89,6 +98,10 @@ public partial class AppSettingsService
             [SelectedFolderPathKey] = settings.SelectedFolderPath,
             [FirstRunExperienceVersionKey] =
                 settings.FirstRunExperienceVersion?.ToString(),
+            ["BrushMode"] = settings.BrushMode,
+            ["BrushSize"] = settings.BrushSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["BrushFeather"] = settings.BrushFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["BrushFlow"] = settings.BrushFlow.ToString(System.Globalization.CultureInfo.InvariantCulture),
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
             [BrowseThumbnailSizeKey] = settings.BrowseThumbnailSize.ToString(),
             [ShowCapturePairsKey] = settings.ShowCapturePairs.ToString(),
@@ -102,6 +115,10 @@ public partial class AppSettingsService
     {
         return _catalogService.SetAppSettingsAsync(WithWatermark(settings, new Dictionary<string, string?>
         {
+            ["BrushMode"] = settings.BrushMode,
+            ["BrushSize"] = settings.BrushSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["BrushFeather"] = settings.BrushFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["BrushFlow"] = settings.BrushFlow.ToString(System.Globalization.CultureInfo.InvariantCulture),
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
             [BrowseThumbnailSizeKey] = settings.BrowseThumbnailSize.ToString(),
             [ShowCapturePairsKey] = settings.ShowCapturePairs.ToString(),

@@ -18,6 +18,9 @@ internal sealed class TestTimeProvider : TimeProvider
         lock (_sync) return _now;
     }
 
+    public override long GetTimestamp() => GetUtcNow().UtcTicks;
+    public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+
     public override ITimer CreateTimer(
         TimerCallback callback,
         object? state,

@@ -12,6 +12,10 @@ public class AppSettings
     public WatermarkSpec Watermark { get; set; } = new("");
     public bool WatermarkEnabled { get; set; }
     public bool StripLocationData { get; set; }
+    public string BrushMode { get; set; } = "paint";
+    public double BrushSize { get; set; } = 65;
+    public double BrushFeather { get; set; } = 50;
+    public double BrushFlow { get; set; } = 100;
     public OutputSharpeningMode OutputSharpening { get; set; } =
         OutputSharpeningMode.Screen;
 }

@@ -10,6 +10,9 @@ public partial class LocalsEditSection : UserControl
     public LocalsEditSection()
     {
         InitializeComponent();
+        // Tool preferences do not participate in the parent panel's image-edit gesture.
+        BrushSection.AddHandler(CompactSlider.DragStartedEvent, (_, e) => e.Handled = true);
+        BrushSection.AddHandler(CompactSlider.DragCompletedEvent, (_, e) => e.Handled = true);
         PropertyChanged += (_, e) =>
         {
             if (e.Property == IsVisibleProperty && IsVisible)

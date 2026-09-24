@@ -7,8 +7,10 @@ public partial class MainWindowViewModel
         _developLoadingMessage.Dispose();
         _historyLoadsClosed = true;
         CloseRenderOutcomeChannel();
+        StopBrushPreview();
         CancelAndDispose(ref _watermarkProofDebounce);
         CancelWatermarkSettingsSave();
+        CancelAndDispose(ref _brushSaveDebounce);
         _localMaskCancellation?.Cancel();
         await _localMaskTask;
         _localRangeMask?.Dispose();

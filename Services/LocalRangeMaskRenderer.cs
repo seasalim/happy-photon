@@ -9,20 +9,24 @@ internal static class LocalRangeMaskRenderer
 {
     internal static unsafe WriteableBitmap Render(BaseImage basis, EditSettings settings,
         LocalAdjustment local, PixelSize size, uint tint, CancellationToken token)
+        => Render(basis, RenderGeometry.CalculateLocalsFrame((int)basis.Pixels.Width,
+            (int)basis.Pixels.Height, settings), settings, local, size, tint, token);
+
+    internal static unsafe WriteableBitmap Render(BaseImage? basis, LocalsFrame numericFrame, EditSettings settings,
+        LocalAdjustment local, PixelSize size, uint tint, CancellationToken token, bool monochrome = false)
     {
         token.ThrowIfCancellationRequested();
-        var needsBasis = local.Luminance?.IsEffective == true || !basis.Info.IsMonochrome && local.Hue?.Enabled == true;
-        var numericFrame = RenderGeometry.CalculateLocalsFrame((int)basis.Pixels.Width, (int)basis.Pixels.Height, settings);
+        var needsBasis = local.Luminance?.IsEffective == true || !(basis?.Info.IsMonochrome ?? monochrome) && local.Hue?.Enabled == true;
         RenderGeometryTrace trace = default;
         AgxCrossing.Matrix3x3 wb = default;
         DcpHueSatMap? map = null;
-        using var geometry = needsBasis ? LocalRangeSampling.Prepare(basis, settings, size, out trace, out wb, out map) : null;
+        using var geometry = needsBasis ? LocalRangeSampling.Prepare(basis!, settings, size, out trace, out wb, out map) : null;
         var maskSettings = settings.Clone();
         maskSettings.Locals = [local with { Enabled = true, Exposure = 1, Temperature = 0,
             Tint = 0, Saturation = 0, Luminance = null, Hue = null }];
         var mask = RenderLocals.Create(maskSettings, trace, size.Width, size.Height, needsBasis ? null : numericFrame);
         var luminance = local.Luminance;
-        var hue = !basis.Info.IsMonochrome && local.Hue is { Enabled: true } enabledHue ? enabledHue : null;
+        var hue = !(basis?.Info.IsMonochrome ?? monochrome) && local.Hue is { Enabled: true } enabledHue ? enabledHue : null;
         using var pixels = geometry?.GetPixelsUnsafe();
         var layout = pixels == null ? default : RenderKernelSupport.GetLayout(pixels);
         // The native pixels remain read-only for the lifetime of this collection. Never write

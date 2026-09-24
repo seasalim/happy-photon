@@ -221,6 +221,7 @@ public partial class MainWindow
             vm.SetColorLabelNames(colorLabelNames);
             await vm.RestoreXmpSettingsAsync();
             vm.RestoreBrowseThumbnailSize(settings.BrowseThumbnailSize);
+            vm.RestoreBrushPreferences(settings);
             vm.RestoreShowCapturePairs(settings.ShowCapturePairs);
             vm.RestoreAppTheme(settings.AppTheme);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;

@@ -23,7 +23,7 @@ edits are locked and dimmed while either is active; WB picking is inert. Switchi
 tools discards unfinished input but retains committed locals. Crop Apply commits the
 crop and draft Horizon together; Cancel discards the draft.
 
-Locals supports at most eight linear/radial adjustments in creation order with shared
+Locals supports at most eight linear/radial/brush adjustments in creation order with shared
 ordinals. Disabled and neutral locals still count; selection and Show Mask are session
 state. Closing retains edits. Scopes, footer, viewer controls and filmstrip remain live.
 
@@ -39,6 +39,39 @@ that drag. Navigation and snapshot/replacement commands discard unfinished geome
 Original, split, fullscreen and preset/history hover suspend editing and visualization
 while preserving selection. Presets/paste preserve destination locals; Develop Reset
 clears them and Undo can restore them.
+
++ Brush arms “Paint to create · Escape cancels”; Enter does nothing and Place at
+center is absent. The first release creates Brush N with one “Add Brush” history
+step. Brush rows use ✎. The Brush section replaces Geometry and Center in view,
+including while armed: Paint/Erase, logarithmic Size 1–100 (radius .001–.25 in
+corrected-frame long-edge units), Feather 0–100%, Flow 5–100%, and Clear strokes.
+Tool preferences persist after a 250 ms debounce in app settings, outside image history; strokes snapshot
+them. Clear strokes is one history step and retains the empty local.
+
+A click is a dab; a drag keeps points at least max(.15 radius, one screen pixel)
+apart and retains the final point. Shift+click joins the previous stroke's end.
+Each release commits “Brush stroke” or “Erase stroke”. Quantized points clamp to
+[-1, 2]. Across the document, 96 strokes or 4,000 points refuse another stroke;
+a stroke at the point cap stops collecting and releases what it has. The instruction
+explains the cap. Escape, Undo, capture loss and navigation discard unfinished paint.
+Other locals' pins select before painting; the selected brush's own pin is excluded.
+Brush pins anchor to the first point of the first stroke. Pan, zoom and suspended
+loupe behavior are unchanged.
+
+Over the image, the brush cursor replaces the system cursor with outer radius and
+inner feather circles, CropBorder over CropHandleStroke, plus Paint/Erase indication;
+below four screen pixels it becomes a crosshair. Letterbox space restores the cursor.
+An immediate LocalMaskColor ribbon (Paint) or translucent white band (Erase) accompanies the
+stroke. Preview ticks run at least 60 ms apart with one render in flight. New points
+wait for it to paint, then dispatch the latest state; a trailing dispatch is guaranteed.
+Completion and discard cancel pending preview work. The mask
+shows automatically while painting and while the selected brush is neutral, restoring
+the user's toggle when those conditions end. Requested masks remain pinned to the
+pre-stroke document during the drag and refresh at release or discard.
+
+Paint anchors in the geometry-corrected, pre-crop frame. Crop and quarter-turn rotation
+preserve alignment; horizon or keystone edits after painting shift paint relative to
+scene content, as they do for gradients.
 
 Show Mask is display-only, including for disabled/neutral locals; it never enters
 pixels, scopes, thumbnails or export and only temporarily suppresses clipping display.
@@ -60,7 +93,7 @@ Scrolling stack:
 Crop                   (only in Crop mode)
   [Horizon] [Lock aspect ratio] [Reset crop] [instruction]
 Locals                 (only in Locals mode)
-  [+ Linear] [+ Radial]
+  [+ Linear] [+ Radial] [+ Brush]
   Empty: [stable-height instruction / armed creation placeholder]
   With locals:
   [local list] [Exposure / Temperature / Tint / Saturation]

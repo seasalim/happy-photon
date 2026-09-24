@@ -192,6 +192,8 @@ public partial class MainWindow
 
         await _appSettingsService.SaveAsync(new AppSettings
         {
+            BrushMode = vm.BrushMode, BrushSize = vm.BrushSize,
+            BrushFeather = vm.BrushFeather, BrushFlow = vm.BrushFlow,
             RootFolderPath = path,
             SelectedFolderPath = path,
             FirstRunExperienceVersion =

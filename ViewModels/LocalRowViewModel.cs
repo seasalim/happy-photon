@@ -7,7 +7,7 @@ public sealed class LocalRowViewModel(LocalAdjustment local) : ObservableObject
 {
     public LocalAdjustment Local { get; private set; } = local;
     public string Name => Local.Name;
-    public string Glyph => Local.IsRadial ? "○" : "▱";
+    public string Glyph => Local.IsBrush ? "✎" : Local.IsRadial ? "○" : "▱";
     public bool Enabled => Local.Enabled;
     public bool HasLuminance => Local.Luminance?.IsEffective == true;
     public string RangeLabel => HasLuminance ? Local.Hue?.Enabled == true ? "Luminance · Hue" : "Luminance"

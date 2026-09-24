@@ -132,6 +132,10 @@ public sealed class SliderAndFooterMetricTests
         content.GetLogicalDescendants().OfType<LocalsEditSection>().Single().IsVisible = true;
         // The editor hides while no local exists; the metric needs its sliders laid out.
         content.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "LocalEditor").IsVisible = true;
+        content.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "BrushSection").IsVisible = true;
+        // Geometry and ranges now share a separate container that also hides without a local.
+        content.GetLogicalDescendants().OfType<ToggleButton>().Single(control => control.Name == "LocalGeometryDisclosure")
+            .GetLogicalAncestors().OfType<StackPanel>().First().IsVisible = true;
         vm.IsLocalGeometryExpanded = true;
         vm.IsLocalLuminanceExpanded = true;
         vm.IsLocalHueExpanded = true;
@@ -147,7 +151,11 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(42, sliders.Length);
+            Assert.Equal(45, sliders.Length);
+            var brush = sliders.Where(slider => slider.GetLogicalAncestors()
+                .OfType<StackPanel>().Any(panel => panel.Name == "BrushSection")).ToArray();
+            Assert.Equal(["Size", "Feather", "Flow"], brush.Select(slider => slider.Label));
+            Assert.All(brush, slider => Assert.True(slider.IsEffectivelyVisible && slider.Bounds.Height > 0));
             var watermark = sliders.Where(slider => slider.GetLogicalAncestors()
                 .OfType<ExportWatermarkOptions>().Any()).ToArray();
             Assert.Equal(["Size", "Opacity", "Margin"], watermark.Select(slider => slider.Label));

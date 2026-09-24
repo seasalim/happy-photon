@@ -73,7 +73,7 @@ The facade exposes sub-services directly and retains only cross-service composit
 
 [pipeline/OVERVIEW.md](pipeline/OVERVIEW.md) owns the decode/render model and its
 invariants. Preview, export and edited standard thumbnails share `RenderPipeline`;
-RAW cache misses use embedded previews with geometry only. Linear and radial locals
+RAW cache misses use embedded previews with geometry only. Linear, radial and brush locals
 ship; layered compositing, HDR, custom output profiles, AVIF/JXL and native region
 decode remain boundaries. The preview ownership summary appears below.
 

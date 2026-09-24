@@ -30,6 +30,16 @@ public sealed class LocalBrushMaskTests
         using var empty = LocalRangeMaskRenderer.Render(basis, settings, local, new PixelSize(60, 40), 0xffffff, CancellationToken.None);
         Assert.All(Bytes(empty), value => Assert.Equal(0, value));
     }
+    [AvaloniaFact]
+    public void UnrestrictedBrushMaskNeedsNoBaseOrPixelAcquisition()
+    {
+        var local = new LocalAdjustment { Type = "brush", Strokes = [new() { Points = [new(8192, 8192)] }] };
+        // No base exists or can be acquired through this numeric-frame-only entry point.
+        using var mask = LocalRangeMaskRenderer.Render(null, new LocalsFrame(120, 80, 0, 0, 1, 1),
+            new EditSettings(), local, new PixelSize(120, 80), 0xffffff, CancellationToken.None);
+        Assert.Contains(Bytes(mask), value => value > 0);
+    }
+
     private static byte[] Bytes(Avalonia.Media.Imaging.WriteableBitmap bitmap)
     {
         using var frame = bitmap.Lock();

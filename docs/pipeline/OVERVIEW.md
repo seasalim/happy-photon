@@ -194,6 +194,6 @@ The current marker values live only in `RenderPipeline.Version` and
 
 ## 7. Current boundaries
 
-Linear and radial local adjustments ship. Remaining boundaries are layered compositing,
+Linear, radial and brush local adjustments ship. Remaining boundaries are layered compositing,
 custom output ICC profiles, HDR output, AVIF/JXL, and 1:1 region decode (zoom uses the
 bounded preview base). XMP exchanges assessments only, not develop settings.

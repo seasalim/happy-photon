@@ -86,6 +86,7 @@ public partial class MainWindow
             OutputSharpening = vm.ExportSettings.OutputSharpening
         };
 
+        vm.CaptureBrushPreferences(settings);
         return vm.CanPersistFolderSession
             ? _appSettingsService.SaveAsync(settings)
             : _appSettingsService.SavePreferencesAsync(settings);

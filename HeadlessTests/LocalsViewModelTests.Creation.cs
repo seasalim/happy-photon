@@ -156,20 +156,20 @@ public sealed partial class LocalsViewModelTests
         var actions = Assert.IsType<StackPanel>(editorChildren[4]);
         Assert.Equal("Reset adjustments", Assert.IsType<Button>(actions.Children[0]).Content);
         Assert.Same(center, actions.Children[1]);
-        Assert.Equal(radial, editorChildren[5].IsVisible);
-        Assert.Same(disclosure, editorChildren[6]);
+        Assert.Equal(radial, section.GetVisualDescendants().OfType<Grid>().Single(g => g.Children.OfType<Avalonia.Controls.Primitives.ToggleButton>().Any(t => Equals(t.Content, "Inside"))).IsVisible);
+        Assert.Equal(count > 0, disclosure.IsEffectivelyVisible);
         Assert.IsType<Border>(children.Last());
         Assert.Equal(count < 8, row.IsEffectivelyEnabled);
         Assert.Equal(count > 0, center.IsEffectivelyEnabled);
         if (count == 0)
         {
             Assert.All(editor.GetVisualDescendants().OfType<Control>(), control => Assert.False(control.IsEffectivelyVisible));
-            var hint = Assert.IsType<TextBlock>(details.Children[1]);
+            var hint = details.Children.OfType<TextBlock>().Single();
             Assert.True(hint.IsEffectivelyVisible);
             Assert.Equal(vm.LocalsInstruction, hint.Text);
             Assert.Equal(0, hint.Bounds.Top);
             Assert.True(details.Bounds.Height >= details.MinHeight);
-            Assert.Equal("Choose + Linear or + Radial to create a local.", vm.LocalsInstruction);
+            Assert.Equal("Choose + Linear, + Radial or + Brush to create a local.", vm.LocalsInstruction);
         }
         if (count == 8)
         {
@@ -188,7 +188,7 @@ public sealed partial class LocalsViewModelTests
         Assert.True(WorkspaceKeyRouting.IsEnterTextInputFocused(new TextBox()));
         Assert.False(WorkspaceKeyRouting.IsEnterTextInputFocused(inline));
         var targets = new List<Control> { section.FindControl<Button>("AddLinearButton")!,
-            section.FindControl<Button>("AddRadialButton")!, section.FindControl<Button>("PlaceLocalAtCenterButton")! };
+            section.FindControl<Button>("AddRadialButton")!, section.FindControl<Button>("AddBrushButton")!, section.FindControl<Button>("PlaceLocalAtCenterButton")! };
         if (count > 0) targets.Add(center);
         foreach (var target in targets)
         {

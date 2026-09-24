@@ -8,7 +8,7 @@ using HappyPhoton.ViewModels;
 
 namespace HappyPhoton.Views;
 
-public sealed class LocalsOverlayControl : Control
+public sealed partial class LocalsOverlayControl : Control
 {
     private MainWindowViewModel? _owner;
     private Point _press;
@@ -40,13 +40,15 @@ public sealed class LocalsOverlayControl : Control
     private void OnOwnerChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainWindowViewModel.Locals) or
+            nameof(MainWindowViewModel.LiveBrushStroke) or nameof(MainWindowViewModel.BrushRadius) or
+            nameof(MainWindowViewModel.BrushFeather) or nameof(MainWindowViewModel.BrushMode) or
             nameof(MainWindowViewModel.IsLocalHuePicking) or nameof(MainWindowViewModel.CanEditLocals) or nameof(MainWindowViewModel.LocalRangeMask) or nameof(MainWindowViewModel.IsLocalMaskVisible))
             Refresh();
     }
     private void Refresh()
     {
         IsVisible = _owner?.CanEditLocals == true;
-        Cursor = _owner?.IsLocalHuePicking == true ? new Cursor(StandardCursorType.Cross) : Cursor.Default;
+        UpdateBrushCursor();
         if (_owner?.IsLocalsGestureActive != true && _pointer != null) CancelCapture();
         InvalidateVisual();
     }
@@ -56,14 +58,15 @@ public sealed class LocalsOverlayControl : Control
         _pointer = null;
         if (pointer != null)
         {
+            UpdateBrushHover(null);
             _owner?.DiscardLocalsGesture();
             pointer.Capture(null);
         }
     }
 
     internal static Point ToCanvas(LocalAdjustment local, LocalsFrame frame, Size size) =>
-        new((local.Cu - frame.CropX) / frame.CropWidth * size.Width,
-            (local.Cv - frame.CropY) / frame.CropHeight * size.Height);
+        new(((local.IsBrush && local.Strokes is { Count: > 0 } s ? s[0].Points[0].U / (double)LocalBrushPoint.Scale : local.Cu) - frame.CropX) / frame.CropWidth * size.Width,
+            ((local.IsBrush && local.Strokes is { Count: > 0 } t ? t[0].Points[0].V / (double)LocalBrushPoint.Scale : local.Cv) - frame.CropY) / frame.CropHeight * size.Height);
     private Point Normalize(Point point, LocalsFrame frame) => new(
         frame.CropX + point.X / Bounds.Width * frame.CropWidth,
         frame.CropY + point.Y / Bounds.Height * frame.CropHeight);
@@ -158,20 +161,21 @@ public sealed class LocalsOverlayControl : Control
         if (_owner is not { CanEditLocals: true } vm || vm.LocalsFrame is not { } frame) return;
         context.DrawRectangle(Brushes.Transparent, null, new Rect(Bounds.Size));
         var selected = vm.SelectedLocal;
-        if (vm.IsLocalMaskVisible && selected is { IsBrush: false })
+        if (vm.IsLocalMaskVisible && selected != null)
         {
-            if (!vm.IsSelectedLocalRangeRestricted)
+            if (!selected.IsBrush && !vm.IsSelectedLocalRangeRestricted)
                 context.DrawRectangle(BuildMaskBrush(selected, frame, Bounds.Size), null, new Rect(Bounds.Size));
             else if (vm.LocalRangeMask is { } mask)
                 context.DrawImage(mask, new Rect(mask.Size), new Rect(Bounds.Size));
         }
-        foreach (var local in vm.Locals.Where(local => !local.IsBrush))
+        foreach (var local in vm.Locals.Where(local => !local.IsBrush || local.Strokes is { Count: > 0 }))
         {
             var center = ToCanvas(local, frame, Bounds.Size);
             using (context.PushOpacity(.5))
                 context.DrawEllipse(HappyPhotonColors.CropHandleFill, Subdued, center, 3, 3);
         }
-        if (selected == null || selected.IsBrush) return;
+        DrawBrush(context, frame);
+        if (selected == null || selected.IsBrush || vm.IsBrushCreationArmed) return;
         if (selected.IsRadial) { DrawRadial(context, selected, frame); return; }
         var c = ToCanvas(selected, frame, Bounds.Size);
         var d = Direction(selected, frame, Bounds.Size);
@@ -237,11 +241,23 @@ public sealed class LocalsOverlayControl : Control
             await vm.PickLocalHueAsync(Normalize(p, frame));
             return;
         }
+        if (vm.IsBrushSectionVisible)
+        {
+            if (HitPin(p, frame) is { } pin) vm.SelectedLocal = pin;
+            else if (new Rect(Bounds.Size).Contains(p) && vm.BeginBrushStroke(Normalize(p, frame), e.KeyModifiers.HasFlag(KeyModifiers.Shift)))
+            {
+                _pointer = e.Pointer;
+                e.Pointer.Capture(this);
+            }
+            UpdateBrushHover(p);
+            Focus(); e.Handled = true;
+            return;
+        }
         var handle = vm.IsLocalCreationArmed ? LocalHandle.Create : vm.SelectedLocal is { } selected
             ? HitHandle(p, selected, frame) : null;
         if (handle == null)
         {
-            var pin = vm.Locals.FirstOrDefault(local => !local.IsBrush && ((Vector)(p - ToCanvas(local, frame, Bounds.Size))).Length <= 10);
+            var pin = HitPin(p, frame);
             if (pin != null) vm.SelectedLocal = pin;
         }
         else if (vm.BeginLocalsGesture(handle.Value, Normalize(p, frame)))
@@ -256,15 +272,19 @@ public sealed class LocalsOverlayControl : Control
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
-        if (_pointer == null || _owner?.LocalsFrame is not { } frame) return;
         var p = e.GetPosition(this);
-        _owner.MoveLocalsGesture(Normalize(p, frame), ((Vector)(p - _press)).Length);
+        UpdateBrushHover(p);
+        if (_pointer == null || _owner?.LocalsFrame is not { } frame) return;
+        if (_owner.IsBrushStrokeActive) _owner.ExtendBrushStroke(Normalize(p, frame), ScreenLongEdge(frame));
+        else _owner.MoveLocalsGesture(Normalize(p, frame), ((Vector)(p - _press)).Length);
         e.Handled = true;
     }
     protected override async void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
         if (_pointer == null || _owner == null) return;
+        if (_owner.IsBrushStrokeActive && _owner.LocalsFrame is { } frame)
+            _owner.ExtendBrushStroke(Normalize(e.GetPosition(this), frame), ScreenLongEdge(frame), final: true);
         _pointer = null;
         e.Pointer.Capture(null);
         e.Handled = true;

@@ -19,7 +19,7 @@ public partial class MainWindowViewModel
     public bool BeginLocalsGesture(LocalHandle handle, Point normalizedPoint)
     {
         if (!double.IsFinite(normalizedPoint.X) || !double.IsFinite(normalizedPoint.Y)) return false;
-        if (!CanEditLocals || LocalsFrame is not { } frame ||
+        if (IsBrushCreationArmed || IsLocalsGestureActive || !CanEditLocals || LocalsFrame is not { } frame ||
             handle == LocalHandle.Create && (!IsLocalCreationArmed || !CanAddLocal) ||
             handle != LocalHandle.Create && (SelectedLocal == null || SelectedLocal.IsBrush)) return false;
         CancelLocalHuePick();
@@ -116,11 +116,14 @@ public partial class MainWindowViewModel
     {
         if (_localsGestureBefore is not { } before) return;
         _previewDebounce?.Cancel();
-        var label = _localsHandle == LocalHandle.Create ?
+        StopBrushPreview();
+        var label = IsBrushStrokeActive ? (_localsHandle == LocalHandle.Create ? "Add Brush" :
+            LiveBrushStroke!.Mode == "erase" ? "Erase stroke" : "Brush stroke") : _localsHandle == LocalHandle.Create ?
             (_localsGestureLocal!.IsRadial ? "Add Radial" : "Add Linear") : "Local geometry";
         _localsGestureBefore = null;
         _localsGestureImage = null;
         IsLocalCreationArmed = false;
+        NotifyLocalsState();
         await CommitLocalAsync(before, label);
         RebindLocalSelection();
     }
@@ -128,15 +131,18 @@ public partial class MainWindowViewModel
     public bool DiscardLocalsGesture()
     {
         CancelLocalHuePick();
+        StopBrushPreview();
+        var wasBrush = IsBrushStrokeActive;
         var before = _localsGestureBefore;
         var image = _localsGestureImage;
         _localsGestureBefore = null;
         _localsGestureImage = null;
-        IsLocalCreationArmed = false;
-        if (before == null || image == null) return false;
+        if (before == null || image == null) { IsLocalCreationArmed = false; return false; }
         _previewDebounce?.Cancel();
         image.EditSettings = before.Clone();
         image.HasEdits = before.HasEdits;
+        if (wasBrush) { _localMaskCancellation?.Cancel(); _localMaskIdentity = null; }
+        IsLocalCreationArmed = false;
         if (ReferenceEquals(image, SelectedImage))
         {
             RebindLocalSelection();
