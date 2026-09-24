@@ -1,10 +1,7 @@
 # Waiting in tests
 
-Four CI failures have now come from the same defect: a test that slept a fixed
-number of milliseconds and then asserted on state that a production timer was
-about to change. On a dev machine the sleep lands where the author expected; on
-a loaded runner it lands past the timer and the assertion sees the next state.
-Reruns pass, so the failure reads as noise and costs a diagnosis every time.
+Fixed sleeps make timer assertions depend on runner load; use deterministic time or
+observe the state transition instead.
 
 ## The rule
 

@@ -1,9 +1,8 @@
 # White Balance Model
 
-Happy Photon models white balance as chromatic adaptation in linear Rec.2020 rather than
-as a display-space red/blue adjustment. `WhiteBalanceModel` and
-`ChromaticAdaptation` produce the 3×3 matrix consumed by RENDER.md §4, while reference
-values and round trips are pinned by the tests summarized in §9.
+`WhiteBalanceModel` and `ChromaticAdaptation` model white balance as a linear Rec.2020
+chromatic-adaptation matrix (RENDER.md §4), not a display-space red/blue adjustment.
+Tests pin reference values and round trips (§9).
 
 ## 1. Semantics (Lightroom convention)
 
@@ -58,11 +57,10 @@ Convert to xy: `x = 3u/(2u − 8v + 4)`, `y = 2v/(2u − 8v + 4)`.
 y_D = −3.000·x_D² + 2.870·x_D − 0.275
 ```
 
-**Blend zone (4000 < T < 4500):** with `q = (T − 4000)/500`, use the smoothstep weight
-`w = q²(3 − 2q)` and `xy = lerp(xy_P(T), xy_D(T), w)`. Both formulas are valid there;
-the loci differ by Δy ≈ 0.007 at 4000 K. Smoothstep (not linear `q`) matters: its zero
-derivative at both ends joins the branch *derivatives* as well as their values, so the
-locus is C1 — a linear blend would only remove the positional jump.
+**Blend zone (4000 < T < 4500):** `q = (T − 4000)/500`, `w = q²(3 − 2q)`, `xy =
+lerp(xy_P(T), xy_D(T), w)`. Both loci are valid here, differing by Δy ≈ 0.007 at 4000 K.
+Smoothstep's zero endpoint derivatives make the join C1; linear blending only removes
+the positional jump.
 
 **Tint** is applied in uv: convert the locus xy → uv
 (`u = 4x/(−2x + 12y + 3)`, `v = 6y/(−2x + 12y + 3)`), then
@@ -96,12 +94,9 @@ M_Rec2020→XYZ = [ 0.6369580483 0.1446169036 0.1688809752
                   0.0000000000 0.0280726930 1.0609850577 ]
 ```
 
-For crossing-on RAW, the render composes this factor as
-`M = M_AgX-inset · M_WB`, normalizes that composed matrix, and refunds its fold once
-inside the log2 tone encoding. Crossing-off sources normalize `M_WB` alone and refund
-the fold in their exposure multiplier. The Rec.2020→sRGB or Display P3 conversion is
-not part of either composition; it runs after all shared edits in finalization. For
-`picked`, the WB factor is `diag(g_r, g_g, g_b)` directly (no CAT).
+RENDER.md §4 owns RAW inset×WB versus standard WB normalization and fold refunds. Target
+conversion follows all shared edits. For `picked`, WB is directly `diag(g_r, g_g, g_b)`
+without CAT.
 
 ## 5. Inversion & as-shot estimation
 
@@ -135,24 +130,15 @@ public static (double kelvin, double tint) EstimateAsShot(
   fact is absent or malformed, use the **(5500, 0)** fallback. The Kelvin display is
   relative, while `asShot` mode remains exact identity regardless (§1).
 
-LibRaw's `rgb_cam` consumes daylight-balanced camera values: each row is normalized to
-sum to 1, with the discarded row scale stored in `pre_mul`. A capture neutral must
-therefore be projected as `pre_mul / cam_mul`. Projecting `1 / cam_mul` omits that
-reference and fabricates an illuminant even when the result happens to look plausible.
-Bridge ABI v2 exposes `pre_mul`, so `RawBaseLoader` can restore the discarded reference
-scale and measure the anchor. It still preserves the RGB or native four-channel
-`CamMul`/`CamToSrgb` facts in `BaseImageInfo`; `pre_mul` is consumed during load rather
-than added to the pipeline metadata. The bridge also exposes `cam_xyz` and per-channel
-`linear_max`, but those facts stop at the managed interop layer until they have a
-consumer. The former `1 / cam_mul` projection remains incorrect and is not used.
+LibRaw's row-normalized `rgb_cam` consumes daylight-balanced values, with discarded
+scale in `pre_mul`; project `pre_mul / cam_mul`, never `1 / cam_mul` alone.
 
 ### 5.3 Display approximation for picked gains
 
-The UI shows grayed Kelvin/tint for gain-based modes. Formula: the white the gains
-neutralize is `w_work = normalize(1/g_r, 1/g_g, 1/g_b)` in linear Rec.2020;
-`XYZ = M_Rec2020→XYZ · w_work` → uv → `EstimateKelvinTintFromUv`. This is a D65-anchored
-approximation (it ignores the as-shot anchor), adequate for the grayed display —
-it is never used in rendering.
+Grayed Kelvin/tint for picked gains estimates the neutralized white as `w_work =
+normalize(1/g_r, 1/g_g, 1/g_b)` in linear Rec.2020; `XYZ = M_Rec2020→XYZ · w_work` → uv
+→ `EstimateKelvinTintFromUv`. This D65-anchored display approximation ignores the
+as-shot anchor and never enters rendering.
 
 ## 6. Presets (fixed targets)
 

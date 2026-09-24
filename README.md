@@ -85,7 +85,7 @@ Happy Photon pairs its fast, three-decision workflow with a deep image engine.
   darken a sky, or adjust warmth and color in part of the frame. Mask edits stay
   non-destructive, with undo/redo and the same adjustments carried into export.
 - **Detail and finishing tools.** Capture sharpening that responds at Fit, wavelet
-  luminance and chroma denoising, RAW noise reduction, crop, horizon straightening,
+  luminance and chroma denoising, crop, horizon straightening,
   vertical and horizontal perspective correction with an alignment grid, vignette,
   deterministic film grain, and independent screen or print output sharpening.
 - **Scopes that help you make decisions.** Display histogram, luminance waveform, RAW

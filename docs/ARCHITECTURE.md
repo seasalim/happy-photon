@@ -1,10 +1,8 @@
 # Happy Photon Architecture
 
-Happy Photon is a desktop photo management and editing app (Avalonia UI, .NET 10) with
-an intentionally simple workflow. This document describes the overall structure and
-then goes deep on the two most intricate subsystems: **catalog loading** and the
-**thumbnail pump**. For day-to-day agent guidance (style, shortcuts, commands), see
-[AGENTS.md](../AGENTS.md).
+Happy Photon is a .NET 10/Avalonia photo workflow. This document owns startup,
+catalog storage, folder loading and thumbnail scheduling. See [AGENTS.md](../AGENTS.md)
+for repository rules and pipeline/OVERVIEW.md for decode/render invariants.
 
 ## Process shape
 
@@ -35,13 +33,10 @@ fixed `locations.json` pointer lives in Local AppData on Windows,
 opt into the platform data root for the catalog. Environment overrides affect
 one process and are never written to the pointer.
 
-Every data root carries `.happy-photon-root`. Destructive storage operations
-re-check it immediately before acting and remove only known catalog files or
-cache tiers. Opening is not destructive: a pointer-designated root whose marker
-went missing (a backup restore, a downgraded-build run) is re-marked on open,
-while a marker with foreign contents still refuses. Existing Pictures catalogs with `assets/` are adopted as legacy
-co-located pairs without moving bytes. Without `assets/`, pointer-loss adoption
-always restores the split layout.
+Every root carries `.happy-photon-root`; destructive operations recheck ownership
+and touch only known catalog/cache data. Pointer-designated roots may regain a missing
+marker on open, but foreign markers refuse. Existing Pictures catalogs with assets
+adopt the legacy co-located layout; without assets, adoption restores split storage.
 
 ## Layering (MVVM)
 
@@ -72,56 +67,21 @@ MainWindowViewModel
  ├── PresetService, AppSettingsService, FileOperationService
 ```
 
-`ImageService` exposes its sub-services directly as properties (`Previews`,
-`Thumbnails`, `Histograms`, `Metadata`) rather than forwarding their members; the
-facade itself keeps only the composed entry points that span sub-services, such as
-thumbnail promotion and export.
+The facade exposes sub-services directly and retains only cross-service composition.
 
 ## Image pipeline
 
-The detailed pipeline documentation starts at
-[docs/pipeline/OVERVIEW.md](pipeline/OVERVIEW.md). Preview, export, and edited standard
-thumbnails share `RenderPipeline`; RAW cache-miss thumbnails deliberately apply only
-`RenderGeometry` to their embedded preview until Develop produces an accurate render.
-Source-specific behavior belongs in the loaders. Render-required facts stay on
-`BaseImageInfo`; preview-only sensor histogram and source-saturation facts travel in a
-generation-matched `PreviewSourceAnalysis` beside the decoded pair. Standard images are
-color-normalized and linearized by Magick.NET. RAW images decode through the pinned
-LibRaw 0.22.2 runtime through the versioned Happy Photon bridge into the same linear Q16
-base contract. It is the only producer of RAW raster pixels: runtime rejection and
-per-file decode failure are surfaced instead of routing through Magick. RAW metadata comes from
-LibRaw except exposure bias, which LibRaw does not surface and Magick cannot read from
-RAW containers; MetadataExtractor reads just that tag, header-only, without decoding.
-An optional local DCP replaces only the RAW characterization matrix at the fused import
-seam and contributes its HueSat payload before AgX in the shared renderer. Resolution is
-availability-gated and binds matrix, tables, typed status, and source/content outcome
-token atomically to `BaseImageInfo`. Missing-WB or rejected profile content preserves the
-built-in path. No profile ships and no profile operation performs a network read.
-
-Develop mode holds one bounded preview pair plus its source analysis from a single
-half-size RAW decode (see the preview pipeline below), retaining that current pair
-across a same-image Browse/Develop round-trip; export decodes a fresh
-native-resolution base without preview analysis. The
-viewer's 100% geometry is anchored to original pixels, but preview detail remains
-limited by the large base; zoom beyond that ceiling is not a native-detail RAW
-inspection mode. `PreviewArtifacts` carries one render's bitmap, scopes, clipping,
-decode capability, profile, white-balance anchor, and sensor histogram facts into a
-VM-owned render outcome. The ViewModel applies that outcome atomically only when its
-image and synchronously reserved surface generation exactly match the current request;
-rejected outcomes dispose their pixels, masks, and uncommitted promotion lease. Clipping masks are requested only
-while the Develop overlay is latched or peeked, preserving a mask-free normal preview
-path. Camera compatibility follows the bundled LibRaw generation and the exact
-compression variant, not merely the file extension. The current product boundary is
-global edits: there are no local masks, layered compositing, HDR output, or custom
-output profiles.
+[pipeline/OVERVIEW.md](pipeline/OVERVIEW.md) owns the decode/render model and its
+invariants. Preview, export and edited standard thumbnails share `RenderPipeline`;
+RAW cache misses use embedded previews with geometry only. Linear and radial locals
+ship; layered compositing, HDR, custom output profiles, AVIF/JXL and native region
+decode remain boundaries. The preview ownership summary appears below.
 
 ## Startup sequence
 
-First frame is sacred: nothing non-visual happens before the window is shown. The one
-exception is the bounded synchronous read of `window.txt` from the app-data pointer
-root: window placement is visual configuration and must be applied before `Show()` to
-avoid a visible jump. The file is plain key=value lines so no JSON library loads before
-the first frame. Failure silently preserves the centered 1200×700 default.
+No non-visual initialization precedes the first frame. The bounded synchronous
+`window.txt` read is visual configuration applied before Show to avoid a jump;
+its plain key=value format avoids loading JSON. Failure preserves default placement.
 
 1. `Program.Main`: single-instance guard, then Avalonia lifetime.
 2. `App.OnFrameworkInitializationCompleted`: construct path-free services +
@@ -149,79 +109,46 @@ the first frame. Failure silently preserves the centered 1200×700 default.
      existing saved browsing root, or prepare an unselected Pictures tree for the
      versioned first-run wizard.
 
-Update discovery is manual-only: the app contacts GitHub only after the user chooses
-**Check for updates** on the About tab, off the UI thread; the result is session-only
-and shutdown cancels an in-flight check.
+The first frame paints Dark; saved theme loads afterward and dynamic resources repaint
+the realized tree. The appearance picker stays disabled until settings arrive.
 
-The first frame always paints Dark; the appearance picker stays disabled until app
-settings load, then the saved `AppTheme` is applied through
-`Application.RequestedThemeVariant`. Variant resources use dynamic lookups so the
-realized tree repaints in place; missing or invalid theme settings fall back to Dark,
-and the Dark-to-saved-theme transition stays off the first-frame path (invariant 6).
-
-The startup gate is present in the first frame and disables workspace controls and
-global shortcuts until startup reaches `Ready`. An unreadable or invalid pointer,
-including one whose persisted catalog folder is missing, stops at an explicit
-quarantine/recovery action; a schema mismatch offers journaled **Set aside and retry**
-for both roots when neither is environment-managed; other catalog or settings failures
-replace the neutral initializing state with Retry/Close. During an incomplete first
-run, shutdown saves preferences only; the browsing root, viewed folder, and completion
-version are committed together when the wizard finishes. The forward-only wizard
-advances through Welcome, Storage, and Pictures, conditionally offers Lightroom
-import, and ends with an explicit choice to start or skip the tour. Its bounded
-Windows and macOS detection checks known install locations and shallow local
-fixed-drive folders off the UI thread — no reparse-point descendants, remote or
-removable volumes, or broad drive scans — and reports at most five catalog candidates
-within the shared entry budget.
-
-Choosing **Start tour** starts a session-only workflow tour owned by
-`MainWindowViewModel.WorkflowTour`. Its three non-modal coachmarks anchor to stable
-Browse and Develop layout points, suspend when the user changes view, and resume when
-that view returns. While a coachmark is visible, unrelated stable sections are
-de-emphasized at a themed opacity while the active work surface stays fully
-interactive, and the Browse empty-state card stays hidden for the tour's lifetime.
-Each coachmark carries a decorative, never hit-testable photon trail (plus an opt-in
-glow on small target regions) so the step names its target without coordinate tracking
-between controls. Tour navigation never changes photograph state, filters, or
-selection; its export action opens a zero-selection preview with a prominent
-return-to-Browse action instead of an enabled export command.
+The first-frame startup gate disables workspace controls/shortcuts until `Ready`.
+Invalid/unreadable pointers, including missing catalog folders, require explicit
+quarantine/recovery. Schema mismatch offers journaled **Set aside and retry** for both
+roots unless environment-managed; other catalog/settings failures offer Retry/Close.
+Incomplete first-run shutdown saves preferences only; browsing root, viewed folder and
+completion version commit together when the wizard finishes. DESIGN.md owns first-run,
+Lightroom-discovery and tour presentation.
 
 ## The catalog
 
 ### Schema
 
-One `images` row per `(file_path, version)`, keyed by autoincrement `id` (the
-**catalogId**), with version numbers limited to 1–8 and a case-insensitive unique
-constraint on that pair. The canonical row contains the optional `version_label`,
-`file_name`, the v3
-`edit_settings` JSON document and `edit_version` marker, `flag_state`, `rating`,
-`color_label`, `history_position`, and `updated_utc`. `edit_history` stores full,
-labeled edit snapshots keyed by `(image_id, seq)`; `app_settings` is a key/value table.
-Each image row is an independent interpretation and owns its edits, history, and
-assessments; the source file is shared.
+`images` has one row per case-insensitive `(file_path, version)`, versions 1–8, keyed by
+autoincrement `id` (**catalogId**). It stores optional `version_label`, `file_name`, v4
+`edit_settings` JSON, `edit_version`, `flag_state`, `rating`, `color_label`,
+`history_position`, and `updated_utc`. Each row owns edits, history, and assessments
+while sharing the source. `edit_history` stores full labeled snapshots by `(image_id,
+seq)`; `app_settings` stores key/value pairs.
+`image_assessments` stores per-image `revision`, `assessed_utc`, and `pending_axes`
+for conflict-aware XMP reconciliation and publication.
 
-`CatalogSchema` creates this shape for new catalogs, runs ordered transactional
-migrations recorded by `app_settings.schema_version`, and then validates the required
-image columns through `PRAGMA table_info` on every startup. Migration 1 adds the native
-`color_label` slot before validation so pre-label catalogs remain readable. Migration 3
-backs up the database before rebuilding `images`; existing ids and the autoincrement
-high-water mark are preserved because they are cache identity. Migration 4 adds edit
-history without back-filling existing image rows.
-Extra columns are ignored so catalogs created by recent development builds still open;
-missing required columns fail inside startup initialization. The error panel names the
-missing columns and offers to set the catalog and paired cache aside together before
-Retry. The ownership-checked journal resumes or rolls back if a crash interrupts the
-two root renames.
+`CatalogSchema` creates new catalogs, runs ordered transactional migrations recorded in
+`app_settings.schema_version`, then validates required image columns with `PRAGMA
+table_info` at every startup. Migration 1 adds `color_label`; 2 adds
+`image_assessments`; 3 backs up and rebuilds `images`, preserving IDs and their
+autoincrement high-water mark as cache identity; 4 adds history without back-filling.
+Extra columns are tolerated for development-build compatibility. Missing columns fail
+startup; the error names them and offers to set aside the catalog/cache pair and Retry.
+An ownership-checked journal resumes or rolls back crash-interrupted root renames.
 
 ### Location moves and cache identity
 
-Storage changes are staged in Settings and run at the next launch before the shared
-catalog connection opens. A catalog move uses a short-lived SQLite connection for
-hot-journal recovery, fingerprints row count, identity, and every preset, copies and
-verifies the destination, flips `locations.json`, then removes only known source data.
-Failure before the pointer flip rolls back wholesale; after the flip, the journal
-resumes cleanup. Cache moves rename `assets/` on one volume or abandon it for
-regeneration across volumes; cache files are never copied across volumes.
+Settings stages moves for next launch before catalog open. Catalog moves recover any
+hot journal, fingerprint catalog/presets, copy and verify, flip the location pointer,
+then remove only known source data. Before the flip failure rolls back; afterward the
+journal resumes cleanup. Cache moves rename same-volume assets or regenerate across
+volumes, never copying caches across volumes.
 
 The versioned `.catalog-identity` GUID and `assets/.catalog-stamp` prevent ID-sharded
 assets from pairing with a different or rolled-back catalog. A missing stamp on a
@@ -230,159 +157,80 @@ the known tiers. Legacy adoption receives one trusted bootstrap. The stamp advan
 after each single insert or insert batch. A missing cache root self-heals; a missing
 catalog root fails startup.
 
-For a row marked v3, valid JSON is parsed and out-of-range values clamp in memory.
-Lens defaults are distortion and chromatic aberration on, vignetting off. A null
-document, malformed JSON, or any other marker (including the retired v2) logs once for
-that image and returns neutral current settings. Reads never rewrite catalog rows. **Runtime cache validity
-comes from asset-file timestamps, never from DB flags** (see caching below).
+Matching version-3 rows migrate in memory; matching version-4 rows parse directly.
+Out-of-range values clamp in memory. Null/malformed documents and unsupported or
+mismatched markers log once and return neutral current settings. Reads never rewrite
+rows; one corrupt row cannot fail the batched load. RENDER schema details live in
+[pipeline/RENDER.md](pipeline/RENDER.md) §8.
+Runtime cache validity uses asset timestamps, never DB flags.
 
 ### The batched-load invariant
 
-The catalog's central design rule: **folder loads never issue per-image queries.**
-`LoadOrCreateImageStatesAsync(paths)` does the whole folder in a fixed number of
-statements:
-
-1. `LoadImageStatesAsync` — `SELECT … WHERE file_path IN (…)` in batches of 500
-   parameters, returning each path's ordered list of `CatalogImageState` versions.
-2. Any paths missing from the result are bulk-inserted with multi-row
-   `INSERT … ON CONFLICT(file_path, version) DO NOTHING` for V1, 300 rows per statement.
-3. If anything was inserted, re-run step 1 to pick up the new ids.
-
-So a 5,000-image folder costs ~10 SELECT batches + inserts on first visit, and ~10
-SELECTs (no writes) on every later visit — regardless of how much per-image state
-exists. Do not reintroduce loops of `GetOrCreateImageAsync` /
-`LoadEditSettingsAsync`-style single-row calls on the folder-load path; that was the
-original design and it made folder switches O(n) in DB round trips.
-
-`GetOrCreateImageAsync` still exists for the *single-image* case: lazily assigning a
-catalogId the first time an image needs one outside a folder load (e.g. rating a file
-that was never cataloged). Callers go through `EnsureCatalogIdAsync`, which no-ops when
-`ImageFile.CatalogId != 0` — after a normal folder load that is always true, so the
-steady-state cost is zero.
+**Folder loads never issue per-image queries.** `LoadOrCreateImageStatesAsync(paths)`
+queries bounded path batches, bulk-inserts missing V1 rows, and requeries only after
+inserts. `EnsureCatalogIdAsync` serves isolated images outside folder loads and no-ops
+for existing IDs; query counts scale with batches, never per-image state.
 
 ### Write patterns
 
-- **Edit autosave**: slider changes debounce 150 ms, then one transaction writes the
-  current JSON document and appends its labeled history snapshot. A divergent or empty
-  list first receives an Original snapshot. Rotation clicks commit discretely, horizon
-  drags use the slider gesture boundary, and applying crop commits the crop and its
-  provisional horizon together. No save occurs per slider tick.
-- **Batch paste**: proposed settings are cloned without mutating live models, then one
-  catalog transaction reuses a parameterized update for every target. Any missing row
-  also appends Paste settings to every target's history. Any missing row rolls back the
-  entire batch; models update only after commit. Thumbnail refresh uses
-  at most six workers and discards results for images no longer in the browse.
-- **Flags, ratings, and color labels**: one set-based JSON-backed `UPDATE` writes every
-  target for the user action inside a transaction. A missing target rolls back the set,
-  and live models change only after commit.
-- **App settings**: multi-key saves share one catalog transaction. First-run completion
-  atomically writes both folder paths, the experience version, and current preferences.
-- **Deletes**: asset files first, then the row.
+- **Edit autosave:** debounce commits one settings/history transaction per gesture,
+  adding Original when needed. Crop and provisional Horizon commit together.
+- **Batch paste:** clone proposals, write every target and history in one transaction,
+  then update live models. A missing row rolls back the whole set.
+- **Assessments:** one set-based transactional update; models change only after commit.
+- **App settings:** multi-key saves are atomic, including first-run paths and completion.
+- **Deletes:** asset files first, then rows.
 
 ### Connection serialization
 
-`CatalogService` holds a **single shared `SqliteConnection`**, and Microsoft.Data.Sqlite
-connections are not safe for concurrent use. Callers run on the UI context *and* on
-threadpool threads (folder loads are wrapped in `Task.Run` because
-Microsoft.Data.Sqlite's async APIs still do synchronous disk work). A service-owned
-`SemaphoreSlim` serializes every command and keeps the lease until its reader or
-transaction is disposed. Batched folder operations release the gate between SQL
-statements so autosaves and direct user actions can make progress. Composite methods
-must not acquire an outer lease and then call another gated catalog method because the
-gate is intentionally non-reentrant.
+`CatalogService` serializes one `SqliteConnection` with its own `SemaphoreSlim` through
+reader/transaction disposal. SQLite async calls block, so folder loads use a worker.
+Batches release the gate between statements for user work; composite methods cannot
+reacquire this non-reentrant gate.
 
-The ViewModel owns every accepted Develop history read, including reads superseded
-by selection changes. Shutdown stops new history loads, finishes accepted edit
-commits, then drains all remaining reads before teardown can return to the catalog
-owner. The current load remains available to pending edits until they commit, so
-closing during a history load preserves the final edit and its history entry.
-
-Completed Develop saves are tracked by case-insensitive source path across image-instance
-replacement. Before reading catalog states, a folder load asynchronously observes saves
-for that folder; cancellation abandons the wait without cancelling the edits. History
-loads also observe earlier saves for their source path. This keeps reloaded settings and
-history aligned with completed edits without extra catalog queries or live-instance repair.
-
-WAL mode is intentionally not enabled: the app has one process and one gated
-connection, so WAL would add sidecar-file behavior without making catalog operations
-concurrent. Revisit this only if the connection model changes.
+The ViewModel tracks accepted history reads/commits, including superseded subjects.
+Shutdown stops new reads, finishes commits, then drains reads before catalog teardown.
+Folder/history reads await earlier saves by case-insensitive source path; cancelling the
+wait preserves the save and edits across instance replacement, without per-image
+queries. One gated connection needs no WAL.
 
 ## Lightroom catalog import
 
-Lightroom import brings ratings, pick/reject flags, color labels, and optional crops
-from Lightroom Classic. `LightroomCatalogReader` works from a
-temporary snapshot outside the Happy Photon catalog. Because read-only SQLite access
-can mutate an existing WAL shared-memory sidecar, the verified safe path requires
-Lightroom to be fully closed and refuses catalogs with SQLite sidecars; the closed
-catalog file is held open for reading while the snapshot is copied. Orphaned snapshot
-directories are swept during deferred catalog initialization.
-
-`CatalogImportService` normalizes mapped paths, verifies each mapped file entry exists
-without opening its content, and builds a vendor-neutral preview. Missing files never
-become catalog rows, and a zero-match preview cannot persist import settings.
-The automatic preview performs no source-content reads. Crop import is separately
-opted in in the dialog; only then does the service availability-gate and ping the
-local source's EXIF orientation header, cancellably off the UI thread. It never
-decodes or hydrates an original. Catalog crop blobs are scanned as depth-aware,
-top-level `key = value` text; unsupported, malformed, or cross-check-mismatched crops
-remain unchanged.
-`CatalogService.Import` exclusively owns persistence: it revalidates the preview's
-per-axis baseline under the connection gate, creates unknown paths, updates `images` and
-revisioned `image_assessments`, and persists import settings in one short transaction.
-Crop adoption re-reads current edit settings in that transaction and merges only into
-empty geometry, preserving tonal edits and adding a Lightroom-labeled history step.
-Imported metadata never sets `pending_axes`, so a large import does not enter the bounded
-XMP writer. After commit, matching live `ImageFile` objects adopt snapshots only when
-their revision still matches the preview baseline; adopted crops also refresh the live
-render, history, and edited thumbnail through the XMP crop-adoption seam.
+`LightroomCatalogReader` reads assessments and optional crops from a closed-catalog
+snapshot and refuses active sidecars: even read-only SQLite can mutate an existing WAL
+shared-memory sidecar. Preview maps paths and checks existence without source-content
+reads, skips missing files, and cannot persist settings with zero matches. Crop import
+requires separate opt-in and only availability-gated, header-only EXIF orientation
+reads; it never decodes or hydrates an original. Unsupported crops stay unchanged.
+`CatalogService.Import` revalidates per-axis revision baselines under the connection
+gate, writes rows/assessments/settings in one transaction, and merges crops only into
+empty geometry while preserving tonal edits and adding history. Imported assessments
+never set `pending_axes`, keeping large imports out of the bounded XMP writer. Live
+models adopt committed snapshots only while their baseline revisions still match.
 
 ## XMP sidecars
 
-XMP support is opt-in per catalog. Folder enumeration records `.xmp` files in
-the same pass as supported images, while XML parsing begins only after the
-thumbnail session has started and runs as cancellable background work.
-Reconciliation compares rating, flag, label, and crop independently against the
-revisioned `image_assessments` row; catalog revisions and the active browse
-generation guard UI adoption. Crop is fill-empty and recency-exempt: a supported
-Adobe crop is adopted through ordinary edit history only while persisted and live
-geometry are both empty. A file's V1 is the permanent XMP primary: sidecar adoption
-and publication target V1 only, while other versions remain catalog-only.
+XMP is opt-in per catalog. Parsing begins as cancellable background work after the
+thumbnail session starts. Reconciliation compares axes against revisioned assessments;
+catalog revisions and browse generation guard adoption. V1 alone exchanges sidecars.
+Crop is fill-empty and recency-exempt, entering history only when live and stored
+geometry are empty. WORKFLOW.md explains use.
 
-In Read & write mode, a committed local assessment mutation or the explicit
-**Write XMP sidecars** command schedules sidecar writes. The command awaits folder
-reconciliation, marks publishable V1 rows pending without changing their assessment
-revision, and feeds the writer with half-capacity headroom for interactive mutations.
-Bulk marking and snapshot reloads run on worker threads; live-row lookup and snapshot
-application stay on the UI thread with a per-pass dictionary keyed by catalog id.
-It marks Crop only for persisted non-full crops and stops admitting work when the
-browse generation changes. A single background writer coalesces work by target,
-merges the changed axes into parsed XML (or the complete assessment tuple for a new
-sidecar), revalidates the candidate path, timestamp, and length, then promotes a
-temporary file beside the sidecar. Writes use only standard Adobe vocabulary:
-`xmp:Rating` always holds the true 0–5 stars, `xmpDM:pick` holds `1`, `0`, or
-`-1` for picked, unflagged, or rejected, and `xmpDM:good` accompanies picked and
-rejected values for Lightroom Classic interoperability. `xmp:Label=""` is the
-explicit label clear. Portable zero-rotation crops use only `crs:HasCrop`, the four
-normalized crop edges, and `crs:CropAngle="0"`; every other Camera Raw property is
-left untouched. Angled, warp-relative, perspective-corrected, and orientation-
-transposed crops are skipped. Reads likewise use only these standard XMP properties,
-and new writes never create or update the `happyphoton` namespace. Applications such
-as darktable and Bridge that recognize rejects only through `xmp:Rating="-1"`
-will not see Happy Photon rejects; preserving the true star rating and
-Lightroom-compatible pick state is intentional. Reader and writer loads reject
-sidecars larger than 4 MiB. Sidecar availability is checked independently. Crop
-interop may perform an availability-gated, header-only EXIF orientation ping on an
-original; it never decodes the original or approves cloud hydration.
+Read/write publication coalesces changed axes, preserves unrelated XML, revalidates
+path/timestamp/length, then atomically promotes a temporary sibling file. Standard
+vocabulary only: `xmp:Rating` preserves true 0–5 stars; `xmpDM:pick` carries 1/0/−1;
+`xmpDM:good` accompanies pick/reject; `xmp:Label=""` explicitly clears a label.
+Portable crops use `crs:HasCrop`, normalized edges and `crs:CropAngle="0"`; other
+Camera Raw properties remain untouched. No `happyphoton` namespace is written.
+Angled, warp-relative and orientation-transposed crops are skipped. Both reader and
+writer reject sidecars over 4 MiB and gate sidecar availability independently.
+Crop interop may read an availability-gated EXIF orientation header, never decode or
+hydrate the original. Reject-only `xmp:Rating="-1"` consumers cannot see our pick state.
 
 ## Folder load and the thumbnail pump
 
-This is the most concurrency-sensitive flow in the app. The goals, in priority order:
-
-1. **Folder switches stay constant-time on the UI thread** — no per-image UI work, no
-   per-image semaphore waiters or cancellation registrations.
-2. Visible thumbnails appear before background work starts.
-3. A folder switch cleanly cancels the previous folder's work without leaking or
-   double-disposing the `CancellationTokenSource`.
+Folder switches do bounded UI work, prioritize visible thumbnails and cancel previous
+work without leaking or double-disposing its token source.
 
 ### Sequence
 
@@ -410,142 +258,68 @@ sequenceDiagram
 
 ### Cancellation ownership protocol
 
-Folder switches are frequent and races here caused real bugs, so ownership is explicit:
-
-- `_thumbnailLoadingCts` is swapped with `Interlocked.Exchange`; the previous CTS is
-  only ever **cancelled** by `LoadFolderAsync`, never disposed by it once the pump has
-  started.
-- **Disposal ownership transfers exactly once**: before the thumbnail session starts,
-  `LoadFolderAsync` owns the CTS and disposes it on early failure/cancel. The active
-  session then owns the CTS for the folder's lifetime because its six scheduler workers
-  remain available for scrolling. Its `finally` uses `CompareExchange` so an older
-  session can never clear a newer folder's state.
-- Workers observe cancellation cooperatively; an in-flight decode may finish after
-  cancel. A monotonically increasing folder generation rejects that result and disposes
-  its bitmap instead of assigning into stale state. Direct refreshes and pump loads also
-  share a per-image request generation: an older completion cannot replace a newer
-  edited thumbnail or publish its failure state. Browse replacement, removal, and
-  shutdown also dispose resident bitmaps deterministically.
+`LoadFolderAsync` atomically swaps and cancels the previous CTS. Before a thumbnail
+session starts, the loader owns disposal; after transfer, the session owns it until
+its workers finish. CompareExchange prevents old cleanup from clearing new state.
+Folder generations reject late results; per-image generations also prevent an older
+load from replacing a newer edited thumbnail or failure state. Rejected bitmaps and
+resident bitmaps on replacement/removal/shutdown are disposed deterministically.
 
 ### The pump
 
-The first `2 × workers` visible Browse images are loaded by `LoadThumbnailRangeAsync`,
-whose six workers pull indices from a shared `Interlocked` counter. Paired RAW paths
-are excluded while the stored Pairs preference is on; disabling it adds those files
-to visibility-driven scheduling without another catalog read. This preserves a fast first
-paint before metadata analysis begins. A Large request stages this burst at Small
-quality, then queues the requested Large follow-up. After that, one
-`ThumbnailLoadScheduler` owns exactly six long-lived workers for the active folder:
+The initial visible burst uses six workers sharing an index, staging Large requests
+at Small quality before upgrade. One `ThumbnailLoadScheduler` then owns six long-lived
+workers, a coalescing visible-first queue and bounded nearby prefetch.
+Develop/fullscreen pause admission before preview work; admitted reads may finish,
+while queued work resumes on return to Browse. Paused work is not status activity.
 
-Develop and full-screen close a shared admission gate before preview work starts. Up to
-six source reads already admitted by the initial range or scheduler may finish, while
-queued visible-first work remains pending and resumes when Browse becomes active.
-Paused pump work is excluded from status activity; direct thumbnail operations remain
-visible, and resuming the pump re-arms the activity sampler.
+- Active-browse membership is checked in constant time. A terminal decode failure
+  remains terminal for that folder instance; a reload permits retry.
+- Hydration deferrals are distinct from failures and reserve no residency slot.
+  Failed/deferred upgrades preserve a usable resident bitmap and do not repeatedly retry.
+- Workers share one wake signal; there is no waiter or cancellation registration per
+  image.
+- RAW/JPEG pairing changes visibility without another catalog read and preserves its
+  preference. Bursts groups logical captures, not duplicate representations.
+- Bursts runs a cancellable metadata sweep only when enabled and groups after UI apply.
+  It skips cloud-only sources; metadata is single-flight with selection-triggered loads.
 
-- `BrowseGridView` derives visible indices from the scroll offset and grid geometry.
-- The ViewModel adds one viewport of nearest-first prefetch on each side, capped at 128
-  images. Visible entries have higher priority than prefetch entries. Queued smaller
-  requests are superseded, while a larger request arriving behind an in-flight smaller
-  request is retained as its follow-up.
-- Active-browse ownership is checked through a reference-identity set, keeping each
-  completed assignment O(1). A terminal decode failure is remembered on that folder's
-  `ImageFile`, so viewport reports do not retry corrupt or unsupported files and any
-  last successful resident bitmap remains visible; a fresh folder load creates new
-  instances and permits a new attempt.
-- A cloud deferral is distinct from a decode failure: it is remembered for the current
-  folder generation, is not re-enqueued by viewport reports, and does not reserve a
-  residency slot. When a usable bitmap is already resident, a failed or
-  hydration-deferred larger request is recorded only against that generation target
-  and neither changes the base cloud badge/count nor retries while the bitmap remains
-  resident; residency eviction removes that constraint, so viewport re-entry may
-  reload.
-- Workers wait on one shared signal, not one semaphore waiter or cancellation
-  registration per image. Folder switches remain constant-time on the UI thread.
-- Capture-time metadata is not swept on folder open. Enabling Bursts starts a
-  cancellable, serial sweep over the current folder and computes burst groups over
-  logical captures — a singleton or a path-derived RAW+JPEG pair with the same
-  case-insensitive basename in the same directory; disabling Bursts or changing
-  folders stops the remaining work. The pairing preference persists in `app_settings`;
-  burst size and index count shutter presses while membership remains available for
-  every file. The shared
-  background segment reports processed/total progress while analysis is active.
-  `MetadataService` deduplicates this work with selection-triggered loads and awaits
-  UI application before grouping reads `DateTaken`. The sweep analyzes locally
-  readable images and reports cloud-only images as skipped; enabling Bursts never
-  approves hydration.
-- Browse derives the same basename RAW+JPEG groups from distinct physical paths.
-  Pairing hides every version of the RAW path and badges every JPEG version; visibility,
-  file-type filtering, navigation, selection, counts, bursts, and thumbnail scheduling
-  then operate on the capture tiles. Pair assessments fan out to both primary catalog
-  rows, while Develop may transiently display the hidden RAW through the same per-file
-  preview path. Deletion recomputes the path-derived groups.
-
-Worker continuations post back to the UI context (the pump is started from the UI
-thread), so `ImageFile.Thumbnail` assignments — and the resulting grid updates — happen
-on the UI thread. Decoded residency is capped at 64 MiB by actual BGRA byte count;
-pending UI-thread bitmap retirement also counts against admission, with an 8 MiB
-prefetch safety margin. Visible and selected images are pinned; the
-least-recently-visible unpinned bitmaps are cleared and retired before new requests are
-admitted. The disk cache remains the long-lived store, so revisiting an evicted range is
-a cheap decode rather than source-image processing.
+Worker continuations apply thumbnails on the UI context. Visible/selected images are
+pinned; unpinned least-recently-visible bitmaps retire before admission. The residency
+budget counts actual BGRA bytes and pending retirement, with prefetch headroom.
+The disk cache is the long-lived store; scrolling never retains the entire folder.
 
 ### Per-image thumbnail resolution (ThumbnailService)
 
-Each request carries a minimum acceptable long edge and a fresh-generation long edge:
-Small `(150, 150)`, Medium `(150, 192)`, or Large `(512, 512)`. A warm cache is checked
-first: satisfactory larger entries decode down to at most the generation target, and
-undersized entries paint immediately while an allowed source upgrade is queued. Cache
-writes are largest-wins for the current source version, so late Small work cannot
-replace a Large entry.
+Requests carry minimum-acceptable and generation sizes. Larger entries satisfy smaller
+requests; undersized entries paint while upgrades queue safely. Largest-wins writes
+prevent late Small work replacing Large output. DECODE.md §5 owns sizes/formats.
 
-On a cache miss, source candidates are tried in this order:
+Cache-miss candidates are tried in order:
 
-1. RAW only — **LibRaw embedded preview** (`ExtractThumbnail`), with manual EXIF
-   orientation when LibRaw output lacks it. A preview whose aspect differs by more
-   than 3% from the visible RAW frame LibRaw reports is center-cropped toward that
-   aspect (camera-added padding); at or below 3%, or when visible geometry is
-   unavailable, the preview is preserved.
-2. **EXIF thumbnail** via `Ping` (header-only read), accepted only if its aspect ratio
-   matches the source within 3% (`ExifThumbnailDecoder`); unlike LibRaw previews,
-   missing geometry or a larger mismatch rejects it.
-3. RAW only — **embedded JPEG scan** (`EmbeddedJpegExtractor`): scan the raw bytes for
-   `FFD8…FFD9` spans, validate candidates with Magick, pick the largest, trying the
-   *last* `FFD9` marker first (some vendors nest JPEGs). Results are memoized in a
-   short-lived static cache to dedupe parallel workers; not aspect-normalized.
-4. **Reduced-size decode for non-RAW files** — for JPEGs, `JpegThumbnailDecoder` uses
-   Avalonia's platform decoder (`Bitmap.DecodeToWidth/Height`) plus a manual
-   orientation pixel-remap; other standard formats go through Magick with size hints.
-   RAW files never enter this step.
+1. RAW LibRaw embedded preview, oriented and normalized for camera padding against
+   the visible RAW aspect; missing geometry does not invalidate extracted bytes.
+2. Header-only EXIF thumbnail, requiring source-matching geometry.
+3. RAW embedded-JPEG byte scan, validating candidates and retaining the largest safe one.
+4. Reduced standard-image decode: JPEG uses the platform decoder and orientation remap;
+   other standard formats use Magick size hints. RAW never enters this step.
 
-RAW extraction retains the best safe embedded candidate and continues while it is
-below the generation target. It returns immediately at that target, otherwise returns
-the best candidate after all safe sources are exhausted. Browse loading never starts a
-full RAW demosaic to satisfy Large.
-
-Edited standard images keep the low-resolution `RenderPipeline` path, which mirrors
-`StandardBaseLoader`. Edited RAWs use a different speed-first order: an in-memory
-thumbnail from the matching accepted Develop render, a matching
-`assets/rendered-thumbs/` entry, then the unedited source thumbnail with only rotation,
-horizon rotation, and crop applied — the fallback never applies tone or color to the
-camera-rendered embedded JPEG and never upscales a crop. Folder loading never decodes a
-RAW base or a 1600px preview. The unedited source thumbnail remains unchanged in
-`assets/thumbs/`. Rendered-thumbnail cache format, validity, and largest-wins rules are
-specified in [docs/pipeline/DECODE.md](pipeline/DECODE.md) §5.
+RAW extraction continues only until the generation target is met or safe candidates
+are exhausted; Browse never demosaics RAW for a thumbnail. Edited standard images use
+`RenderPipeline`. Edited RAWs prefer the accepted Develop thumbnail, then matching
+rendered cache, then source preview with geometry only. The fallback never applies tone
+or color to the camera JPEG, upscales a crop, or loads a base/1600px preview.
 
 ### Cloud-file source access
 
-Folder enumeration captures a display-only availability hint without opening image
-content; every actual source access rechecks the current file attributes through
-`ISourceAvailabilityService`, because a provider may dehydrate a file after
-enumeration.
+Enumeration captures a display-only availability hint without opening image content.
+Every source access rechecks attributes through `ISourceAvailabilityService` because
+providers may dehydrate files after enumeration.
 
-`SourceReadIntent.Background` is used by thumbnails, metadata, previews, Bursts, and
-unconfirmed export work. It permits local and unknown sources but
-returns a typed deferral for files that require hydration; warm Happy Photon caches
-are checked before this gate and remain usable. `GatedBaseImageLoader` wraps both
-default and injected base loaders, while metadata and path-based statistics gate
-their own source entry points.
+Thumbnails, metadata, previews, Bursts and unconfirmed exports use
+`SourceReadIntent.Background`: local/unknown sources pass; hydration returns a typed
+deferral. Warm caches are checked first and remain usable. `GatedBaseImageLoader` wraps
+default and injected loaders; metadata/path-based statistics gate their own reads.
 
 Only two user actions grant `UserApprovedHydration`: **Download and open** for one
 selected image, and the Export workspace after it reports the immutable job's exact
@@ -553,160 +327,37 @@ cloud-file count and logical size. Both paths recheck live availability.
 
 ### The cache write queue (ThumbnailCacheService)
 
-Persisting thumbnails must never slow down rendering them, so writes are decoupled:
-
-- `QueueSaveToCache` clones the bitmap (pixel copy) and enqueues a `CacheWrite` into a
-  **bounded channel (256 entries, drop-oldest)** — a full queue sheds the oldest write
-  rather than blocking a worker or growing memory; dropped/failed entries dispose
-  their bitmap.
-- A **single background writer** drains the channel: encode to a GUID-named JPEG in
-  `assets/tmp/`, verify the source file's mtime hasn't changed since capture
-  (staleness guard), then atomically `File.Move` into place. Old PNG bytes stored
-  under `.jpg` names remain readable and are re-encoded lazily. Failures clean up the
-  temp file; startup clears any orphans left by a crash.
-- **Shutdown**: the channel is completed and drained for at most 2 seconds; after that
-  the writer is cancelled and pending entries are dropped, so a slow disk can never
-  block window close. Losing queued cache writes is safe — they regenerate next visit.
+A bounded drop-oldest channel decouples cache writes from rendering and owns/disposes
+accepted, dropped or failed payloads. One writer encodes in `assets/tmp/`, checks
+captured source mtime, then atomically moves into place; startup clears orphans.
+Shutdown completes and drains the queue to a deadline, then cancels/drops remaining
+work: regenerable writes must not block close.
 
 ### Why cache validity is file-timestamp based
 
-Earlier designs tracked `has_thumbnail`/`has_preview` in the DB, which meant DB writes
-on the image-loading path and a second source of truth that could drift from the files
-on disk. The current rule — *cache file exists and is newer than the source* — needs no
-DB access, survives crashes mid-write (temp + atomic move), and self-heals if a user
-touches originals or deletes the assets folder.
+A cache file newer than its source needs no catalog read or flag update. This avoids
+a second truth that can drift, survives atomic-write crashes and self-heals after
+source changes or deleted caches. DECODE.md §5 owns cache formats and queue capacities.
 
 ## Preview pipeline (Develop mode)
 
-Briefly, for contrast with thumbnails. The authoritative pipeline behavior lives in
-the pipeline docs: decode contract, base-pair ownership, and disk caches in
-[docs/pipeline/DECODE.md](pipeline/DECODE.md) (§4–5); render stages, budgets, resting
-renders, and rendered-thumbnail ownership in
-[docs/pipeline/RENDER.md](pipeline/RENDER.md) (§11 is the performance contract). The
-threading and ownership view:
+`PreviewService` owns one current preview pair with generation-matched source
+analysis. Decodes are single-flight and newest-wins. The ViewModel owns one outcome
+channel and atomically applies pixels and facts only for the matching image/surface
+generation; rejection disposes artifacts and uncommitted promotion leases.
+Resting renders are display-only; adjacent warming is cache-only speculation.
 
-- `PreviewService` keeps one current preview-base pair (immutable linear 1600px
-  interactive + at-most-3200px large) and generation-matched source analysis with
-  separate lease/retirement lifetimes;
-  decodes are single-flight by identity and newest-wins, and slider edits render only
-  from the 1600 base. Camera-profile selection is part of decode identity, so matrix
-  and HueSat tables switch together and stale-base renders are non-promotable. A
-  same-image Browse/Develop round-trip retains this one pair; selection/path,
-  availability, folder, decode-identity, and shutdown invalidation retire it.
-- Warm cached previews and rendered thumbnails may paint immediately as last-known
-  stale state; a background base decode and fresh render confirm or replace them.
-  A settings-matched rendered preview derives its display histogram, waveform, and
-  display-floor clipping from the same cached BGRA buffer; a mismatch remains
-  bitmap-only. Painting either cache outcome never opens an embedded profile or
-  hydrates a source, and availability is rechecked immediately before every profile
-  content open.
-- After a settled Develop or loupe paint, a capacity-one speculative worker walks up to
-  five uncached local neighbors in the current travel direction, one at a time, each
-  waiting for the outcome of the previous entry's own cache write before decoding.
-  Each warm encodes its rendered preview once at JPEG quality 90; the retained entry
-  and queued preview write share that array read-only. The writer persists those exact
-  bytes without cloning the raster or encoding again. Encoded writes are preview-only;
-  versioned thumbnail writers reject them because dimension metadata needs a raster.
-  Persisted writes release the retained entry after both file moves; dropped writes
-  retain the only copy unless the source changed or a matched disk entry exists.
-  Unrelated writes never hold up this handoff. Every write outcome resolves, including
-  queued and in-hand writes abandoned at the shutdown drain timeout; the writer keeps
-  ownership of in-hand payloads until its save finishes. Standard images arm
-  after 75 ms without selection, edit, crop, filter, folder, or mode activity. It never
-  joins the current base coordinator or outcome channel: its base pair is disposed after
-  rendering and its single encoded handoff is consumed by the settings-matched
-  cached-outcome path. Selection cancels in-flight work without blocking the UI, with
-  two exceptions: in the loupe, landing on the image the worker is already decoding
-  keeps that worker and the fresh render joins it while the cached read still paints
-  whatever the cache holds; on either surface, a worker whose
-  target is still within the next walk keeps going, so steady stepping does not restart
-  the buffer. A parked worker is never joined, and a cancelled one is never kept. If native cancellation is
-  still draining when the current neighbor is armed, the VM retries that latest-owned
-  neighbor when capacity frees; edits, availability, folder/view changes, and shutdown
-  invalidate the retry.
-- Develop has one VM-owned render-outcome channel. Selection and availability changes
-  synchronously advance its generation and clear the surface; state-defining renders
-  publish bitmap, histogram/waveform, clipping, capability, profile, as-shot WB, and
-  RAW histogram together. A matching cached paint atomically publishes bitmap plus
-  display scopes and display-floor clipping, while mismatched cached and resting paints
-  are bitmap-only upgrades. Cached outcomes never claim source-saturation or RAW facts,
-  and a rejected outcome cannot promote a rendered thumbnail or arm a resting render. A
-  stale-base render whose own base refresh already painted the same generation fresh
-  reports success without painting, so the edit it carries still autosaves.
-- An accepted edited RAW render hands ownership to a tracked background
-  resize/conversion task for the ≤512px Browse thumbnail — no full-size clone;
-  `PreviewService` retains the result strongly and queues it to the independent
-  rendered-thumbs writer on promotion or image/view leave. Shutdown waits for tracked
-  candidate and queue work before draining that writer. Rendered-cache writes happen
-  on image/view leave, never per slider settle. Bitmap enqueue transfers an owned
-  bitmap or copies its pixels into an owned byte array; conversion and source timestamp
-  re-checks run
-  on the single writer. Payload provenance comes from the retained base's decode,
-  never enqueue time; absent provenance and dropped writes are counted. Thumbnail
-  promotion snapshots under the retention lock, then resizes and enqueues on a
-  worker. Cached/warm preview reads and promotion share a cancellable capacity-two
-  gate; a completed Loupe warm entry is decoded and converted inside that worker,
-  with its live availability check preserved immediately before the read.
-  Selection detaches the held base pair and retires it on a worker. Replacement base
-  decodes await that retirement, bounding deferred pairs without blocking navigation;
-  outstanding render leases retain their existing lifetime protection. Shutdown drains
-  retirement.
-  Thumbnail-created observers run only after the completed thumbnail is retained,
-  under the same lock used to replace or clear that retained reference.
-- Resting (viewport-resolution) renders are display-only: they never advance the
-  interactive render generation and never feed histograms, rendered thumbnails, or
-  the q90 preview cache; edits cancel them through the preview-debounce token, and
-  selection or mode changes retire them. When a resting bitmap replaces the current
-  1600 bitmap, ownership of the displaced bitmap moves to `PreviewService` until
-  cache promotion or invalidation.
-- A RAW preview decode performs one visible-mosaic pass between LibRaw `Unpack` and
-  `Process` — row-chunked across parallel workers with bit-identical merged bins,
-  completing synchronously on the decode call — releasing the native mosaic lease
-  before processing. The optional sensor histogram and source-saturation mask install
-  atomically with the pair in its held analysis and are exposed only through the same
-  generation's `PreviewBaseLease`; full/export loads skip the pass entirely.
-- The ViewModel debounces interaction: preview 150 ms, Browse thumbnail histogram
-  300 ms, and thumbnail refresh 500 ms, each with its own CTS. Every Develop
-  state-defining render computes the active scope from the same BGRA8 buffer as its
-  first paint. Entry paints seed both display scopes; histogram-active ticks skip the
-  waveform work, and selecting Waveform schedules a current-generation coherent
-  refresh while the prior trace remains visible. Selecting an image starts rendered-cache loading and
-  base decoding concurrently. Discovering that the selected original requires
-  hydration advances the surface generation and clears even a provisional cache paint;
-  fresh decode waits for **Download and open**.
-- Export independently re-resolves each selected profile; degraded selections use the
-  built-in matrix and propagate a per-image warning.
-- Browse mode never loads a 1600px preview just to draw the histogram: the UI thread
-  copies the current thumbnail pixels into an independently owned bitmap, and a
-  threadpool task scales it to a DPI-independent 150 px bitmap and calculates its
-  bins through the same BGRA accumulation path as Develop, without waveform storage.
-  Retirement never waits for that work; stale results are rejected by selection and
-  thumbnail-generation checks.
+[DECODE.md](pipeline/DECODE.md) §4 and §5 own base leases and cache formats.
+[RENDER.md](pipeline/RENDER.md) §11 owns accepted outcomes, resting work and promotion.
+[OVERVIEW.md](pipeline/OVERVIEW.md) owns shared pipeline invariants.
 
 ### Background activity ownership
 
-The status bar pulls one constant-size activity snapshot at 4 Hz, and only while an
-activity epoch is open. It reads worker-owned integer state: the initial thumbnail
-batch flag, scheduler desired count, operation-level direct thumbnail tasks, rendered
-thumbnail tasks, the complete initial preview task (cached race through first coherent
-fresh render), preview decode/refresh/adjacent-warm tasks, cache queues plus writer-in-hand state,
-and unique metadata loads. Burst analysis and UI exports contribute one outer
-scope per batch, with processed/total progress; metadata remains accounted but is
-presentation-suppressed while a burst or export scope already explains it.
-
-Producer and downstream cache-write phases deliberately overlap: a thumbnail or
-rendered-thumbnail task enqueues its cache write before leaving its own activity set.
-The sampler shows only after 400 ms of continuous work, hides after 600 ms of quiet,
-and stops once the hidden, all-zero snapshot has kept the same activity epoch for that
-trailing quiet interval; a rendered-thumbnail empty-to-nonempty transition can re-arm
-it. This status segment is the only preview-preparation activity surface; Develop has
-no histogram-local arming bar.
-
-Shared per-image decode methods do not mutate activity state or notify the UI. Folder
-switches register one initial range and a bounded number of operation-level wakes,
-independent of folder size; samples never enumerate the Browse, caches, or export
-lists. This preserves invariant 3 while keeping property changes bounded to the 4 Hz
-sampler.
+One bounded sampler reads worker-owned counters only during active epochs; overlapping
+producer/cache-write phases account for pending writes. Batch analysis/export scopes
+suppress redundant metadata presentation. Samples never enumerate folder/cache/export
+lists or alter shared decode methods. Hysteresis avoids flashes; pipeline/UI.md §9 owns
+the static status segment for sustained preparation.
 
 ## Threading model summary
 
@@ -748,11 +399,9 @@ sampler.
 8. Every source file stays under 500 lines.
 9. Background work never hydrates a cloud-only original. Source reads enforce live
    availability; only a clearly scoped user action may use approved hydration intent.
-10. Progress indicators are indeterminate only while their represented work is active.
-    Hidden indeterminate FluentTheme ProgressBars animate anyway and keep the
-    compositor rendering — they were the entire measured idle CPU/GPU load — so bars
-    bind `IsIndeterminate` to their busy flag and browse tiles use a static loading
-    placeholder, keeping idle usage at the empty-window floor.
+10. Indeterminate indicators run only during represented startup/first-run work, never
+    at rest or hidden; hidden animation keeps the compositor rendering. Sustained
+    preview preparation uses the static status-bar segment (DESIGN.md).
 11. Interactive preview ticks stay on the pre-derived 1600 base. Viewport-resolution
     work begins only after a current 1600 paint and never enters histogram/cache
     paths; the 3200 cap and current-image-only pair ownership bound its memory peak.

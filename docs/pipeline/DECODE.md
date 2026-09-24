@@ -7,25 +7,9 @@ for the runtime contracts.
 
 ## 1. Loader routing
 
-```csharp
-public interface IBaseImageLoader
-{
-    bool CanLoad(ImageFile file);
-
-    BaseImageLoadOutcome LoadPreviewBaseWithOutcome(          // preview pair
-        ImageFile file,
-        BaseDecodeSettings decode,
-        CancellationToken cancellationToken);
-
-    BaseImage? LoadFullBase(                                  // native resolution
-        ImageFile file,
-        BaseDecodeSettings decode,
-        CancellationToken cancellationToken);
-}
-```
-
-`LoadPreviewBase` is an extension method (`BaseImageLoaderExtensions`) that calls
-`LoadPreviewBaseWithOutcome` and detaches the interactive image.
+`IBaseImageLoader` defines preview-pair and full-resolution loads.
+`LoadPreviewBaseWithOutcome` preserves typed failures; the `LoadPreviewBase` extension
+detaches its interactive image. See `Services/IBaseImageLoader.cs`.
 
 `BaseDecodeSettings` (OVERVIEW.md §4) carries the decode-affecting subset of
 `EditSettings` — highlight reconstruction, optics toggles, and the selected camera profile.
@@ -34,16 +18,10 @@ it but ignore it (their `From(EditSettings)` projection is still stored on
 `BaseImageInfo.Decode` so cache keys stay uniform). The defaults are highlight clip
 with built-in characterization.
 
-`BaseLoaderRouter` picks the loader:
-
-- Mosaic RAW extensions (`.CR2 .CR3 .NEF .NRW .ARW .DNG .RAF .ORF .RW2 .PEF`)
-  route only to `RawBaseLoader`. `StandardBaseLoader` rejects these extensions in both
-  its capability and load paths. A rejected native runtime emits one process-level
-  diagnostic; a file LibRaw cannot decode is reported as unsupported in Browse and
-  Develop. Neither failure can route RAW pixels through Magick.
-- `.HEIC .HEIF` route to `StandardBaseLoader` with `Kind = HeicPlatform`. They are
-  standard image sources rather than RAW files, including in the thumbnail path.
-- Everything else (`.JPG .JPEG .PNG .BMP .GIF .TIFF .WEBP`) → `StandardBaseLoader`.
+`BaseLoaderRouter` sends RAW only to `RawBaseLoader`; `StandardBaseLoader` rejects
+RAW in both capability and load paths. A rejected native runtime or unsupported file
+cannot fall back to Magick raster decode. HEIC/HEIF and other standard formats use
+`StandardBaseLoader`; HEIC's internal source-kind name is `HeicPlatform`.
 
 ## 2. `RawBaseLoader` (LibRaw via the Happy Photon bridge)
 
@@ -75,27 +53,13 @@ crossing-on sources.
 
 Post-decode steps, in order:
 
-1. LibRaw's AHD Bayer and Markesteijn X-Trans paths both end at the same linear,
-   neutralized, normalized three-channel camera-RGB span. `CameraRgbCharacterization`
-   composes camera→sRGB with the exact sRGB→Rec.2020 matrix in `double`, then writes
-   through Magick's writable Q16 cache pointer: camera `ushort` → matrix → one rounded
-   Q16 write, with the only clamp at that write (the uncharacterized outcome imports
-   the native codes unchanged). The destination is tagged `ColorSpace.RGB` before any
-   sample is stored, and the loader recycles the LibRaw context before import so raw
-   and processing buffers do not overlap the render allocation — no PPM, intermediate
-   full-frame pass, managed full-image copy, or second Magick pixel cache. When a DCP
-   resolved successfully and WB facts are valid, its balanced-seam ForwardMatrix or
-   ColorMatrix characterization replaces the built-in matrix in this same fused import,
-   with CameraCalibration, AnalogBalance, and the applicable matrix pair interpolated
-   at the as-shot CCT; missing-WB and all typed profile rejections use the unchanged
-   built-in transform, and the matching HueSat payload and outcome token attach to
-   `BaseImageInfo` at the same installation boundary. Four-channel processed output is
-   rejected as unsupported rather than truncated. The binding defaults OpenMP to at
-   most sixteen workers unless the process defines `OMP_NUM_THREADS`, bounding X-Trans
-   scratch space without changing decode precision or pixels.
-   With an active embedded prescription, this import is OPTICS.md's fused inverse map:
-   it samples camera planes per channel, applies scene-linear vignetting gain, and only
-   then runs the characterization matrix. Inactive paths retain the former pixels.
+1. Bayer and X-Trans converge on neutralized camera RGB. `CameraRgbCharacterization`
+   composes the exact camera→Rec.2020 matrix in double and writes Q16 once directly
+   into Magick's cache. LibRaw is recycled before import; there is no full-frame managed
+   copy or second cache. Active optics samples/gains camera planes before this write
+   (OPTICS.md). Valid DCP matrix/HueSat facts install atomically; rejected profiles and
+   missing WB retain built-in characterization (CHARACTERIZATION.md). Four-channel
+   processed output is rejected rather than truncated.
 2. LibRaw sometimes pre-rotates. The loader detects that through the dimension swap,
    applies EXIF orientation otherwise, and records `ExifOrientationApplied`.
 3. Preview uses one LibRaw half-size decode. Two bases derive independently from that
@@ -126,31 +90,16 @@ receive the same code. `BaseImageInfo.IsMonochrome` is set, camera and DCP facts
 absent, and profile characterization is ignored; the 5500 K fallback remains an
 informational as-shot value.
 
-Camera facts are copied immediately after `Unpack`, before the camera-native output
-configuration is applied. `CamToSrgb` therefore remains camera→linear-sRGB and is not a
-camera→working-space fact. `RawWorkingSpaceTests` pins the semantics against the
-separately exposed camera-from-XYZ fact: row-normalize
-`camera_from_xyz · (sRGB→XYZ)`, then invert it to reproduce `camera_to_srgb`.
+Camera facts are copied after Unpack, before output configuration: CamToSrgb remains
+camera→linear-sRGB. WORKING_SPACE.md §3 owns its independent matrix oracle.
 
-For preview loads at the same seam, after camera-fact copying and before
-`ConfigureOutput`/`Process`, `RawSensorFrame` combines the typed bridge sensor identity with a zero-copy
-`BorrowMosaic` lease, always released before `Process` (a held lease intentionally
-makes native process/recycle calls reject). `RawSensorHistogram` then scans the
-visible photosites once, synchronously on the decode call and token, producing both
-the aggregate histogram and a packed preview-size per-channel saturation artifact
-with the exact same `value >= maximum` predicate. Rows are chunked
-across parallel workers whose per-worker bins merge into order-independent integer
-sums, so the histogram is bit-identical for any worker count. Cancellation is checked
-every 256 visible rows and immediately before processing. Cancellation escapes the
-loader; any other sampling/access fault is logged once and leaves a valid decoded pair
-with empty source analysis. Only integer CFA mosaics described by Bayer `filters > 1000` or
-the 36-byte X-Trans table (`filters == 9`) qualify; anything else — no-CFA, Leaf and
-other filter tables, invalid geometry/levels, bridge-unavailable mosaics — returns no
-RAW histogram. There is no second decode, source reread, or processed-RGB substitute.
-The mask maps the visible sensor window by ratio to the oriented decoded dimensions
-with OR reduction. The histogram and interactive-size mask travel together in the
-immutable `PreviewSourceAnalysis` installed beside the pair; full/export loads skip
-the entire sampling pass.
+Preview loads sample the unpacked mosaic once before processing, via a zero-copy
+`RawSensorFrame` lease released before `Process`. `RawSensorHistogram` produces
+both the RAW histogram and packed source-saturation artifact, using order-independent
+integer sums and cancellation checks. Only supported integer Bayer/X-Trans layouts
+qualify; sampling faults leave valid pixels with empty analysis, while cancellation
+escapes. There is no reread or processed-RGB substitute. The matching pair and analysis
+install atomically; full/export loads skip sampling. RENDER.md §7 owns the predicates.
 
 ### 2.1 RAW Browse previews
 
@@ -180,23 +129,12 @@ solver then finds the scalar EV whose neutral AgX render matches the preview med
 with base samples passing through the same default inset → log2/sigmoid → outset
 crossing as the renderer, including the Rec.2020-to-sRGB comparison basis.
 
-The preview estimate is accepted only for thumbnails at least 64×64 with finite,
-non-degenerate medians. A Fuji estimate is clamped to within 0.5 EV of its nonzero
-MakerNote bias; an estimate without a metadata anchor is clamped to ±1 EV around zero.
-The latter bound prevents a high-key camera preview from turning its highlight-heavy
-median into a large global mid-tone lift. Clamping rather than rejecting keeps the
-selection continuous: repeated decodes of the same file measure a few hundredths of
-an EV apart, so a hard accept/reject threshold flipped files sitting at the boundary
-by the full disagreement between decodes of different noise-reduction modes. Missing,
-corrupt, or too-small previews fall back to the Fujifilm mid-point shift from
-MakerNote tag 0x9650, then to the RAF DR200/DR400 mode when that tag is absent; all
-remaining sources fall back to 0. Metadata-anchored paths remain bounded to ±3 EV.
-Preview and full
-decodes estimate independently and may differ by up to 0.05 EV because their LibRaw
-demosaics are approximate rather than identical. The renderer combines the selected
-source fact with the user's relative Exposure setting inside the tone-engine gain, so
-estimator and engine share the anchored post-gain quantity `a = v·2^(EVuser+EVsource)`;
-an unusable preview falls back to a defensible decoded fact and never changes slider
+The loader uses bounded `PreviewExposureEstimator` results and falls back to Fuji
+MakerNote bias, RAF dynamic-range mode, then zero when preview evidence is unusable.
+Clamping keeps estimates continuous; the unanchored ±1 EV limit prevents a high-key
+camera preview from becoming a large global mid-tone lift. Preview/full demosaics are
+approximate, so their estimates may differ within tested bounds. The renderer adds this
+source fact to user Exposure in the tone-engine gain; estimation never changes slider
 semantics.
 
 ### 2.3 Why Clip and Blend are the supported modes
@@ -223,24 +161,15 @@ the same facts in copied support text. Header-only RAW `Ping`, EXIF thumbnail
 extraction, orientation reads, and decoding already-extracted preview bytes remain
 permitted because they do not decode the RAW raster.
 
-Bridge ABI 4 adds one header-stage lens-identity read over LibRaw's parsed generic
-maker-note lens block. It carries the composite ID, maker-note name, lens/camera mount
-and format facts, focal/aperture ranges, and teleconverter, adapter, and attachment
-identifiers without decoding raster data or adding maker-specific native parsing.
-Managed Nikon resolution is data-driven; makers without a shipped table retain only a
-transmitted maker-note name.
-
-The bridge also exposes a mutable mosaic lease whose writes are consumed by the following
-LibRaw process call, plus optional `user_sat`, named `user_qual` requests, and an
-accept-only-verbatim full-resolution crop box. These are interop capabilities only:
-`RawBaseLoader` does not use them until a pipeline consumer defines the corresponding
-decode contract, and an absent quality or crop restores LibRaw's own sentinel, keeping
-the zero-initialized configuration pixel-identical.
+Bridge ABI 4 exposes header-stage generic maker-note lens identity without raster
+decode or maker-specific native parsing; OPTICS.md owns managed matching policy.
+Mutable mosaic leases, `user_sat`, `user_qual`, and the full-resolution crop box are
+unused interop capabilities, not application decode settings.
 
 The same loader parameters and golden fixtures cover Windows, Linux, and macOS; the
 cross-platform comparison uses the mean ΔE bound documented in TESTING.md §3.
 
-### 2.5 Single RAW decoder decision (2026-08-16)
+### 2.5 Single RAW decoder decision
 
 There is no Magick RAW fallback: Magick.NET's RAW support is itself LibRaw — an older,
 slower, unaudited build invisible to the native health gate, whose pixels are not
@@ -250,7 +179,7 @@ container through Magick, and `StandardBaseLoader` rejects RAW directly so a rou
 change cannot bypass the policy. Consequently `ThumbnailCacheService`'s source-mtime
 validity and `RenderSettingsHash` need no decoder-identity field.
 
-### 2.6 X-Trans decode repeatability (2026-08-17)
+### 2.6 X-Trans decode repeatability
 
 LibRaw's X-Trans (Markesteijn) demosaic is not bit-reproducible across fresh processes
 when OpenMP threading is uncontrolled; Bayer sources are. Production decode deliberately
@@ -259,55 +188,26 @@ a one-sample difference (consequences in TESTING.md §3).
 
 ## 3. `StandardBaseLoader` (Magick.NET)
 
-Windows/Linux x64 use Magick.NET Q16 OpenMP 14.15.0; macOS keeps Q16 AnyCPU.
-Before either native decoder loads, process entry fixes the shared OpenMP budget
-at `min(Environment.ProcessorCount, 16)` via `OMP_NUM_THREADS`. The same default
-is set in `MAGICK_THREAD_LIMIT` because ImageMagick otherwise reserves one worker.
-Non-blank explicit values win; Unix defaults also reach native `environ` through libc
-`setenv` replacing unset or blank values. This hook loads no image library. LibRaw retains
-its lazy fallback. Native whole-frame operations share this process-wide budget;
-the resting-render two-worker limit applies only to managed workers.
+Windows/Linux x64 use Magick.NET Q16 OpenMP 14.15.0; macOS keeps Q16 AnyCPU. Process
+entry defaults `OMP_NUM_THREADS` and `MAGICK_THREAD_LIMIT` to at most sixteen workers to
+bound X-Trans scratch space without changing decode precision or pixel math; explicit
+nonblank values win. Native operations share that budget; the resting two-worker cap
+applies only to managed kernels (repeatability: §2.6).
 
-
-1. JPEG sources are pinged for native geometry before decoding. Preview loading uses the
-   `jpeg:size` hint at `LargePreviewMaxDimension` only when the native long edge exceeds
-   that hint, then derives both preview classes (preserves quality through DCT-scaled
-   decode without upscaling smaller JPEGs).
-2. `AutoOrient()` makes the pixels upright and the applied orientation is recorded.
-3. For preview JPEG and HEIC only, capture a packed per-channel source-saturation mask
-   from these upright encoded samples before any ICC/EOTF normalization. The inclusive
-   ratio is `sample / encodedMaximum >= 253 / 255`; the reported encoded depth supplies
-   the maximum (8-bit boundary 253/255, 10-bit boundary 1015/1023). If depth is not
-   reported, the equivalent Q16 ratio is used. TIFF, PNG, and all other formats omit
-   the artifact in v1. Full/export bases skip capture.
-4. **Color normalization:**
-   - Embedded ICC present → record its description, then transform from it to the
-     gamma-1.0 Rec.2020 target defined in WORKING_SPACE.md.
-   - No profile + CMYK colorspace → assume `ColorProfiles.USWebCoatedSWOP` as the
-     deterministic source profile and transform to linear Rec.2020.
-   - No profile otherwise → assume sRGB (industry default), apply the sRGB EOTF, then
-     the exact sRGB→Rec.2020 matrix from WORKING_SPACE.md §2. The bitmap-backed
-     edited-thumbnail proxy, whose upstream profile has already been discarded, uses
-     the same direct path. A managed kernel writes the Q16 pixel cache in place,
-     using one worker per 262,144 pixels, capped at the processor count. A lazy,
-     process-wide decode table comes from Magick's transform of all 65,536 Q16
-     codes; its rounded samples feed the double-precision matrix and a second
-     clamp-and-round-half-up write. This is bit-identical to the whole-frame
-     Magick transform it replaced, including each platform's EOTF approximation.
-     A native-buffer span commits the result even when Magick caches pixels to disk.
-   - Record `HadIccProfile` and the profile description, then strip **all** profiles
-     after color conversion. Bases never retain ICC, EXIF/GPS, XMP, or thumbnails.
-5. The target ICC has linear TRCs, and the direct sRGB path explicitly applies its EOTF,
-   so normalized samples are already linear. Retag them as `ColorSpace.RGB` without a
-   second transfer conversion, then ensure `Depth = 16`.
-6. Preview pair: from the single color-normalized decoded buffer, independently resize
-   interactive to 1600 and large to at most 3200. The interactive-size source-saturation
-   mask is returned in `PreviewSourceAnalysis` beside the pair because large-base
-   renders do not compute stats or masks. JPEG's existing 3200 DCT size hint is
-   stable across viewport changes, so repeated resizes do not change decode identity.
-7. `AsShotKelvin = 6504, AsShotTint = 0` (D65 anchor), `CamMul = null`;
-   `FullWidth/FullHeight` = the original decoded dimensions after orientation
-   (captured before the preview resize in step 5).
+1. JPEG preview uses a native-geometry ping and a large-preview `jpeg:size` hint only
+   when the source exceeds that size, preserving DCT-scaled decode without upscaling.
+2. Auto-orient and record orientation. Preview JPEG/HEIC capture source saturation from
+   upright encoded samples before normalization; other formats and full loads omit it.
+   RENDER.md §7 owns the predicate and depth scaling.
+3. Normalize profiled sources through the linear-Rec.2020 ICC target. Unprofiled CMYK
+   uses USWebCoatedSWOP; other unprofiled sources and sRGB thumbnail proxies use the
+   equivalent EOTF/matrix path (WORKING_SPACE.md §4). The direct kernel uses Magick's
+   Q16 transfer samples then a double matrix and one clamp/round-half-up write.
+4. Record the source profile description, strip all profiles, and tag the already-linear
+   pixels RGB/Q16 without a second transfer. Independently derive interactive and large
+   bases from this buffer; viewport changes never alter the JPEG decode hint.
+5. Record original upright dimensions before resizing, D65 as-shot 6504/0, and no camera
+   multipliers. Preview analysis travels beside the pair, never on `BaseImage`.
 
 GIF decoding uses the first frame only. HEIC follows the identical standard path
 through Magick.NET's HEIC coder backed by the bundled libheif for each target RID —
@@ -319,35 +219,24 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
 
 ## 4. Ownership and concurrency
 
-- `PreviewBaseCoordinator` owns the current preview pair and immutable source analysis
-  with separable leases. Base identity is **(normalized file path,
-  `BaseDecodeSettings.CacheKey`, preview-pair class)**; viewport dimensions are not a
-  decode key. Each interactive lease exposes pixels and analysis installed by the same
-  generation; neither artifact is published through a side channel.
-- **Single-flight, newest-wins decodes:** at most one decode in flight per identity;
-  a newer request (image switch, decode-settings change) cancels/supersedes it and
-  stale results are disposed.
-- A selected profile is resolved from one immutable, availability-gated snapshot before
-  exact cache matching: its request token coordinates the generation, its resolved
-  source/hash/status token identifies the result, and stale bases cannot promote render
-  artifacts under a newer outcome token.
-- **Only `BaseDecodeSettings` changes re-decode.** While a replacement decode is in
-  flight, preview renders lease the held old base; the newest settings accumulate and
-  completion emits one refresh using that latest state rather than a render backlog.
-- A same-image Browse/Develop round-trip retains the one current pair. Selection/path
-  change, live-availability invalidation, folder replacement, decode-identity change,
-  and shutdown retire it. A same-file decode-settings change retains the old interactive
-  base for stale paint but retires the old large base immediately; its only normal lease
-  is cancellable resting work.
-- Luminance and chroma NR are render settings and never change base identity or trigger
-  a decode. Legacy stored `detail.noiseReduction` values are ignored.
-- `RenderPipeline` never mutates the held base (OVERVIEW invariant 8); it clones
-  internally. A superseded base is disposed only after any in-progress render against
-  it completes (generation check).
-- Export always calls `LoadFullBase` fresh per image (no base persistence); the render
-  runs once and writes all variants (OUTPUT.md §2). It re-resolves a selected profile;
-  missing, unavailable, corrupt, and hash-mismatched selections export through built-in
-  characterization with a typed per-image warning.
+`PreviewBaseCoordinator` owns one current pair and immutable analysis through
+separable leases. Identity is normalized file path, decode CacheKey and size class,
+never viewport dimensions. Single-flight newest-wins replacement disposes stale work.
+Selected profiles resolve from one availability-gated snapshot before exact matching;
+request generations and resolved source/hash/status tokens cannot be interchanged.
+
+Only decode settings re-decode. During replacement, interactive renders may lease the
+old base while latest edits accumulate; completion refreshes once with that state. A
+same-image Browse/Develop round trip retains the pair. Selection/path, availability,
+folder, decode-identity and shutdown invalidate it. Decode-setting changes retire the
+old large base immediately but retain interactive stale paint until replacement. All
+disposal waits for outstanding leases; render never mutates a held base. Replacement
+decodes await deferred retirement, bounding cleared pairs without blocking navigation.
+
+Export loads a fresh full base per image, without preview analysis or persistence,
+and renders once for its variants (OUTPUT.md §2). Profiles are re-resolved and typed
+rejections use built-in characterization with a warning. NR is render-only; obsolete
+stored `detail.noiseReduction` input is ignored.
 
 ## 5. Disk caches
 
@@ -361,8 +250,8 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
   (8-bit JPEG q90, 1600px) plus a sidecar `<id>.meta` containing `settingsHash` and
   the render's original-image and post-geometry view dimensions. Legacy hash-only
   sidecars remain readable but are rewritten with dimensions after the next render.
-  - `settingsHash` = SHA-256 of canonical-JSON `EditSettings` v3 + `RenderPipeline.Version`
-    + `BaseImage.Version` + the installed profile outcome token.
+  - `RenderSettingsHash` hashes a JSON envelope of render version, base version, and
+    canonical v4 settings, followed by a DCP outcome token suffix when present.
   - Develop entry: if cached hash matches current settings → decode its one BGRA buffer
     into the bitmap, display histogram, waveform, and display-floor clipping, then
     publish them atomically while the base loads in the background. Hash mismatch →
@@ -370,15 +259,8 @@ uses the depth reported by that decode; the committed fixture reports 8-bit, whi
     resolution, base decode, and fresh render replace or confirm it (no flash of
     nothing). Cache paint itself never opens an embedded profile or hydrates a source.
   - Existing atomic-write, bounded-channel, drop-oldest, 2 s drain rules all carry over.
-  - A settled Develop or loupe selection warms up to five neighbors in the inferred
-    travel direction, one at a time; each warm waits for the previous entry's disk
-    handoff before decoding. The capacity-one worker drops replacement requests while
-    cancellation drains,
-    skips nonlocal sources and existing matches, disposes its decoded pair after one
-    1600px render, and temporarily retains only the encoded q90 entry until its queued
-    disk write lands. Selection reads that entry through the same cache/outcome path;
-    source timestamp, settings hash, identity, and a live local-availability check gate
-    the speculative slot.
+  - Adjacent warming follows OVERVIEW.md invariant 10 and the guarded outcome contract
+    in RENDER.md §11.
   - Write policy: queue a cache write only on leaving the image (or a long debounce),
     never per slider settle — an edit session must not multiply write traffic.
 - **Rendered RAW thumbnail cache:** `assets/rendered-thumbs/` stores one largest-wins
@@ -407,6 +289,6 @@ state rather than a per-file mark.
 - Decoding the same file twice (any mix of preview/full) yields identical bases modulo
   resolution (golden ΔE ≈ 0 for full-vs-full; documented tolerance half-vs-full).
 - A P3-tagged and an sRGB-tagged encode of the same picture produce near-identical bases
-  (ΔE tolerance, TESTING.md §4.3).
+  (ΔE tolerance, TESTING.md §3).
 - No base pixel depends on image statistics (burst determinism test).
-- HEIC preview no longer attempts LibRaw (assert via debug log capture).
+- HEIC uses the bundled Magick codec and never routes through LibRaw.

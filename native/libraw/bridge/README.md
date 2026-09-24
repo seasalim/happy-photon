@@ -66,9 +66,9 @@ directory and verifies the loaded bridge and LibRaw paths and hashes before it
 creates a native handle. Without the environment variable, the native-runtime
 integration case is skipped.
 
-The Linux phase-3 entry point supports an ASAN/UBSAN CTest-only build.
+The Linux entry point supports an ASAN/UBSAN CTest-only build.
 
-## Checkpoint B builds
+## Release candidate builds
 
 The RID entry points live one directory above this one. Each requires the
 pinned vcpkg checkout and a workflow-allocated package version:

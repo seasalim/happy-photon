@@ -28,7 +28,7 @@ trademark policy, dependency inventory, and third-party notices.
 ## Known limitations
 
 - Camera and RAW compatibility varies by platform and capture mode.
-- HEIC/HEIF support depends on operating-system codecs.
+- HEIC/HEIF decoding uses the bundled codec; some variants may not decode.
 - Linux desktop integration is limited to the AppImage's desktop entry and
   icon.
 

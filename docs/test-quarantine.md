@@ -12,15 +12,9 @@ trait, and register the fully qualified test name in
 `Tests/quarantined-tests.json`. Every entry records an owner, reason,
 introduction date, issue, and expiry no more than 90 days later.
 
-The required CI validation compares the registry with one in-process xUnit
-`-list full/json` listing per prebuilt test project. The checker never builds;
-run `dotnet build HappyPhoton.sln --configuration Release` first when using it
-standalone. It writes names and traits to `<ResultsDirectory>/manifests/`
-(default `artifacts/test-results/discovery/manifests/`). `-ManifestDirectory`
-reuses explicit manifests instead of launching discovery. Counts include every
-namespace and count listed cases before theory expansion; the minima are 1300
-for unit tests and 340 for headless tests. Missing or unregistered traits,
-duplicate entries, invalid metadata and expired entries fail validation.
+`verify.ps1` enforces registry/trait agreement, discovery floors and metadata validity;
+see `scripts/check-test-quarantine.ps1`. Standalone checks require prebuilt test
+projects; explicit discovery manifests may be reused with `-ManifestDirectory`.
 
 `verify.ps1` builds once unless `-NoBuild`, then runs tests with `--no-build
 --no-restore`. It always creates an isolated run directory beneath

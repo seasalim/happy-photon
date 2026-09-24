@@ -10,7 +10,7 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 ```
 1 Geometry     rotate90 → fused horizon/keystone/aspect/radial warp → crop
 2 DCP HueSat   optional scene-linear ProPhoto HSV profile map (§2.1)
-3 Matrix       crossing on: AgX inset × WB; crossing off: WB (§4)
+3 Matrix/locals WB → locals → RAW AgX inset (§2.2–2.4, §4)
 4 Tone LUT     source-kind tone regime, fused with matrix storage (§5)
 5 Matrix       crossing on: AgX outset; crossing off: identity
 6 Chroma       one fused OKLCh color-mixer/saturation/vibrance pass (§6)
@@ -19,13 +19,10 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
                (OUTPUT.md)
 ```
 
-`RenderGeometry` owns one clone of the immutable base. Quarter turns remain a separate
-lossless operation. Any active horizon or manual geometry term then runs in one
-inverse-mapped bilinear pass; identity skips that pass. The corrected frame preserves
-the quarter-turned source aspect and is reduced, never upsampled, to the largest
-centered frame whose mapped boundary is covered by source pixels. Crop coordinates are
-normalized on that corrected frame, so both a null and an explicit full-image crop are
-blank-free.
+`RenderGeometry` owns one clone. Quarter-turns are lossless; active horizon/manual
+terms share one inverse bilinear warp, skipped at identity. The corrected frame keeps
+source aspect and shrinks to covered bounds without upsampling. Crop is normalized
+on that frame, so even full-image crop remains blank-free.
 
 Centered keystone coordinates use `w = 1 + a·y + b·x`, with Vertical and Horizontal
 slider values mapping to `a,b = −value/200`. Aspect applies `sx=e^s`, `sy=e^−s`,
@@ -37,59 +34,36 @@ above it. This keeps the map monotone at every slider setting.
 
 ### 1.1 Request contract
 
-```csharp
-public sealed record RenderOptions(
-    bool ComputeStats = true,
-    bool ComputeOverlayMasks = false,
-    ClippingOverlaySide OverlaySides = ClippingOverlaySide.Both);
-public sealed record RenderRequest(
-    BaseImage Base, EditSettings Settings, RenderIntent Intent,
-    int? MaxDimension, RenderOptions Options,
-    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb,
-    OutputSharpeningMode OutputSharpening = OutputSharpeningMode.Off);
-```
+`RenderRequest`, `RenderOptions`, and `RenderResult` are defined in
+[RenderContracts.cs](../../Services/RenderContracts.cs). The request includes output
+color space and sharpening, source saturation, and an internal locals-frame override.
+Options select statistics, scopes, masks, and preview-pixel preparation.
 
-- `OutputColorSpace` selects sRGB (default) or Display P3 only in finalization. Preview
-  always forces sRGB with output sharpening off. The Export workspace's opt-in proof is
-  a distinct `RenderDisplayRec2020` plus proof-finalization path, not an exception to
-  the Preview intent contract. Geometry, tone, chroma, and detail are target-independent;
-  `Intent`, `Options`, and `MaxDimension` otherwise change auxiliary work such as
-  statistics, optional overlay masks, and the resize target.
-- **Base immutability:** `RenderPipeline` never mutates `Base.Pixels`;
-  `RenderGeometry.Apply` always returns the single owned clone/output used by later
-  stages. `BaseImage` lifetime is owned by the caller
-  (`PreviewService` generation logic / export loop), never by the pipeline.
-- **Resize domain:** every downscale — preview `MaxDimension` and export variants —
-  runs in linear light with the same filter (Magick default Lanczos): sRGB-decode →
-  `Resize` → sRGB-encode (the preview *base* is already linear and is resized before
-  encoding). Honest limit: preview resizes the neutral base *before* tone mapping,
-  export resizes the rendered result *after* it, and tone curves/clamps do not commute
-  with resampling — the two paths are a deliberate, performance-driven approximation
-  of each other, governed by the WYSIWYG ΔE bounds (TESTING.md §3, row 3).
+Preview forces sRGB and output sharpening Off. Export proof uses a separate display
+render plus proof finalizer; shared edits remain target-independent.
+`RenderGeometry.Apply` supplies the one owned clone, leaving the caller's base immutable.
+Every downscale runs in linear light with the same filter. Preview resizes the neutral
+base before tone; export resizes after tone. These do not commute, so TESTING.md §3
+bounds their deliberate performance-driven approximation.
 
 ## 2. Why matrix → single LUT → matrix
 
-The chromatic part of WB and the AgX inset/outset are 3×3 matrices, not per-channel
-curves; everything between them is a per-channel 1D function. `AgxCrossing` evaluates
-inset → exact 65,536-entry interpolated tone table → outset in `double`, then makes
-one Q16 write. Crossing-off degenerates to WB → retained display chain → identity.
-This avoids clipped intermediates and cumulative requantization while keeping slider
-ticks bounded to one fused pass plus optional chroma/detail work.
+WB and AgX inset/outset are 3×3 matrices enclosing a per-channel 1D function.
+`AgxCrossing` evaluates inset → exact 65,536-entry interpolated tone table → outset in
+`double`, then writes Q16 once. Crossing-off uses WB → retained display chain →
+identity. One fused pass avoids clipped intermediates and requantization, bounding
+slider ticks plus optional chroma/detail work.
 
 ### 2.1 DCP HueSat stage
 
-An active DCP HueSat map runs after geometry and before the AgX inset. The payload
-comes only from the installed base, so it always matches the profile matrix used
-during decode. The transform is working Rec.2020 D65 → linear ProPhoto D50 → HSV →
-profile map → linear ProPhoto → working space. For sRGB table encoding, only HSV V is
-encoded before lookup and inverse-decoded after; H and S remain linear.
-ValueDivisions=1 is a 2.5D hue/saturation lookup and ignores the encoding tag. Dual
-tables share decode's as-shot interpolation weight; single tables do not vary with it.
-A 65³ Q16 RGB lattice compiled from that sequence (cached process-wide by profile
-content and weight) is trilinearly evaluated as a pass fused onto the AgX crossing's
-whole-frame working array — one read and one write total, in both the interactive and
-resting render paths. With no active table the crossing runs its unmodified math,
-preserving exact no-profile output.
+An installed DCP HueSat payload runs after geometry, before WB/locals and AgX. Convert
+Rec.2020 D65 → linear ProPhoto D50 → HSV → map → ProPhoto → working space. For sRGB
+table encoding, encode only V before lookup and inverse-decode afterward; H/S remain
+linear. ValueDivisions=1 is 2.5D and ignores that encoding tag. Dual tables share
+decode's as-shot weight; single tables do not vary with it. The 65³ Q16 lattice cache
+keys profile content and as-shot weight. Trilinear evaluation fuses into the crossing's
+working array with one read/write for interactive/resting paths; no active table
+preserves exact output.
 
 ### 2.2 Local color before tone
 
@@ -105,19 +79,12 @@ then the unnormalized inset. Standard starts with its normalized WB. Both retain
 the existing Fold refund. No intermediate image or mask field is allocated and
 no local result is clamped; only tone input handles negatives (RAW's existing
 non-positive branch, standard's `Max(0, value)`), preserving overflow above one.
-Unchanged pixels keep the existing LUT path. Documents without active local color or an effective range
-retain the scalar Gain kernel, byte-identical exposure-only pixels and render
-version 14. Monochrome bases prepare no color terms: stored color stays dormant,
-while local Exposure preserves equal RGB channels.
+Unchanged pixels keep the exact LUT path. Monochrome bases ignore local color
+terms while local Exposure preserves equal RGB channels.
 
 ### 2.3 Local Luminance Range
 
-An optional immutable `luminance` object stores `enabled`, `lower`, `upper`, and
-`softness`. A missing `enabled` field defaults off. First enable uses 0, 1, and .1;
-disabling preserves all values. Load clamps endpoints to [0, 1], enforces lower <= upper, and clamps softness to [0, .5]; non-finite
-values reject. Absent objects are omitted from canonical v4 JSON, preserving old
-bytes and hashes. Present values participate in `RenderSettingsHash`; no version bump.
-
+The optional `luminance` range is serialized as described in §8.
 An enabled, non-open window multiplies the geometric weight. The fused locals
 loop computes exact double OKLab L once, only when a restricted local has nonzero
 geometry. Classification uses the original post-DCP/global-WB Rec.2020 pixel with
@@ -126,29 +93,9 @@ also prepares the RAW WB basis. Open endpoints include extended L; shoulders fal
 outward by smoothstep. Equal interior endpoints with zero softness select nothing.
 Off and fully open ranges retain the previous scalar/color paths exactly.
 
-Requested restricted-mask visualization leases the loaded base associated with the
-accepted preview bitmap, including large-base resting replacements. The ViewModel
-owns cancellation and an identity containing image/base, output size, selected local
-ID and geometry/polarity/window, crop/rotation/geometry, decode/profile, and global WB.
-It validates on input changes and completion; the drawable getter only reads a field.
-Local adjustment and global tone edits retain the mask. Mismatches show “Updating mask”;
-a failed identity clears that status, logs the error, and retries only when identity changes.
-No decode or hydration is requested.
-Geometry and resize precede DCP/global WB, then classification and geometry weight
-write directly to a separate themed premultiplied bitmap. Native source pixels are
-read-only, with no retained L field or intermediate tint buffer. Disabled/neutral
-locals remain visualizable; unrestricted masks keep the zero-read gradient brush.
-The bitmap belongs only to the Locals view and never enters other pipeline outputs.
-
 ### 2.4 Local Hue Range and picking
 
-An optional immutable `hue` object beside `luminance` stores `enabled`, `center`,
-`width`, and `softness` in degrees. First enable uses 240 / 60 / 30; disabling
-preserves values. Load clamps center to [0, BitDecrement(360)], width to [0, 360],
-and softness to [0, 90], rejecting non-finite fields. Only interactive stepping
-and circular distance wrap. Absent objects preserve canonical bytes and caches;
-there is no render-version bump.
-
+The optional `hue` range is serialized beside `luminance` (§8).
 An enabled hue term multiplies geometry and luminance by a circular full-weight
 window of half-width width/2, outward smoothstep shoulders, and chroma reliability
 `smoothstep((C - .01) / .03)`. Full-circle hue still applies reliability; width and
@@ -156,17 +103,6 @@ softness both zero select nothing. Monochrome ignores hue without disabling eith
 geometry or luminance. The fused evaluator shares the original pixel's three cube
 roots across all ranges and computes C/hue only after nonzero geometry and
 luminance. No classification image is retained. No-hue paths remain bit-exact.
-
-`LocalRangeSampling` supplies the shared geometry → DCP HueSat → global WB seam
-for mask visualization and Pick Hue, including geometry resize to the displayed
-surface before classification. The picker leases the displayed preview's
-matching base, never decodes, and samples a disk of radius .004 corrected-frame
-long edge including the clicked pixel. It averages OKLab a/b; reliability below
-.5 or coherence below .75 rejects, as do an off-image click and missing base.
-The VM drops stale image/base/local/settings/surface-size results, commits accepted picks as
-one “Pick Hue” history operation, preserves width/softness, and restores Show Mask
-on exit. Restricted-mask identities also include hue and monochrome state.
-
 
 ## 3. Notation
 
@@ -196,25 +132,17 @@ shared edits in finalization (WORKING_SPACE.md §9).
 
 ## 5. Tone regimes
 
-RAW sources use the scene-referred crossing defined normatively in
-[TONE_ENGINE.md](TONE_ENGINE.md): exposure gain → normalized log2 → parameterized
-sigmoid → `u^2.2` → sRGB encode → channel curve → master curve → decode →
-AgX outset → encode.
-Contrast controls sigmoid slope at grey, Highlights controls the shoulder power, and
-Shadows controls the toe power. The post-gain scene value `a = 0.18` maps to the pinned
-display grey for every Contrast value and every `EVsource`. Brightness and base look
-are ignored in this regime.
+RAW uses [TONE_ENGINE.md](TONE_ENGINE.md)'s exposure → log2 → sigmoid → display
+curve chain. Contrast changes slope, Highlights shoulder, Shadows toe; post-gain 0.18
+stays anchored for all Contrast/source bias. Brightness/base look are ignored.
+Standard sources use the display-referred chain below; there is no automatic exposure
+trigger or persisted regime toggle.
 
-Standard sources retain the display-referred chain below. There is no automatic
-exposure trigger and no persisted crossing toggle.
-
-`ToneLut.Compose(ToneParams p) → ToneLuts` is pure and unit-testable. `ToneLuts`
-carries three per-channel `double[65536]` arrays; a channel without its own curve
-shares the master array. Entry `i`
-uses `v = i/65535`, a linear post-matrix value. Display-domain operators are defined
-on [0,1] only. The marked `clamp01` calls keep the §5.2/§5.3 polynomials inside their
-monotone domains; without those clamps the chain can break (for example, Contrast
-+100 can push values to ≈ 3.1 before clamping):
+`ToneLut.Compose(ToneParams p) → ToneLuts` is pure and unit-testable. Its three
+per-channel `double[65536]` arrays share the master array for channels without curves.
+Entry `i` uses linear post-matrix `v = i/65535`. Display-domain operators require [0,1]:
+the marked clamps keep §5.2/§5.3 monotone (Contrast +100 can reach ≈ 3.1 before
+clamping).
 
 ```
 g  = 2^(EVuser + EVsource) · fold        // source bias plus relative user exposure
@@ -234,14 +162,10 @@ lut[i] = clamp01(u)
 `EVsource` is `BaseImageInfo.SourceExposureBiasEv`, estimated at RAW decode time
 (DECODE.md §2.2). Standard images always use 0.
 
-Each step is monotone non-decreasing on its domain and `clamp01` preserves (non-strict)
-monotonicity, so the composed LUT is non-decreasing whenever the user curve is —
-flat plateaus from clamping are expected and legal. Apply with
-`ToneLutApplicator`, which linearly interpolates the exact 65,536 entries on the
-unrounded matrix result and writes Q16 once.
-The identity settings vector must produce, for non-raw bases,
-`lut[i] ≈ E(i/65535)` — a JPEG with zero edits renders back to its original appearance
-within 1 LSB at 8 bits (regression test).
+Everything upstream of user curves must stay monotone unconditionally; clamps preserve
+that order, and monotone user curves preserve the composed table. `ToneLutApplicator`
+interpolates unrounded input and writes Q16 once; standard identity approximates
+`E(i/65535)`, round-tripping an unedited JPEG within the tested 8-bit code bound.
 
 ### 5.1 Crossing-off highlight shoulder (Highlights H ∈ [−100, 0])
 
@@ -269,7 +193,7 @@ after. The negative side is §5.1's knee.
 
 ### 5.4 Crossing-off base look
 
-Exact port of the current decode-time curve, now optional and float:
+The optional display-domain base look is:
 
 ```
 baseLook(x) = x + 0.012(1−x)³ − 0.10·sin(2πx)·4x(1−x) − 0.03x³
@@ -281,29 +205,22 @@ for crossing-off sources; crossing-on sources retain the value but ignore it.
 
 ### 5.5 User curves
 
-Each channel optionally has a `CurveData` 256-entry table, followed by the required
-composite/master table: `u_c = master(channel_c(t_c))`. A missing channel table is
-identity. Both tone regimes compose this at one shared seam; RAW keeps it before the
-AgX outset, whose matrix may then mix channels. Identity channel curves share the
-master LUT array and add no application cost.
+Each channel's optional 256-entry `CurveData` precedes the required master table: `u_c =
+master(channel_c(t_c))`. Missing channel tables are identity. Both tone regimes share
+this seam, before RAW's channel-mixing AgX outset. Identity channels share the master
+LUT at no application cost.
 
-Tables are evaluated with linear interpolation between entries at LUT-composition
-time (input `t·255`). `CurveData` orders points by X but does **not** constrain Y
-([CurveData.cs](../../Models/CurveData.cs)) — a user can draw a decreasing curve, and
-that is allowed (deliberate solarization is user intent, not a pipeline bug).
-Consequently the global monotonicity *property test* runs with identity/monotone
-curves only (TESTING.md §4.1); everything upstream must stay monotone unconditionally.
+Curve tables interpolate at `t·255`. [CurveData.cs](../../Models/CurveData.cs) orders
+X but permits decreasing Y for intentional solarization; monotonicity properties
+therefore use identity/monotone curves (TESTING.md §4.1).
 
 ## 6. Chroma stage
 
-The encoded display-Rec.2020 value is decoded, converted through linear Rec.2020 to
-OKLab/OKLCh, transformed, returned through the inverse chain, encoded, and written
-once to Q16. The eight mixer bands are Red, Orange, Yellow, Green, Aqua, Blue,
-Purple, and Magenta. Adjacent band centers are joined by complementary half-cosine
-windows, including the Magenta→Red wrap, so the periodic weights are smooth and sum
-to one at every hue. Their OKLab hue centers, calibrated to the UI swatches, are
-Red 24°, Orange 56°, Yellow 105°, Green 146°, Aqua 195°, Blue 266°,
-Purple 304°, and Magenta 341°.
+The chroma pass decodes display Rec.2020, transforms through OKLab/OKLCh, then returns
+through the inverse chain with one Q16 write. Eight mixer bands use complementary
+half-cosine windows summing to one, including the wrap; their hue centers are calibrated
+to the UI swatches: Red 24°, Orange 56°, Yellow 105°, Green 146°, Aqua 195°, Blue 266°,
+Purple 304° and Magenta 341°.
 
 All band values are sampled simultaneously from the source hue. With the existing
 hue-reliability ramp `r(C)` (zero through C=0.01, one from C=0.04), mixer offsets are:
@@ -346,50 +263,33 @@ hot path apply identical mixer ordering.
 
 ### 6.1 True monochrome RAW
 
-`BaseImageInfo.IsMonochrome` keeps true monochrome sources on this same RAW render
-path while making color settings dormant. Rendering uses identity WB, omits the DCP
-HueSat map and R/G/B channel curves, and skips the fused chroma pass entirely —
-Saturation, Vibrance, and the color mixer. The
-composite curve, exposure and tone engine, geometry, detail, effects, scopes, output
-conversion, and export remain shared. Persisted color settings are neither applied nor
-cleared. Exact `R = G = B` is required through preview and both sRGB and Display P3
-lossless exports.
+`BaseImageInfo.IsMonochrome` retains the RAW path with identity WB, no DCP HueSat or
+R/G/B curves, and no chroma pass (Saturation, Vibrance, mixer). Stored color settings
+remain dormant. The composite curve, exposure/tone, geometry, detail, effects, scopes,
+conversion and export stay shared. Preview and sRGB/P3 lossless exports must preserve
+exact `R = G = B`.
 
 ## 7. Histogram & clipping
 
-Computed at preview scale when `Options.ComputeStats` (existing `HistogramService`
-bins stay 8-bit). Display-floor statistics sample the finalized display. Highlight
-statistics come from the loader-produced source-saturation artifact projected through
-the render geometry and final resize; tonal, color, profile, and effect math never
-redefines those flags. `PreviewService` passes that artifact explicitly from the
-current `PreviewBaseLease.Analysis` on the render request; `BaseImage` does not own it.
+`Options.ComputeStats` enables preview-scale statistics with existing 8-bit histogram
+bins. Display-floor statistics use finalized display pixels; highlights project the
+loader's source-saturation artifact through geometry and resize, unaffected by tone,
+color, profile or effects. `PreviewService` passes it from the current
+`PreviewBaseLease.Analysis`; `BaseImage` never owns it.
 
-When analysis or preview pixels are requested, the finalizer hands back the final
-Q16 array already written by encode-target, with its channel layout and alpha index.
-A single parallel pass derives display-floor counts, overlay flags, and one BGRA8
-buffer without reading pixels back from Magick. Q16 channels, including alpha,
-scale with `(q + 128) / 257`; absent alpha is 255. The finalized image stays unchanged.
-Direct finalizer callers and resting renders do not retain that array.
+When analysis or preview pixels are requested, the finalizer returns the final encoded
+Q16 array with its channel layout. One parallel pass derives display-floor counts,
+overlay flags and one BGRA8 buffer without Magick read-back; channels, including alpha,
+scale by `(q + 128) / 257`, and absent alpha is 255. Direct finalizer callers and resting
+renders do not retain that array.
 
-That BGRA8 buffer is both the preview-bitmap source and the display-scope source.
-Histogram-active interaction accumulates only the four 8-bit histogram channels;
-waveform-active interaction also accumulates the 256-column ×
-128-level luminance waveform. Horizontal image position maps to columns, Rec.601
-luminance maps with `level = value8 >> 1`, and each `ushort` cell stores the sample
-count. Sources narrower than 256 pixels back-fill unrepresented columns. Browse
-thumbnail histograms use the bitmap overload and never create waveform data.
-Render-pipeline accumulation opts into workers scaled with frame size (one per 8192
-pixels), bounded by row count and processor count. Cached and adjacent-warm preview
-paints retain the two-worker cap (one below 512 × 512 pixels). Both use the same
-accumulation code; per-worker integer partials keep merges exact.
-
-The selectable RAW histogram is deliberately outside that render stage: `RawBaseLoader`
-captures it from LibRaw's preserved post-`Unpack` mosaic before output configuration,
-white balance, demosaic, camera conversion, highlight reconstruction, and tone
-(DECODE.md §2), then installs it with the matching preview pair's source analysis. It
-walks only the visible window at `top_margin + row`,
-`left_margin + column` with stride `raw_pitch / sizeof(ushort)`; CFA phase and
-repeating black blocks use visible coordinates, and both green phases merge into green.
+That BGRA8 buffer supplies both the preview bitmap and display scopes. Histogram-only
+ticks skip waveform accumulation; Browse thumbnails never create waveform data.
+Render-pipeline accumulation uses one worker per 8192 pixels, bounded by rows and
+processors; cached and adjacent-warm paints keep the two-worker cap (one below 512 × 512).
+Per-worker integer partials keep merges exact. RAW histograms instead sample the visible
+unpacked mosaic before WB, demosaic, characterization and tone (DECODE.md §2), merging
+both green phases.
 
 For photosite value `v` and native channel `ch`, RAW binning uses
 `black_ch = black + cblack[ch] + repeatingBlock`,
@@ -400,21 +300,11 @@ sensor channel and written into the spatial source-saturation artifact in the sa
 — never inferred from bin 255. Both green CFA phases merge into the green artifact
 plane.
 
-```csharp
-public sealed record ChannelClip(double R, double G, double B);   // fractions 0..1
-public sealed record ClippingStats(
-    ChannelClip High,        // aligned source-saturation fraction per channel
-    ChannelClip Low,         // per channel: fraction ≤ 0.5/255
-    double HighAny,          // aligned source-saturated pixels, any channel
-    double LowAll,           // all-channels-low fraction (drives the blue overlay/chip)
-    bool IsHighAvailable);   // artifact capability; independent of source-kind gates
-```
-
-RAW `High` uses the histogram's exact sensor predicate. JPEG/HEIC use the decoded
-encoded-sample ratio `sample / encodedMaximum >= 253 / 255` before ICC/EOTF
-normalization (253/255 for 8-bit; 1015/1023 for 10-bit). TIFF, PNG, and other standard
-formats have no v1 source artifact, so only their high side is unavailable; floor
-analysis remains live and never falls back to a finalized-output high threshold.
+`ClippingStats` carries per-channel high/low fractions, `HighAny`, `LowAll`, and
+`IsHighAvailable`. RAW high uses the sensor predicate above. JPEG/HEIC high uses
+`sample / encodedMaximum >= 253 / 255` before normalization (1015/1023 at 10-bit).
+TIFF, PNG and other standard formats lack that artifact; their floor analysis remains
+available and never substitutes a finalized-output high threshold.
 
 Projection follows the forward direction of the exact map carried by the geometry
 trace, then crop and final resize. Every downscale OR-reduces source flags so
@@ -426,7 +316,7 @@ mask-free.
 
 ## 8. EditSettings v4 — schema and storage
 
-JSON document shape (canonical field order for hashing):
+JSON document shape; `EditSettingsJson` owns canonical serialization for hashing:
 
 ```jsonc
 {
@@ -473,251 +363,137 @@ JSON document shape (canonical field order for hashing):
   "geometry": { "vertical": 0,           // optional; omitted at identity
                 "horizontal": 0,
                 "aspect": 0,
-                "distortion": 0 }
+                "distortion": 0 },
+  "locals": [{                           // optional; omitted when empty
+    "id": "<32-hex GUID>", "type": "radial", "ordinal": 1, "enabled": true,
+    "cu": 0.5, "cv": 0.5, "angle": 90, "feather": 0.25, "exposure": 0,
+    "rx": 0.25, "ry": 0.25, "outside": false, // radial only
+    "temperature": 10, "tint": 5, "saturation": 20, // omitted when zero
+    "luminance": { "enabled": true, "lower": 0, "upper": 1, "softness": 0.1 },
+    "hue": { "enabled": true, "center": 240, "width": 60, "softness": 30 }
+  }]
 }
 ```
 
-The optional `locals` array follows `geometry` and is omitted when empty. Each linear
-local stores `id` (32-hex GUID), `type` (`linear`), stable positive `ordinal`, `enabled`,
-`cu`, `cv`, `angle`, `feather`, and `exposure`. Optional `temperature` and `tint`
-clamp to [-50, 50], `saturation` to [-100, 100]; all must be finite. Zero color
-fields are omitted so exposure-only documents retain canonical bytes and hashes. Disabled and neutral locals retain all
-fields and count as edits; snapshots deep-copy them and undo equality compares every
-stored field. Centers clamp to [-1, 2], feather to [0.001, 2] long-edge units, and
-Exposure to [-4, 4] EV; clockwise angles normalize to [0, 360). Unknown types, more
-than eight entries, invalid identities, and non-finite values reject the document.
-Preset save strips locals, preset load ignores them, and the transfer allowlist
-preserves destination locals. Version 3 image/history/preset settings migrate in
-memory to version 4 with no locals; catalog row/document marker checks still apply,
-and reading never rewrites stored version 3 bytes. Version 2 remains unsupported.
+Local coordinates belong to the corrected frame after quarter-turn and warp, before
+crop, and use its long edge as the metric. For linear locals, angle zero points right
+and positive angles turn clockwise. Weight is
+`1 - smoothstep((s + feather/2)/feather)` for signed distance along that direction.
+For radial locals, rotate the center offset by minus angle and compute
+`rho = sqrt((x/rx)^2 + (y/ry)^2)`: inside weight is one below `1-feather`, zero at
+or beyond one, and inverse smoothstep between; zero feather gives a hard edge.
+Outside complements that weight. Quarter-turns carry centers and angles with the
+photograph while preserving radii and feather; clockwise 90° maps the center to
+`(1-cv, cu)`. The resting frame override preserves this coordinate system.
 
-Linear coordinates belong to the corrected frame after quarter-turn and warp,
-before crop. The metric uses its long edge: angle zero points right and positive
-angles turn clockwise. Weight is `1 - smoothstep((s + feather/2)/feather)` for
-signed distance along that direction, so the negative rail has full effect.
-Quarter-turn commits carry centers and directions with the photograph; clockwise
-90° maps `(cu, cv, angle)` to `(1-cv, cu, angle+90)` and preserves feather.
-The viewer obtains frame dimensions from the retained matching preview base and
-uses `RenderGeometry` for corrected-frame/crop mapping, without source reads.
-Resting preparation carries that mapping from the large base through an internal
-render-request override, preserving local coordinates after geometry and resize.
-Develop Reset clears locals; preset removal preserves them. A completed geometry
-gesture commits once, while unfinished geometry is discarded before export or
-version duplication.
-Navigation during a completed local gesture's render still saves its captured
-settings to the original image's catalog row.
+`EditSettingsJson` validates finite values, local identities/types and the eight-local
+limit. Disabled and neutral locals remain stored edits. Range disabling preserves its
+values; omitted ranges and zero color terms preserve canonical exposure-only bytes.
+Version 3 settings migrate in memory without locals; version 2 is unsupported.
 
-Radial locals use `type: "radial"` and additionally store semi-axes `rx`, `ry`
-in [.001, 1] long-edge units and boolean `outside`; these fields are omitted for
-linear documents, preserving their canonical bytes and settings hashes. Radial
-`feather` is an inward radius fraction [0, 1]. Rotate the metric center offset
-by minus `angle` and compute `rho = sqrt((x/rx)^2 + (y/ry)^2)`; inside weight is
-1 below `1-feather`, 0 at or beyond 1, and inverse smoothstep in between (zero
-feather is a hard edge). Outside complements that weight. The existing fused
-scalar gain composition and exact identity LUT path remain unchanged, including
-on the resting frame override; no render-version bump or mask buffer is needed.
-Quarter-turns carry the center and angle while preserving radii and feather.
+| Field | Omitted when | Copy/paste and presets | Decode-affecting? |
+|---|---|---|---|
+| Channel curves | Absent | Transfer | No |
+| `mixer` | All bands zero | Transfer | No |
+| `effects` | Vignette and Grain inactive | Transfer | No |
+| `geometry` | All terms zero | Preserve destination, as with crop/rotation | No |
+| `rawProfile` | Built-in | Preserve destination | Yes |
+| `detail` | Always present; null sharpening means source default | Transfer | No |
+| `lens` | Always present; override omitted when null | Transfer booleans; preserve override | Yes |
+| `locals` | Empty | Preserve destination; excluded from preset files | No |
 
-The three channel fields follow `curve` in the shown order; they and `rawProfile` use
-null-omission semantics — `null` is never serialized, and `Clamp` validates/rebuilds
-an optional curve only when the field was present. Selecting a channel in the UI does
-not materialize it.
-
-`mixer` is omitted unless at least one of its 24 values is nonzero. That same
-pixel-activity predicate governs `HasEdits`, hashing, and the chroma-stage skip;
-`EditSettingsJson` in both directions and preset saving canonicalize an explicit
-identity mixer to null. Clone/history, copy/paste, and presets carry active mixers.
-The selected mixer band is session view-state and is never serialized. Mixer values
-have no XMP mapping. Because absent mixers preserve canonical bytes and pixels, this
-additive optional field does not change `RenderPipeline.Version`.
-
-`effects` is omitted when neither Vignette nor Grain changes pixels; that
-`HasActivePixels` predicate governs persistence, `HasEdits`, hashing, and the render
-skip, and `EditSettingsJson` and preset saving canonicalize an explicit pixel-inactive
-object to null. Midpoint and Size choices made while both operators are off remain
-session-only UI state. Effects-off pixels stay byte-identical, so this additive
-optional field does not change `RenderPipeline.Version`.
-
-`geometry` is omitted when all four values are zero. It is catalog-only and has no XMP
-payload. Clone/history and Reset include it, while copy/paste and presets exclude it
-with rotation, horizon, and crop. Although absence is identity, the corrected-frame
-change alters horizon pixels, so this feature increments `RenderPipeline.Version`.
-
-`hlReconstruction`, the three `lens` booleans, and `rawProfile` are the
-**decode-affecting subset**;
-they project into `BaseDecodeSettings` (OVERVIEW.md §4, DECODE.md §4) and changing
-them re-decodes the base rather than re-rendering it.
-
-The profile field is additive v2. Clone/history retain it, global Reset clears
-it, and it contributes to `HasEdits`. Preset hover/apply/untoggle preserve it;
-preset files and copy/paste exclude it because it is camera- and
-file-specific. Omitting built-in preserves legacy canonical JSON and hash identity.
-
-Capture sharpening resolves a `null` value to RAW 25 or standard 0 and canonicalizes
-the matching default back to `null`. Luminance and chroma NR are always-serialized
-0–100 values for every source. Legacy `detail.noiseReduction` input is ignored without
-rewriting the stored document (§9, UI.md §2). Preview detail uses the bounded preview base, while
-export-scale renders are the fidelity reference.
+Highlight reconstruction also affects decode. Lens settings are defined in OPTICS.md.
+Identity mixer/effects objects canonicalize to null; selecting a UI band or inactive
+effect option does not materialize a persisted edit. Global Reset clears image-specific
+profile, geometry, and locals state; UI.md §6 owns transfer and undo behavior.
 
 ### 8.1 Catalog storage ([CatalogSchema.cs](../../Services/CatalogSchema.cs))
 
-The canonical `images` table contains `id`, `file_path`, `file_name`, `edit_settings`,
-`edit_version`, `flag_state`, `rating`, `color_label`, and `updated_utc`. New rows
-always receive a complete v4 JSON document and `edit_version = 4`.
-
-`CatalogSchema` creates the tables for a new catalog, runs the ordered transactional
-`CatalogMigrations` recorded by `app_settings.schema_version`, then validates the
-required columns of `images` and `image_assessments` on startup. Extra columns are
-tolerated but ignored; a missing required column fails startup with an actionable
-instruction to move the entire catalog folder aside before Retry — keeping the folder
-intact prevents recycled catalog IDs from resolving to thumbnails or previews belonging
-to the incompatible database. The full schema, including migrations and location moves,
-is documented in [docs/ARCHITECTURE.md](../ARCHITECTURE.md) ("The catalog").
-
-The read path is row-local and never writes:
-
-- marker 3 + matching valid document → migrate in memory and return;
-- marker 4 + matching valid document → parse and return;
-- out-of-range current values → clamp in memory and log once;
-- null or malformed document, or any other marker → log once and return neutral
-  current settings.
-
-One corrupt row therefore cannot fail the folder's batched load. Single and batch edit
-writes serialize the complete current document and marker; batch writes retain their
-single-transaction all-or-nothing behavior.
-
-Lens defaults are distortion and chromatic aberration on, vignetting off. Reset,
-the has-edits predicate, and reset-enabled state compare against these constants.
-Copy/paste and preset application transfer the three values.
+The read path is row-local and never writes; [ARCHITECTURE.md](../ARCHITECTURE.md)
+owns catalog schema, migrations, and write contracts.
 
 ### 8.2 Current-format boundaries
 
-`EditSettingsJson` owns document version acceptance and migration and the shared current-model check.
-
-`EditSettingsJson.Serialize` requires the current v4 model, clones it,
-clamps and validates the clone, then writes canonical JSON; it never changes the
-caller's model and rejects every other version. Preset files must explicitly declare
-their wrapper and settings versions. Version 3 settings migrate in memory; version 4 settings are accepted;
-versionless or unsupported files are skipped. Loading never rewrites a preset. Copy/paste accepts only current in-memory
-settings and rejects a non-current source or target before applying values.
+`EditSettingsJson` serializes a validated clone of the current model without mutating
+its caller. Presets require explicit supported wrapper/settings versions and load
+without rewriting files. Copy/paste requires current in-memory source and target models.
 
 ## 9. Detail stage
 
-The Develop Detail group exposes three sliders (§8, UI.md §2): Sharpen,
-Luma NR, and Chroma NR. All apply to every source. Defaults are
-capture sharpening 25 RAW / 0 standard and both NR values 0. The
-implementations are part of the shared pipeline and covered by parity and performance
-tests.
+The shared detail stage applies luminance NR, chroma NR, then capture sharpen.
+Source defaults and serialized fields are defined by `DetailSettings` (§8).
 
-All spatial parameters are **defined at native (full-base) resolution** and scale with
-the render: `σ_effective = σ_native · renderLongEdge / max(Info.FullWidth, Info.FullHeight)`
-(the native dimensions live on `BaseImageInfo`, set for preview bases too). Export
-capture sharpening skips the operation when `σ_effective < 0.3` px (perceptually
-nil). Preview intent instead floors capture sharpening at 1.0 screen px (Lightroom's
-native default radius) for both interactive and resting renders, so Fit and the 3200px
-zoom base share one sigma and never pop between sizes. Fit therefore deliberately
-overstates sharpening relative to a downscaled or even full-resolution export so the
-Develop control remains judgeable; no warning icon accompanies this preview
-approximation.
+Spatial support scales as `σ_effective = σ_native · renderLongEdge / max(Info.FullWidth,
+Info.FullHeight)`. Export capture sharpen skips sub-0.3px support; Preview/resting floor
+it at 1.0 screen px, matching Lightroom's native default radius so Fit and the 3200px
+base share one sigma without a sharpening pop. Fit deliberately overstates sharpening to
+keep the control judgeable; export-scale renders remain the detail reference.
 
-- **Luminance NR** (0–100): four native à trous/starlet detail scales use the
-  separable B3-spline taps `[1 4 6 4 1]/16`. Each native support `2^s` is multiplied
-  by `renderLongEdge/nativeLongEdge`; support below 0.3 px is discarded, the remaining
-  support is rounded to the nearest dyadic octave, and a quantized index below 1 or a
-  support radius beyond one quarter of the shorter render edge is discarded. Thresholds
-  are `6200 · [0.8907963, 0.2006639, 0.0855075, 0.0412175] · v/100` Q16 at integer
-  scale indices, with log-linear evaluation at the bounded exact fractional index
-  before spatial quantization. The mapping is linear across the full slider, with
-  6200 as the tuned maximum at 100. Each detail plane is soft-thresholded and
-  reconstructed.
-  The luma delta is added equally to R, G, and B after clamping it to
-  `[−min(R,G,B), 65535−max(R,G,B)]`; Cb/Cr and alpha therefore remain unchanged even
-  at gamut boundaries. A zero value or empty surviving scale set returns before pixel
-  access. The parallel band kernel carries the full summed halo and is bit-identical
-  to a single band. It runs post-tone and before capture sharpen on interactive and
-  resting paths; large tone moves may require retuning the slider.
-- **Capture sharpen** (0–100, default 25 raw / 0 non-raw): luminance-targeted unsharp,
-  `σ_native 0.75, amount = v/100 · 1.0, threshold 0.01`, applied before any resize.
-  Preview intent resolves `σ = max(σ_effective, 1.0)`; export intent retains the
-  native-scaled sigma and sub-0.3 px skip.
-  Luminance-only (Lab L or equivalent); acceptance = no chroma fringing on golden crops.
-- **Chroma NR** (0–100): five native wavelet scales denoise
-  `Cb = B−Y` and `Cr = R−Y`, where authoritative Rec.2020 luma is
-  `Y = 0.2627002120112671R + 0.6779980715188708G + 0.0593017164698620B`.
-  Chroma uses the same support resolution and B3-spline soft-threshold engine as luma,
-  with independently tuned thresholds
-  `6500 · [0.90, 0.25, 0.12, 0.08, 0.05] · v/100` Q16. The finest scale remains
-  full-resolution; each deeper scale downsamples the prior approximation by two, uses
-  dilation-one B3 taps, and upsamples its thresholded adjustment. Preview and export
-  both retain every scale that survives the native-to-render support mapping. At the
-  finest scale, the
-  larger of the horizontal and vertical cross-plane chroma gradients above four
-  thresholds uses 0.35× the threshold so real color edges retain their local contrast
-  independent of orientation. Luma and chroma share each source-band read;
-  when both are active their plane passes reuse one workspace. The summed support of
-  the deepest active plane determines the halo, and banded output is bit-identical to
-  a single band.
-  Reconstruction retains Y, then scales the complete `(ΔR, ΔG, ΔB)` chroma vector
-  toward zero only as far as needed to keep every channel in gamut. Quantization
-  selects the green code that keeps authoritative quantized Y exact; alpha is untouched.
-  Value 0 and an empty surviving scale set return before pixel access, and monochrome
-  sources skip chroma NR. The noise-reduction stage runs before capture sharpen on
-  interactive, resting, and export paths.
-- **Output sharpen**: OUTPUT.md §3.
+- **Luminance NR:** four native à trous/starlet scales use B3-spline taps
+  `[1 4 6 4 1]/16`. Scale support `2^s` by render/native long edge, discard sub-0.3px
+  support, round to a dyadic octave and discard invalid/oversized supports.
+  Thresholds are `6200 · [0.8907963, 0.2006639, 0.0855075, 0.0412175] · v/100` Q16,
+  log-linearly evaluated at bounded fractional indices before spatial quantization.
+  Soft-thresholded detail reconstructs a luma delta added equally to RGB after clamping
+  to `[−min(R,G,B), 65535−max(R,G,B)]`, preserving chroma and alpha at gamut boundaries.
+- **Capture sharpen:** luminance-targeted unsharp, `σ_native=0.75`,
+  `amount=v/100`, `threshold=0.01`, with the intent-specific sigma rule above.
+- **Chroma NR:** five scales denoise `Cb=B−Y` and `Cr=R−Y` using
+  TONE_ENGINE.md §6's luma authority and the same support/B3-spline engine.
+  Thresholds are `6500 · [0.90, 0.25, 0.12, 0.08, 0.05] · v/100` Q16.
+  The finest scale stays full-size; deeper scales downsample by two, apply dilation-one
+  taps and upsample the adjustment. A finest-scale cross-plane gradient over four
+  thresholds uses 0.35× threshold, preserving edges independently of orientation.
+  Reconstruction retains Y and scales the complete RGB delta just enough for gamut;
+  green quantization preserves authoritative quantized Y, with alpha unchanged.
+  Monochrome skips this stage.
+
+Both NR planes share source-band reads/workspace; full summed halos make banding
+bit-identical to a single band. Zero values or no surviving scales return before pixel
+access. Interactive, resting and export share the post-tone, pre-sharpen order.
+Output sharpening is defined in OUTPUT.md §3.
 
 ## 10. Effects substep of output finalization
 
-`RenderEffects` runs on encoded display Rec.2020 after the final linear-light resize
-and optional export output sharpening, immediately before the target conversion: one
-skipped-when-inactive in-place pass (`GetArea` → parallel coordinate kernel →
-`SetArea`) shared by preview/export finalization and capped-worker resting
-finalization. Multi-variant export applies the snapshotted settings after each
-variant's progressive resize and sharpen. The internal order is vignette, then grain.
+`RenderEffects` runs one skipped-when-inactive pass on encoded display Rec.2020 after
+resize/output sharpening and before target conversion. Preview, resting and each export
+variant share vignette then grain, at the variant's output dimensions. Thumbnails are
+non-authoritative for effects and may resample grain; Develop preview and export are
+authoritative.
 
-Vignette is an elliptical smooth falloff over normalized coordinates of the post-crop
-output frame — negative multiplies toward black, positive lifts toward white, Midpoint
-moves the falloff onset — so the field is unchanged by output dimensions. While crop
-mode is active, Develop intentionally renders the full pending canvas so the overlay
-stays aligned; the vignette previews on that full canvas and recenters on the
-committed crop when crop mode exits.
+Vignette uses a smooth elliptical falloff in normalized post-crop coordinates: negative
+multiplies toward black, positive lifts toward white, and Midpoint sets onset. Output
+dimensions do not change it. During Crop, Develop renders the full pending canvas for
+overlay alignment; vignette recenters on the committed crop when Crop exits.
 
-Grain is an equal-channel additive delta in the encoded display domain: a stateless
-coordinate hash over `(x, y, grainSize)`, amount scaling the stable signed sample.
-Fine hashes every pixel; Medium and Coarse bilinearly interpolate fixed 2px and 3px
-cells. The shared delta is clamped to the gamut-safe interval
-`[−min(R,G,B), 1−max(R,G,B)]`, preserving channel differences at gamut boundaries;
-alpha is untouched. Frequency is defined in output pixels, so preview and export are
-appearance-consistent rather than sample-identical across resolutions.
+Grain adds an equal-channel, amount-scaled delta from a stateless `(x, y, grainSize)`
+hash in encoded display space. Fine hashes each pixel; Medium/Coarse bilinearly
+interpolate fixed 2px/3px cells. Clamping the shared delta to `[−min(R,G,B),
+1−max(R,G,B)]` preserves channel differences at gamut boundaries; alpha is untouched.
+Frequency uses output pixels, so preview/export appearance agrees without sample
+identity across resolutions.
 
 ## 11. Performance contract
 
-Preview rendering calculates the active display scope from the exact display-referred
-sRGB bytes used for bitmap conversion. Entry paints seed both scopes. Histogram-active
-ticks skip waveform accumulation and retain the last trace for an immediate scope
-switch; selecting Waveform schedules one current-generation render that replaces it
-with a coherent trace. A settings-matched q90 rendered-cache load likewise copies one
-BGRA buffer and derives its bitmap, both display scopes, and display-floor clipping
-without entering `RenderPipeline` or opening the source; a mismatched cache remains
-bitmap-only. Cached results never claim source-saturation clipping or a RAW histogram.
-For an edited
-RAW whose service render is still current, `PreviewService` places the detachable
-`RenderResult.Image` in the outcome's promotion lease. Only VM acceptance of a
-committed edited-state render from the current base commits that lease and starts the
-tracked resize (linear light, capped at 512px); rejection, stale-base paint, before
-view, preset hover, crop draft, cache, resting, and shutdown dispose it without
-promotion. The candidate is a cache artifact, not a render stage, so
-`RenderPipeline.Version` is unchanged and no full-size clone is made. Promotion never
-waits on background work.
-Shutdown awaits candidate creation and cache queueing before the writer is drained.
+State-defining outcomes carry pixels, active scopes and matching source facts together.
+VM acceptance requires the current image and surface generation; stale/failed outcomes
+cannot replace facts or promote thumbnails. Entry seeds both display scopes; histogram
+ticks retain the last waveform until a coherent waveform render replaces it. A
+settings-matched cached BGRA buffer supplies bitmap, scopes and floor statistics without
+source access; mismatches are bitmap-only. Caches never claim RAW/high facts.
+Discovering that the selected original needs hydration advances the surface generation
+and clears even a provisional cache paint.
 
-Per slider tick at 1600px preview: geometry (usually no-op), optional profile HueSat,
-the fused matrix → tone LUT → matrix pass, then optional OKLCh/detail work.
-The development budget is ≤ 150 ms, measured with `HAPPY_PHOTON_PERF=1`; the exact tone
-tables are cached for the bounded active settings set. The active-chroma pass —
-pixel-cache traffic included, gated on a projection-heavy S=+100 fixture — is
-additionally capped at the 60 ms AgX-crossing cost class, and identity chroma is
-pinned to zero pixel access. Tonal, chroma, and geometry slider moves invalidate
-only the render; only `BaseDecodeSettings` changes invalidate the base.
+Promotion is committed only after VM acceptance of a current, committed edited RAW
+outcome. Rejected or speculative outcomes dispose their lease; promotion never waits
+on background work. Shutdown awaits candidate queueing before draining the cache writer.
+
+A 1600px slider tick runs geometry, optional HueSat, fused matrix → LUT → matrix, then
+optional OKLCh/detail. The development budget is ≤150 ms (`HAPPY_PHOTON_PERF=1`); exact
+tone tables are cached for a bounded active settings set. Active chroma, including
+pixel-cache traffic on a projection-heavy S=+100 fixture, also has the 60 ms
+AgX-crossing budget; identity chroma requires zero pixel access. Tonal/chroma/geometry
+sliders invalidate only render; only `BaseDecodeSettings` invalidates the base.
 
 Effects-off finalization returns before pixel access and adds no work. On the opt-in
 Release fixtures, active effects retain the ≤150 ms preview-tick budget
@@ -725,35 +501,20 @@ Release fixtures, active effects retain the ≤150 ms preview-tick budget
 private-memory peak is at most one processed Q16 RGB frame, and resting cancellation
 is observed at the next effects execution check.
 
-After a current 1600 paint settles, the display-only resting entry point may render a
-crop-aware snapshot of the large preview base at the active view's required
-device-pixel long edge (fit uses the fitted image bound; manual zoom uses the
-original-relative zoom times the original-scale displayed geometry). Zoom-in settles a
-new render; pan and zoom-out do not. The request is capped by the large base and 3200,
-so zoom beyond that base stretches the best available preview until native region
-decode exists. Geometry and the linear resize run before the pipeline so
-size-dependent detail stages see the achievable resting scale. The result uses the
-same render math and version, but skips statistics and is excluded from rendered
-thumbnails and disk caches; a separate resting serial plus the captured interactive
-generation and decode key reject stale results without advancing the interactive
-generation. Resting execution checks its cancellation token between native full-frame
-operations; only the resting entry point supplies the optional worker cap (at most two
-managed workers) and token to the managed kernels. Ordinary `Render` and every
-interactive caller are unchanged, and output is bit-identical regardless of the
-resting worker cap — band partitioning does not alter pixel values.
+After an accepted interactive paint, a display-only resting render may use the large
+base at the crop-aware view's required device-pixel size, capped by that base and 3200.
+Fit/zoom-in request refinement; pan/zoom-out do not. Geometry and linear resize precede
+detail so it sees achievable scale. The render uses the same math but no statistics,
+thumbnail promotion or disk writes. A resting serial, captured interactive generation
+and decode key reject stale results without advancing interactive generation.
+Cancellation is checked between native operations; resting managed kernels use at most
+two workers and remain bit-identical across worker caps. Zoom beyond the large base
+stretches available pixels until native region decode exists.
 
-The optional DCP HueSat stage carries its own gates — preview/export deltas,
-profile resolution and decode bounds, allocation ceilings, and discovery-scan
-bounds — held normatively by TESTING.md §5's opt-in `DcpPerformanceGateTests`,
-with exactly zero inactive work.
+DCP latency, allocation, and discovery budgets live in `DcpPerformanceGateTests`
+(TESTING.md §5); an inactive profile adds no work.
 
-`HAPPY_PHOTON_DISPLAY_TRACE=1` enables the permanent display-chain diagnostic: the
-active Develop or fullscreen preview emits one post-layout line when its bitmap
-identity, zoom, viewport size, or top-level render scaling changes, recording the
-bitmap/control/viewport sizes, `TopLevel.RenderScaling`, the net
-device-pixels-per-bitmap-pixel scale, and an explicit 1:1 verdict; bitmap swaps
-identify their provenance (cached JPEG, fresh render, background refresh, resting
-render). The gate is captured at process startup and off by default; when off, no
-display observer is installed. Every line is appended to
-`%LOCALAPPDATA%\Happy Photon\logs\display-trace.log`, truncated per process start —
-the app is a WinExe, so the log file, not the console, is the reliable capture.
+`HAPPY_PHOTON_DISPLAY_TRACE=1` enables post-layout size, scale, bitmap provenance, and
+device-true 1:1 diagnostics. It is captured at startup; when off no observer is
+installed. The WinExe has no reliable console capture; use `%LOCALAPPDATA%\Happy
+Photon\logs\display-trace.log`, truncated at process start.

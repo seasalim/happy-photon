@@ -17,11 +17,10 @@ the same quarantine filter without the processor cap.
 
 ## 1. Sample assets (`Tests/assets/`)
 
-Committed directly (no LFS), current total **93.33 MiB** within a budget of
-**≤ 120 MiB, ≤ 30 MiB per file**. The budget covers six distinct raws plus the
-byte-identical burst copy; prefer the
-oldest/smallest CC0 body per mosaic type. Provenance is recorded in
-`Tests/assets/README.md` with per-file source URL + license.
+Assets are committed without LFS.
+`GoldenHarnessTests.AssetAndGoldenBudgets_AreWithinSpec` owns total/per-file asset and
+golden budgets; [Tests/assets/README.md](../../Tests/assets/README.md) owns per-file
+provenance and licenses. Prefer small CC0 fixtures.
 
 | Asset | Purpose | Source |
 |-------|---------|--------|
@@ -36,7 +35,7 @@ oldest/smallest CC0 body per mosaic type. Provenance is recorded in
 | Display P3 ICC profile (`DisplayP3-v4.icc`) | independent source profile for the wide-gamut normalization test | Compact ICC Profiles, CC0 |
 | AdobeRGB JPEG | second ICC case | generate |
 | 16-bit TIFF | depth preservation | generate |
-| HEIC | platform codec path (skip test when codec absent) | generate/CC0 |
+| HEIC | bundled codec; skip when Magick reports no read support | generate/CC0 |
 | Synthetic gradient PNG (0→1 ramp, generated in-test) | LUT banding, monotonicity | code |
 
 Raw-file burst pair: two consecutive CC0 frames of a similar scene if obtainable; else
@@ -44,39 +43,22 @@ duplicate one raw byte-for-byte under two names (sufficient for determinism test
 
 ### 1.1 Opt-in modern-camera compatibility fixtures
 
-`Tests/compatibility-fixtures.json` is the authority for downloaded compatibility
-fixture provenance, CC0 license, exact byte length, SHA-256, selection lifecycle, and
-reviewed behavior. The reciprocal committed-asset authority is
-`Tests/assets/README.md`. Compatibility RAWs are never committed: the file-based .NET
-fetcher verifies or downloads them into the disposable, gitignored
-`artifacts/compatibility-fixtures/` cache.
+`Tests/compatibility-fixtures.json` owns provenance, license, exact length, SHA-256,
+selection lifecycle and reviewed expectations. Downloaded RAWs remain in ignored
+`artifacts/compatibility-fixtures/`; tests never use the network.
 
 ```powershell
 dotnet run --file scripts/fetch-compatibility-fixtures.cs
 dotnet run --file scripts/fetch-compatibility-fixtures.cs -- sony-a9m3-lossy
 ```
 
-The provenance URL is also the download endpoint (a project-controlled mirror
-is deferred until a release gate makes upstream availability release-critical).
-An existing cached length or hash mismatch fails closed, names the fixture and
-observed/expected values, and is never replaced automatically. Selected
-fixtures are capped at 30 MiB. Tests never access the network.
-
-The manifest uses strict JSON. `selectionStatus` is `pending` or `selected`; selected
-entries use `expectationStatus` `candidate` or `reviewed`. Candidates omit `expected`
-and run only in discovery. Reviewed entries require capability, metadata, sensor,
-camera-WB/matrix, tolerance, and review expectations appropriate to their outcome.
-Camera matrices are 3-by-the-native-multiplier-count in row-major order and each row
-sums to 1. All seven current entries use `testLevel: smoke`.
-
-The selected Leica M Monochrom (Typ 246) entry pins `M2462362.DNG` by exact length
-and SHA-256 with sensor `Colors == 1` and absent camera-color expectations. Discovery
-and strict modes exercise preview and full decode, then require exact equal channels
-for the neutral render and lossless PNG and 16-bit TIFF exports in both sRGB and
-Display P3 under extreme dormant WB, profile, saturation/vibrance, mixer, and
-channel-curve settings. The local Q2 MONO file
-is not a manifest fixture; its manual preview-base gate is ≤2.5 s and ≤600 MiB peak
-private-memory delta.
+A mismatched cached length/hash fails closed and is never replaced automatically.
+Selected candidates run only in discovery; reviewed entries require typed expectations.
+The Leica M Monochrom (Typ 246) entry pins `M2462362.DNG`, a one-channel sensor and
+absent camera-color facts. Preview/full renders and PNG/TIFF exports must preserve exact
+equal channels despite dormant color settings. Local non-manifest files are not
+fixtures. The local Q2 MONO preview-base gate remains manual (no automated test): ≤2.5 s
+and ≤600 MiB peak private-memory delta.
 
 `HAPPY_PHOTON_COMPAT` has four states:
 
@@ -87,53 +69,29 @@ private-memory delta.
 | `discovery` | Requires every selected fixture and valid hash, records candidate and reviewed application-path observations, and never changes expectations. |
 | `strict` | Rejects pending/candidate entries and fails for a missing, invalid, or behaviorally different reviewed fixture. |
 
-Any other non-empty value fails so a misspelled gate cannot silently skip. The
-harness is intentionally Windows x64 only and lives wholly in the ordinary test host,
-whose assembly fixture initializes Avalonia/WIC. It owns each fixture's metadata,
-browse-thumbnail, preview base, full base, camera facts, default and edited renders,
-JPEG export, orientation, and disposal checks. It emits exactly one `COMPAT TERMINAL`
-line per selected fixture followed by `COMPAT COMPLETE observed=N selected=N`, and writes
-the ignored structured report to `artifacts/compatibility-results/`. Discovery also
-writes 500 px default-render review images there.
-
-Known reviewed limitation: Nikon Z8 High Efficiency RAW. Metadata and the embedded
-JPEG browse thumbnail succeed, but `Unpack` returns LibRaw `-2`,
-`Unsupported file format or not RAW file`; preview/full/export return no developed
-base, and the existing Nikon-HE user status is set. Because `RawBaseLoader` catches the
-native exception and maps any null result to `UnsupportedRaw`, the causal link between
-that exact `-2` and the production outcome is inferred by the end-to-end fixture test,
-not proven through a production diagnostic seam.
+Other non-empty values fail. The Windows x64 harness uses the ordinary Avalonia/WIC host;
+it checks metadata, thumbnail, bases, camera facts, renders, export and disposal, with
+one terminal per selected fixture and ignored reports/review images under
+`artifacts/compatibility-results/`. Nikon Z8 High Efficiency permits metadata and
+embedded previews but remains unsupported for developed preview/full/export bases.
 
 ## 2. Golden mechanism
 
-- Goldens are rendered PNGs stored under `Tests/goldens/v<RenderPipeline.Version>/`,
-  named `<asset>__<settings-case>.png`, rendered at **long edge 500** (keeps the golden
-  directory ≤ 25 MB without LFS).
-- **Active baseline marker:** `Tests/goldens/ACTIVE_VERSION` (plain text, e.g.
-  `v9` or `pending`) is the source of truth for the active generation — this doc
-  deliberately does not restate the current value. Golden and WYSIWYG suites
-  read it; the literal value `pending` makes
-  them report **skipped-with-reason** ("awaiting re-baseline") instead of failing, so
-  an integration branch stays green mid-rework.
-- Comparison: per-pixel CIE76 ΔE with an explicit domain. Render comparisons decode
-  display sRGB; base comparisons interpret samples as linear Rec.2020 before XYZ/Lab.
-  Report mean and p99.
-- Re-baselining: `HAPPY_PHOTON_UPDATE_GOLDENS=1 dotnet test` regenerates; CI never sets
-  it. A golden diff in review must be justified by a `RenderPipeline.Version` bump or a
-  spec change in the PR. Each re-baseline records a pre/post attribution report
-  (per-image ΔE summary); only the active generation is kept, and superseded versions
-  are pruned once the report is captured.
-- Settings cases (20 total): **tonal set** — identity; +2 EV; −2 EV; highlights −100;
-  shadows +80; contrast +50; full-combo tonal preset. **WB set** — WB 3000 K;
-  WB 9000 K tint +50; WB 9000 K tint −50. Never baseline WB cases while the chromatic
-  stage is a stub — that would golden "WB ignored" and immediately invalidate itself.
-  **Chroma set** — saturation-only, vibrance-only, combined, active color-mixer, and
-  Chroma NR 50 settings on the reference RAW and Display-P3 fixture (10 cases).
+Goldens live in `Tests/goldens/v<RenderPipeline.Version>/` as
+`<asset>__<settings-case>.png`, rendered at long edge 500.
+`Tests/goldens/ACTIVE_VERSION` selects the generation; `pending` produces an explicit
+awaiting-rebaseline skip. Comparison reports mean/p99 CIE76 ΔE: render samples decode
+display sRGB, while base samples are linear Rec.2020 before XYZ/Lab conversion.
 
-The full-combo tonal case is pinned to exposure +1 EV, brightness +10, contrast +25,
-shadows +35, highlights −50, and a monotone curve through `(0,0)`, `(0.25,0.20)`,
-`(0.75,0.82)`, `(1,1)`. Chroma, white balance, geometry, and preset identity remain
-at defaults.
+Set `HAPPY_PHOTON_UPDATE_GOLDENS=1` to regenerate; CI never does. A golden change needs
+a render-version increment or an approved spec change and a pre/post attribution report.
+Keep only the active generation after capturing attribution; budgets remain test-owned.
+If the golden budget fails, shrink render size before adopting LFS.
+
+`GoldenTestCases` defines 15 settings cases: seven tonal (identity, ±2 EV,
+Highlights −100, Shadows +80, Contrast +50, full-combo), three WB (3000 K and
+9000 K with tint ±50), and five chroma (saturation, vibrance, combined, mixer, Chroma NR).
+The matrix yields 49 renders; exact parameter values live in that class.
 
 ### 2.1 Asset × case matrix (keeps golden count and runtime bounded)
 
@@ -144,15 +102,8 @@ at defaults.
 | NEF, RAF, DNG, AdobeRGB JPEG, sRGB JPEG, 16-bit TIFF | identity, +2 EV | WB 3000 K |
 | HEIC | identity (skippable per §6) | — |
 
-The matrix determines the golden count; the tracked files live under the
-generation directory named by `ACTIVE_VERSION`, with the chroma set adding its
-ten cases on the reference CR2 and the Display-P3 JPEG. The clipped-highlight
-case uses the bright water reflection in the reference CR2
-([DECODE.md §2.3](DECODE.md#23-why-clip-and-blend-are-the-supported-modes)).
-The perceptual-chroma re-baseline left every neutral-chroma case
-byte-identical. Each re-baseline keeps its attribution report beside its
-goldens (currently `Tests/goldens/v14/CHROMA_NR_ATTRIBUTION.md`, alongside the
-active generation).
+The five chroma cases additionally run on the reference CR2 and Display-P3 JPEG.
+The clipped-highlight fixture is documented in DECODE.md §2.3.
 
 ## 3. Tolerances (normative)
 
@@ -168,158 +119,54 @@ active generation).
 | Built-in characterization vs LibRaw Rec.2020 comparator, Bayer/X-Trans Clip/Blend/direct-ABI FBDD | mean ΔE76 ≤ 1.1, p99 ≤ 9.5 |
 | Luminance NR at 25/50/100 on high-ISO RAW and HEIC | flat-patch σ drops ≥40% at 50; edge acutance ≥90% through 50 and ≥70% at 100; σ reduction at 100 is ≥1.15× the reduction at 50; max per-pixel ΔCb/ΔCr ≤1 Q16 LSB |
 
-WYSIWYG is calibrated over every active-generation settings case using the actual
-preview base and a full-base export, aligning the occasional one-pixel aspect
-difference to the preview dimensions. Crossing-on measured a worst mean of 1.87 and
-worst p99 of 7.97; crossing-off was bit-identical. The active-chroma RAW cases
-measure 0.82/3.54 (S −50), 0.90/4.15 (V −100), and 1.25/5.61 (combined) mean/p99
-ΔE76; standard cases stay bit-identical at the common dimension. Each worst
-observation rounds up to the next 0.5, producing 2.0/8.0. The separate half/full
-base bound covers the decoded sampling gap before tone.
+Calibrate by rounding the worst supported observation up to the next 0.5.
 
-**OS gating policy:** goldens are generated on Linux CI (canonical). Linux uses
-the same-platform mean/p99 bounds above. Windows and Apple Silicon macOS compare every
-RAW and non-RAW case to that canonical baseline with the cross-platform mean ΔE ≤ 2.0
-bound. HEIC remains the only skippable golden when the platform codec reports no read
-support; codec skips always carry an explicit reason.
+Linux CI generates the canonical goldens. Linux uses same-platform bounds; Windows
+and Apple Silicon macOS use the cross-platform bound. HEIC alone may skip when
+Magick's bundled codec reports no read support, always with an explicit reason.
 
-**X-Trans decodes are not byte-comparable across processes.** With OpenMP threading
-uncontrolled, two census runs differed on `fujifilm-x30` alone, by one sample in
-36,433,152, while four Bayer assets reproduced byte-exactly (DECODE.md §2.6). The
-bit-identical row above covers repeated renders of one base, not X-Trans decodes in
-separate processes; compare those with a tolerance. The X30 golden's mean ΔE ≤ 1.0 is
-orders above the observed difference.
+X-Trans decodes are not byte-comparable across fresh processes with uncontrolled
+OpenMP (DECODE.md §2.6). The bit-identical requirement covers repeated renders of one
+base; fresh X-Trans decodes use the tolerance gate.
 
 ## 4. Required suites
 
-1. **Tone suites:** `AgxToneEnginePropertyTests`, `AgxToneEngineDerivationTests`,
-   `AgxBlenderOracleTests`, `AgxLookGateTests`, `AgxHighlightQualityTests`, and
-   `AgxCrossingPerformanceTests` pin the crossing properties, source-derived
-   constants, exact-table interpolation, look and highlight gates, and the Blender
-   oracle. `ToneLutTests` pins the retained
-   crossing-off formulas, channel-before-master composition in both regimes,
-   identity-array sharing, and monotonicity for identity/monotone user curves.
-2. **`WhiteBalanceModelTests`**: WHITE_BALANCE.md §9 list.
-3. **`RenderDeterminismTests`**: repeated render bit-identical; burst pair identical;
-   settings hash stable across process runs (canonical JSON ordering).
-4. **`GoldenRenderTests`**: §2 matrix plus the actual preview-base vs full-export
-   bound (§3 row 3) for every matrix case, sharing each full decode and export render.
-5. **`WysiwygTests`**: focused proof, geometry, effects, and output-space seams;
-   `WysiwygCalibrationTests` emits the opt-in calibration payload.
-6. **Current-format boundary tests**: `EditSettingsJsonTests` pins canonical ordering,
-   clone-before-clamp behavior, range validation, removed WB modes, and rejection of
-   documents outside versions 3 and 4; `EditDocumentBoundaryBaselineTests` pins the unsupported
-   outcome for v2 and v5 documents at the image-row, history, assessment, and preset
-   boundaries.
-   `CatalogSchemaTests` pins the clean new schema, acceptance of
-   harmless extra columns, and actionable startup rejection for missing columns;
-   `CatalogPersistenceTests` pins neutral no-write recovery for null, malformed, or
-   unsupported rows. Preset tests require explicit/current versions and reject old
-   writes.
-7. **Export boundary suites:** `ExportMetadataTests` covers OUTPUT.md §5 EXIF copy,
-   orientation, GPS strip, stale-thumbnail removal, ICC presence, and subsampling.
-   `TiffExportTests` pins Q16 decode-back parity in both color spaces, 16-bit ZIP,
-   exact profiles, and RGB-only output.
-8. **Loader suites:** `RawBaseLoaderTests` and `StandardBaseLoaderTests` cover the
-   DECODE.md §7 items, including HEIC routing to the platform reader rather than
-   LibRaw.
-9. **Optics suites:** `LensPrescriptionReaderTests` pins generated DNG opcode payloads,
-   mandatory rejection, crop/trim coordinates, and the committed X30 RAF table alarm;
-   `LensCorrectionProcessorTests` pins one-pass sampling and scene-linear radial gain;
-   `LensSettingsTests` and headless `LensControlTests` pin lens defaults,
-   transfer/cache registration, and constant-layout capability gating.
-10. **`RenderNoiseReductionTests`** pins zero-access identity, monochrome skip, native
-    luma/chroma scale mapping, seeded-noise reduction, exact gamut-boundary luma and
-    alpha preservation, single/multiple-band identity, and resting cancellation.
-    **`ChromaNoiseReductionQualityTests`** pins seeded-noise and low-frequency-blotch
-    residuals against the retired box blur plus vertical and horizontal chroma-edge
-    retention. Pipeline
-    composition tests place both NR planes before capture sharpen on shared/export and
-    resting paths.
-11. **Working-space suites:** `RawWorkingSpaceTests` proves the built-in
-    characterization against the LibRaw Rec.2020 comparator, pins the `cam_xyz`
-    semantic oracle under `LibRawOutputConfiguration.LinearCameraNative`
-    (`output_color` 0);
-    `StandardWorkingSpaceTests` checks the external sRGB-profile target, native P3
-    gamut vectors, the thumbnail sRGB-proxy limit, and the one-code JPEG identity gate.
-12. **RAW histogram suites:** synthetic Bayer/X-Trans geometry, black-level, sRGB-bin,
-    clipping, spatial source-saturation predicate parity, lookup-cap, and cancellation
-    cases; six-fixture typed-frame oracle parity; loader fault plus decode-setting/profile
-    mask-and-stat invariance; generation-matched lease analysis, full-load no-sampling,
-    refresh identity; and headless preferred/effective plus 16-photosite presentation
-    boundaries.
-13. **Waveform suites:** pure accumulator tests pin the 256×128 grid, column mapping,
-    level boundaries, Rec.601 parity, narrow-source back-fill, histogram-bin invariance,
-    and the production overflow bound. Painter/view tests pin square-root normalization,
-    opaque premultiplied BGRA, theme-token colors, bitmap reuse/disposal and live-theme
-    repaint. Headless tests cover the stable three-entry selector, RAW fallback,
-    Browse's fixed chrome, cloud-only no-load behavior, and same-image supersession.
-    Cached-preview ordering tests additionally hold source work before profile/base
-    acquisition and require matching bitmap/scopes with zero source reads or renders;
-    background-activity tests hold that gate through the status hysteresis and first
-    coherent render.
-14. **Wide-gamut output suites:** `WideGamutExportTests` checks the Display P3 profile,
-    independently derived native-P3 codes in every format, gamut survival, and common-space
-    agreement. `WideGamutColorimetryTests` gates the Q16 finalization boundary at the
-    §3 limits with output sharpening Off and Screen, and records the expected 8-bit
-    quantization floor as informational. The former frozen per-RID export
-    byte hashes are retired; the active goldens own regression.
-15. **DCP suites:** `DcpProfileReaderTests` is the §7.2 conformance and hostile-input
-    suite; `DcpMatrixAndHueSatTests` covers balanced-seam composition, as-shot dual
-    interpolation, 2.5D/single/dual tables, V-only encoding, and seeded direct/LUT
-    agreement. `DcpProfileDiscoveryTests` covers all local sources, precedence,
-    normalization, refresh, corrupt/oversized/sparse input, and no-read availability
-    gates. `DcpAtomicityTests` drives an A→B→C newest-wins replacement through cache
-    persistence. Settings, preset, catalog, export-warning, ViewModel, hash, and
-    determinism suites cover the integrated boundaries. `DcpColorCheckerAnchorTests`
-    applies a generated synthetic profile to the D300 ground-truth fixture without a
-    skip path. No Adobe profile is committed.
-16. **Perceptual-chroma suites:** `OklabColorDerivationTests` independently derives
-    the composed matrices and consumes oracle vectors; `OklabColorPropertyTests`
-    pins factor, invariance, taper, skin window, maximal-ray projection, mixer
-    partition/periodicity, achromatic reliability, uniform/global equivalence,
-    luminance bounds, and post-edit projection semantics;
-    `RenderChromaStageTests` covers single-final-Q16 precision, bounded-band parity,
-    identity skip, both tone regimes, resting execution, and alpha preservation.
-    `PerceptualChromaExportTests` reads active RAW/standard variants back through the
-    real export service for both output targets.
+| Suites | Contract pinned |
+|---|---|
+| `AgxToneEnginePropertyTests`, `AgxToneEngineDerivationTests`, `AgxBlenderOracleTests`, `AgxLookGateTests`, `AgxHighlightQualityTests`, `ToneLutTests` | Tone formulas, oracle, look, interpolation and monotonicity |
+| `WhiteBalanceModelTests` | WHITE_BALANCE.md §9 |
+| `RenderDeterminismTests` | Repeated renders, bursts and stable hashes |
+| `GoldenRenderTests` | Asset/case matrix and actual preview/full-export agreement |
+| `WysiwygTests`, `WysiwygCalibrationTests` | Proof, geometry, effects and output-space agreement |
+| `EditSettingsJsonTests`, `EditDocumentBoundaryBaselineTests`, `CatalogSchemaTests`, `CatalogPersistenceTests` | Version boundaries, schema and row-local no-write recovery |
+| `ExportMetadataTests`, `TiffExportTests` | EXIF/GPS/orientation, encoders, profiles and Q16 TIFF parity |
+| `RawBaseLoaderTests`, `StandardBaseLoaderTests` | Decode contract and HEIC routing through Magick |
+| `LensPrescriptionReaderTests`, `LensCorrectionProcessorTests`, `LensSettingsTests`, `LensControlTests` | Conservative optics, sampling, settings and capability UI |
+| `RenderNoiseReductionTests`, `ChromaNoiseReductionQualityTests` | Identity, native scale, quality, gamut and cancellation |
+| `RawWorkingSpaceTests`, `StandardWorkingSpaceTests` | Characterization, source ICC and gamut preservation |
+| `RawSensorHistogramTests`, `RawSensorFrameTests` and source-saturation suites | Sensor predicates, artifact alignment, lease generation and no full-load sampling |
+| `WaveformAccumulatorTests`, `WaveformPainterTests`, `WaveformScopeUiTests` | Grid/bin mapping, colors, disposal, fallback and cached-outcome ordering |
+| `WideGamutExportTests`, `WideGamutColorimetryTests` | Target profiles, gamut survival and Q16 agreement |
+| `DcpProfileReaderTests`, `DcpMatrixAndHueSatTests`, `DcpProfileDiscoveryTests`, `DcpAtomicityTests`, `DcpColorCheckerAnchorTests` | Adobe DNG profile conformance, hostile inputs, matrix/table math, discovery, atomicity and ground truth |
+| `OklabColorDerivationTests`, `OklabColorPropertyTests`, `RenderChromaStageTests`, `PerceptualChromaExportTests` | Perceptual formulas, mixer windows, precision, identity and exported color |
 
 ### 4.1 Pipeline validation anchors
 
-Every stage that changes pixels answers to four anchors:
+Every pixel-changing stage answers to four independent anchors:
 
-1. **Seeded properties.** `RenderPropertyTests` fixes its seed and draw count.
-   Achromatic linear input remains achromatic through the full RAW crossing. The
-   post-gain value `a = v·2^(EVuser+EVsource) = 0.18` maps to the pinned display grey
-   across the full Contrast range and multiple nonzero `EVsource` values. The old
-   display-pivot analogue is retired. Brightness/BaseLook dormancy and crossing-off
-   sensitivity are bit-gated separately. DCP adds seeded balanced-neutral matrix
-   round trips and 1,000 seeded RGB comparisons between the direct HueSat sequence and
-   its compiled lattice.
-2. **Source-cited constants.** RGB→XYZ matrices are independently derived in C# from
-   each space's published primaries and white point, then compared with both the
-   published matrix and the committed oracle. The authorities are IEC 61966-2-1 for
-   sRGB, ITU-R BT.2020-2 for Rec.2020, and ISO 22028-2 for ROMM; the W3C CSS Color 4
-   conversion appendix provides the cited published values. The exact sRGB matrix in
-   `RgbColorSpaceMatrices` is the single authority and explicitly exposes the exact
-   primary-derived and published-rounded sRGB variants. `PrecisionColorCases` uses the
-   exact variant; `PrecisionDeltaE`, `GoldenImageComparer`, and production's legacy
-   sRGB camera-fact conversion use the published-rounded variant, with no value changes.
-   Camera characterization composes the exact primary-derived sRGB→Rec.2020 factor
-   from the same authority with each copied camera→sRGB fact. DCP tag numbers,
-   illuminants, defaults, table ordering, and V encoding cite Adobe DNG 1.7.1 in the
-   parser and are exercised through independently built TIFF-IFD fixtures.
-   Production sRGB and Rec.2020 forward/inverse basis vectors are checked directly.
-   OKLab adds Ottosson's XYZ↔LMS and LMS'↔Lab authorities; tests independently
-   compose them with a BT.2020 matrix derived from the published primaries.
-3. **Independent oracle.** `Tests/assets/color-science-oracle.json` contains linear
-   sRGB/D65, linear Rec.2020/D65, and linear ROMM/D50 RGB↔XYZ matrices and round trips,
-   Bradford D50↔D65 adaptation, a synthetic camera→sRGB characterization matrix and
-   transformed RGB vectors, DCP ProPhoto crossing vectors, sRGB EOTF vectors, and the pre-November-2014
-   ColorChecker values for the CIE 1931 2° observer, plus Rec.2020↔OKLab/OKLCh and
-   constant-L/h gamut-projection vectors. It is emitted by the dev-only
-   BSD-licensed `colour-science` generator. Tests and CI read only JSON and never run
-   Python. Regeneration is intentionally version-locked:
+1. **Seeded properties:** `RenderPropertyTests` pins achromatic preservation, post-gain
+   middle-grey anchoring; `RenderPipelineToneRegimeTests` pins source-kind dormancy. DCP
+   properties compare balanced-neutral matrix round trips and direct versus compiled
+   HueSat math.
+2. **Source-cited constants:** derive RGB/XYZ matrices from IEC sRGB, ITU-R Rec.2020 and
+   ISO ROMM primaries/white points, checking published W3C values and the oracle.
+   `RgbColorSpaceMatrices` distinguishes exact primary-derived from published-rounded
+   sRGB variants. DCP fixtures independently encode Adobe DNG tags; OKLab derivations
+   use Ottosson's published transforms. Formula/provenance authorities are the sibling
+   docs.
+3. **Independent oracle:** `Tests/assets/color-science-oracle.json` supplies RGB/XYZ,
+   Bradford, camera characterization, DCP, EOTF, ColorChecker, OKLab and gamut vectors.
+   CI consumes only JSON; the BSD-licensed generator is version-locked:
 
    ```powershell
    python -m venv .venv-color-oracle
@@ -329,42 +176,21 @@ Every stage that changes pixels answers to four anchors:
    git diff --exit-code -- Tests/assets/color-science-oracle.json
    ```
 
-4. **Physical ground truth.** `nikon-d300-colorchecker.nef` is the author-captured
-   CC0 Nikon D300 fixture described in `Tests/assets/README.md`. Its manifest pins the
-   byte length and SHA-256, default full-resolution decode, export intent with no
-   resize (oriented 4320×2868), `OMP_NUM_THREADS=1`, projective corners and central
-   patch ROIs, the 90° chart mapping, frozen neutral-patch XYZ, and the measurement
-   normalization. The characterization anchor samples after analytic picked WB at the
-   pre-crossing scene-linear Rec.2020 seam, applies the frozen least-squares exposure
-   scalar, then adapts to the chart's declared ICC D50 white. A separate observation
-   renders those same fixed gains through the default RAW AgX crossing and samples the
-   finalized sRGB output with no post-look exposure scalar. Fresh base samples are
-   checked for XYZ drift but never feed back into gains or bounds.
-
-The manifest uses the precommitted "worst supported-RID observation rounded up to the
-next 0.5" rule for both anchors. The pre-crossing characterization anchor retains
-mean/max ΔE00 bounds 3.0/6.5; the integrated AgX look anchor retains 6.0/14.0.
-The recorded win-x64, linux-x64, and osx-arm64 observations agree at the 1e-5 level
-and all hold the retained bounds. These budgets pin characterization and look drift;
-they are not claims that an aged physical chart should be rendered colorimetrically
-exact.
-
-The DCP anchor constructs an independent, non-copyrighted profile whose ForwardMatrix
-reproduces the established D300 built-in seam, parses the actual generated bytes, and
-runs the same non-skipping physical measurement with frozen mean/max ΔE00 bounds
-3.0/6.5. The balanced-neutral CC/AB → D50 white test remains the matrix correctness
-anchor. Dev-only `scripts/SyntheticDcpGenerator.csproj` generates valid, malformed,
-and dual-table fixtures without checking binaries into the repository.
+4. **Physical ground truth:** the manifest-pinned D300 ColorChecker uses fixed chart
+   geometry, analytic picked WB, a frozen least-squares exposure scalar and ICC D50
+   adaptation at the pre-crossing seam. A separate default-AgX measurement uses those
+   gains without post-look exposure normalization. Fresh observations never feed gains
+   or bounds: characterization mean/max ΔE00 stays 3.0/6.5, integrated look 6.0/14.0. A
+   generated, independent DCP reproduces the built-in seam under the same 3.0/6.5 gate;
+   no Adobe profile is committed. Adobe/DCP behavior also requires manual verification
+   at look sign-off; `scripts/SyntheticDcpGenerator.csproj` is the dev-only fixture
+   generator.
 
 ### 4.2 Perceptual-chroma look gate
 
-`PerceptualChromaLookGateTests` renders a test-only frozen legacy Modulate reference
-beside the production OKLCh result from the same upstream pixels. It covers every
-canonical golden fixture (including TIFF and HEIC under the normal codec skip policy)
-at S/V −100, −50, +50, and +100 plus two combined cases. A sentinel prevents an
-accidental shared implementation from erasing the A/B difference. The sheet also joins
-the D300 manifest geometry and patch mapping with oracle labels/reference Lab values to
-show skin and neighboring non-skin crops under positive and negative vibrance.
+`PerceptualChromaLookGateTests` compares a frozen legacy Modulate reference with
+production OKLCh across canonical fixtures, signed slider extremes and ColorChecker
+crops. `ColorMixerLookGateTests` renders identity plus each band's saturation treatment.
 
 ```powershell
 $env:HAPPY_PHOTON_CHROMA_LOOKGATE='1'
@@ -373,14 +199,6 @@ dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build `
   --filter FullyQualifiedName~PerceptualChromaLookGateTests
 ```
 
-The generated `index.html` is the maintainer product checkpoint; approval is required
-before merge and the artifacts are not a numeric-oracle substitute.
-
-`ColorMixerLookGateTests` generates the D300 ColorChecker identity plus one
-Saturation +80 render for each mixer band. The matching headless mixer showcases write
-Dark and Middle Gray scenes with the mockup values to `artifacts/shots/`, so swatch
-spacing, touched state, gradients, and the four-row treatment can be reviewed together:
-
 ```powershell
 $env:HAPPY_PHOTON_MIXER_LOOKGATE='1'
 $env:HAPPY_PHOTON_MIXER_LOOKGATE_DIR='artifacts/color-mixer-lookgate'
@@ -388,940 +206,63 @@ dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build `
   --filter FullyQualifiedName~ColorMixerLookGateTests
 ```
 
-The headless showcase is always on:
-
-```powershell
-dotnet test HeadlessTests/HappyPhoton.Headless.Tests.csproj -c Release --no-build `
-  --filter FullyQualifiedName~MixerGroup_Showcase
-```
+Maintainer approval of the generated review sheets is required before merge; sheets
+never replace numeric oracles. The headless filter prefix
+`EffectsControlTests.MixerGroup_Showcase` selects
+`MixerGroup_ShowcaseRendersInDarkTheme` and `MixerGroup_ShowcaseRendersInMidGrayTheme`,
+saving UI evidence under `artifacts/shots/`.
 
 ## 5. Performance
 
-The opt-in [culling qualification runner](../cull-perf.md) runs frozen workloads
-in fresh full-CPU Release processes and retains JSON, event, and TRX evidence.
-`Tests/CullPerfGates.json` owns its reviewed thresholds and comparison identities.
-Informational `coverageGaps` describe instrumentation limits; only missing required
-metric evidence blocks qualification. Unavailable report-only metrics are marked
-`notMeasured`, and measured gates can pass or fail.
-The migrated adjacent-preview measurement retains its approved budgets and memory
-sampler; latency comes from publication events checked against actual polling
-brackets, with polling delay reported separately.
-
-Locals opt-in qualification uses `LocalsFusedBaselineTests.Qualified*`, with
-`HAPPY_PHOTON_PERF=1`, `HAPPY_PHOTON_FULL_CPU=1`, and
-`HAPPY_PHOTON_LOCALS_FIXTURE=raw|standard|synthetic` (locally available fixtures).
-Run one Qualified test per fresh Release process; use `LOCALS_SAMPLES=15` for G2.
-G1 requires a <=150 ms preview tick and <=45 ms stage delta; G2 requires monotone
-coverage cost and <=150 ms ticks. G5 freezes mean/p99 delta-E bounds for feather .25/.001:
-RAW 3/15 and 3.6/18, HEIC 1.3/14.5 and 1.6/18.5; synthetic is report-only.
-G6 allows <=1 Q16 code at the RAW crossing (final sRGB is report-only).
-G7 allows one 1600 px Q16 RGB frame of incremental private memory and <=64 KB
-caller allocation. G8 requires a <=150 ms contended tick; G9 allows export delta
-<=max(5%, 500 ms per full-resolution render). Headless
-`LocalsShowcaseTests.MaskBrushMeetsWeightAndBuildGates` owns G10: <=.002 weight
-error, <5 ms brush construction, and no base-pixel access.
-
-Radial qualification adds `QualifiedRadialG1G7`, `G2`, `G5`, `G9` and `G10`
-in that same class, each in a fresh process with five timing pairs. R1 is a
-centered 30° ellipse covering 45% of the frame, ry=2rx/3, feather .5, Inside,
-+2 EV; R8 uses eight radius-.11 circles on the fixed 4×2 grid, whose union
-coverage depends on the fixture aspect (RAW 44%, portrait HEIC 34%; asserted in
-30–50%). Both assert geometric coverage equals non-identity coverage. G5 names
-off/linear/global/soft-radial/hard-radial arms explicitly and reports every arm
-before failing. Radial bounds (run 245) are RAW 3.2/17.5 soft and 4.0/20.5 hard,
-HEIC 1.6/21.0 soft and 1.8/23.5 hard; every radial arm must also stay below the
-global +2 EV arm, because the radial excess over linear is exposure
-non-commutation with the resize, not mask sampling: the closed-form weight field
-at preview resolution is pinned against the full-resolution field binned into
-the preview grid (feather .5: mean <=.001, p99 <=.005; hard edge: boundary
-pixels <=.3%). `LocalsLinearParitySentinelTests` freezes active linear
-interactive/resting pixels and JSON/hash at 1191d2d. Radial headless tests sample
-the rendered brush against an independent spatial oracle in both polarities at
-feather 0/.5/1, with <=.02 spatial error, <=.002 stop error, and zero base reads.
-
-`PlatformRenderGoldens` preserves exact per-platform pixel hashes for the
-render-sequence and linear parity sentinels. Linux x64 and macOS ARM64 hashes
-were measured at their original frozen commits (73d631c and 1191d2d), then
-compared with ac89bc6 in [historical CI run 34060709129](https://github.com/seasalim/happy-photon/actions/runs/34060709129).
-All 16 cases per Unix platform matched their historical reference exactly;
-the Windows expectations remain unchanged. These native-library-dependent
-hashes assert same-platform regression, not cross-platform byte equality.
-
-Local color qualification (run 246) adds `QualifiedColorG1G7`, `G2`, `G4b`, `G5`,
-`G8Export`, `G9`, and `G9Eight` in `LocalsFusedBaselineTests`. Run each separately
-in a fresh Release process, full CPU, five paired samples, on the Canon ISO-6400
-RAW and iPhone ISO-1000 HEIC. C1 is the 45% linear +2 EV control plus Temperature
-+50, Tint -50, Saturation +100; C8 uses those values on the frozen R8 grid.
-G1 pairs an exposure-only control in the same process: frozen color stage ceilings
-are RAW 38.9 / HEIC 44.4 ms; control ceilings are 23.9 / 29.4 ms. C1/C8 ticks,
-including under the 3200px cap-2 resting render, must be <=150 ms. C8 export delta
-must be <=500 ms. Memory permits one preview Q16 RGB frame (W*H*6) and <=64 KB
-caller allocation, with no per-render mask field.
-G4b compares full-weight local WB (no local Exposure/Saturation) against global
-Custom WB at the identical relative white at the crossing/tone-stage output,
-<=1 Q16 code. Final-preview max code difference and the count of pixels with any
-channel differing by more than one code are reported, not asserted. The worst
-stage pixel diagnostic distinguishes analytic/LUT rounding from downstream
-NR/sharpen amplification. G5 uses C1 without Exposure and aligns preview/export at 1600: mean/p99
-DeltaE00 ceilings are RAW 4.0/20.5 and HEIC 1.8/23.5; off/local/global-W ordering
-is reported only. `LocalsContractPrototypeTests.ProductionColor*` compares the
-production kernels with the independent Reference oracle at <=1 Q16 code,
-including non-unit Fold, order, near-zero weight and standard negative channels.
-Neutral/monochrome tests and the unchanged linear sentinels pin exact bypass.
-`LocalsViewModelTests` covers release/reset undo and mono dormancy; the 1200x700
-Dark scenes `develop-locals-color` and `develop-locals-mono` supply review images.
-
-Range qualification uses
-`./Tests/RunLocalsBaseline.ps1 -Gate <gate> -Fixture raw|standard`; run each
-gate in a fresh Release process with five pairs (default), full CPU, and a 120 s
-limit.
-
-| Gate | Workload / measurement |
-| --- | --- |
-| `QualifiedRangeControlTick` | Current C8 color-radial 1600 px tick and allocation |
-| `QualifiedRangeControlContention` | C8 tick during a cap-2 3200 px resting render |
-| `QualifiedRangeControlExport` | C8 off/on export; three RAW variants, one HEIC |
-| `QualifiedRangeClassification` | RGB-read control; double classification; double/FAST eight-window arms, unculled and CULLED |
-| `QualifiedRangeLuminanceClassification` | Exact double OKLab L for the eight luminance windows only, CULLED; no hue term |
-| `QualifiedRangeClassificationExport` | Same arms at full resolution, excluding encoding |
-| `QualifiedRangeOverlay` | Selected-mask field/tint computation and separate allocation/page-commit timing |
-| `QualifiedRangeRequestedOverlay` | Requested mask prototype from a loaded base to a drawable bitmap |
-| `QualifiedRangeReliability` | Both noisy fixtures' pre-tone 3×3 hue deviation and declared EV sweep |
-
-Except for `QualifiedRangeRequestedOverlay`, setup prepares geometry/DCP and
-Q16 RGB; timed arms apply global WB and share
-one classification across locals. For i=0…7, L bounds are .08i / (.4+.08i), hue
-center 45i, width 60 (360 at i=7); L/hue softness is 0 at i=0,3,6, otherwise
-.1/30°. CULLED uses `RadialSettings`' frozen R8 terms: classify only their union
-and evaluate each window only where its own geometric weight >0, including
-culling cost. FAST uses a shared 2 MiB cube-root LUT: interpolation on
-.01≤|LMS|<4, double oracle elsewhere. Proven bounds |ΔL|≤2e-8 and |Δab|≤9e-8
-determine boundary guards; hard boundaries and steep shoulders fall back once
-per pixel. `LocalsContractPrototypeTests.RangeFast*` checks
-adjacent-double/extended-RGB fidelity (zero hard flips, soft-weight error
-≤1e-3); `RangeOracle*` pins windows, picker and basis equivalence, including RAW
-exposure-only and monochrome cases. No classification image is retained. Overlay
-uses the first window and analytic 45% linear mask, allocating 4N-byte float and
-4N-byte BGRA buffers; native upload is excluded. Private-memory sampling remains
-10 ms plus the final live sample; caller allocation excludes workers. Shared
-LUT/setup is outside per-render timing.
-
-Observations: Windows, 24 CPUs, resident Canon ISO-6400 CR2 / iPhone ISO-1000
-HEIC; paired medians in ms.
-
-| Observation | RAW | HEIC |
-| --- | ---: | ---: |
-| C8 tick / contended control | 56.33 / 131.48 | 55.76 / 123.71 |
-| Export off / C8 delta control | 2747.15 / +337.83 | 840.12 / +167.52 |
-| Double classifier preview / full increment | 18.18 / 136.44 | 17.72 / 92.22 |
-| Double + eight windows, unculled / CULLED increment | 28.47 / 19.09 | 28.84 / 17.00 |
-| FAST + eight windows, unculled / CULLED increment | 66.20 / 15.72 | 28.25 / 15.93 |
-| R8 preview union / mean windows per pixel | 44.45% / .456 | 34.32% / .406 |
-| Projected ordinary / contended, CULLED double | 77.49 / 144.89 | 71.60 / 149.00 |
-| Projected ordinary / contended, CULLED FAST | 74.12 / 141.52 | 70.53 / 147.93 |
-| Full double + windows, unculled / CULLED increment | 254.25 / 168.78 | 181.61 / 109.49 |
-| Full FAST + windows, unculled / CULLED increment | 276.30 / 177.93 | 175.02 / 104.89 |
-| Overlay allocate+commit / field+tint / total | 1.64 / 52.87 / 54.52 | 2.18 / 34.59 / 36.89 |
-| Classifier max arm-median private / caller bytes (preview+full) | 28672 / 3008 | 4096 / 2880 |
-| Overlay incremental private / caller bytes | 0 / 13673072 | 15257600 / 15362800 |
-
-Projections add paired increments to supplied tick/contended baselines
-58.4/125.8 RAW and 54.6/132.0 HEIC; they are **not fused measurements**. Full
-increments are per upstream render shared by variants. Warmup variance remains
-visible in per-arm samples; passing a measurement gate does not qualify
-production. Reliability bins pre-tone C in .002 steps (≥100 samples); D is
-median 3×3 circular deviation √(−2 ln R), where R is the length of the mean unit
-hue vector (zero at C=0), borders excluded, then prefix-min ≥45° / suffix-max
-≤15° crossings. The worse-fixture envelope requires both crossings, ≤2× fixture
-disagreement and start<end; missing bins break evidence: INCONCLUSIVE (RAW
-noise-dominated 70–84° through C=.09; HEIC codec-smoothed near 1°). The pinned
-absolute pre-tone r(C) is smoothstep .01–.04; for Rec.2020 [.0005,.00075,.0075]
-scaled by 2^EV in .01 EV steps, r<1 at −1.31 EV and r<.5 at −3.34 EV.
-
-Luminance Range production gates measure the shipped renderer with every R8
-local carrying its luminance window above and no hue term:
-`LocalsFusedBaselineTests.QualifiedRangeProduction{Tick,Contention,Export,Bypass,Agreement,ClassificationMemory}`
-in `Tests/` and `LocalRangeOverlayGateTests.QualifiedRangeProductionRequestedOverlay`
-in `HeadlessTests/`. Build Release with `HAPPY_PHOTON_FULL_CPU` unset, then run
-each test by exact `FullyQualifiedName` in a fresh process with `HAPPY_PHOTON_PERF=1`,
-`HAPPY_PHOTON_FULL_CPU=1`, `LOCALS_SAMPLES=5` and
-`HAPPY_PHOTON_LOCALS_FIXTURE=raw|standard`; every sample is printed. The overlay
-gate times the selected R1 radial (L .47–1, softness .1) from acquiring the loaded
-matching base to a drawable `WriteableBitmap`, against the resting preview with
-Show Mask off as the memory control.
-
-| Gate | Limit | RAW | HEIC |
-| --- | --- | ---: | ---: |
-| Ordinary tick | ≤ 150 ms | 60.9 ms | 49.7 ms |
-| Contended tick (3200 px resting render) | ≤ 150 ms, median (all samples reported) | 129.3 ms | 130.6 ms |
-| Range increment over the same unrestricted locals | ≤ 22 ms | −1.1 ms | −1.7 ms |
-| Export delta over no locals | ≤ max(5 %, 500 ms) | +339 ms | +219 ms |
-| Requested mask, median | ≤ 60 ms | 28.1 ms | 39.2 ms |
-| Requested mask private increment | ≤ max(150 % preview Q16 frame, 16 MiB) | 6.8 MB | 7.7 MB |
-| Classification private / caller allocation | ≤ max(1 % frame, 1 MiB) / ≤ 64 KiB | 0 / 14 KB | 0.04 MB / 14 KB |
-| Absent, off or fully open range vs unrestricted | 0 differing Q16 codes | 0 | 0 |
-
-Measured 2026-09-22, Windows, 24 CPUs. The increment can be negative because a
-restricted local skips blend and tone work where its window is zero. The mask
-worker is eagerly optimized, but the first request in a process still pays JIT
-(about 50 ms on RAW). Restricted preview/export agreement (R1 as above,
-`WysiwygTests.AlignForComparison`) is image mean/p99 ΔE 1.68/10.05 RAW and
-1.36/19.19 HEIC, weight mean/p99 .0003/.0012 and .0095/.265. A lightness window
-over fine texture does not commute with downsampling, so isolated weights can
-differ by up to 1. WP6 below pins the image bounds and the support-restricted
-weight bounds for the eight-local workload.
-`LuminanceRangeTests`, `LocalsContractPrototypeTests.ProductionLuminance*`,
-`LocalsViewModelTests.Range*`, `DualRangeTrackTests` and `LocalRangeMaskTests`
-cover persistence, oracle agreement, edit ownership, endpoint key handling, stale
-masks and read-only base sampling; `LocalsShowcaseTests.RenderLuminanceScene`
-writes `artifacts/shots/locals-luminance-{panel,mask,off}.png`.
-
-### WP4 combined luminance × hue qualification (run 263)
-
-The `QualifiedRangeHue{Tick,Contention,Export,ClassificationMemory,Bypass,Agreement}`
-tests extend the same R8/C8 workload with run 261's exact eight L×H windows
-(hue centers i×45°, width 60° except the last full circle, softness 0° for
-indices divisible by three and 30° otherwise). Run each in its own fresh Release
-process using the environment above. `QualifiedRangeHueRequestedOverlay` and
-`QualifiedRangeHuePick` live in `LocalRangeOverlayGateTests` in the headless project.
-No-hue bypass compares the frozen `6303626` evaluator at every fixture pixel,
-including luminance-only and hue-off. Full-frame Q16 sentinels also match an isolated
-Release build of `6303626` for luminance-only and disabled-hue variants with/without
-local color; unrestricted hashes retain their prior sentinel values.
-
-Measured Windows, 24 CPUs, 2026-09-22, five pairs unless noted. Before values are
-Claude's fresh approved L8 baseline at `6303626`; C8 ordinary controls were
-52.6 / 45.9 ms before and 52.0 / 47.1 ms in this run. Restricted ticks can be faster
-because windows skip blend/tone work. RAW render gates use Canon EOS 6D ISO 6400;
-HEIC uses iPhone 14 Pro ISO 1000. All originals passed the live local-file check.
-
-| Gate | Before RAW / HEIC | After RAW / HEIC | Limit |
-| --- | --- | --- | --- |
-| Ordinary LH8 tick | L8 51.4 / 44.6 ms | 43.7 / 40.8 ms | 150 ms |
-| Contended LH8 tick | L8 124.9 / 120.6 ms | 110.5 / 116.4 ms | 150 ms |
-| Range increment over C8 | L8 −1.0 / +0.3 ms | −8.7 / −6.2 ms | 22 ms |
-| Export increment over no locals | L8 +279.6 / +166.0 ms | +220.6 / +127.9 ms | max(5%, 500 ms) |
-| Requested overlay | L 35.5 / 40.1 ms | L×H 34.4 / 50.2 ms | 60 ms median |
-| Overlay private increment | 6.8 / 7.7 MB | 6.85 / 8.07 MB | max(150% Q16 frame, 16 MiB) |
-| Classification private increment | ~0 / ~0 | 0 / 0 bytes median | max(1% frame, 1 MiB) |
-| Classification caller allocation | ~14.3 KB | 14.4 / 14.4 KB | 64 KiB |
-| No-hue evaluator / Q16 sentinel differences | 0 | 0 / 0 | exactly zero |
-| Accepted picker, 15 samples | new | 0.056 / 0.075 ms | 60 ms median, every pick accepted |
-
-Picker-only fixture deviation: a 199×199 normalized-point scan of the Canon fixture
-found no accepted default-basis sample. The accepted RAW gate instead uses the existing
-Pentax K-r DNG at corrected-frame (0.35, 0.345), returning 258.167496° from 128 pixels.
-HEIC uses (0.5, 0.5), returning 324.282920° from 124 pixels. Every timed sample
-is accepted; no rejection fallback is part of the gate. Timing includes matching-base
-acquisition, geometry/DCP/WB seam, footprint, and averaging; it excludes history/render.
-Canon remains the fixture for every other RAW gate. The review-turn scan summary is
-recorded below and in `artifacts/fix1/pick-raw.log`; the original performance logs
-remain under `artifacts/hue-gates/`.
-
-All samples below are in ms unless labeled bytes (negative private increments are
-paired process-memory noise). Overlay includes its first measured 130.961 ms RAW sample;
-its gate is explicitly the median. No full-frame L/hue field is allocated or retained.
-
-**Canon RAW samples**
-
-```text
-C8 tick: [52.5768, 51.8647, 54.403, 51.5549, 51.9969]
-LH8 tick: [43.8482, 43.7269, 43.897, 43.2418, 42.095]
-range increment: [-8.7286, -8.1378, -10.506, -8.3131, -9.9019]
-contended alone: [100.6143, 98.7375, 98.3193, 97.2726, 96.7785]
-contended concurrent: [111.7849, 107.774, 109.2049, 110.5213, 112.7772]
-export off: [2817.4939, 2822.8367, 2848.7516, 2807.4247, 2804.5595]
-export LH8: [3035.4021, 3095.1477, 3052.4512, 3039.7604, 3025.1748]
-classification private bytes: [0, 0, 0, 0, 0]
-classification caller bytes: [14384, 14448, 14384, 14448, 14216]
-overlay: [130.961, 32.5828, 34.425, 33.1673, 36.4665]
-overlay private bytes: [6438912, 6848512, 6848512, 7634944, 7770112]
-```
-
-**iPhone HEIC samples**
-
-```text
-C8 tick: [45.7093, 47.1299, 47.2419, 47.1297, 45.928]
-LH8 tick: [40.2237, 40.9467, 38.9242, 40.8412, 40.9759]
-range increment: [-5.4856, -6.1832, -8.3177, -6.2885, -4.9521]
-contended alone: [101.7871, 99.6395, 107.2269, 99.7174, 104.4362]
-contended concurrent: [115.3177, 118.5664, 116.3569, 115.7435, 119.2711]
-export off: [842.7486, 844.4557, 846.9536, 844.4365, 841.8009]
-export LH8: [971.1254, 983.0724, 968.3041, 966.5912, 969.6753]
-classification private bytes: [196608, 0, -98304, -12288, 98304]
-classification caller bytes: [14576, 14384, 14384, 14320, 14344]
-overlay: [50.185, 52.5323, 51.5893, 38.952, 27.6519]
-overlay private bytes: [6639616, 6656000, 8069120, 8609792, 8093696]
-```
-
-Pentax RAW accepted picker ms: [2.0025, 0.0959, 0.0586, 0.0559, 0.0530, 0.0574, 0.0557, 0.0568, 0.0547, 0.0545, 0.0517, 0.0512, 0.0696, 0.0521, 0.0580].
-
-iPhone HEIC accepted picker ms: [2.7676, 0.1206, 0.0865, 0.0747, 0.0795, 0.0748, 0.0767, 0.0701, 0.0699, 0.0733, 0.0669, 0.0835, 0.0697, 0.0694, 0.0674].
-
-Restricted preview/export agreement is bounded by the WP6 limits below: image mean/p99 ΔE
-is 2.145257 / 18.182220 on RAW and 1.143132 / 15.039284 on HEIC. The production R8
-settings are compared with `WysiwygTests.AlignForComparison`; individual weight
-fields use the existing linear Rec.2020 Magick resize. Local 1–8 weight statistics:
-
-RAW (mean / p99 / max): 1: 0.007472 / 0.267628 / 0.985199; 2: 0.002292 / 0.072847 / 0.977035; 3: 0.002615 / 0.082643 / 1.000000; 4: 0.000672 / 0.000000 / 0.999756; 5: 0.000001 / 0.000000 / 0.038651; 6: 0.000003 / 0.000000 / 0.983215; 7: 0.000000 / 0.000000 / 0.000000; 8: 0.000000 / 0.000000 / 0.003052.
-
-HEIC (mean / p99 / max): 1: 0.000001 / 0.000000 / 0.199100; 2: 0.000880 / 0.008499 / 1.000000; 3: 0.002348 / 0.042130 / 1.000000; 4: 0.000162 / 0.000000 / 1.000000; 5: 0.000173 / 0.000031 / 0.871748; 6: 0.000000 / 0.000000 / 0.000153; 7: 0.000000 / 0.000000 / 0.000000; 8: 0.000098 / 0.000000 / 0.811749.
-
-`HueRangeTests`, the combined `ProductionLuminanceMatchesIndependentOracle` cases,
-and the Hue/HueInput locals VM tests cover windows, DCP/WB basis, persistence,
-monochrome dormancy, history/transfer/reset, key wrapping, picker arbitration,
-base/settings staleness, and read-only masks. `RenderHueScene` writes
-`artifacts/shots/locals-hue-{panel,mask,monochrome}.png`; the monochrome scene uses
-a synthetic monochrome RAW base as a UI capability fixture. Full-suite verification
-belongs to the orchestrator; implementor validation uses targeted filters plus
-`./scripts/verify.ps1 -PolicyOnly`.
-
-### WP4 review turn 1 requalification
-
-The review reproduced RAW first-use tiering regressions (hue medians 84.7 / 72.0 ms;
-luminance first samples 85.8 / 85.0 ms). Per-pixel sampling, classification and
-window helpers now request eager optimization/inlining. Range capabilities are
-resolved once per mask, and luminance-only masks retain the WP3 lightness-only
-classifier through the shared read-only sampling seam. No classification image
-is allocated and the math and source ownership are unchanged.
-
-Final fresh-process Release measurements (24 CPUs, same environment and workload
-as above) are the `overlay-complete-*` entries below. L / L×H medians are
-27.5909 / 28.3120 ms RAW and 38.4260 / 38.6732 ms HEIC, all below 60 ms.
-The first two measured luminance samples are 47.7307 / 27.5909 ms RAW and
-37.6488 / 39.1073 ms HEIC, below the corresponding WP3 values
-49.8 / 49.8 and 37.7830 / 40.1216 ms. The previously unreported initial request
-is now separately timed before the existing five samples; every initial request
-in the final run is also below 60 ms. Private increments remain within their gates.
-
-All review-turn overlay measurements follow, including the intermediate builds:
-`overlay-raw/standard` added helper optimization; `overlay-final` also hoisted
-capability checks and optimized the luminance window; `overlay-complete` restored
-lightness-only classification. No samples were discarded. Times are ms and private
-increments are bytes; logs and TRX evidence are under `artifacts/fix1/`.
-
-```text
-overlay-complete-raw-Hue.log
-first_request_ms=45.7754
-production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=28.3120 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[52.3466,27.7699,28.312,28.8245,27.583] private=[7180288,6848512,6848512,6848512,7110656]
-overlay-complete-raw-Production.log
-first_request_ms=44.6143
-production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=27.5909 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[47.7307,27.5909,27.3613,27.4475,27.7841] private=[6524928,6848512,6848512,6848512,6848512]
-overlay-complete-standard-Hue.log
-first_request_ms=47.9419
-production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=38.6732 private_increment=7692288 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[38.309,39.112,39.646,38.6732,29.4119] private=[7319552,6647808,8069120,7692288,8597504]
-overlay-complete-standard-Production.log
-first_request_ms=48.8031
-production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=38.4260 private_increment=7700480 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[37.6488,39.1073,40.0306,38.426,30.7562] private=[6639616,6647808,8069120,7700480,8396800]
-overlay-final-raw-Hue.log
-first_request_ms=44.2920
-production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=28.0299 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[52.293,28.0299,28.5951,27.8094,27.2971] private=[5853184,6848512,6848512,6848512,7110656]
-overlay-final-raw-Production.log
-first_request_ms=43.2341
-production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=28.5343 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[50.6761,28.6088,28.388,27.9137,28.5343] private=[6610944,6848512,6848512,7110656,7110656]
-overlay-final-standard-Hue.log
-first_request_ms=47.6782
-production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=37.5083 private_increment=7692288 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[37.5646,36.949,37.9481,37.5083,33.1344] private=[2789376,6647808,8060928,7692288,8396800]
-overlay-final-standard-Production.log
-first_request_ms=48.8013
-production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=40.2826 private_increment=7696384 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[38.1944,40.7116,40.2826,40.3519,22.7968] private=[7311360,6651904,8065024,7696384,8208384]
-overlay-raw-Hue.log
-first_request_ms=45.7752
-production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=28.9691 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[43.6407,28.3978,27.8139,28.9691,30.027] private=[12611584,6848512,6848512,6848512,6848512]
-overlay-raw-Production.log
-first_request_ms=45.3771
-production_overlay fixture=RAW size=1600, 1068 cpu=24 median_ms=28.6793 private_increment=6848512 limit=16777216 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[46.9467,28.2388,28.6793,28.6944,27.891] private=[12857344,6848512,6848512,6848512,6848512]
-overlay-standard-Hue.log
-first_request_ms=49.6430
-production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=40.8162 private_increment=7692288 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[39.4416,41.143,41.2296,40.8162,25.8205] private=[7319552,6647808,8069120,7692288,8060928]
-overlay-standard-Production.log
-first_request_ms=44.7594
-production_overlay fixture=HEIC size=1200, 1600 cpu=24 median_ms=39.6647 private_increment=7696384 limit=17280000 coverage=.45 upload=WriteableBitmap control=resting_preview_ShowMask_off times=[39.6647,39.9411,40.1303,39.1556,33.0809] private=[6656000,6651904,8065024,7696384,8273920]
-```
-
-The accepted picker gate still uses Pentax RAW and HEIC; all 15 samples per fixture
-passed. The Canon scan now runs after RAW timing, using the production sampler on
-its matching 1600×1068 base at the 199×199 points (x/200, y/200), x,y=1…199.
-Of 39,601 points, 39,599 reject as too neutral and 2 as mixed colors; 0 are accepted.
-Best r(C̄) is 0.664880775 at (0.685, 0.155), with coherence 0.618040694;
-the best coherence anywhere is 0.685853528. This evidences the fixture substitution.
-Production sampling exposes these two diagnostics without changing the rejection
-thresholds. Complete picker timing output follows.
-
-```text
-pick-raw.log
-sample=0 ms=4.0200 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=1 ms=0.1137 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=2 ms=0.0537 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=3 ms=0.0521 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=4 ms=0.0485 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=5 ms=0.0490 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=6 ms=0.0511 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=7 ms=0.0585 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=8 ms=0.0505 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=9 ms=0.0476 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=10 ms=0.0493 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=11 ms=0.0465 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=12 ms=0.0651 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=13 ms=0.0473 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=14 ms=0.0647 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-pick fixture=Pentax-RAW median_ms=0.0511 all_accepted=True
-Canon scan grid=199x199 points=39601 base=1600x1068 reasons=[mixed colors=2, too neutral=39599] best_reliability=0.664880775 coherence_at_best=0.618040694 best_point=0.685, 0.155 best_coherence=0.685853528
-pick-standard.log
-sample=0 ms=4.2333 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=1 ms=0.1148 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=2 ms=0.0806 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=3 ms=0.0645 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=4 ms=0.0649 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=5 ms=0.0603 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=6 ms=0.0672 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=7 ms=0.0615 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=8 ms=0.0607 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=9 ms=0.0696 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=10 ms=0.0587 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=11 ms=0.0793 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=12 ms=0.0623 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=13 ms=0.0596 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=14 ms=0.0584 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-pick fixture=HEIC median_ms=0.0645 all_accepted=True
-```
-
-Final-build fused tick and bypass gates also passed on both fixtures: RAW LH8 median
-46.5211 ms (C8 55.2650), HEIC 42.0910 ms (C8 52.5338), below 150 ms with range
-increments below 22 ms. Bypass reported zero differing evaluator doubles and Q16
-codes for all no-hue cases. Every fused timing sample and the final-build picker
-repeat are below; final picker medians are 0.0483 ms RAW and 0.0653 ms HEIC.
-
-```text
-QualifiedRangeHueTick-raw.log
-fixture=canon-eos-6d-iso-6400.cr2 coverage=0.4445318352059925 cpu=24 process=3508 LH8 fused control=55.2650 tick=46.5211 increment=-8.8252 private_increment=-196608 caller_increment=-56 no_retained_L=True off=[55.8931,54.7993,54.3514,55.265,58.2022] on=[46.352,47.1191,46.5211,46.4398,49.1252] delta=[-9.5411,-7.680199999999999,-7.830300000000001,-8.825200000000002,-9.076999999999998] private=[-10190848,-196608,0,-10272768,0] caller=[-88,-56,144,-560,336]
-QualifiedRangeHueTick-standard.log
-fixture=iphone-14-pro-iso-1000.heic coverage=0.34319791666666666 cpu=24 process=30728 LH8 fused control=52.5338 tick=42.0910 increment=-10.8631 private_increment=61440 caller_increment=272 no_retained_L=True off=[51.7194,52.3432,53.6079,53.5639,52.5338] on=[45.3089,42.0413,42.7448,42.091,41.2397] delta=[-6.410499999999999,-10.301900000000003,-10.863100000000003,-11.472899999999996,-11.2941] private=[397312,11497472,-32768,61440,-8192] caller=[528,272,272,400,144]
-pick-complete-raw.log
-sample=0 ms=3.9930 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=1 ms=0.0951 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=2 ms=0.0499 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=3 ms=0.0488 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=4 ms=0.0454 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=5 ms=0.0461 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=6 ms=0.0483 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=7 ms=0.0524 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=8 ms=0.0482 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=9 ms=0.0458 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=10 ms=0.0458 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=11 ms=0.0445 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=12 ms=0.0645 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=13 ms=0.0529 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=14 ms=0.0464 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-pick fixture=Pentax-RAW median_ms=0.0483 all_accepted=True
-Canon scan grid=199x199 points=39601 base=1600x1068 reasons=[mixed colors=2, too neutral=39599] best_reliability=0.664880775 coherence_at_best=0.618040694 best_point=0.685, 0.155 best_coherence=0.685853528
-pick-complete-standard.log
-sample=0 ms=4.1373 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=1 ms=0.1071 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=2 ms=0.0805 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=3 ms=0.0640 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=4 ms=0.0665 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=5 ms=0.0653 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=6 ms=0.0672 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=7 ms=0.0624 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=8 ms=0.0618 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=9 ms=0.0650 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=10 ms=0.0608 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=11 ms=0.0786 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=12 ms=0.0631 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=13 ms=0.0668 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=14 ms=0.0613 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-pick fixture=HEIC median_ms=0.0653 all_accepted=True
-```
-
-The mask showcase picks foliage at (0.75, 0.35), yielding 73.061229°, so the magenta
-tint is visible on the branches; the panel retains its 350° wrap-crossing selection.
-`locals-hue-picking.png` additionally records the pressed toggle and armed instruction.
-The existing panel, mask, and monochrome PNGs were regenerated and inspected.
-Final net production diff versus `6303626`: **+388 lines** (+32 for this review).
-The review removes repeated base acquisition from binding getters and moves hue
-color conversion to the shared color owner; no new full-frame buffers or source reads.
-
-Review turn 3 - displayed-surface hue sampling (2026-09-22): the new alternating-hue
-regression reproduced the defect before the production change: a 1000x100 base
-shown at 100x10 was rejected as mixed colors although the mask classified a
-coherent selected color. It now passes with a one-pixel accepted sample matching
-the mask classification within 1e-10 degrees. The picker and mask share preparation
-through the surface resize; the corrected-frame disk maps into those pixels.
-Independent cropped/resized footprint tests and same-base surface-size change /
-revert stale-result tests pass. No source reads or retained classification buffers
-were added. The ViewModel owns surface-size identity, and Services owns sampling.
-
-The approved `QualifiedRangeHuePick` gate was rerun in separate fresh Release
-processes on Pentax RAW and iPhone HEIC, with the actual preview surface size
-passed to the sampler. All 15 samples per fixture were accepted. Median before /
-after: RAW 0.0483 / 0.0398 ms; HEIC 0.0653 / 0.0671 ms (limit <=60 ms).
-Every sample follows; full logs are under `artifacts/hue-gates/review3-pick-*.log`.
-
-```text
-review3-pick-raw.log
-sample=0 ms=3.8120 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=1 ms=0.0861 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=2 ms=0.0462 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=3 ms=0.0404 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=4 ms=0.0398 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=5 ms=0.0396 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=6 ms=0.0382 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=7 ms=0.0398 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=8 ms=0.0399 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=9 ms=0.0397 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=10 ms=0.0389 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=11 ms=0.0386 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=12 ms=0.0906 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=13 ms=0.0405 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-sample=14 ms=0.0388 point=0.35, 0.345 hue=258.16749635167577 rejection= count=128
-pick fixture=Pentax-RAW median_ms=0.0398 all_accepted=True
-Canon scan grid=199x199 points=39601 base=1600x1068 reasons=[mixed colors=2, too neutral=39599] best_reliability=0.664880775 coherence_at_best=0.618040694 best_point=0.685, 0.155 best_coherence=0.685853528
-review3-pick-standard.log
-sample=0 ms=4.0621 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=1 ms=0.1126 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=2 ms=0.0860 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=3 ms=0.0657 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=4 ms=0.0671 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=5 ms=0.0621 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=6 ms=0.0686 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=7 ms=0.1137 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=8 ms=0.0665 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=9 ms=0.0677 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=10 ms=0.0636 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=11 ms=0.0843 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=12 ms=0.0662 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=13 ms=0.0643 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-sample=14 ms=0.0619 point=0.5, 0.5 hue=324.28291967449246 rejection= count=124
-pick fixture=HEIC median_ms=0.0671 all_accepted=True
-```
-
-R3-2 corrects the UI documentation to keyboard-stepped degree sliders. R3-3 shares
-the range-header column so the enable checkboxes align. The seven hue/luminance
-showcase scenes were regenerated. Release build passed (one pre-existing xUnit2020
-warning); 8 hue unit tests and 134 targeted headless tests passed. Policy-only
-verification and diff whitespace checks passed; the full suite remains with Claude.
-Net production diff for this review: **+21 lines**, branch total **+409** versus
-`6303626`. The mask renderer's private resize is deleted in favor of the shared
-preparation step; no capability is removed.
-
-Local color qualification measurements (24 CPUs, five pairs, 2026-09-06):
-
-| Metric | RAW | HEIC |
-| --- | --- | --- |
-| C1 tick / stage delta, ms | 50.1 / 17.2 | 50.2 / 22.6 |
-| Paired control stage delta, ms | 20.1 (frozen 18.9) | 23.4 (frozen 24.4) |
-| C8 tick, ms | 55.7 (base R8 70.7) | 51.4 (base R8 60.2) |
-| C1 / C8 contended tick, ms | 114.3 / 123.1 | 121.2 / 129.4 |
-| C8 export delta, ms | 317.1 (base R8 245.3) | 169.7 (base R8 160.6) |
-| C1 mean / p99 DeltaE00 | 1.855 / 11.626 | 0.988 / 11.057 |
-| C1 caller allocation, bytes | 2064 | 1888 |
-| G4b crossing / final preview max Q16 codes | 1 / 167 | 1 / 3 |
-| G4b final-preview pixels over one code | 2192 | 742 |
-
-Opt-in `HAPPY_PHOTON_PERF=1` diagnostics remain outside normal CI. The tone
-gate is `AgxPerformanceGateTests`: one warm-up, median of five, a separate
-process per output target, and a required JSON report. It covers 1600px
-Contrast +25 slider ticks on the Canon 6D, Fuji X30, sRGB JPEG, and HEIC; the
-three-size RAW export per target; the full-resolution standard export; and unique-key
-cold all-channel-curve ticks for one RAW and one standard fixture,
-sampling process private memory every 10 ms. Reports compare against the same
-harness run on the pre-AgX baseline (`878903f`); budgets are slider ≤ 150 ms,
-export wall ≤ +5%, and private peak ≤ +16 MiB.
-
-All performance commands in this section also set
-`HAPPY_PHOTON_FULL_CPU=1` before launching their fresh process so the ordinary
-two-processor test-host cap does not alter the measurement. This is enforced:
-building a test project with `HAPPY_PHOTON_PERF=1` but without
-`HAPPY_PHOTON_FULL_CPU=1` fails in MSBuild, and the budget-bearing perf tests
-throw at runtime when they detect a capped host — a capped measurement fails
-loudly instead of misreading full-width budgets.
-
-The same integrated gate includes an active mixer with global chroma for every slider
-fixture, a projection-heavy Canon S=+100 active-mixer endpoint, and active-mixer
-full-resolution three-variant RAW
-exports for both targets. Active-minus-neutral private peak must stay within the same
-+16 MiB ceiling. `PerceptualChromaPerformanceTests` separately measures the complete
-pooled-band active-mixer pass, including pixel-cache traffic, against a same-fixture AgX crossing
-comparator and enforces the 60 ms class; the neutral identity test proves no pixel
-access instead of timing an empty call.
-
-`DcpPerformanceGateTests` runs separately with `HAPPY_PHOTON_R5B_PERF=1` against the
-20 MP Canon 6D fixture. It records cold external, cold embedded, and warm selected-
-profile decode deltas (≤ 50/30/15 ms), incremental matrix-kernel delta (≤ 10 ms),
-HueSat-only preview/full deltas (≤ 80/250 ms and exactly zero inactive), the standing
-150 ms slider gate, deterministic managed and retained deltas (each ≤ 8 MiB), active
-export +5%/+16 MiB, and cold/warm scans over a fixed 4,000-profile synthetic Adobe
-tree (≤ 1.5 s cold, ≤ 0.3 s warm). Run it in a fresh Release process:
-
-```powershell
-$env:HAPPY_PHOTON_R5B_PERF='1'
-dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter FullyQualifiedName~DcpPerformanceGateTests --logger "console;verbosity=detailed"
-```
-
-The waveform diagnostic reports setup separately and gates the warmed
-accumulator-only median over a pre-materialized 1024×1024 Q16 RGB span at
-5 ms. Additional opt-in diagnostics cover preview base decode and edited
-standard-thumbnail generation at 512px; track results in PR descriptions when
-a work package touches the hot path.
-
-`PreviewPipelinePerformanceTests` carries those preview diagnostics and their
-≤ 150 ms slider budgets. Heap and thread-pool residue from earlier tests in
-the class can inflate a later test's medians past budget, so the canonical run
-executes each test in its own Release process; apply the same
-one-test-per-process rule to any new `HAPPY_PHOTON_PERF` class with latency
-budgets, and never loosen a budget to make a single-process class run pass:
-
-The luminance-NR gate uses Canon RAW, Fuji RAW, JPEG, and the committed high-ISO
-iPhone HEIC at 1600px, values 50 and 100, with five alternating paired
-neutral/active samples in a Release process. Each total is ≤150 ms and each
-active-minus-neutral median delta is ≤20 ms. A stage-only diagnostic separately
-warms and measures 15 iterations at the representative two-, three-, and four-scale
-preview shapes, reporting median latency and peak private-memory delta for each.
-The three `RenderNoiseReductionPerformanceTests` full-resolution gates use a
-5472×3648 Q16 diagnostic, warm the kernel, then measure five runs in one process.
-They assert the median latency and require every run's peak private-memory delta to
-remain ≤150 MiB. Budgets are calibrated on the full-width host (`HAPPY_PHOTON_FULL_CPU=1`):
-Luma NR 100 is ≤200 ms (observed medians 126–133 ms), Chroma NR 100 is ≤350 ms
-(observed 200–238 ms), and combined Luma/Chroma NR 100 is ≤450 ms (observed
-293–307 ms). The export
-gate at value 50 retains the standing ≤max(5%, 500 ms) wall delta
-per full-resolution render: 1,500 ms across the three-variant RAW export and 500 ms
-for the standard export, both from five alternating paired samples per arm.
-
-The chroma-NR preview gate mirrors that protocol for the same four sources and values.
-Each active-minus-neutral median delta is ≤45 ms and each active total is
-≤max(150 ms, neutral + 45 ms); the stage-only diagnostic covers the corresponding
-multi-scale shapes. Chroma NR 50 also shares the standing RAW and standard export-wall
-bounds above.
-
-`RenderSharpeningPreviewGateTests` gates capture sharpening on a Canon-shaped
-1600×1067 Q16 buffer at Sharpen 100. After one warm-up it times five fresh images and
-requires the median stage cost to remain ≤15 ms (observed 11.2–11.8 ms at the 1.0 px
-preview floor). Run it in its own Release process
-with `HAPPY_PHOTON_PERF=1` and `HAPPY_PHOTON_FULL_CPU=1`; the unchanged full-resolution
-luma, chroma, and combined NR gates above remain required when sharpening changes.
-
-`AdjacentPreviewPerformanceTests` drives the real `SelectedImage` cached/fresh race
-for copied JPEG and RAW fixtures. It compares warm and disabled adjacent paints,
-selects a different uncached image while a warm is active, samples private memory,
-and checks activity, decode uniqueness, and single-pair retention. Run it alone:
-
-```powershell
-$env:HAPPY_PHOTON_PERF='1'
-dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
-  --filter FullyQualifiedName~AdjacentPreviewPerformanceTests `
-  --logger "console;verbosity=detailed"
-```
-
-`WaveformTickPerformanceTests.WaveformActiveSliderTickLatency_WhenEnabled`
-drives `ApplyEditsToPreviewArtifactsAsync` over the Display P3 JPEG fixture and
-asserts waveform presence for the active measurement and absence for its paired
-histogram-only measurement. Base `4e2b350` measured 49.2/52.0 ms total and
-46.0/48.5 ms histogram-only in separate Release processes (3.2/3.5 ms deltas).
-The merge-candidate gate is total ≤ 57.0 ms, active-minus-histogram ≤ 8.5 ms,
-and the standing total ≤ 150 ms. Run it in its own process:
-
-```powershell
-$env:HAPPY_PHOTON_PERF='1'
-dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
-  --filter "FullyQualifiedName~WaveformTickPerformanceTests.WaveformActiveSliderTickLatency_WhenEnabled" `
-  --logger "console;verbosity=detailed"
-```
-
-Effects extend the opt-in Release gate with frozen active-minus-off budgets: preview
-delta ≤25 ms while total tick remains ≤150 ms; full export delta ≤max(5%, 500 ms) for
-sRGB and Display P3; incremental private-memory peak ≤ one Q16 RGB frame at the
-processed dimensions. Resting tests also pin bit identity at worker caps 1 and 2 and
-cancellation at effects stage entry. Inactive effects are covered separately by exact
-pixel and canonical-hash equality, so the skip is deterministic rather than inferred
-from timing.
-
-```powershell
-$env:HAPPY_PHOTON_PERF='1'
-foreach ($test in 'DevelopEntryLatencyAndMemory',
-                  'RawCandidateLatency',
-                  'RenderedThumbnailCacheLatency',
-                  'BrowseHistogramLatency') {
-  dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
-    --filter "FullyQualifiedName~PreviewPipelinePerformanceTests.$test" `
-    --logger "console;verbosity=detailed"
-}
-```
-
-```powershell
-$env:HAPPY_PHOTON_PERF='1'
-$env:HAPPY_PHOTON_AGX_PERF_TARGET='srgb' # then display-p3
-$env:HAPPY_PHOTON_AGX_PERF_REPORT='artifacts/agx-perf-srgb.json'
-dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
-  --filter FullyQualifiedName~AgxPerformanceGateTests
-
-$env:HAPPY_PHOTON_WYSIWYG='1'
-$env:HAPPY_PHOTON_WYSIWYG_REPORT='artifacts/agx-wysiwyg.json'
-dotnet test Tests/HappyPhoton.Tests.csproj -c Release --no-build --no-restore `
-  --filter FullyQualifiedName~WysiwygCalibrationTests
-```
-
-RAW preview-base decode performance output includes a `RawHistogram` step for the
-sensor pass; full/export decode has no such step. Measure at least the 20 MP Canon EOS
-6D fixture when this gate is enabled.
-
-The isolated characterization import gate
-(`CameraRgbCharacterizationPerformanceTests`) uses that 20 MP Canon in camera-native
-output mode, one warm-up plus five samples. It compares direct Q16 import with fused
-characterization of the same native span. The budgets are ≤ 45 ms preview,
-≤ 150 ms full, and a ≤ 4 MiB deterministic retained private-memory delta;
-async-sampled peaks are informational because native-allocator private bytes are not
-reproducible.
-
-```powershell
-$env:HAPPY_PHOTON_R5A_PERF='1'
-dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter `
-  FullyQualifiedName~CameraRgbCharacterizationPerformanceTests
-```
-
-The direct full-resolution detail diagnostic warms the optimized kernels, then uses a
-5472×3648 synthetic image and reports elapsed time and peak private-memory delta:
-
-```bash
-HAPPY_PHOTON_PERF=1 dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter RenderNoiseReductionPerformanceTests
-```
-
-The luminance-NR quality gate renders the ISO 6400 Canon and iPhone HEIC fixtures at
-0/25/50/100 and reports flat-patch σ, edge acutance, and maximum per-pixel Cb/Cr delta:
-
-```powershell
-$env:HAPPY_PHOTON_NR_QUALITY='1'
-dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter LuminanceNoiseReductionQualityTests
-```
-
-It is explicit opt-in because the RAW arm requires a full decode. The committed HEIC
-hash and provenance are pinned by `PipelineTestAssetTests` and `Tests/assets/README.md`.
-
-`RenderStageBreakdownPerformanceTests` is report-only attribution. Under
-`HAPPY_PHOTON_PERF=1`, `RenderStageProbe` times each render stage and counts caller-thread
-allocation. With the switch off or no listener, it reads no clock and allocates nothing
-(`RenderStageProbeTests`). The class reports:
-
-- the real 1600 px `PreviewService` tick, with process allocation and GC counts
-- the 2-worker 3200 px resting render
-- raw Q16 round-trip cost
-- preview-base load, with the first and warm-median time of each loader `Preview.*` step
-
-`BaseLoadControlPerformanceTests` adds two report-only base-load arms: a full-base (export)
-load of the generated 24 MP JPEG, and a preview load of the same picture tagged Display P3.
-Run each test in its own process. Set `HAPPY_PHOTON_STAGE_REPORT_DIR` to also write JSON.
-Perf hosts are JIT-only, so early ticks in a fresh process run tier-0 code;
-`DOTNET_TieredCompilation=0` shows steady-state cost. `FolderLoadPerformanceTests` scales
-with `HAPPY_PHOTON_FOLDER_LOAD_FILES` (default 200) and includes a first-visit case.
-
-`WorkingSpaceColorConversionTests` pins the managed untagged-sRGB conversion bit-identical
-to the replaced Magick transform, kept there as the oracle. It covers every Q16 code per
-channel, 1M seeded RGB triples, and the RGB, RGBA, gray, gray+alpha, 8/16-bit PNG, GIF and
-TIFF layouts, and it checks that converting a clone leaves its source untouched. Two arms are
-opt-in under `HAPPY_PHOTON_PERF=1`: the generated 24 MP JPEG at preview and full decode, and a
-disk-backed pixel cache. The disk-backed arm also needs `MAGICK_MAP_LIMIT=0` set before the
-test host starts, and it is the only guard of the kernel's commit step.
-
-`scripts/startup-perf.ps1` publishes the win-x64-msix profile and launches it against an
-isolated seeded catalog (`HAPPY_PHOTON_CATALOG_ROOT` / `HAPPY_PHOTON_CACHE_ROOT`). It
-records `StartupTrace` milestones (show, first frame, startup gate) per run.
-`-RuntimeEnvironment` sets A/B runtime knobs, and `-Cold` launches each run from a fresh
-unbuffered copy.
-
-### WP6 complete eight-local qualification (run 269)
-
-User-approved 2026-09-23 at `7039006` (`c277527` plus test-only measurement
-instrumentation), Windows, 24 CPUs, fresh Release process per gate, five pairs.
-RAW is Canon EOS 6D ISO 6400; HEIC is iPhone 14 Pro ISO 1000. The same-time A/B
-against `938032f` was indistinguishable. The approved measurements below supersede
-the WP3/WP4 limits where explicitly changed; recipes remain unchanged.
-Run each named gate separately with the environment described above and no sibling
-test hosts. All timing and memory samples are printed, including both paired arms.
-The dedicated classification test owns the memory gate: tick private increments
-are report-only because a 10–11 MB Q16 frame can commit in either arm (three of
-twelve base/head runs failed the old tick cap).
-
-| Gate | Measured RAW / HEIC | Approved assertion |
-| --- | --- | --- |
-| LH8 ordinary tick | 50.0411 / 44.5273 ms | median ≤ 150 ms |
-| LH8 contended tick, cap-2 3200 px resting | 115.0545 / 134.7549 ms | median ≤ 150 ms; individual samples reported |
-| Range increment over C8 | −8.3875 / −10.0930 ms | median ≤ 22 ms (unchanged) |
-| LH8 export delta over locals off | +183.9665 / +145.1171 ms | paired median ≤ max(5% of off median, 500 ms) |
-| Classification private increment | 0 / 49,152 bytes | median ≤ max(1% Q16 frame, 1 MiB) |
-| Classification caller allocation | about 14.4 / 14.4 KB | every sample ≤ 64 KiB |
-| R1 requested overlay | 29.6904 / 39.0982 ms; 6.86 / 8.00 MB | median ≤ 60 ms; private median ≤ max(150% Q16 frame, 16 MiB) |
-| LH8 requested overlay, largest support | 7.5779 / 12.3784 ms; 6.85 / 8.00 MB | same asserted limits as R1 |
-| C8 tick control validity | 58.5349 / 55.0678 ms | median within ±25% of 55 / 50 ms |
-| Locals-off export validity | 2304.9359 / 951.4228 ms | median within ±25% of 2300 / 950 ms |
-| Absent, off or fully open range bypass | 0 / 0 differing codes | exactly zero (unchanged) |
-
-A control outside its validity band fails the run as invalid; it cannot certify a
-gate pass. Contention and classification private memory use the median by explicit
-user decision. The HEIC classification sample of 1,396,736 bytes below failed the
-former per-sample rule; its 49,152-byte median passes the approved rule. The two
-requested-overlay tests are `QualifiedRangeHueRequestedOverlay` (R1) and
-`QualifiedRangeHueEightRequestedOverlay` (LH8). Largest-support selection is outside
-timing: local 1 on RAW, local 3 on HEIC. Both include matching-base acquisition
-through drawable bitmap creation, against the Show Mask off resting preview.
-
-Agreement limits are frozen absolute bounds. `QualifiedRangeHueAgreement` and
-`QualifiedRangeProductionAgreement` retain their WP3/WP4 settings and alignment.
-Images align export to preview via `WysiwygTests.AlignForComparison`, Magick's
-existing default resize in display sRGB, and `GoldenImageComparer` ΔE00. Weight
-fields use the existing default Magick resize in linear Rec.2020 to the preview
-width/height. Support is the union where either aligned Q16 weight is positive,
-counted once per pixel. Pooled mean weights each local by its support population
-(overlapping local supports count separately). Per-local p99 is asserted only for
-locals with at least 10,000 support pixels; local 7 is empty on both sides for both
-fixtures and is explicitly reported as empty, excluded from per-local bounds.
-
-| Agreement gate | Measured RAW / HEIC | Approved RAW / HEIC bounds |
-| --- | --- | --- |
-| LH8 image mean / p99 ΔE | 2.145257 / 18.182220; 1.143132 / 15.039284 | ≤ 2.4 / 20.0; ≤ 1.3 / 16.5 |
-| R1-L image mean / p99 ΔE | 1.679 / 10.05; 1.357 / 19.19 | ≤ 1.85 / 11.1; ≤ 1.5 / 21.1 |
-| LH8 pooled support weight mean | 0.082 / 0.059 | ≤ 0.09 / 0.065 |
-| LH8 worst eligible per-local support p99 | 0.666773 / 0.859281 | ≤ 0.75 / 0.95 |
-| Adversarial image mean / p99 ΔE | 1.686699 / 10.128109; 1.292924 / 17.933345 | ≤ 1.9 / 11.2; ≤ 1.45 / 19.7 |
-| Adversarial support weight mean | 0.024098 / 0.104430 | ≤ 0.027 / 0.115 |
-| Synthetic adversarial image mean / p99 ΔE | 19.477438 / 55.341839 | ≤ 21.4 / 60.9 |
-| Synthetic adversarial support weight mean | 0.674035 | ≤ 0.74 |
-
-`QualifiedRangeAdversarialAgreement` uses R1 +2 EV, feather .001, zero-softness
-luminance [.35,.75] and hue center 30°/width 90°. Its synthetic image contains
-hard vertical edges and 1/3/16 px texture. Global +2 EV controls measure mean/p99
-ΔE 5.877696/20.550526 RAW, 2.164370/25.734525 HEIC, and 17.796725/47.003965
-synthetic; the synthetic ranged excess is +1.680713/+8.337874. Those controls
-informed the approved absolute bounds, rather than an assertion that every ranged
-arm must improve on its control. Adversarial weight p99 remains unbounded by user
-decision: hard windows over single-pixel texture inherently reach 1.0.
-All five fresh-process LH8 and adversarial agreement measurements were identical
-at the printed precision (samples 1–5 equal the values above).
-
-**Approved timing/memory samples.** Milliseconds unless labeled bytes. Negative
-paired private increments are process-memory noise. These are the original
-`gates-before/` measurements; the report-only tick private cap and the former
-classification every-sample cap do not invalidate the newly approved median rules.
-
-**Canon RAW**
-
-```text
-Tick:
-  off: [58.3797,62.4159,58.5349,56.7796,70.4632]
-  on: [50.0411,50.948,51.8735,48.3921,47.5304]
-  delta: [-8.3386,-11.4679,-6.6614,-8.387500000000003,-22.9328]
-  private: [-9228288,-196608,-9596928,4096,110592]
-  caller: [272,504,416,168,-48]
-Contention:
-  alone_samples: [115.2269,114.909,103.1793,107.6704,98.1118]
-  concurrent_samples: [136.3342,119.6787,115.0545,108.9896,113.6978]
-Export:
-  off: [2252.5396,2219.5469,2304.9359,2651.6878,2745.0121]
-  on: [2453.766,2427.8524,2488.9024,2613.4182,2507.9362]
-ClassificationMemory:
-  classification_private: [0,0,712704,0,0]
-  caller_absolute: [14344,14344,14152,14408,14216]
-  private_increment_off_bytes: [0,0,0,0,0]
-  private_increment_on_bytes: [0,0,712704,0,0]
-  caller_off_bytes: [13880,13880,14032,13984,13880]
-  caller_on_bytes: [14344,14344,14152,14408,14216]
-  off_ms: [13.8243,11.4112,12.2691,11.7614,11.1368]
-  on_ms: [17.5519,17.6488,19.2834,18.2691,18.0121]
-RequestedOverlay:
-  times: [54.0997,30.1162,29.5161,29.6904,29.4271]
-  private: [6516736,6856704,6852608,7049216,7114752]
-EightRequestedOverlay:
-  times: [7.7434,7.0165,7.5779,7.7382,7.4924]
-  private: [6496256,6852608,6852608,6852608,6852608]
-```
-
-**iPhone HEIC**
-
-```text
-Tick:
-  off: [56.9299,55.8987,53.3945,52.2834,55.0678]
-  on: [46.4537,43.2632,43.8398,44.5273,44.9748]
-  delta: [-10.476200000000006,-12.6355,-9.554700000000004,-7.7561000000000035,-10.092999999999996]
-  private: [-13692928,11776000,77824,11591680,81920]
-  caller: [40,-64,0,88,232]
-Contention:
-  alone_samples: [115.0774,123.6933,160.5568,148.7349,121.381]
-  concurrent_samples: [134.7549,151.0803,146.0728,131.306,123.8568]
-Export:
-  off: [918.9893,920.6516,951.4228,1004.1902,994.991]
-  on: [1064.1064,1037.7235,1169.6428,1139.6494,1197.0671]
-ClassificationMemory:
-  classification_private: [196608,1396736,49152,0,-98304]
-  caller_absolute: [14192,14344,14320,14320,12592]
-  private_increment_off_bytes: [0,8192,81920,0,98304]
-  private_increment_on_bytes: [196608,1404928,131072,0,0]
-  caller_off_bytes: [14176,13816,13984,14368,12320]
-  caller_on_bytes: [14192,14344,14320,14320,12592]
-  off_ms: [58.4386,63.1514,11.3339,10.4214,10.1381]
-  on_ms: [67.5019,122.2066,55.1693,23.4977,18.7395]
-RequestedOverlay:
-  times: [46.9851,40.5334,39.0982,37.069,17.941]
-  private: [0,8065024,7999488,8073216,7696384]
-EightRequestedOverlay:
-  times: [13.5922,12.4226,11.8522,12.177,12.3784]
-  private: [7618560,8003584,8003584,7831552,8003584]
-```
-
-Visual evidence is generated by `LocalsShowcaseTests`: empty entry, linear editing,
-radial Outside, luminance and hue restrictions, monochrome and exited tool, plus
-`develop-locals-eight-disabled` (Middle Gray, 1200 × 700) and
-`develop-locals-unavailable` (Dark, 1440 × 900). PNGs are saved under
-`artifacts/shots/`. The eight-local scene asserts the bounded 120 px list viewport
-scrolls, the disabled selected row is visible, all four adjustment sliders fit in the
-visible panel, and keyboard focus reaches the list and sliders. The unavailable scene
-uses the cloud-only availability seam, disabled controls and the visible online-only
-reason.
+Use Release builds and fresh processes for each gate class; where a class has multiple
+latency gates, run each test separately. Set `HAPPY_PHOTON_PERF=1` and
+`HAPPY_PHOTON_FULL_CPU=1` before launching so the ordinary CPU cap cannot distort
+measurements. Never loosen a budget to make a single-process run pass. The [culling
+runner](../cull-perf.md) owns frozen workload qualification and comparison. Perf hosts
+are JIT-only: early ticks run tier-0 code; `DOTNET_TieredCompilation=0` shows
+steady-state cost.
+
+The table names additional environment variables; exact thresholds and sampling
+protocols live in the listed code. Report-only diagnostics are not acceptance gates.
+
+| Gate / diagnostic | Additional environment | What it measures or gates |
+|---|---|---|
+| `AgxPerformanceGateTests` | `HAPPY_PHOTON_AGX_PERF_TARGET=srgb` or `display-p3`; `HAPPY_PHOTON_AGX_PERF_REPORT=<path>` | Integrated preview tick ≤150 ms, export and memory |
+| `AgxCrossingPerformanceTests` | None | Fused crossing cost |
+| `PerceptualChromaPerformanceTests` | None | Mixer/chroma cost including pixel-cache traffic; identity has no pixel access |
+| `DcpPerformanceGateTests` | `HAPPY_PHOTON_R5B_PERF=1` | Profile decode, matrix/HueSat, discovery, allocation and export deltas |
+| `RenderNoiseReductionPerformanceTests`, `ChromaNrPreviewPerformanceTests` | None | Full-resolution detail and preview NR latency/memory |
+| `WorkingSpaceColorConversionTests` | `MAGICK_MAP_LIMIT=0` for the disk-backed arm | Exact managed-kernel parity, including the disk-cache commit step |
+| `RenderSharpeningPreviewGateTests` | None | Fit/zoom feedback, determinism and tick cost; rerun full-resolution `RenderNoiseReductionPerformanceTests` when sharpening changes |
+| `AdjacentPreviewPerformanceTests` | None | Warm/cold navigation, overlap, decode uniqueness and retained pairs |
+| `WaveformTickPerformanceTests` | None | Scope-active tick and histogram-only delta |
+| Effects arms in `PreviewPipelinePerformanceTests` and `ExportPipelinePerformanceTests` | None | Active preview ≤150 ms; export delta ≤max(5%, 500 ms per full render), memory and cancellation |
+| `CameraRgbCharacterizationPerformanceTests` | `HAPPY_PHOTON_R5A_PERF=1` | Fused import versus direct import latency/retained memory |
+| `RenderStageBreakdownPerformanceTests` | Optional `HAPPY_PHOTON_STAGE_REPORT_DIR` | Report-only stage attribution, allocation and base load |
+| `LocalsFusedBaselineTests` | `HAPPY_PHOTON_LOCALS_FIXTURE=raw`, `standard` or `synthetic`; `LOCALS_SAMPLES` | Local color/geometry/ranges, ≤150 ms tick, export delta ≤max(5%, 500 ms) |
+| Headless `LocalRangeOverlayGateTests` | `HAPPY_PHOTON_LOCALS_FIXTURE=standard` selects HEIC; otherwise RAW. Run both | Requested mask and hue-picker responsiveness |
+| `PlatformRenderGoldens` | None | Platform-specific frozen render sentinels consumed by tests; not a timed gate |
+| `scripts/startup-perf.ps1` | Isolated catalog/cache roots | Published first-frame/startup milestones; supports cold-copy and runtime-environment comparisons |
+
+`Tests/RunLocalsBaseline.ps1` selects a local gate/fixture/sample count in an isolated
+process. Local correctness is covered by `RenderLocalsTests`, `LocalPersistenceTests`,
+`LuminanceRangeTests`, `HueRangeTests`, `LocalRangeMaskTests` and `LocalsViewModelTests`.
+Inactive stages are proved by identity/no-access tests, not by timing empty calls.
+Locals qualification asserts medians for contended ticks and classification memory,
+prints every sample, and fails as invalid when a control median leaves its ±25% validity
+band. Frozen agreement bounds live in `LocalsFusedBaselineTests` (range, production and
+adversarial agreement); eight-local overlay limits live in `LocalRangeOverlayGateTests`.
+`LocalsShowcaseTests` renders the Locals scenes, including eight disabled locals and an
+unavailable source, under `artifacts/shots/`.
 
 ### 5.1 Display-reference comparison
 
-`ReferenceComparisonTests` is a report-only comparison of the two committed diagnostic
-RAWs (`fujifilm-x30.raf` and `canon-eos-6d-iso-6400.cr2`) with externally rendered
-references. It is excluded from normal execution by `HAPPY_PHOTON_COMPARE=1`. Reference
-files use `Tests/assets/references/<fixture-stem>.<tool>.<ext>`; an explicitly set
-`HAPPY_PHOTON_COMPARE_REFERENCE_DIR` replaces that directory rather than supplementing
-it. Every matching tool is reported. A missing reference is a named skip. References
-must be lossless and have at least the 1600px measurement edge; the harness only
-downscales, never upscales. Untagged references are treated as sRGB and that assumption
-is included in the report.
-
-The protocol is fixed as follows. The reference is EXIF-auto-oriented and its embedded
-or declared color is normalized to display sRGB before any resize or measurement. Both
-arms are reduced to a 1600px long edge in linear light with the pipeline's shared resize
-filter. For every display-sRGB RGB8 pixel:
-
-```text
-Y  = 0.2126 R + 0.7152 G + 0.0722 B
-Cb = B - Y
-Cr = R - Y
-```
-
-The full-frame median is the middle value, or the mean of the two middle values for an
-even population. Exposure is bisected over the closed product range [−3,+3] for at most
-12 iterations until the candidate median is within 0.25 RGB8 code
-(0.25/255 normalized) of the once-resized reference median. Every candidate passes
-through the same 1600px operation, and the
-converged candidate is reused for metrics. An unreachable target or iteration limit is
-reported explicitly.
-
-The reference selects the 256px window with lowest population standard deviation in Y
-whose mean is in [40,200]; an exact tie chooses the topmost, then leftmost window. The
-same coordinates measure both arms. Acutance is the mean central-difference gradient
-magnitude `sqrt(((Y[x+1]-Y[x-1])/2)^2 + ((Y[y+1]-Y[y-1])/2)^2)` over interior pixels
-only. For Y, Cb, and Cr the report gives population standard deviation, the standard
-deviation surviving a radius-4 box blur, and their ratio. The blur clamps samples to the
-window edge. A total deviation below `1e-12` makes the ratio `undefined`. These values
-are descriptive; assertions cover only geometry, ROI discovery, bisection convergence,
-and finite metrics.
-
-The opt-in self-reference cases render a temporary reference from each RAW and drive
-the same decode, canonicalization, bisection, ROI, and metric composition even when no
-external references are committed. LibRaw's OpenMP pin is process-start-sensitive, so
-run the filtered suite in a fresh process:
+`ReferenceComparisonTests` is report-only against external lossless renders.
+[Tests/assets/README.md](../../Tests/assets/README.md) owns reference filenames;
+`HAPPY_PHOTON_COMPARE_REFERENCE_DIR` replaces the default directory. Missing references
+skip explicitly. The harness normalizes to sRGB, downsizes in linear light and solves
+exposure against median luminance; assertions cover geometry, ROI discovery,
+convergence and finite metrics, not agreement with another editor's look.
 
 ```powershell
 $env:OMP_NUM_THREADS='1'
@@ -1330,50 +271,21 @@ $env:HAPPY_PHOTON_COMPARE='1'
 dotnet test Tests/HappyPhoton.Tests.csproj -c Release --filter FullyQualifiedName~ReferenceComparisonTests --logger "console;verbosity=detailed"
 ```
 
-The PRECISION investigation's diagnostic harness (ramp goldens and the boundary
-census) was retired after the investigation closed with the Q16-storage decision;
-it lives in git history. The live color-science suites (`PrecisionDeltaE`,
-`PrecisionColorCases`, and the oracle/anchor tests) are unaffected.
-
-The LibRaw resolver's single-file extraction path has a committed publish smoke. Run
-the matching command on Windows or Linux; it restores in locked mode, publishes a
-self-contained single-file console, decodes the Canon fixture, and asserts that both
-the bridge and LibRaw companion loaded from the runtime extraction directory:
-
-```powershell
-./scripts/verify-libraw-single-file.ps1 -RuntimeIdentifier win-x64
-./scripts/verify-libraw-single-file.ps1 -RuntimeIdentifier linux-x64
-```
-
-The manual working-space comparison renders a focused fixture/settings set against a frozen baseline,
-reports normalized RMSE, and writes three side-by-side crop rows per case:
-
-```powershell
-dotnet run --file scripts/evaluate-wide-working-space.cs -- `
-  <frozen-baseline-directory> artifacts/wide-working-space
-```
-
-Review `report.tsv` and `crop-sheets/`, then record the user's look sign-off outside the
-automated test gate.
+LibRaw single-file smoke: `./scripts/verify-libraw-single-file.ps1 -RuntimeIdentifier
+<RID>` checks package extraction and decode. Working-space review: `dotnet run --file
+scripts/evaluate-wide-working-space.cs -- <baseline> artifacts/wide-working-space`;
+record look approval outside the numeric gate.
 
 ## 6. CI
 
-The three-platform workflow runs both xUnit v3 test hosts. Ordinary and native bitmap
-integration tests live in `Tests/HappyPhoton.Tests.csproj`; UI and dispatcher tests run
-through the supported Avalonia headless integration in
-`HeadlessTests/HappyPhoton.Headless.Tests.csproj`. Keep Windows WIC coverage in the
-ordinary host so the native and headless Avalonia platforms never share a process.
+The three-platform workflow runs ordinary/native bitmap tests in
+`Tests/HappyPhoton.Tests.csproj` and dispatcher/UI tests in
+`HeadlessTests/HappyPhoton.Headless.Tests.csproj`. Windows WIC stays in the ordinary
+host so native and headless Avalonia platforms never share a process.
+`ShowcaseTestHelper` saves named scenes to `artifacts/shots/<scene>.png`; tests assert
+frame dimensions, while reviewers assess the image.
 
-`ShowcaseTestHelper` stages and captures named headless scenes in
-`artifacts/shots/<scene>.png` under the repository root. A showcase test asserts only
-that its frame rendered at the requested pixel size; the PNG is evidence for a reviewer,
-not a pixel-comparison gate.
-
-Platform and codec gaps use xUnit v3 native runtime skips (`Assert.Skip` or
-`Assert.SkipWhen`) with an explicit reason so they remain visible in logs. CI gates on
-discovery before execution with a floor, not exact counts: at least 666 ordinary
-listed cases and 35 headless listed cases. Run tests with a 90-second blame
-hang timeout while changing either host.
-
-Golden assets and baselines must keep the repo clone under control — if the goldens
-directory exceeds ~20 MB, shrink render size before reaching for LFS.
+Platform/codec gaps use reasoned xUnit runtime skips. `scripts/check-test-quarantine.ps1`
+owns discovery floors and result reconciliation; `scripts/verify.ps1` enforces them.
+Use a blame-hang timeout when changing hosts. Asset/golden size limits are enforced by
+`GoldenHarnessTests.AssetAndGoldenBudgets_AreWithinSpec`, not copied into this guide.

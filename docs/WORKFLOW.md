@@ -15,116 +15,58 @@ designed to make fast.
 
 ## Before you begin
 
-Happy Photon works directly with the photographs in an existing folder. There
-is no import step and the original files are not moved.
+Happy Photon works directly with existing folders. Originals stay in place; edits,
+assessments and presets live in the local catalog, and Export creates new files.
+Keep the catalog in your backups. Thumbnails and previews are regenerable caches;
+Settings → Storage reveals both locations and stages moves for the next launch.
 
-Edits, flags, ratings, and application settings are stored locally in the Happy
-Photon catalog. The default can be changed before creation or in Settings:
+First run confirms storage and the Pictures browsing root, optionally imports Lightroom
+assessments, then offers a tour. The title-bar Theme menu chooses Dark or Middle Gray;
+Settings (gear or `Ctrl+,`) holds preferences and Metadata interop controls.
+See [DESIGN.md](DESIGN.md) for first-run and theme details.
 
-```text
-~/Pictures/Happy Photon Catalog/
-```
-
-Regenerable thumbnails and previews are separate: `%LOCALAPPDATA%\Happy
-Photon\cache` on Windows, `~/.cache/happy-photon` on Linux, or
-`~/Library/Caches/Happy Photon` on macOS. If this cache disappears, Happy
-Photon rebuilds it. Keep the catalog, which contains precious edit state and
-presets, in normal backups.
-
-Edits are non-destructive: they are instructions stored in the catalog, not
-changes written into the original image. Export creates new files.
-
-On a new installation, first read the Welcome page, confirm where the catalog
-and cache will live, and select the Pictures folder that should appear in the
-folder tree. Storage is created only when you continue from that step. If the
-optional Lightroom step appears, Apply an import or Skip it. Either path keeps
-the Pictures choice as the browsing root and advances to an all-set page, where
-you can start the guided workspace tour or enter the workspace directly.
-
-Cloud Files providers such as OneDrive are supported without automatically downloading
-online-only originals. Happy Photon may show its own cached thumbnail or preview while
-the original remains online-only. It reads that original only after a clearly scoped
-action such as **Download and open** or a confirmed export.
-
-Happy Photon is pre-1.0 software. Keep a backup of important photographs and
-consider learning the workflow with a copied shoot.
-
-Use the focusable **Theme** menu in the title bar to choose **Dark** or
-**Middle Gray**. The choice takes effect immediately and is stored with the other
-application preferences. Middle Gray provides a neutral L\* 50 surround for judging
-photographs; it is a persistent appearance choice, not a temporary color-assessment
-mode.
-
-Open **Settings** with the title-bar gear or `Ctrl+,`. The Storage tab reveals
-both roots and stages safe moves for the next launch; environment-managed roots
-explain why Change and Move are unavailable. The Metadata tab can enable
-per-catalog XMP reading or read/write interop for ratings, flags, recognized
-color-label names, and crops. A plain Lightroom crop fills an image whose Happy
-Photon geometry is still empty; it never replaces or clears existing geometry.
-Read/write creates or updates a sidecar after you change an assessment or
-geometry, and publishes crops only when rotation, horizon, perspective geometry,
-and source orientation need no coordinate conversion. To publish older catalog state,
-choose **Write XMP sidecars** from the Library thumbnail context menu in Read & write
-mode. It acts on the selection, or the active photo if nothing is selected; use
-`Ctrl+A` for the folder. Only V1 photos with an assessment or persisted crop are
-published. Re-run the command for writes still pending, including publication
-interrupted by a folder switch. Happy Photon exchanges only standard Adobe XMP
-vocabulary (see `ARCHITECTURE.md` for the exact properties): Lightroom Classic interoperates
-fully, while darktable and Bridge versions that recognize a reject only as
-`xmp:Rating="-1"` will not show Happy Photon rejects, because the rating keeps
-its true star value. Sidecars may sync through the folder's cloud provider. The
-original photo remains untouched; crop interop reads only a locally available
-orientation header and never downloads an original for XMP work.
-
-Each file's primary version (V1) is the only interpretation that exchanges
-assessments with its XMP sidecar. Ratings, flags, and labels on V2–V8 stay in the
-Happy Photon catalog.
+Cloud-only originals are not automatically downloaded. Cached thumbnails/previews may
+remain visible; source access requires Download and open for one photo or confirmation
+of an export batch. Happy Photon is pre-1.0; learn with backed-up photographs.
 
 ## Bring assessments from Lightroom Classic
 
-Choose **Import from Lightroom…** in the Folders header's **More folder actions** menu,
-or use the optional Lightroom step during first run. When Happy Photon finds a local
-`.lrcat`, choose from the detected catalogs or browse for another. Close Lightroom
-first. Happy Photon summarizes locations it matches automatically. Map any moved
-location you want to import, or leave it blank to skip those photos. Then choose
-whether Lightroom replaces differing Happy Photon values or only fills empty values,
-review the automatically updated report of what will change, and import. An import
-never clears a local rating, flag, or color label, and never writes to Lightroom or an
-original photograph.
+Close Lightroom Classic, then choose **Import from Lightroom…** from the Folders
+header or optional first-run step. Choose a detected catalog or browse for a .lrcat.
+Review matched locations, map moved roots or leave them blank to skip, and choose
+Lightroom-wins or fill-empty policy. The preview updates before Apply; import never
+clears assessments or writes to Lightroom/originals.
 
-Crop import is a separate option and is off by default. Enabling it clearly approves
-a header-only orientation check for each locally available crop candidate; Happy
-Photon never decodes the photo or downloads an online-only original for this check.
-Supported zero-angle Lightroom crops fill only images with no existing crop, rotation,
-horizon, or manual geometry. Existing geometry and unsupported angled or warped crops
-are left unchanged.
+Crop import is separately opt-in: it approves a header-only orientation check on local
+candidates. Supported zero-angle crops fill only empty geometry; angled/warped crops
+and existing geometry remain unchanged. No original is decoded or downloaded.
+Missing mapped files are skipped; if none exist, fix mappings before Apply becomes
+available. Reports distinguish nothing to import from nothing matched, and list virtual
+copies/unsupported files as skips. Repeating an up-to-date import performs no writes.
 
-The preview checks that each mapped photo file exists without opening it. Missing
-files are skipped; if none of the mapped photos exist, copy or mount the originals or
-correct the mappings before Apply becomes available. Unmapped locations, virtual
-copies, and unsupported files are informational skips, and when multiple Lightroom
-records map to one destination path the later record is used. “Nothing to import”
-means the source catalog has no ratings, flags, labels, or supported crops; “Nothing matched” means its
-source paths need review. Re-running the same import performs no catalog writes when
-everything is already up to date.
+### Exchange assessments with XMP
+
+Settings → Metadata enables per-catalog XMP reading or read/write interop. Ratings,
+flags, recognized labels and supported plain crops exchange with V1 only; V2–V8 stay
+catalog-only. Imported crops fill empty geometry and never replace an existing edit.
+Read/write publishes changed assessments and portable crops; original images stay
+untouched. Crop interop reads only locally available orientation headers.
+
+To publish older state, choose **Write XMP sidecars** from the thumbnail context menu
+in Read & write mode. It uses selection or the active photo; `Ctrl+A` selects the folder.
+Re-run it for pending writes after a folder switch. Sidecars can sync through the cloud
+provider. Lightroom-compatible pick state preserves true star ratings, so applications
+that recognize rejects only as negative ratings may not display Happy Photon rejects.
 
 ## 1. Open and survey the shoot
 
 Start in **Browse**. Press `G` at any time to return to it.
 
-The right review pane keeps the active photograph's thumbnail histogram and file,
-camera, exposure, and location details together. With two or more photographs
-selected, it also shows the selection count, capture-date range, and combined local
-file size. Online-only originals remain excluded from those aggregates until they are
-downloaded.
-
-Hover the filename to see its containing folder. Right-click the metadata panel and
-choose **Copy details** to copy the visible rows as plain text. When coordinates are
-available, click them to open that position in OpenStreetMap. This explicit click is
-the only map action; the review pane never contacts a map service in the background.
-An altitude can still appear without coordinates, but it is not a map link. A muted
-date is the file-modified fallback used only for display, not for burst grouping or
-selection capture-date ranges.
+The review pane shows the active photo's histogram, file, camera and location details;
+multiple selection adds count, capture-date range and local file size; online-only
+originals stay out of date/size aggregates until downloaded. Hover its name for the
+folder, or right-click → Copy details. Coordinates open OpenStreetMap only when clicked.
+A muted file-modified date is a display fallback, not capture time.
 
 1. Choose a folder in the folder tree on the left.
 2. Click the folder or press `Enter` to move focus to the image grid.
@@ -133,36 +75,18 @@ selection capture-date ranges.
 4. Turn on burst grouping with the stacked-frames icon when the folder contains
    sequences of closely spaced frames.
 
-Use the three thumbnail buttons at the right edge of the Browse footer to change
-browsing density. **Small** shows the most photographs, **Medium** is the default, and
-**Large** provides a sharper comparison view. Each size sets a minimum cell width;
-cells expand evenly to fill the row while the gutter stays fixed. The choice is
-remembered across launches.
-When Large needs a better cached image, Happy Photon keeps the existing thumbnail
-visible while it upgrades locally available sources in the background. It never
-downloads an online-only original for that quality upgrade.
+Small, Medium and Large in the Browse footer control density; the choice persists.
+Large retains existing thumbnails while sharper local versions load. A ! marks a
+thumbnail or RAW Develop failure; native installation failure is a global status.
+Refresh folder in the Folders header re-reads images/subfolders while preserving
+filters and catalog state for paths that remain.
 
-A `!` marker identifies a thumbnail that could not be loaded or a RAW whose Develop
-decode failed, even when an older embedded or cached image remains visible. A broken
-native RAW installation is shown once as a global degraded status rather than marking
-every RAW tile; reinstall Happy Photon to repair it.
-
-If photographs are added, removed, or renamed outside Happy Photon, use the
-**Refresh folder** button beside **More folder actions** in the Folders header. Refresh
-re-reads the currently viewed folder and its immediate subfolder list while
-preserving active filters and cataloged edits, ratings, and flags for paths that
-still exist.
-
-Right-click a Browse thumbnail to **Copy path**, **Reveal in File Explorer**, or
-manage its Versions. **New Version from Current** copies the active interpretation's
-settings into a sibling tile, up to eight versions. **Rename version label…** sets a
-short optional badge label; blank labels display as `V<n>`. **Delete version** confirms,
-then removes only V2–V8 catalog state and cache assets, never the original file. Right-clicking a
-photograph outside the current selection makes it the
-selection; right-clicking one already selected preserves the selection. Copy path
-places the selected photographs' full paths on the clipboard in grid order, one per
-line. Reveal selects the active file in Explorer or Finder; on Linux it opens the
-containing folder. The folder tree's right-click menu offers Reveal only.
+Right-click thumbnails for Copy path, Reveal, and Versions. New Version from Current
+copies the interpretation into a sibling, up to eight. Rename version label sets an
+optional badge; Delete version removes only V2–V8 catalog/cache state after confirmation.
+Right-click outside the selection selects that photo; inside preserves the selection.
+Copy path copies selected paths in grid order. Reveal selects the active file on
+Windows/macOS or opens its folder on Linux; the folder-tree menu offers Reveal only.
 
 Delete and the `Delete` key use the same targets as other Browse actions: the grid
 selection when it is non-empty, otherwise the active photograph. After one confirmation,
@@ -172,18 +96,12 @@ sidecars to the system Trash. A failed file does not stop the rest
 of a batch; the final dialog names every failure or skipped sidecar. Online-only files
 and sidecars are never downloaded for deletion. Network locations and removable media
 are refused because their deletes may not be recoverable. On Windows, a fixed drive
-whose Recycle Bin was explicitly disabled remains a known limitation: Windows may
-delete permanently just as Explorer does; closing that case requires a future
-`IFileOperation` implementation with recycle-on-delete enforcement.
+with Recycle Bin disabled may delete permanently.
 Deleting a file removes all of its versions from the catalog and grid.
 
-Burst grouping places photographs captured within two seconds into the same
-sequence. It does not choose a winner; it makes neighboring frames easier to
-recognize and compare. Happy Photon analyzes capture times only after Bursts is
-enabled; local photographs are analyzed and online-only photographs are reported
-as skipped. Sustained analysis appears in the shared background-activity segment
-with processed and total counts; it is absent again after the sweep finishes or
-Bursts is turned off.
+Bursts groups frames captured within two seconds without choosing a winner. Enable it
+to analyze local capture times; the status segment shows processed/total, and a transient
+completion message reports skipped cloud files. Disabling it stops remaining analysis.
 
 The **J+R** footer toggle starts off, showing RAW and JPEG files separately. Turn it on
 to combine same-folder, same-name files into one JPEG tile; the choice is remembered.
@@ -193,13 +111,8 @@ RAW while keeping the zoomed viewport. The switch changes files, so it clears un
 history; moving to another capture returns to its JPEG. Turn pairing off to browse,
 assess, or export the physical files separately.
 
-Online-only photographs stay visible with a cloud badge or placeholder. The folder
-status reports how many will not be downloaded automatically. To work with one
-cloud-only image, select it and choose **Download and open**; this downloads only
-that original.
-
-Do not start adjusting every image yet. The first goal is to understand the
-shoot and remove obvious misses from consideration.
+Online-only photographs carry a cloud badge or placeholder. Select one and choose
+**Download and open** to approve access to that original.
 
 ![Happy Photon Browse showing the folder tree, filters, thumbnail grid, and
 assessment controls](screenshots/Screenshot_Browse.png)
@@ -219,22 +132,10 @@ photograph. In Develop, Browse Loupe, and Compare they affect only the active
 photograph. Pick and Reject are set-only; the backtick toggle clears a uniformly
 Picked target or sets Picked otherwise.
 
-Develop and Browse Loupe confirm each flag, rating, and color-label change briefly over the
-photograph — "Set flag: Picked", "Unset rating: ★★★" — and shows nothing between
-changes. Browse remains where a photograph's current assessment is on display.
-
-Unflagged is useful for undecided frames. Rejected does not delete a file, and
-Picked does not automatically select it for export.
-
-Move quickly on the first pass:
-
-1. Reject clear misses such as accidental frames or unusable expressions.
-2. Pick the strongest frame from each moment or burst.
-3. Leave uncertain comparisons unflagged and revisit them later.
-
-The Pick, Reject, and Unflag buttons beneath the image grid provide the same actions.
-Pick and Reject always set their flag; Unflag always clears either flag, including
-across a mixed selection.
+Develop and Browse Loupe briefly confirm assessment changes over the photo; Browse
+shows persistent state. Rejected does not delete, and Picked does not select for export.
+On the first pass, reject clear misses, pick each moment's strongest frame and leave
+uncertain comparisons unflagged. Footer buttons perform the same actions.
 
 ### Add ratings only when they help
 
@@ -242,16 +143,8 @@ Stars answer a different question: **how strong or important is this frame?**
 Press `1` through `5` to set a rating; repeating a star value clears it when every
 target already has that rating. Press `0` to clear it directly.
 
-Ratings use the same targets as flags.
-
-A simple starting method is to flag first, then rate only the picked images:
-
-- `3` — a solid keeper
-- `4` — a standout from the shoot
-- `5` — one of the very best
-
-The meaning is yours to define. Consistency is more useful than a complicated
-rating system.
+Ratings target the same photographs as flags. One useful convention is three stars
+for a keeper, four for a standout and five for your best; consistency matters most.
 
 ### Add color labels for another classification
 
@@ -262,21 +155,10 @@ swatch ring always describes the active photograph, not the selected target set.
 
 ### Filter the result
 
-The Browse filter bar uses labeled groups of compact controls that can be
-combined to show:
-
-- RAW or JPEG files;
-- picked or rejected images;
-- a minimum rating chosen from the five-star strip;
-- no label or one named color.
-
-For example, choose **Picked** and click the third star to review
-photographs rated three stars or more that are most likely to be delivered.
-Re-click any active file type, flag, threshold star, or color swatch to clear that
-filter group. If nothing matches, the grid says so in place and offers a **Clear**
-action that resets every group at once. Changing a flag or rating while a filter is
-active can make the current image disappear when it no longer matches; Happy Photon
-advances to another visible image.
+Combine file-type, flag, minimum-rating and color-label filters. For example, Picked
+plus the third star shows picked images rated at least three. Re-click an active
+filter to clear that group; the empty result's Clear resets every group. Assessment
+changes may remove a photo from the view and advance to the next visible image.
 
 **Delete Rejected** is a separate, destructive cleanup action. After
 confirmation, it moves every rejected image in the open folder to the operating
@@ -288,22 +170,10 @@ Double-click a thumbnail or press `D` to enter **Develop**. Use the previous and
 buttons below the image, or the left and right arrow keys, to move between visible
 images without returning to Browse.
 
-When the rendered cache matches the current settings, the photograph, display
-histogram, waveform, and display-floor clipping become useful together before the
-original is decoded. If fresh preparation lasts beyond the normal delay, the shared
-status bar says **Preparing preview** until the first coherent fresh render settles;
-there is no separate progress line under the scopes. Returning to Browse and then
-Develop on the same active photograph reuses the current in-memory preview pair.
-
-If an original is online-only, an existing cached preview can still appear, but Happy
-Photon does not start a fresh decode until you choose **Download and open**.
-If LibRaw cannot decode a locally available file, an actionable message remains pinned
-for that photograph (including common unsupported variants such as Nikon HE), and the
-Browse keeps its failure marker when you return. A successful retry clears both. Source
-availability messages take priority over file decode and global runtime messages.
-
-A useful editing order is composition, light, color, and then refinement. You
-do not have to touch every control.
+A matching cached preview can show the photo and display scopes while the original
+loads. Sustained preparation appears in the shared status bar; edits remain available.
+An unsupported file keeps an actionable message and Browse failure marker until a
+successful retry. Start with composition, then light, color and refinement.
 
 Use **Assess** beside **Fit**, or press `L`, to judge the photograph against
 an invariant white reference band and mid-gray surround. The session-only mode
@@ -371,10 +241,6 @@ apart from geometry; blue responds as edits change the rendered output.
   every touched band; double-click resets one slider, while the Develop footer Reset
   clears all bands with the other color and tonal adjustments.
 
-Kelvin usually answers whether the photograph feels too cool or too warm.
-Vibrance and saturation answer whether the color feels too weak or too intense.
-If the image already looks right, leave them alone.
-
 For a true monochrome RAW, the camera profile, white balance, Saturation, Vibrance,
 color mixer, and R/G/B channel-curve controls stay visible but disabled. Existing saved color
 values are preserved for later color sources; Exposure, the composite curve, tone,
@@ -382,64 +248,41 @@ detail, effects, scopes, and export continue to work normally.
 
 ### Refine the tone
 
-Use the **Tone Curve** when the basic controls cannot produce the tonal shape
-you want. It is a finishing tool, not a required step. RGB shapes the composite
-curve. Choose R, G, or B for channel-specific balance and split-tone effects; edited
-channel letters stay tinted. The curve's Reset clears only the active channel, while
-the Develop footer Reset clears every curve and other tonal adjustments.
+Use Tone Curve for finer shaping. RGB edits the composite; R/G/B edit channels and
+show touched letters. Its Reset affects only the active curve; footer Reset clears
+all curves with the other tonal adjustments.
 
 ### Refine detail
 
-Use **Luma NR** for luma grain, **Sharpen** for capture detail, and
-**Chroma NR** for color speckling. All three work on RAW, JPEG, HEIC, and TIFF. Noise
-reduction runs after tone, so revisit it after a large shadow or exposure change. The
-Develop viewer uses a bounded 1600px preview base even at 1:1, so judge capture
-sharpening and subtle noise reduction on an export-scale render.
+Use **Luma NR** for luma grain, **Sharpen** for capture detail, and **Chroma NR** for
+color speckling. All three work on RAW, JPEG, HEIC, and TIFF. Noise reduction runs after
+tone, so revisit it after a large shadow or exposure change. The Develop viewer uses
+bounded previews even at 1:1; judge subtle detail on an export-scale render.
 
 ### Add finishing effects
 
-Use **Vignette** after composition to darken negative-value corners or lift
-positive-value corners around the finished frame. **Midpoint** moves the falloff onset
-and is dimmed until Vignette is active. **Grain** adds deterministic monochrome film
-grain; choose Fine, Med, or Coarse for its output-pixel size. Both effects apply to RAW
-and standard sources. During crop mode the vignette is temporarily centered on the full
-canvas used by the crop overlay, then recenters when the crop is applied.
+Use **Vignette** to darken corners with negative values or lift them with positive
+values; Midpoint moves the onset and dims when inactive. Grain adds monochrome texture
+in Fine/Med/Coarse output-pixel sizes. Both work on every source. During crop, vignette
+centers on the full temporary canvas and recenters when the crop commits.
 
-In Develop or fullscreen, press `\` to toggle between the edited image and the
-original. In Develop, choose **Y|Y** or press `Y` to compare that original beside the
-live edited image; fit, zoom, pan, and the press-and-hold loupe stay synchronized.
-Re-click **Y|Y** or press `Escape` to leave the split. The History panel above Presets
-lists committed edits newest-first; click a step to return to it, or use `Ctrl+Z` to
-move back and `Ctrl+Y` or `Ctrl+Shift+Z` to move forward. A new edit after moving back
-discards the later steps; to discard them immediately, right-click the target step and
-choose **Clear History Above This Step**, or Alt-click it. These editing shortcuts do
-nothing in Browse or while crop mode is active. Rotation, horizon, and an applied crop
-each appear in History; a crop session combines its region and horizon into one step.
-The reset
-button clears the color and tonal adjustments while preserving crop, rotation,
-and horizon settings; reset those separately in the geometry controls.
+Press `\` for Before/After in Develop/fullscreen, or Y/Y|Y in Develop for a
+synchronized split. Re-click or Escape closes the split. History below Presets lists
+commits newest-first: click a step, Ctrl+Z back, Ctrl+Y/Ctrl+Shift+Z forward. A new edit
+truncates redo; right-click → Clear History Above This Step or Alt-click truncates now.
+These history actions are unavailable in Browse and during crop. Crop plus provisional
+Horizon commits once. Reset preserves crop/rotation/horizon; use their own reset controls.
 
 Edits are saved to the catalog automatically. Export is not required to
 preserve the edit instructions.
 
 ## 4. Keep a series coherent
 
-Photographs from the same light and location often benefit from the same color
-and tonal starting point.
-
 ### Use a personal preset
 
-When the current image has a useful look:
-
-1. Choose **Save Current** in the presets panel.
-2. Give the preset a descriptive name.
-3. Hover over the preset to preview it on another image.
-4. Click it to apply it.
-
-Applying a preset replaces the image's current color, mixer, tonal, detail, and effects
-settings. Click
-the active preset again to remove it and reset those settings. Presets never
-include crop, rotation, or horizon changes.
+Choose Save Current, name the preset, then hover to preview it and click to apply.
+Presets replace color, mixer, tonal, curves, detail and effects. Re-clicking the active
+preset resets that look; image-specific geometry, profiles and locals stay unchanged.
 
 ### Copy edits between images
 
@@ -457,9 +300,6 @@ To apply the settings to several photographs:
 Batch paste adds a **Paste settings** step to every target, so it can be undone when
 that photograph is opened in Develop. Crop, rotation, and horizon settings on every
 target remain unchanged.
-
-After sharing a starting point, inspect the images individually. Exposure and
-temperature can still vary within a series.
 
 ## 5. Build a selection
 
@@ -486,31 +326,19 @@ use the modifiers above to build a multi-photo selection.
 Images that become hidden by a new filter are removed from the selection. Set the
 filters first, then make the final selection.
 
-Use the fullscreen button below the Develop image, or press `F`, with two or more
-photos selected to review only that selection in fullscreen, starting from the first
-selected photo in the Browse's current order.
-Navigation stops at the first and last selected photo, and the `SELECTION` badge shows
-the current position. The set updates with visible selection changes; if fewer than
-two selected photos remain, navigation returns to the full folder until full screen is
-entered again. With zero or one photo selected, full-screen navigation covers the full
-folder as usual.
+Press `F` or the Develop fullscreen button to review the current selection when it
+contains two or more photos. The SELECTION badge shows position; navigation stops at
+its ends. Dropping below two restores folder navigation until fullscreen is re-entered.
 
-Press `E`, `Enter`, or `Space` in the Browse grid, or choose the **E** footer toggle,
-to open the active photograph in Browse Loupe. The folder tree, review pane, and
-assessment footer remain available while the grid becomes one large image. Arrow keys
-move through the current 2+ photo selection without changing it, or through visible
-photos when the selection has fewer members. `Space` or `Z` toggles Fit and 1:1;
-`E`, `G`, or `Escape` returns to the same active grid tile, `D` enters Develop, and `F`
-enters fullscreen.
+From the Browse grid, `E`, `Enter`, `Space` or the E footer button opens Loupe,
+keeping folders, review pane and assessments visible. Arrows traverse a 2+ selection
+without changing it, otherwise visible photos. Space/Z toggles Fit/1:1; E/G/Escape
+returns to the grid, D enters Develop and F opens fullscreen.
 
-With two to four photos selected, choose the X|Y toggle in the Browse footer before
-the burst and thumbnail-size controls. Two photos appear side by side; three or four use
-a 2×2 view. Click a
-pane or use the left and right arrows to choose the active photo, then use the usual
-flag, rating, and color-label controls. Fit, zoom, pan, and the press-and-hold loupe stay
-synchronized across every pane. Re-click the checked X|Y toggle or press `Escape` to return with
-the comparison selection and active photo preserved. Press `C` from Browse Loupe to
-enter the same comparison directly; with fewer than two selected photos it does nothing.
+Select two to four photos and choose X|Y or press C for Compare: two side by side,
+three/four in a grid. Click a pane or use arrows for the active photo; assessments
+apply there. Fit, zoom, pan and loupe peek synchronize. Re-click X|Y or Escape returns
+with selection/focus preserved. C also enters Compare from Loupe.
 
 ## 6. Export finished copies
 
@@ -533,21 +361,27 @@ Changing photos or settings during a run prepares the next batch; the running jo
 5. Expand **More options** for color space, output sharpening and filenames. Its summary
    shows the current choices. **Keep original filename** is the default; **Custom pattern**
    accepts `{name}` and `{date}`, where `{date}` is the export date.
-6. Review **Example for this photo**: the relative output path includes the format extension,
+6. Expand **Watermark** and choose **Add watermark** to stamp single-line text on every
+   exported size and on **Preview output**; Develop and thumbnails stay unmarked. Font,
+   style, size, color, opacity, edge, alignment, side-edge rotation and margin persist
+   across sessions; size and margin follow the short edge. Blank enabled text blocks Export.
+7. Review **Example for this photo**: the relative output path includes the format extension,
    size subfolder and any version suffix. One size goes directly into the destination;
    multiple sizes each get a subfolder. Multiple versions of the same file in a batch get
    stable `-V<n>` suffixes; a single version keeps its ordinary name.
-7. Choose **Export N files** or press `Enter`. The fixed footer keeps the photo/size count,
+8. Choose **Export N files** or press `Enter`. The fixed footer keeps the photo/size count,
    validation reason and action visible, including at the minimum window size.
 
-The center shows the standard preview immediately. **Preview output** is opt-in: it previews
-size, color space and output sharpening, not JPEG/WebP compression quality. Its chooser
-offers valid enabled sizes, initially the largest (Full means no resizing), and falls back
-to the largest valid enabled size when the choice becomes disabled or invalid. The caption
-names the accepted size and cap, not measured bitmap dimensions, and color space. While a
-refresh is pending, **UPDATING…** is appended to the facts for the pixels still displayed.
-Turning it off restores **PREVIEW · edits applied** and the standard preview. This adds no
-automatic full-resolution decode or cloud download.
+The center shows the standard preview immediately. **Preview output** is opt-in: it
+previews size, color space and output sharpening, not JPEG/WebP compression quality. Its
+chooser offers valid enabled sizes, initially the largest (Full means no resizing), and
+falls back to the largest valid enabled size when the choice becomes disabled or
+invalid. The caption names the accepted size and cap, not measured bitmap dimensions,
+and color space. While a refresh is pending, **UPDATING…** is appended to the facts for
+the pixels still displayed. Turning it off restores **PREVIEW · edits applied** and the
+standard preview. This adds no automatic full-resolution decode or cloud download. Only
+an accepted proof uses its output pixel dimensions as the native-size cap; Proof off
+restores original-relative fit.
 
 If the selection includes online-only originals, Happy Photon first reports their exact
 count and approximate logical size. Choose **Cancel** to leave them untouched or
@@ -560,8 +394,6 @@ target in the same job. Existing output files are confirmed together. Copies go 
 chosen destination (in size subfolders for multiple sizes); a file that appears after
 the confirmation pass is not overwritten.
 
-Export decodes and edits each photograph, then creates new output files.
-Targets that would overwrite a loaded original are refused.
 The **Exporting** strip shows **Exporting k of N files** and **Stop export**. Stop keeps
 already-written files and reports **Export stopped** with **k of N files completed and kept.**
 The disabled footer action reads **Export in progress…** and explains that changes prepare
@@ -575,24 +407,13 @@ without rerunning successful siblings. Collision remedies point back to Browse.
 
 ## A complete first workflow
 
-For a first shoot, keep the process deliberately simple:
-
-1. Open the folder and enable the stacked-frames burst control if it contains
-   rapid sequences.
-2. Make one quick pass with `P`, `X`, and `U`.
-3. Filter with **Picked** and give only the strongest images three to
-   five stars.
-4. Keep the **Picked** filter active and click the third threshold star.
-5. Develop one representative photograph.
-6. Save its look as a preset or copy its settings to similar photographs.
-7. Review every edited image and correct it individually.
-8. Return to Browse, keep the final filter active, and press `Ctrl+A`.
-9. Export the preferred delivery size.
-
-The result is a small, coherent set of finished copies while every original
-remains where it started and unchanged.
+Open the shoot, optionally enable Bursts, then make a fast flagging pass. Filter to
+keepers, rate the strongest, develop a representative image and share its starting
+look. Inspect each result before selecting the finished set and exporting copies.
 
 ## Essential shortcuts
+
+Help & About lists every shortcut and gesture; these are the essentials.
 
 | Key | Action |
 | --- | --- |
@@ -609,6 +430,8 @@ remains where it started and unchanged.
 | `Ctrl+'` | Create a version from the current interpretation in Browse or Develop |
 | `C` | Compare 2–4 selected photos |
 | `R` | Toggle crop mode in Develop |
+| `W` | Toggle the white-balance eyedropper in Develop |
+| `Delete` | Delete selected versions or move primary originals to Trash after confirmation |
 | `Shift+W` | Toggle Locals in Develop |
 | `O` / hold `M` | Toggle Show Mask / temporarily show the mask while Locals is open |
 | `\` | Toggle before/after in Develop or fullscreen |
@@ -618,7 +441,7 @@ remains where it started and unchanged.
 | `Space` / `Z` | Toggle Fit and 1:1 in Develop or Browse Loupe |
 | `J` | Toggle clipping overlay in Develop |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
-| `Ctrl+Z` / `Ctrl+Y` | Move backward or forward through Develop history |
+| `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` | Move backward or forward through Develop history |
 | `Ctrl+Shift+E` | Open the Export workspace |
 | `Enter` | Run Export, apply crop, or move from Browse Loupe to Develop |
 | `Ctrl+,` | Open Settings |
@@ -627,17 +450,11 @@ remains where it started and unchanged.
 
 ### Gesture map
 
-The review gestures deliberately keep distinct scopes: `\` shows before/after in
-Develop or fullscreen, `L` toggles the Develop assessment surround, `R` owns crop
-in Develop, `Y` opens the synchronized Before | After split, `Shift+R` switches a paired
-capture's representation, `C` opens Compare from Browse, `J` owns clipping in Develop,
-and holding the left mouse button invokes the loupe
-below 1:1 in Develop, Browse Loupe, fullscreen, or Compare. The visible E and X|Y
-toggles teach the Loupe and 2–4-photo Compare entries. Future version gestures
-must extend this same catalog without colliding with these keys.
+Press-and-hold loupe, synchronized Compare and Before/After gestures are listed with
+keyboard shortcuts in Help & About. Their scopes keep review actions distinct from edits.
 
 Use the `?` button in the title bar to open **Help & About**. The complete
-shortcut reference is selected by default, with build and project information
+shortcut and gesture reference is selected by default, with build and project information
 available on the About tab. Update discovery is manual-only: Happy Photon makes
 no automatic update network requests, and About contacts GitHub only when you
 choose **Check for updates**. Store-packaged Windows installations open the

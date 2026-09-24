@@ -117,39 +117,20 @@ Kelvin/tint values are asserted exactly for every committed RAW fixture.
 
 ## 3. Versioning, caching, goldens
 
-A decode-visible characterization change bumps `BaseImage.Version`; render
-math is unchanged, so `RenderPipeline.Version` stays put. Caches invalidate
-through the version bump; no migration code. Goldens re-baseline once per
-bump with a recorded pre/post attribution report (per-image ΔE summary), and
-ColorChecker budgets are re-measured on all three RIDs with the standing
-calibration procedure.
+Decode-visible characterization changes increment `BaseImage.Version` under
+OVERVIEW.md §6. TESTING.md §2 owns golden regeneration and approval.
 
 ## 4. Validation and budgets
 
-Four anchors per TESTING.md: property tests (as-shot neutral maps to neutral;
-achromatic preservation through characterization; matrix outcome typing),
-source-cited constants with derivation cross-checks, independent
-`colour-science` oracle vectors for the composed camera→Rec.2020 matrices
-(agent-separated generation), and the ColorChecker ground-truth budget.
+TESTING.md §4.1 owns the four validation anchors: properties, cited derivations,
+independent oracle vectors, and ColorChecker ground truth. The rendered comparison
+against LibRaw's own Rec.2020 conversion retains ABI-only FBDD coverage; application
+decodes always pass Off. TESTING.md §3 owns its nonzero ΔE tolerances: double-precision
+math with one rounding replaces LibRaw's 16-bit matrix path.
 
-Parity gate: rendered comparison of the fused characterization against
-LibRaw's own Rec.2020 conversion over the four RAW golden anchors +
-ColorChecker NEF + Canon 6D, including Blend and direct-interop FBDD modes on Bayer
-and X-Trans. Those FBDD arms retain ABI coverage only; every application decode passes
-Off. Differences come only from double-precision math and a single
-rounding replacing LibRaw's internal 16-bit matrix path; the gate is frozen at
-mean ΔE76 ≤ 1.1 and p99 ΔE76 ≤ 9.5 (TESTING.md §3).
-
-Budgets: canonical TESTING.md gates stay binding (complete slider render
-≤ 150 ms preview; full export within +5% / +16 MiB). The fused import adds:
-decode-latency delta ≤ 150 ms full-res / ≤ 45 ms preview, and a ≤ 4 MiB
-**retained** private-memory delta vs the direct import, measured
-deterministically (forced GC at step boundaries with the result image alive)
-— async-sampled peaks are reported for information only, because
-native-allocator private bytes are not reproducible run-to-run. The budgets
-exclude any additional full-frame allocation; the double-buffered pooled-band
-pipeline (two ≤ 1.5 MiB buffers, each band's cache write overlapping the next
-band's transform) uses no full-frame import transient.
+The fused import uses bounded pooled bands rather than full-frame staging.
+`CameraRgbCharacterizationPerformanceTests` owns latency and retained-memory budgets;
+peak native memory is informational because allocator behavior varies across runs.
 
 ## 5. Out of scope
 
@@ -267,56 +248,29 @@ against the direct transform enforce a maximum 0.008 normalized-channel error.
 
 ### 7.5 Atomicity, settings, cache identity
 
-Profile selection is decode-affecting: it joins the `BaseDecodeSettings`
-projection and `CacheKey` (identity token including a content hash), so a
-profile change triggers the standard newest-wins replacement decode. The
-resolved profile payload — matrices and interpolated HueSat tables — is bound
-to `BaseImageInfo`, so render consumes the tables from the same base whose
-pixels the matching matrix produced; matrix and tables switch atomically when
-the replacement base installs. The raw-only v2 `rawProfile` field persists
-source, location, and content hash; the built-in state is omitted so legacy
-canonical hashes remain unchanged. Clone and undo/redo retain the field,
-global Reset clears it, and preset hover/apply/untoggle preserve it. Presets and
-copy/paste exclude it. A selected profile counts as an edit.
-
-Each decode has one generation-scoped request snapshot. Live resolution yields
-an outcome token containing source, content hash, and rejection status; that
-token joins base and rendered-cache identity. A stale-base render cannot be
-promoted under the requested token. Export re-resolves the selection;
-missing, unavailable, corrupt, or hash-mismatched content uses the typed built-in
-fallback and reports a per-image warning through desktop export results.
+Profile selection changes decode identity (DECODE.md §4). The resolved matrix and
+HueSat payload install atomically with the base; render never mixes generations.
+One availability-gated request snapshot yields the source/hash/status outcome token
+used by base and rendered caches. Stale bases cannot promote under a newer token.
+Export re-resolves profiles, reporting typed built-in fallbacks per image.
+RENDER.md §8 owns serialized profile and transfer semantics.
 
 ### 7.6 Discovery
 
-All profile-content reads route through the live-availability policy and check
-again immediately before open; a placeholder is rejected actionably and is
-never hydrated. When camera identity arrives, discovery starts an asynchronous
-local Adobe scan; picker open remains a generation-correlated refresh fallback.
-The Adobe-only identity scan caches bounded `UniqueCameraModel` probes by
-path/mtime/size and fully parses and hashes only camera-matched candidates.
-Its generation-correlated result records whether scanning was attempted, the number
-of readable lightweight probes, and the pre-dedup identity-match count. Empty-state
-projection separately tracks completion of that identity scan and the image-profile
-pass: zero matches may be reported after the former, while a true-empty claim waits
-for both. Stale results cannot complete either scope for a newer image or identity.
-Picker discovery also inspects the persisted user file and bounded DNG embedded
-profile IFDs. Adobe
-matching keys on `UniqueCameraModel` against normalized make/model from the
-already-open LibRaw decode. Legacy `Fujifilm FinePix …` declarations canonicalize
-to the corresponding `Fujifilm …` identity; the qualifier is removed only for
-Fujifilm so unrelated model names remain exact. Picker precedence is persisted user file,
-embedded, matching Adobe profiles A–Z, then built-in, with semantic duplicates
-owned by the earliest source. Invalid persisted choices remain visible and fall
-back to built-in rather than selecting a substitute. The no-profile pixel decode
-does no DCP work, and embedded tags remain untouched until picker discovery.
+Profile reads recheck live availability immediately before open and never hydrate.
+Camera identity starts a local Adobe scan; picker open is a generation-correlated
+refresh fallback. Bounded probes cache by path/mtime/size; only matching candidates
+are fully parsed/hashed. Identity-scan and image-profile completion stay separate,
+so no-match is distinct from true-empty, and stale results cannot complete a new scope.
+
+Discovery includes persisted user files and bounded DNG profile IFDs. Adobe matching
+uses normalized camera make/model against UniqueCameraModel; only Fujifilm removes
+the FinePix qualifier. Precedence is persisted user, embedded, Adobe A–Z, built-in,
+with earliest-source deduplication. Invalid persisted choices remain visible with
+built-in fallback. No-profile decode does no DCP work; embedded tags wait for discovery.
 
 ### 7.7 DCP validation and budgets
 
-Synthetic `.dcp` fixtures with known constants (generated independently —
-Adobe profiles are copyrighted and never committed); parser, interpolation,
-and HSV round-trip oracle vectors via the `colour-science` script; integration
-tests for all three discovery sources, precedence, corrupt/missing profiles,
-persistence, cache invalidation, and the empty state. Full-resolution
-active-profile decode/export gates on the Canon 6D plus the preview slider
-gate, with frozen numeric peak-memory deltas (TESTING.md §5). Adobe-profile
-behavior is additionally verified manually at look sign-off.
+Independently generated DCP fixtures and `colour-science` vectors pin parser,
+interpolation and HSV math. TESTING.md owns discovery/integration, physical-anchor,
+performance and look-sign-off procedures; Adobe profile binaries are never committed.

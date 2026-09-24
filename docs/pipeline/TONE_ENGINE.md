@@ -124,11 +124,8 @@ Property tests hold all §3 fixed points across the full slider grid.
 Every shared stage runs before the target fork, so in-gamut edited content
 agrees between sRGB and Display P3 within mean ΔE00 ≤ 0.034 (synthetic worst
 case) and ≤ 0.053 (real-RAW full-combo edit), measured at the renderer's Q16
-boundary with sharpening off and on. After the render-v10 perceptual-chroma
-change, the observed synthetic value is 0.0022 with sharpening off or on; the
-real-RAW value is 0.0014 off or on. Encoded 8-bit files cannot carry this
-bound — quantizing identical colors to different target codes alone measures
-≈ 0.2 mean ΔE00.
+boundary with sharpening off and on. Encoded 8-bit files cannot carry this bound:
+quantizing identical colors to different target codes introduces additional error.
 
 ## 6. Luma authority
 
@@ -139,28 +136,13 @@ BT.709 constants are retired.
 
 ## 7. Retired operators
 
-Brightness and base look are dormant for crossing-on sources: the render
-ignores them (proven bit-identical across their full ranges) and the
-Brightness slider disables at `DisabledOpacity`. Both stay persisted and
-functional for crossing-off sources; the edit-settings schema is unchanged
-and nothing is rewritten at parse.
+Brightness and base look are ignored by RAW's crossing-on regime but remain persisted
+and functional for standard sources. Parsing never rewrites them.
 
 ## 8. Clipping semantics
 
-The red clipping side is source-referred and bypasses both tone regimes. RAW flags the
-unpacked mosaic at sensor maximum; JPEG/HEIC flags encoded samples at the scaled
-253/255 near-endpoint ratio before color normalization. Tone, WB, profile, curves,
-chroma, detail, and effects do not change `High`/`HighAny`. The blue side remains a
-finalized-display statistic:
-
-| Field | Crossing ON | Crossing OFF |
-|---|---|---|
-| `High`/`HighAny` | aligned sensor saturation | aligned encoded near-endpoint artifact |
-| `Low`/`LowAll` | display ≤ 0.5/255 | same |
-
-TIFF, PNG, and other standard formats report the high side unavailable in v1. The
-display floor stays available. Overlay masks remain dormant unless the clipping latch
-or an available triangle peek requests them.
+Source highlights bypass both tone regimes; the display floor follows finalized
+pixels. RENDER.md §7 owns source capability, predicates, projection, and mask semantics.
 
 ## 9. Validation
 
@@ -174,10 +156,8 @@ or an available triangle peek requests them.
   chromatic mean ≤ 5.0 / p99 ≤ 12.0 / max ≤ 13.0, grey ≤ 0.05. The chromatic
   residual is Blender's differently tuned inset.
 - **Quality gates:** over 0→+6 EV sweeps of the BT.709 primaries and
-  secondaries — OKLCh hue drift ≤ 8° at every step (measured 7.31°; Blender
-  10.0°) and chroma monotone non-increasing above scene white, ≤ 65% of its
-  0 EV value by +6 EV (measured 61.6%; Blender 57.7%; per-channel clipping
-  scores 177% — pushed colors *gain* saturation).
+  secondaries: OKLCh hue drift ≤ 8° at every step and chroma monotone non-increasing
+  above scene white, ≤ 65% of its 0 EV value by +6 EV.
 - **ColorChecker:** the characterization anchor measures the pre-crossing
   scene-linear seam (cross-platform bounds mean ≤ 3.0 / max ≤ 6.5); a second
   observation through the default crossing pins look drift (≤ 6.0 / ≤ 14.0).

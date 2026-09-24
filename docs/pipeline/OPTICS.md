@@ -1,50 +1,36 @@
 # Lens corrections
 
-Happy Photon applies embedded correction prescriptions to RAW files and resolves
-prescriptions from the pinned Lensfun database snapshot in `data/lensfun`. An exact,
-conservative Lensfun match is trusted: every supported correction class in the matched
-profile is available without a per-lens or per-class qualification gate. There is no
-correction for JPEG/HEIC sources. Distortion and Chromatic aberration default on for
-newly seen images; Vignetting defaults off.
+RAW corrections use embedded prescriptions or the pinned `data/lensfun` snapshot
+(identity: [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md#lensfun-database)).
+Exact conservative matches enable every supported class without per-lens/class
+qualification. JPEG/HEIC sources are uncorrected; newly seen images default Distortion
+and Chromatic aberration on, Vignetting off.
 
-Resolution is conservative and happens independently for each correction class:
-qualified embedded data wins, Lensfun fills an unrepresented class, and otherwise the
-class remains unavailable. Camera maker/model and lens model must match exactly after
-case, whitespace, and punctuation normalization, and the lens mount must be compatible
-with the matched camera. Cameras try exact primary names before exact English aliases.
-Lenses exhaust primary exact and distinct-token-set tiers before English aliases
-participate in the same tiers. Aliases in other languages do not participate. Equality
-of the distinct alphanumeric token sets may match the same lens words in a different
-order. A non-empty candidate set is terminal within that order, and multiple matches
-remain ambiguous. A maker prefix may appear in either the supplied or database model
-identity for both cameras and lenses.
-Missing or ambiguous interchangeable-lens identity produces no match; a
-fixed-lens mount may omit lens identity only when it has exactly one database lens.
-The EXIF lens string is the primary identity. If it produces no unique profile, bridge
-ABI 4 supplies LibRaw's already-parsed maker-note lens facts at the header stage. A
-transmitted maker-note lens name is tried next, followed by the composite-ID-derived name
-when the transmitted name does not match. F-mount composite IDs are resolved only for a
-confirmed LibRaw F-mount identity through a table selected from the normalized maker
-name. The shipped
-`data/lens-ids/nikon.tsv` table is derived from ExifTool's published tag documentation;
-no other maker table is currently shipped. Unknown IDs, missing tables, multi-name
-rows, and duplicate-key groups remain no-data. Focal/aperture guessing and non-CPU lens
-recovery are not implemented.
+Each class resolves independently: qualified embedded data, then Lensfun, else
+unavailable. Camera maker/model and lens model must match after
+case/whitespace/punctuation normalization, with compatible mounts. Cameras try primary
+names before English aliases. Lenses exhaust primary exact and
+distinct-alphanumeric-token-set matches before the same English-alias tiers; token order
+is irrelevant. Other languages do not participate. The first nonempty candidate set is
+terminal; multiple matches remain ambiguous. Maker prefixes may occur in supplied or
+database model identities. Missing/ambiguous interchangeable-lens identity cannot match;
+fixed mounts may omit identity only with one database lens. EXIF lens identity comes
+first. Without a unique match, bridge ABI 4 reads LibRaw's parsed maker-note facts at
+the header stage: try transmitted name, then composite-ID-derived name if it misses.
+Composite F-mount IDs require confirmed LibRaw F-mount identity and a table selected by
+normalized maker. Only `data/lens-ids/nikon.tsv` ships, derived from ExifTool's
+published tag documentation. Unknown IDs, missing tables, multi-name rows and duplicate
+keys yield no data; there is no focal/aperture guessing or non-CPU recovery.
 
 ## Same-optics aliases and manual selection
 
-`data/lens-ids/same-optics.tsv` is a curated, two-column source-name to Lensfun-model
-map. It is consulted only after EXIF, transmitted maker-note, and ID-derived exact
-candidates all miss; aliases of those three names then run in the same order.
-Comments and blank lines are ignored, self-aliases are ignored, and malformed or
-conflicting rows reject the table. Aliases are single-hop, case-insensitive name
-lookups normalized like Lensfun names (the supplied camera maker prefix is optional),
-never focal-range guesses.
+`data/lens-ids/same-optics.tsv` maps curated source names to Lensfun models only after
+EXIF, maker-note and ID-derived exact candidates miss. The same candidate order applies;
+lookups are normalized, case-insensitive and single-hop. Malformed/conflicting rows
+reject the table; blank/comment and self-alias rows are ignored. No focal-range guessing.
 
-The Nikon rows cover the AF prime families introduced in 1986–1995: 20/2.8, 24/2.8,
-35/2, 50/1.4, 50/1.8 (including N), 85/1.8, and 180/2.8 IF-ED. Their D successors
-retain the optical formula; distance reporting, barrel, and coating changes do not
-create a new optical prescription. The 50/1.8D successor arrived later, in 2002.
+The Nikon aliases cover AF 20/2.8, 24/2.8, 35/2, 50/1.4, 50/1.8 (including N),
+85/1.8, and 180/2.8 IF-ED families whose D successors retain the optical formula.
 Provenance: Nikon's [24mm history](https://imaging.nikon.com/imaging/information/story/0086/)
 and [50mm f/1.8 history](https://imaging.nikon.com/imaging/information/story/0060/),
 MIR's [20mm history](https://www.mir.com.my/rb/photography/companies/nikon/nikkoresources/AFNikkor/AFNikkor20mmf28D/index1.htm),
@@ -56,24 +42,11 @@ The AF 28mm f/2.8 is deliberately excluded: its D successor changed optical desi
 The Rokinon row is the Samyang 20mm f/1.8 ED AS UMC sold under the Rokinon brand;
 see the distributor's [brand information](https://rokinon.com/pages/about-us) and
 [20mm specification](https://rokinon.com/products/20mm-f1-8-full-frame-wide-angle).
-These are curated identity equivalences, not new measured calibrations.
 
-Develop's Optics picker offers Automatic followed by mount-compatible logical Lensfun
-names, the camera maker's own lenses first and every name carrying its maker (Lensfun
-omits it from some model strings). Numeric-suffix and crop-factor variants consolidate into one choice;
-manual selection uses the automatic matcher's crop ranking. The shared database
-memoizes choices per matched camera during decode, and the summary references that
-list. No UI lookup or second database instance is involved. Non-monochrome RAWs carry
-this summary even with no profile or complete embedded corrections. A rejected warp
-on an unknown camera retains the existing null-summary contract; it has no picker.
-
-The nullable `lens.profileOverride` is per image, survives JSON and history, counts as
-an edit, and Reset clears it. Copy/paste and presets transfer only the class booleans.
-Applying or removing a preset and pasting edits preserve the destination's manual lens.
-Changing the override re-decodes via `BaseDecodeSettings`; its escaped model joins the
-cache key. Embedded corrections still win per class. The source line marks a manual
-choice with MANUAL and reports NO CORRECTION DATA when it offers no classes.
-JPEG/HEIC and monochrome boundaries are unchanged.
+Develop offers Automatic and mount-compatible logical Lensfun names, consolidating
+calibration variants and ranking them as automatic matching does. Decode supplies the
+picker summary; UI lookup never opens a second database. Embedded data still wins
+per class after a manual selection. JPEG/HEIC and monochrome remain uncorrected.
 
 ## Placement and interpolation ledger
 
@@ -85,35 +58,23 @@ table gains use the output-geometry coordinate required by their existing contra
 Lensfun `pa` gain uses the shared green post-geometry coordinate, where the pristine
 source was sampled.
 
-For an interactive or large preview base this fused import writes the requested size
-directly and replaces that base's existing resize. Each preview base therefore has one
-decode interpolation whether optics are active or not. A native full base ordinarily
-needs no resize, so active corrections add its one budgeted warp pass. Render-side
-quarter turns, horizon rotation, crop, and final output resizing are unchanged. Horizon
-remains an interactive render edit and is not folded into a decode-cached operation.
-
-One centered scale-to-cover factor is solved across all active planes in the native
-full-resolution logical frame so corrected edges stay inside the visible source. That
-factor and frame are invariant across half/full decode scales; only the destination
-sampling density changes. Crop coordinates remain normalized to the corrected base.
-Source-saturation flags follow the same per-channel map with categorical OR semantics;
-the RAW sensor histogram remains a pre-warp sensor measurement.
+Preview imports sample directly to each requested size, replacing the normal resize;
+full-resolution corrections add one warp pass. Horizon remains render-side.
+One centered scale-to-cover is solved across active planes in the native logical frame,
+independent of half/full sampling density. Crop stays normalized to the corrected base;
+source-saturation follows the same maps with OR semantics, while RAW histogram remains
+pre-warp. No extra image interpolation is introduced in preview.
 
 ## DNG subset
 
 The reader follows Adobe's public [DNG 1.7.1 specification](https://helpx.adobe.com/content/dam/help/en/camera-raw/digital-negative/jcr_content/root/content/flex/items/position/position-par/download_section_733958301/download-1/DNG_Spec_1_7_1_0.pdf).
-Opcode payloads are read big-endian independent of TIFF byte order.
-
-- OpcodeList3: `WarpRectilinear`, `FixVignetteRadial`, and `TrimBounds`.
-- OpcodeList2: `FixVignetteRadial` only. Its smooth scene-linear gain field commutes
-  with demosaic interpolation to negligible error; mosaic-stage geometry does not.
-- ActiveArea defines LibRaw's visible source window. DefaultCrop defines the corrected
-  output window unless TrimBounds replaces it. Optical centers remain in the DNG
-  logical frame.
-- A mandatory OpcodeList1 operation, list-2 warp, unknown mandatory opcode, invalid bounds,
-  non-finite value, or unsupported plane count rejects the complete prescription.
-  Optional OpcodeList1 and unknown optional opcodes are skipped; a partial correction
-  is never applied.
+Payloads are big-endian. List 3 supports WarpRectilinear, FixVignetteRadial and
+TrimBounds; list 2 supports only FixVignetteRadial, whose smooth gain approximately
+commutes with demosaic. ActiveArea defines visible source, DefaultCrop the output unless
+TrimBounds replaces it; centers remain in the DNG logical frame. Mandatory list-1
+operations, list-2 warps, unknown mandatory opcodes, invalid/non-finite bounds or
+unsupported planes reject the whole prescription. Optional list-1/unknown operations are
+skipped.
 
 One or three RGB `WarpRectilinear` coefficient sets are supported. Distortion-only uses
 green geometry for every plane. CA-only retains red/blue differential maps relative to
@@ -137,8 +98,8 @@ empirically from Happy Photon's own committed RAF fixtures.
 | Source / mount | Parsing | Application | Evidence |
 |---|---|---|---|
 | DNG embedded opcodes | Supported subset above | Enabled | Synthetic authored-opcode and inversion tests |
-| Fujifilm X, 23/31/23 generation | Pinned; each class independent | Non-identity distortion enabled; CA and vignetting deferred | X30 distortion reduced registered preview displacement residual 61.0%, above both split-grid 3σ floors; X100 distortion tables were identity operations |
-| Fujifilm X, 19/29/19 generation | Pinned; trailing CA scale sentinel required | Deferred per class | X-T5 corpus candidates did not pass the per-file alignment gates |
+| Fujifilm X, 23/31/23 generation | Pinned; each class independent | Non-identity distortion enabled; CA and vignetting deferred | Authored fixtures pin the qualified distortion subset; identity tables advertise no operation |
+| Fujifilm X, 19/29/19 generation | Pinned; trailing CA scale sentinel required | Deferred per class | Parsing coverage does not establish a production correction |
 | Lensfun rectilinear profiles | `poly3`, `poly5`, `ptlens` distortion; `linear`, `poly3` TCA; `pa` vignetting | Enabled for every class supplied by an exact, mount-compatible match | Formula-level synthetic oracle and full-snapshot parse tests; `acm` is unsupported |
 | Monochrome RAW sensors | Not read in v1 | Uncorrected | The v1 correction pass requires three camera-native planes |
 | JPEG / HEIC | None | None | RAW-only boundary |
@@ -174,97 +135,32 @@ the largest calibrated focus distance (an infinity assumption because LibRaw doe
 provide focus distance), then interpolates over aperture and log focal length with the
 same edge clamping. `acm` calibrations produce no data in this version.
 
-The shipped database is a manual snapshot of Lensfun git master at commit `1c8b8f0`.
-There is no runtime network access or automatic update path.
+The shipped database is a pinned manual snapshot in `data/lensfun`; there is no
+runtime network access or automatic update. Database-only numeric calibration suffixes
+do not change lens identity; crop-distance ranking resolves calibrations, while tied
+or distinct identities remain ambiguous. Application toggles do not affect resolution.
 
-An exact or distinct-token-set, mount-compatible match trusts the database and exposes
-every supported, non-identity class in the matched profile. Token order and repeated
-tokens do not affect distinct-token-set equality. There is no production pin table or
-instrument-evidence gate. Matching remains deliberately conservative: missing or
-ambiguous identity still produces no data. A Lensfun model may carry a trailing integer
-calibration token absent from the supplied identity; that database-only suffix is
-ignored for name equality, after which multiple calibrations still use the existing
-crop-distance ranking and tied or distinct identities remain ambiguous. `ForceSource`
-bypasses embedded readers for qualification. Resolution is independent of the application toggles, which gate
-application only; whenever an embedded prescription leaves any class unfilled, Lensfun
-is consulted for correction data. Every non-monochrome RAW also resolves its camera
-and compatible picker choices, including when embedded corrections are complete. The first Lensfun resolution pays the measured one-time 162.7 ms parse
-cost and retains 6.7 MB before matching determines whether a profile applies.
+### Evidence
 
-`scripts/evaluate-raf-lens-corrections.cs` can force either the embedded or Lensfun
-source. It selects a camera JPEG with a long edge of at
-least 1024 px and aspect within 2% of the oriented visible frame, preferring pixel count
-then file offset and recording offset, dimensions, and SHA-256. It compares isolated
-class ablations after global registration on disjoint grid halves and requires the
-class-specific reduction plus an improvement above a bootstrap 3σ floor. It is a
-developer qualification instrument, never a decode-time validator.
+Matching is conservative; unknown or ambiguous identities produce no data. Historical
+qualification runs live in git history; retired per-lens gates no longer apply.
+`scripts/evaluate-raf-lens-corrections.cs` is a qualification instrument whose
+embedded-JPEG oracle can penalize genuinely straightening corrections.
 
-The 2026-08-23 committed-fixture run found one conservative Lensfun match among seven
-RAW fixtures: the fixed-lens X30. No wrong-lens match was accepted. Forced Lensfun
-distortion reduced its aggregate displacement residual 40.7%, compared with the
-embedded prescription's qualified 61.0%, but one split-grid half missed the 3σ floor.
-Lensfun CA reduced the residual 3.5% and also failed; vignetting was an identity
-operation for this profile. Under the now-retired qualification policy these results
-enabled no Lensfun class. They remain informational evidence, not production gates.
-The committed 6D reports only `8mm`; multiple Canon-EF 8 mm database lenses make that
-identity ambiguous, so the matcher correctly returns no data.
-
-The 2026-08-24 maker-note identity gate swept 10,778 local Nikon files. Every file
-carried a composite lens ID and every one resolved, across eight distinct IDs, with no
-unknown or ambiguous key; no file was skipped as unavailable. Of those files 8,952
-(83.1%) reached a Lensfun profile across six lenses. The remaining two identities stay
-no-data honestly: the database carries no profile for the 85 mm f/1.4D, and the one
-third-party lens present has none either.
-
-What that verification does and does not establish is worth stating precisely. The
-shipped table is a byte-faithful transcription of the published documentation, checked
-by hashing both the retrieved source and the generated table against the recorded
-provenance, and every resolved name is consistent with the focal length, maximum
-aperture, and lens-feature bits its own key encodes. It is not an independent check of
-the name itself: LibRaw derives those focal and aperture values from bytes 2 to 5 of the
-same composite, so a key and its range facts cannot corroborate each other. Keys that
-differ only in the lens-ID and MCU bytes are indistinguishable this way -- 321 of the 602
-resolvable published keys share their range and feature bytes with another entry, and two
-of the eight identities seen locally are such a pair. For those, correctness rests on the
-published documentation being right, which is this feature's declared source of truth.
-The safety boundary is unchanged and sits elsewhere: an unknown or ambiguous key still
-produces no data, and a recovered name still has to match a database lens exactly.
-
-This is Nikon F evidence and says nothing about other makers or uncoded lenses.
-
-The subsequent 21,823-file library sweep accepted three camera/lens identities with zero
-wrong-lens matches: Canon PowerShot G11, XF27mmF2.8 R WR, and
-XF16-50mmF2.8-4.8 R LM WR. G11 distortion increased residual on every evaluable sample;
-XF27 distortion passed zero of five samples. Across the five-file samples for both Fuji
-lenses, every CA ablation failed and increased its class residual. The original
-vignetting measurements predated the corner-normalization fix and measured a
-systematically over-strong correction; re-measured after the fix, XF16-50 vignetting
-is mixed and mild (8 of 13 samples improved, up to 33.7%, one passing its individual
-gate; 5 mildly worse within the tone-curve confound). The
-expanded XF16-50 distortion G5 retained a 55.9% median improvement and harmed no
-evaluable file beyond its 3σ floor, though only 6 of 13 evaluable samples
-cleared the per-file split-grid gate. After visual A/B review of every
-evaluable sample, the user ruled the individual-pass criterion too strict for this case
-and accepted XF16-50 distortion under the then-current G5 gate. The later
-trust-the-database ruling retired G5 and all per-lens/class gates. The G11, XF27, and
-XF16-50 measurements are retained as history only; profiles they scored against now
-apply when exactly matched and their class toggle is on. Interpret the negative scores
-with care: the embedded-JPEG oracle measures agreement with the manufacturer's
-rendering, so on cameras whose JPEGs apply little or no distortion correction (the G11
-review case) it penalizes genuinely straightening corrections; user visual review of
-the G11 samples found the corrected geometry fine.
+The Nikon table follows published documentation and recorded provenance. Focal/aperture
+ranges cannot independently corroborate names: LibRaw derives them from the same
+composite bytes. Keys differing only in lens-ID/MCU bytes depend on the published
+source's accuracy. Unknown/ambiguous keys yield no data; recovered names must still
+match Lensfun. This limitation concerns Nikon F, not other makers or uncoded lenses.
 
 ## Settings, cache, and compatibility
 
-EditSettings v3 always stores a `lens` block with the booleans and a `standard` or
-`legacy` baseline. Reading v2 materializes all-off/legacy in memory; saving writes an
-explicit v3 block, so it can never acquire defaults later. New rows use
-on/on/off/standard. `HasEdits` compares with the image's baseline, Reset restores it,
-and copy/paste and presets transfer only the booleans.
+`LensSettings` stores three required booleans: distortion and chromatic aberration
+default on, vignetting off. The nullable `profileOverride` stores a per-image manual
+lens selection; there is no baseline field. `HasEdits` compares with those defaults,
+and Reset restores them and clears the override. Copy/paste and presets transfer only
+the booleans and preserve the destination override. RENDER.md §8 owns version acceptance.
 
-The three bits and any manual lens override join `BaseDecodeSettings.CacheKey`.
-`BaseImage.Version` is 20 because same-optics aliases change corrected decodes; version 19
-introduced English Lensfun aliases, and version 18
-introduced order-tolerant identity and the ID-derived fallback for the same reason.
-`RenderPipeline.Version` is 12, unchanged by lens identity because render-stage math
-is untouched.
+The three bits and escaped manual override join `BaseDecodeSettings.CacheKey`.
+Changing them re-decodes; version values and cache invalidation rules live in code
+and OVERVIEW.md §6.

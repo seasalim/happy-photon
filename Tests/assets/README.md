@@ -39,17 +39,15 @@ dotnet run --file scripts/generate-pipeline-test-assets.cs -- `
 ```
 
 The HEIC was encoded at quality 90 with pillow-heif 1.1.1. Its decode test is
-skipped with an explicit reason when the platform codec is unavailable.
+skipped with an explicit reason when Magick reports no bundled HEIC read support.
 
 ## XMP sidecar fixtures (`xmp/`)
 
-Real third-party XMP for sidecar/interop tests. The `lightroom-*` files were
-authored for the project with Adobe Lightroom Classic 15.5.1 (crs 18.5.1,
-Process Version 15.4) by editing the committed CC0 fixtures per the capture
-matrix in the 2026-08-30 trial (run 220; findings log kept with the capture
-set). They are derivatives of CC0 content and are released CC0. Sidecars are
-committed verbatim; `-embedded`/`-jpg` files are XMP packets extracted
-byte-for-byte from files Lightroom rewrote in place.
+Real third-party XMP for sidecar/interop tests. The `lightroom-*` files were authored
+for the project with Adobe Lightroom Classic 15.5.1 (crs 18.5.1, Process Version 15.4)
+by editing the committed CC0 fixtures. They are derivatives of CC0 content and are
+released CC0. Sidecars are committed verbatim; `-embedded`/`-jpg` files are XMP packets
+extracted byte-for-byte from files Lightroom rewrote in place.
 
 | File | Purpose | SHA-256 |
 |------|---------|---------|
@@ -75,10 +73,10 @@ External reference renders follow
 `references/<fixture-stem>.<tool>.<lossless-extension>`. The comparison harness also
 accepts a fixture-keyed directory supplied by `HAPPY_PHOTON_COMPARE_REFERENCE_DIR`.
 Committed references are canonical test assets: store them losslessly with exactly the
-1600px measurement long edge (never smaller), and add their compressed size to the
-recursive 120 MiB asset budget before committing. If the two real compressed files do
-not fit the remaining budget, obtain maintainer approval for a budget change; do not
-reduce their measurement resolution.
+1600px measurement long edge (never smaller), and add their compressed size to the asset
+budget enforced by `GoldenHarnessTests.AssetAndGoldenBudgets_AreWithinSpec` before
+committing. If the two real compressed files do not fit the remaining budget, obtain
+maintainer approval for a budget change; do not reduce their measurement resolution.
 
 Copy and complete this provenance block for every added reference:
 

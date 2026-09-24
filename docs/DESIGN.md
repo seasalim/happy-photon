@@ -1,352 +1,118 @@
----
-name: Happy Photon
-colors:
-  surface: '#131318'
-  surface-dim: '#131318'
-  surface-bright: '#39383e'
-  surface-container-lowest: '#0e0e13'
-  surface-container-low: '#1b1b20'
-  surface-container: '#1f1f25'
-  surface-container-high: '#2a292f'
-  surface-container-highest: '#35343a'
-  on-surface: '#e4e1e9'
-  on-surface-variant: '#b9cacb'
-  inverse-surface: '#e4e1e9'
-  inverse-on-surface: '#303036'
-  outline: '#849495'
-  outline-variant: '#3b494b'
-  surface-tint: '#00dbe9'
-  primary: '#dbfcff'
-  on-primary: '#00363a'
-  primary-container: '#00f0ff'
-  on-primary-container: '#006970'
-  inverse-primary: '#006970'
-  secondary: '#fface8'
-  on-secondary: '#5e0053'
-  secondary-container: '#ff24e4'
-  on-secondary-container: '#520049'
-  tertiary: '#faf3ff'
-  on-tertiary: '#3c0090'
-  tertiary-container: '#e1d2ff'
-  on-tertiary-container: '#7213ff'
-  white-balance-cool: '#74f7ff'
-  white-balance-neutral: '#9df7b0'
-  white-balance-warm: '#f4ff69'
-  white-balance-tint-green: '#73b95a'
-  white-balance-tint-magenta: '#ec3c7e'
-  local-mask: '#ff24e4'
-  error: '#ffb4ab'
-  on-error: '#690005'
-  error-container: '#93000a'
-  on-error-container: '#ffdad6'
-  primary-fixed: '#7df4ff'
-  primary-fixed-dim: '#00dbe9'
-  on-primary-fixed: '#002022'
-  on-primary-fixed-variant: '#004f54'
-  secondary-fixed: '#ffd7f0'
-  secondary-fixed-dim: '#fface8'
-  on-secondary-fixed: '#3a0033'
-  on-secondary-fixed-variant: '#840076'
-  tertiary-fixed: '#e9ddff'
-  tertiary-fixed-dim: '#d1bcff'
-  on-tertiary-fixed: '#23005b'
-  on-tertiary-fixed-variant: '#5700c9'
-  background: '#131318'
-  on-background: '#e4e1e9'
-  surface-variant: '#35343a'
-typography:
-  display-lg:
-    fontFamily: Sora
-    fontSize: 72px
-    fontWeight: '800'
-    lineHeight: 80px
-    letterSpacing: -0.04em
-  headline-lg:
-    fontFamily: Sora
-    fontSize: 48px
-    fontWeight: '700'
-    lineHeight: 56px
-    letterSpacing: -0.02em
-  headline-lg-mobile:
-    fontFamily: Sora
-    fontSize: 32px
-    fontWeight: '700'
-    lineHeight: 40px
-    letterSpacing: -0.02em
-  headline-md:
-    fontFamily: Sora
-    fontSize: 32px
-    fontWeight: '600'
-    lineHeight: 40px
-  body-lg:
-    fontFamily: Hanken Grotesk
-    fontSize: 18px
-    fontWeight: '400'
-    lineHeight: 28px
-  body-md:
-    fontFamily: Hanken Grotesk
-    fontSize: 16px
-    fontWeight: '400'
-    lineHeight: 24px
-  label-md:
-    fontFamily: Hanken Grotesk
-    fontSize: 14px
-    fontWeight: '500'
-    lineHeight: 20px
-    letterSpacing: 0
-  label-sm:
-    fontFamily: Hanken Grotesk
-    fontSize: 12px
-    fontWeight: '500'
-    lineHeight: 16px
-    letterSpacing: 0
-rounded:
-  sm: 0.25rem
-  DEFAULT: 0.5rem
-  md: 0.75rem
-  lg: 1rem
-  xl: 1.5rem
-  full: 9999px
-spacing:
-  base: 8px
-  xs: 4px
-  sm: 12px
-  md: 24px
-  lg: 48px
-  xl: 80px
-  gutter: 24px
-  margin-mobile: 16px
-  margin-desktop: 64px
----
+# Happy Photon Design
+
+The desktop workspace uses restrained, monochrome chrome so photographs and
+color-semantic data carry the visual emphasis. UI resources live in
+`Themes/HappyPhotonTheme.axaml`; code-drawn overlays use `Views/HappyPhotonColors.cs`.
 
 ## First run
 
-New installations use one calm, sequential wizard. Welcome contains only the product
-promise: a local catalog, no photo import, and untouched originals. Storage quietly
-shows the resolved catalog and cache defaults; each row has its own **Change…** picker,
-the packaged-app uninstall warning follows the selected catalog location, and the
-standard-location catalog is adopted automatically at startup. Confirming Storage is
-the one catalog-creation boundary. Configured-but-empty roots remain read-only.
+New installations use Welcome, Storage, and Pictures in sequence. Welcome explains
+the local catalog and untouched originals. Storage shows catalog/cache defaults and
+separate Change pickers, with the uninstall warning appropriate to the chosen location.
+Confirming Storage is the catalog-creation boundary; empty configured roots stay
+read-only until then. Pictures chooses the top-level browsing folder.
 
-Pictures then selects the top-level folder shown in the folder tree, using the detected
-Pictures folder when available and a picker fallback otherwise. A shallow local probe
-may add a Lightroom step whose dialog is pre-filled from the bounded list of detected
-`.lrcat` files; another catalog can be chosen with the normal picker. Canceling stays
-in the wizard, while Apply or explicit Skip advances to a final all-set page. **Start
-tour** and **Skip** both finish with the validated Pictures folder, open the workspace,
-and focus the folder tree; only **Start tour** begins the guided tour.
+A bounded shallow local probe may offer a Lightroom step. Apply or explicit Skip
+advances to an all-set page; cancel stays in the wizard. Start tour and Skip both
+finish setup and focus the folder tree; only Start tour opens the guided workflow.
+ARCHITECTURE.md owns the startup gate and atomic completion checkpoint.
+
+The session-only tour uses non-modal coachmarks anchored to stable Browse/Develop
+layout points. It suspends when its view is left and resumes on return. Unrelated
+sections dim while the target stays interactive; the Browse empty card stays hidden.
+Decorative photon trails never intercept input. Tour navigation never changes photo
+state, filters or selection; its Export entry offers a return to Browse when empty.
 
 ## Import from Lightroom Classic
 
-The conditional first-run Lightroom step and the Folders header's **More folder
-actions** menu expose **Import from Lightroom**. The dialog reads a `.lrcat`, automatically summarizes source
-roots already available locally,
-asks for optional local mappings for unavailable roots that contain importable photos,
-and offers two non-clearing policies: Lightroom wins, or fill empty Happy Photon values
-only. Its dry-run report updates automatically after mapping or policy changes and
-summarizes path and per-axis outcomes before apply. A wholly unmatched import is
-kept separate from expected information such as intentionally unmapped roots, virtual
-copies, unsupported file types, unrecognized color-label tokens, and
-unverified-but-compatible catalog versions.
-
-Mapped photo files must exist when the preview runs. Missing originals are reported and
-skipped without opening or hydrating image content. When no mapped files exist, Apply is
-unavailable so the import cannot create orphan catalog paths or persist empty settings.
-The completion report distinguishes a catalog with no ratings, flags, or color labels
-from one whose assessed-photo paths did not match. An import into an open folder updates
-the existing Browse objects and filters without reloading thumbnails. During first run,
-the Pictures choice remains the browsing root regardless of Lightroom mappings.
+First run and the Folders header expose the same import dialog. It summarizes local
+roots, offers mappings for unavailable roots, and previews Lightroom-wins or fill-empty
+policies before Apply. Missing photos are skipped; no matched photos means Apply is
+disabled. Reports distinguish no assessments from no matching paths and keep expected
+skips separate. Import updates existing Browse objects without reloading thumbnails;
+first-run mappings never replace the Pictures choice as the browsing root.
+The workflow is described in WORKFLOW.md; ARCHITECTURE.md owns import safety.
 
 ## Settings
 
-The title bar exposes Settings with a gear between the quick Theme menu and
-Help. Settings uses the same tab and footer structure as Help & About. General
-contains the application theme; Storage shows catalog and cache roots with Reveal,
-Change, and restart-time Move actions plus staged status; Metadata contains catalog-scoped XMP mode and
-naming controls, with immediate application and a disclosure about interop,
-cloud synchronization, and original-file safety.
+The title-bar gear sits between Theme and Help. Settings shares Help & About's tab
+and footer structure. General contains theme; Storage reveals roots and stages
+restart-time moves; Metadata applies catalog-scoped XMP settings immediately.
 
-About carries the manual update action and its muted inline result. An available
-release adds only a small muted dot to the title-bar Help button — no status-bar
-chrome — and opening Help while that dot is present selects About so the channel-aware
-Store or GitHub upgrade action is one more click away. Happy Photon makes no automatic
-update network requests; GitHub is contacted only on an explicit **Check for updates**.
-
-## Brand & Style
-
-The brand personality for the design system is energetic, luminous, and high-velocity. It targets a tech-forward audience that values performance and visual stimulation. The UI should evoke a sense of "captured light"—vibrant, focused, and humming with energy.
-
-The workspace uses restrained, monochrome chrome so photographs and color-semantic
-data carry the visual energy. Cyan remains the brand signature in the title bar and
-the first-run welcome heading; controls use
-neutral value shifts for hover, selection, active, and focus states.
-Workspace scrollbars are hidden; the folder tree and History are the overlay exceptions.
+About owns manual update checks and muted inline results. An available release adds
+a muted dot to Help; opening Help then selects About and offers the channel-appropriate
+Store or GitHub action. There are no automatic update requests.
 
 ## Colors
 
-The palette is anchored in deep space blacks so image color remains authoritative.
-- **Control chrome:** Achromatic surface steps distinguish hover, selection, active,
-  and focus states. Active fills use a high-contrast neutral on-color.
-- **Brand cyan:** Reserved for the title-bar mark and wordmark and the first-run
-  welcome heading.
-- **Semantic color:** Reserved for burst-group identity, color labels, mixer bands,
-  white-balance gradients, clipping and scope channels, errors/destructive actions,
-  while reject uses an invariant near-black surface with a light glyph and hairline.
-- **White balance spectrum:** The Kelvin and tint tracks use dedicated cyan→green→yellow and green→magenta functional gradients so their direction is readable at a glance.
-- **Neutral:** A range of ultra-dark navys and blacks (`#0A0A0F` to `#1A1A24`) to provide a high-contrast canvas for the vivid accents.
-
-Avoid muddy colors. Use high-saturation tones and implement luminosity masks to ensure the neon hues feel integrated into the dark environment.
+- Control chrome uses achromatic hover, selection, active and focus states.
+- Brand cyan is reserved for the title-bar mark/wordmark and welcome heading.
+- Semantic color identifies bursts, color labels, mixer bands, white-balance tracks,
+  clipping/scope channels, and errors/destructive actions.
+- Reject uses an invariant near-black surface, light glyph and hairline.
+- Kelvin and tint tracks use functional cyan→green→yellow and green→magenta gradients.
 
 ### Application themes
 
-The themes present as **Dark** (the default) and **Middle Gray** in the UI; the
-Middle Gray internal identifier remains `MidGray` because that spelling matches the
-enum naming style. Middle Gray keeps the same semantic data colors while
-raising the neutral chrome. Its photograph surround is `#777777`, the nearest
-integer sRGB encoding of CIE L\* 50. That code
-value is about 47% of the encoded channel range but decodes to roughly 18.4% relative
-luminance because sRGB is nonlinear. The familiar 18% photographic gray describes a
-physical reflectance convention whose displayed appearance also depends on lighting
-and color management; Happy Photon therefore targets the display-referred L\* 50
-reference and documents its close relationship to 18% gray rather than treating a
-reflectance card as the implementation value.
+Dark is the default; Middle Gray uses the internal identifier `MidGray`.
+Middle Gray's photograph surround is the nearest integer sRGB encoding of CIE L\* 50,
+`#777777`, about 18.4% relative luminance. This is a display reference, not a physical
+18% reflectance card whose appearance would depend on illumination.
 
-Middle Gray remains a dark-family theme with light text. Its chrome ramp stays below
-the surround, and text is placed on darker cards rather than directly on `#777777`.
-Every chrome neutral in the Middle Gray dictionary is strictly achromatic (R=G=B); the
-Dark theme's teal-tinted neutral family stays out of this variant so nothing near the
-photograph carries a color cast. Accents that border photo pixels drop the electric
-cyan under Middle Gray. The active-image ring goes fully achromatic (`#bbbbbb`),
-chosen at the relative luminance its former muted teal carried so the focus rectangle
-keeps its visual weight while adding no chroma beside the photograph. The selection
-check mark is achromatic and high-contrast. `ControlHover`, `ControlSelected`,
-`ControlActive`, and `OnControlActive` are variant-specific neutral state tokens; the
-Fluent `SystemAccentColor*` ramp is achromatic as well. `BrandCyan` is separate and
-serves only the brand identity: the title bar and the first-run welcome heading. The
-`BrandMark` image-brush keeps that cyan mark
-in both themes.
-`AssessmentGray` uses the same shipped value but is an invariant assessment reference,
-not an alias to the theme surround. `AssessmentWhite` is the invariant `#FFFFFF`
-reference band used with it. Theme resources live in
-`Themes/HappyPhotonTheme.axaml`; code-drawn photograph overlays use the matching
-invariant values in `Views/HappyPhotonColors.cs`.
+Middle Gray remains a dark-family theme with light text on darker chrome. Its neutrals
+are strictly achromatic, including the active-image ring and selection mark, so they
+introduce no color cast beside photographs. Semantic colors retain their meanings.
 
-The title-bar icon and Photon wordmark stay cyan. Other interface marks are text or
-vector paths and inherit neutral theme resources.
+| Token | Contract |
+|---|---|
+| `ViewerSurround` | Theme-specific photograph surround |
+| `ControlHover`, `ControlSelected`, `ControlActive`, `OnControlActive` | Neutral interaction states |
+| `SystemAccentColor*` | Achromatic Fluent control ramp |
+| `BrandCyan`, `BrandMark` | Brand identity, separate from control accents |
+| `AssessmentGray`, `AssessmentWhite` | Invariant assessment references; never aliases of theme surround |
 
 ## Typography
 
-Typography in this design system emphasizes a technical yet premium feel. 
-- **Headlines:** Sora provides a geometric, futuristic weight that feels bold and innovative. Use "Display" sizes for hero sections with tight letter spacing to mimic high-end editorial tech layouts.
-- **Body:** Hanken Grotesk offers high legibility and a contemporary edge for long-form content and UI descriptions.
-- **Panel headers:** Hanken Grotesk SemiBold, mixed case, muted, without tracking.
-- **Chrome:** Hanken Grotesk is the single face for buttons, pills, filters, toolbars,
-  status text, and metadata labels; button and pill text uses mixed case.
-- **Fixed-width data:** JetBrains Mono is reserved for slider value columns, numeric
-  readouts such as EXIF, histogram statistics, and dimensions, and keyboard hints.
-
-The desktop welcome surface uses named display tokens rather than local sizes:
-`FontSizeHero` (48px) for the cyan welcome wordmark and `FontSizeFeature` (34px)
-for the two-tone onboarding headline.
-
-Scale typography aggressively on mobile; headlines should shrink significantly while body text remains legible at 16px.
+Sora supplies headings; Hanken Grotesk supplies body and control chrome. Panel headers
+use mixed-case Hanken Grotesk SemiBold, muted and without tracking. JetBrains Mono is
+reserved for numeric readouts, slider values, dimensions and keyboard hints.
+The welcome surface uses named `FontSizeHero` and `FontSizeFeature` tokens.
 
 ## Layout & Spacing
 
-The layout philosophy follows a **Fluid Grid** model with high-impact margins. 
-- **Desktop:** 12-column grid with wide 64px outer margins to create a "cinematic" feel. Gutters are fixed at 24px to maintain structural tension.
-- **Mobile:** 4-column grid with 16px margins. Content should be edge-to-edge for immersive visuals (e.g., cards and images).
+Panes are mode-specific: Browse owns review; Develop owns editing controls
+(pipeline/UI.md §2). Export layout and behavior live in WORKFLOW.md §6.
+Workspace scrollbars are hidden except for the folder tree and History overlays.
 
-Spacing rhythm is strictly based on an 8px scale. Use large `xl` (80px+) vertical spacing between sections to allow the dark background to "breathe" and create a sense of vastness.
+The navigator retains the active thumbnail and online-only action so folders retain
+space. When zoomed, it outlines the visible image region with a primary-text hairline
+and dark halo, mapped to the image rather than its gutters. The outline is informational;
+it tracks pan/zoom and disappears when effectively all of the image is visible, except
+during the transient loupe peek.
 
-The desktop workspace keeps its side panes mode-specific: Browse's right pane is a
-review pane, Develop owns the editing controls (composition in
-`docs/pipeline/UI.md` §2), and Export pairs a batch preview list with output settings
-around the existing rendered preview. Browse owns selection; every listed photo exports,
-and clicking a row changes only the preview. Change photos offers Choose in Browse or
-replacement with the picked photos in the current filtered Browse view. Destination,
-Output sizes, Format/Quality (Lossless for PNG/TIFF), and Remove location data appear
-above collapsed More options (color space, sharpening, filenames), followed by a
-Watermark expander and the resolved path example. Watermark offers Add watermark,
-single-line text, installed font family, bold/italic, short-edge size percentage,
-White/Black, opacity, edge, edge-aware alignment, optional side-edge rotation, and
-short-edge margin percentage. The body is disabled while off; the summary is "Off"
-or quoted text and position. Center hides alignment; Left/Right expose rotation.
-Missing saved fonts keep their name with "(not installed)" and use the platform default.
-Side-edge summaries name the edge, alignment and rotation. Settings persist across
-sessions; watermark changes coalesce for 250 ms before saving or refreshing an open
-Preview output proof. Closing saves the final values after pending writes.
-Enabled blank text blocks export. Develop and thumbnails remain unmarked.
-The batch summary, validation, report and Export N files button occupy
-a fixed footer outside scrolling settings. Report details are collapsed and height-bounded. The
-left navigator retains only the active
-thumbnail and online-only download action so the folder tree receives the reclaimed
-height. When Develop is zoomed past fit, its navigator preview outlines the visible
-image region with a one-pixel primary-text hairline and dark halo. The outline maps to
-the Uniform-stretched image rather than its gutters, tracks pan and zoom, and disappears
-when at least 99.5% of the image is visible; the transient 1:1 loupe peek is the
-exception, showing the outline from an otherwise mostly visible sub-1:1 view. It is
-informational only; navigator panning remains out of scope.
+Browse anchors culling actions left and view/thumbnail state right. Develop anchors
+navigation/rotation left and zoom/view state right. Persistent assessments stay in
+Browse; Develop and Loupe shortcuts briefly show a chrome-less confirmation over the
+photo, with primary text and a dark halo for legibility on unknown content.
 
-The Browse bottom toolbar anchors culling actions left and view/thumbnail state right.
-Develop mirrors that split: navigation and rotation anchor left while
-zoom and view state anchor right. Flag, color-label, and rating state remains visible
-in Browse rather than resting anywhere over the Develop or full-screen viewer. Develop
-and Browse Loupe culling shortcuts briefly show a confirmation centered over the
-photograph and clear of its bottom edge, then fade it out. Unlike the app's persistent
-overlays, this one is not muted: it appears for barely a second over unknown
-photograph content, so it uses primary text at full opacity with a soft dark halo for
-legibility over bright frames. It stays chrome-less — the halo replaces a boxed banner
-rather than joining one.
+Fullscreen exposes a muted exit chip on pointer movement, then fades it away. It is
+clickable only while visible, so exiting is not keyboard-only. Clipping overlays follow
+pipeline/UI.md §4; image viewing aids never become exported pixels.
 
-Full screen keeps the same rule with one exception, so that leaving it is not
-keyboard-only: a muted exit chip sits at the bottom of the frame, invisible while
-the pointer is still, eased in on pointer movement and faded again about two
-seconds later. It is a control rather than a hint — clicking it leaves full
-screen, as Escape and `F` do — and it is not hit-testable while hidden.
-
-The Develop clipping latch uses the same restrained overlay language; its latch and
-peek behavior, the muted `CLIPPING · HIGHLIGHTS / FLOOR` status line, and the invariant
-red (source-saturation) / blue (display-floor) viewing-aid colors are specified in
-`docs/pipeline/UI.md` §4.
-
-The review metadata is a curated FILE, CAMERA, and LOCATION summary for every supported
-format. FILE combines dimensions, megapixels, and size; a missing capture date falls
-back to a muted file-modified date without changing capture-time semantics. CAMERA
-shows available camera, lens, and exposure rows independently, with exposure bias in
-the exposure line and 35mm-equivalent focal length plus crop factor in its tooltip.
-A muted conditions line appears only when a frame deviates from defaults — flash
-fired, non-pattern metering, manual white balance — and stays absent otherwise.
-LOCATION shows coordinates and altitude when present. Missing rows remain absent
-rather than showing placeholder values.
-
-## Elevation & Depth
-
-Elevation is communicated through **Light Emission** rather than physical shadow.
-- **Tonal Layers:** Surfaces further from the "floor" are lighter in tone. The base is `#0A0A0F`, containers are `#16161E`, and floating elements are `#22222E`.
-- **Glows:** Instead of black shadows, use "Photon Glows"—subtle, high-blur outer shadows tinted with the primary or secondary color (e.g., 20% opacity Electric Cyan).
-- **Glassmorphism:** Use backdrop-blur (20px+) on overlays and navigation bars to simulate light passing through high-density energy fields.
-
-## Shapes
-
-The shape language is "Squircle-adjacent"—sophisticated and intentional. 
-- **Standard:** Use `0.5rem` (8px) for buttons and input fields to keep them feeling precise.
-- **Large Containers:** Use `1.5rem` (24px) for cards and modals to soften the high-contrast aesthetic.
-- **Interactive Triggers:** Some small decorative elements may use pill-shapes to indicate "capsules" of energy.
+Review metadata groups FILE, CAMERA and LOCATION. Missing rows remain absent. A muted
+file-modified fallback does not become capture time; exposure-bias, focal-equivalence
+and crop-factor details stay with exposure/lens information. A conditions line appears
+only for deviations such as flash, non-pattern metering or manual white balance.
 
 ## Components
 
-Color labels use fixed red, yellow, green, blue, and purple visual slots. Browse
-thumbnails show the assigned color as a round marker in the caption badge row, aligned
-under the `EDIT` badge so the photograph stays unobstructed. The assessment and filter
-controls generate their swatches from the append-only label enum; the filter row shows
-swatches alone and carries each name in its tooltip; clearing is a re-click on the
-active swatch rather than an All swatch.
+Color labels occupy fixed red, yellow, green, blue and purple slots. Caption markers
+align below EDIT so the photograph stays unobstructed. Assessment/filter swatches come
+from the append-only enum; tooltips name them and re-clicking clears the active filter.
 
-- **Buttons:** Primary buttons should feature a subtle inner glow and a soft drop-shadow in the primary color. On hover, the luminosity increases.
-- **Dialog buttons:** Dialog action buttons sit bottom-right, with the dismiss button (Close/Cancel) immediately left of the accent primary. A button keeps its position across dialog states — the dismiss button must not move when the primary appears or disappears.
-- **Input Fields:** Use a "Ghost" style—thin 1px borders in a muted neutral, turning to Electric Cyan on focus with a faint outer glow.
-- **Cards:** Incorporate a subtle top-down gradient stroke (1px) to catch the "light" from above. Backgrounds should use a semi-transparent dark tint with backdrop-blur.
-- **Chips:** Monospaced labels inside pill-shaped containers with high-saturation borders.
-- **Data Visualization:** Use "Photon Trails"—thin, glowing lines with gradient tails to represent motion and data flow.
-- **Progress Indicators:** Linear bars with a "pulse" animation, moving from Secondary to Primary color to represent energy charging. The pulse runs only while the represented work is actually active — an indicator never animates at rest or while hidden (hidden indeterminate bars keep the GPU rendering; see `ARCHITECTURE.md` invariant 10). Static loading placeholders, like the browse tile strip, are the idle-safe alternative for transient per-item states. Sustained preview preparation uses only the existing static status-bar activity segment; the Develop scope box has no local progress bar.
+Dialog actions stay bottom-right, with Close/Cancel immediately left of the primary.
+Dismiss buttons never move when the primary appears or disappears.
+
+Indeterminate indicators run only during represented work (startup initialization or
+first-run busy), never at rest or while hidden. Sustained preview preparation uses the
+static status-bar activity segment (pipeline/UI.md §9).

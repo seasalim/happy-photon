@@ -56,13 +56,9 @@ the requested target immediately before the common sRGB transfer is encoded.
 
 ## 3. Decode: raw
 
-`RawBaseLoader` selects camera-native output through the bridge's existing
-configuration (`output_color = 0`). LibRaw performs black subtraction, camera-WB
-scaling, normalization, demosaic, and configured highlight handling, but applies no
-output-space matrix. `CameraRgbCharacterization` composes the copied camera→sRGB fact
-with the exact §2 sRGB→Rec.2020 matrix and fuses it into the one Q16 decode write.
-See CHARACTERIZATION.md for the neutralization state, typed fact outcomes, and the DCP
-replacement contract.
+`RawBaseLoader` requests camera-native output; in-app characterization composes the
+camera→sRGB fact with §2's exact sRGB→Rec.2020 matrix for one Q16 write.
+CHARACTERIZATION.md owns neutralization, typed outcomes and DCP replacement.
 
 **The camera-matrix fact stays camera→sRGB.** Facts are copied after unpack and before the
 output configuration is applied, so `camera_to_srgb` is what LibRaw computed under its own
@@ -107,21 +103,11 @@ with vectors.
 
 ## 5. Render placement
 
-RAW composes the AgX inset with white balance,
-evaluates the tone engine, and applies the AgX outset; standard sources use white
-balance and the retained display-referred chain. Chroma and all detail stages then run
-on encoded display Rec.2020. The chroma stage alone temporarily decodes each value to
-linear Rec.2020 for its OKLab/OKLCh transform, then returns to that encoded contract in
-the same pass. After resize and optional output sharpening, vignette and
-grain run in that same encoded Rec.2020 domain. Only then does finalization decode,
-convert display-linear Rec.2020 to sRGB or Display P3, clamp, and encode. Preview always
-selects sRGB.
-
-The crossing's normalize/fold machinery applies only to `M_inset · M_WB` (or `M_WB`
-for crossing off), with the fold refunded by the active tone regime. Target matrices
-never affect shared edits. Source-saturation highlights are loader artifacts captured
-before this working-space pipeline and are only geometrically projected during render;
-display-floor statistics sample the finalized selected output (RENDER.md §7).
+RENDER.md owns stage order. Shared edits, resize, sharpening and effects all precede
+the final display-linear Rec.2020→sRGB/P3 conversion, clamp and encode; Preview uses
+sRGB. Normalize/fold applies to inset×WB (or WB alone), never to target matrices.
+Chroma temporarily decodes for OKLab and returns to display-encoded Rec.2020.
+Source highlights are captured before this pipeline; RENDER.md §7 owns clipping.
 
 ### 5.1 Perceptual chroma derivation and gamut projection
 
@@ -167,9 +153,9 @@ shares. Working-space values are linear Rec.2020; Q16 codes are `round(v · 6553
 clamping to [0,1].
 
 **Display-P3 source → working space** (the gamut-preservation case). The sRGB column is
-what the old path produced — clipped at both ends.
+why an sRGB intermediate would clip at both ends.
 
-| Patch | P3 code | linear Rec.2020 | Q16 | linear sRGB (old path) |
+| Patch | P3 code | linear Rec.2020 | Q16 | linear sRGB (clipping comparison) |
 |-------|---------|-----------------|-----|------------------------|
 | red | 255, 0, 0 | +0.75383303, +0.04574385, −0.00121034 | 49402, 2998, 0 | **+1.22494018**, **−0.04205695**, −0.01963755 |
 | green | 0, 255, 0 | +0.19859737, +0.94177722, +0.01760172 | 13015, 61719, 1154 | **−0.22494018**, +1.04205695, −0.07863605 |
@@ -234,21 +220,12 @@ pass. They do not participate in render normalization or consume tone-table rang
 
 ### 9.1 Embedded profile
 
-P3 exports embed `DisplayP3-v4.icc` from Compact ICC Profiles (CC0, 480 bytes), already
-committed for the gamut fixture and verified there against the D50-adapted P3 colorants to
-7e-6. Exported files are read by other people's software, so a widely-deployed profile beats
-one we generate; the constructed working-space profile (§4) stays internal and is never
-embedded. The embedded profile's primaries **and** its parametric transfer must be checked
-against the pixels the renderer produced — a file tagged with primaries it was not rendered
-for is this feature's characteristic failure and is invisible on inspection.
-
-Output-space pixels remain canonical after finalization. Windows display color
-management is a separate, non-retained view-boundary leg over 8-bit BGRA. Its source is
-sRGB for Develop, Loupe, Compare, and Before/After, and the armed output target for an
-Export proof. Supported matrix/TRC monitor profiles receive a relative-colorimetric
-source→D50 PCS→monitor conversion. No profile, an sRGB-shaped profile, a LUT/MHC2
-profile, or active Windows Auto Color Management treats the monitor as sRGB; in those
-cases an sRGB source is identity while a Display P3 proof still converts to sRGB.
+P3 exports embed the CC0 Compact ICC Profiles `DisplayP3-v4.icc`, verified against
+D50-adapted P3 colorants. A widely deployed profile is preferable for interoperability;
+the constructed working profile (§4) stays internal. Both primaries and transfer must
+match the rendered pixels: tagging other primaries is the characteristic failure
+invisible on pixel inspection, making profile checks mandatory. OUTPUT.md §1 owns the
+separate monitor-display leg.
 
 ### 9.2 Oracle vectors
 
@@ -279,12 +256,6 @@ so it is recognized rather than re-derived or absorbed into a tolerance later.
 
 ### 9.3 Resolved limits
 
-- Every nonlinear edit is target-independent. At the renderer's Q16 pre-encode
-  boundary, edited in-gamut sRGB/P3 agreement is gated at mean ΔE00 ≤ 0.034 for the
-  synthetic worst case and ≤ 0.053 for the real-RAW full-combo case, both with output
-  sharpening off and on. The encoded 8-bit observation remains informational because
-  target-code quantization alone contributes about 0.2 mean ΔE00.
-- Capture sharpen, chroma NR, and output sharpen all reference `Rec2020Luminance`, the
-  exact Rec.2020→XYZ Y row from §2:
-  `(0.2627002120112671, 0.6779980715188708, 0.0593017164698620)`. They run before the
-  target convert; the former rounded BT.709 basis is retired.
+Shared edits precede target conversion; TONE_ENGINE.md §5 owns the Q16 sRGB/P3
+agreement bounds. Encoded 8-bit comparisons also include target-code quantization.
+Capture sharpen, chroma NR, and output sharpen use TONE_ENGINE.md §6's luma authority.

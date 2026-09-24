@@ -1,17 +1,8 @@
 # Pipeline Spec — UI: Controls, Gating, Interactions
 
-UI surface for the pipeline. Follows AGENTS.md UI conventions and
-`docs/DESIGN.md` tokens throughout: `CompactSlider` for edit controls, mixed-case
-Hanken Grotesk `section-label` group headers, 20px between groups, and theme tokens
-only. Control states are monochrome; hue is reserved for semantic image data —
-including burst-group identity — and errors. The edit-status badge is a muted glyph
-with no background.
-`ViewerSurround` is the variant-specific image surround; `AssessmentGray` and
-`AssessmentWhite` are the invariant color-assessment references. They are deliberately
-distinct from themed resources and must not be aliased. Color assessment mode is a
-session-only viewer composition and never changes render settings or output pixels.
-View markup in `Views/`, state in `MainWindowViewModel` partials (add to the matching
-workflow partial, don't grow the root file).
+Pipeline controls use [DESIGN.md](../DESIGN.md)'s theme, typography and assessment
+resources. Views display controls; matching ViewModel partials own state and commands.
+Color assessment is session-only composition and never changes output pixels.
 
 ## 1. Principles
 
@@ -22,134 +13,39 @@ workflow partial, don't grow the root file).
    loaded `BaseImageInfo.IsRawSource`. Before the base arrives, gate provisionally on
    `ImageFile.IsRaw`; if LibRaw cannot produce a base, keep the RAW identity and show
    the reason rather than silently demoting the file.
-3. Coachmarks/tours are untouched and must not gain steps for these controls
-   (existing rule: tours never mutate edits).
+3. Tours never mutate edits; DESIGN.md owns their presentation.
 
 ## 2. Develop right panel — target layout (top → bottom)
 
-Crop and Locals are compact icon-only toggles in the panel's shared develop-action
-style (the scope selector's and action bar's 24 px buttons; tooltip and accessible
-name carry the label) in a fixed tool row beneath the scope box, in the Lightroom
-tool-strip idiom. Pressed state identifies the active tool; a corner dot and accessible
-description identify a committed crop or stored locals, independently of tool state.
-While either tool is active the global stack below is locked and dimmed exactly as it
-is for Locals, and the white-balance picker is inert.
-The fixed active-tool header holds CROP with Cancel / Apply, or LOCALS with Show Mask /
-Close. Entering either tool reveals its settings at the top of the scrolling stack.
-Crop settings contain Horizon, aspect lock, Reset crop and a one-line instruction.
-Horizon stays draft-only until Apply; Cancel discards it. Clicking active Crop cancels,
-clicking active Locals closes, and switching tools discards unfinished input while
-retaining committed locals.
+Crop and Locals are exclusive tool modes beneath the fixed scope box. Their active
+header stays fixed while tool settings enter the top of the scrolling stack. Global
+edits are locked and dimmed while either is active; WB picking is inert. Switching
+tools discards unfinished input but retains committed locals. Crop Apply commits the
+crop and draft Horizon together; Cancel discards the draft.
 
-Locals is a tool mode beside Crop. Its toggle shows a dot for any stored local,
-including disabled and neutral ones. Entering selects the first local and reveals
-the docked section beneath the histogram; Close retains committed edits. A compact
-**+ Linear / + Radial** creation row leads directly above the list. At eight locals it
-is disabled and the instruction reads “8 of 8 locals — delete a local to add another”.
-An empty section hides the list and editor and places the creation instruction directly
-beneath the creation row in a compact placeholder of small stable height; the first
-local swaps in the editor and deleting the last local restores the placeholder; armed
-creation replaces the instruction with its inline action. The list scrolls after four rows and supports up to eight linear or radial masks, each with Exposure
-[-4, +4] EV, an enabled checkbox, explicit Disabled label, and Delete. Selection
-and Show Mask are session state. Presets and paste preserve destination locals;
-Develop Reset clears them with global adjustments, and Undo restores them.
+Locals supports at most eight linear/radial adjustments in creation order with shared
+ordinals. Disabled and neutral locals still count; selection and Show Mask are session
+state. Closing retains edits. Scopes, footer, viewer controls and filmstrip remain live.
 
-While Locals is open, the global edit stack below it is disabled and dimmed,
-including in transient views and with an unavailable source. Closing restores
-its independent capability gates. Scopes, the Develop action bar, viewer controls,
-and filmstrip stay live. Entering cancels white balance picking; the picker
-command (including W) is inert until Locals closes.
+Each local has Exposure, relative Temperature/Tint and Saturation; monochrome disables
+color rows without clearing stored values. Geometry controls edit center, angle,
+feather and radial axes/polarity. Luminance and Hue Range disclosures restrict the
+geometric mask. Reset adjustments clears adjustment values but preserves geometry,
+enablement and ranges. Center in view moves only the local center.
 
-The Adjustments group contains Exposure plus relative Temperature/Tint [-50, +50]
-and Saturation [-100, +100]. Positive Temperature is warmer. Signed CompactSlider
-rows share an 8 px rhythm. Temperature and Tint reuse the global white-balance
-gradient tokens, with neutral centered at 0.5 and value fill off. Rows use zero
-neutral, double-click reset, keyboard stepping and the existing
-slider-release transaction. Reset adjustments clears these four values as one
-named undoable step, retaining geometry, polarity and enablement. On monochrome
-RAW the color rows remain visible but disabled with one shared explanation; stored
-values persist, and Exposure remains live.
+One completed gesture is one history step. Escape restores an unfinished canvas
+gesture, then cancels armed creation, then closes Locals; Undo during a drag cancels
+that drag. Navigation and snapshot/replacement commands discard unfinished geometry.
+Original, split, fullscreen and preset/history hover suspend editing and visualization
+while preserving selection. Presets/paste preserve destination locals; Develop Reset
+clears them and Undo can restore them.
 
-The Geometry disclosure below local Adjustments starts collapsed and retains its
-expanded state for the session. X/Y display cu/cv × 100 in corrected-frame percent
-[-100, 200]; Angle wraps in [0, 360) degrees clockwise; Width displays feather × 100
-in long-edge percent [0.1, 200]. These sliders are disabled without an editable
-selection, never reset on double-click, and update the stored local directly.
-CompactSlider is keyboard-focusable: arrows step by SmallChange (Shift ×10),
-consume photo navigation, and use the drag edit boundary. A pointer drag clears
-focus on release or capture loss so arrows return to photo navigation; a release
-that crosses the 2 px threshold without a move event also counts as a drag. A
-plain click within the threshold or Tab keeps slider focus for keyboard stepping.
-Clicking the Develop photo focuses its viewer pane; controls inside retain their
-own focus behavior. Geometry drags commit on release or capture loss; keyboard
-bursts debounce into one “Local geometry” history row. Canvas gestures retain
-their cancellation behavior below.
-
-Luminance Range endpoint entries own text-editing keys while focused, including
-rating and label digits, letters, Delete/Backspace, and text selection shortcuts.
-Enter commits one “Luminance Range” edit and returns focus to its thumb. Escape
-restores the displayed value and returns focus without closing Locals; subsequent
-focus loss or reopening cannot commit the cancelled draft.
-
-Center in view sits beside Reset adjustments, outside Geometry. It preserves the
-selected local's other fields and commits one
-“Center in view” operation. The navigator visible region's center maps through
-the overlay's LocalsFrame crop trace to pre-crop coordinates. A suppressed region
-(at least 99.5% visible) uses the displayed frame center; navigation clears stale
-regions. The command remains available for disabled locals when editing is possible.
-
-Hue Range starts collapsed below Luminance Range, with a header enable checkbox,
-center swatch, one-shot Pick Hue, and keyboard-stepped Center, Width, Softness sliders in
-degrees. Its circular hue strip centers the selection so crossing 0/360 stays
-continuous, with a tick marking the center hue. The single magenta overlay style
-reads weakly over selections close to its own hue; a contrasting selected hue makes
-the restricted tint easier to assess. Off controls are dimmed; monochrome keeps values visible and dormant
-with the shared color-control explanation. List rows show “Luminance”, “Hue”, or
-“Luminance · Hue”. Reset adjustments and presets/paste preserve ranges; Develop
-Reset removes the locals.
-
-Pick Hue temporarily shows the selected mask. An accepted click enables hue,
-preserves width/softness, and exits with one history step. Neutral/mixed or
-out-of-image clicks explain the rejection and remain armed. No matching loaded
-base disables picking with a reason. Escape cancels picking first. Navigation,
-selection changes, tool exit, crop, transient views, WB picking, creation, and
-geometry gestures cancel or arbitrate it before any canvas handle hit test.
-
-Add Linear arms a drag from full effect to zero effect. A click or drag shorter
-than eight logical pixels creates nothing. Place at center creates a neutral mask
-at (0.5, 0.5), angle 90°, feather 0.25. Selected handles translate the center,
-rotate the direction, or change feather symmetrically; subdued pins select others.
-Middle-button pan and wheel zoom remain available, while the loupe is suspended.
-Show Mask visualizes the selected geometry even when disabled or neutral, using
-the invariant `LocalMaskColor` token and a smoothstep-sampled gradient brush. It
-temporarily suppresses clipping presentation without changing the clipping latch.
-
-Add Radial arms a center-to-corner drag: the projected horizontal/vertical distances
-set the semi-axes, with angle 0°, inward feather 50%, and Inside polarity. Either
-radius below .001 long-edge units creates nothing. Place at center uses the armed
-type (initially linear), retained after Escape or creation; a radial starts at
-(.5, .5) with both radii .25. Radial
-knobs resize four axis ends without moving the center, rotate beyond the first
-axis with a hollow rotation knob, and adjust the inner feather ring; axis/rotation
-knobs and the selected center win over the ring, including at 100% feather. Its
-Inside/Outside segment commits one “Local polarity” operation. Geometry Width
-and Height show diameters in long-edge percent [.2, 200], with Feather [0, 100].
-Rows share creation ordinals across types and display a geometry glyph. The radial
-tint uses one transformed gradient brush with complementary alpha for Outside.
-
-While creation is armed, the instruction reads “Drag to place, or Place at center ·
-Escape cancels”, with Place at center as an inline button. Enter creates through the
-same command and consumes the key, including with button focus; text-input focus
-excludes creation. There is no standing centered-creation button. Creation retains
-“Add Linear” / “Add Radial” history labels.
-
-One completed geometry drag is one history step; Escape or capture loss restores
-its starting state. Escape then cancels armed creation, then closes Locals. Undo
-during a drag only cancels that drag. Navigation and commands that replace or
-snapshot settings discard unfinished geometry. Crop and Locals are exclusive.
-Original view, split, fullscreen, and preset/history hover suspend canvas editing
-and visualization while preserving selection; Return to local editing resumes it.
-No tint is rendered into image pixels, scopes, thumbnails, or exports.
+Show Mask is display-only, including for disabled/neutral locals; it never enters
+pixels, scopes, thumbnails or export and only temporarily suppresses clipping display.
+Restricted masks use the loaded base matching the accepted surface, without source
+reads or decode, and show Updating mask until a matching result arrives.
+Pick Hue temporarily shows the mask, commits an accepted sample once, and yields to
+Escape, navigation, other tools and canvas gestures before handle hit-testing.
 
 The right pane is mode-differentiated. In Browse it is a **review pane** — the
 fixed thumbnail histogram, the metadata/EXIF block, and a selection summary —
@@ -170,9 +66,8 @@ Locals                 (only in Locals mode)
   [local list] [Exposure / Temperature / Tint / Saturation]
   [Reset adjustments] [Center in view]
   [polarity (radial)] [Geometry disclosure] [instruction / armed creation] [divider]
-Camera Profile         (RAW only, collapsed child control)
-  [profile ComboBox]
-  [Browse…] [Refresh]                         status / loading
+Profile                (always shown; disabled for non-RAW)
+  [profile ComboBox, including Choose file…]  status / loading
 White Balance
   [mode/preset ComboBox]  [Auto button]  [eyedropper button]
   Kelvin   ────────●────────   5500K
@@ -201,19 +96,11 @@ Optics
   Vignetting                                      [toggle]
   LENS · EMBEDDED DNG OPCODES                     source
 Develop Footer
-  [Before/after] [Undo] [Redo]                         Reset
+  [Before/after] [Undo] [Redo] [Copy] [Paste]          Reset
 ```
 
-The adjustment stack scrolls beneath the scope box, tool row and header; the Develop footer remains
-fixed. Export has no pointer action in the Develop pane itself: click the **Export**
-tab in the mode strip, or use the global `Ctrl+Shift+E` shortcut from either workspace.
-The Browse bottom toolbar places culling actions at the left and view/thumbnail state
-at the right; Develop mirrors that rhythm with navigation/rotation at the left
-and zoom/view state at the right.
-
-Develop previews floor capture sharpening at 1.0 screen px so Sharpen responds at Fit
-and at the bounded zoom base. This deliberately overstates sharpening relative to an
-export; the approximation has no warning icon.
+The adjustment stack scrolls beneath the fixed scope/tool header and footer.
+RENDER.md §9 owns the preview capture-sharpen approximation.
 
 Brightness is disabled (not hidden) at `DisabledOpacity` while a RAW base is active,
 because the crossing-on engine has no Brightness parameter; it stays enabled for
@@ -222,21 +109,9 @@ provisionally to `ImageFile.IsRaw` before load, survives filmstrip switching, an
 never clears the persisted value. Base look remains persisted but has no
 panel control; RAW ignores it and standard sources retain it.
 
-Selection clears the previous Develop bitmap, scopes, clipping, and RAW histogram in
-one provisional outcome while seeding filename-derived RAW capability, profile
-visibility, and the 5500 K/6504 K as-shot placeholder. A settings-matched cached preview
-may first publish its bitmap, display histogram, waveform, and display-floor clipping
-as one outcome without source access. The first accepted decode outcome confirms or
-corrects source facts and publishes the fresh bitmap, display scopes, clipping,
-measured as-shot anchor, and sensor histogram together. A stale-base interim paint may
-update bitmap and display scopes only; it clears clipping and cannot replace
-decode-derived facts. A failed load outcome contributes failure status only: it paints
-nothing and preserves the surface, scopes, and clipping already on screen. A
-clipping-only overlay render shares the current surface generation but applies only
-while its rendered frame's settings match the painted surface — or, on the edited
-surface, the currently requested settings. A transient surface (Before/After original,
-preset hover) renders its own frame, so the overlay must match that painted surface; a
-stale, failed, or mismatched mask is dropped and the painted clipping stands.
+Selection clears stale surface facts; only image- and generation-matched outcomes
+install atomically. Cached and transient surfaces cannot claim mismatched source
+analysis or clipping. RENDER.md §11 owns the outcome contract.
 
 Recovery is a compact, exclusive Clip/Blend control directly below Highlights, enabled
 only for RAW sources — provisionally from `ImageFile.IsRaw`, then from the loaded base
@@ -244,47 +119,12 @@ fact. The row stays present and dims to `DisabledOpacity` when unavailable, so t
 panel does not reflow across mixed-source filmstrips; a contradictory non-RAW loaded
 fact disables the row without changing the stored value. Clip is the default.
 
-The always-expanded Color Mixer follows the tone curve and applies to every source,
-with no RAW chip or reflow. Eight code-drawn circular swatches select the working
-band; the selection resets to Red when the active image changes and is never
-persisted. A touched band shows a dot. Hue tracks tint through the neighboring band
-hues, while Saturation and Luminance tint within the selected band. Its three
-−100..100 `CompactSlider`s reset individually on double-click; the Develop footer
-Reset clears all eight bands with the other color and tonal adjustments.
-
-Detail follows the color mixer. Sharpen, Luma NR, and Chroma NR
-are 0–100 `CompactSlider`s for all sources; Sharpen displays the resolved source
-default (RAW 25, standard 0). The two NR controls default to 0 and never reflow or
-change enablement when source kind changes.
-
-Effects follows Detail and applies to every source, with no RAW chip. Vignette is a
-−100..100 bipolar `CompactSlider`; Midpoint is 0..100 (default 50) and remains in place
-at `DisabledOpacity` while Vignette is zero. Grain is 0..100. Size is the standard
-compact segmented idiom: `SurfaceHigh` container, radius 4, padding 2, height 22,
-flat borderless pills, `ControlSelected` selected fill, and Fine/Med/Coarse labels in
-FontBody 9 SemiBold without tracking. Medium is the default.
-
-Geometry follows Effects and applies to every source, with no chip or capability
-gating. Vertical, Horizontal, Aspect, and Distortion are −100..100 bipolar
-`CompactSlider`s with unit steps and double-click reset. They are image-specific:
-history and global Reset include them, while copy/paste and presets leave the target
-values unchanged. Crop mode and its overlay use the corrected frame directly.
-
-Optics follows Geometry at the tail of the scrolling edit stack. Its three fixed-height
-toggle rows control distortion, lateral chromatic aberration, and corrective
-vignetting; the latter is distinct from the aesthetic Effects vignette. The muted last
-line identifies the embedded lens prescription and source. A missing prescription
-reads `NO CORRECTION DATA FOR THIS LENS`; unavailable individual corrections dim their
-rows, and the complete group dims without hiding for JPEG/HEIC and other standard
-sources. These states never change the panel height.
-
-The tone-curve selector shares the curve control's existing header, so the panel and
-control do not grow. RGB is the default. Selecting an untouched R/G/B channel shows a
-detached identity draft; only a committed edit creates channel state. A present channel
-tints its selector letter. While a channel is active, its curve uses the matching color
-label token and the composite is painted dimly behind it. The embedded Reset clears
-only the active curve; RGB remains a required identity curve, while resetting R/G/B
-returns that optional field to null.
+Color Mixer is always expanded; its band selection is session state and untouched
+bands remain identity. Detail and Effects apply to all sources. Midpoint dims when
+Vignette is zero; Geometry remains image-specific. Optics disables unavailable
+corrections in place and distinguishes corrective from aesthetic vignetting.
+Selecting an untouched R/G/B curve creates only a draft; committing materializes it.
+The embedded curve Reset clears only the selected curve.
 
 When the generation-matched preview or refresh outcome installs
 `BaseImageInfo.IsMonochrome`, Develop disables and dims the camera-profile picker,
@@ -295,28 +135,12 @@ color-channel selection. Stored color edits remain untouched. The first false-to
 installation shows one shared transient status message; capability is never inferred
 from extension or camera model.
 
-The camera-profile child control is visible provisionally for a RAW `ImageFile` and
-confirms or retracts against the loaded `BaseImageInfo.IsRawSource`. Camera identity
-starts cached local Adobe discovery in the background; opening the picker performs a
-generation-correlated fallback refresh, adds embedded candidates, and shows its
-pending state. Order is persisted user file, DNG embedded, matching Adobe profiles
-A–Z, then built-in. Browse adds one local `.dcp`; Refresh invalidates discovery
-metadata and re-resolves the selection. A chosen storage item that cannot provide a
-local path reports that local-file requirement instead of being discarded silently.
-A terminal empty line waits for both the
-current-identity Adobe scan and the image-profile pass; a completed Adobe scan with
-readable profiles but no identity matches reports the probed count instead of claiming
-the machine has no profiles. Until the required scope completes, the status stays neutral: awaiting
-camera identity while none has arrived, scanning otherwise. Hand-picked entries show their trimmed, otherwise verbatim declared
-camera model as muted subtext and in the closed-row profile/body/source tooltip.
-Once any RAW decode completes without a usable camera identity, including monochrome
-decode, the pending line settles to an unavailable status because camera-matched
-discovery cannot run.
-Loading, honest empty, unavailable, corrupt,
-hash-mismatch, unsupported, and missing-WB fallback are terminal visible states;
-invalid persisted choices remain selected with their reason while decode uses built-in
-characterization. The control never offers hydration or causes a cloud placeholder to
-be read.
+Profile is always shown and disabled for non-RAW. Its ComboBox includes file selection;
+Opening the picker refreshes discovery metadata; camera identity drives local discovery;
+pending, empty, unavailable and typed rejection states remain visible. Invalid persisted
+choices retain their reason while decode uses built-in characterization. No picker
+operation hydrates a placeholder. Discovery and resolution are owned by
+CHARACTERIZATION.md §7.6.
 
 ## 3. White balance group
 
@@ -331,28 +155,14 @@ be read.
 
 ## 4. Viewer interactions
 
-- **Windows display color management:** Develop, Before/After, Compare, Loupe, and
-  fullscreen viewer surfaces show a display copy converted from their retained
-  canonical bitmap to the current monitor's supported matrix/TRC ICC profile. Moving
-  the window to another monitor re-resolves the profile and rederives surfaces without
-  a source read or render. Identity cases show the canonical object directly.
-  Thumbnails and placeholders remain unmanaged in this slice.
-- **Before/after** (`\` or the Develop footer eye): shows the original while active.
-  The original reverts tone and color only; the whole geometry family — rotation,
-  horizon, crop, geometry, and lens corrections — survives, so before and after stay
-  registered and lens corrections the user turned off are not silently reapplied. Every path that paints an original builds those settings
-  through one shared builder, differing only in the frame it passes: live edit state
-  for the toggle and the clipping overlay, the ImageFile for a preview reloaded by a
-  workspace transition or source hydration that leaves the original intent standing.
-  The toggle changes requested intent immediately, but its visible active state follows
-  only an accepted render outcome. A second toggle inverts the requested intent even
-  while the first render is pending. Edit mutations request edited intent; maintenance,
-  cache, refresh, and resting work preserve it, so a late edited render cannot exit an
-  accepted before view.
-- **Crop-mode vignette exception:** crop mode deliberately renders the full canvas so
-  the overlay remains aligned. Vignette is centered on that transient full-canvas
-  preview and recenters on the committed crop after Apply; pending crop coordinates do
-  not enter a render request.
+- **Display color management:** viewer surfaces derive display copies from retained
+  canonical pixels for supported monitor profiles; source reads and edits are unchanged.
+  OUTPUT.md §1 owns conversion. About names the profile and whether matrix/TRC, Windows
+  ACM, macOS or sRGB fallback owns interpretation; there are no profile controls.
+- **Before/after**: original intent resets tone/color while preserving geometry and
+  lens corrections so frames stay registered. The toggle changes requested intent
+  immediately; visible state follows acceptance. Edits request edited intent, while
+  maintenance/cache/resting work preserve the request so late results cannot exit it.
 - **Eyedropper mode** (`W` or button, Develop only): crosshair cursor; left-click
   samples per WHITE_BALANCE.md §7 and exits the mode; Escape or re-press exits without
   sampling; pan/zoom gestures remain live (click-without-drag samples, drag pans).
@@ -389,64 +199,27 @@ be read.
   and stays geometry-identical across source swaps. Fit and zoom-in publish the current view's
   required device-pixel long edge for resting rendering; pan and zoom-out do not
   rerender. A monitor-scaling change recomputes the same geometry and bound.
-- **Export fit** uses accepted edited-original dimensions, falling back to selected
-  metadata and then bitmap dimensions. Changing preview resolution does not change
-  the fitted scene; monitor scaling preserves the original-relative 1:1 cap.
-  A pending proof keeps the current preview geometry. Only an accepted proof uses
-  its output pixel dimensions as the native-size cap; Proof off restores the
-  original-relative fit. Thumbnail placeholders retain their own source aspect,
-  so an unedited thumbnail can differ from a rotated or cropped preview.
-
 ## 5. Scope box + preview activity
 
-- **Scope box**: the Develop panel's top slot is a scope box whose
-  header — the effective-scope title beside a row of three always-present icon
-  toggles (mound = histogram, CFA mosaic = RAW, scanlines = waveform) — picks
-  exactly one body: display histogram (default), luminance waveform, or RAW
-  sensor histogram. The histogram plot itself is
-  frozen: bins, channel colors, geometry, and 80 px height do not change.
-  Alternate bodies may grow the box vertically only while selected, absorbed by
-  the adjustment scroll area. Scope selection is session-only VM state. Scopes
-  are Develop/fullscreen-only: the Browse review pane shows only the fixed
-  thumbnail histogram — never a waveform or RAW data. When sensor data is
-  unavailable (JPEG, Browse, cloud-only, unsupported-CFA, stale-base,
-  replacement-in-flight), the RAW entry stays disabled in place — never removed —
-  with a reason-specific `ToolTip.ShowOnDisabled` tooltip while display data shows
-  as `Histogram`; the UI never labels display-referred data RAW. A selected RAW
-  scope remains the session preference across those fallbacks, and a replacement
-  refresh carries the matching base's RAW fact so it reactivates without another
-  click. RGB parade is deferred until luminance waveform usage demonstrates demand.
-- **RAW clipping indication**: effective sensor mode draws the existing red, green,
-  and blue channels without a luminance line. Each channel shows a dot and the
-  percentage of photosites at or above LibRaw's sensor white level; the exact
-  per-channel count (and white level) live in the tooltip, matching how darktable,
-  RawTherapee, Lightroom, and Capture One surface clipping visually rather than as raw
-  counts. A lit channel never rounds to 0.00% — it floors to `<0.01%`. A channel dot is
-  fully lit at 16 photosites and above; below that it remains dim. Display-domain
-  histograms never show these dots.
-- **Display clipping triangles** flank only the Develop display histogram. The right
-  triangle lights for the source-referred `HighAny` fraction when the loader supplied
-  a source-saturation artifact: exact sensor saturation for RAW, or encoded near-white
-  samples for JPEG/HEIC. TIFF, PNG, and other unsupported formats show that side as
-  unavailable and disable its peek interaction. The left triangle lights for `LowAll`
-  finalized display-floor clipping on every source and remains available without a
-  source-saturation artifact. A settings-matched cached outcome may light only the
-  display-floor side; source-highlight availability waits for matching fresh analysis.
-  Missing or stale render statistics darken both immediately.
-- **Preview activity**: the scope box has no local progress surface. The existing static
-  background-activity status segment shows **Preparing preview** only after its 400 ms
-  hysteresis and remains active through the complete fresh entry task (profile/base
-  acquisition plus first coherent render). Sliders stay **enabled** — edits accumulate
-  in `EditSettings` and the first render catches up. There is no modal or disabled
-  panel.
+- The fixed scope box selects display histogram, luminance waveform or RAW sensor
+  histogram; the histogram plot's geometry, colors and height stay stable. Alternate
+  bodies may grow only while selected. Selection is session state; unavailable RAW
+  stays disabled with a reason and falls back to display without losing the preference.
+  Browse shows only the thumbnail histogram. RGB parade remains deferred.
+- RAW shows sensor channels and clipping percentages, never a display luminance line.
+  Display triangles indicate source saturation on the right and finalized floor on
+  the left. Missing/stale statistics darken them; unsupported source highlights disable
+  only that side. Cached outcomes may supply floor statistics but never RAW/high facts.
+- The scope box has no progress surface. Sustained preview preparation uses §9's status
+  segment; edits remain enabled and accumulate while the base is acquired.
 
 ## 6. Reset / undo / presets / copy-paste scope
 
 - **Reset** returns: `wb → asShot`, `baseLook → null` (source default), all four
   curves to identity (the three optional channel fields to null),
   `hlReconstruction → clip`, `mixer → null`, `detail → source defaults`,
-  `effects → null`, plus all existing fields.
-  A selected camera profile returns to built-in. One undo step, as today.
+  `effects → null`, manual geometry and locals cleared, lens defaults restored.
+  Camera profile returns to built-in; crop/rotation/horizon survive. Reset is one step.
 - **Undo/redo**: each committed control change is one step (existing granularity),
   including a full curve drag, point removal, or embedded curve reset;
   this includes each Clip/Blend or camera-profile selection; mode switches (preset
@@ -474,108 +247,14 @@ Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields
 the controls in §2; copy/paste preserves nullable capture-sharpen semantics and both
 NR values.
 
-Rendered thumbnails remain navigational chrome: the existing path detaches the
-accepted finalized preview, resizes it to at most 512px, and reuses the current caches.
-Vignette remains scale-invariant, while grain may be resampled in this non-authoritative
-surface. Develop preview and export are the authoritative effects surfaces.
-
 ## 7. Export workspace
 
-Export is the third workspace beside Browse and Develop. The mode-strip **Export** tab
-and `Ctrl+Shift+E` enter it armed; image-only fullscreen continues to refuse the transition.
-Its left batch preview list snapshots Browse selection: thumbnail, filename and version
-label, one photo count and an active-preview ring. Every listed photo exports; row activation
-changes only the preview. **Change photos…** offers **Choose in Browse…** with selection
-intact, and **Use picked photos (N)**, which replaces selection with visible picked photos
-under current Browse filters. At zero it is disabled with “No picked photos in the current
-view”. Neither starts work or changes a running job. Re-entry rebuilds the batch; the empty
-state offers Choose in Browse. Export has no inclusion, rating, filter or range-selection UI.
-
-The center retains the preview and opt-in **Preview output**, with a chooser for valid
-enabled sizes. It defaults and falls back to the largest valid enabled size; Full means
-no resizing. Help explains size, color space and output sharpening are previewed, not
-JPEG/WebP compression quality. The caption names the accepted size and cap plus color
-space; **UPDATING…** marks pending work while the caption and display interpretation stay
-with the pixels on screen. Switching off restores **PREVIEW · edits applied**.
-The right scrolling
-settings show Destination, **Output sizes**, Format with Quality or **Lossless** for PNG/TIFF,
-and **Remove location data**. Sizes are independently selectable: **Full size · No resizing**,
-Web and Small long-edge pixels. Raw size text is validated (whole number, 16–65,536), never
-clamped. No size, invalid size, empty destination or invalid custom pattern blocks new jobs,
-including Enter. Proof never receives an invalid size.
-
-Collapsed **More options** holds color space, sharpening and filenames, summarizing their
-current values in the header. Keep original filename maps to `{name}`; Custom pattern help
-identifies `{date}` as export date. The filename choice initializes from the pattern on
-Export entry and stays fixed while typing; choosing Keep original resets it to `{name}`.
-**Example for this photo** shares the job path resolver,
-including extension, multi-size subfolder and version suffix, without constructing a job.
-The fixed footer contains `N photos · M sizes`, the inline disabled reason, report and
-**Export N files** button. Failure/warning details use collapsed **Show details** with a
-75 px bounded scroll when expanded. Report headings and summaries are limited to two and
-three lines respectively, with ellipsis and full-text tooltips, keeping the footer visible
-at 1200×700 and 800×500 even for long collision or exception messages.
-
-`Enter` runs only while Export is active. Elsewhere it retains its crop-apply and
-Browse/Develop meanings. `Escape` returns to the workspace active before Export and
-never cancels a running export. One immutable job is owned by the main view model at a
-time; it and its cancellation token survive workspace switches. Application shutdown
-cancels and drains that job before image services are disposed.
-
-Before the queue opens, one pass over every resolved target refuses loaded-original
-collisions and duplicate output paths, identifies RAW+JPEG pair collisions with the
-Browse selection remedy, confirms all existing-file overwrites together, and confirms the exact
-cloud-source hydration scope. The **Exporting** strip sits in its existing row and shows
-**Exporting k of N files** with **Stop export**. Stop returns partial outcomes and retains
-installed files; a cancellation check after encoding and immediately before atomic
-installation drops the pending target and cleans its temporary file. Cancellation of
-an already-started cloud download is best effort. The footer reads **Export in progress…**
-and explains that edits prepare the next batch. It disappears outside
-Export while the owned work continues and resumes from the same job when Export is
-re-entered.
-
-Completion remains in the workspace. One target-level report card shows successful
-counts, failed photo-size pairs, and profile warnings together, with details collapsed.
-Stopped jobs say **Export stopped** / **k of N files completed and kept.**
-**Open folder** appears when at least one file was written and opens the completed job's
-snapshot destination, never the live settings folder. **Retry failed
-only** projects exactly those pairs from the immutable job, retaining its output and
-edit snapshots, then runs the same preflight again. The final workflow-tour coachmark
-also lives in Export and switches workspaces rather than opening a modal surface.
-
-| Control | Spec |
-|---------|------|
-| "Remove location data" checkbox | Persisted app setting, default **off** (keep GPS). |
-| "Output sharpening" selector | Off, Screen, or Print; persisted alongside existing export preferences (OUTPUT.md §3). |
-
-No UI for quality-dependent chroma subsampling — it is automatic and stays invisible.
+[WORKFLOW.md](../WORKFLOW.md) §6 owns export use; OUTPUT.md §2 owns immutable jobs.
 
 ## 8. Keyboard
 
-| Key | Action | Scope |
-|-----|--------|-------|
-| `W` | Toggle WB eyedropper | Develop only |
-| `J` | Toggle clipping overlay | Develop only |
-| `R` | Toggle crop | Develop only |
-| `Shift+R` | Switch between paired JPEG and RAW | Develop only |
-| `C` | Enter Compare with 2–4 selected photos | Browse grid/Loupe |
-| `L` | Toggle color assessment mode | Develop/fullscreen |
-| `E` / `Enter` / `Space` | Enter Browse Loupe | Browse grid |
-| `E` / `G` / `Escape` | Return from Browse Loupe | Browse Loupe |
-| `Space` / `Z` | Toggle Fit and 1:1 | Develop/Browse Loupe |
-| `Ctrl+Space` | Toggle active photo in selection | Browse/Develop/Loupe |
-| `Ctrl+Shift+E` | Enter Export | Browse/Develop |
-
-Shortcut registrations belong in
-[`Views/ShortcutCatalog.cs`](../../Views/ShortcutCatalog.cs); a binding change
-updates its catalog entry in the same PR. The Help & About dialog reads that
-catalog directly, with the shortcut tab selected by default. Browse mode
-ignores Develop-only keys.
-
-The About tab includes one display-profile diagnostic line. It names the active
-profile and whether its matrix/TRC transform is active, Windows Auto Color Management
-owns conversion, macOS owns it (the window's Metal layer is tagged sRGB), or the profile
-is treated as sRGB because it is LUT-based, MHC2, or invalid. This is diagnostic text only; there are no display-profile controls.
+Registrations live in [ShortcutCatalog.cs](../../Views/ShortcutCatalog.cs), which
+Help & About reads directly. Binding changes update that catalog in the same PR.
 
 ## 9. Status bar
 
@@ -585,31 +264,15 @@ reasons outrank transient hints: source availability, selected RAW decode failur
 global RAW runtime degradation. Outcomes are correlated to image and preview generation,
 so canceled or superseded work cannot pin a stale failure.
 
-One background-activity segment may appear while sustained work is active and is
-absent at rest. It summarizes the highest-priority activity with overflow and shows a
-determinate bar only for capture-time analysis or export totals. Its dot and progress
-are explicitly static exceptions to the pulse guidance in `docs/DESIGN.md`; the
-segment contains no animation. Preview preparation uses this segment exclusively.
+One background-activity segment may appear while sustained work is active and is absent
+at rest. It summarizes the highest-priority activity with overflow and shows a
+determinate bar only for capture-time analysis or export totals; the segment never
+animates. Sustained preview preparation uses it exclusively; DESIGN.md owns active-work
+indeterminate indicators.
 
 ## 10. Explicit UI non-goals
 
-Export is the single permitted pipeline workflow modal. There are also no collapsible
-panel groups, in-app migration/what's-new dialog (release note only), Browse-mode
-editing surfaces (the Browse right pane is a review pane, §2), exposure-range change
-(±3 EV stays), or slider re-ordering beyond the absent Temperature slider. The
-histogram-plot freeze and the scope-box allowances within it are normative in §5.
-
-If a change seems to need one of these, it's a spec question first.
-
-## 11. Acceptance (VM-level, per existing test patterns)
-
-- Mode transition matrix: asShot → drag → custom; preset select seeds values; pick
-  stores gains; Auto stores picked; each transition lands one undo step
-  (`MainWindowViewModel` partial tests, like existing edit-history tests).
-- Reset covers every new field; presets/copy-paste round-trip the widened set;
-  geometry still excluded.
-- Capability-gated controls follow loaded-base facts; Brightness specifically uses
-  disable-not-hide for RAW and preserves its stored value across source changes.
-- Kelvin log mapping: position 0 → 2000, 1 → 12000, midpoint ≈ 4900 (√6·2000) within
-  rounding.
-- Shortcut registration tests list `W` and `J`.
+Top-level Develop groups are not collapsible; Locals disclosures and Export options
+may collapse. There is no in-app migration/what's-new dialog or Browse editing surface.
+Export has no inclusion, rating, filter or range-selection UI.
+Exposure remains ±3 EV. The scope-box allowances and histogram-plot freeze are in §5.

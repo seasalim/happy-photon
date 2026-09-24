@@ -14,35 +14,23 @@ and 2 inconclusive. A diagnostic `-Case <workload-id>` runs a subset and remains
 inconclusive; `-NoBuild` is diagnostic-only: it records `buildVerified: false`,
 a build check explaining that binaries may differ from HEAD, and always returns
 inconclusive (exit 2). Full qualification always builds.
-The full invocation's elapsed seconds are recorded for the 30-minute FINALIZE
-budget. The implementor's targeted runs do not certify that full-run budget.
 
 ## Loading-label dwell measurement
 
-After a Release build, run `./scripts/measure-loading-labels.ps1`. The default
-measures the delayed label the views bind to. To measure the raw nothing-painted
-predicates, as the pre-grace baseline did, pass
-`-LoupeProperty ShowLoadingMessage -DevelopProperty ShowDevelopLoadingMessage`.
-Use `-Steps 40` for a smoke check; qualification uses all 100 steps on each surface
-and freezes no coverage floor from a shortened run. The runner does not build or
-run foreground qualification. Its process-tree timeout defaults to 480 seconds.
-
-The instrument reuses the supplemental dwell setup, Canon fixture, cold app cache,
-warming and 1500 ms cadence, without a dispatcher or callback pump. A signal-held
-JPEG decode supplies a positive control on each surface: exactly one activation
-must occur before decode is released. Each invocation writes a unique
-`Tests/TestResults/loading-label-*` directory (override with `-ResultsDirectory`),
-including per-surface JSON, recorder events and any disposed-source exception stacks.
-
-Intervals follow the raw nothing-painted predicate; activations name their interval.
-Develop intervals continue across selection changes. Step zero is excluded. Replaced
-or torn-down owners without a false edge count as incomplete and fail measurement,
-as do uncorrelated activations. Reports include median, nearest-rank p95, counts
-below 300 ms and at least 320 ms, and activations in each group. Gate 4 requires
-zero short-interval activations, one activation per interval at least 320 ms,
-and at least 80% of baseline short-interval coverage. Fresh-render cadence failures
-remain in `dwellEvidence` for foreground qualification; other harness errors fail
-measurement. Ordinary tests skip this opt-in measurement.
+After a Release build, `./scripts/measure-loading-labels.ps1` measures the delayed label the
+views bind to; `-LoupeProperty ShowLoadingMessage -DevelopProperty ShowDevelopLoadingMessage`
+measures the raw nothing-painted predicates instead. `-Steps 40` is a smoke check;
+qualification uses all 100 steps per surface, and a shortened run freezes no coverage floor.
+The runner does not build, defaults to a 480-second process-tree timeout, and writes a unique
+`Tests/TestResults/loading-label-*` directory unless `-ResultsDirectory` is given.
+It reuses the supplemental dwell setup, fixture, cold cache, warming and cadence without a
+dispatcher. A signal-held JPEG decode is each surface's positive control: exactly one
+activation must precede its release. Intervals follow the raw predicate, excluding step
+zero; Develop intervals span selection changes. Incomplete intervals from replaced owners
+and uncorrelated activations fail measurement. Qualification requires no activation in
+intervals under 300 ms, one activation per interval of at least 320 ms, and short-interval
+coverage of at least 80% of the raw-predicate baseline. Late fresh renders stay in
+`dwellEvidence` for foreground qualification; ordinary tests skip this opt-in measurement.
 
 ## Supplemental dwell and jump workloads
 
@@ -51,87 +39,13 @@ Use `./scripts/cull-perf.ps1 -GateFile Tests/CullPerfGates.dwell.json`, adding
 Relative gate paths resolve from the repository root. The selected file is copied
 and hashed independently; the default frozen table is unchanged.
 
-Dwell takes 100 steady steps at 1500 ms intervals on each of Loupe and Develop,
-using the Canon fixture, default settings, and an empty application cache.
-Adjacent warming stays on. Develop requires an initial fresh preview and a fresh
-publication per step, so a rendered preview departs each time. Loupe accepts a
-matched warm paint per step. A missed completion fails the workload. Cadence
-remains independent of completion; the final step must also publish.
-`dwell-fresh-before-next-input` reports the number of validated steps.
-Dwell has a three-minute hang watchdog; jump has a six-minute watchdog.
-The four-workload supplemental file has a 15-minute runtime budget.
-
-Jump takes 20 inputs at 9000 ms intervals on each of Loupe and Develop, with
-the same cold Canon fixture, default settings, and warming enabled. Each input
-selects the image six positions ahead of the current image, leaving all five
-forward neighbors uncached for a consecutive warm walk. The ledger records the
-target image and submission timestamp before assigning SelectedImage, then
-reconciles selection, feedback and publication as navigation. Direct assignments
-have no command Receipt event: their matching Selection acknowledges the input,
-and their ledger IDs identify samples. Feedback latency still starts before the
-assignment.
-
-The three foreground/publication metric definitions are copied from the frozen
-table unchanged. `ui-enqueue-ms` adds caller-thread `CacheEnqueueStart/End` spans,
-including snapshot preparation, correlated by operation id and restricted to the
-thread that received that input. Caller `BaseRetireStart/End` spans bracket base detachment and worker scheduling;
-`BaseDisposeStart/End` spans cover retirement on the worker. Worker `CacheDecodeStart/End` spans bracket the
-cached/warm reads and promotion. `events-CacheConvert`, `events-CacheWarmDecode`,
-`events-CacheJoinDecode`, and `events-CacheThumbnailResize` report exercised paths.
-The dispatcher-backed `CacheOffThreadTests` proves placement with positive path
-counts; workload thread ids alone do not prove dispatcher placement. Adding this
-attribution metric changes only the supplemental file's hash; compare the earlier
-instrumented-base feedback samples directly, preserving their original gate file.
-In the existing ledger their spans start at submission immediately before command
-invocation, not at the recorder's Receipt event. These view-model measurements
-exclude dispatcher queue delay. This supplemental run does not qualify the frozen
-workloads or repeat their required correctness checks.
-
-The dwell harness waits for the initial walk to complete before submitting inputs.
-Four warm metrics use one-based recorder positions as their sample operation IDs:
-
-- `handoff-gap-ms`: each `WarmHandoffResolved` with value 1 (the worker actually
-  waited), minus the previous warm target's first tier-1 `CacheWriteComplete` or
-  `CacheWriteDropped` after its `WarmEnqueue`. Later outcomes for that image,
-  unrelated images, and tier-2 thumbnail writes cannot replace that outcome.
-  The handoff awaits its own write outcome directly; every drop path, including
-  shutdown timeout, resolves it without waiting for other pending writes.
-  Resolves without a preceding matching outcome yield no sample. Since warm
-  writes persist pre-encoded bytes, the write usually lands before the next
-  worker arrives, so the metric is report-only on all four workloads and an
-  empty sample set is recorded as `notMeasured`; the `handoff-waits` counter
-  reports how many workers actually waited.
-- `step-refill-ms`: each post-input `BufferRefill` to its next `WalkComplete`,
-  provided no further `BufferRefill` intervenes and the parent image matches.
-  Cancelled or unfinished walks yield no latency sample. `step-walks-completed`
-  and `step-walks-excluded` count the two outcomes; `walks-without-complete`
-  includes initial walks too. The per-workload minimumWalks floor (15 for jump,
-  zero for report-only dwell) makes thinner binding fragments inconclusive. Both jump workloads require
-  15 samples and a p95 at most 1.10 times the named baseline.
-- `initial-walk-ms`: the first walk's `BufferRefill` to `WalkComplete`, both
-  before the first ledger input; one separate, report-only p95 sample.
-- `warm-save-ms`: the first tier-1 `CacheSaveStart/End` span after each image's
-  `WarmEnqueue`, correlated by save operation id. A drop before the writer takes
-  the write clears the pending warm; unclosed spans yield no sample. Jump requires
-  at least 80 samples and a p95 at most 0.50 times the named baseline. The writer
-  persists the warm entry's existing JPEG bytes, so warm writes record no
-  `events-CacheEncode`; departing-preview and Compare raster writes still encode.
-
-Step refill and warm save are foreground metrics on jump workloads. Dwell
-overrides both to report-only (no maximum, foreground comparison, or ratio).
-Workload metricOverrides replace the matching global metric definition; jump
-also sets input-feedback-ms to 20 samples, retaining its 50 ms p95 maximum.
-The initial walk remains report-only on all four workloads. A metric's optional
-`maximumBaselineRatio` also enforces candidate <= baseline times that ratio,
-independently of both regression floors. Existing evidence validity, minimum
-sample counts, correctness checks, and any stricter foreground regression limit
-still apply. An unnamed baseline run reports absolute values without enforcing
-an improvement ratio. A single initial-walk sample cannot establish variability;
-repeat runs are needed for that comparison.
-
-Process CPU, peak private bytes and ordinary-idle private bytes remain
-report-only counters on every workload; the single-encode series compares them
-before and after on both jump workloads.
+Dwell measures steady navigation on Loupe and Develop while adjacent warming runs. Jump
+moves beyond the warm neighborhood to measure foreground publication and refill.
+`Tests/CullPerfGates.dwell.json` owns cadence, metrics, sample floors and baseline
+ratios; `scripts/cull-perf.ps1` owns hang watchdogs. The four-workload supplemental file
+has a 15-minute runtime budget; results qualify only that gate hash. Event correlation
+belongs to the gate file and harness, including handoff, refill, save and
+worker-placement evidence; VM spans exclude dispatcher queue delay.
 
 ## Frozen workloads
 
@@ -142,9 +56,6 @@ The table is stratified: every applicable surface/pattern/fixture combination
 and every surface/fixture/cache combination occurs. Both settings variants occur
 for each surface/fixture; it is not a Cartesian expansion of all dimensions.
 Fullscreen only exercises navigation, consistent with its production guards.
-The 12 JPEG workloads that collect accurate-ready gate its p95 at 1,200 ms
-(PERFBASE WP1 G3), while RAW stays report-only.
-
 Preparation generates a 6000×4000 JPEG and hashes it and the repository RAW and
 legacy fixtures. A persistent hash-keyed root contains 627 JPEG/RAW pairs,
 alternating Canon and Fuji RAW members. Private source anchors avoid exhausting
@@ -158,20 +69,10 @@ edit delta. Cold means an empty application cache; **OS cache warmth is
 uncontrolled**. Ahead cases explicitly admit the normal warm worker two images
 ahead and require the first foreground input to overlap its actual decode.
 
-The workloads in `Tests/` drive the view model without a UI dispatcher, following
-the same harness shape as `AdjacentPreviewPerformanceTests`. Their timing spans
-exclude UI-queue delay. The window-loupe scene is the dispatcher-level check;
-moving all workloads onto a dedicated dispatcher is a follow-up candidate.
-
-Input due times are independent of preview completion. A ledger records actual
-submission before command invocation. Receipt and selection/assessment feedback
-are separate samples. Cached/fresh bitmap publication is recorded at the sink;
-it is not a displayed frame. The window check reads the first frame after one forced headless
-render tick: a blocked-source Loupe resident-thumbnail placeholder, then a preview. It also probes a
-posted background-priority dispatcher callback. It does not use `CaptureRenderedFrame`: in
-Avalonia 12 that helper renders until the dispatcher is idle, so it also waits out unrelated
-transitions, such as the loupe-hidden browse tiles that each selection restyles (about 110 ms). It uses a signal-gated synthetic loader
-and a stopped test clock for scheduling correctness, not native decode timing.
+The workloads drive the ViewModel without a dispatcher; their spans exclude UI-queue
+delay. Publication means assignment at the sink, not a displayed frame. The separate
+window-loupe check uses a forced headless render tick and signal-gated loader to verify
+dispatcher placement and first-frame correctness, not native decode speed.
 
 ## Result schema, version 1
 
@@ -193,73 +94,19 @@ and a stopped test clock for scheduling correctness, not native decode timing.
 | `verdict`, `exitCode`, `error` | Overall result and any orchestration error |
 | `startedUtc`, `elapsedSeconds` | Attempt start and complete elapsed duration |
 
-Each fragment contains the workload/gate/machine/cache identities, actual fixture
-hashes, executed/skipped flags, lost-event count, submitted/completed/cancelled/
-superseded/no-op counts, correctness failures, `notMeasured` metric IDs, raw samples and
-counters. Samples are `{ operationId, value }`; units are in metric names. Workload
-samples use receipt operation IDs; `events.json.operations` maps submission-ledger
-IDs to those IDs. Only report-only metrics (no threshold and not in the foreground
-comparison set) may be `notMeasured` without affecting the verdict. Required
-metrics still need their full sample counts, including when marked `notMeasured`.
-Statistics report count, median, nearest-rank p95, and maximum. Each workload's
-`events.json` retains its submission ledger and bounded recorder snapshot:
-monotonic timestamp, kind, operation ID, image catalog ID, generation, managed
-worker thread ID, and value. Publication values are bitmap bytes. Native events
-bracket synchronous Magick decode and LibRaw Unpack/Process, including returns
-after cancellation. `frames.json` separately records captured-frame timestamps.
+Fragments retain workload, gate, machine, cache and fixture identity; execution status,
+lost events, input outcomes, correctness failures, raw samples and counters. Statistics
+are count, median, nearest-rank p95 and maximum. Only report-only metrics may be
+`notMeasured` without affecting verdict; required metrics need complete samples.
+Event snapshots and frame timestamps are retained as evidence.
 
-CPU is process CPU time. Peak private bytes are sampled every 10 ms; ordinary
-idle and aggressive forced-GC private bytes are distinct fields. Thumbnail bytes, peak cache backlog,
-retained pair count, publication bitmap bytes, visible-collection replacements,
-native overlap and event counts
-are explanatory observations, not interchangeable memory measures. Idle here
-means the existing activity/cache/loading counters are zero; future debounced
-work can still be scheduled.
-
-The legacy measurement retains its 100 ms warm first-paint, 0.30 warm/control,
-1.10 priority/control, JPEG 95/20 MiB and RAW 300/50 MiB peak/forced-GC budgets.
-Its sample pairs include actual polling-bracket widths. Every recorded latency
-must fall within its actual false-to-true polling bracket; polling delay has no
-maximum and is not counted as a speedup. A poll is true only once the publication
-timestamp (recorded paint, or the property-change stamp when recording is off) is
-visible to it, and its time is read after that check. The UI thread assigns
-`PreviewImage` before either stamp exists, so an off-thread poll could otherwise
-land in that gap. Recorder overhead interleaves nine
-on/off pairs using the same `PreviewImage` property-change observer on both
-sides. The median of paired first-publication differences is report-only: the
-recording-off arm alone spans about 15 ms on the dev host, so an end-to-end
-threshold below that would gate on noise. Negative differences are clamped to
-zero for nonnegative samples; all signed differences and both original sample
-sets are retained. The binding overhead gates are the 10,000-event cost (≤2 µs
-median) and zero allocated bytes across those enabled calls, measured as the
-smaller of two passes so one-off runtime work such as tiering is not counted,
-with a 100-call null-path allocation sample retained as a companion. The nine-pair case
-has a five-minute hang watchdog; other isolated cases retain 90 seconds.
-
-## Instrumentation coverage and qualification limits
-
-The production diff is deliberately limited to instrumentation. The following
-approved-plan events/counters are not implemented in this iteration: complete
-queue/handoff and Loupe render/conversion stage correlation, and aggregate owned
-base bytes. Cache-writer completion/drop and resting publication are recorded.
-Native overlap counts duplicate concurrent decodes by image ID; superseded native
-calls are joined to recorded rejection or WarmCancelRequested events by image ID while their workers
-remain active, and cease counting only when NativeEnd arrives. Collection
-replacements are counted from Browse.VisibleImages property changes. The harness connects loader and sidecar-writer recorders explicitly;
-production router and view-model writer setup do not propagate them. The ledger
-uses the first matching publication
-or rejection as an operation outcome; there is no separate, deduplicated
-production terminal event. Assessment feedback joins by image and time rather
-than a propagated assessment operation ID.
-
-These gaps are copied from the frozen gate file into result-level `coverageGaps`
-and do not change the verdict. Unavailable report-only metrics are explicitly
-`notMeasured` in fragments. A full run can pass or fail its measured gates;
-missing required evidence still makes it inconclusive. Reversals and bursts can additionally expose
-unreconciled operations or insufficient publication samples. Required correctness
-checks separately cover surviving/cancelled warm workers and pick persistence
-for both pair members, successful sidecar contents, and failed writes retaining
-pending axes despite immediate feedback and a drained writer.
+CPU, sampled peak private bytes, ordinary idle and forced-GC private bytes are distinct
+measurements. Idle means tracked activity is zero, not that future debounced work is
+impossible. Poll-derived latencies must lie inside actual false-to-true brackets;
+poll delay is never counted as a speedup.
+Recorder overhead is gated at ≤2 µs median per event with zero allocations; the
+end-to-end paired comparison is report-only because scheduling noise dominates it.
+Known gaps live in the gate file's `knownMissingEvidence`.
 
 ## Reviewing and comparing results
 
@@ -278,13 +125,3 @@ Change workload definitions and thresholds only through a reviewed diff to the
 gate file. A changed hash starts a new baseline series; never edit an existing
 result or quietly drop a slow sample. For later production work, repeat passing
 candidates independently and stop optimizing once repeated measurements plateau.
-The current-main verdict is a baseline record, not this instrumentation change's
-merge condition. The orchestrator owns full-suite validation and FINALIZE.
-
-## Deviations
-
-`RawBaseLoader.CanLoad` resides in the existing PreviewPair partial to keep the
-root source file below 500 lines; its behavior and ownership are unchanged.
-The production instrumentation diff is +100 net lines against `84f3905`. The
-shared flag command guard and receipt replace the five repeated command guards
-and receipts; the recorder remains bounded and opt-in.

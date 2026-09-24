@@ -77,156 +77,53 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
    Cached output may be displayed without source content. Only a single-image
    **Download and open** action or a confirmed export batch may use approved hydration
    intent.
-10. **Adjacent warming is cache-only speculation.** After a settled Develop or loupe paint, one
-   worker walks up to five locally readable neighbors in the travel direction, one at a
-   time, each decoded and rendered through the normal
-   pipeline. It retains no base or source analysis and can reach the surface only as a
-   settings- and source-matched rendered-cache entry through the guarded cached
-   outcome path.
+10. **Adjacent warming is cache-only speculation.** A bounded worker uses only locally
+    readable neighbors and retains no base or source analysis. Its results can reach
+    the surface only through source- and settings-matched rendered-cache outcomes.
 
 ## 3. Stage diagram
 
-```
-            ┌─ DECODE.md ─────────────────────────────────────────────┐
- RAW ──LibRaw(camera RGB)──optics/sample──characterize→Rec.2020 ─────┤
- mono RAW ──LibRaw(gray, linear)──bounded gray resize──replicate RGB ┤
- JPEG/PNG/TIFF/HEIC ──Magick decode ─color→linear Rec.2020 ──────────┤
-            └──────────► BaseImage (linear Rec.2020 Q16 + BaseImageInfo)┘
-                                   │
-            ┌─ RENDER.md ──────────▼──────────────────────────────────┐
-            │ 1 Geometry   rotate90 → fused corrected-frame warp → crop│
-            │ 2 DCP HueSat optional scene-linear ProPhoto profile map │
-            │              (RENDER.md §2.1)                           │
-            │ 3 Matrix     RAW: AgX inset × WB; standard: WB           │
-            │ 4 Tone LUT   RAW: gain→log2→sigmoid→channel→master;    │
-            │              standard: retained chain→channel→master   │
-            │              retained display-domain chain (exact Q16)  │
-            │ 5 Matrix     RAW: AgX outset; standard: identity         │
-            │ 6 Chroma     OKLCh saturation + protected vibrance      │
-            │ 7 Detail     luminance/chroma NR → capture sharpen      │
-            └──────────────┬───────────────────────────────┬──────────┘
-                     histogram + clipping stats            │
-            ┌─ OUTPUT.md ──▼───────────────────────────────▼──────────┐
-            │ display: ConvertToBitmap (8-bit BGRA)                   │
-            │ shared: decode→linear resize→encode→output sharpen      │
-            │         → vignette→grain                                │
-            │ target: decode→sRGB/P3 convert→encode + matching ICC    │
-            │         + metadata policy (EXIF copy, GPS toggle)       │
-            └─────────────────────────────────────────────────────────┘
+```text
+RAW → LibRaw camera RGB → optics/sample → characterize ┐
+Monochrome RAW → linear gray resize → replicate RGB    ├→ BaseImage
+Standard → Magick decode → color normalization        ┘  linear Rec.2020 Q16
+
+BaseImage → geometry → optional DCP HueSat → WB/locals → tone regime
+          → chroma → detail → linear resize → output sharpen → vignette/grain
+          → sRGB/P3 convert → clamp/encode → display scopes/clipping
+          → bitmap or tagged export
 ```
 
-Interactive analysis consumes the final encoded Q16 array already written to the
-output image: one parallel pass derives display-floor clipping, overlay flags, and
-BGRA8 pixels; histogram and waveform consume those same BGRA8 pixels (RENDER.md §7).
-Render requests for export statistics use the same analysis in their output space,
-with masks suppressed. Direct finalizer calls and resting renders do not retain
-the analysis buffer.
+RAW tone uses AgX inset/LUT/outset; standard tone retains the display-domain chain.
+RENDER.md owns exact ordering and math; OUTPUT.md owns finalization and encoding.
+
+Interactive and export-statistics analysis derive clipping, overlay flags and scope
+BGRA8 in one pass over the final encoded Q16 array (RENDER.md §7).
 
 ## 4. Runtime contracts
 
-```csharp
-public enum BaseSourceKind { RawLibRaw, Standard, HeicPlatform }
+Runtime types live in [BaseImage.cs](../../Services/BaseImage.cs) and
+[RenderContracts.cs](../../Services/RenderContracts.cs). `BaseDecodeSettings` projects
+the decode-affecting settings; `BaseImageInfo` carries loader-produced facts.
+[PreviewBasePair.cs](../../Services/PreviewBasePair.cs) defines the interactive/large
+pair;
+[PreviewBaseCoordinator.Leases.cs](../../Services/PreviewBaseCoordinator.Leases.cs)
+defines `PreviewSourceAnalysis` and its generation-matched `PreviewBaseLease`.
+`RenderRequest` supplies the base, edits, intent, output target, sharpening and
+auxiliary-work options; `RenderResult` owns the rendered image and optional
+scopes/masks. The internal locals-frame override preserves corrected-frame coordinates
+in resting work.
 
-public enum HlReconstructionMode { Blend, Clip }
+`EditSettings` uses the v4 schema (RENDER.md §8). Version 3 migrates in memory;
+version 2 is rejected by `EditSettingsJson`.
 
-public sealed record BaseDecodeSettings(HlReconstructionMode HlReconstruction,
-                                        bool Distortion, bool ChromaticAberration, bool Vignetting)
-{
-    public static BaseDecodeSettings Default { get; }        // Clip + built-in profile
-    public static BaseDecodeSettings From(EditSettings s);   // also carries rawProfile selection
-    public string CacheKey { get; }                          // adds dcp=resolved token when selected
-}
-
-public sealed record BaseImageInfo(
-    BaseSourceKind Kind,
-    bool IsRawSource,              // true only for mosaic sources decoded via LibRaw
-    BaseDecodeSettings Decode,     // the settings this base was decoded with
-    double[]? CamMul,              // length 3, or native LibRaw length 4; null if unavailable
-    double[,]? CamToSrgb,          // camera → linear sRGB, 3×CamMul.Length; null if unavailable
-    double AsShotKelvin,           // measured for raw when facts exist; 6504 non-raw
-    double AsShotTint,             // measured for raw when facts exist; 0 non-raw
-    bool HadIccProfile,
-    string? IccDescription,
-    int ExifOrientationApplied,    // for diagnostics; pixels are already upright
-    int FullWidth,                 // native full-resolution dimensions after orientation —
-    int FullHeight,                // set on preview bases too; RENDER.md §9 scales σ by these
-    double SourceExposureBiasEv = 0); // bounded embedded-preview/default-brightness estimate
-// IsMonochrome is a loader-produced fact propagated with preview/render outcomes.
-// Also carries the generation-matched embedded-lens prescription summary.
-
-public sealed class BaseImage : IDisposable
-{
-    public const int Version = …;        // current value lives in code; bump whenever decoded pixels or facts change
-    public const int InteractivePreviewMaxDimension = 1600;
-    public const int LargePreviewMaxDimension = 3200;
-    public MagickImage Pixels { get; }   // Depth 16, ColorSpace RGB (linear), no profiles
-    public BaseImageInfo Info { get; }
-}
-
-public sealed class PreviewBasePair : IDisposable
-{
-    public BaseImage Interactive { get; } // pre-derived slider base
-    public BaseImage? Large { get; }       // bounded resting-render base
-}
-
-internal sealed record PreviewSourceAnalysis(
-    HistogramData? RawHistogram,
-    SourceSaturationMask? SourceSaturation);
-
-internal sealed class PreviewBaseLease : IDisposable
-{
-    public BaseImage Base { get; }
-    public PreviewSourceAnalysis Analysis { get; }
-}
-
-public enum RenderIntent { Preview, Export }
-public enum OutputColorSpace { Srgb, DisplayP3 }
-
-public sealed record RenderOptions(
-    bool ComputeStats = true,
-    bool ComputeOverlayMasks = false,
-    ClippingOverlaySide OverlaySides = ClippingOverlaySide.Both);
-
-public sealed record RenderRequest(
-    BaseImage Base, EditSettings Settings, RenderIntent Intent,
-    int? MaxDimension, RenderOptions Options,
-    OutputColorSpace OutputColorSpace = OutputColorSpace.Srgb) // RENDER.md §1.1
-{
-    internal SourceSaturationMask? SourceSaturation { get; init; }
-}
-
-public sealed class RenderResult : IDisposable
-{
-    public MagickImage Image { get; }        // display-referred selected output, 16-bit
-    public ClippingStats Clipping { get; }   // see RENDER.md §7
-    public ClippingMask? OverlayMask { get; } // per-pixel side flags; only when Options.ComputeOverlayMasks
-}
-```
-
-`BaseImageInfo` also carries the internal resolved DCP payload, outcome token,
-typed status/message, and normalized camera identity. These facts install with
-the characterized pixels; render never resolves or mixes profile state.
-
-`EditSettings` v3 schema and current storage contract: RENDER.md §8.
-
-Develop exposes luminance noise reduction, capture sharpening, and chroma noise
-reduction for every source in its Detail group. Capture sharpening displays its source-kind default
-(RAW 25, standard 0) while persisting that default as `null`. Fit and 1:1 views both
-use the bounded preview base, so detail fidelity is judged on export-scale renders;
-native-detail inspection is not part of this viewer.
-
-`BaseImage` exclusively owns `Pixels` after construction. Callers may hold a base across
-multiple renders but must dispose it only after those renders finish; disposal is
-idempotent and accessing `Pixels` afterward throws. A loader returning `null` retains
-ownership of any temporary image it created. `BaseImageInfo` is loader-produced factual
-metadata and consumers treat it as immutable. Preview loaders additionally return one
-immutable `PreviewSourceAnalysis`: RAW derives both fields from the same unpacked-mosaic
-pass; JPEG/HEIC derive only source saturation from upright encoded samples before color
-normalization. The coordinator installs pair and analysis atomically and exposes them
-only through a generation-matched lease, so stale work cannot mix artifacts with newer
-pixels. Full/export loads return only canonical pixels and render-required facts and do
-no histogram or saturation sampling. Source-saturation absence is the highlight-warning
-capability signal.
+`BaseImage` exclusively owns immutable pixels; callers keep it alive through renders
+and dispose it afterward. Loaders own temporary images on failure. Loader facts are
+immutable. Preview pair and source analysis install atomically and are accessible only
+through generation-matched leases, preventing facts from mixing with newer pixels.
+RAW preview derives histogram/saturation in one mosaic pass; standard preview captures
+supported source saturation before normalization. Full loads omit both. Missing source
+saturation signals unavailable highlight warnings. DECODE.md §4 owns lease mechanics.
 
 ## 5. Service map
 
@@ -259,6 +156,9 @@ capability signal.
 | `Services/ToneLut.cs` | exact crossing-off LUT composition (RENDER.md §5) |
 | `Services/ToneLutApplicator.cs` | unrounded-input linear interpolation with one Q16 write |
 | `Services/RenderChromaticStage.cs` | white-balance matrix application |
+| `Services/RenderLocals.cs` | fused local exposure/color and range evaluation |
+| `Services/LocalRangeSampling.cs` | shared pre-tone classification seam |
+| `Services/LocalRangeMaskRenderer.cs` | display-only range-mask rendering |
 | `Services/RenderChromaStage.cs` + `OklabColor.cs` | fused OKLCh saturation/vibrance and gamut projection |
 | `Services/RenderNoiseReduction*.cs` + `RenderSharpening.cs` | wavelet noise reduction and fixed sharpening operations |
 | `Services/RenderEffects.cs` | post-resize vignette and deterministic film grain |
@@ -283,32 +183,17 @@ omitting the new field reproduces old pixels bit-for-bit and canonical JSON omit
 so old settings hashes and caches remain valid. Per-channel curves and the nullable
 effects object use this exception; present pixel-active fields change the canonical
 settings hash.
-Manual geometry does not use the additive exception: its unified framing changes
-existing horizon renders, so its render-version increment deliberately invalidates
-rendered caches and selects a new golden baseline.
 `BaseDecodeSettings.CacheKey` is the invariant, culture-independent string
 `base-v{BaseImage.Version};hl={blend|clip};lens={ddd}`, with
-`;dcp={source:content-hash:resolution-status}` appended only for a selected profile.
+optional `;lens-profile={escaped model}` and
+`;dcp={source:content-hash:resolution-status}` suffixes for selected lens/camera profiles.
 In-memory identity adds normalized file path and preview/full size class;
 rendered-cache settings hashes also carry the installed outcome token.
-The current marker values live in code (`RenderPipeline.Version` and
-`BaseImage.Version`); the doc deliberately does not restate them. The
-perceptual OKLCh chroma stage incremented the render version (its golden
-attribution lives beside the goldens); a selected DCP profile bumps neither
-version: the no-profile path is unchanged, while active and rejected profile
-outcomes are isolated by the DCP token.
-Removing the former FBDD field deliberately re-keyed every settings hash and base
-cache entry once; `RenderPipeline.Version` remains unchanged because luminance NR 0
-does not access or change pixels.
-Replacing box-blur chroma NR with the shared wavelet engine increments the render
-version because every active chroma-NR render changes; value 0 remains pixel-identical.
-Flooring capture-sharpen sigma for Preview intent increments the render version so
-cached interactive previews cannot retain the former no-op appearance; Export intent
-and its golden pixels remain unchanged.
+The current marker values live only in `RenderPipeline.Version` and
+`BaseImage.Version`. Selected DCP outcomes are isolated by their resolved token.
 
 ## 7. Current boundaries
 
-Local adjustments/masks, custom output ICC targets, display-profile awareness, XMP
-develop-settings sidecars (XMP exchanges assessments only), HDR output, AVIF/JXL,
-1:1-zoom region decode (zoom continues to use the bounded preview base). These are
-product boundaries, not partially implemented pipeline stages.
+Linear and radial local adjustments ship. Remaining boundaries are layered compositing,
+custom output ICC profiles, HDR output, AVIF/JXL, and 1:1 region decode (zoom uses the
+bounded preview base). XMP exchanges assessments only, not develop settings.

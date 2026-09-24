@@ -7,39 +7,31 @@ can no longer inherit source profiles or orientation tags safely.
 ## 1. Display path
 
 The preview `RenderResult.Image` (display-referred sRGB, Q16) passes through
-`BitmapConversionService.ConvertToBitmap` to become an 8-bit BGRA Avalonia bitmap.
-That bitmap remains the canonical sRGB object used by preview promotion, Compare,
+`BitmapConversionService.ConvertToBitmap` to become an 8-bit BGRA Avalonia bitmap. That
+bitmap remains the canonical sRGB object used by preview promotion, Compare,
 Before/After, and the preview cache. On Windows, viewer surfaces synchronously derive a
 separate 8-bit BGRA display copy at the view boundary when the window's monitor has a
 supported non-sRGB matrix/TRC profile. The display leg is decode LUT → 3×3 matrix →
 encode LUT; it never feeds the histogram, clipping mask, white-balance picker, cache,
 promotion, or export. An absent or sRGB-shaped profile shows the canonical bitmap
-directly with no allocation. LUT-based and MHC2 profiles are reported in About and
-treat the monitor as sRGB; Windows Auto Color Management does the same to avoid a
-second correction.
-On macOS the app tags the window's CAMetalLayer as sRGB once it exists (after the first
-frame) and the compositor color-matches the whole window, thumbnails and chrome included;
-the display leg stays identity there and About reports "managed by macOS".
-The 16-to-8-bit step deliberately uses native nearest-level quantization without
-dithering. On the generated 4096-step gradient, it measured 0.2499 LSB mean absolute
-error and 0.4981 LSB maximum error. Deterministic ordered 8×8 dithering reduced 8×8
-block-mean error from 0.1190 to 0.0052 LSB, but increased point error to 0.3322 LSB
-mean and 0.9883 LSB maximum and would add a full-image pass to interactive preview.
-Happy Photon therefore keeps the lower-error, lower-cost conversion; JPEG/WebP also
-receive lossy encoder noise, while PNG remains an explicit 8-bit output.
+directly with no allocation. LUT-based and MHC2 profiles are reported in About and treat
+the monitor as sRGB; Windows Auto Color Management does the same to avoid a second
+correction. Thumbnails and placeholders remain outside this app-managed display leg. On
+macOS the app tags the window's CAMetalLayer as sRGB once it exists (after the first
+frame) and the compositor color-matches the whole window, thumbnails and chrome
+included; the display leg stays identity there and About reports "managed by macOS".
+Native nearest-level quantization avoids a full-image dithering pass and minimizes point
+error; lossy encoders add their own noise, while PNG remains explicit 8-bit output.
 
-Nearest-level is the **only** 16-to-8 conversion in the product: display, PNG, JPEG,
-and WebP all reach it through Magick's native quantizer, so preview and an sRGB export
-agree code for code before any lossy encoding. TIFF keeps the Q16 values and performs
-no 8-bit conversion. A Display P3 export deliberately has different channel codes.
-Never call `Depth = 8` on a render — it
-quantizes toward zero and silently shifts roughly half of all samples one code below
-the preview (measured 30–51% of channel samples, `pngMinusPreview` in {−1, 0}).
-Request 8-bit output through the encoder's own define instead. The opt-in precision
-harness (TESTING.md §5) gates this equality per fixture as `previewPng=pass`.
-`RenderResult` can carry optional semantic clipping masks. Develop requests them only
-while the clipping latch or a histogram-triangle peek is active; normal display and
-all export renders remain mask-free (RENDER.md §7).
+Nearest-level is the **only** 16-to-8 conversion in the product: display, PNG, JPEG, and
+WebP all reach it through Magick's native quantizer, so preview and an sRGB export agree
+code for code before any lossy encoding. TIFF keeps the Q16 values and performs no 8-bit
+conversion. A Display P3 export deliberately has different channel codes. Never call
+`Depth = 8` on a render — it quantizes toward zero and can shift samples one code below
+the preview. Request 8-bit output through the encoder's own define instead; display/PNG
+code equality has no automated test. `RenderResult` can carry optional semantic clipping
+masks. Develop requests them only while the clipping latch or a histogram-triangle peek
+is active; normal display and all export renders remain mask-free (RENDER.md §7).
 
 ## 2. Export flow (`ImageExportService`)
 
@@ -57,45 +49,20 @@ confirmation; every other install uses create-new semantics, so a file appearing
 preflight is never overwritten. The export loop transfers ownership of the last
 progressive variant instead of cloning it.
 
-The optional single-line watermark is snapshotted with output settings and drawn last
-at each finished size, after target color encoding. Export and Preview output share
-this finalizer step; Develop, resting previews and thumbnails never draw it. SkiaSharp
-places text by the advance-width by ascent-plus-descent layout box and rasterizes
-grayscale coverage over its union with the measured ink bounds, preserving italic
-overhangs. Only that image-clamped rectangle is blended into Q16 output-encoded RGB,
-preserving alpha. Size and margin use the short edge; long text fits the union of
-layout and ink bounds within both margins, and side-edge rotation faces the letters
-toward the edge. With watermark disabled the snapshot is null and the
-step is skipped. Enabled blank text blocks export with "Enter watermark text."
+The optional single-line text watermark is snapshotted with output settings and drawn
+last at each finished size, after target encoding. Export and Preview output share this
+step; Develop, resting previews and thumbnails never draw it. SkiaSharp coverage over the
+union of the layout box and measured ink bounds, which preserves italic overhangs, is
+blended only inside that image-clamped rectangle into Q16 output-encoded RGB, preserving
+alpha. Size and margin use the short edge; long text fits within both margins. A disabled
+watermark is a null snapshot and skips the step; enabled blank text blocks export.
 
-Browse selection is authoritative: every photo in the Export batch becomes a job capture.
-Change photos and settings edits affect only the next batch. Before constructing any new
-job, settings reject no enabled sizes, non-numeric/out-of-range long edges (16–65,536), an
-empty destination or an empty/illegal naming pattern. Explicit variants are range-checked too.
-Retry uses the saved job. There is no silent size clamping.
-
-The default naming pattern is `{name}`; `{date}` is the export date. The active-photo example
-and job targets share one path resolver for extension, size subfolders and `-V<n>` suffixes
-when multiple versions of the same source are present. One size writes directly into the
-destination; multiple sizes use their own subfolders. The example does not clone edits or
-construct a job. Path collisions and RAW+JPEG remedies direct selection changes to Browse.
-
-Develop preview uses the same finalizer with output sharpening disabled and sRGB
-selected. The Export workspace shows that standard preview by default. Its opt-in
-**Preview output** control uses the existing explicitly requested proof render, finalizing
-the chosen valid enabled size with its color space and output sharpening. JPEG/WebP
-compression quality is not previewed. The chooser defaults and falls back to the largest
-valid enabled size (Full means no resizing); no-upscale remains in the finalizer.
-The caption captures size name, cap and color space when the bitmap is accepted, alongside
-the display interpretation. A refresh appends **UPDATING…** to those accepted facts until
-replacement; it never relabels old pixels. No automatic full-resolution decode or cloud
-hydration is added. A displayed proof suppresses the display-fit resting upgrade because
-sharpening is defined at output dimensions; switching it off restores
-**PREVIEW · edits applied** and the standard preview path.
-A proof retains the selected output encoding as its canonical pixels. Its Export image
-surface identifies that source encoding to the display leg, so a Display P3 proof is
-converted to either the supported monitor profile or sRGB when the monitor is treated
-as sRGB. The exported pixels and embedded output profile are unaffected.
+The job validates sizes and naming before execution; retry reuses the saved job.
+User-facing selection, layout, naming examples and proof behavior belong to
+[WORKFLOW.md](../WORKFLOW.md) §6. A proof identifies its canonical output encoding to
+the display leg; conversion for a monitor never changes exported pixels or ICC tags. A
+displayed proof suppresses display-fit resting refinement because sharpening is defined
+at output dimensions.
 
 All geometry, tone, chroma, detail, resize, sharpening, and effects work is
 target-independent; only the trailing convert, clamp, encode, and profile differ
@@ -124,7 +91,7 @@ the default sRGB path, or the 480-byte Compact ICC Profiles `DisplayP3-v4.icc` (
 Display P3. JPEG, PNG, WebP, and TIFF each preserve the selected profile. Display P3 shares the
 sRGB transfer, so resize and tone encoding continue to use the existing transfer LUTs.
 
-**Output sharpen** uses the exact Rec.2020 luma authority in RENDER.md §9. **Off**
+**Output sharpen** uses the exact Rec.2020 luma authority in TONE_ENGINE.md §6. **Off**
 never applies it. **Screen** is the compatibility default and applies after an actual
 resize to a sized variant ≤ 2560px (luminance unsharp `sigma 0.5, amount 0.3,
 threshold 0.005`); unresized output is unchanged. **Print** also applies to full-size
@@ -158,17 +125,12 @@ while private or structurally stale metadata is never carried through accidental
 
 ## 5. Verification
 
-- Typed invalid sizes block both the button and Enter with an inline reason; correcting to
-  3000 yields a 3000-pixel job target. Explicit invalid variants cannot bypass validation.
-- Filename examples equal relative job paths for one/multiple sizes and V1/V2 pairs.
-- Batch changes preserve running jobs; footer summary/action/report remain visible with
-  collapsed and expanded failure/warning details at default and minimum window sizes.
 - Exported JPEG opened in a color-managed browser stays within the preview's colorimetric
   bounds. sRGB retains the golden ΔE/code gates; Display P3 is converted through its
   embedded profile before comparison, and the synthetic native-P3 fixture is the
   gamut-survival sentinel. Edited target agreement is governed by WORKING_SPACE.md §9.3.
 - Preview BGRA and sRGB PNG read-back carry identical 8-bit codes for the same render
-  (precision harness `previewPng` gate, §1).
+  (§1); this is a contract, currently without automated enforcement.
 - Export of a RAW carries capture date, camera, exposure EXIF; orientation displays
   upright everywhere; no embedded stale thumbnail (verify with exiftool in CI or a
   Magick profile read-back test).
