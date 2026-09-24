@@ -3,7 +3,8 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
 
-internal sealed class RenderGeometryMap
+// Immutable numeric state gives independently constructed maps value equality for projection caching.
+internal sealed record RenderGeometryMap
 {
     private readonly double _halfWidth;
     private readonly double _halfHeight;

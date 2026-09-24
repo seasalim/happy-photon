@@ -43,9 +43,9 @@ internal static class CullPerfFiles
         JsonSerializer.Serialize(stream, value, value.GetType(), Json);
     }
 
-    internal static string GeneratedJpeg()
+    internal static string GeneratedJpeg(string? directory = null)
     {
-        var generated = Path.Combine(Root, "artifacts", "cull-perf-fixtures");
+        var generated = directory ?? Path.Combine(Root, "artifacts", "cull-perf-fixtures");
         Directory.CreateDirectory(generated);
         var jpeg = Path.Combine(generated, "generated-24mp.jpg");
         if (!File.Exists(jpeg))

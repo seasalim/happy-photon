@@ -19,7 +19,7 @@ public sealed class ClippingStatsTests
             1);
 
         var analysis = ClippingStatsCalculator.Analyze(
-            image,
+            ReadFrame(image), (int)image.Width, (int)image.Height,
             source,
             createOverlay: true);
         using var overlay = analysis.OverlayMask;
@@ -44,7 +44,7 @@ public sealed class ClippingStatsTests
         ]);
 
         var analysis = ClippingStatsCalculator.Analyze(
-            image,
+            ReadFrame(image), (int)image.Width, (int)image.Height,
             sourceSaturation: null,
             createOverlay: true);
         using var overlay = analysis.OverlayMask;
@@ -171,10 +171,13 @@ public sealed class ClippingStatsTests
         tonalEdit.Exposure = 2;
         tonalEdit.Highlights = -80;
         tonalEdit.Effects = new EffectsSettings { Vignette = -50 };
+        using var secondCorrected = RenderGeometry.Apply(
+            geometryImage, tonalEdit, out var secondTrace);
+        Assert.NotSame(trace.Map, secondTrace.Map);
         var second = SourceSaturationMaskProjector.Project(
             mask,
             tonalEdit,
-            trace,
+            secondTrace,
             5,
             2);
 
@@ -193,12 +196,12 @@ public sealed class ClippingStatsTests
             1);
 
         var highlights = ClippingStatsCalculator.Analyze(
-            image,
+            ReadFrame(image), (int)image.Width, (int)image.Height,
             source,
             true,
             ClippingOverlaySide.Highlights);
         var floor = ClippingStatsCalculator.Analyze(
-            image,
+            ReadFrame(image), (int)image.Width, (int)image.Height,
             source,
             true,
             ClippingOverlaySide.DisplayFloor);
@@ -212,6 +215,13 @@ public sealed class ClippingStatsTests
             (byte)ClippingOverlaySide.DisplayFloor,
             floorMask!.Flags[0]);
         Assert.Equal(highlights.Stats, floor.Stats);
+    }
+
+    private static RenderColorEncoding.EncodedFrame ReadFrame(MagickImage image)
+    {
+        using var pixels = image.GetPixels();
+        return new(pixels.GetArea(0, 0, image.Width, image.Height)!,
+            RenderKernelSupport.GetLayout(pixels), null);
     }
 
     private static byte HighBit(byte value) =>

@@ -364,13 +364,24 @@ the render geometry and final resize; tonal, color, profile, and effect math nev
 redefines those flags. `PreviewService` passes that artifact explicitly from the
 current `PreviewBaseLease.Analysis` on the render request; `BaseImage` does not own it.
 
-The render exports one BGRA8 buffer that is both the preview-bitmap source and the
-display-scope source. Histogram-active interaction accumulates only the four 8-bit
-histogram channels; waveform-active interaction also accumulates the 256-column ×
+When analysis or preview pixels are requested, the finalizer hands back the final
+Q16 array already written by encode-target, with its channel layout and alpha index.
+A single parallel pass derives display-floor counts, overlay flags, and one BGRA8
+buffer without reading pixels back from Magick. Q16 channels, including alpha,
+scale with `(q + 128) / 257`; absent alpha is 255. The finalized image stays unchanged.
+Direct finalizer callers and resting renders do not retain that array.
+
+That BGRA8 buffer is both the preview-bitmap source and the display-scope source.
+Histogram-active interaction accumulates only the four 8-bit histogram channels;
+waveform-active interaction also accumulates the 256-column ×
 128-level luminance waveform. Horizontal image position maps to columns, Rec.601
 luminance maps with `level = value8 >> 1`, and each `ushort` cell stores the sample
 count. Sources narrower than 256 pixels back-fill unrepresented columns. Browse
 thumbnail histograms use the bitmap overload and never create waveform data.
+Render-pipeline accumulation opts into workers scaled with frame size (one per 8192
+pixels), bounded by row count and processor count. Cached and adjacent-warm preview
+paints retain the two-worker cap (one below 512 × 512 pixels). Both use the same
+accumulation code; per-worker integer partials keep merges exact.
 
 The selectable RAW histogram is deliberately outside that render stage: `RawBaseLoader`
 captures it from LibRaw's preserved post-`Unpack` mosaic before output configuration,

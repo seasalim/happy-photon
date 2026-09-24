@@ -726,7 +726,7 @@ sampler.
 | Preview render | Threadpool | Clone lease from held base; latest render generation wins |
 | Resting preview render | Threadpool, at most 2 managed workers | Parent interactive generation + decode key + resting serial; edit token cancels |
 | Adjacent preview warm | Long-running background task, capacity one | Settled Develop or loupe paint; walks up to five neighbors ahead; cancel-and-drop replacement semantics; one encoded cache handoff, held until persisted |
-| Display histogram + waveform | Preview render worker, at most 2 managed workers | Exact preview BGRA8 buffer; bounded row-parallel accumulation; histogram ticks skip inactive waveform accumulation |
+| Display histogram + waveform | Render pipeline: frame-scaled managed workers bounded by rows and processor count; cached/adjacent-warm paint: at most 2 managed workers | Exact preview BGRA8 buffer; shared row-parallel accumulation; histogram ticks skip inactive waveform accumulation |
 | Browse histogram | UI pixel copy, threadpool calculation | Independent source clone; bounded 150px scale; selection/thumbnail-generation checks |
 | All catalog SQL | Caller's context | Service-owned gate around the shared connection |
 | Develop-subject history load | Threadpool (`Task.Run`) | Subject generation; load publishes before a waiting edit append |

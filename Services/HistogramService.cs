@@ -21,14 +21,16 @@ public class HistogramService
         int width,
         int height,
         HistogramData histogram,
-        bool includeWaveform)
+        bool includeWaveform,
+        bool scaleWorkersWithFrame = false)
     {
         CalculateBgraHistogram(
             bgra,
             width,
             height,
             histogram,
-            includeWaveform);
+            includeWaveform,
+            scaleWorkersWithFrame);
     }
 
     private static void CalculateBgraHistogram(
@@ -36,7 +38,8 @@ public class HistogramService
         int width,
         int height,
         HistogramData histogram,
-        bool includeWaveform)
+        bool includeWaveform,
+        bool scaleWorkersWithFrame = false)
     {
         ArgumentNullException.ThrowIfNull(bgra);
         ArgumentNullException.ThrowIfNull(histogram);
@@ -53,7 +56,10 @@ public class HistogramService
             columns[x] = x * WaveformData.ColumnCount / width;
         }
 
-        var workers = bgra.Length / 4 >= MinimumParallelPixels
+        var workers = scaleWorkersWithFrame
+            ? Math.Min(Environment.ProcessorCount,
+                Math.Min(height, Math.Max(1, bgra.Length / 4 / 8192)))
+            : bgra.Length / 4 >= MinimumParallelPixels
             ? Math.Min(2, height)
             : 1;
         var partials = new StatsBuffer[workers];

@@ -1,5 +1,3 @@
-using ImageMagick;
-
 namespace HappyPhoton.Services;
 
 public sealed record ChannelClip(double R, double G, double B)
@@ -63,17 +61,20 @@ internal static class ClippingStatsCalculator
     private const ushort LowThreshold = 128;
 
     public static ClippingAnalysis Analyze(
-        MagickImage image,
+        RenderColorEncoding.EncodedFrame frame,
+        int width,
+        int height,
         SourceSaturationProjection? sourceSaturation,
         bool createOverlay,
-        ClippingOverlaySide overlaySides = ClippingOverlaySide.Both)
+        ClippingOverlaySide overlaySides = ClippingOverlaySide.Both,
+        byte[]? bgra = null,
+        bool countClipping = true)
     {
-        ArgumentNullException.ThrowIfNull(image);
-        var samples = GetRgbSamples(image);
-        var pixels = samples.Length / 3;
+        var (samples, layout, alpha) = frame;
+        var pixels = checked(width * height);
         if (sourceSaturation != null &&
-            (sourceSaturation.Mask.Width != checked((int)image.Width) ||
-             sourceSaturation.Mask.Height != checked((int)image.Height)))
+            (sourceSaturation.Mask.Width != width ||
+             sourceSaturation.Mask.Height != height))
         {
             throw new ArgumentException(
                 "Source saturation must match the finalized preview dimensions.",
@@ -91,10 +92,21 @@ internal static class ClippingStatsCalculator
             long localLowR = 0, localLowG = 0, localLowB = 0, localLowAll = 0;
             for (var pixel = start; pixel < end; pixel++)
             {
-                var sample = pixel * 3;
-                var rLow = samples[sample] <= LowThreshold;
-                var gLow = samples[sample + 1] <= LowThreshold;
-                var bLow = samples[sample + 2] <= LowThreshold;
+                var sample = pixel * layout.Channels;
+                var red = samples[sample + layout.Red];
+                var green = samples[sample + layout.Green];
+                var blue = samples[sample + layout.Blue];
+                if (bgra != null)
+                {
+                    bgra[pixel * 4] = Scale(blue);
+                    bgra[pixel * 4 + 1] = Scale(green);
+                    bgra[pixel * 4 + 2] = Scale(red);
+                    bgra[pixel * 4 + 3] = alpha is { } a ? Scale(samples[sample + a]) : (byte)255;
+                }
+                if (!countClipping) continue;
+                var rLow = red <= LowThreshold;
+                var gLow = green <= LowThreshold;
+                var bLow = blue <= LowThreshold;
                 if (rLow) localLowR++;
                 if (gLow) localLowG++;
                 if (bLow) localLowB++;
@@ -131,12 +143,12 @@ internal static class ClippingStatsCalculator
             lowAll / divisor,
             sourceSaturation != null);
         return new ClippingAnalysis(
-            stats,
+            countClipping ? stats : ClippingStats.Empty,
             flags == null
                 ? null
                 : new ClippingMask(
-                    checked((int)image.Width),
-                    checked((int)image.Height),
+                    width,
+                    height,
                     overlaySides,
                     flags));
     }
@@ -151,7 +163,6 @@ internal static class ClippingStatsCalculator
         ((int)((long)pixelCount * worker / workers),
             (int)((long)pixelCount * (worker + 1) / workers));
 
-    private static ushort[] GetRgbSamples(MagickImage image) =>
-        image.GetPixelsUnsafe().ToShortArray(PixelMapping.RGB) ??
-        throw new InvalidOperationException("Unable to read Q16 RGB pixels.");
+    // Magick Q16 to byte scaling: nearest integer, including alpha.
+    private static byte Scale(ushort value) => (byte)((value + 128) / 257);
 }

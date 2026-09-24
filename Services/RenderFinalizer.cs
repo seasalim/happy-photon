@@ -112,13 +112,35 @@ internal static class RenderFinalizer
         int detailBandPixelLimit = DefaultBandPixelLimit,
         EffectsSettings? effects = null,
         WatermarkSpec? watermark = null)
+        => FinalizeOwned(displayRec2020, maxDimension, outputColorSpace,
+            outputSharpening, wasResized, false, out _, detailBandPixelLimit, effects, watermark);
+
+    internal static MagickImage FinalizeOwned(
+        MagickImage displayRec2020,
+        int? maxDimension,
+        OutputColorSpace outputColorSpace,
+        OutputSharpeningMode outputSharpening,
+        bool wasResized,
+        bool retainEncodedFrame,
+        out RenderColorEncoding.EncodedFrame? encodedFrame,
+        int detailBandPixelLimit = DefaultBandPixelLimit,
+        EffectsSettings? effects = null,
+        WatermarkSpec? watermark = null)
     {
+        encodedFrame = null;
         ArgumentNullException.ThrowIfNull(displayRec2020);
         try
         {
             if (maxDimension is <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(maxDimension));
+            }
+            // The watermark is drawn after encode-target, so a retained frame would not match the image.
+            if (retainEncodedFrame && watermark != null)
+            {
+                throw new ArgumentException(
+                    "A watermarked render cannot retain its encoded frame.",
+                    nameof(watermark));
             }
 
             var probe = RenderStageProbe.Begin();
@@ -147,9 +169,10 @@ internal static class RenderFinalizer
             RenderEffects.Apply(displayRec2020, effects);
             RenderStageProbe.End(probe, "effects", displayRec2020);
             probe = RenderStageProbe.Begin();
-            RenderColorEncoding.ConvertEncodedRec2020ToTarget(
+            var frame = RenderColorEncoding.ConvertEncodedRec2020ToTarget(
                 displayRec2020,
                 outputColorSpace);
+            if (retainEncodedFrame) encodedFrame = frame;
             RenderStageProbe.End(probe, "encode-target", displayRec2020);
             if (watermark != null)
             {

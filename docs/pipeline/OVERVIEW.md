@@ -115,6 +115,13 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
             └─────────────────────────────────────────────────────────┘
 ```
 
+Interactive analysis consumes the final encoded Q16 array already written to the
+output image: one parallel pass derives display-floor clipping, overlay flags, and
+BGRA8 pixels; histogram and waveform consume those same BGRA8 pixels (RENDER.md §7).
+Render requests for export statistics use the same analysis in their output space,
+with masks suppressed. Direct finalizer calls and resting renders do not retain
+the analysis buffer.
+
 ## 4. Runtime contracts
 
 ```csharp

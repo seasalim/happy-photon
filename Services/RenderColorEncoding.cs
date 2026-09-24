@@ -71,7 +71,10 @@ internal static class RenderColorEncoding
         }
     }
 
-    internal static void ConvertEncodedRec2020ToTarget(
+    internal readonly record struct EncodedFrame(
+        ushort[] Samples, RenderKernelSupport.PixelLayout Layout, int? Alpha);
+
+    internal static EncodedFrame ConvertEncodedRec2020ToTarget(
         MagickImage image,
         OutputColorSpace outputColorSpace)
     {
@@ -128,6 +131,8 @@ internal static class RenderColorEncoding
         });
         pixels.SetArea(0, 0, image.Width, image.Height, values);
         RetagAsSrgb(image);
+        return new EncodedFrame(values, layout,
+            pixels.GetChannelIndex(PixelChannel.Alpha) is { } alpha ? checked((int)alpha) : null);
     }
 
     internal static void ConvertEncodedRec2020ToTargetResting(

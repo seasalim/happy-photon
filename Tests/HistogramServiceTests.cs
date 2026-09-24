@@ -7,20 +7,35 @@ namespace HappyPhoton.Tests;
 public sealed class HistogramServiceTests
 {
     [Theory]
-    [InlineData(17, 13, false)]
-    [InlineData(511, 513, false)]
-    [InlineData(512, 512, false)]
-    [InlineData(521, 509, false)]
-    [InlineData(251, 1049, false)]
-    [InlineData(17, 13, true)]
-    [InlineData(511, 513, true)]
-    [InlineData(512, 512, true)]
-    [InlineData(521, 509, true)]
-    [InlineData(251, 1049, true)]
+    [InlineData(17, 13, false, false)]
+    [InlineData(511, 513, false, false)]
+    [InlineData(512, 512, false, false)]
+    [InlineData(521, 509, false, false)]
+    [InlineData(251, 1049, false, false)]
+    [InlineData(1600, 1067, false, false)]
+    [InlineData(17, 13, true, false)]
+    [InlineData(511, 513, true, false)]
+    [InlineData(512, 512, true, false)]
+    [InlineData(521, 509, true, false)]
+    [InlineData(251, 1049, true, false)]
+    [InlineData(1600, 1067, true, false)]
+    [InlineData(17, 13, false, true)]
+    [InlineData(511, 513, false, true)]
+    [InlineData(512, 512, false, true)]
+    [InlineData(521, 509, false, true)]
+    [InlineData(251, 1049, false, true)]
+    [InlineData(1600, 1067, false, true)]
+    [InlineData(17, 13, true, true)]
+    [InlineData(511, 513, true, true)]
+    [InlineData(512, 512, true, true)]
+    [InlineData(521, 509, true, true)]
+    [InlineData(251, 1049, true, true)]
+    [InlineData(1600, 1067, true, true)]
     public void CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(
         int width,
         int height,
-        bool includeWaveform)
+        bool includeWaveform,
+        bool scaleWorkersWithFrame)
     {
         var samples = CreateDeterministicSamples(width, height);
         var bgra = new byte[checked(width * height * 4)];
@@ -38,7 +53,8 @@ public sealed class HistogramServiceTests
             width,
             height,
             actual,
-            includeWaveform);
+            includeWaveform,
+            scaleWorkersWithFrame);
         var expected = CalculateSequentialReference(samples, width, height);
 
         Assert.Equal(expected.Red, actual.Red);

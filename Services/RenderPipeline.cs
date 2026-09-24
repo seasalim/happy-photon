@@ -40,6 +40,11 @@ public sealed class RenderPipeline
                 request.Options.ComputeOverlayMasks &&
                 requestedOverlaySides != ClippingOverlaySide.None;
             var analyze = request.Options.ComputeStats || createOverlay;
+            var histogram = request.Options.ComputeHistogram || request.Options.ComputeWaveform
+                ? new HistogramData()
+                : null;
+            var preparePixels = request.Options.PreparePreviewPixels || histogram != null;
+            var retainEncodedFrame = analyze || preparePixels;
             displayRec2020 = RenderDisplayRec2020Core(
                 request,
                 noiseReductionBandPixelLimit,
@@ -55,63 +60,33 @@ public sealed class RenderPipeline
                     ? OutputSharpeningMode.Off
                     : request.OutputSharpening,
                 wasResized: false,
+                retainEncodedFrame,
+                out var encodedFrame,
                 detailBandPixelLimit,
                 request.Settings.Effects);
-            var histogram = request.Options.ComputeHistogram ||
-                request.Options.ComputeWaveform
-                ? new HistogramData()
-                : null;
             byte[]? previewPixels = null;
             var analysis = new ClippingAnalysis(ClippingStats.Empty, null);
-            if (analyze || histogram != null ||
-                request.Options.PreparePreviewPixels)
+            if (encodedFrame is { } frame)
             {
                 var probe = RenderStageProbe.Begin();
-                Parallel.Invoke(
-                    () =>
-                    {
-                        if (analyze)
-                        {
-                            var sourceSaturation =
-                                SourceSaturationMaskProjector.Project(
-                                    request.SourceSaturation,
-                                    request.Settings,
-                                    geometry,
-                                    checked((int)display.Width),
-                                    checked((int)display.Height));
-                            analysis = ClippingStatsCalculator.Analyze(
-                                display,
-                                sourceSaturation,
-                                createOverlay,
-                                requestedOverlaySides);
-                        }
-                    },
-                    () =>
-                    {
-                        if (request.Options.PreparePreviewPixels ||
-                            histogram != null)
-                        {
-                            var pixels = BitmapConversionService
-                                .CopyBgraPixels(display);
-                            if (histogram != null)
-                            {
-                                HistogramService.CalculatePreviewHistogram(
-                                    pixels,
-                                    checked((int)display.Width),
-                                    checked((int)display.Height),
-                                    histogram,
-                                    request.Options.ComputeWaveform);
-                            }
-                            if (request.Options.PreparePreviewPixels)
-                            {
-                                previewPixels = pixels;
-                            }
-                        }
-                        else
-                        {
-                            previewPixels = null;
-                        }
-                    });
+                var width = checked((int)display.Width);
+                var height = checked((int)display.Height);
+                var pixels = preparePixels
+                    ? GC.AllocateUninitializedArray<byte>(checked(width * height * 4)) : null;
+                var sourceSaturation = analyze
+                    ? SourceSaturationMaskProjector.Project(
+                        request.SourceSaturation, request.Settings, geometry, width, height)
+                    : null;
+                analysis = ClippingStatsCalculator.Analyze(
+                    frame, width, height, sourceSaturation, createOverlay,
+                    requestedOverlaySides, pixels, analyze);
+                if (histogram != null)
+                {
+                    HistogramService.CalculatePreviewHistogram(
+                        pixels!, width, height, histogram, request.Options.ComputeWaveform,
+                        scaleWorkersWithFrame: true);
+                }
+                if (request.Options.PreparePreviewPixels) previewPixels = pixels;
                 RenderStageProbe.End(probe, "analysis", display);
             }
             overlay = analysis.OverlayMask;
