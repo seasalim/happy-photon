@@ -47,12 +47,15 @@ public sealed class LensSettingsTests
     }
 
     [Fact]
-    public void VersionThreeRequiresAllLensBooleans()
+    public void SupportedVersionsRequireAllLensBooleans()
     {
         Assert.Throws<JsonException>(() =>
             EditSettingsJson.Deserialize("""{"version":3}""", out _));
         Assert.Throws<JsonException>(() =>
             EditSettingsJson.Deserialize(
                 """{"version":3,"lens":{"distortion":true}}""", out _));
+        var current = Assert.Throws<JsonException>(() =>
+            EditSettingsJson.Deserialize("""{"version":4}""", out _));
+        Assert.StartsWith("Version 4 edit settings", current.Message, StringComparison.Ordinal);
     }
 }

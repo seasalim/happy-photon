@@ -48,7 +48,7 @@ internal static partial class EditSettingsJson
             !HasBoolean(lensElement, "vignetting"))
         {
             throw new JsonException(
-                "Version 3 edit settings must declare all three lens booleans.");
+                $"Version {documentVersion} edit settings must declare all three lens booleans.");
         }
 
         EditSettings? parsed;
