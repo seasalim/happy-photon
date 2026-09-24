@@ -28,8 +28,15 @@ public sealed class CullPerfWorkloadTests
         var gates = CullPerfFiles.Read<CullPerfGateFile>(CullPerfFiles.GatePath);
         var id = Environment.GetEnvironmentVariable("CULL_PERF_CASE");
         var workload = gates.Workloads.Single(item => item.Id == id);
+        var result = await RunWorkloadAsync(gates, workload, Path.Combine(CullPerfFiles.Run, workload.Id));
+        Assert.Empty(result.WorkloadFailures);
+    }
+
+    internal static async Task<(CullPerfFragment Fragment, string[] WorkloadFailures)> RunWorkloadAsync(CullPerfGateFile gates, CullPerfWorkload workload,
+        string directory, LoadingLabelObserver? loading = null)
+    {
         var fixtures = CullPerfFiles.Fixtures();
-        var directory = Path.Combine(CullPerfFiles.Run, workload.Id);
+
         Directory.CreateDirectory(directory);
         var recorder = new CullPerfRecorder();
         var raw = new RawBaseLoader { CullPerf = recorder };
@@ -54,6 +61,7 @@ public sealed class CullPerfWorkloadTests
         Dictionary<string, double> counters = [];
         try
         {
+            loading?.Attach(vm);
             await CullPerfPreparation.PrepareAsync(catalog, vm, active, workload);
             vm.Browse.SetImages(workload.Pattern == "picks" ? images : active);
             if (workload.Pattern == "picks") vm.RestoreShowCapturePairs(true);
@@ -103,6 +111,7 @@ public sealed class CullPerfWorkloadTests
                 var remaining = due - Stopwatch.GetElapsedTime(start).TotalMilliseconds;
                 // Fixed input cadence is the measured workload, not a correctness wait.
                 if (remaining > 0) await Task.Delay(TimeSpan.FromMilliseconds(remaining));
+                loading?.BeginStep(i + 1);
                 if (workload.Pattern == "picks")
                 {
                     ledger.Add(new(i + 1, Stopwatch.GetTimestamp(), vm.SelectedImage!.CatalogId, true));
@@ -148,6 +157,7 @@ public sealed class CullPerfWorkloadTests
         }
         finally
         {
+            loading?.Dispose();
             await vm.DisposeAsync();
         }
         var events = recorder.Snapshot();
@@ -157,7 +167,7 @@ public sealed class CullPerfWorkloadTests
                     requireFreshRender: workload.Surface == "develop");
         var accounting = CullPerfLedger.Reconcile(ledger, events, workload.CacheCondition == "matched");
         foreach (var pair in CullPerfCounters.Derive(events, ledger.Count == 0 ? long.MaxValue : ledger[0].Timestamp)) counters[pair.Key] = pair.Value;
-        var fragment = new CullPerfFragment(workload.Id, CullPerfFiles.Hash(CullPerfFiles.GatePath),
+        var fragment = new CullPerfFragment(workload.Id, CullPerfFiles.Hash(loading == null ? CullPerfFiles.GatePath : Path.Combine(CullPerfFiles.Root, "Tests", "CullPerfGates.dwell.json")),
             Environment.GetEnvironmentVariable("CULL_PERF_MACHINE") ?? "", fixtures.Hashes,
             workload.CacheCondition, true, false, recorder.LostEvents, ledger.Count,
             accounting.Completed, accounting.Cancelled, accounting.Superseded, accounting.NoOp,
@@ -166,7 +176,7 @@ public sealed class CullPerfWorkloadTests
                 workload.Metric(gates, id) is { Maximum: null, Foreground: false, MaximumBaselineRatio: null }).ToArray());
         CullPerfFiles.WriteNew(Path.Combine(directory, "events.json"), new { ledger, accounting.Operations, events });
         CullPerfFiles.WriteNew(Path.Combine(directory, "fragment.json"), fragment);
-        Assert.Empty(failures);
+        return (fragment, failures.ToArray());
     }
 
     [Fact]

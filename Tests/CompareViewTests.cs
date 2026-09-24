@@ -287,9 +287,14 @@ public sealed class CompareViewTests : IDisposable
     [Fact]
     public void LoadingMessage_MeansNothingToShowNotWorkInProgress()
     {
-        var pane = new ComparePaneViewModel(
-            new ImageFile(Path.Combine(Path.GetTempPath(), "pane.jpg")));
-        Assert.True(pane.ShowLoadingMessage);
+        var clock = new TestTimeProvider();
+        using var pane = new ComparePaneViewModel(
+            new ImageFile(Path.Combine(Path.GetTempPath(), "pane.jpg")), clock);
+        Assert.False(pane.IsLoadingMessageVisible);
+        clock.Advance(TimeSpan.FromMilliseconds(299));
+        Assert.False(pane.IsLoadingMessageVisible);
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        Assert.True(pane.IsLoadingMessageVisible);
 
         using var bitmap = new Avalonia.Media.Imaging.WriteableBitmap(
             new PixelSize(2, 2),
@@ -297,18 +302,18 @@ public sealed class CompareViewTests : IDisposable
             Avalonia.Platform.PixelFormat.Bgra8888,
             Avalonia.Platform.AlphaFormat.Premul);
         pane.Preview = bitmap;
-        Assert.False(pane.ShowLoadingMessage);
+        Assert.False(pane.IsLoadingMessageVisible);
 
         // The authoritative render is still running, but a painted pane must
         // not wear the label.
         Assert.True(pane.IsLoading);
         pane.IsLoading = false;
-        Assert.False(pane.ShowLoadingMessage);
+        Assert.False(pane.IsLoadingMessageVisible);
 
         // A pane whose load failed outright shows the thumbnail, not a
         // perpetual loading claim.
         pane.Preview = null;
-        Assert.False(pane.ShowLoadingMessage);
+        Assert.False(pane.IsLoadingMessageVisible);
     }
 
     public void Dispose() => _fx.Dispose();

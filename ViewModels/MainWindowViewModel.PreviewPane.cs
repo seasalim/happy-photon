@@ -205,6 +205,7 @@ public partial class MainWindowViewModel
 
     private void DisposePreviewPane(ComparePaneViewModel pane)
     {
+        pane.Dispose();
         var bitmap = pane.Preview;
         var previewResolution = pane.PreviewResolutionBitmap;
         pane.Preview = null;

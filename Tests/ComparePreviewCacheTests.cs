@@ -41,7 +41,7 @@ public sealed class ComparePreviewCacheTests : IDisposable
         AssertPaintedWithIdentity(vm);
         Assert.All(vm.ComparePanes, pane =>
         {
-            Assert.False(pane.ShowLoadingMessage);
+            Assert.False(pane.IsLoadingMessageVisible);
             Assert.Equal(0, pane.AchievableLongEdge);
         });
     }

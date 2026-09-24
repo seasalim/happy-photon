@@ -48,7 +48,7 @@ public partial class MainWindowViewModel
         _compareSelectionSnapshot = members.ToList();
         foreach (var member in members)
         {
-            ComparePanes.Add(new ComparePaneViewModel(member)
+            ComparePanes.Add(new ComparePaneViewModel(member, _timeProvider)
             {
                 DisplayTransform = DisplayTransform,
                 OriginalViewPixelSize =

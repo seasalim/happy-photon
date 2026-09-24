@@ -20,7 +20,7 @@
                                   AutoFit="{Binding IsZoomFitMode}" ScrollBarVisibility="Hidden"
                                   ContentInset="10"/>
             <TextBlock Text="Loading preview…"
-                       IsVisible="{Binding LoupePane.ShowLoadingMessage}"
+                       IsVisible="{Binding LoupePane.IsLoadingMessageVisible}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" FontSize="11"/>
             <views:AssessmentFeedbackOverlay x:Name="LoupeAssessmentFeedbackOverlay"
                                              HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="16,16,16,32"/>

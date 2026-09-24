@@ -45,14 +45,15 @@ public partial class MainWindowViewModel
 
     private void ReloadLoupe(Models.ImageFile? image)
     {
-        if (!IsLoupeMode || image == null) return;
+        if (!IsLoupeMode) return;
+        if (image == null) { LoupePane?.Dispose(); return; }
 
         var cancellation = Interlocked.Exchange(ref _loupeLoadingCts, null);
         cancellation?.Cancel();
         cancellation?.Dispose();
         if (LoupePane != null) DisposePreviewPane(LoupePane);
 
-        var pane = new ComparePaneViewModel(image)
+        var pane = new ComparePaneViewModel(image, _timeProvider)
         {
             DisplayTransform = DisplayTransform,
             OriginalViewPixelSize = RenderGeometry.CalculateOriginalViewSize(

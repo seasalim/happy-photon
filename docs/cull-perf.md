@@ -17,6 +17,33 @@ inconclusive (exit 2). Full qualification always builds.
 The full invocation's elapsed seconds are recorded for the 30-minute FINALIZE
 budget. The implementor's targeted runs do not certify that full-run budget.
 
+## Loading-label dwell measurement
+
+After a Release build, run `./scripts/measure-loading-labels.ps1`. The default
+measures the delayed label the views bind to. To measure the raw nothing-painted
+predicates, as the pre-grace baseline did, pass
+`-LoupeProperty ShowLoadingMessage -DevelopProperty ShowDevelopLoadingMessage`.
+Use `-Steps 40` for a smoke check; qualification uses all 100 steps on each surface
+and freezes no coverage floor from a shortened run. The runner does not build or
+run foreground qualification. Its process-tree timeout defaults to 480 seconds.
+
+The instrument reuses the supplemental dwell setup, Canon fixture, cold app cache,
+warming and 1500 ms cadence, without a dispatcher or callback pump. A signal-held
+JPEG decode supplies a positive control on each surface: exactly one activation
+must occur before decode is released. Each invocation writes a unique
+`Tests/TestResults/loading-label-*` directory (override with `-ResultsDirectory`),
+including per-surface JSON, recorder events and any disposed-source exception stacks.
+
+Intervals follow the raw nothing-painted predicate; activations name their interval.
+Develop intervals continue across selection changes. Step zero is excluded. Replaced
+or torn-down owners without a false edge count as incomplete and fail measurement,
+as do uncorrelated activations. Reports include median, nearest-rank p95, counts
+below 300 ms and at least 320 ms, and activations in each group. Gate 4 requires
+zero short-interval activations, one activation per interval at least 320 ms,
+and at least 80% of baseline short-interval coverage. Fresh-render cadence failures
+remain in `dwellEvidence` for foreground qualification; other harness errors fail
+measurement. Ordinary tests skip this opt-in measurement.
+
 ## Supplemental dwell and jump workloads
 
 Use `./scripts/cull-perf.ps1 -GateFile Tests/CullPerfGates.dwell.json`, adding

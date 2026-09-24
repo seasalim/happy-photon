@@ -151,16 +151,23 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private bool _isDevelopPreviewLoading;
 
+    private readonly LoadingMessageGrace _developLoadingMessage;
+    [ObservableProperty]
+    private bool _isDevelopLoadingMessageVisible;
+
+    private void UpdateDevelopLoadingMessage() =>
+        _developLoadingMessage.Update(ShowDevelopLoadingMessage);
+
     // The loupe rule for its loading message: only while nothing has painted.
     public bool ShowDevelopLoadingMessage =>
         IsDevelopPreviewLoading && PreviewImage == null && HasSelectedImage;
 
     partial void OnIsDevelopPreviewLoadingChanged(bool value) =>
-        OnPropertyChanged(nameof(ShowDevelopLoadingMessage));
+        UpdateDevelopLoadingMessage();
 
     partial void OnPreviewImageChanged(Bitmap? value)
     {
-        OnPropertyChanged(nameof(ShowDevelopLoadingMessage));
+        UpdateDevelopLoadingMessage();
         OnPropertyChanged(nameof(ExportPreviewNativePixelSize));
     }
 

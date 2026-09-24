@@ -11,6 +11,8 @@ internal sealed class TestTimeProvider : TimeProvider
     private readonly List<ScheduledTimer> _timers = [];
     private DateTimeOffset _now = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
+    internal int TimerCount { get { lock (_sync) return _timers.Count; } }
+
     public override DateTimeOffset GetUtcNow()
     {
         lock (_sync) return _now;

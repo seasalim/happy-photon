@@ -6,9 +6,24 @@ using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
 
-public partial class ComparePaneViewModel(ImageFile image) : ObservableObject
+public partial class ComparePaneViewModel : ObservableObject, IDisposable
 {
-    public ImageFile Image { get; } = image;
+    private readonly LoadingMessageGrace _loadingMessage;
+    public ImageFile Image { get; }
+
+    public ComparePaneViewModel(ImageFile image, TimeProvider? timeProvider = null)
+    {
+        Image = image;
+        _loadingMessage = new(timeProvider ?? TimeProvider.System, value => IsLoadingMessageVisible = value);
+        _loadingMessage.Update(ShowLoadingMessage);
+    }
+
+    [ObservableProperty]
+    private bool _isLoadingMessageVisible;
+
+    partial void OnPreviewChanged(Bitmap? value) => _loadingMessage.Update(ShowLoadingMessage);
+    partial void OnIsLoadingChanged(bool value) => _loadingMessage.Update(ShowLoadingMessage);
+    public void Dispose() => _loadingMessage.Dispose();
 
     [ObservableProperty]
     private DisplayTransformSnapshot _displayTransform = DisplayTransformSnapshot.None;

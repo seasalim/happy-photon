@@ -4,6 +4,7 @@ public partial class MainWindowViewModel
 {
     public async ValueTask DisposeAsync()
     {
+        _developLoadingMessage.Dispose();
         _historyLoadsClosed = true;
         CloseRenderOutcomeChannel();
         CancelAndDispose(ref _watermarkProofDebounce);

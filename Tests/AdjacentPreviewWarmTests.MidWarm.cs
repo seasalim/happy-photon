@@ -151,15 +151,19 @@ public sealed partial class AdjacentPreviewWarmTests
         vm.Browse.SetImages([image]);
         try
         {
-            Assert.False(vm.ShowDevelopLoadingMessage);
+            Assert.False(vm.IsDevelopLoadingMessageVisible);
             vm.SelectedImage = image;
             Assert.True(loader.Started.Wait(TestWaits.Condition));
             Assert.Null(vm.PreviewImage);
-            Assert.True(vm.ShowDevelopLoadingMessage);
+            Assert.False(vm.IsDevelopLoadingMessageVisible);
+            clock.Advance(TimeSpan.FromMilliseconds(299));
+            Assert.False(vm.IsDevelopLoadingMessageVisible);
+            clock.Advance(TimeSpan.FromMilliseconds(1));
+            Assert.True(vm.IsDevelopLoadingMessageVisible);
 
             loader.Release.Set();
             await SettleAsync(vm, "develop");
-            Assert.False(vm.ShowDevelopLoadingMessage);
+            Assert.False(vm.IsDevelopLoadingMessageVisible);
         }
         finally
         {

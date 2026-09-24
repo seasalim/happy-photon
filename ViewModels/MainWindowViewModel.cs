@@ -56,6 +56,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         _sourceAvailabilityService =
             availabilityService ?? new SourceAvailabilityService();
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _developLoadingMessage = new(_timeProvider, value => IsDevelopLoadingMessageVisible = value);
         _displayColorManagementService =
             displayColorManagementService ?? new DisplayColorManagementService();
         _rawRuntimeHealth = rawRuntimeHealth;
@@ -265,7 +266,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         NotifySelectedImageEditStateChanged();
         OnPropertyChanged(nameof(IsDevelopEmptyStateVisible));
-        OnPropertyChanged(nameof(ShowDevelopLoadingMessage));
+        UpdateDevelopLoadingMessage();
     }
 
     private void NotifySelectedImageEditStateChanged()

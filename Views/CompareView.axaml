@@ -78,7 +78,7 @@
                                                       AttachedToVisualTree="OnPaneAttached"
                                                       DetachedFromVisualTree="OnPaneDetached"/>
                                 <TextBlock Text="Loading preview…"
-                                           IsVisible="{Binding ShowLoadingMessage}"
+                                           IsVisible="{Binding IsLoadingMessageVisible}"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            Foreground="{DynamicResource TextMuted}"

@@ -194,11 +194,8 @@ public partial class MainWindowViewModel
         }
         finally
         {
-            if (IsCurrentRawProfileDiscovery(image, generation, cts))
-            {
-                _rawProfilePickerCts = null;
-            }
-            cts.Dispose();
+            if (ReferenceEquals(Interlocked.CompareExchange(ref _rawProfilePickerCts, null, cts), cts))
+                cts.Dispose();
         }
     }
 
