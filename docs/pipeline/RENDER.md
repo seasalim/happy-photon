@@ -386,9 +386,41 @@ Outside complements that weight. Quarter-turns carry centers and angles with the
 photograph while preserving radii and feather; clockwise 90° maps the center to
 `(1-cv, cu)`. The resting frame override preserves this coordinate system.
 
+Brush locals use `"type": "brush"` and `"strokes": []`, with no gradient geometry
+(`cu`, `cv`, `angle`, local `feather`, `rx`, `ry`, or `outside`). Each ordered stroke
+stores `{"mode":"paint","radius":0.03,"feather":0.5,"flow":1,"points":[8192,8192,128,-64]}`.
+Mode is `paint` or `erase`. Radius clamps to [0.001, 0.25] in long-edge units,
+feather to [0, 1] and flow to [0.05, 1]. Points are paired integer deltas at
+1/16384 per corrected axis: the first pair is absolute, later pairs accumulate
+from the previous point. Reconstructed coordinates clamp to [-1, 2]. In memory,
+points are absolute quantized integers. Immutable, value-equal arrays of points
+and immutable strokes are safely shared by model copies. A clockwise quarter-turn
+maps every point to `(16384-v, u)` exactly.
+Empty brushes are valid; missing or malformed strokes reject the document.
+Gradient locals omit strokes; a non-null strokes array on a gradient is rejected.
+Unknown stroke fields are ignored. Across all brush locals, more than 96 strokes or 4,000 points
+rejects the document, including disabled and neutral locals.
+
+Brush weight starts at zero. For each stroke, distance `d` is the minimum distance
+to its polyline in the aspect-aware long-edge metric; a single point is a disc.
+Stroke weight `s` is flow inside `r(1-f)`, zero at or beyond `r`, and
+`flow * smoothstep((r-d)/(r*f))` between them (zero feather is a hard edge).
+Segments of one stroke never accumulate coverage. Paint composes as
+`c += (1-c)*s`; erase as `c *= 1-s`, in stroke order. Range windows multiply the
+result exactly as for gradients. `LocalBrushEvaluator` builds a double CSR segment
+grid per render, fitted to expanded segment bounds with roughly r/2 cells,
+stroke bounds culling and saturation exits. The 1 MiB index/construction budget is
+shared across the document: reserve caller setup and each brush's one-cell minimum,
+then divide the remainder by segment count. Scratch arrays are bounded before allocation;
+coarsening always accepts a one-cell grid. No pixel-sized mask plane is retained.
+`RenderLocals` maps crop/scale and resting frame overrides into the same corrected
+coordinates on both Gain and color/range paths. Requested brush masks use this
+weight and only read base pixels when a range restriction needs them.
+
 `EditSettingsJson` validates finite values, local identities/types and the eight-local
 limit. Disabled and neutral locals remain stored edits. Range disabling preserves its
 values; omitted ranges and zero color terms preserve canonical exposure-only bytes.
+Brush-free canonical v4 bytes and the render version are unchanged.
 Version 3 settings migrate in memory without locals; version 2 is unsupported.
 
 | Field | Omitted when | Copy/paste and presets | Decode-affecting? |

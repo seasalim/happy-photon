@@ -21,7 +21,7 @@ public partial class MainWindowViewModel
         if (!double.IsFinite(normalizedPoint.X) || !double.IsFinite(normalizedPoint.Y)) return false;
         if (!CanEditLocals || LocalsFrame is not { } frame ||
             handle == LocalHandle.Create && (!IsLocalCreationArmed || !CanAddLocal) ||
-            handle != LocalHandle.Create && SelectedLocal == null) return false;
+            handle != LocalHandle.Create && (SelectedLocal == null || SelectedLocal.IsBrush)) return false;
         CancelLocalHuePick();
         _previewDebounce?.Cancel();
         _localsGestureBefore = CaptureLiveEditState();

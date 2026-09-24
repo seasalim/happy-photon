@@ -37,7 +37,7 @@ internal static class LocalsBrushWorkloads
     internal static string Description(bool eight) =>
         $"workload={(eight ? "BCap" : "B1")} seed={Seed} brushes={(eight ? 8 : 1)} strokes_each={(eight ? CapStrokesPerLocal : 40)} " +
         $"points_each={SegmentsPerStroke + 1} length={SegmentsPerStroke * Spacing:R} spacing={Spacing:R} " +
-        $"r={Radius} feather={Feather} flow={Flow} erase_ratio=.25 quantized=False";
+        $"r={Radius} feather={Feather} flow={Flow} erase_ratio=.25 quantized=1/16384";
 
     // WP6 LH8 controls; BCap carries these same edits and windows, with brush geometry replacing radial.
     internal static EditSettings Settings(bool eight) => new()

@@ -158,20 +158,20 @@ public sealed class LocalsOverlayControl : Control
         if (_owner is not { CanEditLocals: true } vm || vm.LocalsFrame is not { } frame) return;
         context.DrawRectangle(Brushes.Transparent, null, new Rect(Bounds.Size));
         var selected = vm.SelectedLocal;
-        if (vm.IsLocalMaskVisible && selected != null)
+        if (vm.IsLocalMaskVisible && selected is { IsBrush: false })
         {
             if (!vm.IsSelectedLocalRangeRestricted)
                 context.DrawRectangle(BuildMaskBrush(selected, frame, Bounds.Size), null, new Rect(Bounds.Size));
             else if (vm.LocalRangeMask is { } mask)
                 context.DrawImage(mask, new Rect(mask.Size), new Rect(Bounds.Size));
         }
-        foreach (var local in vm.Locals)
+        foreach (var local in vm.Locals.Where(local => !local.IsBrush))
         {
             var center = ToCanvas(local, frame, Bounds.Size);
             using (context.PushOpacity(.5))
                 context.DrawEllipse(HappyPhotonColors.CropHandleFill, Subdued, center, 3, 3);
         }
-        if (selected == null) return;
+        if (selected == null || selected.IsBrush) return;
         if (selected.IsRadial) { DrawRadial(context, selected, frame); return; }
         var c = ToCanvas(selected, frame, Bounds.Size);
         var d = Direction(selected, frame, Bounds.Size);
@@ -202,6 +202,7 @@ public sealed class LocalsOverlayControl : Control
 
     internal LocalHandle? HitHandle(Point point, LocalAdjustment local, LocalsFrame frame)
     {
+        if (local.IsBrush) return null;
         if (local.IsRadial)
         {
             var matrix = RadialTransform(local, frame, Bounds.Size);
@@ -240,7 +241,7 @@ public sealed class LocalsOverlayControl : Control
             ? HitHandle(p, selected, frame) : null;
         if (handle == null)
         {
-            var pin = vm.Locals.FirstOrDefault(local => ((Vector)(p - ToCanvas(local, frame, Bounds.Size))).Length <= 10);
+            var pin = vm.Locals.FirstOrDefault(local => !local.IsBrush && ((Vector)(p - ToCanvas(local, frame, Bounds.Size))).Length <= 10);
             if (pin != null) vm.SelectedLocal = pin;
         }
         else if (vm.BeginLocalsGesture(handle.Value, Normalize(p, frame)))

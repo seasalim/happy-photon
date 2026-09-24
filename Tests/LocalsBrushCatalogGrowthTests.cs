@@ -51,7 +51,7 @@ public sealed class LocalsBrushCatalogGrowthTests(ITestOutputHelper output)
         for (var s = 1; s <= strokes.Length; s++)
         {
             perLocal[(s - 1) % localCount].Add(strokes[s - 1]);
-            var json = LocalsBrushContractSerializer.SerializeDocuments(perLocal.Select(local => new BrushDocument(local.ToArray())).ToArray());
+            var json = LocalsBrushProduction.SerializeDocuments(perLocal.Select(local => new BrushDocument(local.ToArray())).ToArray());
             await Append(s, s % 4 == 0 ? "Erase stroke" : "Brush stroke", json);
         }
         await Execute("PRAGMA wal_checkpoint(TRUNCATE);");

@@ -241,7 +241,7 @@ protocols live in the listed code. Report-only diagnostics are not acceptance ga
 | `RenderStageBreakdownPerformanceTests` | Optional `HAPPY_PHOTON_STAGE_REPORT_DIR` | Report-only stage attribution, allocation and base load |
 | `LocalsFusedBaselineTests` | `HAPPY_PHOTON_LOCALS_FIXTURE=raw`, `standard` or `synthetic`; `LOCALS_SAMPLES` | Local color/geometry/ranges, ≤150 ms tick, export delta ≤max(5%, 500 ms) |
 | Headless `LocalRangeOverlayGateTests` | `HAPPY_PHOTON_LOCALS_FIXTURE=standard` selects HEIC; otherwise RAW. Run both | Requested mask and hue-picker responsiveness |
-| Brush arms of `LocalsFusedBaselineTests` and `LocalRangeOverlayGateTests` | As locals | Brush prototype: B1/BCap tick ≤150 ms, BCap contended ≤175 ms, export ≤max(5%, 700 ms), mask ≤60 ms, index ≤1 MiB |
+| Brush arms of `LocalsFusedBaselineTests` and `LocalRangeOverlayGateTests` | As locals | Production brush: B1/BCap tick ≤150 ms, BCap contended ≤175 ms, export ≤max(5%, 700 ms), mask ≤60 ms, index ≤1 MiB |
 | `PlatformRenderGoldens` | None | Platform-specific frozen render sentinels consumed by tests; not a timed gate |
 | `scripts/startup-perf.ps1` | Isolated catalog/cache roots | Published first-frame/startup milestones; supports cold-copy and runtime-environment comparisons |
 
@@ -256,17 +256,23 @@ adversarial agreement); eight-local overlay limits live in `LocalRangeOverlayGat
 `LocalsShowcaseTests` renders the Locals scenes, including eight disabled locals and an
 unavailable source, under `artifacts/shots/`.
 
-Brush gates (LOCALBRUSH BR-WP1) run a test-only, grid-indexed prototype inside
-mirrored fused kernels, on B1 (one brush, 40 strokes) and BCap (eight range-restricted
-brushes, 96 strokes, 3,936 points, which is the per-document cap). BCap's contended
+Brush gates (pinned in LOCALBRUSH BR-WP1, production wiring in BR-WP2) run
+`RenderPipeline` and `LocalRangeMaskRenderer` on B1 (one brush, 40 strokes) and BCap (eight range-restricted
+brushes, 96 strokes, 3,936 points, just below the 4,000-point document cap). BCap's contended
 tick (≤175 ms median) and export delta (≤max(5%, 700 ms)) allowances apply only to
-documents with brush locals. Brushes-off output must match production exactly. The
+documents with brush locals. Workload seeds, density and controls are unchanged;
+points enter the production model at its required 1/16384 quantization. The
 LH8 export-delta and requested-mask controls use ±max(25%, 75 ms) and ±max(25%, 3 ms).
 `LocalsContractPrototypeTests` holds the independent brush oracle (≤1e-10) and the
 persistence, per-document cap and index-size checks. The index is ≤1 MiB and
 independent of pixel count. `LocalsBrushCatalogGrowthTests` asserts history at the cap,
-and `Tests/RunBrushDeterministic.ps1` runs the deterministic checks. BR-WP2 must
-requalify production wiring against the same limits.
+using production serialization, and `Tests/RunBrushDeterministic.ps1` runs the
+deterministic checks. `LocalBrushPersistenceTests` covers malformed input, caps,
+rotation and value/copy semantics. `LocalBrushRenderTests` checks the independent
+oracle through `RenderLocals`, crop and frame override, preview/export weight fields,
+and exact single-dab/circular-radial pipeline agreement through both tone regimes
+and resting rendering, including mixed creation order and untouched pixels.
+`LocalBrushMaskTests` covers requested masks with and without range restrictions.
 
 ### 5.1 Display-reference comparison
 

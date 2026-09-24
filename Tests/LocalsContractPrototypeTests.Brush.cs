@@ -1,3 +1,4 @@
+using HappyPhoton.Services;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -46,7 +47,8 @@ public sealed partial class LocalsContractPrototypeTests
 
             void Compare(BrushDocument doc)
             {
-                var grid = new LocalsBrushOptimizedGrid(doc, width, height);
+                doc = LocalsBrushProduction.Quantized(doc);
+                var grid = new LocalBrushEvaluator(LocalsBrushProduction.Strokes(doc), width, height);
                 for (var y = 0; y < height; y++) for (var x = 0; x < width; x++)
                     Check((x + .5) / width, (y + .5) / height);
                 // Fitted-grid boundaries and adjacent doubles on both axes.

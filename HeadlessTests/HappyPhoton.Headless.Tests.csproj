@@ -27,12 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Tests\LocalsBrushProduction.cs" Link="LocalsBrushProduction.cs" />
     <Compile Include="..\Tests\LocalsBrushData.cs" Link="LocalsBrushData.cs" />
-    <Compile Include="..\Tests\LocalsBrushSegments.cs" Link="LocalsBrushSegments.cs" />
-    <Compile Include="..\Tests\LocalsBrushOptimizedGrid.cs" Link="LocalsBrushOptimizedGrid.cs" />
-    <Compile Include="..\Tests\LocalsBrushEvaluation.cs" Link="LocalsBrushEvaluation.cs" />
     <Compile Include="..\Tests\LocalsBrushWorkloads.cs" Link="LocalsBrushWorkloads.cs" />
-    <Compile Include="..\Tests\LocalsBrushPlan.cs" Link="LocalsBrushPlan.cs" />
     <Compile Include="..\Tests\LocalsBrushCoverage.cs" Link="LocalsBrushCoverage.cs" />
     <Compile Include="..\Tests\OpenMpRuntimeTests.cs" Link="OpenMpRuntimeTests.cs" />
     <Compile Include="..\Tests\OpenMpStartup.cs" Link="OpenMpStartup.cs" />

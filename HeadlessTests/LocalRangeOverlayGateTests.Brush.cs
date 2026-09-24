@@ -27,8 +27,6 @@ public sealed partial class LocalRangeOverlayGateTests
         using var fixture = new CatalogVmFixture("brush-overlay-report");
         using var catalog = await fixture.CreateCatalogAsync();
         await using var vm = fixture.CreateViewModel(catalog, new BaseLoaderRouter(new RawBaseLoader(), new StandardBaseLoader()), _ => Task.CompletedTask);
-        // Radial settings are a test-side carrier for the same decode/range/color parameters.
-        // Production cannot accept brush JSON yet. The requested renderer receives strokes separately.
         var settings = LocalsBrushWorkloads.Settings(true);
         var image = new ImageFile(path) { EditSettings = settings };
         image.CatalogId = await catalog.GetOrCreateImageAsync(path);
@@ -38,6 +36,7 @@ public sealed partial class LocalRangeOverlayGateTests
         var size = vm.PreviewImage!.PixelSize;
         var edge = Math.Max(size.Width, size.Height);
         var documents = LocalsBrushWorkloads.Create(true, size.Width, size.Height);
+        var brushSettings = LocalsBrushProduction.Attach(settings, documents);
         var selectedIndex = 0; LocalAdjustment selectedControl;
         using (var lease = vm.ImageService.Previews.AcquireLocalRangeBase(image, settings, edge))
         {
@@ -61,7 +60,7 @@ public sealed partial class LocalRangeOverlayGateTests
             using var lease = vm.ImageService.Previews.AcquireLocalRangeBase(image, settings, edge);
             if (lease == null) throw new InvalidOperationException("No matching loaded base");
             drawable = arm == 1 ? LocalRangeMaskRenderer.Render(lease.Base, settings, selectedControl, size, tint, CancellationToken.None) :
-                LocalsBrushMaskRenderer.Render(lease.Base, settings, settings.Locals![selectedIndex], documents[selectedIndex], size, tint);
+                LocalRangeMaskRenderer.Render(lease.Base, brushSettings, brushSettings.Locals![selectedIndex], size, tint, CancellationToken.None);
         }
         var times = Enumerable.Range(0, 3).Select(_ => new double[samples]).ToArray();
         var memory = Enumerable.Range(0, 3).Select(_ => new long[samples]).ToArray();
@@ -81,7 +80,6 @@ public sealed partial class LocalRangeOverlayGateTests
                 var elapsed = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
                 stop.Set(); await sampler;
                 process.Refresh(); peak = Math.Max(peak, process.PrivateMemorySize64);
-                if (arm == 2) output.WriteLine(LocalsBrushMaskRenderer.BuildReport);
                 if (sample >= 0) { times[arm][sample] = elapsed; memory[arm][sample] = peak - baseline; }
                 output.WriteLine($"brush_requested_overlay fixture={(standard ? "HEIC" : "RAW")} sample={sample} first_request={sample < 0} " +
                     $"arm={new[] { "resting-off", "LH8", "BCap" }[arm]} ms={elapsed:R} private_bytes={peak - baseline} " +

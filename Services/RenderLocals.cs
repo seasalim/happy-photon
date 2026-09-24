@@ -5,6 +5,8 @@ namespace HappyPhoton.Services;
 internal sealed class RenderLocals
 {
     private readonly Term[] _terms;
+    private readonly LocalBrushEvaluator?[]? _brushes;
+    private readonly double _brushX, _brushY, _brushOriginX, _brushOriginY;
     private readonly AgxCrossing.Matrix3x3?[]? _colors;
     private readonly int _width;
     private readonly LuminanceRange?[]? _ranges;
@@ -17,15 +19,21 @@ internal sealed class RenderLocals
 
     internal bool HasColor => _colors != null;
 
-    private RenderLocals(Term[] terms, int width, AgxCrossing.Matrix3x3?[]? colors, HueRange?[]? hues, LuminanceRange?[]? ranges) =>
+    private RenderLocals(Term[] terms, int width, AgxCrossing.Matrix3x3?[]? colors, HueRange?[]? hues,
+        LuminanceRange?[]? ranges, LocalBrushEvaluator?[]? brushes,
+        double brushX, double brushY, double brushOriginX, double brushOriginY)
+    {
         (_terms, _width, _colors, _hues, _ranges) = (terms, width, colors, hues, ranges);
+        (_brushes, _brushX, _brushY, _brushOriginX, _brushOriginY) =
+            (brushes, brushX, brushY, brushOriginX, brushOriginY);
+    }
 
     internal static RenderLocals? Create(EditSettings settings, RenderGeometryTrace frame,
         int width, int height, LocalsFrame? frameOverride = null, BaseImageInfo? info = null)
     {
         bool ColorActive(LocalAdjustment local) => info?.IsMonochrome != true &&
             (local.Temperature != 0 || local.Tint != 0 || local.Saturation != 0);
-        var active = settings.Locals?.Where(local => local.Enabled && (local.Exposure != 0 || ColorActive(local))).ToArray();
+        var active = settings.Locals?.Where(local => local.Enabled && (!local.IsBrush || local.Strokes is { Length: > 0 }) && (local.Exposure != 0 || ColorActive(local))).ToArray();
         if (active is not { Length: > 0 }) return null;
         var correctedWidth = frameOverride?.Width ?? frame.CorrectedFrameWidth;
         var correctedHeight = frameOverride?.Height ?? frame.CorrectedFrameHeight;
@@ -44,6 +52,7 @@ internal sealed class RenderLocals
             ? PrepareColor(local, kelvin, tint) : (AgxCrossing.Matrix3x3?)null).ToArray() : null;
         var linears = active.Select(local =>
         {
+            if (local.IsBrush) return new Term(0, 0, 0, Math.Pow(2, local.Exposure) - 1);
             var cos = Math.Cos(local.Angle * Math.PI / 180);
             var sin = Math.Sin(local.Angle * Math.PI / 180);
             if (local.IsRadial)
@@ -67,7 +76,17 @@ internal sealed class RenderLocals
             ? active.Select(local => local.Luminance?.IsEffective == true ? local.Luminance : null).ToArray() : null;
         var hues = info?.IsMonochrome != true && active.Any(local => local.Hue?.Enabled == true)
             ? active.Select(local => local.Hue?.Enabled == true ? local.Hue : null).ToArray() : null;
-        return new RenderLocals(linears, width, colors, hues, ranges);
+        var brushSegments = active.Sum(local => local.IsBrush ? LocalBrushEvaluator.CountSegments(local.Strokes) : 0);
+        // Reserve caller setup, then each evaluator's one-cell floor before sharing the remainder.
+        var brushExtra = LocalBrushEvaluator.DocumentBudget - 16384 -
+            active.Sum(local => local.IsBrush ? LocalBrushEvaluator.MinimumBudget(local.Strokes) : 0);
+        var brushes = brushSegments > 0 ? active.Select(local => local.IsBrush
+            ? new LocalBrushEvaluator(local.Strokes, correctedWidth, correctedHeight,
+                LocalBrushEvaluator.MinimumBudget(local.Strokes) +
+                brushExtra * LocalBrushEvaluator.CountSegments(local.Strokes) / brushSegments) : null).ToArray() : null;
+        return new RenderLocals(linears, width, colors, hues, ranges, brushes,
+            croppedWidth / width / correctedWidth, croppedHeight / height / correctedHeight,
+            cropX / correctedWidth, cropY / correctedHeight);
     }
 
     private static AgxCrossing.Matrix3x3 PrepareColor(LocalAdjustment local, double kelvin, double tint)
@@ -85,7 +104,23 @@ internal sealed class RenderLocals
         return new(matrix);
     }
 
-    internal bool ApplyColor(int pixel, ref double r, ref double g, ref double b, double fold = 1)
+    internal bool ApplyColor(int pixel, ref double r, ref double g, ref double b, double fold = 1) =>
+        _brushes == null ? ApplyColorCore<GradientWeights>(pixel, ref r, ref g, ref b, fold)
+            : ApplyColorCore<BrushWeights>(pixel, ref r, ref g, ref b, fold);
+
+    private interface IWeights { static abstract double Weight(RenderLocals owner, int i, double x, double y); }
+    private readonly struct GradientWeights : IWeights
+    {
+        public static double Weight(RenderLocals owner, int i, double x, double y) => GeometryWeight(owner._terms[i], x, y);
+    }
+    private readonly struct BrushWeights : IWeights
+    {
+        public static double Weight(RenderLocals owner, int i, double x, double y) => owner._brushes![i] is { } brush
+            ? brush.Weight(owner._brushOriginX + x * owner._brushX, owner._brushOriginY + y * owner._brushY)
+            : GeometryWeight(owner._terms[i], x, y);
+    }
+
+    private bool ApplyColorCore<T>(int pixel, ref double r, ref double g, ref double b, double fold) where T : struct, IWeights
     {
         var x = pixel % _width + .5;
         var y = pixel / _width + .5;
@@ -96,18 +131,7 @@ internal sealed class RenderLocals
         for (var i = 0; i < _terms.Length; i++)
         {
             var term = _terms[i];
-            var t = term.Origin + x * term.X + y * term.Y;
-            double weight;
-            if (term.Radial)
-            {
-                var across = term.AcrossOrigin + x * term.AcrossX + y * term.AcrossY;
-                var rho = Math.Sqrt(t * t + across * across);
-                t = term.Feather == 0 ? (rho < 1 ? 0 : 1) :
-                    Math.Clamp((rho - (1 - term.Feather)) / term.Feather, 0, 1);
-                weight = 1 - t * t * (3 - 2 * t);
-                if (term.Outside) weight = 1 - weight;
-            }
-            else { t = Math.Clamp(t, 0, 1); weight = 1 - t * t * (3 - 2 * t); }
+            var weight = T.Weight(this, i, x, y);
             if (weight == 0) continue;
             if (_ranges?[i] is { } range)
             {
@@ -133,12 +157,34 @@ internal sealed class RenderLocals
         return original != (r, g, b);
     }
 
+    private static double GeometryWeight(Term term, double x, double y)
+    {
+        var t = term.Origin + x * term.X + y * term.Y;
+        double weight;
+        if (term.Radial)
+        {
+            var across = term.AcrossOrigin + x * term.AcrossX + y * term.AcrossY;
+            var rho = Math.Sqrt(t * t + across * across);
+            t = term.Feather == 0 ? (rho < 1 ? 0 : 1) :
+                Math.Clamp((rho - (1 - term.Feather)) / term.Feather, 0, 1);
+            weight = 1 - t * t * (3 - 2 * t);
+            if (term.Outside) weight = 1 - weight;
+        }
+        else { t = Math.Clamp(t, 0, 1); weight = 1 - t * t * (3 - 2 * t); }
+        return weight;
+    }
+
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
     internal double Gain(int pixel)
     {
         var gain = 1d;
         var x = pixel % _width + .5;
         var y = pixel / _width + .5;
+        if (_brushes != null)
+        {
+            for (var i = 0; i < _terms.Length; i++) gain *= 1 + BrushWeights.Weight(this, i, x, y) * _terms[i].Gain;
+            return gain;
+        }
         foreach (var linear in _terms)
         {
             if (linear.Radial)

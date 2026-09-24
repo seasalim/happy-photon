@@ -11,19 +11,24 @@ internal static class LocalRangeMaskRenderer
         LocalAdjustment local, PixelSize size, uint tint, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
-        using var geometry = LocalRangeSampling.Prepare(basis, settings, size, out var trace, out var wb, out var map);
+        var needsBasis = local.Luminance?.IsEffective == true || !basis.Info.IsMonochrome && local.Hue?.Enabled == true;
+        var numericFrame = RenderGeometry.CalculateLocalsFrame((int)basis.Pixels.Width, (int)basis.Pixels.Height, settings);
+        RenderGeometryTrace trace = default;
+        AgxCrossing.Matrix3x3 wb = default;
+        DcpHueSatMap? map = null;
+        using var geometry = needsBasis ? LocalRangeSampling.Prepare(basis, settings, size, out trace, out wb, out map) : null;
         var maskSettings = settings.Clone();
         maskSettings.Locals = [local with { Enabled = true, Exposure = 1, Temperature = 0,
             Tint = 0, Saturation = 0, Luminance = null, Hue = null }];
-        var mask = RenderLocals.Create(maskSettings, trace, size.Width, size.Height)!;
+        var mask = RenderLocals.Create(maskSettings, trace, size.Width, size.Height, needsBasis ? null : numericFrame);
         var luminance = local.Luminance;
         var hue = !basis.Info.IsMonochrome && local.Hue is { Enabled: true } enabledHue ? enabledHue : null;
-        using var pixels = geometry.GetPixelsUnsafe();
-        var layout = RenderKernelSupport.GetLayout(pixels);
+        using var pixels = geometry?.GetPixelsUnsafe();
+        var layout = pixels == null ? default : RenderKernelSupport.GetLayout(pixels);
         // The native pixels remain read-only for the lifetime of this collection. Never write
         // through this pointer: an identity geometry clone can share the immutable base cache.
-        var source = (ushort*)pixels.GetAreaPointer(0, 0, geometry.Width, geometry.Height);
-        if (source == null) throw new InvalidOperationException("Unable to read local mask basis.");
+        var source = pixels == null ? null : (ushort*)pixels.GetAreaPointer(0, 0, geometry!.Width, geometry.Height);
+        if (needsBasis && source == null) throw new InvalidOperationException("Unable to read local mask basis.");
         var bitmap = new WriteableBitmap(size, new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
         try
         {
@@ -41,8 +46,8 @@ internal static class LocalRangeMaskRenderer
                 for (var pixel = count * worker / workers; pixel < count * (worker + 1) / workers; pixel++)
                 {
                     if ((pixel & 8191) == 0) token.ThrowIfCancellationRequested();
-                    var weight = mask.Gain(pixel) - 1;
-                    if (weight != 0)
+                    var weight = mask == null ? 0 : mask.Gain(pixel) - 1;
+                    if (weight != 0 && needsBasis)
                     {
                         var lab = LocalRangeSampling.Read(source, pixel * layout.Channels, layout, wb, map, sample, lightnessOnly: hue == null);
                         if (luminance != null) weight *= LuminanceWindow.Weight(luminance, lab.L);

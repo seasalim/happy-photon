@@ -45,15 +45,29 @@ public sealed record LocalAdjustment
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public HueRange? Hue { get; set; }
 
+    [JsonPropertyName("strokes")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ValueArray<LocalBrushStroke>? Strokes { get; set; }
+
+    [JsonIgnore]
+    public bool IsBrush => Type == "brush";
     [JsonIgnore]
     public bool IsRadial => Type == "radial";
     [JsonIgnore]
-    public string Name => $"{(IsRadial ? "Radial" : "Linear")} {Ordinal}";
+    public string Name => $"{(IsBrush ? "Brush" : IsRadial ? "Radial" : "Linear")} {Ordinal}";
 
     public void Rotate(int clockwiseDegrees)
     {
         var turns = ((clockwiseDegrees / 90) % 4 + 4) % 4;
-        for (var i = 0; i < turns; i++) (Cu, Cv) = (1 - Cv, Cu);
-        Angle = ((Angle + turns * 90) % 360 + 360) % 360;
+        for (var i = 0; i < turns; i++)
+        {
+            if (!IsBrush) (Cu, Cv) = (1 - Cv, Cu);
+            if (IsBrush && Strokes != null)
+                Strokes = [.. Strokes.Select(stroke => stroke with
+                {
+                    Points = [.. stroke.Points.Select(p => new LocalBrushPoint(LocalBrushPoint.Scale - p.V, p.U))]
+                })];
+        }
+        if (!IsBrush) Angle = ((Angle + turns * 90) % 360 + 360) % 360;
     }
 }

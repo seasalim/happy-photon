@@ -1,9 +1,103 @@
+using HappyPhoton.Models;
+using HappyPhoton.Services;
 using Xunit;
 
 namespace HappyPhoton.Tests;
 
 public sealed partial class LocalsContractPrototypeTests
 {
+    private static LocalBrushEvaluator[] BrushGrids(RenderLocals plan) =>
+        ((LocalBrushEvaluator?[])typeof(RenderLocals).GetField("_brushes",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(plan)!)
+        .OfType<LocalBrushEvaluator>().ToArray();
+
+    [Theory]
+    [InlineData(0)] [InlineData(1)] [InlineData(-1)]
+    public void UndersizedBrushBudgetTerminatesAtOneCell(int requestedBudget)
+    {
+        var document = AdversarialBrush("long-segments");
+        var strokes = LocalsBrushProduction.Strokes(document);
+        var minimum = LocalBrushEvaluator.MinimumBudget(strokes);
+        var budget = requestedBudget < 0 ? minimum - 1 : requestedBudget;
+        GC.KeepAlive(new LocalBrushEvaluator(strokes, 1600, 1200, budget));
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var grid = new LocalBrushEvaluator(strokes, 1600, 1200, budget);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal((1, 1), (grid.Columns, grid.Rows));
+        Assert.InRange(grid.PayloadBytes, 0, minimum);
+        Assert.InRange(allocated, 0, minimum);
+        output.WriteLine($"one_cell budget={budget} minimum={minimum} payload_bytes={grid.PayloadBytes} caller_alloc_bytes={allocated}");
+        CheckAdversarialBrushOracle(document, grid, 1600, 1200, "undersized-budget");
+    }
+
+    [Theory]
+    [InlineData(false, 1600, 1068)] [InlineData(true, 1600, 1068)]
+    [InlineData(false, 1200, 1600)] [InlineData(true, 1200, 1600)]
+    public void BrushQualifyingGridsKeepTheirDimensions(bool eight, int width, int height)
+    {
+        var documents = LocalsBrushWorkloads.Create(eight, width, height);
+        var settings = LocalsBrushProduction.Attach(LocalsBrushWorkloads.Settings(eight), documents);
+        GC.KeepAlive(RenderLocals.Create(settings, default, width, height, new(width, height, 0, 0, 1, 1)));
+        var measurement = new LocalsBrushIndexMeasurement(settings, width, height);
+        output.WriteLine(measurement.Report);
+        Assert.InRange(measurement.AllocatedBytes, 0, 1024 * 1024);
+        var grids = BrushGrids(measurement.Plan);
+        var actual = string.Join(";", grids.Select(g => $"{g.Columns}x{g.Rows}"));
+        output.WriteLine($"{(eight ? "BCap" : "B1")} size={width}x{height} grids={actual}");
+        // Frozen dimensions at the recorded RAW/HEIC gate sizes, with the original allowance.
+        var expected = (eight, width) switch
+        {
+            (false, 1600) => "67x45",
+            (false, 1200) => "50x67",
+            (true, 1600) => "28x30;35x28;36x28;23x29;31x26;32x28;27x21;33x25",
+            _ => "24x31;33x29;33x30;20x32;27x29;30x31;27x22;29x29"
+        };
+        Assert.Equal(expected, actual);
+    }
+
+    [Theory]
+    [InlineData(1600, 1200)] [InlineData(1200, 1600)] [InlineData(1600, 1600)]
+    public void EightBrushDocumentIndexStaysBoundedAndAgreesWithOracle(int width, int height)
+    {
+        var strokes = AdversarialBrush("long-segments").Strokes;
+        var documents = strokes.Chunk(12).Select(s => new BrushDocument(s)).ToArray();
+        LocalsBrushOracle.ValidateDocuments(documents);
+        Assert.Equal(96, documents.Sum(d => d.Strokes.Length));
+        Assert.Equal(4000, documents.Sum(d => d.Strokes.Sum(s => s.Points.Length)));
+        var settings = LocalsBrushProduction.Attach(LocalsBrushWorkloads.Settings(true), documents);
+        foreach (var local in settings.Locals!)
+        { local.Exposure = .125; local.Temperature = local.Tint = local.Saturation = 0; local.Luminance = null; local.Hue = null; }
+        long? previewPayload = null;
+        foreach (var scale in new[] { 1, 4 })
+        {
+            var w = width * scale; var h = height * scale;
+            var frame = new LocalsFrame(w, h, 0, 0, 1, 1);
+            GC.KeepAlive(RenderLocals.Create(settings, default, w, h, frame));
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            var plan = RenderLocals.Create(settings, default, w, h, frame)!;
+            var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            var grids = BrushGrids(plan);
+            var payload = grids.Sum(g => g.PayloadBytes);
+            output.WriteLine($"eight_brush_index size={w}x{h} payload_bytes={payload} caller_alloc_bytes={allocated}");
+            double worst = 0;
+            for (var i = 0; i < 8; i++) CheckAdversarialBrushOracle(documents[i], grids[i], w, h, "eight-long-segments");
+            var random = new Random(273031);
+            for (var i = 0; i < 512; i++)
+            {
+                var x = random.Next(w); var y = i % 2 == 0 ? (int)(x * (long)h / w) : random.Next(h);
+                var expected = documents.Aggregate(1d, (gain, doc) => gain * (1 +
+                    LocalsBrushOracle.Weight(doc, (x + .5) / w, (y + .5) / h, w, h) * (Math.Pow(2, .125) - 1)));
+                worst = Math.Max(worst, Math.Abs(expected - plan.Gain(y * w + x)));
+            }
+            output.WriteLine($"eight_brush_render_oracle max_absolute_error={worst:R}");
+            Assert.InRange(worst, 0, BrushAgreementTolerance);
+            if (previewPayload != null) Assert.Equal(previewPayload.Value, payload);
+            previewPayload = payload;
+            Assert.InRange(payload, 0, 1024 * 1024);
+            Assert.InRange(allocated, 0, 1024 * 1024);
+        }
+    }
+
     [Theory]
     [InlineData("corner-dabs")]
     [InlineData("mixed-radii")]
@@ -12,18 +106,19 @@ public sealed partial class LocalsContractPrototypeTests
     [InlineData("long-segments")]
     public void BrushAdversarialIndexStaysBoundedAndAgreesWithOracle(string shape)
     {
-        var document = AdversarialBrush(shape);
+        var document = LocalsBrushProduction.Quantized(AdversarialBrush(shape));
         LocalsBrushOracle.ValidateDocuments([document]);
         const long budget = 1024 * 1024;
         foreach (var (width, height) in new[] { (1600, 1200), (1200, 1600), (1600, 1600) })
         {
-            LocalsBrushOptimizedGrid? preview = null;
+            LocalBrushEvaluator? preview = null;
             foreach (var scale in new[] { 1, 4 }) // 1600 px and 6400 px export, identical aspect.
             {
-                GC.KeepAlive(new LocalsBrushOptimizedGrid(document, width, height)); // Warm static/JIT setup.
+                var strokes = LocalsBrushProduction.Strokes(document);
+                GC.KeepAlive(new LocalBrushEvaluator(strokes, width, height)); // Warm static/JIT setup.
                 var w = width * scale; var h = height * scale;
                 var before = GC.GetAllocatedBytesForCurrentThread();
-                var grid = new LocalsBrushOptimizedGrid(document, w, h);
+                var grid = new LocalBrushEvaluator(strokes, w, h);
                 var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
                 output.WriteLine($"brush_index_adversarial shape={shape} size={w}x{h} " +
                     $"cells={grid.Columns * grid.Rows} segments={grid.SegmentCount} entries={grid.EntryCount} " +
@@ -43,7 +138,7 @@ public sealed partial class LocalsContractPrototypeTests
         }
     }
 
-    private void CheckAdversarialBrushOracle(BrushDocument document, LocalsBrushOptimizedGrid grid,
+    private void CheckAdversarialBrushOracle(BrushDocument document, LocalBrushEvaluator grid,
         int width, int height, string shape)
     {
         double worst = 0;

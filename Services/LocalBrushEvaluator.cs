@@ -1,11 +1,13 @@
-namespace HappyPhoton.Tests;
+using HappyPhoton.Models;
+
+namespace HappyPhoton.Services;
 
 // CSR grid fitted to expanded segment bounds, starting at r/2 and coarsened to fit budgets.
 // Each cell contains stroke groups, so saturation can skip the rest of that stroke in O(1).
-internal sealed class LocalsBrushOptimizedGrid
+internal sealed class LocalBrushEvaluator
 {
     private readonly record struct Group(int Stroke, int Start, int End);
-    private readonly LocalsBrushSegments data;
+    private readonly SegmentData data;
     private readonly int[] offsets, entries;
     private readonly Group[] groups;
     private readonly double left, top, right, bottom, cellSize;
@@ -16,9 +18,18 @@ internal sealed class LocalsBrushOptimizedGrid
     internal int WorstSegmentsPerCell { get; }
     internal long PayloadBytes => data.PayloadBytes + (offsets.LongLength + entries.LongLength) * 4 + groups.LongLength * 12;
 
-    internal LocalsBrushOptimizedGrid(BrushDocument document, int width, int height)
+    internal const int DocumentBudget = 1024 * 1024;
+    internal static int CountSegments(ValueArray<LocalBrushStroke>? strokes) =>
+        strokes?.Sum(s => Math.Max(1, s.Points.Length - 1)) ?? 0;
+    // One cell: segment data + owner/entry indices, stroke data + groups, three two-int
+    // arrays, and the same conservative allowance for object headers and delegates as below.
+    internal static long MinimumBudget(ValueArray<LocalBrushStroke>? strokes) =>
+        CountSegments(strokes) * 48L + (strokes?.Length ?? 0) * 84L + 24 + 4096;
+
+    internal LocalBrushEvaluator(ValueArray<LocalBrushStroke>? strokes, double width, double height,
+        long budget = DocumentBudget)
     {
-        data = new(document, width, height);
+        data = new(strokes ?? [], width, height);
         if (data.Strokes.Length == 0)
         { offsets = [0, 0]; entries = []; groups = []; Columns = Rows = 1; cellSize = 1; return; }
         left = Math.Max(0, data.Strokes.Min(s => s.Left)); top = Math.Max(0, data.Strokes.Min(s => s.Top));
@@ -26,7 +37,10 @@ internal sealed class LocalsBrushOptimizedGrid
         bottom = Math.Min(data.FrameHeight, data.Strokes.Max(s => s.Bottom));
         cellSize = data.Strokes.Min(s => s.Radius) / 2;
         (Columns, Rows) = Dimensions();
-        var cellBudget = Math.Max(4096, 4 * SegmentCount);
+        var minimumBudget = MinimumBudget(strokes);
+        budget = Math.Max(budget, minimumBudget);
+        // Bound scratch before allocating it so even the one-cell fallback fits this share.
+        var cellBudget = Math.Min(Math.Max(4096, 4 * SegmentCount), 1 + (budget - minimumBudget) / 12);
         while ((long)Columns * Rows > cellBudget)
         {
             cellSize *= 2;
@@ -45,7 +59,7 @@ internal sealed class LocalsBrushOptimizedGrid
             counts[cell + 1]++; entryCount++;
             if (cursor[cell] != owner[segment]) { cursor[cell] = owner[segment]; groupCount++; }
             // Count exact groups before allocating entries; abort oversized candidates early.
-            return fixedBytes + entryCount * 4L + groupCount * 12L <= 1024 * 1024;
+            return Columns == 1 && Rows == 1 || fixedBytes + entryCount * 4L + groupCount * 12L <= budget;
         }
         Func<int, int, bool> count = Count;
         while (true)
@@ -139,5 +153,65 @@ internal sealed class LocalsBrushOptimizedGrid
             coverage = stroke.Erase ? coverage * (1 - maximum) : coverage + maximum * (1 - coverage);
         }
         return coverage;
+    }
+
+    private readonly record struct BrushSegment(double X, double Y, double Dx, double Dy, double InverseLength2)
+    {
+        internal double DistanceSquared(double x, double y)
+        {
+            var dx = x - X; var dy = y - Y;
+            var t = Math.Clamp((dx * Dx + dy * Dy) * InverseLength2, 0, 1);
+            dx -= t * Dx; dy -= t * Dy;
+            return dx * dx + dy * dy;
+        }
+    }
+
+    private sealed class SegmentData
+    {
+        internal readonly record struct Stroke(int Start, int Count, double Left, double Top, double Right,
+            double Bottom, double Radius, double Feather, double Flow, bool Erase)
+        {
+            internal bool Contains(double x, double y) => x >= Left && x <= Right && y >= Top && y <= Bottom;
+            internal double CoreSquared => Radius * Radius * (1 - Feather) * (1 - Feather);
+            internal double Weight(double distance2)
+            {
+                if (distance2 >= Radius * Radius) return 0;
+                if (Feather == 0) return Flow;
+                var ramp = Math.Clamp((1 - Math.Sqrt(distance2) / Radius) / Feather, 0, 1);
+                return Flow * ramp * ramp * (3 - 2 * ramp);
+            }
+        }
+
+        internal BrushSegment[] Segments { get; }
+        internal Stroke[] Strokes { get; }
+        internal double FrameWidth { get; }
+        internal double FrameHeight { get; }
+        internal long PayloadBytes => Segments.LongLength * 40 + Strokes.LongLength * 72;
+
+        internal SegmentData(ValueArray<LocalBrushStroke> strokes, double width, double height)
+        {
+            var edge = (double)Math.Max(width, height);
+            FrameWidth = width / edge; FrameHeight = height / edge;
+            Segments = new BrushSegment[strokes.Sum(s => Math.Max(1, s.Points.Length - 1))];
+            Strokes = new Stroke[strokes.Length];
+            var next = 0;
+            for (var s = 0; s < Strokes.Length; s++)
+            {
+                var stroke = strokes[s]; var start = next;
+                double left = double.PositiveInfinity, top = left, right = double.NegativeInfinity, bottom = right;
+                for (var p = 0; p < Math.Max(1, stroke.Points.Length - 1); p++)
+                {
+                    var a = stroke.Points[p]; var b = stroke.Points[Math.Min(p + 1, stroke.Points.Length - 1)];
+                    var x = a.U / (double)LocalBrushPoint.Scale * FrameWidth; var y = a.V / (double)LocalBrushPoint.Scale * FrameHeight;
+                    var dx = (b.U - (double)a.U) / LocalBrushPoint.Scale * FrameWidth; var dy = (b.V - (double)a.V) / LocalBrushPoint.Scale * FrameHeight;
+                    var length2 = dx * dx + dy * dy;
+                    Segments[next++] = new(x, y, dx, dy, length2 == 0 ? 0 : 1 / length2);
+                    left = Math.Min(left, Math.Min(x, x + dx)); right = Math.Max(right, Math.Max(x, x + dx));
+                    top = Math.Min(top, Math.Min(y, y + dy)); bottom = Math.Max(bottom, Math.Max(y, y + dy));
+                }
+                Strokes[s] = new(start, next - start, left - stroke.Radius, top - stroke.Radius,
+                    right + stroke.Radius, bottom + stroke.Radius, stroke.Radius, stroke.Feather, stroke.Flow, stroke.Mode == "erase");
+            }
+        }
     }
 }

@@ -1,3 +1,4 @@
+using HappyPhoton.Services;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -30,15 +31,15 @@ public sealed partial class LocalsContractPrototypeTests
                 new BrushPoint[41 + (local * 12 + stroke < 64 ? 1 : 0)], .03, .5, .35, false)).ToArray())).ToArray();
         Assert.Equal(96, documents.Sum(d => d.Strokes.Length));
         Assert.Equal(4000, documents.Sum(d => d.Strokes.Sum(s => s.Points.Length)));
-        Assert.NotEmpty(LocalsBrushContractSerializer.SerializeDocuments(documents));
+        Assert.NotEmpty(LocalsBrushProduction.SerializeDocuments(documents));
         var all = new BrushDocument(documents.SelectMany(d => d.Strokes).ToArray());
         Assert.Equal(4000, LocalsBrushOracle.Decode(LocalsBrushOracle.Encode(all)).Strokes.Sum(s => s.Points.Length));
         var tooManyPoints = documents.ToArray();
         tooManyPoints[0] = new(documents[0].Strokes.Select((s, i) => i == 0 ? s with { Points = [.. s.Points, new(0, 0)] } : s).ToArray());
-        Assert.Throws<ArgumentOutOfRangeException>(() => LocalsBrushContractSerializer.SerializeDocuments(tooManyPoints));
+        Assert.Throws<System.Text.Json.JsonException>(() => LocalsBrushProduction.SerializeDocuments(tooManyPoints));
         var tooManyStrokes = documents.Select(d => new BrushDocument(d.Strokes.Select(s => s with { Points = [new(0, 0)] }).ToArray())).ToArray();
         tooManyStrokes[0] = new([.. tooManyStrokes[0].Strokes, new([new(0, 0)], .03, .5, 1, false)]);
-        Assert.Throws<ArgumentOutOfRangeException>(() => LocalsBrushContractSerializer.SerializeDocuments(tooManyStrokes));
+        Assert.Throws<System.Text.Json.JsonException>(() => LocalsBrushProduction.SerializeDocuments(tooManyStrokes));
         Assert.Throws<ArgumentOutOfRangeException>(() => LocalsBrushOracle.Decode(
             [new(new int[8002], .03, .5, 1, false)]));
         Assert.Throws<ArgumentOutOfRangeException>(() => LocalsBrushOracle.Decode(
@@ -57,8 +58,8 @@ public sealed partial class LocalsContractPrototypeTests
             Assert.Equal(cap ? 3936 : 1640, documents.Sum(d => d.Strokes.Sum(s => s.Points.Length)));
             foreach (var doc in documents)
             {
-                var preview = new LocalsBrushOptimizedGrid(doc, 320, 213);
-                var export = new LocalsBrushOptimizedGrid(doc, 3200, 2130);
+                var preview = new LocalBrushEvaluator(LocalsBrushProduction.Strokes(doc), 320, 213);
+                var export = new LocalBrushEvaluator(LocalsBrushProduction.Strokes(doc), 3200, 2130);
                 Assert.Equal(preview.PayloadBytes, export.PayloadBytes);
                 Assert.Equal(preview.EntryCount, export.EntryCount);
                 Assert.Equal(preview.Columns, export.Columns); Assert.Equal(preview.Rows, export.Rows);

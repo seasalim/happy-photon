@@ -15,7 +15,7 @@ internal static class LocalsBrushCoverage
         var values = pixels.GetArea(0, 0, geometry.Width, geometry.Height)!;
         var width = (int)geometry.Width; var height = (int)geometry.Height;
         var wb = new AgxCrossing.Matrix3x3(RenderChromaticStage.CreateWhiteBalanceMatrix(basis.Info, settings));
-        var grids = documents.Select(d => new LocalsBrushOptimizedGrid(d, width, height)).ToArray();
+        var grids = documents.Select(d => new LocalBrushEvaluator(LocalsBrushProduction.Strokes(d), width, height)).ToArray();
         var geometric = new long[grids.Length]; var support = new long[grids.Length];
         Parallel.For(0, height, y =>
         {
@@ -33,7 +33,7 @@ internal static class LocalsBrushCoverage
                         var r = values[o] / 65535d; var g = values[o + 1] / 65535d; var blue = values[o + 2] / 65535d;
                         lab = OklabColor.Classify(wb.Row0(r, g, blue), wb.Row1(r, g, blue), wb.Row2(r, g, blue));
                     }
-                    if (LocalsBrushPlan.RangeWeight(settings.Locals![j], lab.Value, basis.Info.IsMonochrome) > 0) b[j]++;
+                    if (LocalsBrushProduction.RangeWeight(settings.Locals![j], lab.Value, basis.Info.IsMonochrome) > 0) b[j]++;
                 }
             }
             for (var j = 0; j < grids.Length; j++)

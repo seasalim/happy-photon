@@ -11,7 +11,11 @@ internal static partial class EditSettingsJson
         var resolver = new DefaultJsonTypeInfoResolver();
         resolver.Modifiers.Add(info =>
         {
+            if (info.Type == typeof(LocalBrushStroke))
+                info.Properties.Single(p => p.Name == "points").CustomConverter = new BrushPointsConverter();
             if (info.Type != typeof(LocalAdjustment)) return;
+            foreach (var property in info.Properties.Where(p => p.Name is "cu" or "cv" or "angle" or "feather"))
+                property.ShouldSerialize = (owner, _) => !((LocalAdjustment)owner).IsBrush;
             foreach (var property in info.Properties.Where(p => p.Name is "temperature" or "tint" or "saturation"))
                 property.ShouldSerialize = (_, value) => (double)value! != 0;
             foreach (var property in info.Properties.Where(p => p.Name is "rx" or "ry" or "outside"))
@@ -27,15 +31,18 @@ internal static partial class EditSettingsJson
             throw new JsonException("Edit settings contain more than eight locals.");
         var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var ordinals = new HashSet<int>();
+        int strokes = 0, points = 0;
         foreach (var local in locals)
         {
-            if (local == null || local.Type is not ("linear" or "radial"))
+            if (local == null || local.Type is not ("linear" or "radial" or "brush"))
                 throw new JsonException("Local adjustment type is not supported.");
             if (local.Id == null || local.Id.Length != 32 ||
                 !Guid.TryParseExact(local.Id, "N", out _) || !ids.Add(local.Id))
                 throw new JsonException("Local adjustment IDs must be unique 32-hex GUIDs.");
             if (local.Ordinal < 1 || local.Ordinal == int.MaxValue || !ordinals.Add(local.Ordinal))
                 throw new JsonException("Local adjustment ordinals must be unique positive integers.");
+            if (local.IsBrush) ClampBrush(local, ref strokes, ref points, ref changed);
+            else if (local.Strokes != null) throw new JsonException("Gradient locals cannot contain brush strokes.");
             local.Cu = Clamp(local.Cu, -1, 2, ref changed);
             local.Cv = Clamp(local.Cv, -1, 2, ref changed);
             local.Feather = Clamp(local.Feather, local.IsRadial ? 0 : .001, local.IsRadial ? 1 : 2, ref changed);
