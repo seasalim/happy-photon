@@ -1,4 +1,3 @@
-using System.Buffers;
 using HappyPhoton.Models;
 using ImageMagick;
 
@@ -7,6 +6,7 @@ namespace HappyPhoton.Services;
 internal static class RenderChromaStage
 {
     internal const int DefaultBandPixelLimit = 524_288;
+    internal static readonly RenderScratchSlot<ushort> Scratch = new();
 
     /// <summary>
     /// Applies chroma edits to an image whose pixel cache is already owned and
@@ -55,7 +55,7 @@ internal static class RenderChromaStage
             1,
             Math.Min(height, bandPixelLimit / width));
         var bandSampleCount = checked(width * bandHeight * layout.Channels);
-        var buffer = ArrayPool<ushort>.Shared.Rent(bandSampleCount);
+        var buffer = Scratch.Take(bandSampleCount);
         try
         {
             for (var y = 0; y < height; y += bandHeight)
@@ -85,7 +85,7 @@ internal static class RenderChromaStage
         }
         finally
         {
-            ArrayPool<ushort>.Shared.Return(buffer);
+            Scratch.Return(buffer);
         }
 
         execution?.ThrowIfCancellationRequested();

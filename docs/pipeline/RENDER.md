@@ -254,9 +254,10 @@ chroma on the post-edit `Lm`/`hm` ray. The normal path solves the channel-bounda
 cubics and retains bounded bisection as a fallback; it never clips channels
 independently.
 
-The pass runs in bounded pooled bands, preserves alpha and extra channels, and checks
-the resting execution contract for worker limits and cancellation. S=V=0 returns
-before pixel access only when the mixer is also pixel-inactive. All transform math is
+The pass runs in bounded bands using one owned scratch slot that retains the largest
+returned array; concurrent calls take exclusive arrays. It preserves alpha and extra
+channels and checks the resting execution contract for worker limits and cancellation.
+S=V=0 returns before pixel access only when the mixer is also pixel-inactive. All transform math is
 `double`; transfer lookup interpolation and the final Q16 write are the only
 production precision boundary. The reference `(L,C,h) -> (L,C,h)` seam and fused Q16
 hot path apply identical mixer ordering.

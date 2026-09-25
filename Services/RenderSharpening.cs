@@ -15,7 +15,7 @@ internal static class RenderSharpening
     private const double ScreenAmount = 0.3;
     private const double ScreenThreshold = 0.005;
     private const int MaximumOutputLongEdge = 2560;
-    private static float[]? _scratch;
+    internal static readonly RenderScratchSlot<float> Scratch = new();
 
     public static void ApplyCapture(
         MagickImage image,
@@ -161,7 +161,7 @@ internal static class RenderSharpening
         var bandRows = Math.Min(
             height,
             Math.Max(1, bandPixelLimit / width));
-        var horizontal = TakeScratch(
+        var horizontal = Scratch.Take(
             checked((bandRows + radius * 2) * width));
         var bandCount = 0;
         try
@@ -263,7 +263,7 @@ internal static class RenderSharpening
         }
         finally
         {
-            ReturnScratch(horizontal);
+            Scratch.Return(horizontal);
         }
 
         ImageServiceHelpers.LogPerformance(
@@ -273,24 +273,6 @@ internal static class RenderSharpening
             $"size={image.Width}x{image.Height}",
             $"sigma={sigma:F3};radius={radius};" +
             $"bands={bandCount};bandRows={bandRows}");
-    }
-
-    internal static float[] TakeScratch(int length)
-    {
-        var scratch = Interlocked.Exchange(ref _scratch, null);
-        return scratch is not null && scratch.Length >= length
-            ? scratch : GC.AllocateUninitializedArray<float>(length);
-    }
-
-    internal static void ReturnScratch(float[] scratch)
-    {
-        var retained = Volatile.Read(ref _scratch);
-        while (retained is null || retained.Length < scratch.Length)
-        {
-            var previous = Interlocked.CompareExchange(ref _scratch, scratch, retained);
-            if (ReferenceEquals(previous, retained)) return;
-            retained = previous;
-        }
     }
 
     private static void BlurHorizontalRows(

@@ -216,6 +216,11 @@ public sealed class RenderStageBreakdownPerformanceTests(
             };
             settings.Mixer.Orange.Hue = 20;
             return settings;
+        }),
+        ("nr", index => new EditSettings
+        {
+            Contrast = 20 + index,
+            Detail = new DetailSettings { LuminanceNr = 50, ChromaNr = 50 }
         })
     ];
 
@@ -275,6 +280,8 @@ public sealed class RenderStageBreakdownPerformanceTests(
             Median(ticks.Select(tick => tick.ElapsedMs)),
             ticks.Max(tick => tick.ElapsedMs),
             (long)Median(ticks.Select(tick => (double)tick.AllocatedBytes)),
+            ticks.Select(tick => tick.AllocatedBytes).ToArray(),
+            ticks.Max(tick => tick.AllocatedBytes),
             ticks.Sum(tick => tick.Gen0),
             ticks.Sum(tick => tick.Gen1),
             ticks.Sum(tick => tick.Gen2),
@@ -366,6 +373,8 @@ public sealed class RenderStageBreakdownPerformanceTests(
         double MedianMs,
         double MaxMs,
         long MedianAllocatedBytes,
+        long[] AllocatedBytesSamples,
+        long MaxAllocatedBytes,
         int Gen0,
         int Gen1,
         int Gen2,

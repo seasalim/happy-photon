@@ -14,7 +14,7 @@ public sealed class SharpeningScratchCollection
 [Collection(SharpeningScratchCollection.Name)]
 public sealed class RenderSharpeningScratchTests : IDisposable
 {
-    private readonly float[] _previous = RenderSharpening.TakeScratch(1);
+    private readonly float[] _previous = RenderSharpening.Scratch.Take(1);
 
     [Fact]
     public async Task Sharpening_ReusesScratchAcrossDifferentThreads()
@@ -40,56 +40,13 @@ public sealed class RenderSharpeningScratchTests : IDisposable
         Assert.Equal(small.Pixels, smallAgain.Pixels);
     }
 
-    [Fact]
-    public async Task ConcurrentLeases_AreExclusiveAndRetainOnlyLargest()
-    {
-        using var acquired = new Barrier(3);
-        var tasks = Enumerable.Range(1, 3).Select(size => OnNewThread(() =>
-        {
-            var scratch = RenderSharpening.TakeScratch(size * 1024);
-            try
-            {
-                Array.Fill(scratch, (float)size);
-                Assert.True(acquired.SignalAndWait(TestWaits.Condition));
-                Assert.All(scratch, value => Assert.Equal((float)size, value));
-                return scratch;
-            }
-            finally
-            {
-                RenderSharpening.ReturnScratch(scratch);
-            }
-        })).ToArray();
-        var buffers = await Task.WhenAll(tasks);
-
-        Assert.NotSame(buffers[0], buffers[1]);
-        Assert.NotSame(buffers[0], buffers[2]);
-        Assert.NotSame(buffers[1], buffers[2]);
-        var retained = RenderSharpening.TakeScratch(1);
-        Assert.Same(buffers[2], retained);
-        Assert.DoesNotContain(RenderSharpening.TakeScratch(1), buffers);
-    }
-
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void ReturnScratch_KeepsLargestInEitherReturnOrder(bool largestFirst)
-    {
-        var small = RenderSharpening.TakeScratch(16);
-        var large = RenderSharpening.TakeScratch(32);
-
-        RenderSharpening.ReturnScratch(largestFirst ? large : small);
-        RenderSharpening.ReturnScratch(largestFirst ? small : large);
-
-        Assert.Same(large, RenderSharpening.TakeScratch(1));
-    }
-
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public void Sharpening_ReturnsScratchAfterCancellationOrException(bool cancel)
     {
-        var scratch = RenderSharpening.TakeScratch(4096);
-        RenderSharpening.ReturnScratch(scratch);
+        var scratch = RenderSharpening.Scratch.Take(4096);
+        RenderSharpening.Scratch.Return(scratch);
         using var image = new MagickImage(MagickColors.Black, 64, 32);
         using var cancellation = new CancellationTokenSource();
         var checks = 0;
@@ -109,7 +66,7 @@ public sealed class RenderSharpeningScratchTests : IDisposable
 
         if (cancel) Assert.IsType<OperationCanceledException>(error);
         else Assert.IsType<InvalidOperationException>(error);
-        Assert.Same(scratch, RenderSharpening.TakeScratch(1));
+        Assert.Same(scratch, RenderSharpening.Scratch.Take(1));
     }
 
     private static (int ThreadId, float[] Scratch, ushort[] Pixels) Sharpen(int width, int height)
@@ -117,8 +74,8 @@ public sealed class RenderSharpeningScratchTests : IDisposable
         using var image = new MagickImage("gradient:#182a48-#edce91",
             new MagickReadSettings { Width = (uint)width, Height = (uint)height });
         RenderSharpening.ApplyOutput(image, OutputSharpeningMode.Screen, wasResized: true);
-        var scratch = RenderSharpening.TakeScratch(1);
-        RenderSharpening.ReturnScratch(scratch);
+        var scratch = RenderSharpening.Scratch.Take(1);
+        RenderSharpening.Scratch.Return(scratch);
         using var pixels = image.GetPixelsUnsafe();
         return (Environment.CurrentManagedThreadId, scratch,
             pixels.ToShortArray(PixelMapping.RGB)!);
@@ -130,7 +87,7 @@ public sealed class RenderSharpeningScratchTests : IDisposable
 
     public void Dispose()
     {
-        RenderSharpening.TakeScratch(1);
-        RenderSharpening.ReturnScratch(_previous);
+        RenderSharpening.Scratch.Take(1);
+        RenderSharpening.Scratch.Return(_previous);
     }
 }

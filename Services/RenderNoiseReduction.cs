@@ -1,4 +1,3 @@
-using System.Buffers;
 using System.Diagnostics;
 using HappyPhoton.Models;
 using ImageMagick;
@@ -8,6 +7,12 @@ namespace HappyPhoton.Services;
 
 internal static partial class RenderNoiseReduction
 {
+    internal static readonly RenderScratchSlot<ushort> SourceScratch = new();
+    internal static readonly RenderScratchSlot<float> LumaScratch = new();
+    internal static readonly RenderScratchSlot<float> ChromaScratch = new();
+    internal static readonly RenderScratchSlot<float> HorizontalScratch = new();
+    internal static readonly RenderScratchSlot<float> AdjustmentScratch = new();
+
     // The combined path carries seven float values per core pixel. Quarter-size
     // bands keep it below the 150 MiB sibling ceiling.
     private const int NoiseReductionBandPixelLimit =
@@ -87,7 +92,7 @@ internal static partial class RenderNoiseReduction
         var upperCarry = new ushort[checked(
             halo * width * layout.Channels)];
         var maximumSourceRows = Math.Min(height, bandRows + halo * 2);
-        var source = ArrayPool<ushort>.Shared.Rent(checked(
+        var source = SourceScratch.Take(checked(
             maximumSourceRows * width * layout.Channels));
         var hasUpperCarry = false;
         var bandCount = 0;
@@ -154,7 +159,7 @@ internal static partial class RenderNoiseReduction
         }
         finally
         {
-            ArrayPool<ushort>.Shared.Return(source);
+            SourceScratch.Return(source);
         }
 
         ImageServiceHelpers.LogPerformance(
@@ -184,15 +189,15 @@ internal static partial class RenderNoiseReduction
         var planeSamples = checked(sourceRows * width);
         var outputSamples = checked(outputRows * width);
         var luma = lumaScales.Length > 0
-            ? ArrayPool<float>.Shared.Rent(planeSamples)
+            ? LumaScratch.Take(planeSamples)
             : null;
         var chroma = chromaScales.Length > 0
-            ? ArrayPool<float>.Shared.Rent(checked(planeSamples * 2))
+            ? ChromaScratch.Take(checked(planeSamples * 2))
             : null;
         var workspacePlanes = chroma is null ? 1 : 2;
-        var horizontal = ArrayPool<float>.Shared.Rent(checked(
+        var horizontal = HorizontalScratch.Take(checked(
             planeSamples * workspacePlanes));
-        var adjustment = ArrayPool<float>.Shared.Rent(checked(
+        var adjustment = AdjustmentScratch.Take(checked(
             outputSamples * workspacePlanes));
         try
         {
@@ -242,11 +247,11 @@ internal static partial class RenderNoiseReduction
         finally
         {
             if (luma is not null)
-                ArrayPool<float>.Shared.Return(luma);
+                LumaScratch.Return(luma);
             if (chroma is not null)
-                ArrayPool<float>.Shared.Return(chroma);
-            ArrayPool<float>.Shared.Return(horizontal);
-            ArrayPool<float>.Shared.Return(adjustment);
+                ChromaScratch.Return(chroma);
+            HorizontalScratch.Return(horizontal);
+            AdjustmentScratch.Return(adjustment);
         }
     }
 }
