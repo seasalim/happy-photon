@@ -263,6 +263,8 @@ public sealed class RenderStageBreakdownPerformanceTests(
                 group.Key,
                 Median(group.Select(sample => sample.Elapsed.TotalMilliseconds)),
                 (long)Median(group.Select(sample => (double)sample.CallerAllocatedBytes)),
+                group.Select(sample => sample.CallerAllocatedBytes).ToArray(),
+                group.Max(sample => sample.CallerAllocatedBytes),
                 group.Last().FrameBytes,
                 $"{group.Last().Width}x{group.Last().Height}"))
             .ToArray();
@@ -352,6 +354,8 @@ public sealed class RenderStageBreakdownPerformanceTests(
         string Stage,
         double MedianMs,
         long MedianCallerAllocatedBytes,
+        long[] CallerAllocatedBytesSamples,
+        long MaxCallerAllocatedBytes,
         long FrameBytes,
         string FrameSize);
 
