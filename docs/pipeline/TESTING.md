@@ -301,6 +301,10 @@ The three-platform workflow runs ordinary/native bitmap tests in
 `Tests/HappyPhoton.Tests.csproj` and dispatcher/UI tests in
 `HeadlessTests/HappyPhoton.Headless.Tests.csproj`. Windows WIC stays in the ordinary
 host so native and headless Avalonia platforms never share a process.
+On Linux and macOS, the ordinary host initializes Skia rendering/font services
+without a desktop windowing backend. Set `HAPPY_PHOTON_TEST_SKIA_ONLY=1` to exercise
+that fixture path on Windows with a focused view-model test filter; native Windows
+bitmap tests still require the default fixture.
 `ShowcaseTestHelper` saves named scenes to `artifacts/shots/<scene>.png`; tests assert
 frame dimensions, while reviewers assess the image.
 

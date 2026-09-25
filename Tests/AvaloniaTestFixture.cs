@@ -60,9 +60,16 @@ public sealed class AvaloniaPlatformAssemblyFixture
 {
     public AvaloniaPlatformAssemblyFixture()
     {
-        if (OperatingSystem.IsWindows())
+        // Allow the display-free CI setup to be exercised on Windows too.
+        if (OperatingSystem.IsWindows() &&
+            Environment.GetEnvironmentVariable("HAPPY_PHOTON_TEST_SKIA_ONLY") != "1")
         {
             HappyPhoton.Program.BuildAvaloniaApp().SetupWithoutStarting();
+        }
+        else
+        {
+            // View-model tests need font services without a desktop windowing backend.
+            Avalonia.Skia.SkiaPlatform.Initialize();
         }
     }
 }
