@@ -16,28 +16,28 @@ public sealed class WatermarkRendererTests
 
     [Theory]
     [MemberData(nameof(Positions))]
-    public void ChangedPixelsStayInsideAdvanceAndMetricsBox(
+    public void ChangedPixelsMatchUnclippedFullImageReference(
         WatermarkEdge edge, WatermarkAlignment alignment, bool rotate)
     {
         var spec = new WatermarkSpec("F Jane ©", Size: 10, Edge: edge,
-            Alignment: alignment, RotateAlongEdge: rotate, Margin: 7);
+            Alignment: alignment, RotateAlongEdge: rotate, Margin: 7, Opacity: 100);
         using var image = Solid(600, 400);
         var before = Rgba(image);
         WatermarkRenderer.Apply(image, spec);
         var after = Rgba(image);
-        var box = ExpectedBox(600, 400, spec);
-        var changed = 0;
-        for (var y = 0; y < 400; y++)
-        for (var x = 0; x < 600; x++)
+        var coverage = ExpectedCoverage(600, 400, spec);
+        Assert.Contains(coverage, alpha => alpha > 0);
+        for (var i = 0; i < 600 * 400; i++)
         {
-            var offset = (y * 600 + x) * 4;
-            Assert.Equal(before[offset + 3], after[offset + 3]);
-            if (before[offset] == after[offset]) continue;
-            changed++;
-            Assert.InRange(x, (int)Math.Floor(box.Left), (int)Math.Ceiling(box.Right) - 1);
-            Assert.InRange(y, (int)Math.Floor(box.Top), (int)Math.Ceiling(box.Bottom) - 1);
+            Assert.Equal(before[i * 4 + 3], after[i * 4 + 3]);
+            var alpha = coverage[i] * (spec.Opacity / 25500);
+            for (var channel = 0; channel < 3; channel++)
+            {
+                var offset = i * 4 + channel;
+                var expected = (ushort)(before[offset] * (1 - alpha) + 65535 * alpha + 0.5);
+                Assert.Equal(expected, after[offset]);
+            }
         }
-        Assert.True(changed > 0);
     }
 
     [Theory]
@@ -297,9 +297,49 @@ public sealed class WatermarkRendererTests
             .Select(i => (i % (int)image.Width, i / (int)image.Width)).ToList();
     }
 
+    private static byte[] ExpectedCoverage(int width, int height, WatermarkSpec spec)
+    {
+        // Draw on a full-image canvas: the oracle has no production mask bounds
+        // and preserves platform glyph overhangs beyond the advance/metrics box.
+        var box = ExpectedBox(width, height, spec);
+        using var typeface = SKFontManager.Default.MatchFamily(spec.FontFamily, SKFontStyle.Normal);
+        using var font = new SKFont(typeface ?? SKTypeface.Default,
+            (float)(Math.Min(width, height) * spec.Size / 100))
+        {
+            Edging = SKFontEdging.Antialias, Subpixel = false
+        };
+        using var mask = new SKBitmap(new SKImageInfo(width, height, SKColorType.Alpha8, SKAlphaType.Premul));
+        using (var canvas = new SKCanvas(mask))
+        using (var paint = new SKPaint { Color = SKColors.White, IsAntialias = true })
+        {
+            canvas.Clear(SKColors.Transparent);
+            if (spec.RotateAlongEdge && spec.Edge == WatermarkEdge.Right)
+            {
+                canvas.Translate(box.Right, box.Top);
+                canvas.RotateDegrees(90);
+            }
+            else if (spec.RotateAlongEdge && spec.Edge == WatermarkEdge.Left)
+            {
+                canvas.Translate(box.Left, box.Bottom);
+                canvas.RotateDegrees(-90);
+            }
+            else canvas.Translate(box.Left, box.Top);
+            canvas.DrawText(spec.Text, 0, -font.Metrics.Ascent, font, paint);
+        }
+        var coverage = new byte[mask.ByteCount];
+        System.Runtime.InteropServices.Marshal.Copy(mask.GetPixels(), coverage, 0, coverage.Length);
+        Assert.Equal(width, mask.RowBytes);
+        return coverage;
+    }
+
     private static SKRect ExpectedBox(int width, int height, WatermarkSpec spec)
     {
-        using var font = new SKFont(SKTypeface.Default, (float)(Math.Min(width, height) * spec.Size / 100));
+        using var typeface = SKFontManager.Default.MatchFamily(spec.FontFamily, SKFontStyle.Normal);
+        using var font = new SKFont(typeface ?? SKTypeface.Default,
+            (float)(Math.Min(width, height) * spec.Size / 100))
+        {
+            Edging = SKFontEdging.Antialias, Subpixel = false
+        };
         var w = font.MeasureText(spec.Text);
         var h = font.Metrics.Descent - font.Metrics.Ascent;
         if (spec.RotateAlongEdge && spec.Edge is WatermarkEdge.Left or WatermarkEdge.Right) (w, h) = (h, w);
