@@ -246,6 +246,9 @@ public sealed partial class LocalsViewModelTests
     }
     private static async Task<(int History, string Saved, string Live)> ShortcutSnapshot(MainWindowViewModel vm, CatalogService catalog)
     {
+        // Returning to Develop reloads history asynchronously.
+        if (vm.PendingHistoryLoadTask is { } historyLoad)
+            await historyLoad.WaitAsync(TestWaits.Condition);
         var image = vm.SelectedImage!;
         var saved = (await catalog.LoadImageStatesAsync([image.FilePath]))[image.FilePath].Single().EditSettings;
         return (vm.HistoryEntries.Count, RenderSettingsHash.Compute(saved), RenderSettingsHash.Compute(image.EditSettings));

@@ -111,23 +111,17 @@ public sealed class ManualFolderRefreshViewTests
         Assert.Equal(1, requested);
     }
 
-    [Fact]
-    public void RefreshScroll_IsBackgroundPostedAndGenerationGuarded()
+    [AvaloniaFact]
+    public async Task RefreshScroll_IsBackgroundPostedAndGenerationGuarded()
     {
-        var root = Path.Combine(
-            Path.GetTempPath(),
-            $"happy-photon-refresh-view-{Guid.NewGuid():N}");
-        var photos = Path.Combine(root, "photos");
-        Directory.CreateDirectory(photos);
+        using var fixture = new CatalogVmFixture("refresh-view");
+        var photos = Directory.CreateDirectory(fixture.Path("photos")).FullName;
         TestImages.WriteJpeg(Path.Combine(photos, "image.jpg"));
-        using var catalog = new CatalogService(Path.Combine(root, "catalog"));
-        Complete(catalog.InitializeAsync());
-        var vm = new MainWindowViewModel(
-            catalog,
-            baseLoader: null,
-            loadMetadataAsync: _ => Task.CompletedTask);
+        using var catalog = await fixture.CreateCatalogAsync("catalog");
+        await using var vm = fixture.CreateViewModel(
+            catalog, loadMetadataAsync: _ => Task.CompletedTask);
         vm.SetRootFolder(photos);
-        var generation = Complete(vm.RefreshCurrentFolderAsync());
+        var generation = await vm.RefreshCurrentFolderAsync();
         Action? callback = null;
         DispatcherPriority? priority = null;
         var scrollCount = 0;
@@ -148,17 +142,8 @@ public sealed class ManualFolderRefreshViewTests
         callback!();
         Assert.Equal(1, scrollCount);
 
-        Complete(vm.LoadFolderAsync(photos));
+        await vm.LoadFolderAsync(photos);
         callback();
         Assert.Equal(1, scrollCount);
-
-        Complete(vm.DisposeAsync().AsTask());
-        catalog.Dispose();
-        Directory.Delete(root, recursive: true);
     }
-
-    private static void Complete(Task task) => task.GetAwaiter().GetResult();
-
-    private static T Complete<T>(Task<T> task) =>
-        task.GetAwaiter().GetResult();
 }
