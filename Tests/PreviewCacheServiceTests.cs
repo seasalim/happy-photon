@@ -353,6 +353,8 @@ public sealed class PreviewCacheServiceTests : IDisposable
         Directory.CreateDirectory(_tempDirectory);
         var path = Path.Combine(_tempDirectory, name);
         File.WriteAllBytes(path, [1, 2, 3]);
+        // Cache validity requires a newer timestamp, independent of filesystem resolution.
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddDays(-1));
         return path;
     }
 
