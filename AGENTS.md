@@ -27,6 +27,7 @@ Happy Photon is a performance-focused .NET 10/Avalonia photo workflow for browsi
 ## Measured change process
 
 - For refactors and fixes, first establish an instrumented baseline and propose concrete gates that include the workload, metric, observed before value, and acceptance threshold. Get the user's explicit approval of those gates before changing production code.
+- A gate envelope in an owner-approved work-package spec (workload, metric, allowed baseline range, threshold) counts as that approval only if both hold: the plan's gates match the envelope exactly (none added, dropped or changed), and every observed baseline falls inside its range. Anything else needs explicit approval as above.
 - Instrumentation and test-only changes may be made while establishing the gates. If a meaningful instrumented gate is impractical, explain why and agree on an observable substitute before starting the production fix.
 - Split production work into the smallest coherent, human-reviewable iteration. Keep each production diff narrowly focused; test-code changes do not count toward this limit.
 - After each production iteration, rerun the approved gates, report the before/after values, and walk the user through every production change and how the design preserves ownership and relevant invariants before continuing.
