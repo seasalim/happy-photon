@@ -78,7 +78,7 @@ public sealed class ShortcutReachabilityTests
         }
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Claims_RejectMissingAmbiguousAndContainerDeclarations()
     {
         var representationSwitch = ShortcutCatalog.Groups
@@ -99,6 +99,7 @@ public sealed class ShortcutReachabilityTests
             claim.ControlName == "RawJpegSwitchButton");
         Assert.False(HasValidReachability(missing));
         Assert.False(HasValidReachability(ambiguous));
+        Assert.True(IsValidControlTarget(new CompactSlider()));
         Assert.False(IsValidControlTarget(new UserControl()));
         Assert.False(IsValidControlTarget(new StackPanel()));
     }
@@ -107,6 +108,11 @@ public sealed class ShortcutReachabilityTests
     [InlineData("Shift+W", "LocalsModeButton")]
     [InlineData("O", "ShowLocalMaskButton")]
     [InlineData("Hold M", "ShowLocalMaskButton")]
+    [InlineData("B", "AddBrushButton")]
+    [InlineData("[  /  ]", "BrushSizeSlider")]
+    [InlineData("Shift+[  /  Shift+]", "BrushFeatherSlider")]
+    [InlineData("Hold Alt", "BrushPaintButton")]
+    [InlineData("Hold Alt", "BrushEraseButton")]
     public void LocalsShortcutsDeclareDevelopControls(string keys, string control)
     {
         var entry = Assert.Single(ShortcutCatalog.Groups.Single(group => group.Title == "Develop and edit")
@@ -128,7 +134,7 @@ public sealed class ShortcutReachabilityTests
         });
 
     private static bool IsValidControlTarget(Control control) =>
-        control is not UserControl and not Panel;
+        control is CompactSlider || control is not UserControl and not Panel;
 
     private static async Task<Control?> ResolveClaimControl(
         MainWindow window,
@@ -166,8 +172,12 @@ public sealed class ShortcutReachabilityTests
         {
             vm.IsCropMode = true;
         }
-        if (claim.ControlName == "ShowLocalMaskButton")
+        if (claim.ControlName is "ShowLocalMaskButton" or "AddBrushButton" or "BrushSizeSlider" or
+            "BrushFeatherSlider" or "BrushPaintButton" or "BrushEraseButton")
+        {
             await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
+            if (claim.ControlName != "ShowLocalMaskButton") vm.AddBrushCommand.Execute(null);
+        }
         Dispatcher.UIThread.RunJobs();
         if (claim.Workspace == ShortcutWorkspace.FullScreen)
         {

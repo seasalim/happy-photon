@@ -42,6 +42,7 @@ public sealed partial class LocalsOverlayControl : Control
         if (e.PropertyName is nameof(MainWindowViewModel.Locals) or
             nameof(MainWindowViewModel.LiveBrushStroke) or nameof(MainWindowViewModel.BrushRadius) or
             nameof(MainWindowViewModel.BrushFeather) or nameof(MainWindowViewModel.BrushMode) or
+            nameof(MainWindowViewModel.IsEffectiveBrushPaint) or
             nameof(MainWindowViewModel.IsLocalHuePicking) or nameof(MainWindowViewModel.CanEditLocals) or nameof(MainWindowViewModel.LocalRangeMask) or nameof(MainWindowViewModel.IsLocalMaskVisible))
             Refresh();
     }
@@ -244,7 +245,8 @@ public sealed partial class LocalsOverlayControl : Control
         if (vm.IsBrushSectionVisible)
         {
             if (HitPin(p, frame) is { } pin) vm.SelectedLocal = pin;
-            else if (new Rect(Bounds.Size).Contains(p) && vm.BeginBrushStroke(Normalize(p, frame), e.KeyModifiers.HasFlag(KeyModifiers.Shift)))
+            else if (new Rect(Bounds.Size).Contains(p) && vm.BeginBrushStroke(Normalize(p, frame),
+                e.KeyModifiers.HasFlag(KeyModifiers.Shift), e.KeyModifiers.HasFlag(KeyModifiers.Alt)))
             {
                 _pointer = e.Pointer;
                 e.Pointer.Capture(this);
@@ -274,6 +276,7 @@ public sealed partial class LocalsOverlayControl : Control
         base.OnPointerMoved(e);
         var p = e.GetPosition(this);
         UpdateBrushHover(p);
+        SyncBrushAlt(e.KeyModifiers);
         if (_pointer == null || _owner?.LocalsFrame is not { } frame) return;
         if (_owner.IsBrushStrokeActive) _owner.ExtendBrushStroke(Normalize(p, frame), ScreenLongEdge(frame));
         else _owner.MoveLocalsGesture(Normalize(p, frame), ((Vector)(p - _press)).Length);

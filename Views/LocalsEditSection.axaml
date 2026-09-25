@@ -38,7 +38,7 @@
         <StackPanel x:Name="LocalCreationRow" Orientation="Horizontal" Spacing="5" IsEnabled="{Binding CanAddLocal}">
             <Button x:Name="AddLinearButton" Content="+ Linear" Command="{Binding AddLinearCommand}" Padding="8,4" FontSize="10"/>
             <Button x:Name="AddRadialButton" Content="+ Radial" Command="{Binding AddRadialCommand}" Padding="8,4" FontSize="10"/>
-            <Button x:Name="AddBrushButton" Content="+ Brush" Command="{Binding AddBrushCommand}" Padding="8,4" FontSize="10"/>
+            <Button x:Name="AddBrushButton" Content="+ Brush" ToolTip.Tip="Arm Brush (B)" Command="{Binding AddBrushCommand}" Padding="8,4" FontSize="10"/>
         </StackPanel>
         <StackPanel x:Name="LocalDetailsArea" MinHeight="40" Spacing="8">
             <StackPanel x:Name="LocalEditor" Grid.IsSharedSizeScope="True" Spacing="8" IsVisible="{Binding HasLocals}">
@@ -107,15 +107,15 @@
             <StackPanel x:Name="BrushSection" Spacing="6" IsVisible="{Binding IsBrushSectionVisible}" IsEnabled="{Binding CanEditLocals}">
                 <TextBlock Text="Brush" Classes="section-label" FontSize="10"/>
                 <Grid ColumnDefinitions="*,*">
-                    <ToggleButton Classes="mask" Content="Paint" IsChecked="{Binding IsBrushPaint, Mode=OneWay}"
+                    <ToggleButton x:Name="BrushPaintButton" ToolTip.Tip="Paint (hold Alt to erase)" Classes="mask" Content="Paint" IsChecked="{Binding IsBrushPaint, Mode=OneWay}"
                                   Command="{Binding SetBrushModeCommand}" CommandParameter="paint" HorizontalAlignment="Stretch"
                                   HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
-                    <ToggleButton Classes="mask" Grid.Column="1" Content="Erase" IsChecked="{Binding IsBrushErase, Mode=OneWay}"
+                    <ToggleButton x:Name="BrushEraseButton" ToolTip.Tip="Erase (hold Alt to paint)" Classes="mask" Grid.Column="1" Content="Erase" IsChecked="{Binding IsBrushErase, Mode=OneWay}"
                                   Command="{Binding SetBrushModeCommand}" CommandParameter="erase" HorizontalAlignment="Stretch"
                                   HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
                 </Grid>
-                <views:CompactSlider Label="Size" Value="{Binding BrushSize}" Minimum="1" Maximum="100" SmallChange="1"/>
-                <views:CompactSlider Label="Feather" Value="{Binding BrushFeather}" Minimum="0" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%"/>
+                <views:CompactSlider x:Name="BrushSizeSlider" ToolTip.Tip="Size ([ / ])" Label="Size" Value="{Binding BrushSize}" Minimum="1" Maximum="100" SmallChange="1"/>
+                <views:CompactSlider x:Name="BrushFeatherSlider" ToolTip.Tip="Feather (Shift+[ / Shift+])" Label="Feather" Value="{Binding BrushFeather}" Minimum="0" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%"/>
                 <views:CompactSlider Label="Flow" Value="{Binding BrushFlow}" Minimum="5" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%"/>
                 <Button Content="Clear strokes" Command="{Binding ClearBrushStrokesCommand}" IsVisible="{Binding !IsBrushCreationArmed}"
                         Padding="8,4" FontSize="10"/>

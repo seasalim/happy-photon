@@ -1,4 +1,5 @@
 using Avalonia;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.Models;
 
@@ -13,6 +14,19 @@ public partial class MainWindowViewModel
     private bool _brushPreviewDirty;
     private long? _brushPreviewTimestamp;
     private int _brushRemainingPoints;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEffectiveBrushPaint))]
+    private bool _isBrushAltHeld;
+    public bool IsEffectiveBrushPaint => IsBrushPaint != IsBrushAltHeld;
+    public bool CanArmBrushFromShortcut => !_renderOutcomeChannelClosed && CanEditSelectedImage && IsDevelopMode &&
+        !IsFullScreenMode && !IsBeforeAfterSplit && !_isBeforeAfterSplitTransitioning &&
+        _requestedPreviewIntent != PreviewSurfaceIntent.Original && !_isHoveringPreset && _hoveredHistoryEntry == null &&
+        !IsWhiteBalancePicking && !IsLocalHuePicking && !IsLocalsGestureActive && Locals.Count < LocalAdjustment.MaximumCount;
+    public void StepBrushPreference(bool increase, bool feather)
+    {
+        if (feather) BrushFeather += increase ? 10 : -10;
+        else BrushSize += (increase ? 1 : -1) * 99 * Math.Log(1.25) / Math.Log(250);
+    }
     public bool IsBrushCreationArmed => IsLocalCreationArmed && _localCreationType == "brush";
     public bool IsBrushSectionVisible => IsBrushCreationArmed || !IsLocalCreationArmed && SelectedLocal?.IsBrush == true;
     public bool IsGradientSectionVisible => !IsBrushSectionVisible;
@@ -76,7 +90,7 @@ public partial class MainWindowViewModel
     {
         foreach (var name in new[] { nameof(IsBrushCreationArmed), nameof(IsBrushSectionVisible),
             nameof(IsGradientSectionVisible), nameof(IsGradientGeometryExpanded), nameof(IsBrushStrokeActive),
-            nameof(BrushMode), nameof(IsBrushPaint), nameof(IsBrushErase), nameof(BrushSize),
+            nameof(BrushMode), nameof(IsBrushPaint), nameof(IsBrushErase), nameof(IsEffectiveBrushPaint), nameof(BrushSize),
             nameof(BrushRadius), nameof(BrushFeather), nameof(BrushFlow), nameof(LiveBrushStroke) }) OnPropertyChanged(name);
         AddBrushCommand.NotifyCanExecuteChanged();
     }
@@ -102,7 +116,7 @@ public partial class MainWindowViewModel
         if (SelectedLocal is { IsBrush: true } local) local.Strokes = [];
     });
 
-    public bool BeginBrushStroke(Point point, bool straight = false)
+    public bool BeginBrushStroke(Point point, bool straight = false, bool invert = false)
     {
         if (!CanEditLocals || !IsBrushSectionVisible || IsLocalsGestureActive ||
             !double.IsFinite(point.X) || !double.IsFinite(point.Y) || LocalsFrame is not { } frame ||
@@ -117,7 +131,7 @@ public partial class MainWindowViewModel
         _localsGestureLocal = local with { };
         _brushRemainingPoints = LocalBrushStroke.MaximumPoints - Locals.Sum(l => l.Strokes?.Sum(s => s.Points.Count) ?? 0);
         var start = straight && local.Strokes is { Count: > 0 } strokes ? strokes[^1].Points[^1] : QuantizeBrushPoint(point);
-        var stroke = new LocalBrushStroke { Mode = BrushMode, Radius = BrushRadius,
+        var stroke = new LocalBrushStroke { Mode = invert ? (IsBrushPaint ? "erase" : "paint") : BrushMode, Radius = BrushRadius,
             Feather = BrushFeather / 100, Flow = BrushFlow / 100, Points = [start] };
         local.Strokes = [.. local.Strokes ?? [], stroke];
         _brushRemainingPoints--;

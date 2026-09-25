@@ -433,6 +433,10 @@ Help & About lists every shortcut and gesture; these are the essentials.
 | `W` | Toggle the white-balance eyedropper in Develop |
 | `Delete` | Delete selected versions or move primary originals to Trash after confirmation |
 | `Shift+W` | Toggle Locals in Develop |
+| `B` | Open Locals if needed and arm Brush in Develop |
+| `[` / `]` | Scale brush radius by ×0.8 / ×1.25 while the Brush section is visible |
+| `Shift+[` / `Shift+]` | Change brush Feather by −10 / +10 points |
+| Hold `Alt` | Invert Paint/Erase for a stroke started while held; the cursor shows the effective mode and the toggle stays unchanged |
 | `O` / hold `M` | Toggle Show Mask / temporarily show the mask while Locals is open |
 | `\` | Toggle before/after in Develop or fullscreen |
 | `Y` | Show Before and After side by side in Develop |

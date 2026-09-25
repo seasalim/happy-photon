@@ -28,6 +28,17 @@ public sealed partial class LocalsOverlayControl
         ? new Cursor(StandardCursorType.Cross)
         : _owner is { CanEditLocals: true, IsBrushSectionVisible: true } && _brushHover != null
             ? HiddenBrushCursor : Cursor.Default;
+    private void SyncBrushAlt(KeyModifiers modifiers)
+    {
+        if (_brushHover != null && _owner is { CanEditLocals: true, IsBrushSectionVisible: true, IsLocalHuePicking: false } vm)
+            vm.IsBrushAltHeld = modifiers.HasFlag(KeyModifiers.Alt);
+    }
+    protected override void OnPointerEntered(PointerEventArgs e)
+    {
+        base.OnPointerEntered(e);
+        UpdateBrushHover(e.GetPosition(this));
+        SyncBrushAlt(e.KeyModifiers);
+    }
     protected override void OnPointerExited(PointerEventArgs e)
     {
         base.OnPointerExited(e);
@@ -70,7 +81,7 @@ public sealed partial class LocalsOverlayControl
                 if (inner > 0) context.DrawEllipse(null, pen, center, inner, inner);
             }
             context.DrawLine(pen, center - new Vector(4, 0), center + new Vector(4, 0));
-            if (vm.IsBrushPaint || radius < 4) context.DrawLine(pen, center - new Vector(0, 4), center + new Vector(0, 4));
+            if (vm.IsEffectiveBrushPaint || radius < 4) context.DrawLine(pen, center - new Vector(0, 4), center + new Vector(0, 4));
         }
     }
 }
