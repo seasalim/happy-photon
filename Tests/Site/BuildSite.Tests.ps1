@@ -43,10 +43,12 @@ Describe "Happy Photon download manifests" {
     }
 
     It "keeps verified Store metadata non-actionable without release data" {
-        $manifest = New-UnavailableSiteManifest -Config (Read-SiteConfig)
+        $config = Read-SiteConfig
+        $config.microsoftStoreVersion = "0.0.9"
+        $manifest = New-UnavailableSiteManifest -Config $config
         $manifest.selectedChannel | Should -BeNullOrEmpty
         $manifest.platforms.windows.availability | Should -Be "verified"
-        $manifest.platforms.windows.note | Should -Be "Microsoft Store · 0.2.6"
+        $manifest.platforms.windows.note | Should -Be "Microsoft Store · 0.0.9"
         $manifest.platforms.windows.url | Should -BeNullOrEmpty
         $manifest.platforms.macos.availability | Should -Be "unavailable"
         $manifest.platforms.linux.availability | Should -Be "unavailable"
