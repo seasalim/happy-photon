@@ -274,6 +274,182 @@ and exact single-dab/circular-radial pipeline agreement through both tone regime
 and resting rendering, including mixed creation order and untouched pixels.
 `LocalBrushMaskTests` covers requested masks with and without range restrictions.
 
+**HEAL-WP1 measurement spike (2026-09-25, Windows, Q16 OpenMP, 24 logical CPUs).**
+Test-only: net production LOC **0**; deletes nothing (the prototype and oracle stay as
+HEAL-WP3's reference). The owner or spec lane carries the FINAL choice, the relative G1
+bound (owner ruling, 2026-09-25), the radius contract and the area limit into HEAL
+Design. All numbers below were measured under an exclusive `measure` host lease;
+decimal MB is 1,000,000 bytes.
+
+**FINAL heal: Membrane (discrete Poisson boundary interpolation), additive, linear
+Rec.2020.** `HealOracle` (scalar doubles, rounded at each spot's Q16 write) and
+`HealPrototype` agree within 1 code. Composition follows the spec: creation order,
+source and destination snapshots before each spot's write, bilinear source sampling,
+opacity × inward smoothstep feather. Clone places translated source pixels.
+
+- *Boundary samples.* 32 fixed angles. Each sample is the exact mean of the clamped
+  bilinear reconstruction over an axis-aligned square of half-width **r/3**, centred
+  **r(1+√2/3)** from the spot centre: the smallest offset that keeps every square
+  outside the disc (it touches at 45°). The footprint is defined in normalized
+  coordinates, so the correction field is resolution consistent, and a blemish that
+  fills its spot never enters the destination's boundary estimate. The Poisson weights
+  use that sampling circle (radius 1 + √2/3 in spot radii), so an affine destination
+  is reproduced inside the disc without a seam at its edge. The prototype
+  integrates with per-row trapezoid prefixes (`HealBoundaryRows`, O(rows) per sample,
+  equal to direct quadrature within 1e-9); the oracle integrates cell by cell.
+- *Correction.* Destination-minus-source boundary means, interpolated by normalized
+  Poisson weights. For correction m, source s and directional headroom
+  h = max(0, (1−s up, s down) − 0.51/65535), m ≤ 7h/8 is unchanged; beyond the knee
+  the magnitude is 29h/32 − h²/[1024(m − 27h/32)], sign preserved. The rule is C1,
+  moves toward the source and never clamps. It reserves ≥ 3h/32 plus just over half a
+  code, so a result never rounds onto 65535 (or 0) unless the source is already there,
+  and the result's derivative in s is ≥ 3/32: a 65400–65463 near-ceiling source keeps
+  7 distinct codes (65522–65528) and shows no plateau after −2 EV. In-range
+  corrections are exact up to the knee; 0.6 + 0.35 lands within 0.001 code.
+- *Selection.* G1 eligibility, then equal-weight seam excess (candidates within 5 % of
+  the best tie), then repair-only cost. Both ratio candidates fail G1 on RAW. The
+  additive candidates tie on seams (Membrane 0.005551, Gaussian 0.005591); Membrane
+  is cheaper at every size (repair only, two workers, median of 7, ms):
+
+| Workload | Membrane-Additive | Gaussian-Additive |
+|---|---|---|
+| S64, RAW 1600×1068 | 50.2 | 76.9 |
+| S64, RAW 2748×1835 | 134.6 | 217.2 |
+| S64, RAW 5496×3670 | 521.6 | 817.7 |
+| SCap (64 discs), RAW 1600×1068 | 925.3 | 1629.6 |
+
+- *Boundary footprint evidence* (`HealContaminationDiagnosticTests`, report only): a
+  dark blemish filling a fraction of a 40 px spot on a textured field; mean absolute
+  error inside the healed disc, in Q16 codes:
+
+| Blemish fill | Point samples | Ring-centred r/3 | Outward √2/3 (FINAL) |
+|---|---|---|---|
+| ≤ 0.5r | 414.7 | 389.6 | 379.8 |
+| 0.7r | 936.7 | 1187.7 | 892.1 |
+| 0.8r | 2265.7 | 3614.8 | 2210.2 |
+| 0.9r | 4659.2 | 7501.0 | 4591.3 |
+
+**Spot contract.** Count cap **64**. Stored radius **0.002–0.10** long-edge units; the
+effective pixel radius is **min(radius × max(W,H), min(W,H)/2)** in both kernels and
+the comparison masks, before the source centre is clamped so the source disc lies
+inside the frame. The cap depends only on aspect ratio (resolution independent);
+destinations may cross frame edges. Centres map to x = uW − 0.5, y = vH − 0.5.
+
+**Frozen workloads.** `HealWorkloads.S64()`: 48 heal and 16 clone spots, radii
+0.005–0.04, feather 0.5, opacity 1, centres quantized to 1/16384, overlaps, sources
+outside a centred 3:2 crop; summed area 0.12817698026646362 long-edge². `SCap`: 64
+heals at radius 0.10 on a serpentine 11×6 grid (6×11 portrait) with half-area
+neighbour overlap; summed area 2.0106192982974695. LH8 is the qualified production
+locals control. Fixtures: `canon-eos-6d-iso-6400.cr2` (5496×3670; real half-decode
+pair 1600×1068 / 2748×1835) and `iphone-14-pro-iso-1000.heic` (3024×4032; pair
+1200×1600 / 2400×3200). Preview bases are never derived from the full decode.
+
+**Registration** (nine 49×49 green-channel NCC patches, ±4 px search refined to
+0.025 px; threshold ≤ 0.5 full-size px). Canon (no applicable prescription) is stable
+at ≤ 0.23 px with and without optics. The Fuji X30 half decode (optics arm) sits at the
+boundary: 0.32–0.58 px uncorrected across four runs, ≤ 0.40 px after a +0.25 px
+horizontal source-phase correction (preview u′ = u − 0.25/fullWidth). That correction
+is a candidate to validate against decoder framing before HEAL-WP2, not a production
+fix. Quarter turns, horizon, keystone and crop round-trip base points within 1e−9 px.
+
+**Gate results** (Membrane-Additive; G3–G6 medians of five fresh processes; G7/G8
+three processes; ranges span two full qualification passes where they differ):
+
+| Gate | Control | Workload | Threshold | Outcome |
+|---|---|---|---|---|
+| G1 RAW 1600×1068 | region 2.283 / 11.249 | 2.390 / 10.026 | ≤ 2.783 / 13.249 | pass |
+| G1 RAW 2748×1835 | region 5.148 / 26.462 | 4.060 / 20.038 | ≤ 5.648 / 28.462 | pass |
+| G1 HEIC 1200×1600 | region 1.393 / 13.723 | 1.282 / 10.455 | ≤ 1.893 / 15.723 | pass |
+| G1 HEIC 2400×3200 | region 0.684 / 8.766 | 0.825 / 8.112 | ≤ 1.184 / 10.766 | pass |
+| G2 RAW 5496×3670 | spot-free 0 codes | S64+LH8 0 of 60,510,960 | 0 | pass |
+| G3 RAW | 50.25 ms | 79.36 ms (+29.44) | ≤ 150; +≤ 40 | pass |
+| G3 HEIC | 38.19 ms | 64.99 ms (+28.12) | ≤ 150; +≤ 40 | pass |
+| G4 RAW, unlimited SCap | 116–127 ms | 401–489 ms | ≤ 175 | miss → area limit |
+| G4 HEIC, unlimited SCap | 118–120 ms | 453–484 ms | ≤ 175 | miss → area limit |
+| G5 RAW warm refinement | Loupe 2.16–2.18 s | 2.88–3.95 s | ≤ 1.5 s | **miss** |
+| G6 RAW cold refinement | Loupe 2.16–2.18 s | 4.21–5.43 s | ≤ 2.38–2.39 s | **miss** |
+| G7 RAW installed 1:1 | Fit 202.6–213.5 MB | delta 573.0–705.6 MB | ≤ 221.87 MB | **miss** |
+| G8 RAW install peak | idle 781.7–919.1 MB | delta 486.6–775.0 MB | ≤ 310.62 MB | **miss** |
+
+One G3 RAW run was invalid (its LH8 control drifted to 65.10 ms, outside the ±25 %
+band); the table shows the valid rerun under the same lease conditions. Two-worker
+refinement times vary about 27 % between passes (the same code's render stage measured
+3.31 s and 2.43 s), consistent with core placement on this hybrid host; both passes miss
+G5/G6 by more than 1.3 s.
+
+G1 is the owner's relative bound: repaired-region ΔE (DisplaySrgb mean / nearest-rank
+p99) may exceed the same region's spot-free ΔE by at most +0.5 mean and +2.0 p99. The
+spot-free whole-image controls fail the spec's original absolute bound on three of four
+cases (RAW 1.675/10.015 and 3.754/23.887; HEIC 0.941/10.634 and 0.418/5.618) because
+of the half-size decode and scale on these noisy fixtures, not render intent.
+
+**G4 area limit** (pre-approved fallback). Tick medians, ms, five processes per count,
+in two passes (A, then B after the final kernel fixes); controls 113–134 ms:
+
+| Discs at r = 0.10 | RAW A / B | HEIC A / B |
+|---|---|---|
+| 5 | 149.01 / 154.98 | 151.92 / 147.81 |
+| **6** | **153.36 / 143.17** | **153.30 / 152.61** |
+| 7 | 145.74 / 170.44 | 159.34 / 163.29 |
+| 8 | 166.94 / 160.59 | 167.32 / 169.39 |
+| 10 | 188.95 / 178.83 | 181.19 / 181.57 |
+| 12 | 183.82 / – | 189.83 / – |
+| 16 | 216.99 / – | 228.99 / – |
+| 32 | 297.63 / – | 293.35 / – |
+
+**Limit: 6 discs, 6π(0.10)² = 0.18849555921538758 long-edge²** (1.47× S64's area): the
+largest count that passes both fixtures in both passes by more than the control spread
+(≥ 21.6 ms). Seven and eight discs pass nominally in both passes but with as little as
+4.6 ms to spare. `HealWorkloads.SCap` admits n discs when n·π(0.10)² ≤ limit, so the
+limit must be quoted exactly (or as its generating expression). The per-spot cost is dominated by the boundary
+footprint's snapshot box (about 3.3× the disc's box) and its row prefixes, rebuilt for
+every spot. A production stage that shares one frame-level prefix across spots
+(HEAL-WP3) can requalify SCap and raise the limit; that is additive, not a format change.
+
+**Refinement diagnostics** (report only; one warm refinement per G5/G6 process, S64+LH8,
+Export intent; medians, ms):
+
+| Workers | Base copy | Repair | Render | Total |
+|---|---|---|---|---|
+| 2 (gate policy), pass A | 22 | 481 | 3307 | 3924 |
+| 2 (gate policy), pass B | 18 | 345 | 2425 | 2892 |
+| 24 (all logical), pass A | 19 | 183 | 523 | 835 |
+| 24 (all logical), pass B | 19 | 163 | 491 | 780 |
+
+BGRA extraction (≈ 72 ms) and bitmap construction (≈ 22 ms) are included in the totals.
+The two-worker cap explains the G5 miss: unrestricted, a warm refinement is 0.78–0.84 s.
+
+**Retained memory** (report only, after the ungated G7/G8 samples): a blocking,
+compacting full GC returns nothing; managed live is 79.2 MB in every process. Of the
+581–706 MB installed delta, the full base (121.0 MB), display bitmap (80.7 MB),
+`RenderSharpening.Scratch` (32.1 MB; NR and chroma slots 0) and prototype scratch
+(29.3 MB) account for 263.1 MB, already 1.30 × w·h·10; the remaining 318–443 MB is
+native commitment not returned after the refinement's transient copies are freed, and
+it varies between processes.
+
+**40 MP, report only.** X-T50 not fetched; a generated 7752×5178 JPEG (pair 1600×1069 /
+3200×2138). Loupe / warm / cold medians **1.209 / 5.442 / 6.193 s**; warm at all logical
+processors 1.228 s. Fit **179.6 MB**, refined idle **1368.3 MB** (installed delta
+1188.7 MB), install peak **2663.9 MB** (delta 1295.6 MB); prototype scratch 58.1 MB.
+
+**Outcome.** G1–G3 pass; G4 misses unlimited and takes the 6-disc area limit; G5–G8
+miss, so **HEAL-WP5 is blocked** and its design, WPs and envelopes return to the owner.
+HEAL-WP2 to WP4 are not blocked by this spike; the Fuji registration correction needs
+validation before WP2.
+
+Run `Tests/RunHealGates.ps1 -Gate <name> -Fixture raw|standard` under an exclusive
+measurement lease. Names: `G1Candidates`, `G1PerSpotDiagnostic`, `G2ExportParity`,
+`Registration`, `G3Tick`, `G4Contention` (`-AreaLimit <area>` or
+`-AreaDiscCounts <counts>`), `G5G6Refinement`, `G7G8Memory`, `Record40Mp`,
+`RepairCostDiagnostic`. G3/G4 run five fresh processes of five alternating samples and
+fail invalid controls (G3 with the LH8 harness's ten warm-up pairs, G4 with three).
+G5/G6 run five fresh processes; G7/G8 run in the ordinary Windows/WIC host with the
+preview pair, analysis and Fit bitmap retained, sampling through installation while
+the previous full bitmap is referenced, without forced GC. The prototype's extra base
+copy is included in G3–G8 (conservative; production writes into the pipeline's working
+copy). JSON and logs go to `artifacts/heal/`; this section is the durable record.
+`HAPPY_PHOTON_XT50_FIXTURE` selects a local opt-in RAF for the 40 MP record.
+
 ### 5.1 Display-reference comparison
 
 `ReferenceComparisonTests` is report-only against external lossless renders.

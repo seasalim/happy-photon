@@ -19,7 +19,7 @@ internal static class GoldenImageComparer
     public static GoldenComparison Compare(
         MagickImage expected,
         MagickImage actual,
-        GoldenComparisonDomain domain)
+        GoldenComparisonDomain domain, bool[]? mask = null)
     {
         if (expected.Width != actual.Width || expected.Height != actual.Height)
         {
@@ -64,6 +64,12 @@ internal static class GoldenImageComparer
             }
         }
 
+        if (mask != null)
+        {
+            if (mask.Length != deltaValues.Length || !mask.Any(value => value))
+                throw new ArgumentException("Comparison mask must match the frame and contain pixels.", nameof(mask));
+            deltaValues = deltaValues.Where((_, index) => mask[index]).ToArray();
+        }
         Array.Sort(deltaValues);
         var mean = deltaValues.Average();
         var p99Index = Math.Max(0, (int)Math.Ceiling(deltaValues.Length * 0.99) - 1);
