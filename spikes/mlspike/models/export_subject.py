@@ -71,6 +71,11 @@ def main():
                 return predictions[0][0]
             return predictions[0]
 
+    if args.candidate == "birefnet-lite":
+        # BiRefNet's deformable convs need the decomposition its ONNX tutorial registers
+        # (deform_conv2d_onnx_exporter 1.2.0 with the tutorial's dim-size patch applied).
+        import deform_conv2d_onnx_exporter
+        deform_conv2d_onnx_exporter.register_deform_conv2d_onnx_op()
     torch.onnx.export(Foreground().eval(), torch.zeros(1, 3, size, size), str(output),
                       input_names=["image"], output_names=["mask"], opset_version=17,
                       dynamo=False)

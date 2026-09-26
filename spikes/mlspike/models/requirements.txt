@@ -13,3 +13,4 @@ kornia==0.8.1
 opencv-python-headless==4.10.0.84
 tqdm==4.67.1
 huggingface-hub==0.28.1
+deform_conv2d_onnx_exporter==1.2.0  # patched per BiRefNet tutorials/BiRefNet_pth2onnx.ipynb (dim-size fallback)
