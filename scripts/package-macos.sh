@@ -89,7 +89,8 @@ iconutil --convert icns "$iconset_directory" \
 sign_target() {
     local target="$1"
     if [[ "$signing_identity" == "-" ]]; then
-        codesign --force --sign - "$target"
+        # spike/mlspike only (MLSPIKE D-5): ad-hoc with the hardened runtime.
+        codesign --force --options runtime --sign - "$target"
     else
         codesign --force --options runtime --timestamp \
             --sign "$signing_identity" "$target"
@@ -98,7 +99,7 @@ sign_target() {
 
 sign_app_bundle() {
     if [[ "$signing_identity" == "-" ]]; then
-        codesign --force --entitlements "$entitlements_file" \
+        codesign --force --options runtime --entitlements "$entitlements_file" \
             --sign - "$app_bundle"
     else
         codesign --force --options runtime --timestamp \

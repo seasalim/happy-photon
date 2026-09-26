@@ -1,0 +1,51 @@
+# spike/mlspike only (MLSPIKE D-5): never merges into main.
+name: MLSPIKE harness
+on:
+  push:
+    branches:
+      - spike/mlspike
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rig-identity:
+    name: Rig identity (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Capture runner identity
+        shell: pwsh
+        run: |
+          if ($IsWindows) {
+            $cpu = (Get-CimInstance Win32_Processor | Select-Object -First 1).Name.Trim()
+            $ramBytes = [int64](Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory
+          } elseif ($IsLinux) {
+            $line = Get-Content /proc/cpuinfo | Where-Object { $_ -like 'model name*' } | Select-Object -First 1
+            $cpu = ($line -split ':', 2)[1].Trim()
+            $kib = (Get-Content /proc/meminfo | Where-Object { $_ -like 'MemTotal*' }) -replace '\D', ''
+            $ramBytes = [int64]$kib * 1024
+          } else {
+            $cpu = (sysctl -n machdep.cpu.brand_string).Trim()
+            $ramBytes = [int64](sysctl -n hw.memsize)
+          }
+          [ordered]@{
+            matrixOs = '${{ matrix.os }}'
+            imageOs = $env:ImageOS
+            imageVersion = $env:ImageVersion
+            runnerArch = $env:RUNNER_ARCH
+            cpuModel = $cpu
+            logicalCores = [Environment]::ProcessorCount
+            ramBytes = $ramBytes
+            ramGiB = [math]::Round($ramBytes / 1GB, 2)
+            sha = $env:GITHUB_SHA
+            runId = $env:GITHUB_RUN_ID
+          } | ConvertTo-Json | Tee-Object -FilePath rig-identity.json
+      - name: Upload identity
+        uses: actions/upload-artifact@v7
+        with:
+          name: rig-identity-${{ matrix.os }}
+          path: rig-identity.json
+          retention-days: 30
