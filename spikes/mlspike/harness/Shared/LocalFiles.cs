@@ -12,9 +12,16 @@ public static class LocalFiles
             throw new IOException($"Input is not locally readable: {path}");
         for (FileSystemInfo? current = new FileInfo(Path.GetFullPath(path));
              current != null; current = Directory.GetParent(current.FullName))
-            if ((current.Attributes & FileAttributes.ReparsePoint) != 0)
+            if ((current.Attributes & FileAttributes.ReparsePoint) != 0 && !IsVolumeMountPoint(current))
                 throw new IOException($"Linked input is not permitted: {current.FullName}");
     }
+
+    // A volume mounted into a folder (e.g. the ReFS dev volume at D:\Workspace) is a
+    // reparse point too, but it is not a link to other content; symlinks and junctions are.
+    static bool IsVolumeMountPoint(FileSystemInfo entry) =>
+        entry is DirectoryInfo && entry.LinkTarget is { } target &&
+        (target.StartsWith(@"\\?\Volume{", StringComparison.OrdinalIgnoreCase) ||
+         target.StartsWith(@"\??\Volume{", StringComparison.OrdinalIgnoreCase));
 
     public static byte[] Read(string path)
     {
