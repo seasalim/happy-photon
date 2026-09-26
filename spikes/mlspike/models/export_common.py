@@ -70,10 +70,17 @@ def evidence(output, args, config, extra=None):
         stream.write("\n")
 
 
+# IS-Net general-use is normalized with mean 0.5 / std 1.0 by its authors
+# (DIS IS-Net/Inference.py:43); BiRefNet and U2-Net use ImageNet statistics.
+UPSTREAM_NORMALIZATION = {"isnet": ([0.5, 0.5, 0.5], [1.0, 1.0, 1.0])}
+
+
 def config(candidate, size, capability="subject", activation="probability"):
+    mean, std = UPSTREAM_NORMALIZATION.get(
+        candidate, ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]))
     return {
         "candidate": candidate, "capability": capability, "width": size, "height": size,
         "input_name": "image", "output_name": "mask", "input_layout": "NCHW",
         "output_layout": "NCHW", "activation": activation, "class_index": 0,
-        "mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225],
+        "mean": mean, "std": std,
     }
