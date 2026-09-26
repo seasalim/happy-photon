@@ -12,7 +12,14 @@ def deeplab(args, output):
     verify_weights(args.source, args.source_sha256)
     graph = tf.compat.v1.GraphDef()
     graph.ParseFromString(args.source.read_bytes())
-    spec = tf.TensorSpec([1, args.size, args.size, 3], tf.float32, name="image")
+    # The 2018 graph carries static _output_shapes from its training crop; they conflict
+    # with the decoder's real shapes in ONNX (Concat 128 vs 129), so let TF re-infer them.
+    for node in graph.node:
+        if "_output_shapes" in node.attr:
+            del node.attr["_output_shapes"]
+    # Dynamic spatial dims: a static input lets tf2onnx fold a decoder resize to 128 while
+    # the skip branch is 129, which ONNX Runtime rejects. The harness still feeds --size.
+    spec = tf.TensorSpec([1, None, None, 3], tf.float32, name="image")
 
     @tf.function(input_signature=[spec])
     def inference(image):
