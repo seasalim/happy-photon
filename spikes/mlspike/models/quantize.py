@@ -13,6 +13,8 @@ def main():
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--format", choices=["fp16", "int8", "int8-dynamic", "int8-matmul"], required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--exclude-prefix", action="append", default=[],
+                        help="leave nodes whose name starts with this prefix in float32 (repeatable)")
     args = parser.parse_args()
     settings = json.loads(args.config.read_text(encoding="utf-8"))
     verify_weights(args.model, settings["model_sha256"])
@@ -29,9 +31,13 @@ def main():
         # int8-matmul leaves convolutions in float32: ConvInteger costs accuracy and CPU time.
         from onnxruntime.quantization import QuantType, quantize_dynamic
         op_types = ["MatMul"] if args.format == "int8-matmul" else None
+        excluded = [n.name for n in onnx.load(str(args.model), load_external_data=False).graph.node
+                    if any(n.name.startswith(p) for p in args.exclude_prefix)]
         quantize_dynamic(str(args.model), str(output), per_channel=True,
-                         weight_type=QuantType.QInt8, op_types_to_quantize=op_types)
-        calibration = f"none (dynamic, weight-only int8, ops {op_types or 'default'}); no sample-set access"
+                         weight_type=QuantType.QInt8, op_types_to_quantize=op_types,
+                         nodes_to_exclude=excluded)
+        calibration = (f"none (dynamic, weight-only int8, ops {op_types or 'default'}, "
+                       f"{len(excluded)} nodes excluded by {args.exclude_prefix}); no sample-set access")
     else:
         import numpy as np
         from onnxruntime.quantization import CalibrationDataReader, QuantFormat, QuantType, quantize_static
