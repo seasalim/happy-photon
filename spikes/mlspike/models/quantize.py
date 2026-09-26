@@ -11,7 +11,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--format", choices=["fp16", "int8", "int8-dynamic"], required=True)
+    parser.add_argument("--format", choices=["fp16", "int8", "int8-dynamic", "int8-matmul"], required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     settings = json.loads(args.config.read_text(encoding="utf-8"))
@@ -23,13 +23,15 @@ def main():
         converted = float16.convert_float_to_float16(onnx.load(str(args.model)), keep_io_types=True)
         onnx.save(converted, str(output))
         calibration = "none; float32 input/output preserved"
-    elif args.format == "int8-dynamic":
+    elif args.format in ("int8-dynamic", "int8-matmul"):
         # Weight-only int8: no calibration pass. Static calibration at 1024 px keeps every
         # intermediate activation in memory and fails with "bad allocation" on the host.
+        # int8-matmul leaves convolutions in float32: ConvInteger costs accuracy and CPU time.
         from onnxruntime.quantization import QuantType, quantize_dynamic
+        op_types = ["MatMul"] if args.format == "int8-matmul" else None
         quantize_dynamic(str(args.model), str(output), per_channel=True,
-                         weight_type=QuantType.QInt8)
-        calibration = "none (dynamic, weight-only int8); no sample-set access"
+                         weight_type=QuantType.QInt8, op_types_to_quantize=op_types)
+        calibration = f"none (dynamic, weight-only int8, ops {op_types or 'default'}); no sample-set access"
     else:
         import numpy as np
         from onnxruntime.quantization import CalibrationDataReader, QuantFormat, QuantType, quantize_static
