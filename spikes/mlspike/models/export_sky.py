@@ -58,7 +58,10 @@ def oneformer(args, output):
     if actual != set(hashes):
         raise ValueError("Snapshot file inventory differs from supplied hashes")
     model = OneFormerForUniversalSegmentation.from_pretrained(args.source, local_files_only=True).eval()
-    processor = OneFormerProcessor.from_pretrained(args.source, local_files_only=True)
+    # The class-info JSON normally comes from the shi-labs/oneformer_demo dataset repo at load
+    # time; the host pins it into the snapshot, so point the processor at the local copy.
+    processor = OneFormerProcessor.from_pretrained(args.source, local_files_only=True,
+                                                   repo_path=str(args.source))
     label = model.config.id2label.get(args.sky_class, "")
     if "sky" not in label.lower():
         raise ValueError(f"Selected class is not sky: {label}")
