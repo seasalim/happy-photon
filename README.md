@@ -16,7 +16,7 @@ ethos.
 Always: originals stay untouched, the catalog stays local, and no account or
 subscription is required.
 
-![Happy Photon Browse view showing a wildlife shoot with the filter bar, flags,
+![Happy Photon Browse view showing a mixed RAW shoot with the filter bar, flags,
 ratings, color labels, histogram, and capture metadata](docs/screenshots/Screenshot_Browse.png)
 
 ## The Happy Photon workflow
@@ -34,8 +34,8 @@ into three matching workspaces: **Browse**, **Develop**, and **Export**.
 
 [Follow the complete workflow, from opening a shoot to exporting it](docs/WORKFLOW.md).
 
-![Happy Photon Develop view editing a bear photo with presets, histogram, white
-balance, adjustments, and tone curve](docs/screenshots/Screenshot_Develop.png)
+![Happy Photon Develop view editing a valley landscape with the histogram,
+adjustments, tone curve, and edit history](docs/screenshots/Screenshot_Develop.png)
 
 ## New in 0.2.5
 

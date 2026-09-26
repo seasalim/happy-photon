@@ -27,13 +27,24 @@
       </div>
     </section>
 
-    <section class="guide-visual pro-visual section-shell" aria-label="Happy Photon Develop workspace">
-      <figure class="app-shot">
-        <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span><b>DEVELOP</b></div>
-        <picture>
-          <source srcset="{{BASE_PATH}}assets/images/develop-720.webp 720w, {{BASE_PATH}}assets/images/develop-1200.webp 1200w, {{BASE_PATH}}assets/images/develop-1800.webp 1800w" sizes="(max-width: 900px) 94vw, 1240px" type="image/webp">
-          <img src="{{BASE_PATH}}assets/images/develop-1200.webp" width="1200" height="686" alt="Happy Photon Develop showing a photograph, presets, histogram, tone curve, and focused adjustment controls">
-        </picture>
+    <section class="guide-visual pro-visual section-shell" aria-label="A RAW photograph developed in Happy Photon">
+      <figure class="compare" data-compare data-compare-intro>
+        <div class="compare-media">
+          <picture class="compare-after">
+            <source srcset="{{BASE_PATH}}assets/images/photos/milky-way-after-720.webp 720w, {{BASE_PATH}}assets/images/photos/milky-way-after-1200.webp 1200w, {{BASE_PATH}}assets/images/photos/milky-way-after-2000.webp 2000w" sizes="(max-width: 900px) 94vw, 1320px" type="image/webp">
+            <img src="{{BASE_PATH}}assets/images/photos/milky-way-after-1200.webp" width="1200" height="801" alt="The Milky Way above a mountain ridge, developed from an ISO 6400 RAW to reveal dense star fields and cool night color">
+          </picture>
+          <picture class="compare-before">
+            <source srcset="{{BASE_PATH}}assets/images/photos/milky-way-before-720.webp 720w, {{BASE_PATH}}assets/images/photos/milky-way-before-1200.webp 1200w, {{BASE_PATH}}assets/images/photos/milky-way-before-2000.webp 2000w" sizes="(max-width: 900px) 94vw, 1320px" type="image/webp">
+            <img src="{{BASE_PATH}}assets/images/photos/milky-way-before-1200.webp" width="1200" height="801" alt="">
+          </picture>
+          <span class="compare-divider" aria-hidden="true"></span>
+          <span class="compare-handle" aria-hidden="true"><svg viewBox="0 0 80 48"><ellipse cx="26" cy="16" rx="5" ry="7"/><ellipse cx="54" cy="16" rx="5" ry="7"/><path d="M19 30 C28 50 52 50 61 30" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg></span>
+          <span class="compare-label compare-label-before" aria-hidden="true">Default render</span>
+          <span class="compare-label compare-label-after" aria-hidden="true">Developed</span>
+          <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Reveal the default render (left) or the developed photograph (right)" data-compare-range>
+        </div>
+        <figcaption class="photo-credit"><span>Drag to compare.</span> Canon EOS 6D at ISO 6400 · Exposure +1.3 · Contrast +45 · 3900 K · CC0 sample from a Dryad open dataset</figcaption>
       </figure>
     </section>
 
@@ -47,12 +58,12 @@
     </section>
 
     <section id="inside-the-pipeline" class="section pro-section section-shell" aria-labelledby="pipeline-title">
-      <div class="section-heading">
+      <div class="section-heading" data-reveal>
         <p class="eyebrow">COLOR SCIENCE UNDER THE HOOD</p>
         <h2 id="pipeline-title">Built to hold up when <span>you push the photograph.</span></h2>
         <p>Happy Photon keeps image formation, creative edits, and output conversion in a deliberate order. Preview and export share that path, so the finished file follows the photograph you developed.</p>
       </div>
-      <ol class="pro-pipeline">
+      <ol class="pro-pipeline" data-reveal>
         <li><span>01</span><b>Characterize</b><p>Measured as-shot white balance, built-in camera characterization, and DCP profiles when available.</p></li>
         <li><span>02</span><b>Form the image</b><p>Lens corrections, highlight reconstruction, and a scene-referred AgX tone engine shape RAW data without a baked-in picture style.</p></li>
         <li><span>03</span><b>Shape color</b><p>White balance, color mixer, saturation, and skin-aware vibrance operate through a wide-gamut perceptual color stage.</p></li>
@@ -63,12 +74,12 @@
 
     <section class="section pro-section pro-section-alt" aria-labelledby="control-title">
       <div class="section-shell">
-        <div class="section-heading centered-heading">
+        <div class="section-heading centered-heading" data-reveal>
           <p class="eyebrow">DEEP WHERE IT COUNTS</p>
           <h2 id="control-title">The controls to finish a photograph. <span>Not a cockpit to manage.</span></h2>
           <p>Work across the whole image or draw linear and radial masks for local Exposure, Temperature, Tint, and Saturation. Feather the transitions, position masks on the image or numerically, and refine each adjustment with undo and redo.</p>
         </div>
-        <div class="pro-card-grid">
+        <div class="pro-card-grid" data-reveal>
           <article class="pro-card">
             <span class="pro-card-index">LIGHT / TONE</span>
             <h3>Recover the scene, then shape it</h3>
@@ -94,7 +105,7 @@
     </section>
 
     <section class="section pro-section section-shell pro-scope-section" aria-labelledby="scope-title">
-      <div class="pro-scope-copy">
+      <div class="pro-scope-copy" data-reveal>
         <p class="eyebrow">MEASURE WHAT YOU SEE</p>
         <h2 id="scope-title">Scopes for decisions, <span>not decoration.</span></h2>
         <p>Read the display histogram, luminance waveform, or RAW sensor histogram. Toggle highlight and shadow clipping, inspect before and after in a synchronized split, press and hold for a 1:1 loupe, zoom in device pixels, or enter Assess mode for an invariant mid-gray surround and white reference.</p>
@@ -114,17 +125,17 @@
         <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span><b>ASSESS</b></div>
         <picture>
           <source srcset="{{BASE_PATH}}assets/images/assess-720.webp 720w, {{BASE_PATH}}assets/images/assess-1200.webp 1200w, {{BASE_PATH}}assets/images/assess-1800.webp 1800w" sizes="(max-width: 980px) 94vw, 54vw" type="image/webp">
-          <img src="{{BASE_PATH}}assets/images/assess-1200.webp" width="1200" height="700" loading="lazy" alt="Happy Photon Assess mode showing a bear photograph against a stable mid-gray surround and white reference border">
+          <img src="{{BASE_PATH}}assets/images/assess-1200.webp" width="1200" height="688" loading="lazy" alt="Happy Photon Assess mode in the Middle Gray theme showing a canal photograph against a stable mid-gray surround and white reference border">
         </picture>
       </figure>
     </section>
 
     <section class="section pro-section section-shell" aria-labelledby="pro-workflow-title">
-      <div class="section-heading">
+      <div class="section-heading" data-reveal>
         <p class="eyebrow">KEEP THE WORK MOVING</p>
         <h2 id="pro-workflow-title">Carry your decisions <span>through the whole shoot.</span></h2>
       </div>
-      <ul class="pro-feature-list">
+      <ul class="pro-feature-list" data-reveal>
         <li><b>Bring your decisions with you</b><span>Import ratings, flags, color labels, and supported crops from Lightroom Classic. Opt-in XMP sidecars keep those decisions portable without rewriting original pixels.</span></li>
         <li><b>Cull at full size</b><span>Open Browse Loupe with E, Enter, or Space. Keep the folder tree and assessment controls close, then move into Compare or Develop without losing your selection.</span></li>
         <li><b>Keep RAW and JPEG together</b><span>J+R groups a same-name pair into one capture with shared flags, ratings, and labels. J|R switches between the camera JPEG and RAW in Develop without losing your viewport.</span></li>
@@ -141,7 +152,7 @@
           <h2 id="raw-title">Camera data gets a <span>photographic path.</span></h2>
           <p>Happy Photon starts from the sensor and builds the image deliberately: measured as-shot white balance, highlight reconstruction, camera characterization, optional DCP profiles, database and embedded lens corrections, and true monochrome RAW handling.</p>
         </div>
-        <ul class="pro-feature-list">
+        <ul class="pro-feature-list" data-reveal>
           <li><b>Scene-referred rendering</b><span>AgX maps RAW scene values into a display-ready photograph.</span></li>
           <li><b>Camera profiles</b><span>Use discovered DCP profiles when a compatible profile is available.</span></li>
           <li><b>Lens corrections</b><span>Correct distortion, chromatic aberration, and vignetting using embedded DNG and Fujifilm RAF prescriptions or an exact camera and lens match from the bundled Lensfun database. Nikon lens identities are recovered from maker notes.</span></li>
@@ -151,13 +162,13 @@
     </section>
 
     <section class="section pro-section section-shell" aria-labelledby="handoff-title">
-      <div class="section-heading centered-heading">
+      <div class="section-heading centered-heading" data-reveal>
         <p class="eyebrow">A PROFESSIONAL HANDOFF</p>
         <h2 id="handoff-title">Export the file the job needs. <span>Keep the original safe.</span></h2>
         <p>Deliver JPEG, PNG, WebP, or lossless 16-bit TIFF in sRGB or Display P3. Preserve normalized EXIF, strip GPS when needed, and rely on collision protection that refuses to overwrite a loaded original.</p>
         <p>The dedicated Export workspace keeps selected captures in a filmstrip and proofs the output pixels before delivery. Its queue keeps running while you continue working.</p>
       </div>
-      <div class="pro-delivery-grid">
+      <div class="pro-delivery-grid" data-reveal>
         <article><b>JPEG · PNG · WebP</b><span>Everyday delivery formats with explicit sizing and color space.</span></article>
         <article><b>16-bit TIFF</b><span>Lossless, wide-gamut handoff without an 8-bit conversion.</span></article>
         <article><b>Screen · Print</b><span>Output sharpening selected independently from capture sharpening.</span></article>
@@ -192,5 +203,6 @@
   </main>
   {{> shared/footer}}
   <script type="module" src="{{BASE_PATH}}assets/js/navigation.js?v={{SCRIPT_VERSION}}"></script>
+  <script type="module" src="{{BASE_PATH}}assets/js/effects.js?v={{SCRIPT_VERSION}}"></script>
 </body>
 </html>

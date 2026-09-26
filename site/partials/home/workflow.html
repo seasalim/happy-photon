@@ -1,24 +1,45 @@
-<section id="workflow" class="section section-shell" aria-labelledby="workflow-title">
-  <div class="section-heading centered-heading">
+<section id="workflow" class="section section-shell workflow-section" aria-labelledby="workflow-title">
+  <div class="section-heading centered-heading" data-reveal>
     <p class="eyebrow">THE HAPPY PHOTON WORKFLOW</p>
     <h2 id="workflow-title">A complete workflow.<br><span>Just three decisions.</span></h2>
     <p>Move from a full card to finished photographs without turning the process into a second job.</p>
   </div>
   <ol class="workflow-grid">
-    <li class="workflow-card">
-      <span class="step-number">01</span>
+    <li class="workflow-card" data-reveal>
+      <div class="workflow-visual cull-visual" aria-hidden="true">
+        <span class="cull-thumb is-pick"><img src="{{BASE_PATH}}assets/images/photos/valley-after-720.webp" width="720" height="452" alt="" loading="lazy"><i>★★★★★</i></span>
+        <span class="cull-thumb is-reject"><img src="{{BASE_PATH}}assets/images/photos/valley-before-720.webp" width="720" height="452" alt="" loading="lazy"><i>✕</i></span>
+        <span class="cull-thumb is-pick"><img src="{{BASE_PATH}}assets/images/photos/canal-after-720.webp" width="720" height="480" alt="" loading="lazy"><i>★★★★</i></span>
+        <span class="cull-thumb"><img src="{{BASE_PATH}}assets/images/photos/milky-way-after-720.webp" width="720" height="481" alt="" loading="lazy"><i>★★★</i></span>
+      </div>
+      <span class="step-number">01 · CULL</span>
       <h3>Choose the keepers</h3>
       <p>Browse in place. Compare candidates side by side and use flags, ratings, filters, and burst grouping to narrow a shoot quickly.</p>
       <span class="card-detail">COMPARE · PICK · RATE</span>
     </li>
-    <li class="workflow-card featured-card">
-      <span class="step-number">02</span>
+    <li class="workflow-card featured-card" data-reveal style="--reveal-delay: 120ms">
+      <div class="workflow-visual develop-visual" aria-hidden="true">
+        <img src="{{BASE_PATH}}assets/images/photos/canal-after-720.webp" width="720" height="480" alt="" loading="lazy">
+        <span class="slider-stack">
+          <span style="--v: 68%"><b>Exposure</b></span>
+          <span style="--v: 72%"><b>Contrast</b></span>
+          <span style="--v: 34%"><b>Highlights</b></span>
+          <span style="--v: 78%"><b>Vibrance</b></span>
+        </span>
+      </div>
+      <span class="step-number">02 · DEVELOP</span>
       <h3>Develop the photographs</h3>
       <p>Crop, straighten, correct perspective, and shape light, color, tone, and detail with non-destructive controls. Use local masks to refine light and color in selected parts of the frame.</p>
       <span class="card-detail">COMPOSE · LIGHT · COLOR</span>
     </li>
-    <li class="workflow-card">
-      <span class="step-number">03</span>
+    <li class="workflow-card" data-reveal style="--reveal-delay: 240ms">
+      <div class="workflow-visual export-visual" aria-hidden="true">
+        <span class="file-chip"><b>JPEG</b><i>sRGB</i></span>
+        <span class="file-chip"><b>PNG</b><i>sRGB</i></span>
+        <span class="file-chip"><b>WebP</b><i>P3</i></span>
+        <span class="file-chip is-hero"><b>TIFF</b><i>16-bit · P3</i></span>
+      </div>
+      <span class="step-number">03 · EXPORT</span>
       <h3>Export what you need</h3>
       <p>Proof the result, then create JPEG, PNG, WebP, or 16-bit TIFF copies in the sizes you need—without changing the originals.</p>
       <span class="card-detail">SELECT · PROOF · EXPORT</span>

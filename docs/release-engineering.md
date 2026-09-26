@@ -246,4 +246,10 @@ GitHub Pages deploys the site from `site/` via `.github/workflows/pages.yml`
 (`scripts/build-site.ps1` + `scripts/check-site.ps1`). The committed webp
 screenshots under `site/assets/images/` are regenerated from
 `docs/screenshots/` with `dotnet run --file scripts/generate-site-images.cs`
-when a screenshot changes; Pages builds never run the app.
+when a screenshot changes. The before/after photographs under
+`site/assets/images/photos/` are rendered from the CC0 RAW fixtures in
+`Tests/assets` through the app's export pipeline with
+`dotnet run --file scripts/generate-site-photos.cs`; rerun it when the
+render pipeline changes enough to alter them. Pages builds never run the app.
+On Windows, `scripts/app-window.ps1` can capture and drive a running app window in the
+background to retake the screenshots; its header lists usage and caveats.

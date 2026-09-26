@@ -171,7 +171,9 @@ $cssFiles = @(
     "base.css",
     "layout.css",
     "components.css",
-    "pages.css"
+    "pages.css",
+    "home.css",
+    "pro.css"
 )
 $cssContent = foreach ($cssFile in $cssFiles) {
     Get-Content -Raw -LiteralPath (Join-Path $sourcePath "assets/css/$cssFile")

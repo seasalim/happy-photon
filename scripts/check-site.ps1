@@ -103,7 +103,7 @@ foreach ($htmlEntry in $htmlByPath.GetEnumerator()) {
     if ($htmlEntry.Value -notmatch [regex]::Escape($stylesheetRelativePath)) {
         throw "$($htmlEntry.Key) does not reference the current hashed stylesheet."
     }
-    if ($htmlEntry.Value -match 'assets/css/(?:tokens|base|layout|components|pages)\.css') {
+    if ($htmlEntry.Value -match 'assets/css/(?:tokens|base|layout|components|pages|home|pro)\.css') {
         throw "$($htmlEntry.Key) references an unhashed source stylesheet."
     }
     foreach ($scriptReference in @([regex]::Matches($htmlEntry.Value, 'src="[^"?]+\.js([^\"]*)"'))) {

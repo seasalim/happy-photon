@@ -1,32 +1,57 @@
-<section class="hero section-shell" aria-labelledby="hero-title">
-  <div class="hero-glow hero-glow-cyan" aria-hidden="true"></div>
-  <div class="hero-glow hero-glow-magenta" aria-hidden="true"></div>
-  <div class="hero-copy">
-    <h1 id="hero-title">Photo editing,<br><span>simplified.</span></h1>
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+  <div class="hero-copy section-shell">
+    <p class="release-line">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span data-release-status>{{RELEASE_STATUS}}</span>
+      <span aria-hidden="true">·</span>
+      <span>Free and open source</span>
+      <span aria-hidden="true">·</span>
+      <span>Windows, macOS, Linux</span>
+    </p>
+    <h1 id="hero-title">Photo editing,<br><span class="gradient-text">simplified.</span></h1>
     <p class="hero-summary">Simple enough for your first camera. Serious enough for a working pro.</p>
     <div class="button-row hero-actions">
       <a class="button button-primary" href="{{BASE_PATH}}download/" data-download-action>See release availability</a>
       <a class="button button-secondary" href="{{BASE_PATH}}pro-editing/">See the pro pipeline <span aria-hidden="true">→</span></a>
     </div>
-    <div class="release-line">
-      <span class="status-dot" aria-hidden="true"></span>
-      <span data-release-status>{{RELEASE_STATUS}}</span>
-      <span aria-hidden="true">·</span>
-      <span>Windows, macOS, Linux</span>
-    </div>
   </div>
-  <div class="hero-shot-frame">
-  <a class="hero-stamp" href="{{BASE_PATH}}import-from-lightroom/" aria-label="Lightroom compatible: import ratings, flags, color labels, and supported crops from Lightroom Classic">
-    <svg class="hero-stamp-face" viewBox="0 0 80 48" aria-hidden="true"><ellipse cx="26" cy="16" rx="5" ry="7"/><ellipse cx="54" cy="16" rx="5" ry="7"/><path d="M19 30 C28 50 52 50 61 30" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>
-    <span class="hero-stamp-title">Lightroom<br>compatible</span>
-    <span class="hero-stamp-detail">Ratings · Flags · Labels · Crops</span>
-  </a>
-  <figure class="app-shot app-shot-hero">
-    <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span><b>BROWSE</b></div>
-    <picture>
-      <source srcset="{{BASE_PATH}}assets/images/browse-720.webp 720w, {{BASE_PATH}}assets/images/browse-1200.webp 1200w, {{BASE_PATH}}assets/images/browse-1800.webp 1800w" sizes="(max-width: 760px) 94vw, (max-width: 1300px) 92vw, 1220px" type="image/webp">
-      <img src="{{BASE_PATH}}assets/images/browse-1200.webp" width="1200" height="702" alt="Happy Photon Browse showing wildlife thumbnails with flags, star ratings, color labels, the filter bar, histogram, and capture metadata">
-    </picture>
-  </figure>
+
+  <div class="hero-stage section-shell">
+    <a class="hero-stamp" href="{{BASE_PATH}}import-from-lightroom/" aria-label="Lightroom compatible: import ratings, flags, color labels, and supported crops from Lightroom Classic">
+      <svg class="hero-stamp-face" viewBox="0 0 80 48" aria-hidden="true"><ellipse cx="26" cy="16" rx="5" ry="7"/><ellipse cx="54" cy="16" rx="5" ry="7"/><path d="M19 30 C28 50 52 50 61 30" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>
+      <span class="hero-stamp-title">Lightroom<br>compatible</span>
+      <span class="hero-stamp-detail">Ratings · Flags · Labels · Crops</span>
+    </a>
+    <figure class="compare hero-compare" data-compare data-compare-intro>
+      <div class="compare-media">
+        <picture class="compare-after">
+          <source srcset="{{BASE_PATH}}assets/images/photos/valley-after-720.webp 720w, {{BASE_PATH}}assets/images/photos/valley-after-1200.webp 1200w, {{BASE_PATH}}assets/images/photos/valley-after-2000.webp 2000w" sizes="(max-width: 900px) 94vw, 1320px" type="image/webp">
+          <img src="{{BASE_PATH}}assets/images/photos/valley-after-1200.webp" width="1200" height="753" fetchpriority="high" alt="A green valley under billowing clouds, developed with deeper contrast, richer color, and a warmer light">
+        </picture>
+        <picture class="compare-before">
+          <source srcset="{{BASE_PATH}}assets/images/photos/valley-before-720.webp 720w, {{BASE_PATH}}assets/images/photos/valley-before-1200.webp 1200w, {{BASE_PATH}}assets/images/photos/valley-before-2000.webp 2000w" sizes="(max-width: 900px) 94vw, 1320px" type="image/webp">
+          <img src="{{BASE_PATH}}assets/images/photos/valley-before-1200.webp" width="1200" height="753" alt="">
+        </picture>
+        <span class="compare-divider" aria-hidden="true"></span>
+        <span class="compare-handle" aria-hidden="true"><svg viewBox="0 0 80 48"><ellipse cx="26" cy="16" rx="5" ry="7"/><ellipse cx="54" cy="16" rx="5" ry="7"/><path d="M19 30 C28 50 52 50 61 30" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg></span>
+        <span class="compare-label compare-label-before" aria-hidden="true">Default render</span>
+        <span class="compare-label compare-label-after" aria-hidden="true">Developed</span>
+        <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Reveal the default render (left) or the developed photograph (right)" data-compare-range>
+        <aside class="hero-recipe" aria-label="Edits applied to the developed version">
+          <p class="card-detail">DEVELOP · RAW</p>
+          <dl>
+            <div><dt>Exposure</dt><dd>−0.15</dd></div>
+            <div><dt>Contrast</dt><dd>+45</dd></div>
+            <div><dt>Highlights</dt><dd>−35</dd></div>
+            <div><dt>Shadows</dt><dd>+25</dd></div>
+            <div><dt>Vibrance</dt><dd>+60</dd></div>
+            <div><dt>Saturation</dt><dd>+22</dd></div>
+            <div><dt>Tone curve</dt><dd>S-curve</dd></div>
+          </dl>
+        </aside>
+      </div>
+      <figcaption class="photo-credit"><span>Drag to compare.</span> Both halves rendered by Happy Photon’s export pipeline from a Fujifilm X30 RAW · CC0 sample from raw.pixls.us</figcaption>
+    </figure>
   </div>
 </section>

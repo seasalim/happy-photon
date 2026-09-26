@@ -38,7 +38,7 @@
 html {
   color-scheme: dark;
   scroll-behavior: smooth;
-  scroll-padding-top: 88px;
+  scroll-padding-top: 96px;
 }
 
 body {
@@ -48,27 +48,30 @@ body {
   color: var(--on-surface);
   font-family: "Hanken Grotesk", system-ui, sans-serif;
   font-size: 1rem;
-  line-height: 1.5;
+  line-height: 1.55;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Clip decorative bleed (hero glows) at the viewport edge; on body the value
    would propagate to the viewport and still leave scrollable overflow. */
 main { overflow-x: clip; }
 
-body::before {
+/* Film grain over the whole page keeps large dark areas from banding. */
+body::after {
   position: fixed;
   inset: 0;
-  z-index: -1;
-  background-image: linear-gradient(color-mix(in srgb, var(--outline-variant) 8%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--outline-variant) 8%, transparent) 1px, transparent 1px);
-  background-size: 48px 48px;
+  z-index: 60;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   content: "";
-  mask-image: linear-gradient(to bottom, black, transparent 72%);
+  opacity: 0.045;
+  pointer-events: none;
 }
 
 img { display: block; max-width: 100%; }
 a { color: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
+::selection { background: color-mix(in srgb, var(--primary-container) 36%, transparent); color: var(--primary); }
 
 :focus-visible {
   outline: 3px solid var(--primary-container);
@@ -83,15 +86,37 @@ h1, h2, h3 {
 }
 
 h1, h2 {
-  letter-spacing: -0.035em;
-  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
 }
+
+h3 { letter-spacing: -0.02em; }
 
 h1 span, h2 span { color: var(--primary-fixed-dim); }
 
-p { color: var(--on-surface-variant); }
+p { color: var(--on-surface-variant); text-wrap: pretty; }
+
+code { font-family: "JetBrains Mono", monospace; }
+
+/* Scroll reveals only engage once the effects script marks the page ready,
+   so content is never hidden without JavaScript. */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-ready [data-reveal] {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 900ms var(--ease-out), transform 900ms var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .motion-ready [data-reveal].is-visible { opacity: 1; transform: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,32 +1,32 @@
 <section id="platform-guides" class="section platform-guides-section" aria-labelledby="platform-guides-title">
   <div class="section-shell">
-    <div class="section-heading">
+    <div class="section-heading" data-reveal>
       <p class="eyebrow">PLATFORM GUIDES</p>
       <h2 id="platform-guides-title">A clear start,<br><span>on your desktop.</span></h2>
       <p>Check installation, compatibility, and the complete RAW and JPEG workflow for your operating system.</p>
     </div>
     <div class="guide-card-grid">
-      <article class="guide-card">
-        <span class="guide-card-icon" aria-hidden="true">⊞</span>
+      <a class="guide-card" href="{{BASE_PATH}}photo-editor-windows/" data-reveal>
+        <span class="guide-card-icon">{{> shared/icons/windows}}</span>
         <p class="card-detail">WINDOWS 10 1809+ · X64</p>
         <h3>Photo editing on Windows</h3>
         <p>Install from the Microsoft Store, open a camera folder, and export finished copies.</p>
-        <a class="text-link" href="{{BASE_PATH}}photo-editor-windows/">Read the Windows guide <span aria-hidden="true">→</span></a>
-      </article>
-      <article class="guide-card">
-        <span class="guide-card-icon" aria-hidden="true">⌁</span>
-        <p class="card-detail">APPIMAGE · X64</p>
-        <h3>Photo editing on Linux</h3>
-        <p>Run the AppImage and use a local, open-source folder-to-export workflow.</p>
-        <a class="text-link" href="{{BASE_PATH}}photo-editor-linux/">Read the Linux guide <span aria-hidden="true">→</span></a>
-      </article>
-      <article class="guide-card">
-        <span class="guide-card-icon" aria-hidden="true">⌘</span>
+        <span class="text-link">Read the Windows guide <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="guide-card" href="{{BASE_PATH}}photo-editor-macos/" data-reveal style="--reveal-delay: 100ms">
+        <span class="guide-card-icon">{{> shared/icons/macos}}</span>
         <p class="card-detail">MACOS 14+ · APPLE SILICON</p>
         <h3>Photo editing on macOS</h3>
         <p>Install the signed and notarized app on an Apple Silicon Mac and begin with a local folder.</p>
-        <a class="text-link" href="{{BASE_PATH}}photo-editor-macos/">Read the macOS guide <span aria-hidden="true">→</span></a>
-      </article>
+        <span class="text-link">Read the macOS guide <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="guide-card" href="{{BASE_PATH}}photo-editor-linux/" data-reveal style="--reveal-delay: 200ms">
+        <span class="guide-card-icon">{{> shared/icons/linux}}</span>
+        <p class="card-detail">APPIMAGE · X64</p>
+        <h3>Photo editing on Linux</h3>
+        <p>Run the AppImage and use a local, open-source folder-to-export workflow.</p>
+        <span class="text-link">Read the Linux guide <span aria-hidden="true">→</span></span>
+      </a>
     </div>
     <p class="centered-action">Already assessed a shoot in Lightroom Classic? <a class="text-link" href="{{BASE_PATH}}import-from-lightroom/">Bring over ratings, flags, and color labels <span aria-hidden="true">→</span></a></p>
   </div>
