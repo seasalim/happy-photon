@@ -5,6 +5,8 @@ from copy import deepcopy
 from pathlib import Path
 import shutil
 import tempfile
+import time
+from urllib.error import HTTPError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
@@ -19,6 +21,25 @@ from raw_preview import embedded_preview
 from verify_manifest import require, validate_rig, validate_samples, verify
 
 
+USER_AGENT = "HappyPhoton-MLSPIKE-WP1/1.0 (https://github.com/seasalim/happy-photon)"
+
+
+def download(url, destination, attempts=6, pause=1.0):
+    """Polite, rate-limit-aware download: pause between requests; honor 429/503 Retry-After."""
+    for attempt in range(attempts):
+        time.sleep(pause)
+        try:
+            request = Request(url, headers={"User-Agent": USER_AGENT})
+            with urlopen(request, timeout=60) as response, destination.open("wb") as stream:
+                shutil.copyfileobj(response, stream)
+            return
+        except HTTPError as error:
+            if error.code not in (429, 503) or attempt == attempts - 1:
+                raise
+            retry_after = error.headers.get("Retry-After", "")
+            time.sleep(int(retry_after) if retry_after.isdigit() else 15 * (attempt + 1))
+
+
 def acquire(sample, destination, local_root=None):
     """Copy only explicitly listed local public fixtures, or fetch their source URL."""
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -28,9 +49,7 @@ def acquire(sample, destination, local_root=None):
         require(source.resolve() != destination.resolve(), "Refusing source/output collision")
         shutil.copyfile(source, destination)
     else:
-        request = Request(sample["url"], headers={"User-Agent": "HappyPhoton-MLSPIKE-WP1/1.0"})
-        with urlopen(request, timeout=60) as response, destination.open("wb") as stream:
-            shutil.copyfileobj(response, stream)
+        download(sample["url"], destination)
     actual = file_hash(destination)
     if sample.get("sha256"):
         require(actual == sample["sha256"], f"{sample['id']}: expected SHA-256 differs")
