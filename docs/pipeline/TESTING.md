@@ -450,6 +450,205 @@ copy is included in G3–G8 (conservative; production writes into the pipeline's
 copy). JSON and logs go to `artifacts/heal/`; this section is the durable record.
 `HAPPY_PHOTON_XT50_FIXTURE` selects a local opt-in RAF for the 40 MP record.
 
+**OPS-WP1 measurement spike (2026-09-26, Windows/WIC, Q16 OpenMP, 24 logical CPUs).**
+Test-only: net production LOC **0**. Deletes nothing: the prototypes and independent
+oracles remain the reference for the operator WPs. Base `0515aaf`; the owner's
+2026-09-26 ruling makes G1 relative (operators-off control + 0.5 mean / + 2.0 p99). All
+numbers below were measured under an exclusive `measure` host lease.
+
+**Outcome.** Texture and guided Clarity pass every gate; Gaussian Clarity fails the halo
+gate. Dehaze (with the pre-approved edge-aware refinement) passes G4, G5 and G7 but
+misses G1 for positive amounts, G2 on RAW, G3 and G6, so the combined OP stack misses
+G1, G2 (RAW) and G3. Per the spec, the Dehaze design returns to the owner; no formulation
+is recorded FINAL here. Texture and guided Clarity are the candidates for the owner's
+look review (sheets below). OPS-WP2 and OPS-WP6 do not depend on this spike.
+
+**Candidate constants (frozen for reproduction, not approved production choices).**
+`OpsPresenceOracle` uses scalar doubles, direct two-dimensional convolution and
+source-pixel area scattering. `OpsPresencePrototype` uses separable filtering,
+cell gathering and one working-size float plane. `OpsDehazeOracle` independently
+builds the lattice, airlight, interpolation and signed correction; its tone side
+uses the existing scalar tone formulas. Synthetic contracts require max error
+≤1 Q16 code; workers and bands must agree exactly.
+
+- Texture: B3 taps `[1,4,6,4,1]/16`, à trous dilations **1, 2, 4 native pixels**.
+  The sum of these three bands is original minus the composed low-pass. Its
+  separable support is **±14 native pixels**, scaled continuously by render/native
+  long edge, with fractional taps distributed to adjacent pixels. Clamp extension
+  is applied to the composed kernel; the summed band has soft threshold **0.01**.
+  There is no intent floor. Signed slider/100 multiplies the thresholded band.
+- Both Clarity candidates reduce luma by exact fractional area to at most **256**
+  cells on the long edge, preserving aspect, then bilinearly reconstruct at pixel
+  centres. Gaussian σ is **0.010 long edge**, truncated at 3σ. The self-guided
+  candidate uses box radius `ceil(sqrt(3) * sigma)` (5 at a 256-cell edge), variance
+  regularizer **0.0025**, and box-averaged affine coefficients. Both limit the luma
+  band to **±0.04**, weight it by **4Y(1−Y)** and multiply by signed slider/100.
+  Texture and Clarity deltas sum before the NR-style equal-channel gamut clamp.
+- Presence allocates at most one working-size float plane plus the small grids.
+  The Texture horizontal smooth occupies that plane; the Q16 working array
+  supplies original luma. There is no full-size mask, RGB-float image or row ring.
+  Default bands are **32 rows**; the one-row limit and worker caps 1/2/all execute
+  the same reductions. Cancellation is checked at each band and before writeback.
+- Dehaze: **48 cells** on the long edge (RAW 48×32; HEIC 36×48), exact area
+  averages from the pre-geometry base after WB. Airlight is a normalized weighted
+  mean, with weight `max(0,min(R,G,B))^8 + 1e-12`, floored per channel at 1/65535.
+  Cell transmission is `clamp(1−0.95*min(R/A_R,G/A_G,B/A_B),0.1,1)`.
+  Positive amounts divide the signed distance from airlight by
+  `max(0.1,1−abs(amount)/100*(1−t))`; negative amounts multiply by that factor.
+  Lattice-only reconstruction is bilinear. Its G5 miss activates the approved
+  fallback: joint bilateral reconstruction of the four adjacent cells, guided by
+  the pixel's WB luma, with Gaussian variance **0.0025** and weight floor **1e−30**.
+- Amount fields: two signed Int16 planes, **100 codes per slider unit**, summing
+  each enabled local's final geometry × luminance-window × hue-window weight.
+  Clamp the complete local sum to **±200**, then quantize. The presence stage adds
+  field/10000 to global slider/100. No fields are allocated when inactive.
+  `OpsKernelTests` independently exposes production weights through a +1 EV local;
+  `OpsContractTests` covers overlap saturation and full-frame local/global identity.
+
+**Stage placement and controls.** Presence uses production display-Rec.2020 with
+capture sharpen set to zero, applies the test stage after production NR, then calls
+production capture sharpen with the original detail settings and intent. Dehaze
+uses a test-only WB → signed affine correction → existing extended tone seam;
+negative and above-one corrections never round-trip through an unsigned base.
+It rejects crop/geometry and DCP HueSat, which are absent from these whole-frame
+workloads. Its operators-off arm must equal production at all three real base
+sizes before a runner invocation collects gates. The independent oracle also
+covers ±50/±100, nonidentity WB, −2 EV and out-of-range corrections.
+
+G1 uses actual loader pairs: RAW **1600×1068 / 2748×1835**, from the real half decode,
+and HEIC **1200×1600 / 2400×3200**. Full bases are **5496×3670 / 3024×4032**.
+No real preview is constructed from the full decode. G2/G4 use the production
+export service, full decode, JPEG quality 85 and its real variants (RAW: full,
+2048 and 1024 with Screen output sharpen; HEIC: full, output sharpen Off).
+The hook substitutes only the test upstream. G3 controls are the production NL
+request with a fresh pipeline, 1600 max dimension and stats/overlays off.
+The on arm uses that same output arrangement. All extra prototype pixel-cache
+copies are charged to the on arm; none are subtracted. G2 also charges lattice
+construction. After R1-2, G3 builds analysis once per process before warm-ups and
+timing, reuses it for DH± and OP, and reports the build time as `G3-lattice-build`.
+This models the fixed base/repairs/WB of a slider tick; it is not a production cache.
+Each materialized RGB Q16 array is 6wh bytes, in addition to the 4wh
+presence float plane and, for LPP8, 4wh amount fields. Actual private commitment,
+including native copies and GC timing, is measured rather than inferred from these
+array sizes.
+
+**Frozen synthetic fixtures.** Skyline is a vertical linear-gray step **0.08 → 0.65**,
+at half width, at **1600×1066** and **5496×3664**. Measure the larger band's width
+on either side at the middle row, relative to the far-field value one-quarter of
+the frame from the edge; the cutoff is 2% of that render's far-field step.
+The off band is exactly zero. Haze uses the full CR2 base and a 1600×1068 reduction
+of that same clear base, airlight **[0.65,0.70,0.75]** in linear Rec.2020,
+and transmission **0.975 + 0.0125 cos(πu) cos(πv)** at pixel centres (range
+0.9625–0.9875). Q16 input construction rounds once. Bright neutral-to-cool airlight
+is frozen; only haze strength was calibrated using operators-off renders. No
+estimator, transmission rule, operator amount or threshold was retuned.
+
+Construction history (full / 1600 operators-off mean ΔE):
+
+| Attempt | Airlight | Transmission mean / variation | Full / 1600 ΔE | Disposition |
+|---|---|---|---|---|
+| Original bright, strong haze | [0.65,0.70,0.75] | 0.65 / 0.10 | 60.667 / 60.617 | outside 10–20 construction band |
+| Original dark-airlight workaround | [0.04875,0.0525,0.05625] | 0.65 / 0.10 | 15.612 / 15.542 | rejected in R1-1: dark haze does not test the bright-haze prior |
+| R1 bright, weaker haze | [0.65,0.70,0.75] | 0.90 / 0.05 | 38.569 / 38.530 | outside band |
+| R1 bright, weaker haze | same | 0.95 / 0.025 | 26.317 / 26.327 | outside band |
+| **R1 frozen construction** | same | **0.975 / 0.0125** | **15.544 / 15.549** | in band at both sizes |
+| R1 construction-only trial | same | 0.98 / 0.01 | 12.717 / 12.673 | in band; not selected |
+
+`HazeConstruction` records the new off-only trials; the 0.975 construction was
+selected before any recovery render. Evidence: `artifacts/ops/review-construction.log`.
+G5/G6 use Export intent at both synthetic sizes; review sheets use Preview intent,
+including its existing capture-sharpen floor. The four sheets were regenerated with
+the corrected construction during review turn 1.
+
+**Workloads and protocol.** TX ±60; CL ±60; DH ±50; OP Texture +40, Clarity +40,
+Dehaze +30. LPP8 is the existing LH8 geometry, exposure/color and ranges plus local
+Texture +30 / Clarity +50 on all eight. G2/G4 take five alternating pairs after
+one warm pair; G3 takes five alternating pairs after ten warm pairs in each of
+five fresh processes, then gates medians across those processes. G4 samples
+private bytes in the ordinary Windows/WIC host without forced GC, recording each
+arm's baseline and absolute peak; the increment is the paired absolute-peak
+subtraction. An out-of-range control invalidates a result, never changes its bound.
+Qualification runs under the exclusive `measure` host lease; an initial pre-lease
+skyline diagnostic and superseded row-ring measurements are not used below.
+
+**G1 (mean / p99 ΔE, relative bound).** Real preview pairs (RAW 1600×1068 / 2748×1835
+from the half decode; HEIC 1200×1600 / 2400×3200) against the full render downsampled.
+
+| Arm | RAW 1600 | RAW 2748 | HEIC 1200 | HEIC 2400 |
+|---|---|---|---|---|
+| Off control | 1.675 / 10.015 | 3.754 / 23.887 | 0.941 / 10.634 | 0.418 / 5.618 |
+| Bound | 2.175 / 12.015 | 4.254 / 25.887 | 1.441 / 12.634 | 0.918 / 7.618 |
+| TX+ | 1.726 / 10.114 | 3.821 / 24.006 | 1.076 / 10.804 | 0.556 / 6.434 |
+| TX− | 1.663 / 9.970 | 3.762 / 24.031 | 0.886 / 10.245 | 0.455 / 5.952 |
+| CL+ (guided) | 1.701 / 10.115 | 3.786 / 24.036 | 0.956 / 10.559 | 0.426 / 5.551 |
+| CL− (guided) | 1.656 / 9.933 | 3.746 / 23.833 | 0.934 / 10.746 | 0.417 / 5.692 |
+| DH+ | **1.997 / 13.546** | **4.435 / 31.257** | 1.427 / **14.550** | 0.733 / **9.071** |
+| DH− | 1.393 / 6.964 | 3.088 / 16.819 | 0.639 / 6.748 | 0.280 / 3.528 |
+| OP | 1.908 / **12.038** | 4.202 / **28.033** | 1.306 / **12.790** | 0.701 / **7.927** |
+
+Bold values exceed the bound. Report-only diagnostic: rendering the preview arm with the
+full base's lattice and airlight leaves the DH+ excess essentially unchanged (RAW 1600
+1.984 / 13.51 against 1.997 / 13.55; per-base airlights agree within 0.03 %). The miss is
+positive Dehaze amplifying the pipeline's existing preview/full gap (it divides the
+distance from the airlight by t′), not a per-base analysis disagreement.
+
+**G2 (export, paired ms over no edits; bound max(5 %, 500 ms), OP max(10 %, 900 ms)) and
+G3 (1600 tick increment over NL, lattice cached; TX/CL ≤ 25, DH ≤ 20, OP ≤ 60 ms).**
+Medians of five pairs (G2) and of five fresh processes (G3); every control in range.
+
+| Arm | G2 RAW | G2 HEIC | G3 RAW | G3 HEIC |
+|---|---|---|---|---|
+| TX+ | +329 | +207 | +15.8 | +21.2 |
+| TX− | +276 | +213 | +14.4 | +21.4 |
+| CL+ | +103 | +92 | +18.9 | +22.5 |
+| CL− | +102 | +85 | +19.0 | +22.6 |
+| DH+ | **+640** | +376 | **+46.7** | **+52.6** |
+| DH− | **+674** | +400 | **+46.4** | **+58.5** |
+| OP | **+1022** | +633 | **+73.6** | **+88.9** |
+
+Controls: G2 RAW 2226–2246 ms, HEIC 846–869 ms; G3 NL RAW 25.8–27.6 ms, HEIC 18.0–21.0 ms.
+Report-only attribution at 1600 (RAW, DH): edge-aware refinement ≈ 28 ms, affine
+correction ≈ 10 ms, harness copies ≈ 4 ms; lattice-only correction ≈ 14 ms. The lattice
+build from the 1600 base (not charged to G3) is ≈ 400 ms, relevant to OPS-WP4 G2
+(first tick after a new base ≤ 150 ms). Not gated here: the LPP8 amount-field prototype
+export adds ≈ 1.94 s RAW and 1.23 s HEIC over no edits.
+
+**G4 (paired private-peak delta, same process).** OP RAW +2.3 MB (bound 121.0 MB), HEIC
+−0.1 MB (73.2 MB); LPP8 RAW −59.1 MB (201.7 MB), HEIC −69.9 MB (121.9 MB). Controls: RAW
+490–572 MB, HEIC 145–306 MB. Pass; per-sample deltas are noisy (GC commitment) and
+retained in the JSON.
+
+**G5 (halo width, long-edge units; bound ≤ 0.010; off = 0).** Guided Clarity +100: 0.0031
+at 1600 and full. Refined Dehaze +100: 0 at both. Gaussian Clarity: **0.020** (fails, so it
+is ineligible). Lattice-only Dehaze: **0.0104–0.0106** (fails, which triggers the
+pre-approved refinement).
+
+**G6 (refined Dehaze +50, bright-airlight fixture).** Construction airlight
+[0.65, 0.70, 0.75], transmission 0.975 ± 0.0125; hazy baseline 15.54 / 15.55 ΔE (range
+10–20). Recovery **25.7 %** (full) and **27.3 %** (1600) against ≥ 40 %; airlight
+agreement within 1 %. A first construction with a dark airlight (≈ 0.05) was rejected as
+physically implausible haze.
+
+**G7.** OP and LPP8, workers 1/2/24 × band rows 1/32, both fixtures: 0 differing Q16 codes
+in all 24 comparisons. Prototype versus oracle: ≤ 1 code on every contract, including
+fractional-lattice Dehaze refinement at 419×283 and 283×419 (max error 0 codes, where
+refinement changes outputs materially) and negative Dehaze outputs at both tone regimes'
+input handling (standard clamps at 0, as production).
+
+Run `Tests/RunOpsGates.ps1 -Gate <name> -Fixture raw|standard -Clarity Gaussian|Guided`
+under an exclusive measurement lease; `-Refine` selects the pre-approved DH fallback.
+Gate names: `Qualification`, `G1Parity`, `G2Export`, `G3Tick`, `G4Memory`, `G5Halo`,
+`G6Haze`, `G7Determinism`, `ReviewSheets`; report-only names are
+`HazeConstruction`, `G1SharedAnalysis`, `CostAttribution`. Each invocation first
+runs the oracle
+contracts and real-fixture off-arm qualification. Stale Release assemblies are
+rejected. JSON, TRX and detailed logs are retained in `artifacts/ops/`; JSON pins the
+assembly and OPS source hashes. The runner preserves failed observations and exits
+nonzero on misses. Review sheets live in `artifacts/ops/sheets/<fixture>/<candidate>/`:
+operator off/active full-frame pairs and 1:1 centre crops, at ±60/±100, for both
+real fixtures and both frozen synthetic scenes. These are formulation-selection
+sheets only; production operator WPs still need their own owner-approved sheets.
+
 ### 5.1 Display-reference comparison
 
 `ReferenceComparisonTests` is report-only against external lossless renders.
