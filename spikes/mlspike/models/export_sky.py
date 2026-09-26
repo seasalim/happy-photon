@@ -19,6 +19,9 @@ def deeplab(args, output):
         result = tf.import_graph_def(
             graph, input_map={args.input_tensor: tf.cast(image * 255.0, tf.uint8)},
             return_elements=[args.output_tensor], name="")[0]
+        if args.output_kind == "logits":
+            # The 2018 ADE20K mobile graph exposes upsampled logits, not probabilities.
+            result = tf.nn.softmax(result, axis=-1)
         return tf.identity(result, name="mask")
 
     tf2onnx.convert.from_function(inference, input_signature=[spec], opset=17,
@@ -88,6 +91,8 @@ def main():
     parser.add_argument("--size", type=int, required=True)
     parser.add_argument("--input-tensor", default="ImageTensor:0")
     parser.add_argument("--output-tensor", default="SemanticProbabilities:0")
+    parser.add_argument("--output-kind", choices=["probabilities", "logits"], default="probabilities",
+                        help="logits: apply a class softmax before exporting (DeepLab ResizeBilinear_2:0)")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.size < 1 or args.sky_class < 0:
