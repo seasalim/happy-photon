@@ -5,10 +5,95 @@ on:
     branches:
       - spike/mlspike
   workflow_dispatch:
+    inputs:
+      evaluate:
+        description: Run the WP2 hosted evaluation (sky candidate from the draft release)
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
+  evaluate:
+    if: github.event_name == 'workflow_dispatch' && inputs.evaluate
+    name: Evaluate (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    permissions:
+      contents: write  # read the maintainer-only draft release assets
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Fetch draft-release inputs
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/in"
+          gh release download mlspike-s1-eval --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/in"
+          ls -la "$RUNNER_TEMP/in"
+      - name: Fetch frozen sample set
+        shell: bash
+        run: |
+          PY=$(command -v python3 || command -v python)
+          "$PY" spikes/mlspike/fetch_frozen.py --manifest "$RUNNER_TEMP/in/manifest.json" \
+            --masks "$RUNNER_TEMP/in/masks.zip" --output "$RUNNER_TEMP/frozen"
+          mkdir -p "$RUNNER_TEMP/desktop" && cd "$RUNNER_TEMP/desktop" && "$PY" -m zipfile -e "$RUNNER_TEMP/in/desktop-x1.zip" .
+      - name: Build harness
+        shell: bash
+        run: |
+          dotnet restore spikes/mlspike/harness/MlSpike.Harness.csproj
+          dotnet build spikes/mlspike/harness/MlSpike.Harness.csproj -c Release --no-restore
+      - name: Run modes
+        shell: bash
+        run: |
+          set -u
+          H="spikes/mlspike/harness/bin/Release/net10.0/MlSpike.Harness.dll"
+          NUPKG=$(ls "$HOME/.nuget/packages/microsoft.ml.onnxruntime/1.30.0/"*.nupkg)
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            CPU=$(pwsh -NoProfile -Command "(Get-CimInstance Win32_Processor | Select-Object -First 1).Name.Trim()")
+          elif [ "$RUNNER_OS" = "Linux" ]; then
+            CPU=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^ //')
+          else
+            CPU=$(sysctl -n machdep.cpu.brand_string)
+          fi
+          ENV_NAME="${{ matrix.os }}"
+          OUT="$RUNNER_TEMP/results"; mkdir -p "$OUT"
+          COMMON=(--manifest "$RUNNER_TEMP/frozen/manifest.json" --sample-root "$RUNNER_TEMP/frozen"
+                  --model "$RUNNER_TEMP/in/model.onnx" --config "$RUNNER_TEMP/in/model.json"
+                  --runtime-package "$NUPKG" --environment "$ENV_NAME" --cpu-model "$CPU")
+          ID=commons-106145836
+          run() { name=$1; shift; echo "::group::$name"; dotnet "$H" "$@" "${COMMON[@]}" --output "$OUT/$name" > "$OUT/$name.log" 2>&1; echo "$name exit=$?" | tee -a "$OUT/exits.txt"; tail -3 "$OUT/$name.log"; echo "::endgroup::"; }
+          run quality --mode quality
+          run repeat --mode repeat --repeat-ids commons-101522309,commons-104547203,commons-106145836,commons-106713803,commons-146235939,repo-fujifilm-x30
+          run latency --mode latency
+          for n in 1 2 3; do run cold-$n --mode cold --image-id $ID; done
+          run memory --mode memory
+          run cancel --mode cancel --image-id $ID --latency-result "$OUT/latency/result.json"
+          run interaction --mode interaction --image-id $ID
+          echo '{"commons-101522309":[1150,600,400,400],"commons-104547203":[600,220,400,400],"commons-106145836":[800,250,400,400],"commons-106713803":[750,250,400,400],"commons-146235939":[640,200,400,400],"rawpixls-3210":[760,420,400,400],"repo-fujifilm-x30":[700,600,400,400],"repo-pentax-k-r":[520,120,400,400]}' > "$RUNNER_TEMP/crops.json"
+          run x1 --mode contact-sheet --crops "$RUNNER_TEMP/crops.json" --desktop-result "$RUNNER_TEMP/desktop/result.json"
+          # D-6: never upload source images or source crops.
+          find "$OUT" -name '*-source.png' -delete
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mlspike-eval-${{ matrix.os }}
+          path: ${{ runner.temp }}/results
+          retention-days: 30
+
   rig-identity:
+    if: github.event_name == 'push' || !inputs.evaluate
     name: Rig identity (${{ matrix.os }})
     strategy:
       fail-fast: false
