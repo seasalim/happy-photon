@@ -1,0 +1,6 @@
+[project]
+name = "happy-photon-mlspike"
+version = "0.0.0"
+description = "Local-only sample-set preparation for MLSPIKE WP1"
+requires-python = ">=3.11,<3.12"
+dependencies = ["Pillow==12.3.0", "numpy==2.4.4"]
