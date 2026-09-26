@@ -1,0 +1,8 @@
+*.onnx
+*.onnx.data
+*.pth
+*.pt
+*.safetensors
+*.pb
+*.tar.gz
+.venv*/

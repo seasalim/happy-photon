@@ -34,6 +34,10 @@
     <AvaloniaResource Remove="Assets\happy-photon-icon.svg" />
     <EmbeddedResource Include="Assets\DisplayP3-v4.icc"
                       LogicalName="HappyPhoton.Assets.DisplayP3-v4.icc" />
+    <Compile Remove="spikes/**" />
+    <!-- Unmerged MLSPIKE branch: installed probes share the harness inference path. -->
+    <Compile Include="spikes/mlspike/harness/Shared/*.cs" />
+    <Compile Include="spikes/mlspike/harness/PackagedProbe.cs" />
     <Compile Remove="Tests\**" />
     <Compile Remove="HeadlessTests\**" />
     <Compile Remove="Interop\**" />
@@ -60,6 +64,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
     <PackageReference Include="Avalonia" Version="12.0.4" />
     <PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="12.0.0" />
     <PackageReference Include="Avalonia.Desktop" Version="12.0.4" />
@@ -79,4 +84,8 @@
     </ItemGroup>
     <Delete Files="@(ReleasePublishSymbols)" />
   </Target>
+  <ItemGroup Condition="'$(MlSpikePayload)' != ''">
+    <Content Include="$(MlSpikePayload)/*" Link="mlspike/%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+  </ItemGroup>
 </Project>

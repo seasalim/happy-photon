@@ -12,6 +12,11 @@ sealed class Program
     public static void Main(string[] args)
     {
         LibRaw.Interop.NativeLibraryResolver.ConfigureOpenMpThreadLimit();
+        if (args.Length > 0 && args[0] == "--mlspike-probe")
+        {
+            Environment.ExitCode = MlSpike.PackagedProbe.Run(args);
+            return;
+        }
         using var singleInstance = SingleInstanceGuard.TryAcquire();
         if (singleInstance is null)
         {
