@@ -14,6 +14,7 @@ from common import (EDGE_CATEGORIES, RAW_SUFFIXES, SEED, digest, file_hash,
                     local_file, output_directory, read_json, relative_file,
                     safe_id, sorted_samples, write_json)
 from masks import union
+from coco_attribution import load_snapshot, validate_snapshot
 from raw_preview import embedded_preview
 from verify_manifest import require, validate_rig, validate_samples, verify
 
@@ -99,17 +100,21 @@ def licence_records(records, evidence_root, output):
 
 
 def fetch(selection, edges, rig, licences, output, evidence_root,
-          local_root=None, attribution=None):
+          local_root=None, attribution=None, attribution_sha256=None):
     require(selection["schema_version"] == 1 and selection["seed"] == SEED,
             "Expected the seed-51 selection")
     samples = deepcopy(selection["samples"] + edges)
-    attribution = attribution or {}
+    validate_snapshot(attribution)
+    require(bool(attribution_sha256) and
+            selection.get("attribution_sha256") == attribution_sha256,
+            "Attribution snapshot SHA-256 differs from selection; rerun selection")
     for sample in samples:
-        # COCO metadata often omits creator names. Never invent attribution.
-        extra = attribution.get(sample["id"], {})
-        for key in ("author", "attribution_url"):
-            if key in extra:
-                sample[key] = extra[key]
+        if sample["source"] != "coco":
+            continue
+        extra = attribution.get(sample["source_id"])
+        require(extra is not None and "unresolved" not in extra,
+                f"{sample['id']}: resolved author attribution required")
+        sample.update(extra)
     samples = sorted_samples(samples)
     validate_samples(samples)
     validate_rig(rig)
@@ -121,6 +126,7 @@ def fetch(selection, edges, rig, licences, output, evidence_root,
     manifest = {
         "schema_version": 1, "seed": SEED, "annotations": selection["annotations"],
         "annotation_licences": evidence, "rig": rig,
+        "attribution_sha256": attribution_sha256,
         "samples": [materialize(s, output, local_root) for s in samples],
     }
     revision = verify(manifest, output)
@@ -135,15 +141,16 @@ def main():
     parser.add_argument("--edges", type=Path, required=True)
     parser.add_argument("--rig", type=Path, required=True)
     parser.add_argument("--annotation-licences", type=Path, required=True)
-    parser.add_argument("--attribution", type=Path)
+    parser.add_argument("--attribution", type=Path, required=True)
     parser.add_argument("--local-root", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
+    attribution, snapshot_hash = load_snapshot(args.attribution)
     manifest = fetch(
         read_json(args.labeled), read_json(args.edges), read_json(args.rig),
         read_json(args.annotation_licences), output_directory(args.output_dir),
         args.annotation_licences.parent, args.local_root,
-        read_json(args.attribution) if args.attribution else None)
+        attribution, snapshot_hash)
     print(digest(manifest))
 
 

@@ -4,7 +4,7 @@ import argparse
 from html.parser import HTMLParser
 import json
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 
 from common import (EDGE_CATEGORIES, RAW_SUFFIXES, licence_name, output_directory,
@@ -43,6 +43,8 @@ def parse_pages(response, category):
         pages = pages.values()
     for page in pages:
         for info in page.get("imageinfo", []):
+            if info.get("mime") not in {"image/jpeg", "image/png"}:
+                continue
             if max(info.get("width", 0), info.get("height", 0)) < 2400:
                 continue
             metadata = info.get("extmetadata", {})
@@ -54,10 +56,12 @@ def parse_pages(response, category):
             if not author:
                 continue
             title = page["title"]
+            url = urlsplit(info["url"])
             result.append({
                 "id": f"commons-{page['pageid']}", "source": "commons",
                 "source_id": str(page["pageid"]), "title": title,
-                "url": info["url"], "attribution_url": info["descriptionurl"],
+                "url": urlunsplit(url._replace(query="", fragment="")),
+                "attribution_url": info["descriptionurl"],
                 "author": author, "licence": licence,
                 "licence_url": metadata.get("LicenseUrl", {}).get("value", ""),
                 "category": category, "width": info["width"], "height": info["height"],
@@ -73,7 +77,7 @@ def query(category, search, limit, user_agent):
         parameters = {
             "action": "query", "format": "json", "generator": "search",
             "gsrsearch": search, "gsrnamespace": 6, "gsrlimit": 50,
-            "prop": "imageinfo", "iiprop": "url|size|extmetadata",
+            "prop": "imageinfo", "iiprop": "url|size|mime|extmetadata",
             **continuation,
         }
         request = Request(API + "?" + urlencode(parameters),

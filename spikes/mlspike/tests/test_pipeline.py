@@ -12,7 +12,7 @@ from contact_sheet import generate
 from fetch import fetch, materialize
 from raw_preview import embedded_preview
 from verify_manifest import main, validate_rig, verify
-from tests.fixtures import full_inputs
+from tests.fixtures import attribution, full_inputs
 
 
 class PipelineTests(unittest.TestCase):
@@ -21,12 +21,14 @@ class PipelineTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name).resolve()
         self.sources = self.root / "sources"
+        self.attribution = attribution()
         self.selection, self.edges, self.rig, self.licences = full_inputs(self.sources)
 
     def build(self, name="first"):
         with patch("fetch.urlopen", side_effect=AssertionError("Tests must remain offline")):
             return fetch(self.selection, self.edges, self.rig, self.licences,
-                         self.root / name, self.sources, self.sources)
+                         self.root / name, self.sources, self.sources,
+                         self.attribution, digest(self.attribution))
 
     def test_independent_runs_have_identical_manifest_hash_and_pass_g2(self):
         first = self.build()
@@ -59,14 +61,36 @@ class PipelineTests(unittest.TestCase):
             self.assertGreater(image.getpixel((0, 0))[1], image.getpixel((0, 0))[0])
 
     def test_missing_attribution_and_bad_subquotas_fail_before_download(self):
-        self.selection["samples"][0]["author"] = ""
+        source_id = self.selection["samples"][0]["source_id"]
+        entry = self.attribution.pop(source_id)
+        self.selection["attribution_sha256"] = digest(self.attribution)
         with self.assertRaisesRegex(ValueError, "author attribution"):
             self.build()
-        self.selection["samples"][0]["author"] = "Reviewed creator"
+        self.attribution[source_id] = entry
+        self.selection["attribution_sha256"] = digest(self.attribution)
         for sample in self.edges:
             sample["tags"] = []
         with self.assertRaisesRegex(ValueError, "backlit-or-flyaway"):
             self.build()
+
+    def test_fetch_uses_image_id_snapshot_and_preserves_its_hash(self):
+        for sample in self.selection["samples"]:
+            sample["author"] = "Untrusted annotation author"
+        manifest = self.build()
+        self.assertEqual(digest(self.attribution), manifest["attribution_sha256"])
+        for sample in manifest["samples"]:
+            if sample["source"] == "coco":
+                self.assertEqual(self.attribution[sample["source_id"]]["author"], sample["author"])
+
+    def test_changed_snapshot_and_unresolved_authors_fail_before_download(self):
+        source_id = self.selection["samples"][0]["source_id"]
+        self.attribution[source_id] = {"unresolved": "Photo removed"}
+        with self.assertRaisesRegex(ValueError, "SHA-256 differs"):
+            self.build()
+        self.selection["attribution_sha256"] = digest(self.attribution)
+        with self.assertRaisesRegex(ValueError, "resolved author attribution"):
+            self.build()
+        self.assertFalse((self.root / "first").exists())
 
     def test_integrity_failure_and_existing_manifest_are_not_overwritten(self):
         manifest = self.build()

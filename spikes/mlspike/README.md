@@ -9,9 +9,9 @@ state and stops for the owner at that bound.
 **D-6: local evaluation only.** Images, masks, annotation dumps, licence evidence
 and contact sheets stay outside this repository, under the run directory.
 Never commit or redistribute them, and never use them for training or tuning.
-Only source identifiers and attribution in the reviewed `edge-set.json` belong
-in Git. The CLIs refuse output directories inside the repository. Tests generate
-tiny synthetic files inside temporary directories under `tests/` and remove them.
+Only source identifiers and attribution in the reviewed `edge-set.json` and
+`coco-attribution.json` belong in Git. The CLIs refuse sample-data output directories
+inside the repository. Tests generate tiny synthetic files inside temporary directories under `tests/` and remove them.
 
 ## Setup and responsibilities
 
@@ -36,7 +36,7 @@ Provide the official COCO instances val2017 JSON and COCO-Stuff val2017 JSON
 Extract archives locally first. These tools do not download annotation dumps.
 
 ```powershell
-python spikes/mlspike/select_labeled.py --instances RUN/annotations/instances_val2017.json --stuff RUN/annotations/stuff_val2017.json --output-dir RUN/selection
+python spikes/mlspike/select_labeled.py --instances RUN/annotations/instances_val2017.json --stuff RUN/annotations/stuff_val2017.json --attribution spikes/mlspike/coco-attribution.json --output-dir RUN/selection
 ```
 
 Seed 51 is fixed. The selector sorts by numeric image ID before shuffling with
@@ -44,7 +44,7 @@ Python's seeded PRNG. It selects 16 people, 8 animals, 16 sky and 4 indoor negat
 It selects subjects first, excludes their IDs from the sky pool, reserves six
 tree-adjacent skies, then fills the remaining sky slots. An insufficient pool
 fails; thresholds never relax. Annotation JSON SHA-256 values travel with the
-selection.
+selection, together with the exact attribution snapshot file SHA-256.
 
 Subject coverage uses COCO's annotated areas: exactly one non-crowd person/animal,
 at least 15% of the frame; all other instance areas summed at most 5%; long edge
@@ -60,10 +60,35 @@ coordinates are clipped to the image. Every PNG mask uses the image's native
 raster dimensions, with values 0/255. No resizing occurs until the contact-sheet
 thumbnail; no predicted mask exists in WP1.
 
-COCO creator names are often missing. Supply a reviewed attribution JSON keyed
-by selected sample ID, e.g. `coco-subject-person-123`, with `author` and optionally
-`attribution_url`. Use the source/Flickr attribution page to establish authorship.
-Missing names fail before image downloads; a URL is not a substitute for a name.
+COCO creator names are missing. `--attribution` is required and names the reviewed
+`coco-attribution.json`, initially `{}` for Claude to fill. It is keyed by COCO
+image ID (e.g. `"123"`, never sample ID). Each entry is either
+`{"author": "Flickr owner", "attribution_url": "https://www.flickr.com/photos/OWNER/PHOTO/"}`
+or `{"unresolved": "Photo deleted; no recoverable owner"}`.
+
+Each seeded draw skips known unresolved images without reshuffling. At the first
+unknown image, selection exits with code 2 without writing `labeled.json`. It writes
+`needs-attribution.json`: an ordered list of `image_id` / `flickr_url` records for
+that draw's remaining shortfall plus up to five backups. Only unknown IDs appear;
+a smaller remaining pool yields fewer backups. Resolve that batch on the host:
+
+```powershell
+python spikes/mlspike/resolve_flickr_authors.py --needs RUN/selection/needs-attribution.json --snapshot spikes/mlspike/coco-attribution.json
+```
+
+The helper parses the photo ID from COCO's Flickr URL, follows `photo.gne` using a
+cookie jar, and records the photo page's owner handle and canonical attribution URL.
+An empty `/photos///` owner, failed request or unresolved redirect becomes an
+`unresolved` entry. Existing snapshot decisions are preserved; Claude reviews them
+and may correct a failed lookup before rerunning selection. No live lookup occurs
+in selection or fetching. Repeat selection and resolution until all draws are
+attributable; quotas never relax. On success the needs file is removed. A completed
+selection directory cannot be overwritten: use a fresh directory for another run.
+
+The fetcher requires the same snapshot bytes (checked against `attribution_sha256`
+in `labeled.json`), uses authors by COCO image ID, and carries the hash into the
+manifest. It rejects missing/unresolved entries before downloading, even if the
+selection contains an author. Commit the reviewed snapshot alongside the picks.
 
 ## Edge review
 
@@ -76,7 +101,8 @@ Queries are discovery aids, not automatic aesthetic selections. Override
 `--query` to find each sub-quota; keep each review batch in its own output directory.
 For offline processing, replace the live query with `--response PATH` to a saved
 Commons API response. The API collector follows continuation and filters on
-explicit allowed licence, creator and long edge of at least 2400.
+explicit allowed licence, creator, JPEG/PNG MIME type and long edge of at least
+2400. Original upload URLs have tracking queries removed.
 
 `edge-set.json` intentionally starts as `[]`. After visual review, Claude copies
 36 chosen records into it. An empty list is valid pick-list syntax but cannot pass
@@ -153,7 +179,7 @@ never pass. Model/weight licence review belongs to WP2.
 ## Fetch, rerun and owner sheet
 
 ```powershell
-python spikes/mlspike/fetch.py --labeled RUN/selection/labeled.json --edges spikes/mlspike/edge-set.json --rig RUN/rig.json --annotation-licences RUN/annotation-licences.json --attribution RUN/attribution.json --output-dir RUN/sampleset
+python spikes/mlspike/fetch.py --labeled RUN/selection/labeled.json --edges spikes/mlspike/edge-set.json --rig RUN/rig.json --annotation-licences RUN/annotation-licences.json --attribution spikes/mlspike/coco-attribution.json --output-dir RUN/sampleset
 python spikes/mlspike/contact_sheet.py --manifest RUN/sampleset/manifest.json --output-dir RUN/contact-sheet
 ```
 
@@ -185,7 +211,7 @@ empty negatives. RAW entries use embedded previews. Never publish this directory
 ```powershell
 python -m compileall -q spikes/mlspike
 cd spikes/mlspike
-python -m unittest tests.test_masks.MaskTests tests.test_selection.SelectionTests tests.test_commons.CommonsTests tests.test_pipeline.PipelineTests
+python -m unittest tests.test_masks.MaskTests tests.test_selection.SelectionTests tests.test_commons.CommonsTests tests.test_pipeline.PipelineTests tests.test_attribution.AttributionTests
 ```
 
 The orchestrator separately runs discovery and the repository verification script,

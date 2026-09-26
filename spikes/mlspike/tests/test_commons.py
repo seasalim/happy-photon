@@ -7,7 +7,7 @@ from commons_candidates import parse_pages
 class CommonsTests(unittest.TestCase):
     def response(self):
         return {"query": {"pages": {"7": {"pageid": 7, "title": "File:Photo.jpg",
-            "imageinfo": [{"width": 3000, "height": 2000,
+            "imageinfo": [{"width": 3000, "height": 2000, "mime": "image/jpeg",
                           "url": "https://upload.wikimedia.org/photo.jpg",
                           "descriptionurl": "https://commons.wikimedia.org/wiki/File:Photo.jpg",
                           "extmetadata": {"LicenseShortName": {"value": "CC BY-SA 4.0"},
@@ -30,6 +30,27 @@ class CommonsTests(unittest.TestCase):
         self.assertEqual([], parse_pages(response, "portrait"))
         info["width"] = 2400
         info["extmetadata"]["Artist"]["value"] = ""
+        self.assertEqual([], parse_pages(response, "portrait"))
+
+    def test_tracking_query_is_removed_from_original_url(self):
+        response = self.response()
+        info = response["query"]["pages"]["7"]["imageinfo"][0]
+        info["url"] += "?utm_source=commons&utm_campaign=test&utm_content=original"
+        sample, = parse_pages(response, "portrait")
+        self.assertEqual("https://upload.wikimedia.org/photo.jpg", sample["url"])
+
+    def test_only_jpeg_and_png_mime_types_are_eligible(self):
+        response = self.response()
+        info = response["query"]["pages"]["7"]["imageinfo"][0]
+        for mime in ("image/jpeg", "image/png"):
+            with self.subTest(mime=mime):
+                info["mime"] = mime
+                self.assertEqual(1, len(parse_pages(response, "portrait")))
+        for mime in ("image/vnd.djvu", "application/pdf", "image/tiff", "image/webp", "", None):
+            with self.subTest(mime=mime):
+                info["mime"] = mime
+                self.assertEqual([], parse_pages(response, "portrait"))
+        del info["mime"]
         self.assertEqual([], parse_pages(response, "portrait"))
 
     def test_licence_normalization_never_admits_nc_or_nd(self):

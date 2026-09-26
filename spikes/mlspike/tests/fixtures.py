@@ -50,6 +50,12 @@ def annotations():
     return instances, stuff
 
 
+def attribution():
+    return {str(index): {"author": f"Test creator {index}",
+                         "attribution_url": f"https://www.flickr.com/photos/test/{index}/"}
+            for index in range(1, 57)}
+
+
 def rig():
     return {
         "windows-2025": {"runner_image": "windows-2025-test", "cpu_model": "AMD EPYC 7763",
@@ -65,7 +71,8 @@ def full_inputs(root):
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
     instances, stuff = annotations()
-    selection = select(instances, stuff)
+    selection = select(instances, stuff, attribution())
+    selection["attribution_sha256"] = digest(attribution())
     selection["annotations"] = {"instances": digest(instances), "stuff": digest(stuff)}
     for sample in selection["samples"]:
         path = root / f"{sample['id']}.jpg"

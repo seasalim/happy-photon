@@ -8,6 +8,7 @@ from pathlib import Path
 from common import (ANIMALS, SEED, coco_licences, file_hash, output_directory,
                     read_json, sorted_samples, write_json)
 from masks import adjacent, union
+from coco_attribution import load_snapshot, validate_snapshot
 
 # Ceiling labels provide a conservative indoor cue; floor labels can be outdoors.
 INDOOR = {"ceiling-other", "ceiling-tile"}
@@ -104,29 +105,50 @@ def sky_candidates(instances, stuff):
     return result
 
 
-def choose(candidates, count, rng, label):
+class NeedsAttribution(ValueError):
+    def __init__(self, label, samples):
+        super().__init__(f"Resolve attribution for {label}; see needs-attribution.json")
+        self.needs = [{"image_id": int(s["source_id"]),
+                       "flickr_url": s["attribution_url"]} for s in samples]
+
+
+def choose(candidates, count, rng, label, attribution):
     ordered = sorted(candidates, key=lambda item: int(item["source_id"]))
     if len(ordered) < count:
         raise ValueError(f"Insufficient {label}: {len(ordered)} available, {count} required")
     rng.shuffle(ordered)
-    return ordered[:count]
+    selected = []
+    for index, sample in enumerate(ordered):
+        entry = attribution.get(sample["source_id"])
+        if entry is None:
+            # Stop at the first unknown draw. Request the remaining shortfall plus
+            # five backups (or all remaining unknowns if the pool is smaller).
+            unknown = [s for s in ordered[index:] if s["source_id"] not in attribution]
+            raise NeedsAttribution(label, unknown[:count - len(selected) + 5])
+        if "unresolved" in entry:
+            continue
+        selected.append(sample | entry)
+        if len(selected) == count:
+            return selected
+    raise ValueError(f"Insufficient {label}: {len(selected)} attributable, {count} required")
 
 
-def select(instances, stuff, seed=SEED):
+def select(instances, stuff, attribution, seed=SEED):
+    validate_snapshot(attribution)
     rng = random.Random(seed)
     subject = subject_candidates(instances)
     sky = sky_candidates(instances, stuff)
-    selected = choose(subject["subject-person"], 16, rng, "people")
-    selected += choose(subject["subject-animal"], 8, rng, "animals")
+    selected = choose(subject["subject-person"], 16, rng, "people", attribution)
+    selected += choose(subject["subject-animal"], 8, rng, "animals", attribution)
     used = {s["source_id"] for s in selected}
     sky = {key: [s for s in rows if s["source_id"] not in used]
            for key, rows in sky.items()}
     trees = choose([s for s in sky["sky"] if "tree-next-to-sky" in s["tags"]],
-                   6, rng, "sky with adjacent trees")
+                   6, rng, "sky with adjacent trees", attribution)
     tree_ids = {s["id"] for s in trees}
     selected += trees + choose([s for s in sky["sky"] if s["id"] not in tree_ids],
-                               10, rng, "remaining sky")
-    selected += choose(sky["sky-negative"], 4, rng, "indoor sky negatives")
+                               10, rng, "remaining sky", attribution)
+    selected += choose(sky["sky-negative"], 4, rng, "indoor sky negatives", attribution)
     return {"schema_version": 1, "seed": seed, "samples": sorted_samples(selected)}
 
 
@@ -134,13 +156,24 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--instances", type=Path, required=True)
     parser.add_argument("--stuff", type=Path, required=True)
+    parser.add_argument("--attribution", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--seed", type=int, choices=[SEED], default=SEED)
     args = parser.parse_args()
-    result = select(read_json(args.instances), read_json(args.stuff), args.seed)
+    output = output_directory(args.output_dir)
+    if (output / "labeled.json").exists():
+        parser.error("labeled.json already exists; use a fresh selection directory")
+    attribution, snapshot_hash = load_snapshot(args.attribution)
+    try:
+        result = select(read_json(args.instances), read_json(args.stuff), attribution, args.seed)
+    except NeedsAttribution as error:
+        write_json(output / "needs-attribution.json", error.needs)
+        parser.exit(2, str(error) + "\n")
+    result["attribution_sha256"] = snapshot_hash
     result["annotations"] = {
         "instances": file_hash(args.instances), "stuff": file_hash(args.stuff)}
-    write_json(output_directory(args.output_dir) / "labeled.json", result)
+    write_json(output / "labeled.json", result)
+    (output / "needs-attribution.json").unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
