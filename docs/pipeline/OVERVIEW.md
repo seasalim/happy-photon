@@ -11,6 +11,8 @@ documents cover the individual stages in greater depth.
 | [DECODE.md](DECODE.md) | Sources → `BaseImage` (loaders, LibRaw params, ICC normalize, caching) |
 | [OPTICS.md](OPTICS.md) | Embedded DNG/Fuji prescriptions and fused sampling |
 | [RENDER.md](RENDER.md) | `BaseImage` + `EditSettings` → rendered image (stage order, LUT math) |
+| [REPAIRS.md](REPAIRS.md) | Repairs edit model, persistence, validation and settings flows |
+| [HEAL_REGISTRATION.md](HEAL_REGISTRATION.md) | FINAL base-frame mapping, per-CFA registration bounds and decoder evidence |
 | [TONE_ENGINE.md](TONE_ENGINE.md) | AgX crossing and tone engine: formula authority, clean-room provenance |
 | [WHITE_BALANCE.md](WHITE_BALANCE.md) | WB model: CCT/tint math, presets, eyedropper, matrices |
 | [OUTPUT.md](OUTPUT.md) | Export encoding, ICC tagging, metadata policy, variants |

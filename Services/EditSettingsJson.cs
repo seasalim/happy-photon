@@ -31,7 +31,7 @@ internal static partial class EditSettingsJson
         return JsonSerializer.Serialize(current, CompactOptions);
     }
 
-    public static EditSettings Deserialize(string json, out bool wasClamped, bool ignoreLocals = false)
+    public static EditSettings Deserialize(string json, out bool wasClamped, bool ignoreLocals = false, bool ignoreRepairs = false)
     {
         using var document = JsonDocument.Parse(json);
         if (document.RootElement.ValueKind != JsonValueKind.Object ||
@@ -52,10 +52,11 @@ internal static partial class EditSettingsJson
         }
 
         EditSettings? parsed;
-        if (ignoreLocals || documentVersion == 3)
+        if (ignoreLocals || ignoreRepairs || documentVersion == 3)
         {
             var payload = System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject();
-            payload.Remove("locals");
+            if (ignoreLocals || documentVersion == 3) payload.Remove("locals");
+            if (ignoreRepairs) payload.Remove("repairs");
             parsed = payload.Deserialize<EditSettings>(CompactOptions);
         }
         else parsed = document.RootElement.Deserialize<EditSettings>(CompactOptions);
@@ -80,6 +81,7 @@ internal static partial class EditSettingsJson
     {
         var changed = false;
         ClampLocals(settings, ref changed);
+        ClampRepairs(settings, ref changed);
         settings.Exposure = Clamp(settings.Exposure, -3, 3, ref changed);
         settings.Highlights = Clamp(settings.Highlights, -100, 100, ref changed);
         settings.Shadows = Clamp(settings.Shadows, -100, 100, ref changed);

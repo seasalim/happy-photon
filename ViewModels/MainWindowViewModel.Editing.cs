@@ -86,6 +86,7 @@ public partial class MainWindowViewModel
         image.EditSettings.Crop = state.Crop?.Clone();
         image.EditSettings.Geometry = state.Geometry?.Clone();
         image.EditSettings.Locals = state.Locals?.Select(local => local with { }).ToList();
+        image.EditSettings.Repairs = state.Repairs?.Select(repair => repair with { }).ToList();
         RebindLocalSelection();
         WriteRawProfileSelection(image, state.RawProfile);
         image.EditSettings.AppliedPresetId = ActivePresetId;
@@ -128,7 +129,7 @@ public partial class MainWindowViewModel
 
     private async Task ResetEditsCoreAsync(
         bool preserveProfile,
-        string historyLabel, bool preserveLocals = false)
+        string historyLabel, bool preserveSpatialEdits = false)
     {
         DiscardLocalsGesture();
         if (!CanEditSelectedImage || SelectedImage == null) return;
@@ -137,13 +138,11 @@ public partial class MainWindowViewModel
         var previousIntent = _requestedPreviewIntent;
         var generation = RequestEditedRender();
 
-        // Preserve rotation and crop - Reset only affects color/tonal adjustments
         var currentRotation = Rotation;
         var currentHorizonRotation = HorizonRotation;
         var currentCrop = CurrentCrop;
-
-        // Reset color/tonal adjustments (not rotation or crop)
-        if (!preserveLocals) SelectedImage.EditSettings.Locals = null;
+        if (!preserveSpatialEdits)
+            (image.EditSettings.Locals, image.EditSettings.Repairs) = (null, null);
         RebindLocalSelection();
         SelectedImage.EditSettings.Exposure = 0;
         SelectedImage.EditSettings.Wb = new WhiteBalanceSettings();
@@ -352,7 +351,7 @@ public partial class MainWindowViewModel
     {
         await ResetEditsCoreAsync(
             preserveProfile: true,
-            historyLabel: "Preset: None", preserveLocals: true);
+            historyLabel: "Preset: None", preserveSpatialEdits: true);
     }
 
     /// <summary>

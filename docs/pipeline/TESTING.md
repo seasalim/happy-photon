@@ -344,13 +344,18 @@ locals control. Fixtures: `canon-eos-6d-iso-6400.cr2` (5496×3670; real half-dec
 pair 1600×1068 / 2748×1835) and `iphone-14-pro-iso-1000.heic` (3024×4032; pair
 1200×1600 / 2400×3200). Preview bases are never derived from the full decode.
 
-**Registration** (nine 49×49 green-channel NCC patches, ±4 px search refined to
-0.025 px; threshold ≤ 0.5 full-size px). Canon (no applicable prescription) is stable
-at ≤ 0.23 px with and without optics. The Fuji X30 half decode (optics arm) sits at the
-boundary: 0.32–0.58 px uncorrected across four runs, ≤ 0.40 px after a +0.25 px
-horizontal source-phase correction (preview u′ = u − 0.25/fullWidth). That correction
-is a candidate to validate against decoder framing before HEAL-WP2, not a production
-fix. Quarter turns, horizon, keystone and crop round-trip base points within 1e−9 px.
+**Registration — FINAL: no phase correction** (owner ruling, 2026-09-26).
+The frozen workload uses nine 49×49 green-channel NCC patches, ±4 px search
+refined to 0.025 px; bounds are **Bayer ≤ 0.5 full-size px** and
+**X-Trans ≤ 0.75 full-size px**. Every decode uses x = uW − 0.5, y = vH − 0.5.
+X-Trans half-size decoding is nondeterministic; see
+[HEAL_REGISTRATION.md](HEAL_REGISTRATION.md) for decoder evidence and qualification.
+
+Historical WP1 measurements: Canon (no applicable prescription) was stable at
+≤ 0.23 px with and without optics. Fuji X30 measured 0.32–0.58 px uncorrected
+across four runs, and ≤ 0.40 px with a diagnostic +0.25 full-pixel horizontal
+correction (preview u′ = u − 0.25/fullWidth). That candidate was not adopted.
+Quarter turns, horizon, keystone and crop round-trip base points within 1e−9 px.
 
 **Gate results** (Membrane-Additive; G3–G6 medians of five fresh processes; G7/G8
 three processes; ranges span two full qualification passes where they differ):
@@ -434,8 +439,8 @@ processors 1.228 s. Fit **179.6 MB**, refined idle **1368.3 MB** (installed delt
 
 **Outcome.** G1–G3 pass; G4 misses unlimited and takes the 6-disc area limit; G5–G8
 miss, so **HEAL-WP5 is blocked** and its design, WPs and envelopes return to the owner.
-HEAL-WP2 to WP4 are not blocked by this spike; the Fuji registration correction needs
-validation before WP2.
+HEAL-WP2 to WP4 are not blocked by this spike; registration is resolved by the
+FINAL owner ruling above.
 
 Run `Tests/RunHealGates.ps1 -Gate <name> -Fixture raw|standard` under an exclusive
 measurement lease. Names: `G1Candidates`, `G1PerSpotDiagnostic`, `G2ExportParity`,
@@ -449,6 +454,71 @@ the previous full bitmap is referenced, without forced GC. The prototype's extra
 copy is included in G3–G8 (conservative; production writes into the pipeline's working
 copy). JSON and logs go to `artifacts/heal/`; this section is the durable record.
 `HAPPY_PHOTON_XT50_FIXTURE` selects a local opt-in RAF for the 40 MP record.
+
+### HEAL-WP2 frozen controls
+
+Area validation uses the shared Neumaier compensated `RepairArea.Sum` over clamped
+radii and admits sums ≤ `Repair.MaximumArea * (1 + 1e-12)`, keeping `MaximumArea`
+exactly 0.18849555921538758 long-edge²; the relative tolerance covers rounding only
+(below about 5e-13 relative radius change).
+
+The [repairs contract](REPAIRS.md) defines the model, persistence and settings
+flows; [HEAL_REGISTRATION.md](HEAL_REGISTRATION.md) records the FINAL no-phase
+mapping, per-CFA bounds and X-Trans decoder evidence.
+
+Controls were frozen against production revision
+15c1063b5970a915a3b328d5c2891608e321aab8, with test instrumentation only.
+
+**G1 — canonical serialization.** The frozen document set and exact pre-change
+UTF-8 outputs live in
+[HealSerializationBaseline.jsonl](../../Tests/HealSerializationBaseline.jsonl):
+84 named documents covering all 49 asset/settings pairs in GoldenTestCases,
+all 16 geometry goldens, RenderSequenceGoldenTests.Settings, and 18 supported
+complete JSON settings documents embedded in Tests/HeadlessTests, including nested
+preset settings and pipe-delimited migration goldens. The scanner covers raw,
+verbatim and concatenated C# strings and JSON files. Unsupported/invalid negative
+fixtures have no canonical output and are excluded; runtime-generated mutations
+are not standalone fixture documents.
+
+HealSerializationControlTests checks corpus identity and exact canonical bytes;
+source formatting and valid v3 migration syntax are not differences. There is no
+baseline update switch. The observed control was **0 differing bytes** (three
+runs: 0, 0, 0); the acceptance threshold remains **0**.
+
+**G2 — history payload.** The frozen exposure control is **32,938 bytes** across
+65 persisted rows (Original plus 64 commits), position −1 → 64. It fell below the
+original 40–250 KB envelope; the owner explicitly accepted it on 2026-09-26.
+The S64 acceptance threshold is **432,938 bytes**: control + 400,000 bytes
+(decimal KB). Never recompute the control to change this allowance.
+
+Starting catalog: a newly initialized CatalogService in a unique temporary
+directory, one synthetic.cr2 path registered with GetOrCreateImageAsync, no actual
+photo file, default EditSettings, zero edit_history rows and position −1. No source
+content or availability probe is needed. S64 uses this same initial state.
+
+Frozen exposure script: for integer i = 1..64 in increasing order, assign
+Exposure = i / 16d (+0.0625 through +4.0 EV), with all other settings at defaults.
+Each step clones the previous state, calls EditHistory.PrepareAppend, awaits
+CatalogService.SaveEditSettingsWithHistoryAsync, then calls EditHistory.Publish.
+These are Develop's production history APIs and order. Labels are derived by
+production code; the first commit also persists Original. S64 reuses
+HealHistoryWorkload.RunAsync, replacing only the edit callback with one appended
+spot per step.
+
+Accounting: after minus before of the persisted UTF-8 byte lengths of label plus
+settings_json over this image's edit_history rows, including Original. The SQL
+sums length(CAST(label AS BLOB)) + length(CAST(settings_json AS BLOB)); it never
+reserializes rows or estimates bytes from managed strings. SQLite row/index/page
+overhead and images.edit_settings are excluded. Secondary catalog.db growth was
+36,864 → 77,824 bytes (**40,960 bytes**), measured only after a non-busy
+wal_checkpoint(TRUNCATE) at each boundary, excluding WAL allocation. This secondary
+metric must not replace the history payload metric.
+
+Run Tests/RunHealWp2Controls.ps1 -Gate G1 for serialization. Its -Gate G2 selects
+the opt-in historical exposure workload (HEAL_CONTROL=1), not the S64 gate;
+ordinary runs skip that control. The runner bounds each invocation to 120 seconds.
+RepairFlowTests.S64HistoryGrowthStaysWithinTheFrozenAllowance measures S64 against
+the recorded control and threshold above; it does not rerun the exposure control.
 
 **OPS-WP1 measurement spike (2026-09-26, Windows/WIC, Q16 OpenMP, 24 logical CPUs).**
 Test-only: net production LOC **0**. Deletes nothing: the prototypes and independent

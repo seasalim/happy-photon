@@ -248,7 +248,7 @@ public partial class MainWindowViewModel
             SelectedImage?.EditSettings.CurveRed is { } red && !red.IsIdentity() ||
             SelectedImage?.EditSettings.CurveGreen is { } green && !green.IsIdentity() ||
             SelectedImage?.EditSettings.CurveBlue is { } blue && !blue.IsIdentity();
-        CanReset = HasLocals || Exposure != 0.0 ||
+        CanReset = HasLocals || SelectedImage?.EditSettings.Repairs != null || Exposure != 0.0 ||
                    !_liveWhiteBalance.IsIdentity ||
                    Brightness != 0 ||
                    Contrast != 0 ||

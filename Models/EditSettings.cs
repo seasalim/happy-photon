@@ -140,6 +140,17 @@ public class EditSettings
         set => _locals = value;
     }
 
+    private List<Repair>? _repairs;
+
+    [JsonPropertyName("repairs")]
+    [JsonPropertyOrder(26)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<Repair>? Repairs
+    {
+        get => _repairs is { Count: > 0 } ? _repairs : null;
+        set => _repairs = value;
+    }
+
     [JsonIgnore]
     public bool HasEdits => Exposure != 0.0 || !Wb.IsIdentity ||
                           Brightness != 0 || Contrast != 0 ||
@@ -157,7 +168,7 @@ public class EditSettings
                           (CurveGreen is { } green && !green.IsIdentity()) ||
                           (CurveBlue is { } blue && !blue.IsIdentity()) ||
                           AppliedPresetId != null ||
-                          RawProfile != null || Locals != null;
+                          RawProfile != null || Locals != null || Repairs != null;
 
     public EditSettings Clone() => new()
     {
@@ -186,7 +197,8 @@ public class EditSettings
         RawProfile = RawProfile?.Clone(),
         Mixer = Mixer?.Clone(),
         Geometry = Geometry?.Clone(),
-        Locals = Locals?.Select(local => local with { }).ToList()
+        Locals = Locals?.Select(local => local with { }).ToList(),
+        Repairs = Repairs?.Select(repair => repair == null ? null! : repair with { }).ToList()
     };
 
     public bool HasSameEdits(EditSettings other)
@@ -218,7 +230,8 @@ public class EditSettings
                CurvesMatch(CurveGreen, other.CurveGreen) &&
                CurvesMatch(CurveBlue, other.CurveBlue) &&
                ProfilesEqual(RawProfile, other.RawProfile) &&
-               (Locals ?? []).SequenceEqual(other.Locals ?? []);
+               (Locals ?? []).SequenceEqual(other.Locals ?? []) &&
+               (Repairs ?? []).SequenceEqual(other.Repairs ?? []);
     }
 
     private static bool CropsMatch(CropRegion? left, CropRegion? right) =>

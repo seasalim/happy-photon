@@ -3,7 +3,7 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
 
-public static class EditHistoryLabel
+public static partial class EditHistoryLabel
 {
     public static string Derive(EditSettings before, EditSettings after,
         string? operation = null)
@@ -100,6 +100,7 @@ public static class EditHistoryLabel
         Add(changes, "Highlight handling", before.HlReconstruction,
             after.HlReconstruction);
         AddLocals(changes, before.Locals, after.Locals);
+        AddRepairs(changes, before.Repairs, after.Repairs);
         Add(changes, "Profile", before.RawProfile, after.RawProfile);
         return changes.Count switch
         {

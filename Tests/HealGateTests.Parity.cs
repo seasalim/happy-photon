@@ -92,19 +92,20 @@ public sealed partial class HealGateTests
                     offsets.Add((bestX, bestY));
                 }
                 var max = offsets.Max(p => Math.Sqrt(p.X * p.X + p.Y * p.Y));
-                var pass = max <= .5; allPass &= pass;
+                var threshold = fixture == "fujifilm-x30.raf" ? .75 : .5;
+                var pass = max <= threshold; allPass &= pass;
                 // Diagnostic correction to hand back to the owner, not a production decode fix.
                 var correctionX = fixture == "fujifilm-x30.raf" ? .25 : 0;
                 var correctedMax = offsets.Max(p => Math.Sqrt((p.X - correctionX) * (p.X - correctionX) + p.Y * p.Y));
                 Report("registration", new { source = fixture, optics, prescription = full.Info.LensPrescriptionSummary?.Source,
                     activeOptics = optics && full.Info.LensPrescriptionSummary?.HasAny == true,
                     size = Size(basis), full = Size(full), method = "9-patch NCC, green, sigma1, 0.25px search +/-4, refined to 0.025 full px",
-                    offsets = offsets.Select(p => new { p.X, p.Y }), maxFullPixelError = max, threshold = .5, pass,
+                    offsets = offsets.Select(p => new { p.X, p.Y }), maxFullPixelError = max, threshold, pass,
                     suggestedFullPixelCorrectionX = correctionX, correctedMax,
                     medianOffsetX = Median(offsets.Select(p => p.X)), medianOffsetY = Median(offsets.Select(p => p.Y)) });
             }
         }
-        Assert.True(allPass, "Registration exceeds 0.5 full pixels; record a correction before WP2");
+        Assert.True(allPass, "Registration exceeds the owner-approved Bayer 0.5 / X-Trans 0.75 full-pixel bound");
     }
     private static double RegistrationError(ushort[] a, ushort[] b, int w, int cx, int cy, double dx, double dy)
     {

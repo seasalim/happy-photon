@@ -11,7 +11,7 @@ internal static class HealOracle
         foreach (var spot in spots)
         {
             var snapshot = result.Select(value => value / 65535d).ToArray();
-            var r = Math.Min(spot.Radius * Math.Max(width, height), Math.Min(width, height) / 2d);
+            var r = HappyPhoton.Services.RepairGeometry.EffectiveRadius(spot.Radius, width, height);
             var x0 = spot.U * width - .5; var y0 = spot.V * height - .5;
             var xs = Math.Clamp(spot.Su * width, r, width - r) - .5;
             var ys = Math.Clamp(spot.Sv * height, r, height - r) - .5;

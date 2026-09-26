@@ -246,6 +246,7 @@ public class PresetService
         settings.Crop = null;
         settings.Geometry = null;
         settings.Locals = null;
+        settings.Repairs = null;
         if (settings.Effects?.HasActivePixels != true)
         {
             settings.Effects = null;
@@ -290,7 +291,7 @@ public class PresetService
 
         var settings = EditSettingsJson.Deserialize(
             settingsElement.GetRawText(),
-            out var wasClamped, ignoreLocals: true);
+            out var wasClamped, ignoreLocals: true, ignoreRepairs: true);
         // Camera and lens profiles are image-specific and never transfer through a
         // preset file, including a hand-edited one.
         settings.RawProfile = null;
