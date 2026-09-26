@@ -61,8 +61,13 @@ def oneformer(args, output):
     # The class-info JSON normally comes from the shi-labs/oneformer_demo dataset repo at load
     # time; the host pins it into the snapshot, so point the processor at the local copy.
     from transformers import AutoTokenizer, OneFormerImageProcessor
-    image_processor = OneFormerImageProcessor.from_pretrained(
-        args.source, local_files_only=True, repo_path=str(args.source))
+    # from_pretrained applies kwargs after __init__, but __init__ already loads the class-info
+    # file, so construct from the saved config with repo_path replaced up front.
+    image_config = json.loads((args.source / "preprocessor_config.json").read_text(encoding="utf-8"))
+    image_config.pop("image_processor_type", None)
+    image_config.pop("processor_class", None)
+    image_config["repo_path"] = str(args.source)
+    image_processor = OneFormerImageProcessor(**image_config)
     tokenizer = AutoTokenizer.from_pretrained(args.source, local_files_only=True)
     processor = OneFormerProcessor(image_processor=image_processor, tokenizer=tokenizer)
     label = model.config.id2label.get(args.sky_class, "")
