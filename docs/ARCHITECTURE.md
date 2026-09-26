@@ -194,6 +194,25 @@ Folder/history reads await earlier saves by case-insensitive source path; cancel
 wait preserves the save and edits across instance replacement, without per-image
 queries. One gated connection needs no WAL.
 
+### Backups
+
+On quit, the hidden main window drains view-model commits, then runs a weekly backup
+before final closure. Repeated close and desktop lifetime quit requests wait for that
+same shutdown. Avalonia’s desktop ShutdownRequested event (the macOS Quit menu and
+Dock Quit route) is cancelled and routed through the same window close guard. An
+unopened catalog or a session that has not reached Ready with first-run completion
+committed is skipped; no startup work or source reads are added.
+
+CatalogBackupService takes a SQLite online snapshot and count/schema under the shared
+connection gate. Integrity, metadata, SHA-256 and zip readback checks run on the copy
+after release. Identity and atomically saved, loadable presets accompany catalog.db;
+invalid presets are skipped, matching the app's preset loader.
+The zip is published first, its sidecar manifest last as the commit marker. Scheduling
+and retention only list sidecars with matching archives, without opening archives.
+Only after verification are older scheduled/manual backups pruned to five (sidecar
+first); unchecked archives and before-restore/upgrade kinds remain. Owned partials
+are swept on the next attempt. Outcomes persist best-effort in catalog app settings.
+
 ## Lightroom catalog import
 
 `LightroomCatalogReader` reads assessments and optional crops from a closed-catalog

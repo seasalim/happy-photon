@@ -141,7 +141,7 @@ public class PresetService
         Directory.CreateDirectory(RequireDirectory());
         var path = GetPresetPath(id);
         var json = JsonSerializer.Serialize(file, JsonOptions);
-        await File.WriteAllTextAsync(path, json);
+        await WritePresetAsync(path, json);
 
         var preset = file.ToPreset();
         if (existingIndex >= 0)
@@ -176,7 +176,7 @@ public class PresetService
         };
 
         var json = JsonSerializer.Serialize(file, JsonOptions);
-        await File.WriteAllTextAsync(GetPresetPath(id), json);
+        await WritePresetAsync(GetPresetPath(id), json);
         _userPresets[index] = file.ToPreset();
         RefreshPresetSnapshot();
         PresetsChanged?.Invoke(this, EventArgs.Empty);
@@ -199,6 +199,29 @@ public class PresetService
         _userPresets.RemoveAt(index);
         RefreshPresetSnapshot();
         PresetsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    internal Action<string>? WriteStep { get; set; }
+
+    private async Task WritePresetAsync(string path, string json)
+    {
+        var temporary = $"{path}.{Guid.NewGuid():N}.tmp";
+        try
+        {
+            WriteStep?.Invoke("before:preset-write");
+            await File.WriteAllTextAsync(temporary, json);
+            WriteStep?.Invoke("after:preset-write");
+            WriteStep?.Invoke("before:preset-rename");
+            if (File.Exists(path)) File.Replace(temporary, path, destinationBackupFileName: null);
+            else File.Move(temporary, path);
+            WriteStep?.Invoke("after:preset-rename");
+        }
+        finally
+        {
+            WriteStep?.Invoke("before:preset-delete");
+            File.Delete(temporary);
+            WriteStep?.Invoke("after:preset-delete");
+        }
     }
 
     private void RefreshPresetSnapshot()
@@ -237,7 +260,7 @@ public class PresetService
         return settings;
     }
 
-    private static UserPresetFile? DeserializePresetFile(string json, string path)
+    internal static UserPresetFile? DeserializePresetFile(string json, string path)
     {
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;

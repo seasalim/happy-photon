@@ -160,6 +160,7 @@ public partial class MainWindow
         string? picturesPath)
     {
         _startupCatalogService = catalogService;
+        BackupOnQuitAsync = new CatalogBackupService(catalogService).BackupIfDueAsync;
         _dataLocationService = locationService;
         _locationMigrator = locationMigrator;
         vm.BindDataLocationService(locationService);

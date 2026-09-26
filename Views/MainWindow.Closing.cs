@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using HappyPhoton.Models;
 using HappyPhoton.ViewModels;
@@ -7,8 +8,18 @@ namespace HappyPhoton.Views;
 
 public partial class MainWindow
 {
+    internal Func<Task>? BackupOnQuitAsync { get; set; }
+
+    internal void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
+    {
+        if (_closeReady) return;
+        e.Cancel = true;
+        Close();
+    }
+
     protected override async void OnClosing(WindowClosingEventArgs e)
     {
+        if (_isClosing && !_closeReady) { e.Cancel = true; return; }
         if (_closeReady || DataContext is not MainWindowViewModel vm)
         {
             base.OnClosing(e);
@@ -37,6 +48,16 @@ public partial class MainWindow
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Image service shutdown failed: {ex.Message}");
+        }
+
+        try
+        {
+            if (vm.CanPersistFolderSession && vm.StartupGateState == StartupGateState.Ready &&
+                BackupOnQuitAsync is { } backup) await backup();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Catalog backup failed: {ex.Message}");
         }
 
         _closeReady = true;

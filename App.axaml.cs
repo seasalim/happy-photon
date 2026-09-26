@@ -30,6 +30,8 @@ public partial class App : Application
             window.RestoreWindowPlacement(placementStore, placementStore.Load());
 
             desktop.MainWindow = window;
+            desktop.ShutdownRequested += window.OnShutdownRequested;
+            window.Closed += (_, _) => desktop.ShutdownRequested -= window.OnShutdownRequested;
             StartupTrace.Attach(window, viewModel);
             window.Show();
 

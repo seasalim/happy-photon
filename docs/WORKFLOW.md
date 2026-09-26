@@ -17,7 +17,10 @@ designed to make fast.
 
 Happy Photon works directly with existing folders. Originals stay in place; edits,
 assessments and presets live in the local catalog, and Export creates new files.
-Keep the catalog in your backups. Thumbnails and previews are regenerable caches;
+Happy Photon makes a verified weekly backup on quit in the catalog’s Backups folder,
+keeping the newest five. These protect edits and presets on this disk; keep originals
+and a separate copy of your backups elsewhere to protect against disk loss.
+Thumbnails and previews are regenerable caches;
 Settings → Storage reveals both locations and stages moves for the next launch.
 
 First run confirms storage and the Pictures browsing root, optionally imports Lightroom
