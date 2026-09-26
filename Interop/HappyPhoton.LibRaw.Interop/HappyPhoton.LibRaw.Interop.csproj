@@ -16,6 +16,8 @@
     <InternalsVisibleTo Include="HappyPhoton.Tests" />
     <InternalsVisibleTo Include="HappyPhoton" />
     <InternalsVisibleTo Include="HappyPhoton.Headless.Tests" />
+    <!-- spike/mlspike only: the S1 harness mirrors the app's OpenMP limit. -->
+    <InternalsVisibleTo Include="MlSpike.Harness" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="HappyPhoton.LibRaw.Native" Version="0.22.2.12" />
