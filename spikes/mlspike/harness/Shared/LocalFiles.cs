@@ -18,10 +18,18 @@ public static class LocalFiles
 
     // A volume mounted into a folder (e.g. the ReFS dev volume at D:\Workspace) is a
     // reparse point too, but it is not a link to other content; symlinks and junctions are.
-    static bool IsVolumeMountPoint(FileSystemInfo entry) =>
-        entry is DirectoryInfo && entry.LinkTarget is { } target &&
-        (target.StartsWith(@"\\?\Volume{", StringComparison.OrdinalIgnoreCase) ||
-         target.StartsWith(@"\??\Volume{", StringComparison.OrdinalIgnoreCase));
+    // .NET reports no LinkTarget for volume mount points, so ask Windows directly: the call
+    // succeeds only for a real volume mount point (not a junction or symlink).
+    static bool IsVolumeMountPoint(FileSystemInfo entry)
+    {
+        if (!OperatingSystem.IsWindows() || entry is not DirectoryInfo) return false;
+        var buffer = new char[64];
+        return GetVolumeNameForVolumeMountPointW(
+            Path.TrimEndingDirectorySeparator(entry.FullName) + "\\", buffer, (uint)buffer.Length);
+    }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    static extern bool GetVolumeNameForVolumeMountPointW(string mountPoint, char[] volumeName, uint length);
 
     public static byte[] Read(string path)
     {
