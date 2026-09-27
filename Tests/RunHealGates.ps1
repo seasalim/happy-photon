@@ -1,11 +1,12 @@
 param(
-    [ValidateSet('G1Candidates','G1PerSpotDiagnostic','G2ExportParity','Registration','G3Tick','G4Contention','G5G6Refinement','G7G8Memory','Record40Mp','RepairCostDiagnostic')]
+    [ValidateSet('G1Candidates','G1PerSpotDiagnostic','G2ExportParity','Registration','G3Tick','G4Contention','G5G6Refinement','G7G8Memory','Record40Mp','RepairCostDiagnostic','Wp3ExportDelta')]
     [string]$Gate = 'G3Tick',
     [ValidateSet('raw','standard')][string]$Fixture = 'raw',
-    [ValidateSet('Membrane','Gaussian')][string]$Formulation = 'Membrane',
-    [ValidateSet('Additive','Ratio')][string]$Domain = 'Additive',
+    [ValidateSet('Membrane')][string]$Formulation = 'Membrane',
+    [ValidateSet('Additive')][string]$Domain = 'Additive',
     [ValidateRange(0,3)][double]$AreaLimit = 0,
     [ValidateRange(5,64)][int[]]$AreaDiscCounts = @(),
+    [ValidateSet("SCap6", "SArea64")][string]$Workload = "SCap6",
     [switch]$Diagnostic,
     [ValidateRange(1,600)][int]$TimeoutSeconds = 300
 )
@@ -35,6 +36,7 @@ if ($AreaDiscCounts.Count -gt 0) {
 $env:HAPPY_PHOTON_PERF = '1'
 $env:HAPPY_PHOTON_FULL_CPU = '1'
 $env:HAPPY_PHOTON_HEAL_FIXTURE = $Fixture
+$env:HAPPY_PHOTON_HEAL_WORKLOAD = $Workload
 $env:HAPPY_PHOTON_HEAL_FORMULATION = $Formulation
 $env:HAPPY_PHOTON_HEAL_DOMAIN = $Domain
 $env:HAPPY_PHOTON_HEAL_AREA_LIMIT = if ($AreaLimit -gt 0) { $AreaLimit.ToString('R', [Globalization.CultureInfo]::InvariantCulture) } else { $null }
@@ -45,7 +47,7 @@ $processes = if ($Gate -in @('G3Tick','G4Contention','G5G6Refinement')) { 5 } el
 $folder = Join-Path $repo 'artifacts/heal'
 $null = New-Item -ItemType Directory -Path $folder -Force
 $stamp = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-fffffff')
-$stamp += '-area-' + $AreaLimit.ToString('R', [Globalization.CultureInfo]::InvariantCulture)
+$stamp += '-' + $Workload + '-area-' + $AreaLimit.ToString('R', [Globalization.CultureInfo]::InvariantCulture)
 $records = [Collections.Generic.List[object]]::new()
 $failed = $false
 for ($sample = 1; $sample -le $processes; $sample++) {
@@ -112,7 +114,7 @@ if ($Gate -eq 'G7G8Memory') {
     if (!$summary.G7 -or !$summary.G8) { $failed = $true }
 }
 $result = @{ gate = $Gate; fixture = $Fixture; formulation = $Formulation; domain = $Domain;
-    diagnostic = ([bool]$Diagnostic -or $Gate -in @('RepairCostDiagnostic','G1PerSpotDiagnostic')); areaLimit = $AreaLimit; records = @($records.ToArray()); summary = $summary; failed = $failed }
+    diagnostic = ([bool]$Diagnostic -or $Gate -in @('RepairCostDiagnostic','G1PerSpotDiagnostic')); areaLimit = $AreaLimit; workload = $Workload; records = @($records.ToArray()); summary = $summary; failed = $failed }
 $json = $result | ConvertTo-Json -Depth 15
 $json | Set-Content (Join-Path $folder "$Gate-$Fixture-$Formulation-$Domain-$stamp.json")
 Write-Output "HEAL_SUMMARY $($summary | ConvertTo-Json -Compress)"

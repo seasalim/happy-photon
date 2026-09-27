@@ -11,17 +11,17 @@ public sealed partial class HealGateTests
     public async Task G2ExportParity()
     {
         OptIn(); var file = LocalFile(Raw); using var folder = new TemporaryDirectory();
-        var pipeline = new RenderPipeline(); var prototype = new HealPrototype();
+        var pipeline = new RenderPipeline();
         foreach (var repairs in new[] { false, true })
         {
             file.EditSettings = repairs ? HealWorkloads.LH8() : new();
+            if (repairs) file.EditSettings.Repairs = HealWorkloads.Repairs(HealWorkloads.S64());
             var calls = 0;
             var service = new ImageExportService(pipeline, Loader(), new ExportMetadataService(),
                 new DcpProfileService(new SourceAvailabilityService()), request =>
                 {
                     calls++;
-                    using var repaired = repairs ? prototype.Repair(request.Base, HealWorkloads.S64(), Candidate) : null;
-                    var sameBase = request with { Base = repaired ?? request.Base };
+                    var sameBase = request;
                     Assert.True(sameBase.Settings.Detail.ResolveCaptureSharpen(true) > 0);
                     using var refinement = pipeline.RenderResting(sameBase,
                         RenderExecutionOptions.Resting(CancellationToken.None, 2));

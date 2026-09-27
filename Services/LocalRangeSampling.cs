@@ -15,7 +15,7 @@ internal static class LocalRangeSampling
         if (map != null) map = DcpHueSatRenderer.Prepare(map);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(size.Width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(size.Height);
-        var geometry = RenderGeometry.Apply(basis.Pixels, settings, out trace);
+        var geometry = RenderGeometry.ApplyCanonicalBase(basis.Pixels, settings, settings.Repairs, out trace);
         try
         {
             if (geometry.Width != size.Width || geometry.Height != size.Height)

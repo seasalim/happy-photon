@@ -455,6 +455,17 @@ copy is included in G3–G8 (conservative; production writes into the pipeline's
 copy). JSON and logs go to `artifacts/heal/`; this section is the durable record.
 `HAPPY_PHOTON_XT50_FIXTURE` selects a local opt-in RAF for the 40 MP record.
 
+### HEAL-WP3 qualification
+
+| Workload / gate | Definition / record |
+|---|---|
+| SArea64 | `HealWorkloads.SArea64`: 64 heals, r = √(Repair.MaximumArea / 64π), centred 8×8 serpentine; neighbour separation 0.807945506599034r gives half-area overlap. |
+| G1 S64 + LH8 tick increment | RAW +36.3 ms, HEIC +36.5 ms (≤ 40) |
+| G2 contended tick | SCap6 150.1 / 142.8 ms; SArea64 169.3 / 175.6 ms (≤ 175; HEIC accepted as measured by the owner) |
+| G3 S64 export delta over LH8 | RAW +256 ms, HEIC +121 ms (≤ 500) |
+| G4 S64 export private peak over LH8 | RAW −3.4 MB (≤ 64 MiB) |
+| G5 repaired-region ΔE | RAW 2.390/10.026, 4.060/20.038; HEIC 1.282/10.455, 0.825/8.112 (≤ control + 0.5 / + 2.0) |
+
 ### HEAL-WP2 frozen controls
 
 Area validation uses the shared Neumaier compensated `RepairArea.Sum` over clamped

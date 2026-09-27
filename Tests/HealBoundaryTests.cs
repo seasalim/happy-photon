@@ -1,3 +1,4 @@
+using HappyPhoton.Services;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -7,14 +8,14 @@ public sealed class HealBoundaryTests
     [Fact]
     public void FootprintIsNormalizedAndSpansOnePixelAtMinimumPreviewRadius()
     {
-        Assert.Equal(1d / 3, HealPrototype.BoundaryHalfWidthInRadii);
-        Assert.True(1600 * HealWorkloads.MinRadius * HealPrototype.BoundaryHalfWidthInRadii >= 1);
+        Assert.Equal(1d / 3, RenderRepairs.BoundaryHalfWidthInRadii);
+        Assert.True(1600 * HealWorkloads.MinRadius * RenderRepairs.BoundaryHalfWidthInRadii >= 1);
         // Every footprint square lies outside the destination disc (touching it at 45 degrees),
         // so a blemish filling its spot never enters the boundary estimate.
-        var h = HealPrototype.BoundaryHalfWidthInRadii; var reach = 1 + HealPrototype.BoundaryOffsetInRadii;
-        var nearest = Enumerable.Range(0, HealPrototype.RingSamples).Min(k =>
+        var h = RenderRepairs.BoundaryHalfWidthInRadii; var reach = 1 + RenderRepairs.BoundaryOffsetInRadii;
+        var nearest = Enumerable.Range(0, RenderRepairs.RingSamples).Min(k =>
         {
-            var (x, y) = (reach * Math.Cos(2 * Math.PI * k / HealPrototype.RingSamples), reach * Math.Sin(2 * Math.PI * k / HealPrototype.RingSamples));
+            var (x, y) = (reach * Math.Cos(2 * Math.PI * k / RenderRepairs.RingSamples), reach * Math.Sin(2 * Math.PI * k / RenderRepairs.RingSamples));
             var (px, py) = (Math.Clamp(0, x - h, x + h), Math.Clamp(0, y - h, y + h));
             return Math.Sqrt(px * px + py * py);
         });
@@ -33,7 +34,7 @@ public sealed class HealBoundaryTests
         {
             var x = 60 + 12 * Math.Cos(angle * Math.PI / 16);
             var y = 40 + 12 * Math.Sin(angle * Math.PI / 16);
-            var actual = HealPrototype.BoundaryMean(pixels, width, height,
+            var actual = HealProductionStage.BoundaryMean(pixels, width, height,
                 x * scale - .5, y * scale - .5, 4 * scale, 0) * 65535;
             // A symmetric square's integral of a bilinear polynomial is its center value.
             Assert.InRange(Math.Abs(actual - Field(x, y)), 0, .50000001);
@@ -48,12 +49,12 @@ public sealed class HealBoundaryTests
             (ushort)(30000 + ((i / 3 % width + i / 3 / width) % 2 == 0 ? 12000 : -12000))).ToArray();
         // Four full checkerboard periods: exact cancellation at arbitrary subpixel phase.
         foreach (var phase in new[] { 0d, .17, .5 })
-            Assert.Equal(30000, HealPrototype.BoundaryMean(checker, width, height,
+            Assert.Equal(30000, HealProductionStage.BoundaryMean(checker, width, height,
                 30 + phase, 20 + phase, 4, 0) * 65535, 8);
         var ramp = Enumerable.Range(0, width * height * 3).Select(i =>
             (ushort)(1000 + 100 * (i / 3 % width) + 200 * (i / 3 / width))).ToArray();
         // mean(max(x,0)) over [-2,2] = 1/2; y remains interior and affine.
-        Assert.Equal(1700, HealPrototype.BoundaryMean(ramp, width, height, 0, 3.25, 2, 0) * 65535, 8);
+        Assert.Equal(1700, HealProductionStage.BoundaryMean(ramp, width, height, 0, 3.25, 2, 0) * 65535, 8);
     }
 
     [Fact]
@@ -71,7 +72,7 @@ public sealed class HealBoundaryTests
                 var y = -halfWidth + random.NextDouble() * (height + 2 * halfWidth);
                 var c = random.Next(3);
                 Assert.Equal(DirectMean(pixels, width, height, x, y, halfWidth, c),
-                    HealPrototype.BoundaryMean(pixels, width, height, x, y, halfWidth, c), 1e-9);
+                    HealProductionStage.BoundaryMean(pixels, width, height, x, y, halfWidth, c), 1e-9);
             }
         }
     }

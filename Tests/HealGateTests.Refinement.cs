@@ -18,7 +18,7 @@ public sealed partial class HealGateTests
 
     private async Task Refinement(ImageFile file, bool gated)
     {
-        var loader = Loader(); var prototype = new HealPrototype();
+        var loader = Loader(); var prototype = new HealProductionStage();
         using var folder = new TemporaryDirectory();
         using var catalog = new CatalogService(folder.Path); await catalog.InitializeAsync();
         await using var service = new PreviewService(catalog, loader, new RenderPipeline());
@@ -54,7 +54,7 @@ public sealed partial class HealGateTests
         RefinementDiagnostic(full, prototype, Environment.ProcessorCount);
     }
 
-    private static Bitmap RefinedBitmap(BaseImage full, HealPrototype prototype)
+    private static Bitmap RefinedBitmap(BaseImage full, HealProductionStage prototype)
     {
         using var repaired = prototype.Repair(full, HealWorkloads.S64(), Candidate, 2);
         using var rendered = new RenderPipeline().RenderResting(new(repaired, HealWorkloads.LH8(), RenderIntent.Export,
@@ -73,7 +73,7 @@ public sealed partial class HealGateTests
     {
         var loader = Loader(); var outcome = loader.LoadPreviewBaseWithOutcome(file, BaseDecodeSettings.Default, CancellationToken.None);
         using var pair = outcome.Pair; Assert.NotNull(pair); Assert.NotNull(pair.Large);
-        var prototype = new HealPrototype();
+        var prototype = new HealProductionStage();
         using var fit = FitBitmap(pair.Interactive, prototype);
         using var process = Process.GetCurrentProcess();
         process.Refresh(); var fitBytes = process.PrivateMemorySize64;
@@ -107,7 +107,7 @@ public sealed partial class HealGateTests
         GC.KeepAlive(fit); GC.KeepAlive(outcome); GC.KeepAlive(pair); GC.KeepAlive(full); GC.KeepAlive(prototype);
     }
 
-    private static Bitmap FitBitmap(BaseImage basis, HealPrototype prototype)
+    private static Bitmap FitBitmap(BaseImage basis, HealProductionStage prototype)
     {
         using var repaired = prototype.Repair(basis, HealWorkloads.S64(), Candidate);
         using var rendered = new RenderPipeline().Render(new(repaired, HealWorkloads.LH8(), RenderIntent.Preview,

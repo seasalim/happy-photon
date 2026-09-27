@@ -1,11 +1,11 @@
-# Repairs model and persistence (HEAL-WP2)
+# Repairs model, persistence and rendering
 
 `EditSettings.Repairs` is an ordered list of `heal` or `clone` entries, independent
 of the eight locals. Canonical v4 JSON appends `repairs` after every existing key
 and omits it when null or empty. Settings and pipeline versions stay unchanged;
 repair-free canonical bytes and hashes stay unchanged. Older builds ignore the
 unknown field and lose repairs on save; downgrade is not a supported round trip.
-This work adds no rendering or UI.
+Stored repairs render through the shared pipeline; the spot UI is a later work package.
 
 Each entry requires a unique 32-hex GUID, type, destination `u`/`v`, source
 `su`/`sv`, radius, feather, and opacity. Coordinates are normalized doubles,
@@ -23,7 +23,7 @@ exactly 0.18849555921538758 long-edge²; the relative tolerance covers rounding 
 The owner's P-1 ruling moves aspect-dependent source clamping to use time.
 `RepairGeometry` computes min(radius × max(W,H), min(W,H)/2) and clamps source
 centres to contain that disc. It is pure and depends only on the base aspect.
-WP3 must call it where the base is known; WP4 must write clamped sources from
+The render stage calls it where the base is known; WP4 must write clamped sources from
 its gestures. Deserialization has no trustworthy base dimensions and therefore
 only enforces aspect-independent rules. Destinations may cross the frame edge.
 `BaseFrameMapping` uses x = uW − 0.5, without phase correction; see
@@ -37,3 +37,24 @@ explicit subset leaves destination repairs untouched. `EditHistoryLabel` supplie
 spot labels; callers can identify gestures such as "Resize spot" or "New spot
 source" using its operation override, since the same value change can represent
 more than one action.
+
+## Render stage
+
+`RenderRepairs` writes the render-owned copy before geometry, DCP, WB and tone.
+Repairs compose in creation order; source and destination boundary footprints are
+snapshotted from the current pixels before each spot writes. Clone bilinearly samples
+the translated source; opacity multiplies an inward smoothstep feather. Heal uses the
+FINAL Membrane-additive contract in linear Rec.2020: 32 boundary squares with half-width
+r/3 at radius r(1 + √2/3), and normalized discrete Poisson weights on that circle.
+Source and destination row prefixes are rebuilt per spot; no frame-wide prefix exists.
+
+Corrections preserve headroom without clamping. With directional headroom
+h = max(0, (1 − s upward, s downward) − 0.51/65535), magnitudes through 7h/8 are
+unchanged; larger magnitudes become 29h/32 − h²/[1024(m − 27h/32)], sign preserved.
+
+Preview, resting, Compare/Loupe, adjacent warm, side surfaces, Proof, export and standard
+thumbnails share the canonical-base stage. Resting removes repairs from its prepared
+settings after geometry, preventing a second application. Before and the encoded
+camera-JPEG RAW thumbnail fallback exclude repairs. Range/hue sampling and WB picking
+include them; sensor clipping deliberately keeps the unrepaired sensor mask.
+Null/empty repairs return before pixel access, preserving v14 renders and hashes.

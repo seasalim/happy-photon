@@ -30,6 +30,7 @@
     <Compile Include="..\Tests\RestoreTestSupport.cs" Link="RestoreTestSupport.cs" />
     <Compile Include="..\Tests\BackupCatalogFixtures.cs" Link="BackupCatalogFixtures.cs" />
     <Compile Include="..\Tests\BackupFixtureEdits.cs" Link="BackupFixtureEdits.cs" />
+    <Compile Include="..\Tests\HealWorkloads.cs" Link="HealWorkloads.cs" />
     <Compile Include="..\Tests\LocalsBrushProduction.cs" Link="LocalsBrushProduction.cs" />
     <Compile Include="..\Tests\LocalsBrushData.cs" Link="LocalsBrushData.cs" />
     <Compile Include="..\Tests\LocalsBrushWorkloads.cs" Link="LocalsBrushWorkloads.cs" />

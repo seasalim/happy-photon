@@ -53,10 +53,22 @@ internal static class RenderGeometry
         return new PixelSize(width, height);
     }
 
-    public static MagickImage Apply(
+    private static readonly RenderRepairs Repairs = new();
+
+    // Only canonical, linear Rec.2020 bases may enter the repair stage.
+    internal static MagickImage ApplyCanonicalBase(MagickImage source, EditSettings settings,
+        IReadOnlyList<Repair>? repairs, out RenderGeometryTrace trace, RenderExecutionOptions? execution = null) =>
+        ApplyCore(source, settings, repairs, out trace, execution);
+
+    public static MagickImage Apply(MagickImage source, EditSettings settings, out RenderGeometryTrace trace) =>
+        ApplyCore(source, settings, null, out trace, null);
+
+    private static MagickImage ApplyCore(
         MagickImage source,
         EditSettings settings,
-        out RenderGeometryTrace trace)
+        IReadOnlyList<Repair>? repairs,
+        out RenderGeometryTrace trace,
+        RenderExecutionOptions? execution)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(settings);
@@ -64,9 +76,19 @@ internal static class RenderGeometry
         MagickImage? owned = null;
         try
         {
-            if (settings.Rotation != 0)
+            if (repairs is { Count: > 0 })
             {
                 owned = new MagickImage(source);
+                Repairs.Apply(owned, repairs, execution);
+            }
+
+            execution?.ThrowIfCancellationRequested();
+            execution?.ReportStage("geometry");
+            var probe = RenderStageProbe.Begin();
+
+            if (settings.Rotation != 0)
+            {
+                owned ??= new MagickImage(source);
                 owned.Rotate(settings.Rotation);
                 owned.ResetPage();
             }
@@ -119,6 +141,8 @@ internal static class RenderGeometry
                 width,
                 height,
                 map);
+            RenderStageProbe.End(probe, "geometry", owned);
+
             var result = owned;
             owned = null;
             return result;

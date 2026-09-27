@@ -179,15 +179,12 @@ public sealed class RenderPipeline
         try
         {
             execution?.ThrowIfCancellationRequested();
-            execution?.ReportStage("geometry");
-            var probe = RenderStageProbe.Begin();
-            working = RenderGeometry.Apply(
+            working = RenderGeometry.ApplyCanonicalBase(
                 request.Base.Pixels,
                 request.Settings,
-                out geometry);
-            RenderStageProbe.End(probe, "geometry", working);
+                request.Settings.Repairs, out geometry, execution);
             execution?.ThrowIfCancellationRequested();
-            probe = RenderStageProbe.Begin();
+            var probe = RenderStageProbe.Begin();
             var locals = RenderLocals.Create(request.Settings, geometry,
                 (int)working.Width, (int)working.Height, request.LocalsFrameOverride, request.Base.Info);
             RenderStageProbe.End(probe, "locals", working);

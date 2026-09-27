@@ -27,21 +27,20 @@ public sealed partial class HealGateTests
 
     private void RepairCost(BaseImage basis, HealSpot[] spots, string workload)
     {
-        var candidates = new[] { new HealCandidate(HealFormulation.Membrane, HealDomain.Additive),
-            new HealCandidate(HealFormulation.Gaussian, HealDomain.Additive) };
-        var prototypes = new[] { new HealPrototype(), new HealPrototype() };
-        var samples = new[] { new double[7], new double[7] };
+        var candidates = HealCandidate.FinalOnly.ToArray();
+        var prototypes = candidates.Select(_ => new HealProductionStage()).ToArray();
+        var samples = candidates.Select(_ => new double[7]).ToArray();
         // Alternate order; every sample starts from the same pixels, with native COW
         // detachment completed outside the stopwatch. Warm each candidate twice.
         for (var sample = -2; sample < 7; sample++)
-        for (var step = 0; step < 2; step++)
+        for (var step = 0; step < candidates.Length; step++)
         {
-            var arm = (sample + 2 + step) % 2;
+            var arm = (sample + 2 + step) % candidates.Length;
             using var copy = DetachedCopy(basis);
             var elapsed = Time(() => prototypes[arm].Apply(copy, spots, candidates[arm], 2));
             if (sample >= 0) samples[arm][sample] = elapsed;
         }
-        for (var arm = 0; arm < 2; arm++)
+        for (var arm = 0; arm < candidates.Length; arm++)
             Report("repair-cost-diagnostic", new { diagnostic = true, formulation = candidates[arm].ToString(),
                 workload, size = Size(basis), workers = 2, warmup = 2, samples = samples[arm],
                 medianMs = Median(samples[arm]), includesBaseCopy = false });
@@ -60,7 +59,7 @@ public sealed partial class HealGateTests
         catch { copy.Dispose(); throw; }
     }
 
-    private void RefinementDiagnostic(BaseImage full, HealPrototype prototype, int workers)
+    private void RefinementDiagnostic(BaseImage full, HealProductionStage prototype, int workers)
     {
         var spots = HealWorkloads.S64(); var settings = HealWorkloads.LH8();
         var stages = new Dictionary<string, double>();
@@ -104,7 +103,7 @@ public sealed partial class HealGateTests
         RequireWic();
         var input = Enumerable.Range(0, 160 * 120 * 3).Select(i => (ushort)(1000 + i % 30000)).ToArray();
         using var basis = RenderPipelineTestSupport.CreateBase(input, isRaw: true, height: 120);
-        var prototype = new HealPrototype();
+        var prototype = new HealProductionStage();
         using var bitmap = RefinedBitmap(basis, prototype);
         var before = BitmapConversionService.CopyBgraPixels(bitmap);
         RefinementDiagnostic(basis, prototype, 2);
@@ -134,7 +133,7 @@ public sealed partial class HealGateTests
         return result;
     }
 
-    private void RetainedMemoryDiagnostic(BaseImage full, Bitmap displayed, HealPrototype prototype,
+    private void RetainedMemoryDiagnostic(BaseImage full, Bitmap displayed, HealProductionStage prototype,
         long fitBytes, long gatedIdle, Dictionary<string, long> fitScratch, long fitSpotScratch)
     {
         using var process = Process.GetCurrentProcess();

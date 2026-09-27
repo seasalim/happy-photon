@@ -35,6 +35,7 @@ public sealed partial class HealGateTests(ITestOutputHelper output)
     private static void OptIn()
     {
         Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1", "Opt-in HEAL qualification");
+        Assert.Equal(default(HealCandidate), Candidate);
         Assert.Equal("1", Environment.GetEnvironmentVariable("HAPPY_PHOTON_FULL_CPU"));
         PerfEnvironment.AssertFullCpu();
 #if DEBUG
@@ -76,21 +77,27 @@ public sealed partial class HealGateTests(ITestOutputHelper output)
         using var full = loader.LoadFullBase(file, BaseDecodeSettings.Default, CancellationToken.None);
         Assert.NotNull(full);
         using var controlFull = pipeline.Render(new(full, new(), RenderIntent.Export, null, new(false, false)));
-        var prototype = new HealPrototype(); var spots = HealWorkloads.S64();
+        var spots = HealWorkloads.S64();
+        var repairedSettings = new EditSettings { Repairs = HealWorkloads.Repairs(spots) };
         var selectedPass = true;
-        foreach (var candidate in HealCandidate.All)
+        foreach (var candidate in HealCandidate.FinalOnly)
         {
-            using var repairedFull = prototype.Repair(full, spots, candidate);
-            using var reference = pipeline.Render(new(repairedFull, new(), RenderIntent.Export, null, new(false, false)));
+            using var reference = pipeline.Render(new(full, repairedSettings, RenderIntent.Export, null, new(false, false)));
             foreach (var basis in new[] { pair.Interactive, pair.Large })
             {
                 var mask = Mask(basis, spots);
                 using var control = pipeline.Render(new(basis, new(), RenderIntent.Preview, null, new(false, false)));
                 var baseline = Compare(controlFull, control, mask);
                 var start = Stopwatch.GetTimestamp();
-                using var repaired = prototype.Repair(basis, spots, candidate);
+                using var actual = pipeline.Render(new(basis, repairedSettings, RenderIntent.Preview, null, new(false, false)));
                 var repairMs = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
-                using var actual = pipeline.Render(new(repaired, new(), RenderIntent.Preview, null, new(false, false)));
+                var pinned = (basis.Info.IsRawSource, basis.Pixels.Width == pair.Interactive.Pixels.Width) switch
+                {
+                    (true, true) => (2.283, 11.249), (true, false) => (5.148, 26.462),
+                    (false, true) => (1.393, 13.723), _ => (.684, 8.766)
+                };
+                Assert.InRange(baseline.MeanDeltaE, pinned.Item1 * .85, pinned.Item1 * 1.15);
+                Assert.InRange(baseline.P99DeltaE, pinned.Item2 * .85, pinned.Item2 * 1.15);
                 var metric = Compare(reference, actual, mask);
                 var pass = metric.MeanDeltaE <= baseline.MeanDeltaE + .5 && metric.P99DeltaE <= baseline.P99DeltaE + 2;
                 if (candidate == Candidate) selectedPass &= pass;
@@ -117,7 +124,7 @@ public sealed partial class HealGateTests(ITestOutputHelper output)
         foreach (var index in new[] { 0, ordered.Length / 2 })
         {
             var s = ordered[index] with { Radius = .04 };
-            using var repair = new HealPrototype().Repair(basis, [s], candidate);
+            using var repair = new HealProductionStage().Repair(basis, [s], candidate);
             var actual = RenderPipelineTestSupport.ReadPixels(repair.Pixels);
             double excess = 0;
             for (var k = 0; k < 64; k++)

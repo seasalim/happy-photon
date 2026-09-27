@@ -7,8 +7,8 @@ internal enum HealDomain { Additive, Ratio }
 internal readonly record struct HealCandidate(HealFormulation Formulation, HealDomain Domain)
 {
     public override string ToString() => $"{Formulation}-{Domain}";
-    internal static IEnumerable<HealCandidate> All =>
-        from f in Enum.GetValues<HealFormulation>() from d in Enum.GetValues<HealDomain>() select new HealCandidate(f, d);
+    internal static IEnumerable<HealCandidate> FinalOnly =>
+        [new(HealFormulation.Membrane, HealDomain.Additive)];
 }
 
 // Stored radius is in long-edge units. Both kernels cap its pixel radius at half
@@ -52,6 +52,26 @@ internal static class HealWorkloads
             var column = row % 2 == 0 ? i % columns : columns - 1 - i % columns;
             return new HealSpot((width / 2d + (column - (columns - 1) / 2d) * step) / width,
                 (height / 2d + (row - (rows - 1) / 2d) * step) / height, .2, .25, MaxRadius);
+        }).ToArray();
+    }
+
+    internal static List<Repair> Repairs(IEnumerable<HealSpot> spots) => spots.Select((s, i) => new Repair
+    {
+        Id = i.ToString("x32"), Type = s.IsClone ? "clone" : "heal", U = s.U, V = s.V, Su = s.Su, Sv = s.Sv,
+        Radius = s.Radius, Feather = s.Feather, Opacity = s.Opacity
+    }).ToList();
+
+    // Frozen 8x8 serpentine; adjacent equal discs overlap by half their area.
+    internal static HealSpot[] SArea64(int width, int height)
+    {
+        var radius = Math.Sqrt(Repair.MaximumArea / (64 * Math.PI));
+        var step = .807945506599034 * radius * Math.Max(width, height);
+        return Enumerable.Range(0, Cap).Select(i =>
+        {
+            var row = i / 8;
+            var column = row % 2 == 0 ? i % 8 : 7 - i % 8;
+            return new HealSpot(.5 + (column - 3.5) * step / width,
+                .5 + (row - 3.5) * step / height, .2, .25, radius);
         }).ToArray();
     }
 

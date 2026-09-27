@@ -1,3 +1,4 @@
+using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
 using Xunit;
@@ -13,11 +14,10 @@ public sealed partial class HealGateTests
         using var pair = Loader().LoadPreviewBaseWithOutcome(LocalFile(), BaseDecodeSettings.Default, CancellationToken.None).Pair;
         Assert.NotNull(pair);
         var basis = pair.Interactive; var settings = HealWorkloads.LH8(); var pipeline = new RenderPipeline();
-        var prototype = new HealPrototype(); var spots = HealWorkloads.S64();
+        var repairedSettings = settings.Clone(); repairedSettings.Repairs = HealWorkloads.Repairs(HealWorkloads.S64());
         void Tick(bool heal)
         {
-            using var repaired = heal ? prototype.Repair(basis, spots, Candidate, Environment.ProcessorCount) : null;
-            using var render = pipeline.Render(new(repaired ?? basis, settings, RenderIntent.Preview, 1600, new(false, false)));
+            using var render = pipeline.Render(new(basis, heal ? repairedSettings : settings, RenderIntent.Preview, 1600, new(false, false)));
         }
         for (var warm = 0; warm < 10; warm++) { Tick(false); Tick(true); }
         var off = new double[5]; var on = new double[5]; var copy = new double[5];
@@ -50,15 +50,17 @@ public sealed partial class HealGateTests
         var small = pair.Interactive; var large = pair.Large;
         var restingSettings = RenderSequenceGoldenTests.Settings();
         var settings = restingSettings.Clone(); settings.Locals = HealWorkloads.LH8().Locals;
-        var prototype = new HealPrototype(); var pipeline = new RenderPipeline();
+        var pipeline = new RenderPipeline();
         var limitText = Environment.GetEnvironmentVariable("HAPPY_PHOTON_HEAL_AREA_LIMIT");
-        double? areaLimit = limitText == null ? null : double.Parse(limitText, System.Globalization.CultureInfo.InvariantCulture);
+        double? areaLimit = limitText == null ? Repair.MaximumArea : double.Parse(limitText, System.Globalization.CultureInfo.InvariantCulture);
         if (areaLimit != null) Assert.True(areaLimit >= HealWorkloads.Area(HealWorkloads.S64()));
-        var spots = HealWorkloads.SCap((int)small.Pixels.Width, (int)small.Pixels.Height, areaLimit);
+        var area64 = Environment.GetEnvironmentVariable("HAPPY_PHOTON_HEAL_WORKLOAD") == "SArea64";
+        var spots = area64 ? HealWorkloads.SArea64((int)small.Pixels.Width, (int)small.Pixels.Height)
+            : HealWorkloads.SCap((int)small.Pixels.Width, (int)small.Pixels.Height, areaLimit);
+        var repairedSettings = settings.Clone(); repairedSettings.Repairs = HealWorkloads.Repairs(spots);
         void Tick(bool heal)
         {
-            using var repaired = heal ? prototype.Repair(small, spots, Candidate, Environment.ProcessorCount) : null;
-            using var rendered = pipeline.Render(new(repaired ?? small, settings, RenderIntent.Preview, 1600, new(false, false)));
+            using var rendered = pipeline.Render(new(small, heal ? repairedSettings : settings, RenderIntent.Preview, 1600, new(false, false)));
         }
         for (var warm = 0; warm < 3; warm++) { Tick(false); Tick(true); }
         var off = new double[5]; var on = new double[5];
@@ -77,7 +79,7 @@ public sealed partial class HealGateTests
             }
             finally { using var result = await resting; }
         }
-        Report("G4", new { size = Size(small), resting = Size(large), areaLimit, spots = spots.Length, topology = "serpentine-11x6-or-6x11",
+        Report("G4", new { size = Size(small), resting = Size(large), areaLimit, spots = spots.Length, topology = area64 ? "SArea64-serpentine-8x8" : "SCap6-serpentine-11x6-or-6x11",
             totalArea = HealWorkloads.Area(spots), minimumArea = HealWorkloads.Area(HealWorkloads.S64()),
             off, on, control = Median(off), tick = Median(on), controlMin = 95, controlMax = 145, tickLimit = 175 });
     }

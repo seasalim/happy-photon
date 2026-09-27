@@ -20,10 +20,10 @@ public sealed partial class HealGateTests
         var basis = pair.Interactive;
         Assert.Equal("1200x1600", Size(basis));
         var spots = HealWorkloads.S64();
-        foreach (var candidate in HealCandidate.All)
+        foreach (var candidate in HealCandidate.FinalOnly)
         {
-            using var repairedFull = new HealPrototype().Repair(full, spots, candidate);
-            using var repaired = new HealPrototype().Repair(basis, spots, candidate);
+            using var repairedFull = new HealProductionStage().Repair(full, spots, candidate);
+            using var repaired = new HealProductionStage().Repair(basis, spots, candidate);
             using var reference = pipeline.Render(new(repairedFull, new(), RenderIntent.Export, null, new(false, false)));
             using var actual = pipeline.Render(new(repaired, new(), RenderIntent.Preview, null, new(false, false)));
             using var aligned = new MagickImage(reference.Image);

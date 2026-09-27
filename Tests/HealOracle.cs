@@ -19,7 +19,7 @@ internal static class HealOracle
             for (var angle = 0; angle < 32; angle++)
             for (var channel = 0; channel < 3; channel++)
             {
-                // Footprint centers sit sqrt(2)/3 radii outside the ring (see HealPrototype).
+                // Footprint centers sit sqrt(2)/3 radii outside the ring (see RenderRepairs).
                 var dx = r * (1 + Math.Sqrt(2) / 3) * Math.Cos(angle * Math.PI / 16);
                 var dy = r * (1 + Math.Sqrt(2) / 3) * Math.Sin(angle * Math.PI / 16);
                 var source = BoundaryAverage(snapshot, width, height, xs + dx, ys + dy, r / 3, channel);

@@ -18,9 +18,9 @@ public sealed class HealContractTests
         if (floor) input = input.Select(v => (ushort)(65535 - v)).ToArray();
         var spot = new HealSpot(.75, .5, .25, .5, .1, Feather: 0);
         using var basis = RenderPipelineTestSupport.CreateBase(input, height: height);
-        foreach (var candidate in HealCandidate.All)
+        foreach (var candidate in HealCandidate.FinalOnly)
         {
-            using var repair = new HealPrototype().Repair(basis, [spot], candidate);
+            using var repair = new HealProductionStage().Repair(basis, [spot], candidate);
             Assert.Equal(input, RenderPipelineTestSupport.ReadPixels(repair.Pixels));
             Assert.Equal(input, HealOracle.Apply(input, width, height, [spot], candidate));
         }
@@ -43,9 +43,9 @@ public sealed class HealContractTests
         var spot = new HealSpot(600.5 / width, 100.5 / height, 200.5 / width, 100.5 / height,
             HealWorkloads.MaxRadius, Feather: 0);
         using var basis = RenderPipelineTestSupport.CreateBase(input, height: height);
-        foreach (var candidate in HealCandidate.All.Where(c => !floor || c.Domain == HealDomain.Additive))
+        foreach (var candidate in HealCandidate.FinalOnly.Where(c => !floor || c.Domain == HealDomain.Additive))
         {
-            using var repair = new HealPrototype().Repair(basis, [spot], candidate);
+            using var repair = new HealProductionStage().Repair(basis, [spot], candidate);
             var codes = RenderPipelineTestSupport.ReadPixels(repair.Pixels);
             var oracle = HealOracle.Apply(input, width, height, [spot], candidate);
             // Independent Q16 expectations from the published rule (TESTING.md), without
@@ -85,23 +85,23 @@ public sealed class HealContractTests
     {
         // In-range corrections below the knee are exact; 0.6 + 0.35 sits 0.45 code past it
         // (the reserve) and still lands within a thousandth of a code.
-        Assert.Equal(.9499, .6 + HealPrototype.Attenuate(.6, .3499), 14);
-        Assert.InRange(Math.Abs(.6 + HealPrototype.Attenuate(.6, .35) - .95) * 65535, 0, .001);
+        Assert.Equal(.9499, .6 + RenderRepairs.Attenuate(.6, .3499), 14);
+        Assert.InRange(Math.Abs(.6 + RenderRepairs.Attenuate(.6, .35) - .95) * 65535, 0, .001);
         foreach (var direction in new[] { -1, 1 })
         {
             const double source = .5, epsilon = 1e-7;
-            var knee = 7d / 8 * (.5 - HealPrototype.QuantumReserve);
-            double At(double magnitude) => source + HealPrototype.Attenuate(source, direction * magnitude);
+            var knee = 7d / 8 * (.5 - RenderRepairs.QuantumReserve);
+            double At(double magnitude) => source + RenderRepairs.Attenuate(source, direction * magnitude);
             Assert.Equal(source + direction * knee, At(knee), 14);
             Assert.InRange(direction * (At(knee) - At(knee - epsilon)) / epsilon, .9999, 1.0001);
             Assert.InRange(direction * (At(knee + epsilon) - At(knee)) / epsilon, .9999, 1.0001);
             foreach (var magnitude in new[] { .0001, .01, .35, .5, 2, 1000 })
             {
-                double previous = HealPrototype.Attenuate(0, direction * magnitude);
+                double previous = RenderRepairs.Attenuate(0, direction * magnitude);
                 for (var i = 1; i <= 4096; i++)
                 {
                     var s = i / 4096d;
-                    var delta = HealPrototype.Attenuate(s, direction * magnitude);
+                    var delta = RenderRepairs.Attenuate(s, direction * magnitude);
                     var value = s + delta;
                     Assert.InRange(value, 0, 1);
                     Assert.InRange(direction * delta, 0, magnitude);
@@ -144,15 +144,15 @@ public sealed class HealContractTests
                 changed++;
             }
             Assert.True(changed > 0);
-            using var repair = new HealPrototype().Repair(basis, [spot], default);
+            using var repair = new HealProductionStage().Repair(basis, [spot], default);
             Assert.Equal(expected, RenderPipelineTestSupport.ReadPixels(repair.Pixels));
             Assert.Equal(expected, HealOracle.Apply(input, width, height, [spot], default));
 
             // The same clamped footprint and source boundary must agree for both heals/domains.
-            foreach (var candidate in HealCandidate.All)
+            foreach (var candidate in HealCandidate.FinalOnly)
             {
                 var heal = spot with { IsClone = false };
-                using var healed = new HealPrototype().Repair(basis, [heal], candidate);
+                using var healed = new HealProductionStage().Repair(basis, [heal], candidate);
                 var codes = RenderPipelineTestSupport.ReadPixels(healed.Pixels);
                 var oracle = HealOracle.Apply(input, width, height, [heal], candidate);
                 Assert.All(Enumerable.Range(0, codes.Length), i =>
@@ -176,7 +176,7 @@ public sealed class HealContractTests
         var spot = new HealSpot(360.5 / width, 160.5 / height, 100.5 / width, 160.5 / height, 40d / width, Feather: 0);
         using var basis = RenderPipelineTestSupport.CreateBase(input, height: height);
         var candidate = new HealCandidate(HealFormulation.Membrane, HealDomain.Additive);
-        using var repair = new HealPrototype().Repair(basis, [spot], candidate);
+        using var repair = new HealProductionStage().Repair(basis, [spot], candidate);
         var codes = RenderPipelineTestSupport.ReadPixels(repair.Pixels);
         var oracle = HealOracle.Apply(input, width, height, [spot], candidate);
         double worst = 0;
@@ -202,13 +202,13 @@ public sealed class HealContractTests
         {
             var source = (floor ? 65535 - code : code) / 65535d;
             var correction = floor ? -.5 : .5;
-            var result = (int)Math.Round((source + HealPrototype.Attenuate(source, correction)) * 65535);
+            var result = (int)Math.Round((source + RenderRepairs.Attenuate(source, correction)) * 65535);
             var mirrored = floor ? 65535 - result : result;
             Assert.InRange(mirrored, code, 65534);
             Assert.True(mirrored >= previous, $"code {code} decreased to {mirrored}");
             previous = mirrored;
         }
         var limit = floor ? 0d : 1d;
-        Assert.Equal(0, HealPrototype.Attenuate(limit, floor ? -.5 : .5));
+        Assert.Equal(0, RenderRepairs.Attenuate(limit, floor ? -.5 : .5));
     }
 }

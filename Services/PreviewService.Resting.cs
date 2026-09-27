@@ -184,10 +184,10 @@ public sealed partial class PreviewService
             RestingStageStarted?.Invoke("snapshot-geometry");
             var localsFrame = RenderGeometry.CalculateLocalsFrame(
                 (int)largeBase.Pixels.Width, (int)largeBase.Pixels.Height, settings);
-            preparedPixels = RenderGeometry.Apply(
+            preparedPixels = RenderGeometry.ApplyCanonicalBase(
                 largeBase.Pixels,
                 settings,
-                out _);
+                settings.Repairs, out _, execution);
             execution.ThrowIfCancellationRequested();
 
             var achievable = checked((int)Math.Max(
@@ -212,6 +212,7 @@ public sealed partial class PreviewService
             preparedSettings.HorizonRotation = 0;
             preparedSettings.Crop = null;
             preparedSettings.Geometry = null;
+            preparedSettings.Repairs = null;
             using var preparedBase = new BaseImage(
                 preparedPixels,
                 largeBase.Info);

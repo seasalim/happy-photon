@@ -7,7 +7,7 @@ namespace HappyPhoton.Tests;
 public sealed class HealKernelTests
 {
     [Fact]
-    public void AllCandidatesMatchIndependentOracleAndWorkerCounts()
+    public void FinalKernelMatchesIndependentOracleAndWorkerCounts()
     {
         const int width = 97, height = 73;
         var random = new Random(277);
@@ -20,13 +20,13 @@ public sealed class HealKernelTests
             new HealSpot(.6, .6, .43, .48, .09)
         };
         using var basis = RenderPipelineTestSupport.CreateBase(input, height: height);
-        foreach (var candidate in HealCandidate.All)
+        foreach (var candidate in HealCandidate.FinalOnly)
         {
             var expected = HealOracle.Apply(input, width, height, spots, candidate);
             ushort[]? first = null;
             foreach (var workers in new[] { 1, 2, 8, 2 })
             {
-                using var actual = new HealPrototype().Repair(basis, spots, candidate, workers);
+                using var actual = new HealProductionStage().Repair(basis, spots, candidate, workers);
                 var codes = Read(actual);
                 var worst = Enumerable.Range(0, codes.Length).MaxBy(i => Math.Abs(codes[i] - expected[i]));
                 Assert.True(Math.Abs(codes[worst] - expected[worst]) <= 1,
@@ -46,16 +46,16 @@ public sealed class HealKernelTests
         // Pixel (20,15) samples (21,15); overlap must not propagate newly written pixels.
         var a = new HealSpot(20.5 / 40, 15.5 / 30, 21.5 / 40, 15.5 / 30, .1, true, 0);
         var b = new HealSpot(10.5 / 40, 15.5 / 30, 20.5 / 40, 15.5 / 30, .1, true, 0);
-        using var repaired = new HealPrototype().Repair(basis, [a, b], default);
+        using var repaired = new HealProductionStage().Repair(basis, [a, b], default);
         var codes = Read(repaired);
         for (var c = 0; c < 3; c++)
         {
             Assert.Equal(input[(15 * 40 + 21) * 3 + c], codes[(15 * 40 + 20) * 3 + c]);
             Assert.Equal(input[(15 * 40 + 21) * 3 + c], codes[(15 * 40 + 10) * 3 + c]);
         }
-        using var reversed = new HealPrototype().Repair(basis, [b, a], default);
+        using var reversed = new HealProductionStage().Repair(basis, [b, a], default);
         Assert.NotEqual(codes[(15 * 40 + 10) * 3], Read(reversed)[(15 * 40 + 10) * 3]);
-        using var bypass = new HealPrototype().Repair(basis, [], default);
+        using var bypass = new HealProductionStage().Repair(basis, [], default);
         Assert.Equal(input, Read(bypass));
     }
 
@@ -64,7 +64,7 @@ public sealed class HealKernelTests
     {
         var input = Enumerable.Range(0, 100 * 60 * 3).Select(i => (ushort)(i / 3 % 100 * 400)).ToArray();
         using var basis = RenderPipelineTestSupport.CreateBase(input, height: 60);
-        using var repaired = new HealPrototype().Repair(basis,
+        using var repaired = new HealProductionStage().Repair(basis,
             [new(.5, .5, 0, .5, .1, IsClone: true, Feather: 0)], default);
         // Clamped source u=.1 gives x=9.5; destination pixel x=50 is +.5 from its center.
         Assert.Equal((ushort)4000, Read(repaired)[(30 * 100 + 50) * 3]);
@@ -79,10 +79,10 @@ public sealed class HealKernelTests
             values[(y * width + x) * 3 + c] = (ushort)((x < 80 ? 18000 : 46000) + x * 50 + y * 20 + c * 100 +
                 33000 * Math.Exp(-((x - 44.3) * (x - 44.3) + (y - 49.5) * (y - 49.5)) / 40));
         using var basis = RenderPipelineTestSupport.CreateBase(values, height: height);
-        foreach (var candidate in HealCandidate.All)
+        foreach (var candidate in HealCandidate.FinalOnly)
         {
             var spot = new HealSpot(.51, .5, .28, .5, .10, Feather: .2);
-            using var repair = new HealPrototype().Repair(basis, [spot], candidate);
+            using var repair = new HealProductionStage().Repair(basis, [spot], candidate);
             var codes = Read(repair);
             var disc = Enumerable.Range(0, width * height).Where(p =>
                 Math.Pow(p % width + .5 - spot.U * width, 2) + Math.Pow(p / width + .5 - spot.V * height, 2) < 16 * 16).ToArray();
@@ -134,13 +134,13 @@ public sealed class HealKernelTests
     {
         var input = Enumerable.Range(0, 160 * 120 * 3).Select(i => (ushort)(i % 65536)).ToArray();
         using var basis = RenderPipelineTestSupport.CreateBase(input, height: 120);
-        foreach (var formulation in Enum.GetValues<HealFormulation>())
+        foreach (var formulation in new[] { HealFormulation.Membrane })
         {
             var candidate = new HealCandidate(formulation, HealDomain.Additive);
             using var copy = HealGateTests.DetachedCopy(basis);
             Assert.Equal(input, RenderPipelineTestSupport.ReadPixels(copy));
-            new HealPrototype().Apply(copy, HealWorkloads.S64(), candidate, 2);
-            using var regular = new HealPrototype().Repair(basis, HealWorkloads.S64(), candidate);
+            new HealProductionStage().Apply(copy, HealWorkloads.S64(), candidate, 2);
+            using var regular = new HealProductionStage().Repair(basis, HealWorkloads.S64(), candidate);
             Assert.Equal(Read(regular), RenderPipelineTestSupport.ReadPixels(copy));
             Assert.Equal(input, Read(basis));
         }

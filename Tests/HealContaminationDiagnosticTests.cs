@@ -5,7 +5,7 @@ using Xunit;
 namespace HappyPhoton.Tests;
 
 // Report-only: how much of a snug blemish leaks into the healed disc through the
-// boundary estimate, for point, ring-centred and outward boundary footprints.
+// FINAL outward boundary estimate.
 public sealed class HealContaminationDiagnosticTests(ITestOutputHelper output)
 {
     private const int Width = 480, Height = 320;
@@ -15,22 +15,18 @@ public sealed class HealContaminationDiagnosticTests(ITestOutputHelper output)
     public void SnugBlemishLeakageByBoundaryFootprint()
     {
         var clean = Field(0);
-        var footprints = new (string Name, HealBoundary Boundary)[]
-        {
-            ("point", new(1e-3, 0)), ("ring-centred r/3", new(1d / 3, 0)), ("outward r/3", new(1d / 3, 1d / 3)),
-            ("outward sqrt2/3 (default)", HealBoundary.Default),
-        };
+        var footprints = new[] { "outward sqrt2/3 (FINAL)" };
         var candidate = new HealCandidate(HealFormulation.Membrane, HealDomain.Additive);
         foreach (var fill in new[] { 0, .5, .7, .8, .9 })
         {
             var dusty = Field(fill);
-            foreach (var (name, boundary) in footprints)
+            foreach (var name in footprints)
             {
                 using var basis = RenderPipelineTestSupport.CreateBase(dusty, height: Height);
                 using var copy = new MagickImage(basis.Pixels);
                 // Destination at (240,160), clean source at (100,160); radius 40 px.
                 var spot = new HealSpot(240.5 / Width, 160.5 / Height, 100.5 / Width, 160.5 / Height, RadiusPixels / Width);
-                new HealPrototype().Apply(copy, [spot], candidate, 2, boundary);
+                new HealProductionStage().Apply(copy, [spot], candidate, 2);
                 var healed = RenderPipelineTestSupport.ReadPixels(copy);
                 double sum = 0, max = 0; var count = 0;
                 for (var y = 0; y < Height; y++)

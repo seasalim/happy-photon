@@ -90,7 +90,7 @@ RAW → LibRaw camera RGB → optics/sample → characterize ┐
 Monochrome RAW → linear gray resize → replicate RGB    ├→ BaseImage
 Standard → Magick decode → color normalization        ┘  linear Rec.2020 Q16
 
-BaseImage → geometry → optional DCP HueSat → WB/locals → tone regime
+BaseImage → repairs → geometry → optional DCP HueSat → WB/locals → tone regime
           → chroma → detail → linear resize → output sharpen → vignette/grain
           → sRGB/P3 convert → clamp/encode → display scopes/clipping
           → bitmap or tagged export
@@ -196,6 +196,6 @@ The current marker values live only in `RenderPipeline.Version` and
 
 ## 7. Current boundaries
 
-Linear, radial and brush local adjustments ship. Remaining boundaries are layered compositing,
+Heal and clone repairs, and linear, radial and brush local adjustments ship. Remaining boundaries are layered compositing,
 custom output ICC profiles, HDR output, AVIF/JXL, and 1:1 region decode (zoom uses the
 bounded preview base). XMP exchanges assessments only, not develop settings.

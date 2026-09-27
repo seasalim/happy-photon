@@ -8,6 +8,7 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 ## 1. Stage order (fixed)
 
 ```
+0 Repairs      sequential heal/clone in linear Rec.2020, on the base frame
 1 Geometry     rotate90 → fused horizon/keystone/aspect/radial warp → crop
 2 DCP HueSat   optional scene-linear ProPhoto HSV profile map (§2.1)
 3 Matrix/locals WB → locals → RAW AgX inset (§2.2–2.4, §4)
@@ -19,7 +20,9 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
                (OUTPUT.md)
 ```
 
-`RenderGeometry` owns one clone. Quarter-turns are lossless; active horizon/manual
+`RenderGeometry.ApplyCanonicalBase` applies repairs before geometry on the owned copy.
+A warp with repairs needs one transient source frame. The geometry-only `Apply` skips
+repairs for encoded camera-JPEG RAW thumbnail fallbacks. Quarter-turns are lossless; active horizon/manual
 terms share one inverse bilinear warp, skipped at identity. The corrected frame keeps
 source aspect and shrinks to covered bounds without upsampling. Crop is normalized
 on that frame, so even full-image crop remains blank-free.
@@ -41,7 +44,7 @@ Options select statistics, scopes, masks, and preview-pixel preparation.
 
 Preview forces sRGB and output sharpening Off. Export proof uses a separate display
 render plus proof finalizer; shared edits remain target-independent.
-`RenderGeometry.Apply` supplies the one owned clone, leaving the caller's base immutable.
+`RenderGeometry.ApplyCanonicalBase` supplies the owned working copy, leaving the caller's base immutable.
 Every downscale runs in linear light with the same filter. Preview resizes the neutral
 base before tone; export resizes after tone. These do not commute, so TESTING.md §3
 bounds their deliberate performance-driven approximation.
@@ -324,6 +327,8 @@ while the `J` latch or a triangle peek is active; ordinary preview renders remai
 mask-free.
 
 ## 8. EditSettings v4 — schema and storage
+
+[REPAIRS.md](REPAIRS.md) defines repair storage and the render contract.
 
 JSON document shape; `EditSettingsJson` owns canonical serialization for hashing:
 

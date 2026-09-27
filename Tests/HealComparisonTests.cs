@@ -27,10 +27,10 @@ public sealed class HealComparisonTests(ITestOutputHelper output)
         var random = new Random(27764);
         var input = Enumerable.Range(0, width * height * 3).Select(_ => (ushort)random.Next(65536)).ToArray();
         using var basis = RenderPipelineTestSupport.CreateBase(input, height: height);
-        foreach (var candidate in HealCandidate.All)
+        foreach (var candidate in HealCandidate.FinalOnly)
         {
             var expected = HealOracle.Apply(input, width, height, HealWorkloads.S64(), candidate);
-            using var actual = new HealPrototype().Repair(basis, HealWorkloads.S64(), candidate);
+            using var actual = new HealProductionStage().Repair(basis, HealWorkloads.S64(), candidate);
             var codes = RenderPipelineTestSupport.ReadPixels(actual.Pixels);
             var maximum = expected.Zip(codes, (a, b) => Math.Abs(a - b)).Max();
             output.WriteLine($"S64 oracle {candidate}: maximum_Q16_difference={maximum}, limit=1");

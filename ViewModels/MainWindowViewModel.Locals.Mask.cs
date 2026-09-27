@@ -30,6 +30,7 @@ public partial class MainWindowViewModel
         System.Text.Json.JsonSerializer.Serialize(new
         {
             settings.Rotation, settings.HorizonRotation, settings.Crop, settings.Geometry,
+            Repairs = local.Luminance?.Enabled == true || local.Hue?.Enabled == true ? settings.Repairs : null,
             Decode = BaseDecodeSettings.From(settings).CacheKey,
             Wb = new { settings.Wb.Mode, settings.Wb.Kelvin, settings.Wb.Tint, settings.Wb.Gains },
             Local = new { local.Type, local.Cu, local.Cv, local.Angle, local.Feather,
