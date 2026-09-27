@@ -48,7 +48,14 @@ Read only the material relevant to the change:
 - Packaging or releases: `docs/release-engineering.md`
 - Adding or changing a test that waits on time: `docs/test-waits.md`
 
-Treat code and tests as the specification for details not covered there. Update the relevant focused documentation when behavior or architecture changes; do not grow this file with feature inventories.
+Treat code and tests as the specification for details not covered there; do not grow this file with feature inventories.
+
+## Documentation
+
+- Update docs only with durable facts a future change needs: contracts, invariants, stage order, formats, frozen constants, and decisions with a one-line reason. Use the fewest lines that state them.
+- Never record process or history: qualification narratives, review turns, run or commit IDs, rulings transcripts, diagnostics, cost probes or evidence. They belong in run artifacts and specs.
+- Record a measurement only when a later gate depends on it (a frozen control or pinned baseline), as a compact table row with no narrative.
+- Do not restate what code or tests make obvious; link instead of duplicating.
 
 ## Verify
 
