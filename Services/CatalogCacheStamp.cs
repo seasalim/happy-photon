@@ -88,14 +88,15 @@ internal static class CatalogCacheStamp
         return Task.CompletedTask;
     }
 
-    public static void ClearTiers(string cacheRoot, string assetsRoot)
+    public static void ClearTiers(string cacheRoot, string assetsRoot, Action<string, Action>? change = null)
     {
         foreach (var tierName in TierNames)
         {
             var tier = Path.Combine(assetsRoot, tierName);
             if (!Directory.Exists(tier)) continue;
             AppDataRootOwnership.AssertAppOwned(cacheRoot);
-            Directory.Delete(tier, recursive: true);
+            if (change == null) Directory.Delete(tier, recursive: true);
+            else change(tierName, () => Directory.Delete(tier, recursive: true));
         }
     }
 

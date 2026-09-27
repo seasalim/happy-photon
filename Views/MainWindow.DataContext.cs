@@ -132,6 +132,8 @@ public partial class MainWindow
             ChangeSetupLocationAsync(vm, catalog);
         vm.RecoverLocationPointerAsync = () => RecoverLocationPointerAsync(vm);
         vm.SetAsideCatalogAsync = () => SetAsideCatalogAsync(vm);
+        vm.RequestRestoreBackupAsync = () => ChooseRestoreBackupAsync(vm);
+        vm.PresentRestoreNoticeAsync = () => PresentRestoreNoticeAsync(vm);
         vm.CloseApplicationRequested = Close;
         vm.RequestFolderTreeFocus = FocusFolderTree;
         vm.CopyToClipboardAsync = async text =>
@@ -186,7 +188,7 @@ public partial class MainWindow
         try
         {
             await vm.EnsureRawRuntimeReadyAsync();
-            await _locationMigrator.ExecutePendingAsync();
+            await Task.Run(() => _locationMigrator.ExecutePendingAsync());
             _startupLocations = await _dataLocationService.ResolveAsync();
             if (_startupLocations == null)
             {
@@ -198,9 +200,15 @@ public partial class MainWindow
             vm.SetResolvedDataLocations(_startupLocations, _locationMigrator);
             ConfigureStorageSettings(vm);
             vm.PrepareFirstRunStorage(_dataLocationService, _startupLocations);
-            var hasCatalogSignature = AppDataLocationService.HasCatalogSignature(
-                _startupLocations.CatalogRoot);
-            if (!hasCatalogSignature &&
+            // A hot rollback journal makes the read-only signature probe fail.
+            // Let the normal catalog open recover it before judging the database.
+            var hasCatalogToOpen = AppDataLocationService.HasCatalogSignature(
+                _startupLocations.CatalogRoot) ||
+                (File.Exists(_startupLocations.DatabasePath) &&
+                 File.Exists(_startupLocations.DatabasePath + "-journal"));
+            if (!hasCatalogToOpen && File.Exists(_startupLocations.DatabasePath))
+                throw new IOException("The local catalog is damaged or unrecognized. Restore a backup or retry.");
+            if (!hasCatalogToOpen &&
                 !vm.IsFirstRunStorageCommitted)
             {
                 vm.ShowFirstRunWelcome(_startupPicturesPath);
@@ -210,6 +218,7 @@ public partial class MainWindow
                 _startupCatalogService.InitializeAsync(_startupLocations));
             await vm.InitializeAsync(_startupLocations);
 
+            if (BeforeStartupSettingsLoad != null) await BeforeStartupSettingsLoad();
             var settings = await _appSettingsService.LoadAsync();
             var colorLabelNames = await new ColorLabelNames(
                 _startupCatalogService).LoadAsync();

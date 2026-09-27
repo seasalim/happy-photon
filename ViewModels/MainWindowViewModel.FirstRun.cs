@@ -392,6 +392,7 @@ public partial class MainWindowViewModel
 
     partial void OnStartupGateStateChanged(StartupGateState value)
     {
+        if (value == StartupGateState.Ready) _ = PresentRestoreNoticeAsync?.Invoke();
         NotifyFirstRunPresentationChanged();
         OnPropertyChanged(nameof(IsStartupGateVisible));
         OnPropertyChanged(nameof(IsStartupInitializing));

@@ -9,10 +9,10 @@ namespace HappyPhoton.Services;
 internal sealed record BackupEntry(long Size, string Sha256);
 internal sealed record BackupManifest(int FormatVersion, string Kind, DateTimeOffset Utc,
     string AppVersion, Guid CatalogIdentity, long SchemaVersion, long ImageRows,
-    Dictionary<string, BackupEntry> Entries);
+    Dictionary<string, BackupEntry> Entries, bool Damaged = false);
 internal sealed record BackupOutcome(DateTimeOffset Utc, string Status, string? Reason = null);
 
-public sealed class CatalogBackupService(CatalogService catalog)
+public sealed partial class CatalogBackupService(CatalogService catalog)
 {
     internal const string OutcomeKey = "backup_last_attempt";
     private readonly object _sync = new();
@@ -21,7 +21,18 @@ public sealed class CatalogBackupService(CatalogService catalog)
     internal Func<DateTimeOffset> UtcNow { get; set; } = () => DateTimeOffset.UtcNow;
     internal Func<string, long> FreeSpace { get; set; } = path =>
         new DriveInfo(path).AvailableFreeSpace;
-    internal string Folder => Path.Combine(catalog.CatalogPath, "Backups");
+    private static long _folderAccessCount;
+    internal static long FolderAccessCount => Interlocked.Read(ref _folderAccessCount);
+    // Count path acquisition, conservatively including probes that find no folder.
+    // All backup-folder I/O must obtain its path here; no I/O is added by the seam.
+    internal string Folder
+    {
+        get
+        {
+            Interlocked.Increment(ref _folderAccessCount);
+            return Path.Combine(catalog.CatalogPath, "Backups");
+        }
+    }
 
     public Task BackupIfDueAsync() => BackupAsync("scheduled", onlyIfDue: true);
 
@@ -48,6 +59,7 @@ public sealed class CatalogBackupService(CatalogService catalog)
                 if (((int)File.GetAttributes(path) & (0x1000 | 0x40000 | 0x400000)) != 0) continue;
                 var manifest = JsonSerializer.Deserialize<BackupManifest>(File.ReadAllText(path));
                 if (manifest is { FormatVersion: 1, Entries: not null } &&
+                    !manifest.Damaged && manifest.SchemaVersion <= CatalogMigrations.CurrentVersion &&
                     manifest.CatalogIdentity == catalog.OpenCatalogIdentity &&
                     manifest.Entries.ContainsKey("catalog.db") && manifest.Entries.ContainsKey(".catalog-identity"))
                     result.Add((stem, manifest));

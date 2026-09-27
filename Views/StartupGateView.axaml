@@ -76,6 +76,8 @@
                                Foreground="{DynamicResource TextSecondary}"
                                TextAlignment="Center"
                                TextWrapping="Wrap"/>
+                    <Button Content="Restore from backup…" HorizontalAlignment="Center"
+                            Command="{Binding RestoreBackupCommand}"/>
                     <TextBlock Text="Your originals are untouched."
                                Foreground="{DynamicResource TextMuted}"
                                TextAlignment="Center"/>

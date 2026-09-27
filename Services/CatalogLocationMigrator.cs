@@ -4,6 +4,7 @@ namespace HappyPhoton.Services;
 
 public sealed class CatalogLocationMigrator
 {
+    internal Action<string>? RestoreStep { get; set; }
     private const string JournalFileName = "location-move.json";
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -34,9 +35,10 @@ public sealed class CatalogLocationMigrator
         CatalogLocationMoveKind kind,
         string? destinationRoot = null)
     {
+        if (kind == CatalogLocationMoveKind.Restore) throw new ArgumentException("Use the restore staging entry point.");
         if (File.Exists(JournalPath))
         {
-            throw new InvalidOperationException("A storage move is already pending.");
+            throw new InvalidOperationException("A storage move or restore is already pending.");
         }
         if (current.IsCatalogEnvironmentManaged || current.IsCacheEnvironmentManaged)
         {
@@ -83,6 +85,11 @@ public sealed class CatalogLocationMigrator
     {
         if (!File.Exists(JournalPath)) return;
         var journal = await ReadJournalAsync();
+        if (journal.Kind == CatalogLocationMoveKind.Restore)
+        {
+            await new CatalogRestoreExecutor(this) { Step = RestoreStep }.ExecuteAsync(journal);
+            return;
+        }
         try
         {
             if (journal.Kind == CatalogLocationMoveKind.SetAside)
@@ -278,7 +285,7 @@ public sealed class CatalogLocationMigrator
         CatalogLocationMovePhase phase) =>
         await CommitAsync(journal with { Phase = phase });
 
-    private Task<CatalogLocationMoveJournal> CommitAsync(CatalogLocationMoveJournal journal)
+    internal Task<CatalogLocationMoveJournal> CommitAsync(CatalogLocationMoveJournal journal)
     {
         var pointerRoot = Path.GetDirectoryName(_locations.PointerPath)!;
         AppDataRootOwnership.Claim(pointerRoot);
@@ -290,12 +297,12 @@ public sealed class CatalogLocationMigrator
         return Task.FromResult(journal);
     }
 
-    private async Task<CatalogLocationMoveJournal> ReadJournalAsync() =>
+    internal async Task<CatalogLocationMoveJournal> ReadJournalAsync() =>
         JsonSerializer.Deserialize<CatalogLocationMoveJournal>(
             await File.ReadAllTextAsync(JournalPath), JsonOptions) ??
         throw new InvalidDataException("The storage move journal is invalid.");
 
-    private void DeleteJournal()
+    internal void DeleteJournal()
     {
         if (!File.Exists(JournalPath)) return;
         AppDataRootOwnership.AssertAppOwned(

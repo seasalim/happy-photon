@@ -92,7 +92,7 @@ its plain key=value format avoids loading JSON. Failure preserves default placem
      and inject the completed immutable result into both RAW composition branches
      before workspace readiness; a rejection leaves RAW support unavailable until the
      installation is repaired;
-   - finish or roll back a pending journaled move, then resolve `locations.json`;
+   - finish or roll back a pending journaled move or restore, then resolve `locations.json`;
    - branch on an existing catalog signature rather than a configured path. A fresh or
      configured-but-empty install renders the static Welcome step before any SQLite open;
    - after the user confirms Storage, create or claim the selected roots and re-enter
@@ -115,7 +115,9 @@ the realized tree. The appearance picker stays disabled until settings arrive.
 The first-frame startup gate disables workspace controls/shortcuts until `Ready`.
 Invalid/unreadable pointers, including missing catalog folders, require explicit
 quarantine/recovery. Schema mismatch offers journaled **Set aside and retry** for both
-roots unless environment-managed; other catalog/settings failures offer Retry/Close.
+roots unless environment-managed; catalog/settings failures offer Retry, Restore from backup and Close.
+An existing database that fails the signature check reaches the error screen, never first-run
+setup, unless a rollback journal is present: the normal read-write open recovers it first.
 Incomplete first-run shutdown saves preferences only; browsing root, viewed folder and
 completion version commit together when the wizard finishes. DESIGN.md owns first-run,
 Lightroom-discovery and tour presentation.
@@ -149,6 +151,29 @@ hot journal, fingerprint catalog/presets, copy and verify, flip the location poi
 then remove only known source data. Before the flip failure rolls back; afterward the
 journal resumes cleanup. Cache moves rename same-volume assets or regenerate across
 volumes, never copying caches across volumes.
+
+Restore is another kind in the same next-launch journal; a move and a restore cannot
+coexist. Phases: Prepared, Verified, PayloadStaged, Preserved, Replacing, CacheReset,
+NoticeRecorded.
+- Schema, hashes, identity (a different catalog needs acknowledgement) and integrity are
+  checked when staging and again when executing. A refusal before Verified deletes the
+  journal and changes nothing. Only content failures mark an archive damaged.
+- The starting catalog.db, rollback journal, identity and presets are preserved byte for
+  byte as a before-restore zip and sidecar before any original changes.
+- Before Replacing commits, recovery rolls back (originals untouched); after it, recovery
+  rolls forward from hashed local staging and never rereads the archive. The result is
+  exactly the backup's file set: stray presets, absent rollback journals and WAL/SHM are
+  removed, and preset names follow the filesystem's case rules.
+- Hot rollback journals are recovered only on disposable copies; restored bytes are unchanged.
+- CacheReset clears every tier and the pairing stamp, recreating a missing cache root.
+  `restore-notice.json` (outside SQLite) is shown once at Ready, then deleted.
+- Staging cleanup removes the ownership marker last, so an interrupted cleanup resumes.
+- An error-screen restore closes the catalog and retries startup with fresh catalog-bound
+  services in the same window.
+- The chooser lists from sidecars and file attributes only; only Restore or a file choice
+  opens an archive.
+- Invariant: nothing acquires the backup-folder path before Ready unless a restore journal
+  exists; every path comes from `CatalogBackupService.Folder`.
 
 The versioned `.catalog-identity` GUID and `assets/.catalog-stamp` prevent ID-sharded
 assets from pairing with a different or rolled-back catalog. A missing stamp on a

@@ -4,7 +4,8 @@ public enum CatalogLocationMoveKind
 {
     Catalog,
     Cache,
-    SetAside
+    SetAside,
+    Restore
 }
 
 public enum CatalogLocationMovePhase
@@ -34,4 +35,10 @@ internal sealed record CatalogLocationMoveJournal(
     CatalogFingerprint? Fingerprint,
     bool? CacheWasRenamed,
     string? CacheAsideRoot,
-    string? CatalogAsideRoot = null);
+    string? CatalogAsideRoot = null,
+    CatalogRestoreState? Restore = null);
+
+internal enum CatalogRestorePhase { Prepared, Verified, PayloadStaged, Preserved, Replacing, CacheReset, NoticeRecorded }
+internal sealed record CatalogRestoreState(string BackupPath, string ArchiveHash, string ManifestHash,
+    string BeforeStem, bool AcknowledgeDifferentCatalog, CatalogRestorePhase Phase = CatalogRestorePhase.Prepared,
+    Dictionary<string, BackupEntry>? Entries = null);
