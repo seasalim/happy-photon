@@ -27,12 +27,15 @@
                         <Button Content="Reveal" Command="{Binding RevealCatalogCommand}"/>
                         <Button Content="Change" Command="{Binding ChangeCatalogCommand}"/>
                         <Button Content="Move" Command="{Binding MoveCatalogCommand}"/>
+                        <Button Content="Restore from backup…" Command="{Binding RestoreBackupCommand}"/>
                     </StackPanel>
                     <TextBlock x:Name="CatalogStatus" Text="{Binding CatalogStatus}"
                                IsVisible="{Binding CatalogStatus,
                                            Converter={x:Static ObjectConverters.IsNotNull}}"
                                Foreground="{DynamicResource TextSecondary}"
                                TextWrapping="Wrap"/>
+                    <Button Content="Cancel restore" Command="{Binding CancelRestoreCommand}"
+                            IsVisible="{Binding HasPendingRestore}"/>
                     <TextBlock x:Name="CatalogError" Text="{Binding CatalogError}"
                                IsVisible="{Binding CatalogError,
                                            Converter={x:Static ObjectConverters.IsNotNull}}"

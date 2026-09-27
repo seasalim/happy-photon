@@ -41,4 +41,4 @@ internal sealed record CatalogLocationMoveJournal(
 internal enum CatalogRestorePhase { Prepared, Verified, PayloadStaged, Preserved, Replacing, CacheReset, NoticeRecorded }
 internal sealed record CatalogRestoreState(string BackupPath, string ArchiveHash, string ManifestHash,
     string BeforeStem, bool AcknowledgeDifferentCatalog, CatalogRestorePhase Phase = CatalogRestorePhase.Prepared,
-    Dictionary<string, BackupEntry>? Entries = null);
+    Dictionary<string, BackupEntry>? Entries = null, DateTimeOffset? BackupUtc = null);

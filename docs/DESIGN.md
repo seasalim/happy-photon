@@ -38,6 +38,7 @@ The workflow is described in WORKFLOW.md; ARCHITECTURE.md owns import safety.
 The title-bar gear sits between Theme and Help. Settings shares Help & About's tab
 and footer structure. General contains theme; Storage reveals roots and stages
 restart-time moves; Metadata applies catalog-scoped XMP settings immediately.
+Restore from backup… in Storage stages a restore for the next launch, with Cancel restore.
 
 About owns manual update checks and muted inline results. An available release adds
 a muted dot to Help; opening Help then selects About and offers the channel-appropriate

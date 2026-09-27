@@ -8,13 +8,22 @@ public sealed partial class RestoreBackupViewModel : ViewModelBase
 {
     private readonly CatalogBackupService _service;
     private readonly string _root;
-    public RestoreBackupViewModel(string root)
+    private readonly bool _staged;
+
+    public RestoreBackupViewModel(string root, bool staged = false)
+        : this(root, new CatalogBackupService(new CatalogService(root)), staged)
+    {
+    }
+
+    internal RestoreBackupViewModel(string root, CatalogBackupService service, bool staged)
     {
         _root = root;
-        _service = new CatalogBackupService(new CatalogService(root));
+        _service = service;
+        _staged = staged;
         Refresh();
         Selected = Rows.FirstOrDefault(row => row.CanRestore);
     }
+
     [ObservableProperty] private IReadOnlyList<CatalogBackupRow> _rows = [];
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
@@ -51,6 +60,7 @@ public sealed partial class RestoreBackupViewModel : ViewModelBase
             var different = CatalogBackupService.ReadIdentity(_root) != check.Manifest.CatalogIdentity;
             var message = $"Restore the backup from {check.Manifest.Utc:g}? Changes since then are not included. " +
                 "The current catalog will be kept as a Before restore backup. Thumbnails will rebuild." +
+                (_staged ? "\n\nThe restore runs at the next launch. Your catalog, presets and caches stay unchanged until then." : "") +
                 (different ? "\n\nThis backup belongs to a different catalog. Continuing replaces this catalog with that one." : "") +
                 "\n\nIf XMP reading is enabled, newer sidecar ratings will be read back on the next folder load.";
             if (ConfirmAsync != null && await ConfirmAsync(message)) Accepted?.Invoke(path, different, check);

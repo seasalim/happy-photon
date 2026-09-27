@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 
 namespace HappyPhoton.Views;
@@ -52,7 +53,14 @@ public partial class MainWindow
 
         try
         {
-            if (vm.CanPersistFolderSession && vm.StartupGateState == StartupGateState.Ready &&
+            _locationMigrator?.RestoreStep?.Invoke("before:quit-backup");
+            // Match the two-second shutdown drains. Staging still running then skips the quit
+            // backup; one that failed earlier must not, so wait for it to settle, not succeed.
+            var staging = _locationMigrator?.PendingStaging ?? Task.CompletedTask;
+            var stagingSettled = await Task.WhenAny(staging, Task.Delay(TimeSpan.FromSeconds(2))) == staging;
+            if (stagingSettled && vm.CanPersistFolderSession && vm.StartupGateState == StartupGateState.Ready &&
+                !(_locationMigrator != null && File.Exists(_locationMigrator.JournalPath) &&
+                  (await _locationMigrator.ReadJournalAsync()).Kind == CatalogLocationMoveKind.Restore) &&
                 BackupOnQuitAsync is { } backup) await backup();
         }
         catch (Exception ex)

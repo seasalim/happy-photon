@@ -20,7 +20,7 @@
                 <TextBlock Grid.Column="1" Text="{Binding ActiveFileName}"
                            Foreground="{DynamicResource TextSecondary}" FontFamily="{StaticResource FontBody}"
                            TextTrimming="CharacterEllipsis" MaxWidth="480" Margin="8,0"/>
-                <TextBlock Grid.Column="2" Text="{Binding StatusMessage}"
+                <TextBlock x:Name="StatusText" Grid.Column="2" Text="{Binding StatusMessage}"
                            Foreground="{DynamicResource ControlActive}" FontFamily="{StaticResource FontBody}"
                            TextTrimming="CharacterEllipsis" Margin="8,0"/>
             </Grid>

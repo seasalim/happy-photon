@@ -179,13 +179,19 @@ public static class AppDataRootOwnership
     internal static void WriteAtomicOwned(
         string ownedRoot,
         string path,
-        string contents)
+        string contents,
+        bool overwrite = true)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var temporary = $"{path}.{Guid.NewGuid():N}.tmp";
         File.WriteAllText(temporary, contents, new UTF8Encoding(false));
-        AssertAppOwned(ownedRoot);
-        File.Move(temporary, path, overwrite: true);
+
+        try
+        {
+            AssertAppOwned(ownedRoot);
+            File.Move(temporary, path, overwrite);
+        }
+        finally { File.Delete(temporary); }
     }
 
     private static string Normalize(string path) =>

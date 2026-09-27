@@ -25,7 +25,7 @@ public partial class MainWindowViewModel
         PreviewSourceFailureStatus ??
         SelectedRawDecodeFailureStatus ??
         GlobalRawRuntimeFailureStatus ??
-        TransientStatus;
+        TransientStatus ?? _backupNotice;
 
     public Func<int, Task<bool>>? ConfirmBatchApplyAsync { get; set; }
 
@@ -371,8 +371,11 @@ public partial class MainWindowViewModel
         }
     }
 
-    partial void OnTransientStatusChanged(string? value) =>
+    partial void OnTransientStatusChanged(string? value)
+    {
+        if (value != null && _backupNoticePresented) _backupNotice = null;
         OnPropertyChanged(nameof(StatusMessage));
+    }
 
     partial void OnPinnedStatusChanged(string? value) =>
         OnPropertyChanged(nameof(StatusMessage));

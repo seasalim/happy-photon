@@ -17,7 +17,7 @@ public sealed class CatalogRestoreExecutor(CatalogLocationMigrator journalStore)
 
     // Reuses only checked metadata; the chooser owns the disposable extraction directory.
     internal Task StageAsync(AppDataLocations locations, string path, CheckedCatalogBackup? checkedBackup,
-        bool acknowledgeDifferentCatalog) => Task.Run(async () =>
+        bool acknowledgeDifferentCatalog) => journalStore.TrackStaging(async () =>
         {
             if (File.Exists(journalStore.JournalPath))
                 throw new InvalidOperationException("A storage move or restore is already pending.");
@@ -29,12 +29,13 @@ public sealed class CatalogRestoreExecutor(CatalogLocationMigrator journalStore)
             AppDataRootOwnership.AssertAppOwned(locations.CatalogRoot);
             AssertCacheOwnedIfPresent(locations.CacheRoot);
             var state = new CatalogRestoreState(Path.GetFullPath(path), checkedBackup.ArchiveHash,
-                checkedBackup.ManifestHash, $"hp-backup-{Guid.NewGuid():N}", acknowledgeDifferentCatalog);
+                checkedBackup.ManifestHash, $"hp-backup-{Guid.NewGuid():N}", acknowledgeDifferentCatalog,
+                BackupUtc: checkedBackup.Manifest.Utc);
             // Only an accepted check may repair a copied-in archive's metadata.
             service.RewriteSidecar(path, checkedBackup.Manifest);
             await Commit(new(1, CatalogLocationMoveKind.Restore, CatalogLocationMovePhase.Prepared,
                 locations.CatalogRoot, locations.CacheRoot, locations.CatalogOrigin, locations.CacheOrigin,
-                null, null, null, null, Restore: state));
+                null, null, null, null, Restore: state), createNew: true);
         });
 
     internal async Task ExecuteAsync(CatalogLocationMoveJournal journal)
@@ -169,10 +170,10 @@ public sealed class CatalogRestoreExecutor(CatalogLocationMigrator journalStore)
         if (Directory.Exists(root) || File.Exists(root)) AppDataRootOwnership.AssertAppOwned(root);
     }
 
-    private async Task<CatalogLocationMoveJournal> Commit(CatalogLocationMoveJournal journal)
+    private async Task<CatalogLocationMoveJournal> Commit(CatalogLocationMoveJournal journal, bool createNew = false)
     {
         Step?.Invoke("before:commit:" + journal.Restore!.Phase);
-        var result = await journalStore.CommitAsync(journal);
+        var result = await journalStore.CommitAsync(journal, createNew);
         Step?.Invoke("after:commit:" + journal.Restore!.Phase);
         return result;
     }

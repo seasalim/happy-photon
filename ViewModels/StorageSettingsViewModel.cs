@@ -35,6 +35,12 @@ public partial class StorageSettingsViewModel : ViewModelBase
         _fileOperationService = fileOperationService ?? new FileOperationService();
         CatalogRoot = locations.CatalogRoot;
         CacheRoot = locations.CacheRoot;
+
+        foreach (var command in new[] { RestoreBackupCommand, MoveCatalogCommand, MoveCacheCommand })
+            command.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(IAsyncRelayCommand.IsRunning)) NotifyAvailability();
+            };
     }
 
     [ObservableProperty]
@@ -63,8 +69,8 @@ public partial class StorageSettingsViewModel : ViewModelBase
 
     private bool HasEnvironmentManagedRoot =>
         _locations.IsCatalogEnvironmentManaged || _locations.IsCacheEnvironmentManaged;
-    public bool CanChangeCatalog => !HasEnvironmentManagedRoot;
-    public bool CanChangeCache => !HasEnvironmentManagedRoot;
+    public bool CanChangeCatalog => !HasEnvironmentManagedRoot && !HasPendingRestore && !IsStaging;
+    public bool CanChangeCache => !HasEnvironmentManagedRoot && !HasPendingRestore && !IsStaging;
     public string CatalogManagementNote => HasEnvironmentManagedRoot
         ? $"Moves are unavailable while {ManagedEnvironmentVariables} manages a storage location. Remove or repoint it first."
         : "Catalog database and presets. Moves run safely at next launch.";
@@ -112,9 +118,7 @@ public partial class StorageSettingsViewModel : ViewModelBase
             _locations,
             CatalogLocationMoveKind.Catalog,
             PendingCatalogRoot);
-        CatalogStatus = "Catalog move staged for the next launch.";
-        MoveCatalogCommand.NotifyCanExecuteChanged();
-        MoveCacheCommand.NotifyCanExecuteChanged();
+        await RefreshPendingAsync();
     });
 
     [RelayCommand(CanExecute = nameof(CanMoveCache))]
@@ -124,9 +128,7 @@ public partial class StorageSettingsViewModel : ViewModelBase
             _locations,
             CatalogLocationMoveKind.Cache,
             PendingCacheRoot);
-        CacheStatus = "Cache move staged for the next launch.";
-        MoveCatalogCommand.NotifyCanExecuteChanged();
-        MoveCacheCommand.NotifyCanExecuteChanged();
+        await RefreshPendingAsync();
     });
 
     // Command exceptions otherwise escape through async void into the
@@ -147,9 +149,61 @@ public partial class StorageSettingsViewModel : ViewModelBase
         }
     }
 
-    // The journal holds a single staged move, so either staged status
-    // disables both MOVE buttons until the next launch executes it.
-    private bool HasStagedMove => CatalogStatus != null || CacheStatus != null;
+    private CatalogLocationMoveJournal? _pendingJournal;
+
+    public bool HasPendingRestore => _pendingJournal?.Kind == CatalogLocationMoveKind.Restore;
+
+    private bool HasStagedMove => _pendingJournal != null || File.Exists(_migrator.JournalPath);
+
+    private bool IsStaging => RestoreBackupCommand.IsRunning || MoveCatalogCommand.IsRunning || MoveCacheCommand.IsRunning;
+
+    private bool CanRestore => !HasStagedMove && !IsStaging;
+
+    internal Func<Task<(string Path, bool Acknowledged, CheckedCatalogBackup Check)?>>? RequestRestoreAsync { get; set; }
+
+    internal Task RefreshPendingAsync() => GuardAsync(catalog: true, async () =>
+    {
+        _pendingJournal = File.Exists(_migrator.JournalPath) ? await _migrator.ReadJournalAsync() : null;
+        CatalogStatus = _pendingJournal?.Kind == CatalogLocationMoveKind.Catalog
+            ? "Catalog move staged for the next launch." : null;
+        CacheStatus = _pendingJournal?.Kind == CatalogLocationMoveKind.Cache
+            ? "Cache move staged for the next launch." : null;
+        if (_pendingJournal?.Restore is { } restore)
+            CatalogStatus = $"Restore from {restore.BackupUtc?.ToString("g") ?? Path.GetFileName(restore.BackupPath)} staged for the next launch.";
+
+        OnPropertyChanged(nameof(HasPendingRestore));
+        NotifyAvailability();
+    });
+
+    private void NotifyAvailability()
+    {
+        OnPropertyChanged(nameof(CanChangeCatalog));
+        OnPropertyChanged(nameof(CanChangeCache));
+        ChangeCatalogCommand.NotifyCanExecuteChanged();
+        ChangeCacheCommand.NotifyCanExecuteChanged();
+        MoveCatalogCommand.NotifyCanExecuteChanged();
+        MoveCacheCommand.NotifyCanExecuteChanged();
+        RestoreBackupCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRestore))]
+    private Task RestoreBackupAsync() => GuardAsync(catalog: true, async () =>
+    {
+        if (RequestRestoreAsync == null || !CanRestore) return;
+        if (await RequestRestoreAsync() is not { } chosen) return;
+        await new CatalogRestoreExecutor(_migrator) { Step = _migrator.RestoreStep }.StageAsync(
+            _locations, chosen.Path, chosen.Check, chosen.Acknowledged);
+        await RefreshPendingAsync();
+    });
+
+    [RelayCommand]
+    private Task CancelRestoreAsync() => GuardAsync(catalog: true, async () =>
+    {
+        if (File.Exists(_migrator.JournalPath) && await _migrator.ReadJournalAsync() is
+            { Kind: CatalogLocationMoveKind.Restore, Restore.Phase: CatalogRestorePhase.Prepared })
+            _migrator.DeleteJournal();
+        await RefreshPendingAsync();
+    });
 
     private bool CanMoveCatalog() =>
         CanChangeCatalog && PendingCatalogRoot != null && !HasStagedMove;

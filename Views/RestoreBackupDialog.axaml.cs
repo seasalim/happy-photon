@@ -8,9 +8,9 @@ namespace HappyPhoton.Views;
 public partial class RestoreBackupDialog : Window
 {
     public RestoreBackupDialog() => InitializeComponent();
-    public RestoreBackupDialog(string catalogRoot) : this()
+    public RestoreBackupDialog(string catalogRoot, bool staged = false) : this()
     {
-        DataContext = new RestoreBackupViewModel(catalogRoot)
+        DataContext = new RestoreBackupViewModel(catalogRoot, staged)
         {
             ChooseFileAsync = async () =>
             {

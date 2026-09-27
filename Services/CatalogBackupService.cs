@@ -15,6 +15,9 @@ internal sealed record BackupOutcome(DateTimeOffset Utc, string Status, string? 
 public sealed partial class CatalogBackupService(CatalogService catalog)
 {
     internal const string OutcomeKey = "backup_last_attempt";
+
+    internal const string PresentedOutcomeKey = "backup_last_presented";
+
     private readonly object _sync = new();
     private Task? _running;
     internal Action<string>? Step { get; set; }

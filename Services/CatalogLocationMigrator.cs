@@ -30,10 +30,29 @@ public sealed class CatalogLocationMigrator
     public string JournalPath => Path.Combine(
         Path.GetDirectoryName(_locations.PointerPath)!, JournalFileName);
 
-    public async Task StageMoveAsync(
+    private readonly object _stagingSync = new();
+
+    private Task _staging = Task.CompletedTask;
+
+    internal Task PendingStaging
+    {
+        get { lock (_stagingSync) return _staging; }
+    }
+
+    internal Task TrackStaging(Func<Task> action)
+    {
+        lock (_stagingSync)
+        {
+            var task = Task.Run(action);
+            _staging = _staging.IsCompleted ? task : Task.WhenAll(_staging, task);
+            return task;
+        }
+    }
+
+    public Task StageMoveAsync(
         AppDataLocations current,
         CatalogLocationMoveKind kind,
-        string? destinationRoot = null)
+        string? destinationRoot = null) => TrackStaging(async () =>
     {
         if (kind == CatalogLocationMoveKind.Restore) throw new ArgumentException("Use the restore staging entry point.");
         if (File.Exists(JournalPath))
@@ -78,8 +97,8 @@ public sealed class CatalogLocationMigrator
             destination,
             null,
             null,
-            null));
-    }
+            null), createNew: true);
+    });
 
     public async Task ExecutePendingAsync()
     {
@@ -285,14 +304,19 @@ public sealed class CatalogLocationMigrator
         CatalogLocationMovePhase phase) =>
         await CommitAsync(journal with { Phase = phase });
 
-    internal Task<CatalogLocationMoveJournal> CommitAsync(CatalogLocationMoveJournal journal)
+    internal Task<CatalogLocationMoveJournal> CommitAsync(CatalogLocationMoveJournal journal, bool createNew = false)
     {
         var pointerRoot = Path.GetDirectoryName(_locations.PointerPath)!;
         AppDataRootOwnership.Claim(pointerRoot);
-        AppDataRootOwnership.WriteAtomicOwned(
-            pointerRoot,
-            JournalPath,
-            JsonSerializer.Serialize(journal, JsonOptions));
+        try
+        {
+            AppDataRootOwnership.WriteAtomicOwned(pointerRoot, JournalPath,
+                JsonSerializer.Serialize(journal, JsonOptions), overwrite: !createNew);
+        }
+        catch (IOException) when (createNew && File.Exists(JournalPath))
+        {
+            throw new InvalidOperationException("A storage move or restore is already pending.");
+        }
         _afterCommit?.Invoke(journal.Phase);
         return Task.FromResult(journal);
     }
