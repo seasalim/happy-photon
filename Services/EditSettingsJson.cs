@@ -84,6 +84,8 @@ internal static partial class EditSettingsJson
         ClampRepairs(settings, ref changed);
         settings.Exposure = Clamp(settings.Exposure, -3, 3, ref changed);
         settings.Highlights = Clamp(settings.Highlights, -100, 100, ref changed);
+        settings.Whites = Clamp(settings.Whites, -100, 100, ref changed);
+        settings.Blacks = Clamp(settings.Blacks, -100, 100, ref changed);
         settings.Shadows = Clamp(settings.Shadows, -100, 100, ref changed);
         settings.Brightness = Clamp(settings.Brightness, -100, 100, ref changed);
         settings.Contrast = Clamp(settings.Contrast, -100, 100, ref changed);

@@ -119,6 +119,50 @@ Shadows    s ∈ [−100,100]:  p_toe(s)      = 3.0  · 2^(−s/100)
 The minimum slope 1.414 clears the binding pivot-to-limit chord (1.374).
 Property tests hold all §3 fixed points across the full slider grid.
 
+### 4.1 Whites and Blacks (OPS-WP2 frozen ramps)
+
+Both regimes share a pre-tone, ratio-preserving Rec.2020 luminance gain. For the
+post-global-exposure scene luminance Y, let e = log2(Y/0.18). Whites uses the positive
+half and Blacks the negative half; each is exactly zero at grey and on the other half.
+For t = clamp(abs(e)/span, 0, 1), RAW uses smoothstep t²(3−2t), spans +6.5/−10 EV,
+and a maximum of 4 EV per slider. Standard uses spans +log2(1/0.18)/−5.5 EV and
+maximum 2.4 EV. Its C1 ramp has quadratic end caps of normalized width d = 0.02:
+
+- t < d: t² / (2d(1−d));
+- d ≤ t ≤ 1−d: (t−d/2)/(1−d);
+- t > 1−d: 1−(1−t)²/(2d(1−d)).
+
+The gain is 2^(W·sW(e) + B·sB(e)), where W/B are slider/100 times the regime's
+maximum EV. Tables store log2 gain from −10 to +7 EV with 2048 mantissa intervals
+per octave and constant tails. IEEE exponent/mantissa indexing needs no per-pixel
+logarithm; interpolation is linear in luminance within each interval. Grey has its
+own exact table node. The worst negative
+log slope stays positive: RAW ≥ 1−4·1.5/6.5; standard ≥
+1−2.4/((1−0.02)·log2(1/0.18)). Property tests include table nodes.
+The neutral tone's 95% display point reaches ≥99% at Whites +100; its 5% point
+reaches ≤1% at Blacks −100. Zero and grey are fixed.
+
+Global gain and mask-weighted local gains use the same post-exposure luminance:
+G = 2^(logGglobal + sum(weight · logGlocal)), evaluated with one exp2 after all locals.
+Scalar gains commute with the existing linear local color/exposure matrices, so they
+are applied together before inset/tone without extra buffers. Range classification
+retains the pre-exposure, pre-operator WB basis. A zero accumulated log gain skips
+exp2 and multiplication and keeps the pixel's existing tone route: clamped LUT for
+unchanged pixels, analytic evaluation for previously adjusted locals. No active
+controls means no additional pixel access. Monochrome retains equal channels.
+
+Pixels with nonzero log gain use `ExtendedToneLut`, sampled from the same extended
+analytic evaluators (including channel and master curves). It uses 2048 mantissa
+intervals per octave from 2^-24 to 2^24, with analytic tails outside that domain,
+so stacked gain never clips an intermediate. Cells crossing either user curve's
+segment boundaries use analytic evaluation, including narrow nonmonotone peaks.
+Quarter-cell error probes also select analytic fallback above 1e-8 output error,
+including clamp knees. Oracle sweeps cover nodes, interiors, tails and final RAW outset/Q16
+encoding to a one-code bound. These tables are lazily cached by the existing tone
+LUT identity: Whites/Blacks ticks reuse them because those controls are not tone
+parameters. Weak keys tie their lifetime to the existing bounded tone caches;
+curves are snapshotted for the analytic tail. Build cost is reported separately.
+
 ## 5. sRGB / Display P3 agreement
 
 Every shared stage runs before the target fork, so in-gamut edited content

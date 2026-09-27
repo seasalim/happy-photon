@@ -64,8 +64,8 @@ public sealed partial class LocalsShowcaseTests
                 Assert.True(selected.Focus(NavigationMethod.Tab));
                 Assert.Same(selected, shown.FocusManager!.GetFocusedElement());
                 var sliders = section.GetVisualDescendants().OfType<CompactSlider>()
-                    .Where(slider => slider.Label is "Exposure" or "Temperature" or "Tint" or "Saturation").ToArray();
-                Assert.Equal(4, sliders.Length);
+                    .Where(slider => slider.Label is "Exposure" or "Whites" or "Blacks" or "Temperature" or "Tint" or "Saturation").ToArray();
+                Assert.Equal(6, sliders.Length);
                 var reached = new HashSet<CompactSlider>();
                 for (var i = 0; i < 100 && reached.Count < sliders.Length; i++)
                 {

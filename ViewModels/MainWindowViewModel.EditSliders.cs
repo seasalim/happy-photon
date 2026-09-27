@@ -30,6 +30,9 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private int _highlights;
 
+    [ObservableProperty] private int _whites;
+    [ObservableProperty] private int _blacks;
+
     [ObservableProperty]
     private int _rotation;
 
@@ -46,6 +49,8 @@ public partial class MainWindowViewModel
     partial void OnVibranceChanged(int value) => OnEditValueChanged();
     partial void OnShadowsChanged(int value) => OnEditValueChanged();
     partial void OnHighlightsChanged(int value) => OnEditValueChanged();
+    partial void OnWhitesChanged(int value) => OnEditValueChanged();
+    partial void OnBlacksChanged(int value) => OnEditValueChanged();
     partial void OnHorizonRotationChanged(double value) => OnHorizonRotationValueChanged();
 
     public void OnSliderEditStarted() => _activeSliderEditCount++;
@@ -100,6 +105,8 @@ public partial class MainWindowViewModel
         target.Vibrance = Vibrance;
         target.Shadows = Shadows;
         target.Highlights = Highlights;
+        target.Whites = Whites;
+        target.Blacks = Blacks;
         target.Rotation = Rotation;
         if (!IsCropMode)
             target.HorizonRotation = HorizonRotation;
@@ -122,6 +129,8 @@ public partial class MainWindowViewModel
         Vibrance = source.Vibrance;
         Shadows = source.Shadows;
         Highlights = source.Highlights;
+        Whites = source.Whites;
+        Blacks = source.Blacks;
         Rotation = source.Rotation;
         HorizonRotation = source.HorizonRotation;
         CurrentCrop = source.Crop?.Clone();

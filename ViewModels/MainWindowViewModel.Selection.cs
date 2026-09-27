@@ -255,7 +255,7 @@ public partial class MainWindowViewModel
                    Saturation != 0 ||
                    Vibrance != 0 ||
                    Shadows != 0 ||
-                   Highlights != 0 ||
+                   Highlights != 0 || Whites != 0 || Blacks != 0 ||
                    // Keep disabled RAW-only state resettable after fallback.
                    HlReconstruction != HlReconstructionMode.Clip ||
                    CaptureSharpen != CaptureSharpenDefault ||
@@ -293,6 +293,7 @@ public partial class MainWindowViewModel
         Vibrance = 0;
         Shadows = 0;
         Highlights = 0;
+        Whites = Blacks = 0;
         Rotation = 0;
         HorizonRotation = 0.0;
         LoadCurrentCurveFrom(SelectedImage?.EditSettings);

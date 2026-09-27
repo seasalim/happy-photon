@@ -151,7 +151,14 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(45, sliders.Length);
+            Assert.Equal(49, sliders.Length);
+            foreach (var name in new[] { "Whites", "Blacks" })
+            foreach (var local in new[] { false, true })
+            {
+                var points = Assert.Single(sliders, slider => slider.Label == name &&
+                    slider.GetLogicalAncestors().OfType<LocalsEditSection>().Any() == local);
+                Assert.True(points.IsEffectivelyVisible && points.Bounds.Height > 0);
+            }
             var brush = sliders.Where(slider => slider.GetLogicalAncestors()
                 .OfType<StackPanel>().Any(panel => panel.Name == "BrushSection")).ToArray();
             Assert.Equal(["Size", "Feather", "Flow"], brush.Select(slider => slider.Label));

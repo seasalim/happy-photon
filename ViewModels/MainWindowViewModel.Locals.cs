@@ -63,6 +63,26 @@ public partial class MainWindowViewModel
         }
     }
 
+    public int LocalWhites
+    {
+        get => SelectedLocal?.Whites ?? 0;
+        set => SetLocalPoints(value, true);
+    }
+    public int LocalBlacks
+    {
+        get => SelectedLocal?.Blacks ?? 0;
+        set => SetLocalPoints(value, false);
+    }
+    private void SetLocalPoints(int value, bool whites)
+    {
+        if (!CanEditLocals || SelectedLocal is not { } local) return;
+        value = Math.Clamp(value, -100, 100);
+        if (value == (whites ? local.Whites : local.Blacks)) return;
+        if (whites) local.Whites = value; else local.Blacks = value;
+        NotifyLocalsState();
+        OnEditValueChanged();
+    }
+
     public bool CanEditLocalColor => CanEditLocals && HasSelectedLocal && IsColorEditingEnabled;
     public double LocalTemperature
     {
@@ -94,7 +114,10 @@ public partial class MainWindowViewModel
     private Task ResetLocalAdjustmentsAsync() => ChangeLocalAsync("Reset adjustments", () =>
     {
         if (SelectedLocal is { } local)
+        {
             local.Exposure = local.Temperature = local.Tint = local.Saturation = 0;
+            local.Whites = local.Blacks = 0;
+        }
     });
 
     [RelayCommand]
@@ -246,6 +269,7 @@ public partial class MainWindowViewModel
         }
         OnPropertyChanged(nameof(SelectedLocalRow));
         foreach (var property in new[] { nameof(Locals), nameof(HasLocals), nameof(SelectedLocal),
+            nameof(LocalWhites), nameof(LocalBlacks), nameof(IsNeutralBrush),
             nameof(LocalTemperature), nameof(LocalTint), nameof(LocalSaturation), nameof(CanEditLocalColor),
             nameof(HasSelectedLocal), nameof(LocalExposure), nameof(CanAddLocal), nameof(CanEditLocals),
             nameof(IsLocalMaskVisible), nameof(LocalsInstruction), nameof(LocalsFrame),

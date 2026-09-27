@@ -151,9 +151,11 @@ public sealed partial class LocalsViewModelTests
         Assert.Same(list, editorChildren[0]);
         Assert.Equal(120, list.MaxHeight);
         Assert.Equal("Exposure", Assert.IsType<CompactSlider>(editorChildren[1]).Label);
+        Assert.Equal("Whites", Assert.IsType<CompactSlider>(editorChildren[2]).Label);
+        Assert.Equal("Blacks", Assert.IsType<CompactSlider>(editorChildren[3]).Label);
         Assert.Equal(new[] { "Temperature", "Tint", "Saturation" },
-            Assert.IsType<StackPanel>(editorChildren[2]).Children.OfType<CompactSlider>().Select(s => s.Label));
-        var actions = Assert.IsType<StackPanel>(editorChildren[4]);
+            Assert.IsType<StackPanel>(editorChildren[4]).Children.OfType<CompactSlider>().Select(s => s.Label));
+        var actions = Assert.IsType<StackPanel>(editorChildren[6]);
         Assert.Equal("Reset adjustments", Assert.IsType<Button>(actions.Children[0]).Content);
         Assert.Same(center, actions.Children[1]);
         Assert.Equal(radial, section.GetVisualDescendants().OfType<Grid>().Single(g => g.Children.OfType<Avalonia.Controls.Primitives.ToggleButton>().Any(t => Equals(t.Content, "Inside"))).IsVisible);

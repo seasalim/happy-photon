@@ -15,6 +15,8 @@ public static partial class EditHistoryLabel
         AddScalar(changes, "Contrast", before.Contrast, after.Contrast);
         AddScalar(changes, "Highlights", before.Highlights, after.Highlights);
         AddScalar(changes, "Shadows", before.Shadows, after.Shadows);
+        AddScalar(changes, "Whites", before.Whites, after.Whites);
+        AddScalar(changes, "Blacks", before.Blacks, after.Blacks);
         AddScalar(changes, "Saturation", before.Saturation, after.Saturation);
         AddScalar(changes, "Vibrance", before.Vibrance, after.Vibrance);
         Add(changes, "Base look", before.BaseLook, after.BaseLook);
@@ -116,12 +118,23 @@ public static partial class EditHistoryLabel
         if (before != null && after != null && before.Count == after.Count)
         {
             var changed = before.Zip(after).Where(pair => pair.First != pair.Second).ToArray();
-            if (changed.Length == 1 &&
-                changed[0].First with { Exposure = changed[0].Second.Exposure } == changed[0].Second)
+            if (changed.Length == 1)
             {
-                AddScalar(changes, $"{changed[0].Second.Name} exposure",
-                    changed[0].First.Exposure, changed[0].Second.Exposure, "0.00");
-                return;
+                var (a, b) = changed[0];
+                foreach (var (name, oldValue, newValue, normalized, format) in new[]
+                {
+                    ("exposure", a.Exposure, b.Exposure, a with { Exposure = b.Exposure }, "0.00"),
+                    ("whites", (double)a.Whites, b.Whites, a with { Whites = b.Whites }, "0"),
+                    ("blacks", (double)a.Blacks, b.Blacks, a with { Blacks = b.Blacks }, "0"),
+                    ("temperature", a.Temperature, b.Temperature, a with { Temperature = b.Temperature }, "0"),
+                    ("tint", a.Tint, b.Tint, a with { Tint = b.Tint }, "0"),
+                    ("saturation", a.Saturation, b.Saturation, a with { Saturation = b.Saturation }, "0")
+                })
+                    if (normalized == b)
+                    {
+                        AddScalar(changes, $"{b.Name} {name}", oldValue, newValue, format);
+                        return;
+                    }
             }
         }
         Add(changes, "Locals", before, after);

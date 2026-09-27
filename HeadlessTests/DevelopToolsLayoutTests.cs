@@ -109,8 +109,8 @@ public sealed class DevelopToolsLayoutTests
             scope.Show();
             Dispatcher.UIThread.RunJobs();
             var section = scope.Window!.GetVisualDescendants().OfType<LocalsEditSection>().Single();
-            var rows = section.GetVisualDescendants().OfType<CompactSlider>().Take(4).ToArray();
-            Assert.Equal(new[] { "Exposure", "Temperature", "Tint", "Saturation" }, rows.Select(s => s.Label));
+            var rows = section.GetVisualDescendants().OfType<CompactSlider>().Take(6).ToArray();
+            Assert.Equal(new[] { "Exposure", "Whites", "Blacks", "Temperature", "Tint", "Saturation" }, rows.Select(s => s.Label));
             var gaps = rows.Zip(rows.Skip(1), (a, b) =>
                 b.TranslatePoint(default, section)!.Value.Y - a.TranslatePoint(default, section)!.Value.Y - a.Bounds.Height).ToArray();
             Assert.All(gaps, gap => Assert.Equal(8, gap));
@@ -118,7 +118,7 @@ public sealed class DevelopToolsLayoutTests
                 ["WhiteBalanceTintGreenColor", "WhiteBalanceTintNeutralColor", "WhiteBalanceTintMagentaColor"]];
             for (var i = 0; i < 2; i++)
             {
-                var slider = rows[i + 1];
+                var slider = rows[i + 3];
                 var brush = Assert.IsType<LinearGradientBrush>(slider.TrackBrush);
                 Assert.False(slider.ShowValueFill);
                 Assert.Equal(new RelativePoint(0, .5, RelativeUnit.Relative), brush.StartPoint);

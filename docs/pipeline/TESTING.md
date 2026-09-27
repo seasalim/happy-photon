@@ -719,6 +719,46 @@ operator off/active full-frame pairs and 1:1 centre crops, at ±60/±100, for bo
 real fixtures and both frozen synthetic scenes. These are formulation-selection
 sheets only; production operator WPs still need their own owner-approved sheets.
 
+**OPS-WP2 qualification (2026-09-27, `3dfd0a2`, Windows/WIC, Q16 OpenMP).**
+Production Whites/Blacks results on the Canon EOS 6D RAW and iPhone 14 Pro HEIC
+fixtures; paired values below are +60 / −60, with both controls set to that amount.
+
+| Gate | RAW | HEIC | Bound / result |
+|---|---:|---:|---|
+| G1, 1600 tick increment over NL | +12.6 / +4.6 ms | +8.8 / +7.3 ms | ≤20 ms; active ≤45 ms against ≤150 ms |
+| G2, LH8 local Whites +30 / Blacks −20 increment | +2.3 ms | +0.4 ms | ≤10 ms |
+| G3, full-export paired delta | +114 / +62 ms | +47 / +37 ms | ≤max(5%, 500 ms), here 500 ms |
+
+G5: 84 frozen HEAL documents + 65 v14 golden renders/settings + 12 legacy
+documents, with **0 differing canonical bytes or pixels**.
+
+G4 measured mean / p99 ΔE against full export downsampled to each production
+preview size. Operators-off controls remain as measured. The owner's **2026-09-27
+option 1 ruling** asserts only −100 against control +0.5 mean / +2.0 p99 at both
+sizes on both fixtures. −60, +60 and +100 are report-only under that ruling;
+−60 is within the relative bound, while both brightening arms exceed it.
+
+| Fixture and preview size | Operators off | −100 (asserted) | −60 (report-only) | +60 (report-only) | +100 (report-only) |
+|---|---:|---:|---:|---:|---:|
+| RAW 1600×1068 | 1.675 / 10.015 | 0.852 / 8.332 | 1.061 / 8.855 | 4.392 / 14.518 | 9.428 / 27.552 |
+| RAW 2748×1835 | 3.754 / 23.887 | 1.554 / 18.753 | 1.996 / 20.534 | 10.436 / 33.655 | 18.723 / 56.070 |
+| HEIC 1200×1600 | 0.941 / 10.634 | 0.939 / 12.139 | 0.903 / 10.864 | 1.417 / 17.256 | 1.910 / 23.619 |
+| HEIC 2400×3200 | 0.418 / 5.618 | 0.411 / 5.863 | 0.392 / 5.258 | 0.669 / 9.931 | 0.915 / 14.050 |
+
+The brightening excess amplifies the existing preview/export gap: identical input
+with sharpening off is exact; the RAW preview decode exposure offset is 0.495 EV
+against 0.732 EV for the full decode. Resize order and RAW preview sharpening add
+smaller differences. The maximum +100 pre-tone luminance slope is 19.95 (RAW) and
+10.32 (standard). See [DECODE §2](DECODE.md#2-rawbaseloader-libraw-via-the-happy-photon-bridge)
+for the half-size preview decode and independent preview resizes, and
+[DECODE §2.2](DECODE.md#22-raw-exposure) for the source exposure estimate.
+
+The extended tone table's cold build measured about 10 ms (RAW 9.76, HEIC 9.57),
+or 33–35 ms with channel curves (RAW 34.96, HEIC 33.02); the tone-identity cache
+reuses it across Whites/Blacks amount changes. The owner approved the production
+look from the `3dfd0a2` review sheets on 2026-09-27. The remaining preview/export
+gap goes to the spec lane as a separate work package.
+
 ### 5.1 Display-reference comparison
 
 `ReferenceComparisonTests` is report-only against external lossless renders.

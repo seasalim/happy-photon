@@ -82,6 +82,14 @@ non-positive branch, standard's `Max(0, value)`), preserving overflow above one.
 Unchanged pixels keep the exact LUT path. Monochrome bases ignore local color
 terms while local Exposure preserves equal RGB channels.
 
+Whites/Blacks uses the shared luminance-driven exposure operator frozen in
+TONE_ENGINE.md §4.1. Global and final-mask-weighted local gains stack in log exposure,
+using the post-global-exposure luminance. Classification still uses the original
+post-DCP/WB pixel, before exposure, Whites/Blacks and all locals. Nonzero per-pixel
+log gain selects the headroom-preserving extended tone tables in both regimes
+(TONE_ENGINE.md §4.1); zero controls
+retain the existing exact path without additional pixel access or a mask allocation.
+
 ### 2.3 Local Luminance Range
 
 The optional `luminance` range is serialized as described in §8.
@@ -318,6 +326,13 @@ mask-free.
 ## 8. EditSettings v4 — schema and storage
 
 JSON document shape; `EditSettingsJson` owns canonical serialization for hashing:
+
+Global and local `whites` and `blacks` are integers clamped to −100..100 and omitted
+at zero. Their order is append-only: globally after `repairs`, locally after `strokes`.
+Absent fields preserve canonical bytes, settings hashes and v14 pixels; schema remains
+v4. Global fields transfer through paste and presets; local fields stay with their local,
+are destination-preserved on paste and excluded from presets. Reset clears both.
+Clone, equality, edit indicators, history, undo/redo and reload include both fields.
 
 ```jsonc
 {

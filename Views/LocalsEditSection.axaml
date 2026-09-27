@@ -71,6 +71,10 @@
                 <views:CompactSlider Label="Exposure" Value="{Binding LocalExposure}" Minimum="-4" Maximum="4"
                                      SmallChange="0.1" StringFormat="{}{0:+0.00;-0.00;0.00}"
                                      EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
+                <views:CompactSlider Label="Whites" Value="{Binding LocalWhites}" Minimum="-100" Maximum="100"
+                                     SmallChange="1" EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
+                <views:CompactSlider Label="Blacks" Value="{Binding LocalBlacks}" Minimum="-100" Maximum="100"
+                                     SmallChange="1" EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
                 <StackPanel Spacing="8" IsEnabled="{Binding CanEditLocalColor}">
                     <views:CompactSlider Label="Temperature" Value="{Binding LocalTemperature}" Minimum="-50" Maximum="50"
                                          SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True" ShowValueFill="False">

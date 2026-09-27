@@ -34,7 +34,7 @@ public partial class MainWindowViewModel
     public bool IsBrushStrokeActive => IsLocalsGestureActive && _localsGestureLocal?.IsBrush == true;
     public LocalBrushStroke? LiveBrushStroke => IsBrushStrokeActive && SelectedLocal?.Strokes is { Count: > 0 } strokes
         ? strokes[^1] : null;
-    public bool IsNeutralBrush => SelectedLocal is { IsBrush: true, Exposure: 0, Temperature: 0, Tint: 0, Saturation: 0 };
+    public bool IsNeutralBrush => SelectedLocal is { IsBrush: true, Exposure: 0, Whites: 0, Blacks: 0, Temperature: 0, Tint: 0, Saturation: 0 };
     public double BrushRadius => .001 * Math.Pow(250, (BrushSize - 1) / 99);
     public bool IsBrushPaint => BrushMode == "paint";
     public bool IsBrushErase => BrushMode == "erase";

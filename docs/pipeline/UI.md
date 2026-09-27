@@ -27,11 +27,16 @@ Locals supports at most eight linear/radial/brush adjustments in creation order 
 ordinals. Disabled and neutral locals still count; selection and Show Mask are session
 state. Closing retains edits. Scopes, footer, viewer controls and filmstrip remain live.
 
-Each local has Exposure, relative Temperature/Tint and Saturation; monochrome disables
+Each local has Exposure, Whites, Blacks, relative Temperature/Tint and Saturation; monochrome disables
 color rows without clearing stored values. Geometry controls edit center, angle,
 feather and radial axes/polarity. Luminance and Hue Range disclosures restrict the
 geometric mask. Reset adjustments clears adjustment values but preserves geometry,
 enablement and ranges. Center in view moves only the local center.
+
+Whites and Blacks are enabled for every source kind, including monochrome RAW.
+Their global rows follow Recovery and lock with the other globals during a tool.
+Double-click resets either slider. Local rows follow Exposure; Reset adjustments
+clears them, and single-control history labels name the local and changed control.
 
 One completed gesture is one history step. Escape restores an unfinished canvas
 gesture, then cancels armed creation, then closes Locals; Undo during a drag cancels
@@ -96,7 +101,7 @@ Locals                 (only in Locals mode)
   [+ Linear] [+ Radial] [+ Brush]
   Empty: [stable-height instruction / armed creation placeholder]
   With locals:
-  [local list] [Exposure / Temperature / Tint / Saturation]
+  [local list] [Exposure / Whites / Blacks / Temperature / Tint / Saturation]
   [Reset adjustments] [Center in view]
   [polarity (radial)] [Geometry disclosure] [instruction / armed creation] [divider]
 Profile                (always shown; disabled for non-RAW)
@@ -108,6 +113,7 @@ White Balance
 Adjustments            (no Temperature slider)
   Exposure / Brightness / Contrast / Saturation / Vibrance / Shadows / Highlights
   Recovery                                                [Clip | Blend]  (RAW only)
+  Whites / Blacks                                         (−100..100)
 Tone Curve             [RGB | R | G | B] [embedded Reset]
 Color Mixer                                      Reset
   [Red Orange Yellow Green Aqua Blue Purple Magenta swatches]

@@ -49,6 +49,13 @@ public sealed record LocalAdjustment
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ValueArray<LocalBrushStroke>? Strokes { get; set; }
 
+    [JsonPropertyName("whites")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int Whites { get; set; }
+    [JsonPropertyName("blacks")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int Blacks { get; set; }
+
     [JsonIgnore]
     public bool IsBrush => Type == "brush";
     [JsonIgnore]

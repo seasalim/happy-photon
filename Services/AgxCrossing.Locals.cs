@@ -18,6 +18,7 @@ internal sealed partial class AgxCrossing
         var redIdentity = masterIdentity && (_parameters.CurveRed?.IsIdentity() ?? true);
         var greenIdentity = masterIdentity && (_parameters.CurveGreen?.IsIdentity() ?? true);
         var blueIdentity = masterIdentity && (_parameters.CurveBlue?.IsIdentity() ?? true);
+        var extended = _locals.HasWhitesBlacks ? ExtendedToneLut.ForRaw(_luts, _parameters, Fold) : null;
         Parallel.For(0, workers, execution?.ParallelOptions ?? new ParallelOptions(), worker =>
         {
             var end = count * (worker + 1) / workers;
@@ -29,20 +30,30 @@ internal sealed partial class AgxCrossing
                 var r = values[offset + red] * Q16ToUnit;
                 var g = values[offset + green] * Q16ToUnit;
                 var b = values[offset + blue] * Q16ToUnit;
-                var ir = _input.Row0(r, g, b);
-                var ig = _input.Row1(r, g, b);
-                var ib = _input.Row2(r, g, b);
+                double ir = 0, ig = 0, ib = 0;
                 var adjusted = gain != 1;
+                var pointsAdjusted = false;
                 if (needsBasis)
                 {
                     var cr = _localWhiteBalance.Row0(r, g, b);
                     var cg = _localWhiteBalance.Row1(r, g, b);
                     var cb = _localWhiteBalance.Row2(r, g, b);
-                    if (_locals!.ApplyColor(pixel, ref cr, ref cg, ref cb, Fold))
+                    if (_locals!.ApplyColor(pixel, ref cr, ref cg, ref cb, Fold, out pointsAdjusted))
                     {
                         ir = inset.Row0(cr, cg, cb); ig = inset.Row1(cr, cg, cb); ib = inset.Row2(cr, cg, cb);
                         adjusted = true;
                     }
+                }
+                // Points alone must not change the old scalar-local arithmetic order.
+                if (needsBasis && !pointsAdjusted && !_locals.LegacyNeedsBasis)
+                {
+                    gain = _locals.Gain(pixel);
+                    adjusted = gain != 1;
+                    ir = _input.Row0(r, g, b); ig = _input.Row1(r, g, b); ib = _input.Row2(r, g, b);
+                }
+                if (!needsBasis || !adjusted)
+                {
+                    ir = _input.Row0(r, g, b); ig = _input.Row1(r, g, b); ib = _input.Row2(r, g, b);
                 }
                 double tr, tg, tb;
                 if (!adjusted)
@@ -50,6 +61,10 @@ internal sealed partial class AgxCrossing
                     tr = AgxToneLut.InterpolateUnchecked(_luts.Red, Clamp01(ir));
                     tg = AgxToneLut.InterpolateUnchecked(_luts.Green, Clamp01(ig));
                     tb = AgxToneLut.InterpolateUnchecked(_luts.Blue, Clamp01(ib));
+                }
+                else if (pointsAdjusted)
+                {
+                    tr = extended!.Red.Evaluate(ir); tg = extended.Green.Evaluate(ig); tb = extended.Blue.Evaluate(ib);
                 }
                 else
                 {

@@ -14,6 +14,7 @@ internal static partial class ToneLutApplicator
         var count = checked((int)(image.Width * image.Height));
         var workers = execution?.CapWorkers(WorkerCount(count)) ?? WorkerCount(count);
         var needsBasis = locals.NeedsBasis;
+        var extended = locals.HasWhitesBlacks ? ExtendedToneLut.ForStandard(luts, tone) : null;
         Parallel.For(0, workers, execution?.ParallelOptions ?? new ParallelOptions(), worker =>
         {
             var (start, end) = ChunkRange(count, worker, workers);
@@ -28,13 +29,23 @@ internal static partial class ToneLutApplicator
                 var ir = Transform(matrix, 0, r, g, b);
                 var ig = Transform(matrix, 1, r, g, b);
                 var ib = Transform(matrix, 2, r, g, b);
-                var adjusted = needsBasis ? locals.ApplyColor(pixel, ref ir, ref ig, ref ib, tone.Fold) : gain != 1;
-                if (needsBasis && adjusted) { ir = Math.Max(0, ir); ig = Math.Max(0, ig); ib = Math.Max(0, ib); }
+                var pointsAdjusted = false;
+                var adjusted = needsBasis ? locals.ApplyColor(pixel, ref ir, ref ig, ref ib, tone.Fold, out pointsAdjusted) : gain != 1;
+                if (needsBasis && !pointsAdjusted && !locals.LegacyNeedsBasis)
+                {
+                    gain = locals.Gain(pixel);
+                    adjusted = gain != 1;
+                    ir = Transform(matrix, 0, r, g, b); ig = Transform(matrix, 1, r, g, b); ib = Transform(matrix, 2, r, g, b);
+                }
+                if ((locals.LegacyNeedsBasis || pointsAdjusted) && adjusted) { ir = Math.Max(0, ir); ig = Math.Max(0, ig); ib = Math.Max(0, ib); }
                 values[offset + layout.Red] = ToQuantum(!adjusted ? Interpolate(luts.Red, ir) :
+                    pointsAdjusted ? extended!.Red.Evaluate(ir) :
                     ToneLut.Evaluate(tone, ir * gain, tone.CurveRed));
                 values[offset + layout.Green] = ToQuantum(!adjusted ? Interpolate(luts.Green, ig) :
+                    pointsAdjusted ? extended!.Green.Evaluate(ig) :
                     ToneLut.Evaluate(tone, ig * gain, tone.CurveGreen));
                 values[offset + layout.Blue] = ToQuantum(!adjusted ? Interpolate(luts.Blue, ib) :
+                    pointsAdjusted ? extended!.Blue.Evaluate(ib) :
                     ToneLut.Evaluate(tone, ib * gain, tone.CurveBlue));
             }
         });

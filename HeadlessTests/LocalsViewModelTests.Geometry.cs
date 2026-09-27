@@ -81,7 +81,7 @@ public sealed partial class LocalsViewModelTests
         using var scope = TestUiScope.ForMainWindow(window, vm);
         var section = window.GetVisualDescendants().OfType<LocalsEditSection>().Single();
         var sliders = section.GetVisualDescendants().OfType<CompactSlider>().Where(s => s.IsEffectivelyVisible).ToArray();
-        Assert.Equal(8, sliders.Length);
+        Assert.Equal(10, sliders.Length);
         foreach (var slider in sliders)
         {
             slider.BringIntoView();

@@ -12,7 +12,13 @@ internal sealed class RenderLocals
     private readonly LuminanceRange?[]? _ranges;
     private readonly HueRange?[]? _hues;
     internal bool HasRange => _ranges != null || _hues != null;
-    internal bool NeedsBasis => HasColor || HasRange;
+    private WhitesBlacksOperator? _globalPoints;
+    private WhitesBlacksOperator?[]? _localPoints;
+    private double _exposure;
+    internal bool HasWhitesBlacks => _globalPoints != null || _localPoints != null;
+    // Points need post-WB Rec.2020 luminance, before RAW's inset mixes the channels.
+    internal bool LegacyNeedsBasis { get; private init; }
+    internal bool NeedsBasis => HasColor || HasRange || HasWhitesBlacks;
     private readonly record struct Term(double X, double Y, double Origin, double Gain,
         bool Radial = false, double AcrossX = 0, double AcrossY = 0, double AcrossOrigin = 0,
         double Feather = 0, bool Outside = false);
@@ -33,8 +39,9 @@ internal sealed class RenderLocals
     {
         bool ColorActive(LocalAdjustment local) => info?.IsMonochrome != true &&
             (local.Temperature != 0 || local.Tint != 0 || local.Saturation != 0);
-        var active = settings.Locals?.Where(local => local.Enabled && (!local.IsBrush || local.Strokes is { Length: > 0 }) && (local.Exposure != 0 || ColorActive(local))).ToArray();
-        if (active is not { Length: > 0 }) return null;
+        var active = settings.Locals?.Where(local => local.Enabled && (!local.IsBrush || local.Strokes is { Length: > 0 }) && (local.Exposure != 0 || local.Whites != 0 || local.Blacks != 0 || ColorActive(local))).ToArray() ?? [];
+        var globalPoints = settings.Whites != 0 || settings.Blacks != 0;
+        if (active.Length == 0 && !globalPoints) return null;
         var correctedWidth = frameOverride?.Width ?? frame.CorrectedFrameWidth;
         var correctedHeight = frameOverride?.Height ?? frame.CorrectedFrameHeight;
         var cropX = frameOverride?.CropX * correctedWidth ?? frame.CropX;
@@ -86,7 +93,16 @@ internal sealed class RenderLocals
                 brushExtra * LocalBrushEvaluator.CountSegments(local.Strokes) / brushSegments) : null).ToArray() : null;
         return new RenderLocals(linears, width, colors, hues, ranges, brushes,
             croppedWidth / width / correctedWidth, croppedHeight / height / correctedHeight,
-            cropX / correctedWidth, cropY / correctedHeight);
+            cropX / correctedWidth, cropY / correctedHeight)
+        {
+            LegacyNeedsBasis = colors != null || active.Where(local => local.Exposure != 0).Any(local =>
+                local.Luminance?.IsEffective == true || info?.IsMonochrome != true && local.Hue?.Enabled == true),
+            _globalPoints = globalPoints ? new(settings.Whites, settings.Blacks, info?.IsRawSource == true) : null,
+            _localPoints = active.Any(local => local.Whites != 0 || local.Blacks != 0)
+                ? active.Select(local => local.Whites != 0 || local.Blacks != 0
+                    ? new WhitesBlacksOperator(local.Whites, local.Blacks, info?.IsRawSource == true) : null).ToArray() : null,
+            _exposure = Math.Pow(2, settings.Exposure + (info?.SourceExposureBiasEv ?? 0))
+        };
     }
 
     private static AgxCrossing.Matrix3x3 PrepareColor(LocalAdjustment local, double kelvin, double tint)
@@ -105,8 +121,11 @@ internal sealed class RenderLocals
     }
 
     internal bool ApplyColor(int pixel, ref double r, ref double g, ref double b, double fold = 1) =>
-        _brushes == null ? ApplyColorCore<GradientWeights>(pixel, ref r, ref g, ref b, fold)
-            : ApplyColorCore<BrushWeights>(pixel, ref r, ref g, ref b, fold);
+        ApplyColor(pixel, ref r, ref g, ref b, fold, out _);
+
+    internal bool ApplyColor(int pixel, ref double r, ref double g, ref double b, double fold, out bool pointsAdjusted) =>
+        _brushes == null ? ApplyColorCore<GradientWeights>(pixel, ref r, ref g, ref b, fold, out pointsAdjusted)
+            : ApplyColorCore<BrushWeights>(pixel, ref r, ref g, ref b, fold, out pointsAdjusted);
 
     private interface IWeights { static abstract double Weight(RenderLocals owner, int i, double x, double y); }
     private readonly struct GradientWeights : IWeights
@@ -120,11 +139,15 @@ internal sealed class RenderLocals
             : GeometryWeight(owner._terms[i], x, y);
     }
 
-    private bool ApplyColorCore<T>(int pixel, ref double r, ref double g, ref double b, double fold) where T : struct, IWeights
+    private bool ApplyColorCore<T>(int pixel, ref double r, ref double g, ref double b, double fold, out bool pointsAdjusted) where T : struct, IWeights
     {
         var x = pixel % _width + .5;
         var y = pixel / _width + .5;
         var original = (r, g, b);
+        // All point gains share the post-exposure luma; mask classification keeps the original WB basis.
+        var position = HasWhitesBlacks ? WhitesBlacksOperator.Position(
+            (Rec2020Luminance.Red * r + Rec2020Luminance.Green * g + Rec2020Luminance.Blue * b) * fold * _exposure) : 0;
+        var pointsLog = _globalPoints?.LogGain(position) ?? 0;
         double? lightness = null;
         OklabColor.Classification? classification = null;
         double? hue = null, chroma = null;
@@ -149,12 +172,16 @@ internal sealed class RenderLocals
                 weight *= HueWindow.Weight(hueRange, hue.Value, chroma.Value);
                 if (weight == 0) continue;
             }
+            if (_localPoints?[i] is { } points)
+                pointsLog += weight * points.LogGain(position);
             if (_colors?[i] is { } matrix)
                 (r, g, b) = (r + weight * (matrix.Row0(r, g, b) - r),
                     g + weight * (matrix.Row1(r, g, b) - g), b + weight * (matrix.Row2(r, g, b) - b));
             else { var gain = 1 + weight * term.Gain; r *= gain; g *= gain; b *= gain; }
         }
-        return original != (r, g, b);
+        pointsAdjusted = pointsLog != 0;
+        if (pointsAdjusted) { var gain = double.Exp2(pointsLog); r *= gain; g *= gain; b *= gain; }
+        return pointsAdjusted || original != (r, g, b);
     }
 
     private static double GeometryWeight(Term term, double x, double y)

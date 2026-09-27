@@ -151,9 +151,19 @@ public class EditSettings
         set => _repairs = value;
     }
 
+    [JsonPropertyName("whites")]
+    [JsonPropertyOrder(27)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int Whites { get; set; }
+
+    [JsonPropertyName("blacks")]
+    [JsonPropertyOrder(28)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int Blacks { get; set; }
+
     [JsonIgnore]
     public bool HasEdits => Exposure != 0.0 || !Wb.IsIdentity ||
-                          Brightness != 0 || Contrast != 0 ||
+                          Brightness != 0 || Contrast != 0 || Whites != 0 || Blacks != 0 ||
                           Saturation != 0 || Vibrance != 0 || Shadows != 0 || Highlights != 0 ||
                           BaseLook != null || HlReconstruction != HlReconstructionMode.Clip ||
                           Detail.CaptureSharpen != null || Detail.LuminanceNr != 0 ||
@@ -181,6 +191,8 @@ public class EditSettings
         Vibrance = Vibrance,
         Shadows = Shadows,
         Highlights = Highlights,
+        Whites = Whites,
+        Blacks = Blacks,
         BaseLook = BaseLook,
         HlReconstruction = HlReconstruction,
         Detail = Detail?.Clone() ?? new DetailSettings(),
@@ -210,6 +222,7 @@ public class EditSettings
                Brightness == other.Brightness && Contrast == other.Contrast &&
                Saturation == other.Saturation && Vibrance == other.Vibrance &&
                Shadows == other.Shadows && Highlights == other.Highlights &&
+               Whites == other.Whites && Blacks == other.Blacks &&
                BaseLook == other.BaseLook &&
                HlReconstruction == other.HlReconstruction &&
                Detail.CaptureSharpen == other.Detail.CaptureSharpen &&

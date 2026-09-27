@@ -27,6 +27,8 @@ public static class EditSettingsTransfer
         target.Vibrance = copied.Vibrance;
         target.Shadows = copied.Shadows;
         target.Highlights = copied.Highlights;
+        target.Whites = copied.Whites;
+        target.Blacks = copied.Blacks;
         target.BaseLook = copied.BaseLook;
         target.HlReconstruction = copied.HlReconstruction;
         target.Detail = copied.Detail.Clone();

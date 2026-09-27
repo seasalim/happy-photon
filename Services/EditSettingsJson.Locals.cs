@@ -52,6 +52,8 @@ internal static partial class EditSettingsJson
                 local.Ry = Clamp(local.Ry, .001, 1, ref changed);
             }
             local.Exposure = Clamp(local.Exposure, -4, 4, ref changed);
+            local.Whites = Clamp(local.Whites, -100, 100, ref changed);
+            local.Blacks = Clamp(local.Blacks, -100, 100, ref changed);
             local.Temperature = Clamp(local.Temperature, -50, 50, ref changed);
             local.Tint = Clamp(local.Tint, -50, 50, ref changed);
             local.Saturation = Clamp(local.Saturation, -100, 100, ref changed);
