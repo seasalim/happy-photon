@@ -38,6 +38,11 @@ Happy Photon is a performance-focused .NET 10/Avalonia photo workflow for browsi
 - No body, no bullet lists, no "Co-Authored-By" or "Generated with" trailers, no emoji.
 - Squash commits before merge so each merged change lands as one commit.
 
+## Code style
+
+- Separate type members with one blank line, and separate a method's logical steps (setup, validation, main work, cleanup) with a blank line.
+- Never compress code to meet the 500-line limit or a LOC estimate: no dropped blank lines, stacked statements or merged declarations. Split the file, or report the overrun at the merge gate.
+
 ## Load context on demand
 
 Read only the material relevant to the change:
