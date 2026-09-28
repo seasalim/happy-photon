@@ -364,6 +364,8 @@
                         <views:CompactSlider Label="Blacks" Value="{Binding Blacks}" Minimum="-100" Maximum="100"
                                              SmallChange="1" EnableDoubleClickReset="True"/>
 
+                        <views:PresenceEditGroup x:Name="PresenceEditGroup"/>
+
                         <views:CurveView x:Name="ToneCurveView"
                                          Curve="{Binding CurrentCurve}" CompositeCurve="{Binding CompositeCurve}" ActiveChannel="{Binding ActiveCurveChannel, Mode=TwoWay}"
                                          HasRedCurve="{Binding HasRedCurve}" HasGreenCurve="{Binding HasGreenCurve}" HasBlueCurve="{Binding HasBlueCurve}" CurveEditStarted="OnCurveEditStarted" CurveChanged="OnCurveChanged"

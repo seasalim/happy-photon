@@ -155,6 +155,8 @@ public partial class MainWindowViewModel
         SelectedImage.EditSettings.Vibrance = 0;
         SelectedImage.EditSettings.Shadows = 0;
         SelectedImage.EditSettings.Highlights = SelectedImage.EditSettings.Whites = SelectedImage.EditSettings.Blacks = 0;
+        SelectedImage.EditSettings.Texture = 0;
+        SelectedImage.EditSettings.Clarity = 0;
         SelectedImage.EditSettings.BaseLook = null;
         SelectedImage.EditSettings.HlReconstruction = HlReconstructionMode.Clip;
         SelectedImage.EditSettings.Detail = new DetailSettings();
@@ -190,6 +192,7 @@ public partial class MainWindowViewModel
         Vibrance = 0;
         Shadows = 0;
         Highlights = Whites = Blacks = 0;
+        Texture = Clarity = 0;
         Rotation = currentRotation;
         HorizonRotation = currentHorizonRotation;
         CurrentCrop = currentCrop;

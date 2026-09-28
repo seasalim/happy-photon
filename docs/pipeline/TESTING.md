@@ -541,10 +541,10 @@ numbers below were measured under an exclusive `measure` host lease.
 gate. Dehaze (with the pre-approved edge-aware refinement) passes G4, G5 and G7 but
 misses G1 for positive amounts, G2 on RAW, G3 and G6, so the combined OP stack misses
 G1, G2 (RAW) and G3. Per the spec, the Dehaze design returns to the owner; no formulation
-is recorded FINAL here. Texture and guided Clarity are the candidates for the owner's
-look review (sheets below). OPS-WP2 and OPS-WP6 do not depend on this spike.
+is recorded FINAL for Dehaze. Texture and guided Clarity are FINAL (RENDER.md §9).
+OPS-WP2 and OPS-WP6 do not depend on this spike.
 
-**Candidate constants (frozen for reproduction, not approved production choices).**
+**Frozen constants (Texture and guided Clarity FINAL; Dehaze remains a candidate).**
 `OpsPresenceOracle` uses scalar doubles, direct two-dimensional convolution and
 source-pixel area scattering. `OpsPresencePrototype` uses separable filtering,
 cell gathering and one working-size float plane. `OpsDehazeOracle` independently

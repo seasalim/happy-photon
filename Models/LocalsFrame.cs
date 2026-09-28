@@ -4,4 +4,6 @@ public readonly record struct LocalsFrame(double Width, double Height,
     double CropX, double CropY, double CropWidth, double CropHeight)
 {
     public double LongEdge => Math.Max(Width, Height);
+
+    internal double BaseLongEdge { get; init; } = Math.Max(Width, Height);
 }

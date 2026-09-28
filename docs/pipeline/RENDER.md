@@ -15,7 +15,7 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 4 Tone LUT     source-kind tone regime, fused with matrix storage (§5)
 5 Matrix       crossing on: AgX outset; crossing off: identity
 6 Chroma       one fused OKLCh color-mixer/saturation/vibrance pass (§6)
-7 Detail       luminance/chroma NR → capture sharpen (§9)
+7 Detail       luminance/chroma NR → presence → capture sharpen (§9)
 8 Output       linear resize → output sharpen → effects → target convert → encode
                (OUTPUT.md)
 ```
@@ -479,7 +479,7 @@ without rewriting files. Copy/paste requires current in-memory source and target
 
 ## 9. Detail stage
 
-The shared detail stage applies luminance NR, chroma NR, then capture sharpen.
+The shared detail stage applies luminance NR, chroma NR, presence, then capture sharpen.
 Source defaults and serialized fields are defined by `DetailSettings` (§8).
 
 Spatial support scales as `σ_effective = σ_native · renderLongEdge / max(Info.FullWidth,
@@ -495,6 +495,13 @@ keep the control judgeable; export-scale renders remain the detail reference.
   log-linearly evaluated at bounded fractional indices before spatial quantization.
   Soft-thresholded detail reconstructs a luma delta added equally to RGB after clamping
   to `[−min(R,G,B), 65535−max(R,G,B)]`, preserving chroma and alpha at gamut boundaries.
+- **Presence (FINAL):** Texture is the composed B3 à trous band at native dilations
+  1, 2, 4 (±14 px, scaled like σ above), soft-thresholded at 0.01. Clarity is a
+  self-guided base (box radius ceil(√3·σ), σ = 0.010 long edge, ε = 0.0025) over
+  area-reduced luma (≤ 256 cells); its band is clamped to ±0.04 and weighted by 4Y(1−Y).
+  Each band scales by slider/100, and the summed delta uses NR's equal-channel clamp.
+  Clarity's grid stays aligned to the uncropped corrected frame, including prepared resting bases.
+  Its cell size and radius use the pre-warp base long edge at render scale.
 - **Capture sharpen:** luminance-targeted unsharp, `σ_native=0.75`,
   `amount=v/100`, `threshold=0.01`, with the intent-specific sigma rule above.
 - **Chroma NR:** five scales denoise `Cb=B−Y` and `Cr=R−Y` using

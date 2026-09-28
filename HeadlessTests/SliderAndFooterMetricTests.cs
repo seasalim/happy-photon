@@ -153,7 +153,7 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(53, sliders.Length);
+            Assert.Equal(55, sliders.Length);
             var spots = sliders.Where(slider => slider.GetLogicalAncestors().OfType<SpotsEditSection>().Any()).ToArray();
             Assert.Equal(["Threshold", "Size", "Feather", "Opacity"], spots.Select(slider => slider.Label));
             foreach (var name in new[] { "Whites", "Blacks" })

@@ -33,7 +33,7 @@ public sealed partial class LocalsViewModelTests
             "MixerEditGroup", "DetailEditGroup", "EffectsEditGroup", "GeometryEditGroup", "LensEditGroup"];
         var controls = names.Select(name => panel.GetVisualDescendants().OfType<Control>()
             .Single(control => control.Name == name)).Concat(panel.GetVisualDescendants()
-            .OfType<CompactSlider>().Where(slider => slider.Label is "Exposure" or "Contrast" or "Shadows" or "Highlights" or "Whites" or "Blacks")
+            .OfType<CompactSlider>().Where(slider => slider.Label is "Exposure" or "Contrast" or "Shadows" or "Highlights" or "Whites" or "Blacks" or "Texture" or "Clarity")
             .Where(slider => !slider.GetVisualAncestors().OfType<LocalsEditSection>().Any())).ToArray();
         // BASELINE at 5a9af39: entry and transient views retained these states.
         bool[] baseline = (raw, mono) switch
@@ -43,7 +43,7 @@ public sealed partial class LocalsViewModelTests
             _ => [false, false, false, false, false, true, true, false, true, true, true, true, true, true, true, true]
         };
         // The additive luminance controls stay enabled in every source regime.
-        baseline = [.. baseline, true, true];
+        baseline = [.. baseline, true, true, true, true];
         Assert.Equal(baseline, controls.Select(control => control.IsEffectivelyEnabled));
         var live = new Control[] { panel.FindControl<Border>("DevelopScopeBox")!,
             panel.FindControl<DevelopActionBar>("DevelopActionBar")! };

@@ -91,8 +91,8 @@ Monochrome RAW → linear gray resize → replicate RGB    ├→ BaseImage
 Standard → Magick decode → color normalization        ┘  linear Rec.2020 Q16
 
 BaseImage → repairs → geometry → optional DCP HueSat → WB/locals → tone regime
-          → chroma → detail → linear resize → output sharpen → vignette/grain
-          → sRGB/P3 convert → clamp/encode → display scopes/clipping
+          → chroma → NR → presence → capture sharpen → linear resize
+          → output sharpen → vignette/grain → sRGB/P3 convert → clamp/encode → display scopes/clipping
           → bitmap or tagged export
 ```
 

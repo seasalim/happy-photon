@@ -52,6 +52,9 @@ Their global rows follow Recovery and lock with the other globals during a tool.
 Double-click resets either slider. Local rows follow Exposure; Reset adjustments
 clears them, and single-control history labels name the local and changed control.
 
+Presence (Texture, Clarity) is enabled for every source kind, including monochrome,
+and locks with the global edits while a tool is open.
+
 One completed gesture is one history step. Escape restores an unfinished canvas
 gesture, then cancels armed creation, then closes Locals; Undo during a drag cancels
 that drag. Navigation and snapshot/replacement commands discard unfinished geometry.
@@ -128,6 +131,8 @@ Adjustments            (no Temperature slider)
   Exposure / Brightness / Contrast / Saturation / Vibrance / Shadows / Highlights
   Recovery                                                [Clip | Blend]  (RAW only)
   Whites / Blacks                                         (−100..100)
+Presence
+  Texture / Clarity                                       (−100..100)
 Tone Curve             [RGB | R | G | B] [embedded Reset]
 Color Mixer                                      Reset
   [Red Orange Yellow Green Aqua Blue Purple Magenta swatches]

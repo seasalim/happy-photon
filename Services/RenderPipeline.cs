@@ -242,6 +242,26 @@ public sealed class RenderPipeline
                 noiseReductionBandPixelLimit,
                 execution);
             RenderStageProbe.End(probe, "noise-reduction", working);
+
+            if (request.Settings.Texture != 0 || request.Settings.Clarity != 0)
+            {
+                execution?.ThrowIfCancellationRequested();
+                execution?.ReportStage("presence");
+                probe = RenderStageProbe.Begin();
+                RenderPresence.Apply(working, request.Base.Info, request.Settings,
+                    noiseReductionBandPixelLimit, execution,
+                    request.LocalsFrameOverride ?? new LocalsFrame(
+                        geometry.CorrectedFrameWidth, geometry.CorrectedFrameHeight,
+                        geometry.CropX / (double)geometry.CorrectedFrameWidth,
+                        geometry.CropY / (double)geometry.CorrectedFrameHeight,
+                        geometry.Width / (double)geometry.CorrectedFrameWidth,
+                        geometry.Height / (double)geometry.CorrectedFrameHeight)
+                    {
+                        BaseLongEdge = Math.Max(geometry.QuarterTurnWidth, geometry.QuarterTurnHeight)
+                    });
+                RenderStageProbe.End(probe, "presence", working);
+            }
+
             execution?.ThrowIfCancellationRequested();
             execution?.ReportStage("capture-sharpen");
             probe = RenderStageProbe.Begin();

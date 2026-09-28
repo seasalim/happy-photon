@@ -29,6 +29,8 @@ public static class EditSettingsTransfer
         target.Highlights = copied.Highlights;
         target.Whites = copied.Whites;
         target.Blacks = copied.Blacks;
+        target.Texture = copied.Texture;
+        target.Clarity = copied.Clarity;
         target.BaseLook = copied.BaseLook;
         target.HlReconstruction = copied.HlReconstruction;
         target.Detail = copied.Detail.Clone();

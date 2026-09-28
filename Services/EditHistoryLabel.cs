@@ -17,6 +17,8 @@ public static partial class EditHistoryLabel
         AddScalar(changes, "Shadows", before.Shadows, after.Shadows);
         AddScalar(changes, "Whites", before.Whites, after.Whites);
         AddScalar(changes, "Blacks", before.Blacks, after.Blacks);
+        AddScalar(changes, "Texture", before.Texture, after.Texture);
+        AddScalar(changes, "Clarity", before.Clarity, after.Clarity);
         AddScalar(changes, "Saturation", before.Saturation, after.Saturation);
         AddScalar(changes, "Vibrance", before.Vibrance, after.Vibrance);
         Add(changes, "Base look", before.BaseLook, after.BaseLook);
