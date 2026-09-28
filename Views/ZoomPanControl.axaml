@@ -67,8 +67,8 @@
                 </TextBlock.Effect>
             </TextBlock>
             <TextBlock x:Name="LoupeStatus"
-                       Text="1:1"
-                       IsVisible="{Binding $parent[views:ZoomPanControl].IsLoupePeekActive}"
+                       Text="{Binding $parent[views:ZoomPanControl].OneToOneStatus}"
+                       IsVisible="{Binding $parent[views:ZoomPanControl].IsOneToOneStatusVisible}"
                        HorizontalAlignment="Right"
                        VerticalAlignment="Bottom"
                        Margin="10,8"

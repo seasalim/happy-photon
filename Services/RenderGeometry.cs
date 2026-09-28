@@ -103,7 +103,7 @@ internal static class RenderGeometry
                 settings.Geometry);
             if (!map.IsIdentity)
             {
-                var warped = GeometryWarpProcessor.Apply(geometrySource, map);
+                var warped = GeometryWarpProcessor.Apply(geometrySource, map, execution);
                 owned?.Dispose();
                 owned = warped;
             }

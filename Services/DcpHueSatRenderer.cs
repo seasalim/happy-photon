@@ -52,14 +52,15 @@ internal static partial class DcpHueSatRenderer
         int redChannel,
         int greenChannel,
         int blueChannel,
-        DcpHueSatMap map)
+        DcpHueSatMap map, RenderExecutionOptions? execution = null)
     {
-        var prepared = map.RgbLut == null ? Prepare(map) : map;
+        var prepared = map.RgbLut == null ? Prepare(map, execution) : map;
         var lut = prepared.RgbLut!;
         var workers = Math.Min(
             Environment.ProcessorCount,
             Math.Max(1, (pixelCount + 32_767) / 32_768));
-        Parallel.For(0, workers, worker =>
+        workers = execution?.CapWorkers(workers) ?? workers;
+        Parallel.For(0, workers, execution?.ParallelOptions ?? new ParallelOptions(), worker =>
         {
             var start = pixelCount * worker / workers;
             var end = pixelCount * (worker + 1) / workers;

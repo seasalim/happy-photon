@@ -27,7 +27,7 @@ internal static class ToneLut
     // Same shape as AgxToneLut.ComposeCached: slider ticks that leave tone
     // parameters unchanged (saturation, vignette, crop, overlay refreshes)
     // reuse the composed LUTs instead of rebuilding three 64K tables.
-    public static ToneLuts ComposeCached(ToneParams parameters)
+    public static ToneLuts ComposeCached(ToneParams parameters, RenderExecutionOptions? execution = null)
     {
         lock (CacheLock)
         {
@@ -41,7 +41,8 @@ internal static class ToneLut
             }
         }
 
-        var composed = Compose(parameters);
+        var composed = Compose(parameters, execution);
+        execution?.ThrowIfCancellationRequested();
         lock (CacheLock)
         {
             var existing = Cache.FindIndex(entry => entry.Matches(parameters));
@@ -105,21 +106,22 @@ internal static class ToneLut
             _blue.Matches(parameters.CurveBlue);
     }
 
-    public static ToneLuts Compose(ToneParams parameters) =>
+    public static ToneLuts Compose(ToneParams parameters, RenderExecutionOptions? execution = null) =>
         ChannelCurveLutComposer.Compose(
             parameters.CurveRed,
             parameters.CurveGreen,
             parameters.CurveBlue,
-            channelCurve => Compose(parameters, channelCurve));
+            channelCurve => Compose(parameters, channelCurve, execution));
 
     private static double[] Compose(
         ToneParams parameters,
-        CurveData? channelCurve)
+        CurveData? channelCurve, RenderExecutionOptions? execution)
     {
         var lut = new double[Length];
         var workers = Math.Min(
             Environment.ProcessorCount,
             Math.Max(1, Length / 8192));
+        workers = execution?.CapWorkers(workers) ?? workers;
         Parallel.For(0, workers, worker =>
         {
             var start = Length * worker / workers;

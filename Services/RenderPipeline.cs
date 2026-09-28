@@ -285,7 +285,7 @@ public sealed class RenderPipeline
             request.Settings.CurveGreen,
             request.Settings.CurveBlue);
         var probe = RenderStageProbe.Begin();
-        var tone = ToneLut.ComposeCached(parameters);
+        var tone = ToneLut.ComposeCached(parameters, execution);
         RenderStageProbe.End(probe, "standard-tone-lut", working);
         execution?.ThrowIfCancellationRequested();
         if (locals == null) ToneLutApplicator.Apply(working, chromatic.Matrix, tone, execution);

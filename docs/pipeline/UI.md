@@ -236,6 +236,9 @@ CHARACTERIZATION.md §7.6.
   preceding zoom and viewport. The chrome-less `1:1` line and the resting-render
   refinement are transient view behavior: zoom, fit, edit, persistence, and undo
   state do not move.
+- The 1:1 label appears at manual 1:1 and during peek. Develop shows `1:1 · refining`
+  until its full-base bitmap is installed, then `1:1`; cloud-only originals show
+  `1:1 · preview detail` and never trigger a source read.
 - **Zoom is device-true and original-relative.** `ZoomLevel = 1.0` maps one original
   image pixel to one device pixel, independent of the monitor's render scaling, and
   the mouse wheel keeps the image point under the pointer fixed while zooming. The

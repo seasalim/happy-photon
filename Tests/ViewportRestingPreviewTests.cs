@@ -273,11 +273,11 @@ public sealed partial class ViewportRestingPreviewTests : IAsyncLifetime
         clock.Advance(TimeSpan.FromMilliseconds(75));
         await TestWaits.UntilAsync(() =>
             viewModel.PreviewImage?.PixelSize.Width == 300);
-        viewModel.PublishRequiredDeviceLongEdge(500);
+        viewModel.PublishRequiredDeviceLongEdge(320);
         clock.Advance(TimeSpan.FromMilliseconds(75));
         await TestWaits.UntilAsync(() =>
             viewModel.PreviewImage?.PixelSize.Width == 320);
-        viewModel.PublishRequiredDeviceLongEdge(600);
+        viewModel.PublishRequiredDeviceLongEdge(320);
         clock.Advance(TimeSpan.FromMilliseconds(75));
 
         Assert.Equal(3, viewModel.RestingPaintCount);
@@ -307,13 +307,13 @@ public sealed partial class ViewportRestingPreviewTests : IAsyncLifetime
         await TestWaits.UntilAsync(() => viewModel.Histogram != null);
         await TestWaits.UntilAsync(() => viewModel.HasArmedRestingRender);
 
-        viewModel.ApplyManualZoom(1.25);
-        viewModel.PublishRequiredDeviceLongEdge(500);
+        viewModel.ApplyManualZoom(.8);
+        viewModel.PublishRequiredDeviceLongEdge(320);
         clock.Advance(TimeSpan.FromMilliseconds(75));
         await TestWaits.UntilAsync(() =>
             viewModel.PreviewImage?.PixelSize.Width == 320);
 
-        Assert.Equal(1.25, viewModel.ManualZoomLevel);
+        Assert.Equal(.8, viewModel.ManualZoomLevel);
         Assert.Equal(1, viewModel.RestingPaintCount);
         viewModel.PublishNavigatorVisibleRegion(new Rect(0.1, 0.1, 0.5, 0.5));
         clock.Advance(TimeSpan.FromMilliseconds(75));

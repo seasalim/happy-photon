@@ -269,6 +269,7 @@ public partial class ZoomPanControl
     {
         var wasActive = IsLoupePeekActive;
         _loupePeek = value;
+        NotifyDetailStatus();
         RaisePropertyChanged(
             IsLoupePeekActiveProperty,
             wasActive,

@@ -197,5 +197,4 @@ The current marker values live only in `RenderPipeline.Version` and
 ## 7. Current boundaries
 
 Heal and clone repairs, and linear, radial and brush local adjustments ship. Remaining boundaries are layered compositing,
-custom output ICC profiles, HDR output, AVIF/JXL, and 1:1 region decode (zoom uses the
-bounded preview base). XMP exchanges assessments only, not develop settings.
+custom output ICC profiles, HDR output, AVIF/JXL, and region decode (Develop 1:1 renders the whole full-resolution frame). XMP exchanges assessments only, not develop settings.

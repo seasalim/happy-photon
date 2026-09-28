@@ -15,14 +15,15 @@ internal sealed class ExtendedToneLut
     private readonly double[] _values = new double[Intervals + 1];
     private readonly bool[] _analytic = new bool[Intervals];
     private readonly Func<double, double> _evaluate;
-    private static readonly ConditionalWeakTable<ToneLuts, Lazy<Channels>> Cache = new();
+    private static readonly ConditionalWeakTable<ToneLuts, Channels> Cache = new();
     internal sealed record Channels(ExtendedToneLut Red, ExtendedToneLut Green, ExtendedToneLut Blue);
 
-    internal ExtendedToneLut(Func<double, double> evaluate, Func<double, int>? curveCell = null)
+    internal ExtendedToneLut(Func<double, double> evaluate, Func<double, int>? curveCell = null,
+        RenderExecutionOptions? execution = null)
     {
         _evaluate = evaluate;
-        Parallel.For(0, Intervals + 1, i => _values[i] = evaluate(Node(i)));
-        Parallel.For(0, Intervals, i =>
+        Parallel.For(0, Intervals + 1, execution?.ParallelOptions ?? new ParallelOptions(), i => _values[i] = evaluate(Node(i)));
+        Parallel.For(0, Intervals, execution?.ParallelOptions ?? new ParallelOptions(), i =>
         {
             var lo = Node(i); var hi = Node(i + 1);
             if (curveCell != null && curveCell(lo) != curveCell(hi))
@@ -60,13 +61,24 @@ internal sealed class ExtendedToneLut
             _values[i] + (_values[i + 1] - _values[i]) * (position - i);
     }
 
-    internal static Channels ForRaw(ToneLuts key, AgxToneParameters parameters, double fold) =>
-        Cache.GetValue(key, _ => new Lazy<Channels>(() => ComposeRaw(parameters, fold))).Value;
+    internal static Channels ForRaw(ToneLuts key, AgxToneParameters parameters, double fold,
+        RenderExecutionOptions? execution = null)
+    {
+        if (Cache.TryGetValue(key, out var hit)) return hit;
+        var composed = ComposeRaw(parameters, fold, execution);
+        return Cache.GetValue(key, _ => composed);
+    }
 
-    internal static Channels ForStandard(ToneLuts key, ToneParams parameters) =>
-        Cache.GetValue(key, _ => new Lazy<Channels>(() => ComposeStandard(parameters))).Value;
+    internal static Channels ForStandard(ToneLuts key, ToneParams parameters,
+        RenderExecutionOptions? execution = null)
+    {
+        if (Cache.TryGetValue(key, out var hit)) return hit;
+        var composed = ComposeStandard(parameters, execution);
+        return Cache.GetValue(key, _ => composed);
+    }
 
-    internal static Channels ComposeRaw(AgxToneParameters parameters, double fold)
+    internal static Channels ComposeRaw(AgxToneParameters parameters, double fold,
+        RenderExecutionOptions? execution = null)
     {
         var p = parameters with { Curve = parameters.Curve.Clone(), CurveRed = parameters.CurveRed?.Clone(),
             CurveGreen = parameters.CurveGreen?.Clone(), CurveBlue = parameters.CurveBlue?.Clone() };
@@ -81,18 +93,18 @@ internal sealed class ExtendedToneLut
             return new(value => AgxToneEngine.EvaluateToneExtendedUnchecked(value, p, exposure, logFold,
                 slope, toe, shoulder, channel, toeScale, shoulderScale, identity), identity ? null : value =>
                 CurveCell(ToneLut.SrgbEncode(AgxToneEngine.EvaluateToneExtendedUnchecked(value, p, exposure,
-                    logFold, slope, toe, shoulder, null, toeScale, shoulderScale, true)), p.Curve, channel));
+                    logFold, slope, toe, shoulder, null, toeScale, shoulderScale, true)), p.Curve, channel), execution);
         });
     }
 
-    internal static Channels ComposeStandard(ToneParams parameters)
+    internal static Channels ComposeStandard(ToneParams parameters, RenderExecutionOptions? execution = null)
     {
         var p = parameters with { Curve = parameters.Curve.Clone(), CurveRed = parameters.CurveRed?.Clone(),
             CurveGreen = parameters.CurveGreen?.Clone(), CurveBlue = parameters.CurveBlue?.Clone() };
         var uncurved = p with { Curve = new(), CurveRed = null, CurveGreen = null, CurveBlue = null };
         return Compose(p.CurveRed, p.CurveGreen, p.CurveBlue, channel => new(value => ToneLut.Evaluate(p, value, channel),
             p.Curve.IsIdentity() && (channel?.IsIdentity() ?? true) ? null : value =>
-                CurveCell(ToneLut.Evaluate(uncurved, value), p.Curve, channel)));
+                CurveCell(ToneLut.Evaluate(uncurved, value), p.Curve, channel), execution));
     }
 
     // A cell may interpolate only within one segment of each 256-node curve.

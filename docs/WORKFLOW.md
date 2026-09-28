@@ -261,8 +261,9 @@ all curves with the other tonal adjustments.
 
 Use **Luma NR** for luma grain, **Sharpen** for capture detail, and **Chroma NR** for
 color speckling. All three work on RAW, JPEG, HEIC, and TIFF. Noise reduction runs after
-tone, so revisit it after a large shadow or exposure change. The Develop viewer uses
-bounded previews even at 1:1; judge subtle detail on an export-scale render.
+tone, so revisit it after a large shadow or exposure change. Develop at 1:1 refines to
+source detail with every edit applied. “1:1 · refining” becomes “1:1” when ready; online-only
+originals stay at “1:1 · preview detail” without downloading. Zooming out releases the full base.
 
 ### Add finishing effects
 

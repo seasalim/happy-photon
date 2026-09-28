@@ -11,7 +11,7 @@ internal static class GeometryWarpProcessor
 
     internal static unsafe MagickImage Apply(
         MagickImage source,
-        RenderGeometryMap map)
+        RenderGeometryMap map, RenderExecutionOptions? execution = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(map);
@@ -59,7 +59,7 @@ internal static class GeometryWarpProcessor
                         map,
                         layout,
                         sourceChannels,
-                        alpha);
+                        alpha, execution);
                     outputPixels.SetArea(
                         0,
                         y,
@@ -89,11 +89,13 @@ internal static class GeometryWarpProcessor
         RenderGeometryMap map,
         RenderKernelSupport.PixelLayout layout,
         int sourceChannels,
-        int alphaChannel)
+        int alphaChannel, RenderExecutionOptions? execution)
     {
         var workers = Math.Min(
             Environment.ProcessorCount,
             Math.Max(1, rows / 16));
+        execution?.ReportStage("geometry-warp");
+        workers = execution?.CapWorkers(workers) ?? workers;
         Parallel.For(0, workers, worker =>
         {
             var startY = bandY + rows * worker / workers;

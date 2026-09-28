@@ -429,8 +429,8 @@ compacting full GC returns nothing; managed live is 79.2 MB in every process. Of
 581–706 MB installed delta, the full base (121.0 MB), display bitmap (80.7 MB),
 `RenderSharpening.Scratch` (32.1 MB; NR and chroma slots 0) and prototype scratch
 (29.3 MB) account for 263.1 MB, already 1.30 × w·h·10; the remaining 318–443 MB is
-native commitment not returned after the refinement's transient copies are freed, and
-it varies between processes.
+Windows .NET 10 GC free-region commitment (see [owner probe](../../Tests/HealGateTests.NativeRetention.cs)), and
+it varies between processes. Develop reclaims it with an off-UI aggressive compacting GC after refinement and full-base release.
 
 **40 MP, report only.** X-T50 not fetched; a generated 7752×5178 JPEG (pair 1600×1069 /
 3200×2138). Loupe / warm / cold medians **1.209 / 5.442 / 6.193 s**; warm at all logical

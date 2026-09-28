@@ -38,6 +38,8 @@ public partial class MainWindowViewModel
         var previous = _requiredDeviceLongEdge;
         var grew = normalized > previous;
         _requiredDeviceLongEdge = normalized;
+        var hadFullBase = _fullBase != null;
+        EvaluateFullResolutionDemand();
         ImageServiceHelpers.LogDisplayTrace(
             $"resting bound={normalized} prev={previous} grew={grew} " +
             $"parent={(_restingParent == null ? "null" : _restingParent.Generation.ToString())} " +
@@ -55,6 +57,7 @@ public partial class MainWindowViewModel
                 normalized);
             CancelRestingTimerOnly();
         }
+        if (hadFullBase && _fullBase == null) ScheduleRestingRender();
     }
 
     private void OnAcceptedInteractivePreview(
@@ -98,10 +101,12 @@ public partial class MainWindowViewModel
                 bitmap.PixelSize.Width,
                 bitmap.PixelSize.Height);
         }
+        _restingAchievableLongEdge = ImageService.Previews.FullResolutionThreshold(SelectedImage, settings, bitmap);
         _restingEditCancellationRegistration.Dispose();
         var editDebounce = ActiveEditDebounce();
         _restingEditCancellationRegistration = editDebounce.Token.Register(
             () => InvalidateRestingParent(identity));
+        RefreshFullResolution();
         ScheduleRestingRender();
         if (scheduleAdjacentWarm) ScheduleAdjacentPreviewWarm(identity.ImageFile);
     }
@@ -133,6 +138,7 @@ public partial class MainWindowViewModel
             : SelectedImage == null ? "no-image"
             : !IsWorkspacePreviewSurfaceActive && !IsFullScreenMode
                 ? "no-surface"
+            : _fullRenderCts != null ? "full-resolution"
             : _proofIsDisplayed ? "proof"
             : IsCropMode ? "crop"
             : IsShowingOriginal ? "original"
@@ -222,10 +228,12 @@ public partial class MainWindowViewModel
             return;
         }
 
-        _restingAchievableLongEdge = result.AchievableLongEdge;
+        _restingAchievableLongEdge = Math.Min(result.AchievableLongEdge, BaseImage.LargePreviewMaxDimension);
+        EvaluateFullResolutionDemand();
         _restingSatisfiedLongEdge = Math.Max(
             _restingSatisfiedLongEdge,
             result.RenderedLongEdge);
+        if (_fullRenderCts != null) return;
         if (PreviewImage != null &&
             result.RenderedLongEdge <= Math.Max(
                 PreviewImage.PixelSize.Width,
@@ -242,6 +250,7 @@ public partial class MainWindowViewModel
 
     private void ReplaceWithRestingPreview(Bitmap preview)
     {
+        if (_fullBitmap != null) RestoreRestingBitmap();
         ArgumentNullException.ThrowIfNull(preview);
         if (ReferenceEquals(PreviewImage, preview))
         {
@@ -299,6 +308,7 @@ public partial class MainWindowViewModel
 
     private void CancelRestingPreview(bool clearParent = false)
     {
+        ReleaseFullResolution();
         Interlocked.Increment(ref _restingScheduleSerial);
         CancelRestingTimerOnly();
         if (!clearParent)
@@ -313,6 +323,7 @@ public partial class MainWindowViewModel
 
     private void ClearRestingParentState()
     {
+        CancelFullRefinement();
         _restingParent = null;
         _restingSurfaceGeneration = 0;
         _restingSettings = null;

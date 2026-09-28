@@ -567,8 +567,12 @@ detail so it sees achievable scale. The render uses the same math but no statist
 thumbnail promotion or disk writes. A resting serial, captured interactive generation
 and decode key reject stale results without advancing interactive generation.
 Cancellation is checked between native operations; resting managed kernels use at most
-two workers and remain bit-identical across worker caps. Zoom beyond the large base
-stretches available pixels until native region decode exists.
+two workers and remain bit-identical across worker caps. Develop demand beyond the large
+base holds one full base and renders the whole frame with Export intent at native size.
+Refinement stages use all logical processors, capped at two while a gesture or queued/running
+interactive render is live. Zoom-out, navigation, decode changes and leaving Develop release
+the full base and refined bitmap. After refinement and release, an off-UI aggressive compacting
+GC decommits freed regions; refined bitmaps never retain the base through the weak table.
 
 DCP latency, allocation, and discovery budgets live in `DcpPerformanceGateTests`
 (TESTING.md §5); an inactive profile adds no work.

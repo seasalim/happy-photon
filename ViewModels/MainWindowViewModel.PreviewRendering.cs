@@ -31,6 +31,7 @@ public partial class MainWindowViewModel
 
         var tempSettings = CaptureRenderSettings(PreviewCrop());
 
+        Interlocked.Increment(ref _interactiveRenders);
         try
         {
             if (IsExportMode && ExportSettings.ShowProof)
@@ -89,6 +90,10 @@ public partial class MainWindowViewModel
                     previousIntent);
             }
             return false;
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _interactiveRenders);
         }
     }
 

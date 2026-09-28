@@ -36,6 +36,7 @@
                        HorizontalAlignment="Center" VerticalAlignment="Center"
                        Foreground="{DynamicResource TextMuted}" FontSize="11"/>
             <views:ZoomPanControl x:Name="ZoomPanControl"
+                                  OneToOneStatus="{Binding OneToOneStatus}"
                                   Source="{Binding PreviewImage}"
                                   DisplayTransform="{Binding DisplayTransform}"
                                   SourceIdentity="{Binding SelectedImage}"

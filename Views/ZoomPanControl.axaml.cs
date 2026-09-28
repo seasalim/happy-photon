@@ -278,6 +278,8 @@ public partial class ZoomPanControl : UserControl
         {
             _displayChainTrace?.OnInputChanged();
         }
+        if (change.Property == ZoomLevelProperty || change.Property == AutoFitProperty)
+            NotifyDetailStatus();
         OnViewportGeometryInputChanged(change.Property);
         if (change.Property == SourceProperty ||
             change.Property == ZoomLevelProperty ||

@@ -9,18 +9,18 @@ internal static partial class DcpHueSatRenderer
     private const double LutToUnit = 1.0 / LutMaximumIndex;
     private const double Q10ToUnit = 1.0 / 1023;
 
-    internal static DcpHueSatMap Prepare(DcpHueSatMap map)
+    internal static DcpHueSatMap Prepare(DcpHueSatMap map, RenderExecutionOptions? execution = null)
     {
         ArgumentNullException.ThrowIfNull(map);
         if (map.RgbLut != null) return map;
-        return map with { RgbLut = BuildRgbLut(map) };
+        return map with { RgbLut = BuildRgbLut(map, execution) };
     }
 
-    internal static ushort[] BuildRgbLut(DcpHueSatMap map)
+    internal static ushort[] BuildRgbLut(DcpHueSatMap map, RenderExecutionOptions? execution = null)
     {
         var lut = GC.AllocateUninitializedArray<ushort>(
             LutDivisions * LutDivisions * LutDivisions * 3);
-        Parallel.For(0, LutDivisions, redIndex =>
+        Parallel.For(0, LutDivisions, execution?.ParallelOptions ?? new ParallelOptions(), redIndex =>
         {
             var red = redIndex * LutToUnit;
             for (var greenIndex = 0; greenIndex < LutDivisions; greenIndex++)

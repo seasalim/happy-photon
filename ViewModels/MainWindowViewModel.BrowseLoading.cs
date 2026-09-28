@@ -335,6 +335,7 @@ public partial class MainWindowViewModel
     {
         ArgumentNullException.ThrowIfNull(preview);
         if (ReferenceEquals(PreviewImage, preview)) return;
+        RestoreRestingBitmap();
 
         if (ImageServiceHelpers.DisplayTraceLoggingEnabled)
         {
@@ -369,6 +370,7 @@ public partial class MainWindowViewModel
 
     internal void ClearPreviewImage()
     {
+        RestoreRestingBitmap();
         var previous = PreviewImage;
         if (previous == null) return;
         PreviewImage = null;

@@ -115,6 +115,7 @@ public sealed partial class PreviewService
         }
 
         Interlocked.Increment(ref _activeRestingRenders);
+        FullResolutionTrace?.Invoke("resting-start");
         try
         {
             var result = await Task.Run(
@@ -143,6 +144,7 @@ public sealed partial class PreviewService
         finally
         {
             Interlocked.Decrement(ref _activeRestingRenders);
+            FullResolutionTrace?.Invoke("resting-end");
         }
     }
 

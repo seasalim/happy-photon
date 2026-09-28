@@ -231,6 +231,7 @@ public partial class MainWindowViewModel
 
     private long RequestEditedRender()
     {
+        InvalidateFullRefinementForEdit();
         CancelAdjacentPreviewWarm(
             invalidateWorker: true,
             dropRetained: true,

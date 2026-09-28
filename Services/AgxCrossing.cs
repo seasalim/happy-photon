@@ -98,7 +98,7 @@ internal sealed partial class AgxCrossing
                 layout.Red,
                 layout.Green,
                 layout.Blue,
-                _hueSatMap);
+                _hueSatMap, execution);
             execution?.ThrowIfCancellationRequested();
         }
         Apply(

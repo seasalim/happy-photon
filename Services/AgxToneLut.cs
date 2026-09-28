@@ -11,20 +11,20 @@ internal static class AgxToneLut
 
     internal static ToneLuts Compose(
         AgxToneParameters parameters,
-        double fold)
+        double fold, RenderExecutionOptions? execution = null)
     {
         AgxToneEngine.Validate(parameters, fold);
         return ChannelCurveLutComposer.Compose(
             parameters.CurveRed,
             parameters.CurveGreen,
             parameters.CurveBlue,
-            channelCurve => Compose(parameters, fold, channelCurve));
+            channelCurve => Compose(parameters, fold, channelCurve, execution));
     }
 
     private static double[] Compose(
         AgxToneParameters parameters,
         double fold,
-        HappyPhoton.Models.CurveData? channelCurve)
+        HappyPhoton.Models.CurveData? channelCurve, RenderExecutionOptions? execution)
     {
         var lut = new double[Length];
         var exposureGain = Math.Pow(
@@ -37,6 +37,7 @@ internal static class AgxToneLut
         var workers = Math.Min(
             Environment.ProcessorCount,
             Math.Max(1, Length / 8192));
+        workers = execution?.CapWorkers(workers) ?? workers;
         Parallel.For(0, workers, worker =>
         {
             var start = Length * worker / workers;
@@ -93,9 +94,7 @@ internal static class AgxToneLut
         return composed;
     }
 
-    // Resting-path variant: identical composition to ComposeCached (the LUT
-    // build is milliseconds, so no worker cap is needed), with a cancellation
-    // check before the cache insert.
+    // Cancellable composition uses the current refinement worker budget.
     internal static ToneLuts ComposeCached(
         AgxToneParameters parameters,
         double fold,
@@ -114,7 +113,7 @@ internal static class AgxToneLut
             }
         }
 
-        var composed = Compose(parameters, fold);
+        var composed = Compose(parameters, fold, execution);
         execution.ThrowIfCancellationRequested();
         lock (CacheLock)
         {

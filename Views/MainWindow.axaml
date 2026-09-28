@@ -279,6 +279,7 @@
                    RenderOptions.BitmapInterpolationMode="LowQuality"/>
 
             <views:ZoomPanControl x:Name="FullScreenZoomPanControl"
+                                  OneToOneStatus="{Binding OneToOneStatus}"
                                   Source="{Binding PreviewImage}"
                                   DisplayTransform="{Binding DisplayTransform}"
                                   DisplaySourceColorSpace="{Binding PreviewDisplayColorSpace}"
