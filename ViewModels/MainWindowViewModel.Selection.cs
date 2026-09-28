@@ -10,7 +10,6 @@ public partial class MainWindowViewModel
     partial void OnSelectedImageChanged(ImageFile? oldValue, ImageFile? newValue)
     {
         _selectedSpotId = null;
-        _spotCandidates.Clear();
         RebindLocalSelection(first: true);
         KeepCaptureMemberViewportOnlyFor(newValue);
         NotifyCaptureMemberStateChanged();

@@ -11,8 +11,6 @@ public partial class MainWindowViewModel
 
     private string? _selectedSpotId;
 
-    private readonly Dictionary<string, IReadOnlyList<RepairSourceCandidate>> _spotCandidates = [];
-
     public IReadOnlyList<Repair> Spots => SelectedImage?.EditSettings.Repairs ?? [];
 
     public bool HasSpots => Spots.Count > 0;
@@ -67,7 +65,6 @@ public partial class MainWindowViewModel
         if (SelectedSpot is { } spot)
         {
             SelectedImage!.EditSettings.Repairs!.Remove(spot);
-            _spotCandidates.Remove(spot.Id);
         }
         _selectedSpotId = null;
     });
@@ -77,7 +74,6 @@ public partial class MainWindowViewModel
     {
         SelectedImage!.EditSettings.Repairs = null;
         _selectedSpotId = null;
-        _spotCandidates.Clear();
     });
 
     private async Task ChangeSpotsAsync(string label, Action change)

@@ -46,6 +46,8 @@
                                   IsCropMode="{Binding IsCropMode}"
                                   IsLocalsMode="{Binding CanEditLocals}"
                                   IsSpotsMode="{Binding CanEditSpots}"
+                                  VisualizeSpots="{Binding VisualizeSpots}"
+                                  SpotVisualizeThreshold="{Binding SpotVisualizeThreshold}"
                                   IsWhiteBalancePicking="{Binding IsWhiteBalancePicking}"
                                   IsColorAssessment="{Binding IsColorAssessmentMode}"
                                   IsDisplayTraceActive="{Binding IsDevelopPreviewSurfaceActive}"

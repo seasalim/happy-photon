@@ -437,13 +437,16 @@ Help & About lists every shortcut and gesture; these are the essentials.
 | `C` | Compare 2–4 selected photos |
 | `R` | Toggle crop mode in Develop |
 | `Q` | Toggle Spot Removal in Develop |
+| `A` | Toggle Visualize Spots; Threshold controls sensitivity |
+| `H` | Hide or show spot circles without deselecting |
+| `/` | Choose the next source for the selected spot |
 | `Delete` / `Backspace` | Delete the selected spot while Spot Removal is open; no selection does nothing |
 | `W` | Toggle the white-balance eyedropper in Develop |
 | `Delete` | Delete selected versions or move primary originals to Trash after confirmation |
 | `Shift+W` | Toggle Locals in Develop |
 | `B` | Open Locals if needed and arm Brush in Develop |
-| `[` / `]` | Scale brush radius by ×0.8 / ×1.25 while the Brush section is visible |
-| `Shift+[` / `Shift+]` | Change brush Feather by −10 / +10 points |
+| `[` / `]` | Scale spot size or brush radius by ×0.8 / ×1.25 in the active tool |
+| `Shift+[` / `Shift+]` | Change spot or brush Feather by −10 / +10 points |
 | Hold `Alt` | Invert Paint/Erase for a stroke started while held; the cursor shows the effective mode and the toggle stays unchanged |
 | `O` / hold `M` | Toggle Show Mask / temporarily show the mask while Locals is open |
 | `\` | Toggle before/after in Develop or fullscreen |

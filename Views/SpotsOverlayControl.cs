@@ -51,7 +51,8 @@ public sealed class SpotsOverlayControl : Control
     private void OwnerChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainWindowViewModel.Spots) or nameof(MainWindowViewModel.CanEditSpots) or
-            nameof(MainWindowViewModel.SpotDisplayMap) or nameof(MainWindowViewModel.SpotSize)) Refresh();
+            nameof(MainWindowViewModel.SpotDisplayMap) or nameof(MainWindowViewModel.SpotSize) or
+            nameof(MainWindowViewModel.HideSpotCircles)) Refresh();
     }
 
     private void Refresh()
@@ -100,7 +101,10 @@ public sealed class SpotsOverlayControl : Control
     public override void Render(DrawingContext context)
     {
         if (_owner is not { CanEditSpots: true } vm || Bounds.Width <= 0 || Bounds.Height <= 0) return;
+
         context.DrawRectangle(Brushes.Transparent, null, new Rect(Bounds.Size));
+        if (vm.HideSpotCircles) return;
+
         foreach (var spot in vm.Spots)
         {
             if (spot != vm.SelectedSpot && _hover == null) continue;

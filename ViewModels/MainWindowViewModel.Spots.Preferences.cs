@@ -6,6 +6,22 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    public double SpotVisualizeThreshold
+    {
+        get => _brushPreferences.SpotVisualizeThreshold;
+        set
+        {
+            if (!double.IsFinite(value)) return;
+
+            value = Math.Clamp(value, 0, 100);
+            if (value == SpotVisualizeThreshold) return;
+
+            _brushPreferences.SpotVisualizeThreshold = value;
+            OnPropertyChanged();
+            BrushPreferenceChanged();
+        }
+    }
+
     public bool IsSpotHeal => (SelectedSpot?.Type ?? _brushPreferences.SpotMode) == "heal";
 
     public bool IsSpotClone => !IsSpotHeal;
@@ -79,6 +95,8 @@ public partial class MainWindowViewModel
         _brushPreferences.SpotSize = FinitePreference(settings.SpotSize, .2, 10, 3);
         _brushPreferences.SpotFeather = FinitePreference(settings.SpotFeather, 0, 100, 50);
         _brushPreferences.SpotOpacity = FinitePreference(settings.SpotOpacity, 5, 100, 100);
+        _brushPreferences.SpotVisualizeThreshold = FinitePreference(settings.SpotVisualizeThreshold, 0, 100, 50);
+        OnPropertyChanged(nameof(SpotVisualizeThreshold));
         NotifySpotsState();
     }
 
@@ -88,5 +106,6 @@ public partial class MainWindowViewModel
         settings.SpotSize = _brushPreferences.SpotSize;
         settings.SpotFeather = _brushPreferences.SpotFeather;
         settings.SpotOpacity = _brushPreferences.SpotOpacity;
+        settings.SpotVisualizeThreshold = _brushPreferences.SpotVisualizeThreshold;
     }
 }

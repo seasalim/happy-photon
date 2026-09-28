@@ -31,6 +31,11 @@ Each gesture is one history step. Escape cancels a draft, deselects, then closes
 Delete/Backspace never trash photos while Spots is open. Count and summed-area
 limits clamp creation/resizing; Clear spots removes the list. Overlay projection
 uses the displayed bitmap's base geometry, including its crop rounding.
+Visualize (A) draws a high pass of the monitor-transformed visible viewport below
+spot circles, including at refined 1:1; it never changes exports, statistics or caches.
+Threshold is a debounced app preference. H hides circles without deselecting; / ranks
+fresh source candidates. Brackets change size; Shift+brackets change feather, each
+selected-spot change committing one history step. Text entry and pickers take precedence.
 
 Locals supports at most eight linear/radial/brush adjustments in creation order with shared
 ordinals. Disabled and neutral locals still count; selection and Show Mask are session

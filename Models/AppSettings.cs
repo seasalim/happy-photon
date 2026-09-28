@@ -20,6 +20,8 @@ public class AppSettings
 
     public double SpotOpacity { get; set; } = 100;
 
+    public double SpotVisualizeThreshold { get; set; } = 50;
+
     public string BrushMode { get; set; } = "paint";
     public double BrushSize { get; set; } = 65;
     public double BrushFeather { get; set; } = 50;

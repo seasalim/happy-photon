@@ -20,7 +20,7 @@ public partial class SpotsEditSection : UserControl
         AddHandler(PointerPressedEvent, (_, e) => _sliderPointer = e.Pointer, RoutingStrategies.Tunnel);
         AddHandler(CompactSlider.DragStartedEvent, (_, e) =>
         {
-            if (DataContext is MainWindowViewModel vm && e.Source is CompactSlider slider &&
+            if (DataContext is MainWindowViewModel vm && e.Source is CompactSlider slider && slider.Label != "Threshold" &&
                 vm.BeginSpotSliderEdit("Spot " + slider.Label.ToLowerInvariant()))
             {
                 _sliderOwner = vm;

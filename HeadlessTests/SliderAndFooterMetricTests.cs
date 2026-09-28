@@ -141,6 +141,7 @@ public sealed class SliderAndFooterMetricTests
         vm.IsLocalLuminanceExpanded = true;
         vm.IsLocalHueExpanded = true;
         vm.IsWatermarkExpanded = true;
+        vm.VisualizeSpots = true;
         foreach (var slider in content.GetLogicalDescendants().OfType<CompactSlider>()
                      .Where(slider => slider.Classes.Contains("local-geometry")))
             slider.IsVisible = true;
@@ -152,9 +153,9 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(52, sliders.Length);
+            Assert.Equal(53, sliders.Length);
             var spots = sliders.Where(slider => slider.GetLogicalAncestors().OfType<SpotsEditSection>().Any()).ToArray();
-            Assert.Equal(["Size", "Feather", "Opacity"], spots.Select(slider => slider.Label));
+            Assert.Equal(["Threshold", "Size", "Feather", "Opacity"], spots.Select(slider => slider.Label));
             foreach (var name in new[] { "Whites", "Blacks" })
             foreach (var local in new[] { false, true })
             {

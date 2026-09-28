@@ -160,6 +160,7 @@ public partial class ZoomPanControl : UserControl
         _surroundLayer = this.FindControl<Panel>("SurroundLayer");
         _assessmentMat = this.FindControl<Border>("AssessmentMat");
         InitializeVisibleRegionTracking();
+        InitializeSpotVisualization();
         InitializeClippingOverlay();
         InitializeAlignmentGrid();
         InitializeDeviceScaling();
@@ -281,6 +282,12 @@ public partial class ZoomPanControl : UserControl
         if (change.Property == ZoomLevelProperty || change.Property == AutoFitProperty)
             NotifyDetailStatus();
         OnViewportGeometryInputChanged(change.Property);
+
+        if (change.Property == VisualizeSpotsProperty || change.Property == SpotVisualizeThresholdProperty ||
+            change.Property == SourceProperty || change.Property == SourceIdentityProperty ||
+            change.Property == ZoomLevelProperty || change.Property == IsSpotsModeProperty)
+            InvalidateSpotVisualization();
+
         if (change.Property == SourceProperty ||
             change.Property == ZoomLevelProperty ||
             change.Property == IsCropModeProperty)

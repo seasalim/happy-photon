@@ -38,6 +38,9 @@
                                                        IsVisible="False"/>
                     <views:LocalsOverlayControl x:Name="LocalsOverlay" IsVisible="False"
                                                Width="{Binding #ImageControl.Width}" Height="{Binding #ImageControl.Height}"/>
+                    <Canvas IsHitTestVisible="False" Width="{Binding #ImageControl.Width}" Height="{Binding #ImageControl.Height}">
+                        <Image x:Name="SpotVisualization" Stretch="Fill"/>
+                    </Canvas>
                     <views:SpotsOverlayControl x:Name="SpotsOverlay" IsVisible="False"
                                               Width="{Binding #ImageControl.Width}" Height="{Binding #ImageControl.Height}"/>
                     <views:CropOverlayControl x:Name="CropOverlay"

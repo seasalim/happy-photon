@@ -31,6 +31,8 @@ public sealed class ShortcutReachabilityTests
                 new(0, "Original", new EditSettings()),
                 new(1, "Exposure +1.00", firstSettings)
             ], 1));
+        using var source = new ImageMagick.MagickImage(ImageMagick.MagickColors.Gray, 160, 100);
+        source.Write(firstPath);
         await using var vm = new MainWindowViewModel(catalog);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
         var images = new[]
@@ -105,6 +107,9 @@ public sealed class ShortcutReachabilityTests
     }
 
     [Theory]
+    [InlineData("A", "VisualizeSpotsButton")]
+    [InlineData("[  /  ]", "SpotSizeSlider")]
+    [InlineData("Shift+[  /  Shift+]", "SpotFeatherSlider")]
     [InlineData("Shift+W", "LocalsModeButton")]
     [InlineData("O", "ShowLocalMaskButton")]
     [InlineData("Hold M", "ShowLocalMaskButton")]
@@ -146,6 +151,7 @@ public sealed class ShortcutReachabilityTests
         vm.IsFullScreenMode = false;
         vm.IsCropMode = false;
         vm.CloseLocalsCommand.Execute(null);
+        vm.CloseSpotsCommand.Execute(null);
         vm.WorkspaceMode = claim.Workspace switch
         {
             ShortcutWorkspace.Develop => WorkspaceMode.Develop,
@@ -178,6 +184,12 @@ public sealed class ShortcutReachabilityTests
             await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
             if (claim.ControlName != "ShowLocalMaskButton") vm.AddBrushCommand.Execute(null);
         }
+        if (claim.ControlName is "VisualizeSpotsButton" or "SpotSizeSlider" or "SpotFeatherSlider")
+        {
+            await TestWaits.UntilAsync(() => vm.PreviewImage != null);
+            await vm.ToggleSpotsModeCommand.ExecuteAsync(null);
+        }
+
         Dispatcher.UIThread.RunJobs();
         if (claim.Workspace == ShortcutWorkspace.FullScreen)
         {

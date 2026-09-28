@@ -5,13 +5,15 @@
              x:Class="HappyPhoton.Views.SpotsEditSection"
              x:DataType="vm:MainWindowViewModel" IsVisible="{Binding IsSpotsMode}">
     <StackPanel Spacing="8" IsEnabled="{Binding CanEditSpots}" Margin="0,0,0,12">
+        <views:CompactSlider Label="Threshold" Value="{Binding SpotVisualizeThreshold}" Minimum="0" Maximum="100"
+                             IsVisible="{Binding VisualizeSpots}"/>
         <ListBox x:Name="SpotModeControl" Classes="segmented" SelectedIndex="{Binding SpotModeIndex, Mode=TwoWay}"
                  SelectionMode="Single,AlwaysSelected" AutomationProperties.Name="Spot mode">
             <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
             <ListBoxItem Content="Heal"/><ListBoxItem Content="Clone"/>
         </ListBox>
-        <views:CompactSlider Label="Size" Value="{Binding SpotSize}" Minimum="0.2" Maximum="10" SmallChange="0.1" StringFormat="{}{0:0.0}"/>
-        <views:CompactSlider Label="Feather" Value="{Binding SpotFeather}" Minimum="0" Maximum="100"/>
+        <views:CompactSlider x:Name="SpotSizeSlider" ToolTip.Tip="Spot size ([ / ])" Label="Size" Value="{Binding SpotSize}" Minimum="0.2" Maximum="10" SmallChange="0.1" StringFormat="{}{0:0.0}"/>
+        <views:CompactSlider x:Name="SpotFeatherSlider" ToolTip.Tip="Spot feather (Shift+[ / Shift+])" Label="Feather" Value="{Binding SpotFeather}" Minimum="0" Maximum="100"/>
         <views:CompactSlider Label="Opacity" Value="{Binding SpotOpacity}" Minimum="5" Maximum="100"/>
         <TextBlock Text="{Binding SpotCount}" Foreground="{DynamicResource TextMuted}" FontSize="11"/>
         <Button Content="Clear spots" Command="{Binding ClearSpotsCommand}" IsEnabled="{Binding HasSpots}"/>

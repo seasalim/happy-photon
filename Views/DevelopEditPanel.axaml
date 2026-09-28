@@ -149,9 +149,12 @@
                     <Button x:Name="ApplyCropButton" Grid.Column="2" Content="Apply" Command="{Binding ApplyCropCommand}"
                             ToolTip.Tip="Apply Crop (Enter)" FontSize="10" Padding="10,4" Classes="accent" BorderThickness="0"/>
                 </Grid>
-                <Grid ColumnDefinitions="*,Auto" Margin="15,0,15,8" IsVisible="{Binding IsSpotsMode}">
+                <Grid ColumnDefinitions="*,Auto,Auto" Margin="15,0,15,8" IsVisible="{Binding IsSpotsMode}">
                     <TextBlock Text="SPOTS" Classes="section-label" VerticalAlignment="Center"/>
-                    <Button Grid.Column="1" Content="Close" Command="{Binding CloseSpotsCommand}" Padding="5,3" FontSize="10"/>
+                    <ToggleButton x:Name="VisualizeSpotsButton" Classes="tool-mask" Grid.Column="1" Content="Visualize"
+                                  ToolTip.Tip="Visualize Spots (A) · Hide circles (H) · Next source (/)"
+                                  IsChecked="{Binding VisualizeSpots}" AutomationProperties.Name="Visualize Spots" Padding="5,3" FontSize="10"/>
+                    <Button Grid.Column="2" Content="Close" Command="{Binding CloseSpotsCommand}" Padding="5,3" FontSize="10"/>
                 </Grid>
                 <Grid x:Name="LocalsToolHeader" ColumnDefinitions="*,Auto,Auto" Margin="15,0,15,8" IsVisible="{Binding IsLocalsMode}">
                     <TextBlock Text="LOCALS" Classes="section-label" VerticalAlignment="Center"/>

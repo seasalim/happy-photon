@@ -126,7 +126,6 @@ public partial class MainWindowViewModel
                 ShowTransientStatus("No source available for this spot");
                 return;
             }
-            _spotCandidates[spot.Id] = ranked;
             spot.Su = ranked[0].U;
             spot.Sv = ranked[0].V;
             ClampSpot(spot);
