@@ -168,9 +168,10 @@ public sealed class LensPickerTests : IDisposable
         var loaded = EditSettingsJson.Deserialize(EditSettingsJson.Serialize(edited), out _);
         Assert.Equal(Nikon20, loaded.Lens.ProfileOverride);
         Assert.Equal("Optics: lens profile", EditHistoryLabel.Derive(baseline, loaded));
-        Assert.Null(EditSettingsTransfer.CopySubset(edited).Lens.ProfileOverride);
+
+        Assert.Null(EditSettingsTransfer.CopyGroups(edited).Lens.ProfileOverride);
         var target = new EditSettings { Lens = new LensSettings { ProfileOverride = Samyang20 } };
-        EditSettingsTransfer.ApplySubset(edited, target);
+        EditSettingsTransfer.ApplyGroups(edited, target);
         Assert.Equal(Samyang20, target.Lens.ProfileOverride);
         var presets = new PresetService(_root.Path);
         await presets.InitializeAsync();

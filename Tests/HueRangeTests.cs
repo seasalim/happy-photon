@@ -45,8 +45,10 @@ public sealed class HueRangeTests
         Assert.False(clamped); Assert.Equal(saved, EditSettingsJson.Serialize(copy));
         var clone = copy.Clone(); clone.Locals![0].Hue = clone.Locals[0].Hue! with { Center = 10 };
         Assert.Equal(350, copy.Locals![0].Hue!.Center); Assert.False(copy.HasSameEdits(clone));
-        EditSettingsTransfer.ApplySubset(new() { Exposure = 2 }, copy);
-        Assert.Equal(350, copy.Locals[0].Hue!.Center); Assert.Null(EditSettingsTransfer.CopySubset(copy).Locals);
+        EditSettingsTransfer.ApplyGroups(new() { Exposure = 2 }, copy);
+        Assert.Equal(350, copy.Locals[0].Hue!.Center);
+        Assert.Null(EditSettingsTransfer.CopyGroups(copy).Locals);
+
         foreach (var center in new[] { -10d, 360, 720 })
         {
             settings.Locals[0].Hue = new() { Enabled = true, Center = center, Width = -1, Softness = 120 };

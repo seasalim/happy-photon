@@ -126,9 +126,9 @@ public sealed class WhitesBlacksTests
         Assert.Equal(100, clamped.Locals![0].Whites); Assert.Equal(-100, clamped.Locals[0].Blacks);
         var target = new EditSettings { Locals = [new() { Whites = -40 }] };
         var destinationLocal = target.Locals[0];
-        EditSettingsTransfer.ApplySubset(settings, target);
+        EditSettingsTransfer.ApplyGroups(settings, target);
         Assert.Equal(50, target.Whites); Assert.Equal(-50, target.Blacks); Assert.Same(destinationLocal, target.Locals![0]);
-        Assert.Null(EditSettingsTransfer.CopySubset(settings).Locals);
+        Assert.Null(EditSettingsTransfer.CopyGroups(settings).Locals);
         using var directory = new TemporaryDirectory();
         var presets = new PresetService(); await presets.UseDirectoryAsync(directory.Path);
         await presets.SaveUserPresetAsync("Points", settings);

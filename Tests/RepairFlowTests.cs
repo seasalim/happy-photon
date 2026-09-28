@@ -37,11 +37,11 @@ public sealed class RepairFlowTests(ITestOutputHelper output)
         node["settings"]!["repairs"] = "invalid payload ignored before validation";
         var imported = PresetService.DeserializePresetFile(node.ToJsonString(), path)!;
         Assert.Null(imported.Settings.Repairs);
-        EditSettingsTransfer.ApplySubset(imported.Settings, destination);
+        EditSettingsTransfer.ApplyGroups(imported.Settings, destination);
         Assert.Same(repairs, destination.Repairs);
-        EditSettingsTransfer.ApplySubset(source, destination);
+        EditSettingsTransfer.ApplyGroups(source, destination);
         Assert.Same(repairs, destination.Repairs);
-        Assert.Null(EditSettingsTransfer.CopySubset(source).Repairs);
+        Assert.Null(EditSettingsTransfer.CopyGroups(source).Repairs);
         Assert.Equal(1, destination.Exposure);
     }
 

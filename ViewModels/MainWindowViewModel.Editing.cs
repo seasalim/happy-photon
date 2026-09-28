@@ -77,23 +77,15 @@ public partial class MainWindowViewModel
         var previousSettings = CaptureLiveEditState();
         var previousIntent = _requestedPreviewIntent;
         var generation = RequestEditedRender();
-        _isLoadingImage = true;
-        LoadSlidersFrom(state);
-        _isLoadingImage = false;
+        var restored = state.Clone();
 
-        EditSettingsTransfer.ApplySubset(state, image.EditSettings);
-        image.EditSettings.Lens.ProfileOverride = state.Lens.ProfileOverride;
-        image.EditSettings.Rotation = state.Rotation;
-        image.EditSettings.HorizonRotation = state.HorizonRotation;
-        image.EditSettings.Crop = state.Crop?.Clone();
-        image.EditSettings.Geometry = state.Geometry?.Clone();
-        image.EditSettings.Locals = state.Locals?.Select(local => local with { }).ToList();
-        image.EditSettings.Repairs = state.Repairs?.Select(repair => repair with { }).ToList();
-        RebindLocalSelection();
-        WriteRawProfileSelection(image, state.RawProfile);
-        image.EditSettings.AppliedPresetId = ActivePresetId;
-        LoadCurrentCurveFrom(image.EditSettings);
-        image.HasEdits = image.EditSettings.HasEdits;
+        if (restored.AppliedPresetId != null && PresetService.GetById(restored.AppliedPresetId) == null)
+        {
+            restored.AppliedPresetId = null;
+        }
+
+        InstallDevelopDocument(image, restored, preserveCropDraft: false);
+
         try
         {
             await image.EnsureCatalogIdAsync(_catalogService);
@@ -267,7 +259,7 @@ public partial class MainWindowViewModel
         _isLoadingImage = false;
 
         SelectedImage.EditSettings = previousSettings.Clone();
-        EditSettingsTransfer.ApplySubset(preset.Settings, SelectedImage.EditSettings);
+        EditSettingsTransfer.ApplyGroups(preset.Settings, SelectedImage.EditSettings, EditSettingsTransfer.LookGroups);
         SelectedImage.EditSettings.AppliedPresetId = presetId;
         LoadCurrentCurveFrom(SelectedImage.EditSettings);
         SelectedImage.HasEdits = true;
@@ -331,7 +323,7 @@ public partial class MainWindowViewModel
         try
         {
             var previewSettings = CaptureRenderSettings(PreviewCrop());
-            EditSettingsTransfer.ApplySubset(preset.Settings, previewSettings);
+            EditSettingsTransfer.ApplyGroups(preset.Settings, previewSettings, EditSettingsTransfer.LookGroups);
 
             using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
                 image,

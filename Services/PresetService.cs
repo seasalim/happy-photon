@@ -239,25 +239,20 @@ public class PresetService
 
     private static EditSettings CreatePresetSettings(EditSettings source)
     {
-        EditSettingsJson.EnsureCurrent(source);
-        var settings = source.Clone();
-        settings.Rotation = 0;
-        settings.HorizonRotation = 0;
-        settings.Crop = null;
-        settings.Geometry = null;
-        settings.Locals = null;
-        settings.Repairs = null;
+        var settings = EditSettingsTransfer.CopyGroups(source, EditSettingsTransfer.LookGroups);
+
         if (settings.Effects?.HasActivePixels != true)
         {
             settings.Effects = null;
         }
+
         if (settings.Mixer?.HasActivePixels != true)
         {
             settings.Mixer = null;
         }
+
         settings.AppliedPresetId = null;
-        settings.RawProfile = null;
-        settings.Lens.ProfileOverride = null;
+
         return settings;
     }
 

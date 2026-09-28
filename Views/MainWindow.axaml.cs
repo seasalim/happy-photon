@@ -278,8 +278,8 @@ public partial class MainWindow : Window
     private Task<bool> ConfirmBatchApplyAsync(int count)
     {
         var message = count == 1
-            ? "Apply copied edit settings to 1 image? This cannot be undone."
-            : $"Apply copied edit settings to {count} images? This cannot be undone.";
+            ? "Apply copied edit settings to 1 image?"
+            : $"Apply copied edit settings to {count} images?";
 
         return ConfirmationDialog.ConfirmAsync(
             this,

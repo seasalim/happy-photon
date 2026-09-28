@@ -55,9 +55,9 @@ public sealed class LuminanceRangeTests
         clone.Locals![0].Luminance = clone.Locals[0].Luminance! with { Lower = .6 };
         Assert.Equal(.47, copy.Locals![0].Luminance!.Lower);
         Assert.False(copy.HasSameEdits(clone));
-        EditSettingsTransfer.ApplySubset(new() { Exposure = 2 }, copy);
+        EditSettingsTransfer.ApplyGroups(new() { Exposure = 2 }, copy);
         Assert.Equal(.47, copy.Locals[0].Luminance!.Lower);
-        Assert.Null(EditSettingsTransfer.CopySubset(copy).Locals);
+        Assert.Null(EditSettingsTransfer.CopyGroups(copy).Locals);
         settings.Locals[0].Luminance = new() { Enabled = true, Lower = 2, Upper = -1, Softness = 2 };
         var bounded = EditSettingsJson.Deserialize(JsonSerializer.Serialize(settings), out clamped).Locals![0].Luminance!;
         Assert.True(clamped); Assert.Equal((0d, 0d, .5), (bounded.Lower, bounded.Upper, bounded.Softness));

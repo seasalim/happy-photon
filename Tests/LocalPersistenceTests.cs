@@ -37,8 +37,9 @@ public sealed class LocalPersistenceTests
             var json = EditSettingsJson.Serialize(copy).Replace($"\"{name.ToLowerInvariant()}\":{(name == "Tint" ? "-50" : name == "Temperature" ? "50" : "100")}", $"\"{name.ToLowerInvariant()}\":1e999");
             Assert.Throws<JsonException>(() => EditSettingsJson.Deserialize(json, out _));
         }
-        Assert.Null(EditSettingsTransfer.CopySubset(copy).Locals);
-        EditSettingsTransfer.ApplySubset(new EditSettings { Exposure = 2 }, copy);
+
+        Assert.Null(EditSettingsTransfer.CopyGroups(copy).Locals);
+        EditSettingsTransfer.ApplyGroups(new EditSettings { Exposure = 2 }, copy);
         Assert.Equal((50d, -50d, 100d), (copy.Locals![0].Temperature, copy.Locals[0].Tint, copy.Locals[0].Saturation));
     }
 
@@ -140,10 +141,10 @@ public sealed class LocalPersistenceTests
         Assert.Null(loaded.UserPresets[0].Settings.Locals);
         var destination = new EditSettings { Locals = [new() { Exposure = -1 }] };
         var id = destination.Locals[0].Id;
-        EditSettingsTransfer.ApplySubset(source, destination);
+        EditSettingsTransfer.ApplyGroups(source, destination);
         Assert.Equal(id, destination.Locals![0].Id);
         Assert.Equal(-1, destination.Locals[0].Exposure);
-        Assert.Null(EditSettingsTransfer.CopySubset(source).Locals);
+        Assert.Null(EditSettingsTransfer.CopyGroups(source).Locals);
     }
 
     [Theory]

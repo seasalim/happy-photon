@@ -39,7 +39,7 @@ public partial class MainWindowViewModel
 
         var liveSettings = SelectedImage.EditSettings.Clone();
         SaveSlidersTo(liveSettings);
-        _copiedSettings = EditSettingsTransfer.CopySubset(liveSettings);
+        _copiedSettings = liveSettings;
         HasCopiedSettings = true;
         ShowTransientStatus("Copied edit settings");
     }
@@ -99,36 +99,11 @@ public partial class MainWindowViewModel
         var previousIntent = _requestedPreviewIntent;
         var surfaceGeneration = RequestEditedRender();
 
-        var currentRotation = Rotation;
-        var currentHorizonRotation = HorizonRotation;
-        var currentCrop = CurrentCrop?.Clone();
-        var currentGeometry = previousSettings.Geometry?.Clone();
-        var storedRotation = selectedImage.EditSettings.Rotation;
-        var storedHorizonRotation = selectedImage.EditSettings.HorizonRotation;
-        var storedCrop = selectedImage.EditSettings.Crop?.Clone();
+        var settings = selectedImage.EditSettings.Clone();
+        EditSettingsTransfer.ApplyGroups(_copiedSettings, settings);
+        settings.Geometry = previousSettings.Geometry?.Clone();
+        InstallDevelopDocument(selectedImage, settings, preserveCropDraft: true);
 
-        _isLoadingImage = true;
-        try
-        {
-            LoadSlidersFrom(_copiedSettings);
-            LensProfileOverride = previousSettings.Lens.ProfileOverride;
-            Rotation = currentRotation;
-            HorizonRotation = currentHorizonRotation;
-            LoadGeometryFrom(previousSettings);
-            CurrentCrop = currentCrop;
-        }
-        finally
-        {
-            _isLoadingImage = false;
-        }
-
-        EditSettingsTransfer.ApplySubset(_copiedSettings, selectedImage.EditSettings);
-        selectedImage.EditSettings.Rotation = storedRotation;
-        selectedImage.EditSettings.HorizonRotation = storedHorizonRotation;
-        selectedImage.EditSettings.Crop = storedCrop;
-        selectedImage.EditSettings.Geometry = currentGeometry;
-        LoadCurrentCurveFrom(selectedImage.EditSettings);
-        selectedImage.HasEdits = selectedImage.EditSettings.HasEdits;
         try
         {
             await SaveEditSettingsAsync(
@@ -187,7 +162,7 @@ public partial class MainWindowViewModel
             {
                 var previous = target.EditSettings.Clone();
                 var settings = target.EditSettings.Clone();
-                EditSettingsTransfer.ApplySubset(_copiedSettings, settings);
+                EditSettingsTransfer.ApplyGroups(_copiedSettings, settings);
                 return (Target: target, Previous: previous, Settings: settings);
             }).ToList();
             await _catalogService.SaveEditSettingsBatchWithHistoryAsync(proposed

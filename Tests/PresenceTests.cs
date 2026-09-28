@@ -264,11 +264,11 @@ public sealed class PresenceTests
 
         var target = new EditSettings { Locals = [new() { Exposure = 1 }] };
         var local = target.Locals[0];
-        EditSettingsTransfer.ApplySubset(settings, target);
+        EditSettingsTransfer.ApplyGroups(settings, target);
         Assert.Equal(50, target.Texture);
         Assert.Equal(-50, target.Clarity);
         Assert.Same(local, target.Locals![0]);
-        Assert.True(settings.HasSameEdits(EditSettingsTransfer.CopySubset(target)));
+        Assert.True(settings.HasSameEdits(EditSettingsTransfer.CopyGroups(target)));
 
         using var directory = new TemporaryDirectory();
         var presets = new PresetService();

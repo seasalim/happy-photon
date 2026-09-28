@@ -138,7 +138,7 @@ public sealed class EditConstructionVmBaselineTests
         if (state == "live-crop-horizon") vm.HorizonRotation = 3.5;
         if (state == "active-preset")
         {
-            EditSettingsTransfer.ApplySubset(preset.Settings, settings);
+            EditSettingsTransfer.ApplyGroups(preset.Settings, settings);
             settings.AppliedPresetId = preset.Id;
             Call(vm, "LoadSlidersFrom", settings);
         }

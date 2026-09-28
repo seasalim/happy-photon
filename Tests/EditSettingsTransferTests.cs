@@ -67,7 +67,7 @@ public sealed class EditSettingsTransferTests
     {
         var source = CreateFullSettings();
 
-        var copy = EditSettingsTransfer.CopySubset(source);
+        var copy = EditSettingsTransfer.CopyGroups(source);
 
         Assert.Equal(1.5, copy.Exposure);
         Assert.Equal(WbMode.Custom, copy.Wb.Mode);
@@ -107,7 +107,7 @@ public sealed class EditSettingsTransferTests
     [Fact]
     public void ApplySubset_PreservesTargetGeometry()
     {
-        var copied = EditSettingsTransfer.CopySubset(CreateFullSettings());
+        var copied = EditSettingsTransfer.CopyGroups(CreateFullSettings());
         var target = new EditSettings
         {
             Version = EditSettings.CurrentVersion,
@@ -124,7 +124,7 @@ public sealed class EditSettingsTransferTests
             RawProfile = CreateProfileSelection()
         };
 
-        EditSettingsTransfer.ApplySubset(copied, target);
+        EditSettingsTransfer.ApplyGroups(copied, target);
 
         Assert.Equal(1.5, target.Exposure);
         Assert.Equal(WbMode.Custom, target.Wb.Mode);
@@ -159,7 +159,7 @@ public sealed class EditSettingsTransferTests
     public void CurveIsDeepClonedInBothDirections()
     {
         var source = CreateFullSettings();
-        var copy = EditSettingsTransfer.CopySubset(source);
+        var copy = EditSettingsTransfer.CopyGroups(source);
 
         source.Curve.MovePoint(1, 0.5, 0.1);
         source.CurveRed!.MovePoint(1, 0.5, 0.1);
@@ -168,8 +168,8 @@ public sealed class EditSettingsTransferTests
 
         var targetA = new EditSettings();
         var targetB = new EditSettings();
-        EditSettingsTransfer.ApplySubset(copy, targetA);
-        EditSettingsTransfer.ApplySubset(copy, targetB);
+        EditSettingsTransfer.ApplyGroups(copy, targetA);
+        EditSettingsTransfer.ApplyGroups(copy, targetB);
 
         targetA.Curve.MovePoint(1, 0.5, 0.9);
         targetA.CurveBlue!.MovePoint(1, 0.5, 0.9);
@@ -232,14 +232,14 @@ public sealed class EditSettingsTransferTests
     public void ApplySubset_HasEditsReflectsResult()
     {
         var target = new EditSettings();
-        EditSettingsTransfer.ApplySubset(EditSettingsTransfer.CopySubset(CreateFullSettings()), target);
+        EditSettingsTransfer.ApplyGroups(EditSettingsTransfer.CopyGroups(CreateFullSettings()), target);
         Assert.True(target.HasEdits);
 
         var croppedOnly = new EditSettings
         {
             Crop = new CropRegion { Left = 0.1, Top = 0.1, Right = 0.9, Bottom = 0.9 }
         };
-        EditSettingsTransfer.ApplySubset(EditSettingsTransfer.CopySubset(new EditSettings()), croppedOnly);
+        EditSettingsTransfer.ApplyGroups(EditSettingsTransfer.CopyGroups(new EditSettings()), croppedOnly);
         Assert.True(croppedOnly.HasEdits);
     }
 
@@ -263,7 +263,7 @@ public sealed class EditSettingsTransferTests
     {
         var target = new EditSettings();
 
-        EditSettingsTransfer.ApplySubset(EditSettingsTransfer.CopySubset(CreateFullSettings()), target);
+        EditSettingsTransfer.ApplyGroups(EditSettingsTransfer.CopyGroups(CreateFullSettings()), target);
 
         Assert.True(target.Curve.LookupTable[128] > 140);
         Assert.True(target.CurveRed!.LookupTable[128] > 140);
@@ -285,7 +285,7 @@ public sealed class EditSettingsTransferTests
             Geometry = new GeometrySettings { Vertical = -25 }
         };
 
-        EditSettingsTransfer.ApplySubset(copied, target);
+        EditSettingsTransfer.ApplyGroups(copied, target);
 
         Assert.Equal(0.5, target.Exposure);
         Assert.Equal(90, target.Rotation);
@@ -299,11 +299,11 @@ public sealed class EditSettingsTransferTests
         var unsupported = new EditSettings { Version = 1 };
 
         Assert.Throws<NotSupportedException>(() =>
-            EditSettingsTransfer.CopySubset(unsupported));
+            EditSettingsTransfer.CopyGroups(unsupported));
         Assert.Throws<NotSupportedException>(() =>
-            EditSettingsTransfer.ApplySubset(unsupported, new EditSettings()));
+            EditSettingsTransfer.ApplyGroups(unsupported, new EditSettings()));
         Assert.Throws<NotSupportedException>(() =>
-            EditSettingsTransfer.ApplySubset(
+            EditSettingsTransfer.ApplyGroups(
                 new EditSettings(),
                 new EditSettings { Version = 1 }));
     }
@@ -335,8 +335,8 @@ public sealed class EditSettingsTransferTests
             }
         };
 
-        var copied = EditSettingsTransfer.CopySubset(source);
-        EditSettingsTransfer.ApplySubset(copied, target);
+        var copied = EditSettingsTransfer.CopyGroups(source);
+        EditSettingsTransfer.ApplyGroups(copied, target);
 
         Assert.Equal(captureSharpen, copied.Detail.CaptureSharpen);
         Assert.Equal(captureSharpen, target.Detail.CaptureSharpen);

@@ -83,4 +83,9 @@
     <Compile Include="..\Tests\WorkspaceTransitionTests.cs" Link="WorkspaceTransitionTests.cs" />
     <Compile Include="..\Tests\WorkflowTourDimmingTests.cs" Link="WorkflowTourDimmingTests.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Tests\GoldenTestCases.cs" Link="GoldenTestCases.cs" />
+    <Compile Include="..\Tests\SyncTransferParityCorpus.cs" Link="SyncTransferParityCorpus.cs" />
+    <Compile Include="..\Tests\SyncTransferParityRecording.cs" Link="SyncTransferParityRecording.cs" />
+  </ItemGroup>
 </Project>
