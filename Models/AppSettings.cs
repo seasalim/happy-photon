@@ -12,6 +12,9 @@ public class AppSettings
     public WatermarkSpec Watermark { get; set; } = new("");
     public bool WatermarkEnabled { get; set; }
     public bool StripLocationData { get; set; }
+
+    public Dictionary<string, bool> PasteGroups { get; set; } = [];
+
     public string SpotMode { get; set; } = "heal";
 
     public double SpotSize { get; set; } = 3;

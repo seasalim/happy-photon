@@ -20,7 +20,7 @@ internal sealed class SyncTransferParityVm : IAsyncDisposable
 
     internal MainWindowViewModel Vm { get; private set; } = null!;
 
-    internal async Task InitializeAsync()
+    internal async Task InitializeAsync(bool includeDeletedPreset = false)
     {
         Catalog = await _fixture.CreateCatalogAsync();
         Vm = _fixture.CreateViewModel(Catalog, new TinyBaseLoader(),
@@ -32,7 +32,14 @@ internal sealed class SyncTransferParityVm : IAsyncDisposable
         var presets = _fixture.Path("presets");
         Directory.CreateDirectory(presets);
 
-        foreach (var id in new[] { SyncTransferParityCorpus.PresetId, SourcePresetId })
+        var ids = new List<string> { SyncTransferParityCorpus.PresetId, SourcePresetId };
+
+        if (includeDeletedPreset)
+        {
+            ids.Add(SyncTransferParityCorpus.DeletedPresetId);
+        }
+
+        foreach (var id in ids)
         {
             await File.WriteAllTextAsync(Path.Combine(presets, $"{id}.json"),
                 JsonSerializer.Serialize(new UserPresetFile { Id = id, Name = id }));

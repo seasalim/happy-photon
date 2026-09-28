@@ -106,7 +106,8 @@
             <Button x:Name="PasteEditSettingsButton"
                     Classes="develop-action"
                     Command="{Binding PasteEditSettingsCommand}"
-                    ToolTip.Tip="Paste edit settings (Ctrl+Shift+V)"
+                    ToolTip.Tip="{Binding PasteSettingsTooltip}"
+                    ContextRequested="OnPasteContextRequested"
                     AutomationProperties.Name="Paste edit settings">
                 <Viewbox Width="14" Height="14">
                     <Canvas Width="16" Height="16">

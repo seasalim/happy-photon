@@ -10,7 +10,7 @@ public sealed class PasteTargetingTests : IDisposable
     private readonly CatalogVmFixture _fx = new("paste-targets");
 
     [Fact]
-    public async Task OnePhotoBrowseSelection_UsesBatchConfirmation()
+    public async Task OnePhotoBrowseSelection_UsesPasteDialog()
     {
         using var catalog = await CreateCatalogAsync();
         await using var vm = CreateViewModel(catalog);
@@ -21,9 +21,9 @@ public sealed class PasteTargetingTests : IDisposable
         vm.CopyEditSettingsCommand.Execute(null);
         vm.Browse.ToggleSelection(target);
         var confirmedCount = 0;
-        vm.ConfirmBatchApplyAsync = count =>
+        vm.ShowPasteSettingsAsync = dialog =>
         {
-            confirmedCount = count;
+            confirmedCount = dialog.TargetCount;
             return Task.FromResult(true);
         };
 
@@ -31,11 +31,11 @@ public sealed class PasteTargetingTests : IDisposable
 
         Assert.Equal(1, confirmedCount);
         Assert.Equal(2, target.EditSettings.Exposure);
-        Assert.Equal("Applied to 1 image", vm.TransientStatus);
+        Assert.Equal("Applied to 1 photo", vm.TransientStatus);
     }
 
     [Fact]
-    public async Task EmptyBrowseSelection_UsesSinglePhotoPathWithoutConfirmation()
+    public async Task EmptyBrowseSelection_UsesPasteDialogForActivePhoto()
     {
         using var catalog = await CreateCatalogAsync();
         await using var vm = CreateViewModel(catalog);
@@ -46,7 +46,7 @@ public sealed class PasteTargetingTests : IDisposable
         vm.CopyEditSettingsCommand.Execute(null);
         vm.SelectedImage = target;
         var confirmations = 0;
-        vm.ConfirmBatchApplyAsync = _ =>
+        vm.ShowPasteSettingsAsync = _ =>
         {
             confirmations++;
             return Task.FromResult(true);
@@ -54,9 +54,9 @@ public sealed class PasteTargetingTests : IDisposable
 
         await vm.PasteEditSettingsCommand.ExecuteAsync(null);
 
-        Assert.Equal(0, confirmations);
+        Assert.Equal(1, confirmations);
         Assert.Equal(2, target.EditSettings.Exposure);
-        Assert.Equal("Pasted edit settings", vm.TransientStatus);
+        Assert.Equal("Applied to 1 photo", vm.TransientStatus);
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public sealed class PasteTargetingTests : IDisposable
             availabilityChanges++;
         vm.IsDevelopMode = true;
         var confirmations = 0;
-        vm.ConfirmBatchApplyAsync = _ =>
+        vm.ShowPasteSettingsAsync = _ =>
         {
             confirmations++;
             return Task.FromResult(true);
@@ -113,9 +113,9 @@ public sealed class PasteTargetingTests : IDisposable
         vm.Browse.ToggleSelection(target);
         vm.SelectedImage = cloud;
         var confirmedCount = 0;
-        vm.ConfirmBatchApplyAsync = count =>
+        vm.ShowPasteSettingsAsync = dialog =>
         {
-            confirmedCount = count;
+            confirmedCount = dialog.TargetCount;
             return Task.FromResult(true);
         };
 

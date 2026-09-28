@@ -275,18 +275,6 @@ public partial class MainWindow : Window
         return ("Delete Rejected Images", message);
     }
 
-    private Task<bool> ConfirmBatchApplyAsync(int count)
-    {
-        var message = count == 1
-            ? "Apply copied edit settings to 1 image?"
-            : $"Apply copied edit settings to {count} images?";
-
-        return ConfirmationDialog.ConfirmAsync(
-            this,
-            "Apply Edit Settings",
-            message);
-    }
-
     private Task<bool> ConfirmExportOverwriteAsync(
         int count,
         IReadOnlyList<string> paths)

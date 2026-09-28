@@ -109,6 +109,7 @@ public partial class MainWindow
             BrowseThumbnailSize = vm.BrowseThumbnailSize,
             ShowCapturePairs = vm.ShowCapturePairs,
             AppTheme = vm.AppTheme,
+            PasteGroups = vm.CapturePasteGroups(),
             StripLocationData = vm.ExportSettings.StripLocationData,
             Watermark = vm.ExportSettings.Watermark.Capture(),
             WatermarkEnabled = vm.ExportSettings.Watermark.Enabled,

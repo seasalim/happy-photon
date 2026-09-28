@@ -142,7 +142,7 @@ public sealed class RawThumbnailFallbackTests : IDisposable
         viewModel.SelectedImage = source;
         viewModel.CopyEditSettingsCommand.Execute(null);
         viewModel.Browse.ToggleSelection(target);
-        viewModel.ConfirmBatchApplyAsync = _ => Task.FromResult(true);
+        viewModel.ShowPasteSettingsAsync = _ => Task.FromResult(true);
 
         await viewModel.PasteEditSettingsCommand.ExecuteAsync(null);
 

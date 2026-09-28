@@ -300,9 +300,20 @@ CHARACTERIZATION.md §7.6.
 - **User presets** capture color, tonal, color-mixer, all curve, detail, and effects fields and
   still never geometry or camera profiles. Hover, apply, and untoggle preserve the
   current profile.
-- **Copy/paste** (`Ctrl+Shift+C/V`) carries the same widened set, including the mixer
-  and nullable channel curves but never camera profiles; geometry still never
-  transfers; Browse multi-paste confirmation flow unchanged.
+- **Copy/paste**: Copy (`Ctrl+Shift+C`) snapshots the live document and source filename.
+  Browse Paste (`Ctrl+Shift+V`) opens **Paste Settings** for the selection, or the active
+  photo when nothing is selected. The dialog offers the registry's look groups in panel
+  order, including Presence; All, None and Defaults; Cancel and accent Paste. Enter
+  pastes, Escape cancels, and Paste is disabled when no group is checked.
+  The group-name map is an app setting saved on Paste; missing names use registry defaults
+  and unknown names are ignored. Photo-specific groups remain off.
+  Develop `Ctrl+Shift+V` pastes the remembered groups in one step;
+  `Ctrl+Alt+Shift+V` or right-clicking Paste opens the dialog. Unticked groups keep live,
+  unsaved values. Crop drafts stay live while committed crop/straighten/rotation persist.
+  Paste first discards any Spots or Locals gesture and adds one **Paste settings** history
+  step. Only choosing every look group carries the source preset marker; partial choices
+  clear it. Copy reports "Copied settings from <file>"; paste reports "Pasted settings"
+  in Develop and "Applied to N photos" in Browse. Opening the dialog reads no originals.
 
 Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields use
 the controls in §2; copy/paste preserves nullable capture-sharpen semantics and both

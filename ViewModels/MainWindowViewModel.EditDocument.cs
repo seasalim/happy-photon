@@ -23,6 +23,11 @@ public partial class MainWindowViewModel
 
             if (preserveCropDraft)
             {
+                // The proposal contains live controls; persist only the committed frame and lens choice.
+                settings.Rotation = image.EditSettings.Rotation;
+                settings.HorizonRotation = image.EditSettings.HorizonRotation;
+                settings.Lens.ProfileOverride = image.EditSettings.Lens.ProfileOverride;
+
                 Rotation = rotation;
                 HorizonRotation = horizon;
                 CurrentCrop = crop;

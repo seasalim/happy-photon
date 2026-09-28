@@ -8,10 +8,14 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     private EditSettings? _copiedSettings;
+
+    private string? _copiedSourceName;
+
     private CancellationTokenSource? _transientStatusCts;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(PasteEditSettingsCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ChoosePasteSettingsCommand))]
     private bool _hasCopiedSettings;
 
     [ObservableProperty]
@@ -27,8 +31,6 @@ public partial class MainWindowViewModel
         GlobalRawRuntimeFailureStatus ??
         TransientStatus ?? _backupNotice;
 
-    public Func<int, Task<bool>>? ConfirmBatchApplyAsync { get; set; }
-
     private bool CanCopyEditSettings =>
         CanEditSelectedImage && !IsFullScreenMode;
 
@@ -40,8 +42,9 @@ public partial class MainWindowViewModel
         var liveSettings = SelectedImage.EditSettings.Clone();
         SaveSlidersTo(liveSettings);
         _copiedSettings = liveSettings;
+        _copiedSourceName = Path.GetFileName(SelectedImage.FilePath);
         HasCopiedSettings = true;
-        ShowTransientStatus("Copied edit settings");
+        ShowTransientStatus($"Copied settings from {_copiedSourceName}");
     }
 
     private bool CanPasteEditSettings
@@ -58,16 +61,22 @@ public partial class MainWindowViewModel
     partial void OnSelectedCountChanged(int value)
     {
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
+        ChoosePasteSettingsCommand.NotifyCanExecuteChanged();
         NotifyCompareGateChanged();
     }
 
     partial void OnWorkspaceModeChanged(
         WorkspaceMode oldValue,
-        WorkspaceMode newValue) =>
+        WorkspaceMode newValue)
+    {
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
+        ChoosePasteSettingsCommand.NotifyCanExecuteChanged();
+    }
 
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]
-    private async Task PasteEditSettingsAsync()
+    private Task PasteEditSettingsAsync() => PasteEditSettingsCoreAsync(showDialog: false);
+
+    private async Task PasteEditSettingsCoreAsync(bool showDialog)
     {
         DiscardSpotsGesture();
         DiscardLocalsGesture();
@@ -75,33 +84,50 @@ public partial class MainWindowViewModel
 
         var resolution = ResolveActionTargets();
         if (resolution.Targets.Count == 0) return;
-        if (resolution.Targets.Any(target => target.SourceRequiresHydration))
+
+        var workspaceMode = WorkspaceMode;
+        var selectedImage = SelectedImage;
+        var targets = resolution.Targets.ToArray();
+
+        if (targets.Any(target => target.SourceRequiresHydration))
         {
             ShowTransientStatus(
                 "Download online-only originals before applying edit settings");
             return;
         }
 
-        if (resolution.IsBrowseSelection)
+        if ((showDialog || workspaceMode == WorkspaceMode.Browse) &&
+            !await ChoosePasteGroupsAsync(targets.Length, !resolution.IsBrowseSelection))
         {
-            await PasteToSelectionAsync(resolution.Targets);
             return;
         }
 
-        await PasteToCurrentImageAsync();
+        if (WorkspaceMode != workspaceMode || !ReferenceEquals(SelectedImage, selectedImage)) return;
+
+        var groups = RememberedPasteGroups;
+        if (groups.Length == 0) return;
+
+        if (workspaceMode == WorkspaceMode.Browse)
+        {
+            await PasteToSelectionAsync(targets, groups);
+            return;
+        }
+
+        await PasteToCurrentImageAsync(targets[0], groups);
     }
 
-    private async Task PasteToCurrentImageAsync()
+    private async Task PasteToCurrentImageAsync(ImageFile selectedImage,
+        IReadOnlyCollection<EditSettingsGroup> groups)
     {
-        var selectedImage = SelectedImage;
-        if (selectedImage == null || _copiedSettings == null) return;
+        if (_copiedSettings == null) return;
+
+        _previewDebounce?.Cancel();
         var previousSettings = CaptureLiveEditState();
         var previousIntent = _requestedPreviewIntent;
         var surfaceGeneration = RequestEditedRender();
 
-        var settings = selectedImage.EditSettings.Clone();
-        EditSettingsTransfer.ApplyGroups(_copiedSettings, settings);
-        settings.Geometry = previousSettings.Geometry?.Clone();
+        var settings = previousSettings.Clone();
+        EditSettingsTransfer.ApplyGroups(_copiedSettings, settings, groups);
         InstallDevelopDocument(selectedImage, settings, preserveCropDraft: true);
 
         try
@@ -122,32 +148,33 @@ public partial class MainWindowViewModel
         if (ReferenceEquals(SelectedImage, selectedImage))
         {
             _lastSavedState = selectedImage.EditSettings.Clone();
+
             if (IsDevelopMode || IsFullScreenMode)
             {
                 await UpdatePreviewWithCurrentSliders(
                     generation: surfaceGeneration);
             }
+
             UpdateCanReset();
         }
 
         _ = TrackDirectThumbnailOperation(
             RefreshThumbnailAsync(selectedImage));
-        ShowTransientStatus("Pasted edit settings");
+        ShowTransientStatus("Pasted settings");
     }
 
     private EditSettings CaptureLiveEditState()
     {
         var liveState = SelectedImage!.EditSettings.Clone();
         SaveSlidersTo(liveState);
+
         return liveState;
     }
 
-    private async Task PasteToSelectionAsync(IReadOnlyList<ImageFile> targets)
+    private async Task PasteToSelectionAsync(IReadOnlyList<ImageFile> targets,
+        IReadOnlyCollection<EditSettingsGroup> groups)
     {
         if (_copiedSettings == null) return;
-
-        if (targets.Count == 0 || ConfirmBatchApplyAsync == null) return;
-        if (!await ConfirmBatchApplyAsync(targets.Count)) return;
 
         List<(ImageFile Target, EditSettings Previous, EditSettings Settings)> proposed;
 
@@ -162,7 +189,8 @@ public partial class MainWindowViewModel
             {
                 var previous = target.EditSettings.Clone();
                 var settings = target.EditSettings.Clone();
-                EditSettingsTransfer.ApplyGroups(_copiedSettings, settings);
+                EditSettingsTransfer.ApplyGroups(_copiedSettings, settings, groups);
+
                 return (Target: target, Previous: previous, Settings: settings);
             }).ToList();
             await _catalogService.SaveEditSettingsBatchWithHistoryAsync(proposed
@@ -221,7 +249,7 @@ public partial class MainWindowViewModel
                 (update.Target, update.Previous))));
 
         var applied = targets.Count;
-        var noun = applied == 1 ? "image" : "images";
+        var noun = applied == 1 ? "photo" : "photos";
         ShowTransientStatus($"Applied to {applied} {noun}");
     }
 

@@ -112,15 +112,6 @@ public sealed class EditSettingsGroupTests
         Assert.Equal(before, JsonSerializer.Serialize(source));
     }
 
-    [Fact]
-    public void BatchConfirmationDoesNotClaimPasteIsIrreversible()
-    {
-        var view = File.ReadAllText(Path.Combine(GoldenTestPaths.RepositoryRoot, "Views", "MainWindow.axaml.cs"));
-        Assert.Contains("Apply copied edit settings to 1 image?\"", view);
-        Assert.Contains("Apply copied edit settings to {count} images?\"", view);
-        Assert.DoesNotContain("This cannot be undone", view);
-    }
-
     private static JsonNode? Field(JsonNode document, string path) =>
         path.Split('.').Aggregate((JsonNode?)document, (node, part) => node?[part]);
 

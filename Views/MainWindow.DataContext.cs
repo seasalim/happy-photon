@@ -116,7 +116,7 @@ public partial class MainWindow
             _compareView?.CancelLoupePeek() == true ||
             _loupeView?.CancelLoupePeek() == true ||
             GetActiveZoomPanControl()?.CancelLoupePeek() == true;
-        vm.ConfirmBatchApplyAsync = ConfirmBatchApplyAsync;
+        vm.ShowPasteSettingsAsync = model => new PasteSettingsDialog(model).ShowDialog<bool>(this);
         vm.ShowFileOperationFailuresAsync = ShowFileOperationFailuresAsync;
         vm.PersistAppSettingsAsync = () => SaveAppSettingsAsync(vm);
         vm.PersistFirstRunCompletionAsync =
@@ -225,6 +225,7 @@ public partial class MainWindow
             await vm.RestoreXmpSettingsAsync();
             vm.RestoreBrowseThumbnailSize(settings.BrowseThumbnailSize);
             vm.RestoreBrushPreferences(settings);
+            vm.RestorePasteGroups(settings.PasteGroups);
             vm.RestoreShowCapturePairs(settings.ShowCapturePairs);
             vm.RestoreAppTheme(settings.AppTheme);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;

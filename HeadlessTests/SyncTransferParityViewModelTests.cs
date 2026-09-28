@@ -57,9 +57,9 @@ public sealed class SyncTransferParityViewModelTests(ITestOutputHelper output)
         var target = await fixture.ImageAsync($"{path}-{index}", destination.Settings);
         await fixture.SelectAsync(target, develop: !browse);
         var confirmations = 0;
-        fixture.Vm.ConfirmBatchApplyAsync = count =>
+        fixture.Vm.ShowPasteSettingsAsync = dialog =>
         {
-            Assert.Equal(1, count);
+            Assert.Equal(1, dialog.TargetCount);
             confirmations++;
 
             return Task.FromResult(true);
@@ -67,7 +67,7 @@ public sealed class SyncTransferParityViewModelTests(ITestOutputHelper output)
         Assert.True(fixture.Vm.PasteEditSettingsCommand.CanExecute(null));
         await fixture.Vm.PasteEditSettingsCommand.ExecuteAsync(null);
         Assert.Equal(browse ? 1 : 0, confirmations);
-        Assert.Equal(browse ? "Applied to 1 image" : "Pasted edit settings", fixture.Vm.TransientStatus);
+        Assert.Equal(browse ? "Applied to 1 photo" : "Pasted settings", fixture.Vm.TransientStatus);
         await fixture.RecordAsync(recording, $"{path}/{sourceName}", target);
     }
 

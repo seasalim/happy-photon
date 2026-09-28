@@ -292,20 +292,26 @@ preset resets that look; image-specific geometry, profiles and locals stay uncha
 
 ### Copy edits between images
 
-Use the copy and paste buttons in the Develop footer, or press `Ctrl+Shift+C` and
-`Ctrl+Shift+V`, to transfer the current image's color, mixer, tonal, composite and
-channel curve, detail, effects, and preset settings to another image.
+Copy the current photo's settings with the Develop footer button or `Ctrl+Shift+C`.
+In Develop, `Ctrl+Shift+V` pastes the remembered groups in one step.
+Use `Ctrl+Alt+Shift+V`, or right-click Paste, to choose groups in **Paste Settings**.
 
 To apply the settings to several photographs:
 
 1. Return to Browse with `G`.
-2. Select the target images.
-3. Press `Ctrl+Shift+V`.
-4. Review and confirm the batch operation.
+2. Select the target photos.
+3. Press `Ctrl+Shift+V` to open **Paste Settings**.
+4. Choose the look groups and press **Paste** (or Enter). Escape or Cancel leaves the photos unchanged.
 
-Batch paste adds a **Paste settings** step to every target, so it can be undone when
-that photograph is opened in Develop. Crop, rotation, and horizon settings on every
-target remain unchanged.
+The dialog offers White Balance, Adjustments, Presence, Tone Curve, Color Mixer, Detail,
+Effects and Optics. All, None and Defaults change the checklist; Paste is disabled with
+nothing selected. The choice is remembered across restarts. With no Browse selection,
+the dialog targets the active photo. Unticked groups retain their values, including
+unsaved Develop edits. The source preset marker travels only when all look groups are chosen.
+
+Each changed target gets one **Paste settings** history step; one Undo restores its prior
+document. Paste discards an active Spots or Locals gesture first. Crop, rotation,
+straighten, geometry, profiles, locals and spot removal remain the target's own.
 
 ## 5. Build a selection
 
@@ -455,7 +461,8 @@ Help & About lists every shortcut and gesture; these are the essentials.
 | `L` | Toggle color assessment mode in Develop or fullscreen |
 | `Space` / `Z` | Toggle Fit and 1:1 in Develop or Browse Loupe |
 | `J` | Toggle clipping overlay in Develop |
-| `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy or paste edit settings |
+| `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy settings / paste remembered groups in Develop; choose groups in Browse |
+| `Ctrl+Alt+Shift+V` | Open Paste Settings (also right-click Paste) |
 | `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` | Move backward or forward through Develop history |
 | `Ctrl+Shift+E` | Open the Export workspace |
 | `Enter` | Run Export, apply crop, or move from Browse Loupe to Develop |

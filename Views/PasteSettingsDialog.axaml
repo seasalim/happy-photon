@@ -1,0 +1,52 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:HappyPhoton.ViewModels"
+        x:Class="HappyPhoton.Views.PasteSettingsDialog"
+        x:DataType="vm:PasteSettingsViewModel"
+        Title="Paste Settings" Width="420" Height="490"
+        CanResize="False" WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource SurfaceLow}" Foreground="{DynamicResource TextPrimary}"
+        FontFamily="{StaticResource FontBody}">
+    <Window.Styles>
+        <Style Selector="Button.accent:disabled">
+            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        </Style>
+        <Style Selector="Button.choice-link">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Styles>
+    <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+        <StackPanel Spacing="7">
+            <TextBlock Text="Paste Settings" Classes="section-label"/>
+            <TextBlock Text="{Binding Summary}" TextTrimming="CharacterEllipsis"
+                       ToolTip.Tip="{Binding Summary}"
+                       Foreground="{DynamicResource TextSecondary}"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Margin="0,18" Spacing="8">
+            <TextBlock Text="Look" Classes="section-label"/>
+            <ItemsControl ItemsSource="{Binding Groups}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:PasteSettingsGroupViewModel">
+                        <CheckBox Content="{Binding Group.Name}"
+                                  IsChecked="{Binding IsSelected}"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <StackPanel Orientation="Horizontal" Spacing="18">
+                <Button Content="All" Classes="choice-link" Command="{Binding AllCommand}"/>
+                <Button Content="None" Classes="choice-link" Command="{Binding NoneCommand}"/>
+                <Button Content="Defaults" Classes="choice-link" Command="{Binding DefaultsCommand}"/>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10"
+                    HorizontalAlignment="Right">
+            <Button x:Name="CancelButton" Content="Cancel" Click="OnCancel"/>
+            <Button x:Name="PasteButton" Content="Paste" Classes="accent"
+                    IsEnabled="{Binding CanPaste}" Click="OnPaste"/>
+        </StackPanel>
+    </Grid>
+</Window>

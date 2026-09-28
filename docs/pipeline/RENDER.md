@@ -450,15 +450,15 @@ values; omitted ranges and zero color terms preserve canonical exposure-only byt
 Brush-free canonical v4 bytes and the render version are unchanged.
 Version 3 settings migrate in memory without locals; version 2 is unsupported.
 
-| Field | Omitted when | Copy/paste and presets | Decode-affecting? |
+| Field | Omitted when | Paste (chosen groups); presets (all look groups) | Decode-affecting? |
 |---|---|---|---|
-| Channel curves | Absent | Transfer | No |
-| `mixer` | All bands zero | Transfer | No |
-| `effects` | Vignette and Grain inactive | Transfer | No |
+| Channel curves | Absent | Tone Curve | No |
+| `mixer` | All bands zero | Color Mixer | No |
+| `effects` | Vignette and Grain inactive | Effects | No |
 | `geometry` | All terms zero | Preserve destination, as with crop/rotation | No |
 | `rawProfile` | Built-in | Preserve destination | Yes |
-| `detail` | Always present; null sharpening means source default | Transfer | No |
-| `lens` | Always present; override omitted when null | Transfer booleans; preserve override | Yes |
+| `detail` | Always present; null sharpening means source default | Detail | No |
+| `lens` | Always present; override omitted when null | Optics booleans; preserve override | Yes |
 | `locals` | Empty | Preserve destination; excluded from preset files | No |
 
 Highlight reconstruction also affects decode. Lens settings are defined in OPTICS.md.

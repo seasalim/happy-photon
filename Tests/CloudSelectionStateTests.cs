@@ -190,7 +190,7 @@ public sealed class CloudSelectionStateTests : IDisposable
             viewModel.ToggleImageSelection(local);
             viewModel.ToggleImageSelection(cloud);
             var confirmations = 0;
-            viewModel.ConfirmBatchApplyAsync = _ =>
+            viewModel.ShowPasteSettingsAsync = _ =>
             {
                 confirmations++;
                 return Task.FromResult(true);

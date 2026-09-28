@@ -86,9 +86,9 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
         var confirmations = 0;
         var updated = 0;
         var timer = new Stopwatch();
-        vm.ConfirmBatchApplyAsync = count =>
+        vm.ShowPasteSettingsAsync = dialog =>
         {
-            Assert.Equal(TargetCount, count);
+            Assert.Equal(TargetCount, dialog.TargetCount);
             confirmations++;
             if (measure) timer.Start();
 

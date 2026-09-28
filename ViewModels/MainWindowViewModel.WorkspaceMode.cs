@@ -250,6 +250,7 @@ public partial class MainWindowViewModel
 
         CopyEditSettingsCommand.NotifyCanExecuteChanged();
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
+        ChoosePasteSettingsCommand.NotifyCanExecuteChanged();
         NotifyWhiteBalanceCommandState();
         ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
         ToggleBeforeAfterCommand.NotifyCanExecuteChanged();

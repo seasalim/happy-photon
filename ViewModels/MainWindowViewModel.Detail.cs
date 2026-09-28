@@ -34,9 +34,13 @@ public partial class MainWindowViewModel
 
     private void SaveDetailTo(EditSettings target)
     {
-        target.Detail.CaptureSharpen = CaptureSharpen == CaptureSharpenDefault
-            ? null
-            : CaptureSharpen;
+        if (CaptureSharpen != target.Detail.ResolveCaptureSharpen(IsHighlightHandlingEnabled))
+        {
+            target.Detail.CaptureSharpen = CaptureSharpen == CaptureSharpenDefault
+                ? null
+                : CaptureSharpen;
+        }
+
         target.Detail.LuminanceNr = LuminanceNr;
         target.Detail.ChromaNr = ChromaNr;
     }

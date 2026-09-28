@@ -57,5 +57,6 @@ public sealed class SyncTransferSnapshotTests
         await fixture.Vm.PasteEditSettingsCommand.ExecuteAsync(null);
 
         Assert.Equal("pending lens", fixture.Vm.LensProfileOverride);
+        Assert.Null(target.EditSettings.Lens.ProfileOverride);
     }
 }
