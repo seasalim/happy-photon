@@ -40,7 +40,10 @@ Happy Photon is a performance-focused .NET 10/Avalonia photo workflow for browsi
 
 ## Code style
 
-- Separate type members with one blank line, and separate a method's logical steps (setup, validation, main work, cleanup) with a blank line.
+- Separate type members with one blank line.
+- Inside a method, put a blank line after a block of guard clauses, before and after a multi-line `if`, `for`, `foreach`, `while`, `switch`, `using` or `try` block, between `switch` sections, and before a final `return` that follows other statements. A method body of eight or more lines with no blank line is a review finding.
+- A guard clause keeps `return`/`throw` on the same line only when its condition fits on one line.
+- These rules apply to new and changed code even where the surrounding code is dense; they override matching the surrounding style. Do not reformat untouched code.
 - Never compress code to meet the 500-line limit or a LOC estimate: no dropped blank lines, stacked statements or merged declarations. Split the file, or report the overrun at the merge gate.
 
 ## Load context on demand
