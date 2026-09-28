@@ -5,6 +5,12 @@ namespace HappyPhoton.Services;
 
 public partial class CatalogService
 {
+    internal bool UpgradeWithoutBackup { get; set; }
+
+    internal bool SkipUpgradeBackupForTests { get; set; }
+
+    internal Action<CatalogBackupService>? ConfigureUpgradeBackup { get; set; }
+
     internal Guid? OpenCatalogIdentity => _initialized ? _identity?.CatalogId : null;
     internal Action<double>? BackupGateMeasured { get; set; }
 
@@ -33,8 +39,17 @@ public partial class CatalogService
     {
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
             { DataSource = path, Mode = mode, Pooling = false }.ToString());
-        connection.Open();
-        return connection;
+        try
+        {
+            connection.Open();
+
+            return connection;
+        }
+        catch
+        {
+            connection.Dispose();
+            throw;
+        }
     }
 
     internal static (long Rows, long Schema) ReadBackupFacts(SqliteConnection connection)
@@ -42,7 +57,11 @@ public partial class CatalogService
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT count(*) FROM images;";
         var rows = Convert.ToInt64(command.ExecuteScalar());
+        command.CommandText = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='app_settings';";
+        if (Convert.ToInt64(command.ExecuteScalar()) == 0) return (rows, 0);
+
         command.CommandText = "SELECT value FROM app_settings WHERE key = 'schema_version';";
+
         return (rows, Convert.ToInt64(command.ExecuteScalar()));
     }
 }

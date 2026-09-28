@@ -17,12 +17,6 @@ internal static class CatalogMigrations
                 $"({CurrentVersion}). Upgrade Happy Photon to open this catalog.");
         }
 
-        if (version < 3 && !await HasImageColumnAsync(connection, "version", null))
-        {
-            var backupPath = connection.DataSource + ".pre-versions-backup";
-            File.Copy(connection.DataSource, backupPath, overwrite: true);
-        }
-
         for (var next = version + 1; next <= CurrentVersion; next++)
         {
             using var transaction = connection.BeginTransaction();
@@ -32,7 +26,7 @@ internal static class CatalogMigrations
         }
     }
 
-    private static async Task<int> ReadVersionAsync(SqliteConnection connection)
+    internal static async Task<int> ReadVersionAsync(SqliteConnection connection)
     {
         using var command = connection.CreateCommand();
         command.CommandText =

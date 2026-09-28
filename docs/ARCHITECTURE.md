@@ -98,6 +98,8 @@ its plain key=value format avoids loading JSON. Failure preserves default placem
    - after the user confirms Storage, create or claim the selected roots and re-enter
      initialization at the Pictures step. This committed checkpoint prevents root
      creation from running twice;
+   - probe the stored schema read-only (recover a disposable copy if a hot journal blocks it);
+   - verify a byte-preserving before-upgrade package for an existing older/unversioned catalog;
    - open the shared catalog connection;
    - create tables;
    - run ordered catalog migrations;
@@ -116,8 +118,9 @@ The first-frame startup gate disables workspace controls/shortcuts until `Ready`
 Invalid/unreadable pointers, including missing catalog folders, require explicit
 quarantine/recovery. Schema mismatch offers journaled **Set aside and retry** for both
 roots unless environment-managed; catalog/settings failures offer Retry, Restore from backup and Close.
-An existing database that fails the signature check reaches the error screen, never first-run
-setup, unless a rollback journal is present: the normal read-write open recovers it first.
+A missing or table-less database is fresh. Any populated unversioned catalog, including
+an images-only catalog, needs protection before migration. An unreadable database reaches
+the error screen; a hot rollback journal is probed and verified on disposable copies.
 Incomplete first-run shutdown saves preferences only; browsing root, viewed folder and
 completion version commit together when the wizard finishes. DESIGN.md owns first-run,
 Lightroom-discovery and tour presentation.
@@ -138,7 +141,7 @@ for conflict-aware XMP reconciliation and publication.
 `CatalogSchema` creates new catalogs, runs ordered transactional migrations recorded in
 `app_settings.schema_version`, then validates required image columns with `PRAGMA
 table_info` at every startup. Migration 1 adds `color_label`; 2 adds
-`image_assessments`; 3 backs up and rebuilds `images`, preserving IDs and their
+`image_assessments`; 3 rebuilds `images`, preserving IDs and their
 autoincrement high-water mark as cache identity; 4 adds history without back-filling.
 Extra columns are tolerated for development-build compatibility. Missing columns fail
 startup; the error names them and offers to set aside the catalog/cache pair and Retry.
@@ -148,8 +151,10 @@ An ownership-checked journal resumes or rolls back crash-interrupted root rename
 
 Settings stages moves for next launch before catalog open. Catalog moves recover any
 hot journal, fingerprint catalog/presets, copy and verify, flip the location pointer,
-then remove only known source data. Before the flip failure rolls back; afterward the
-journal resumes cleanup. Cache moves rename same-volume assets or regenerate across
+then remove only known source data. The entire backup folder travels as bytes with a
+journaled per-file SHA-256 set, verified before the flip; cleanup deletes only recorded
+files. Cloud-only backup files refuse staging and execution without opening content.
+Before the flip failure rolls back; afterward the journal resumes cleanup. Cache moves rename same-volume assets or regenerate across
 volumes, never copying caches across volumes.
 
 Restore is another kind in the same next-launch journal; a move and a restore cannot
@@ -173,7 +178,8 @@ NoticeRecorded.
 - The chooser lists from sidecars and file attributes only; only Restore or a file choice
   opens an archive.
 - Invariant: nothing acquires the backup-folder path before Ready unless a restore journal
-  exists; every path comes from `CatalogBackupService.Folder`.
+  exists or an existing catalog needs an upgrade or move; every path comes from
+  `CatalogBackupService.Folder`.
 
 The versioned `.catalog-identity` GUID and `assets/.catalog-stamp` prevent ID-sharded
 assets from pairing with a different or rolled-back catalog. A missing stamp on a
@@ -220,6 +226,12 @@ wait preserves the save and edits across instance replacement, without per-image
 queries. One gated connection needs no WAL.
 
 ### Backups
+
+Before an existing catalog's schema upgrade, the closed database, rollback journal,
+identity and presets are packaged byte for byte; integrity and schema facts are checked
+on a disposable recovered copy. Only a missing or table-less database is fresh.
+Failure blocks the live write-open and offers Retry, Upgrade without a backup (in memory,
+this launch only), and Close. A current-schema launch never acquires the backup path.
 
 On quit, the hidden main window drains view-model commits, then runs a weekly backup
 before final closure. Repeated close and desktop lifetime quit requests wait for that

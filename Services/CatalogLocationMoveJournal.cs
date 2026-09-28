@@ -36,7 +36,8 @@ internal sealed record CatalogLocationMoveJournal(
     bool? CacheWasRenamed,
     string? CacheAsideRoot,
     string? CatalogAsideRoot = null,
-    CatalogRestoreState? Restore = null);
+    CatalogRestoreState? Restore = null,
+    Dictionary<string, string>? BackupFiles = null);
 
 internal enum CatalogRestorePhase { Prepared, Verified, PayloadStaged, Preserved, Replacing, CacheReset, NoticeRecorded }
 internal sealed record CatalogRestoreState(string BackupPath, string ArchiveHash, string ManifestHash,

@@ -62,7 +62,8 @@ internal static class CatalogRestorePreservation
         }
     }
 
-    internal static void Create(string root, string staging, string stem, Action<string, Action> change)
+    internal static void Create(string root, string staging, string stem, Action<string, Action> change,
+        string kind = "before-restore", Action<string>? verify = null)
     {
         var folder = Path.GetDirectoryName(stem)!;
         CatalogRestoreExecutor.OwnedPath(root, Path.GetRelativePath(root, folder));
@@ -95,12 +96,13 @@ internal static class CatalogRestorePreservation
                 facts = CatalogService.ReadBackupFacts(connection);
             }
             catch (Exception ex) when (ex is SqliteException or IOException) { damaged = true; }
-            var manifest = new BackupManifest(1, "before-restore", DateTimeOffset.UtcNow,
+            var manifest = new BackupManifest(1, kind, DateTimeOffset.UtcNow,
                 AppBuildInfo.Version.ToString(), CatalogBackupService.ReadIdentity(root) ?? Guid.Empty,
                 facts.Schema, facts.Rows, entries, damaged);
             using var writer = new StreamWriter(zip.CreateEntry("manifest.json").Open());
             writer.Write(JsonSerializer.Serialize(manifest));
         });
+        verify?.Invoke(stem + ".partial.zip");
         var verified = CatalogBackupService.VerifyArchive(stem + ".partial.zip");
         change("preserve-sidecar", () => File.WriteAllText(stem + ".partial.json", JsonSerializer.Serialize(verified)));
         change("preserve-publish", () => File.Move(stem + ".partial.zip", stem + ".zip"));

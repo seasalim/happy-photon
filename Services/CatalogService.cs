@@ -151,6 +151,14 @@ public partial class CatalogService : IDisposable
 
             LightroomCatalogReader.SweepOrphanedSnapshots();
 
+            if (!UpgradeWithoutBackup && !SkipUpgradeBackupForTests &&
+                await CatalogUpgradeProbe.NeedsUpgradeAsync(_databasePath))
+            {
+                var backup = new CatalogBackupService(this);
+                ConfigureUpgradeBackup?.Invoke(backup);
+                backup.BeforeUpgrade();
+            }
+
             _connection = new SqliteConnection($"Data Source={_databasePath}");
             try
             {

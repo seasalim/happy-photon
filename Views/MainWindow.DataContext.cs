@@ -154,23 +154,6 @@ public partial class MainWindow
         UpdateDevelopViewportPublication(vm);
     }
 
-    internal async Task InitializeApplicationAsync(
-        MainWindowViewModel vm,
-        CatalogService catalogService,
-        AppDataLocationService locationService,
-        CatalogLocationMigrator locationMigrator,
-        string? picturesPath)
-    {
-        _startupCatalogService = catalogService;
-        BackupOnQuitAsync = new CatalogBackupService(catalogService).BackupIfDueAsync;
-        _dataLocationService = locationService;
-        _locationMigrator = locationMigrator;
-        vm.BindDataLocationService(locationService);
-        _startupPicturesPath = picturesPath;
-        _appSettingsService = new AppSettingsService(catalogService);
-        await TryInitializeApplicationAsync(vm);
-    }
-
     private async Task TryInitializeApplicationAsync(MainWindowViewModel vm)
     {
         if (_startupAttemptInProgress ||
@@ -200,14 +183,24 @@ public partial class MainWindow
             vm.SetResolvedDataLocations(_startupLocations, _locationMigrator);
             ConfigureStorageSettings(vm);
             vm.PrepareFirstRunStorage(_dataLocationService, _startupLocations);
-            // A hot rollback journal makes the read-only signature probe fail.
-            // Let the normal catalog open recover it before judging the database.
             var hasCatalogToOpen = AppDataLocationService.HasCatalogSignature(
-                _startupLocations.CatalogRoot) ||
-                (File.Exists(_startupLocations.DatabasePath) &&
-                 File.Exists(_startupLocations.DatabasePath + "-journal"));
+                _startupLocations.CatalogRoot);
+
             if (!hasCatalogToOpen && File.Exists(_startupLocations.DatabasePath))
-                throw new IOException("The local catalog is damaged or unrecognized. Restore a backup or retry.");
+            {
+                try
+                {
+                    // Probe hot journals on a disposable recovered copy before judging the database.
+                    hasCatalogToOpen = await Task.Run(async () =>
+                        await CatalogUpgradeProbe.ReadVersionAsync(_startupLocations.DatabasePath) != null);
+                }
+                catch (Exception exception)
+                {
+                    throw new IOException(
+                        "The local catalog is damaged or unrecognized. Restore a backup or retry.", exception);
+                }
+            }
+
             if (!hasCatalogToOpen &&
                 !vm.IsFirstRunStorageCommitted)
             {
@@ -284,6 +277,10 @@ public partial class MainWindow
             System.Diagnostics.Debug.WriteLine(
                 $"Storage pointer recovery required: {exception}");
             vm.ShowPointerRecovery(exception.Message);
+        }
+        catch (CatalogUpgradeBackupException exception)
+        {
+            vm.ShowUpgradeBackupFailure(exception.Message);
         }
         catch (CatalogSchemaMismatchException exception)
         {

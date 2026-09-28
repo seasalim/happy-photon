@@ -27,6 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Tests\UpgradeTestSupport.cs" Link="UpgradeTestSupport.cs" />
     <Compile Include="..\Tests\RestoreTestSupport.cs" Link="RestoreTestSupport.cs" />
     <Compile Include="..\Tests\BackupCatalogFixtures.cs" Link="BackupCatalogFixtures.cs" />
     <Compile Include="..\Tests\BackupFixtureEdits.cs" Link="BackupFixtureEdits.cs" />

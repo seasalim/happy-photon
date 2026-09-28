@@ -4,6 +4,10 @@ namespace HappyPhoton.Services;
 
 public sealed class CatalogLocationMigrator
 {
+    internal Action<string>? BackupMoveStep { get; set; }
+
+    internal Func<string, FileAttributes> BackupAttributes { get; set; } = File.GetAttributes;
+
     internal Action<string>? RestoreStep { get; set; }
     private const string JournalFileName = "location-move.json";
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -86,6 +90,9 @@ public sealed class CatalogLocationMigrator
                         : current.CacheRoot]);
         }
 
+        if (kind == CatalogLocationMoveKind.Catalog)
+            CatalogMoveBackupFiles.LocalFiles(current.CatalogRoot, BackupAttributes);
+
         await CommitAsync(new CatalogLocationMoveJournal(
             1,
             kind,
@@ -144,9 +151,26 @@ public sealed class CatalogLocationMigrator
         if (journal.Kind == CatalogLocationMoveKind.Catalog &&
             journal.Phase == CatalogLocationMovePhase.Prepared)
         {
+            var files = CatalogMoveBackupFiles.LocalFiles(journal.CatalogRoot, BackupAttributes);
+            journal = await CommitAsync(journal with
+            {
+                BackupFiles = journal.BackupFiles ?? files.ToDictionary(name => name,
+                    name => CatalogBackupService.Hash(CatalogMoveBackupFiles.PathFor(journal.CatalogRoot, name)))
+            });
             var fingerprint = await CatalogFingerprinter.FingerprintAsync(
                 journal.CatalogRoot);
             CatalogMoveFileOperations.CopyCatalog(journal.CatalogRoot, destination);
+
+            foreach (var name in journal.BackupFiles!.Keys)
+            {
+                BackupMoveStep?.Invoke("before:copy:" + name);
+                CatalogMoveBackupFiles.AssertLocal(CatalogMoveBackupFiles.PathFor(journal.CatalogRoot, name), BackupAttributes);
+                var target = CatalogMoveBackupFiles.PathFor(destination, name);
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                File.Copy(CatalogMoveBackupFiles.PathFor(journal.CatalogRoot, name), target, overwrite: true);
+                BackupMoveStep?.Invoke("after:copy:" + name);
+            }
+
             journal = await CommitAsync(journal with
             {
                 Phase = CatalogLocationMovePhase.CatalogCopied,
@@ -172,10 +196,14 @@ public sealed class CatalogLocationMigrator
             journal.Phase == CatalogLocationMovePhase.CatalogCopied)
         {
             await CatalogFingerprinter.VerifyAsync(destination, journal.Fingerprint!);
+            CatalogMoveBackupFiles.Verify(destination, journal.BackupFiles, BackupAttributes);
             journal = await AdvanceAsync(journal, CatalogLocationMovePhase.Verified);
         }
         if (journal.Phase < CatalogLocationMovePhase.PointerFlipped)
         {
+            if (journal.Kind == CatalogLocationMoveKind.Catalog)
+                CatalogMoveBackupFiles.Verify(destination, journal.BackupFiles, BackupAttributes);
+
             var next = journal.Kind == CatalogLocationMoveKind.Catalog
                 ? new AppDataLocations(
                     destination,
@@ -246,6 +274,7 @@ public sealed class CatalogLocationMigrator
     {
         if (journal.Kind == CatalogLocationMoveKind.Catalog)
         {
+            CatalogMoveBackupFiles.Cleanup(journal.CatalogRoot, journal.BackupFiles);
             CatalogMoveFileOperations.DeleteFile(journal.CatalogRoot, "catalog.db");
             CatalogMoveFileOperations.DeleteFile(journal.CatalogRoot, ".catalog-identity");
             CatalogMoveFileOperations.DeleteKnownDirectory(journal.CatalogRoot, "presets");
@@ -263,6 +292,7 @@ public sealed class CatalogLocationMigrator
         if (journal.Kind == CatalogLocationMoveKind.Catalog &&
             journal.DestinationRoot != null)
         {
+            CatalogMoveBackupFiles.Cleanup(journal.DestinationRoot, journal.BackupFiles);
             CatalogMoveFileOperations.DeleteFile(
                 journal.DestinationRoot, "catalog.db");
             CatalogMoveFileOperations.DeleteFile(

@@ -88,7 +88,8 @@ public sealed class RestoreHotJournalStartupTests(BackupCatalogFixtures fixtures
             await window.InitializeApplicationAsync(vm, catalog, f.Service, new CatalogLocationMigrator(f.Service),
                 Path.Combine(directory.Path, "pictures")).WaitAsync(TestWaits.Condition);
             Assert.True(vm.IsStartupError);
-            Assert.False(string.IsNullOrWhiteSpace(vm.FirstRunErrorMessage));
+            Assert.Equal("The local catalog is damaged or unrecognized. Restore a backup or retry.",
+                vm.FirstRunErrorMessage);
             Assert.Null(catalog.OpenCatalogIdentity);
             Assert.Equal("not SQLite", File.ReadAllText(f.Locations.DatabasePath));
         }
@@ -106,7 +107,7 @@ public sealed class RestoreHotJournalStartupTests(BackupCatalogFixtures fixtures
         return rows;
     }
 
-    private static async Task KillWriter(string database)
+    internal static async Task KillWriter(string database)
     {
         var start = new ProcessStartInfo("dotnet")
         {
@@ -146,7 +147,7 @@ public sealed class RestoreHotJournalStartupTests(BackupCatalogFixtures fixtures
             PRAGMA cache_size=1;
             PRAGMA cache_spill=ON;
             BEGIN IMMEDIATE;
-            UPDATE images SET file_name=printf('%0500d', id);
+            UPDATE images SET file_name=printf('%0500d', id) WHERE id <= 100;
             """;
         command.ExecuteNonQuery();
         using var signal = new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true };

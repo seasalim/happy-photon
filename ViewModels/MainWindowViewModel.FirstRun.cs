@@ -114,6 +114,7 @@ public partial class MainWindowViewModel
 
     public void ShowInitializing()
     {
+        IsUpgradeBackupFailure = false;
         FirstRunErrorMessage = null;
         StartupGateState = StartupGateState.Initializing;
     }

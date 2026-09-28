@@ -165,7 +165,11 @@ public sealed class CatalogVersionMigrationTests : IDisposable
         using (var catalog = new CatalogService(_root.Path))
             await catalog.InitializeAsync();
 
-        var backup = database + ".pre-versions-backup";
+        using var listing = new CatalogService(_root.Path);
+        var service = new CatalogBackupService(listing);
+        using var checkedBackup = service.CheckForRestore(Assert.Single(service.ListForRestore()).Path);
+        var backup = Path.Combine(checkedBackup.Directory, "catalog.db");
+        Assert.False(File.Exists(database + ".pre-versions-backup"));
         Assert.Equal(before, await File.ReadAllBytesAsync(backup));
         await using (var backupConnection = await OpenAsync(backup))
         {
@@ -220,8 +224,10 @@ public sealed class CatalogVersionMigrationTests : IDisposable
 
         await Assert.ThrowsAnyAsync<Exception>(catalog.InitializeAsync);
 
-        Assert.Equal(before, await File.ReadAllBytesAsync(
-            database + ".pre-versions-backup"));
+        var service = new CatalogBackupService(catalog);
+        using var checkedBackup = service.CheckForRestore(Assert.Single(service.ListForRestore()).Path);
+        Assert.Equal(before, await File.ReadAllBytesAsync(Path.Combine(checkedBackup.Directory, "catalog.db")));
+        Assert.False(File.Exists(database + ".pre-versions-backup"));
     }
 
     private async Task<string> SeedVersionTwoAsync(bool failMigration)

@@ -278,9 +278,9 @@ public sealed class AppDataLocationService
             command.CommandText = """
                 SELECT COUNT(*)
                 FROM sqlite_master
-                WHERE type = 'table' AND name IN ('images', 'app_settings');
+                WHERE type = 'table' AND name = 'images';
                 """;
-            return (long)(command.ExecuteScalar() ?? 0L) == 2;
+            return (long)(command.ExecuteScalar() ?? 0L) == 1;
         }
         catch
         {

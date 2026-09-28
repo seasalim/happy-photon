@@ -77,6 +77,7 @@
                                TextAlignment="Center"
                                TextWrapping="Wrap"/>
                     <Button Content="Restore from backup…" HorizontalAlignment="Center"
+                            IsVisible="{Binding !IsUpgradeBackupFailure}"
                             Command="{Binding RestoreBackupCommand}"/>
                     <TextBlock Text="Your originals are untouched."
                                Foreground="{DynamicResource TextMuted}"
@@ -88,6 +89,9 @@
                                 Content="Retry"
                                 Command="{Binding RetryStartupCommand}"
                                 AutomationProperties.Name="Retry opening the local catalog"/>
+                        <Button Content="Upgrade without a backup"
+                                IsVisible="{Binding IsUpgradeBackupFailure}"
+                                Command="{Binding UpgradeWithoutBackupCommand}"/>
                         <Button Content="Set aside and retry"
                                 IsVisible="{Binding CanSetAsideCatalog}"
                                 Command="{Binding SetAsideCatalogCommand}"
