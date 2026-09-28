@@ -5,7 +5,7 @@ of the eight locals. Canonical v4 JSON appends `repairs` after every existing ke
 and omits it when null or empty. Settings and pipeline versions stay unchanged;
 repair-free canonical bytes and hashes stay unchanged. Older builds ignore the
 unknown field and lose repairs on save; downgrade is not a supported round trip.
-Stored repairs render through the shared pipeline; the spot UI is a later work package.
+Stored repairs render through the shared pipeline; the Spots tool edits them in Develop.
 
 Each entry requires a unique 32-hex GUID, type, destination `u`/`v`, source
 `su`/`sv`, radius, feather, and opacity. Coordinates are normalized doubles,
@@ -23,8 +23,8 @@ exactly 0.18849555921538758 long-edge²; the relative tolerance covers rounding 
 The owner's P-1 ruling moves aspect-dependent source clamping to use time.
 `RepairGeometry` computes min(radius × max(W,H), min(W,H)/2) and clamps source
 centres to contain that disc. It is pure and depends only on the base aspect.
-The render stage calls it where the base is known; WP4 must write clamped sources from
-its gestures. Deserialization has no trustworthy base dimensions and therefore
+The render stage calls it where the base is known; spot gestures write clamped sources.
+Deserialization has no trustworthy base dimensions and therefore
 only enforces aspect-independent rules. Destinations may cross the frame edge.
 `BaseFrameMapping` uses x = uW − 0.5, without phase correction; see
 [the FINAL registration decision and decoder evidence](HEAL_REGISTRATION.md).
@@ -37,6 +37,12 @@ explicit subset leaves destination repairs untouched. `EditHistoryLabel` supplie
 spot labels; callers can identify gestures such as "Resize spot" or "New spot
 source" using its operation override, since the same value change can represent
 more than one action.
+
+`AutomaticRepairSource` ranks a bounded ring search on the held interactive base
+by boundary mismatch and texture differences. Candidate discs lie inside the base
+and do not overlap the destination; ties preserve search order. The UI writes the
+winner through the shared source clamp and keeps the ranking for source cycling.
+Source selection never runs during rendering and never acquires original content.
 
 ## Render stage
 

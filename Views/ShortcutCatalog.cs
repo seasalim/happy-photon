@@ -175,6 +175,8 @@ public static class ShortcutCatalog
                 [Develop("Toggle before/after", "BeforeAfterButton")]),
             new("Y", "Show Before and After side by side in Develop",
                 [Develop("Show Before and After side by side", "BeforeAfterSplitButton")]),
+            new("Q", "Toggle Spot Removal", [Develop("Toggle Spot Removal", "SpotsModeButton")]),
+            new("Delete / Backspace", "Delete the selected spot while Spot Removal is open", [Accelerator("Delete the selected spot")]),
             new("R", "Toggle crop mode", [Develop("Toggle crop mode", "CropModeButton")]),
             new("Shift+R", "Switch between the paired JPEG and RAW in Develop",
                 [Develop("Switch JPEG and RAW", "RawJpegSwitchButton")]),

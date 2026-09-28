@@ -122,6 +122,15 @@
                                      Margin="0,-2,-3,0" IsVisible="{Binding HasCommittedCrop}"/>
                         </Grid>
                     </ToggleButton>
+                    <ToggleButton x:Name="SpotsModeButton" Classes="develop-action tool spots" Classes.has-content="{Binding HasSpots}"
+                                  IsChecked="{Binding IsSpotsMode, Mode=OneWay}" Command="{Binding ToggleSpotsModeCommand}"
+                                  AutomationProperties.Name="Spot Removal" ToolTip.Tip="Spot Removal (Q)" IsEnabled="{Binding CanEditSelectedImage}">
+                        <Grid>
+                            <TextBlock Text="◌" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <Ellipse Width="4" Height="4" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                     Margin="0,-2,-3,0" IsVisible="{Binding HasSpots}"/>
+                        </Grid>
+                    </ToggleButton>
                     <ToggleButton x:Name="LocalsModeButton" Classes="develop-action tool locals" Classes.has-content="{Binding HasLocals}"
                                   IsChecked="{Binding IsLocalsMode, Mode=OneWay}" Command="{Binding ToggleLocalsModeCommand}"
                                   AutomationProperties.Name="Locals" ToolTip.Tip="Locals (Shift+W)">
@@ -139,6 +148,10 @@
                             ToolTip.Tip="Cancel (Escape)" FontSize="10" Padding="8,4" BorderThickness="0"/>
                     <Button x:Name="ApplyCropButton" Grid.Column="2" Content="Apply" Command="{Binding ApplyCropCommand}"
                             ToolTip.Tip="Apply Crop (Enter)" FontSize="10" Padding="10,4" Classes="accent" BorderThickness="0"/>
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" Margin="15,0,15,8" IsVisible="{Binding IsSpotsMode}">
+                    <TextBlock Text="SPOTS" Classes="section-label" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="Close" Command="{Binding CloseSpotsCommand}" Padding="5,3" FontSize="10"/>
                 </Grid>
                 <Grid x:Name="LocalsToolHeader" ColumnDefinitions="*,Auto,Auto" Margin="15,0,15,8" IsVisible="{Binding IsLocalsMode}">
                     <TextBlock Text="LOCALS" Classes="section-label" VerticalAlignment="Center"/>
@@ -158,6 +171,7 @@
                             IsEnabled="{Binding HasSelectedImage}">
                     <views:CropEditSection/>
                     <views:LocalsEditSection/>
+                    <views:SpotsEditSection/>
                     <StackPanel Classes="global-edits" Classes.locked="{Binding IsToolActive}" Spacing="4" IsEnabled="{Binding !IsToolActive}">
                         <views:RawProfilePicker x:Name="RawProfilePicker"
                             IsEnabled="{Binding IsColorEditingEnabled}"/>

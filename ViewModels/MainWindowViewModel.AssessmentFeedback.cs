@@ -55,6 +55,7 @@ public partial class MainWindowViewModel
     {
         if (!ReferenceEquals(oldValue, newValue))
         {
+            DiscardSpotsGesture();
             DiscardLocalsGesture();
             ClearAssessmentFeedback();
             ClearAlignmentGrid();
@@ -63,6 +64,7 @@ public partial class MainWindowViewModel
 
     partial void OnIsFullScreenModeChanging(bool value)
     {
+        DiscardSpotsGesture();
         DiscardLocalsGesture();
         if (value)
         {

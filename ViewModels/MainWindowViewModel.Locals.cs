@@ -128,6 +128,7 @@ public partial class MainWindowViewModel
         if (IsCropMode) await CancelCropCoreAsync();
         if (IsCropMode) return;
         IsWhiteBalancePicking = false;
+        CloseSpots();
         IsLocalsMode = true;
         RebindLocalSelection(first: true);
     }
@@ -229,7 +230,7 @@ public partial class MainWindowViewModel
         await CommitLocalAsync(before, label);
     }
 
-    private async Task CommitLocalAsync(EditSettings before, string label)
+    private async Task CommitLocalAsync(EditSettings before, string label, string failureMessage = "Unable to save local adjustment")
     {
         if (SelectedImage is not { } image) return;
         var after = CaptureLiveEditState();
@@ -244,7 +245,7 @@ public partial class MainWindowViewModel
         catch
         {
             RollbackEditReservation(image, before, generation, previousIntent);
-            ShowTransientStatus("Unable to save local adjustment");
+            ShowTransientStatus(failureMessage);
         }
         RebindLocalSelection();
         UpdateCanReset();
@@ -259,6 +260,7 @@ public partial class MainWindowViewModel
 
     private void NotifyLocalsState()
     {
+        NotifySpotsState();
         for (var i = LocalRows.Count - 1; i >= 0; i--)
             if (!Locals.Any(local => local.Id == LocalRows[i].Local.Id)) LocalRows.RemoveAt(i);
         foreach (var local in Locals)

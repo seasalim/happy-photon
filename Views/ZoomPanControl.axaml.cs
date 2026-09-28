@@ -217,7 +217,7 @@ public partial class ZoomPanControl : UserControl
             }
             RequestRequiredBoundPublication();
         }
-        else if (change.Property == IsLocalsModeProperty)
+        else if (change.Property == IsLocalsModeProperty || change.Property == IsSpotsModeProperty)
         {
             CancelLoupePeek();
             UpdatePointerCursor();

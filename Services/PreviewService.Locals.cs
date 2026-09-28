@@ -6,6 +6,11 @@ namespace HappyPhoton.Services;
 
 public partial class PreviewService
 {
+    private readonly ConditionalWeakTable<Bitmap, RepairDisplayMap> _repairMaps = new();
+
+    internal RepairDisplayMap? GetRepairDisplayMap(Bitmap? bitmap) =>
+        bitmap != null && _repairMaps.TryGetValue(bitmap, out var map) ? map : null;
+
     private readonly ConditionalWeakTable<Bitmap, BaseImage> _localRangeBases = new();
 
     internal PreviewBaseSnapshot? AcquireLocalRangeBase(ImageFile image, EditSettings settings, int edge, Bitmap? surface = null)

@@ -62,6 +62,10 @@ public partial class AppSettingsService
 
         return new AppSettings
         {
+            SpotMode = await _catalogService.GetAppSettingAsync("SpotMode") == "clone" ? "clone" : "heal",
+            SpotSize = await LoadBrushNumberAsync("SpotSize", 3, .2, 10),
+            SpotFeather = await LoadBrushNumberAsync("SpotFeather", 50, 0, 100),
+            SpotOpacity = await LoadBrushNumberAsync("SpotOpacity", 100, 5, 100),
             BrushMode = await _catalogService.GetAppSettingAsync("BrushMode") == "erase" ? "erase" : "paint",
             BrushSize = await LoadBrushNumberAsync("BrushSize", 65, 1, 100),
             BrushFeather = await LoadBrushNumberAsync("BrushFeather", 50, 0, 100),
@@ -98,6 +102,10 @@ public partial class AppSettingsService
             [SelectedFolderPathKey] = settings.SelectedFolderPath,
             [FirstRunExperienceVersionKey] =
                 settings.FirstRunExperienceVersion?.ToString(),
+            ["SpotMode"] = settings.SpotMode,
+            ["SpotSize"] = settings.SpotSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["SpotFeather"] = settings.SpotFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["SpotOpacity"] = settings.SpotOpacity.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["BrushMode"] = settings.BrushMode,
             ["BrushSize"] = settings.BrushSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["BrushFeather"] = settings.BrushFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -115,6 +123,10 @@ public partial class AppSettingsService
     {
         return _catalogService.SetAppSettingsAsync(WithWatermark(settings, new Dictionary<string, string?>
         {
+            ["SpotMode"] = settings.SpotMode,
+            ["SpotSize"] = settings.SpotSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["SpotFeather"] = settings.SpotFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["SpotOpacity"] = settings.SpotOpacity.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["BrushMode"] = settings.BrushMode,
             ["BrushSize"] = settings.BrushSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["BrushFeather"] = settings.BrushFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),

@@ -17,11 +17,19 @@ Color assessment is session-only composition and never changes output pixels.
 
 ## 2. Develop right panel — target layout (top → bottom)
 
-Crop and Locals are exclusive tool modes beneath the fixed scope box. Their active
+Crop, Spots and Locals are exclusive tool modes beneath the fixed scope box. Their active
 header stays fixed while tool settings enter the top of the scrolling stack. Global
-edits are locked and dimmed while either is active; WB picking is inert. Switching
+edits are locked and dimmed while a tool is active; WB picking is inert. Switching
 tools discards unfinished input but retains committed locals. Crop Apply commits the
 crop and draft Horizon together; Cancel discards the draft.
+
+Spots (Q) offers Heal/Clone, Size, Feather and Opacity; controls edit the selected
+spot or persistent new-spot preferences. Click chooses an automatic source; drag
+chooses it manually. Destination, source and edge drags move, retarget and resize.
+Each gesture is one history step. Escape cancels a draft, deselects, then closes.
+Delete/Backspace never trash photos while Spots is open. Count and summed-area
+limits clamp creation/resizing; Clear spots removes the list. Overlay projection
+uses the displayed bitmap's base geometry, including its crop rounding.
 
 Locals supports at most eight linear/radial/brush adjustments in creation order with shared
 ordinals. Disabled and neutral locals still count; selection and Show Mask are session

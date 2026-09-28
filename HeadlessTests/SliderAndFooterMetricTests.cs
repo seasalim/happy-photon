@@ -130,6 +130,7 @@ public sealed class SliderAndFooterMetricTests
         };
         // Measure local Adjustments and expanded Geometry alongside the global controls.
         content.GetLogicalDescendants().OfType<LocalsEditSection>().Single().IsVisible = true;
+        content.GetLogicalDescendants().OfType<SpotsEditSection>().Single().IsVisible = true;
         // The editor hides while no local exists; the metric needs its sliders laid out.
         content.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "LocalEditor").IsVisible = true;
         content.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "BrushSection").IsVisible = true;
@@ -151,7 +152,9 @@ public sealed class SliderAndFooterMetricTests
         {
             var sliders = content.GetLogicalDescendants()
                 .OfType<CompactSlider>().ToArray();
-            Assert.Equal(49, sliders.Length);
+            Assert.Equal(52, sliders.Length);
+            var spots = sliders.Where(slider => slider.GetLogicalAncestors().OfType<SpotsEditSection>().Any()).ToArray();
+            Assert.Equal(["Size", "Feather", "Opacity"], spots.Select(slider => slider.Label));
             foreach (var name in new[] { "Whites", "Blacks" })
             foreach (var local in new[] { false, true })
             {

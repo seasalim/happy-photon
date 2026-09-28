@@ -139,7 +139,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        if (EscapeLocals()) return;
+        if (EscapeSpots() || EscapeLocals()) return;
 
         // First priority: cancel crop mode if active
         if (IsCropMode)

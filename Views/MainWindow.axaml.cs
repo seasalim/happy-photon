@@ -352,7 +352,7 @@ public partial class MainWindow : Window
                 return;
             }
 
-            if (TryHandleLocalsKey(e, vm)) return;
+            if (TryHandleSpotsKey(e, vm) || TryHandleLocalsKey(e, vm)) return;
 
             // R key: Toggle crop mode (in Develop mode)
             if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.None &&

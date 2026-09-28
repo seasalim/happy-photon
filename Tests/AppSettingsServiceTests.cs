@@ -10,6 +10,27 @@ public sealed class AppSettingsServiceTests : IDisposable
         Path.Combine(Path.GetTempPath(), $"happy-photon-settings-{Guid.NewGuid():N}");
 
     [Fact]
+    public async Task SpotPreferencesRoundTripAndRejectNonFiniteValues()
+    {
+        using var catalog = new CatalogService(_catalogPath);
+        await catalog.InitializeAsync();
+        var service = new AppSettingsService(catalog);
+        var settings = new AppSettings { SpotMode = "clone", SpotSize = 8, SpotFeather = 25, SpotOpacity = 70 };
+        await service.SaveAsync(settings);
+        var loaded = await service.LoadAsync();
+        Assert.Equal(("clone", 8d, 25d, 70d), (loaded.SpotMode, loaded.SpotSize, loaded.SpotFeather, loaded.SpotOpacity));
+        settings.SpotSize = .4;
+        await service.SavePreferencesAsync(settings);
+        Assert.Equal(.4, (await service.LoadAsync()).SpotSize);
+        await catalog.SetAppSettingsAsync(new Dictionary<string, string?>
+        {
+            ["SpotMode"] = "invalid", ["SpotSize"] = "NaN", ["SpotFeather"] = "Infinity", ["SpotOpacity"] = "-5"
+        });
+        loaded = await service.LoadAsync();
+        Assert.Equal(("heal", 3d, 50d, 5d), (loaded.SpotMode, loaded.SpotSize, loaded.SpotFeather, loaded.SpotOpacity));
+    }
+
+    [Fact]
     public async Task SaveAndLoad_RoundTripsNullableFirstRunVersion()
     {
         using var catalog = new CatalogService(_catalogPath);

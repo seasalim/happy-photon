@@ -44,6 +44,7 @@
                                   AutoFit="{Binding IsZoomFitMode}"
                                   IsCropMode="{Binding IsCropMode}"
                                   IsLocalsMode="{Binding CanEditLocals}"
+                                  IsSpotsMode="{Binding CanEditSpots}"
                                   IsWhiteBalancePicking="{Binding IsWhiteBalancePicking}"
                                   IsColorAssessment="{Binding IsColorAssessmentMode}"
                                   IsDisplayTraceActive="{Binding IsDevelopPreviewSurfaceActive}"

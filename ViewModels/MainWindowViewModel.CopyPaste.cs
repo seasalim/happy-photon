@@ -69,6 +69,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]
     private async Task PasteEditSettingsAsync()
     {
+        DiscardSpotsGesture();
         DiscardLocalsGesture();
         if (_copiedSettings == null) return;
 

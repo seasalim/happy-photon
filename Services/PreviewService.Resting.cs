@@ -246,6 +246,8 @@ public sealed partial class PreviewService
                 }
 
                 _localRangeBases.Add(bitmap, largeBase);
+                _repairMaps.Add(bitmap, new RepairDisplayMap((int)largeBase.Pixels.Width,
+                    (int)largeBase.Pixels.Height, settings));
                 var preview = new RestingPreview(
                     bitmap,
                     parentGeneration,
@@ -285,6 +287,8 @@ public sealed partial class PreviewService
     {
         if (bitmap == null) return;
         _localRangeBases.AddOrUpdate(bitmap, baseImage);
+        _repairMaps.AddOrUpdate(bitmap, new RepairDisplayMap((int)baseImage.Pixels.Width,
+            (int)baseImage.Pixels.Height, settings));
         var info = baseImage.Info;
         var originalViewSize = RenderGeometry.CalculateOriginalViewSize(
             info.FullWidth,

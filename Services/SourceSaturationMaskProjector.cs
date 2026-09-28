@@ -66,7 +66,7 @@ internal static class SourceSaturationMaskProjector
             {
                 var flags = source.GetFlags(x, y);
                 if (flags == 0) continue;
-                var (quarterTurnX, quarterTurnY) = QuarterTurn(
+                var (quarterTurnX, quarterTurnY) = RepairDisplayMap.QuarterTurn(
                     x,
                     y,
                     source.Width,
@@ -125,21 +125,6 @@ internal static class SourceSaturationMaskProjector
             new ChannelClip(red / divisor, green / divisor, blue / divisor),
             any / divisor);
     }
-
-    private static (int X, int Y) QuarterTurn(
-        int x,
-        int y,
-        int width,
-        int height,
-        int rotation) =>
-        rotation switch
-        {
-            0 => (x, y),
-            90 => (height - 1 - y, x),
-            180 => (width - 1 - x, height - 1 - y),
-            270 => (y, width - 1 - x),
-            _ => throw new ArgumentOutOfRangeException(nameof(rotation))
-        };
 
     private sealed class ProjectionSlot
     {

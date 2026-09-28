@@ -10,7 +10,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanUndoEdit))]
     private async Task UndoAsync()
     {
-        if (DiscardLocalsGesture()) return;
+        if (DiscardSpotsGesture() || DiscardLocalsGesture()) return;
         var image = SelectedImage;
         var generation = Volatile.Read(ref _historySubjectGeneration);
         if (!IsDevelopMode || IsFullScreenMode ||
@@ -28,6 +28,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanRedoEdit))]
     private async Task RedoAsync()
     {
+        DiscardSpotsGesture();
         DiscardLocalsGesture();
         var image = SelectedImage;
         var generation = Volatile.Read(ref _historySubjectGeneration);
@@ -50,6 +51,7 @@ public partial class MainWindowViewModel
         int position,
         CatalogEditHistoryMutation? mutation = null)
     {
+        DiscardSpotsGesture();
         DiscardLocalsGesture();
         CancelHistoryHover();
         var cropWriteContext = CaptureCropWriteContext(image);
@@ -131,6 +133,7 @@ public partial class MainWindowViewModel
         bool preserveProfile,
         string historyLabel, bool preserveSpatialEdits = false)
     {
+        DiscardSpotsGesture();
         DiscardLocalsGesture();
         if (!CanEditSelectedImage || SelectedImage == null) return;
         var image = SelectedImage;
@@ -226,6 +229,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public async Task ApplyPresetAsync(string presetId)
     {
+        DiscardSpotsGesture();
         DiscardLocalsGesture();
         if (!CanEditSelectedImage || SelectedImage == null) return;
         var image = SelectedImage;
@@ -295,6 +299,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public async Task PreviewPresetHoverAsync(string presetId)
     {
+        DiscardSpotsGesture();
         DiscardLocalsGesture();
         if (SelectedImage == null) return;
         var preset = PresetService.GetById(presetId);
@@ -396,6 +401,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanToggleBeforeAfter))]
     private async Task ToggleBeforeAfterAsync()
     {
+        DiscardSpotsGesture();
         DiscardLocalsGesture();
         if (!CanToggleBeforeAfter() || SelectedImage == null) return;
 
@@ -480,14 +486,6 @@ public partial class MainWindowViewModel
         Curve = new CurveData(),
         Lens = settings.Lens.Clone()
     };
-
-    private bool CanUndoEdit() =>
-        (CanUndo || IsLocalsGestureActive) && IsDevelopMode && !IsFullScreenMode &&
-        !IsHistoryBlockedByCrop && CanEditSelectedImage;
-
-    private bool CanRedoEdit() =>
-        CanRedo && IsDevelopMode && !IsFullScreenMode &&
-        !IsHistoryBlockedByCrop && CanEditSelectedImage;
 
     private bool CanToggleBeforeAfter() =>
         !IsBeforeAfterSplit && CanReset && CanEditSelectedImage &&

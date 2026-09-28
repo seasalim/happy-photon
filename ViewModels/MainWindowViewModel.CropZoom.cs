@@ -64,6 +64,7 @@ public partial class MainWindowViewModel
             SelectedImage is not { } image)
             return;
 
+        DiscardSpotsGesture();
         DiscardLocalsGesture();
         var before = CaptureLiveEditState();
         Rotation = (Rotation + delta + 360) % 360;
@@ -120,6 +121,7 @@ public partial class MainWindowViewModel
 
     private async Task EnterCropModeAsync()
     {
+        CloseSpots();
         CloseLocals();
         var image = SelectedImage;
         if (!CanEditSelectedImage || image == null) return;

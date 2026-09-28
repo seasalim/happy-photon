@@ -10,15 +10,22 @@ internal sealed record DeleteConfirmationRequest(
 
 public partial class MainWindowViewModel
 {
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanDeleteImage))]
     private async Task DeleteImageAsync()
     {
+        if (IsSpotsMode)
+        {
+            await DeleteSpotAsync();
+            return;
+        }
         if (IsFullScreenMode || IsCompareMode) return;
 
         var targets = ResolveActionTargets().Targets;
         if (targets.Count == 0) return;
         await ConfirmAndDeleteAsync(targets);
     }
+
+    private bool CanDeleteImage() => !IsSpotsMode || IsEnterTextInputFocused?.Invoke() != true;
 
     private async Task ConfirmAndDeleteAsync(IReadOnlyList<ImageFile> targets)
     {

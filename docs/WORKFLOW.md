@@ -433,6 +433,8 @@ Help & About lists every shortcut and gesture; these are the essentials.
 | `Ctrl+'` | Create a version from the current interpretation in Browse or Develop |
 | `C` | Compare 2–4 selected photos |
 | `R` | Toggle crop mode in Develop |
+| `Q` | Toggle Spot Removal in Develop |
+| `Delete` / `Backspace` | Delete the selected spot while Spot Removal is open; no selection does nothing |
 | `W` | Toggle the white-balance eyedropper in Develop |
 | `Delete` | Delete selected versions or move primary originals to Trash after confirmation |
 | `Shift+W` | Toggle Locals in Develop |

@@ -57,10 +57,12 @@ public partial class MainWindowViewModel
         _brushPreferences.BrushSize = FinitePreference(settings.BrushSize, 1, 100, 65);
         _brushPreferences.BrushFeather = FinitePreference(settings.BrushFeather, 0, 100, 50);
         _brushPreferences.BrushFlow = FinitePreference(settings.BrushFlow, 5, 100, 100);
+        RestoreSpotPreferences(settings);
         NotifyBrushState();
     }
     public void CaptureBrushPreferences(AppSettings settings)
     {
+        CaptureSpotPreferences(settings);
         settings.BrushMode = BrushMode; settings.BrushSize = BrushSize;
         settings.BrushFeather = BrushFeather; settings.BrushFlow = BrushFlow;
     }

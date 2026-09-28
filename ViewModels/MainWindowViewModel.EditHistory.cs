@@ -8,6 +8,14 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private bool CanUndoEdit() =>
+        (CanUndo || IsLocalsGestureActive || IsSpotsGestureActive) && IsDevelopMode && !IsFullScreenMode &&
+        !IsHistoryBlockedByCrop && CanEditSelectedImage;
+
+    private bool CanRedoEdit() =>
+        CanRedo && IsDevelopMode && !IsFullScreenMode &&
+        !IsHistoryBlockedByCrop && CanEditSelectedImage;
+
     private const int NavigatorHoverMaxDimension = 280;
     private static readonly TimeSpan HistoryHoverDelay = TimeSpan.FromMilliseconds(80);
     private CancellationTokenSource? _historyHoverCts;
@@ -20,6 +28,7 @@ public partial class MainWindowViewModel
 
     public async Task PreviewHistoryHoverAsync(EditHistoryEntry entry)
     {
+        DiscardSpotsGesture();
         DiscardLocalsGesture();
         EndHistoryHover();
         var image = SelectedImage;

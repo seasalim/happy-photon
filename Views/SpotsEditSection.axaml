@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:HappyPhoton.Views"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.SpotsEditSection"
+             x:DataType="vm:MainWindowViewModel" IsVisible="{Binding IsSpotsMode}">
+    <StackPanel Spacing="8" IsEnabled="{Binding CanEditSpots}" Margin="0,0,0,12">
+        <ListBox x:Name="SpotModeControl" Classes="segmented" SelectedIndex="{Binding SpotModeIndex, Mode=TwoWay}"
+                 SelectionMode="Single,AlwaysSelected" AutomationProperties.Name="Spot mode">
+            <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+            <ListBoxItem Content="Heal"/><ListBoxItem Content="Clone"/>
+        </ListBox>
+        <views:CompactSlider Label="Size" Value="{Binding SpotSize}" Minimum="0.2" Maximum="10" SmallChange="0.1" StringFormat="{}{0:0.0}"/>
+        <views:CompactSlider Label="Feather" Value="{Binding SpotFeather}" Minimum="0" Maximum="100"/>
+        <views:CompactSlider Label="Opacity" Value="{Binding SpotOpacity}" Minimum="5" Maximum="100"/>
+        <TextBlock Text="{Binding SpotCount}" Foreground="{DynamicResource TextMuted}" FontSize="11"/>
+        <Button Content="Clear spots" Command="{Binding ClearSpotsCommand}" IsEnabled="{Binding HasSpots}"/>
+        <TextBlock Text="Click a blemish to heal it · drag to choose the source · Delete removes"
+                   TextWrapping="Wrap" Foreground="{DynamicResource TextMuted}" FontSize="11"/>
+    </StackPanel>
+</UserControl>

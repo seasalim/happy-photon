@@ -38,6 +38,8 @@
                                                        IsVisible="False"/>
                     <views:LocalsOverlayControl x:Name="LocalsOverlay" IsVisible="False"
                                                Width="{Binding #ImageControl.Width}" Height="{Binding #ImageControl.Height}"/>
+                    <views:SpotsOverlayControl x:Name="SpotsOverlay" IsVisible="False"
+                                              Width="{Binding #ImageControl.Width}" Height="{Binding #ImageControl.Height}"/>
                     <views:CropOverlayControl x:Name="CropOverlay"
                                               IsVisible="False"/>
                 </Panel>
