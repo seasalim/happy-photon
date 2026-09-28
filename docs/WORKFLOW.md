@@ -173,6 +173,8 @@ Double-click a thumbnail or press `D` to enter **Develop**. Use the previous and
 buttons below the image, or the left and right arrow keys, to move between visible
 images without returning to Browse.
 
+Hold Shift and scroll over an enabled slider to adjust it in small steps (up/right increases); each burst is one undo step.
+
 A matching cached preview can show the photo and display scopes while the original
 loads. Sustained preparation appears in the shared status bar; edits remain available.
 An unsupported file keeps an actionable message and Browse failure marker until a

@@ -55,12 +55,33 @@ public partial class MainWindowViewModel
 
     public void OnSliderEditStarted() => _activeSliderEditCount++;
 
-    public void OnSliderEditCompleted(string? historyLabel = null)
+    internal event Action? SliderEditsEnding;
+
+    public void OnSliderEditCompleted(string? historyLabel = null, bool completeWheel = false)
     {
         if (_activeSliderEditCount == 0) return;
 
         _activeSliderEditCount--;
-        if (_activeSliderEditCount == 0) SchedulePreviewUpdate(historyLabel);
+        if (_activeSliderEditCount != 0) return;
+
+        if (completeWheel) CommitWheelEdit(historyLabel);
+        else SchedulePreviewUpdate(historyLabel);
+    }
+
+    private void CommitWheelEdit(string? historyLabel)
+    {
+        if (SelectedImage is not { } image) return;
+
+        _previewDebounce?.Cancel();
+        SaveSlidersTo(image.EditSettings);
+        image.HasEdits = image.EditSettings.HasEdits;
+        var before = (_lastSavedState ?? image.EditSettings).Clone();
+        var previousIntent = _requestedPreviewIntent;
+        var generation = RequestEditedRender();
+
+        TrackPreviewDebounce(SaveEditSettingsCoreAsync(
+            image, image.EditSettings, historyLabel, before: null, recordHistory: true,
+            beforeSave: () => RenderCommittedEditAsync(image, before, generation, previousIntent)));
     }
 
     private void OnEditValueChanged()

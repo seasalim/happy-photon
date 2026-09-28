@@ -155,6 +155,8 @@ public partial class CompactSlider : UserControl
     {
         InitializeComponent();
         Focusable = true;
+        PointerExited += (_, _) => CompleteWheel();
+        DetachedFromVisualTree += (_, _) => CompleteWheel();
 
         _layoutGrid = this.FindControl<Grid>("LayoutGrid");
         _trackGrid = this.FindControl<Grid>("TrackGrid");
@@ -191,6 +193,7 @@ public partial class CompactSlider : UserControl
     {
         if (IsEffectivelyEnabled && e.Key is Key.Left or Key.Right or Key.Down or Key.Up)
         {
+            CompleteWheel();
             var direction = e.Key is Key.Right or Key.Up ? 1 : -1;
             var step = SmallChange * (e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? 10 : 1);
             RaiseEvent(new RoutedEventArgs(DragStartedEvent));
@@ -208,6 +211,9 @@ public partial class CompactSlider : UserControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
+
+        if (change.Property == IsEffectivelyEnabledProperty && !IsEffectivelyEnabled)
+            CompleteWheel();
 
         if (change.Property == ValueProperty ||
             change.Property == MinimumProperty ||
@@ -306,6 +312,7 @@ public partial class CompactSlider : UserControl
         if (e.Pointer.Type == PointerType.Mouse &&
             !e.GetCurrentPoint(_layoutGrid).Properties.IsLeftButtonPressed) return;
         Focus();
+        CompleteWheel();
 
         if (EnableDoubleClickReset && e.ClickCount == 2)
         {
