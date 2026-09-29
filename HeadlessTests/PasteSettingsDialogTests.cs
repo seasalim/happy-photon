@@ -25,7 +25,7 @@ public sealed class PasteSettingsDialogTests
         using var scope = new TestUiScope(dialog);
         var paste = dialog.FindControl<Button>("PasteButton")!;
         var boxes = dialog.GetLogicalDescendants().OfType<CheckBox>().ToArray();
-        Assert.Equal(EditSettingsTransfer.LookGroups.Select(group => group.Name),
+        Assert.Equal(PasteSettingsViewModel.AvailableGroups.Select(group => group.Name),
             boxes.Select(box => box.Content));
         Assert.Contains(boxes, box => Equals(box.Content, "Presence"));
 
@@ -87,26 +87,42 @@ public sealed class PasteSettingsDialogTests
     }
 
     [AvaloniaFact]
-    public void MissingNamesUseDefaultsAndUnknownOrPhotoSpecificNamesAreIgnored()
+    public void MissingNamesUseDefaultsAndPhotoSpecificChoicesAreRemembered()
     {
         var model = new PasteSettingsViewModel("source.jpg", 1,
             new Dictionary<string, bool> { ["White Balance"] = false, ["Geometry"] = true, ["Future"] = true });
         Assert.False(model.Groups[0].IsSelected);
-        Assert.All(model.Groups.Skip(1), group => Assert.Equal(group.Group.IsDefault, group.IsSelected));
-        Assert.DoesNotContain(model.Groups, group => group.Group.Kind == EditSettingsGroupKind.PhotoSpecific);
+        Assert.True(Assert.Single(model.Groups, group => group.Group.Name == "Geometry").IsSelected);
+        Assert.All(model.Groups.Where(group => group.Group.Name is not ("White Balance" or "Geometry")),
+            group => Assert.Equal(group.Group.IsDefault, group.IsSelected));
+        Assert.DoesNotContain(model.Groups, group => group.Group.Name is "Camera Profile" or "Lens Profile" or "Spot Removal");
         Assert.DoesNotContain("Future", model.CaptureChoice().Keys);
     }
 
     [AvaloniaTheory]
     [InlineData("paste-settings-default", false)]
     [InlineData("paste-settings-none", true)]
+    [InlineData("paste-settings-photo-groups", false)]
     public void Showcase(string scene, bool none)
     {
-        var model = new PasteSettingsViewModel("IMG_0412.CR2", 24, new Dictionary<string, bool>());
+        var targets = Enumerable.Range(0, 24).Select(index => new EditSettings
+        {
+            Crop = index < 5 ? new CropRegion { Left = .1 } : null,
+            Locals = index < 3 ? [new LocalAdjustment()] : null
+        }).ToArray();
+        var choice = new Dictionary<string, bool>();
+
+        if (scene == "paste-settings-photo-groups")
+        {
+            choice["Crop & Straighten"] = true;
+            choice["Locals"] = true;
+        }
+
+        var model = new PasteSettingsViewModel("IMG_0412.CR2", 24, choice, targets: targets, reframeCount: _ => 3);
         if (none) model.NoneCommand.Execute(null);
 
         var dialog = new PasteSettingsDialog(model);
-        ShowcaseTestHelper.Capture(scene, dialog, new PixelSize(420, 490), ThemeVariant.Dark,
+        ShowcaseTestHelper.Capture(scene, dialog, new PixelSize(660, 490), ThemeVariant.Dark,
             shown => Assert.Equal(!none, shown.FindControl<Button>("PasteButton")!.IsEnabled));
     }
 

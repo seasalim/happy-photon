@@ -14,9 +14,8 @@ public partial class MainWindowViewModel
         "Choose settings: Ctrl+Alt+Shift+V or right-click";
 
     private EditSettingsGroup[] RememberedPasteGroups =>
-        EditSettingsTransfer.Groups.Where(group => group.Kind == EditSettingsGroupKind.Look
-            ? _pasteGroups.GetValueOrDefault(group.Name, group.IsDefault)
-            : group.IsDefault).ToArray();
+        PasteSettingsViewModel.AvailableGroups.Where(group =>
+            _pasteGroups.GetValueOrDefault(group.Name, group.IsDefault)).ToArray();
 
     public void RestorePasteGroups(IReadOnlyDictionary<string, bool> groups)
     {
@@ -29,11 +28,13 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]
     private Task ChoosePasteSettingsAsync() => PasteEditSettingsCoreAsync(showDialog: true);
 
-    private async Task<bool> ChoosePasteGroupsAsync(int count, bool currentPhoto)
+    private async Task<bool> ChoosePasteGroupsAsync(IReadOnlyList<ImageFile> targets, bool currentPhoto)
     {
         if (ShowPasteSettingsAsync == null) return false;
 
-        var dialog = new PasteSettingsViewModel(_copiedSourceName!, count, _pasteGroups, currentPhoto);
+        var dialog = new PasteSettingsViewModel(_copiedSourceName!, targets.Count, _pasteGroups, currentPhoto,
+            targets.Select(target => target.EditSettings).ToArray(),
+            reframeCount: optics => CachedReframeCount(targets, optics));
         if (!await ShowPasteSettingsAsync(dialog) || !dialog.CanPaste) return false;
 
         var choice = dialog.CaptureChoice();

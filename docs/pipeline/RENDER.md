@@ -455,11 +455,17 @@ Version 3 settings migrate in memory without locals; version 2 is unsupported.
 | Channel curves | Absent | Tone Curve | No |
 | `mixer` | All bands zero | Color Mixer | No |
 | `effects` | Vignette and Grain inactive | Effects | No |
-| `geometry` | All terms zero | Preserve destination, as with crop/rotation | No |
+| `geometry` | All terms zero | Geometry; excluded from presets | No |
 | `rawProfile` | Built-in | Preserve destination | Yes |
 | `detail` | Always present; null sharpening means source default | Detail | No |
 | `lens` | Always present; override omitted when null | Optics booleans; preserve override | Yes |
-| `locals` | Empty | Preserve destination; excluded from preset files | No |
+| `locals` | Empty | Locals replaces the whole list; excluded from presets | No |
+
+Crop & Straighten transfers exactly within 1% of the same oriented frame aspect; otherwise
+its pixel ratio follows the target's long side, maximized about the source center and shifted
+inside the frame. Quarter turns never transfer. Facts use LibRaw visible dimensions or Ping,
+then the renderer's lens output-size function and the document's own rotation. Header reads
+require live availability; DNG with enabled lens correction may also read the TIFF opcode window.
 
 Highlight reconstruction also affects decode. Lens settings are defined in OPTICS.md.
 Identity mixer/effects objects canonicalize to null; selecting a UI band or inactive

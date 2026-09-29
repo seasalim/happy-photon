@@ -42,6 +42,7 @@ public partial class MainWindowViewModel
         var liveSettings = SelectedImage.EditSettings.Clone();
         SaveSlidersTo(liveSettings);
         _copiedSettings = liveSettings;
+        _copiedSource = SelectedImage;
         _copiedSourceName = Path.GetFileName(SelectedImage.FilePath);
         HasCopiedSettings = true;
         ShowTransientStatus($"Copied settings from {_copiedSourceName}");
@@ -97,12 +98,18 @@ public partial class MainWindowViewModel
         }
 
         if ((showDialog || workspaceMode == WorkspaceMode.Browse) &&
-            !await ChoosePasteGroupsAsync(targets.Length, !resolution.IsBrowseSelection))
+            !await ChoosePasteGroupsAsync(targets, !resolution.IsBrowseSelection))
         {
             return;
         }
 
         if (WorkspaceMode != workspaceMode || !ReferenceEquals(SelectedImage, selectedImage)) return;
+
+        if (targets.Any(target => _sourceAvailabilityService.GetAvailability(target.FilePath).IsOnlineOnly()))
+        {
+            ShowTransientStatus("Download online-only originals before applying edit settings");
+            return;
+        }
 
         var groups = RememberedPasteGroups;
         if (groups.Length == 0) return;
@@ -122,13 +129,39 @@ public partial class MainWindowViewModel
         if (_copiedSettings == null) return;
 
         _previewDebounce?.Cancel();
-        var previousSettings = CaptureLiveEditState();
+        var changesFrame = groups.Any(group => group.Name is "Crop & Straighten" or "Geometry");
+        var previousSettings = CapturePasteState(selectedImage, changesFrame);
+        var snapshot = (_copiedSource!, _copiedSettings);
+
+        PasteProposal proposal;
+
+        try
+        {
+            proposal = await PreparePasteAsync(selectedImage, previousSettings, groups, snapshot);
+            if (!ReferenceEquals(SelectedImage, selectedImage) || !IsDevelopMode) return;
+
+            _previewDebounce?.Cancel();
+            var current = CapturePasteState(selectedImage, changesFrame);
+
+            if (EditSettingsJson.Serialize(current) != EditSettingsJson.Serialize(previousSettings))
+            {
+                previousSettings = current;
+                proposal = PreparePaste(selectedImage, previousSettings, groups, snapshot, cachedOnly: true);
+            }
+        }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
+        {
+            ShowTransientStatus("Settings unchanged (invalid settings)");
+            _transientStatusCts?.Cancel();
+            return;
+        }
+
+        if (!ReferenceEquals(SelectedImage, selectedImage) || !IsDevelopMode) return;
+
         var previousIntent = _requestedPreviewIntent;
         var surfaceGeneration = RequestEditedRender();
-
-        var settings = previousSettings.Clone();
-        EditSettingsTransfer.ApplyGroups(_copiedSettings, settings, groups);
-        InstallDevelopDocument(selectedImage, settings, preserveCropDraft: true);
+        var settings = proposal.Settings;
+        InstallDevelopDocument(selectedImage, settings, preserveCropDraft: !changesFrame, preserveLensDraft: true);
 
         try
         {
@@ -160,7 +193,11 @@ public partial class MainWindowViewModel
 
         _ = TrackDirectThumbnailOperation(
             RefreshThumbnailAsync(selectedImage));
-        ShowTransientStatus("Pasted settings");
+        var replaced = groups.Where(group => PasteSettingsViewModel.HasOwn(previousSettings, group.Name) &&
+                !(proposal.FactsUnavailable && group.Name == "Crop & Straighten"))
+            .Select(group => group.Name == "Crop & Straighten" ? "Crop" : group.Name).ToArray();
+        ReportPaste("Pasted settings" + (replaced.Length == 0 ? "" : $" · replaced {string.Join(", ", replaced)}"),
+            proposal.Reframed ? 1 : 0, proposal.FactsUnavailable ? 1 : 0);
     }
 
     private EditSettings CaptureLiveEditState()
@@ -176,23 +213,40 @@ public partial class MainWindowViewModel
     {
         if (_copiedSettings == null) return;
 
-        List<(ImageFile Target, EditSettings Previous, EditSettings Settings)> proposed;
+        List<(ImageFile Target, EditSettings Previous, EditSettings Settings)> proposed = [];
+        var reframed = 0;
+        var unavailable = 0;
+        var invalid = 0;
+        var skipped = 0;
+        var snapshot = (_copiedSource!, _copiedSettings);
+        var changesFrame = groups.Any(group => group.Name is "Crop & Straighten" or "Geometry");
+        Dictionary<ImageFile, CropWriteContext>? cropContexts = null;
+
+        if (changesFrame)
+        {
+            var folderPaths = CaptureCropWritePaths(targets);
+            cropContexts = targets.ToDictionary(target => target,
+                target => CaptureCropWriteContext(target, folderPaths));
+        }
+
+        var originals = targets.Select(target => (Target: target, Settings: target.EditSettings.Clone())).ToArray();
 
         try
         {
-            foreach (var target in targets)
+            if (PasteNeedsFrameFacts(snapshot.Item2, groups))
             {
-                await target.EnsureCatalogIdAsync(_catalogService);
+                await Task.Run(BuildProposals);
+            }
+            else
+            {
+                BuildProposals();
             }
 
-            proposed = targets.Select(target =>
+            foreach (var update in proposed)
             {
-                var previous = target.EditSettings.Clone();
-                var settings = target.EditSettings.Clone();
-                EditSettingsTransfer.ApplyGroups(_copiedSettings, settings, groups);
+                await update.Target.EnsureCatalogIdAsync(_catalogService);
+            }
 
-                return (Target: target, Previous: previous, Settings: settings);
-            }).ToList();
             await _catalogService.SaveEditSettingsBatchWithHistoryAsync(proposed
                 .Select(update => new CatalogEditSettingsUpdate(
                     update.Target.CatalogId,
@@ -204,6 +258,8 @@ public partial class MainWindowViewModel
             {
                 update.Target.EditSettings = update.Settings;
                 update.Target.HasEdits = update.Settings.HasEdits;
+                await CommitCropAxisIfGeometryChangedAsync(update.Target, update.Previous,
+                    update.Settings, cropContexts?.GetValueOrDefault(update.Target) ?? default);
             }
         }
         catch (Exception ex)
@@ -214,33 +270,31 @@ public partial class MainWindowViewModel
         }
 
         long? surfaceGeneration = null;
-        if (SelectedImage != null && targets.Contains(SelectedImage))
+
+        if (SelectedImage != null && proposed.Any(update => ReferenceEquals(update.Target, SelectedImage)))
         {
             surfaceGeneration = RequestEditedRender();
-            _isLoadingImage = true;
-            try
-            {
-                LoadSlidersFrom(SelectedImage.EditSettings);
-            }
-            finally
-            {
-                _isLoadingImage = false;
-            }
+            InstallDevelopDocument(SelectedImage, SelectedImage.EditSettings,
+                preserveCropDraft: !changesFrame, preserveLensDraft: true);
 
             _lastSavedState = SelectedImage.EditSettings.Clone();
+
             if (IsDevelopMode)
             {
                 BeginDevelopHistoryLoad(SelectedImage);
+
                 if (_pendingHistoryLoad is { } load)
                 {
                     await load;
                 }
             }
+
             if (IsDevelopMode || IsFullScreenMode)
             {
                 await UpdatePreviewWithCurrentSliders(
                     generation: surfaceGeneration);
             }
+
             UpdateCanReset();
         }
 
@@ -248,9 +302,34 @@ public partial class MainWindowViewModel
             RefreshThumbnailsAsync(proposed.Select(update =>
                 (update.Target, update.Previous))));
 
-        var applied = targets.Count;
+        var applied = targets.Count - invalid - skipped;
         var noun = applied == 1 ? "photo" : "photos";
-        ShowTransientStatus($"Applied to {applied} {noun}");
+        ReportPaste($"Applied to {applied} {noun}", reframed, unavailable, invalid);
+
+        void BuildProposals()
+        {
+            foreach (var (target, previous) in originals)
+            {
+                try
+                {
+                    var proposal = PreparePaste(target, previous, groups, snapshot);
+                    if (proposal.Reframed) reframed++;
+                    if (proposal.FactsUnavailable) unavailable++;
+
+                    if (proposal.FactsUnavailable && groups.Count == 1)
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    proposed.Add((target, previous, proposal.Settings));
+                }
+                catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
+                {
+                    invalid++;
+                }
+            }
+        }
     }
 
     private async Task RefreshThumbnailsAsync(IEnumerable<ImageFile> images)

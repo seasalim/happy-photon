@@ -204,8 +204,8 @@ at the top of the adjustment stack:
 - reset the crop.
 
 Apply the crop with **Apply** in the crop header or `Enter`. Use **Cancel** or
-`Escape` to abandon the current crop operation. Geometry belongs to the individual frame, so crop,
-rotation, and horizon settings are never transferred by presets or copy/paste.
+`Escape` to abandon the current crop operation. Presets preserve geometry. Paste can include
+Crop & Straighten and Geometry; quarter-turn rotation always stays with the target.
 
 ### Shape the light
 
@@ -301,7 +301,10 @@ To apply the settings to several photographs:
 1. Return to Browse with `G`.
 2. Select the target photos.
 3. Press `Ctrl+Shift+V` to open **Paste Settings**.
-4. Choose the look groups and press **Paste** (or Enter). Escape or Cancel leaves the photos unchanged.
+4. Choose the groups and press **Paste** (or Enter). Crop & Straighten, Geometry and Locals
+   are optional and show how many targets have their own values. Locals replace the whole
+   list. Crops transfer exactly on matching frames, or reframe without stretching on others.
+   Escape or Cancel leaves the photos unchanged.
 
 The dialog offers White Balance, Adjustments, Presence, Tone Curve, Color Mixer, Detail,
 Effects and Optics. All, None and Defaults change the checklist; Paste is disabled with

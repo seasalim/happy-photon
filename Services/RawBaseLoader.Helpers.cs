@@ -67,7 +67,7 @@ public sealed partial class RawBaseLoader
             ? (height, width)
             : (width, height);
 
-    private static int NormalizeOrientation(int orientation) =>
+    internal static int NormalizeOrientation(int orientation) =>
         orientation is >= 1 and <= 8 ? orientation : 1;
 
     private byte[]? ReadThumbnail(LibRawContext context, string filePath)

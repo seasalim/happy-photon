@@ -23,11 +23,17 @@ internal static partial class EditSettingsJson
         }
     }
 
+    internal static void ValidateForSave(EditSettings settings)
+    {
+        EnsureCurrent(settings);
+        Clamp(settings);
+    }
+
     public static string Serialize(EditSettings settings)
     {
         EnsureCurrent(settings);
         var current = settings.Clone();
-        Clamp(current);
+        ValidateForSave(current);
         return JsonSerializer.Serialize(current, CompactOptions);
     }
 

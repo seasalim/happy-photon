@@ -302,18 +302,23 @@ CHARACTERIZATION.md §7.6.
   current profile.
 - **Copy/paste**: Copy (`Ctrl+Shift+C`) snapshots the live document and source filename.
   Browse Paste (`Ctrl+Shift+V`) opens **Paste Settings** for the selection, or the active
-  photo when nothing is selected. The dialog offers the registry's look groups in panel
-  order, including Presence; All, None and Defaults; Cancel and accent Paste. Enter
-  pastes, Escape cancels, and Paste is disabled when no group is checked.
+  photo when nothing is selected. The dialog offers look groups and a second column for
+  Crop & Straighten, Geometry and Locals, with in-memory replace counts; All, None and
+  Defaults; Cancel and accent Paste. Enter pastes, Escape cancels, and Paste is disabled
+  when no group is checked.
   The group-name map is an app setting saved on Paste; missing names use registry defaults
-  and unknown names are ignored. Photo-specific groups remain off.
+  and unknown names are ignored. Photo-specific groups default off but are remembered.
   Develop `Ctrl+Shift+V` pastes the remembered groups in one step;
   `Ctrl+Alt+Shift+V` or right-clicking Paste opens the dialog. Unticked groups keep live,
-  unsaved values. Crop drafts stay live while committed crop/straighten/rotation persist.
+  unsaved values. Choosing Crop & Straighten or Geometry discards the crop draft;
+  otherwise crop drafts stay live. Quarter-turn rotation never transfers. Locals replace
+  the whole list and rebind selection and Show Mask, as history restore does.
   Paste first discards any Spots or Locals gesture and adds one **Paste settings** history
   step. Only choosing every look group carries the source preset marker; partial choices
   clear it. Copy reports "Copied settings from <file>"; paste reports "Pasted settings"
-  in Develop and "Applied to N photos" in Browse. Opening the dialog reads no originals.
+  in Develop (naming replaced photo-specific values) and "Applied to N photos" in Browse.
+  Opening the dialog reads no originals. Reframe counts appear there only with cached
+  facts; otherwise they appear in the result. Facts-unavailable skips stay until the next status.
 
 Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields use
 the controls in §2; copy/paste preserves nullable capture-sharpen semantics and both

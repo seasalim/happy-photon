@@ -3,7 +3,7 @@
         xmlns:vm="using:HappyPhoton.ViewModels"
         x:Class="HappyPhoton.Views.PasteSettingsDialog"
         x:DataType="vm:PasteSettingsViewModel"
-        Title="Paste Settings" Width="420" Height="490"
+        Title="Paste Settings" Width="660" Height="490"
         CanResize="False" WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SurfaceLow}" Foreground="{DynamicResource TextPrimary}"
         FontFamily="{StaticResource FontBody}">
@@ -26,9 +26,10 @@
                        ToolTip.Tip="{Binding Summary}"
                        Foreground="{DynamicResource TextSecondary}"/>
         </StackPanel>
-        <StackPanel Grid.Row="1" Margin="0,18" Spacing="8">
+        <Grid Grid.Row="1" Margin="0,18" ColumnDefinitions="*,*">
+        <StackPanel Spacing="8">
             <TextBlock Text="Look" Classes="section-label"/>
-            <ItemsControl ItemsSource="{Binding Groups}">
+            <ItemsControl ItemsSource="{Binding LookGroups}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:PasteSettingsGroupViewModel">
                         <CheckBox Content="{Binding Group.Name}"
@@ -42,6 +43,21 @@
                 <Button Content="Defaults" Classes="choice-link" Command="{Binding DefaultsCommand}"/>
             </StackPanel>
         </StackPanel>
+        <StackPanel Grid.Column="1" Spacing="8">
+            <TextBlock Text="This photo's own" Classes="section-label"/>
+            <ItemsControl ItemsSource="{Binding PhotoGroups}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:PasteSettingsGroupViewModel">
+                        <StackPanel Margin="0,0,0,12">
+                            <CheckBox Content="{Binding Group.Name}" IsChecked="{Binding IsSelected}"/>
+                            <TextBlock Text="{Binding Note}" Margin="26,0,0,0" TextWrapping="Wrap"
+                                       FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+        </Grid>
         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10"
                     HorizontalAlignment="Right">
             <Button x:Name="CancelButton" Content="Cancel" Click="OnCancel"/>

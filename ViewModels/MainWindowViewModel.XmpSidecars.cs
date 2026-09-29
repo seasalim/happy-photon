@@ -327,19 +327,23 @@ public partial class MainWindowViewModel
         return snapshots;
     }
 
-    private CropWriteContext CaptureCropWriteContext(ImageFile image)
+    internal Action<IReadOnlyList<string>>? CropWritePathsCaptured { get; set; }
+
+    private CropWriteContext CaptureCropWriteContext(ImageFile image, IReadOnlyList<string>? folderImagePaths = null) =>
+        new(image.Version == 1 && XmpSidecarMode == XmpSidecarMode.ReadWrite,
+            _xmpWriter, folderImagePaths ?? CaptureCropWritePaths([image]), XmpSidecarNaming);
+
+    private string[] CaptureCropWritePaths(IEnumerable<ImageFile> targets)
     {
         var folderImagePaths = Browse.AllImages
             .Where(candidate => candidate.Version == 1)
             .Select(candidate => candidate.FilePath)
-            .Append(image.FilePath)
+            .Concat(targets.Select(image => image.FilePath))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
-        return new CropWriteContext(
-            image.Version == 1 && XmpSidecarMode == XmpSidecarMode.ReadWrite,
-            _xmpWriter,
-            folderImagePaths,
-            XmpSidecarNaming);
+        CropWritePathsCaptured?.Invoke(folderImagePaths);
+
+        return folderImagePaths;
     }
 
     private async Task CommitCropAssessmentAsync(
