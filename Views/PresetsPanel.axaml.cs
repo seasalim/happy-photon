@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
+using HappyPhoton.ViewModels;
 
 namespace HappyPhoton.Views;
 
@@ -15,6 +16,24 @@ public partial class PresetsPanel : UserControl
 
     public static readonly StyledProperty<bool> CanSavePresetProperty =
         AvaloniaProperty.Register<PresetsPanel, bool>(nameof(CanSavePreset));
+
+    public static readonly StyledProperty<bool> ShowBuiltInsProperty =
+        AvaloniaProperty.Register<PresetsPanel, bool>(nameof(ShowBuiltIns));
+
+    public static readonly StyledProperty<IReadOnlyDictionary<string, bool>?> PresetGroupsProperty =
+        AvaloniaProperty.Register<PresetsPanel, IReadOnlyDictionary<string, bool>?>(nameof(PresetGroups));
+
+    public bool ShowBuiltIns
+    {
+        get => GetValue(ShowBuiltInsProperty);
+        set => SetValue(ShowBuiltInsProperty, value);
+    }
+
+    public IReadOnlyDictionary<string, bool>? PresetGroups
+    {
+        get => GetValue(PresetGroupsProperty);
+        set => SetValue(PresetGroupsProperty, value);
+    }
 
     private readonly Dictionary<string, Button> _presetButtons = new();
     private readonly HashSet<string> _userPresetIds = new();
@@ -54,7 +73,11 @@ public partial class PresetsPanel : UserControl
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == ActivePresetIdProperty)
+        if (change.Property == ShowBuiltInsProperty || change.Property == PresetGroupsProperty)
+        {
+            BuildPresetUI();
+        }
+        else if (change.Property == ActivePresetIdProperty)
         {
             UpdateActiveState();
         }
@@ -73,7 +96,7 @@ public partial class PresetsPanel : UserControl
         }
 
         SubscribeToPresetSource();
-        RebuildUserPresets();
+        BuildPresetUI();
     }
 
     private void BuildPresetUI()
@@ -84,10 +107,32 @@ public partial class PresetsPanel : UserControl
             return;
         }
 
+        container.Children.Clear();
+        _presetButtons.Clear();
         var userExpander = CreateExpander("My Presets");
         _userPresetPanel = CreateButtonPanel();
         userExpander.Content = _userPresetPanel;
         container.Children.Add(userExpander);
+
+        if (ShowBuiltIns && _presetSource != null)
+        {
+            foreach (var group in _presetSource.BuiltInPresets.GroupBy(preset => preset.Group!))
+            {
+                var panel = CreateButtonPanel();
+
+                foreach (var preset in group)
+                {
+                    var button = CreatePresetButton(preset);
+                    ToolTip.SetTip(button, preset.Description);
+                    panel.Children.Add(button);
+                }
+
+                var expander = CreateExpander(group.Key);
+                expander.Content = panel;
+                container.Children.Add(expander);
+            }
+        }
+
         RebuildUserPresets();
     }
 
@@ -139,6 +184,7 @@ public partial class PresetsPanel : UserControl
         button.PointerEntered += OnPresetButtonPointerEntered;
         button.PointerExited += OnPresetButtonPointerExited;
         _presetButtons[preset.Id] = button;
+
         return button;
     }
 
@@ -155,9 +201,9 @@ public partial class PresetsPanel : UserControl
         };
     }
 
-    private static Expander CreateExpander(string name)
+    private Expander CreateExpander(string name)
     {
-        return new Expander
+        var expander = new Expander
         {
             Header = new TextBlock
             {
@@ -166,10 +212,19 @@ public partial class PresetsPanel : UserControl
                 FontWeight = FontWeight.SemiBold,
                 Classes = { "preset-header" }
             },
-            IsExpanded = true,
+            IsExpanded = PresetGroups?.GetValueOrDefault(name, true) ?? true,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch
         };
+        expander.PropertyChanged += async (_, change) =>
+        {
+            if (change.Property == Expander.IsExpandedProperty && DataContext is MainWindowViewModel vm)
+            {
+                await vm.SetPresetGroupExpandedAsync(name, expander.IsExpanded);
+            }
+        };
+
+        return expander;
     }
 
     private static StackPanel CreateButtonPanel()
@@ -177,6 +232,7 @@ public partial class PresetsPanel : UserControl
         return new StackPanel
         {
             Spacing = 0,
+            Margin = new Thickness(12, 0, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Stretch
         };
     }

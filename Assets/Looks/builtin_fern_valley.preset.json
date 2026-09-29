@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "id": "builtin_fern_valley",
+  "name": "Fern Valley",
+  "group": "Landscape",
+  "order": 2,
+  "intent": "Rich foliage with cooler greens and deep wooded midtones.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.065
+        },
+        {
+          "x": 0.25,
+          "y": 0.27
+        },
+        {
+          "x": 0.5,
+          "y": 0.48
+        },
+        {
+          "x": 0.75,
+          "y": 0.76
+        },
+        {
+          "x": 1.0,
+          "y": 0.94
+        }
+      ]
+    },
+    "vibrance": 18,
+    "mixer": {
+      "green": {
+        "hue": -12,
+        "saturation": 17,
+        "luminance": -12
+      },
+      "yellow": {
+        "hue": 16,
+        "saturation": -9,
+        "luminance": -4
+      }
+    }
+  }
+}

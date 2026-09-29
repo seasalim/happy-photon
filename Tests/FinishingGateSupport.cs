@@ -129,7 +129,7 @@ internal static class FinishingGateSupport
     }
 
     internal static string CandidateHash(FinishingCandidate candidate) => Convert.ToHexString(
-        SHA256.HashData(File.ReadAllBytes(Path.Combine(FinishingLookHarness.Folder, candidate.Id + ".preset.json"))));
+        SHA256.HashData(File.ReadAllBytes(FinishingLookHarness.CandidatePath(candidate.Id))));
 
     internal static string AssemblyHash => Convert.ToHexString(SHA256.HashData(
         File.ReadAllBytes(typeof(FinishingGateSupport).Assembly.Location)));

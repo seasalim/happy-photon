@@ -276,6 +276,12 @@ CHARACTERIZATION.md §7.6.
 
 ## 6. Reset / undo / presets / copy-paste scope
 
+Built-in looks change only Contrast, Saturation, Vibrance, the four curves, Color Mixer,
+Effects, Texture and Clarity; all corrections survive apply, hover and removal. Below
+My Presets, read-only Natural, Portrait, Landscape, Black & White and Creative groups
+show approved looks with their intent as tooltips. Empty groups are absent; every
+expander remembers its collapse state. Clicking the active look records Preset: None.
+
 - **Reset** returns: `wb → asShot`, `baseLook → null` (source default), all four
   curves to identity (the three optional channel fields to null),
   `hlReconstruction → clip`, `mixer → null`, `detail → source defaults`,

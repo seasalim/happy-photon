@@ -226,6 +226,7 @@ public partial class MainWindow
             vm.RestoreBrowseThumbnailSize(settings.BrowseThumbnailSize);
             vm.RestoreBrushPreferences(settings);
             vm.RestorePasteGroups(settings.PasteGroups);
+            vm.RestorePresetGroups(settings.PresetGroups);
             vm.RestoreShowCapturePairs(settings.ShowCapturePairs);
             vm.RestoreAppTheme(settings.AppTheme);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;

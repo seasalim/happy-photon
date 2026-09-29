@@ -158,6 +158,8 @@
                 <Grid Grid.Row="2" x:Name="DevelopLeftPane" RowDefinitions="*,8,Auto"
                       IsVisible="{Binding IsDevelopMode}">
                     <views:PresetsPanel Grid.Row="0" x:Name="PresetsPanel"
+                                         ShowBuiltIns="{Binding IsDevelopMode}"
+                                         PresetGroups="{Binding PresetGroups}"
                                          IsEnabled="{Binding CanEditSelectedImage}"
                                          CanSavePreset="{Binding CanSavePreset}"
                                          ActivePresetId="{Binding ActivePresetId}"/>

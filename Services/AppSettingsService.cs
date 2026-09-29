@@ -62,7 +62,8 @@ public partial class AppSettingsService
 
         return new AppSettings
         {
-            PasteGroups = await LoadPasteGroupsAsync(),
+            PasteGroups = await LoadGroupPreferencesAsync(PasteGroupsKey),
+            PresetGroups = await LoadGroupPreferencesAsync("PresetGroups"),
             SpotMode = await _catalogService.GetAppSettingAsync("SpotMode") == "clone" ? "clone" : "heal",
             SpotSize = await LoadBrushNumberAsync("SpotSize", 3, .2, 10),
             SpotFeather = await LoadBrushNumberAsync("SpotFeather", 50, 0, 100),
@@ -114,6 +115,7 @@ public partial class AppSettingsService
             ["BrushFeather"] = settings.BrushFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["BrushFlow"] = settings.BrushFlow.ToString(System.Globalization.CultureInfo.InvariantCulture),
             [PasteGroupsKey] = System.Text.Json.JsonSerializer.Serialize(settings.PasteGroups),
+            ["PresetGroups"] = System.Text.Json.JsonSerializer.Serialize(settings.PresetGroups),
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
             [BrowseThumbnailSizeKey] = settings.BrowseThumbnailSize.ToString(),
             [ShowCapturePairsKey] = settings.ShowCapturePairs.ToString(),
@@ -137,6 +139,7 @@ public partial class AppSettingsService
             ["BrushFeather"] = settings.BrushFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["BrushFlow"] = settings.BrushFlow.ToString(System.Globalization.CultureInfo.InvariantCulture),
             [PasteGroupsKey] = System.Text.Json.JsonSerializer.Serialize(settings.PasteGroups),
+            ["PresetGroups"] = System.Text.Json.JsonSerializer.Serialize(settings.PresetGroups),
             [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
             [BrowseThumbnailSizeKey] = settings.BrowseThumbnailSize.ToString(),
             [ShowCapturePairsKey] = settings.ShowCapturePairs.ToString(),

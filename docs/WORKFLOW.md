@@ -284,6 +284,10 @@ preserve the edit instructions.
 
 ## 4. Keep a series coherent
 
+| Starting point | Action |
+|---|---|
+| Built-in looks | Hover to preview, click to apply, or click the active look to remove it; corrections stay unchanged. Save Current… makes an editable personal preset. |
+
 ### Use a personal preset
 
 Choose Save Current, name the preset, then hover to preview it and click to apply.

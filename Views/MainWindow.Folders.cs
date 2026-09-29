@@ -195,6 +195,7 @@ public partial class MainWindow
             BrushMode = vm.BrushMode, BrushSize = vm.BrushSize,
             BrushFeather = vm.BrushFeather, BrushFlow = vm.BrushFlow,
             PasteGroups = vm.CapturePasteGroups(),
+            PresetGroups = new(vm.PresetGroups),
             RootFolderPath = path,
             SelectedFolderPath = path,
             FirstRunExperienceVersion =

@@ -18,7 +18,7 @@ public sealed class FinishingLookTests
             "lens.chromaticAberration", "lens.vignetting"
         ];
         var transfer = EditSettingsTransfer.LookGroups.SelectMany(group => group.Fields).Order().ToArray();
-        var classified = FinishingLookHarness.LookFields.Concat(corrections).Order().ToArray();
+        var classified = EditSettingsLook.Fields.Concat(corrections).Order().ToArray();
         Assert.Equal(classified.Length, classified.Distinct().Count());
         Assert.Equal(transfer, classified);
     }
@@ -39,7 +39,7 @@ public sealed class FinishingLookTests
             Assert.Equal(Enumerable.Range(1, group.Count()), group.Select(candidate => candidate.Order).Order());
         }
 
-        foreach (var path in Directory.GetFiles(FinishingLookHarness.Folder, "*.preset.json"))
+        foreach (var path in FinishingLookHarness.CandidatePaths)
         {
             using var document = JsonDocument.Parse(File.ReadAllText(path));
             var candidate = JsonSerializer.Deserialize<FinishingCandidate>(document)!;

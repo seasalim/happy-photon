@@ -2,3 +2,4 @@
 Tests/assets/xmp/*.xmp -text
 Tests/assets/lightroom/*.lua text eol=lf
 Tests/assets/finishing-looks/exempt-components.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+Assets/Looks/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol

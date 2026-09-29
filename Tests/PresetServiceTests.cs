@@ -207,8 +207,7 @@ public sealed class PresetServiceTests : IDisposable
 
         await service.InitializeAsync();
 
-        Assert.Equal(2, service.AllPresets.Count);
-        Assert.Equal(new[] { "alpha", "Zulu" }, service.AllPresets.Select(preset => preset.Name));
+        Assert.Equal(2, service.UserPresets.Count);
         Assert.Equal(new[] { "alpha", "Zulu" }, service.UserPresets.Select(preset => preset.Name));
     }
 

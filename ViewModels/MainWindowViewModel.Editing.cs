@@ -79,7 +79,7 @@ public partial class MainWindowViewModel
         var generation = RequestEditedRender();
         var restored = state.Clone();
 
-        if (restored.AppliedPresetId != null && PresetService.GetById(restored.AppliedPresetId) == null)
+        if (restored.AppliedPresetId != null && !PresetService.ContainsId(restored.AppliedPresetId))
         {
             restored.AppliedPresetId = null;
         }
@@ -220,76 +220,6 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Applies a preset to the current image, or untoggles if the same preset is already active.
-    /// </summary>
-    public async Task ApplyPresetAsync(string presetId)
-    {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
-        if (!CanEditSelectedImage || SelectedImage == null) return;
-        var image = SelectedImage;
-
-        // Clear hover state - we're committing to this preset
-        _isHoveringPreset = false;
-        _preHoverSettings = null;
-        _hoverPreviewCts?.Cancel();
-
-        // If same preset is active, untoggle (reset)
-        if (ActivePresetId == presetId)
-        {
-            await UntogglePresetAsync();
-            return;
-        }
-
-        var preset = PresetService.GetById(presetId);
-        if (preset == null) return;
-        var previousSettings = CaptureLiveEditState();
-        var previousIntent = _requestedPreviewIntent;
-        var generation = RequestEditedRender();
-
-        var currentCrop = CurrentCrop?.Clone();
-        _isLoadingImage = true;
-        LoadSlidersFrom(preset.Settings);
-        LensProfileOverride = previousSettings.Lens.ProfileOverride;
-        ActivePresetId = presetId;
-        Rotation = SelectedImage.EditSettings.Rotation;
-        HorizonRotation = SelectedImage.EditSettings.HorizonRotation;
-        LoadGeometryFrom(previousSettings);
-        CurrentCrop = currentCrop;
-        _isLoadingImage = false;
-
-        SelectedImage.EditSettings = previousSettings.Clone();
-        EditSettingsTransfer.ApplyGroups(preset.Settings, SelectedImage.EditSettings, EditSettingsTransfer.LookGroups);
-        SelectedImage.EditSettings.AppliedPresetId = presetId;
-        LoadCurrentCurveFrom(SelectedImage.EditSettings);
-        SelectedImage.HasEdits = true;
-
-        // Save to catalog
-        try
-        {
-            await SaveEditSettingsAsync(
-                SelectedImage, $"Preset: {preset.Name}", previousSettings);
-        }
-        catch
-        {
-            RollbackEditReservation(
-                image,
-                previousSettings,
-                generation,
-                previousIntent);
-            throw;
-        }
-        _lastSavedState = SelectedImage.EditSettings.Clone();
-
-        // Update preview and UI
-        await UpdatePreviewWithCurrentSliders(generation: generation);
-        UpdateCanReset();
-
-        // Refresh thumbnail to reflect preset
-        RefreshSelectedThumbnail();
-    }
-
-    /// <summary>
     /// Shows a temporary preview of a preset on hover without applying it.
     /// </summary>
     public async Task PreviewPresetHoverAsync(string presetId)
@@ -323,7 +253,9 @@ public partial class MainWindowViewModel
         try
         {
             var previewSettings = CaptureRenderSettings(PreviewCrop());
-            EditSettingsTransfer.ApplyGroups(preset.Settings, previewSettings, EditSettingsTransfer.LookGroups);
+
+            if (preset.IsBuiltIn) EditSettingsLook.Apply(preset.Settings, previewSettings);
+            else EditSettingsTransfer.ApplyGroups(preset.Settings, previewSettings, EditSettingsTransfer.LookGroups);
 
             using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
                 image,

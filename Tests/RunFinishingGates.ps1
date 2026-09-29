@@ -13,7 +13,9 @@ if (Get-ChildItem (Join-Path $PSScriptRoot 'Finishing*.cs') | Where-Object LastW
     throw 'Finishing sources are newer than the Release assembly; build first'
 }
 $requested = @($Candidate -split ',' | Where-Object { $_ } | ForEach-Object { $_.Trim() })
-$candidates = @(Get-ChildItem (Join-Path $PSScriptRoot 'assets/finishing-looks/*.preset.json') |
+$candidateFiles = @(Get-ChildItem (Join-Path $repo 'Assets/Looks/*.preset.json')) +
+    @(Get-ChildItem (Join-Path $PSScriptRoot 'assets/finishing-looks/*.preset.json'))
+$candidates = @($candidateFiles |
     ForEach-Object { Get-Content -Raw $_.FullName | ConvertFrom-Json } |
     Where-Object { !$Candidate -or $_.id -in $requested })
 if ($candidates.Count -eq 0 -or ($Candidate -and $candidates.Count -ne $requested.Count)) { throw 'Unknown or duplicate candidate' }
@@ -82,7 +84,7 @@ $fixtureId = if ($Gate -eq 'G4Clipping') { 'all' } else { $Fixture }
 $receipts = Join-Path $folder 'receipts'
 $null = New-Item -ItemType Directory -Path $receipts -Force
 foreach ($candidateEntry in $candidates) {
-    $candidatePath = Join-Path $PSScriptRoot "assets/finishing-looks/$($candidateEntry.id).preset.json"
+    $candidatePath = ($candidateFiles | Where-Object Name -eq "$($candidateEntry.id).preset.json").FullName
     $receipt = New-FinishingReceipt -Records $records.ToArray() -GateId $gateId -FixtureId $fixtureId `
         -CandidateId $candidateEntry.id -CandidatePath $candidatePath -AssemblyPath $assembly.FullName `
         -ProductionPath (Join-Path $PSScriptRoot 'bin/Release/net10.0/HappyPhoton.dll') -LogStamp $stamp

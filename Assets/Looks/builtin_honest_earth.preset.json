@@ -1,0 +1,84 @@
+{
+  "version": 2,
+  "id": "builtin_honest_earth",
+  "name": "Honest Earth",
+  "group": "Natural",
+  "order": 5,
+  "intent": "Restrained earthy color and weighty midtones.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.04
+        },
+        {
+          "x": 0.25,
+          "y": 0.21
+        },
+        {
+          "x": 0.5,
+          "y": 0.43
+        },
+        {
+          "x": 0.75,
+          "y": 0.7
+        },
+        {
+          "x": 1.0,
+          "y": 0.94
+        }
+      ]
+    },
+    "saturation": -16,
+    "curveRed": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.015
+        },
+        {
+          "x": 0.25,
+          "y": 0.27
+        },
+        {
+          "x": 0.5,
+          "y": 0.52
+        },
+        {
+          "x": 0.75,
+          "y": 0.77
+        },
+        {
+          "x": 1.0,
+          "y": 0.99
+        }
+      ]
+    },
+    "curveBlue": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.015
+        },
+        {
+          "x": 0.25,
+          "y": 0.25
+        },
+        {
+          "x": 0.5,
+          "y": 0.48
+        },
+        {
+          "x": 0.75,
+          "y": 0.72
+        },
+        {
+          "x": 1.0,
+          "y": 0.95
+        }
+      ]
+    }
+  }
+}

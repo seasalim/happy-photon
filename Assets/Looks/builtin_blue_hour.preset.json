@@ -1,0 +1,84 @@
+{
+  "version": 2,
+  "id": "builtin_blue_hour",
+  "name": "Blue Hour",
+  "group": "Creative",
+  "order": 6,
+  "intent": "Cool cinematic middle tones with deep quiet color.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.045
+        },
+        {
+          "x": 0.25,
+          "y": 0.18
+        },
+        {
+          "x": 0.5,
+          "y": 0.41
+        },
+        {
+          "x": 0.75,
+          "y": 0.72
+        },
+        {
+          "x": 1.0,
+          "y": 0.94
+        }
+      ]
+    },
+    "curveRed": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.025
+        },
+        {
+          "x": 0.25,
+          "y": 0.26
+        },
+        {
+          "x": 0.5,
+          "y": 0.46
+        },
+        {
+          "x": 0.75,
+          "y": 0.7
+        },
+        {
+          "x": 1.0,
+          "y": 0.93
+        }
+      ]
+    },
+    "curveBlue": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.025
+        },
+        {
+          "x": 0.25,
+          "y": 0.31
+        },
+        {
+          "x": 0.5,
+          "y": 0.57
+        },
+        {
+          "x": 0.75,
+          "y": 0.82
+        },
+        {
+          "x": 1.0,
+          "y": 0.99
+        }
+      ]
+    },
+    "saturation": -39
+  }
+}

@@ -112,7 +112,7 @@ public sealed class FinishingGateSupportTests
     public void LoadedFingerprintRetainsTheExactBytesDespiteLaterFileChanges()
     {
         using var directory = new TemporaryDirectory();
-        var source = Directory.GetFiles(FinishingLookHarness.Folder, "*.preset.json")[0];
+        var source = FinishingLookHarness.CandidatePaths.First();
         var bytes = File.ReadAllBytes(source);
         var path = Path.Combine(directory.Path, Path.GetFileName(source));
         File.WriteAllBytes(path, bytes);

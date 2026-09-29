@@ -6,9 +6,9 @@ public partial class AppSettingsService
 {
     private const string PasteGroupsKey = "PasteGroups";
 
-    private async Task<Dictionary<string, bool>> LoadPasteGroupsAsync()
+    private async Task<Dictionary<string, bool>> LoadGroupPreferencesAsync(string key)
     {
-        var saved = await _catalogService.GetAppSettingAsync(PasteGroupsKey);
+        var saved = await _catalogService.GetAppSettingAsync(key);
         if (string.IsNullOrEmpty(saved)) return [];
 
         try

@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "id": "builtin_open_window",
+  "name": "Open Window",
+  "group": "Portrait",
+  "order": 4,
+  "intent": "Bright airy midtones with pale color and luminous shadows.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.075
+        },
+        {
+          "x": 0.25,
+          "y": 0.38
+        },
+        {
+          "x": 0.5,
+          "y": 0.68
+        },
+        {
+          "x": 0.75,
+          "y": 0.88
+        },
+        {
+          "x": 1.0,
+          "y": 0.97
+        }
+      ]
+    },
+    "saturation": -19
+  }
+}

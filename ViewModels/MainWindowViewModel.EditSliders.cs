@@ -172,8 +172,13 @@ public partial class MainWindowViewModel
         CurrentCrop = source.Crop?.Clone();
         LoadCurrentCurveFrom(source);
         ActivePresetId = source.AppliedPresetId != null &&
-                         PresetService.GetById(source.AppliedPresetId) != null
+                         PresetService.ContainsId(source.AppliedPresetId)
             ? source.AppliedPresetId
             : null;
+
+        if (ActivePresetId == null && source.AppliedPresetId?.StartsWith("builtin_", StringComparison.Ordinal) == true)
+        {
+            source.AppliedPresetId = null;
+        }
     }
 }

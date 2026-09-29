@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "id": "builtin_fresh_start",
+  "name": "Fresh Start",
+  "group": "Natural",
+  "order": 1,
+  "intent": "Clean neutral midtone separation with protected highlights.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.045
+        },
+        {
+          "x": 0.25,
+          "y": 0.24
+        },
+        {
+          "x": 0.5,
+          "y": 0.54
+        },
+        {
+          "x": 0.75,
+          "y": 0.8
+        },
+        {
+          "x": 1.0,
+          "y": 0.95
+        }
+      ]
+    },
+    "saturation": -7
+  }
+}

@@ -6,4 +6,8 @@ namespace HappyPhoton.Models;
 /// <param name="Id">Unique identifier for the preset</param>
 /// <param name="Name">Display name of the preset</param>
 /// <param name="Settings">Edit settings values to apply</param>
-public record Preset(string Id, string Name, EditSettings Settings);
+public record Preset(string Id, string Name, EditSettings Settings,
+    string? Group = null, int Order = 0, string? Description = null)
+{
+    public bool IsBuiltIn => Id.StartsWith("builtin_", StringComparison.Ordinal);
+}

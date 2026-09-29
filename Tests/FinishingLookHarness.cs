@@ -21,7 +21,15 @@ internal static class FinishingLookHarness
 
     internal static string Folder => Path.Combine(GoldenTestPaths.AssetDirectory, "finishing-looks");
 
-    internal static FinishingCandidate[] Candidates() => Directory.GetFiles(Folder, "*.preset.json")
+    internal static string ShippedFolder => Path.Combine(GoldenTestPaths.RepositoryRoot, "Assets", "Looks");
+
+    internal static IEnumerable<string> CandidatePaths => Directory.GetFiles(ShippedFolder, "*.preset.json")
+        .Concat(Directory.GetFiles(Folder, "*.preset.json"));
+
+    internal static string CandidatePath(string id) => CandidatePaths.Single(path =>
+        Path.GetFileName(path) == id + ".preset.json");
+
+    internal static FinishingCandidate[] Candidates() => CandidatePaths
         .Select(Load)
         .OrderBy(candidate => candidate.Group).ThenBy(candidate => candidate.Order).ToArray();
 

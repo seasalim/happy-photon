@@ -1,0 +1,84 @@
+{
+  "version": 2,
+  "id": "builtin_amber_archive",
+  "name": "Amber Archive",
+  "group": "Creative",
+  "order": 5,
+  "intent": "Vintage amber color and mellow paper-white highlights.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.07
+        },
+        {
+          "x": 0.25,
+          "y": 0.25
+        },
+        {
+          "x": 0.5,
+          "y": 0.5
+        },
+        {
+          "x": 0.75,
+          "y": 0.74
+        },
+        {
+          "x": 1.0,
+          "y": 0.92
+        }
+      ]
+    },
+    "curveRed": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.025
+        },
+        {
+          "x": 0.25,
+          "y": 0.31
+        },
+        {
+          "x": 0.5,
+          "y": 0.59
+        },
+        {
+          "x": 0.75,
+          "y": 0.83
+        },
+        {
+          "x": 1.0,
+          "y": 0.99
+        }
+      ]
+    },
+    "curveBlue": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.025
+        },
+        {
+          "x": 0.25,
+          "y": 0.26
+        },
+        {
+          "x": 0.5,
+          "y": 0.43
+        },
+        {
+          "x": 0.75,
+          "y": 0.62
+        },
+        {
+          "x": 1.0,
+          "y": 0.87
+        }
+      ]
+    },
+    "saturation": -26
+  }
+}

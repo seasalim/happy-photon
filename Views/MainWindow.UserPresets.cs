@@ -45,7 +45,7 @@ public partial class MainWindow
     private async void OnRenamePresetRequested(object? sender, string presetId)
     {
         if (DataContext is not MainWindowViewModel vm ||
-            vm.PresetService.GetById(presetId) is not { } preset)
+            vm.PresetService.GetById(presetId) is not { IsBuiltIn: false } preset)
         {
             return;
         }
@@ -78,7 +78,7 @@ public partial class MainWindow
     private async void OnDeletePresetRequested(object? sender, string presetId)
     {
         if (DataContext is not MainWindowViewModel vm ||
-            vm.PresetService.GetById(presetId) is not { } preset)
+            vm.PresetService.GetById(presetId) is not { IsBuiltIn: false } preset)
         {
             return;
         }

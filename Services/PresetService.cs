@@ -26,7 +26,11 @@ public class PresetService
         _presetsDirectory = presetsDirectory;
     }
 
-    public IReadOnlyList<Preset> AllPresets => UserPresets;
+    private readonly BuiltInLookLibrary _builtIns = new();
+
+    public IReadOnlyList<Preset> BuiltInPresets => _builtIns.Looks;
+
+    internal bool AreBuiltInsLoaded => _builtIns.IsLoaded;
 
     public IReadOnlyList<Preset> UserPresets => _userPresetSnapshot;
 
@@ -52,7 +56,8 @@ public class PresetService
                 var json = await File.ReadAllTextAsync(path);
                 var file = DeserializePresetFile(json, path);
                 if (file == null || string.IsNullOrWhiteSpace(file.Id) ||
-                    string.IsNullOrWhiteSpace(file.Name) || file.Settings == null)
+                    string.IsNullOrWhiteSpace(file.Name) || file.Settings == null ||
+                    file.Id.StartsWith("builtin_", StringComparison.Ordinal))
                 {
                     Debug.WriteLine($"Skipping invalid preset file: {path}");
                     continue;
@@ -100,9 +105,15 @@ public class PresetService
         await InitializeAsync();
     }
 
+    public bool ContainsId(string id) => id.StartsWith("builtin_", StringComparison.Ordinal)
+        ? BuiltInLookLibrary.ContainsId(id)
+        : _userPresets.Any(preset => preset.Id == id);
+
     public Preset? GetById(string id)
     {
-        return _userPresets.FirstOrDefault(preset => preset.Id == id);
+        return id.StartsWith("builtin_", StringComparison.Ordinal)
+            ? BuiltInPresets.FirstOrDefault(preset => preset.Id == id)
+            : _userPresets.FirstOrDefault(preset => preset.Id == id);
     }
 
     public Preset? FindUserPresetByName(string name)
