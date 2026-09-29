@@ -35,7 +35,7 @@ Happy Photon is a performance-focused .NET 10/Avalonia photo workflow for browsi
 ## Commits
 
 - Commit messages are a single imperative line matching the existing history (e.g. "Highlight the target of each workflow tour step").
-- No body, no bullet lists, no "Co-Authored-By" or "Generated with" trailers, no emoji.
+- No body, no bullet lists, no emoji, and no trailers such as "Co-Authored-By", "Claude-Session" or "Generated with", even when a tool's attribution default asks for them.
 - Squash commits before merge so each merged change lands as one commit.
 
 ## Code style
