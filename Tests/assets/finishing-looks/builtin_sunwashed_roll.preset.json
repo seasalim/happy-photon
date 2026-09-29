@@ -1,0 +1,84 @@
+{
+  "version": 2,
+  "id": "builtin_sunwashed_roll",
+  "name": "Sunwashed Roll",
+  "group": "Creative",
+  "order": 1,
+  "intent": "Faded film color, raised blacks and a warm compressed shoulder.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.14
+        },
+        {
+          "x": 0.25,
+          "y": 0.33
+        },
+        {
+          "x": 0.5,
+          "y": 0.55
+        },
+        {
+          "x": 0.75,
+          "y": 0.74
+        },
+        {
+          "x": 1.0,
+          "y": 0.89
+        }
+      ]
+    },
+    "saturation": -32,
+    "curveRed": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.02
+        },
+        {
+          "x": 0.25,
+          "y": 0.29
+        },
+        {
+          "x": 0.5,
+          "y": 0.54
+        },
+        {
+          "x": 0.75,
+          "y": 0.79
+        },
+        {
+          "x": 1.0,
+          "y": 0.99
+        }
+      ]
+    },
+    "curveBlue": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.02
+        },
+        {
+          "x": 0.25,
+          "y": 0.26
+        },
+        {
+          "x": 0.5,
+          "y": 0.47
+        },
+        {
+          "x": 0.75,
+          "y": 0.68
+        },
+        {
+          "x": 1.0,
+          "y": 0.91
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "id": "builtin_cotton_rag",
+  "name": "Cotton Rag",
+  "group": "Black & White",
+  "order": 4,
+  "intent": "Soft matte monochrome with lifted black and a restrained white point.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.13
+        },
+        {
+          "x": 0.25,
+          "y": 0.31
+        },
+        {
+          "x": 0.5,
+          "y": 0.52
+        },
+        {
+          "x": 0.75,
+          "y": 0.73
+        },
+        {
+          "x": 1.0,
+          "y": 0.9
+        }
+      ]
+    },
+    "saturation": -100,
+    "mixer": {}
+  }
+}

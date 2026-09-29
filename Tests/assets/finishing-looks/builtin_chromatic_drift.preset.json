@@ -1,0 +1,108 @@
+{
+  "version": 2,
+  "id": "builtin_chromatic_drift",
+  "name": "Chromatic Drift",
+  "group": "Creative",
+  "order": 2,
+  "intent": "Cross-process color with green-cyan low tones and magenta highlights.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.105
+        },
+        {
+          "x": 0.25,
+          "y": 0.27
+        },
+        {
+          "x": 0.5,
+          "y": 0.53
+        },
+        {
+          "x": 0.75,
+          "y": 0.77
+        },
+        {
+          "x": 1.0,
+          "y": 0.91
+        }
+      ]
+    },
+    "curveRed": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.04
+        },
+        {
+          "x": 0.25,
+          "y": 0.24
+        },
+        {
+          "x": 0.5,
+          "y": 0.53
+        },
+        {
+          "x": 0.75,
+          "y": 0.82
+        },
+        {
+          "x": 1.0,
+          "y": 0.97
+        }
+      ]
+    },
+    "curveGreen": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.04
+        },
+        {
+          "x": 0.25,
+          "y": 0.31
+        },
+        {
+          "x": 0.5,
+          "y": 0.54
+        },
+        {
+          "x": 0.75,
+          "y": 0.73
+        },
+        {
+          "x": 1.0,
+          "y": 0.93
+        }
+      ]
+    },
+    "curveBlue": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.04
+        },
+        {
+          "x": 0.25,
+          "y": 0.32
+        },
+        {
+          "x": 0.5,
+          "y": 0.52
+        },
+        {
+          "x": 0.75,
+          "y": 0.8
+        },
+        {
+          "x": 1.0,
+          "y": 0.97
+        }
+      ]
+    },
+    "saturation": -14
+  }
+}

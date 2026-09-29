@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "id": "builtin_living_color",
+  "name": "Living Color",
+  "group": "Natural",
+  "order": 2,
+  "intent": "Vivid color with open shadows and rounded highlights.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.09
+        },
+        {
+          "x": 0.25,
+          "y": 0.32
+        },
+        {
+          "x": 0.5,
+          "y": 0.58
+        },
+        {
+          "x": 0.75,
+          "y": 0.79
+        },
+        {
+          "x": 1.0,
+          "y": 0.93
+        }
+      ]
+    },
+    "vibrance": 24,
+    "saturation": 5
+  }
+}

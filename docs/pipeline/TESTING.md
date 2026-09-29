@@ -791,6 +791,25 @@ LibRaw single-file smoke: `./scripts/verify-libraw-single-file.ps1 -RuntimeIdent
 scripts/evaluate-wide-working-space.cs -- <baseline> artifacts/wide-working-space`;
 record look approval outside the numeric gate.
 
+**FINISHING G4 frozen clipping controls.** Production Preview, maximum dimension 1600,
+final encoded Q16; each count is pixels with any channel at 0 or 65535. Controls
+must match exactly; `fujifilm-x30.raf` allows ±0.1 percentage point per side.
+Each look must stay within its same-base no-look control +1.0 percentage point per side.
+
+| Review fixture | Pixels | At 0 | At 65535 |
+|---|---:|---:|---:|
+| canon-eos-350d.cr2 | 1705600 | 1759 | 0 |
+| canon-eos-6d-iso-6400.cr2 | 1708800 | 964375 | 0 |
+| nikon-d300-colorchecker.nef | 1699200 | 14911 | 0 |
+| nikon-d70-burst-1.nef | 1530640 | 7258 | 0 |
+| nikon-d70-burst-2.nef | 1530640 | 7258 | 0 |
+| fujifilm-x30.raf | 1912000 | 7 | 0 |
+| pentax-k-r.dng | 1704000 | 956 | 0 |
+| iphone-14-pro-iso-1000.heic | 1920000 | 69734 | 22326 |
+| reference.heic | 958800 | 0 | 3395 |
+| srgb-reference.jpg | 958800 | 0 | 1416 |
+| adobe-rgb-reference.jpg | 958800 | 0 | 1847 |
+
 ## 6. CI
 
 The three-platform workflow runs ordinary/native bitmap tests in

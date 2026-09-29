@@ -1,0 +1,84 @@
+{
+  "version": 2,
+  "id": "builtin_honey_veil",
+  "name": "Honey Veil",
+  "group": "Portrait",
+  "order": 2,
+  "intent": "Warm luminous skin and gently rolled highlights; a glow-like tone, without blur.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.055
+        },
+        {
+          "x": 0.25,
+          "y": 0.3
+        },
+        {
+          "x": 0.5,
+          "y": 0.59
+        },
+        {
+          "x": 0.75,
+          "y": 0.82
+        },
+        {
+          "x": 1.0,
+          "y": 0.95
+        }
+      ]
+    },
+    "saturation": -13,
+    "curveRed": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.02
+        },
+        {
+          "x": 0.25,
+          "y": 0.29
+        },
+        {
+          "x": 0.5,
+          "y": 0.56
+        },
+        {
+          "x": 0.75,
+          "y": 0.81
+        },
+        {
+          "x": 1.0,
+          "y": 0.99
+        }
+      ]
+    },
+    "curveBlue": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.02
+        },
+        {
+          "x": 0.25,
+          "y": 0.26
+        },
+        {
+          "x": 0.5,
+          "y": 0.47
+        },
+        {
+          "x": 0.75,
+          "y": 0.69
+        },
+        {
+          "x": 1.0,
+          "y": 0.92
+        }
+      ]
+    }
+  }
+}

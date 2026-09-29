@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "id": "builtin_gentle_day",
+  "name": "Gentle Day",
+  "group": "Natural",
+  "order": 4,
+  "intent": "Soft pastel color and luminous low midtones.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.065
+        },
+        {
+          "x": 0.25,
+          "y": 0.32
+        },
+        {
+          "x": 0.5,
+          "y": 0.6
+        },
+        {
+          "x": 0.75,
+          "y": 0.8
+        },
+        {
+          "x": 1.0,
+          "y": 0.94
+        }
+      ]
+    },
+    "saturation": -23
+  }
+}

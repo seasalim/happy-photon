@@ -1,0 +1,63 @@
+{
+  "version": 2,
+  "id": "builtin_leaf_silver",
+  "name": "Leaf Silver",
+  "group": "Black & White",
+  "order": 3,
+  "intent": "Green-filter monochrome separates bright foliage from darker warm hues.",
+  "settings": {
+    "version": 4,
+    "curve": {
+      "points": [
+        {
+          "x": 0.0,
+          "y": 0.04
+        },
+        {
+          "x": 0.25,
+          "y": 0.22
+        },
+        {
+          "x": 0.5,
+          "y": 0.53
+        },
+        {
+          "x": 0.75,
+          "y": 0.8
+        },
+        {
+          "x": 1.0,
+          "y": 0.96
+        }
+      ]
+    },
+    "saturation": -100,
+    "mixer": {
+      "green": {
+        "hue": 0,
+        "saturation": 0,
+        "luminance": 33
+      },
+      "yellow": {
+        "hue": 0,
+        "saturation": 0,
+        "luminance": 16
+      },
+      "red": {
+        "hue": 0,
+        "saturation": 0,
+        "luminance": -22
+      },
+      "orange": {
+        "hue": 0,
+        "saturation": 0,
+        "luminance": -14
+      },
+      "blue": {
+        "hue": 0,
+        "saturation": 0,
+        "luminance": -9
+      }
+    }
+  }
+}
