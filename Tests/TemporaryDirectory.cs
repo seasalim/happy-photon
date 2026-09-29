@@ -4,6 +4,8 @@ internal sealed class TemporaryDirectory : IDisposable
 {
     private const int CleanupAttempts = 3;
 
+    internal Action<Exception>? CleanupFailure { get; set; }
+
     public string Path { get; } = System.IO.Path.Combine(
         System.IO.Path.GetTempPath(),
         $"happy-photon-test-{Guid.NewGuid():N}");
@@ -31,6 +33,11 @@ internal sealed class TemporaryDirectory : IDisposable
                 attempt < CleanupAttempts)
             {
                 Thread.Sleep(TimeSpan.FromMilliseconds(25 * attempt));
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                CleanupFailure?.Invoke(exception);
+                throw;
             }
         }
     }

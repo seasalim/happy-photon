@@ -85,9 +85,21 @@ public sealed partial class CatalogBackupService(CatalogService catalog)
             if (onlyIfDue && !IsDue()) return;
             AssertOwned();
             Directory.CreateDirectory(Folder);
+
             foreach (var path in Directory.GetFiles(Folder, "hp-backup-*.partial.*"))
-                if (IsBackupName(Path.GetFileName(path).Split(".partial.")[0]))
+            {
+                if (!IsBackupName(Path.GetFileName(path).Split(".partial.")[0])) continue;
+
+                try
+                {
                     Change("sweep", () => File.Delete(path));
+                }
+                catch (IOException ex) when (ex.HResult is unchecked((int)0x80070020) or unchecked((int)0x80070021))
+                {
+                    // A terminated process may still hold this stale partial; the next attempt sweeps it.
+                }
+            }
+
             if (AvailableFreeSpace() < 2 * new FileInfo(Path.Combine(catalog.CatalogPath, "catalog.db")).Length)
                 outcome = new(UtcNow(), "skipped-disk-space");
             else

@@ -6,7 +6,7 @@ using Xunit;
 namespace HappyPhoton.Tests;
 
 [Collection(BackupBaselineCollection.Name)]
-public sealed class RestoreHotJournalTests(BackupCatalogFixtures fixtures)
+public sealed class RestoreHotJournalTests(BackupCatalogFixtures fixtures, ITestOutputHelper output)
 {
     [Fact]
     public async Task HotRollbackJournal_IsPreservedWithoutRecoveringTheOriginal()
@@ -24,6 +24,7 @@ public sealed class RestoreHotJournalTests(BackupCatalogFixtures fixtures)
             start.ArgumentList.Add(argument);
         start.Environment["HP_RESTORE_HOT_CHILD"] = f.Locations.DatabasePath;
         using var process = Process.Start(start)!;
+        var childPid = process.Id;
         var error = process.StandardError.ReadToEndAsync();
         using var timeout = new CancellationTokenSource(TestWaits.Condition);
         var signalled = false;
@@ -36,7 +37,9 @@ public sealed class RestoreHotJournalTests(BackupCatalogFixtures fixtures)
         {
             if (!process.HasExited) process.Kill(entireProcessTree: true);
             await process.WaitForExitAsync();
+            await BackupCrashFileRelease.WaitAsync(f.Locations.CatalogRoot, childPid, output);
         }
+
         Assert.True(signalled, await error);
         var journalPath = f.Locations.DatabasePath + "-journal";
         Assert.True(new FileInfo(journalPath).Length > 512);

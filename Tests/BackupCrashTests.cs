@@ -24,7 +24,10 @@ public sealed class BackupCrashTests(BackupCatalogFixtures fixtures, ITestOutput
         var fixture = await (archiveGate ? fixtures.Archive : fixtures.Everyday);
         Assert.InRange(fixture.SizeMiB, archiveGate ? 160 : 1.5, archiveGate ? 260 : 4);
         output.WriteLine($"fixture={(archiveGate ? "archive G4" : "everyday")} size_mib={fixture.SizeMiB:F3}");
+        var childPid = 0;
         using var directory = new TemporaryDirectory();
+        directory.CleanupFailure = exception =>
+            BackupCrashLockDiagnostics.Cleanup(exception, directory.Path, childPid, output);
         BackupTestSupport.CopyCatalog(fixture.Root, directory.Path);
         using (var seedCatalog = new CatalogService(directory.Path))
         {
@@ -56,6 +59,7 @@ public sealed class BackupCrashTests(BackupCatalogFixtures fixtures, ITestOutput
         start.Environment["HAPPY_PHOTON_BACKUP_CHILD"] = directory.Path;
         start.Environment["HAPPY_PHOTON_BACKUP_KILL"] = point;
         using var process = Process.Start(start)!;
+        childPid = process.Id;
         var stderr = process.StandardError.ReadToEndAsync();
         string? expectedHash = null;
         using var timeout = new CancellationTokenSource(TestWaits.Condition);
@@ -74,20 +78,27 @@ public sealed class BackupCrashTests(BackupCatalogFixtures fixtures, ITestOutput
         {
             if (!process.HasExited) process.Kill(entireProcessTree: true);
             await process.WaitForExitAsync();
+            await BackupCrashFileRelease.WaitAsync(directory.Path, childPid, output);
         }
+
         Assert.NotEqual(0, process.ExitCode);
         Assert.Equal(expectedHash, BackupTestSupport.Hash(Path.Combine(directory.Path, "catalog.db")));
         using var catalog = new CatalogService(directory.Path);
         await catalog.InitializeAsync();
         var service = new CatalogBackupService(catalog);
+        using var diagnostics = new BackupCrashDiagnostics(catalog, service, process, output);
         var listed = service.List();
+        var initiallyDue = service.IsDue();
+        await diagnostics.ReportReadFailuresAsync();
         foreach (var sidecar in Directory.GetFiles(service.Folder, "*.manifest.json"))
             Assert.True(File.Exists(sidecar[..^14] + ".zip"));
         var fresh = listed.Where(item => !initialZips.Contains(item.Path + ".zip")).ToArray();
-        Assert.Equal(fresh.Length == 0, service.IsDue());
+        Assert.Equal(fresh.Length == 0, initiallyDue);
         foreach (var zip in Directory.GetFiles(service.Folder, "*.zip").Where(path => !path.Contains(".partial.") && !initialZips.Contains(path)))
         {
             using var restore = new TemporaryDirectory();
+            restore.CleanupFailure = exception =>
+                BackupCrashLockDiagnostics.Cleanup(exception, restore.Path, childPid, output);
             await BackupTestSupport.AssertArchiveAsync(zip, restore.Path);
             AssertConcurrentTransactions(Path.Combine(restore.Path, "catalog.db"));
         }
@@ -95,9 +106,22 @@ public sealed class BackupCrashTests(BackupCatalogFixtures fixtures, ITestOutput
             .Where(path => !path.Contains(".partial.") && !File.Exists(path[..^4] + ".manifest.json"))
             .ToDictionary(path => path, BackupTestSupport.Hash);
         // A fresh attempt must ignore unchecked zips and finish interrupted retention.
+        diagnostics.BeginAttempt();
         await service.BackupAsync();
-        Assert.Equal(5, service.List().Count);
-        Assert.False(service.IsDue());
+        var count = service.List().Count;
+        var due = service.IsDue();
+
+        if (count != 5 || due)
+        {
+            await diagnostics.ReportAsync($"fresh count={count} due={due}");
+        }
+        else
+        {
+            await diagnostics.ReportReadFailuresAsync();
+        }
+
+        Assert.Equal(5, count);
+        Assert.False(due);
         foreach (var (path, hash) in uncheckedZips) Assert.Equal(hash, BackupTestSupport.Hash(path));
         Assert.Empty(Directory.GetFiles(service.Folder, "*.partial.*"));
         output.WriteLine($"{point}: real child killed; live bytes, publication, transactions, presets, due and retention passed");
