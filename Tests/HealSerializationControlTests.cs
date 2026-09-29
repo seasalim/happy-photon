@@ -37,6 +37,21 @@ public sealed class HealSerializationControlTests(ITestOutputHelper output)
         Assert.Equal(0, differences);
     }
 
+    [Fact]
+    public void CandidatesSkipNonNumericVersions()
+    {
+        const string settings = """{"version":4,"exposure":1}""";
+        var text = """
+            {"version":"10.0.0"}
+            {"version":null}
+            {"version":{"major":4}}
+            """ + settings;
+
+        var candidate = Assert.Single(HealSettingsCorpus.Candidates(text));
+
+        Assert.Equal(settings, candidate);
+    }
+
     private sealed record FrozenDocument(string Name, string Input, string Canonical);
 }
 
@@ -114,7 +129,7 @@ internal static class HealSettingsCorpus
         }
     }
 
-    private static IEnumerable<string> Candidates(string value)
+    internal static IEnumerable<string> Candidates(string value)
     {
         // Includes settings nested in preset fixtures and pipe-delimited goldens.
         for (var start = 0; start < value.Length; start++)
@@ -132,6 +147,7 @@ internal static class HealSettingsCorpus
             {
                 var root = document.RootElement;
                 if (root.TryGetProperty("version", out var version) &&
+                    version.ValueKind == JsonValueKind.Number &&
                     version.TryGetInt32(out var number) &&
                     // Exclude preset envelopes and other versioned manifests.
                     !root.TryGetProperty("settings", out _) &&
