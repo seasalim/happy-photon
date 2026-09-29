@@ -8,6 +8,20 @@ internal sealed class PhotoFrameFactsReader(ISourceAvailabilityService availabil
 {
     private readonly Dictionary<string, Header> _headers = new(StringComparer.OrdinalIgnoreCase);
 
+    private readonly Dictionary<string, PhotoCameraFacts> _cameras = new(StringComparer.OrdinalIgnoreCase);
+
+    internal void RememberCamera(ImageFile file, PhotoCameraFacts facts) => _cameras[file.FilePath] = facts;
+
+    internal PhotoCameraFacts? ReadCamera(ImageFile file, bool cachedOnly = false)
+    {
+        if (_cameras.TryGetValue(file.FilePath, out var facts)) return facts;
+        if (!file.IsRaw || cachedOnly) return null;
+
+        Read(file, new EditSettings { Lens = new() { Distortion = false, ChromaticAberration = false } });
+
+        return _cameras.GetValueOrDefault(file.FilePath);
+    }
+
     internal Action<string, string>? Opening { get; set; }
 
     internal Action<string>? ReadCompleted { get; set; }
@@ -28,8 +42,12 @@ internal sealed class PhotoFrameFactsReader(ISourceAvailabilityService availabil
                 {
                     using var raw = LibRawContext.Open(file.FilePath);
                     var dimensions = raw.GetDimensions();
+                    var metadata = raw.GetMetadata();
+                    var monochrome = RawBaseLoader.IsMonochromeSensor(raw.GetSensorIdentity());
+                    _cameras[file.FilePath] = new(monochrome ? null : new CameraIdentity(
+                        metadata.NormalizedMake ?? metadata.Make, metadata.NormalizedModel ?? metadata.Model), monochrome);
                     header = new((int)dimensions.VisibleWidth, (int)dimensions.VisibleHeight,
-                        RawBaseLoader.NormalizeOrientation(dimensions.Orientation)) { IsMonochrome = RawBaseLoader.IsMonochromeSensor(raw.GetSensorIdentity()) };
+                        RawBaseLoader.NormalizeOrientation(dimensions.Orientation)) { IsMonochrome = monochrome };
                 }
                 else
                 {

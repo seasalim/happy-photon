@@ -456,9 +456,9 @@ Version 3 settings migrate in memory without locals; version 2 is unsupported.
 | `mixer` | All bands zero | Color Mixer | No |
 | `effects` | Vignette and Grain inactive | Effects | No |
 | `geometry` | All terms zero | Geometry; excluded from presets | No |
-| `rawProfile` | Built-in | Preserve destination | Yes |
+| `rawProfile` | Built-in | Camera Profile, subject to compatibility; excluded from presets | Yes |
 | `detail` | Always present; null sharpening means source default | Detail | No |
-| `lens` | Always present; override omitted when null | Optics booleans; preserve override | Yes |
+| `lens` | Always present; override omitted when null | Optics booleans; Lens Profile override subject to compatibility, excluded from presets | Yes |
 | `locals` | Empty | Locals replaces the whole list; excluded from presets | No |
 
 Crop & Straighten transfers exactly within 1% of the same oriented frame aspect; otherwise

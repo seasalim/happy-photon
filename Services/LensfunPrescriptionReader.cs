@@ -25,12 +25,14 @@ internal sealed class LensfunPrescriptionReader
 
     internal (string? Camera, IReadOnlyList<string> Lenses) ListCompatibleLenses(
         LibRawMetadata metadata)
+        => ListCompatibleLenses(new CameraIdentity(metadata.NormalizedMake ?? metadata.Make,
+            metadata.NormalizedModel ?? metadata.Model));
+
+    internal (string? Camera, IReadOnlyList<string> Lenses) ListCompatibleLenses(CameraIdentity identity)
     {
         try
         {
-            return _database.Value.ListCompatibleLenses(
-                metadata.NormalizedMake ?? metadata.Make,
-                metadata.NormalizedModel ?? metadata.Model);
+            return _database.Value.ListCompatibleLenses(identity.Make, identity.Model);
         }
         catch (Exception exception) when (exception is IOException or
             UnauthorizedAccessException or InvalidDataException or

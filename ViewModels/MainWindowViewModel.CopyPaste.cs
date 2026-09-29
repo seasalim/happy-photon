@@ -41,6 +41,7 @@ public partial class MainWindowViewModel
 
         var liveSettings = SelectedImage.EditSettings.Clone();
         SaveSlidersTo(liveSettings);
+        CaptureProfileSource(SelectedImage, liveSettings);
         _copiedSettings = liveSettings;
         _copiedSource = SelectedImage;
         _copiedSourceName = Path.GetFileName(SelectedImage.FilePath);
@@ -128,10 +129,10 @@ public partial class MainWindowViewModel
     {
         if (_copiedSettings == null) return;
 
-        _previewDebounce?.Cancel();
         var changesFrame = groups.Any(group => group.Name is "Crop & Straighten" or "Geometry");
-        var previousSettings = CapturePasteState(selectedImage, changesFrame);
-        var snapshot = (_copiedSource!, _copiedSettings);
+        var previousSettings = CapturePasteState(selectedImage, changesFrame,
+            groups.Any(group => group.Name == "Lens Profile"));
+        var snapshot = new PasteSnapshot(_copiedSource!, _copiedSettings, _copiedProfileSource!);
 
         PasteProposal proposal;
 
@@ -140,8 +141,8 @@ public partial class MainWindowViewModel
             proposal = await PreparePasteAsync(selectedImage, previousSettings, groups, snapshot);
             if (!ReferenceEquals(SelectedImage, selectedImage) || !IsDevelopMode) return;
 
-            _previewDebounce?.Cancel();
-            var current = CapturePasteState(selectedImage, changesFrame);
+            var current = CapturePasteState(selectedImage, changesFrame,
+                groups.Any(group => group.Name == "Lens Profile"));
 
             if (EditSettingsJson.Serialize(current) != EditSettingsJson.Serialize(previousSettings))
             {
@@ -158,10 +159,27 @@ public partial class MainWindowViewModel
 
         if (!ReferenceEquals(SelectedImage, selectedImage) || !IsDevelopMode) return;
 
+        var unchanged = EditSettingsJson.Serialize(proposal.Settings) == EditSettingsJson.Serialize(previousSettings);
+
+        if (unchanged)
+        {
+            if (changesFrame || proposal.LensApplied && LensProfileOverride != proposal.Settings.Lens.ProfileOverride)
+            {
+                InstallDevelopDocument(selectedImage, proposal.Settings, preserveCropDraft: !changesFrame,
+                    preserveLensDraft: !proposal.LensApplied);
+                SchedulePreviewUpdate();
+            }
+
+            ReportPaste("Pasted settings", proposal.Reframed ? 1 : 0, proposal.Skips);
+            return;
+        }
+
+        _previewDebounce?.Cancel();
         var previousIntent = _requestedPreviewIntent;
         var surfaceGeneration = RequestEditedRender();
         var settings = proposal.Settings;
-        InstallDevelopDocument(selectedImage, settings, preserveCropDraft: !changesFrame, preserveLensDraft: true);
+        InstallDevelopDocument(selectedImage, settings, preserveCropDraft: !changesFrame,
+            preserveLensDraft: !proposal.LensApplied);
 
         try
         {
@@ -191,13 +209,16 @@ public partial class MainWindowViewModel
             UpdateCanReset();
         }
 
-        _ = TrackDirectThumbnailOperation(
-            RefreshThumbnailAsync(selectedImage));
+        if (!unchanged)
+        {
+            _ = TrackDirectThumbnailOperation(RefreshThumbnailAsync(selectedImage));
+        }
+
         var replaced = groups.Where(group => PasteSettingsViewModel.HasOwn(previousSettings, group.Name) &&
-                !(proposal.FactsUnavailable && group.Name == "Crop & Straighten"))
+                !proposal.Skips.ContainsKey(group.Name))
             .Select(group => group.Name == "Crop & Straighten" ? "Crop" : group.Name).ToArray();
         ReportPaste("Pasted settings" + (replaced.Length == 0 ? "" : $" · replaced {string.Join(", ", replaced)}"),
-            proposal.Reframed ? 1 : 0, proposal.FactsUnavailable ? 1 : 0);
+            proposal.Reframed ? 1 : 0, proposal.Skips);
     }
 
     private EditSettings CaptureLiveEditState()
@@ -213,12 +234,12 @@ public partial class MainWindowViewModel
     {
         if (_copiedSettings == null) return;
 
-        List<(ImageFile Target, EditSettings Previous, EditSettings Settings)> proposed = [];
+        List<(ImageFile Target, EditSettings Previous, EditSettings Settings, bool LensApplied)> proposed = [];
         var reframed = 0;
-        var unavailable = 0;
+        var skips = new List<KeyValuePair<string, string>>();
         var invalid = 0;
         var skipped = 0;
-        var snapshot = (_copiedSource!, _copiedSettings);
+        var snapshot = new PasteSnapshot(_copiedSource!, _copiedSettings, _copiedProfileSource!);
         var changesFrame = groups.Any(group => group.Name is "Crop & Straighten" or "Geometry");
         Dictionary<ImageFile, CropWriteContext>? cropContexts = null;
 
@@ -229,11 +250,13 @@ public partial class MainWindowViewModel
                 target => CaptureCropWriteContext(target, folderPaths));
         }
 
+        if (SelectedImage != null) RememberLoadedCamera(SelectedImage);
+
         var originals = targets.Select(target => (Target: target, Settings: target.EditSettings.Clone())).ToArray();
 
         try
         {
-            if (PasteNeedsFrameFacts(snapshot.Item2, groups))
+            if (PasteNeedsFrameFacts(snapshot.Settings, groups))
             {
                 await Task.Run(BuildProposals);
             }
@@ -274,8 +297,9 @@ public partial class MainWindowViewModel
         if (SelectedImage != null && proposed.Any(update => ReferenceEquals(update.Target, SelectedImage)))
         {
             surfaceGeneration = RequestEditedRender();
-            InstallDevelopDocument(SelectedImage, SelectedImage.EditSettings,
-                preserveCropDraft: !changesFrame, preserveLensDraft: true);
+            var update = proposed.Single(update => ReferenceEquals(update.Target, SelectedImage));
+            InstallDevelopDocument(SelectedImage, update.Settings,
+                preserveCropDraft: !changesFrame, preserveLensDraft: !update.LensApplied, previous: update.Previous);
 
             _lastSavedState = SelectedImage.EditSettings.Clone();
 
@@ -304,7 +328,7 @@ public partial class MainWindowViewModel
 
         var applied = targets.Count - invalid - skipped;
         var noun = applied == 1 ? "photo" : "photos";
-        ReportPaste($"Applied to {applied} {noun}", reframed, unavailable, invalid);
+        ReportPaste($"Applied to {applied} {noun}", reframed, skips, invalid);
 
         void BuildProposals()
         {
@@ -314,15 +338,15 @@ public partial class MainWindowViewModel
                 {
                     var proposal = PreparePaste(target, previous, groups, snapshot);
                     if (proposal.Reframed) reframed++;
-                    if (proposal.FactsUnavailable) unavailable++;
+                    skips.AddRange(proposal.Skips);
 
-                    if (proposal.FactsUnavailable && groups.Count == 1)
+                    if (EditSettingsJson.Serialize(proposal.Settings) == EditSettingsJson.Serialize(previous))
                     {
-                        skipped++;
+                        if (proposal.Skips.Count == groups.Count) skipped++;
                         continue;
                     }
 
-                    proposed.Add((target, previous, proposal.Settings));
+                    proposed.Add((target, previous, proposal.Settings, proposal.LensApplied));
                 }
                 catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
                 {

@@ -158,8 +158,9 @@ match Lensfun. This limitation concerns Nikon F, not other makers or uncoded len
 `LensSettings` stores three required booleans: distortion and chromatic aberration
 default on, vignetting off. The nullable `profileOverride` stores a per-image manual
 lens selection; there is no baseline field. `HasEdits` compares with those defaults,
-and Reset restores them and clears the override. Copy/paste and presets transfer only
-the booleans and preserve the destination override. RENDER.md §8 owns version acceptance.
+and Reset restores them and clears the override. Presets transfer only the booleans.
+Paste transfers an override only when Lens Profile is chosen and the target’s Optics picker
+offers that lens; Automatic applies to any RAW. RENDER.md §8 owns version acceptance.
 
 The three bits and escaped manual override join `BaseDecodeSettings.CacheKey`.
 Changing them re-decodes; version values and cache invalidation rules live in code

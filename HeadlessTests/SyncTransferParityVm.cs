@@ -20,12 +20,15 @@ internal sealed class SyncTransferParityVm : IAsyncDisposable
 
     internal MainWindowViewModel Vm { get; private set; } = null!;
 
-    internal async Task InitializeAsync(bool includeDeletedPreset = false)
+    internal void AdvancePreviewClock() => _clock.Advance(TimeSpan.FromMilliseconds(200));
+
+    internal async Task InitializeAsync(bool includeDeletedPreset = false, IBaseImageLoader? loader = null,
+        ISourceAvailabilityService? availability = null)
     {
         Catalog = await _fixture.CreateCatalogAsync();
-        Vm = _fixture.CreateViewModel(Catalog, new TinyBaseLoader(),
+        Vm = _fixture.CreateViewModel(Catalog, loader ?? new TinyBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask,
-            availabilityService: new TestSourceAvailabilityService(SourceAvailability.AvailableLocally),
+            availabilityService: availability ?? new TestSourceAvailabilityService(SourceAvailability.AvailableLocally),
             timeProvider: _clock);
         Vm.ImageService.Previews.AdjacentWarmEnabled = false;
         Vm.IsDevelopMode = true;

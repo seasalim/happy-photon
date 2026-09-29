@@ -157,7 +157,7 @@ public sealed class LensPickerTests : IDisposable
     }
 
     [Fact]
-    public async Task OverrideRoundTripsButNeverTransfersOrEntersPresets()
+    public async Task OverrideRoundTripsButDefaultGroupsAndPresetsExcludeIt()
     {
         var baseline = new EditSettings();
         var edited = baseline.Clone();

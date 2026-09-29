@@ -45,6 +45,11 @@ public partial class MainWindowViewModel
     {
         if (!ReferenceEquals(SelectedImage, image)) return;
 
+        if (isRawSource && state != null)
+        {
+            PasteFrameReader.RememberCamera(image, new(state.CameraIdentity, IsMonochromeSource));
+        }
+
         var presentationChanged = _isRawProfileCapable != isRawSource;
         _isRawProfileCapable = isRawSource;
         if (!isRawSource)

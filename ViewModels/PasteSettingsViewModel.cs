@@ -8,13 +8,15 @@ public sealed partial class PasteSettingsViewModel : ObservableObject
 {
     internal static IReadOnlyList<EditSettingsGroup> AvailableGroups { get; } =
         EditSettingsTransfer.Groups.Where(group => group.Kind == EditSettingsGroupKind.Look ||
-            group.Name is "Crop & Straighten" or "Geometry" or "Locals").ToArray();
+            group.Name is "Crop & Straighten" or "Geometry" or "Camera Profile" or "Lens Profile" or "Locals").ToArray();
 
     internal static bool HasOwn(EditSettings settings, string group) => group switch
     {
         "Crop & Straighten" => settings.Crop is { IsFullImage: false } || settings.HorizonRotation != 0,
         "Geometry" => settings.Geometry is { IsIdentity: false },
         "Locals" => settings.Locals is { Count: > 0 },
+        "Camera Profile" => settings.RawProfile != null,
+        "Lens Profile" => settings.Lens.ProfileOverride != null,
         _ => false
     };
 
@@ -30,6 +32,13 @@ public sealed partial class PasteSettingsViewModel : ObservableObject
         {
             var count = targets?.Count(target => HasOwn(target, group.Name)) ?? 0;
             var note = count == 0 ? "none have their own" : $"replaces own on {count} of {targetCount}";
+
+            note += group.Name switch
+            {
+                "Camera Profile" => "\nother camera models keep their own",
+                "Lens Profile" => "\nphotos outside the lens mount keep their own",
+                _ => ""
+            };
 
             return new PasteSettingsGroupViewModel(group,
                 remembered.GetValueOrDefault(group.Name, group.IsDefault), note);
