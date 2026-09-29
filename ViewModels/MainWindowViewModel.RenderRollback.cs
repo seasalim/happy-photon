@@ -16,6 +16,7 @@ public partial class MainWindowViewModel
             return false;
         }
 
+        InvalidateLocalMask();
         var replacedProfile = image.EditSettings.RawProfile;
         var cropDraft = _restoreCropModeOnRollback ? CurrentCrop : null;
         var horizonDraft = HorizonRotation;

@@ -39,7 +39,7 @@ public sealed partial class LocalsViewModelTests
         var stroke = vm.LiveBrushStroke!;
         Assert.Equal(3, stroke.Points.Count); Assert.Equal(.27, stroke.Feather); Assert.Equal(.35, stroke.Flow);
         Assert.Equal(vm.BrushRadius, stroke.Radius);
-        Assert.False(vm.ShowLocalMask); Assert.True(vm.IsLocalMaskVisible);
+        Assert.True(vm.ShowLocalMask); Assert.True(vm.IsLocalMaskVisible);
         Assert.Equal(history, vm.HistoryEntries.Count);
         await vm.CompleteLocalsGestureAsync();
         Assert.Equal("Add Brush", vm.HistoryEntries[0].Label);
@@ -61,7 +61,14 @@ public sealed partial class LocalsViewModelTests
         Assert.Empty(Assert.Single(vm.Locals).Strokes!); Assert.Equal("Clear strokes", vm.HistoryEntries[0].Label);
         await vm.UndoCommand.ExecuteAsync(null); Assert.Equal(3, vm.SelectedLocal!.Strokes!.Count);
         Assert.Equal(100, vm.BrushFlow); Assert.Equal("paint", vm.BrushMode);
+        vm.LocalExposure = 1;
+        Assert.True(vm.IsLocalMaskVisible);
+        vm.ShowLocalMask = false;
+        vm.LocalExposure = 0;
+        Assert.False(vm.IsLocalMaskVisible);
         vm.LocalExposure = 1; Assert.False(vm.IsLocalMaskVisible);
+        vm.LocalExposure = 0;
+        Assert.False(vm.IsLocalMaskVisible);
         Assert.True(vm.BeginBrushStroke(new(.3, .3))); Assert.True(vm.IsLocalMaskVisible);
         vm.EscapeLocals(); Assert.False(vm.IsLocalMaskVisible); Assert.False(vm.ShowLocalMask);
     }

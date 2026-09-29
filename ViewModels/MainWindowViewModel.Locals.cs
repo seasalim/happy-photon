@@ -8,7 +8,7 @@ public partial class MainWindowViewModel
 {
     [ObservableProperty] private bool _isLocalsMode;
     [ObservableProperty] private bool _isLocalCreationArmed;
-    [ObservableProperty] private bool _showLocalMask;
+    [ObservableProperty] private bool _showLocalMask = true;
     [ObservableProperty] private bool _isLocalMaskHeld;
     private string? _selectedLocalId;
     private string _localCreationType = "linear";
@@ -39,7 +39,7 @@ public partial class MainWindowViewModel
         _requestedPreviewIntent != PreviewSurfaceIntent.Original &&
         !_isHoveringPreset && _hoveredHistoryEntry == null && !IsWhiteBalancePicking;
     public bool IsLocalMaskVisible => CanEditLocals && (HasSelectedLocal || IsBrushCreationArmed) &&
-        (ShowLocalMask || IsLocalMaskHeld || IsLocalCreationArmed || IsBrushStrokeActive || IsNeutralBrush);
+        (ShowLocalMask || IsLocalMaskHeld || IsBrushCreationArmed || IsBrushStrokeActive || IsLocalHuePicking);
     public string LocalsInstruction => IsBrushSectionVisible && BrushLimitInstruction.Length > 0 ? BrushLimitInstruction
         : IsBrushCreationArmed ? "Paint to create · Escape cancels"
         : Locals.Count == 8
@@ -260,6 +260,7 @@ public partial class MainWindowViewModel
 
     private void NotifyLocalsState()
     {
+        RefreshLocalMaskPresentation();
         NotifySpotsState();
         for (var i = LocalRows.Count - 1; i >= 0; i--)
             if (!Locals.Any(local => local.Id == LocalRows[i].Local.Id)) LocalRows.RemoveAt(i);
@@ -271,7 +272,7 @@ public partial class MainWindowViewModel
         }
         OnPropertyChanged(nameof(SelectedLocalRow));
         foreach (var property in new[] { nameof(Locals), nameof(HasLocals), nameof(SelectedLocal),
-            nameof(LocalWhites), nameof(LocalBlacks), nameof(IsNeutralBrush),
+            nameof(LocalWhites), nameof(LocalBlacks),
             nameof(LocalTemperature), nameof(LocalTint), nameof(LocalSaturation), nameof(CanEditLocalColor),
             nameof(HasSelectedLocal), nameof(LocalExposure), nameof(CanAddLocal), nameof(CanEditLocals),
             nameof(IsLocalMaskVisible), nameof(LocalsInstruction), nameof(LocalsFrame),

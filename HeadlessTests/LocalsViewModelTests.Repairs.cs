@@ -16,6 +16,7 @@ public sealed partial class LocalsViewModelTests
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog, new TestTimeProvider());
+        vm.ShowLocalMask = false;
         await Prepare(vm, catalog); await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         vm.SelectedImage!.EditSettings.Locals = [new() { Cu = 2,
             Luminance = hue ? null : new() { Enabled = true, Lower = .2 },
@@ -33,7 +34,7 @@ public sealed partial class LocalsViewModelTests
             vm.SelectedImage.EditSettings.Repairs = [new() { Su = .2 }];
             // Invoke the existing refresh seam without changing any other mask input.
             typeof(MainWindowViewModel).GetMethod("RefreshLocalRangeMask", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(vm, null);
-            Assert.Null(vm.LocalRangeMask);
+            Assert.Same(first, vm.LocalRangeMask);
             release.TrySetResult(); await vm.PendingLocalMaskTask;
             Assert.Equal(2, renders);
             Assert.NotNull(vm.LocalRangeMask);

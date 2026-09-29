@@ -12,6 +12,7 @@ public sealed partial class LocalsViewModelTests
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog, new TestTimeProvider());
+        vm.ShowLocalMask = false;
         await Prepare(vm, catalog); await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         vm.SelectedImage!.EditSettings.Locals = [new() { Type = "brush", Exposure = 1,
             Strokes = [new() { Points = [new(8192, 8192)] }] }];
@@ -46,6 +47,7 @@ public sealed partial class LocalsViewModelTests
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog, new TestTimeProvider());
+        vm.ShowLocalMask = false;
         await Prepare(vm, catalog); await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -77,10 +79,11 @@ public sealed partial class LocalsViewModelTests
     }
 
     [AvaloniaFact]
-    public async Task FirstBrushStrokePinsEmptyMaskWithToggleOffThroughRelease()
+    public async Task FirstBrushStrokePinsEmptyMaskWithToggleOffThenHidesAtRelease()
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog, new TestTimeProvider());
+        vm.ShowLocalMask = false;
         await Prepare(vm, catalog); await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         var renders = 0;
         vm.LocalMaskRenderGateAsync = () => { renders++; return Task.CompletedTask; };
@@ -96,7 +99,11 @@ public sealed partial class LocalsViewModelTests
         vm.ExtendBrushStroke(new(.6, .6), 1000);
         Assert.Equal(1, renders); Assert.False(vm.ShowLocalMask);
         await vm.CompleteLocalsGestureAsync(); await vm.PendingLocalMaskTask;
-        Assert.Equal(2, renders); Assert.False(vm.ShowLocalMask); Assert.True(vm.IsLocalMaskVisible);
+        Assert.Equal(1, renders);
+        Assert.False(vm.ShowLocalMask);
+        Assert.False(vm.IsLocalMaskVisible);
+        Assert.Null(vm.LocalRangeMask);
+        Assert.Empty(vm.BrushOverlayStrokes);
     }
 
     [AvaloniaTheory]
@@ -105,6 +112,7 @@ public sealed partial class LocalsViewModelTests
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog, new TestTimeProvider());
+        vm.ShowLocalMask = false;
         await Prepare(vm, catalog); await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         vm.SelectedImage!.EditSettings.Locals = [new() { Type = "brush", Exposure = 1,
             Luminance = restricted ? new() { Enabled = true, Lower = .2 } : null,

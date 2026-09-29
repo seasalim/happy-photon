@@ -26,7 +26,7 @@ public sealed partial class LocalsViewModelTests
         var before = await ShortcutSnapshot(vm, catalog);
         ShortcutPress(window, Key.O);
         ShortcutDown(window, Key.M);
-        Assert.False(vm.ShowLocalMask);
+        Assert.True(vm.ShowLocalMask);
         Assert.False(vm.IsLocalMaskHeld);
         ShortcutUp(window, Key.M);
         vm.ToggleWhiteBalancePickerCommand.Execute(null);
@@ -131,6 +131,7 @@ public sealed partial class LocalsViewModelTests
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog);
         await PrepareShortcutLocal(vm, catalog);
+        vm.ShowLocalMask = false;
         var window = new MainWindow { Focusable = true };
         using var scope = TestUiScope.ForMainWindow(window, vm);
         if (suppression == "original") await vm.ToggleBeforeAfterCommand.ExecuteAsync(null);
@@ -159,6 +160,7 @@ public sealed partial class LocalsViewModelTests
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog);
         await PrepareShortcutLocal(vm, catalog);
+        vm.ShowLocalMask = false;
         var window = new MainWindow { Focusable = true };
         using var scope = TestUiScope.ForMainWindow(window, vm);
         Assert.True(window.Focus());

@@ -136,4 +136,85 @@ public sealed partial class LocalsViewModelTests
         }
         finally { release.TrySetResult(); }
     }
+    [AvaloniaTheory]
+    [InlineData("local")]
+    [InlineData("image")]
+    [InlineData("hidden")]
+    [InlineData("fullscreen")]
+    [InlineData("original")]
+    [InlineData("split")]
+    [InlineData("crop")]
+    [InlineData("preset-hover")]
+    [InlineData("history-hover")]
+    [InlineData("rollback")]
+    public async Task RetainedMaskAndReleaseRibbonCannotCrossOwnershipChanges(string route)
+    {
+        using var catalog = await _fixture.CreateCatalogAsync();
+        var clock = new TestTimeProvider();
+        await using var vm = CreateVm(catalog, clock);
+        await PrepareBrushMask(vm, catalog);
+        var shown = vm.LocalRangeMask;
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        vm.LocalMaskRenderGateAsync = () => release.Task;
+
+        try
+        {
+            Assert.True(vm.BeginBrushStroke(new(.7, .7)));
+            await vm.CompleteLocalsGestureAsync();
+            Assert.Same(shown, vm.LocalRangeMask);
+            Assert.Single(vm.BrushOverlayStrokes);
+
+            switch (route)
+            {
+                case "local":
+                    var other = new LocalAdjustment { Type = "brush", Strokes = [] };
+                    vm.SelectedImage!.EditSettings.Locals!.Add(other);
+                    vm.SelectedLocal = other;
+                    break;
+
+                case "image": vm.SelectedImage = null; break;
+
+                case "hidden": vm.ShowLocalMask = false; break;
+
+                case "fullscreen": vm.IsFullScreenMode = true; break;
+
+                case "original": await vm.ToggleBeforeAfterCommand.ExecuteAsync(null); break;
+
+                case "split": await vm.ToggleBeforeAfterSplitCommand.ExecuteAsync(null); break;
+
+                case "crop": await vm.ToggleCropModeCommand.ExecuteAsync(null); break;
+
+                case "preset-hover":
+                    await vm.PresetService.UseDirectoryAsync(_fixture.Path("mask-presets"));
+                    var preset = await vm.PresetService.SaveUserPresetAsync("Mask", new EditSettings { Exposure = .5 });
+                    await vm.PreviewPresetHoverAsync(preset.Id);
+                    break;
+
+                case "history-hover":
+                    var hover = vm.PreviewHistoryHoverAsync(vm.HistoryEntries.Last());
+                    clock.Advance(TimeSpan.FromMilliseconds(80));
+                    await hover.WaitAsync(TestWaits.Condition);
+                    break;
+
+                case "rollback":
+                    vm.ImageService.Previews.RenderGateAsync = () =>
+                        Task.FromException(new InvalidOperationException("Injected preview failure"));
+                    Assert.True(vm.BeginBrushStroke(new(.8, .8)));
+                    await vm.CompleteLocalsGestureAsync();
+                    break;
+            }
+
+            Assert.Null(vm.LocalRangeMask);
+            Assert.Empty(vm.BrushOverlayStrokes);
+            release.TrySetResult();
+            await vm.PendingLocalMaskTask.WaitAsync(TestWaits.Condition);
+            Assert.NotSame(shown, vm.LocalRangeMask);
+            Assert.Empty(vm.BrushOverlayStrokes);
+        }
+        finally
+        {
+            release.TrySetResult();
+        }
+    }
+
 }

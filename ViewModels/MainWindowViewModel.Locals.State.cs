@@ -18,7 +18,17 @@ public partial class MainWindowViewModel
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(IsLocalHuePicking))
+            OnPropertyChanged(nameof(IsLocalMaskVisible));
+
+        if (e.PropertyName == nameof(IsLocalMaskVisible))
+        {
+            if (IsLocalMaskVisible) RefreshLocalMaskPresentation();
+            else InvalidateLocalMask();
+        }
+
         base.OnPropertyChanged(e);
+
         // Selection and history rebinds refresh both committed-content indicators.
         if (e.PropertyName == nameof(HasLocals))
             OnPropertyChanged(nameof(HasCommittedCrop));

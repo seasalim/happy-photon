@@ -22,6 +22,7 @@ public sealed partial class LocalsViewModelTests
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog);
         await PrepareRangeEntry(vm, catalog);
+        vm.ShowLocalMask = false;
         var window = new MainWindow { Focusable = true, Width = 1200, Height = 900 };
         using var scope = TestUiScope.ForMainWindow(window, vm);
         TextBox entry;
@@ -66,6 +67,7 @@ public sealed partial class LocalsViewModelTests
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog);
         await PrepareShortcutLocal(vm, catalog);
+        vm.ShowLocalMask = false;
         var window = new MainWindow { Focusable = true, Width = 1200, Height = 900 };
         using var scope = TestUiScope.ForMainWindow(window, vm);
         var slider = window.GetVisualDescendants().OfType<CompactSlider>()
@@ -95,6 +97,7 @@ public sealed partial class LocalsViewModelTests
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog, new TestTimeProvider());
         await PrepareShortcutLocal(vm, catalog);
+        vm.ShowLocalMask = false;
         var window = new MainWindow { Focusable = true, Width = 1200, Height = 900 };
         using var scope = TestUiScope.ForMainWindow(window, vm);
         Dispatcher.UIThread.RunJobs();
@@ -111,7 +114,7 @@ public sealed partial class LocalsViewModelTests
         Assert.True(vm.IsLocalsGestureActive);
         Assert.NotNull(pointer);
         Assert.Same(overlay, pointer.Captured);
-        Assert.Equal(creation, vm.IsLocalMaskVisible);
+        Assert.False(vm.IsLocalMaskVisible);
         var draft = vm.SelectedLocal! with { };
         ShortcutPress(window, Key.O);
         Assert.True(vm.ShowLocalMask);
@@ -122,7 +125,7 @@ public sealed partial class LocalsViewModelTests
         Assert.True(vm.IsLocalMaskVisible);
         Assert.True(vm.IsLocalMaskHeld);
         ShortcutUp(window, Key.M);
-        Assert.Equal(creation, vm.IsLocalMaskVisible);
+        Assert.False(vm.IsLocalMaskVisible);
         Assert.Equal(draft, vm.SelectedLocal);
         Assert.True(vm.IsLocalsGestureActive);
         Assert.Same(overlay, pointer.Captured);
@@ -146,6 +149,7 @@ public sealed partial class LocalsViewModelTests
         var clock = new TestTimeProvider();
         await using var vm = CreateVm(catalog, clock);
         await PrepareRangeEntry(vm, catalog);
+        vm.ShowLocalMask = false;
         vm.LocalLuminanceLower = 47;
         clock.Advance(TimeSpan.FromMilliseconds(200));
         await vm.PendingPreviewDebounceTask!;

@@ -37,7 +37,9 @@ public sealed partial class LocalsShowcaseTests
                 await vm.CompleteLocalsGestureAsync();
                 vm.BrushMode = "erase"; vm.BrushSize = 58;
                 vm.BeginBrushStroke(new(.45, .53)); vm.ExtendBrushStroke(new(.6, .53), 1000);
-                await vm.CompleteLocalsGestureAsync(); vm.BrushMode = "paint"; vm.ShowLocalMask = true;
+                await vm.CompleteLocalsGestureAsync(); vm.BrushMode = "paint";
+                Assert.True(vm.ShowLocalMask);
+                Assert.True(vm.IsLocalMaskVisible);
             }
             else if (scene == "brush-erasing")
             {
@@ -51,7 +53,7 @@ public sealed partial class LocalsShowcaseTests
         }
         var window = new MainWindow();
         using var scope = TestUiScope.ForMainWindow(window, vm, show: false);
-        ShowcaseTestHelper.Capture(scene, scope, new PixelSize(1200, 700), ThemeVariant.Dark, shown =>
+        ShowcaseTestHelper.Capture(scene == "brush-mask" ? "locals-brush-mask" : scene, scope, new PixelSize(1200, 700), ThemeVariant.Dark, shown =>
         {
             shown.GetVisualDescendants().OfType<Avalonia.Controls.ScrollViewer>()
                 .Single(control => control.Name == "DevelopControlsScrollViewer").Offset = default;

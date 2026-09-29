@@ -40,6 +40,7 @@ public sealed partial class LocalsShowcaseTests
         await TestWaits.UntilAsync(() => vm.PreviewImage != null && vm.IsHistoryLoaded);
         await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         vm.SelectedLocal = vm.Locals[^1];
+        await vm.PendingLocalMaskTask.WaitAsync(TestWaits.Condition);
         var window = new MainWindow();
         using var scope = TestUiScope.ForMainWindow(window, vm, show: false);
         ShowcaseTestHelper.Capture("develop-locals-eight-disabled", scope, new PixelSize(1200, 700), HappyPhotonThemes.MidGray,

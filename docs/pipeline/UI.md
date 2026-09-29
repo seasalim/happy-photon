@@ -86,10 +86,10 @@ below four screen pixels it becomes a crosshair. Letterbox space restores the cu
 An immediate LocalMaskColor ribbon (Paint) or translucent white band (Erase) accompanies the
 stroke. Preview ticks run at least 60 ms apart with one render in flight. New points
 wait for it to paint, then dispatch the latest state; a trailing dispatch is guaranteed.
-Completion and discard cancel pending preview work. The mask
-shows automatically while painting and while the selected brush is neutral, restoring
-the user's toggle when those conditions end. Requested masks remain pinned to the
-pre-stroke document during the drag and refresh at release or discard.
+Completion and discard cancel pending preview work. Show Mask starts on each session
+and O toggles it; it is not persisted. Visibility depends only on Show Mask, M held,
+a brush armed, a brush stroke in progress or Pick Hue, never brush values. Requested
+masks stay pinned during a drag; the release ribbon stays until its committed mask lands.
 
 Paint anchors in the geometry-corrected, pre-crop frame. Crop and quarter-turn rotation
 preserve alignment; horizon or keystone edits after painting shift paint relative to
@@ -98,7 +98,9 @@ scene content, as they do for gradients.
 Show Mask is display-only, including for disabled/neutral locals; it never enters
 pixels, scopes, thumbnails or export and only temporarily suppresses clipping display.
 Restricted masks use the loaded base matching the accepted surface, without source
-reads or decode, and show Updating mask until a matching result arrives.
+reads or decode. A visible mask stays until its content replacement arrives; Updating
+mask marks pending content only. Surface-size swaps neither clear nor request masks.
+Retention ends on image/local changes, hiding, suspension or rollback.
 Pick Hue temporarily shows the mask, commits an accepted sample once, and yields to
 Escape, navigation, other tools and canvas gestures before handle hit-testing.
 

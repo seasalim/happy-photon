@@ -120,6 +120,8 @@ public partial class MainWindowViewModel
         var label = IsBrushStrokeActive ? (_localsHandle == LocalHandle.Create ? "Add Brush" :
             LiveBrushStroke!.Mode == "erase" ? "Erase stroke" : "Brush stroke") : _localsHandle == LocalHandle.Create ?
             (_localsGestureLocal!.IsRadial ? "Add Radial" : "Add Linear") : "Local geometry";
+        if (LiveBrushStroke is { } released) _releasedBrushStrokes.Add(released);
+
         _localsGestureBefore = null;
         _localsGestureImage = null;
         IsLocalCreationArmed = false;
@@ -132,7 +134,8 @@ public partial class MainWindowViewModel
     {
         CancelLocalHuePick();
         StopBrushPreview();
-        var wasBrush = IsBrushStrokeActive;
+        if (IsLocalsGestureActive) InvalidateLocalMask();
+
         var before = _localsGestureBefore;
         var image = _localsGestureImage;
         _localsGestureBefore = null;
@@ -141,7 +144,6 @@ public partial class MainWindowViewModel
         _previewDebounce?.Cancel();
         image.EditSettings = before.Clone();
         image.HasEdits = before.HasEdits;
-        if (wasBrush) { _localMaskCancellation?.Cancel(); _localMaskIdentity = null; }
         IsLocalCreationArmed = false;
         if (ReferenceEquals(image, SelectedImage))
         {

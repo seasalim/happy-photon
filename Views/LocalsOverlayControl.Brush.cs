@@ -51,7 +51,7 @@ public sealed partial class LocalsOverlayControl
 
     private void DrawBrush(DrawingContext context, LocalsFrame frame)
     {
-        if (_owner?.LiveBrushStroke is { } stroke)
+        foreach (var stroke in _owner?.BrushOverlayStrokes ?? [])
         {
             var path = new StreamGeometry();
             using (var shape = path.Open())

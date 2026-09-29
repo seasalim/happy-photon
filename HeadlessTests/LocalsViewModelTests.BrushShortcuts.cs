@@ -196,7 +196,7 @@ public sealed partial class LocalsViewModelTests
         Assert.Equal(new[] { Key.OemOpenBrackets, Key.OemOpenBrackets,
             Key.OemCloseBrackets, Key.OemCloseBrackets, Key.LeftAlt, Key.RightAlt }, unhandled);
         ShortcutPress(window, Key.O);
-        Assert.True(vm.ShowLocalMask);
+        Assert.False(vm.ShowLocalMask);
         ShortcutDown(window, Key.M);
         Assert.True(vm.IsLocalMaskHeld);
         ShortcutUp(window, Key.M);

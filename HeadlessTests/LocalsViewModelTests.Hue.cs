@@ -31,7 +31,7 @@ public sealed partial class LocalsViewModelTests
         Assert.Equal("Click a color in the image · Escape cancels", vm.LocalHuePickAvailability);
         Assert.False(vm.IsLocalCreationArmed); Assert.True(vm.ShowLocalMask); Assert.True(vm.IsLocalHuePicking);
         await vm.PickLocalHueAsync(new(.5, .5));
-        Assert.False(vm.IsLocalHuePicking); Assert.False(vm.ShowLocalMask);
+        Assert.False(vm.IsLocalHuePicking); Assert.True(vm.ShowLocalMask);
         Assert.Empty(vm.LocalHuePickAvailability);
         Assert.True(vm.IsLocalHueEnabled); Assert.Equal(80, vm.LocalHueWidth); Assert.Equal(12, vm.LocalHueSoftness);
         Assert.Equal(count + 1, vm.HistoryEntries.Count); Assert.Equal("Pick Hue", vm.HistoryEntries[0].Label);
@@ -145,7 +145,7 @@ public sealed partial class LocalsViewModelTests
         vm.ToggleLocalHuePickCommand.Execute(null);
         await vm.PickLocalHueAsync(new(-.1, .5)); Assert.True(vm.IsLocalHuePicking); Assert.Null(vm.SelectedLocal!.Hue);
         await vm.PickLocalHueAsync(new(.5, .5)); Assert.True(vm.IsLocalHuePicking); Assert.Null(vm.SelectedLocal.Hue);
-        vm.EscapeLocals(); Assert.False(vm.ShowLocalMask);
+        vm.EscapeLocals(); Assert.True(vm.ShowLocalMask);
         await using var mono = CreateVm(catalog, raw: true, mono: true);
         await Prepare(mono, catalog); await mono.ToggleLocalsModeCommand.ExecuteAsync(null);
         await mono.PlaceLocalAtCenterCommand.ExecuteAsync(null);

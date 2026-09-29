@@ -76,6 +76,7 @@ public sealed partial class LocalsViewModelTests
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog);
+        vm.ShowLocalMask = false;
         await Prepare(vm, catalog); await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         await vm.PlaceLocalAtCenterCommand.ExecuteAsync(null);
         await vm.ToggleLocalLuminanceCommand.ExecuteAsync(null);
@@ -98,8 +99,9 @@ public sealed partial class LocalsViewModelTests
         vm.ShowLocalMask = true; await vm.PendingLocalMaskTask;
         Assert.NotNull(vm.LocalRangeMask); Assert.False(vm.IsLocalRangeMaskUpdating);
         Assert.False(vm.SelectedLocal!.Enabled); Assert.Equal(0, vm.LocalExposure);
+        var previousMask = vm.LocalRangeMask;
         vm.LocalLuminanceLower = 60;
-        Assert.Null(vm.LocalRangeMask);
+        Assert.Same(previousMask, vm.LocalRangeMask);
         await vm.PendingLocalMaskTask; Assert.NotNull(vm.LocalRangeMask);
         vm.CloseLocalsCommand.Execute(null); Assert.Null(vm.LocalRangeMask);
     }
@@ -110,6 +112,7 @@ public sealed partial class LocalsViewModelTests
         using var catalog = await _fixture.CreateCatalogAsync();
         var clock = new TestTimeProvider();
         await using var vm = CreateVm(catalog, clock);
+        vm.ShowLocalMask = false;
         await Prepare(vm, catalog); await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         await vm.PlaceLocalAtCenterCommand.ExecuteAsync(null);
         await vm.ToggleLocalLuminanceCommand.ExecuteAsync(null);
@@ -135,7 +138,7 @@ public sealed partial class LocalsViewModelTests
         try
         {
             vm.LocalLuminanceLower = 60;
-            Assert.Null(vm.LocalRangeMask); Assert.True(vm.IsLocalRangeMaskUpdating);
+            Assert.Same(mask, vm.LocalRangeMask); Assert.True(vm.IsLocalRangeMaskUpdating);
         }
         finally { release.TrySetResult(); }
         await vm.PendingLocalMaskTask;
@@ -153,6 +156,7 @@ public sealed partial class LocalsViewModelTests
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         await using var vm = CreateVm(catalog, new TestTimeProvider());
+        vm.ShowLocalMask = false;
         await Prepare(vm, catalog); await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
         await vm.PlaceLocalAtCenterCommand.ExecuteAsync(null);
         await vm.ToggleLocalLuminanceCommand.ExecuteAsync(null);
