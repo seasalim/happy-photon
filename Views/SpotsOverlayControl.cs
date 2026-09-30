@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -17,7 +18,21 @@ public sealed class SpotsOverlayControl : Control
 
     private Point? _hover;
 
+    private Point? _topLevelPosition;
+
+    private TopLevel? _topLevel;
+
     private Point _press;
+
+    private (SpotHandle Handle, Repair? Spot) _target;
+
+    private static readonly Cursor CreateCursor = new(StandardCursorType.None);
+
+    private static readonly Cursor MoveCursor = new(StandardCursorType.SizeAll);
+
+    private static readonly Cursor DrawCursor = new(StandardCursorType.Cross);
+
+    private static readonly Pen Highlight = new(HappyPhotonColors.CropBorder, 2);
 
     private static readonly Pen Guide = new(HappyPhotonColors.CropBorder, 1);
 
@@ -30,9 +45,22 @@ public sealed class SpotsOverlayControl : Control
         ClipToBounds = true;
         Focusable = true;
         DataContextChanged += (_, _) => BindOwner();
-        AttachedToVisualTree += (_, _) => BindOwner();
+        LayoutUpdated += ViewportChanged;
+        AttachedToVisualTree += (_, _) =>
+        {
+            _topLevel = TopLevel.GetTopLevel(this);
+            _topLevel?.AddHandler(PointerMovedEvent, TrackPointer, RoutingStrategies.Tunnel, handledEventsToo: true);
+            _topLevel?.AddHandler(PointerExitedEvent, LeaveTopLevel);
+
+            BindOwner();
+        };
         DetachedFromVisualTree += (_, _) =>
         {
+            _topLevel?.RemoveHandler(PointerMovedEvent, TrackPointer);
+            _topLevel?.RemoveHandler(PointerExitedEvent, LeaveTopLevel);
+            _topLevel = null;
+            _topLevelPosition = null;
+
             CancelCapture();
             if (_owner != null) _owner.PropertyChanged -= OwnerChanged;
             _owner = null;
@@ -52,13 +80,15 @@ public sealed class SpotsOverlayControl : Control
     {
         if (e.PropertyName is nameof(MainWindowViewModel.Spots) or nameof(MainWindowViewModel.CanEditSpots) or
             nameof(MainWindowViewModel.SpotDisplayMap) or nameof(MainWindowViewModel.SpotSize) or
-            nameof(MainWindowViewModel.HideSpotCircles)) Refresh();
+            nameof(MainWindowViewModel.HideSpotCircles) or nameof(MainWindowViewModel.SelectedSpot) or
+            nameof(MainWindowViewModel.IsSpotsGestureActive)) Refresh();
     }
 
     private void Refresh()
     {
         IsVisible = _owner?.CanEditSpots == true;
         if (_pointer != null && (!IsVisible || _owner?.IsSpotsGestureActive != true)) CancelCapture();
+        UpdateFeedback();
         InvalidateVisual();
     }
 
@@ -67,8 +97,11 @@ public sealed class SpotsOverlayControl : Control
         var pointer = _pointer;
         _pointer = null;
         if (pointer == null) return;
+
         _owner?.DiscardSpotsGesture();
         pointer.Capture(null);
+        UpdateFeedback();
+        InvalidateVisual();
     }
 
     internal Point ToCanvas(Point point)
@@ -107,18 +140,22 @@ public sealed class SpotsOverlayControl : Control
 
         foreach (var spot in vm.Spots)
         {
-            if (spot != vm.SelectedSpot && _hover == null) continue;
+            if (spot != vm.SelectedSpot && _hover == null && _pointer == null) continue;
+
             var circle = Circle(new(spot.U, spot.V), spot.Radius);
             context.DrawGeometry(null, Outline, circle);
-            context.DrawGeometry(null, Guide, circle);
+            context.DrawGeometry(null,
+                _target.Spot == spot && _target.Handle != SpotHandle.Source ? Highlight : Guide, circle);
         }
+
         if (vm.SelectedSpot is { } selected)
         {
             var map = vm.SpotDisplayMap!;
             var (su, sv) = RepairGeometry.ClampSource(selected, map.BaseWidth, map.BaseHeight);
             var circle = Circle(new(su, sv), selected.Radius);
             context.DrawGeometry(null, Outline, circle);
-            context.DrawGeometry(null, Source, circle);
+            context.DrawGeometry(null,
+                _target.Spot == selected && _target.Handle == SpotHandle.Source ? Highlight : Source, circle);
             var source = ToCanvas(new(su, sv));
             var destination = ToCanvas(new(selected.U, selected.V));
             Line(source, destination);
@@ -131,7 +168,8 @@ public sealed class SpotsOverlayControl : Control
                 Line(destination, destination - unit * 7 - wing);
             }
         }
-        if (_hover is { } hover && _pointer == null)
+
+        if (_hover is { } hover && _pointer == null && _target.Handle == SpotHandle.Create)
         {
             var cursor = Circle(ToBase(hover), vm.NewSpotRadius);
             context.DrawGeometry(null, Outline, cursor);
@@ -164,31 +202,97 @@ public sealed class SpotsOverlayControl : Control
     {
         base.OnPointerPressed(e);
         if (_owner is not { CanEditSpots: true } vm || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+
         var point = e.GetPosition(this);
-        var handle = vm.SelectedSpot is { } selected ? HitHandle(point, selected) : null;
-        if (handle == null)
-        {
-            var hit = vm.Spots.Reverse().FirstOrDefault(spot => HitHandle(point, spot) is SpotHandle.Destination or SpotHandle.Edge);
-            vm.SelectedSpot = hit;
-            handle = hit == null ? SpotHandle.Create : SpotHandle.Destination;
-        }
-        if (vm.BeginSpotsGesture(handle.Value, ToBase(point)))
+        var target = ResolveTarget(point);
+        _topLevelPosition = e.GetPosition(_topLevel);
+        vm.SelectedSpot = target.Spot;
+        _hover = point;
+
+        if (vm.BeginSpotsGesture(target.Handle, ToBase(point)))
         {
             _press = point;
             _pointer = e.Pointer;
+            SetFeedback(target, point);
             e.Pointer.Capture(this);
         }
+
         Focus();
+        InvalidateVisual();
         e.Handled = true;
+    }
+
+    private (SpotHandle Handle, Repair? Spot) ResolveTarget(Point point)
+    {
+        var vm = _owner!;
+        if (vm.SelectedSpot is { } selected && HitHandle(point, selected) is { } handle) return (handle, selected);
+
+        var hit = vm.Spots.Reverse().FirstOrDefault(spot => HitHandle(point, spot) is SpotHandle.Destination or SpotHandle.Edge);
+
+        return (hit == null ? SpotHandle.Create : SpotHandle.Destination, hit);
+    }
+
+    private void TrackPointer(object? sender, PointerEventArgs e)
+    {
+        _topLevelPosition = e.GetPosition(_topLevel);
+        ViewportChanged(sender, e);
+    }
+
+    private void LeaveTopLevel(object? sender, PointerEventArgs e)
+    {
+        _topLevelPosition = null;
+        ViewportChanged(sender, e);
+    }
+
+    private void ViewportChanged(object? sender, EventArgs e)
+    {
+        var previous = (_hover, _target, Cursor);
+        UpdateFeedback();
+        if (previous != (_hover, _target, Cursor)) InvalidateVisual();
+    }
+
+    private void UpdateFeedback()
+    {
+        if (_pointer != null) return;
+
+        _hover = null;
+
+        if (IsVisible && _owner?.CanEditSpots == true && _topLevelPosition is { } position &&
+            _topLevel?.InputHitTest(position) == this && _topLevel.TranslatePoint(position, this) is { } point &&
+            Bounds.Width > 0 && Bounds.Height > 0)
+        {
+            _hover = point;
+            SetFeedback(ResolveTarget(point), point);
+            return;
+        }
+
+        _target = default;
+        Cursor = null;
+    }
+
+    private void SetFeedback((SpotHandle Handle, Repair? Spot) target, Point point)
+    {
+        _target = target;
+        var center = target.Spot is { } spot ? ToCanvas(new(spot.U, spot.V)) : point;
+
+        Cursor = target.Handle switch
+        {
+            SpotHandle.Create => _pointer == null ? CreateCursor : DrawCursor,
+            SpotHandle.Edge => ResizeCursor.ForAngle(Math.Atan2(point.Y - center.Y, point.X - center.X)),
+            _ => MoveCursor
+        };
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
-        _hover = e.GetPosition(this);
-        Cursor = new Cursor(StandardCursorType.None);
+        var point = e.GetPosition(this);
+        _topLevelPosition = e.GetPosition(_topLevel);
+
         if (_pointer != null && _owner?.CanEditSpots == true)
-            _owner.MoveSpotsGesture(ToBase(_hover.Value), ((Vector)(_hover.Value - _press)).Length);
+            _owner.MoveSpotsGesture(ToBase(point), ((Vector)(point - _press)).Length);
+
+        UpdateFeedback();
         InvalidateVisual();
         e.Handled = true;
     }
@@ -197,10 +301,14 @@ public sealed class SpotsOverlayControl : Control
     {
         base.OnPointerReleased(e);
         if (_pointer == null || _owner == null) return;
+
         var point = e.GetPosition(this);
+        _topLevelPosition = e.GetPosition(_topLevel);
         _owner.MoveSpotsGesture(ToBase(point), ((Vector)(point - _press)).Length);
         _pointer = null;
         e.Pointer.Capture(null);
+        UpdateFeedback();
+        InvalidateVisual();
         e.Handled = true;
         await _owner.CompleteSpotsGestureAsync();
     }
@@ -209,7 +317,7 @@ public sealed class SpotsOverlayControl : Control
     {
         base.OnPointerExited(e);
         _hover = null;
-        Cursor = null;
+        UpdateFeedback();
         InvalidateVisual();
     }
 

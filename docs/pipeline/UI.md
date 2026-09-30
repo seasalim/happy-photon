@@ -215,6 +215,8 @@ CHARACTERIZATION.md §7.6.
 
 ## 4. Viewer interactions
 
+- **Spot pointer:** empty image shows the brush circle; move and angle-based resize cursors emphasize the target circle (unless circles are hidden), persist during capture, and use a crosshair for a Create drag.
+
 - **Display color management:** viewer surfaces derive display copies from retained
   canonical pixels for supported monitor profiles; source reads and edits are unchanged.
   OUTPUT.md §1 owns conversion. About names the profile and whether matrix/TRC, Windows

@@ -30,7 +30,7 @@ public sealed partial class SpotsViewModelTests
         var overlay = viewer.GetVisualDescendants().OfType<SpotsOverlayControl>().Single();
         Point WindowPoint(Point normalized) => overlay.TranslatePoint(overlay.ToCanvas(normalized), window)!.Value;
         var click = WindowPoint(new(.25, .3));
-        window.MouseMove(click);
+        window.MouseMove(WindowPoint(new(.1, .1)));
         Assert.Equal("None", overlay.Cursor?.ToString());
         window.MouseDown(click, MouseButton.Left);
         window.MouseUp(click, MouseButton.Left);

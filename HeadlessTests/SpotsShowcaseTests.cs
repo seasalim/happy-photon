@@ -16,6 +16,8 @@ public sealed class SpotsShowcaseTests
     [InlineData("spots-empty")]
     [InlineData("spots-heal-selected")]
     [InlineData("spots-clone")]
+    [InlineData("spots-hover-move")]
+    [InlineData("spots-hover-resize")]
     public async Task RenderScene(string scene)
     {
         using var fixture = new CatalogVmFixture("spots-shots");
@@ -48,10 +50,21 @@ public sealed class SpotsShowcaseTests
             var overlay = shown.GetVisualDescendants().OfType<SpotsOverlayControl>().Single();
             Assert.True(overlay.IsVisible);
             Assert.True(overlay.Bounds.Width > 0);
-            var origin = overlay.TranslatePoint(new Point(overlay.Bounds.Width * .8, overlay.Bounds.Height * .8), shown)!.Value;
+            var point = scene switch
+            {
+                "spots-hover-move" => new Point(.4, .4),
+                "spots-hover-resize" => new Point(.44, .4),
+                _ => new Point(.9, .9)
+            };
+            var origin = overlay.TranslatePoint(overlay.ToCanvas(point), shown)!.Value;
             Avalonia.Headless.AvaloniaHeadlessPlatform.ForceRenderTimerTick();
             Avalonia.Headless.HeadlessWindowExtensions.MouseMove(shown, origin);
-            Assert.Equal("None", overlay.Cursor?.ToString());
+            Assert.Equal(scene switch
+            {
+                "spots-hover-move" => "SizeAll",
+                "spots-hover-resize" => "SizeWestEast",
+                _ => "None"
+            }, overlay.Cursor?.ToString());
         });
     }
 }
