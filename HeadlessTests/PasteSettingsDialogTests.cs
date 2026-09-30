@@ -95,7 +95,7 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
         Assert.True(Assert.Single(model.Groups, group => group.Group.Name == "Geometry").IsSelected);
         Assert.All(model.Groups.Where(group => group.Group.Name is not ("White Balance" or "Geometry")),
             group => Assert.Equal(group.Group.IsDefault, group.IsSelected));
-        Assert.DoesNotContain(model.Groups, group => group.Group.Name is "Spot Removal");
+        Assert.False(Assert.Single(model.Groups, group => group.Group.Name == "Spot Removal").IsSelected);
         Assert.DoesNotContain("Future", model.CaptureChoice().Keys);
     }
 
@@ -104,6 +104,7 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
     [InlineData("paste-settings-none", true)]
     [InlineData("paste-settings-photo-groups", false)]
     [InlineData("paste-settings-profiles", false)]
+    [InlineData("paste-settings-spots", false)]
     public void Showcase(string scene, bool none)
     {
         var targets = Enumerable.Range(0, 24).Select(index => new EditSettings
@@ -111,6 +112,7 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
             RawProfile = index < 6 ? new RawProfileSelection { Source = RawProfileSource.UserFile } : null,
             Lens = new() { ProfileOverride = index < 8 ? "Canon EF 50mm f/1.8 MkII" : null },
             Crop = index < 5 ? new CropRegion { Left = .1 } : null,
+            Repairs = index < 9 ? [new Repair()] : null,
             Locals = index < 3 ? [new LocalAdjustment()] : null
         }).ToArray();
         var choice = new Dictionary<string, bool>();
@@ -127,8 +129,21 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
             choice["Lens Profile"] = true;
         }
 
+        if (scene == "paste-settings-spots")
+        {
+            choice["Spot Removal"] = true;
+        }
+
         var model = new PasteSettingsViewModel("IMG_0412.CR2", 24, choice, targets: targets, reframeCount: _ => 3);
         if (none) model.NoneCommand.Execute(null);
+
+        if (scene == "paste-settings-spots")
+        {
+            Assert.Equal(6, model.PhotoGroups.Count());
+            var spots = Assert.Single(model.Groups, group => group.Group.Name == "Spot Removal");
+            Assert.True(spots.IsSelected);
+            Assert.Equal("replaces own on 9 of 24\nother camera bodies keep their own", spots.Note);
+        }
 
         var dialog = new PasteSettingsDialog(model);
         ShowcaseTestHelper.Capture(scene, dialog, new PixelSize((int)dialog.Width, (int)dialog.Height), ThemeVariant.Dark,
@@ -184,26 +199,14 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
         Assert.Equal("White Balance", Assert.Single(restored.Groups, group => group.IsSelected).Group.Name);
     }
 
-    [AvaloniaTheory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void LongSourceNameKeepsActionsInsideWindow(bool includeSixthPhotoGroup)
+    [AvaloniaFact]
+    public void LongSourceNameKeepsActionsInsideWindow()
     {
         var model = new PasteSettingsViewModel(new string('W', 240) + ".CR2", 24,
             new Dictionary<string, bool>(), targets: [new EditSettings { Crop = new() { Left = .1 } }],
             reframeCount: _ => 3);
         var dialog = new PasteSettingsDialog(model);
         using var scope = new TestUiScope(dialog);
-
-        if (includeSixthPhotoGroup)
-        {
-            var photoGroups = dialog.GetLogicalDescendants().OfType<ItemsControl>().Single(control =>
-                control.ItemsSource is IEnumerable<PasteSettingsGroupViewModel> groups &&
-                groups.All(group => group.Group.Kind == EditSettingsGroupKind.PhotoSpecific));
-            photoGroups.ItemsSource = model.PhotoGroups.Append(new PasteSettingsGroupViewModel(
-                EditSettingsTransfer.Groups.Single(group => group.Name == "Spot Removal"), false,
-                "replaces own on 3 of 24")).ToArray();
-        }
 
         Dispatcher.UIThread.RunJobs();
         dialog.UpdateLayout();
@@ -226,11 +229,11 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
         }
 
         var boxes = dialog.GetLogicalDescendants().OfType<CheckBox>().ToArray();
-        Assert.Equal(model.Groups.Count + (includeSixthPhotoGroup ? 1 : 0), boxes.Length);
+        Assert.Equal(model.Groups.Count, boxes.Length);
         var notes = dialog.GetLogicalDescendants().OfType<TextBlock>()
             .Where(text => text.DataContext is PasteSettingsGroupViewModel group && text.Text == group.Note)
             .ToArray();
-        Assert.Equal(includeSixthPhotoGroup ? 6 : 5, notes.Length);
+        Assert.Equal(6, notes.Length);
         var lastBottom = 0d;
 
         foreach (var control in boxes.Cast<Control>().Concat(notes))

@@ -311,8 +311,8 @@ expander remembers its collapse state. Clicking the active look records Preset: 
 - **Copy/paste**: Copy (`Ctrl+Shift+C`) snapshots the live document and source filename.
   Browse Paste (`Ctrl+Shift+V`) opens **Paste Settings** for the selection, or the active
   photo when nothing is selected. The dialog offers look groups and a second column for
-  Crop & Straighten, Geometry, Camera Profile, Lens Profile and Locals, with in-memory
-  replace counts; All, None and
+  Crop & Straighten, Geometry, Camera Profile, Lens Profile, Locals and Spot Removal,
+  with in-memory replace counts; All, None and
   Defaults; Cancel and accent Paste. Enter pastes, Escape cancels, and Paste is disabled
   when no group is checked.
   The group-name map is an app setting saved on Paste; missing names use registry defaults
@@ -326,9 +326,15 @@ expander remembers its collapse state. Clicking the active look records Preset: 
   step. Only choosing every look group carries the source preset marker; partial choices
   clear it. Copy reports "Copied settings from <file>"; paste reports "Pasted settings"
   in Develop (naming replaced photo-specific values) and "Applied to N photos" in Browse.
+  Spot Removal replaces the list and rebinds Spots selection; presets exclude repairs and
+  Reset clears them. Other bodies keep their own. Skips report "different camera",
+  "camera body unknown", "different camera body", "different sensor size" or "facts unavailable".
+  Missing source facts and serial are frozen after successful reads on a paste choosing
+  Spot Removal when either photo has repairs; failed reads retry on the next paste.
+  Header-only serial reads are availability-checked and cached per file for the session.
   Opening the dialog reads no originals. Reframe counts appear there only with cached
   facts; otherwise they appear in the result. Compatibility skips report each group and reason
-  until the next status. Camera identity is captured at Copy; paste never reopens it for identity.
+  until the next status. Camera Profile identity is captured at Copy; paste never reopens it for that group.
   User/Adobe profiles require the same normalized camera model; embedded profiles require the
   same file. Manual lenses require the target’s Lensfun mount match; monochrome targets skip them.
   Built-in and Automatic apply to every RAW without reads. Fully skipped targets keep their

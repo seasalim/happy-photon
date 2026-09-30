@@ -95,6 +95,8 @@ public sealed class StandardBaseLoader : IBaseImageLoader
                     $"size={image.Width}x{image.Height}");
             }
 
+            var exif = image.GetExifProfile();
+            var camera = new CameraIdentity(exif?.GetValue(ExifTag.Make)?.Value, exif?.GetValue(ExifTag.Model)?.Value);
             var orientation = NormalizeOrientation(image.Orientation);
             image.AutoOrient();
             trace.Mark("Orient");
@@ -138,7 +140,12 @@ public sealed class StandardBaseLoader : IBaseImageLoader
                 profileDescription,
                 orientation,
                 fullWidth,
-                fullHeight);
+                fullHeight)
+            {
+                SensorFrame = orientation is >= 5 and <= 8
+                    ? new(fullHeight, fullWidth, orientation) : new(fullWidth, fullHeight, orientation),
+                CameraIdentity = camera
+            };
             if (preview)
             {
                 var pair = PreviewBasePairFactory.Create(

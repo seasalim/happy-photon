@@ -95,6 +95,10 @@ public sealed record BaseImageInfo(
     int FullHeight,
     double SourceExposureBiasEv = 0)
 {
+    internal PhotoSensorFrame? SensorFrame { get; init; }
+
+    internal PhotoCameraFacts? CameraFacts { get; init; }
+
     public bool IsMonochrome { get; init; }
     internal DcpProfilePayload? DcpProfile { get; init; }
     internal string ProfileToken { get; init; } = string.Empty;

@@ -11,15 +11,19 @@ public partial class MainWindowViewModel
 
     private PhotoProfileSnapshot? _copiedProfileSource;
 
+    private PhotoSpotSnapshot? _copiedSpotSource;
+
     private PhotoCameraFacts? RememberLoadedCamera(ImageFile image)
     {
         var cached = PasteFrameReader.ReadCamera(image, cachedOnly: true);
-        if (cached != null) return cached;
 
         using var basis = ImageService.Previews.AcquireLocalRangeBase(image, image.EditSettings, BaseImage.InteractivePreviewMaxDimension);
-        if (basis == null || !image.IsRaw) return null;
+        if (basis == null) return cached;
 
-        var facts = new PhotoCameraFacts(basis.Base.Info.CameraIdentity, basis.Base.Info.IsMonochrome);
+        if (basis.Base.Info.SensorFrame is { } frame) PasteFrameReader.RememberSensorFrame(image, frame);
+
+        var facts = cached ?? basis.Base.Info.CameraFacts ??
+            new PhotoCameraFacts(basis.Base.Info.CameraIdentity, basis.Base.Info.IsMonochrome);
         PasteFrameReader.RememberCamera(image, facts);
 
         return facts;
@@ -35,6 +39,7 @@ public partial class MainWindowViewModel
         }
 
         _copiedProfileSource = new(image.FilePath, image.IsRaw, facts);
+        _copiedSpotSource = new(image, facts, PasteFrameReader.ReadSensorFrame(image, cachedOnly: true));
     }
 
     internal PhotoFrameFactsReader PasteFrameReader =>
@@ -67,7 +72,9 @@ public partial class MainWindowViewModel
         return count;
     }
 
-    private static bool PasteNeedsFrameFacts(EditSettings settings, IReadOnlyCollection<EditSettingsGroup> groups) =>
+    private static bool PasteNeedsFrameFacts(EditSettings settings, IReadOnlyCollection<EditSettingsGroup> groups,
+        bool targetHasRepairs) =>
+        (settings.Repairs is { Count: > 0 } || targetHasRepairs) && groups.Any(group => group.Name == "Spot Removal") ||
         settings.Crop is { IsFullImage: false } && groups.Any(group => group.Name == "Crop & Straighten") ||
         settings.RawProfile != null && groups.Any(group => group.Name == "Camera Profile") ||
         settings.Lens.ProfileOverride != null && groups.Any(group => group.Name == "Lens Profile");
@@ -77,7 +84,7 @@ public partial class MainWindowViewModel
     {
         RememberLoadedCamera(target);
 
-        return PasteNeedsFrameFacts(snapshot.Settings, groups)
+        return PasteNeedsFrameFacts(snapshot.Settings, groups, previous.Repairs is { Count: > 0 })
             ? Task.Run(() => PreparePaste(target, previous, groups, snapshot))
             : Task.FromResult(PreparePaste(target, previous, groups, snapshot));
     }
@@ -89,6 +96,21 @@ public partial class MainWindowViewModel
         var skips = new Dictionary<string, string>();
         var compatible = ProfileSettingsTransfer.CompatibleGroups(snapshot.Profiles, snapshot.Settings,
             target, groups, PasteFrameReader, skips, cachedOnly);
+        var from = 1;
+        var to = 1;
+
+        if ((snapshot.Settings.Repairs is { Count: > 0 } || previous.Repairs is { Count: > 0 }) &&
+            compatible.Any(group => group.Name == "Spot Removal"))
+        {
+            var reason = snapshot.Spots.Compatibility(target, PasteFrameReader, cachedOnly, out from, out to);
+
+            if (reason != null)
+            {
+                skips["Spot Removal"] = reason;
+                compatible = compatible.Where(group => group.Name != "Spot Removal").ToArray();
+            }
+        }
+
         var proposal = previous.Clone();
         var reframed = false;
         var unavailable = false;
@@ -97,6 +119,12 @@ public partial class MainWindowViewModel
         {
             proposal = PhotoSettingsTransfer.Apply(snapshot.Source, snapshot.Settings, target, previous, compatible,
                 PasteFrameReader, out reframed, out unavailable, cachedOnly);
+        }
+
+        if (from != to && proposal.Repairs != null && !skips.ContainsKey("Spot Removal"))
+        {
+            proposal.Repairs = proposal.Repairs.Select(repair => RepairOrientation.Map(repair, from, to)).ToList();
+            EditSettingsJson.ValidateForSave(proposal);
         }
 
         if (unavailable) skips["Crop & Straighten"] = "facts unavailable";
@@ -141,7 +169,7 @@ public partial class MainWindowViewModel
         }
     }
 
-    private sealed record PasteSnapshot(ImageFile Source, EditSettings Settings, PhotoProfileSnapshot Profiles);
+    private sealed record PasteSnapshot(ImageFile Source, EditSettings Settings, PhotoProfileSnapshot Profiles, PhotoSpotSnapshot Spots);
 
     private sealed record PasteProposal(EditSettings Settings, bool Reframed,
         Dictionary<string, string> Skips, bool LensApplied);

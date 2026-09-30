@@ -132,7 +132,7 @@ public partial class MainWindowViewModel
         var changesFrame = groups.Any(group => group.Name is "Crop & Straighten" or "Geometry");
         var previousSettings = CapturePasteState(selectedImage, changesFrame,
             groups.Any(group => group.Name == "Lens Profile"));
-        var snapshot = new PasteSnapshot(_copiedSource!, _copiedSettings, _copiedProfileSource!);
+        var snapshot = new PasteSnapshot(_copiedSource!, _copiedSettings, _copiedProfileSource!, _copiedSpotSource!);
 
         PasteProposal proposal;
 
@@ -239,7 +239,7 @@ public partial class MainWindowViewModel
         var skips = new List<KeyValuePair<string, string>>();
         var invalid = 0;
         var skipped = 0;
-        var snapshot = new PasteSnapshot(_copiedSource!, _copiedSettings, _copiedProfileSource!);
+        var snapshot = new PasteSnapshot(_copiedSource!, _copiedSettings, _copiedProfileSource!, _copiedSpotSource!);
         var changesFrame = groups.Any(group => group.Name is "Crop & Straighten" or "Geometry");
         Dictionary<ImageFile, CropWriteContext>? cropContexts = null;
 
@@ -256,7 +256,7 @@ public partial class MainWindowViewModel
 
         try
         {
-            if (PasteNeedsFrameFacts(snapshot.Settings, groups))
+            if (PasteNeedsFrameFacts(snapshot.Settings, groups, originals.Any(item => item.Settings.Repairs is { Count: > 0 })))
             {
                 await Task.Run(BuildProposals);
             }

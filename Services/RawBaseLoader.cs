@@ -115,8 +115,11 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                         cameraResult.Error);
                 }
             }
+
             var dimensions = context.GetDimensions(cancellationToken);
             var rawMetadata = context.GetMetadata(cancellationToken);
+            var sensorCamera = new CameraIdentity(rawMetadata.NormalizedMake ?? rawMetadata.Make,
+                rawMetadata.NormalizedModel ?? rawMetadata.Model);
             var lensResult = isMonochrome ? LensPrescriptionReadResult.None
                 : ReadLensPrescription(file, rawMetadata,
                     context.GetLensIdentity(cancellationToken), dimensions, decode.LensProfileOverride);
@@ -415,16 +418,14 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 orientedFullSize.Height,
                 SourceExposureBiasEv: sourceExposureBiasEv)
             {
+                SensorFrame = new(fullWidth, fullHeight, RepairFrameOrientation(orientation, fullWidth, fullHeight)),
                 IsMonochrome = isMonochrome,
                 DcpProfile = dcp?.Payload,
                 ProfileToken = dcp?.Token ?? string.Empty,
                 ProfileStatus = dcp?.Status ?? DcpProfileErrorCode.None,
                 ProfileMessage = dcp?.Message,
-                CameraIdentity = isMonochrome
-                    ? null
-                    : new CameraIdentity(
-                        rawMetadata.NormalizedMake ?? rawMetadata.Make,
-                        rawMetadata.NormalizedModel ?? rawMetadata.Model),
+                CameraIdentity = isMonochrome ? null : sensorCamera,
+                CameraFacts = new(sensorCamera, isMonochrome),
                 LensPrescription = lensPrescription,
                 LensPrescriptionSummary = lensResult.GetSummary(lensPrescription)
             };

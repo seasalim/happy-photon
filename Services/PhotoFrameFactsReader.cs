@@ -4,7 +4,7 @@ using ImageMagick;
 
 namespace HappyPhoton.Services;
 
-internal sealed class PhotoFrameFactsReader(ISourceAvailabilityService availability)
+internal sealed partial class PhotoFrameFactsReader(ISourceAvailabilityService availability)
 {
     private readonly Dictionary<string, Header> _headers = new(StringComparer.OrdinalIgnoreCase);
 
@@ -44,7 +44,7 @@ internal sealed class PhotoFrameFactsReader(ISourceAvailabilityService availabil
                     var dimensions = raw.GetDimensions();
                     var metadata = raw.GetMetadata();
                     var monochrome = RawBaseLoader.IsMonochromeSensor(raw.GetSensorIdentity());
-                    _cameras[file.FilePath] = new(monochrome ? null : new CameraIdentity(
+                    _cameras[file.FilePath] = new(new CameraIdentity(
                         metadata.NormalizedMake ?? metadata.Make, metadata.NormalizedModel ?? metadata.Model), monochrome);
                     header = new((int)dimensions.VisibleWidth, (int)dimensions.VisibleHeight,
                         RawBaseLoader.NormalizeOrientation(dimensions.Orientation)) { IsMonochrome = monochrome };
@@ -53,7 +53,10 @@ internal sealed class PhotoFrameFactsReader(ISourceAvailabilityService availabil
                 {
                     using var image = new MagickImage();
                     image.Ping(file.FilePath);
-                    header = new((int)image.Width, (int)image.Height, (int)image.Orientation);
+                    header = new((int)image.Width, (int)image.Height, RawBaseLoader.NormalizeOrientation((int)image.Orientation));
+                    var exif = image.GetExifProfile();
+                    _cameras[file.FilePath] = new(new CameraIdentity(
+                        exif?.GetValue(ExifTag.Make)?.Value, exif?.GetValue(ExifTag.Model)?.Value), false);
                 }
 
                 _headers[file.FilePath] = header;

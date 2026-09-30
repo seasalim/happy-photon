@@ -80,7 +80,7 @@ public sealed class SyncProfileTransferTests
     {
         var target = new ImageFile(raw ? "target.dng" : "target.jpg");
         var reader = new PhotoFrameFactsReader(new SourceAvailabilityService());
-        reader.RememberCamera(target, new(null, mono));
+        reader.RememberCamera(target, new(mono ? new("Leica", "M Monochrom") : null, mono));
         var skips = new Dictionary<string, string>();
         var settings = new EditSettings
         {

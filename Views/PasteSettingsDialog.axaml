@@ -3,7 +3,7 @@
         xmlns:vm="using:HappyPhoton.ViewModels"
         x:Class="HappyPhoton.Views.PasteSettingsDialog"
         x:DataType="vm:PasteSettingsViewModel"
-        Title="Paste Settings" Width="660" Height="560"
+        Title="Paste Settings" Width="660" Height="572"
         CanResize="False" WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SurfaceLow}" Foreground="{DynamicResource TextPrimary}"
         FontFamily="{StaticResource FontBody}">

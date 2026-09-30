@@ -305,9 +305,12 @@ To apply the settings to several photographs:
 1. Return to Browse with `G`.
 2. Select the target photos.
 3. Press `Ctrl+Shift+V` to open **Paste Settings**.
-4. Choose the groups and press **Paste** (or Enter). Crop & Straighten, Geometry and Locals
-   are optional and show how many targets have their own values. Locals replace the whole
-   list. Crops transfer exactly on matching frames, or reframe without stretching on others.
+4. Choose the groups and press **Paste** (or Enter). Crop & Straighten, Geometry, Locals,
+   Camera Profile, Lens Profile and Spot Removal are optional and show how many targets
+   have their own values. Locals replace the whole
+   list. Spot Removal replaces repairs on the same camera body and sensor size, mapping
+   orientation; other bodies and photos with unknown serials keep their own and are reported.
+   Crops transfer exactly on matching frames, or reframe without stretching on others.
    Escape or Cancel leaves the photos unchanged.
 
 The dialog offers White Balance, Adjustments, Presence, Tone Curve, Color Mixer, Detail,
@@ -317,8 +320,8 @@ the dialog targets the active photo. Unticked groups retain their values, includ
 unsaved Develop edits. The source preset marker travels only when all look groups are chosen.
 
 Each changed target gets one **Paste settings** history step; one Undo restores its prior
-document. Paste discards an active Spots or Locals gesture first. Crop, rotation,
-straighten, geometry, profiles, locals and spot removal remain the target's own.
+document. Paste discards an active Spots or Locals gesture first. Unticked groups and
+quarter-turn rotation remain the target's own.
 
 ## 5. Build a selection
 

@@ -32,8 +32,9 @@ only enforces aspect-independent rules. Destinations may cross the frame edge.
 History restores repairs explicitly alongside locals. Clone and version creation
 isolate repair entries; the settings hash includes them through canonical JSON.
 Reset clears them, while "Preset: None" preserves them. Preset saving strips
-repairs and imported presets drop their payload before validation. Paste's
-explicit subset leaves destination repairs untouched. `EditHistoryLabel` supplies
+repairs and imported presets drop their payload before validation. Optional Spot Removal
+paste replaces the whole list on the same camera body and sensor dimensions, mapping
+source and destination centers between base orientations. `EditHistoryLabel` supplies
 spot labels; callers can identify gestures such as "Resize spot" or "New spot
 source" using its operation override, since the same value change can represent
 more than one action.
