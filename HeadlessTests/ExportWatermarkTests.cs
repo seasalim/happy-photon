@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -119,6 +120,28 @@ public sealed class ExportWatermarkTests
         vm.ExportSettings.Watermark.Text = " ";
         Assert.Equal("Enter watermark text.", vm.ExportSettings.ValidationReason);
         Assert.False(vm.CanRunExport);
+    }
+
+    [AvaloniaFact]
+    public async Task HeaderShowsWatermarkRestoredBeforeExportMode()
+    {
+        using var root = new TemporaryDirectory();
+        using var catalog = new CatalogService(root.Path);
+        await catalog.InitializeAsync();
+        await using var vm = new MainWindowViewModel(catalog);
+        var pane = new ExportSettingsPane { DataContext = vm };
+        using var scope = new TestUiScope(new Window { Width = 280, Height = 1100, Content = pane });
+        Dispatcher.UIThread.RunJobs();
+
+        vm.ExportSettings.Watermark.Restore(new WatermarkSpec("© Jane Doe"), enabled: true);
+        vm.WorkspaceMode = WorkspaceMode.Export;
+        Dispatcher.UIThread.RunJobs();
+
+        var expander = pane.FindControl<Expander>("ExportWatermarkExpander")!;
+        var header = Assert.IsType<StackPanel>(expander.Header);
+        var shown = header.GetLogicalDescendants().OfType<TextBlock>()
+            .Where(text => text.IsEffectivelyVisible).Select(text => text.Text).ToArray();
+        Assert.Equal(["Watermark", "\"© Jane Doe\" · Bottom right"], shown);
     }
 
     [AvaloniaFact]

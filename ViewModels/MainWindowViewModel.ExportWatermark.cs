@@ -87,11 +87,19 @@ public partial class MainWindowViewModel
         mark.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(ExportWatermark.FontFamily)) RefreshWatermarkFonts();
-            OnPropertyChanged(nameof(WatermarkSummary));
-            OnPropertyChanged(nameof(IsWatermarkSide));
-            OnPropertyChanged(nameof(IsWatermarkAlignmentVisible));
-            OnPropertyChanged(nameof(WatermarkAlignmentLabels));
+            NotifyWatermarkLayout();
         };
+
+        // The pane binds at startup, before saved settings restore the watermark.
+        NotifyWatermarkLayout();
+    }
+
+    private void NotifyWatermarkLayout()
+    {
+        OnPropertyChanged(nameof(WatermarkSummary));
+        OnPropertyChanged(nameof(IsWatermarkSide));
+        OnPropertyChanged(nameof(IsWatermarkAlignmentVisible));
+        OnPropertyChanged(nameof(WatermarkAlignmentLabels));
     }
 
     private void RefreshWatermarkFonts()
