@@ -75,6 +75,39 @@
         <Style Selector="Expander /template/ Path">
             <Setter Property="Stroke" Value="{DynamicResource TextMuted}"/>
         </Style>
+        <Style Selector="ScrollViewer.thin-scrollbar, ListBox.thin-scrollbar">
+            <Setter Property="ScrollViewer.AllowAutoHide" Value="False"/>
+        </Style>
+        <Style Selector="ScrollViewer.thin-scrollbar /template/ ScrollBar#PART_VerticalScrollBar,
+                         ListBox.thin-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar">
+            <Setter Property="Theme">
+                <ControlTheme TargetType="ScrollBar">
+                    <Setter Property="Width" Value="{StaticResource ThinScrollBarWidth}"/>
+                    <Setter Property="Template">
+                        <ControlTemplate>
+                            <Border Background="{DynamicResource Divider}" CornerRadius="{StaticResource RadiusSmall}">
+                                <Track Name="PART_Track" Orientation="Vertical" IsDirectionReversed="True"
+                                       Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}"
+                                       Value="{TemplateBinding Value, Mode=TwoWay}" ViewportSize="{TemplateBinding ViewportSize}">
+                                    <Track.Thumb>
+                                        <Thumb MinHeight="{StaticResource MaskRowControlSize}" Background="{DynamicResource TextMuted}">
+                                            <Thumb.Template>
+                                                <ControlTemplate>
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="{StaticResource RadiusSmall}"/>
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                </Track>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter>
+                    <Style Selector="^ /template/ Thumb:pointerover, ^ /template/ Thumb:pressed">
+                        <Setter Property="Background" Value="{DynamicResource TextSecondary}"/>
+                    </Style>
+                </ControlTheme>
+            </Setter>
+        </Style>
         <Style Selector="ScrollViewer.overlay-scrollbar /template/ ScrollBar#PART_VerticalScrollBar,
                          TreeView.overlay-scrollbar /template/ ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar">
             <Setter Property="Width" Value="12"/>

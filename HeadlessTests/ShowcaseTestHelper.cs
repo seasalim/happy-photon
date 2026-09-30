@@ -21,8 +21,9 @@ internal static class ShowcaseTestHelper
         Action<Window>? stage = null, TestUiScope? mainWindowScope = null)
     {
         ValidateScene(scene);
-        var outputDirectory = Path.GetFullPath(Path.Combine(
-            GoldenTestPaths.RepositoryRoot, "artifacts", "shots"));
+        var outputDirectory = Environment.GetEnvironmentVariable("HAPPY_PHOTON_MASK_LIST_BASELINE") == "1"
+            ? Path.Combine(GoldenTestPaths.RepositoryRoot, "HeadlessTests", "bin", "mask-list-baseline", "base")
+            : Path.GetFullPath(Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "shots"));
         var outputPath = Path.GetFullPath(
             Path.Combine(outputDirectory, $"{scene}.png"));
         var pathComparison = OperatingSystem.IsWindows()

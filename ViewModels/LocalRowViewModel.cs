@@ -12,14 +12,20 @@ public sealed class LocalRowViewModel(LocalAdjustment local) : ObservableObject
     public bool HasLuminance => Local.Luminance?.IsEffective == true;
     public string RangeLabel => HasLuminance ? Local.Hue?.Enabled == true ? "Luminance · Hue" : "Luminance"
         : Local.Hue?.Enabled == true ? "Hue" : "";
+
+    public string? SecondaryLabel => Enabled ? RangeLabel.Length == 0 ? null : RangeLabel
+        : RangeLabel.Length == 0 ? "Disabled" : $"Disabled · {RangeLabel}";
+
     internal void Refresh(LocalAdjustment value)
     {
         Local = value;
+
         OnPropertyChanged(nameof(Local));
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Glyph));
         OnPropertyChanged(nameof(Enabled));
         OnPropertyChanged(nameof(HasLuminance));
         OnPropertyChanged(nameof(RangeLabel));
+        OnPropertyChanged(nameof(SecondaryLabel));
     }
 }

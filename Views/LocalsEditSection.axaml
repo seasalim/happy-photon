@@ -6,6 +6,24 @@
              x:Class="HappyPhoton.Views.LocalsEditSection"
              x:DataType="vm:MainWindowViewModel" IsVisible="{Binding IsLocalsMode}">
     <UserControl.Styles>
+        <Style Selector="ListBox#LocalList TextBlock.muted">
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        </Style>
+        <Style Selector="ListBox#LocalList Button.delete-local">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="ListBox#LocalList Button.delete-local:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        </Style>
+        <Style Selector="ListBox#LocalList Button.delete-local:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPressed}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        </Style>
         <Style Selector="ListBoxItem">
             <Setter Property="Padding" Value="6,2"/>
             <Setter Property="MinHeight" Value="0"/>
@@ -42,26 +60,27 @@
         </StackPanel>
         <StackPanel x:Name="LocalDetailsArea" MinHeight="40" Spacing="8">
             <StackPanel x:Name="LocalEditor" Grid.IsSharedSizeScope="True" Spacing="8" IsVisible="{Binding HasLocals}">
-                <ListBox x:Name="LocalList" ItemsSource="{Binding LocalRows}" SelectedItem="{Binding SelectedLocalRow}"
+                <ListBox x:Name="LocalList" Classes="thin-scrollbar" ItemsSource="{Binding LocalRows}" SelectedItem="{Binding SelectedLocalRow}"
                          IsEnabled="{Binding CanEditLocals}" MaxHeight="120" AutomationProperties.Name="Local adjustments">
+                    <ListBox.Resources>
+                        <StaticResource x:Key="CheckBoxMinHeight" ResourceKey="MaskRowControlSize"/>
+                    </ListBox.Resources>
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:LocalRowViewModel">
-                            <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="24">
-                                <CheckBox IsChecked="{Binding Enabled, Mode=OneWay}" Padding="0" Margin="0,0,5,0"
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto" ToolTip.Tip="{Binding SecondaryLabel}">
+                                <CheckBox IsChecked="{Binding Enabled, Mode=OneWay}" Margin="0,0,5,0"
+                                          Padding="{StaticResource MaskRowControlPadding}" MinHeight="{StaticResource MaskRowControlSize}"
+                                          Height="{StaticResource MaskRowControlSize}" VerticalAlignment="Center"
                                           AutomationProperties.Name="Enable local"
                                           Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).ToggleLocalEnabledCommand}"
                                           CommandParameter="{Binding Local}"/>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                        <TextBlock Text="{Binding Glyph}" FontSize="11"/>
-                                        <TextBlock Text="{Binding Name}" FontSize="11"/>
-                                    </StackPanel>
-                                    <TextBlock Text="{Binding RangeLabel}" FontSize="9"
-                                               Foreground="{DynamicResource TextMuted}"/>
-                                    <TextBlock Text="Disabled" IsVisible="{Binding !Enabled}" FontSize="9"
-                                               Foreground="{DynamicResource TextMuted}"/>
-                                </StackPanel>
-                                <Button Grid.Column="2" Content="×" Padding="5,2" AutomationProperties.Name="Delete local"
+                                <TextBlock Grid.Column="1" Text="{Binding Glyph}" Classes.muted="{Binding !Enabled}" FontSize="{StaticResource FontSizeBody}"
+                                           Width="{StaticResource MaskRowControlSize}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Name}" Classes.muted="{Binding !Enabled}" FontSize="{StaticResource FontSizeBody}"
+                                           HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                <Button Grid.Column="3" Classes="delete-local" Content="×" AutomationProperties.Name="Delete local"
+                                        Padding="{StaticResource MaskRowControlPadding}" MinHeight="{StaticResource MaskRowControlSize}"
+                                        Height="{StaticResource MaskRowControlSize}" Width="{StaticResource MaskRowControlSize}" VerticalAlignment="Center"
                                         Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).DeleteLocalCommand}"
                                         CommandParameter="{Binding Local}"/>
                             </Grid>

@@ -84,7 +84,11 @@ The welcome surface uses named `FontSizeHero` and `FontSizeFeature` tokens.
 
 Panes are mode-specific: Browse owns review; Develop owns editing controls
 (pipeline/UI.md §2). Export layout and behavior live in WORKFLOW.md §6.
-Workspace scrollbars are hidden except for the folder tree and History overlays.
+Workspace scrollbars are hidden by default. A list that must show more content uses a very
+thin, thumb-only bar with no arrow buttons, never Fluent's default wide scrollbar:
+`overlay-scrollbar` floats over the rows and fades in on hover, for plain lists (folder
+tree, History); `thin-scrollbar` stays visible in its own gutter, for lists whose rows
+hold controls (Masks), so it never covers them.
 
 The navigator retains the active thumbnail and online-only action so folders retain
 space. When zoomed, it outlines the visible image region with a primary-text hairline
