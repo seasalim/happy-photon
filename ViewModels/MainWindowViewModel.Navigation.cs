@@ -97,6 +97,38 @@ public partial class MainWindowViewModel
         if (SelectedImage != null) MoveSelectionWithFocus(SelectedImage);
     }
 
+    /// <summary>
+    /// Shift+navigation in the Browse grid: move focus by <paramref name="offset"/>
+    /// and select exactly the span from the anchor to the new focus.
+    /// </summary>
+    /// <returns>The anchor used, for the caller to keep.</returns>
+    public ImageFile? ExtendSelection(ImageFile? anchor, int offset) =>
+        ExtendSelectionTo(anchor, Browse.MoveVisible(
+            VisibleRepresentative(SelectedImage), offset));
+
+    public ImageFile? ExtendSelectionToEdge(ImageFile? anchor, bool last) =>
+        ExtendSelectionTo(anchor, last ? Browse.LastVisible() : Browse.FirstVisible());
+
+    private ImageFile? ExtendSelectionTo(ImageFile? anchor, ImageFile? target)
+    {
+        if (!IsBrowseGridVisible || IsFullScreenMode)
+        {
+            MoveFocusAndSelection(target);
+            return target ?? anchor;
+        }
+
+        anchor = VisibleRepresentative(anchor);
+        if (anchor == null || !Browse.VisibleImages.Contains(anchor))
+            anchor = VisibleRepresentative(SelectedImage);
+
+        if (target == null || anchor == null) return anchor;
+
+        SelectedImage = target;
+        Browse.SelectOnlyRange(anchor, target);
+        UpdateSelectedCount();
+        return anchor;
+    }
+
     private void MoveFocusAndSelection(ImageFile? image)
     {
         if (image == null) return;

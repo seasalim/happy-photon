@@ -164,6 +164,8 @@ public static class ShortcutCatalog
             new("Ctrl+Click", "Toggle an image in the selection",
                 [Accelerator("Toggle selection")]),
             new("Shift+Click", "Select a range", [Accelerator("Select a range")]),
+            new("Shift+Arrow keys", "Extend the selection in the Browse grid",
+                [Accelerator("Extend the selection")]),
             new("Delete", "Delete versions in the Browse selection or move its originals to Trash after confirmation",
                 [Browse("Delete the Browse selection", "DeleteImageMenuItem")]),
             new("Ctrl+'", "Create a version from the current interpretation in Browse or Develop",

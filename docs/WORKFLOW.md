@@ -334,6 +334,8 @@ Filter the Browse to the group you want before selecting it. Then:
 - click a thumbnail's check badge, or press `Ctrl+Space`, to toggle the current image;
 - use `Ctrl+Click` to add or remove individual images;
 - use `Shift+Click` to select a range;
+- hold `Shift` with the arrow keys, `Page Up`/`Page Down`, or `Home`/`End` to extend
+  the selection from the last clicked or keyboard-focused image;
 - press `Ctrl+A` to select every image currently visible through the filters;
 - press `Ctrl+D`, or choose **Deselect All** from **More browse actions**, to clear
   the visible selection.

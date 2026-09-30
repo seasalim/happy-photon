@@ -7,7 +7,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class AssessmentTargetingTests : IDisposable
+public sealed partial class AssessmentTargetingTests : IDisposable
 {
     private readonly CatalogVmFixture _fx = new("assessment");
 

@@ -305,6 +305,26 @@ public partial class BrowseImageState : ObservableObject
         NotifySelectedCountChanged();
     }
 
+    // Keyboard range extension: the selection becomes exactly the span, so
+    // stepping back toward the anchor shrinks it.
+    public void SelectOnlyRange(ImageFile fromImage, ImageFile toImage)
+    {
+        var fromIndex = VisibleImages.IndexOf(fromImage);
+        var toIndex = VisibleImages.IndexOf(toImage);
+
+        if (fromIndex < 0 || toIndex < 0) return;
+
+        var start = Math.Min(fromIndex, toIndex);
+        var end = Math.Max(fromIndex, toIndex);
+
+        for (var i = 0; i < VisibleImages.Count; i++)
+        {
+            VisibleImages[i].IsSelected = i >= start && i <= end;
+        }
+
+        NotifySelectedCountChanged();
+    }
+
     public void SelectAllVisible()
     {
         foreach (var image in VisibleImages)

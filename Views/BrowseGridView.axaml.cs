@@ -194,7 +194,9 @@ public partial class BrowseGridView : UserControl
     public event EventHandler<(ImageFile from, ImageFile to)>? RangeSelectionRequested;
     public event EventHandler<(int StartIndex, int Count)>? ViewportRangeChanged;
 
-    private ImageFile? _lastClickedImage;
+    // Range anchor shared by Shift+Click and Shift+Arrow keys.
+    internal ImageFile? SelectionAnchor { get; set; }
+
     private ImageFile? _versionMenuTarget;
     private ObservableCollection<ImageFile>? _subscribedImages;
     private int _lastViewportStart = -1;
@@ -221,7 +223,7 @@ public partial class BrowseGridView : UserControl
 
         if (change.Property == ImagesProperty)
         {
-            _lastClickedImage = _versionMenuTarget = null;
+            SelectionAnchor = _versionMenuTarget = null;
             if (_subscribedImages != null)
             {
                 _subscribedImages.CollectionChanged -= OnImagesCollectionChanged;
@@ -333,10 +335,10 @@ public partial class BrowseGridView : UserControl
                 // Also set as active image
                 SelectedImage = image;
             }
-            else if (modifiers.HasFlag(KeyModifiers.Shift) && _lastClickedImage != null && Images != null)
+            else if (modifiers.HasFlag(KeyModifiers.Shift) && SelectionAnchor != null && Images != null)
             {
                 // Shift+Click: Range selection - notify ViewModel
-                RangeSelectionRequested?.Invoke(this, (_lastClickedImage, image));
+                RangeSelectionRequested?.Invoke(this, (SelectionAnchor, image));
                 // Also set as active image
                 SelectedImage = image;
             }
@@ -357,7 +359,7 @@ public partial class BrowseGridView : UserControl
                 SelectionChanged?.Invoke(this, EventArgs.Empty);
             }
 
-            _lastClickedImage = image;
+            SelectionAnchor = image;
         }
     }
 
@@ -394,7 +396,7 @@ public partial class BrowseGridView : UserControl
         }
 
         SelectedImage = image;
-        _lastClickedImage = image;
+        SelectionAnchor = image;
     }
 
     // View-local visual state lets groupmates react without a view-model round-trip.

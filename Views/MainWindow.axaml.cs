@@ -351,18 +351,20 @@ public partial class MainWindow : Window
                 return;
             }
 
+            if (TryHandleSelectionExtendKey(e, vm)) return;
+
             // Arrow keys: Navigation
             if (e.Key == Key.Left)
             {
                 vm.SelectPreviousImageCommand.Execute(null);
-                if (vm.IsBrowseGridVisible) ScrollSelectedIntoView(vm);
+                if (vm.IsBrowseGridVisible) FollowKeyboardFocus(vm);
                 e.Handled = true;
                 return;
             }
             else if (e.Key == Key.Right)
             {
                 vm.SelectNextImageCommand.Execute(null);
-                if (vm.IsBrowseGridVisible) ScrollSelectedIntoView(vm);
+                if (vm.IsBrowseGridVisible) FollowKeyboardFocus(vm);
                 e.Handled = true;
                 return;
             }
@@ -375,7 +377,7 @@ public partial class MainWindow : Window
                 {
                     var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
                     vm.SelectImageUp(itemsPerRow);
-                    if (vm.IsBrowseGridVisible) ScrollSelectedIntoView(vm);
+                    if (vm.IsBrowseGridVisible) FollowKeyboardFocus(vm);
                     e.Handled = true;
                     return;
                 }
@@ -383,7 +385,7 @@ public partial class MainWindow : Window
                 {
                     var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
                     vm.SelectImageDown(itemsPerRow);
-                    if (vm.IsBrowseGridVisible) ScrollSelectedIntoView(vm);
+                    if (vm.IsBrowseGridVisible) FollowKeyboardFocus(vm);
                     e.Handled = true;
                     return;
                 }
@@ -397,7 +399,7 @@ public partial class MainWindow : Window
                     var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
                     var rowsPerPage = _browseGridView?.GetRowsPerPage() ?? 1;
                     vm.SelectImageUp(itemsPerRow * rowsPerPage);
-                    ScrollSelectedIntoView(vm);
+                    FollowKeyboardFocus(vm);
                     e.Handled = true;
                     return;
                 }
@@ -406,21 +408,21 @@ public partial class MainWindow : Window
                     var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
                     var rowsPerPage = _browseGridView?.GetRowsPerPage() ?? 1;
                     vm.SelectImageDown(itemsPerRow * rowsPerPage);
-                    ScrollSelectedIntoView(vm);
+                    FollowKeyboardFocus(vm);
                     e.Handled = true;
                     return;
                 }
                 else if (e.Key == Key.Home)
                 {
                     vm.SelectFirstImage();
-                    ScrollSelectedIntoView(vm);
+                    FollowKeyboardFocus(vm);
                     e.Handled = true;
                     return;
                 }
                 else if (e.Key == Key.End)
                 {
                     vm.SelectLastImage();
-                    ScrollSelectedIntoView(vm);
+                    FollowKeyboardFocus(vm);
                     e.Handled = true;
                     return;
                 }
