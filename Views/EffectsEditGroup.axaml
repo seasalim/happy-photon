@@ -33,6 +33,7 @@
                              Label="Vignette"
                              Value="{Binding Vignette}"
                              Minimum="-100" Maximum="100" SmallChange="1"
+                             StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <Grid x:Name="MidpointRow"
               Classes="midpoint-row"

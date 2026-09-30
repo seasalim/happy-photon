@@ -277,7 +277,7 @@
                                                      Minimum="-3"
                                                      Maximum="3"
                                                      SmallChange="0.05"
-                                                     StringFormat="{}{0:F2}"
+                                                     StringFormat="{}{0:+0.00;-0.00;0.00}"
                                                      EnableDoubleClickReset="True"/>
                                 <views:CompactSlider x:Name="BrightnessSlider"
                                                      Classes="crossing-dependent"
@@ -287,12 +287,14 @@
                                                      Minimum="-100"
                                                      Maximum="100"
                                                      SmallChange="1"
+                                                     StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
                                 <views:CompactSlider Label="Contrast"
                                                      Value="{Binding Contrast}"
                                                      Minimum="-100"
                                                      Maximum="100"
                                                      SmallChange="1"
+                                                     StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
                                 <views:CompactSlider x:Name="SaturationSlider"
                                                      Classes="color-dependent"
@@ -302,6 +304,7 @@
                                                      Minimum="-100"
                                                      Maximum="100"
                                                      SmallChange="1"
+                                                     StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
                                 <views:CompactSlider x:Name="VibranceSlider"
                                                      Classes="color-dependent"
@@ -311,18 +314,21 @@
                                                      Minimum="-100"
                                                      Maximum="100"
                                                      SmallChange="1"
+                                                     StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
                                 <views:CompactSlider Label="Shadows"
                                                      Value="{Binding Shadows}"
                                                      Minimum="-100"
                                                      Maximum="100"
                                                      SmallChange="1"
+                                                     StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
                                 <views:CompactSlider Label="Highlights"
                                                      Value="{Binding Highlights}"
                                                      Minimum="-100"
                                                      Maximum="100"
                                                      SmallChange="1"
+                                                     StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
 
                                 <Grid x:Name="HighlightHandlingRow"
@@ -360,9 +366,11 @@
                                 </Grid>
 
                                 <views:CompactSlider Label="Whites" Value="{Binding Whites}" Minimum="-100" Maximum="100"
-                                                     SmallChange="1" EnableDoubleClickReset="True"/>
+                                                     SmallChange="1" StringFormat="{}{0:+0;-0;0}"
+                                                     EnableDoubleClickReset="True"/>
                                 <views:CompactSlider Label="Blacks" Value="{Binding Blacks}" Minimum="-100" Maximum="100"
-                                                     SmallChange="1" EnableDoubleClickReset="True"/>
+                                                     SmallChange="1" StringFormat="{}{0:+0;-0;0}"
+                                                     EnableDoubleClickReset="True"/>
 
                             </StackPanel>
                         </views:DevelopGroup>

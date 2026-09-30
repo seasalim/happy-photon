@@ -12,21 +12,25 @@
                              Label="Vertical"
                              Value="{Binding GeometryVertical}"
                              Minimum="-100" Maximum="100" SmallChange="1"
+                             StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="GeometryHorizontalSlider"
                              Label="Horizontal"
                              Value="{Binding GeometryHorizontal}"
                              Minimum="-100" Maximum="100" SmallChange="1"
+                             StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="GeometryAspectSlider"
                              Label="Aspect"
                              Value="{Binding GeometryAspect}"
                              Minimum="-100" Maximum="100" SmallChange="1"
+                             StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="GeometryDistortionSlider"
                              Label="Distortion"
                              Value="{Binding GeometryDistortion}"
                              Minimum="-100" Maximum="100" SmallChange="1"
+                             StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
     </StackPanel>
 </UserControl>

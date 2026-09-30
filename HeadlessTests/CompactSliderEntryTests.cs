@@ -22,6 +22,8 @@ public sealed partial class CompactSliderEntryTests
 {
     [AvaloniaTheory]
     [InlineData("Contrast", "35", 35)]
+    [InlineData("Contrast", "+15", 15)]
+    [InlineData("Exposure", "+0.35", .35)]
     [InlineData("Exposure", "0.37", .35)]
     [InlineData("Contrast", "+250", 100)]
     [InlineData("Contrast", "−20", -20)]
@@ -58,6 +60,14 @@ public sealed partial class CompactSliderEntryTests
         Assert.Null(s.Window.FocusManager!.GetFocusedElement());
         if (label == "Contrast") Assert.Contains("Contrast", s.Vm.HistoryEntries[0].Label);
         if (label == "Kelvin") Assert.Equal($"{expected:0}K", slider.DisplayText);
+
+        var displayed = slider.FindControl<TextBlock>("ValueText")!.Text!;
+        entry = s.Open(slider);
+        Assert.Equal(displayed.TrimEnd('K'), entry.Text);
+        s.Key(Key.Enter);
+        await s.Drain();
+        Assert.Equal(expected, slider.ValueToDisplay?.Invoke(slider.Value) ?? slider.Value, 7);
+        Assert.Equal(history + 1, s.Steps);
     }
 
     [AvaloniaTheory]

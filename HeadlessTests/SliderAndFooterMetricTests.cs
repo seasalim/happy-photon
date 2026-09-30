@@ -277,6 +277,45 @@ public sealed class SliderAndFooterMetricTests
             footer.FindControl<Button>("PairsButton")!.Classes);
     }
 
+    [AvaloniaFact]
+    public async Task SignedGlobalReadouts_FitAtMinimumPaneWidth()
+    {
+        using var root = new TemporaryDirectory();
+        using var catalog = new CatalogService(Path.Combine(root.Path, "catalog"));
+        await using var vm = new MainWindowViewModel(
+            catalog, new NullBaseLoader(), _ => Task.CompletedTask);
+        vm.IsDevelopMode = true;
+        var panel = new DevelopEditPanel { DataContext = vm };
+        var window = new Window { Width = 200, Height = 700, Content = panel };
+        using var scope = new TestUiScope(window, ThemeVariant.Dark);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(200, panel.Bounds.Width);
+        var global = panel.GetVisualDescendants().OfType<StackPanel>()
+            .Single(control => control.Classes.Contains("global-edits"));
+        var sliders = global.GetVisualDescendants().OfType<CompactSlider>()
+            .Where(slider => slider.Minimum < 0 && slider.Maximum == -slider.Minimum)
+            .ToArray();
+        Assert.Equal(20, sliders.Length);
+
+        foreach (var slider in sliders)
+        {
+            foreach (var value in new[] { slider.Minimum, slider.Maximum })
+            {
+                slider.SetCurrentValue(CompactSlider.ValueProperty, value);
+                Dispatcher.UIThread.RunJobs();
+                var text = slider.FindControl<TextBlock>("ValueText")!;
+                var column = slider.FindControl<Grid>("LayoutGrid")!.ColumnDefinitions[2].ActualWidth;
+                Assert.Equal(40, column);
+                Assert.StartsWith(value > 0 ? "+" : "-", text.Text);
+                Assert.Equal(TextTrimming.None, text.TextTrimming);
+                var intrinsic = IntrinsicWidth(text);
+                Assert.True(intrinsic <= column,
+                    $"{slider.Label}: '{text.Text}' exceeds the {column}px value column.");
+                Assert.True(intrinsic <= text.Bounds.Width);
+            }
+        }
+    }
+
     private static double IntrinsicWidth(TextBlock source)
     {
         var probe = new TextBlock

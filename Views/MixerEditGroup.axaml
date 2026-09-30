@@ -126,6 +126,7 @@
                              Minimum="-100" Maximum="100" SmallChange="1"
                              ShowValueFill="False"
                              TrackBrush="{Binding ActiveMixerBand, Converter={x:Static views:MixerEditGroup.HueTrackBrushConverter}}"
+                             StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="MixerSaturationSlider"
                              Label="Saturation"
@@ -133,6 +134,7 @@
                              Minimum="-100" Maximum="100" SmallChange="1"
                              ShowValueFill="False"
                              TrackBrush="{Binding ActiveMixerBand, Converter={x:Static views:MixerEditGroup.SaturationTrackBrushConverter}}"
+                             StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="MixerLuminanceSlider"
                              Label="Luminance"
@@ -140,6 +142,7 @@
                              Minimum="-100" Maximum="100" SmallChange="1"
                              ShowValueFill="False"
                              TrackBrush="{Binding ActiveMixerBand, Converter={x:Static views:MixerEditGroup.LuminanceTrackBrushConverter}}"
+                             StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
     </StackPanel>
 </UserControl>
