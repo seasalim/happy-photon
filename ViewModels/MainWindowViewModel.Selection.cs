@@ -237,6 +237,8 @@ public partial class MainWindowViewModel
 
     private void UpdateCanReset()
     {
+        RefreshDevelopGroupEdits();
+
         if (!CanEditSelectedImage)
         {
             CanReset = false;

@@ -10,7 +10,8 @@
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <TextBlock Classes="section-label" Text="{Binding}"/>
                     <Ellipse Width="5" Height="5" Fill="{DynamicResource TextSecondary}"
-                             VerticalAlignment="Center" IsVisible="False"/>
+                             VerticalAlignment="Center"
+                             IsVisible="{ReflectionBinding $parent[Expander].Tag.ShowsEditDot}"/>
                 </StackPanel>
             </DataTemplate>
         </Setter>
@@ -25,6 +26,7 @@
                                   Content="{TemplateBinding Header}"
                                   ContentTemplate="{TemplateBinding HeaderTemplate}"
                                   AutomationProperties.Name="{TemplateBinding Header}"
+                                  AutomationProperties.HelpText="{ReflectionBinding $parent[Expander].Tag.EditDotHelpText}"
                                   IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
                                   ToolTip.Tip="Alt+click to show only this group"/>
                     <ContentPresenter Name="PART_ContentPresenter" Grid.Row="1"

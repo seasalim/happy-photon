@@ -9,16 +9,8 @@ public sealed partial class PasteSettingsViewModel : ObservableObject
     internal static IReadOnlyList<EditSettingsGroup> AvailableGroups { get; } =
         EditSettingsTransfer.Groups;
 
-    internal static bool HasOwn(EditSettings settings, string group) => group switch
-    {
-        "Crop & Straighten" => settings.Crop is { IsFullImage: false } || settings.HorizonRotation != 0,
-        "Geometry" => settings.Geometry is { IsIdentity: false },
-        "Spot Removal" => settings.Repairs is { Count: > 0 },
-        "Locals" => settings.Locals is { Count: > 0 },
-        "Camera Profile" => settings.RawProfile != null,
-        "Lens Profile" => settings.Lens.ProfileOverride != null,
-        _ => false
-    };
+    internal static bool HasOwn(EditSettings settings, string group) =>
+        AvailableGroups.FirstOrDefault(item => item.Name == group)?.DiffersFromDefault(settings) == true;
 
     public PasteSettingsViewModel(string sourceName, int targetCount,
         IReadOnlyDictionary<string, bool> remembered, bool currentPhoto = false,
@@ -42,7 +34,10 @@ public sealed partial class PasteSettingsViewModel : ObservableObject
             };
 
             return new PasteSettingsGroupViewModel(group,
-                remembered.GetValueOrDefault(group.Name, group.IsDefault), note);
+                remembered.GetValueOrDefault(group.Name, group.IsDefault), note)
+            {
+                HasOwnValues = count > 0
+            };
         }).ToArray();
 
         foreach (var group in Groups)
@@ -109,6 +104,8 @@ public sealed partial class PasteSettingsGroupViewModel(
     EditSettingsGroup group, bool selected, string note = "") : ObservableObject
 {
     public EditSettingsGroup Group { get; } = group;
+
+    public bool HasOwnValues { get; init; }
 
     [ObservableProperty]
     private string _note = note;

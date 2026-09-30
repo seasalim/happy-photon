@@ -85,6 +85,7 @@ public partial class MainWindowViewModel
 
         _previewDebounce?.Cancel();
         SaveSlidersTo(image.EditSettings);
+        RefreshDevelopGroupEdits();
         image.HasEdits = image.EditSettings.HasEdits;
         var before = (_lastSavedState ?? image.EditSettings).Clone();
         var previousIntent = _requestedPreviewIntent;

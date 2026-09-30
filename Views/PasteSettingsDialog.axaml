@@ -32,8 +32,12 @@
             <ItemsControl ItemsSource="{Binding LookGroups}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:PasteSettingsGroupViewModel">
-                        <CheckBox Content="{Binding Group.Name}"
-                                  IsChecked="{Binding IsSelected}"/>
+                        <StackPanel>
+                            <CheckBox Content="{Binding Group.Name}" IsChecked="{Binding IsSelected}"/>
+                            <TextBlock Text="{Binding Note}" Margin="26,0,0,0" TextWrapping="Wrap"
+                                       IsVisible="{Binding HasOwnValues}"
+                                       FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

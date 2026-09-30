@@ -28,6 +28,31 @@ public sealed class SyncTransferParityViewModelTests(ITestOutputHelper output)
     [AvaloniaFact]
     public Task G1_DeletedPreset() => ReplayDestinationAsync("deleted-preset");
 
+    [AvaloniaTheory]
+    [InlineData(false, "Pasted settings")]
+    [InlineData(true, "Pasted settings · replaced Locals")]
+    public async Task DevelopPasteConfirmationNamesOnlyPhotoSpecificEdits(bool pasteLocals, string expected)
+    {
+        await using var fixture = new SyncTransferParityVm();
+        await fixture.InitializeAsync();
+        await fixture.CopyAsync(await fixture.ImageAsync("source", new()));
+        var settings = SyncTransferParityCorpus.CreateLook();
+        settings.Texture = 12;
+        settings.Locals = [new LocalAdjustment { Id = "22222222222222222222222222222222", Exposure = -.5 }];
+        var target = await fixture.ImageAsync("target", settings);
+        await fixture.SelectAsync(target);
+        var lookGroups = EditSettingsTransfer.Groups.Where(group => group.Kind == EditSettingsGroupKind.Look);
+        Assert.All(lookGroups, group => Assert.True(group.DiffersFromDefault(target.EditSettings), group.Name));
+        fixture.Vm.RestorePasteGroups(EditSettingsTransfer.Groups.ToDictionary(group => group.Name,
+            group => group.Kind == EditSettingsGroupKind.Look || pasteLocals && group.Name == "Locals"));
+
+        await fixture.Vm.PasteEditSettingsCommand.ExecuteAsync(null);
+
+        Assert.Equal(expected, fixture.Vm.TransientStatus);
+        Assert.All(lookGroups, group => Assert.False(group.DiffersFromDefault(target.EditSettings), group.Name));
+        Assert.Equal(!pasteLocals, target.EditSettings.Locals is { Count: > 0 });
+    }
+
     private async Task ReplayDestinationAsync(string name)
     {
         var destination = Assert.Single(SyncTransferParityCorpus.Destinations(), item => item.Name == name);

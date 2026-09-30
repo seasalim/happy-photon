@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -147,7 +148,79 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
 
         var dialog = new PasteSettingsDialog(model);
         ShowcaseTestHelper.Capture(scene, dialog, new PixelSize((int)dialog.Width, (int)dialog.Height), ThemeVariant.Dark,
-            shown => Assert.Equal(!none, shown.FindControl<Button>("PasteButton")!.IsEnabled));
+            shown =>
+            {
+                Assert.Equal(!none, shown.FindControl<Button>("PasteButton")!.IsEnabled);
+
+                if (scene == "paste-settings-default")
+                {
+                    AssertLookMatchesOriginalLayout(shown);
+                }
+            });
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LookNotesAppearOnlyForGroupsWithOwnValues(bool edited)
+    {
+        var target = edited
+            ? new EditSettings { Texture = 12, Detail = new() { LuminanceNr = 15 } }
+            : new EditSettings();
+        var model = new PasteSettingsViewModel("source.jpg", 3, new Dictionary<string, bool>(),
+            targets: [target, target.Clone(), new()]);
+        var dialog = new PasteSettingsDialog(model);
+        using var scope = new TestUiScope(dialog);
+        var notes = dialog.GetLogicalDescendants().OfType<TextBlock>()
+            .Where(text => text.DataContext is PasteSettingsGroupViewModel group && text.Text == group.Note)
+            .ToArray();
+        var lookNotes = notes.Where(text =>
+            ((PasteSettingsGroupViewModel)text.DataContext!).Group.Kind == EditSettingsGroupKind.Look).ToArray();
+        var visible = lookNotes.Where(text => text.IsEffectivelyVisible).ToArray();
+        output.WriteLine($"Look notes visible: {visible.Length}; expected: {(edited ? 2 : 0)}");
+        Assert.Equal(edited ? new[] { "Presence", "Detail" } : [],
+            visible.Select(text => ((PasteSettingsGroupViewModel)text.DataContext!).Group.Name));
+        Assert.All(visible, text => Assert.Equal("replaces own on 2 of 3", text.Text));
+        Assert.All(lookNotes.Except(visible), text => Assert.Equal(default, text.Bounds.Size));
+        Assert.Equal(6, notes.Except(lookNotes).Count(text => text.IsEffectivelyVisible));
+
+        if (!edited)
+        {
+            AssertLookMatchesOriginalLayout(dialog);
+        }
+    }
+
+    private void AssertLookMatchesOriginalLayout(Window dialog)
+    {
+        var look = Assert.Single(dialog.GetLogicalDescendants().OfType<ItemsControl>(),
+            control => control.ItemsSource?.Cast<object>().FirstOrDefault() is PasteSettingsGroupViewModel
+                { Group.Kind: EditSettingsGroupKind.Look });
+        var template = look.ItemTemplate;
+        var actual = Bounds();
+
+        try
+        {
+            // The Look template at 8d9e712 contains only this checkbox.
+            look.ItemTemplate = new FuncDataTemplate<PasteSettingsGroupViewModel>((group, _) =>
+                new CheckBox { Content = group!.Group.Name, IsChecked = group.IsSelected });
+            Dispatcher.UIThread.RunJobs();
+            dialog.UpdateLayout();
+            var original = Bounds();
+            output.WriteLine($"Look original/current last checkbox: {original[7]} / {actual[7]}");
+            Assert.Equal(original, actual);
+        }
+        finally
+        {
+            look.ItemTemplate = template;
+            Dispatcher.UIThread.RunJobs();
+            dialog.UpdateLayout();
+        }
+
+        Rect[] Bounds() => look.GetLogicalDescendants().OfType<CheckBox>().Cast<Control>()
+            .Concat(dialog.GetLogicalDescendants().OfType<Button>()
+                .Where(button => button.Classes.Contains("choice-link")))
+            .Select(control => new Rect(control.TranslatePoint(default, dialog)!.Value, control.Bounds.Size))
+            .ToArray();
     }
 
     [AvaloniaFact]
@@ -199,11 +272,15 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
         Assert.Equal("White Balance", Assert.Single(restored.Groups, group => group.IsSelected).Group.Name);
     }
 
-    [AvaloniaFact]
-    public void LongSourceNameKeepsActionsInsideWindow()
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LongSourceNameKeepsActionsInsideWindow(bool edited)
     {
+        var target = edited ? DevelopEditDotBaselineTests.AllGroupsEdited() : new EditSettings();
+        target.Crop = new() { Left = .1 };
         var model = new PasteSettingsViewModel(new string('W', 240) + ".CR2", 24,
-            new Dictionary<string, bool>(), targets: [new EditSettings { Crop = new() { Left = .1 } }],
+            new Dictionary<string, bool>(), targets: [target],
             reframeCount: _ => 3);
         var dialog = new PasteSettingsDialog(model);
         using var scope = new TestUiScope(dialog);
@@ -233,7 +310,8 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
         var notes = dialog.GetLogicalDescendants().OfType<TextBlock>()
             .Where(text => text.DataContext is PasteSettingsGroupViewModel group && text.Text == group.Note)
             .ToArray();
-        Assert.Equal(6, notes.Length);
+        notes = notes.Where(text => text.IsEffectivelyVisible).ToArray();
+        Assert.Equal(edited ? 14 : 6, notes.Length);
         var lastBottom = 0d;
 
         foreach (var control in boxes.Cast<Control>().Concat(notes))
@@ -245,7 +323,7 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
         }
 
         var gap = footerTop - lastBottom;
-        output.WriteLine($"Photo rows={notes.Length}; footer clearance={gap:F1}px");
+        output.WriteLine($"Group rows={notes.Length}; footer clearance={gap:F1}px");
         Assert.True(gap >= 18, $"Last group is {gap:F1}px above the footer; expected at least 18px.");
 
         var summary = Assert.Single(dialog.GetLogicalDescendants().OfType<TextBlock>(),

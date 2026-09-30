@@ -15,6 +15,7 @@ public partial class MainWindowViewModel
         if (image == null) return;
 
         SaveSlidersTo(image.EditSettings);
+        RefreshDevelopGroupEdits();
         image.HasEdits = image.EditSettings.HasEdits;
 
         await SaveEditSettingsAsync(image, historyLabel, before);

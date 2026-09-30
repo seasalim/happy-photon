@@ -49,6 +49,7 @@ public partial class MainWindowViewModel
         }
 
         image.EditSettings = settings;
+        RefreshDevelopGroupEdits();
         RebindLocalSelection();
 
         if (!RawProfilePickerProjector.ProfilesEqual(previousProfile, settings.RawProfile))

@@ -28,6 +28,16 @@ public partial class MainWindowViewModel
 
     public IReadOnlyList<DevelopGroupViewModel> DevelopGroupList { get; private set; } = [];
 
+    internal void RefreshDevelopGroupEdits()
+    {
+        var settings = CanEditSelectedImage ? SelectedImage?.EditSettings : null;
+
+        for (var i = 0; i < DevelopGroupList.Count; i++)
+        {
+            DevelopGroupList[i].RefreshEdits(settings);
+        }
+    }
+
     private void InitializeDevelopGroups()
     {
         DevelopGroupList = [ProfileGroup, WhiteBalanceGroup, AdjustmentsGroup, PresenceGroup,

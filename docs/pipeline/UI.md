@@ -370,7 +370,8 @@ indeterminate indicators.
 ## 10. Explicit UI non-goals
 
 Top-level Develop groups collapse individually, Alt+click solos a group, and
-expansion state persists. Locals disclosures and Export options may collapse.
+expansion state persists. A collapsed group with saved edits shows a neutral TextSecondary
+dot. Locals disclosures and Export options may collapse.
 There is no in-app migration/what's-new dialog or Browse editing surface.
 Export has no inclusion, rating, filter or range-selection UI.
 Exposure remains ±3 EV. The scope-box allowances and histogram-plot freeze are in §5.

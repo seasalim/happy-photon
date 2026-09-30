@@ -214,7 +214,8 @@ public partial class MainWindowViewModel
             _ = TrackDirectThumbnailOperation(RefreshThumbnailAsync(selectedImage));
         }
 
-        var replaced = groups.Where(group => PasteSettingsViewModel.HasOwn(previousSettings, group.Name) &&
+        var replaced = groups.Where(group => group.Kind == EditSettingsGroupKind.PhotoSpecific &&
+                PasteSettingsViewModel.HasOwn(previousSettings, group.Name) &&
                 !proposal.Skips.ContainsKey(group.Name))
             .Select(group => group.Name == "Crop & Straighten" ? "Crop" : group.Name).ToArray();
         ReportPaste("Pasted settings" + (replaced.Length == 0 ? "" : $" · replaced {string.Join(", ", replaced)}"),
