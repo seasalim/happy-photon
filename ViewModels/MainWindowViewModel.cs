@@ -66,6 +66,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             SignalBackgroundActivityStarted);
         Browse = new BrowseImageState(RetireThumbnail);
         ConfigureCapturePairs();
+        InitializeDevelopGroups();
         _folderTreeService = new FolderTreeService(
             catalogService.HasExplicitPath ? catalogService.CatalogPath : null);
         _imageService = new Lazy<ImageService>(() =>

@@ -179,7 +179,7 @@ fact. The row stays present and dims to `DisabledOpacity` when unavailable, so t
 panel does not reflow across mixed-source filmstrips; a contradictory non-RAW loaded
 fact disables the row without changing the stored value. Clip is the default.
 
-Color Mixer is always expanded; its band selection is session state and untouched
+Color Mixer band selection is session state and untouched
 bands remain identity. Detail and Effects apply to all sources. Midpoint dims when
 Vignette is zero; Geometry remains image-specific. Optics disables unavailable
 corrections in place and distinguishes corrective from aesthetic vignetting.
@@ -363,7 +363,8 @@ indeterminate indicators.
 
 ## 10. Explicit UI non-goals
 
-Top-level Develop groups are not collapsible; Locals disclosures and Export options
-may collapse. There is no in-app migration/what's-new dialog or Browse editing surface.
+Top-level Develop groups collapse individually, Alt+click solos a group, and
+expansion state persists. Locals disclosures and Export options may collapse.
+There is no in-app migration/what's-new dialog or Browse editing surface.
 Export has no inclusion, rating, filter or range-selection UI.
 Exposure remains ±3 EV. The scope-box allowances and histogram-plot freeze are in §5.

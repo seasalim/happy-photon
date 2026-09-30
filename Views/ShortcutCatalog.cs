@@ -217,6 +217,8 @@ public static class ShortcutCatalog
                 [Develop("Undo the last edit", "UndoEditButton")]),
             new("Ctrl+Y  /  Ctrl+Shift+Z", "Redo the last undone edit in Develop",
                 [Develop("Redo the last undone edit", "RedoEditButton")]),
+            new("Alt+Click", "Show only this Develop group",
+                [Develop("Show only this Develop group", "ExpanderHeader")]),
             new("Alt+Click", "Clear history above this step",
                 [Develop("Clear history above this step", "ClearHistoryAboveStepMenuItem")]),
             new("Mouse wheel", "Zoom in Develop", [Accelerator("Zoom")]),

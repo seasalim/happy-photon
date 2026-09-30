@@ -177,12 +177,14 @@
                     <views:LocalsEditSection/>
                     <views:SpotsEditSection/>
                     <StackPanel Classes="global-edits" Classes.locked="{Binding IsToolActive}" Spacing="0" IsEnabled="{Binding !IsToolActive}">
-                        <views:DevelopGroup Header="Profile" Classes="first">
+                        <views:DevelopGroup Header="Profile" IsExpanded="{Binding ProfileGroup.IsExpanded, Mode=TwoWay}"
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding ProfileGroup}" Classes="first">
                             <views:RawProfilePicker x:Name="RawProfilePicker"
                                 IsEnabled="{Binding IsColorEditingEnabled}"/>
                         </views:DevelopGroup>
 
-                        <views:DevelopGroup Header="White Balance">
+                        <views:DevelopGroup Header="White Balance" IsExpanded="{Binding WhiteBalanceGroup.IsExpanded, Mode=TwoWay}"
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding WhiteBalanceGroup}">
                             <StackPanel x:Name="WhiteBalanceControls"
                                         Classes="color-dependent"
                                         Spacing="4"
@@ -264,7 +266,8 @@
 
                         </views:DevelopGroup>
 
-                        <views:DevelopGroup Header="Adjustments">
+                        <views:DevelopGroup Header="Adjustments" IsExpanded="{Binding AdjustmentsGroup.IsExpanded, Mode=TwoWay}"
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding AdjustmentsGroup}">
                             <StackPanel Spacing="4">
                                 <views:CompactSlider Label="Exposure"
                                                      Value="{Binding Exposure}"
@@ -361,11 +364,13 @@
                             </StackPanel>
                         </views:DevelopGroup>
 
-                        <views:DevelopGroup Header="Presence">
+                        <views:DevelopGroup Header="Presence" IsExpanded="{Binding PresenceGroup.IsExpanded, Mode=TwoWay}"
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding PresenceGroup}">
                             <views:PresenceEditGroup x:Name="PresenceEditGroup"/>
                         </views:DevelopGroup>
 
-                        <views:DevelopGroup Header="Tone Curve">
+                        <views:DevelopGroup Header="Tone Curve" IsExpanded="{Binding ToneCurveGroup.IsExpanded, Mode=TwoWay}"
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding ToneCurveGroup}">
                             <views:CurveView x:Name="ToneCurveView"
                                              Curve="{Binding CurrentCurve}" CompositeCurve="{Binding CompositeCurve}" ActiveChannel="{Binding ActiveCurveChannel, Mode=TwoWay}"
                                              HasRedCurve="{Binding HasRedCurve}" HasGreenCurve="{Binding HasGreenCurve}" HasBlueCurve="{Binding HasBlueCurve}" CurveEditStarted="OnCurveEditStarted" CurveChanged="OnCurveChanged"
@@ -373,21 +378,26 @@
                                              Height="180"/>
                         </views:DevelopGroup>
 
-                        <views:DevelopGroup Header="Color Mixer">
+                        <views:DevelopGroup Header="Color Mixer" IsExpanded="{Binding ColorMixerGroup.IsExpanded, Mode=TwoWay}"
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding ColorMixerGroup}">
                             <views:MixerEditGroup x:Name="MixerEditGroup"
                                                   Classes="color-dependent"
                                                   IsEnabled="{Binding IsColorEditingEnabled}"/>
                         </views:DevelopGroup>
-                        <views:DevelopGroup Header="Detail">
+                        <views:DevelopGroup Header="Detail" IsExpanded="{Binding DetailGroup.IsExpanded, Mode=TwoWay}"
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding DetailGroup}">
                             <views:DetailEditGroup x:Name="DetailEditGroup"/>
                         </views:DevelopGroup>
-                        <views:DevelopGroup Header="Effects">
+                        <views:DevelopGroup Header="Effects" IsExpanded="{Binding EffectsGroup.IsExpanded, Mode=TwoWay}"
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding EffectsGroup}">
                             <views:EffectsEditGroup x:Name="EffectsEditGroup"/>
                         </views:DevelopGroup>
-                        <views:DevelopGroup Header="Geometry">
+                        <views:DevelopGroup Header="Geometry" IsExpanded="{Binding GeometryGroup.IsExpanded, Mode=TwoWay}"
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding GeometryGroup}">
                             <views:GeometryEditGroup x:Name="GeometryEditGroup"/>
                         </views:DevelopGroup>
-                        <views:DevelopGroup Header="Optics">
+                        <views:DevelopGroup Header="Optics" IsExpanded="{Binding OpticsGroup.IsExpanded, Mode=TwoWay}"
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding OpticsGroup}">
                             <views:LensEditGroup x:Name="LensEditGroup"/>
                         </views:DevelopGroup>
                     </StackPanel>

@@ -65,7 +65,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             Assert.Equal(180, curve.Bounds.Height);
             output.WriteLine($"L2 CurveCanvas: parentBounds={canvas.Bounds}; inCurve={BoundsIn(canvas, curve)}; cardHeight={curve.Bounds.Height}");
             var scroll = panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!;
-            Assert.InRange(scroll.Extent.Height, 0, 1532.5);
+            Assert.InRange(scroll.Extent.Height, 1531.5, 1532.5);
             output.WriteLine(FormattableString.Invariant(
                 $"L3 extent={scroll.Extent}; viewport={scroll.Viewport}; spacingSum={spacingSum:R}; normalizationDelta={270 - spacingSum:R}; thresholdWithoutChevronRows={scroll.Extent.Height + 270 - spacingSum:R}"));
             MeasurePresets(window, "Dark");
@@ -192,17 +192,21 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             Assert.Equal(Avalonia.Media.PenLineJoin.Round, chevron.StrokeJoin);
             var title = BoundsIn(group.Title, expander);
             var glyph = BoundsIn(chevron, expander);
+            var fill = header.GetVisualDescendants().OfType<Border>()
+                .Single(c => c.Name == "ToggleButtonBackground");
+            output.WriteLine($"HEADER-FILL {group.Name}: bounds={BoundsIn(fill, expander)}; contentWidth={((Control)expander.Content!).Bounds.Width}; radius={fill.CornerRadius}");
+            Assert.Equal(new Rect(-6, 0, ((Control)expander.Content!).Bounds.Width + 12, 43),
+                BoundsIn(fill, expander));
+            Assert.Equal(new CornerRadius(4), fill.CornerRadius);
+            Assert.Equal(fill.Bounds.Size, header.Bounds.Size);
             Assert.InRange(glyph.Center.Y, title.Top, title.Bottom);
             output.WriteLine($"CHEVRON {group.Name}: size={chevron.Bounds.Size}; stroke={chevron.StrokeThickness}");
 
             Assert.Equal(group.Name, AutomationProperties.GetName(header));
-            Assert.False(header.Focusable);
-            Assert.False(header.IsTabStop);
-            Assert.False(header.IsHitTestVisible);
-            Assert.False(header.Focus());
-            expander.IsExpanded = false;
-            Assert.True(expander.IsExpanded);
-            output.WriteLine($"L6 {group.Name}: expanded={expander.IsExpanded}; focusable={header.Focusable}; hitTestVisible={header.IsHitTestVisible}");
+            // WP2 replaces the inert WP1 L6 contract with accessible disclosure headers.
+            Assert.True(header.Focusable);
+            Assert.True(header.IsTabStop);
+            Assert.True(header.IsHitTestVisible);
         }
     }
 
@@ -257,18 +261,18 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
         Assert.True(completedCycle, "Keyboard traversal must complete a cycle within 400 Tab events.");
         var expected = mode == "normal" ? new[]
         {
-            "WhiteBalanceModeBox", "WhiteBalanceAutoButton", "WhiteBalancePickerButton",
-            "SliderRoot[Kelvin]", "SliderRoot[Tint]", "SliderRoot[Exposure]", "BrightnessSlider[Brightness]",
+            "Header[Profile]", "Header[White Balance]", "WhiteBalanceModeBox", "WhiteBalanceAutoButton", "WhiteBalancePickerButton",
+            "SliderRoot[Kelvin]", "SliderRoot[Tint]", "Header[Adjustments]", "SliderRoot[Exposure]", "BrightnessSlider[Brightness]",
             "SliderRoot[Contrast]", "SaturationSlider[Saturation]", "VibranceSlider[Vibrance]",
             "SliderRoot[Shadows]", "SliderRoot[Highlights]", "SliderRoot[Whites]", "SliderRoot[Blacks]",
-            "TextureSlider[Texture]", "ClaritySlider[Clarity]", "CompositeChannelButton", "RedChannelButton",
-            "GreenChannelButton", "BlueChannelButton", "Reset curve", "RedMixerButton", "OrangeMixerButton",
+            "Header[Presence]", "TextureSlider[Texture]", "ClaritySlider[Clarity]", "Header[Tone Curve]", "CompositeChannelButton", "RedChannelButton",
+            "GreenChannelButton", "BlueChannelButton", "Reset curve", "Header[Color Mixer]", "RedMixerButton", "OrangeMixerButton",
             "YellowMixerButton", "GreenMixerButton", "AquaMixerButton", "BlueMixerButton", "PurpleMixerButton",
             "MagentaMixerButton", "MixerHueSlider[Hue]", "MixerSaturationSlider[Saturation]",
-            "MixerLuminanceSlider[Luminance]", "CaptureSharpenSlider[Sharpen]", "LuminanceNrSlider[Luma NR]",
-            "ChromaNrSlider[Chroma NR]", "VignetteSlider[Vignette]", "GrainSlider[Grain]", "ListBoxItem[Medium]",
-            "GeometryVerticalSlider[Vertical]", "GeometryHorizontalSlider[Horizontal]",
-            "GeometryAspectSlider[Aspect]", "GeometryDistortionSlider[Distortion]"
+            "MixerLuminanceSlider[Luminance]", "Header[Detail]", "CaptureSharpenSlider[Sharpen]", "LuminanceNrSlider[Luma NR]",
+            "ChromaNrSlider[Chroma NR]", "Header[Effects]", "VignetteSlider[Vignette]", "GrainSlider[Grain]", "ListBoxItem[Medium]",
+            "Header[Geometry]", "GeometryVerticalSlider[Vertical]", "GeometryHorizontalSlider[Horizontal]",
+            "GeometryAspectSlider[Aspect]", "GeometryDistortionSlider[Distortion]", "Header[Optics]"
         } : Array.Empty<string>();
         Assert.Equal(expected, sequence);
         output.WriteLine($"L6 {mode} tabOrder ({sequence.Count}): {string.Join(" -> ", sequence)}");
@@ -286,6 +290,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
 
     private static string Identity(Control control) => control switch
     {
+        ToggleButton { Name: "ExpanderHeader" } header => $"Header[{((DevelopGroup)header.TemplatedParent!).Header}]",
         CompactSlider slider => $"{slider.Name ?? slider.Label}[{slider.Label}]",
         _ => control.Name ?? AutomationProperties.GetName(control) ??
             (control is ContentControl content ? $"{control.GetType().Name}[{content.Content}]" : control.GetType().Name)

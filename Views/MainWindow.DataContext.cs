@@ -42,6 +42,7 @@ public partial class MainWindow
             _subscribedViewModel.CancelWatermarkSettingsSave();
             SetExportWorkspaceSettingsSubscription(null);
             _subscribedViewModel.IsEnterTextInputFocused = null;
+            _subscribedViewModel.ToggleFocusedDevelopGroup = null;
             _subscribedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
             _subscribedViewModel = null;
         }
@@ -54,6 +55,7 @@ public partial class MainWindow
 
         vm.IsEnterTextInputFocused = () => WorkspaceKeyRouting.IsEnterTextInputFocused(
             FocusManager?.GetFocusedElement());
+        vm.ToggleFocusedDevelopGroup = () => DevelopGroup.ToggleFocusedHeader(FocusManager?.GetFocusedElement());
         vm.ZoomFitCommand = new RelayCommand(ZoomFit);
         vm.RequestZoomFit = () => GetActiveZoomPanControl()?.RequestFitToView(vm.ApplyFitZoom);
         vm.CaptureDevelopViewport = () =>
@@ -227,6 +229,7 @@ public partial class MainWindow
             vm.RestoreBrushPreferences(settings);
             vm.RestorePasteGroups(settings.PasteGroups);
             vm.RestorePresetGroups(settings.PresetGroups);
+            vm.RestoreDevelopGroups(settings.DevelopGroups);
             vm.RestoreShowCapturePairs(settings.ShowCapturePairs);
             vm.RestoreAppTheme(settings.AppTheme);
             vm.ExportSettings.StripLocationData = settings.StripLocationData;

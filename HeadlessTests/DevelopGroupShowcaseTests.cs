@@ -77,46 +77,53 @@ public sealed class DevelopGroupShowcaseTests
         });
     }
 
-    [AvaloniaFact]
-    public async Task HeadersIgnorePointerAndKeyboardInput()
+    [AvaloniaTheory]
+    [InlineData("develop-groups-collapsed")]
+    [InlineData("develop-groups-solo")]
+    [InlineData("develop-groups-hover")]
+    [InlineData("develop-groups-focus")]
+    public async Task CollapseAndHeaderStatesRender(string scene)
     {
-        await DevelopToolsBaselineTests.WithScene("normal", 1200, 700, (_, scope) =>
+        await DevelopToolsBaselineTests.WithScene("normal", 1200, 700, (vm, scope) =>
         {
-            // test-teardown-policy: allow - WithScene owns and disposes this MainWindow scope.
-            scope.Show();
-            var window = scope.Window!;
-            Dispatcher.UIThread.RunJobs();
-            var panel = window.GetVisualDescendants().OfType<DevelopEditPanel>().Single();
-            var groups = panel.GetVisualDescendants().OfType<DevelopGroup>().ToArray();
-
-            foreach (var group in groups)
+            ShowcaseTestHelper.Capture(scene, scope, new PixelSize(1200, 700), ThemeVariant.Dark, window =>
             {
-                var header = group.GetVisualDescendants().OfType<ToggleButton>()
-                    .Single(c => c.Name == "ExpanderHeader");
-                header.BringIntoView();
+                var panel = window.GetVisualDescendants().OfType<DevelopEditPanel>().Single();
+                var groups = panel.GetVisualDescendants().OfType<DevelopGroup>().ToArray();
+                panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!.Offset = default;
                 window.UpdateLayout();
-                var point = header.TranslatePoint(new Point(20, 8), window)!.Value;
 
-                foreach (var modifiers in new[] { RawInputModifiers.None, RawInputModifiers.Alt })
+                if (scene == "develop-groups-collapsed")
                 {
-                    window.MouseDown(point, MouseButton.Left, modifiers);
-                    window.MouseUp(point, MouseButton.Left, modifiers);
-                    Assert.All(groups, item => Assert.True(item.IsExpanded));
+                    vm.PresenceGroup.IsExpanded = false;
+                    vm.ToneCurveGroup.IsExpanded = false;
+                    vm.DetailGroup.IsExpanded = false;
+                    panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!.Offset = new Vector(0, 500);
+                }
+                else if (scene == "develop-groups-solo")
+                {
+                    var header = DevelopCollapseBaselineTests.Header(groups[5]);
+                    header.BringIntoView();
+                    DevelopCollapseBaselineTests.Settle(window);
+                    DevelopCollapseBaselineTests.Click(window, header, RawInputModifiers.Alt);
+                }
+                else
+                {
+                    var header = DevelopCollapseBaselineTests.Header(groups[0]);
+
+                    if (scene.EndsWith("hover"))
+                    {
+                        window.MouseMove(header.TranslatePoint(new Point(20, 8), window)!.Value);
+                    }
+                    else
+                    {
+                        Assert.True(header.Focus(NavigationMethod.Tab));
+                    }
                 }
 
-                Assert.False(header.Focus());
-                panel.Focusable = true;
-                Assert.True(panel.Focus());
-
-                foreach (var key in new[] { Key.Enter, Key.Space })
-                {
-                    var physicalKey = key == Key.Enter ? PhysicalKey.Enter : PhysicalKey.Space;
-                    window.KeyPress(key, RawInputModifiers.None, physicalKey, null);
-                    window.KeyRelease(key, RawInputModifiers.None, physicalKey, null);
-                    Assert.True(group.IsExpanded);
-                    Assert.True(header.IsChecked);
-                }
-            }
+                window.UpdateLayout();
+                ShowcaseTestHelper.SettleExpanderChevrons(panel);
+            });
 
             return Task.CompletedTask;
         });

@@ -111,6 +111,7 @@ public partial class MainWindow
             AppTheme = vm.AppTheme,
             PasteGroups = vm.CapturePasteGroups(),
             PresetGroups = new(vm.PresetGroups),
+            DevelopGroups = vm.CaptureDevelopGroups(),
             StripLocationData = vm.ExportSettings.StripLocationData,
             Watermark = vm.ExportSettings.Watermark.Capture(),
             WatermarkEnabled = vm.ExportSettings.Watermark.Enabled,

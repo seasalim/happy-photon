@@ -17,6 +17,8 @@ public class AppSettings
 
     public Dictionary<string, bool> PresetGroups { get; set; } = [];
 
+    public Dictionary<string, bool> DevelopGroups { get; set; } = [];
+
     public string SpotMode { get; set; } = "heal";
 
     public double SpotSize { get; set; } = 3;

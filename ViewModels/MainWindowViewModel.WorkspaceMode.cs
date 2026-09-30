@@ -95,15 +95,20 @@ public partial class MainWindowViewModel
 
     public Func<bool>? IsEnterTextInputFocused { get; set; }
 
+    public Func<bool>? ToggleFocusedDevelopGroup { get; set; }
+
     [RelayCommand]
     private async Task HandleEnterAsync()
     {
         if (IsFullScreenMode) return;
+        if (ToggleFocusedDevelopGroup?.Invoke() == true) return;
+
         if (IsExportMode)
         {
             await RunExportAsync();
             return;
         }
+
         if (IsDevelopMode && IsLocalCreationArmed)
         {
             if (IsEnterTextInputFocused?.Invoke() != true && CanAddLocal)
@@ -111,11 +116,13 @@ public partial class MainWindowViewModel
             // Armed creation owns Enter even at the cap; do not fall through to other actions.
             return;
         }
+
         if (IsCropMode)
         {
             await ApplyCropAsync();
             return;
         }
+
         if (IsLoupeMode)
         {
             CloseLoupe();

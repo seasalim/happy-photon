@@ -234,6 +234,13 @@ public sealed class ShortcutReachabilityTests
                 .FirstOrDefault(control => control.Name == claim.ControlName);
         }
 
+        if (claim.ControlName == "ExpanderHeader")
+        {
+            return window.GetVisualDescendants().OfType<DevelopGroup>().First()
+                .GetVisualDescendants().OfType<Control>()
+                .Single(control => control.Name == claim.ControlName);
+        }
+
         return window.GetVisualDescendants().Prepend(window)
             .OfType<Control>()
             .FirstOrDefault(control =>
