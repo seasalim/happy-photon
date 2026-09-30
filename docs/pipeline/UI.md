@@ -37,6 +37,8 @@ Threshold is a debounced app preference. H hides circles without deselecting; / 
 fresh source candidates. Brackets change size; Shift+brackets change feather, each
 selected-spot change committing one history step. Text entry and pickers take precedence.
 
+Masks pointer feedback follows press targeting: crosshair for armed Radial/Linear creation and rotation/direction, move for centers, axis-aligned resize for shape handles, and hand for other pins; Brush and hue-pick feedback remain active, and gesture cursors persist through capture.
+
 Locals supports at most eight linear/radial/brush adjustments in creation order with shared
 ordinals. Disabled and neutral locals still count; selection and Show Mask are session
 state. Closing retains edits. Scopes, footer, viewer controls and filmstrip remain live.

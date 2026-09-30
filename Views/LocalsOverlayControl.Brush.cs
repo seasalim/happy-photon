@@ -20,23 +20,23 @@ public sealed partial class LocalsOverlayControl
     {
         var hadHover = _brushHover != null;
         _brushHover = point is { } p && new Rect(Bounds.Size).Contains(p) ? point : null;
-        UpdateBrushCursor();
+        UpdatePointerCursor();
+
         if (_owner is { IsBrushSectionVisible: true, IsLocalHuePicking: false } || hadHover != (_brushHover != null))
             InvalidateVisual();
     }
-    private void UpdateBrushCursor() => Cursor = _owner?.IsLocalHuePicking == true
-        ? new Cursor(StandardCursorType.Cross)
-        : _owner is { CanEditLocals: true, IsBrushSectionVisible: true } && _brushHover != null
-            ? HiddenBrushCursor : Cursor.Default;
+
     private void SyncBrushAlt(KeyModifiers modifiers)
     {
         if (_brushHover != null && _owner is { CanEditLocals: true, IsBrushSectionVisible: true, IsLocalHuePicking: false } vm)
             vm.IsBrushAltHeld = modifiers.HasFlag(KeyModifiers.Alt);
     }
+
     protected override void OnPointerEntered(PointerEventArgs e)
     {
         base.OnPointerEntered(e);
-        UpdateBrushHover(e.GetPosition(this));
+        _hoverTracker.Record(e);
+        UpdateFeedback();
         SyncBrushAlt(e.KeyModifiers);
     }
     protected override void OnPointerExited(PointerEventArgs e)
@@ -44,6 +44,7 @@ public sealed partial class LocalsOverlayControl
         base.OnPointerExited(e);
         UpdateBrushHover(null);
     }
+
     internal LocalAdjustment? HitPin(Point point, LocalsFrame frame) => _owner?.Locals.FirstOrDefault(local =>
         !(local.IsBrush && local.Id == _owner.SelectedLocal?.Id) &&
         (!local.IsBrush || local.Strokes is { Count: > 0 }) &&

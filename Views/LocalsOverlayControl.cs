@@ -20,6 +20,7 @@ public sealed partial class LocalsOverlayControl : Control
     {
         ClipToBounds = true;
         Focusable = true;
+        _hoverTracker = new OverlayPointerTracker(this, UpdateFeedback);
         DataContextChanged += (_, _) => BindOwner();
         DetachedFromVisualTree += (_, _) =>
         {
@@ -46,22 +47,26 @@ public sealed partial class LocalsOverlayControl : Control
             nameof(MainWindowViewModel.IsLocalHuePicking) or nameof(MainWindowViewModel.CanEditLocals) or nameof(MainWindowViewModel.LocalRangeMask) or nameof(MainWindowViewModel.IsLocalMaskVisible))
             Refresh();
     }
+
     private void Refresh()
     {
         IsVisible = _owner?.CanEditLocals == true;
-        UpdateBrushCursor();
         if (_owner?.IsLocalsGestureActive != true && _pointer != null) CancelCapture();
+
+        UpdateFeedback();
         InvalidateVisual();
     }
+
     private void CancelCapture()
     {
         var pointer = _pointer;
         _pointer = null;
+
         if (pointer != null)
         {
-            UpdateBrushHover(null);
             _owner?.DiscardLocalsGesture();
             pointer.Capture(null);
+            UpdateFeedback();
         }
     }
 
@@ -230,54 +235,53 @@ public sealed partial class LocalsOverlayControl : Control
         var distance = Math.Abs(Vector.Dot(point - c, unit));
         return Math.Abs(distance - d.Length * local.Feather / 2) <= 6 ? LocalHandle.Feather : null;
     }
+
     protected override async void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
         if (_owner is not { CanEditLocals: true } vm || vm.LocalsFrame is not { } frame ||
             !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+
         var p = e.GetPosition(this);
-        if (vm.IsLocalHuePicking)
+        _hoverTracker.Record(e);
+        var target = ResolveTarget(p, frame);
+        var cursor = CursorFor(target, p, frame);
+
+        if (target.Hue)
         {
-            Focus(); e.Handled = true;
+            Focus();
+            e.Handled = true;
             await vm.PickLocalHueAsync(Normalize(p, frame));
             return;
         }
-        if (vm.IsBrushSectionVisible)
-        {
-            if (HitPin(p, frame) is { } pin) vm.SelectedLocal = pin;
-            else if (new Rect(Bounds.Size).Contains(p) && vm.BeginBrushStroke(Normalize(p, frame),
-                e.KeyModifiers.HasFlag(KeyModifiers.Shift), e.KeyModifiers.HasFlag(KeyModifiers.Alt)))
-            {
-                _pointer = e.Pointer;
-                e.Pointer.Capture(this);
-            }
-            UpdateBrushHover(p);
-            Focus(); e.Handled = true;
-            return;
-        }
-        var handle = vm.IsLocalCreationArmed ? LocalHandle.Create : vm.SelectedLocal is { } selected
-            ? HitHandle(p, selected, frame) : null;
-        if (handle == null)
-        {
-            var pin = HitPin(p, frame);
-            if (pin != null) vm.SelectedLocal = pin;
-        }
-        else if (vm.BeginLocalsGesture(handle.Value, Normalize(p, frame)))
+
+        if (target.Pin is { } pin) vm.SelectedLocal = pin;
+        else if (target.Brush
+            ? new Rect(Bounds.Size).Contains(p) && vm.BeginBrushStroke(Normalize(p, frame),
+                e.KeyModifiers.HasFlag(KeyModifiers.Shift), e.KeyModifiers.HasFlag(KeyModifiers.Alt))
+            : target.Handle is { } handle && vm.BeginLocalsGesture(handle, Normalize(p, frame)))
         {
             _press = p;
             _pointer = e.Pointer;
+            Cursor = cursor;
             e.Pointer.Capture(this);
         }
+
+        UpdateBrushHover(p);
         Focus();
         e.Handled = true;
     }
+
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
         var p = e.GetPosition(this);
-        UpdateBrushHover(p);
+        _hoverTracker.Record(e);
+        UpdateBrushHover(_hoverTracker.Position);
         SyncBrushAlt(e.KeyModifiers);
+
         if (_pointer == null || _owner?.LocalsFrame is not { } frame) return;
+
         if (_owner.IsBrushStrokeActive) _owner.ExtendBrushStroke(Normalize(p, frame), ScreenLongEdge(frame));
         else _owner.MoveLocalsGesture(Normalize(p, frame), ((Vector)(p - _press)).Length);
         e.Handled = true;
@@ -286,12 +290,16 @@ public sealed partial class LocalsOverlayControl : Control
     {
         base.OnPointerReleased(e);
         if (_pointer == null || _owner == null) return;
+
         if (_owner.IsBrushStrokeActive && _owner.LocalsFrame is { } frame)
             _owner.ExtendBrushStroke(Normalize(e.GetPosition(this), frame), ScreenLongEdge(frame), final: true);
+
+        _hoverTracker.Record(e);
         _pointer = null;
         e.Pointer.Capture(null);
         e.Handled = true;
         await _owner.CompleteLocalsGestureAsync();
+        UpdateFeedback();
     }
     protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
     {

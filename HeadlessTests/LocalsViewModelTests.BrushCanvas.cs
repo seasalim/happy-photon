@@ -41,11 +41,14 @@ public sealed partial class LocalsViewModelTests
         Assert.Equal(brush.Strokes[0].Points[0], brush.Strokes[1].Points[0]);
         Assert.Equal(2, brush.Strokes[1].Points.Count);
         window.MouseDown(new(320, 240), MouseButton.Left); window.MouseUp(new(320, 240), MouseButton.Left);
-        Assert.Same(gradient, vm.SelectedLocal); Assert.Equal(Cursor.Default, overlay.Cursor);
+        Assert.Same(gradient, vm.SelectedLocal);
+        Assert.Equal("SizeAll", overlay.Cursor?.ToString());
         vm.SelectedLocal = brush;
         var before = brush with { };
         window.MouseDown(new(110, 110), MouseButton.Left); window.MouseMove(new(150, 200), RawInputModifiers.LeftMouseButton);
-        vm.EscapeLocals(); Assert.Equal(before, vm.SelectedLocal); Assert.Equal(Cursor.Default, overlay.Cursor);
+        vm.EscapeLocals();
+        Assert.Equal(before, vm.SelectedLocal);
+        Assert.Equal("None", overlay.Cursor?.ToString());
         window.MouseMove(new(110, 110)); Assert.Equal("None", overlay.Cursor?.ToString());
         window.MouseDown(new(110, 110), MouseButton.Left); window.MouseMove(new(150, 200), RawInputModifiers.LeftMouseButton);
         window.Content = null;

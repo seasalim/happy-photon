@@ -2,7 +2,6 @@ using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Media;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -18,9 +17,7 @@ public sealed class SpotsOverlayControl : Control
 
     private Point? _hover;
 
-    private Point? _topLevelPosition;
-
-    private TopLevel? _topLevel;
+    private readonly OverlayPointerTracker _hoverTracker;
 
     private Point _press;
 
@@ -45,22 +42,10 @@ public sealed class SpotsOverlayControl : Control
         ClipToBounds = true;
         Focusable = true;
         DataContextChanged += (_, _) => BindOwner();
-        LayoutUpdated += ViewportChanged;
-        AttachedToVisualTree += (_, _) =>
-        {
-            _topLevel = TopLevel.GetTopLevel(this);
-            _topLevel?.AddHandler(PointerMovedEvent, TrackPointer, RoutingStrategies.Tunnel, handledEventsToo: true);
-            _topLevel?.AddHandler(PointerExitedEvent, LeaveTopLevel);
-
-            BindOwner();
-        };
+        _hoverTracker = new OverlayPointerTracker(this, ViewportChanged);
+        AttachedToVisualTree += (_, _) => BindOwner();
         DetachedFromVisualTree += (_, _) =>
         {
-            _topLevel?.RemoveHandler(PointerMovedEvent, TrackPointer);
-            _topLevel?.RemoveHandler(PointerExitedEvent, LeaveTopLevel);
-            _topLevel = null;
-            _topLevelPosition = null;
-
             CancelCapture();
             if (_owner != null) _owner.PropertyChanged -= OwnerChanged;
             _owner = null;
@@ -205,7 +190,7 @@ public sealed class SpotsOverlayControl : Control
 
         var point = e.GetPosition(this);
         var target = ResolveTarget(point);
-        _topLevelPosition = e.GetPosition(_topLevel);
+        _hoverTracker.Record(e);
         vm.SelectedSpot = target.Spot;
         _hover = point;
 
@@ -232,19 +217,7 @@ public sealed class SpotsOverlayControl : Control
         return (hit == null ? SpotHandle.Create : SpotHandle.Destination, hit);
     }
 
-    private void TrackPointer(object? sender, PointerEventArgs e)
-    {
-        _topLevelPosition = e.GetPosition(_topLevel);
-        ViewportChanged(sender, e);
-    }
-
-    private void LeaveTopLevel(object? sender, PointerEventArgs e)
-    {
-        _topLevelPosition = null;
-        ViewportChanged(sender, e);
-    }
-
-    private void ViewportChanged(object? sender, EventArgs e)
+    private void ViewportChanged()
     {
         var previous = (_hover, _target, Cursor);
         UpdateFeedback();
@@ -257,9 +230,7 @@ public sealed class SpotsOverlayControl : Control
 
         _hover = null;
 
-        if (IsVisible && _owner?.CanEditSpots == true && _topLevelPosition is { } position &&
-            _topLevel?.InputHitTest(position) == this && _topLevel.TranslatePoint(position, this) is { } point &&
-            Bounds.Width > 0 && Bounds.Height > 0)
+        if (_owner?.CanEditSpots == true && _hoverTracker.Position is { } point)
         {
             _hover = point;
             SetFeedback(ResolveTarget(point), point);
@@ -287,7 +258,7 @@ public sealed class SpotsOverlayControl : Control
     {
         base.OnPointerMoved(e);
         var point = e.GetPosition(this);
-        _topLevelPosition = e.GetPosition(_topLevel);
+        _hoverTracker.Record(e);
 
         if (_pointer != null && _owner?.CanEditSpots == true)
             _owner.MoveSpotsGesture(ToBase(point), ((Vector)(point - _press)).Length);
@@ -303,7 +274,7 @@ public sealed class SpotsOverlayControl : Control
         if (_pointer == null || _owner == null) return;
 
         var point = e.GetPosition(this);
-        _topLevelPosition = e.GetPosition(_topLevel);
+        _hoverTracker.Record(e);
         _owner.MoveSpotsGesture(ToBase(point), ((Vector)(point - _press)).Length);
         _pointer = null;
         e.Pointer.Capture(null);
