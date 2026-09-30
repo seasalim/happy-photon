@@ -6,8 +6,6 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.VisualTree;
-using CommunityToolkit.Mvvm.Input;
 
 namespace HappyPhoton.Views;
 
@@ -48,12 +46,16 @@ public sealed class DualRangeTrack : UserControl
             thumb.AddHandler(PointerPressedEvent, (_, e) => Start(index, e), RoutingStrategies.Tunnel);
             thumb.AddHandler(KeyDownEvent, (_, e) => Step(index, e), RoutingStrategies.Tunnel);
             _track.Children.Add(thumb);
-            var entry = _entries[i] = new EndpointEntry(key =>
+            var entry = _entries[i] = new NumericEntryBox
             {
-                if (key == Key.Enter) Commit(index);
-                else Update();
-                _thumbs[index].Focus();
-            });
+                Finish = key =>
+                {
+                    if (key == Key.Enter) Commit(index);
+                    else Update();
+
+                    _thumbs[index].Focus();
+                }
+            };
             entry.Classes.Add("edit-field");
             entry.FontSize = 11; entry.MinWidth = 0; entry.Width = 48; entry.MinHeight = 24; entry.Height = 24;
             entry.Padding = new Thickness(5, 2); entry.TextAlignment = TextAlignment.Right;
@@ -123,39 +125,6 @@ public sealed class DualRangeTrack : UserControl
             var value = i == 0 ? Lower : Upper;
             Canvas.SetLeft(_thumbs[i], value / 100 * Math.Max(0, _track.Bounds.Width - 12)); Canvas.SetTop(_thumbs[i], 3);
             _entries[i].Text = value.ToString("0.#", CultureInfo.CurrentCulture);
-        }
-    }
-
-    // Avalonia checks bindings from the focused element outward before routed KeyDown.
-    // Shadow ancestor gestures only in this entry and send them through native text editing.
-    private sealed class EndpointEntry(Action<Key> finish) : TextBox
-    {
-        protected override Type StyleKeyOverride => typeof(TextBox);
-
-        protected override void OnGotFocus(FocusChangedEventArgs e)
-        {
-            base.OnGotFocus(e);
-            KeyBindings.Clear();
-            var gestures = this.GetVisualAncestors().OfType<InputElement>()
-                .SelectMany(element => element.KeyBindings).Select(binding => binding.Gesture)
-                .OfType<KeyGesture>().Concat([new(Key.Enter), new(Key.Escape)]).Distinct();
-            foreach (var gesture in gestures)
-                KeyBindings.Add(new KeyBinding
-                {
-                    Gesture = gesture,
-                    Command = new RelayCommand(() => OnKeyDown(new KeyEventArgs
-                    {
-                        RoutedEvent = KeyDownEvent, Source = this,
-                        Key = gesture.Key, KeyModifiers = gesture.KeyModifiers
-                    }))
-                });
-        }
-
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            if (e.Key is Key.Enter or Key.Escape) finish(e.Key);
-            else base.OnKeyDown(e);
-            if (e.Key != Key.Tab) e.Handled = true;
         }
     }
 }

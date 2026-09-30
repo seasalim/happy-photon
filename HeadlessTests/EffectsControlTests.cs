@@ -94,6 +94,7 @@ public sealed class EffectsControlTests : IDisposable
         using var windowScope = new TestUiScope(window);
         vm.IsDevelopMode = true;
         vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "mixer-photo.jpg"));
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
         Dispatcher.UIThread.RunJobs();
 
         var curve = panel.FindControl<CurveView>("ToneCurveView")!;
@@ -132,6 +133,7 @@ public sealed class EffectsControlTests : IDisposable
         vm.SelectMixerBandCommand.Execute(ColorMixerBand.Orange);
         Assert.Equal(22, vm.MixerSaturation);
 
+        Assert.True(saturation.IsEffectivelyEnabled);
         var layout = saturation.FindControl<Grid>("LayoutGrid")!;
         PointerPressedEventArgs? samplePress = null;
         window.AddHandler(

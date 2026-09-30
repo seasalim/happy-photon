@@ -49,6 +49,10 @@ public partial class MainWindowViewModel
     public string WhiteBalanceTintText =>
         $"{WhiteBalanceTint:+0;-0;0}";
 
+    public Func<double, double> KelvinEntryToValue => KelvinToPosition;
+
+    public Func<double, double> KelvinValueToEntry => PositionToKelvin;
+
     public static double PositionToKelvin(double position) =>
         Math.Round(
             2000 * Math.Pow(6, Math.Clamp(position, 0, 1)) / 50) * 50;

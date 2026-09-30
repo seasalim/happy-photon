@@ -16,6 +16,7 @@ public partial class DevelopEditPanel : UserControl
     public DevelopEditPanel()
     {
         InitializeComponent();
+        AddHandler(CompactSlider.ValueEntryStartedEvent, OnValueEntryStarted);
         AddHandler(CompactSlider.WheelInputStartedEvent, OnWheelInputStarted);
         AddHandler(CompactSlider.DragStartedEvent, OnSliderDragStarted);
         AddHandler(CompactSlider.DragCompletedEvent, OnSliderDragCompleted);
@@ -66,6 +67,32 @@ public partial class DevelopEditPanel : UserControl
     private void OnCurveEditStarted(object? sender, EventArgs e) =>
         (DataContext as MainWindowViewModel)?.OnCurveEditStarted();
 
+    private void OnValueEntryStarted(object? sender, RoutedEventArgs e)
+    {
+        if (e.Source is not CompactSlider slider || DataContext is not MainWindowViewModel vm) return;
+
+        object Identity() => (vm.SelectedImage, vm.SelectedLocal?.Id, vm.SelectedSpot?.Id);
+
+        slider.EditIdentity = Identity;
+        var identity = Identity();
+        vm.SliderEditsEnding += slider.CancelValueEntry;
+        vm.PropertyChanged += TargetChanged;
+        slider.ValueEntryEnded += Ended;
+
+        void TargetChanged(object? source, System.ComponentModel.PropertyChangedEventArgs change)
+        {
+            if (!Equals(identity, Identity())) slider.CancelValueEntry();
+        }
+
+        void Ended()
+        {
+            vm.SliderEditsEnding -= slider.CancelValueEntry;
+            vm.PropertyChanged -= TargetChanged;
+            slider.ValueEntryEnded -= Ended;
+            slider.EditIdentity = null;
+        }
+    }
+
     private void OnWheelInputStarted(object? sender, RoutedEventArgs e)
     {
         if (e.Source is not CompactSlider slider || DataContext is not MainWindowViewModel viewModel) return;
@@ -105,7 +132,7 @@ public partial class DevelopEditPanel : UserControl
             e.Source is CompactSlider slider && slider.Classes.Contains("local-geometry")
                 ? "Local geometry" : e.Source is DualRangeTrack || e.Source is CompactSlider range && range.Classes.Contains("local-range")
                     ? "Luminance Range" : e.Source is CompactSlider hue && hue.Classes.Contains("local-hue") ? "Hue Range" : null,
-            completeWheel: e is CompactSlider.WheelCompletedEventArgs);
+            completeImmediately: e is CompactSlider.ImmediateCompletedEventArgs);
 
     internal Task ForwardCurveChangedAsync() =>
         DataContext is MainWindowViewModel viewModel

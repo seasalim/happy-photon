@@ -225,6 +225,9 @@
 
                                 <views:CompactSlider Label="Kelvin"
                                                      Value="{Binding WhiteBalanceKelvinPosition}"
+                                                     ValueToDisplay="{Binding KelvinValueToEntry}"
+                                                     DisplayToValue="{Binding KelvinEntryToValue}"
+                                                     EntryStep="50"
                                                      Minimum="0"
                                                      Maximum="1"
                                                      SmallChange="0.005"

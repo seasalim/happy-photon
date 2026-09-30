@@ -27,6 +27,7 @@ public sealed class GeometryControlTests : IDisposable
             catalog,
             new NullBaseLoader(),
             loadMetadataAsync: _ => Task.CompletedTask);
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
         var panel = new DevelopEditPanel { DataContext = vm };
         var window = new Window { Width = 260, Height = 1_200, Content = panel };
         using var windowScope = new TestUiScope(window);
@@ -69,6 +70,7 @@ public sealed class GeometryControlTests : IDisposable
         Assert.Equal([-18d, 27d, -36d, 45d],
             sliders.Select(slider => slider.Value));
 
+        Assert.All(sliders, slider => Assert.True(slider.IsEffectivelyEnabled));
         DoubleClickReset(window, sliders[0]);
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(0, vm.GeometryVertical);

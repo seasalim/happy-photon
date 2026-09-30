@@ -26,13 +26,14 @@ public partial class CompactSlider
 
     internal TimeProvider WheelTimeProvider { get; set; } = TimeProvider.System;
 
-    internal sealed class WheelCompletedEventArgs() : RoutedEventArgs(DragCompletedEvent);
+    internal sealed class ImmediateCompletedEventArgs() : RoutedEventArgs(DragCompletedEvent);
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         base.OnPointerWheelChanged(e);
         if (!IsEffectivelyEnabled || !e.KeyModifiers.HasFlag(KeyModifiers.Shift)) return;
 
+        FinishValueEntry(commit: true, clearFocus: true);
         var delta = e.Delta.Y != 0 ? e.Delta.Y : e.Delta.X;
         if (delta == 0 || _isDragging) return;
 
@@ -85,7 +86,7 @@ public partial class CompactSlider
 
         var started = _wheelStarted;
         _wheelStarted = false;
-        if (started) RaiseEvent(new WheelCompletedEventArgs());
+        if (started) RaiseEvent(new ImmediateCompletedEventArgs());
         WheelInputEnded?.Invoke();
     }
 }

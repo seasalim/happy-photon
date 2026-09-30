@@ -186,6 +186,7 @@ public partial class CompactSlider : UserControl
             _layoutGrid.PointerCaptureLost += OnTrackPointerCaptureLost;
         }
 
+        InitializeEntry();
         UpdateDisplay();
     }
 
@@ -211,6 +212,7 @@ public partial class CompactSlider : UserControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
+        OnEntryPropertyChanged(change);
 
         if (change.Property == IsEffectivelyEnabledProperty && !IsEffectivelyEnabled)
             CompleteWheel();
@@ -304,103 +306,5 @@ public partial class CompactSlider : UserControl
                 Math.Max(0, trackWidth - thumbWidth));
             _thumbDot.Margin = new Thickness(thumbLeft, 0, 0, 0);
         }
-    }
-
-    private void OnTrackPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (_layoutGrid == null || _trackGrid == null) return;
-        if (e.Pointer.Type == PointerType.Mouse &&
-            !e.GetCurrentPoint(_layoutGrid).Properties.IsLeftButtonPressed) return;
-        Focus();
-        CompleteWheel();
-
-        if (EnableDoubleClickReset && e.ClickCount == 2)
-        {
-            _isDragging = false;
-            _hasDragStarted = false;
-            _thumbDot?.Classes.Set("pointer-captured", false);
-            e.Pointer.Capture(null);
-            Value = DefaultValue;
-            e.Handled = true;
-            return;
-        }
-
-        _isDragging = true;
-        _hasDragStarted = false;
-        _dragStartX = e.GetPosition(_trackGrid).X;
-        _dragStartValue = Value;
-        e.Pointer.Capture(_layoutGrid);
-        _thumbDot?.Classes.Set(
-            "pointer-captured",
-            e.Pointer.Captured == _layoutGrid);
-        RaiseEvent(new RoutedEventArgs(DragStartedEvent));
-        e.Handled = true;
-    }
-
-    private void OnTrackPointerMoved(object? sender, PointerEventArgs e)
-    {
-        if (!_isDragging || _trackGrid == null) return;
-
-        var pointerX = e.GetPosition(_trackGrid).X;
-        if (!_hasDragStarted && Math.Abs(pointerX - _dragStartX) < DragThreshold) return;
-
-        _hasDragStarted = true;
-        UpdateValueFromDrag(pointerX);
-        e.Handled = true;
-    }
-
-    private void OnTrackPointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-        if (_isDragging && _trackGrid != null)
-        {
-            var pointerX = e.GetPosition(_trackGrid).X;
-            if (_hasDragStarted || Math.Abs(pointerX - _dragStartX) >= DragThreshold)
-            {
-                _hasDragStarted = true;
-                UpdateValueFromDrag(pointerX);
-            }
-        }
-
-        CompleteDrag();
-        e.Pointer.Capture(null);
-        e.Handled = true;
-    }
-
-    private void OnTrackPointerCaptureLost(
-        object? sender,
-        PointerCaptureLostEventArgs e)
-    {
-        CompleteDrag();
-    }
-
-    private void CompleteDrag()
-    {
-        if (!_isDragging) return;
-
-        var wasDragged = _hasDragStarted;
-        _isDragging = false;
-        _hasDragStarted = false;
-        _thumbDot?.Classes.Set("pointer-captured", false);
-        RaiseEvent(new RoutedEventArgs(DragCompletedEvent));
-        if (wasDragged && IsFocused)
-        {
-            TopLevel.GetTopLevel(this)?.FocusManager?.Focus(null);
-        }
-    }
-
-    private void UpdateValueFromDrag(double pointerX)
-    {
-        if (_trackGrid == null) return;
-
-        var trackWidth = _trackGrid.Bounds.Width;
-        if (trackWidth <= 0) return;
-
-        var range = Maximum - Minimum;
-        var newValue = _dragStartValue + ((pointerX - _dragStartX) / trackWidth * range);
-
-        newValue = Math.Round(newValue / SmallChange) * SmallChange;
-        newValue = BoundValue(newValue);
-
-        Value = newValue;
     }
 }

@@ -1,7 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:views="using:HappyPhoton.Views"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="HappyPhoton.Views.CompactSlider"
-             x:Name="SliderRoot">
+             x:Name="SliderRoot" ClipToBounds="False">
 
     <UserControl.Styles>
         <Style Selector="TextBlock#LabelText">
@@ -23,6 +24,17 @@
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border#ValueCell">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Border#ValueCell:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
+        </Style>
+        <Style Selector="TextBox#ValueEntry:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Outline}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="Border#ThumbDot">
             <Setter Property="Background" Value="{DynamicResource TextMuted}"/>
@@ -87,8 +99,23 @@
             </Grid>
         </Border>
 
+        <!-- The overlay borrows only the existing margins, preserving the 40px column. -->
+        <Border x:Name="ValueCell" Grid.Column="2" Width="49" Height="18"
+                Margin="-6,0,-3,0" CornerRadius="2"
+                IsVisible="{Binding IsValueEntryEnabled, ElementName=SliderRoot}"/>
         <!-- Value on the right -->
         <TextBlock x:Name="ValueText"
-                   Grid.Row="0"/>
+                   Grid.Row="0" IsHitTestVisible="False"
+                   IsVisible="{Binding !IsEditingValue, ElementName=SliderRoot}"/>
+        <views:NumericEntryBox x:Name="ValueEntry" Grid.Column="2"
+                              Width="49" Height="18" MinWidth="0" MinHeight="0"
+                              Margin="-6,0,-3,0" Padding="2,0" BorderThickness="1"
+                              CornerRadius="2" VerticalAlignment="Center"
+                              FontFamily="{StaticResource FontLabel}" FontSize="11"
+                              TextAlignment="Right" VerticalContentAlignment="Center"
+                              Background="{DynamicResource SurfaceHigh}"
+                              BorderBrush="{DynamicResource Outline}"
+                              Foreground="{DynamicResource TextPrimary}"
+                              IsVisible="{Binding IsEditingValue, ElementName=SliderRoot}"/>
     </Grid>
 </UserControl>

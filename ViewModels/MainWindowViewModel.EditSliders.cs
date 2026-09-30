@@ -68,18 +68,20 @@ public partial class MainWindowViewModel
 
     internal event Action? SliderEditsEnding;
 
-    public void OnSliderEditCompleted(string? historyLabel = null, bool completeWheel = false)
+    public void OnSliderEditCompleted(string? historyLabel = null, bool completeImmediately = false)
     {
         if (_activeSliderEditCount == 0) return;
 
         _activeSliderEditCount--;
         if (_activeSliderEditCount != 0) return;
 
-        if (completeWheel) CommitWheelEdit(historyLabel);
+        if (IsCropMode) return;
+
+        if (completeImmediately) CommitImmediateSliderEdit(historyLabel);
         else SchedulePreviewUpdate(historyLabel);
     }
 
-    private void CommitWheelEdit(string? historyLabel)
+    private void CommitImmediateSliderEdit(string? historyLabel)
     {
         if (SelectedImage is not { } image) return;
 
