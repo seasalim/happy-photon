@@ -39,6 +39,28 @@ public sealed class HistoryGeometryViewModelTests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task SelectingImageRaisesRotateCanExecuteChanged()
+    {
+        using var catalog = await _fixture.CreateCatalogAsync("rotate-enable");
+        await using var vm = CreateViewModel(catalog);
+        var image = await CreateImageAsync(catalog, "rotate-enable.jpg");
+        Assert.False(vm.RotateLeftCommand.CanExecute(null));
+
+        var left = 0;
+        var right = 0;
+        vm.RotateLeftCommand.CanExecuteChanged += (_, _) => left++;
+        vm.RotateRightCommand.CanExecuteChanged += (_, _) => right++;
+
+        vm.SelectedImage = image;
+        await WaitForHistoryAsync(vm);
+
+        Assert.True(left > 0);
+        Assert.True(right > 0);
+        Assert.True(vm.RotateLeftCommand.CanExecute(null));
+        Assert.True(vm.RotateRightCommand.CanExecute(null));
+    }
+
+    [AvaloniaFact]
     public async Task CropApplyCommitsAfterMidModeExposureWithCommittedGeometry()
     {
         using var catalog = await _fixture.CreateCatalogAsync("crop-order");

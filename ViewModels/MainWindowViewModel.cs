@@ -277,6 +277,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
         ChoosePasteSettingsCommand.NotifyCanExecuteChanged();
         ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
+        RotateLeftCommand.NotifyCanExecuteChanged();
+        RotateRightCommand.NotifyCanExecuteChanged();
         NotifyClippingCommandState();
     }
     partial void OnCanResetChanged(bool value)
