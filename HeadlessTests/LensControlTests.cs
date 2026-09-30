@@ -29,10 +29,10 @@ public sealed class LensControlTests : IDisposable
         vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "photo.jpg"));
         Dispatcher.UIThread.RunJobs();
 
-        var effects = panel.FindControl<EffectsEditGroup>("EffectsEditGroup")!;
         var optics = panel.FindControl<LensEditGroup>("LensEditGroup")!;
-        var stack = Assert.IsType<StackPanel>(effects.Parent);
-        Assert.Equal(stack.Children.Count - 1, stack.Children.IndexOf(optics));
+        var opticsGroup = Assert.IsType<DevelopGroup>(optics.Parent);
+        var stack = Assert.IsType<StackPanel>(opticsGroup.Parent);
+        Assert.Equal(stack.Children.Count - 1, stack.Children.IndexOf(opticsGroup));
         Assert.False(optics.FindControl<StackPanel>("OpticsGroup")!.IsEnabled);
         Assert.Equal("NO CORRECTION DATA FOR THIS LENS",
             optics.FindControl<TextBlock>("LensSourceText")!.Text);

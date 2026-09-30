@@ -145,7 +145,9 @@ public sealed class ThemeLiveSwitchTests
             Assert.Equal(
                 ThemeResourceTests.Brush("ViewerSurround", Avalonia.Styling.ThemeVariant.Dark).Color,
                 ColorOf(browse.Background));
-            Assert.Equal(Color.Parse("#e4e1e9"), ColorOf(presetHeader.Foreground));
+            Assert.Equal(
+                ThemeResourceTests.Brush("TextMuted", ThemeVariant.Dark).Color,
+                ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00f0ff"), ColorOf(burstStripe.Background));
             Assert.Equal(Color.Parse("#4b4a52"), ColorOf(thumbnail.Background));
             Assert.Equal(
@@ -188,7 +190,9 @@ public sealed class ThemeLiveSwitchTests
             Assert.False(vm.IsDarkTheme);
             Assert.Equal(1, persistCount);
             Assert.Equal(Color.Parse("#777777"), ColorOf(browse.Background));
-            Assert.Equal(Color.Parse("#ffffff"), ColorOf(presetHeader.Foreground));
+            Assert.Equal(
+                ThemeResourceTests.Brush("TextMuted", HappyPhotonThemes.MidGray).Color,
+                ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00dbe9"), ColorOf(burstStripe.Background));
             Assert.Equal(Color.Parse("#616161"), ColorOf(thumbnail.Background));
             Assert.Equal(

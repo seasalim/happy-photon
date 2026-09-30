@@ -40,10 +40,14 @@ public sealed class PresenceShowcaseTests
             host =>
             {
                 var group = host.GetVisualDescendants().OfType<PresenceEditGroup>().Single();
-                var stack = Assert.IsType<StackPanel>(group.Parent);
-                var index = stack.Children.IndexOf(group);
-                Assert.Equal("Blacks", Assert.IsType<CompactSlider>(stack.Children[index - 1]).Label);
-                Assert.Equal("ToneCurveView", stack.Children[index + 1].Name);
+                var wrapper = Assert.IsType<DevelopGroup>(group.Parent);
+                var stack = Assert.IsType<StackPanel>(wrapper.Parent);
+                var index = stack.Children.IndexOf(wrapper);
+                var adjustments = Assert.IsType<DevelopGroup>(stack.Children[index - 1]);
+                var adjustmentControls = Assert.IsType<StackPanel>(adjustments.Content);
+                Assert.Equal("Blacks", Assert.IsType<CompactSlider>(adjustmentControls.Children.Last()).Label);
+                var curve = Assert.IsType<DevelopGroup>(stack.Children[index + 1]);
+                Assert.Equal("ToneCurveView", Assert.IsType<CurveView>(curve.Content).Name);
                 var sliders = group.GetVisualDescendants().OfType<CompactSlider>().ToArray();
                 Assert.Equal(["Texture", "Clarity"], sliders.Select(slider => slider.Label));
                 Assert.All(sliders, slider =>

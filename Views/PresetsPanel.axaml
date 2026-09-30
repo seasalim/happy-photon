@@ -7,7 +7,9 @@
 
     <UserControl.Styles>
         <Style Selector="TextBlock.preset-header">
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         </Style>
         <Style Selector="Button.preset">
             <Setter Property="Background" Value="Transparent"/>

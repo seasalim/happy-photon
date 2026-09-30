@@ -90,14 +90,14 @@
         <Style Selector="Button.curveReset:pointerover Path">
             <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
         </Style>
+        <Style Selector="StackPanel.global-edits.locked Button.curveChannel">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
     </UserControl.Styles>
 
     <Border Background="{DynamicResource SurfaceLow}" CornerRadius="8" Padding="10">
         <Grid RowDefinitions="Auto,*,Auto">
             <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,8">
-                <TextBlock Text="Tone Curve" FontSize="11" Foreground="{DynamicResource TextMuted}"
-                           FontFamily="{StaticResource FontBody}"
-                           VerticalAlignment="Center"/>
                 <Border Grid.Column="2" Width="112" Height="22" Margin="4,0"
                         Background="{DynamicResource SurfaceHigh}"
                         CornerRadius="4" Padding="2">

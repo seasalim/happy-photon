@@ -37,11 +37,14 @@ public sealed class GeometryControlTests : IDisposable
         var effects = panel.FindControl<EffectsEditGroup>("EffectsEditGroup")!;
         var geometry = panel.FindControl<GeometryEditGroup>("GeometryEditGroup")!;
         var optics = panel.FindControl<LensEditGroup>("LensEditGroup")!;
-        var stack = Assert.IsType<StackPanel>(geometry.Parent);
-        Assert.Equal(stack.Children.IndexOf(effects) + 1,
-            stack.Children.IndexOf(geometry));
-        Assert.Equal(stack.Children.IndexOf(geometry) + 1,
-            stack.Children.IndexOf(optics));
+        var effectsGroup = Assert.IsType<DevelopGroup>(effects.Parent);
+        var geometryGroup = Assert.IsType<DevelopGroup>(geometry.Parent);
+        var opticsGroup = Assert.IsType<DevelopGroup>(optics.Parent);
+        var stack = Assert.IsType<StackPanel>(geometryGroup.Parent);
+        Assert.Equal(stack.Children.IndexOf(effectsGroup) + 1,
+            stack.Children.IndexOf(geometryGroup));
+        Assert.Equal(stack.Children.IndexOf(geometryGroup) + 1,
+            stack.Children.IndexOf(opticsGroup));
 
         var sliders = new[]
         {

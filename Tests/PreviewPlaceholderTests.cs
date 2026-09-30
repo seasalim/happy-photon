@@ -315,8 +315,6 @@ public sealed class PreviewPlaceholderTests
             "WhiteBalanceAutoButton")!;
         var whiteBalancePicker = developPanel.FindControl<ToggleButton>(
             "WhiteBalancePickerButton")!;
-        var whiteBalanceHeading = developPanel.FindControl<TextBlock>(
-            "WhiteBalanceHeading")!;
         var actionBar = developPanel.FindControl<DevelopActionBar>(
             "DevelopActionBar")!;
         var beforeAfter = actionBar.FindControl<ToggleButton>(
@@ -378,8 +376,6 @@ public sealed class PreviewPlaceholderTests
         Assert.Equal(11, whiteBalanceAuto.FontSize);
         Assert.Equal(28, whiteBalancePicker.Height);
         Assert.Equal(28, whiteBalancePicker.MinWidth);
-        Assert.Equal(12, whiteBalanceHeading.FontSize);
-        Assert.Equal(0, whiteBalanceHeading.LetterSpacing);
         Assert.Same(placeholder, developPlaceholder.Source);
         Assert.Same(placeholder, fullScreenPlaceholder.Source);
         Assert.True(developPlaceholder.IsVisible);

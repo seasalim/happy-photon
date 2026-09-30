@@ -205,11 +205,10 @@ public partial class PresetsPanel : UserControl
     {
         var expander = new Expander
         {
+            Classes = { "compact-chevron" },
             Header = new TextBlock
             {
                 Text = name,
-                FontSize = 12,
-                FontWeight = FontWeight.SemiBold,
                 Classes = { "preset-header" }
             },
             IsExpanded = PresetGroups?.GetValueOrDefault(name, true) ?? true,

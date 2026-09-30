@@ -38,10 +38,12 @@ public sealed class EffectsControlTests : IDisposable
 
         var detail = panel.FindControl<DetailEditGroup>("DetailEditGroup")!;
         var effects = panel.FindControl<EffectsEditGroup>("EffectsEditGroup")!;
-        var stack = Assert.IsType<StackPanel>(detail.Parent);
+        var detailGroup = Assert.IsType<DevelopGroup>(detail.Parent);
+        var effectsGroup = Assert.IsType<DevelopGroup>(effects.Parent);
+        var stack = Assert.IsType<StackPanel>(detailGroup.Parent);
         Assert.Equal(
-            stack.Children.IndexOf(detail) + 1,
-            stack.Children.IndexOf(effects));
+            stack.Children.IndexOf(detailGroup) + 1,
+            stack.Children.IndexOf(effectsGroup));
 
         var vignette = effects.FindControl<CompactSlider>("VignetteSlider")!;
         var midpoint = effects.FindControl<CompactSlider>("MidpointSlider")!;
@@ -97,9 +99,12 @@ public sealed class EffectsControlTests : IDisposable
         var curve = panel.FindControl<CurveView>("ToneCurveView")!;
         var mixer = panel.FindControl<MixerEditGroup>("MixerEditGroup")!;
         var detail = panel.FindControl<DetailEditGroup>("DetailEditGroup")!;
-        var stack = Assert.IsType<StackPanel>(mixer.Parent);
-        Assert.Equal(stack.Children.IndexOf(curve) + 1, stack.Children.IndexOf(mixer));
-        Assert.Equal(stack.Children.IndexOf(mixer) + 1, stack.Children.IndexOf(detail));
+        var curveGroup = Assert.IsType<DevelopGroup>(curve.Parent);
+        var mixerGroup = Assert.IsType<DevelopGroup>(mixer.Parent);
+        var detailGroup = Assert.IsType<DevelopGroup>(detail.Parent);
+        var stack = Assert.IsType<StackPanel>(mixerGroup.Parent);
+        Assert.Equal(stack.Children.IndexOf(curveGroup) + 1, stack.Children.IndexOf(mixerGroup));
+        Assert.Equal(stack.Children.IndexOf(mixerGroup) + 1, stack.Children.IndexOf(detailGroup));
 
         var hue = mixer.FindControl<CompactSlider>("MixerHueSlider")!;
         var saturation = mixer.FindControl<CompactSlider>("MixerSaturationSlider")!;

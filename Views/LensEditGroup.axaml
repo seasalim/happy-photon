@@ -17,14 +17,16 @@
         <Style Selector="Grid.optics-row:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
+        <Style Selector="StackPanel.global-edits.locked StackPanel.optics-group,
+                         StackPanel.global-edits.locked Grid.optics-row">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
     </UserControl.Styles>
 
-    <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0">
     <StackPanel x:Name="OpticsGroup"
                 Classes="optics-group"
                 Spacing="2"
                 IsEnabled="{Binding IsOpticsEnabled}">
-        <TextBlock Classes="section-label" Text="Optics" Margin="0,19,0,8"/>
         <Grid ColumnDefinitions="*" IsVisible="{Binding HasLensChoices}">
             <ComboBox x:Name="LensPicker"
                       Classes="edit-dropdown"
@@ -85,5 +87,4 @@
                    Foreground="{DynamicResource TextMuted}"
                    VerticalAlignment="Center"/>
     </StackPanel>
-    </Border>
 </UserControl>

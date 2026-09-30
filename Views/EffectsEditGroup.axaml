@@ -23,11 +23,12 @@
         <Style Selector="Grid.midpoint-row.active">
             <Setter Property="Opacity" Value="1"/>
         </Style>
+        <Style Selector="StackPanel.global-edits.locked Grid.midpoint-row">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
     </UserControl.Styles>
 
-    <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0">
     <StackPanel Spacing="4">
-        <TextBlock Classes="section-label" Text="Effects" Margin="0,19,0,8"/>
         <views:CompactSlider x:Name="VignetteSlider"
                              Label="Vignette"
                              Value="{Binding Vignette}"
@@ -76,5 +77,4 @@
             </ListBox>
         </Grid>
     </StackPanel>
-    </Border>
 </UserControl>

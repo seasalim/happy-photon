@@ -33,12 +33,12 @@
             <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         </Style>
+        <Style Selector="StackPanel.global-edits.locked Grid.raw-profile-row">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
     </UserControl.Styles>
 
     <StackPanel>
-        <TextBlock Classes="section-label"
-                   Text="Profile"
-                   Margin="0,2,0,8"/>
         <Grid Classes="raw-profile-row"
               ColumnDefinitions="*,Auto"
               IsEnabled="{Binding RawProfilePickerState.IsVisible}"
@@ -107,6 +107,6 @@
                    Classes="profile-source-line"
                    Text="{Binding RawProfilePickerState.StatusMessage}"
                    TextWrapping="Wrap"
-                   Margin="0,0,0,8"/>
+                   Margin="0"/>
     </StackPanel>
 </UserControl>

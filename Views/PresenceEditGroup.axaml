@@ -4,17 +4,14 @@
              xmlns:vm="using:HappyPhoton.ViewModels"
              x:Class="HappyPhoton.Views.PresenceEditGroup"
              x:DataType="vm:MainWindowViewModel">
-    <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0">
-        <StackPanel Spacing="4">
-            <TextBlock Classes="section-label" Text="Presence" Margin="0,19,0,8"/>
-            <views:CompactSlider x:Name="TextureSlider"
-                                 Label="Texture" Value="{Binding Texture}"
-                                 Minimum="-100" Maximum="100" SmallChange="1"
-                                 EnableDoubleClickReset="True"/>
-            <views:CompactSlider x:Name="ClaritySlider"
-                                 Label="Clarity" Value="{Binding Clarity}"
-                                 Minimum="-100" Maximum="100" SmallChange="1"
-                                 EnableDoubleClickReset="True"/>
-        </StackPanel>
-    </Border>
+    <StackPanel Spacing="4">
+        <views:CompactSlider x:Name="TextureSlider"
+                             Label="Texture" Value="{Binding Texture}"
+                             Minimum="-100" Maximum="100" SmallChange="1"
+                             EnableDoubleClickReset="True"/>
+        <views:CompactSlider x:Name="ClaritySlider"
+                             Label="Clarity" Value="{Binding Clarity}"
+                             Minimum="-100" Maximum="100" SmallChange="1"
+                             EnableDoubleClickReset="True"/>
+    </StackPanel>
 </UserControl>
