@@ -1,12 +1,26 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Disclosure triangle: down when expanded, a 90° turn to point left when collapsed. -->
     <Style Selector="Expander.compact-chevron /template/ ToggleButton#ExpanderHeader /template/ Path#ExpandCollapseChevron">
-        <Setter Property="Width" Value="10"/>
-        <Setter Property="Height" Value="6"/>
-        <Setter Property="Stretch" Value="Fill"/>
-        <Setter Property="StrokeThickness" Value="1.5"/>
-        <Setter Property="StrokeLineCap" Value="Round"/>
-        <Setter Property="StrokeJoin" Value="Round"/>
+        <Setter Property="Data" Value="M3,4.25 L9,4.25 L6,7.75 Z"/>
+        <Setter Property="Width" Value="12"/>
+        <Setter Property="Height" Value="12"/>
+        <Setter Property="Stretch" Value="None"/>
+        <Setter Property="Fill" Value="{DynamicResource TextMuted}"/>
         <Setter Property="Stroke" Value="{DynamicResource TextMuted}"/>
+        <Setter Property="StrokeThickness" Value="0.5"/>
+        <Setter Property="StrokeJoin" Value="Round"/>
+        <Setter Property="Opacity" Value="0.6"/>
+        <Setter Property="RenderTransform">
+            <RotateTransform Angle="90"/>
+        </Setter>
+    </Style>
+    <Style Selector="Expander.compact-chevron:expanded /template/ ToggleButton#ExpanderHeader /template/ Path#ExpandCollapseChevron">
+        <Setter Property="RenderTransform">
+            <RotateTransform Angle="0"/>
+        </Setter>
+    </Style>
+    <Style Selector="Expander.compact-chevron /template/ ToggleButton#ExpanderHeader:pointerover /template/ Path#ExpandCollapseChevron, Expander.compact-chevron /template/ ToggleButton#ExpanderHeader:focus-visible /template/ Path#ExpandCollapseChevron">
+        <Setter Property="Opacity" Value="1"/>
     </Style>
 </Styles>

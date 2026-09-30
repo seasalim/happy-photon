@@ -63,13 +63,7 @@ public sealed class DevelopGroupShowcaseTests
                     {
                         var chevron = category.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>()
                             .Single(path => path.Name == "ExpandCollapseChevron");
-                        Assert.Equal(new Size(10, 6), chevron.Bounds.Size);
-                        Assert.Equal(1.5, chevron.StrokeThickness);
-                        Assert.Equal(Stretch.Fill, chevron.Stretch);
-                        Assert.Equal(PenLineCap.Round, chevron.StrokeLineCap);
-                        Assert.Equal(PenLineJoin.Round, chevron.StrokeJoin);
-                        Assert.Equal(ThemeResourceTests.Brush("TextMuted", window.ActualThemeVariant).Color,
-                            Assert.IsAssignableFrom<ISolidColorBrush>(chevron.Stroke).Color);
+                        DevelopHeaderBaselineTests.AssertDisclosureTriangle(chevron, category.IsExpanded);
                     }
                 });
 

@@ -83,8 +83,11 @@ internal static class ShowcaseTestHelper
         Settle(() => chevrons.All(path =>
         {
             var rotation = Assert.IsType<RotateTransform>(path.RenderTransform);
-            var expanded = path.GetVisualAncestors().OfType<Expander>().First().IsExpanded;
-            return rotation.Angle == (expanded ? 180 : 0);
+            var expander = path.GetVisualAncestors().OfType<Expander>().First();
+            var angle = expander.Classes.Contains("compact-chevron")
+                ? expander.IsExpanded ? 0 : 90
+                : expander.IsExpanded ? 180 : 0;
+            return rotation.Angle == angle;
         }), "Expander chevrons");
     }
 

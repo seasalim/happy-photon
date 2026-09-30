@@ -185,11 +185,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
                 .Single(c => c.Name == "ExpanderHeader");
             var chevron = header.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>()
                 .Single(c => c.Name == "ExpandCollapseChevron");
-            Assert.Equal(new Size(10, 6), chevron.Bounds.Size);
-            Assert.Equal(1.5, chevron.StrokeThickness);
-            Assert.Equal(Avalonia.Media.Stretch.Fill, chevron.Stretch);
-            Assert.Equal(Avalonia.Media.PenLineCap.Round, chevron.StrokeLineCap);
-            Assert.Equal(Avalonia.Media.PenLineJoin.Round, chevron.StrokeJoin);
+            AssertDisclosureTriangle(chevron, expander.IsExpanded);
             var title = BoundsIn(group.Title, expander);
             var glyph = BoundsIn(chevron, expander);
             var fill = header.GetVisualDescendants().OfType<Border>()
@@ -295,6 +291,18 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
         _ => control.Name ?? AutomationProperties.GetName(control) ??
             (control is ContentControl content ? $"{control.GetType().Name}[{content.Content}]" : control.GetType().Name)
     };
+
+    internal static void AssertDisclosureTriangle(Avalonia.Controls.Shapes.Path triangle, bool expanded)
+    {
+        var muted = ThemeResourceTests.Brush("TextMuted", triangle.ActualThemeVariant).Color;
+
+        Assert.Equal(Avalonia.Media.Geometry.Parse("M3,4.25 L9,4.25 L6,7.75 Z").Bounds, triangle.Data!.Bounds);
+        Assert.Equal(new Size(12, 12), triangle.Bounds.Size);
+        Assert.Equal(Avalonia.Media.Stretch.None, triangle.Stretch);
+        Assert.Equal(muted, Assert.IsAssignableFrom<Avalonia.Media.ISolidColorBrush>(triangle.Fill).Color);
+        Assert.Equal(0.6, triangle.Opacity);
+        Assert.Equal(expanded ? 0 : 90, Assert.IsType<Avalonia.Media.RotateTransform>(triangle.RenderTransform).Angle);
+    }
 
     private static Rect BoundsIn(Control control, Visual relative)
     {
