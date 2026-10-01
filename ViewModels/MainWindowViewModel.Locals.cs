@@ -38,7 +38,8 @@ public partial class MainWindowViewModel
         !IsFullScreenMode && !IsBeforeAfterSplit && !_isBeforeAfterSplitTransitioning &&
         _requestedPreviewIntent != PreviewSurfaceIntent.Original &&
         !_isHoveringPreset && _hoveredHistoryEntry == null && !IsWhiteBalancePicking;
-    public bool IsLocalMaskVisible => CanEditLocals && (HasSelectedLocal || IsBrushCreationArmed) &&
+    public bool IsLocalMaskVisible => !_isProvisionalRotation && CanEditLocals &&
+        (HasSelectedLocal || IsBrushCreationArmed) &&
         (ShowLocalMask || IsLocalMaskHeld || IsBrushCreationArmed || IsBrushStrokeActive || IsLocalHuePicking);
     public string LocalsInstruction => IsBrushSectionVisible && BrushLimitInstruction.Length > 0 ? BrushLimitInstruction
         : IsBrushCreationArmed ? "Paint to create · Escape cancels"

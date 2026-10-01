@@ -163,7 +163,12 @@ public partial class MainWindowViewModel
         }
         var previous = pane.Preview;
         pane.Preview = bitmap;
-        CullPerf?.Record(source == PreviewPaintSource.CachedJpeg ? "CachedJpeg" : "FreshRender",
+        CullPerf?.Record(source switch
+        {
+            PreviewPaintSource.CachedJpeg => "CachedJpeg",
+            PreviewPaintSource.ProvisionalRotate => "ProvisionalRotate",
+            _ => "FreshRender"
+        },
             pane.Image.CatalogId, generation == 0 ? LatestPreviewOutcomeGeneration : generation, _cullOperation,
             (long)bitmap.PixelSize.Width * bitmap.PixelSize.Height * 4);
         if (matchedCache) CullPerf?.Record("MatchedCacheReady", pane.Image.CatalogId, generation);

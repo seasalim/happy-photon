@@ -72,6 +72,14 @@ public sealed partial class SpotHoverBaselineTests
         AssertHighlight(overlay, vm, vm.Spots[0], SpotHandle.Edge);
         vm.RotateRightCommand.Execute(null);
         await vm.PendingHistoryCommitTask!.WaitAsync(TestWaits.Condition);
+        // History completion precedes compositor hit testing and stationary hover feedback.
+        await TestWaits.UntilAsync(() =>
+        {
+            AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+            Dispatcher.UIThread.RunJobs();
+
+            return vm.CanEditSpots && overlay.IsPointerOver && overlay.Cursor?.ToString() == "None";
+        });
         Assert.NotSame(map, vm.SpotDisplayMap);
         Assert.Equal("None", overlay.Cursor?.ToString());
         Assert.Empty(Highlights(overlay));

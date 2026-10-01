@@ -74,6 +74,7 @@ public partial class MainWindowViewModel
         var after = CaptureLiveEditState();
         var previousIntent = _requestedPreviewIntent;
         var generation = RequestEditedRender();
+        TryPaintProvisionalRotation(image, after, generation);
         _ = SaveEditSettingsCoreAsync(
             image, after, label, before, recordHistory: true,
             beforeSave: () => RenderCommittedEditAsync(

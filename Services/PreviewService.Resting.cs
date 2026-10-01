@@ -306,6 +306,9 @@ public sealed partial class PreviewService
                 settingsHash,
                 new PixelSize(info.FullWidth, info.FullHeight),
                 originalViewSize,
-                baseImage.SourceWriteTime));
+                baseImage.SourceWriteTime)
+            {
+                PaintGeometry = PreviewPaintGeometry.From(settings)
+            });
     }
 }

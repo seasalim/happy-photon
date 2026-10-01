@@ -39,6 +39,7 @@ public partial class MainWindowViewModel
         RebindLocalSelection();
         UpdateCanReset();
         ApplyRollbackOutcome(image, generation, previousIntent);
+        RestoreRotationPaint(image, previousSettings, generation);
         return true;
     }
 

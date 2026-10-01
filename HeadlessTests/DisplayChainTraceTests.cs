@@ -418,6 +418,18 @@ public sealed class DisplayChainTraceTests
         }
     }
 
+    [AvaloniaFact]
+    public async Task ProvisionalRotationHasExplicitTraceLabel()
+    {
+        using var root = new TemporaryDirectory();
+        using var catalog = new CatalogService(root.Path);
+        await using var vm = new MainWindowViewModel(catalog);
+        var lines = new List<string>();
+        using var trace = ImageServiceHelpers.OverrideDisplayTraceForTesting(true, lines.Add);
+        vm.ReplacePreviewImage(CreateBitmap(3, 4), PreviewPaintSource.ProvisionalRotate);
+        Assert.StartsWith("[DisplayChain] paint source=provisional-rotate bitmap=3x4 luma=", Assert.Single(lines));
+    }
+
     private static ZoomPanControl CreateBoundSurface(
         Bitmap bitmap,
         string activeProperty)

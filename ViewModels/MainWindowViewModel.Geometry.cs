@@ -30,6 +30,7 @@ public partial class MainWindowViewModel
     private void OnGeometryValueChanged()
     {
         if (_isLoadingImage || !CanEditSelectedImage) return;
+        _rotationGeometryPending = true;
         ShowAlignmentGridTemporarily();
         UpdateCanReset();
         SchedulePreviewUpdate();

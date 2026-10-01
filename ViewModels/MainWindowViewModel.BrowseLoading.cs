@@ -7,14 +7,6 @@ using HappyPhoton.Services;
 
 namespace HappyPhoton.ViewModels;
 
-internal enum PreviewPaintSource
-{
-    CachedJpeg,
-    FreshRender,
-    BackgroundRefresh,
-    RestingRender
-}
-
 public partial class MainWindowViewModel
 {
     private readonly Action<Action> _postSelection;
@@ -196,7 +188,7 @@ public partial class MainWindowViewModel
                     imageFile.EditSettings.Rotation,
                     imageFile.EditSettings.HorizonRotation,
                     imageFile.EditSettings.Crop?.Clone())
-                : imageFile.EditSettings;
+                : imageFile.EditSettings.Clone();
             if (IsExportMode && ExportSettings.ShowProof)
             {
                 var proofPainted = await LoadExportProofAsync(
@@ -236,7 +228,7 @@ public partial class MainWindowViewModel
                         imageFile,
                         surfaceGeneration,
                         cached,
-                        cachedIdentity));
+                        cachedIdentity, renderSettings));
                     if (cachedAccepted)
                         RestoreCaptureMemberViewportAfterPaint(imageFile);
                 }
@@ -286,7 +278,7 @@ public partial class MainWindowViewModel
                         imageFile,
                         surfaceGeneration,
                         cached,
-                        cachedIdentity));
+                        cachedIdentity, renderSettings));
                 }
             }
         }
@@ -337,14 +329,21 @@ public partial class MainWindowViewModel
         if (ReferenceEquals(PreviewImage, preview)) return;
         RestoreRestingBitmap();
 
+        if (source != PreviewPaintSource.ProvisionalRotate) ReleaseRotationPaint();
+
         if (ImageServiceHelpers.DisplayTraceLoggingEnabled)
         {
             var identity =
                 ImageService.Previews.TryGetPreviewRenderIdentity(preview);
+            // A quarter turn preserves luminance; reuse the retained surface's
+            // diagnostic estimate instead of copying every provisional again.
+            var luma = source == PreviewPaintSource.ProvisionalRotate && _rotationRetainedBitmap != null
+                ? _rotationRetainedLuma ??= BitmapConversionService.EstimateMeanLuma(_rotationRetainedBitmap)
+                : BitmapConversionService.EstimateMeanLuma(preview);
             ImageServiceHelpers.LogDisplayTrace(
                 $"paint source={PaintSourceLabel(source)} " +
                 $"bitmap={preview.PixelSize.Width}x{preview.PixelSize.Height} " +
-                $"luma={BitmapConversionService.EstimateMeanLuma(preview):F4} " +
+                $"luma={luma:F4} " +
                 $"decode={identity?.DecodeKey ?? "none"} " +
                 $"settings={identity?.SettingsHash ?? "none"}");
         }
@@ -357,10 +356,11 @@ public partial class MainWindowViewModel
         SetProofDisplayed(isProof);
         PreviewImage = preview;
         CullPerf?.Record(source switch { PreviewPaintSource.CachedJpeg => "CachedJpeg",
-            PreviewPaintSource.FreshRender => "FreshRender", _ => "Refinement" },
+            PreviewPaintSource.FreshRender => "FreshRender",
+            PreviewPaintSource.ProvisionalRotate => "ProvisionalRotate", _ => "Refinement" },
             SelectedImage?.CatalogId ?? 0, LatestPreviewOutcomeGeneration, _cullOperation,
             (long)preview.PixelSize.Width * preview.PixelSize.Height * 4);
-        if (previous != null)
+        if (previous != null && !ReferenceEquals(previous, _rotationRetainedBitmap))
         {
             _bitmapRetirement.Retire(
                 previous,
@@ -371,6 +371,7 @@ public partial class MainWindowViewModel
     internal void ClearPreviewImage()
     {
         RestoreRestingBitmap();
+        ReleaseRotationPaint();
         var previous = PreviewImage;
         if (previous == null) return;
         PreviewImage = null;
@@ -388,6 +389,7 @@ public partial class MainWindowViewModel
             PreviewPaintSource.FreshRender => "fresh-render",
             PreviewPaintSource.BackgroundRefresh => "background-refresh",
             PreviewPaintSource.RestingRender => "resting-render",
+            PreviewPaintSource.ProvisionalRotate => "provisional-rotate",
             _ => throw new ArgumentOutOfRangeException(nameof(source))
         };
 

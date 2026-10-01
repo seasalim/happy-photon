@@ -245,7 +245,8 @@ public partial class MainWindowViewModel
         ApplyRenderOutcome(RenderOutcome.Resting(
             image,
             surfaceGeneration,
-            result.DetachBitmap()));
+            result.DetachBitmap(),
+            settings));
     }
 
     private void ReplaceWithRestingPreview(Bitmap preview)
@@ -268,6 +269,7 @@ public partial class MainWindowViewModel
                 $"decode={restingIdentity?.DecodeKey ?? "none"} " +
                 $"settings={restingIdentity?.SettingsHash ?? "none"}");
         }
+        ReleaseRotationPaint();
         var previous = PreviewImage;
         var transferred = false;
         if (previous != null)

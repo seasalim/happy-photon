@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Rendering.Composition;
 
 namespace HappyPhoton.Views;
 
@@ -15,11 +16,15 @@ internal sealed class OverlayPointerTracker
 
     private Point? _position;
 
+    private Task? _pendingRefresh;
+
     public OverlayPointerTracker(Control overlay, Action changed)
     {
         _overlay = overlay;
         _changed = changed;
-        overlay.LayoutUpdated += (_, _) => changed();
+        overlay.LayoutUpdated += RefreshAfterRender;
+        // Re-entry after a repaint can happen without a PointerMoved event.
+        overlay.PointerEntered += Track;
         overlay.AttachedToVisualTree += (_, _) =>
         {
             _topLevel = TopLevel.GetTopLevel(overlay);
@@ -31,6 +36,7 @@ internal sealed class OverlayPointerTracker
             _topLevel?.RemoveHandler(InputElement.PointerMovedEvent, Track);
             _topLevel?.RemoveHandler(InputElement.PointerExitedEvent, Leave);
             _topLevel = null;
+            _pendingRefresh = null;
             _position = null;
         };
     }
@@ -44,6 +50,28 @@ internal sealed class OverlayPointerTracker
     private void Track(object? sender, PointerEventArgs e)
     {
         Record(e);
+        _changed();
+    }
+
+    private async void RefreshAfterRender(object? sender, EventArgs e)
+    {
+        _changed();
+
+        if (!_overlay.IsVisible || _position == null ||
+            ElementComposition.GetElementVisual(_overlay) is not { } visual)
+        {
+            return;
+        }
+
+        // Hit testing catches up after rendering, even if visibility changes skip pointer re-entry.
+        var rendered = visual.Compositor.RequestCompositionBatchCommitAsync().Rendered;
+        if (ReferenceEquals(_pendingRefresh, rendered)) return;
+
+        _pendingRefresh = rendered;
+        await rendered;
+        if (!ReferenceEquals(_pendingRefresh, rendered)) return;
+
+        _pendingRefresh = null;
         _changed();
     }
 

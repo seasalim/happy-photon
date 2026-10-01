@@ -349,6 +349,14 @@ Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields
 the controls in §2; copy/paste preserves nullable capture-sharpen semantics and both
 NR values.
 
+Rotate Left/Right in Develop immediately remaps the last real preview while its replacement
+render is pending. This requires known painted rotation/crop/Geometry provenance and identity
+Geometry with no crop (or a full crop) in both the painted and current settings; pending Geometry
+changes, Original, Before/After split and export proof keep waiting for a real render. The remap
+uses the interactive/resting surface, including at 1:1, clears clipping and waveform, and preserves
+the histogram. It has no render identity, cache promotion or thumbnail output; a newer real paint,
+selection change or disposal releases the retained surface, and failed rotation restores its framing.
+
 ## 7. Export workspace
 
 [WORKFLOW.md](../WORKFLOW.md) §6 owns export use; OUTPUT.md §2 owns immutable jobs.

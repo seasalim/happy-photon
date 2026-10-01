@@ -265,6 +265,8 @@ internal sealed record PreviewRenderIdentity(
     PixelSize OriginalViewSize,
     DateTime? SourceWriteTime = null)
 {
+    public PreviewPaintGeometry? PaintGeometry { get; init; }
+
     public PreviewCacheIdentity CacheIdentity => new(
         OriginalViewSize,
         OriginalImageSize);

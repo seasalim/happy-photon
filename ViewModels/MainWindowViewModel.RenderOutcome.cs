@@ -182,13 +182,6 @@ internal sealed partial class RenderOutcome : IDisposable
     {
         Interlocked.Exchange(ref _promotionLease, null)?.Commit(bitmap);
     }
-
-    public void Dispose()
-    {
-        Interlocked.Exchange(ref _promotionLease, null)?.Dispose();
-        Interlocked.Exchange(ref _clippingMask, null)?.Dispose();
-        Interlocked.Exchange(ref _bitmap, null)?.Dispose();
-    }
 }
 
 public partial class MainWindowViewModel
@@ -486,8 +479,13 @@ public partial class MainWindowViewModel
         }
         else
         {
+            _isProvisionalRotation = outcome.PaintSource == PreviewPaintSource.ProvisionalRotate &&
+                !ReferenceEquals(bitmap, _rotationRetainedBitmap);
             ReplacePreviewImage(bitmap, outcome.PaintSource);
         }
+
+        RecordRotationPaint(outcome, bitmap);
+
         return true;
     }
 
