@@ -1,5 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Reactive;
 using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 
@@ -9,6 +11,23 @@ namespace HappyPhoton.Views;
 // Shadow ancestor gestures only in this entry and send them through native text editing.
 public sealed class NumericEntryBox : TextBox
 {
+    private bool _allowTextInput;
+
+    static NumericEntryBox()
+    {
+        // Keep ancestor bindings and routed shortcuts suppressed, then let the platform
+        // produce text for keys native TextBox editing did not consume (Win32 WM_CHAR).
+
+        KeyDownEvent.RouteFinished.Subscribe(new AnonymousObserver<RoutedEventArgs>(e =>
+        {
+            if (e is KeyEventArgs { Route: RoutingStrategies.Bubble, KeySymbol.Length: > 0,
+                    Source: NumericEntryBox { _allowTextInput: true } })
+            {
+                e.Handled = false;
+            }
+        }));
+    }
+
     internal Action<Key>? Finish { get; set; }
 
     protected override Type StyleKeyOverride => typeof(TextBox);
@@ -37,8 +56,14 @@ public sealed class NumericEntryBox : TextBox
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
+        _allowTextInput = false;
+
         if (e.Key is Key.Enter or Key.Escape) Finish?.Invoke(e.Key);
-        else base.OnKeyDown(e);
+        else
+        {
+            base.OnKeyDown(e);
+            _allowTextInput = !e.Handled;
+        }
 
         if (e.Key != Key.Tab) e.Handled = true;
     }

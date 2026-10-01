@@ -58,6 +58,8 @@ public static class AppWindow {
   public static void Key(IntPtr h, int vk) {
     uint sc = MapVirtualKey((uint)vk, 0);
     PostMessage(h, 0x0100, (IntPtr)vk, (IntPtr)(1 | (sc << 16)));
+    // Let TranslateMessage deliver WM_CHAR before key-up resets Avalonia's suppression flag.
+    System.Threading.Thread.Sleep(40);
     PostMessage(h, 0x0101, (IntPtr)vk, (IntPtr)(1 | (sc << 16) | (1u << 30) | (1u << 31)));
   }
   public static void Move(IntPtr h, int x, int y, bool down) { PostMessage(h, 0x0200, down ? (IntPtr)1 : IntPtr.Zero, Pt(x, y)); }
