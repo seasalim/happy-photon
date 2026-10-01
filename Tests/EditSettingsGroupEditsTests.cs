@@ -28,7 +28,7 @@ public sealed class EditSettingsGroupEditsTests
     [Fact]
     public void EverySavedSettingBelongsToExactlyOneGroup()
     {
-        foreach (var property in new[] { "Exposure", "Brightness", "Contrast", "Saturation", "Vibrance",
+        foreach (var property in new[] { "Exposure", "Brightness", "Contrast",
             "Shadows", "Highlights", "Whites", "Blacks", "HlReconstruction" })
         {
             Check("Adjustments", settings => Set(settings, property));
@@ -36,6 +36,8 @@ public sealed class EditSettingsGroupEditsTests
 
         Check("Presence", settings => settings.Texture = 1);
         Check("Presence", settings => settings.Clarity = 1);
+        Check("Presence", settings => settings.Vibrance = 1);
+        Check("Presence", settings => settings.Saturation = 1);
         Check("White Balance", settings => settings.Wb = new() { Mode = WbMode.Custom, Kelvin = 6000 });
         Check("White Balance", settings => settings.Wb = new() { Mode = WbMode.Custom, Tint = 10 });
         Check("White Balance", settings => settings.Wb = new() { Mode = WbMode.Preset, Preset = "daylight" });

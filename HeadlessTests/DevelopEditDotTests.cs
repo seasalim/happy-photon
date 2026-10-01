@@ -102,6 +102,10 @@ public sealed class DevelopEditDotTests(ITestOutputHelper output)
             Assert.All(vm.DevelopGroupList, group => Assert.True(group.HasEdits));
             DevelopCollapseBaselineTests.Settle(window);
 
+            // WP2: all four Presence fields must be neutral for the unedited half.
+            vm.SelectedImage!.EditSettings.Vibrance = 0;
+            vm.SelectedImage.EditSettings.Saturation = 0;
+
             foreach (var transition in new[] { false, true })
             {
                 void Refresh()
@@ -118,7 +122,13 @@ public sealed class DevelopEditDotTests(ITestOutputHelper output)
 
                 for (var i = 0; i < 1000; i++)
                 {
+                    var before = vm.PresenceGroup.HasEdits;
                     Refresh();
+
+                    if (transition)
+                    {
+                        Assert.Equal(!before, vm.PresenceGroup.HasEdits);
+                    }
                 }
 
                 var ticks = new long[10000];

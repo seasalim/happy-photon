@@ -50,12 +50,13 @@ geometric mask. Reset adjustments clears adjustment values but preserves geometr
 enablement and ranges. Center in view moves only the local center.
 
 Whites and Blacks are enabled for every source kind, including monochrome RAW.
-Their global rows follow Recovery and lock with the other globals during a tool.
+Their global rows follow Shadows and lock with the other globals during a tool.
 Double-click resets either slider. Local rows follow Exposure; Reset adjustments
 clears them, and single-control history labels name the local and changed control.
 
-Presence (Texture, Clarity) is enabled for every source kind, including monochrome,
-and locks with the global edits while a tool is open.
+Presence (Texture, Clarity, Vibrance, Saturation) stays enabled for every source kind.
+Vibrance and Saturation dim on monochrome; Texture and Clarity remain enabled.
+The group locks with the global edits while a tool is open.
 
 One completed gesture is one history step. Escape restores an unfinished canvas
 gesture, then cancels armed creation, then closes Locals; Undo during a drag cancels
@@ -132,11 +133,11 @@ White Balance
   Kelvin   ────────●────────   5500K
   Tint     ──────●──────────   −12
 Adjustments            (no Temperature slider)
-  Exposure / Brightness / Contrast / Saturation / Vibrance / Shadows / Highlights
-  Recovery                                                [Clip | Blend]  (RAW only)
+  Exposure / Brightness / Contrast / Highlights / Shadows
   Whites / Blacks                                         (−100..100)
+  Recovery                                                [Clip | Blend]  (RAW only)
 Presence
-  Texture / Clarity                                       (−100..100)
+  Texture / Clarity / Vibrance / Saturation               (−100..100)
 Tone Curve             [RGB | R | G | B] [embedded Reset]
 Color Mixer                                      Reset
   [Red Orange Yellow Green Aqua Blue Purple Magenta swatches]
@@ -175,7 +176,7 @@ Selection clears stale surface facts; only image- and generation-matched outcome
 install atomically. Cached and transient surfaces cannot claim mismatched source
 analysis or clipping. RENDER.md §11 owns the outcome contract.
 
-Recovery is a compact, exclusive Clip/Blend control directly below Highlights, enabled
+Recovery is a compact, exclusive Clip/Blend control last in Adjustments, enabled
 only for RAW sources — provisionally from `ImageFile.IsRaw`, then from the loaded base
 fact. The row stays present and dims to `DisabledOpacity` when unavailable, so the
 panel does not reflow across mixed-source filmstrips; a contradictory non-RAW loaded

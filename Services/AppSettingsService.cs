@@ -62,7 +62,7 @@ public partial class AppSettingsService
 
         return new AppSettings
         {
-            PasteGroups = await LoadGroupPreferencesAsync(PasteGroupsKey),
+            PasteGroups = await LoadPasteGroupsAsync(),
             PresetGroups = await LoadGroupPreferencesAsync("PresetGroups"),
             DevelopGroups = await LoadGroupPreferencesAsync("DevelopGroups"),
             SpotMode = await _catalogService.GetAppSettingAsync("SpotMode") == "clone" ? "clone" : "heal",

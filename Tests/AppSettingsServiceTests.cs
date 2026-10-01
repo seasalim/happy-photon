@@ -9,6 +9,52 @@ public sealed class AppSettingsServiceTests : IDisposable
     private readonly string _catalogPath =
         Path.Combine(Path.GetTempPath(), $"happy-photon-settings-{Guid.NewGuid():N}");
 
+    [Theory]
+    [InlineData("{\"Adjustments\":true,\"Presence\":false}", true)]
+    [InlineData("{\"Adjustments\":false,\"Presence\":true}", false)]
+    [InlineData("{\"Presence\":false}", true)]
+    [InlineData("{\"Adjustments\":false}", false)]
+    public async Task LegacyPasteChoiceMigratesEffectiveDefaultsWithoutWriting(string stored, bool expected)
+    {
+        using var catalog = new CatalogService(_catalogPath);
+        await catalog.InitializeAsync();
+        await catalog.SetAppSettingAsync("PasteGroups", stored);
+
+        for (var load = 0; load < 2; load++)
+        {
+            var settings = await new AppSettingsService(catalog).LoadAsync();
+            Assert.Equal(expected, settings.PasteGroups.GetValueOrDefault("Adjustments", true));
+            Assert.Equal(expected, settings.PasteGroups.GetValueOrDefault("Presence", true));
+            Assert.Equal(stored, await catalog.GetAppSettingAsync("PasteGroups"));
+            Assert.Null(await catalog.GetAppSettingAsync("PasteGroupsV2"));
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task SavedPasteMigrationPreservesLaterDeliberateChoice(bool preferencesOnly)
+    {
+        using var catalog = new CatalogService(_catalogPath);
+        await catalog.InitializeAsync();
+        await catalog.SetAppSettingAsync("PasteGroups", "{\"Adjustments\":true,\"Presence\":false}");
+
+        var service = new AppSettingsService(catalog);
+        var settings = await service.LoadAsync();
+        await Save(settings);
+        settings = await new AppSettingsService(catalog).LoadAsync();
+        Assert.True(settings.PasteGroups["Presence"]);
+
+        settings.PasteGroups["Presence"] = false;
+        await Save(settings);
+        var reloaded = await new AppSettingsService(catalog).LoadAsync();
+        Assert.True(reloaded.PasteGroups["Adjustments"]);
+        Assert.False(reloaded.PasteGroups["Presence"]);
+
+        Task Save(AppSettings value) => preferencesOnly
+            ? service.SavePreferencesAsync(value) : service.SaveAsync(value);
+    }
+
     [Fact]
     public async Task SpotPreferencesRoundTripAndRejectNonFiniteValues()
     {

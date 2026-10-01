@@ -1,6 +1,9 @@
 using System.Collections.Concurrent;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -13,6 +16,46 @@ namespace HappyPhoton.Tests;
 public sealed class HighlightHandlingControlTests : IDisposable
 {
     private readonly TemporaryDirectory _root = new();
+
+    [AvaloniaFact]
+    public async Task RawKeyboardOrderReachesRecoveryAfterBlacksBeforePresence()
+    {
+        using var catalog = new CatalogService(_root.Path);
+        await catalog.InitializeAsync();
+        await using var vm = CreateViewModel(catalog, new ControlledLoader());
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "keyboard.dng"));
+        await TestWaits.UntilAsync(() => vm.IsWhiteBalanceReady && vm.PreviewImage != null);
+
+        var panel = new DevelopEditPanel { DataContext = vm };
+        using var scope = ShowPanel(panel);
+        var window = scope.Window!;
+        vm.RestoreDevelopGroups(vm.DevelopGroupList.ToDictionary(group => group.Name, _ => true));
+        DevelopCollapseBaselineTests.Settle(window);
+
+        var adjustments = panel.GetVisualDescendants().OfType<DevelopGroup>()
+            .Single(group => Equals(group.Header, "Adjustments"));
+        var blacks = adjustments.GetVisualDescendants().OfType<CompactSlider>()
+            .Single(slider => slider.Label == "Blacks");
+        var recovery = panel.FindControl<ListBox>("HighlightHandlingControl")!;
+        var presence = panel.GetVisualDescendants().OfType<DevelopGroup>()
+            .Single(group => Equals(group.Header, "Presence"));
+        Assert.True(recovery.IsEffectivelyEnabled);
+
+        Assert.True(blacks.Focus());
+        Tab();
+        var focused = Assert.IsAssignableFrom<Control>(window.FocusManager!.GetFocusedElement());
+        Assert.Contains(recovery, focused.GetVisualAncestors());
+
+        Tab();
+        Assert.Same(DevelopCollapseBaselineTests.Header(presence), window.FocusManager.GetFocusedElement());
+
+        void Tab()
+        {
+            window.KeyPress(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            window.KeyRelease(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+        }
+    }
 
     [AvaloniaFact]
     public async Task EnabledStateFollowsProvisionalAndLoadedRawCapability()

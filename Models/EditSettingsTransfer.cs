@@ -46,11 +46,10 @@ public static class EditSettingsTransfer
             settings => !settings.Wb.IsIdentity,
             (source, target) => target.Wb = source.Wb.Clone()),
         new("Adjustments", EditSettingsGroupKind.Look, true,
-            ["exposure", "brightness", "contrast", "saturation", "vibrance", "shadows",
+            ["exposure", "brightness", "contrast", "shadows",
                 "highlights", "whites", "blacks", "baseLook", "hlReconstruction"],
             settings => settings.Exposure != Defaults.Exposure || settings.Brightness != Defaults.Brightness ||
-                settings.Contrast != Defaults.Contrast || settings.Saturation != Defaults.Saturation ||
-                settings.Vibrance != Defaults.Vibrance || settings.Shadows != Defaults.Shadows ||
+                settings.Contrast != Defaults.Contrast || settings.Shadows != Defaults.Shadows ||
                 settings.Highlights != Defaults.Highlights || settings.Whites != Defaults.Whites ||
                 settings.Blacks != Defaults.Blacks || settings.HlReconstruction != Defaults.HlReconstruction,
             (source, target) =>
@@ -58,8 +57,6 @@ public static class EditSettingsTransfer
                 target.Exposure = source.Exposure;
                 target.Brightness = source.Brightness;
                 target.Contrast = source.Contrast;
-                target.Saturation = source.Saturation;
-                target.Vibrance = source.Vibrance;
                 target.Shadows = source.Shadows;
                 target.Highlights = source.Highlights;
 
@@ -69,12 +66,15 @@ public static class EditSettingsTransfer
                 target.HlReconstruction = source.HlReconstruction;
             }),
         // OPS's Presence panel; Dehaze joins this group when its field lands.
-        new("Presence", EditSettingsGroupKind.Look, true, ["texture", "clarity"],
-            settings => settings.Texture != Defaults.Texture || settings.Clarity != Defaults.Clarity,
+        new("Presence", EditSettingsGroupKind.Look, true, ["texture", "clarity", "vibrance", "saturation"],
+            settings => settings.Texture != Defaults.Texture || settings.Clarity != Defaults.Clarity ||
+                settings.Vibrance != Defaults.Vibrance || settings.Saturation != Defaults.Saturation,
             (source, target) =>
             {
                 target.Texture = source.Texture;
                 target.Clarity = source.Clarity;
+                target.Vibrance = source.Vibrance;
+                target.Saturation = source.Saturation;
             }),
         new("Tone Curve", EditSettingsGroupKind.Look, true,
             ["curve", "curveRed", "curveGreen", "curveBlue"],

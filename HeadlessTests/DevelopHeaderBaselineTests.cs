@@ -35,7 +35,8 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             // Above: previous content bottom to title top; first starts at global origin.
             // Below: title bottom to first content top. Content excludes outer margins.
             // L1 uses the curve card edge; L2 retains the baseline canvas/footer span.
-            double[] expectedHeight = [44, 84, 246, 44, 130, 104, 68, 106, 92, 114];
+            // WP2 moves two 24px slider rows to Presence; Recovery now ends Adjustments.
+            double[] expectedHeight = [44, 84, 194, 92, 130, 104, 68, 106, 92, 114];
             var previousBottom = 0d;
             var spacingSum = 0d;
 
@@ -75,7 +76,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             await vm.ToggleCropModeCommand.ExecuteAsync(null);
             Settle(window);
             Assert.True(vm.IsToolActive);
-            var saturation = panel.FindControl<CompactSlider>("SaturationSlider")!;
+            var saturation = panel.FindControl<PresenceEditGroup>("PresenceEditGroup")!.FindControl<CompactSlider>("SaturationSlider")!;
             MeasureOpacity(saturation, "SaturationSlider");
             MeasureOpacity(saturation.FindControl<TextBlock>("LabelText")!, "SaturationSlider.LabelText");
             MeasureOpacity(curve.FindControl<Button>("RedChannelButton")!, "RedChannelButton");
@@ -259,9 +260,9 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
         {
             "Header[Profile]", "Header[White Balance]", "WhiteBalanceModeBox", "WhiteBalanceAutoButton", "WhiteBalancePickerButton",
             "SliderRoot[Kelvin]", "SliderRoot[Tint]", "Header[Adjustments]", "SliderRoot[Exposure]", "BrightnessSlider[Brightness]",
-            "SliderRoot[Contrast]", "SaturationSlider[Saturation]", "VibranceSlider[Vibrance]",
-            "SliderRoot[Shadows]", "SliderRoot[Highlights]", "SliderRoot[Whites]", "SliderRoot[Blacks]",
-            "Header[Presence]", "TextureSlider[Texture]", "ClaritySlider[Clarity]", "Header[Tone Curve]", "CompositeChannelButton", "RedChannelButton",
+            "SliderRoot[Contrast]", "SliderRoot[Highlights]", "SliderRoot[Shadows]", "SliderRoot[Whites]", "SliderRoot[Blacks]",
+            "Header[Presence]", "TextureSlider[Texture]", "ClaritySlider[Clarity]", "VibranceSlider[Vibrance]",
+            "SaturationSlider[Saturation]", "Header[Tone Curve]", "CompositeChannelButton", "RedChannelButton",
             "GreenChannelButton", "BlueChannelButton", "Reset curve", "Header[Color Mixer]", "RedMixerButton", "OrangeMixerButton",
             "YellowMixerButton", "GreenMixerButton", "AquaMixerButton", "BlueMixerButton", "PurpleMixerButton",
             "MagentaMixerButton", "MixerHueSlider[Hue]", "MixerSaturationSlider[Saturation]",

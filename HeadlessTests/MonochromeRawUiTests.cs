@@ -28,6 +28,7 @@ public sealed class MonochromeRawUiTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask,
             availabilityService: new TestSourceAvailabilityService(
                 SourceAvailability.AvailableLocally));
+        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
         vm.IsDevelopMode = true;
         var image = new ImageFile(_fixture.Path("mono.dng"));
         vm.SelectedImage = image;
@@ -68,8 +69,14 @@ public sealed class MonochromeRawUiTests : IDisposable
 
         Assert.False(panel.FindControl<RawProfilePicker>("RawProfilePicker")!.IsEnabled);
         Assert.False(panel.FindControl<StackPanel>("WhiteBalanceControls")!.IsEnabled);
-        Assert.False(panel.FindControl<CompactSlider>("SaturationSlider")!.IsEnabled);
-        Assert.False(panel.FindControl<CompactSlider>("VibranceSlider")!.IsEnabled);
+        var presence = panel.FindControl<PresenceEditGroup>("PresenceEditGroup")!;
+        Assert.True(presence.IsEffectivelyEnabled);
+        Assert.True(presence.FindControl<CompactSlider>("TextureSlider")!.IsEffectivelyEnabled);
+        Assert.True(presence.FindControl<CompactSlider>("ClaritySlider")!.IsEffectivelyEnabled);
+        Assert.False(presence.FindControl<CompactSlider>("SaturationSlider")!.IsEnabled);
+        Assert.False(presence.FindControl<CompactSlider>("VibranceSlider")!.IsEnabled);
+        Assert.Equal(0.32, presence.FindControl<CompactSlider>("SaturationSlider")!.Opacity);
+        Assert.Equal(0.32, presence.FindControl<CompactSlider>("VibranceSlider")!.Opacity);
         Assert.False(panel.FindControl<MixerEditGroup>("MixerEditGroup")!.IsEnabled);
         var curve = panel.FindControl<CurveView>("ToneCurveView")!;
         Assert.True(curve.FindControl<Button>("CompositeChannelButton")!.IsEnabled);

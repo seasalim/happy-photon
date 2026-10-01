@@ -296,21 +296,8 @@
                                                      SmallChange="1"
                                                      StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
-                                <views:CompactSlider x:Name="SaturationSlider"
-                                                     Classes="color-dependent"
-                                                     Label="Saturation"
-                                                     Value="{Binding Saturation}"
-                                                     IsEnabled="{Binding IsColorEditingEnabled}"
-                                                     Minimum="-100"
-                                                     Maximum="100"
-                                                     SmallChange="1"
-                                                     StringFormat="{}{0:+0;-0;0}"
-                                                     EnableDoubleClickReset="True"/>
-                                <views:CompactSlider x:Name="VibranceSlider"
-                                                     Classes="color-dependent"
-                                                     Label="Vibrance"
-                                                     Value="{Binding Vibrance}"
-                                                     IsEnabled="{Binding IsColorEditingEnabled}"
+                                <views:CompactSlider Label="Highlights"
+                                                     Value="{Binding Highlights}"
                                                      Minimum="-100"
                                                      Maximum="100"
                                                      SmallChange="1"
@@ -323,12 +310,11 @@
                                                      SmallChange="1"
                                                      StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
-                                <views:CompactSlider Label="Highlights"
-                                                     Value="{Binding Highlights}"
-                                                     Minimum="-100"
-                                                     Maximum="100"
-                                                     SmallChange="1"
-                                                     StringFormat="{}{0:+0;-0;0}"
+                                <views:CompactSlider Label="Whites" Value="{Binding Whites}" Minimum="-100" Maximum="100"
+                                                     SmallChange="1" StringFormat="{}{0:+0;-0;0}"
+                                                     EnableDoubleClickReset="True"/>
+                                <views:CompactSlider Label="Blacks" Value="{Binding Blacks}" Minimum="-100" Maximum="100"
+                                                     SmallChange="1" StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
 
                                 <Grid x:Name="HighlightHandlingRow"
@@ -364,14 +350,6 @@
                                         <TextBlock Text="RAW"/>
                                     </Border>
                                 </Grid>
-
-                                <views:CompactSlider Label="Whites" Value="{Binding Whites}" Minimum="-100" Maximum="100"
-                                                     SmallChange="1" StringFormat="{}{0:+0;-0;0}"
-                                                     EnableDoubleClickReset="True"/>
-                                <views:CompactSlider Label="Blacks" Value="{Binding Blacks}" Minimum="-100" Maximum="100"
-                                                     SmallChange="1" StringFormat="{}{0:+0;-0;0}"
-                                                     EnableDoubleClickReset="True"/>
-
                             </StackPanel>
                         </views:DevelopGroup>
 
