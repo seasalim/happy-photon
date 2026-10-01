@@ -36,15 +36,6 @@
             <Setter Property="BorderBrush" Value="{DynamicResource Outline}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
-        <Style Selector="Border#ThumbDot">
-            <Setter Property="Background" Value="{DynamicResource TextMuted}"/>
-        </Style>
-        <Style Selector="Border#ThumbDot.pointer-captured">
-            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
-        </Style>
-        <Style Selector="UserControl:focus-visible Border#ThumbDot">
-            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
-        </Style>
     </UserControl.Styles>
 
     <Grid x:Name="LayoutGrid" ColumnDefinitions="70,*,40"
@@ -85,17 +76,14 @@
                 <Border x:Name="CenterMark"
                         Background="{DynamicResource Outline}"
                         Width="1"
-                        Height="8"
+                        Height="3" Margin="0,6,0,0"
                         HorizontalAlignment="Center"
-                        VerticalAlignment="Center"/>
+                        VerticalAlignment="Top"/>
 
-                <!-- Round handle at the value position; visual only -->
-                <Border x:Name="ThumbDot"
-                        Width="8" Height="10"
-                        CornerRadius="4,4,4,1"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        IsHitTestVisible="False"/>
+                <!-- The tip marks the value; the track remains unobstructed. -->
+                <Path x:Name="ThumbMark" Theme="{StaticResource SliderThumbTheme}"
+                      Classes.rowHover="{Binding IsPointerOver, ElementName=SliderRoot}"
+                      HorizontalAlignment="Left" VerticalAlignment="Top"/>
             </Grid>
         </Border>
 

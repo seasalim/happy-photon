@@ -6,6 +6,7 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using ThumbMark = Avalonia.Controls.Shapes.Path;
 
 namespace HappyPhoton.Views;
 
@@ -22,9 +23,17 @@ public sealed class DualRangeTrack : UserControl
     private readonly Canvas _track = new() { Height = 24, Background = Brushes.Transparent };
     private readonly Border _line = new() { Height = 8, CornerRadius = new(2), IsHitTestVisible = false };
     private readonly Border _selection = new() { Height = 2, IsHitTestVisible = false };
-    private readonly Button[] _thumbs = [new(), new()];
+
+    private readonly ThumbMark[] _thumbs = [new(), new()];
+
     private readonly TextBox[] _entries = new TextBox[2];
     private int? _drag;
+
+    private bool _isDragging;
+
+    private double _pressX;
+
+    private double _startValue;
 
     public DualRangeTrack()
     {
@@ -35,16 +44,20 @@ public sealed class DualRangeTrack : UserControl
         _track.Children.Add(_line);
         _selection.Bind(Border.BackgroundProperty, this.GetResourceObservable("ControlActive"));
         _track.Children.Add(_selection);
+
         for (var i = 0; i < 2; i++)
         {
             var index = i;
             var name = i == 0 ? "Luminance lower limit" : "Luminance upper limit";
             var thumb = _thumbs[i];
-            thumb.Width = 12; thumb.Height = 18; thumb.Padding = default; thumb.MinWidth = 0; thumb.MinHeight = 0;
+            thumb.Focusable = true;
+            thumb.Bind(ThemeProperty, this.GetResourceObservable("SliderThumbTheme"));
             AutomationProperties.SetName(thumb, name);
-            thumb.Bind(BackgroundProperty, this.GetResourceObservable("TextMuted"));
-            thumb.AddHandler(PointerPressedEvent, (_, e) => Start(index, e), RoutingStrategies.Tunnel);
+            AutomationProperties.SetControlTypeOverride(thumb, Avalonia.Automation.Peers.AutomationControlType.Slider);
+            AutomationProperties.SetIsControlElementOverride(thumb, true);
             thumb.AddHandler(KeyDownEvent, (_, e) => Step(index, e), RoutingStrategies.Tunnel);
+            thumb.GotFocus += (_, _) => UpdateThumbOrder();
+            thumb.LostFocus += (_, _) => UpdateThumbOrder();
             _track.Children.Add(thumb);
             var entry = _entries[i] = new NumericEntryBox
             {
@@ -53,7 +66,7 @@ public sealed class DualRangeTrack : UserControl
                     if (key == Key.Enter) Commit(index);
                     else Update();
 
-                    _thumbs[index].Focus();
+                    _thumbs[index].Focus(NavigationMethod.Tab);
                 }
             };
             entry.Classes.Add("edit-field");
@@ -68,28 +81,103 @@ public sealed class DualRangeTrack : UserControl
             Grid.SetColumn(endpoint, i * 2); numbers.Children.Add(endpoint);
             entry.LostFocus += (_, _) => Commit(index);
         }
-        panel.Children.Add(_track); panel.Children.Add(numbers); Content = panel;
+
+        PointerEntered += (_, _) => SetHover(true);
+        PointerExited += (_, _) => SetHover(false);
+        panel.Children.Add(_track);
+        panel.Children.Add(numbers);
+        Content = panel;
         _track.SizeChanged += (_, _) => Update();
-        _track.PointerMoved += (_, e) => { if (_drag is { } i) Set(i, (e.GetPosition(_track).X - 6) / Math.Max(1, _track.Bounds.Width - 12) * 100); };
+        _track.PointerPressed += Start;
+        _track.PointerMoved += Move;
         _track.PointerReleased += (_, e) => { Complete(); e.Pointer.Capture(null); e.Handled = true; };
         _track.PointerCaptureLost += (_, _) => Complete();
         Update();
     }
 
-    private void Start(int index, PointerPressedEventArgs e)
+    private void SetHover(bool hovered)
+    {
+        foreach (var thumb in _thumbs)
+        {
+            thumb.Classes.Set("rowHover", hovered);
+        }
+    }
+
+    private void Start(object? sender, PointerPressedEventArgs e)
     {
         if (!IsEffectivelyEnabled || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
-        _thumbs[index].Focus(); _drag = index; e.Pointer.Capture(_track);
-        RaiseEvent(new RoutedEventArgs(CompactSlider.DragStartedEvent)); e.Handled = true;
+
+        // Either entry can own a draft; commit it before picking or snapshotting the range.
+        for (var i = 0; i < _entries.Length; i++)
+        {
+            if (_entries[i].IsFocused) Commit(i);
+        }
+
+        _pressX = e.GetPosition(_track).X;
+        _drag = Lower == Upper ? null :
+            Math.Abs(_pressX - ValueX(Lower)) <= Math.Abs(_pressX - ValueX(Upper)) ? 0 : 1;
+        _isDragging = true;
+        _startValue = _drag == 1 ? Upper : Lower;
+
+        if (_drag is { } index)
+        {
+            _thumbs[index].Focus();
+            _thumbs[index].Classes.Set("pointer-captured", true);
+        }
+
+        e.Pointer.Capture(_track);
+        UpdateThumbOrder();
+        RaiseEvent(new RoutedEventArgs(CompactSlider.DragStartedEvent));
+        e.Handled = true;
     }
+
+    private void Move(object? sender, PointerEventArgs e)
+    {
+        if (!_isDragging) return;
+
+        var delta = e.GetPosition(_track).X - _pressX;
+        if (_drag == null && Math.Abs(delta) < 2) return;
+
+        if (_drag == null)
+        {
+            _drag = delta < 0 ? 0 : 1;
+            _thumbs[_drag.Value].Focus();
+            _thumbs[_drag.Value].Classes.Set("pointer-captured", true);
+            UpdateThumbOrder();
+        }
+
+        Set(_drag.Value, _startValue + delta / Math.Max(1, _line.Width) * 100);
+        e.Handled = true;
+    }
+
     private void Complete()
     {
-        if (_drag == null) return;
-        _drag = null; RaiseEvent(new RoutedEventArgs(CompactSlider.DragCompletedEvent));
+        if (!_isDragging) return;
+
+        _isDragging = false;
+
+        if (_drag is { } index)
+        {
+            _thumbs[index].Classes.Set("pointer-captured", false);
+        }
+
+        _drag = null;
+        UpdateThumbOrder();
+        RaiseEvent(new RoutedEventArgs(CompactSlider.DragCompletedEvent));
     }
+
+    private void UpdateThumbOrder()
+    {
+        for (var i = 0; i < _thumbs.Length; i++)
+        {
+            _thumbs[i].ZIndex = _isDragging && _drag == i ? 2 : _thumbs[i].IsFocused ? 1 : 0;
+        }
+    }
+
     private void Step(int index, KeyEventArgs e)
     {
-        if (e.Key is not (Key.Left or Key.Right or Key.Up or Key.Down)) return;
+        if (!IsEffectivelyEnabled || e.Key is not (Key.Left or Key.Right or Key.Up or Key.Down)) return;
+
         RaiseEvent(new RoutedEventArgs(CompactSlider.DragStartedEvent));
         Set(index, (index == 0 ? Lower : Upper) + (e.Key is Key.Right or Key.Up ? 1 : -1) *
             (e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? 10 : 1));
@@ -115,15 +203,23 @@ public sealed class DualRangeTrack : UserControl
         if (change.Property == EditIdentityProperty) { Complete(); Update(); }
         if (change.Property == LowerProperty || change.Property == UpperProperty) Update();
     }
+
+    private double ValueX(double value) => 6 + value / 100 * Math.Max(0, _track.Bounds.Width - 12);
+
     private void Update()
     {
-        _line.Width = Math.Max(0, _track.Bounds.Width - 12); Canvas.SetLeft(_line, 6); Canvas.SetTop(_line, 8);
+        _line.Width = Math.Max(0, _track.Bounds.Width - 12);
+        Canvas.SetLeft(_line, 6);
+        Canvas.SetTop(_line, 8);
         _selection.Width = Math.Max(0, (Upper - Lower) / 100 * _line.Width);
-        Canvas.SetLeft(_selection, 6 + Lower / 100 * _line.Width); Canvas.SetTop(_selection, 17);
+        Canvas.SetLeft(_selection, ValueX(Lower));
+        Canvas.SetTop(_selection, 17);
+
         for (var i = 0; i < 2; i++)
         {
             var value = i == 0 ? Lower : Upper;
-            Canvas.SetLeft(_thumbs[i], value / 100 * Math.Max(0, _track.Bounds.Width - 12)); Canvas.SetTop(_thumbs[i], 3);
+            Canvas.SetLeft(_thumbs[i], ValueX(value) - 3.5);
+            Canvas.SetTop(_thumbs[i], 19);
             _entries[i].Text = value.ToString("0.#", CultureInfo.CurrentCulture);
         }
     }

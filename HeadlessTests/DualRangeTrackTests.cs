@@ -21,7 +21,7 @@ public sealed class DualRangeTrackTests
         var starts = 0; var ends = 0;
         track.AddHandler(CompactSlider.DragStartedEvent, (_, _) => starts++);
         track.AddHandler(CompactSlider.DragCompletedEvent, (_, _) => ends++);
-        var buttons = track.GetVisualDescendants().OfType<Button>().ToArray();
+        var buttons = track.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().ToArray();
         Assert.Equal(2, buttons.Length);
         Assert.All(buttons, b => Assert.Contains("Luminance", AutomationProperties.GetName(b)));
         buttons[0].Focus(); window.KeyPress(Key.Right, RawInputModifiers.Shift, PhysicalKey.None, null);

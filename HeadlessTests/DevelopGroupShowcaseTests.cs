@@ -24,7 +24,8 @@ public sealed class DevelopGroupShowcaseTests
     {
         await DevelopToolsBaselineTests.WithScene("normal", 1200, 700, (_, scope) =>
         {
-            ShowcaseTestHelper.Capture(scene, scope, new PixelSize(1200, 700), ThemeVariant.Dark, window =>
+            ShowcaseTestHelper.Capture(scene, scope, new PixelSize(1200, 700),
+                scene == "develop-groups-middle" ? HappyPhotonThemes.MidGray : ThemeVariant.Dark, window =>
             {
                 var panel = window.GetVisualDescendants().OfType<DevelopEditPanel>().Single();
                 var groups = panel.GetVisualDescendants().OfType<DevelopGroup>().ToArray();
@@ -32,6 +33,19 @@ public sealed class DevelopGroupShowcaseTests
                 Assert.All(groups, group => Assert.True(group.IsExpanded));
                 panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!.Offset = new Vector(0, offset);
                 window.UpdateLayout();
+
+                if (scene == "develop-groups-middle")
+                {
+                    var mixer = groups.Single(group => group.Header is "Color Mixer");
+                    var sliders = mixer.GetVisualDescendants().OfType<CompactSlider>().ToArray();
+                    Assert.Equal(3, sliders.Length);
+                    Assert.True(sliders[1].Focus(NavigationMethod.Tab));
+                    Dispatcher.UIThread.RunJobs();
+                    sliders[2].BringIntoView();
+                    window.UpdateLayout();
+                    window.MouseMove(sliders[0].TranslatePoint(new Point(5, 10), window)!.Value);
+                }
+
                 ShowcaseTestHelper.SettleExpanderChevrons(panel);
             });
 

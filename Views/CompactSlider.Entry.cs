@@ -287,7 +287,7 @@ public partial class CompactSlider
         {
             _isDragging = false;
             _hasDragStarted = false;
-            _thumbDot?.Classes.Set("pointer-captured", false);
+            _thumbMark?.Classes.Set("pointer-captured", false);
             e.Pointer.Capture(null);
             Value = DefaultValue;
             e.Handled = true;
@@ -300,7 +300,7 @@ public partial class CompactSlider
         _dragStartX = e.GetPosition(_trackGrid).X;
         _dragStartValue = Value;
         e.Pointer.Capture(_layoutGrid);
-        _thumbDot?.Classes.Set(
+        _thumbMark?.Classes.Set(
             "pointer-captured",
             e.Pointer.Captured == _layoutGrid);
         if (!_valuePressed) RaiseEvent(new RoutedEventArgs(DragStartedEvent));
@@ -357,7 +357,7 @@ public partial class CompactSlider
         var wasDragged = _hasDragStarted;
         _isDragging = false;
         _hasDragStarted = false;
-        _thumbDot?.Classes.Set("pointer-captured", false);
+        _thumbMark?.Classes.Set("pointer-captured", false);
         if (!_valuePressed || wasDragged) RaiseEvent(new RoutedEventArgs(DragCompletedEvent));
         _valuePressed = false;
 

@@ -27,11 +27,11 @@ public sealed class CompactSliderInputGateTests
         Assert.Null(Record.Exception(() => slider.Value = value));
         var trackWidth = slider.FindControl<Grid>("TrackGrid")!.Bounds.Width;
         var fill = slider.FindControl<Border>("FillBar")!;
-        var thumb = slider.FindControl<Border>("ThumbDot")!;
+        var thumb = slider.FindControl<Avalonia.Controls.Shapes.Path>("ThumbMark")!;
         Assert.True(trackWidth > 0);
         Assert.InRange(fill.Width, 0, trackWidth);
         Assert.InRange(fill.Margin.Left, 0, trackWidth - fill.Width);
-        Assert.InRange(thumb.Margin.Left, 0, trackWidth - thumb.Width);
+        Assert.Equal(value < minimum ? 0 : trackWidth, thumb.Margin.Left + thumb.Width / 2);
         Assert.Equal(value, slider.Value);
     }
 
@@ -90,9 +90,13 @@ public sealed class CompactSliderInputGateTests
         const int attemptCount = 100;
         var (slider, window, scope) = ShowSlider();
         using var windowScope = scope;
-        var thumb = slider.FindControl<Border>("ThumbDot")!;
+        var thumb = slider.FindControl<Avalonia.Controls.Shapes.Path>("ThumbMark")!;
         var inactiveColor = Assert.IsAssignableFrom<ISolidColorBrush>(
-            thumb.Background).Color;
+            thumb.Fill).Color;
+
+        // VISUALS-WP3: after release the pointer still hovers the row, so the mark shows the row-hover color.
+        var hoverColor = Assert.IsAssignableFrom<ISolidColorBrush>(
+            thumb.FindResource(thumb.ActualThemeVariant, "TextSecondary")).Color;
 
         try
         {
@@ -111,7 +115,7 @@ public sealed class CompactSliderInputGateTests
                     capturedClassCount++;
                 }
                 var capturedColor = Assert.IsAssignableFrom<ISolidColorBrush>(
-                    thumb.Background).Color;
+                    thumb.Fill).Color;
                 lastCapturedColor = capturedColor;
                 if (capturedColor != inactiveColor)
                 {
@@ -124,9 +128,9 @@ public sealed class CompactSliderInputGateTests
                     RawInputModifiers.None);
                 Dispatcher.UIThread.RunJobs();
                 Assert.Equal(
-                    inactiveColor,
+                    hoverColor,
                     Assert.IsAssignableFrom<ISolidColorBrush>(
-                        thumb.Background).Color);
+                        thumb.Fill).Color);
             }
 
             Assert.True(

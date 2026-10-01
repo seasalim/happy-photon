@@ -145,7 +145,9 @@ public partial class CompactSlider : UserControl
     private Border? _centerMark;
     private TextBlock? _labelText;
     private TextBlock? _valueText;
-    private Border? _thumbDot;
+
+    private Avalonia.Controls.Shapes.Path? _thumbMark;
+
     private bool _isDragging;
     private bool _hasDragStarted;
     private double _dragStartX;
@@ -164,7 +166,10 @@ public partial class CompactSlider : UserControl
         _centerMark = this.FindControl<Border>("CenterMark");
         _labelText = this.FindControl<TextBlock>("LabelText");
         _valueText = this.FindControl<TextBlock>("ValueText");
-        _thumbDot = this.FindControl<Border>("ThumbDot");
+        _thumbMark = this.FindControl<Avalonia.Controls.Shapes.Path>("ThumbMark");
+        GotFocus += (_, e) => _thumbMark?.Classes.Set("keyboardFocused",
+            e.Source == this && e.NavigationMethod is NavigationMethod.Tab or NavigationMethod.Directional);
+        LostFocus += (_, _) => _thumbMark?.Classes.Set("keyboardFocused", false);
 
         if (_layoutGrid != null)
         {
@@ -293,18 +298,9 @@ public partial class CompactSlider : UserControl
         }
         _fillBar.IsVisible = ShowValueFill;
 
-        if (_thumbDot != null)
+        if (_thumbMark != null)
         {
-            // Thumb center sits at the value position (NOT at fill-width: for a
-            // negative bipolar value the fill's left edge is the value side).
-            var thumbWidth = double.IsNaN(_thumbDot.Width)
-                ? 8
-                : _thumbDot.Width;
-            var thumbLeft = Math.Clamp(
-                valueX - thumbWidth / 2,
-                0,
-                Math.Max(0, trackWidth - thumbWidth));
-            _thumbDot.Margin = new Thickness(thumbLeft, 0, 0, 0);
+            _thumbMark.Margin = new Thickness(valueX - 3.5, 11, 0, 0);
         }
     }
 }
