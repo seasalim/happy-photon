@@ -320,8 +320,8 @@ public sealed partial class ExportVisualStyleTests : IDisposable
         AssertBrush("SurfaceHigh", control.Background);
         var item = control.GetVisualDescendants().OfType<ListBoxItem>().First();
         Assert.Equal(18, item.Height);
-        Assert.Equal(9, item.FontSize);
-        Assert.Equal(1, item.LetterSpacing);
+        Assert.Equal(10, item.FontSize);
+        Assert.Equal(0, item.LetterSpacing);
     }
 
     private static void AssertBrush(string resource, IBrush? actual) =>

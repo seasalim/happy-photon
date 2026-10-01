@@ -78,7 +78,9 @@ Sora supplies headings; Hanken Grotesk supplies body and control chrome. Panel h
 use mixed-case Hanken Grotesk SemiBold, muted and without tracking. JetBrains Mono is
 reserved for numeric readouts, slider values, dimensions and keyboard hints.
 Preset subgroup headers step down to body size (11), Medium, TextMuted.
-The welcome surface uses named `FontSizeHero` and `FontSizeFeature` tokens.
+The type scale is Title 20, Heading 15, Label 12, Body 11 and Small 10;
+`FontSizeSmall` is the minimum. Use mixed case and no tracking anywhere.
+The welcome surface uses the named `FontSizeHero` token.
 
 ## Layout & Spacing
 
@@ -105,7 +107,7 @@ Fullscreen exposes a muted exit chip on pointer movement, then fades it away. It
 clickable only while visible, so exiting is not keyboard-only. Clipping overlays follow
 pipeline/UI.md §4; image viewing aids never become exported pixels.
 
-Review metadata groups FILE, CAMERA and LOCATION. Missing rows remain absent. A muted
+Review metadata groups File, Camera and Location. Missing rows remain absent. A muted
 file-modified fallback does not become capture time; exposure-bias, focal-equivalence
 and crop-factor details stay with exposure/lens information. A conditions line appears
 only for deviations such as flash, non-pattern metering or manual white balance.

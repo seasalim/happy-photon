@@ -10,6 +10,8 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://HappyPhoton/Themes/HappyPhotonTheme.axaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <StaticResource x:Key="ControlContentThemeFontSize" ResourceKey="FontSizeBody"/>
+            <StaticResource x:Key="ToolTipContentThemeFontSize" ResourceKey="FontSizeBody"/>
             <SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="Transparent"/>
             <SolidColorBrush x:Key="ExpanderHeaderBorderPointerOverBrush" Color="Transparent"/>
             <SolidColorBrush x:Key="ExpanderHeaderBorderPressedBrush" Color="Transparent"/>
@@ -35,6 +37,10 @@
         <StyleInclude Source="avares://HappyPhoton/Views/ExpanderChevronStyles.axaml"/>
 
         <!-- Global typography -->
+        <Style Selector="Window">
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+        </Style>
         <Style Selector="TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
         </Style>
@@ -199,9 +205,9 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
-            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="LetterSpacing" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Border.raw-chip">
