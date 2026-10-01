@@ -8,7 +8,7 @@ namespace HappyPhoton.Tests;
 public sealed class SyncSpotOrientationTests(ITestOutputHelper output)
 {
     // Independent of the future repair mapper: observe the native output frame,
-    // then pass a labelled frame through the loader's actual orientation function.
+    // then compare the shared orientation contract with independently rotated labels.
     [Fact]
     public void G2_RealHeaderPixels()
     {
@@ -30,7 +30,7 @@ public sealed class SyncSpotOrientationTests(ITestOutputHelper output)
             var map = LoaderMap(path, decode, out var flip, out var preRotated);
             using var target = loader.LoadFullBase(new ImageFile(path), decode, CancellationToken.None);
             Assert.NotNull(target);
-            Assert.Equal(RawBaseLoader.NormalizeOrientation(flip), target.Info.ExifOrientationApplied);
+            Assert.Equal(LibRawOrientation.FromNativeFlip(flip), target.Info.ExifOrientationApplied);
             var reader = new PhotoFrameFactsReader(new SourceAvailabilityService());
             Assert.Equal(target.Info.SensorFrame, reader.ReadSensorFrame(new ImageFile(path)));
             var targetPixels = RenderPipelineTestSupport.ReadPixels(target.Pixels);
@@ -86,7 +86,7 @@ public sealed class SyncSpotOrientationTests(ITestOutputHelper output)
         SyncProfileGateSupport.RequireLocal(path);
         using var raw = LibRawContext.Open(path);
         var dimensions = raw.GetDimensions();
-        flip = dimensions.Orientation;
+        flip = LibRawOrientation.ToNativeFlip(dimensions.Orientation);
         Assert.Contains(flip, new[] { 3, 5, 6 });
         raw.Unpack();
         raw.ConfigureOutput(RawBaseLoader.ConfigureOutput(decode, preview: false));
@@ -98,9 +98,11 @@ public sealed class SyncSpotOrientationTests(ITestOutputHelper output)
             [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6], height: 2);
         // Model the native rotation independently; real decoded pixels below verify it.
         marker.Pixels.Rotate(flip == 3 ? 180 : flip == 5 ? 270 : 90);
-        preRotated = RawBaseLoader.ApplyOrientation(marker.Pixels,
-            RawBaseLoader.NormalizeOrientation(flip), 3, 2);
-        Assert.Equal(flip != 3, preRotated);
+        var transform = RawBaseLoader.ResolveOrientation(dimensions.Orientation);
+        preRotated = transform.AlreadyApplied;
+        Assert.True(preRotated);
+        Assert.Equal(1, transform.LoaderOrientation);
+        Assert.Equal(dimensions.Orientation, transform.FrameOrientation);
         var pixels = RenderPipelineTestSupport.ReadPixels(marker.Pixels);
         var width = (int)marker.Pixels.Width;
         var height = (int)marker.Pixels.Height;

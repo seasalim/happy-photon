@@ -9,8 +9,8 @@ Stored repairs render through the shared pipeline; the Spots tool edits them in 
 
 Each entry requires a unique 32-hex GUID, type, destination `u`/`v`, source
 `su`/`sv`, radius, feather, and opacity. Coordinates are normalized doubles,
-rounded to 1/16384 after clamping to [0, 1]. They belong to the oriented,
-lens-corrected base, before user geometry. Quarter turns never transform them.
+rounded to 1/16384 after clamping to [0, 1]. They belong to the
+[base frame](DECODE.md#orientation). Quarter turns never transform them.
 Load and save reject malformed entries, unknown types, non-finite numbers,
 more than 64 repairs, or summed π·radius² above the area limit (overlaps count).
 Ranges clamp before the area check: radius [0.002, 0.10], feather [0, 1], opacity [0.05, 1]. Six maximum discs

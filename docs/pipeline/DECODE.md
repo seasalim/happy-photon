@@ -60,8 +60,7 @@ Post-decode steps, in order:
    (OPTICS.md). Valid DCP matrix/HueSat facts install atomically; rejected profiles and
    missing WB retain built-in characterization (CHARACTERIZATION.md). Four-channel
    processed output is rejected rather than truncated.
-2. LibRaw sometimes pre-rotates. The loader detects that through the dimension swap,
-   applies EXIF orientation otherwise, and records `ExifOrientationApplied`.
+2. The processed pixels already carry orientation; see [Orientation](#orientation).
 3. Preview uses one LibRaw half-size decode. Two bases derive independently from that
    decoded buffer: interactive is the same one-step linear resize to 1600 as before;
    large is one resize to min(half-size result, 3200). Small sensors are never upscaled
@@ -185,6 +184,65 @@ LibRaw's X-Trans (Markesteijn) demosaic is not bit-reproducible across fresh pro
 when OpenMP threading is uncontrolled; Bayer sources are. Production decode deliberately
 does not pin OpenMP — serializing Markesteijn would cost real preview latency to remove
 a one-sample difference (consequences in TESTING.md §3).
+
+## Orientation
+
+The **base frame** is the EXIF-oriented, lens-corrected image produced by either
+loader. It is the reference for document geometry, crop, locals and repairs.
+User quarter turns (`EditSettings.Rotation`) and horizon/geometry run afterward:
+repairs retain base coordinates, crop and locals use the geometry-corrected frame
+([RENDER.md §8](RENDER.md)). Stored coordinates remain unchanged
+when the base orientation changes; only a user quarter turn remaps Locals as specified
+by the locals coordinate contract.
+
+LibRaw **0.22.2** applies every `sizes.flip` in `dcraw_make_mem_image` through
+[`copy_mem_image`](https://github.com/LibRaw/LibRaw/blob/0.22.2/src/postprocessing/mem_image.cpp#L222-L230)
+and [`flip_index`](https://github.com/LibRaw/LibRaw/blob/0.22.2/src/write/file_write.cpp#L22-L30).
+Happy Photon never sets `user_flip`. The managed facts bridge converts native flip
+codes to EXIF once for dimensions and metadata, using the
+[`tiff.cpp` table](https://github.com/LibRaw/LibRaw/blob/0.22.2/src/metadata/tiff.cpp#L620-L621).
+Native codes are not EXIF values. `RawBaseLoader.ResolveOrientation` always reports
+already applied, loader identity, and the EXIF frame orientation.
+
+For a native visible frame W × H (or the native lens output window when corrected):
+
+| EXIF | LibRaw flip | LibRaw transform | Base dimensions | RAW loader | Thumbnail / embedded preview |
+|------|-------------|------------------|-----------------|------------|------------------------------|
+| 1 | 0 | Identity | W × H | None | Identity |
+| 2 | 1 | Mirror horizontal | W × H | None | Mirror horizontal |
+| 3 | 3 | Rotate 180° | W × H | None | Rotate 180° |
+| 4 | 2 | Mirror vertical | W × H | None | Mirror vertical |
+| 5 | 4 | Transpose | H × W | None | Transpose |
+| 6 | 6 | Rotate 90° clockwise | H × W | None | Rotate 90° clockwise |
+| 7 | 7 | Transverse | H × W | None | Transverse |
+| 8 | 5 | Rotate 270° clockwise | H × W | None | Rotate 270° clockwise |
+
+The last column describes the upright display transform, not a second transform of
+already-oriented pixels. Encoded RAW thumbnails/embedded previews are separate from
+the processed buffer: their decoder uses embedded EXIF or the source orientation
+fallback. JPEG, HEIC, TIFF and other standard images use Magick `AutoOrient`, applying
+the same EXIF table before normalization; they do not use the native flip conversion.
+`RawProcessedOrientationTests` pins this table to real-header fixture dimensions,
+metadata, repair frames and sampled pixels.
+
+Optics prescriptions live in the native sensor frame. For both 180° and 90° files,
+the output coordinate maps back to that frame, the complete correction (windows,
+centers, radial and tangential terms, CA and vignette gain) is evaluated there, and
+its source coordinate maps forward into the already-oriented processed buffer.
+Reference dimensions stay unchanged for 180° and swap for quarter turns. These are
+coordinate transforms within the existing fused sample, with no additional image
+interpolation. The saturation mask starts in the unrotated mosaic and retains its
+own sensor-to-base transform (orientation and lens warp); the histogram stays native.
+
+Spot Removal paste maps both centers between these frame orientations through
+`RawBaseLoader.ResolveOrientation`. XMP and catalog crop interop retain their
+header-only orientation compatibility checks. Export consumes upright pixels and
+writes the orientation tag as TopLeft. Preview and rendered-thumbnail cache identity
+includes `BaseImage.Version`; a decode version change invalidates both globally.
+
+There is no document migration: edits authored on orientation-3 RAWs before the fix
+keep their stored coordinates, so placement moves with the corrected base and can
+be redone by hand.
 
 ## 3. `StandardBaseLoader` (Magick.NET)
 

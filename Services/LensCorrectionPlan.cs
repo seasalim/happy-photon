@@ -30,12 +30,36 @@ internal sealed partial class LensCorrectionPlan
         double zoom,
         LensCorrectionReferenceFrame? referenceFrame = null)
     {
+        _sensorOrientation = referenceFrame?.SourceOrientation ?? 1;
+
+        if (_sensorOrientation != 1 && orientation != 1)
+        {
+            throw new ArgumentException(
+                "An already-oriented sensor buffer requires identity output orientation.",
+                nameof(orientation));
+        }
+
+        _bufferWidth = sourceWidth;
+        _bufferHeight = sourceHeight;
+
+        if (_sensorOrientation is >= 5 and <= 8)
+        {
+            (sourceWidth, sourceHeight) = (sourceHeight, sourceWidth);
+        }
+
         var referenceWidth = referenceFrame?.SourceWidth ?? sourceWidth;
         var referenceHeight = referenceFrame?.SourceHeight ?? sourceHeight;
+
+        if (_sensorOrientation is >= 5 and <= 8)
+        {
+            (referenceWidth, referenceHeight) = (referenceHeight, referenceWidth);
+        }
+
         var output = prescription.OutputWindow;
         var centerX = (output.Left + output.Right) * 0.5;
         var centerY = (output.Top + output.Bottom) * 0.5;
-        var oriented = OrientedPixelAffine(outputWidth, outputHeight, orientation);
+        var oriented = OrientedPixelAffine(outputWidth, outputHeight,
+            _sensorOrientation == 1 ? orientation : _sensorOrientation);
         _originX = centerX +
             (output.Left + oriented.OriginX * output.Width - centerX) / zoom;
         _originY = centerY +
@@ -99,9 +123,8 @@ internal sealed partial class LensCorrectionPlan
             _originX + x * _xStepX + y * _yStepX,
             _originY + x * _xStepY + y * _yStepY);
         point = MapGeometry(point, 1);
-        return new LensPoint(
-            point.X * _sourceScaleX + _sourceOffsetX,
-            point.Y * _sourceScaleY + _sourceOffsetY);
+
+        return ToBuffer(point);
     }
 
     internal LensPoint Map(LensPoint point, int channel) =>
@@ -113,9 +136,8 @@ internal sealed partial class LensCorrectionPlan
         out LensPoint prescriptionPoint)
     {
         prescriptionPoint = MapGeometry(point, channel);
-        return new LensPoint(
-            prescriptionPoint.X * _sourceScaleX + _sourceOffsetX,
-            prescriptionPoint.Y * _sourceScaleY + _sourceOffsetY);
+
+        return ToBuffer(prescriptionPoint);
     }
 
     private LensPoint MapGeometry(LensPoint point, int channel)
@@ -134,36 +156,6 @@ internal sealed partial class LensCorrectionPlan
             point = tca.Apply(point, channel);
         return point;
     }
-    private static PixelAffine OrientedPixelAffine(
-        int width,
-        int height,
-        int orientation)
-    {
-        var halfX = 0.5 / width;
-        var halfY = 0.5 / height;
-        var stepX = 1.0 / width;
-        var stepY = 1.0 / height;
-        return orientation switch
-        {
-            1 => new(halfX, halfY, stepX, 0, 0, stepY),
-            2 => new(1 - halfX, halfY, -stepX, 0, 0, stepY),
-            3 => new(1 - halfX, 1 - halfY, -stepX, 0, 0, -stepY),
-            4 => new(halfX, 1 - halfY, stepX, 0, 0, -stepY),
-            5 => new(halfY, halfX, 0, stepX, stepY, 0),
-            6 => new(halfY, 1 - halfX, 0, -stepX, stepY, 0),
-            7 => new(1 - halfY, 1 - halfX, 0, -stepX, -stepY, 0),
-            8 => new(1 - halfY, halfX, 0, stepX, -stepY, 0),
-            _ => throw new ArgumentOutOfRangeException(nameof(orientation))
-        };
-    }
-
-    private readonly record struct PixelAffine(
-        double OriginX,
-        double OriginY,
-        double XStepX,
-        double XStepY,
-        double YStepX,
-        double YStepY);
 
     private readonly struct LensWarpOperation
     {

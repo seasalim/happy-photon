@@ -77,12 +77,20 @@ public sealed class SyncSpotPasteGateTests(ITestOutputHelper output)
             vm.Browse.SelectAllVisible();
             await vm.PasteEditSettingsCommand.ExecuteAsync(null);
             var expected = source.EditSettings.Clone();
-            expected.Repairs = source.EditSettings.Repairs!.Select(repair => orientation == 3 ? repair with { } : orientation == 6
+            expected.Repairs = source.EditSettings.Repairs!.Select(repair => orientation == 3
+                ? repair with { U = 1 - repair.U, V = 1 - repair.V, Su = 1 - repair.Su, Sv = 1 - repair.Sv }
+                : orientation == 6
                 ? repair with { U = 1 - repair.V, V = repair.U, Su = 1 - repair.Sv, Sv = repair.Su }
                 : repair with { U = repair.V, V = 1 - repair.U, Su = repair.Sv, Sv = 1 - repair.Su }).ToList();
             await SyncSpotGateSupport.AssertTransfer(catalog, target, before, expected);
             var error = SyncSpotGateSupport.CenterError(expected.Repairs, target.EditSettings.Repairs!);
             maximum = Math.Max(maximum, error);
+            var desired = source.EditSettings.Repairs!.Select(repair => orientation == 3
+                ? repair with { U = 1 - repair.U, V = 1 - repair.V, Su = 1 - repair.Su, Sv = 1 - repair.Sv }
+                : orientation == 6
+                    ? repair with { U = 1 - repair.V, V = repair.U, Su = 1 - repair.Sv, Sv = repair.Su }
+                    : repair with { U = repair.V, V = 1 - repair.U, Su = repair.Sv, Sv = 1 - repair.Su }).ToList();
+            output.WriteLine($"ORIENTATION318 exif={orientation} baselineCenterErrorUnits={error} desiredExifCenterErrorUnits={SyncSpotGateSupport.CenterError(desired, target.EditSettings.Repairs!)}");
             Assert.InRange(error, 0, 1);
             await vm.PasteEditSettingsCommand.ExecuteAsync(null);
             await SyncSpotGateSupport.AssertTransfer(catalog, target, before, expected);

@@ -47,7 +47,7 @@ internal sealed partial class PhotoFrameFactsReader(ISourceAvailabilityService a
                     _cameras[file.FilePath] = new(new CameraIdentity(
                         metadata.NormalizedMake ?? metadata.Make, metadata.NormalizedModel ?? metadata.Model), monochrome);
                     header = new((int)dimensions.VisibleWidth, (int)dimensions.VisibleHeight,
-                        RawBaseLoader.NormalizeOrientation(dimensions.Orientation)) { IsMonochrome = monochrome };
+                        dimensions.Orientation) { IsMonochrome = monochrome };
                 }
                 else
                 {

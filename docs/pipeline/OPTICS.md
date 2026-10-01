@@ -50,6 +50,8 @@ per class after a manual selection. JPEG/HEIC and monochrome remain uncorrected.
 
 ## Placement and interpolation ledger
 
+[Orientation](DECODE.md#orientation) owns the sensor-to-buffer sampling contract.
+
 Corrections are decode-dependent. A corrected destination coordinate maps to the
 demosaiced camera-native source separately for R, G, and B. Bilinear sampling happens
 before the camera-to-Rec.2020 matrix, radial vignetting gain multiplies those sampled

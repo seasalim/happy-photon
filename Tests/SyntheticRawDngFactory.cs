@@ -8,19 +8,33 @@ internal sealed record SyntheticRawDngOptions
     internal string Make { get; init; } = "Happy Photon";
     internal string Model { get; init; } = "Synthetic Bayer DNG";
     internal bool IncludeChromaticAberration { get; init; }
+
+    internal double ChromaticAberrationKr1Delta { get; init; } = 0.001;
+
     internal int Scale { get; init; } = 1;
     internal bool IncludeOpcodes { get; init; } = true;
     internal bool UseInsetDefaultCrop { get; init; } = true;
     internal double WarpKr1 { get; init; } = -0.08;
     internal double VignetteK0 { get; init; } = 0.2;
     internal ushort Orientation { get; init; } = 1;
+
+    internal double WarpKt0 { get; init; }
+
+    internal double WarpKt1 { get; init; }
+
+    internal double WarpCenterX { get; init; } = 0.5;
+
+    internal double WarpCenterY { get; init; } = 0.5;
+
+    internal bool AsymmetricCrop { get; init; }
+
     internal (int X, int Y)? SaturatedRedSite { get; init; }
 
     internal int Width => 640 * Scale;
     internal int Height => 480 * Scale;
     internal uint[] ActiveArea => ScaleValues(16, 16, 464, 624);
-    internal uint[] DefaultCropOrigin => ScaleValues(32, 24);
-    internal uint[] DefaultCropSize => ScaleValues(544, 400);
+    internal uint[] DefaultCropOrigin => AsymmetricCrop ? ScaleValues(20, 40) : ScaleValues(32, 24);
+    internal uint[] DefaultCropSize => AsymmetricCrop ? ScaleValues(536, 352) : ScaleValues(544, 400);
 
     private uint[] ScaleValues(params uint[] values) =>
         values.Select(value => checked(value * (uint)Scale)).ToArray();
@@ -135,7 +149,7 @@ internal static class SyntheticRawDngFactory
         if (options.IncludeOpcodes)
         {
             result.Add(E(51022, Undefined, OpcodeList(
-                Opcode(1, WarpPayload(options.WarpKr1, options.IncludeChromaticAberration)),
+                Opcode(1, WarpPayload(options)),
                 Opcode(3, VignettePayload(options.VignetteK0)))));
         }
         return result;
@@ -237,15 +251,19 @@ internal static class SyntheticRawDngFactory
         return result;
     }
 
-    private static byte[] WarpPayload(double kr1, bool chromaticAberration)
+    private static byte[] WarpPayload(SyntheticRawDngOptions options)
     {
-        var planes = chromaticAberration ? 3 : 1;
+        var planes = options.IncludeChromaticAberration ? 3 : 1;
         var result = new byte[4 + planes * 48 + 16];
         BinaryPrimitives.WriteUInt32BigEndian(result, (uint)planes);
+
         for (var plane = 0; plane < planes; plane++)
             WriteDoubles(result, 4 + plane * 48, 1,
-                kr1 + (chromaticAberration ? (plane - 1) * 0.001 : 0), 0, 0, 0, 0);
-        WriteDoubles(result, 4 + planes * 48, 0.5, 0.5);
+                options.WarpKr1 + (options.IncludeChromaticAberration ? (plane - 1) * options.ChromaticAberrationKr1Delta : 0),
+                0, 0, options.WarpKt0, options.WarpKt1);
+
+        WriteDoubles(result, 4 + planes * 48, options.WarpCenterX, options.WarpCenterY);
+
         return result;
     }
 

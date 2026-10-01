@@ -462,4 +462,5 @@ internal readonly record struct LensCorrectionReferenceFrame(
     int SourceWidth,
     int SourceHeight,
     int OutputWidth,
-    int OutputHeight);
+    int OutputHeight,
+    int SourceOrientation = 1);

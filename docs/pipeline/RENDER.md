@@ -7,6 +7,8 @@ tonal work to one quantization step. All Magick.NET processing remains Q16.
 
 ## 1. Stage order (fixed)
 
+[Orientation](DECODE.md#orientation) defines the base frame and decoder contract.
+
 ```
 0 Repairs      sequential heal/clone in linear Rec.2020, on the base frame
 1 Geometry     rotate90 → fused horizon/keystone/aspect/radial warp → crop
@@ -70,6 +72,7 @@ preserves exact output.
 
 ### 2.2 Local color before tone
 
+The base orientation follows [DECODE.md](DECODE.md#orientation).
 Locals compose in creation order after global WB in linear Rec.2020 and before
 AgX inset/tone. Render setup resolves the effective global white from Custom/Preset
 Kelvin+tint, the base's as-shot estimate, or `EstimateFromGains` for Picked.

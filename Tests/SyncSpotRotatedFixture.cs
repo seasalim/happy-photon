@@ -8,7 +8,7 @@ internal static class SyncSpotRotatedFixture
 {
     internal static string Create(string original, string directory, ushort orientation)
     {
-        Assert.Contains(orientation, new ushort[] { 3, 6, 8 });
+        Assert.InRange(orientation, (ushort)1, (ushort)8);
         SyncProfileGateSupport.RequireLocal(original);
         var bytes = File.ReadAllBytes(original);
         Assert.Equal((byte)'I', bytes[0]);

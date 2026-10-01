@@ -373,28 +373,22 @@ public sealed class RawBaseLoaderTests
             second.Info.SourceExposureBiasEv);
     }
 
-    [Fact]
-    public void Orientation_AppliesOnlyWhenLibRawHasNotSwappedDimensions()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    public void Orientation_IsAlreadyAppliedWithoutDependingOnDimensions(int orientation)
     {
-        using var unoriented = CreateTwoPixelImage(width: 2, height: 1);
-        var alreadyApplied = RawBaseLoader.ApplyOrientation(
-            unoriented,
-            orientation: 6,
-            sourceWidth: 2,
-            sourceHeight: 1);
-        Assert.False(alreadyApplied);
-        Assert.Equal(1u, unoriented.Width);
-        Assert.Equal(2u, unoriented.Height);
+        var transform = RawBaseLoader.ResolveOrientation(orientation);
 
-        using var oriented = CreateTwoPixelImage(width: 1, height: 2);
-        alreadyApplied = RawBaseLoader.ApplyOrientation(
-            oriented,
-            orientation: 6,
-            sourceWidth: 2,
-            sourceHeight: 1);
-        Assert.True(alreadyApplied);
-        Assert.Equal(1u, oriented.Width);
-        Assert.Equal(2u, oriented.Height);
+        Assert.True(transform.AlreadyApplied);
+        Assert.Equal(1, transform.LoaderOrientation);
+        Assert.Equal(orientation, transform.FrameOrientation);
     }
 
     public static TheoryData<string, double, double> GetRawAssets()
@@ -473,15 +467,5 @@ public sealed class RawBaseLoaderTests
         var calibrated = ChromaticAdaptation.Identity();
         calibrated[0, 1] = 0.01;
         Assert.False(RawCameraFactSnapshot.IsIdentityTransform(calibrated));
-    }
-
-    private static MagickImage CreateTwoPixelImage(int width, int height)
-    {
-        var samples = new ushort[width * height * 3];
-        samples[0] = ushort.MaxValue;
-        return RawBaseLoader.ImportRgb16(
-            MemoryMarshal.AsBytes(samples.AsSpan()),
-            width,
-            height);
     }
 }

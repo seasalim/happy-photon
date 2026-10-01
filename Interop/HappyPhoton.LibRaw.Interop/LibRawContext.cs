@@ -130,7 +130,7 @@ public sealed unsafe class LibRawContext : IDisposable
 
     private static LibRawDimensions Convert(NativeDimensions value) => new(
         value.RawWidth, value.RawHeight, value.VisibleWidth, value.VisibleHeight,
-        value.OutputWidth, value.OutputHeight, value.Orientation);
+        value.OutputWidth, value.OutputHeight, LibRawOrientation.FromNativeFlip(value.Orientation));
 
     private static LibRawSensorIdentity Convert(NativeSensorIdentity value)
     {
@@ -158,7 +158,7 @@ public sealed unsafe class LibRawContext : IDisposable
             Optional(value.AperturePresent, value.Aperture),
             Optional(value.FocalLengthPresent, value.FocalLength),
             Optional(value.FocalLength35mmPresent, value.FocalLength35mm),
-            value.TimestampPresent != 0 ? value.Timestamp : null, value.Orientation,
+            value.TimestampPresent != 0 ? value.Timestamp : null, LibRawOrientation.FromNativeFlip(value.Orientation),
             new(value.Gps.Parsed != 0,
                 value.Gps.CoordinatePresent != 0 ? value.Gps.Latitude : null,
                 value.Gps.CoordinatePresent != 0 ? value.Gps.Longitude : null,

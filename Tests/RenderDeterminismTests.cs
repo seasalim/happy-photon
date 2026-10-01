@@ -92,12 +92,12 @@ public sealed class RenderDeterminismTests
     [Fact]
     public void SettingsHash_MatchesPinnedCanonicalValue()
     {
-        // Base v20 deliberately re-keys both canonical and compatibility hashes.
+        // Base v21 deliberately re-keys both canonical and compatibility hashes.
         const string previousExpected =
-            "e825b5e553467ea476296bab09ce966c8324be3d5421c670baf72d650f796555";
+            "6c8b3112b15589b770533a4b90f763d5c17ceb69f84f4f47a9504e2b07dd4073";
         // Settings v4 and render v14 deliberately re-key canonical hashes for Locals.
         const string expected =
-            "48a07df93f531a0bca75e20df0190cf7301dfd9a1761391a236c7b1556e6118c";
+            "6fc27df0c21e1989f1726aa2d97a975d5344baec73389add12411f891868058e";
         var settings = CreateSettings();
         var canonical = EditSettingsJson.Serialize(settings);
         var actual = RenderSettingsHash.Compute(settings);

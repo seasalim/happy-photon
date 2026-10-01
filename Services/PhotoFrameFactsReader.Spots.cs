@@ -25,7 +25,7 @@ internal sealed partial class PhotoFrameFactsReader
         if (!_headers.TryGetValue(file.FilePath, out var header)) return null;
 
         return new(header.Width, header.Height,
-            file.IsRaw ? RawBaseLoader.RepairFrameOrientation(header.Orientation, header.Width, header.Height) : header.Orientation);
+            file.IsRaw ? RawBaseLoader.ResolveOrientation(header.Orientation).FrameOrientation : header.Orientation);
     }
 
     internal (bool Available, string? Serial) ReadSerial(ImageFile file, bool cachedOnly)
