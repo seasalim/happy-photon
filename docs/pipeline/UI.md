@@ -355,6 +355,8 @@ NR values.
 
 ## 8. Keyboard
 
+Slider value fields apply Up/Down (Shift ×10) through ordinary arrow debounce; Tab/Shift+Tab commits immediately and opens the next/previous visible, enabled entry in the nearest scroll host, scrolling into view without wrapping.
+
 Registrations live in [ShortcutCatalog.cs](../../Views/ShortcutCatalog.cs), which
 Help & About reads directly. Binding changes update that catalog in the same PR.
 

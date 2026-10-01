@@ -20,10 +20,12 @@ public sealed class NumericEntryBox : TextBox
 
         KeyDownEvent.RouteFinished.Subscribe(new AnonymousObserver<RoutedEventArgs>(e =>
         {
-            if (e is KeyEventArgs { Route: RoutingStrategies.Bubble, KeySymbol.Length: > 0,
-                    Source: NumericEntryBox { _allowTextInput: true } })
+            if (e is KeyEventArgs { Route: RoutingStrategies.Bubble, Source: NumericEntryBox box } key)
             {
-                e.Handled = false;
+                if (box._allowTextInput && key.KeySymbol is { Length: > 0 }) e.Handled = false;
+
+                // Consume permission on every route, including tunnel-handled navigation.
+                box._allowTextInput = false;
             }
         }));
     }

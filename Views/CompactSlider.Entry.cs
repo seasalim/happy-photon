@@ -64,6 +64,8 @@ public partial class CompactSlider
 
     private bool _valuePressed;
 
+    private bool _steppingEntry;
+
     private object? _entryIdentity;
 
     private Visual[] _entryAncestors = [];
@@ -73,6 +75,7 @@ public partial class CompactSlider
     private void InitializeEntry()
     {
         _entry = this.FindControl<NumericEntryBox>("ValueEntry")!;
+        _entry.AddHandler(KeyDownEvent, OnEntryKeyDown, RoutingStrategies.Tunnel);
         _entry.Finish = key => FinishValueEntry(key != Key.Escape, clearFocus: true);
         _entry.LostFocus += (_, _) => FinishValueEntry(commit: true);
         DetachedFromVisualTree += (_, _) => CancelValueEntry();
@@ -80,7 +83,7 @@ public partial class CompactSlider
 
     private void OnEntryPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
-        if (change.Property == DataContextProperty || change.Property == ValueProperty ||
+        if (change.Property == DataContextProperty || change.Property == ValueProperty && !_steppingEntry ||
             change.Property == IsValueEntryEnabledProperty ||
             change.Property == IsEffectivelyEnabledProperty && !IsEffectivelyEnabled)
         {
@@ -138,6 +141,79 @@ public partial class CompactSlider
 
     internal void CancelValueEntry() => FinishValueEntry(commit: false);
 
+    private void OnEntryKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (!IsEditingValue || _entry == null || e.Key is not (Key.Up or Key.Down or Key.Tab)) return;
+
+        e.Handled = true;
+        var shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+
+        if (e.Key == Key.Tab)
+        {
+            MoveToAdjacentValue(shift);
+
+            return;
+        }
+
+        if (!TryParseEntry(_entry.Text, out var value)) value = ValueToDisplay?.Invoke(Value) ?? Value;
+
+        var step = EntryStep > 0 ? EntryStep : SmallChange;
+        value = NormalizeEntryValue(value + (e.Key == Key.Up ? 1 : -1) * step * (shift ? 10 : 1));
+        if (!double.IsFinite(value)) return;
+
+        CompleteWheel();
+        RaiseEvent(new RoutedEventArgs(DragStartedEvent));
+        _steppingEntry = true;
+
+        try
+        {
+            SetCurrentValue(ValueProperty, value);
+        }
+        finally
+        {
+            _steppingEntry = false;
+        }
+
+        RaiseEvent(new RoutedEventArgs(DragCompletedEvent));
+        _entry.Text = StripUnit(_valueText?.Text);
+        _entry.SelectAll();
+    }
+
+    private void MoveToAdjacentValue(bool backwards)
+    {
+        FinishValueEntry(commit: true, clearFocus: true);
+        var sliders = this.GetVisualAncestors().OfType<ScrollViewer>().FirstOrDefault()?
+            .GetVisualDescendants().OfType<CompactSlider>().ToArray() ?? [];
+        var current = Array.IndexOf(sliders, this);
+        if (current < 0) return;
+
+        var direction = backwards ? -1 : 1;
+
+        for (var next = current + direction; next >= 0 && next < sliders.Length; next += direction)
+        {
+            var slider = sliders[next];
+            if (!slider.IsEffectivelyVisible || !slider.IsEffectivelyEnabled || !slider.IsValueEntryEnabled) continue;
+
+            slider.OpenValueEntry();
+            slider.UpdateLayout();
+            slider.BringIntoView();
+
+            return;
+        }
+    }
+
+    private static bool TryParseEntry(string? text, out double value) =>
+        double.TryParse(StripUnit(text).Replace('−', '-'), NumberStyles.Float,
+            CultureInfo.CurrentCulture, out value) && double.IsFinite(value);
+
+    private double NormalizeEntryValue(double value)
+    {
+        var step = EntryStep > 0 ? EntryStep : SmallChange;
+        value = Math.Round(value / step) * step;
+
+        return BoundValue(DisplayToValue?.Invoke(value) ?? value);
+    }
+
     private void FinishValueEntry(bool commit, bool clearFocus = false)
     {
         if (!IsEditingValue || _entry == null) return;
@@ -157,12 +233,9 @@ public partial class CompactSlider
         ValueEntryEnded?.Invoke();
 
         if (commit && validTarget && IsEffectivelyEnabled && IsEffectivelyVisible &&
-            double.TryParse(StripUnit(text).Replace('−', '-'), NumberStyles.Float,
-                CultureInfo.CurrentCulture, out var value) && double.IsFinite(value))
+            TryParseEntry(text, out var value))
         {
-            var step = EntryStep > 0 ? EntryStep : SmallChange;
-            value = Math.Round(value / step) * step;
-            value = BoundValue(DisplayToValue?.Invoke(value) ?? value);
+            value = NormalizeEntryValue(value);
 
             if (double.IsFinite(value) && value != Value &&
                 (ValueToDisplay == null || ValueToDisplay(value) != ValueToDisplay(Value)))

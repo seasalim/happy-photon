@@ -107,6 +107,8 @@ public sealed class ShortcutReachabilityTests
     }
 
     [Theory]
+    [InlineData("Click value", "SaturationSlider")]
+    [InlineData("Tab / Shift+Tab", "SaturationSlider")]
     [InlineData("A", "VisualizeSpotsButton")]
     [InlineData("[  /  ]", "SpotSizeSlider")]
     [InlineData("Shift+[  /  Shift+]", "SpotFeatherSlider")]

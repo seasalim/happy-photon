@@ -9,7 +9,9 @@ namespace HappyPhoton.Tests;
 
 internal static class NumericEntryKeyInput
 {
-    public static void Type(Window window, Key key, string symbol)
+    public static void Type(Window window, Key key, string symbol) => Press(window, key, symbol, expectTextInput: true);
+
+    public static void Press(Window window, Key key, string symbol, bool expectTextInput)
     {
         KeyEventArgs? down = null;
         using var subscription = InputElement.KeyDownEvent.RouteFinished.Subscribe(new AnonymousObserver<RoutedEventArgs>(input =>
@@ -24,7 +26,7 @@ internal static class NumericEntryKeyInput
         if (!down.Handled) window.KeyTextInput(symbol);
 
         window.KeyRelease(key, RawInputModifiers.None, PhysicalKey.None, symbol);
-        Assert.False(down.Handled, $"{key} suppressed platform text input");
+        Assert.Equal(expectTextInput, !down.Handled);
     }
 
     public static Key KeyFor(char symbol) => symbol switch

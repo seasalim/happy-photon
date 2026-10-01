@@ -173,6 +173,7 @@ Double-click a thumbnail or press `D` to enter **Develop**. Use the previous and
 buttons below the image, or the left and right arrow keys, to move between visible
 images without returning to Browse.
 
+Click a slider value to type; Up/Down steps it (Shift ×10), and Tab/Shift+Tab commits and opens the next/previous visible, enabled value field without wrapping.
 Hold Shift and scroll over an enabled slider to adjust it in small steps (up/right increases); each burst is one undo step.
 
 A matching cached preview can show the photo and display scopes while the original
