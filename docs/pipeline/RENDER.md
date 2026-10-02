@@ -37,6 +37,10 @@ Beyond `ru=1`, `f` continues linearly with value `1+k` and slope `1+3k`; the for
 projection uses the closed-form inverse of the cubic below that knee and division
 above it. This keeps the map monotone at every slider setting.
 
+Crop Auto samples the preview [base frame](DECODE.md#orientation) before repairs and
+Geometry on a button press. It sets only draft Horizon within ±5°, with a frozen
+confidence cutoff of 0.20; it never runs inside the render pipeline.
+
 ### 1.1 Request contract
 
 `RenderRequest`, `RenderOptions`, and `RenderResult` are defined in

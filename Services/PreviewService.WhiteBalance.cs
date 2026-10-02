@@ -76,42 +76,19 @@ public sealed partial class PreviewService
         Func<MagickImage, double[]?> sample,
         CancellationToken cancellationToken)
     {
-        using var snapshot = await _baseCoordinator.GetPreviewAsync(
-            imageFile,
-            await ResolveDecodeAsync(imageFile, settings, cancellationToken),
-            cancellationToken);
-        if (snapshot == null)
-        {
-            return null;
-        }
-        if (WhiteBalanceSampleGateAsync is { } gate)
-        {
-            await gate().ConfigureAwait(false);
-        }
+        var result = await SamplePreviewBaseAsync(
+            imageFile, settings, sample, cancellationToken, WhiteBalanceSampleGateAsync);
 
-        var gains = await Task.Run(
-            () => sample(snapshot.Base.Pixels),
-            cancellationToken);
-        return gains == null
-            ? null
-            : new WhiteBalanceSample(gains, snapshot.Base);
+        return result?.Value is { } gains
+            ? new WhiteBalanceSample(gains, result.BaseToken)
+            : null;
     }
 
-    internal async Task<bool> IsWhiteBalanceBaseCurrentAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        object baseToken,
-        CancellationToken cancellationToken = default)
-    {
-        var decode = await ResolveDecodeAsync(
-            imageFile,
-            settings,
-            cancellationToken).ConfigureAwait(false);
-        using var snapshot = _baseCoordinator.TryAcquireCurrent(
-            imageFile,
-            decode);
-        return snapshot != null && ReferenceEquals(snapshot.Base, baseToken);
-    }
+    // Retain the existing race-test seam while both callers use the shared check.
+    internal Task<bool> IsWhiteBalanceBaseCurrentAsync(
+        ImageFile imageFile, EditSettings settings, object baseToken,
+        CancellationToken cancellationToken = default) =>
+        IsPreviewBaseCurrentAsync(imageFile, settings, baseToken, cancellationToken);
 
     private static async Task<double[]?> GetSampleGainsAsync(
         Task<WhiteBalanceSample?> sample) =>

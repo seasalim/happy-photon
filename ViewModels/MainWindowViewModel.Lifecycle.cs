@@ -7,6 +7,7 @@ public partial class MainWindowViewModel
         _developLoadingMessage.Dispose();
         _historyLoadsClosed = true;
         CloseRenderOutcomeChannel();
+        await CancelAndDrainAutoStraightenAsync();
         StopBrushPreview();
         CancelAndDispose(ref _watermarkProofDebounce);
         CancelWatermarkSettingsSave();

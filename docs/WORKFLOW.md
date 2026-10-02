@@ -202,7 +202,7 @@ Rotate in 90-degree steps with the controls below the image. Enter crop mode
 with the **Crop** toggle beneath the histogram or with `R`; its settings then sit
 at the top of the adjustment stack:
 
-- straighten the horizon;
+- straighten the horizon with the slider, or **Auto** to level from the photo’s straight lines;
 - lock the current crop aspect ratio when needed;
 - reset the crop.
 

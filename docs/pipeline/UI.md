@@ -23,6 +23,7 @@ header stays fixed while tool settings enter the top of the scrolling stack. Glo
 edits are locked and dimmed while a tool is active; WB picking is inert. Switching
 tools discards unfinished input but retains committed locals. Crop Apply commits the
 crop and draft Horizon together; Cancel discards the draft.
+Crop Auto sets draft Horizon from straight lines; no result or an unchanged draft shows transient status.
 
 Spots (Q) offers Heal/Clone, Size, Feather and Opacity; controls edit the selected
 spot or persistent new-spot preferences. Click chooses an automatic source; drag
@@ -119,7 +120,8 @@ Scope box              (fixed)
 CROP [Cancel] [Apply] / LOCALS [Show Mask] [Close]  (fixed active-tool header)
 Scrolling stack:
 Crop                   (only in Crop mode)
-  [Horizon] [Lock aspect ratio] [Reset crop] [instruction]
+  [Horizon]
+  [Lock aspect ratio] [Auto] [Reset crop] [instruction]
 Locals                 (only in Locals mode)
   [+ Linear] [+ Radial] [+ Brush]
   Empty: [stable-height instruction / armed creation placeholder]

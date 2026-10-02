@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
@@ -6,6 +7,9 @@ namespace HappyPhoton.Views;
 
 public partial class CropEditSection : UserControl
 {
+    private void OnAutoClick(object? sender, RoutedEventArgs e) =>
+        this.FindAncestorOfType<Window>()?.Focus();
+
     public CropEditSection()
     {
         InitializeComponent();

@@ -8,13 +8,18 @@
         <views:CompactSlider Label="Horizon" Value="{Binding HorizonRotation}"
                              Minimum="-5" Maximum="5" SmallChange="0.1"
                              StringFormat="{}{0:+0.0;-0.0;0.0}°" EnableDoubleClickReset="True"/>
-        <Grid ColumnDefinitions="*,Auto">
-            <ToggleButton IsChecked="{Binding IsCropAspectLocked}" Content="Lock aspect ratio"
-                          ToolTip.Tip="Lock Aspect Ratio" FontSize="10" Padding="8,4" BorderThickness="0"/>
-            <Button Grid.Column="1" Command="{Binding ResetCropCommand}" Content="Reset crop"
-                    ToolTip.Tip="Reset Crop" FontSize="10" Padding="8,4" BorderThickness="0"/>
+        <Grid ColumnDefinitions="*,Auto,Auto">
+            <ToggleButton IsChecked="{Binding IsCropAspectLocked}" MinWidth="0"
+                          ToolTip.Tip="Lock Aspect Ratio" FontSize="{StaticResource FontSizeSmall}" Padding="4,4" BorderThickness="0">
+                <TextBlock Text="Lock aspect ratio" TextTrimming="CharacterEllipsis"/>
+            </ToggleButton>
+            <Button x:Name="AutoStraightenButton" Grid.Column="1" Classes="wb-auto"
+                    Command="{Binding AutoStraightenCommand}" Content="Auto" Click="OnAutoClick"
+                    ToolTip.Tip="Straighten from the photo's lines (sets Horizon)"/>
+            <Button Grid.Column="2" Command="{Binding ResetCropCommand}" Content="Reset crop"
+                    ToolTip.Tip="Reset Crop" FontSize="{StaticResource FontSizeSmall}" Padding="4,4" BorderThickness="0"/>
         </Grid>
-        <TextBlock Text="Drag edges to crop · Enter to apply" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+        <TextBlock Text="Drag edges to crop · Enter to apply" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}"/>
         <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0"/>
     </StackPanel>
 </UserControl>

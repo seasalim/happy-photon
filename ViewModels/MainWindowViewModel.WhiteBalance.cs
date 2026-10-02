@@ -260,7 +260,7 @@ public partial class MainWindowViewModel
         {
             return false;
         }
-        var baseCurrent = await ImageService.Previews.IsWhiteBalanceBaseCurrentAsync(
+        var baseCurrent = await ImageService.Previews.IsPreviewBaseCurrentAsync(
             image,
             settings,
             baseToken);
@@ -311,6 +311,7 @@ public partial class MainWindowViewModel
 
     private void NotifyWhiteBalanceCommandState()
     {
+        AutoStraightenCommand.NotifyCanExecuteChanged();
         AutoWhiteBalanceCommand.NotifyCanExecuteChanged();
         ToggleWhiteBalancePickerCommand.NotifyCanExecuteChanged();
         if (!CanSampleWhiteBalance())
@@ -324,6 +325,7 @@ public partial class MainWindowViewModel
 
     partial void OnIsCropModeChanged(bool value)
     {
+        _cropSessionIdentity++;
         if (value) CloseBeforeAfterSplit();
         ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();
