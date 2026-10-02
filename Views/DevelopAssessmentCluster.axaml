@@ -19,7 +19,7 @@
         <TextBlock x:Name="CompactRating" Grid.Column="1" Text="{Binding SelectedImage.RatingStars}"
                    FontSize="{StaticResource FontSizeLabel}" Foreground="{DynamicResource TextPrimary}"
                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        <Border x:Name="CompactColorLabel" Grid.Column="2" Width="10" Height="10" CornerRadius="999"
+        <Border x:Name="CompactColorLabel" Grid.Column="2" Width="10" Height="10"
                 Background="{Binding SelectedImage.ColorLabel, Converter={StaticResource ColorLabelBrushConverter}}"
                 IsVisible="{Binding SelectedImage.HasColorLabel, FallbackValue=False}"
                 ToolTip.Tip="{Binding SelectedImage.ColorLabel}"/>

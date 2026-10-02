@@ -75,7 +75,7 @@ public sealed class BatchExportFormatTests : IDisposable
         Assert.Equal(
             VerticalAlignment.Center,
             exportButton.VerticalContentAlignment);
-        Assert.Equal(new CornerRadius(8), exportButton.CornerRadius);
+        Assert.Equal(new CornerRadius(0), exportButton.CornerRadius);
         Assert.Equal(FontWeight.Bold, exportButton.FontWeight);
         Assert.Equal(11, exportButton.FontSize);
         Assert.Equal(0, exportButton.LetterSpacing);

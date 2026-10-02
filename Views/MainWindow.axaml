@@ -100,7 +100,7 @@
                                        Foreground="{DynamicResource TextMuted}"/>
                         </Grid>
                         <Border x:Name="NavigatorPreviewFrame"
-                                Background="{DynamicResource SurfaceLow}" CornerRadius="3"
+                                Background="{DynamicResource SurfaceLow}"
                                 Height="168" HorizontalAlignment="Stretch">
                             <Grid>
                                 <Image x:Name="NavigatorThumbnailImage"
@@ -130,7 +130,6 @@
                         <Border Background="{DynamicResource SurfaceMid}"
                                 BorderBrush="{DynamicResource OutlineVariant}"
                                 BorderThickness="1"
-                                CornerRadius="{StaticResource RadiusSmall}"
                                 Padding="8"
                                 Margin="0,8,0,0"
                                 IsVisible="{Binding SelectedImage.SourceRequiresHydration, FallbackValue=False}">
@@ -316,7 +315,7 @@
                     HorizontalAlignment="Center" VerticalAlignment="Bottom"
                     Margin="12" Padding="0"
                     Background="Transparent" Foreground="{DynamicResource TextMuted}"
-                    BorderThickness="0" CornerRadius="999"
+                    BorderThickness="0" CornerRadius="0"
                     Opacity="0" IsHitTestVisible="False"
                     Command="{Binding ToggleFullScreenCommand}"
                     ToolTip.Tip="Exit fullscreen (Escape)"
@@ -328,7 +327,7 @@
                     </Transitions>
                 </Button.Transitions>
                 <Grid>
-                    <Border Background="{DynamicResource SurfaceLowest}" Opacity="0.62" CornerRadius="999"/>
+                    <Border Background="{DynamicResource SurfaceLowest}" Opacity="0.62"/>
                     <StackPanel Orientation="Horizontal" Spacing="7" Margin="10,4">
                     <Viewbox Width="11" Height="11">
                         <Canvas Width="16" Height="16">

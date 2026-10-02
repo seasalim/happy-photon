@@ -93,8 +93,8 @@ public sealed class BrowseTileColorLabelTests
                 .OfType<Avalonia.Controls.Shapes.Path>()
                 .Where(path => path.Classes.Contains("corner-bite"))
                 .ToArray();
-            Assert.Equal(8, bites.Length);
-            Assert.All(bites, bite => Assert.False(bite.IsHitTestVisible));
+            Assert.Empty(bites);
+            Assert.Equal(new CornerRadius(0), marker.CornerRadius);
             Assert.Equal(
                 ThemeResourceTests.Brush("RejectSurface", ThemeVariant.Dark).Color,
                 Assert.IsType<SolidColorBrush>(rejectBadge.Background).Color);

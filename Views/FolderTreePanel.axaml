@@ -70,7 +70,6 @@
                 <TreeDataTemplate DataType="models:FolderNode" ItemsSource="{Binding Children}">
                     <Border Classes="folder-row"
                             Classes.active="{Binding IsSelected}"
-                            CornerRadius="{StaticResource RadiusSmall}"
                             Padding="7,3">
                         <Border.ContextMenu>
                             <ContextMenu>
@@ -107,7 +106,6 @@
                                         Background="{TemplateBinding Background}"
                                         BorderBrush="{TemplateBinding BorderBrush}"
                                         BorderThickness="{TemplateBinding BorderThickness}"
-                                        CornerRadius="{TemplateBinding CornerRadius}"
                                         MinHeight="{TemplateBinding MinHeight}"
                                         TemplatedControl.IsTemplateFocusTarget="True">
                                     <Grid Name="PART_Header" ColumnDefinitions="20,*">

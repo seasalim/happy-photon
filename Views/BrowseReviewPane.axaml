@@ -31,7 +31,6 @@
                     Margin="15,15,15,10"
                     Padding="5"
                     Background="{DynamicResource SurfaceLow}"
-                    CornerRadius="8"
                     IsEnabled="{Binding HasSelectedImage}">
                 <Grid RowDefinitions="Auto,Auto">
                     <TextBlock x:Name="BrowseHistogramHeader"
@@ -172,7 +171,6 @@
 
                     <Border x:Name="SelectionSummaryPanel"
                             Background="{DynamicResource SurfaceLow}"
-                            CornerRadius="{StaticResource RadiusSmall}"
                             Padding="10"
                             IsVisible="{Binding HasBrowseSelectionSummary}">
                         <StackPanel Spacing="5">

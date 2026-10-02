@@ -66,8 +66,7 @@
                                              Margin="16,16,16,32"/>
             <Border x:Name="DevelopEmptyState"
                     IsVisible="{Binding IsDevelopEmptyStateVisible}"
-                    Background="{DynamicResource SurfaceLow}"
-                    CornerRadius="{StaticResource RadiusMedium}" Padding="20"
+                    Background="{DynamicResource SurfaceLow}" Padding="20"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="Select an image to edit"
                            Foreground="{DynamicResource TextMuted}" FontSize="16"/>

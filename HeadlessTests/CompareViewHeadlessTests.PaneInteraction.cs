@@ -273,9 +273,9 @@ public sealed partial class CompareViewHeadlessTests
         Assert.All(paneBorders, border =>
         {
             Assert.Equal(1, border.BorderThickness.Left);
-            Assert.Equal(new CornerRadius(14), border.CornerRadius);
+            Assert.Equal(new CornerRadius(0), border.CornerRadius);
             Assert.Equal(
-                new CornerRadius(13),
+                new CornerRadius(0),
                 Assert.IsType<Border>(border.Child).CornerRadius);
         });
     }

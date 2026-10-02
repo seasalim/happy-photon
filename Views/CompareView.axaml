@@ -14,7 +14,7 @@
         <Style Selector="Border.compare-pane">
             <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariant}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="ClipToBounds" Value="True"/>
         </Style>
         <Style Selector="Border.compare-pane.active">
@@ -60,7 +60,7 @@
                             Classes.active="{Binding Image.IsActive}"
                             Background="{DynamicResource SurfaceLowest}"
                             Margin="3">
-                        <Border CornerRadius="13" ClipToBounds="True">
+                        <Border ClipToBounds="True">
                           <Grid RowDefinitions="*,Auto">
                             <Panel>
                                 <views:PlaceholderImage Source="{Binding Image.Thumbnail}"
@@ -94,16 +94,14 @@
                                                FontSize="11" ToolTip.Tip="{Binding Image.FileName}"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                 Spacing="5" Margin="8,0,0,0">
-                                        <Border Background="{DynamicResource ControlActive}"
-                                                CornerRadius="2" Padding="3,0"
+                                        <Border Background="{DynamicResource ControlActive}" Padding="3,0"
                                                 IsVisible="{Binding Image.IsPicked}">
                                             <TextBlock Text="P" FontSize="9"
                                                        Foreground="{DynamicResource OnControlActive}"/>
                                         </Border>
                                         <Border Background="{StaticResource RejectSurface}"
                                                 BorderBrush="{StaticResource RejectOutline}"
-                                                BorderThickness="1"
-                                                CornerRadius="2" Padding="3,0"
+                                                BorderThickness="1" Padding="3,0"
                                                 IsVisible="{Binding Image.IsRejected}">
                                             <TextBlock Text="X" FontSize="9"
                                                        Foreground="{StaticResource RejectGlyph}"/>
@@ -112,7 +110,7 @@
                                                    FontSize="10"
                                                    Foreground="{DynamicResource TextPrimary}"
                                                    IsVisible="{Binding Image.HasRating}"/>
-                                        <Border Width="11" Height="11" CornerRadius="999"
+                                        <Border Width="11" Height="11"
                                                 IsVisible="{Binding Image.HasColorLabel}"
                                                 Background="{Binding Image.ColorLabel, Converter={StaticResource ColorLabelBrushConverter}}"/>
                                     </StackPanel>

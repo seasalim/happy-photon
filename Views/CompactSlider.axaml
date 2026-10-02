@@ -56,19 +56,16 @@
                 <Border x:Name="TrackLine"
                         Background="{DynamicResource OutlineVariant}"
                         Height="2"
-                        CornerRadius="1"
                         VerticalAlignment="Center"/>
 
                 <Border Background="{Binding TrackBrush, ElementName=SliderRoot}"
                         Height="{Binding Height, ElementName=TrackLine}"
-                        CornerRadius="{Binding CornerRadius, ElementName=TrackLine}"
                         VerticalAlignment="Center"/>
 
                 <!-- Fill bar (shows value position) - uses margin for positioning -->
                 <Border x:Name="FillBar"
                         Background="{DynamicResource TextMuted}"
                         Height="2"
-                        CornerRadius="1"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Left"/>
 
@@ -89,7 +86,7 @@
 
         <!-- The overlay borrows only the existing margins, preserving the 40px column. -->
         <Border x:Name="ValueCell" Grid.Column="2" Width="49" Height="18"
-                Margin="-6,0,-3,0" CornerRadius="2"
+                Margin="-6,0,-3,0"
                 IsVisible="{Binding IsValueEntryEnabled, ElementName=SliderRoot}"/>
         <!-- Value on the right -->
         <TextBlock x:Name="ValueText"
@@ -98,7 +95,7 @@
         <views:NumericEntryBox x:Name="ValueEntry" Grid.Column="2"
                               Width="49" Height="18" MinWidth="0" MinHeight="0"
                               Margin="-6,0,-3,0" Padding="2,0" BorderThickness="1"
-                              CornerRadius="2" VerticalAlignment="Center"
+                              CornerRadius="0" VerticalAlignment="Center"
                               FontFamily="{StaticResource FontLabel}" FontSize="11"
                               TextAlignment="Right" VerticalContentAlignment="Center"
                               Background="{DynamicResource SurfaceHigh}"

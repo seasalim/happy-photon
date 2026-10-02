@@ -43,7 +43,7 @@ public sealed class ThemeLiveSwitchTests
                     .OfType<Avalonia.Controls.Shapes.Path>(),
                 path => path.Name == "CheckGlyph");
 
-            Assert.Equal(new CornerRadius(3), checkBox.CornerRadius);
+            Assert.Equal(new CornerRadius(0), checkBox.CornerRadius);
             Assert.Equal(0.8, box.RenderTransform!.Value.M11, precision: 3);
             Assert.Equal(
                 ThemeResourceTests.Brush("ControlActive", variant).Color,

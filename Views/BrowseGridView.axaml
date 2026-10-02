@@ -194,40 +194,22 @@
                                 <Panel Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
                                        Height="{Binding $parent[views:BrowseGridView].ImageViewportHeight}">
                                     <!-- Background: darker blue-gray for RAW, standard for others -->
-                                    <Border Background="{DynamicResource RawFileBackground}" CornerRadius="8"
+                                    <Border Background="{DynamicResource RawFileBackground}"
                                             IsVisible="{Binding IsRaw}" ToolTip.Tip="RAW file"/>
-                                    <Border Background="{DynamicResource SurfaceHigh}" CornerRadius="8"
+                                    <Border Background="{DynamicResource SurfaceHigh}"
                                             IsVisible="{Binding !IsRaw}"/>
                                     <!-- Thumbnail content -->
                                     <Border x:Name="ThumbnailContentClip">
                                         <Panel>
-                                            <!-- The frame hugs the letterboxed image so the inner
-                                                 bites round the image's own corners; backdrop-colored
-                                                 fills match what sits behind the photo, and the
-                                                 card-colored viewport bites paint over them when the
-                                                 image runs full-bleed. -->
                                             <Grid x:Name="ThumbnailImageFrame"
                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
                                                   IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNotNull}}">
                                                 <Image Source="{Binding Thumbnail}" Stretch="Uniform"/>
-                                                <Path Classes="corner-bite backdrop-bite" Classes.raw="{Binding IsRaw}"
-                                                      HorizontalAlignment="Left" VerticalAlignment="Top"
-                                                      Data="M 0,0 L 8,0 A 8,8 0 0 0 0,8 Z"/>
-                                                <Path Classes="corner-bite backdrop-bite" Classes.raw="{Binding IsRaw}"
-                                                      HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                      Data="M 8,0 L 0,0 A 8,8 0 0 1 8,8 Z"/>
-                                                <Path Classes="corner-bite backdrop-bite" Classes.raw="{Binding IsRaw}"
-                                                      HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                                      Data="M 0,8 L 0,0 A 8,8 0 0 0 8,8 Z"/>
-                                                <Path Classes="corner-bite backdrop-bite" Classes.raw="{Binding IsRaw}"
-                                                      HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                                      Data="M 8,8 L 8,0 A 8,8 0 0 1 0,8 Z"/>
                                             </Grid>
                                             <Border Name="TileLoadingPlaceholder"
                                                     Background="{DynamicResource SurfaceHighest}"
                                                     IsVisible="{Binding IsLoading}"
                                                     Width="50" Height="4"
-                                                    CornerRadius="2"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"/>
                                             <StackPanel IsVisible="{Binding ShowCloudPlaceholder}"
@@ -243,24 +225,11 @@
                                             </StackPanel>
                                         </Panel>
                                     </Border>
-                                    <!-- Solid corner bites: the GPU renderer draws bitmap
-                                         content square regardless of rounded clips or
-                                         rounded-fill brushes, so the card color is painted
-                                         back over the image corners instead. -->
-                                    <Path Classes="corner-bite" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                          Data="M 0,0 L 8,0 A 8,8 0 0 0 0,8 Z"/>
-                                    <Path Classes="corner-bite" HorizontalAlignment="Right" VerticalAlignment="Top"
-                                          Data="M 8,0 L 0,0 A 8,8 0 0 1 8,8 Z"/>
-                                    <Path Classes="corner-bite" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                          Data="M 0,8 L 0,0 A 8,8 0 0 0 8,8 Z"/>
-                                    <Path Classes="corner-bite" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                          Data="M 8,8 L 8,0 A 8,8 0 0 1 0,8 Z"/>
-                                    <Border Classes="img-hairline" CornerRadius="8"
+                                    <Border Classes="img-hairline"
                                             IsHitTestVisible="False"/>
                                     <Border Background="{DynamicResource SurfaceHighest}"
                                             BorderBrush="{DynamicResource ControlActive}"
                                             BorderThickness="1"
-                                            CornerRadius="999"
                                             Padding="5,1"
                                             Margin="0,5,5,0"
                                             HorizontalAlignment="Right"
@@ -270,14 +239,13 @@
                                         <TextBlock Text="☁" FontSize="10"
                                                    Foreground="{DynamicResource ControlActive}"/>
                                     </Border>
-                                    <Border Background="{DynamicResource ErrorContainer}" CornerRadius="999"
+                                    <Border Background="{DynamicResource ErrorContainer}"
                                             Padding="6,2" Margin="0,5,5,0" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                             IsVisible="{Binding HasVisibleLoadFailure}" ToolTip.Tip="{Binding LoadFailureText}">
                                         <TextBlock Text="!" FontFamily="{StaticResource FontBody}" FontWeight="Bold"
                                                    Foreground="{DynamicResource OnErrorContainer}"/>
                                     </Border>
                                     <Border Width="4" HorizontalAlignment="Left"
-                                            CornerRadius="2,0,0,2"
                                             Classes="burst-stripe"
                                             Classes.highlighted="{Binding IsBurstHighlighted}"
                                             IsVisible="{Binding HasBurstGroup}"
@@ -293,7 +261,7 @@
                                     <Button x:Name="SelectionBadgeButton"
                                             Width="17" Height="17"
                                             Padding="0"
-                                            CornerRadius="5"
+                                            CornerRadius="0"
                                             BorderThickness="0"
                                             HorizontalAlignment="Left"
                                             VerticalAlignment="Top"
@@ -307,7 +275,6 @@
                                             PointerPressed="OnSelectionBadgePointerPressed"
                                             Click="OnSelectionBadgeClick">
                                         <Border Width="17" Height="17"
-                                                CornerRadius="5"
                                                 Background="{DynamicResource SelectionSurface}"
                                                 BoxShadow="{StaticResource BadgeShadow}">
                                             <Path Data="M 3,7.5 L 6.5,11 L 12,4"
@@ -327,7 +294,6 @@
                                     <StackPanel Orientation="Horizontal" Spacing="3"
                                                 HorizontalAlignment="Left">
                                             <Border Background="{DynamicResource ControlActive}"
-                                                    CornerRadius="{StaticResource RadiusSmall}"
                                                     Padding="4,1"
                                                     IsVisible="{Binding HasVersions}"
                                                     ToolTip.Tip="Version">
@@ -338,15 +304,14 @@
                                                            FontFamily="{StaticResource FontBody}"
                                                            Foreground="{DynamicResource OnControlActive}"/>
                                             </Border>
-                                            <Border Background="{DynamicResource ControlActive}" CornerRadius="2"
+                                            <Border Background="{DynamicResource ControlActive}"
                                                     Padding="3,0" IsVisible="{Binding IsPicked}" ToolTip.Tip="Picked">
                                                 <TextBlock Text="P" FontSize="9" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource OnControlActive}"/>
                                             </Border>
                                             <Border Background="{StaticResource RejectSurface}"
                                                     BorderBrush="{StaticResource RejectOutline}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="2" Padding="3,0"
+                                                    BorderThickness="1" Padding="3,0"
                                                     IsVisible="{Binding IsRejected}" ToolTip.Tip="Rejected">
                                                 <TextBlock Text="X" FontSize="9" FontWeight="SemiBold"
                                                            Foreground="{StaticResource RejectGlyph}"/>
@@ -356,8 +321,7 @@
                                                        VerticalAlignment="Center" IsVisible="{Binding HasRating}"
                                                        ToolTip.Tip="Rating"/>
                                             <Border x:Name="RawJpegPairChip"
-                                                    Background="{DynamicResource SurfaceHighest}"
-                                                    CornerRadius="2" Padding="3,0"
+                                                    Background="{DynamicResource SurfaceHighest}" Padding="3,0"
                                                     IsVisible="{Binding IsRawJpegPair}"
                                                     ToolTip.Tip="RAW+JPEG pair">
                                                 <TextBlock Text="J+R"
@@ -366,7 +330,7 @@
                                                            FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextSecondary}"/>
                                             </Border>
-                                            <Border CornerRadius="2" Padding="3,0"
+                                            <Border Padding="3,0"
                                                     IsVisible="{Binding HasBurstGroup}" ToolTip.Tip="Burst frame">
                                                 <Border.Background>
                                                     <MultiBinding Converter="{StaticResource BurstColorConverter}">
@@ -388,7 +352,7 @@
                                             <TextBlock Text="±" FontSize="11"
                                                        Foreground="{DynamicResource TextMuted}"/>
                                         </Border>
-                                        <Border Width="12" Height="12" CornerRadius="999"
+                                        <Border Width="12" Height="12"
                                                 VerticalAlignment="Center"
                                                 Classes="color-label-marker"
                                                 IsVisible="{Binding HasColorLabel}" IsHitTestVisible="False"
@@ -408,7 +372,6 @@
                 x:Name="EmptyState"
                 IsVisible="False"
                 Background="{DynamicResource SurfaceLow}"
-                CornerRadius="{StaticResource RadiusMedium}"
                 Padding="20"
                 MaxWidth="520"
                 Margin="24"

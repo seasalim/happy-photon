@@ -91,7 +91,7 @@
                     <Setter Property="Width" Value="{StaticResource ThinScrollBarWidth}"/>
                     <Setter Property="Template">
                         <ControlTemplate>
-                            <Border Background="{DynamicResource Divider}" CornerRadius="{StaticResource RadiusSmall}">
+                            <Border Background="{DynamicResource Divider}">
                                 <Track Name="PART_Track" Orientation="Vertical" IsDirectionReversed="True"
                                        Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}"
                                        Value="{TemplateBinding Value, Mode=TwoWay}" ViewportSize="{TemplateBinding ViewportSize}">
@@ -99,7 +99,7 @@
                                         <Thumb MinHeight="{StaticResource MaskRowControlSize}" Background="{DynamicResource TextMuted}">
                                             <Thumb.Template>
                                                 <ControlTemplate>
-                                                    <Border Background="{TemplateBinding Background}" CornerRadius="{StaticResource RadiusSmall}"/>
+                                                    <Border Background="{TemplateBinding Background}"/>
                                                 </ControlTemplate>
                                             </Thumb.Template>
                                         </Thumb>
@@ -190,7 +190,7 @@
             <Setter Property="Padding" Value="2"/>
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="CornerRadius" Value="0"/>
         </Style>
         <Style Selector="ListBox.segmented ListBoxItem">
             <Setter Property="Height" Value="18"/>
@@ -198,7 +198,7 @@
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Margin" Value="0"/>
-            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -215,7 +215,7 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariant}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="99"/>
+            <Setter Property="CornerRadius" Value="0"/>
         </Style>
         <Style Selector="Border.raw-chip TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
@@ -234,7 +234,7 @@
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="CheckBox">
-            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="CornerRadius" Value="0"/>
         </Style>
         <Style Selector="CheckBox /template/ Border#NormalRectangle,
                          CheckBox /template/ Viewbox">
@@ -272,7 +272,7 @@
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
-            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="CornerRadius" Value="0"/>
         </Style>
         <!-- Active controls use value contrast; hue is reserved for semantic data. -->
         <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter">

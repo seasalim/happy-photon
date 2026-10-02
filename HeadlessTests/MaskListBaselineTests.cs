@@ -218,7 +218,7 @@ public sealed class MaskListBaselineTests(ITestOutputHelper output)
         var thumb = bar.GetVisualDescendants().OfType<Thumb>().Single();
         var thumbBorder = Assert.Single(thumb.GetVisualDescendants().OfType<Border>());
         AssertBrush(thumbBorder, "TextMuted", thumbBorder.Background);
-        Assert.True(thumbBorder.CornerRadius.TopLeft > 0);
+        Assert.Equal(new CornerRadius(0), thumbBorder.CornerRadius);
         var point = list.TranslatePoint(new Point(100, 60), window)!.Value;
         window.MouseMove(point);
         window.MouseWheel(point, new Vector(0, -1), RawInputModifiers.None);

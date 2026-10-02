@@ -18,7 +18,7 @@ namespace HappyPhoton.Tests;
 public sealed partial class BrowseGridDensityGateTests
 {
     [AvaloniaFact]
-    public async Task StretchedUnselectedTiles_RenderRoundedThumbnailCorners()
+    public async Task StretchedUnselectedTiles_PreserveSquareThumbnailCorners()
     {
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),
@@ -28,12 +28,14 @@ public sealed partial class BrowseGridDensityGateTests
         viewModel.ShowWorkspaceReady(
             MainWindowViewModel.CurrentFirstRunExperienceVersion);
         var images = NewImages(7);
+
         foreach (var image in images)
         {
             image.SwapThumbnail(NewWhiteThumbnail());
         }
+
         // A portrait thumbnail letterboxes: its own corners sit inboard of the
-        // viewport and must round there, not at the viewport corners.
+        // viewport and must retain their pixels there too.
         images[1].SwapThumbnail(NewWhiteThumbnail(128, 192));
         var grid = new BrowseGridView
         {
@@ -63,8 +65,7 @@ public sealed partial class BrowseGridDensityGateTests
 
             using var frame = window.CaptureRenderedFrame() ??
                 throw new InvalidOperationException("Grid frame was empty.");
-            // Every realized tile, none selected: the white thumbnail must be
-            // clipped off the 8px-radius corner but present at the center.
+            // Every realized tile retains the white thumbnail at all four corners.
             var frames = repeater.GetVisualDescendants()
                 .OfType<Grid>()
                 .Where(grid => grid.Name == "ThumbnailImageFrame")
@@ -74,12 +75,14 @@ public sealed partial class BrowseGridDensityGateTests
             Assert.Equal(clips.Length, frames.Length);
             Assert.Contains(frames, entry =>
                 entry.Frame.Bounds.Width < entry.Frame.Bounds.Height);
+
             foreach (var (frame2, origin2) in frames)
             {
                 var fw = frame2.Bounds.Width;
                 var fh = frame2.Bounds.Height;
                 Assert.Equal(0xFFFFFFFFu,
                     SamplePixel(frame, origin2.X + fw / 2, origin2.Y + fh / 2));
+
                 foreach (var (cx, cy, name) in new[]
                 {
                     (origin2.X + 1.5, origin2.Y + 1.5, "top-left"),
@@ -89,8 +92,8 @@ public sealed partial class BrowseGridDensityGateTests
                 })
                 {
                     var corner = SamplePixel(frame, cx, cy);
-                    Assert.True(corner != 0xFFFFFFFFu,
-                        $"image {name} corner rendered unclipped white ({corner:X8}).");
+                    Assert.True(corner == 0xFFFFFFFFu,
+                        $"image {name} corner lost its white photo pixel ({corner:X8}).");
                 }
             }
 
@@ -100,18 +103,7 @@ public sealed partial class BrowseGridDensityGateTests
                 var h = border.Bounds.Height;
                 var center = SamplePixel(frame, origin.X + w / 2, origin.Y + h / 2);
                 Assert.Equal(0xFFFFFFFFu, center);
-                foreach (var (cx, cy, name) in new[]
-                {
-                    (origin.X + 1.5, origin.Y + 1.5, "top-left"),
-                    (origin.X + w - 1.5, origin.Y + 1.5, "top-right"),
-                    (origin.X + 1.5, origin.Y + h - 1.5, "bottom-left"),
-                    (origin.X + w - 1.5, origin.Y + h - 1.5, "bottom-right")
-                })
-                {
-                    var corner = SamplePixel(frame, cx, cy);
-                    Assert.True(corner != 0xFFFFFFFFu,
-                        $"{name} corner rendered unclipped white ({corner:X8}).");
-                }
+                Assert.Equal(default, border.CornerRadius);
             }
         }
         finally
@@ -123,8 +115,10 @@ public sealed partial class BrowseGridDensityGateTests
     private static uint SamplePixel(WriteableBitmap frame, double x, double y)
     {
         using var buffer = frame.Lock();
-        var px = (int)Math.Round(x * buffer.Dpi.X / 96);
-        var py = (int)Math.Round(y * buffer.Dpi.Y / 96);
+        // Sample the pixel containing the point, rather than rounding onto an antialiased outer edge.
+        var px = (int)Math.Floor(x * buffer.Dpi.X / 96);
+        var py = (int)Math.Floor(y * buffer.Dpi.Y / 96);
+
         return (uint)System.Runtime.InteropServices.Marshal.ReadInt32(
             buffer.Address + py * buffer.RowBytes + px * 4);
     }

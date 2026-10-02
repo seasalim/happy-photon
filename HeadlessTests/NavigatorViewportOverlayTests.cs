@@ -111,7 +111,7 @@ public sealed class NavigatorViewportOverlayTests
         Assert.Equal(Color.Parse("#73000000"), halo.Color);
         Assert.Equal(1, NavigatorViewportOverlay.StrokeThickness);
         Assert.Equal(1, NavigatorViewportOverlay.HaloThickness);
-        Assert.Equal(1, NavigatorViewportOverlay.CornerRadius);
+        Assert.Equal(0, NavigatorViewportOverlay.CornerRadius);
     }
 
     [AvaloniaFact]

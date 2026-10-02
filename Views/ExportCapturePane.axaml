@@ -51,9 +51,8 @@
                             Classes="thumbnail">
                         <Grid ColumnDefinitions="56,*">
                             <Panel Width="56" Height="42">
-                                <Border Background="{DynamicResource SurfaceHigh}"
-                                        CornerRadius="4"/>
-                                <Border CornerRadius="4" ClipToBounds="True">
+                                <Border Background="{DynamicResource SurfaceHigh}"/>
+                                <Border ClipToBounds="True">
                                     <Image Source="{Binding Image.Thumbnail}"
                                            Width="56" Height="42"
                                            Stretch="UniformToFill"/>

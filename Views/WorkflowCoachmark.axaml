@@ -98,7 +98,6 @@
                 Background="{DynamicResource SurfaceHigh}"
                 BorderBrush="{DynamicResource Divider}"
                 BorderThickness="1"
-                CornerRadius="{StaticResource RadiusLarge}"
                 Padding="18"
                 BoxShadow="{DynamicResource CoachmarkShadow}">
             <StackPanel Spacing="10">

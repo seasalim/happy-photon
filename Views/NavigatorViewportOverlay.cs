@@ -8,8 +8,10 @@ namespace HappyPhoton.Views;
 public sealed class NavigatorViewportOverlay : Control
 {
     public const double StrokeThickness = 1;
+
     public const double HaloThickness = 1;
-    public const double CornerRadius = 1;
+
+    public const double CornerRadius = 0;
 
     public static readonly StyledProperty<Bitmap?> SourceProperty =
         AvaloniaProperty.Register<NavigatorViewportOverlay, Bitmap?>(nameof(Source));
@@ -81,6 +83,7 @@ public sealed class NavigatorViewportOverlay : Control
         using (context.PushClip(ImageBounds))
         {
             var hairlineRect = region.Deflate(StrokeThickness / 2);
+
             if (hairlineRect.Width <= 0 || hairlineRect.Height <= 0)
             {
                 return;

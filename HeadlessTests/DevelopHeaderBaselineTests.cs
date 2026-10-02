@@ -194,7 +194,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             output.WriteLine($"HEADER-FILL {group.Name}: bounds={BoundsIn(fill, expander)}; contentWidth={((Control)expander.Content!).Bounds.Width}; radius={fill.CornerRadius}");
             Assert.Equal(new Rect(-6, 0, ((Control)expander.Content!).Bounds.Width + 12, 43),
                 BoundsIn(fill, expander));
-            Assert.Equal(new CornerRadius(4), fill.CornerRadius);
+            Assert.Equal(new CornerRadius(0), fill.CornerRadius);
             Assert.Equal(fill.Bounds.Size, header.Bounds.Size);
             Assert.InRange(glyph.Center.Y, title.Top, title.Bottom);
             output.WriteLine($"CHEVRON {group.Name}: size={chevron.Bounds.Size}; stroke={chevron.StrokeThickness}");

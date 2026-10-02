@@ -8,7 +8,6 @@
     <Border Background="{DynamicResource SurfaceLow}"
             BorderBrush="{DynamicResource OutlineVariant}"
             BorderThickness="1"
-            CornerRadius="{StaticResource RadiusSmall}"
             Padding="10">
         <StackPanel Spacing="7">
             <TextBlock x:Name="ExportReportHeading" Text="{Binding ExportReport.Heading}" ToolTip.Tip="{Binding ExportReport.Heading}"

@@ -98,7 +98,6 @@
                         Margin="15,15,15,10"
                         Padding="5"
                         Background="{DynamicResource SurfaceLow}"
-                        CornerRadius="8"
                         IsEnabled="{Binding HasSelectedImage}">
                     <StackPanel Spacing="5">
                         <views:ScopeSelectorRow x:Name="ScopeSelector"/>

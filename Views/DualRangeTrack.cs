@@ -21,7 +21,7 @@ public sealed class DualRangeTrack : UserControl
     public double Lower { get => GetValue(LowerProperty); set => SetValue(LowerProperty, value); }
     public double Upper { get => GetValue(UpperProperty); set => SetValue(UpperProperty, value); }
     private readonly Canvas _track = new() { Height = 24, Background = Brushes.Transparent };
-    private readonly Border _line = new() { Height = 8, CornerRadius = new(2), IsHitTestVisible = false };
+    private readonly Border _line = new() { Height = 8, IsHitTestVisible = false };
     private readonly Border _selection = new() { Height = 2, IsHitTestVisible = false };
 
     private readonly ThumbMark[] _thumbs = [new(), new()];

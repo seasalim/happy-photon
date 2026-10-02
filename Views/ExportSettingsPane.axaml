@@ -118,7 +118,7 @@
                             VerticalContentAlignment="Center"
                             Background="{DynamicResource ControlActive}"
                             Foreground="{DynamicResource OnControlActive}"
-                            BorderThickness="0" CornerRadius="{StaticResource RadiusMedium}"
+                            BorderThickness="0" CornerRadius="0"
                             FontFamily="{StaticResource FontBody}" FontSize="{StaticResource FontSizeBody}"
                             FontWeight="Bold"
                             Command="{Binding RunExportCommand}"

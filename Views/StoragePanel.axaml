@@ -10,8 +10,7 @@
             <TextBlock Text="Location changes are staged and run before the catalog opens on the next launch."
                        Classes="setting-note"/>
             <Border Padding="14" Background="{DynamicResource SurfaceMid}"
-                    BorderBrush="{DynamicResource Divider}" BorderThickness="1"
-                    CornerRadius="{StaticResource RadiusMedium}">
+                    BorderBrush="{DynamicResource Divider}" BorderThickness="1">
                 <StackPanel Spacing="8">
                     <TextBlock Text="Catalog + presets" FontWeight="SemiBold"/>
                     <TextBlock Text="{Binding CatalogRoot}" TextWrapping="Wrap"
@@ -44,8 +43,7 @@
                 </StackPanel>
             </Border>
             <Border Padding="14" Background="{DynamicResource SurfaceMid}"
-                    BorderBrush="{DynamicResource Divider}" BorderThickness="1"
-                    CornerRadius="{StaticResource RadiusMedium}">
+                    BorderBrush="{DynamicResource Divider}" BorderThickness="1">
                 <StackPanel Spacing="8">
                     <TextBlock Text="Regenerable cache" FontWeight="SemiBold"/>
                     <TextBlock Text="{Binding CacheRoot}" TextWrapping="Wrap"

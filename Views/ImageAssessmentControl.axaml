@@ -20,7 +20,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -81,7 +81,6 @@
 
     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
             <Border Background="{DynamicResource SurfaceLowest}"
-                    CornerRadius="{StaticResource RadiusSmall}"
                     Padding="1">
                 <StackPanel Orientation="Horizontal" Spacing="1">
                     <Button x:Name="PickImageButton"
@@ -240,7 +239,7 @@
                                 CommandParameter="{Binding Value}"
                                 ToolTip.Tip="{Binding ToolTip}"
                                 AutomationProperties.Name="{Binding AutomationName}">
-                            <Border Width="13" Height="13" CornerRadius="999"
+                            <Border Width="13" Height="13"
                                     Background="{Binding Value, Converter={StaticResource ColorLabelBrushConverter}}"
                                     BorderThickness="2">
                                 <Border.BorderBrush>

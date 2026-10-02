@@ -84,6 +84,8 @@ The welcome surface uses the named `FontSizeHero` token.
 
 ## Layout & Spacing
 
+The UI is flat and square; only semantic circles stay round.
+
 Panes are mode-specific: Browse owns review; Develop owns editing controls
 (pipeline/UI.md §2). Export layout and behavior live in WORKFLOW.md §6.
 Workspace scrollbars are hidden by default. A list that must show more content uses a very

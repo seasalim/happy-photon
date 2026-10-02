@@ -58,7 +58,7 @@ public sealed class EffectsControlTests : IDisposable
         Assert.Equal(0.32, midpointRow.Opacity);
         Assert.Equal(22, sizes.Height);
         Assert.Equal(new Thickness(2), sizes.Padding);
-        Assert.Equal(new CornerRadius(4), sizes.CornerRadius);
+        Assert.Equal(new CornerRadius(0), sizes.CornerRadius);
         Assert.Equal(new Thickness(0), sizes.BorderThickness);
         Assert.Equal(3, sizes.ItemCount);
         Assert.Equal(GrainSize.Medium, sizes.SelectedItem);

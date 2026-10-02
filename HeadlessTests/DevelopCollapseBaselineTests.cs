@@ -283,7 +283,7 @@ public sealed class DevelopCollapseBaselineTests(ITestOutputHelper output)
                 Settle(window);
                 Assert.Equal(!before, group.IsExpanded);
                 Assert.Equal(new Size(232, 43), fill.Bounds.Size);
-                Assert.Equal(new CornerRadius(4), header.CornerRadius);
+                Assert.Equal(new CornerRadius(0), header.CornerRadius);
             }
 
             return Task.CompletedTask;

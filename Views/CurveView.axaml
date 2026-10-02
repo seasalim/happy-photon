@@ -11,7 +11,7 @@
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="MinWidth" Value="0"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="FontSize" Value="9"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="LetterSpacing" Value="1"/>
@@ -75,7 +75,7 @@
             <Setter Property="Padding" Value="3"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}"/>
+            <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.curveReset /template/ ContentPresenter#PART_ContentPresenter">
@@ -95,12 +95,11 @@
         </Style>
     </UserControl.Styles>
 
-    <Border Background="{DynamicResource SurfaceLow}" CornerRadius="8" Padding="10">
+    <Border Background="{DynamicResource SurfaceLow}" Padding="10">
         <Grid RowDefinitions="Auto,*,Auto">
             <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,8">
                 <Border Grid.Column="2" Width="112" Height="22" Margin="4,0"
-                        Background="{DynamicResource SurfaceHigh}"
-                        CornerRadius="4" Padding="2">
+                        Background="{DynamicResource SurfaceHigh}" Padding="2">
                     <UniformGrid Rows="1" ColumnSpacing="2">
                         <Button x:Name="CompositeChannelButton" Classes="curveChannel composite"
                                 Content="RGB" Click="OnCompositeChannelClick"/>
@@ -127,7 +126,7 @@
                 </Button>
             </Grid>
 
-            <Border Grid.Row="1" Background="{DynamicResource SurfaceBase}" CornerRadius="4"
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceBase}"
                     BorderBrush="{DynamicResource Outline}" BorderThickness="1">
                 <Canvas x:Name="CurveCanvas" ClipToBounds="True" Background="Transparent"/>
             </Border>

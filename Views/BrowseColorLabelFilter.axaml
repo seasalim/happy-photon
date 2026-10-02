@@ -19,7 +19,7 @@
             <Setter Property="Padding" Value="3,5"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="CornerRadius" Value="0"/>
         </Style>
         <Style Selector="Button.swatch:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
@@ -70,12 +70,12 @@
                             </MultiBinding>
                         </Classes.active>
                         <Panel>
-                            <Border Width="13" Height="13" CornerRadius="999"
+                            <Border Width="13" Height="13"
                                     Classes="swatch-dot"
                                     IsVisible="{Binding IsColorSlot}"
                                     Background="{Binding Value, Converter={StaticResource ColorLabelBrushConverter}}"
                                     BorderThickness="2"/>
-                            <Border Width="13" Height="13" CornerRadius="999"
+                            <Border Width="13" Height="13"
                                     Classes="none-ring"
                                     IsVisible="{Binding IsNoneSlot}"
                                     BorderThickness="2">

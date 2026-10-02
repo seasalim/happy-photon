@@ -39,7 +39,7 @@
         </Setter>
     </Style>
     <Style Selector="Expander.develop-group:expanded /template/ ToggleButton#ExpanderHeader, Expander.develop-group:not(:expanded) /template/ ToggleButton#ExpanderHeader">
-        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="CornerRadius" Value="0"/>
     </Style>
     <Style Selector="Expander.develop-group.first /template/ Border#GroupDivider">
         <Setter Property="IsVisible" Value="False"/>

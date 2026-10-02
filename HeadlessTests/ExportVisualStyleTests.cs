@@ -87,7 +87,7 @@ public sealed partial class ExportVisualStyleTests : IDisposable
             var recipeToggle = pane.GetVisualDescendants().OfType<CheckBox>().First();
             Assert.Equal(28, recipeToggle.Height);
             Assert.Equal(11, recipeToggle.FontSize);
-            Assert.Equal(new CornerRadius(3), recipeToggle.CornerRadius);
+            Assert.Equal(new CornerRadius(0), recipeToggle.CornerRadius);
             var checkBox = Assert.Single(
                 recipeToggle.GetVisualDescendants().OfType<Border>(),
                 border => border.Name == "NormalRectangle");
