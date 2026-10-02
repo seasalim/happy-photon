@@ -236,6 +236,7 @@ protocols live in the listed code. Report-only diagnostics are not acceptance ga
 | `RenderSharpeningPreviewGateTests` | None | Fit/zoom feedback, determinism and tick cost; rerun full-resolution `RenderNoiseReductionPerformanceTests` when sharpening changes |
 | `AdjacentPreviewPerformanceTests` | None | Warm/cold navigation, overlap, decode uniqueness and retained pairs |
 | `WaveformTickPerformanceTests` | None | Scope-active tick and histogram-only delta |
+| `StraightenGateTimingTests.G5Detector` | `HAPPY_PHOTON_STRAIGHTEN_FIXTURE` selects 6D, HEIC or D300; `Tests/RunStraightenGates.ps1 -Gate G5Detector` | Held preview-base horizon detection ≤50 ms; 3 warm-ups, 11 samples, 5 fresh processes, beside the same-session `G5Before` NL control |
 | Effects arms in `PreviewPipelinePerformanceTests` and `ExportPipelinePerformanceTests` | None | Active preview ≤150 ms; export delta ≤max(5%, 500 ms per full render), memory and cancellation |
 | `CameraRgbCharacterizationPerformanceTests` | `HAPPY_PHOTON_R5A_PERF=1` | Fused import versus direct import latency/retained memory |
 | `RenderStageBreakdownPerformanceTests` | Optional `HAPPY_PHOTON_STAGE_REPORT_DIR` | Report-only stage attribution, allocation and base load |
