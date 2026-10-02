@@ -160,7 +160,9 @@ public sealed class EditHistoryViewModelTests : IDisposable
         var paste = typeof(MainWindowViewModel).GetMethod(
             "PasteToSelectionAsync",
             BindingFlags.Instance | BindingFlags.NonPublic)!;
-        await (Task)paste.Invoke(vm, [new[] { target }, EditSettingsTransfer.DefaultGroups])!;
+        var snapshot = typeof(MainWindowViewModel).GetMethod(
+            "CopiedPasteSnapshot", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(vm, null);
+        await (Task)paste.Invoke(vm, [snapshot, new[] { target }, EditSettingsTransfer.DefaultGroups])!;
         await CommitDebouncedAsync(vm, clock, () => vm.Exposure = 0.4);
 
         Assert.Equal(

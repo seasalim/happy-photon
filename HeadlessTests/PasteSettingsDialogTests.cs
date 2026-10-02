@@ -57,17 +57,28 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
     [InlineData("escape", false)]
     [InlineData("enter", true)]
     [InlineData("paste", true)]
-    public async Task DialogReturnsOnlyConfirmedChoice(string action, bool expected)
+    [InlineData("cancel", false, PasteSettingsMode.Sync)]
+    [InlineData("escape", false, PasteSettingsMode.Sync)]
+    [InlineData("enter", true, PasteSettingsMode.Sync)]
+    [InlineData("paste", true, PasteSettingsMode.Sync)]
+    public async Task DialogReturnsOnlyConfirmedChoice(string action, bool expected,
+        PasteSettingsMode mode = PasteSettingsMode.Paste)
     {
         using var owner = new TestUiScope(new Window());
-        var model = new PasteSettingsViewModel("source.jpg", 1, new Dictionary<string, bool>(), currentPhoto: true);
+        var model = new PasteSettingsViewModel("source.jpg", 1, new Dictionary<string, bool>(),
+            currentPhoto: mode == PasteSettingsMode.Paste, mode: mode);
         var dialog = new PasteSettingsDialog(model);
         var result = dialog.ShowDialog<bool>(owner.Window!);
 
         try
         {
             Dispatcher.UIThread.RunJobs();
-            Assert.Equal("From source.jpg to this photo", model.Summary);
+            Assert.Equal(mode == PasteSettingsMode.Sync ? "From source.jpg to 1 photo" : "From source.jpg to this photo",
+                model.Summary);
+            Assert.Equal(mode == PasteSettingsMode.Sync ? "Sync Settings" : "Paste Settings", dialog.Title);
+            Assert.Equal(mode == PasteSettingsMode.Sync ? "Sync" : "Paste", dialog.FindControl<Button>("PasteButton")!.Content);
+            Assert.Contains(dialog.GetLogicalDescendants().OfType<TextBlock>(),
+                text => text.Text == (mode == PasteSettingsMode.Sync ? "Sync settings" : "Paste settings"));
 
             if (action is "enter" or "escape")
             {

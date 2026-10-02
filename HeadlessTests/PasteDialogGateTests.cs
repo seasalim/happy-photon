@@ -24,7 +24,18 @@ public sealed class PasteDialogGateTests(ITestOutputHelper output)
     [AvaloniaFact]
     public Task Sanity_PasteSettings() => RunAsync(measure: false);
 
-    private async Task RunAsync(bool measure)
+    [AvaloniaFact]
+    public Task G3_SyncSettings()
+    {
+        PasteGateSupport.RequirePerformance();
+
+        return RunAsync(measure: true, sync: true);
+    }
+
+    [AvaloniaFact]
+    public Task Sanity_SyncSettings() => RunAsync(measure: false, sync: true);
+
+    private async Task RunAsync(bool measure, bool sync = false)
     {
         using var fixture = new CatalogVmFixture("paste-dialog-gate");
         using var catalog = await fixture.CreateCatalogAsync();
@@ -45,7 +56,7 @@ public sealed class PasteDialogGateTests(ITestOutputHelper output)
             EditSettings = PasteGateSupport.SourceLook()
         };
         vm.SelectedImage = source;
-        vm.CopyEditSettingsCommand.Execute(null);
+        if (!sync) vm.CopyEditSettingsCommand.Execute(null);
         var targets = Enumerable.Range(0, 1000).Select(index => new ImageFile(fixture.Path($"photo-{index}.dng"))
         {
             EditSettings = new EditSettings
@@ -54,14 +65,16 @@ public sealed class PasteDialogGateTests(ITestOutputHelper output)
                 Crop = index % 3 == 0 ? new CropRegion { Left = .1, Top = .2, Right = .9, Bottom = .8 } : null
             }
         }).ToArray();
-        vm.Browse.SetImages(targets);
+        vm.Browse.SetImages(sync ? [source, .. targets] : targets);
         vm.Browse.SelectAllVisible();
+        if (sync) vm.SelectAllCommand.Execute(null);
 
         Dispatcher.UIThread.RunJobs();
         Assert.False(vm.IsDevelopMode);
-        Assert.Equal(1000, vm.Browse.SelectedCount);
+        Assert.Equal(sync ? 1001 : 1000, vm.Browse.SelectedCount);
         Assert.NotNull(vm.ShowPasteSettingsAsync);
-        Assert.True(vm.PasteEditSettingsCommand.CanExecute(null));
+        var action = sync ? vm.SyncSettingsCommand : vm.PasteEditSettingsCommand;
+        Assert.True(action.CanExecute(null));
         // Content readers must first query availability. Zero admission calls,
         // plus zero metadata/loader calls, proves no source access through the
         // production seams. This is a conservative zero-only counter, not an
@@ -93,19 +106,28 @@ public sealed class PasteDialogGateTests(ITestOutputHelper output)
         try
         {
             timer?.Start();
-            command = vm.PasteEditSettingsCommand.ExecuteAsync(null);
+            command = action.ExecuteAsync(null);
             var observed = await shown.Task.WaitAsync(TestWaits.Condition);
             Assert.IsType<PasteSettingsDialog>(observed);
             Assert.True(observed.IsVisible);
             Assert.Contains(observed.GetLogicalDescendants().OfType<TextBlock>(),
                 text => text.Text == "From source.dng to 1000 photos");
+            if (sync)
+            {
+                Assert.Equal("Sync Settings", observed.Title);
+                Assert.Contains(observed.GetLogicalDescendants().OfType<TextBlock>(),
+                    text => text.Text == "replaces own on 334 of 1000");
+                Assert.Contains(observed.GetLogicalDescendants().OfType<TextBlock>(),
+                    text => text.Text == "replaces own on 500 of 1000");
+            }
+
             Assert.Equal(0, sourceAdmissions);
             Assert.Equal(0, sourceMetadata);
             Assert.Equal(0, sourceDecodes);
             output.WriteLine("PASTE_GATE " + JsonSerializer.Serialize(new
             {
                 gate = measure ? "G3" : "sanity-dialog",
-                fixture = "paste-settings-1000",
+                fixture = sync ? "sync-settings-1000" : "paste-settings-1000",
                 pid = Environment.ProcessId,
                 milliseconds = timer?.Elapsed.TotalMilliseconds,
                 count = targets.Length,

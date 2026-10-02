@@ -29,8 +29,13 @@ public partial class MainWindowViewModel
         return facts;
     }
 
-    private void CaptureProfileSource(ImageFile image, EditSettings settings)
+    private PasteSnapshot? CopiedPasteSnapshot() => _copiedSettings == null ? null :
+        new(_copiedSource!, _copiedSourceName!, _copiedSettings, _copiedProfileSource!, _copiedSpotSource!);
+
+    private PasteSnapshot CapturePasteSnapshot(ImageFile image)
     {
+        var settings = image.EditSettings.Clone();
+        SaveSlidersTo(settings);
         var facts = RememberLoadedCamera(image);
 
         if (facts == null && image.IsRaw && (settings.RawProfile != null || settings.Lens.ProfileOverride != null))
@@ -38,18 +43,18 @@ public partial class MainWindowViewModel
             facts = PasteFrameReader.ReadCamera(image);
         }
 
-        _copiedProfileSource = new(image.FilePath, image.IsRaw, facts);
-        _copiedSpotSource = new(image, facts, PasteFrameReader.ReadSensorFrame(image, cachedOnly: true));
+        return new(image, image.FileName, settings, new(image.FilePath, image.IsRaw, facts),
+            new(image, facts, PasteFrameReader.ReadSensorFrame(image, cachedOnly: true)));
     }
 
     internal PhotoFrameFactsReader PasteFrameReader =>
         _pasteFrameReader ??= new PhotoFrameFactsReader(_sourceAvailabilityService);
 
-    private int? CachedReframeCount(IReadOnlyList<ImageFile> targets, bool optics)
+    private int? CachedReframeCount(PasteSnapshot snapshot, IReadOnlyList<ImageFile> targets, bool optics)
     {
-        if (_copiedSettings?.Crop is not { IsFullImage: false } || _copiedSource == null) return 0;
+        if (snapshot.Settings.Crop is not { IsFullImage: false }) return 0;
 
-        var source = PasteFrameReader.Read(_copiedSource, _copiedSettings, cachedOnly: true);
+        var source = PasteFrameReader.Read(snapshot.Source, snapshot.Settings, cachedOnly: true);
         if (source == null) return null;
 
         var count = 0;
@@ -60,7 +65,7 @@ public partial class MainWindowViewModel
 
             if (optics)
             {
-                EditSettingsTransfer.ApplyGroups(_copiedSettings, settings,
+                EditSettingsTransfer.ApplyGroups(snapshot.Settings, settings,
                     [EditSettingsTransfer.Groups.Single(group => group.Name == "Optics")]);
             }
 
@@ -169,7 +174,8 @@ public partial class MainWindowViewModel
         }
     }
 
-    private sealed record PasteSnapshot(ImageFile Source, EditSettings Settings, PhotoProfileSnapshot Profiles, PhotoSpotSnapshot Spots);
+    private sealed record PasteSnapshot(ImageFile Source, string SourceName, EditSettings Settings,
+        PhotoProfileSnapshot Profiles, PhotoSpotSnapshot Spots);
 
     private sealed record PasteProposal(EditSettings Settings, bool Reframed,
         Dictionary<string, string> Skips, bool LensApplied);

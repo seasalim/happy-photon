@@ -18,7 +18,15 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task G2_ConfirmToModelsUpdated_WhenEnabled()
+    public Task G2_ConfirmToModelsUpdated_WhenEnabled() => MeasureAsync(sync: false);
+
+    [Fact]
+    public Task G2_SyncConfirmToModelsUpdated_WhenEnabled() => MeasureAsync(sync: true);
+
+    [Fact]
+    public Task SyncWorkloadTransfersDocumentsAndSeedsHistory() => RunAsync(measure: false, sync: true);
+
+    private async Task MeasureAsync(bool sync)
     {
         Assert.SkipWhen(
             Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
@@ -30,7 +38,7 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
 
         for (var run = 0; run < samples.Length; run++)
         {
-            samples[run] = await RunAsync(measure: true);
+            samples[run] = await RunAsync(measure: true, sync);
             output.WriteLine($"G2 run {run + 1}: {samples[run]:F3} ms");
         }
 
@@ -51,7 +59,7 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
         }
     }
 
-    private static async Task<double> RunAsync(bool measure)
+    private static async Task<double> RunAsync(bool measure, bool sync = false)
     {
         using var fixture = new CatalogVmFixture("sync-transfer-batch");
         using var catalog = await fixture.CreateCatalogAsync();
@@ -76,12 +84,24 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
 
         vm.Browse.SetImages([source, .. targets]);
         vm.SelectedImage = source;
-        vm.CopyEditSettingsCommand.Execute(null);
+
+        if (sync)
+        {
+            source.CatalogId = await catalog.GetOrCreateImageAsync(source.FilePath);
+            await catalog.SaveEditSettingsAsync(source.CatalogId, source.EditSettings);
+            vm.Browse.ToggleSelection(source);
+        }
+        else
+        {
+            vm.CopyEditSettingsCommand.Execute(null);
+        }
 
         foreach (var target in targets)
         {
             vm.Browse.ToggleSelection(target);
         }
+
+        if (sync) vm.SelectAllCommand.Execute(null);
 
         var confirmations = 0;
         var updated = 0;
@@ -109,8 +129,9 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
         }
 
         Assert.False(vm.IsDevelopMode);
-        Assert.True(vm.PasteEditSettingsCommand.CanExecute(null));
-        await vm.PasteEditSettingsCommand.ExecuteAsync(null);
+        var command = sync ? vm.SyncSettingsCommand : vm.PasteEditSettingsCommand;
+        Assert.True(command.CanExecute(null));
+        await command.ExecuteAsync(null);
         Assert.Equal(1, confirmations);
         Assert.Equal(TargetCount, updated);
         Assert.False(timer.IsRunning);
@@ -131,6 +152,15 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
                 history.Entries.Select(entry => entry.Label));
             Assert.Equal(original, EditSettingsJson.Serialize(history.Entries[0].Settings));
             Assert.Equal(expected, EditSettingsJson.Serialize(history.Entries[1].Settings));
+        }
+
+        if (sync)
+        {
+            Assert.Equal(expected, EditSettingsJson.Serialize(source.EditSettings));
+            Assert.Empty((await catalog.LoadEditHistoryAsync(source.CatalogId)).Entries);
+            var storedSource = await catalog.LoadImageStatesAsync([source.FilePath]);
+            Assert.Equal(expected, EditSettingsJson.Serialize(Assert.Single(storedSource[source.FilePath]).EditSettings));
+            Assert.False(vm.HasCopiedSettings);
         }
 
         return elapsed;

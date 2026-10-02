@@ -3,7 +3,7 @@
         xmlns:vm="using:HappyPhoton.ViewModels"
         x:Class="HappyPhoton.Views.PasteSettingsDialog"
         x:DataType="vm:PasteSettingsViewModel"
-        Title="Paste Settings" Width="660" Height="572"
+        Title="{Binding WindowTitle}" Width="660" Height="572"
         CanResize="False" WindowStartupLocation="CenterOwner"
         Classes="dialog">
     <Window.Styles>
@@ -14,7 +14,7 @@
     <Grid RowDefinitions="Auto,*,Auto">
         <Border Classes="dialog-content">
             <StackPanel Spacing="7">
-                <TextBlock Text="Paste settings" Classes="dialog-title"/>
+                <TextBlock Text="{Binding Heading}" Classes="dialog-title"/>
                 <TextBlock Text="{Binding Summary}" TextTrimming="CharacterEllipsis"
                            ToolTip.Tip="{Binding Summary}"
                            Foreground="{DynamicResource TextSecondary}"/>
@@ -61,7 +61,7 @@
         <Border Grid.Row="2" Classes="dialog-footer">
             <StackPanel Classes="dialog-buttons">
                 <Button x:Name="CancelButton" Content="Cancel" Classes="quiet-button" Click="OnCancel"/>
-                <Button x:Name="PasteButton" Content="Paste" Classes="quiet-button accent"
+                <Button x:Name="PasteButton" Content="{Binding PrimaryLabel}" Classes="quiet-button accent"
                         IsEnabled="{Binding CanPaste}" Click="OnPaste"/>
             </StackPanel>
         </Border>

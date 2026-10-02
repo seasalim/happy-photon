@@ -58,7 +58,10 @@ public partial class MainWindowViewModel
                         member.EditSettings)
             });
         }
+
         IsCompareMode = true;
+        NotifySyncSettingsChanged();
+
         if (SelectedImage == null || !members.Contains(SelectedImage))
         {
             SelectedImage = members[0];
@@ -161,6 +164,8 @@ public partial class MainWindowViewModel
         cancellation?.Cancel();
         cancellation?.Dispose();
         IsCompareMode = false;
+        NotifySyncSettingsChanged();
+
         foreach (var pane in ComparePanes)
         {
             DisposePreviewPane(pane);

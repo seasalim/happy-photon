@@ -1,6 +1,7 @@
 param(
     [ValidateSet('G1', 'G2', 'G3', 'Sanity')][string]$Gate = 'Sanity',
-    [ValidateRange(1, 120)][int]$TimeoutSeconds = 120
+    [ValidateRange(1, 120)][int]$TimeoutSeconds = 120,
+    [switch]$Sync
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
@@ -67,7 +68,8 @@ try {
         'G2' { RunSample 'FullyQualifiedName~PasteDevelopGateTests.G2_NoDecode' }
         'G3' {
             for ($sample = 0; $sample -lt 5; $sample++) {
-                RunSample 'FullyQualifiedName=HappyPhoton.Tests.PasteDialogGateTests.G3_PasteSettings'
+                $case = if ($Sync) { 'G3_SyncSettings' } else { 'G3_PasteSettings' }
+                RunSample "FullyQualifiedName=HappyPhoton.Tests.PasteDialogGateTests.$case"
                 if ($sample -eq 0 -and $budget.Elapsed.TotalSeconds * 5 -gt 600) {
                     throw 'DEFERRED: the first sample predicts more than ten minutes.'
                 }

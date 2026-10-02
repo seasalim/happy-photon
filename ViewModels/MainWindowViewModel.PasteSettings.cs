@@ -26,15 +26,16 @@ public partial class MainWindowViewModel
     public Dictionary<string, bool> CapturePasteGroups() => new(_pasteGroups);
 
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]
-    private Task ChoosePasteSettingsAsync() => PasteEditSettingsCoreAsync(showDialog: true);
+    private Task ChoosePasteSettingsAsync() => PasteEditSettingsCoreAsync(CopiedPasteSnapshot(), showDialog: true);
 
-    private async Task<bool> ChoosePasteGroupsAsync(IReadOnlyList<ImageFile> targets, bool currentPhoto)
+    private async Task<bool> ChoosePasteGroupsAsync(PasteSnapshot snapshot, IReadOnlyList<ImageFile> targets,
+        bool currentPhoto, PasteSettingsMode mode = PasteSettingsMode.Paste)
     {
         if (ShowPasteSettingsAsync == null) return false;
 
-        var dialog = new PasteSettingsViewModel(_copiedSourceName!, targets.Count, _pasteGroups, currentPhoto,
+        var dialog = new PasteSettingsViewModel(snapshot.SourceName, targets.Count, _pasteGroups, currentPhoto,
             targets.Select(target => target.EditSettings).ToArray(),
-            reframeCount: optics => CachedReframeCount(targets, optics));
+            reframeCount: optics => CachedReframeCount(snapshot, targets, optics), mode: mode);
         if (!await ShowPasteSettingsAsync(dialog) || !dialog.CanPaste) return false;
 
         var choice = dialog.CaptureChoice();

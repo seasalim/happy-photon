@@ -278,6 +278,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         CopyEditSettingsCommand.NotifyCanExecuteChanged();
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
         ChoosePasteSettingsCommand.NotifyCanExecuteChanged();
+        NotifySyncSettingsChanged();
         ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
         RotateLeftCommand.NotifyCanExecuteChanged();
         RotateRightCommand.NotifyCanExecuteChanged();

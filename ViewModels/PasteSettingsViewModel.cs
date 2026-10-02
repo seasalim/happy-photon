@@ -4,6 +4,13 @@ using HappyPhoton.Models;
 
 namespace HappyPhoton.ViewModels;
 
+public enum PasteSettingsMode
+{
+    Paste,
+
+    Sync
+}
+
 public sealed partial class PasteSettingsViewModel : ObservableObject
 {
     internal static IReadOnlyList<EditSettingsGroup> AvailableGroups { get; } =
@@ -14,8 +21,10 @@ public sealed partial class PasteSettingsViewModel : ObservableObject
 
     public PasteSettingsViewModel(string sourceName, int targetCount,
         IReadOnlyDictionary<string, bool> remembered, bool currentPhoto = false,
-        IReadOnlyList<EditSettings>? targets = null, Func<bool, int?>? reframeCount = null)
+        IReadOnlyList<EditSettings>? targets = null, Func<bool, int?>? reframeCount = null,
+        PasteSettingsMode mode = PasteSettingsMode.Paste)
     {
+        Mode = mode;
         TargetCount = targetCount;
         Summary = currentPhoto
             ? $"From {sourceName} to this photo"
@@ -64,6 +73,14 @@ public sealed partial class PasteSettingsViewModel : ObservableObject
             if (count > 0) crop.Note += $" · reframed to fit on {count}";
         }
     }
+
+    public PasteSettingsMode Mode { get; }
+
+    public string WindowTitle => Mode == PasteSettingsMode.Sync ? "Sync Settings" : "Paste Settings";
+
+    public string Heading => Mode == PasteSettingsMode.Sync ? "Sync settings" : "Paste settings";
+
+    public string PrimaryLabel => Mode == PasteSettingsMode.Sync ? "Sync" : "Paste";
 
     public string Summary { get; }
 

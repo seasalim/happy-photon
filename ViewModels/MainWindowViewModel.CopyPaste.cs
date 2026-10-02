@@ -39,12 +39,12 @@ public partial class MainWindowViewModel
     {
         if (SelectedImage == null) return;
 
-        var liveSettings = SelectedImage.EditSettings.Clone();
-        SaveSlidersTo(liveSettings);
-        CaptureProfileSource(SelectedImage, liveSettings);
-        _copiedSettings = liveSettings;
-        _copiedSource = SelectedImage;
-        _copiedSourceName = Path.GetFileName(SelectedImage.FilePath);
+        var snapshot = CapturePasteSnapshot(SelectedImage);
+        _copiedSettings = snapshot.Settings;
+        _copiedSource = snapshot.Source;
+        _copiedSourceName = snapshot.SourceName;
+        _copiedProfileSource = snapshot.Profiles;
+        _copiedSpotSource = snapshot.Spots;
         HasCopiedSettings = true;
         ShowTransientStatus($"Copied settings from {_copiedSourceName}");
     }
@@ -64,6 +64,7 @@ public partial class MainWindowViewModel
     {
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
         ChoosePasteSettingsCommand.NotifyCanExecuteChanged();
+        NotifySyncSettingsChanged();
         NotifyCompareGateChanged();
     }
 
@@ -73,16 +74,17 @@ public partial class MainWindowViewModel
     {
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
         ChoosePasteSettingsCommand.NotifyCanExecuteChanged();
+        NotifySyncSettingsChanged();
     }
 
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]
-    private Task PasteEditSettingsAsync() => PasteEditSettingsCoreAsync(showDialog: false);
+    private Task PasteEditSettingsAsync() => PasteEditSettingsCoreAsync(CopiedPasteSnapshot(), showDialog: false);
 
-    private async Task PasteEditSettingsCoreAsync(bool showDialog)
+    private async Task PasteEditSettingsCoreAsync(PasteSnapshot? snapshot, bool showDialog)
     {
         DiscardSpotsGesture();
         DiscardLocalsGesture();
-        if (_copiedSettings == null) return;
+        if (snapshot == null) return;
 
         var resolution = ResolveActionTargets();
         if (resolution.Targets.Count == 0) return;
@@ -99,7 +101,7 @@ public partial class MainWindowViewModel
         }
 
         if ((showDialog || workspaceMode == WorkspaceMode.Browse) &&
-            !await ChoosePasteGroupsAsync(targets, !resolution.IsBrowseSelection))
+            !await ChoosePasteGroupsAsync(snapshot, targets, !resolution.IsBrowseSelection))
         {
             return;
         }
@@ -117,22 +119,19 @@ public partial class MainWindowViewModel
 
         if (workspaceMode == WorkspaceMode.Browse)
         {
-            await PasteToSelectionAsync(targets, groups);
+            await PasteToSelectionAsync(snapshot, targets, groups);
             return;
         }
 
-        await PasteToCurrentImageAsync(targets[0], groups);
+        await PasteToCurrentImageAsync(snapshot, targets[0], groups);
     }
 
-    private async Task PasteToCurrentImageAsync(ImageFile selectedImage,
+    private async Task PasteToCurrentImageAsync(PasteSnapshot snapshot, ImageFile selectedImage,
         IReadOnlyCollection<EditSettingsGroup> groups)
     {
-        if (_copiedSettings == null) return;
-
         var changesFrame = groups.Any(group => group.Name is "Crop & Straighten" or "Geometry");
         var previousSettings = CapturePasteState(selectedImage, changesFrame,
             groups.Any(group => group.Name == "Lens Profile"));
-        var snapshot = new PasteSnapshot(_copiedSource!, _copiedSettings, _copiedProfileSource!, _copiedSpotSource!);
 
         PasteProposal proposal;
 
@@ -230,17 +229,14 @@ public partial class MainWindowViewModel
         return liveState;
     }
 
-    private async Task PasteToSelectionAsync(IReadOnlyList<ImageFile> targets,
+    private async Task PasteToSelectionAsync(PasteSnapshot snapshot, IReadOnlyList<ImageFile> targets,
         IReadOnlyCollection<EditSettingsGroup> groups)
     {
-        if (_copiedSettings == null) return;
-
         List<(ImageFile Target, EditSettings Previous, EditSettings Settings, bool LensApplied)> proposed = [];
         var reframed = 0;
         var skips = new List<KeyValuePair<string, string>>();
         var invalid = 0;
         var skipped = 0;
-        var snapshot = new PasteSnapshot(_copiedSource!, _copiedSettings, _copiedProfileSource!, _copiedSpotSource!);
         var changesFrame = groups.Any(group => group.Name is "Crop & Straighten" or "Geometry");
         Dictionary<ImageFile, CropWriteContext>? cropContexts = null;
 
