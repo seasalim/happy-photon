@@ -31,7 +31,7 @@ public sealed class ExportProofViewModelTests
 
         Assert.False(vm.ExportSettings.ShowProof);
         Assert.Equal(0, loader.FullLoadCount);
-        Assert.Equal("PREVIEW · edits applied", vm.ExportProofCaption);
+        Assert.Equal("Preview · edits applied", vm.ExportProofCaption);
 
         vm.ActiveExportCapture = vm.ExportCaptures.Single(capture =>
             ReferenceEquals(capture.Image, second));
@@ -42,7 +42,7 @@ public sealed class ExportProofViewModelTests
 
         Assert.Same(first, vm.ExportCaptures[0].Image);
         Assert.Equal(0, loader.FullLoadCount);
-        Assert.Equal("PREVIEW · edits applied", vm.ExportProofCaption);
+        Assert.Equal("Preview · edits applied", vm.ExportProofCaption);
     }
 
     [AvaloniaFact]
@@ -64,7 +64,7 @@ public sealed class ExportProofViewModelTests
         vm.ExportSettings.ShowProof = true;
         await TestWaits.UntilAsync(() =>
             vm.PreviewImage?.PixelSize.Width == 96 &&
-            vm.ExportProofCaption == "PROOF · Web · 96 PX · sRGB");
+            vm.ExportProofCaption == "Proof · Web · 96 px · sRGB");
         Assert.Equal(1, loader.FullLoadCount);
         AssertPaintedPreviewSize(paneScope, 96, 48);
 
@@ -77,7 +77,7 @@ public sealed class ExportProofViewModelTests
         vm.ExportSettings.ShowProof = false;
         await TestWaits.UntilAsync(() =>
             vm.PreviewImage?.PixelSize.Width == 128 &&
-            vm.ExportProofCaption == "PREVIEW · edits applied");
+            vm.ExportProofCaption == "Preview · edits applied");
         Assert.Equal(2, loader.FullLoadCount);
         AssertPaintedPreviewSize(paneScope, 320, 160);
     }
@@ -101,7 +101,7 @@ public sealed class ExportProofViewModelTests
         vm.WorkspaceMode = WorkspaceMode.Export;
         await TestWaits.UntilAsync(() => vm.PreviewImage?.PixelSize.Width == 128);
         vm.ExportSettings.ShowProof = true;
-        await TestWaits.UntilAsync(() => vm.ExportProofCaption == "PROOF · Small · 48 PX · sRGB");
+        await TestWaits.UntilAsync(() => vm.ExportProofCaption == "Proof · Small · 48 px · sRGB");
         Assert.Equal(48, vm.PreviewImage!.PixelSize.Width);
         Assert.False(vm.CanRunExport);
     }
@@ -124,18 +124,18 @@ public sealed class ExportProofViewModelTests
 
         vm.ExportSettings.ShowProof = true;
         Assert.True(loader.FullLoadStarted.Wait(TestWaits.Condition));
-        Assert.Equal("PREVIEW · edits applied · UPDATING…", vm.ExportProofCaption);
+        Assert.Equal("Preview · edits applied · Updating…", vm.ExportProofCaption);
         AssertPaintedPreviewSize(paneScope, 320, 160);
 
         vm.ExportSettings.WebMaxSize = 48;
         await TestWaits.UntilAsync(() => loader.FullLoadCount >= 2);
-        Assert.Equal("PREVIEW · edits applied · UPDATING…", vm.ExportProofCaption);
+        Assert.Equal("Preview · edits applied · Updating…", vm.ExportProofCaption);
         AssertPaintedPreviewSize(paneScope, 320, 160);
 
         loader.ReleaseFullLoads.Set();
         await TestWaits.UntilAsync(() =>
             vm.PreviewImage?.PixelSize.Width == 48 &&
-            vm.ExportProofCaption == "PROOF · Web · 48 PX · sRGB");
+            vm.ExportProofCaption == "Proof · Web · 48 px · sRGB");
         AssertPaintedPreviewSize(paneScope, 48, 24);
     }
 
@@ -168,7 +168,7 @@ public sealed class ExportProofViewModelTests
 
         vm.ExportSettings.ShowProof = true;
         await TestWaits.UntilAsync(() =>
-            vm.ExportProofCaption == "PROOF · Web · 96 PX · sRGB");
+            vm.ExportProofCaption == "Proof · Web · 96 px · sRGB");
         releaseResting.Set();
         await vm.DisposeAsync();
 
@@ -214,7 +214,7 @@ public sealed class ExportProofViewModelTests
             var checks = availability.CallCount;
             vm.ExportSettings.ShowProof = true;
             await TestWaits.UntilAsync(() => availability.CallCount > checks &&
-                !vm.ExportProofCaption.Contains("UPDATING"));
+                !vm.ExportProofCaption.Contains("Updating"));
         }
         finally { await vm.DisposeAsync(); }
         Assert.Equal(0, loader.FullLoadCount);
@@ -276,8 +276,8 @@ public sealed class ExportProofViewModelTests
         vm.WorkspaceMode = WorkspaceMode.Export;
         await TestWaits.UntilAsync(() => vm.PreviewImage != null);
         vm.ExportSettings.ShowProof = true;
-        await TestWaits.UntilAsync(() => vm.ExportProofCaption.StartsWith("PROOF") &&
-            !vm.ExportProofCaption.Contains("UPDATING"));
+        await TestWaits.UntilAsync(() => vm.ExportProofCaption.StartsWith("Proof") &&
+            !vm.ExportProofCaption.Contains("Updating"));
         Assert.Equal(1, loader.FullLoadCount);
         var previous = vm.PreviewImage;
         for (var i = 0; i < 10; i++)
@@ -292,7 +292,7 @@ public sealed class ExportProofViewModelTests
         Assert.Equal(1, loader.FullLoadCount);
         clock.Advance(TimeSpan.FromMilliseconds(1));
         await TestWaits.UntilAsync(() => vm.PreviewImage != previous &&
-            !vm.ExportProofCaption.Contains("UPDATING"));
+            !vm.ExportProofCaption.Contains("Updating"));
         Assert.Equal(2, loader.FullLoadCount);
 
         // An immediate non-watermark trigger consumes any pending watermark refresh.

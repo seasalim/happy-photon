@@ -15,7 +15,7 @@
                     </MenuFlyout>
                 </Button.Flyout>
             </Button>
-            <TextBlock Text="All listed photos will export. Click to preview." IsVisible="{Binding !HasNoExportCaptures}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+            <TextBlock Text="All listed photos will export. Click to preview." IsVisible="{Binding !HasNoExportCaptures}" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
         </StackPanel>
         <ListBox Grid.Row="1" ItemsSource="{Binding ExportCaptures}"
                  SelectedItem="{Binding ActiveExportCapture, Mode=TwoWay}"
@@ -59,8 +59,8 @@
                                 </Border>
                             </Panel>
                             <StackPanel Grid.Column="1" Margin="8,0,3,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Image.FileName}" TextTrimming="CharacterEllipsis" FontSize="11"/>
-                                <TextBlock Text="{Binding Image.VersionReportLabel}" TextTrimming="CharacterEllipsis" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                <TextBlock Text="{Binding Image.FileName}" TextTrimming="CharacterEllipsis" FontSize="{StaticResource FontSizeBody}"/>
+                                <TextBlock Text="{Binding Image.VersionReportLabel}" TextTrimming="CharacterEllipsis" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}"/>
                             </StackPanel>
                         </Grid>
                     </Border>

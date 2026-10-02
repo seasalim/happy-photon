@@ -58,7 +58,7 @@
                             <Button.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem x:Name="ClearHistoryAboveStepMenuItem"
-                                              Header="Clear History Above This Step"
+                                              Header="Clear history above this step"
                                               Command="{Binding DataContext.ClearHistoryAboveStepCommand, ElementName=Root}"
                                               CommandParameter="{Binding}"/>
                                 </ContextMenu>

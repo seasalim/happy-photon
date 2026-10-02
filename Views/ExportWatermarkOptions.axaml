@@ -51,7 +51,7 @@
             <CheckBox x:Name="WatermarkRotate" Classes="edit-toggle" Content="Rotate along edge" IsVisible="{Binding IsWatermarkSide}"
                       IsChecked="{Binding ExportSettings.Watermark.RotateAlongEdge, Mode=TwoWay}"/>
             <views:CompactSlider Label="Margin" Minimum="0" Maximum="20" SmallChange="0.5" StringFormat="{}{0:0.#}%" Value="{Binding ExportSettings.Watermark.Margin, Mode=TwoWay}"/>
-            <TextBlock Text="Size and margin are % of the photo’s short edge." FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+            <TextBlock Text="Size and margin are % of the photo’s short edge." FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
         </StackPanel>
     </StackPanel>
 </UserControl>

@@ -151,7 +151,7 @@
         <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
         <Setter Property="Foreground" Value="{StaticResource OnErrorContainer}"/>
     </Style>
-    <Style Selector="Button.icon-button, ToggleButton.icon-button">
+    <Style Selector="Button.icon-button, :is(ToggleButton).icon-button">
         <Setter Property="MinHeight" Value="0"/>
         <Setter Property="MinWidth" Value="0"/>
         <Setter Property="Width" Value="24"/>
@@ -165,49 +165,49 @@
         <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter,
-                     ToggleButton.icon-button:not(:checked):pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                     :is(ToggleButton).icon-button:not(:checked):pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
-    <Style Selector="Button.icon-button:disabled, ToggleButton.icon-button:disabled">
+    <Style Selector="Button.icon-button:disabled, :is(ToggleButton).icon-button:disabled">
         <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
     </Style>
     <Style Selector="Button.icon-button:disabled /template/ ContentPresenter#PART_ContentPresenter,
-                     ToggleButton.icon-button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+                     :is(ToggleButton).icon-button:disabled /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
     </Style>
-    <Style Selector="Button.icon-button Path, ToggleButton.icon-button Path">
+    <Style Selector="Button.icon-button Path, :is(ToggleButton).icon-button Path">
         <Setter Property="Stroke" Value="{DynamicResource ControlActive}"/>
     </Style>
     <Style Selector="Button.icon-button:pointerover Path,
-                     ToggleButton.icon-button:pointerover Path">
+                     :is(ToggleButton).icon-button:pointerover Path">
         <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
     </Style>
-    <Style Selector="ToggleButton.icon-button:checked,
+    <Style Selector=":is(ToggleButton).icon-button:checked,
                      ToggleButton.compact-button:not(.compact-chevron):checked">
         <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
         <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
     </Style>
-    <Style Selector="ToggleButton.icon-button:checked /template/ ContentPresenter#PART_ContentPresenter,
+    <Style Selector=":is(ToggleButton).icon-button:checked /template/ ContentPresenter#PART_ContentPresenter,
                      ToggleButton.compact-button:not(.compact-chevron):checked /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
         <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
     </Style>
-    <Style Selector="ToggleButton.icon-button:checked Path">
+    <Style Selector=":is(ToggleButton).icon-button:checked Path">
         <Setter Property="Stroke" Value="{DynamicResource OnControlActive}"/>
     </Style>
-    <Style Selector="Button.icon-button.compact, ToggleButton.icon-button.compact">
+    <Style Selector="Button.icon-button.compact, :is(ToggleButton).icon-button.compact">
         <Setter Property="Width" Value="20"/>
         <Setter Property="Height" Value="20"/>
         <Setter Property="Padding" Value="4"/>
         <Setter Property="Background" Value="Transparent"/>
     </Style>
-    <Style Selector="Button.icon-button Viewbox, ToggleButton.icon-button Viewbox">
+    <Style Selector="Button.icon-button Viewbox, :is(ToggleButton).icon-button Viewbox">
         <Setter Property="Width" Value="14"/>
         <Setter Property="Height" Value="14"/>
     </Style>
-    <Style Selector="Button.icon-button.compact Viewbox, ToggleButton.icon-button.compact Viewbox">
+    <Style Selector="Button.icon-button.compact Viewbox, :is(ToggleButton).icon-button.compact Viewbox">
         <Setter Property="Width" Value="12"/>
         <Setter Property="Height" Value="12"/>
     </Style>
@@ -282,5 +282,28 @@
         <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.rating-star">
+        <Setter Property="Width" Value="24"/>
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    <Style Selector="Button.rating-star:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
+    </Style>
+    <Style Selector="Button.rating-star Path">
+        <Setter Property="Width" Value="14"/>
+        <Setter Property="Height" Value="14"/>
+        <Setter Property="Data" Value="M7,1 L8.8,5 L13,5.5 L10,8.5 L11,13 L7,10.7 L3,13 L4,8.5 L1,5.5 L5.2,5 Z"/>
+        <Setter Property="Stroke" Value="{DynamicResource TextSecondary}"/>
+        <Setter Property="StrokeThickness" Value="1"/>
+    </Style>
+    <Style Selector="Button.rating-star Path.rating-filled">
+        <Setter Property="Fill" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
     </Style>
 </Styles>

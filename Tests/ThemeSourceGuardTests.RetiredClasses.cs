@@ -27,12 +27,20 @@ public sealed partial class ThemeSourceGuardTests
         Assert.Matches(RetiredClassPattern(), text);
     }
 
+    [Theory]
+    [InlineData("<Button Classes=\"view-toggle\"/>")]
+    [InlineData("<Style Selector=\"RadioButton.thumbnail-size\"/>")]
+    public void RetiredClassMatcher_RejectsBrowseClasses(string text)
+    {
+        Assert.Matches(RetiredClassPattern(), text);
+    }
+
     [Fact]
     public void RetiredClassMatcher_AcceptsSharedClasses()
     {
         Assert.DoesNotMatch(RetiredClassPattern(), "<Button Classes=\"icon-button compact\"/>");
     }
 
-    [GeneratedRegex(@"(?<![\w-])(?:wb-auto|develop-reset|develop-action)(?![\w-])")]
+    [GeneratedRegex(@"(?<![\w-])(?:wb-auto|develop-reset|develop-action|view-toggle|thumbnail-size)(?![\w-])")]
     private static partial Regex RetiredClassPattern();
 }

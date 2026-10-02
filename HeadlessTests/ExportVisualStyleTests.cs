@@ -200,7 +200,7 @@ public sealed partial class ExportVisualStyleTests : IDisposable
         var emptyState = pane.FindControl<Border>("ExportPreviewEmptyState")!;
         placeholder.IsVisible = false;
         image.CanonicalSource = source;
-        caption.Text = "PREVIEW · JPEG · Display P3 · 65536 PX";
+        caption.Text = "Preview · JPEG · Display P3 · 65536 px";
         caption.IsVisible = true;
         emptyState.IsVisible = false;
         var window = new Window { Width = hostWidth, Height = 600, Content = pane };
@@ -261,7 +261,7 @@ public sealed partial class ExportVisualStyleTests : IDisposable
         pane.FindControl<Image>("ExportPlaceholderImage")!.IsVisible = false;
         pane.FindControl<Border>("ExportPreviewEmptyState")!.IsVisible = false;
         image.CanonicalSource = source;
-        caption.Text = "PREVIEW · JPEG · sRGB · 256 PX";
+        caption.Text = "Preview · JPEG · sRGB · 256 px";
         caption.IsVisible = true;
         var window = new Window { Width = 800, Height = 600, Content = pane };
         using var windowScope = new TestUiScope(window);

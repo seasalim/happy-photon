@@ -9,28 +9,26 @@
         <Grid RowDefinitions="Auto,Auto" Margin="14,8,14,0">
             <WrapPanel HorizontalAlignment="Right" Orientation="Horizontal" ItemSpacing="6" LineSpacing="6">
                 <ToggleButton x:Name="ExportProofToggle"
-                              Classes="icon-button"
+                              Classes="compact-button"
                               Content="Preview output"
                               Width="112"
-                              Height="20"
-                              Padding="8,0"
-                              Foreground="{DynamicResource TextMuted}"
-                              FontFamily="{StaticResource FontBody}"
-                              FontSize="8"
-                              FontWeight="SemiBold"
-                              LetterSpacing="1"
+                              VerticalAlignment="Center"
                               IsChecked="{Binding ExportSettings.ShowProof, Mode=TwoWay}"
                               ToolTip.Tip="Preview size, color space and output sharpening; JPEG/WebP compression quality is not previewed."
                               AutomationProperties.Name="Preview size, color space and output sharpening; JPEG/WebP compression quality is not previewed."/>
-                <ComboBox x:Name="ExportProofSizeChooser" Width="176" MinHeight="20" Height="20"
-                          FontSize="10" Padding="6,0"
+                <ComboBox x:Name="ExportProofSizeChooser" Width="176" Classes="edit-dropdown"
                           ItemsSource="{Binding ExportProofSizes}"
                           SelectedItem="{Binding SelectedExportProofSize, Mode=TwoWay}"
                           IsEnabled="{Binding ExportSettings.ShowProof}"
                           AutomationProperties.Name="Preview output size">
                     <ComboBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:ExportProofSize">
-                            <TextBlock Text="{Binding Label}"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name, StringFormat='{}{0} · '}"/>
+                                <TextBlock Text="{Binding MaxDimension, StringFormat='{}{0} px'}" FontFamily="{StaticResource FontLabel}"
+                                           IsVisible="{Binding MaxDimension, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                <TextBlock Text="No resizing" IsVisible="{Binding MaxDimension, Converter={x:Static ObjectConverters.IsNull}}"/>
+                            </StackPanel>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
@@ -40,7 +38,7 @@
                        IsVisible="{Binding ExportSettings.ShowProof}"
                        Foreground="{DynamicResource TextMuted}"
                        FontFamily="{StaticResource FontBody}"
-                       FontSize="9" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                       FontSize="{StaticResource FontSizeSmall}" TextWrapping="Wrap" VerticalAlignment="Center"/>
         </Grid>
         <views:UniformImageOverlayPanel x:Name="ExportPreviewImageFrame"
                                         Grid.Row="1"
@@ -63,9 +61,8 @@
                        IsVisible="{Binding IsExportProofCaptionVisible}"
                        IsHitTestVisible="False"
                        FontFamily="{StaticResource FontBody}"
-                       FontSize="8"
+                       FontSize="{StaticResource FontSizeSmall}"
                        FontWeight="SemiBold"
-                       LetterSpacing="1"
                        Foreground="{StaticResource ProofCaption}">
                 <TextBlock.Effect>
                     <DropShadowEffect Color="{StaticResource ViewerStatusShadowColor}"
@@ -85,7 +82,7 @@
             <StackPanel Spacing="8">
                 <TextBlock Text="Choose photos to export"
                            Foreground="{DynamicResource TextMuted}"
-                           FontSize="16"/>
+                           FontSize="{StaticResource FontSizeHeading}"/>
                 <Button Content="Choose in Browse…" Classes="quiet-button" Command="{Binding ChooseExportPhotosInBrowseCommand}" HorizontalAlignment="Center"/>
             </StackPanel>
         </Border>

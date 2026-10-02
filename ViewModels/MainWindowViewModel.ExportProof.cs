@@ -7,7 +7,7 @@ namespace HappyPhoton.ViewModels;
 
 public sealed record ExportProofSize(string Name, int? MaxDimension)
 {
-    public string Label => MaxDimension is { } pixels ? $"{Name} · {pixels} PX" : $"{Name} · No resizing";
+    public string Label => MaxDimension is { } pixels ? $"{Name} · {pixels} px" : $"{Name} · No resizing";
 }
 
 public partial class MainWindowViewModel
@@ -61,7 +61,7 @@ public partial class MainWindowViewModel
         IsExportMode && !HasNoExportCaptures && PreviewImage != null;
     public string ExportProofCaption => FormatExportProofCaption(
         _proofIsDisplayed, _displayedProofSize, _displayedProofColorSpace) +
-        (_proofUpdatePending && ExportSettings.ShowProof ? " · UPDATING…" : string.Empty);
+        (_proofUpdatePending && ExportSettings.ShowProof ? " · Updating…" : string.Empty);
 
     public PixelSize ExportPreviewNativePixelSize
     {
@@ -229,7 +229,7 @@ public partial class MainWindowViewModel
         bool proofIsDisplayed,
         ExportProofSize? size,
         OutputColorSpace outputColorSpace) =>
-        !proofIsDisplayed ? "PREVIEW · edits applied" :
-        $"PROOF · {size?.Label} · " +
+        !proofIsDisplayed ? "Preview · edits applied" :
+        $"Proof · {size?.Label} · " +
         (outputColorSpace == OutputColorSpace.Srgb ? "sRGB" : "Display P3");
 }

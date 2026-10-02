@@ -82,13 +82,13 @@ public partial class BrowseGridFooter : UserControl
     }
 
     private void UpdateBurstsButton() =>
-        BurstsButton.Classes.Set("active", ShowBursts);
+        BurstsButton.IsChecked = ShowBursts;
 
     private void OnBurstsClick(object? sender, RoutedEventArgs e) =>
         ShowBursts = !ShowBursts;
 
     private void UpdatePairsButton() =>
-        PairsButton.Classes.Set("active", ShowPairs);
+        PairsButton.IsChecked = ShowPairs;
 
     private void OnPairsClick(object? sender, RoutedEventArgs e) =>
         ShowPairs = !ShowPairs;

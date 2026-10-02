@@ -94,7 +94,7 @@ public sealed class EditHistoryPanelTests
             Dispatcher.UIThread.RunJobs();
             Assert.True(menuTarget.ContextMenu!.IsOpen);
             var trim = Assert.Single(menuTarget.ContextMenu.Items.OfType<MenuItem>());
-            Assert.Equal("Clear History Above This Step", trim.Header);
+            Assert.Equal("Clear history above this step", trim.Header);
             Assert.True(trim.IsEffectivelyEnabled);
             trim.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             await TestWaits.UntilAsync(() => vm.HistoryEntries.Count == 38);

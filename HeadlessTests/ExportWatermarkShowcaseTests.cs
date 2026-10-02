@@ -51,7 +51,7 @@ public sealed class ExportWatermarkShowcaseTests
             mark.Size = 2.5;
         }
         vm.ExportSettings.ShowProof = true;
-        await TestWaits.UntilAsync(() => vm.ExportProofCaption == "PROOF · Full size · No resizing · sRGB");
+        await TestWaits.UntilAsync(() => vm.ExportProofCaption == "Proof · Full size · No resizing · sRGB");
         var window = new MainWindow();
         using var scope = TestUiScope.ForMainWindow(window, vm, show: false);
         ShowcaseTestHelper.Capture(scene, scope, new PixelSize(1200, 760), ThemeVariant.Dark, shown =>

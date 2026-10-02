@@ -29,7 +29,7 @@ public sealed class ExportFeedbackBaselineTests(ITestOutputHelper output)
         PrepareProof(vm, root.Path, full, small: true);
         await TestWaits.UntilAsync(() => vm.PreviewImage != null);
         vm.ExportSettings.ShowProof = true;
-        await TestWaits.UntilAsync(() => vm.ExportProofCaption.StartsWith("PROOF"));
+        await TestWaits.UntilAsync(() => vm.ExportProofCaption.StartsWith("Proof"));
         var size = vm.PreviewImage!.PixelSize;
         var longEdge = Math.Max(size.Width, size.Height);
         output.WriteLine($"G-{(full ? 1 : 2)}: accepted={longEdge} px; bitmap={size}; elapsed={elapsed.Elapsed.TotalSeconds:F3}s");
@@ -64,10 +64,10 @@ public sealed class ExportFeedbackBaselineTests(ITestOutputHelper output)
         PrepareProof(vm, root.Path, full: false, small: false);
         await TestWaits.UntilAsync(() => vm.PreviewImage != null);
         vm.ExportSettings.ShowProof = true;
-        await TestWaits.UntilAsync(() => vm.ExportProofCaption.StartsWith("PROOF"));
+        await TestWaits.UntilAsync(() => vm.ExportProofCaption.StartsWith("Proof"));
         Assert.Equal(2048, vm.PreviewImage!.PixelSize.Width);
         Assert.Equal(DisplaySourceColorSpace.Srgb, vm.PreviewDisplayColorSpace);
-        Assert.Equal("PROOF · Web · 2048 PX · sRGB", vm.ExportProofCaption);
+        Assert.Equal("Proof · Web · 2048 px · sRGB", vm.ExportProofCaption);
         var oldBitmap = vm.PreviewImage;
         loader.FullLoadStarted.Reset();
         loader.PauseFullLoads = true;
@@ -77,7 +77,7 @@ public sealed class ExportFeedbackBaselineTests(ITestOutputHelper output)
             Assert.True(loader.FullLoadStarted.Wait(TestWaits.Condition));
             Assert.Same(oldBitmap, vm.PreviewImage);
             output.WriteLine($"G-3: caption={vm.ExportProofCaption}; display={vm.PreviewDisplayColorSpace}; oldBitmapSame={ReferenceEquals(oldBitmap, vm.PreviewImage)}; elapsed={elapsed.Elapsed.TotalSeconds:F3}s");
-            Assert.Equal("PROOF · Web · 2048 PX · sRGB · UPDATING…", vm.ExportProofCaption);
+            Assert.Equal("Proof · Web · 2048 px · sRGB · Updating…", vm.ExportProofCaption);
             Assert.Equal(DisplaySourceColorSpace.Srgb, vm.PreviewDisplayColorSpace);
         }
         finally
@@ -85,7 +85,7 @@ public sealed class ExportFeedbackBaselineTests(ITestOutputHelper output)
             loader.ReleaseFullLoads.Set();
         }
         await TestWaits.UntilAsync(() => !ReferenceEquals(oldBitmap, vm.PreviewImage));
-        Assert.Equal("PROOF · Web · 2048 PX · Display P3", vm.ExportProofCaption);
+        Assert.Equal("Proof · Web · 2048 px · Display P3", vm.ExportProofCaption);
         Assert.Equal(DisplaySourceColorSpace.DisplayP3, vm.PreviewDisplayColorSpace);
         loader.ReleaseFullLoads.Reset();
         loader.FullLoadStarted.Reset();
@@ -95,11 +95,11 @@ public sealed class ExportFeedbackBaselineTests(ITestOutputHelper output)
             vm.ExportSettings.OutputSharpening = OutputSharpeningMode.Screen;
             Assert.True(loader.FullLoadStarted.Wait(TestWaits.Condition));
             Assert.Same(oldBitmap, vm.PreviewImage);
-            Assert.Equal("PROOF · Web · 2048 PX · Display P3 · UPDATING…", vm.ExportProofCaption);
+            Assert.Equal("Proof · Web · 2048 px · Display P3 · Updating…", vm.ExportProofCaption);
         }
         finally { loader.ReleaseFullLoads.Set(); }
         await TestWaits.UntilAsync(() => !ReferenceEquals(oldBitmap, vm.PreviewImage));
-        Assert.DoesNotContain("UPDATING", vm.ExportProofCaption);
+        Assert.DoesNotContain("Updating", vm.ExportProofCaption);
     }
 
     [AvaloniaFact]

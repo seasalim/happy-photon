@@ -230,7 +230,7 @@ public sealed class ThemeResourceTests
     [AvaloniaFact]
     public void BurstPalette_KeepsChipInkReadableOnEveryHue()
     {
-        var ink = Assert.IsType<SolidColorBrush>(HappyPhotonColors.BurstChipInk).Color;
+        var ink = Brush("BurstChipInk", ThemeVariant.Dark).Color;
         foreach (var hue in new[]
         {
             HappyPhotonColors.BurstCyan,

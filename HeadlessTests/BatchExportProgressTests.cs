@@ -18,7 +18,8 @@ public sealed class BatchExportProgressTests
 
         Assert.False(bar.IsIndeterminate);
         Assert.Equal(2, bar.Height);
-        Assert.Equal(9, label.FontSize);
-        Assert.Equal(1, label.LetterSpacing);
+        // WP8 uses FontSizeSmall (the minimum) and removes tracking.
+        Assert.Equal(10, label.FontSize);
+        Assert.Equal(0, label.LetterSpacing);
     }
 }

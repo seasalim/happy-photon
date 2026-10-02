@@ -25,98 +25,87 @@
                     Spacing="4">
                 <ToggleButton x:Name="LoupeViewButton"
                               Classes="icon-button"
-                              Width="30" Padding="0"
                               Command="{Binding ToggleLoupeCommand}"
                               IsChecked="{Binding IsLoupeMode, Mode=OneWay}"
                               ToolTip.Tip="Loupe (E)"
                               AutomationProperties.Name="Open Browse Loupe">
-                    <PathIcon Width="14" Height="14"
-                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}"
-                              Data="M1 2h12v10H1z M3 4v6h8V4z"/>
+                    <Viewbox><Canvas Width="16" Height="16">
+                        <Path Data="M1 2h12v10H1z M3 4v6h8V4z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
                 </ToggleButton>
                 <ToggleButton x:Name="CompareViewButton"
                               Classes="icon-button"
-                              Width="30"
-                              Padding="0"
                               Command="{Binding ToggleCompareCommand}"
                               IsChecked="{Binding IsCompareMode, Mode=OneWay}"
                               IsEnabled="{Binding CanToggleCompare}"
                               ToolTip.Tip="{Binding CompareViewToolTip}"
                               ToolTip.ShowOnDisabled="True"
                               AutomationProperties.Name="{Binding CompareViewToolTip}">
-                    <TextBlock Text="X|Y"
-                               FontFamily="{StaticResource FontBody}"
-                               FontSize="10"
-                               FontWeight="Bold"
-                               LetterSpacing="0.5"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"/>
+                    <Viewbox><Canvas Width="16" Height="16">
+                        <Path Data="M1,4 L5,12 M5,4 L1,12 M8,2 V14 M11,4 L13,8 L15,4 M13,8 V12" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
                 </ToggleButton>
                 <Rectangle Width="1" Height="16"
                            Fill="{DynamicResource Divider}"
                            Margin="6,0"
                            VerticalAlignment="Center"/>
-                <Button x:Name="BurstsButton" Classes="view-toggle"
+                <ToggleButton x:Name="BurstsButton" Classes="icon-button"
                         Click="OnBurstsClick"
                         IsEnabled="{Binding IsBrowseGridVisible}"
                         ToolTip.Tip="Group bursts"
                         AutomationProperties.Name="Group bursts">
-                    <PathIcon Width="14" Height="14"
-                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                              Data="M3 1h11v10H3z M1 4h2v9h9v2H1z"/>
-                </Button>
-                <Button x:Name="PairsButton" Classes="view-toggle"
+                    <Viewbox><Canvas Width="16" Height="16">
+                        <Path Data="M3 1h11v10H3z M1 4h2v9h9v2H1z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
+                </ToggleButton>
+                <ToggleButton x:Name="PairsButton" Classes="icon-button"
                         Click="OnPairsClick"
                         IsEnabled="{Binding IsBrowseGridVisible}"
                         ToolTip.Tip="Pair RAW+JPEG"
                         AutomationProperties.Name="Pair RAW+JPEG">
-                    <TextBlock Text="J+R"
-                               FontFamily="{StaticResource FontBody}"
-                               FontSize="10"
-                               FontWeight="Bold"
-                               LetterSpacing="0.5"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"/>
-                </Button>
+                    <Viewbox><Canvas Width="16" Height="16">
+                        <Path Data="M1,10 Q1,12 3,12 Q5,12 5,10 V4 M8,2 V14 M11,12 V4 H13 Q15,4 15,6 Q15,8 13,8 H11 M13,8 L15,12" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
+                </ToggleButton>
                 <Rectangle Width="1" Height="16"
                            Fill="{DynamicResource Divider}"
                            Margin="6,0"
                            VerticalAlignment="Center"/>
                 <RadioButton x:Name="SmallThumbnailButton"
                              GroupName="BrowseThumbnailSize"
-                             Classes="thumbnail-size"
+                             Classes="icon-button"
+                             Theme="{StaticResource {x:Type ToggleButton}}"
                              IsEnabled="{Binding IsBrowseGridVisible}"
                              Click="OnSmallThumbnailClick"
                              ToolTip.Tip="Small thumbnails"
                              AutomationProperties.Name="Small thumbnails">
-                    <PathIcon Width="12"
-                              Height="12"
-                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
-                              Data="M1 1h3v3H1z M6.5 1h3v3h-3z M12 1h3v3h-3z M1 6.5h3v3H1z M6.5 6.5h3v3h-3z M12 6.5h3v3h-3z M1 12h3v3H1z M6.5 12h3v3h-3z M12 12h3v3h-3z"/>
+                    <Viewbox><Canvas Width="16" Height="16">
+                        <Path Data="M1 1h3v3H1z M6.5 1h3v3h-3z M12 1h3v3h-3z M1 6.5h3v3H1z M6.5 6.5h3v3h-3z M12 6.5h3v3h-3z M1 12h3v3H1z M6.5 12h3v3h-3z M12 12h3v3h-3z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
                 </RadioButton>
                 <RadioButton x:Name="MediumThumbnailButton"
                              GroupName="BrowseThumbnailSize"
-                             Classes="thumbnail-size"
+                             Classes="icon-button"
+                             Theme="{StaticResource {x:Type ToggleButton}}"
                              IsEnabled="{Binding IsBrowseGridVisible}"
                              Click="OnMediumThumbnailClick"
                              ToolTip.Tip="Medium thumbnails"
                              AutomationProperties.Name="Medium thumbnails">
-                    <PathIcon Width="12"
-                              Height="12"
-                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
-                              Data="M1 1h6v6H1z M9 1h6v6H9z M1 9h6v6H1z M9 9h6v6H9z"/>
+                    <Viewbox><Canvas Width="16" Height="16">
+                        <Path Data="M1 1h6v6H1z M9 1h6v6H9z M1 9h6v6H1z M9 9h6v6H9z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
                 </RadioButton>
                 <RadioButton x:Name="LargeThumbnailButton"
                              GroupName="BrowseThumbnailSize"
-                             Classes="thumbnail-size"
+                             Classes="icon-button"
+                             Theme="{StaticResource {x:Type ToggleButton}}"
                              IsEnabled="{Binding IsBrowseGridVisible}"
                              Click="OnLargeThumbnailClick"
                              ToolTip.Tip="Large thumbnails"
                              AutomationProperties.Name="Large thumbnails">
-                    <PathIcon Width="12"
-                              Height="12"
-                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
-                              Data="M1 2h14v5H1z M1 9h14v5H1z"/>
+                    <Viewbox><Canvas Width="16" Height="16">
+                        <Path Data="M1 2h14v5H1z M1 9h14v5H1z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
                 </RadioButton>
         </StackPanel>
         <Grid Grid.Column="0" ColumnDefinitions="Auto,*">
@@ -136,7 +125,7 @@
                        IsVisible="{Binding HasOnlineOnlyPhotos}"
                        Foreground="{DynamicResource TextSecondary}"
                        FontFamily="{StaticResource FontBody}"
-                       FontSize="10"
+                       FontSize="{StaticResource FontSizeSmall}"
                        HorizontalAlignment="Left"
                        VerticalAlignment="Center"
                        MaxWidth="180"

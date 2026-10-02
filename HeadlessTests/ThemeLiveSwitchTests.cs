@@ -324,7 +324,8 @@ public sealed class ThemeLiveSwitchTests
             expectedMark.Source,
             Assert.IsType<ImageBrush>(mark.Background).Source);
         Assert.Equal(
-            ThemeResourceTests.Brush("BrandCyan", variant).Color,
+            // WP8 ruling 8: the wordmark follows TextPrimary in both themes.
+            ThemeResourceTests.Brush("TextPrimary", variant).Color,
             ColorOf(photonWordmark.Foreground));
         Assert.Equal(
             ThemeResourceTests.Brush("ControlActive", variant).Color,

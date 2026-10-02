@@ -15,23 +15,26 @@
                 <TextBlock Classes="section-label" Text="Folders"
                            VerticalAlignment="Center"/>
                 <Button Grid.Column="1" x:Name="RefreshFolderButton"
-                        Width="24" Height="24" Padding="5"
+                        Classes="icon-button compact"
                         Margin="0,0,4,0"
                         Click="OnRefreshFolderClick"
                         IsEnabled="{Binding CanRefreshFolder, ElementName=Root}"
                         ToolTip.Tip="Refresh folder — re-read photographs in the current folder."
                         AutomationProperties.Name="Refresh current folder">
-                    <PathIcon Width="12" Height="12" Opacity="0.72">
-                        <PathIcon.Data>
-                            <PathGeometry>M13.65 2.35A8 8 0 1 0 16 8h-2a6 6 0 1 1-1.76-4.24L9 7h7V0l-2.35 2.35z</PathGeometry>
-                        </PathIcon.Data>
-                    </PathIcon>
+                    <Viewbox><Canvas Width="16" Height="16">
+                        <Path Data="M13,5 A6,6 0 1 0 14,9 M9,5 H14 V0" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
                 </Button>
                 <Button Grid.Column="2" x:Name="FolderActionsButton"
-                        Content="⋯" Width="24" Height="24" Padding="4,0" FontSize="10"
+                        Classes="icon-button compact"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         ToolTip.Tip="More folder actions"
                         AutomationProperties.Name="More folder actions">
+                    <Button.Content>
+                        <Viewbox><Canvas Width="16" Height="16">
+                        <Path Data="M2,8 H3 M7.5,8 H8.5 M13,8 H14" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
+                    </Button.Content>
                     <Button.Flyout>
                         <MenuFlyout Placement="BottomEdgeAlignedRight">
                             <MenuItem Header="Import from Lightroom…"
@@ -47,10 +50,10 @@
                 </Button>
                 <TextBlock Grid.Row="1" Grid.ColumnSpan="3"
                            Text="{Binding BrowsingFolderName, ElementName=Root, StringFormat='Browsing from: {0}'}"
-                           Foreground="{DynamicResource TextMuted}" FontSize="10" Margin="0,4,0,0"/>
+                           Foreground="{DynamicResource TextMuted}" FontSize="{StaticResource FontSizeSmall}" Margin="0,4,0,0"/>
                 <TextBlock Grid.Row="2" Grid.ColumnSpan="3"
                            Text="{Binding ViewingFolderName, ElementName=Root, StringFormat='Viewing: {0}'}"
-                           Foreground="{DynamicResource TextSecondary}" FontSize="10" Margin="0,8,0,0"/>
+                           Foreground="{DynamicResource TextSecondary}" FontSize="{StaticResource FontSizeSmall}" Margin="0,8,0,0"/>
             </Grid>
         </Border>
 
@@ -88,7 +91,7 @@
                             </PathIcon>
                             <!-- Folder Name -->
                             <TextBlock Text="{Binding Name}"
-                                       FontSize="11"
+                                       FontSize="{StaticResource FontSizeBody}"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -182,13 +185,13 @@
                 <Style Selector="Border.folder-row PathIcon">
                     <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
                 </Style>
-                <Style Selector="Border.folder-row TextBlock">
+                <Style Selector="Border.folder-row > StackPanel > TextBlock">
                     <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                 </Style>
                 <Style Selector="Border.folder-row.active">
                     <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
                 </Style>
-                <Style Selector="Border.folder-row.active TextBlock">
+                <Style Selector="Border.folder-row.active > StackPanel > TextBlock">
                     <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                 </Style>
                 <Style Selector="Border.folder-row.active PathIcon">

@@ -56,6 +56,7 @@ public partial class MainWindowViewModel
             {
                 OnPropertyChanged(nameof(HasBrowseSelectionOnlineOnlyImages));
                 OnPropertyChanged(nameof(BrowseSelectionOnlineOnlyNote));
+                OnPropertyChanged(nameof(BrowseSelectionOnlineOnlyDescription));
             }
         }
     }
@@ -63,16 +64,12 @@ public partial class MainWindowViewModel
     public bool HasBrowseSelectionOnlineOnlyImages =>
         BrowseSelectionOnlineOnlyCount > 0;
 
-    public string BrowseSelectionOnlineOnlyNote
-    {
-        get
-        {
-            var noun = BrowseSelectionOnlineOnlyCount == 1
-                ? "photo"
-                : "photos";
-            return $"{BrowseSelectionOnlineOnlyCount:N0} online-only {noun} excluded";
-        }
-    }
+    public string BrowseSelectionOnlineOnlyNote =>
+        $"{BrowseSelectionOnlineOnlyCount:N0} {BrowseSelectionOnlineOnlyDescription}";
+
+    public string BrowseSelectionOnlineOnlyDescription => BrowseSelectionOnlineOnlyCount == 1
+        ? "online-only photo excluded"
+        : "online-only photos excluded";
 
     public long BrowseSelectionCombinedFileSize
     {

@@ -136,15 +136,13 @@
                             <StackPanel Spacing="6">
                                 <TextBlock Text="This original is online-only."
                                            Foreground="{DynamicResource TextSecondary}"
-                                           FontSize="11"
+                                           FontSize="{StaticResource FontSizeBody}"
                                            TextWrapping="Wrap"/>
                                 <Button x:Name="DownloadAndOpenButton"
                                          Content="Download and open"
-                                         Classes="accent"
+                                         Classes="quiet-button accent"
                                          Command="{Binding DownloadAndOpenCommand}"
                                          HorizontalAlignment="Left"
-                                         FontSize="10"
-                                         Padding="8,4"
                                          AutomationProperties.Name="Download and open selected original"/>
                             </StackPanel>
                         </Border>
@@ -338,7 +336,7 @@
                         </Canvas>
                     </Viewbox>
                     <TextBlock Text="Exit fullscreen · Esc" FontFamily="{StaticResource FontBody}"
-                               FontSize="9" LetterSpacing="0"/>
+                               FontSize="{StaticResource FontSizeSmall}" LetterSpacing="0"/>
                     </StackPanel>
                 </Grid>
             </Button>

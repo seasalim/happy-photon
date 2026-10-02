@@ -39,10 +39,10 @@ public sealed partial class ExportVisualStyleTests
         placeholder.OriginalPixelHeight = 3000;
         pane.FindControl<Border>("ExportPreviewEmptyState")!.IsVisible = false;
         var caption = pane.FindControl<TextBlock>("ExportProofCaption")!;
-        caption.Text = "PREVIEW";
+        caption.Text = "Preview";
         caption.IsVisible = true;
         var frame = pane.FindControl<UniformImageOverlayPanel>("ExportPreviewImageFrame")!;
-        var window = new Window { Width = 2432, Height = 1660, Content = pane };
+        var window = new Window { Width = 2432, Height = 1660 + (28 - 20), Content = pane };
         using var scope = new TestUiScope(window);
         window.SetRenderScaling(scaling);
         Dispatcher.UIThread.RunJobs();
@@ -89,7 +89,7 @@ public sealed partial class ExportVisualStyleTests
         var pane = new ExportPreviewPane { DataContext = vm };
         pane.FindControl<Border>("ExportPreviewEmptyState")!.IsVisible = false;
         var frame = pane.FindControl<UniformImageOverlayPanel>("ExportPreviewImageFrame")!;
-        var window = new Window { Width = 832, Height = 660, Content = pane };
+        var window = new Window { Width = 832, Height = 660 + (28 - 20), Content = pane };
         using var scope = new TestUiScope(window);
         try
         {
@@ -143,7 +143,7 @@ public sealed partial class ExportVisualStyleTests
         var pane = new ExportPreviewPane { DataContext = vm };
         pane.FindControl<Border>("ExportPreviewEmptyState")!.IsVisible = false;
         var frame = pane.FindControl<UniformImageOverlayPanel>("ExportPreviewImageFrame")!;
-        var window = new Window { Width = 832, Height = 660, Content = pane };
+        var window = new Window { Width = 832, Height = 660 + (28 - 20), Content = pane };
         using var scope = new TestUiScope(window);
         window.SetRenderScaling(2);
         try

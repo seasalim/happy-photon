@@ -32,7 +32,7 @@
                 <TextBlock x:Name="FilterLabel"
                            Classes="tour-region"
                            Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                           Text="Filter" FontSize="10" Foreground="{DynamicResource TextMuted}"
+                           Text="Filter" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}"
                            FontFamily="{StaticResource FontBody}"
                            VerticalAlignment="Center" Margin="0,0,7,0"/>
 
@@ -48,14 +48,14 @@
                         <Button x:Name="FilterJpegButton" Content="JPEG" Classes="filter"
                                 Click="OnFilterJpegClick"/>
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
-                        <TextBlock Text="Pick" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontBody}"
+                        <TextBlock Text="Pick" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontBody}"
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
                         <Button x:Name="FlagFilterPickedButton" Content="Picked" Classes="filter"
                                 Click="OnFlagFilterPickedClick"/>
                         <Button x:Name="FlagFilterRejectedButton" Content="Rejected" Classes="filter"
                                 Click="OnFlagFilterRejectedClick"/>
                         <Rectangle Width="1" Fill="{DynamicResource Outline}" Margin="5,2"/>
-                        <TextBlock Text="Rating" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontBody}"
+                        <TextBlock Text="Rating" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontBody}"
                                    VerticalAlignment="Center" Margin="0,0,2,0"/>
                         <views:BrowseRatingFilter x:Name="RatingFilter"
                             MinimumRating="{Binding MinimumRating, ElementName=Root, Mode=TwoWay}"/>
@@ -92,23 +92,28 @@
                             Margin="10,0,0,0"
                             Classes="tour-region"
                             Classes.tour-dimmed="{Binding IsWorkflowTourPresented}">
-                    <Button x:Name="BrowseActionsButton" Content="⋯" FontSize="10" Width="24" Padding="4,4"
+                    <Button x:Name="BrowseActionsButton" Classes="icon-button compact"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             IsEnabled="{Binding Browse.HasVisibleImages}"
                             ToolTip.Tip="More Browse actions"
                             AutomationProperties.Name="More Browse actions">
+                        <Button.Content>
+                            <Viewbox><Canvas Width="16" Height="16">
+                        <Path Data="M2,8 H3 M7.5,8 H8.5 M13,8 H14" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
+                        </Button.Content>
                         <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedRight">
                                 <MenuItem x:Name="SelectAllMenuItem"
-                                          Header="Select All" InputGesture="Ctrl+A"
+                                          Header="Select all" InputGesture="Ctrl+A"
                                           IsEnabled="{Binding Browse.HasVisibleImages}"
                                           Click="OnSelectAllClick"/>
                                 <MenuItem x:Name="DeselectAllMenuItem"
-                                          Header="Deselect All" InputGesture="Ctrl+D"
+                                          Header="Deselect all" InputGesture="Ctrl+D"
                                           IsEnabled="{Binding Browse.HasSelectedImages}"
                                           Click="OnDeselectAllClick"/>
                                 <Separator/>
-                                <MenuItem Header="Delete Rejected…"
+                                <MenuItem Header="Delete rejected…"
                                           IsEnabled="{Binding Browse.HasVisibleImages}"
                                           Click="OnDeleteRejectedClick"/>
                             </MenuFlyout>
@@ -117,18 +122,6 @@
                 </StackPanel>
             </Grid>
         </Border>
-
-        <StackPanel Grid.Row="1" x:Name="FilteredEmptyState"
-                    IsVisible="False" Orientation="Horizontal" Spacing="4"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="No images match the current filters"
-                       Foreground="{DynamicResource TextMuted}" FontSize="12"
-                       VerticalAlignment="Center"/>
-            <Button x:Name="FilteredEmptyClearButton"
-                    Content="Clear" Classes="filter-clear"
-                    Click="OnClearFiltersClick"
-                    AutomationProperties.Name="Clear all filters"/>
-        </StackPanel>
 
         <!-- Thumbnail Grid with Virtualization -->
         <ScrollViewer Grid.Row="1"
@@ -170,7 +163,7 @@
                                               Click="OnWriteXmpSidecarsClick"/>
                                     <Separator/>
                                     <MenuItem x:Name="NewVersionMenuItem"
-                                              Header="New Version from Current"
+                                              Header="New version from current"
                                               IsEnabled="{Binding CanCreateVersion}"
                                               ToolTip.ShowOnDisabled="True"
                                               ToolTip.Tip="{Binding CreateVersionToolTip}"
@@ -218,10 +211,10 @@
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Center"
                                                         Spacing="2">
-                                                <TextBlock Text="☁" FontSize="24"
+                                                <TextBlock Text="☁" FontSize="{StaticResource FontSizeTitle}"
                                                            Foreground="{DynamicResource ControlActive}"
                                                            HorizontalAlignment="Center"/>
-                                                <TextBlock Text="Online" FontSize="9"
+                                                <TextBlock Text="Online" FontSize="{StaticResource FontSizeSmall}"
                                                            FontFamily="{StaticResource FontBody}"
                                                            Foreground="{DynamicResource TextMuted}"/>
                                             </StackPanel>
@@ -238,7 +231,7 @@
                                             VerticalAlignment="Top"
                                             IsVisible="{Binding SourceRequiresHydration}"
                                             ToolTip.Tip="Online-only original">
-                                        <TextBlock Text="☁" FontSize="10"
+                                        <TextBlock Text="☁" FontSize="{StaticResource FontSizeSmall}"
                                                    Foreground="{DynamicResource ControlActive}"/>
                                     </Border>
                                     <Border Background="{DynamicResource ErrorContainer}"
@@ -300,7 +293,7 @@
                                                     IsVisible="{Binding HasVersions}"
                                                     ToolTip.Tip="Version">
                                                 <TextBlock Text="{Binding VersionDisplayLabel}"
-                                                           FontSize="9"
+                                                           FontSize="{StaticResource FontSizeSmall}"
                                                            MaxWidth="72"
                                                            TextTrimming="CharacterEllipsis"
                                                            FontFamily="{StaticResource FontBody}"
@@ -308,17 +301,17 @@
                                             </Border>
                                             <Border Background="{DynamicResource ControlActive}"
                                                     Padding="3,0" IsVisible="{Binding IsPicked}" ToolTip.Tip="Picked">
-                                                <TextBlock Text="P" FontSize="9" FontWeight="SemiBold"
+                                                <TextBlock Text="P" FontSize="{StaticResource FontSizeSmall}" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource OnControlActive}"/>
                                             </Border>
                                             <Border Background="{StaticResource RejectSurface}"
                                                     BorderBrush="{StaticResource RejectOutline}"
                                                     BorderThickness="1" Padding="3,0"
                                                     IsVisible="{Binding IsRejected}" ToolTip.Tip="Rejected">
-                                                <TextBlock Text="X" FontSize="9" FontWeight="SemiBold"
+                                                <TextBlock Text="X" FontSize="{StaticResource FontSizeSmall}" FontWeight="SemiBold"
                                                            Foreground="{StaticResource RejectGlyph}"/>
                                             </Border>
-                                            <TextBlock Text="{Binding RatingStars}" FontSize="10"
+                                            <TextBlock Text="{Binding RatingStars}" FontSize="{StaticResource FontSizeSmall}"
                                                        Foreground="{DynamicResource TextPrimary}"
                                                        VerticalAlignment="Center" IsVisible="{Binding HasRating}"
                                                        ToolTip.Tip="Rating"/>
@@ -328,7 +321,7 @@
                                                     ToolTip.Tip="RAW+JPEG pair">
                                                 <TextBlock Text="J+R"
                                                            FontFamily="{StaticResource FontBody}"
-                                                           FontSize="9"
+                                                           FontSize="{StaticResource FontSizeSmall}"
                                                            FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextSecondary}"/>
                                             </Border>
@@ -340,9 +333,9 @@
                                                         <Binding Path="$parent[views:BrowseGridView].ActualThemeVariant"/>
                                                     </MultiBinding>
                                                 </Border.Background>
-                                                <TextBlock Text="{Binding BurstChipText}" FontSize="9"
+                                                <TextBlock Text="{Binding BurstChipText}" FontFamily="{StaticResource FontLabel}" FontSize="{StaticResource FontSizeSmall}"
                                                            FontWeight="SemiBold"
-                                                           Foreground="{x:Static views:HappyPhotonColors.BurstChipInk}"/>
+                                                           Foreground="{DynamicResource BurstChipInk}"/>
                                             </Border>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="3"
@@ -351,7 +344,7 @@
                                                 Padding="2,1"
                                                 IsVisible="{Binding HasEdits}"
                                                 ToolTip.Tip="Has edits">
-                                            <TextBlock Text="±" FontSize="11"
+                                            <TextBlock Text="±" FontSize="{StaticResource FontSizeBody}"
                                                        Foreground="{DynamicResource TextMuted}"/>
                                         </Border>
                                         <Border Width="12" Height="12"
@@ -370,6 +363,19 @@
             </ItemsRepeater>
         </ScrollViewer>
 
+        <!-- Above the thumbnail scroller, below the Compare and Loupe viewers. -->
+        <StackPanel Grid.Row="1" x:Name="FilteredEmptyState"
+                    IsVisible="False" Orientation="Horizontal" Spacing="4"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="No images match the current filters"
+                       Foreground="{DynamicResource TextMuted}" FontSize="{StaticResource FontSizeLabel}"
+                       VerticalAlignment="Center"/>
+            <Button x:Name="FilteredEmptyClearButton"
+                    Content="Clear" Classes="filter-clear"
+                    Click="OnClearFiltersClick"
+                    AutomationProperties.Name="Clear all filters"/>
+        </StackPanel>
+
         <!-- Empty state -->
         <Border Grid.Row="1"
                 x:Name="EmptyState"
@@ -385,13 +391,13 @@
                            Text="Select a folder to view photographs"
                            FontFamily="{StaticResource FontHeading}"
                            Foreground="{DynamicResource TextPrimary}"
-                           FontSize="16"
+                           FontSize="{StaticResource FontSizeHeading}"
                            TextAlignment="Center"
                            TextWrapping="Wrap"/>
                 <TextBlock x:Name="EmptyMessage"
                            Text="Choose a folder in the folder tree."
                            Foreground="{DynamicResource TextMuted}"
-                           FontSize="12"
+                           FontSize="{StaticResource FontSizeLabel}"
                            TextAlignment="Center"
                            TextWrapping="Wrap"/>
             </StackPanel>

@@ -246,15 +246,16 @@ public sealed class SliderAndFooterMetricTests
         Dispatcher.UIThread.RunJobs();
 
         var pairsButton = browse.FindControl<Button>("PairsButton")!;
-        var pairGlyph = Assert.IsType<TextBlock>(pairsButton.Content);
-        var compareGlyph = Assert.IsType<TextBlock>(
+        var pairGlyph = Assert.IsType<Viewbox>(pairsButton.Content);
+        var compareGlyph = Assert.IsType<Viewbox>(
             browse.FindControl<ToggleButton>("CompareViewButton")!.Content);
         var tileGlyph = Assert.IsType<TextBlock>(Assert.Single(
             browse.GetVisualDescendants().OfType<Border>(),
             border => border.Name == "RawJpegPairChip" &&
                       border.IsEffectivelyVisible).Child);
-        Assert.Equal(compareGlyph.FontSize, pairGlyph.FontSize);
-        Assert.NotEqual(pairGlyph.FontSize, tileGlyph.FontSize);
+        Assert.Equal(compareGlyph.Width, pairGlyph.Width);
+        Assert.Equal(14, pairGlyph.Width);
+        Assert.Equal(10, tileGlyph.FontSize);
         var origin = pairGlyph.TranslatePoint(default, pairsButton);
         Assert.True(origin.HasValue);
         Assert.True(origin.Value.X >= pairsButton.Padding.Left &&

@@ -49,22 +49,12 @@ public sealed partial class CompareViewHeadlessTests
                 browse,
                 "CompareViewButton");
             Assert.IsType<ToggleButton>(compareButton);
-            var compareGlyph = Assert.IsType<TextBlock>(compareButton.Content);
-            Assert.Equal("X|Y", compareGlyph.Text);
-            Assert.Contains("Hanken Grotesk", compareGlyph.FontFamily.ToString());
-            Assert.Equal(10, compareGlyph.FontSize);
-            Assert.Equal(Avalonia.Media.FontWeight.Bold, compareGlyph.FontWeight);
-            Assert.Equal(0.5, compareGlyph.LetterSpacing);
+            var compareGlyph = Assert.IsType<Viewbox>(compareButton.Content);
+            Assert.Equal(14, compareGlyph.Width);
+            Assert.Equal(14, compareGlyph.Height);
             Assert.Contains("icon-button", compareButton.Classes);
-            // Wider than the square icon buttons on purpose: the three-glyph
-            // comparison mark does not fit the 24px square.
-            var burstsWidth = Descendant<Button>(browse, "BurstsButton").Bounds.Width;
-            Assert.True(compareButton.Bounds.Width > burstsWidth,
-                $"Compare toggle {compareButton.Bounds.Width} should exceed the " +
-                $"square icon buttons at {burstsWidth}.");
-            Assert.True(compareGlyph.Bounds.Width <= compareButton.Bounds.Width,
-                $"Glyph {compareGlyph.Bounds.Width} is clipped by the " +
-                $"{compareButton.Bounds.Width}px toggle.");
+            Assert.Equal(24, compareButton.Bounds.Width);
+            Assert.Equal(24, Descendant<Button>(browse, "BurstsButton").Bounds.Width);
             Assert.True(compareButton.IsEffectivelyVisible);
             Assert.False(compareButton.IsEffectivelyEnabled);
             Assert.False(compareButton.IsChecked);

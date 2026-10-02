@@ -35,7 +35,6 @@ public static class HappyPhotonColors
     public static readonly IBrush BurstViolet = Brush("#d1bcff");
 
     // Every burst hue must keep >= 4.5:1 contrast against this chip ink.
-    public static readonly IBrush BurstChipInk = Brush("#0e0e13");
 
     public static readonly IBrush MidGrayBurstCyan = Brush("#00dbe9");
     public static readonly IBrush MidGrayBurstMagenta = Brush("#ff6de7");

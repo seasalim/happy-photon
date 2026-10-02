@@ -16,11 +16,11 @@
                        TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
             <TextBlock Text="{Binding ExportReport.Summary}" ToolTip.Tip="{Binding ExportReport.Summary}"
                        Foreground="{DynamicResource TextSecondary}"
-                       FontSize="11"
+                       FontSize="{StaticResource FontSizeBody}"
                        TextWrapping="Wrap" MaxLines="3" TextTrimming="CharacterEllipsis"/>
             <Expander x:Name="ExportReportDetails" IsVisible="{Binding ExportReport.HasDetails}" IsExpanded="False">
                 <Expander.Header>
-                    <TextBlock Text="Show details" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                    <TextBlock Text="Show details" FontSize="{StaticResource FontSizeBody}" Foreground="{DynamicResource TextSecondary}"/>
                 </Expander.Header>
                 <ScrollViewer MaxHeight="75" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="7">
@@ -28,7 +28,7 @@
                                       IsVisible="{Binding ExportReport.HasFailures}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="services:ExportTargetOutcome">
-                                    <TextBlock FontSize="11"
+                                    <TextBlock FontSize="{StaticResource FontSizeBody}"
                                                Foreground="{DynamicResource TextSecondary}"
                                                TextWrapping="Wrap">
                                         <Run Text="• "/><Run Text="{Binding Capture.FileName}"/>
@@ -43,7 +43,7 @@
                                       IsVisible="{Binding ExportReport.HasWarnings}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="services:ExportWarning">
-                                    <TextBlock FontSize="11"
+                                    <TextBlock FontSize="{StaticResource FontSizeBody}"
                                                Foreground="{DynamicResource TextSecondary}"
                                                TextWrapping="Wrap">
                                         <Run Text="• "/><Run Text="{Binding Image.FileName}"/>

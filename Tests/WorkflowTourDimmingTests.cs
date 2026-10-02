@@ -454,6 +454,25 @@ public sealed class WorkflowTourDimmingTests
         Assert.Equal(ThemeResourceTests.Resource<double>("DisabledOpacity", window.ActualThemeVariant), savePreset.Opacity);
         expectedNonUnit.RemoveWhere(control => control is Button { Content: "＋ Save Current…" });
         expectedNonUnit.Add(savePreset);
+        // These existing controls disable outside grid mode. WP8's shared icon-button
+        // style dims the buttons themselves; this is independent of tour-region opacity.
+        var vm = Assert.IsType<MainWindowViewModel>(window.DataContext);
+        var browse = window.FindControl<BrowseGridView>("BrowseGridView")!;
+
+        foreach (var name in new[] { "BurstsButton", "PairsButton", "SmallThumbnailButton", "MediumThumbnailButton", "LargeThumbnailButton" })
+        {
+            var button = browse.FindControl<Button>(name)!;
+            Assert.Equal(vm.IsBrowseGridVisible, button.IsEnabled);
+            Assert.Equal(vm.IsBrowseGridVisible ? 1 :
+                ThemeResourceTests.Resource<double>("DisabledOpacity", window.ActualThemeVariant), button.Opacity);
+            expectedNonUnit.Remove(button);
+
+            if (!vm.IsBrowseGridVisible)
+            {
+                expectedNonUnit.Add(button);
+            }
+        }
+
         var actualNonUnit = new HashSet<Control>(
             DimmedControls(window),
             ReferenceEqualityComparer.Instance);

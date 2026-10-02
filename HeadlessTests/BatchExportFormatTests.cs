@@ -1,10 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -67,7 +69,8 @@ public sealed class BatchExportFormatTests : IDisposable
             actionStack.Children.IndexOf(exportButton));
         Assert.Equal(10, actionStack.Spacing);
         Assert.Equal("Export 0 files", exportButton.Content);
-        Assert.Equal(30, exportButton.Height);
+        // WP8 adopts the shared quiet-button accent metrics.
+        Assert.Equal(28, exportButton.Height);
         Assert.Equal(HorizontalAlignment.Stretch, exportButton.HorizontalAlignment);
         Assert.Equal(
             HorizontalAlignment.Center,
@@ -76,18 +79,21 @@ public sealed class BatchExportFormatTests : IDisposable
             VerticalAlignment.Center,
             exportButton.VerticalContentAlignment);
         Assert.Equal(new CornerRadius(0), exportButton.CornerRadius);
-        Assert.Equal(FontWeight.Bold, exportButton.FontWeight);
+        Assert.Equal(FontWeight.SemiBold, exportButton.FontWeight);
         Assert.Equal(11, exportButton.FontSize);
         Assert.Equal(0, exportButton.LetterSpacing);
         Assert.Equal(
             ThemeResourceTests.Resource<FontFamily>("FontBody", ThemeVariant.Dark),
             exportButton.FontFamily);
+        // Shared accent paints the template presenter, not Button.Background.
+        var presenter = exportButton.GetVisualDescendants().OfType<ContentPresenter>()
+            .Single(control => control.Name == "PART_ContentPresenter");
         Assert.Equal(
             ThemeResourceTests.Brush("ControlActive", ThemeVariant.Dark).Color,
-            Assert.IsType<SolidColorBrush>(exportButton.Background).Color);
+            Assert.IsType<SolidColorBrush>(presenter.Background).Color);
         Assert.Equal(
             ThemeResourceTests.Brush("OnControlActive", ThemeVariant.Dark).Color,
-            Assert.IsType<SolidColorBrush>(exportButton.Foreground).Color);
+            Assert.IsType<SolidColorBrush>(presenter.Foreground).Color);
 
         window.Close();
         await viewModel.DisposeAsync();

@@ -47,7 +47,7 @@ Store or GitHub action. There are no automatic update requests.
 ## Colors
 
 - Control chrome uses achromatic hover, selection, active and focus states.
-- Brand cyan is reserved for the title-bar mark/wordmark and welcome heading.
+- Brand cyan is reserved for the icon and welcome heading.
 - Semantic color identifies bursts, color labels, mixer bands, white-balance tracks,
   clipping/scope channels, and errors/destructive actions.
 - Reject uses an invariant near-black surface, light glyph and hairline.

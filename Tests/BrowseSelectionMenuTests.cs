@@ -118,7 +118,7 @@ public sealed class BrowseSelectionMenuTests
         Assert.IsType<Separator>(items[7]);
         var delete = Assert.IsType<MenuItem>(items[8]);
         Assert.Equal(
-            ["Copy path", "Reveal in File Explorer", "Write XMP sidecars", "New Version from Current",
+            ["Copy path", "Reveal in File Explorer", "Write XMP sidecars", "New version from current",
                 "Rename version label…", "Delete version", "Delete selection…"],
             new[] { copy, reveal, writeXmp, createVersion, renameVersion, deleteVersion, delete }
                 .Select(item => item.Header));
@@ -340,7 +340,7 @@ public sealed class BrowseSelectionMenuTests
             panel.Children.OfType<TextBlock>(),
             text => text.Text == "Select");
         Assert.Equal(
-            ["Select All", "Deselect All", "Delete Rejected…"],
+            ["Select all", "Deselect all", "Delete rejected…"],
             new[] { selectAll, deselectAll, deleteRejected }
                 .Select(item => item.Header));
         Assert.Equal("Ctrl+A", selectAll.InputGesture?.ToString());

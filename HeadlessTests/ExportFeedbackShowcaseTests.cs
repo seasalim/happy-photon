@@ -47,7 +47,7 @@ public sealed class ExportFeedbackShowcaseTests
             vm.ExportSettings.ExportSmall = true;
             vm.SelectedExportProofSize = vm.ExportProofSizes.Single(size => size.Name == "Web");
             vm.ExportSettings.ShowProof = true;
-            await TestWaits.UntilAsync(() => vm.ExportProofCaption == "PROOF · Web · 2048 PX · sRGB");
+            await TestWaits.UntilAsync(() => vm.ExportProofCaption == "Proof · Web · 2048 px · sRGB");
         }
         else if (scene == "export-exporting-gray")
         {

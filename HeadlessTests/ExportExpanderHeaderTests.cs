@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
@@ -41,18 +42,20 @@ public sealed class ExportExpanderHeaderTests
             firstHeader ??= header;
             Assert.Same(firstHeader.Theme, header.Theme);
             Assert.Same(firstHeader.Template, header.Template);
-            Assert.Equal(new Thickness(8, 4), header.Padding);
+            Assert.Equal(new Thickness(6, 19, 6, 8), header.Padding);
             var chevron = expander.GetVisualDescendants().OfType<ShapePath>()
                 .Single(path => path.Name == "ExpandCollapseChevron");
             var border = Assert.IsType<Border>(chevron.GetVisualParent());
-            Assert.Equal(new Size(32, 32), border.Bounds.Size);
+            Assert.Equal(new Size(16, 16), border.Bounds.Size);
             Assert.Equal(new Size(14, 7), chevron.Data!.Bounds.Size);
             Assert.Equal(chevron.Data.Bounds.Size, chevron.Bounds.Size);
             Assert.True(new Rect(border.Bounds.Size).Contains(chevron.Bounds));
             Assert.Equal(expanded ? 180 : 0, Assert.IsType<RotateTransform>(chevron.RenderTransform).Angle);
             var title = expander.GetVisualDescendants().OfType<TextBlock>()
                 .First(text => text.Text is "More options" or "Watermark");
-            Assert.Equal(8, title.TranslatePoint(default, header)!.Value.X);
+            Assert.Equal(6, title.TranslatePoint(default, header)!.Value.X);
+            Assert.Equal(title.Text, AutomationProperties.GetName(header));
+            Assert.Null(ToolTip.GetTip(header));
         }
     }
 }

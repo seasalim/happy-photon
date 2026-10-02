@@ -97,15 +97,15 @@ public sealed partial class ColorLabelUiTests
         var rejected = control.FindControl<Button>("FlagFilterRejectedButton")!;
         var raw = control.FindControl<Button>("FilterRawButton")!;
         var jpeg = control.FindControl<Button>("FilterJpegButton")!;
-        var bursts = control.FindControl<Button>("BurstsButton")!;
-        var pairs = control.FindControl<Button>("PairsButton")!;
+        var bursts = control.FindControl<Avalonia.Controls.Primitives.ToggleButton>("BurstsButton")!;
+        var pairs = control.FindControl<Avalonia.Controls.Primitives.ToggleButton>("PairsButton")!;
         var filterLabel = control.FindControl<TextBlock>("FilterLabel")!;
         var medium = control.FindControl<RadioButton>("MediumThumbnailButton")!;
         Assert.Equal(
-            ThemeResourceTests.Brush("ControlSelected", Avalonia.Styling.ThemeVariant.Dark).Color,
+            ThemeResourceTests.Brush("ControlActive", Avalonia.Styling.ThemeVariant.Dark).Color,
             Assert.IsAssignableFrom<ISolidColorBrush>(medium.Background).Color);
-        Assert.IsType<PathIcon>(bursts.Content);
-        Assert.Contains("view-toggle", bursts.Classes);
+        Assert.IsType<Viewbox>(bursts.Content);
+        Assert.Contains("icon-button", bursts.Classes);
         Assert.DoesNotContain("filter", bursts.Classes);
         Assert.Contains(
             bursts,
@@ -118,14 +118,12 @@ public sealed partial class ColorLabelUiTests
             Assert.Contains("filter", button.Classes));
         Assert.Equal("Group bursts", ToolTip.GetTip(bursts));
         Assert.Equal("Group bursts", AutomationProperties.GetName(bursts));
-        Assert.IsType<Button>(pairs);
-        Assert.Contains("view-toggle", pairs.Classes);
-        Assert.DoesNotContain("active", pairs.Classes);
+        Assert.IsType<Avalonia.Controls.Primitives.ToggleButton>(pairs);
+        Assert.Contains("icon-button", pairs.Classes);
+        Assert.False(pairs.IsChecked);
         Assert.Equal("Pair RAW+JPEG", ToolTip.GetTip(pairs));
         Assert.Equal("Pair RAW+JPEG", AutomationProperties.GetName(pairs));
-        Assert.Equal("J+R", Assert.IsType<TextBlock>(pairs.Content).Text);
-        Assert.Contains("Hanken Grotesk",
-            Assert.IsType<TextBlock>(pairs.Content).FontFamily.ToString());
+        Assert.IsType<Viewbox>(pairs.Content);
         Assert.Null(control.FindControl<Button>("FilterAllButton"));
         Assert.Null(control.FindControl<Button>("FlagFilterAllButton"));
         Assert.Null(control.FindControl<Button>("RatingFilterAllButton"));
@@ -155,7 +153,7 @@ public sealed partial class ColorLabelUiTests
         var rating = control.FindControl<BrowseRatingFilter>("RatingFilter")!;
         var thirdStar = rating.FindControl<Button>("RatingFilter3Button")!;
         Assert.Null(rating.FindControl<Border>("RatingFilterGroup"));
-        Assert.Equal(18, thirdStar.Width);
+        Assert.Equal(24, thirdStar.Width);
         Assert.Equal(0, thirdStar.BorderThickness.Left);
         Click(thirdStar);
         Assert.Equal(3, control.MinimumRating);
@@ -169,13 +167,13 @@ public sealed partial class ColorLabelUiTests
 
         Click(pairs);
         Assert.True(control.ShowPairs);
-        Assert.Contains("active", pairs.Classes);
+        Assert.True(pairs.IsChecked);
         Assert.Equal(
-            ThemeResourceTests.Brush("ControlSelected", Avalonia.Styling.ThemeVariant.Dark).Color,
+            ThemeResourceTests.Brush("ControlActive", Avalonia.Styling.ThemeVariant.Dark).Color,
             Assert.IsAssignableFrom<ISolidColorBrush>(pairs.Background).Color);
         Click(pairs);
         Assert.False(control.ShowPairs);
-        Assert.DoesNotContain("active", pairs.Classes);
+        Assert.False(pairs.IsChecked);
 
         var filterControls = control.FindControl<ScrollViewer>("FilterScrollViewer")!;
         var captions = filterControls.GetLogicalDescendants()
@@ -245,7 +243,7 @@ public sealed partial class ColorLabelUiTests
         {
             Assert.Equal(
                 rating <= 3,
-                control.FindControl<TextBlock>(
+                control.FindControl<Avalonia.Controls.Shapes.Path>(
                     $"RatingFilter{rating}Filled")!.IsVisible);
         }
 
@@ -253,7 +251,7 @@ public sealed partial class ColorLabelUiTests
         Assert.Equal(0, control.MinimumRating);
         Assert.All(
             Enumerable.Range(1, 5),
-            rating => Assert.False(control.FindControl<TextBlock>(
+            rating => Assert.False(control.FindControl<Avalonia.Controls.Shapes.Path>(
                 $"RatingFilter{rating}Filled")!.IsVisible));
 
     }
@@ -315,7 +313,8 @@ public sealed partial class ColorLabelUiTests
         Assert.Equal("Show select label only", ToolTip.GetTip(red));
         Click(red);
         Assert.Equal(ColorLabelFilter.Red, control.Filter);
-        Assert.Equal(HappyPhotonColors.ControlActive, redDot.BorderBrush);
+        Assert.Equal(ThemeResourceTests.Brush("ControlActive", Avalonia.Styling.ThemeVariant.Dark).Color,
+            Assert.IsAssignableFrom<ISolidColorBrush>(redDot.BorderBrush).Color);
         Click(red);
         Assert.Equal(ColorLabelFilter.All, control.Filter);
 

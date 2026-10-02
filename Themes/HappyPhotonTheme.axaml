@@ -30,6 +30,7 @@
         </Style>
     </ControlTheme>
     <!-- Hue is reserved for brand and color-semantic data. -->
+    <SolidColorBrush x:Key="BurstChipInk" Color="#0e0e13"/>
     <Color x:Key="BrandCyanColor">#00f0ff</Color>
     <Color x:Key="LocalMaskColor">#ff24e4</Color>
     <Color x:Key="LuminanceTrackDarkColor">#171717</Color>
@@ -196,6 +197,10 @@
                              Opacity="0.92"/>
             <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}"/>
             <SolidColorBrush x:Key="TextMuted" Color="{StaticResource TextMutedColor}"/>
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForeground" ResourceKey="TextMuted"/>
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForegroundPointerOver" ResourceKey="TextMuted"/>
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForegroundPressed" ResourceKey="TextMuted"/>
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForegroundDisabled" ResourceKey="TextMuted"/>
             <SolidColorBrush x:Key="TextDisabled" Color="{StaticResource TextDisabledColor}"/>
             <SolidColorBrush x:Key="RawFileBackground" Color="{StaticResource RawFileBackgroundColor}"/>
             <SolidColorBrush x:Key="ViewerSurround" Color="{StaticResource ViewerSurroundColor}"/>
@@ -289,6 +294,10 @@
                              Opacity="0.92"/>
             <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}"/>
             <SolidColorBrush x:Key="TextMuted" Color="{StaticResource TextMutedColor}"/>
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForeground" ResourceKey="TextMuted"/>
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForegroundPointerOver" ResourceKey="TextMuted"/>
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForegroundPressed" ResourceKey="TextMuted"/>
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForegroundDisabled" ResourceKey="TextMuted"/>
             <SolidColorBrush x:Key="TextDisabled" Color="{StaticResource TextDisabledColor}"/>
             <SolidColorBrush x:Key="RawFileBackground" Color="{StaticResource RawFileBackgroundColor}"/>
             <SolidColorBrush x:Key="ViewerSurround" Color="{StaticResource ViewerSurroundColor}"/>

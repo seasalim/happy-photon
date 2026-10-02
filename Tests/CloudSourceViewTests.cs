@@ -363,7 +363,7 @@ public sealed class CloudSourceViewTests
             Assert.True(download.IsVisible);
             Assert.Same(viewModel.DownloadAndOpenCommand, download.Command);
             Assert.Equal(HorizontalAlignment.Left, download.HorizontalAlignment);
-            Assert.Equal(10, download.FontSize);
+            Assert.Equal(11, download.FontSize);
             Assert.False(viewModel.CanEditSelectedImage);
             Assert.False(develop.IsEnabled);
             Assert.False(presets.IsEnabled);

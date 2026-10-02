@@ -160,7 +160,7 @@ public sealed class ExportWatermarkTests
         vm.WorkspaceMode = WorkspaceMode.Export;
         await TestWaits.UntilAsync(() => vm.PreviewImage != null);
         vm.ExportSettings.ShowProof = true;
-        await TestWaits.UntilAsync(() => vm.ExportProofCaption == "PROOF · Full size · No resizing · sRGB");
+        await TestWaits.UntilAsync(() => vm.ExportProofCaption == "Proof · Full size · No resizing · sRGB");
         var mark = vm.ExportSettings.Watermark;
         Action[] changes = [() => mark.Text = "© Jane Doe", () => mark.Enabled = true,
             () => mark.FontFamily = "Arial", () => mark.Bold = true, () => mark.Italic = true,
@@ -172,7 +172,7 @@ public sealed class ExportWatermarkTests
             var previous = vm.PreviewImage;
             change();
             await TestWaits.UntilAsync(() => vm.PreviewImage != previous &&
-                !vm.ExportProofCaption.Contains("UPDATING"));
+                !vm.ExportProofCaption.Contains("Updating"));
         }
         mark.Text = " ";
         Assert.Equal("Enter watermark text.", vm.ExportValidationReason);

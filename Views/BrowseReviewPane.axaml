@@ -10,11 +10,11 @@
 
     <UserControl.Styles>
         <Style Selector="Button.metadata-link">
-            <Setter Property="Background" Value="{x:Null}"/>
+            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="{x:Null}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="MinHeight" Value="20"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
@@ -94,17 +94,17 @@
                                        IsVisible="{Binding IsSelectedMetadataUnavailable}"/>
                             <StackPanel Spacing="4"
                                         IsVisible="{Binding SelectedImage.MetadataLoaded}">
-                                <TextBlock x:Name="ReviewFileDetailsText"
+                                <TextBlock x:Name="ReviewFileDetailsText" FontFamily="{StaticResource FontLabel}"
                                            Text="{Binding SelectedImage.FileDetailsDisplay}"
                                            Foreground="{DynamicResource TextSecondary}"
                                            FontSize="{DynamicResource FontSizeBody}"
                                            IsVisible="{Binding SelectedImage.FileDetailsDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                <TextBlock x:Name="ReviewCaptureDateText"
+                                <TextBlock x:Name="ReviewCaptureDateText" FontFamily="{StaticResource FontLabel}"
                                            Text="{Binding SelectedImage.DisplayDate, StringFormat='{}{0:MMM d, yyyy  h:mm tt}'}"
                                            Foreground="{DynamicResource TextSecondary}"
                                            FontSize="{DynamicResource FontSizeBody}"
                                            IsVisible="{Binding SelectedImage.HasCaptureDate}"/>
-                                <TextBlock x:Name="ReviewModifiedDateText"
+                                <TextBlock x:Name="ReviewModifiedDateText" FontFamily="{StaticResource FontLabel}"
                                            Text="{Binding SelectedImage.DisplayDate, StringFormat='{}{0:MMM d, yyyy  h:mm tt}'}"
                                            Foreground="{DynamicResource TextMuted}"
                                            FontSize="{DynamicResource FontSizeBody}"
@@ -133,7 +133,7 @@
                                            TextTrimming="CharacterEllipsis"
                                            ToolTip.Tip="{Binding SelectedImage.LensModel}"
                                            IsVisible="{Binding SelectedImage.LensModel, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                <TextBlock x:Name="ReviewExposureText"
+                                <TextBlock x:Name="ReviewExposureText" FontFamily="{StaticResource FontLabel}"
                                            Text="{Binding SelectedImage.ExposureDisplay}"
                                            Foreground="{DynamicResource TextSecondary}"
                                            FontSize="{DynamicResource FontSizeBody}"
@@ -152,7 +152,7 @@
                                         Margin="0,8,0,0" Spacing="4"
                                         IsVisible="{Binding SelectedImage.HasLocationMetadata}">
                                 <TextBlock Classes="section-label" Text="Location"/>
-                                <Button x:Name="ReviewMapLink"
+                                <Button x:Name="ReviewMapLink" FontFamily="{StaticResource FontLabel}"
                                         Classes="metadata-link"
                                         Content="{Binding SelectedImage.GpsDisplay}"
                                         FontSize="{DynamicResource FontSizeBody}"
@@ -160,7 +160,7 @@
                                         IsEnabled="{Binding SelectedImage.HasGpsCoordinates}"
                                         IsVisible="{Binding SelectedImage.GpsDisplay, Converter={x:Static ObjectConverters.IsNotNull}}"
                                         ToolTip.Tip="Open location in OpenStreetMap"/>
-                                <TextBlock x:Name="ReviewAltitudeText"
+                                <TextBlock x:Name="ReviewAltitudeText" FontFamily="{StaticResource FontLabel}"
                                            Text="{Binding SelectedImage.GpsAltitudeDisplay}"
                                            Foreground="{DynamicResource TextSecondary}"
                                            FontSize="{DynamicResource FontSizeBody}"
@@ -175,24 +175,30 @@
                             IsVisible="{Binding HasBrowseSelectionSummary}">
                         <StackPanel Spacing="5">
                             <TextBlock Classes="section-label" Text="Selection"/>
-                            <TextBlock Text="{Binding BrowseSelectionCountDisplay}"
+                            <TextBlock x:Name="ReviewSelectionCountText" FontFamily="{StaticResource FontBody}"
                                        Foreground="{DynamicResource TextPrimary}"
-                                       FontSize="{DynamicResource FontSizeBody}"/>
-                            <TextBlock Text="{Binding BrowseSelectionDateRangeDisplay}"
+                                       FontSize="{DynamicResource FontSizeBody}">
+                                <Run Text="{Binding BrowseSelectionCount, StringFormat='{}{0:N0}'}" FontFamily="{StaticResource FontLabel}"/>
+                                <Run Text="photos selected"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding BrowseSelectionDateRangeDisplay}" FontFamily="{StaticResource FontLabel}"
                                        Foreground="{DynamicResource TextSecondary}"
                                        FontSize="{DynamicResource FontSizeBody}"/>
-                            <TextBlock Text="{Binding BrowseSelectionCombinedFileSizeDisplay}"
+                            <TextBlock Text="{Binding BrowseSelectionCombinedFileSizeDisplay}" FontFamily="{StaticResource FontLabel}"
                                        Foreground="{DynamicResource TextSecondary}"
                                        FontSize="{DynamicResource FontSizeBody}"/>
                             <TextBlock Text="Updating selection details…"
                                        Foreground="{DynamicResource TextMuted}"
                                        FontSize="{DynamicResource FontSizeSmall}"
                                        IsVisible="{Binding IsBrowseSelectionSummaryLoading}"/>
-                            <TextBlock Text="{Binding BrowseSelectionOnlineOnlyNote}"
+                            <TextBlock x:Name="ReviewSelectionOnlineOnlyText" FontFamily="{StaticResource FontBody}"
                                        Foreground="{DynamicResource TextMuted}"
                                        FontSize="{DynamicResource FontSizeSmall}"
                                        TextWrapping="Wrap"
-                                       IsVisible="{Binding HasBrowseSelectionOnlineOnlyImages}"/>
+                                       IsVisible="{Binding HasBrowseSelectionOnlineOnlyImages}">
+                                <Run Text="{Binding BrowseSelectionOnlineOnlyCount, StringFormat='{}{0:N0}'}" FontFamily="{StaticResource FontLabel}"/>
+                                <Run Text="{Binding BrowseSelectionOnlineOnlyDescription}"/>
+                            </TextBlock>
                         </StackPanel>
                     </Border>
                 </StackPanel>

@@ -10,12 +10,12 @@
         <Style Selector="Button.tab">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontHeading}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="Padding" Value="20,8"/>
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.tab:pointerover">
@@ -73,14 +73,14 @@
         <Style Selector="Button.caption.help">
             <Setter Property="Width" Value="38"/>
             <Setter Property="FontFamily" Value="{StaticResource FontHeading}"/>
-            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeHeading}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
         <Style Selector="Button.caption.appearance">
             <Setter Property="Width" Value="78"/>
             <Setter Property="Focusable" Value="True"/>
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
-            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
         </Style>
     </UserControl.Styles>
 
@@ -96,10 +96,10 @@
                         Background="{DynamicResource BrandMark}"/>
                 <TextBlock x:Name="BrandWordmark"
                            FontFamily="{StaticResource FontHeading}"
-                           FontWeight="Bold" FontSize="16"
+                           FontWeight="SemiBold" FontSize="{StaticResource FontSizeHeading}"
                            VerticalAlignment="Center">
                     <Run Text="Happy " Foreground="{DynamicResource TextPrimary}"/>
-                    <Run Text="Photon" Foreground="{StaticResource BrandCyan}"/>
+                    <Run Text="Photon" Foreground="{DynamicResource TextPrimary}"/>
                 </TextBlock>
             </StackPanel>
 
@@ -143,10 +143,15 @@
                         chrome:WindowDecorationProperties.ElementRole="User">
                 <Button x:Name="AppearanceButton"
                         Classes="caption appearance"
-                        Content="Theme ▾"
                         IsEnabled="{Binding IsAppearanceSettingsReady}"
                         ToolTip.Tip="Choose appearance"
                         AutomationProperties.Name="Choose appearance">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="Theme"/>
+                            <Path Width="10" Height="10" Data="M2,3 L5,6 L8,3" StrokeThickness="1.4" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
                     <Button.Flyout>
                         <MenuFlyout Placement="BottomEdgeAlignedRight">
                             <MenuItem Header="Dark"
@@ -154,7 +159,7 @@
                                       IsChecked="{Binding IsDarkTheme, Mode=OneWay}"
                                       Command="{Binding SetAppThemeCommand}"
                                       CommandParameter="{x:Static models:AppTheme.Dark}"/>
-                            <MenuItem Header="Middle Gray"
+                            <MenuItem Header="Middle gray"
                                       ToggleType="Radio"
                                       IsChecked="{Binding IsMidGrayTheme, Mode=OneWay}"
                                       Command="{Binding SetAppThemeCommand}"
@@ -164,20 +169,19 @@
                 </Button>
                 <Button x:Name="SettingsButton"
                         Classes="caption help"
-                        Content="⚙"
                         IsEnabled="{Binding AreXmpSettingsReady}"
                         ToolTip.Tip="Settings (Ctrl+,)"
                         AutomationProperties.Name="Settings"
-                        Command="{Binding OpenSettingsCommand}"/>
+                        Command="{Binding OpenSettingsCommand}">
+                    <Path Width="16" Height="16" Data="M6,1 H10 L11,4 L14,5 V9 L11,10 L10,13 H6 L5,10 L2,9 V5 L5,4 Z M10,7 A2,2 0 1 1 6,7 A2,2 0 1 1 10,7" StrokeThickness="1.3"/>
+                </Button>
                 <Button x:Name="HelpAboutButton"
                         Classes="caption help"
                         ToolTip.Tip="Help &amp; About"
                         AutomationProperties.Name="Help &amp; About"
                         Click="OnHelpAboutClick">
                     <Grid Width="18" Height="18">
-                        <TextBlock Text="?"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"/>
+                        <Path Width="16" Height="16" Data="M4,4 C4,0 12,0 12,4 C12,7 8,6 8,10 M8,12 V14" StrokeThickness="1.5"/>
                         <Ellipse x:Name="UpdateAvailableIndicator"
                                  Width="4" Height="4"
                                  Fill="{DynamicResource TextMuted}"

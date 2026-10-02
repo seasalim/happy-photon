@@ -22,7 +22,7 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
-            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.assessment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -61,11 +61,6 @@
         <Style Selector="Button.reject.active Path">
             <Setter Property="Stroke" Value="{StaticResource RejectGlyph}"/>
         </Style>
-        <Style Selector="Button.star">
-            <Setter Property="Width" Value="24"/>
-            <Setter Property="Padding" Value="2"/>
-            <Setter Property="FontSize" Value="16"/>
-        </Style>
         <Style Selector="Button.clear Path">
             <Setter Property="Stroke" Value="{DynamicResource TextSecondary}"/>
         </Style>
@@ -74,7 +69,7 @@
         </Style>
         <Style Selector="TextBlock.shortcut">
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
-            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="Opacity" Value="0.7"/>
         </Style>
     </UserControl.Styles>
@@ -133,7 +128,7 @@
 
             <StackPanel Orientation="Horizontal" Spacing="0">
                 <Button x:Name="Rating1Button"
-                        Classes="assessment star"
+                        Classes="rating-star"
                         Command="{Binding SetRatingCommand}"
                         ToolTip.Tip="Set or clear 1 star for the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (1)"
                         AutomationProperties.Name="Set 1-star rating">
@@ -141,13 +136,13 @@
                         <x:Int32>1</x:Int32>
                     </Button.CommandParameter>
                     <Grid>
-                        <TextBlock Text="☆" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock Text="★" Foreground="{DynamicResource TextPrimary}"
+                        <Path/>
+                        <Path Classes="rating-filled"
                                    IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=1, FallbackValue=False}"/>
                     </Grid>
                 </Button>
                 <Button x:Name="Rating2Button"
-                        Classes="assessment star"
+                        Classes="rating-star"
                         Command="{Binding SetRatingCommand}"
                         ToolTip.Tip="Set or clear 2 stars for the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (2)"
                         AutomationProperties.Name="Set 2-star rating">
@@ -155,13 +150,13 @@
                         <x:Int32>2</x:Int32>
                     </Button.CommandParameter>
                     <Grid>
-                        <TextBlock Text="☆" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock Text="★" Foreground="{DynamicResource TextPrimary}"
+                        <Path/>
+                        <Path Classes="rating-filled"
                                    IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=2, FallbackValue=False}"/>
                     </Grid>
                 </Button>
                 <Button x:Name="Rating3Button"
-                        Classes="assessment star"
+                        Classes="rating-star"
                         Command="{Binding SetRatingCommand}"
                         ToolTip.Tip="Set or clear 3 stars for the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (3)"
                         AutomationProperties.Name="Set 3-star rating">
@@ -169,13 +164,13 @@
                         <x:Int32>3</x:Int32>
                     </Button.CommandParameter>
                     <Grid>
-                        <TextBlock Text="☆" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock Text="★" Foreground="{DynamicResource TextPrimary}"
+                        <Path/>
+                        <Path Classes="rating-filled"
                                    IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=3, FallbackValue=False}"/>
                     </Grid>
                 </Button>
                 <Button x:Name="Rating4Button"
-                        Classes="assessment star"
+                        Classes="rating-star"
                         Command="{Binding SetRatingCommand}"
                         ToolTip.Tip="Set or clear 4 stars for the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (4)"
                         AutomationProperties.Name="Set 4-star rating">
@@ -183,13 +178,13 @@
                         <x:Int32>4</x:Int32>
                     </Button.CommandParameter>
                     <Grid>
-                        <TextBlock Text="☆" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock Text="★" Foreground="{DynamicResource TextPrimary}"
+                        <Path/>
+                        <Path Classes="rating-filled"
                                    IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=4, FallbackValue=False}"/>
                     </Grid>
                 </Button>
                 <Button x:Name="Rating5Button"
-                        Classes="assessment star"
+                        Classes="rating-star"
                         Command="{Binding SetRatingCommand}"
                         ToolTip.Tip="Set or clear 5 stars for the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (5)"
                         AutomationProperties.Name="Set 5-star rating">
@@ -197,8 +192,8 @@
                         <x:Int32>5</x:Int32>
                     </Button.CommandParameter>
                     <Grid>
-                        <TextBlock Text="☆" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock Text="★" Foreground="{DynamicResource TextPrimary}"
+                        <Path/>
+                        <Path Classes="rating-filled"
                                    IsVisible="{Binding SelectedImage.Rating, Converter={StaticResource RatingAtLeastConverter}, ConverterParameter=5, FallbackValue=False}"/>
                     </Grid>
                 </Button>

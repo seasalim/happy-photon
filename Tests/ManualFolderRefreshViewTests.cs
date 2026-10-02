@@ -60,7 +60,10 @@ public sealed class ManualFolderRefreshViewTests
         panel.ImportCatalogRequested += (_, _) => importRequested++;
         panel.ChangeFolderRequested += (_, _) => changeRequested++;
 
-        Assert.Equal("⋯", button.Content);
+        // WP8 replaces text glyphs with the shared compact Path icon structure.
+        var iconBox = Assert.IsType<Viewbox>(button.Content);
+        var iconCanvas = Assert.IsType<Canvas>(iconBox.Child);
+        Assert.NotNull(Assert.IsType<Avalonia.Controls.Shapes.Path>(Assert.Single(iconCanvas.Children)).Data);
         Assert.Equal("More folder actions", ToolTip.GetTip(button));
         Assert.Equal("More folder actions", AutomationProperties.GetName(button));
         Assert.Equal(
@@ -97,8 +100,10 @@ public sealed class ManualFolderRefreshViewTests
         panel.SelectedFolder = new FolderNode(Path.GetTempPath());
 
         Assert.True(panel.CanRefreshFolder);
-        var icon = Assert.IsType<PathIcon>(button.Content);
-        Assert.IsType<PathGeometry>(icon.Data);
+        var iconBox = Assert.IsType<Viewbox>(button.Content);
+        var iconCanvas = Assert.IsType<Canvas>(iconBox.Child);
+        var icon = Assert.IsType<Avalonia.Controls.Shapes.Path>(Assert.Single(iconCanvas.Children));
+        Assert.NotNull(icon.Data);
         Assert.Equal(
             "Refresh folder — re-read photographs in the current folder.",
             ToolTip.GetTip(button));
