@@ -37,7 +37,6 @@ public partial class BrowseGridView : UserControl
         "NewVersionMenuItem",
         "DeleteVersionMenuItem",
         "DeleteImageMenuItem",
-        "SelectionBadgeButton",
         "EmptyState",
         "EmptyHeading",
         "EmptyMessage",
@@ -361,25 +360,6 @@ public partial class BrowseGridView : UserControl
 
             SelectionAnchor = image;
         }
-    }
-
-    private void OnSelectionBadgePointerPressed(
-        object? sender,
-        PointerPressedEventArgs e)
-    {
-        if (sender is Control control &&
-            e.GetCurrentPoint(control).Properties.IsLeftButtonPressed)
-        {
-            e.Handled = true;
-        }
-    }
-
-    private void OnSelectionBadgeClick(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { DataContext: ImageFile image }) return;
-
-        ImageSelectionToggled?.Invoke(this, image);
-        e.Handled = true;
     }
 
     internal void ApplyRightClickSelection(ImageFile image)

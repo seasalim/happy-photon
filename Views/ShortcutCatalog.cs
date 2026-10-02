@@ -156,7 +156,7 @@ public static class ShortcutCatalog
             new("6–9", "Set color labels on Browse selection, else active photo; active-only in Develop, Loupe, or Compare",
                 [Browse("Set a color label", "ColorLabelButton")]),
             new("Ctrl+Space", "Toggle the active photo in the selection in Browse, Develop, or Loupe",
-                [Browse("Toggle selection", "SelectionBadgeButton")]),
+                [Accelerator("Toggle selection")]),
             new("Ctrl+A", "Select all visible images",
                 [Browse("Select all visible images", "SelectAllMenuItem")]),
             new("Ctrl+D", "Deselect all visible images",

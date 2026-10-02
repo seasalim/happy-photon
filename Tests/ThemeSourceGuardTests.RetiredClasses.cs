@@ -30,6 +30,7 @@ public sealed partial class ThemeSourceGuardTests
     [Theory]
     [InlineData("<Button Classes=\"view-toggle\"/>")]
     [InlineData("<Style Selector=\"RadioButton.thumbnail-size\"/>")]
+    [InlineData("<Style Selector=\"Button.check-badge.selected\"/>")]
     public void RetiredClassMatcher_RejectsBrowseClasses(string text)
     {
         Assert.Matches(RetiredClassPattern(), text);
@@ -41,6 +42,6 @@ public sealed partial class ThemeSourceGuardTests
         Assert.DoesNotMatch(RetiredClassPattern(), "<Button Classes=\"icon-button compact\"/>");
     }
 
-    [GeneratedRegex(@"(?<![\w-])(?:wb-auto|develop-reset|develop-action|view-toggle|thumbnail-size)(?![\w-])")]
+    [GeneratedRegex(@"(?<![\w-])(?:wb-auto|develop-reset|develop-action|view-toggle|thumbnail-size|check-badge)(?![\w-])")]
     private static partial Regex RetiredClassPattern();
 }

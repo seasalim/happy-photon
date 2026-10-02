@@ -106,7 +106,7 @@ public sealed class FullScreenSelectionTests : IDisposable
         vm.ToggleFullScreenCommand.Execute(null);
 
         Assert.Same(images[1], vm.SelectedImage);
-        Assert.Equal("SELECTION · 1 / 2", vm.FullScreenSelectionBadgeText);
+        Assert.Equal("Selection · 1 / 2", vm.FullScreenSelectionBadgeText);
     }
 
     [Fact]
@@ -157,12 +157,12 @@ public sealed class FullScreenSelectionTests : IDisposable
         vm.ToggleFullScreenCommand.Execute(null);
 
         vm.ToggleImageSelection(images[1]);
-        Assert.Equal("SELECTION · 1 / 3", vm.FullScreenSelectionBadgeText);
+        Assert.Equal("Selection · 1 / 3", vm.FullScreenSelectionBadgeText);
 
         vm.ToggleImageSelection(images[0]);
         Assert.True(vm.IsFullScreenSelectionRestricted);
         Assert.Same(images[1], vm.SelectedImage);
-        Assert.Equal("SELECTION · 1 / 2", vm.FullScreenSelectionBadgeText);
+        Assert.Equal("Selection · 1 / 2", vm.FullScreenSelectionBadgeText);
 
         vm.ToggleImageSelection(images[2]);
         Assert.False(vm.IsFullScreenSelectionRestricted);
@@ -198,7 +198,7 @@ public sealed class FullScreenSelectionTests : IDisposable
 
         Assert.True(vm.IsFullScreenSelectionRestricted);
         Assert.Same(images[2], vm.SelectedImage);
-        Assert.Equal("SELECTION · 1 / 2", vm.FullScreenSelectionBadgeText);
+        Assert.Equal("Selection · 1 / 2", vm.FullScreenSelectionBadgeText);
 
         vm.Browse.Remove(images[2]);
 
@@ -220,7 +220,7 @@ public sealed class FullScreenSelectionTests : IDisposable
         vm.Browse.SetImages([inserted, images[0], images[1]]);
 
         Assert.True(vm.IsFullScreenSelectionRestricted);
-        Assert.Equal("SELECTION · 1 / 2", vm.FullScreenSelectionBadgeText);
+        Assert.Equal("Selection · 1 / 2", vm.FullScreenSelectionBadgeText);
 
         vm.Browse.SetImages(CreateImages(3, "replacement"));
 

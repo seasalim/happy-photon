@@ -22,7 +22,7 @@ public partial class MainWindowViewModel
             var members = GetFullScreenSelectionMembers();
             var position = members.IndexOf(SelectedImage!);
             return position >= 0
-                ? $"SELECTION · {position + 1} / {members.Count}"
+                ? $"Selection · {position + 1} / {members.Count}"
                 : string.Empty;
         }
     }

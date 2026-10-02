@@ -337,7 +337,7 @@ export:
 
 Filter the Browse to the group you want before selecting it. Then:
 
-- click a thumbnail's check badge, or press `Ctrl+Space`, to toggle the current image;
+- press `Ctrl+Space` to toggle the current image;
 - use `Ctrl+Click` to add or remove individual images;
 - use `Shift+Click` to select a range;
 - hold `Shift` with the arrow keys, `Page Up`/`Page Down`, or `Home`/`End` to extend
@@ -354,7 +354,7 @@ Images that become hidden by a new filter are removed from the selection. Set th
 filters first, then make the final selection.
 
 Press `F` or the Develop fullscreen button to review the current selection when it
-contains two or more photos. The SELECTION badge shows position; navigation stops at
+contains two or more photos. The Selection readout shows position; navigation stops at
 its ends. Dropping below two restores folder navigation until fullscreen is re-entered.
 
 From the Browse grid, `E`, `Enter`, `Space` or the E footer button opens Loupe,

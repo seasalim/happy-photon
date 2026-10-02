@@ -47,6 +47,8 @@ Store or GitHub action. There are no automatic update requests.
 ## Colors
 
 - Control chrome uses achromatic hover, selection, active and focus states.
+- Browse shows selection by tile tone alone (unselected < hover < selected, at least ΔL\* 8
+  apart in both themes) and the active photo by the ring; tiles carry no check badge.
 - Brand cyan is reserved for the icon and welcome heading.
 - Semantic color identifies bursts, color labels, mixer bands, white-balance tracks,
   clipping/scope channels, and errors/destructive actions.
@@ -61,7 +63,7 @@ Middle Gray's photograph surround is the nearest integer sRGB encoding of CIE L\
 18% reflectance card whose appearance would depend on illumination.
 
 Middle Gray remains a dark-family theme with light text on darker chrome. Its neutrals
-are strictly achromatic, including the active-image ring and selection mark, so they
+are strictly achromatic, including the active-image ring and selection tone, so they
 introduce no color cast beside photographs. Semantic colors retain their meanings.
 
 | Token | Contract |

@@ -181,8 +181,8 @@ public sealed class ThemeLiveSwitchTests
             // until both reach their end colors so the assertions below sample
             // settled brushes instead of a guessed instant mid-fade.
             await SettleAsync(() =>
-                ColorOf(thumbnail.Background) == Color.Parse("#616161") &&
-                ColorOf(thumbnail.BorderBrush) == Color.Parse("#bbbbbb"));
+                ColorOf(thumbnail.Background) == Color.Parse("#6a6a6a") &&
+                ColorOf(thumbnail.BorderBrush) == Color.Parse("#c2c2c2"));
 
             Assert.Same(originalWindow, window);
             Assert.Equal(HappyPhotonThemes.MidGray, Application.Current!.RequestedThemeVariant);
@@ -195,7 +195,7 @@ public sealed class ThemeLiveSwitchTests
                 ThemeResourceTests.Brush("TextMuted", HappyPhotonThemes.MidGray).Color,
                 ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00dbe9"), ColorOf(burstStripe.Background));
-            Assert.Equal(Color.Parse("#616161"), ColorOf(thumbnail.Background));
+            Assert.Equal(Color.Parse("#6a6a6a"), ColorOf(thumbnail.Background));
             Assert.Equal(
                 ThemeResourceTests.Brush("ActiveImageRing", HappyPhotonThemes.MidGray).Color,
                 ColorOf(thumbnail.BorderBrush));

@@ -52,7 +52,6 @@ public sealed class ThemeResourceTests
         AssertContrast(4.5, "TextPrimary", "SelectionSurface", variant);
         AssertContrast(3, "ControlActive", "SurfaceHigh", variant);
         AssertContrast(3, "ActiveImageRing", "SelectionSurface", variant);
-        AssertContrast(3, "SelectionCheck", "SelectionSurface", variant);
     }
 
     [AvaloniaFact]

@@ -10,7 +10,7 @@
     <Grid ColumnDefinitions="20,70,20" VerticalAlignment="Center">
         <Path x:Name="CompactPickedFlag" Width="14" Height="14"
               Data="M 2,13 L 2,2 M 2,3 L 11,3 L 9,6 L 11,9 L 2,9"
-              Stroke="{DynamicResource SelectionCheck}" StrokeThickness="1.4"
+              Stroke="{DynamicResource ControlActive}" StrokeThickness="1.4"
               StrokeLineCap="Round" StrokeJoin="Round"
               IsVisible="{Binding SelectedImage.IsPicked, FallbackValue=False}"/>
         <TextBlock x:Name="CompactRejectedFlag" Text="×" HorizontalAlignment="Center"

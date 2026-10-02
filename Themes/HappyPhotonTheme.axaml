@@ -115,7 +115,6 @@
                      Color="{StaticResource NavigatorViewportHaloColor}"/>
 
     <!-- Shape -->
-    <BoxShadows x:Key="BadgeShadow">0 1 4 0 #80000000</BoxShadows>
     <x:Double x:Key="TreeViewItemMinHeight">24</x:Double>
     <x:Double x:Key="MaskRowControlSize">20</x:Double>
     <Thickness x:Key="MaskRowControlPadding">0</Thickness>
@@ -211,7 +210,6 @@
             <SolidColorBrush x:Key="ControlActive" Color="{StaticResource ControlActiveColor}"/>
             <SolidColorBrush x:Key="OnControlActive" Color="{StaticResource OnControlActiveColor}"/>
             <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource ControlActiveColor}" Opacity="0.77"/>
-            <SolidColorBrush x:Key="SelectionCheck" Color="{StaticResource ControlActiveColor}"/>
             <SolidColorBrush x:Key="ViewerControlBarBackground" Color="Transparent"/>
             <BoxShadows x:Key="CoachmarkShadow">0 12 30 0 #99000000</BoxShadows>
             <x:Double x:Key="TourDimmedOpacity">0.48</x:Double>
@@ -259,7 +257,7 @@
             <Color x:Key="RawFileBackgroundColor">#444444</Color>
             <Color x:Key="ViewerSurroundColor">#777777</Color>
             <Color x:Key="FullScreenBackdropColor">#777777</Color>
-            <Color x:Key="SelectionSurfaceColor">#616161</Color>
+            <Color x:Key="SelectionSurfaceColor">#6a6a6a</Color>
             <Color x:Key="ControlHoverColor">#535353</Color>
             <Color x:Key="ControlSelectedColor">#616161</Color>
             <Color x:Key="ControlActiveColor">#e4e4e4</Color>
@@ -268,7 +266,7 @@
                  limits simultaneous-contrast shifts against the L* 50 surround. -->
             <!-- Achromatic at the same relative luminance the muted teal carried,
                  so the ring keeps its former visual weight against the surround. -->
-            <Color x:Key="ActiveImageRingColor">#bbbbbb</Color>
+            <Color x:Key="ActiveImageRingColor">#c2c2c2</Color>
             <Color x:Key="SystemAccentColor">#ffffff</Color>
             <Color x:Key="SystemAccentColorLight1">#ffffff</Color>
             <Color x:Key="SystemAccentColorLight2">#f0f0f0</Color>
@@ -308,7 +306,6 @@
             <SolidColorBrush x:Key="ControlActive" Color="{StaticResource ControlActiveColor}"/>
             <SolidColorBrush x:Key="OnControlActive" Color="{StaticResource OnControlActiveColor}"/>
             <SolidColorBrush x:Key="ActiveImageRing" Color="{StaticResource ActiveImageRingColor}"/>
-            <SolidColorBrush x:Key="SelectionCheck" Color="{StaticResource ControlActiveColor}"/>
             <SolidColorBrush x:Key="ViewerControlBarBackground" Color="{StaticResource SurfaceLowColor}"/>
             <BoxShadows x:Key="CoachmarkShadow">0 12 30 0 #b3000000</BoxShadows>
             <x:Double x:Key="TourDimmedOpacity">0.44</x:Double>

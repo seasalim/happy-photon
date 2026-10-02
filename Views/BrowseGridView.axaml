@@ -253,33 +253,6 @@
                                             </MultiBinding>
                                         </Border.Background>
                                     </Border>
-                                    <Button x:Name="SelectionBadgeButton"
-                                            Width="17" Height="17"
-                                            Padding="0"
-                                            CornerRadius="0"
-                                            BorderThickness="0"
-                                            HorizontalAlignment="Left"
-                                            VerticalAlignment="Top"
-                                            Margin="8,6,0,0"
-                                            Classes="check-badge"
-                                            Classes.selected="{Binding IsSelected}"
-                                            Background="Transparent"
-                                            Focusable="False"
-                                            ToolTip.Tip="Toggle selection (Ctrl+Space)"
-                                            AutomationProperties.Name="Toggle image selection"
-                                            PointerPressed="OnSelectionBadgePointerPressed"
-                                            Click="OnSelectionBadgeClick">
-                                        <Border Width="17" Height="17"
-                                                Background="{DynamicResource SelectionSurface}"
-                                                BoxShadow="{StaticResource BadgeShadow}">
-                                            <Path Data="M 3,7.5 L 6.5,11 L 12,4"
-                                                  Stretch="Uniform" Width="9" Height="7"
-                                                  Stroke="{DynamicResource SelectionCheck}"
-                                                  StrokeThickness="1.8"
-                                                  StrokeLineCap="Round"
-                                                  StrokeJoin="Round"/>
-                                        </Border>
-                                    </Button>
                                 </Panel>
                                 <!-- Alignment-based placement: an Auto column caches a
                                      zero width when the dot's visibility flips on a recycled

@@ -20,7 +20,7 @@ namespace HappyPhoton.Tests;
 public sealed class BrowseSelectionMenuTests
 {
     [AvaloniaFact]
-    public async Task UnflagAndBadgeControls_HandleMixedSelectionWithoutTileReselection()
+    public async Task UnflagAndCtrlClick_HandleMixedSelection()
     {
         using var catalog = new CatalogService(NewRoot());
         await catalog.InitializeAsync();
@@ -50,39 +50,27 @@ public sealed class BrowseSelectionMenuTests
         Assert.Equal(ImageFlag.Unflagged, images[1].Flag);
         Dispatcher.UIThread.RunJobs();
 
-        var badge = window.GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Name == "SelectionBadgeButton" &&
-                              ReferenceEquals(button.DataContext, images[1]));
-        var unselectedBadge = window.GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Name == "SelectionBadgeButton" &&
-                              ReferenceEquals(button.DataContext, images[2]));
-        Assert.Equal(0, unselectedBadge.Opacity);
-        // An invisible badge must not become a tab stop in the Browse grid.
-        Assert.False(unselectedBadge.Focusable);
-        var unselectedTile = window.GetVisualDescendants().OfType<Border>()
-            .Single(border => border.Name == "ThumbnailTile" &&
-                              ReferenceEquals(border.DataContext, images[2]));
-        var hoverPoint = unselectedTile.TranslatePoint(new Point(20, 20), window)!.Value;
-        window.MouseMove(hoverPoint, RawInputModifiers.None);
-        Dispatcher.UIThread.RunJobs();
-        Assert.True(unselectedBadge.Opacity > 0);
-        var point = badge.TranslatePoint(new Point(8, 8), window)!.Value;
-        var badgeTile = window.GetVisualDescendants().OfType<Border>()
+        // Selection is shown by tile tone alone (VISUALS-WP10): no badge, and
+        // Ctrl+click on the tile is the pointer toggle.
+        Assert.DoesNotContain(window.GetVisualDescendants().OfType<Button>(),
+            button => button.Classes.Contains("check-badge"));
+        var clickedTile = window.GetVisualDescendants().OfType<Border>()
             .Single(border => border.Name == "ThumbnailTile" &&
                               ReferenceEquals(border.DataContext, images[1]));
-        window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
-        window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
+        var point = clickedTile.TranslatePoint(new Point(20, 20), window)!.Value;
+        window.MouseDown(point, MouseButton.Left, RawInputModifiers.Control);
+        window.MouseUp(point, MouseButton.Left, RawInputModifiers.Control);
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(images[0].IsSelected);
         Assert.False(images[1].IsSelected);
         Assert.False(images[2].IsSelected);
-        Assert.Same(images[2], vm.SelectedImage);
+        Assert.Same(images[1], vm.SelectedImage);
 
         window.MouseDown(point, MouseButton.Right, RawInputModifiers.None);
         window.MouseUp(point, MouseButton.Right, RawInputModifiers.None);
         Dispatcher.UIThread.RunJobs();
-        Assert.True(badgeTile.ContextMenu!.IsOpen);
+        Assert.True(clickedTile.ContextMenu!.IsOpen);
 
         windowScope.Dispose();
     }

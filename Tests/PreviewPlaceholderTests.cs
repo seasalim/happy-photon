@@ -402,11 +402,11 @@ public sealed class PreviewPlaceholderTests
         vm.ToggleFullScreenCommand.Execute(null);
         Assert.True(fullScreenSelectionBadge.IsVisible);
         Assert.Equal(
-            "SELECTION · 1 / 2",
+            "Selection · 1 / 2",
             Assert.IsType<TextBlock>(fullScreenSelectionBadge.Child).Text);
         vm.SelectNextImageCommand.Execute(null);
         Assert.Equal(
-            "SELECTION · 2 / 2",
+            "Selection · 2 / 2",
             Assert.IsType<TextBlock>(fullScreenSelectionBadge.Child).Text);
         vm.ToggleFullScreenCommand.Execute(null);
         Assert.False(fullScreenSelectionBadge.IsVisible);
