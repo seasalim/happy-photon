@@ -1,6 +1,9 @@
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.VisualTree;
+using CommunityToolkit.Mvvm.Input;
 using HappyPhoton.ViewModels;
 
 namespace HappyPhoton.Views;
@@ -10,15 +13,75 @@ public partial class DevelopViewerPane : UserControl
     private MainWindowViewModel? _viewModel;
     private SynchronizedPaneGroup? _paneGroup;
 
+    private double _fullBarWidth;
+
+    private double _noSliderBarWidth;
+
     public DevelopViewerPane()
     {
         InitializeComponent();
-        DevelopControlBar.SizeChanged += (_, _) => UpdateAssessmentMode();
+        DevelopControlBar.SizeChanged += (_, _) => UpdateControlBarTier();
         DevelopAssessmentSlot.SizeChanged += (_, _) => UpdateAssessmentMode();
         DevelopImageAssessment.AddHandler(Button.ClickEvent, (_, _) => Focus());
+        DevelopViewActionsButton.Flyout!.Opened += (_, _) => ConfigureViewMenuKeys();
+        DevelopViewActionsButton.Flyout.Closed += (_, _) =>
+        {
+            if (IsEffectivelyVisible) Focus();
+            else (TopLevel.GetTopLevel(this) as MainWindow)?
+                .FindControl<ZoomPanControl>("FullScreenZoomPanControl")?.Focus();
+        };
     }
 
     public ZoomPanControl Viewer => ZoomPanControl;
+
+    private void ConfigureViewMenuKeys()
+    {
+        var menu = (MenuFlyout)DevelopViewActionsButton.Flyout!;
+        var presenter = menu.Items.Cast<MenuItem>().First().GetVisualAncestors()
+            .OfType<MenuFlyoutPresenter>().Single();
+        if (presenter.KeyBindings.Count != 0) return;
+
+        // Local bindings run before the window's bindings; route through native menu handling.
+        foreach (var key in new[] { Key.Enter, Key.Escape })
+        {
+            presenter.KeyBindings.Add(new KeyBinding
+            {
+                Gesture = new KeyGesture(key),
+                Command = new RelayCommand(() =>
+                {
+                    var target = TopLevel.GetTopLevel(presenter)?.FocusManager?.GetFocusedElement()
+                        as InputElement ?? presenter;
+                    target.RaiseEvent(new KeyEventArgs { RoutedEvent = KeyDownEvent, Key = key });
+                })
+            });
+        }
+    }
+
+    private void UpdateControlBarTier()
+    {
+        if (_fullBarWidth == 0)
+        {
+            // Read once with every original control visible, even on a narrow first layout.
+            DevelopImageActionsPanel.Measure(Size.Infinity);
+            DevelopViewStatePanel.Measure(Size.Infinity);
+            _fullBarWidth = DevelopImageActionsPanel.DesiredSize.Width +
+                DevelopViewStatePanel.DesiredSize.Width + DevelopControlBar.Padding.Left +
+                DevelopControlBar.Padding.Right;
+            _noSliderBarWidth = _fullBarWidth - DevelopZoomSlider.DesiredSize.Width -
+                DevelopViewStatePanel.Spacing;
+        }
+
+        var width = DevelopControlBar.Bounds.Width;
+        var overflow = width < _noSliderBarWidth;
+
+        foreach (var control in DevelopViewStatePanel.Children)
+        {
+            control.IsVisible = control == DevelopViewActionsButton ? overflow
+                : control == DevelopZoomSlider ? width >= _fullBarWidth : !overflow;
+        }
+
+        // The slot's SizeChanged applies WP4's rule after these groups have laid out.
+    }
 
     private void UpdateAssessmentMode()
     {

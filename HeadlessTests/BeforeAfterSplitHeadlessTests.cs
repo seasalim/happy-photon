@@ -364,44 +364,6 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
 
     public void Dispose() => _fx.Dispose();
 
-    [AvaloniaFact]
-    public async Task SplitToggleSitsBesideFullScreenInTheViewerBar()
-    {
-        using var catalog = await _fx.CreateCatalogAsync();
-        await using var vm = _fx.CreateViewModel(
-            catalog,
-            new GrayLoader(),
-            _ => Task.CompletedTask,
-            new TestSourceAvailabilityService(SourceAvailability.AvailableLocally));
-        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        vm.IsDevelopMode = true;
-        var image = new ImageFile(_fx.Path("narrow.jpg"));
-        vm.Browse.SetImages([image]);
-        vm.SelectedImage = image;
-        await TestWaits.UntilAsync(() => vm.PreviewImage != null);
-
-        var window = new MainWindow { Width = 800, Height = 600 };
-        using var windowScope = TestUiScope.ForMainWindow(window, vm);
-        Drain();
-        try
-        {
-            var split = Descendant<ToggleButton>(window, "BeforeAfterSplitButton");
-            var bar = Descendant<Border>(window, "DevelopControlBar");
-            Assert.Contains(
-                bar.GetVisualDescendants(),
-                control => ReferenceEquals(control, split));
-            Assert.True(split.IsEffectivelyVisible);
-            var full = Descendant<Button>(window, "FullScreenButton");
-            var row = Assert.IsType<StackPanel>(split.Parent);
-            Assert.Same(row, full.Parent);
-            Assert.Equal(row.Children.IndexOf(full) + 1, row.Children.IndexOf(split));
-        }
-        finally
-        {
-            windowScope.Dispose();
-        }
-    }
-
     private static T Descendant<T>(
         Control root,
         string? name = null,

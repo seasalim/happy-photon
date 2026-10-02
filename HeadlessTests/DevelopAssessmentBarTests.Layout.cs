@@ -99,11 +99,11 @@ public sealed partial class DevelopAssessmentBarTests
                 AssertMode(pane, width == 1300, width == 800);
             }
 
-            // The minimum window already overflows its fixed button groups; the new slot stays empty.
+            // The overflow button leaves enough space for the compact assessment cluster.
             pane.ClearValue(Control.WidthProperty);
             window.Width = 800;
             Settle(window);
-            AssertMode(pane, false, false);
+            AssertMode(pane, false, true);
 
             await Task.CompletedTask;
         });

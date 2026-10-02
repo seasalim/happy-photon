@@ -20,6 +20,7 @@ internal static class WorkspaceKeyRouting
         }
 
         if (focusedElement is not null &&
+            !(viewModel.IsFullScreenMode && focusedElement is ZoomPanControl) &&
             (focusedElement is not Avalonia.Visual focused ||
              !IsWorkspaceSurfaceFocus(focused)))
         {

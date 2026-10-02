@@ -74,7 +74,7 @@
             </Border>
             </Panel>
         </Grid>
-        <Border x:Name="DevelopControlBar" Grid.Row="1" Padding="10,4"
+        <Border x:Name="DevelopControlBar" Grid.Row="1" Padding="10,4" ClipToBounds="True"
                 Background="{DynamicResource SurfaceLow}"
                 BorderBrush="{DynamicResource Divider}"
                 BorderThickness="0,1,0,0"
@@ -127,11 +127,11 @@
             <StackPanel x:Name="DevelopViewStatePanel"
                         Grid.Column="2"
                         Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <views:CompactSlider Label="Zoom" IsValueEntryEnabled="False"
+                <views:CompactSlider x:Name="DevelopZoomSlider" Label="Zoom" IsValueEntryEnabled="False"
                                      Value="{Binding ManualZoomLevel, Mode=TwoWay}"
                                      Minimum="0.1" Maximum="5" SmallChange="0.1"
                                      StringFormat="{}{0:P0}" Width="180"/>
-                <Button Command="{Binding ZoomFitCommand}" Content="Fit"
+                <Button x:Name="ZoomFitButton" Command="{Binding ZoomFitCommand}" Content="Fit"
                         ToolTip.Tip="Fit to View" FontSize="10"
                         Padding="8,3" BorderThickness="0"/>
                 <ToggleButton x:Name="ActualSizeButton"
@@ -170,6 +170,33 @@
                               AutomationProperties.Name="Switch JPEG and RAW"
                               Content="J|R" FontFamily="{StaticResource FontBody}"
                               FontSize="10" Padding="8,3" BorderThickness="0"/>
+                <Button x:Name="DevelopViewActionsButton" Content="⋯" Width="24" Padding="4,4"
+                        FontSize="{DynamicResource FontSizeSmall}" IsVisible="False"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        ToolTip.Tip="More Develop view actions"
+                        AutomationProperties.Name="More Develop view actions">
+                    <Button.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedRight">
+                            <MenuItem Header="Fit" Command="{Binding ZoomFitCommand}"/>
+                            <MenuItem Header="1:1" InputGesture="Space" ToggleType="CheckBox"
+                                      IsChecked="{Binding !IsZoomFitMode, Mode=OneWay}"
+                                      Command="{Binding ToggleActualSizeCommand}"/>
+                            <MenuItem Header="Assess" InputGesture="L" ToggleType="CheckBox"
+                                      IsChecked="{Binding IsColorAssessmentMode, Mode=OneWay}"
+                                      Command="{Binding ToggleColorAssessmentModeCommand}"/>
+                            <MenuItem Header="Fullscreen" InputGesture="F"
+                                      IsEnabled="{Binding !IsCropMode}"
+                                      Command="{Binding ToggleFullScreenCommand}"/>
+                            <MenuItem Header="Before | After" InputGesture="Y" ToggleType="CheckBox"
+                                      IsChecked="{Binding IsBeforeAfterSplit, Mode=OneWay}"
+                                      Command="{Binding ToggleBeforeAfterSplitCommand}"/>
+                            <MenuItem Header="Switch JPEG / RAW" InputGesture="Shift+R" ToggleType="CheckBox"
+                                      IsChecked="{Binding IsViewingPairedRaw, Mode=OneWay}"
+                                      IsEnabled="{Binding CanSwitchCaptureMember}"
+                                      Command="{Binding SwitchCaptureMemberCommand}"/>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
             </StackPanel>
             </Grid>
         </Border>

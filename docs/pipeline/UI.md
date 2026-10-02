@@ -268,6 +268,7 @@ CHARACTERIZATION.md §7.6.
   and stays geometry-identical across source swaps. Fit and zoom-in publish the current view's
   required device-pixel long edge for resting rendering; pan and zoom-out do not
   rerender. A monitor-scaling change recomputes the same geometry and bound.
+- Develop's bar uses fixed width tiers (full, no Zoom slider, then a view-actions menu) before sizing its assessment slot; wheel zoom remains available when the slider is hidden.
 ## 5. Scope box + preview activity
 
 - The fixed scope box selects display histogram, luminance waveform or RAW sensor
