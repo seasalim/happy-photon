@@ -111,6 +111,7 @@
         <Setter Property="MinHeight" Value="24"/>
         <Setter Property="Height" Value="24"/>
         <Setter Property="Padding" Value="4,0"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Background" Value="Transparent"/>
@@ -134,6 +135,16 @@
     <Style Selector="Button.compact-button:disabled /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.compact-button:disabled /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource TextDisabled}"/>
+    </Style>
+    <!-- Filled text buttons match the icon-button surface when they share a toolbar. -->
+    <Style Selector="Button.compact-button.filled, ToggleButton.compact-button.filled">
+        <Setter Property="Padding" Value="6,0"/>
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.compact-button.filled:disabled /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.compact-button.filled:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
     </Style>
     <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource ControlActive}"/>

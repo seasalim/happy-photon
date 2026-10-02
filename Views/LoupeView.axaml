@@ -45,7 +45,7 @@
                     </Viewbox>
                 </Button>
                 <Rectangle Width="1" Height="16" Fill="{DynamicResource Divider}" Margin="4,0"/>
-                <ToggleButton Classes="compact-button" x:Name="LoupeActualSizeButton"
+                <ToggleButton Classes="compact-button filled" x:Name="LoupeActualSizeButton"
                               IsChecked="{Binding !IsZoomFitMode, Mode=OneWay}" Command="{Binding ToggleActualSizeCommand}"
                               Content="1:1" ToolTip.Tip="Fit / 1:1 (Space or Z)"/>
                 <Button Classes="icon-button" x:Name="LoupeFullScreenButton" Command="{Binding ToggleFullScreenCommand}"
@@ -56,7 +56,7 @@
                         </Canvas>
                     </Viewbox>
                 </Button>
-                <Button Classes="compact-button" x:Name="LoupeGridButton"
+                <Button Classes="compact-button filled" x:Name="LoupeGridButton"
                         Command="{Binding ExitLoupeCommand}" Content="Grid"
                         ToolTip.Tip="Return to grid (G)"/>
             </StackPanel>

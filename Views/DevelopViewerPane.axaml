@@ -139,14 +139,14 @@
                 <views:CompactSlider x:Name="DevelopZoomSlider" Label="Zoom" IsValueEntryEnabled="False"
                                      Value="{Binding ManualZoomLevel, Mode=TwoWay}"
                                      Minimum="0.1" Maximum="5" SmallChange="0.1"
-                                     StringFormat="{}{0:P0}" Width="180"/>
-                <Button Classes="compact-button" x:Name="ZoomFitButton" Command="{Binding ZoomFitCommand}" Content="Fit"
+                                     StringFormat="{}{0:P0}" Width="180" VerticalAlignment="Center"/>
+                <Button Classes="compact-button filled" x:Name="ZoomFitButton" Command="{Binding ZoomFitCommand}" Content="Fit"
                         ToolTip.Tip="Fit to View"/>
-                <ToggleButton Classes="compact-button" x:Name="ActualSizeButton"
+                <ToggleButton Classes="compact-button filled" x:Name="ActualSizeButton"
                               IsChecked="{Binding !IsZoomFitMode, Mode=OneWay}"
                               Command="{Binding ToggleActualSizeCommand}"
                               Content="1:1" ToolTip.Tip="Fit / 1:1 (Space or Z)"/>
-                <ToggleButton Classes="compact-button" x:Name="ColorAssessmentButton"
+                <ToggleButton Classes="compact-button filled" x:Name="ColorAssessmentButton"
                               IsChecked="{Binding IsColorAssessmentMode, Mode=OneWay}"
                               Command="{Binding ToggleColorAssessmentModeCommand}"
                               Content="Assess" ToolTip.Tip="Color assessment mode (L)"/>
@@ -159,14 +159,14 @@
                               StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
                     </Canvas></Viewbox>
                 </Button>
-                <ToggleButton Classes="compact-button" x:Name="BeforeAfterSplitButton"
+                <ToggleButton Classes="compact-button filled" x:Name="BeforeAfterSplitButton"
                               IsChecked="{Binding IsBeforeAfterSplit, Mode=OneWay}"
                               Command="{Binding ToggleBeforeAfterSplitCommand}"
                               ToolTip.Tip="Before | After (Y)"
                               AutomationProperties.Name="Show Before and After side by side">
                     <TextBlock Text="Y|Y" FontFamily="{StaticResource FontBody}" FontSize="{StaticResource FontSizeSmall}"/>
                 </ToggleButton>
-                <ToggleButton Classes="compact-button" x:Name="RawJpegSwitchButton"
+                <ToggleButton Classes="compact-button filled" x:Name="RawJpegSwitchButton"
                               IsChecked="{Binding IsViewingPairedRaw, Mode=OneWay}"
                               Command="{Binding SwitchCaptureMemberCommand}"
                               IsEnabled="{Binding CanSwitchCaptureMember}"

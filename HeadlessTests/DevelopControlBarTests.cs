@@ -24,13 +24,13 @@ public sealed partial class DevelopControlBarTests
             Resize(window, pane, 1200);
             var (full, noSlider) = Thresholds(pane);
             // WP7: five 24px icons, a 180px slider, the 9px separator, ten
-            // 8px gaps, 20px bar padding, and compact text labels with 4px padding.
+            // 8px gaps, 20px bar padding, and filled text labels with 6px padding.
             var face = new Avalonia.Media.Typeface(
                 ThemeResourceTests.Resource<Avalonia.Media.FontFamily>("FontBody", Avalonia.Styling.ThemeVariant.Dark),
                 weight: Avalonia.Media.FontWeight.SemiBold);
             var labels = new[] { "Fit", "1:1", "Assess", "Y|Y", "J|R" };
             var labelWidth = labels.Sum(text => Math.Ceiling(new Avalonia.Media.TextFormatting.TextLayout(
-                text, face, 10, Avalonia.Media.Brushes.White).WidthIncludingTrailingWhitespace) + 8);
+                text, face, 10, Avalonia.Media.Brushes.White).WidthIncludingTrailingWhitespace) + 12);
             var expected = 5 * 24 + 180 + 9 + 10 * 8 + 20 + labelWidth;
             Assert.Equal(expected, full);
             Assert.Equal(expected - 180 - 8, noSlider);
