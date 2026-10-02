@@ -1,7 +1,8 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!-- Disclosure triangle: down when expanded, a 90° turn to point left when collapsed. -->
-    <Style Selector="Expander.compact-chevron /template/ ToggleButton#ExpanderHeader /template/ Path#ExpandCollapseChevron">
+    <Style Selector="Expander.compact-chevron /template/ ToggleButton#ExpanderHeader /template/ Path#ExpandCollapseChevron,
+                     ToggleButton.compact-chevron Path">
         <Setter Property="Data" Value="M3,4.25 L9,4.25 L6,7.75 Z"/>
         <Setter Property="Width" Value="12"/>
         <Setter Property="Height" Value="12"/>
@@ -15,12 +16,26 @@
             <RotateTransform Angle="90"/>
         </Setter>
     </Style>
-    <Style Selector="Expander.compact-chevron:expanded /template/ ToggleButton#ExpanderHeader /template/ Path#ExpandCollapseChevron">
+    <Style Selector="Expander.compact-chevron:expanded /template/ ToggleButton#ExpanderHeader /template/ Path#ExpandCollapseChevron,
+                     ToggleButton.compact-chevron:checked Path">
         <Setter Property="RenderTransform">
             <RotateTransform Angle="0"/>
         </Setter>
     </Style>
-    <Style Selector="Expander.compact-chevron /template/ ToggleButton#ExpanderHeader:pointerover /template/ Path#ExpandCollapseChevron, Expander.compact-chevron /template/ ToggleButton#ExpanderHeader:focus-visible /template/ Path#ExpandCollapseChevron">
+    <Style Selector="Expander.compact-chevron /template/ ToggleButton#ExpanderHeader:pointerover /template/ Path#ExpandCollapseChevron, Expander.compact-chevron /template/ ToggleButton#ExpanderHeader:focus-visible /template/ Path#ExpandCollapseChevron,
+                     ToggleButton.compact-chevron:pointerover Path, ToggleButton.compact-chevron:focus-visible Path">
         <Setter Property="Opacity" Value="1"/>
+    </Style>
+    <Style Selector="ToggleButton.compact-chevron">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    </Style>
+    <Style Selector="ToggleButton.compact-chevron /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.compact-chevron:checked /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.compact-chevron:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.compact-chevron:checked:pressed /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.compact-chevron:checked:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
     </Style>
 </Styles>

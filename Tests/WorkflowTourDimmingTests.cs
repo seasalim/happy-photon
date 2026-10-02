@@ -446,6 +446,14 @@ public sealed class WorkflowTourDimmingTests
             baselineOpacity,
             ReferenceEqualityComparer.Instance);
         expectedNonUnit.UnionWith(expectedDimmed);
+        // Preset initialization rebuilds Save Current; its shared disabled style now
+        // dims the Button itself, so compare the current instance and its role.
+        var savePreset = window.GetLogicalDescendants().OfType<Button>()
+            .Single(button => Equals(button.Content, "＋ Save Current…"));
+        Assert.False(savePreset.IsEnabled);
+        Assert.Equal(ThemeResourceTests.Resource<double>("DisabledOpacity", window.ActualThemeVariant), savePreset.Opacity);
+        expectedNonUnit.RemoveWhere(control => control is Button { Content: "＋ Save Current…" });
+        expectedNonUnit.Add(savePreset);
         var actualNonUnit = new HashSet<Control>(
             DimmedControls(window),
             ReferenceEqualityComparer.Instance);

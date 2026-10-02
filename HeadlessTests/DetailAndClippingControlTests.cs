@@ -68,9 +68,9 @@ public sealed class DetailAndClippingControlTests : IDisposable
         var window = new Window { Width = 250, Height = 100, Content = histogram };
         using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
-        var high = histogram.FindControl<Border>(
+        var high = histogram.FindControl<Control>(
             "SceneHighlightTriangleTarget")!;
-        var floor = histogram.FindControl<Border>(
+        var floor = histogram.FindControl<Control>(
             "DisplayFloorTriangleTarget")!;
 
         Assert.True(high.IsHitTestVisible);

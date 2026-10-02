@@ -34,7 +34,7 @@
             <TextBlock Text="Loading preview…"
                        IsVisible="{Binding IsDevelopLoadingMessageVisible}"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                       Foreground="{DynamicResource TextMuted}" FontSize="11"/>
+                       Foreground="{DynamicResource TextMuted}" FontSize="{StaticResource FontSizeBody}"/>
             <views:ZoomPanControl x:Name="ZoomPanControl"
                                   OneToOneStatus="{Binding OneToOneStatus}"
                                   Source="{Binding PreviewImage}"
@@ -69,7 +69,7 @@
                     Background="{DynamicResource SurfaceLow}" Padding="20"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="Select an image to edit"
-                           Foreground="{DynamicResource TextMuted}" FontSize="16"/>
+                           Foreground="{DynamicResource TextMuted}" FontSize="{StaticResource FontSizeHeading}"/>
             </Border>
             </Panel>
         </Grid>
@@ -82,37 +82,47 @@
             <Grid ColumnDefinitions="Auto,*,Auto">
             <StackPanel x:Name="DevelopImageActionsPanel"
                         Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Button x:Name="PreviousImageButton"
+                <Button Classes="icon-button" x:Name="PreviousImageButton"
                         Command="{Binding SelectPreviousImageCommand}"
                         ToolTip.Tip="Previous image (←)"
-                        AutomationProperties.Name="Previous image"
-                        Padding="7,3" BorderThickness="0">
+                        AutomationProperties.Name="Previous image">
                     <Viewbox Width="14" Height="14"><Canvas Width="16" Height="16">
                         <Path Data="M 10,3.5 L 5.5,8 L 10,12.5" Fill="Transparent"
-                              Stroke="{DynamicResource ControlActive}" StrokeThickness="1.5"
+                              StrokeThickness="1.5"
                               StrokeLineCap="Round" StrokeJoin="Round"/>
                     </Canvas></Viewbox>
                 </Button>
-                <Button x:Name="NextImageButton"
+                <Button Classes="icon-button" x:Name="NextImageButton"
                         Command="{Binding SelectNextImageCommand}"
                         ToolTip.Tip="Next image (→)"
-                        AutomationProperties.Name="Next image"
-                        Padding="7,3" BorderThickness="0">
+                        AutomationProperties.Name="Next image">
                     <Viewbox Width="14" Height="14"><Canvas Width="16" Height="16">
                         <Path Data="M 6,3.5 L 10.5,8 L 6,12.5" Fill="Transparent"
-                              Stroke="{DynamicResource ControlActive}" StrokeThickness="1.5"
+                              StrokeThickness="1.5"
                               StrokeLineCap="Round" StrokeJoin="Round"/>
                     </Canvas></Viewbox>
                 </Button>
                 <Rectangle Width="1" Height="16" Fill="{DynamicResource Divider}" Margin="4,0"/>
-                <Button x:Name="RotateLeftButton" Command="{Binding RotateLeftCommand}"
-                        IsEnabled="{Binding CanEditSelectedImage}" Content="↶"
+                <Button Classes="icon-button" x:Name="RotateLeftButton" Command="{Binding RotateLeftCommand}"
+                        IsEnabled="{Binding CanEditSelectedImage}"
                         ToolTip.Tip="Rotate Left (90° counter-clockwise)"
-                        FontSize="14" Padding="8,3" BorderThickness="0"/>
-                <Button Command="{Binding RotateRightCommand}"
-                        IsEnabled="{Binding CanEditSelectedImage}" Content="↷"
+                        AutomationProperties.Name="↶">
+                    <Viewbox Width="14" Height="14">
+                        <Canvas Width="16" Height="16">
+                            <Path Data="M3,7 A5,5 0 1 1 4,12 M3,3 L3,7 L7,7" Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+                <Button Classes="icon-button" Command="{Binding RotateRightCommand}"
+                        IsEnabled="{Binding CanEditSelectedImage}"
                         ToolTip.Tip="Rotate Right (90° clockwise)"
-                        FontSize="14" Padding="8,3" BorderThickness="0"/>
+                        AutomationProperties.Name="↷">
+                    <Viewbox Width="14" Height="14">
+                        <Canvas Width="16" Height="16">
+                            <Path Data="M13,7 A5,5 0 1 0 12,12 M13,3 L13,7 L9,7" Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                        </Canvas>
+                    </Viewbox>
+                </Button>
             </StackPanel>
             <Grid x:Name="DevelopAssessmentSlot" Grid.Column="1" ClipToBounds="True">
                 <!-- Reserve the widest (Rejected) state, including its button border. -->
@@ -130,50 +140,49 @@
                                      Value="{Binding ManualZoomLevel, Mode=TwoWay}"
                                      Minimum="0.1" Maximum="5" SmallChange="0.1"
                                      StringFormat="{}{0:P0}" Width="180"/>
-                <Button x:Name="ZoomFitButton" Command="{Binding ZoomFitCommand}" Content="Fit"
-                        ToolTip.Tip="Fit to View" FontSize="10"
-                        Padding="8,3" BorderThickness="0"/>
-                <ToggleButton x:Name="ActualSizeButton"
+                <Button Classes="compact-button" x:Name="ZoomFitButton" Command="{Binding ZoomFitCommand}" Content="Fit"
+                        ToolTip.Tip="Fit to View"/>
+                <ToggleButton Classes="compact-button" x:Name="ActualSizeButton"
                               IsChecked="{Binding !IsZoomFitMode, Mode=OneWay}"
                               Command="{Binding ToggleActualSizeCommand}"
-                              Content="1:1" ToolTip.Tip="Fit / 1:1 (Space or Z)"
-                              FontSize="10" Padding="8,3" BorderThickness="0"/>
-                <ToggleButton x:Name="ColorAssessmentButton"
+                              Content="1:1" ToolTip.Tip="Fit / 1:1 (Space or Z)"/>
+                <ToggleButton Classes="compact-button" x:Name="ColorAssessmentButton"
                               IsChecked="{Binding IsColorAssessmentMode, Mode=OneWay}"
                               Command="{Binding ToggleColorAssessmentModeCommand}"
-                              Content="Assess" ToolTip.Tip="Color assessment mode (L)"
-                              FontSize="10" Padding="8,3" BorderThickness="0"/>
-                <Button x:Name="FullScreenButton" Command="{Binding ToggleFullScreenCommand}"
+                              Content="Assess" ToolTip.Tip="Color assessment mode (L)"/>
+                <Button Classes="icon-button" x:Name="FullScreenButton" Command="{Binding ToggleFullScreenCommand}"
                         IsEnabled="{Binding !IsCropMode}" ToolTip.Tip="Fullscreen (F)"
-                        AutomationProperties.Name="Enter fullscreen"
-                        Padding="7,3" BorderThickness="0">
+                        AutomationProperties.Name="Enter fullscreen">
                     <Viewbox Width="14" Height="14"><Canvas Width="16" Height="16">
                         <Path Data="M 2,6 L 2,2 L 6,2 M 10,2 L 14,2 L 14,6 M 14,10 L 14,14 L 10,14 M 6,14 L 2,14 L 2,10"
-                              Fill="Transparent" Stroke="{DynamicResource ControlActive}"
+                              Fill="Transparent"
                               StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
                     </Canvas></Viewbox>
                 </Button>
-                <ToggleButton x:Name="BeforeAfterSplitButton"
+                <ToggleButton Classes="compact-button" x:Name="BeforeAfterSplitButton"
                               IsChecked="{Binding IsBeforeAfterSplit, Mode=OneWay}"
                               Command="{Binding ToggleBeforeAfterSplitCommand}"
                               ToolTip.Tip="Before | After (Y)"
-                              AutomationProperties.Name="Show Before and After side by side"
-                              FontSize="10" Padding="8,3" BorderThickness="0">
-                    <TextBlock Text="Y|Y" FontFamily="{StaticResource FontBody}" FontSize="10"/>
+                              AutomationProperties.Name="Show Before and After side by side">
+                    <TextBlock Text="Y|Y" FontFamily="{StaticResource FontBody}" FontSize="{StaticResource FontSizeSmall}"/>
                 </ToggleButton>
-                <ToggleButton x:Name="RawJpegSwitchButton"
+                <ToggleButton Classes="compact-button" x:Name="RawJpegSwitchButton"
                               IsChecked="{Binding IsViewingPairedRaw, Mode=OneWay}"
                               Command="{Binding SwitchCaptureMemberCommand}"
                               IsEnabled="{Binding CanSwitchCaptureMember}"
                               ToolTip.Tip="Switch JPEG / RAW (Shift+R)"
                               AutomationProperties.Name="Switch JPEG and RAW"
-                              Content="J|R" FontFamily="{StaticResource FontBody}"
-                              FontSize="10" Padding="8,3" BorderThickness="0"/>
-                <Button x:Name="DevelopViewActionsButton" Content="⋯" Width="24" Padding="4,4"
-                        FontSize="{DynamicResource FontSizeSmall}" IsVisible="False"
+                              Content="J|R" FontFamily="{StaticResource FontBody}"/>
+                <Button Classes="icon-button" x:Name="DevelopViewActionsButton"
+                        IsVisible="False"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         ToolTip.Tip="More Develop view actions"
                         AutomationProperties.Name="More Develop view actions">
+                    <Button.Content>
+                        <Viewbox Width="14" Height="14"><Canvas Width="16" Height="16">
+                            <Path Data="M2,8 L3,8 M7.5,8 L8.5,8 M13,8 L14,8" StrokeThickness="2" StrokeLineCap="Round"/>
+                        </Canvas></Viewbox>
+                    </Button.Content>
                     <Button.Flyout>
                         <MenuFlyout Placement="BottomEdgeAlignedRight">
                             <MenuItem Header="Fit" Command="{Binding ZoomFitCommand}"/>

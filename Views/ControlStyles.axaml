@@ -107,7 +107,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
         <Setter Property="CornerRadius" Value="0"/>
     </Style>
-    <Style Selector="Button.compact-button">
+    <Style Selector="Button.compact-button, ToggleButton.compact-button">
         <Setter Property="MinHeight" Value="24"/>
         <Setter Property="Height" Value="24"/>
         <Setter Property="Padding" Value="4,0"/>
@@ -122,15 +122,16 @@
         <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
-    <Style Selector="Button.compact-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.compact-button:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.compact-button:not(:checked):not(.compact-chevron):pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
-    <Style Selector="Button.compact-button:disabled">
+    <Style Selector="Button.compact-button:disabled, ToggleButton.compact-button:disabled">
         <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextDisabled}"/>
     </Style>
-    <Style Selector="Button.compact-button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.compact-button:disabled /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.compact-button:disabled /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource TextDisabled}"/>
     </Style>
@@ -164,7 +165,7 @@
         <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter,
-                     ToggleButton.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                     ToggleButton.icon-button:not(:checked):pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
@@ -183,11 +184,13 @@
                      ToggleButton.icon-button:pointerover Path">
         <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
     </Style>
-    <Style Selector="ToggleButton.icon-button:checked">
+    <Style Selector="ToggleButton.icon-button:checked,
+                     ToggleButton.compact-button:not(.compact-chevron):checked">
         <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
         <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
     </Style>
-    <Style Selector="ToggleButton.icon-button:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="ToggleButton.icon-button:checked /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.compact-button:not(.compact-chevron):checked /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
         <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
     </Style>
@@ -268,5 +271,16 @@
     </Style>
     <Style Selector="views|BrowseGridView:focus-visible Border.thumbnail.active Border.tile-focus">
         <Setter Property="IsVisible" Value="True"/>
+    </Style>
+    <Style Selector="TextBlock.hint-text">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.edit-control-label">
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 </Styles>

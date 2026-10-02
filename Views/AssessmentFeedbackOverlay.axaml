@@ -30,11 +30,11 @@
                  text across bright frames without adding a boxed banner. -->
             <TextBlock Text="{Binding AssessmentFeedback}"
                        FontFamily="{StaticResource FontBody}"
-                       FontSize="18"
+                       FontSize="{StaticResource FontSizeHeading}"
                        FontWeight="Medium"
                        Foreground="{DynamicResource TextPrimary}">
                 <TextBlock.Effect>
-                    <DropShadowEffect Color="Black"
+                    <DropShadowEffect Color="{DynamicResource ViewerStatusShadowColor}"
                                       BlurRadius="10"
                                       OffsetX="0"
                                       OffsetY="1"

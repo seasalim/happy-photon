@@ -36,7 +36,7 @@
                      Columns="8"
                      Margin="0,0,0,8">
             <Button x:Name="RedMixerButton"
-                          Classes="mixer-band"
+                          Classes="icon-button mixer-band"
                           Classes.active="{Binding IsRedMixerActive}"
                           Command="{Binding SelectMixerBandCommand}"
                           CommandParameter="{x:Static models:ColorMixerBand.Red}"
@@ -47,7 +47,7 @@
                              Fill="{DynamicResource TextPrimary}" IsVisible="{Binding IsRedMixerTouched}"/>
                 </Border>
             </Button>
-            <Button x:Name="OrangeMixerButton" Classes="mixer-band"
+            <Button x:Name="OrangeMixerButton" Classes="icon-button mixer-band"
                           Classes.active="{Binding IsOrangeMixerActive}"
                           Command="{Binding SelectMixerBandCommand}"
                           CommandParameter="{x:Static models:ColorMixerBand.Orange}"
@@ -58,7 +58,7 @@
                              Fill="{DynamicResource TextPrimary}" IsVisible="{Binding IsOrangeMixerTouched}"/>
                 </Border>
             </Button>
-            <Button x:Name="YellowMixerButton" Classes="mixer-band"
+            <Button x:Name="YellowMixerButton" Classes="icon-button mixer-band"
                           Classes.active="{Binding IsYellowMixerActive}"
                           Command="{Binding SelectMixerBandCommand}"
                           CommandParameter="{x:Static models:ColorMixerBand.Yellow}"
@@ -68,7 +68,7 @@
                              Fill="{DynamicResource TextPrimary}" IsVisible="{Binding IsYellowMixerTouched}"/>
                 </Border>
             </Button>
-            <Button x:Name="GreenMixerButton" Classes="mixer-band"
+            <Button x:Name="GreenMixerButton" Classes="icon-button mixer-band"
                           Classes.active="{Binding IsGreenMixerActive}"
                           Command="{Binding SelectMixerBandCommand}"
                           CommandParameter="{x:Static models:ColorMixerBand.Green}"
@@ -78,7 +78,7 @@
                              Fill="{DynamicResource TextPrimary}" IsVisible="{Binding IsGreenMixerTouched}"/>
                 </Border>
             </Button>
-            <Button x:Name="AquaMixerButton" Classes="mixer-band"
+            <Button x:Name="AquaMixerButton" Classes="icon-button mixer-band"
                           Classes.active="{Binding IsAquaMixerActive}"
                           Command="{Binding SelectMixerBandCommand}"
                           CommandParameter="{x:Static models:ColorMixerBand.Aqua}"
@@ -88,7 +88,7 @@
                              Fill="{DynamicResource TextPrimary}" IsVisible="{Binding IsAquaMixerTouched}"/>
                 </Border>
             </Button>
-            <Button x:Name="BlueMixerButton" Classes="mixer-band"
+            <Button x:Name="BlueMixerButton" Classes="icon-button mixer-band"
                           Classes.active="{Binding IsBlueMixerActive}"
                           Command="{Binding SelectMixerBandCommand}"
                           CommandParameter="{x:Static models:ColorMixerBand.Blue}"
@@ -98,7 +98,7 @@
                              Fill="{DynamicResource TextPrimary}" IsVisible="{Binding IsBlueMixerTouched}"/>
                 </Border>
             </Button>
-            <Button x:Name="PurpleMixerButton" Classes="mixer-band"
+            <Button x:Name="PurpleMixerButton" Classes="icon-button mixer-band"
                           Classes.active="{Binding IsPurpleMixerActive}"
                           Command="{Binding SelectMixerBandCommand}"
                           CommandParameter="{x:Static models:ColorMixerBand.Purple}"
@@ -108,7 +108,7 @@
                              Fill="{DynamicResource TextPrimary}" IsVisible="{Binding IsPurpleMixerTouched}"/>
                 </Border>
             </Button>
-            <Button x:Name="MagentaMixerButton" Classes="mixer-band"
+            <Button x:Name="MagentaMixerButton" Classes="icon-button mixer-band"
                           Classes.active="{Binding IsMagentaMixerActive}"
                           Command="{Binding SelectMixerBandCommand}"
                           CommandParameter="{x:Static models:ColorMixerBand.Magenta}"

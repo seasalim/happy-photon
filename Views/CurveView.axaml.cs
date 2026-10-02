@@ -28,7 +28,11 @@ public partial class CurveView : UserControl
     private double _dragX, _dragY; // Normalized position during drag (0-1)
     private double _dragStartCanvasX, _dragStartCanvasY; // Initial canvas position at drag start
     private readonly List<Ellipse> _pointEllipses = new();
-    private const double PointRadius = 6;      // Increase for easier targeting
+
+    private const double PointRadius = 3;
+
+    private const double ActivePointRadius = 4;
+
     private const double SelectRadius = 10;    // Increase for easier grabbing
 
     // Cached brushes and cursors to avoid GC pressure
@@ -134,7 +138,7 @@ public partial class CurveView : UserControl
             double y = height - point.Y * height;
 
             bool isActive = (i == _hoverPointIndex || i == _dragPointIndex);
-            double radius = isActive ? PointRadius * 1.4 : PointRadius;
+            double radius = isActive ? ActivePointRadius : PointRadius;
 
             var ellipse = new Ellipse
             {
@@ -142,7 +146,7 @@ public partial class CurveView : UserControl
                 Height = radius * 2,
                 Fill = isActive ? ActiveFillBrush : NormalFillBrush,
                 Stroke = isActive ? ActiveStrokeBrush : NormalStrokeBrush,
-                StrokeThickness = isActive ? 2 : 1
+                StrokeThickness = 1
             };
 
             Canvas.SetLeft(ellipse, x - radius);
@@ -241,7 +245,7 @@ public partial class CurveView : UserControl
         e.Pointer.Capture(_canvas);
 
         // Store initial canvas position for transform-based dragging
-        double radius = PointRadius * 1.4;
+        double radius = ActivePointRadius;
         _dragStartCanvasX = _dragX * width - radius;
         _dragStartCanvasY = height - _dragY * height - radius;
 
@@ -249,11 +253,13 @@ public partial class CurveView : UserControl
         if (index >= 0 && index < _pointEllipses.Count)
         {
             var ellipse = _pointEllipses[index];
+            Canvas.SetLeft(ellipse, _dragStartCanvasX);
+            Canvas.SetTop(ellipse, _dragStartCanvasY);
             ellipse.Width = radius * 2;
             ellipse.Height = radius * 2;
             ellipse.Fill = ActiveFillBrush;
             ellipse.Stroke = ActiveStrokeBrush;
-            ellipse.StrokeThickness = 2;
+            ellipse.StrokeThickness = 1;
             _dragTransform.X = 0;
             _dragTransform.Y = 0;
             ellipse.RenderTransform = _dragTransform;
@@ -290,7 +296,7 @@ public partial class CurveView : UserControl
             _dragY = normY;
 
             // Calculate new canvas position and update transform (bypasses layout)
-            double radius = PointRadius * 1.4;
+            double radius = ActivePointRadius;
             double newCanvasX = normX * width - radius;
             double newCanvasY = height - normY * height - radius;
             _dragTransform.X = newCanvasX - _dragStartCanvasX;

@@ -23,8 +23,17 @@ public sealed partial class DevelopControlBarTests
             AssertTier(pane, initialWidth == 800 ? "overflow" : "full");
             Resize(window, pane, 1200);
             var (full, noSlider) = Thresholds(pane);
-            Assert.InRange(full, 595, 597);
-            Assert.InRange(noSlider, 407, 409);
+            // WP7: five 24px icons, a 180px slider, the 9px separator, ten
+            // 8px gaps, 20px bar padding, and compact text labels with 4px padding.
+            var face = new Avalonia.Media.Typeface(
+                ThemeResourceTests.Resource<Avalonia.Media.FontFamily>("FontBody", Avalonia.Styling.ThemeVariant.Dark),
+                weight: Avalonia.Media.FontWeight.SemiBold);
+            var labels = new[] { "Fit", "1:1", "Assess", "Y|Y", "J|R" };
+            var labelWidth = labels.Sum(text => Math.Ceiling(new Avalonia.Media.TextFormatting.TextLayout(
+                text, face, 10, Avalonia.Media.Brushes.White).WidthIncludingTrailingWhitespace) + 8);
+            var expected = 5 * 24 + 180 + 9 + 10 * 8 + 20 + labelWidth;
+            Assert.Equal(expected, full);
+            Assert.Equal(expected - 180 - 8, noSlider);
 
             foreach (var width in new[] { 1200, 500, 308, 1200,
                          full + 1, full, full - 1, noSlider + 1, noSlider, noSlider - 1 })

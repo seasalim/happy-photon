@@ -34,7 +34,7 @@ public sealed class LensControlTests : IDisposable
         var stack = Assert.IsType<StackPanel>(opticsGroup.Parent);
         Assert.Equal(stack.Children.Count - 1, stack.Children.IndexOf(opticsGroup));
         Assert.False(optics.FindControl<StackPanel>("OpticsGroup")!.IsEnabled);
-        Assert.Equal("NO CORRECTION DATA FOR THIS LENS",
+        Assert.Equal("No correction data for this lens",
             optics.FindControl<TextBlock>("LensSourceText")!.Text);
 
         vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "photo.dng"));

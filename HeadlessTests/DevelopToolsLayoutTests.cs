@@ -64,7 +64,7 @@ public sealed class DevelopToolsLayoutTests
                 Assert.Single(window.GetLogicalDescendants().OfType<ToggleButton>(), b => b.Name == name);
             Assert.DoesNotContain(viewer.GetLogicalDescendants().OfType<Control>(), c =>
                 c is CropEditSection or LocalsEditSection || c is CompactSlider { Label: "Horizon" } ||
-                c is ToggleButton && ToolTip.GetTip(c)?.ToString() == "Lock Aspect Ratio" ||
+                c is ToggleButton && c.Name == "CropAspectLockButton" ||
                 c is Button b && (b.Command == vm.ToggleCropModeCommand || b.Command == vm.ToggleLocalsModeCommand ||
                     b.Command == vm.ApplyCropCommand || b.Command == vm.CancelCropCommand || b.Command == vm.ResetCropCommand));
             var scroll = panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!;

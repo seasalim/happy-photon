@@ -79,10 +79,10 @@ public sealed class MonochromeRawUiTests : IDisposable
         Assert.Equal(0.32, presence.FindControl<CompactSlider>("VibranceSlider")!.Opacity);
         Assert.False(panel.FindControl<MixerEditGroup>("MixerEditGroup")!.IsEnabled);
         var curve = panel.FindControl<CurveView>("ToneCurveView")!;
-        Assert.True(curve.FindControl<Button>("CompositeChannelButton")!.IsEnabled);
-        Assert.False(curve.FindControl<Button>("RedChannelButton")!.IsEnabled);
-        Assert.False(curve.FindControl<Button>("GreenChannelButton")!.IsEnabled);
-        Assert.False(curve.FindControl<Button>("BlueChannelButton")!.IsEnabled);
+        Assert.True(curve.FindControl<ListBoxItem>("CompositeChannelButton")!.IsEnabled);
+        Assert.False(curve.FindControl<ListBoxItem>("RedChannelButton")!.IsEnabled);
+        Assert.False(curve.FindControl<ListBoxItem>("GreenChannelButton")!.IsEnabled);
+        Assert.False(curve.FindControl<ListBoxItem>("BlueChannelButton")!.IsEnabled);
 
         window.Close();
         panel.DataContext = null;

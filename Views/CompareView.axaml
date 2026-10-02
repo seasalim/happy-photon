@@ -29,20 +29,31 @@
             <Grid ColumnDefinitions="Auto,*">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <TextBlock Text="Compare" Classes="section-label"/>
-                    <TextBlock Text="{Binding ComparePanes.Count, StringFormat='{}{0} PHOTOS'}"
+                    <TextBlock Text="{Binding ComparePanes.Count}"
                                Foreground="{DynamicResource TextMuted}"
-                               FontFamily="{StaticResource FontLabel}" FontSize="10"/>
+                               FontFamily="{StaticResource FontLabel}" FontSize="{StaticResource FontSizeSmall}"/>
+                    <TextBlock Text="photos" Classes="hint-text"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
                             HorizontalAlignment="Center">
-                    <Button x:Name="ComparePreviousButton"
+                    <Button Classes="icon-button" x:Name="ComparePreviousButton"
                             Command="{Binding SelectPreviousImageCommand}"
-                            Content="←" Padding="7,2" BorderThickness="0"
-                            ToolTip.Tip="Previous comparison image (←)"/>
-                    <Button x:Name="CompareNextButton"
+                            ToolTip.Tip="Previous comparison image (←)" AutomationProperties.Name="←">
+                        <Viewbox Width="14" Height="14">
+                            <Canvas Width="16" Height="16">
+                                <Path Data="M10,3.5 L5.5,8 L10,12.5" Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
+                    <Button Classes="icon-button" x:Name="CompareNextButton"
                             Command="{Binding SelectNextImageCommand}"
-                            Content="→" Padding="7,2" BorderThickness="0"
-                            ToolTip.Tip="Next comparison image (→)"/>
+                            ToolTip.Tip="Next comparison image (→)" AutomationProperties.Name="→">
+                        <Viewbox Width="14" Height="14">
+                            <Canvas Width="16" Height="16">
+                                <Path Data="M6,3.5 L10.5,8 L6,12.5" Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -82,7 +93,7 @@
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            Foreground="{DynamicResource TextMuted}"
-                                           FontSize="11"/>
+                                           FontSize="{StaticResource FontSizeBody}"/>
                             </Panel>
                             <Border Grid.Row="1" Background="{DynamicResource SurfaceLow}"
                                     BorderBrush="{DynamicResource Divider}"
@@ -91,23 +102,23 @@
                                     <TextBlock Text="{Binding Image.FileName}"
                                                TextTrimming="CharacterEllipsis"
                                                Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="11" ToolTip.Tip="{Binding Image.FileName}"/>
+                                               FontSize="{StaticResource FontSizeBody}" ToolTip.Tip="{Binding Image.FileName}"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                 Spacing="5" Margin="8,0,0,0">
                                         <Border Background="{DynamicResource ControlActive}" Padding="3,0"
                                                 IsVisible="{Binding Image.IsPicked}">
-                                            <TextBlock Text="P" FontSize="9"
+                                            <TextBlock Text="P" FontSize="{StaticResource FontSizeSmall}"
                                                        Foreground="{DynamicResource OnControlActive}"/>
                                         </Border>
                                         <Border Background="{StaticResource RejectSurface}"
                                                 BorderBrush="{StaticResource RejectOutline}"
                                                 BorderThickness="1" Padding="3,0"
                                                 IsVisible="{Binding Image.IsRejected}">
-                                            <TextBlock Text="X" FontSize="9"
+                                            <TextBlock Text="X" FontSize="{StaticResource FontSizeSmall}"
                                                        Foreground="{StaticResource RejectGlyph}"/>
                                         </Border>
                                         <TextBlock Text="{Binding Image.RatingStars}"
-                                                   FontSize="10"
+                                                   FontSize="{StaticResource FontSizeSmall}"
                                                    Foreground="{DynamicResource TextPrimary}"
                                                    IsVisible="{Binding Image.HasRating}"/>
                                         <Border Width="11" Height="11"
@@ -124,10 +135,10 @@
         </ItemsControl>
 
         <Border Grid.Row="2" Background="Transparent" Padding="8,4">
-            <TextBlock Text="FIT · ZOOM · PAN · LOUPE SYNCED"
+            <TextBlock Text="Fit · Zoom · Pan · Loupe synced"
                        VerticalAlignment="Center"
                        Foreground="{DynamicResource TextMuted}"
-                       FontFamily="{StaticResource FontBody}" FontSize="9"/>
+                       FontFamily="{StaticResource FontBody}" FontSize="{StaticResource FontSizeSmall}"/>
         </Border>
     </Grid>
 </UserControl>

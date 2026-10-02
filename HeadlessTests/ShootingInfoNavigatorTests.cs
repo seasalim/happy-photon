@@ -31,8 +31,8 @@ public sealed class ShootingInfoNavigatorTests
             var plot = histogram.Bounds;
             var baseHeight = box.Bounds.Height;
             Assert.False(row.IsVisible);
-            // Existing scope: 26px selector + 5px gap + 80px plot + 10px padding.
-            Assert.Equal(121, baseHeight);
+            // Compact scope: 20px selector + 2px margin + 5px gap + 80px plot + 10px padding.
+            Assert.Equal(117, baseHeight);
             SetExif(vm.SelectedImage!);
             ShellPaneLimitsTests.Settle(window);
             Assert.True(row.IsVisible);
@@ -122,7 +122,8 @@ public sealed class ShootingInfoNavigatorTests
             // retains the full header width when the readout is blank.
             Assert.Equal(labelBounds.Position, label.Bounds.Position);
             Assert.Equal(labelBounds.Height, label.Bounds.Height);
-            Assert.Equal(new Rect(header.Bounds.Size), label.Bounds);
+            Assert.Equal(header.Bounds.Width, label.Bounds.Width);
+            Assert.Equal((header.Bounds.Height - label.Bounds.Height) / 2, label.Bounds.Y);
             vm.IsDevelopMode = true;
             window.Width = 1000;
             vm.ManualZoomLevel = 1.5;

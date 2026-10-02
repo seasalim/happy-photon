@@ -94,7 +94,7 @@ public sealed class DevelopToolsBaselineTests(ITestOutputHelper output)
     private static string? ToolIdentity(Control control, MainWindowViewModel vm)
     {
         if (control is CompactSlider { Label: "Horizon" }) return Describe(control);
-        if (control is ToggleButton && ToolTip.GetTip(control)?.ToString() == "Lock Aspect Ratio")
+        if (control is ToggleButton && control.Name == "CropAspectLockButton")
             return "aspect lock (unnamed ToggleButton)";
         if (control is not Button button) return null;
         var command = button.Command;

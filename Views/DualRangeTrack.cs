@@ -70,11 +70,20 @@ public sealed class DualRangeTrack : UserControl
                 }
             };
             entry.Classes.Add("edit-field");
-            entry.FontSize = 11; entry.MinWidth = 0; entry.Width = 48; entry.MinHeight = 24; entry.Height = 24;
+            entry.Bind(FontSizeProperty, this.GetResourceObservable("FontSizeBody"));
+            entry.Bind(FontFamilyProperty, this.GetResourceObservable("FontLabel"));
+            entry.MinWidth = 0;
+            entry.Width = 48;
+            entry.MinHeight = 24;
+            entry.Height = 24;
             entry.Padding = new Thickness(5, 2); entry.TextAlignment = TextAlignment.Right;
             AutomationProperties.SetName(entry, name + " numeric entry");
-            var label = new TextBlock { Text = i == 0 ? "Lower" : "Upper", FontSize = 10,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            var label = new TextBlock
+            {
+                Text = i == 0 ? "Lower" : "Upper",
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            label.Bind(TextBlock.FontSizeProperty, this.GetResourceObservable("FontSizeSmall"));
             label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable("TextMuted"));
             var endpoint = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 5 };
             endpoint.Children.Add(label); endpoint.Children.Add(entry);

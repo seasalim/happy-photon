@@ -36,7 +36,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             // Below: title bottom to first content top. Content excludes outer margins.
             // L1 uses the curve card edge; L2 retains the baseline canvas/footer span.
             // WP2 moves two 24px slider rows to Presence; Recovery now ends Adjustments.
-            double[] expectedHeight = [44, 84, 194, 92, 130, 104, 68, 106, 92, 114];
+            double[] expectedHeight = [44, 84, 192, 92, 128, 104, 68, 104, 92, 114];
             var previousBottom = 0d;
             var spacingSum = 0d;
 
@@ -62,11 +62,11 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
 
             var curve = global.GetVisualDescendants().OfType<CurveView>().Single();
             var canvas = curve.FindControl<Canvas>("CurveCanvas")!;
-            Assert.Equal(new Size(198, 111), canvas.Bounds.Size);
+            Assert.Equal(new Size(198, 109), canvas.Bounds.Size);
             Assert.Equal(180, curve.Bounds.Height);
             output.WriteLine($"L2 CurveCanvas: parentBounds={canvas.Bounds}; inCurve={BoundsIn(canvas, curve)}; cardHeight={curve.Bounds.Height}");
             var scroll = panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!;
-            Assert.InRange(scroll.Extent.Height, 1531.5, 1532.5);
+            Assert.InRange(scroll.Extent.Height, 1527.5, 1528.5);
             output.WriteLine(FormattableString.Invariant(
                 $"L3 extent={scroll.Extent}; viewport={scroll.Viewport}; spacingSum={spacingSum:R}; normalizationDelta={270 - spacingSum:R}; thresholdWithoutChevronRows={scroll.Extent.Height + 270 - spacingSum:R}"));
             MeasurePresets(window, "Dark");
@@ -79,7 +79,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             var saturation = panel.FindControl<PresenceEditGroup>("PresenceEditGroup")!.FindControl<CompactSlider>("SaturationSlider")!;
             MeasureOpacity(saturation, "SaturationSlider");
             MeasureOpacity(saturation.FindControl<TextBlock>("LabelText")!, "SaturationSlider.LabelText");
-            MeasureOpacity(curve.FindControl<Button>("RedChannelButton")!, "RedChannelButton");
+            MeasureOpacity(curve.FindControl<ListBoxItem>("RedChannelButton")!, "RedChannelButton");
             foreach (var control in global.GetVisualDescendants().OfType<Control>()
                 .Where(c => c.Classes.Any(name => name is "color-dependent" or "crossing-dependent" or
                     "raw-profile-row" or "midpoint-row" or "optics-group" or "optics-row")))
@@ -210,7 +210,9 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
     private void MeasureEnabled(StackPanel global, string mode)
     {
         var controls = global.GetVisualDescendants().OfType<Control>()
-            .Where(c => c is CompactSlider or Button or ComboBox or ListBox)
+            .Where(c => c is CompactSlider or Button or ComboBox or ListBox ||
+                c is ListBoxItem && c.Name?.EndsWith("ChannelButton") == true)
+            .Where(c => c.Name != "ChannelPicker")
             .Where(c => c.Name != "ExpanderHeader")
             .Where(c => c.IsEffectivelyVisible).ToArray();
         Assert.All(global.Children.Cast<DevelopGroup>(), group =>

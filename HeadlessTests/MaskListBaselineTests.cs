@@ -293,12 +293,12 @@ public sealed class MaskListBaselineTests(ITestOutputHelper output)
     {
         var delete = Row(list, 0).GetVisualDescendants().OfType<Button>().Single(b => b is not CheckBox);
         var presenter = delete.GetVisualDescendants().OfType<ContentPresenter>().Single();
-        var glyph = delete.GetVisualDescendants().OfType<TextBlock>().Single();
+        var glyph = delete.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().Single();
         Assert.Equal(new Size(20, 20), delete.Bounds.Size);
         Assert.Equal(default, presenter.BorderThickness);
         Assert.Equal(0, Assert.IsAssignableFrom<ISolidColorBrush>(presenter.Background).Color.A);
-        AssertBrush(glyph, "TextMuted", glyph.Foreground);
-        var center = glyph.TranslatePoint(new Point(glyph.Bounds.Width / 2, glyph.Bounds.Height / 2), delete)!.Value;
+        AssertBrush(glyph, "TextMuted", glyph.Stroke);
+        var center = glyph.TranslatePoint(glyph.Data!.Bounds.Center, delete)!.Value;
         Assert.InRange(Math.Abs(center.X - 10), 0, .5);
         Assert.InRange(Math.Abs(center.Y - 10), 0, .5);
         output.WriteLine($"R1-2 hit-area={delete.Bounds.Size}; glyph-center={center}");
@@ -309,7 +309,7 @@ public sealed class MaskListBaselineTests(ITestOutputHelper output)
         Settle();
         Assert.True(delete.IsPointerOver);
         AssertBrush(presenter, "ControlHover", presenter.Background);
-        AssertBrush(glyph, "TextPrimary", glyph.Foreground);
+        AssertBrush(glyph, "TextPrimary", glyph.Stroke);
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
         Settle();
         Assert.True(delete.IsPressed);

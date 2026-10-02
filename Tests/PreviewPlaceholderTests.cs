@@ -374,8 +374,8 @@ public sealed class PreviewPlaceholderTests
         Assert.Equal(28, whiteBalanceAuto.Height);
         Assert.Equal(50, whiteBalanceAuto.MinWidth);
         Assert.Equal(11, whiteBalanceAuto.FontSize);
-        Assert.Equal(28, whiteBalancePicker.Height);
-        Assert.Equal(28, whiteBalancePicker.MinWidth);
+        Assert.Equal(24, whiteBalancePicker.Height);
+        Assert.Equal(0, whiteBalancePicker.MinWidth);
         Assert.Same(placeholder, developPlaceholder.Source);
         Assert.Same(placeholder, fullScreenPlaceholder.Source);
         Assert.True(developPlaceholder.IsVisible);

@@ -50,7 +50,7 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
         Dispatcher.UIThread.RunJobs();
         var panel = window.FindControl<DevelopEditPanel>("DevelopEditPanel")!;
         var histogram = panel.FindControl<HistogramView>("DevelopHistogram")!;
-        var target = histogram.FindControl<Border>("DisplayFloorTriangleTarget")!;
+        var target = histogram.FindControl<Control>("DisplayFloorTriangleTarget")!;
         var marker = histogram.FindControl<Rectangle>("DisplayFloorLatchMarker")!;
         var point = target.TranslatePoint(new Point(5, 5), window)!.Value;
 

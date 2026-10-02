@@ -58,9 +58,8 @@
                        VerticalAlignment="Bottom"
                        Margin="10,8"
                        FontFamily="{StaticResource FontBody}"
-                       FontSize="9"
+                       FontSize="{StaticResource FontSizeSmall}"
                        FontWeight="SemiBold"
-                       LetterSpacing="1"
                        Foreground="{DynamicResource TextMuted}">
                 <TextBlock.Effect>
                     <DropShadowEffect Color="{StaticResource ViewerStatusShadowColor}"
@@ -78,7 +77,6 @@
                        FontFamily="{StaticResource FontLabel}"
                        FontSize="{StaticResource FontSizeLabel}"
                        FontWeight="SemiBold"
-                       LetterSpacing="1"
                        Foreground="{DynamicResource TextPrimary}">
                 <TextBlock.Effect>
                     <DropShadowEffect Color="{StaticResource ViewerStatusShadowColor}"

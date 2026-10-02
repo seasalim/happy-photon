@@ -6,91 +6,16 @@
              x:Class="HappyPhoton.Views.CurveView">
 
     <UserControl.Styles>
-        <Style Selector="Button.curveChannel">
-            <Setter Property="Height" Value="18"/>
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="CornerRadius" Value="0"/>
-            <Setter Property="FontSize" Value="9"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="LetterSpacing" Value="1"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
-        <Style Selector="Button.curveChannel:disabled">
-            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
-        <Style Selector="Button.curveChannel /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-        </Style>
-        <Style Selector="Button.curveChannel:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-        </Style>
-        <Style Selector="Button.curveChannel.red.touched /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="ListBoxItem.red.touched">
             <Setter Property="Foreground" Value="{DynamicResource ColorLabelRed}"/>
         </Style>
-        <Style Selector="Button.curveChannel.green.touched /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="ListBoxItem.green.touched">
             <Setter Property="Foreground" Value="{DynamicResource ColorLabelGreen}"/>
         </Style>
-        <Style Selector="Button.curveChannel.blue.touched /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="ListBoxItem.blue.touched">
             <Setter Property="Foreground" Value="{DynamicResource ColorLabelBlue}"/>
         </Style>
-        <Style Selector="Button.curveChannel.composite.active /template/ ContentPresenter#PART_ContentPresenter,
-                         Button.curveChannel.composite.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
-            <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
-        </Style>
-        <Style Selector="Button.curveChannel.red.active /template/ ContentPresenter#PART_ContentPresenter,
-                         Button.curveChannel.red.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ColorLabelRed}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        </Style>
-        <Style Selector="Button.curveChannel.green.active /template/ ContentPresenter#PART_ContentPresenter,
-                         Button.curveChannel.green.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ColorLabelGreen}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        </Style>
-        <Style Selector="Button.curveChannel.blue.active /template/ ContentPresenter#PART_ContentPresenter,
-                         Button.curveChannel.blue.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ColorLabelBlue}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        </Style>
-        <Style Selector="Button.curveReset">
-            <Setter Property="Width" Value="20"/>
-            <Setter Property="Height" Value="20"/>
-            <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="Padding" Value="3"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
-        <Style Selector="Button.curveReset /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-        <Style Selector="Button.curveReset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
-        </Style>
-        <Style Selector="Button.curveReset Path">
-            <Setter Property="Stroke" Value="{DynamicResource TextMuted}"/>
-        </Style>
-        <Style Selector="Button.curveReset:pointerover Path">
-            <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
-        </Style>
-        <Style Selector="StackPanel.global-edits.locked Button.curveChannel">
+        <Style Selector="StackPanel.global-edits.locked ListBoxItem">
             <Setter Property="Opacity" Value="1"/>
         </Style>
     </UserControl.Styles>
@@ -98,23 +23,19 @@
     <Border Background="{DynamicResource SurfaceLow}" Padding="10">
         <Grid RowDefinitions="Auto,*,Auto">
             <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,8">
-                <Border Grid.Column="2" Width="112" Height="22" Margin="4,0"
-                        Background="{DynamicResource SurfaceHigh}" Padding="2">
-                    <UniformGrid Rows="1" ColumnSpacing="2">
-                        <Button x:Name="CompositeChannelButton" Classes="curveChannel composite"
-                                Content="RGB" Click="OnCompositeChannelClick"/>
-                        <Button x:Name="RedChannelButton" Classes="curveChannel red"
-                                Content="R" Click="OnRedChannelClick"/>
-                        <Button x:Name="GreenChannelButton" Classes="curveChannel green"
-                                Content="G" Click="OnGreenChannelClick"/>
-                        <Button x:Name="BlueChannelButton" Classes="curveChannel blue"
-                                Content="B" Click="OnBlueChannelClick"/>
-                    </UniformGrid>
-                </Border>
-                <Button Grid.Column="3" Classes="curveReset" Click="OnResetClick"
+                <ListBox x:Name="ChannelPicker" Grid.Column="2" Width="112" Margin="4,0"
+                         Classes="segmented" AutoScrollToSelectedItem="False" SelectionMode="Single,AlwaysSelected" KeyboardNavigation.TabNavigation="Continue"
+                         SelectionChanged="OnChannelSelectionChanged" AutomationProperties.Name="Curve channel">
+                    <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                    <ListBoxItem x:Name="CompositeChannelButton" Content="RGB"/>
+                    <ListBoxItem x:Name="RedChannelButton" Classes="red" Content="R"/>
+                    <ListBoxItem x:Name="GreenChannelButton" Classes="green" Content="G"/>
+                    <ListBoxItem x:Name="BlueChannelButton" Classes="blue" Content="B"/>
+                </ListBox>
+                <Button Grid.Column="3" Classes="icon-button compact curveReset" Click="OnResetClick"
                         ToolTip.Tip="Reset the active channel's curve"
                         AutomationProperties.Name="Reset curve">
-                    <Viewbox Width="14" Height="14">
+                    <Viewbox Width="12" Height="12">
                         <Canvas Width="16" Height="16">
                             <Path Fill="Transparent"
                                   StrokeThickness="1.5"
@@ -131,9 +52,8 @@
                 <Canvas x:Name="CurveCanvas" ClipToBounds="True" Background="Transparent"/>
             </Border>
 
-            <TextBlock Grid.Row="2" Text="Click to add • Drag to move • Right-click to remove"
-                       FontSize="9" Foreground="{DynamicResource TextMuted}" Margin="0,5,0,0"
-                       HorizontalAlignment="Center"/>
+            <TextBlock Grid.Row="2" Classes="hint-text" LineHeight="12" Text="Click: add · Drag: move · Right-click: delete"
+                       Margin="0,5,0,0" HorizontalAlignment="Center"/>
         </Grid>
     </Border>
 </UserControl>

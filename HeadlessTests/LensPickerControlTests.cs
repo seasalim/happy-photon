@@ -59,7 +59,7 @@ public sealed class LensPickerControlTests : IDisposable
             Assert.True(optics.FindControl<Grid>("DistortionRow")!.IsEnabled);
             Assert.True(optics.FindControl<Grid>("ChromaticAberrationRow")!.IsEnabled);
             Assert.True(optics.FindControl<Grid>("VignettingRow")!.IsEnabled);
-            Assert.Equal($"{LensA} · LENSFUN · MANUAL",
+            Assert.Equal($"{LensA} · LENSFUN · Manual",
                 optics.FindControl<TextBlock>("LensSourceText")!.Text);
         }
         ShowcaseTestHelper.Capture(scene, scope, new PixelSize(800, 500), ThemeVariant.Dark);
@@ -114,7 +114,7 @@ public sealed class LensPickerControlTests : IDisposable
             loadMetadataAsync: _ => Task.CompletedTask);
         vm.ApplyLensPrescription(true, new LensPrescriptionSummary(
             LensA, string.Empty, false, false, false) { IsManual = true });
-        Assert.Equal($"{LensA} · NO CORRECTION DATA · MANUAL", vm.LensSourceText);
+        Assert.Equal($"{LensA} · No correction data · Manual", vm.LensSourceText);
         Assert.False(vm.HasLensDistortion);
         Assert.False(vm.HasLensChromaticAberration);
         Assert.False(vm.HasLensVignetting);
@@ -185,7 +185,7 @@ public sealed class LensPickerControlTests : IDisposable
             await TestWaits.UntilAsync(() => vm.PreviewImage != null &&
                 vm.LensPrescription?.LensName == lens && vm.LensPrescription.IsManual == manual &&
                 vm.CaptureBackgroundActivitySnapshot().PreviewCount == 0);
-            Assert.Equal(manual, vm.LensSourceText.EndsWith(" · MANUAL", StringComparison.Ordinal));
+            Assert.Equal(manual, vm.LensSourceText.EndsWith(" · Manual", StringComparison.Ordinal));
         }
     }
 

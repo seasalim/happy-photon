@@ -33,14 +33,14 @@ public sealed class CurveChannelControlTests : IDisposable
             viewModel.SelectedImage = image;
             Dispatcher.UIThread.RunJobs();
             var curve = panel.FindControl<CurveView>("ToneCurveView")!;
-            var red = curve.FindControl<Button>("RedChannelButton")!;
+            var red = curve.FindControl<ListBoxItem>("RedChannelButton")!;
 
             Assert.Equal(180, curve.Height);
             Assert.Equal(ToneCurveChannel.Composite, curve.ActiveChannel);
-            Assert.Equal("RGB", curve.FindControl<Button>(
+            Assert.Equal("RGB", curve.FindControl<ListBoxItem>(
                 "CompositeChannelButton")!.Content);
 
-            red.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            red.IsSelected = true;
             Dispatcher.UIThread.RunJobs();
 
             Assert.Equal(ToneCurveChannel.Red, viewModel.ActiveCurveChannel);

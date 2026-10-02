@@ -82,8 +82,7 @@
                    Text="{Binding LensSourceText}"
                    TextTrimming="CharacterEllipsis"
                    FontFamily="{StaticResource FontBody}"
-                   FontSize="9"
-                   LetterSpacing="0.6"
+                   FontSize="{StaticResource FontSizeSmall}"
                    Foreground="{DynamicResource TextMuted}"
                    VerticalAlignment="Center"/>
     </StackPanel>

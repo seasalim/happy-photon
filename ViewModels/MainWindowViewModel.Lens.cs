@@ -43,11 +43,11 @@ public partial class MainWindowViewModel
     public bool HasLensVignetting => LensPrescription?.HasVignetting == true;
 
     public string LensSourceText => LensPrescription?.HasAny == true
-        ? $"{LensPrescription.LensName ?? "EMBEDDED LENS"} · {LensPrescription.Source}" +
-            (LensPrescription.IsManual ? " · MANUAL" : string.Empty)
+        ? $"{LensPrescription.LensName ?? "Embedded lens"} · {LensPrescription.Source}" +
+            (LensPrescription.IsManual ? " · Manual" : string.Empty)
         : LensPrescription?.IsManual == true
-            ? $"{LensPrescription.LensName} · NO CORRECTION DATA · MANUAL"
-            : "NO CORRECTION DATA FOR THIS LENS";
+            ? $"{LensPrescription.LensName} · No correction data · Manual"
+            : "No correction data for this lens";
 
     partial void OnLensDistortionChanged(bool value) => OnLensValueChanged();
     partial void OnLensChromaticAberrationChanged(bool value) => OnLensValueChanged();

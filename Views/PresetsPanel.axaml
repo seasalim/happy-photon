@@ -22,7 +22,7 @@
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
         </Style>
         <Style Selector="Button.preset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
@@ -43,8 +43,8 @@
 
     <Grid RowDefinitions="Auto,*">
         <!-- Header -->
-        <Border Grid.Row="0" Background="{DynamicResource SurfaceLow}" Padding="10">
-            <TextBlock Classes="section-label" Text="Presets"/>
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceLow}" Padding="10,4">
+            <TextBlock Classes="section-label" Text="Presets" Height="24" VerticalAlignment="Center"/>
         </Border>
 
         <!-- Presets List -->

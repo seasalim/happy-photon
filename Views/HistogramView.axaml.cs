@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 
@@ -63,8 +64,8 @@ public partial class HistogramView : UserControl
     private TextBlock? _greenText;
     private TextBlock? _blueText;
     private Grid? _displayClippingIndicators;
-    private Border? _displayFloorTriangleTarget;
-    private Border? _sceneHighlightTriangleTarget;
+    private Avalonia.Controls.Primitives.ToggleButton? _displayFloorTriangleTarget;
+    private Avalonia.Controls.Primitives.ToggleButton? _sceneHighlightTriangleTarget;
     private Avalonia.Controls.Shapes.Path? _displayFloorTriangle;
     private Avalonia.Controls.Shapes.Path? _sceneHighlightTriangle;
     private Rectangle? _displayFloorLatchMarker;
@@ -84,9 +85,9 @@ public partial class HistogramView : UserControl
         _displayClippingIndicators =
             this.FindControl<Grid>("DisplayClippingIndicators");
         _displayFloorTriangleTarget =
-            this.FindControl<Border>("DisplayFloorTriangleTarget");
+            this.FindControl<Avalonia.Controls.Primitives.ToggleButton>("DisplayFloorTriangleTarget");
         _sceneHighlightTriangleTarget =
-            this.FindControl<Border>("SceneHighlightTriangleTarget");
+            this.FindControl<Avalonia.Controls.Primitives.ToggleButton>("SceneHighlightTriangleTarget");
         _displayFloorTriangle =
             this.FindControl<Avalonia.Controls.Shapes.Path>("DisplayFloorTriangle");
         _sceneHighlightTriangle =
@@ -97,10 +98,10 @@ public partial class HistogramView : UserControl
             this.FindControl<Rectangle>("SceneHighlightLatchMarker");
         _displayFloorTriangleTarget!.PointerEntered += OnDisplayFloorEntered;
         _displayFloorTriangleTarget.PointerExited += OnTriangleExited;
-        _displayFloorTriangleTarget.PointerPressed += OnTrianglePressed;
+        _displayFloorTriangleTarget.AddHandler(PointerPressedEvent, OnTrianglePressed, RoutingStrategies.Tunnel);
         _sceneHighlightTriangleTarget!.PointerEntered += OnSceneHighlightEntered;
         _sceneHighlightTriangleTarget.PointerExited += OnTriangleExited;
-        _sceneHighlightTriangleTarget.PointerPressed += OnTrianglePressed;
+        _sceneHighlightTriangleTarget.AddHandler(PointerPressedEvent, OnTrianglePressed, RoutingStrategies.Tunnel);
         UpdateDisplayClippingIndicators();
     }
 

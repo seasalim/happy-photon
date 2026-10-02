@@ -43,9 +43,9 @@ public sealed class WaveformScopeUiTests : IDisposable
 
         Assert.True(
             buttons.All(button =>
-                button.Width == 24 &&
-                button.Height == 24 &&
-                button.Padding == new Thickness(5) &&
+                button.Width == 20 &&
+                button.Height == 20 &&
+                button.Padding == new Thickness(4) &&
                 button.BorderThickness == new Thickness(0)),
             observed);
 

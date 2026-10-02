@@ -184,7 +184,7 @@ public sealed partial class LocalsViewModelTests
         vm.AddLinearCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
         var inline = section.FindControl<Button>("PlaceLocalAtCenterButton")!;
-        var instruction = (StackPanel)inline.Parent!;
+        var instruction = (WrapPanel)inline.Parent!;
         var suffix = instruction.Children.Last();
         Assert.True(suffix.TranslatePoint(new Point(suffix.Bounds.Width, 0), section)!.Value.X <= section.Bounds.Width);
         Assert.True(WorkspaceKeyRouting.IsEnterTextInputFocused(new TextBox()));

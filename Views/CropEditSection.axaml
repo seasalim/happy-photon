@@ -4,22 +4,38 @@
              xmlns:views="using:HappyPhoton.Views"
              x:Class="HappyPhoton.Views.CropEditSection"
              x:DataType="vm:MainWindowViewModel" IsVisible="{Binding IsCropMode}">
+    <UserControl.Styles>
+        <Style Selector="ToggleButton#CropAspectLockButton">
+            <Setter Property="AutomationProperties.Name" Value="Lock aspect ratio, unlocked"/>
+        </Style>
+        <Style Selector="ToggleButton#CropAspectLockButton:checked">
+            <Setter Property="AutomationProperties.Name" Value="Lock aspect ratio, locked"/>
+        </Style>
+        <Style Selector="ToggleButton#CropAspectLockButton Path">
+            <Setter Property="Data" Value="M3,7 L13,7 L13,14 L3,14 Z M6,7 L6,4 A3,3 0 0 1 12,4"/>
+        </Style>
+        <Style Selector="ToggleButton#CropAspectLockButton:checked Path">
+            <Setter Property="Data" Value="M3,7 L13,7 L13,14 L3,14 Z M5,7 L5,4 A3,3 0 0 1 11,4 L11,7"/>
+        </Style>
+    </UserControl.Styles>
     <StackPanel Spacing="8" Margin="0,0,0,12" IsEnabled="{Binding CanEditSelectedImage}">
         <views:CompactSlider Label="Horizon" Value="{Binding HorizonRotation}"
                              Minimum="-5" Maximum="5" SmallChange="0.1"
                              StringFormat="{}{0:+0.0;-0.0;0.0}°" EnableDoubleClickReset="True"/>
         <Grid ColumnDefinitions="*,Auto,Auto">
-            <ToggleButton IsChecked="{Binding IsCropAspectLocked}" MinWidth="0"
-                          ToolTip.Tip="Lock Aspect Ratio" FontSize="{StaticResource FontSizeSmall}" Padding="4,4" BorderThickness="0">
-                <TextBlock Text="Lock aspect ratio" TextTrimming="CharacterEllipsis"/>
+            <ToggleButton x:Name="CropAspectLockButton" Classes="icon-button" HorizontalAlignment="Left" IsChecked="{Binding IsCropAspectLocked}" MinWidth="0"
+                          ToolTip.Tip="Lock aspect ratio">
+                <Viewbox Width="14" Height="14"><Canvas Width="16" Height="16">
+                    <Path Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                </Canvas></Viewbox>
             </ToggleButton>
-            <Button x:Name="AutoStraightenButton" Grid.Column="1" Classes="quiet-button" MinWidth="50"
+            <Button x:Name="AutoStraightenButton" Grid.Column="1" Classes="compact-button" MinWidth="50"
                     Command="{Binding AutoStraightenCommand}" Content="Auto" Click="OnAutoClick"
                     ToolTip.Tip="Straighten from the photo's lines (sets Horizon)"/>
-            <Button Grid.Column="2" Command="{Binding ResetCropCommand}" Content="Reset crop"
-                    ToolTip.Tip="Reset Crop" FontSize="{StaticResource FontSizeSmall}" Padding="4,4" BorderThickness="0"/>
+            <Button Classes="compact-button" Grid.Column="2" Command="{Binding ResetCropCommand}" Content="Reset crop"
+                    ToolTip.Tip="Reset Crop"/>
         </Grid>
-        <TextBlock Text="Drag edges to crop · Enter to apply" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}"/>
+        <TextBlock Classes="hint-text" Text="Drag edges to crop · Enter to apply"/>
         <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0"/>
     </StackPanel>
 </UserControl>

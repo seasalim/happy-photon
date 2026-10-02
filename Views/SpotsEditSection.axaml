@@ -15,9 +15,8 @@
         <views:CompactSlider x:Name="SpotSizeSlider" ToolTip.Tip="Spot size ([ / ])" Label="Size" Value="{Binding SpotSize}" Minimum="0.2" Maximum="10" SmallChange="0.1" StringFormat="{}{0:0.0}"/>
         <views:CompactSlider x:Name="SpotFeatherSlider" ToolTip.Tip="Spot feather (Shift+[ / Shift+])" Label="Feather" Value="{Binding SpotFeather}" Minimum="0" Maximum="100"/>
         <views:CompactSlider Label="Opacity" Value="{Binding SpotOpacity}" Minimum="5" Maximum="100"/>
-        <TextBlock Text="{Binding SpotCount}" Foreground="{DynamicResource TextMuted}" FontSize="11"/>
-        <Button Content="Clear spots" Command="{Binding ClearSpotsCommand}" IsEnabled="{Binding HasSpots}"/>
-        <TextBlock Text="Click a blemish to heal it · drag to choose the source · Delete removes"
-                   TextWrapping="Wrap" Foreground="{DynamicResource TextMuted}" FontSize="11"/>
+        <TextBlock Text="{Binding SpotCount}" Foreground="{DynamicResource TextMuted}" FontSize="{StaticResource FontSizeBody}"/>
+        <Button Classes="quiet-button" Content="Clear spots" Command="{Binding ClearSpotsCommand}" IsEnabled="{Binding HasSpots}"/>
+        <TextBlock Classes="hint-text" Text="Click a blemish to heal it · drag to choose the source · Delete removes"/>
     </StackPanel>
 </UserControl>

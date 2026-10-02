@@ -11,14 +11,12 @@
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="LetterSpacing" Value="1"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         </Style>
         <Style Selector="TextBlock.profile-menu-header">
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="LetterSpacing" Value="1"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="Margin" Value="4,5,4,2"/>
         </Style>

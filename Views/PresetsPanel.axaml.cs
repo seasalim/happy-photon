@@ -155,7 +155,7 @@ public partial class PresetsPanel : UserControl
         {
             Content = "＋ Save Current…",
             IsEnabled = CanSavePreset,
-            Classes = { "preset" }
+            Classes = { "compact-button", "preset" }
         };
         _savePresetButton.Click += (_, _) => SavePresetRequested?.Invoke(this, EventArgs.Empty);
         _userPresetPanel.Children.Add(_savePresetButton);
@@ -177,7 +177,7 @@ public partial class PresetsPanel : UserControl
         {
             Content = preset.Name,
             Tag = preset.Id,
-            Classes = { "preset" }
+            Classes = { "compact-button", "preset" }
         };
 
         button.Click += OnPresetButtonClick;

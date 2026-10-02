@@ -16,7 +16,7 @@
         <Style Selector="ToggleButton.tool">
             <Setter Property="Padding" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
             <Setter Property="AutomationProperties.HelpText" Value=""/>
         </Style>
         <Style Selector="ToggleButton.tool-mask:checked">
@@ -45,24 +45,6 @@
                          views|CompactSlider.color-dependent:disabled,
                          views|MixerEditGroup.color-dependent:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
-        <Style Selector="ToggleButton.wb-picker:checked">
-            <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
-            <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
-        </Style>
-        <Style Selector="ToggleButton.wb-picker">
-            <Setter Property="MinWidth" Value="28"/>
-            <Setter Property="MinHeight" Value="28"/>
-            <Setter Property="Height" Value="28"/>
-            <Setter Property="MaxHeight" Value="28"/>
-            <Setter Property="Padding" Value="6"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        </Style>
-        <Style Selector="TextBlock.edit-control-label">
-            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         <Style Selector="Grid.highlight-handling-row:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
@@ -119,7 +101,11 @@
                                   IsChecked="{Binding IsCropMode, Mode=OneWay}" Command="{Binding ToggleCropModeCommand}"
                                   AutomationProperties.Name="Crop" ToolTip.Tip="Crop Image (R)" IsEnabled="{Binding CanEditSelectedImage}">
                         <Grid>
-                            <TextBlock Text="⬚" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <Viewbox Width="14" Height="14">
+                                <Canvas Width="16" Height="16">
+                                    <Path Data="M4,1 L4,12 L15,12 M1,4 L12,4 L12,15" Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                                </Canvas>
+                            </Viewbox>
                             <Ellipse Width="4" Height="4" HorizontalAlignment="Right" VerticalAlignment="Top"
                                      Margin="0,-2,-3,0" IsVisible="{Binding HasCommittedCrop}"/>
                         </Grid>
@@ -128,7 +114,11 @@
                                   IsChecked="{Binding IsSpotsMode, Mode=OneWay}" Command="{Binding ToggleSpotsModeCommand}"
                                   AutomationProperties.Name="Spot Removal" ToolTip.Tip="Spot Removal (Q)" IsEnabled="{Binding CanEditSelectedImage}">
                         <Grid>
-                            <TextBlock Text="◌" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <Viewbox Width="14" Height="14">
+                                <Canvas Width="16" Height="16">
+                                    <Path Data="M8,2 A6,6 0 1 1 7.99,2 M5,8 L11,8 M8,5 L8,11" Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                                </Canvas>
+                            </Viewbox>
                             <Ellipse Width="4" Height="4" HorizontalAlignment="Right" VerticalAlignment="Top"
                                      Margin="0,-2,-3,0" IsVisible="{Binding HasSpots}"/>
                         </Grid>
@@ -137,7 +127,11 @@
                                   IsChecked="{Binding IsLocalsMode, Mode=OneWay}" Command="{Binding ToggleLocalsModeCommand}"
                                   AutomationProperties.Name="Locals" ToolTip.Tip="Locals (Shift+W)">
                         <Grid>
-                            <TextBlock Text="◩" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <Viewbox Width="14" Height="14">
+                                <Canvas Width="16" Height="16">
+                                    <Path Data="M2,2 L14,2 L14,14 L2,14 Z M2,14 L14,2" Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                                </Canvas>
+                            </Viewbox>
                             <Ellipse Width="4" Height="4" HorizontalAlignment="Right" VerticalAlignment="Top"
                                      Margin="0,-2,-3,0" IsVisible="{Binding HasLocals}"/>
                         </Grid>
@@ -145,25 +139,25 @@
                 </StackPanel>
                 <Grid x:Name="CropToolHeader" ColumnDefinitions="*,Auto,Auto" Margin="15,0,15,8"
                       IsVisible="{Binding IsCropMode}" IsEnabled="{Binding CanEditSelectedImage}">
-                    <TextBlock Text="CROP" Classes="section-label" VerticalAlignment="Center"/>
-                    <Button x:Name="CancelCropButton" Grid.Column="1" Content="Cancel" Command="{Binding CancelCropCommand}"
-                            ToolTip.Tip="Cancel (Escape)" FontSize="10" Padding="8,4" BorderThickness="0"/>
+                    <TextBlock Text="Crop" Classes="section-label" VerticalAlignment="Center"/>
+                    <Button Classes="compact-button" x:Name="CancelCropButton" Grid.Column="1" Content="Cancel" Command="{Binding CancelCropCommand}"
+                            ToolTip.Tip="Cancel (Escape)"/>
                     <Button x:Name="ApplyCropButton" Grid.Column="2" Content="Apply" Command="{Binding ApplyCropCommand}"
-                            ToolTip.Tip="Apply Crop (Enter)" FontSize="10" Padding="10,4" Classes="accent" BorderThickness="0"/>
+                            ToolTip.Tip="Apply Crop (Enter)" Classes="compact-button accent"/>
                 </Grid>
                 <Grid ColumnDefinitions="*,Auto,Auto" Margin="15,0,15,8" IsVisible="{Binding IsSpotsMode}">
-                    <TextBlock Text="SPOTS" Classes="section-label" VerticalAlignment="Center"/>
-                    <ToggleButton x:Name="VisualizeSpotsButton" Classes="tool-mask" Grid.Column="1" Content="Visualize"
+                    <TextBlock Text="Spots" Classes="section-label" VerticalAlignment="Center"/>
+                    <ToggleButton x:Name="VisualizeSpotsButton" Classes="compact-button tool-mask" Grid.Column="1" Content="Visualize"
                                   ToolTip.Tip="Visualize Spots (A) · Hide circles (H) · Next source (/)"
-                                  IsChecked="{Binding VisualizeSpots}" AutomationProperties.Name="Visualize Spots" Padding="5,3" FontSize="10"/>
-                    <Button Grid.Column="2" Content="Close" Command="{Binding CloseSpotsCommand}" Padding="5,3" FontSize="10"/>
+                                  IsChecked="{Binding VisualizeSpots}" AutomationProperties.Name="Visualize Spots"/>
+                    <Button Classes="compact-button" Grid.Column="2" Content="Close" Command="{Binding CloseSpotsCommand}"/>
                 </Grid>
                 <Grid x:Name="LocalsToolHeader" ColumnDefinitions="*,Auto,Auto" Margin="15,0,15,8" IsVisible="{Binding IsLocalsMode}">
-                    <TextBlock Text="LOCALS" Classes="section-label" VerticalAlignment="Center"/>
-                    <ToggleButton x:Name="ShowLocalMaskButton" Classes="tool-mask" Grid.Column="1" Content="Show Mask"
+                    <TextBlock Text="Locals" Classes="section-label" VerticalAlignment="Center"/>
+                    <ToggleButton x:Name="ShowLocalMaskButton" Classes="compact-button tool-mask" Grid.Column="1" Content="Show Mask"
                                   ToolTip.Tip="Show Mask (O) · Hold M to show temporarily"
-                                  IsChecked="{Binding ShowLocalMask}" AutomationProperties.Name="Show selected mask" Padding="5,3" FontSize="10"/>
-                    <Button x:Name="CloseLocalsButton" Grid.Column="2" Content="Close" Command="{Binding CloseLocalsCommand}" Padding="5,3" FontSize="10"/>
+                                  IsChecked="{Binding ShowLocalMask}" AutomationProperties.Name="Show selected mask"/>
+                    <Button Classes="compact-button" x:Name="CloseLocalsButton" Grid.Column="2" Content="Close" Command="{Binding CloseLocalsCommand}"/>
                 </Grid>
             </StackPanel>
 
@@ -207,15 +201,14 @@
                                             ToolTip.Tip="Automatic white balance"/>
                                     <ToggleButton x:Name="WhiteBalancePickerButton"
                                                   Grid.Column="2"
-                                                  Classes="wb-picker"
+                                                  Classes="icon-button wb-picker"
                                                   Command="{Binding ToggleWhiteBalancePickerCommand}"
                                                   IsChecked="{Binding IsWhiteBalancePicking, Mode=OneWay}"
                                                   Margin="4,0,0,0"
                                                   ToolTip.Tip="White balance eyedropper (W)">
-                                        <Viewbox Width="16" Height="16">
+                                        <Viewbox Width="14" Height="14">
                                             <Canvas Width="24" Height="24">
-                                                <Path Stroke="{DynamicResource TextPrimary}"
-                                                      StrokeThickness="1.8"
+                                                <Path StrokeThickness="1.8"
                                                       StrokeLineCap="Round"
                                                       StrokeJoin="Round"
                                                       Data="M2,22 L3,21 L6,21 L15,12 M3,21 L3,18 L12,9 M15,6 L18.4,2.6 C19.2,1.8 20.5,1.8 21.3,2.6 C22.1,3.4 22.1,4.7 21.3,5.5 L18,9 Z M15,6 L12,9 L15,12 L18,9 Z"/>
@@ -321,7 +314,7 @@
                                 <Grid x:Name="HighlightHandlingRow"
                                       Classes="highlight-handling-row"
                                       ColumnDefinitions="70,*,40"
-                                      Height="26"
+                                      Height="24"
                                       Margin="0,0,0,4"
                                       IsEnabled="{Binding IsHighlightHandlingEnabled}">
                                     <TextBlock Classes="edit-control-label"

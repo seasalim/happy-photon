@@ -18,7 +18,7 @@
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
         </Style>
         <Style Selector="Button.history-row:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
@@ -40,8 +40,8 @@
             <Grid x:Name="HistoryHeader" ColumnDefinitions="*,Auto" MinHeight="24">
                 <TextBlock x:Name="HistoryLabel" Classes="section-label" Text="History"
                            VerticalAlignment="Center"/>
-                <Button Grid.Column="1" x:Name="ClearHistoryButton" Content="Clear" Classes="quiet-button"
-                        Height="22" MinHeight="22" MaxHeight="22" VerticalAlignment="Center"
+                <Button Grid.Column="1" x:Name="ClearHistoryButton" Content="Clear" Classes="compact-button"
+                        VerticalAlignment="Center"
                         Command="{Binding ClearHistoryCommand}"/>
             </Grid>
         </Border>
@@ -49,7 +49,7 @@
             <ItemsControl ItemsSource="{Binding HistoryEntries}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:EditHistoryEntry">
-                        <Button x:CompileBindings="False" Content="{Binding Label}" Classes="history-row"
+                        <Button x:CompileBindings="False" Content="{Binding Label}" Classes="compact-button history-row"
                                 Classes.current="{Binding IsCurrent}"
                                 PointerEntered="OnHistoryRowPointerEntered"
                                 PointerExited="OnHistoryRowPointerExited"

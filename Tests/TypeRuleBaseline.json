@@ -1,10 +1,5 @@
 [
   {
-    "Path": "Views/AssessmentFeedbackOverlay.axaml",
-    "Text": "FontSize=\u002218\u0022",
-    "Count": 1
-  },
-  {
     "Path": "Views/BrowseColorLabelFilter.axaml",
     "Text": "FontSize=\u002210\u0022",
     "Count": 1
@@ -60,103 +55,8 @@
     "Count": 1
   },
   {
-    "Path": "Views/CompactSlider.axaml",
-    "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u002211\u0022/\u003E",
-    "Count": 2
-  },
-  {
-    "Path": "Views/CompactSlider.axaml",
-    "Text": "FontSize=\u002211\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/CompareView.axaml",
-    "Text": "FontSize=\u002210\u0022",
-    "Count": 2
-  },
-  {
-    "Path": "Views/CompareView.axaml",
-    "Text": "FontSize=\u002211\u0022",
-    "Count": 2
-  },
-  {
-    "Path": "Views/CompareView.axaml",
-    "Text": "FontSize=\u00229\u0022",
-    "Count": 3
-  },
-  {
     "Path": "Views/ConfirmationDialog.cs",
     "Text": "FontSize = 13",
-    "Count": 1
-  },
-  {
-    "Path": "Views/CropEditSection.axaml",
-    "Text": "FontSize=\u002210\u0022",
-    "Count": 3
-  },
-  {
-    "Path": "Views/CurveView.axaml",
-    "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u00229\u0022/\u003E",
-    "Count": 1
-  },
-  {
-    "Path": "Views/CurveView.axaml",
-    "Text": "\u003CSetter Property=\u0022LetterSpacing\u0022 Value=\u00221\u0022/\u003E",
-    "Count": 1
-  },
-  {
-    "Path": "Views/CurveView.axaml",
-    "Text": "FontSize=\u00229\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/DevelopActionBar.axaml",
-    "Text": "\u003CSetter Property=\u0022LetterSpacing\u0022 Value=\u00221\u0022/\u003E",
-    "Count": 1
-  },
-  {
-    "Path": "Views/DevelopEditPanel.axaml",
-    "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u002212\u0022/\u003E",
-    "Count": 1
-  },
-  {
-    "Path": "Views/DevelopEditPanel.axaml",
-    "Text": "FontSize=\u002210\u0022",
-    "Count": 6
-  },
-  {
-    "Path": "Views/DevelopViewerPane.axaml",
-    "Text": "FontSize=\u002210\u0022",
-    "Count": 6
-  },
-  {
-    "Path": "Views/DevelopViewerPane.axaml",
-    "Text": "FontSize=\u002211\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/DevelopViewerPane.axaml",
-    "Text": "FontSize=\u002214\u0022",
-    "Count": 2
-  },
-  {
-    "Path": "Views/DevelopViewerPane.axaml",
-    "Text": "FontSize=\u002216\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/DualRangeTrack.cs",
-    "Text": "FontSize = 10",
-    "Count": 1
-  },
-  {
-    "Path": "Views/DualRangeTrack.cs",
-    "Text": "FontSize = 11",
-    "Count": 1
-  },
-  {
-    "Path": "Views/EditHistoryPanel.axaml",
-    "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u002211\u0022/\u003E",
     "Count": 1
   },
   {
@@ -290,11 +190,6 @@
     "Count": 1
   },
   {
-    "Path": "Views/HistogramView.axaml",
-    "Text": "FontSize=\u00228\u0022",
-    "Count": 4
-  },
-  {
     "Path": "Views/ImageAssessmentControl.axaml",
     "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u002210\u0022/\u003E",
     "Count": 1
@@ -325,36 +220,6 @@
     "Count": 1
   },
   {
-    "Path": "Views/LensEditGroup.axaml",
-    "Text": "FontSize=\u00229\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/LensEditGroup.axaml",
-    "Text": "LetterSpacing=\u00220.6\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/LocalsEditSection.axaml",
-    "Text": "FontSize=\u002210\u0022",
-    "Count": 22
-  },
-  {
-    "Path": "Views/LocalsEditSection.axaml",
-    "Text": "FontSize=\u00229\u0022",
-    "Count": 4
-  },
-  {
-    "Path": "Views/LoupeView.axaml",
-    "Text": "FontSize=\u002210\u0022",
-    "Count": 3
-  },
-  {
-    "Path": "Views/LoupeView.axaml",
-    "Text": "FontSize=\u002211\u0022",
-    "Count": 1
-  },
-  {
     "Path": "Views/MainWindow.axaml",
     "Text": "FontSize=\u002210\u0022",
     "Count": 1
@@ -375,16 +240,6 @@
     "Count": 2
   },
   {
-    "Path": "Views/PresetsPanel.axaml",
-    "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u002211\u0022/\u003E",
-    "Count": 1
-  },
-  {
-    "Path": "Views/RawProfilePicker.axaml",
-    "Text": "\u003CSetter Property=\u0022LetterSpacing\u0022 Value=\u00221\u0022/\u003E",
-    "Count": 2
-  },
-  {
     "Path": "Views/SettingsDialog.axaml",
     "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u002212\u0022/\u003E",
     "Count": 1
@@ -398,11 +253,6 @@
     "Path": "Views/SettingsDialog.axaml",
     "Text": "FontSize=\u002220\u0022",
     "Count": 1
-  },
-  {
-    "Path": "Views/SpotsEditSection.axaml",
-    "Text": "FontSize=\u002211\u0022",
-    "Count": 2
   },
   {
     "Path": "Views/TextInputDialog.cs",
@@ -423,15 +273,5 @@
     "Path": "Views/WorkflowCoachmark.axaml",
     "Text": "LetterSpacing=\u00221\u0022",
     "Count": 1
-  },
-  {
-    "Path": "Views/ZoomPanControl.axaml",
-    "Text": "FontSize=\u00229\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/ZoomPanControl.axaml",
-    "Text": "LetterSpacing=\u00221\u0022",
-    "Count": 2
   }
 ]

@@ -21,26 +21,44 @@
                                   ContentInset="10"/>
             <TextBlock Text="Loading preview…"
                        IsVisible="{Binding LoupePane.IsLoadingMessageVisible}"
-                       HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" FontSize="11"/>
+                       HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}" FontSize="{StaticResource FontSizeBody}"/>
             <views:AssessmentFeedbackOverlay x:Name="LoupeAssessmentFeedbackOverlay"
                                              HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="16,16,16,32"/>
         </Panel>
         <Border Grid.Row="1" Padding="12,6"
                 Background="{DynamicResource ViewerControlBarBackground}" HorizontalAlignment="Center" Margin="0,4,0,8">
             <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button x:Name="LoupePreviousButton" Command="{Binding SelectPreviousImageCommand}"
-                        Content="←" ToolTip.Tip="Previous image (←)" Padding="7,3" BorderThickness="0"/>
-                <Button x:Name="LoupeNextButton" Command="{Binding SelectNextImageCommand}"
-                        Content="→" ToolTip.Tip="Next image (→)" Padding="7,3" BorderThickness="0"/>
-                <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}" Margin="4,0"/>
-                <ToggleButton x:Name="LoupeActualSizeButton"
+                <Button Classes="icon-button" x:Name="LoupePreviousButton" Command="{Binding SelectPreviousImageCommand}"
+                        ToolTip.Tip="Previous image (←)" AutomationProperties.Name="←">
+                    <Viewbox Width="14" Height="14">
+                        <Canvas Width="16" Height="16">
+                            <Path Data="M10,3.5 L5.5,8 L10,12.5" Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+                <Button Classes="icon-button" x:Name="LoupeNextButton" Command="{Binding SelectNextImageCommand}"
+                        ToolTip.Tip="Next image (→)" AutomationProperties.Name="→">
+                    <Viewbox Width="14" Height="14">
+                        <Canvas Width="16" Height="16">
+                            <Path Data="M6,3.5 L10.5,8 L6,12.5" Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+                <Rectangle Width="1" Height="16" Fill="{DynamicResource Divider}" Margin="4,0"/>
+                <ToggleButton Classes="compact-button" x:Name="LoupeActualSizeButton"
                               IsChecked="{Binding !IsZoomFitMode, Mode=OneWay}" Command="{Binding ToggleActualSizeCommand}"
-                              Content="1:1" ToolTip.Tip="Fit / 1:1 (Space or Z)" FontSize="10" Padding="8,3" BorderThickness="0"/>
-                <Button x:Name="LoupeFullScreenButton" Command="{Binding ToggleFullScreenCommand}"
-                        Content="Full" ToolTip.Tip="Fullscreen (F)" FontSize="10" Padding="8,3" BorderThickness="0"/>
-                <Button x:Name="LoupeGridButton"
+                              Content="1:1" ToolTip.Tip="Fit / 1:1 (Space or Z)"/>
+                <Button Classes="icon-button" x:Name="LoupeFullScreenButton" Command="{Binding ToggleFullScreenCommand}"
+                        ToolTip.Tip="Fullscreen (F)" AutomationProperties.Name="Full">
+                    <Viewbox Width="14" Height="14">
+                        <Canvas Width="16" Height="16">
+                            <Path Data="M2,6 L2,2 L6,2 M10,2 L14,2 L14,6 M14,10 L14,14 L10,14 M6,14 L2,14 L2,10" Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+                <Button Classes="compact-button" x:Name="LoupeGridButton"
                         Command="{Binding ExitLoupeCommand}" Content="Grid"
-                        ToolTip.Tip="Return to grid (G)" FontSize="10" Padding="8,3" BorderThickness="0"/>
+                        ToolTip.Tip="Return to grid (G)"/>
             </StackPanel>
         </Border>
     </Grid>

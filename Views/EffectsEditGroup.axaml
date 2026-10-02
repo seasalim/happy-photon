@@ -8,12 +8,6 @@
              x:Class="HappyPhoton.Views.EffectsEditGroup"
              x:DataType="vm:MainWindowViewModel">
     <UserControl.Styles>
-        <Style Selector="TextBlock.effects-control-label">
-            <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
         <Style Selector="Grid.midpoint-row">
             <Setter Property="Opacity" Value="1"/>
         </Style>
@@ -54,8 +48,8 @@
                              EnableDoubleClickReset="True"/>
         <Grid x:Name="GrainSizeRow"
               ColumnDefinitions="70,*,40"
-              Height="26">
-            <TextBlock Classes="effects-control-label" Text="Size"/>
+              Height="24">
+            <TextBlock Classes="edit-control-label" Text="Size"/>
             <ListBox x:Name="GrainSizeControl"
                      Grid.Column="1"
                      Grid.ColumnSpan="2"

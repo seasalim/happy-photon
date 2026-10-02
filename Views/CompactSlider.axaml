@@ -9,7 +9,7 @@
             <Setter Property="Grid.Column" Value="0"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         <Style Selector="Border#TrackArea">
@@ -21,7 +21,7 @@
             <Setter Property="Grid.Column" Value="2"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
@@ -85,7 +85,7 @@
         </Border>
 
         <!-- The overlay borrows only the existing margins, preserving the 40px column. -->
-        <Border x:Name="ValueCell" Grid.Column="2" Width="49" Height="18"
+        <Border x:Name="ValueCell" Grid.Column="2" Width="49" Height="20"
                 Margin="-6,0,-3,0"
                 IsVisible="{Binding IsValueEntryEnabled, ElementName=SliderRoot}"/>
         <!-- Value on the right -->
@@ -96,7 +96,7 @@
                               Width="49" Height="18" MinWidth="0" MinHeight="0"
                               Margin="-6,0,-3,0" Padding="2,0" BorderThickness="1"
                               CornerRadius="0" VerticalAlignment="Center"
-                              FontFamily="{StaticResource FontLabel}" FontSize="11"
+                              FontFamily="{StaticResource FontLabel}" FontSize="{StaticResource FontSizeBody}"
                               TextAlignment="Right" VerticalContentAlignment="Center"
                               Background="{DynamicResource SurfaceHigh}"
                               BorderBrush="{DynamicResource Outline}"

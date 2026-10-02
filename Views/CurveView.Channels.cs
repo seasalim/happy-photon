@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Media;
 using HappyPhoton.Models;
 
@@ -74,26 +73,11 @@ public partial class CurveView
         _ => HappyPhotonColors.ControlActive
     };
 
-    private void OnCompositeChannelClick(object? sender, RoutedEventArgs e) =>
-        SelectChannel(ToneCurveChannel.Composite);
-
-    private void OnRedChannelClick(object? sender, RoutedEventArgs e) =>
-        SelectChannel(ToneCurveChannel.Red);
-
-    private void OnGreenChannelClick(object? sender, RoutedEventArgs e) =>
-        SelectChannel(ToneCurveChannel.Green);
-
-    private void OnBlueChannelClick(object? sender, RoutedEventArgs e) =>
-        SelectChannel(ToneCurveChannel.Blue);
-
-    private void SelectChannel(ToneCurveChannel channel)
+    private void OnChannelSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (!AreColorChannelsEnabled && channel != ToneCurveChannel.Composite)
-        {
-            return;
-        }
-        SetCurrentValue(ActiveChannelProperty, channel);
-        UpdateChannelSelectors();
+        if (ChannelPicker == null || ChannelPicker.SelectedIndex < 0) return;
+
+        SetCurrentValue(ActiveChannelProperty, (ToneCurveChannel)ChannelPicker.SelectedIndex);
     }
 
     private void UpdateChannelSelectors()
@@ -103,12 +87,7 @@ public partial class CurveView
             return;
         }
 
-        CompositeChannelButton.Classes.Set(
-            "active", ActiveChannel == ToneCurveChannel.Composite);
-        RedChannelButton.Classes.Set("active", ActiveChannel == ToneCurveChannel.Red);
-        GreenChannelButton.Classes.Set(
-            "active", ActiveChannel == ToneCurveChannel.Green);
-        BlueChannelButton.Classes.Set("active", ActiveChannel == ToneCurveChannel.Blue);
+        ChannelPicker.SelectedIndex = (int)ActiveChannel;
         RedChannelButton.Classes.Set("touched", HasRedCurve);
         GreenChannelButton.Classes.Set("touched", HasGreenCurve);
         BlueChannelButton.Classes.Set("touched", HasBlueCurve);

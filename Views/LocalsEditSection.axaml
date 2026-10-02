@@ -45,18 +45,12 @@
         <Style Selector="views|CompactSlider:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
-        <Style Selector="ToggleButton.geometry-disclosure Path">
-            <Setter Property="Data" Value="M 0,0 L 3,3 L 0,6"/>
-        </Style>
-        <Style Selector="ToggleButton.geometry-disclosure:checked Path">
-            <Setter Property="Data" Value="M 0,0 L 3,3 L 6,0"/>
-        </Style>
     </UserControl.Styles>
     <StackPanel Spacing="8" Margin="0,0,0,12">
         <StackPanel x:Name="LocalCreationRow" Orientation="Horizontal" Spacing="5" IsEnabled="{Binding CanAddLocal}">
-            <Button x:Name="AddLinearButton" Content="+ Linear" Command="{Binding AddLinearCommand}" Padding="8,4" FontSize="10"/>
-            <Button x:Name="AddRadialButton" Content="+ Radial" Command="{Binding AddRadialCommand}" Padding="8,4" FontSize="10"/>
-            <Button x:Name="AddBrushButton" Content="+ Brush" ToolTip.Tip="Arm Brush (B)" Command="{Binding AddBrushCommand}" Padding="8,4" FontSize="10"/>
+            <Button Classes="compact-button" x:Name="AddLinearButton" Content="+ Linear" Command="{Binding AddLinearCommand}"/>
+            <Button Classes="compact-button" x:Name="AddRadialButton" Content="+ Radial" Command="{Binding AddRadialCommand}"/>
+            <Button Classes="compact-button" x:Name="AddBrushButton" Content="+ Brush" ToolTip.Tip="Arm Brush (B)" Command="{Binding AddBrushCommand}"/>
         </StackPanel>
         <StackPanel x:Name="LocalDetailsArea" MinHeight="40" Spacing="8">
             <StackPanel x:Name="LocalEditor" Grid.IsSharedSizeScope="True" Spacing="8" IsVisible="{Binding HasLocals}">
@@ -74,11 +68,16 @@
                                            Width="{StaticResource MaskRowControlSize}" VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="2" Text="{Binding Name}" Classes.muted="{Binding !Enabled}" FontSize="{StaticResource FontSizeBody}"
                                            HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                                <Button Grid.Column="3" Classes="delete-local" Content="×" AutomationProperties.Name="Delete local"
-                                        Padding="{StaticResource MaskRowControlPadding}" MinHeight="{StaticResource MaskRowControlSize}"
+                                <Button Grid.Column="3" Classes="icon-button compact delete-local" AutomationProperties.Name="Delete local"
+                                        MinHeight="{StaticResource MaskRowControlSize}"
                                         Height="{StaticResource MaskRowControlSize}" Width="{StaticResource MaskRowControlSize}" VerticalAlignment="Center"
                                         Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).DeleteLocalCommand}"
-                                        CommandParameter="{Binding Local}"/>
+                                        CommandParameter="{Binding Local}">
+                                    <Viewbox Width="12" Height="12"><Canvas Width="16" Height="16">
+                                        <Path Data="M4,4 L12,12 M12,4 L4,12" StrokeThickness="1.5" StrokeLineCap="Round"
+                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ContentPresenter}}"/>
+                                    </Canvas></Viewbox>
+                                </Button>
                             </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
@@ -114,56 +113,45 @@
                     <views:CompactSlider Label="Saturation" Value="{Binding LocalSaturation}" Minimum="-100" Maximum="100"
                                          SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
                 </StackPanel>
-                <TextBlock Text="Monochrome RAW — color controls unavailable" IsVisible="{Binding IsMonochromeSource}"
-                           TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                <TextBlock Classes="hint-text" Text="Monochrome RAW — color controls unavailable" IsVisible="{Binding IsMonochromeSource}"/>
                 <StackPanel Orientation="Horizontal" Spacing="5">
-                    <Button Content="Reset adjustments" Command="{Binding ResetLocalAdjustmentsCommand}"
-                            IsEnabled="{Binding HasSelectedLocal}" Padding="8,4" FontSize="10"/>
-                    <Button x:Name="CenterLocalInViewButton" IsVisible="{Binding IsGradientSectionVisible}" Content="Center in view"
-                            IsEnabled="{Binding CanEditLocalGeometry}" Command="{Binding CenterLocalInViewCommand}" Padding="8,4" FontSize="10"/>
+                    <Button Classes="compact-button" Content="Reset adjustments" Command="{Binding ResetLocalAdjustmentsCommand}"
+                            IsEnabled="{Binding HasSelectedLocal}"/>
+                    <Button Classes="compact-button" x:Name="CenterLocalInViewButton" IsVisible="{Binding IsGradientSectionVisible}" Content="Center in view"
+                            IsEnabled="{Binding CanEditLocalGeometry}" Command="{Binding CenterLocalInViewCommand}"/>
                 </StackPanel>
             </StackPanel>
             <StackPanel x:Name="BrushSection" Spacing="6" IsVisible="{Binding IsBrushSectionVisible}" IsEnabled="{Binding CanEditLocals}">
-                <TextBlock Text="Brush" Classes="section-label" FontSize="10"/>
+                <TextBlock Text="Brush" Classes="section-label"/>
                 <Grid ColumnDefinitions="*,*">
-                    <ToggleButton x:Name="BrushPaintButton" ToolTip.Tip="Paint (hold Alt to erase)" Classes="mask" Content="Paint" IsChecked="{Binding IsBrushPaint, Mode=OneWay}"
+                    <ToggleButton x:Name="BrushPaintButton" ToolTip.Tip="Paint (hold Alt to erase)" Classes="compact-button mask" Content="Paint" IsChecked="{Binding IsBrushPaint, Mode=OneWay}"
                                   Command="{Binding SetBrushModeCommand}" CommandParameter="paint" HorizontalAlignment="Stretch"
-                                  HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
-                    <ToggleButton x:Name="BrushEraseButton" ToolTip.Tip="Erase (hold Alt to paint)" Classes="mask" Grid.Column="1" Content="Erase" IsChecked="{Binding IsBrushErase, Mode=OneWay}"
+                                  HorizontalContentAlignment="Center"/>
+                    <ToggleButton x:Name="BrushEraseButton" ToolTip.Tip="Erase (hold Alt to paint)" Classes="compact-button mask" Grid.Column="1" Content="Erase" IsChecked="{Binding IsBrushErase, Mode=OneWay}"
                                   Command="{Binding SetBrushModeCommand}" CommandParameter="erase" HorizontalAlignment="Stretch"
-                                  HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
+                                  HorizontalContentAlignment="Center"/>
                 </Grid>
                 <views:CompactSlider x:Name="BrushSizeSlider" ToolTip.Tip="Size ([ / ])" Label="Size" Value="{Binding BrushSize}" Minimum="1" Maximum="100" SmallChange="1"/>
                 <views:CompactSlider x:Name="BrushFeatherSlider" ToolTip.Tip="Feather (Shift+[ / Shift+])" Label="Feather" Value="{Binding BrushFeather}" Minimum="0" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%"/>
                 <views:CompactSlider Label="Flow" Value="{Binding BrushFlow}" Minimum="5" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%"/>
-                <Button Content="Clear strokes" Command="{Binding ClearBrushStrokesCommand}" IsVisible="{Binding !IsBrushCreationArmed}"
-                        Padding="8,4" FontSize="10"/>
+                <Button Classes="compact-button" Content="Clear strokes" Command="{Binding ClearBrushStrokesCommand}" IsVisible="{Binding !IsBrushCreationArmed}"/>
             </StackPanel>
             <StackPanel Spacing="8" Grid.IsSharedSizeScope="True" IsVisible="{Binding HasLocals}">
                 <Grid ColumnDefinitions="*,*" IsVisible="{Binding IsRadialLocal}" IsEnabled="{Binding CanEditLocalGeometry}">
-                    <ToggleButton Classes="mask" Content="Inside" IsChecked="{Binding IsLocalInside, Mode=OneWay}"
+                    <ToggleButton Classes="compact-button mask" Content="Inside" IsChecked="{Binding IsLocalInside, Mode=OneWay}"
                                   Command="{Binding SetLocalPolarityCommand}" CommandParameter="inside" HorizontalAlignment="Stretch"
-                                  HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
-                    <ToggleButton Classes="mask" Grid.Column="1" Content="Outside" IsChecked="{Binding IsLocalOutside, Mode=OneWay}"
+                                  HorizontalContentAlignment="Center"/>
+                    <ToggleButton Classes="compact-button mask" Grid.Column="1" Content="Outside" IsChecked="{Binding IsLocalOutside, Mode=OneWay}"
                                   Command="{Binding SetLocalPolarityCommand}" CommandParameter="outside" HorizontalAlignment="Stretch"
-                                  HorizontalContentAlignment="Center" Padding="5,3" FontSize="10"/>
+                                  HorizontalContentAlignment="Center"/>
                 </Grid>
-                <ToggleButton x:Name="LocalGeometryDisclosure" IsVisible="{Binding IsGradientSectionVisible}" Classes="geometry-disclosure"
+                <ToggleButton x:Name="LocalGeometryDisclosure" IsVisible="{Binding IsGradientSectionVisible}" Classes="compact-button compact-chevron"
                               IsChecked="{Binding IsLocalGeometryExpanded}" AutomationProperties.Name="Geometry"
-                              HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="0"
-                              Background="Transparent" BorderThickness="0" MinHeight="20">
-                    <ToggleButton.Template>
-                        <ControlTemplate>
-                            <ContentPresenter Content="{TemplateBinding Content}"
-                                              Background="{TemplateBinding Background}"
-                                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalContentAlignment="Center"/>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
+                              HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                              Background="Transparent" MinHeight="20">
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="Geometry" Classes="section-label" FontSize="10"/>
-                        <Path Width="6" Height="6" VerticalAlignment="Center"
-                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1"/>
+                        <TextBlock Text="Geometry" Classes="section-label"/>
+                        <Path VerticalAlignment="Center"/>
                     </StackPanel>
                 </ToggleButton>
                 <StackPanel IsVisible="{Binding IsGradientGeometryExpanded}" IsEnabled="{Binding CanEditLocalGeometry}">
@@ -191,16 +179,12 @@
                         <ColumnDefinition Width="Auto" SharedSizeGroup="LocalRangeHeader"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <ToggleButton x:Name="LocalLuminanceDisclosure" Classes="geometry-disclosure" IsChecked="{Binding IsLocalLuminanceExpanded}"
-                                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="0"
-                                  Background="Transparent" BorderThickness="0" MinHeight="20" AutomationProperties.Name="Luminance Range">
-                        <ToggleButton.Template>
-                            <ControlTemplate><ContentPresenter Content="{TemplateBinding Content}" Background="{TemplateBinding Background}"
-                                HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/></ControlTemplate>
-                        </ToggleButton.Template>
+                    <ToggleButton x:Name="LocalLuminanceDisclosure" Classes="compact-button compact-chevron" IsChecked="{Binding IsLocalLuminanceExpanded}"
+                                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                  Background="Transparent" MinHeight="20" AutomationProperties.Name="Luminance Range">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="Luminance Range" Classes="section-label" FontSize="10"/>
-                            <Path Width="6" Height="6" VerticalAlignment="Center" Stroke="{DynamicResource TextMuted}" StrokeThickness="1"/>
+                            <TextBlock Text="Luminance Range" Classes="section-label"/>
+                            <Path VerticalAlignment="Center"/>
                         </StackPanel>
                     </ToggleButton>
                     <CheckBox x:Name="LocalLuminanceEnabled" Grid.Column="1" Margin="8,0,0,0"
@@ -217,24 +201,19 @@
                             <views:CompactSlider Classes="local-range" Label="Softness" Value="{Binding LocalLuminanceSoftness}"
                                                  Minimum="0" Maximum="50" SmallChange="1" AutomationProperties.Name="Luminance softness"/>
                         </StackPanel>
-                        <TextBlock Text="Ranges follow the base image before local adjustments. Global white balance or profile changes may change the mask."
-                                   TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                        <TextBlock Classes="hint-text" Text="Ranges follow the base image before local adjustments. Global white balance or profile changes may change the mask."/>
                 </StackPanel>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" SharedSizeGroup="LocalRangeHeader"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <ToggleButton x:Name="LocalHueDisclosure" Classes="geometry-disclosure" IsChecked="{Binding IsLocalHueExpanded}"
-                                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="0"
-                                  Background="Transparent" BorderThickness="0" MinHeight="20" AutomationProperties.Name="Hue Range">
-                        <ToggleButton.Template>
-                            <ControlTemplate><ContentPresenter Content="{TemplateBinding Content}" Background="{TemplateBinding Background}"
-                                HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/></ControlTemplate>
-                        </ToggleButton.Template>
+                    <ToggleButton x:Name="LocalHueDisclosure" Classes="compact-button compact-chevron" IsChecked="{Binding IsLocalHueExpanded}"
+                                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                  Background="Transparent" MinHeight="20" AutomationProperties.Name="Hue Range">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="Hue Range" Classes="section-label" FontSize="10"/>
-                            <Path Width="6" Height="6" VerticalAlignment="Center" Stroke="{DynamicResource TextMuted}" StrokeThickness="1"/>
+                            <TextBlock Text="Hue Range" Classes="section-label"/>
+                            <Path VerticalAlignment="Center"/>
                         </StackPanel>
                     </ToggleButton>
                     <CheckBox x:Name="LocalHueEnabled" Grid.Column="1" Margin="8,0,0,0" AutomationProperties.Name="Enable Hue Range"
@@ -247,9 +226,9 @@
                             <Style Selector="StackPanel:disabled"><Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/></Style>
                         </StackPanel.Styles>
                         <views:HueRangeStrip Center="{Binding LocalHueCenter}" IsSwatch="True" Width="22" Height="22"/>
-                        <ToggleButton x:Name="LocalHuePick" Content="Pick Hue" Classes="mask" IsChecked="{Binding IsLocalHuePicking, Mode=OneWay}"
+                        <ToggleButton x:Name="LocalHuePick" Content="Pick Hue" Classes="compact-button mask" IsChecked="{Binding IsLocalHuePicking, Mode=OneWay}"
                                       Command="{Binding ToggleLocalHuePickCommand}" IsEnabled="{Binding CanPickLocalHue}"
-                                      ToolTip.Tip="{Binding LocalHuePickAvailability}" AutomationProperties.Name="Pick Hue" Padding="8,4" FontSize="10"/>
+                                      ToolTip.Tip="{Binding LocalHuePickAvailability}" AutomationProperties.Name="Pick Hue"/>
                     </StackPanel>
                     <StackPanel Spacing="6" IsEnabled="{Binding CanEditLocalHue}">
                         <StackPanel.Styles>
@@ -265,29 +244,23 @@
                         <views:CompactSlider Classes="local-hue" Label="Softness" Value="{Binding LocalHueSoftness}"
                                              Minimum="0" Maximum="90" SmallChange="1" StringFormat="{}{0:0}°" AutomationProperties.Name="Hue softness"/>
                     </StackPanel>
-                    <TextBlock Text="Selects colors before local adjustments. Neutral colors fade out. Global white balance or profile changes may change the mask."
-                               TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-                    <TextBlock Text="{Binding LocalHuePickAvailability}" TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                    <TextBlock Classes="hint-text" Text="Selects colors before local adjustments. Neutral colors fade out. Global white balance or profile changes may change the mask."/>
+                    <TextBlock Classes="hint-text" Text="{Binding LocalHuePickAvailability}"/>
                 </StackPanel>
-                <TextBlock Text="Updating mask" IsVisible="{Binding IsLocalRangeMaskUpdating}" FontSize="10"
-                           Foreground="{DynamicResource TextMuted}"/>
+                <TextBlock Classes="hint-text" Text="Updating mask" IsVisible="{Binding IsLocalRangeMaskUpdating}"/>
             </StackPanel>
-            <TextBlock Text="{Binding LocalsInstruction}" IsVisible="{Binding !IsLocalCreationArmed}"
-                       TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
-            <StackPanel Orientation="Horizontal" IsVisible="{Binding IsLocalCreationArmed}"
+            <TextBlock Classes="hint-text" Text="{Binding LocalsInstruction}" IsVisible="{Binding !IsLocalCreationArmed}"/>
+            <WrapPanel IsVisible="{Binding IsLocalCreationArmed}"
                         AutomationProperties.Name="{Binding LocalsInstruction}">
-                <TextBlock Text="{Binding LocalsInstruction}" IsVisible="{Binding IsBrushCreationArmed}" TextWrapping="Wrap"
-                           FontSize="9" Foreground="{DynamicResource TextMuted}"/>
-                <TextBlock Text="Drag to place, or " IsVisible="{Binding !IsBrushCreationArmed}" FontSize="9" VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextMuted}"/>
-                <Button x:Name="PlaceLocalAtCenterButton" IsVisible="{Binding !IsBrushCreationArmed}" Content="Place at center"
-                        Command="{Binding PlaceLocalAtCenterCommand}" Padding="3,2" FontSize="9"/>
-                <TextBlock IsVisible="{Binding !IsBrushCreationArmed}" Text=" · Escape cancels" FontSize="9" VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextMuted}"/>
-            </StackPanel>
+                <TextBlock Classes="hint-text" Text="{Binding LocalsInstruction}" IsVisible="{Binding IsBrushCreationArmed}"/>
+                <TextBlock Classes="hint-text" Text="Drag to place, or " IsVisible="{Binding !IsBrushCreationArmed}" VerticalAlignment="Center"/>
+                <Button Classes="compact-button" x:Name="PlaceLocalAtCenterButton" IsVisible="{Binding !IsBrushCreationArmed}" Content="Place at center"
+                        Command="{Binding PlaceLocalAtCenterCommand}"/>
+                <TextBlock Classes="hint-text" IsVisible="{Binding !IsBrushCreationArmed}" Text=" · Escape cancels" VerticalAlignment="Center"/>
+            </WrapPanel>
         </StackPanel>
-        <Button Content="Return to local editing" Command="{Binding ResumeLocalEditingCommand}"
-                IsVisible="{Binding !CanEditLocals}" FontSize="10" Padding="5,3"/>
+        <Button Classes="compact-button" Content="Return to local editing" Command="{Binding ResumeLocalEditingCommand}"
+                IsVisible="{Binding !CanEditLocals}"/>
         <Border BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0"/>
     </StackPanel>
 </UserControl>
