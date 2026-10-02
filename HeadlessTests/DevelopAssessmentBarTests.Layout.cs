@@ -120,7 +120,13 @@ public sealed partial class DevelopAssessmentBarTests
             var workspace = pane.GetVisualAncestors().OfType<Grid>()
                 .Single(grid => grid.ColumnDefinitions.Count == 5);
 
-            workspace.ColumnDefinitions[0].Width = new GridLength(compact ? 650 : 950);
+            // Pane maximums (400/450) bound the viewer, so use a window where they still reach each tier.
+            window.Width = 1500;
+            Settle(window);
+            AssertMode(pane, true, false);
+
+            workspace.ColumnDefinitions[0].Width = new GridLength(400);
+            workspace.ColumnDefinitions[4].Width = new GridLength(compact ? 250 : 450);
             Settle(window);
             AssertMode(pane, false, compact);
 

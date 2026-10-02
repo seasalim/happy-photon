@@ -69,13 +69,13 @@
     </Window.Styles>
 
     <Panel>
-    <Grid RowDefinitions="40,*,Auto,24">
+    <Grid RowDefinitions="40,*,Auto,24" SizeChanged="OnShellSizeChanged">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240" MinWidth="150"/>
+            <ColumnDefinition Width="240" MinWidth="150" MaxWidth="400"/>
             <ColumnDefinition Width="1"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*" MinWidth="300"/>
             <ColumnDefinition Width="1"/>
-            <ColumnDefinition Width="250" MinWidth="200"/>
+            <ColumnDefinition Width="250" MinWidth="200" MaxWidth="450"/>
         </Grid.ColumnDefinitions>
 
         <views:HappyPhotonTitleBar x:Name="HappyPhotonTitleBar" Grid.Row="0" Grid.ColumnSpan="5"/>
@@ -93,7 +93,12 @@
                         Grid.Row="0" Background="{DynamicResource SurfaceHigh}" Padding="8"
                         BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1">
                     <StackPanel>
-                        <TextBlock Classes="section-label" Text="Navigator" Margin="0,0,0,6"/>
+                        <Grid x:Name="NavigatorHeader" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                            <TextBlock Classes="section-label" Text="Navigator"/>
+                            <TextBlock x:Name="NavigatorZoomReadout" Grid.Column="1" Text="{Binding ZoomReadout}"
+                                       VerticalAlignment="Center" FontSize="{StaticResource FontSizeSmall}"
+                                       Foreground="{DynamicResource TextMuted}"/>
+                        </Grid>
                         <Border x:Name="NavigatorPreviewFrame"
                                 Background="{DynamicResource SurfaceLow}" CornerRadius="3"
                                 Height="168" HorizontalAlignment="Stretch">

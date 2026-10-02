@@ -8,10 +8,15 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ZoomReadout))]
     private bool _isZoomFitMode = true;
 
     [ObservableProperty]
     private PixelSize _originalViewPixelSize;
+
+    public string ZoomReadout => HasSelectedImage && (IsDevelopMode || IsLoupeMode)
+        ? IsZoomFitMode ? "Fit" : ZoomLevel.ToString("P0")
+        : string.Empty;
 
     public double ManualZoomLevel
     {
@@ -87,6 +92,9 @@ public partial class MainWindowViewModel
         }
     }
 
-    partial void OnZoomLevelChanged(double value) =>
+    partial void OnZoomLevelChanged(double value)
+    {
         OnPropertyChanged(nameof(ManualZoomLevel));
+        OnPropertyChanged(nameof(ZoomReadout));
+    }
 }

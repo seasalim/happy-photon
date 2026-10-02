@@ -84,6 +84,10 @@
                          StackPanel.global-edits.locked Grid.highlight-handling-row">
             <Setter Property="Opacity" Value="1"/>
         </Style>
+        <Style Selector="Grid.shooting-info TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        </Style>
     </UserControl.Styles>
 
     <Border Background="{DynamicResource SurfaceMid}"
@@ -110,6 +114,14 @@
                                 x:Name="DevelopWaveform"
                                 Waveform="{Binding EffectiveWaveform}"
                                 IsVisible="{Binding IsWaveformScopeEffective}"/>
+                        </Grid>
+                        <Grid x:Name="ShootingInfoRow" Classes="shooting-info" ColumnDefinitions="*,*,*,*"
+                              IsVisible="{Binding SelectedImage.HasShootingInfo, FallbackValue=False}">
+                            <TextBlock Text="{Binding SelectedImage.IsoDisplay}" TextAlignment="Left"/>
+                            <TextBlock Grid.Column="1" Text="{Binding SelectedImage.FocalLengthDisplay}" TextAlignment="Center"
+                                       ToolTip.Tip="{Binding SelectedImage.ExposureTooltip}"/>
+                            <TextBlock Grid.Column="2" Text="{Binding SelectedImage.ApertureDisplay}" TextAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Text="{Binding SelectedImage.ShutterDisplay}" TextAlignment="Right"/>
                         </Grid>
                     </StackPanel>
                 </Border>

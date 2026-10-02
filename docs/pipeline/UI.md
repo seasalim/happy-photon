@@ -269,6 +269,7 @@ CHARACTERIZATION.md §7.6.
   required device-pixel long edge for resting rendering; pan and zoom-out do not
   rerender. A monitor-scaling change recomputes the same geometry and bound.
 - Develop's bar uses fixed width tiers (full, no Zoom slider, then a view-actions menu) before sizing its assessment slot; wheel zoom remains available when the slider is hidden.
+- The Navigator shows Fit or the slider percentage for a selected photo in Develop and Loupe, including when the slider is hidden.
 ## 5. Scope box + preview activity
 
 - The fixed scope box selects display histogram, luminance waveform or RAW sensor
@@ -276,6 +277,7 @@ CHARACTERIZATION.md §7.6.
   bodies may grow only while selected. Selection is session state; unavailable RAW
   stays disabled with a reason and falls back to display without losing the preference.
   Browse shows only the thumbnail histogram. RGB parade remains deferred.
+- A read-only row below either scope shows ISO, focal length, aperture and shutter; it hides when all four values are missing.
 - RAW shows sensor channels and clipping percentages, never a display luminance line.
   Display triangles indicate source saturation on the right and finalized floor on
   the left. Missing/stale statistics darken them; unsupported source highlights disable

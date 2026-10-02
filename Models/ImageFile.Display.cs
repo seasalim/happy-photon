@@ -155,6 +155,19 @@ public partial class ImageFile
         _ => null   // 0 unknown, 5 pattern (the default), 255 other
     };
 
+    public string? IsoDisplay => Iso.HasValue ? $"ISO {Iso}" : null;
+
+    public string? FocalLengthDisplay => FocalLength is { } focal
+        ? focal < 10 ? $"{focal:F1} mm" : $"{focal:F0} mm"
+        : null;
+
+    public string? ApertureDisplay => FNumber.HasValue ? $"f/{FNumber:F1}" : null;
+
+    public string? ShutterDisplay => string.IsNullOrEmpty(ExposureTime) ? null : $"{ExposureTime} s";
+
+    public bool HasShootingInfo => Iso.HasValue || FocalLength.HasValue ||
+        FNumber.HasValue || !string.IsNullOrEmpty(ExposureTime);
+
     public string? ExposureDisplay
     {
         get
@@ -293,6 +306,11 @@ public partial class ImageFile
 
     private void NotifyExposureDisplayChanged()
     {
+        OnPropertyChanged(nameof(IsoDisplay));
+        OnPropertyChanged(nameof(FocalLengthDisplay));
+        OnPropertyChanged(nameof(ApertureDisplay));
+        OnPropertyChanged(nameof(ShutterDisplay));
+        OnPropertyChanged(nameof(HasShootingInfo));
         OnPropertyChanged(nameof(ExposureDisplay));
         OnPropertyChanged(nameof(HasCameraMetadata));
     }

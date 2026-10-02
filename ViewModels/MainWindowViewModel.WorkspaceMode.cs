@@ -7,6 +7,7 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ZoomReadout))]
     [NotifyPropertyChangedFor(nameof(IsDevelopMode))]
     [NotifyPropertyChangedFor(nameof(IsBrowseMode))]
     [NotifyPropertyChangedFor(nameof(IsExportMode))]

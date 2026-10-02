@@ -30,10 +30,11 @@ public sealed class DevelopAssessmentBarShowcaseTests
                     var workspace = pane.GetVisualAncestors().OfType<Grid>()
                         .Single(grid => grid.ColumnDefinitions.Count == 5);
 
-                    // Full and compact use default panes; widen the inspector for the empty tier.
+                    // Full and compact use default panes; widen both panes (within their maximums) for the empty tier.
                     if (scene == "develop-bar-empty")
                     {
-                        workspace.ColumnDefinitions[4].Width = new GridLength(598);
+                        workspace.ColumnDefinitions[0].Width = new GridLength(400);
+                        workspace.ColumnDefinitions[4].Width = new GridLength(388);
                     }
 
                     window.UpdateLayout();

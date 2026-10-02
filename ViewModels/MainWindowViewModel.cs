@@ -178,6 +178,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     public ExportSettings ExportSettings { get; } = new();
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ZoomReadout))]
     private bool _hasSelectedImage;
 
     public bool CanEditSelectedImage =>
