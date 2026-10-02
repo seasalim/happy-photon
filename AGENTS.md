@@ -67,7 +67,13 @@ Treat code and tests as the specification for details not covered there; do not 
 
 ## Verify
 
-Run `./scripts/verify.ps1`.
+Before a commit, run the policy checks and the tests that cover what you touched:
+`./scripts/verify.ps1 -PolicyOnly`, then `./scripts/verify.ps1 -NoBuild -Filter "<test classes>"`
+(the test classes a spec's gate row names, plus the test files the diff touches and the guard tests).
+The full suite runs once a day on main (`scripts/nightly-verify.ps1`, scheduled, under the exclusive
+host lock) and before a release; a change to shared infrastructure (catalog schema, render stage order,
+`EditSettings` JSON) runs it once at FINALIZE. A red nightly blocks merges until it is fixed or the owner
+waives it (owner, 2026-10-02).
 
 In Codex's restricted filesystem sandbox, run this script with escalated permissions
 from the start. Avalonia BuildServices writes its telemetry log under `%LOCALAPPDATA%`,

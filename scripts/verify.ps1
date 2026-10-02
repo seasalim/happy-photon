@@ -10,7 +10,11 @@ param(
     [switch] $BlameHang,
     [string] $BlameHangTimeout = "90s",
     [string] $LogFilePrefix = "",
-    [string] $ResultsDirectory = ""
+    [string] $ResultsDirectory = "",
+    # A `dotnet test --filter` expression. With it, only the matching tests run
+    # (the targeted verification a change needs); the quarantine reconciliation
+    # needs the whole suite and is skipped. The full suite runs nightly.
+    [string] $Filter = ""
 )
 
 Set-StrictMode -Version Latest
@@ -66,9 +70,12 @@ try {
     if ($BlameHang) {
         $testArguments += @("--blame-hang", "--blame-hang-timeout", $BlameHangTimeout)
     }
+    if ($Filter) {
+        $testArguments += @("--filter", $Filter)
+    }
     & dotnet @testArguments
     $testExitCode = $LASTEXITCODE
-    if (-not $SkipQuarantine) {
+    if (-not $SkipQuarantine -and -not $Filter) {
         & $checker -Mode StableResults -ResultsDirectory $runDirectory
     }
     if ($testExitCode -ne 0) { throw "Solution tests failed with exit code $testExitCode." }
