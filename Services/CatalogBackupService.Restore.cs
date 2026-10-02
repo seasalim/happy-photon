@@ -24,28 +24,38 @@ public sealed partial class CatalogBackupService
     public IReadOnlyList<CatalogBackupRow> ListForRestore()
     {
         var folder = Folder;
+
         if (!Directory.Exists(folder)) return [];
+
         return Directory.GetFiles(folder, "*.zip").Where(p => !p.Contains(".partial."))
             .Select(path =>
             {
                 BackupManifest? manifest = null;
                 var sidecar = Path.ChangeExtension(path, ".manifest.json");
                 var cloud = CloudOnly(path);
+
                 try
                 {
                     if (File.Exists(sidecar) && !CloudOnly(sidecar))
+                    {
                         manifest = JsonSerializer.Deserialize<BackupManifest>(File.ReadAllText(sidecar));
+                    }
                 }
                 catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException) { }
+
                 if (manifest is not { FormatVersion: 1, Entries: not null } ||
                     !manifest.Entries.ContainsKey("catalog.db") || !manifest.Entries.ContainsKey(".catalog-identity"))
+                {
                     manifest = null;
+                }
+
                 var state = Damaged.ContainsKey(path) || manifest?.Damaged == true ? "damaged" :
                     manifest?.SchemaVersion > CatalogMigrations.CurrentVersion ? $"needs a newer app (schema {manifest.SchemaVersion})" :
                     cloud ? "cloud-only · downloads when restored" :
                     manifest is { FormatVersion: 1, Entries: not null } ? "verified when created" : "not checked";
                 var description = manifest == null ? System.IO.Path.GetFileName(path) :
-                    $"{manifest.Utc:g} · {manifest.Kind} · {new FileInfo(path).Length / 1048576d:F1} MiB · {manifest.ImageRows:N0} images · {manifest.AppVersion}";
+                    $"{manifest.Utc.LocalDateTime.ToString("MMM d, yyyy h:mm tt", System.Globalization.CultureInfo.InvariantCulture)} · {manifest.Kind} · {new FileInfo(path).Length / 1000000d:F1} MB · {manifest.ImageRows:N0} images · {manifest.AppVersion}";
+
                 return new CatalogBackupRow(path, description, state,
                     state is not "damaged" && !state.StartsWith("needs a newer app"), manifest?.Utc);
             }).OrderByDescending(row => row.Utc).ToArray();

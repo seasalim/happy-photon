@@ -30,7 +30,9 @@ public partial class MainWindow
             var overwrite = await ConfirmationDialog.ConfirmAsync(
                 this,
                 "Overwrite Preset",
-                $"A preset named '{name}' already exists. Overwrite it?");
+                $"A preset named '{name}' already exists. Overwrite it?",
+                destructive: true, cancelLabel: "Cancel", confirmLabel: "Overwrite preset");
+
             if (overwrite)
             {
                 await RunPresetOperationAsync(
@@ -87,7 +89,8 @@ public partial class MainWindow
             this,
             "Delete Preset",
             $"Delete preset '{preset.Name}'? Images already edited with it keep their edits.",
-            destructive: true);
+            destructive: true, cancelLabel: "Cancel", confirmLabel: "Delete preset");
+
         if (!confirmed)
         {
             return;

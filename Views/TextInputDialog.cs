@@ -1,8 +1,5 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Layout;
-using Avalonia.Media;
 
 namespace HappyPhoton.Views;
 
@@ -19,12 +16,12 @@ public class TextInputDialog : Window
         SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         CanResize = false;
-        Background = ResolveBrush("SurfaceLow");
+        Classes.Add("dialog");
 
         _textBox = new TextBox
         {
             Text = initialText,
-            Margin = new Thickness(20, 0, 20, 16)
+            Classes = { "edit-field" }
         };
         _textBox.TextChanged += (_, _) => UpdateOkState();
 
@@ -35,33 +32,38 @@ public class TextInputDialog : Window
         var cancelButton = CreateButton("Cancel");
         cancelButton.Click += (_, _) => Close(null);
 
-        var buttons = new StackPanel
+        var footer = new Border
         {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 8,
-            Margin = new Thickness(20, 0, 20, 20),
-            Children = { cancelButton, _okButton }
-        };
-        Grid.SetRow(buttons, 2);
-
-        Content = new Grid
-        {
-            RowDefinitions = new RowDefinitions("Auto,Auto,Auto"),
-            Children =
+            Classes = { "dialog-footer" },
+            Child = new StackPanel
             {
-                new TextBlock
-                {
-                    Text = prompt,
-                    Margin = new Thickness(20, 20, 20, 8),
-                    Foreground = ResolveBrush("TextPrimary"),
-                    FontSize = 13
-                },
-                _textBox,
-                buttons
+                Classes = { "dialog-buttons" },
+                Children = { cancelButton, _okButton }
             }
         };
-        Grid.SetRow(_textBox, 1);
+        Grid.SetRow(footer, 1);
+        Content = new Grid
+        {
+            RowDefinitions = new RowDefinitions("*,Auto"),
+            Children =
+            {
+                new Border
+                {
+                    Classes = { "dialog-content" },
+                    Child = new StackPanel
+                    {
+                        Spacing = 12,
+                        Children =
+                        {
+                            new TextBlock { Text = title, Classes = { "dialog-title" } },
+                            new TextBlock { Text = prompt, Classes = { "dialog-body" } },
+                            _textBox
+                        }
+                    }
+                },
+                footer
+            }
+        };
 
         KeyDown += OnKeyDown;
         Opened += (_, _) =>
@@ -70,17 +72,6 @@ public class TextInputDialog : Window
             _textBox.SelectAll();
         };
         UpdateOkState();
-    }
-
-    private IBrush ResolveBrush(string key)
-    {
-        if (this.TryFindResource(key, ActualThemeVariant, out var resource) &&
-            resource is IBrush brush)
-        {
-            return brush;
-        }
-
-        throw new InvalidOperationException($"Theme brush '{key}' was not found.");
     }
 
     public static Task<string?> ShowAsync(
@@ -97,9 +88,7 @@ public class TextInputDialog : Window
         return new Button
         {
             Content = label,
-            MinWidth = 80,
-            Padding = new Thickness(16, 6),
-            HorizontalContentAlignment = HorizontalAlignment.Center
+            Classes = { "quiet-button" }
         };
     }
 

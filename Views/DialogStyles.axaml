@@ -1,0 +1,44 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style Selector=":is(Window).dialog">
+        <Setter Property="Background" Value="{DynamicResource SurfaceLow}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
+    </Style>
+    <Style Selector=":is(Window).dialog TabControl">
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+    <Style Selector="Border.dialog-content">
+        <Setter Property="Padding" Value="20,16"/>
+    </Style>
+    <Style Selector="TextBlock.dialog-title">
+        <Setter Property="FontFamily" Value="{StaticResource FontHeading}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.dialog-body">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeLabel}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.dialog-note">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="Border.dialog-footer">
+        <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
+        <Setter Property="Padding" Value="20,12"/>
+    </Style>
+    <Style Selector="StackPanel.dialog-buttons">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="Spacing" Value="8"/>
+    </Style>
+    <Style Selector="Border.dialog-footer Button">
+        <Setter Property="MinWidth" Value="84"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+</Styles>

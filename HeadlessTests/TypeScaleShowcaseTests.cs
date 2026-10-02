@@ -111,12 +111,12 @@ public sealed class TypeScaleShowcaseTests
     {
         using var theme = new TestUiScope(theme: ThemeVariant.Dark);
         var dialog = new ConfirmationDialog("Move to Trash", "Move \"4.2.03.tiff\" to Trash?",
-            ConfirmationDialogButtons.YesNo, destructive: true)
+            ConfirmationDialogButtons.YesNo, destructive: true, cancelLabel: "Cancel", confirmLabel: "Move to Trash")
         {
             SizeToContent = SizeToContent.Manual
         };
 
-        ShowcaseTestHelper.Capture("29-confirmation", dialog, new PixelSize(420, 110),
+        ShowcaseTestHelper.Capture("29-confirmation", dialog, new PixelSize(420, 180),
             ThemeVariant.Dark);
     }
 }

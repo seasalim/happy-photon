@@ -137,10 +137,10 @@ public sealed class ThemeLiveSwitchTests
             var reset = window.GetLogicalDescendants()
                 .OfType<Button>()
                 .Single(button => button.Name == "ResetAdjustmentsButton");
-            var accent = settingsDialog.GetLogicalDescendants()
+            var close = settingsDialog.GetLogicalDescendants()
                 .OfType<Button>()
-                .Single(button => button.Classes.Contains("accent"));
-            var accentPresenter = accent.GetVisualDescendants()
+                .Single(button => Equals(button.Content, "Close"));
+            var closePresenter = close.GetVisualDescendants()
                 .OfType<ContentPresenter>()
                 .Single(presenter => presenter.Name == "PART_ContentPresenter");
             Assert.Equal(
@@ -161,18 +161,18 @@ public sealed class ThemeLiveSwitchTests
                 brandMark,
                 photonWordmark,
                 browseUnderline,
-                accentPresenter,
+                closePresenter,
                 ThemeVariant.Dark);
 
             var darkMarkSource = Assert.IsType<ImageBrush>(brandMark.Background).Source;
-            ((IPseudoClasses)accent.Classes).Set(":pointerover", true);
+            ((IPseudoClasses)close.Classes).Set(":pointerover", true);
             Dispatcher.UIThread.RunJobs();
             AssertBrandSurfaces(
                 brandMark,
                 photonWordmark,
                 browseUnderline,
-                accentPresenter,
-                ThemeVariant.Dark);
+                closePresenter,
+                ThemeVariant.Dark, hovered: true);
 
             vm.SetAppThemeCommand.Execute(AppTheme.MidGray);
             Dispatcher.UIThread.RunJobs();
@@ -206,19 +206,19 @@ public sealed class ThemeLiveSwitchTests
                 brandMark,
                 photonWordmark,
                 browseUnderline,
-                accentPresenter,
-                HappyPhotonThemes.MidGray);
+                closePresenter,
+                HappyPhotonThemes.MidGray, hovered: true);
             Assert.NotSame(
                 darkMarkSource,
                 Assert.IsType<ImageBrush>(brandMark.Background).Source);
 
-            ((IPseudoClasses)accent.Classes).Set(":pointerover", false);
+            ((IPseudoClasses)close.Classes).Set(":pointerover", false);
             Dispatcher.UIThread.RunJobs();
             AssertBrandSurfaces(
                 brandMark,
                 photonWordmark,
                 browseUnderline,
-                accentPresenter,
+                closePresenter,
                 HappyPhotonThemes.MidGray);
 
             var flyout = Assert.IsType<MenuFlyout>(appearance.Flyout);
@@ -234,16 +234,19 @@ public sealed class ThemeLiveSwitchTests
                 "Confirm",
                 "Continue?",
                 ConfirmationDialogButtons.Ok,
-                destructive: false);
+                destructive: false, cancelLabel: "Cancel", confirmLabel: "OK");
             var input = new TextInputDialog("Name", "Preset name", "Value");
+            using var confirmationScope = new TestUiScope(confirmation);
+            using var inputScope = new TestUiScope(input);
             Assert.Equal(Color.Parse("#3d3d3d"), ColorOf(confirmation.Background));
             Assert.Equal(Color.Parse("#3d3d3d"), ColorOf(input.Background));
             Assert.All(
-                confirmation.GetLogicalDescendants().OfType<TextBlock>(),
+                confirmation.GetLogicalDescendants().OfType<TextBlock>()
+                    .Where(text => text.Classes.Contains("dialog-title") || text.Classes.Contains("dialog-body")),
                 text => Assert.Equal(Color.Parse("#ffffff"), ColorOf(text.Foreground)));
-            Assert.Equal(
-                Color.Parse("#ffffff"),
-                ColorOf(input.GetLogicalDescendants().OfType<TextBlock>().Single().Foreground));
+            Assert.All(input.GetLogicalDescendants().OfType<TextBlock>()
+                    .Where(text => text.Classes.Contains("dialog-title") || text.Classes.Contains("dialog-body")),
+                text => Assert.Equal(Color.Parse("#ffffff"), ColorOf(text.Foreground)));
             confirmation.Close();
             input.Close();
         }
@@ -316,8 +319,8 @@ public sealed class ThemeLiveSwitchTests
         Border mark,
         Run photonWordmark,
         Rectangle underline,
-        ContentPresenter accentPresenter,
-        ThemeVariant variant)
+        ContentPresenter closePresenter,
+        ThemeVariant variant, bool hovered = false)
     {
         var expectedMark = ThemeResourceTests.Resource<ImageBrush>("BrandMark", variant);
         Assert.Same(
@@ -331,11 +334,11 @@ public sealed class ThemeLiveSwitchTests
             ThemeResourceTests.Brush("ControlActive", variant).Color,
             ColorOf(underline.Fill));
         Assert.Equal(
-            ThemeResourceTests.Brush("ControlActive", variant).Color,
-            ColorOf(accentPresenter.Background));
+            ThemeResourceTests.Brush(hovered ? "ControlHover" : "SurfaceHigh", variant).Color,
+            ColorOf(closePresenter.Background));
         Assert.Equal(
-            ThemeResourceTests.Brush("OnControlActive", variant).Color,
-            ColorOf(accentPresenter.Foreground));
+            ThemeResourceTests.Brush("TextPrimary", variant).Color,
+            ColorOf(closePresenter.Foreground));
     }
 
     private static void AssertDisabledControls(

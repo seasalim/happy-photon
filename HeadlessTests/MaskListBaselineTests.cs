@@ -365,7 +365,7 @@ public sealed class MaskListBaselineTests(ITestOutputHelper output)
             "2/101111/ListBoxItem/False/", "1/101111/ListBoxItem/False/",
             "1/101111/ListBoxItem/False/", "1/101111/ListBoxItem/False/",
             "1/101111/ListBoxItem/False/", "2/01111//False/",
-            "2/01111//False/Move to Trash", "2/01111/ListBoxItem/False/"
+            "2/01111/Button/False/Move to Trash", "2/01111/ListBoxItem/False/"
         };
         var step = 0;
 
@@ -443,7 +443,7 @@ public sealed class MaskListBaselineTests(ITestOutputHelper output)
         {
             output.WriteLine($"W5 dialog: title={dialog.Title}; text=" +
                 string.Join(" | ", dialog.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)));
-            var cancel = dialog.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "No"));
+            var cancel = dialog.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Cancel"));
             Click(cancel, dialog);
             State("cancel-delete-dialog");
         }

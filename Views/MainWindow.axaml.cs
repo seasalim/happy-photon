@@ -218,7 +218,8 @@ public partial class MainWindow : Window
     }
 
     private Task<bool> ConfirmDestructiveAsync(string title, string message) =>
-        ConfirmationDialog.ConfirmAsync(this, title, message, destructive: true);
+        ConfirmationDialog.ConfirmAsync(this, title, message, destructive: true,
+            cancelLabel: "Cancel", confirmLabel: title);
 
     internal static (string Title, string Message) DeleteConfirmationContent(
         DeleteConfirmationRequest request)
@@ -282,21 +283,23 @@ public partial class MainWindow : Window
         var message = count == 1
             ? $"The file \"{Path.GetFileName(paths[0])}\" already exists. Overwrite?"
             : $"{count} export files already exist. Overwrite them?";
+
         return ConfirmationDialog.ConfirmAsync(
             this,
-            "Confirm Overwrite",
-            message);
+            "Confirm overwrite",
+            message, destructive: true, cancelLabel: "Cancel", confirmLabel: "Overwrite");
     }
 
     private Task<bool> ConfirmExportHydrationAsync(ExportHydrationScope scope)
     {
         var noun = scope.FileCount == 1 ? "original" : "originals";
+
         return ConfirmationDialog.ConfirmAsync(
             this,
             "Download originals for export?",
             $"Exporting will download {scope.FileCount} online-only {noun} " +
             $"(approximately {FormatLogicalSize(scope.LogicalBytes)}).",
-            cancelLabel: "Cancel",
+            destructive: false, cancelLabel: "Cancel",
             confirmLabel: "Download / Export");
     }
 

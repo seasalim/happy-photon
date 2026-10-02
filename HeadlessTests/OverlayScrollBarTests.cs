@@ -49,7 +49,7 @@ public sealed class OverlayScrollBarTests
     }
 
     [AvaloniaFact]
-    public void OverlayClassIsDefinedCentrallyAndAppliedToTwoHosts()
+    public void OverlayClassIsDefinedCentrallyAndAppliedToWorkspaceAndDialogs()
     {
         var tree = new FolderTreePanel().FindControl<TreeView>("FolderTree")!;
         var history = new EditHistoryPanel().FindControl<ScrollViewer>(
@@ -71,7 +71,11 @@ public sealed class OverlayScrollBarTests
         [
             "App.axaml",
             "Views/EditHistoryPanel.axaml",
-            "Views/FolderTreePanel.axaml"
+            "Views/FolderTreePanel.axaml",
+            "Views/HelpAboutDialog.axaml",
+            "Views/RestoreBackupDialog.axaml",
+            "Views/SettingsDialog.axaml",
+            "Views/StoragePanel.axaml"
         ], references);
         var app = File.ReadAllText(Path.Combine(root, "App.axaml"));
         Assert.Contains("ScrollViewer.overlay-scrollbar", app);

@@ -19,7 +19,7 @@ public sealed partial class PasteSettingsViewModel : ObservableObject
         TargetCount = targetCount;
         Summary = currentPhoto
             ? $"From {sourceName} to this photo"
-            : $"From {sourceName} to {targetCount} photos";
+            : $"From {sourceName} to {targetCount} {(targetCount == 1 ? "photo" : "photos")}";
         Groups = AvailableGroups.Select(group =>
         {
             var count = targets?.Count(target => HasOwn(target, group.Name)) ?? 0;

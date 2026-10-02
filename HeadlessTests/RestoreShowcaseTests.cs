@@ -10,20 +10,11 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class RestoreShowcaseTests
+public sealed class RestoreShowcaseTests(ITestOutputHelper output)
 {
     [AvaloniaFact]
-    public async Task StartupErrorRestore_RendersShowcase()
-    {
-        using var catalog = new CatalogService();
-        await using var vm = new MainWindowViewModel(catalog);
-        vm.ShowStartupFailure("The local catalog is damaged or unrecognized. Restore a backup or retry.");
-        var window = new MainWindow();
-        using var scope = TestUiScope.ForMainWindow(window, vm, show: false);
-        ShowcaseTestHelper.Capture("startup-error-restore", scope, new PixelSize(1200, 700), ThemeVariant.Dark,
-            shown => Assert.Contains(shown.GetVisualDescendants().OfType<Button>(),
-                button => button.IsEffectivelyVisible && Equals(button.Content, "Restore from backup…")));
-    }
+    public Task StartupErrorRestore_RendersShowcase() =>
+        new DialogChromeStartupBaselineTests(output).CaptureAsync(pointerRecovery: false, run: 1);
 
     [AvaloniaFact]
     public void RestoreChooser_RendersShowcase()
@@ -32,20 +23,20 @@ public sealed class RestoreShowcaseTests
         var vm = new RestoreBackupViewModel(directory.Path)
         {
             Rows = [
-                new("verified.zip", "26 Sep 2026 · manual · 12.4 MiB · 2,000 images · 1.0", "verified when created", true),
+                new("verified.zip", "Sep 26, 2026 2:06 PM Â· manual Â· 12.4 MB Â· 2,000 images Â· 1.0", "verified when created", true),
                 new("copied.zip", "copied-catalog-backup.zip", "not checked", true),
-                new("damaged.zip", "24 Sep 2026 · before-restore · 12.1 MiB · 2,000 images · 1.0", "damaged", false),
-                new("newer.zip", "23 Sep 2026 · manual · 12.4 MiB · 2,000 images · 2.0", "needs a newer app (schema 99)", false),
-                new("cloud.zip", "22 Sep 2026 · scheduled · 12.0 MiB · 1,950 images · 1.0", "cloud-only · downloads when restored", true)
+                new("damaged.zip", "Sep 24, 2026 2:06 PM Â· before-restore Â· 12.1 MB Â· 2,000 images Â· 1.0", "damaged", false),
+                new("newer.zip", "Sep 23, 2026 2:06 PM Â· manual Â· 12.4 MB Â· 2,000 images Â· 2.0", "needs a newer app (schema 99)", false),
+                new("cloud.zip", "Sep 22, 2026 2:06 PM Â· scheduled Â· 12.0 MB Â· 1,950 images Â· 1.0", "cloud-only Â· downloads when restored", true)
             ]
         };
         vm.Selected = vm.Rows[0];
         var dialog = new RestoreBackupDialog { DataContext = vm };
-        ShowcaseTestHelper.Capture("restore-chooser", dialog, new PixelSize(650, 440), ThemeVariant.Dark,
+        ShowcaseTestHelper.Capture("30-restore-backup-wp9", dialog, new PixelSize(650, 440), ThemeVariant.Dark,
             shown =>
             {
                 Assert.Contains(shown.GetVisualDescendants().OfType<Button>(),
-                    button => button.IsEffectivelyVisible && Equals(button.Content, "Choose a backup file…"));
+                    button => button.IsEffectivelyVisible && Equals(button.Content, "Choose a backup fileâ€¦"));
                 var list = Assert.Single(shown.GetVisualDescendants().OfType<ListBox>());
                 foreach (var row in vm.Rows)
                 {

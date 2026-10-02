@@ -2,36 +2,46 @@
         xmlns:vm="using:HappyPhoton.ViewModels" xmlns:s="using:HappyPhoton.Services"
         x:Class="HappyPhoton.Views.RestoreBackupDialog" x:DataType="vm:RestoreBackupViewModel"
         Title="Restore from backup" Width="650" Height="440" MinWidth="480" MinHeight="300"
-        WindowStartupLocation="CenterOwner" Background="{DynamicResource SurfaceLow}">
-    <Grid Margin="20" RowDefinitions="Auto,*,Auto,Auto" RowSpacing="14">
-        <TextBlock Text="Choose a catalog backup" FontSize="{StaticResource FontSizeHeading}"/>
-        <ListBox Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}">
-            <ListBox.Styles>
-                <Style Selector="ListBoxItem">
-                    <Setter Property="Padding" Value="10,6"/>
-                </Style>
-                <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-                    <Setter Property="Background" Value="{DynamicResource SelectionSurface}"/>
-                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                </Style>
-                <Style Selector="TextBlock:disabled">
-                    <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-                </Style>
-            </ListBox.Styles>
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="s:CatalogBackupRow">
-                    <StackPanel Spacing="4" IsEnabled="{Binding CanRestore}">
-                        <TextBlock Text="{Binding Description}" TextWrapping="Wrap"/>
-                        <TextBlock Text="{Binding State}" Foreground="{DynamicResource TextSecondary}"/>
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        <TextBlock Grid.Row="2" Text="{Binding Error}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"/>
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" IsEnabled="{Binding !IsBusy}">
-            <Button Content="Choose a backup file…" Command="{Binding ChooseFileCommand}"/>
-            <Button Content="Cancel" Click="Cancel"/>
-            <Button Classes="accent" Content="Restore…" Command="{Binding RestoreCommand}"/>
-        </StackPanel>
+        WindowStartupLocation="CenterOwner" Classes="dialog">
+    <Grid RowDefinitions="*,Auto">
+        <Border Classes="dialog-content">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+                <TextBlock Text="Restore from backup" Classes="dialog-title"/>
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <ListBox Classes="overlay-scrollbar" Background="{DynamicResource SurfaceMid}"
+                             BorderBrush="{DynamicResource Divider}" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="10,6"/>
+                            </Style>
+                            <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                            </Style>
+                            <Style Selector="TextBlock:disabled">
+                                <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="s:CatalogBackupRow">
+                                <StackPanel Spacing="4" IsEnabled="{Binding CanRestore}">
+                                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding State}" Foreground="{DynamicResource TextSecondary}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Button Grid.Column="1" Content="Choose a backup file…" Classes="quiet-button"
+                            VerticalAlignment="Top" Command="{Binding ChooseFileCommand}" IsEnabled="{Binding !IsBusy}"/>
+                </Grid>
+                <TextBlock Grid.Row="2" Text="{Binding Error}" Classes="dialog-note"/>
+            </Grid>
+        </Border>
+        <Border Grid.Row="1" Classes="dialog-footer">
+            <StackPanel Classes="dialog-buttons" IsEnabled="{Binding !IsBusy}">
+                <Button Classes="quiet-button" Content="Cancel" Click="Cancel"/>
+                <Button Classes="quiet-button accent" Content="Restore…" Command="{Binding RestoreCommand}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

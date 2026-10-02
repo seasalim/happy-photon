@@ -197,12 +197,19 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
                 { Group.Kind: EditSettingsGroupKind.Look });
         var template = look.ItemTemplate;
         var actual = Bounds();
+        // All, None and Defaults must take part in the comparison, not drop out of the selector.
+        Assert.Equal(3, actual.Length - look.GetLogicalDescendants().OfType<CheckBox>().Count());
 
         try
         {
             // The Look template at 8d9e712 contains only this checkbox.
             look.ItemTemplate = new FuncDataTemplate<PasteSettingsGroupViewModel>((group, _) =>
-                new CheckBox { Content = group!.Group.Name, IsChecked = group.IsSelected });
+                new CheckBox
+                {
+                    Content = group!.Group.Name,
+                    IsChecked = group.IsSelected,
+                    FontSize = (double)Application.Current!.FindResource("FontSizeLabel")!
+                });
             Dispatcher.UIThread.RunJobs();
             dialog.UpdateLayout();
             var original = Bounds();
@@ -218,7 +225,7 @@ public sealed class PasteSettingsDialogTests(ITestOutputHelper output)
 
         Rect[] Bounds() => look.GetLogicalDescendants().OfType<CheckBox>().Cast<Control>()
             .Concat(dialog.GetLogicalDescendants().OfType<Button>()
-                .Where(button => button.Classes.Contains("choice-link")))
+                .Where(button => button.Content is "All" or "None" or "Defaults"))
             .Select(control => new Rect(control.TranslatePoint(default, dialog)!.Value, control.Bounds.Size))
             .ToArray();
     }

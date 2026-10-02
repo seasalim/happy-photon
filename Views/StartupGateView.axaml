@@ -16,28 +16,27 @@
             <views:FirstRunView IsVisible="{Binding IsFirstRunVisible}"/>
 
             <Border IsVisible="{Binding IsPointerRecoveryVisible}"
-                    MaxWidth="560" Margin="24" Padding="32"
+                    MaxWidth="560" Margin="24"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     Background="{DynamicResource SurfaceLow}"
                     BorderBrush="{DynamicResource Divider}" BorderThickness="1">
-                <StackPanel Spacing="18">
-                    <TextBlock Text="STORAGE POINTER NEEDS RECOVERY"
-                               FontFamily="{StaticResource FontHeading}"
-                               FontSize="{StaticResource FontSizeHeading}"
-                               FontWeight="SemiBold" TextAlignment="Center"/>
-                    <TextBlock Text="{Binding FirstRunErrorMessage}"
-                               Foreground="{DynamicResource TextSecondary}"
-                               TextWrapping="Wrap" TextAlignment="Center"/>
-                    <TextBlock Text="Recovery quarantines the damaged pointer and looks for a conventional catalog. It never creates a replacement catalog automatically."
-                               Foreground="{DynamicResource TextMuted}"
-                               TextWrapping="Wrap" TextAlignment="Center"/>
-                    <StackPanel Orientation="Horizontal" Spacing="10"
-                                HorizontalAlignment="Center">
-                        <Button Classes="accent" Content="Recover pointer"
-                                Command="{Binding RecoverLocationPointerCommand}"/>
-                        <Button Content="Close" Command="{Binding CloseApplicationCommand}"/>
-                    </StackPanel>
-                </StackPanel>
+                <Grid RowDefinitions="Auto,Auto">
+                    <Border Classes="dialog-content">
+                        <StackPanel Spacing="18">
+                            <TextBlock Text="Storage pointer needs recovery" Classes="dialog-title"/>
+                            <TextBlock Text="{Binding FirstRunErrorMessage}" Classes="dialog-body"/>
+                            <TextBlock Text="Recovery quarantines the damaged pointer and looks for a conventional catalog. It never creates a replacement catalog automatically."
+                                       Classes="dialog-note"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="1" Classes="dialog-footer">
+                        <StackPanel Classes="dialog-buttons">
+                            <Button Classes="quiet-button" TabIndex="1" Content="Close" Command="{Binding CloseApplicationCommand}"/>
+                            <Button Classes="quiet-button accent" TabIndex="0" Content="Recover pointer"
+                                    Command="{Binding RecoverLocationPointerCommand}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </Border>
 
             <StackPanel IsVisible="{Binding IsStartupInitializing}"
@@ -54,51 +53,39 @@
             </StackPanel>
 
             <Border IsVisible="{Binding IsStartupError}"
-                    MaxWidth="560"
-                    Margin="24"
-                    Padding="32"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
+                    MaxWidth="560" Margin="24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
                     Background="{DynamicResource SurfaceLow}"
-                    BorderBrush="{DynamicResource Divider}"
-                    BorderThickness="1">
-                <StackPanel Spacing="20">
-                    <TextBlock Text="Happy Photon couldn't open its local catalog."
-                               FontFamily="{StaticResource FontHeading}"
-                               FontSize="{StaticResource FontSizeHeading}"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimary}"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"/>
-                    <TextBlock Text="{Binding FirstRunErrorMessage}"
-                               Foreground="{DynamicResource TextSecondary}"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"/>
-                    <Button Content="Restore from backup…" HorizontalAlignment="Center"
-                            IsVisible="{Binding !IsUpgradeBackupFailure}"
-                            Command="{Binding RestoreBackupCommand}"/>
-                    <TextBlock Text="Your originals are untouched."
-                               Foreground="{DynamicResource TextMuted}"
-                               TextAlignment="Center"/>
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="10"
-                                HorizontalAlignment="Center">
-                        <Button Classes="accent"
-                                Content="Retry"
-                                Command="{Binding RetryStartupCommand}"
-                                AutomationProperties.Name="Retry opening the local catalog"/>
-                        <Button Content="Upgrade without a backup"
-                                IsVisible="{Binding IsUpgradeBackupFailure}"
-                                Command="{Binding UpgradeWithoutBackupCommand}"/>
-                        <Button Content="Set aside and retry"
-                                IsVisible="{Binding CanSetAsideCatalog}"
-                                Command="{Binding SetAsideCatalogCommand}"
-                                AutomationProperties.Name="Set catalog and cache aside and retry"/>
-                        <Button Content="Close"
-                                Command="{Binding CloseApplicationCommand}"
-                                AutomationProperties.Name="Close Happy Photon"/>
-                    </StackPanel>
-                </StackPanel>
+                    BorderBrush="{DynamicResource Divider}" BorderThickness="1">
+                <Grid RowDefinitions="Auto,Auto">
+                    <Border Classes="dialog-content">
+                        <StackPanel Spacing="20">
+                            <TextBlock Text="Happy Photon couldn't open its local catalog." Classes="dialog-title"/>
+                            <TextBlock Text="{Binding FirstRunErrorMessage}" Classes="dialog-body"/>
+                            <Button Content="Restore from backup…" Classes="quiet-button" TabIndex="0" HorizontalAlignment="Left"
+                                    IsVisible="{Binding !IsUpgradeBackupFailure}"
+                                    Command="{Binding RestoreBackupCommand}"/>
+                            <TextBlock Text="Your originals are untouched." Classes="dialog-note"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="1" Classes="dialog-footer">
+                        <StackPanel Classes="dialog-buttons">
+                            <Button Content="Upgrade without a backup" Classes="quiet-button" TabIndex="2"
+                                    IsVisible="{Binding IsUpgradeBackupFailure}"
+                                    Command="{Binding UpgradeWithoutBackupCommand}"/>
+                            <Button Content="Set aside and retry" Classes="quiet-button" TabIndex="3"
+                                    IsVisible="{Binding CanSetAsideCatalog}"
+                                    Command="{Binding SetAsideCatalogCommand}"
+                                    AutomationProperties.Name="Set catalog and cache aside and retry"/>
+                            <Button Content="Close" Classes="quiet-button" TabIndex="4"
+                                    Command="{Binding CloseApplicationCommand}"
+                                    AutomationProperties.Name="Close Happy Photon"/>
+                            <Button Content="Retry" Classes="quiet-button accent" TabIndex="1"
+                                    Command="{Binding RetryStartupCommand}"
+                                    AutomationProperties.Name="Retry opening the local catalog"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </Border>
         </Panel>
     </Border>

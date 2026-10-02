@@ -1,40 +1,5 @@
 [
   {
-    "Path": "Views/ConfirmationDialog.cs",
-    "Text": "FontSize = 13",
-    "Count": 1
-  },
-  {
-    "Path": "Views/HelpAboutDialog.axaml",
-    "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u002210\u0022/\u003E",
-    "Count": 1
-  },
-  {
-    "Path": "Views/HelpAboutDialog.axaml",
-    "Text": "FontSize=\u002211\u0022",
-    "Count": 8
-  },
-  {
-    "Path": "Views/HelpAboutDialog.axaml",
-    "Text": "FontSize=\u002212\u0022",
-    "Count": 2
-  },
-  {
-    "Path": "Views/HelpAboutDialog.axaml",
-    "Text": "FontSize=\u002213\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/HelpAboutDialog.axaml",
-    "Text": "FontSize=\u002220\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/HelpAboutDialog.axaml",
-    "Text": "FontSize=\u002226\u0022",
-    "Count": 1
-  },
-  {
     "Path": "Views/ImportCatalogDialog.axaml",
     "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u002211\u0022/\u003E",
     "Count": 2
@@ -47,31 +12,6 @@
   {
     "Path": "Views/ImportCatalogDialog.axaml",
     "Text": "FontSize=\u002218\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/PasteSettingsDialog.axaml",
-    "Text": "FontSize=\u002211\u0022",
-    "Count": 2
-  },
-  {
-    "Path": "Views/SettingsDialog.axaml",
-    "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u002212\u0022/\u003E",
-    "Count": 1
-  },
-  {
-    "Path": "Views/SettingsDialog.axaml",
-    "Text": "FontSize=\u002212\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/SettingsDialog.axaml",
-    "Text": "FontSize=\u002220\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/TextInputDialog.cs",
-    "Text": "FontSize = 13",
     "Count": 1
   },
   {
