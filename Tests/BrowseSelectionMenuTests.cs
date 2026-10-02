@@ -100,16 +100,19 @@ public sealed class BrowseSelectionMenuTests
         var reveal = Assert.IsType<MenuItem>(items[1]);
         var writeXmp = Assert.IsType<MenuItem>(items[2]);
         Assert.IsType<Separator>(items[3]);
-        var createVersion = Assert.IsType<MenuItem>(items[4]);
-        var renameVersion = Assert.IsType<MenuItem>(items[5]);
-        var deleteVersion = Assert.IsType<MenuItem>(items[6]);
-        Assert.IsType<Separator>(items[7]);
-        var delete = Assert.IsType<MenuItem>(items[8]);
+        var sync = Assert.IsType<MenuItem>(items[4]);
+        Assert.IsType<Separator>(items[5]);
+        var createVersion = Assert.IsType<MenuItem>(items[6]);
+        var renameVersion = Assert.IsType<MenuItem>(items[7]);
+        var deleteVersion = Assert.IsType<MenuItem>(items[8]);
+        Assert.IsType<Separator>(items[9]);
+        var delete = Assert.IsType<MenuItem>(items[10]);
         Assert.Equal(
-            ["Copy path", "Reveal in File Explorer", "Write XMP sidecars", "New version from current",
+            ["Copy path", "Reveal in File Explorer", "Write XMP sidecars", "Sync settings…", "New version from current",
                 "Rename version label…", "Delete version", "Delete selection…"],
-            new[] { copy, reveal, writeXmp, createVersion, renameVersion, deleteVersion, delete }
+            new[] { copy, reveal, writeXmp, sync, createVersion, renameVersion, deleteVersion, delete }
                 .Select(item => item.Header));
+        Assert.Equal("Ctrl+Shift+S", sync.InputGesture?.ToString());
         Assert.All(new[]
             {
                 copy, reveal, createVersion, renameVersion, deleteVersion, delete
@@ -165,7 +168,7 @@ public sealed class BrowseSelectionMenuTests
             border => ReferenceEquals(border.DataContext, previous) &&
                       border.Classes.Contains("thumbnail"));
         var menu = tile.ContextMenu!;
-        var createVersion = Assert.IsType<MenuItem>(menu.Items.ElementAt(4));
+        var createVersion = Assert.IsType<MenuItem>(menu.Items.ElementAt(6));
         control.ApplyRightClickSelection(previous);
         menu.PlacementTarget = tile;
         menu.Open();
@@ -239,7 +242,7 @@ public sealed class BrowseSelectionMenuTests
         menu.PlacementTarget = tile;
         menu.Open();
         Dispatcher.UIThread.RunJobs();
-        Assert.IsType<MenuItem>(menu.Items.ElementAt(6))
+        Assert.IsType<MenuItem>(menu.Items.ElementAt(8))
             .RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         await prompted.Task.WaitAsync(TestWaits.Condition);
         Dispatcher.UIThread.RunJobs();
@@ -314,7 +317,9 @@ public sealed class BrowseSelectionMenuTests
         var selectAll = Assert.IsType<MenuItem>(items[0]);
         var deselectAll = Assert.IsType<MenuItem>(items[1]);
         Assert.IsType<Separator>(items[2]);
-        var deleteRejected = Assert.IsType<MenuItem>(items[3]);
+        var sync = Assert.IsType<MenuItem>(items[3]);
+        Assert.IsType<Separator>(items[4]);
+        var deleteRejected = Assert.IsType<MenuItem>(items[5]);
 
         Assert.Equal([actions], panel.Children);
         Assert.Same(loupeView, thumbnailControls.Children[0]);
@@ -328,13 +333,16 @@ public sealed class BrowseSelectionMenuTests
             panel.Children.OfType<TextBlock>(),
             text => text.Text == "Select");
         Assert.Equal(
-            ["Select all", "Deselect all", "Delete rejected…"],
-            new[] { selectAll, deselectAll, deleteRejected }
+            ["Select all", "Deselect all", "Sync settings…", "Delete rejected…"],
+            new[] { selectAll, deselectAll, sync, deleteRejected }
                 .Select(item => item.Header));
         Assert.Equal("Ctrl+A", selectAll.InputGesture?.ToString());
         Assert.Equal("Ctrl+D", deselectAll.InputGesture?.ToString());
+        Assert.Equal("Ctrl+Shift+S", sync.InputGesture?.ToString());
+        Assert.Same(vm.SyncSettingsCommand, sync.Command);
+        Assert.False(sync.IsEffectivelyEnabled);
         Assert.All(
-            new[] { selectAll, deselectAll, deleteRejected },
+            new[] { selectAll, deselectAll, sync, deleteRejected },
             item => Assert.True(item.IsVisible));
 
         Assert.Null(vm.SelectedImage);

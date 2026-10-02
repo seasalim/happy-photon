@@ -111,8 +111,10 @@ Escape, navigation, other tools and canvas gestures before handle hit-testing.
 
 The right pane is mode-differentiated. In Browse it is a **review pane** — the
 fixed thumbnail histogram, the metadata/EXIF block, and a selection summary —
-with no editing controls; everything below is a Develop-only surface (Browse
-editing surfaces remain a non-goal, §10).
+with no editing controls. Its one command, **Sync settings…**, is a full-width footer
+below the scrolling details, with Develop's action-bar margins; it stays visible in
+grid, Loupe and Compare. Everything below is a Develop-only surface (Browse editing
+surfaces remain a non-goal, §10).
 
 ```
 Scope box              (fixed)
@@ -350,6 +352,14 @@ expander remembers its collapse state. Clicking the active look records Preset: 
   same file. Manual lenses require the target’s Lensfun mount match; monochrome targets skip them.
   Built-in and Automatic apply to every RAW without reads. Fully skipped targets keep their
   document and history. Lens drafts survive unless a compatible Lens Profile group is applied.
+
+- **Sync** (`Ctrl+Shift+S`): in the Browse grid or Loupe, transfers the active selected
+  photo's settings to the rest of a two-or-more selection through **Sync Settings**.
+  The review-pane footer, Browse's **⋯** menu and the thumbnail menu after Write XMP
+  sidecars share the command's enablement. Right-clicking a selected photo makes it
+  the source and preserves selection. The footer's tooltip stays visible when disabled;
+  Compare, Develop, fullscreen and Export cannot sync. Numeric entries
+  shadow the shortcut. Sync leaves the source and Copy buffer unchanged.
 
 Recovery has the RAW-only Clip/Blend control and defaults to Clip. Detail fields use
 the controls in §2; copy/paste preserves nullable capture-sharpen semantics and both

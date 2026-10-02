@@ -30,6 +30,7 @@
         <KeyBinding Gesture="Ctrl+D" Command="{Binding DeselectAllCommand}"/>
         <KeyBinding Gesture="Ctrl+Shift+C" Command="{Binding CopyEditSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+Shift+V" Command="{Binding PasteEditSettingsCommand}"/>
+        <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding SyncSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+Alt+Shift+V" Command="{Binding ChoosePasteSettingsCommand}"/>
         <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}"/>
         <KeyBinding Gesture="Ctrl+Y" Command="{Binding RedoCommand}"/>

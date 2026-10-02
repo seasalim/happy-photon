@@ -211,6 +211,8 @@ public static class ShortcutCatalog
                 [Develop("Copy edit settings", "CopyEditSettingsButton")]),
             new("Ctrl+Shift+V", "Paste remembered groups in Develop; choose groups in Browse",
                 [Develop("Paste edit settings", "PasteEditSettingsButton")]),
+            new("Ctrl+Shift+S", "Sync settings from the active photo to the rest of the Browse selection",
+                [Browse("Sync settings", "SyncSettingsButton"), Loupe("Sync settings", "SyncSettingsButton")]),
             new("Ctrl+Alt+Shift+V", "Choose groups in Paste Settings",
                 [Develop("Choose paste settings (right-click)", "PasteEditSettingsButton")]),
             new("Ctrl+Z", "Undo the last edit in Develop",

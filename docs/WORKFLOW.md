@@ -299,6 +299,14 @@ preset resets that look; image-specific geometry, profiles and locals stay uncha
 
 ### Copy edits between images
 
+To sync directly in Browse, select the source and target photos, keeping the source
+as the outlined active photo. Click **Sync settings…** at the bottom of the review
+pane or press `Ctrl+Shift+S` in the grid or Loupe, then choose groups and press **Sync**.
+The same command is in **⋯** and the thumbnail right-click menu; right-clicking a
+selected photo makes it the source without clearing selection. The source and copied
+settings stay unchanged. Sync is disabled in Compare and outside Browse; its footer
+tooltip explains why it cannot run.
+
 Copy the current photo's settings with the Develop footer button or `Ctrl+Shift+C`.
 In Develop, `Ctrl+Shift+V` pastes the remembered groups in one step.
 Use `Ctrl+Alt+Shift+V`, or right-click Paste, to choose groups in **Paste Settings**.
@@ -477,6 +485,7 @@ Help & About lists every shortcut and gesture; these are the essentials.
 | `Space` / `Z` | Toggle Fit and 1:1 in Develop or Browse Loupe |
 | `J` | Toggle clipping overlay in Develop |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy settings / paste remembered groups in Develop; choose groups in Browse |
+| `Ctrl+Shift+S` | Sync the active selected photo's settings to the rest in Browse grid or Loupe |
 | `Ctrl+Alt+Shift+V` | Open Paste Settings (also right-click Paste) |
 | `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` | Move backward or forward through Develop history |
 | `Ctrl+Shift+E` | Open the Export workspace |

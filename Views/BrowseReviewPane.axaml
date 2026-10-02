@@ -26,7 +26,7 @@
 
     <Border Background="{DynamicResource SurfaceMid}"
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
-        <Grid RowDefinitions="Auto,*">
+        <Grid RowDefinitions="Auto,*,Auto">
             <Border x:Name="BrowseHistogramBox"
                     Margin="15,15,15,10"
                     Padding="5"
@@ -203,6 +203,18 @@
                     </Border>
                 </StackPanel>
             </ScrollViewer>
+
+            <Button x:Name="SyncSettingsButton"
+                    Grid.Row="2"
+                    Classes="compact-button filled"
+                    Content="Sync settings…"
+                    AutomationProperties.Name="Sync settings"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Margin="15,8,15,15"
+                    Command="{Binding SyncSettingsCommand}"
+                    ToolTip.Tip="{Binding SyncSettingsToolTip}"
+                    ToolTip.ShowOnDisabled="True"/>
         </Grid>
     </Border>
 </UserControl>

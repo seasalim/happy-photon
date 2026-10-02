@@ -128,6 +128,20 @@ public sealed class ShortcutReachabilityTests
             claim.Workspace == ShortcutWorkspace.Develop);
     }
 
+    [Fact]
+    public void SyncShortcutSitsBesidePasteAndClaimsGridAndLoupeFooter()
+    {
+        var entries = ShortcutCatalog.Groups.Single(group => group.Title == "Develop and edit").Entries;
+        var pasteIndex = entries.ToList().FindIndex(entry => entry.Keys == "Ctrl+Shift+V");
+        var sync = entries[pasteIndex + 1];
+
+        Assert.Equal("Ctrl+Shift+S", sync.Keys);
+        Assert.Equal("Sync settings from the active photo to the rest of the Browse selection", sync.Action);
+        Assert.Equal(new ShortcutWorkspace?[] { ShortcutWorkspace.Browse, ShortcutWorkspace.Loupe },
+            sync.Reachability.Select(claim => claim.Workspace));
+        Assert.All(sync.Reachability, claim => Assert.Equal("SyncSettingsButton", claim.ControlName));
+    }
+
     private static bool HasValidReachability(ShortcutEntry entry) =>
         entry.Reachability.Count > 0 && entry.Reachability.All(claim =>
         {

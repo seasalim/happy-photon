@@ -113,6 +113,11 @@
                                           IsEnabled="{Binding Browse.HasSelectedImages}"
                                           Click="OnDeselectAllClick"/>
                                 <Separator/>
+                                <MenuItem x:Name="SyncSettingsMenuItem"
+                                          Header="Sync settings…"
+                                          InputGesture="Ctrl+Shift+S"
+                                          Command="{Binding SyncSettingsCommand}"/>
+                                <Separator/>
                                 <MenuItem Header="Delete rejected…"
                                           IsEnabled="{Binding Browse.HasVisibleImages}"
                                           Click="OnDeleteRejectedClick"/>
@@ -161,6 +166,11 @@
                                               ToolTip.ShowOnDisabled="True"
                                               ToolTip.Tip="Enable Read &amp; write in Settings → Metadata to write XMP sidecars"
                                               Click="OnWriteXmpSidecarsClick"/>
+                                    <Separator/>
+                                    <MenuItem x:Name="SyncSettingsContextMenuItem"
+                                              Header="Sync settings…"
+                                              InputGesture="Ctrl+Shift+S"
+                                              Command="{Binding $parent[views:BrowseGridView].DataContext.SyncSettingsCommand}"/>
                                     <Separator/>
                                     <MenuItem x:Name="NewVersionMenuItem"
                                               Header="New version from current"
