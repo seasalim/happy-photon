@@ -42,15 +42,33 @@ public partial class MainWindowViewModel
 
         if (SelectedImage != null)
         {
-            Browse.ToggleSelection(SelectedImage);
-            UpdateSelectedCount();
+            ToggleImageSelection(SelectedImage);
         }
     }
 
     public void ToggleImageSelection(ImageFile image)
     {
         Browse.ToggleSelection(image);
+        ReanchorBrowseSelection();
         UpdateSelectedCount();
+    }
+
+    // In Browse grid and Loupe a non-empty selection always holds the ring: when the
+    // ringed photo leaves it, or a toggle rebuilds it around an unselected ring, the
+    // ring moves to the earliest selected photo.
+    private void ReanchorBrowseSelection()
+    {
+        if (!IsBrowseMode || IsCompareMode || IsFullScreenMode || SelectedImage is { IsSelected: true })
+        {
+            return;
+        }
+
+        var first = Browse.GetSelectedImages().FirstOrDefault();
+
+        if (first != null)
+        {
+            SelectedImage = first;
+        }
     }
 
     public void SelectRange(ImageFile fromImage, ImageFile toImage)
@@ -80,7 +98,6 @@ public partial class MainWindowViewModel
     private void UpdateSelectedCount()
     {
         SelectedCount = Browse.SelectedCount;
-        RestartBrowseSelectionSummary();
         ReconcileFullScreenSelection();
     }
 

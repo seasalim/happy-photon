@@ -10,6 +10,44 @@ public sealed class FullScreenSelectionTests : IDisposable
     private readonly CatalogVmFixture _fx = new("fullscreen-selection");
     private readonly CatalogService _catalog;
 
+    [Fact]
+    public async Task RemovingRingInFullscreen_UsesNearestRemainingRatherThanEarliest()
+    {
+        await using var vm = CreateViewModel();
+        var images = CreateImages(6);
+        vm.Browse.SetImages(images);
+        vm.ToggleImageSelection(images[0]);
+        vm.ToggleImageSelection(images[3]);
+        vm.ToggleImageSelection(images[4]);
+        vm.SelectedImage = images[0];
+        vm.ToggleFullScreenCommand.Execute(null);
+        vm.SelectNextImageCommand.Execute(null);
+        Assert.Same(images[3], vm.SelectedImage);
+
+        vm.ToggleImageSelection(images[3]);
+
+        Assert.Equal([images[0], images[4]], vm.Browse.GetSelectedImages());
+        Assert.Same(images[4], vm.SelectedImage);
+        Assert.Equal("Selection · 2 / 2", vm.FullScreenSelectionBadgeText);
+    }
+
+    [Fact]
+    public async Task CtrlSpaceInDevelop_KeepsTheRingOnTheRemovedPhoto()
+    {
+        await using var vm = CreateViewModel();
+        var images = CreateImages(3);
+        vm.Browse.SetImages(images);
+        vm.ToggleImageSelection(images[0]);
+        vm.ToggleImageSelection(images[2]);
+        vm.SelectedImage = images[2];
+        vm.IsDevelopMode = true;
+
+        vm.ToggleSelectionCommand.Execute(null);
+
+        Assert.Equal([images[0]], vm.Browse.GetSelectedImages());
+        Assert.Same(images[2], vm.SelectedImage);
+    }
+
     public FullScreenSelectionTests()
     {
         _catalog = _fx.CreateCatalog("catalog");

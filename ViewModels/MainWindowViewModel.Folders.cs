@@ -228,7 +228,6 @@ public partial class MainWindowViewModel
     {
         SelectedCount = Browse.SelectedCount;
         RefreshOnlineOnlyPhotoCount();
-        RestartBrowseSelectionSummary();
         NotifyBrowseEmptyStateChanged();
         ReconcileFullScreenSelection();
         NotifyImageNavigationCommandState();

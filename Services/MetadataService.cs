@@ -124,6 +124,7 @@ internal sealed class MetadataService
 
         try
         {
+            imageFile.MetadataReadObserved?.Invoke(nameof(FileInfo));
             var fileInfo = new FileInfo(imageFile.FilePath);
             builder.FileSize = fileInfo.Length;
             builder.FileModifiedDate = fileInfo.LastWriteTime;

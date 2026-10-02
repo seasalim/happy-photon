@@ -25,7 +25,7 @@ public partial class MainWindowViewModel
     {
         if (!IsBrowseGridVisible || SelectedImage == null) return;
 
-        ArmFullScreenSelection();
+        ArmFullScreenSelection(keepSelectedSource: true);
         IsLoupeMode = true;
         RequestZoomFit?.Invoke();
         ReloadLoupe(SelectedImage);

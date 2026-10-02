@@ -126,7 +126,9 @@ public sealed class LoupeViewHeadlessTests
 
         Assert.False(vm.IsLoupeMode);
         Assert.True(vm.IsBrowseGridVisible);
-        Assert.Same(images[0], vm.SelectedImage);
+        // Entering Loupe keeps the ringed photo (the Sync source, SYNCSETTINGS-WP3);
+        // the earlier arrow step moved the ring to images[1].
+        Assert.Same(images[1], vm.SelectedImage);
 
         Press(fixture.Window, Key.E);
         Drain();
@@ -137,7 +139,9 @@ public sealed class LoupeViewHeadlessTests
 
         Assert.False(vm.IsLoupeMode);
         Assert.True(vm.IsBrowseGridVisible);
-        Assert.Same(images[0], vm.SelectedImage);
+        // Entering Loupe keeps the ringed photo (the Sync source, SYNCSETTINGS-WP3);
+        // the earlier arrow step moved the ring to images[1].
+        Assert.Same(images[1], vm.SelectedImage);
     }
 
     [AvaloniaFact]

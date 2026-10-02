@@ -15,17 +15,17 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-// SYNCSETTINGS-WP2 G3 captures, after the mockup's scenes: 1 enabled button with its
-// tooltip, 2 the trimmed (disabled) case, 3 the "⋯" menu, 4 the thumbnail menu on a
-// selected photo, 5 the dialog opened by Sync, 7 Loupe with the button.
+// SYNCSETTINGS G3 captures, after the mockup's scenes: 1 enabled button with its tooltip,
+// 2 the first photo selected staying the source after eleven Ctrl+clicks, 3 the "⋯" menu,
+// 4 the thumbnail menu on a selected photo, 5 the dialog opened by Sync, 7 Loupe with the button.
 public sealed class SyncSettingsShowcaseTests
 {
     [AvaloniaTheory]
     [InlineData("1-enabled", false, 1600, 1000)]
     [InlineData("1-enabled", true, 1600, 1000)]
     [InlineData("1-enabled-800", false, 800, 500)]
-    [InlineData("2-trimmed", false, 1600, 1000)]
-    [InlineData("2-trimmed", true, 1600, 1000)]
+    [InlineData("2-first-selected", false, 1600, 1000)]
+    [InlineData("2-first-selected", true, 1600, 1000)]
     [InlineData("3-actions-menu", false, 1600, 1000)]
     [InlineData("3-actions-menu", true, 1600, 1000)]
     [InlineData("4-thumbnail-menu", false, 1600, 1000)]
@@ -54,11 +54,22 @@ public sealed class SyncSettingsShowcaseTests
             vm.SwitchToBrowseCommand.Execute(null);
             vm.SelectAllCommand.Execute(null);
 
-            if (scene == "2-trimmed")
+            if (scene == "2-first-selected")
             {
-                vm.ToggleImageSelection(first);
-                Assert.False(first.IsSelected);
+                // Mockup scene 2 (D-5): click the first photo, then Ctrl+click the
+                // other eleven; the ring stays on the first, which is the source.
+                vm.DeselectAllCommand.Execute(null);
+                vm.Browse.SelectOnly(first);
+                vm.SelectedImage = first;
+                vm.RefreshSelectedCount();
+
+                foreach (var image in images.Skip(1))
+                {
+                    vm.ToggleImageSelection(image);
+                }
+
                 Assert.Same(first, vm.SelectedImage);
+                Assert.Equal(12, vm.SelectedCount);
             }
 
             if (scene == "7-loupe")
@@ -74,7 +85,7 @@ public sealed class SyncSettingsShowcaseTests
             Dispatcher.UIThread.RunJobs();
             window.UpdateLayout();
             var button = window.GetVisualDescendants().OfType<Button>().Single(control => control.Name == "SyncSettingsButton");
-            Assert.Equal(scene is not "2-trimmed", button.IsEffectivelyEnabled);
+            Assert.True(button.IsEffectivelyEnabled);
             // The mockup's pane button: a filled, full-width compact button with a centred label.
             Assert.Contains("filled", button.Classes);
             Assert.Equal(Avalonia.Layout.HorizontalAlignment.Center, button.HorizontalContentAlignment);
@@ -84,9 +95,7 @@ public sealed class SyncSettingsShowcaseTests
             try
             {
                 // Headless tooltips open at the window origin, so the captures show the text by assertion only.
-                Assert.Equal(scene == "2-trimmed"
-                        ? "Select the outlined photo too; it is the source."
-                        : "Sync settings from srgb-reference.jpg to 11 photos (Ctrl+Shift+S)",
+                Assert.Equal("Sync settings from srgb-reference.jpg to 11 photos (Ctrl+Shift+S)",
                     ToolTip.GetTip(button));
 
                 if (scene == "3-actions-menu")

@@ -31,7 +31,6 @@ public partial class MainWindowViewModel
             _xmpWriter = null;
         }
         CancelSourceHydration();
-        await CancelBrowseSelectionSummaryAsync();
         _burstAnalysisRestartRequested = false;
         CancelBurstAnalysis();
         var thumbnailLoadingCts = Interlocked.Exchange(

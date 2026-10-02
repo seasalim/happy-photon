@@ -110,7 +110,7 @@ Pick Hue temporarily shows the mask, commits an accepted sample once, and yields
 Escape, navigation, other tools and canvas gestures before handle hit-testing.
 
 The right pane is mode-differentiated. In Browse it is a **review pane** — the
-fixed thumbnail histogram, the metadata/EXIF block, and a selection summary —
+fixed thumbnail histogram and metadata/EXIF block ending with Location —
 with no editing controls. Its one command, **Sync settings…**, is a full-width footer
 below the scrolling details, with Develop's action-bar margins; it stays visible in
 grid, Loupe and Compare. Everything below is a Develop-only surface (Browse editing

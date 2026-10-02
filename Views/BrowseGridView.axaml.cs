@@ -327,19 +327,20 @@ public partial class BrowseGridView : UserControl
         {
             var modifiers = e.KeyModifiers;
 
-            if (modifiers.HasFlag(KeyModifiers.Control))
+            if (modifiers.HasFlag(KeyModifiers.Alt) && image.IsSelected)
+            {
+                SelectedImage = image;
+            }
+            else if (!modifiers.HasFlag(KeyModifiers.Alt) && modifiers.HasFlag(KeyModifiers.Control))
             {
                 // Ctrl+Click: Toggle selection - notify ViewModel
                 ImageSelectionToggled?.Invoke(this, image);
-                // Also set as active image
-                SelectedImage = image;
             }
-            else if (modifiers.HasFlag(KeyModifiers.Shift) && SelectionAnchor != null && Images != null)
+            else if (!modifiers.HasFlag(KeyModifiers.Alt) &&
+                     modifiers.HasFlag(KeyModifiers.Shift) && SelectedImage != null && Images != null)
             {
                 // Shift+Click: Range selection - notify ViewModel
-                RangeSelectionRequested?.Invoke(this, (SelectionAnchor, image));
-                // Also set as active image
-                SelectedImage = image;
+                RangeSelectionRequested?.Invoke(this, (SelectedImage, image));
             }
             else
             {
@@ -351,6 +352,7 @@ public partial class BrowseGridView : UserControl
                         img.IsSelected = false;
                     }
                 }
+
                 image.IsSelected = true;
                 SelectedImage = image;
 
@@ -358,7 +360,7 @@ public partial class BrowseGridView : UserControl
                 SelectionChanged?.Invoke(this, EventArgs.Empty);
             }
 
-            SelectionAnchor = image;
+            SelectionAnchor = SelectedImage;
         }
     }
 

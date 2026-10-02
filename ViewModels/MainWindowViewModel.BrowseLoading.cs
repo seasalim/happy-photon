@@ -16,7 +16,6 @@ public partial class MainWindowViewModel
     {
         CancelAdjacentPreviewWarm(true, dropRetained: true);
         var generation = Interlocked.Increment(ref _browseGeneration);
-        await CancelBrowseSelectionSummaryAsync();
         await CancelXmpReconcileAsync();
         _xmpIndexedSidecars = [];
         CancelSourceHydration();

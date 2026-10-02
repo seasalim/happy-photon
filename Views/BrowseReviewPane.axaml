@@ -169,38 +169,6 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <Border x:Name="SelectionSummaryPanel"
-                            Background="{DynamicResource SurfaceLow}"
-                            Padding="10"
-                            IsVisible="{Binding HasBrowseSelectionSummary}">
-                        <StackPanel Spacing="5">
-                            <TextBlock Classes="section-label" Text="Selection"/>
-                            <TextBlock x:Name="ReviewSelectionCountText" FontFamily="{StaticResource FontBody}"
-                                       Foreground="{DynamicResource TextPrimary}"
-                                       FontSize="{DynamicResource FontSizeBody}">
-                                <Run Text="{Binding BrowseSelectionCount, StringFormat='{}{0:N0}'}" FontFamily="{StaticResource FontLabel}"/>
-                                <Run Text="photos selected"/>
-                            </TextBlock>
-                            <TextBlock Text="{Binding BrowseSelectionDateRangeDisplay}" FontFamily="{StaticResource FontLabel}"
-                                       Foreground="{DynamicResource TextSecondary}"
-                                       FontSize="{DynamicResource FontSizeBody}"/>
-                            <TextBlock Text="{Binding BrowseSelectionCombinedFileSizeDisplay}" FontFamily="{StaticResource FontLabel}"
-                                       Foreground="{DynamicResource TextSecondary}"
-                                       FontSize="{DynamicResource FontSizeBody}"/>
-                            <TextBlock Text="Updating selection details…"
-                                       Foreground="{DynamicResource TextMuted}"
-                                       FontSize="{DynamicResource FontSizeSmall}"
-                                       IsVisible="{Binding IsBrowseSelectionSummaryLoading}"/>
-                            <TextBlock x:Name="ReviewSelectionOnlineOnlyText" FontFamily="{StaticResource FontBody}"
-                                       Foreground="{DynamicResource TextMuted}"
-                                       FontSize="{DynamicResource FontSizeSmall}"
-                                       TextWrapping="Wrap"
-                                       IsVisible="{Binding HasBrowseSelectionOnlineOnlyImages}">
-                                <Run Text="{Binding BrowseSelectionOnlineOnlyCount, StringFormat='{}{0:N0}'}" FontFamily="{StaticResource FontLabel}"/>
-                                <Run Text="{Binding BrowseSelectionOnlineOnlyDescription}"/>
-                            </TextBlock>
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
             </ScrollViewer>
 

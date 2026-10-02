@@ -188,10 +188,13 @@ public partial class ImageFile : ObservableObject
     }
 
     // Metadata properties
-    [ObservableProperty] private long _fileSize;
+    private long _fileSize;
+
     [ObservableProperty] private int _pixelWidth;
     [ObservableProperty] private int _pixelHeight;
-    [ObservableProperty] private DateTime? _dateTaken;
+
+    private DateTime? _dateTaken;
+
     [ObservableProperty] private DateTime? _fileModifiedDate;
     [ObservableProperty] private string? _cameraMake;
     [ObservableProperty] private string? _cameraModel;

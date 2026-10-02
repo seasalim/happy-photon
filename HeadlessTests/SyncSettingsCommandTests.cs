@@ -67,6 +67,8 @@ public sealed partial class SyncSettingsCommandTests
 
             case "unselected":
                 vm.ToggleImageSelection(source);
+                // Explicitly stage the outside-active state; Browse toggles now re-anchor.
+                vm.SelectedImage = source;
                 Assert.Equal(2, vm.SelectedCount);
                 break;
 

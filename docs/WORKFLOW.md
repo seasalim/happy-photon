@@ -65,10 +65,9 @@ that recognize rejects only as negative ratings may not display Happy Photon rej
 
 Start in **Browse**. Press `G` at any time to return to it.
 
-The review pane shows the active photo's histogram, file, camera and location details;
-multiple selection adds count, capture-date range and local file size; online-only
-originals stay out of date/size aggregates until downloaded. Hover its name for the
-folder, or right-click → Copy details. Coordinates open OpenStreetMap only when clicked.
+The review pane shows the active photo's histogram, file, camera and location details.
+Hover its name for the folder, or right-click → Copy details. Coordinates open
+OpenStreetMap only when clicked.
 A muted file-modified date is a display fallback, not capture time.
 
 1. Choose a folder in the folder tree on the left.
@@ -346,8 +345,9 @@ export:
 Filter the Browse to the group you want before selecting it. Then:
 
 - press `Ctrl+Space` to toggle the current image;
-- use `Ctrl+Click` to add or remove individual images;
-- use `Shift+Click` to select a range;
+- use `Ctrl+Click` to add or remove individual images without moving the ring;
+- use `Shift+Click` to select a range from the ring without moving it;
+- use `Alt+Click` or right-click on a selected photo to move the ring and keep the selection;
 - hold `Shift` with the arrow keys, `Page Up`/`Page Down`, or `Home`/`End` to extend
   the selection from the last clicked or keyboard-focused image;
 - press `Ctrl+A` to select every image currently visible through the filters;
@@ -357,6 +357,11 @@ Filter the Browse to the group you want before selecting it. Then:
 A plain click or arrow-key move replaces the selection with the newly focused
 photo, so single-photo assessment always lands on the photo under the focus ring;
 use the modifiers above to build a multi-photo selection.
+
+In Browse grid and Loupe, the first photo selected stays the Sync source. Removing
+the ringed photo with `Ctrl+Click` or `Ctrl+Space` moves the ring to the earliest
+remaining selected photo in grid order; an empty selection leaves the ring in place.
+`Alt+Click` on an unselected photo acts as a plain click.
 
 Images that become hidden by a new filter are removed from the selection. Set the
 filters first, then make the final selection.
@@ -461,6 +466,8 @@ Help & About lists every shortcut and gesture; these are the essentials.
 | `1`–`5` / `0` | Set or clear a rating |
 | `6`–`9` | Set red, yellow, green, or blue color label |
 | `Ctrl+Space` | Toggle the active photo in the selection |
+| `Ctrl+Click` / `Shift+Click` | Toggle a photo / select a range from the ring; keep the ring in place |
+| `Alt+Click` | Move the ring to a selected photo; on an unselected photo, select only it |
 | `Ctrl+A` / `Ctrl+D` | Select or deselect all visible images |
 | `Ctrl+'` | Create a version from the current interpretation in Browse or Develop |
 | `C` | Compare 2–4 selected photos |

@@ -230,11 +230,12 @@ public partial class ImageFile
         ? $"{altitude:F0} m altitude"
         : null;
 
-    partial void OnFileSizeChanged(long value)
+    private void OnFileSizeChanged(long value)
     {
         OnPropertyChanged(nameof(FileSizeDisplay));
         OnPropertyChanged(nameof(FileDetailsDisplay));
     }
+
     partial void OnPixelWidthChanged(int value)
     {
         OnPropertyChanged(nameof(FileDetailsDisplay));
@@ -245,13 +246,15 @@ public partial class ImageFile
         OnPropertyChanged(nameof(FileDetailsDisplay));
         OnPropertyChanged(nameof(GridToolTip));
     }
-    partial void OnDateTakenChanged(DateTime? value)
+
+    private void OnDateTakenChanged(DateTime? value)
     {
         OnPropertyChanged(nameof(DisplayDate));
         OnPropertyChanged(nameof(HasCaptureDate));
         OnPropertyChanged(nameof(IsFileModifiedDateFallback));
         OnPropertyChanged(nameof(GridToolTip));
     }
+
     partial void OnMetadataLoadedChanged(bool value) =>
         OnPropertyChanged(nameof(GridToolTip));
     partial void OnFileModifiedDateChanged(DateTime? value)

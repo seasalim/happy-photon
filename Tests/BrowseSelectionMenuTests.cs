@@ -65,7 +65,9 @@ public sealed class BrowseSelectionMenuTests
         Assert.True(images[0].IsSelected);
         Assert.False(images[1].IsSelected);
         Assert.False(images[2].IsSelected);
-        Assert.Same(images[1], vm.SelectedImage);
+        // A non-empty selection always holds the ring (SYNCSETTINGS-WP3): the toggle
+        // moves the unselected ring to the earliest selected photo.
+        Assert.Same(images[0], vm.SelectedImage);
 
         window.MouseDown(point, MouseButton.Right, RawInputModifiers.None);
         window.MouseUp(point, MouseButton.Right, RawInputModifiers.None);

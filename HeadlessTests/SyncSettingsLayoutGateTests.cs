@@ -12,7 +12,7 @@ namespace HappyPhoton.Tests;
 
 // SYNCSETTINGS-WP2 G2: with 12 photos selected, the Sync button and
 // the "⋯" button are not clipped, and the review pane's details still scroll to
-// the Selection card's last line above any footer.
+// the Location details' last line above any footer.
 public sealed class SyncSettingsLayoutGateTests(ITestOutputHelper output)
 {
     [AvaloniaTheory]
@@ -24,7 +24,7 @@ public sealed class SyncSettingsLayoutGateTests(ITestOutputHelper output)
     [InlineData(800, 500, true, true)]
     [InlineData(1200, 700, false, true)]
     [InlineData(1200, 700, true, true)]
-    public async Task G2_SyncButtonAndSelectionCardFit(int width, int height, bool gray, bool loupe)
+    public async Task G2_SyncButtonAndLocationDetailsFit(int width, int height, bool gray, bool loupe)
     {
         await DevelopToolsBaselineTests.WithScene("normal", width, height, async (vm, scope) =>
         {
@@ -32,6 +32,10 @@ public sealed class SyncSettingsLayoutGateTests(ITestOutputHelper output)
             using var themeScope = new TestUiScope(theme: theme);
             vm.RestoreAppTheme(gray ? AppTheme.MidGray : AppTheme.Dark);
             var first = vm.SelectedImage!;
+            first.MetadataLoaded = true;
+            first.GpsLatitude = 45;
+            first.GpsLongitude = 6;
+            first.GpsAltitude = 1200;
             var images = Enumerable.Range(1, 11)
                 .Select(index => new ImageFile($"layout-{index:D2}.jpg") { MetadataLoaded = true })
                 .Prepend(first)
@@ -61,10 +65,10 @@ public sealed class SyncSettingsLayoutGateTests(ITestOutputHelper output)
             var sync = Named<Button>(window, "SyncSettingsButton");
             var actionsClip = actions is { IsEffectivelyVisible: true } ? Clipped(window, actions) : (double?)null;
             var syncClip = sync is { IsEffectivelyVisible: true } ? Clipped(window, sync) : (double?)null;
-            var (reachable, cardBottom, viewportBottom) = SelectionCardReachable(window);
+            var (reachable, cardBottom, viewportBottom) = LocationDetailsReachable(window);
 
             output.WriteLine(FormattableString.Invariant(
-                $"SYNCSETTINGS G2 {label}: actions clipped={Describe(actionsClip)} sync clipped={Describe(syncClip)} selectionCard reachable={reachable} cardBottom={cardBottom:F1} viewportBottom={viewportBottom:F1}"));
+                $"SYNCSETTINGS G2 {label}: actions clipped={Describe(actionsClip)} sync clipped={Describe(syncClip)} locationDetails reachable={reachable} cardBottom={cardBottom:F1} viewportBottom={viewportBottom:F1}"));
 
             if (!loupe)
             {
@@ -73,7 +77,7 @@ public sealed class SyncSettingsLayoutGateTests(ITestOutputHelper output)
 
             Assert.NotNull(sync);
             Assert.Equal(0, syncClip);
-            Assert.True(reachable, $"{label}: the Selection card's last line is not reachable.");
+            Assert.True(reachable, $"{label}: the Location details' last line is not reachable.");
             Assert.True(viewportBottom <= sync.TranslatePoint(default, window)!.Value.Y,
                 $"{label}: the details viewport overlaps the pinned footer.");
         });
@@ -105,11 +109,11 @@ public sealed class SyncSettingsLayoutGateTests(ITestOutputHelper output)
         return Math.Round(box.Width - visible.Width + box.Height - visible.Height, 1);
     }
 
-    private static (bool Reachable, double CardBottom, double ViewportBottom) SelectionCardReachable(Window window)
+    private static (bool Reachable, double CardBottom, double ViewportBottom) LocationDetailsReachable(Window window)
     {
-        var card = Named<Border>(window, "SelectionSummaryPanel")
-            ?? throw new InvalidOperationException("SelectionSummaryPanel not found.");
-        Assert.True(card.IsEffectivelyVisible, "The Selection card must show with 12 selected.");
+        var card = Named<TextBlock>(window, "ReviewAltitudeText")
+            ?? throw new InvalidOperationException("ReviewAltitudeText not found.");
+        Assert.True(card.IsEffectivelyVisible, "The final Location detail must be visible.");
         var scroll = card.GetVisualAncestors().OfType<ScrollViewer>().First();
         scroll.Offset = new Vector(0, Math.Max(0, scroll.Extent.Height - scroll.Viewport.Height));
         Dispatcher.UIThread.RunJobs();

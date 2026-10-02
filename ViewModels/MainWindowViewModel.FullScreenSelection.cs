@@ -27,13 +27,17 @@ public partial class MainWindowViewModel
         }
     }
 
-    private void ArmFullScreenSelection()
+    private void ArmFullScreenSelection(bool keepSelectedSource = false)
     {
         var members = GetFullScreenSelectionMembers();
         SetFullScreenSelectionRestricted(members.Count >= 2);
         if (_isFullScreenSelectionRestricted)
         {
-            AnchorFullScreenSelection(members[0], suppressPreviewLoad: true);
+            // Loupe keeps the ringed photo (the Sync source); fullscreen starts at the first member.
+            var anchor = keepSelectedSource && SelectedImage != null && members.Contains(SelectedImage)
+                ? SelectedImage
+                : members[0];
+            AnchorFullScreenSelection(anchor, suppressPreviewLoad: true);
         }
     }
 
