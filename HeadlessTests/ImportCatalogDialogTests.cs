@@ -25,16 +25,16 @@ public sealed class ImportCatalogDialogTests
 
             Assert.Null(dialog.FindControl<Button>("PreviewButton"));
             Assert.False(dialog.FindControl<CheckBox>("CropImportCheckBox")!.IsChecked);
-            Assert.Equal("WHAT WILL CHANGE",
+            Assert.Equal("What will change",
                 dialog.FindControl<TextBlock>("ReportSectionLabel")!.Text);
-            Assert.Contains("Crops — 2 to import · 3 already match · 4 unsupported (left unchanged)",
+            Assert.Contains("Crops · 2 to import · 3 already match · 4 unsupported (left unchanged)",
                 dialog.FindControl<TextBlock>("OutcomeText")!.Text);
             var apply = dialog.FindControl<Button>("ApplyButton")!;
             apply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             await WaitForAsync(() => flow.IsApplied);
             Dispatcher.UIThread.RunJobs();
 
-            Assert.Equal("WHAT CHANGED",
+            Assert.Equal("What changed",
                 dialog.FindControl<TextBlock>("ReportSectionLabel")!.Text);
         });
     }

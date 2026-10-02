@@ -31,6 +31,9 @@ public sealed partial class ThemeSourceGuardTests
     [InlineData("<Button Classes=\"view-toggle\"/>")]
     [InlineData("<Style Selector=\"RadioButton.thumbnail-size\"/>")]
     [InlineData("<Style Selector=\"Button.check-badge.selected\"/>")]
+    [InlineData("<Button Classes=\"root-override\"/>")]
+    [InlineData("<Button Classes=\"wizard-primary accent\"/>")]
+    [InlineData("<Style Selector=\"Button.wizard-quiet\"/>")]
     public void RetiredClassMatcher_RejectsBrowseClasses(string text)
     {
         Assert.Matches(RetiredClassPattern(), text);
@@ -42,6 +45,6 @@ public sealed partial class ThemeSourceGuardTests
         Assert.DoesNotMatch(RetiredClassPattern(), "<Button Classes=\"icon-button compact\"/>");
     }
 
-    [GeneratedRegex(@"(?<![\w-])(?:wb-auto|develop-reset|develop-action|view-toggle|thumbnail-size|check-badge)(?![\w-])")]
+    [GeneratedRegex(@"(?<![\w-])(?:wb-auto|develop-reset|develop-action|view-toggle|thumbnail-size|check-badge|root-override|wizard-primary|wizard-quiet)(?![\w-])")]
     private static partial Regex RetiredClassPattern();
 }

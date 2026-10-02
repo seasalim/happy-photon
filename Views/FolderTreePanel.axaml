@@ -49,9 +49,11 @@
                     </Button.Flyout>
                 </Button>
                 <TextBlock Grid.Row="1" Grid.ColumnSpan="3"
+                           IsVisible="{Binding BrowsingFolderName, ElementName=Root, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                            Text="{Binding BrowsingFolderName, ElementName=Root, StringFormat='Browsing from: {0}'}"
                            Foreground="{DynamicResource TextMuted}" FontSize="{StaticResource FontSizeSmall}" Margin="0,4,0,0"/>
                 <TextBlock Grid.Row="2" Grid.ColumnSpan="3"
+                           IsVisible="{Binding ViewingFolderName, ElementName=Root, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                            Text="{Binding ViewingFolderName, ElementName=Root, StringFormat='Viewing: {0}'}"
                            Foreground="{DynamicResource TextSecondary}" FontSize="{StaticResource FontSizeSmall}" Margin="0,8,0,0"/>
             </Grid>

@@ -5,7 +5,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class FirstRunExperienceTests : IDisposable
+public sealed partial class FirstRunExperienceTests : IDisposable
 {
     private readonly TemporaryDirectory _testRoot = new();
 

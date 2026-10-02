@@ -60,13 +60,17 @@ public partial class ImportCatalogDialog : Window
     {
         BuildRootEditors();
         if (_flow == null) return;
+
         PolicyPicker.SelectedIndex = _flow.Policy ==
                                      CatalogImportPolicy.FillEmptyOnly ? 1 : 0;
+        UpdatePolicyHelp();
+
         if (!_policyEventsAttached)
         {
             PolicyPicker.SelectionChanged += OnPolicyChanged;
             _policyEventsAttached = true;
         }
+
         CropImportCheckBox.IsChecked = _flow.ImportCrops;
         MappingSection.IsVisible = true;
         PolicySection.IsVisible = true;
@@ -79,9 +83,11 @@ public partial class ImportCatalogDialog : Window
     private void UpdateUi()
     {
         if (_flow == null) return;
+
         BusyProgress.IsVisible = _flow.IsBusy;
         BusyProgress.IsIndeterminate = _flow.IsBusy;
         StatusText.Text = _flow.StatusText;
+        StatusText.IsVisible = _flow.FailureText == null;
         MappingSection.IsEnabled = _flow.InputsEnabled;
         PolicySection.IsEnabled = _flow.InputsEnabled;
         ApplyButton.IsVisible = _flow.CanApply;
@@ -211,21 +217,24 @@ public partial class ImportCatalogDialog : Window
             Content = "Override…",
             VerticalAlignment = VerticalAlignment.Center
         };
-        overrideButton.Classes.Add("root-override");
+        overrideButton.Classes.Add("compact-button");
         overrideButton.Click += async (_, _) =>
         {
             var index = RootsPanel.Children.IndexOf(row);
+
             if (index >= 0)
             {
                 RootsPanel.Children.RemoveAt(index);
                 RootsPanel.Children.Insert(index, BuildRootEditor(root, mappedPath));
             }
+
             MappingHelpText.Text =
                 "Choose a different local folder, or leave this location blank to skip its photos.";
             if (_flow != null) await _flow.OverrideRootAsync(root.SourcePath);
         };
         Grid.SetColumn(overrideButton, 1);
         row.Children.Add(overrideButton);
+
         return row;
     }
 
@@ -236,6 +245,7 @@ public partial class ImportCatalogDialog : Window
             Text = initialPath,
             PlaceholderText = "Choose a matching local folder"
         };
+        editor.Classes.Add("edit-field");
         _rootEditors[root.SourcePath] = editor;
         editor.TextChanged += (_, _) =>
             _flow?.UpdateRootText(root.SourcePath, editor.Text);
@@ -247,6 +257,7 @@ public partial class ImportCatalogDialog : Window
         };
 
         var choose = new Button { Content = "Choose…" };
+        choose.Classes.Add("compact-button");
         choose.Click += async (_, _) => await ChooseRootAsync(root.SourcePath, editor);
         var row = new Grid
         {
@@ -264,6 +275,7 @@ public partial class ImportCatalogDialog : Window
         Grid.SetColumn(choose, 1);
         choose.VerticalAlignment = VerticalAlignment.Bottom;
         row.Children.Add(choose);
+
         return row;
     }
 
@@ -301,9 +313,18 @@ public partial class ImportCatalogDialog : Window
     private async void OnPolicyChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_flow == null) return;
+
+        UpdatePolicyHelp();
         await _flow.SetPolicyAsync(PolicyPicker.SelectedIndex == 1
             ? CatalogImportPolicy.FillEmptyOnly
             : CatalogImportPolicy.LightroomWins);
+    }
+
+    private void UpdatePolicyHelp()
+    {
+        PolicyHelpText.Text = PolicyPicker.SelectedIndex == 1
+            ? "Fill empty applies Lightroom values only where Happy Photon has none. Values you cleared yourself count as empty. An import never clears local values."
+            : "Lightroom wins replaces local values with available Lightroom values. An import never clears local values.";
     }
 
     private async void OnCropImportChanged(object? sender, RoutedEventArgs e)
@@ -320,7 +341,9 @@ public partial class ImportCatalogDialog : Window
     private void RenderReport(CatalogImportReport report, bool applied)
     {
         ReportSection.IsVisible = true;
-        ReportSectionLabel.Text = applied ? "WHAT CHANGED" : "WHAT WILL CHANGE";
+        ReportCountNote.IsVisible = true;
+        OutcomeText.Classes.Set("report-numbers", true);
+        ReportSectionLabel.Text = applied ? "What changed" : "What will change";
         HeadlineText.Text = report.NothingToImport
             ? "Nothing to import"
             : report.NothingMatched
@@ -332,25 +355,29 @@ public partial class ImportCatalogDialog : Window
                             ? $"Updated {report.UpdatedPhotos} photos, {Math.Max(0, report.MatchedPhotos - report.UpdatedPhotos)} unchanged"
                             : $"Imported metadata for {report.UpdatedPhotos} photos"
                     : $"{report.UpdatedPhotos} photos will be updated";
+
         var rerunNote = _flow?.IsReimport == true &&
                         report.Rating.PreservedByPolicy +
                         report.Flag.PreservedByPolicy +
                         report.ColorLabel.PreservedByPolicy > 0
             ? "\nKept values may include ones you changed in Happy Photon since the last import."
             : string.Empty;
+
         var updated = applied ? "updated" : "to update";
         var crops = report.Crop ?? new CatalogImportAxisSummary(0, 0, 0, 0, 0);
         var unavailable = report.UnavailableFilePhotos == 0
             ? string.Empty
             : $"\nMapped files not found: {report.UnavailableFilePhotos}";
+
         OutcomeText.Text =
-            $"Matched paths: {report.MatchedPhotos}  ·  Existing: {report.ExistingCatalogRows}  ·  New paths: {report.NewlyStoredPaths}" +
+            $"Photos changing: {report.UpdatedPhotos} · Existing: {report.ExistingCatalogRows} · New paths: {report.NewlyStoredPaths}" +
             unavailable + "\n" +
-            $"Ratings — {report.Rating.Written} {updated} · {report.Rating.Unchanged} already match · {report.Rating.PreservedByPolicy} kept your value\n" +
-            $"Flags — {report.Flag.Written} {updated} · {report.Flag.Unchanged} already match · {report.Flag.PreservedByPolicy} kept your value\n" +
-            $"Color labels — {report.ColorLabel.Written} {updated} · {report.ColorLabel.Unchanged} already match · {report.ColorLabel.PreservedByPolicy} kept your value · {report.ColorLabel.Unsupported} unrecognized left as-is\n" +
-            $"Crops — {crops.Written} to import · {crops.Unchanged} already match · {crops.Unsupported} unsupported (left unchanged)" +
+            $"Ratings · {report.Rating.Written} {updated} · {report.Rating.Unchanged} already match · {report.Rating.PreservedByPolicy} kept your value\n" +
+            $"Flags · {report.Flag.Written} {updated} · {report.Flag.Unchanged} already match · {report.Flag.PreservedByPolicy} kept your value\n" +
+            $"Color labels · {report.ColorLabel.Written} {updated} · {report.ColorLabel.Unchanged} already match · {report.ColorLabel.PreservedByPolicy} kept your value · {report.ColorLabel.Unsupported} unrecognized left as-is\n" +
+            $"Crops · {crops.Written} to import · {crops.Unchanged} already match · {crops.Unsupported} unsupported (left unchanged)" +
             rerunNote;
+
         ActionableHeading.IsVisible = report.ActionableOutcomes.Count > 0;
         ActionableText.Text = string.Join("\n",
             report.ActionableOutcomes.Select(text => "• " + text));
@@ -362,9 +389,12 @@ public partial class ImportCatalogDialog : Window
     private void ShowFailure(string message)
     {
         ReportSection.IsVisible = true;
-        ReportSectionLabel.Text = "WHAT WILL CHANGE";
+        ReportCountNote.IsVisible = false;
+        ReportSectionLabel.Text = "What will change";
         HeadlineText.Text = "Import could not continue";
+        OutcomeText.Classes.Set("report-numbers", false);
         OutcomeText.Text = message;
+
         ActionableHeading.IsVisible = false;
         ActionableText.Text = string.Empty;
         InformationHeading.IsVisible = false;

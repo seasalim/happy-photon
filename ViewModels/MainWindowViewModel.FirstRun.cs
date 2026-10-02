@@ -33,6 +33,8 @@ public partial class MainWindowViewModel
 {
     public const int CurrentFirstRunExperienceVersion = 1;
 
+    private bool _firstRunLightroomOffered;
+
     [ObservableProperty]
     private StartupGateState _startupGateState = StartupGateState.Initializing;
 
@@ -125,7 +127,9 @@ public partial class MainWindowViewModel
         FirstRunPicturesPath = null;
         DetectedLightroomCatalogPath = null;
         DetectedLightroomCatalogPaths = [];
+        _firstRunLightroomOffered = false;
         FirstRunErrorMessage = null;
+
         CanPersistFolderSession = false;
         FirstRunStep = FirstRunStep.Welcome;
         StartupGateState = StartupGateState.Welcome;
@@ -136,7 +140,7 @@ public partial class MainWindowViewModel
         SetFirstRunDefaultLocation(defaultPath);
         FirstRunErrorMessage = null;
         CanPersistFolderSession = false;
-        IsFirstRunStorageCommitted = true;
+        MarkFirstRunStorageCommitted();
         FirstRunStep = FirstRunStep.Pictures;
         StartupGateState = StartupGateState.Welcome;
     }
@@ -161,6 +165,24 @@ public partial class MainWindowViewModel
         FirstRunErrorMessage = null;
         StartupGateState = StartupGateState.Ready;
     }
+
+    [RelayCommand(CanExecute = nameof(CanBackFirstRun))]
+    private void BackFirstRun()
+    {
+        if (!CanBackFirstRun()) return;
+
+        FirstRunStep = FirstRunStep switch
+        {
+            FirstRunStep.Storage => FirstRunStep.Welcome,
+            FirstRunStep.Pictures => FirstRunStep.Storage,
+            FirstRunStep.Lightroom => FirstRunStep.Pictures,
+            FirstRunStep.AllSet when _firstRunLightroomOffered => FirstRunStep.Lightroom,
+            _ => FirstRunStep.Pictures
+        };
+    }
+
+    private bool CanBackFirstRun() =>
+        IsFirstRunVisible && !IsFirstRunBusy && !IsFirstRunWelcomeStep;
 
     [RelayCommand(CanExecute = nameof(CanContinueFirstRun))]
     private async Task ContinueFirstRunAsync()
@@ -213,6 +235,7 @@ public partial class MainWindowViewModel
 
         IsFirstRunBusy = true;
         FirstRunErrorMessage = null;
+
         try
         {
             FirstRunPicturesPath = path;
@@ -220,15 +243,11 @@ public partial class MainWindowViewModel
             var detection = DetectLightroomAsync == null
                 ? LightroomDetectionResult.NotDetected
                 : await DetectLightroomAsync(path, CancellationToken.None);
-            if (detection.IsDetected)
-            {
-                DetectedLightroomCatalogPaths = detection.CatalogPaths;
-                DetectedLightroomCatalogPath = detection.CatalogPaths.FirstOrDefault();
-                FirstRunStep = FirstRunStep.Lightroom;
-                return;
-            }
+            _firstRunLightroomOffered = detection.IsDetected;
+            DetectedLightroomCatalogPaths = detection.IsDetected ? detection.CatalogPaths : [];
+            DetectedLightroomCatalogPath = DetectedLightroomCatalogPaths.FirstOrDefault();
 
-            FirstRunStep = FirstRunStep.AllSet;
+            FirstRunStep = detection.IsDetected ? FirstRunStep.Lightroom : FirstRunStep.AllSet;
         }
         catch (Exception exception)
         {
@@ -445,9 +464,11 @@ public partial class MainWindowViewModel
 
     private void NotifyFirstRunCommandsChanged()
     {
+        BackFirstRunCommand.NotifyCanExecuteChanged();
         ContinueFirstRunCommand.NotifyCanExecuteChanged();
         StartInDefaultLocationCommand.NotifyCanExecuteChanged();
         BrowseElsewhereCommand.NotifyCanExecuteChanged();
+
         ImportDetectedLightroomCommand.NotifyCanExecuteChanged();
         SkipDetectedLightroomCommand.NotifyCanExecuteChanged();
         ChooseAnotherLightroomCatalogCommand.NotifyCanExecuteChanged();

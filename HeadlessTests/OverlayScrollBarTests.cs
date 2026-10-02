@@ -71,8 +71,10 @@ public sealed class OverlayScrollBarTests
         [
             "App.axaml",
             "Views/EditHistoryPanel.axaml",
+            "Views/FirstRunView.axaml",
             "Views/FolderTreePanel.axaml",
             "Views/HelpAboutDialog.axaml",
+            "Views/ImportCatalogDialog.axaml",
             "Views/RestoreBackupDialog.axaml",
             "Views/SettingsDialog.axaml",
             "Views/StoragePanel.axaml"

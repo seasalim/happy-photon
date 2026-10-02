@@ -3,24 +3,23 @@
         x:Class="HappyPhoton.Views.ImportCatalogDialog"
         Title="Import from Lightroom Classic"
         Width="720" Height="650" MinWidth="620" MinHeight="520"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner" Classes="dialog">
     <Window.Styles>
         <Style Selector="TextBlock.root-location">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
         </Style>
         <Style Selector="TextBlock.root-count">
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
         </Style>
-        <Style Selector="Button.root-override">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Padding" Value="8,4"/>
+        <Style Selector="TextBlock.report-numbers">
+            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
         </Style>
     </Window.Styles>
-    <Grid RowDefinitions="Auto,*,Auto" Margin="24">
-        <StackPanel Spacing="7">
-            <TextBlock Text="Import From Lightroom Classic"
-                       Classes="section-label"/>
+    <Grid RowDefinitions="Auto,*,Auto">
+        <StackPanel Spacing="7" Margin="20,16">
+            <TextBlock Text="Import from Lightroom Classic"
+                       Classes="dialog-title"/>
             <TextBlock x:Name="CatalogPathText"
                        Foreground="{DynamicResource TextSecondary}"
                        TextWrapping="Wrap"/>
@@ -32,11 +31,11 @@
                        AutomationProperties.LiveSetting="Polite"/>
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1" Margin="0,18,0,18" Padding="0,0,12,0"
+        <ScrollViewer Grid.Row="1" Margin="20,0,20,16" Classes="overlay-scrollbar" Padding="0,0,12,0"
                       VerticalScrollBarVisibility="Auto">
             <StackPanel Spacing="18">
                 <StackPanel x:Name="MappingSection" Spacing="10" IsVisible="False">
-                    <TextBlock Text="Source Roots" Classes="section-label"/>
+                    <TextBlock Text="Source roots" Classes="section-label"/>
                     <TextBlock x:Name="MappingHelpText"
                                Text="Map Lightroom locations that are not available at their original path. Paths are matched without opening photo files."
                                Foreground="{DynamicResource TextSecondary}"
@@ -45,27 +44,29 @@
                 </StackPanel>
 
                 <StackPanel x:Name="PolicySection" Spacing="8" IsVisible="False">
-                    <TextBlock Text="Import Policy" Classes="section-label"/>
-                    <ComboBox x:Name="PolicyPicker" SelectedIndex="0">
+                    <TextBlock Text="Import policy" Classes="section-label"/>
+                    <ComboBox x:Name="PolicyPicker" Classes="edit-dropdown" SelectedIndex="0">
                         <ComboBoxItem Content="Merge — Lightroom wins"/>
                         <ComboBoxItem Content="Merge — fill empty values only"/>
                     </ComboBox>
-                    <TextBlock Text="Fill empty applies Lightroom values only where Happy Photon has none. Values you cleared yourself count as empty. An import never clears local values."
+                    <TextBlock x:Name="PolicyHelpText" Text="Lightroom wins replaces local values with available Lightroom values. An import never clears local values."
                                Foreground="{DynamicResource TextMuted}"
-                               FontSize="11" TextWrapping="Wrap"/>
+                               FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap"/>
                     <CheckBox x:Name="CropImportCheckBox" Content="Import crops (reads local photo orientation headers only)" IsCheckedChanged="OnCropImportChanged"/>
                     <TextBlock Text="Crops always fill empty geometry only. This check never downloads an online-only original."
-                               Foreground="{DynamicResource TextMuted}" FontSize="11" TextWrapping="Wrap"/>
+                               Foreground="{DynamicResource TextMuted}" FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <StackPanel x:Name="ReportSection" Spacing="10" IsVisible="False">
-                    <TextBlock x:Name="ReportSectionLabel" Text="What Will Change"
+                    <TextBlock x:Name="ReportSectionLabel" Text="What will change"
                                Classes="section-label"/>
-                    <TextBlock x:Name="HeadlineText" FontSize="18"
+                    <TextBlock x:Name="HeadlineText" FontSize="{StaticResource FontSizeHeading}"
                                FontWeight="SemiBold" TextWrapping="Wrap"/>
                     <TextBlock x:Name="OutcomeText" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondary}"/>
-                    <TextBlock x:Name="ActionableHeading" Text="Action Needed"
+                    <TextBlock x:Name="ReportCountNote" Classes="dialog-note" TextWrapping="Wrap"
+                               Text="The headline counts photos with at least one change. Per-field lines cover every Lightroom photo found at its mapped path, so they can total more than the headline."/>
+                    <TextBlock x:Name="ActionableHeading" Text="Action needed"
                                Classes="section-label" IsVisible="False"/>
                     <TextBlock x:Name="ActionableText" TextWrapping="Wrap"
                                Foreground="{StaticResource OnErrorContainer}"/>
@@ -77,12 +78,13 @@
             </StackPanel>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10"
-                    HorizontalAlignment="Right">
-            <Button x:Name="CancelButton" Content="Close" IsEnabled="False"
-                    Click="OnCancelClick"/>
-            <Button x:Name="ApplyButton" Content="Import"
-                    IsVisible="False" Classes="accent" Click="OnApplyClick"/>
-        </StackPanel>
+        <Border Grid.Row="2" Classes="dialog-footer">
+            <Grid ColumnDefinitions="160,84" ColumnSpacing="8" HorizontalAlignment="Right">
+                <Button x:Name="CancelButton" Content="Close" IsEnabled="False"
+                        Classes="quiet-button" Width="160" Click="OnCancelClick"/>
+                <Button Grid.Column="1" x:Name="ApplyButton" Content="Import"
+                        IsVisible="False" Classes="quiet-button accent" MinWidth="84" Click="OnApplyClick"/>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

@@ -1,20 +1,5 @@
 [
   {
-    "Path": "Views/ImportCatalogDialog.axaml",
-    "Text": "\u003CSetter Property=\u0022FontSize\u0022 Value=\u002211\u0022/\u003E",
-    "Count": 2
-  },
-  {
-    "Path": "Views/ImportCatalogDialog.axaml",
-    "Text": "FontSize=\u002211\u0022",
-    "Count": 2
-  },
-  {
-    "Path": "Views/ImportCatalogDialog.axaml",
-    "Text": "FontSize=\u002218\u0022",
-    "Count": 1
-  },
-  {
     "Path": "Views/WorkflowCoachmark.axaml",
     "Text": "FontSize=\u002212\u0022",
     "Count": 1
