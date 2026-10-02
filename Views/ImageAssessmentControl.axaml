@@ -15,7 +15,7 @@
 
     <UserControl.Styles>
         <Style Selector="Button.assessment">
-            <Setter Property="Height" Value="26"/>
+            <Setter Property="Height" Value="24"/>
             <Setter Property="Padding" Value="5,2"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
@@ -75,8 +75,9 @@
     </UserControl.Styles>
 
     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+            <!-- Side padding only, so an active flag fills the shared 24px control height. -->
             <Border Background="{DynamicResource SurfaceLowest}"
-                    Padding="1">
+                    Padding="1,0">
                 <StackPanel Orientation="Horizontal" Spacing="1">
                     <Button x:Name="PickImageButton"
                             Classes="assessment flag"

@@ -121,8 +121,8 @@ public sealed partial class DevelopAssessmentBarTests
                 .Single(grid => grid.ColumnDefinitions.Count == 5);
 
             // Pane maximums (400/450) bound the viewer, so use a window where they still reach each tier.
-            // Shared button metrics reduce the full action bar by 59 px (596 to 537).
-            window.Width = 1441;
+            // Shared button metrics reduce the full action bar by 59 px (596 to 537); filled view buttons add 20 px.
+            window.Width = 1461;
             Settle(window);
             AssertMode(pane, true, false);
 
