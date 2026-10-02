@@ -159,6 +159,10 @@ public partial class CompactSlider : UserControl
         Focusable = true;
         PointerExited += (_, _) => CompleteWheel();
         DetachedFromVisualTree += (_, _) => CompleteWheel();
+        AttachedToVisualTree += (_, _) =>
+        {
+            if (IsInline) UpdateInlineColumns();
+        };
 
         _layoutGrid = this.FindControl<Grid>("LayoutGrid");
         _trackGrid = this.FindControl<Grid>("TrackGrid");
@@ -218,6 +222,7 @@ public partial class CompactSlider : UserControl
     {
         base.OnPropertyChanged(change);
         OnEntryPropertyChanged(change);
+        OnInlinePropertyChanged(change);
 
         if (change.Property == IsEffectivelyEnabledProperty && !IsEffectivelyEnabled)
             CompleteWheel();

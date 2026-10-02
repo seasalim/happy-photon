@@ -139,7 +139,8 @@
                 <views:CompactSlider x:Name="DevelopZoomSlider" Label="Zoom" IsValueEntryEnabled="False"
                                      Value="{Binding ManualZoomLevel, Mode=TwoWay}"
                                      Minimum="0.1" Maximum="5" SmallChange="0.1"
-                                     StringFormat="{}{0:P0}" Width="180" VerticalAlignment="Center"/>
+                                     StringFormat="{}{0:P0}" Width="180" IsInline="True"
+                                     VerticalAlignment="Center"/>
                 <Button Classes="compact-button filled" x:Name="ZoomFitButton" Command="{Binding ZoomFitCommand}" Content="Fit"
                         ToolTip.Tip="Fit to View"/>
                 <ToggleButton Classes="compact-button filled" x:Name="ActualSizeButton"
