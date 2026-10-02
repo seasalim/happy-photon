@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:HappyPhoton.Converters"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.DevelopAssessmentCluster"
+             x:DataType="vm:MainWindowViewModel" Width="110">
+    <UserControl.Resources>
+        <converters:ColorLabelBrushConverter x:Key="ColorLabelBrushConverter"/>
+    </UserControl.Resources>
+    <Grid ColumnDefinitions="20,70,20" VerticalAlignment="Center">
+        <Path x:Name="CompactPickedFlag" Width="14" Height="14"
+              Data="M 2,13 L 2,2 M 2,3 L 11,3 L 9,6 L 11,9 L 2,9"
+              Stroke="{DynamicResource SelectionCheck}" StrokeThickness="1.4"
+              StrokeLineCap="Round" StrokeJoin="Round"
+              IsVisible="{Binding SelectedImage.IsPicked, FallbackValue=False}"/>
+        <TextBlock x:Name="CompactRejectedFlag" Text="×" HorizontalAlignment="Center"
+                   FontSize="{StaticResource FontSizeHeading}" Foreground="{StaticResource RejectGlyph}"
+                   IsVisible="{Binding SelectedImage.IsRejected, FallbackValue=False}"/>
+        <TextBlock x:Name="CompactRating" Grid.Column="1" Text="{Binding SelectedImage.RatingStars}"
+                   FontSize="{StaticResource FontSizeLabel}" Foreground="{DynamicResource TextPrimary}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <Border x:Name="CompactColorLabel" Grid.Column="2" Width="10" Height="10" CornerRadius="999"
+                Background="{Binding SelectedImage.ColorLabel, Converter={StaticResource ColorLabelBrushConverter}}"
+                IsVisible="{Binding SelectedImage.HasColorLabel, FallbackValue=False}"
+                ToolTip.Tip="{Binding SelectedImage.ColorLabel}"/>
+    </Grid>
+</UserControl>

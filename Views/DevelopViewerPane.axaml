@@ -115,6 +115,15 @@
                         ToolTip.Tip="Rotate Right (90° clockwise)"
                         FontSize="14" Padding="8,3" BorderThickness="0"/>
             </StackPanel>
+            <Grid x:Name="DevelopAssessmentSlot" Grid.Column="1" ClipToBounds="True">
+                <!-- Reserve the widest (Rejected) state, including its button border. -->
+                <Border x:Name="DevelopAssessmentHost" Width="406" IsVisible="False"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <views:ImageAssessmentControl x:Name="DevelopImageAssessment"/>
+                </Border>
+                <views:DevelopAssessmentCluster x:Name="DevelopCompactAssessment" IsVisible="False"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
             <StackPanel x:Name="DevelopViewStatePanel"
                         Grid.Column="2"
                         Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">

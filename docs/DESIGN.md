@@ -99,8 +99,10 @@ it tracks pan/zoom and disappears when effectively all of the image is visible, 
 during the transient loupe peek.
 
 Browse anchors culling actions left and view/thumbnail state right. Develop anchors
-navigation/rotation left and zoom/view state right. Persistent assessments stay in
-Browse; Develop and Loupe shortcuts briefly show a chrome-less confirmation over the
+navigation/rotation left and zoom/view state right, with persistent assessments centered
+between them. Develop uses the Library footer control, a compact read-only cluster when
+only that fits, or an empty slot when neither fits; assessment state never moves the buttons.
+Develop and Loupe shortcuts briefly show a chrome-less confirmation over the
 photo, with primary text and a dark halo for legibility on unknown content.
 
 Fullscreen exposes a muted exit chip on pointer movement, then fades it away. It is

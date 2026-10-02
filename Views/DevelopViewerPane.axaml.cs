@@ -9,12 +9,25 @@ public partial class DevelopViewerPane : UserControl
 {
     private MainWindowViewModel? _viewModel;
     private SynchronizedPaneGroup? _paneGroup;
+
     public DevelopViewerPane()
     {
         InitializeComponent();
+        DevelopControlBar.SizeChanged += (_, _) => UpdateAssessmentMode();
+        DevelopAssessmentSlot.SizeChanged += (_, _) => UpdateAssessmentMode();
+        DevelopImageAssessment.AddHandler(Button.ClickEvent, (_, _) => Focus());
     }
 
     public ZoomPanControl Viewer => ZoomPanControl;
+
+    private void UpdateAssessmentMode()
+    {
+        var available = DevelopAssessmentSlot.Bounds.Width;
+        DevelopAssessmentHost.IsVisible = available >= DevelopAssessmentHost.Width;
+        DevelopCompactAssessment.IsVisible = !DevelopAssessmentHost.IsVisible &&
+            available >= DevelopCompactAssessment.Width;
+    }
+
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);

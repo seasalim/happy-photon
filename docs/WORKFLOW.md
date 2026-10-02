@@ -135,8 +135,10 @@ photograph. In Develop, Browse Loupe, and Compare they affect only the active
 photograph. Pick and Reject are set-only; the backtick toggle clears a uniformly
 Picked target or sets Picked otherwise.
 
-Develop and Browse Loupe briefly confirm assessment changes over the photo; Browse
-shows persistent state. Rejected does not delete, and Picked does not select for export.
+Develop and Browse Loupe briefly confirm assessment changes over the photo. Develop's
+control bar shows persistent state as the Library footer does, using a compact read-only
+cluster when space is limited and an empty middle slot when neither control fits.
+Rejected does not delete, and Picked does not select for export.
 On the first pass, reject clear misses, pick each moment's strongest frame and leave
 uncertain comparisons unflagged. Footer buttons perform the same actions.
 
