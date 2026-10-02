@@ -55,7 +55,7 @@ public sealed class CropAutoLayoutMeasurementTests(ITestOutputHelper output)
             var auto = section.GetVisualDescendants().OfType<Button>()
                 .SingleOrDefault(button => button.Content?.ToString() == "Auto");
             var wbAuto = panel.FindControl<Button>("WhiteBalanceAutoButton")!;
-            Assert.Contains("wb-auto", wbAuto.Classes);
+            Assert.Contains("quiet-button", wbAuto.Classes);
             Assert.True(wbAuto.Bounds.Height > 0);
             var scroll = panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!;
             var viewport = scroll.GetVisualDescendants().OfType<ScrollContentPresenter>()

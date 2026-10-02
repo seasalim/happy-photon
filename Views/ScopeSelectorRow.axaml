@@ -6,7 +6,6 @@
              x:DataType="vm:MainWindowViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://HappyPhoton/Views/DevelopActionStyles.axaml"/>
         <Style Selector="ToggleButton.scope-icon Path.cfa-fill">
             <Setter Property="Stroke" Value="{x:Null}"/>
             <Setter Property="Fill" Value="{DynamicResource ControlActive}"/>
@@ -28,7 +27,7 @@
                     Orientation="Horizontal"
                     Spacing="4">
             <ToggleButton x:Name="HistogramScopeButton"
-                          Classes="develop-action scope-icon"
+                          Classes="icon-button scope-icon"
                           IsChecked="{Binding IsHistogramScopeActive, Mode=OneWay}"
                           Command="{Binding SelectScopeCommand}"
                           CommandParameter="{x:Static models:ScopeView.Histogram}"
@@ -44,7 +43,7 @@
                 </Viewbox>
             </ToggleButton>
             <ToggleButton x:Name="RawHistogramScopeButton"
-                          Classes="develop-action scope-icon"
+                          Classes="icon-button scope-icon"
                           IsChecked="{Binding IsRawHistogramScopeActive, Mode=OneWay}"
                           IsEnabled="{Binding IsRawHistogramAvailable}"
                           Command="{Binding SelectScopeCommand}"
@@ -63,7 +62,7 @@
                 </Viewbox>
             </ToggleButton>
             <ToggleButton x:Name="WaveformScopeButton"
-                          Classes="develop-action scope-icon"
+                          Classes="icon-button scope-icon"
                           IsChecked="{Binding IsWaveformScopeActive, Mode=OneWay}"
                           Command="{Binding SelectScopeCommand}"
                           CommandParameter="{x:Static models:ScopeView.Waveform}"

@@ -20,7 +20,6 @@
     <UserControl.Styles>
         <StyleInclude Source="avares://HappyPhoton/Views/BrowseFilterBarStyles.axaml"/>
         <StyleInclude Source="avares://HappyPhoton/Views/BrowseThumbnailStyles.axaml"/>
-        <StyleInclude Source="avares://HappyPhoton/Views/DevelopActionStyles.axaml"/>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto">
@@ -190,8 +189,11 @@
                                               Click="OnDeleteImagesClick"/>
                                 </ContextMenu>
                             </Border.ContextMenu>
+                            <Grid>
+                                <Border Classes="tile-focus" BorderBrush="{DynamicResource TextPrimary}"
+                                        BorderThickness="1" CornerRadius="0" Margin="-2" IsHitTestVisible="False"/>
                             <StackPanel>
-                                <Panel Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
+                                <Panel x:Name="ThumbnailImageViewport" Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
                                        Height="{Binding $parent[views:BrowseGridView].ImageViewportHeight}">
                                     <!-- Background: darker blue-gray for RAW, standard for others -->
                                     <Border Background="{DynamicResource RawFileBackground}"
@@ -289,7 +291,7 @@
                                 <!-- Alignment-based placement: an Auto column caches a
                                      zero width when the dot's visibility flips on a recycled
                                      container, pushing it outside the tile. -->
-                                <Grid Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
+                                <Grid x:Name="ThumbnailStatusRow" Width="{Binding $parent[views:BrowseGridView].ImageViewportWidth}"
                                       Margin="0,3,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="3"
                                                 HorizontalAlignment="Left">
@@ -361,6 +363,7 @@
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
+                            </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsRepeater.ItemTemplate>

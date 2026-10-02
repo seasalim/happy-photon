@@ -4,15 +4,12 @@
              xmlns:views="using:HappyPhoton.Views"
              x:Class="HappyPhoton.Views.ExportPreviewPane"
              x:DataType="vm:MainWindowViewModel">
-    <UserControl.Styles>
-        <StyleInclude Source="avares://HappyPhoton/Views/DevelopActionStyles.axaml"/>
-    </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
         <Grid RowDefinitions="Auto,Auto" Margin="14,8,14,0">
             <WrapPanel HorizontalAlignment="Right" Orientation="Horizontal" ItemSpacing="6" LineSpacing="6">
                 <ToggleButton x:Name="ExportProofToggle"
-                              Classes="develop-action"
+                              Classes="icon-button"
                               Content="Preview output"
                               Width="112"
                               Height="20"

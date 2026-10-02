@@ -58,7 +58,7 @@ public sealed class AutoStraightenViewTests
             Assert.Equal(paneWidth == 250 ? 110 : 60,
                 slider.FindControl<Grid>("LayoutGrid")!.ColumnDefinitions[1].ActualWidth);
             Assert.Equal(28, auto.Bounds.Height);
-            Assert.Contains("wb-auto", auto.Classes);
+            Assert.Contains("quiet-button", auto.Classes);
             Assert.True(auto.IsEffectivelyVisible);
             var bounds = BoundsIn(auto, section);
             Assert.True(new Rect(section.Bounds.Size).Contains(bounds));

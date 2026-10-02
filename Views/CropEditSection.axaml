@@ -13,7 +13,7 @@
                           ToolTip.Tip="Lock Aspect Ratio" FontSize="{StaticResource FontSizeSmall}" Padding="4,4" BorderThickness="0">
                 <TextBlock Text="Lock aspect ratio" TextTrimming="CharacterEllipsis"/>
             </ToggleButton>
-            <Button x:Name="AutoStraightenButton" Grid.Column="1" Classes="wb-auto"
+            <Button x:Name="AutoStraightenButton" Grid.Column="1" Classes="quiet-button" MinWidth="50"
                     Command="{Binding AutoStraightenCommand}" Content="Auto" Click="OnAutoClick"
                     ToolTip.Tip="Straighten from the photo's lines (sets Horizon)"/>
             <Button Grid.Column="2" Command="{Binding ResetCropCommand}" Content="Reset crop"

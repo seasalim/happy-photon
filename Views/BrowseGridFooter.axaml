@@ -24,7 +24,7 @@
                     Orientation="Horizontal"
                     Spacing="4">
                 <ToggleButton x:Name="LoupeViewButton"
-                              Classes="develop-action"
+                              Classes="icon-button"
                               Width="30" Padding="0"
                               Command="{Binding ToggleLoupeCommand}"
                               IsChecked="{Binding IsLoupeMode, Mode=OneWay}"
@@ -35,7 +35,7 @@
                               Data="M1 2h12v10H1z M3 4v6h8V4z"/>
                 </ToggleButton>
                 <ToggleButton x:Name="CompareViewButton"
-                              Classes="develop-action"
+                              Classes="icon-button"
                               Width="30"
                               Padding="0"
                               Command="{Binding ToggleCompareCommand}"

@@ -62,15 +62,11 @@
             <StackPanel x:Name="LocalEditor" Grid.IsSharedSizeScope="True" Spacing="8" IsVisible="{Binding HasLocals}">
                 <ListBox x:Name="LocalList" Classes="thin-scrollbar" ItemsSource="{Binding LocalRows}" SelectedItem="{Binding SelectedLocalRow}"
                          IsEnabled="{Binding CanEditLocals}" MaxHeight="120" AutomationProperties.Name="Local adjustments">
-                    <ListBox.Resources>
-                        <StaticResource x:Key="CheckBoxMinHeight" ResourceKey="MaskRowControlSize"/>
-                    </ListBox.Resources>
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:LocalRowViewModel">
                             <Grid ColumnDefinitions="Auto,Auto,*,Auto" ToolTip.Tip="{Binding SecondaryLabel}">
                                 <CheckBox IsChecked="{Binding Enabled, Mode=OneWay}" Margin="0,0,5,0"
-                                          Padding="{StaticResource MaskRowControlPadding}" MinHeight="{StaticResource MaskRowControlSize}"
-                                          Height="{StaticResource MaskRowControlSize}" VerticalAlignment="Center"
+                                          VerticalAlignment="Center"
                                           AutomationProperties.Name="Enable local"
                                           Command="{Binding $parent[views:LocalsEditSection].((vm:MainWindowViewModel)DataContext).ToggleLocalEnabledCommand}"
                                           CommandParameter="{Binding Local}"/>
@@ -207,7 +203,7 @@
                             <Path Width="6" Height="6" VerticalAlignment="Center" Stroke="{DynamicResource TextMuted}" StrokeThickness="1"/>
                         </StackPanel>
                     </ToggleButton>
-                    <CheckBox x:Name="LocalLuminanceEnabled" Grid.Column="1" Margin="8,0,0,0" MinHeight="20"
+                    <CheckBox x:Name="LocalLuminanceEnabled" Grid.Column="1" Margin="8,0,0,0"
                               AutomationProperties.Name="Enable Luminance Range" ToolTip.Tip="Enable Luminance Range"
                               IsChecked="{Binding IsLocalLuminanceEnabled, Mode=OneWay}"
                               IsEnabled="{Binding CanEditLocalGeometry}" Command="{Binding ToggleLocalLuminanceCommand}"/>
@@ -241,7 +237,7 @@
                             <Path Width="6" Height="6" VerticalAlignment="Center" Stroke="{DynamicResource TextMuted}" StrokeThickness="1"/>
                         </StackPanel>
                     </ToggleButton>
-                    <CheckBox x:Name="LocalHueEnabled" Grid.Column="1" Margin="8,0,0,0" MinHeight="20" AutomationProperties.Name="Enable Hue Range"
+                    <CheckBox x:Name="LocalHueEnabled" Grid.Column="1" Margin="8,0,0,0" AutomationProperties.Name="Enable Hue Range"
                               IsChecked="{Binding IsLocalHueEnabled, Mode=OneWay}" IsEnabled="{Binding CanEditLocalColor}"
                               Command="{Binding ToggleLocalHueCommand}"/>
                 </Grid>

@@ -228,8 +228,9 @@ public sealed partial class BrowseGridDensityGateTests
             Assert.NotEmpty(firstRow);
             var gaps = firstRow.Zip(firstRow.Skip(1), (left, right) =>
                 right.Origin.X - (left.Origin.X + left.Tile.Bounds.Width)).ToArray();
-            var imagePanel = Assert.IsType<Panel>(
-                Assert.IsType<StackPanel>(firstRow[0].Tile.Child).Children[0]);
+            var imagePanel = Assert.Single(
+                firstRow[0].Tile.GetVisualDescendants().OfType<Panel>(),
+                panel => panel.Name == "ThumbnailImageViewport");
             var last = firstRow[^1];
             var lastRow = tiles
                 .Where(tile => Math.Abs(tile.Origin.Y - rowOrigins[^1]) < 0.001)

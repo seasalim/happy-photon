@@ -166,9 +166,10 @@ public sealed partial class BrowseGridDensityGateTests
             var repeater = grid.FindControl<ItemsRepeater>("ThumbnailGrid")!;
             var tile = repeater.GetVisualDescendants().OfType<Border>()
                 .First(border => border.Classes.Contains("thumbnail"));
-            var stack = (StackPanel)tile.Child!;
-            var panel = (Panel)stack.Children[0];
-            var chipGrid = (Grid)stack.Children[1];
+            var panel = Assert.Single(tile.GetVisualDescendants().OfType<Panel>(),
+                child => child.Name == "ThumbnailImageViewport");
+            var chipGrid = Assert.Single(tile.GetVisualDescendants().OfType<Grid>(),
+                child => child.Name == "ThumbnailStatusRow");
             var dot = tile.GetVisualDescendants().OfType<Border>()
                 .First(border => border.Classes.Contains("color-label-marker"));
             var tileOrigin = tile.TranslatePoint(default, repeater)!.Value;

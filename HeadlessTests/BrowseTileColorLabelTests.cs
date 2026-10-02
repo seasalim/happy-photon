@@ -60,12 +60,13 @@ public sealed class BrowseTileColorLabelTests
             var tile = Assert.Single(
                 repeater.GetVisualDescendants().OfType<Border>(),
                 border => border.Classes.Contains("thumbnail"));
-            var content = Assert.IsType<StackPanel>(tile.Child);
-            var imagePanel = Assert.IsType<Panel>(content.Children[0]);
+            var imagePanel = Assert.Single(tile.GetVisualDescendants().OfType<Panel>(),
+                panel => panel.Name == "ThumbnailImageViewport");
             var clippedContent = Assert.Single(
                 imagePanel.Children.OfType<Border>(),
                 border => border.Name == "ThumbnailContentClip");
-            var status = Assert.IsType<Grid>(content.Children[1]);
+            var status = Assert.Single(tile.GetVisualDescendants().OfType<Grid>(),
+                grid => grid.Name == "ThumbnailStatusRow");
             var marker = Assert.Single(
                 tile.GetVisualDescendants().OfType<Border>(),
                 border => border.Classes.Contains("color-label-marker"));

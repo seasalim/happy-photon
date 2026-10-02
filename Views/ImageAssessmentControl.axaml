@@ -129,7 +129,7 @@
                 </StackPanel>
             </Border>
 
-            <Rectangle Width="1" Height="18" Fill="{DynamicResource Divider}"/>
+            <Rectangle Width="1" Height="16" Fill="{DynamicResource Divider}"/>
 
             <StackPanel Orientation="Horizontal" Spacing="0">
                 <Button x:Name="Rating1Button"
@@ -221,7 +221,7 @@
                 </StackPanel>
             </Button>
 
-            <Rectangle Width="1" Height="18" Fill="{DynamicResource Divider}"/>
+            <Rectangle Width="1" Height="16" Fill="{DynamicResource Divider}"/>
 
             <ItemsControl ItemsSource="{Binding ColorLabelChoices}">
                 <ItemsControl.ItemsPanel>

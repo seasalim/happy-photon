@@ -118,6 +118,8 @@ only for deviations such as flash, non-pattern metering or manual white balance.
 
 ## Components
 
+Icon buttons use drawn paths at 14px (24px button) and 12px (20px button); text buttons are 28px or 24px high.
+
 Color labels occupy fixed red, yellow, green, blue and purple slots. Caption markers
 align below EDIT so the photograph stays unobstructed. Assessment/filter swatches come
 from the append-only enum; tooltips name them and re-clicking clears the active filter.

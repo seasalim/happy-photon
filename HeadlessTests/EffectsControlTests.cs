@@ -56,7 +56,7 @@ public sealed class EffectsControlTests : IDisposable
         Assert.True(vignette.EnableDoubleClickReset);
         Assert.False(midpointRow.IsEnabled);
         Assert.Equal(0.32, midpointRow.Opacity);
-        Assert.Equal(22, sizes.Height);
+        Assert.Equal(24, sizes.Height); // WP6 shared segmented control height.
         Assert.Equal(new Thickness(2), sizes.Padding);
         Assert.Equal(new CornerRadius(0), sizes.CornerRadius);
         Assert.Equal(new Thickness(0), sizes.BorderThickness);

@@ -1,0 +1,272 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:HappyPhoton.Views">
+    <Style Selector="ListBox.segmented">
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Padding" Value="2"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="ListBox.segmented ListBoxItem">
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="LetterSpacing" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="ListBox.segmented ListBoxItem:pointerover">
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+    </Style>
+    <Style Selector="ListBox.segmented ListBoxItem:selected,
+                     ListBox.segmented ListBoxItem:selected:pointerover">
+        <Setter Property="Background" Value="{DynamicResource ControlSelected}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+    <Style Selector="CheckBox">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid ColumnDefinitions="12,*">
+                    <Border Name="PART_Border" Grid.ColumnSpan="2" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"/>
+                    <Grid VerticalAlignment="Center" Width="12" Height="12">
+                        <Border Name="NormalRectangle" Width="12" Height="12" CornerRadius="0" BorderThickness="1"
+                                Background="{DynamicResource SurfaceHigh}" BorderBrush="{DynamicResource TextMuted}"/>
+                        <Viewbox Width="12" Height="12">
+                            <Panel>
+                                <Panel Width="16" Height="16"/>
+                                <Path Name="CheckGlyph" Opacity="0" Stretch="Uniform" VerticalAlignment="Center"
+                                      Fill="{DynamicResource OnControlActive}"/>
+                            </Panel>
+                        </Viewbox>
+                    </Grid>
+                    <ContentPresenter Name="PART_ContentPresenter" Grid.Column="1" Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}" Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" TextWrapping="Wrap"/>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+        <Setter Property="MinHeight" Value="20"/>
+        <Setter Property="MinWidth" Value="20"/>
+        <Setter Property="Padding" Value="6,0,0,0"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+        <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="CheckBox:unchecked:pointerover /template/ Border#NormalRectangle">
+        <Setter Property="BorderBrush" Value="{DynamicResource TextSecondary}"/>
+    </Style>
+    <Style Selector="CheckBox:disabled">
+        <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+    </Style>
+    <Style Selector="CheckBox:unchecked:disabled /template/ Border#NormalRectangle">
+        <Setter Property="BorderBrush" Value="{DynamicResource TextMuted}"/>
+    </Style>
+    <Style Selector="CheckBox:checked /template/ Border#NormalRectangle,
+                     CheckBox:checked:pointerover /template/ Border#NormalRectangle,
+                     CheckBox:checked:pressed /template/ Border#NormalRectangle">
+        <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlActive}"/>
+    </Style>
+    <Style Selector="CheckBox:checked /template/ Path#CheckGlyph,
+                     CheckBox:checked:pointerover /template/ Path#CheckGlyph,
+                     CheckBox:checked:pressed /template/ Path#CheckGlyph">
+        <Setter Property="Fill" Value="{DynamicResource OnControlActive}"/>
+    </Style>
+    <Style Selector="CheckBox.edit-toggle">
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="MaxHeight" Value="28"/>
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.quiet-button">
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="MaxHeight" Value="28"/>
+        <Setter Property="Padding" Value="10,2"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
+        <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Button.compact-button">
+        <Setter Property="MinHeight" Value="24"/>
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Padding" Value="4,0"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource ControlActive}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Button.quiet-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+    <Style Selector="Button.compact-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+    <Style Selector="Button.compact-button:disabled">
+        <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextDisabled}"/>
+    </Style>
+    <Style Selector="Button.compact-button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextDisabled}"/>
+    </Style>
+    <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
+    </Style>
+    <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
+    </Style>
+    <Style Selector="Button.destructive /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
+        <Setter Property="Foreground" Value="{StaticResource OnErrorContainer}"/>
+    </Style>
+    <Style Selector="Button.destructive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource ErrorContainer}"/>
+        <Setter Property="Foreground" Value="{StaticResource OnErrorContainer}"/>
+    </Style>
+    <Style Selector="Button.icon-button, ToggleButton.icon-button">
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="Width" Value="24"/>
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Padding" Value="5"/>
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ControlActive}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+    <Style Selector="Button.icon-button:disabled, ToggleButton.icon-button:disabled">
+        <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+    </Style>
+    <Style Selector="Button.icon-button:disabled /template/ ContentPresenter#PART_ContentPresenter,
+                     ToggleButton.icon-button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+    </Style>
+    <Style Selector="Button.icon-button Path, ToggleButton.icon-button Path">
+        <Setter Property="Stroke" Value="{DynamicResource ControlActive}"/>
+    </Style>
+    <Style Selector="Button.icon-button:pointerover Path,
+                     ToggleButton.icon-button:pointerover Path">
+        <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+    <Style Selector="ToggleButton.icon-button:checked">
+        <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
+    </Style>
+    <Style Selector="ToggleButton.icon-button:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
+    </Style>
+    <Style Selector="ToggleButton.icon-button:checked Path">
+        <Setter Property="Stroke" Value="{DynamicResource OnControlActive}"/>
+    </Style>
+    <Style Selector="Button.icon-button.compact, ToggleButton.icon-button.compact">
+        <Setter Property="Width" Value="20"/>
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="Button.icon-button Viewbox, ToggleButton.icon-button Viewbox">
+        <Setter Property="Width" Value="14"/>
+        <Setter Property="Height" Value="14"/>
+    </Style>
+    <Style Selector="Button.icon-button.compact Viewbox, ToggleButton.icon-button.compact Viewbox">
+        <Setter Property="Width" Value="12"/>
+        <Setter Property="Height" Value="12"/>
+    </Style>
+    <Style Selector="MenuItem">
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="MinHeight" Value="24"/>
+        <Setter Property="Padding" Value="8,0"/>
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+        <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="MenuItem /template/ TextBlock#PART_InputGestureText,
+                     MenuItem:selected /template/ TextBlock#PART_InputGestureText">
+        <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+    </Style>
+    <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot,
+                     MenuItem:selected /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
+    </Style>
+    <Style Selector="MenuItem /template/ Popup#PART_Popup > Border">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="2"/>
+    </Style>
+    <Style Selector="ContextMenu, MenuFlyoutPresenter">
+        <Setter Property="views:MenuKeyboardFocus.Enabled" Value="True"/>
+        <Setter Property="Padding" Value="2"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Divider}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="ContextMenu Separator, MenuFlyoutPresenter Separator, MenuItem Separator">
+        <Setter Property="Background" Value="{DynamicResource Divider}"/>
+    </Style>
+    <Style Selector="ToolTip">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="MaxWidth" Value="400"/>
+    </Style>
+    <Style Selector=":is(Control)">
+        <Setter Property="FocusAdorner">
+            <Template>
+                <Border Name="SharedFocusOutline" BorderBrush="{DynamicResource TextPrimary}"
+                        BorderThickness="1" CornerRadius="0" Margin="-2" IsHitTestVisible="False"
+                        AdornerLayer.IsClipEnabled="False"/>
+            </Template>
+        </Setter>
+    </Style>
+    <!-- The grid owns focus; its active tile projects the keyboard outline inside the ring. -->
+    <Style Selector="views|BrowseGridView">
+        <Setter Property="FocusAdorner" Value="{x:Null}"/>
+    </Style>
+    <Style Selector="Border.tile-focus">
+        <Setter Property="IsVisible" Value="False"/>
+    </Style>
+    <Style Selector="views|BrowseGridView:focus-visible Border.thumbnail.active Border.tile-focus">
+        <Setter Property="IsVisible" Value="True"/>
+    </Style>
+</Styles>

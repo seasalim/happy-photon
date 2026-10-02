@@ -55,7 +55,7 @@ public sealed partial class CompareViewHeadlessTests
             Assert.Equal(10, compareGlyph.FontSize);
             Assert.Equal(Avalonia.Media.FontWeight.Bold, compareGlyph.FontWeight);
             Assert.Equal(0.5, compareGlyph.LetterSpacing);
-            Assert.Contains("develop-action", compareButton.Classes);
+            Assert.Contains("icon-button", compareButton.Classes);
             // Wider than the square icon buttons on purpose: the three-glyph
             // comparison mark does not fit the 24px square.
             var burstsWidth = Descendant<Button>(browse, "BurstsButton").Bounds.Width;

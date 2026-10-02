@@ -1,0 +1,38 @@
+using System.Text.RegularExpressions;
+using Xunit;
+
+namespace HappyPhoton.Tests;
+
+public sealed partial class ThemeSourceGuardTests
+{
+    [Fact]
+    public void SharedControlClasses_DoNotUseRetiredNames()
+    {
+        var root = FindRepositoryRoot();
+        var sources = SourceFiles(Path.Combine(root, "Views"))
+            .Concat(SourceFiles(Path.Combine(root, "Themes")))
+            .Append(Path.Combine(root, "App.axaml"));
+        var violations = sources.SelectMany(file => RetiredClassPattern().Matches(File.ReadAllText(file))
+            .Select(match => $"{Path.GetRelativePath(root, file)}: {match.Value}"));
+
+        Assert.Empty(violations);
+    }
+
+    [Theory]
+    [InlineData("<Button Classes=\"wb-auto\"/>")]
+    [InlineData("<Button Classes=\"develop-reset accent\"/>")]
+    [InlineData("<Style Selector=\"ToggleButton.develop-action:checked\"/>")]
+    public void RetiredClassMatcher_RejectsRetiredClass(string text)
+    {
+        Assert.Matches(RetiredClassPattern(), text);
+    }
+
+    [Fact]
+    public void RetiredClassMatcher_AcceptsSharedClasses()
+    {
+        Assert.DoesNotMatch(RetiredClassPattern(), "<Button Classes=\"icon-button compact\"/>");
+    }
+
+    [GeneratedRegex(@"(?<![\w-])(?:wb-auto|develop-reset|develop-action)(?![\w-])")]
+    private static partial Regex RetiredClassPattern();
+}

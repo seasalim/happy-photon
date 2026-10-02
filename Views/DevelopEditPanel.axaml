@@ -12,7 +12,6 @@
              x:DataType="vm:MainWindowViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://HappyPhoton/Views/DevelopActionStyles.axaml"/>
         <StyleInclude Source="avares://HappyPhoton/Views/DevelopGroupStyles.axaml"/>
         <Style Selector="ToggleButton.tool">
             <Setter Property="Padding" Value="0"/>
@@ -50,15 +49,6 @@
         <Style Selector="ToggleButton.wb-picker:checked">
             <Setter Property="Background" Value="{DynamicResource ControlActive}"/>
             <Setter Property="Foreground" Value="{DynamicResource OnControlActive}"/>
-        </Style>
-        <Style Selector="Button.wb-auto">
-            <Setter Property="MinWidth" Value="50"/>
-            <Setter Property="MinHeight" Value="28"/>
-            <Setter Property="Height" Value="28"/>
-            <Setter Property="MaxHeight" Value="28"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
         <Style Selector="ToggleButton.wb-picker">
             <Setter Property="MinWidth" Value="28"/>
@@ -125,7 +115,7 @@
                     </StackPanel>
                 </Border>
                 <StackPanel x:Name="DevelopToolRow" Orientation="Horizontal" Spacing="4" Margin="15,0,15,8">
-                    <ToggleButton x:Name="CropModeButton" Classes="develop-action tool crop" Classes.has-content="{Binding HasCommittedCrop}"
+                    <ToggleButton x:Name="CropModeButton" Classes="icon-button tool crop" Classes.has-content="{Binding HasCommittedCrop}"
                                   IsChecked="{Binding IsCropMode, Mode=OneWay}" Command="{Binding ToggleCropModeCommand}"
                                   AutomationProperties.Name="Crop" ToolTip.Tip="Crop Image (R)" IsEnabled="{Binding CanEditSelectedImage}">
                         <Grid>
@@ -134,7 +124,7 @@
                                      Margin="0,-2,-3,0" IsVisible="{Binding HasCommittedCrop}"/>
                         </Grid>
                     </ToggleButton>
-                    <ToggleButton x:Name="SpotsModeButton" Classes="develop-action tool spots" Classes.has-content="{Binding HasSpots}"
+                    <ToggleButton x:Name="SpotsModeButton" Classes="icon-button tool spots" Classes.has-content="{Binding HasSpots}"
                                   IsChecked="{Binding IsSpotsMode, Mode=OneWay}" Command="{Binding ToggleSpotsModeCommand}"
                                   AutomationProperties.Name="Spot Removal" ToolTip.Tip="Spot Removal (Q)" IsEnabled="{Binding CanEditSelectedImage}">
                         <Grid>
@@ -143,7 +133,7 @@
                                      Margin="0,-2,-3,0" IsVisible="{Binding HasSpots}"/>
                         </Grid>
                     </ToggleButton>
-                    <ToggleButton x:Name="LocalsModeButton" Classes="develop-action tool locals" Classes.has-content="{Binding HasLocals}"
+                    <ToggleButton x:Name="LocalsModeButton" Classes="icon-button tool locals" Classes.has-content="{Binding HasLocals}"
                                   IsChecked="{Binding IsLocalsMode, Mode=OneWay}" Command="{Binding ToggleLocalsModeCommand}"
                                   AutomationProperties.Name="Locals" ToolTip.Tip="Locals (Shift+W)">
                         <Grid>
@@ -210,7 +200,7 @@
                                               SelectedItem="{Binding SelectedWhiteBalanceMode, Mode=TwoWay}"/>
                                     <Button x:Name="WhiteBalanceAutoButton"
                                             Grid.Column="1"
-                                            Classes="wb-auto"
+                                            Classes="quiet-button" MinWidth="50"
                                             Command="{Binding AutoWhiteBalanceCommand}"
                                             Content="Auto"
                                             Margin="6,0,0,0"

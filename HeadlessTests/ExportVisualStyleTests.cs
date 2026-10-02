@@ -94,8 +94,8 @@ public sealed partial class ExportVisualStyleTests : IDisposable
             var checkGlyph = Assert.Single(
                 recipeToggle.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>(),
                 path => path.Name == "CheckGlyph");
-            Assert.Equal(0.8, checkBox.RenderTransform!.Value.M11, precision: 3);
-            Assert.Equal(0.8, checkBox.RenderTransform.Value.M22, precision: 3);
+            Assert.Null(checkBox.RenderTransform);
+            Assert.Equal(new Size(12, 12), checkBox.Bounds.Size);
             AssertBrush("ControlActive", checkBox.Background);
             AssertBrush("OnControlActive", checkGlyph.Fill);
             var browse = pane.GetVisualDescendants().OfType<Button>()
@@ -316,10 +316,10 @@ public sealed partial class ExportVisualStyleTests : IDisposable
 
     private static void AssertSegmented(ListBox control)
     {
-        Assert.Equal(22, control.Height);
+        Assert.Equal(24, control.Height);
         AssertBrush("SurfaceHigh", control.Background);
         var item = control.GetVisualDescendants().OfType<ListBoxItem>().First();
-        Assert.Equal(18, item.Height);
+        Assert.Equal(20, item.Height);
         Assert.Equal(10, item.FontSize);
         Assert.Equal(0, item.LetterSpacing);
     }

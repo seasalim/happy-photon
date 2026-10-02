@@ -44,7 +44,8 @@ public sealed class ThemeLiveSwitchTests
                 path => path.Name == "CheckGlyph");
 
             Assert.Equal(new CornerRadius(0), checkBox.CornerRadius);
-            Assert.Equal(0.8, box.RenderTransform!.Value.M11, precision: 3);
+            Assert.Null(box.RenderTransform);
+            Assert.Equal(new Size(12, 12), box.Bounds.Size);
             Assert.Equal(
                 ThemeResourceTests.Brush("ControlActive", variant).Color,
                 ColorOf(box.Background));

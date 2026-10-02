@@ -104,7 +104,7 @@
                               StrokeLineCap="Round" StrokeJoin="Round"/>
                     </Canvas></Viewbox>
                 </Button>
-                <Rectangle Width="1" Height="16" Fill="{DynamicResource Outline}" Margin="4,0"/>
+                <Rectangle Width="1" Height="16" Fill="{DynamicResource Divider}" Margin="4,0"/>
                 <Button x:Name="RotateLeftButton" Command="{Binding RotateLeftCommand}"
                         IsEnabled="{Binding CanEditSelectedImage}" Content="↶"
                         ToolTip.Tip="Rotate Left (90° counter-clockwise)"
