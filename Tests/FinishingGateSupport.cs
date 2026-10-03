@@ -35,7 +35,7 @@ internal static class FinishingGateSupport
 
     internal static ImageFile LocalFile(string path)
     {
-        Assert.Equal(SourceAvailability.AvailableLocally, new SourceAvailabilityService().GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
 
         return new(path);
     }

@@ -38,7 +38,7 @@ public sealed class PresenceShowcaseTests
         using var fixture = new CatalogVmFixture("presence-showcase");
         using var catalog = await fixture.CreateCatalogAsync();
         var path = GoldenTestPaths.Asset("srgb-reference.jpg");
-        Assert.Equal(SourceAvailability.AvailableLocally, new SourceAvailabilityService().GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
         await using var vm = fixture.CreateViewModel(catalog, new StandardBaseLoader(), _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
         var image = new ImageFile(path)

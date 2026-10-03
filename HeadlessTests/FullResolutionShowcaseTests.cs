@@ -23,7 +23,7 @@ public sealed class FullResolutionShowcaseTests
         using var catalog = await fixture.CreateCatalogAsync();
         var availability = new TestSourceAvailabilityService(SourceAvailability.AvailableLocally);
         var path = GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2");
-        Assert.Equal(SourceAvailability.AvailableLocally, new SourceAvailabilityService().GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
         await using var vm = fixture.CreateViewModel(catalog, new RawBaseLoader(),
             _ => Task.CompletedTask, availability);
         var image = new ImageFile(path) { EditSettings = new()

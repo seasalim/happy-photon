@@ -36,7 +36,9 @@ public sealed class FinishingCanonicalBytesTests(ITestOutputHelper output)
             await presets.InitializeAsync();
             await presets.SaveUserPresetAsync("Canonical", fixture.Settings, presetId);
             var presetBytes = await File.ReadAllBytesAsync(presetPath);
-            hashes.Add($"{fixture.Name}/preset", Hash(presetBytes));
+            // The frozen preset hashes use Windows JSON formatting; retain exact reload checks below.
+            hashes.Add($"{fixture.Name}/preset", Hash(Encoding.UTF8.GetBytes(
+                Encoding.UTF8.GetString(presetBytes).ReplaceLineEndings("\r\n"))));
             var reopened = new PresetService(presetDirectory);
             await reopened.InitializeAsync();
             var preset = Assert.Single(reopened.UserPresets);

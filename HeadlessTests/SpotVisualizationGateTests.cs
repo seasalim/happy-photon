@@ -108,7 +108,7 @@ public sealed class SpotVisualizationGateTests(ITestOutputHelper output)
     private static ImageFile LocalRaw()
     {
         var path = GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2");
-        Assert.Equal(SourceAvailability.AvailableLocally, new SourceAvailabilityService().GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
 
         return new(path);
     }

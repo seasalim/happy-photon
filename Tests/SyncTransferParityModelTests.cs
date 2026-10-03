@@ -48,8 +48,11 @@ public sealed class SyncTransferParityModelTests(ITestOutputHelper output)
             var preset = await service.SaveUserPresetAsync(
                 "Sync parity", source.Settings, SyncTransferParityCorpus.PresetId);
             recording.Add($"preset/settings/{source.Name}", SyncTransferParityRecording.Settings(preset.Settings));
-            // Fixed overwrite ID makes these the exact file bytes, with no GUID replacement.
-            recording.Add($"preset/bytes/{source.Name}", Convert.ToBase64String(await File.ReadAllBytesAsync(presetPath)));
+            // The frozen recording uses Windows JSON newlines and a fixed overwrite ID.
+            var presetText = System.Text.Encoding.UTF8.GetString(await File.ReadAllBytesAsync(presetPath))
+                .ReplaceLineEndings("\r\n");
+            recording.Add($"preset/bytes/{source.Name}",
+                Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(presetText)));
             var loaded = new PresetService(directory.Path);
             await loaded.InitializeAsync();
             recording.Add($"preset/reloaded/{source.Name}",

@@ -26,7 +26,7 @@ internal static class StraightenGateFixtures
     {
         var path = PathFor(name);
         Assert.SkipUnless(File.Exists(path), $"Missing straighten fixture: {name}");
-        Assert.Equal(SourceAvailability.AvailableLocally, new SourceAvailabilityService().GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
         var manifestPath = Path.Combine(GoldenTestPaths.RepositoryRoot, "Tests", "compatibility-fixtures.json");
         using var manifest = JsonDocument.Parse(File.ReadAllText(manifestPath));
         var entry = manifest.RootElement.GetProperty("fixtures").EnumerateArray().FirstOrDefault(f =>
@@ -52,7 +52,7 @@ internal static class StraightenGateFixtures
         }
 
         // The live availability check precedes opening source content even for hashing.
-        Assert.Equal(SourceAvailability.AvailableLocally, new SourceAvailabilityService().GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
         using var stream = File.OpenRead(path);
         var actual = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
         Assert.Equal(expected, actual);

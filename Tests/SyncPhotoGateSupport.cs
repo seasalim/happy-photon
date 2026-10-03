@@ -24,7 +24,7 @@ internal static class SyncPhotoGateSupport
     internal static string LocalFixture(string name)
     {
         var path = GoldenTestPaths.Asset(name);
-        Assert.Equal(SourceAvailability.AvailableLocally, new SourceAvailabilityService().GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
         var expected = name switch
         {
             Raw => "7727EE0280B44EA1D633962F49942F37F3C7EC6D704D22E108A5223666327C32",

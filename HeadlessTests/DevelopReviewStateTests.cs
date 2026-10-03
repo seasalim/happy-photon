@@ -180,7 +180,9 @@ public sealed class DevelopReviewStateTests(ITestOutputHelper output)
 
         using var frame = window.CaptureRenderedFrame();
         Assert.NotNull(frame);
-        frame.Save(System.IO.Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "shots",
+        var shots = System.IO.Directory.CreateDirectory(
+            System.IO.Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "shots"));
+        frame.Save(System.IO.Path.Combine(shots.FullName,
             $"wp7-review-toggle-hover-{(gray ? "gray" : "dark")}.png"));
     }
 

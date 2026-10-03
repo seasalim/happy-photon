@@ -25,7 +25,7 @@ public sealed class HealSerializationControlTests(ITestOutputHelper output)
         for (var index = 0; index < frozen.Length; index++)
         {
             var item = frozen[index];
-            Assert.Equal(item.Input, inputs[index].Input);
+            Assert.Equal(item.Input.ReplaceLineEndings("\n"), inputs[index].Input.ReplaceLineEndings("\n"));
             var actual = EditSettingsJson.Serialize(EditSettingsJson.Deserialize(item.Input, out _));
             var expectedBytes = Encoding.UTF8.GetBytes(item.Canonical);
             var actualBytes = Encoding.UTF8.GetBytes(actual);

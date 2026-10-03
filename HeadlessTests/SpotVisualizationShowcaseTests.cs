@@ -21,7 +21,7 @@ public sealed class SpotVisualizationShowcaseTests
         using var fixture = new CatalogVmFixture("visualize-shots");
         using var catalog = await fixture.CreateCatalogAsync();
         var path = GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2");
-        Assert.Equal(SourceAvailability.AvailableLocally, new SourceAvailabilityService().GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
         await using var vm = fixture.CreateViewModel(catalog, new RawBaseLoader(), _ => Task.CompletedTask);
         var image = new ImageFile(path)
         {

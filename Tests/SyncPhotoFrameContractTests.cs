@@ -28,7 +28,7 @@ public sealed class SyncPhotoFrameContractTests(ITestOutputHelper output)
             })
             : GoldenTestPaths.Asset(fixture);
         var availability = new SourceAvailabilityService();
-        Assert.Equal(SourceAvailability.AvailableLocally, availability.GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
         var file = new ImageFile(path);
         var reader = new PhotoFrameFactsReader(availability);
         var opens = new List<string>();

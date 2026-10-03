@@ -62,7 +62,7 @@ internal static class SyncProfileGateSupport
     }
 
     internal static void RequireLocal(string path) =>
-        Assert.Equal(SourceAvailability.AvailableLocally, new SourceAvailabilityService().GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
 
     internal static void AssertHash(string path, string expected)
     {

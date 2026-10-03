@@ -28,7 +28,7 @@ public sealed partial class LocalsHoverBaselineTests(ITestOutputHelper output)
         using var fixture = new CatalogVmFixture("locals-hover-baseline");
         using var catalog = await fixture.CreateCatalogAsync();
         var path = GoldenTestPaths.Asset("srgb-reference.jpg");
-        Assert.Equal(SourceAvailability.AvailableLocally, new SourceAvailabilityService().GetAvailability(path));
+        GoldenTestPaths.RequireReadableFixture(path);
         await using var vm = fixture.CreateViewModel(catalog, new StandardBaseLoader(),
             _ => Task.CompletedTask, timeProvider: new TestTimeProvider());
         var image = new ImageFile(path) { CatalogId = await catalog.GetOrCreateImageAsync(path) };

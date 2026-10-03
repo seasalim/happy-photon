@@ -10,13 +10,26 @@ namespace HappyPhoton.Tests;
 
 public sealed class RestoreCrashTests(BackupCatalogFixtures fixtures, ITestOutputHelper output)
 {
+    private const int BatchCount = 16;
+
+    public static IEnumerable<object[]> OperationBatches()
+    {
+        foreach (var corrupt in new[] { false, true })
+        {
+            foreach (var errorScreen in new[] { false, true })
+            {
+                for (var batch = 0; batch < BatchCount; batch++)
+                {
+                    yield return [corrupt, errorScreen, batch];
+                }
+            }
+        }
+    }
+
     [AvaloniaTheory]
-    [InlineData(false, false)]
-    [InlineData(false, true)]
-    [InlineData(true, false)]
-    [InlineData(true, true)]
-    public Task G2_KillEveryOperation_RecoversACompleteGeneration(bool corrupt, bool errorScreen) =>
-        RunMatrix(corrupt, errorScreen, matchingPreset: true);
+    [MemberData(nameof(OperationBatches))]
+    public Task G2_KillEveryOperation_RecoversACompleteGeneration(bool corrupt, bool errorScreen, int batch) =>
+        RunMatrix(corrupt, errorScreen, matchingPreset: true, batch);
 
     [AvaloniaTheory]
     [InlineData(false, false)]
@@ -26,7 +39,7 @@ public sealed class RestoreCrashTests(BackupCatalogFixtures fixtures, ITestOutpu
     public Task G2_KillCaseOnlyReplacementOfDifferentBytes_RecoversACompleteGeneration(bool corrupt, bool errorScreen) =>
         RunMatrix(corrupt, errorScreen, matchingPreset: false);
 
-    private async Task RunMatrix(bool corrupt, bool errorScreen, bool matchingPreset)
+    private async Task RunMatrix(bool corrupt, bool errorScreen, bool matchingPreset, int? batch = null)
     {
         var fixture = await fixtures.Everyday;
         using var probe = new TemporaryDirectory();
@@ -45,6 +58,15 @@ public sealed class RestoreCrashTests(BackupCatalogFixtures fixtures, ITestOutpu
             boundaries = boundaries.Where(point => point.Contains(":case-delete:")).ToArray();
             if (OperatingSystem.IsWindows()) Assert.Equal(2, boundaries.Length);
         }
+
+        if (batch.HasValue)
+        {
+            // Report progress between bounded cases without dropping any discovered kill point.
+            boundaries = boundaries.Order(StringComparer.Ordinal)
+                .Where((_, index) => index % BatchCount == batch.Value).ToArray();
+            Assert.NotEmpty(boundaries);
+        }
+
         foreach (var point in boundaries)
         {
             using var directory = new TemporaryDirectory();

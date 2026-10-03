@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -140,7 +141,13 @@ public sealed partial class DevelopAssessmentBarTests
 
     private static async Task Click(MainWindow window, Button button)
     {
+        // Layout changes must reach the compositor before pointer hit-testing.
+        using var frame = window.CaptureRenderedFrame();
+        Assert.NotNull(frame);
         var point = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), window)!.Value;
+        var hit = window.InputHitTest(point) as Visual;
+        Assert.True(ReferenceEquals(hit, button) || hit?.GetVisualAncestors().Contains(button) == true,
+            $"Expected to click {button.Name} at {point}; hit {hit}.");
         window.MouseDown(point, MouseButton.Left);
         window.MouseUp(point, MouseButton.Left);
 

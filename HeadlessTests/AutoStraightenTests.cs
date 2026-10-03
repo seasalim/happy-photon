@@ -76,7 +76,7 @@ public sealed partial class AutoStraightenTests : IDisposable
         Assert.False(vm.IsCropMode);
         Assert.Equal(loader.Expected, image.EditSettings.HorizonRotation);
         Assert.Equal(2, vm.HistoryEntries.Count);
-        Assert.Equal(moveCrop ? "Crop" : "Horizon -2.00° (-2.00°)",
+        Assert.Equal(moveCrop ? "Crop" : "Horizon -2.00\u00b0 (-2.00\u00b0)",
             vm.HistoryEntries[0].Label);
         var persisted = (await catalog.LoadImageStatesAsync([image.FilePath]))[image.FilePath].Single();
         Assert.Equal(loader.Expected, persisted.EditSettings.HorizonRotation);

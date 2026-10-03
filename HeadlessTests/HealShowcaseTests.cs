@@ -20,7 +20,7 @@ public sealed class HealShowcaseTests
     {
         var file = new ImageFile(GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2"));
         var availability = new SourceAvailabilityService();
-        Assert.Equal(SourceAvailability.AvailableLocally, availability.GetAvailability(file.FilePath));
+        GoldenTestPaths.RequireReadableFixture(file.FilePath);
         var loader = new GatedBaseImageLoader(new RawBaseLoader(), availability);
         using var pair = loader.LoadPreviewBaseWithOutcome(file, BaseDecodeSettings.Default, CancellationToken.None).Pair;
         Assert.NotNull(pair); Assert.Equal(1600u, pair.Interactive.Pixels.Width);

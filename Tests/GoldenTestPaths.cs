@@ -1,3 +1,6 @@
+using HappyPhoton.Services;
+using Xunit;
+
 namespace HappyPhoton.Tests;
 
 internal static class GoldenTestPaths
@@ -9,6 +12,15 @@ internal static class GoldenTestPaths
 
     public static string Asset(string name) =>
         Path.Combine(AssetDirectory, name);
+
+    internal static void RequireReadableFixture(string path)
+    {
+        Assert.True(File.Exists(path), $"Missing test fixture: {path}");
+        var expected = OperatingSystem.IsWindows()
+            ? SourceAvailability.AvailableLocally
+            : SourceAvailability.Unknown;
+        Assert.Equal(expected, new SourceAvailabilityService().GetAvailability(path));
+    }
 
     public static string GoldenDirectory =>
         Path.Combine(RepositoryRoot, "Tests", "goldens");
