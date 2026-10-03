@@ -38,6 +38,12 @@ public partial class MainWindowViewModel
                 ? SelectedImage
                 : members[0];
             AnchorFullScreenSelection(anchor, suppressPreviewLoad: true);
+
+            // Opening Loupe on the last member leaves nothing ahead, so warm back through the rest.
+            if (keepSelectedSource && ReferenceEquals(anchor, members[^1]))
+            {
+                _adjacentWarmDirection = -1;
+            }
         }
     }
 

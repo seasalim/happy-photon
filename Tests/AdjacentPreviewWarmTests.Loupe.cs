@@ -193,7 +193,7 @@ public sealed partial class AdjacentPreviewWarmTests
     }
 
     [WindowsFact]
-    public async Task EnteringARestrictedSelectionFromItsLastMemberStillWarmsForward()
+    public async Task EnteringARestrictedSelectionOnItsLastMemberKeepsItAndWarmsBackThroughTheRest()
     {
         _fixture.RequireWindows();
         using var catalog = await CreateCatalogAsync("loupe-restricted-last");
@@ -222,15 +222,16 @@ public sealed partial class AdjacentPreviewWarmTests
             images[6].IsSelected = true;
             vm.SelectedImage = images[6];
             vm.EnterLoupeCommand.Execute(null);
-            // Entry re-anchors to the first member; that jump is not travel.
-            Assert.Same(images[0], vm.SelectedImage);
+            // Entry keeps the ringed photo (the Sync source); with nothing ahead of the
+            // last member, warming runs back through the rest of the selection.
+            Assert.Same(images[6], vm.SelectedImage);
             await vm.LoupeLoadingTask;
             clock.Advance(TimeSpan.FromMilliseconds(75));
             await TestWaits.UntilAsync(() => loader.Paths.Count >= 3);
             await TestWaits.UntilAsync(() =>
                 vm.ImageService.Previews.PreviewActivityCount == 0);
             Assert.Equal(
-                new[] { "first.jpg", "fourth.jpg", "seventh.jpg" },
+                new[] { "seventh.jpg", "fourth.jpg", "first.jpg" },
                 loader.Paths);
         }
         finally
