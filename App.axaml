@@ -189,6 +189,7 @@
             <Setter Property="Height" Value="28"/>
             <Setter Property="MaxHeight" Value="28"/>
             <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
             <Setter Property="FontWeight" Value="Regular"/>
